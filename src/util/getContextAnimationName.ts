@@ -17,9 +17,8 @@ const getContextAnimationName = (path: Path, isAppearing?: boolean) => (state: S
   let animation: 'disappearingLowerLeft' | 'disappearingUpperRight' = 'disappearingLowerLeft'
 
   if (isDescendantPath(path, state.cursor)) {
-    const isCursorInContextView = isLastActionContextView
-      ? !!state.cursor && isContextViewActive(state, state.cursor)
-      : false
+    const isCursorInContextView = isLastActionContextView && !!state.cursor && isContextViewActive(state, state.cursor)
+
     if (isCursorInContextView) {
       // Context View ON
       // New contextual child appearing (fade IN from RIGHT)
