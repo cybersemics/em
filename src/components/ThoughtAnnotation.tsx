@@ -285,35 +285,35 @@ const ThoughtAnnotationContainer = React.memo(
     }, [])
 
     const positionAnnotation = useCallback(() => {
-      if (editableRef.current && annotationRef.current) {
-        const range = document.createRange()
-        const textNode = editableRef.current.lastChild
+      if (!editableRef.current || !annotationRef.current) return
 
-        const length = textNode && textNode.nodeType === Node.TEXT_NODE && textNode.textContent?.length
-        const offset = editableRef.current.getBoundingClientRect()
+      const range = document.createRange()
+      const textNode = editableRef.current.lastChild
 
-        let right = offset.width - fontSize - (length ? fontSize / 3 : 0)
-        let top = 0
+      const length = textNode && textNode.nodeType === Node.TEXT_NODE && textNode.textContent?.length
+      const offset = editableRef.current.getBoundingClientRect()
 
-        if (length) {
-          // Select the last character
-          range.setStart(textNode, length - 1)
-          range.setEnd(textNode, length)
+      let right = offset.width - fontSize - (length ? fontSize / 3 : 0)
+      let top = 0
 
-          // Get bounding box
-          const rect = range.getBoundingClientRect()
-          const isAtEdge = rect.right - offset.left > offset.width
+      if (length) {
+        // Select the last character
+        range.setStart(textNode, length - 1)
+        range.setEnd(textNode, length)
 
-          top = rect.top - offset.top
-          // offset annotation container to account for -12px left margin in ThoughtPositioner #3352
-          if (!isAtEdge) right = rect.right - offset.left + (isTableCol1 ? 12 : 0)
-        }
+        // Get bounding box
+        const rect = range.getBoundingClientRect()
+        const isAtEdge = rect.right - offset.left > offset.width
 
-        // rect.right gives you the x position (relative to viewport)
-        annotationRef.current.style.left = `${right}px`
-        annotationRef.current.style.top = `${top}px`
-        annotationRef.current.style.opacity = '1'
+        top = rect.top - offset.top
+        // offset annotation container to account for -12px left margin in ThoughtPositioner #3352
+        if (!isAtEdge) right = rect.right - offset.left + (isTableCol1 ? 12 : 0)
       }
+
+      // rect.right gives you the x position (relative to viewport)
+      annotationRef.current.style.left = `${right}px`
+      annotationRef.current.style.top = `${top}px`
+      annotationRef.current.style.opacity = '1'
     }, [editableRef, fontSize, isTableCol1])
 
     const contextAnimation = useSelector(getContextAnimationName(path))
