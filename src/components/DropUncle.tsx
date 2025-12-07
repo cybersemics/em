@@ -5,7 +5,6 @@ import { dropEndRecipe, dropHoverRecipe } from '../../styled-system/recipes'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
-import { DROP_HOVER_WIDTH } from '../constants'
 import testFlags from '../e2e/testFlags'
 import useDragAndDropThought from '../hooks/useDragAndDropThought'
 import dropHoverColor from '../selectors/dropHoverColor'
@@ -52,7 +51,7 @@ const DropUncle = ({
           opacity: 0.9,
         }),
       )}
-      style={{ width: DROP_HOVER_WIDTH, height: `${1.9 + dropTargetHeight}em` }}
+      style={{ height: `${1.9 + dropTargetHeight}em` }}
       ref={dndRef(dropTarget)}
     >
       {testFlags.simulateDrop && (
@@ -71,10 +70,7 @@ const DropUncle = ({
         </span>
       )}
       {(testFlags.simulateDrag || isHovering) && (
-        <span
-          className={dropHoverRecipe({ insideDropEnd: true })}
-          style={{ width: DROP_HOVER_WIDTH, backgroundColor: dropHoverColorValue }}
-        />
+        <span className={dropHoverRecipe({ insideDropEnd: true })} style={{ backgroundColor: dropHoverColorValue }} />
       )}
     </span>
   )

@@ -7,6 +7,8 @@ const dropHoverRecipe = defineRecipe({
     position: 'absolute',
     height: '3px',
     borderRadius: '99px',
+    /** The width for drop hover bars during drag-and-drop operations. */
+    width: '50vw',
     zIndex: 'stack',
   },
   variants: {

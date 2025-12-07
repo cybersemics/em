@@ -6,7 +6,7 @@ import { token } from '../../styled-system/tokens'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import SimplePath from '../@types/SimplePath'
 import ThoughtId from '../@types/ThoughtId'
-import { DROP_HOVER_WIDTH, LongPressState } from '../constants'
+import { LongPressState } from '../constants'
 import testFlags from '../e2e/testFlags'
 import attributeEquals from '../selectors/attributeEquals'
 import calculateAutofocus from '../selectors/calculateAutofocus'
@@ -57,7 +57,6 @@ const DropHover = ({ simplePath }: { simplePath: SimplePath }) => {
         }),
       )}
       style={{
-        width: DROP_HOVER_WIDTH,
         backgroundColor: animateHover ? token('colors.highlight2') : dropHoverColorValue,
       }}
     />

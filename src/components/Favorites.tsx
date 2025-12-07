@@ -7,7 +7,7 @@ import { token } from '../../styled-system/tokens'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import SimplePath from '../@types/SimplePath'
 import { toggleUserSettingActionCreator as toggleUserSetting } from '../actions/toggleUserSetting'
-import { DROP_HOVER_WIDTH, Settings } from '../constants'
+import { Settings } from '../constants'
 import useDragAndDropFavorites from '../hooks/useDragDropFavorites'
 import useDragHold from '../hooks/useDragHold'
 import { getLexeme } from '../selectors/getLexeme'
@@ -61,7 +61,6 @@ const DragAndDropFavorite = ({
               marginTop: '-0.4em',
             }),
           )}
-          style={{ width: DROP_HOVER_WIDTH }}
         />
       )}
       <ThoughtLink
@@ -95,11 +94,9 @@ const DropEnd = ({ disableDragAndDrop }: { disableDragAndDrop?: boolean }) => {
           css({
             marginLeft: 0,
             marginTop: 0,
-            width: 'calc(100% - 4em)',
             background: isHovering ? 'highlight2' : undefined,
           }),
         )}
-        style={{ width: DROP_HOVER_WIDTH }}
       />
     </div>
   )

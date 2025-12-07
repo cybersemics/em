@@ -5,7 +5,6 @@ import { dropEndRecipe, dropHoverRecipe } from '../../styled-system/recipes'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import { isTouch } from '../browser'
-import { DROP_HOVER_WIDTH } from '../constants'
 import testFlags from '../e2e/testFlags'
 import useDragAndDropSubThought from '../hooks/useDragAndDropSubThought'
 import dropHoverColor from '../selectors/dropHoverColor'
@@ -94,10 +93,9 @@ const DropChild = ({ depth, path, simplePath, cliff, isLastVisible }: DropChildP
                 // offset drop-end (above) and add 0.25em to slightly  exaggerate the indentation for better drop perception.
                 marginLeft: isTouch ? 'calc(-33% - 8px)' : 'calc(-2em - 10px)',
                 marginTop: '-0.4em',
-                width: '100%',
               }),
             )}
-            style={{ width: DROP_HOVER_WIDTH, backgroundColor: dropHoverColorValue }}
+            style={{ backgroundColor: dropHoverColorValue }}
           />
         )}
       </span>
