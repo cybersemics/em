@@ -105,7 +105,7 @@ const DropEnd = ({
         css({
           display: 'list-item',
           // If dropping target is table column 1, do not set width (but use width property of dropEndRecipe)
-          width: isParentTableCol1 ? undefined : 'token(sizes.dropHover)',
+          width: isParentTableCol1 ? undefined : 'dropHover',
           marginLeft: isRootPath ? '-4em' : last ? '-2em' : undefined,
           // offset marginLeft, minus 1em for bullet
           // otherwise drop-hover will be too far left
