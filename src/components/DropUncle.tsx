@@ -49,7 +49,7 @@ const DropUncle = ({
         css({
           backgroundColor: testFlags.simulateDrop ? 'eggplant' : undefined,
           opacity: 0.9,
-          width: '50vw',
+          dropHover: 'auto',
         }),
       )}
       style={{ height: `${1.9 + dropTargetHeight}em` }}

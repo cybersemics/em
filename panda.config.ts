@@ -504,6 +504,16 @@ export default defineConfig({
     dragInProgress: '[data-drag-in-progress=true] &',
   },
 
+  utilities: {
+    /** The width for drop hover bars during drag-and-drop operations. */
+    dropHover: {
+      className: 'drop-hover-width',
+      transform(type: 'auto' | 'parentTableCol1') {
+        return { width: type === 'parentTableCol1' ? undefined : '50vw' }
+      },
+    },
+  },
+
   // The output directory for your css system
   outdir: 'styled-system',
   presets: [],

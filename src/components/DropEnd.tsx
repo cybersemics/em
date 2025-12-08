@@ -104,6 +104,8 @@ const DropEnd = ({
         dropEndRecipe(),
         css({
           display: 'list-item',
+          // If dropping target is table column 1, do not set width (but use width property of dropEndRecipe)
+          dropHover: isParentTableCol1 ? 'parentTableCol1' : 'auto',
           marginLeft: isRootPath ? '-4em' : last ? '-2em' : undefined,
           // offset marginLeft, minus 1em for bullet
           // otherwise drop-hover will be too far left
@@ -115,8 +117,6 @@ const DropEnd = ({
         height: isRootPath ? '8em' : `${0.7 + dropTargetHeight}em`,
         // use transform to avoid conflicting with margin, which is currently spread out across multiple components
         transform: `translateX(${DROPEND_FINGERSHIFT}em)`,
-        // If dropping target is table column 1, do not set width (but use width property of dropEndRecipe)
-        width: isParentTableCol1 ? undefined : '50vw',
       }}
       ref={dndRef(dropTarget)}
     >
