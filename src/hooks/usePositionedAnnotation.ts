@@ -2,7 +2,6 @@ import { RefObject, useCallback, useEffect, useMemo, useRef, useState } from 're
 import { useSelector } from 'react-redux'
 import Path from '../@types/Path'
 import isContextViewActive from '../selectors/isContextViewActive'
-import viewportStore from '../stores/viewport'
 import durations from '../util/durations'
 import getContextAnimationName from '../util/getContextAnimationName'
 import isDescendantPath from '../util/isDescendantPath'
@@ -19,8 +18,6 @@ const usePositionedAnnotation = (
   numContexts: number,
   path: Path,
 ) => {
-  // We're trying to get rid of contentWidth as part of #3369, but currently it's the easiest reactive proxy for a viewport resize event.
-  const contentWidth = viewportStore.useSelector(state => state.contentWidth)
   const contextAnimation = useSelector(getContextAnimationName(path))
   const descendant = useSelector(state => isDescendantPath(path, state.cursor))
   const isInContextView = useSelector(state => isContextViewActive(state, parentOf(path)))
@@ -74,7 +71,6 @@ const usePositionedAnnotation = (
       contextAnimation ? durations.get(contextAnimation) : 0,
     ) as unknown as number
   }, [
-    contentWidth,
     contextAnimation,
     descendant,
     editableRef,
@@ -85,6 +81,11 @@ const usePositionedAnnotation = (
     numContexts,
     positionAnnotation,
   ])
+
+  useEffect(() => {
+    window.addEventListener('resize', positionAnnotation)
+    return () => window.removeEventListener('resize', positionAnnotation)
+  }, [positionAnnotation])
 
   const styles = useMemo(() => ({ top, left, opacity }), [top, left, opacity])
 
