@@ -2158,18 +2158,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@capacitor/docgen@npm:^0.3.0":
-  version: 0.3.0
-  resolution: "@capacitor/docgen@npm:0.3.0"
+"@capacitor/docgen@npm:^0.3.1":
+  version: 0.3.1
+  resolution: "@capacitor/docgen@npm:0.3.1"
   dependencies:
-    "@types/node": "npm:^14.18.0"
     colorette: "npm:^2.0.20"
     github-slugger: "npm:^1.5.0"
     minimist: "npm:^1.2.8"
     typescript: "npm:~4.2.4"
   bin:
     docgen: bin/docgen
-  checksum: 10c0/1ae9bc12a69fa5df2980d3a87ba9b1fa9080252452e7d52746eb5ca9e016383fd65a94c66f57a9933952bce7e151169f34dd430b621192e6b03711951985a468
+  checksum: 10c0/e2a66cdde13a170da86ac44926c240d81ecef20456a2e6bd44d4f8cb20a787bf5e294c00e90f9ddb01f3704d0f2fc0f252d894893c12dca6667308b411ebe199
   languageName: node
   linkType: hard
 
@@ -5508,13 +5507,6 @@ __metadata:
   dependencies:
     undici-types: "npm:~6.19.8"
   checksum: 10c0/3f46cbe0a49bab4ba30494025e4c8a6e699b98ac922857aa1f0209ce11a1313ee46e6808b8f13fe5b8b960a9d7796b77c8d542ad4e9810e85ef897d5593b5d51
-  languageName: node
-  linkType: hard
-
-"@types/node@npm:^14.18.0":
-  version: 14.18.63
-  resolution: "@types/node@npm:14.18.63"
-  checksum: 10c0/626a371419a6a0e11ca460b22bb4894abe5d75c303739588bc96267e380aa8b90ba5a87bc552400584f0ac2a84b5c458dadcbcf0dfd2396ebeb765f7a7f95893
   languageName: node
   linkType: hard
 
@@ -21494,7 +21486,7 @@ __metadata:
   dependencies:
     "@capacitor/android": "npm:^7.4.3"
     "@capacitor/core": "npm:^7.4.4"
-    "@capacitor/docgen": "npm:^0.3.0"
+    "@capacitor/docgen": "npm:^0.3.1"
     "@capacitor/ios": "npm:^7.4.4"
     "@ionic/swiftlint-config": "npm:^2.0.0"
     rimraf: "npm:^6.1.2"
