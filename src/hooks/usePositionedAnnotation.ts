@@ -18,7 +18,6 @@ const usePositionedAnnotation = (
   isTableCol1: boolean | undefined,
   numContexts: number,
   path: Path,
-  styleAnnotation: React.CSSProperties | undefined,
 ) => {
   // We're trying to get rid of contentWidth as part of #3369, but currently it's the easiest reactive proxy for a viewport resize event.
   const contentWidth = viewportStore.useSelector(state => state.contentWidth)
@@ -86,7 +85,6 @@ const usePositionedAnnotation = (
     isTableCol1,
     numContexts,
     positionAnnotation,
-    styleAnnotation,
   ])
 
   const styles = useMemo(() => ({ top, left, opacity }), [top, left, opacity])
