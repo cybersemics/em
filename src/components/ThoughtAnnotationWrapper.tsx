@@ -1,4 +1,4 @@
-import { FC, PropsWithChildren, RefObject } from 'react'
+import { FC, PropsWithChildren } from 'react'
 import { css } from '../../styled-system/css'
 import { MIN_CONTENT_WIDTH_EM } from '../constants'
 import isAttribute from '../util/isAttribute'
@@ -10,18 +10,17 @@ import isAttribute from '../util/isAttribute'
  */
 const ThoughtAnnotationWrapper: FC<
   PropsWithChildren<{
-    annotationRef?: RefObject<HTMLDivElement | null>
+    stylePosition?: React.CSSProperties
     ellipsizedUrl?: boolean
     multiline?: boolean
     value?: string
     styleAnnotation?: React.CSSProperties
     isTableCol1?: boolean
   }>
-> = ({ annotationRef, ellipsizedUrl, multiline, value, styleAnnotation, children, isTableCol1 }) => {
+> = ({ ellipsizedUrl, multiline, value, styleAnnotation, stylePosition, children }) => {
   return (
     <div
       aria-label='thought-annotation'
-      ref={annotationRef}
       className={css({
         position: 'absolute',
         pointerEvents: 'none',
@@ -45,6 +44,7 @@ const ThoughtAnnotationWrapper: FC<
           marginLeft: { _android: '0.5em' },
         },
       })}
+      style={stylePosition}
     >
       <div
         className={

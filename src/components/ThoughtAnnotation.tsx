@@ -1,5 +1,5 @@
 import moize from 'moize'
-import React, { RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { RefObject, useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { SystemStyleObject } from '../../styled-system/types'
@@ -10,24 +10,20 @@ import State from '../@types/State'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { isSafari, isTouch } from '../browser'
 import { REGEX_PUNCTUATIONS, REGEX_TAGS, Settings } from '../constants'
+import usePositionedAnnotation from '../hooks/usePositionedAnnotation'
 import attributeEquals from '../selectors/attributeEquals'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import { filterAllChildren } from '../selectors/getChildren'
 import getContexts from '../selectors/getContexts'
 import getThoughtById from '../selectors/getThoughtById'
 import getUserSetting from '../selectors/getUserSetting'
-import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import editingValueStore from '../stores/editingValue'
-import viewportStore from '../stores/viewport'
 import containsURL from '../util/containsURL'
-import durations from '../util/durations'
 import equalPath from '../util/equalPath'
 import fastClick from '../util/fastClick'
-import getContextAnimationName from '../util/getContextAnimationName'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
-import isDescendantPath from '../util/isDescendantPath'
 import isEmail from '../util/isEmail'
 import isVisibleContext from '../util/isVisibleContext'
 import parentOf from '../util/parentOf'
@@ -98,8 +94,9 @@ EmailIconLink.displayName = 'EmailIconLink'
 /** A non-interactive annotation overlay that contains intrathought links (superscripts and underlining). */
 const ThoughtAnnotation = React.memo(
   ({
-    annotationRef,
+    editableRef,
     email,
+    isEditing,
     multiline,
     ellipsizedUrl,
     numContexts,
@@ -112,8 +109,9 @@ const ThoughtAnnotation = React.memo(
     url,
     value,
   }: {
-    annotationRef: RefObject<HTMLDivElement | null>
+    editableRef: React.RefObject<HTMLInputElement | null>
     email?: string
+    isEditing: boolean
     multiline?: boolean
     ellipsizedUrl?: boolean
     numContexts: number
@@ -129,6 +127,15 @@ const ThoughtAnnotation = React.memo(
       attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table'),
     )
 
+    const stylePosition = usePositionedAnnotation(
+      editableRef,
+      isEditing,
+      isTableCol1,
+      numContexts,
+      simplePath,
+      styleAnnotation,
+    )
+
     return (
       <>
         <span
@@ -141,12 +148,11 @@ const ThoughtAnnotation = React.memo(
           <FauxCaret caretType='thoughtStart' />
         </span>
         <ThoughtAnnotationWrapper
-          annotationRef={annotationRef}
-          isTableCol1={isTableCol1}
           ellipsizedUrl={ellipsizedUrl}
           multiline={multiline}
           value={value}
           styleAnnotation={styleAnnotation}
+          stylePosition={stylePosition}
         >
           {
             // do not render url icon on root thoughts in publish mode
@@ -205,7 +211,6 @@ const ThoughtAnnotationContainer = React.memo(
     style?: React.CSSProperties
     styleAnnotation?: React.CSSProperties
   }) => {
-    const annotationRef = useRef<HTMLDivElement>(null)
     // delay calculation of contexts for performance
     // recalculate after the component has mounted
     // filtering on isNotArchive is very slow: O(totalNumberOfContexts * depth)
@@ -223,17 +228,12 @@ const ThoughtAnnotationContainer = React.memo(
       isEditing ? editingValue : null,
     )
 
-    // We're trying to get rid of contentWidth as part of #3369, but currently it's the easiest reactive proxy for a viewport resize event.
-    const contentWidth = viewportStore.useSelector(state => state.contentWidth)
-    const fontSize = useSelector(state => state.fontSize)
-
     // if a thought has the same value as editValue, re-render its ThoughtAnnotation in order to get the correct number of contexts
     editingValueStore.useSelector((editingValue: string | null) => value === editingValue)
 
     const hideSuperscriptsSetting = useSelector(getUserSetting(Settings.hideSuperscripts))
 
     const isExpanded = useSelector(state => !!state.expanded[hashPath(simplePath)])
-    const isInContextView = useSelector(state => isContextViewActive(state, parentOf(path)))
 
     const numContexts = useSelector(
       moize(
@@ -284,70 +284,6 @@ const ThoughtAnnotationContainer = React.memo(
       setCalculateContexts(true)
     }, [])
 
-    const positionAnnotation = useCallback(() => {
-      if (!editableRef.current || !annotationRef.current) return
-
-      const range = document.createRange()
-      const textNode = editableRef.current.lastChild
-
-      const length = textNode && textNode.nodeType === Node.TEXT_NODE && textNode.textContent?.length
-      const offset = editableRef.current.getBoundingClientRect()
-
-      let right = offset.width - fontSize - (length ? fontSize / 3 : 0)
-      let top = 0
-
-      if (length) {
-        // Select the last character
-        range.setStart(textNode, length - 1)
-        range.setEnd(textNode, length)
-
-        // Get bounding box
-        const rect = range.getBoundingClientRect()
-        const isAtEdge = rect.right - offset.left > offset.width
-
-        top = rect.top - offset.top
-        // offset annotation container to account for -12px left margin in ThoughtPositioner #3352
-        if (!isAtEdge) right = rect.right - offset.left + (isTableCol1 ? 12 : 0)
-      }
-
-      // rect.right gives you the x position (relative to viewport)
-      annotationRef.current.style.left = `${right}px`
-      annotationRef.current.style.top = `${top}px`
-      annotationRef.current.style.opacity = '1'
-    }, [editableRef, fontSize, isTableCol1])
-
-    const contextAnimation = useSelector(getContextAnimationName(path))
-    const descendant = useSelector(state => isDescendantPath(path, state.cursor))
-    const timeoutRef = useRef(0)
-
-    // useSelector would be a cleaner way to get the annotationRef's new position
-    // but, on load, the refs are null until setTimeout runs
-    useEffect(() => {
-      if (contextAnimation && descendant && !isEditing && annotationRef.current) {
-        clearTimeout(timeoutRef.current)
-        annotationRef.current.style.opacity = '0'
-      }
-      timeoutRef.current = setTimeout(
-        positionAnnotation,
-        contextAnimation ? durations.get(contextAnimation) : 0,
-      ) as unknown as number
-    }, [
-      contentWidth,
-      contextAnimation,
-      descendant,
-      editableRef,
-      email,
-      fontSize,
-      isEditing,
-      isInContextView,
-      isTableCol1,
-      numContexts,
-      positionAnnotation,
-      showSuperscript,
-      styleAnnotation,
-      url,
-    ])
-
     // In order to render a faux caret while hideCaret animations are playing, ThoughtAnnotation always needs
     // to exist on mobile Safari. The line end faux caret must be placed inline-block at the end of the
     // thought text in order to cover cases where the selection is an ELEMENT_NODE and its bounding box
@@ -355,11 +291,11 @@ const ThoughtAnnotationContainer = React.memo(
     return showSuperscript || url || email || styleAnnotation || (isTouch && isSafari()) ? (
       <ThoughtAnnotation
         {...{
-          annotationRef,
+          editableRef,
           simplePath,
           isEditing,
           multiline,
-          ellipsizedUrl: ellipsizedUrl,
+          ellipsizedUrl,
           numContexts,
           showSuperscript,
           cssRaw,
