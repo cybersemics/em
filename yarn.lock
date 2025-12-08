@@ -3779,9 +3779,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@pandacss/eslint-plugin@npm:^0.2.14":
-  version: 0.2.14
-  resolution: "@pandacss/eslint-plugin@npm:0.2.14"
+"@pandacss/eslint-plugin@npm:^0.3.0":
+  version: 0.3.0
+  resolution: "@pandacss/eslint-plugin@npm:0.3.0"
   dependencies:
     "@pandacss/config": "npm:^0.53.2"
     "@pandacss/generator": "npm:^0.53.2"
@@ -3789,10 +3789,11 @@ __metadata:
     "@pandacss/shared": "npm:^0.53.2"
     "@typescript-eslint/utils": "npm:^8.21.0"
     hookable: "npm:^5.5.3"
+    micromatch: "npm:^4.0.8"
     synckit: "npm:^0.9.0"
   peerDependencies:
     eslint: "*"
-  checksum: 10c0/152eeb371e0ecc85b0f163f5e95f27dfe5be3261e610af7edfd89c2f62fae3c23a1db5d4f4e5aed7c7dc970f0b42538552276542e16ae9c5ee5fa6e11504d969
+  checksum: 10c0/516f11e795f0be4f35009cbe576dd3437d193514d7f30a12f8c7e7775bd1c67f44483bf34ea079d5ed07fe6254c0f737d883741fae16fcb6f2d0c9fecb61a5cf
   languageName: node
   linkType: hard
 
@@ -9551,7 +9552,7 @@ __metadata:
     "@emotion/styled": "npm:^11.14.1"
     "@mui/material": "npm:^7.3.5"
     "@pandacss/dev": "npm:^1.5.1"
-    "@pandacss/eslint-plugin": "npm:^0.2.14"
+    "@pandacss/eslint-plugin": "npm:^0.3.0"
     "@redux-devtools/extension": "npm:^3.3.0"
     "@sinonjs/fake-timers": "npm:^15.0.0"
     "@stylistic/eslint-plugin": "npm:^5.5.0"
