@@ -8,6 +8,10 @@ import getContextAnimationName from '../util/getContextAnimationName'
 import isDescendantPath from '../util/isDescendantPath'
 import parentOf from '../util/parentOf'
 
+/** Create a selection range at the end of an editable and measure its position to determine where to place a thought annotation (context superscript or url/email link).
+ * If contextAnimation returns an animation name, that means that the thought is in the process of transitioning in or out of a context view.
+ * In that case, hide the annotation until the animation is complete, and position it after the thought has reached its final position.
+ */
 const usePositionedAnnotation = (
   editableRef: RefObject<HTMLDivElement | null>,
   isEditing: boolean,
