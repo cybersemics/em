@@ -167,7 +167,6 @@ const StaticThought = ({
         minContexts={allowSingleContext ? 0 : 2}
         multiline={multiline}
         ellipsizedUrl={ellipsizedUrl}
-        isTableCol1={isTableCol1}
         path={path}
         showContextBreadcrumbs={showContextBreadcrumbs}
         simplePath={simplePath}

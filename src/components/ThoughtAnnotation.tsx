@@ -100,6 +100,7 @@ const ThoughtAnnotation = React.memo(
     multiline,
     ellipsizedUrl,
     numContexts,
+    path,
     showSuperscript,
     simplePath,
     cssRaw,
@@ -115,6 +116,7 @@ const ThoughtAnnotation = React.memo(
     multiline?: boolean
     ellipsizedUrl?: boolean
     numContexts: number
+    path: Path
     showSuperscript?: boolean
     simplePath: SimplePath
     cssRaw?: SystemStyleObject
@@ -132,7 +134,7 @@ const ThoughtAnnotation = React.memo(
       isEditing,
       isTableCol1,
       numContexts,
-      simplePath,
+      path,
       styleAnnotation,
     )
 
@@ -187,7 +189,6 @@ const ThoughtAnnotationContainer = React.memo(
     path,
     simplePath,
     minContexts = 2,
-    isTableCol1,
     multiline,
     ellipsizedUrl,
     invalidState,
@@ -200,7 +201,6 @@ const ThoughtAnnotationContainer = React.memo(
     env?: LazyEnv
     focusOffset?: number
     invalidState?: boolean
-    isTableCol1?: boolean
     minContexts?: number
     multiline?: boolean
     ellipsizedUrl?: boolean
@@ -297,6 +297,7 @@ const ThoughtAnnotationContainer = React.memo(
           multiline,
           ellipsizedUrl,
           numContexts,
+          path,
           showSuperscript,
           cssRaw,
           style,
