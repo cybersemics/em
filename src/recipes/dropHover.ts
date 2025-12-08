@@ -7,7 +7,7 @@ const dropHoverRecipe = defineRecipe({
     position: 'absolute',
     height: '3px',
     borderRadius: '99px',
-    dropHover: 'auto',
+    width: `token(sizes.dropHover)`,
     zIndex: 'stack',
   },
   variants: {
