@@ -23,7 +23,6 @@ const usePositionedAnnotation = (
   const contentWidth = viewportStore.useSelector(state => state.contentWidth)
   const contextAnimation = useSelector(getContextAnimationName(path))
   const descendant = useSelector(state => isDescendantPath(path, state.cursor))
-
   const isInContextView = useSelector(state => isContextViewActive(state, parentOf(path)))
   const timeoutRef = useRef(0)
   const fontSize = useSelector(state => state.fontSize)
@@ -54,14 +53,14 @@ const usePositionedAnnotation = (
 
       top = rect.top - offset.top
       // offset annotation container to account for -12px left margin in ThoughtPositioner #3352
-      if (!isAtEdge) right = rect.right - offset.left + (isTableCol1 ? 12 : 0)
+      if (!isAtEdge) right = rect.right - offset.left + (isTableCol1 && !isEditing ? 12 : 0)
     }
 
     // rect.right gives you the x position (relative to viewport)
     setLeft(`${right}px`)
     setTop(`${top}px`)
     setOpacity('1')
-  }, [editableRef, fontSize, isTableCol1])
+  }, [editableRef, fontSize, isEditing, isTableCol1])
 
   // useSelector would be a cleaner way to get the editableRef's new position
   // but, on load, the refs are null until setTimeout runs
