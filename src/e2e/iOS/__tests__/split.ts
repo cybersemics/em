@@ -2,7 +2,7 @@ import helpers from '../helpers'
 
 const { clickThought, getEditingText, getSelection, paste, pause, tapReturnKey, tap, waitForEditable } = helpers()
 
-it.skip('split a thought when the caret is in the middle', async () => {
+it('split a thought when the caret is in the middle', async () => {
   const importText = `
   - puppeteer
     - web scraping

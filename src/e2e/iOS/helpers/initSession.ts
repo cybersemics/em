@@ -1,5 +1,4 @@
 import { Browser } from 'webdriverio'
-import tap from './tap'
 import waitForElement from './waitForElement'
 
 // eslint-disable-next-line @typescript-eslint/no-namespace, @typescript-eslint/prefer-namespace-keyword
@@ -23,7 +22,7 @@ const initSession = (): (() => Promise<Browser>) => {
     await mobileBrowser.url('http://bs-local.com:3000')
     const skipElement = await waitForElement(mobileBrowser, '#skip-tutorial', { timeout: 90000 })
     await mobileBrowser.waitUntil(async () => await skipElement.isClickable())
-    await tap(mobileBrowser, skipElement, { y: 50 })
+    await skipElement.click()
     await waitForElement(mobileBrowser, '[aria-label="empty-thoughtspace"]', { timeout: 90000 })
     return mobileBrowser
   }

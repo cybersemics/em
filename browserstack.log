@@ -1,15 +1,162 @@
 
 
-Thu Nov 27 2025 10:50:00:828 GMT+0545 (+0545) -- Setting output as verbose
-Thu Nov 27 2025 10:50:01:468 GMT+0545 (+0545) -- [WARNING] Skipping initialisation of configuration console because: port already in use by another Binary
-Thu Nov 27 2025 10:50:03:303 GMT+0545 (+0545) -- [SUCCESS] You can now access your local server(s) in our remote browser
+Sun Dec 07 2025 16:26:58:406 GMT+0545 (+0545) -- Setting output as verbose
+Sun Dec 07 2025 16:26:58:952 GMT+0545 (+0545) -- [WARNING] Skipping initialisation of configuration console because: port already in use by another Binary
+Sun Dec 07 2025 16:27:00:418 GMT+0545 (+0545) -- [SUCCESS] You can now access your local server(s) in our remote browser
 
-Thu Nov 27 2025 10:50:04:408 GMT+0545 (+0545) -- Connecting to BrowserStack using WebSocket protocol...
-Thu Nov 27 2025 10:50:04:414 GMT+0545 (+0545) -- Platform supports WebSocket connections.
+Sun Dec 07 2025 16:27:01:344 GMT+0545 (+0545) -- Connecting to BrowserStack using WebSocket protocol...
+Sun Dec 07 2025 16:27:01:344 GMT+0545 (+0545) -- Platform supports WebSocket connections.
 
-Thu Nov 27 2025 10:50:04:519 GMT+0545 (+0545) -- Press Ctrl-C to exit
+Sun Dec 07 2025 16:27:01:446 GMT+0545 (+0545) -- Press Ctrl-C to exit
 
 
-Thu Nov 27 2025 10:50:10:407 GMT+0545 (+0545) -- local.browserstack.com:443 socket connected.
-Thu Nov 27 2025 10:50:21:419 GMT+0545 (+0545) -- api.smoot.apple.com:443 socket connected.
-Thu Nov 27 2025 10:50:21:843 GMT+0545 (+0545) -- bag.itunes.apple.com:443 socket connected.
+Sun Dec 07 2025 16:27:07:67 GMT+0545 (+0545) -- local.browserstack.com:443 socket connected.
+Sun Dec 07 2025 16:27:17:984 GMT+0545 (+0545) -- api.smoot.apple.com:443 socket connected.
+Sun Dec 07 2025 16:27:18:97 GMT+0545 (+0545) -- ocsp.digicert.com:80 socket connected.
+Sun Dec 07 2025 16:27:18:291 GMT+0545 (+0545) -- bag.itunes.apple.com:443 socket connected.
+Sun Dec 07 2025 16:27:18:349 GMT+0545 (+0545) -- ocsp.digicert.com:80 socket connected.
+Sun Dec 07 2025 16:27:19:76 GMT+0545 (+0545) -- ocsp.digicert.com:80 socket connected.
+Sun Dec 07 2025 16:27:22:511 GMT+0545 (+0545) -- 127.0.0.1:3000 socket connected.
+Sun Dec 07 2025 16:27:23:246 GMT+0545 (+0545) -- 127.0.0.1:3000 socket connected.
+Sun Dec 07 2025 16:27:23:247 GMT+0545 (+0545) -- 127.0.0.1:3000 socket connected.
+Sun Dec 07 2025 16:27:23:247 GMT+0545 (+0545) -- 127.0.0.1:3000 socket connected.
+Sun Dec 07 2025 16:27:23:252 GMT+0545 (+0545) -- 127.0.0.1:3000 socket connected.
+Sun Dec 07 2025 16:27:23:954 GMT+0545 (+0545) -- 127.0.0.1:3000 socket connected.
+Sun Dec 07 2025 16:27:25:4 GMT+0545 (+0545) -- 127.0.0.1:3000 socket connected.
+Sun Dec 07 2025 16:32:58:885 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:32:58:890 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:32:58:934 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:32:58:935 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:32:58:936 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:32:58:936 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:32:58:947 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:32:58:948 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:32:58:957 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:32:58:958 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:32:58:960 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:32:58:960 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:02:9 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:02:9 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:02:57 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:02:58 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:02:58 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:02:58 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:02:59 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:02:60 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:02:60 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:02:61 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:02:63 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:02:63 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:05:2 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:05:3 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:05:46 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:05:47 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:05:48 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:05:48 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:05:52 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:05:53 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:05:69 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:05:70 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:05:70 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:05:70 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:07:999 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:08:0 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:08:45 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:08:46 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:08:47 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:08:51 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:08:55 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:08:56 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:08:69 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:08:70 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:08:71 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:08:72 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:11:4 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:11:5 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:11:67 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:11:68 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:11:68 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:11:69 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:11:76 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:11:76 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:11:77 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:11:77 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:11:77 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:11:77 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:14:5 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:14:6 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:14:46 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:14:47 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:14:47 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:14:48 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:14:61 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:14:62 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:14:74 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:14:75 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:14:75 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:33:14:91 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:50:07:787 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:50:07:788 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:50:07:806 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:50:07:807 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:50:07:807 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:50:07:808 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:50:07:818 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:50:07:819 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:50:07:836 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:50:07:836 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:50:07:838 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:50:07:838 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:50:10:787 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:50:10:788 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:50:10:807 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:50:10:807 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:50:10:809 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:50:10:809 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:50:10:822 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:50:10:823 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:50:10:836 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:50:10:837 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:50:10:837 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 16:50:10:838 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 17:06:17:547 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 17:06:17:548 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 17:06:17:559 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 17:06:17:562 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 17:06:17:562 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 17:06:17:563 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 17:06:17:573 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 17:06:17:574 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 17:06:17:594 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 17:06:17:595 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 17:06:17:595 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 17:06:17:596 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 17:06:20:532 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 17:06:20:532 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 17:06:20:562 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 17:06:20:564 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 17:06:20:566 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 17:06:20:568 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 17:06:20:576 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 17:06:20:577 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 17:06:20:609 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 17:06:20:617 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 17:06:20:617 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 17:06:20:617 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 17:21:20:274 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 17:21:20:277 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 17:21:20:296 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 17:21:20:297 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 17:21:20:297 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 17:21:20:297 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 17:21:20:310 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 17:21:20:311 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 17:21:20:333 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 17:21:20:334 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 17:21:20:334 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 17:21:20:335 GMT+0545 (+0545) -- Error in establishing connection.
+Sun Dec 07 2025 17:21:23:277 GMT+0545 (+0545) --  *** Error: The connection to BrowserStack failed 10 attempts. Please try again.
+
+You need to allow outbound traffic for *.browserstack.com in your corporate firewall to setup local testing.
+For any other problem please contact support@browserstack.com.
+
