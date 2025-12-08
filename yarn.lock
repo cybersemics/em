@@ -9687,7 +9687,7 @@ __metadata:
     workbox-expiration: "npm:^7.4.0"
     workbox-precaching: "npm:^7.3.0"
     workbox-routing: "npm:^7.3.0"
-    workbox-strategies: "npm:^7.3.0"
+    workbox-strategies: "npm:^7.4.0"
     workbox-window: "npm:^7.4.0"
     xhtml-purifier: "npm:^0.4.1"
     y-indexeddb: "⚠️ OVERRIDDEN BY 'resolutions' - Source: https://github.com/raineorshine/y-indexeddb#y-indexeddb-multiplex | Tarball: https://codeload.github.com/raineorshine/y-indexeddb/tar.gz/60b960009085b1a988b5064ee35703229231531f | Configured in: package.json#resolutions"
@@ -21905,12 +21905,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"workbox-strategies@npm:7.3.0, workbox-strategies@npm:^7.3.0":
+"workbox-strategies@npm:7.3.0":
   version: 7.3.0
   resolution: "workbox-strategies@npm:7.3.0"
   dependencies:
     workbox-core: "npm:7.3.0"
   checksum: 10c0/50f3c28b46b54885a9461ad6559010d9abb2a7e35e0128d05c268f3ea0a96b1a747934758121d0e821f7af63946d9db8f4d2d7e0146f12555fb05c768e6b82bb
+  languageName: node
+  linkType: hard
+
+"workbox-strategies@npm:^7.4.0":
+  version: 7.4.0
+  resolution: "workbox-strategies@npm:7.4.0"
+  dependencies:
+    workbox-core: "npm:7.4.0"
+  checksum: 10c0/c25771af342ce10aee006d749e7adba4e77e7379b39cd96dbd05557f0f4968ff1ac88001022fb588ce2c105e5dfded321ce9f14344291c19ab753db37e6611f8
   languageName: node
   linkType: hard
 
