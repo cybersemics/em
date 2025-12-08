@@ -10,7 +10,6 @@ let virtualKeyboardHeightPortrait = isTouch ? window.innerHeight / 2.275 : 0
 let virtualKeyboardHeightLandscape = isTouch ? window.innerWidth / 1.7 : 0
 
 export interface ViewportState {
-  contentWidth: number
   innerWidth: number
   innerHeight: number
   layoutTreeTop: number
@@ -27,8 +26,6 @@ const viewportStore = reactMinistore<ViewportState>({
   /** Height of the virtual keyboard regardless of whether it is open or closed. Defaults to estimated height of portrait or landscape mode when window.visualViewport.width is not valid (see below; questionable). */
   virtualKeyboardHeight:
     window.innerHeight > window.innerWidth ? virtualKeyboardHeightPortrait : virtualKeyboardHeightLandscape,
-  /** Width of the content element. */
-  contentWidth: 0,
   /** The y offset of the layout tree element. */
   layoutTreeTop: 0,
 })

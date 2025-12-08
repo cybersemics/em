@@ -406,6 +406,10 @@ export default defineConfig({
           sm: { value: '80%' },
           md: { value: '90%' },
         },
+        /** The width for drop hover bars during drag-and-drop operations. */
+        sizes: {
+          dropHover: { value: '50vw' },
+        },
         spacing: {
           modalPadding: { value: '8%' },
           safeAreaTop: { value: 'env(safe-area-inset-top)' },
