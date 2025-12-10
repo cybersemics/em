@@ -141,6 +141,7 @@ const initialState = (created: Timestamp = timestamp()) => {
     schemaVersion: SCHEMA_LATEST,
     search: null,
     showCommandPalette: false,
+    showGestureMenu: false,
     remoteSearch: false,
     searchContexts: null,
     showHiddenThoughts: false,
