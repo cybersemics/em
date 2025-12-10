@@ -25,7 +25,9 @@ const usePositionedAnnotation = (
   const fontSize = useSelector(state => state.fontSize)
   const [top, setTop] = useState<string | undefined>(undefined)
   const [left, setLeft] = useState<string | undefined>(undefined)
+  const [right, setRight] = useState<string | undefined>(undefined)
   const [opacity, setOpacity] = useState<string | undefined>(undefined)
+  const [transform, setTransform] = useState<string | undefined>(undefined)
 
   const positionAnnotation = useCallback(() => {
     if (!editableRef.current) return
@@ -38,6 +40,7 @@ const usePositionedAnnotation = (
 
     let right = offset.width - (isTableCol1 ? 0 : fontSize) - (length ? fontSize / 3 : 0)
     let top = 0
+    let isAtEdge = false
 
     if (length) {
       // Select the last character
@@ -46,17 +49,26 @@ const usePositionedAnnotation = (
 
       // Get bounding box
       const rect = range.getBoundingClientRect()
-      const isAtEdge = rect.right - offset.left > offset.width
+      isAtEdge = rect.right - offset.left > offset.width
 
       top = rect.top - offset.top
       // offset annotation container to account for -12px left margin in ThoughtPositioner #3352
       if (!isAtEdge) right = rect.right - offset.left + (isTableCol1 && !isEditing ? 12 : 0)
     }
 
-    // rect.right gives you the x position (relative to viewport)
-    setLeft(`${right}px`)
     setTop(`${top}px`)
-    setOpacity('1')
+
+    if (isTableCol1) {
+      setLeft(undefined)
+      setRight(isAtEdge ? '1.7em' : '1.333em')
+      setTransform('translateX(100%)')
+    } else {
+      // rect.right gives you the x position (relative to viewport)
+      setLeft(`${right}px`)
+      setRight(undefined)
+      setOpacity('1')
+      setTransform(undefined)
+    }
   }, [editableRef, fontSize, isEditing, isTableCol1])
 
   // useSelector would be a cleaner way to get the editableRef's new position
@@ -87,7 +99,7 @@ const usePositionedAnnotation = (
     return () => window.removeEventListener('resize', positionAnnotation)
   }, [positionAnnotation])
 
-  const styles = useMemo(() => ({ top, left, opacity }), [top, left, opacity])
+  const styles = useMemo(() => ({ top, left, right, opacity, transform }), [top, left, right, opacity, transform])
 
   return styles
 }
