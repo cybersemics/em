@@ -1,6 +1,5 @@
 import { FC, PropsWithChildren } from 'react'
 import { css } from '../../styled-system/css'
-import { MIN_CONTENT_WIDTH_EM } from '../constants'
 import isAttribute from '../util/isAttribute'
 
 /**
@@ -73,7 +72,6 @@ const ThoughtAnnotationWrapper: FC<
         }
         style={{
           ...styleAnnotation,
-          minWidth: `${MIN_CONTENT_WIDTH_EM - 0.333 - 0.333}em`, // min width of thought (3em) - 0.333em left padding - 0.333em right padding
         }}
       >
         {children}
