@@ -36,7 +36,7 @@ const usePositionedAnnotation = (
     const length = textNode && textNode.nodeType === Node.TEXT_NODE && textNode.textContent?.length
     const offset = editableRef.current.getBoundingClientRect()
 
-    let right = offset.width - fontSize - (length ? fontSize / 3 : 0)
+    let right = offset.width - (isTableCol1 ? 0 : fontSize) - (length ? fontSize / 3 : 0)
     let top = 0
 
     if (length) {
