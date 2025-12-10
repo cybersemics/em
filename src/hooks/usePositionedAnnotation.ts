@@ -60,6 +60,7 @@ const usePositionedAnnotation = (
 
     if (isTableCol1) {
       setLeft(undefined)
+      // For table col 1, isAtEdge is actually a proxy for ellipsizedUrl. urlLinkStyle has an extra 0.333em of padding on it.
       setRight(isAtEdge ? '1.7em' : '1.333em')
       setTransform('translateX(100%)')
     } else {
