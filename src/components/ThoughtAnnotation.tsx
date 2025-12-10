@@ -162,7 +162,7 @@ const ThoughtAnnotation = React.memo(
                 n={numContexts}
                 style={style}
                 cssRaw={cssRaw}
-                multiline={multiline}
+                type={url || email ? 'supplemental' : multiline ? 'multiline' : 'singleline'}
                 thoughtId={head(simplePath)}
               />
             ) : null
