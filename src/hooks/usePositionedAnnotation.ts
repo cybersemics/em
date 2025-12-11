@@ -77,10 +77,17 @@ const usePositionedAnnotation = (
   useEffect(() => {
     if (contextAnimation && descendant && !isEditing) {
       clearTimeout(timeoutRef.current)
+      timeoutRef.current = 0
       setOpacity('0')
     }
+
+    if (timeoutRef.current) return
+
     timeoutRef.current = setTimeout(
-      positionAnnotation,
+      () => {
+        positionAnnotation()
+        timeoutRef.current = 0
+      },
       contextAnimation ? durations.get(contextAnimation) : 0,
     ) as unknown as number
   }, [
