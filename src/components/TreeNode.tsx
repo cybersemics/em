@@ -7,7 +7,7 @@ import TreeThoughtPositioned from '../@types/TreeThoughtPositioned'
 import testFlags from '../e2e/testFlags'
 import useFauxCaretNodeProvider from '../hooks/useFauxCaretCssVars'
 import useMoveThoughtAnimation from '../hooks/useMoveThoughtAnimation'
-import getContextAnimationName from '../util/getContextAnimationName'
+import getContextAnimationName from '../selectors/getContextAnimationName'
 import DropCliff from './DropCliff'
 import FadeTransition from './FadeTransition'
 import FauxCaret from './FauxCaret'
@@ -86,7 +86,7 @@ const TreeNode = ({
   })
 
   // /** The transition animation for descendants of the context view after toggleContextView. Returns null otherwise. */
-  const contextAnimation = useSelector(getContextAnimationName(path, transitionGroupsProps.in))
+  const contextAnimation = useSelector(state => getContextAnimationName(state, path, transitionGroupsProps.in))
 
   const moveDivStyle = useMoveThoughtAnimation(index, thoughtId)
 

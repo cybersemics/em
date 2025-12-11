@@ -1,13 +1,13 @@
 import Path from '../@types/Path'
 import State from '../@types/State'
-import isContextViewActive from '../selectors/isContextViewActive'
-import isDescendantPath from './isDescendantPath'
+import isDescendantPath from '../util/isDescendantPath'
+import isContextViewActive from './isContextViewActive'
 
 /** Return an animation name for a thought that is appearing or disappearing as a result of toggling a context view.
  * This is used to display the animation in TreeNode, and also to determine whether thought annotations should delay
  * their position calculation until after the animation has completed (#3352).
  */
-const getContextAnimationName = (path: Path, isAppearing?: boolean) => (state: State) => {
+const getContextAnimationName = (state: State, path: Path, isAppearing?: boolean) => {
   const isLastActionContextView = state.undoPatches[state.undoPatches.length - 1]?.some(
     patch => patch.actions[0] === 'toggleContextView',
   )

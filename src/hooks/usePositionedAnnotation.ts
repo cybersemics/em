@@ -1,9 +1,9 @@
 import { RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import Path from '../@types/Path'
+import getContextAnimationName from '../selectors/getContextAnimationName'
 import isContextViewActive from '../selectors/isContextViewActive'
 import durations from '../util/durations'
-import getContextAnimationName from '../util/getContextAnimationName'
 import isDescendantPath from '../util/isDescendantPath'
 import parentOf from '../util/parentOf'
 
@@ -18,7 +18,7 @@ const usePositionedAnnotation = (
   numContexts: number,
   path: Path,
 ) => {
-  const contextAnimation = useSelector(getContextAnimationName(path))
+  const contextAnimation = useSelector(state => getContextAnimationName(state, path))
   const descendant = useSelector(state => isDescendantPath(path, state.cursor))
   const isInContextView = useSelector(state => isContextViewActive(state, parentOf(path)))
   const timeoutRef = useRef(0)
