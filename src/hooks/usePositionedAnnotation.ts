@@ -81,6 +81,7 @@ const usePositionedAnnotation = (
       setOpacity('0')
     }
 
+    // Don't interrupt an in-flight context animation
     if (timeoutRef.current) return
 
     timeoutRef.current = setTimeout(
