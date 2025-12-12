@@ -12,7 +12,7 @@ import Index from './@types/IndexType'
 import Key from './@types/Key'
 import State from './@types/State'
 import { alertActionCreator as alert } from './actions/alert'
-import { commandPaletteActionCreator as commandPalette } from './actions/commandPalette'
+import { gestureMenuActionCreator as gestureMenu } from './actions/gestureMenu'
 import { showLatestCommandsActionCreator as showLatestCommands } from './actions/showLatestCommands'
 import { suppressExpansionActionCreator as suppressExpansion } from './actions/suppressExpansion'
 import { isMac } from './browser'
@@ -162,7 +162,7 @@ const index = (): {
   }
 }
 
-let commandPaletteGesture: number | undefined
+let gestureMenuPalette: number | undefined
 
 const { commandKeyIndex, commandIdIndex, commandGestureIndex } = index()
 
@@ -206,14 +206,14 @@ export const inputHandlers = (store: Store<State, any>) => ({
 
     // command palette
     // alert after a delay of COMMAND_PALETTE_TIMEOUT
-    clearTimeout(commandPaletteGesture)
-    commandPaletteGesture = window.setTimeout(
+    clearTimeout(gestureMenuPalette)
+    gestureMenuPalette = window.setTimeout(
       () => {
         store.dispatch((dispatch, getState) => {
           // do not show "Cancel gesture" if already being shown by basic gesture hint
           const state = getState()
-          if (state.showCommandPalette) return
-          dispatch(commandPalette())
+          if (state.showGestureMenu) return
+          dispatch(gestureMenu())
         })
       },
       // if the hint is already being shown, do not wait to change the value
@@ -254,8 +254,8 @@ export const inputHandlers = (store: Store<State, any>) => ({
     // if no command was found, execute the cancel command
 
     // clear gesture hint
-    clearTimeout(commandPaletteGesture)
-    commandPaletteGesture = undefined // clear the timer to track when it is running for handleGestureSegment
+    clearTimeout(gestureMenuPalette)
+    gestureMenuPalette = undefined // clear the timer to track when it is running for handleGestureSegment
 
     // In training mode, show alert for any valid command (except forward/back)
     // In experience mode, clear any existing gesture hint
@@ -265,8 +265,8 @@ export const inputHandlers = (store: Store<State, any>) => ({
         const alertType = state.alert?.alertType
         const experienceMode = getUserSetting(state, Settings.experienceMode)
 
-        if (state.showCommandPalette) {
-          dispatch(commandPalette())
+        if (state.showGestureMenu) {
+          dispatch(gestureMenu())
         }
 
         // Show alert for valid commands in training mode (except back/forward)
@@ -295,13 +295,13 @@ export const inputHandlers = (store: Store<State, any>) => ({
 
   /** Dismiss gesture hint that is shown by alert. */
   handleGestureCancel: () => {
-    clearTimeout(commandPaletteGesture)
+    clearTimeout(gestureMenuPalette)
     store.dispatch((dispatch, getState) => {
       const state = getState()
-      if (state.showCommandPalette) {
-        dispatch(commandPalette())
+      if (state.showGestureMenu) {
+        dispatch(gestureMenu())
       }
-      if (state.alert?.alertType === AlertType.GestureHint || state.showCommandPalette) {
+      if (state.alert?.alertType === AlertType.GestureHint || state.showGestureMenu) {
         dispatch(alert(null))
       }
     })

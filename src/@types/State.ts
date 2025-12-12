@@ -144,6 +144,7 @@ interface State {
   showColorPicker?: boolean
   showLetterCase?: boolean
   showCommandPalette: boolean
+  showGestureMenu: boolean
   showHiddenThoughts: boolean
   showSortPicker?: boolean
   showCommandMenu: boolean

@@ -7,6 +7,7 @@ import State from '../@types/State'
 import { alertActionCreator as alert } from '../actions/alert'
 import { commandPaletteActionCreator as commandPalette } from '../actions/commandPalette'
 import { errorActionCreator as error } from '../actions/error'
+import { gestureMenuActionCreator as gestureMenu } from '../actions/gestureMenu'
 import { longPressActionCreator as longPress } from '../actions/longPress'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { isAndroidWebView, isIOS, isSafari, isTouch } from '../browser'
@@ -303,6 +304,9 @@ const initEvents = (store: Store<State, any>) => {
       }
       if (state.showCommandPalette) {
         store.dispatch(commandPalette())
+      }
+      if (state.showGestureMenu) {
+        store.dispatch(gestureMenu())
       }
       // we could also persist unsaved data here
     }

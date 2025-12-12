@@ -4,16 +4,12 @@ import { TransitionGroup } from 'react-transition-group'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import Command from '../@types/Command'
-import CommandId from '../@types/CommandId'
 import Key from '../@types/Key'
 import { commandPaletteActionCreator as commandPalette } from '../actions/commandPalette'
-import { isTouch } from '../browser'
-import { gestureString, hashCommand, hashKeyDown } from '../commands'
+import { hashCommand, hashKeyDown } from '../commands'
 import commandPaletteCommand from '../commands/commandPalette'
-import openGestureCheatsheetCommand from '../commands/openGestureCheatsheet'
 import * as selection from '../device/selection'
 import useFilteredCommands from '../hooks/useFilteredCommands'
-import gestureStore from '../stores/gesture'
 import storageModel from '../stores/storageModel'
 import { executeCommandWithMulticursor } from '../util/executeCommand'
 import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
@@ -113,17 +109,18 @@ const CommandSearch: FC<{
   )
 }
 
-/** Render a command palette with keyboard or gesture autocomplete. */
-const CommandPalette: FC<{
-  commands: Command[]
-  recentCommands: CommandId[]
-  setRecentCommands: (commandIds: CommandId[]) => void
-  search: string
-  setSearch: (search: string) => void
-}> = ({ commands, recentCommands, setRecentCommands, search, setSearch }) => {
+/** Render a command palette with keyboard. */
+const CommandPalette: FC = ({}) => {
+  // Commands need to be calculated even if the command palette is not shown because useFilteredCommands is responsible for updating gestureStore's possibleCommands which is needed to prevent haptics when there are no more possible commands. Otherwise, either haptics would continue to fire when there are no more possible commands, or would falsely fire when the current sequence is not a valid gesture but there are possible commands with additional swipes.
+  const [recentCommands, setRecentCommands] = useState(storageModel.get('recentCommands'))
+  const [search, setSearch] = useState('')
+  const commands = useFilteredCommands(search, {
+    recentCommands,
+    sortActiveCommandsFirst: true,
+  })
+
   const store = useStore()
   const dispatch = useDispatch()
-  const gestureInProgress = gestureStore.useSelector(state => state.gesture)
   const fontSize = useSelector(state => state.fontSize)
   const unmounted = useRef(false)
 
@@ -224,15 +221,14 @@ const CommandPalette: FC<{
         flexDirection: 'column',
         maxHeight: '100%',
         maxWidth: '100%',
-        height: isTouch ? undefined : '500px',
+        height: '500px',
       })}
     >
       <div
         className={css({
-          marginBottom: isTouch ? 0 : fontSize,
           textAlign: 'left',
           border: '1px solid {colors.gray15}',
-          borderRadius: isTouch ? undefined : '12px',
+          borderRadius: '12px',
           backgroundColor: 'gray09',
           maxWidth: '100%',
           maxHeight: '100%',
@@ -247,76 +243,56 @@ const CommandPalette: FC<{
          * See `onClick` on parent.
          * */
         onClick={e => e.stopPropagation()}
-        style={{ fontSize }}
+        style={{ fontSize, marginBottom: fontSize }}
       >
-        {!isTouch || (gestureInProgress && commands.length > 0) ? (
-          <>
-            {!isTouch ? (
-              <h2
-                className={css({
-                  margin: 0,
-                  borderBottom: 'solid 1px {colors.gray15}',
-                })}
-              >
-                <CommandSearch
-                  onExecute={onExecuteSelected}
-                  onInput={setSearch}
-                  onSelectUp={onSelectUp}
-                  onSelectDown={onSelectDown}
-                  onSelectTop={onSelectTop}
-                  onSelectBottom={onSelectBottom}
-                />
-              </h2>
-            ) : null}
+        <>
+          <h2
+            className={css({
+              margin: 0,
+              borderBottom: 'solid 1px {colors.gray15}',
+            })}
+          >
+            <CommandSearch
+              onExecute={onExecuteSelected}
+              onInput={setSearch}
+              onSelectUp={onSelectUp}
+              onSelectDown={onSelectDown}
+              onSelectTop={onSelectTop}
+              onSelectBottom={onSelectBottom}
+            />
+          </h2>
 
-            <div
-              className={css({
-                overflow: isTouch ? undefined : 'auto',
-                padding: '0.85em 0.66em',
-              })}
-            >
-              {commands.length > 0 ? (
-                <>
-                  {(() => {
-                    const hasMatchingCommand = commands.some(
-                      cmd => (gestureInProgress as string) === gestureString(cmd),
+          <div
+            className={css({
+              overflow: 'auto',
+              padding: '0.85em 0.66em',
+            })}
+          >
+            {commands.length > 0 ? (
+              <>
+                {(() => {
+                  return commands.map((command, index) => {
+                    return (
+                      <CommandItem
+                        search={search}
+                        key={command.id}
+                        onClick={onExecute}
+                        onHover={onHover}
+                        selected={command === selectedCommand.command}
+                        command={command}
+                        shouldScrollSelectedIntoView={selectedCommand.source === 'keyboard'}
+                        isFirstCommand={index === 0}
+                        isLastCommand={index === commands.length - 1}
+                      />
                     )
-
-                    return commands.map((command, index) => {
-                      // Check if the current gesture sequence ends with help gesture
-                      const cheatsheetInProgress = gestureInProgress
-                        ?.toString()
-                        .endsWith(gestureString(openGestureCheatsheetCommand))
-                      const isCheatsheetMatch = command.id === 'openGestureCheatsheet' && cheatsheetInProgress
-                      const isCancelMatch = command.id === 'cancel' && !hasMatchingCommand && !cheatsheetInProgress
-
-                      return (
-                        <CommandItem
-                          search={search}
-                          gestureInProgress={gestureInProgress as string}
-                          key={command.id}
-                          onClick={onExecute}
-                          onHover={onHover}
-                          selected={
-                            !isTouch
-                              ? command === selectedCommand.command
-                              : isCheatsheetMatch || gestureInProgress === gestureString(command) || isCancelMatch
-                          }
-                          command={command}
-                          shouldScrollSelectedIntoView={selectedCommand.source === 'keyboard'}
-                          isFirstCommand={index === 0}
-                          isLastCommand={index === commands.length - 1}
-                        />
-                      )
-                    })
-                  })()}
-                </>
-              ) : (
-                <span className={css({ marginLeft: '1em' })}>No matching commands</span>
-              )}
-            </div>
-          </>
-        ) : null}
+                  })
+                })()}
+              </>
+            ) : (
+              <span className={css({ marginLeft: '1em' })}>No matching commands</span>
+            )}
+          </div>
+        </>
       </div>
     </div>
   )
@@ -335,21 +311,6 @@ const CommandPaletteWithTransition: FC = () => {
   }, [dispatch])
 
   const showCommandPalette = useSelector(state => state.showCommandPalette)
-
-  // Commands need to be calculated even if the command palette is not shown because useFilteredCommands is responsible for updating gestureStore's possibleCommands which is needed to prevent haptics when there are no more possible commands. Otherwise, either haptics would continue to fire when there are no more possible commands, or would falsely fire when the current sequence is not a valid gesture but there are possible commands with additional swipes.
-  const [recentCommands, setRecentCommands] = useState(storageModel.get('recentCommands'))
-  const [search, setSearch] = useState('')
-  const commands = useFilteredCommands(search, {
-    recentCommands,
-    sortActiveCommandsFirst: true,
-  })
-
-  // clear search when command palette is closed
-  useEffect(() => {
-    if (!showCommandPalette) {
-      setSearch('')
-    }
-  }, [showCommandPalette])
 
   // if dismissed, set timeout to 0 to remove alert component immediately. Otherwise it will block toolbar interactions until the timeout completes.
   return (
@@ -373,19 +334,13 @@ const CommandPaletteWithTransition: FC = () => {
                 boxSizing: 'border-box',
                 display: 'flex',
                 flexDirection: 'column',
-                justifyContent: isTouch ? 'start' : 'center',
+                justifyContent: 'center',
                 alignItems: 'center',
-                ...(!isTouch && { padding: '2em' }),
+                padding: '2em',
               })}
-              onClick={!isTouch ? onClose : undefined}
+              onClick={onClose}
             >
-              <CommandPalette
-                search={search}
-                setSearch={setSearch}
-                commands={commands}
-                recentCommands={recentCommands}
-                setRecentCommands={setRecentCommands}
-              />
+              <CommandPalette />
             </div>
           </PopupBase>
         </FadeTransition>
