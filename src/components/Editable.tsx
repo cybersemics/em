@@ -526,7 +526,7 @@ const Editable = ({
   )
 
   /**
-   * Safari does glyph-only hit testing, so clicking empty space has no caret target.
+   * Safari does glyph-only hit testing, so tapping/clicking on empty space has no caret target.
    * Hence, get all text nodes that can receive a caret.
    */
   const getTextNodes = useCallback((root: HTMLElement): Text[] => {
@@ -591,7 +591,7 @@ const Editable = ({
       }, [])
   }, [])
 
-  /** Binary search for the offset of the click within the given text node. */
+  /** Binary search for the offset of the tap/click within the given text node. */
   const binarySearchOffset = useCallback((node: Text, clientX: number, lo: number, hi: number): number => {
     while (lo < hi) {
       const mid = (lo + hi) >> 1
@@ -667,8 +667,8 @@ const Editable = ({
   )
 
   /**
-   * Detects if a click is in a void area and returns caret position info.
-   * Returns null if click is on a valid character, or caret position info if it's a void area click.
+   * Detects if a tap is in a void area and returns caret position info.
+   * Returns null if tap is on a valid character, or caret position info if it's a void area tap.
    */
   const detectVoidAreaClick = useCallback(
     (
@@ -684,7 +684,7 @@ const Editable = ({
         return null
       }
 
-      // Get the browser range for the click position
+      // Get the browser range for the tap position
       let range: Range | null = null
 
       if (doc.caretRangeFromPoint) {
@@ -698,9 +698,9 @@ const Editable = ({
         }
       }
 
-      // Ensure click is within our editable element
+      // Ensure tap is within our editable element
       if (!range || !editable.contains(range.startContainer)) {
-        // Click is outside editable - treat as void area
+        // Tap is outside editable so treat as void area
         const textNodes = getTextNodes(editable)
         if (textNodes.length === 0) return null
 
@@ -724,32 +724,32 @@ const Editable = ({
         return charRange.getBoundingClientRect()
       }
 
-      /** Check if click is within a character's bounding box. */
+      /** Check if tap is within a character's bounding box. */
       const isInsideCharRect = (rect: DOMRect | null): boolean => {
         if (!rect) return false
         return clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom
       }
 
-      /** Check if click is vertically contained within the character's bounding box. */
+      /** Check if tap is vertically contained within the character's bounding box. */
       const isVerticallyContained = (rect: DOMRect | null): boolean => {
         if (!rect) return false
         return clientY >= rect.top && clientY <= rect.bottom
       }
 
-      // Check by clicking on a character at the current offset and the one before it.
+      // Check by tapping on a character at the current offset and the one before it.
       const isClickOnCharacter = [offset, offset - 1]
         .filter(o => o >= 0 && o < nodeTextLength)
         .some(checkOffset => isInsideCharRect(getCharRect(checkOffset)))
 
-      // Allow clicks horizontally beyond text if vertically aligned with text line
+      // Allow taps horizontally beyond text if vertically aligned with text line
       const isValidEdgeClick =
         (offset === 0 || offset === nodeTextLength) &&
         isVerticallyContained(getCharRect(offset === 0 ? 0 : nodeTextLength - 1))
 
-      // Valid click on character - not a void area
+      // Valid tap on character - not a void area
       if (isClickOnCharacter || isValidEdgeClick) return null
 
-      // Invalid click (padding/void area), calculate the caret position
+      // Invalid tap (padding/void area), calculate the caret position
       const textNodes = getTextNodes(editable)
       if (textNodes.length === 0) return null
 
@@ -764,10 +764,10 @@ const Editable = ({
   )
 
   /**
-   * Handles void area clicks by preventing default and setting the caret.
-   * Returns true if we handled the click (void area), false if browser should handle it (valid click on character).
+   * Handles void area taps by preventing default and setting the caret.
+   * Returns true if we handled the tap (void area), false if browser should handle it (valid tap on character).
    */
-  const handleVoidAreaClick = useCallback(
+  const handleVoidAreaTap = useCallback(
     (clientX: number, clientY: number, preventDefault: () => void): boolean => {
       const editable = contentRef.current
       if (!editable) return false
@@ -775,7 +775,7 @@ const Editable = ({
       const voidAreaInfo = detectVoidAreaClick(editable, clientX, clientY)
       if (!voidAreaInfo) return false
 
-      // Void area click detected - perform side effects
+      // Void area tap detected - perform side effects
       preventDefault()
 
       // Update Redux cursor state
@@ -814,10 +814,8 @@ const Editable = ({
           bottomMargin: fontSize * 2,
         })
 
-        // // Handle void area clicks with Safari-safe caret positioning
-        const handledVoidArea = handleVoidAreaClick(e.clientX, e.clientY, () => e.preventDefault())
-        // // If not a void area click, allow browser's default selection
-        if (!handledVoidArea) {
+        // If not a void area tap, allow browser's default selection
+        if (!handleVoidAreaTap(e.clientX, e.clientY, () => e.preventDefault())) {
           allowDefaultSelection()
         }
       }
@@ -829,7 +827,7 @@ const Editable = ({
         e.preventDefault()
       }
     },
-    [contentRef, editingOrOnCursor, fontSize, allowDefaultSelection, hasMulticursor, handleVoidAreaClick],
+    [contentRef, editingOrOnCursor, fontSize, allowDefaultSelection, hasMulticursor, handleVoidAreaTap],
   )
 
   // Manually attach touchstart listener with { passive: false } to allow preventDefault
@@ -840,12 +838,8 @@ const Editable = ({
     /** Handle touch events to prevent initial cursor jump (Safari-safe). */
     const handleTouchStart = (e: TouchEvent) => {
       if (editingOrOnCursor && !hasMulticursor && e.touches.length > 0) {
-        // Handle void area clicks with Safari-safe caret positioning
-        const handledVoidArea = handleVoidAreaClick(e.touches[0].clientX, e.touches[0].clientY, () =>
-          e.preventDefault(),
-        )
-        // If not a void area click, allow browser's default selection
-        if (!handledVoidArea) {
+        // If not a void area tap, allow browser's default selection
+        if (!handleVoidAreaTap(e.touches[0].clientX, e.touches[0].clientY, () => e.preventDefault())) {
           allowDefaultSelection()
         }
       }
@@ -857,7 +851,7 @@ const Editable = ({
     return () => {
       editable.removeEventListener('touchstart', handleTouchStart)
     }
-  }, [contentRef, editingOrOnCursor, hasMulticursor, allowDefaultSelection, handleVoidAreaClick])
+  }, [contentRef, editingOrOnCursor, hasMulticursor, allowDefaultSelection, handleVoidAreaTap])
 
   /** Sets the cursor on the thought on touchend or click. Handles hidden elements, drags, and editing mode. */
   const onTap = useCallback(
