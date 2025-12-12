@@ -7,6 +7,18 @@ import durations from '../util/durations'
 import isDescendantPath from '../util/isDescendantPath'
 import parentOf from '../util/parentOf'
 
+/** Iterates through a DOM node to find the text node that comprises the final portion of the thought. */
+const getFinalTextNode = (element: ChildNode | null) => {
+  let child = element
+
+  do {
+    if (child === null) return null
+    child = child.lastChild
+  } while (child?.nodeType !== Node.TEXT_NODE)
+
+  return child
+}
+
 /** Create a selection range at the end of an editable and measure its position to determine where to place a thought annotation (context superscript or url/email link).
  * If contextAnimation returns an animation name, that means that the thought is in the process of transitioning in or out of a context view.
  * In that case, hide the annotation until the animation is complete, and position it after the thought has reached its final position.
@@ -33,7 +45,7 @@ const usePositionedAnnotation = (
     if (!editableRef.current) return
 
     const range = document.createRange()
-    const textNode = editableRef.current.lastChild
+    const textNode = getFinalTextNode(editableRef.current)
 
     const length = textNode && textNode.nodeType === Node.TEXT_NODE && textNode.textContent?.length
     const offset = editableRef.current.getBoundingClientRect()
