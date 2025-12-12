@@ -1,5 +1,5 @@
 import moize from 'moize'
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { RefObject, useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { SystemStyleObject } from '../../styled-system/types'
@@ -10,10 +10,10 @@ import State from '../@types/State'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { isSafari, isTouch } from '../browser'
 import { REGEX_PUNCTUATIONS, REGEX_TAGS, Settings } from '../constants'
+import usePositionedAnnotation from '../hooks/usePositionedAnnotation'
 import attributeEquals from '../selectors/attributeEquals'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
-import findDescendant from '../selectors/findDescendant'
-import { anyChild, filterAllChildren } from '../selectors/getChildren'
+import { filterAllChildren } from '../selectors/getChildren'
 import getContexts from '../selectors/getContexts'
 import getThoughtById from '../selectors/getThoughtById'
 import getUserSetting from '../selectors/getUserSetting'
@@ -40,7 +40,6 @@ const urlLinkStyle = css({
   /* set height of this a tag to 1em to make sure the a tag doesn't affect .thought annotation's line height */
   height: '1em',
   display: 'inline-block',
-  overflow: 'hidden',
   position: 'relative',
   zIndex: 'thoughtAnnotationLink',
   marginLeft: 3,
@@ -95,11 +94,13 @@ EmailIconLink.displayName = 'EmailIconLink'
 /** A non-interactive annotation overlay that contains intrathought links (superscripts and underlining). */
 const ThoughtAnnotation = React.memo(
   ({
+    editableRef,
     email,
     isEditing,
     multiline,
     ellipsizedUrl,
     numContexts,
+    path,
     showSuperscript,
     simplePath,
     cssRaw,
@@ -107,91 +108,89 @@ const ThoughtAnnotation = React.memo(
     // only applied to the .subthought container
     styleAnnotation,
     url,
-    placeholder,
     value,
   }: {
+    editableRef: React.RefObject<HTMLInputElement | null>
     email?: string
     isEditing: boolean
     multiline?: boolean
     ellipsizedUrl?: boolean
     numContexts: number
+    path: Path
     showSuperscript?: boolean
     simplePath: SimplePath
     cssRaw?: SystemStyleObject
     style?: React.CSSProperties
     styleAnnotation?: React.CSSProperties
     url?: string | null
-    placeholder?: string
     value: string
   }) => {
-    const liveValueIfEditing = editingValueStore.useSelector((editingValue: string | null) =>
-      isEditing ? (editingValue ?? value) : null,
-    )
-
     const isTableCol1 = useSelector((state: State) =>
       attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table'),
     )
 
-    /**
-     * Adding dependency on lexemeIndex as the fetch for thought is async await.
-     * ThoughtAnnotation wasn't waiting for all the lexemeIndex to be set before it was rendered.
-     * And hence the superscript wasn't rendering properly on load.
-     * So now subscribing to get context so that StaticSuperscript is not re-rendered for all lexemeIndex change.
-     * It will re-render only when respective Lexeme is changed.
-     * Changed as part of fix for issue 1419 (https://github.com/cybersemics/em/issues/1419).
-     */
-
-    const textMarkup = useSelector(state => {
-      const labelId = findDescendant(state, head(simplePath), '=label')
-      const labelChild = anyChild(state, labelId || undefined)
-      return isEditing ? (liveValueIfEditing ?? value) : labelChild ? labelChild.value : value
-    })
+    const stylePosition = usePositionedAnnotation(editableRef, isEditing, isTableCol1, numContexts, path)
 
     return (
-      <ThoughtAnnotationWrapper
-        isTableCol1={isTableCol1}
-        ellipsizedUrl={ellipsizedUrl}
-        multiline={multiline}
-        value={value}
-        styleAnnotation={styleAnnotation}
-        cssRaw={cssRaw}
-        style={style}
-        textMarkup={textMarkup}
-        placeholder={placeholder}
-      >
-        {
-          // do not render url icon on root thoughts in publish mode
-          url && !(publishMode() && simplePath.length === 1) && <UrlIconLink url={url} />
-        }
-        {email && <EmailIconLink email={email} />}
-        {
-          // with real time context update we increase context length by 1 // with the default minContexts of 2, do not count the whole thought
-          showSuperscript ? (
-            <StaticSuperscript absolute n={numContexts} style={style} cssRaw={cssRaw} thoughtId={head(simplePath)} />
-          ) : null
-        }
-        <span className={css({ fontSize: '1.25em', margin: '-0.3625em 0 0 -0.0875em', position: 'absolute' })}>
-          <FauxCaret caretType='thoughtEnd' />
+      <>
+        <span
+          className={css({
+            fontSize: '1.25em',
+            margin: '-0.375em 0 0 0.1375em',
+            position: 'absolute',
+          })}
+        >
+          <FauxCaret caretType='thoughtStart' />
         </span>
-      </ThoughtAnnotationWrapper>
+        <ThoughtAnnotationWrapper
+          ellipsizedUrl={ellipsizedUrl}
+          multiline={multiline}
+          value={value}
+          styleAnnotation={styleAnnotation}
+          stylePosition={stylePosition}
+        >
+          {
+            // do not render url icon on root thoughts in publish mode
+            url && !(publishMode() && simplePath.length === 1) && <UrlIconLink url={url} />
+          }
+          {email && <EmailIconLink email={email} />}
+          {
+            // with real time context update we increase context length by 1 // with the default minContexts of 2, do not count the whole thought
+            showSuperscript ? (
+              <StaticSuperscript
+                absolute
+                n={numContexts}
+                style={style}
+                cssRaw={cssRaw}
+                type={url || email ? 'supplemental' : multiline ? 'multiline' : 'singleline'}
+                thoughtId={head(simplePath)}
+              />
+            ) : null
+          }
+          <span className={css({ fontSize: '1.25em', margin: '-0.3625em 0 0 -0.0875em', position: 'absolute' })}>
+            <FauxCaret caretType='thoughtEnd' />
+          </span>
+        </ThoughtAnnotationWrapper>
+      </>
     )
   },
 )
 /** Container for ThoughtAnnotation. */
 const ThoughtAnnotationContainer = React.memo(
   ({
+    editableRef,
     path,
     simplePath,
     minContexts = 2,
     multiline,
     ellipsizedUrl,
-    placeholder,
     invalidState,
     cssRaw,
     style,
     // only applied to the .subthought container
     styleAnnotation,
   }: {
+    editableRef: RefObject<HTMLInputElement | null>
     env?: LazyEnv
     focusOffset?: number
     invalidState?: boolean
@@ -199,7 +198,6 @@ const ThoughtAnnotationContainer = React.memo(
     multiline?: boolean
     ellipsizedUrl?: boolean
     path: Path
-    placeholder?: string
     showContextBreadcrumbs?: boolean
     simplePath: SimplePath
     cssRaw?: SystemStyleObject
@@ -286,17 +284,18 @@ const ThoughtAnnotationContainer = React.memo(
     return showSuperscript || url || email || styleAnnotation || (isTouch && isSafari()) ? (
       <ThoughtAnnotation
         {...{
+          editableRef,
           simplePath,
           isEditing,
           multiline,
-          ellipsizedUrl: ellipsizedUrl,
+          ellipsizedUrl,
           numContexts,
+          path,
           showSuperscript,
           cssRaw,
           style,
           styleAnnotation,
           email,
-          placeholder,
           url,
           value,
         }}

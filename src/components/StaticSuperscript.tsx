@@ -5,6 +5,9 @@ import { SystemStyleObject } from '../../styled-system/types'
 import ThoughtId from '../@types/ThoughtId'
 import getThoughtFill from '../selectors/getThoughtFill'
 
+// Position the superscript differently for multiline thoughts or thoughts with another (email or url) annotation
+type SuperscriptType = 'multiline' | 'singleline' | 'supplemental'
+
 /** Renders a given number as a superscript. */
 const StaticSuperscript = React.forwardRef<
   HTMLSpanElement,
@@ -16,8 +19,9 @@ const StaticSuperscript = React.forwardRef<
     hideZero?: boolean
     absolute?: boolean
     thoughtId?: ThoughtId
+    type?: SuperscriptType
   }
->(({ n, style, show = true, hideZero, absolute, cssRaw, thoughtId }, forwardRef) => {
+>(({ n, style, show = true, hideZero, absolute, cssRaw, thoughtId, type }, forwardRef) => {
   const fill = useSelector(state =>
     // make sure fill is only calculated if the superscript is shown, since getThoughtFill is expensive
     show && (n || !hideZero) && thoughtId ? getThoughtFill(state, thoughtId) : undefined,
@@ -52,7 +56,7 @@ const StaticSuperscript = React.forwardRef<
               className={css({
                 position: 'relative',
                 zIndex: 'stack',
-                top: '-1px',
+                top: type === 'multiline' ? '-2em' : type === 'singleline' ? '-2.745em' : undefined,
                 left: '1px',
               })}
               style={{ color: fill }}
