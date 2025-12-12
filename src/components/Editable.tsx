@@ -525,6 +525,266 @@ const Editable = ({
     [value, setCursorOnThought],
   )
 
+  /**
+   * Safari does glyph-only hit testing, so tapping/clicking on empty space has no caret target.
+   * Hence, get all text nodes that can receive a caret.
+   */
+  const getTextNodes = useCallback((root: HTMLElement): Text[] => {
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode(node) {
+        return node.nodeValue?.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT
+      },
+    })
+    const nodes: Text[] = []
+    let n: Text | null
+    while ((n = walker.nextNode() as Text | null)) nodes.push(n)
+    return nodes
+  }, [])
+
+  /** Find the nearest text node by Y distance. */
+  const findNearestTextNode = useCallback(
+    (textNodes: Text[], clientY: number): { node: Text; rect: DOMRect } | null =>
+      textNodes.reduce<{ node: Text; rect: DOMRect } | null>((closest, node) => {
+        const range = document.createRange()
+        range.selectNodeContents(node)
+        const rect = range.getBoundingClientRect()
+
+        const dist = clientY < rect.top ? rect.top - clientY : clientY > rect.bottom ? clientY - rect.bottom : 0
+
+        if (!closest) return { node, rect }
+
+        const closestDist =
+          clientY < closest.rect.top
+            ? closest.rect.top - clientY
+            : clientY > closest.rect.bottom
+              ? clientY - closest.rect.bottom
+              : 0
+
+        return dist < closestDist ? { node, rect } : closest
+      }, null),
+    [],
+  )
+
+  /** Get all the lines for the given text node. */
+  const getTextNodeLines = useCallback((node: Text): { start: number; end: number; rect: DOMRect }[] => {
+    const text = node.nodeValue ?? ''
+    if (!text) return []
+
+    const range = document.createRange()
+    let lastRect: DOMRect | null = null
+
+    return Array.from(text, (_, i) => {
+      range.setStart(node, i)
+      range.setEnd(node, i + 1)
+      const rect = range.getBoundingClientRect()
+      return rect.height ? { i, rect } : null
+    })
+      .filter((item): item is { i: number; rect: DOMRect } => item !== null)
+      .reduce<{ start: number; end: number; rect: DOMRect }[]>((lines, { i, rect }) => {
+        if (!lastRect || Math.abs(lastRect.top - rect.top) > rect.height / 2) {
+          lines.push({ start: i, end: i + 1, rect })
+        } else {
+          lines[lines.length - 1].end = i + 1
+        }
+        lastRect = rect
+        return lines
+      }, [])
+  }, [])
+
+  /** Binary search for the offset of the tap/click within the given text node. */
+  const binarySearchOffset = useCallback((node: Text, clientX: number, lo: number, hi: number): number => {
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1
+
+      const r = document.createRange()
+      r.setStart(node, mid)
+      r.setEnd(node, Math.min(mid + 1, hi))
+
+      const rect = r.getBoundingClientRect()
+
+      if (clientX < rect.left) {
+        hi = mid
+      } else if (clientX > rect.right) {
+        lo = mid + 1
+      } else {
+        const center = rect.left + rect.width / 2
+        return clientX < center ? mid : mid + 1
+      }
+    }
+
+    return lo
+  }, [])
+
+  /** Resolve horizontal offset inside the node using binary search. */
+  const offsetFromX = useCallback(
+    (node: Text, clientX: number, clientY: number): number => {
+      const text = node.nodeValue ?? ''
+      if (!text) return 0
+
+      const lines = getTextNodeLines(node)
+
+      // If the text node is a single line, use binary search to find the offset
+      if (lines.length <= 1) {
+        return binarySearchOffset(node, clientX, 0, text.length)
+      }
+
+      // If the text node is a multi-line, pick the closest line with respect to the Y coordinate and then do binary search
+      const target = lines.reduce<{ line: (typeof lines)[0]; dist: number }>(
+        (closest, line) => {
+          const dist =
+            clientY < line.rect.top
+              ? line.rect.top - clientY
+              : clientY > line.rect.bottom
+                ? clientY - line.rect.bottom
+                : 0
+          return dist < closest.dist ? { line, dist } : closest
+        },
+        { line: lines[0], dist: Infinity },
+      ).line
+
+      // Binary search only inside that line
+      return binarySearchOffset(node, clientX, target.start, target.end)
+    },
+    [getTextNodeLines, binarySearchOffset],
+  )
+
+  /** Set the caret at a specific node and offset. */
+  const setCaretAtNode = useCallback((node: Text, offset: number) => {
+    selection.set(node, { offset: Math.min(offset, node.length) })
+  }, [])
+
+  /** Calculate cumulative offset from start of editable to the given text node position. */
+  const getCumulativeOffset = useCallback(
+    (editable: HTMLElement, targetNode: Text, nodeOffset: number): number => {
+      const textNodes = getTextNodes(editable)
+      const targetIndex = textNodes.findIndex(node => node === targetNode)
+      const precedingLength = textNodes
+        .slice(0, targetIndex === -1 ? textNodes.length : targetIndex)
+        .reduce((acc, node) => acc + (node.nodeValue?.length || 0), 0)
+      return precedingLength + nodeOffset
+    },
+    [getTextNodes],
+  )
+
+  /**
+   * Detects if a tap is in a void area and returns caret position info.
+   * Returns null if tap is on a valid character, or caret position info if it's a void area tap.
+   */
+  const detectVoidAreaTap = useCallback(
+    (
+      editable: HTMLElement,
+      clientX: number,
+      clientY: number,
+    ): { node: Text; nodeOffset: number; cumulativeOffset: number } | null => {
+      const doc = document as Document
+
+      // These APIs are not available in test environments (JSDOM)
+      // In that case, allow default behavior
+      if (!doc.caretRangeFromPoint && !doc.caretPositionFromPoint) {
+        return null
+      }
+
+      // Get the browser range for the tap position
+      let range: Range | null = null
+
+      if (doc.caretRangeFromPoint) {
+        range = doc.caretRangeFromPoint(clientX, clientY)
+      } else if (doc.caretPositionFromPoint) {
+        const pos = doc.caretPositionFromPoint(clientX, clientY)
+        if (pos?.offsetNode) {
+          range = document.createRange()
+          range.setStart(pos.offsetNode, pos.offset)
+          range.collapse(true)
+        }
+      }
+
+      // Ensure tap is within our editable element
+      if (!range || !editable.contains(range.startContainer)) {
+        return null
+      }
+
+      const node = range.startContainer
+      const offset = range.startOffset
+      const nodeTextLength = node.textContent?.length || 0
+
+      /** Get the bounding rectangle for a character at the given offset. */
+      const getCharRect = (targetOffset: number): DOMRect | null => {
+        const charRange = document.createRange()
+        charRange.setStart(node, targetOffset)
+        charRange.setEnd(node, targetOffset + 1)
+        return charRange.getBoundingClientRect()
+      }
+
+      /** Check if tap is within a character's bounding box. */
+      const isInsideCharRect = (rect: DOMRect | null): boolean => {
+        if (!rect) return false
+        return clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom
+      }
+
+      /** Check if tap is vertically contained within the character's bounding box. */
+      const isVerticallyContained = (rect: DOMRect | null): boolean => {
+        if (!rect) return false
+        return clientY >= rect.top && clientY <= rect.bottom
+      }
+
+      // Check by tapping on a character at the current offset and the one before it.
+      const isClickOnCharacter = [offset, offset - 1]
+        .filter(o => o >= 0 && o < nodeTextLength)
+        .some(checkOffset => isInsideCharRect(getCharRect(checkOffset)))
+
+      // Allow taps horizontally beyond text if vertically aligned with text line
+      const isValidEdgeClick =
+        (offset === 0 || offset === nodeTextLength) &&
+        isVerticallyContained(getCharRect(offset === 0 ? 0 : nodeTextLength - 1))
+
+      // Valid tap on character - not a void area
+      if (isClickOnCharacter || isValidEdgeClick) return null
+
+      // Invalid tap (padding/void area), calculate the caret position
+      const textNodes = getTextNodes(editable)
+      if (textNodes.length === 0) return null
+
+      const nearest = findNearestTextNode(textNodes, clientY)
+      if (!nearest) return null
+
+      const nodeOffset = offsetFromX(nearest.node, clientX, clientY)
+      const cumulativeOffset = getCumulativeOffset(editable, nearest.node, nodeOffset)
+      return { node: nearest.node, nodeOffset, cumulativeOffset }
+    },
+    [getTextNodes, findNearestTextNode, offsetFromX, getCumulativeOffset],
+  )
+
+  /**
+   * Handles void area taps by preventing default and setting the caret.
+   * Returns true if we handled the tap (void area), false if browser should handle it (valid tap on character).
+   */
+  const handleVoidAreaTap = useCallback(
+    (clientX: number, clientY: number, preventDefault: () => void): boolean => {
+      const editable = contentRef.current
+      if (!editable) return false
+
+      const voidAreaInfo = detectVoidAreaTap(editable, clientX, clientY)
+      if (!voidAreaInfo) return false
+
+      // Void area tap detected - perform side effects
+      preventDefault()
+
+      // Update Redux cursor state
+      dispatch(
+        setCursor({
+          path,
+          offset: voidAreaInfo.cumulativeOffset,
+        }),
+      )
+
+      // Set caret manually
+      setCaretAtNode(voidAreaInfo.node, voidAreaInfo.nodeOffset)
+
+      return true
+    },
+    [contentRef, detectVoidAreaTap, dispatch, path, setCaretAtNode],
+  )
+
   const onMouseDown = useCallback(
     (e: React.MouseEvent) => {
       // If CMD/CTRL is pressed, don't focus the editable.
@@ -545,7 +805,10 @@ const Editable = ({
           bottomMargin: fontSize * 2,
         })
 
-        allowDefaultSelection()
+        // If not a void area tap, allow browser's default selection
+        if (!handleVoidAreaTap(e.clientX, e.clientY, () => e.preventDefault())) {
+          allowDefaultSelection()
+        }
       }
       // There are areas on the outside edge of the thought that will fail to trigger onTouchEnd.
       // In those cases, it is best to prevent onFocus or onClick, otherwise keyboard is open will be incorrectly activated.
@@ -555,8 +818,31 @@ const Editable = ({
         e.preventDefault()
       }
     },
-    [contentRef, editingOrOnCursor, fontSize, allowDefaultSelection, hasMulticursor],
+    [contentRef, editingOrOnCursor, fontSize, allowDefaultSelection, hasMulticursor, handleVoidAreaTap],
   )
+
+  // Manually attach touchstart listener with { passive: false } to allow preventDefault
+  useEffect(() => {
+    const editable = contentRef.current
+    if (!editable) return
+
+    /** Handle touch events to prevent initial cursor jump (Safari-safe). */
+    const handleTouchStart = (e: TouchEvent) => {
+      if (editingOrOnCursor && !hasMulticursor && e.touches.length > 0) {
+        // If not a void area tap, allow browser's default selection
+        if (!handleVoidAreaTap(e.touches[0].clientX, e.touches[0].clientY, () => e.preventDefault())) {
+          allowDefaultSelection()
+        }
+      }
+    }
+
+    // Add event listener with { passive: false } to allow preventDefault
+    editable.addEventListener('touchstart', handleTouchStart, { passive: false })
+
+    return () => {
+      editable.removeEventListener('touchstart', handleTouchStart)
+    }
+  }, [contentRef, editingOrOnCursor, hasMulticursor, allowDefaultSelection, handleVoidAreaTap])
 
   /** Sets the cursor on the thought on touchend or click. Handles hidden elements, drags, and editing mode. */
   const onTap = useCallback(
