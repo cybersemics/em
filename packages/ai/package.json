@@ -23,7 +23,7 @@
     "prom-client": "^14.2.0"
   },
   "devDependencies": {
-    "@types/cors": "^2.8.17",
+    "@types/cors": "^2.8.19",
     "@types/express": "^4.17.18",
     "@types/level": "^8.0.0",
     "@types/node-fetch": "^2.6.5",

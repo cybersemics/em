@@ -73,7 +73,6 @@ const Overlay = () => {
         className={css({
           position: 'absolute',
           pointerEvents: 'none',
-          zIndex: 'modal',
           backgroundImage: 'url(/img/command-center/overlay.webp)',
           backgroundSize: 'cover',
           backgroundPosition: 'center bottom',
@@ -162,7 +161,6 @@ const CommandMenu = () => {
             isolation: 'isolate',
           })}
         >
-          <Overlay />
           <div
             /** Falloff. */
             className={css({
@@ -175,41 +173,54 @@ const CommandMenu = () => {
               height: '100%',
             })}
           />
+          <Overlay />
+
           <div
             className={css({
-              position: 'relative',
-              zIndex: 1,
-              margin: '0 1.2rem calc(1.2rem + env(safe-area-inset-bottom)) 1.2rem',
+              display: 'flex',
+              flexDirection: 'column',
+              margin: '0 1.5rem calc(1.5rem + env(safe-area-inset-bottom)) 1.5rem',
+              gap: '1rem',
             })}
           >
-            <div className={css({ marginBottom: '1rem' })}>
+            <div
+              className={css({
+                display: 'flex',
+                alignItems: 'flex-end',
+                justifyContent: 'space-between',
+              })}
+            >
+              <MultiselectMessage />
               <div
                 className={css({
-                  display: 'flex',
-                  alignItems: 'flex-end',
-                  justifyContent: 'space-between',
-                  width: '100%',
+                  display: 'grid',
+                  // Define a single area for stacking. Cannot use position relative,
+                  // since that will create a new stacking context and break mix-blend-mode.
+                  gridTemplateAreas: '"button"',
+                  fontSize: '0.85em',
+                  fontWeight: 500,
+                  letterSpacing: '-0.011em',
+                  color: 'fg',
                 })}
               >
-                <MultiselectMessage />
+                <div
+                  className={css({
+                    gridArea: 'button',
+                    background: 'fgOverlay20',
+                    borderRadius: 46,
+                    mixBlendMode: 'soft-light',
+                  })}
+                />
                 <button
                   {...fastClick(onClose)}
                   className={css({
-                    cursor: 'pointer',
-                    border: 'none',
-                    color: 'fg',
-                    background: 'fgOverlay20',
-                    borderRadius: 46.6,
+                    all: 'unset',
+                    gridArea: 'button',
+                    mixBlendMode: 'lighten',
+                    opacity: 0.5,
                     fontWeight: 500,
-                    letterSpacing: '-0.011em',
+                    cursor: 'pointer',
                     padding: '8px 16px',
-                    mixBlendMode: 'soft-light',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '1ch',
-                    /** Button won't show without z-index. */
-                    zIndex: 'modal',
-                    fontSize: '0.85em',
                   })}
                 >
                   Done
@@ -223,7 +234,7 @@ const CommandMenu = () => {
                 gridTemplateRows: 'auto',
                 gridAutoFlow: 'row',
                 gap: '0.7rem',
-                maxWidth: '100%',
+                gridRowGap: '1rem',
               })}
             >
               <PanelCommand command={{ ...copyCursorCommand, label: 'Copy' }} size='small' />
