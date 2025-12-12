@@ -670,7 +670,7 @@ const Editable = ({
    * Detects if a tap is in a void area and returns caret position info.
    * Returns null if tap is on a valid character, or caret position info if it's a void area tap.
    */
-  const detectVoidAreaClick = useCallback(
+  const detectVoidAreaTap = useCallback(
     (
       editable: HTMLElement,
       clientX: number,
@@ -700,16 +700,7 @@ const Editable = ({
 
       // Ensure tap is within our editable element
       if (!range || !editable.contains(range.startContainer)) {
-        // Tap is outside editable so treat as void area
-        const textNodes = getTextNodes(editable)
-        if (textNodes.length === 0) return null
-
-        const nearest = findNearestTextNode(textNodes, clientY)
-        if (!nearest) return null
-
-        const nodeOffset = offsetFromX(nearest.node, clientX, clientY)
-        const cumulativeOffset = getCumulativeOffset(editable, nearest.node, nodeOffset)
-        return { node: nearest.node, nodeOffset, cumulativeOffset }
+        return null
       }
 
       const node = range.startContainer
@@ -772,7 +763,7 @@ const Editable = ({
       const editable = contentRef.current
       if (!editable) return false
 
-      const voidAreaInfo = detectVoidAreaClick(editable, clientX, clientY)
+      const voidAreaInfo = detectVoidAreaTap(editable, clientX, clientY)
       if (!voidAreaInfo) return false
 
       // Void area tap detected - perform side effects
@@ -791,7 +782,7 @@ const Editable = ({
 
       return true
     },
-    [contentRef, detectVoidAreaClick, dispatch, path, setCaretAtNode],
+    [contentRef, detectVoidAreaTap, dispatch, path, setCaretAtNode],
   )
 
   const onMouseDown = useCallback(
