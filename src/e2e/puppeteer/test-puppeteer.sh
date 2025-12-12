@@ -20,7 +20,7 @@ stop_dev_server() {
 }
 
 cleanup() {
-    stop_dev_server 
+    stop_dev_server
     stop_docker_container
 }
 
