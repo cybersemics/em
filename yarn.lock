@@ -2112,9 +2112,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@capacitor/cli@npm:^7.4.4":
-  version: 7.4.4
-  resolution: "@capacitor/cli@npm:7.4.4"
+"@capacitor/cli@npm:^8.0.0":
+  version: 8.0.0
+  resolution: "@capacitor/cli@npm:8.0.0"
   dependencies:
     "@ionic/cli-framework-output": "npm:^2.2.8"
     "@ionic/utils-subprocess": "npm:^3.0.1"
@@ -2136,7 +2136,7 @@ __metadata:
   bin:
     cap: bin/capacitor
     capacitor: bin/capacitor
-  checksum: 10c0/ae7346afcd4029904327c52f2a5a44b87d9919aec3062a7eb3b3bc75fef84f28c2587ecd6e4aa2b488fcc8f09c619932584c4a06c05062513caec574e6fe5901
+  checksum: 10c0/b328ff44057e919010a2cd39dcc4248e16161a82db281744f5143d8c27a8f2d0daf552f571c9a0226aed98e910f4df60c3bf62c8eb3baf017d4e28e33f3acd08
   languageName: node
   linkType: hard
 
@@ -9541,7 +9541,7 @@ __metadata:
     "@babel/core": "npm:^7.28.5"
     "@babel/plugin-proposal-private-property-in-object": "npm:^7.21.11"
     "@capacitor/android": "npm:^7.4.3"
-    "@capacitor/cli": "npm:^7.4.4"
+    "@capacitor/cli": "npm:^8.0.0"
     "@capacitor/clipboard": "npm:^7.0.2"
     "@capacitor/core": "npm:^7.4.4"
     "@capacitor/haptics": "npm:^7.0.2"
