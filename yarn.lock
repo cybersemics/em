@@ -2149,12 +2149,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@capacitor/core@npm:^7.4.4":
-  version: 7.4.4
-  resolution: "@capacitor/core@npm:7.4.4"
+"@capacitor/core@npm:^8.0.0":
+  version: 8.0.0
+  resolution: "@capacitor/core@npm:8.0.0"
   dependencies:
     tslib: "npm:^2.1.0"
-  checksum: 10c0/6c89d2fe9ab64a45d2bcb786d9837380dbd652997c9bfd3ab8e62fa0759a8a8558342d800cd19b175f1f6238e290a5efefe3733b283ec737b088f178e1ed6c0d
+  checksum: 10c0/a8034158794481f12bf29ef25578c925f7ddc762503102713562ca5888c9397e42f8cc48679b7f1cd7f7ce71bdc1de787286e2f0760935361892d9c6f34302f1
   languageName: node
   linkType: hard
 
@@ -9543,7 +9543,7 @@ __metadata:
     "@capacitor/android": "npm:^7.4.3"
     "@capacitor/cli": "npm:^7.4.4"
     "@capacitor/clipboard": "npm:^7.0.2"
-    "@capacitor/core": "npm:^7.4.4"
+    "@capacitor/core": "npm:^8.0.0"
     "@capacitor/haptics": "npm:^7.0.2"
     "@capacitor/ios": "npm:^7.4.4"
     "@capacitor/keyboard": "npm:^7.0.3"
@@ -21502,7 +21502,7 @@ __metadata:
   resolution: "webview-background@workspace:packages/webview"
   dependencies:
     "@capacitor/android": "npm:^7.4.3"
-    "@capacitor/core": "npm:^7.4.4"
+    "@capacitor/core": "npm:^8.0.0"
     "@capacitor/docgen": "npm:^0.3.1"
     "@capacitor/ios": "npm:^7.4.4"
     "@ionic/swiftlint-config": "npm:^2.0.0"
@@ -21511,7 +21511,7 @@ __metadata:
     swiftlint: "npm:^2.0.0"
     typescript: "npm:5.9.3"
   peerDependencies:
-    "@capacitor/core": ^7.4.4
+    "@capacitor/core": ^8.0.0
   languageName: unknown
   linkType: soft
 

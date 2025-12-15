@@ -41,7 +41,7 @@
   },
   "devDependencies": {
     "@capacitor/android": "^7.4.3",
-    "@capacitor/core": "^7.4.4",
+    "@capacitor/core": "^8.0.0",
     "@capacitor/docgen": "^0.3.1",
     "@capacitor/ios": "^7.4.4",
     "@ionic/swiftlint-config": "^2.0.0",
@@ -51,7 +51,7 @@
     "typescript": "5.9.3"
   },
   "peerDependencies": {
-    "@capacitor/core": "^7.4.4"
+    "@capacitor/core": "^8.0.0"
   },
   "capacitor": {
     "ios": {
