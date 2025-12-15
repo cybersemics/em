@@ -50,8 +50,6 @@ const useSizeTracking = () => {
       key: string
     }) => {
       if (height !== null) {
-        // To create the correct selection behavior, thoughts must be clipped on the top and bottom. Otherwise the top and bottom 1px cause the caret to move to the beginning or end of the editable. But clipPath creates a gap between thoughts. To eliminate this gap, thoughts are rendered with a slight overlap by subtracting a small amount from each thought's measured height, thus affecting their y positions as they are rendered.
-        // See: clipPath in recipes/editable.ts
         const lineHeightOverlap = fontSize / 8
         const heightClipped = height - lineHeightOverlap
 
