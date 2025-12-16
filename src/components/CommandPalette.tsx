@@ -245,54 +245,52 @@ const CommandPalette: FC = ({}) => {
         onClick={e => e.stopPropagation()}
         style={{ fontSize, marginBottom: fontSize }}
       >
-        <>
-          <h2
-            className={css({
-              margin: 0,
-              borderBottom: 'solid 1px {colors.gray15}',
-            })}
-          >
-            <CommandSearch
-              onExecute={onExecuteSelected}
-              onInput={setSearch}
-              onSelectUp={onSelectUp}
-              onSelectDown={onSelectDown}
-              onSelectTop={onSelectTop}
-              onSelectBottom={onSelectBottom}
-            />
-          </h2>
+        <h2
+          className={css({
+            margin: 0,
+            borderBottom: 'solid 1px {colors.gray15}',
+          })}
+        >
+          <CommandSearch
+            onExecute={onExecuteSelected}
+            onInput={setSearch}
+            onSelectUp={onSelectUp}
+            onSelectDown={onSelectDown}
+            onSelectTop={onSelectTop}
+            onSelectBottom={onSelectBottom}
+          />
+        </h2>
 
-          <div
-            className={css({
-              overflow: 'auto',
-              padding: '0.85em 0.66em',
-            })}
-          >
-            {commands.length > 0 ? (
-              <>
-                {(() => {
-                  return commands.map((command, index) => {
-                    return (
-                      <CommandItem
-                        search={search}
-                        key={command.id}
-                        onClick={onExecute}
-                        onHover={onHover}
-                        selected={command === selectedCommand.command}
-                        command={command}
-                        shouldScrollSelectedIntoView={selectedCommand.source === 'keyboard'}
-                        isFirstCommand={index === 0}
-                        isLastCommand={index === commands.length - 1}
-                      />
-                    )
-                  })
-                })()}
-              </>
-            ) : (
-              <span className={css({ marginLeft: '1em' })}>No matching commands</span>
-            )}
-          </div>
-        </>
+        <div
+          className={css({
+            overflow: 'auto',
+            padding: '0.85em 0.66em',
+          })}
+        >
+          {commands.length > 0 ? (
+            <>
+              {(() => {
+                return commands.map((command, index) => {
+                  return (
+                    <CommandItem
+                      search={search}
+                      key={command.id}
+                      onClick={onExecute}
+                      onHover={onHover}
+                      selected={command === selectedCommand.command}
+                      command={command}
+                      shouldScrollSelectedIntoView={selectedCommand.source === 'keyboard'}
+                      isFirstCommand={index === 0}
+                      isLastCommand={index === commands.length - 1}
+                    />
+                  )
+                })
+              })()}
+            </>
+          ) : (
+            <span className={css({ marginLeft: '1em' })}>No matching commands</span>
+          )}
+        </div>
       </div>
     </div>
   )

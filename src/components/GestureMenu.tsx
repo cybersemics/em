@@ -16,9 +16,9 @@ import PopupBase from './PopupBase'
  * Components
  **********************************************************************/
 
-/** Render a command palette with gesture autocomplete. */
+/** Render a gesture menu with gesture autocomplete. */
 const GestureMenu: FC = () => {
-  // Commands need to be calculated even if the command palette is not shown because useFilteredCommands is responsible for updating gestureStore's possibleCommands which is needed to prevent haptics when there are no more possible commands. Otherwise, either haptics would continue to fire when there are no more possible commands, or would falsely fire when the current sequence is not a valid gesture but there are possible commands with additional swipes.
+  // Commands need to be calculated even if the gesture menu is not shown because useFilteredCommands is responsible for updating gestureStore's possibleCommands which is needed to prevent haptics when there are no more possible commands. Otherwise, either haptics would continue to fire when there are no more possible commands, or would falsely fire when the current sequence is not a valid gesture but there are possible commands with additional swipes.
   const [recentCommands] = useState(storageModel.get('recentCommands'))
   const commands = useFilteredCommands('', {
     recentCommands,
@@ -99,7 +99,7 @@ const GestureMenu: FC = () => {
   )
 }
 
-/** A CommandPalette component that fades in and out based on state.showGestureMenu. */
+/** A GestureMenu component that fades in and out based on state.showGestureMenu. */
 const GestureMenuWithTransition: FC = () => {
   const [isDismissed, setDismiss] = useState(false)
   const popupRef = useRef<HTMLDivElement>(null)

@@ -162,7 +162,7 @@ const index = (): {
   }
 }
 
-let gestureMenuPalette: number | undefined
+let gestureMenuTimeout: number | undefined
 
 const { commandKeyIndex, commandIdIndex, commandGestureIndex } = index()
 
@@ -178,16 +178,16 @@ export const commandById = (id: CommandId): Command => commandIdIndex[id]
  *
  * There are two alert types for gesture hints:
  * - GestureHint - The basic gesture hint that is shown immediately on swipe.
- * - CommandPaletteGesture - The command palette  that shows all possible gestures from the current sequence after a delay.
+ * - gestureMenuTimeout - The gesture menu  that shows all possible gestures from the current sequence after a delay.
  *
  * There is no automated test coverage since timers are so messed up in the current Jest version. It may be possible to write tests if Jest is upgraded. Manual test cases.
  * - Basic gesture hint.
  * - Preserve gesture hint for valid command.
  * - Only show "Cancel gesture" if gesture hint is already activated.
  * - Dismiss gesture hint after release for invalid command.
- * - command palette  on hold.
- * - command palette  from invalid gesture (e.g. ←↓, hold, ←↓←).
- * - Change command palette  to basic gesture hint on gesture end.
+ * - gesture menu  on hold.
+ * - gesture menu  from invalid gesture (e.g. ←↓, hold, ←↓←).
+ * - Change gesture menu  to basic gesture hint on gesture end.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const inputHandlers = (store: Store<State, any>) => ({
@@ -204,10 +204,10 @@ export const inputHandlers = (store: Store<State, any>) => ({
       haptics.light()
     }
 
-    // command palette
+    // gesture menu
     // alert after a delay of COMMAND_PALETTE_TIMEOUT
-    clearTimeout(gestureMenuPalette)
-    gestureMenuPalette = window.setTimeout(
+    clearTimeout(gestureMenuTimeout)
+    gestureMenuTimeout = window.setTimeout(
       () => {
         store.dispatch((dispatch, getState) => {
           // do not show "Cancel gesture" if already being shown by basic gesture hint
@@ -226,7 +226,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
     const state = store.getState()
 
     // Get the command from the command gesture index.
-    // When the command palette  is displayed, disable gesture aliases (i.e. gestures hidden from instructions). This is because the gesture hints are meant only as an aid when entering gestures quickly.
+    // When the gesture menu  is displayed, disable gesture aliases (i.e. gestures hidden from instructions). This is because the gesture hints are meant only as an aid when entering gestures quickly.
 
     const openGestureCheatsheetGesture = gestureString(openGestureCheatsheetCommand)
 
@@ -254,8 +254,8 @@ export const inputHandlers = (store: Store<State, any>) => ({
     // if no command was found, execute the cancel command
 
     // clear gesture hint
-    clearTimeout(gestureMenuPalette)
-    gestureMenuPalette = undefined // clear the timer to track when it is running for handleGestureSegment
+    clearTimeout(gestureMenuTimeout)
+    gestureMenuTimeout = undefined // clear the timer to track when it is running for handleGestureSegment
 
     // In training mode, show alert for any valid command (except forward/back)
     // In experience mode, clear any existing gesture hint
@@ -295,7 +295,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
 
   /** Dismiss gesture hint that is shown by alert. */
   handleGestureCancel: () => {
-    clearTimeout(gestureMenuPalette)
+    clearTimeout(gestureMenuTimeout)
     store.dispatch((dispatch, getState) => {
       const state = getState()
       if (state.showGestureMenu) {
