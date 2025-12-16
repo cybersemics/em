@@ -31,9 +31,9 @@ const detectVoidAreaTap = (editable: HTMLElement, clientX: number, clientY: numb
   const doc = document as Document
 
   // These APIs are not available in test environments (JSDOM)
-  // In that case, return a fallback result
+  // In that case, return null to let the browser handle it normally
   if (!doc.caretRangeFromPoint && !doc.caretPositionFromPoint) {
-    return { node: null, nodeOffset: 0 }
+    return null
   }
 
   // Get the browser range for the tap position
