@@ -157,14 +157,14 @@ const ThoughtAnnotation = React.memo(
           {
             // with real time context update we increase context length by 1 // with the default minContexts of 2, do not count the whole thought
             showSuperscript ? (
-              <StaticSuperscript
-                absolute
-                n={numContexts}
-                style={style}
-                cssRaw={cssRaw}
-                type={url || email ? 'supplemental' : multiline ? 'multiline' : 'singleline'}
-                thoughtId={head(simplePath)}
-              />
+              <span
+                className={css({
+                  position: 'absolute',
+                  top: '-0.425em',
+                })}
+              >
+                <StaticSuperscript n={numContexts} style={style} cssRaw={cssRaw} thoughtId={head(simplePath)} />
+              </span>
             ) : null
           }
           <span className={css({ fontSize: '1.25em', margin: '-0.3625em 0 0 -0.0875em', position: 'absolute' })}>
