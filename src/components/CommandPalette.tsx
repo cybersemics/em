@@ -4,6 +4,7 @@ import { TransitionGroup } from 'react-transition-group'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import Command from '../@types/Command'
+import CommandId from '../@types/CommandId'
 import Key from '../@types/Key'
 import { commandPaletteActionCreator as commandPalette } from '../actions/commandPalette'
 import { hashCommand, hashKeyDown } from '../commands'
@@ -110,15 +111,13 @@ const CommandSearch: FC<{
 }
 
 /** Render a command palette with keyboard. */
-const CommandPalette: FC = ({}) => {
-  // Commands need to be calculated even if the command palette is not shown because useFilteredCommands is responsible for updating gestureStore's possibleCommands which is needed to prevent haptics when there are no more possible commands. Otherwise, either haptics would continue to fire when there are no more possible commands, or would falsely fire when the current sequence is not a valid gesture but there are possible commands with additional swipes.
-  const [recentCommands, setRecentCommands] = useState(storageModel.get('recentCommands'))
-  const [search, setSearch] = useState('')
-  const commands = useFilteredCommands(search, {
-    recentCommands,
-    sortActiveCommandsFirst: true,
-  })
-
+const CommandPalette: FC<{
+  commands: Command[]
+  recentCommands: CommandId[]
+  setRecentCommands: (commandIds: CommandId[]) => void
+  search: string
+  setSearch: (search: string) => void
+}> = ({ commands, recentCommands, setRecentCommands, search, setSearch }) => {
   const store = useStore()
   const dispatch = useDispatch()
   const fontSize = useSelector(state => state.fontSize)
@@ -310,6 +309,21 @@ const CommandPaletteWithTransition: FC = () => {
 
   const showCommandPalette = useSelector(state => state.showCommandPalette)
 
+  // Commands need to be calculated even if the command palette is not shown because useFilteredCommands is responsible for updating gestureStore's possibleCommands which is needed to prevent haptics when there are no more possible commands. Otherwise, either haptics would continue to fire when there are no more possible commands, or would falsely fire when the current sequence is not a valid gesture but there are possible commands with additional swipes.
+  const [recentCommands, setRecentCommands] = useState(storageModel.get('recentCommands'))
+  const [search, setSearch] = useState('')
+  const commands = useFilteredCommands(search, {
+    recentCommands,
+    sortActiveCommandsFirst: true,
+  })
+
+  // clear search when command palette is closed
+  useEffect(() => {
+    if (!showCommandPalette) {
+      setSearch('')
+    }
+  }, [showCommandPalette])
+
   // if dismissed, set timeout to 0 to remove alert component immediately. Otherwise it will block toolbar interactions until the timeout completes.
   return (
     <TransitionGroup
@@ -338,7 +352,13 @@ const CommandPaletteWithTransition: FC = () => {
               })}
               onClick={onClose}
             >
-              <CommandPalette />
+              <CommandPalette
+                search={search}
+                setSearch={setSearch}
+                commands={commands}
+                recentCommands={recentCommands}
+                setRecentCommands={setRecentCommands}
+              />
             </div>
           </PopupBase>
         </FadeTransition>

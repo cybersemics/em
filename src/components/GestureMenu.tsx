@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
+import Command from '../@types/Command'
 import { gestureString } from '../commands'
 import openGestureCheatsheetCommand from '../commands/openGestureCheatsheet'
 import useFilteredCommands from '../hooks/useFilteredCommands'
@@ -17,13 +18,9 @@ import PopupBase from './PopupBase'
  **********************************************************************/
 
 /** Render a gesture menu with gesture autocomplete. */
-const GestureMenu: FC = () => {
-  // Commands need to be calculated even if the gesture menu is not shown because useFilteredCommands is responsible for updating gestureStore's possibleCommands which is needed to prevent haptics when there are no more possible commands. Otherwise, either haptics would continue to fire when there are no more possible commands, or would falsely fire when the current sequence is not a valid gesture but there are possible commands with additional swipes.
-  const [recentCommands] = useState(storageModel.get('recentCommands'))
-  const commands = useFilteredCommands('', {
-    recentCommands,
-    sortActiveCommandsFirst: true,
-  })
+const GestureMenu: FC<{
+  commands: Command[]
+}> = ({ commands }) => {
   const gestureInProgress = gestureStore.useSelector(state => state.gesture)
   const fontSize = useSelector(state => state.fontSize)
 
@@ -106,6 +103,13 @@ const GestureMenuWithTransition: FC = () => {
 
   const showGestureMenu = useSelector(state => state.showGestureMenu)
 
+  // Commands need to be calculated even if the gesture menu is not shown because useFilteredCommands is responsible for updating gestureStore's possibleCommands which is needed to prevent haptics when there are no more possible commands. Otherwise, either haptics would continue to fire when there are no more possible commands, or would falsely fire when the current sequence is not a valid gesture but there are possible commands with additional swipes.
+  const [recentCommands] = useState(storageModel.get('recentCommands'))
+  const commands = useFilteredCommands('', {
+    recentCommands,
+    sortActiveCommandsFirst: true,
+  })
+
   // if dismissed, set timeout to 0 to remove alert component immediately. Otherwise it will block toolbar interactions until the timeout completes.
   return (
     <TransitionGroup
@@ -132,7 +136,7 @@ const GestureMenuWithTransition: FC = () => {
                 alignItems: 'center',
               })}
             >
-              <GestureMenu />
+              <GestureMenu commands={commands} />
             </div>
           </PopupBase>
         </FadeTransition>
