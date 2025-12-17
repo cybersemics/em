@@ -10,3 +10,73 @@ updates:
     schedule:
       interval: 'weekly'
     open-pull-requests-limit: 10
+    # Group related deps into single PR
+    groups:
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "@types/react-dom"
+      capacitor:
+        patterns:
+          - "@capacitor/*"
+      mui-emotion:
+        patterns:
+          - "@mui/*"
+          - "@emotion/*"
+      react-dnd:
+        patterns:
+          - "react-dnd*"
+          - "dnd-core"
+      redux:
+        patterns:
+          - "redux"
+          - "redux-*"
+          - "react-redux"
+          - "reselect"
+          - "redux-mock-store"
+          - "@types/react-redux"
+          - "@types/redux-mock-store"
+      testing-library:
+        patterns:
+          - "@testing-library/*"
+      sinon-fake-timers:
+        patterns:
+          - "@sinonjs/fake-timers"
+          - "@types/sinonjs__fake-timers"
+      jest:
+        patterns:
+          - "jest"
+          - "jest-*"
+          - "jest-environment-*"
+          - "@types/jest"
+          - "@types/jest-*"
+      vitest-vite:
+        patterns:
+          - "vitest"
+          - "vitest-*"
+          - "vite"
+          - "vite-*"
+          - "@vitejs/*"
+      eslint:
+        patterns:
+          - "eslint"
+          - "eslint-*"
+          - "eslint-plugin-*"
+          - "eslint-config-*"
+          - "@typescript-eslint/*"
+          - "@stylistic/*"
+      prettier:
+        patterns:
+          - "prettier"
+          - "@trivago/prettier-plugin-*"
+      pandacss:
+        patterns:
+          - "@pandacss/*"
+      babel:
+        patterns:
+          - "@babel/*"
+      workbox:
+        patterns:
+          - "workbox-*"
