@@ -2112,9 +2112,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@capacitor/cli@npm:^7.4.4":
-  version: 7.4.4
-  resolution: "@capacitor/cli@npm:7.4.4"
+"@capacitor/android@npm:^8.0.0":
+  version: 8.0.0
+  resolution: "@capacitor/android@npm:8.0.0"
+  peerDependencies:
+    "@capacitor/core": ^8.0.0
+  checksum: 10c0/2349e41f2bb29d178757edd35bc248d7577d7da9b2b6d07118a69ee297a8159da9fd6fd3cfbd6cac940a3fb53bee1f51affd0b91195f03d3e189175163bef58c
+  languageName: node
+  linkType: hard
+
+"@capacitor/cli@npm:^8.0.0":
+  version: 8.0.0
+  resolution: "@capacitor/cli@npm:8.0.0"
   dependencies:
     "@ionic/cli-framework-output": "npm:^2.2.8"
     "@ionic/utils-subprocess": "npm:^3.0.1"
@@ -2136,16 +2145,16 @@ __metadata:
   bin:
     cap: bin/capacitor
     capacitor: bin/capacitor
-  checksum: 10c0/ae7346afcd4029904327c52f2a5a44b87d9919aec3062a7eb3b3bc75fef84f28c2587ecd6e4aa2b488fcc8f09c619932584c4a06c05062513caec574e6fe5901
+  checksum: 10c0/b328ff44057e919010a2cd39dcc4248e16161a82db281744f5143d8c27a8f2d0daf552f571c9a0226aed98e910f4df60c3bf62c8eb3baf017d4e28e33f3acd08
   languageName: node
   linkType: hard
 
-"@capacitor/clipboard@npm:^7.0.2":
-  version: 7.0.2
-  resolution: "@capacitor/clipboard@npm:7.0.2"
+"@capacitor/clipboard@npm:^8.0.0":
+  version: 8.0.0
+  resolution: "@capacitor/clipboard@npm:8.0.0"
   peerDependencies:
-    "@capacitor/core": ">=7.0.0"
-  checksum: 10c0/927e41a6263a9ae6e76e4f5400113d68654c4de5aba023b47e9ca7f2022b5975c13d5bc66558ec1c0d99bde21a731ec36c1a5ebd5e309dcb34957788a25b82ad
+    "@capacitor/core": ">=8.0.0"
+  checksum: 10c0/b9dd7e92bb5d6a979140300ec8c1e3c82b1dac9c2b0c14f23b7627f5e68a78cb8dd740bd7a2ddca9a9456b5f5528c23d7819b6f4c40320a8b12ae8fb533f2f51
   languageName: node
   linkType: hard
 
@@ -2155,6 +2164,15 @@ __metadata:
   dependencies:
     tslib: "npm:^2.1.0"
   checksum: 10c0/6c89d2fe9ab64a45d2bcb786d9837380dbd652997c9bfd3ab8e62fa0759a8a8558342d800cd19b175f1f6238e290a5efefe3733b283ec737b088f178e1ed6c0d
+  languageName: node
+  linkType: hard
+
+"@capacitor/core@npm:^8.0.0":
+  version: 8.0.0
+  resolution: "@capacitor/core@npm:8.0.0"
+  dependencies:
+    tslib: "npm:^2.1.0"
+  checksum: 10c0/a8034158794481f12bf29ef25578c925f7ddc762503102713562ca5888c9397e42f8cc48679b7f1cd7f7ce71bdc1de787286e2f0760935361892d9c6f34302f1
   languageName: node
   linkType: hard
 
@@ -2172,12 +2190,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@capacitor/haptics@npm:^7.0.2":
-  version: 7.0.2
-  resolution: "@capacitor/haptics@npm:7.0.2"
+"@capacitor/haptics@npm:^8.0.0":
+  version: 8.0.0
+  resolution: "@capacitor/haptics@npm:8.0.0"
   peerDependencies:
-    "@capacitor/core": ">=7.0.0"
-  checksum: 10c0/1756a80c205daaded385e13031558db178760961f5dd310002dbdf21bdd021368b4c20c85be7b903346191b463d8b755f75d76d5690350fe53a3a4935814ee34
+    "@capacitor/core": ">=8.0.0"
+  checksum: 10c0/3d9f0b7925c11fb11ca095de78fa6c2785e86fdc198262082858f01af44205484d307ab442ba03aec24df0ab93c8b962c88919e197f867c2a3f5d3abcd30f0ae
   languageName: node
   linkType: hard
 
@@ -2190,21 +2208,30 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@capacitor/keyboard@npm:^7.0.3":
-  version: 7.0.3
-  resolution: "@capacitor/keyboard@npm:7.0.3"
+"@capacitor/ios@npm:^8.0.0":
+  version: 8.0.0
+  resolution: "@capacitor/ios@npm:8.0.0"
   peerDependencies:
-    "@capacitor/core": ">=7.0.0"
-  checksum: 10c0/6b94ec8a41ffc497cac5eac3bfbda47ef7b1dd028131b4dc4d9e0b6aa9a33c21b80ef90a1cec59440231cbba3628c345cfdcebaac96200d9f1810ead53e3097b
+    "@capacitor/core": ^8.0.0
+  checksum: 10c0/00b9117e0b166bb1991e971586de74545c9728ed2034ee68585b473ff1861e38d2a5ffa2a656d1720a3d010f9ecae1a4773e7825c56c17c1310cf1fd495e2837
   languageName: node
   linkType: hard
 
-"@capacitor/status-bar@npm:^7.0.3":
-  version: 7.0.3
-  resolution: "@capacitor/status-bar@npm:7.0.3"
+"@capacitor/keyboard@npm:^8.0.0":
+  version: 8.0.0
+  resolution: "@capacitor/keyboard@npm:8.0.0"
   peerDependencies:
-    "@capacitor/core": ">=7.0.0"
-  checksum: 10c0/ec16d5b61ee08b80ac1b828ffc49e9f57ce114a452e8a940a487334bef9db6fef90c21e040c0cef1a2a81bf9803d02f166665ad8b8195afd073d9867dc14ee13
+    "@capacitor/core": ">=8.0.0"
+  checksum: 10c0/755ef1ccf80c3d9fa46be595e7c4115d252f64b299d2e40cf01e8c42b5cb75c2677a142b1f2f19c7e134a033099c92ac65b4f8267feebc22ea171cddfb704bba
+  languageName: node
+  linkType: hard
+
+"@capacitor/status-bar@npm:^8.0.0":
+  version: 8.0.0
+  resolution: "@capacitor/status-bar@npm:8.0.0"
+  peerDependencies:
+    "@capacitor/core": ">=8.0.0"
+  checksum: 10c0/5a8a33073b27e138805a722f15318fc56efc999da445091af2e5d961543eae411799a38f9ccbdad3fcc4853ee85d9f173455901eda4ec48055fe2bf0f3c3ead2
   languageName: node
   linkType: hard
 
@@ -9729,14 +9756,14 @@ __metadata:
   dependencies:
     "@babel/core": "npm:^7.28.5"
     "@babel/plugin-proposal-private-property-in-object": "npm:^7.21.11"
-    "@capacitor/android": "npm:^7.4.3"
-    "@capacitor/cli": "npm:^7.4.4"
-    "@capacitor/clipboard": "npm:^7.0.2"
-    "@capacitor/core": "npm:^7.4.4"
-    "@capacitor/haptics": "npm:^7.0.2"
-    "@capacitor/ios": "npm:^7.4.4"
-    "@capacitor/keyboard": "npm:^7.0.3"
-    "@capacitor/status-bar": "npm:^7.0.3"
+    "@capacitor/android": "npm:^8.0.0"
+    "@capacitor/cli": "npm:^8.0.0"
+    "@capacitor/clipboard": "npm:^8.0.0"
+    "@capacitor/core": "npm:^8.0.0"
+    "@capacitor/haptics": "npm:^8.0.0"
+    "@capacitor/ios": "npm:^8.0.0"
+    "@capacitor/keyboard": "npm:^8.0.0"
+    "@capacitor/status-bar": "npm:^8.0.0"
     "@emotion/react": "npm:^11.14.0"
     "@emotion/styled": "npm:^11.14.1"
     "@mui/material": "npm:^7.3.5"
