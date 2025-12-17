@@ -47,6 +47,7 @@ import storageModel from '../stores/storageModel'
 import suppressFocusStore from '../stores/suppressFocus'
 import addEmojiSpace from '../util/addEmojiSpace'
 import containsURL from '../util/containsURL'
+import detectVoidArea from '../util/detectVoidArea'
 import ellipsize from '../util/ellipsize'
 import equalPath from '../util/equalPath'
 import haptics from '../util/haptics'
@@ -56,7 +57,6 @@ import isDocumentEditable from '../util/isDocumentEditable'
 import strip from '../util/strip'
 import stripEmptyFormattingTags from '../util/stripEmptyFormattingTags'
 import trimHtml from '../util/trimHtml'
-import detectVoidAreaTap from '../util/voidAreaDetection'
 import ContentEditable, { ContentEditableEvent } from './ContentEditable'
 import useEditMode from './Editable/useEditMode'
 import useOnCopy from './Editable/useOnCopy'
@@ -535,7 +535,7 @@ const Editable = ({
       const editable = contentRef.current
       if (!editable) return false
 
-      const caretPositionInfo = detectVoidAreaTap(editable, clientX, clientY)
+      const caretPositionInfo = detectVoidArea(editable, { clientX, clientY })
       if (!caretPositionInfo) return false
 
       // Void area tap detected, prevent default browser behavior
