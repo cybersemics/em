@@ -160,7 +160,7 @@ const ThoughtAnnotation = React.memo(
               <span
                 className={css({
                   position: 'absolute',
-                  top: '-0.425em',
+                  top: url || email ? '-0.425em' : multiline ? 'calc(-0.25em - 0.5px)' : 'calc(-0.425em - 0.5px)',
                 })}
               >
                 <StaticSuperscript n={numContexts} style={style} cssRaw={cssRaw} thoughtId={head(simplePath)} />
