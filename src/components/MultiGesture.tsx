@@ -1,10 +1,10 @@
 import React, { PropsWithChildren } from 'react'
-import { GestureResponderEvent, PanResponder, PanResponderInstance, View } from 'react-native'
 import Direction from '../@types/Direction'
 import GesturePath from '../@types/GesturePath'
 import { noop } from '../constants'
 import gestureStore from '../stores/gesture'
 import isInGestureZone from '../util/isInGestureZone'
+import { GestureResponderEvent, PanResponder, PanResponderInstance, View } from './PanResponder'
 import ScrollZone from './ScrollZone'
 import TraceGesture from './TraceGesture'
 
