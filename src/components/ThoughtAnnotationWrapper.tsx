@@ -3,7 +3,6 @@ import { css, cx } from '../../styled-system/css'
 import { multilineRecipe } from '../../styled-system/recipes'
 import { SystemStyleObject } from '../../styled-system/types'
 import { MIN_CONTENT_WIDTH_EM } from '../constants'
-import annotationPointerEvents from '../recipes/annotationPointerEvents'
 import isAttribute from '../util/isAttribute'
 import FauxCaret from './FauxCaret'
 
@@ -16,7 +15,6 @@ const ThoughtAnnotationWrapper: FC<
   PropsWithChildren<{
     cursorOverlay?: boolean
     ellipsizedUrl?: boolean
-    isVisible?: boolean
     multiline?: boolean
     value?: string
     styleAnnotation?: React.CSSProperties
@@ -29,7 +27,6 @@ const ThoughtAnnotationWrapper: FC<
 > = ({
   cursorOverlay,
   ellipsizedUrl,
-  isVisible,
   multiline,
   value,
   styleAnnotation,
@@ -43,70 +40,59 @@ const ThoughtAnnotationWrapper: FC<
   return (
     <div
       aria-label='thought-annotation'
-      className={cx(
-        // Use annotationPointerEvents to set pointerEvents: 'none' as the base.
-        // This allows clicks to pass through to the editable text below.
-        // Interactive children (like UrlIconLink) can override this using the override variant.
-        // When isVisible is false, the ancestor Subthought container sets pointerEvents: 'none',
-        // which prevents all descendants from receiving pointer events, even with override.
-        annotationPointerEvents(),
-        css({
-          position: 'absolute',
-          userSelect: 'none',
-          boxSizing: 'border-box',
-          width: '100%',
-          // maxWidth: '100%',
-          marginTop: '0',
-          display: 'inline-block',
-          textAlign: 'left',
-          verticalAlign: 'top',
-          whiteSpace: 'pre-wrap',
-          /* override editable-annotation's single line to have same width with .editable. 100% - 1em since .editable has padding-right 1em */
-          maxWidth: ellipsizedUrl ? 'calc(100% - 2em)' : '100%',
-          '@media (max-width: 500px)': {
-            marginTop: { _android: '-2.1px' },
-            marginLeft: { _android: '0.5em' },
-          },
-          '@media (min-width: 560px) and (max-width: 1024px)': {
-            marginTop: { _android: '-0.1px' },
-            marginLeft: { _android: '0.5em' },
-          },
-        }),
-      )}
+      className={css({
+        position: 'absolute',
+        userSelect: 'none',
+        boxSizing: 'border-box',
+        width: '100%',
+        // maxWidth: '100%',
+        marginTop: '0',
+        display: 'inline-block',
+        textAlign: 'left',
+        verticalAlign: 'top',
+        whiteSpace: 'pre-wrap',
+        /* override editable-annotation's single line to have same width with .editable. 100% - 1em since .editable has padding-right 1em */
+        maxWidth: ellipsizedUrl ? 'calc(100% - 2em)' : '100%',
+        '@media (max-width: 500px)': {
+          marginTop: { _android: '-2.1px' },
+          marginLeft: { _android: '0.5em' },
+        },
+        '@media (min-width: 560px) and (max-width: 1024px)': {
+          marginTop: { _android: '-0.1px' },
+          marginLeft: { _android: '0.5em' },
+        },
+      })}
     >
       <div
-        className={cx(
-          multiline ? multilineRecipe() : null,
-          // When isVisible is false, disable all children from receiving pointer events.
-          // This prevents children from using annotationPointerEvents({ override: true })
-          // to override the wrapper's pointerEvents: 'none'. This ensures hidden thoughts
-          // (hidden by autofocus) are not clickable, even if their children try to override.
-          annotationPointerEvents({ disableChildren: isVisible === false }),
-          css({
-            ...(value &&
-              isAttribute(value) && {
-                backgroundColor: 'thoughtAnnotation',
-                fontFamily: 'monospace',
-              }),
-            display: 'inline-block',
-            maxWidth: '100%',
-            padding: '0 0.333em',
-            boxSizing: 'border-box',
-            whiteSpace: ellipsizedUrl ? 'nowrap' : undefined,
-            /*
-                Since .editable-annotation-text is display: inline the margin only gets applied to its first line, and not later lines.
-                To make sure all lines are aligned need to apply the margin here, and remove margin from the .editable-annotation-text
-              */
-            margin: '-0.5px 0 0 calc(1em - 18px)',
-            paddingRight: multiline ? '1em' : '0.333em',
-            textAlign: isTableCol1 ? 'right' : 'left',
-          }),
-        )}
-        // disable intrathought linking until add, edit, delete, and expansion can be implemented
-        // 'subthought-highlight': isEditing && focusOffset != null && subthought.contexts.length > (subthought.text === value ? 1 : 0) && subthoughtUnderSelection() && subthought.text === subthoughtUnderSelection().text
-        // .subthought-highlight {
-        //   border-bottom: solid 1px;
-        // }
+        className={
+          cx(
+            multiline ? multilineRecipe() : null,
+            css({
+              ...(value &&
+                isAttribute(value) && {
+                  backgroundColor: 'thoughtAnnotation',
+                  fontFamily: 'monospace',
+                }),
+              display: 'inline-block',
+              maxWidth: '100%',
+              padding: '0 0.333em',
+              boxSizing: 'border-box',
+              whiteSpace: ellipsizedUrl ? 'nowrap' : undefined,
+              /*
+                  Since .editable-annotation-text is display: inline the margin only gets applied to its first line, and not later lines.
+                  To make sure all lines are aligned need to apply the margin here, and remove margin from the .editable-annotation-text
+                */
+              margin: '-0.5px 0 0 calc(1em - 18px)',
+              paddingRight: multiline ? '1em' : '0.333em',
+              textAlign: isTableCol1 ? 'right' : 'left',
+            }),
+          )
+          // disable intrathought linking until add, edit, delete, and expansion can be implemented
+          // 'subthought-highlight': isEditing && focusOffset != null && subthought.contexts.length > (subthought.text === value ? 1 : 0) && subthoughtUnderSelection() && subthought.text === subthoughtUnderSelection().text
+          // .subthought-highlight {
+          //   border-bottom: solid 1px;
+          // }
+        }
         style={{
           ...styleAnnotation,
           minWidth: `${MIN_CONTENT_WIDTH_EM - 0.333 - 0.333}em`, // min width of thought (3em) - 0.333em left padding - 0.333em right padding

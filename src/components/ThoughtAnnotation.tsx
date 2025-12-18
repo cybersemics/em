@@ -1,7 +1,7 @@
 import moize from 'moize'
 import React, { useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { css, cx } from '../../styled-system/css'
+import { css } from '../../styled-system/css'
 import { SystemStyleObject } from '../../styled-system/types'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
@@ -10,7 +10,6 @@ import State from '../@types/State'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { isSafari, isTouch } from '../browser'
 import { REGEX_PUNCTUATIONS, REGEX_TAGS, Settings } from '../constants'
-import annotationPointerEvents from '../recipes/annotationPointerEvents'
 import attributeEquals from '../selectors/attributeEquals'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import findDescendant from '../selectors/findDescendant'
@@ -64,13 +63,7 @@ const UrlIconLink = React.memo(({ url }: { url: string }) => {
       href={addMissingProtocol(url)}
       rel='noopener noreferrer'
       target='_blank'
-      // Use annotationPointerEvents with override: true to override ThoughtAnnotationWrapper's
-      // pointerEvents: 'none' and make the icon clickable. This is a typesafe way to override
-      // the inherited pointer-events style, similar to how toolbar buttons override the toolbar.
-      // When the thought is hidden (isVisible: false), ThoughtAnnotationWrapper prevents this
-      // override by applying pointerEvents: 'none' to all children via the disableChildren variant,
-      // ensuring hidden thoughts are not clickable.
-      className={cx(urlLinkStyle, annotationPointerEvents({ override: true }))}
+      className={urlLinkStyle}
       {...fastClick(e => {
         e.stopPropagation() // prevent Editable onMouseDown
         if (isInternalLink(url)) {
@@ -93,16 +86,7 @@ UrlIconLink.displayName = 'UrlIconLink'
 
 /** Renders an email icon and adds mailto: to email addresses. */
 const EmailIconLink = React.memo(({ email }: { email: string }) => (
-  <a
-    href={`mailto:${email}`}
-    target='_blank'
-    rel='noopener noreferrer'
-    // Use annotationPointerEvents with override: true to override ThoughtAnnotationWrapper's
-    // pointerEvents: 'none' and make the email link clickable. When the thought is hidden,
-    // ThoughtAnnotationWrapper prevents this override by applying pointerEvents: 'none' to all
-    // children via the disableChildren variant.
-    className={cx(urlLinkStyle, annotationPointerEvents({ override: true }))}
-  >
+  <a href={`mailto:${email}`} target='_blank' rel='noopener noreferrer' className={urlLinkStyle}>
     {' '}
     <EmailIcon />
   </a>
@@ -113,7 +97,6 @@ const ThoughtAnnotation = React.memo(
   ({
     email,
     isEditing,
-    isVisible,
     multiline,
     ellipsizedUrl,
     numContexts,
@@ -129,7 +112,6 @@ const ThoughtAnnotation = React.memo(
   }: {
     email?: string
     isEditing: boolean
-    isVisible?: boolean
     multiline?: boolean
     ellipsizedUrl?: boolean
     numContexts: number
@@ -169,7 +151,6 @@ const ThoughtAnnotation = React.memo(
       <ThoughtAnnotationWrapper
         isTableCol1={isTableCol1}
         ellipsizedUrl={ellipsizedUrl}
-        isVisible={isVisible}
         multiline={multiline}
         value={value}
         styleAnnotation={styleAnnotation}
@@ -199,7 +180,6 @@ const ThoughtAnnotation = React.memo(
 /** Container for ThoughtAnnotation. */
 const ThoughtAnnotationContainer = React.memo(
   ({
-    isVisible,
     path,
     simplePath,
     minContexts = 2,
@@ -215,7 +195,6 @@ const ThoughtAnnotationContainer = React.memo(
     env?: LazyEnv
     focusOffset?: number
     invalidState?: boolean
-    isVisible?: boolean
     minContexts?: number
     multiline?: boolean
     ellipsizedUrl?: boolean
@@ -309,7 +288,6 @@ const ThoughtAnnotationContainer = React.memo(
         {...{
           simplePath,
           isEditing,
-          isVisible,
           multiline,
           ellipsizedUrl: ellipsizedUrl,
           numContexts,

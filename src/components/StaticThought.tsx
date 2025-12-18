@@ -168,7 +168,6 @@ const StaticThought = ({
         ellipsizedUrl={ellipsizedUrl}
         placeholder={placeholder}
         path={path}
-        isVisible={isVisible}
         showContextBreadcrumbs={showContextBreadcrumbs}
         simplePath={simplePath}
         cssRaw={cssRawThought}
