@@ -167,6 +167,7 @@ const ThoughtAnnotation = React.memo(
               </span>
             ) : null
           }
+          &#8203; {/* zero-width space */}
           <span className={css({ fontSize: '1.25em', margin: '-0.3625em 0 0 -0.0875em', position: 'absolute' })}>
             <FauxCaret caretType='thoughtEnd' />
           </span>
