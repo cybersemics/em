@@ -1,4 +1,5 @@
 import { PropsWithChildren, forwardRef, useCallback } from 'react'
+import { ConnectDragSource } from 'react-dnd'
 import { useDispatch, useSelector } from 'react-redux'
 import { css, cva, cx } from '../../styled-system/css'
 import { bulletRecipe } from '../../styled-system/recipes'
@@ -9,12 +10,14 @@ import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { setDescendantActionCreator as setDescendant } from '../actions/setDescendant'
 import { isMac, isSafari, isTouch, isiPhone } from '../browser'
 import { LongPressState } from '../constants'
+import { LongPressProps } from '../hooks/useLongPress'
 import findDescendant from '../selectors/findDescendant'
 import getChildren from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import isMulticursorPath from '../selectors/isMulticursorPath'
 import isPinned from '../selectors/isPinned'
+import dndRef from '../util/dndRef'
 import fastClick from '../util/fastClick'
 import getBulletWidth from '../util/getBulletWidth'
 import hashPath from '../util/hashPath'
@@ -182,6 +185,8 @@ const glyph = cva({
 })
 
 type BulletPositionerProps = {
+  dragSource?: ConnectDragSource
+  longPressProps?: LongPressProps
   path: Path
   simplePath: SimplePath
   isEditing: boolean
@@ -201,6 +206,8 @@ const BulletPositioner = forwardRef<SVGSVGElement, PropsWithChildren<BulletPosit
   (
     {
       children,
+      dragSource,
+      longPressProps,
       path,
       isEditing,
       isInContextView,
@@ -294,6 +301,7 @@ const BulletPositioner = forwardRef<SVGSVGElement, PropsWithChildren<BulletPosit
         data-testid={cursorOverlay ? undefined : 'bullet-' + hashPath(path)}
         aria-label={cursorOverlay ? undefined : 'bullet'}
         data-highlighted={cursorOverlay ? undefined : isHighlighted}
+        ref={dragSource ? dndRef(ref => dragSource(ref)) : undefined}
         className={cx(
           bulletRecipe({ invalid }),
           css({
@@ -329,6 +337,7 @@ const BulletPositioner = forwardRef<SVGSVGElement, PropsWithChildren<BulletPosit
           zIndex: cursorOverlay ? 0 : 1,
         }}
         {...(!cursorOverlay && fastClick(clickHandler, { enableHaptics: false }))}
+        {...longPressProps}
       >
         <svg
           className={cx(
