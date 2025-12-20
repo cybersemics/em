@@ -235,6 +235,7 @@ const CommandPalette: FC<{
           cursor: 'default',
           display: 'flex',
           flexDirection: 'column',
+          marginBottom: `${fontSize}`,
         })}
         /**
          * Clicking anywhere outside this element will close the command palette.
@@ -242,7 +243,7 @@ const CommandPalette: FC<{
          * See `onClick` on parent.
          * */
         onClick={e => e.stopPropagation()}
-        style={{ fontSize, marginBottom: fontSize }}
+        style={{ fontSize }}
       >
         <h2
           className={css({
