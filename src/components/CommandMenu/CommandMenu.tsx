@@ -98,7 +98,7 @@ const CommandMenu = () => {
             height: 'calc(100% + 110px)',
           })}
           style={{
-            height: height,
+            height,
           }}
         />
         <motion.div
@@ -116,10 +116,10 @@ const CommandMenu = () => {
         />
         <Sheet.Backdrop
           style={{
+            zIndex: 'auto', // required to override backdrop styles
             opacity,
           }}
           className={css({
-            zIndex: 'auto',
             position: 'fixed',
             pointerEvents: 'none',
             backgroundImage: 'url(/img/command-center/overlay.webp)',
