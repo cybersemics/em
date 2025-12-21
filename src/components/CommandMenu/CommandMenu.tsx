@@ -84,7 +84,6 @@ const CommandMenu = () => {
   }, [dispatch])
 
   if (isTouch && !isTutorialOn) {
-    console.log('showCommandMenu', showCommandMenu)
     return (
       <Sheet ref={ref} isOpen={showCommandMenu} onClose={onClose} detent='content' unstyled>
         <motion.div
