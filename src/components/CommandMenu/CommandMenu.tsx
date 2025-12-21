@@ -102,22 +102,6 @@ const CommandMenu = () => {
             height: height,
           }}
         />
-        <Sheet.Backdrop
-          style={{
-            opacity,
-          }}
-          className={css({
-            position: 'fixed',
-            pointerEvents: 'none',
-            backgroundImage: 'url(/img/command-center/overlay.webp)',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center bottom',
-            mixBlendMode: 'screen',
-            height: '100vh',
-            width: '100%',
-            bottom: 0,
-          })}
-        />
         <motion.div
           /** Falloff. */
           className={css({
@@ -131,6 +115,23 @@ const CommandMenu = () => {
           })}
           style={{ height }}
         />
+        <Sheet.Backdrop
+          style={{
+            opacity,
+          }}
+          className={css({
+            zIndex: 'auto',
+            position: 'fixed',
+            pointerEvents: 'none',
+            backgroundImage: 'url(/img/command-center/overlay.webp)',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center bottom',
+            mixBlendMode: 'screen',
+            height: '100vh',
+            width: '100%',
+            bottom: 0,
+          })}
+        />
         <Sheet.Container
           data-testid='command-menu-panel'
           style={{
@@ -143,6 +144,7 @@ const CommandMenu = () => {
             maxHeight: '70%',
             pointerEvents: 'auto',
             boxShadow: 'none',
+            zIndex: 'auto',
           }}
         >
           <Sheet.Content
