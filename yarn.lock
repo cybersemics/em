@@ -9817,6 +9817,7 @@ __metadata:
     lottie-react: "npm:^2.4.1"
     marked: "npm:^17.0.1"
     moize: "npm:^6.1.6"
+    motion: "npm:^12.23.26"
     murmurhash3js: "npm:^3.0.1"
     nanoid: "npm:^5.1.6"
     npm-run-all2: "npm:^8.0.4"
@@ -9838,6 +9839,7 @@ __metadata:
     react-dom: "npm:^19.1.1"
     react-error-boundary: "npm:^6.0.0"
     react-gravatar: "npm:^2.6.3"
+    react-modal-sheet: "npm:^5.2.1"
     react-native-web: "npm:^0.21.2"
     react-redux: "npm:^9.2.0"
     react-signature-pad-wrapper: "npm:^4.3.2"
@@ -11682,6 +11684,28 @@ __metadata:
   version: 1.0.2
   resolution: "fp-and-or@npm:1.0.2"
   checksum: 10c0/6107dcdafc318a028a0c757d3cd5d977b07b80b7125edbbd77b7b8874d48cb897f79a0965c9a972b7a751e06f7715c389d14378cf5cb9fe92fe593cbf5a1ee34
+  languageName: node
+  linkType: hard
+
+"framer-motion@npm:^12.23.26":
+  version: 12.23.26
+  resolution: "framer-motion@npm:12.23.26"
+  dependencies:
+    motion-dom: "npm:^12.23.23"
+    motion-utils: "npm:^12.23.6"
+    tslib: "npm:^2.4.0"
+  peerDependencies:
+    "@emotion/is-prop-valid": "*"
+    react: ^18.0.0 || ^19.0.0
+    react-dom: ^18.0.0 || ^19.0.0
+  peerDependenciesMeta:
+    "@emotion/is-prop-valid":
+      optional: true
+    react:
+      optional: true
+    react-dom:
+      optional: true
+  checksum: 10c0/7dbbc4a392b969804e04a056e3d89a55bf31572dc7f6cd79050b90616fbb84a1762e4ac4e2537c735d347bbf4ceebea126f5c090234149b12cffa3ea6c518a34
   languageName: node
   linkType: hard
 
@@ -15871,6 +15895,43 @@ __metadata:
   languageName: node
   linkType: hard
 
+"motion-dom@npm:^12.23.23":
+  version: 12.23.23
+  resolution: "motion-dom@npm:12.23.23"
+  dependencies:
+    motion-utils: "npm:^12.23.6"
+  checksum: 10c0/139705731085063519b88f23fcc5b1c13e15707a4ff3365da02ef9a4bf2a2d8ebed9a151c57e7f215ccd9e822365d93c16e28e619fbf25611f61dcff5ee81d75
+  languageName: node
+  linkType: hard
+
+"motion-utils@npm:^12.23.6":
+  version: 12.23.6
+  resolution: "motion-utils@npm:12.23.6"
+  checksum: 10c0/c058e8ba6423b3baa63e985bcc669877ee7d9579d938f5348b4e60c5ea1b4b33dd7f4877434436a4a5807f3cf00370d3fd4079a6fdd6309c5c87aa62b311a897
+  languageName: node
+  linkType: hard
+
+"motion@npm:^12.23.26":
+  version: 12.23.26
+  resolution: "motion@npm:12.23.26"
+  dependencies:
+    framer-motion: "npm:^12.23.26"
+    tslib: "npm:^2.4.0"
+  peerDependencies:
+    "@emotion/is-prop-valid": "*"
+    react: ^18.0.0 || ^19.0.0
+    react-dom: ^18.0.0 || ^19.0.0
+  peerDependenciesMeta:
+    "@emotion/is-prop-valid":
+      optional: true
+    react:
+      optional: true
+    react-dom:
+      optional: true
+  checksum: 10c0/80ac9c2caaa149fb6feaad4146294b304dda52a643360063eb7a672bf7e7c8e134ec201ddcfafc0a918113004aed939ddbacf546b0e2297ea23955c78235c497
+  languageName: node
+  linkType: hard
+
 "mrmime@npm:^2.0.0":
   version: 2.0.1
   resolution: "mrmime@npm:2.0.1"
@@ -18136,6 +18197,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-modal-sheet@npm:^5.2.1":
+  version: 5.2.1
+  resolution: "react-modal-sheet@npm:5.2.1"
+  dependencies:
+    react-use-measure: "npm:2.1.7"
+  peerDependencies:
+    motion: ">=11"
+    react: ">=16"
+  checksum: 10c0/b622d670e83d3035b3b798564143a7f7cf34987e66c800837d6dc784a1d3afb606c7e67d89ea92bca65c73fa286a0e6bc076ce6d0eb1dc64b91d95f2e85ffe97
+  languageName: node
+  linkType: hard
+
 "react-native-web@npm:^0.21.2":
   version: 0.21.2
   resolution: "react-native-web@npm:0.21.2"
@@ -18268,6 +18341,19 @@ __metadata:
     react: ">=16.6.0"
     react-dom: ">=16.6.0"
   checksum: 10c0/2ba754ba748faefa15f87c96dfa700d5525054a0141de8c75763aae6734af0740e77e11261a1e8f4ffc08fd9ab78510122e05c21c2d79066c38bb6861a886c82
+  languageName: node
+  linkType: hard
+
+"react-use-measure@npm:2.1.7":
+  version: 2.1.7
+  resolution: "react-use-measure@npm:2.1.7"
+  peerDependencies:
+    react: ">=16.13"
+    react-dom: ">=16.13"
+  peerDependenciesMeta:
+    react-dom:
+      optional: true
+  checksum: 10c0/ff24130e6f95e853feb6892fb74af08dbc5aae3574b701169e3bc3adb392c3162f51a58ddfe39bb7337db13ae609bbec0bb51a9de8b5fae5420f9d17e1f8b542
   languageName: node
   linkType: hard
 
