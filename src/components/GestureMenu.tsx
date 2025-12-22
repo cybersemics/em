@@ -24,6 +24,8 @@ const GestureMenu: FC<{
   const gestureInProgress = gestureStore.useSelector(state => state.gesture)
   const fontSize = useSelector(state => state.fontSize)
 
+  const hasMatchingCommand = commands.some(cmd => (gestureInProgress as string) === gestureString(cmd))
+
   /* Select the last command in the list. */
 
   return (
@@ -51,45 +53,31 @@ const GestureMenu: FC<{
         style={{ fontSize }}
       >
         {gestureInProgress && commands.length > 0 ? (
-          <>
-            <div
-              className={css({
-                padding: '0.85em 0.66em',
-              })}
-            >
-              {commands.length > 0 ? (
-                <>
-                  {(() => {
-                    const hasMatchingCommand = commands.some(
-                      cmd => (gestureInProgress as string) === gestureString(cmd),
-                    )
+          <div
+            className={css({
+              padding: '0.85em 0.66em',
+            })}
+          >
+            {commands.map((command, index) => {
+              // Check if the current gesture sequence ends with help gesture
+              const cheatsheetInProgress = gestureInProgress
+                ?.toString()
+                .endsWith(gestureString(openGestureCheatsheetCommand))
+              const isCheatsheetMatch = command.id === 'openGestureCheatsheet' && cheatsheetInProgress
+              const isCancelMatch = command.id === 'cancel' && !hasMatchingCommand && !cheatsheetInProgress
 
-                    return commands.map((command, index) => {
-                      // Check if the current gesture sequence ends with help gesture
-                      const cheatsheetInProgress = gestureInProgress
-                        ?.toString()
-                        .endsWith(gestureString(openGestureCheatsheetCommand))
-                      const isCheatsheetMatch = command.id === 'openGestureCheatsheet' && cheatsheetInProgress
-                      const isCancelMatch = command.id === 'cancel' && !hasMatchingCommand && !cheatsheetInProgress
-
-                      return (
-                        <CommandItem
-                          gestureInProgress={gestureInProgress as string}
-                          key={command.id}
-                          selected={isCheatsheetMatch || gestureInProgress === gestureString(command) || isCancelMatch}
-                          command={command}
-                          isFirstCommand={index === 0}
-                          isLastCommand={index === commands.length - 1}
-                        />
-                      )
-                    })
-                  })()}
-                </>
-              ) : (
-                <span className={css({ marginLeft: '1em' })}>No matching commands</span>
-              )}
-            </div>
-          </>
+              return (
+                <CommandItem
+                  gestureInProgress={gestureInProgress as string}
+                  key={command.id}
+                  selected={isCheatsheetMatch || gestureInProgress === gestureString(command) || isCancelMatch}
+                  command={command}
+                  isFirstCommand={index === 0}
+                  isLastCommand={index === commands.length - 1}
+                />
+              )
+            })}
+          </div>
         ) : null}
       </div>
     </div>

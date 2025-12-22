@@ -235,7 +235,7 @@ const CommandPalette: FC<{
           cursor: 'default',
           display: 'flex',
           flexDirection: 'column',
-          marginBottom: `${fontSize}`,
+          marginBottom: '1em',
         })}
         /**
          * Clicking anywhere outside this element will close the command palette.
@@ -269,23 +269,19 @@ const CommandPalette: FC<{
         >
           {commands.length > 0 ? (
             <>
-              {(() => {
-                return commands.map((command, index) => {
-                  return (
-                    <CommandItem
-                      search={search}
-                      key={command.id}
-                      onClick={onExecute}
-                      onHover={onHover}
-                      selected={command === selectedCommand.command}
-                      command={command}
-                      shouldScrollSelectedIntoView={selectedCommand.source === 'keyboard'}
-                      isFirstCommand={index === 0}
-                      isLastCommand={index === commands.length - 1}
-                    />
-                  )
-                })
-              })()}
+              {commands.map((command, index) => (
+                <CommandItem
+                  search={search}
+                  key={command.id}
+                  onClick={onExecute}
+                  onHover={onHover}
+                  selected={command === selectedCommand.command}
+                  command={command}
+                  shouldScrollSelectedIntoView={selectedCommand.source === 'keyboard'}
+                  isFirstCommand={index === 0}
+                  isLastCommand={index === commands.length - 1}
+                />
+              ))}
             </>
           ) : (
             <span className={css({ marginLeft: '1em' })}>No matching commands</span>
