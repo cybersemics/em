@@ -160,7 +160,7 @@
     "@capacitor/cli": "^7.4.4",
     "@pandacss/dev": "^1.5.1",
     "@pandacss/eslint-plugin": "^0.3.0",
-    "@sinonjs/fake-timers": "^15.0.0",
+    "@sinonjs/fake-timers": "^15.1.0",
     "@stylistic/eslint-plugin": "^5.6.1",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",

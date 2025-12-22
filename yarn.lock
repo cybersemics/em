@@ -5165,12 +5165,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sinonjs/fake-timers@npm:^15.0.0":
-  version: 15.0.0
-  resolution: "@sinonjs/fake-timers@npm:15.0.0"
+"@sinonjs/fake-timers@npm:^15.1.0":
+  version: 15.1.0
+  resolution: "@sinonjs/fake-timers@npm:15.1.0"
   dependencies:
     "@sinonjs/commons": "npm:^3.0.1"
-  checksum: 10c0/fa9e8d178689b29a4c0b5170e91525553870647d546919934b4d6e15bb86489d0c180f14cf8195e2fc361836bca2a1de91b5873239a20470dfa43bd22bb4b97b
+  checksum: 10c0/e2913b96376d197be7dae561229879df7fab76745ab4e93fd9d6518cc5010e543b8a4503887c0bb1afcc25493f9c0a4523a01e72b04bd9832b3f3d2c21c00847
   languageName: node
   linkType: hard
 
@@ -9750,7 +9750,7 @@ __metadata:
     "@pandacss/dev": "npm:^1.5.1"
     "@pandacss/eslint-plugin": "npm:^0.3.0"
     "@redux-devtools/extension": "npm:^3.3.0"
-    "@sinonjs/fake-timers": "npm:^15.0.0"
+    "@sinonjs/fake-timers": "npm:^15.1.0"
     "@stylistic/eslint-plugin": "npm:^5.6.1"
     "@stylistic/eslint-plugin-ts": "npm:^4.4.1"
     "@testing-library/dom": "npm:^10.4.1"
