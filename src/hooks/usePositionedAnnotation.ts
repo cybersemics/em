@@ -79,18 +79,20 @@ const usePositionedAnnotation = (
       // rect.right gives you the x position (relative to viewport)
       setLeft(`${right}px`)
       setRight(undefined)
-      setOpacity('1')
       setTransform(undefined)
     }
+
+    setOpacity('1')
   }, [editableRef, fontSize, isEditing, isTableCol1])
 
   // useSelector would be a cleaner way to get the editableRef's new position
   // but, on load, the refs are null until setTimeout runs
   useEffect(() => {
+    setOpacity('0')
+
     if (contextAnimation && descendant && !isEditing) {
       clearTimeout(timeoutRef.current)
       timeoutRef.current = 0
-      setOpacity('0')
     }
 
     // Don't interrupt an in-flight context animation
