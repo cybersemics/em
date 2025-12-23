@@ -8,6 +8,7 @@ const openCommandCenterCommand: Command = {
   description: `Opens a special keyboard which contains commands that can be executed on the cursor thought.`,
   gesture: 'u',
   multicursor: false,
+  hideAlert: true,
   svg: HelpIcon,
   canExecute: state => !!state.cursor,
   exec: (dispatch, getState) => {

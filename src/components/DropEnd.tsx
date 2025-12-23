@@ -7,7 +7,6 @@ import Path from '../@types/Path'
 import { isTouch } from '../browser'
 import testFlags from '../e2e/testFlags'
 import useDragAndDropSubThought from '../hooks/useDragAndDropSubThought'
-import useDropHoverWidth from '../hooks/useDropHoverWidth'
 import attributeEquals from '../selectors/attributeEquals'
 import dropHoverColor from '../selectors/dropHoverColor'
 import { getChildrenSorted } from '../selectors/getChildren'
@@ -54,8 +53,6 @@ const DropEnd = ({
   const isParentTableCol1 = useSelector(state =>
     attributeEquals(state, head(rootedParentOf(state, path)), '=view', 'Table'),
   )
-
-  const dropHoverLength = useDropHoverWidth({ isTableCol2: isParentTableCol1 })
 
   const { isHovering, dropTarget } = useDragAndDropSubThought({ path })
 
@@ -107,6 +104,8 @@ const DropEnd = ({
         dropEndRecipe(),
         css({
           display: 'list-item',
+          // If dropping target is table column 1, do not set width (but use width property of dropEndRecipe)
+          width: isParentTableCol1 ? undefined : 'dropHover',
           marginLeft: isRootPath ? '-4em' : last ? '-2em' : undefined,
           // offset marginLeft, minus 1em for bullet
           // otherwise drop-hover will be too far left
@@ -118,8 +117,6 @@ const DropEnd = ({
         height: isRootPath ? '8em' : `${0.7 + dropTargetHeight}em`,
         // use transform to avoid conflicting with margin, which is currently spread out across multiple components
         transform: `translateX(${DROPEND_FINGERSHIFT}em)`,
-        // If dropping target is table column 1, do not set width (but use width property of dropEndRecipe)
-        width: isParentTableCol1 ? undefined : dropHoverLength,
       }}
       ref={dndRef(dropTarget)}
     >
@@ -142,7 +139,6 @@ const DropEnd = ({
         <span
           className={dropHoverRecipe({ insideDropEnd: true })}
           style={{
-            width: dropHoverLength,
             backgroundColor: dropHoverColorValue,
             // shift the drop-hover back into the proper place visually, even though drop-end has been shifted right for touch
             marginLeft: `-${DROPEND_FINGERSHIFT}em`,

@@ -41,6 +41,8 @@ const durationsConfig = {
   disappearingLowerLeft: 500,
   /* Duration for command menu swipable drawer animation. */
   commandMenuDrawer: 400,
+  activeButtonGlowLuminosity: 400,
+  activeButtonGlowSaturation: 400,
 } as const
 
 export default durationsConfig

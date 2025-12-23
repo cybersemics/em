@@ -13,6 +13,7 @@ const cursorBackCommand: Command = {
   description: 'Move the cursor up a level.',
   gesture: 'r',
   svg: BackIcon,
+  hideAlert: true,
   keyboard: 'Escape',
   multicursor: false,
   exec: throttleByAnimationFrame((dispatch, getState) => {

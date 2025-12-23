@@ -10,6 +10,7 @@ const fadeTransitionRecipe = defineSlotRecipe({
   base: {
     enter: { opacity: 0 },
     enterActive: { opacity: 1 },
+    enterDone: { opacity: 1 },
     exit: { opacity: 1 },
     exitActive: { opacity: 0 },
     exitDone: { opacity: 0 },
@@ -32,6 +33,22 @@ const fadeTransitionRecipe = defineSlotRecipe({
         // Easing follows that of Material UI SwipeableDrawer.
         enterActive: { transition: `opacity {durations.commandMenuDrawer} cubic-bezier(0, 0, 0.2, 1) 0ms` },
         exitActive: { transition: `opacity {durations.commandMenuDrawer} cubic-bezier(0.4, 0, 0.2, 1) 0ms` },
+      },
+      activeButtonGlowLuminosity: {
+        enter: { opacity: 0 },
+        enterActive: { opacity: 0.75, transition: `opacity {durations.activeButtonGlowLuminosity} ease 0ms` },
+        enterDone: { opacity: 0.75 },
+        exit: { opacity: 0.75 },
+        exitActive: { opacity: 0, transition: `opacity {durations.activeButtonGlowLuminosity} ease 0ms` },
+        exitDone: { opacity: 0 },
+      },
+      activeButtonGlowSaturation: {
+        enter: { opacity: 0 },
+        enterActive: { opacity: 0.45, transition: `opacity {durations.activeButtonGlowSaturation} ease 0ms` },
+        enterDone: { opacity: 0.45 },
+        exit: { opacity: 0.45 },
+        exitActive: { opacity: 0, transition: `opacity {durations.activeButtonGlowSaturation} ease 0ms` },
+        exitDone: { opacity: 0 },
       },
       distractionFreeTyping: {
         enterActive: { transition: `opacity {durations.distractionFreeTyping} ease 0ms` },

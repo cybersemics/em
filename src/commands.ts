@@ -269,8 +269,8 @@ export const inputHandlers = (store: Store<State, any>) => ({
           dispatch(commandPalette())
         }
 
-        // Show alert for valid commands in training mode (except back/forward)
-        if (!experienceMode && command && command?.id !== 'cursorForward' && command?.id !== 'cursorBack') {
+        // Show alert for valid commands in training mode
+        if (!experienceMode && command && !command.hideAlert) {
           dispatch(
             alert(command.label, {
               alertType: AlertType.GestureHint,
