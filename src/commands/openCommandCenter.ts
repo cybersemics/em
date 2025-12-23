@@ -1,6 +1,7 @@
 import Command from '../@types/Command'
 import { addMulticursorActionCreator } from '../actions/addMulticursor'
 import HelpIcon from '../components/icons/HelpIcon'
+import hasMulticursor from '../selectors/hasMulticursor'
 
 const openCommandCenterCommand: Command = {
   id: 'openCommandCenter',
@@ -10,7 +11,7 @@ const openCommandCenterCommand: Command = {
   multicursor: false,
   hideAlert: true,
   svg: HelpIcon,
-  canExecute: state => !!state.cursor,
+  canExecute: state => !!state.cursor && !hasMulticursor(state),
   exec: (dispatch, getState) => {
     const state = getState()
     if (!state.cursor) return
