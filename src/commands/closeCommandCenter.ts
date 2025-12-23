@@ -8,6 +8,7 @@ const closeCommandCenterCommand: Command = {
   label: 'Close Command Center',
   description: `Closes the command center if it's open. You can also just tap on the empty space.`,
   gesture: 'd',
+  hideAlert: true,
   multicursor: false,
   svg: HelpIcon,
   canExecute: state => !!state.cursor && hasMulticursor(state),
