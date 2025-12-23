@@ -27,6 +27,7 @@ const usePositionedAnnotation = (
   editableRef: RefObject<HTMLDivElement | null>,
   isEditing: boolean,
   isTableCol1: boolean | undefined,
+  multiline: boolean | undefined,
   numContexts: number,
   path: Path,
 ) => {
@@ -88,9 +89,8 @@ const usePositionedAnnotation = (
   // useSelector would be a cleaner way to get the editableRef's new position
   // but, on load, the refs are null until setTimeout runs
   useEffect(() => {
-    setOpacity('0')
-
     if (contextAnimation && descendant && !isEditing) {
+      setOpacity('0')
       clearTimeout(timeoutRef.current)
       timeoutRef.current = 0
     }
@@ -98,13 +98,12 @@ const usePositionedAnnotation = (
     // Don't interrupt an in-flight context animation
     if (timeoutRef.current) return
 
-    timeoutRef.current = setTimeout(
-      () => {
+    if (contextAnimation) {
+      timeoutRef.current = setTimeout(() => {
         positionAnnotation()
         timeoutRef.current = 0
-      },
-      contextAnimation ? durations.get(contextAnimation) : 0,
-    ) as unknown as number
+      }, durations.get(contextAnimation)) as unknown as number
+    } else positionAnnotation()
   }, [
     contextAnimation,
     descendant,
@@ -113,6 +112,7 @@ const usePositionedAnnotation = (
     isEditing,
     isInContextView,
     isTableCol1,
+    multiline,
     numContexts,
     positionAnnotation,
   ])
