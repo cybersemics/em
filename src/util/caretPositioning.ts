@@ -108,7 +108,7 @@ const calculateHorizontalOffset = (node: Text, clientX: number, clientY: number)
   }
 
   // If the text node is multi-line, pick the closest line with respect to the Y coordinate
-  // and then do binary search within that line
+  // and then find the offset within that line
   const targetLine = findClosestLine(lines, clientY)
 
   // Search only inside that line

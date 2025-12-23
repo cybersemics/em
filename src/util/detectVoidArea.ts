@@ -108,11 +108,29 @@ const detectVoidArea = (editable: HTMLElement, { clientX, clientY }: Coordinates
   const offset = range.startOffset
   const nodeTextLength = node.textContent?.length || 0
 
+  // If the node is empty (placeholder text), return caret position at offset 0
+  if (nodeTextLength === 0) {
+    return { node: node as Text, nodeOffset: 0 }
+  }
+
   /** Get the bounding rectangle for a character at the given offset. */
   const getCharRect = (targetOffset: number): DOMRect | null => {
+    // Ensure targetOffset is within valid bounds
+    if (targetOffset < 0 || targetOffset > nodeTextLength) {
+      return null
+    }
+
     const charRange = document.createRange()
     charRange.setStart(node, targetOffset)
-    charRange.setEnd(node, targetOffset + 1)
+
+    // If targetOffset is at the end, collapse the range to that position
+    // Otherwise, set the end to targetOffset + 1 to get the character's bounding box
+    if (targetOffset >= nodeTextLength) {
+      charRange.collapse(true)
+    } else {
+      charRange.setEnd(node, targetOffset + 1)
+    }
+
     return charRange.getBoundingClientRect()
   }
 

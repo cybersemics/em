@@ -551,7 +551,8 @@ const Editable = ({
         )
 
         // Set caret manually
-        selection.set(caretPositionInfo.node, {
+        selection.restore({
+          node: caretPositionInfo.node,
           offset: Math.min(caretPositionInfo.nodeOffset, caretPositionInfo.node.length),
         })
       }
