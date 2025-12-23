@@ -268,21 +268,19 @@ const CommandPalette: FC<{
           })}
         >
           {commands.length > 0 ? (
-            <>
-              {commands.map((command, index) => (
-                <CommandItem
-                  search={search}
-                  key={command.id}
-                  onClick={onExecute}
-                  onHover={onHover}
-                  selected={command === selectedCommand.command}
-                  command={command}
-                  shouldScrollSelectedIntoView={selectedCommand.source === 'keyboard'}
-                  isFirstCommand={index === 0}
-                  isLastCommand={index === commands.length - 1}
-                />
-              ))}
-            </>
+            commands.map((command, index) => (
+              <CommandItem
+                search={search}
+                key={command.id}
+                onClick={onExecute}
+                onHover={onHover}
+                selected={command === selectedCommand.command}
+                command={command}
+                shouldScrollSelectedIntoView={selectedCommand.source === 'keyboard'}
+                isFirstCommand={index === 0}
+                isLastCommand={index === commands.length - 1}
+              />
+            ))
           ) : (
             <span className={css({ marginLeft: '1em' })}>No matching commands</span>
           )}
