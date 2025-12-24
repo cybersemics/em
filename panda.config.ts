@@ -126,6 +126,14 @@ const keyframes = defineKeyframes({
       opacity: 0.5,
     },
   },
+  pulseBackgroundHighlight: {
+    from: {
+      backgroundColor: 'highlight0',
+    },
+    to: {
+      backgroundColor: 'highlight10',
+    },
+  },
   ripple_loader: {
     '0%': {
       top: '100%',

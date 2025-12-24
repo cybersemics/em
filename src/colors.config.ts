@@ -31,6 +31,8 @@ const colors = {
     gray: 'rgba(169, 169, 169, 1)', // #a9a9a9, this is used for disabled things + text color, unlike gray66 it is the same for both light and dark
     green: 'rgba(0, 214, 136, 1)', // #00d688
     highlight: 'rgba(173, 216, 230, 1)', // #add8e6 (lightblue)
+    highlight0: 'rgba(173, 216, 230, 0)', // #add8e6 (lightblue - 0% alpha [used in pulseBackgroundHighlight animation])
+    highlight10: 'rgba(173, 216, 230, 0.1)', // #add8e6 (lightblue - 10% alpha [used in pulseBackgroundHighlight animation])
     highlight2: 'rgba(155, 170, 220, 1)', // (slight variation on highlight color for alternating highlights)
     lightgray: '#999999', // #999999
     lightgreen: 'rgba(144, 238, 144)', // #90ee90 (lightgreen)
@@ -117,6 +119,8 @@ const colors = {
     gray: 'rgba(169, 169, 169, 1)', // #a9a9a9
     green: 'rgba(0, 214, 136, 1)', // #00d688
     highlight: 'rgba(65, 105, 225, 1)', // #4169e1 (royalblue)
+    highlight0: 'rgba(173, 216, 230, 0)', // #add8e6 (lightblue - 0% alpha [used in pulseBackgroundHighlight animation])
+    highlight10: 'rgba(173, 216, 230, 0.1)', // #add8e6 (lightblue - 10% alpha [used in pulseBackgroundHighlight animation])
     highlight2: 'rgba(155, 170, 220, 1)', // (slight variation on highlight color for alternating highlights)
     lightgray: '#666666', // #666666
     lightgreen: 'rgba(0, 214, 136, 1)', // #00d688 (same as green in the light theme)

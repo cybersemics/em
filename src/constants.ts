@@ -460,6 +460,8 @@ export enum AlertType {
   MulticursorError = 'MulticursorError',
   // shown when the user redoes an action
   Redo = 'Redo',
+  // shown when the user attempts to open the Command Center without a cursor multiple times within 10 seconds
+  ScrollZoneHelp = 'ScrollZoneHelp',
   // shown when a toolbar button is hovering over the area for removal in the CustomizeToolbar modal
   ToolbarButtonRemoveHint = 'ToolbarButtonRemoveHint',
   // shown when the user undoes an action
