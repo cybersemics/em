@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { useMotionValueEvent, useTransform } from 'motion/react'
+import { useTransform } from 'motion/react'
 import { motion } from 'motion/react'
 import pluralize from 'pluralize'
 import { FC, useCallback, useRef } from 'react'
