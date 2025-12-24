@@ -47,9 +47,9 @@ import storageModel from '../stores/storageModel'
 import suppressFocusStore from '../stores/suppressFocus'
 import addEmojiSpace from '../util/addEmojiSpace'
 import containsURL from '../util/containsURL'
-import detectVoidArea from '../util/detectVoidArea'
 import ellipsize from '../util/ellipsize'
 import equalPath from '../util/equalPath'
+import getNodeOffsetForVoidArea from '../util/getNodeOffsetForVoidArea'
 import haptics from '../util/haptics'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
@@ -526,40 +526,18 @@ const Editable = ({
     [value, setCursorOnThought],
   )
 
-  /**
-   * Handles void area taps by preventing default and setting the caret.
-   * Returns true if we handled the tap (void area), false if browser should handle it (valid tap on character).
-   */
-  const handleVoidAreaTap = useCallback(
-    (clientX: number, clientY: number, preventDefault: () => void): boolean => {
-      const editable = contentRef.current
-      if (!editable) return false
-
-      const caretPositionInfo = detectVoidArea(editable, { clientX, clientY })
-      if (!caretPositionInfo) return false
-
-      // Void area tap detected, prevent default browser behavior
-      preventDefault()
-
-      if (caretPositionInfo.node) {
-        // Update Redux cursor state
-        dispatch(
-          setCursor({
-            path,
-            offset: caretPositionInfo.nodeOffset,
-          }),
-        )
-
-        // Set caret manually
-        selection.restore({
-          node: caretPositionInfo.node,
-          offset: Math.min(caretPositionInfo.nodeOffset, caretPositionInfo.node.length),
-        })
-      }
-
-      return true
+  /** Sets the caret position for a void area tap. */
+  const setVoidAreaCaret = useCallback(
+    (nodeOffset: number) => {
+      // Update Redux cursor state
+      dispatch(
+        setCursor({
+          path,
+          offset: nodeOffset,
+        }),
+      )
     },
-    [contentRef, dispatch, path],
+    [dispatch, path],
   )
 
   const onMouseDown = useCallback(
@@ -582,8 +560,17 @@ const Editable = ({
           bottomMargin: fontSize * 2,
         })
 
-        // If not a void area tap, allow browser's default selection
-        if (!handleVoidAreaTap(e.clientX, e.clientY, () => e.preventDefault())) {
+        // Handle void area detection
+        const nodeOffset = getNodeOffsetForVoidArea(contentRef.current, {
+          clientX: e.clientX,
+          clientY: e.clientY,
+        })
+        // nodeOffset is null if the tap is on a valid character
+        // in that case, allow the default selection
+        if (nodeOffset) {
+          e.preventDefault()
+          setVoidAreaCaret(nodeOffset)
+        } else {
           allowDefaultSelection()
         }
       }
@@ -595,31 +582,37 @@ const Editable = ({
         e.preventDefault()
       }
     },
-    [contentRef, editingOrOnCursor, fontSize, allowDefaultSelection, hasMulticursor, handleVoidAreaTap],
+    [contentRef, editingOrOnCursor, fontSize, allowDefaultSelection, hasMulticursor, setVoidAreaCaret],
   )
 
   // Manually attach touchstart listener with { passive: false } to allow preventDefault
   useEffect(() => {
     const editable = contentRef.current
     if (!editable) return
-
-    /** Handle touch events to prevent initial cursor jump (Safari-safe). */
+    /** Handle touch events to prevent initial cursor jump. */
     const handleTouchStart = (e: TouchEvent) => {
       if (editingOrOnCursor && !hasMulticursor && e.touches.length > 0) {
-        // If not a void area tap, allow browser's default selection
-        if (!handleVoidAreaTap(e.touches[0].clientX, e.touches[0].clientY, () => e.preventDefault())) {
+        const nodeOffset = getNodeOffsetForVoidArea(editable, {
+          clientX: e.touches[0].clientX,
+          clientY: e.touches[0].clientY,
+        })
+        // nodeOffset is null if the tap is on a valid character
+        // in that case, allow the default selection
+        if (nodeOffset) {
+          e.preventDefault()
+          setVoidAreaCaret(nodeOffset)
+        } else {
           allowDefaultSelection()
         }
       }
     }
 
-    // Add event listener with { passive: false } to allow preventDefault
     editable.addEventListener('touchstart', handleTouchStart, { passive: false })
 
     return () => {
       editable.removeEventListener('touchstart', handleTouchStart)
     }
-  }, [contentRef, editingOrOnCursor, hasMulticursor, allowDefaultSelection, handleVoidAreaTap])
+  }, [contentRef, editingOrOnCursor, hasMulticursor, allowDefaultSelection, setVoidAreaCaret])
 
   /** Sets the cursor on the thought on touchend or click. Handles hidden elements, drags, and editing mode. */
   const onTap = useCallback(

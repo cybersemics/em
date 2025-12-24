@@ -2,14 +2,12 @@
  * Safari does glyph-only hit testing, so clicking on empty space has no caret target.
  * This module provides API for detecting void area positions and calculating appropriate caret positions.
  */
-import calculateHorizontalOffset from './caretPositioning'
 
-/** Represents the result of void area detection with caret position information. */
-interface CaretPositionInfo {
-  /** The text node where the caret should be placed, or null if no valid position found. */
-  node: Text | null
-  /** The character offset within the text node. */
-  nodeOffset: number
+/** Represents a line within a text node with its character range and bounding box. */
+interface TextNodeLine {
+  start: number
+  end: number
+  rect: DOMRect
 }
 
 /** Represents a text node with its bounding rectangle. */
@@ -22,6 +20,117 @@ interface Coordinates {
   clientX: number
   clientY: number
 }
+
+/**
+ * Splits a text node into individual lines based on vertical position.
+ * Returns an array of line objects with start/end character positions and bounding boxes.
+ */
+const getTextNodeLines = (node: Text): TextNodeLine[] => {
+  const text = node.nodeValue ?? ''
+  if (!text) return []
+
+  const range = document.createRange()
+  let lastRect: DOMRect | null = null
+
+  return Array.from(text, (_, i) => {
+    range.setStart(node, i)
+    range.setEnd(node, i + 1)
+    const rect = range.getBoundingClientRect()
+    return rect.height ? { i, rect } : null
+  })
+    .filter((item): item is { i: number; rect: DOMRect } => item !== null)
+    .reduce<TextNodeLine[]>((lines, { i, rect }) => {
+      if (!lastRect || Math.abs(lastRect.top - rect.top) > rect.height / 2) {
+        lines.push({ start: i, end: i + 1, rect })
+      } else {
+        lines[lines.length - 1].end = i + 1
+      }
+      lastRect = rect
+      return lines
+    }, [])
+}
+
+/**
+ * Finds the character offset within a text node that corresponds to a given X coordinate.
+ *
+ * @param node - The text node to search within.
+ * @param clientX - The X coordinate of the tap/click.
+ * @param lo - Lower bound of the search range (character index).
+ * @param hi - Upper bound of the search range (character index).
+ * @returns The character offset where the caret should be placed.
+ */
+const findOffsetAtX = (node: Text, clientX: number, lo: number, hi: number): number => {
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1
+
+    const r = document.createRange()
+    r.setStart(node, mid)
+    r.setEnd(node, Math.min(mid + 1, hi))
+
+    const rect = r.getBoundingClientRect()
+
+    if (clientX < rect.left) {
+      hi = mid
+    } else if (clientX > rect.right) {
+      lo = mid + 1
+    } else {
+      const center = rect.left + rect.width / 2
+      return clientX < center ? mid : mid + 1
+    }
+  }
+
+  return lo
+}
+
+/**
+ * Calculates the vertical distance from a Y coordinate to a line's bounding rectangle.
+ * Returns 0 if the coordinate is within the line vertically.
+ */
+const getLineDistance = (clientY: number, rect: DOMRect): number =>
+  clientY < rect.top ? rect.top - clientY : clientY > rect.bottom ? clientY - rect.bottom : 0
+
+/** Finds the closest line to a Y coordinate within an array of lines. */
+const findClosestLine = (lines: TextNodeLine[], clientY: number): TextNodeLine => {
+  return lines.reduce<{ line: TextNodeLine; dist: number }>(
+    (closest, line) => {
+      const dist = getLineDistance(clientY, line.rect)
+      return dist < closest.dist ? { line, dist } : closest
+    },
+    { line: lines[0], dist: Infinity },
+  ).line
+}
+
+/**
+ * Resolves the horizontal character offset within a text node using binary search.
+ * Handles both single-line and multi-line text nodes.
+ *
+ * For multi-line text, it first finds the closest line vertically, then performs
+ * binary search within that line.
+ *
+ * @param node - The text node to search within.
+ * @param clientX - The X coordinate of the tap/click.
+ * @param clientY - The Y coordinate of the tap/click (used for multi-line text).
+ * @returns The character offset where the caret should be placed.
+ */
+const calculateHorizontalOffset = (node: Text, clientX: number, clientY: number): number => {
+  const text = node.nodeValue ?? ''
+  if (!text) return 0
+
+  const lines = getTextNodeLines(node)
+
+  // If the text node is a single line, find the offset directly
+  if (lines.length <= 1) {
+    return findOffsetAtX(node, clientX, 0, text.length)
+  }
+
+  // If the text node is multi-line, pick the closest line with respect to the Y coordinate
+  // and then find the offset within that line
+  const targetLine = findClosestLine(lines, clientY)
+
+  // Search only inside that line
+  return findOffsetAtX(node, clientX, targetLine.start, targetLine.end)
+}
+
 /**
  * Gets all text nodes within an element that can receive a caret.
  * Filters out empty or whitespace-only text nodes.
@@ -74,9 +183,12 @@ const findNearestTextNode = (textNodes: Text[], clientY: number): TextNodeWithRe
  * @param editable - The editable element containing the text.
  * @param clientX - The X coordinate.
  * @param clientY - The Y coordinate.
- * @returns Caret position info if it's a void area position, null if it is on a valid character.
+ * @returns The character offset where the caret should be placed, or null if it is on a valid character.
  */
-const detectVoidArea = (editable: HTMLElement, { clientX, clientY }: Coordinates): CaretPositionInfo | null => {
+const getNodeOffsetForVoidArea = (editable: HTMLElement | null, { clientX, clientY }: Coordinates): number | null => {
+  // If the editable is not found, return null
+  if (!editable) return null
+
   const doc = document as Document
 
   // These APIs are not available in test environments (JSDOM)
@@ -101,7 +213,7 @@ const detectVoidArea = (editable: HTMLElement, { clientX, clientY }: Coordinates
 
   // Ensure the coordinates are within our editable element
   if (!range || !editable.contains(range.startContainer)) {
-    return { node: null, nodeOffset: 0 }
+    return 0
   }
 
   const node = range.startContainer
@@ -110,7 +222,7 @@ const detectVoidArea = (editable: HTMLElement, { clientX, clientY }: Coordinates
 
   // If the node is empty (placeholder text), return caret position at offset 0
   if (nodeTextLength === 0) {
-    return { node: node as Text, nodeOffset: 0 }
+    return 0
   }
 
   /** Get the bounding rectangle for a character at the given offset. */
@@ -166,8 +278,7 @@ const detectVoidArea = (editable: HTMLElement, { clientX, clientY }: Coordinates
   const nearest = findNearestTextNode(textNodes, clientY)
   if (!nearest) return null
 
-  const nodeOffset = calculateHorizontalOffset(nearest.node, clientX, clientY)
-  return { node: nearest.node, nodeOffset }
+  return calculateHorizontalOffset(nearest.node, clientX, clientY)
 }
 
-export default detectVoidArea
+export default getNodeOffsetForVoidArea
