@@ -1,11 +1,8 @@
-import { CSSProperties, ReactNode, useLayoutEffect, useMemo, useState } from 'react'
+import { CSSProperties, ReactNode, useLayoutEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
-import ActionType from '../@types/ActionType'
 import Path from '../@types/Path'
 import State from '../@types/State'
-import durations from '../durations.config'
-import usePrevious from '../hooks/usePrevious'
 import isCursorGreaterThanParent from '../selectors/isCursorGreaterThanParent'
 import equalPath from '../util/equalPath'
 import hashPath from '../util/hashPath'
@@ -25,7 +22,6 @@ interface TreeNodePositionerProps {
   y: number
   width?: string | number
   fauxCaretNodeProvider?: CSSProperties
-  index: number
   path: Path
 }
 /**
@@ -42,45 +38,11 @@ const TreeNodePositioner = ({
   y: _y,
   width,
   isMounted,
-  index,
   path,
   cursorOverlay,
 }: TreeNodePositionerProps) => {
   const [y, setY] = useState(_y)
   const [x, setX] = useState(_x)
-
-  const [isSortAnimating, setIsSortAnimating] = useState(false)
-
-  // Store the on-screen index from the previous render to determine movement direction.
-  const previousIndex = usePrevious<number>(index)
-
-  /** Detect when this thought's on-screen position (array index) has changed. */
-  const indexChanged = previousIndex !== undefined && previousIndex !== index
-
-  /** True if the last action is setSortPreference. */
-  const isLastActionSort = useSelector(state => {
-    const sortActions: ActionType[] = ['setSortPreference', 'toggleSort']
-    return sortActions.includes(state.lastUndoableActionType as ActionType)
-  })
-
-  /**
-   * The direction of the curved animation in sort operations.
-   * - If the thought's rank increased (moved down), curve right (clockwise).
-   * - If the thought's rank decreased (moved up), curve left (counterclockwise).
-   */
-  const sortDirection = useMemo(
-    () => (isLastActionSort && previousIndex !== undefined && index > previousIndex ? 'clockwise' : 'counterclockwise'),
-    // Only recalculate sortDirection when index changes and  last action is sort.
-    // Do not update when previousIndex changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [index, isLastActionSort],
-  )
-
-  /**
-   * Horizontal offset for the first frame of a sort animation. This allows the X transition
-   * to start immediately from the correct position.
-   */
-  const sortOffset = sortDirection === 'clockwise' ? 30 : -30
 
   /** True if the last action is swapParent and the thought is involved in the swap (cursor or parent). */
   const isSwap = useSelector(
@@ -94,22 +56,6 @@ const TreeNodePositioner = ({
   const swapDirection = useSelector((state: State): 'clockwise' | 'counterclockwise' | null =>
     !isSwap ? null : isCursorGreaterThanParent(state) ? 'clockwise' : 'counterclockwise',
   )
-
-  useLayoutEffect(() => {
-    // Start sort animation only when the change originated from a sort action.
-    if (isLastActionSort && indexChanged) {
-      setIsSortAnimating(true)
-    }
-
-    // After the layout node animation duration:
-    // reset X offset (Y will update naturally when isSortAnimating becomes false)
-    const timer = setTimeout(() => {
-      setIsSortAnimating(false)
-      // manual timeout adjustment to get the transition duration effectively applied
-    }, 0.5 * durations.layoutNodeAnimation)
-
-    return () => clearTimeout(timer)
-  }, [isLastActionSort, indexChanged])
 
   // We split x and y transitions into separate nodes to:
   // 1. Allow independent timing curves for horizontal and vertical movement
@@ -133,8 +79,8 @@ const TreeNodePositioner = ({
   const outerDivStyle: CSSProperties = {
     // Cannot use transform because it creates a new stacking context, which causes later siblings' DropChild to be covered by previous siblings'.
     // Unfortunately left causes layout recalculation, so we may want to hoist DropChild into a parent and manually control the position.
-    left: isMounted ? (isLastActionSort ? x + (isSortAnimating ? sortOffset : 0) : x) : _x,
-    top: isMounted ? (isSwap || isLastActionSort ? 'auto' : y) : _y,
+    left: isMounted ? x : _x,
+    top: isMounted ? (isSwap ? 'auto' : y) : _y,
     // Table col1 uses its exact width since cannot extend to the right edge of the screen.
     // All other thoughts extend to the right edge of the screen. We cannot use width auto as it causes the text to wrap continuously during the counter-indentation animation, which is jarring. Instead, use a fixed width of the available space so that it changes in a stepped fashion as depth changes and the word wrap will not be animated. Use x instead of depth in order to accommodate ancestor tables.
     // 1em + 10px is an eyeball measurement at font sizes 14 and 18
@@ -144,13 +90,12 @@ const TreeNodePositioner = ({
     ...style,
   }
 
-  const innerDivStyle =
-    isSwap || isLastActionSort
-      ? {
-          top: y,
-          left: 0,
-        }
-      : {}
+  const innerDivStyle = isSwap
+    ? {
+        top: y,
+        left: 0,
+      }
+    : {}
 
   return (
     <div
@@ -166,11 +111,9 @@ const TreeNodePositioner = ({
             ? swapDirection === 'clockwise'
               ? 'left {durations.layoutNodeAnimation} {easings.nodeCurveXLayerClockwise}'
               : 'left {durations.layoutNodeAnimation} {easings.nodeCurveXLayer}'
-            : isLastActionSort
-              ? 'left {durations.layoutNodeAnimation} {easings.nodeCurveSortXLayer}'
-              : contextAnimation
-                ? 'left {durations.disappearingUpperRight} ease-out,top {durations.disappearingUpperRight} ease-out'
-                : 'left {durations.layoutNodeAnimation} ease-out,top {durations.layoutNodeAnimation} ease-out',
+            : contextAnimation
+              ? 'left {durations.disappearingUpperRight} ease-out,top {durations.disappearingUpperRight} ease-out'
+              : 'left {durations.layoutNodeAnimation} ease-out,top {durations.layoutNodeAnimation} ease-out',
       })}
       style={outerDivStyle}
       data-thought-id={thoughtId}
@@ -192,9 +135,7 @@ const TreeNodePositioner = ({
             ? swapDirection === 'clockwise'
               ? 'top {durations.layoutNodeAnimation} {easings.nodeCurveYLayerClockwise}'
               : 'top {durations.layoutNodeAnimation} {easings.nodeCurveYLayer}'
-            : isLastActionSort
-              ? 'top {durations.layoutNodeAnimation} {easings.nodeCurveSortYLayer}'
-              : undefined,
+            : undefined,
         })}
         style={innerDivStyle}
       >

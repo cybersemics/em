@@ -298,7 +298,6 @@ const LayoutTree = () => {
             showContexts={cursorThoughtPositioned.showContexts}
             width={cursorThoughtPositioned.width}
             parentId={head(parentOf(cursorThoughtPositioned.path))}
-            index={cursorThoughtPositionedIndex}
           />
         )}
         <TransitionGroup>

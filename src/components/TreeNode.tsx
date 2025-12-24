@@ -145,7 +145,6 @@ const TreeNode = ({
       <TreeNodePositioner
         x={x}
         y={y}
-        index={index}
         path={path}
         width={width}
         isTableCol1={isTableCol1}
