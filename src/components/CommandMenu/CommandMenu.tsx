@@ -87,19 +87,6 @@ const CommandMenu = () => {
     return -y
   })
 
-  const backdropRef = useRef<HTMLDivElement>(null)
-
-  useMotionValueEvent(opacity, 'change', latest => {
-    if (!backdropRef.current) return
-    /*
-     * The opacity is controlled via a CSS variable to ensure it takes precedence
-     * over any inline styles set by react-modal-sheet.
-     * This is because MotionValues cannot be set with '!important', so we use this
-     * workaround to ensure the opacity takes precedence over library styles.
-     */
-    backdropRef.current.style.setProperty('--opacity', latest.toString(), 'important')
-  })
-
   const onClose = useCallback(() => {
     dispatch([toggleDropdown({ dropDownType: 'commandMenu', value: false }), clearMulticursors()])
   }, [dispatch])
@@ -144,11 +131,7 @@ const CommandMenu = () => {
           })}
           style={{ height }}
         />
-        <Sheet.Backdrop
-          ref={backdropRef}
-          style={{
-            zIndex: 'auto', // required to override backdrop styles
-          }}
+        <motion.div
           className={css({
             position: 'fixed',
             pointerEvents: 'none',
@@ -159,13 +142,8 @@ const CommandMenu = () => {
             height: '100vh',
             width: '100%',
             bottom: 0,
-            '--opacity': '0', // set initial value to 0
-            /**
-             * The opacity is controlled via a CSS variable to ensure it takes precedence
-             * over any inline styles set by react-modal-sheet.
-             */
-            opacity: 'var(--opacity) !important',
           })}
+          style={{ opacity }}
         />
         <Sheet.Container
           data-testid='command-menu-panel'
