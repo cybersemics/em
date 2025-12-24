@@ -145,7 +145,7 @@ interface State {
   showGestureMenu: boolean
   showHiddenThoughts: boolean
   showSortPicker?: boolean
-  showCommandMenu: boolean
+  showCommandCenter: boolean
   /**
    * The currently shown modal dialog box.
    * Initialized to the welcome modal, unless already completed.

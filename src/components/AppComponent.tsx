@@ -18,7 +18,7 @@ import themeColors from '../selectors/themeColors'
 import store from '../stores/app'
 import isDocumentEditable from '../util/isDocumentEditable'
 import Alert from './Alert'
-import CommandMenu from './CommandMenu/CommandMenu'
+import CommandCenter from './CommandCenter/CommandCenter'
 import CommandPalette from './CommandPalette'
 import Content from './Content'
 import ErrorMessage from './ErrorMessage'
@@ -207,7 +207,7 @@ const AppComponent: FC = () => {
           {/* NavBar must be outside MultiGestureIfTouch in order to have a higher stacking order than the Sidebar. Otherwise the user can accidentally activate the Sidebar edge swipe when trying to tap the Home icon. */}
           <NavBar position='bottom' />
 
-          <CommandMenu />
+          <CommandCenter />
           <div style={{ fontSize }}>
             <Footer />
           </div>
