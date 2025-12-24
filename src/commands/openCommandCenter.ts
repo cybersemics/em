@@ -1,5 +1,6 @@
 import Command from '../@types/Command'
 import { addMulticursorActionCreator } from '../actions/addMulticursor'
+import { alertActionCreator } from '../actions/alert'
 import HelpIcon from '../components/icons/HelpIcon'
 import hasMulticursor from '../selectors/hasMulticursor'
 
@@ -11,11 +12,16 @@ const openCommandCenterCommand: Command = {
   hideAlert: true,
   multicursor: false,
   svg: HelpIcon,
-  canExecute: state => !!state.cursor && !hasMulticursor(state),
+  canExecute: state => !hasMulticursor(state),
   exec: (dispatch, getState) => {
     const state = getState()
-    if (!state.cursor) return
-    dispatch([addMulticursorActionCreator({ path: state.cursor })])
+
+    if (!state.cursor) {
+      dispatch(alertActionCreator('Select a thought to open the Command Center.'))
+      return
+    }
+
+    dispatch(addMulticursorActionCreator({ path: state.cursor }))
   },
 }
 
