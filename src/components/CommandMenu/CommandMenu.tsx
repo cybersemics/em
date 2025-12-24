@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { useTransform } from 'motion/react'
+import { useMotionValueEvent, useTransform } from 'motion/react'
 import { motion } from 'motion/react'
 import pluralize from 'pluralize'
 import { FC, useCallback, useRef } from 'react'
@@ -73,10 +73,31 @@ const CommandMenu = () => {
     return ref.current?.yInverted.get() ?? 0
   })
 
+  const blurHeight = useTransform(height, height => height + 110)
+
   const opacity = useTransform(() => {
     const y = ref.current?.yInverted.get() ?? 0
     const height = ref.current?.height ?? 0
+    if (height === 0) return 0
     return y / height
+  })
+
+  const bottom = useTransform(() => {
+    const y = ref.current?.y.get() ?? 0
+    return -y
+  })
+
+  const backdropRef = useRef<HTMLDivElement>(null)
+
+  useMotionValueEvent(opacity, 'change', latest => {
+    if (!backdropRef.current) return
+    /*
+     * The opacity is controlled via a CSS variable to ensure it takes precedence
+     * over any inline styles set by react-modal-sheet.
+     * This is because MotionValues cannot be set with '!important', so we use this
+     * workaround to ensure the opacity takes precedence over library styles.
+     */
+    backdropRef.current.style.setProperty('--opacity', latest.toString(), 'important')
   })
 
   const onClose = useCallback(() => {
@@ -85,7 +106,16 @@ const CommandMenu = () => {
 
   if (isTouch && !isTutorialOn) {
     return (
-      <Sheet ref={ref} isOpen={showCommandMenu} onClose={onClose} detent='content' unstyled>
+      <Sheet
+        ref={ref}
+        isOpen={showCommandMenu}
+        onClose={onClose}
+        detent='content'
+        unstyled
+        style={{
+          position: 'static',
+        }}
+      >
         <motion.div
           /** Progressive blur. */
           className={css({
@@ -98,7 +128,7 @@ const CommandMenu = () => {
             height: 'calc(100% + 110px)',
           })}
           style={{
-            height,
+            height: blurHeight,
           }}
         />
         <motion.div
@@ -115,9 +145,9 @@ const CommandMenu = () => {
           style={{ height }}
         />
         <Sheet.Backdrop
+          ref={backdropRef}
           style={{
             zIndex: 'auto', // required to override backdrop styles
-            opacity,
           }}
           className={css({
             position: 'fixed',
@@ -129,6 +159,12 @@ const CommandMenu = () => {
             height: '100vh',
             width: '100%',
             bottom: 0,
+            '--opacity': '0', // set initial value to 0
+            /**
+             * The opacity is controlled via a CSS variable to ensure it takes precedence
+             * over any inline styles set by react-modal-sheet.
+             */
+            opacity: 'var(--opacity) !important',
           })}
         />
         <Sheet.Container
@@ -144,7 +180,17 @@ const CommandMenu = () => {
             pointerEvents: 'auto',
             boxShadow: 'none',
             zIndex: 'auto',
+            bottom,
           }}
+          className={css({
+            /**
+             * Override inline transform styles, to rely only on bottom.
+             * This way no new stacking context is created.
+             * This needs to be set in className, as react-modal-sheet
+             * will override the transform value passed in inside style.
+             */
+            transform: 'none !important',
+          })}
         >
           <Sheet.Content
             style={{
