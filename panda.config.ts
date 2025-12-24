@@ -164,16 +164,6 @@ const keyframes = defineKeyframes({
       transform: 'translateX(-50%) translateY(0)',
     },
   },
-  moveThoughtOver: {
-    '0%': { transform: 'scale3d(1, 1, 1)' },
-    '50%': { transform: 'scale3d(1.5, 1.5, 1)' },
-    '100%': { transform: 'scale3d(1, 1, 1)' },
-  },
-  moveThoughtUnder: {
-    '0%': { transform: 'scale3d(1, 1, 1)', opacity: 1, filter: 'blur(0)' },
-    '50%': { transform: 'scale3d(0.5, 0.5, 1)', opacity: 0.5, filter: 'blur(2px)' },
-    '100%': { transform: 'scale3d(1, 1, 1)', opacity: 1, filter: 'blur(0)' },
-  },
   /**
    * Clone drop animation: translate to destination and apply subtle fade/scale.
    * Combines translate and scale in a single transform to avoid property conflicts.

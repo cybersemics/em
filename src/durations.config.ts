@@ -26,8 +26,6 @@ const durationsConfig = {
   layoutSlowShift: 750,
   /** The animation duration of a node in the LayoutTree component. This animates thought positions when they are moved. */
   layoutNodeAnimation: 150,
-  /** The animation duration for the moveThought animation. */
-  moveThoughtAnimation: 250,
   /* A fade in animation that is triggered for new thoughts. */
   nodeFadeIn: 150,
   /* A fade out animation that is triggered when a node unmounts. See autofocusChanged for normal opacity animations. */
