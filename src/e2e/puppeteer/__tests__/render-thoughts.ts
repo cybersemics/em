@@ -245,4 +245,41 @@ describe('Superscripts', () => {
     await hideHUD()
     expect(await screenshot()).toMatchImageSnapshot()
   })
+
+  it('tables with urls with superscripts', async () => {
+    await paste(`
+      - 1
+        - a
+          - b
+            - c
+              - =view
+                - Table
+              - d
+                - d1
+              - e
+                - e1
+                  - f
+              - stackoverflow.com
+                - stackoverflow.com
+      - 2
+        - a
+          - b
+            - c
+              - =view
+                - Table
+              - d
+                - d1
+              - e
+                - e1
+                  - f
+      - 3
+        - url
+          - stackoverflow.com
+        - code
+  `)
+
+    await clickThought('1')
+    await hideHUD()
+    expect(await screenshot()).toMatchImageSnapshot()
+  })
 })
