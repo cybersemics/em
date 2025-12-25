@@ -9794,7 +9794,7 @@ __metadata:
     lodash: "npm:^4.17.21"
     lottie-react: "npm:^2.4.1"
     marked: "npm:^17.0.1"
-    moize: "npm:^6.1.6"
+    moize: "npm:^6.1.7"
     murmurhash3js: "npm:^3.0.1"
     nanoid: "npm:^5.1.6"
     npm-run-all2: "npm:^8.0.4"
@@ -15945,13 +15945,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"moize@npm:^6.1.6":
-  version: 6.1.6
-  resolution: "moize@npm:6.1.6"
+"moize@npm:^6.1.7":
+  version: 6.1.7
+  resolution: "moize@npm:6.1.7"
   dependencies:
     fast-equals: "npm:^3.0.1"
     micro-memoize: "npm:^4.1.2"
-  checksum: 10c0/5496569c25fd2eaf7a50707e62b5109bad9c3ca43166a82e52c7d3fed41d8b7312cabe3180e1c3c68b3785db06dbeee1bfc60b01b69c7389fae4ce3b3154e28f
+  checksum: 10c0/769dd315b5e8f3a603341a3ed06787ee13ed301372d4f9a1fe56e290d79614bcb8002438648b4a1cc93473ec03954d30457bfb30b66adece94c8fa76c13b42b6
   languageName: node
   linkType: hard
 
