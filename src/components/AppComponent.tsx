@@ -18,11 +18,12 @@ import themeColors from '../selectors/themeColors'
 import store from '../stores/app'
 import isDocumentEditable from '../util/isDocumentEditable'
 import Alert from './Alert'
-import CommandMenu from './CommandMenu/CommandMenu'
+import CommandCenter from './CommandCenter/CommandCenter'
 import CommandPalette from './CommandPalette'
 import Content from './Content'
 import ErrorMessage from './ErrorMessage'
 import Footer from './Footer'
+import GestureMenu from './GestureMenu'
 import HamburgerMenu from './HamburgerMenu'
 import LatestCommandsDiagram from './LatestCommandsDiagram'
 import MultiGesture from './MultiGesture'
@@ -165,7 +166,8 @@ const AppComponent: FC = () => {
     >
       <Alert />
       <Tips />
-      <CommandPalette />
+      {!isTouch && <CommandPalette />}
+      {isTouch && <GestureMenu />}
       <ErrorMessage />
       {enableLatestCommandsDiagram && <LatestCommandsDiagram position='bottom' />}
       <GestureCheatsheet />
@@ -205,7 +207,7 @@ const AppComponent: FC = () => {
           {/* NavBar must be outside MultiGestureIfTouch in order to have a higher stacking order than the Sidebar. Otherwise the user can accidentally activate the Sidebar edge swipe when trying to tap the Home icon. */}
           <NavBar position='bottom' />
 
-          <CommandMenu />
+          <CommandCenter />
           <div style={{ fontSize }}>
             <Footer />
           </div>

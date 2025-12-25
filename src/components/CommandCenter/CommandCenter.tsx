@@ -26,7 +26,7 @@ import PanelCommandGroup from './PanelCommandGroup'
 
 /**
  * A custom hook that returns the last non-zero number of multicursors.
- * This is used to avoid showing the MultiselectMessage changing as the Command Menu is closed.
+ * This is used to avoid showing the MultiselectMessage changing as the Command Center is closed.
  */
 const useNonzeroNumMulticursors = () => {
   const numMulticursors = useSelector(state => Object.keys(state.multicursors).length)
@@ -61,12 +61,12 @@ const MultiselectMessage: FC = () => {
   )
 }
 
-/** Command menu gradient overlay. Fades in when the Command Menu opens. */
+/** Command center gradient overlay. Fades in when the Command Center opens. */
 const Overlay = () => {
-  const showCommandMenu = useSelector(state => state.showCommandMenu)
+  const showCommandCenter = useSelector(state => state.showCommandCenter)
   const ref = useRef<HTMLDivElement>(null)
   return (
-    <FadeTransition nodeRef={ref} in={showCommandMenu} type='commandMenuDrawer' unmountOnExit>
+    <FadeTransition nodeRef={ref} in={showCommandCenter} type='commandCenterDrawer' unmountOnExit>
       <div
         // Passing the ref in is required, due to position absolute child.
         ref={ref}
@@ -87,35 +87,35 @@ const Overlay = () => {
 }
 
 /**
- * A panel that displays the command menu.
+ * A panel that displays the Command Center.
  */
-const CommandMenu = () => {
+const CommandCenter = () => {
   const dispatch = useDispatch()
-  const showCommandMenu = useSelector(state => state.showCommandMenu)
+  const showCommandCenter = useSelector(state => state.showCommandCenter)
   const isTutorialOn = useSelector(isTutorial)
 
   const onOpen = useCallback(() => {
-    dispatch(toggleDropdown({ dropDownType: 'commandMenu', value: true }))
+    dispatch(toggleDropdown({ dropDownType: 'commandCenter', value: true }))
   }, [dispatch])
 
   const onClose = useCallback(() => {
-    dispatch([toggleDropdown({ dropDownType: 'commandMenu', value: false }), clearMulticursors()])
+    dispatch([toggleDropdown({ dropDownType: 'commandCenter', value: false }), clearMulticursors()])
   }, [dispatch])
 
   if (isTouch && !isTutorialOn) {
     return (
       <SwipeableDrawer
-        data-testid='command-menu-panel'
+        data-testid='command-center-panel'
         // Disable swipe to open - this removes the swipe-up-to-open functionality
         disableSwipeToOpen={true}
-        transitionDuration={durations.get('commandMenuDrawer')}
+        transitionDuration={durations.get('commandCenterDrawer')}
         // Remove the SwipeAreaProps since we don't want to enable swipe to open
         anchor='bottom'
         // Keep onOpen for programmatic opening
         onOpen={onOpen}
         // Keep onClose for swipe to dismiss
         onClose={onClose}
-        open={showCommandMenu}
+        open={showCommandCenter}
         hideBackdrop={true}
         disableScrollLock={true}
         PaperProps={{
@@ -256,4 +256,4 @@ const CommandMenu = () => {
   }
 }
 
-export default CommandMenu
+export default CommandCenter

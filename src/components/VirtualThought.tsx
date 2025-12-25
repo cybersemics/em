@@ -235,9 +235,8 @@ const VirtualThought = ({
         height: shimHiddenThought && height != null ? height : undefined,
       }}
     >
-      <div style={moveStyle}>
-        {
-          /* Since no drop target is rendered when thoughts are hidden/shimmed, we need to create a drop target after a hidden parent.
+      {
+        /* Since no drop target is rendered when thoughts are hidden/shimmed, we need to create a drop target after a hidden parent.
                e.g. Below, a is hidden and all of b's siblings are hidden, but we still want to be able to drop before e. Therefore we must insert DropUncle when e would not be rendered.
                  - a
                   - b
@@ -246,42 +245,41 @@ const VirtualThought = ({
                     - d
                   - e
              */
-          !isVisible && dropUncle && <DropUncle depth={depth} path={path} simplePath={simplePath} cliff={prevCliff} />
-        }
+        !isVisible && dropUncle && <DropUncle depth={depth} path={path} simplePath={simplePath} cliff={prevCliff} />
+      }
 
-        {!shimHiddenThought && (
-          <Subthought
-            autofocus={autofocus}
-            debugIndex={debugIndex}
-            depth={depth + 1}
-            dropUncle={dropUncle}
-            env={env}
-            indexDescendant={indexDescendant}
-            isMultiColumnTable={isMultiColumnTable}
-            leaf={leaf}
-            updateSize={updateSize}
-            path={path}
-            prevChildId={prevChildId}
-            showContexts={showContexts}
-            simplePath={simplePath}
-            style={style}
-            zoomCursor={zoomCursor}
-          />
-        )}
+      {!shimHiddenThought && (
+        <Subthought
+          autofocus={autofocus}
+          debugIndex={debugIndex}
+          depth={depth + 1}
+          dropUncle={dropUncle}
+          env={env}
+          indexDescendant={indexDescendant}
+          isMultiColumnTable={isMultiColumnTable}
+          leaf={leaf}
+          updateSize={updateSize}
+          path={path}
+          prevChildId={prevChildId}
+          showContexts={showContexts}
+          simplePath={simplePath}
+          style={style}
+          zoomCursor={zoomCursor}
+        />
+      )}
 
-        {isVisible && (
-          <DropChild
-            depth={depth}
-            // In context view, we need to pass the source simplePath in order to add dragged thoughts to the correct lexeme instance.
-            // For example, when dropping a thought onto a/m~/b, drop should be triggered with the props of m/b.
-            // TODO: DragAndDropSubthoughts should be able to handle this.
-            path={path}
-            simplePath={simplePath}
-            cliff={cliff}
-            isLastVisible={isLastVisible}
-          />
-        )}
-      </div>
+      {isVisible && (
+        <DropChild
+          depth={depth}
+          // In context view, we need to pass the source simplePath in order to add dragged thoughts to the correct lexeme instance.
+          // For example, when dropping a thought onto a/m~/b, drop should be triggered with the props of m/b.
+          // TODO: DragAndDropSubthoughts should be able to handle this.
+          path={path}
+          simplePath={simplePath}
+          cliff={cliff}
+          isLastVisible={isLastVisible}
+        />
+      )}
     </div>
   )
 }
