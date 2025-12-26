@@ -30,7 +30,7 @@ export const removeToolbarButtonActionCreator =
     const fromThoughtId = userCommandChildren[fromIndex].id
 
     dispatch([
-      alert(`Removed ${command.label} from toolbar`, { clearDelay: 5000 }),
+      alert(`Removed ${command.label} from toolbar`, {}),
       deleteThought({
         thoughtId: fromThoughtId,
         pathParent: userCommandsPath,

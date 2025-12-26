@@ -31,7 +31,7 @@ const ModalFeedback = () => {
 
     // minimum characters
     if (feedback.length < FEEDBACK_MIN_LENGTH) {
-      dispatch(alert(`Message must be at least ${FEEDBACK_MIN_LENGTH} characters`, { clearDelay: 5000 }))
+      dispatch(alert(`Message must be at least ${FEEDBACK_MIN_LENGTH} characters`, {}))
       setIsDisabled(true)
       return
     }
@@ -45,7 +45,7 @@ const ModalFeedback = () => {
       console.error('Error sending feedback', err)
       const { response } = err as AxiosError
       const message = (response?.data as FeedbackResponse)?.message ?? 'Error sending feedback'
-      dispatch(alert(message))
+      dispatch(alert(message, { clearDelay: null }))
       setIsSubmitting(false)
     }
   }

@@ -42,7 +42,6 @@ const pinAllCommand: Command = {
       const pinned = findDescendant(state, thoughtId, ['=children', '=pin', 'true'])
       dispatch(
         alert(pinned ? 'Unpinned subthoughts' : 'Pinned subthoughts', {
-          clearDelay: 2000,
           showCloseLink: false,
         }),
       )

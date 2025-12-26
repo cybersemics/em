@@ -256,9 +256,7 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
           : ''
 
         store.dispatch(
-          alert(`${alertFrom} moved to${dropTop ? ' top of' : ''} ${alertTo}${inContext}.`, {
-            clearDelay: 5000,
-          }),
+          alert(`${alertFrom} moved to${dropTop ? ' top of' : ''} ${alertTo}${inContext}.`, {}),
         )
       }, 100)
     }

@@ -36,9 +36,7 @@ const toggleSortCommand: Command = {
       const sortPreference = getSortPreference(stateNew, id)
       const sortDirectionLabel = sortPreference.direction === 'Asc' ? 'ascending' : 'descending'
       dispatch(
-        alert(sortPreference.direction ? `Sort ${sortDirectionLabel}` : 'Sort manually', {
-          clearDelay: 2000,
-        }),
+        alert(sortPreference.direction ? `Sort ${sortDirectionLabel}` : 'Sort manually', {}),
       )
     }
   },

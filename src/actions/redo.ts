@@ -15,7 +15,6 @@ export const redoActionCreator = (): Thunk => (dispatch, getState) => {
 
   dispatch(
     alert(`Redo: ${startCase(lastActionType)}`, {
-      clearDelay: 3000,
       showCloseLink: false,
       alertType: AlertType.Redo,
     }),

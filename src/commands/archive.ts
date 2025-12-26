@@ -76,7 +76,6 @@ const archiveCommand: Command = {
     onComplete(filteredCursors, dispatch, getState) {
       dispatch(
         alert(`Deleted ${pluralize('thought', filteredCursors.length, true)}.`, {
-          clearDelay: 8000,
           showCloseLink: true,
         }),
       )

@@ -49,7 +49,6 @@ const exec: Command['exec'] = (dispatch, getState, e, { type }) => {
     if (value || !experienceMode) {
       dispatch(
         alert(deleteThoughtAlertText(state, cursor), {
-          clearDelay: 8000,
           showCloseLink: true,
         }),
       )
@@ -69,7 +68,6 @@ const deleteCommand: Command = {
     onComplete(filteredCursors, dispatch, getState) {
       dispatch(
         alert(`Deleted ${pluralize('thought', filteredCursors.length, true)}.`, {
-          clearDelay: 8000,
           showCloseLink: true,
         }),
       )

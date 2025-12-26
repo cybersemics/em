@@ -364,9 +364,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
 
     dispatch([
       closeModal(),
-      alert(`Copied ${exportThoughtsPhraseFinal} to the clipboard`, {
-        clearDelay: 3000,
-      }),
+      alert(`Copied ${exportThoughtsPhraseFinal} to the clipboard`, {}),
     ])
 
     clearTimeout(globals.errorTimer)

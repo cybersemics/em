@@ -274,7 +274,6 @@ export const inputHandlers = (store: Store<State, any>) => ({
           dispatch(
             alert(command.label, {
               alertType: AlertType.GestureHint,
-              clearDelay: GESTURE_HINT_TIMEOUT,
               showCloseLink: false,
             }),
           )

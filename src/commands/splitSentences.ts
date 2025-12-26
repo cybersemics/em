@@ -25,9 +25,7 @@ const splitSentencesCommand: Command = {
 
     if (sentences.length <= 1) {
       dispatch(
-        alert('Cannot split sentences: thought is an empty thought or has only one sentence.', {
-          clearDelay: 3000,
-        }),
+        alert('Cannot split sentences: thought is an empty thought or has only one sentence.', {}),
       )
       return
     }
