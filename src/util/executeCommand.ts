@@ -1,4 +1,3 @@
-import { GestureResponderEvent } from 'react-native'
 import { Store } from 'redux'
 import Command from '../@types/Command'
 import CommandType from '../@types/CommandType'
@@ -10,6 +9,7 @@ import { addMulticursorActionCreator as addMulticursor } from '../actions/addMul
 import { alertActionCreator as alert } from '../actions/alert'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from '../actions/setIsMulticursorExecuting'
+import { GestureResponderEvent } from '../components/PanResponder'
 import { AlertType, HOME_PATH, noop } from '../constants'
 import documentSort from '../selectors/documentSort'
 import hasMulticursor from '../selectors/hasMulticursor'
