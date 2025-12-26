@@ -44,7 +44,7 @@ const useDelayedEffect = (callback: () => void, delay: number | undefined, trigg
   }, [])
 
   useEffect(() => {
-    if (trigger && delay) {
+    if (trigger != null && delay) {
       startTimer()
     }
     return () => {
