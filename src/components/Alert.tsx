@@ -17,14 +17,8 @@ import RedoIcon from './RedoIcon'
 import UndoIcon from './UndoIcon'
 
 /** A custom hook that manages a delayed effect with start and clear timer functions. The callback will not be called if delay is 0 or undefined. */
-const useDelayedEffect = (callback: () => void, delay: number | undefined, trigger?: unknown) => {
+const useDelayedEffect = (callback: () => void, delay: number | undefined) => {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const callbackRef = useRef(callback)
-
-  // Keep callback ref up to date without causing re-renders
-  useEffect(() => {
-    callbackRef.current = callback
-  }, [callback])
 
   const startTimer = useCallback(() => {
     if (!delay) return
@@ -32,9 +26,9 @@ const useDelayedEffect = (callback: () => void, delay: number | undefined, trigg
       clearTimeout(timerRef.current)
     }
     timerRef.current = setTimeout(() => {
-      callbackRef.current()
+      callback()
     }, delay)
-  }, [delay])
+  }, [delay, callback])
 
   const clearTimer = useCallback(() => {
     if (timerRef.current) {
@@ -44,11 +38,11 @@ const useDelayedEffect = (callback: () => void, delay: number | undefined, trigg
   }, [])
 
   useEffect(() => {
-    if (trigger && delay) {
+    if (delay) {
       startTimer()
     }
     return clearTimer
-  }, [trigger, delay, startTimer, clearTimer])
+  }, [delay, startTimer, clearTimer])
 
   return { startTimer, clearTimer }
 }
@@ -67,7 +61,7 @@ const Alert: FC = () => {
     dispatch(alertActionCreator(null))
   }, [dispatch])
 
-  const { startTimer, clearTimer } = useDelayedEffect(onClose, alert?.clearDelay, alert)
+  const { startTimer, clearTimer } = useDelayedEffect(onClose, alert?.clearDelay)
 
   const Icon = alert?.alertType === AlertType.Undo ? UndoIcon : alert?.alertType === AlertType.Redo ? RedoIcon : null
 
