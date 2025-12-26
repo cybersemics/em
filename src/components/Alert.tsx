@@ -16,7 +16,7 @@ import Notification from './Notification'
 import RedoIcon from './RedoIcon'
 import UndoIcon from './UndoIcon'
 
-/** A custom hook that manages a delayed effect with start and clear timer functions. */
+/** A custom hook that manages a delayed effect with start and clear timer functions. The callback will not be called if delay is 0 or undefined. */
 const useDelayedEffect = (callback: () => void, delay: number | undefined, trigger?: unknown) => {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const callbackRef = useRef(callback)
@@ -47,9 +47,7 @@ const useDelayedEffect = (callback: () => void, delay: number | undefined, trigg
     if (trigger && delay) {
       startTimer()
     }
-    return () => {
-      clearTimer()
-    }
+    return clearTimer
   }, [trigger, delay, startTimer, clearTimer])
 
   return { startTimer, clearTimer }
