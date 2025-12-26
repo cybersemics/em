@@ -2103,15 +2103,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@capacitor/android@npm:^7.4.3":
-  version: 7.4.3
-  resolution: "@capacitor/android@npm:7.4.3"
-  peerDependencies:
-    "@capacitor/core": ^7.4.0
-  checksum: 10c0/1342df79c1c25ae7071f486ffd3eafb70ae2a56efe6a58db02ab06dc00134eb484bd2974e8cb02b59940c4e40df2ec15dd5fcf56f0ef9fd438f73d9ecfdfdf19
-  languageName: node
-  linkType: hard
-
 "@capacitor/android@npm:^8.0.0":
   version: 8.0.0
   resolution: "@capacitor/android@npm:8.0.0"
@@ -2158,15 +2149,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@capacitor/core@npm:^7.4.4":
-  version: 7.4.4
-  resolution: "@capacitor/core@npm:7.4.4"
-  dependencies:
-    tslib: "npm:^2.1.0"
-  checksum: 10c0/6c89d2fe9ab64a45d2bcb786d9837380dbd652997c9bfd3ab8e62fa0759a8a8558342d800cd19b175f1f6238e290a5efefe3733b283ec737b088f178e1ed6c0d
-  languageName: node
-  linkType: hard
-
 "@capacitor/core@npm:^8.0.0":
   version: 8.0.0
   resolution: "@capacitor/core@npm:8.0.0"
@@ -2196,15 +2178,6 @@ __metadata:
   peerDependencies:
     "@capacitor/core": ">=8.0.0"
   checksum: 10c0/3d9f0b7925c11fb11ca095de78fa6c2785e86fdc198262082858f01af44205484d307ab442ba03aec24df0ab93c8b962c88919e197f867c2a3f5d3abcd30f0ae
-  languageName: node
-  linkType: hard
-
-"@capacitor/ios@npm:^7.4.4":
-  version: 7.4.4
-  resolution: "@capacitor/ios@npm:7.4.4"
-  peerDependencies:
-    "@capacitor/core": ^7.4.0
-  checksum: 10c0/99f424fc8195f7a96a589c7f087ed6e46a6d00c8b23c2b127361ff235a8b13f18b29b04ef5def48e1c016910f812ab1a31b46b8c1df2961302b103fd406d2b79
   languageName: node
   linkType: hard
 
@@ -21903,17 +21876,17 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "webview-background@workspace:packages/webview"
   dependencies:
-    "@capacitor/android": "npm:^7.4.3"
-    "@capacitor/core": "npm:^7.4.4"
+    "@capacitor/android": "npm:^8.0.0"
+    "@capacitor/core": "npm:^8.0.0"
     "@capacitor/docgen": "npm:^0.3.1"
-    "@capacitor/ios": "npm:^7.4.4"
+    "@capacitor/ios": "npm:^8.0.0"
     "@ionic/swiftlint-config": "npm:^2.0.0"
     rimraf: "npm:^6.1.2"
     rollup: "npm:^4.53.3"
     swiftlint: "npm:^2.0.0"
     typescript: "npm:5.9.3"
   peerDependencies:
-    "@capacitor/core": ^7.4.4
+    "@capacitor/core": ^8.0.0
   languageName: unknown
   linkType: soft
 
