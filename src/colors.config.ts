@@ -66,8 +66,8 @@ const colors = {
     bgTransparent: 'rgba(0, 0, 0, 0)',
     fgTransparent: 'rgba(255, 255, 255, 0)',
     modalColor: 'rgba(227, 227, 227, 1)', // #e3e3e3
-    quickDropBgHover: 'rgba(40,40,40,0.8)',
-    quickDropBg: 'rgba(30,30,30,0.8)',
+    dropGutterBgHover: 'rgba(40,40,40,0.8)',
+    dropGutterBg: 'rgba(30,30,30,0.8)',
     bulletGray: 'rgba(102, 102, 102, 1)', // #666
     midPink: 'rgba(255, 123, 195, 1)', // #ff7bc3
     dropChildTarget: '#32305f', // purple-eggplant
@@ -154,8 +154,8 @@ const colors = {
     fgTransparent: 'rgba(0, 0, 0, 0)',
     bgTransparent: 'rgba(255, 255, 255, 0)',
     modalColor: 'rgba(28, 28, 28, 1)', // #1c1c1c
-    quickDropBgHover: 'rgba(215, 215, 215, 0.8)',
-    quickDropBg: 'rgba(225, 225, 225, 0.8)',
+    dropGutterBgHover: 'rgba(215, 215, 215, 0.8)',
+    dropGutterBg: 'rgba(225, 225, 225, 0.8)',
     bulletGray: 'rgba(153, 153, 153, 1)', // #999999
     midPink: 'rgba(255, 123, 195, 1)',
     dropChildTarget: '#a4a2cd',

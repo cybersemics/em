@@ -411,8 +411,8 @@ const ThoughtContainer = ({
     return isSubthoughtsDropTarget || isThoughtDropTarget
   })
 
-  /** True if the the user is dragging the thought and hovering over the DeleteDrop QuickDrop icon. */
-  const isQuickDropDeleteHovering = useSelector(
+  /** True if the the user is dragging the thought and hovering over the DeleteDrop DropGutter icon. */
+  const isDropGutterDeleteHovering = useSelector(
     state => isDragging && state.alert?.alertType === AlertType.DeleteDropHint,
   )
 
@@ -445,7 +445,7 @@ const ThoughtContainer = ({
           animation: `pulseLight {durations.slowPulse} linear infinite alternate`,
           color: 'highlight',
         }
-      : isQuickDropDeleteHovering
+      : isDropGutterDeleteHovering
         ? {
             WebkitTextStrokeWidth: '0.05em',
             animation: `pulseLight {durations.mediumPulse} linear infinite alternate`,
