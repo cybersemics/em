@@ -101,9 +101,7 @@ const copyCursorCommand: Command = {
       value: getThoughtById(stateAfterPull, head(simplePath))?.value,
     })
 
-    dispatch(
-      alert(`Copied ${phrase} to the clipboard`, {}),
-    )
+    dispatch(alert(`Copied ${phrase} to the clipboard`, {}))
   },
 }
 

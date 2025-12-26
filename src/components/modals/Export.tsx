@@ -362,10 +362,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
     // Note: clipboard leaves unwanted text selection after copy operation. so removing it to prevent issue with gesture handler
     selection.clear()
 
-    dispatch([
-      closeModal(),
-      alert(`Copied ${exportThoughtsPhraseFinal} to the clipboard`, {}),
-    ])
+    dispatch([closeModal(), alert(`Copied ${exportThoughtsPhraseFinal} to the clipboard`, {})])
 
     clearTimeout(globals.errorTimer)
   }, [dispatch, exportThoughtsPhraseFinal])
