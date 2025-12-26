@@ -16,27 +16,17 @@ import Notification from './Notification'
 import RedoIcon from './RedoIcon'
 import UndoIcon from './UndoIcon'
 
-/** An alert component that fades in and out. */
-const Alert: FC = () => {
-  const alert = useSelector(state => state.alert)
-  const alertStoreValue = alertStore.useState()
-  const value = strip(alertStoreValue ?? alert?.value ?? '')
-  const iconSize = useSelector(state => 0.78 * state.fontSize)
-  const multicursor = useSelector(state => state.alert?.alertType === AlertType.MulticursorActive)
-  const dispatch = useDispatch()
-
+/** A custom hook that manages a delayed effect with start and clear timer functions. The callback will not be called if delay is 0 or undefined. */
+const useDelayedEffect = (callback: () => void, delay: number | undefined) => {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const clearDelay = alert?.clearDelay
 
   const startTimer = useCallback(() => {
-    if (!clearDelay) return
+    if (!delay) return
     if (timerRef.current) {
       clearTimeout(timerRef.current)
     }
-    timerRef.current = setTimeout(() => {
-      dispatch(alertActionCreator(null))
-    }, clearDelay)
-  }, [clearDelay, dispatch])
+    timerRef.current = setTimeout(callback, delay)
+  }, [delay, callback])
 
   const clearTimer = useCallback(() => {
     if (timerRef.current) {
@@ -46,18 +36,30 @@ const Alert: FC = () => {
   }, [])
 
   useEffect(() => {
-    if (alert && clearDelay) {
+    if (delay) {
       startTimer()
     }
-    return () => {
-      clearTimer()
-    }
-  }, [alert, clearDelay, startTimer, clearTimer])
+    return clearTimer
+  }, [delay, startTimer, clearTimer])
+
+  return { startTimer, clearTimer }
+}
+
+/** An alert component that fades in and out. */
+const Alert: FC = () => {
+  const alert = useSelector(state => state.alert)
+  const alertStoreValue = alertStore.useState()
+  const value = strip(alertStoreValue ?? alert?.value ?? '')
+  const iconSize = useSelector(state => 0.78 * state.fontSize)
+  const multicursor = useSelector(state => state.alert?.alertType === AlertType.MulticursorActive)
+  const dispatch = useDispatch()
 
   /** Dismiss the alert on close. */
   const onClose = useCallback(() => {
     dispatch(alertActionCreator(null))
   }, [dispatch])
+
+  const { startTimer, clearTimer } = useDelayedEffect(onClose, alert?.clearDelay)
 
   const Icon = alert?.alertType === AlertType.Undo ? UndoIcon : alert?.alertType === AlertType.Redo ? RedoIcon : null
 
