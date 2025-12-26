@@ -25,9 +25,7 @@ const useDelayedEffect = (callback: () => void, delay: number | undefined) => {
     if (timerRef.current) {
       clearTimeout(timerRef.current)
     }
-    timerRef.current = setTimeout(() => {
-      callback()
-    }, delay)
+    timerRef.current = setTimeout(callback, delay)
   }, [delay, callback])
 
   const clearTimer = useCallback(() => {
