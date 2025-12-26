@@ -298,7 +298,7 @@ describe('drag', () => {
     expect(image).toMatchImageSnapshot()
   })
 
-  it('should show alert and DropGutter when long pressing after drag operation', async () => {
+  it('should show alert', async () => {
     await paste(`
       - a
       - b
