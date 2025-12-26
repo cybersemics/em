@@ -33,7 +33,7 @@ describe('QuickDropPanel: mobile only', () => {
     await click('[aria-label="Add to Favorites"]')
 
     // wait until the favorite alert appears
-    await waitForAlertContent('Added a to favorites')
+    await waitForAlertContent('Added "a" to favorites')
 
     await dragToQuickDropPanel(await waitForEditable('a'))
 
