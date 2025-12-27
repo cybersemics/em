@@ -25,7 +25,7 @@ import PanelCommandGroup from './PanelCommandGroup'
 
 /**
  * A custom hook that returns the last non-zero number of multicursors.
- * This is used to avoid showing the MultiselectMessage changing as the Command Menu is closed.
+ * This is used to avoid showing the MultiselectMessage changing as the Command Center is closed.
  */
 const useNonzeroNumMulticursors = () => {
   const numMulticursors = useSelector(state => Object.keys(state.multicursors).length)
@@ -61,11 +61,11 @@ const MultiselectMessage: FC = () => {
 }
 
 /**
- * A panel that displays the command menu.
+ * A panel that displays the Command Center.
  */
-const CommandMenu = ({ mountPoint }: Pick<SheetProps, 'mountPoint'>) => {
+const CommandCenter = ({ mountPoint }: Pick<SheetProps, 'mountPoint'>) => {
   const dispatch = useDispatch()
-  const showCommandMenu = useSelector(state => state.showCommandMenu)
+  const showCommandCenter = useSelector(state => state.showCommandCenter)
   const isTutorialOn = useSelector(isTutorial)
   const ref = useRef<SheetRef>(null)
 
@@ -90,12 +90,13 @@ const CommandMenu = ({ mountPoint }: Pick<SheetProps, 'mountPoint'>) => {
   const [isFullyOpen, setIsFullyOpen] = useState(false)
 
   const onClose = useCallback(() => {
-    dispatch([toggleDropdown({ dropDownType: 'commandMenu', value: false }), clearMulticursors()])
+    dispatch([toggleDropdown({ dropDownType: 'commandCenter', value: false }), clearMulticursors()])
   }, [dispatch])
 
   if (isTouch && !isTutorialOn) {
     return (
       <Sheet
+        data-testid='command-center-panel'
         onOpenEnd={() => {
           setIsFullyOpen(true)
         }}
@@ -103,7 +104,7 @@ const CommandMenu = ({ mountPoint }: Pick<SheetProps, 'mountPoint'>) => {
           setIsFullyOpen(false)
         }}
         ref={ref}
-        isOpen={showCommandMenu}
+        isOpen={showCommandCenter}
         onClose={onClose}
         detent='content'
         unstyled
@@ -271,4 +272,4 @@ const CommandMenu = ({ mountPoint }: Pick<SheetProps, 'mountPoint'>) => {
   }
 }
 
-export default CommandMenu
+export default CommandCenter

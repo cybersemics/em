@@ -262,8 +262,8 @@ const Bullet = ({
     return isHolding || isDragging || isMulticursor
   })
 
-  /** True if the the user is dragging the thought and hovering over the DeleteDrop QuickDrop icon. */
-  const isQuickDropDeleteHovering = useSelector(
+  /** True if the the user is dragging the thought and hovering over the DeleteDrop DropGutter icon. */
+  const isDropGutterDeleteHovering = useSelector(
     state => isDragging && state.alert?.alertType === AlertType.DeleteDropHint,
   )
 
@@ -315,7 +315,7 @@ const Bullet = ({
       ref={svgElement}
     >
       <g>
-        {!(publish && (isRoot || isRootChildLeaf)) && isHighlighted && !isQuickDropDeleteHovering && (
+        {!(publish && (isRoot || isRootChildLeaf)) && isHighlighted && !isDropGutterDeleteHovering && (
           <BulletHighlightOverlay isHighlighted={isHighlighted} leaf={leaf} publish={publish} simplePath={simplePath} />
         )}
         {leaf && !showContexts ? (
@@ -323,7 +323,7 @@ const Bullet = ({
             done={isDone}
             fill={fill}
             isHighlighted={isHighlighted}
-            dimmed={isQuickDropDeleteHovering}
+            dimmed={isDropGutterDeleteHovering}
             missing={missing}
             pending={pending}
             showContexts={showContexts}

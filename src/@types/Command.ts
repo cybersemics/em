@@ -85,6 +85,9 @@ interface Command {
   /** A MultiGesture sequence to activate the command on touch screens. */
   gesture?: GesturePath | GesturePath[]
 
+  /** Do not show the alert after the command is executed in training mode. */
+  hideAlert?: boolean
+
   /** Hide the command in the CommandPalette. */
   hideFromCommandPalette?: boolean
 

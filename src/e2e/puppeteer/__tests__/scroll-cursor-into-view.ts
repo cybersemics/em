@@ -40,11 +40,10 @@ describe('scrollCursorIntoView', () => {
   - v
 - t
     `
-    await paste(importText)
 
-    // Verify the initial scroll position is 0
-    const initialScrollY = await page.evaluate(() => window.scrollY)
-    expect(initialScrollY).toBe(0)
+    // Note: initial window.scrollY can be non-zero after paste for some reason.
+    // Does not matter since we are asserting the initial scroll position after refresh, but be aware.
+    await paste(importText)
 
     await clickThought('t')
 
@@ -54,6 +53,10 @@ describe('scrollCursorIntoView', () => {
 
     // Wait for page to be ready after refresh
     await page.waitForFunction(() => document.readyState === 'complete')
+
+    // Verify the initial scroll position is 0
+    const initialScrollY = await page.evaluate(() => window.scrollY)
+    expect(initialScrollY).toBe(0)
 
     // Set test delay for data replication after refresh
     // This simulates the regression case where thoughts are loaded slowly from the database

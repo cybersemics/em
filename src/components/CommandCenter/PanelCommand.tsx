@@ -67,7 +67,7 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size, isGlowReady }) => 
   const handleTap = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
       if (isButtonExecutable) {
-        executeCommandWithMulticursor(command, { store, type: 'commandMenu', event: e })
+        executeCommandWithMulticursor(command, { store, type: 'commandCenter', event: e })
         setIsAnimated(true)
         // prevent Editable blur
         if (isTouch) {
