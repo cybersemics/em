@@ -102,8 +102,8 @@ const CommandCenter = ({ mountPoint }: Pick<SheetProps, 'mountPoint'>) => {
            * from the background content due to the fixed position of the parent.
            */
           className={css({
+            position: 'fixed',
             pointerEvents: 'none',
-            position: 'absolute',
             backdropFilter: 'blur(2px)',
             mask: 'linear-gradient(180deg, {colors.bgTransparent} 0%, black 110px, black 100%)',
             bottom: 0,
