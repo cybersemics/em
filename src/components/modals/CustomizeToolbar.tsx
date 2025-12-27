@@ -76,7 +76,6 @@ const DropToRemoveFromToolbar: FC<PropsWithChildren> = ({ children }) => {
         alert(AlertText.DragAndDropToolbarAdd, {
           alertType: AlertType.ToolbarButtonRemoveHint,
           clearDelay: null,
-          showCloseLink: false,
         }),
       )
     } else if (sourceZone === DragCommandZone.Toolbar) {
@@ -85,7 +84,6 @@ const DropToRemoveFromToolbar: FC<PropsWithChildren> = ({ children }) => {
           alert(`Drop to remove ${commandById(dragCommand).label} from toolbar`, {
             alertType: AlertType.ToolbarButtonRemoveHint,
             clearDelay: null,
-            showCloseLink: false,
           }),
         ])
       }
