@@ -3,7 +3,7 @@ import { useTransform } from 'motion/react'
 import { motion } from 'motion/react'
 import pluralize from 'pluralize'
 import { FC, useCallback, useRef, useState } from 'react'
-import { Sheet, SheetRef } from 'react-modal-sheet'
+import { Sheet, SheetProps, SheetRef } from 'react-modal-sheet'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { clearMulticursorsActionCreator as clearMulticursors } from '../../actions/clearMulticursors'
@@ -63,7 +63,7 @@ const MultiselectMessage: FC = () => {
 /**
  * A panel that displays the command menu.
  */
-const CommandMenu = () => {
+const CommandMenu = ({ mountPoint }: Pick<SheetProps, 'mountPoint'>) => {
   const dispatch = useDispatch()
   const showCommandMenu = useSelector(state => state.showCommandMenu)
   const isTutorialOn = useSelector(isTutorial)
@@ -107,6 +107,11 @@ const CommandMenu = () => {
         onClose={onClose}
         detent='content'
         unstyled
+        mountPoint={mountPoint}
+        style={{
+          /** Required for progressive blur to properly blend with background. */
+          position: 'static',
+        }}
       >
         <motion.div
           /** Progressive blur. */

@@ -1,7 +1,7 @@
 import { Capacitor } from '@capacitor/core'
 import { StatusBar, Style } from '@capacitor/status-bar'
 import _ from 'lodash'
-import React, { FC, PropsWithChildren, useEffect, useLayoutEffect } from 'react'
+import React, { FC, PropsWithChildren, useEffect, useLayoutEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { WebviewBackground } from 'webview-background'
 import { css } from '../../styled-system/css'
@@ -114,6 +114,7 @@ const AppComponent: FC = () => {
   const fontSize = useSelector(state => state.fontSize)
   const showModal = useSelector(state => state.showModal)
   const tutorial = useSelector(isTutorial)
+  const rootRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     WebviewBackground.changeBackgroundColor({ color: colors.bg })
@@ -162,6 +163,7 @@ const AppComponent: FC = () => {
         /* safeAreaTop applies for rounded screens */
         paddingTop: 'safeAreaTop',
       })}
+      ref={rootRef}
     >
       <Alert />
       <Tips />
@@ -205,7 +207,7 @@ const AppComponent: FC = () => {
           {/* NavBar must be outside MultiGestureIfTouch in order to have a higher stacking order than the Sidebar. Otherwise the user can accidentally activate the Sidebar edge swipe when trying to tap the Home icon. */}
           <NavBar position='bottom' />
 
-          <CommandMenu />
+          <CommandMenu mountPoint={rootRef.current ?? undefined} />
           <div style={{ fontSize }}>
             <Footer />
           </div>
