@@ -163,7 +163,7 @@ const CommandItem: FC<{
         borderRadius: '8px',
         display: 'flex',
         flexDirection: viewType === 'grid' ? 'column' : 'row',
-        gap: viewType === 'grid' ? '0.6rem' : paddingSize,
+        gap: viewType === 'grid' ? '0.533rem' : paddingSize,
         justifyContent: 'flex-start',
         alignItems: 'center',
         opacity: isDragging ? 0.5 : 1,
@@ -188,7 +188,7 @@ const CommandItem: FC<{
         className={css(
           { boxSizing: 'border-box' },
           viewType === 'grid'
-            ? { minWidth: { base: '10rem', _mobile: 'auto' }, width: '100%' }
+            ? { minWidth: { base: '8.889rem', _mobile: 'auto' }, width: '100%' }
             : {
                 display: 'flex',
                 justifyContent: 'center',
@@ -252,7 +252,7 @@ const CommandItem: FC<{
             minWidth: '4em',
             lineHeight: '1em',
             whiteSpace: 'nowrap',
-            fontSize: viewType === 'grid' ? '0.9rem' : '0.9em',
+            fontSize: viewType === 'grid' ? '0.8rem' : '0.9em',
             color: disabled
               ? 'gray45'
               : viewType === 'grid'
@@ -271,9 +271,9 @@ const CommandItem: FC<{
             className={css(
               viewType === 'grid'
                 ? {
-                    fontSize: '0.7rem',
-                    marginTop: '0.3rem',
-                    marginBottom: '0.3rem',
+                    fontSize: '0.622rem',
+                    marginTop: '0.267rem',
+                    marginBottom: '0.267rem',
                   }
                 : {
                     flexGrow: 1,

@@ -37,9 +37,9 @@ const SortOption = ({ sort, label, selectedSort, handleSortChange }: SortOptionP
       <h3
         className={css({
           color: selectedSort === sort ? 'fg' : 'gray50',
-          margin: '0 0 0 0.2rem',
+          margin: '0 0 0 0.178rem',
           fontWeight: 'normal',
-          fontSize: '0.9rem',
+          fontSize: '0.8rem',
         })}
       >
         {label}

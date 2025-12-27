@@ -166,8 +166,8 @@ const CommandCenter = () => {
             className={css({
               pointerEvents: 'none',
               position: 'absolute',
-              background: 'linear-gradient(180deg, {colors.bgTransparent} 0%, {colors.bg} 1.2rem)',
-              paddingTop: '0.8rem',
+              background: 'linear-gradient(180deg, {colors.bgTransparent} 0%, {colors.bg} 1.067rem)',
+              paddingTop: '0.711rem',
               bottom: 0,
               width: '100%',
               height: '100%',
@@ -179,8 +179,8 @@ const CommandCenter = () => {
             className={css({
               display: 'flex',
               flexDirection: 'column',
-              margin: '0 1.5rem calc(1.5rem + env(safe-area-inset-bottom)) 1.5rem',
-              gap: '1rem',
+              margin: '0 1.333rem calc(1.333rem + env(safe-area-inset-bottom)) 1.333rem',
+              gap: '0.889rem',
             })}
           >
             <div
@@ -233,8 +233,8 @@ const CommandCenter = () => {
                 gridTemplateColumns: 'repeat(4, 1fr)',
                 gridTemplateRows: 'auto',
                 gridAutoFlow: 'row',
-                gap: '0.7rem',
-                gridRowGap: '1rem',
+                gap: '0.622rem',
+                gridRowGap: '0.889rem',
               })}
             >
               <PanelCommand command={{ ...copyCursorCommand, label: 'Copy' }} size='small' />

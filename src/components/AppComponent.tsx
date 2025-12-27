@@ -122,6 +122,14 @@ const AppComponent: FC = () => {
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', colors.bg)
   }, [colors.bg])
 
+  // sync root font size with app font size so rem units follow the user setting
+  useLayoutEffect(() => {
+    if (typeof document === 'undefined') return
+
+    document.documentElement.style.fontSize = `${fontSize}px`
+    document.documentElement.style.setProperty('--app-font-size', `${fontSize}px`)
+  }, [fontSize])
+
   // Set body attributes using custom hooks
   useBodyAttribute('data-device', isTouch ? 'mobile' : 'desktop')
   useBodyAttribute('data-native', Capacitor.isNativePlatform() ? 'true' : 'false')

@@ -7,7 +7,7 @@ export default defineRecipe({
     color: 'fgOverlay75',
     position: 'relative',
     boxSizing: 'border-box',
-    padding: '0.5rem 1rem',
+    padding: '0.444rem 0.889rem',
     // Use CSS variables for border radii
     '--panel-command-radius': '48px',
     '--panel-command-radius-inner': '24px',

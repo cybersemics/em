@@ -15,7 +15,7 @@ const PanelCommandHeader: React.FC<PanelCommandHeaderProps> = ({ title }) => {
         gridColumn: 'span 4',
         alignSelf: 'end',
         height: 'auto',
-        margin: '1.3rem 0 0.2rem',
+        margin: '1.156rem 0 0.178rem',
         '&:first-child': {
           marginTop: 0,
         },
@@ -26,7 +26,7 @@ const PanelCommandHeader: React.FC<PanelCommandHeaderProps> = ({ title }) => {
           fontWeight: 'bold',
           color: 'fg',
           margin: '0',
-          fontSize: '1rem',
+          fontSize: '0.889rem',
           borderBottom: 'none',
         })}
       >
