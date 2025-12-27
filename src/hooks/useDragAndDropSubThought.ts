@@ -255,7 +255,7 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
           ? ` in the context of ${ellipsize(headValue(state, props.simplePath ?? props.path) || 'MISSING_CONTEXT')}`
           : ''
 
-        store.dispatch(alert(`${alertFrom} moved to${dropTop ? ' top of' : ''} ${alertTo}${inContext}.`, {}))
+        store.dispatch(alert(`${alertFrom} moved to${dropTop ? ' top of' : ''} ${alertTo}${inContext}.`))
       }, 100)
     }
   })

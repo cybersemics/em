@@ -28,7 +28,7 @@ const closeCommandCenterCommand: Command = {
 
     if (!hasMulticursor(state)) {
       if (showScrollZoneHelpAlert) {
-        dispatch(alert(scrollZoneHelpMessage(state), { alertType: AlertType.ScrollZoneHelp, clearDelay: null }))
+        dispatch(alert(scrollZoneHelpMessage(state), { alertType: AlertType.ScrollZoneHelp }))
       }
 
       // Set a timer for 10 seconds. If the Command Center is opened without a cursor within that time, an alert will be shown that tries to help the user if they are confused about the scroll zone.

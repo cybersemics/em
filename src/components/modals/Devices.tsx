@@ -243,7 +243,7 @@ const ShareList = React.forwardRef<
                           setShowDeviceForm(false)
                           onAdd?.(result.accessToken!)
                         } else {
-                          dispatch(alert('Not connected to server. Unable to add device.', {}))
+                          dispatch(alert('Not connected to server. Unable to add device.'))
                         }
                       }}
                       defaultName={getNextDeviceName(permissions)}
@@ -366,7 +366,7 @@ const ShareDetail = React.memo(
           }, 200)
 
           navigator.clipboard.writeText(url)
-          dispatch(alert('Share URL copied to clipboard', {}))
+          dispatch(alert('Share URL copied to clipboard'))
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [url],

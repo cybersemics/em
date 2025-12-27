@@ -124,7 +124,7 @@ const Invites = () => {
   /** Copy text to clipboard. */
   const updateCopy = (text: string) => {
     navigator.clipboard.writeText(text)
-    dispatch(alert('Invite code copied to clipboard', {}))
+    dispatch(alert('Invite code copied to clipboard'))
   }
 
   throw new Error('Not implemented')

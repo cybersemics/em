@@ -135,7 +135,7 @@ const Footer = () => {
   useEffect(() => {
     // prevent alert dispatch when rendered for first time
     if (!firstUpdate.current) {
-      dispatch(alert(`Font size: ${fontSize}`, {}))
+      dispatch(alert(`Font size: ${fontSize}`))
       scrollTo('bottom')
     } else {
       firstUpdate.current = false

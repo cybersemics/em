@@ -40,9 +40,7 @@ const drop = (state: State, items: DragThoughtItem[]) => {
       haptics.light()
       store.dispatch([
         toggleAttribute({ path: simplePath, values: ['=favorite', 'true'] }),
-        alert(`Removed ${ellipsize(value)} from favorites`, {
-          showCloseLink: true,
-        }),
+        alert(`Removed ${ellipsize(value)} from favorites`),
       ])
     } else if (zone === DragThoughtZone.Thoughts) {
       haptics.vibrate(DELETE_VIBRATE_DURATION)
@@ -62,9 +60,6 @@ const drop = (state: State, items: DragThoughtItem[]) => {
     // alert for multiple deleted thoughts will override the previous individual alert
     alert(
       `Removed ${pluralize('thought', items.length, true)}${items[0].zone === DragThoughtZone.Favorites ? ' from favorites' : ''}`,
-      {
-        showCloseLink: true,
-      },
     ),
   ])
 }
@@ -122,7 +117,6 @@ const DropGutter: FC = () => {
       store.dispatch(
         alert(message, {
           alertType: isHovering ? AlertType.DeleteDropHint : AlertType.DragAndDropHint,
-          showCloseLink: false,
         }),
       )
     }

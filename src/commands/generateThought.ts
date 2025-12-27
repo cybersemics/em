@@ -177,7 +177,7 @@ const generateThought: Command = {
       const { content, err } = (await res.json()) as { content: string; err: { status: number; message: string } }
       if (err) {
         if (err.status === 429) {
-          dispatch(alert('Rate limit reached. Please try again later.', {}))
+          dispatch(alert('Rate limit reached. Please try again later.'))
         } else {
           dispatch(error({ value: err.message }))
         }

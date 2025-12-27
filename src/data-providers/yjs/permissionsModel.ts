@@ -21,7 +21,7 @@ const permissionsModel: { [key in keyof Routes['share']]: any } = {
       name: name || '',
       role,
     })
-    store.dispatch(alert(`Added ${name ? `"${name}"` : 'device'}`, {}))
+    store.dispatch(alert(`Added ${name ? `"${name}"` : 'device'}`))
     return { accessToken }
   },
   delete: (accessToken: string, { name }: { name?: string } = {}) => {
@@ -29,11 +29,11 @@ const permissionsModel: { [key in keyof Routes['share']]: any } = {
 
     // removed other device
     if (accessToken !== accessTokenLocal) {
-      store.dispatch(alert(`Removed ${name ? `"${name}"` : 'device'}`, {}))
+      store.dispatch(alert(`Removed ${name ? `"${name}"` : 'device'}`))
     }
     // removed current device when there are others
     else if (permissionsMap.size > 1) {
-      store.dispatch([clearActionCreator(), alert(`Removed this device from the thoughtspace`, {})])
+      store.dispatch([clearActionCreator(), alert(`Removed this device from the thoughtspace`)])
     }
     // remove last device
     else {
@@ -53,7 +53,7 @@ const permissionsModel: { [key in keyof Routes['share']]: any } = {
       ...(name ? { name } : null),
       ...(role ? { role } : null),
     })
-    store.dispatch(alert(`${name ? ` "${name}"` : 'Device '} updated`, {}))
+    store.dispatch(alert(`${name ? ` "${name}"` : 'Device '} updated`))
   },
 }
 

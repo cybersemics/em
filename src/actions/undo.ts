@@ -15,7 +15,6 @@ export const undoActionCreator = (): Thunk => (dispatch, getState) => {
 
   dispatch(
     alert(`Undo: ${startCase(lastActionType)}`, {
-      showCloseLink: false,
       alertType: AlertType.Undo,
     }),
   )

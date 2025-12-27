@@ -31,7 +31,7 @@ const ModalFeedback = () => {
 
     // minimum characters
     if (feedback.length < FEEDBACK_MIN_LENGTH) {
-      dispatch(alert(`Message must be at least ${FEEDBACK_MIN_LENGTH} characters`, {}))
+      dispatch(alert(`Message must be at least ${FEEDBACK_MIN_LENGTH} characters`))
       setIsDisabled(true)
       return
     }

@@ -132,7 +132,6 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
           // alert
           alert({
             value: deleteThoughtAlertText(state, path, { archive: true }),
-            showCloseLink: true,
           }),
 
           // execute moveThought after newThought has updated the state

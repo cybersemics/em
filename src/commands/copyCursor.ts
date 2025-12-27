@@ -66,7 +66,6 @@ const copyCursorCommand: Command = {
           `Copied ${pluralize('thought', numThoughts, true)}${
             numDescendants > 0 ? ` and ${pluralize('descendant', numDescendants, true)}` : ''
           } to the clipboard`,
-          {},
         ),
       )
     },
@@ -101,7 +100,7 @@ const copyCursorCommand: Command = {
       value: getThoughtById(stateAfterPull, head(simplePath))?.value,
     })
 
-    dispatch(alert(`Copied ${phrase} to the clipboard`, {}))
+    dispatch(alert(`Copied ${phrase} to the clipboard`))
   },
 }
 

@@ -40,11 +40,7 @@ const pinAllCommand: Command = {
     // since the user won't have the visual feedbavk from the toolbar due to the toolbar hiding logic
     if (type === 'keyboard') {
       const pinned = findDescendant(state, thoughtId, ['=children', '=pin', 'true'])
-      dispatch(
-        alert(pinned ? 'Unpinned subthoughts' : 'Pinned subthoughts', {
-          showCloseLink: false,
-        }),
-      )
+      dispatch(alert(pinned ? 'Unpinned subthoughts' : 'Pinned subthoughts'))
     }
 
     const childrenAttributeId = findDescendant(state, thoughtId, '=children')
