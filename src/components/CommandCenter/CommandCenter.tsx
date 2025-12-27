@@ -95,27 +95,12 @@ const CommandCenter = ({ mountPoint }: Pick<SheetProps, 'mountPoint'>) => {
 
   if (isTouch && !isTutorialOn) {
     return (
-      <Sheet
-        data-testid='command-center-panel'
-        onOpenEnd={() => {
-          setIsFullyOpen(true)
-        }}
-        onCloseStart={() => {
-          setIsFullyOpen(false)
-        }}
-        ref={ref}
-        isOpen={showCommandCenter}
-        onClose={onClose}
-        detent='content'
-        unstyled
-        mountPoint={mountPoint}
-        style={{
-          /** Required for progressive blur to properly blend with background. */
-          position: 'static',
-        }}
-      >
+      <>
         <motion.div
-          /** Progressive blur. */
+          /*
+           * Progressive blur effect. Must be placed outside the Sheet to avoid separation
+           * from the background content due to the fixed position of the parent.
+           */
           className={css({
             pointerEvents: 'none',
             position: 'absolute',
@@ -129,145 +114,161 @@ const CommandCenter = ({ mountPoint }: Pick<SheetProps, 'mountPoint'>) => {
             height: blurHeight,
           }}
         />
-        <motion.div
-          /** Falloff. */
-          className={css({
-            pointerEvents: 'none',
-            position: 'absolute',
-            background: 'linear-gradient(180deg, {colors.bgTransparent} 0%, {colors.bg} 1.2rem)',
-            paddingTop: '0.8rem',
-            bottom: 0,
-            width: '100%',
-            height: '100%',
-          })}
-          style={{ height }}
-        />
-        <motion.div
-          className={css({
-            position: 'fixed',
-            pointerEvents: 'none',
-            backgroundImage: 'url(/img/command-center/overlay.webp)',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center bottom',
-            mixBlendMode: 'screen',
-            height: '100vh',
-            width: '100%',
-            bottom: 0,
-          })}
-          style={{ opacity }}
-        />
-        <Sheet.Container
-          data-testid='command-menu-panel'
-          style={{
-            backgroundColor: 'transparent',
-            // Make sure it overrides any inline styles
-            display: 'flex',
-            flexDirection: 'column',
-            width: '100%',
-            overflow: 'visible',
-            maxHeight: '70%',
-            pointerEvents: 'auto',
-            boxShadow: 'none',
-            zIndex: 'auto',
-            bottom,
+        <Sheet
+          data-testid='command-center-panel'
+          onOpenEnd={() => {
+            setIsFullyOpen(true)
           }}
-          className={css({
-            /**
-             * Override inline transform styles, to rely only on bottom.
-             * This way no new stacking context is created.
-             * This needs to be set in className, as react-modal-sheet
-             * will override the transform value passed in inside style.
-             */
-            transform: 'none !important',
-          })}
+          onCloseStart={() => {
+            setIsFullyOpen(false)
+          }}
+          ref={ref}
+          isOpen={showCommandCenter}
+          onClose={onClose}
+          detent='content'
+          unstyled
+          mountPoint={mountPoint}
         >
-          <Sheet.Content
+          <motion.div
+            /** Falloff. */
+            className={css({
+              pointerEvents: 'none',
+              position: 'absolute',
+              background: 'linear-gradient(180deg, {colors.bgTransparent} 0%, {colors.bg} 1.2rem)',
+              paddingTop: '0.8rem',
+              bottom: 0,
+              width: '100%',
+              height: '100%',
+            })}
+            style={{ height }}
+          />
+          <motion.div
+            className={css({
+              position: 'fixed',
+              pointerEvents: 'none',
+              backgroundImage: 'url(/img/command-center/overlay.webp)',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center bottom',
+              mixBlendMode: 'screen',
+              height: '100vh',
+              width: '100%',
+              bottom: 0,
+            })}
+            style={{ opacity }}
+          />
+          <Sheet.Container
+            data-testid='command-menu-panel'
             style={{
+              backgroundColor: 'transparent',
+              // Make sure it overrides any inline styles
+              display: 'flex',
+              flexDirection: 'column',
+              width: '100%',
               overflow: 'visible',
+              maxHeight: '70%',
+              pointerEvents: 'auto',
+              boxShadow: 'none',
+              zIndex: 'auto',
+              bottom,
             }}
+            className={css({
+              /**
+               * Override inline transform styles, to rely only on bottom.
+               * This way no new stacking context is created.
+               * This needs to be set in className, as react-modal-sheet
+               * will override the transform value passed in inside style.
+               */
+              transform: 'none !important',
+            })}
           >
-            <div
-              className={css({
-                display: 'flex',
-                flexDirection: 'column',
-                margin: '0 1.5rem calc(1.5rem + env(safe-area-inset-bottom)) 1.5rem',
-                gap: '1rem',
-              })}
+            <Sheet.Content
+              style={{
+                overflow: 'visible',
+              }}
             >
               <div
                 className={css({
                   display: 'flex',
-                  alignItems: 'flex-end',
-                  justifyContent: 'space-between',
+                  flexDirection: 'column',
+                  margin: '0 1.5rem calc(1.5rem + env(safe-area-inset-bottom)) 1.5rem',
+                  gap: '1rem',
                 })}
               >
-                <MultiselectMessage />
+                <div
+                  className={css({
+                    display: 'flex',
+                    alignItems: 'flex-end',
+                    justifyContent: 'space-between',
+                  })}
+                >
+                  <MultiselectMessage />
+                  <div
+                    className={css({
+                      display: 'grid',
+                      // Define a single area for stacking. Cannot use position relative,
+                      // since that will create a new stacking context and break mix-blend-mode.
+                      gridTemplateAreas: '"button"',
+                      fontSize: '0.85em',
+                      fontWeight: 500,
+                      letterSpacing: '-0.011em',
+                      color: 'fg',
+                    })}
+                  >
+                    <div
+                      className={css({
+                        gridArea: 'button',
+                        background: 'fgOverlay20',
+                        borderRadius: 46,
+                        mixBlendMode: 'soft-light',
+                      })}
+                    />
+                    <button
+                      {...fastClick(onClose)}
+                      className={css({
+                        all: 'unset',
+                        gridArea: 'button',
+                        mixBlendMode: 'lighten',
+                        opacity: 0.5,
+                        fontWeight: 500,
+                        cursor: 'pointer',
+                        padding: '8px 16px',
+                      })}
+                    >
+                      Done
+                    </button>
+                  </div>
+                </div>
                 <div
                   className={css({
                     display: 'grid',
-                    // Define a single area for stacking. Cannot use position relative,
-                    // since that will create a new stacking context and break mix-blend-mode.
-                    gridTemplateAreas: '"button"',
-                    fontSize: '0.85em',
-                    fontWeight: 500,
-                    letterSpacing: '-0.011em',
-                    color: 'fg',
+                    gridTemplateColumns: 'repeat(4, 1fr)',
+                    gridTemplateRows: 'auto',
+                    gridAutoFlow: 'row',
+                    gap: '0.7rem',
+                    gridRowGap: '1rem',
                   })}
                 >
-                  <div
-                    className={css({
-                      gridArea: 'button',
-                      background: 'fgOverlay20',
-                      borderRadius: 46,
-                      mixBlendMode: 'soft-light',
-                    })}
+                  <PanelCommand
+                    isGlowReady={isFullyOpen}
+                    command={{ ...copyCursorCommand, label: 'Copy' }}
+                    size='small'
                   />
-                  <button
-                    {...fastClick(onClose)}
-                    className={css({
-                      all: 'unset',
-                      gridArea: 'button',
-                      mixBlendMode: 'lighten',
-                      opacity: 0.5,
-                      fontWeight: 500,
-                      cursor: 'pointer',
-                      padding: '8px 16px',
-                    })}
-                  >
-                    Done
-                  </button>
+                  <PanelCommand isGlowReady={isFullyOpen} command={note} size='small' />
+                  <PanelCommand isGlowReady={isFullyOpen} command={{ ...favorite, label: 'Favorite' }} size='small' />
+                  <PanelCommand isGlowReady={isFullyOpen} command={deleteCommand} size='small' />
+                  <PanelCommandGroup commandSize='small' commandCount={2}>
+                    <PanelCommand isGlowReady={isFullyOpen} command={{ ...outdent, label: '' }} size='small' />
+                    <PanelCommand isGlowReady={isFullyOpen} command={{ ...indent, label: '' }} size='small' />
+                  </PanelCommandGroup>
+                  <PanelCommand isGlowReady={isFullyOpen} command={swapParent} size='medium' />
+                  <PanelCommand isGlowReady={isFullyOpen} command={categorize} size='medium' />
+                  <PanelCommand isGlowReady={isFullyOpen} command={uncategorize} size='medium' />
                 </div>
               </div>
-              <div
-                className={css({
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(4, 1fr)',
-                  gridTemplateRows: 'auto',
-                  gridAutoFlow: 'row',
-                  gap: '0.7rem',
-                  gridRowGap: '1rem',
-                })}
-              >
-                <PanelCommand
-                  isGlowReady={isFullyOpen}
-                  command={{ ...copyCursorCommand, label: 'Copy' }}
-                  size='small'
-                />
-                <PanelCommand isGlowReady={isFullyOpen} command={note} size='small' />
-                <PanelCommand isGlowReady={isFullyOpen} command={{ ...favorite, label: 'Favorite' }} size='small' />
-                <PanelCommand isGlowReady={isFullyOpen} command={deleteCommand} size='small' />
-                <PanelCommandGroup commandSize='small' commandCount={2}>
-                  <PanelCommand isGlowReady={isFullyOpen} command={{ ...outdent, label: '' }} size='small' />
-                  <PanelCommand isGlowReady={isFullyOpen} command={{ ...indent, label: '' }} size='small' />
-                </PanelCommandGroup>
-                <PanelCommand isGlowReady={isFullyOpen} command={swapParent} size='medium' />
-                <PanelCommand isGlowReady={isFullyOpen} command={categorize} size='medium' />
-                <PanelCommand isGlowReady={isFullyOpen} command={uncategorize} size='medium' />
-              </div>
-            </div>
-          </Sheet.Content>
-        </Sheet.Container>
-      </Sheet>
+            </Sheet.Content>
+          </Sheet.Container>
+        </Sheet>
+      </>
     )
   }
 }
