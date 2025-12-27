@@ -67,7 +67,7 @@ const Alert: FC = () => {
   return (
     <Notification
       transitionKey={value}
-      onClose={alert?.showCloseLink ? onClose : undefined}
+      onClose={alert?.clearDelay != null ? onClose : undefined}
       value={alert ? value : null}
       icon={Icon ? <Icon cssRaw={css.raw({ cursor: 'default' })} size={iconSize} fill={token('colors.fg')} /> : null}
       onMouseLeave={startTimer}

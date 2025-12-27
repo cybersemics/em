@@ -19,7 +19,6 @@ const toolbarLongPress = (state: State, { command }: Payload) => ({
         value: AlertText.DragAndDropToolbar,
         alertType: AlertType.DragAndDropToolbarHint,
         clearDelay: null,
-        showCloseLink: false,
       })
     : state),
   toolbarLongPress: command,
