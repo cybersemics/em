@@ -44,7 +44,7 @@ const alertReducer = (state: State, { alertType, value, importFileId, clearDelay
  *
  * @param value The string or React Component that will be rendered in the alert.
  * @param type An arbitrary alert type that can be added to the alert. This is useful if specific alerts needs to be detected later on, for example, to determine if the alert should be closed, or if it has been superceded by a different alert type.
- * @param clearDelay Timeout after which alert will be cleared. Default: 5000ms. Set to null to prevent auto-dismiss and show a close link.
+ * @param clearDelay Timeout after which alert will be cleared. Default: 5000ms. Set to null to prevent auto-dismiss. When clearDelay is set, a close link is shown.
  */
 export const alertActionCreator =
   (
