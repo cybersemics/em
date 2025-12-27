@@ -75,6 +75,7 @@ const DropToRemoveFromToolbar: FC<PropsWithChildren> = ({ children }) => {
       dispatch(
         alert(AlertText.DragAndDropToolbarAdd, {
           alertType: AlertType.ToolbarButtonRemoveHint,
+          clearDelay: null,
           showCloseLink: false,
         }),
       )
@@ -83,6 +84,7 @@ const DropToRemoveFromToolbar: FC<PropsWithChildren> = ({ children }) => {
         dispatch([
           alert(`Drop to remove ${commandById(dragCommand).label} from toolbar`, {
             alertType: AlertType.ToolbarButtonRemoveHint,
+            clearDelay: null,
             showCloseLink: false,
           }),
         ])
@@ -208,7 +210,7 @@ const ModalCustomizeToolbar: FC = () => {
           <a
             {...fastClick(() => {
               if (window.confirm('Reset toolbar to factory settings?')) {
-                dispatch([initUserToolbar({ force: true }), alert('Toolbar reset', { clearDelay: 8000 })])
+                dispatch([initUserToolbar({ force: true }), alert('Toolbar reset')])
               }
             })}
             className={cx(extendTapRecipe(), css({ color: 'red' }))}
