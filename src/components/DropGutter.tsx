@@ -117,6 +117,8 @@ const DropGutter: FC = () => {
       store.dispatch(
         alert(message, {
           alertType: isHovering ? AlertType.DeleteDropHint : AlertType.DragAndDropHint,
+          clearDelay: null,
+          showCloseLink: false,
         }),
       )
     }
