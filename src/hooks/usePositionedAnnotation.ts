@@ -89,8 +89,9 @@ const usePositionedAnnotation = (
   // useSelector would be a cleaner way to get the editableRef's new position
   // but, on load, the refs are null until setTimeout runs
   useEffect(() => {
+    setOpacity('0')
+
     if (contextAnimation && descendant && !isEditing) {
-      setOpacity('0')
       clearTimeout(timeoutRef.current)
       timeoutRef.current = 0
     }
