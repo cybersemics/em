@@ -18,7 +18,7 @@ import { suppressExpansionActionCreator as suppressExpansion } from './actions/s
 import { isMac } from './browser'
 import * as commandsObject from './commands/index'
 import openGestureCheatsheetCommand from './commands/openGestureCheatsheet'
-import { AlertType, COMMAND_PALETTE_TIMEOUT, GESTURE_HINT_TIMEOUT, LongPressState, Settings } from './constants'
+import { AlertType, COMMAND_PALETTE_TIMEOUT, LongPressState, Settings } from './constants'
 import * as selection from './device/selection'
 import globals from './globals'
 import getUserSetting from './selectors/getUserSetting'
@@ -274,8 +274,6 @@ export const inputHandlers = (store: Store<State, any>) => ({
           dispatch(
             alert(command.label, {
               alertType: AlertType.GestureHint,
-              clearDelay: GESTURE_HINT_TIMEOUT,
-              showCloseLink: false,
             }),
           )
         } else if (

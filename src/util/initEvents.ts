@@ -259,7 +259,7 @@ const initEvents = (store: Store<State, any>) => {
         scrollAtEdge.stop()
       }
     }
-    // do not scroll-at-edge when hovering over QuickDrop component
+    // do not scroll-at-edge when hovering over DropGutter component
     else if (
       state.longPress === LongPressState.DragInProgress &&
       !(state.alert?.alertType === AlertType.DeleteDropHint)

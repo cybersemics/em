@@ -21,6 +21,7 @@ import Alert from './Alert'
 import CommandCenter from './CommandCenter/CommandCenter'
 import CommandPalette from './CommandPalette'
 import Content from './Content'
+import DropGutter from './DropGutter'
 import ErrorMessage from './ErrorMessage'
 import Footer from './Footer'
 import GestureMenu from './GestureMenu'
@@ -28,7 +29,6 @@ import HamburgerMenu from './HamburgerMenu'
 import LatestCommandsDiagram from './LatestCommandsDiagram'
 import MultiGesture from './MultiGesture'
 import NavBar from './NavBar'
-import QuickDropPanel from './QuickDropPanel'
 import Sidebar from './Sidebar'
 import Tips from './Tips/Tips'
 import Toolbar from './Toolbar'
@@ -184,7 +184,7 @@ const AppComponent: FC = () => {
           <UndoSlider />
         </>
       )}
-      <QuickDropPanel />
+      <DropGutter />
 
       <MultiGestureIfTouch>
         {showModal ? (

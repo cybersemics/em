@@ -28,7 +28,7 @@ export const dragCommandActionCreator =
       commandId && toolbarTop >= toolbarHeight
         ? alert(AlertText.DragAndDropToolbar, {
             alertType: AlertType.DragAndDropToolbarHint,
-            showCloseLink: false,
+            clearDelay: null,
           })
         : alertType === AlertType.ToolbarButtonRemoveHint ||
             alertType === AlertType.DragAndDropToolbarAdd ||

@@ -50,31 +50,33 @@ const GestureMenu: FC<{
         })}
         style={{ fontSize }}
       >
-        <div
-          className={css({
-            padding: '0.85em 0.66em',
-          })}
-        >
-          {commands.map((command, index) => {
-            // Check if the current gesture sequence ends with help gesture
-            const cheatsheetInProgress = gestureInProgress
-              ?.toString()
-              .endsWith(gestureString(openGestureCheatsheetCommand))
-            const isCheatsheetMatch = command.id === 'openGestureCheatsheet' && cheatsheetInProgress
-            const isCancelMatch = command.id === 'cancel' && !hasMatchingCommand && !cheatsheetInProgress
+        {gestureInProgress && (
+          <div
+            className={css({
+              padding: '0.85em 0.66em',
+            })}
+          >
+            {commands.map((command, index) => {
+              // Check if the current gesture sequence ends with help gesture
+              const cheatsheetInProgress = gestureInProgress
+                ?.toString()
+                .endsWith(gestureString(openGestureCheatsheetCommand))
+              const isCheatsheetMatch = command.id === 'openGestureCheatsheet' && cheatsheetInProgress
+              const isCancelMatch = command.id === 'cancel' && !hasMatchingCommand && !cheatsheetInProgress
 
-            return (
-              <CommandItem
-                gestureInProgress={gestureInProgress as string}
-                key={command.id}
-                selected={isCheatsheetMatch || gestureInProgress === gestureString(command) || isCancelMatch}
-                command={command}
-                isFirstCommand={index === 0}
-                isLastCommand={index === commands.length - 1}
-              />
-            )
-          })}
-        </div>
+              return (
+                <CommandItem
+                  gestureInProgress={gestureInProgress as string}
+                  key={command.id}
+                  selected={isCheatsheetMatch || gestureInProgress === gestureString(command) || isCancelMatch}
+                  command={command}
+                  isFirstCommand={index === 0}
+                  isLastCommand={index === commands.length - 1}
+                />
+              )
+            })}
+          </div>
+        )}
       </div>
     </div>
   )
