@@ -200,7 +200,6 @@
     "@wdio/mocha-framework": "^9.22.0",
     "@wdio/spec-reporter": "^9.20.0",
     "@wdio/types": "^9.20.0",
-    "browserstack-local": "^1.5.8",
     "chalk": "^5.6.2",
     "dotenv": "17.2.3",
     "eslint": "^9.39.2",
