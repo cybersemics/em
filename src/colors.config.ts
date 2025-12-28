@@ -18,6 +18,7 @@ const colors = {
     fgOverlay40: 'rgba(255, 255, 255, 0.4)',
     fgOverlay50: 'rgba(255, 255, 255, 0.5)',
     fgOverlay70: 'rgba(255, 255, 255, 0.7)',
+    fgOverlay75: 'rgba(255, 255, 255, 0.75)',
     fgOverlay80: 'rgba(20, 20, 20, 0.8)',
     fgOverlay90: 'rgba(20, 20, 20, 0.9)',
     gray09: 'rgba(23, 23, 23, 1)', // #171717
@@ -30,6 +31,8 @@ const colors = {
     gray: 'rgba(169, 169, 169, 1)', // #a9a9a9, this is used for disabled things + text color, unlike gray66 it is the same for both light and dark
     green: 'rgba(0, 214, 136, 1)', // #00d688
     highlight: 'rgba(173, 216, 230, 1)', // #add8e6 (lightblue)
+    highlight0: 'rgba(173, 216, 230, 0)', // #add8e6 (lightblue - 0% alpha [used in pulseBackgroundHighlight animation])
+    highlight10: 'rgba(173, 216, 230, 0.1)', // #add8e6 (lightblue - 10% alpha [used in pulseBackgroundHighlight animation])
     highlight2: 'rgba(155, 170, 220, 1)', // (slight variation on highlight color for alternating highlights)
     lightgray: '#999999', // #999999
     lightgreen: 'rgba(144, 238, 144)', // #90ee90 (lightgreen)
@@ -63,8 +66,8 @@ const colors = {
     bgTransparent: 'rgba(0, 0, 0, 0)',
     fgTransparent: 'rgba(255, 255, 255, 0)',
     modalColor: 'rgba(227, 227, 227, 1)', // #e3e3e3
-    quickDropBgHover: 'rgba(40,40,40,0.8)',
-    quickDropBg: 'rgba(30,30,30,0.8)',
+    dropGutterBgHover: 'rgba(40,40,40,0.8)',
+    dropGutterBg: 'rgba(30,30,30,0.8)',
     bulletGray: 'rgba(102, 102, 102, 1)', // #666
     midPink: 'rgba(255, 123, 195, 1)', // #ff7bc3
     dropChildTarget: '#32305f', // purple-eggplant
@@ -77,6 +80,12 @@ const colors = {
     exportTextareaColor: 'rgba(170, 170, 170, 1)', // #aaa, also used in anchorButton
     panelBorder: 'rgba(36, 36, 36, 1)',
     panelBg: 'rgba(23, 23, 23, 1)', // #171717
+    commandCenterBlue: 'rgba(106, 154, 181, 1)',
+    commandCenterPurple: 'rgba(45, 8, 126, 1)', // #2d087e
+    panelCommandBorderGradientPurple: 'rgba(130, 108, 203, 0)',
+    panelCommandBorderGradientBlue: 'rgba(127, 172, 255, 0.08)',
+    panelCommandBorderGradientGray: 'rgba(186, 187, 187, 0.26)',
+    panelCommandBorderGradientPurpleLight: 'rgba(208, 210, 224, 0)',
   },
   light: {
     // Background colors in capacitor app needs to be in hexadecimal codes
@@ -97,6 +106,7 @@ const colors = {
     fgOverlay40: 'rgba(0, 0, 0, 0.4)',
     fgOverlay50: 'rgba(0, 0, 0, 0.5)',
     fgOverlay70: 'rgba(0, 0, 0, 0.7)',
+    fgOverlay75: 'rgba(0, 0, 0, 0.75)',
     fgOverlay80: 'rgba(235, 235, 235, 0.8)',
     fgOverlay90: 'rgba(235, 235, 235, 0.9)',
     gray09: 'rgba(232, 232, 232, 1)', // #e8e8e8
@@ -109,6 +119,8 @@ const colors = {
     gray: 'rgba(169, 169, 169, 1)', // #a9a9a9
     green: 'rgba(0, 214, 136, 1)', // #00d688
     highlight: 'rgba(65, 105, 225, 1)', // #4169e1 (royalblue)
+    highlight0: 'rgba(173, 216, 230, 0)', // #add8e6 (lightblue - 0% alpha [used in pulseBackgroundHighlight animation])
+    highlight10: 'rgba(173, 216, 230, 0.1)', // #add8e6 (lightblue - 10% alpha [used in pulseBackgroundHighlight animation])
     highlight2: 'rgba(155, 170, 220, 1)', // (slight variation on highlight color for alternating highlights)
     lightgray: '#666666', // #666666
     lightgreen: 'rgba(0, 214, 136, 1)', // #00d688 (same as green in the light theme)
@@ -142,8 +154,8 @@ const colors = {
     fgTransparent: 'rgba(0, 0, 0, 0)',
     bgTransparent: 'rgba(255, 255, 255, 0)',
     modalColor: 'rgba(28, 28, 28, 1)', // #1c1c1c
-    quickDropBgHover: 'rgba(215, 215, 215, 0.8)',
-    quickDropBg: 'rgba(225, 225, 225, 0.8)',
+    dropGutterBgHover: 'rgba(215, 215, 215, 0.8)',
+    dropGutterBg: 'rgba(225, 225, 225, 0.8)',
     bulletGray: 'rgba(153, 153, 153, 1)', // #999999
     midPink: 'rgba(255, 123, 195, 1)',
     dropChildTarget: '#a4a2cd',
@@ -156,6 +168,12 @@ const colors = {
     exportTextareaColor: 'rgba(85, 85, 85, 1)',
     panelBorder: 'rgba(219, 219, 219, 1)',
     panelBg: 'rgba(232, 232, 232, 1)', // #171717
+    commandCenterBlue: 'rgba(106, 154, 181, 1)',
+    commandCenterPurple: 'rgba(45, 8, 126, 1)', // #2d087e
+    panelCommandBorderGradientPurple: 'rgba(130, 108, 203, 0)',
+    panelCommandBorderGradientBlue: 'rgba(127, 172, 255, 0.08)',
+    panelCommandBorderGradientGray: 'rgba(186, 187, 187, 0.26)',
+    panelCommandBorderGradientPurpleLight: 'rgba(208, 210, 224, 0)',
   },
 } as const
 

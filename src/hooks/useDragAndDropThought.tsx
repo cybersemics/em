@@ -17,7 +17,6 @@ import { errorActionCreator as error } from '../actions/error'
 import { importFilesActionCreator as importFiles } from '../actions/importFiles'
 import { longPressActionCreator as longPress } from '../actions/longPress'
 import { moveThoughtActionCreator as moveThought } from '../actions/moveThought'
-import { setDroppedPathActionCreator as setDroppedPath } from '../actions/setDroppedPath'
 import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from '../actions/setIsMulticursorExecuting'
 import { ThoughtContainerProps } from '../components/Thought'
 import { LongPressState } from '../constants'
@@ -232,10 +231,6 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
 
     haptics.medium()
 
-    // set post-drop highlight on destination parent so the pulse continues briefly at a slower rate
-    const destinationParent = parentOf(props.simplePath)
-    dispatch(setDroppedPath({ path: destinationParent }))
-
     // Alert user if context changed
     const hasContextChanged = draggedItems.every(
       item => !equalPath(parentOf(item.simplePath), parentOf(props.simplePath)),
@@ -255,11 +250,7 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
         const alertFrom = numThoughts === 1 ? `"${ellipsize(firstFromThought.value)}"` : `${numThoughts} thoughts`
         const alertTo = isRoot([parentThought.id]) ? 'home' : `"${ellipsize(parentThought.value)}"`
 
-        dispatch(
-          alert(`${alertFrom} moved to ${alertTo} context.`, {
-            clearDelay: 5000,
-          }),
-        )
+        dispatch(alert(`${alertFrom} moved to ${alertTo} context.`))
       }, 100)
     }
   })

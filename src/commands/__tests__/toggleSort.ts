@@ -87,6 +87,9 @@ describe('DOM', () => {
       const subthoughtsOfA = getDescendantsOfContext(['a'])
 
       expect(subthoughtsOfA.map((child: HTMLElement) => child.textContent)).toMatchObject(['1', '2', '3'])
+
+      // TODO: Why does the next test fail if we don't wait for all timers here?
+      await act(() => vi.runAllTimersAsync())
     })
 
     it('home: Desc', async () => {

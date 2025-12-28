@@ -39,7 +39,7 @@ const copyCursorCommand: Command = {
       )
 
       if (needsPull) {
-        dispatch(alert('Loading thoughts...'))
+        dispatch(alert('Loading thoughts...', { clearDelay: null }))
         await dispatch(
           pull(
             filteredCursors.map(cursor => head(cursor)),
@@ -66,9 +66,6 @@ const copyCursorCommand: Command = {
           `Copied ${pluralize('thought', numThoughts, true)}${
             numDescendants > 0 ? ` and ${pluralize('descendant', numDescendants, true)}` : ''
           } to the clipboard`,
-          {
-            clearDelay: 3000,
-          },
         ),
       )
     },
@@ -87,7 +84,7 @@ const copyCursorCommand: Command = {
     // if there are any pending descendants, do a pull
     // otherwise copy whatever is in state
     if (someDescendants(state, head(simplePath), child => isPending(state, getThoughtById(state, child.id)))) {
-      dispatch(alert('Loading thoughts...'))
+      dispatch(alert('Loading thoughts...', { clearDelay: null }))
       await dispatch(pull([head(simplePath)], { maxDepth: Infinity }))
     }
 
@@ -103,11 +100,7 @@ const copyCursorCommand: Command = {
       value: getThoughtById(stateAfterPull, head(simplePath))?.value,
     })
 
-    dispatch(
-      alert(`Copied ${phrase} to the clipboard`, {
-        clearDelay: 3000,
-      }),
-    )
+    dispatch(alert(`Copied ${phrase} to the clipboard`))
   },
 }
 

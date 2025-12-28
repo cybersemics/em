@@ -14,7 +14,7 @@ const throttledAlert = _.throttle(
   { leading: false, trailing: true },
 )
 
-/** A middleware that manages multicursor alerts and shows/hides the Command Menu on mobile. This is done so that the Alert and Command Menu are updated regardless of which action the multiselect is triggered from. Note that this only works in one direction: Multiselect -> Alert/CommandMenu. If the Command Menu is closed somewhere else (e.g. toggleDropdown) it will need to clear the multicursors itself. */
+/** A middleware that manages multicursor alerts and shows/hides the Command Center on mobile. This is done so that the Alert and Command Center are updated regardless of which action the multiselect is triggered from. Note that this only works in one direction: Multiselect -> Alert/CommandCenter. If the Command Center is closed somewhere else (e.g. toggleDropdown) it will need to clear the multicursors itself. */
 const multicursorAlertMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => {
   return next => action => {
     const prevNumMulticursors = Object.keys(getState().multicursors).length
@@ -24,12 +24,12 @@ const multicursorAlertMiddleware: ThunkMiddleware<State> = ({ getState, dispatch
     const state = getState()
     const numMulticursors = Object.keys(state.multicursors).length
 
-    // On mobile, show the command menu when multicursor is active, and hide it when inactive.
+    // On mobile, show the Command Center when multicursor is active, and hide it when inactive.
     if (isTouch) {
-      if (numMulticursors === 0 && state.showCommandMenu) {
-        dispatch(toggleDropdown({ dropDownType: 'commandMenu', value: false }))
-      } else if (numMulticursors > 0 && !state.showCommandMenu) {
-        dispatch(toggleDropdown({ dropDownType: 'commandMenu', value: true }))
+      if (numMulticursors === 0 && state.showCommandCenter) {
+        dispatch(toggleDropdown({ dropDownType: 'commandCenter', value: false }))
+      } else if (numMulticursors > 0 && !state.showCommandCenter) {
+        dispatch(toggleDropdown({ dropDownType: 'commandCenter', value: true }))
       }
     }
     // on desktop, show a persistent alert

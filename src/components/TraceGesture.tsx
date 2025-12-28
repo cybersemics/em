@@ -32,12 +32,12 @@ interface SignaturePadOverride {
 
 /** A hook that detects when there is a cancelled gesture in progress. Handles GestureHint and: CommandPaletteGesture which have different ways of showing a cancelled gesture. */
 const useGestureCancelled = () => {
-  const showCommandPalette = useSelector(state => state.showCommandPalette)
+  const showGestureMenu = useSelector(state => state.showGestureMenu)
 
   const invalidGesture = gestureStore.useSelector(
     state =>
       state.gesture &&
-      showCommandPalette &&
+      showGestureMenu &&
       !globalCommands.some(command => !command.hideFromHelp && gestureString(command) === state.gesture),
   )
 

@@ -44,10 +44,10 @@ describe('mobile only', () => {
     await longPressThought(b, { edge: 'right' })
 
     // In CI, sometimes the count of highlighted bullets are incorrect. The selector query runs immediately after both long presses, but react might not have finished re-rendering all bullet components.
-    // Wait for the command menu panel to show "2 thoughts selected" before we query for highlighted bullets.
+    // Wait for the Command Center to show "2 thoughts selected" before we query for highlighted bullets.
     await page.waitForFunction(
       () => {
-        const panel = document.querySelector('[data-testid=command-menu-panel]')
+        const panel = document.querySelector('[data-testid=command-center-panel]')
         return panel?.textContent?.includes('2 thoughts selected') ?? false
       },
       { timeout: 6000 },

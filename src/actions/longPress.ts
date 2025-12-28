@@ -75,7 +75,7 @@ const longPress = (state: State, payload: Payload) => {
             : alert(state, {
                 value: sourceZone === DragThoughtZone.Thoughts ? AlertText.DragAndDrop : AlertText.ReorderFavorites,
                 alertType: AlertType.DragAndDropHint,
-                showCloseLink: false,
+                clearDelay: null,
               })),
           ...longPressInactiveState,
           longPress: LongPressState.DragHold,
@@ -96,7 +96,7 @@ const longPress = (state: State, payload: Payload) => {
           ...alert(state, {
             value: sourceZone === DragThoughtZone.Thoughts ? AlertText.DragAndDrop : AlertText.ReorderFavorites,
             alertType: AlertType.DragAndDropHint,
-            showCloseLink: false,
+            clearDelay: null,
           }),
           ...longPressInactiveState,
           longPress: LongPressState.DragInProgress,

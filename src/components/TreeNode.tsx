@@ -6,7 +6,6 @@ import ActionType from '../@types/ActionType'
 import TreeThoughtPositioned from '../@types/TreeThoughtPositioned'
 import testFlags from '../e2e/testFlags'
 import useFauxCaretNodeProvider from '../hooks/useFauxCaretCssVars'
-import useMoveThoughtAnimation from '../hooks/useMoveThoughtAnimation'
 import getContextAnimationName from '../selectors/getContextAnimationName'
 import DropCliff from './DropCliff'
 import FadeTransition from './FadeTransition'
@@ -88,8 +87,6 @@ const TreeNode = ({
   // /** The transition animation for descendants of the context view after toggleContextView. Returns null otherwise. */
   const contextAnimation = useSelector(state => getContextAnimationName(state, path, transitionGroupsProps.in))
 
-  const moveDivStyle = useMoveThoughtAnimation(index, thoughtId)
-
   const onResize: OnResize = useCallback(props => setSize({ ...props, cliff }), [cliff, setSize])
 
   // List Virtualization
@@ -119,7 +116,6 @@ const TreeNode = ({
       <TreeNodePositioner
         x={x}
         y={y}
-        index={index}
         path={path}
         width={width}
         isTableCol1={isTableCol1}
@@ -155,7 +151,6 @@ const TreeNode = ({
             prevCliff={treeThoughtsPositioned[index - 1]?.cliff}
             isLastVisible={isLastVisible}
             autofocus={autofocus}
-            moveStyle={moveDivStyle}
           />
         </div>
         {dragInProgress &&

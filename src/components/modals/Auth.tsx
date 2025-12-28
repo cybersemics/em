@@ -71,7 +71,7 @@ const ModalAuth = () => {
         updateIsSubmitting(false)
         return updateError(e.message || errorsIndex.default)
       }
-      dispatch(alert('Please check your email'))
+      dispatch(alert('Please check your email', { clearDelay: null }))
       closeModal()
     },
     [dispatch],

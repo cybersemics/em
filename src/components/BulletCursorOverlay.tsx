@@ -34,7 +34,6 @@ type BulletCursorOverlayProps = {
   parentId: ThoughtId
   showContexts?: boolean
   leaf?: boolean
-  index: number
 }
 
 /** Returns true if two lists of children are equal. Deeply compares id, value, and rank. */
@@ -102,7 +101,6 @@ export default function BulletCursorOverlay({
   parentId,
   showContexts,
   leaf,
-  index,
 }: BulletCursorOverlayProps) {
   const value: string | undefined = useSelector(state => {
     const thought = getThoughtById(state, head(path))
@@ -166,7 +164,6 @@ export default function BulletCursorOverlay({
       thoughtId={head(simplePath)}
       width={width}
       path={path}
-      index={index}
       isMounted
     >
       {showContexts && simplePath?.length > 1 && (

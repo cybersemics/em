@@ -74,12 +74,7 @@ const archiveCommand: Command = {
     preventSetCursor: true,
     clearMulticursor: true,
     onComplete(filteredCursors, dispatch, getState) {
-      dispatch(
-        alert(`Deleted ${pluralize('thought', filteredCursors.length, true)}.`, {
-          clearDelay: 8000,
-          showCloseLink: true,
-        }),
-      )
+      dispatch(alert(`Deleted ${pluralize('thought', filteredCursors.length, true)}.`))
     },
   },
   svg: ArchiveIcon,

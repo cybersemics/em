@@ -9,13 +9,9 @@ const testFlags: {
   /** Render drop targets as blocks of color. */
   simulateDrop: boolean
 } = {
-  /** Delay in ms before expanding the hovering thought. Set in drag-and-drop test.  If null, EXPAND_HOVER_DELAY is use instead. */
   expandHoverDelay: null,
-  /** Delay in ms to mock data replication, for simulating network latency in tests. */
   replicationDelay: 0,
-  /** Render drop-hover elements as blocks of color. */
   simulateDrag: false,
-  /** Render drop targets as blocks of color. */
   simulateDrop: false,
 }
 export default testFlags
