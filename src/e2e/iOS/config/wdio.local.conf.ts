@@ -18,7 +18,7 @@ const PORT = process.env.APPIUM_PORT ? parseInt(process.env.APPIUM_PORT, 10) : 4
  *
  * Run: yarn test:ios:local.
  */
-const localConfig: WebdriverIO.Config = {
+export const config: WebdriverIO.Config = {
   ...baseConfig,
 
   // Runner Configuration
@@ -68,4 +68,4 @@ const localConfig: WebdriverIO.Config = {
   },
 }
 
-export default localConfig
+export default config

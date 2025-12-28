@@ -27,7 +27,7 @@ const date = new Date().toISOString().slice(0, 10)
  *
  * Run: yarn test:ios:browserstack.
  */
-const browserstackConfig: WebdriverIO.Config = {
+export const config: WebdriverIO.Config = {
   ...baseConfig,
 
   // BrowserStack Configuration
@@ -109,4 +109,4 @@ const browserstackConfig: WebdriverIO.Config = {
   },
 }
 
-export default browserstackConfig
+export default config
