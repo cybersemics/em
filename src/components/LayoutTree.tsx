@@ -115,13 +115,15 @@ const useAutocrop = (spaceAbove: number): number => {
 }
 
 /** A hook that returns a ref to the content div and updates the viewport store's layoutTreeTop property on mount. */
-const useLayoutTreeTop = (ref: RefObject<HTMLElement | null>) => {
+const useLayoutTreeTop = (
+  ref: RefObject<HTMLElement | null>,
+  /** The amount that the layout tree is shifted up is needed to produce the correct layoutTreeTop value. See: useAutocrop. */
+  autocrop: number,
+) => {
   useEffect(() => {
     if (!ref.current) return
-
-    const rect = ref.current.getBoundingClientRect()
-    viewportStore.update({ layoutTreeTop: rect?.top || 0 })
-  }, [ref])
+    viewportStore.update({ layoutTreeTop: (ref.current?.offsetTop || 0) + autocrop })
+  }, [ref, autocrop])
 
   return ref
 }
@@ -256,7 +258,7 @@ const LayoutTree = () => {
   // Subtract singleLineHeight since we can assume that the last rendered thought is within the viewport. (It would be more accurate to use its exact rendered height, but it just means that there may be slightly more space at the bottom, which is not a problem. The scroll position is only forced to change when there is not enough space.)
   const spaceBelow = viewportHeight - navAndFooterHeight - CONTENT_PADDING_BOTTOM - singleLineHeight
 
-  useLayoutTreeTop(ref)
+  useLayoutTreeTop(ref, autocrop)
 
   return (
     <div
