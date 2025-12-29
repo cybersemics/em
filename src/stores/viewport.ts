@@ -26,7 +26,7 @@ const viewportStore = reactMinistore<ViewportState>({
   /** Height of the virtual keyboard regardless of whether it is open or closed. Defaults to estimated height of portrait or landscape mode when window.visualViewport.width is not valid (see below; questionable). */
   virtualKeyboardHeight:
     window.innerHeight > window.innerWidth ? virtualKeyboardHeightPortrait : virtualKeyboardHeightLandscape,
-  /** The y offset of the layout tree element. */
+  /** The y position of the layout tree element relative to the document. */
   layoutTreeTop: 0,
 })
 
