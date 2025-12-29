@@ -132,10 +132,14 @@ describe('autocrop', () => {
     await clickThought('m')
 
     const yDiff = await page.evaluate(async () => {
-      /** Calls a function every 10 ms until it returns truthy. */
+      /** Calls a function every 10 ms until it returns truthy. Times out after 5 seconds. */
       function waitUntil<T>(fn: () => T): Promise<T> {
-        return new Promise(resolve => {
+        const start = Date.now()
+        return new Promise((resolve, reject) => {
           const interval = setInterval(() => {
+            if (Date.now() - start > 5000) {
+              reject('Timeout exceeded')
+            }
             const result = fn()
             if (result) {
               clearInterval(interval)
