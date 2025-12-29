@@ -92,3 +92,114 @@ describe('scrollCursorIntoView', () => {
     })
   })
 })
+
+describe('autocrop', () => {
+  it('preserve thought positions relative to viewport when navigating deeper', async () => {
+    const importText = `
+      - a
+      - b
+      - c
+      - d
+      - e
+      - f
+      - g
+      - h
+      - i
+      - j
+      - k
+      - l
+      - m
+        - n
+        - o
+        - p
+        - q
+        - r
+        - s
+        - t
+        - u
+        - v
+        - w
+        - x
+        - y
+        - z
+          - 1
+            - 2
+              - 3
+    `
+
+    await paste(importText)
+
+    await clickThought('m')
+
+    const yDiff = await page.evaluate(async () => {
+      /** Calls a function every 10 ms until it returns truthy. */
+      function waitUntil<T>(fn: () => T): Promise<T> {
+        return new Promise(resolve => {
+          const interval = setInterval(() => {
+            const result = fn()
+            if (result) {
+              clearInterval(interval)
+              resolve(result)
+            }
+          }, 10)
+        })
+      }
+
+      /** Waits until the cursor is the specified value. */
+      async function waitUntilCursor(value: string): Promise<void> {
+        await waitUntil(
+          () => (document.querySelector('[data-editing=true]') as HTMLElement | undefined)?.innerText === value,
+        )
+      }
+
+      /** Waits until an editable with the specified value appears and return it. */
+      async function waitUntilEditable(value: string): Promise<HTMLElement> {
+        return waitUntil(
+          () =>
+            Array.from(document.querySelectorAll('[data-editable]')).find(
+              element => element.innerHTML === value,
+            ) as HTMLElement,
+        )
+      }
+
+      // scroll down so z is visible
+      window.scrollBy({ top: 800 })
+
+      // wait for virtualized thoughts to be rendered
+      const thoughtZ = await waitUntilEditable('z')
+
+      // TODO: How to click z instead of arrowing down?
+      // thoughtZ.click()
+      let lastCursorText: string | undefined
+      while (lastCursorText !== 'z') {
+        window.dispatchEvent(new KeyboardEvent('keydown', { key: 'arrowdown' }))
+        const cursorEl = document.querySelector('[data-editing=true]') as HTMLElement | undefined
+
+        // TODO
+        // eslint-disable-next-line no-loop-func
+        await waitUntil(() => cursorEl?.innerText !== lastCursorText)
+        lastCursorText = cursorEl?.innerText
+      }
+
+      // TODO: Why is the cursor on 1 instead of z?
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'arrowup' }))
+      await waitUntilCursor('z')
+
+      // get the y position of thought z relative to the viewport before moving thn cursor down to 1
+      const cursorTopBefore = thoughtZ?.getBoundingClientRect().top
+
+      // TODO: How to click 1 instead of arrowing down?
+      // thought1.click()
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'arrowdown' }))
+      await waitUntilCursor('1')
+
+      // get the y position of thought z relative to the viewport after moving the cursor down to 1
+      const cursorTopAfter = thoughtZ?.getBoundingClientRect().top
+
+      return cursorTopBefore && cursorTopAfter ? cursorTopAfter - cursorTopBefore : null
+    })
+
+    // TODO: We should expect 0 scroll. WHy does it scroll by 0.25px?
+    expect(yDiff).toBeLessThan(1)
+  })
+})

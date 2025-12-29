@@ -109,6 +109,8 @@ const useHideSpaceAbove = (spaceAbove: number) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [spaceAboveExtended],
   )
+
+  return spaceAboveExtended
 }
 
 /** A hook that returns a ref to the content div and updates the viewport store's layoutTreeTop property on mount. */
