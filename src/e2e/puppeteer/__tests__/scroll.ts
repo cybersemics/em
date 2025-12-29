@@ -167,22 +167,21 @@ describe('autocrop', () => {
       }
 
       // scroll down so z is visible
-      window.scrollBy({ top: 800 })
+      window.scrollBy({ top: 200 })
 
       // wait for virtualized thoughts to be rendered
       const thoughtZ = await waitUntilEditable('z')
 
       // TODO: How to click z instead of arrowing down?
       // thoughtZ.click()
-      let lastCursorText: string | undefined
-      while (lastCursorText !== 'z') {
+      let cursorText: string | undefined
+      while (cursorText !== 'z') {
         window.dispatchEvent(new KeyboardEvent('keydown', { key: 'arrowdown' }))
         const cursorEl = document.querySelector('[data-editing=true]') as HTMLElement | undefined
+        cursorText = cursorEl?.innerText
 
-        // TODO
-        // eslint-disable-next-line no-loop-func
-        await waitUntil(() => cursorEl?.innerText !== lastCursorText)
-        lastCursorText = cursorEl?.innerText
+        // sleep 50ms to allow virtualized thoughts to be rendered
+        await new Promise(resolve => setTimeout(resolve, 50))
       }
 
       // TODO: Why is the cursor on 1 instead of z?
