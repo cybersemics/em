@@ -1,5 +1,5 @@
 import { isEqual, throttle } from 'lodash'
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { RefObject, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
 import { css, cx } from '../../styled-system/css'
@@ -114,17 +114,15 @@ const useHideSpaceAbove = (spaceAbove: number) => {
 }
 
 /** A hook that returns a ref to the content div and updates the viewport store's layoutTreeTop property on mount. */
-const useLayoutTreeTop = () => {
-  const layoutTreeRef = useRef<HTMLDivElement>(null)
-
+const useLayoutTreeTop = (ref: RefObject<HTMLElement | null>) => {
   useEffect(() => {
-    if (!layoutTreeRef.current) return
+    if (!ref.current) return
 
-    const rect = layoutTreeRef.current.getBoundingClientRect()
+    const rect = ref.current.getBoundingClientRect()
     viewportStore.update({ layoutTreeTop: rect?.top || 0 })
-  }, [])
+  }, [ref])
 
-  return layoutTreeRef
+  return ref
 }
 
 /** Lays out thoughts as DOM siblings with manual x,y positioning. */
@@ -134,7 +132,7 @@ const LayoutTree = () => {
   const treeThoughts = useSelector(linearizeTree, isEqual)
   const fontSize = useSelector(state => state.fontSize)
   const dragInProgress = useSelector(state => state.longPress === LongPressState.DragInProgress)
-  const ref = useLayoutTreeTop()
+  const ref = useRef<HTMLDivElement>(null)
   const indentDepth = useSelector(state =>
     state.cursor && state.cursor.length > 2
       ? // when the cursor is on a leaf, the indention level should not change
@@ -256,6 +254,8 @@ const LayoutTree = () => {
   /** The space added below the last rendered thought and the breadcrumbs/footer. This is calculated such that there is a total of one viewport of height between the last rendered thought and the bottom of the document. This ensures that when the keyboard is closed, the scroll position will not change. If the caret is on a thought at the top edge of the screen when the keyboard is closed, then the document will shrink by the height of the virtual keyboard. The scroll position will only be forced to change if the document height is less than window.scrollY + window.innerHeight. */
   // Subtract singleLineHeight since we can assume that the last rendered thought is within the viewport. (It would be more accurate to use its exact rendered height, but it just means that there may be slightly more space at the bottom, which is not a problem. The scroll position is only forced to change when there is not enough space.)
   const spaceBelow = viewportHeight - navAndFooterHeight - CONTENT_PADDING_BOTTOM - singleLineHeight
+
+  useLayoutTreeTop(ref)
 
   return (
     <div
