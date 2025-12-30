@@ -8,11 +8,8 @@ const baseConfig = {
   // Runner Configuration
   runner: 'local' as const,
 
-  // Specify Test Files
-
   // Use glob pattern to run all tests in __tests__ directory
   specs: [path.resolve(process.cwd(), 'src/e2e/iOS/__tests__/**/*.ts')],
-  // specs: [path.resolve(process.cwd(), 'src/e2e/iOS/__tests__/caret.ts')],
   exclude: [],
 
   // Setup Files
@@ -21,7 +18,6 @@ const baseConfig = {
 
   // Capabilities
   // Each spec file runs in its own parallel session
-  // Adjust based on your BrowserStack plan's parallel session limit
   maxInstances: 5,
 
   // Test Configurations

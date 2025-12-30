@@ -39,11 +39,9 @@ export const config: WebdriverIO.Config = {
   ],
 
   // Hooks
-  beforeTest: async function () {
-    // Navigate to localhost for local testing
+  // Navigate once at the start of the session
+  before: async function () {
     await browser.url('http://bs-local.com:3000')
-
-    // Wait for page to load
     await browser.waitUntil(
       async () => {
         const body = await browser.$('body')
@@ -51,18 +49,26 @@ export const config: WebdriverIO.Config = {
       },
       { timeout: 30000 },
     )
+  },
 
-    // Check if skip tutorial button exists (it won't exist if tutorial was already completed)
+  // Before each test: clear storage and refresh (faster than full navigation)
+  beforeTest: async function () {
+    // Clear localStorage and sessionStorage to ensure fresh state
+    await browser.execute(() => {
+      localStorage.clear()
+      sessionStorage.clear()
+    })
+
+    // Refresh to apply the cleared storage (much faster than full navigation)
+    await browser.refresh()
+
+    // Wait for the tutorial skip button and click it
     const skipElement = await $('#skip-tutorial')
-    const skipExists = await skipElement.isExisting().catch(() => false)
+    await skipElement.waitForExist({ timeout: 90000 })
+    await skipElement.waitForClickable({ timeout: 10000 })
+    await skipElement.click()
 
-    if (skipExists) {
-      // Tutorial is showing, skip it
-      await skipElement.waitForClickable({ timeout: 10000 })
-      await skipElement.click()
-    }
-
-    // Wait for the empty thoughtspace to be ready (appears after tutorial is skipped or if already skipped)
+    // Wait for the empty thoughtspace to be ready
     const emptyThoughtspace = await $('[aria-label="empty-thoughtspace"]')
     await emptyThoughtspace.waitForExist({ timeout: 90000 })
   },
