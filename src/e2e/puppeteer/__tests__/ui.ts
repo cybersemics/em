@@ -31,6 +31,10 @@ it('GestureMenu', async () => {
   await page.emulate(KnownDevices['iPhone 15 Pro'])
   await paste('Hello')
 
+  // makes sure the first thought is selected
+  // TODO: Why does the CI fail without this, but it passes locally?
+  await press('ArrowDown')
+
   // swipe and hold
   await swipe('r')
 
@@ -43,6 +47,9 @@ it('GestureMenu', async () => {
 it('CommandCenter', async () => {
   await page.emulate(KnownDevices['iPhone 15 Pro'])
   await paste('Hello')
+
+  // make sure the first thought is selected
+  await press('ArrowDown')
 
   // open the Command Center
   await swipe('u', true)
