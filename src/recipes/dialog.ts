@@ -26,7 +26,7 @@ const dialogRecipe = defineSlotRecipe({
     container: {
       backgroundColor: 'bg',
       color: 'fg',
-      padding: '0.8rem 0.8rem 0',
+      padding: '0.711rem 0.711rem 0',
       borderRadius: '8px',
       maxWidth: '500px',
       width: '80%',
@@ -43,18 +43,18 @@ const dialogRecipe = defineSlotRecipe({
       fontWeight: '700',
       color: 'fg',
       borderBottom: 'none',
-      fontSize: '1.4rem',
-      margin: '0.7rem',
+      fontSize: '1.244rem',
+      margin: '0.622rem',
       '@media (min-width: 1200px)': {
-        fontSize: '2rem',
+        fontSize: '1.778rem',
       },
     },
     content: {
-      fontSize: '1.25rem',
+      fontSize: '1.11rem',
       color: 'fg',
       maxHeight: '70vh',
       overflow: 'auto',
-      padding: '1rem',
+      padding: '0.889rem',
       scrollbarColor: '{colors.fg} {colors.bg}',
       scrollbarWidth: 'thin',
       '&::-webkit-scrollbar': {
@@ -65,7 +65,7 @@ const dialogRecipe = defineSlotRecipe({
       },
       position: 'relative',
       '@media (min-width: 1200px)': {
-        fontSize: '1.7rem',
+        fontSize: '1.51rem',
       },
       overscrollBehavior: 'contain',
     },
