@@ -1,5 +1,5 @@
 import { isEqual, throttle } from 'lodash'
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { RefObject, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
 import { css, cx } from '../../styled-system/css'
@@ -86,8 +86,8 @@ const useNavAndFooterHeight = () => {
   }
 }
 
-/** When navigating deep within the hierarchy, many ancestors and siblings of ancestors are hidden, resulting in a large blank space above the cursor. If the user scrolls up, the entire screen will be blank. To avoid this, crop the space above and simultaneously scroll up by the same amount so that the thoughts do not appear to move (relative to the viewport), but the empty space above is eliminated. */
-const useHideSpaceAbove = (spaceAbove: number) => {
+/** When navigating deep within the hierarchy, many ancestors and siblings of ancestors are hidden, resulting in a large blank space above the cursor. If the user scrolls up, the entire screen will be blank. To avoid this, crop the space above and simultaneously scroll up by the same amount so that the thoughts do not appear to move (relative to the viewport), but the empty space above is eliminated. Returns the number of pixels that all thoughts should be shifted off. */
+const useAutocrop = (spaceAbove: number): number => {
   // get the scroll position before the render so it can be preserved
   const scrollY = window.scrollY
 
@@ -109,20 +109,23 @@ const useHideSpaceAbove = (spaceAbove: number) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [spaceAboveExtended],
   )
+
+  // add a full viewport height's space above to ensure that there is room to scroll by the same amount as spaceAbove
+  return -spaceAboveExtended + viewportHeight
 }
 
 /** A hook that returns a ref to the content div and updates the viewport store's layoutTreeTop property on mount. */
-const useLayoutTreeTop = () => {
-  const layoutTreeRef = useRef<HTMLDivElement>(null)
-
+const useLayoutTreeTop = (
+  ref: RefObject<HTMLElement | null>,
+  /** The amount that the layout tree is shifted up is needed to produce the correct layoutTreeTop value. See: useAutocrop. */
+  autocrop: number,
+) => {
   useEffect(() => {
-    if (!layoutTreeRef.current) return
+    if (!ref.current) return
+    viewportStore.update({ layoutTreeTop: (ref.current?.offsetTop || 0) + autocrop })
+  }, [ref, autocrop])
 
-    const rect = layoutTreeRef.current.getBoundingClientRect()
-    viewportStore.update({ layoutTreeTop: rect?.top || 0 })
-  }, [])
-
-  return layoutTreeRef
+  return ref
 }
 
 /** Lays out thoughts as DOM siblings with manual x,y positioning. */
@@ -132,7 +135,7 @@ const LayoutTree = () => {
   const treeThoughts = useSelector(linearizeTree, isEqual)
   const fontSize = useSelector(state => state.fontSize)
   const dragInProgress = useSelector(state => state.longPress === LongPressState.DragInProgress)
-  const ref = useLayoutTreeTop()
+  const ref = useRef<HTMLDivElement>(null)
   const indentDepth = useSelector(state =>
     state.cursor && state.cursor.length > 2
       ? // when the cursor is on a leaf, the indention level should not change
@@ -249,11 +252,13 @@ const LayoutTree = () => {
   // (The same multiplicand is applied to the vertical translation that crops hidden thoughts above the cursor.)
   const indent = indentDepth * 0.9 + indentCursorAncestorTables / fontSize
 
-  const spaceAboveExtended = useHideSpaceAbove(spaceAbove)
+  const autocrop = useAutocrop(spaceAbove)
 
   /** The space added below the last rendered thought and the breadcrumbs/footer. This is calculated such that there is a total of one viewport of height between the last rendered thought and the bottom of the document. This ensures that when the keyboard is closed, the scroll position will not change. If the caret is on a thought at the top edge of the screen when the keyboard is closed, then the document will shrink by the height of the virtual keyboard. The scroll position will only be forced to change if the document height is less than window.scrollY + window.innerHeight. */
   // Subtract singleLineHeight since we can assume that the last rendered thought is within the viewport. (It would be more accurate to use its exact rendered height, but it just means that there may be slightly more space at the bottom, which is not a problem. The scroll position is only forced to change when there is not enough space.)
   const spaceBelow = viewportHeight - navAndFooterHeight - CONTENT_PADDING_BOTTOM - singleLineHeight
+
+  useLayoutTreeTop(ref, autocrop)
 
   return (
     <div
@@ -263,10 +268,7 @@ const LayoutTree = () => {
         }),
         fauxCaretTreeProvider(indent),
       )}
-      style={{
-        // add a full viewport height's space above to ensure that there is room to scroll by the same amount as spaceAbove
-        transform: `translateY(${-spaceAboveExtended + viewportHeight}px)`,
-      }}
+      style={{ transform: `translateY(${autocrop}px)` }}
       ref={ref}
     >
       <HoverArrow
