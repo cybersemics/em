@@ -215,6 +215,7 @@ const CommandPalette: FC<{
 
   return (
     <div
+      data-testid='command-palette'
       className={css({
         display: 'flex',
         flexDirection: 'column',
