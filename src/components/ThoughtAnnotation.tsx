@@ -128,8 +128,19 @@ const ThoughtAnnotation = React.memo(
     const isTableCol1 = useSelector((state: State) =>
       attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table'),
     )
+    const isTableCol2 = useSelector((state: State) =>
+      attributeEquals(state, head(rootedParentOf(state, rootedParentOf(state, simplePath))), '=view', 'Table'),
+    )
 
-    const stylePosition = usePositionedAnnotation(editableRef, isEditing, isTableCol1, multiline, numContexts, path)
+    const stylePosition = usePositionedAnnotation(
+      editableRef,
+      isEditing,
+      isTableCol1,
+      isTableCol2,
+      multiline,
+      numContexts,
+      path,
+    )
 
     return (
       <>

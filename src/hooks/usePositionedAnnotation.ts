@@ -6,6 +6,7 @@ import isContextViewActive from '../selectors/isContextViewActive'
 import durations from '../util/durations'
 import isDescendantPath from '../util/isDescendantPath'
 import parentOf from '../util/parentOf'
+import usePrevious from './usePrevious'
 
 /** Iterates through a DOM node to find the text node that comprises the final portion of the thought. */
 const getFinalTextNode = (element: ChildNode | null) => {
@@ -27,6 +28,7 @@ const usePositionedAnnotation = (
   editableRef: RefObject<HTMLDivElement | null>,
   isEditing: boolean,
   isTableCol1: boolean | undefined,
+  isTableCol2: boolean | undefined,
   multiline: boolean | undefined,
   numContexts: number,
   path: Path,
@@ -41,6 +43,7 @@ const usePositionedAnnotation = (
   const [right, setRight] = useState<string | undefined>(undefined)
   const [opacity, setOpacity] = useState<string | undefined>(undefined)
   const [transform, setTransform] = useState<string | undefined>(undefined)
+  const wasTableCol2 = usePrevious(isTableCol2)
 
   const positionAnnotation = useCallback(() => {
     if (!editableRef.current) return
@@ -113,9 +116,11 @@ const usePositionedAnnotation = (
     isEditing,
     isInContextView,
     isTableCol1,
+    isTableCol2,
     multiline,
     numContexts,
     positionAnnotation,
+    wasTableCol2,
   ])
 
   useEffect(() => {
