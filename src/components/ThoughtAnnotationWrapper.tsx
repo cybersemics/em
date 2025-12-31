@@ -35,6 +35,7 @@ const ThoughtAnnotationWrapper: FC<
         marginLeft: 'calc(0.666em - 18px)',
         display: 'inline-block',
         textAlign: 'left',
+        transition: 'opacity {durations.fast} ease-in',
         verticalAlign: 'top',
         whiteSpace: 'pre-wrap',
         /* override editable-annotation's single line to have same width with .editable. 100% - 1em since .editable has padding-right 1em */
