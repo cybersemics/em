@@ -25,6 +25,7 @@ const getFinalTextNode = (element: ChildNode | null) => {
  * In that case, hide the annotation until the animation is complete, and position it after the thought has reached its final position.
  */
 const usePositionedAnnotation = (
+  belowCursor: boolean,
   editableRef: RefObject<HTMLDivElement | null>,
   isEditing: boolean,
   isTableCol1: boolean | undefined,
@@ -33,7 +34,9 @@ const usePositionedAnnotation = (
   numContexts: number,
   path: Path,
 ) => {
-  const contextAnimation = useSelector(state => getContextAnimationName(state, path))
+  const contextAnimation = useSelector(state =>
+    belowCursor && !isEditing ? getContextAnimationName(state, path) : null,
+  )
   const descendant = useSelector(state => isDescendantPath(path, state.cursor))
   const isInContextView = useSelector(state => isContextViewActive(state, parentOf(path)))
   const timeoutRef = useRef(0)

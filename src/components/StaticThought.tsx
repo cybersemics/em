@@ -33,6 +33,7 @@ import HomeIcon from './icons/HomeIcon'
 
 export interface ThoughtProps {
   allowSingleContext?: boolean
+  belowCursor: boolean
   debugIndex?: number
   dragSource: ConnectDragSource
   longPressProps: LongPressProps
@@ -97,6 +98,7 @@ const isBlack = (color: string | undefined) => {
 /** A static thought element with overlay bullet, context breadcrumbs, editable, and superscript. */
 const StaticThought = ({
   allowSingleContext,
+  belowCursor,
   dragSource,
   longPressProps,
   // See: ThoughtProps['isContextPending']
@@ -162,6 +164,7 @@ const StaticThought = ({
   return (
     <>
       <ThoughtAnnotation
+        belowCursor={belowCursor}
         editableRef={editableRef}
         env={env}
         minContexts={allowSingleContext ? 0 : 2}

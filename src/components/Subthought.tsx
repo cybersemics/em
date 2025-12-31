@@ -26,6 +26,7 @@ import Thought from './Thought'
 // TODO: These selectors can be optimized by calculating them once for all children, since they are the same among siblings. However siblings are not rendered contiguously (virtualTree), so they need to be calculated higher up.
 const Subthought = ({
   autofocus,
+  belowCursor,
   debugIndex,
   depth,
   env,
@@ -40,6 +41,7 @@ const Subthought = ({
   zoomCursor,
 }: {
   autofocus: Autofocus
+  belowCursor: boolean
   debugIndex?: number
   depth: number
   dropUncle?: boolean
@@ -149,6 +151,7 @@ const Subthought = ({
         })}
       >
         <Thought
+          belowCursor={belowCursor}
           debugIndex={debugIndex}
           depth={depth + 1}
           env={env}

@@ -62,6 +62,7 @@ import ThoughtPositioner from './ThoughtPositioner'
 
 export interface ThoughtContainerProps {
   allowSingleContext?: boolean
+  belowCursor: boolean
   childrenForced?: ThoughtId[]
   // used by testFlags.simulateDrop
   debugIndex?: number
@@ -245,6 +246,7 @@ const useCol1Alignment = ({ path, value, isTableCol1 }: UseCol1AlignParams) => {
  */
 const ThoughtContainer = ({
   allowSingleContext,
+  belowCursor,
   childrenForced,
   debugIndex,
   depth = 0,
@@ -603,6 +605,7 @@ const ThoughtContainer = ({
         <div style={alignmentTransition.editable}>
           <StaticThought
             allowSingleContext={allowSingleContext}
+            belowCursor={belowCursor}
             dragSource={dragSourceEditable}
             longPressProps={dragHoldResult.props}
             env={env}

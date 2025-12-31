@@ -129,6 +129,7 @@ const TreeNode = ({
       >
         <div ref={fadeThoughtRef}>
           <VirtualThought
+            belowCursor={belowCursor}
             debugIndex={testFlags.simulateDrop ? indexChild : undefined}
             depth={depth}
             dropUncle={thoughtId === cursorUncleId}

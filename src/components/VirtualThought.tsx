@@ -52,6 +52,7 @@ const selectCursor = (state: State) => state.cursor
 
 /** Renders a thought if it is not hidden by autofocus, otherwise renders a fixed height shim. */
 const VirtualThought = ({
+  belowCursor,
   debugIndex,
   depth,
   dropUncle,
@@ -74,6 +75,7 @@ const VirtualThought = ({
   autofocus,
   moveStyle,
 }: {
+  belowCursor: boolean
   // contextChain is needed to uniquely identify thoughts across context views
   debugIndex?: number
   depth: number
@@ -251,6 +253,7 @@ const VirtualThought = ({
       {!shimHiddenThought && (
         <Subthought
           autofocus={autofocus}
+          belowCursor={belowCursor}
           debugIndex={debugIndex}
           depth={depth + 1}
           dropUncle={dropUncle}

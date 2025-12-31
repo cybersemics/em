@@ -94,6 +94,7 @@ EmailIconLink.displayName = 'EmailIconLink'
 /** A non-interactive annotation overlay that contains intrathought links (superscripts and underlining). */
 const ThoughtAnnotation = React.memo(
   ({
+    belowCursor,
     editableRef,
     email,
     isEditing,
@@ -110,6 +111,7 @@ const ThoughtAnnotation = React.memo(
     url,
     value,
   }: {
+    belowCursor: boolean
     editableRef: React.RefObject<HTMLInputElement | null>
     email?: string
     isEditing: boolean
@@ -133,6 +135,7 @@ const ThoughtAnnotation = React.memo(
     )
 
     const stylePosition = usePositionedAnnotation(
+      belowCursor,
       editableRef,
       isEditing,
       isTableCol1,
@@ -190,6 +193,7 @@ const ThoughtAnnotation = React.memo(
 /** Container for ThoughtAnnotation. */
 const ThoughtAnnotationContainer = React.memo(
   ({
+    belowCursor,
     editableRef,
     path,
     simplePath,
@@ -202,6 +206,7 @@ const ThoughtAnnotationContainer = React.memo(
     // only applied to the .subthought container
     styleAnnotation,
   }: {
+    belowCursor: boolean
     editableRef: RefObject<HTMLInputElement | null>
     env?: LazyEnv
     focusOffset?: number
@@ -296,6 +301,7 @@ const ThoughtAnnotationContainer = React.memo(
     return showSuperscript || url || email || styleAnnotation || (isTouch && isSafari()) ? (
       <ThoughtAnnotation
         {...{
+          belowCursor,
           editableRef,
           simplePath,
           isEditing,
