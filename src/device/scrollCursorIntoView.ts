@@ -16,27 +16,31 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
 
   // determine if the elements is above or below the viewport
   // toolbar element is not present when distractionFreeTyping is activated
+  const viewport = viewportStore.getState()
+
+  /** The y position of the element relative to the document. */
+  const yDocument = viewport.layoutTreeTop + y
+
+  /** The y position of the element relative to the viewport. */
+  const yViewport = yDocument - window.scrollY
+
   const toolbarRect = document.getElementById('toolbar')?.getBoundingClientRect()
   const toolbarBottom = toolbarRect ? toolbarRect.bottom : 0
   const navbarRect = document.querySelector('[aria-label="nav"]')?.getBoundingClientRect()
-  const viewport = viewportStore.getState()
-  const isAboveViewport = y + viewport.layoutTreeTop - window.scrollY < toolbarBottom
+  const isAboveViewport = yViewport < toolbarBottom
   const isBelowViewport =
-    y + height + viewport.layoutTreeTop - window.scrollY > viewport.innerHeight - viewport.virtualKeyboardHeight
+    yViewport + height > viewport.innerHeight - viewport.virtualKeyboardHeight - (navbarRect?.height ?? 0)
 
   if (!isAboveViewport && !isBelowViewport) return
 
   // The native el.scrollIntoView causes a bug where the top part of the content is cut off, even when a significant delay is added.
   // Therefore, we need to calculate the scroll position ourselves
 
-  /** The y position of the element relative to the document. */
-  const yOffset = viewport.layoutTreeTop + y
-
   // leave a margin between the element and the viewport edge equal to half the element's height
   // add offset to account for the navbar height and prevent scrolled to elements from being hidden below
   const scrollYNew = isAboveViewport
-    ? yOffset - (toolbarRect?.height ?? 0) - height / 2
-    : yOffset - viewport.innerHeight + viewport.virtualKeyboardHeight + height * 1.5 + (navbarRect?.height ?? 0)
+    ? yDocument - (toolbarRect?.height ?? 0) - height / 2
+    : yDocument - viewport.innerHeight + viewport.virtualKeyboardHeight + height * 1.5 + (navbarRect?.height ?? 0)
 
   // scroll to 1 instead of 0
   // otherwise Mobile Safari scrolls to the top after MultiGesture

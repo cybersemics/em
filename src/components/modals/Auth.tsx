@@ -164,7 +164,7 @@ const ModalAuth = () => {
 
           <button
             disabled={isSubmitting}
-            className={cx(buttonRecipe(), css({ fontSize: '1.2rem', opacity: 0.5, marginTop: 12 }))}
+            className={cx(buttonRecipe(), css({ fontSize: '1.067rem', opacity: 0.5, marginTop: 12 }))}
             key='cancel'
           >
             <a
