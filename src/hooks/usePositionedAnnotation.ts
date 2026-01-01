@@ -99,6 +99,7 @@ const usePositionedAnnotation = (
     isTableCol2,
     multiline,
     numContexts,
+    positionAnnotation,
     wasTableCol2,
   ])
 
