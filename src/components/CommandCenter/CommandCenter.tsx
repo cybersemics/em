@@ -96,7 +96,7 @@ const HiddenOverlay = () => {
     <div
       className={css({
         backgroundImage: 'url(/img/command-center/overlay.webp)',
-        display: 'none',
+        visibility: 'hidden',
       })}
     />
   )
