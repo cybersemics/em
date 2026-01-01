@@ -62,7 +62,6 @@ import ThoughtPositioner from './ThoughtPositioner'
 
 export interface ThoughtContainerProps {
   allowSingleContext?: boolean
-  belowCursor: boolean
   childrenForced?: ThoughtId[]
   // used by testFlags.simulateDrop
   debugIndex?: number
@@ -71,6 +70,7 @@ export interface ThoughtContainerProps {
   expandedContextThought?: Path
   hideBullet?: boolean
   // See: ThoughtProps['isContextPending']
+  inTransition: boolean
   isContextPending?: boolean
   isCursorParent?: boolean
   isDeepHovering?: boolean
@@ -246,12 +246,12 @@ const useCol1Alignment = ({ path, value, isTableCol1 }: UseCol1AlignParams) => {
  */
 const ThoughtContainer = ({
   allowSingleContext,
-  belowCursor,
   childrenForced,
   debugIndex,
   depth = 0,
   env,
   hideBullet: hideBulletProp,
+  inTransition,
   isContextPending,
   isVisible,
   leaf,
@@ -605,10 +605,10 @@ const ThoughtContainer = ({
         <div style={alignmentTransition.editable}>
           <StaticThought
             allowSingleContext={allowSingleContext}
-            belowCursor={belowCursor}
             dragSource={dragSourceEditable}
             longPressProps={dragHoldResult.props}
             env={env}
+            inTransition={inTransition}
             isContextPending={isContextPending}
             isEditing={isEditing}
             ellipsizedUrl={!isEditing && containsURL(value)}

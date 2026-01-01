@@ -33,12 +33,12 @@ import HomeIcon from './icons/HomeIcon'
 
 export interface ThoughtProps {
   allowSingleContext?: boolean
-  belowCursor: boolean
   debugIndex?: number
   dragSource: ConnectDragSource
   longPressProps: LongPressProps
   editing?: boolean | null
   env?: LazyEnv
+  inTransition: boolean
   // When context view is activated, some contexts may be pending
   // however since they were not loaded hierarchically there is not a pending thought in the thoughtIndex
   // getContexts will return ids that do not exist in the thoughtIndex
@@ -98,11 +98,11 @@ const isBlack = (color: string | undefined) => {
 /** A static thought element with overlay bullet, context breadcrumbs, editable, and superscript. */
 const StaticThought = ({
   allowSingleContext,
-  belowCursor,
   dragSource,
   longPressProps,
   // See: ThoughtProps['isContextPending']
   env,
+  inTransition,
   isContextPending,
   isEditing,
   ellipsizedUrl,
@@ -164,12 +164,12 @@ const StaticThought = ({
   return (
     <>
       <ThoughtAnnotation
-        belowCursor={belowCursor}
         editableRef={editableRef}
         env={env}
         minContexts={allowSingleContext ? 0 : 2}
         multiline={multiline}
         ellipsizedUrl={ellipsizedUrl}
+        inTransition={inTransition}
         path={path}
         showContextBreadcrumbs={showContextBreadcrumbs}
         simplePath={simplePath}

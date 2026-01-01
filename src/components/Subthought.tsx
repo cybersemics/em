@@ -26,10 +26,10 @@ import Thought from './Thought'
 // TODO: These selectors can be optimized by calculating them once for all children, since they are the same among siblings. However siblings are not rendered contiguously (virtualTree), so they need to be calculated higher up.
 const Subthought = ({
   autofocus,
-  belowCursor,
   debugIndex,
   depth,
   env,
+  inTransition,
   isMultiColumnTable,
   leaf,
   updateSize,
@@ -41,12 +41,12 @@ const Subthought = ({
   zoomCursor,
 }: {
   autofocus: Autofocus
-  belowCursor: boolean
   debugIndex?: number
   depth: number
   dropUncle?: boolean
   env?: LazyEnv
   indexDescendant: number
+  inTransition: boolean
   isMultiColumnTable?: boolean
   leaf?: boolean
   updateSize?: () => void
@@ -151,11 +151,11 @@ const Subthought = ({
         })}
       >
         <Thought
-          belowCursor={belowCursor}
           debugIndex={debugIndex}
           depth={depth + 1}
           env={env}
           hideBullet={hideBullet}
+          inTransition={inTransition}
           isContextPending={thought.value === '__PENDING__'}
           leaf={leaf}
           // isHeader={isHeader}

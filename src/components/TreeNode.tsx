@@ -68,6 +68,7 @@ const TreeNode = ({
   // rather than one universal caret in the parent.
   const fadeThoughtRef = useRef<HTMLDivElement>(null)
   const [isMounted, setIsMounted] = useState(true)
+  const [inTransition, setInTransition] = useState(false)
 
   const fauxCaretNodeProvider = useFauxCaretNodeProvider({
     editing,
@@ -109,7 +110,11 @@ const TreeNode = ({
       type={type}
       nodeRef={fadeThoughtRef}
       in={transitionGroupsProps.in}
-      onEnter={() => setIsMounted(true)}
+      onEnter={() => {
+        setInTransition(true)
+        setIsMounted(true)
+      }}
+      onEntered={() => setInTransition(false)}
       onExit={() => setIsMounted(false)}
       unmountOnExit
     >
@@ -129,12 +134,12 @@ const TreeNode = ({
       >
         <div ref={fadeThoughtRef}>
           <VirtualThought
-            belowCursor={belowCursor}
             debugIndex={testFlags.simulateDrop ? indexChild : undefined}
             depth={depth}
             dropUncle={thoughtId === cursorUncleId}
             env={env}
             indexDescendant={indexDescendant}
+            inTransition={inTransition}
             isMultiColumnTable={false}
             leaf={leaf}
             onResize={onResize}

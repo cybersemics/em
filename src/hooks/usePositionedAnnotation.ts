@@ -1,11 +1,7 @@
-import { RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { RefObject, useCallback, useEffect, useMemo, useState } from 'react'
 import { useSelector } from 'react-redux'
 import Path from '../@types/Path'
-import getContextAnimationName from '../selectors/getContextAnimationName'
-import isContextViewActive from '../selectors/isContextViewActive'
-import durations from '../util/durations'
 import isDescendantPath from '../util/isDescendantPath'
-import parentOf from '../util/parentOf'
 import usePrevious from './usePrevious'
 
 /** Iterates through a DOM node to find the text node that comprises the final portion of the thought. */
@@ -25,8 +21,8 @@ const getFinalTextNode = (element: ChildNode | null) => {
  * In that case, hide the annotation until the animation is complete, and position it after the thought has reached its final position.
  */
 const usePositionedAnnotation = (
-  belowCursor: boolean,
   editableRef: RefObject<HTMLDivElement | null>,
+  inTransition: boolean,
   isEditing: boolean,
   isTableCol1: boolean | undefined,
   isTableCol2: boolean | undefined,
@@ -34,17 +30,12 @@ const usePositionedAnnotation = (
   numContexts: number,
   path: Path,
 ) => {
-  const contextAnimation = useSelector(state =>
-    belowCursor && !isEditing ? getContextAnimationName(state, path) : null,
-  )
   const descendant = useSelector(state => isDescendantPath(path, state.cursor))
-  const isInContextView = useSelector(state => isContextViewActive(state, parentOf(path)))
-  const timeoutRef = useRef(0)
   const fontSize = useSelector(state => state.fontSize)
   const [top, setTop] = useState<string | undefined>(undefined)
   const [left, setLeft] = useState<string | undefined>(undefined)
   const [right, setRight] = useState<string | undefined>(undefined)
-  const [opacity, setOpacity] = useState<string | undefined>(undefined)
+  const [opacity, setOpacity] = useState<string | undefined>('0')
   const [transform, setTransform] = useState<string | undefined>(undefined)
   const wasTableCol2 = usePrevious(isTableCol2)
 
@@ -88,41 +79,26 @@ const usePositionedAnnotation = (
       setRight(undefined)
       setTransform(undefined)
     }
-
-    setOpacity('1')
   }, [editableRef, fontSize, isEditing, isTableCol1])
 
   // useSelector would be a cleaner way to get the editableRef's new position
   // but, on load, the refs are null until setTimeout runs
   useEffect(() => {
     setOpacity('0')
-
-    if (contextAnimation && descendant && !isEditing) {
-      clearTimeout(timeoutRef.current)
-      timeoutRef.current = 0
+    if (!inTransition) {
+      positionAnnotation()
+      setOpacity('1')
     }
-
-    // Don't interrupt an in-flight context animation
-    if (timeoutRef.current) return
-
-    if (contextAnimation) {
-      timeoutRef.current = setTimeout(() => {
-        positionAnnotation()
-        timeoutRef.current = 0
-      }, durations.get(contextAnimation)) as unknown as number
-    } else positionAnnotation()
   }, [
-    contextAnimation,
     descendant,
     editableRef,
     fontSize,
+    inTransition,
     isEditing,
-    isInContextView,
     isTableCol1,
     isTableCol2,
     multiline,
     numContexts,
-    positionAnnotation,
     wasTableCol2,
   ])
 

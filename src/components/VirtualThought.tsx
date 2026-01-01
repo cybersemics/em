@@ -52,12 +52,12 @@ const selectCursor = (state: State) => state.cursor
 
 /** Renders a thought if it is not hidden by autofocus, otherwise renders a fixed height shim. */
 const VirtualThought = ({
-  belowCursor,
   debugIndex,
   depth,
   dropUncle,
   env,
   indexDescendant,
+  inTransition,
   isMultiColumnTable,
   leaf,
   onResize,
@@ -75,13 +75,13 @@ const VirtualThought = ({
   autofocus,
   moveStyle,
 }: {
-  belowCursor: boolean
   // contextChain is needed to uniquely identify thoughts across context views
   debugIndex?: number
   depth: number
   dropUncle?: boolean
   env?: LazyEnv
   indexDescendant: number
+  inTransition: boolean
   isMultiColumnTable?: boolean
   leaf: boolean
   path: Path
@@ -253,12 +253,12 @@ const VirtualThought = ({
       {!shimHiddenThought && (
         <Subthought
           autofocus={autofocus}
-          belowCursor={belowCursor}
           debugIndex={debugIndex}
           depth={depth + 1}
           dropUncle={dropUncle}
           env={env}
           indexDescendant={indexDescendant}
+          inTransition={inTransition}
           isMultiColumnTable={isMultiColumnTable}
           leaf={leaf}
           updateSize={updateSize}
