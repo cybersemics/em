@@ -6,7 +6,7 @@ import isDocumentEditable from '../util/isDocumentEditable'
 /** Toggle the letter case picker. */
 const letterCase: Command = {
   id: 'letterCase',
-  label: 'LetterCase',
+  label: 'Letter Case',
   description: 'Change the Letter case.',
   svg: Icon,
   canExecute: state => isDocumentEditable() && !!state.cursor,
