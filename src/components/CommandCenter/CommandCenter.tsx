@@ -61,6 +61,22 @@ const MultiselectMessage: FC = () => {
 }
 
 /**
+ * A hidden pre-rendered overlay on mobile, used as a workaround for the
+ * Command Center flicker caused by the overlay background only being loaded
+ * when the Command Center opens.
+ */
+const HiddenOverlay = () => {
+  return (
+    <div
+      className={css({
+        backgroundImage: 'url(/img/command-center/overlay.webp)',
+        visibility: 'hidden',
+      })}
+    />
+  )
+}
+
+/**
  * A panel that displays the Command Center.
  */
 const CommandCenter = ({ mountPoint }: Pick<SheetProps, 'mountPoint'>) => {
@@ -114,6 +130,7 @@ const CommandCenter = ({ mountPoint }: Pick<SheetProps, 'mountPoint'>) => {
             height: blurHeight,
           }}
         />
+        <HiddenOverlay />
         <Sheet
           data-testid='command-center-panel'
           onOpenEnd={() => {
@@ -135,7 +152,7 @@ const CommandCenter = ({ mountPoint }: Pick<SheetProps, 'mountPoint'>) => {
               pointerEvents: 'none',
               position: 'absolute',
               background: 'linear-gradient(180deg, {colors.bgTransparent} 0%, {colors.bg} 1.2rem)',
-              paddingTop: '0.8rem',
+              paddingTop: '0.711rem',
               bottom: 0,
               width: '100%',
               height: '100%',
@@ -190,8 +207,8 @@ const CommandCenter = ({ mountPoint }: Pick<SheetProps, 'mountPoint'>) => {
                 className={css({
                   display: 'flex',
                   flexDirection: 'column',
-                  margin: '0 1.5rem calc(1.5rem + env(safe-area-inset-bottom)) 1.5rem',
-                  gap: '1rem',
+                  margin: '0 1.333rem calc(1.333rem + env(safe-area-inset-bottom)) 1.333rem',
+                  gap: '0.889rem',
                 })}
               >
                 <div
@@ -244,8 +261,8 @@ const CommandCenter = ({ mountPoint }: Pick<SheetProps, 'mountPoint'>) => {
                     gridTemplateColumns: 'repeat(4, 1fr)',
                     gridTemplateRows: 'auto',
                     gridAutoFlow: 'row',
-                    gap: '0.7rem',
-                    gridRowGap: '1rem',
+                    gap: '0.622rem',
+                    gridRowGap: '0.889rem',
                   })}
                 >
                   <PanelCommand

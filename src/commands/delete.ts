@@ -47,12 +47,7 @@ const exec: Command['exec'] = (dispatch, getState, e, { type }) => {
     // Only show alert for empty thought in training mode.
     const experienceMode = getUserSetting(state, Settings.experienceMode)
     if (value || !experienceMode) {
-      dispatch(
-        alert(deleteThoughtAlertText(state, cursor), {
-          clearDelay: 8000,
-          showCloseLink: true,
-        }),
-      )
+      dispatch(alert(deleteThoughtAlertText(state, cursor)))
     }
   }
 }
@@ -67,12 +62,7 @@ const deleteCommand: Command = {
     reverse: true,
     clearMulticursor: true,
     onComplete(filteredCursors, dispatch, getState) {
-      dispatch(
-        alert(`Deleted ${pluralize('thought', filteredCursors.length, true)}.`, {
-          clearDelay: 8000,
-          showCloseLink: true,
-        }),
-      )
+      dispatch(alert(`Deleted ${pluralize('thought', filteredCursors.length, true)}.`))
     },
   },
   keyboard: { key: Key.Backspace, alt: true, shift: true, meta: true },

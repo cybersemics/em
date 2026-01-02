@@ -16,8 +16,8 @@ import Notification from './Notification'
 import RedoIcon from './RedoIcon'
 import UndoIcon from './UndoIcon'
 
-/** A custom hook that manages a delayed effect with start and clear timer functions. The callback will not be called if delay is 0 or undefined. */
-const useDelayedEffect = (callback: () => void, delay: number | undefined) => {
+/** A custom hook that manages a delayed effect with start and clear timer functions. The callback will not be called if delay is null, 0, or undefined. */
+const useDelayedEffect = (callback: () => void, delay: number | null | undefined) => {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const startTimer = useCallback(() => {
@@ -67,7 +67,7 @@ const Alert: FC = () => {
   return (
     <Notification
       transitionKey={value}
-      onClose={alert?.showCloseLink ? onClose : undefined}
+      onClose={alert?.clearDelay != null ? onClose : undefined}
       value={alert ? value : null}
       icon={Icon ? <Icon cssRaw={css.raw({ cursor: 'default' })} size={iconSize} fill={token('colors.fg')} /> : null}
       onMouseLeave={startTimer}
