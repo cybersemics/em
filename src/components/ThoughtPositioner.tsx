@@ -7,7 +7,7 @@ import hashPath from '../util/hashPath'
  * In BulletCursorOverlay, it’s used to maintain the height of the thought,
  * which helps determine the cursor overlay’s position.
  */
-const ThoughtWrapper = ({
+const ThoughtPositioner = ({
   children,
   path,
   hideBullet,
@@ -36,4 +36,4 @@ const ThoughtWrapper = ({
   )
 }
 
-export default ThoughtWrapper
+export default ThoughtPositioner

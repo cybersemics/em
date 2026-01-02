@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useRef } from 'react'
+import React, { FC } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Dispatch from '../@types/Dispatch'
@@ -19,7 +19,6 @@ import * as selection from '../device/selection'
 import { childrenFilterPredicate, filterAllChildren } from '../selectors/getChildren'
 import getSetting from '../selectors/getSetting'
 import isTutorial from '../selectors/isTutorial'
-import viewportStore from '../stores/viewport'
 import fastClick from '../util/fastClick'
 import head from '../util/head'
 import isAbsolute from '../util/isAbsolute'
@@ -38,29 +37,6 @@ const transientChildPath = ['TRANSIENT_THOUGHT_ID'] as SimplePath
 const TransientEditable = (
   <Editable isEditing={false} transient={true} path={transientChildPath} simplePath={transientChildPath} rank={0} />
 )
-
-/** A hook that returns a ref to the content div and updates the viewport store's contentWidth property on resize. */
-const useContentWidth = () => {
-  const contentRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!contentRef.current) return
-
-    /** Update viewportStore's contentWidth when the window resizes. */
-    const resizeObserver = () => {
-      if (!(contentRef.current?.firstChild instanceof HTMLElement)) return
-      const rect = contentRef.current.firstChild.getBoundingClientRect()
-      if (!rect) return
-      viewportStore.update({ contentWidth: rect.width })
-    }
-
-    resizeObserver()
-    window.addEventListener('resize', resizeObserver)
-    return () => window.removeEventListener('resize', resizeObserver)
-  }, [])
-
-  return contentRef
-}
 
 /** The main content section of em. */
 const Content: FC = () => {
@@ -86,8 +62,6 @@ const Content: FC = () => {
     dispatch([state.showModal ? closeModal() : null, toggleDropdown()])
   }
 
-  const contentRef = useContentWidth()
-
   return (
     <div
       id='content-wrapper'
@@ -102,7 +76,6 @@ const Content: FC = () => {
     >
       <div
         id='content'
-        ref={contentRef}
         className={css({
           position: 'relative',
           transition: 'transform 0 ease-out, margin 0 ease-out',

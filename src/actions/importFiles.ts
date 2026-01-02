@@ -239,7 +239,8 @@ export const importFilesActionCreator =
             dispatch(
               alertWithMinistore(`Importing ${fileProgressString}... ${importProgressString}%`, {
                 alertType: AlertType.ImportFile,
-                clearDelay: i === numThoughts - 1 ? 5000 : undefined,
+                // Don't auto-dismiss intermediate progress alerts, but do auto-dismiss the final one
+                clearDelay: i === numThoughts - 1 ? undefined : null,
                 importFileId: file.id,
               }),
             )

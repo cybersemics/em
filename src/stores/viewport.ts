@@ -10,7 +10,6 @@ let virtualKeyboardHeightPortrait = isTouch ? window.innerHeight / 2.275 : 0
 let virtualKeyboardHeightLandscape = isTouch ? window.innerWidth / 1.7 : 0
 
 export interface ViewportState {
-  contentWidth: number
   innerWidth: number
   innerHeight: number
   layoutTreeTop: number
@@ -27,9 +26,7 @@ const viewportStore = reactMinistore<ViewportState>({
   /** Height of the virtual keyboard regardless of whether it is open or closed. Defaults to estimated height of portrait or landscape mode when window.visualViewport.width is not valid (see below; questionable). */
   virtualKeyboardHeight:
     window.innerHeight > window.innerWidth ? virtualKeyboardHeightPortrait : virtualKeyboardHeightLandscape,
-  /** Width of the content element. */
-  contentWidth: 0,
-  /** The y offset of the layout tree element. */
+  /** The y position of the layout tree element relative to the document. Includes autocrop, i.e. this value changes when space above is cropped away as you navigate deeper. This ensures that scrollCursorIntoView can properly calculate the position of the cursor relative to the viewport. */
   layoutTreeTop: 0,
 })
 

@@ -5,16 +5,21 @@ import { registerActionMetadata } from '../util/actionMetadata.registry'
 import reducerFlow from '../util/reducerFlow'
 import clearMulticursors from './clearMulticursors'
 
-type DropdownType = 'colorPicker' | 'letterCase' | 'sortPicker' | 'commandMenu' | 'undoSlider'
+type DropdownType = 'colorPicker' | 'letterCase' | 'sortPicker' | 'commandCenter' | 'undoSlider'
 
-type DropdownStateKeys = 'showColorPicker' | 'showLetterCase' | 'showSortPicker' | 'showCommandMenu' | 'showUndoSlider'
+type DropdownStateKeys =
+  | 'showColorPicker'
+  | 'showLetterCase'
+  | 'showSortPicker'
+  | 'showCommandCenter'
+  | 'showUndoSlider'
 
 // Map dropdown types to their state keys
 const DROPDOWN_STATE_KEYS: Record<DropdownType, DropdownStateKeys> = {
   colorPicker: 'showColorPicker',
   letterCase: 'showLetterCase',
   sortPicker: 'showSortPicker',
-  commandMenu: 'showCommandMenu',
+  commandCenter: 'showCommandCenter',
   undoSlider: 'showUndoSlider',
 }
 
@@ -32,9 +37,9 @@ const toggleDropdown = (state: State, { dropDownType, value }: { dropDownType?: 
 
   return reducerFlow([
     state => ({ ...state, ...dropdownStates }),
-    // When closing the commandMenu, clear the multicursors.
-    // This is necessary because multicursorAlertMiddleware only handles Multiselect -> Alert/CommandMenu.
-    (!dropDownType || dropDownType === 'commandMenu') && !value ? clearMulticursors : null,
+    // When closing the commandCenter, clear the multicursors.
+    // This is necessary because multicursorAlertMiddleware only handles Multiselect -> Alert/CommandCenter.
+    (!dropDownType || dropDownType === 'commandCenter') && !value ? clearMulticursors : null,
   ])(state)
 }
 

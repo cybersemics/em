@@ -1,11 +1,13 @@
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
+import { AlertType } from '../constants'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 
 /** Clears all multicursors. */
 const clearMulticursors = (state: State): State => {
   return {
     ...state,
+    ...(state.alert?.alertType === AlertType.ScrollZoneHelp ? { alert: null } : null),
     multicursors: {},
   }
 }

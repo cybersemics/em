@@ -26,7 +26,7 @@ import PanelCommandGroup from './PanelCommandGroup'
 
 /**
  * A custom hook that returns the last non-zero number of multicursors.
- * This is used to avoid showing the MultiselectMessage changing as the Command Menu is closed.
+ * This is used to avoid showing the MultiselectMessage changing as the Command Center is closed.
  */
 const useNonzeroNumMulticursors = () => {
   const numMulticursors = useSelector(state => Object.keys(state.multicursors).length)
@@ -61,19 +61,18 @@ const MultiselectMessage: FC = () => {
   )
 }
 
-/** Command menu gradient overlay. Fades in when the Command Menu opens. */
+/** Command center gradient overlay. Fades in when the Command Center opens. */
 const Overlay = () => {
-  const showCommandMenu = useSelector(state => state.showCommandMenu)
+  const showCommandCenter = useSelector(state => state.showCommandCenter)
   const ref = useRef<HTMLDivElement>(null)
   return (
-    <FadeTransition nodeRef={ref} in={showCommandMenu} type='commandMenuDrawer' unmountOnExit>
+    <FadeTransition nodeRef={ref} in={showCommandCenter} type='commandCenterDrawer' unmountOnExit>
       <div
         // Passing the ref in is required, due to position absolute child.
         ref={ref}
         className={css({
           position: 'absolute',
           pointerEvents: 'none',
-          zIndex: 'modal',
           backgroundImage: 'url(/img/command-center/overlay.webp)',
           backgroundSize: 'cover',
           backgroundPosition: 'center bottom',
@@ -88,35 +87,35 @@ const Overlay = () => {
 }
 
 /**
- * A panel that displays the command menu.
+ * A panel that displays the Command Center.
  */
-const CommandMenu = () => {
+const CommandCenter = () => {
   const dispatch = useDispatch()
-  const showCommandMenu = useSelector(state => state.showCommandMenu)
+  const showCommandCenter = useSelector(state => state.showCommandCenter)
   const isTutorialOn = useSelector(isTutorial)
 
   const onOpen = useCallback(() => {
-    dispatch(toggleDropdown({ dropDownType: 'commandMenu', value: true }))
+    dispatch(toggleDropdown({ dropDownType: 'commandCenter', value: true }))
   }, [dispatch])
 
   const onClose = useCallback(() => {
-    dispatch([toggleDropdown({ dropDownType: 'commandMenu', value: false }), clearMulticursors()])
+    dispatch([toggleDropdown({ dropDownType: 'commandCenter', value: false }), clearMulticursors()])
   }, [dispatch])
 
   if (isTouch && !isTutorialOn) {
     return (
       <SwipeableDrawer
-        data-testid='command-menu-panel'
+        data-testid='command-center-panel'
         // Disable swipe to open - this removes the swipe-up-to-open functionality
         disableSwipeToOpen={true}
-        transitionDuration={durations.get('commandMenuDrawer')}
+        transitionDuration={durations.get('commandCenterDrawer')}
         // Remove the SwipeAreaProps since we don't want to enable swipe to open
         anchor='bottom'
         // Keep onOpen for programmatic opening
         onOpen={onOpen}
         // Keep onClose for swipe to dismiss
         onClose={onClose}
-        open={showCommandMenu}
+        open={showCommandCenter}
         hideBackdrop={true}
         disableScrollLock={true}
         PaperProps={{
@@ -162,54 +161,66 @@ const CommandMenu = () => {
             isolation: 'isolate',
           })}
         >
-          <Overlay />
           <div
             /** Falloff. */
             className={css({
               pointerEvents: 'none',
               position: 'absolute',
-              background: 'linear-gradient(180deg, {colors.bgTransparent} 0%, {colors.bg} 1.2rem)',
-              paddingTop: '0.8rem',
+              background: 'linear-gradient(180deg, {colors.bgTransparent} 0%, {colors.bg} 1.067rem)',
+              paddingTop: '0.711rem',
               bottom: 0,
               width: '100%',
               height: '100%',
             })}
           />
+          <Overlay />
+
           <div
             className={css({
-              position: 'relative',
-              zIndex: 1,
-              margin: '0 1.2rem calc(1.2rem + env(safe-area-inset-bottom)) 1.2rem',
+              display: 'flex',
+              flexDirection: 'column',
+              margin: '0 1.333rem calc(1.333rem + env(safe-area-inset-bottom)) 1.333rem',
+              gap: '0.889rem',
             })}
           >
-            <div className={css({ marginBottom: '1rem' })}>
+            <div
+              className={css({
+                display: 'flex',
+                alignItems: 'flex-end',
+                justifyContent: 'space-between',
+              })}
+            >
+              <MultiselectMessage />
               <div
                 className={css({
-                  display: 'flex',
-                  alignItems: 'flex-end',
-                  justifyContent: 'space-between',
-                  width: '100%',
+                  display: 'grid',
+                  // Define a single area for stacking. Cannot use position relative,
+                  // since that will create a new stacking context and break mix-blend-mode.
+                  gridTemplateAreas: '"button"',
+                  fontSize: '0.85em',
+                  fontWeight: 500,
+                  letterSpacing: '-0.011em',
+                  color: 'fg',
                 })}
               >
-                <MultiselectMessage />
+                <div
+                  className={css({
+                    gridArea: 'button',
+                    background: 'fgOverlay20',
+                    borderRadius: 46,
+                    mixBlendMode: 'soft-light',
+                  })}
+                />
                 <button
                   {...fastClick(onClose)}
                   className={css({
-                    cursor: 'pointer',
-                    border: 'none',
-                    color: 'fg',
-                    background: 'fgOverlay20',
-                    borderRadius: 46.6,
+                    all: 'unset',
+                    gridArea: 'button',
+                    mixBlendMode: 'lighten',
+                    opacity: 0.5,
                     fontWeight: 500,
-                    letterSpacing: '-0.011em',
+                    cursor: 'pointer',
                     padding: '8px 16px',
-                    mixBlendMode: 'soft-light',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '1ch',
-                    /** Button won't show without z-index. */
-                    zIndex: 'modal',
-                    fontSize: '0.85em',
                   })}
                 >
                   Done
@@ -222,8 +233,8 @@ const CommandMenu = () => {
                 gridTemplateColumns: 'repeat(4, 1fr)',
                 gridTemplateRows: 'auto',
                 gridAutoFlow: 'row',
-                gap: '0.7rem',
-                maxWidth: '100%',
+                gap: '0.622rem',
+                gridRowGap: '0.889rem',
               })}
             >
               <PanelCommand command={{ ...copyCursorCommand, label: 'Copy' }} size='small' />
@@ -245,4 +256,4 @@ const CommandMenu = () => {
   }
 }
 
-export default CommandMenu
+export default CommandCenter

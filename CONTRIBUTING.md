@@ -2,12 +2,14 @@
 
 ## Functional Programming
 
-Adhere to the functional programming style, namely no mutations. The linter will mostly enforce this.
+Adhere to the functional programming style:
 
-- No `let`; use `const`
-- No `for` loops; use `map`, `filter`, `reduce`
+- Avoid mutations.
+- Avoid `let`; use `const`.
+- Avoid `for` loops; use `map`, `filter`, `reduce`.
+- Use point-free style: Avoid `setTimeout(() => cb())`; use `setTimeout(cb)`.
 
-See existing code if you are unfamiliar with this approach. Support will be offered to those new to this style, but a willingness and effort is required. Do not claim an issue or submit a Pull Request if you are unable or unwilling to adhere to this requirement.
+See existing code if you are unfamiliar with this approach. Support will be offered to those new to this style, but willingness and effort is required.
 
 ## Code Quality
 

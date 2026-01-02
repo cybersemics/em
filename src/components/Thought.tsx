@@ -13,7 +13,7 @@ import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
-import { isMac, isSafari, isTouch } from '../browser'
+import { isMac, isTouch } from '../browser'
 import { AlertType, REGEX_TAGS } from '../constants'
 import { MIN_CONTENT_WIDTH_EM } from '../constants'
 import testFlags from '../e2e/testFlags'
@@ -21,7 +21,6 @@ import useDragAndDropThought from '../hooks/useDragAndDropThought'
 import useDragHold from '../hooks/useDragHold'
 import useDragLeave from '../hooks/useDragLeave'
 import useHideBullet from '../hooks/useHideBullet'
-import useHoveringPath from '../hooks/useHoveringPath'
 import useThoughtStyle from '../hooks/useThoughtStyle'
 import useThoughtStyleContainer from '../hooks/useThoughtStyleContainer'
 import attribute from '../selectors/attribute'
@@ -55,7 +54,7 @@ import ContextBreadcrumbs from './ContextBreadcrumbs'
 import DropHover from './DropHover'
 import Note from './Note'
 import StaticThought from './StaticThought'
-import ThoughtWrapper from './ThoughtWrapper'
+import ThoughtPositioner from './ThoughtPositioner'
 
 /**********************************************************************
  * Redux
@@ -285,15 +284,23 @@ const ThoughtContainer = ({
     return equalPath(parentOf(state.cursor), path)
   })
 
-  const { isDragging, dragSource, isHovering, isBeingHoveredOver, dropTarget, canDropThought, isDeepHovering } =
-    useDragAndDropThought({
-      path,
-      simplePath,
-      isVisible,
-      isCursorParent,
-    })
+  const {
+    isDragging,
+    dragPreview,
+    dragSourceBullet,
+    dragSourceEditable,
+    isHovering,
+    dropTarget,
+    canDropThought,
+    isDeepHovering,
+  } = useDragAndDropThought({
+    path,
+    simplePath,
+    isVisible,
+    isCursorParent,
+    hoverZone: DropThoughtZone.ThoughtDrop,
+  })
 
-  useHoveringPath(path, isBeingHoveredOver, DropThoughtZone.ThoughtDrop)
   useDragLeave({ isDeepHovering, canDropThought })
 
   // check if the cursor is editing a thought directly
@@ -404,8 +411,8 @@ const ThoughtContainer = ({
     return isSubthoughtsDropTarget || isThoughtDropTarget
   })
 
-  /** True if the the user is dragging the thought and hovering over the DeleteDrop QuickDrop icon. */
-  const isQuickDropDeleteHovering = useSelector(
+  /** True if the the user is dragging the thought and hovering over the DeleteDrop DropGutter icon. */
+  const isDropGutterDeleteHovering = useSelector(
     state => isDragging && state.alert?.alertType === AlertType.DeleteDropHint,
   )
 
@@ -426,9 +433,6 @@ const ThoughtContainer = ({
     [style?.textDecoration],
   )
 
-  // true when this thought is the parent of a recently dropped child, to continue a slower pulse briefly
-  const isRecentlyDropped = useSelector(state => equalPath(state.droppedPath, simplePath))
-
   // Styles applied to the .thought-annotation and .editable
   // See: https://stackoverflow.com/a/46452396/480608
   // Use -webkit-text-stroke-width instead of font-weight:bold, as bold changes the width of the text and can cause the thought to become multiline during a drag. This can even create an oscillation effect as the increased Thought height triggers a different hoveringPath ad infinitum (often resulting in a Shaker cancel false positive).
@@ -441,21 +445,14 @@ const ThoughtContainer = ({
           animation: `pulseLight {durations.slowPulse} linear infinite alternate`,
           color: 'highlight',
         }
-      : /** Continue a slower pulse on the parent briefly after a drop completes. */
-        isRecentlyDropped
+      : isDropGutterDeleteHovering
         ? {
             WebkitTextStrokeWidth: '0.05em',
-            animation: `pulseLight {durations.verySlowPulse} linear infinite alternate`,
-            color: 'highlight',
+            animation: `pulseLight {durations.mediumPulse} linear infinite alternate`,
+            color: 'gray',
+            textDecoration: 'line-through',
           }
-        : isQuickDropDeleteHovering
-          ? {
-              WebkitTextStrokeWidth: '0.05em',
-              animation: `pulseLight {durations.mediumPulse} linear infinite alternate`,
-              color: 'gray',
-              textDecoration: 'line-through',
-            }
-          : null),
+        : null),
   })
 
   // useWhyDidYouUpdate('<Thought> ' + prettyPath(store.getState(), simplePath), {
@@ -538,15 +535,10 @@ const ThoughtContainer = ({
 
   return (
     <div
-      {...dragHoldResult.props}
-      ref={dndRef(node => dragSource(dropTarget(node)))}
+      ref={dndRef(node => dragPreview(dropTarget(node)))}
       aria-label='child'
       data-divider={isDivider(value)}
       data-editing={isEditing}
-      // HTML5Backend will override this to be "true" on platforms that use it.
-      // iOS Safari needs it to be true to disable native long press behavior. (#2953, #2931, #2964)
-      // Android works better if draggable is false.
-      draggable={isTouch && isSafari()}
       onClick={isTouch ? undefined : handleMultiselect}
       style={{
         transition: `transform ${token('durations.layoutSlowShift')} ease-out, opacity ${token('durations.layoutSlowShift')} ease-out`,
@@ -585,10 +577,12 @@ const ThoughtContainer = ({
         />
       )}
 
-      <ThoughtWrapper path={path} hideBullet={hideBullet}>
+      <ThoughtPositioner path={path} hideBullet={hideBullet}>
         {!(publish && simplePath.length === 0) && (!leaf || !isPublishChild) && !hideBullet && (
           <div style={alignmentTransition.bullet}>
             <Bullet
+              dragSource={dragSourceBullet}
+              longPressProps={dragHoldResult.props}
               isContextPending={isContextPending}
               isDragging={isDragging}
               isEditing={isEditing}
@@ -609,6 +603,8 @@ const ThoughtContainer = ({
         <div style={alignmentTransition.editable}>
           <StaticThought
             allowSingleContext={allowSingleContext}
+            dragSource={dragSourceEditable}
+            longPressProps={dragHoldResult.props}
             env={env}
             isContextPending={isContextPending}
             isEditing={isEditing}
@@ -630,7 +626,7 @@ const ThoughtContainer = ({
           />
         </div>
         <Note path={path} disabled={!isVisible} />
-      </ThoughtWrapper>
+      </ThoughtPositioner>
 
       {publish && simplePath.length === 0 && <Byline id={head(parentOf(simplePath))} />}
 

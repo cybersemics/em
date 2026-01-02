@@ -126,6 +126,14 @@ const keyframes = defineKeyframes({
       opacity: 0.5,
     },
   },
+  pulseBackgroundHighlight: {
+    from: {
+      backgroundColor: 'highlight0',
+    },
+    to: {
+      backgroundColor: 'highlight10',
+    },
+  },
   ripple_loader: {
     '0%': {
       top: '100%',
@@ -163,16 +171,6 @@ const keyframes = defineKeyframes({
     '100%': {
       transform: 'translateX(-50%) translateY(0)',
     },
-  },
-  moveThoughtOver: {
-    '0%': { transform: 'scale3d(1, 1, 1)' },
-    '50%': { transform: 'scale3d(1.5, 1.5, 1)' },
-    '100%': { transform: 'scale3d(1, 1, 1)' },
-  },
-  moveThoughtUnder: {
-    '0%': { transform: 'scale3d(1, 1, 1)', opacity: 1, filter: 'blur(0)' },
-    '50%': { transform: 'scale3d(0.5, 0.5, 1)', opacity: 0.5, filter: 'blur(2px)' },
-    '100%': { transform: 'scale3d(1, 1, 1)', opacity: 1, filter: 'blur(0)' },
   },
   /**
    * Clone drop animation: translate to destination and apply subtle fade/scale.
@@ -345,6 +343,17 @@ const globalCss = defineGlobalStyles({
     content: 'attr(placeholder)',
     cursor: 'text',
   },
+  // PandaCSS does not directly support fallbacks: https://github.com/chakra-ui/panda/discussions/846
+  ':root': {
+    '--active-glow-gradient':
+      'linear-gradient(180deg, {colors.commandCenterBlue} 0%, {colors.commandCenterPurple} 100%)',
+  },
+  '@supports (background-image: linear-gradient(180deg in oklch, #000))': {
+    ':root': {
+      '--active-glow-gradient':
+        'linear-gradient(180deg in oklch, {colors.commandCenterBlue} 0%, {colors.commandCenterPurple} 100%)',
+    },
+  },
 })
 
 export default defineConfig({
@@ -395,16 +404,14 @@ export default defineConfig({
           nodeCurveYLayerClockwise: {
             value: 'cubic-bezier(0.8,0.2,0.8,1)',
           },
-          nodeCurveSortXLayer: {
-            value: 'cubic-bezier(.1, 0, .1, .5)',
-          },
-          nodeCurveSortYLayer: {
-            value: 'cubic-bezier(0.5, 0, 0.5, 1)',
-          },
         },
         fontSizes: {
           sm: { value: '80%' },
           md: { value: '90%' },
+        },
+        /** The width for drop hover bars during drag-and-drop operations. */
+        sizes: {
+          dropHover: { value: '50vw' },
         },
         spacing: {
           modalPadding: { value: '8%' },
@@ -482,6 +489,11 @@ export default defineConfig({
           },
         },
         durations,
+        gradients: {
+          activeGlow: {
+            value: 'var(--active-glow-gradient)',
+          },
+        },
       },
     },
   },

@@ -3,6 +3,7 @@ import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/
 import { cursorBackActionCreator as cursorBack } from '../actions/cursorBack'
 import { isTouch } from '../browser'
 import BackIcon from '../components/icons/BackIcon'
+import scrollTo from '../device/scrollTo'
 import * as selection from '../device/selection'
 import hasMulticursor from '../selectors/hasMulticursor'
 import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
@@ -13,6 +14,7 @@ const cursorBackCommand: Command = {
   description: 'Move the cursor up a level.',
   gesture: 'r',
   svg: BackIcon,
+  hideAlert: true,
   keyboard: 'Escape',
   multicursor: false,
   exec: throttleByAnimationFrame((dispatch, getState) => {
@@ -34,6 +36,12 @@ const cursorBackCommand: Command = {
       if (!cursorNew) {
         selection.clear()
       }
+    }
+
+    // As a convenience, allow cursorBack to scroll to the top if the cursor is already null.
+    // Only do this after the cursor is already null to avoid disrupting the user when they are simply moving up a level to adjust autofocus and immediately back down a level to a sibling.
+    if (!cursor) {
+      scrollTo('top')
     }
   }),
 }

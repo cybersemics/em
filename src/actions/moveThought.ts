@@ -108,7 +108,6 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
       ? reducerFlow([
           alert({
             value: 'Switched to manual sort because thought was moved',
-            clearDelay: 5000,
           }),
           deleteAttribute({
             path: destinationThoughtPath,

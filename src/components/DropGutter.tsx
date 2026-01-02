@@ -40,10 +40,7 @@ const drop = (state: State, items: DragThoughtItem[]) => {
       haptics.light()
       store.dispatch([
         toggleAttribute({ path: simplePath, values: ['=favorite', 'true'] }),
-        alert(`Removed ${ellipsize(value)} from favorites`, {
-          clearDelay: 8000,
-          showCloseLink: true,
-        }),
+        alert(`Removed ${ellipsize(value)} from favorites`),
       ])
     } else if (zone === DragThoughtZone.Thoughts) {
       haptics.vibrate(DELETE_VIBRATE_DURATION)
@@ -63,10 +60,6 @@ const drop = (state: State, items: DragThoughtItem[]) => {
     // alert for multiple deleted thoughts will override the previous individual alert
     alert(
       `Removed ${pluralize('thought', items.length, true)}${items[0].zone === DragThoughtZone.Favorites ? ' from favorites' : ''}`,
-      {
-        clearDelay: 8000,
-        showCloseLink: true,
-      },
     ),
   ])
 }
@@ -99,7 +92,7 @@ const dropCollect = (monitor: DropTargetMonitor) => {
 }
 
 /** An invisible panel at the right edge of the screen during drag-and-drop that allows for quick delete. */
-const QuickDropPanel: FC = () => {
+const DropGutter: FC = () => {
   const [{ isHovering, zone }, dropTarget] = useDrop({
     accept: [DragAndDropType.Thought, NativeTypes.FILE],
     // item is undefined for some reason, so we need to get it from thn monitor
@@ -124,7 +117,7 @@ const QuickDropPanel: FC = () => {
       store.dispatch(
         alert(message, {
           alertType: isHovering ? AlertType.DeleteDropHint : AlertType.DragAndDropHint,
-          showCloseLink: false,
+          clearDelay: null,
         }),
       )
     }
@@ -155,11 +148,11 @@ const QuickDropPanel: FC = () => {
   )
 }
 
-/** Shows the QuickDropPanel when dragging. */
+/** Shows the DropGutter when dragging. */
 const QuickDropController: FC = () => {
   const dragInProgress = useSelector(state => state.longPress === LongPressState.DragInProgress)
 
-  return dragInProgress ? <QuickDropPanel /> : null
+  return dragInProgress ? <DropGutter /> : null
 }
 
 export default QuickDropController
