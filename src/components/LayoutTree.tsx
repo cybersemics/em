@@ -6,7 +6,7 @@ import { css, cx } from '../../styled-system/css'
 import Index from '../@types/IndexType'
 import ThoughtId from '../@types/ThoughtId'
 import { isTouch } from '../browser'
-import { LongPressState } from '../constants'
+import { CONTENT_BOX_PADDING_LEFT, LongPressState } from '../constants'
 import testFlags from '../e2e/testFlags'
 import usePositionedThoughts from '../hooks/usePositionedThoughts'
 import useSizeTracking from '../hooks/useSizeTracking'
@@ -143,8 +143,8 @@ const LayoutTree = () => {
       : 0,
   )
 
-  // Width of thought bullet
-  const [bulletWidth, setBulletWidth] = useState(0)
+  // Width of thought bullet, using the default from Bullet.tsx
+  const [bulletWidth, setBulletWidth] = useState(fontSize * 1.25)
   // Distance from toolbar to the first visible thought
   const [layoutTop, setLayoutTop] = useState(0)
 
@@ -260,6 +260,9 @@ const LayoutTree = () => {
 
   useLayoutTreeTop(ref, autocrop)
 
+  // Add a negative marginRight equal to translateX to ensure the thought takes up the full width.
+  const marginRight = `${-indent + (isTouch ? 2 : -1)}em`
+
   return (
     <div
       className={cx(
@@ -285,8 +288,8 @@ const LayoutTree = () => {
           // Use translateX instead of marginLeft to prevent multiline thoughts from continuously recalculating layout as their width changes during the transition.
           // Instead of using spaceAbove, we use -min(spaceAbove, c) + c, where c is the number of pixels of hidden thoughts above the cursor before cropping kicks in.
           transform: `translateX(${1.5 - indent}em`,
-          // Add a negative marginRight equal to translateX to ensure the thought takes up the full width. Not animated for a more stable visual experience.
-          marginRight: `${-indent + (isTouch ? 2 : -1)}em`,
+          // Not animated for a more stable visual experience.
+          marginRight,
         }}
       >
         {cursorThoughtPositioned && (
@@ -306,6 +309,12 @@ const LayoutTree = () => {
           {treeThoughtsPositioned.map((thought, index) => (
             <TreeNode
               {...thought}
+              style={{
+                ...thought.style,
+                // Ensure that transforming the thought's position by its indent level cannot push it off-screen.
+                // The extra 17px is to make sure it doesn't get cut off under the scrollbar
+                maxWidth: `calc(${window.innerWidth > 560 ? '90' : '100'}vw - ${CONTENT_BOX_PADDING_LEFT + thought.x}px - ${1.5 - indent}em)`,
+              }}
               index={index}
               // Pass unique key for the component
               key={thought.key}
