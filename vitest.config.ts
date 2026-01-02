@@ -33,50 +33,8 @@ export default defineConfig({
           }),
         ],
       },
-      {
-        extends: './vite.config.ts',
-        test: {
-          name: 'ios-appium',
-          globals: true,
-          include: ['src/e2e/iOS/__tests__/split.ts'],
-          exclude: ['node_modules/**'],
-          environment: './src/e2e/webdriverio-environment.ts',
-          retry: 0,
-          testTimeout: 90000,
-          hookTimeout: 90000,
-          environmentOptions: {
-            target: 'appium',
-          },
-        },
-        plugins: [
-          Terminal({
-            console: 'terminal',
-            output: ['terminal', 'console'],
-          }),
-        ],
-      },
-      {
-        extends: './vite.config.ts',
-        test: {
-          name: 'ios-browserstack',
-          globals: true,
-          include: ['src/e2e/iOS/__tests__/split.ts'],
-          exclude: ['node_modules/**'],
-          environment: './src/e2e/webdriverio-environment.ts',
-          retry: 0,
-          testTimeout: 90000,
-          hookTimeout: 90000,
-          environmentOptions: {
-            target: 'browserstack',
-          },
-        },
-        plugins: [
-          Terminal({
-            console: 'terminal',
-            output: ['terminal', 'console'],
-          }),
-        ],
-      },
+      // iOS tests are now run with WDIO test runner
+      // Use: yarn test:ios:local (local Appium) or yarn test:ios:browserstack
     ],
   },
 })
