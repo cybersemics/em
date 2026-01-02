@@ -237,6 +237,8 @@ const CommandCenter = ({ mountPoint }: Pick<SheetProps, 'mountPoint'>) => {
                         background: 'fgOverlay20',
                         borderRadius: 46,
                         mixBlendMode: 'soft-light',
+                        // Safari fix: will-change forces GPU layer creation which fixes blend mode rendering bug.
+                        willChange: 'transform',
                       })}
                     />
                     <button
@@ -249,6 +251,8 @@ const CommandCenter = ({ mountPoint }: Pick<SheetProps, 'mountPoint'>) => {
                         fontWeight: 500,
                         cursor: 'pointer',
                         padding: '8px 16px',
+                        // Safari fix: will-change forces GPU layer creation which fixes blend mode rendering bug.
+                        willChange: 'transform',
                       })}
                     >
                       Done
