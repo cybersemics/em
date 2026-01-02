@@ -1,4 +1,4 @@
-import { RefObject, useCallback, useEffect, useMemo, useState } from 'react'
+import { RefObject, useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { useSelector } from 'react-redux'
 import Path from '../@types/Path'
 import isDescendantPath from '../util/isDescendantPath'
@@ -83,12 +83,10 @@ const usePositionedAnnotation = (
 
   // useSelector would be a cleaner way to get the editableRef's new position
   // but, on load, the refs are null until setTimeout runs
-  useEffect(() => {
+  useLayoutEffect(() => {
     setOpacity('0')
-    if (!inTransition) {
-      positionAnnotation()
-      setOpacity('1')
-    }
+    positionAnnotation()
+    setOpacity('1')
   }, [
     descendant,
     editableRef,
