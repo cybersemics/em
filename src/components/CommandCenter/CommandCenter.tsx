@@ -145,6 +145,8 @@ const CommandCenter = ({ mountPoint }: Pick<SheetProps, 'mountPoint'>) => {
           detent='content'
           unstyled
           mountPoint={mountPoint}
+          /** Fixes sheet shifting up on ios when it opens. */
+          disableScrollLocking
         >
           <motion.div
             /** Falloff. */
