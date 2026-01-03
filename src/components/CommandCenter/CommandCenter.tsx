@@ -1,9 +1,9 @@
 import _ from 'lodash'
-import { Transition, cubicBezier, useTransform } from 'motion/react'
+import { cubicBezier, useTransform } from 'motion/react'
 import { motion } from 'motion/react'
 import pluralize from 'pluralize'
 import { FC, useCallback, useRef } from 'react'
-import { Sheet, SheetProps, SheetRef } from 'react-modal-sheet'
+import { Sheet, SheetProps, SheetRef, SheetTweenConfig } from 'react-modal-sheet'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { clearMulticursorsActionCreator as clearMulticursors } from '../../actions/clearMulticursors'
@@ -77,12 +77,13 @@ const HiddenOverlay = () => {
   )
 }
 
-const ease = cubicBezier(0, 0, 0.2, 1)
+const bezierDefinition = [0, 0, 0.2, 1] as const
 
-const transition: Transition = {
-  type: 'tween',
-  duration: durationsConfig.medium / 100,
-  ease,
+const ease = cubicBezier(...bezierDefinition)
+
+const tweenConfig: SheetTweenConfig = {
+  duration: durationsConfig.medium / 1000,
+  ease: bezierDefinition,
 }
 
 /**
@@ -148,7 +149,7 @@ const CommandCenter = ({ mountPoint }: Pick<SheetProps, 'mountPoint'>) => {
           detent='content'
           unstyled
           mountPoint={mountPoint}
-          transition={transition}
+          tweenConfig={tweenConfig}
           /** Fixes sheet shifting up on ios when it opens. */
           disableScrollLocking
         >
