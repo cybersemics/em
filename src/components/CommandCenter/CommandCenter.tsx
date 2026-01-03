@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { useTransform } from 'motion/react'
+import { cubicBezier, useTransform } from 'motion/react'
 import { motion } from 'motion/react'
 import pluralize from 'pluralize'
 import { FC, useCallback, useRef } from 'react'
@@ -76,6 +76,8 @@ const HiddenOverlay = () => {
   )
 }
 
+const ease = cubicBezier(0, 0, 0.2, 1)
+
 /**
  * A panel that displays the Command Center.
  */
@@ -91,12 +93,14 @@ const CommandCenter = ({ mountPoint }: Pick<SheetProps, 'mountPoint'>) => {
 
   const blurHeight = useTransform(height, height => height + 110)
 
-  const opacity = useTransform(() => {
+  const sheetProgress = useTransform(() => {
     const y = ref.current?.yInverted.get() ?? 0
     const height = ref.current?.height ?? 0
     if (height === 0) return 0
-    return y / height
+    return Math.min(Math.max(y / height, 0), 1)
   })
+
+  const opacity = useTransform(sheetProgress, [0, 1], [0, 1], { ease })
 
   const bottom = useTransform(() => {
     const y = ref.current?.y.get() ?? 0
