@@ -2,7 +2,7 @@ import _ from 'lodash'
 import { useTransform } from 'motion/react'
 import { motion } from 'motion/react'
 import pluralize from 'pluralize'
-import { FC, useCallback, useRef, useState } from 'react'
+import { FC, useCallback, useRef } from 'react'
 import { Sheet, SheetProps, SheetRef } from 'react-modal-sheet'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
@@ -103,8 +103,6 @@ const CommandCenter = ({ mountPoint }: Pick<SheetProps, 'mountPoint'>) => {
     return -y
   })
 
-  const [isFullyOpen, setIsFullyOpen] = useState(false)
-
   const onClose = useCallback(() => {
     dispatch([toggleDropdown({ dropDownType: 'commandCenter', value: false }), clearMulticursors()])
   }, [dispatch])
@@ -133,12 +131,6 @@ const CommandCenter = ({ mountPoint }: Pick<SheetProps, 'mountPoint'>) => {
         <HiddenOverlay />
         <Sheet
           data-testid='command-center-panel'
-          onOpenEnd={() => {
-            setIsFullyOpen(true)
-          }}
-          onCloseStart={() => {
-            setIsFullyOpen(false)
-          }}
           ref={ref}
           isOpen={showCommandCenter}
           onClose={onClose}
@@ -271,21 +263,17 @@ const CommandCenter = ({ mountPoint }: Pick<SheetProps, 'mountPoint'>) => {
                     gridRowGap: '0.889rem',
                   })}
                 >
-                  <PanelCommand
-                    isGlowReady={isFullyOpen}
-                    command={{ ...copyCursorCommand, label: 'Copy' }}
-                    size='small'
-                  />
-                  <PanelCommand isGlowReady={isFullyOpen} command={note} size='small' />
-                  <PanelCommand isGlowReady={isFullyOpen} command={{ ...favorite, label: 'Favorite' }} size='small' />
-                  <PanelCommand isGlowReady={isFullyOpen} command={deleteCommand} size='small' />
+                  <PanelCommand command={{ ...copyCursorCommand, label: 'Copy' }} size='small' />
+                  <PanelCommand command={note} size='small' />
+                  <PanelCommand command={{ ...favorite, label: 'Favorite' }} size='small' />
+                  <PanelCommand command={deleteCommand} size='small' />
                   <PanelCommandGroup commandSize='small' commandCount={2}>
-                    <PanelCommand isGlowReady={isFullyOpen} command={{ ...outdent, label: '' }} size='small' />
-                    <PanelCommand isGlowReady={isFullyOpen} command={{ ...indent, label: '' }} size='small' />
+                    <PanelCommand command={{ ...outdent, label: '' }} size='small' />
+                    <PanelCommand command={{ ...indent, label: '' }} size='small' />
                   </PanelCommandGroup>
-                  <PanelCommand isGlowReady={isFullyOpen} command={swapParent} size='medium' />
-                  <PanelCommand isGlowReady={isFullyOpen} command={categorize} size='medium' />
-                  <PanelCommand isGlowReady={isFullyOpen} command={uncategorize} size='medium' />
+                  <PanelCommand command={swapParent} size='medium' />
+                  <PanelCommand command={categorize} size='medium' />
+                  <PanelCommand command={uncategorize} size='medium' />
                 </div>
               </div>
             </Sheet.Content>

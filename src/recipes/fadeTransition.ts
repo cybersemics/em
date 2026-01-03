@@ -6,7 +6,17 @@ import { defineSlotRecipe } from '@pandacss/dev'
 
 const fadeTransitionRecipe = defineSlotRecipe({
   className: 'fade',
-  slots: ['enter', 'exit', 'exitActive', 'enterActive', 'enterDone', 'exitDone'],
+  slots: [
+    'enter',
+    'exit',
+    'exitActive',
+    'enterActive',
+    'enterDone',
+    'exitDone',
+    'appear',
+    'appearActive',
+    'appearDone',
+  ],
   base: {
     enter: { opacity: 0 },
     enterActive: { opacity: 1 },
@@ -36,6 +46,9 @@ const fadeTransitionRecipe = defineSlotRecipe({
         exit: { opacity: 0.75 },
         exitActive: { opacity: 0, transition: `opacity {durations.activeButtonGlowLuminosity} ease 0ms` },
         exitDone: { opacity: 0 },
+        appear: { opacity: 0 },
+        appearActive: { opacity: 0.75, transition: `opacity {durations.activeButtonGlowLuminosity} ease 0ms` },
+        appearDone: { opacity: 0.75 },
       },
       activeButtonGlowSaturation: {
         enter: { opacity: 0 },
@@ -44,6 +57,9 @@ const fadeTransitionRecipe = defineSlotRecipe({
         exit: { opacity: 0.45 },
         exitActive: { opacity: 0, transition: `opacity {durations.activeButtonGlowSaturation} ease 0ms` },
         exitDone: { opacity: 0 },
+        appear: { opacity: 0 },
+        appearActive: { opacity: 0.45, transition: `opacity {durations.activeButtonGlowSaturation} ease 0ms` },
+        appearDone: { opacity: 0.45 },
       },
       distractionFreeTyping: {
         enterActive: { transition: `opacity {durations.distractionFreeTyping} ease 0ms` },

@@ -15,8 +15,6 @@ interface PanelCommandProps {
   command: Command
   /** The size of the button. */
   size?: 'small' | 'medium'
-  /** Whether the glow effect is ready to be displayed. */
-  isGlowReady: boolean
 }
 
 interface ActiveButtonGlowImageProps {
@@ -34,6 +32,8 @@ const ActiveButtonGlowImage: FC<ActiveButtonGlowImageProps> = ({ isActive, type 
       in={isActive}
       unmountOnExit
       nodeRef={nodeRef}
+      /** When `in={true}` on mount, ensures the initial opacity of the element is correct. */
+      appear
     >
       <div
         ref={nodeRef}
@@ -56,7 +56,7 @@ const ActiveButtonGlowImage: FC<ActiveButtonGlowImageProps> = ({ isActive, type 
 }
 
 /** A single button in the Panel Command Grid. */
-const PanelCommand: FC<PanelCommandProps> = ({ command, size, isGlowReady }) => {
+const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
   const [isAnimated, setIsAnimated] = useState(false)
 
   const { svg, isActive, canExecute } = command
@@ -93,8 +93,8 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size, isGlowReady }) => 
       })}
     >
       {/* For the first fade in to work properly, ActiveButtonGlowImage must be already mounted with opacity 0. */}
-      <ActiveButtonGlowImage isActive={isGlowReady && isButtonActive} type='luminosity' />
-      <ActiveButtonGlowImage isActive={isGlowReady && isButtonActive} type='saturation' />
+      <ActiveButtonGlowImage isActive={isButtonActive} type='luminosity' />
+      <ActiveButtonGlowImage isActive={isButtonActive} type='saturation' />
       <div
         className={cx(
           panelCommandRecipe({
