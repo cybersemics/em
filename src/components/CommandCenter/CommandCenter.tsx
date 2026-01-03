@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { cubicBezier, useTransform } from 'motion/react'
+import { Transition, cubicBezier, useTransform } from 'motion/react'
 import { motion } from 'motion/react'
 import pluralize from 'pluralize'
 import { FC, useCallback, useRef } from 'react'
@@ -18,6 +18,7 @@ import note from '../../commands/note'
 import outdent from '../../commands/outdent'
 import swapParent from '../../commands/swapParent'
 import uncategorize from '../../commands/uncategorize'
+import durationsConfig from '../../durations.config'
 import isTutorial from '../../selectors/isTutorial'
 import fastClick from '../../util/fastClick'
 import PanelCommand from './PanelCommand'
@@ -77,6 +78,12 @@ const HiddenOverlay = () => {
 }
 
 const ease = cubicBezier(0, 0, 0.2, 1)
+
+const transition: Transition = {
+  type: 'tween',
+  duration: durationsConfig.medium / 100,
+  ease,
+}
 
 /**
  * A panel that displays the Command Center.
@@ -141,6 +148,7 @@ const CommandCenter = ({ mountPoint }: Pick<SheetProps, 'mountPoint'>) => {
           detent='content'
           unstyled
           mountPoint={mountPoint}
+          transition={transition}
           /** Fixes sheet shifting up on ios when it opens. */
           disableScrollLocking
         >
