@@ -240,13 +240,10 @@ const CommandCenter = ({ mountPoint }: Pick<SheetProps, 'mountPoint'>) => {
                       className={css({
                         all: 'unset',
                         gridArea: 'button',
-                        mixBlendMode: 'lighten',
                         opacity: 0.5,
                         fontWeight: 500,
                         cursor: 'pointer',
                         padding: '8px 16px',
-                        // Safari fix: will-change forces GPU layer creation which fixes blend mode rendering bug.
-                        willChange: 'transform',
                       })}
                     >
                       Done
