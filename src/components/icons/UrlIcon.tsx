@@ -13,7 +13,6 @@ const UrlIcon = () => {
         // Make sure the icon doesn't take up extra space.
         padding: '0.05em 0.167em 0.167em 0',
         cursor: 'pointer',
-        pointerEvents: 'all',
       })}
     >
       <path
