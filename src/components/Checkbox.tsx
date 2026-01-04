@@ -68,7 +68,7 @@ const Checkbox: FC<
         opacity: disabled ? 0.5 : undefined,
         marginBottom: children ? (parent ? '0.5rem' : '1rem') : 0,
         // child marginLeft should match .checkbox-container padding-left
-        marginLeft: child ? '2.2em' : undefined,
+        marginLeft: child ? '2.2rem' : undefined,
         pointerEvents: disabled ? 'none' : undefined,
         cursor: disabled ? 'default' : 'pointer',
       })}
