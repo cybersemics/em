@@ -14,8 +14,9 @@ stop_docker_container() {
 stop_dev_server() {
     if [ -z "$GITHUB_ACTIONS" ] && [ -n "$DEV_SERVER_PID" ]; then
         echo "Stopping development server..."
-        kill $DEV_SERVER_PID
-        wait $DEV_SERVER_PID 2>/dev/null
+        # wait $DEV_SERVER_PID is not reliable within an exit trap, so just kill and move on.
+        # Otherwise, the process can exit here and stop_docker_container will never be called, and the next run will fail because the port is already in use.
+        kill $DEV_SERVER_PID || true
     fi
 }
 

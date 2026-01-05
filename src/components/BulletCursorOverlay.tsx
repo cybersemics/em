@@ -171,10 +171,10 @@ export default function BulletCursorOverlay({
           hidden
           cssRaw={css.raw({
             /* Tighten up the space between the context-breadcrumbs and the thought (similar to the space above a note). */
-            marginBottom: '-0.25em',
+            marginBottom: '-0.21675rem',
             /* Use padding-top instead of margin-top to ensure this gets included in the dynamic height of each thought.
             Otherwise the accumulated y value will not be correct. */
-            paddingTop: '0.5em',
+            paddingTop: '0.4335rem',
           })}
           path={parentOf(simplePath)}
           homeContext={homeContext}

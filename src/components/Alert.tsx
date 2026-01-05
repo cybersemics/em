@@ -87,7 +87,7 @@ const Alert: FC = () => {
 
       {multicursor && (
         <a
-          className={cx(anchorButtonRecipe(), css({ margin: '0 1em 1em' }))}
+          className={cx(anchorButtonRecipe(), css({ margin: '0 1rem 1rem' }))}
           {...fastClick(() => {
             dispatch(clearMulticursors())
             onClose?.()
