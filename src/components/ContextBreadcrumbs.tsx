@@ -208,11 +208,11 @@ const ContextBreadcrumbs = ({
       aria-label={hidden ? undefined : 'context-breadcrumbs'}
       className={css(
         {
-          fontSize: '0.867em',
+          fontSize: '0.867rem',
           color: 'gray66',
-          marginLeft: 'calc(1.3em - 14.5px)',
+          marginLeft: 'calc(1.1271rem - 14.5px)',
           marginTop: '0.533em',
-          minHeight: '1em',
+          minHeight: '0.867rem',
           visibility: hidden ? 'hidden' : undefined,
         },
         cssRaw,
