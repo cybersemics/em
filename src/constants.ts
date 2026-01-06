@@ -153,9 +153,6 @@ export const FONT_SCALE_INCREMENT = 1
 // to detect if field has multiline
 export const MIN_LINE_HEIGHT = 26
 
-// the maximum number of characters of a thought to display before ellipsizing in links and tutorial
-export const THOUGHT_ELLIPSIZED_CHARS = 16
-
 // delay after gesture hint is activated before command palette appears
 export const COMMAND_PALETTE_TIMEOUT = 400
 
@@ -460,6 +457,8 @@ export enum AlertType {
   MulticursorError = 'MulticursorError',
   // shown when the user redoes an action
   Redo = 'Redo',
+  // shown when the user attempts to open the Command Center without a cursor multiple times within 10 seconds
+  ScrollZoneHelp = 'ScrollZoneHelp',
   // shown when a toolbar button is hovering over the area for removal in the CustomizeToolbar modal
   ToolbarButtonRemoveHint = 'ToolbarButtonRemoveHint',
   // shown when the user undoes an action

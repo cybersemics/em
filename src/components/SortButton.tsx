@@ -69,7 +69,7 @@ const SortButton = ({ onSortChange }: SortButtonProps) => {
             css({
               position: 'absolute',
               top: '100%',
-              marginTop: '0.5rem',
+              marginTop: '0.444rem',
               right: 0,
               backgroundColor: 'bg',
               border: 'solid 1px {colors.gray50}',
@@ -78,7 +78,7 @@ const SortButton = ({ onSortChange }: SortButtonProps) => {
               padding: '1rem',
               display: 'flex',
               flexDirection: 'column',
-              gap: '0.5rem',
+              gap: '0.444rem',
             }),
           )}
         >
@@ -87,7 +87,7 @@ const SortButton = ({ onSortChange }: SortButtonProps) => {
               color: 'gray50',
               borderBottom: 'none',
               textAlign: 'left',
-              fontSize: '0.9rem',
+              fontSize: '0.8rem',
               margin: '0',
             })}
           >

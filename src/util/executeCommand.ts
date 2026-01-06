@@ -127,7 +127,6 @@ export const executeCommandWithMulticursor = (command: Command, { store, type, e
     store.dispatch(
       alert(errorMessage, {
         alertType: AlertType.MulticursorError,
-        clearDelay: 5000,
       }),
     )
     return

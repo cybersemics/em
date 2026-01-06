@@ -19,7 +19,7 @@ const CloseButton: React.FC<CloseButtonProps> = ({ onClick }) => {
         minWidth: '40px',
         minHeight: '40px',
         borderRadius: '50%',
-        marginRight: '0.5rem',
+        marginRight: '0.444rem',
         backgroundColor: 'darkgray',
         border: `2px solid {colors.gray50}`,
         display: 'flex',
