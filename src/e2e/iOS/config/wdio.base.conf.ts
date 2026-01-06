@@ -18,7 +18,7 @@ const baseConfig = {
 
   // Capabilities
   // Each spec file runs in its own parallel session
-  maxInstances: 5,
+  maxInstances: 3,
 
   // Test Configurations
   logLevel: 'info' as const,
