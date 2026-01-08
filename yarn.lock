@@ -5307,9 +5307,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@trivago/prettier-plugin-sort-imports@npm:^6.0.0":
-  version: 6.0.0
-  resolution: "@trivago/prettier-plugin-sort-imports@npm:6.0.0"
+"@trivago/prettier-plugin-sort-imports@npm:^6.0.2":
+  version: 6.0.2
+  resolution: "@trivago/prettier-plugin-sort-imports@npm:6.0.2"
   dependencies:
     "@babel/generator": "npm:^7.28.0"
     "@babel/parser": "npm:^7.28.0"
@@ -5334,7 +5334,7 @@ __metadata:
       optional: true
     svelte:
       optional: true
-  checksum: 10c0/f964257dd0678085087b38c4f53bfa2ea4210c579163f471bf27e85aac544a05d9c51fbde2ac6c1cb6d0994fb2f6714c88d425a826eded622795a63db60d119a
+  checksum: 10c0/62ee7d74c9cb6318cf7b3a6faf8fb794853c30bae6dc9e27c9ae1b22ffd160d45286c0c143881064020329edd6ec8ae529d625dbe5e2867e092886d84b1a13fe
   languageName: node
   linkType: hard
 
@@ -9708,7 +9708,7 @@ __metadata:
     "@testing-library/react": "npm:^16.3.1"
     "@testing-library/user-event": "npm:^14.6.1"
     "@total-typescript/ts-reset": "npm:^0.6.1"
-    "@trivago/prettier-plugin-sort-imports": "npm:^6.0.0"
+    "@trivago/prettier-plugin-sort-imports": "npm:^6.0.2"
     "@types/clipboard": "npm:^2.0.10"
     "@types/dompurify": "npm:^3.2.0"
     "@types/html-escaper": "npm:^3.0.4"
