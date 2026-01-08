@@ -88,7 +88,7 @@ const glyphFg = cva({
       isBulletExpanded: true,
       css: {
         _mobile: {
-          left: '-0.02em',
+          left: '-0.016rem',
         },
       },
     },

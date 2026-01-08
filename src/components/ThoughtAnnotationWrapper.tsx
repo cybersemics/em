@@ -42,7 +42,6 @@ const ThoughtAnnotationWrapper: FC<
       aria-label='thought-annotation'
       className={css({
         position: 'absolute',
-        pointerEvents: 'none',
         userSelect: 'none',
         boxSizing: 'border-box',
         width: '100%',
