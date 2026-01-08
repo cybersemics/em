@@ -152,7 +152,7 @@
     "y-indexeddb": "⚠️ OVERRIDDEN BY 'resolutions' - Source: https://github.com/raineorshine/y-indexeddb#y-indexeddb-multiplex | Tarball: https://codeload.github.com/raineorshine/y-indexeddb/tar.gz/60b960009085b1a988b5064ee35703229231531f | Configured in: package.json#resolutions",
     "y-protocols": "^1.0.7",
     "yallist": "^5.0.0",
-    "yjs": "^13.6.28"
+    "yjs": "^13.6.29"
   },
   "devDependencies": {
     "@babel/core": "^7.28.5",
