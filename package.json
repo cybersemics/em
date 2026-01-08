@@ -234,5 +234,5 @@
     "vitest-localstorage-mock": "^0.1.2",
     "webdriverio": "^9.19.2"
   },
-  "packageManager": "yarn@4.5.1"
+  "packageManager": "yarn@4.12.0"
 }
