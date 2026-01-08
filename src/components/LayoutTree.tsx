@@ -260,9 +260,6 @@ const LayoutTree = () => {
 
   useLayoutTreeTop(ref, autocrop)
 
-  // Add a negative marginRight equal to translateX to ensure the thought takes up the full width.
-  const marginRight = `${-indent + (isTouch ? 2 : -1)}em`
-
   return (
     <div
       className={cx(
@@ -288,8 +285,9 @@ const LayoutTree = () => {
           // Use translateX instead of marginLeft to prevent multiline thoughts from continuously recalculating layout as their width changes during the transition.
           // Instead of using spaceAbove, we use -min(spaceAbove, c) + c, where c is the number of pixels of hidden thoughts above the cursor before cropping kicks in.
           transform: `translateX(${1.5 - indent}em`,
+          // Add a negative marginRight equal to translateX to ensure the thought takes up the full width.
           // Not animated for a more stable visual experience.
-          marginRight,
+          marginRight: `${-indent + (isTouch ? 2 : -1)}em`,
         }}
       >
         {cursorThoughtPositioned && (
