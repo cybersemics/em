@@ -2,6 +2,7 @@
  * Safari does glyph-only hit testing, so clicking on empty space has no caret target.
  * This module provides API for detecting void area positions and calculating appropriate caret positions.
  */
+import { isSafari } from '../browser'
 
 /** Represents a line within a text node with its character range and bounding box. */
 interface TextNodeLine {
@@ -101,11 +102,47 @@ const findClosestLine = (lines: TextNodeLine[], clientY: number): TextNodeLine =
 }
 
 /**
+ * Adjusts an offset to skip trailing whitespaces in a line.
+ * If the offset is in whitespace, moves it to after the last non-whitespace character in that line.
+ *
+ * @param text - The text content.
+ * @param offset - The calculated offset.
+ * @param lineStart - The start of the line containing the offset.
+ * @param lineEnd - The end of the line containing the offset.
+ * @returns The adjusted offset, skipping trailing whitespaces.
+ */
+const skipTrailingWhitespace = (text: string, offset: number, lineStart: number, lineEnd: number): number => {
+  const lineText = text.substring(lineStart, lineEnd)
+  const offsetInLine = offset - lineStart
+  const lastNonWhitespaceIndex = lineText.trimEnd().length
+
+  // If offset is beyond the last non-whitespace character, place after it
+  if (offsetInLine > lastNonWhitespaceIndex) {
+    return lineStart + lastNonWhitespaceIndex
+  }
+
+  /** If offset is in whitespace, find the last non-whitespace before it. */
+  const isWhitespace = (char: string) => /\s/.test(char)
+
+  if (isWhitespace(lineText[offsetInLine])) {
+    // Find last non-whitespace character before the offset using reduceRight
+    const charsBeforeOffset = Array.from(lineText.slice(0, offsetInLine))
+    const lastNonWhitespaceIndex = charsBeforeOffset.reduceRight<number | null>(
+      (foundIndex, char, index) => foundIndex ?? (!isWhitespace(char) ? index : null),
+      null,
+    )
+
+    // If found, place after it; otherwise place at start of line
+    return lastNonWhitespaceIndex !== null ? lineStart + lastNonWhitespaceIndex + 1 : lineStart
+  }
+
+  return offset
+}
+
+/**
  * Resolves the horizontal character offset within a text node using binary search.
  * Handles both single-line and multi-line text nodes.
- *
- * For multi-line text, it first finds the closest line vertically, then performs
- * binary search within that line.
+ * Skips trailing whitespaces when placing the caret.
  *
  * @param node - The text node to search within.
  * @param clientX - The X coordinate of the tap/click.
@@ -118,17 +155,52 @@ const calculateHorizontalOffset = (node: Text, clientX: number, clientY: number)
 
   const lines = getTextNodeLines(node)
 
+  let offset: number
+  let lineStart: number
+  let lineEnd: number
+
   // If the text node is a single line, find the offset directly
   if (lines.length <= 1) {
-    return findOffsetAtX(node, clientX, 0, text.length)
+    lineStart = 0
+    lineEnd = text.length
+    offset = findOffsetAtX(node, clientX, lineStart, lineEnd)
+  } else {
+    // If the text node is multi-line, pick the closest line with respect to the Y coordinate
+    // and then find the offset within that line
+    const targetLine = findClosestLine(lines, clientY)
+    lineStart = targetLine.start
+    lineEnd = targetLine.end
+    offset = findOffsetAtX(node, clientX, lineStart, lineEnd)
   }
 
-  // If the text node is multi-line, pick the closest line with respect to the Y coordinate
-  // and then find the offset within that line
-  const targetLine = findClosestLine(lines, clientY)
+  // Safari-specific correction: Safari's getBoundingClientRect can be off by a few characters, so verify the result
+  if (isSafari() && offset >= lineStart && offset <= lineEnd) {
+    // Generate range of offsets to check (±2 characters)
+    const startOffset = Math.max(lineStart, offset - 2)
+    const endOffset = Math.min(lineEnd, offset + 2)
+    const offsetsToCheck = Array.from({ length: endOffset - startOffset + 1 }, (_, i) => startOffset + i)
 
-  // Search only inside that line
-  return findOffsetAtX(node, clientX, targetLine.start, targetLine.end)
+    /** Get distance for each offset and find the one closest to clientX. */
+    const getDistance = (checkOffset: number): number => {
+      const checkR = document.createRange()
+      checkR.setStart(node, checkOffset)
+      checkR.collapse(true)
+      const checkRect = checkR.getBoundingClientRect()
+      return Math.abs(clientX - checkRect.left)
+    }
+
+    const { offset: bestOffset } = offsetsToCheck
+      .map(checkOffset => ({ offset: checkOffset, distance: getDistance(checkOffset) }))
+      .reduce((best, current) => (current.distance < best.distance ? current : best), {
+        offset,
+        distance: getDistance(offset),
+      })
+
+    offset = bestOffset
+  }
+
+  // Adjust offset to skip trailing whitespaces
+  return skipTrailingWhitespace(text, offset, lineStart, lineEnd)
 }
 
 /**
