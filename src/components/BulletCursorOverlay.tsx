@@ -34,7 +34,6 @@ type BulletCursorOverlayProps = {
   parentId: ThoughtId
   showContexts?: boolean
   leaf?: boolean
-  index: number
 }
 
 /** Returns true if two lists of children are equal. Deeply compares id, value, and rank. */
@@ -102,7 +101,6 @@ export default function BulletCursorOverlay({
   parentId,
   showContexts,
   leaf,
-  index,
 }: BulletCursorOverlayProps) {
   const value: string | undefined = useSelector(state => {
     const thought = getThoughtById(state, head(path))
@@ -166,7 +164,6 @@ export default function BulletCursorOverlay({
       thoughtId={head(simplePath)}
       width={width}
       path={path}
-      index={index}
       isMounted
     >
       {showContexts && simplePath?.length > 1 && (
@@ -174,10 +171,10 @@ export default function BulletCursorOverlay({
           hidden
           cssRaw={css.raw({
             /* Tighten up the space between the context-breadcrumbs and the thought (similar to the space above a note). */
-            marginBottom: '-0.25em',
+            marginBottom: '-0.21675rem',
             /* Use padding-top instead of margin-top to ensure this gets included in the dynamic height of each thought.
             Otherwise the accumulated y value will not be correct. */
-            paddingTop: '0.5em',
+            paddingTop: '0.4335rem',
           })}
           path={parentOf(simplePath)}
           homeContext={homeContext}

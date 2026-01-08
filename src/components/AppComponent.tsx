@@ -18,16 +18,17 @@ import themeColors from '../selectors/themeColors'
 import store from '../stores/app'
 import isDocumentEditable from '../util/isDocumentEditable'
 import Alert from './Alert'
-import CommandMenu from './CommandMenu/CommandMenu'
+import CommandCenter from './CommandCenter/CommandCenter'
 import CommandPalette from './CommandPalette'
 import Content from './Content'
+import DropGutter from './DropGutter'
 import ErrorMessage from './ErrorMessage'
 import Footer from './Footer'
+import GestureMenu from './GestureMenu'
 import HamburgerMenu from './HamburgerMenu'
 import LatestCommandsDiagram from './LatestCommandsDiagram'
 import MultiGesture from './MultiGesture'
 import NavBar from './NavBar'
-import QuickDropPanel from './QuickDropPanel'
 import Sidebar from './Sidebar'
 import Tips from './Tips/Tips'
 import Toolbar from './Toolbar'
@@ -121,6 +122,14 @@ const AppComponent: FC = () => {
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', colors.bg)
   }, [colors.bg])
 
+  // sync root font size with app font size so rem units follow the user setting
+  useLayoutEffect(() => {
+    if (typeof document === 'undefined') return
+
+    document.documentElement.style.fontSize = `${fontSize}px`
+    document.documentElement.style.setProperty('--app-font-size', `${fontSize}px`)
+  }, [fontSize])
+
   // Set body attributes using custom hooks
   useBodyAttribute('data-device', isTouch ? 'mobile' : 'desktop')
   useBodyAttribute('data-native', Capacitor.isNativePlatform() ? 'true' : 'false')
@@ -165,7 +174,8 @@ const AppComponent: FC = () => {
     >
       <Alert />
       <Tips />
-      <CommandPalette />
+      {!isTouch && <CommandPalette />}
+      {isTouch && <GestureMenu />}
       <ErrorMessage />
       {enableLatestCommandsDiagram && <LatestCommandsDiagram position='bottom' />}
       <GestureCheatsheet />
@@ -182,7 +192,7 @@ const AppComponent: FC = () => {
           <UndoSlider />
         </>
       )}
-      <QuickDropPanel />
+      <DropGutter />
 
       <MultiGestureIfTouch>
         {showModal ? (
@@ -205,7 +215,7 @@ const AppComponent: FC = () => {
           {/* NavBar must be outside MultiGestureIfTouch in order to have a higher stacking order than the Sidebar. Otherwise the user can accidentally activate the Sidebar edge swipe when trying to tap the Home icon. */}
           <NavBar position='bottom' />
 
-          <CommandMenu />
+          <CommandCenter />
           <div style={{ fontSize }}>
             <Footer />
           </div>
