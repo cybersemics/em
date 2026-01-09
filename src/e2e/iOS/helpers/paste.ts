@@ -1,9 +1,6 @@
 import { HOME_TOKEN } from '../../../constants.js'
 import { WindowEm } from '../../../initialize.js'
 
-// browser is provided globally by WDIO test runner
-declare const browser: WebdriverIO.Browser
-
 async function paste(text: string): Promise<void>
 async function paste(pathUnranked: string[], text: string): Promise<void>
 
