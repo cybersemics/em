@@ -264,7 +264,7 @@ const LayoutTree = () => {
     <div
       className={cx(
         css({
-          marginTop: '0.501em',
+          marginTop: '0.501rem',
         }),
         fauxCaretTreeProvider(indent),
       )}
