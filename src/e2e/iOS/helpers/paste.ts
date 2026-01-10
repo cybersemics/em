@@ -15,17 +15,15 @@ async function paste(pathUnranked: string | string[], text?: string): Promise<vo
     (_pathUnranked: string[], _text: string) => {
       const em = window.em as WindowEm
       em.testHelpers.importToContext(_pathUnranked, _text)
+
+      // Wait for React to render the DOM changes
+      return new Promise<void>(resolve => {
+        requestAnimationFrame(() => resolve())
+      })
     },
     _pathUnranked,
     _text,
   )
-
-  // wait until react has rendered the DOM changes.
-  await browser.execute(() => {
-    return new Promise<void>(resolve => {
-      requestAnimationFrame(() => resolve())
-    })
-  })
 }
 
 export default paste
