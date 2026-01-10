@@ -1,6 +1,8 @@
 /** Test coverage of basic UI appearance. Snapashots only. Do not place behavioral tests here. If a component has snapshot and behavioral tests, move them to a separate test file. */
 import path from 'path'
 import { KnownDevices } from 'puppeteer'
+import durationsConfig from '../../../durations.config'
+import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
 import hideHUD from '../helpers/hideHUD'
@@ -61,6 +63,9 @@ it('CommandCenter', async () => {
 
   // wait for the command center panel to appear before taking screenshot
   await waitForSelector('[data-testid=command-center-panel]')
+
+  // wait for the command center panel to slide in fully before taking screenshot
+  await sleep(durationsConfig.medium)
 
   expect(await screenshot()).toMatchImageSnapshot()
 })
