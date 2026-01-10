@@ -1,20 +1,20 @@
 /** Clear local storage. */
-const clear = () => localStorage.clear()
+const clear = () => globalThis.localStorage.clear()
 
 /** Removes an item from local storage. */
-const removeItem = (key: string) => localStorage.removeItem(key)
+const removeItem = (key: string) => globalThis.localStorage.removeItem(key)
 
 /** Sets an item on local storage. */
-const setItem = (key: string, value: string) => localStorage.setItem(key, value)
+const setItem = (key: string, value: string) => globalThis.localStorage.setItem(key, value)
 
 function getItem(key: string): string | null
 function getItem(key: string, defaultValue: string | (() => string)): string
 /** Gets the item from local storage. If it does not exist and defaultValue is provided, sets the value in local storage to defaultValue and returns it. */
 function getItem(key: string, defaultValue?: string | (() => string)) {
-  let value = localStorage.getItem(key)
+  let value = globalThis.localStorage.getItem(key)
   if (value === null && defaultValue !== undefined) {
     value = typeof defaultValue === 'function' ? defaultValue() : defaultValue
-    localStorage.setItem(key, value)
+    globalThis.localStorage.setItem(key, value)
   }
   return value
 }
