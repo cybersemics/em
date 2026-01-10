@@ -29,6 +29,6 @@
       "react-redux-default": ["./node_modules/react-redux"],
       "react-redux": ["./src/@types/react-redux.d.ts"]
     },
-    "types": ["vitest/globals"]
+    "types": ["vitest/globals", "@wdio/globals/types", "@wdio/mocha-framework", "@wdio/browserstack-service"]
   }
 }

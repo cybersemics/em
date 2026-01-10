@@ -1,6 +1,4 @@
-import { Browser } from 'webdriverio'
-import partialWithRef from '../../../test-helpers/partialWithRef'
-// helpers
+// Import all helpers to build default export
 import $ from './$'
 import clickThought from './clickThought'
 import editThought from './editThought'
@@ -11,7 +9,6 @@ import getElementRectByScreen from './getElementRectByScreen'
 import getNativeElementRect from './getNativeElementRect'
 import getSelection from './getSelection'
 import hideKeyboardByTappingDone from './hideKeyboardByTappingDone'
-import initSession from './initSession'
 import isKeyboardShown from './isKeyboardShown'
 import keyboard from './keyboard'
 import newThought from './newThought'
@@ -24,16 +21,36 @@ import waitForEditable from './waitForEditable'
 import waitForElement from './waitForElement'
 import waitUntil from './waitUntil'
 
-// Only used as a type.
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function pasteOverload(text: string): Promise<void>
-async function pasteOverload(pathUnranked: string[], text: string): Promise<void>
-/** Parameter<...> doesn't handle function overload afaik, so we need to fix the types manually before exporting. */
-async function pasteOverload(): Promise<void> {
-  /** */
-}
+/**
+ * IOS test helpers for WDIO.
+ * All helpers use the global `browser` object provided by the WDIO test runner.
+ */
 
-const helpers = {
+export { default as $ } from './$'
+export { default as clickThought } from './clickThought'
+export { default as editThought } from './editThought'
+export { default as gesture } from './gesture'
+export { default as getEditable } from './getEditable'
+export { default as getEditingText } from './getEditingText'
+export { default as getElementRectByScreen } from './getElementRectByScreen'
+export { default as getNativeElementRect } from './getNativeElementRect'
+export { default as getSelection } from './getSelection'
+export { default as hideKeyboardByTappingDone } from './hideKeyboardByTappingDone'
+export { default as isKeyboardShown } from './isKeyboardShown'
+export { default as keyboard } from './keyboard'
+export { default as newThought } from './newThought'
+export { default as paste } from './paste'
+export { default as pause } from './pause'
+export { default as swipe } from './swipe'
+export { default as tap } from './tap'
+export { default as tapReturnKey } from './tapReturnKey'
+export { default as waitForEditable } from './waitForEditable'
+export { default as waitForElement } from './waitForElement'
+export { default as waitUntil } from './waitUntil'
+export type { GestureOptions } from './gesture'
+
+// Default export as function that returns all helpers
+export default () => ({
   $,
   clickThought,
   editThought,
@@ -45,31 +62,14 @@ const helpers = {
   getSelection,
   hideKeyboardByTappingDone,
   isKeyboardShown,
+  keyboard,
   newThought,
   paste,
   pause,
   swipe,
   tap,
   tapReturnKey,
-  type: keyboard.type,
   waitForEditable,
   waitForElement,
   waitUntil,
-}
-
-/** Setup up the Browser instance for all helpers and returns an index of test helpers with the Browser instance partially applied. */
-const index = () => {
-  const init = initSession()
-  const browserRef = {} as { current?: Browser }
-  const index = partialWithRef(browserRef, helpers)
-
-  beforeEach(async () => {
-    browserRef.current = await init()
-  }, 30000)
-
-  return index as typeof index & {
-    paste: typeof pasteOverload
-  }
-}
-
-export default index
+})

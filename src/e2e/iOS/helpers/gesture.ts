@@ -1,4 +1,3 @@
-import { Browser, TouchAction } from 'webdriverio'
 import Direction from '../../../@types/Direction'
 import GesturePath from '../../../@types/GesturePath'
 
@@ -9,9 +8,17 @@ export interface GestureOptions {
   waitMs?: number
 }
 
+interface PointerAction {
+  type: string
+  duration?: number
+  x?: number
+  y?: number
+  button?: number
+  origin?: string
+}
+
 /** Apply gesture action for the given path. */
 const gesture = async (
-  browser: Browser,
   path: GesturePath,
   { xStart, yStart, segmentLength = 60, waitMs = 200 }: GestureOptions = {},
 ) => {
@@ -21,30 +28,44 @@ const gesture = async (
     yStart = yStart ?? windowSize!.height / 2
   }
 
-  const actions = browser.action('pointer').move({ x: xStart, y: yStart }).down().pause(waitMs)
+  // Build actions array for performActions
+  // Safari/XCUITest doesn't support the DELETE /actions endpoint (releaseActions)
+  // which WebDriverIO's action().perform() calls automatically after performing
+  const pointerActions: PointerAction[] = [
+    { type: 'pointerMove', duration: 0, x: Math.round(xStart), y: Math.round(yStart), origin: 'viewport' },
+    { type: 'pointerDown', button: 0 },
+    { type: 'pause', duration: waitMs },
+  ]
 
-  // 'wait' action is used for the speed of the moveTo action. Appium needs wait action before 'move' actions. If we don't add 'wait' actions none of the touch event is triggered.
-  const WAIT_ACTION = { action: 'wait', ms: waitMs } as TouchAction
+  // Build move actions for each direction in the path
+  let currentX = xStart
+  let currentY = yStart
 
-  ;(Array.from(path) as Direction[]).reduce<TouchAction[]>((acc, cur) => {
-    const { x: previousX, y: previousY } = acc.length > 0 ? acc[acc.length - 1] : { x: xStart, y: yStart }
-    const x = previousX! + (cur === 'r' ? +segmentLength : cur === 'l' ? -segmentLength : 0)
-    const y = previousY! + (cur === 'd' ? +segmentLength : cur === 'u' ? -segmentLength : 0)
+  for (const direction of Array.from(path) as Direction[]) {
+    currentX = currentX + (direction === 'r' ? +segmentLength : direction === 'l' ? -segmentLength : 0)
+    currentY = currentY + (direction === 'd' ? +segmentLength : direction === 'u' ? -segmentLength : 0)
 
-    actions.move({ x, y }).pause(waitMs)
-    return [...acc, WAIT_ACTION, { action: 'moveTo', x, y }]
-  }, [])
+    pointerActions.push({
+      type: 'pointerMove',
+      duration: waitMs,
+      x: Math.round(currentX),
+      y: Math.round(currentY),
+      origin: 'viewport',
+    })
+    pointerActions.push({ type: 'pause', duration: waitMs })
+  }
 
-  actions.up()
-  // add first and last action
-  // const actions = [{ action: 'press', x: xStart, y: yStart }, ...moveActions, { action: 'release' }] as TouchAction[]
+  pointerActions.push({ type: 'pointerUp', button: 0 })
 
-  // webdriverio has some problem about type for TouchAction[] that is why we add @ts-ignore
-  // We didn't use touchPerform here because webdriverio calls touchPerform in the background. https://github.com/webdriverio/webdriverio/blob/aea3d797ab1970309a60c43629f74154453597e9/packages/webdriverio/src/commands/constant.ts#L100
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  // await browser.action('pointer').move({ x: coordinates.x, y: coordinates.y }).down().pause(holdDuration).up().perform()
-  await actions.perform()
+  // Use performActions directly to avoid the automatic releaseActions call
+  await browser.performActions([
+    {
+      type: 'pointer',
+      id: 'finger1',
+      parameters: { pointerType: 'touch' },
+      actions: pointerActions,
+    },
+  ])
 }
 
 export default gesture
