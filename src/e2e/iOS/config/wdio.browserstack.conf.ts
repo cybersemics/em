@@ -80,7 +80,7 @@ export const config: WebdriverIO.Config = {
     await browser.waitUntil(
       async () => {
         const body = await browser.$('body')
-        return await body.isExisting()
+        return body.isExisting()
       },
       { timeout: 30000 },
     )
