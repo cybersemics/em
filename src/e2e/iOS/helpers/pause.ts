@@ -1,9 +1,8 @@
-import { Browser } from 'webdriverio'
-
 /**
- * Tap a node with an optional text offset or x,y offset.
+ * Pause execution for the given number of milliseconds.
+ * Uses the global browser object from WDIO.
  */
-const pause = async (browser: Browser, milliseconds: number) => {
+const pause = async (milliseconds: number) => {
   await browser.pause(milliseconds)
 }
 
