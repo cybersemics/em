@@ -1,8 +1,6 @@
 /** Test coverage of basic UI appearance. Snapashots only. Do not place behavioral tests here. If a component has snapshot and behavioral tests, move them to a separate test file. */
 import path from 'path'
 import { KnownDevices } from 'puppeteer'
-import durationsConfig from '../../../durations.config'
-import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
 import hideHUD from '../helpers/hideHUD'
