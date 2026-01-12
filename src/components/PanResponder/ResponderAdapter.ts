@@ -26,7 +26,7 @@ function touchToNativeTouchEvent(touch: Touch, target: HTMLElement): NativeTouch
     locationY,
     timestamp: Date.now(),
     target: target,
-    force: (touch as any).force || 0,
+    force: (touch as Touch & { force?: number }).force || 0,
     touches: [],
     changedTouches: [],
   }
@@ -38,9 +38,11 @@ function touchToNativeTouchEvent(touch: Touch, target: HTMLElement): NativeTouch
 function touchListToNativeTouches(touchList: TouchList, target: HTMLElement): NativeTouchEvent[] {
   const touches = Array.from(touchList).map(touch => touchToNativeTouchEvent(touch, target))
   // Update self-references after all touches are created
+  type TouchWithRefs = NativeTouchEvent & { touches: NativeTouchEvent[]; changedTouches: NativeTouchEvent[] }
   touches.forEach(touch => {
-    (touch as any).touches = touches
-    ;(touch as any).changedTouches = touches
+    const touchWithRefs = touch as TouchWithRefs
+    touchWithRefs.touches = touches
+    touchWithRefs.changedTouches = touches
   })
   return touches
 }
@@ -48,7 +50,7 @@ function touchListToNativeTouches(touchList: TouchList, target: HTMLElement): Na
 /**
  * Creates a PressEvent from a DOM TouchEvent.
  */
-export function createPressEventFromTouchEvent(
+function createPressEventFromTouchEvent(
   event: TouchEvent | React.TouchEvent<HTMLElement>,
   target: HTMLElement,
 ): PressEvent {
@@ -74,16 +76,20 @@ export function createPressEventFromTouchEvent(
     } as NativeTouchEvent)
 
   // Update self-references for all touches
+  type TouchWithRefs = NativeTouchEvent & { touches: NativeTouchEvent[]; changedTouches: NativeTouchEvent[] }
   touches.forEach(touch => {
-    (touch as any).touches = touches
-    ;(touch as any).changedTouches = changedTouches
+    const touchWithRefs = touch as TouchWithRefs
+    touchWithRefs.touches = touches
+    touchWithRefs.changedTouches = changedTouches
   })
   changedTouches.forEach(touch => {
-    (touch as any).touches = touches
-    ;(touch as any).changedTouches = changedTouches
+    const touchWithRefs = touch as TouchWithRefs
+    touchWithRefs.touches = touches
+    touchWithRefs.changedTouches = changedTouches
   })
-  ;(mainTouch as any).touches = touches
-  ;(mainTouch as any).changedTouches = changedTouches
+  const mainTouchWithRefs = mainTouch as TouchWithRefs
+  mainTouchWithRefs.touches = touches
+  mainTouchWithRefs.changedTouches = changedTouches
 
   // Update touch history store
   for (let i = 0; i < nativeTouchEvent.changedTouches.length; i++) {
@@ -132,3 +138,6 @@ export function createPressEventFromTouchEvent(
 
   return syntheticEvent
 }
+
+export default createPressEventFromTouchEvent
+export { createPressEventFromTouchEvent }

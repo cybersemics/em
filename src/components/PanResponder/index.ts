@@ -137,7 +137,7 @@ export interface PanResponderConfig {
 }
 
 export interface PanResponderHandlers {
-  onClickCapture: (event: any) => void
+  onClickCapture: (event: React.MouseEvent<HTMLElement>) => void
   onMoveShouldSetResponder: (event: PressEvent) => boolean
   onMoveShouldSetResponderCapture: (event: PressEvent) => boolean
   onResponderEnd: (event: PressEvent) => void
@@ -203,18 +203,17 @@ export interface PanResponderInstance {
  * Explanation of some of the non-obvious fields:
  *
  * - moveX/moveY: If no move event has been observed, then `(moveX, moveY)` is
- *   invalid. If a move event has been observed, `(moveX, moveY)` is the
- *   centroid of the most recently moved "cluster" of active touches.
- *   (Currently all move have the same timeStamp, but later we should add some
- *   threshold for what is considered to be "moving"). If a palm is
- *   accidentally counted as a touch, but a finger is moving greatly, the palm
- *   will move slightly, but we only want to count the single moving touch.
- * - x0/y0: Centroid location (non-cumulative) at the time of becoming
- *   responder.
+ * invalid. If a move event has been observed, `(moveX, moveY)` is the
+ * centroid of the most recently moved "cluster" of active touches.
+ * (Currently all move have the same timeStamp, but later we should add some
+ * threshold for what is considered to be "moving"). If a palm is
+ * accidentally counted as a touch, but a finger is moving greatly, the palm
+ * will move slightly, but we only want to count the single moving touch.
+ * - x0/y0: Centroid location (non-cumulative) at the time of becoming responder.
  * - dx/dy: Cumulative touch distance - not the same thing as sum of each touch
- *   distance. Accounts for touch moves that are clustered together in time,
- *   moving the same direction. Only valid when currently responder (otherwise,
- *   it only represents the drag distance below the threshold).
+ * distance. Accounts for touch moves that are clustered together in time,
+ * moving the same direction. Only valid when currently responder (otherwise,
+ * it only represents the drag distance below the threshold).
  * - vx/vy: Velocity.
  */
 function _initializeGestureState(gestureState: GestureState): void {
@@ -278,6 +277,9 @@ function _updateGestureStateOnMove(gestureState: GestureState, touchHistory: Pre
   gestureState._accountsForMovesUpTo = touchHistory.mostRecentTimeStamp
 }
 
+/**
+ * Clears an interaction handle and optionally calls a callback.
+ */
 function clearInteractionHandle(
   interactionState: InteractionState,
   callback: (ActiveCallback | PassiveCallback) | null | undefined,
@@ -293,6 +295,9 @@ function clearInteractionHandle(
   }
 }
 
+/**
+ * Clears the interaction timeout.
+ */
 function clearInteractionTimeout(interactionState: InteractionState): void {
   if (interactionState.timeout) {
     clearTimeout(interactionState.timeout)
@@ -300,6 +305,9 @@ function clearInteractionTimeout(interactionState: InteractionState): void {
   }
 }
 
+/**
+ * Sets the interaction timeout.
+ */
 function setInteractionTimeout(interactionState: InteractionState): void {
   interactionState.timeout = setTimeout(() => {
     interactionState.shouldCancelClick = false
@@ -325,7 +333,7 @@ function setInteractionTimeout(interactionState: InteractionState): void {
  * - `onPanResponderMove: (e, gestureState) => {...}`
  * - `onPanResponderTerminate: (e, gestureState) => {...}`
  * - `onPanResponderTerminationRequest: (e, gestureState) => {...}`
- * - `onShouldBlockNativeResponder: (e, gestureState) => {...}`
+ * - `onShouldBlockNativeResponder: (e, gestureState) => {...}`.
  *
  * In general, for events that have capture equivalents, we update the
  * gestureState once in the capture phase and can use it in the bubble phase
@@ -479,7 +487,7 @@ const PanResponder = {
       // on any pan target that is under a mouse cursor when it is released.
       // Browsers will natively cancel 'click' events on a target if a non-mouse
       // active pointer moves.
-      onClickCapture: (event: any): void => {
+      onClickCapture: (event: React.MouseEvent<HTMLElement>): void => {
         if (interactionState.shouldCancelClick === true) {
           event.stopPropagation()
           event.preventDefault()

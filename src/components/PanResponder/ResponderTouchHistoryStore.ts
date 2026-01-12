@@ -17,6 +17,9 @@ interface TouchTrack {
   previousTimeStamp: number
 }
 
+/**
+ * Tracks touch history for the responder system.
+ */
 class ResponderTouchHistoryStore {
   private touchBank: (TouchTrack | null)[] = new Array(20).fill(null)
   private numberActiveTouches = 0
