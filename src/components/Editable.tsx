@@ -536,8 +536,17 @@ const Editable = ({
           offset: nodeOffset,
         }),
       )
+      // Directly set the DOM selection to ensure the caret moves immediately
+      if (contentRef.current) {
+        // Use requestAnimationFrame to ensure the DOM is ready after the state update
+        requestAnimationFrame(() => {
+          if (contentRef.current) {
+            selection.set(contentRef.current, { offset: nodeOffset })
+          }
+        })
+      }
     },
-    [dispatch, path],
+    [dispatch, path, contentRef],
   )
 
   const onMouseDown = useCallback(
@@ -596,6 +605,9 @@ const Editable = ({
           clientX: e.touches[0].clientX,
           clientY: e.touches[0].clientY,
         })
+
+        console.log('nodeOffset :', nodeOffset)
+
         // nodeOffset is null if the tap is on a valid character
         // in that case, allow the default selection
         if (nodeOffset) {
