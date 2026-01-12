@@ -10,7 +10,6 @@ import { VitePWA } from 'vite-plugin-pwa'
 export default defineConfig({
   resolve: {
     alias: {
-      'react-native': 'react-native-web',
       'webview-background': path.resolve(__dirname, 'packages/webview/dist/esm'),
     },
   },
