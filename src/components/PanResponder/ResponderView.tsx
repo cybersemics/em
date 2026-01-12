@@ -36,7 +36,7 @@ const ResponderView: React.FC<ResponderViewProps> = ({ children, panHandlers, ..
         if (shouldBlock !== false) {
           panHandlers.onResponderStart?.(pressEvent)
           e.preventDefault()
-          e.stopPropagation()
+          // Don't stop propagation - allow events to reach child elements (e.g., TraceGesture)
         }
       }
     }
@@ -59,7 +59,7 @@ const ResponderView: React.FC<ResponderViewProps> = ({ children, panHandlers, ..
           if (shouldBlock !== false) {
             panHandlers.onResponderStart?.(pressEvent)
             e.preventDefault()
-            e.stopPropagation()
+            // Don't stop propagation
             panHandlers.onResponderMove?.(pressEvent)
           }
         }
@@ -67,7 +67,7 @@ const ResponderView: React.FC<ResponderViewProps> = ({ children, panHandlers, ..
       }
 
       e.preventDefault()
-      e.stopPropagation()
+      // Don't stop propagation
       panHandlers.onResponderMove?.(pressEvent)
     }
 
