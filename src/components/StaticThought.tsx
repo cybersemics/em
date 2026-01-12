@@ -35,7 +35,7 @@ export interface ThoughtProps {
   allowSingleContext?: boolean
   debugIndex?: number
   dragSource: ConnectDragSource
-  longPressProps: LongPressProps
+  longPressProps?: LongPressProps
   editing?: boolean | null
   env?: LazyEnv
   // When context view is activated, some contexts may be pending
