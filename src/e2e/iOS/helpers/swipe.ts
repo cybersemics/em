@@ -1,9 +1,8 @@
-import { Browser } from 'webdriverio'
-
 /**
- * Tap a node with an optional text offset or x,y offset.
+ * Perform a swipe gesture.
+ * Uses the global browser object from WDIO.
  */
-const swipe = async (browser: Browser) => {
+const swipe = async () => {
   await browser.touchAction([
     { action: 'press', x: 200, y: 100 },
     // { action: 'moveTo', x: 300, y: 300 },

@@ -1,7 +1,8 @@
-import { Browser } from 'webdriverio'
-
-/** Return native element rect. */
-const getNativeElementRect = async (browser: Browser, selector: string) => {
+/**
+ * Return native element rect.
+ * Uses the global browser object from WDIO.
+ */
+const getNativeElementRect = async (selector: string) => {
   const oldContext = ((await browser.getContext()) as string) || 'NATIVE_APP'
   await browser.switchContext('NATIVE_APP')
   const element = await browser.$(selector).getElement()

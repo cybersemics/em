@@ -46,7 +46,7 @@
     "@capacitor/ios": "^8.0.0",
     "@ionic/swiftlint-config": "^2.0.0",
     "rimraf": "^6.1.2",
-    "rollup": "^4.54.0",
+    "rollup": "^4.55.1",
     "swiftlint": "^2.0.0",
     "typescript": "5.9.3"
   },
