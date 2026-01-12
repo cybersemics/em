@@ -19,6 +19,9 @@ const ResponderView: React.FC<ResponderViewProps> = ({ children, panHandlers, ..
     const element = ref.current
     if (!element || !panHandlers) return
 
+    /**
+     * Handles touch start events.
+     */
     const handleTouchStart = (e: TouchEvent) => {
       if (!panHandlers) return
 
@@ -38,6 +41,9 @@ const ResponderView: React.FC<ResponderViewProps> = ({ children, panHandlers, ..
       }
     }
 
+    /**
+     * Handles touch move events.
+     */
     const handleTouchMove = (e: TouchEvent) => {
       if (!panHandlers) return
 
@@ -65,6 +71,9 @@ const ResponderView: React.FC<ResponderViewProps> = ({ children, panHandlers, ..
       panHandlers.onResponderMove?.(pressEvent)
     }
 
+    /**
+     * Handles touch end events.
+     */
     const handleTouchEnd = (e: TouchEvent) => {
       if (!panHandlers || !isResponderRef.current) return
 
@@ -74,6 +83,9 @@ const ResponderView: React.FC<ResponderViewProps> = ({ children, panHandlers, ..
       isResponderRef.current = false
     }
 
+    /**
+     * Handles touch cancel events.
+     */
     const handleTouchCancel = (e: TouchEvent) => {
       if (!panHandlers || !isResponderRef.current) return
 
@@ -86,9 +98,18 @@ const ResponderView: React.FC<ResponderViewProps> = ({ children, panHandlers, ..
       }
     }
 
+    /**
+     * Handles click capture events.
+     */
     const handleClickCapture = (e: MouseEvent) => {
       if (panHandlers.onClickCapture) {
-        panHandlers.onClickCapture(e as any)
+        // Convert DOM MouseEvent to React MouseEvent format
+        const reactEvent = {
+          ...e,
+          currentTarget: e.currentTarget as HTMLElement,
+          target: e.target as HTMLElement,
+        } as unknown as React.MouseEvent<HTMLElement>
+        panHandlers.onClickCapture(reactEvent)
       }
     }
 
@@ -100,10 +121,10 @@ const ResponderView: React.FC<ResponderViewProps> = ({ children, panHandlers, ..
     element.addEventListener('click', handleClickCapture, true)
 
     return () => {
-      element.removeEventListener('touchstart', handleTouchStart, { capture: true } as any)
-      element.removeEventListener('touchmove', handleTouchMove, { capture: true } as any)
-      element.removeEventListener('touchend', handleTouchEnd, { capture: true } as any)
-      element.removeEventListener('touchcancel', handleTouchCancel, { capture: true } as any)
+      element.removeEventListener('touchstart', handleTouchStart, { capture: true } as EventListenerOptions)
+      element.removeEventListener('touchmove', handleTouchMove, { capture: true } as EventListenerOptions)
+      element.removeEventListener('touchend', handleTouchEnd, { capture: true } as EventListenerOptions)
+      element.removeEventListener('touchcancel', handleTouchCancel, { capture: true } as EventListenerOptions)
       element.removeEventListener('click', handleClickCapture, true)
       isResponderRef.current = false
     }
