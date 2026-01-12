@@ -64,8 +64,5 @@ it('CommandCenter', async () => {
   // wait for the command center panel to appear before taking screenshot
   await waitForSelector('[data-testid=command-center-panel]')
 
-  // wait for the command center panel to slide in fully before taking screenshot
-  await sleep(durationsConfig.medium)
-
   expect(await screenshot()).toMatchImageSnapshot()
 })

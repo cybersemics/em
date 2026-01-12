@@ -18,8 +18,8 @@ import note from '../../commands/note'
 import outdent from '../../commands/outdent'
 import swapParent from '../../commands/swapParent'
 import uncategorize from '../../commands/uncategorize'
-import durationsConfig from '../../durations.config'
 import isTutorial from '../../selectors/isTutorial'
+import durations from '../../util/durations'
 import fastClick from '../../util/fastClick'
 import PanelCommand from './PanelCommand'
 import PanelCommandGroup from './PanelCommandGroup'
@@ -82,7 +82,7 @@ const bezierDefinition = [0, 0, 0.2, 1] as const
 const ease = cubicBezier(...bezierDefinition)
 
 const tweenConfig: SheetTweenConfig = {
-  duration: durationsConfig.medium / 1000,
+  duration: durations.get('medium') / 1000,
   ease: bezierDefinition,
 }
 
