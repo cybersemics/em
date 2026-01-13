@@ -237,7 +237,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
       }}
       onMouseLeave={onMouseLeave}
       onMouseDown={isTouch ? undefined : tapDown}
-      onMouseUp={isTouch ? undefined : tapUp}
+      onClick={isTouch ? undefined : tapUp}
       onTouchStart={isTouch ? tapDown : undefined}
       onTouchEnd={isTouch ? tapUp : undefined}
     >
