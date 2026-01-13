@@ -2,9 +2,10 @@
  * IOS Safari home navigation tests.
  * Uses WDIO test runner with Mocha framework.
  */
-import helpers from '../helpers'
-
-const { $, clickThought, paste, waitForEditable } = helpers()
+import $ from '../helpers/$'
+import clickThought from '../helpers/clickThought'
+import paste from '../helpers/paste'
+import waitForEditable from '../helpers/waitForEditable'
 
 // test succeeds individually, but fails when there are too many tests running in parallel
 // https://github.com/cybersemics/em/issues/1475

@@ -3,24 +3,20 @@
  * Uses WDIO test runner with Mocha framework.
  */
 import gestures from '../../../test-helpers/gestures'
-import helpers from '../helpers'
-
-const {
-  clickThought,
-  editThought,
-  gesture,
-  getEditable,
-  getEditingText,
-  getElementRectByScreen,
-  getSelection,
-  hideKeyboardByTappingDone,
-  isKeyboardShown,
-  newThought,
-  paste,
-  tap,
-  waitForEditable,
-  waitUntil,
-} = helpers()
+import clickThought from '../helpers/clickThought'
+import editThought from '../helpers/editThought'
+import gesture from '../helpers/gesture'
+import getEditable from '../helpers/getEditable'
+import getEditingText from '../helpers/getEditingText'
+import getElementRectByScreen from '../helpers/getElementRectByScreen'
+import getSelection from '../helpers/getSelection'
+import hideKeyboardByTappingDone from '../helpers/hideKeyboardByTappingDone'
+import isKeyboardShown from '../helpers/isKeyboardShown'
+import newThought from '../helpers/newThought'
+import paste from '../helpers/paste'
+import tap from '../helpers/tap'
+import waitForEditable from '../helpers/waitForEditable'
+import waitUntil from '../helpers/waitUntil'
 
 // tests succeeds individually, but fails when there are too many tests running in parallel
 // https://github.com/cybersemics/em/issues/1475
