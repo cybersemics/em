@@ -606,8 +606,6 @@ const Editable = ({
           clientY: e.touches[0].clientY,
         })
 
-        console.log('nodeOffset :', nodeOffset)
-
         // nodeOffset is null if the tap is on a valid character
         // in that case, allow the default selection
         if (nodeOffset) {
