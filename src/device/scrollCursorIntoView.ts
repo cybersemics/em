@@ -18,6 +18,11 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
   // toolbar element is not present when distractionFreeTyping is activated
   const viewport = viewportStore.getState()
 
+  // window.visualViewport.height excludes the virtual keyboard height (i.e. it changes when the keyboard is open/closed).
+  // It changes in a single step (before the virtual keyboard animation completes), so we can use it to determine if the element will be below the visible area.
+  // On desktop or when the virtual keyboard is down, it is equivalent to window.innerHeight.
+  const visualViewportHeight = window.visualViewport?.height ?? window.innerHeight
+
   /** The y position of the element relative to the document. */
   const yDocument = viewport.layoutTreeTop + y
 
@@ -28,8 +33,7 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
   const toolbarBottom = toolbarRect ? toolbarRect.bottom : 0
   const navbarRect = document.querySelector('[aria-label="nav"]')?.getBoundingClientRect()
   const isAboveViewport = yViewport < toolbarBottom
-  const isBelowViewport =
-    yViewport + height > viewport.innerHeight - viewport.virtualKeyboardHeight - (navbarRect?.height ?? 0)
+  const isBelowViewport = yViewport + height > visualViewportHeight - (navbarRect?.height ?? 0)
 
   if (!isAboveViewport && !isBelowViewport) return
 
@@ -40,7 +44,7 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
   // add offset to account for the navbar height and prevent scrolled to elements from being hidden below
   const scrollYNew = isAboveViewport
     ? yDocument - (toolbarRect?.height ?? 0) - height / 2
-    : yDocument - viewport.innerHeight + viewport.virtualKeyboardHeight + height * 1.5 + (navbarRect?.height ?? 0)
+    : yDocument - visualViewportHeight + height * 1.5 + (navbarRect?.height ?? 0)
 
   // scroll to 1 instead of 0
   // otherwise Mobile Safari scrolls to the top after MultiGesture
@@ -48,8 +52,7 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
   const top = Math.max(1, scrollYNew)
 
   const scrollDistance = Math.abs(scrollYNew - window.scrollY)
-  const viewportHeight = viewport.innerHeight
-  const behavior = scrollDistance < viewportHeight ? 'smooth' : 'auto'
+  const behavior = scrollDistance < visualViewportHeight ? 'smooth' : 'auto'
 
   window.scrollTo({
     top,
