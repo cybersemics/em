@@ -104,6 +104,7 @@ const ColorSwatch: FC<{
     dispatch(formatSelection('backColor', selected ? 'bg' : (backgroundColor ?? 'bg')))
   }
 
+  /** Toggles the text color onTouchEnd or onClick on desktop */
   const tapUp = (e: React.MouseEvent | React.TouchEvent) => {
     // stop toolbar button dip and click empty space
     e.stopPropagation()
