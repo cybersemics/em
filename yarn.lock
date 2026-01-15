@@ -6130,14 +6130,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/jest-image-snapshot@npm:^6.4.0":
-  version: 6.4.0
-  resolution: "@types/jest-image-snapshot@npm:6.4.0"
+"@types/jest-image-snapshot@npm:^6.4.1":
+  version: 6.4.1
+  resolution: "@types/jest-image-snapshot@npm:6.4.1"
   dependencies:
     "@types/jest": "npm:*"
     "@types/pixelmatch": "npm:*"
     ssim.js: "npm:^3.1.1"
-  checksum: 10c0/99f3a0dc5a07fa342b72098b7af02c1371676bc69cc0984c3b720a0c78f55c9464de8a4feb1cd5a97b276bc24501c46fd5d5702ee16574eff7dbdfd0fd3a0866
+  checksum: 10c0/4533d41a1c81fccfdefcb1a6cd319280fbd570866cf14b26b4883c313395cff1182709fecea5d2e60ac95b3222d876ff5e463c29206a2bb8d0b86e580593af5c
   languageName: node
   linkType: hard
 
@@ -10752,7 +10752,7 @@ __metadata:
     "@types/dompurify": "npm:^3.2.0"
     "@types/html-escaper": "npm:^3.0.4"
     "@types/jest": "npm:^30.0.0"
-    "@types/jest-image-snapshot": "npm:^6.4.0"
+    "@types/jest-image-snapshot": "npm:^6.4.1"
     "@types/lodash": "npm:^4.17.21"
     "@types/murmurhash3js": "npm:^3.0.7"
     "@types/node": "npm:^24.9.2"
