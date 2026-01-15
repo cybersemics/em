@@ -1,8 +1,4 @@
 import React, { HTMLAttributes, useEffect, useRef } from 'react'
-import { useSelector } from 'react-redux'
-import { Settings } from '../../constants'
-import getUserSetting from '../../selectors/getUserSetting'
-import isInGestureZone from '../../util/isInGestureZone'
 import { createPressEventFromTouchEvent } from './ResponderAdapter'
 import type { PanResponderHandlers } from './index'
 
@@ -18,7 +14,6 @@ interface ResponderViewProps extends HTMLAttributes<HTMLDivElement> {
 const ResponderView: React.FC<ResponderViewProps> = ({ children, panHandlers, ...props }) => {
   const ref = useRef<HTMLDivElement>(null)
   const isResponderRef = useRef(false)
-  const leftHanded = useSelector(getUserSetting(Settings.leftHanded))
 
   useEffect(() => {
     const element = ref.current
@@ -32,10 +27,6 @@ const ResponderView: React.FC<ResponderViewProps> = ({ children, panHandlers, ..
 
       const pressEvent = createPressEventFromTouchEvent(e, element)
 
-      // Check if touch is in gesture zone before preventing default
-      const touch = e.touches[0]
-      const inGestureZone = touch ? isInGestureZone(touch.clientX, touch.clientY, leftHanded) : false
-
       const shouldStartCapture = panHandlers.onStartShouldSetResponderCapture?.(pressEvent) || false
       const shouldStart = shouldStartCapture || panHandlers.onStartShouldSetResponder?.(pressEvent) || false
 
@@ -44,10 +35,7 @@ const ResponderView: React.FC<ResponderViewProps> = ({ children, panHandlers, ..
         const shouldBlock = panHandlers.onResponderGrant?.(pressEvent)
         if (shouldBlock !== false) {
           panHandlers.onResponderStart?.(pressEvent)
-          // Only prevent default if in gesture zone (allow scrolling in scroll zone)
-          if (inGestureZone) {
-            e.preventDefault()
-          }
+          e.preventDefault()
           // Don't stop propagation - allow events to reach child elements (e.g., TraceGesture)
         }
       }
@@ -61,10 +49,6 @@ const ResponderView: React.FC<ResponderViewProps> = ({ children, panHandlers, ..
 
       const pressEvent = createPressEventFromTouchEvent(e, element)
 
-      // Check if touch is in gesture zone before preventing default
-      const touch = e.touches[0]
-      const inGestureZone = touch ? isInGestureZone(touch.clientX, touch.clientY, leftHanded) : false
-
       if (!isResponderRef.current) {
         const shouldMoveCapture = panHandlers.onMoveShouldSetResponderCapture?.(pressEvent) || false
         const shouldMove = shouldMoveCapture || panHandlers.onMoveShouldSetResponder?.(pressEvent) || false
@@ -74,10 +58,7 @@ const ResponderView: React.FC<ResponderViewProps> = ({ children, panHandlers, ..
           const shouldBlock = panHandlers.onResponderGrant?.(pressEvent)
           if (shouldBlock !== false) {
             panHandlers.onResponderStart?.(pressEvent)
-            // Only prevent default if in gesture zone (allow scrolling in scroll zone)
-            if (inGestureZone) {
-              e.preventDefault()
-            }
+            // Don't prevent default here - let MultiGesture handle scroll prevention via document.body listener
             // Don't stop propagation
             panHandlers.onResponderMove?.(pressEvent)
           }
@@ -85,10 +66,9 @@ const ResponderView: React.FC<ResponderViewProps> = ({ children, panHandlers, ..
         return
       }
 
-      // Only prevent default if in gesture zone (allow scrolling in scroll zone)
-      if (inGestureZone) {
-        e.preventDefault()
-      }
+      // Don't prevent default here
+      // Let MultiGesture handle scroll prevention via document.body listener
+
       // Don't stop propagation
       panHandlers.onResponderMove?.(pressEvent)
     }
@@ -150,7 +130,7 @@ const ResponderView: React.FC<ResponderViewProps> = ({ children, panHandlers, ..
       element.removeEventListener('click', handleClickCapture, true)
       isResponderRef.current = false
     }
-  }, [panHandlers, leftHanded])
+  }, [panHandlers])
 
   const { style, ...otherProps } = props
 
