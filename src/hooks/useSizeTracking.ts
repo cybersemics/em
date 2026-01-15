@@ -9,7 +9,9 @@ const SIZE_REMOVAL_DEBOUNCE = 1000
 /** Dynamically update and remove sizes for different keys. */
 const useSizeTracking = () => {
   // Track dynamic thought sizes from inner refs via VirtualThought. These are used to set the absolute y position which enables animation between any two states. isVisible is used to crop hidden thoughts.
-  const [sizes, setSizes] = useState<Index<{ height: number; width?: number; isVisible: boolean }>>({})
+  const [sizes, setSizes] = useState<Index<{ height: number; width?: number; isVisible: boolean; mounted: boolean }>>(
+    {},
+  )
   const fontSize = useSelector(state => state.fontSize)
   const unmounted = useRef(false)
 
@@ -22,6 +24,7 @@ const useSizeTracking = () => {
   // Use throttleConcat to accumulate all keys to be removed during the interval.
   // TODO: Is a root cause of the mount-unmount loop.
   const removeSize = useCallback((key: string) => {
+    setSizes(sizesOld => ({ ...sizesOld, [key]: { ...sizesOld[key], mounted: false } }))
     clearTimeout(sizeRemovalTimeouts.current.get(key))
     const timeout = setTimeout(() => {
       if (unmounted.current) return
@@ -71,6 +74,7 @@ const useSizeTracking = () => {
                   width: width || undefined,
                   cliff,
                   isVisible,
+                  mounted: true,
                 },
               },
         )

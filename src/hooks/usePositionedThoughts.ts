@@ -21,7 +21,7 @@ const usePositionedThoughts = (
   }: {
     maxVisibleY: number
     singleLineHeight: number
-    sizes: Index<{ height: number; width?: number; isVisible: boolean; cliff?: number }>
+    sizes: Index<{ height: number; width?: number; isVisible: boolean; mounted: boolean; cliff?: number }>
   },
 ): {
   indentCursorAncestorTables: number
@@ -179,7 +179,12 @@ const usePositionedThoughts = (
           - [empty]
       */
       const isNewCliff =
-        !sizes[node.key] && cliff < 0 && prev && node.depth >= prev.depth && (prevCliff === undefined || prevCliff < 0)
+        // the node does not exist in the sizes cache, or it has been removed but is still cached (#3310)
+        !sizes[node.key]?.mounted &&
+        cliff < 0 &&
+        prev &&
+        node.depth >= prev.depth &&
+        (prevCliff === undefined || prevCliff < 0)
 
       // Capture the y position of the current thought before it is incremented by its own height for the next thought.
       const y = yaccum - (isNewCliff ? cliffPadding : 0)
