@@ -10,10 +10,6 @@ const useSizeTracking = () => {
   const fontSize = useSelector(state => state.fontSize)
   const unmounted = useRef(false)
 
-  // Removing a size immediately on unmount can cause an infinite mount-unmount loop as the VirtualThought re-render triggers a new height calculation (iOS Safari only).
-  // Debouncing size removal mitigates the issue.
-  // Use throttleConcat to accumulate all keys to be removed during the interval.
-  // TODO: Is a root cause of the mount-unmount loop.
   const removeSize = useCallback((key: string) => {
     if (unmounted.current) return
     setSizes(sizesOld => {
