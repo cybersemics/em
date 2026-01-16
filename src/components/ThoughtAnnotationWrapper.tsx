@@ -75,7 +75,7 @@ const ThoughtAnnotationWrapper: FC<
                 }),
               display: 'inline-block',
               maxWidth: '100%',
-              padding: '0 0.333em',
+              paddingLeft: '0.333em',
               boxSizing: 'border-box',
               whiteSpace: ellipsizedUrl ? 'nowrap' : undefined,
               /*
