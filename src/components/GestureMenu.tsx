@@ -39,8 +39,6 @@ const GestureMenu: FC<{
         className={css({
           marginBottom: 0,
           textAlign: 'left',
-          border: '1px solid {colors.gray15}',
-          backgroundColor: 'gray09',
           maxWidth: '100%',
           maxHeight: '100%',
           width: 826,
@@ -69,6 +67,7 @@ const GestureMenu: FC<{
                   gestureInProgress={gestureInProgress as string}
                   key={command.id}
                   selected={isCheatsheetMatch || gestureInProgress === gestureString(command) || isCancelMatch}
+                  // selected={false}
                   command={command}
                   isFirstCommand={index === 0}
                   isLastCommand={index === commands.length - 1}
@@ -79,6 +78,58 @@ const GestureMenu: FC<{
         )}
       </div>
     </div>
+  )
+}
+
+/** Renders a blur effect overlay for the gesture menu. */
+function ProgressiveBlur() {
+  return (
+    <div
+      className={css({
+        pointerEvents: 'none',
+        position: 'absolute',
+        backdropFilter: 'blur(5px)',
+        mask: 'linear-gradient(180deg, {colors.black} 0%, {colors.bgOverlay80} calc(100% - 20px), {colors.bgTransparent} 100%)',
+        width: '100%',
+        top: 0,
+        height: '100%',
+      })}
+    />
+  )
+}
+
+/** Renders the glow effect for the gesture menu. */
+function Glow() {
+  return (
+    <div
+      className={css({
+        position: 'absolute',
+        pointerEvents: 'none',
+        backgroundImage: 'url(/img/gesture-menu/glow.webp)',
+        backgroundSize: 'cover',
+        mixBlendMode: 'screen',
+        height: '100%',
+        width: '100%',
+        top: 0,
+      })}
+    />
+  )
+}
+
+/** Renders a gradient overlay for the gesture menu. */
+function Overlay() {
+  return (
+    <div
+      className={css({
+        pointerEvents: 'none',
+        position: 'absolute',
+        background: 'linear-gradient(180deg, {colors.black} 0%, {colors.bgOverlay80} 30%, {colors.bgTransparent} 100%)',
+
+        top: 0,
+        width: '100%',
+        height: '100%',
+      })}
+    />
   )
 }
 
@@ -114,15 +165,30 @@ const GestureMenuWithTransition: FC = () => {
             <div
               data-testid='popup-value'
               className={css({
-                height: '100%',
                 boxSizing: 'border-box',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'start',
                 alignItems: 'center',
+                width: '100%',
+                position: 'absolute',
+                top: 0,
               })}
             >
-              <GestureMenu commands={commands} />
+              <ProgressiveBlur />
+              <div
+                className={css({
+                  position: 'relative',
+                  // prevent mix-blend-mode and backdrop-filter from affecting each other
+                  isolation: 'isolate',
+                  width: '100%',
+                  paddingBottom: '200px',
+                })}
+              >
+                <Overlay />
+                <Glow />
+                <GestureMenu commands={commands} />
+              </div>
             </div>
           </PopupBase>
         </FadeTransition>
