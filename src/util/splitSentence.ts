@@ -71,7 +71,61 @@ const splitSentence = (value: string): SplitResult[] => {
   // pattern2, multiple symbols: ?! !!! ...
   const mainSplitRegex = /[.;!?]+/g
 
-  const sentenceSplitters = value.match(mainSplitRegex)
+  /**
+   * Checks if a period at a given index is part of a decimal number.
+   * Decimal numbers are of the form: digits.digits (e.g., 1.1, 3.14, 0.5)
+   * This should NOT match things like "a.a" which should split normally.
+   */
+  const isDecimalNumber = (value: string, periodIndex: number): boolean => {
+    // Check if there's a digit before and after the period
+    const before = periodIndex > 0 && /\d/.test(value[periodIndex - 1])
+    const after = periodIndex < value.length - 1 && /\d/.test(value[periodIndex + 1])
+    return before && after
+  }
+
+  // Find all sentence splitters, but filter out periods that are part of decimal numbers
+  // We'll build both the sentences array and sentenceSplitters array together to keep them aligned
+  const allMatches = Array.from(value.matchAll(mainSplitRegex))
+  const sentenceSplitters: string[] = []
+  const sentences: string[] = []
+  let lastIndex = 0
+  let hasDecimalPeriods = false
+
+  for (const match of allMatches) {
+    const splitter = match[0]
+    const index = match.index!
+
+    // Check if this splitter should be used (not a decimal period)
+    let shouldUse = true
+    if (splitter.includes('.')) {
+      // Check if ALL periods in this splitter are part of decimal numbers
+      let allPeriodsAreDecimals = true
+      for (let i = 0; i < splitter.length; i++) {
+        if (splitter[i] === '.' && !isDecimalNumber(value, index + i)) {
+          allPeriodsAreDecimals = false
+          break
+        }
+      }
+      // Only skip if ALL periods are decimals AND there are no other punctuation marks (;!?)
+      // This ensures we don't skip things like "!." or "?." which are real sentence endings
+      if (allPeriodsAreDecimals && /^\.+$/.test(splitter)) {
+        shouldUse = false // Skip decimal periods
+        hasDecimalPeriods = true // Track that we found decimal periods
+      }
+    }
+
+    if (shouldUse) {
+      sentences.push(value.slice(lastIndex, index))
+      sentenceSplitters.push(splitter)
+      lastIndex = index + splitter.length
+    }
+  }
+  // Add the remaining part
+  if (lastIndex < value.length) {
+    sentences.push(value.slice(lastIndex))
+  } else if (sentences.length > 0) {
+    sentences.push('')
+  }
 
   /**
    * Checks if the value has no other main split characters  except one period at the end, i.e. value is just one sentence.
@@ -81,7 +135,7 @@ const splitSentence = (value: string): SplitResult[] => {
 
   // if we're sub-sentence or in one sentence territory, check for dash splitting first
   // e.g. "one - 1" -> "- one   - 1" (as child)
-  if (!sentenceSplitters || hasOnlyPeriodAtEnd()) {
+  if (sentenceSplitters.length === 0 || hasOnlyPeriodAtEnd()) {
     // Check for dash (-, –, or —) and split into child if found
     // This handles Case 1: Split into child when there's only one sentence
     // Match the first dash that has content on both sides
@@ -96,6 +150,13 @@ const splitSentence = (value: string): SplitResult[] => {
       }
     }
 
+    // If there are decimal periods but no real sentence splitters, don't split on comma/and
+    // This preserves the original behavior where decimal numbers prevent comma/and splitting
+    // e.g. "Fruit cost: apple $10.23 and pear $10.70" should not split
+    if (hasDecimalPeriods) {
+      return [{ value: value.trim() }]
+    }
+
     // if we're sub-sentence or in one sentence territory, split by comma and "and"
     // e.g. "john, johnson, and john doe" -> "- john - johnson - john doe"
     return value
@@ -106,9 +167,9 @@ const splitSentence = (value: string): SplitResult[] => {
   }
 
   /**
-   * When the setences can be split, it has multiple situations.
+   * When the sentences can be split, it has multiple situations.
+   * Note: sentences and sentenceSplitters arrays are already built above and kept aligned.
    */
-  const sentences = value.split(mainSplitRegex)
 
   /**
    * The reduce function return a string, which is a combination of all the sentences, we then use __SEP__ to seperate each qualified sentence that can be split during the next step.
