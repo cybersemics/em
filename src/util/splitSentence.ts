@@ -77,55 +77,48 @@ const splitSentence = (value: string): SplitResult[] => {
    * This should NOT match things like "a.a" which should split normally.
    */
   const isDecimalNumber = (value: string, periodIndex: number): boolean => {
-    // Check if there's a digit before and after the period
-    const before = periodIndex > 0 && /\d/.test(value[periodIndex - 1])
-    const after = periodIndex < value.length - 1 && /\d/.test(value[periodIndex + 1])
-    return before && after
+    return (
+      periodIndex > 0 &&
+      /\d/.test(value[periodIndex - 1]) &&
+      periodIndex < value.length - 1 &&
+      /\d/.test(value[periodIndex + 1])
+    )
   }
 
   // Find all sentence splitters, but filter out periods that are part of decimal numbers
-  // We'll build both the sentences array and sentenceSplitters array together to keep them aligned
+  // Build both sentences and sentenceSplitters arrays in a single pass to keep them aligned
   const allMatches = Array.from(value.matchAll(mainSplitRegex))
   const sentenceSplitters: string[] = []
   const sentences: string[] = []
-  let lastIndex = 0
   let hasDecimalPeriods = false
+  let lastIndex = 0
 
+  /**
+   * Checks if a splitter contains only periods that are part of decimal numbers.
+   * Returns true only if the splitter contains only periods (no other punctuation)
+   * AND all those periods are decimal periods (e.g., "1.1" but not "a.a").
+   */
+  const isDecimalPeriod = (splitter: string, index: number): boolean => {
+    if (!splitter.includes('.') || !/^\.+$/.test(splitter)) return false
+    for (let i = 0; i < splitter.length; i++) {
+      if (splitter[i] === '.' && !isDecimalNumber(value, index + i)) return false
+    }
+    return true
+  }
+
+  // Build sentences and sentenceSplitters arrays, skipping decimal periods
   for (const match of allMatches) {
     const splitter = match[0]
     const index = match.index!
-
-    // Check if this splitter should be used (not a decimal period)
-    let shouldUse = true
-    if (splitter.includes('.')) {
-      // Check if ALL periods in this splitter are part of decimal numbers
-      let allPeriodsAreDecimals = true
-      for (let i = 0; i < splitter.length; i++) {
-        if (splitter[i] === '.' && !isDecimalNumber(value, index + i)) {
-          allPeriodsAreDecimals = false
-          break
-        }
-      }
-      // Only skip if ALL periods are decimals AND there are no other punctuation marks (;!?)
-      // This ensures we don't skip things like "!." or "?." which are real sentence endings
-      if (allPeriodsAreDecimals && /^\.+$/.test(splitter)) {
-        shouldUse = false // Skip decimal periods
-        hasDecimalPeriods = true // Track that we found decimal periods
-      }
+    if (isDecimalPeriod(splitter, index)) {
+      hasDecimalPeriods = true
+      continue // Skip decimal periods - don't treat them as sentence endings
     }
-
-    if (shouldUse) {
-      sentences.push(value.slice(lastIndex, index))
-      sentenceSplitters.push(splitter)
-      lastIndex = index + splitter.length
-    }
+    sentences.push(value.slice(lastIndex, index))
+    sentenceSplitters.push(splitter)
+    lastIndex = index + splitter.length
   }
-  // Add the remaining part
-  if (lastIndex < value.length) {
-    sentences.push(value.slice(lastIndex))
-  } else if (sentences.length > 0) {
-    sentences.push('')
-  }
+  sentences.push(value.slice(lastIndex)) // Add remaining text after last splitter
 
   /**
    * Checks if the value has no other main split characters  except one period at the end, i.e. value is just one sentence.
@@ -151,7 +144,8 @@ const splitSentence = (value: string): SplitResult[] => {
     }
 
     // If there are decimal periods but no real sentence splitters, don't split on comma/and
-    // This preserves the original behavior where decimal numbers prevent comma/and splitting
+    // This prevents splitting when only decimal numbers are present (no actual sentence endings)
+    // Note: hasDecimalPeriods is only relevant when sentenceSplitters.length === 0 (we're in this branch)
     // e.g. "Fruit cost: apple $10.23 and pear $10.70" should not split
     if (hasDecimalPeriods) {
       return [{ value: value.trim() }]
@@ -167,7 +161,7 @@ const splitSentence = (value: string): SplitResult[] => {
   }
 
   /**
-   * When the sentences can be split, it has multiple situations.
+   * When the setences can be split, it has multiple situations.
    * Note: sentences and sentenceSplitters arrays are already built above and kept aligned.
    */
 
