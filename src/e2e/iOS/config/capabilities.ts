@@ -1,6 +1,4 @@
-/**
- * Common base capability properties for iOS Safari testing.
- */
+// Common base capability properties for iOS Safari testing.
 export const baseIOSCapability = {
   platformName: 'iOS' as const,
   browserName: 'Safari' as const,
