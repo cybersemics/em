@@ -20,10 +20,10 @@ export interface ViewportState {
 /** A store that tracks the viewport dimensions, including the nontrivial virtual keyboard height. */
 const viewportStore = reactMinistore<ViewportState>({
   innerWidth: window.innerWidth,
-  /** Height of the viewport, including the virtual keyboard. */
+  /** Height of the viewport, including the virtual keyboard (i.e. does not change when the virtuaul keyboard is opened/closed). */
   innerHeight: window.innerHeight,
   scrollZoneWidth: Math.min(window.innerWidth, window.innerHeight) * SCROLL_ZONE_WIDTH,
-  /** Height of the virtual keyboard regardless of whether it is open or closed. Defaults to estimated height of portrait or landscape mode when window.visualViewport.width is not valid (see below; questionable). */
+  /** Height of the virtual keyboard regardless of whether it is open or closed. Initialized to estimated height. */
   virtualKeyboardHeight:
     window.innerHeight > window.innerWidth ? virtualKeyboardHeightPortrait : virtualKeyboardHeightLandscape,
   /** The y position of the layout tree element relative to the document. Includes autocrop, i.e. this value changes when space above is cropped away as you navigate deeper. This ensures that scrollCursorIntoView can properly calculate the position of the cursor relative to the viewport. */
@@ -38,28 +38,19 @@ export const updateSize = _.throttle(
     // If it is invalid, go back to the default
     const isPortrait = window.innerHeight > window.innerWidth
     const currentKeyboardHeight = window.visualViewport ? window.innerHeight - window.visualViewport.height : 0
-    const isViewportValid =
-      currentKeyboardHeight > 0 && window.visualViewport!.height > window.visualViewport!.width === isPortrait
 
     // update the cached virtual keyboard height every time there is a valid visualViewport in case the keyboard has changed
-    if (isViewportValid) {
-      if (isPortrait) {
-        virtualKeyboardHeightPortrait = currentKeyboardHeight
-      } else {
-        virtualKeyboardHeightLandscape = currentKeyboardHeight
-      }
+    if (isPortrait) {
+      virtualKeyboardHeightPortrait = currentKeyboardHeight
+    } else {
+      virtualKeyboardHeightLandscape = currentKeyboardHeight
     }
 
     viewportStore.update({
       innerWidth: window.innerWidth,
       innerHeight: window.innerHeight,
-      virtualKeyboardHeight:
-        // when the keyboard is invalid or closed, use the cached height
-        isViewportValid
-          ? currentKeyboardHeight
-          : isPortrait
-            ? virtualKeyboardHeightPortrait
-            : virtualKeyboardHeightLandscape,
+      // when the keyboard is closed, use the cached height
+      virtualKeyboardHeight: currentKeyboardHeight,
     })
   },
   // lock to 60 fps

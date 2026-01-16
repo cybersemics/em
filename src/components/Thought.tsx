@@ -604,7 +604,7 @@ const ThoughtContainer = ({
           <StaticThought
             allowSingleContext={allowSingleContext}
             dragSource={dragSourceEditable}
-            longPressProps={dragHoldResult.props}
+            longPressProps={isTouch ? dragHoldResult.props : undefined}
             env={env}
             isContextPending={isContextPending}
             isEditing={isEditing}

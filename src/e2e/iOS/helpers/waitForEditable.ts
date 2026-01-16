@@ -1,8 +1,7 @@
-import { Browser } from 'webdriverio'
 import getEditable from './getEditable'
 
 /** Wait for editable element that contains given value. */
-const waitForEditable = async (browser: Browser, value: string) => {
+const waitForEditable = async (value: string) => {
   await browser.waitUntil(
     async () =>
       await browser.execute(value => {
@@ -13,7 +12,7 @@ const waitForEditable = async (browser: Browser, value: string) => {
       }, value),
     { timeout: 15000 },
   )
-  return await getEditable(browser, value)
+  return await getEditable(value)
 }
 
 export default waitForEditable

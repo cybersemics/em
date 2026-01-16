@@ -1,28 +1,29 @@
-import { Browser } from 'webdriverio'
-import { HOME_TOKEN } from '../../../constants'
-import { WindowEm } from '../../../initialize'
+import { HOME_TOKEN } from '../../../constants.js'
+import { WindowEm } from '../../../initialize.js'
 
-const em = window.em as WindowEm
-
-async function paste(browser: Browser, text: string): Promise<void>
-async function paste(browser: Browser, pathUnranked: string[], text: string): Promise<void>
+async function paste(text: string): Promise<void>
+async function paste(pathUnranked: string[], text: string): Promise<void>
 
 /** Import text on given unranked path using exposed testHelpers. */
-async function paste(browser: Browser, pathUnranked: string | string[], text?: string): Promise<void> {
+async function paste(pathUnranked: string | string[], text?: string): Promise<void> {
   const _pathUnranked = typeof pathUnranked === 'string' ? [HOME_TOKEN] : (pathUnranked as string[])
   const _text = typeof pathUnranked === 'string' ? pathUnranked : text!
 
-  // Note: This helper is exposed because copy paste seemed impossible in headless mode. With headless false copy paste with ctrl + v seems to work. ??
+  // Note: This helper is exposed because copy paste doesn't work in headless mode.
+  // Access window.em inside browser.execute() since window doesn't exist in Node context
   await browser.execute(
     (_pathUnranked: string[], _text: string) => {
-      const testHelpers = em.testHelpers
-      testHelpers.importToContext(_pathUnranked, _text)
+      const em = window.em as WindowEm
+      em.testHelpers.importToContext(_pathUnranked, _text)
+
+      // Wait for React to render the DOM changes
+      return new Promise<void>(resolve => {
+        requestAnimationFrame(() => resolve())
+      })
     },
     _pathUnranked,
     _text,
   )
-
-  browser.pause(10000)
 }
 
 export default paste
