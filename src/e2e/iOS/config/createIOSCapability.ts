@@ -10,11 +10,11 @@ export const baseIOSCapability = {
  * @param deviceName - The device name (default: 'iPhone 15 Plus').
  * @returns Base capability object.
  */
-function capabilities(deviceName: string = 'iPhone 15 Plus') {
+function createIOSCapability(deviceName: string = 'iPhone 15 Plus') {
   return {
     ...baseIOSCapability,
     'appium:deviceName': deviceName,
   }
 }
 
-export default capabilities
+export default createIOSCapability

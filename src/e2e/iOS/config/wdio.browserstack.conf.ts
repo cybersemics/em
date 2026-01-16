@@ -1,6 +1,6 @@
 import dotenv from 'dotenv'
 import path from 'path'
-import capabilities from './capabilities.js'
+import createIOSCapability from './createIOSCapability.js'
 import baseConfig from './wdio.base.conf.js'
 
 // Load .env.test.local before checking env vars since this file is imported
@@ -38,7 +38,7 @@ export const config: WebdriverIO.Config = {
   // Capabilities
   capabilities: [
     {
-      ...capabilities('iPhone 15 Plus'),
+      ...createIOSCapability('iPhone 15 Plus'),
       'appium:platformVersion': '17',
       'bstack:options': {
         deviceName: 'iPhone 15 Plus',

@@ -1,4 +1,4 @@
-import capabilities from './capabilities.js'
+import createIOSCapability from './createIOSCapability.js'
 import baseConfig from './wdio.base.conf.js'
 
 const HOST = process.env.APPIUM_HOST || '127.0.0.1'
@@ -30,7 +30,7 @@ export const config: WebdriverIO.Config = {
   // Capabilities
   capabilities: [
     {
-      ...capabilities(process.env.IOS_DEVICE_NAME || 'iPhone 15 Plus'),
+      ...createIOSCapability(process.env.IOS_DEVICE_NAME || 'iPhone 15 Plus'),
       'appium:platformVersion': process.env.IOS_PLATFORM_VERSION || '18.3',
       'appium:newCommandTimeout': 240,
     },
