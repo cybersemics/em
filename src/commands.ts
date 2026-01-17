@@ -17,11 +17,13 @@ import { suppressExpansionActionCreator as suppressExpansion } from './actions/s
 import { isMac } from './browser'
 import * as commandsObject from './commands/index'
 import openGestureCheatsheetCommand from './commands/openGestureCheatsheet'
+import selectAllCommand from './commands/selectAll'
 import { GestureResponderEvent } from './components/PanResponder'
 import { AlertType, COMMAND_PALETTE_TIMEOUT, LongPressState, Settings } from './constants'
 import * as selection from './device/selection'
 import globals from './globals'
 import getUserSetting from './selectors/getUserSetting'
+import isAllSelected from './selectors/isAllSelected'
 import gestureStore from './stores/gesture'
 import { executeCommandWithMulticursor } from './util/executeCommand'
 import haptics from './util/haptics'
@@ -173,6 +175,20 @@ export const gestureString = (command: Command): string =>
 /** Get a command by its id. Only use this for dynamic ids that are only known at runtime. If you know the id of the command at compile time, use a static import. */
 export const commandById = (id: CommandId): Command => commandIdIndex[id]
 
+/** Generates a synthetic Command object that is the result of chaining Select All with another command. Prefixes gesture and label. */
+export const chainCommand = (command: Command): Command => {
+  const selectAllGesture = selectAllCommand.gesture as string
+  const commandGesture = gestureString(command)
+  // collapse duplicate swipes when the command starts with the same character that selectAllCommand.gesture ends with
+  const chainedGesture = selectAllGesture + commandGesture.slice(selectAllGesture.endsWith(commandGesture[0]) ? 1 : 0)
+  const chainedCommand: Command = {
+    ...command,
+    gesture: chainedGesture,
+    label: `Select All + ${command.label}`,
+  }
+  return chainedCommand
+}
+
 /**
  * Keyboard and gesture handlers factory function that binds the store to event handlers.
  *
@@ -221,7 +237,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
     )
   },
 
-  /** Executes a valid gesture and closes the gesture hint. */
+  /** Executes a valid gesture and closes the gesture hint. Special handling for Select All chaining. */
   handleGestureEnd: ({ sequence, e }: { sequence: GesturePath | null; e: GestureResponderEvent }) => {
     const state = store.getState()
 
@@ -232,11 +248,28 @@ export const inputHandlers = (store: Store<State, any>) => ({
 
     // If sequence ends with help gesture, use help command
     // Otherwise use the normal command lookup
-    const command = sequence?.toString().endsWith(openGestureCheatsheetGesture)
-      ? openGestureCheatsheetCommand
-      : !state.showCommandPalette || !commandGestureIndex[sequence as string]?.hideFromHelp
-        ? commandGestureIndex[sequence as string]
-        : null
+    const selectAllGesture = selectAllCommand.gesture as string
+    // True if the current gesture-in-progress starts with the Select All gesture, but is not the Select All gesture itself.
+    const selectAllInProgressExclusive =
+      sequence?.toString().startsWith(selectAllGesture) && sequence?.toString() !== selectAllGesture
+
+    let command: Command | null | undefined = null
+
+    if (sequence?.toString().endsWith(openGestureCheatsheetGesture)) {
+      command = openGestureCheatsheetCommand
+    } else if (selectAllInProgressExclusive) {
+      const chainedGestureCollapsed = sequence!.toString().slice(selectAllGesture.length - 1)
+      const chainedGesture = sequence!.toString().slice(selectAllGesture.length)
+      const commandMatch = commandGestureIndex[chainedGestureCollapsed] ?? commandGestureIndex[chainedGesture]
+      if (commandMatch) {
+        command = chainCommand(commandMatch)
+      }
+    } else {
+      command =
+        !state.showCommandPalette || !commandGestureIndex[sequence as string]?.hideFromHelp
+          ? commandGestureIndex[sequence as string]
+          : null
+    }
 
     // execute command
     // do not execute when modal is displayed or a drag is in progress
@@ -247,6 +280,9 @@ export const inputHandlers = (store: Store<State, any>) => ({
       state.longPress !== LongPressState.DragInProgress
     ) {
       commandEmitter.trigger('command', command)
+      if (selectAllInProgressExclusive && !isAllSelected(state)) {
+        executeCommandWithMulticursor(selectAllCommand, { event: e, type: 'gesture', store })
+      }
       executeCommandWithMulticursor(command, { event: e, type: 'gesture', store })
       if (store.getState().enableLatestCommandsDiagram) store.dispatch(showLatestCommands(command))
     }

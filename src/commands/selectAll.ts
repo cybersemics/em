@@ -1,24 +1,10 @@
 import Command from '../@types/Command'
-import State from '../@types/State'
 import { addAllMulticursorActionCreator as addAllMulticursor } from '../actions/addAllMulticursor'
 import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/clearMulticursors'
 import { isTouch } from '../browser'
-import { HOME_TOKEN } from '../constants'
-import getChildren from '../selectors/getChildren'
 import hasMulticursor from '../selectors/hasMulticursor'
-import rootedParentOf from '../selectors/rootedParentOf'
-import head from '../util/head'
+import isAllSelected from '../selectors/isAllSelected'
 import isDocumentEditable from '../util/isDocumentEditable'
-
-/** Returns true if the cursor and all its siblings are selected in the multicursor. */
-const isAllSelected = (state: State): boolean => {
-  const { cursor } = state
-  const parentId = cursor ? head(rootedParentOf(state, cursor)) : HOME_TOKEN
-  const childrenIds = getChildren(state, parentId).map(child => child.id)
-  // ignore order
-  const multicursorIdSet = new Set(Object.values(state.multicursors).map(path => head(path)))
-  return childrenIds.length === multicursorIdSet.size && childrenIds.every(childId => multicursorIdSet.has(childId))
-}
 
 const selectAllCommand: Command = {
   id: 'selectAll',
