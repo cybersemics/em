@@ -5,10 +5,11 @@ import Command from '../@types/Command'
 import CommandId from '../@types/CommandId'
 import State from '../@types/State'
 import { isTouch } from '../browser'
-import { gestureString, globalCommands } from '../commands'
+import { commandById, gestureString, globalCommands } from '../commands'
 import gestureStore from '../stores/gesture'
 
 const visibleCommands = globalCommands.filter(command => !command.hideFromCommandPalette && !command.hideFromHelp)
+const selectAllCommand = commandById('selectAll')
 
 /** Returns true if the command can be executed. */
 const isExecutable = (state: State, command: Command) =>
@@ -29,12 +30,42 @@ const useFilteredCommands = (
     /** The search term to filter commands that match. */
     sortActiveCommandsFirst?: boolean
   },
-) => {
+): Command[] => {
   const gestureInProgress = gestureStore.useSelector(state => state.gesture)
+  const selectAllInProgress = (gestureInProgress as string).startsWith(selectAllCommand.gesture as string)
   const store = useStore()
 
   const possibleCommandsSorted = useMemo(() => {
-    const possibleCommands = visibleCommands.filter(command => {
+    // if Select All is in progress, extend the command list with all multicursor commands prefixed with Select All
+    const visibleCommandsChained = selectAllInProgress
+      ? [
+          // always include Select All, Gesture Cheatsheet, and Cancel commands
+          ...visibleCommands.filter(command => ['selectAll', 'openGestureCheatsheet', 'cancel'].includes(command.id)),
+          // append chainable multicursor commands
+          ...visibleCommands
+            .filter(
+              command =>
+                // platformCommandsOnly will filter out commands without gestures on mobile, but filter them out here anyway since they can't be used after Select All.
+                // It is more performant and it makes the Select All tests platformCommandsOnly agnostic.
+                // Unfortunately categorize is a special case since it has multicursor: false but can still handle multicursor in the action.
+                command.gesture && (command.multicursor || command.id === 'categorize'),
+            )
+            .map(command => {
+              const selectAllGesture = selectAllCommand.gesture as string
+              const commandGesture = gestureString(command)
+              // collapse duplicate swipes when the command starts with the same character that selectAllCommand.gesture ends with
+              const chainedGesture =
+                selectAllGesture + commandGesture.slice(selectAllGesture.endsWith(commandGesture[0]) ? 1 : 0)
+              return {
+                ...command,
+                gesture: chainedGesture,
+                label: `Select All + ${command.label}`,
+              }
+            }),
+        ]
+      : visibleCommands
+
+    const possibleCommands = visibleCommandsChained.filter(command => {
       // Always include help command in gesture mode
       if (isTouch && command.id === 'openGestureCheatsheet') return true
       // Always exclude gestureCheatsheet command in keyboard mode
@@ -46,10 +77,12 @@ const useFilteredCommands = (
 
       // gesture
       if (isTouch) {
-        // only commands with gestures are visible
-        return (
-          (!platformCommandsOnly || command.gesture) && gestureString(command).startsWith(gestureInProgress as string)
+        const commandGesture = gestureString(command)
+        // collapse duplicate swipes when the command starts with the same character that selectAllCommand.gesture ends with
+        const chainedGesture = commandGesture.slice(
+          selectAllInProgress && (selectAllCommand.gesture as string).endsWith(commandGesture[0]) ? 1 : 0,
         )
+        return (!platformCommandsOnly || command.gesture) && chainedGesture.startsWith(gestureInProgress as string)
       }
       // keyboard
       else {
@@ -129,7 +162,15 @@ const useFilteredCommands = (
       )
     })
     return sorted
-  }, [gestureInProgress, sortActiveCommandsFirst, search, recentCommands, store, platformCommandsOnly])
+  }, [
+    gestureInProgress,
+    sortActiveCommandsFirst,
+    search,
+    recentCommands,
+    store,
+    platformCommandsOnly,
+    selectAllInProgress,
+  ])
 
   // persist possible commands to gestureStore so that they can be accessed by the onGestureSegment in commands.ts
   useLayoutEffect(() => {
