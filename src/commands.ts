@@ -23,6 +23,7 @@ import { AlertType, COMMAND_PALETTE_TIMEOUT, LongPressState, Settings } from './
 import * as selection from './device/selection'
 import globals from './globals'
 import getUserSetting from './selectors/getUserSetting'
+import isAllSelected from './selectors/isAllSelected'
 import gestureStore from './stores/gesture'
 import { executeCommandWithMulticursor } from './util/executeCommand'
 import haptics from './util/haptics'
@@ -279,7 +280,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
       state.longPress !== LongPressState.DragInProgress
     ) {
       commandEmitter.trigger('command', command)
-      if (selectAllInProgressExclusive) {
+      if (selectAllInProgressExclusive && !isAllSelected(state)) {
         executeCommandWithMulticursor(selectAllCommand, { event: e, type: 'gesture', store })
       }
       executeCommandWithMulticursor(command, { event: e, type: 'gesture', store })
