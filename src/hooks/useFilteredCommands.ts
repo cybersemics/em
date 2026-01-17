@@ -32,12 +32,13 @@ const useFilteredCommands = (
   },
 ): Command[] => {
   const gestureInProgress = gestureStore.useSelector(state => state.gesture)
-  const selectAllInProgress = (gestureInProgress as string).startsWith(selectAllCommand.gesture as string)
+  // True if the current gesture-in-progress starts with the Select All gesture or is the Select All gesture itself.
+  const selectAllInProgressInclusive = (gestureInProgress as string).startsWith(selectAllCommand.gesture as string)
   const store = useStore()
 
   const possibleCommandsSorted = useMemo(() => {
     // if Select All is in progress, extend the command list with all multicursor commands prefixed with Select All
-    const visibleCommandsChained = selectAllInProgress
+    const visibleCommandsChained = selectAllInProgressInclusive
       ? [
           // always include Select All, Gesture Cheatsheet, and Cancel commands
           ...visibleCommands.filter(command => ['selectAll', 'openGestureCheatsheet', 'cancel'].includes(command.id)),
@@ -69,7 +70,7 @@ const useFilteredCommands = (
         const commandGesture = gestureString(command)
         // collapse duplicate swipes when the command starts with the same character that selectAllCommand.gesture ends with
         const chainedGesture = commandGesture.slice(
-          selectAllInProgress && (selectAllCommand.gesture as string).endsWith(commandGesture[0]) ? 1 : 0,
+          selectAllInProgressInclusive && (selectAllCommand.gesture as string).endsWith(commandGesture[0]) ? 1 : 0,
         )
         return (!platformCommandsOnly || command.gesture) && chainedGesture.startsWith(gestureInProgress as string)
       }
@@ -158,7 +159,7 @@ const useFilteredCommands = (
     recentCommands,
     store,
     platformCommandsOnly,
-    selectAllInProgress,
+    selectAllInProgressInclusive,
   ])
 
   // persist possible commands to gestureStore so that they can be accessed by the onGestureSegment in commands.ts
