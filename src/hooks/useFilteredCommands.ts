@@ -5,7 +5,7 @@ import Command from '../@types/Command'
 import CommandId from '../@types/CommandId'
 import State from '../@types/State'
 import { isTouch } from '../browser'
-import { commandById, gestureString, globalCommands } from '../commands'
+import { chainCommand, commandById, gestureString, globalCommands } from '../commands'
 import gestureStore from '../stores/gesture'
 
 const visibleCommands = globalCommands.filter(command => !command.hideFromCommandPalette && !command.hideFromHelp)
@@ -50,18 +50,7 @@ const useFilteredCommands = (
                 // Unfortunately categorize is a special case since it has multicursor: false but can still handle multicursor in the action.
                 command.gesture && (command.multicursor || command.id === 'categorize'),
             )
-            .map(command => {
-              const selectAllGesture = selectAllCommand.gesture as string
-              const commandGesture = gestureString(command)
-              // collapse duplicate swipes when the command starts with the same character that selectAllCommand.gesture ends with
-              const chainedGesture =
-                selectAllGesture + commandGesture.slice(selectAllGesture.endsWith(commandGesture[0]) ? 1 : 0)
-              return {
-                ...command,
-                gesture: chainedGesture,
-                label: `Select All + ${command.label}`,
-              }
-            }),
+            .map(chainCommand),
         ]
       : visibleCommands
 

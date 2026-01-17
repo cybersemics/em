@@ -38,7 +38,8 @@ import useFilteredCommands from '../useFilteredCommands'
 
 vi.mock('../../browser')
 
-vi.mock('../../commands', () => {
+vi.mock('../../commands', async () => {
+  const actual = await vi.importActual('../../commands')
   const globalCommands: Command[] = [
     {
       id: 'newThought' as CommandId,
@@ -166,6 +167,7 @@ vi.mock('../../commands', () => {
     },
   ]
   return {
+    chainCommand: actual.chainCommand,
     commandById: (id: CommandId) => globalCommands.find(command => command.id === id),
     globalCommands,
     gestureString: (command: Command): string =>
