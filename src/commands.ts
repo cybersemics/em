@@ -236,7 +236,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
     )
   },
 
-  /** Executes a valid gesture and closes the gesture hint. */
+  /** Executes a valid gesture and closes the gesture hint. Special handling for Select All chaining. */
   handleGestureEnd: ({ sequence, e }: { sequence: GesturePath | null; e: GestureResponderEvent }) => {
     const state = store.getState()
 
@@ -247,11 +247,28 @@ export const inputHandlers = (store: Store<State, any>) => ({
 
     // If sequence ends with help gesture, use help command
     // Otherwise use the normal command lookup
-    const command = sequence?.toString().endsWith(openGestureCheatsheetGesture)
-      ? openGestureCheatsheetCommand
-      : !state.showCommandPalette || !commandGestureIndex[sequence as string]?.hideFromHelp
-        ? commandGestureIndex[sequence as string]
-        : null
+    const selectAllGesture = selectAllCommand.gesture as string
+    // True if the current gesture-in-progress starts with the Select All gesture, but is not the Select All gesture itself.
+    const selectAllInProgressExclusive =
+      sequence?.toString().startsWith(selectAllGesture) && sequence?.toString() !== selectAllGesture
+
+    let command: Command | null | undefined = null
+
+    if (sequence?.toString().endsWith(openGestureCheatsheetGesture)) {
+      command = openGestureCheatsheetCommand
+    } else if (selectAllInProgressExclusive) {
+      const chainedGestureCollapsed = sequence!.toString().slice(selectAllGesture.length - 1)
+      const chainedGesture = sequence!.toString().slice(selectAllGesture.length)
+      const commandMatch = commandGestureIndex[chainedGestureCollapsed] ?? commandGestureIndex[chainedGesture]
+      if (commandMatch) {
+        command = chainCommand(commandMatch)
+      }
+    } else {
+      command =
+        !state.showCommandPalette || !commandGestureIndex[sequence as string]?.hideFromHelp
+          ? commandGestureIndex[sequence as string]
+          : null
+    }
 
     // execute command
     // do not execute when modal is displayed or a drag is in progress
@@ -262,6 +279,9 @@ export const inputHandlers = (store: Store<State, any>) => ({
       state.longPress !== LongPressState.DragInProgress
     ) {
       commandEmitter.trigger('command', command)
+      if (selectAllInProgressExclusive) {
+        executeCommandWithMulticursor(selectAllCommand, { event: e, type: 'gesture', store })
+      }
       executeCommandWithMulticursor(command, { event: e, type: 'gesture', store })
       if (store.getState().enableLatestCommandsDiagram) store.dispatch(showLatestCommands(command))
     }
