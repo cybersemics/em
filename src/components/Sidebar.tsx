@@ -1,7 +1,7 @@
 import * as Dialog from '@radix-ui/react-dialog'
 import { animate, AnimatePresence, motion, useMotionValue, useTransform } from 'framer-motion'
 import _ from 'lodash'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { longPressActionCreator as longPress } from '../actions/longPress'
@@ -77,28 +77,45 @@ const Sidebar = () => {
     ease: [0, 0, 0.2, 1] as const,
   }
 
+  /** Lock body scroll when sidebar is open. */
+  useEffect(() => {
+    if (showSidebar) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [showSidebar])
+
   return (
-    <Dialog.Root open={showSidebar} onOpenChange={toggleSidebar} modal={true}>
+    <Dialog.Root open={showSidebar} onOpenChange={toggleSidebar} modal={false}>
       {/* forceMount prop keeps the sidebar mounted when closed.
       this is temporarily added to match the behavior of the outgoing MUI drawer
       it can be removed in a later PR to optimize performance */}
       <Dialog.Portal forceMount>
         <AnimatePresence onExitComplete={() => toggleSidebar(false)}>
           {showSidebar && (
-            <Dialog.Overlay asChild forceMount key='sidebar-overlay'>
-              <motion.div
-                style={{ opacity }}
-                className={css({
-                  position: 'fixed',
-                  inset: 0,
-                  backgroundColor: 'rgba(0,0,0,0.5)',
-                  zIndex: 'sidebar',
-                })}
-              />
-            </Dialog.Overlay>
+            <motion.div
+              key='sidebar-overlay'
+              style={{ opacity }}
+              onClick={() => toggleSidebar(false)}
+              className={css({
+                position: 'fixed',
+                inset: 0,
+                backgroundColor: 'rgba(0,0,0,0.5)',
+                zIndex: 'sidebar',
+              })}
+            />
           )}
           {showSidebar && (
-            <Dialog.Content asChild forceMount key='sidebar-content'>
+            <Dialog.Content
+              asChild
+              forceMount
+              key='sidebar-content'
+              onInteractOutside={e => e.preventDefault()} // This is needed to prevent the sidebar from double-toggling when tapping hamburger icon
+            >
               <motion.div
                 data-testid='sidebar'
                 style={{ x }}
