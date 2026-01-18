@@ -1,7 +1,7 @@
 import Command from '../../../@types/Command'
 
 /** Mock commands for GestureMenu testing. These commands are stable and won't change when real commands change. */
-export const mockCommands: Command[] = [
+const mockCommands: Command[] = [
   {
     id: 'testCommand1',
     label: 'Test Command 1',
@@ -51,3 +51,5 @@ export const mockCommands: Command[] = [
     exec: () => {},
   },
 ]
+
+export default mockCommands

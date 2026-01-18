@@ -32,10 +32,10 @@ it('CommandPalette', async () => {
 
 it('GestureMenu', async () => {
   await page.emulate(KnownDevices['iPhone 15 Pro'])
-  
+
   // Set mock commands to ensure stable snapshots
   await setMockCommands()
-  
+
   await paste('Hello')
 
   // When cursor is on the thought, gesture menu is rendered with two new options. When cursor is null, those options are not shown. Hence always be consistent and set cursor to the thought.

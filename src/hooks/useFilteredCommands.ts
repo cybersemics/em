@@ -10,6 +10,7 @@ import gestureStore from '../stores/gesture'
 
 /** Gets the commands to use for filtering. Checks for mock commands in window for testing. */
 const getVisibleCommands = (): Command[] => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mockCommands = (window as any).__mockCommands as Command[] | undefined
   const commands = mockCommands || globalCommands
   return commands.filter(command => !command.hideFromCommandPalette && !command.hideFromHelp)
@@ -44,7 +45,7 @@ const useFilteredCommands = (
 
   const possibleCommandsSorted = useMemo(() => {
     const visibleCommands = getVisibleCommands()
-    
+
     // if Select All is in progress, extend the command list with all multicursor commands prefixed with Select All
     const visibleCommandsChained = selectAllInProgressInclusive
       ? [
