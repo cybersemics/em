@@ -10,8 +10,10 @@ const iOSCapacitorHandler: VirtualKeyboardHandler = {
   init: () => {
     if (!Capacitor.isNativePlatform() || !Capacitor.isPluginAvailable('Keyboard')) return
 
-    /** This value is used to provide animated height updates to virtualKeyboardStore.
-     *  It uses the same spring physics as the native iOS keyboard. */
+    /**
+     * This value is used to provide animated height updates to virtualKeyboardStore.
+     * It uses the same spring physics as the native iOS keyboard.
+     */
     const animatedHeight = new SpringValue(0, {
       config: { tension: 3600, friction: 220, mass: 1.2 },
     })

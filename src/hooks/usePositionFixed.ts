@@ -1,7 +1,7 @@
 /** Position fixed breaks in mobile Safari when the keyboard is up. This module provides functionality to emulate position:fixed by changing all top navigation to position:absolute and updating on scroll. */
 import { token } from '../../styled-system/tokens'
-import virtualKeyboardStore from '../stores/virtualKeyboardStore'
 import viewportStore from '../stores/viewport'
+import virtualKeyboardStore from '../stores/virtualKeyboardStore'
 import useScrollTop from './useScrollTop'
 
 /** Emulates position fixed on mobile Safari with positon absolute. Returns { position, top, bottom } in absolute mode. */

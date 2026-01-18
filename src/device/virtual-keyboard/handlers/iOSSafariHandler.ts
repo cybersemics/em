@@ -1,6 +1,6 @@
 import _ from 'lodash'
-import { isSafari, isTouch } from '../../../browser'
 import VirtualKeyboardHandler from '../../../@types/VirtualKeyboardHandler'
+import { isSafari, isTouch } from '../../../browser'
 import store from '../../../stores/app'
 import viewportStore, { updateSize } from '../../../stores/viewport'
 import virtualKeyboardStore from '../../../stores/virtualKeyboardStore'
@@ -20,7 +20,7 @@ const updateIOSSafariKeyboardState = () => {
   setTimeout(() => {
     const { virtualKeyboardHeight } = viewportStore.getState()
     const targetHeight = virtualKeyboardHeight || 0
-    
+
     const isKeyboardOpen = store.getState().isKeyboardOpen
     const keyboardIsVisible = isKeyboardOpen === true
 
