@@ -30,15 +30,6 @@ import durations from './durations'
 import equalPath from './equalPath'
 import handleKeyboardVisibility from './handleKeyboardVisibility'
 
-declare global {
-  interface Window {
-    __inputHandlers: {
-      keyDown: (e: KeyboardEvent) => void
-      keyUp: (e: KeyboardEvent) => void
-    }
-  }
-}
-
 // the width of the scroll-at-edge zone at the top/bottom of the screen (for vertical scrolling) or left/right of the screen (for horizontal scrolling)
 const TOOLBAR_SCROLLATEDGE_SIZE = 50
 const WINDOW_SCROLLATEDGE_UP_SIZE = 120
@@ -364,9 +355,6 @@ const initEvents = (store: Store<State, any>) => {
     }
   }
 
-  // store input handlers so they can be removed on cleanup
-  window.__inputHandlers = { keyDown, keyUp }
-
   // prevent browser from restoring the scroll position so that we can do it manually
   window.history.scrollRestoration = 'manual'
 
@@ -402,7 +390,7 @@ const initEvents = (store: Store<State, any>) => {
   const unsubscribeSaveErrorReload = syncStatusStore.subscribeSelector(state => state.savingProgress, saveErrorReload)
 
   /** Remove window event handlers. */
-  const cleanup = ({ keyDown, keyUp } = window.__inputHandlers || {}) => {
+  const cleanup = () => {
     unsubscribeSaveErrorReload()
     document.removeEventListener('selectionchange', onSelectionChange)
     window.removeEventListener('keydown', keyDown)
