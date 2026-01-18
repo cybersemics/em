@@ -20,15 +20,12 @@ const iOSCapacitorHandler: VirtualKeyboardHandler = {
       const height = info.keyboardHeight || 0
       viewportStore.update({ virtualKeyboardHeight: height })
       virtualKeyboardStore.update({ open: true, source: 'ios-capacitor' })
-      
+
       // Start storing animated height values in virtualKeyboardStore.
       animatedHeight.start({
         to: height,
-        onChange: (result: any) => {
-          const val = typeof result === 'object' && result !== null ? result.value : result
-          if (typeof val === 'number') {
-            virtualKeyboardStore.update({ height: val })
-          }
+        onChange: value => {
+          virtualKeyboardStore.update({ height: value as unknown as number })
         },
       })
     })
@@ -46,11 +43,8 @@ const iOSCapacitorHandler: VirtualKeyboardHandler = {
       // Start storing animated height values in virtualKeyboardStore.
       animatedHeight.start({
         to: 0,
-        onChange: (result: any) => {
-          const val = typeof result === 'object' && result !== null ? result.value : result
-          if (typeof val === 'number') {
-            virtualKeyboardStore.update({ height: val })
-          }
+        onChange: value => {
+          virtualKeyboardStore.update({ height: value as unknown as number })
         },
       })
     })
