@@ -48,9 +48,13 @@ it('GestureMenu', async () => {
     const commandItems = document.querySelectorAll('[data-testid="command-item"]')
 
     commandItems.forEach((item, index) => {
+      // Skip the first command to test actual icons/gestures
+      if (index === 0) return
+
       const label = item.querySelector('[data-testid="command-label"]')
       const description = item.querySelector('[data-testid="command-description"]')
-      const gesture = item.querySelector('[data-testid="command-gesture"]')
+      const icon = item.querySelector('[data-testid="command-icon"]') as HTMLElement | null
+      const gesture = item.querySelector('[data-testid="command-gesture"]') as HTMLElement | null
 
       if (label) {
         label.textContent = `Test Command ${index + 1}`
@@ -60,10 +64,13 @@ it('GestureMenu', async () => {
         description.textContent = `Test command ${index + 1} description`
       }
 
-      // Hide gesture diagram by making it invisible
+      // Hide icon and gesture diagram by making them invisible
+      if (icon) {
+        icon.style.visibility = 'hidden'
+      }
+
       if (gesture) {
-        // eslint-disable-next-line no-extra-semi
-        ;(gesture as HTMLElement).style.visibility = 'hidden'
+        gesture.style.visibility = 'hidden'
       }
     })
   })
