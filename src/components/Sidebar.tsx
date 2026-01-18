@@ -1,7 +1,7 @@
 import * as Dialog from '@radix-ui/react-dialog'
-import { animate, AnimatePresence, motion, useMotionValue, useTransform } from 'framer-motion'
+import { AnimatePresence, animate, motion, useMotionValue, useTransform } from 'framer-motion'
 import _ from 'lodash'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { longPressActionCreator as longPress } from '../actions/longPress'
@@ -58,18 +58,21 @@ const Sidebar = () => {
   const x = useMotionValue(0)
 
   /** Toggle the sidebar. */
-  const toggleSidebar = (value: boolean) => {
-    dispatch([toggleSidebarActionCreator({ value })])
-  }
+  const toggleSidebar = useCallback(
+    (value: boolean) => {
+      dispatch([toggleSidebarActionCreator({ value })])
+    },
+    [dispatch],
+  )
 
   /** Dynamically determine the width of the sidebar. */
-  const sidebarWidth = typeof window !== 'undefined' && window.innerWidth < 768 ? '90%' : '400px'
+  const width = typeof window !== 'undefined' && window.innerWidth < 768 ? '90%' : '400px'
 
   /** Get the width of the sidebar in pixels, which is used for progress-based animations. */
-  const sidebarWidthPx = typeof window !== 'undefined' && window.innerWidth < 768 ? window.innerWidth * 0.9 : 400
+  const widthPx = typeof window !== 'undefined' && window.innerWidth < 768 ? window.innerWidth * 0.9 : 400
 
   /** Link opacity to x position of the sidebar. 1 when open, 0 when closed. */
-  const opacity = useTransform(x, [-sidebarWidthPx, 0], [0, 1])
+  const opacity = useTransform(x, [-widthPx, 0], [0, 1])
 
   /** MUI-style cubic-bezier transition. */
   const transition = {
@@ -89,8 +92,8 @@ const Sidebar = () => {
     }
   }, [showSidebar])
 
-  /* Watch for esc key. Handling this manually makes sure the current selection in the editor is kept when esc is hit. */
   useEffect(() => {
+    /** Watch for esc key. Handling this manually makes sure the current selection in the editor is kept when esc is hit. */
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         toggleSidebar(false)
@@ -119,7 +122,7 @@ const Sidebar = () => {
               className={css({
                 position: 'fixed',
                 inset: 0,
-                backgroundColor: 'rgba(0,0,0,0.5)',
+                backgroundColor: 'bgOverlay50',
                 zIndex: 'sidebar',
               })}
             />
@@ -135,7 +138,7 @@ const Sidebar = () => {
                 data-testid='sidebar'
                 style={{ x }}
                 drag='x'
-                dragConstraints={{ left: -sidebarWidthPx, right: 0 }}
+                dragConstraints={{ left: -widthPx, right: 0 }}
                 dragElastic={1e-9} // This disables elastic overscroll.
                 onDragStart={() => setIsSwiping(true)}
                 onDragEnd={(e, info) => {
@@ -150,20 +153,20 @@ const Sidebar = () => {
                     animate(x, 0, transition)
                   }
                 }}
-                initial={{ x: -sidebarWidthPx }}
+                initial={{ x: -widthPx }}
                 animate={{ x: 0 }}
-                exit={{ x: -sidebarWidthPx }}
+                exit={{ x: -widthPx }}
                 transition={transition}
                 className={css({
                   position: 'fixed',
                   top: 'safeAreaTop',
                   left: 0,
                   bottom: 0,
-                  width: sidebarWidth,
+                  width,
                   backgroundColor: 'sidebarBg',
                   zIndex: 'sidebar !important',
                   userSelect: 'none',
-                  boxShadow: '0 0 20px rgba(0,0,0,0.2)',
+                  boxShadow: '0 0 20px bgOverlay30',
                   outline: 'none',
                 })}
               >
