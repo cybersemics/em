@@ -45,15 +45,19 @@ it('GestureMenu', async () => {
 
   // Mock command labels and descriptions to ensure stable snapshots
   await page.evaluate(() => {
-    const labels = document.querySelectorAll('[data-testid="command-label"]')
-    const descriptions = document.querySelectorAll('[data-testid="command-description"]')
+    const commandItems = document.querySelectorAll('[data-testid="command-item"]')
 
-    labels.forEach((label, index) => {
-      label.textContent = `Test Command ${index + 1}`
-    })
+    commandItems.forEach((item, index) => {
+      const label = item.querySelector('[data-testid="command-label"]')
+      const description = item.querySelector('[data-testid="command-description"]')
 
-    descriptions.forEach((description, index) => {
-      description.textContent = `Test command ${index + 1} description`
+      if (label) {
+        label.textContent = `Test Command ${index + 1}`
+      }
+
+      if (description) {
+        description.textContent = `Test command ${index + 1} description`
+      }
     })
   })
 

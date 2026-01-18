@@ -149,6 +149,7 @@ const CommandItem: FC<{
 
   return (
     <Container
+      data-testid='command-item'
       ref={current => {
         ref.current = current
         dragSource(current)
