@@ -23,3 +23,6 @@ export const isSafari = () => typeof navigator !== 'undefined' && navigator.vend
 
 /** Returns true if the navigator user agent contains 'Android'. */
 export const isAndroidWebView = () => typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent)
+
+/** Returns true if the application is running in Capacitor (on either iOS or Android). */
+export const isCapacitor = () => Capacitor.getPlatform() === 'ios' || Capacitor.getPlatform() === 'android'
