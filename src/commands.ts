@@ -394,200 +394,196 @@ export const executeCommandWithMulticursor = (
 }
 
 /**
- * Keyboard and gesture handlers factory function that binds the store to event handlers.
+ * Handles gesture hints when a valid segment is entered.
  *
  * There are two alert types for gesture hints:
  * - GestureHint - The basic gesture hint that is shown immediately on swipe.
- * - gestureMenuTimeout - The gesture menu  that shows all possible gestures from the current sequence after a delay.
+ * - gestureMenuTimeout - The gesture menu that shows all possible gestures from the current sequence after a delay.
  *
  * There is no automated test coverage since timers are so messed up in the current Jest version. It may be possible to write tests if Jest is upgraded. Manual test cases.
  * - Basic gesture hint.
  * - Preserve gesture hint for valid command.
  * - Only show "Cancel gesture" if gesture hint is already activated.
  * - Dismiss gesture hint after release for invalid command.
- * - gesture menu  on hold.
- * - gesture menu  from invalid gesture (e.g. ←↓, hold, ←↓←).
- * - Change gesture menu  to basic gesture hint on gesture end.
+ * - gesture menu on hold.
+ * - gesture menu from invalid gesture (e.g. ←↓, hold, ←↓←).
+ * - Change gesture menu to basic gesture hint on gesture end.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const inputHandlers = (store: Store<State, any>) => ({
-  /** Handles gesture hints when a valid segment is entered. */
-  handleGestureSegment: ({ sequence }: { gesture: Direction | null; sequence: GesturePath }) => {
-    const state = store.getState()
+export const handleGestureSegment = ({ sequence }: { gesture: Direction | null; sequence: GesturePath }) => {
+  const state = store.getState()
 
-    if (state.showModal || state.longPress === LongPressState.DragInProgress || state.showGestureCheatsheet) return
+  if (state.showModal || state.longPress === LongPressState.DragInProgress || state.showGestureCheatsheet) return
 
-    // Stop gesture segment haptics when there are no more possible commands that can be completed from the current sequence.
-    // useFilteredCommands updates the possibleCommands in a back channel for efficiency.
-    // Always allow haptics for the first swipe, as possibleCommands may not be populated yet.
-    if (sequence.length === 1 || gestureStore.getState().possibleCommands.length > 2) {
-      haptics.light()
-    }
+  // Stop gesture segment haptics when there are no more possible commands that can be completed from the current sequence.
+  // useFilteredCommands updates the possibleCommands in a back channel for efficiency.
+  // Always allow haptics for the first swipe, as possibleCommands may not be populated yet.
+  if (sequence.length === 1 || gestureStore.getState().possibleCommands.length > 2) {
+    haptics.light()
+  }
 
-    // gesture menu
-    // alert after a delay of COMMAND_PALETTE_TIMEOUT
-    clearTimeout(gestureMenuTimeout)
-    gestureMenuTimeout = window.setTimeout(
-      () => {
-        store.dispatch((dispatch, getState) => {
-          // do not show "Cancel gesture" if already being shown by basic gesture hint
-          const state = getState()
-          if (state.showGestureMenu) return
-          dispatch(gestureMenu())
-        })
-      },
-      // if the hint is already being shown, do not wait to change the value
-      COMMAND_PALETTE_TIMEOUT,
-    )
-  },
-
-  /** Executes a valid gesture and closes the gesture hint. Special handling for Select All chaining. */
-  handleGestureEnd: ({ sequence, e }: { sequence: GesturePath | null; e: GestureResponderEvent }) => {
-    const state = store.getState()
-
-    // Get the command from the command gesture index.
-    // When the gesture menu  is displayed, disable gesture aliases (i.e. gestures hidden from instructions). This is because the gesture hints are meant only as an aid when entering gestures quickly.
-
-    const openGestureCheatsheetGesture = gestureString(openGestureCheatsheetCommand)
-
-    // If sequence ends with help gesture, use help command
-    // Otherwise use the normal command lookup
-    const selectAllGesture = selectAllCommand.gesture as string
-    // True if the current gesture-in-progress starts with the Select All gesture, but is not the Select All gesture itself.
-    const selectAllInProgressExclusive =
-      sequence?.toString().startsWith(selectAllGesture) && sequence?.toString() !== selectAllGesture
-
-    let command: Command | null | undefined = null
-
-    if (sequence?.toString().endsWith(openGestureCheatsheetGesture)) {
-      command = openGestureCheatsheetCommand
-    } else if (selectAllInProgressExclusive) {
-      const chainedGestureCollapsed = sequence!.toString().slice(selectAllGesture.length - 1)
-      const chainedGesture = sequence!.toString().slice(selectAllGesture.length)
-      const commandMatch = commandGestureIndex[chainedGestureCollapsed] ?? commandGestureIndex[chainedGesture]
-      if (commandMatch) {
-        command = chainCommand(commandMatch)
-      }
-    } else {
-      command =
-        !state.showCommandPalette || !commandGestureIndex[sequence as string]?.hideFromHelp
-          ? commandGestureIndex[sequence as string]
-          : null
-    }
-
-    // execute command
-    // do not execute when modal is displayed or a drag is in progress
-    if (
-      command &&
-      !state.showModal &&
-      !state.showGestureCheatsheet &&
-      state.longPress !== LongPressState.DragInProgress
-    ) {
-      commandEmitter.trigger('command', command)
-      if (selectAllInProgressExclusive && !isAllSelected(state)) {
-        executeCommandWithMulticursor(selectAllCommand, { event: e, type: 'gesture', store })
-      }
-      executeCommandWithMulticursor(command, { event: e, type: 'gesture', store })
-      if (store.getState().enableLatestCommandsDiagram) store.dispatch(showLatestCommands(command))
-    }
-
-    // if no command was found, execute the cancel command
-
-    // clear gesture hint
-    clearTimeout(gestureMenuTimeout)
-    gestureMenuTimeout = undefined // clear the timer to track when it is running for handleGestureSegment
-
-    // In training mode, show alert for any valid command (except forward/back)
-    // In experience mode, clear any existing gesture hint
-    setTimeout(() => {
+  // gesture menu
+  // alert after a delay of COMMAND_PALETTE_TIMEOUT
+  clearTimeout(gestureMenuTimeout)
+  gestureMenuTimeout = window.setTimeout(
+    () => {
       store.dispatch((dispatch, getState) => {
+        // do not show "Cancel gesture" if already being shown by basic gesture hint
         const state = getState()
-        const alertType = state.alert?.alertType
-        const experienceMode = getUserSetting(state, Settings.experienceMode)
-
-        if (state.showGestureMenu) {
-          dispatch(gestureMenu())
-        }
-
-        // Show alert for valid commands in training mode
-        if (!experienceMode && command && !command.hideAlert) {
-          dispatch(
-            alert(command.label, {
-              alertType: AlertType.GestureHint,
-            }),
-          )
-        } else if (
-          // Clear alert if gesture is cancelled (no command)
-          !command ||
-          // Clear alert if back/forward
-          command?.id === 'cursorForward' ||
-          command?.id === 'cursorBack' ||
-          // In experience mode, clear any existing gesture hint
-          (experienceMode && alertType === AlertType.GestureHint)
-        ) {
-          dispatch(alert(null))
-        }
+        if (state.showGestureMenu) return
+        dispatch(gestureMenu())
       })
-    })
-  },
+    },
+    // if the hint is already being shown, do not wait to change the value
+    COMMAND_PALETTE_TIMEOUT,
+  )
+}
 
-  /** Dismiss gesture hint that is shown by alert. */
-  handleGestureCancel: () => {
-    clearTimeout(gestureMenuTimeout)
+/** Executes a valid gesture and closes the gesture hint. Special handling for Select All chaining. */
+export const handleGestureEnd = ({ sequence, e }: { sequence: GesturePath | null; e: GestureResponderEvent }) => {
+  const state = store.getState()
+
+  // Get the command from the command gesture index.
+  // When the gesture menu  is displayed, disable gesture aliases (i.e. gestures hidden from instructions). This is because the gesture hints are meant only as an aid when entering gestures quickly.
+
+  const openGestureCheatsheetGesture = gestureString(openGestureCheatsheetCommand)
+
+  // If sequence ends with help gesture, use help command
+  // Otherwise use the normal command lookup
+  const selectAllGesture = selectAllCommand.gesture as string
+  // True if the current gesture-in-progress starts with the Select All gesture, but is not the Select All gesture itself.
+  const selectAllInProgressExclusive =
+    sequence?.toString().startsWith(selectAllGesture) && sequence?.toString() !== selectAllGesture
+
+  let command: Command | null | undefined = null
+
+  if (sequence?.toString().endsWith(openGestureCheatsheetGesture)) {
+    command = openGestureCheatsheetCommand
+  } else if (selectAllInProgressExclusive) {
+    const chainedGestureCollapsed = sequence!.toString().slice(selectAllGesture.length - 1)
+    const chainedGesture = sequence!.toString().slice(selectAllGesture.length)
+    const commandMatch = commandGestureIndex[chainedGestureCollapsed] ?? commandGestureIndex[chainedGesture]
+    if (commandMatch) {
+      command = chainCommand(commandMatch)
+    }
+  } else {
+    command =
+      !state.showCommandPalette || !commandGestureIndex[sequence as string]?.hideFromHelp
+        ? commandGestureIndex[sequence as string]
+        : null
+  }
+
+  // execute command
+  // do not execute when modal is displayed or a drag is in progress
+  if (
+    command &&
+    !state.showModal &&
+    !state.showGestureCheatsheet &&
+    state.longPress !== LongPressState.DragInProgress
+  ) {
+    commandEmitter.trigger('command', command)
+    if (selectAllInProgressExclusive && !isAllSelected(state)) {
+      executeCommandWithMulticursor(selectAllCommand, { event: e, type: 'gesture', store })
+    }
+    executeCommandWithMulticursor(command, { event: e, type: 'gesture', store })
+    if (store.getState().enableLatestCommandsDiagram) store.dispatch(showLatestCommands(command))
+  }
+
+  // if no command was found, execute the cancel command
+
+  // clear gesture hint
+  clearTimeout(gestureMenuTimeout)
+  gestureMenuTimeout = undefined // clear the timer to track when it is running for handleGestureSegment
+
+  // In training mode, show alert for any valid command (except forward/back)
+  // In experience mode, clear any existing gesture hint
+  setTimeout(() => {
     store.dispatch((dispatch, getState) => {
       const state = getState()
+      const alertType = state.alert?.alertType
+      const experienceMode = getUserSetting(state, Settings.experienceMode)
+
       if (state.showGestureMenu) {
         dispatch(gestureMenu())
       }
-      if (state.alert?.alertType === AlertType.GestureHint || state.showGestureMenu) {
+
+      // Show alert for valid commands in training mode
+      if (!experienceMode && command && !command.hideAlert) {
+        dispatch(
+          alert(command.label, {
+            alertType: AlertType.GestureHint,
+          }),
+        )
+      } else if (
+        // Clear alert if gesture is cancelled (no command)
+        !command ||
+        // Clear alert if back/forward
+        command?.id === 'cursorForward' ||
+        command?.id === 'cursorBack' ||
+        // In experience mode, clear any existing gesture hint
+        (experienceMode && alertType === AlertType.GestureHint)
+      ) {
         dispatch(alert(null))
       }
     })
-  },
+  })
+}
 
-  /** Global keyUp handler. */
-  keyUp: (e: KeyboardEvent) => {
-    // track meta key for expansion algorithm
-    if (e.key === (isMac ? 'Meta' : 'Control') && globals.suppressExpansion) {
-      store.dispatch(suppressExpansion(false))
+/** Dismiss gesture hint that is shown by alert. */
+export const handleGestureCancel = () => {
+  clearTimeout(gestureMenuTimeout)
+  store.dispatch((dispatch, getState) => {
+    const state = getState()
+    if (state.showGestureMenu) {
+      dispatch(gestureMenu())
     }
-  },
-
-  /** Global keyDown handler. */
-  keyDown: (e: KeyboardEvent) => {
-    const state = store.getState()
-
-    // track meta key for expansion algorithm
-    if (!(isMac ? e.metaKey : e.ctrlKey)) {
-      // disable suppress expansion without triggering re-render
-      globals.suppressExpansion = false
+    if (state.alert?.alertType === AlertType.GestureHint || state.showGestureMenu) {
+      dispatch(alert(null))
     }
+  })
+}
 
-    // For some reason, when the caret is at the beginning of the thought, alt + ArrowLeft sets the caret to the end.
-    // Prevent this default behavior, as the caret should have nowhere to go when it is already at the beginning.
-    if (e.altKey && e.key === 'ArrowLeft' && selection.offset() === 0 && selection.isThought()) {
+/** Global keyUp handler. */
+export const keyUp = (e: KeyboardEvent) => {
+  // track meta key for expansion algorithm
+  if (e.key === (isMac ? 'Meta' : 'Control') && globals.suppressExpansion) {
+    store.dispatch(suppressExpansion(false))
+  }
+}
+
+/** Global keyDown handler. */
+export const keyDown = (e: KeyboardEvent) => {
+  const state = store.getState()
+
+  // track meta key for expansion algorithm
+  if (!(isMac ? e.metaKey : e.ctrlKey)) {
+    // disable suppress expansion without triggering re-render
+    globals.suppressExpansion = false
+  }
+
+  // For some reason, when the caret is at the beginning of the thought, alt + ArrowLeft sets the caret to the end.
+  // Prevent this default behavior, as the caret should have nowhere to go when it is already at the beginning.
+  if (e.altKey && e.key === 'ArrowLeft' && selection.offset() === 0 && selection.isThought()) {
+    e.preventDefault()
+    return
+  }
+
+  // disable if command palette is displayed
+  if (state.showCommandPalette) return
+
+  const command = commandKeyIndex[hashKeyDown(e)]
+
+  // disable if modal is shown, except for navigation commands
+  if (!command || state.showGestureCheatsheet || (state.showModal && !command.allowExecuteFromModal)) return
+
+  // execute the command
+  commandEmitter.trigger('command', command)
+
+  if (!command.canExecute || command.preventDefault || command.canExecute(store.getState())) {
+    if (!command.permitDefault) {
       e.preventDefault()
-      return
     }
 
-    // disable if command palette is displayed
-    if (state.showCommandPalette) return
-
-    const command = commandKeyIndex[hashKeyDown(e)]
-
-    // disable if modal is shown, except for navigation commands
-    if (!command || state.showGestureCheatsheet || (state.showModal && !command.allowExecuteFromModal)) return
-
-    // execute the command
-    commandEmitter.trigger('command', command)
-
-    if (!command.canExecute || command.preventDefault || command.canExecute(store.getState())) {
-      if (!command.permitDefault) {
-        e.preventDefault()
-      }
-
-      // execute command
-      executeCommandWithMulticursor(command, { event: e, type: 'keyboard', store })
-    }
-  },
-})
+    // execute command
+    executeCommandWithMulticursor(command, { event: e, type: 'keyboard', store })
+  }
+}

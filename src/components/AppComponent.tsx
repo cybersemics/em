@@ -7,7 +7,7 @@ import { WebviewBackground } from 'webview-background'
 import { css } from '../../styled-system/css'
 import State from '../@types/State'
 import { isAndroid, isMac, isSafari, isTouch, isiPhone } from '../browser'
-import { inputHandlers } from '../commands'
+import { handleGestureCancel, handleGestureEnd, handleGestureSegment } from '../commands'
 import { LongPressState, Settings } from '../constants'
 import * as selection from '../device/selection'
 import testFlags from '../e2e/testFlags'
@@ -36,8 +36,6 @@ import Tutorial from './Tutorial'
 import UndoSlider from './UndoSlider'
 import GestureCheatsheet from './dialog/GestureCheatsheet'
 import * as modals from './modals'
-
-const { handleGestureCancel, handleGestureEnd, handleGestureSegment } = inputHandlers(store)
 
 /** A hook that sets an attribute on the document.body element. */
 const useBodyAttribute = (name: string, value: string) => {
