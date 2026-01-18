@@ -7,6 +7,7 @@ const mockCommands: Command[] = [
     label: 'Test Command 1',
     description: 'First test command',
     gesture: 'r',
+    multicursor: false,
     exec: () => {},
   },
   {
@@ -14,6 +15,7 @@ const mockCommands: Command[] = [
     label: 'Test Command 2',
     description: 'Second test command',
     gesture: 'rd',
+    multicursor: false,
     exec: () => {},
   },
   {
@@ -21,6 +23,7 @@ const mockCommands: Command[] = [
     label: 'Test Command 3',
     description: 'Third test command',
     gesture: 'rdr',
+    multicursor: false,
     exec: () => {},
   },
   {
@@ -28,6 +31,7 @@ const mockCommands: Command[] = [
     label: 'Test Command 4',
     description: 'Fourth test command',
     gesture: 'rdl',
+    multicursor: false,
     exec: () => {},
   },
   {
@@ -35,6 +39,7 @@ const mockCommands: Command[] = [
     label: 'Test Command 5',
     description: 'Fifth test command',
     gesture: 'rl',
+    multicursor: false,
     exec: () => {},
   },
   {
@@ -42,14 +47,16 @@ const mockCommands: Command[] = [
     label: 'Gesture Cheatsheet',
     description: 'Open gesture cheatsheet',
     gesture: 'u',
+    multicursor: false,
     exec: () => {},
   },
   {
     id: 'cancel',
     label: 'Cancel',
     description: 'Cancel gesture',
+    multicursor: false,
     exec: () => {},
   },
-]
+] as Command[]
 
 export default mockCommands
