@@ -70,6 +70,6 @@ const mockCommands: Command[] = [
     multicursor: false,
     exec: () => {},
   },
-] as Command[]
+] as Command[] // Type assertion needed because we use non-standard command IDs for testing
 
 export default mockCommands
