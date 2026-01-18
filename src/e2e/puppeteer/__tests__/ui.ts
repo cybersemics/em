@@ -4,10 +4,10 @@ import { KnownDevices } from 'puppeteer'
 import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
 import hideHUD from '../helpers/hideHUD'
+import mockGestureMenuCommands from '../helpers/mockGestureMenuCommands'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
-import setMockCommands from '../helpers/setMockCommands'
 import setTheme from '../helpers/setTheme'
 import swipe from '../helpers/swipe'
 import waitForSelector from '../helpers/waitForSelector'
@@ -33,10 +33,6 @@ it('CommandPalette', async () => {
 it('GestureMenu', async () => {
   await page.emulate(KnownDevices['iPhone 15 Pro'])
 
-  // Set mock commands to ensure stable snapshots that don't change when real command gestures are modified.
-  // The mock commands have fixed gestures (r, rd, rdr, rdl, rl) that will never change.
-  await setMockCommands()
-
   await paste('Hello')
 
   // When cursor is on the thought, gesture menu is rendered with two new options. When cursor is null, those options are not shown. Hence always be consistent and set cursor to the thought.
@@ -47,6 +43,10 @@ it('GestureMenu', async () => {
 
   // wait for the gesture menu to appear
   await waitForSelector('[data-testid=popup-value]')
+
+  // Mock the command labels and descriptions to ensure stable snapshots.
+  // This replaces real command text with test fixtures via DOM manipulation.
+  await mockGestureMenuCommands()
 
   expect(await screenshot()).toMatchImageSnapshot()
 })
