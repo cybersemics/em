@@ -248,6 +248,7 @@ const CommandItem: FC<{
         })}
       >
         <b
+          data-testid='command-label'
           className={css({
             minWidth: '4em',
             lineHeight: '1em',
@@ -268,6 +269,7 @@ const CommandItem: FC<{
 
         {(alwaysShowDescription || !isTouch || selected) && (
           <p
+            data-testid='command-description'
             className={css(
               viewType === 'grid'
                 ? {

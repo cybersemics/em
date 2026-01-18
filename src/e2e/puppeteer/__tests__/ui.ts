@@ -4,7 +4,6 @@ import { KnownDevices } from 'puppeteer'
 import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
 import hideHUD from '../helpers/hideHUD'
-import mockGestureMenuCommands from '../helpers/mockGestureMenuCommands'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
@@ -44,9 +43,19 @@ it('GestureMenu', async () => {
   // wait for the gesture menu to appear
   await waitForSelector('[data-testid=popup-value]')
 
-  // Mock the command labels and descriptions to ensure stable snapshots.
-  // This replaces real command text with test fixtures via DOM manipulation.
-  await mockGestureMenuCommands()
+  // Mock command labels and descriptions to ensure stable snapshots
+  await page.evaluate(() => {
+    const labels = document.querySelectorAll('[data-testid="command-label"]')
+    const descriptions = document.querySelectorAll('[data-testid="command-description"]')
+
+    labels.forEach((label, index) => {
+      label.textContent = `Test Command ${index + 1}`
+    })
+
+    descriptions.forEach((description, index) => {
+      description.textContent = `Test command ${index + 1} description`
+    })
+  })
 
   expect(await screenshot()).toMatchImageSnapshot()
 })
