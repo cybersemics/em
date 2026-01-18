@@ -89,6 +89,21 @@ const Sidebar = () => {
     }
   }, [showSidebar])
 
+  /* Watch for esc key. Handling this manually makes sure the current selection in the editor is kept when esc is hit. */
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        toggleSidebar(false)
+        e.preventDefault()
+        e.stopPropagation()
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [toggleSidebar])
+
   return (
     <Dialog.Root open={showSidebar} onOpenChange={toggleSidebar} modal={false}>
       {/* forceMount prop keeps the sidebar mounted when closed.
@@ -174,6 +189,7 @@ const Sidebar = () => {
                     className={css({
                       background: 'sidebarBg',
                       overflowY: 'scroll',
+                      overflowX: 'hidden',
                       overscrollBehavior: 'contain',
                       boxSizing: 'border-box',
                       width: '100%',
