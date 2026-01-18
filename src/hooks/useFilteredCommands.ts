@@ -8,10 +8,16 @@ import { isTouch } from '../browser'
 import { chainCommand, commandById, gestureString, globalCommands } from '../commands'
 import gestureStore from '../stores/gesture'
 
+/** Extended window interface for test mock commands. */
+declare global {
+  interface Window {
+    __mockCommands?: Command[]
+  }
+}
+
 /** Gets the commands to use for filtering. Checks for mock commands in window for testing. */
 const getVisibleCommands = (): Command[] => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const mockCommands = (window as any).__mockCommands as Command[] | undefined
+  const mockCommands = window.__mockCommands
   const commands = mockCommands || globalCommands
   return commands.filter(command => !command.hideFromCommandPalette && !command.hideFromHelp)
 }

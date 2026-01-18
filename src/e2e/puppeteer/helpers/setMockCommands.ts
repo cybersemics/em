@@ -6,8 +6,7 @@ import mockCommands from './mockCommands'
 const setMockCommands = async (commands: Command[] = mockCommands): Promise<void> => {
   await page.evaluate(commands => {
     // Store mock commands in window object
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-extra-semi
-    ;(window as any).__mockCommands = commands
+    window.__mockCommands = commands
   }, commands)
 }
 
