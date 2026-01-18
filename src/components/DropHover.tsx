@@ -75,21 +75,25 @@ const DropHoverIfVisible = ({
 }) => {
   // true if a thought is being dragged over this drop hover
   const showDropHover = useSelector(state => {
-    // render the drop-hover if hovering over any thought in a sorted list
-    const isThoughtHovering =
+    /** Returns true if hovering over current thought. */
+    const isThoughtHovering = () =>
       state.hoveringPath &&
       equalPath(parentOf(state.hoveringPath), parentOf(simplePath)) &&
       state.hoverZone === DropThoughtZone.ThoughtDrop
 
-    // render the drop-hover if hovering over sorted Subthoughts
-    const isSubthoughtsHovering =
+    /** Returns true if hovering over the current subthought. */
+    const isSubthoughtsHovering = () =>
       state.hoveringPath &&
       equalPath(state.hoveringPath, rootedParentOf(state, simplePath)) &&
       state.hoverZone === DropThoughtZone.SubthoughtsDrop
-    const value = getThoughtById(state, head(simplePath))?.value
     const prevChild = prevChildId && getThoughtById(state, prevChildId)
 
-    if (value === undefined || !(isThoughtHovering || isSubthoughtsHovering)) {
+    if (!isThoughtHovering() && !isSubthoughtsHovering()) {
+      return false
+    }
+
+    const thought = getThoughtById(state, head(simplePath))
+    if (thought?.value === undefined) {
       return false
     }
 
@@ -106,13 +110,17 @@ const DropHoverIfVisible = ({
 
     // Typically we show the drop hover if the thought is being directly hovered over.
     // However, when moving into a different context that is sorted, we need to show the drop hover on the sorted drop destination if the thought is hovered over any of the thoughts in the sorted context.
-    const parentId = getThoughtById(state, head(simplePath))?.parentId
     const sameContext = state.draggingThoughts.every(draggingPath =>
       equalPath(rootedParentOf(state, draggingPath), rootedParentOf(state, simplePath)),
     )
-    const isParentSorted = parentId && getSortPreference(state, parentId).type === 'Alphabetical'
-    if (!isParentSorted || sameContext) return testFlags.simulateDrag || isHovering
-    else if (state.longPress !== LongPressState.DragInProgress) return false
+
+    /** Returns true if the parent is sorted alphabetically. */
+    const isParentSorted = () => getSortPreference(state, thought.parentId).type === 'Alphabetical'
+    if (sameContext || !isParentSorted()) {
+      return testFlags.simulateDrag || isHovering
+    } else if (state.longPress !== LongPressState.DragInProgress) {
+      return false
+    }
 
     const draggingThoughtValues = state.draggingThoughts
       .map(draggingPath => getThoughtById(state, head(draggingPath))?.value)
@@ -125,7 +133,7 @@ const DropHoverIfVisible = ({
     return draggingThoughtValues.some(
       draggingValue =>
         // check if it's alphabetically previous to current thought
-        compareReasonable(draggingValue, value) <= 0 &&
+        compareReasonable(draggingValue, thought.value) <= 0 &&
         // check if it's alphabetically next to previous thought if it exists
         (!prevChild || compareReasonable(draggingValue, prevChild.value) === 1),
     )
