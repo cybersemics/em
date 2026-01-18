@@ -13,6 +13,7 @@ import calculateAutofocus from '../selectors/calculateAutofocus'
 import dropHoverColor from '../selectors/dropHoverColor'
 import getSortPreference from '../selectors/getSortPreference'
 import getThoughtById from '../selectors/getThoughtById'
+import prevSibling from '../selectors/prevSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
 import appendToPath from '../util/appendToPath'
 import { compareReasonable } from '../util/compareThought'
@@ -92,15 +93,16 @@ const DropHoverIfVisible = ({
       return false
     }
 
-    const prevThoughtPath = prevChildId ? appendToPath(parentOf(simplePath), prevChildId) : null
+    // Don't show drop hover between contiguous selected thoughts
+    const contiguousDraggingThoughts = state.draggingThoughts.filter(draggingPath => {
+      const prev = prevSibling(state, draggingPath)
+      const prevPath = prev ? appendToPath(parentOf(draggingPath), prev.id) : null
+      return prev && state.draggingThoughts.some(simplePath => equalPath(prevPath, simplePath))
+    })
 
-    // Don't show drop hover on dragged thoughts or between contiguous selected thoughts
-    const shouldHideDropHover = state.draggingThoughts.some(
-      draggingPath =>
-        equalPath(draggingPath, simplePath) || (prevThoughtPath && equalPath(draggingPath, prevThoughtPath)),
-    )
-
-    if (shouldHideDropHover) return false
+    if (contiguousDraggingThoughts.some(draggingPath => equalPath(draggingPath, simplePath))) {
+      return false
+    }
 
     // Typically we show the drop hover if the thought is being directly hovered over.
     // However, when moving into a different context that is sorted, we need to show the drop hover on the sorted drop destination if the thought is hovered over any of the thoughts in the sorted context.
