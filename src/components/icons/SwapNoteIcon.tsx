@@ -2,8 +2,8 @@ import IconType from '../../@types/IconType'
 import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/24-convert-to-note.json'
 
-/** Convert To Note Icon with Conditional Lottie Animation. */
-const ConvertToNoteIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+/** Swap Note Icon with Conditional Lottie Animation. */
+const SwapNoteIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg
@@ -51,4 +51,4 @@ const ConvertToNoteIcon = ({ fill, size = 18, style = {}, cssRaw, animated, anim
   )
 }
 
-export default ConvertToNoteIcon
+export default SwapNoteIcon
