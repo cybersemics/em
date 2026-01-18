@@ -1,5 +1,5 @@
 import * as Dialog from '@radix-ui/react-dialog'
-import { AnimatePresence, animate, motion, useMotionValue, useTransform } from 'framer-motion'
+import { animate, motion, useMotionValue, useTransform } from 'framer-motion'
 import _ from 'lodash'
 import { useCallback, useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
@@ -54,7 +54,7 @@ const Sidebar = () => {
   const dispatch = useDispatch()
   const [section, setSection] = useState<SidebarSection>('favorites')
 
-  /** Track the current x position of the sidebar. This is used for progress- animations. */
+  /** Track the current x position of the sidebar. This is used for progress-based animations. */
   const x = useMotionValue(0)
 
   /** Toggle the sidebar. */
@@ -113,146 +113,154 @@ const Sidebar = () => {
       this is temporarily added to match the behavior of the outgoing MUI drawer
       it can be removed in a later PR to optimize performance */}
       <Dialog.Portal forceMount>
-        <AnimatePresence onExitComplete={() => toggleSidebar(false)}>
-          {showSidebar && (
+        <div
+          data-testid='sidebar'
+          aria-hidden={!showSidebar}
+          className={css({
+            position: 'fixed',
+            inset: 0,
+            zIndex: 'sidebar',
+            pointerEvents: 'none',
+            userSelect: 'none',
+          })}
+        >
+          {/* Backdrop/overlay */}
+          <motion.div
+            aria-hidden='true'
+            style={{ opacity }}
+            onClick={() => toggleSidebar(false)}
+            className={css({
+              position: 'absolute',
+              inset: 0,
+              backgroundColor: 'sidebarOverlayBg',
+              pointerEvents: showSidebar ? 'auto' : 'none',
+              cursor: 'pointer',
+              userSelect: 'none',
+            })}
+          />
+
+          <Dialog.Content
+            asChild
+            forceMount
+            onInteractOutside={e => e.preventDefault()} // This is needed to prevent the sidebar from double-toggling when tapping hamburger icon
+          >
             <motion.div
-              key='sidebar-overlay'
-              style={{ opacity }}
-              onClick={() => toggleSidebar(false)}
+              style={{ x }}
+              drag='x'
+              dragConstraints={{ left: -widthPx, right: 0 }}
+              dragElastic={1e-9} // This disables elastic overscroll.
+              onDragStart={() => setIsSwiping(true)}
+              onDragEnd={(e, info) => {
+                setIsSwiping(false)
+
+                // Check that the swipe meets the threshold to close.
+                // The swipe either needs to be at least 100px or have a velocity of at least 500px/s.
+                if (info.offset.x < -100 || info.velocity.x < -500) {
+                  toggleSidebar(false)
+                } else {
+                  // Snap back to 0
+                  animate(x, 0, transition)
+                }
+              }}
+              initial={false}
+              animate={{ x: showSidebar ? 0 : -widthPx }}
+              transition={transition}
               className={css({
                 position: 'fixed',
-                inset: 0,
-                backgroundColor: 'bgOverlay50',
-                zIndex: 'sidebar',
+                top: 'safeAreaTop',
+                left: 0,
+                bottom: 0,
+                width,
+                backgroundColor: 'sidebarBg',
+                zIndex: 'sidebar !important',
+                userSelect: 'none',
+                boxShadow: '0 0 20px bgOverlay30',
+                outline: 'none',
+                pointerEvents: 'auto',
               })}
-            />
-          )}
-          {showSidebar && (
-            <Dialog.Content
-              asChild
-              forceMount
-              key='sidebar-content'
-              onInteractOutside={e => e.preventDefault()} // This is needed to prevent the sidebar from double-toggling when tapping hamburger icon
             >
-              <motion.div
-                data-testid='sidebar'
-                style={{ x }}
-                drag='x'
-                dragConstraints={{ left: -widthPx, right: 0 }}
-                dragElastic={1e-9} // This disables elastic overscroll.
-                onDragStart={() => setIsSwiping(true)}
-                onDragEnd={(e, info) => {
+              <div
+                onTouchMove={_.throttle(
+                  () => {
+                    if (isSwiping) return
+                    if (x.get() !== 0) {
+                      setIsSwiping(true)
+                      dispatch(longPress({ value: LongPressState.Inactive }))
+                    }
+                  },
+                  10,
+                  { leading: false },
+                )}
+                onTouchEnd={() => {
                   setIsSwiping(false)
-
-                  // Check that the swipe meets the threshold to close.
-                  // The swipe either needs to be at least 100px or have a velocity of at least 500px/s.
-                  if (info.offset.x < -100 || info.velocity.x < -500) {
-                    toggleSidebar(false)
-                  } else {
-                    // Snap back to 0
-                    animate(x, 0, transition)
-                  }
                 }}
-                initial={{ x: -widthPx }}
-                animate={{ x: 0 }}
-                exit={{ x: -widthPx }}
-                transition={transition}
-                className={css({
-                  position: 'fixed',
-                  top: 'safeAreaTop',
-                  left: 0,
-                  bottom: 0,
-                  width,
-                  backgroundColor: 'sidebarBg',
-                  zIndex: 'sidebar !important',
-                  userSelect: 'none',
-                  boxShadow: '0 0 20px bgOverlay30',
-                  outline: 'none',
-                })}
+                className={css({ height: '100%' })}
               >
                 <div
-                  onTouchMove={_.throttle(
-                    () => {
-                      if (isSwiping) return
-                      if (x.get() !== 0) {
-                        setIsSwiping(true)
-                        dispatch(longPress({ value: LongPressState.Inactive }))
-                      }
+                  aria-label='sidebar'
+                  className={css({
+                    background: 'sidebarBg',
+                    overflowY: 'scroll',
+                    overflowX: 'hidden',
+                    overscrollBehavior: 'contain',
+                    boxSizing: 'border-box',
+                    width: '100%',
+                    height: '100%',
+                    color: 'fg',
+                    scrollbarWidth: 'thin',
+                    lineHeight: 1.8,
+                    '&::-webkit-scrollbar': {
+                      width: '0px',
+                      background: 'transparent',
+                      display: 'none',
                     },
-                    10,
-                    { leading: false },
-                  )}
-                  onTouchEnd={() => {
-                    setIsSwiping(false)
-                  }}
-                  className={css({ height: '100%' })}
+                    userSelect: 'none',
+                    position: 'relative',
+                    padding: '0 1em',
+                  })}
+                  data-scroll-at-edge
                 >
-                  <div
-                    aria-label='sidebar'
-                    className={css({
-                      background: 'sidebarBg',
-                      overflowY: 'scroll',
-                      overflowX: 'hidden',
-                      overscrollBehavior: 'contain',
-                      boxSizing: 'border-box',
-                      width: '100%',
-                      height: '100%',
-                      color: 'fg',
-                      scrollbarWidth: 'thin',
-                      lineHeight: 1.8,
-                      '&::-webkit-scrollbar': {
-                        width: '0px',
-                        background: 'transparent',
-                        display: 'none',
-                      },
-                      userSelect: 'none',
-                      position: 'relative',
-                      padding: '0 1em',
-                    })}
-                    data-scroll-at-edge
-                  >
-                    <FadeTransition type='fast' in={showSidebar}>
-                      <div
-                        style={{
-                          marginLeft: fontSize * 1.3 + 30,
-                        }}
-                      >
-                        <SidebarLink
-                          active={section === 'favorites'}
-                          section='favorites'
-                          setSection={setSection}
-                          text='Favorites'
-                        />
-                        <SidebarLink
-                          active={section === 'recentEdited'}
-                          section='recentEdited'
-                          setSection={setSection}
-                          text='Recently Edited'
-                        />
-                        <SidebarLink
-                          active={section === 'deletedEdited'}
-                          section='deletedEdited'
-                          setSection={setSection}
-                          text='Recently Deleted'
-                        />
-                      </div>
-                    </FadeTransition>
+                  <FadeTransition type='fast' in={showSidebar}>
+                    <div
+                      style={{
+                        marginLeft: fontSize * 1.3 + 30,
+                      }}
+                    >
+                      <SidebarLink
+                        active={section === 'favorites'}
+                        section='favorites'
+                        setSection={setSection}
+                        text='Favorites'
+                      />
+                      <SidebarLink
+                        active={section === 'recentEdited'}
+                        section='recentEdited'
+                        setSection={setSection}
+                        text='Recently Edited'
+                      />
+                      <SidebarLink
+                        active={section === 'deletedEdited'}
+                        section='deletedEdited'
+                        setSection={setSection}
+                        text='Recently Deleted'
+                      />
+                    </div>
+                  </FadeTransition>
 
-                    {section === 'favorites' ? (
-                      <Favorites disableDragAndDrop={isSwiping} />
-                    ) : section === 'recentEdited' ? (
-                      <RecentlyEdited />
-                    ) : section === 'deletedEdited' ? (
-                      <RecentlyDeleted />
-                    ) : (
-                      'Not yet implemented'
-                    )}
-                  </div>
+                  {section === 'favorites' ? (
+                    <Favorites disableDragAndDrop={isSwiping} />
+                  ) : section === 'recentEdited' ? (
+                    <RecentlyEdited />
+                  ) : section === 'deletedEdited' ? (
+                    <RecentlyDeleted />
+                  ) : (
+                    'Not yet implemented'
+                  )}
                 </div>
-              </motion.div>
-            </Dialog.Content>
-          )}
-        </AnimatePresence>
+              </div>
+            </motion.div>
+          </Dialog.Content>
+        </div>
       </Dialog.Portal>
     </Dialog.Root>
   )
