@@ -1,6 +1,6 @@
 /** Position fixed breaks in mobile Safari when the keyboard is up. This module provides functionality to emulate position:fixed by changing all top navigation to position:absolute and updating on scroll. */
 import { token } from '../../styled-system/tokens'
-import safariKeyboardStore from '../stores/safariKeyboardStore'
+import virtualKeyboardStore from '../stores/virtualKeyboardStore'
 import viewportStore from '../stores/viewport'
 import useScrollTop from './useScrollTop'
 
@@ -19,15 +19,15 @@ const usePositionFixed = ({
   top?: string
   bottom?: string
 } => {
-  const safariKeyboard = safariKeyboardStore.useState()
-  const position = safariKeyboard.open ? 'absolute' : 'fixed'
+  const virtualKeyboard = virtualKeyboardStore.useState()
+  const position = virtualKeyboard.open ? 'absolute' : 'fixed'
   const scrollTop = useScrollTop({ disabled: position === 'fixed' })
   const { innerHeight } = viewportStore.useState()
 
   let top, bottom
   if (position === 'absolute') {
     top = fromBottom
-      ? `${Math.min(document.body.scrollHeight, scrollTop + innerHeight - safariKeyboard.height) - (height ?? 0) - offset}px`
+      ? `${Math.min(document.body.scrollHeight, scrollTop + innerHeight - virtualKeyboard.height) - (height ?? 0) - offset}px`
       : `${scrollTop + offset}px`
   } else if (fromBottom) {
     // spacing.safeAreaBottom applies to rounded screens

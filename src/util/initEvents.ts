@@ -10,7 +10,7 @@ import { errorActionCreator as error } from '../actions/error'
 import { gestureMenuActionCreator as gestureMenu } from '../actions/gestureMenu'
 import { longPressActionCreator as longPress } from '../actions/longPress'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
-import { isAndroidWebView, isIOS, isSafari, isTouch } from '../browser'
+import { isSafari, isTouch } from '../browser'
 import { inputHandlers } from '../commands'
 import { AlertType, LongPressState } from '../constants'
 import * as selection from '../device/selection'
@@ -19,7 +19,7 @@ import pathExists from '../selectors/pathExists'
 import store from '../stores/app'
 import { updateCommandState } from '../stores/commandStateStore'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
-import { updateSafariKeyboardState } from '../stores/safariKeyboardStore'
+import initVirtualKeyboard from '../device/virtual-keyboard'
 import { updateScrollTop } from '../stores/scrollTop'
 import storageModel from '../stores/storageModel'
 import syncStatusStore from '../stores/syncStatus'
@@ -28,7 +28,6 @@ import isRoot from '../util/isRoot'
 import pathToContext from '../util/pathToContext'
 import durations from './durations'
 import equalPath from './equalPath'
-import handleKeyboardVisibility from './handleKeyboardVisibility'
 
 declare global {
   interface Window {
@@ -220,10 +219,6 @@ const initEvents = (store: Store<State, any>) => {
 
     // update command state store
     updateCommandState()
-
-    if (isTouch && isSafari() && !isIOS) {
-      updateSafariKeyboardState()
-    }
   }
 
   /** MouseMove event listener. */
@@ -384,13 +379,8 @@ const initEvents = (store: Store<State, any>) => {
   const resizeHost = window.visualViewport || window
   resizeHost.addEventListener('resize', updateSize)
 
-  // Add Visual Viewport resize listener for keyboard detection
-  if (isTouch && isAndroidWebView() && window.visualViewport) {
-    window.visualViewport.addEventListener('resize', handleKeyboardVisibility)
-
-    // Force an immediate check in case keyboard is already visible
-    handleKeyboardVisibility()
-  }
+  // Initialize virtual keyboard handlers
+  initVirtualKeyboard()
 
   // clean up on app switch in PWA
   // https://github.com/cybersemics/em/issues/1030
@@ -415,11 +405,6 @@ const initEvents = (store: Store<State, any>) => {
     window.removeEventListener('drop', drop)
     lifecycle.removeEventListener('statechange', onStateChange)
     resizeHost.removeEventListener('resize', updateSize)
-
-    // Remove Visual Viewport event listener
-    if (isTouch && isAndroidWebView() && window.visualViewport) {
-      window.visualViewport.removeEventListener('resize', handleKeyboardVisibility)
-    }
   }
 
   // return input handlers as another way to remove them on cleanup
