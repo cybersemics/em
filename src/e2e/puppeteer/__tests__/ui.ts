@@ -33,7 +33,8 @@ it('CommandPalette', async () => {
 it('GestureMenu', async () => {
   await page.emulate(KnownDevices['iPhone 15 Pro'])
 
-  // Set mock commands to ensure stable snapshots
+  // Set mock commands to ensure stable snapshots that don't change when real command gestures are modified.
+  // The mock commands have fixed gestures (r, rd, rdr, rdl, rl) that will never change.
   await setMockCommands()
 
   await paste('Hello')

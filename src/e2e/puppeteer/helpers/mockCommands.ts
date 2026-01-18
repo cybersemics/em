@@ -1,6 +1,18 @@
 import Command from '../../../@types/Command'
 
-/** Mock commands for GestureMenu testing. These commands are stable and won't change when real commands change. */
+/**
+ * Mock commands for GestureMenu testing.
+ *
+ * These commands provide stable fixtures for the GestureMenu puppeteer test to ensure snapshot stability.
+ * When real command gestures change (e.g., a command's gesture is modified from 'rd' to 'ru'), the GestureMenu
+ * snapshot would fail. By using these mock commands with fixed gestures, the snapshot remains stable.
+ *
+ * The mock commands have fixed gestures: r, rd, rdr, rdl, rl, u (cheatsheet), and cancel.
+ * Special commands 'openGestureCheatsheet' and 'cancel' are included because they have special behavior
+ * in the GestureMenu component (they appear at the end of the list).
+ *
+ * To use: call setMockCommands() before performing a gesture in the test.
+ */
 const mockCommands: Command[] = [
   {
     id: 'testCommand1',
