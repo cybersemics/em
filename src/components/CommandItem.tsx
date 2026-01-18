@@ -202,6 +202,7 @@ const CommandItem: FC<{
         {/* gesture diagram */}
         {isTouch && viewType === 'grid' ? (
           <div
+            data-testid='command-icon'
             className={css({
               border: '1px solid {colors.fgOverlay50}',
               borderRadius: '8px',
@@ -222,6 +223,7 @@ const CommandItem: FC<{
           </div>
         ) : Icon ? (
           <Icon
+            data-testid='command-icon'
             cssRaw={css.raw({
               cursor: !disabled && onClick ? 'pointer' : 'default',
             })}
@@ -301,6 +303,7 @@ const CommandItem: FC<{
       {/* gesture diagram or keyboard shortcut */}
       {viewType === 'grid' ? null : isMobileGestures ? (
         <Cell
+          data-testid='command-gesture'
           className={css({ height: 32, width: 32, display: 'flex', justifyContent: 'center', alignItems: 'center' })}
         >
           <GestureDiagram

@@ -50,6 +50,7 @@ it('GestureMenu', async () => {
     commandItems.forEach((item, index) => {
       const label = item.querySelector('[data-testid="command-label"]')
       const description = item.querySelector('[data-testid="command-description"]')
+      const gesture = item.querySelector('[data-testid="command-gesture"]')
 
       if (label) {
         label.textContent = `Test Command ${index + 1}`
@@ -57,6 +58,12 @@ it('GestureMenu', async () => {
 
       if (description) {
         description.textContent = `Test command ${index + 1} description`
+      }
+
+      // Hide gesture diagram by making it invisible
+      if (gesture) {
+        // eslint-disable-next-line no-extra-semi
+        ;(gesture as HTMLElement).style.visibility = 'hidden'
       }
     })
   })
