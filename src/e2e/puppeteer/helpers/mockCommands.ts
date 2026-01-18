@@ -66,6 +66,7 @@ const mockCommands: Command[] = [
     id: 'cancel',
     label: 'Cancel',
     description: 'Cancel gesture',
+    gesture: undefined,
     multicursor: false,
     exec: () => {},
   },
