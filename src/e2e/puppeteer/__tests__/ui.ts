@@ -36,8 +36,8 @@ it('GestureMenu', async () => {
   // When cursor is on the thought, gesture menu is rendered with two new options. When cursor is null, those options are not shown. Hence always be consistent and set cursor to the thought.
   await clickThought('Hello')
 
-  // swipe and hold
-  await swipe('r')
+  // swipe and hold an invalid gesture so that the snapshot just includes Cancel and Open Gesture Cheatsheet and does not need to be updated every time a gesture is added or changed.
+  await swipe('rdldrd')
 
   // wait for the gesture menu to appear
   await waitForSelector('[data-testid=popup-value]')
