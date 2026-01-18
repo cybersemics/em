@@ -11,7 +11,7 @@ import { gestureMenuActionCreator as gestureMenu } from '../actions/gestureMenu'
 import { longPressActionCreator as longPress } from '../actions/longPress'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { isAndroidWebView, isIOS, isSafari, isTouch } from '../browser'
-import { inputHandlers } from '../commands'
+import { keyDown, keyUp } from '../commands'
 import { AlertType, LongPressState } from '../constants'
 import * as selection from '../device/selection'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
@@ -32,7 +32,10 @@ import handleKeyboardVisibility from './handleKeyboardVisibility'
 
 declare global {
   interface Window {
-    __inputHandlers: ReturnType<typeof inputHandlers>
+    __inputHandlers: {
+      keyDown: (e: KeyboardEvent) => void
+      keyUp: (e: KeyboardEvent) => void
+    }
   }
 }
 
@@ -362,7 +365,7 @@ const initEvents = (store: Store<State, any>) => {
   }
 
   // store input handlers so they can be removed on cleanup
-  const { keyDown, keyUp } = (window.__inputHandlers = inputHandlers(store))
+  window.__inputHandlers = { keyDown, keyUp }
 
   // prevent browser from restoring the scroll position so that we can do it manually
   window.history.scrollRestoration = 'manual'
