@@ -21,9 +21,6 @@ if (!process.env.CI) {
   }
 }
 
-const user = process.env.BROWSERSTACK_USERNAME
-const date = new Date().toISOString().slice(0, 10)
-
 /**
  * WDIO configuration for BrowserStack iOS testing.
  * Uses @wdio/browserstack-service for automatic tunnel management.
@@ -38,7 +35,8 @@ export const config: WebdriverIO.Config = {
   ...baseConfig,
 
   // BrowserStack Configuration
-  user,
+  // Use env vars directly to ensure they're read at runtime, not module load time
+  user: process.env.BROWSERSTACK_USERNAME,
   key: process.env.BROWSERSTACK_ACCESS_KEY,
 
   // Capabilities
@@ -53,7 +51,9 @@ export const config: WebdriverIO.Config = {
         deviceName: 'iPhone 15 Plus',
         osVersion: '17',
         projectName: process.env.BROWSERSTACK_PROJECT_NAME || 'em',
-        buildName: process.env.BROWSERSTACK_BUILD_NAME || `Local - ${user} - ${date}`,
+        buildName:
+          process.env.BROWSERSTACK_BUILD_NAME ||
+          `Local - ${process.env.BROWSERSTACK_USERNAME || 'unknown'} - ${new Date().toISOString().slice(0, 10)}`,
         sessionName: 'iOS Safari Tests',
         local: true,
         debug: true,
