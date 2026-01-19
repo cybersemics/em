@@ -15,13 +15,7 @@ on:
 
 env:
   CI: true
-  COPILOT_AGENT_FIREWALL_ALLOW_LIST_ADDITIONS:
-    googlechromelabs.github.io,storage.googleapis.com
-    # BrowserStack credentials - WDIO's browserstack-service handles the tunnel
-  BROWSERSTACK_USERNAME: ${{secrets.BROWSERSTACK_USERNAME}}
-  BROWSERSTACK_ACCESS_KEY: ${{secrets.BROWSERSTACK_ACCESS_KEY}}
-  BROWSERSTACK_BUILD_NAME: 'CI - ${{github.run_id}}'
-  BROWSERSTACK_PROJECT_NAME: 'em'
+  COPILOT_AGENT_FIREWALL_ALLOW_LIST_ADDITIONS: googlechromelabs.github.io,storage.googleapis.com
 
 jobs:
   run:
@@ -53,19 +47,10 @@ jobs:
         run: yarn servebuild &
 
       - name: Test iOS on BrowserStack
-        run: |
-          # Verify secrets are available before running tests
-          if [ -z "$BROWSERSTACK_USERNAME" ]; then
-            echo "ERROR: BROWSERSTACK_USERNAME environment variable is not set"
-            echo "This usually means the secret is not configured in repository settings"
-            echo "or this is a PR from a fork (secrets are not available for security reasons)"
-            exit 1
-          fi
-          if [ -z "$BROWSERSTACK_ACCESS_KEY" ]; then
-            echo "ERROR: BROWSERSTACK_ACCESS_KEY environment variable is not set"
-            echo "This usually means the secret is not configured in repository settings"
-            echo "or this is a PR from a fork (secrets are not available for security reasons)"
-            exit 1
-          fi
-          echo "BrowserStack credentials verified (username: ${BROWSERSTACK_USERNAME:0:2}...)"
-          yarn test:ios
+        run: yarn test:ios
+        env:
+          # BrowserStack credentials - WDIO's browserstack-service handles the tunnel
+          BROWSERSTACK_USERNAME: ${{secrets.BROWSERSTACK_USERNAME}}
+          BROWSERSTACK_ACCESS_KEY: ${{secrets.BROWSERSTACK_ACCESS_KEY}}
+          BROWSERSTACK_BUILD_NAME: 'CI - ${{github.run_id}}'
+          BROWSERSTACK_PROJECT_NAME: 'em'

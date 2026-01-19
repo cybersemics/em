@@ -21,6 +21,9 @@ if (!process.env.CI) {
   }
 }
 
+const user = process.env.BROWSERSTACK_USERNAME
+const date = new Date().toISOString().slice(0, 10)
+
 /**
  * WDIO configuration for BrowserStack iOS testing.
  * Uses @wdio/browserstack-service for automatic tunnel management.
@@ -31,36 +34,12 @@ if (!process.env.CI) {
  *
  * Run: yarn test:ios:browserstack.
  */
-
-// Log BrowserStack credentials for debugging (mask key for security)
-const username = process.env.BROWSERSTACK_USERNAME
-const accessKey = process.env.BROWSERSTACK_ACCESS_KEY
-
-// Debug: Log all relevant environment variables
-console.info('[BrowserStack Config] CI:', process.env.CI)
-console.info('[BrowserStack Config] All BROWSERSTACK_* env vars:', {
-  BROWSERSTACK_USERNAME: username ? `${username.substring(0, 2)}...` : 'undefined',
-  BROWSERSTACK_ACCESS_KEY: accessKey ? 'defined' : 'undefined',
-  BROWSERSTACK_PROJECT_NAME: process.env.BROWSERSTACK_PROJECT_NAME || 'undefined',
-  BROWSERSTACK_BUILD_NAME: process.env.BROWSERSTACK_BUILD_NAME || 'undefined',
-})
-
-const maskedKey = accessKey
-  ? `${accessKey.substring(0, 4)}...${accessKey.substring(accessKey.length - 4)}`
-  : 'undefined'
-
-console.info('[BrowserStack Config] Username:', username || 'undefined')
-console.info('[BrowserStack Config] Access Key:', maskedKey)
-console.info('[BrowserStack Config] Project:', process.env.BROWSERSTACK_PROJECT_NAME || 'em')
-console.info('[BrowserStack Config] Build Name:', process.env.BROWSERSTACK_BUILD_NAME || 'not set')
-
 export const config: WebdriverIO.Config = {
   ...baseConfig,
 
   // BrowserStack Configuration
-  // Use env vars directly to ensure they're read at runtime, not module load time
-  user: username,
-  key: accessKey,
+  user,
+  key: process.env.BROWSERSTACK_ACCESS_KEY,
 
   // Capabilities
   capabilities: [
@@ -74,9 +53,7 @@ export const config: WebdriverIO.Config = {
         deviceName: 'iPhone 15 Plus',
         osVersion: '17',
         projectName: process.env.BROWSERSTACK_PROJECT_NAME || 'em',
-        buildName:
-          process.env.BROWSERSTACK_BUILD_NAME ||
-          `Local - ${process.env.BROWSERSTACK_USERNAME || 'unknown'} - ${new Date().toISOString().slice(0, 10)}`,
+        buildName: process.env.BROWSERSTACK_BUILD_NAME || `Local - ${user} - ${date}`,
         sessionName: 'iOS Safari Tests',
         local: true,
         debug: true,
