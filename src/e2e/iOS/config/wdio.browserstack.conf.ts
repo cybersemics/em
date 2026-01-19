@@ -6,14 +6,15 @@ import baseConfig from './wdio.base.conf.js'
 // In CI, environment variables should be set via GitHub Actions secrets
 if (!process.env.CI) {
   dotenv.config({ path: path.resolve(process.cwd(), '.env.test.local') })
-}
-
-// Validate environment variables
-if (!process.env.BROWSERSTACK_USERNAME) {
-  throw new Error('process.env.BROWSERSTACK_USERNAME not defined')
-}
-if (!process.env.BROWSERSTACK_ACCESS_KEY) {
-  throw new Error('process.env.BROWSERSTACK_ACCESS_KEY not defined')
+  
+  // Validate environment variables only in local development
+  // In CI, secrets are set by GitHub Actions and will be available when WebdriverIO runs
+  if (!process.env.BROWSERSTACK_USERNAME) {
+    throw new Error('process.env.BROWSERSTACK_USERNAME not defined. Set it in .env.test.local or as an environment variable.')
+  }
+  if (!process.env.BROWSERSTACK_ACCESS_KEY) {
+    throw new Error('process.env.BROWSERSTACK_ACCESS_KEY not defined. Set it in .env.test.local or as an environment variable.')
+  }
 }
 
 const user = process.env.BROWSERSTACK_USERNAME
