@@ -35,6 +35,16 @@ if (!process.env.CI) {
 // Log BrowserStack credentials for debugging (mask key for security)
 const username = process.env.BROWSERSTACK_USERNAME
 const accessKey = process.env.BROWSERSTACK_ACCESS_KEY
+
+// Debug: Log all relevant environment variables
+console.info('[BrowserStack Config] CI:', process.env.CI)
+console.info('[BrowserStack Config] All BROWSERSTACK_* env vars:', {
+  BROWSERSTACK_USERNAME: username ? `${username.substring(0, 2)}...` : 'undefined',
+  BROWSERSTACK_ACCESS_KEY: accessKey ? 'defined' : 'undefined',
+  BROWSERSTACK_PROJECT_NAME: process.env.BROWSERSTACK_PROJECT_NAME || 'undefined',
+  BROWSERSTACK_BUILD_NAME: process.env.BROWSERSTACK_BUILD_NAME || 'undefined',
+})
+
 const maskedKey = accessKey
   ? `${accessKey.substring(0, 4)}...${accessKey.substring(accessKey.length - 4)}`
   : 'undefined'
