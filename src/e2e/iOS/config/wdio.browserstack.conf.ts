@@ -31,13 +31,26 @@ if (!process.env.CI) {
  *
  * Run: yarn test:ios:browserstack.
  */
+
+// Log BrowserStack credentials for debugging (mask key for security)
+const username = process.env.BROWSERSTACK_USERNAME
+const accessKey = process.env.BROWSERSTACK_ACCESS_KEY
+const maskedKey = accessKey
+  ? `${accessKey.substring(0, 4)}...${accessKey.substring(accessKey.length - 4)}`
+  : 'undefined'
+
+console.info('[BrowserStack Config] Username:', username || 'undefined')
+console.info('[BrowserStack Config] Access Key:', maskedKey)
+console.info('[BrowserStack Config] Project:', process.env.BROWSERSTACK_PROJECT_NAME || 'em')
+console.info('[BrowserStack Config] Build Name:', process.env.BROWSERSTACK_BUILD_NAME || 'not set')
+
 export const config: WebdriverIO.Config = {
   ...baseConfig,
 
   // BrowserStack Configuration
   // Use env vars directly to ensure they're read at runtime, not module load time
-  user: process.env.BROWSERSTACK_USERNAME,
-  key: process.env.BROWSERSTACK_ACCESS_KEY,
+  user: username,
+  key: accessKey,
 
   // Capabilities
   capabilities: [
