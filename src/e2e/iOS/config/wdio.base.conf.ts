@@ -1,4 +1,26 @@
+import http from 'http'
 import path from 'path'
+
+/**
+ * Checks if the app is running on locally.
+ * @throws Error if the app is not running.
+ */
+export const checkAppRunning = (): Promise<void> => {
+  const errorMessage = 'App is not running on http://localhost:3000. Please start the app locally before running tests.'
+  return new Promise((resolve, reject) => {
+    const req = http.get('http://localhost:3000', { timeout: 2000 }, res => {
+      res.on('data', () => {})
+      res.on('end', () => resolve())
+    })
+    req.on('error', () => {
+      reject(new Error(errorMessage))
+    })
+    req.on('timeout', () => {
+      req.destroy()
+      reject(new Error(errorMessage))
+    })
+  })
+}
 
 /**
  * Base WDIO configuration shared between local and BrowserStack configs.
@@ -19,6 +41,13 @@ const baseConfig = {
   // Capabilities
   // Each spec file runs in its own parallel session
   maxInstances: 3,
+
+  // Base iOS Safari capabilities shared between local and browserStack configs. Individual configs can override or extend these.
+  baseCapabilities: {
+    platformName: 'iOS' as const,
+    browserName: 'Safari' as const,
+    'appium:automationName': 'XCUITest' as const,
+  },
 
   // Test Configurations
   logLevel: 'info' as const,

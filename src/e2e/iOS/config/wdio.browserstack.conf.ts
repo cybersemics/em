@@ -1,7 +1,6 @@
 import dotenv from 'dotenv'
 import path from 'path'
-import createIOSCapability from './createIOSCapability.js'
-import baseConfig from './wdio.base.conf.js'
+import baseConfig, { checkAppRunning } from './wdio.base.conf.js'
 
 // Load .env.test.local before checking env vars since this file is imported
 // at module load time, before vitest's automatic env loading kicks in
@@ -38,7 +37,8 @@ export const config: WebdriverIO.Config = {
   // Capabilities
   capabilities: [
     {
-      ...createIOSCapability('iPhone 15 Plus'),
+      ...baseConfig.baseCapabilities,
+      'appium:deviceName': 'iPhone 15 Plus',
       'appium:platformVersion': '17',
       'bstack:options': {
         deviceName: 'iPhone 15 Plus',
@@ -70,6 +70,19 @@ export const config: WebdriverIO.Config = {
       },
     ],
   ],
+
+  // Check if app is running before starting any workers (only in local development)
+  // Reason for this is when app is not running, the tests will run but will fail with a timeout unncessarily.
+  onPrepare: async function () {
+    if (!process.env.CI) {
+      try {
+        await checkAppRunning()
+      } catch (error) {
+        console.error(error instanceof Error ? error.message : 'App is not running on http://localhost:3000')
+        process.exit(1)
+      }
+    }
+  },
 }
 
 export default config
