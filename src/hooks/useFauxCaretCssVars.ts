@@ -40,7 +40,7 @@ const useFauxCaretNodeProvider = ({
       if (!isTouch || !isSafari()) return
       if (editing && isCursor) {
         // The selection ranges aren't updated until the end of the frame when the thought is focused.
-        timeout = setTimeout(() => {
+        timeout = requestAnimationFrame(() => {
           if (noteFocus) {
             setFauxCaretType(isStartOfElementNode() ? 'noteStart' : isEndOfElementNode() ? 'noteEnd' : 'none')
           } else {
