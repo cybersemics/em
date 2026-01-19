@@ -2,9 +2,11 @@ import dotenv from 'dotenv'
 import path from 'path'
 import baseConfig from './wdio.base.conf.js'
 
-// Load .env.test.local before checking env vars since this file is imported
-// at module load time, before vitest's automatic env loading kicks in
-dotenv.config({ path: path.resolve(process.cwd(), '.env.test.local') })
+// Load .env.test.local only in local development, not in CI
+// In CI, environment variables should be set via GitHub Actions secrets
+if (!process.env.CI) {
+  dotenv.config({ path: path.resolve(process.cwd(), '.env.test.local') })
+}
 
 // Validate environment variables
 if (!process.env.BROWSERSTACK_USERNAME) {
