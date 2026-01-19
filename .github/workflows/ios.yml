@@ -15,7 +15,13 @@ on:
 
 env:
   CI: true
-  COPILOT_AGENT_FIREWALL_ALLOW_LIST_ADDITIONS: googlechromelabs.github.io,storage.googleapis.com
+  COPILOT_AGENT_FIREWALL_ALLOW_LIST_ADDITIONS:
+    googlechromelabs.github.io,storage.googleapis.com
+    # BrowserStack credentials - WDIO's browserstack-service handles the tunnel
+  BROWSERSTACK_USERNAME: ${{secrets.BROWSERSTACK_USERNAME}}
+  BROWSERSTACK_ACCESS_KEY: ${{secrets.BROWSERSTACK_ACCESS_KEY}}
+  BROWSERSTACK_BUILD_NAME: 'CI - ${{github.run_id}}'
+  BROWSERSTACK_PROJECT_NAME: 'em'
 
 jobs:
   run:
@@ -63,9 +69,3 @@ jobs:
           fi
           echo "BrowserStack credentials verified (username: ${BROWSERSTACK_USERNAME:0:2}...)"
           yarn test:ios
-        env:
-          # BrowserStack credentials - WDIO's browserstack-service handles the tunnel
-          BROWSERSTACK_USERNAME: ${{secrets.BROWSERSTACK_USERNAME}}
-          BROWSERSTACK_ACCESS_KEY: ${{secrets.BROWSERSTACK_ACCESS_KEY}}
-          BROWSERSTACK_BUILD_NAME: 'CI - ${{github.run_id}}'
-          BROWSERSTACK_PROJECT_NAME: 'em'
