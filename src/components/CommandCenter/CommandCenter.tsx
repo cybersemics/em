@@ -87,20 +87,24 @@ const tweenConfig: SheetTweenConfig = {
 }
 
 /**
- * A panel that displays the Command Center.
+ * Custom hook that returns the sheet's height and blur height transforms.
+ * The blur height extends 110px beyond the sheet height for the progressive blur effect.
  */
-const CommandCenter = ({ mountPoint }: Pick<SheetProps, 'mountPoint'>) => {
-  const dispatch = useDispatch()
-  const showCommandCenter = useSelector(state => state.showCommandCenter)
-  const isTutorialOn = useSelector(isTutorial)
-  const ref = useRef<SheetRef>(null)
-
+const useSheetDimensions = (ref: React.RefObject<SheetRef | null>) => {
   const height = useTransform(() => {
     return ref.current?.yInverted.get() ?? 0
   })
 
   const blurHeight = useTransform(height, height => height + 110)
 
+  return { height, blurHeight }
+}
+
+/**
+ * Custom hook that returns the opacity transform for the overlay background.
+ * Maps the sheet's progress (0-1) to opacity (0-1) with easing.
+ */
+const useSheetOpacity = (ref: React.RefObject<SheetRef | null>) => {
   const sheetProgress = useTransform(() => {
     const y = ref.current?.yInverted.get() ?? 0
     const height = ref.current?.height ?? 0
@@ -110,6 +114,22 @@ const CommandCenter = ({ mountPoint }: Pick<SheetProps, 'mountPoint'>) => {
 
   const opacity = useTransform(sheetProgress, [0, 1], [0, 1], { ease })
 
+  return opacity
+}
+
+/**
+ * A panel that displays the Command Center.
+ */
+const CommandCenter = ({ mountPoint }: Pick<SheetProps, 'mountPoint'>) => {
+  const dispatch = useDispatch()
+  const showCommandCenter = useSelector(state => state.showCommandCenter)
+  const isTutorialOn = useSelector(isTutorial)
+  const ref = useRef<SheetRef>(null)
+
+  const { height, blurHeight } = useSheetDimensions(ref)
+  const opacity = useSheetOpacity(ref)
+
+  /** The bottom position of the sheet container, negated from the y-position for proper positioning. */
   const bottom = useTransform(() => {
     const y = ref.current?.y.get() ?? 0
     return -y
