@@ -7,6 +7,7 @@ import { indentActionCreator as indent } from '../../actions/indent'
 import { moveThoughtDownActionCreator as moveThoughtDown } from '../../actions/moveThoughtDown'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import { undoActionCreator as undo } from '../../actions/undo'
+import { executeCommandWithMulticursor } from '../../commands'
 import indentCommand from '../../commands/indent'
 import moveThoughtDownCommand from '../../commands/moveThoughtDown'
 import { HOME_TOKEN } from '../../constants'
@@ -19,7 +20,6 @@ import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../..
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
-import { executeCommandWithMulticursor } from '../../util/executeCommand'
 import deleteCommand from '../delete'
 
 beforeEach(initStore)

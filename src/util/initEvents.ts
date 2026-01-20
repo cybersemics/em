@@ -11,7 +11,7 @@ import { gestureMenuActionCreator as gestureMenu } from '../actions/gestureMenu'
 import { longPressActionCreator as longPress } from '../actions/longPress'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { isAndroidWebView, isIOS, isSafari, isTouch } from '../browser'
-import { inputHandlers } from '../commands'
+import { keyDown, keyUp } from '../commands'
 import { AlertType, LongPressState } from '../constants'
 import * as selection from '../device/selection'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
@@ -29,12 +29,6 @@ import pathToContext from '../util/pathToContext'
 import durations from './durations'
 import equalPath from './equalPath'
 import handleKeyboardVisibility from './handleKeyboardVisibility'
-
-declare global {
-  interface Window {
-    __inputHandlers: ReturnType<typeof inputHandlers>
-  }
-}
 
 // the width of the scroll-at-edge zone at the top/bottom of the screen (for vertical scrolling) or left/right of the screen (for horizontal scrolling)
 const TOOLBAR_SCROLLATEDGE_SIZE = 50
@@ -361,9 +355,6 @@ const initEvents = (store: Store<State, any>) => {
     }
   }
 
-  // store input handlers so they can be removed on cleanup
-  const { keyDown, keyUp } = (window.__inputHandlers = inputHandlers(store))
-
   // prevent browser from restoring the scroll position so that we can do it manually
   window.history.scrollRestoration = 'manual'
 
@@ -399,7 +390,7 @@ const initEvents = (store: Store<State, any>) => {
   const unsubscribeSaveErrorReload = syncStatusStore.subscribeSelector(state => state.savingProgress, saveErrorReload)
 
   /** Remove window event handlers. */
-  const cleanup = ({ keyDown, keyUp } = window.__inputHandlers || {}) => {
+  const cleanup = () => {
     unsubscribeSaveErrorReload()
     document.removeEventListener('selectionchange', onSelectionChange)
     window.removeEventListener('keydown', keyDown)

@@ -1,11 +1,11 @@
 import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { setCursorActionCreator as setCursor } from '../../actions/setCursor'
+import { executeCommand } from '../../commands'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
-import executeCommand from '../../util/executeCommand'
 import clearThoughtCommand from '../clearThought'
 
 beforeEach(initStore)

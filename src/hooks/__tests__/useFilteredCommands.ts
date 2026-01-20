@@ -28,14 +28,19 @@ import { Provider } from 'react-redux'
 import Command from '../../@types/Command'
 import CommandId from '../../@types/CommandId'
 import * as browser from '../../browser'
+import { gestureString } from '../../commands'
+import categorizeCommand from '../../commands/categorize'
+import openGestureCheatsheetCommand from '../../commands/openGestureCheatsheet'
+import selectAllCommand from '../../commands/selectAll'
 import store from '../../stores/app'
 import gestureStore from '../../stores/gesture'
 import useFilteredCommands from '../useFilteredCommands'
 
 vi.mock('../../browser')
 
-vi.mock('../../commands', () => ({
-  globalCommands: [
+vi.mock('../../commands', async () => {
+  const actual = await vi.importActual('../../commands')
+  const globalCommands: Command[] = [
     {
       id: 'newThought' as CommandId,
       label: 'New Thought',
@@ -86,6 +91,20 @@ vi.mock('../../commands', () => ({
       exec: vi.fn(),
     },
     {
+      id: 'categorize' as CommandId,
+      label: 'Categorize',
+      gesture: 'lu',
+      multicursor: true,
+      exec: vi.fn(),
+    },
+    {
+      id: 'newThought' as CommandId,
+      label: 'New Thought',
+      gesture: 'rd',
+      multicursor: true,
+      exec: vi.fn(),
+    },
+    {
       id: 'cancel' as CommandId,
       label: 'Cancel',
       gesture: undefined,
@@ -132,6 +151,8 @@ vi.mock('../../commands', () => ({
       description: 'Selects all thoughts at the current level. May reduce wrist strain.',
       descriptionInverse: 'Deselects all thoughts at the current level.',
       gesture: 'ldr',
+      exec: vi.fn(),
+      multicursor: false,
       keyboard: [
         { key: 'a', meta: true, alt: true },
         { key: 'a', meta: true },
@@ -144,10 +165,15 @@ vi.mock('../../commands', () => ({
       multicursor: false,
       exec: vi.fn(),
     },
-  ],
-  gestureString: (command: Command): string =>
-    (typeof command.gesture === 'string' ? command.gesture : command.gesture?.[0] || '') as string,
-}))
+  ]
+  return {
+    chainCommand: actual.chainCommand,
+    commandById: (id: CommandId) => globalCommands.find(command => command.id === id),
+    globalCommands,
+    gestureString: (command: Command): string =>
+      (typeof command.gesture === 'string' ? command.gesture : command.gesture?.[0] || '') as string,
+  }
+})
 
 /**
  * Test wrapper component that provides Redux store context.
@@ -449,13 +475,113 @@ describe('useFilteredCommands', () => {
       })
     })
 
-    describe('Parameter: platformCommandsOnly', () => {
+    describe('platformCommandsOnly', () => {
       it('should only include commands with gestures when platformCommandsOnly is true', () => {
         const { result } = renderHook(() => useFilteredCommands('', { platformCommandsOnly: true }), { wrapper })
 
         const commandIds = result.current.map(cmd => cmd.id)
         expect(commandIds).toContain('newThought')
         expect(commandIds).not.toContain('noGestureCommand')
+      })
+    })
+
+    describe('Select All chaining', () => {
+      it('should show additional commands when Select All is active', () => {
+        act(() => {
+          gestureStore.update({ gesture: selectAllCommand.gesture as string })
+        })
+
+        const { result } = renderHook(() => useFilteredCommands('', {}), { wrapper })
+
+        const commandIds = result.current.map(cmd => cmd.id)
+        expect(commandIds).toContain('categorize')
+      })
+
+      it('should show Select All, Open Gesture Cheatsheet, and Cancel commands unchanged', () => {
+        act(() => {
+          gestureStore.update({ gesture: selectAllCommand.gesture as string })
+        })
+
+        const { result } = renderHook(() => useFilteredCommands('', {}), { wrapper })
+
+        const commandIds = result.current.map(cmd => cmd.id)
+        expect(commandIds).toContain('selectAll')
+        expect(commandIds).toContain('openGestureCheatsheet')
+        expect(commandIds).toContain('cancel')
+
+        const selectAllCategorizeCommand = result.current.find(command => command.id === 'selectAll')
+        expect(selectAllCategorizeCommand!.gesture).toEqual(selectAllCommand.gesture)
+        expect(selectAllCategorizeCommand!.label).toEqual(selectAllCommand.label)
+
+        const gestureCheatsheetCommand = result.current.find(command => command.id === 'openGestureCheatsheet')
+        expect(gestureCheatsheetCommand!.gesture).toEqual(openGestureCheatsheetCommand.gesture)
+        expect(gestureCheatsheetCommand!.label).toEqual(openGestureCheatsheetCommand.label)
+
+        const cancelCommand = result.current.find(command => command.id === 'cancel')
+        expect(cancelCommand!.gesture).toEqual(cancelCommand!.gesture)
+        expect(cancelCommand!.label).toEqual(cancelCommand!.label)
+      })
+
+      it('should prefix command labels with "Select All + "', () => {
+        act(() => {
+          gestureStore.update({ gesture: selectAllCommand.gesture as string })
+        })
+
+        const { result } = renderHook(() => useFilteredCommands('', {}), { wrapper })
+
+        const commandIds = result.current.map(cmd => cmd.id)
+        expect(commandIds).toContain('categorize')
+
+        const selectAllCategorizeCommand = result.current.find(command => command.id === 'categorize')
+        expect(selectAllCategorizeCommand!.label).toEqual('Select All + Categorize')
+      })
+
+      it('should prefix command gestures with Select All swipes', () => {
+        act(() => {
+          gestureStore.update({ gesture: selectAllCommand.gesture as string })
+        })
+
+        const { result } = renderHook(() => useFilteredCommands('', {}), { wrapper })
+
+        const commandIds = result.current.map(cmd => cmd.id)
+        expect(commandIds).toContain('categorize')
+
+        const selectAllCategorizeCommand = result.current.find(command => command.id === 'categorize')
+        expect(selectAllCategorizeCommand!.gesture).toEqual(
+          selectAllCommand.gesture + gestureString(categorizeCommand!),
+        )
+      })
+
+      it('should filter chained commands with additional swipes', () => {
+        act(() => {
+          gestureStore.update({ gesture: (selectAllCommand.gesture as string) + categorizeCommand.gesture })
+        })
+
+        const { result } = renderHook(() => useFilteredCommands('', {}), { wrapper })
+
+        const commandIds = result.current.map(cmd => cmd.id)
+        expect(commandIds).toContain('categorize')
+
+        const selectAllCategorizeCommand = result.current.find(command => command.id === 'categorize')
+        expect(selectAllCategorizeCommand!.gesture).toEqual(
+          (selectAllCommand.gesture as string) + categorizeCommand.gesture,
+        )
+      })
+
+      it('should collapse duplicate swipes in chained commands', () => {
+        act(() => {
+          gestureStore.update({ gesture: 'ldrd' })
+        })
+
+        const { result } = renderHook(() => useFilteredCommands('', {}), { wrapper })
+
+        const commandIds = result.current.map(cmd => cmd.id)
+        expect(commandIds).toContain('newThought')
+
+        const selectAllNewThoughtCommand = result.current.find(command => command.id === 'newThought')
+        // Should be 'ldrd' not 'ldrrd' - duplicate 'r' should be collapsed
+        expect(selectAllNewThoughtCommand!.gesture).toEqual('ldrd')
+        expect(selectAllNewThoughtCommand!.label).toEqual('Select All + New Thought')
       })
     })
   })

@@ -1,6 +1,7 @@
 import { screen } from '@testing-library/dom'
 import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { executeCommand, executeCommandWithMulticursor } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
@@ -8,7 +9,6 @@ import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../..
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
-import executeCommand, { executeCommandWithMulticursor } from '../../util/executeCommand'
 import deleteCommand from '../delete'
 
 beforeEach(initStore)

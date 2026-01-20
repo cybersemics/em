@@ -10,7 +10,7 @@ const bumpThoughtDownCommand: Command = {
   id: 'bumpThoughtDown',
   label: 'Bump Thought Down',
   description: 'Bump the current thought down one level and replace it with a new, empty thought.',
-  gesture: 'rld',
+  gesture: 'drd',
   keyboard: { key: 'd', meta: true, alt: true },
   multicursor: {
     disallow: true,
