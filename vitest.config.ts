@@ -13,7 +13,9 @@ export default defineConfig({
           exclude: ['node_modules/**', '**/e2e/**', 'packages/**'],
           environment: 'jsdom',
           mockReset: false,
-          setupFiles: ['src/setupTests.js'],
+          // setupLocalStorage must run FIRST to ensure localStorage is mocked before
+          // any modules are evaluated (e.g., storageCache.ts which runs at module load time)
+          setupFiles: ['src/setupLocalStorage.js', 'src/setupTests.js'],
         },
       },
       {

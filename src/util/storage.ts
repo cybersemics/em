@@ -1,36 +1,36 @@
-/** Safely gets localStorage, with a fallback if it's not available (e.g., during test initialization). */
-const getLocalStorage = (): Storage => {
-  if (typeof globalThis !== 'undefined' && globalThis.localStorage) {
-    return globalThis.localStorage
-  }
-  // Fallback: return a no-op storage implementation if localStorage is not available
-  // This can happen during module evaluation before test mocks are initialized
-  return {
-    clear: () => {},
-    getItem: () => null,
-    removeItem: () => {},
-    setItem: () => {},
-    key: () => null,
-    get length() {
-      return 0
-    },
-  } as Storage
-}
+// /** Safely gets localStorage, with a fallback if it's not available (e.g., during test initialization). */
+// const getLocalStorage = (): Storage => {
+//   if (typeof globalThis !== 'undefined' && globalThis.localStorage) {
+//     return globalThis.localStorage
+//   }
+//   // Fallback: return a no-op storage implementation if localStorage is not available
+//   // This can happen during module evaluation before test mocks are initialized
+//   return {
+//     clear: () => {},
+//     getItem: () => null,
+//     removeItem: () => {},
+//     setItem: () => {},
+//     key: () => null,
+//     get length() {
+//       return 0
+//     },
+//   } as Storage
+// }
 
 /** Clear local storage. */
-const clear = () => getLocalStorage().clear()
+const clear = () => globalThis.localStorage.clear()
 
 /** Removes an item from local storage. */
-const removeItem = (key: string) => getLocalStorage().removeItem(key)
+const removeItem = (key: string) => globalThis.localStorage.removeItem(key)
 
 /** Sets an item on local storage. */
-const setItem = (key: string, value: string) => getLocalStorage().setItem(key, value)
+const setItem = (key: string, value: string) => globalThis.localStorage.setItem(key, value)
 
 function getItem(key: string): string | null
 function getItem(key: string, defaultValue: string | (() => string)): string
 /** Gets the item from local storage. If it does not exist and defaultValue is provided, sets the value in local storage to defaultValue and returns it. */
 function getItem(key: string, defaultValue?: string | (() => string)) {
-  const storage = getLocalStorage()
+  const storage = globalThis.localStorage
   let value = storage.getItem(key)
   if (value === null && defaultValue !== undefined) {
     value = typeof defaultValue === 'function' ? defaultValue() : defaultValue

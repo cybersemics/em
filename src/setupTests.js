@@ -5,7 +5,6 @@ import * as matchers from 'jest-extended'
 import { noop } from 'lodash'
 import { TextDecoder, TextEncoder } from 'util'
 import 'vi-canvas-mock'
-import 'vitest-localstorage-mock'
 
 expect.extend(matchers)
 
