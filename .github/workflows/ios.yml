@@ -1,15 +1,16 @@
 name: BrowserStack
 
-# Temporarily disable the workflow except when manually triggered
-# https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_dispatch
-on: workflow_dispatch
-
-# on:
-#   push:
-#     branches:
-#       - main
-#   pull_request_target:
-#     types: [opened, synchronize, reopened]
+on:
+  push:
+    branches:
+      - main
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      rerun_id:
+        description: 'Optional ID for tracking repeated runs'
+        required: false
 
 env:
   CI: true
@@ -35,21 +36,6 @@ jobs:
         with:
           node-version: 20
 
-      - name: 'BrowserStack Env Setup'
-        uses: 'browserstack/github-actions/setup-env@master'
-        with:
-          username: ${{secrets.BROWSERSTACK_USERNAME}}
-          access-key: ${{secrets.BROWSERSTACK_ACCESS_KEY}}
-          build-name: 'BUILD_INFO'
-          project-name: 'REPO_NAME'
-
-      - name: 'Start BrowserStackLocal Tunnel'
-        uses: 'browserstack/github-actions/setup-local@master'
-        with:
-          local-testing: 'start'
-          local-logging-level: 'all-logs'
-          local-identifier: 'random'
-
       - name: Install npm dependencies
         run: yarn
 
@@ -61,8 +47,9 @@ jobs:
 
       - name: Test iOS on BrowserStack
         run: yarn test:ios
-
-      - name: 'Stop BrowserStackLocal'
-        uses: 'browserstack/github-actions/setup-local@master'
-        with:
-          local-testing: 'stop'
+        env:
+          # BrowserStack credentials - WDIO's browserstack-service handles the tunnel
+          BROWSERSTACK_USERNAME: ${{secrets.BROWSERSTACK_USERNAME}}
+          BROWSERSTACK_ACCESS_KEY: ${{secrets.BROWSERSTACK_ACCESS_KEY}}
+          BROWSERSTACK_BUILD_NAME: 'CI - ${{github.run_id}}'
+          BROWSERSTACK_PROJECT_NAME: 'em'

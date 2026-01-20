@@ -48,10 +48,12 @@ export default defineConfig({
     // minify and add EJS capabilities to index.html
     createHtmlPlugin({ minify: true }),
   ],
-  ...(process.env.PUPPETEER
-    ? {
-        // Serve the dev server over HTTPS in puppeteer tests to enable clipboard access
-        server: {
+  server: {
+    // Allow bs-local.com for BrowserStack local testing
+    allowedHosts: ['bs-local.com'],
+    ...(process.env.PUPPETEER
+      ? {
+          // Serve the dev server over HTTPS in puppeteer tests to enable clipboard access
           https: {
             key: fs.readFileSync('./src/e2e/puppeteer/puppeteer-key.pem'),
             cert: fs.readFileSync('./src/e2e/puppeteer/puppeteer.pem'),
@@ -62,7 +64,7 @@ export default defineConfig({
             // wss uses a secure websocket(wss://) connection. This was necessary to resolve mixed content security error which was observed when using ws protocol only.
             protocol: 'wss',
           },
-        },
-      }
-    : {}),
+        }
+      : {}),
+  },
 })

@@ -32,3 +32,10 @@ __diff_output__
 ## PandaCSS
 styled-system
 styled-system-studio
+
+# WDIO
+wdio.log
+browserstack.log
+local.log
+/log
+/logs

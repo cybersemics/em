@@ -8,14 +8,13 @@ import DragCommandZone from '../@types/DragCommandZone'
 import State from '../@types/State'
 import { isTouch } from '../browser'
 import { commandById, formatKeyboardShortcut } from '../commands'
+import { executeCommandWithMulticursor } from '../commands'
 import { TOOLBAR_BUTTON_PADDING } from '../constants'
 import useDragAndDropToolbarButton from '../hooks/useDragAndDropToolbarButton'
 import useLongPress from '../hooks/useLongPress'
 import store from '../stores/app'
 import commandStateStore from '../stores/commandStateStore'
 import dndRef from '../util/dndRef'
-import { executeCommandWithMulticursor } from '../util/executeCommand'
-import fastClick from '../util/fastClick'
 import getCursorSortDirection from '../util/getCursorSortDirection'
 import haptics from '../util/haptics'
 
@@ -237,7 +236,10 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
         padding: `14px ${TOOLBAR_BUTTON_PADDING}px ${isDraggingAny ? '7em' : 0}px ${TOOLBAR_BUTTON_PADDING}px`,
       }}
       onMouseLeave={onMouseLeave}
-      {...fastClick(tapUp, { enableHaptics: false, tapDown })}
+      onMouseDown={isTouch ? undefined : tapDown}
+      onClick={isTouch ? undefined : tapUp}
+      onTouchStart={isTouch ? tapDown : undefined}
+      onTouchEnd={isTouch ? tapUp : undefined}
     >
       {
         // selected top dash
