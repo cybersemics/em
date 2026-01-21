@@ -1,4 +1,4 @@
-import baseConfig, { checkAppRunning } from './wdio.base.conf.js'
+import baseConfig from './wdio.base.conf.js'
 
 const HOST = process.env.APPIUM_HOST || '127.0.0.1'
 const PORT = process.env.APPIUM_PORT ? parseInt(process.env.APPIUM_PORT, 10) : 4723
@@ -35,16 +35,6 @@ export const config: WebdriverIO.Config = {
       'appium:newCommandTimeout': 240,
     },
   ],
-
-  // Check if app is running before starting any workers
-  onPrepare: async function () {
-    try {
-      await checkAppRunning()
-    } catch (error) {
-      console.error(error instanceof Error ? error.message : 'App is not running on http://localhost:3000')
-      process.exit(1)
-    }
-  },
 }
 
 export default config

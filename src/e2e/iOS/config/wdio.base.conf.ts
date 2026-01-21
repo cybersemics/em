@@ -64,6 +64,21 @@ const baseConfig = {
   },
 
   // Hooks
+  // Check if app is running before starting any workers (only in local development, not CI)
+  // Reason: when app is not running, tests will run but fail with a timeout unnecessarily.
+  // wdio.local.conf.ts always runs locally, so this check always runs for it.
+  // wdio.browserstack.conf.ts can run locally or in CI, so we check !process.env.CI.
+  onPrepare: async function () {
+    if (!process.env.CI) {
+      try {
+        await checkAppRunning()
+      } catch (error) {
+        console.error(error instanceof Error ? error.message : 'App is not running on http://localhost:3000')
+        process.exit(1)
+      }
+    }
+  },
+
   // Navigate once at the start of the session
   before: async function () {
     await browser.url('http://bs-local.com:3000')
