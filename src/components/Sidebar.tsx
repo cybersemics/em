@@ -179,7 +179,7 @@ const Sidebar = () => {
                 bottom: 0,
                 width,
                 backgroundColor: 'sidebarBg',
-                zIndex: 'sidebar !important',
+                zIndex: 'sidebar',
                 userSelect: 'none',
                 boxShadow: '0 0 20px bgOverlay30',
                 outline: 'none',
