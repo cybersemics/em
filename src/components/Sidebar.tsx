@@ -7,6 +7,7 @@ import { css } from '../../styled-system/css'
 import { longPressActionCreator as longPress } from '../actions/longPress'
 import { toggleSidebarActionCreator } from '../actions/toggleSidebar'
 import { LongPressState } from '../constants'
+import viewportStore from '../stores/viewport'
 import durations from '../util/durations'
 import fastClick from '../util/fastClick'
 import FadeTransition from './FadeTransition'
@@ -53,6 +54,7 @@ const Sidebar = () => {
   const fontSize = useSelector(state => state.fontSize)
   const dispatch = useDispatch()
   const [section, setSection] = useState<SidebarSection>('favorites')
+  const innerWidth = viewportStore.useSelector(state => state.innerWidth)
 
   /** Track the current x position of the sidebar. This is used for progress-based animations. */
   const x = useMotionValue(0)
@@ -66,10 +68,10 @@ const Sidebar = () => {
   )
 
   /** Dynamically determine the width of the sidebar. */
-  const width = typeof window !== 'undefined' && window.innerWidth < 768 ? '90%' : '400px'
+  const width = innerWidth < 768 ? '90%' : '400px'
 
   /** Get the width of the sidebar in pixels, which is used for progress-based animations. */
-  const widthPx = typeof window !== 'undefined' && window.innerWidth < 768 ? window.innerWidth * 0.9 : 400
+  const widthPx = innerWidth < 768 ? innerWidth * 0.9 : 400
 
   /** Link opacity to x position of the sidebar. 1 when open, 0 when closed. */
   const opacity = useTransform(x, [-widthPx, 0], [0, 1])
