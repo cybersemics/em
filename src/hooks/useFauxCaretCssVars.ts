@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useSelector } from 'react-redux'
 import FauxCaretType from '../@types/FauxCaretType'
 import Path from '../@types/Path'
 import { isSafari, isTouch } from '../browser'
 import { isEndOfElementNode, isStartOfElementNode } from '../device/selection'
 import editingValueStore from '../stores/editingValue'
+import useLayoutAnimationFrameEffect from './useLayoutAnimationFrameEffect'
 
 /** Returns CSS variables that will suppress faux carets at the start or end of thoughts or notes.
  * */
@@ -34,24 +35,19 @@ const useFauxCaretNodeProvider = ({
 
   // If the thought isCursor and keyboard is open, position the faux cursor at the point where the
   // selection is created.
-  useEffect(
+  // The selection ranges aren't updated until the end of the frame when the thought is focused.
+  useLayoutAnimationFrameEffect(
     () => {
-      let timeout = undefined
       if (!isTouch || !isSafari()) return
       if (editing && isCursor) {
-        // The selection ranges aren't updated until the end of the frame when the thought is focused.
-        timeout = setTimeout(() => {
-          if (noteFocus) {
-            setFauxCaretType(isStartOfElementNode() ? 'noteStart' : isEndOfElementNode() ? 'noteEnd' : 'none')
-          } else {
-            setFauxCaretType(isStartOfElementNode() ? 'thoughtStart' : isEndOfElementNode() ? 'thoughtEnd' : 'none')
-          }
-        })
+        if (noteFocus) {
+          setFauxCaretType(isStartOfElementNode() ? 'noteStart' : isEndOfElementNode() ? 'noteEnd' : 'none')
+        } else {
+          setFauxCaretType(isStartOfElementNode() ? 'thoughtStart' : isEndOfElementNode() ? 'thoughtEnd' : 'none')
+        }
       } else {
         setFauxCaretType('none')
       }
-
-      return () => clearTimeout(timeout)
     },
     /* Changes to fadeThoughtElement and isTableCol1 can trigger the hideCaret animation to update, even though they are not directly used in calculating the caret type. */ [
       editing,
