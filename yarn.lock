@@ -19986,10 +19986,10 @@ __metadata:
 
 "react-dnd-html5-backend@patch:react-dnd-html5-backend@npm%3A16.0.1#~/.yarn/patches/react-dnd-html5-backend-npm-16.0.1-754940d855.patch":
   version: 16.0.1
-  resolution: "react-dnd-html5-backend@patch:react-dnd-html5-backend@npm%3A16.0.1#~/.yarn/patches/react-dnd-html5-backend-npm-16.0.1-754940d855.patch::version=16.0.1&hash=b7a892"
+  resolution: "react-dnd-html5-backend@patch:react-dnd-html5-backend@npm%3A16.0.1#~/.yarn/patches/react-dnd-html5-backend-npm-16.0.1-754940d855.patch::version=16.0.1&hash=d2cc07"
   dependencies:
     dnd-core: "npm:^16.0.1"
-  checksum: 10c0/95202eb77b272571cb994e1891a8f1a939d60faa1076668959ff7879a3570d13b797eea8c6b8158146356f67689c42061965aa6d15dcebd344aa0765b8e11f26
+  checksum: 10c0/471be4257afd6abdfb03282fc45fb544360f57f5e0b4c6860b8e39b31335d01b512be6d2bd03f62e3618dafccf1d464825baba945980492f040d4e31fbf0420f
   languageName: node
   linkType: hard
 
