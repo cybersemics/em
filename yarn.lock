@@ -6406,6 +6406,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/node@npm:>=20.0.0":
+  version: 25.0.10
+  resolution: "@types/node@npm:25.0.10"
+  dependencies:
+    undici-types: "npm:~7.16.0"
+  checksum: 10c0/9edc3c812b487c32c76eebac7c87acae1f69515a0bc3f6b545806d513eb9e918c3217bf751dc93da39f60e06bf1b0caa92258ef3a6dd6457124b2e761e54f61f
+  languageName: node
+  linkType: hard
+
 "@types/node@npm:^17.0.36":
   version: 17.0.45
   resolution: "@types/node@npm:17.0.45"
@@ -6419,15 +6428,6 @@ __metadata:
   dependencies:
     undici-types: "npm:~5.26.4"
   checksum: 10c0/a54009cd222f5751c903e5f4889a0f12e3d3755a1f87ce919455eeaf00a9ba0c9215c4a92bc3d8df585a894fa3e4cf218e5afccced355688624133e1a4b88235
-  languageName: node
-  linkType: hard
-
-"@types/node@npm:^20.0.0":
-  version: 20.19.11
-  resolution: "@types/node@npm:20.19.11"
-  dependencies:
-    undici-types: "npm:~6.21.0"
-  checksum: 10c0/9eecc4be04f1a8afbb8f8059b322fd0bbceeb02f96669bbaa52fb0b264c2e3269432a8833ada4be7b335e18d6b438b2d2c0274f5b3f54cc2081cb7c5374a6561
   languageName: node
   linkType: hard
 
@@ -10985,7 +10985,7 @@ __metadata:
     fake-indexeddb: "npm:^6.2.5"
     fast-json-patch: "npm:^3.1.1"
     fp-and-or: "npm:^1.0.2"
-    happy-dom: "npm:^20.3.0"
+    happy-dom: "npm:^20.3.4"
     himalaya: "npm:^1.1.1"
     html-escaper: "npm:^3.0.3"
     idb-keyval: "npm:^6.2.2"
@@ -13693,16 +13693,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"happy-dom@npm:^20.3.0":
-  version: 20.3.0
-  resolution: "happy-dom@npm:20.3.0"
+"happy-dom@npm:^20.3.4":
+  version: 20.3.4
+  resolution: "happy-dom@npm:20.3.4"
   dependencies:
-    "@types/node": "npm:^20.0.0"
+    "@types/node": "npm:>=20.0.0"
     "@types/whatwg-mimetype": "npm:^3.0.2"
     "@types/ws": "npm:^8.18.1"
+    entities: "npm:^4.5.0"
     whatwg-mimetype: "npm:^3.0.0"
     ws: "npm:^8.18.3"
-  checksum: 10c0/127cee105e227d4fc41f5c0bc5d1351ac8bf25c01dc672b558162109e05a9c08d8c81cc8e99b0700db17c4621381b2a8733316e2fc74907bc8c8927b8f4b5bfd
+  checksum: 10c0/fba02d229d6fdefb8d17b5c987bec2d562f1b184b8bf5b69c44942a2e7432987b4bf3b2de113b19078baa46a28601402ac6142639e86093c940a1fdfaf7a36dc
   languageName: node
   linkType: hard
 
