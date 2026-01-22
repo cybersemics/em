@@ -20,7 +20,7 @@ export interface ViewportState {
 /** A store that tracks the viewport dimensions, including the nontrivial virtual keyboard height. */
 const viewportStore = reactMinistore<ViewportState>({
   innerWidth: window.innerWidth,
-  /** Height of the viewport, including the virtual keyboard (i.e. does not change when the virtuaul keyboard is opened/closed). */
+  /** Height of the viewport, including the virtual keyboard (i.e. does not change when the virtual keyboard is opened/closed). */
   innerHeight: window.innerHeight,
   scrollZoneWidth: Math.min(window.innerWidth, window.innerHeight) * SCROLL_ZONE_WIDTH,
   /** Height of the virtual keyboard regardless of whether it is open or closed. Initialized to estimated height. */
