@@ -28,7 +28,7 @@ const usePositionFixed = ({
   if (position === 'absolute') {
     top = fromBottom
       ? `${Math.min(document.body.scrollHeight, scrollTop + innerHeight - virtualKeyboard.height) - (height ?? 0) - offset}px`
-      : `${scrollTop + offset}px`
+      : `calc(${scrollTop}px + ${token('spacing.safeAreaTop')} + ${offset}px)`
   } else if (fromBottom) {
     // spacing.safeAreaBottom applies to rounded screens
     bottom = `calc(${token('spacing.safeAreaBottom')} + ${offset}px)`
