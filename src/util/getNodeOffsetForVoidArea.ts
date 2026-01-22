@@ -341,7 +341,17 @@ const getNodeOffsetForVoidArea = (editable: HTMLElement | null, { clientX, clien
     isVerticallyContained(getCharRect(offset === 0 ? 0 : nodeTextLength - 1))
 
   // Valid coordinates on character, not a void area
-  if (isClickOnCharacter || isValidEdgeClick) return null
+  if (isClickOnCharacter || isValidEdgeClick) {
+    // For multiline thoughts, we need to check if the click is on a different line than the browser would naturally place the caret.
+    const textNodes = getTextNodes(editable)
+    if (textNodes.length === 0) return null
+
+    const nearest = findNearestTextNode(textNodes, clientY)
+    if (!nearest) return null
+
+    // Calculate the offset to ensure proper line selection
+    return calculateHorizontalOffset(nearest.node, clientX, clientY)
+  }
 
   // Coordinates are in padding/void area, calculate the caret position
   const textNodes = getTextNodes(editable)

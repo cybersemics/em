@@ -529,6 +529,9 @@ const Editable = ({
   /** Sets the caret position for a void area tap. */
   const setVoidAreaCaret = useCallback(
     (nodeOffset: number) => {
+      //Directly set the DOM selection to ensure the caret moves immediately
+      selection.set(contentRef.current, { offset: nodeOffset })
+
       // Update Redux cursor state
       dispatch(
         setCursor({
@@ -536,15 +539,6 @@ const Editable = ({
           offset: nodeOffset,
         }),
       )
-      // Directly set the DOM selection to ensure the caret moves immediately
-      if (contentRef.current) {
-        // Use requestAnimationFrame to ensure the DOM is ready after the state update
-        requestAnimationFrame(() => {
-          if (contentRef.current) {
-            selection.set(contentRef.current, { offset: nodeOffset })
-          }
-        })
-      }
     },
     [dispatch, path, contentRef],
   )
