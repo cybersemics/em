@@ -349,8 +349,15 @@ const getNodeOffsetForVoidArea = (editable: HTMLElement | null, { clientX, clien
     const nearest = findNearestTextNode(textNodes, clientY)
     if (!nearest) return null
 
-    // Calculate the offset to ensure proper line selection
-    return calculateHorizontalOffset(nearest.node, clientX, clientY)
+    // Check if the text node has multiple lines
+    const lines = getTextNodeLines(nearest.node)
+    if (lines.length > 1) {
+      // For multiline text nodes, calculate the offset to ensure proper line selection
+      return calculateHorizontalOffset(nearest.node, clientX, clientY)
+    }
+
+    // For single-line thoughts, allow default browser behavior
+    return null
   }
 
   // Coordinates are in padding/void area, calculate the caret position
