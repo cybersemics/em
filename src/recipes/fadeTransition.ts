@@ -6,7 +6,17 @@ import { defineSlotRecipe } from '@pandacss/dev'
 
 const fadeTransitionRecipe = defineSlotRecipe({
   className: 'fade',
-  slots: ['enter', 'exit', 'exitActive', 'enterActive', 'enterDone', 'exitDone'],
+  slots: [
+    'enter',
+    'exit',
+    'exitActive',
+    'enterActive',
+    'enterDone',
+    'exitDone',
+    'appear',
+    'appearActive',
+    'appearDone',
+  ],
   base: {
     enter: { opacity: 0 },
     enterActive: { opacity: 1 },
@@ -29,11 +39,6 @@ const fadeTransitionRecipe = defineSlotRecipe({
         enterActive: { transition: `opacity {durations.medium} ease 0ms` },
         exitActive: { transition: `opacity {durations.medium} ease 0ms` },
       },
-      commandCenterDrawer: {
-        // Easing follows that of Material UI SwipeableDrawer.
-        enterActive: { transition: `opacity {durations.commandCenterDrawer} cubic-bezier(0, 0, 0.2, 1) 0ms` },
-        exitActive: { transition: `opacity {durations.commandCenterDrawer} cubic-bezier(0.4, 0, 0.2, 1) 0ms` },
-      },
       activeButtonGlowLuminosity: {
         enter: { opacity: 0 },
         enterActive: { opacity: 0.75, transition: `opacity {durations.activeButtonGlowLuminosity} ease 0ms` },
@@ -41,6 +46,9 @@ const fadeTransitionRecipe = defineSlotRecipe({
         exit: { opacity: 0.75 },
         exitActive: { opacity: 0, transition: `opacity {durations.activeButtonGlowLuminosity} ease 0ms` },
         exitDone: { opacity: 0 },
+        appear: { opacity: 0 },
+        appearActive: { opacity: 0.75, transition: `opacity {durations.activeButtonGlowLuminosity} ease 0ms` },
+        appearDone: { opacity: 0.75 },
       },
       activeButtonGlowSaturation: {
         enter: { opacity: 0 },
@@ -49,6 +57,9 @@ const fadeTransitionRecipe = defineSlotRecipe({
         exit: { opacity: 0.45 },
         exitActive: { opacity: 0, transition: `opacity {durations.activeButtonGlowSaturation} ease 0ms` },
         exitDone: { opacity: 0 },
+        appear: { opacity: 0 },
+        appearActive: { opacity: 0.45, transition: `opacity {durations.activeButtonGlowSaturation} ease 0ms` },
+        appearDone: { opacity: 0.45 },
       },
       distractionFreeTyping: {
         enterActive: { transition: `opacity {durations.distractionFreeTyping} ease 0ms` },
