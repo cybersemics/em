@@ -1,15 +1,16 @@
 name: BrowserStack
 
-# Temporarily disable the workflow except when manually triggered
-# https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_dispatch
-on: workflow_dispatch
-
-# on:
-#   push:
-#     branches:
-#       - main
-#   pull_request_target:
-#     types: [opened, synchronize, reopened]
+on:
+  push:
+    branches:
+      - main
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      rerun_id:
+        description: 'Optional ID for tracking repeated runs'
+        required: false
 
 env:
   CI: true
