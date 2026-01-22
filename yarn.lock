@@ -10994,7 +10994,7 @@ __metadata:
     react: "npm:^19.2.3"
     react-contenteditable: "npm:^3.3.7"
     react-dnd: "npm:^16.0.1"
-    react-dnd-html5-backend: "npm:^16.0.1"
+    react-dnd-html5-backend: "patch:react-dnd-html5-backend@npm%3A16.0.1#~/.yarn/patches/react-dnd-html5-backend-npm-16.0.1-754940d855.patch"
     react-dnd-test-backend: "npm:^16.0.1"
     react-dnd-test-utils: "npm:^16.0.1"
     react-dnd-touch-backend: "patch:react-dnd-touch-backend@patch%3Areact-dnd-touch-backend@patch%253Areact-dnd-touch-backend@npm%25253A16.0.1%2523~/.yarn/patches/react-dnd-touch-backend-npm-16.0.1-2b96ba84be.patch%253A%253Aversion=16.0.1&hash=77964d%23~/.yarn/patches/react-dnd-touch-backend-patch-0040823149.patch%3A%3Aversion=16.0.1&hash=33fdd5#~/.yarn/patches/react-dnd-touch-backend-patch-2c3a2052b6.patch"
@@ -19975,12 +19975,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-dnd-html5-backend@npm:^16.0.1":
+"react-dnd-html5-backend@npm:16.0.1":
   version: 16.0.1
   resolution: "react-dnd-html5-backend@npm:16.0.1"
   dependencies:
     dnd-core: "npm:^16.0.1"
   checksum: 10c0/6e4b632a11e20211d71f5f3bedadf13ecec2fa73372fde388619838294b1375f15b717d1ce128e12c872ff7b15c32d26761d2026b33c14fc55e4fd5477c15289
+  languageName: node
+  linkType: hard
+
+"react-dnd-html5-backend@patch:react-dnd-html5-backend@npm%3A16.0.1#~/.yarn/patches/react-dnd-html5-backend-npm-16.0.1-754940d855.patch":
+  version: 16.0.1
+  resolution: "react-dnd-html5-backend@patch:react-dnd-html5-backend@npm%3A16.0.1#~/.yarn/patches/react-dnd-html5-backend-npm-16.0.1-754940d855.patch::version=16.0.1&hash=b7a892"
+  dependencies:
+    dnd-core: "npm:^16.0.1"
+  checksum: 10c0/95202eb77b272571cb994e1891a8f1a939d60faa1076668959ff7879a3570d13b797eea8c6b8158146356f67689c42061965aa6d15dcebd344aa0765b8e11f26
   languageName: node
   linkType: hard
 
