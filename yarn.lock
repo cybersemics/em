@@ -7620,6 +7620,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@wdio/reporter@npm:9.23.2":
+  version: 9.23.2
+  resolution: "@wdio/reporter@npm:9.23.2"
+  dependencies:
+    "@types/node": "npm:^20.1.0"
+    "@wdio/logger": "npm:9.18.0"
+    "@wdio/types": "npm:9.23.2"
+    diff: "npm:^8.0.2"
+    object-inspect: "npm:^1.12.0"
+  checksum: 10c0/3e245219dfd3017ebaea0b9cb5cc204c11d1491140a5684e2afa281dde362b0b599448acbec7828f88530e7cce3afa0d17cfd52546149e9e64f931ac57727694
+  languageName: node
+  linkType: hard
+
 "@wdio/runner@npm:9.23.0":
   version: 9.23.0
   resolution: "@wdio/runner@npm:9.23.0"
@@ -7646,16 +7659,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@wdio/spec-reporter@npm:^9.20.0":
-  version: 9.20.0
-  resolution: "@wdio/spec-reporter@npm:9.20.0"
+"@wdio/spec-reporter@npm:^9.23.2":
+  version: 9.23.2
+  resolution: "@wdio/spec-reporter@npm:9.23.2"
   dependencies:
-    "@wdio/reporter": "npm:9.20.0"
-    "@wdio/types": "npm:9.20.0"
+    "@wdio/reporter": "npm:9.23.2"
+    "@wdio/types": "npm:9.23.2"
     chalk: "npm:^5.1.2"
     easy-table: "npm:^1.2.0"
     pretty-ms: "npm:^9.0.0"
-  checksum: 10c0/6fcd7167d64a3fa904dfd3bcf5a2d4e62e40616da44981e457f14367ef53592cff8b89ff08aacbdb1017610d3e3f764a000b1ed3fc0da97715dbe72dd3e21100
+  checksum: 10c0/fa4407f8cf4e17505fb96107bce2655597b2d5edd2c6041d42e73d082f949803611c4280d1fbeca11140d94d2aedb730bc37ee743a23d5fc552992b09fa22b94
   languageName: node
   linkType: hard
 
@@ -7674,6 +7687,15 @@ __metadata:
   dependencies:
     "@types/node": "npm:^20.1.0"
   checksum: 10c0/cb8f201d86d1711f7abaa2a57c062696e6b0f2f9441a528130e9ac245a8a82611a002514abc46eee3e00f07436a617362caa2b5b4d03a3dded026a331b7e8683
+  languageName: node
+  linkType: hard
+
+"@wdio/types@npm:9.23.2":
+  version: 9.23.2
+  resolution: "@wdio/types@npm:9.23.2"
+  dependencies:
+    "@types/node": "npm:^20.1.0"
+  checksum: 10c0/c427d1062229b76406be52342df4b4dd4cccd9a71f63aead6b7885b6a856ff87ee433aeea76ce2c467408d907fc002c8c6ef341d9d3b5a1963dd5e90c6f2083f
   languageName: node
   linkType: hard
 
@@ -10936,7 +10958,7 @@ __metadata:
     "@wdio/local-runner": "npm:^9.22.0"
     "@wdio/logger": "npm:^9.18.0"
     "@wdio/mocha-framework": "npm:^9.22.0"
-    "@wdio/spec-reporter": "npm:^9.20.0"
+    "@wdio/spec-reporter": "npm:^9.23.2"
     "@wdio/types": "npm:^9.20.0"
     algoliasearch: "npm:^5.40.1"
     axios: "npm:^1.13.2"

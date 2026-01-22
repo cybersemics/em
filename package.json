@@ -198,7 +198,7 @@
     "@wdio/local-runner": "^9.22.0",
     "@wdio/logger": "^9.18.0",
     "@wdio/mocha-framework": "^9.22.0",
-    "@wdio/spec-reporter": "^9.20.0",
+    "@wdio/spec-reporter": "^9.23.2",
     "@wdio/types": "^9.20.0",
     "chalk": "^5.6.2",
     "dotenv": "17.2.3",
