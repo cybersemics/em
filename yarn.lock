@@ -7577,17 +7577,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@wdio/mocha-framework@npm:^9.22.0":
-  version: 9.23.0
-  resolution: "@wdio/mocha-framework@npm:9.23.0"
+"@wdio/mocha-framework@npm:^9.23.2":
+  version: 9.23.2
+  resolution: "@wdio/mocha-framework@npm:9.23.2"
   dependencies:
     "@types/mocha": "npm:^10.0.6"
     "@types/node": "npm:^20.11.28"
     "@wdio/logger": "npm:9.18.0"
-    "@wdio/types": "npm:9.20.0"
-    "@wdio/utils": "npm:9.23.0"
+    "@wdio/types": "npm:9.23.2"
+    "@wdio/utils": "npm:9.23.2"
     mocha: "npm:^10.3.0"
-  checksum: 10c0/3975514a87185499ed3f88d003a41f5571df3684d251e28b623c73c4adc184fdaca5f08eb08e91ed5fd9b13e7d876cc7cbbb9c77852203e62ef2c523e590abbe
+  checksum: 10c0/285fbdb021cdbc9bb03beaa52dcd00d908a11071f06cbe052f7ad6d6a3b433ff3a95564db35005cde3850512afa094ce672a7c265655bf46be26cf702e664f23
   languageName: node
   linkType: hard
 
@@ -7740,6 +7740,28 @@ __metadata:
     split2: "npm:^4.2.0"
     wait-port: "npm:^1.1.0"
   checksum: 10c0/fd8ff8586e4c8434ddf28fa21166375548e99689d465d59a8f22297d247c6390da84ddd8126cc018c9e87649ff837c4016c1891ec82b6dc60bb37532fac2af31
+  languageName: node
+  linkType: hard
+
+"@wdio/utils@npm:9.23.2":
+  version: 9.23.2
+  resolution: "@wdio/utils@npm:9.23.2"
+  dependencies:
+    "@puppeteer/browsers": "npm:^2.2.0"
+    "@wdio/logger": "npm:9.18.0"
+    "@wdio/types": "npm:9.23.2"
+    decamelize: "npm:^6.0.0"
+    deepmerge-ts: "npm:^7.0.3"
+    edgedriver: "npm:^6.1.2"
+    geckodriver: "npm:^6.1.0"
+    get-port: "npm:^7.0.0"
+    import-meta-resolve: "npm:^4.0.0"
+    locate-app: "npm:^2.2.24"
+    mitt: "npm:^3.0.1"
+    safaridriver: "npm:^1.0.0"
+    split2: "npm:^4.2.0"
+    wait-port: "npm:^1.1.0"
+  checksum: 10c0/b7e87ea03eddeb8401243c3889e3f225bc2d1827b3c29a30040b70d04f5cece42db2ac6a5955346794abed8bc2f0c40a2c14e6ac6322f02894b9078347f26379
   languageName: node
   linkType: hard
 
@@ -10957,7 +10979,7 @@ __metadata:
     "@wdio/globals": "npm:^9.17.0"
     "@wdio/local-runner": "npm:^9.22.0"
     "@wdio/logger": "npm:^9.18.0"
-    "@wdio/mocha-framework": "npm:^9.22.0"
+    "@wdio/mocha-framework": "npm:^9.23.2"
     "@wdio/spec-reporter": "npm:^9.23.2"
     "@wdio/types": "npm:^9.20.0"
     algoliasearch: "npm:^5.40.1"
