@@ -255,7 +255,7 @@ const globalCss = defineGlobalStyles({
     fontWeight: 600,
   },
   /* Disables pull-to-refresh but allows overscroll glow effects. */
-  body: { margin: 0, overscrollBehaviorY: 'contain', color: 'fg', backgroundColor: 'bg' },
+  body: { overscrollBehaviorY: 'contain', color: 'fg', backgroundColor: 'bg' },
   button: { fontSize: '1.2em' },
   a: {
     cursor: 'pointer',
