@@ -12,4 +12,14 @@ const initVirtualKeyboard = () => {
   }
 }
 
-export default initVirtualKeyboard
+/** Destroys the appropriate virtual keyboard handler based on the platform. */
+const destroyVirtualKeyboard = () => {
+  if (isCapacitor() && isIOS) {
+    iOSCapacitorHandler.destroy()
+  } else {
+    // fallback
+    iOSSafariHandler.destroy()
+  }
+}
+
+export { initVirtualKeyboard, destroyVirtualKeyboard }

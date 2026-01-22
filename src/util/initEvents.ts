@@ -14,7 +14,7 @@ import { isSafari, isTouch } from '../browser'
 import { inputHandlers } from '../commands'
 import { AlertType, LongPressState } from '../constants'
 import * as selection from '../device/selection'
-import initVirtualKeyboard from '../device/virtual-keyboard'
+import { destroyVirtualKeyboard, initVirtualKeyboard } from '../device/virtual-keyboard'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import pathExists from '../selectors/pathExists'
 import store from '../stores/app'
@@ -405,6 +405,7 @@ const initEvents = (store: Store<State, any>) => {
     window.removeEventListener('drop', drop)
     lifecycle.removeEventListener('statechange', onStateChange)
     resizeHost.removeEventListener('resize', updateSize)
+    destroyVirtualKeyboard()
   }
 
   // return input handlers as another way to remove them on cleanup
