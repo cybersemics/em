@@ -14,7 +14,7 @@ import { isSafari, isTouch } from '../browser'
 import { keyDown, keyUp } from '../commands'
 import { AlertType, LongPressState } from '../constants'
 import * as selection from '../device/selection'
-import { destroyVirtualKeyboard, initVirtualKeyboard } from '../device/virtual-keyboard'
+import virtualKeyboardHandler from '../device/virtual-keyboard'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import pathExists from '../selectors/pathExists'
 import store from '../stores/app'
@@ -371,7 +371,7 @@ const initEvents = (store: Store<State, any>) => {
   resizeHost.addEventListener('resize', updateSize)
 
   // Initialize virtual keyboard handlers
-  initVirtualKeyboard()
+  virtualKeyboardHandler.init()
 
   // clean up on app switch in PWA
   // https://github.com/cybersemics/em/issues/1030
@@ -396,7 +396,7 @@ const initEvents = (store: Store<State, any>) => {
     window.removeEventListener('drop', drop)
     lifecycle.removeEventListener('statechange', onStateChange)
     resizeHost.removeEventListener('resize', updateSize)
-    destroyVirtualKeyboard()
+    virtualKeyboardHandler.destroy()
   }
 
   // return input handlers as another way to remove them on cleanup
