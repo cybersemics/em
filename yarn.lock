@@ -11021,7 +11021,7 @@ __metadata:
     vite-plugin-checker: "npm:^0.12.0"
     vite-plugin-html: "npm:^3.2.2"
     vite-plugin-pwa: "npm:^1.2.0"
-    vite-plugin-terminal: "npm:^1.3.0"
+    vite-plugin-terminal: "npm:^1.4.0"
     vitest: "npm:^4.0.17"
     vitest-browser-react: "npm:^2.0.2"
     vitest-localstorage-mock: "npm:^0.1.2"
@@ -23691,9 +23691,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vite-plugin-terminal@npm:^1.3.0":
-  version: 1.3.0
-  resolution: "vite-plugin-terminal@npm:1.3.0"
+"vite-plugin-terminal@npm:^1.4.0":
+  version: 1.4.0
+  resolution: "vite-plugin-terminal@npm:1.4.0"
   dependencies:
     "@rollup/plugin-strip": "npm:^3.0.2"
     debug: "npm:^4.3.4"
@@ -23701,8 +23701,8 @@ __metadata:
     sirv: "npm:^2.0.2"
     ufo: "npm:^1.1.1"
   peerDependencies:
-    vite: ^2.0.0||^3.0.0||^4.0.0||^5.0.0||^6.0.0
-  checksum: 10c0/983b88e0b569e556a7b8d7605615c701802b879a4be955b0c80b11e3ee1d1d05f20ff6c6a7160e0da1025c4d9bc4b55f09930aeaa3abffe620154fb5c944362a
+    vite: ^2.0.0||^3.0.0||^4.0.0||^5.0.0||^6.0.0||^7.0.0
+  checksum: 10c0/e0c155f47e9305b945b1d7cf2691768c1f41eef45f61c7924632ae2e5f136e9c872891e36b2a720401ae667f8f6c9babae7b7d204acb1f3d58c3c16d2eff7f97
   languageName: node
   linkType: hard
 
