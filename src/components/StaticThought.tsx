@@ -186,7 +186,7 @@ const StaticThought = ({
         // HTML5Backend will override this to be "true" on platforms that use it.
         // iOS Safari needs it to be true to disable native long press behavior. (#2953, #2931, #2964)
         // Android works better if draggable is false.
-        draggable={isTouch && isSafari()}
+        draggable={!!longPressProps && isSafari()}
         ref={isTouch ? dndRef(ref => dragSource(ref)) : undefined}
         style={{ minWidth: `${MIN_CONTENT_WIDTH_EM}em` }}
       >
