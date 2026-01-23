@@ -189,15 +189,20 @@ const Sidebar = () => {
               })}
             >
               <div
+                // We need to disable favorites drag-and-drop when the Sidebar is being slid close.
+                // We'll do this by checking the sidebar's x offset.
                 onTouchMove={_.throttle(
                   () => {
                     if (isSwiping) return
+                    // If the sidebar's x-offset is 0, the sidebar isn't moving.
+                    // Otherwise, it -is- moving, and we should disable drag-and-drop by setting isSwiping.
                     if (x.get() !== 0) {
                       setIsSwiping(true)
                       dispatch(longPress({ value: LongPressState.Inactive }))
                     }
                   },
                   10,
+                  // no need to check on the first touchmove trigger since x has probably not changed yet
                   { leading: false },
                 )}
                 onTouchEnd={() => {
@@ -224,6 +229,7 @@ const Sidebar = () => {
                       display: 'none',
                     },
                     userSelect: 'none',
+                    // must be position:relative to ensure drop hovers are positioned correctly when sidebar is scrolled
                     position: 'relative',
                     padding: '0 1em',
                   })}
@@ -232,6 +238,7 @@ const Sidebar = () => {
                   <FadeTransition type='fast' in={showSidebar}>
                     <div
                       style={{
+                        // match HamburgerMenu width + padding
                         marginLeft: fontSize * 1.3 + 30,
                       }}
                     >
