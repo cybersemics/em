@@ -1,4 +1,4 @@
-import React, { PropsWithChildren, useEffect } from 'react'
+import React, { PropsWithChildren, useLayoutEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
@@ -7,6 +7,7 @@ import { dismissTipActionCreator as dismissTip } from '../actions/dismissTip'
 import { AlertType } from '../constants'
 import useCombinedRefs from '../hooks/useCombinedRefs'
 import usePositionFixed from '../hooks/usePositionFixed'
+import useScrollTop from '../hooks/useScrollTop'
 import useSwipeToDismiss from '../hooks/useSwipeToDismiss'
 import CloseButton from './CloseButton'
 
@@ -54,17 +55,21 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
     const fontSize = useSelector(state => state.fontSize)
     const multicursor = useSelector(state => state.alert?.alertType === AlertType.MulticursorActive)
     /** Used when `anchorFromBottom = true` for calculating position on mobile safari. */
-    const [height, setHeight] = React.useState(50)
-    useEffect(() => {
-      if (typeof ref === 'object' && ref?.current && anchorFromBottom) {
-        setHeight(ref.current.getBoundingClientRect().height)
-      }
-    }, [ref, anchorFromBottom])
+    const [height, setHeight] = React.useState(0)
+    const innerRef = React.useRef<HTMLDivElement>(null)
     const positionFixedStyles = usePositionFixed({
       fromBottom: anchorFromBottom,
       offset: anchorOffset,
       height,
     })
+    const scrollTop = useScrollTop({ disabled: positionFixedStyles?.position === 'fixed' })
+
+    // measure the height of the popup after it has been rendered
+    useLayoutEffect(() => {
+      if (innerRef.current && anchorFromBottom) {
+        setHeight(innerRef.current.getBoundingClientRect().height)
+      }
+    }, [anchorFromBottom, children, scrollTop]) // measure on mount and whenever children (content) or scrollTop change (which affects absolute positioning)
     const useSwipeToDismissProps = useSwipeToDismiss({
       // dismiss after animation is complete to avoid touch events going to the Toolbar
       onDismissEnd: () => {
@@ -119,7 +124,7 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
         })}
         // disable swipe-to-dismiss when multicursor is active
         {...(!multicursor && useSwipeToDismissProps)}
-        ref={useCombinedRefs([ref, useSwipeToDismissProps.ref])}
+        ref={useCombinedRefs([ref, innerRef, useSwipeToDismissProps.ref])}
         // merge style with useSwipeToDismissProps.style (transform, transition, and touchAction for sticking to user's touch)
         style={{
           ...positionFixedStyles,
