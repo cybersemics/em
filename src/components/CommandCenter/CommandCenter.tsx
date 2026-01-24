@@ -224,6 +224,13 @@ const CommandCenter = ({ mountPoint }: Pick<SheetProps, 'mountPoint'>) => {
                */
               transform: 'none !important',
             })}
+            onScroll={e => {
+              /**
+               * Prevent scroll events in command center from bubbling up
+               * to window scroll listeners.
+               */
+              e.stopPropagation()
+            }}
           >
             <Sheet.Content
               style={{
