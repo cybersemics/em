@@ -482,7 +482,16 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: GesturePath | null
   ) {
     commandEmitter.trigger('command', command)
     if (selectAllInProgressExclusive && !isAllSelected(state)) {
-      executeCommandWithMulticursor(selectAllCommand, { event: e, type: 'gesture', store })
+      executeCommandWithMulticursor(selectAllCommand, {
+        event: {
+          ...e,
+          // Hacky magic value, but it's the easiest way to tell the command that this is a chained gesture so that it can adjust the undo behavior.
+          // Select All and the chained command need to be undone together, and this is not a property of the Command object but of the way it is invoked, so is somewhat appropriately stored on the event object, albeit ad hoc.
+          type: 'chainedGesture',
+        },
+        type: 'gesture',
+        store,
+      })
     }
     executeCommandWithMulticursor(command, { event: e, type: 'gesture', store })
     if (store.getState().enableLatestCommandsDiagram) store.dispatch(showLatestCommands(command))
