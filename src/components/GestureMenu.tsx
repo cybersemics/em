@@ -108,9 +108,9 @@ function Glow() {
         backgroundImage: 'url(/img/gesture-menu/glow.webp)',
         backgroundSize: 'cover',
         mixBlendMode: 'screen',
-        height: '100%',
+        height: '100vh',
         width: '100%',
-        top: 0,
+        inset: 0,
       })}
     />
   )
@@ -139,6 +139,7 @@ const GestureMenuWithTransition: FC = () => {
   const popupRef = useRef<HTMLDivElement>(null)
 
   const showGestureMenu = useSelector(state => state.showGestureMenu)
+  // const showGestureMenu = true
 
   // Commands need to be calculated even if the gesture menu is not shown because useFilteredCommands is responsible for updating gestureStore's possibleCommands which is needed to prevent haptics when there are no more possible commands. Otherwise, either haptics would continue to fire when there are no more possible commands, or would falsely fire when the current sequence is not a valid gesture but there are possible commands with additional swipes.
   const [recentCommands] = useState(storageModel.get('recentCommands'))
