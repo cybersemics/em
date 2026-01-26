@@ -51,11 +51,26 @@ const ContentEditable = React.memo(({ style, html, disabled, innerRef, ...props 
   }, [editableNonce])
 
   // eslint-disable-next-line jsdoc/require-jsdoc
-  const handleInput = (originalEvent: React.SyntheticEvent<HTMLInputElement>) => {
-    const innerHTML = contentRef!.current!.innerHTML
+  const handleInput = async (originalEvent: React.SyntheticEvent<HTMLInputElement>) => {
+    let innerHTML = contentRef!.current!.innerHTML
+    const nativeEvent = originalEvent.nativeEvent as InputEvent
 
     // prevent innerHTML update when editing
     allowInnerHTMLChange.current = false
+
+    if (nativeEvent?.dataTransfer?.items) {
+      const htmlItem = Array.from(nativeEvent.dataTransfer.items).find(item => item.type === 'text/html')
+      const plainItem = Array.from(nativeEvent.dataTransfer.items).find(item => item.type === 'text/plain')
+
+      const htmlString = htmlItem ? ((await new Promise(resolve => htmlItem.getAsString(resolve))) as string) : null
+      const plainString = plainItem ? ((await new Promise(resolve => plainItem.getAsString(resolve))) as string) : null
+
+      if (htmlString && plainString && htmlString !== plainString) {
+        const htmlRegex = new RegExp(htmlString.replace(/style="[^"]*"/, 'style="[^"]*"'))
+        innerHTML = innerHTML.replace(htmlRegex, plainString)
+        contentRef!.current!.innerHTML = innerHTML
+      }
+    }
 
     const event = Object.assign({}, originalEvent, {
       target: {
@@ -92,6 +107,9 @@ const ContentEditable = React.memo(({ style, html, disabled, innerRef, ...props 
 
         if (props.onBlur) props.onBlur(event)
       }}
+      // Allow dragging a text selection within an editable (#3530)
+      // https://github.com/react-dnd/react-dnd/issues/3157
+      onDragOver={disabled ? undefined : e => e.stopPropagation()}
       onInput={handleInput}
       onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
         if (props.onKeyDown) props.onKeyDown(e)
