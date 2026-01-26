@@ -107,9 +107,6 @@ const ContentEditable = React.memo(({ style, html, disabled, innerRef, ...props 
 
         if (props.onBlur) props.onBlur(event)
       }}
-      // Allow dragging a text selection within an editable (#3530)
-      // https://github.com/react-dnd/react-dnd/issues/3157
-      onDragOver={disabled ? undefined : e => e.stopPropagation()}
       onInput={handleInput}
       onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
         if (props.onKeyDown) props.onKeyDown(e)
