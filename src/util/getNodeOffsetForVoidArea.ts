@@ -283,84 +283,19 @@ const getNodeOffsetForVoidArea = (editable: HTMLElement | null, { clientX, clien
     }
   }
 
-  // Ensure the coordinates are within our editable element
-  if (!range || !editable.contains(range.startContainer)) {
-    return 0
-  }
+  const editableRect = editable.getBoundingClientRect()
+  const isWithinEditable =
+    clientX >= editableRect.left &&
+    clientX <= editableRect.right &&
+    clientY >= editableRect.top &&
+    clientY <= editableRect.bottom
 
-  const node = range.startContainer
-  const offset = range.startOffset
-  const nodeTextLength = node.textContent?.length || 0
-
-  // If the node is empty (placeholder text), return caret position at offset 0
-  if (nodeTextLength === 0) {
-    return 0
-  }
-
-  /** Get the bounding rectangle for a character at the given offset. */
-  const getCharRect = (targetOffset: number): DOMRect | null => {
-    // Ensure targetOffset is within valid bounds
-    if (targetOffset < 0 || targetOffset > nodeTextLength) {
-      return null
-    }
-
-    const charRange = document.createRange()
-    charRange.setStart(node, targetOffset)
-
-    // If targetOffset is at the end, collapse the range to that position
-    // Otherwise, set the end to targetOffset + 1 to get the character's bounding box
-    if (targetOffset >= nodeTextLength) {
-      charRange.collapse(true)
-    } else {
-      charRange.setEnd(node, targetOffset + 1)
-    }
-
-    return charRange.getBoundingClientRect()
-  }
-
-  /** Check if the coordinates are within a character's bounding box. */
-  const isInsideCharRect = (rect: DOMRect | null): boolean => {
-    if (!rect) return false
-    return clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom
-  }
-
-  /** Check if the coordinates are vertically contained within the character's bounding box. */
-  const isVerticallyContained = (rect: DOMRect | null): boolean => {
-    if (!rect) return false
-    return clientY >= rect.top && clientY <= rect.bottom
-  }
-
-  // Check whether the coordinates land on the character at the current offset or the one before it.
-  const isClickOnCharacter = [offset, offset - 1]
-    .filter(o => o >= 0 && o < nodeTextLength)
-    .some(checkOffset => isInsideCharRect(getCharRect(checkOffset)))
-
-  // Allow coordinates horizontally beyond text if vertically aligned with the text line
-  const isValidEdgeClick =
-    (offset === 0 || offset === nodeTextLength) &&
-    isVerticallyContained(getCharRect(offset === 0 ? 0 : nodeTextLength - 1))
-
-  // Valid coordinates on character, not a void area
-  if (isClickOnCharacter || isValidEdgeClick) {
-    // For multiline thoughts, we need to check if the click is on a different line than the browser would naturally place the caret.
-    const textNodes = getTextNodes(editable)
-    if (textNodes.length === 0) return null
-
-    const nearest = findNearestTextNode(textNodes, clientY)
-    if (!nearest) return null
-
-    // Check if the text node has multiple lines
-    const lines = getTextNodeLines(nearest.node)
-    if (lines.length > 1) {
-      // For multiline text nodes, calculate the offset to ensure proper line selection
-      return calculateHorizontalOffset(nearest.node, clientX, clientY)
-    }
-
-    // For single-line thoughts, allow default browser behavior
+  // If the tap is outside the editable bounds, return null.
+  if (!isWithinEditable && (!range || !editable.contains(range.startContainer))) {
     return null
   }
 
-  // Coordinates are in padding/void area, calculate the caret position
+  // Calculate the caret position using text nodes
   const textNodes = getTextNodes(editable)
   if (textNodes.length === 0) return null
 

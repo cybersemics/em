@@ -23,6 +23,8 @@ import {
   EDIT_THROTTLE,
   EM_TOKEN,
   LongPressState,
+  Settings,
+  TOOLBAR_HEIGHT,
   TUTORIAL2_STEP_CONTEXT1,
   TUTORIAL2_STEP_CONTEXT1_PARENT,
   TUTORIAL2_STEP_CONTEXT2,
@@ -39,12 +41,14 @@ import { anyChild, getAllChildrenAsThoughts } from '../selectors/getChildren'
 import getContexts from '../selectors/getContexts'
 import getSetting from '../selectors/getSetting'
 import getThoughtById from '../selectors/getThoughtById'
+import getUserSetting from '../selectors/getUserSetting'
 import hasMulticursorSelector from '../selectors/hasMulticursor'
 import rootedParentOf from '../selectors/rootedParentOf'
 import editingValueStore from '../stores/editingValue'
 import editingValueUntrimmedStore from '../stores/editingValueUntrimmed'
 import storageModel from '../stores/storageModel'
 import suppressFocusStore from '../stores/suppressFocus'
+import viewportStore from '../stores/viewport'
 import addEmojiSpace from '../util/addEmojiSpace'
 import containsURL from '../util/containsURL'
 import ellipsize from '../util/ellipsize'
@@ -62,6 +66,8 @@ import useEditMode from './Editable/useEditMode'
 import useOnCopy from './Editable/useOnCopy'
 import useOnCut from './Editable/useOnCut'
 import useOnPaste from './Editable/useOnPaste'
+
+const SCROLL_ZONE_MOVE_THRESHOLD = 8
 
 interface EditableProps {
   editableRef?: React.RefObject<HTMLInputElement | null>
@@ -128,6 +134,22 @@ const Editable = ({
   const nullRef = useRef<HTMLInputElement>(null)
   const contentRef = editableRef || nullRef
   const editingOrOnCursor = useSelector(state => state.isKeyboardOpen || equalPath(path, state.cursor))
+  const leftHanded = useSelector(state => getUserSetting(state, Settings.leftHanded))
+  const scrollZoneWidth = viewportStore.useSelector(state => state.scrollZoneWidth)
+  const viewportWidth = viewportStore.useSelector(state => state.innerWidth)
+  const scrollZoneTouch = useRef<{
+    x: number
+    y: number
+    moved: boolean
+    offset: number | null
+    startScrollY: number
+  } | null>(null)
+
+  const isInScrollZone = useCallback(
+    (x: number, y: number) =>
+      y > TOOLBAR_HEIGHT && (leftHanded ? x <= scrollZoneWidth : x >= viewportWidth - scrollZoneWidth),
+    [leftHanded, scrollZoneWidth, viewportWidth],
+  )
 
   // Disable contenteditable on Mobile Safari during drag-and-drop, otherwise thought text will become selected.
   // This is restricted to Mobile Safari, because on Chrome it creates a small layout shift.
@@ -568,9 +590,9 @@ const Editable = ({
           clientX: e.clientX,
           clientY: e.clientY,
         })
-        // nodeOffset is null if the tap is on a valid character
-        // in that case, allow the default selection
-        if (nodeOffset) {
+        // nodeOffset is null only when the click is outside the editable bounds.
+        // Note: nodeOffset can be 0 (beginning of text) which is a valid offset.
+        if (nodeOffset !== null) {
           e.preventDefault()
           setVoidAreaCaret(nodeOffset)
         } else {
@@ -595,28 +617,84 @@ const Editable = ({
     /** Handle touch events to prevent initial cursor jump. */
     const handleTouchStart = (e: TouchEvent) => {
       if (editingOrOnCursor && !hasMulticursor && e.touches.length > 0) {
+        const touch = e.touches[0]
+        const inScrollZone = isTouch && isInScrollZone(touch.clientX, touch.clientY)
+
         const nodeOffset = getNodeOffsetForVoidArea(editable, {
-          clientX: e.touches[0].clientX,
-          clientY: e.touches[0].clientY,
+          clientX: touch.clientX,
+          clientY: touch.clientY,
         })
 
-        // nodeOffset is null if the tap is on a valid character
-        // in that case, allow the default selection
-        if (nodeOffset) {
-          e.preventDefault()
-          setVoidAreaCaret(nodeOffset)
+        // nodeOffset is null only when the tap is outside the editable bounds.
+        // Note: nodeOffset can be 0 (beginning of text) which is a valid offset.
+        if (nodeOffset !== null) {
+          if (inScrollZone) {
+            // Assume tap: preventDefault to block iOS caret. If user scrolls, we'll scroll manually in touchmove.
+            e.preventDefault()
+            scrollZoneTouch.current = {
+              x: touch.clientX,
+              y: touch.clientY,
+              moved: false,
+              offset: nodeOffset,
+              startScrollY: window.scrollY,
+            }
+          } else {
+            e.preventDefault()
+            setVoidAreaCaret(nodeOffset)
+          }
         } else {
           allowDefaultSelection()
         }
       }
     }
 
+    /** Handles touch move events to scroll the document if the user scrolls in the scroll zone. */
+    const handleTouchMove = (e: TouchEvent) => {
+      const currentTouch = scrollZoneTouch.current
+      if (!currentTouch || e.touches.length === 0) return
+      const touch = e.touches[0]
+      const dx = touch.clientX - currentTouch.x
+      const dy = touch.clientY - currentTouch.y
+      if (Math.hypot(dx, dy) > SCROLL_ZONE_MOVE_THRESHOLD) {
+        currentTouch.moved = true
+        // Manual scroll: we prevented default on touchstart, so implement scroll ourselves
+        const maxScroll = document.documentElement.scrollHeight - window.innerHeight
+        const newScrollY = currentTouch.startScrollY + (currentTouch.y - touch.clientY)
+        window.scrollTo(0, Math.max(0, Math.min(maxScroll, newScrollY)))
+      }
+    }
+
+    /** Handles touch end events to reset the scroll zone touch state. */
+    const handleTouchEnd = (e: TouchEvent) => {
+      const currentTouch = scrollZoneTouch.current
+      scrollZoneTouch.current = null
+      if (!currentTouch || currentTouch.moved) return
+      // Tap: we already prevented default on touchstart, so iOS never moved the caret. Place it now.
+      const storedOffset = currentTouch.offset
+      if (storedOffset !== null) {
+        setVoidAreaCaret(storedOffset)
+      } else {
+        allowDefaultSelection()
+      }
+    }
+
+    /** Handles touch cancel events to reset the scroll zone touch state. */
+    const handleTouchCancel = () => {
+      scrollZoneTouch.current = null
+    }
+
     editable.addEventListener('touchstart', handleTouchStart, { passive: false })
+    editable.addEventListener('touchmove', handleTouchMove, { passive: true })
+    editable.addEventListener('touchend', handleTouchEnd, { passive: false })
+    editable.addEventListener('touchcancel', handleTouchCancel)
 
     return () => {
       editable.removeEventListener('touchstart', handleTouchStart)
+      editable.removeEventListener('touchmove', handleTouchMove)
+      editable.removeEventListener('touchend', handleTouchEnd)
+      editable.removeEventListener('touchcancel', handleTouchCancel)
     }
-  }, [contentRef, editingOrOnCursor, hasMulticursor, allowDefaultSelection, setVoidAreaCaret])
+  }, [contentRef, editingOrOnCursor, hasMulticursor, allowDefaultSelection, setVoidAreaCaret, isInScrollZone])
 
   /** Sets the cursor on the thought on touchend or click. Handles hidden elements, drags, and editing mode. */
   const onTap = useCallback(
