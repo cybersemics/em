@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
+import { isTouch } from '../browser'
 
 interface ContentEditableProps extends React.HTMLProps<HTMLDivElement> {
   style?: React.CSSProperties
@@ -95,7 +96,8 @@ const ContentEditable = React.memo(({ style, html, disabled, hasFocus, innerRef,
       }}
       // Allow dragging a text selection within an editable (#3530)
       // https://github.com/react-dnd/react-dnd/issues/3157
-      onDragOver={disabled || !hasFocus ? undefined : e => e.stopPropagation()}
+      onDragOver={isTouch || disabled || !hasFocus ? undefined : e => e.stopPropagation()}
+      onDrop={isTouch && !hasFocus ? e => e.preventDefault() : undefined}
       onInput={handleInput}
       onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
         if (props.onKeyDown) props.onKeyDown(e)
