@@ -1,6 +1,5 @@
 import { KnownDevices } from 'puppeteer'
 import newThoughtCommand from '../../../commands/newThought'
-import { HOME_TOKEN } from '../../../constants'
 import clickThought from '../helpers/clickThought'
 import exportThoughts from '../helpers/exportThoughts'
 import getEditingText from '../helpers/getEditingText'
@@ -46,19 +45,21 @@ it('Undo Select All + Categorize chained command in one step', async () => {
   await swipe('ldr' + 'lu', true)
 
   const exported1 = await exportThoughts()
-  expect(exported1).toBe(`- ${HOME_TOKEN}
-  - 
-    - a
-    - b
-    - c`)
+  expect(exported1).toBe(`
+- 
+  - a
+  - b
+  - c
+`)
 
   await press('z', { meta: true })
 
   const exported2 = await exportThoughts()
-  expect(exported2).toBe(`- ${HOME_TOKEN}
-  - a
-  - b
-  - c`)
+  expect(exported2).toBe(`
+- a
+- b
+- c
+`)
 
   // make sure multicursor is disabled after undo
   const highlightedCount = await page.evaluate(() => document.querySelectorAll('[data-highlighted=true]').length)
