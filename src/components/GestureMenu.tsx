@@ -67,7 +67,6 @@ const GestureMenu: FC<{
                   gestureInProgress={gestureInProgress as string}
                   key={command.id}
                   selected={isCheatsheetMatch || gestureInProgress === gestureString(command) || isCancelMatch}
-                  // selected={false}
                   command={command}
                   isFirstCommand={index === 0}
                   isLastCommand={index === commands.length - 1}
@@ -105,14 +104,31 @@ function Glow() {
       className={css({
         position: 'absolute',
         pointerEvents: 'none',
-        backgroundImage: 'url(/img/gesture-menu/glow.webp)',
-        backgroundSize: 'cover',
-        mixBlendMode: 'screen',
+        width: '100vw',
         height: '100vh',
-        width: '100%',
-        inset: 0,
+        overflow: 'hidden',
       })}
-    />
+    >
+      <div
+        className={css({
+          backgroundImage: 'url(/img/gesture-menu/glow.webp)',
+          backgroundRepeat: 'no-repeat',
+          mixBlendMode: 'screen',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100vh',
+          backgroundSize: 'cover',
+          '@media (max-width: 1024px)': {
+            transform: 'translateX(-30%) scaleX(3.3)',
+          },
+          '@media (max-width: 560px)': {
+            transform: 'translateX(-40%) scaleX(2.5)',
+          },
+        })}
+      />
+    </div>
   )
 }
 
