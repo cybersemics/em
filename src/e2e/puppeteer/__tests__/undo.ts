@@ -2,10 +2,10 @@ import { KnownDevices } from 'puppeteer'
 import newThoughtCommand from '../../../commands/newThought'
 import clickThought from '../helpers/clickThought'
 import exportThoughts from '../helpers/exportThoughts'
+import gesture from '../helpers/gesture'
 import getEditingText from '../helpers/getEditingText'
 import keyboard from '../helpers/keyboard'
 import press from '../helpers/press'
-import swipe from '../helpers/swipe'
 import { page } from '../setup'
 
 it('Re-render cursor thought on undo', async () => {
@@ -34,15 +34,15 @@ it('Undo Select All + Categorize chained command in one step', async () => {
   await page.emulate(KnownDevices['iPhone 15 Pro'])
 
   // create thoughts a, b, c
-  await swipe(newThoughtCommand, true)
+  await gesture(newThoughtCommand, true)
   await keyboard.type('a')
-  await swipe(newThoughtCommand, true)
+  await gesture(newThoughtCommand, true)
   await keyboard.type('b')
-  await swipe(newThoughtCommand, true)
+  await gesture(newThoughtCommand, true)
   await keyboard.type('c')
 
   // Select All + Categorize
-  await swipe('ldr' + 'lu', true)
+  await gesture('ldr' + 'lu', true)
 
   const exported1 = await exportThoughts()
   expect(exported1).toBe(`

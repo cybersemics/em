@@ -49,7 +49,7 @@ function isCommand(value: unknown): value is Command {
  * Set to false to test during-gesture behavior.
  * Set to true to test post-gesture behavior.
  */
-const swipe = async (gestureOrCommand: GesturePath | Command, completeGesture = false) => {
+const gesture = async (gestureOrCommand: GesturePath | Command, completeGesture = false) => {
   if (isCommand(gestureOrCommand) && !gestureOrCommand.gesture) {
     throw new Error(
       `Command "${gestureOrCommand.id}" does not have a gesture defined so cannot be activated with swipe.`,
@@ -104,4 +104,4 @@ const swipe = async (gestureOrCommand: GesturePath | Command, completeGesture = 
   }
 }
 
-export default swipe
+export default gesture
