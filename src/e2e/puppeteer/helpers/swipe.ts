@@ -33,21 +33,6 @@ const move = async (x1: number, y1: number, x2: number, y2: number): Promise<voi
   }
 }
 
-/** Draw a gesture on the screen. */
-const swipePoints = async (points: { x: number; y: number }[], complete: boolean = true) => {
-  const start = points[0]
-
-  await page.touchscreen.touchStart(start.x, start.y)
-
-  for (let i = 1; i < points.length; i++) {
-    await move(points[i - 1].x, points[i - 1].y, points[i].x, points[i].y)
-  }
-
-  if (complete) {
-    await page.touchscreen.touchEnd()
-  }
-}
-
 /**
  * Swipe gesture helper for testing.
  * Creates a series of touch events to simulate realistic gesture movement.
@@ -90,8 +75,15 @@ const swipe = async (gesture: GesturePath, completeGesture = false) => {
     points.push({ x, y })
   }
 
-  // Execute the gesture with optional completion
-  await swipePoints(points, completeGesture)
+  await page.touchscreen.touchStart(points[0].x, points[0].y)
+
+  for (let i = 1; i < points.length; i++) {
+    await move(points[i - 1].x, points[i - 1].y, points[i].x, points[i].y)
+  }
+
+  if (completeGesture) {
+    await page.touchscreen.touchEnd()
+  }
 }
 
 export default swipe
