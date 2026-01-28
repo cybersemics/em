@@ -43,13 +43,17 @@ function isCommand(value: unknown): value is Command {
  * Swipe gesture helper for testing.
  * Creates a series of touch events to simulate realistic gesture movement.
  * Uses fixed step sizes for simplicity and reliability.
- *
- * @param gesture - String of directions (e.g., "rd" for right-down) or a Command object with a gesture property.
- * @param completeGesture - Whether to complete the gesture with touchEnd
- * Set to false to test during-gesture behavior.
- * Set to true to test post-gesture behavior.
  */
-const gesture = async (gestureOrCommand: GesturePath | Command, completeGesture = false) => {
+const gesture = async (
+  /** String of directions (e.g., "rd" for right-down) or a Command object with a gesture property. */
+  gestureOrCommand: GesturePath | Command,
+  {
+    hold,
+  }: {
+    /** If true, the gesture will be held and not completed with touchEnd. */
+    hold?: boolean
+  } = {},
+) => {
   if (isCommand(gestureOrCommand) && !gestureOrCommand.gesture) {
     throw new Error(
       `Command "${gestureOrCommand.id}" does not have a gesture defined so cannot be activated with swipe.`,
@@ -99,7 +103,7 @@ const gesture = async (gestureOrCommand: GesturePath | Command, completeGesture 
     await move(points[i - 1].x, points[i - 1].y, points[i].x, points[i].y)
   }
 
-  if (completeGesture) {
+  if (!hold) {
     await page.touchscreen.touchEnd()
   }
 }

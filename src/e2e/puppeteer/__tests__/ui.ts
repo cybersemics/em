@@ -41,7 +41,7 @@ it('GestureMenu', async () => {
   await clickThought('Hello')
 
   // swipe and hold an invalid gesture so that the snapshot just includes Cancel and Open Gesture Cheatsheet and does not need to be updated every time a gesture is added or changed.
-  await gesture('rdldrd')
+  await gesture('rdldrd', { hold: true })
 
   // wait for the gesture menu to appear
   await waitForSelector('[data-testid=popup-value]')
@@ -61,7 +61,7 @@ it('CommandCenter', async () => {
   await clickThought('Hello')
 
   // open the Command Center
-  await gesture(openCommandCenterCommand, true)
+  await gesture(openCommandCenterCommand)
 
   // wait for the command center panel to appear before taking screenshot
   await waitForSelector('[data-testid=command-center-panel]')

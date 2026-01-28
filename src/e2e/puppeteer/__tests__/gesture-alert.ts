@@ -30,7 +30,7 @@ describe('gesture alert behavior', () => {
    */
   it('should not show alert during gesture progress', async () => {
     // Perform an incomplete gesture (no touchEnd) - create a new thought
-    await gesture(newSubthoughtCommand, false)
+    await gesture(newSubthoughtCommand, { hold: true })
 
     await waitForFrames()
 
@@ -48,7 +48,7 @@ describe('gesture alert behavior', () => {
    */
   it('should show alert after gesture completion', async () => {
     // Perform a complete gesture - create a new thought
-    await gesture(newSubthoughtCommand, true)
+    await gesture(newSubthoughtCommand)
 
     await waitForFrames()
 

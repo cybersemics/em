@@ -34,15 +34,15 @@ it('Undo Select All + Categorize chained command in one step', async () => {
   await page.emulate(KnownDevices['iPhone 15 Pro'])
 
   // create thoughts a, b, c
-  await gesture(newThoughtCommand, true)
+  await gesture(newThoughtCommand)
   await keyboard.type('a')
-  await gesture(newThoughtCommand, true)
+  await gesture(newThoughtCommand)
   await keyboard.type('b')
-  await gesture(newThoughtCommand, true)
+  await gesture(newThoughtCommand)
   await keyboard.type('c')
 
   // Select All + Categorize
-  await gesture('ldr' + 'lu', true)
+  await gesture('ldr' + 'lu')
 
   const exported1 = await exportThoughts()
   expect(exported1).toBe(`
