@@ -21,6 +21,7 @@ import { updateCommandState } from '../stores/commandStateStore'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
 import { updateSafariKeyboardState } from '../stores/safariKeyboardStore'
 import { updateScrollTop } from '../stores/scrollTop'
+import selectionRangeStore from '../stores/selectionRangeStore'
 import storageModel from '../stores/storageModel'
 import syncStatusStore from '../stores/syncStatus'
 import { updateSize } from '../stores/viewport'
@@ -198,6 +199,8 @@ const initEvents = (store: Store<State, any>) => {
   /** Save selection offset to storage, throttled. */
   const saveSelectionOffset = _.throttle(
     () => {
+      // editables are not long-pressable on desktop, so the range will only be a concern on mobile
+      if (isTouch) selectionRangeStore.update(!selection.isCollapsed())
       storageModel.set('cursor', value => ({
         path: value?.path || store.getState().cursor,
         offset: selection.offsetThought(),
@@ -333,6 +336,10 @@ const initEvents = (store: Store<State, any>) => {
     // dragEnter and dragLeave are called in alternating pairs as the user drags over nested elements: ENTER, LEAVE, ENTER, LEAVE, ENTER
     // In order to detect the end of dragging a file, we need to debounce the dragLeave event and cancel it if dragEnter occurs.
     // Inspired by: https://stackoverflow.com/questions/3144881/how-do-i-detect-a-html5-drag-event-entering-and-leaving-the-window-like-gmail-d
+
+    const hasSelectionRange = selectionRangeStore.getState()
+    if (hasSelectionRange) return
+
     setTimeout(() => {
       dragLeave.cancel()
     })

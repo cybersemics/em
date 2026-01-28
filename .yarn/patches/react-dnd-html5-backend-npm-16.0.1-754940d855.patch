@@ -1,0 +1,24 @@
+diff --git a/dist/HTML5BackendImpl.js b/dist/HTML5BackendImpl.js
+index b7405c68f4e59cf9cea672a2a91c0b7721b300ed..3a36c9236b4be54ae81850c52a67ff9ec2c49a30 100644
+--- a/dist/HTML5BackendImpl.js
++++ b/dist/HTML5BackendImpl.js
+@@ -518,7 +518,6 @@ export class HTML5BackendImpl {
+             this.dropTargetIds = [];
+             if (this.isDraggingNativeItem()) {
+                 var ref;
+-                e.preventDefault();
+                 (ref = this.currentNativeSource) === null || ref === void 0 ? void 0 : ref.loadDataTransfer(e.dataTransfer);
+             } else if (matchNativeItemType(e.dataTransfer)) {
+                 // Dragging some elements, like <a> and <img> may still behave like a native drag event,
+diff --git a/src/HTML5BackendImpl.ts b/src/HTML5BackendImpl.ts
+index 378b86e7d2090d09a434911ddf692ae7b1e02358..3650367c2d8f389b2adafcb089527e8cccc12259 100644
+--- a/src/HTML5BackendImpl.ts
++++ b/src/HTML5BackendImpl.ts
+@@ -697,7 +697,6 @@ export class HTML5BackendImpl implements Backend {
+ 		this.dropTargetIds = []
+ 
+ 		if (this.isDraggingNativeItem()) {
+-			e.preventDefault()
+ 			this.currentNativeSource?.loadDataTransfer(e.dataTransfer)
+ 		} else if (matchNativeItemType(e.dataTransfer)) {
+ 			// Dragging some elements, like <a> and <img> may still behave like a native drag event,

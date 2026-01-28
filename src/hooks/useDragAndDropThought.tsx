@@ -18,6 +18,7 @@ import { importFilesActionCreator as importFiles } from '../actions/importFiles'
 import { longPressActionCreator as longPress } from '../actions/longPress'
 import { moveThoughtActionCreator as moveThought } from '../actions/moveThought'
 import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from '../actions/setIsMulticursorExecuting'
+import { isTouch } from '../browser'
 import { ThoughtContainerProps } from '../components/Thought'
 import { LongPressState } from '../constants'
 import * as selection from '../device/selection'
@@ -33,6 +34,7 @@ import isMulticursorPath from '../selectors/isMulticursorPath'
 import pathToThought from '../selectors/pathToThought'
 import simplifyPath from '../selectors/simplifyPath'
 import store from '../stores/app'
+import selectionRangeStore from '../stores/selectionRangeStore'
 import appendToPath from '../util/appendToPath'
 import ellipsize from '../util/ellipsize'
 import equalPath from '../util/equalPath'
@@ -54,6 +56,9 @@ export type DropValidationResult = {
 
 /** Returns true if the thought can be dragged. */
 const canDrag = (props: ThoughtContainerProps) => {
+  const hasSelectionRange = selectionRangeStore.getState()
+  if (isTouch && hasSelectionRange) return false
+
   const state = store.getState()
   const thoughtId = head(props.simplePath)
   const pathParentId = head(parentOf(props.simplePath))
