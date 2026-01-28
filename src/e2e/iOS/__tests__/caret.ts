@@ -2,7 +2,8 @@
  * IOS Safari caret positioning tests.
  * Uses WDIO test runner with Mocha framework.
  */
-import gestures from '../../../test-helpers/gestures'
+import bumpThoughtDownCommand from '../../../commands/bumpThoughtDown'
+import newThoughtCommand from '../../../commands/newThought'
 import clickThought from '../helpers/clickThought'
 import editThought from '../helpers/editThought'
 import gesture from '../helpers/gesture'
@@ -208,7 +209,7 @@ describe('Caret', () => {
     const editableNodeHandle = await waitForEditable('y')
     const elementRect = await getElementRectByScreen(editableNodeHandle)
 
-    await gesture(gestures.newThought, {
+    await gesture(newThoughtCommand, {
       xStart: elementRect.x + 5,
       yStart: elementRect.y + elementRect.height + 10,
     })
@@ -236,7 +237,7 @@ describe('Caret', () => {
     const editableNodeHandle = await getEditable('foo')
     await tap(editableNodeHandle)
 
-    await gesture(gestures.bumpThoughtDown)
+    await gesture(bumpThoughtDownCommand)
     const newThoughtEditable = await editThought('new')
     const selectionTextContent = await getSelection().focusNode?.textContent
 
