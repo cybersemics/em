@@ -195,6 +195,7 @@ const Note = React.memo(
           // For some reason, pointerEvents: 'none' on ContentEditable or its parent does prevent onFocus.
           // This is strange, as it seems to prevent onFocus in Subthought.tsx.
           disabled={disabled}
+          onDrop={isTouch ? (e: React.DragEvent) => e.preventDefault() : undefined}
           onKeyDown={onKeyDown}
           onChange={onChange}
           onPaste={() => {
