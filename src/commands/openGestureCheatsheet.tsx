@@ -3,7 +3,7 @@ import { toggleGestureCheatsheetActionCreator as toggleGestureCheatsheet } from 
 import GestureCheatsheetIcon from '../components/icons/GestureCheatsheetIcon'
 import isDocumentEditable from '../util/isDocumentEditable'
 
-const openGestureCheatsheetCommand: Command = {
+const openGestureCheatsheetCommand = {
   id: 'openGestureCheatsheet',
   label: 'Gesture Cheatsheet',
   description: 'Opens a list of all the gestures.',
@@ -15,6 +15,6 @@ const openGestureCheatsheetCommand: Command = {
   exec: dispatch => {
     dispatch(toggleGestureCheatsheet({ value: true }))
   },
-}
+} satisfies Command
 
 export default openGestureCheatsheetCommand

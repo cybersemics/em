@@ -66,7 +66,7 @@ const multicursor: Command['multicursor'] = {
   preventSetCursor: true,
 }
 
-const newThoughtCommand: Command = {
+const newThoughtCommand = {
   id: 'newThought',
   label: 'New Thought',
   description: 'Create a shiny new thought.',
@@ -80,6 +80,6 @@ const newThoughtCommand: Command = {
   svg: Icon,
   canExecute: () => isDocumentEditable(),
   exec,
-}
+} satisfies Command
 
 export default newThoughtCommand

@@ -4,7 +4,7 @@ import CategorizeIcon from '../components/icons/CategorizeIcon'
 import hasMulticursor from '../selectors/hasMulticursor'
 import isDocumentEditable from '../util/isDocumentEditable'
 
-const categorizeCommand: Command = {
+const categorizeCommand = {
   id: 'categorize',
   label: 'Categorize',
   description: 'Move the current thought into a new, empty thought at the same level.',
@@ -22,6 +22,6 @@ const categorizeCommand: Command = {
     return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
   },
   exec: dispatch => dispatch(categorize()),
-}
+} satisfies Command
 
 export default categorizeCommand

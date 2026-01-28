@@ -7,7 +7,7 @@ import simplifyPath from '../selectors/simplifyPath'
 import isDocumentEditable from '../util/isDocumentEditable'
 import noteValue from '../util/noteValue'
 
-const noteCommand: Command = {
+const noteCommand = {
   id: 'note',
   label: 'Note',
   description: 'Add a small note beneath a thought. Cute!',
@@ -34,6 +34,6 @@ const noteCommand: Command = {
     const path = cursor ? simplifyPath(state, cursor) : HOME_PATH
     return noteValue(state, path) !== null
   },
-}
+} satisfies Command
 
 export default noteCommand

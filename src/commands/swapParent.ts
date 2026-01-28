@@ -4,7 +4,7 @@ import SwapParentIcon from '../components/icons/SwapParentIcon'
 import hasMulticursor from '../selectors/hasMulticursor'
 import isDocumentEditable from '../util/isDocumentEditable'
 
-const swapParent: Command = {
+const swapParent = {
   id: 'swapParent',
   label: 'Swap Parent',
   description: 'Swap the current thought with its parent.',
@@ -20,6 +20,6 @@ const swapParent: Command = {
   exec: dispatch => {
     dispatch(swapParentActionCreator())
   },
-}
+} satisfies Command
 
 export default swapParent

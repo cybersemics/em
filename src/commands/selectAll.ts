@@ -6,7 +6,7 @@ import hasMulticursor from '../selectors/hasMulticursor'
 import isAllSelected from '../selectors/isAllSelected'
 import isDocumentEditable from '../util/isDocumentEditable'
 
-const selectAllCommand: Command = {
+const selectAllCommand = {
   id: 'selectAll',
   label: 'Select All',
   labelInverse: 'Deselect All',
@@ -50,6 +50,6 @@ const selectAllCommand: Command = {
           }),
     )
   },
-}
+} satisfies Command
 
 export default selectAllCommand

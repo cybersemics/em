@@ -547,9 +547,7 @@ describe('useFilteredCommands', () => {
         expect(commandIds).toContain('categorize')
 
         const selectAllCategorizeCommand = result.current.find(command => command.id === 'categorize')
-        expect(selectAllCategorizeCommand!.gesture).toEqual(
-          selectAllCommand.gesture + gestureString(categorizeCommand!),
-        )
+        expect(selectAllCategorizeCommand!.gesture).toEqual(selectAllCommand.gesture + gestureString(categorizeCommand))
       })
 
       it('should filter chained commands with additional swipes', () => {

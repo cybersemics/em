@@ -8,7 +8,7 @@ import * as selection from '../device/selection'
 import hasMulticursor from '../selectors/hasMulticursor'
 import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 
-const cursorBackCommand: Command = {
+const cursorBackCommand = {
   id: 'cursorBack',
   label: 'Back',
   description: 'Move the cursor up a level.',
@@ -44,6 +44,6 @@ const cursorBackCommand: Command = {
       scrollTo('top')
     }
   }),
-}
+} satisfies Command
 
 export default cursorBackCommand

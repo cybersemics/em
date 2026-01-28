@@ -8,7 +8,7 @@ import splitChain from '../selectors/splitChain'
 import isDocumentEditable from '../util/isDocumentEditable'
 import pathToContext from '../util/pathToContext'
 
-const bindContextCommand: Command = {
+const bindContextCommand = {
   id: 'bindContext',
   label: 'Bind Context',
   svg: BindContextIcon,
@@ -40,6 +40,6 @@ const bindContextCommand: Command = {
       }),
     )
   },
-}
+} satisfies Command
 
 export default bindContextCommand

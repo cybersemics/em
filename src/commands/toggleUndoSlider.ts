@@ -2,7 +2,7 @@ import Command from '../@types/Command'
 import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import Icon from '../components/icons/CategorizeIcon'
 
-const toggleUndoSlider: Command = {
+const toggleUndoSlider = {
   id: 'toggleUndoSlider',
   label: 'Toggle Undo Slider',
   description: 'Toggle a handy slider that lets you rewind edits.',
@@ -14,6 +14,6 @@ const toggleUndoSlider: Command = {
     dispatch(toggleDropdown({ dropDownType: 'undoSlider' }))
   },
   isDropdownOpen: state => !!state.showUndoSlider,
-}
+} satisfies Command
 
 export default toggleUndoSlider

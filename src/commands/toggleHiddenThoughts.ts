@@ -2,7 +2,7 @@ import Command from '../@types/Command'
 import { toggleHiddenThoughtsActionCreator as toggleHiddenThoughts } from '../actions/toggleHiddenThoughts'
 import HiddenThoughtsIcon from '../components/icons/HiddenThoughtsIcon'
 
-const toggleHiddenThoughtsCommand: Command = {
+const toggleHiddenThoughtsCommand = {
   id: 'toggleHiddenThoughts',
   label: 'Show Hidden Thoughts',
   labelInverse: 'Hide Hidden Thoughts',
@@ -13,6 +13,6 @@ const toggleHiddenThoughtsCommand: Command = {
   svg: HiddenThoughtsIcon,
   exec: dispatch => dispatch(toggleHiddenThoughts()),
   isActive: state => state.showHiddenThoughts,
-}
+} satisfies Command
 
 export default toggleHiddenThoughtsCommand

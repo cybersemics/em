@@ -4,7 +4,7 @@ import { newThoughtActionCreator as newThought } from '../actions/newThought'
 import NewSubthoughtAboveIcon from '../components/icons/NewSubthoughtAboveIcon'
 import isDocumentEditable from '../util/isDocumentEditable'
 
-const newSubthoughtTopCommand: Command = {
+const newSubthoughtTopCommand = {
   id: 'newSubthoughtTop',
   label: 'New Subthought (above)',
   description: 'Create a new subthought in the current thought. Add it to the top of any existing subthoughts.',
@@ -17,6 +17,6 @@ const newSubthoughtTopCommand: Command = {
   svg: NewSubthoughtAboveIcon,
   canExecute: () => isDocumentEditable(),
   exec: newThought({ insertNewSubthought: true, insertBefore: true }),
-}
+} satisfies Command
 
 export default newSubthoughtTopCommand

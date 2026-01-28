@@ -6,7 +6,7 @@ import hasMulticursor from '../selectors/hasMulticursor'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 /** Removes formatting of the current browser selection. If there is no selection, clears formatting of the entire thought. */
-const removeFormat: Command = {
+const removeFormat = {
   id: 'removeFormat',
   label: 'Clear Formatting',
   description: 'Clears all formatting from the current thought or selected text.',
@@ -19,6 +19,6 @@ const removeFormat: Command = {
   exec: dispatch => {
     dispatch(formatSelection('removeFormat'))
   },
-}
+} satisfies Command
 
 export default removeFormat

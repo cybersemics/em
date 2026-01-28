@@ -58,7 +58,7 @@ const fetchWebpageTitle = async (url: string): Promise<string | null> => {
 }
 
 /** Generate a thought using AI. */
-const generateThought: Command = {
+const generateThought = {
   id: 'generateThought',
   label: 'Generate Thought',
   description: 'Generates a thought using AI.',
@@ -201,6 +201,6 @@ const generateThought: Command = {
       ])
     }
   },
-}
+} satisfies Command
 
 export default generateThought

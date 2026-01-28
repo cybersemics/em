@@ -36,7 +36,7 @@ const Tutorial2StepContextViewToggle = () => {
             </p>
           ) : null}
           <p>
-            {isTouch ? 'Trace the line below' : `Hit ${formatKeyboardShortcut(toggleContextViewCommand.keyboard!)}`} to
+            {isTouch ? 'Trace the line below' : `Hit ${formatKeyboardShortcut(toggleContextViewCommand.keyboard)}`} to
             view the current thought's contexts.
           </p>
           <TutorialGestureDiagram gesture={toggleContextViewCommand.gesture} />

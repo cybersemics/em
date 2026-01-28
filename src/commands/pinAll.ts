@@ -15,7 +15,7 @@ import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
 
-const pinAllCommand: Command = {
+const pinAllCommand = {
   id: 'pinAll',
   label: 'Pin All',
   labelInverse: 'Unpin All',
@@ -85,6 +85,6 @@ const pinAllCommand: Command = {
     const childrenAttributeId = findDescendant(state, head(path), '=children')
     return !!isPinned(state, childrenAttributeId)
   },
-}
+} satisfies Command
 
 export default pinAllCommand

@@ -8,7 +8,7 @@ import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
 
-const toggleTableViewCommand: Command = {
+const toggleTableViewCommand = {
   id: 'toggleTableView',
   label: 'Table View',
   description: 'Display the current list as a table, with subthoughts rendered in the second column.',
@@ -38,6 +38,6 @@ const toggleTableViewCommand: Command = {
     const path = simplifyPath(state, rootedParentOf(state, state.cursor))
     return attributeEquals(state, head(path), '=view', 'Table')
   },
-}
+} satisfies Command
 
 export default toggleTableViewCommand

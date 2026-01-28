@@ -8,7 +8,7 @@ import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
 
-const toggleSortCommand: Command = {
+const toggleSortCommand = {
   id: 'toggleSortPicker',
   label: 'SortPicker',
   description: 'Open a sort picker to pick the sort option and sort by option.',
@@ -50,6 +50,6 @@ const toggleSortCommand: Command = {
       ? 'Ranks do not match sort condition'
       : null
   },
-}
+} satisfies Command
 
 export default toggleSortCommand

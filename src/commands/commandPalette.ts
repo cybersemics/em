@@ -2,7 +2,7 @@ import Command from '../@types/Command'
 import { commandPaletteActionCreator as commandPalette } from '../actions/commandPalette'
 import CommandPaletteIcon from '../components/icons/CommandPaletteIcon'
 
-const commandPaletteCommand: Command = {
+const commandPaletteCommand = {
   id: 'commandPalette',
   label: 'Command Palette',
   description: 'Opens the command palette where commands can be executed by name.',
@@ -12,6 +12,6 @@ const commandPaletteCommand: Command = {
   keyboard: { key: 'p', meta: true },
   exec: dispatch => dispatch(commandPalette()),
   allowExecuteFromModal: true,
-}
+} satisfies Command
 
 export default commandPaletteCommand

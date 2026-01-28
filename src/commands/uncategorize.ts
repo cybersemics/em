@@ -3,7 +3,7 @@ import { uncategorizeActionCreator as uncategorize } from '../actions/uncategori
 import UncategorizeIcon from '../components/icons/UncategorizeIcon'
 import hasMulticursor from '../selectors/hasMulticursor'
 
-const uncategorizeCommand: Command = {
+const uncategorizeCommand = {
   id: 'uncategorize',
   label: 'Uncategorize',
   description: 'Deletes the current thought and moves all its subthoughts up a level.',
@@ -20,6 +20,6 @@ const uncategorizeCommand: Command = {
   exec: dispatch => {
     dispatch(uncategorize({}))
   },
-}
+} satisfies Command
 
 export default uncategorizeCommand

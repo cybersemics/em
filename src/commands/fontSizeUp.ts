@@ -2,7 +2,7 @@ import Command from '../@types/Command'
 import fontSizeUp from '../actions/fontSizeUp'
 import SettingsIcon from '../components/icons/SettingsIcon'
 
-const fontSizeUpCommand: Command = {
+const fontSizeUpCommand = {
   id: 'fontSizeUp',
   label: 'Increase Font Size',
   description: 'Increase the font size. Bigger is better!',
@@ -12,6 +12,6 @@ const fontSizeUpCommand: Command = {
   exec: dispatch => {
     dispatch(fontSizeUp())
   },
-}
+} satisfies Command
 
 export default fontSizeUpCommand

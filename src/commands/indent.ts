@@ -4,7 +4,7 @@ import IndentIcon from '../components/icons/IndentIcon'
 import isDocumentEditable from '../util/isDocumentEditable'
 import moveCursorForward from './moveCursorForward'
 
-const indentCommand: Command = {
+const indentCommand = {
   id: 'indent',
   label: 'Indent',
   description: 'Indent the current thought one level deeper.',
@@ -21,6 +21,6 @@ const indentCommand: Command = {
   },
   exec: dispatch => dispatch(indent()),
   hideTitleInPanels: true,
-}
+} satisfies Command
 
 export default indentCommand

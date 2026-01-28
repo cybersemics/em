@@ -18,7 +18,7 @@ import isDocumentEditable from '../util/isDocumentEditable'
 import strip from '../util/strip'
 import trimBullet from '../util/trimBullet'
 
-const copyCursorCommand: Command = {
+const copyCursorCommand = {
   id: 'copyCursor',
   label: 'Copy Cursor',
   description: 'Copies the cursor and all descendants.',
@@ -102,6 +102,6 @@ const copyCursorCommand: Command = {
 
     dispatch(alert(`Copied ${phrase} to the clipboard`))
   },
-}
+} satisfies Command
 
 export default copyCursorCommand

@@ -9,7 +9,7 @@ import isPinned from '../selectors/isPinned'
 import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
 
-const pinCommand: Command = {
+const pinCommand = {
   id: 'pin',
   label: 'Pin',
   labelInverse: 'Unpin',
@@ -49,6 +49,6 @@ const pinCommand: Command = {
     const path = cursor ? simplifyPath(state, cursor) : HOME_PATH
     return !!isPinned(state, head(path))
   },
-}
+} satisfies Command
 
 export default pinCommand

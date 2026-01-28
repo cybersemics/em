@@ -2,7 +2,7 @@ import Command from '../@types/Command'
 import { jumpActionCreator as jump } from '../actions/jump'
 import JumpForwardIcon from '../components/icons/JumpForwardIcon'
 
-const jumpForwardCommand: Command = {
+const jumpForwardCommand = {
   id: 'jumpForward',
   label: 'Jump Forward',
   description: 'Move the cursor to the next edit point. Reverses jump back.',
@@ -13,6 +13,6 @@ const jumpForwardCommand: Command = {
   exec: dispatch => {
     dispatch(jump(1))
   },
-}
+} satisfies Command
 
 export default jumpForwardCommand

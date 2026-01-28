@@ -7,7 +7,7 @@ import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 /** Toggle the built-in =done style to cross out an item. */
-const toggleDone: Command = {
+const toggleDone = {
   id: 'toggleDone',
   label: 'Mark as done',
   labelInverse: 'Unmark as done',
@@ -33,6 +33,6 @@ const toggleDone: Command = {
     )
   },
   svg: Icon,
-}
+} satisfies Command
 
 export default toggleDone

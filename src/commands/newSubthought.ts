@@ -12,7 +12,7 @@ const multicursor: Command['multicursor'] = {
   preventSetCursor: true,
 }
 
-const newSubthoughtCommand: Command = {
+const newSubthoughtCommand = {
   id: 'newSubthought',
   label: 'New Subthought',
   description: 'Create a new subthought in the current thought. Adds it to the bottom of any existing subthoughts.',
@@ -55,6 +55,6 @@ const newSubthoughtCommand: Command = {
   svg: Icon,
   canExecute: () => isDocumentEditable(),
   exec,
-}
+} satisfies Command
 
 export default newSubthoughtCommand

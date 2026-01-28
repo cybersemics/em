@@ -4,7 +4,7 @@ import TextColorWithColorPicker from '../components/icons/TextColorWithColorPick
 import isDocumentEditable from '../util/isDocumentEditable'
 
 /** Toggle the built-in =done style to cross out an item. */
-const textColor: Command = {
+const textColor = {
   id: 'textColor',
   label: 'Text Color',
   description: 'Change the text color or highlight color to your liking.',
@@ -19,6 +19,6 @@ const textColor: Command = {
   },
   isActive: state => !!state.cursor,
   isDropdownOpen: state => !!state.showColorPicker,
-}
+} satisfies Command
 
 export default textColor

@@ -7,7 +7,7 @@ import appendToPath from '../util/appendToPath'
 import isDocumentEditable from '../util/isDocumentEditable'
 import parentOf from '../util/parentOf'
 
-const moveThoughtDownCommand: Command = {
+const moveThoughtDownCommand = {
   id: 'moveThoughtDown',
   label: 'Move Thought Down',
   description: 'Move the current thought down.',
@@ -33,6 +33,6 @@ const moveThoughtDownCommand: Command = {
     return !!nextThought || !!nextUnclePath
   },
   exec: dispatch => dispatch(moveThoughtDown()),
-}
+} satisfies Command
 
 export default moveThoughtDownCommand

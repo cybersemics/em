@@ -49,7 +49,7 @@ const exec: Command['exec'] = (dispatch, getState) => {
   }
 }
 
-const archiveCommand: Command = {
+const archiveCommand = {
   id: 'archive',
   label: 'Archive',
   description: 'Move the thought to a hidden archive. It can be recovered or viewed by toggling hidden thoughts.',
@@ -83,6 +83,6 @@ const archiveCommand: Command = {
     return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
   },
   exec,
-}
+} satisfies Command
 
 export default archiveCommand

@@ -29,30 +29,31 @@ const iconMap = {
 export type HeadingLevel = 0 | 1 | 2 | 3 | 4 | 5
 
 /** Creates a heading command at a given level (h1, h2, etc). */
-const headingCommand = (level: HeadingLevel): Command => ({
-  id: `heading${level}`,
-  label: level === 0 ? 'Normal Text' : `Heading ${level}`,
-  description: level
-    ? `Turns the thought into a ${headingLabels[level]} heading.${
-        level === 3
-          ? ' Perhaps a pattern is emerging?'
-          : level === 4
-            ? ' You get the idea.'
-            : level === 5
-              ? ' Impressive that you read this far.'
-              : ''
-      }`
-    : 'Sets a heading to normal text.',
-  keyboard: { key: level.toString(), meta: true, alt: true },
-  multicursor: true,
-  svg: iconMap[level], // Assign the icon based on the level
-  canExecute: state => {
-    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
-  },
-  exec: dispatch => {
-    dispatch(heading({ level }))
-  },
-})
+const headingCommand = (level: HeadingLevel) =>
+  ({
+    id: `heading${level}`,
+    label: level === 0 ? 'Normal Text' : `Heading ${level}`,
+    description: level
+      ? `Turns the thought into a ${headingLabels[level]} heading.${
+          level === 3
+            ? ' Perhaps a pattern is emerging?'
+            : level === 4
+              ? ' You get the idea.'
+              : level === 5
+                ? ' Impressive that you read this far.'
+                : ''
+        }`
+      : 'Sets a heading to normal text.',
+    keyboard: { key: level.toString(), meta: true, alt: true },
+    multicursor: true,
+    svg: iconMap[level], // Assign the icon based on the level
+    canExecute: state => {
+      return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
+    },
+    exec: dispatch => {
+      dispatch(heading({ level }))
+    },
+  }) satisfies Command
 
 export const heading0 = headingCommand(0)
 export const heading1 = headingCommand(1)

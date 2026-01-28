@@ -11,7 +11,7 @@ import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
 import parentOf from '../util/parentOf'
 
-const moveCursorBackward: Command = {
+const moveCursorBackward = {
   id: 'moveCursorBackward',
   label: 'Move Cursor Backward',
   description: 'Move the current thought to the next sibling of its context or to previous column in table view.',
@@ -37,6 +37,6 @@ const moveCursorBackward: Command = {
 
     dispatch(isTable ? cursorBack() : outdent())
   },
-}
+} satisfies Command
 
 export default moveCursorBackward

@@ -5,7 +5,7 @@ import hasMulticursor from '../selectors/hasMulticursor'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 /** Toggles formatting of the current browser selection as italic. If there is no selection, formats the entire thought. */
-const italic: Command = {
+const italic = {
   id: 'italic',
   label: 'Italic',
   description: 'Italicizes the current thought or selected text.',
@@ -20,6 +20,6 @@ const italic: Command = {
     dispatch(formatSelection('italic'))
   },
   // The isActive logic for formatting commands is handled differently than other commands because it references the CommandStateStore. This can be found in ToolbarButton (isButtonActive)
-}
+} satisfies Command
 
 export default italic

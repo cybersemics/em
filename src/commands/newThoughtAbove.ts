@@ -5,7 +5,7 @@ import { isTouch } from '../browser'
 import NewThoughtAboveIcon from '../components/icons/NewThoughtAboveIcon'
 import isDocumentEditable from '../util/isDocumentEditable'
 
-const newThoughtAboveCommand: Command = {
+const newThoughtAboveCommand = {
   id: 'newThoughtAbove',
   label: 'New Thought (above)',
   description: 'Create a new thought immediately above the current thought.',
@@ -20,6 +20,6 @@ const newThoughtAboveCommand: Command = {
   canExecute: () => isDocumentEditable(),
   exec: newThought({ insertBefore: true }),
   rounded: true,
-}
+} satisfies Command
 
 export default newThoughtAboveCommand

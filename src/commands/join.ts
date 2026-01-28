@@ -2,7 +2,7 @@ import Command from '../@types/Command'
 import { joinActionCreator as join } from '../actions/join'
 import JoinThoughtsIcon from '../components/icons/JoinThoughtsIcon'
 
-const joinThoughts: Command = {
+const joinThoughts = {
   id: 'join',
   label: 'Join Thoughts',
   description: 'Join all thoughts at the same level into a single thought.',
@@ -18,6 +18,6 @@ const joinThoughts: Command = {
   exec: dispatch => {
     dispatch(join({}))
   },
-}
+} satisfies Command
 
 export default joinThoughts

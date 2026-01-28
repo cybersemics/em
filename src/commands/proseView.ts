@@ -8,7 +8,7 @@ import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
 
-const proseViewCommand: Command = {
+const proseViewCommand = {
   id: 'proseView',
   label: 'Prose View',
   description: 'Display subthoughts of the current thought as indented paragraphs.',
@@ -38,6 +38,6 @@ const proseViewCommand: Command = {
     const path = cursor ? simplifyPath(state, cursor) : HOME_PATH
     return attributeEquals(state, head(path), '=view', 'Prose')
   },
-}
+} satisfies Command
 
 export default proseViewCommand

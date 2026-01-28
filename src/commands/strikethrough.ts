@@ -5,7 +5,7 @@ import hasMulticursor from '../selectors/hasMulticursor'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 /** Toggles formatting of the current browser selection as strikethrough. If there is no selection, formats the entire thought. */
-const strikethrough: Command = {
+const strikethrough = {
   id: 'strikethrough',
   label: 'Strikethrough',
   description: 'Formats the current thought or selected text with strikethrough.',
@@ -21,6 +21,6 @@ const strikethrough: Command = {
     dispatch(formatSelection('strikethrough'))
   },
   // The isActive logic for formatting commands is handled differently than other commands because it references the CommandStateStore. This can be found in ToolbarButton (isButtonActive)
-}
+} satisfies Command
 
 export default strikethrough

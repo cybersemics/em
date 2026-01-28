@@ -5,7 +5,7 @@ import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggle
 import RedoIcon from '../components/RedoIcon'
 import getLatestActionType from '../util/getLastActionType'
 
-const redoCommand: Command = {
+const redoCommand = {
   id: 'redo',
   label: 'Redo',
   multicursor: false,
@@ -27,6 +27,6 @@ const redoCommand: Command = {
   longPress: dispatch => {
     dispatch(toggleDropdown({ dropDownType: 'undoSlider' }))
   },
-}
+} satisfies Command
 
 export default redoCommand

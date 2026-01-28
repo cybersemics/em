@@ -2,7 +2,7 @@ import Command from '../@types/Command'
 import { cursorForwardActionCreator as cursorForward } from '../actions/cursorForward'
 import CursorForwardIcon from '../components/icons/CursorForwardIcon'
 
-const cursorForwardCommand: Command = {
+const cursorForwardCommand = {
   id: 'cursorForward',
   description: 'Move the cursor down a level.',
   hideAlert: true,
@@ -11,6 +11,6 @@ const cursorForwardCommand: Command = {
   gesture: 'l',
   svg: CursorForwardIcon,
   exec: dispatch => dispatch(cursorForward()),
-}
+} satisfies Command
 
 export default cursorForwardCommand

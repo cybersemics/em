@@ -3,7 +3,7 @@ import { extractThoughtActionCreator as extract } from '../actions/extractThough
 import ExtractThoughtIcon from '../components/icons/ExtractThoughtIcon'
 import hasMulticursor from '../selectors/hasMulticursor'
 
-const extractThought: Command = {
+const extractThought = {
   id: 'extractThought',
   label: 'Extract',
   description: 'Extract selected part of a thought as its child',
@@ -19,6 +19,6 @@ const extractThought: Command = {
   exec: dispatch => {
     dispatch(extract())
   },
-}
+} satisfies Command
 
 export default extractThought

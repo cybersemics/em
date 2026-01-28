@@ -10,7 +10,7 @@ import scrollZoneHelpMessage from '../selectors/scrollZoneHelpMessage'
 let scrollZoneHelpAlertTimeout = 0
 let showScrollZoneHelpAlert = false
 
-const closeCommandCenterCommand: Command = {
+const closeCommandCenterCommand = {
   id: 'closeCommandCenter',
   label: 'Close Command Center',
   description: `Closes the command center if it's open. You can also just tap on the empty space.`,
@@ -44,6 +44,6 @@ const closeCommandCenterCommand: Command = {
 
     showScrollZoneHelpAlert = false
   },
-}
+} satisfies Command
 
 export default closeCommandCenterCommand

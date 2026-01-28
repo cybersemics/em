@@ -31,7 +31,7 @@ const NoOtherContexts = ({ allowSingleContext }: { allowSingleContext?: boolean;
             Swipe <GestureDiagram path={subthoughtCommand.gesture as GesturePath} size={30} color='darkgray' />
           </span>
         ) : (
-          <span>Type {formatKeyboardShortcut(subthoughtCommand.keyboard!)}</span>
+          <span>Type {formatKeyboardShortcut(subthoughtCommand.keyboard)}</span>
         )}{' '}
         to add "{value}" to a new context.
       </div> */}
@@ -50,7 +50,7 @@ const NoOtherContexts = ({ allowSingleContext }: { allowSingleContext?: boolean;
               />
             </span>
           ) : (
-            <span>Type {formatKeyboardShortcut(toggleContextViewCommand.keyboard!)}</span>
+            <span>Type {formatKeyboardShortcut(toggleContextViewCommand.keyboard)}</span>
           )}{' '}
           to toggle context view off.
         </div>

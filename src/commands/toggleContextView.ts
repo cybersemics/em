@@ -3,7 +3,7 @@ import { toggleContextViewActionCreator as toggleContextView } from '../actions/
 import ContextViewIcon from '../components/icons/ContextViewIcon'
 import isContextViewActive from '../selectors/isContextViewActive'
 
-const toggleContextViewCommand: Command = {
+const toggleContextViewCommand = {
   id: 'toggleContextView',
   label: 'Context View',
   description:
@@ -19,6 +19,6 @@ const toggleContextViewCommand: Command = {
     return !!state.cursor && isContextViewActive(state, state.cursor)
   },
   exec: dispatch => dispatch(toggleContextView()),
-}
+} satisfies Command
 
 export default toggleContextViewCommand

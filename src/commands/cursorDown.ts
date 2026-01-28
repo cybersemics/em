@@ -22,7 +22,7 @@ import headValue from '../util/headValue'
 import parentOf from '../util/parentOf'
 import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 
-const cursorDownCommand: Command = {
+const cursorDownCommand = {
   id: 'cursorDown',
   label: 'Cursor Down',
   keyboard: [{ key: Key.ArrowDown }, { key: Key.ArrowDown, shift: true }],
@@ -106,6 +106,6 @@ const cursorDownCommand: Command = {
       })
     } else dispatch(cursorDown())
   }),
-}
+} satisfies Command
 
 export default cursorDownCommand

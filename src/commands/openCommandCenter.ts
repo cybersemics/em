@@ -10,7 +10,7 @@ import scrollZoneHelpMessage from '../selectors/scrollZoneHelpMessage'
 let scrollZoneHelpAlertTimeout = 0
 let showScrollZoneHelpAlert = false
 
-const openCommandCenterCommand: Command = {
+const openCommandCenterCommand = {
   id: 'openCommandCenter',
   label: 'Open Command Center',
   description: `Opens a special keyboard which contains commands that can be executed on the cursor thought.`,
@@ -48,6 +48,6 @@ const openCommandCenterCommand: Command = {
 
     showScrollZoneHelpAlert = false
   },
-}
+} satisfies Command
 
 export default openCommandCenterCommand

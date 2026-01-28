@@ -4,7 +4,7 @@ import { cursorPrevActionCreator as cursorPrev } from '../actions/cursorPrev'
 import PrevIcon from '../components/icons/PrevIcon'
 import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 
-const cursorPrevCommand: Command = {
+const cursorPrevCommand = {
   id: 'cursorPrev',
   label: 'Previous Thought',
   description: 'Move the cursor to the previous thought.',
@@ -13,6 +13,6 @@ const cursorPrevCommand: Command = {
   keyboard: { key: Key.ArrowUp, meta: true },
   exec: throttleByAnimationFrame(dispatch => dispatch(cursorPrev())),
   rounded: true,
-}
+} satisfies Command
 
 export default cursorPrevCommand
