@@ -71,7 +71,54 @@ const splitSentence = (value: string): SplitResult[] => {
   // pattern2, multiple symbols: ?! !!! ...
   const mainSplitRegex = /[.;!?]+/g
 
-  const sentenceSplitters = value.match(mainSplitRegex)
+  /**
+   * Checks if a period at a given index is part of a decimal number.
+   * Decimal numbers are of the form: digits.digits (e.g., 1.1, 3.14, 0.5)
+   * This should NOT match things like "a.a" which should split normally.
+   */
+  const isDecimalNumber = (value: string, periodIndex: number): boolean => {
+    return (
+      periodIndex > 0 &&
+      /\d/.test(value[periodIndex - 1]) &&
+      periodIndex < value.length - 1 &&
+      /\d/.test(value[periodIndex + 1])
+    )
+  }
+
+  // Find all sentence splitters, but filter out periods that are part of decimal numbers
+  // Build both sentences and sentenceSplitters arrays in a single pass to keep them aligned
+  const allMatches = Array.from(value.matchAll(mainSplitRegex))
+  const sentenceSplitters: string[] = []
+  const sentences: string[] = []
+  let hasDecimalPeriods = false
+  let lastIndex = 0
+
+  /**
+   * Checks if a splitter contains only periods that are part of decimal numbers.
+   * Returns true only if the splitter contains only periods (no other punctuation)
+   * AND all those periods are decimal periods (e.g., "1.1" but not "a.a").
+   */
+  const isDecimalPeriod = (splitter: string, index: number): boolean => {
+    if (!splitter.includes('.') || !/^\.+$/.test(splitter)) return false
+    for (let i = 0; i < splitter.length; i++) {
+      if (splitter[i] === '.' && !isDecimalNumber(value, index + i)) return false
+    }
+    return true
+  }
+
+  // Build sentences and sentenceSplitters arrays, skipping decimal periods
+  for (const match of allMatches) {
+    const splitter = match[0]
+    const index = match.index!
+    if (isDecimalPeriod(splitter, index)) {
+      hasDecimalPeriods = true
+      continue // Skip decimal periods - don't treat them as sentence endings
+    }
+    sentences.push(value.slice(lastIndex, index))
+    sentenceSplitters.push(splitter)
+    lastIndex = index + splitter.length
+  }
+  sentences.push(value.slice(lastIndex)) // Add remaining text after last splitter
 
   /**
    * Checks if the value has no other main split characters  except one period at the end, i.e. value is just one sentence.
@@ -81,7 +128,7 @@ const splitSentence = (value: string): SplitResult[] => {
 
   // if we're sub-sentence or in one sentence territory, check for dash splitting first
   // e.g. "one - 1" -> "- one   - 1" (as child)
-  if (!sentenceSplitters || hasOnlyPeriodAtEnd()) {
+  if (sentenceSplitters.length === 0 || hasOnlyPeriodAtEnd()) {
     // Check for dash (-, –, or —) and split into child if found
     // This handles Case 1: Split into child when there's only one sentence
     // Match the first dash that has content on both sides
@@ -96,6 +143,14 @@ const splitSentence = (value: string): SplitResult[] => {
       }
     }
 
+    // If there are decimal periods but no real sentence splitters, don't split on comma/and
+    // This prevents splitting when only decimal numbers are present (no actual sentence endings)
+    // Note: hasDecimalPeriods is only relevant when sentenceSplitters.length === 0 (we're in this branch)
+    // e.g. "Fruit cost: apple $10.23 and pear $10.70" should not split
+    if (hasDecimalPeriods) {
+      return [{ value: value.trim() }]
+    }
+
     // if we're sub-sentence or in one sentence territory, split by comma and "and"
     // e.g. "john, johnson, and john doe" -> "- john - johnson - john doe"
     return value
@@ -107,8 +162,8 @@ const splitSentence = (value: string): SplitResult[] => {
 
   /**
    * When the setences can be split, it has multiple situations.
+   * Note: sentences and sentenceSplitters arrays are already built above and kept aligned.
    */
-  const sentences = value.split(mainSplitRegex)
 
   /**
    * The reduce function return a string, which is a combination of all the sentences, we then use __SEP__ to seperate each qualified sentence that can be split during the next step.
