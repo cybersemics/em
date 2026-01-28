@@ -1,3 +1,4 @@
+import Command from '../../../@types/Command'
 import Direction from '../../../@types/Direction'
 import GesturePath from '../../../@types/GesturePath'
 import { page } from '../setup'
@@ -33,18 +34,35 @@ const move = async (x1: number, y1: number, x2: number, y2: number): Promise<voi
   }
 }
 
+/** Type predicate for Command. */
+function isCommand(value: unknown): value is Command {
+  return typeof value === 'object' && value !== null && 'id' in value && 'label' in value && 'exec' in value
+}
+
 /**
  * Swipe gesture helper for testing.
  * Creates a series of touch events to simulate realistic gesture movement.
  * Uses fixed step sizes for simplicity and reliability.
  *
- * @param gesture - String of directions (e.g., "rd" for right-down).
+ * @param gesture - String of directions (e.g., "rd" for right-down) or a Command object with a gesture property.
  * @param completeGesture - Whether to complete the gesture with touchEnd
  * Set to false to test during-gesture behavior.
  * Set to true to test post-gesture behavior.
  */
-const swipe = async (gesture: GesturePath, completeGesture = false) => {
-  const directions = typeof gesture === 'string' ? (gesture.split('') as Direction[]) : gesture
+const swipe = async (gestureOrCommand: GesturePath | Command, completeGesture = false) => {
+  if (isCommand(gestureOrCommand) && !gestureOrCommand.gesture) {
+    throw new Error(
+      `Command "${gestureOrCommand.id}" does not have a gesture defined so cannot be activated with swipe.`,
+    )
+  }
+
+  const gestureObject = isCommand(gestureOrCommand)
+    ? gestureOrCommand.gesture instanceof Array
+      ? gestureOrCommand.gesture[0]
+      : // gesture must be defined because of runtime validation above
+        gestureOrCommand.gesture!
+    : gestureOrCommand
+  const directions = typeof gestureObject === 'string' ? (gestureObject.split('') as Direction[]) : gestureObject
 
   // Fixed step sizes for consistent gesture behavior
   const stepSize = 80

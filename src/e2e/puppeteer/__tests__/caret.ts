@@ -1,5 +1,5 @@
 import { KnownDevices } from 'puppeteer'
-import gestures from '../../../test-helpers/gestures'
+import categorizeCommand from '../../../commands/categorize'
 import click from '../helpers/click'
 import clickBullet from '../helpers/clickBullet'
 import clickThought from '../helpers/clickThought'
@@ -270,7 +270,7 @@ describe('mobile only', () => {
     // perform a categorize gesture at thought b
     // previously this was done by waiting for categorize selector and clicking it from the toolbar
     // in CI and especially in mobile emulation sometimes the click was not registered due to which categorize operation was never performed, hence assertions were failing intermittently
-    await swipe(gestures.categorizeThought, true)
+    await swipe(categorizeCommand, true)
 
     const textContext = await getSelection().focusNode?.textContent
     expect(textContext).toBe('')

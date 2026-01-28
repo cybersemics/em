@@ -1,4 +1,5 @@
 import { KnownDevices } from 'puppeteer'
+import newThoughtCommand from '../../../commands/newThought'
 import { HOME_TOKEN } from '../../../constants'
 import clickThought from '../helpers/clickThought'
 import exportThoughts from '../helpers/exportThoughts'
@@ -34,12 +35,11 @@ it('Undo Select All + Categorize chained command in one step', async () => {
   await page.emulate(KnownDevices['iPhone 15 Pro'])
 
   // create thoughts a, b, c
-  // TODO: Gesture by command name
-  await swipe('rd', true)
+  await swipe(newThoughtCommand, true)
   await keyboard.type('a')
-  await swipe('rd', true)
+  await swipe(newThoughtCommand, true)
   await keyboard.type('b')
-  await swipe('rd', true)
+  await swipe(newThoughtCommand, true)
   await keyboard.type('c')
 
   // Select All + Categorize

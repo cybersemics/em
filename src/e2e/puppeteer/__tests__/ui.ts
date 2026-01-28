@@ -1,6 +1,7 @@
 /** Test coverage of basic UI appearance. Snapashots only. Do not place behavioral tests here. If a component has snapshot and behavioral tests, move them to a separate test file. */
 import path from 'path'
 import { KnownDevices } from 'puppeteer'
+import openCommandCenterCommand from '../../../commands/openCommandCenter'
 import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
 import hideHUD from '../helpers/hideHUD'
@@ -60,7 +61,7 @@ it('CommandCenter', async () => {
   await clickThought('Hello')
 
   // open the Command Center
-  await swipe('u', true)
+  await swipe(openCommandCenterCommand, true)
 
   // wait for the command center panel to appear before taking screenshot
   await waitForSelector('[data-testid=command-center-panel]')
