@@ -240,8 +240,8 @@
     "vite-plugin-checker": "^0.12.0",
     "vite-plugin-pwa": "^1.2.0",
     "vite-plugin-terminal": "^1.4.0",
-    "vitest": "^4.0.17",
-    "vitest-browser-react": "^2.0.3",
+    "vitest": "^4.0.18",
+    "vitest-browser-react": "^2.0.5",
     "vitest-localstorage-mock": "^0.1.2",
     "webdriverio": "^9.19.2"
   },
