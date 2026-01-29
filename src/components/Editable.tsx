@@ -128,7 +128,7 @@ const Editable = ({
   const contentRef = editableRef || nullRef
   const isCursor = useSelector(state => equalPath(path, state.cursor))
   const editingOrOnCursor = useSelector(state => isCursor || state.isKeyboardOpen)
-  const hasFocus = useSelector(state => isCursor && !state.noteFocus)
+  const stopDragOver = useSelector(state => !isCursor || state.noteFocus)
 
   // Disable contenteditable during drag-and-drop, otherwise thought text will become selected on mobile Safari.
   // On desktop Chrome, disabled is used to allow dragover events to avoid disrupting drag-and-drop behavior.
@@ -616,7 +616,7 @@ const Editable = ({
   return (
     <ContentEditable
       disabled={disabled}
-      hasFocus={hasFocus}
+      stopDragOver={stopDragOver}
       innerRef={contentRef}
       aria-label={'editable-' + head(path)}
       data-editable
