@@ -2277,18 +2277,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@capacitor/android@npm:^8.0.1":
-  version: 8.0.1
-  resolution: "@capacitor/android@npm:8.0.1"
+"@capacitor/android@npm:^8.0.2":
+  version: 8.0.2
+  resolution: "@capacitor/android@npm:8.0.2"
   peerDependencies:
     "@capacitor/core": ^8.0.0
-  checksum: 10c0/86bd70cfba77a5d21a54c428899bbe7d3d35a74fcb56a235622d0cc216cccea63095fe4568730848cbfcf2bc13b789fd66a55062990865125d8b20aa4fdd40b1
+  checksum: 10c0/c9452385107fabad76b83a8a441fb4da836b590485abc0360aea3afbf7e821015397db950087e79d89abfcb7cbd16e86a78c946e567a1d5b09244de43c78c0c7
   languageName: node
   linkType: hard
 
-"@capacitor/cli@npm:^8.0.1":
-  version: 8.0.1
-  resolution: "@capacitor/cli@npm:8.0.1"
+"@capacitor/cli@npm:^8.0.2":
+  version: 8.0.2
+  resolution: "@capacitor/cli@npm:8.0.2"
   dependencies:
     "@ionic/cli-framework-output": "npm:^2.2.8"
     "@ionic/utils-subprocess": "npm:^3.0.1"
@@ -2304,13 +2304,13 @@ __metadata:
     prompts: "npm:^2.4.2"
     rimraf: "npm:^6.0.1"
     semver: "npm:^7.6.3"
-    tar: "npm:^6.1.11"
+    tar: "npm:^7.5.3"
     tslib: "npm:^2.8.1"
     xml2js: "npm:^0.6.2"
   bin:
     cap: bin/capacitor
     capacitor: bin/capacitor
-  checksum: 10c0/deaf5d704c3a21dda16affc0992581e1905af31575d3754f52253fde8224521acdee616e6c0afe3c49632aa0fd5c1e728acb7ed89881e4b7b73d1861abbdce44
+  checksum: 10c0/7e4432e6fe00362e96b39ee5a28de9a0f77d1c929e11ee682b1bb217d82df4d347c88945e9ff2743fdd5bdbc2ec8ad7280ddfe48611f6bc214298f4a630dfa99
   languageName: node
   linkType: hard
 
@@ -2323,12 +2323,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@capacitor/core@npm:^8.0.1":
-  version: 8.0.1
-  resolution: "@capacitor/core@npm:8.0.1"
+"@capacitor/core@npm:^8.0.2":
+  version: 8.0.2
+  resolution: "@capacitor/core@npm:8.0.2"
   dependencies:
     tslib: "npm:^2.1.0"
-  checksum: 10c0/ba20ef1bcc3706e75fe1f743ee28f96213331caaaea1e28a462bef6ef4d79142ac0c8dd81d7b2f0d34461979a7469af603ae8fa210e40157c9d975f0ae5cdf5b
+  checksum: 10c0/537917afe06bb79e2e299a2349e1f0a729824dcfd7e8b6e321bddfdfb1466f7d7d21e5ffb2d7b5332549b7838506af4fca24c9a81a9e177994ef6b8ce977a1cc
   languageName: node
   linkType: hard
 
@@ -2355,12 +2355,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@capacitor/ios@npm:^8.0.1":
-  version: 8.0.1
-  resolution: "@capacitor/ios@npm:8.0.1"
+"@capacitor/ios@npm:^8.0.2":
+  version: 8.0.2
+  resolution: "@capacitor/ios@npm:8.0.2"
   peerDependencies:
     "@capacitor/core": ^8.0.0
-  checksum: 10c0/f0612f91b674b4aab8a8393dba92e59c58ba4a63fa99e86cc93226edb34a68fc0b871d524a9d1aa2560b3438693126ab01e23049a49116832ac173c4fb8cd6a6
+  checksum: 10c0/ba412e4cc819b5abdc64627bf99a837cdb687af5def9ceae357699570f27f537efe264e2db3c89133fa69ae144df71add6e2b343c4f0511715bfdba2f478b94d
   languageName: node
   linkType: hard
 
@@ -3648,6 +3648,15 @@ __metadata:
     wrap-ansi: "npm:^8.1.0"
     wrap-ansi-cjs: "npm:wrap-ansi@^7.0.0"
   checksum: 10c0/b1bf42535d49f11dc137f18d5e4e63a28c5569de438a221c369483731e9dac9fb797af554e8bf02b6192d1e5eba6e6402cf93900c3d0ac86391d00d04876789e
+  languageName: node
+  linkType: hard
+
+"@isaacs/fs-minipass@npm:^4.0.0":
+  version: 4.0.1
+  resolution: "@isaacs/fs-minipass@npm:4.0.1"
+  dependencies:
+    minipass: "npm:^7.0.4"
+  checksum: 10c0/c25b6dc1598790d5b55c0947a9b7d111cfa92594db5296c3b907e2f533c033666f692a3939eadac17b1c7c40d362d0b0635dc874cbfe3e70db7c2b07cc97a5d2
   languageName: node
   linkType: hard
 
@@ -9729,6 +9738,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"chownr@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "chownr@npm:3.0.0"
+  checksum: 10c0/43925b87700f7e3893296c8e9c56cc58f926411cce3a6e5898136daaf08f08b9a8eb76d37d3267e707d0dcc17aed2e2ebdf5848c0c3ce95cf910a919935c1b10
+  languageName: node
+  linkType: hard
+
 "chrome-launcher@npm:^0.15.2":
   version: 0.15.2
   resolution: "chrome-launcher@npm:0.15.2"
@@ -11209,12 +11225,12 @@ __metadata:
   dependencies:
     "@babel/core": "npm:^7.28.6"
     "@babel/plugin-proposal-private-property-in-object": "npm:^7.21.11"
-    "@capacitor/android": "npm:^8.0.1"
-    "@capacitor/cli": "npm:^8.0.1"
+    "@capacitor/android": "npm:^8.0.2"
+    "@capacitor/cli": "npm:^8.0.2"
     "@capacitor/clipboard": "npm:^8.0.0"
-    "@capacitor/core": "npm:^8.0.1"
+    "@capacitor/core": "npm:^8.0.2"
     "@capacitor/haptics": "npm:^8.0.0"
-    "@capacitor/ios": "npm:^8.0.1"
+    "@capacitor/ios": "npm:^8.0.2"
     "@capacitor/keyboard": "npm:^8.0.0"
     "@capacitor/status-bar": "npm:^8.0.0"
     "@emotion/react": "npm:^11.14.0"
@@ -17948,7 +17964,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"minipass@npm:^5.0.0 || ^6.0.2 || ^7.0.0, minipass@npm:^7.0.2, minipass@npm:^7.0.3, minipass@npm:^7.1.2":
+"minipass@npm:^5.0.0 || ^6.0.2 || ^7.0.0, minipass@npm:^7.0.2, minipass@npm:^7.0.3, minipass@npm:^7.0.4, minipass@npm:^7.1.2":
   version: 7.1.2
   resolution: "minipass@npm:7.1.2"
   checksum: 10c0/b0fd20bb9fb56e5fa9a8bfac539e8915ae07430a619e4b86ff71f5fc757ef3924b23b2c4230393af1eda647ed3d75739e4e0acb250a6b1eb277cf7f8fe449557
@@ -17962,6 +17978,15 @@ __metadata:
     minipass: "npm:^3.0.0"
     yallist: "npm:^4.0.0"
   checksum: 10c0/64fae024e1a7d0346a1102bb670085b17b7f95bf6cfdf5b128772ec8faf9ea211464ea4add406a3a6384a7d87a0cd1a96263692134323477b4fb43659a6cab78
+  languageName: node
+  linkType: hard
+
+"minizlib@npm:^3.1.0":
+  version: 3.1.0
+  resolution: "minizlib@npm:3.1.0"
+  dependencies:
+    minipass: "npm:^7.1.2"
+  checksum: 10c0/5aad75ab0090b8266069c9aabe582c021ae53eb33c6c691054a13a45db3b4f91a7fb1bd79151e6b4e9e9a86727b522527c0a06ec7d45206b745d54cd3097bcec
   languageName: node
   linkType: hard
 
@@ -22821,6 +22846,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"tar@npm:^7.5.3":
+  version: 7.5.7
+  resolution: "tar@npm:7.5.7"
+  dependencies:
+    "@isaacs/fs-minipass": "npm:^4.0.0"
+    chownr: "npm:^3.0.0"
+    minipass: "npm:^7.1.2"
+    minizlib: "npm:^3.1.0"
+    yallist: "npm:^5.0.0"
+  checksum: 10c0/51f261afc437e1112c3e7919478d6176ea83f7f7727864d8c2cce10f0b03a631d1911644a567348c3063c45abdae39718ba97abb073d22aa3538b9a53ae1e31c
+  languageName: node
+  linkType: hard
+
 "tcp-port-used@npm:^1.0.2":
   version: 1.0.2
   resolution: "tcp-port-used@npm:1.0.2"
@@ -24600,17 +24638,17 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "webview-background@workspace:packages/webview"
   dependencies:
-    "@capacitor/android": "npm:^8.0.1"
-    "@capacitor/core": "npm:^8.0.1"
+    "@capacitor/android": "npm:^8.0.2"
+    "@capacitor/core": "npm:^8.0.2"
     "@capacitor/docgen": "npm:^0.3.1"
-    "@capacitor/ios": "npm:^8.0.1"
+    "@capacitor/ios": "npm:^8.0.2"
     "@ionic/swiftlint-config": "npm:^2.0.0"
     rimraf: "npm:^6.1.2"
     rollup: "npm:^4.56.0"
     swiftlint: "npm:^2.0.0"
     typescript: "npm:5.9.3"
   peerDependencies:
-    "@capacitor/core": ^8.0.1
+    "@capacitor/core": ^8.0.2
   languageName: unknown
   linkType: soft
 
