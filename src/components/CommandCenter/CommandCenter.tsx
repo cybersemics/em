@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { cubicBezier, useTransform } from 'motion/react'
+import { easeOut, useTransform } from 'motion/react'
 import { motion } from 'motion/react'
 import pluralize from 'pluralize'
 import { FC, useCallback, useRef } from 'react'
@@ -77,13 +77,9 @@ const HiddenOverlay = () => {
   )
 }
 
-const bezierDefinition = [0, 0, 0.2, 1] as const
-
-const ease = cubicBezier(...bezierDefinition)
-
 const tweenConfig: SheetTweenConfig = {
   duration: durations.get('medium') / 1000,
-  ease: bezierDefinition,
+  ease: 'easeOut',
 }
 
 /**
@@ -112,7 +108,7 @@ const useSheetOpacity = (ref: React.RefObject<SheetRef | null>) => {
     return Math.min(Math.max(y / height, 0), 1)
   })
 
-  const opacity = useTransform(sheetProgress, [0, 1], [0, 1], { ease })
+  const opacity = useTransform(sheetProgress, [0, 1], [0, 1], { ease: easeOut })
 
   return opacity
 }
