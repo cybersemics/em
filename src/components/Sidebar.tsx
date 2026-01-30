@@ -136,7 +136,7 @@ const Sidebar = () => {
       <Dialog.Portal forceMount>
         <div
           data-testid='sidebar'
-          inert={!showSidebar || undefined} // Prevent focus from entering when sidebar is closed
+          aria-hidden={!showSidebar}
           className={css({
             position: 'fixed',
             inset: 0,
@@ -163,6 +163,7 @@ const Sidebar = () => {
           <Dialog.Content
             asChild
             forceMount
+            onOpenAutoFocus={e => e.preventDefault()} // Prevents focus from entering the sidebar when the page first loads
             onInteractOutside={e => e.preventDefault()} // This is needed to prevent the sidebar from double-toggling when tapping hamburger icon
             onEscapeKeyDown={e => e.preventDefault()} // Stop Radix from closing the sidebar when esc is pressed – we will handle it ourselves
             aria-describedby={undefined} // Suppress Radix console warning about aria-describedby. This property isn't relevant in this case.
