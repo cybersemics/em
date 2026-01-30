@@ -39,8 +39,6 @@ const GestureMenu: FC<{
         className={css({
           marginBottom: 0,
           textAlign: 'left',
-          border: '1px solid {colors.gray15}',
-          backgroundColor: 'gray09',
           maxWidth: '100%',
           maxHeight: '100%',
           width: 826,
@@ -82,12 +80,82 @@ const GestureMenu: FC<{
   )
 }
 
+/** Renders a blur effect overlay for the gesture menu. */
+function ProgressiveBlur() {
+  return (
+    <div
+      className={css({
+        pointerEvents: 'none',
+        position: 'absolute',
+        backdropFilter: 'blur(5px)',
+        mask: 'linear-gradient(180deg, {colors.black} 0%, {colors.bgOverlay80} calc(100% - 20px), {colors.bgTransparent} 100%)',
+        width: '100%',
+        top: 0,
+        height: '100%',
+      })}
+    />
+  )
+}
+
+/** Renders the glow effect for the gesture menu. */
+function Glow() {
+  return (
+    <div
+      className={css({
+        position: 'absolute',
+        pointerEvents: 'none',
+        width: '100vw',
+        height: '100vh',
+        overflow: 'hidden',
+      })}
+    >
+      <div
+        className={css({
+          backgroundImage: 'url(/img/gesture-menu/glow.webp)',
+          backgroundRepeat: 'no-repeat',
+          mixBlendMode: 'screen',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100vh',
+          backgroundSize: 'cover',
+          '@media (max-width: 1024px)': {
+            transform: 'translateX(-30%) scaleX(3.3)',
+          },
+          '@media (max-width: 560px)': {
+            transform: 'translateX(-40%) scaleX(2.5)',
+          },
+        })}
+      />
+    </div>
+  )
+}
+
+/** Renders a gradient overlay for the gesture menu. */
+function Overlay() {
+  return (
+    <div
+      className={css({
+        pointerEvents: 'none',
+        position: 'absolute',
+        background: 'linear-gradient(180deg, {colors.black} 0%, {colors.bgOverlay80} 30%, {colors.bgTransparent} 100%)',
+
+        top: 0,
+        width: '100%',
+        height: '100%',
+      })}
+    />
+  )
+}
+
 /** A GestureMenu component that fades in and out based on state.showGestureMenu. */
 const GestureMenuWithTransition: FC = () => {
   const [isDismissed, setDismiss] = useState(false)
   const popupRef = useRef<HTMLDivElement>(null)
 
   const showGestureMenu = useSelector(state => state.showGestureMenu)
+  // const showGestureMenu = true
 
   // Commands need to be calculated even if the gesture menu is not shown because useFilteredCommands is responsible for updating gestureStore's possibleCommands which is needed to prevent haptics when there are no more possible commands. Otherwise, either haptics would continue to fire when there are no more possible commands, or would falsely fire when the current sequence is not a valid gesture but there are possible commands with additional swipes.
   const [recentCommands] = useState(storageModel.get('recentCommands'))
@@ -114,15 +182,30 @@ const GestureMenuWithTransition: FC = () => {
             <div
               data-testid='popup-value'
               className={css({
-                height: '100%',
                 boxSizing: 'border-box',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'start',
                 alignItems: 'center',
+                width: '100%',
+                position: 'absolute',
+                top: 0,
               })}
             >
-              <GestureMenu commands={commands} />
+              <ProgressiveBlur />
+              <div
+                className={css({
+                  position: 'relative',
+                  // prevent mix-blend-mode and backdrop-filter from affecting each other
+                  isolation: 'isolate',
+                  width: '100%',
+                  paddingBottom: '200px',
+                })}
+              >
+                <Overlay />
+                <Glow />
+                <GestureMenu commands={commands} />
+              </div>
             </div>
           </PopupBase>
         </FadeTransition>
