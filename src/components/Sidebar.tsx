@@ -136,7 +136,7 @@ const Sidebar = () => {
       <Dialog.Portal forceMount>
         <div
           data-testid='sidebar'
-          aria-hidden={!showSidebar}
+          inert={!showSidebar || undefined} // Prevent focus from entering when sidebar is closed
           className={css({
             position: 'fixed',
             inset: 0,
