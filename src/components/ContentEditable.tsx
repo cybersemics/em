@@ -5,6 +5,7 @@ interface ContentEditableProps extends React.HTMLProps<HTMLDivElement> {
   style?: React.CSSProperties
   html: string
   disabled?: boolean
+  hasFocus?: boolean
   innerRef?: React.RefObject<HTMLDivElement | null>
   onChange: (originalEvt: ContentEditableEvent) => void
 }
@@ -12,7 +13,7 @@ interface ContentEditableProps extends React.HTMLProps<HTMLDivElement> {
 /**
  * Content Editable Component.
  */
-const ContentEditable = React.memo(({ style, html, disabled, innerRef, ...props }: ContentEditableProps) => {
+const ContentEditable = React.memo(({ style, html, disabled, hasFocus, innerRef, ...props }: ContentEditableProps) => {
   const newContentRef = useRef<HTMLDivElement>(null)
   const contentRef = innerRef || newContentRef
   const prevHtmlRef = useRef<string>(html)
@@ -92,6 +93,9 @@ const ContentEditable = React.memo(({ style, html, disabled, innerRef, ...props 
 
         if (props.onBlur) props.onBlur(event)
       }}
+      // Allow dragging a text selection within an editable (#3530)
+      // https://github.com/react-dnd/react-dnd/issues/3157
+      onDragOver={disabled || !hasFocus ? undefined : e => e.stopPropagation()}
       onInput={handleInput}
       onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
         if (props.onKeyDown) props.onKeyDown(e)
