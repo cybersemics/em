@@ -165,6 +165,7 @@ const Sidebar = () => {
             forceMount
             onInteractOutside={e => e.preventDefault()} // This is needed to prevent the sidebar from double-toggling when tapping hamburger icon
             onEscapeKeyDown={e => e.preventDefault()} // Stop Radix from closing the sidebar when esc is pressed – we will handle it ourselves
+            aria-describedby={undefined} // Suppress Radix console warning about aria-describedby. This property isn't relevant in this case.
           >
             <motion.div
               style={{ x }}
