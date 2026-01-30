@@ -1,4 +1,5 @@
 import * as Dialog from '@radix-ui/react-dialog'
+import * as VisuallyHidden from '@radix-ui/react-visually-hidden'
 import { animate, motion, useMotionValue, useTransform } from 'framer-motion'
 import _ from 'lodash'
 import { useCallback, useEffect, useState } from 'react'
@@ -15,24 +16,36 @@ import Favorites from './Favorites'
 import RecentlyDeleted from './RecentlyDeleted'
 import RecentlyEdited from './RecentlyEdited'
 
-type SidebarSection = 'favorites' | 'recentEdited' | 'deletedEdited'
+/** Valid sidebar section IDs. */
+type SidebarSectionId = 'favorites' | 'recentlyEdited' | 'recentlyDeleted'
+
+/** Configuration for a sidebar section. */
+type SidebarSection = {
+  id: SidebarSectionId
+  label: string
+}
+
+/** All available sidebar sections. */
+const SECTIONS: SidebarSection[] = [
+  { id: 'favorites', label: 'Favorites' },
+  { id: 'recentlyEdited', label: 'Recently Edited' },
+  { id: 'recentlyDeleted', label: 'Recently Deleted' },
+]
 
 /** A link to a sidebar section. */
 const SidebarLink = ({
   active,
   section,
   setSection,
-  text,
 }: {
   active?: boolean
   section: SidebarSection
-  setSection: (section: SidebarSection) => void
-  text: string
+  setSection: (id: SidebarSectionId) => void
 }) => {
   return (
     <a
-      {...fastClick(() => setSection(section))}
-      data-testid={`sidebar-${section}`}
+      {...fastClick(() => setSection(section.id))}
+      data-testid={`sidebar-${section.id}`}
       className={css({
         color: active ? 'fg' : 'gray50',
         display: 'inline-block',
@@ -42,7 +55,7 @@ const SidebarLink = ({
         textDecoration: 'none',
       })}
     >
-      {text}
+      {section.label}
     </a>
   )
 }
@@ -53,7 +66,7 @@ const Sidebar = () => {
   const showSidebar = useSelector(state => state.showSidebar)
   const fontSize = useSelector(state => state.fontSize)
   const dispatch = useDispatch()
-  const [section, setSection] = useState<SidebarSection>('favorites')
+  const [sectionId, setSectionId] = useState<SidebarSectionId>('favorites')
   const innerWidth = viewportStore.useSelector(state => state.innerWidth)
 
   /** Track the current x position of the sidebar. This is used for progress-based animations. */
@@ -150,8 +163,10 @@ const Sidebar = () => {
           <Dialog.Content
             asChild
             forceMount
+            onOpenAutoFocus={e => e.preventDefault()} // Prevents focus from entering the sidebar when the page first loads
             onInteractOutside={e => e.preventDefault()} // This is needed to prevent the sidebar from double-toggling when tapping hamburger icon
             onEscapeKeyDown={e => e.preventDefault()} // Stop Radix from closing the sidebar when esc is pressed – we will handle it ourselves
+            aria-describedby={undefined} // Suppress Radix console warning about aria-describedby. This property isn't relevant in this case.
           >
             <motion.div
               style={{ x }}
@@ -235,6 +250,11 @@ const Sidebar = () => {
                   })}
                   data-scroll-at-edge
                 >
+                  {/* Visually hidden title for screen readers */}
+                  <VisuallyHidden.Root>
+                    <Dialog.Title>{SECTIONS.find(s => s.id === sectionId)?.label}</Dialog.Title>
+                  </VisuallyHidden.Root>
+
                   <FadeTransition type='fast' in={showSidebar}>
                     <div
                       style={{
@@ -242,32 +262,22 @@ const Sidebar = () => {
                         marginLeft: fontSize * 1.3 + 30,
                       }}
                     >
-                      <SidebarLink
-                        active={section === 'favorites'}
-                        section='favorites'
-                        setSection={setSection}
-                        text='Favorites'
-                      />
-                      <SidebarLink
-                        active={section === 'recentEdited'}
-                        section='recentEdited'
-                        setSection={setSection}
-                        text='Recently Edited'
-                      />
-                      <SidebarLink
-                        active={section === 'deletedEdited'}
-                        section='deletedEdited'
-                        setSection={setSection}
-                        text='Recently Deleted'
-                      />
+                      {SECTIONS.map(section => (
+                        <SidebarLink
+                          key={section.id}
+                          active={sectionId === section.id}
+                          section={section}
+                          setSection={setSectionId}
+                        />
+                      ))}
                     </div>
                   </FadeTransition>
 
-                  {section === 'favorites' ? (
+                  {sectionId === 'favorites' ? (
                     <Favorites disableDragAndDrop={isSwiping} />
-                  ) : section === 'recentEdited' ? (
+                  ) : sectionId === 'recentlyEdited' ? (
                     <RecentlyEdited />
-                  ) : section === 'deletedEdited' ? (
+                  ) : sectionId === 'recentlyDeleted' ? (
                     <RecentlyDeleted />
                   ) : (
                     'Not yet implemented'

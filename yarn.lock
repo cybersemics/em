@@ -5307,6 +5307,25 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@radix-ui/react-primitive@npm:2.1.4":
+  version: 2.1.4
+  resolution: "@radix-ui/react-primitive@npm:2.1.4"
+  dependencies:
+    "@radix-ui/react-slot": "npm:1.2.4"
+  peerDependencies:
+    "@types/react": "*"
+    "@types/react-dom": "*"
+    react: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+    react-dom: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+  peerDependenciesMeta:
+    "@types/react":
+      optional: true
+    "@types/react-dom":
+      optional: true
+  checksum: 10c0/90d687b222a25975371ed1f9f08648d75237214b8dec4cbaf09ec9ac951339b17421278f1aff2fb7c5672ba8bd03774a94904efdba73805dd5cc947ce5be8c4a
+  languageName: node
+  linkType: hard
+
 "@radix-ui/react-slot@npm:1.2.3":
   version: 1.2.3
   resolution: "@radix-ui/react-slot@npm:1.2.3"
@@ -5319,6 +5338,21 @@ __metadata:
     "@types/react":
       optional: true
   checksum: 10c0/5913aa0d760f505905779515e4b1f0f71a422350f077cc8d26d1aafe53c97f177fec0e6d7fbbb50d8b5e498aa9df9f707ca75ae3801540c283b26b0136138eef
+  languageName: node
+  linkType: hard
+
+"@radix-ui/react-slot@npm:1.2.4":
+  version: 1.2.4
+  resolution: "@radix-ui/react-slot@npm:1.2.4"
+  dependencies:
+    "@radix-ui/react-compose-refs": "npm:1.1.2"
+  peerDependencies:
+    "@types/react": "*"
+    react: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+  peerDependenciesMeta:
+    "@types/react":
+      optional: true
+  checksum: 10c0/8b719bb934f1ae5ac0e37214783085c17c2f1080217caf514c1c6cc3d9ca56c7e19d25470b26da79aa6e605ab36589edaade149b76f5fc0666f1063e2fc0a0dc
   languageName: node
   linkType: hard
 
@@ -5391,6 +5425,25 @@ __metadata:
     "@types/react":
       optional: true
   checksum: 10c0/9f98fdaba008dfc58050de60a77670b885792df473cf82c1cef8daee919a5dd5a77d270209f5f0b0abfaac78cb1627396e3ff56c81b735be550409426fe8b040
+  languageName: node
+  linkType: hard
+
+"@radix-ui/react-visually-hidden@npm:^1.2.4":
+  version: 1.2.4
+  resolution: "@radix-ui/react-visually-hidden@npm:1.2.4"
+  dependencies:
+    "@radix-ui/react-primitive": "npm:2.1.4"
+  peerDependencies:
+    "@types/react": "*"
+    "@types/react-dom": "*"
+    react: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+    react-dom: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+  peerDependenciesMeta:
+    "@types/react":
+      optional: true
+    "@types/react-dom":
+      optional: true
+  checksum: 10c0/cca313cd3268f483612da1ab91c4cca55a54d24963dd543154f2d043bfdca21a96ab0582152ae473de44769474867d5433dbadae799a42932e6204fd2d5fa889
   languageName: node
   linkType: hard
 
@@ -11232,6 +11285,7 @@ __metadata:
     "@pandacss/dev": "npm:^1.8.1"
     "@pandacss/eslint-plugin": "npm:^0.3.0"
     "@radix-ui/react-dialog": "npm:^1.1.15"
+    "@radix-ui/react-visually-hidden": "npm:^1.2.4"
     "@redux-devtools/extension": "npm:^3.3.0"
     "@sinonjs/fake-timers": "npm:^15.1.0"
     "@stylistic/eslint-plugin": "npm:^5.7.1"
