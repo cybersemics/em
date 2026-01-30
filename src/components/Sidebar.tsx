@@ -249,12 +249,9 @@ const Sidebar = () => {
                   })}
                   data-scroll-at-edge
                 >
-                  
                   {/* Visually hidden title for screen readers */}
                   <VisuallyHidden.Root>
-                    <Dialog.Title>
-                      {SECTIONS.find(s => s.id === sectionId)?.label}
-                    </Dialog.Title>
+                    <Dialog.Title>{SECTIONS.find(s => s.id === sectionId)?.label}</Dialog.Title>
                   </VisuallyHidden.Root>
 
                   <FadeTransition type='fast' in={showSidebar}>
