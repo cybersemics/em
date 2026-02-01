@@ -2,7 +2,7 @@ import * as Dialog from '@radix-ui/react-dialog'
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden'
 import { animate, motion, useMotionValue, useTransform } from 'framer-motion'
 import _ from 'lodash'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { longPressActionCreator as longPress } from '../actions/longPress'
@@ -71,6 +71,17 @@ const Sidebar = () => {
 
   /** Track the current x position of the sidebar. This is used for progress-based animations. */
   const x = useMotionValue(0)
+
+  /**
+   * Smoothed velocity for swipe-to-close detection.
+   *
+   * Framer Motion only gives us the velocity at the moment of release, which can be
+   * unreliable for quick flicks (the finger may have slowed down just before lifting).
+   *
+   * We solve this by accumulating a "smoothed" velocity throughout the gesture.
+   * This is identical to MUI's SwipeableDrawer's velocity logic.
+   */
+  const smoothedVelocity = useRef(0)
 
   /** Toggle the sidebar. */
   const toggleSidebar = useCallback(
@@ -173,16 +184,34 @@ const Sidebar = () => {
               drag='x'
               dragConstraints={{ left: -widthPx, right: 0 }}
               dragElastic={1e-9} // This disables elastic overscroll.
-              onDragStart={() => setIsSwiping(true)}
+              onDragStart={() => {
+                setIsSwiping(true)
+                // Reset smoothed velocity at the start of each new gesture
+                smoothedVelocity.current = 0
+              }}
+              onDrag={(e, info) => {
+                // Accumulate smoothed velocity during the drag gesture (MUI-style).
+                // This weighted average gives 60% weight to the current velocity and 40% to the previous velocity,
+                // making the final velocity more representative of the overall gesture speed.
+                smoothedVelocity.current = smoothedVelocity.current * 0.4 + Math.abs(info.velocity.x) * 0.6
+              }}
               onDragEnd={(e, info) => {
                 setIsSwiping(false)
 
-                // Check that the swipe meets the threshold to close.
-                // The swipe either needs to be at least 100px or have a velocity of at least 500px/s.
-                if (info.offset.x < -100 || info.velocity.x < -500) {
+                const offset = Math.abs(info.offset.x)
+                // Use the higher of smoothed or instantaneous velocity
+                const velocity = Math.max(smoothedVelocity.current, Math.abs(info.velocity.x))
+
+                // Use a combined score to allow offset and velocity can compensate for each other.
+                // Fast + short swipes, or slow + long drags, should both be able to close the drawer.
+                const closeScore = offset + velocity * 0.5
+                const closeThreshold = 150
+
+                // Close if the combined score exceeds the threshold
+                if (closeScore > closeThreshold) {
                   toggleSidebar(false)
                 } else {
-                  // Snap back to 0
+                  // Score too low - snap back to open position
                   animate(x, 0, transition)
                 }
               }}
