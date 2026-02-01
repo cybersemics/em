@@ -350,6 +350,13 @@ const Sidebar = () => {
               }}
               onDragEnd={(e, info) => {
                 setIsSwiping(false)
+
+                // Only consider closing if the swipe was to the left (negative offset)
+                if (info.offset.x >= 0) {
+                  animate(x, 0, transition)
+                  return
+                }
+
                 const offset = Math.abs(info.offset.x)
                 const velocity = Math.max(smoothedVelocity.current, Math.abs(info.velocity.x))
                 handleSwipeEnd(offset, velocity)
