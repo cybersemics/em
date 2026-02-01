@@ -62,6 +62,9 @@ const SidebarLink = ({
 
 /** The sidebar component. */
 const Sidebar = () => {
+  // ============================
+  // State
+  // ============================
   const [isSwiping, setIsSwiping] = useState(false)
   const showSidebar = useSelector(state => state.showSidebar)
   const fontSize = useSelector(state => state.fontSize)
@@ -69,27 +72,47 @@ const Sidebar = () => {
   const [sectionId, setSectionId] = useState<SidebarSectionId>('favorites')
   const innerWidth = viewportStore.useSelector(state => state.innerWidth)
 
-  /** Track the current x position of the sidebar. This is used for progress-based animations. */
+  // ============================
+  // Refs
+  // ============================
+
+  /** Ref to the drawer element, used to detect if touches are inside the drawer. */
+  const drawerRef = useRef<HTMLDivElement>(null)
+
+  /** Track the current x position of the sidebar. Used for animations and swipe tracking. */
   const x = useMotionValue(0)
 
   /**
    * Smoothed velocity for swipe-to-close detection.
-   *
    * Framer Motion only gives us the velocity at the moment of release, which can be
-   * unreliable for quick flicks (the finger may have slowed down just before lifting).
-   *
-   * We solve this by accumulating a "smoothed" velocity throughout the gesture.
-   * This is identical to MUI's SwipeableDrawer's velocity logic.
+   * unreliable for quick flicks. We accumulate a smoothed velocity throughout the gesture
+   * (identical to MUI's SwipeableDrawer approach).
    */
   const smoothedVelocity = useRef(0)
 
-  /** Toggle the sidebar. */
-  const toggleSidebar = useCallback(
-    (value: boolean) => {
-      dispatch([toggleSidebarActionCreator({ value })])
-    },
-    [dispatch],
-  )
+  /**
+   * State for backdrop-initiated swipes (MUI's "paperHit" pattern).
+   * When a touch starts on the backdrop and moves into the drawer, we track it here
+   * so we can "pick up" the drawer and let the user swipe it closed.
+   */
+  const backdropSwipe = useRef({
+    /** Whether a backdrop swipe is currently active. */
+    active: false,
+    /** Whether the finger has entered the drawer area (MUI calls this "paperHit"). */
+    paperHit: false,
+    /** The x position where the finger first entered the drawer. */
+    startX: 0,
+    /** Timestamp of the last touch move, for velocity calculation. */
+    lastTime: 0,
+    /** The last x position, for velocity calculation. */
+    lastX: 0,
+    /** Accumulated velocity during the swipe. */
+    velocity: 0,
+  })
+
+  // ============================
+  // Derived values
+  // ============================
 
   /** Dynamically determine the width of the sidebar. */
   const width = innerWidth < 768 ? '90%' : '400px'
@@ -106,6 +129,43 @@ const Sidebar = () => {
     ease: [0, 0, 0.2, 1] as const,
   }
 
+  // ============================
+  // Callbacks
+  // ============================
+
+  /** Toggle the sidebar open/closed. */
+  const toggleSidebar = useCallback(
+    (value: boolean) => {
+      dispatch([toggleSidebarActionCreator({ value })])
+    },
+    [dispatch],
+  )
+
+  /**
+   * Shared logic for deciding whether to close the sidebar or snap it back after a swipe.
+   * Used by both Framer Motion's drag handlers and backdrop swipe handlers.
+   */
+  const handleSwipeEnd = useCallback(
+    (offset: number, velocity: number) => {
+      // Combined score: offset and velocity can compensate for each other.
+      // Fast + short swipes, or slow + long drags, should both be able to close the drawer.
+      const closeScore = offset + velocity * 0.5
+      const closeThreshold = 150
+
+      if (closeScore > closeThreshold) {
+        toggleSidebar(false)
+      } else {
+        // Score too low - snap back to open position
+        animate(x, 0, transition)
+      }
+    },
+    [toggleSidebar, x, transition],
+  )
+
+  // ============================
+  // Effects
+  // ============================
+
   /** Lock body scroll when sidebar is open. */
   useEffect(() => {
     if (showSidebar) {
@@ -118,14 +178,10 @@ const Sidebar = () => {
     }
   }, [showSidebar])
 
-  /** Watch for the escape key. Make sure the listener is only initialized when the sidebar is open,
-   * and cleaned up when the sidebar is closed.
-   */
+  /** Handle escape key to close sidebar. */
   useEffect(() => {
     if (!showSidebar) return
 
-    /** Watch for esc key. We handle this manually instead of letting Radix
-     * to make sure the current selection in the editor is kept when esc is hit. */
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         toggleSidebar(false)
@@ -138,6 +194,105 @@ const Sidebar = () => {
       document.removeEventListener('keydown', handleKeyDown)
     }
   }, [showSidebar, toggleSidebar])
+
+  /**
+   * Handle swipes that begin outside the drawer.
+   * This logic is adapted from MUI's SwipeableDrawer implementation.
+   *
+   * When the user starts their swipe from outside the drawer – and then swipes left
+   * _into_ the drawer, we want to "pick up" the drawer at the moment their finger
+   * enters it, allowing them to swipe it closed in one continuous motion.
+   *
+   * This is how it works:
+   * 1. Touch starts outside drawer (on backdrop): record the position of the touch
+   * 2. Touch moves, but finger is still in backdrop area: do nothing (drawer stays put)
+   * 3. Touch moves, and finger has entered drawer area: 'paperHit': drag begins via Framer Motion
+   * 4. Subsequent moves → update drawer position relative to where finger entered
+   */
+  useEffect(() => {
+    if (!showSidebar) return
+
+    const handleTouchStart = (e: TouchEvent) => {
+      // Ignore if touch started inside the drawer, as these are already handled by Framer Motion
+      if (drawerRef.current?.contains(e.target as Node)) return
+
+      // Record the position of the touch
+      const touchX = e.touches[0].clientX
+
+      // Reset backdrop swipe state
+      backdropSwipe.current = {
+        active: true,
+        paperHit: false,
+        startX: touchX,
+        lastTime: performance.now(),
+        lastX: touchX,
+        velocity: 0,
+      }
+    }
+
+    const handleTouchMove = (e: TouchEvent) => {
+      const swipe = backdropSwipe.current
+      if (!swipe.active) return
+
+      const touchX = e.touches[0].clientX
+      const now = performance.now()
+
+      // Calculate velocity (smoothed, like MUI)
+      const dt = now - swipe.lastTime
+      if (dt > 0) {
+        const instantVelocity = ((swipe.lastX - touchX) / dt) * 1000 // px/s, positive = moving left
+        swipe.velocity = swipe.velocity * 0.4 + instantVelocity * 0.6
+      }
+      swipe.lastTime = now
+      swipe.lastX = touchX
+
+      // Check if finger has entered the drawer area
+      if (!swipe.paperHit) {
+        if (touchX < widthPx) {
+          // Finger just entered drawer - "pick it up"
+          swipe.paperHit = true
+          swipe.startX = touchX // Reset start position to where finger entered
+        } else {
+          // Finger still outside drawer - don't move drawer yet
+          return
+        }
+      }
+
+      // Move the drawer to follow the finger
+      const dragOffset = touchX - swipe.startX // Negative when dragging left
+      const newX = Math.max(-widthPx, Math.min(0, dragOffset)) // Clamp to valid range
+      x.set(newX)
+
+      // Prevent scrolling while swiping
+      e.preventDefault()
+    }
+
+    const handleTouchEnd = () => {
+      const swipe = backdropSwipe.current
+      if (!swipe.active) return
+
+      // Only process if finger actually entered the drawer
+      if (swipe.paperHit) {
+        const offset = Math.abs(x.get())
+        const velocity = Math.max(swipe.velocity, 0) // Use smoothed velocity
+        handleSwipeEnd(offset, velocity)
+      }
+
+      // Reset state
+      swipe.active = false
+      swipe.paperHit = false
+    }
+
+    document.addEventListener('touchstart', handleTouchStart)
+    document.addEventListener('touchmove', handleTouchMove, { passive: false })
+    document.addEventListener('touchend', handleTouchEnd)
+
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart)
+      document.removeEventListener('touchmove', handleTouchMove)
+      document.removeEventListener('touchend', handleTouchEnd)
+    }
+  }, [showSidebar, widthPx, x, handleSwipeEnd])
 
   return (
     <Dialog.Root open={showSidebar} onOpenChange={toggleSidebar} modal={false}>
@@ -180,40 +335,24 @@ const Sidebar = () => {
             aria-describedby={undefined} // Suppress Radix console warning about aria-describedby. This property isn't relevant in this case.
           >
             <motion.div
+              ref={drawerRef}
               style={{ x }}
               drag='x'
               dragConstraints={{ left: -widthPx, right: 0 }}
               dragElastic={1e-9} // This disables elastic overscroll.
               onDragStart={() => {
                 setIsSwiping(true)
-                // Reset smoothed velocity at the start of each new gesture
                 smoothedVelocity.current = 0
               }}
               onDrag={(e, info) => {
-                // Accumulate smoothed velocity during the drag gesture (MUI-style).
-                // This weighted average gives 60% weight to the current velocity and 40% to the previous velocity,
-                // making the final velocity more representative of the overall gesture speed.
+                // Accumulate smoothed velocity during the drag (MUI-style weighted average)
                 smoothedVelocity.current = smoothedVelocity.current * 0.4 + Math.abs(info.velocity.x) * 0.6
               }}
               onDragEnd={(e, info) => {
                 setIsSwiping(false)
-
                 const offset = Math.abs(info.offset.x)
-                // Use the higher of smoothed or instantaneous velocity
                 const velocity = Math.max(smoothedVelocity.current, Math.abs(info.velocity.x))
-
-                // Use a combined score to allow offset and velocity can compensate for each other.
-                // Fast + short swipes, or slow + long drags, should both be able to close the drawer.
-                const closeScore = offset + velocity * 0.5
-                const closeThreshold = 150
-
-                // Close if the combined score exceeds the threshold
-                if (closeScore > closeThreshold) {
-                  toggleSidebar(false)
-                } else {
-                  // Score too low - snap back to open position
-                  animate(x, 0, transition)
-                }
+                handleSwipeEnd(offset, velocity)
               }}
               initial={false}
               animate={{ x: showSidebar ? 0 : -widthPx }}
