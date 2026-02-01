@@ -7,7 +7,6 @@ import { dismissTipActionCreator as dismissTip } from '../actions/dismissTip'
 import { AlertType } from '../constants'
 import useCombinedRefs from '../hooks/useCombinedRefs'
 import usePositionFixed from '../hooks/usePositionFixed'
-import useScrollTop from '../hooks/useScrollTop'
 import useSwipeToDismiss from '../hooks/useSwipeToDismiss'
 import CloseButton from './CloseButton'
 
@@ -62,14 +61,13 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
       offset: anchorOffset,
       height,
     })
-    const scrollTop = useScrollTop({ disabled: positionFixedStyles?.position === 'fixed' })
 
     // measure the height of the popup after it has been rendered
     useLayoutEffect(() => {
       if (innerRef.current && anchorFromBottom) {
         setHeight(innerRef.current.getBoundingClientRect().height)
       }
-    }, [anchorFromBottom, children, scrollTop]) // measure on mount and whenever children (content) or scrollTop change (which affects absolute positioning)
+    }, [anchorFromBottom, children]) // measure on mount and whenever children (content) changes
     const useSwipeToDismissProps = useSwipeToDismiss({
       // dismiss after animation is complete to avoid touch events going to the Toolbar
       onDismissEnd: () => {
