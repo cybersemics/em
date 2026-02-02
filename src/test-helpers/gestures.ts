@@ -4,7 +4,6 @@ enum gestureEnum {
   newSubThought = 'rdr',
   newThought = 'rd',
   bumpThoughtDown = 'rld',
-  categorizeThought = 'lu',
 }
 
 const gestures = gestureEnum as {

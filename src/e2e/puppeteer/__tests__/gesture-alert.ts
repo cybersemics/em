@@ -1,5 +1,6 @@
 import { KnownDevices } from 'puppeteer'
-import swipe from '../helpers/swipe'
+import newSubthoughtCommand from '../../../commands/newSubthought'
+import gesture from '../helpers/gesture'
 import waitForFrames from '../helpers/waitForFrames'
 import { page } from '../setup'
 
@@ -29,7 +30,7 @@ describe('gesture alert behavior', () => {
    */
   it('should not show alert during gesture progress', async () => {
     // Perform an incomplete gesture (no touchEnd) - create a new thought
-    await swipe('rdr', false)
+    await gesture(newSubthoughtCommand, { hold: true })
 
     await waitForFrames()
 
@@ -47,7 +48,7 @@ describe('gesture alert behavior', () => {
    */
   it('should show alert after gesture completion', async () => {
     // Perform a complete gesture - create a new thought
-    await swipe('rdr', true)
+    await gesture(newSubthoughtCommand)
 
     await waitForFrames()
 
