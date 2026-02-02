@@ -8,7 +8,7 @@ import { token } from '../../styled-system/tokens'
 import { SystemStyleObject } from '../../styled-system/types'
 import Path from '../@types/Path'
 import ThoughtId from '../@types/ThoughtId'
-import { HOME_TOKEN } from '../constants'
+import { BASE_FONT_SIZE, HOME_TOKEN } from '../constants'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import simplifyPath from '../selectors/simplifyPath'
@@ -23,6 +23,35 @@ import FadeTransition from './FadeTransition'
 import HomeLink from './HomeLink'
 import Link from './Link'
 import Superscript from './Superscript'
+
+export type BreadcrumbPlacement = 'thought' | 'navbar' | 'thoughtLink'
+
+/**
+ * Calculates the scale factor for breadcrumbs based on their placement location.
+ *
+ * The scale factor adjusts breadcrumb size relative to the base context breadcrumb font size
+ * (0.867 * fontSize) to maintain consistent sizing across different UI locations.
+ *
+ * @param placement - The location where the breadcrumb is displayed
+ * - 'navbar': Renders at a fixed 14px equivalent size
+ * - 'thoughtLink': Renders at 16px(BASE_FONT_SIZE) * 0.867 equivalent size
+ * - other: Uses default scale of 1.
+ * @returns A scale multiplier to apply to the breadcrumb component.
+ */
+const useBreadcrumbScaler = (placement: BreadcrumbPlacement): number => {
+  const fontSize = useSelector(state => state.fontSize)
+  return useMemo(() => {
+    const ctxBreadcrumbRootContainerFontSize = 0.867 * fontSize
+    if (placement === 'navbar') {
+      return 14 / ctxBreadcrumbRootContainerFontSize
+    }
+
+    if (placement === 'thoughtLink') {
+      return (BASE_FONT_SIZE * 0.867) / ctxBreadcrumbRootContainerFontSize
+    }
+    return 1
+  }, [fontSize, placement])
+}
 
 type OverflowChild = {
   id: ThoughtId
@@ -157,6 +186,7 @@ const ContextBreadcrumbs = ({
   hidden,
   homeContext,
   path,
+  placement = 'thought',
   staticText,
   thoughtsLimit,
   linkCssRaw,
@@ -172,6 +202,8 @@ const ContextBreadcrumbs = ({
   hidden?: boolean
   homeContext?: boolean
   path: Path
+  /** The location where the breadcrumb is displayed. */
+  placement?: BreadcrumbPlacement
   /** Disables click on breadcrumb fragments. */
   staticText?: boolean
   thoughtsLimit?: number
@@ -184,6 +216,7 @@ const ContextBreadcrumbs = ({
     shallowEqual,
   )
   const ellipsizedThoughts = useEllipsizedThoughts(pathFiltered, { charLimit, disabled, thoughtsLimit })
+  const scaler = useBreadcrumbScaler(placement)
 
   /** Clones the direct breadcrumb children to inject isDeleting animation state. */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -206,13 +239,21 @@ const ContextBreadcrumbs = ({
   return (
     <div
       aria-label={hidden ? undefined : 'context-breadcrumbs'}
+      style={
+        {
+          '--breadcrumb-font-size': `${scaler * 0.867}rem`,
+          '--breadcrumb-margin-left': `calc(${scaler * 1.1271}rem - 14.5px)`,
+          '--breadcrumb-margin-top': `${scaler * 0.462}rem`,
+          '--breadcrumb-min-height': `${scaler * 0.867}rem`,
+        } as React.CSSProperties
+      }
       className={css(
         {
-          fontSize: '0.867em',
+          fontSize: 'var(--breadcrumb-font-size)',
+          marginLeft: 'var(--breadcrumb-margin-left)',
+          marginTop: 'var(--breadcrumb-margin-top)',
+          minHeight: 'var(--breadcrumb-min-height)',
           color: 'gray66',
-          marginLeft: 'calc(1.3em - 14.5px)',
-          marginTop: '0.533em',
-          minHeight: '1em',
           visibility: hidden ? 'hidden' : undefined,
         },
         cssRaw,

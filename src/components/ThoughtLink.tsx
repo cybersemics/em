@@ -42,6 +42,7 @@ const ThoughtLink = ({
         <ContextBreadcrumbs
           hideArchive={hideArchive}
           path={parentPath}
+          placement='thoughtLink'
           staticText={staticBreadcrumbs}
           charLimit={charLimit || 32}
           thoughtsLimit={thoughtsLimit || 10}
