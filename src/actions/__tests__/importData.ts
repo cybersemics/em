@@ -6,14 +6,14 @@ import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
 import initStore from '../../test-helpers/initStore'
 import removeHome from '../../util/removeHome'
-import importDataActionCreator from '../importData'
+import importData from '../importData'
 import { newThoughtActionCreator as newThought } from '../newThought'
 
 /** Helper function that initializes the store, imports html into the root, and exports it as plaintext to make easily readable assertions. This is async because importFiles is async. */
 const importExport = async (html: string, outputFormat: MimeType = 'text/plain') => {
   vi.useFakeTimers()
   const { cleanup } = await initialize()
-  store.dispatch(importDataActionCreator({ html }))
+  store.dispatch(importData({ html }))
   await vi.runOnlyPendingTimersAsync()
   const exported = exportContext(store.getState(), HOME_PATH, outputFormat)
   cleanup()
@@ -1056,7 +1056,7 @@ it('empty parent', async () => {
 
   store.dispatch([
     newThought({}),
-    (dispatch, getState) => dispatch(importDataActionCreator({ path: contextToPath(getState(), [''])!, text })),
+    (dispatch, getState) => dispatch(importData({ path: contextToPath(getState(), [''])!, text })),
   ])
 
   await vi.runOnlyPendingTimersAsync()
@@ -1096,7 +1096,7 @@ p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 9.0px Helvetica; color: #000000}
 
   store.dispatch([
     newThought({ value: 'a' }),
-    (dispatch, getState) => dispatch(importDataActionCreator({ path: contextToPath(getState(), ['a'])!, html })),
+    (dispatch, getState) => dispatch(importData({ path: contextToPath(getState(), ['a'])!, html })),
   ])
 
   await vi.runOnlyPendingTimersAsync()
@@ -1133,7 +1133,7 @@ bar</i></p>
 
   store.dispatch([
     newThought({ value: 'a' }),
-    (dispatch, getState) => dispatch(importDataActionCreator({ path: contextToPath(getState(), ['a'])!, html })),
+    (dispatch, getState) => dispatch(importData({ path: contextToPath(getState(), ['a'])!, html })),
   ])
 
   await vi.runOnlyPendingTimersAsync()
@@ -1170,7 +1170,7 @@ p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 9.0px Helvetica; color: #000000}
 
   store.dispatch([
     newThought({ value: 'x' }),
-    (dispatch, getState) => dispatch(importDataActionCreator({ path: contextToPath(getState(), ['x'])!, html })),
+    (dispatch, getState) => dispatch(importData({ path: contextToPath(getState(), ['x'])!, html })),
   ])
 
   await vi.runOnlyPendingTimersAsync()
