@@ -132,13 +132,16 @@ const Note = React.memo(
     /** Set editing to false onBlur, if keyboard is closed. */
     const onBlur = useCallback(
       (e: React.FocusEvent) => {
+        const relatedTarget = e.relatedTarget as Element
+        const isRelatedTargetNote = !!relatedTarget?.matches('[aria-label="note-editable"]')
+
+        if (!isRelatedTargetNote) dispatch(setNoteFocus({ value: false }))
+
         if (isTouch && !selection.isActive()) {
           // if we know that the focus is changing to another editable or note then do not set editing to false
           // (does not work when clicking a bullet as it is set to null)
           const isRelatedTargetEditableOrNote =
-            e.relatedTarget &&
-            ((e.relatedTarget as Element).hasAttribute?.('data-editable') ||
-              !!(e.relatedTarget as Element).matches('[aria-label="note-editable"]'))
+            relatedTarget && (relatedTarget.hasAttribute?.('data-editable') || isRelatedTargetNote)
 
           if (!isRelatedTargetEditableOrNote) setTimeout(() => dispatch(keyboardOpen({ value: false })))
         }
