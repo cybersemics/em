@@ -15,7 +15,6 @@ const isColorWhite = (value: string) => whiteColors.includes(value.replace(/\s/g
 const allowedStyleProperties = [
   {
     property: 'color',
-    enabled: true,
     test: (styleProperty: StyleProperty, styleProperties: StyleProperty[]) => {
       const background = styleProperties.find(property => property.name.startsWith('background'))
       return !((isColorBlack(styleProperty.value) || isColorWhite(styleProperty.value)) && !background)
@@ -32,7 +31,6 @@ const allowedStyleProperties = [
   },
   {
     property: 'background',
-    enabled: false,
     test: (styleProperty: StyleProperty, styleProperties: StyleProperty[]) => {
       const color = styleProperties.find(property => property.name === 'color')
       return !(isColorWhite(styleProperty.value) && !color)
@@ -40,7 +38,6 @@ const allowedStyleProperties = [
   },
   {
     property: 'background-color',
-    enabled: true,
     test: (styleProperty: StyleProperty, styleProperties: StyleProperty[]) => {
       const color = styleProperties.find(property => property.name === 'color')
       return !(isColorWhite(styleProperty.value) && !color)
@@ -55,12 +52,6 @@ const allowedStyleProperties = [
       return ['text-decoration'].includes(styleProperty.name)
     },
   },
-  { property: 'border', enabled: false },
-  { property: 'padding', enabled: false },
-  { property: 'word', enabled: false },
-  { property: 'box-shadow', enabled: false },
-  { property: 'opacity', enabled: false },
-  { property: 'white-space', enabled: false },
 ]
 
 /** Parse style string, returns array of StyleProperty. */
@@ -82,9 +73,9 @@ const parseStyleString = (styleString: string): StyleProperty[] => {
 const stripStyleAttribute = (style: string) => {
   const styles = parseStyleString(style)
   return styles.reduce((acc, property) => {
-    const styleProperty = allowedStyleProperties
-      .filter(property => property.enabled !== false)
-      .find(allowedStyleProperty => property.name.startsWith(allowedStyleProperty.property))
+    const styleProperty = allowedStyleProperties.find(allowedStyleProperty =>
+      property.name.startsWith(allowedStyleProperty.property),
+    )
     if (styleProperty && (!styleProperty.test || styleProperty.test(property, styles))) {
       return (
         acc + `${property.name}: ${property.name === 'font-weight' && +property.value >= 500 ? 700 : property.value};`
