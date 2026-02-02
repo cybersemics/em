@@ -1,12 +1,14 @@
-import SwipeableDrawer, { SwipeableDrawerProps } from '@mui/material/SwipeableDrawer'
+import * as Dialog from '@radix-ui/react-dialog'
+import * as VisuallyHidden from '@radix-ui/react-visually-hidden'
+import { animate, motion, useMotionValue, useTransform } from 'framer-motion'
 import _ from 'lodash'
-import { useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { longPressActionCreator as longPress } from '../actions/longPress'
 import { toggleSidebarActionCreator } from '../actions/toggleSidebar'
-import { isTouch } from '../browser'
 import { LongPressState } from '../constants'
+import viewportStore from '../stores/viewport'
 import durations from '../util/durations'
 import fastClick from '../util/fastClick'
 import FadeTransition from './FadeTransition'
@@ -14,30 +16,36 @@ import Favorites from './Favorites'
 import RecentlyDeleted from './RecentlyDeleted'
 import RecentlyEdited from './RecentlyEdited'
 
-// extend SwipeableDrawer with classes prop
-const SwipeableDrawerWithClasses = SwipeableDrawer as unknown as React.ComponentType<
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  SwipeableDrawerProps & { classes: any; ref: any }
->
+/** Valid sidebar section IDs. */
+type SidebarSectionId = 'favorites' | 'recentlyEdited' | 'recentlyDeleted'
 
-type SidebarSection = 'favorites' | 'recentEdited' | 'deletedEdited'
+/** Configuration for a sidebar section. */
+type SidebarSection = {
+  id: SidebarSectionId
+  label: string
+}
+
+/** All available sidebar sections. */
+const SECTIONS: SidebarSection[] = [
+  { id: 'favorites', label: 'Favorites' },
+  { id: 'recentlyEdited', label: 'Recently Edited' },
+  { id: 'recentlyDeleted', label: 'Recently Deleted' },
+]
 
 /** A link to a sidebar section. */
 const SidebarLink = ({
   active,
   section,
   setSection,
-  text,
 }: {
   active?: boolean
   section: SidebarSection
-  setSection: (section: SidebarSection) => void
-  text: string
+  setSection: (id: SidebarSectionId) => void
 }) => {
   return (
     <a
-      {...fastClick(() => setSection(section))}
-      data-testid={`sidebar-${section}`}
+      {...fastClick(() => setSection(section.id))}
+      data-testid={`sidebar-${section.id}`}
       className={css({
         color: active ? 'fg' : 'gray50',
         display: 'inline-block',
@@ -47,7 +55,7 @@ const SidebarLink = ({
         textDecoration: 'none',
       })}
     >
-      {text}
+      {section.label}
     </a>
   )
 }
@@ -55,151 +63,232 @@ const SidebarLink = ({
 /** The sidebar component. */
 const Sidebar = () => {
   const [isSwiping, setIsSwiping] = useState(false)
-  const containerRef = useRef<HTMLInputElement>(null)
   const showSidebar = useSelector(state => state.showSidebar)
   const fontSize = useSelector(state => state.fontSize)
   const dispatch = useDispatch()
-  const [section, setSection] = useState<SidebarSection>('favorites')
+  const [sectionId, setSectionId] = useState<SidebarSectionId>('favorites')
+  const innerWidth = viewportStore.useSelector(state => state.innerWidth)
+
+  /** Track the current x position of the sidebar. This is used for progress-based animations. */
+  const x = useMotionValue(0)
 
   /** Toggle the sidebar. */
-  const toggleSidebar = (value: boolean) => {
-    dispatch([toggleSidebarActionCreator({ value })])
+  const toggleSidebar = useCallback(
+    (value: boolean) => {
+      dispatch([toggleSidebarActionCreator({ value })])
+    },
+    [dispatch],
+  )
+
+  /** Dynamically determine the width of the sidebar. */
+  const width = innerWidth < 768 ? '90%' : '400px'
+
+  /** Get the width of the sidebar in pixels, which is used for progress-based animations. */
+  const widthPx = innerWidth < 768 ? innerWidth * 0.9 : 400
+
+  /** Link opacity to x position of the sidebar. 1 when open, 0 when closed. */
+  const opacity = useTransform(x, [-widthPx, 0], [0, 1])
+
+  /** MUI-style cubic-bezier transition. */
+  const transition = {
+    duration: durations.get('fast') / 1000,
+    ease: [0, 0, 0.2, 1] as const,
   }
 
-  return (
-    /**
-     * Actually Sidebar is inside the AppComponent. But the way the Material UI renders the drawer is by creating
-     * a modal just inside the <body /> regardless where we put the Sidebar component in the component tree.
-     * So .mobile classname added to the main wrapper of app component wont work for drawer.
-     * Therefore instead of using recommended partern of .mobile .drawer-container
-     * we are providing different classname to drawer based on isTouch property.
-     */
-    <SwipeableDrawerWithClasses
-      data-testid='sidebar'
-      classes={{
-        /* Increase precedence over .css-1u2w381-MuiModal-root-MuiDrawer-root z-index. */
-        root: css({ userSelect: 'none', zIndex: 'sidebar !important' }),
-        /* material drawer container css z-index override */
-        paper: css({
-          width: '400px',
-          _mobile: { width: '90%' },
-        }),
-        paperAnchorLeft: css({ top: 'safeAreaTop !important' }),
-      }}
-      disableSwipeToOpen={true}
-      ref={containerRef}
-      transitionDuration={durations.get('fast')}
-      // On iOS Safari, restoring focus works when tapping the backdrop to close the sidebar, but not when tapping the hamburger
-      // menu to close the sidebar. Hopefully the hamburger menu can be fixed and focus can be restored properly in all cases.
-      // Until then, letting the backdrop (correctly) restore focus results in inconsistent behavior.
-      ModalProps={{ disableRestoreFocus: isTouch }}
-      SwipeAreaProps={{
-        style: {
-          // Set width here since setting style with SwipeAreaProps will override the swipeAreaWidth prop.
-          width: 8,
-          // Override default zIndex of 1199 to so that the Sidebar is below the Toolbar and Footer.
-          // Otherwise the user can accidentally activate the Sidebar edge swipe when trying to tap the Hamburger menu or Home icon.
-          // Cannot set class name on SwipeArea without overriding the entire SwipeableDrawer classes prop.
-          zIndex: 1,
-        },
-      }}
-      anchor='left'
-      onOpen={() => toggleSidebar(true)}
-      onClose={() => toggleSidebar(false)}
-      open={showSidebar}
-    >
-      {/* <RecentlyEdited /> */}
-      <div
-        // We need to disable favorites drag-and-drop when the Sidebar is being slid close.
-        // Unfortunately, MUI SwipeableDrawer does not provide an API for its animation or swipe state, or final open/close.
-        // Therefore we check translateX from the .MuiDrawer-paper element and disable drag-and-drop
-        // See: https://bit.cloud/mui-org/material-ui/swipeable-drawer
-        //      https://mui.com/material-ui/api/swipeable-drawer/
-        onTouchMove={_.throttle(
-          () => {
-            if (isSwiping) return
-            const drawer = containerRef.current?.querySelector('.MuiDrawer-paper') as HTMLElement | null
-            if (!drawer) return
-            const translateX = parseInt(drawer.style.transform.slice(10))
-            // set isSwiping if translateX is not parseable (NaN) or explicitly set to 0
-            if (translateX) {
-              setIsSwiping(true)
-              dispatch(longPress({ value: LongPressState.Inactive }))
-            }
-          },
-          10,
-          // no need to check on the first touchmove trigger since translateX is probably not yet set
-          { leading: false },
-        )}
-        onTouchEnd={() => {
-          setIsSwiping(false)
-        }}
-        className={css({ height: '100%' })}
-      >
-        <div
-          aria-label='sidebar'
-          className={css({
-            background: 'sidebarBg',
-            overflowY: 'scroll',
-            overscrollBehavior: 'contain',
-            boxSizing: 'border-box',
-            width: '100%',
-            height: '100%',
-            color: 'fg',
-            scrollbarWidth: 'thin',
-            lineHeight: 1.8,
-            '&::-webkit-scrollbar': {
-              width: '0px', // Remove scrollbar space
-              background: 'transparent', // Optional: just make scrollbar invisible
-              display: 'none',
-            },
-            userSelect: 'none',
-            // must be position:relative to ensure drop hovers are positioned correctly when sidebar is scrolled
-            position: 'relative',
-            padding: '0 1em',
-          })}
-          data-scroll-at-edge
-        >
-          <FadeTransition type='fast' in={showSidebar}>
-            <div
-              style={{
-                // match HamburgerMenu width + padding
-                marginLeft: fontSize * 1.3 + 30,
-              }}
-            >
-              <SidebarLink
-                active={section === 'favorites'}
-                section='favorites'
-                setSection={setSection}
-                text='Favorites'
-              />
-              <SidebarLink
-                active={section === 'recentEdited'}
-                section='recentEdited'
-                setSection={setSection}
-                text='Recently Edited'
-              />
-              <SidebarLink
-                active={section === 'deletedEdited'}
-                section='deletedEdited'
-                setSection={setSection}
-                text='Recently Deleted'
-              />
-            </div>
-          </FadeTransition>
+  /** Lock body scroll when sidebar is open. */
+  useEffect(() => {
+    if (showSidebar) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [showSidebar])
 
-          {section === 'favorites' ? (
-            <Favorites disableDragAndDrop={isSwiping} />
-          ) : section === 'recentEdited' ? (
-            <RecentlyEdited />
-          ) : section === 'deletedEdited' ? (
-            <RecentlyDeleted />
-          ) : (
-            'Not yet implemented'
-          )}
+  /** Watch for the escape key. Make sure the listener is only initialized when the sidebar is open,
+   * and cleaned up when the sidebar is closed.
+   */
+  useEffect(() => {
+    if (!showSidebar) return
+
+    /** Watch for esc key. We handle this manually instead of letting Radix
+     * to make sure the current selection in the editor is kept when esc is hit. */
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        toggleSidebar(false)
+        e.preventDefault()
+        e.stopPropagation()
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [showSidebar, toggleSidebar])
+
+  return (
+    <Dialog.Root open={showSidebar} onOpenChange={toggleSidebar} modal={false}>
+      {/* forceMount prop keeps the sidebar mounted when closed.
+      this is temporarily added to match the behavior of the outgoing MUI drawer
+      it can be removed in a later PR to optimize performance */}
+      <Dialog.Portal forceMount>
+        <div
+          data-testid='sidebar'
+          aria-hidden={!showSidebar}
+          className={css({
+            position: 'fixed',
+            inset: 0,
+            zIndex: 'sidebar',
+            pointerEvents: 'none',
+            userSelect: 'none',
+          })}
+        >
+          {/* Backdrop/overlay */}
+          <motion.div
+            aria-hidden='true'
+            style={{ opacity }}
+            onClick={() => toggleSidebar(false)}
+            className={css({
+              position: 'absolute',
+              inset: 0,
+              backgroundColor: 'sidebarOverlayBg',
+              pointerEvents: showSidebar ? 'auto' : 'none',
+              cursor: 'pointer',
+              userSelect: 'none',
+            })}
+          />
+
+          <Dialog.Content
+            asChild
+            forceMount
+            onOpenAutoFocus={e => e.preventDefault()} // Prevents focus from entering the sidebar when the page first loads
+            onInteractOutside={e => e.preventDefault()} // This is needed to prevent the sidebar from double-toggling when tapping hamburger icon
+            onEscapeKeyDown={e => e.preventDefault()} // Stop Radix from closing the sidebar when esc is pressed – we will handle it ourselves
+            aria-describedby={undefined} // Suppress Radix console warning about aria-describedby. This property isn't relevant in this case.
+          >
+            <motion.div
+              style={{ x }}
+              drag='x'
+              dragConstraints={{ left: -widthPx, right: 0 }}
+              dragElastic={1e-9} // This disables elastic overscroll.
+              onDragStart={() => setIsSwiping(true)}
+              onDragEnd={(e, info) => {
+                setIsSwiping(false)
+
+                // Check that the swipe meets the threshold to close.
+                // The swipe either needs to be at least 100px or have a velocity of at least 500px/s.
+                if (info.offset.x < -100 || info.velocity.x < -500) {
+                  toggleSidebar(false)
+                } else {
+                  // Snap back to 0
+                  animate(x, 0, transition)
+                }
+              }}
+              initial={false}
+              animate={{ x: showSidebar ? 0 : -widthPx }}
+              transition={transition}
+              className={css({
+                position: 'fixed',
+                top: 'safeAreaTop',
+                left: 0,
+                bottom: 0,
+                width,
+                backgroundColor: 'sidebarBg',
+                zIndex: 'sidebar',
+                userSelect: 'none',
+                boxShadow: '0 0 20px bgOverlay30',
+                outline: 'none',
+                pointerEvents: 'auto',
+              })}
+            >
+              <div
+                // We need to disable favorites drag-and-drop when the Sidebar is being slid close.
+                // We'll do this by checking the sidebar's x offset.
+                onTouchMove={_.throttle(
+                  () => {
+                    if (isSwiping) return
+                    // If the sidebar's x-offset is 0, the sidebar isn't moving.
+                    // Otherwise, it -is- moving, and we should disable drag-and-drop by setting isSwiping.
+                    if (x.get() !== 0) {
+                      setIsSwiping(true)
+                      dispatch(longPress({ value: LongPressState.Inactive }))
+                    }
+                  },
+                  10,
+                  // no need to check on the first touchmove trigger since x has probably not changed yet
+                  { leading: false },
+                )}
+                onTouchEnd={() => {
+                  setIsSwiping(false)
+                }}
+                className={css({ height: '100%' })}
+              >
+                <div
+                  aria-label='sidebar'
+                  className={css({
+                    background: 'sidebarBg',
+                    overflowY: 'scroll',
+                    overflowX: 'hidden',
+                    overscrollBehavior: 'contain',
+                    boxSizing: 'border-box',
+                    width: '100%',
+                    height: '100%',
+                    color: 'fg',
+                    scrollbarWidth: 'thin',
+                    lineHeight: 1.8,
+                    '&::-webkit-scrollbar': {
+                      width: '0px',
+                      background: 'transparent',
+                      display: 'none',
+                    },
+                    userSelect: 'none',
+                    // must be position:relative to ensure drop hovers are positioned correctly when sidebar is scrolled
+                    position: 'relative',
+                    padding: '0 1em',
+                  })}
+                  data-scroll-at-edge
+                >
+                  {/* Visually hidden title for screen readers */}
+                  <VisuallyHidden.Root>
+                    <Dialog.Title>{SECTIONS.find(s => s.id === sectionId)?.label}</Dialog.Title>
+                  </VisuallyHidden.Root>
+
+                  <FadeTransition type='fast' in={showSidebar}>
+                    <div
+                      style={{
+                        // match HamburgerMenu width + padding
+                        marginLeft: fontSize * 1.3 + 30,
+                      }}
+                    >
+                      {SECTIONS.map(section => (
+                        <SidebarLink
+                          key={section.id}
+                          active={sectionId === section.id}
+                          section={section}
+                          setSection={setSectionId}
+                        />
+                      ))}
+                    </div>
+                  </FadeTransition>
+
+                  {sectionId === 'favorites' ? (
+                    <Favorites disableDragAndDrop={isSwiping} />
+                  ) : sectionId === 'recentlyEdited' ? (
+                    <RecentlyEdited />
+                  ) : sectionId === 'recentlyDeleted' ? (
+                    <RecentlyDeleted />
+                  ) : (
+                    'Not yet implemented'
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          </Dialog.Content>
         </div>
-      </div>
-    </SwipeableDrawerWithClasses>
+      </Dialog.Portal>
+    </Dialog.Root>
   )
 }
 

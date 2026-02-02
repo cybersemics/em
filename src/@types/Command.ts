@@ -1,5 +1,5 @@
 import React from 'react'
-import { GestureResponderEvent } from '../components/PanResponder'
+import { GestureResponderEvent } from 'react-native'
 import CommandId from './CommandId'
 import CommandType from './CommandType'
 import Dispatch from './Dispatch'

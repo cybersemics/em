@@ -186,7 +186,8 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
   (createStore: StoreEnhancerStoreCreator) =>
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   <A extends Action<any>>(reducer: (state: any, action: A) => any, initialState: any): Store<State, A> => {
-    let lastActionType: ActionType
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let lastAction: Action<any> | undefined
 
     /** True if the last edit was an addition of characters (vs a deletion of characters). Undo steps of contiguous edits in the same direction are combined (e.g. "one" -> "one two" -> "one two three"); Undo steps of continiguous edits in the opposite direction are not combined (e.g. "hello world" -> "hello" -> "hello universe"). */
     let lastIsEditAddition = true
@@ -236,7 +237,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
 
       // Determine if an edit is an addition or a deletion
       const isEditAddition =
-        lastActionType === 'editThought' &&
+        lastAction?.type === 'editThought' &&
         actionType === 'editThought' &&
         isEditThoughtAction(action) &&
         action.newValue.length > action.oldValue.length
@@ -246,13 +247,15 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       // - Contiguous edits are merged into a single edit action. For example, if the user edits 'a' to 'ab' and then 'ab' to 'abc', the undo will revert to 'a' in one step.
       // - The closeAlert action is merged with the previous action so that the alert can be undone.
       // - All actions during the execution of a multicursor command will be merged together. The prevous action will always be setIsMulticursorExecuting.
+      // - Chained commands will be merged into the previous command, e.g. Select All + Categorize
       if (
-        (isNavigation(actionType) && isNavigation(lastActionType)) ||
-        (lastActionType === 'editThought' && actionType === 'editThought' && isEditAddition === lastIsEditAddition) ||
+        (isNavigation(actionType) && isNavigation(lastAction?.type)) ||
+        (lastAction?.type === 'editThought' && actionType === 'editThought' && isEditAddition === lastIsEditAddition) ||
         actionType === 'closeAlert' ||
-        state.isMulticursorExecuting
+        state.isMulticursorExecuting ||
+        (lastAction as UnknownAction)?.mergeUndo
       ) {
-        lastActionType = actionType
+        lastAction = action
         const lastUndoPatch = nthLast(state.undoPatches, 1)
         let lastState = state
         if (lastUndoPatch && lastUndoPatch.length > 0) {
@@ -283,7 +286,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         }
       }
 
-      lastActionType = actionType
+      lastAction = action
       lastIsEditAddition = isEditAddition
 
       // add a new undo patch
@@ -298,7 +301,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
               addActionsToPatch(undoPatch, [
                 // Override the action label with undoLabel so that the command label is used in the alert on undo/redo of a multicursor command.
                 // TODO: A better solution would add a label to the Patch itself.
-                isSetIsMulticursorExecutingAction(action) ? (action.undoLabel as ActionType) : lastActionType,
+                isSetIsMulticursorExecutingAction(action) ? (action.undoLabel as ActionType) : lastAction.type,
               ]),
             ],
           }

@@ -1,14 +1,61 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { newThoughtActionCreator as newThought } from '../../actions/newThought'
+import { executeCommandWithMulticursor } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
-import { executeCommandWithMulticursor } from '../../util/executeCommand'
 import indentCommand from '../indent'
+import moveCursorForward from '../moveCursorForward'
 
 beforeEach(initStore)
+
+describe('space-to-indent', () => {
+  it('indent on empty thought', () => {
+    store.dispatch(
+      importText({
+        text: `
+          - a
+        `,
+      }),
+    )
+    store.dispatch([setCursor(['a']), newThought({ value: '' })])
+
+    executeCommandWithMulticursor(indentCommand, { store, type: 'keyboard' })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+
+    const expectedOutput = `- ${HOME_TOKEN}
+  - a
+    - `
+
+    expect(exported).toEqual(expectedOutput)
+  })
+
+  it('do nothing on a non-empty thought', () => {
+    store.dispatch(
+      importText({
+        text: `
+          - a
+          - b
+        `,
+      }),
+    )
+    store.dispatch(setCursor(['b']))
+
+    executeCommandWithMulticursor(indentCommand, { store, type: 'keyboard' })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+
+    const expectedOutput = `- ${HOME_TOKEN}
+  - a
+  - b`
+
+    expect(exported).toEqual(expectedOutput)
+  })
+})
 
 describe('multicursor', () => {
   it('indents multiple thoughts', async () => {
@@ -26,7 +73,7 @@ describe('multicursor', () => {
       addMulticursor(['c']),
     ])
 
-    executeCommandWithMulticursor(indentCommand, { store })
+    executeCommandWithMulticursor(moveCursorForward, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
@@ -56,7 +103,7 @@ describe('multicursor', () => {
       addMulticursor(['d', 'f']),
     ])
 
-    executeCommandWithMulticursor(indentCommand, { store })
+    executeCommandWithMulticursor(moveCursorForward, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
@@ -86,7 +133,7 @@ describe('multicursor', () => {
       addMulticursor(['c']),
     ])
 
-    executeCommandWithMulticursor(indentCommand, { store })
+    executeCommandWithMulticursor(moveCursorForward, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
@@ -95,39 +142,6 @@ describe('multicursor', () => {
     - b
     - c
   - d`
-
-    expect(exported).toEqual(expectedOutput)
-  })
-
-  it('indents parent/child thoughts', () => {
-    store.dispatch([
-      importText({
-        text: `
-          - a
-            - b
-          - c
-            - d
-          - e
-            - f
-          `,
-      }),
-      setCursor(['c']),
-      addMulticursor(['c']),
-      addMulticursor(['c', 'd']),
-      addMulticursor(['e']),
-    ])
-
-    executeCommandWithMulticursor(indentCommand, { store })
-
-    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-
-    const expectedOutput = `- ${HOME_TOKEN}
-  - a
-    - b
-    - c
-      - d
-    - e
-      - f`
 
     expect(exported).toEqual(expectedOutput)
   })
