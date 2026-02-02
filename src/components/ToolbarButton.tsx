@@ -292,6 +292,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
         style={style}
         animated={isAnimated}
         animationComplete={() => setIsAnimated(false)}
+        active={isButtonActive}
       />
     </div>
   )
