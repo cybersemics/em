@@ -93,7 +93,7 @@ const Sidebar = () => {
   const swipeState = useRef({
     /** Whether a touch is currently being tracked. */
     active: false,
-    /** Whether we've determined the swipe direction yet. null = undetermined, true = horizontal, false = vertical. */
+    /** Whether we've determined the swipe direction yet. Null means undetermined, true means horizontal, false means vertical. */
     isSwiping: null as boolean | null,
     /** Whether the touch started on the backdrop (outside drawer). */
     startedOnBackdrop: false,
@@ -185,6 +185,7 @@ const Sidebar = () => {
   useEffect(() => {
     if (!showSidebar) return
 
+    /** Close sidebar when Escape is pressed. */
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         toggleSidebar(false)
@@ -203,9 +204,9 @@ const Sidebar = () => {
    * This logic is adapted from MUI's SwipeableDrawer implementation.
    *
    * Key differences from Framer Motion's drag:
-   * - We detect touches that originate outside the drawer
-   * - We wait until direction is clear (3px threshold) before committing to swipe vs scroll
-   * - Call preventDefault() to disable scrolling after the swipe threshold
+   * - We detect touches that originate outside the drawer.
+   * - We wait until direction is clear (3px threshold) before committing to swipe vs scroll.
+   * - Call preventDefault() to disable scrolling after the swipe threshold.
    */
   useEffect(() => {
     if (!showSidebar) return
