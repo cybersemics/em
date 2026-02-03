@@ -407,6 +407,7 @@ const Sidebar = () => {
                     overflowY: 'scroll',
                     overflowX: 'hidden',
                     overscrollBehavior: 'contain',
+                    touchAction: 'pan-y',
                     boxSizing: 'border-box',
                     width: '100%',
                     height: '100%',
