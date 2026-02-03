@@ -527,7 +527,7 @@ const ThoughtContainer = ({
     isTableCol1,
   })
 
-  const hasSelectionRange = selectionRangeStore.useSelector(value => value)
+  const hasSelectionRange = selectionRangeStore.useState()
 
   // thought does not exist
   if (value == null) return null
