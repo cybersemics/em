@@ -70,7 +70,7 @@ const TreeNode = ({
   const fadeThoughtRef = useRef<HTMLDivElement>(null)
   const [isMounted, setIsMounted] = useState(true)
 
-  const fauxCaretNodeProvider = useFauxCaretNodeProvider({
+  const { fauxCaretNodeProviderStyles, fauxCaretTapHandler } = useFauxCaretNodeProvider({
     editing,
     fadeThoughtElement: fadeThoughtRef.current,
     isCursor,
@@ -153,10 +153,10 @@ const TreeNode = ({
         isMounted={isMounted}
         style={{
           ...style,
-          ...fauxCaretNodeProvider,
+          ...fauxCaretNodeProviderStyles,
         }}
       >
-        <div ref={fadeThoughtRef}>
+        <div ref={fadeThoughtRef} onClick={fauxCaretTapHandler}>
           <VirtualThought
             debugIndex={testFlags.simulateDrop ? indexChild : undefined}
             depth={depth}
