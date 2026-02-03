@@ -1,10 +1,10 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { executeCommand } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
-import executeCommand from '../../util/executeCommand'
 import pinAllCommand from '../pinAll'
 
 beforeEach(initStore)

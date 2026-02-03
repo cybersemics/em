@@ -1,14 +1,15 @@
 /** Test coverage of basic UI appearance. Snapashots only. Do not place behavioral tests here. If a component has snapshot and behavioral tests, move them to a separate test file. */
 import path from 'path'
 import { KnownDevices } from 'puppeteer'
+import openCommandCenterCommand from '../../../commands/openCommandCenter'
 import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
+import gesture from '../helpers/gesture'
 import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import setTheme from '../helpers/setTheme'
-import swipe from '../helpers/swipe'
 import waitForSelector from '../helpers/waitForSelector'
 import { page } from '../setup'
 
@@ -31,13 +32,16 @@ it('CommandPalette', async () => {
 
 it('GestureMenu', async () => {
   await page.emulate(KnownDevices['iPhone 15 Pro'])
+
+  await hideHUD()
+
   await paste('Hello')
 
   // When cursor is on the thought, gesture menu is rendered with two new options. When cursor is null, those options are not shown. Hence always be consistent and set cursor to the thought.
   await clickThought('Hello')
 
-  // swipe and hold
-  await swipe('r')
+  // swipe and hold an invalid gesture so that the snapshot just includes Cancel and Open Gesture Cheatsheet and does not need to be updated every time a gesture is added or changed.
+  await gesture('rdldrd', { hold: true })
 
   // wait for the gesture menu to appear
   await waitForSelector('[data-testid=popup-value]')
@@ -57,7 +61,7 @@ it('CommandCenter', async () => {
   await clickThought('Hello')
 
   // open the Command Center
-  await swipe('u', true)
+  await gesture(openCommandCenterCommand)
 
   // wait for the command center panel to appear before taking screenshot
   await waitForSelector('[data-testid=command-center-panel]')
