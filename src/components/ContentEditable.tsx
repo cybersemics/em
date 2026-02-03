@@ -8,6 +8,9 @@ interface ContentEditableProps extends React.HTMLProps<HTMLDivElement> {
   disabled?: boolean
   innerRef?: React.RefObject<HTMLDivElement | null>
   onChange: (originalEvt: ContentEditableEvent) => void
+  /** Stops the dragover event from propagating to ancestors on desktop. By default, dragover events are allowed and bubble up to ancestors where
+   * they may affect other drag-and-drop behavior (e.g. react-dnd). Stopping dragover events may be useful to allow native browser behavior such
+   * as text selection drag-and-drop if react-dnd would otherwise interfere. Setting this to true will also prevent the default drop events on mobile. */
   stopDragOver?: boolean
 }
 

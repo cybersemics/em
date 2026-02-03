@@ -128,6 +128,8 @@ const Editable = ({
   const contentRef = editableRef || nullRef
   const isCursor = useSelector(state => equalPath(path, state.cursor))
   const editingOrOnCursor = useSelector(state => isCursor || state.isKeyboardOpen)
+  // Stop dragover events from propagating up on non-cursor thoughts or notes, otherwise text selection drag-and-drop will be canceled by
+  // react-dnd on desktop.
   const stopDragOver = useSelector(state => !isCursor || state.noteFocus)
 
   // Disable contenteditable during drag-and-drop, otherwise thought text will become selected on mobile Safari.

@@ -196,6 +196,9 @@ const Note = React.memo(
           // For some reason, pointerEvents: 'none' on ContentEditable or its parent does prevent onFocus.
           // This is strange, as it seems to prevent onFocus in Subthought.tsx.
           disabled={disabled}
+          // Prevent drag-and-drop of text selection between thoughts and notes. This also disables dragging
+          // text within the note, which was previously possible on mobile but not desktop. This may be addressed
+          // on both platforms by https://github.com/cybersemics/em/issues/3739.
           onDrop={isTouch ? (e: React.DragEvent) => e.preventDefault() : undefined}
           onKeyDown={onKeyDown}
           onChange={onChange}
