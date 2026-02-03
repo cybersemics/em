@@ -98,7 +98,7 @@ const Sidebar = () => {
     /** Whether the touch started on the backdrop (outside drawer). */
     startedOnBackdrop: false,
     /** Whether the finger has entered the drawer area (for backdrop-initiated swipes). */
-    paperHit: false,
+    drawerHit: false,
     /** Starting X position. */
     startX: 0,
     /** Starting Y position. */
@@ -222,7 +222,7 @@ const Sidebar = () => {
         active: true,
         isSwiping: null, // Direction not yet determined
         startedOnBackdrop,
-        paperHit: !startedOnBackdrop, // If started inside drawer, we've already "hit" it
+        drawerHit: !startedOnBackdrop, // If started inside drawer, we've already "hit" it
         startX: touchX,
         startY: touchY,
         lastTime: performance.now(),
@@ -250,10 +250,10 @@ const Sidebar = () => {
       swipe.lastX = touchX
 
       // For backdrop-initiated swipes, check if finger has entered the drawer
-      if (swipe.startedOnBackdrop && !swipe.paperHit) {
+      if (swipe.startedOnBackdrop && !swipe.drawerHit) {
         if (touchX < widthPx) {
           // Finger just entered drawer - "pick it up"
-          swipe.paperHit = true
+          swipe.drawerHit = true
           swipe.startX = touchX
           swipe.startY = touchY
         } else {
@@ -310,7 +310,7 @@ const Sidebar = () => {
       if (!swipe.active) return
 
       // Only process if we were actually swiping
-      if (swipe.isSwiping && swipe.paperHit) {
+      if (swipe.isSwiping && swipe.drawerHit) {
         const offset = Math.abs(x.get())
         const velocity = Math.max(swipe.velocity, 0)
         handleSwipeEnd(offset, velocity)
@@ -319,7 +319,7 @@ const Sidebar = () => {
       // Reset state
       swipe.active = false
       swipe.isSwiping = null
-      swipe.paperHit = false
+      swipe.drawerHit = false
       setIsSwiping(false)
     }
 
