@@ -34,8 +34,8 @@ styled-system
 styled-system-studio
 
 # WDIO
-wdio.log
-browserstack.log
-local.log
+wdio.*
+browserstack.*
+local.*
 /log
 /logs

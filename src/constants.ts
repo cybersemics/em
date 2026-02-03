@@ -6,6 +6,8 @@ import ThoughtId from './@types/ThoughtId'
 import { ColorToken } from './colors.config'
 import emojiRegex from './emojiRegex'
 
+export const TOOLBAR_HEIGHT = 50
+
 // maximum number of characters of children to allow expansion
 export const MAX_DISTANCE_FROM_CURSOR = 3
 export const MAX_DEPTH = 20
