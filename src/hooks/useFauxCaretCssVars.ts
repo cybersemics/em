@@ -61,13 +61,13 @@ const useFauxCaretNodeProvider = ({
   )
 
   return {
-    fauxCaretNodeProviderStyles: {
+    styles: {
       '--faux-caret-line-start-opacity': fauxCaretType === 'thoughtStart' ? undefined : 0,
       '--faux-caret-line-end-opacity': fauxCaretType === 'thoughtEnd' ? undefined : 0,
       '--faux-caret-note-line-start-opacity': fauxCaretType === 'noteStart' ? undefined : 0,
       '--faux-caret-note-line-end-opacity': fauxCaretType === 'noteEnd' ? undefined : 0,
     },
-    fauxCaretTapHandler: isTouch && isSafari() ? () => setFauxCaretType('none') : undefined,
+    hide: isTouch && isSafari() ? () => setFauxCaretType('none') : undefined,
   }
 }
 
