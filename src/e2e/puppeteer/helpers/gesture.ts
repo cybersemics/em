@@ -1,6 +1,7 @@
 import Command from '../../../@types/Command'
 import Direction from '../../../@types/Direction'
 import GesturePath from '../../../@types/GesturePath'
+import isCommand from '../../../util/isCommand'
 import { page } from '../setup'
 
 /**
@@ -32,11 +33,6 @@ const move = async (x1: number, y1: number, x2: number, y2: number): Promise<voi
     const curY = y1 + yStep * i
     await page.touchscreen.touchMove(curX, curY)
   }
-}
-
-/** Type predicate for Command. */
-function isCommand(value: unknown): value is Command {
-  return typeof value === 'object' && value !== null && 'id' in value && 'label' in value && 'exec' in value
 }
 
 /**
