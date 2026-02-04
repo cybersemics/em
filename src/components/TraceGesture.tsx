@@ -92,10 +92,6 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
     signaturePad.canvas.width = signaturePad.canvas.offsetWidth
     signaturePad.canvas.height = signaturePad.canvas.offsetHeight
 
-    // Track if a touch has started in the gesture zone
-    // This allows the trace to draw immediately, not just when a gesture is detected
-    let touchStartedInGestureZone = false
-
     /** Forwards the touchstart event to the signaturePad if in the gesture zone. */
     const onTouchStart = (e: TouchEvent) => {
       // Make preventDefault a noop otherwise tap-to-edit is broken.
@@ -103,23 +99,17 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
       e.preventDefault = noop
 
       const touch = e.touches[0]
-      if (touch && isInGestureZone(touch.clientX, touch.clientY, leftHanded)) {
-        touchStartedInGestureZone = true
+      if (isInGestureZone(touch.clientX, touch.clientY, leftHanded)) {
         signaturePad._handleTouchStart(e)
-      } else {
-        touchStartedInGestureZone = false
       }
     }
 
     /** Forwards the touchmove event to the signaturePad if in the gesture zone. */
     const onTouchMove = (e: TouchEvent) => {
+      const isGestureInProgress = gestureStore.getState().gesture.length > 0
       const touch = e.touches[0]
-      if (!touch) return
 
-      // Forward touchmove if we're in the gesture zone and a touch has started
-      // This allows the trace to draw immediately, not just when a gesture is detected
-      // This is especially important on iOS where gesture detection might be delayed
-      if (touchStartedInGestureZone && isInGestureZone(touch.clientX, touch.clientY, leftHanded)) {
+      if (isGestureInProgress && isInGestureZone(touch.clientX, touch.clientY, leftHanded)) {
         signaturePad._handleTouchMove(e)
       }
     }
@@ -131,10 +121,7 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
       const preventDefault = e.preventDefault
       e.preventDefault = noop
 
-      if (touchStartedInGestureZone) {
-        signaturePad._handleTouchEnd(e)
-      }
-      touchStartedInGestureZone = false
+      signaturePad._handleTouchEnd(e)
       e.preventDefault = preventDefault
     }
 
@@ -144,10 +131,7 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
      */
     const onTouchCancel = (e: TouchEvent) => {
       // singaturePad.clear() is insufficient since the stroke has already begun. We need to end the stroke so that the touchmove handlers within signaturePad that draw the signature are removed.
-      if (touchStartedInGestureZone) {
-        signaturePad._handleTouchEnd(e)
-      }
-      touchStartedInGestureZone = false
+      signaturePad._handleTouchEnd(e)
     }
 
     eventNode?.addEventListener('touchstart', onTouchStart)
