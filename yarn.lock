@@ -5149,9 +5149,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@puppeteer/browsers@npm:2.11.2":
-  version: 2.11.2
-  resolution: "@puppeteer/browsers@npm:2.11.2"
+"@puppeteer/browsers@npm:2.12.0":
+  version: 2.12.0
+  resolution: "@puppeteer/browsers@npm:2.12.0"
   dependencies:
     debug: "npm:^4.4.3"
     extract-zip: "npm:^2.0.1"
@@ -5162,7 +5162,7 @@ __metadata:
     yargs: "npm:^17.7.2"
   bin:
     browsers: lib/cjs/main-cli.js
-  checksum: 10c0/8e52b3887f91d759e1c5f330ca449c5b1e3a43ea12f707668b30b32a9118a62039064a82465da2ed60f6327df92be8bf3f7dbe5b472ee7b63c68b81c097a20d8
+  checksum: 10c0/1895591d9acbdd7b20f971be9678f2f84148e6290c0407b0dfd7e5482fd668402dc1d25831374bf16a473f0dc97f5dcc9784f8e9a4e05fd86f3b44b640295571
   languageName: node
   linkType: hard
 
@@ -9884,15 +9884,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"chromium-bidi@npm:13.0.1":
-  version: 13.0.1
-  resolution: "chromium-bidi@npm:13.0.1"
+"chromium-bidi@npm:13.1.0":
+  version: 13.1.0
+  resolution: "chromium-bidi@npm:13.1.0"
   dependencies:
     mitt: "npm:^3.0.1"
+    puppeteer: "npm:^24.36.0"
     zod: "npm:^3.24.1"
   peerDependencies:
     devtools-protocol: "*"
-  checksum: 10c0/3841fb1c6e6ec836e8d796a8b8bb81381fed6f486101cb42f7a6531c6d3cc7f5cbb9696356aba01ba701b5bb84caf2b2363a6f8f9e086fd7ee0c902d91ec2477
+  checksum: 10c0/0a1848a4cfe634b86a983642efdfecd6e7b310ac3ff4c8511234ab284794c954517c46ca8136a0c29fd1b26ae7afa7aa00ad42703b62dbf2947bf1029ba01b19
   languageName: node
   linkType: hard
 
@@ -11023,10 +11024,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"devtools-protocol@npm:0.0.1551306":
-  version: 0.0.1551306
-  resolution: "devtools-protocol@npm:0.0.1551306"
-  checksum: 10c0/b38b0aaf21675a8c2ccaa213d9dfb2f8314b2408592e5817758bbf4c55d844b29eb390a9086812a5a11851f41501cedf0b43914aef7b67ef53cd241c9732a188
+"devtools-protocol@npm:0.0.1566079":
+  version: 0.0.1566079
+  resolution: "devtools-protocol@npm:0.0.1566079"
+  checksum: 10c0/a220a0a408df35efe118249d822d7b79874a1374b4eba0d59473a3d98623c7d0159f9833541086eeaa0da18f92e450b1c099cdbc6525277e804e2571cd530b8a
   languageName: node
   linkType: hard
 
@@ -11450,7 +11451,7 @@ __metadata:
     pluralize: "npm:^8.0.0"
     postinstall-postinstall: "npm:^2.1.0"
     prettier: "npm:^3.8.1"
-    puppeteer: "npm:^24.36.1"
+    puppeteer: "npm:^24.37.0"
     qrcode.react: "npm:^4.2.0"
     rc-slider: "npm:^11.1.9"
     react: "npm:^19.2.3"
@@ -20305,34 +20306,34 @@ __metadata:
   languageName: node
   linkType: hard
 
-"puppeteer-core@npm:24.36.1":
-  version: 24.36.1
-  resolution: "puppeteer-core@npm:24.36.1"
+"puppeteer-core@npm:24.37.0":
+  version: 24.37.0
+  resolution: "puppeteer-core@npm:24.37.0"
   dependencies:
-    "@puppeteer/browsers": "npm:2.11.2"
-    chromium-bidi: "npm:13.0.1"
+    "@puppeteer/browsers": "npm:2.12.0"
+    chromium-bidi: "npm:13.1.0"
     debug: "npm:^4.4.3"
-    devtools-protocol: "npm:0.0.1551306"
+    devtools-protocol: "npm:0.0.1566079"
     typed-query-selector: "npm:^2.12.0"
     webdriver-bidi-protocol: "npm:0.4.0"
     ws: "npm:^8.19.0"
-  checksum: 10c0/78f2f93bb2d7ada27cb03ea878541071b0fc5bd5e2026611a6f446df30bf009a5d1c30c6feccf5ce3960bf8b48b11e244f34f30198cabccc08cf758b4d115241
+  checksum: 10c0/498e7a27bf53f6e14297c6cc39c481753ccad5a9569456a5a8b0d2b4d4822c5ed466f8816f6e269602b3575fe78558b1ed7aa2b2ba5c3c4000ca99d0c3055e81
   languageName: node
   linkType: hard
 
-"puppeteer@npm:^24.36.1":
-  version: 24.36.1
-  resolution: "puppeteer@npm:24.36.1"
+"puppeteer@npm:^24.36.0, puppeteer@npm:^24.37.0":
+  version: 24.37.0
+  resolution: "puppeteer@npm:24.37.0"
   dependencies:
-    "@puppeteer/browsers": "npm:2.11.2"
-    chromium-bidi: "npm:13.0.1"
+    "@puppeteer/browsers": "npm:2.12.0"
+    chromium-bidi: "npm:13.1.0"
     cosmiconfig: "npm:^9.0.0"
-    devtools-protocol: "npm:0.0.1551306"
-    puppeteer-core: "npm:24.36.1"
+    devtools-protocol: "npm:0.0.1566079"
+    puppeteer-core: "npm:24.37.0"
     typed-query-selector: "npm:^2.12.0"
   bin:
     puppeteer: lib/cjs/puppeteer/node/cli.js
-  checksum: 10c0/9286b611598f93970f1832b59b0836bcc22437eeca373db6626ae08c50d546d7fc7776a109b007bf044aace2724c70a2d8939e59aa7904efe8eab8cb8e85707b
+  checksum: 10c0/7194c060237272daf399663d2f047843015c7e35f5f7a0a3c268530b4aa4ac43012cfc2ae7f5fe4726a96183beedf80d2c6021cef1f1c323cb7f8ec081f2af26
   languageName: node
   linkType: hard
 
