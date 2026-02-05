@@ -19,7 +19,7 @@ interface ImportDataPayload {
 }
 
 /** Matches a single line of content within a body tag. This is a special for copying small bits of text from PDF's. See more below at usage. */
-const REGEX_HTML_SINGLE_LINE = /<body[^>]*>\s(?:<p[^>]*>)?([^\n]*?)(?:<\/p>)?\s*<\/body>/is
+const REGEX_HTML_SINGLE_LINE = /<body[^>]*>\s*(?:<p[^>]*>)?([^\n]*?)(?:<\/p>)?\s*<\/body>/is
 
 /** Action-creator for importData. This is an action that handles importing content
  * into the application, choosing between importText and importFiles based on the content type.
