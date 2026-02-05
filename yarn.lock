@@ -340,29 +340,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/core@npm:^7.28.6":
-  version: 7.28.6
-  resolution: "@babel/core@npm:7.28.6"
-  dependencies:
-    "@babel/code-frame": "npm:^7.28.6"
-    "@babel/generator": "npm:^7.28.6"
-    "@babel/helper-compilation-targets": "npm:^7.28.6"
-    "@babel/helper-module-transforms": "npm:^7.28.6"
-    "@babel/helpers": "npm:^7.28.6"
-    "@babel/parser": "npm:^7.28.6"
-    "@babel/template": "npm:^7.28.6"
-    "@babel/traverse": "npm:^7.28.6"
-    "@babel/types": "npm:^7.28.6"
-    "@jridgewell/remapping": "npm:^2.3.5"
-    convert-source-map: "npm:^2.0.0"
-    debug: "npm:^4.1.0"
-    gensync: "npm:^1.0.0-beta.2"
-    json5: "npm:^2.2.3"
-    semver: "npm:^6.3.1"
-  checksum: 10c0/716b88b1ab057aa53ffa40f2b2fb7e4ab7a35cd6a065fa60e55ca13d2a666672592329f7ea9269aec17e90cc7ce29f42eda566d07859bfd998329a9f283faadb
-  languageName: node
-  linkType: hard
-
 "@babel/core@npm:^7.29.0":
   version: 7.29.0
   resolution: "@babel/core@npm:7.29.0"
@@ -11354,7 +11331,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "em@workspace:."
   dependencies:
-    "@babel/core": "npm:^7.28.6"
+    "@babel/core": "npm:^7.29.0"
     "@babel/plugin-proposal-private-property-in-object": "npm:^7.21.11"
     "@capacitor/android": "npm:^8.0.2"
     "@capacitor/cli": "npm:^8.0.2"

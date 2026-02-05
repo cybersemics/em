@@ -160,7 +160,7 @@
     "yjs": "^13.6.29"
   },
   "devDependencies": {
-    "@babel/core": "^7.28.6",
+    "@babel/core": "^7.29.0",
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@capacitor/cli": "^8.0.2",
     "@pandacss/dev": "^1.8.1",
