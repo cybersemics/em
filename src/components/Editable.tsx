@@ -17,7 +17,7 @@ import { newThoughtActionCreator as newThought } from '../actions/newThought'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import { tutorialNextActionCreator as tutorialNext } from '../actions/tutorialNext'
-import { isMac, isSafari, isTouch } from '../browser'
+import { isMac, isTouch } from '../browser'
 import { commandEmitter } from '../commands'
 import {
   EDIT_THROTTLE,
@@ -126,14 +126,16 @@ const Editable = ({
   const oldValueRef = useRef(value)
   const nullRef = useRef<HTMLInputElement>(null)
   const contentRef = editableRef || nullRef
-  const editingOrOnCursor = useSelector(state => state.isKeyboardOpen || equalPath(path, state.cursor))
+  const isCursor = useSelector(state => equalPath(path, state.cursor))
+  const editingOrOnCursor = useSelector(state => isCursor || state.isKeyboardOpen)
+  // Stop dragover events from propagating up on non-cursor thoughts or notes, otherwise text selection drag-and-drop will be canceled by
+  // react-dnd on desktop.
+  const stopDragOver = useSelector(state => !isCursor || state.noteFocus)
 
-  // Disable contenteditable on Mobile Safari during drag-and-drop, otherwise thought text will become selected.
-  // This is restricted to Mobile Safari, because on Chrome it creates a small layout shift.
-  // https://github.com/cybersemics/em/pull/2960
-  const disabled = useSelector(
-    state => !isDocumentEditable || (isTouch && isSafari() && state.longPress === LongPressState.DragInProgress),
-  )
+  // Disable contenteditable during drag-and-drop, otherwise thought text will become selected on mobile Safari.
+  // On desktop Chrome, disabled is used to allow dragover events to avoid disrupting drag-and-drop behavior.
+  // https://github.com/cybersemics/em/pull/3703
+  const disabled = useSelector(state => !isDocumentEditable || state.longPress === LongPressState.DragInProgress)
 
   // console.info('<Editable> ' + prettyPath(store.getState(), simplePath))
   // useWhyDidYouUpdate('<Editable> ' + prettyPath(state, simplePath), {
@@ -616,6 +618,7 @@ const Editable = ({
   return (
     <ContentEditable
       disabled={disabled}
+      stopDragOver={stopDragOver}
       innerRef={contentRef}
       aria-label={'editable-' + head(path)}
       data-editable
