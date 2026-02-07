@@ -48,6 +48,8 @@ export const globalCommands: Command[] = Object.values(commandsObject)
 
 export const commandEmitter = new Emitter()
 
+let keyPressed: { key: string | null } = { key: null }
+
 /* A mapping of key codes to uppercase letters.
  * {
  *   65: 'A',
@@ -551,6 +553,19 @@ export const handleGestureCancel = () => {
   })
 }
 
+export const beforeInput = (e: InputEvent) => {
+  if (keyPressed.key) {
+    const command = commandKeyIndex[keyPressed.key]
+
+    if (!command) return
+
+    if (!command.canExecute || command.preventDefault || command.canExecute(store.getState())) {
+      e.preventDefault()
+    }
+    keyPressed.key = null
+  }
+}
+
 /** Global keyUp handler. */
 export const keyUp = (e: KeyboardEvent) => {
   // track meta key for expansion algorithm
@@ -561,6 +576,7 @@ export const keyUp = (e: KeyboardEvent) => {
 
 /** Global keyDown handler. */
 export const keyDown = (e: KeyboardEvent) => {
+  keyPressed.key = e.key
   const state = store.getState()
 
   // track meta key for expansion algorithm

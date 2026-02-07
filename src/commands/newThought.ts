@@ -77,6 +77,7 @@ const newThoughtCommand: Command = {
   // Main gesture and alternative patterns to help with mis-swipes since MultiGesture does not support diagonal swipes
   gesture: ['rd', 'rdldl', 'rdldld', 'rldl', 'rldld', 'rldldl'],
   multicursor,
+  permitDefault: true,
   svg: Icon,
   canExecute: () => isDocumentEditable(),
   exec,
