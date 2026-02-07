@@ -48,7 +48,7 @@ export const globalCommands: Command[] = Object.values(commandsObject)
 
 export const commandEmitter = new Emitter()
 
-let keyPressed: { key: string | null } = { key: null }
+const keyPressed: { key: string | null } = { key: null }
 
 /* A mapping of key codes to uppercase letters.
  * {
@@ -553,6 +553,7 @@ export const handleGestureCancel = () => {
   })
 }
 
+/** Prevent default in beforeinput event instead of keydown to preserve default iOS keyboard behavior. */
 export const beforeInput = (e: InputEvent) => {
   if (keyPressed.key) {
     const command = commandKeyIndex[keyPressed.key]
