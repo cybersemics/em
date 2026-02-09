@@ -92,7 +92,7 @@ const useEditMode = ({
           if (!selection.isThought()) {
             asyncFocus()
           }
-          requestAnimationFrame(setSelectionToCursorOffset)
+          setSelectionToCursorOffset()
         } else {
           setSelectionToCursorOffset()
         }
