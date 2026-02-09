@@ -6,6 +6,7 @@ import { FC, useCallback, useRef } from 'react'
 import { Sheet, SheetProps, SheetRef, SheetTweenConfig } from 'react-modal-sheet'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
+import { token } from '../../../styled-system/tokens'
 import { clearMulticursorsActionCreator as clearMulticursors } from '../../actions/clearMulticursors'
 import { toggleDropdownActionCreator as toggleDropdown } from '../../actions/toggleDropdown'
 import { isTouch } from '../../browser'
@@ -139,6 +140,7 @@ const CommandCenter = ({ mountPoint }: Pick<SheetProps, 'mountPoint'>) => {
             bottom: 0,
             width: '100%',
             height: 'calc(100% + 110px)',
+            zIndex: 'commandCenter',
           })}
           style={{
             height: blurHeight,
@@ -154,6 +156,7 @@ const CommandCenter = ({ mountPoint }: Pick<SheetProps, 'mountPoint'>) => {
           unstyled
           mountPoint={mountPoint}
           tweenConfig={tweenConfig}
+          style={{ zIndex: token('zIndex.commandCenter') }}
           /** Fixes sheet shifting up on ios when it opens. */
           disableScrollLocking
         >
