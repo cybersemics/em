@@ -27,7 +27,6 @@ const CursorBreadcrumbs = ({ position }: { position: string }) => {
         width: '100%',
         color: 'breadcrumbs',
         paddingLeft: '15px',
-        fontSize: '14px',
         verticalAlign: 'bottom',
         ...(position === 'bottom' && { width: 'calc(100% - 40px)', paddingLeft: '35px' }),
       })}
