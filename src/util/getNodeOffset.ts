@@ -173,29 +173,22 @@ const calculateHorizontalOffset = (node: Text, clientX: number, clientY: number)
     offset = findOffsetAtX(node, clientX, lineStart, lineEnd)
   }
 
-  // Safari-specific correction: Safari's getBoundingClientRect can be off by a few characters, so verify the result
+  // Safari: getBoundingClientRect can be off by a few characters (±2 characters); pick the offset whose caret is closest to clientX
   if (isSafari() && offset >= lineStart && offset <= lineEnd) {
-    // Generate range of offsets to check (±2 characters)
-    const startOffset = Math.max(lineStart, offset - 2)
-    const endOffset = Math.min(lineEnd, offset + 2)
-    const offsetsToCheck = Array.from({ length: endOffset - startOffset + 1 }, (_, i) => startOffset + i)
-
-    /** Get distance for each offset and find the one closest to clientX. */
-    const getDistance = (checkOffset: number): number => {
-      const checkR = document.createRange()
-      checkR.setStart(node, checkOffset)
-      checkR.collapse(true)
-      const checkRect = checkR.getBoundingClientRect()
-      return Math.abs(clientX - checkRect.left)
+    const lo = Math.max(lineStart, offset - 2)
+    const hi = Math.min(lineEnd, offset + 2)
+    const r = document.createRange()
+    let bestOffset = offset
+    let bestDist = Infinity
+    for (let i = lo; i <= hi; i++) {
+      r.setStart(node, i)
+      r.collapse(true)
+      const d = Math.abs(clientX - r.getBoundingClientRect().left)
+      if (d < bestDist) {
+        bestDist = d
+        bestOffset = i
+      }
     }
-
-    const { offset: bestOffset } = offsetsToCheck
-      .map(checkOffset => ({ offset: checkOffset, distance: getDistance(checkOffset) }))
-      .reduce((best, current) => (current.distance < best.distance ? current : best), {
-        offset,
-        distance: getDistance(offset),
-      })
-
     offset = bestOffset
   }
 
@@ -220,34 +213,142 @@ const getTextNodes = (root: HTMLElement): Text[] => {
 }
 
 /**
- * Finds the nearest text node to a given Y coordinate by calculating vertical distance.
- * Returns the text node with the smallest vertical distance to the coordinate.
+ * Checks if a click coordinate is actually within the visible character bounds of a text node.
+ * This is more accurate than checking the overall bounding box, especially for text nodes
+ * with trailing spaces that extend beyond visible characters.
  */
-const findNearestTextNode = (textNodes: Text[], clientY: number): TextNodeWithRect | null => {
-  return textNodes.reduce<TextNodeWithRect | null>((closest, node) => {
-    const range = document.createRange()
-    range.selectNodeContents(node)
-    const rect = range.getBoundingClientRect()
+const isClickWithinTextNodeCharacters = (node: Text, clientX: number, clientY: number): boolean => {
+  const text = node.nodeValue ?? ''
+  if (!text.trim()) return false // ignore pure whitespace nodes
 
-    const dist = clientY < rect.top ? rect.top - clientY : clientY > rect.bottom ? clientY - rect.bottom : 0
+  const range = document.createRange()
 
-    if (!closest) return { node, rect }
+  for (let i = 0; i < text.length; i++) {
+    // Skip whitespace characters early
+    if (/\s/.test(text[i])) continue
 
-    const closestDist =
-      clientY < closest.rect.top
-        ? closest.rect.top - clientY
-        : clientY > closest.rect.bottom
-          ? clientY - closest.rect.bottom
-          : 0
+    range.setStart(node, i)
+    range.setEnd(node, i + 1)
 
-    return dist < closestDist ? { node, rect } : closest
-  }, null)
+    const rects = Array.from(range.getClientRects())
+
+    for (const rect of rects) {
+      if (rect.height === 0 || rect.width === 0) continue
+
+      if (clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom) {
+        return true
+      }
+    }
+  }
+
+  return false
 }
 
 /**
- * Detects if a coordinate is in a void area and calculates the appropriate caret position.
+ * Calculates the minimum distance from a click coordinate to any visible character in a text node.
+ * Returns both the distance and the bounding rectangle of the closest character.
+ * This avoids issues where trailing spaces make a text node appear closer than it actually is.
+ */
+const getDistanceToNearestCharacter = (
+  node: Text,
+  clientX: number,
+  clientY: number,
+): { dist: number; rect: DOMRect } => {
+  const text = node.nodeValue ?? ''
+  const range = document.createRange()
+
+  let minDist = Infinity
+  let closestRect: DOMRect | null = null
+
+  for (let i = 0; i < text.length; i++) {
+    if (/\s/.test(text[i])) continue
+
+    range.setStart(node, i)
+    range.setEnd(node, i + 1)
+
+    const rects = Array.from(range.getClientRects())
+
+    for (const rect of rects) {
+      if (rect.height === 0 || rect.width === 0) continue
+
+      const verticalDist = clientY < rect.top ? rect.top - clientY : clientY > rect.bottom ? clientY - rect.bottom : 0
+
+      const horizontalDist = clientX < rect.left ? rect.left - clientX : clientX > rect.right ? clientX - rect.right : 0
+
+      const dist = verticalDist * 1000 + horizontalDist
+
+      if (dist < minDist) {
+        minDist = dist
+        closestRect = rect
+      }
+    }
+  }
+
+  // Fallback: whole node box (still needed for empty/whitespace cases)
+  if (!closestRect) {
+    range.selectNodeContents(node)
+    const rect = range.getBoundingClientRect()
+
+    const verticalDist = clientY < rect.top ? rect.top - clientY : clientY > rect.bottom ? clientY - rect.bottom : 0
+    const horizontalDist = clientX < rect.left ? rect.left - clientX : clientX > rect.right ? clientX - rect.right : 0
+
+    minDist = verticalDist * 1000 + horizontalDist
+    closestRect = rect
+  }
+
+  return { dist: minDist, rect: closestRect }
+}
+
+/**
+ * Finds the nearest text node to given coordinates by calculating distance to visible characters.
+ * Returns the text node with the smallest distance to its nearest visible character.
+ * Prioritizes text nodes where the click is directly inside visible character bounds.
+ */
+const findNearestTextNode = (textNodes: Text[], clientX: number, clientY: number): TextNodeWithRect | null => {
+  const nodesWithinCharBounds = textNodes.filter(node => isClickWithinTextNodeCharacters(node, clientX, clientY))
+
+  if (nodesWithinCharBounds.length > 0) {
+    const node = nodesWithinCharBounds[0]
+    const range = document.createRange()
+    range.selectNodeContents(node)
+    return { node, rect: range.getBoundingClientRect() }
+  }
+
+  return (
+    textNodes.reduce<{ result: TextNodeWithRect; dist: number } | null>((closest, node) => {
+      const { dist, rect } = getDistanceToNearestCharacter(node, clientX, clientY)
+
+      if (!closest || dist < closest.dist) {
+        return { result: { node, rect }, dist }
+      }
+
+      return closest
+    }, null)?.result ?? null
+  )
+}
+
+/**
+ * Converts a DOM position (node + offset) in the real element to a plain-text offset.
+ * The result is the character index in the element's textContent, i.e. ignoring HTML structure.
+ * Used so selection.set(editable, { offset }) receives the offset it expects.
+ */
+const domPositionToUnformattedOffset = (root: HTMLElement, node: Node, offset: number): number => {
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
+  let globalOffset = 0
+  let currentNode: Text | null
+  while ((currentNode = walker.nextNode() as Text | null)) {
+    if (currentNode === node) {
+      return globalOffset + offset
+    }
+    globalOffset += currentNode.nodeValue?.length ?? 0
+  }
+  return globalOffset
+}
+
+/**
+ * Detects if a coordinate is in a void area or on a valid character and calculates the appropriate caret position.
  *
- * A void area is defined as.
+ * A void area is defined as:
  * - Empty space (padding, margins, line height gaps) within the editable element.
  * - Areas where the browser cannot detect a valid caret position.
  * - Coordinates that are not directly on visible characters.
@@ -257,7 +358,7 @@ const findNearestTextNode = (textNodes: Text[], clientY: number): TextNodeWithRe
  * @param clientY - The Y coordinate.
  * @returns The character offset where the caret should be placed, or null if it is on a valid character.
  */
-const getNodeOffsetForVoidArea = (editable: HTMLElement | null, { clientX, clientY }: Coordinates): number | null => {
+const getNodeOffset = (editable: HTMLElement | null, { clientX, clientY }: Coordinates): number | null => {
   // If the editable is not found, return null
   if (!editable) return null
 
@@ -269,40 +370,21 @@ const getNodeOffsetForVoidArea = (editable: HTMLElement | null, { clientX, clien
     return null
   }
 
-  // Get the browser range for the given point
-  let range: Range | null = null
-
-  if (doc.caretRangeFromPoint) {
-    range = doc.caretRangeFromPoint(clientX, clientY)
-  } else if (doc.caretPositionFromPoint) {
-    const pos = doc.caretPositionFromPoint(clientX, clientY)
-    if (pos?.offsetNode) {
-      range = document.createRange()
-      range.setStart(pos.offsetNode, pos.offset)
-      range.collapse(true)
+  const textNodes = getTextNodes(editable)
+  if (textNodes.length === 0) {
+    // Empty thought: place caret at 0 if tap is within editable bounds
+    const rect = editable.getBoundingClientRect()
+    if (clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom) {
+      return 0
     }
-  }
-
-  const editableRect = editable.getBoundingClientRect()
-  const isWithinEditable =
-    clientX >= editableRect.left &&
-    clientX <= editableRect.right &&
-    clientY >= editableRect.top &&
-    clientY <= editableRect.bottom
-
-  // If the tap is outside the editable bounds, return null.
-  if (!isWithinEditable && (!range || !editable.contains(range.startContainer))) {
     return null
   }
 
-  // Calculate the caret position using text nodes
-  const textNodes = getTextNodes(editable)
-  if (textNodes.length === 0) return null
-
-  const nearest = findNearestTextNode(textNodes, clientY)
+  const nearest = findNearestTextNode(textNodes, clientX, clientY)
   if (!nearest) return null
 
-  return calculateHorizontalOffset(nearest.node, clientX, clientY)
+  const offsetInNode = calculateHorizontalOffset(nearest.node, clientX, clientY)
+  return domPositionToUnformattedOffset(editable, nearest.node, offsetInNode)
 }
 
-export default getNodeOffsetForVoidArea
+export default getNodeOffset

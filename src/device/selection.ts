@@ -510,3 +510,38 @@ export const isNear = (
 
   return x >= left && y >= top && x <= right && y <= bottom
 }
+
+/** Set the selection to the word at the given offset. */
+export const setWordAtOffset = (el: HTMLElement, offset: number) => {
+  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT)
+  let currentOffset = 0
+  let node: Text | null = null
+
+  while ((node = walker.nextNode() as Text | null)) {
+    const len = node.nodeValue?.length ?? 0
+    if (offset <= currentOffset + len) {
+      const localOffset = offset - currentOffset
+      const text = node.nodeValue || ''
+
+      /** Check if the character is a word character. */
+      const isWordChar = (c: string) => /\w/.test(c)
+
+      let start = localOffset
+      let end = localOffset
+
+      while (start > 0 && isWordChar(text[start - 1])) start--
+      while (end < text.length && isWordChar(text[end])) end++
+
+      const range = document.createRange()
+      range.setStart(node, start)
+      range.setEnd(node, end)
+
+      const sel = window.getSelection()
+      sel?.removeAllRanges()
+      sel?.addRange(range)
+
+      return
+    }
+    currentOffset += len
+  }
+}

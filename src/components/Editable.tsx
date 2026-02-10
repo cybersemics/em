@@ -23,8 +23,6 @@ import {
   EDIT_THROTTLE,
   EM_TOKEN,
   LongPressState,
-  Settings,
-  TOOLBAR_HEIGHT,
   TUTORIAL2_STEP_CONTEXT1,
   TUTORIAL2_STEP_CONTEXT1_PARENT,
   TUTORIAL2_STEP_CONTEXT2,
@@ -41,19 +39,17 @@ import { anyChild, getAllChildrenAsThoughts } from '../selectors/getChildren'
 import getContexts from '../selectors/getContexts'
 import getSetting from '../selectors/getSetting'
 import getThoughtById from '../selectors/getThoughtById'
-import getUserSetting from '../selectors/getUserSetting'
 import hasMulticursorSelector from '../selectors/hasMulticursor'
 import rootedParentOf from '../selectors/rootedParentOf'
 import editingValueStore from '../stores/editingValue'
 import editingValueUntrimmedStore from '../stores/editingValueUntrimmed'
 import storageModel from '../stores/storageModel'
 import suppressFocusStore from '../stores/suppressFocus'
-import viewportStore from '../stores/viewport'
 import addEmojiSpace from '../util/addEmojiSpace'
 import containsURL from '../util/containsURL'
 import ellipsize from '../util/ellipsize'
 import equalPath from '../util/equalPath'
-import getNodeOffsetForVoidArea from '../util/getNodeOffsetForVoidArea'
+import getNodeOffset from '../util/getNodeOffset'
 import haptics from '../util/haptics'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
@@ -66,8 +62,6 @@ import useEditMode from './Editable/useEditMode'
 import useOnCopy from './Editable/useOnCopy'
 import useOnCut from './Editable/useOnCut'
 import useOnPaste from './Editable/useOnPaste'
-
-const SCROLL_ZONE_MOVE_THRESHOLD = 8
 
 interface EditableProps {
   editableRef?: React.RefObject<HTMLInputElement | null>
@@ -133,30 +127,30 @@ const Editable = ({
   const oldValueRef = useRef(value)
   const nullRef = useRef<HTMLInputElement>(null)
   const contentRef = editableRef || nullRef
-  const editingOrOnCursor = useSelector(state => state.isKeyboardOpen || equalPath(path, state.cursor))
-  const leftHanded = useSelector(state => getUserSetting(state, Settings.leftHanded))
-  const scrollZoneWidth = viewportStore.useSelector(state => state.scrollZoneWidth)
-  const viewportWidth = viewportStore.useSelector(state => state.innerWidth)
-  const scrollZoneTouch = useRef<{
-    x: number
-    y: number
-    moved: boolean
-    offset: number | null
-    startScrollY: number
-  } | null>(null)
+  const overlayRef = useRef<HTMLDivElement>(null)
+  const isCursor = useSelector(state => equalPath(path, state.cursor))
+  const editingOrOnCursor = useSelector(state => isCursor || state.isKeyboardOpen)
+  // Stop dragover events from propagating up on non-cursor thoughts or notes, otherwise text selection drag-and-drop will be canceled by
+  // react-dnd on desktop.
+  const stopDragOver = useSelector(state => !isCursor || state.noteFocus)
 
-  const isInScrollZone = useCallback(
-    (x: number, y: number) =>
-      y > TOOLBAR_HEIGHT && (leftHanded ? x <= scrollZoneWidth : x >= viewportWidth - scrollZoneWidth),
-    [leftHanded, scrollZoneWidth, viewportWidth],
-  )
+  // Disable contenteditable during drag-and-drop, otherwise thought text will become selected on mobile Safari.
+  // On desktop Chrome, disabled is used to allow dragover events to avoid disrupting drag-and-drop behavior.
+  // https://github.com/cybersemics/em/pull/3703
+  const disabled = useSelector(state => !isDocumentEditable || state.longPress === LongPressState.DragInProgress)
 
-  // Disable contenteditable on Mobile Safari during drag-and-drop, otherwise thought text will become selected.
-  // This is restricted to Mobile Safari, because on Chrome it creates a small layout shift.
-  // https://github.com/cybersemics/em/pull/2960
-  const disabled = useSelector(
-    state => !isDocumentEditable || (isTouch && isSafari() && state.longPress === LongPressState.DragInProgress),
-  )
+  // Touch overlay: deferred caret placement so preventDefault in touchend doesn't block scroll
+  const pendingCaretOffsetRef = useRef<number | null>(null)
+  const touchStartPosRef = useRef<{ x: number; y: number } | null>(null)
+  const touchStartTimeRef = useRef<number>(0)
+  const lastTapTimeRef = useRef<number>(0)
+  const lastTapPosRef = useRef<{ x: number; y: number } | null>(null)
+  const isDoubleTapRef = useRef<boolean>(false)
+  const overlayRestoreTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const SCROLL_THRESHOLD_PX = 10
+  const MAX_TAP_DURATION_MS = 500
+  const DOUBLE_TAP_WINDOW_MS = 300
+  const DOUBLE_TAP_THRESHOLD_PX = 25
 
   // console.info('<Editable> ' + prettyPath(store.getState(), simplePath))
   // useWhyDidYouUpdate('<Editable> ' + prettyPath(state, simplePath), {
@@ -548,8 +542,8 @@ const Editable = ({
     [value, setCursorOnThought],
   )
 
-  /** Sets the caret position for a void area tap. */
-  const setVoidAreaCaret = useCallback(
+  /** Sets the caret offset. */
+  const setCaretOffset = useCallback(
     (nodeOffset: number) => {
       //Directly set the DOM selection to ensure the caret moves immediately
       selection.set(contentRef.current, { offset: nodeOffset })
@@ -585,16 +579,18 @@ const Editable = ({
           bottomMargin: fontSize * 2,
         })
 
-        // Handle void area detection
-        const nodeOffset = getNodeOffsetForVoidArea(contentRef.current, {
-          clientX: e.clientX,
-          clientY: e.clientY,
-        })
-        // nodeOffset is null only when the click is outside the editable bounds.
-        // Note: nodeOffset can be 0 (beginning of text) which is a valid offset.
-        if (nodeOffset !== null) {
-          e.preventDefault()
-          setVoidAreaCaret(nodeOffset)
+        // Handle manual caret offset for non-touch devices only
+        if (!isTouch) {
+          const nodeOffset = getNodeOffset(contentRef.current, {
+            clientX: e.clientX,
+            clientY: e.clientY,
+          })
+          // nodeOffset is null only when the click is outside the editable bounds.
+          // Note: nodeOffset can be 0 (beginning of text) which is a valid offset.
+          if (nodeOffset !== null) {
+            e.preventDefault()
+            setCaretOffset(nodeOffset)
+          }
         } else {
           allowDefaultSelection()
         }
@@ -607,94 +603,8 @@ const Editable = ({
         e.preventDefault()
       }
     },
-    [contentRef, editingOrOnCursor, fontSize, allowDefaultSelection, hasMulticursor, setVoidAreaCaret],
+    [contentRef, editingOrOnCursor, fontSize, allowDefaultSelection, hasMulticursor, setCaretOffset],
   )
-
-  // Manually attach touchstart listener with { passive: false } to allow preventDefault
-  useEffect(() => {
-    const editable = contentRef.current
-    if (!editable) return
-    /** Handle touch events to prevent initial cursor jump. */
-    const handleTouchStart = (e: TouchEvent) => {
-      if (editingOrOnCursor && !hasMulticursor && e.touches.length > 0) {
-        const touch = e.touches[0]
-        const inScrollZone = isTouch && isInScrollZone(touch.clientX, touch.clientY)
-
-        const nodeOffset = getNodeOffsetForVoidArea(editable, {
-          clientX: touch.clientX,
-          clientY: touch.clientY,
-        })
-
-        // nodeOffset is null only when the tap is outside the editable bounds.
-        // Note: nodeOffset can be 0 (beginning of text) which is a valid offset.
-        if (nodeOffset !== null) {
-          if (inScrollZone) {
-            // Assume tap: preventDefault to block iOS caret. If user scrolls, we'll scroll manually in touchmove.
-            e.preventDefault()
-            scrollZoneTouch.current = {
-              x: touch.clientX,
-              y: touch.clientY,
-              moved: false,
-              offset: nodeOffset,
-              startScrollY: window.scrollY,
-            }
-          } else {
-            e.preventDefault()
-            setVoidAreaCaret(nodeOffset)
-          }
-        } else {
-          allowDefaultSelection()
-        }
-      }
-    }
-
-    /** Handles touch move events to scroll the document if the user scrolls in the scroll zone. */
-    const handleTouchMove = (e: TouchEvent) => {
-      const currentTouch = scrollZoneTouch.current
-      if (!currentTouch || e.touches.length === 0) return
-      const touch = e.touches[0]
-      const dx = touch.clientX - currentTouch.x
-      const dy = touch.clientY - currentTouch.y
-      if (Math.hypot(dx, dy) > SCROLL_ZONE_MOVE_THRESHOLD) {
-        currentTouch.moved = true
-        // Manual scroll: we prevented default on touchstart, so implement scroll ourselves
-        const maxScroll = document.documentElement.scrollHeight - window.innerHeight
-        const newScrollY = currentTouch.startScrollY + (currentTouch.y - touch.clientY)
-        window.scrollTo(0, Math.max(0, Math.min(maxScroll, newScrollY)))
-      }
-    }
-
-    /** Handles touch end events to reset the scroll zone touch state. */
-    const handleTouchEnd = (e: TouchEvent) => {
-      const currentTouch = scrollZoneTouch.current
-      scrollZoneTouch.current = null
-      if (!currentTouch || currentTouch.moved) return
-      // Tap: we already prevented default on touchstart, so iOS never moved the caret. Place it now.
-      const storedOffset = currentTouch.offset
-      if (storedOffset !== null) {
-        setVoidAreaCaret(storedOffset)
-      } else {
-        allowDefaultSelection()
-      }
-    }
-
-    /** Handles touch cancel events to reset the scroll zone touch state. */
-    const handleTouchCancel = () => {
-      scrollZoneTouch.current = null
-    }
-
-    editable.addEventListener('touchstart', handleTouchStart, { passive: false })
-    editable.addEventListener('touchmove', handleTouchMove, { passive: true })
-    editable.addEventListener('touchend', handleTouchEnd, { passive: false })
-    editable.addEventListener('touchcancel', handleTouchCancel)
-
-    return () => {
-      editable.removeEventListener('touchstart', handleTouchStart)
-      editable.removeEventListener('touchmove', handleTouchMove)
-      editable.removeEventListener('touchend', handleTouchEnd)
-      editable.removeEventListener('touchcancel', handleTouchCancel)
-    }
-  }, [contentRef, editingOrOnCursor, hasMulticursor, allowDefaultSelection, setVoidAreaCaret, isInScrollZone])
 
   /** Sets the cursor on the thought on touchend or click. Handles hidden elements, drags, and editing mode. */
   const onTap = useCallback(
@@ -751,49 +661,179 @@ const Editable = ({
     [disabled, dispatch, editingOrOnCursor, isVisible, setCursorOnThought],
   )
 
-  return (
-    <ContentEditable
-      disabled={disabled}
-      innerRef={contentRef}
-      aria-label={'editable-' + head(path)}
-      data-editable
-      className={cx(multiline ? multilineRecipe() : null, editableRecipe(), className)}
-      html={
-        value === EM_TOKEN
-          ? '<b>em</b>'
-          : // render as empty string during temporary clear state
-            // see: /actions/cursorCleared
-            isCursorCleared
-            ? ''
-            : isEditing
-              ? value
-              : (childrenLabel ?? value)
+  // Touch overlay: capture touch on overlay so preventDefault in touchend doesn't block scroll
+  useEffect(() => {
+    // Only handle touch events on Safari for now
+    if (!isTouch || !isSafari()) return
+
+    // Overlay is only rendered when editingOrOnCursor && !hasMulticursor; skip setup otherwise
+    if (!editingOrOnCursor || hasMulticursor) return
+
+    // Get the overlay and editable elements
+    const overlay = overlayRef.current
+    const editable = contentRef.current
+    if (!overlay || !editable) return
+
+    /** Handles touch start events on the overlay. */
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 0) return
+      const touch = e.touches[0]
+      const now = Date.now()
+      const pos = { x: touch.clientX, y: touch.clientY }
+
+      // get the caret offset
+      const nodeOffset = getNodeOffset(editable, {
+        clientX: touch.clientX,
+        clientY: touch.clientY,
+      })
+
+      if (nodeOffset === null) {
+        pendingCaretOffsetRef.current = null
+        allowDefaultSelection()
+        return
       }
-      placeholder={placeholder}
-      onMouseDown={onMouseDown}
-      onClick={onTap}
-      onTouchEnd={onTap}
-      onFocus={onFocus}
-      onBlur={onBlur}
-      onChange={onChangeHandler}
-      onCopy={onCopy}
-      onCut={e => {
-        // flush the last edit, otherwise if cut occurs in quick succession the new value can be overwritten by the throttled change
-        throttledChangeRef.current?.flush()
 
-        onCut(e)
-      }}
-      onPaste={e => {
-        // flush the last edit, otherwise if paste occurs in quick succession the pasted value can be overwritten by the throttled change
-        throttledChangeRef.current?.flush()
+      // Check for double-tap
+      if (
+        lastTapTimeRef.current &&
+        now - lastTapTimeRef.current < DOUBLE_TAP_WINDOW_MS &&
+        lastTapPosRef.current &&
+        Math.abs(pos.x - lastTapPosRef.current.x) < DOUBLE_TAP_THRESHOLD_PX &&
+        Math.abs(pos.y - lastTapPosRef.current.y) < DOUBLE_TAP_THRESHOLD_PX
+      ) {
+        isDoubleTapRef.current = true
 
-        onPaste(e)
-      }}
-      // iOS Safari delays event handling in case the DOM is modified during setTimeout inside an event handler,
-      // unless it is given a hint that the element is some sort of form control
-      role='button'
-      style={style}
-    />
+        // Let native Safari selection happen
+        overlay.style.pointerEvents = 'none'
+
+        // manual selection
+        selection.setWordAtOffset(editable, nodeOffset)
+
+        haptics.light()
+
+        lastTapTimeRef.current = now
+        lastTapPosRef.current = pos
+
+        return
+      }
+
+      // update the touch start time and position
+      touchStartTimeRef.current = now
+      touchStartPosRef.current = pos
+      pendingCaretOffsetRef.current = nodeOffset
+    }
+
+    /** Prevents manual caret offset from being set if the user scrolls. */
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length > 0 && touchStartPosRef.current) {
+        const touch = e.touches[0]
+        const dx = touch.clientX - touchStartPosRef.current.x
+        const dy = touch.clientY - touchStartPosRef.current.y
+        if (Math.sqrt(dx * dx + dy * dy) > SCROLL_THRESHOLD_PX) {
+          pendingCaretOffsetRef.current = null
+        }
+      }
+    }
+
+    /** Sets the caret offset on touch end. */
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (isDoubleTapRef.current) {
+        isDoubleTapRef.current = false
+        touchStartPosRef.current = null
+        pendingCaretOffsetRef.current = null
+
+        overlayRestoreTimerRef.current = setTimeout(() => {
+          overlay.style.pointerEvents = ''
+        }, 300)
+        return
+      }
+
+      const offset = pendingCaretOffsetRef.current
+      const tapPos = touchStartPosRef.current
+      pendingCaretOffsetRef.current = null
+      touchStartPosRef.current = null
+
+      if (offset !== null && e.changedTouches.length > 0) {
+        const touchDuration = Date.now() - touchStartTimeRef.current
+        if (touchDuration < MAX_TAP_DURATION_MS) {
+          e.preventDefault()
+          setCaretOffset(offset)
+          haptics.light()
+          if (tapPos) {
+            lastTapTimeRef.current = Date.now()
+            lastTapPosRef.current = tapPos
+          }
+        }
+      } else {
+        allowDefaultSelection()
+      }
+    }
+
+    overlay.addEventListener('touchstart', handleTouchStart, { passive: true })
+    overlay.addEventListener('touchmove', handleTouchMove, { passive: true })
+    overlay.addEventListener('touchend', handleTouchEnd, { passive: false })
+
+    return () => {
+      overlay.removeEventListener('touchstart', handleTouchStart)
+      overlay.removeEventListener('touchmove', handleTouchMove)
+      overlay.removeEventListener('touchend', handleTouchEnd)
+
+      if (overlayRestoreTimerRef.current) {
+        clearTimeout(overlayRestoreTimerRef.current)
+        overlayRestoreTimerRef.current = null
+      }
+    }
+  }, [contentRef, editingOrOnCursor, hasMulticursor, setCaretOffset, allowDefaultSelection, overlayRef])
+
+  return (
+    <div style={{ position: 'relative' }}>
+      <ContentEditable
+        disabled={disabled}
+        stopDragOver={stopDragOver}
+        innerRef={contentRef}
+        aria-label={'editable-' + head(path)}
+        data-editable
+        className={cx(multiline ? multilineRecipe() : null, editableRecipe(), className)}
+        html={
+          value === EM_TOKEN
+            ? '<b>em</b>'
+            : // render as empty string during temporary clear state
+              // see: /actions/cursorCleared
+              isCursorCleared
+              ? ''
+              : isEditing
+                ? value
+                : (childrenLabel ?? value)
+        }
+        placeholder={placeholder}
+        onMouseDown={onMouseDown}
+        onClick={onTap}
+        onTouchEnd={onTap}
+        onFocus={onFocus}
+        onBlur={onBlur}
+        onChange={onChangeHandler}
+        onCopy={onCopy}
+        onCut={e => {
+          // flush the last edit, otherwise if cut occurs in quick succession the new value can be overwritten by the throttled change
+          throttledChangeRef.current?.flush()
+
+          onCut(e)
+        }}
+        onPaste={e => {
+          // flush the last edit, otherwise if paste occurs in quick succession the pasted value can be overwritten by the throttled change
+          throttledChangeRef.current?.flush()
+
+          onPaste(e)
+        }}
+        // iOS Safari delays event handling in case the DOM is modified during setTimeout inside an event handler,
+        // unless it is given a hint that the element is some sort of form control
+        role='button'
+        style={style}
+      />
+      {isTouch && isSafari() && editingOrOnCursor && !hasMulticursor && (
+        <div ref={overlayRef} style={{ position: 'absolute', inset: 0 }} />
+      )}
+    </div>
   )
 }
 

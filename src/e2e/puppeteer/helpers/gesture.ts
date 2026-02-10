@@ -1,3 +1,4 @@
+import Command from '../../../@types/Command'
 import Direction from '../../../@types/Direction'
 import GesturePath from '../../../@types/GesturePath'
 import { page } from '../setup'
@@ -33,33 +34,39 @@ const move = async (x1: number, y1: number, x2: number, y2: number): Promise<voi
   }
 }
 
-/** Draw a gesture on the screen. */
-const swipePoints = async (points: { x: number; y: number }[], complete: boolean = true) => {
-  const start = points[0]
-
-  await page.touchscreen.touchStart(start.x, start.y)
-
-  for (let i = 1; i < points.length; i++) {
-    await move(points[i - 1].x, points[i - 1].y, points[i].x, points[i].y)
-  }
-
-  if (complete) {
-    await page.touchscreen.touchEnd()
-  }
+/** Type predicate for Command. */
+function isCommand(value: unknown): value is Command {
+  return typeof value === 'object' && value !== null && 'id' in value && 'label' in value && 'exec' in value
 }
 
 /**
  * Swipe gesture helper for testing.
  * Creates a series of touch events to simulate realistic gesture movement.
  * Uses fixed step sizes for simplicity and reliability.
- *
- * @param gesture - String of directions (e.g., "rd" for right-down).
- * @param completeGesture - Whether to complete the gesture with touchEnd
- * Set to false to test during-gesture behavior.
- * Set to true to test post-gesture behavior.
  */
-const swipe = async (gesture: GesturePath, completeGesture = false) => {
-  const directions = typeof gesture === 'string' ? (gesture.split('') as Direction[]) : gesture
+const gesture = async (
+  /** String of directions (e.g., "rd" for right-down) or a Command object with a gesture property. */
+  gestureOrCommand: GesturePath | Command,
+  {
+    hold,
+  }: {
+    /** If true, the gesture will be held and not completed with touchEnd. */
+    hold?: boolean
+  } = {},
+) => {
+  if (isCommand(gestureOrCommand) && !gestureOrCommand.gesture) {
+    throw new Error(
+      `Command "${gestureOrCommand.id}" does not have a gesture defined so cannot be activated with swipe.`,
+    )
+  }
+
+  const gestureObject = isCommand(gestureOrCommand)
+    ? gestureOrCommand.gesture instanceof Array
+      ? gestureOrCommand.gesture[0]
+      : // gesture must be defined because of runtime validation above
+        gestureOrCommand.gesture!
+    : gestureOrCommand
+  const directions = typeof gestureObject === 'string' ? (gestureObject.split('') as Direction[]) : gestureObject
 
   // Fixed step sizes for consistent gesture behavior
   const stepSize = 80
@@ -90,8 +97,15 @@ const swipe = async (gesture: GesturePath, completeGesture = false) => {
     points.push({ x, y })
   }
 
-  // Execute the gesture with optional completion
-  await swipePoints(points, completeGesture)
+  await page.touchscreen.touchStart(points[0].x, points[0].y)
+
+  for (let i = 1; i < points.length; i++) {
+    await move(points[i - 1].x, points[i - 1].y, points[i].x, points[i].y)
+  }
+
+  if (!hold) {
+    await page.touchscreen.touchEnd()
+  }
 }
 
-export default swipe
+export default gesture
