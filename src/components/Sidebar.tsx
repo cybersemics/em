@@ -141,11 +141,11 @@ const SidebarBackground = ({
       {isSafari() ? (
         <>
           <SidebarGradient opacity={opacity} width={width} showSidebar={showSidebar} toggleSidebar={toggleSidebar} />
-          <ProgressiveBlur direction='to right' minBlur={0} maxBlur={32} layers={6} width={width} opacity={opacity} />
+          <ProgressiveBlur direction='to right' minBlur={0} maxBlur={32} layers={4} width={width} opacity={opacity} />
         </>
       ) : (
         <>
-          <ProgressiveBlur direction='to right' minBlur={0} maxBlur={32} layers={6} width={width} opacity={opacity} />
+          <ProgressiveBlur direction='to right' minBlur={0} maxBlur={32} layers={4} width={width} opacity={opacity} />
           <SidebarGradient opacity={opacity} width={width} showSidebar={showSidebar} toggleSidebar={toggleSidebar} />
         </>
       )}
