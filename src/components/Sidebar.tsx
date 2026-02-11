@@ -127,15 +127,18 @@ const SidebarBackground = ({
         pointerEvents: 'none',
       })}
     >
-      {/* Full-screen click target to close the sidebar when clicking outside */}
-      <div
+      {/* Full-screen overlay – dims the background and closes the sidebar on click */}
+      <motion.div
         aria-hidden='true'
+        style={{ opacity }}
         onClick={() => toggleSidebar(false)}
         className={css({
           position: 'absolute',
           inset: 0,
+          backgroundColor: 'sidebarOverlayBg',
           pointerEvents: showSidebar ? 'auto' : 'none',
           cursor: 'pointer',
+          userSelect: 'none',
         })}
       />
 
@@ -146,11 +149,11 @@ const SidebarBackground = ({
       {isSafari() ? (
         <>
           <SidebarGradient opacity={opacity} width={width} showSidebar={showSidebar} toggleSidebar={toggleSidebar} />
-          <ProgressiveBlur direction='to right' minBlur={0} maxBlur={32} layers={8} width={width} opacity={opacity} />
+          <ProgressiveBlur direction='to right' minBlur={0} maxBlur={32} layers={6} width={width} opacity={opacity} />
         </>
       ) : (
         <>
-          <ProgressiveBlur direction='to right' minBlur={0} maxBlur={32} layers={8} width={width} opacity={opacity} />
+          <ProgressiveBlur direction='to right' minBlur={0} maxBlur={32} layers={6} width={width} opacity={opacity} />
           <SidebarGradient opacity={opacity} width={width} showSidebar={showSidebar} toggleSidebar={toggleSidebar} />
         </>
       )}
