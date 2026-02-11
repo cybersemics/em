@@ -21,11 +21,15 @@ interface ProgressiveBlurProps extends React.HTMLAttributes<HTMLDivElement> {
   layers?: number
   /** Width override. */
   width?: string | number
-  /** Optional MotionValue to animate the opacity of the progressive blur effect. Avoids the Safari bug where animating opacity on a parent of backdrop-filter elements breaks the blur. */
+  /** Optional MotionValue to animate the opacity of the proressive blur effect. Avoids the Safari bug where animating opacity on a parent of backdrop-filter elements breaks the blur. */
   opacity?: MotionValue<number>
 }
 
-/** A progressive blur component using a multi-layered slice technique with backdrop-filter. */
+/**
+ * A highly optimized, stabilized progressive blur component.
+ * Uses a multi-layered slice technique with GPU acceleration hints
+ * to prevent flickering and visual artifacts during animation.
+ */
 const ProgressiveBlur = ({
   direction = 'to right',
   maxBlur = 32,
@@ -37,22 +41,16 @@ const ProgressiveBlur = ({
   ...props
 }: ProgressiveBlurProps) => {
   const blurLayers = Array.from({ length: layers }).map((_, i) => {
-    // Blur radius follows a quadratic curve, reaching 0 at the trailing edge
-    // so the last layer applies no blur and the transition is seamless.
-    const t = layers <= 1 ? 1 : (layers - 1 - i) / (layers - 1)
-    const radius = minBlur + Math.pow(t, 2) * (maxBlur - minBlur)
+    // Blur radius follows a quadratic curve for a more natural look.
+    // We add the minBlur as a constant baseline.
+    const radius = minBlur + Math.pow((layers - i) / layers, 2) * (maxBlur - minBlur)
 
     // Each layer covers a specific slice with a generous overlap (feather) to ensure smoothness.
     const start = (i / layers) * 100
     const end = ((i + 1) / layers) * 100
     const feather = (100 / layers) * 2 // Double feather for smoother blending
 
-    // Clamp feather stops within bounds so trailing layers fade out
-    // inside the container instead of getting clipped by overflow:hidden.
-    const leadingStop = Math.max(start - feather, 0)
-    const trailingStop = Math.min(end + feather, 100)
-
-    return { radius, start, end, leadingStop, trailingStop }
+    return { radius, start, end, feather }
   })
 
   return (
@@ -63,6 +61,8 @@ const ProgressiveBlur = ({
         inset: 0,
         pointerEvents: 'none',
         overflow: 'hidden',
+        isolation: 'isolate',
+        transformStyle: 'preserve-3d',
       })}
       style={{ width, ...props.style }}
     >
@@ -78,9 +78,15 @@ const ProgressiveBlur = ({
             backdropFilter: `blur(${layer.radius.toFixed(2)}px)`,
             WebkitBackdropFilter: `blur(${layer.radius.toFixed(2)}px)`,
 
-            // Sliced mask with overlap (feather), clamped to container bounds
-            maskImage: `linear-gradient(${direction}, transparent ${layer.leadingStop}%, black ${layer.start}%, black ${layer.end}%, transparent ${layer.trailingStop}%)`,
-            WebkitMaskImage: `linear-gradient(${direction}, transparent ${layer.leadingStop}%, black ${layer.start}%, black ${layer.end}%, transparent ${layer.trailingStop}%)`,
+            transform: 'translateZ(0)',
+            WebkitTransform: 'translateZ(0)',
+            backfaceVisibility: 'hidden',
+            WebkitBackfaceVisibility: 'hidden',
+            willChange: 'transform, backdrop-filter, mask-image',
+
+            // Sliced mask with overlap (feather)
+            maskImage: `linear-gradient(${direction}, transparent ${layer.start - layer.feather}%, black ${layer.start}%, black ${layer.end}%, transparent ${layer.end + layer.feather}%)`,
+            WebkitMaskImage: `linear-gradient(${direction}, transparent ${layer.start - layer.feather}%, black ${layer.start}%, black ${layer.end}%, transparent ${layer.end + layer.feather}%)`,
           }}
         />
       ))}
@@ -88,4 +94,5 @@ const ProgressiveBlur = ({
   )
 }
 
+export { ProgressiveBlur }
 export default ProgressiveBlur
