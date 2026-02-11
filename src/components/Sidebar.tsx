@@ -1,6 +1,6 @@
 import * as Dialog from '@radix-ui/react-dialog'
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden'
-import { animate, motion, useMotionValue, useTransform } from 'framer-motion'
+import { MotionValue, animate, motion, useMotionValue, useTransform } from 'framer-motion'
 import _ from 'lodash'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
@@ -8,12 +8,14 @@ import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens/index.mjs'
 import { longPressActionCreator as longPress } from '../actions/longPress'
 import { toggleSidebarActionCreator } from '../actions/toggleSidebar'
+import { isSafari } from '../browser'
 import { LongPressState } from '../constants'
 import viewportStore from '../stores/viewport'
 import durations from '../util/durations'
 import fastClick from '../util/fastClick'
 import FadeTransition from './FadeTransition'
 import Favorites from './Favorites'
+import { ProgressiveBlur } from './ProgressiveBlur'
 import RecentlyDeleted from './RecentlyDeleted'
 import RecentlyEdited from './RecentlyEdited'
 
@@ -58,6 +60,89 @@ const SidebarLink = ({
     >
       {section.label}
     </a>
+  )
+}
+
+/** The sidebar gradient overlay. */
+const SidebarGradient = ({
+  opacity,
+  width,
+  showSidebar,
+  toggleSidebar,
+}: {
+  opacity: MotionValue<number>
+  width: string
+  showSidebar: boolean
+  toggleSidebar: (value: boolean) => void
+}) => (
+  <motion.div
+    aria-label='sidebar-gradient'
+    aria-hidden='true'
+    style={{ opacity }}
+    onClick={() => toggleSidebar(false)}
+    className={css({
+      position: 'absolute',
+      inset: 0,
+      background: 'linear-gradient(to right, rgba(10, 10, 18, 1) 0%, {colors.bgTransparent} 100%)',
+      width,
+      pointerEvents: showSidebar ? 'auto' : 'none',
+      cursor: 'pointer',
+      userSelect: 'none',
+    })}
+  />
+)
+
+/** The sidebar background component with progressive blur and gradient. */
+const SidebarBackground = ({
+  x,
+  widthPx,
+  showSidebar,
+  toggleSidebar,
+  sidebarWidth,
+  innerWidth,
+}: {
+  x: MotionValue<number>
+  widthPx: number
+  showSidebar: boolean
+  toggleSidebar: (value: boolean) => void
+  sidebarWidth: string
+  innerWidth: number
+}) => {
+  // Derive opacity from sidebar x position, then apply cubic ease-in
+  // so the background fades in gently and catches up as the sidebar settles.
+  const linearOpacity = useTransform(x, [-widthPx, 0], [0, 1])
+  const opacity = useTransform(linearOpacity, v => v * v * v)
+
+  const xlValue = token('breakpoints.xl')
+  const xl = parseInt(xlValue, 10)
+  const isMobile = innerWidth < xl
+  const width = isMobile ? '100%' : sidebarWidth
+
+  return (
+    <div
+      className={css({
+        position: 'fixed',
+        inset: 0,
+        zIndex: 'sidebar',
+        pointerEvents: 'none',
+      })}
+    >
+      {/*
+       * On WebKit (Safari/iOS), it looks better if the blur is applied -above- the gradient. The other way around, there's patchy artifacts.
+       * On Chromium, it looks better if the blur is applied -below- the gradient. The other way around, there's visible banding artifacts.
+       */}
+      {isSafari() ? (
+        <>
+          <SidebarGradient opacity={opacity} width={width} showSidebar={showSidebar} toggleSidebar={toggleSidebar} />
+          <ProgressiveBlur direction='to right' minBlur={0} maxBlur={32} layers={8} width={width} opacity={opacity} />
+        </>
+      ) : (
+        <>
+          <ProgressiveBlur direction='to right' minBlur={0} maxBlur={32} layers={8} width={width} opacity={opacity} />
+          <SidebarGradient opacity={opacity} width={width} showSidebar={showSidebar} toggleSidebar={toggleSidebar} />
+        </>
+      )}
+    </div>
   )
 }
 
@@ -122,13 +207,16 @@ const Sidebar = () => {
   /** Track the current x position of the sidebar. Used for animations and swipe tracking. */
   const x = useMotionValue(showSidebar ? 0 : -widthPx)
 
-  /** MUI-style cubic-bezier transition. */
+  /** Fade sidebar content with a quadratic ease – stays readable while mostly open, fades as it nears the edge. */
+  const contentOpacity = useTransform(useTransform(x, [-widthPx, 0], [0, 1]), v => v * v)
+
+  /** Cubic-bezier transition – ease-out for both open and close. Close uses a gentler ease-out (less aggressive start). */
   const transition = useMemo(
     () => ({
       duration: durations.get('medium') / 1000,
-      ease: [0.16, 0.6, 0.2, 1] as const,
+      ease: showSidebar ? ([0.16, 0.6, 0.2, 1] as const) : ([0.25, 0.1, 0.25, 1] as const),
     }),
-    [],
+    [showSidebar],
   )
 
   // ============================
@@ -333,151 +421,146 @@ const Sidebar = () => {
   }, [showSidebar, widthPx, x, handleSwipeEnd])
 
   return (
-    <Dialog.Root open={showSidebar} onOpenChange={toggleSidebar} modal={false}>
-      {/* forceMount prop keeps the sidebar mounted when closed.
-      this is temporarily added to match the behavior of the outgoing MUI drawer
-      it can be removed in a later PR to optimize performance */}
-      <Dialog.Portal forceMount>
-        <div
-          data-testid='sidebar'
-          aria-hidden={!showSidebar}
-          className={css({
-            position: 'fixed',
-            inset: 0,
-            zIndex: 'sidebar',
-            pointerEvents: 'none',
-            userSelect: 'none',
-          })}
-        >
-          {/* Backdrop/overlay */}
-          <motion.div
-            aria-hidden='true'
-            style={{ opacity }}
-            onClick={() => toggleSidebar(false)}
+    <>
+      <Dialog.Root open={showSidebar} onOpenChange={toggleSidebar} modal={false}>
+        {/* forceMount prop keeps the sidebar mounted when closed.
+        this is temporarily added to match the behavior of the outgoing MUI drawer
+        it can be removed in a later PR to optimize performance */}
+        <Dialog.Portal forceMount>
+          <div
+            data-testid='sidebar'
+            aria-hidden={!showSidebar}
             className={css({
-              position: 'absolute',
+              position: 'fixed',
               inset: 0,
-              backgroundColor: 'sidebarOverlayBg',
-              pointerEvents: showSidebar ? 'auto' : 'none',
-              cursor: 'pointer',
+              zIndex: 'sidebar',
+              pointerEvents: 'none',
               userSelect: 'none',
             })}
-          />
-
-          <Dialog.Content
-            asChild
-            forceMount
-            onOpenAutoFocus={e => e.preventDefault()} // Prevents focus from entering the sidebar when the page first loads
-            onInteractOutside={e => e.preventDefault()} // This is needed to prevent the sidebar from double-toggling when tapping hamburger icon
-            onEscapeKeyDown={e => e.preventDefault()} // Stop Radix from closing the sidebar when esc is pressed – we will handle it ourselves
-            aria-describedby={undefined} // Suppress Radix console warning about aria-describedby. This property isn't relevant in this case.
           >
-            <motion.div
-              ref={drawerRef}
-              style={{ x }}
-              initial={false}
-              animate={{ x: showSidebar ? 0 : -widthPx }}
-              transition={transition}
-              className={css({
-                position: 'fixed',
-                top: 'safeAreaTop',
-                left: 0,
-                bottom: 0,
-                width,
-                backgroundColor: 'sidebarBg',
-                zIndex: 'sidebar',
-                userSelect: 'none',
-                boxShadow: '0 0 20px bgOverlay30',
-                outline: 'none',
-                pointerEvents: 'auto',
-              })}
+            <SidebarBackground
+              x={x}
+              widthPx={widthPx}
+              showSidebar={showSidebar}
+              toggleSidebar={toggleSidebar}
+              sidebarWidth={width}
+              innerWidth={innerWidth}
+            />
+
+            <Dialog.Content
+              asChild
+              forceMount
+              onOpenAutoFocus={e => e.preventDefault()} // Prevents focus from entering the sidebar when the page first loads
+              onInteractOutside={e => e.preventDefault()} // This is needed to prevent the sidebar from double-toggling when tapping hamburger icon
+              onEscapeKeyDown={e => e.preventDefault()} // Stop Radix from closing the sidebar when esc is pressed – we will handle it ourselves
+              aria-describedby={undefined} // Suppress Radix console warning about aria-describedby. This property isn't relevant in this case.
             >
-              <div
-                // We need to disable favorites drag-and-drop when the Sidebar is being slid close.
-                // We'll do this by checking the sidebar's x offset.
-                onTouchMove={_.throttle(
-                  () => {
-                    if (isSwiping) return
-                    // If the sidebar's x-offset is 0, the sidebar isn't moving.
-                    // Otherwise, it -is- moving, and we should disable drag-and-drop by setting isSwiping.
-                    if (x.get() !== 0) {
-                      setIsSwiping(true)
-                      dispatch(longPress({ value: LongPressState.Inactive }))
-                    }
-                  },
-                  10,
-                  // no need to check on the first touchmove trigger since x has probably not changed yet
-                  { leading: false },
-                )}
-                onTouchEnd={() => {
-                  setIsSwiping(false)
-                }}
-                className={css({ height: '100%' })}
+              <motion.div
+                ref={drawerRef}
+                style={{ x, opacity: contentOpacity }}
+                initial={false}
+                animate={{ x: showSidebar ? 0 : -widthPx }}
+                transition={transition}
+                className={css({
+                  position: 'fixed',
+                  top: 'safeAreaTop',
+                  left: 0,
+                  bottom: 0,
+                  width,
+                  backgroundColor: 'transparent',
+                  zIndex: 'sidebar',
+                  userSelect: 'none',
+                  outline: 'none',
+                  pointerEvents: 'auto',
+                })}
               >
                 <div
-                  aria-label='sidebar'
-                  className={css({
-                    background: 'sidebarBg',
-                    overflowY: 'scroll',
-                    overflowX: 'hidden',
-                    overscrollBehavior: 'contain',
-                    boxSizing: 'border-box',
-                    width: '100%',
-                    height: '100%',
-                    color: 'fg',
-                    scrollbarWidth: 'thin',
-                    lineHeight: 1.8,
-                    '&::-webkit-scrollbar': {
-                      width: '0px',
-                      background: 'transparent',
-                      display: 'none',
+                  // We need to disable favorites drag-and-drop when the Sidebar is being slid close.
+                  // We'll do this by checking the sidebar's x offset.
+                  onTouchMove={_.throttle(
+                    () => {
+                      if (isSwiping) return
+                      // If the sidebar's x-offset is 0, the sidebar isn't moving.
+                      // Otherwise, it -is- moving, and we should disable drag-and-drop by setting isSwiping.
+                      if (x.get() !== 0) {
+                        setIsSwiping(true)
+                        dispatch(longPress({ value: LongPressState.Inactive }))
+                      }
                     },
-                    userSelect: 'none',
-                    // must be position:relative to ensure drop hovers are positioned correctly when sidebar is scrolled
-                    position: 'relative',
-                    padding: '0 1em',
-                  })}
-                  data-scroll-at-edge
-                >
-                  {/* Visually hidden title for screen readers */}
-                  <VisuallyHidden.Root>
-                    <Dialog.Title>{SECTIONS.find(s => s.id === sectionId)?.label}</Dialog.Title>
-                  </VisuallyHidden.Root>
-
-                  <FadeTransition type='fast' in={showSidebar}>
-                    <div
-                      style={{
-                        // match HamburgerMenu width + padding
-                        marginLeft: fontSize * 1.3 + 30,
-                      }}
-                    >
-                      {SECTIONS.map(section => (
-                        <SidebarLink
-                          key={section.id}
-                          active={sectionId === section.id}
-                          section={section}
-                          setSection={setSectionId}
-                        />
-                      ))}
-                    </div>
-                  </FadeTransition>
-
-                  {sectionId === 'favorites' ? (
-                    <Favorites disableDragAndDrop={isSwiping} />
-                  ) : sectionId === 'recentlyEdited' ? (
-                    <RecentlyEdited />
-                  ) : sectionId === 'recentlyDeleted' ? (
-                    <RecentlyDeleted />
-                  ) : (
-                    'Not yet implemented'
+                    10,
+                    // no need to check on the first touchmove trigger since x has probably not changed yet
+                    { leading: false },
                   )}
+                  onTouchEnd={() => {
+                    setIsSwiping(false)
+                  }}
+                  className={css({ height: '100%' })}
+                >
+                  <div
+                    aria-label='sidebar'
+                    className={css({
+                      background: 'transparent',
+                      overflowY: 'scroll',
+                      overflowX: 'hidden',
+                      overscrollBehavior: 'contain',
+                      boxSizing: 'border-box',
+                      width: '100%',
+                      height: '100%',
+                      color: 'fg',
+                      scrollbarWidth: 'thin',
+                      lineHeight: 1.8,
+                      '&::-webkit-scrollbar': {
+                        width: '0px',
+                        background: 'transparent',
+                        display: 'none',
+                      },
+                      userSelect: 'none',
+                      // must be position:relative to ensure drop hovers are positioned correctly when sidebar is scrolled
+                      position: 'relative',
+                      padding: '0 1em',
+                    })}
+                    data-scroll-at-edge
+                  >
+                    {/* Visually hidden title for screen readers */}
+                    <VisuallyHidden.Root>
+                      <Dialog.Title>{SECTIONS.find(s => s.id === sectionId)?.label}</Dialog.Title>
+                    </VisuallyHidden.Root>
+
+                    <FadeTransition type='fast' in={showSidebar}>
+                      <div
+                        style={{
+                          // match HamburgerMenu width + padding
+                          marginLeft: fontSize * 1.3 + 30,
+                        }}
+                      >
+                        {SECTIONS.map(section => (
+                          <SidebarLink
+                            key={section.id}
+                            active={sectionId === section.id}
+                            section={section}
+                            setSection={setSectionId}
+                          />
+                        ))}
+                      </div>
+                    </FadeTransition>
+
+                    {sectionId === 'favorites' ? (
+                      <Favorites disableDragAndDrop={isSwiping} />
+                    ) : sectionId === 'recentlyEdited' ? (
+                      <RecentlyEdited />
+                    ) : sectionId === 'recentlyDeleted' ? (
+                      <RecentlyDeleted />
+                    ) : (
+                      'Not yet implemented'
+                    )}
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          </Dialog.Content>
-        </div>
-      </Dialog.Portal>
-    </Dialog.Root>
+              </motion.div>
+            </Dialog.Content>
+          </div>
+        </Dialog.Portal>
+      </Dialog.Root>
+    </>
   )
 }
 
