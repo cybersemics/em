@@ -194,6 +194,18 @@ const Note = React.memo(
           disabled={disabled}
           onKeyDown={onKeyDown}
           onChange={onChange}
+          // Text copied from a note and pasted on a thought should not bring along the note's default color and italicization. (#3779)
+          onCopy={(e: React.ClipboardEvent) => {
+            const html = selection.html()
+            const text = selection.text()
+
+            if (html && text) {
+              e.clipboardData.setData('text/html', html)
+              e.clipboardData.setData('text/plain', text)
+            }
+
+            e.preventDefault()
+          }}
           onPaste={() => {
             // set justPasted so onChange can strip HTML from the new value
             // the default onPaste behavior is maintained for easier caret and selection management
