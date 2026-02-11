@@ -121,6 +121,12 @@ interface Command {
   /** When true, prevent the default browser behavior even when canExecute returns false. */
   preventDefault?: boolean
 
+  /** When true, prevent the default browser behavior during the beforeinput event.
+   * In the specific case of the newThought command, preventing default on keydown is undesirable because it disables auto-capitalization on iOS Safari.
+   * However, we still need to prevent the Enter character from being inserted into the new thought, which can be accomplished in beforeinput (#3707).
+   */
+  preventInput?: boolean
+
   /** An icon that represents the command in the Toolbar. */
   svg?: (icon: IconType) => React.ReactNode
 

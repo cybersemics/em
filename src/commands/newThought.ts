@@ -78,6 +78,7 @@ const newThoughtCommand: Command = {
   gesture: ['rd', 'rdldl', 'rdldld', 'rldl', 'rldld', 'rldldl'],
   multicursor,
   permitDefault: true,
+  preventInput: true,
   svg: Icon,
   canExecute: () => isDocumentEditable(),
   exec,

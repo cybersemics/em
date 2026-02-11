@@ -48,7 +48,7 @@ export const globalCommands: Command[] = Object.values(commandsObject)
 
 export const commandEmitter = new Emitter()
 
-const keyPressed: { key: string | null } = { key: null }
+let keyCommand: Command | null = null
 
 /* A mapping of key codes to uppercase letters.
  * {
@@ -555,16 +555,7 @@ export const handleGestureCancel = () => {
 
 /** Prevent default in beforeinput event instead of keydown to preserve default iOS keyboard behavior. */
 export const beforeInput = (e: InputEvent) => {
-  if (keyPressed.key) {
-    const command = commandKeyIndex[keyPressed.key]
-
-    if (!command) return
-
-    if (!command.canExecute || command.preventDefault || command.canExecute(store.getState())) {
-      e.preventDefault()
-    }
-    keyPressed.key = null
-  }
+  if (keyCommand?.preventInput) e.preventDefault()
 }
 
 /** Global keyUp handler. */
@@ -573,11 +564,11 @@ export const keyUp = (e: KeyboardEvent) => {
   if (e.key === (isMac ? 'Meta' : 'Control') && globals.suppressExpansion) {
     store.dispatch(suppressExpansion(false))
   }
+  keyCommand = null
 }
 
 /** Global keyDown handler. */
 export const keyDown = (e: KeyboardEvent) => {
-  keyPressed.key = e.key
   const state = store.getState()
 
   // track meta key for expansion algorithm
@@ -597,6 +588,7 @@ export const keyDown = (e: KeyboardEvent) => {
   if (state.showCommandPalette) return
 
   const command = commandKeyIndex[hashKeyDown(e)]
+  keyCommand = command
 
   // disable if modal is shown, except for navigation commands
   if (!command || state.showGestureCheatsheet || (state.showModal && !command.allowExecuteFromModal)) return
