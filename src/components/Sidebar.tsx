@@ -127,6 +127,18 @@ const SidebarBackground = ({
         pointerEvents: 'none',
       })}
     >
+      {/* Full-screen click target to close the sidebar when clicking outside */}
+      <div
+        aria-hidden='true'
+        onClick={() => toggleSidebar(false)}
+        className={css({
+          position: 'absolute',
+          inset: 0,
+          pointerEvents: showSidebar ? 'auto' : 'none',
+          cursor: 'pointer',
+        })}
+      />
+
       {/*
        * On WebKit (Safari/iOS), it looks better if the blur is applied -above- the gradient. The other way around, there's patchy artifacts.
        * On Chromium, it looks better if the blur is applied -below- the gradient. The other way around, there's visible banding artifacts.
