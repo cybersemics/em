@@ -5,6 +5,7 @@ import _ from 'lodash'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
+import { token } from '../../styled-system/tokens/index.mjs'
 import { longPressActionCreator as longPress } from '../actions/longPress'
 import { toggleSidebarActionCreator } from '../actions/toggleSidebar'
 import { LongPressState } from '../constants'
@@ -79,9 +80,6 @@ const Sidebar = () => {
   /** Ref to the drawer element, used to detect if touches are inside the drawer. */
   const drawerRef = useRef<HTMLDivElement>(null)
 
-  /** Track the current x position of the sidebar. Used for animations and swipe tracking. */
-  const x = useMotionValue(0)
-
   /** MUI-style uncertainty threshold for direction detection (in pixels). */
   const UNCERTAINTY_THRESHOLD = 3
 
@@ -116,13 +114,13 @@ const Sidebar = () => {
   // ============================
 
   /** Dynamically determine the width of the sidebar. */
-  const width = innerWidth < 768 ? '90%' : '400px'
+  const width = innerWidth < token('breakpoints.xl') ? '90%' : '400px'
 
   /** Get the width of the sidebar in pixels, which is used for progress-based animations. */
-  const widthPx = innerWidth < 768 ? innerWidth * 0.9 : 400
+  const widthPx = innerWidth < token('breakpoints.xl') ? innerWidth * 0.9 : 400
 
-  /** Link opacity to x position of the sidebar. 1 when open, 0 when closed. */
-  const opacity = useTransform(x, [-widthPx, 0], [0, 1])
+  /** Track the current x position of the sidebar. Used for animations and swipe tracking. */
+  const x = useMotionValue(showSidebar ? 0 : -widthPx)
 
   /** MUI-style cubic-bezier transition. */
   const transition = useMemo(
