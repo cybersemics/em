@@ -125,8 +125,8 @@ const Sidebar = () => {
   /** MUI-style cubic-bezier transition. */
   const transition = useMemo(
     () => ({
-      duration: durations.get('fast') / 1000,
-      ease: [0, 0, 0.2, 1] as const,
+      duration: durations.get('medium') / 1000,
+      ease: [0.16, 0.6, 0.2, 1] as const,
     }),
     [],
   )
