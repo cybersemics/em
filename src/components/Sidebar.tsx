@@ -15,7 +15,7 @@ import durations from '../util/durations'
 import fastClick from '../util/fastClick'
 import FadeTransition from './FadeTransition'
 import Favorites from './Favorites'
-import ProgressiveBlur from './ProgressiveBlur'
+import { ProgressiveBlur } from './ProgressiveBlur'
 import RecentlyDeleted from './RecentlyDeleted'
 import RecentlyEdited from './RecentlyEdited'
 
@@ -63,9 +63,6 @@ const SidebarLink = ({
   )
 }
 
-/** The xl breakpoint in pixels, used for JS-based responsive checks. */
-const XL_BREAKPOINT = parseInt(token('breakpoints.xl'))
-
 /** The sidebar gradient overlay. */
 const SidebarGradient = ({
   opacity,
@@ -86,7 +83,7 @@ const SidebarGradient = ({
     className={css({
       position: 'absolute',
       inset: 0,
-      background: 'linear-gradient(to right, {colors.sidebarBg} 0%, {colors.bgTransparent} 100%)',
+      background: 'linear-gradient(to right, rgba(10, 10, 18, 1) 0%, {colors.bgTransparent} 100%)',
       width,
       pointerEvents: showSidebar ? 'auto' : 'none',
       cursor: 'pointer',
@@ -101,18 +98,25 @@ const SidebarBackground = ({
   widthPx,
   showSidebar,
   toggleSidebar,
-  width,
+  sidebarWidth,
+  innerWidth,
 }: {
   x: MotionValue<number>
   widthPx: number
   showSidebar: boolean
   toggleSidebar: (value: boolean) => void
-  width: string
+  sidebarWidth: string
+  innerWidth: number
 }) => {
   // Derive opacity from sidebar x position, then apply cubic ease-in
   // so the background fades in gently and catches up as the sidebar settles.
   const linearOpacity = useTransform(x, [-widthPx, 0], [0, 1])
   const opacity = useTransform(linearOpacity, v => v * v * v)
+
+  const xlValue = token('breakpoints.xl')
+  const xl = parseInt(xlValue, 10)
+  const isMobile = innerWidth < xl
+  const width = isMobile ? '100%' : sidebarWidth
 
   return (
     <div
@@ -123,22 +127,6 @@ const SidebarBackground = ({
         pointerEvents: 'none',
       })}
     >
-      {/* Full-screen overlay – dims the background and closes the sidebar on click */}
-      <motion.div
-        aria-hidden='true'
-        style={{ opacity }}
-        onClick={() => toggleSidebar(false)}
-        className={css({
-          position: 'absolute',
-          inset: 0,
-          backgroundColor: 'sidebarOverlayBg',
-          pointerEvents: showSidebar ? 'auto' : 'none',
-          cursor: 'pointer',
-          userSelect: 'none',
-          touchAction: 'none',
-        })}
-      />
-
       {/*
        * On WebKit (Safari/iOS), it looks better if the blur is applied -above- the gradient. The other way around, there's patchy artifacts.
        * On Chromium, it looks better if the blur is applied -below- the gradient. The other way around, there's visible banding artifacts.
@@ -146,11 +134,11 @@ const SidebarBackground = ({
       {isSafari() ? (
         <>
           <SidebarGradient opacity={opacity} width={width} showSidebar={showSidebar} toggleSidebar={toggleSidebar} />
-          <ProgressiveBlur direction='to right' minBlur={0} maxBlur={32} layers={4} width={width} opacity={opacity} />
+          <ProgressiveBlur direction='to right' minBlur={0} maxBlur={32} layers={8} width={width} opacity={opacity} />
         </>
       ) : (
         <>
-          <ProgressiveBlur direction='to right' minBlur={0} maxBlur={32} layers={4} width={width} opacity={opacity} />
+          <ProgressiveBlur direction='to right' minBlur={0} maxBlur={32} layers={8} width={width} opacity={opacity} />
           <SidebarGradient opacity={opacity} width={width} showSidebar={showSidebar} toggleSidebar={toggleSidebar} />
         </>
       )}
@@ -227,7 +215,7 @@ const Sidebar = () => {
   const transition = useMemo(
     () => ({
       duration: durations.get('medium') / 1000,
-      ease: [0.16, 0.6, 0.2, 1] as const,
+      ease: showSidebar ? ([0.16, 0.6, 0.2, 1] as const) : ([0.25, 0.1, 0.25, 1] as const),
     }),
     [showSidebar],
   )
@@ -467,7 +455,8 @@ const Sidebar = () => {
               widthPx={widthPx}
               showSidebar={showSidebar}
               toggleSidebar={toggleSidebar}
-              width={width}
+              sidebarWidth={width}
+              innerWidth={innerWidth}
             />
 
             <Dialog.Content
@@ -545,14 +534,16 @@ const Sidebar = () => {
                       overflowX: 'hidden',
                       overscrollBehavior: 'contain',
                       boxSizing: 'border-box',
-                      // Take away 1px from `width` to prevent Android from treating this as the root scroller,
-                      // which bypasses overscroll-behavior and causes a bounce effect.
-                      width: 'calc(100% - 1px)',
+                      width: '100%',
                       height: '100%',
                       color: 'fg',
-                      lineHeight: 1.8,
                       scrollbarWidth: 'thin',
-                      scrollbarColor: '{colors.fgOverlay20} transparent',
+                      lineHeight: 1.8,
+                      '&::-webkit-scrollbar': {
+                        width: '0px',
+                        background: 'transparent',
+                        display: 'none',
+                      },
                       userSelect: 'none',
                       // must be position:relative to ensure drop hovers are positioned correctly when sidebar is scrolled
                       position: 'relative',
