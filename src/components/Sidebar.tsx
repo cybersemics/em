@@ -206,7 +206,6 @@ const Sidebar = () => {
   // ============================
 
   /** Dynamically determine the width of the sidebar. */
-  /** Dynamically determine the width of the sidebar. */
   const width = innerWidth < 768 ? '100%' : '400px'
 
   /** Get the width of the sidebar in pixels, which is used for progress-based animations. */
