@@ -5,7 +5,6 @@ import _ from 'lodash'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
-import { token } from '../../styled-system/tokens/index.mjs'
 import { longPressActionCreator as longPress } from '../actions/longPress'
 import { toggleSidebarActionCreator } from '../actions/toggleSidebar'
 import { isSafari } from '../browser'
@@ -98,25 +97,18 @@ const SidebarBackground = ({
   widthPx,
   showSidebar,
   toggleSidebar,
-  sidebarWidth,
-  innerWidth,
+  width,
 }: {
   x: MotionValue<number>
   widthPx: number
   showSidebar: boolean
   toggleSidebar: (value: boolean) => void
-  sidebarWidth: string
-  innerWidth: number
+  width: string
 }) => {
   // Derive opacity from sidebar x position, then apply cubic ease-in
   // so the background fades in gently and catches up as the sidebar settles.
   const linearOpacity = useTransform(x, [-widthPx, 0], [0, 1])
   const opacity = useTransform(linearOpacity, v => v * v * v)
-
-  const xlValue = token('breakpoints.xl')
-  const xl = parseInt(xlValue, 10)
-  const isMobile = innerWidth < xl
-  const width = isMobile ? '100%' : sidebarWidth
 
   return (
     <div
@@ -214,10 +206,11 @@ const Sidebar = () => {
   // ============================
 
   /** Dynamically determine the width of the sidebar. */
-  const width = innerWidth < token('breakpoints.xl') ? '90%' : '400px'
+  /** Dynamically determine the width of the sidebar. */
+  const width = innerWidth < 768 ? '100%' : '400px'
 
   /** Get the width of the sidebar in pixels, which is used for progress-based animations. */
-  const widthPx = innerWidth < token('breakpoints.xl') ? innerWidth * 0.9 : 400
+  const widthPx = innerWidth < 768 ? innerWidth : 400
 
   /** Track the current x position of the sidebar. Used for animations and swipe tracking. */
   const x = useMotionValue(showSidebar ? 0 : -widthPx)
@@ -458,8 +451,7 @@ const Sidebar = () => {
               widthPx={widthPx}
               showSidebar={showSidebar}
               toggleSidebar={toggleSidebar}
-              sidebarWidth={width}
-              innerWidth={innerWidth}
+              width={width}
             />
 
             <Dialog.Content
@@ -489,6 +481,23 @@ const Sidebar = () => {
                   pointerEvents: 'auto',
                 })}
               >
+                {/* Tap zone on the right 10% of the sidebar to close it on mobile */}
+                {innerWidth < 768 && (
+                  <div
+                    aria-hidden='true'
+                    onClick={() => toggleSidebar(false)}
+                    className={css({
+                      position: 'absolute',
+                      top: 0,
+                      right: 0,
+                      bottom: 0,
+                      width: '10%',
+                      zIndex: 1,
+                      cursor: 'pointer',
+                    })}
+                  />
+                )}
+
                 <div
                   // We need to disable favorites drag-and-drop when the Sidebar is being slid close.
                   // We'll do this by checking the sidebar's x offset.
