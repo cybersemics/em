@@ -21,15 +21,11 @@ interface ProgressiveBlurProps extends React.HTMLAttributes<HTMLDivElement> {
   layers?: number
   /** Width override. */
   width?: string | number
-  /** Optional MotionValue to animate the opacity of the proressive blur effect. Avoids the Safari bug where animating opacity on a parent of backdrop-filter elements breaks the blur. */
+  /** Optional MotionValue to animate the opacity of the progressive blur effect. Avoids the Safari bug where animating opacity on a parent of backdrop-filter elements breaks the blur. */
   opacity?: MotionValue<number>
 }
 
-/**
- * A highly optimized, stabilized progressive blur component.
- * Uses a multi-layered slice technique with GPU acceleration hints
- * to prevent flickering and visual artifacts during animation.
- */
+/** A progressive blur component using a multi-layered slice technique with backdrop-filter. */
 const ProgressiveBlur = ({
   direction = 'to right',
   maxBlur = 32,
@@ -61,8 +57,6 @@ const ProgressiveBlur = ({
         inset: 0,
         pointerEvents: 'none',
         overflow: 'hidden',
-        isolation: 'isolate',
-        transformStyle: 'preserve-3d',
       })}
       style={{ width, ...props.style }}
     >
@@ -77,12 +71,6 @@ const ProgressiveBlur = ({
             opacity,
             backdropFilter: `blur(${layer.radius.toFixed(2)}px)`,
             WebkitBackdropFilter: `blur(${layer.radius.toFixed(2)}px)`,
-
-            transform: 'translateZ(0)',
-            WebkitTransform: 'translateZ(0)',
-            backfaceVisibility: 'hidden',
-            WebkitBackfaceVisibility: 'hidden',
-            willChange: 'transform, backdrop-filter, mask-image',
 
             // Sliced mask with overlap (feather)
             maskImage: `linear-gradient(${direction}, transparent ${layer.start - layer.feather}%, black ${layer.start}%, black ${layer.end}%, transparent ${layer.end + layer.feather}%)`,
