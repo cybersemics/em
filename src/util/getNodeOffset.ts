@@ -2,7 +2,7 @@
  * Safari does glyph-only hit testing, so clicking on empty space has no caret target.
  * This module provides API for detecting void area positions and calculating appropriate caret positions.
  */
-import { isSafari } from '../browser'
+import { isSafari, isTouch } from '../browser'
 
 /** Represents a line within a text node with its character range and bounding box. */
 interface TextNodeLine {
@@ -20,6 +20,66 @@ interface TextNodeWithRect {
 interface Coordinates {
   clientX: number
   clientY: number
+}
+
+/**
+ * Finds word boundaries around a given offset.
+ * Returns the start and end indices of the word containing the offset.
+ * A word is defined as a sequence of non-whitespace characters.
+ */
+const findWordBoundaries = (text: string, offset: number): { start: number; end: number } | null => {
+  // If offset is beyond text length or text is empty
+  if (offset < 0 || offset > text.length || text.length === 0) {
+    return null
+  }
+
+  // If offset is at the end, check the character before it
+  const checkIndex = offset === text.length ? offset - 1 : offset
+
+  // If the character at the check position is whitespace, no word boundary snapping needed
+  if (checkIndex >= 0 && checkIndex < text.length && /\s/.test(text[checkIndex])) {
+    return null
+  }
+
+  // Find the start of the word (move backwards until we hit whitespace or start)
+  let start = checkIndex
+  while (start > 0 && !/\s/.test(text[start - 1])) {
+    start--
+  }
+
+  // Find the end of the word (move forwards until we hit whitespace or end)
+  let end = checkIndex
+  while (end < text.length && !/\s/.test(text[end])) {
+    end++
+  }
+
+  return { start, end }
+}
+
+/**
+ * Snaps an offset to the nearest word boundary (iOS Safari behavior).
+ * If the offset is within a word, it snaps to either the start or end of the word, whichever is closer.
+ */
+const snapToWordBoundary = (text: string, offset: number): number => {
+  const boundaries = findWordBoundaries(text, offset)
+
+  if (!boundaries) {
+    return offset
+  }
+
+  const { start, end } = boundaries
+
+  // If already at a boundary, don't change
+  if (offset === start || offset === end) {
+    return offset
+  }
+
+  // Calculate distance to start and end
+  const distToStart = offset - start
+  const distToEnd = end - offset
+
+  // Snap to the closer boundary (prefer end if equal distance)
+  return distToEnd <= distToStart ? end : start
 }
 
 /**
@@ -192,6 +252,11 @@ const calculateHorizontalOffset = (node: Text, clientX: number, clientY: number)
     offset = bestOffset
   }
 
+  // iOS Safari: snap to word boundary like native iOS behavior
+  if (isSafari() && isTouch) {
+    offset = snapToWordBoundary(text, offset)
+  }
+
   // Adjust offset to skip trailing whitespaces
   return skipTrailingWhitespace(text, offset, lineStart, lineEnd)
 }
@@ -345,6 +410,25 @@ const domPositionToUnformattedOffset = (root: HTMLElement, node: Node, offset: n
   return globalOffset
 }
 
+/** Returns the offset of the nearest text node to the given coordinates. */
+const getOffset = (editable: HTMLElement, clientX: number, clientY: number): number | null => {
+  const textNodes = getTextNodes(editable)
+  if (textNodes.length === 0) {
+    // Empty thought: place caret at 0 if tap is within editable bounds
+    const rect = editable.getBoundingClientRect()
+    if (clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom) {
+      return 0
+    }
+    return null
+  }
+
+  const nearest = findNearestTextNode(textNodes, clientX, clientY)
+  if (!nearest) return null
+
+  const offsetInNode = calculateHorizontalOffset(nearest.node, clientX, clientY)
+  return domPositionToUnformattedOffset(editable, nearest.node, offsetInNode)
+}
+
 /**
  * Detects if a coordinate is in a void area or on a valid character and calculates the appropriate caret position.
  *
@@ -370,21 +454,82 @@ const getNodeOffset = (editable: HTMLElement | null, { clientX, clientY }: Coord
     return null
   }
 
-  const textNodes = getTextNodes(editable)
-  if (textNodes.length === 0) {
-    // Empty thought: place caret at 0 if tap is within editable bounds
-    const rect = editable.getBoundingClientRect()
-    if (clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom) {
-      return 0
+  // Get the browser range for the given point
+  let range: Range | null = null
+
+  if (doc.caretRangeFromPoint) {
+    range = doc.caretRangeFromPoint(clientX, clientY)
+  } else if (doc.caretPositionFromPoint) {
+    const pos = doc.caretPositionFromPoint(clientX, clientY)
+    if (pos?.offsetNode) {
+      range = document.createRange()
+      range.setStart(pos.offsetNode, pos.offset)
+      range.collapse(true)
     }
-    return null
   }
 
-  const nearest = findNearestTextNode(textNodes, clientX, clientY)
-  if (!nearest) return null
+  // Ensure the coordinates are within our editable element
+  if (!range || !editable.contains(range.startContainer)) {
+    return getOffset(editable, clientX, clientY)
+  }
 
-  const offsetInNode = calculateHorizontalOffset(nearest.node, clientX, clientY)
-  return domPositionToUnformattedOffset(editable, nearest.node, offsetInNode)
+  const node = range.startContainer
+  const offset = range.startOffset
+  const nodeTextLength = node.textContent?.length || 0
+
+  // If the node is empty (placeholder text), return caret position at offset 0
+  if (nodeTextLength === 0) {
+    return 0
+  }
+
+  /** Get the bounding rectangle for a character at the given offset. */
+  const getCharRect = (targetOffset: number): DOMRect | null => {
+    // Ensure targetOffset is within valid bounds
+    if (targetOffset < 0 || targetOffset > nodeTextLength) {
+      return null
+    }
+
+    const charRange = document.createRange()
+    charRange.setStart(node, targetOffset)
+
+    // If targetOffset is at the end, collapse the range to that position
+    // Otherwise, set the end to targetOffset + 1 to get the character's bounding box
+    if (targetOffset >= nodeTextLength) {
+      charRange.collapse(true)
+    } else {
+      charRange.setEnd(node, targetOffset + 1)
+    }
+
+    return charRange.getBoundingClientRect()
+  }
+
+  /** Check if the coordinates are within a character's bounding box. */
+  const isInsideCharRect = (rect: DOMRect | null): boolean => {
+    if (!rect) return false
+    return clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom
+  }
+
+  /** Check if the coordinates are vertically contained within the character's bounding box. */
+  const isVerticallyContained = (rect: DOMRect | null): boolean => {
+    if (!rect) return false
+    return clientY >= rect.top && clientY <= rect.bottom
+  }
+
+  // Check whether the coordinates land on the character at the current offset or the one before it.
+  const isClickOnCharacter = [offset, offset - 1]
+    .filter(o => o >= 0 && o < nodeTextLength)
+    .some(checkOffset => isInsideCharRect(getCharRect(checkOffset)))
+
+  // Allow coordinates horizontally beyond text if vertically aligned with the text line
+  const isValidEdgeClick =
+    (offset === 0 || offset === nodeTextLength) &&
+    isVerticallyContained(getCharRect(offset === 0 ? 0 : nodeTextLength - 1))
+
+  // Valid coordinates on character, not a void area
+
+  if (isClickOnCharacter || isValidEdgeClick) return null
+
+  return getOffset(editable, clientX, clientY)
 }
 
 export default getNodeOffset
