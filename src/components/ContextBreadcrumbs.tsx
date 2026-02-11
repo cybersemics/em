@@ -23,7 +23,7 @@ import FadeTransition from './FadeTransition'
 import HomeLink from './HomeLink'
 import Link from './Link'
 import Superscript from './Superscript'
-import useBreadcrumbScaler, { BreadcrumbPlacement } from './scaler/useBreadcrumbScaler'
+import useBreadcrumbScaler, { BreadcrumbVariant } from './scaler/useBreadcrumbScaler'
 
 type OverflowChild = {
   id: ThoughtId
@@ -158,7 +158,7 @@ const ContextBreadcrumbs = ({
   hidden,
   homeContext,
   path,
-  placement = 'thought',
+  variant = 'default',
   staticText,
   thoughtsLimit,
   linkCssRaw,
@@ -174,8 +174,8 @@ const ContextBreadcrumbs = ({
   hidden?: boolean
   homeContext?: boolean
   path: Path
-  /** The location where the breadcrumb is displayed. */
-  placement?: BreadcrumbPlacement
+  /** The variant of the breadcrumb. */
+  variant?: BreadcrumbVariant
   /** Disables click on breadcrumb fragments. */
   staticText?: boolean
   thoughtsLimit?: number
@@ -188,7 +188,7 @@ const ContextBreadcrumbs = ({
     shallowEqual,
   )
   const ellipsizedThoughts = useEllipsizedThoughts(pathFiltered, { charLimit, disabled, thoughtsLimit })
-  const scaler = useBreadcrumbScaler(placement)
+  const scaler = useBreadcrumbScaler(variant)
 
   /** Clones the direct breadcrumb children to inject isDeleting animation state. */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

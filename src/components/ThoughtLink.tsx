@@ -37,7 +37,7 @@ const ThoughtLink = ({
     return thought?.value
   })
 
-  const breadcrumbScaler = useBreadcrumbScaler('thoughtLink')
+  const breadcrumbScaler = useBreadcrumbScaler('small')
   return (
     <div>
       {!hideContext && (
@@ -51,7 +51,7 @@ const ThoughtLink = ({
           <ContextBreadcrumbs
             hideArchive={hideArchive}
             path={parentPath}
-            placement='thoughtLink'
+            variant='small'
             staticText={staticBreadcrumbs}
             charLimit={charLimit || 32}
             thoughtsLimit={thoughtsLimit || 10}

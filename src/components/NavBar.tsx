@@ -37,7 +37,7 @@ const CursorBreadcrumbs = ({ position }: { position: string }) => {
         },
       })}
       path={breadcrumbSimplePath}
-      placement='navbar'
+      variant='small'
     />
   )
 }
