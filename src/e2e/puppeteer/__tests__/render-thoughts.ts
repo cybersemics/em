@@ -10,6 +10,7 @@ import press from '../helpers/press'
 import screenshot from '../helpers/screenshot-with-no-antialiasing'
 import scroll from '../helpers/scroll'
 import setTheme from '../helpers/setTheme'
+import { page } from '../setup'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
@@ -241,6 +242,35 @@ describe('Superscripts', () => {
     await clickThought('m')
 
     await command('toggleContextView')
+
+    await hideHUD()
+    expect(await screenshot()).toMatchImageSnapshot()
+  })
+
+  it('paste text from a note into a thought', async () => {
+    const importText = `
+      - This is a thought
+        - =note
+          - This is a note
+    `
+
+    await paste(importText)
+
+    const note = await page.$('[aria-label=note-editable]')
+    const boundingBox = await note?.boundingBox()
+
+    if (boundingBox) {
+      // Calculate the edge of the note, inside the first word ('This')
+      const x = boundingBox.x + 1
+      const y = boundingBox.y + boundingBox.height / 2
+
+      // Perform the double-click
+      await page.mouse.click(x, y, { clickCount: 2 })
+    }
+
+    await press('c', { ctrl: true })
+    await clickThought('This is a thought')
+    await press('v', { ctrl: true })
 
     await hideHUD()
     expect(await screenshot()).toMatchImageSnapshot()
