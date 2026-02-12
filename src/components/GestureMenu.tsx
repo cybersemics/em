@@ -1,7 +1,6 @@
 import React, { FC, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
-import { token } from '../../styled-system/tokens'
 import Command from '../@types/Command'
 import { gestureString } from '../commands'
 import openMobileCommandUniverseCommand from '../commands/openMobileCommandUniverse'
@@ -159,7 +158,6 @@ const GestureMenuWithTransition: FC = () => {
   const popupRef = useRef<HTMLDivElement>(null)
 
   const showGestureMenu = useSelector(state => state.showGestureMenu)
-  // const showGestureMenu = true
 
   // Commands need to be calculated even if the gesture menu is not shown because useFilteredCommands is responsible for updating gestureStore's possibleCommands which is needed to prevent haptics when there are no more possible commands. Otherwise, either haptics would continue to fire when there are no more possible commands, or would falsely fire when the current sequence is not a valid gesture but there are possible commands with additional swipes.
   const [recentCommands] = useState(storageModel.get('recentCommands'))
@@ -185,7 +183,7 @@ const GestureMenuWithTransition: FC = () => {
 
   if (!showGestureMenu) return null
   return (
-    <PopupBase background={token('colors.bgOverlay50')} ref={popupRef} fullScreen>
+    <PopupBase background='transparent' ref={popupRef} fullScreen>
       <div
         data-testid='popup-value'
         className={css({
@@ -211,6 +209,7 @@ const GestureMenuWithTransition: FC = () => {
               isolation: 'isolate',
               width: '100%',
               paddingBottom: '200px',
+              background: 'bgOverlay50',
             })}
           >
             <Overlay />
