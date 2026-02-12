@@ -43,16 +43,16 @@ const SECTIONS: SidebarSection[] = [
  * for the current SidebarSection. It can be tapped to toggle a dropdown
  * view, which shows all SidebarSections.
  */
-const SidebarHeader = ({ sections, sectionId, onSectionChange } : { sections: SidebarSection[], sectionId: SidebarSectionId, onSectionChange: (id: SidebarSectionId) => void }) =>  {
-  const [isOpen, setIsOpen] = useState(false)
-  const showSidebar = useSelector(state => state.showSidebar)
-
-  useEffect(() => {
-    if (!showSidebar) setIsOpen(false)
-  }, [showSidebar])
-
+const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen, onDropdownHeight } : { sections: SidebarSection[], sectionId: SidebarSectionId, onSectionChange: (id: SidebarSectionId) => void, isOpen: boolean, setIsOpen: (open: boolean) => void, onDropdownHeight: (height: number) => void }) =>  {
+  const dropdownRef = useRef<HTMLDivElement>(null)
   const section = sections.find((s) => s.id === sectionId)
   const otherSections = sections.filter((s) => s.id !== sectionId)
+
+  useEffect(() => {
+    if (isOpen && dropdownRef.current) {
+      onDropdownHeight(dropdownRef.current.scrollHeight)
+    }
+  }, [isOpen, sectionId])
 
   return (
     <div className={css({ position: 'relative' })}>
@@ -94,16 +94,17 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange } : { sections: Si
                 right: '-1em',
                 height: '100vh',
                 backdropFilter: 'blur(8px)',
-                background: 'rgba(0, 0, 0, 0.2)',
+                background: 'rgba(0, 0, 0, 0.001)',
                 cursor: 'pointer',
               })}
             />
             <motion.div
+              ref={dropdownRef}
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: durations.get('medium') / 1000, ease: [0.16, 0.6, 0.2, 1] }}
-              style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}
+              style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}
             >
               {otherSections.map((s) => (
                 <div
@@ -150,6 +151,27 @@ const SidebarSectionLabel = ({ children, active }: { children: React.ReactNode, 
     })}>{children}</div>
   )
 }
+
+/** Overlay layer that adds middle tones to the sidebar colour blend. */
+const SidebarOverlay2 = ({ width, opacity }: { width: string, opacity: MotionValue<number> }) => (
+  <motion.div
+    style={{ opacity }}
+    className={css({
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      bottom: 0,
+      width,
+      backgroundImage: 'url(/img/sidebar/overlay-layer-2.webp)',
+      backgroundSize: 'cover',
+      backgroundPosition: 'top center',
+      mixBlendMode: 'screen',
+      pointerEvents: 'none',
+      zIndex: 'sidebar',
+      filter: 'blur(8px)'
+    })}
+  />
+)
 
 /** The sidebar gradient overlay. */
 const SidebarGradient = ({
@@ -253,7 +275,14 @@ const Sidebar = () => {
   const longPressState = useSelector(state => state.longPress)
   const dispatch = useDispatch()
   const [sectionId, setSectionId] = useState<SidebarSectionId>('favorites')
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [dropdownHeight, setDropdownHeight] = useState(0)
   const innerWidth = viewportStore.useSelector(state => state.innerWidth)
+
+  // Close the dropdown when the sidebar closes
+  useEffect(() => {
+    if (!showSidebar) setDropdownOpen(false)
+  }, [showSidebar])
 
   // ============================
   // Refs
@@ -554,6 +583,8 @@ const Sidebar = () => {
               width={width}
             />
 
+            <SidebarOverlay2 width={width} opacity={contentOpacity} />
+
             <Dialog.Content
               asChild
               forceMount
@@ -661,19 +692,27 @@ const Sidebar = () => {
                           sections={SECTIONS}
                           sectionId={sectionId}
                           onSectionChange={setSectionId}
+                          isOpen={dropdownOpen}
+                          setIsOpen={setDropdownOpen}
+                          onDropdownHeight={setDropdownHeight}
                         />
                       </div>
                     </FadeTransition>
 
-                    {sectionId === 'favorites' ? (
-                      <Favorites disableDragAndDrop={isSwiping} />
-                    ) : sectionId === 'recentlyEdited' ? (
-                      <RecentlyEdited />
-                    ) : sectionId === 'recentlyDeleted' ? (
-                      <RecentlyDeleted />
-                    ) : (
-                      'Not yet implemented'
-                    )}
+                    <motion.div
+                      animate={{ paddingTop: dropdownOpen ? `${dropdownHeight}px` : '0px' }}
+                      transition={{ duration: durations.get('medium') / 1000, ease: [0.16, 0.6, 0.2, 1] }}
+                    >
+                      {sectionId === 'favorites' ? (
+                        <Favorites disableDragAndDrop={isSwiping} />
+                      ) : sectionId === 'recentlyEdited' ? (
+                        <RecentlyEdited />
+                      ) : sectionId === 'recentlyDeleted' ? (
+                        <RecentlyDeleted />
+                      ) : (
+                        'Not yet implemented'
+                      )}
+                    </motion.div>
                   </div>
                 </div>
               </motion.div>
