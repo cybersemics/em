@@ -163,22 +163,28 @@ const GestureMenuWithTransition: FC = () => {
     sortActiveCommandsFirst: true,
   })
 
-  // Start with false so CSSTransition sees a false→true transition on mount,
-  // which triggers the enter animation.
+  // Start with false so CSSTransition sees a false -> true transition on mount,
+  // which triggers the fade-in animation.
   const [fadeAnimation, setFadeAnimation] = useState(false)
+  // Track whether the component should remain rendered during exit animation.
+  const [shouldRender, setShouldRender] = useState(false)
   const overlayRef = useRef<HTMLDivElement>(null)
 
   React.useEffect(() => {
     // when showGestureMenu changes, set fadeAnimation to true or false
     // this is used to trigger the fade animation when the gesture menu is shown or hidden
     if (showGestureMenu) {
+      setShouldRender(true)
       setFadeAnimation(true)
     } else {
       setFadeAnimation(false)
+      // Don't set shouldRender to false here.
+      // let onExited handle it so that we can animate the exit of the gesture menu.
     }
   }, [showGestureMenu])
 
-  if (!showGestureMenu) return null
+  // Render if either showGestureMenu is true (for enter) or shouldRender is true (for exit animation)
+  if (!showGestureMenu && !shouldRender) return null
   return (
     <PopupBase background='transparent' ref={popupRef} fullScreen>
       <div
@@ -197,7 +203,13 @@ const GestureMenuWithTransition: FC = () => {
         <ProgressiveBlur />
         {/* Apply the fade transition only to the glow, overlay, and gesture menu contents 
         to prevent the progressive blur from appearing only after the animation ends. */}
-        <FadeTransition nodeRef={overlayRef} in={fadeAnimation} type='fast' unmountOnExit>
+        <FadeTransition
+          nodeRef={overlayRef}
+          in={fadeAnimation}
+          type='fast'
+          unmountOnExit
+          onExited={() => setShouldRender(false)}
+        >
           <div
             ref={overlayRef}
             className={css({
