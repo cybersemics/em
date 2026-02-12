@@ -55,7 +55,7 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange } : { sections: Si
   const otherSections = sections.filter((s) => s.id !== sectionId)
 
   return (
-    <div>
+    <div className={css({ position: 'relative' })}>
       <div
         {...fastClick(() => setIsOpen(!isOpen))}
         className={css({
@@ -80,38 +80,57 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange } : { sections: Si
 
       <AnimatePresence>
         {isOpen && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: durations.get('medium') / 1000, ease: [0.16, 0.6, 0.2, 1] }}
-            style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}
-          >
-            {otherSections.map((s) => (
-              <div
-                key={s.id}
-                {...fastClick(() => {
-                  onSectionChange(s.id)
-                  setIsOpen(false)
-                })}
-                className={css({
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  cursor: 'pointer',
-                  marginTop: '0.5rem',
-                  opacity: 0.6,
-                  _hover: { opacity: 1 },
-                  transition: 'opacity 0.15s ease-out',
-                })}
-              >
-                <div className={css({ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 })}>
-                  <s.icon size={20} fill='#C5EFF2' />
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: durations.get('medium') / 1000, ease: [0.16, 0.6, 0.2, 1] }}
+              {...fastClick(() => setIsOpen(false))}
+              className={css({
+                position: 'absolute',
+                top: '100%',
+                left: '-1em',
+                right: '-1em',
+                height: '100vh',
+                backdropFilter: 'blur(8px)',
+                background: 'rgba(0, 0, 0, 0.2)',
+                cursor: 'pointer',
+              })}
+            />
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: durations.get('medium') / 1000, ease: [0.16, 0.6, 0.2, 1] }}
+              style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}
+            >
+              {otherSections.map((s) => (
+                <div
+                  key={s.id}
+                  {...fastClick(() => {
+                    onSectionChange(s.id)
+                    setIsOpen(false)
+                  })}
+                  className={css({
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    cursor: 'pointer',
+                    marginTop: '0.5rem',
+                    opacity: 0.6,
+                    _hover: { opacity: 1 },
+                    transition: 'opacity 0.15s ease-out',
+                  })}
+                >
+                  <div className={css({ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 })}>
+                    <s.icon size={20} fill='#C5EFF2' />
+                  </div>
+                  <SidebarSectionLabel active={false}>{s.label}</SidebarSectionLabel>
                 </div>
-                <SidebarSectionLabel active={false}>{s.label}</SidebarSectionLabel>
-              </div>
-            ))}
-          </motion.div>
+              ))}
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </div>
