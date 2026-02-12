@@ -17,6 +17,10 @@ import Favorites from './Favorites'
 import { ProgressiveBlur } from './ProgressiveBlur'
 import RecentlyDeleted from './RecentlyDeleted'
 import RecentlyEdited from './RecentlyEdited'
+import FavoritesIcon from './icons/FavoritesIcon'
+import PencilIcon from './icons/PencilIcon'
+import DeleteIcon from './icons/DeleteIcon'
+import ChevronImg from './ChevronImg'
 
 /** Valid sidebar section IDs. */
 type SidebarSectionId = 'favorites' | 'recentlyEdited' | 'recentlyDeleted'
@@ -25,14 +29,50 @@ type SidebarSectionId = 'favorites' | 'recentlyEdited' | 'recentlyDeleted'
 type SidebarSection = {
   id: SidebarSectionId
   label: string
+  icon: React.ComponentType
 }
 
 /** All available sidebar sections. */
 const SECTIONS: SidebarSection[] = [
-  { id: 'favorites', label: 'Favorites' },
-  { id: 'recentlyEdited', label: 'Recently Edited' },
-  { id: 'recentlyDeleted', label: 'Recently Deleted' },
+  { id: 'favorites', label: 'Favorites', icon: FavoritesIcon },
+  { id: 'recentlyEdited', label: 'Recently Edited', icon: PencilIcon },
+  { id: 'recentlyDeleted', label: 'Recently Deleted', icon: DeleteIcon },
 ]
+
+/** The header for the sidebar, which by default shows the icon and label
+ * for the current SidebarSection. It can be tapped to toggle a dropdown
+ * view, which shows all SidebarSections.
+ */
+const SidebarHeader = ({ sectionId, onSectionChange, dropdownOpen } : { sectionId: SidebarSectionId, onSectionChange: (id: SidebarSectionId, dropdownOpen: boolean ) => void }) =>  {
+  const section = SECTIONS.find((s) => s.id === sectionId)
+  
+  return (
+    <div className={css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '0.5rem'
+    })}>
+      <section.icon size={24} fill='#C5EFF2' />
+      <SidebarSectionLabel>{section.label}</SidebarSectionLabel>
+      <ChevronImg />
+
+      
+    </div>
+  )
+} 
+
+/** A label for a sidebar section. */
+const SidebarSectionLabel = ({ children, active }: { children: React.ReactNode, active: boolean }) => {
+  return (
+    <div className={css({
+      background: 'linear-gradient(180deg, #C7F4FF 17.78%, rgba(199, 244, 255, 0.75) 82.22%)',
+      backgroundClip: 'text',
+      WebkitTextFillColor: 'transparent',
+      fontSize: '1.25rem',
+      letterSpacing: '-1px',
+    })}>{children}</div>
+  )
+}
 
 /** A link to a sidebar section. */
 const SidebarLink = ({
@@ -565,17 +605,14 @@ const Sidebar = () => {
                       <div
                         style={{
                           // match HamburgerMenu width + padding
-                          marginLeft: fontSize * 1.3 + 30,
+                          marginTop: fontSize * 1.3 + 30,
                         }}
                       >
-                        {SECTIONS.map(section => (
-                          <SidebarLink
-                            key={section.id}
-                            active={sectionId === section.id}
-                            section={section}
-                            setSection={setSectionId}
-                          />
-                        ))}
+                        <SidebarHeader
+                          sections={SECTIONS}
+                          sectionId={sectionId}
+                          onSectionChange={setSectionId}
+                        />
                       </div>
                     </FadeTransition>
 
