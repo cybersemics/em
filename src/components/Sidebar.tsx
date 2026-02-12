@@ -1,6 +1,6 @@
 import * as Dialog from '@radix-ui/react-dialog'
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden'
-import { MotionValue, animate, motion, useMotionValue, useTransform } from 'framer-motion'
+import { AnimatePresence, MotionValue, animate, motion, useMotionValue, useTransform } from 'framer-motion'
 import _ from 'lodash'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
@@ -43,20 +43,77 @@ const SECTIONS: SidebarSection[] = [
  * for the current SidebarSection. It can be tapped to toggle a dropdown
  * view, which shows all SidebarSections.
  */
-const SidebarHeader = ({ sectionId, onSectionChange, dropdownOpen } : { sectionId: SidebarSectionId, onSectionChange: (id: SidebarSectionId, dropdownOpen: boolean ) => void }) =>  {
-  const section = SECTIONS.find((s) => s.id === sectionId)
-  
-  return (
-    <div className={css({
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: '0.5rem'
-    })}>
-      <section.icon size={24} fill='#C5EFF2' />
-      <SidebarSectionLabel>{section.label}</SidebarSectionLabel>
-      <ChevronImg />
+const SidebarHeader = ({ sections, sectionId, onSectionChange } : { sections: SidebarSection[], sectionId: SidebarSectionId, onSectionChange: (id: SidebarSectionId) => void }) =>  {
+  const [isOpen, setIsOpen] = useState(false)
+  const showSidebar = useSelector(state => state.showSidebar)
 
-      
+  useEffect(() => {
+    if (!showSidebar) setIsOpen(false)
+  }, [showSidebar])
+
+  const section = sections.find((s) => s.id === sectionId)
+  const otherSections = sections.filter((s) => s.id !== sectionId)
+
+  return (
+    <div>
+      <div
+        {...fastClick(() => setIsOpen(!isOpen))}
+        className={css({
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          cursor: 'pointer',
+        })}
+      >
+        <div className={css({ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 })}>
+          <section.icon size={24} fill='#C5EFF2' />
+        </div>
+        <SidebarSectionLabel>{section.label}</SidebarSectionLabel>
+        <ChevronImg
+          onClickHandle={() => setIsOpen(!isOpen)}
+          additonalStyle={{
+            transition: 'transform 0.2s ease-out',
+            transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+          }}
+        />
+      </div>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: durations.get('medium') / 1000, ease: [0.16, 0.6, 0.2, 1] }}
+            style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}
+          >
+            {otherSections.map((s) => (
+              <div
+                key={s.id}
+                {...fastClick(() => {
+                  onSectionChange(s.id)
+                  setIsOpen(false)
+                })}
+                className={css({
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  cursor: 'pointer',
+                  marginTop: '0.5rem',
+                  opacity: 0.6,
+                  _hover: { opacity: 1 },
+                  transition: 'opacity 0.15s ease-out',
+                })}
+              >
+                <div className={css({ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 })}>
+                  <s.icon size={20} fill='#C5EFF2' />
+                </div>
+                <SidebarSectionLabel active={false}>{s.label}</SidebarSectionLabel>
+              </div>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 } 
@@ -70,35 +127,8 @@ const SidebarSectionLabel = ({ children, active }: { children: React.ReactNode, 
       WebkitTextFillColor: 'transparent',
       fontSize: '1.25rem',
       letterSpacing: '-1px',
+      fontWeight: 500
     })}>{children}</div>
-  )
-}
-
-/** A link to a sidebar section. */
-const SidebarLink = ({
-  active,
-  section,
-  setSection,
-}: {
-  active?: boolean
-  section: SidebarSection
-  setSection: (id: SidebarSectionId) => void
-}) => {
-  return (
-    <a
-      {...fastClick(() => setSection(section.id))}
-      data-testid={`sidebar-${section.id}`}
-      className={css({
-        color: active ? 'fg' : 'gray50',
-        display: 'inline-block',
-        fontSize: '1.2em',
-        fontWeight: 600,
-        margin: '0.5em 1em 0 0',
-        textDecoration: 'none',
-      })}
-    >
-      {section.label}
-    </a>
   )
 }
 
