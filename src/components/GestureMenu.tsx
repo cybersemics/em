@@ -5,7 +5,12 @@ import Command from '../@types/Command'
 import { gestureString } from '../commands'
 import openGestureCheatsheetCommand from '../commands/openGestureCheatsheet'
 import useFilteredCommands from '../hooks/useFilteredCommands'
-import gestureStore from '../stores/gesture'
+import gestureStore, {
+  onGestureMenuEntered,
+  onGestureMenuExited,
+  startGestureMenuEnter,
+  startGestureMenuExit,
+} from '../stores/gesture'
 import storageModel from '../stores/storageModel'
 import CommandItem from './CommandItem'
 import FadeTransition from './FadeTransition'
@@ -153,8 +158,10 @@ function Overlay() {
 /** A GestureMenu component that fades in and out based on state.showGestureMenu. */
 const GestureMenuWithTransition: FC = () => {
   const popupRef = useRef<HTMLDivElement>(null)
+  const overlayRef = useRef<HTMLDivElement>(null)
 
   const showGestureMenu = useSelector(state => state.showGestureMenu)
+  const animationState = gestureStore.useSelector(state => state.gestureMenuAnimationState)
 
   // Commands need to be calculated even if the gesture menu is not shown because useFilteredCommands is responsible for updating gestureStore's possibleCommands which is needed to prevent haptics when there are no more possible commands. Otherwise, either haptics would continue to fire when there are no more possible commands, or would falsely fire when the current sequence is not a valid gesture but there are possible commands with additional swipes.
   const [recentCommands] = useState(storageModel.get('recentCommands'))
@@ -163,28 +170,30 @@ const GestureMenuWithTransition: FC = () => {
     sortActiveCommandsFirst: true,
   })
 
-  // Start with false so CSSTransition sees a false -> true transition on mount,
-  // which triggers the fade-in animation.
-  const [fadeAnimation, setFadeAnimation] = useState(false)
-  // Track whether the component should remain rendered during exit animation.
-  const [shouldRender, setShouldRender] = useState(false)
-  const overlayRef = useRef<HTMLDivElement>(null)
-
+  // Sync Redux showGestureMenu to gestureStore animation state
   React.useEffect(() => {
-    // when showGestureMenu changes, set fadeAnimation to true or false
-    // this is used to trigger the fade animation when the gesture menu is shown or hidden
-    if (showGestureMenu) {
-      setShouldRender(true)
-      setFadeAnimation(true)
-    } else {
-      setFadeAnimation(false)
-      // Don't set shouldRender to false here.
-      // let onExited handle it so that we can animate the exit of the gesture menu.
+    if (showGestureMenu && animationState === 'hidden') {
+      // Start enter animation only when menu opens and we're in hidden state
+      startGestureMenuEnter()
+    } else if (!showGestureMenu && animationState !== 'hidden' && animationState !== 'exiting') {
+      // Start exit animation only when menu closes and we're not already hidden or exiting
+      startGestureMenuExit()
     }
-  }, [showGestureMenu])
+  }, [showGestureMenu, animationState])
 
-  // Render if either showGestureMenu is true (for enter) or shouldRender is true (for exit animation)
-  if (!showGestureMenu && !shouldRender) return null
+  // Transition from 'entering' to 'visible' to trigger the fade-in animation.
+  // Component mounts with in={false} when 'entering', then in={true} when 'visible'.
+  React.useEffect(() => {
+    if (animationState === 'entering') {
+      onGestureMenuEntered()
+    }
+  }, [animationState])
+
+  // Don't render if hidden
+  if (animationState === 'hidden') return null
+
+  // fadeIn is true only when 'visible' - this gives CSSTransition a frame with in={false} when mounting
+  const fadeIn = animationState === 'visible'
   return (
     <PopupBase background='transparent' ref={popupRef} fullScreen>
       <div
@@ -205,10 +214,11 @@ const GestureMenuWithTransition: FC = () => {
         to prevent the progressive blur from appearing only after the animation ends. */}
         <FadeTransition
           nodeRef={overlayRef}
-          in={fadeAnimation}
+          in={fadeIn}
           type='fast'
           unmountOnExit
-          onExited={() => setShouldRender(false)}
+          onEntered={onGestureMenuEntered}
+          onExited={onGestureMenuExited}
         >
           <div
             ref={overlayRef}
