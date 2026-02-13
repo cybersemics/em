@@ -220,21 +220,31 @@ const GestureMenuWithTransition: FC = () => {
           onEntered={onGestureMenuEntered}
           onExited={onGestureMenuExited}
         >
-          <div
-            ref={overlayRef}
-            className={css({
-              position: 'relative',
-              // prevent mix-blend-mode and backdrop-filter from affecting each other
-              isolation: 'isolate',
-              width: '100%',
-              paddingBottom: '200px',
-              background: 'bgOverlay50',
-            })}
-          >
-            <Overlay />
-            <Glow />
-            <GestureMenu commands={commands} />
-          </div>
+          <>
+            <div
+              className={css({
+                background: 'bgOverlay50',
+                position: 'absolute',
+                inset: 0,
+                width: '100%',
+                height: '100vh',
+              })}
+            />
+            <div
+              ref={overlayRef}
+              className={css({
+                position: 'relative',
+                // prevent mix-blend-mode and backdrop-filter from affecting each other
+                isolation: 'isolate',
+                width: '100%',
+                paddingBottom: '200px',
+              })}
+            >
+              <Overlay />
+              <Glow />
+              <GestureMenu commands={commands} />
+            </div>
+          </>
         </FadeTransition>
       </div>
     </PopupBase>
