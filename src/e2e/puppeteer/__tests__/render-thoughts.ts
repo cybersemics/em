@@ -3,6 +3,7 @@ import configureSnapshots from '../configureSnapshots'
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
 import command from '../helpers/command'
+import exportThoughts from '../helpers/exportThoughts'
 import hide from '../helpers/hide'
 import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
@@ -272,7 +273,11 @@ describe('Superscripts', () => {
     await clickThought('This is a thought')
     await press('v', { ctrl: true })
 
-    await hideHUD()
-    expect(await screenshot()).toMatchImageSnapshot()
+    // get exported html and compress all indentation (whitespace before/after newline)
+    const output = (await exportThoughts('text/html')).replace(/\s*\n\s*/g, '')
+
+    const expected = `<ul><li>__ROOT__<ul><li>This is a Thisthought<ul><li>=note<ul><li>This is a note</li></ul></li></ul></li></ul></li></ul>`
+
+    expect(output).toBe(expected)
   })
 })
