@@ -152,6 +152,33 @@ const SidebarSectionLabel = ({ children, active }: { children: React.ReactNode, 
   )
 }
 
+/** Overlay layer positioned under the collapsible switcher. Expands when the dropdown opens. */
+const SidebarOverlay1 = ({ width, opacity, expanded, expandedHeight }: { width: string, opacity: MotionValue<number>, expanded: boolean, expandedHeight: number }) => {
+  return (
+    <motion.div
+      data-test-id={'sidebar-overlay-1'}
+      style={{ opacity }}
+      transition={{ duration: durations.get('medium') / 1000, ease: [0.16, 0.6, 0.2, 1] }}
+      className={css({
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width,
+        height: '100vh',
+        backgroundImage: 'url(/img/sidebar/overlay-layer-1.webp)',
+        backgroundSize: '200%',
+        backgroundPosition: 'top',
+        backgroundRepeat: 'no-repeat',
+        transform: 'translateY(-80px)',
+        mixBlendMode: 'screen',
+        pointerEvents: 'none',
+        zIndex: 'sidebar',
+        filter: 'blur(16px)',
+      })}
+    />
+  )
+}
+
 /** Overlay layer that adds middle tones to the sidebar colour blend. */
 const SidebarOverlay2 = ({ width, opacity }: { width: string, opacity: MotionValue<number> }) => (
   <motion.div
@@ -583,6 +610,7 @@ const Sidebar = () => {
               width={width}
             />
 
+            <SidebarOverlay1 width={width} opacity={contentOpacity} expanded={dropdownOpen} expandedHeight={dropdownHeight} />
             <SidebarOverlay2 width={width} opacity={contentOpacity} />
 
             <Dialog.Content
