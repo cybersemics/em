@@ -589,7 +589,7 @@ export const keyDown = (e: KeyboardEvent) => {
   if (state.showCommandPalette) return
 
   const command = commandKeyIndex[hashKeyDown(e)]
-  keyCommandId = command.id
+  keyCommandId = command?.id
 
   // disable if modal is shown, except for navigation commands
   if (!command || state.showGestureCheatsheet || (state.showModal && !command.allowExecuteFromModal)) return
