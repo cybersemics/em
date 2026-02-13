@@ -17,7 +17,7 @@ import { newThoughtActionCreator as newThought } from '../actions/newThought'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import { tutorialNextActionCreator as tutorialNext } from '../actions/tutorialNext'
-import { isMac, isTouch } from '../browser'
+import { isMac, isSafari, isTouch } from '../browser'
 import { commandEmitter } from '../commands'
 import {
   EDIT_THROTTLE,
@@ -49,7 +49,7 @@ import addEmojiSpace from '../util/addEmojiSpace'
 import containsURL from '../util/containsURL'
 import ellipsize from '../util/ellipsize'
 import equalPath from '../util/equalPath'
-import getNodeOffsetForVoidArea from '../util/getNodeOffset'
+import getNodeOffsetForVoidArea from '../util/getNodeOffsetForVoidArea'
 import haptics from '../util/haptics'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
@@ -139,19 +139,6 @@ const Editable = ({
   // https://github.com/cybersemics/em/pull/3703
   const disabled = useSelector(state => !isDocumentEditable || state.longPress === LongPressState.DragInProgress)
 
-  // Touch overlay: deferred caret placement so preventDefault in touchend doesn't block scroll
-  // const pendingCaretOffsetRef = useRef<number | null>(null)
-  // const touchStartPosRef = useRef<{ x: number; y: number } | null>(null)
-  // const touchStartTimeRef = useRef<number>(0)
-  // const lastTapTimeRef = useRef<number>(0)
-  // const lastTapPosRef = useRef<{ x: number; y: number } | null>(null)
-  // const isDoubleTapRef = useRef<boolean>(false)
-  // const overlayRestoreTimerRef = useRef<NodeJS.Timeout | null>(null)
-  // const SCROLL_THRESHOLD_PX = 10
-  // const MAX_TAP_DURATION_MS = 500
-  // const DOUBLE_TAP_WINDOW_MS = 300
-  // const DOUBLE_TAP_THRESHOLD_PX = 25
-
   // console.info('<Editable> ' + prettyPath(store.getState(), simplePath))
   // useWhyDidYouUpdate('<Editable> ' + prettyPath(state, simplePath), {
   //   cursorOffset,
@@ -171,7 +158,6 @@ const Editable = ({
   //   isCursorCleared,
   // })
   const pendingCaretOffsetRef = useRef<number | null>(null)
-  const touchStartTimeRef = useRef<number>(0)
   const touchStartPosRef = useRef<{ x: number; y: number } | null>(null)
   const SCROLL_THRESHOLD_PX = 10
 
@@ -584,7 +570,7 @@ const Editable = ({
         })
 
         // Handle manual caret offset for non-touch devices only
-        if (!isTouch) {
+        if (!isTouch || !isSafari()) {
           const nodeOffset = getNodeOffsetForVoidArea(contentRef.current, {
             clientX: e.clientX,
             clientY: e.clientY,
@@ -595,6 +581,8 @@ const Editable = ({
           if (nodeOffset !== null) {
             e.preventDefault()
             setCaretOffset(nodeOffset)
+          } else {
+            allowDefaultSelection()
           }
         } else {
           allowDefaultSelection()
@@ -666,32 +654,32 @@ const Editable = ({
     [disabled, dispatch, editingOrOnCursor, isVisible, setCursorOnThought],
   )
 
+  // Manually attach touchstart listener with { passive: false } to allow preventDefault
   useEffect(() => {
-    if (!isTouch) return
+    if (!isTouch || !isSafari()) return
     const editable = contentRef.current
     if (!editable) return
 
     /** Handle touch start event to set the pending caret offset and prevent default behavior when tapping on a void area. */
     const onTouchStart = (e: TouchEvent) => {
-      const touch = e.touches[0]
-      if (!touch) return
-      const now = Date.now()
-      const pos = { x: touch.clientX, y: touch.clientY }
-      const nodeOffset = getNodeOffsetForVoidArea(editable, {
-        clientX: touch.clientX,
-        clientY: touch.clientY,
-      })
+      if (editingOrOnCursor && !hasMulticursor && e.touches.length > 0) {
+        const touch = e.touches[0]
+        if (!touch) return
+        const pos = { x: touch.clientX, y: touch.clientY }
+        const nodeOffset = getNodeOffsetForVoidArea(editable, {
+          clientX: touch.clientX,
+          clientY: touch.clientY,
+        })
 
-      if (nodeOffset !== null) {
-        e.preventDefault()
-        pendingCaretOffsetRef.current = nodeOffset
-      } else {
-        allowDefaultSelection()
+        if (nodeOffset !== null) {
+          e.preventDefault()
+          pendingCaretOffsetRef.current = nodeOffset
+        } else {
+          allowDefaultSelection()
+        }
+        // update the touch start position
+        touchStartPosRef.current = pos
       }
-      // update the touch start time and position
-      touchStartTimeRef.current = now
-      touchStartPosRef.current = pos
-      pendingCaretOffsetRef.current = nodeOffset
     }
 
     /** Handle touch move event to cancel the pending caret offset if the user scrolls. */
@@ -725,7 +713,7 @@ const Editable = ({
       editable.removeEventListener('touchmove', handleTouchMove)
       editable.removeEventListener('touchend', handleTouchEnd)
     }
-  }, [contentRef, allowDefaultSelection, setCaretOffset])
+  }, [contentRef, editingOrOnCursor, hasMulticursor, allowDefaultSelection, setCaretOffset])
 
   return (
     <ContentEditable
