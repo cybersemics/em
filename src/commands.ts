@@ -48,7 +48,7 @@ export const globalCommands: Command[] = Object.values(commandsObject)
 
 export const commandEmitter = new Emitter()
 
-let keyCommand: Command | null = null
+let keyCommandId: string | null = null
 
 /* A mapping of key codes to uppercase letters.
  * {
@@ -553,9 +553,10 @@ export const handleGestureCancel = () => {
   })
 }
 
-/** Prevent default in beforeinput event instead of keydown to preserve default iOS keyboard behavior. */
+/** In the specific case of the newThought command, prevent default in beforeinput event instead of keydown to preserve default iOS
+ * auto-capitalization behavior. The Enter character needs to be prevented so that it doesn't get inserted into the new thought (#3707). */
 export const beforeInput = (e: InputEvent) => {
-  if (keyCommand?.preventInput) e.preventDefault()
+  if (keyCommandId === 'newThought') e.preventDefault()
 }
 
 /** Global keyUp handler. */
@@ -564,7 +565,7 @@ export const keyUp = (e: KeyboardEvent) => {
   if (e.key === (isMac ? 'Meta' : 'Control') && globals.suppressExpansion) {
     store.dispatch(suppressExpansion(false))
   }
-  keyCommand = null
+  keyCommandId = null
 }
 
 /** Global keyDown handler. */
@@ -588,7 +589,7 @@ export const keyDown = (e: KeyboardEvent) => {
   if (state.showCommandPalette) return
 
   const command = commandKeyIndex[hashKeyDown(e)]
-  keyCommand = command
+  keyCommandId = command.id
 
   // disable if modal is shown, except for navigation commands
   if (!command || state.showGestureCheatsheet || (state.showModal && !command.allowExecuteFromModal)) return
