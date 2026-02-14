@@ -204,7 +204,7 @@
     "@wdio/spec-reporter": "^9.23.3",
     "@wdio/types": "^9.23.3",
     "chalk": "^5.6.2",
-    "dotenv": "17.2.3",
+    "dotenv": "17.2.4",
     "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-export-default-identifier": "0.3.0",
