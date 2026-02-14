@@ -78,7 +78,8 @@
     "page-lifecycle": "https://codeload.github.com/magic-akari/page-lifecycle/tar.gz/50b50421bdeab3d211a57e81a277f699638373b0",
     "y-indexeddb": "https://codeload.github.com/raineorshine/y-indexeddb/tar.gz/60b960009085b1a988b5064ee35703229231531f",
     "use-latest": "^1.3.0",
-    "use-isomorphic-layout-effect": "^1.2.1"
+    "use-isomorphic-layout-effect": "^1.2.1",
+    "@typescript-eslint/utils": "^8.55.0"
   },
   "workspaces": [
     "packages/*"
@@ -205,7 +206,7 @@
     "@wdio/types": "^9.23.3",
     "chalk": "^5.6.2",
     "dotenv": "17.2.4",
-    "eslint": "^10.0.0",
+    "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-export-default-identifier": "0.3.0",
     "eslint-plugin-import": "^2.32.0",
