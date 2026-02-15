@@ -80,6 +80,8 @@ const newThoughtCommand: Command = {
   // Preventing default on keydown is undesirable because it disables auto-capitalization on iOS Safari. (#3707)
   permitDefault: true,
   svg: Icon,
+  // Just chain the immediateyl useful outdent command for now. More can be added in the future.
+  isChainable: command => command.id === 'outdent',
   canExecute: () => isDocumentEditable(),
   exec,
 }

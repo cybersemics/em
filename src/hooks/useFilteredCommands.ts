@@ -5,12 +5,10 @@ import Command from '../@types/Command'
 import CommandId from '../@types/CommandId'
 import State from '../@types/State'
 import { isTouch } from '../browser'
-import { chainCommand, commandById, gestureString, globalCommands } from '../commands'
-import newThoughtCommand from '../commands/newThought'
+import { chainCommand, gestureString, globalCommands } from '../commands'
 import gestureStore from '../stores/gesture'
 
 const visibleCommands = globalCommands.filter(command => !command.hideFromCommandPalette && !command.hideFromHelp)
-const selectAllCommand = commandById('selectAll')
 
 /** Returns true if the command can be executed. */
 const isExecutable = (state: State, command: Command) =>
@@ -34,13 +32,9 @@ const useFilteredCommands = (
 ): Command[] => {
   const gestureInProgress = gestureStore.useSelector(state => state.gesture as string)
   // The chainable command that is in progress (including when there are no other swipes). Otherwise null.
-  const chainableCommandInProgressInclusive: Command | null = gestureInProgress.startsWith(
-    gestureString(selectAllCommand),
+  const chainableCommandInProgressInclusive: Command | undefined = visibleCommands.find(
+    command => command.isChainable && gestureInProgress.startsWith(gestureString(command)),
   )
-    ? selectAllCommand
-    : gestureInProgress.startsWith(gestureString(newThoughtCommand))
-      ? newThoughtCommand
-      : null
   const store = useStore()
 
   const possibleCommandsSorted = useMemo(() => {
@@ -51,16 +45,7 @@ const useFilteredCommands = (
         ? [
             // append chainable commands
             ...visibleCommands
-              .filter(command =>
-                // platformCommandsOnly will filter out commands without gestures on mobile, but filter them out here anyway since they can't be used after Select All.
-                // It is more performant and it makes the Select All tests platformCommandsOnly agnostic.
-                // Unfortunately categorize is a special case since it has multicursor: false but can still handle multicursor in the action.
-                chainableCommandInProgressInclusive.id === 'newThought'
-                  ? command.id === 'outdent'
-                  : chainableCommandInProgressInclusive.id === 'selectAll' && command.gesture
-                    ? command.multicursor || command.id === 'categorize'
-                    : false,
-              )
+              .filter(command => chainableCommandInProgressInclusive.isChainable?.(command))
               .map(command => chainCommand(chainableCommandInProgressInclusive, command)),
           ]
         : []),

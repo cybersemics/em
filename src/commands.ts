@@ -24,9 +24,7 @@ import { showLatestCommandsActionCreator as showLatestCommands } from './actions
 import { suppressExpansionActionCreator as suppressExpansion } from './actions/suppressExpansion'
 import { isMac } from './browser'
 import * as commandsObject from './commands/index'
-import newThoughtCommand from './commands/newThought'
 import openGestureCheatsheetCommand from './commands/openGestureCheatsheet'
-import selectAllCommand from './commands/selectAll'
 import { AlertType, COMMAND_PALETTE_TIMEOUT, HOME_PATH, LongPressState, Settings, noop } from './constants'
 import * as selection from './device/selection'
 import globals from './globals'
@@ -443,7 +441,7 @@ export const handleGestureSegment = ({ sequence }: { gesture: Direction | null; 
   )
 }
 
-/** Executes a valid gesture and closes the gesture hint. Special handling for Select All chaining. */
+/** Executes a valid gesture and closes the gesture hint. Special handling for chainable commands. */
 export const handleGestureEnd = ({ sequence, e }: { sequence: GesturePath | null; e: GestureResponderEvent }) => {
   const state = store.getState()
 
@@ -453,14 +451,12 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: GesturePath | null
   const openGestureCheatsheetGesture = gestureString(openGestureCheatsheetCommand)
 
   // The chainable command that is in progress (only if there is at least one additional swipe). Otherwise null.
-  const chainedCommandInProgressExclusive: Command | null =
-    sequence?.toString().startsWith(gestureString(selectAllCommand)) &&
-    sequence?.toString()?.length > gestureString(selectAllCommand).length
-      ? selectAllCommand
-      : sequence?.toString().startsWith(gestureString(newThoughtCommand)) &&
-          sequence?.toString()?.length > gestureString(newThoughtCommand).length
-        ? newThoughtCommand
-        : null
+  const chainableCommandInProgressExclusive: Command | undefined = globalCommands.find(
+    command =>
+      command.isChainable &&
+      sequence?.toString().startsWith(gestureString(command)) &&
+      sequence?.toString()?.length > gestureString(command).length,
+  )
 
   // If sequence ends with help gesture, use help command.
   // If sequence starts with a chainable command gesture and has additional swipes, use the chained command with the longest matching gesture.
@@ -472,13 +468,13 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: GesturePath | null
     command = openGestureCheatsheetCommand
   }
   // chained command
-  else if (chainedCommandInProgressExclusive) {
-    const chainedGesture1 = gestureString(chainedCommandInProgressExclusive)
+  else if (chainableCommandInProgressExclusive) {
+    const chainedGesture1 = gestureString(chainableCommandInProgressExclusive)
     const chainedGestureCollapsed = sequence!.toString().slice(chainedGesture1.length - 1)
     const chainedGesture = sequence!.toString().slice(chainedGesture1.length)
     const commandMatch = commandGestureIndex[chainedGestureCollapsed] ?? commandGestureIndex[chainedGesture]
     if (commandMatch) {
-      command = chainCommand(chainedCommandInProgressExclusive, commandMatch)
+      command = chainCommand(chainableCommandInProgressExclusive, commandMatch)
     }
   }
   // normal command
@@ -498,8 +494,8 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: GesturePath | null
     state.longPress !== LongPressState.DragInProgress
   ) {
     commandEmitter.trigger('command', command)
-    if (chainedCommandInProgressExclusive && !isAllSelected(state)) {
-      executeCommandWithMulticursor(chainedCommandInProgressExclusive, {
+    if (chainableCommandInProgressExclusive && !isAllSelected(state)) {
+      executeCommandWithMulticursor(chainableCommandInProgressExclusive, {
         event: {
           ...e,
           // Hacky magic value, but it's the easiest way to tell the command that this is a chained gesture so that it can adjust the undo behavior.
