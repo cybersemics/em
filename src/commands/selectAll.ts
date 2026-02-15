@@ -23,7 +23,8 @@ const selectAllCommand: Command = {
   isActive: isAllSelected,
   // Allow chaining Select All into multicursor commands without lifting the finger.
   // Unfortunately categorize is a special case since it has multicursor: false but can still handle multicursor in the action.
-  isChainable: command => !!command.gesture && (!!command.multicursor || command.id === 'categorize'),
+  isChainable: command =>
+    !!command.gesture && command.id !== 'clearThought' && (!!command.multicursor || command.id === 'categorize'),
   canExecute: state => {
     if (!isDocumentEditable()) {
       return false
