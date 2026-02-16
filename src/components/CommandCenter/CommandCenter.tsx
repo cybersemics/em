@@ -140,7 +140,7 @@ const CommandCenter = ({ mountPoint }: Pick<SheetProps, 'mountPoint'>) => {
             bottom: 0,
             width: '100%',
             height: 'calc(100% + 110px)',
-            zIndex: 'commandCenter',
+            zIndex: 'commandCenterBlur',
           })}
           style={{
             height: blurHeight,
