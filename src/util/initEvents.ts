@@ -11,7 +11,7 @@ import { gestureMenuActionCreator as gestureMenu } from '../actions/gestureMenu'
 import { longPressActionCreator as longPress } from '../actions/longPress'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { isAndroidWebView, isIOS, isSafari, isTouch } from '../browser'
-import { keyDown, keyUp } from '../commands'
+import { beforeInput, keyDown, keyUp } from '../commands'
 import { AlertType, LongPressState } from '../constants'
 import * as selection from '../device/selection'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
@@ -21,6 +21,7 @@ import { updateCommandState } from '../stores/commandStateStore'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
 import { updateSafariKeyboardState } from '../stores/safariKeyboardStore'
 import { updateScrollTop } from '../stores/scrollTop'
+import selectionRangeStore from '../stores/selectionRangeStore'
 import storageModel from '../stores/storageModel'
 import syncStatusStore from '../stores/syncStatus'
 import { updateSize } from '../stores/viewport'
@@ -198,6 +199,8 @@ const initEvents = (store: Store<State, any>) => {
   /** Save selection offset to storage, throttled. */
   const saveSelectionOffset = _.throttle(
     () => {
+      // editables are not long-pressable on desktop, so the range will only be a concern on mobile
+      if (isTouch) selectionRangeStore.update(!selection.isCollapsed())
       storageModel.set('cursor', value => ({
         path: value?.path || store.getState().cursor,
         offset: selection.offsetThought(),
@@ -333,6 +336,10 @@ const initEvents = (store: Store<State, any>) => {
     // dragEnter and dragLeave are called in alternating pairs as the user drags over nested elements: ENTER, LEAVE, ENTER, LEAVE, ENTER
     // In order to detect the end of dragging a file, we need to debounce the dragLeave event and cancel it if dragEnter occurs.
     // Inspired by: https://stackoverflow.com/questions/3144881/how-do-i-detect-a-html5-drag-event-entering-and-leaving-the-window-like-gmail-d
+
+    const hasSelectionRange = selectionRangeStore.getState()
+    if (hasSelectionRange) return
+
     setTimeout(() => {
       dragLeave.cancel()
     })
@@ -359,6 +366,7 @@ const initEvents = (store: Store<State, any>) => {
   window.history.scrollRestoration = 'manual'
 
   document.addEventListener('selectionchange', onSelectionChange)
+  window.addEventListener('beforeinput', beforeInput)
   window.addEventListener('keydown', keyDown)
   window.addEventListener('keyup', keyUp)
   window.addEventListener('popstate', onPopstate)
@@ -393,6 +401,7 @@ const initEvents = (store: Store<State, any>) => {
   const cleanup = () => {
     unsubscribeSaveErrorReload()
     document.removeEventListener('selectionchange', onSelectionChange)
+    window.removeEventListener('beforeinput', beforeInput)
     window.removeEventListener('keydown', keyDown)
     window.removeEventListener('keyup', keyUp)
     window.removeEventListener('popstate', onPopstate)

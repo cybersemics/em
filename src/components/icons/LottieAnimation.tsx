@@ -1,4 +1,3 @@
-import { hexToRgb } from '@mui/material'
 import _ from 'lodash'
 import Player, { LottieRefCurrentProps } from 'lottie-react'
 import React, { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
@@ -9,6 +8,7 @@ import RGBA from '../../@types/lottie/RGBA'
 import ShapeItem from '../../@types/lottie/ShapeItem'
 import ShapeLayer from '../../@types/lottie/ShapeLayer'
 import StaticColor from '../../@types/lottie/StaticColor'
+import hexToRgb from '../../util/hexToRgb'
 
 /** The props for the LottieAnimation component. */
 interface LottieAnimationProps {
@@ -19,7 +19,7 @@ interface LottieAnimationProps {
 }
 
 /**
- * Converts hex color to RGBA using Material UI's hexToRgb.
+ * Converts hex color to RGBA.
  *
  * @param hex - The hex color code.
  * @returns The RGBA values as [r, g, b, a].

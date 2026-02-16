@@ -129,6 +129,9 @@ interface Command {
 
   /** When true, hides the title for this command when shown in panels. */
   hideTitleInPanels?: boolean
+
+  /** Return true if the given command's gesture can be chained after the current command's gesture without lifting the finger to execute one after another. For example, after entering the gesture for Select All, all of the multicursor commands can be executed by continuing with their gesture. */
+  isChainable?: (command: Command) => boolean
 }
 
 export default Command

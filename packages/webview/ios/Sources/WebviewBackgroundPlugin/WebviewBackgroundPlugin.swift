@@ -16,7 +16,9 @@ public class WebviewBackgroundPlugin: CAPPlugin, CAPBridgedPlugin {
     @objc func changeBackgroundColor(_ call: CAPPluginCall) {
         let color = call.getString("color") ?? ""
 
-        self.webView?.backgroundColor = UIColor(named: color)
-        self.webView?.scrollView.backgroundColor = UIColor(named: color)
+        DispatchQueue.main.async {
+            self.webView?.backgroundColor = UIColor(named: color)
+            self.webView?.scrollView.backgroundColor = UIColor(named: color)
+        }
     }
 }
