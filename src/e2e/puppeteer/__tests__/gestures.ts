@@ -16,7 +16,7 @@ vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
  * This ensures a clean user experience where alerts don't interfere
  * with ongoing gesture interactions.
  */
-describe('gesture alert behavior', () => {
+describe('alerts', () => {
   beforeEach(async () => {
     await page.emulate(KnownDevices['iPhone 15 Pro'])
   })
