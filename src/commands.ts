@@ -450,32 +450,14 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: GesturePath | null
 
   const openGestureCheatsheetGesture = gestureString(openGestureCheatsheetCommand)
 
-  // The chainable command that is in progress (only if there is at least one additional swipe). Otherwise null.
-  const chainableCommandInProgressExclusive: Command | undefined = globalCommands.find(
-    command =>
-      command.isChainable &&
-      sequence?.toString().startsWith(gestureString(command)) &&
-      sequence?.toString()?.length > gestureString(command).length,
-  )
-
   // If sequence ends with help gesture, use help command.
   // If sequence starts with a chainable command gesture and has additional swipes, use the chained command with the longest matching gesture.
   // Otherwise use the normal command lookup.
-  let command: Command | null | undefined = null
+  let command: Command | null = null
 
   // gesture cheatsheet
   if (sequence?.toString().endsWith(openGestureCheatsheetGesture)) {
     command = openGestureCheatsheetCommand
-  }
-  // chained command
-  else if (chainableCommandInProgressExclusive) {
-    const chainedGesture1 = gestureString(chainableCommandInProgressExclusive)
-    const chainedGestureCollapsed = sequence!.toString().slice(chainedGesture1.length - 1)
-    const chainedGesture = sequence!.toString().slice(chainedGesture1.length)
-    const commandMatch = commandGestureIndex[chainedGestureCollapsed] ?? commandGestureIndex[chainedGesture]
-    if (commandMatch) {
-      command = chainCommand(chainableCommandInProgressExclusive, commandMatch)
-    }
   }
   // normal command
   else {
@@ -483,6 +465,28 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: GesturePath | null
       !state.showCommandPalette || !commandGestureIndex[sequence as string]?.hideFromHelp
         ? commandGestureIndex[sequence as string]
         : null
+  }
+
+  // The chainable command that is in progress (only if there is at least one additional swipe). Otherwise null.
+  const chainableCommandInProgressExclusive: Command | undefined = command
+    ? undefined
+    : globalCommands.find(
+        command =>
+          command.isChainable &&
+          sequence?.toString().startsWith(gestureString(command)) &&
+          sequence?.toString()?.length > gestureString(command).length,
+      )
+
+  // chained command
+  // only if there is no exact match command
+  if (!command && chainableCommandInProgressExclusive) {
+    const chainedGesture1 = gestureString(chainableCommandInProgressExclusive)
+    const chainedGestureCollapsed = sequence!.toString().slice(chainedGesture1.length - 1)
+    const chainedGesture = sequence!.toString().slice(chainedGesture1.length)
+    const commandMatch = commandGestureIndex[chainedGestureCollapsed] ?? commandGestureIndex[chainedGesture]
+    if (commandMatch) {
+      command = chainCommand(chainableCommandInProgressExclusive, commandMatch)
+    }
   }
 
   // execute command
