@@ -70,6 +70,23 @@ describe('chaining commands', () => {
     await page.emulate(KnownDevices['iPhone 15 Pro'])
   })
 
+  it('chained command', async () => {
+    await gesture(newThoughtCommand)
+    await keyboard.type('a')
+    await gesture(newSubthoughtCommand)
+    await keyboard.type('b')
+
+    // New Thought + Outdent
+    await gesture('rd' + 'lrl')
+
+    const exported1 = await exportThoughts()
+    expect(exported1).toBe(`
+- a
+  - b
+- 
+`)
+  })
+
   it('prioritize exact match over chained command', async () => {
     await gesture(newThoughtCommand)
     await keyboard.type('a')
