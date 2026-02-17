@@ -1,7 +1,6 @@
 import { css, cx } from '../../styled-system/css'
 import { textNoteRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
-import GestureString from '../@types/GestureString'
 import SimplePath from '../@types/SimplePath'
 import { isTouch } from '../browser'
 import { formatKeyboardShortcut, gestureString } from '../commands'
@@ -44,7 +43,7 @@ const NoOtherContexts = ({ allowSingleContext }: { allowSingleContext?: boolean;
               Swipe{' '}
               <GestureDiagram
                 inGestureContainer
-                path={gestureString(toggleContextViewCommand) as GestureString}
+                path={gestureString(toggleContextViewCommand)}
                 size={30}
                 color={token('colors.gray66')}
               />
