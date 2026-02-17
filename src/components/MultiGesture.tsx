@@ -3,7 +3,7 @@ import { GestureResponderEvent, PanResponder, PanResponderInstance, View } from 
 import Direction from '../@types/Direction'
 import GesturePath from '../@types/GesturePath'
 import { noop } from '../constants'
-import gestureStore from '../stores/gesture'
+import { clearGesture, updateGesture } from '../stores/gesture'
 import isInGestureZone from '../util/isInGestureZone'
 import ScrollZone from './ScrollZone'
 import TraceGesture from './TraceGesture'
@@ -174,7 +174,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
 
         if (this.props.shouldCancelGesture?.()) {
           this.props.onCancel?.({ clientStart: this.clientStart, e })
-          gestureStore.update({ gesture: '' })
+          clearGesture()
           this.abandon = true
           return
         }
@@ -231,7 +231,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
             // append the gesture to the sequence and call the onGesture handler
             this.sequence += g
             this.props.onGesture?.({ gesture: g, sequence: this.sequence, clientStart: this.clientStart!, e })
-            gestureStore.update({ gesture: this.sequence })
+            updateGesture(this.sequence)
           }
         }
       },
@@ -264,7 +264,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     this.scrollYStart = null
     this.disableScroll = false
     this.sequence = ''
-    gestureStore.update({ gesture: '' })
+    clearGesture()
   }
 
   render() {
