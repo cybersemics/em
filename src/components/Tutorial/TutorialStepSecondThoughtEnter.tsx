@@ -1,6 +1,6 @@
 import { useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
-import GesturePath from '../../@types/GesturePath'
+import GestureString from '../../@types/GestureString'
 import { isTouch } from '../../browser'
 import { gestureString } from '../../commands'
 import newThoughtCommand from '../../commands/newThought'
@@ -23,7 +23,7 @@ const TutorialStepSecondThoughtEnter = () => {
           <>
             Swiping{' '}
             <GestureDiagram
-              path={gestureString(newThoughtCommand) as GesturePath}
+              path={gestureString(newThoughtCommand) as GestureString}
               size={28}
               cssRaw={css.raw({ margin: '-10px -4px -6px' })}
             />

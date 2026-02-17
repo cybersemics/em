@@ -8,7 +8,7 @@ import Command from './@types/Command'
 import CommandId from './@types/CommandId'
 import CommandType from './@types/CommandType'
 import Direction from './@types/Direction'
-import GesturePath from './@types/GesturePath'
+import GestureString from './@types/GestureString'
 import Index from './@types/IndexType'
 import Key from './@types/Key'
 import MulticursorFilter from './@types/MulticursorFilter'
@@ -412,7 +412,7 @@ export const executeCommandWithMulticursor = (
  * - gesture menu from invalid gesture (e.g. ←↓, hold, ←↓←).
  * - Change gesture menu to basic gesture hint on gesture end.
  */
-export const handleGestureSegment = ({ sequence }: { gesture: Direction | null; sequence: GesturePath }) => {
+export const handleGestureSegment = ({ sequence }: { gesture: Direction | null; sequence: GestureString }) => {
   const state = store.getState()
 
   if (state.showModal || state.longPress === LongPressState.DragInProgress || state.showGestureCheatsheet) return
@@ -442,7 +442,7 @@ export const handleGestureSegment = ({ sequence }: { gesture: Direction | null; 
 }
 
 /** Executes a valid gesture and closes the gesture hint. Special handling for chainable commands. */
-export const handleGestureEnd = ({ sequence, e }: { sequence: GesturePath | null; e: GestureResponderEvent }) => {
+export const handleGestureEnd = ({ sequence, e }: { sequence: GestureString | null; e: GestureResponderEvent }) => {
   const state = store.getState()
 
   // Get the command from the command gesture index.

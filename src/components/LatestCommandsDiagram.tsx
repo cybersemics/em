@@ -1,7 +1,7 @@
 import { FC, useEffect, useRef } from 'react'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
-import GesturePath from '../@types/GesturePath'
+import GestureString from '../@types/GestureString'
 import { gestureString, globalCommands } from '../commands'
 import FadeTransition from './FadeTransition'
 import GestureDiagram from './GestureDiagram'
@@ -52,7 +52,7 @@ const LatestCommandsDiagram: FC<{ position?: 'middle' | 'bottom' }> = ({ positio
                   })}
                 >
                   <GestureDiagram
-                    path={gestureString(command) as GesturePath}
+                    path={gestureString(command) as GestureString}
                     size={30}
                     color={token('colors.fg')}
                     strokeWidth={2}

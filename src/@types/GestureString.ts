@@ -28,8 +28,4 @@ type GestureString<S extends string = string> = [S] extends [string]
     : StringOf<S, SwipeChar>
   : StringOf<S, SwipeChar>
 
-/** @deprecated Use GestureString instead. Retained for backward compatibility during migration. */
-type GesturePath = GestureString
-
-export default GesturePath
-export type { GestureString }
+export default GestureString

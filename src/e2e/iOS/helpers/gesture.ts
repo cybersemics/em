@@ -1,5 +1,5 @@
 import Direction from '../../../@types/Direction'
-import GesturePath from '../../../@types/GesturePath'
+import GestureString from '../../../@types/GestureString'
 
 export interface GestureOptions {
   xStart?: number
@@ -19,7 +19,7 @@ interface PointerAction {
 
 /** Apply gesture action for the given path. */
 const gesture = async (
-  path: GesturePath,
+  path: GestureString,
   { xStart, yStart, segmentLength = 60, waitMs = 200 }: GestureOptions = {},
 ) => {
   if (!xStart || !yStart) {
