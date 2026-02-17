@@ -3,7 +3,7 @@ import { css } from '../../../styled-system/css'
 import Command from '../../@types/Command'
 import GestureDiagram from '../GestureDiagram'
 
-/** During the totirla, a portal is used for rendering gestures on top of the thought space. It's the ID for the portal element. */
+/** During the tutorial, a portal is used for rendering gestures on top of the thought space. It's the ID for the portal element. */
 const TUTORIAL_GESTURE_PORTAL_DOM_ID = 'tutorial-gesture-diagram-portal'
 
 /** A portal for conditionally rendering Gesture hints. Used to show an appropriate gesture  below the tutorial UI up top, thus Portal. */
