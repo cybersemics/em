@@ -7,12 +7,13 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
+import gestures from './gestures'
 
 const toggleTableViewCommand: Command = {
   id: 'toggleTableView',
   label: 'Table View',
   description: 'Display the current list as a table, with subthoughts rendered in the second column.',
-  gesture: 'rdlu',
+  gesture: gestures.TOGGLE_TABLE_VIEW_GESTURE,
   keyboard: { key: 't', alt: true, shift: true },
   multicursor: true,
   svg: TableViewIcon,

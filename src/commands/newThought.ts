@@ -16,6 +16,7 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import editingValueStore from '../stores/editingValue'
 import ellipsize from '../util/ellipsize'
 import isDocumentEditable from '../util/isDocumentEditable'
+import gestures from './gestures'
 
 /** A selector that splits the cursor and returns a SplitResult. This function first checks that a split is allowed (i.e. cursor is non-empty, context view is not activated, etc), and returns null if not allowed. */
 const split = (state: State, el: HTMLElement): SplitResult | null => {
@@ -75,7 +76,7 @@ const newThoughtCommand: Command = {
   keyboard: [{ key: Key.Enter }, ...(isTouch ? [{ key: Key.Enter, shift: true }] : [])],
   // Support multiple gesture patterns
   // Main gesture and alternative patterns to help with mis-swipes since MultiGesture does not support diagonal swipes
-  gesture: ['rd', 'rdldl', 'rdldld', 'rldl', 'rldld', 'rldldl'],
+  gesture: gestures.NEW_THOUGHT_GESTURE,
   multicursor,
   // Preventing default on keydown is undesirable because it disables auto-capitalization on iOS Safari. (#3707)
   permitDefault: true,

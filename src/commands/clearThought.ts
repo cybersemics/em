@@ -4,12 +4,13 @@ import ClearThoughtIcon from '../components/icons/ClearThoughtIcon'
 import * as selection from '../device/selection'
 import hasMulticursor from '../selectors/hasMulticursor'
 import isDocumentEditable from '../util/isDocumentEditable'
+import gestures from './gestures'
 
 const clearThoughtCommand: Command = {
   id: 'clearThought',
   label: 'Clear Thought',
   description: 'Clear the text of the current thought. A quick recovery after you have changed your mind.',
-  gesture: 'rl',
+  gesture: gestures.CLEAR_THOUGHT_GESTURE,
   keyboard: { key: 'c', alt: true, shift: true, meta: true },
   multicursor: {
     disallow: true,

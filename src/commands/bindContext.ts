@@ -7,13 +7,14 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import splitChain from '../selectors/splitChain'
 import isDocumentEditable from '../util/isDocumentEditable'
 import pathToContext from '../util/pathToContext'
+import gestures from './gestures'
 
 const bindContextCommand: Command = {
   id: 'bindContext',
   label: 'Bind Context',
   svg: BindContextIcon,
   description: 'Bind two different contexts of a thought so that they always have the same children.',
-  gesture: 'rud',
+  gesture: gestures.BIND_CONTEXT_GESTURE,
   multicursor: {
     disallow: true,
     error: 'Cannot bind multiple thoughts.',

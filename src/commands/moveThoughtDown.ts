@@ -6,12 +6,13 @@ import nextSibling from '../selectors/nextSibling'
 import appendToPath from '../util/appendToPath'
 import isDocumentEditable from '../util/isDocumentEditable'
 import parentOf from '../util/parentOf'
+import gestures from './gestures'
 
 const moveThoughtDownCommand: Command = {
   id: 'moveThoughtDown',
   label: 'Move Thought Down',
   description: 'Move the current thought down.',
-  gesture: 'dud',
+  gesture: gestures.MOVE_THOUGHT_DOWN_GESTURE,
   keyboard: { key: Key.ArrowDown, meta: true, shift: true },
   multicursor: {
     reverse: true,

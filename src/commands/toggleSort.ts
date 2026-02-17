@@ -7,13 +7,14 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
+import gestures from './gestures'
 
 const toggleSortCommand: Command = {
   id: 'toggleSort',
   label: 'Sort',
   description:
     'Change the sorting option for the current context. Rotates through manual, alphabetical, and reverse alphabetical.',
-  gesture: 'lurd',
+  gesture: gestures.TOGGLE_SORT_GESTURE,
   keyboard: { key: 's', meta: true, alt: true },
   multicursor: {
     filter: 'first-sibling',

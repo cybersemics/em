@@ -6,13 +6,14 @@ import asyncFocus from '../device/asyncFocus'
 import simplifyPath from '../selectors/simplifyPath'
 import isDocumentEditable from '../util/isDocumentEditable'
 import noteValue from '../util/noteValue'
+import gestures from './gestures'
 
 const noteCommand: Command = {
   id: 'note',
   label: 'Note',
   description: 'Add a small note beneath a thought. Cute!',
   keyboard: { key: 'n', alt: true, meta: true },
-  gesture: 'rdlr',
+  gesture: gestures.NOTE_GESTURE,
   multicursor: {
     disallow: true,
     error: 'Cannot create a note with multiple thoughts.',

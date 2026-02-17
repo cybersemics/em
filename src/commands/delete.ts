@@ -18,6 +18,7 @@ import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
 import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
+import gestures from './gestures'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const exec: Command['exec'] = (dispatch, getState, e, { type }) => {
@@ -56,7 +57,7 @@ const deleteCommand: Command = {
   id: 'delete',
   label: 'Delete',
   description: 'Say goodbye to the current thought. Hit undo if you are not ready to part ways.',
-  gesture: 'ldldl',
+  gesture: gestures.DELETE_GESTURE,
   multicursor: {
     preventSetCursor: true,
     reverse: true,

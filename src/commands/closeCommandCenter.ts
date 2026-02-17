@@ -5,6 +5,7 @@ import HelpIcon from '../components/icons/HelpIcon'
 import { AlertType } from '../constants'
 import hasMulticursor from '../selectors/hasMulticursor'
 import scrollZoneHelpMessage from '../selectors/scrollZoneHelpMessage'
+import gestures from './gestures'
 
 /** If zero, then the Command Center was opened without a cursor recently and the default message can be shown. If non-zero, then Open Commmand Center was attempted within the last 10 second and a special alert should be shown that describes where the Scroll Zone is. */
 let scrollZoneHelpAlertTimeout = 0
@@ -14,7 +15,7 @@ const closeCommandCenterCommand: Command = {
   id: 'closeCommandCenter',
   label: 'Close Command Center',
   description: `Closes the command center if it's open. You can also just tap on the empty space.`,
-  gesture: 'd',
+  gesture: gestures.CLOSE_COMMAND_CENTER_GESTURE,
   hideAlert: true,
   hideFromCommandPalette: true,
   multicursor: false,

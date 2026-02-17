@@ -1,6 +1,7 @@
 import Command from '../@types/Command'
 import { cursorForwardActionCreator as cursorForward } from '../actions/cursorForward'
 import CursorForwardIcon from '../components/icons/CursorForwardIcon'
+import gestures from './gestures'
 
 const cursorForwardCommand: Command = {
   id: 'cursorForward',
@@ -8,7 +9,7 @@ const cursorForwardCommand: Command = {
   hideAlert: true,
   label: 'Forward',
   multicursor: false,
-  gesture: 'l',
+  gesture: gestures.CURSOR_FORWARD_GESTURE,
   svg: CursorForwardIcon,
   exec: dispatch => dispatch(cursorForward()),
 }

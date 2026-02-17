@@ -3,12 +3,13 @@ import { categorizeActionCreator as categorize } from '../actions/categorize'
 import CategorizeIcon from '../components/icons/CategorizeIcon'
 import hasMulticursor from '../selectors/hasMulticursor'
 import isDocumentEditable from '../util/isDocumentEditable'
+import gestures from './gestures'
 
 const categorizeCommand: Command = {
   id: 'categorize',
   label: 'Categorize',
   description: 'Move the current thought into a new, empty thought at the same level.',
-  gesture: 'lu',
+  gesture: gestures.CATEGORIZE_GESTURE,
   keyboard: [
     { key: 'o', meta: true, alt: true },
     { key: ']', meta: true },

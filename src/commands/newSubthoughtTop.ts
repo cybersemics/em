@@ -3,12 +3,13 @@ import Command from '../@types/Command'
 import { newThoughtActionCreator as newThought } from '../actions/newThought'
 import NewSubthoughtAboveIcon from '../components/icons/NewSubthoughtAboveIcon'
 import isDocumentEditable from '../util/isDocumentEditable'
+import gestures from './gestures'
 
 const newSubthoughtTopCommand: Command = {
   id: 'newSubthoughtTop',
   label: 'New Subthought (above)',
   description: 'Create a new subthought in the current thought. Add it to the top of any existing subthoughts.',
-  gesture: 'rdu',
+  gesture: gestures.NEW_SUBTHOUGHT_TOP_GESTURE,
   keyboard: { key: Key.Enter, shift: true, meta: true },
   multicursor: {
     disallow: true,

@@ -14,6 +14,7 @@ import isDocumentEditable from '../util/isDocumentEditable'
 import isURL from '../util/isURL'
 import parentOf from '../util/parentOf'
 import pathToContext from '../util/pathToContext'
+import gestures from './gestures'
 
 /** Fetches the title of a webpage from its URL. */
 const fetchWebpageTitle = async (url: string): Promise<string | null> => {
@@ -64,7 +65,7 @@ const generateThought: Command = {
   description: 'Generates a thought using AI.',
   // svg: Icon,
   keyboard: { key: 'g', meta: true, alt: true },
-  gesture: 'ur',
+  gesture: gestures.GENERATE_THOUGHT_GESTURE,
   svg: GenerateThoughtIcon,
   multicursor: {
     disallow: true,

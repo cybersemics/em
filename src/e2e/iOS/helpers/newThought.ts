@@ -1,5 +1,4 @@
-import newSubthoughtCommand from '../../../commands/newSubthought.js'
-import newThoughtCommand from '../../../commands/newThought.js'
+import gestures from '../../../commands/gestures'
 import editThought from './editThought.js'
 import gesture from './gesture.js'
 import waitForEditable from './waitForEditable.js'
@@ -10,7 +9,7 @@ interface Options {
 
 /** Creates a new thought by gesture and typing text. */
 const newThought = async (value?: string, { insertNewSubthought }: Options = {}) => {
-  await gesture(insertNewSubthought ? newSubthoughtCommand : newThoughtCommand)
+  await gesture(insertNewSubthought ? gestures.NEW_SUBTHOUGHT_GESTURE : gestures.NEW_THOUGHT_GESTURE)
   await waitForEditable('')
   if (value) {
     await editThought(value)

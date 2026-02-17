@@ -5,6 +5,7 @@ import { isTouch } from '../browser'
 import hasMulticursor from '../selectors/hasMulticursor'
 import isAllSelected from '../selectors/isAllSelected'
 import isDocumentEditable from '../util/isDocumentEditable'
+import gestures from './gestures'
 
 const selectAllCommand: Command = {
   id: 'selectAll',
@@ -12,7 +13,7 @@ const selectAllCommand: Command = {
   labelInverse: 'Deselect All',
   description: 'Selects all thoughts at the current level. May reduce wrist strain.',
   descriptionInverse: 'Deselects all thoughts at the current level.',
-  gesture: 'ldr',
+  gesture: gestures.SELECT_ALL_GESTURE,
   // meta + alt + a is the default keyboard shortcut and always works.
   // meta + a is conditionally active when multicursor is active
   keyboard: [

@@ -1,7 +1,6 @@
 import Command from '../../../@types/Command'
-import Direction from '../../../@types/Direction'
 import GesturePath from '../../../@types/GesturePath'
-import isCommand from '../../../util/isCommand'
+import getGestureDirections from '../../getGestureDirections'
 import { page } from '../setup'
 
 /**
@@ -41,8 +40,8 @@ const move = async (x1: number, y1: number, x2: number, y2: number): Promise<voi
  * Uses fixed step sizes for simplicity and reliability.
  */
 const gesture = async (
-  /** String of directions (e.g., "rd" for right-down) or a Command object with a gesture property. */
-  gestureOrCommand: GesturePath | Command,
+  /** String of directions (e.g., "rd"), gesture path array, or a Command with a gesture. Uses first path when given an array. */
+  gestureOrCommand: GesturePath | GesturePath[] | Command,
   {
     hold,
   }: {
@@ -50,19 +49,7 @@ const gesture = async (
     hold?: boolean
   } = {},
 ) => {
-  if (isCommand(gestureOrCommand) && !gestureOrCommand.gesture) {
-    throw new Error(
-      `Command "${gestureOrCommand.id}" does not have a gesture defined so cannot be activated with swipe.`,
-    )
-  }
-
-  const gestureObject = isCommand(gestureOrCommand)
-    ? gestureOrCommand.gesture instanceof Array
-      ? gestureOrCommand.gesture[0]
-      : // gesture must be defined because of runtime validation above
-        gestureOrCommand.gesture!
-    : gestureOrCommand
-  const directions = typeof gestureObject === 'string' ? (gestureObject.split('') as Direction[]) : gestureObject
+  const directions = getGestureDirections(gestureOrCommand)
 
   // Fixed step sizes for consistent gesture behavior
   const stepSize = 80

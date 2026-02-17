@@ -1,7 +1,6 @@
 import Command from '../../../@types/Command'
-import Direction from '../../../@types/Direction'
 import GesturePath from '../../../@types/GesturePath'
-import isCommand from '../../../util/isCommand'
+import getGestureDirections from '../../getGestureDirections'
 
 export interface GestureOptions {
   xStart?: number
@@ -19,24 +18,12 @@ interface PointerAction {
   origin?: string
 }
 
-/** Execute a gesture by command or explicit swipes. */
+/** Execute a gesture by command, gesture path(s), or explicit path. Accepts Command, GesturePath, or GesturePath[] (uses first path when array). */
 const gesture = async (
-  gestureOrCommand: GesturePath | Command,
+  gestureOrCommand: GesturePath | GesturePath[] | Command,
   { xStart, yStart, segmentLength = 60, waitMs = 200 }: GestureOptions = {},
 ) => {
-  if (isCommand(gestureOrCommand) && !gestureOrCommand.gesture) {
-    throw new Error(
-      `Command "${gestureOrCommand.id}" does not have a gesture defined so cannot be activated with swipe.`,
-    )
-  }
-
-  const gestureObject = isCommand(gestureOrCommand)
-    ? gestureOrCommand.gesture instanceof Array
-      ? gestureOrCommand.gesture[0]
-      : // gesture must be defined because of runtime validation above
-        gestureOrCommand.gesture!
-    : gestureOrCommand
-  const directions = typeof gestureObject === 'string' ? (gestureObject.split('') as Direction[]) : gestureObject
+  const directions = getGestureDirections(gestureOrCommand)
 
   if (!xStart || !yStart) {
     const windowSize = await browser.getWindowSize()
@@ -57,7 +44,7 @@ const gesture = async (
   let currentX = xStart
   let currentY = yStart
 
-  for (const direction of Array.from(directions) as Direction[]) {
+  for (const direction of directions) {
     currentX = currentX + (direction === 'r' ? +segmentLength : direction === 'l' ? -segmentLength : 0)
     currentY = currentY + (direction === 'd' ? +segmentLength : direction === 'u' ? -segmentLength : 0)
 

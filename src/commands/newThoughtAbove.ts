@@ -4,12 +4,13 @@ import { newThoughtActionCreator as newThought } from '../actions/newThought'
 import { isTouch } from '../browser'
 import NewThoughtAboveIcon from '../components/icons/NewThoughtAboveIcon'
 import isDocumentEditable from '../util/isDocumentEditable'
+import gestures from './gestures'
 
 const newThoughtAboveCommand: Command = {
   id: 'newThoughtAbove',
   label: 'New Thought (above)',
   description: 'Create a new thought immediately above the current thought.',
-  gesture: 'rul',
+  gesture: gestures.NEW_THOUGHT_ABOVE_GESTURE,
   multicursor: {
     filter: 'first-sibling',
     clearMulticursor: true,

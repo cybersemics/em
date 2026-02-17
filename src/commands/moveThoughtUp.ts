@@ -8,12 +8,13 @@ import simplifyPath from '../selectors/simplifyPath'
 import appendToPath from '../util/appendToPath'
 import isDocumentEditable from '../util/isDocumentEditable'
 import parentOf from '../util/parentOf'
+import gestures from './gestures'
 
 const moveThoughtUpCommand: Command = {
   id: 'moveThoughtUp',
   label: 'Move Thought Up',
   description: 'Move the current thought up.',
-  gesture: 'udu',
+  gesture: gestures.MOVE_THOUGHT_UP_GESTURE,
   keyboard: { key: Key.ArrowUp, meta: true, shift: true },
   multicursor: true,
   preventDefault: true,

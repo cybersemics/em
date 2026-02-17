@@ -5,12 +5,13 @@ import asyncFocus from '../device/asyncFocus'
 import * as selection from '../device/selection'
 import hasMulticursor from '../selectors/hasMulticursor'
 import isDocumentEditable from '../util/isDocumentEditable'
+import gestures from './gestures'
 
 const bumpThoughtDownCommand: Command = {
   id: 'bumpThoughtDown',
   label: 'Bump Thought Down',
   description: 'Bump the current thought down one level and replace it with a new, empty thought.',
-  gesture: 'drd',
+  gesture: gestures.BUMP_THOUGHT_DOWN_GESTURE,
   keyboard: { key: 'd', meta: true, alt: true },
   multicursor: {
     disallow: true,

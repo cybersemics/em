@@ -3,12 +3,13 @@ import { swapParentActionCreator } from '../actions/swapParent'
 import SwapParentIcon from '../components/icons/SwapParentIcon'
 import hasMulticursor from '../selectors/hasMulticursor'
 import isDocumentEditable from '../util/isDocumentEditable'
+import gestures from './gestures'
 
 const swapParent: Command = {
   id: 'swapParent',
   label: 'Swap Parent',
   description: 'Swap the current thought with its parent.',
-  gesture: 'ul',
+  gesture: gestures.SWAP_PARENT_GESTURE,
   multicursor: {
     disallow: true,
     error: 'Cannot swap parent with multiple thoughts.',

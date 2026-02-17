@@ -3,13 +3,14 @@ import { swapNoteActionCreator } from '../actions/swapNote'
 import SwapNoteIcon from '../components/icons/SwapNoteIcon'
 import hasMulticursor from '../selectors/hasMulticursor'
 import isDocumentEditable from '../util/isDocumentEditable'
+import gestures from './gestures'
 
 const swapNote: Command = {
   id: 'swapNote',
   label: 'Swap Note',
   description: 'Convert a thought to a note.',
   keyboard: { key: 'n', alt: true, shift: true },
-  gesture: 'ulr',
+  gesture: gestures.SWAP_NOTE_GESTURE,
   multicursor: true,
   canExecute: state => {
     return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))

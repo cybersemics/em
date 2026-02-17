@@ -16,6 +16,7 @@ import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
 import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
+import gestures from './gestures'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const exec: Command['exec'] = (dispatch, getState) => {
@@ -53,23 +54,7 @@ const archiveCommand: Command = {
   id: 'archive',
   label: 'Archive',
   description: 'Move the thought to a hidden archive. It can be recovered or viewed by toggling hidden thoughts.',
-  // Main gesture and alternate patterns to help with mis-swipes
-  gesture: [
-    'ldl',
-    'ldlr',
-    'lrdl',
-    'lrdrl',
-    'lrdldr',
-    'lrdldlr',
-    'ldru',
-    'ldrlru',
-    'ldllru',
-    'ldlru',
-    'lrdru',
-    'lrdlru',
-    'lrdldru',
-    'lrdldlru',
-  ],
+  gesture: gestures.ARCHIVE_GESTURE,
   multicursor: {
     preventSetCursor: true,
     clearMulticursor: true,

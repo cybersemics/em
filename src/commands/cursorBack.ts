@@ -7,12 +7,13 @@ import scrollTo from '../device/scrollTo'
 import * as selection from '../device/selection'
 import hasMulticursor from '../selectors/hasMulticursor'
 import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
+import gestures from './gestures'
 
 const cursorBackCommand: Command = {
   id: 'cursorBack',
   label: 'Back',
   description: 'Move the cursor up a level.',
-  gesture: 'r',
+  gesture: gestures.CURSOR_BACK_GESTURE,
   svg: BackIcon,
   hideAlert: true,
   keyboard: 'Escape',

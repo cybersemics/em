@@ -7,12 +7,13 @@ import hasMulticursor from '../selectors/hasMulticursor'
 import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
+import gestures from './gestures'
 
 const proseViewCommand: Command = {
   id: 'proseView',
   label: 'Prose View',
   description: 'Display subthoughts of the current thought as indented paragraphs.',
-  gesture: 'rudr',
+  gesture: gestures.PROSE_VIEW_GESTURE,
   keyboard: { key: 'p', shift: true, alt: true },
   multicursor: true,
   svg: ProseViewIcon,

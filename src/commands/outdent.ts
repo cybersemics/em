@@ -3,6 +3,7 @@ import { outdentActionCreator as outdent } from '../actions/outdent'
 import OutdentIcon from '../components/icons/OutdentIcon'
 import hasMulticursor from '../selectors/hasMulticursor'
 import isDocumentEditable from '../util/isDocumentEditable'
+import gestures from './gestures'
 import moveCursorBackward from './moveCursorBackward'
 
 const outdentCommand: Command = {
@@ -12,7 +13,7 @@ const outdentCommand: Command = {
   overlay: {
     keyboard: moveCursorBackward.keyboard,
   },
-  gesture: 'lrl',
+  gesture: gestures.OUTDENT_GESTURE,
   multicursor: {
     filter: 'prefer-ancestor',
     reverse: true,

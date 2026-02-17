@@ -3,6 +3,7 @@ import { indentActionCreator as indent } from '../actions/indent'
 import IndentIcon from '../components/icons/IndentIcon'
 import editingValueStore from '../stores/editingValue'
 import isDocumentEditable from '../util/isDocumentEditable'
+import gestures from './gestures'
 import moveCursorForward from './moveCursorForward'
 
 const indentCommand: Command = {
@@ -18,7 +19,7 @@ const indentCommand: Command = {
   multicursor: {
     filter: 'prefer-ancestor',
   },
-  gesture: 'rlr',
+  gesture: gestures.INDENT_GESTURE,
   // must allow default browser behavior and manually control preventDefault defending on whether space-to-indent is activated
   permitDefault: true,
   svg: IndentIcon,
