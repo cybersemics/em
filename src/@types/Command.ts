@@ -3,7 +3,7 @@ import { GestureResponderEvent } from 'react-native'
 import CommandId from './CommandId'
 import CommandType from './CommandType'
 import Dispatch from './Dispatch'
-import GestureString from './GestureString'
+import Gesture from './Gesture'
 import IconType from './IconType'
 import Key from './Key'
 import MulticursorFilter from './MulticursorFilter'
@@ -83,7 +83,7 @@ interface Command {
   error?: (state: State) => string | null
 
   /** A MultiGesture sequence to activate the command on touch screens. */
-  gesture?: GestureString | GestureString[]
+  gesture?: Gesture | Gesture[]
 
   /** Do not show the alert after the command is executed in training mode. */
   hideAlert?: boolean
@@ -111,7 +111,7 @@ interface Command {
 
   /** Specify backup gesture or keyboard that is shown in the Toolbar overlay. */
   overlay?: {
-    gesture?: GestureString
+    gesture?: Gesture
     keyboard?: Key | Key[] | string
   }
 

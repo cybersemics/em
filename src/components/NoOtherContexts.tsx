@@ -27,7 +27,7 @@ const NoOtherContexts = ({ allowSingleContext }: { allowSingleContext?: boolean;
       {/* <div>
         {isTouch ? (
           <span>
-            Swipe <GestureDiagram path={subthoughtCommand.gesture as GestureString} size={30} color='darkgray' />
+            Swipe <GestureDiagram path={subthoughtCommand.gesture as Gesture} size={30} color='darkgray' />
           </span>
         ) : (
           <span>Type {formatKeyboardShortcut(subthoughtCommand.keyboard!)}</span>

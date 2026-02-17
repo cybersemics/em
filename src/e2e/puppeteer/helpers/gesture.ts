@@ -1,6 +1,6 @@
 import Command from '../../../@types/Command'
 import Direction from '../../../@types/Direction'
-import GestureString from '../../../@types/GestureString'
+import Gesture from '../../../@types/Gesture'
 import { page } from '../setup'
 
 /**
@@ -46,7 +46,7 @@ function isCommand(value: unknown): value is Command {
  */
 const gesture = async (
   /** String of directions (e.g., "rd" for right-down) or a Command object with a gesture property. */
-  gestureOrCommand: GestureString | Command,
+  gestureOrCommand: Gesture | Command,
   {
     hold,
   }: {

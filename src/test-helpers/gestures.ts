@@ -1,4 +1,4 @@
-import GestureString from '../@types/GestureString'
+import Gesture from '../@types/Gesture'
 
 enum gestureEnum {
   newSubThought = 'rdr',
@@ -7,9 +7,9 @@ enum gestureEnum {
 }
 
 const gestures = gestureEnum as {
-  [key in keyof typeof gestureEnum]: GestureString
+  [key in keyof typeof gestureEnum]: Gesture
 }
 
-// widen the type of the gestureEnum values to GestureString using a mapped type
+// widen the type of the gestureEnum values to Gesture using a mapped type
 // https://www.typescriptlang.org/docs/handbook/2/mapped-types.html
 export default gestures

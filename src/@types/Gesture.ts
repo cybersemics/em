@@ -18,14 +18,14 @@ type SwipeChar = 'l' | 'r' | 'u' | 'd'
  * When used with a literal type parameter, validates the string contains only valid characters.
  *
  * @example
- * type Good = GestureString<'lrd'>;  // OK: 'lrd'
- * type Bad = GestureString<'xyz'>;   // Error: never
- * const gesture: GestureString = 'lrd';  // OK at runtime
+ * type Good = Gesture<'lrd'>;  // OK: 'lrd'
+ * type Bad = Gesture<'xyz'>;   // Error: never
+ * const gesture: Gesture = 'lrd';  // OK at runtime
  */
-type GestureString<S extends string = string> = [S] extends [string]
+type Gesture<S extends string = string> = [S] extends [string]
   ? string extends S
     ? string
     : StringOf<S, SwipeChar>
   : StringOf<S, SwipeChar>
 
-export default GestureString
+export default Gesture
