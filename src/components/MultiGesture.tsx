@@ -1,7 +1,7 @@
 import React, { PropsWithChildren } from 'react'
 import { GestureResponderEvent, PanResponder, PanResponderInstance, View } from 'react-native'
 import Direction from '../@types/Direction'
-import GesturePath from '../@types/GesturePath'
+import Gesture from '../@types/Gesture'
 import { noop } from '../constants'
 import gestureStore from '../stores/gesture'
 import isInGestureZone from '../util/isInGestureZone'
@@ -27,13 +27,13 @@ type MultiGestureProps = PropsWithChildren<{
   // fired when a new gesture is added to the sequence
   onGesture?: (args: {
     gesture: Direction | null
-    sequence: GesturePath
+    sequence: Gesture
     clientStart: Point
     e: GestureResponderEvent
   }) => void
   // fired when all gestures have completed
   onEnd?: (args: {
-    sequence: GesturePath | null
+    sequence: Gesture | null
     clientStart: Point | null
     clientEnd: Point | null
     e: GestureResponderEvent
@@ -104,7 +104,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
   disableScroll = false
   panResponder: PanResponderInstance
   scrolling = false
-  sequence: GesturePath = ''
+  sequence: Gesture = ''
 
   constructor(props: MultiGestureProps) {
     super(props)

@@ -8,7 +8,7 @@ import Command from './@types/Command'
 import CommandId from './@types/CommandId'
 import CommandType from './@types/CommandType'
 import Direction from './@types/Direction'
-import GesturePath from './@types/GesturePath'
+import Gesture from './@types/Gesture'
 import Index from './@types/IndexType'
 import Key from './@types/Key'
 import MulticursorFilter from './@types/MulticursorFilter'
@@ -185,8 +185,8 @@ let gestureMenuTimeout: number | undefined
 const { commandKeyIndex, commandIdIndex, commandGestureIndex } = index()
 
 /** Gets the canonical gesture of the command as a string, ignoring aliases. Returns an empty string if the command does not have a gesture. */
-export const gestureString = (command: Command): string =>
-  (typeof command.gesture === 'string' ? command.gesture : command.gesture?.[0] || '') as string
+export const gestureString = (command: Command): Gesture =>
+  (typeof command.gesture === 'string' ? command.gesture : command.gesture?.[0] || '') as Gesture
 
 /** Get a command by its id. Only use this for dynamic ids that are only known at runtime. If you know the id of the command at compile time, use a static import. */
 export const commandById = (id: CommandId): Command => commandIdIndex[id]
@@ -412,7 +412,7 @@ export const executeCommandWithMulticursor = (
  * - gesture menu from invalid gesture (e.g. ←↓, hold, ←↓←).
  * - Change gesture menu to basic gesture hint on gesture end.
  */
-export const handleGestureSegment = ({ sequence }: { gesture: Direction | null; sequence: GesturePath }) => {
+export const handleGestureSegment = ({ sequence }: { gesture: Direction | null; sequence: Gesture }) => {
   const state = store.getState()
 
   if (state.showModal || state.longPress === LongPressState.DragInProgress || state.showGestureCheatsheet) return
@@ -442,7 +442,7 @@ export const handleGestureSegment = ({ sequence }: { gesture: Direction | null; 
 }
 
 /** Executes a valid gesture and closes the gesture hint. Special handling for chainable commands. */
-export const handleGestureEnd = ({ sequence, e }: { sequence: GesturePath | null; e: GestureResponderEvent }) => {
+export const handleGestureEnd = ({ sequence, e }: { sequence: Gesture | null; e: GestureResponderEvent }) => {
   const state = store.getState()
 
   // Get the command from the command gesture index.

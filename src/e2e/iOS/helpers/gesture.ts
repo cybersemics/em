@@ -1,5 +1,5 @@
 import Direction from '../../../@types/Direction'
-import GesturePath from '../../../@types/GesturePath'
+import Gesture from '../../../@types/Gesture'
 
 export interface GestureOptions {
   xStart?: number
@@ -18,10 +18,7 @@ interface PointerAction {
 }
 
 /** Apply gesture action for the given path. */
-const gesture = async (
-  path: GesturePath,
-  { xStart, yStart, segmentLength = 60, waitMs = 200 }: GestureOptions = {},
-) => {
+const gesture = async (path: Gesture, { xStart, yStart, segmentLength = 60, waitMs = 200 }: GestureOptions = {}) => {
   if (!xStart || !yStart) {
     const windowSize = await browser.getWindowSize()
     xStart = xStart ?? windowSize!.width / 3
