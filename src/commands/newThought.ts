@@ -77,7 +77,11 @@ const newThoughtCommand: Command = {
   // Main gesture and alternative patterns to help with mis-swipes since MultiGesture does not support diagonal swipes
   gesture: ['rd', 'rdldl', 'rdldld', 'rldl', 'rldld', 'rldldl'],
   multicursor,
+  // Preventing default on keydown is undesirable because it disables auto-capitalization on iOS Safari. (#3707)
+  permitDefault: true,
   svg: Icon,
+  // Just chain the immediateyl useful outdent command for now. More can be added in the future.
+  isChainable: command => command.id === 'outdent',
   canExecute: () => isDocumentEditable(),
   exec,
 }

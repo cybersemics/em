@@ -34,6 +34,7 @@ import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import col1MaxWidthStore from '../stores/col1MaxWidthStore'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
+import selectionRangeStore from '../stores/selectionRangeStore'
 import containsURL from '../util/containsURL'
 import dndRef from '../util/dndRef'
 import durations from '../util/durations'
@@ -526,6 +527,8 @@ const ThoughtContainer = ({
     isTableCol1,
   })
 
+  const hasSelectionRange = selectionRangeStore.useState()
+
   // thought does not exist
   if (value == null) return null
 
@@ -604,7 +607,10 @@ const ThoughtContainer = ({
           <StaticThought
             allowSingleContext={allowSingleContext}
             dragSource={dragSourceEditable}
-            longPressProps={isTouch ? dragHoldResult.props : undefined}
+            // Disallow long press on mobile when there is a selection range, otherwise it will interfere with native selection controls like
+            // adjusting the selection or selection drag-and-drop. This is part of matching logic across StaticThought, Thought, and
+            // useDragAndDropThought that disables long press when there is a selection range.
+            longPressProps={isTouch && !hasSelectionRange ? dragHoldResult.props : undefined}
             env={env}
             isContextPending={isContextPending}
             isEditing={isEditing}
