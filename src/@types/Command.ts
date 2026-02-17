@@ -82,7 +82,7 @@ interface Command {
   /** A function that returns an error message if the command should indicate an error. */
   error?: (state: State) => string | null
 
-  /** A MultiGesture sequence to activate the command on touch screens. */
+  /** A MultiGesture sequence to activate the command on touch screens. If an array of Gestures are provided, the first gesture in the array will be shown in the UI but the command can be activated by any of them. */
   gesture?: Gesture | Gesture[]
 
   /** Do not show the alert after the command is executed in training mode. */
@@ -91,13 +91,13 @@ interface Command {
   /** Hide the command in the CommandPalette. */
   hideFromCommandPalette?: boolean
 
-  /** Hide the command in the Help modal and: CommandPalette. */
+  /** Hide the command in the Help modal and CommandPalette. */
   hideFromHelp?: boolean
 
   /** A function that returns true if the command should be highlighted in the Toolbar. */
   isActive?: (state: State) => boolean
 
-  /** When true, a small open dropdown indicator will be rendered beneath the icon. */
+  /** When true, a small open dropdown indicator will be rendered beneath the icon for this command in the Toolbar. */
   isDropdownOpen?: (state: State) => boolean
 
   /** A keyboard sequence or array of sequences to activate the command. The first keyboard shortcut in the array will be shown in the UI. */
