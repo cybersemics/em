@@ -431,7 +431,7 @@ const GestureDiagram = ({
                         ? 'M 54,40.5 Q 45,49.5 45,58.5'
                         : 'M 45,58.5 L 45,72'
                   : rounded
-                    ? generateArcPath(i, path as Direction[])
+                    ? generateArcPath(i, Array.from(path) as Direction[])
                     : `M ${x} ${y} l ${segment.dx * scale} ${segment.dy * scale}`
               }
               // segments do not change independently, so we can use index as the key

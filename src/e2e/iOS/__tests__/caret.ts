@@ -169,7 +169,7 @@ describe('Caret', () => {
     const elementRect = await getElementRectByScreen(editableNodeHandle)
 
     // swipe right on thought
-    await gesture(['r'], {
+    await gesture('r', {
       xStart: elementRect.x + 5,
       yStart: elementRect.y + elementRect.height / 2,
       segmentLength: elementRect.width,
