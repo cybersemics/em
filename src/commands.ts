@@ -186,7 +186,7 @@ const { commandKeyIndex, commandIdIndex, commandGestureIndex } = index()
 
 /** Gets the canonical gesture of the command as a string, ignoring aliases. Returns an empty string if the command does not have a gesture. */
 export const gestureString = (command: Command): Gesture =>
-  (typeof command.gesture === 'string' ? command.gesture : command.gesture?.[0] || '') as Gesture
+  typeof command.gesture === 'string' ? command.gesture : command.gesture?.[0] || ''
 
 /** Get a command by its id. Only use this for dynamic ids that are only known at runtime. If you know the id of the command at compile time, use a static import. */
 export const commandById = (id: CommandId): Command => commandIdIndex[id]
