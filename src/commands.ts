@@ -34,6 +34,7 @@ import hasMulticursor from './selectors/hasMulticursor'
 import isAllSelected from './selectors/isAllSelected'
 import thoughtToPath from './selectors/thoughtToPath'
 import store from './stores/app'
+import editingValueStore from './stores/editingValue'
 import gestureStore from './stores/gesture'
 import equalPath from './util/equalPath'
 import haptics from './util/haptics'
@@ -568,10 +569,11 @@ export const handleGestureCancel = () => {
   })
 }
 
-/** In the specific case of the newThought command, prevent default in beforeinput event instead of keydown to preserve default iOS
- * auto-capitalization behavior. The Enter character needs to be prevented so that it doesn't get inserted into the new thought (#3707). */
+/** In the specific case of the newThought and indent commands, prevent default in beforeinput event instead of keydown to preserve default iOS auto-capitalization behavior. The Enter and space characters needs to be prevented so that it doesn't get inserted into the thought (#3707). */
 export const beforeInput = (e: InputEvent) => {
-  if (keyCommandId === 'newThought') e.preventDefault()
+  if (keyCommandId === 'newThought' || (keyCommandId === 'indent' && editingValueStore.getState() === '')) {
+    e.preventDefault()
+  }
 }
 
 /** Global keyUp handler. */
