@@ -60,6 +60,7 @@ const colors = {
     gestureDiagramWrapper: 'rgba(94, 94, 94, 1)',
     pickerBg: 'rgba(20, 20, 20, 1)', // #141414
     sidebarBg: 'rgba(41, 42, 43, 1)', // #292a2b
+    sidebarOverlayBg: 'rgba(0, 0, 0, 0.5)', // this is defined separately to bgOverlay50 as it doesn't change between dark/light mode
     tutorialBg: 'rgba(33, 33, 33, 0.8)', // #212121
     thoughtAnnotation: 'rgba(34, 34, 34, 1)', // #222
     transparent: 'transparent',
@@ -148,6 +149,7 @@ const colors = {
     gestureDiagramWrapper: 'rgba(180, 180, 180, 1)',
     pickerBg: 'rgba(235, 235, 235, 1)', // #ebebeb
     sidebarBg: 'rgba(245, 245, 245, 1)', // #f5f5f5
+    sidebarOverlayBg: 'rgba(0, 0, 0, 0.5)', // this is defined separately to bgOverlay50 as it doesn't change between dark/light mode
     tutorialBg: 'rgba(221, 221, 221, 1)', // #ddd
     thoughtAnnotation: 'rgba(221, 221, 221, 1)', // #ddd
     transparent: 'transparent',

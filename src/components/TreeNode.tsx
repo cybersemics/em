@@ -70,7 +70,7 @@ const TreeNode = ({
   const fadeThoughtRef = useRef<HTMLDivElement>(null)
   const [isMounted, setIsMounted] = useState(true)
 
-  const fauxCaretNodeProvider = useFauxCaretNodeProvider({
+  const { styles: fauxCaretNodeProviderStyles, hide: hideFauxCaret } = useFauxCaretNodeProvider({
     editing,
     fadeThoughtElement: fadeThoughtRef.current,
     isCursor,
@@ -153,10 +153,15 @@ const TreeNode = ({
         isMounted={isMounted}
         style={{
           ...style,
-          ...fauxCaretNodeProvider,
+          ...fauxCaretNodeProviderStyles,
         }}
       >
-        <div ref={fadeThoughtRef}>
+        <div
+          ref={fadeThoughtRef}
+          // It's possible for both the positioned faux caret and the start/end faux caret to be active at once, so hide the start/end
+          // caret after a tap activates the positioned faux caret. https://github.com/cybersemics/em/pull/3757
+          onClick={hideFauxCaret}
+        >
           <VirtualThought
             debugIndex={testFlags.simulateDrop ? indexChild : undefined}
             depth={depth}

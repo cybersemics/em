@@ -1,5 +1,9 @@
 import { KnownDevices } from 'puppeteer'
-import swipe from '../helpers/swipe'
+import newSubthoughtCommand from '../../../commands/newSubthought'
+import newThoughtCommand from '../../../commands/newThought'
+import exportThoughts from '../helpers/exportThoughts'
+import gesture from '../helpers/gesture'
+import keyboard from '../helpers/keyboard'
 import waitForFrames from '../helpers/waitForFrames'
 import { page } from '../setup'
 
@@ -15,7 +19,7 @@ vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
  * This ensures a clean user experience where alerts don't interfere
  * with ongoing gesture interactions.
  */
-describe('gesture alert behavior', () => {
+describe('alerts', () => {
   beforeEach(async () => {
     await page.emulate(KnownDevices['iPhone 15 Pro'])
   })
@@ -29,7 +33,7 @@ describe('gesture alert behavior', () => {
    */
   it('should not show alert during gesture progress', async () => {
     // Perform an incomplete gesture (no touchEnd) - create a new thought
-    await swipe('rdr', false)
+    await gesture(newSubthoughtCommand, { hold: true })
 
     await waitForFrames()
 
@@ -47,7 +51,7 @@ describe('gesture alert behavior', () => {
    */
   it('should show alert after gesture completion', async () => {
     // Perform a complete gesture - create a new thought
-    await swipe('rdr', true)
+    await gesture(newSubthoughtCommand)
 
     await waitForFrames()
 
@@ -58,5 +62,40 @@ describe('gesture alert behavior', () => {
     // Verify alert content contains gesture hint text
     const alertText = await page.$eval('[data-testid=alert-content]', el => el.textContent)
     expect(alertText).toBeTruthy()
+  })
+})
+
+describe('chaining commands', () => {
+  beforeEach(async () => {
+    await page.emulate(KnownDevices['iPhone 15 Pro'])
+  })
+
+  it('chained command', async () => {
+    await gesture(newThoughtCommand)
+    await keyboard.type('a')
+    await gesture(newSubthoughtCommand)
+    await keyboard.type('b')
+
+    // New Thought + Outdent
+    await gesture('rd' + 'lrl')
+
+    const exported1 = await exportThoughts()
+    expect(exported1).toBe(`
+- a
+  - b
+- 
+`)
+  })
+
+  it('prioritize exact match over chained command', async () => {
+    await gesture(newThoughtCommand)
+    await keyboard.type('a')
+    await gesture(newSubthoughtCommand)
+
+    const exported1 = await exportThoughts()
+    expect(exported1).toBe(`
+- a
+  - 
+`)
   })
 })

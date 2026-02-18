@@ -29,49 +29,12 @@ export const config: WebdriverIO.Config = {
   // Capabilities
   capabilities: [
     {
-      platformName: 'iOS',
-      browserName: 'Safari',
+      ...baseConfig.baseCapabilities,
       'appium:deviceName': process.env.IOS_DEVICE_NAME || 'iPhone 15 Plus',
       'appium:platformVersion': process.env.IOS_PLATFORM_VERSION || '18.3',
-      'appium:automationName': 'XCUITest',
       'appium:newCommandTimeout': 240,
     },
   ],
-
-  // Hooks
-  // Navigate once at the start of the session
-  before: async function () {
-    await browser.url('http://bs-local.com:3000')
-    await browser.waitUntil(
-      async () => {
-        const body = await browser.$('body')
-        return body.isExisting()
-      },
-      { timeout: 30000 },
-    )
-  },
-
-  // Before each test: clear storage and refresh (faster than full navigation)
-  beforeTest: async function () {
-    // Clear localStorage and sessionStorage to ensure fresh state
-    await browser.execute(() => {
-      localStorage.clear()
-      sessionStorage.clear()
-    })
-
-    // Refresh to apply the cleared storage (much faster than full navigation)
-    await browser.refresh()
-
-    // Wait for the tutorial skip button and click it
-    const skipElement = await $('#skip-tutorial')
-    await skipElement.waitForExist({ timeout: 90000 })
-    await skipElement.waitForClickable({ timeout: 10000 })
-    await skipElement.click()
-
-    // Wait for the empty thoughtspace to be ready
-    const emptyThoughtspace = await $('[aria-label="empty-thoughtspace"]')
-    await emptyThoughtspace.waitForExist({ timeout: 90000 })
-  },
 }
 
 export default config

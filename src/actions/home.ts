@@ -20,5 +20,5 @@ export const homeActionCreator = (): Thunk => (dispatch, getState) => {
     selection.clear()
   }
 
-  scrollTo('top')
+  scrollTo('top', 'smooth')
 }

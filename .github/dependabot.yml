@@ -80,3 +80,6 @@ updates:
       workbox:
         patterns:
           - "workbox-*"
+      wdio:
+        patterns:
+          - "@wdio/*"

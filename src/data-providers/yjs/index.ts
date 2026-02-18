@@ -17,10 +17,11 @@ export const accessTokenLocal = storage.getItem('accessToken', () => nanoid(21))
 // This can be shared with ?share={docId} when connected to a y-websocket server.
 export const tsidLocal = storage.getItem('tsid', () => nanoid(21))
 
-// access a shared document when the URL contains share=DOCID&
-// otherwise use the tsid stored on the device
-export const tsidShared = new URLSearchParams(window.location.search).get('share')
-const accessTokenShared = new URLSearchParams(window.location.search).get('auth')
+// Access a shared document when the URL contains share=DOCID&.
+// Otherwise use the tsid stored on the device.
+// window.location may be undefined in puppeteer if this module is imported before happy-dom is set up, so guard against undefined despite the truthy type.
+export const tsidShared = new URLSearchParams(window.location?.search).get('share')
+const accessTokenShared = new URLSearchParams(window.location?.search).get('auth')
 
 export const tsid = tsidShared || tsidLocal
 export const accessToken = accessTokenShared || accessTokenLocal

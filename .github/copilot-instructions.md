@@ -2,6 +2,8 @@ This is a Typescript/React/Redux web app that runs as a PWA on mobile.
 
 Background: https://github.com/cybersemics/em/wiki/Docs
 
+Contributing Guidelines: https://github.com/cybersemics/em/blob/main/CONTRIBUTING.md
+
 ## Setup and Development
 
 ### Installation

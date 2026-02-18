@@ -1,5 +1,5 @@
 import { head } from 'lodash'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { Property } from '../../styled-system/types/csstype'
@@ -7,6 +7,7 @@ import FauxCaretType from '../@types/FauxCaretType'
 import Path from '../@types/Path'
 import { isSafari, isTouch } from '../browser'
 import { getBoundingClientRect } from '../device/selection'
+import useLayoutAnimationFrameEffect from '../hooks/useLayoutAnimationFrameEffect'
 import attributeEquals from '../selectors/attributeEquals'
 import editingValueStore from '../stores/editingValue'
 import equalPath from '../util/equalPath'
@@ -55,32 +56,30 @@ const FauxCaret = ({
   })
 
   // If the thought isCursor and keyboard is open, position the faux cursor at the point where the selection is created.
-  useEffect(() => {
+  // The selection ranges aren't updated until the end of the frame when the thought is focused.
+  useLayoutAnimationFrameEffect(() => {
     if (!isTouch || !isSafari() || caretType !== 'positioned') return
 
     if (isEditingCursor) {
-      // The selection ranges aren't updated until the end of the frame when the thought is focused.
-      setTimeout(() => {
-        if (!wrapperElement) return
+      if (!wrapperElement) return
 
-        const offset = wrapperElement.getBoundingClientRect()
+      const offset = wrapperElement.getBoundingClientRect()
 
-        if (!offset) return
+      if (!offset) return
 
-        const rect = getBoundingClientRect()
+      const rect = getBoundingClientRect()
 
-        if (rect) {
-          setStyles({
-            position: 'absolute',
-            display: undefined,
-            fontSize: `${rect.height}px`,
-            top: `${rect.y - offset.y}px`,
-            left: `${rect.x - offset.x}px`,
-          })
-        } else {
-          setStyles({ display: 'none' })
-        }
-      })
+      if (rect) {
+        setStyles({
+          position: 'absolute',
+          display: undefined,
+          fontSize: `${rect.height}px`,
+          top: `${rect.y - offset.y}px`,
+          left: `${rect.x - offset.x}px`,
+        })
+      } else {
+        setStyles({ display: 'none' })
+      }
     } else {
       setStyles({ display: 'none' })
     }

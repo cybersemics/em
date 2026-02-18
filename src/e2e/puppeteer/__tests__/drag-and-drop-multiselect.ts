@@ -1,4 +1,3 @@
-import { HOME_TOKEN } from '../../../constants'
 import dragAndDropThought from '../helpers/dragAndDropThought'
 import exportThoughts from '../helpers/exportThoughts'
 import hideHUD from '../helpers/hideHUD'
@@ -21,14 +20,15 @@ describe('drag and drop multiple thoughts', () => {
       `)
 
     await multiselectThoughts(['y', 'z', 'a'])
-    await dragAndDropThought('a', 'x', { position: 'before', mouseUp: true })
+    await dragAndDropThought('a', 'x', { position: 'before' })
 
     const exported = await exportThoughts()
-    expect(exported).toBe(`- ${HOME_TOKEN}
-  - y
-  - z
-  - a
-  - x`)
+    expect(exported).toBe(`
+- y
+- z
+- a
+- x
+`)
   })
 
   it('should drop multiple thoughts as siblings after target', async () => {
@@ -40,14 +40,15 @@ describe('drag and drop multiple thoughts', () => {
       `)
 
     await multiselectThoughts(['y', 'z'])
-    await dragAndDropThought('z', 'a', { position: 'after', mouseUp: true })
+    await dragAndDropThought('z', 'a', { position: 'after' })
 
     const exported = await exportThoughts()
-    expect(exported).toBe(`- ${HOME_TOKEN}
-  - x
-  - a
-  - y
-  - z`)
+    expect(exported).toBe(`
+- x
+- a
+- y
+- z
+`)
   })
 
   it('should drop multiple thoughts as children of target', async () => {
@@ -59,14 +60,15 @@ describe('drag and drop multiple thoughts', () => {
       `)
 
     await multiselectThoughts(['y', 'z'])
-    await dragAndDropThought('z', 'a', { position: 'child', mouseUp: true })
+    await dragAndDropThought('z', 'a', { position: 'child' })
 
     const exported = await exportThoughts()
-    expect(exported).toBe(`- ${HOME_TOKEN}
-  - x
-  - a
-    - y
-    - z`)
+    expect(exported).toBe(`
+- x
+- a
+  - y
+  - z
+`)
   })
 
   it('should preserve document order of multiselected thoughts when dropping', async () => {
@@ -79,14 +81,15 @@ describe('drag and drop multiple thoughts', () => {
 
     // Select in random order: a, x, y
     await multiselectThoughts(['a', 'x', 'y'])
-    await dragAndDropThought('y', 'z', { position: 'child', mouseUp: true })
+    await dragAndDropThought('y', 'z', { position: 'child' })
 
     const exported = await exportThoughts()
-    expect(exported).toBe(`- ${HOME_TOKEN}
-  - z
-    - x
-    - y
-    - a`)
+    expect(exported).toBe(`
+- z
+  - x
+  - y
+  - a
+`)
   })
 
   it('should handle multiselect drag to sorted context - multiple drop positions', async () => {
@@ -104,18 +107,19 @@ describe('drag and drop multiple thoughts', () => {
 
     // Drag b and e into the sorted context
     await multiselectThoughts(['e', 'b'])
-    await dragAndDropThought('e', 'parent', { position: 'child', mouseUp: true })
+    await dragAndDropThought('e', 'parent', { position: 'child' })
 
     const exported = await exportThoughts()
-    expect(exported).toBe(`- ${HOME_TOKEN}
-  - parent
-    - =sort
-      - Alphabetical
-        - Asc
-    - a
-    - b
-    - c
-    - e
-    - f`)
+    expect(exported).toBe(`
+- parent
+  - =sort
+    - Alphabetical
+      - Asc
+  - a
+  - b
+  - c
+  - e
+  - f
+`)
   })
 })

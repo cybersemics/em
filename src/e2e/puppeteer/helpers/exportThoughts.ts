@@ -1,4 +1,6 @@
+import { HOME_TOKEN } from '../../../constants'
 import { WindowEm } from '../../../initialize'
+import removeHome from '../../../util/removeHome'
 import { page } from '../setup'
 
 const em = window.em as WindowEm
@@ -8,10 +10,8 @@ const em = window.em as WindowEm
  * This allows puppeteer tests to verify thought structure without using snapshots.
  */
 const exportThoughts = async (): Promise<string> => {
-  return await page.evaluate(() => {
-    const exported = em.exportContext(['__ROOT__'], 'text/plain')
-    return exported
-  })
+  const exported = await page.evaluate(HOME_TOKEN => em.exportContext([HOME_TOKEN], 'text/plain'), HOME_TOKEN)
+  return removeHome(exported)
 }
 
 export default exportThoughts

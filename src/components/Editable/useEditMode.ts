@@ -88,14 +88,11 @@ const useEditMode = ({
 
         If the last action is swapParent, set the selection synchronously to keep the focus stable after the swap.
       */
-        if (isTouch && isSafari() && lastUndoableActionType !== 'swapParent') {
-          if (!selection.isThought()) {
-            asyncFocus()
-          }
-          requestAnimationFrame(setSelectionToCursorOffset)
-        } else {
-          setSelectionToCursorOffset()
+        if (isTouch && isSafari() && lastUndoableActionType !== 'swapParent' && !selection.isThought()) {
+          asyncFocus()
         }
+
+        setSelectionToCursorOffset()
       }
     },
     // React Hook useEffect has missing dependencies: 'contentRef', 'editMode', and 'style?.visibility'.

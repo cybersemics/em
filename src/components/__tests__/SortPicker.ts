@@ -32,7 +32,7 @@ describe('Alphabetical', () => {
 
       await act(vi.runOnlyPendingTimersAsync)
 
-      await click('[data-testid="toolbar-icon"][aria-label="SortPicker"]')
+      await click('[data-testid="toolbar-icon"][aria-label="Sort Picker"]')
       await click('[aria-label="sort options"] [aria-label="Alphabetical"]')
       await act(vi.runAllTimersAsync)
 
@@ -59,7 +59,7 @@ describe('Alphabetical', () => {
         ])
       })
 
-      await click('[data-testid="toolbar-icon"][aria-label="SortPicker"]')
+      await click('[data-testid="toolbar-icon"][aria-label="Sort Picker"]')
       await click('[aria-label="sort options"] [aria-label="Alphabetical"]')
       await act(vi.runOnlyPendingTimersAsync)
 
@@ -88,7 +88,7 @@ describe('Alphabetical', () => {
           setCursor(['a']),
         ])
       })
-      await click('[data-testid="toolbar-icon"][aria-label="SortPicker"]')
+      await click('[data-testid="toolbar-icon"][aria-label="Sort Picker"]')
       await click('[aria-label="sort options"] [aria-label="Alphabetical"]')
       await act(vi.runAllTimersAsync)
 
@@ -115,11 +115,11 @@ describe('Alphabetical', () => {
         ])
       })
 
-      await click('[data-testid="toolbar-icon"][aria-label="SortPicker"]')
+      await click('[data-testid="toolbar-icon"][aria-label="Sort Picker"]')
       await click('[aria-label="sort options"] [aria-label="Alphabetical"]')
 
       await act(vi.runOnlyPendingTimersAsync)
-      await click('[data-testid="toolbar-icon"][aria-label="SortPicker"]')
+      await click('[data-testid="toolbar-icon"][aria-label="Sort Picker"]')
       await click('[aria-label="sort options"] [aria-label="Alphabetical"]')
 
       await act(vi.runAllTimersAsync)
@@ -165,7 +165,7 @@ describe('Created', () => {
     await act(vi.runOnlyPendingTimersAsync)
 
     // Click sort picker and select Created sort
-    await click('[data-testid="toolbar-icon"][aria-label="SortPicker"]')
+    await click('[data-testid="toolbar-icon"][aria-label="Sort Picker"]')
     await act(vi.runOnlyPendingTimersAsync)
     await click('[aria-label="sort options"] [aria-label="Created"]')
     await act(vi.runOnlyPendingTimersAsync)
@@ -210,7 +210,7 @@ describe('Created', () => {
     await act(vi.runOnlyPendingTimersAsync)
 
     // Click sort picker and select Created sort
-    await click('[data-testid="toolbar-icon"][aria-label="SortPicker"]')
+    await click('[data-testid="toolbar-icon"][aria-label="Sort Picker"]')
     await click('[aria-label="sort options"] [aria-label="Created"]')
     await act(vi.runAllTimersAsync)
 
@@ -261,7 +261,7 @@ describe('Updated', () => {
     await act(vi.runOnlyPendingTimersAsync)
 
     // Click sort picker and select Updated sort
-    await click('[data-testid="toolbar-icon"][aria-label="SortPicker"]')
+    await click('[data-testid="toolbar-icon"][aria-label="Sort Picker"]')
     await click('[aria-label="sort options"] [aria-label="Updated"]')
     await act(vi.runOnlyPendingTimersAsync)
 
@@ -313,7 +313,7 @@ describe('Updated', () => {
     await act(vi.runOnlyPendingTimersAsync)
 
     // Click sort picker and select Updated sort
-    await click('[data-testid="toolbar-icon"][aria-label="SortPicker"]')
+    await click('[data-testid="toolbar-icon"][aria-label="Sort Picker"]')
     await click('[aria-label="sort options"] [aria-label="Updated"]')
     await act(vi.runOnlyPendingTimersAsync)
 
@@ -364,11 +364,11 @@ describe('Created to Updated', () => {
 
     await act(vi.runOnlyPendingTimersAsync)
     // Click sort picker and select Created sort
-    await click('[data-testid="toolbar-icon"][aria-label="SortPicker"]')
+    await click('[data-testid="toolbar-icon"][aria-label="Sort Picker"]')
     await click('[aria-label="sort options"] [aria-label="Created"]')
 
     // Click sort picker and select Updated sort
-    await click('[data-testid="toolbar-icon"][aria-label="SortPicker"]')
+    await click('[data-testid="toolbar-icon"][aria-label="Sort Picker"]')
     await click('[aria-label="sort options"] [aria-label="Updated"]')
     await act(vi.runOnlyPendingTimersAsync)
 
@@ -404,7 +404,7 @@ it('home: Note Asc', async () => {
 
   await act(vi.runOnlyPendingTimersAsync)
 
-  await click('[data-testid="toolbar-icon"][aria-label="SortPicker"]')
+  await click('[data-testid="toolbar-icon"][aria-label="Sort Picker"]')
   await click('[aria-label="sort options"] [aria-label="Note"]')
   await act(() => vi.runAllTimersAsync())
 
@@ -436,7 +436,7 @@ it('home: Note Desc', async () => {
 
   await act(vi.runOnlyPendingTimersAsync)
 
-  await click('[data-testid="toolbar-icon"][aria-label="SortPicker"]')
+  await click('[data-testid="toolbar-icon"][aria-label="Sort Picker"]')
   await click('[aria-label="sort options"] [aria-label="Note"]')
   await act(() => vi.runAllTimersAsync())
 
@@ -510,7 +510,7 @@ it('home: Note Asc with mixed thoughts', async () => {
 
   await act(vi.runOnlyPendingTimersAsync)
 
-  await click('[data-testid="toolbar-icon"][aria-label="SortPicker"]')
+  await click('[data-testid="toolbar-icon"][aria-label="Sort Picker"]')
   await click('[aria-label="sort options"] [aria-label="Note"]')
   await act(() => vi.runAllTimersAsync())
 
@@ -543,7 +543,7 @@ it('home: Note Desc with mixed thoughts', async () => {
 
   await act(vi.runOnlyPendingTimersAsync)
 
-  await click('[data-testid="toolbar-icon"][aria-label="SortPicker"]')
+  await click('[data-testid="toolbar-icon"][aria-label="Sort Picker"]')
   await click('[aria-label="sort options"] [aria-label="Note"]')
   await act(() => vi.runAllTimersAsync())
 

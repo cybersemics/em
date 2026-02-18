@@ -11,15 +11,15 @@ const dragAndDropThought = async (
   destValue: string | null,
   {
     dropUncle,
-    mouseUp,
+    hold,
     position,
     showAlert,
     skipMouseDown,
   }: {
     /** If true, the source thought is dropped as a sibling to the hidden uncle. */
     dropUncle?: boolean
-    /** If true, the mouse button is released after the drop. */
-    mouseUp?: boolean
+    /** If true, the mouse button is not released after the drop. */
+    hold?: boolean
     /** Determines where the destination thought is dropped, relative to the source thought.
     - after: drop the source thought as a sibling after the destination thought.
     - before: drop the source thought as a sibling before the destination thought.
@@ -95,7 +95,7 @@ const dragAndDropThought = async (
 
   await page.locator('[data-testid="alert-content"]').wait()
 
-  if (mouseUp) {
+  if (!hold) {
     await page.mouse.up()
 
     // Wait for drag operation to fully complete by checking:

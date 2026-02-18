@@ -29,16 +29,16 @@ export function registerActionMetadata(actionType: ActionType, metadata: ActionM
 /**
  * Returns if an action is undoable.
  */
-export function isUndoable(actionType: ActionType): boolean {
-  return actionMetadataRegistry[actionType]?.undoable ?? false
+export function isUndoable(actionType?: ActionType): boolean {
+  return (actionType && actionMetadataRegistry[actionType]?.undoable) ?? false
 }
 
 /**
  * Returns if an action is navigational, i.e. cursor movements.
  * Contiguous navigation actions will be merged and adjoined with the last non-navigational action.
  */
-export function isNavigation(actionType: ActionType): boolean {
-  return actionMetadataRegistry[actionType]?.isNavigation ?? false
+export function isNavigation(actionType?: ActionType): boolean {
+  return (actionType && actionMetadataRegistry[actionType]?.isNavigation) ?? false
 }
 
 /**

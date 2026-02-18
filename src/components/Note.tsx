@@ -132,13 +132,17 @@ const Note = React.memo(
     /** Set editing to false onBlur, if keyboard is closed. */
     const onBlur = useCallback(
       (e: React.FocusEvent) => {
+        if (!(e.relatedTarget instanceof Element)) return
+
+        const isRelatedTargetNote = !!e.relatedTarget.matches('[aria-label="note-editable"]')
+
+        if (!isRelatedTargetNote) dispatch(setNoteFocus({ value: false }))
+
         if (isTouch && !selection.isActive()) {
           // if we know that the focus is changing to another editable or note then do not set editing to false
           // (does not work when clicking a bullet as it is set to null)
           const isRelatedTargetEditableOrNote =
-            e.relatedTarget &&
-            ((e.relatedTarget as Element).hasAttribute?.('data-editable') ||
-              !!(e.relatedTarget as Element).matches('[aria-label="note-editable"]'))
+            e.relatedTarget && (e.relatedTarget.hasAttribute?.('data-editable') || isRelatedTargetNote)
 
           if (!isRelatedTargetEditableOrNote) setTimeout(() => dispatch(keyboardOpen({ value: false })))
         }
@@ -192,6 +196,10 @@ const Note = React.memo(
           // For some reason, pointerEvents: 'none' on ContentEditable or its parent does prevent onFocus.
           // This is strange, as it seems to prevent onFocus in Subthought.tsx.
           disabled={disabled}
+          // Prevent drag-and-drop of text selection between thoughts and notes. This also disables dragging
+          // text within the note, which was previously possible on mobile but not desktop. This may be addressed
+          // on both platforms by https://github.com/cybersemics/em/issues/3739.
+          onDrop={isTouch ? (e: React.DragEvent) => e.preventDefault() : undefined}
           onKeyDown={onKeyDown}
           onChange={onChange}
           onPaste={() => {
