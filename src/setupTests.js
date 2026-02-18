@@ -1,12 +1,17 @@
 import '@testing-library/jest-dom'
 import 'fake-indexeddb/auto'
 import * as matchers from 'jest-extended'
+import * as lib0Encoding from 'lib0/encoding'
 // requires jest config resetMocks: false after react-scripts v4
 import { noop } from 'lodash'
 import { TextDecoder, TextEncoder } from 'util'
 import 'vi-canvas-mock'
 
 expect.extend(matchers)
+
+// Yjs can pass undefined to writeVarString (e.g. parentSub), which lib0 does not handle.
+const originalWriteVarString = lib0Encoding.writeVarString
+lib0Encoding.writeVarString = (encoder, str) => originalWriteVarString(encoder, str ?? '')
 
 // define missing global built-ins for jest
 global.TextEncoder = TextEncoder
