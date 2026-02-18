@@ -1,6 +1,8 @@
 import { Action, Store, StoreEnhancer, StoreEnhancerStoreCreator } from 'redux'
 import State from '../@types/State'
+import { HOME_TOKEN } from '../constants'
 import isTutorial from '../selectors/isTutorial'
+import equalPath from '../util/equalPath'
 
 /**
  * Validates the next state after an action is applied and throws an error if fatal conditions are detected.
@@ -23,6 +25,9 @@ const validateNextState = (nextState: State, action: Action): void => {
     throw new Error(
       '__EM__ with empty childrenMap detected. This should never happen after the welcome screen is closed.',
     )
+  } else if (equalPath(nextState.cursor, [HOME_TOKEN])) {
+    console.error(action)
+    throw new Error(`["${HOME_TOKEN}"] is not a valid cursor. The root node is represented by null.`)
   }
 }
 
