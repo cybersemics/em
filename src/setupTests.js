@@ -6,15 +6,6 @@ import { noop } from 'lodash'
 import { TextDecoder, TextEncoder } from 'util'
 import 'vi-canvas-mock'
 
-// Yjs can pass undefined to writeVarString (e.g. parentSub), which lib0 does not handle.
-vi.mock('lib0/encoding', async importOriginal => {
-  const mod = await importOriginal()
-  return {
-    ...mod,
-    writeVarString: (encoder, str) => mod.writeVarString(encoder, str ?? ''),
-  }
-})
-
 expect.extend(matchers)
 
 // define missing global built-ins for jest
