@@ -6,7 +6,7 @@ import _ from 'lodash'
 import { applyMiddleware, createStore } from 'redux'
 import { thunk } from 'redux-thunk'
 import appReducer from '../actions/app'
-import debuggingEnhancer from '../redux-enhancers/debuggingEnhancer'
+import validateStateEnhancer from '../redux-enhancers/validateStateEnhancer'
 import pushQueue from '../redux-enhancers/pushQueue'
 import storageCache from '../redux-enhancers/storageCache'
 import undoRedoEnhancer from '../redux-enhancers/undoRedoEnhancer'
@@ -44,14 +44,14 @@ const middlewareEnhancer = applyMiddleware(
 )
 
 // only validate Redux state in dev and test environments
-const debuggingEnhancerDevOnly =
-  import.meta.env.MODE === 'development' || import.meta.env.MODE === 'test' ? [debuggingEnhancer] : null
+const validateStateEnhancerDevOnly =
+  import.meta.env.MODE === 'development' || import.meta.env.MODE === 'test' ? [validateStateEnhancer] : null
 
 const store = createStore(
   appReducer,
   composeEnhancers(
     // validate state before production enhancers run
-    ...(debuggingEnhancerDevOnly || []),
+    ...(validateStateEnhancerDevOnly || []),
     middlewareEnhancer,
     storageCache,
     undoRedoEnhancer,
@@ -59,7 +59,7 @@ const store = createStore(
     // must go at the end to ensure it clears the pushQueue before other enhancers
     pushQueue,
     // validate state again after production enhancers run
-    ...(debuggingEnhancerDevOnly || []),
+    ...(validateStateEnhancerDevOnly || []),
   ),
 )
 

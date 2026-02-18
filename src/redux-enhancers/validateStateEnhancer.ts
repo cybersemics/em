@@ -26,9 +26,9 @@ const validateNextState = (nextState: State, action: Action): void => {
   }
 }
 
-/** Store enhancer for debugging that validates state changes before they occur. */
+/** Store enhancer that validates state changes before they occur. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const debuggingEnhancer: StoreEnhancer<any> =
+const validateStateEnhancer: StoreEnhancer<any> =
   (createStore: StoreEnhancerStoreCreator) =>
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   <A extends Action<any>>(reducer: (state: any, action: A) => any, initialState: any): Store<State, A> =>
@@ -41,4 +41,4 @@ const debuggingEnhancer: StoreEnhancer<any> =
       return nextState
     }, initialState)
 
-export default debuggingEnhancer
+export default validateStateEnhancer
