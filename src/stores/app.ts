@@ -6,12 +6,12 @@ import _ from 'lodash'
 import { applyMiddleware, createStore } from 'redux'
 import { thunk } from 'redux-thunk'
 import appReducer from '../actions/app'
+import debuggingEnhancer from '../redux-enhancers/debuggingEnhancer'
 import pushQueue from '../redux-enhancers/pushQueue'
 import storageCache from '../redux-enhancers/storageCache'
 import undoRedoEnhancer from '../redux-enhancers/undoRedoEnhancer'
 import updateJumpHistory from '../redux-enhancers/updateJumpHistoryEnhancer'
 import clearSelection from '../redux-middleware/clearSelection'
-import debuggingMiddleware from '../redux-middleware/debuggingMiddleware'
 import doNotDispatchReducer from '../redux-middleware/doNotDispatchReducer'
 import freeThoughts from '../redux-middleware/freeThoughts'
 import multi from '../redux-middleware/multi'
@@ -35,8 +35,6 @@ const middlewareEnhancer = applyMiddleware(
   ...(import.meta.env.MODE === 'development' || import.meta.env.MODE === 'test' ? [doNotDispatchReducer] : []),
   multi,
   thunk,
-  // must go after the thunk middleware, otherwise the Puppeteer cursor test fails
-  debuggingMiddleware,
   pullQueue,
   clearSelection,
   updateEditingValue,
@@ -45,15 +43,23 @@ const middlewareEnhancer = applyMiddleware(
   multicursorAlertMiddleware,
 )
 
+// only validate Redux state in dev and test environments
+const debuggingEnhancerDevOnly =
+  import.meta.env.MODE === 'development' || import.meta.env.MODE === 'test' ? [debuggingEnhancer] : null
+
 const store = createStore(
   appReducer,
   composeEnhancers(
+    // validate state before production enhancers run
+    ...(debuggingEnhancerDevOnly || []),
     middlewareEnhancer,
     storageCache,
     undoRedoEnhancer,
     updateJumpHistory,
     // must go at the end to ensure it clears the pushQueue before other enhancers
     pushQueue,
+    // validate state again after production enhancers run
+    ...(debuggingEnhancerDevOnly || []),
   ),
 )
 
