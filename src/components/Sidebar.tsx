@@ -30,13 +30,15 @@ type SidebarSection = {
   id: SidebarSectionId
   label: string
   icon: React.ComponentType
+  hue: number
+  saturate: number
 }
 
 /** All available sidebar sections. */
 const SECTIONS: SidebarSection[] = [
-  { id: 'favorites', label: 'Favorites', icon: FavoritesIcon },
-  { id: 'recentlyEdited', label: 'Recently Edited', icon: PencilIcon },
-  { id: 'recentlyDeleted', label: 'Recently Deleted', icon: DeleteIcon },
+  { id: 'favorites', label: 'Favorites', icon: FavoritesIcon, hue: 0, saturate: 1 },
+  { id: 'recentlyEdited', label: 'Recently Edited', icon: PencilIcon, hue: -45, saturate: 1.05 },
+  { id: 'recentlyDeleted', label: 'Recently Deleted', icon: DeleteIcon, hue: 128, saturate: 1.1 },
 ]
 
 /** The header for the sidebar, which by default shows the icon and label
@@ -181,25 +183,28 @@ const SidebarOverlay1 = ({ width, opacity, expanded, expandedHeight }: { width: 
 }
 
 /** Overlay layer that adds middle tones to the sidebar colour blend. */
-const SidebarOverlay2 = ({ width, opacity }: { width: string, opacity: MotionValue<number> }) => (
-  <motion.div
-    style={{ opacity }}
-    className={css({
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      bottom: 0,
-      width,
-      backgroundImage: 'url(/img/sidebar/overlay-layer-2.webp)',
-      backgroundSize: 'cover',
-      backgroundPosition: 'top center',
-      mixBlendMode: 'screen',
-      pointerEvents: 'none',
-      zIndex: 'sidebar',
-      filter: 'blur(8px)'
-    })}
-  />
-)
+const SidebarOverlay2 = ({ width, opacity, hue, sat }: { width: string, opacity: MotionValue<number>, hue: MotionValue<number>, sat: MotionValue<number> }) => {
+  const filter = useTransform([hue, sat], ([h, s]) => `blur(8px) hue-rotate(${h}deg) saturate(${s})`)
+
+  return (
+    <motion.div
+      style={{ opacity, filter }}
+      className={css({
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        bottom: 0,
+        width,
+        backgroundImage: 'url(/img/sidebar/overlay-layer-2.webp)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'top center',
+        mixBlendMode: 'screen',
+        pointerEvents: 'none',
+        zIndex: 'sidebar',
+      })}
+    />
+  )
+}
 
 /** The sidebar gradient overlay. */
 const SidebarGradient = ({
@@ -306,6 +311,23 @@ const Sidebar = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [dropdownHeight, setDropdownHeight] = useState(0)
   const innerWidth = viewportStore.useSelector(state => state.innerWidth)
+
+  /** Hue rotation motion value – takes the shortest path around the color wheel. */
+  const hue = useMotionValue(0)
+  const sat = useMotionValue(1)
+
+  // Animate hue/saturate when section changes, taking the shortest path
+  useEffect(() => {
+    const section = SECTIONS.find(s => s.id === sectionId)!
+    const currentHue = hue.get()
+    // Normalize current to [0, 360) then find shortest-path diff in [-180, 180]
+    let diff = section.hue - (((currentHue % 360) + 360) % 360)
+    if (diff > 180) diff -= 360
+    if (diff < -180) diff += 360
+    const t = { duration: durations.get('slow') / 1000, ease: [0.16, 0.6, 0.2, 1] as const }
+    animate(hue, currentHue + diff, t)
+    animate(sat, section.saturate, t)
+  }, [sectionId])
 
   // Close the dropdown when the sidebar closes
   useEffect(() => {
@@ -611,8 +633,8 @@ const Sidebar = () => {
               width={width}
             />
 
-            <SidebarOverlay1 width={width} opacity={contentOpacity} expanded={dropdownOpen} expandedHeight={dropdownHeight} />
-            <SidebarOverlay2 width={width} opacity={contentOpacity} />
+            <SidebarOverlay1 width={width} opacity={contentOpacity} expanded={dropdownOpen} expandedHeight={dropdownHeight} hue={hue} sat={sat} />
+            <SidebarOverlay2 width={width} opacity={contentOpacity} hue={hue} sat={sat} />
 
             <Dialog.Content
               asChild
