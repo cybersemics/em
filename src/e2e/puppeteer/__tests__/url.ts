@@ -5,7 +5,7 @@ import hide from '../helpers/hide'
 import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
-import screenshot from '../helpers/screenshot-with-no-antialiasing'
+import screenshot from '../helpers/screenshot'
 import scroll from '../helpers/scroll'
 
 expect.extend({

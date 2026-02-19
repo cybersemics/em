@@ -14,6 +14,8 @@ expect.extend({
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
+/** Takes a screenshot with hardware acceleration disabled. */
+const takeScreenshot = () => screenshot({ hardwareAcceleration: false })
 /** Open sidebar and wait for it to slide all the way open. */
 const openSidebar = async () => {
   await click('[aria-label=menu]')
@@ -23,7 +25,7 @@ const openSidebar = async () => {
 /** Screenshot without the toolbar. */
 const screenshotWithoutToolbarIcons = async () => {
   await hideVisibility('[data-testid="toolbar-icon"]')
-  return screenshot()
+  return takeScreenshot()
 }
 
 describe('sidebar', () => {

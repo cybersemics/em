@@ -2,7 +2,7 @@ import path from 'path'
 import configureSnapshots from '../configureSnapshots'
 import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
-import screenshot from '../helpers/screenshot-with-no-antialiasing'
+import screenshot from '../helpers/screenshot'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
