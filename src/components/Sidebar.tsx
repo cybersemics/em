@@ -123,7 +123,7 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
                     cursor: 'pointer',
                     marginTop: '0.5rem',
                     opacity: 0.6,
-                    _hover: { opacity: 1 },
+                    '@media (hover: hover)': { _hover: { opacity: 1 } },
                     transition: 'opacity 0.15s ease-out',
                   })}
                 >
