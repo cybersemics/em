@@ -55,18 +55,18 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
   }, [isOpen, sectionId])
 
   return (
-    <div className={css({ position: 'relative' })}>
+    <div className={css({ position: 'relative', zIndex: 1 })}>
       <div
         {...fastClick(() => setIsOpen(!isOpen))}
         className={css({
           display: 'inline-flex',
           alignItems: 'center',
-          gap: '0.5rem',
-          cursor: 'pointer',
+          gap: '0.75rem',
+          cursor: 'pointer'
         })}
       >
-        <div className={css({ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 })}>
-          <section.icon size={24} fill='#C5EFF2' />
+        <div className={css({ width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 })}>
+          <section.icon size={28} fill='#C5EFF2' />
         </div>
         <SidebarSectionLabel>{section.label}</SidebarSectionLabel>
         <ChevronImg
@@ -74,6 +74,7 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
           additonalStyle={{
             transition: 'transform 0.2s ease-out',
             transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+            opacity: 0.4
           }}
         />
       </div>
@@ -104,7 +105,7 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: durations.get('medium') / 1000, ease: [0.16, 0.6, 0.2, 1] }}
-              style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}
+              style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginTop: '0.4rem', gap: '0.4rem' }}
             >
               {otherSections.map((s) => (
                 <div
@@ -116,7 +117,7 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
                   className={css({
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '0.5rem',
+                    gap: '0.75rem',
                     cursor: 'pointer',
                     marginTop: '0.5rem',
                     opacity: 0.6,
@@ -124,8 +125,8 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
                     transition: 'opacity 0.15s ease-out',
                   })}
                 >
-                  <div className={css({ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 })}>
-                    <s.icon size={20} fill='#C5EFF2' />
+                  <div className={css({ width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 })}>
+                    <s.icon size={32} fill='#C5EFF2' />
                   </div>
                   <SidebarSectionLabel active={false}>{s.label}</SidebarSectionLabel>
                 </div>
@@ -145,8 +146,9 @@ const SidebarSectionLabel = ({ children, active }: { children: React.ReactNode, 
       background: 'linear-gradient(180deg, #C7F4FF 17.78%, rgba(199, 244, 255, 0.75) 82.22%)',
       backgroundClip: 'text',
       WebkitTextFillColor: 'transparent',
-      fontSize: '1.25rem',
-      letterSpacing: '-1px',
+      fontSize: '1.6rem',
+      lineHeight: '1.6rem',
+      letterSpacing: '-0.25px',
       fontWeight: 500
     })}>{children}</div>
   )
@@ -158,6 +160,8 @@ const SidebarOverlay1 = ({ width, opacity, expanded, expandedHeight }: { width: 
     <motion.div
       data-test-id={'sidebar-overlay-1'}
       style={{ opacity }}
+      initial={{ y: '-8.75%', backgroundSize: '200%', filter: 'brightness(1.0)' }}
+      animate={{ y: expanded ? '-15%' : '-8.75%', backgroundSize: expanded ? '300%' : '200%', filter: expanded ? 'brightness(1.15)' : 'brightness(1)' }}
       transition={{ duration: durations.get('medium') / 1000, ease: [0.16, 0.6, 0.2, 1] }}
       className={css({
         position: 'absolute',
@@ -166,14 +170,11 @@ const SidebarOverlay1 = ({ width, opacity, expanded, expandedHeight }: { width: 
         width,
         height: '100vh',
         backgroundImage: 'url(/img/sidebar/overlay-layer-1.webp)',
-        backgroundSize: '200%',
         backgroundPosition: 'top',
         backgroundRepeat: 'no-repeat',
-        transform: 'translateY(-80px)',
         mixBlendMode: 'screen',
         pointerEvents: 'none',
         zIndex: 'sidebar',
-        filter: 'blur(16px)',
       })}
     />
   )
@@ -712,8 +713,7 @@ const Sidebar = () => {
                     <FadeTransition type='fast' in={showSidebar}>
                       <div
                         style={{
-                          // match HamburgerMenu width + padding
-                          marginTop: fontSize * 1.3 + 30,
+                          marginTop: '3.75rem'
                         }}
                       >
                         <SidebarHeader
