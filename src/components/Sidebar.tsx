@@ -151,7 +151,7 @@ const SidebarSectionLabel = ({ children, active }: { children: React.ReactNode, 
       fontSize: '1.6rem',
       lineHeight: '1.6rem',
       letterSpacing: '-0.25px',
-      fontWeight: 500
+      fontWeight: 300
     })}>{children}</div>
   )
 }
