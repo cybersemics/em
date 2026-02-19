@@ -2358,12 +2358,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@capacitor/clipboard@npm:^8.0.0":
-  version: 8.0.0
-  resolution: "@capacitor/clipboard@npm:8.0.0"
+"@capacitor/clipboard@npm:^8.0.1":
+  version: 8.0.1
+  resolution: "@capacitor/clipboard@npm:8.0.1"
   peerDependencies:
     "@capacitor/core": ">=8.0.0"
-  checksum: 10c0/b9dd7e92bb5d6a979140300ec8c1e3c82b1dac9c2b0c14f23b7627f5e68a78cb8dd740bd7a2ddca9a9456b5f5528c23d7819b6f4c40320a8b12ae8fb533f2f51
+  checksum: 10c0/94471a4930f61e840ff118b663fd8f28e33d9988bca61b61c3143fa9cdc51e70293fe45dfdf61ea9c146c7e191a2503f2ec216a1dc0b71a98a97739f9ad01918
   languageName: node
   linkType: hard
 
@@ -2417,12 +2417,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@capacitor/status-bar@npm:^8.0.0":
-  version: 8.0.0
-  resolution: "@capacitor/status-bar@npm:8.0.0"
+"@capacitor/status-bar@npm:^8.0.1":
+  version: 8.0.1
+  resolution: "@capacitor/status-bar@npm:8.0.1"
   peerDependencies:
     "@capacitor/core": ">=8.0.0"
-  checksum: 10c0/5a8a33073b27e138805a722f15318fc56efc999da445091af2e5d961543eae411799a38f9ccbdad3fcc4853ee85d9f173455901eda4ec48055fe2bf0f3c3ead2
+  checksum: 10c0/944257d3226400b6c186f5200e4bac0384a1bd0727be90a1602510d3b5d2a42656461e2cf1886e7cdcaa45f5125925cbd6512ddc56fbfbdaa4da6a6546b635bf
   languageName: node
   linkType: hard
 
@@ -11350,12 +11350,12 @@ __metadata:
     "@babel/plugin-proposal-private-property-in-object": "npm:^7.21.11"
     "@capacitor/android": "npm:^8.1.0"
     "@capacitor/cli": "npm:^8.1.0"
-    "@capacitor/clipboard": "npm:^8.0.0"
+    "@capacitor/clipboard": "npm:^8.0.1"
     "@capacitor/core": "npm:^8.1.0"
     "@capacitor/haptics": "npm:^8.0.0"
     "@capacitor/ios": "npm:^8.1.0"
     "@capacitor/keyboard": "npm:^8.0.0"
-    "@capacitor/status-bar": "npm:^8.0.0"
+    "@capacitor/status-bar": "npm:^8.0.1"
     "@emotion/react": "npm:^11.14.0"
     "@emotion/styled": "npm:^11.14.1"
     "@mui/material": "npm:^7.3.8"
