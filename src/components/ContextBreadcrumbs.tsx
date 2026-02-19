@@ -23,6 +23,7 @@ import FadeTransition from './FadeTransition'
 import HomeLink from './HomeLink'
 import Link from './Link'
 import Superscript from './Superscript'
+import useBreadcrumbScaler, { BreadcrumbVariant } from './scaler/useBreadcrumbScaler'
 
 type OverflowChild = {
   id: ThoughtId
@@ -157,6 +158,7 @@ const ContextBreadcrumbs = ({
   hidden,
   homeContext,
   path,
+  variant = 'default',
   staticText,
   thoughtsLimit,
   linkCssRaw,
@@ -172,6 +174,8 @@ const ContextBreadcrumbs = ({
   hidden?: boolean
   homeContext?: boolean
   path: Path
+  /** The variant of the breadcrumb. */
+  variant?: BreadcrumbVariant
   /** Disables click on breadcrumb fragments. */
   staticText?: boolean
   thoughtsLimit?: number
@@ -184,6 +188,7 @@ const ContextBreadcrumbs = ({
     shallowEqual,
   )
   const ellipsizedThoughts = useEllipsizedThoughts(pathFiltered, { charLimit, disabled, thoughtsLimit })
+  const scaler = useBreadcrumbScaler(variant)
 
   /** Clones the direct breadcrumb children to inject isDeleting animation state. */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -206,13 +211,17 @@ const ContextBreadcrumbs = ({
   return (
     <div
       aria-label={hidden ? undefined : 'context-breadcrumbs'}
+      style={
+        {
+          fontSize: `${scaler * 0.867}rem`,
+          marginLeft: `calc(${scaler * 1.1271}rem - 14.5px)`,
+          marginTop: `${scaler * 0.462}rem`,
+          minHeight: `${scaler * 0.867}rem`,
+        } as React.CSSProperties
+      }
       className={css(
         {
-          fontSize: '0.867rem',
           color: 'gray66',
-          marginLeft: 'calc(1.1271rem - 14.5px)',
-          marginTop: '0.533em',
-          minHeight: '0.867rem',
           visibility: hidden ? 'hidden' : undefined,
         },
         cssRaw,
