@@ -115,7 +115,7 @@
     "ipfs-http-client": "^43.0.1",
     "lodash": "^4.17.23",
     "lottie-react": "^2.4.1",
-    "marked": "^17.0.1",
+    "marked": "^17.0.3",
     "moize": "^6.1.7",
     "murmurhash3js": "^3.0.1",
     "nanoid": "^5.1.6",
