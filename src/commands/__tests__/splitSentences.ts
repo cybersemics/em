@@ -145,6 +145,61 @@ describe('splitSentences', () => {
   - three.`)
   })
 
+  it('splits on dash when decimal number is present (ignores decimal period)', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - A - B 1.1
+        `,
+      }),
+      setCursor(['A - B 1.1']),
+    ])
+
+    executeCommand(splitSentencesCommand, { store })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- __ROOT__
+  - A
+    - B 1.1`)
+  })
+
+  it('does not split on dash when decimal number is present and already split', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - A
+            - B 1.1
+        `,
+      }),
+      setCursor(['B 1.1']),
+    ])
+
+    executeCommand(splitSentencesCommand, { store })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- __ROOT__
+  - A
+    - B 1.1`)
+  })
+
+  it('splits normally on non-decimal periods like a.a', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a.a. b.b.
+        `,
+      }),
+      setCursor(['a.a. b.b.']),
+    ])
+
+    executeCommand(splitSentencesCommand, { store })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- __ROOT__
+  - a.a.
+  - b.b.`)
+  })
+
   describe('multicursor', () => {
     it('splits sentences in multiple thoughts', async () => {
       store.dispatch([
