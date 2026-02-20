@@ -15,7 +15,7 @@ import durations from '../util/durations'
 import fastClick from '../util/fastClick'
 import FadeTransition from './FadeTransition'
 import Favorites from './Favorites'
-import { ProgressiveBlur } from './ProgressiveBlur'
+import ProgressiveBlur from './ProgressiveBlur'
 import RecentlyDeleted from './RecentlyDeleted'
 import RecentlyEdited from './RecentlyEdited'
 
