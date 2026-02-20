@@ -743,7 +743,7 @@ const Sidebar = () => {
                     aria-label='sidebar'
                     className={css({
                       background: 'transparent',
-                      overflowY: 'scroll',
+                      overflowY: dropdownOpen ? 'hidden' : 'scroll',
                       overflowX: 'hidden',
                       overscrollBehavior: 'contain',
                       boxSizing: 'border-box',
