@@ -21,7 +21,6 @@ const HomeLink = ({ color, size, iconStyle, className, breadcrumb }: HomeLinkPro
     <span data-testid='home' className={className}>
       <a
         tabIndex={-1}
-        href='/'
         {...fastClick(e => {
           e.preventDefault()
           dispatch(home())
