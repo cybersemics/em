@@ -64,7 +64,7 @@ const dragAndDropFavorite = async (
     await page.mouse.move(dropPosition.x, dropPosition.y)
   }
 
-  await page.locator('[data-drag-in-progress="true"]').wait()
+  await page.locator('[data-testid="alert-content"]').wait()
 
   if (mouseUp) {
     await page.mouse.up()
