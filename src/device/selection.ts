@@ -470,6 +470,7 @@ export const html = () => {
         const parentElement = node.parentElement
         const clonedElement = parentElement.cloneNode(true) as HTMLElement
         removeEmptyElementsRecursively(clonedElement!, range.startContainer.textContent!)
+        // iOS Safari inserts non-breaking spaces into text replacements which don't match regular spaces (#3779)
         containerHtml = clonedElement ? clonedElement.innerHTML.replace(/&nbsp;/g, '\u00A0') : null
       }
     }
