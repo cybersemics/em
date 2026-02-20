@@ -32,6 +32,8 @@ const ActiveButtonGlowImage: FC<ActiveButtonGlowImageProps> = ({ isActive, type 
       in={isActive}
       unmountOnExit
       nodeRef={nodeRef}
+      /** When `in={true}` on mount, ensures the initial opacity of the element is correct. */
+      appear
     >
       <div
         ref={nodeRef}
@@ -90,6 +92,7 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
           : { gridColumn: 'span 1', gridTemplateColumns: 'auto', gridTemplateAreas: `"command"` }),
       })}
     >
+      {/* For the first fade in to work properly, ActiveButtonGlowImage must be already mounted with opacity 0. */}
       <ActiveButtonGlowImage isActive={isButtonActive} type='luminosity' />
       <ActiveButtonGlowImage isActive={isButtonActive} type='saturation' />
       <div

@@ -426,6 +426,8 @@ export default defineConfig({
             'dialog',
             'dialogContainer',
             'popup',
+            'commandCenter',
+            'commandCenterBlur',
             'cloneDroppedThought',
             'hoverArrow',
             'gestureTrace',
