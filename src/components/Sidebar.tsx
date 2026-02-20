@@ -182,24 +182,25 @@ const SidebarSectionLabel = ({ children, active }: { children: React.ReactNode, 
  * - opacity: fades in/out with the sidebar open/close via the parent's contentOpacity
  */
 const SidebarOverlay1 = ({ width, opacity, expanded, expandedHeight, hue, sat }: { width: string, opacity: MotionValue<number>, expanded: boolean, expandedHeight: number, hue: MotionValue<number>, sat: MotionValue<number> }) => {
-  // Animate the brightness of the glow from 1.3 to 1.65 when the dropdown
-  // is open.
   const brightness = useMotionValue(1)
 
   useEffect(() => {
-    animate(brightness, expanded ? 1.65 : 1.3, { duration: durations.get('medium') / 1000, ease: EASE_OUT })
+    animate(brightness, expanded ? 1.5 : 1.2, { duration: durations.get('medium') / 1000, ease: EASE_OUT })
   }, [expanded])
 
-  // Compose the full CSS filter from three motion values so all three
-  // animate smoothly and independently within a single filter string.
   const filter = useTransform([brightness, hue, sat], ([b, h, s]) => `blur(4px) brightness(${b}) hue-rotate(${h}deg) saturate(${s})`)
+
+  // Style variants for the collapsed and expanded states.
+  const safeY = (px: number) => `calc(${px}px + env(safe-area-inset-top, 0px))`
+  const collapsed = { backgroundSize: '200% 400px', backgroundPositionY: safeY(-104) }
+  const open = { backgroundSize: '250% 600px', backgroundPositionY: safeY(-168) }
 
   return (
     <motion.div
       data-test-id={'sidebar-overlay-1'}
       style={{ opacity, filter }}
-      initial={{ backgroundSize: '200% 400px', backgroundPositionY: -104 }}
-      animate={{ backgroundSize: expanded ? '250% 600px' : '200% 400px', backgroundPositionY: expanded ? -168 : -104 }}
+      initial={collapsed}
+      animate={expanded ? open : collapsed}
       transition={{ duration: durations.get('medium') / 1000, ease: EASE_OUT }}
       className={css({
         position: 'absolute',
