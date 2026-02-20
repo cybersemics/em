@@ -148,7 +148,7 @@ const colors = {
     footerBg: 'rgba(228, 228, 228, 1)', // #e4e4e4
     gestureDiagramWrapper: 'rgba(180, 180, 180, 1)',
     pickerBg: 'rgba(235, 235, 235, 1)', // #ebebeb
-    sidebarBg: 'rgba(10, 10, 18, 1)', // #0a0a12
+    sidebarBg: 'rgba(230, 230, 230, 1)', // #0a0a12
     sidebarOverlayBg: 'rgba(0, 0, 0, 0.5)', // this is defined separately to bgOverlay50 as it doesn't change between dark/light mode
     tutorialBg: 'rgba(221, 221, 221, 1)', // #ddd
     thoughtAnnotation: 'rgba(221, 221, 221, 1)', // #ddd
