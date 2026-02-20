@@ -10,6 +10,7 @@ import press from '../helpers/press'
 import screenshot from '../helpers/screenshot-with-no-antialiasing'
 import scroll from '../helpers/scroll'
 import setTheme from '../helpers/setTheme'
+import waitForColorSwatches from '../helpers/waitForColorSwatches'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
@@ -199,10 +200,10 @@ describe('Color Theme', () => {
 
     await clickThought('Golden Retriever')
     await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
-    await click('[aria-label="background color swatches"] [aria-label="green"]')
+    await click(await waitForColorSwatches('background', 'green'))
 
     await clickThought('Labrador')
-    await click('[aria-label="text color swatches"] [aria-label="purple"]')
+    await click(await waitForColorSwatches('text', 'purple'))
 
     await hideHUD()
 
