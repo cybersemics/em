@@ -536,7 +536,9 @@ const Sidebar = () => {
                       overflowX: 'hidden',
                       overscrollBehavior: 'contain',
                       boxSizing: 'border-box',
-                      width: '100%',
+                      // Take away 1px from `width` to prevent Android from treating this as the root scroller,
+                      // which bypasses overscroll-behavior and causes a bounce effect.
+                      width: 'calc(100% - 1px)',
                       height: '100%',
                       color: 'fg',
                       lineHeight: 1.8,
