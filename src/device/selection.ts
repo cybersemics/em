@@ -470,7 +470,7 @@ export const html = () => {
         const parentElement = node.parentElement
         const clonedElement = parentElement.cloneNode(true) as HTMLElement
         removeEmptyElementsRecursively(clonedElement!, range.startContainer.textContent!)
-        containerHtml = clonedElement ? clonedElement.innerHTML : null
+        containerHtml = clonedElement ? clonedElement.innerHTML.replace(/&nbsp;/g, '\u00A0') : null
       }
     }
     return containerHtml?.replace(range.startContainer.textContent!, selection.toString())
