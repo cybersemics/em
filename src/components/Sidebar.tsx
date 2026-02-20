@@ -22,6 +22,12 @@ import PencilIcon from './icons/PencilIcon'
 import DeleteIcon from './icons/DeleteIcon'
 import ChevronImg from './ChevronImg'
 
+/** Cubic-bezier ease-out curve used for sidebar animations. */
+const EASE_OUT = [0.16, 0.6, 0.2, 1] as const
+
+/** Gentler ease-out used when closing the sidebar. */
+const EASE_OUT_GENTLE = [0.25, 0.1, 0.25, 1] as const
+
 /** Valid sidebar section IDs. */
 type SidebarSectionId = 'favorites' | 'recentlyEdited' | 'recentlyDeleted'
 
@@ -88,7 +94,7 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: durations.get('medium') / 1000, ease: [0.16, 0.6, 0.2, 1] }}
+              transition={{ duration: durations.get('medium') / 1000, ease: EASE_OUT }}
               {...fastClick(() => setIsOpen(false))}
               className={css({
                 position: 'absolute',
@@ -111,7 +117,7 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: durations.get('medium') / 1000, ease: [0.16, 0.6, 0.2, 1] }}
+              transition={{ duration: durations.get('medium') / 1000, ease: EASE_OUT }}
               style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginTop: '0rem', gap: '0.4rem' }}
             >
               {otherSections.map((s) => (
@@ -163,23 +169,38 @@ const SidebarSectionLabel = ({ children, active }: { children: React.ReactNode, 
   )
 }
 
-/** Overlay layer positioned under the collapsible switcher. Expands when the dropdown opens. */
+/** Glow overlay behind the sidebar header. Uses a background image (lighten blend)
+ * whose width scales with the sidebar and whose height is fixed in px so it
+ * stays anchored to the header regardless of viewport dimensions.
+ *
+ * Animated properties:
+ * - backgroundSize width: zooms from 200% → 300% when the dropdown expands
+ * - backgroundSize height: grows from 400px → 500px to cover the expanded dropdown
+ * - brightness: increases on expand to intensify the glow
+ * - hue-rotate / saturate: driven by the parent's shared motion values to
+ *   tint the glow when switching sidebar sections
+ * - opacity: fades in/out with the sidebar open/close via the parent's contentOpacity
+ */
 const SidebarOverlay1 = ({ width, opacity, expanded, expandedHeight, hue, sat }: { width: string, opacity: MotionValue<number>, expanded: boolean, expandedHeight: number, hue: MotionValue<number>, sat: MotionValue<number> }) => {
+  // Animate the brightness of the glow from 1.3 to 1.65 when the dropdown
+  // is open.
   const brightness = useMotionValue(1)
 
   useEffect(() => {
-    animate(brightness, expanded ? 1.15 : 1, { duration: durations.get('medium') / 1000, ease: [0.16, 0.6, 0.2, 1] })
+    animate(brightness, expanded ? 1.65 : 1.3, { duration: durations.get('medium') / 1000, ease: EASE_OUT })
   }, [expanded])
 
-  const filter = useTransform([brightness, hue, sat], ([b, h, s]) => `brightness(${b}) hue-rotate(${h}deg) saturate(${s})`)
+  // Compose the full CSS filter from three motion values so all three
+  // animate smoothly and independently within a single filter string.
+  const filter = useTransform([brightness, hue, sat], ([b, h, s]) => `blur(4px) brightness(${b}) hue-rotate(${h}deg) saturate(${s})`)
 
   return (
     <motion.div
       data-test-id={'sidebar-overlay-1'}
       style={{ opacity, filter }}
-      initial={{ y: '-8.75%', backgroundSize: '200%' }}
-      animate={{ y: expanded ? '-15%' : '-8.75%', backgroundSize: expanded ? '300%' : '200%' }}
-      transition={{ duration: durations.get('medium') / 1000, ease: [0.16, 0.6, 0.2, 1] }}
+      initial={{ backgroundSize: '200% 400px', backgroundPositionY: -104 }}
+      animate={{ backgroundSize: expanded ? '250% 600px' : '200% 400px', backgroundPositionY: expanded ? -168 : -104 }}
+      transition={{ duration: durations.get('medium') / 1000, ease: EASE_OUT }}
       className={css({
         position: 'absolute',
         top: 0,
@@ -187,9 +208,9 @@ const SidebarOverlay1 = ({ width, opacity, expanded, expandedHeight, hue, sat }:
         width,
         height: '100vh',
         backgroundImage: 'url(/img/sidebar/overlay-layer-1.webp)',
-        backgroundPosition: 'top',
+        backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
-        mixBlendMode: 'screen',
+        mixBlendMode: 'lighten',
         pointerEvents: 'none',
         zIndex: 'sidebar',
       })}
@@ -339,7 +360,7 @@ const Sidebar = () => {
     let diff = section.hue - (((currentHue % 360) + 360) % 360)
     if (diff > 180) diff -= 360
     if (diff < -180) diff += 360
-    const t = { duration: durations.get('slow') / 1000, ease: [0.16, 0.6, 0.2, 1] as const }
+    const t = { duration: durations.get('slow') / 1000, ease: EASE_OUT }
     animate(hue, currentHue + diff, t)
     animate(sat, section.saturate, t)
   }, [sectionId])
@@ -405,7 +426,7 @@ const Sidebar = () => {
   const transition = useMemo(
     () => ({
       duration: durations.get('medium') / 1000,
-      ease: showSidebar ? ([0.16, 0.6, 0.2, 1] as const) : ([0.25, 0.1, 0.25, 1] as const),
+      ease: showSidebar ? EASE_OUT : EASE_OUT_GENTLE,
     }),
     [showSidebar],
   )
@@ -766,7 +787,7 @@ const Sidebar = () => {
 
                     <motion.div
                       animate={{ paddingTop: dropdownOpen ? `${dropdownHeight}px` : '0px' }}
-                      transition={{ duration: durations.get('medium') / 1000, ease: [0.16, 0.6, 0.2, 1] }}
+                      transition={{ duration: durations.get('medium') / 1000, ease: EASE_OUT }}
                     >
                       {sectionId === 'favorites' ? (
                         <Favorites disableDragAndDrop={isSwiping} />
