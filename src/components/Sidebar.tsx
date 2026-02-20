@@ -86,7 +86,7 @@ const SidebarGradient = ({
     className={css({
       position: 'absolute',
       inset: 0,
-      background: 'linear-gradient(to right, rgba(10, 10, 18, 1) 0%, {colors.bgTransparent} 100%)',
+      background: 'linear-gradient(to right, {colors.sidebarBg} 0%, {colors.bgTransparent} 100%)',
       width,
       pointerEvents: showSidebar ? 'auto' : 'none',
       cursor: 'pointer',
