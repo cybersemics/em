@@ -1,9 +1,11 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import { executeCommand, executeCommandWithMulticursor } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
+import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import splitSentencesCommand from '../splitSentences'
@@ -28,6 +30,45 @@ describe('splitSentences', () => {
   - This is sentence one.
   - This is sentence two.
   - This is sentence three.`)
+  })
+
+  it('splits a thought with multiple sentences and styles', () => {
+    store.dispatch([
+      newThought({ value: '' }),
+      setCursor(['']),
+      editThought([''], '**This is sentence one. This is sentence two. This is sentence three.**'),
+    ])
+
+    executeCommand(splitSentencesCommand, { store })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- __ROOT__
+  - **This is sentence one.**
+  - **This is sentence two.**
+  - **This is sentence three.**`)
+  })
+
+  it('splits a thought with multiple sentences and font tags', () => {
+    store.dispatch([
+      newThought({ value: '' }),
+      setCursor(['']),
+      editThought(
+        [''],
+        `<ul>
+  <li>__ROOT__  
+    <ul>
+      <li><font color="#000000" style="background-color: rgb(0, 214, 136);">font</font></li>
+    </ul>
+  </li>
+</ul>`,
+      ),
+    ])
+
+    executeCommand(splitSentencesCommand, { store })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- __ROOT__
+  - <font color="#000000" style="background-color: rgb(0, 214, 136);">font</font>`)
   })
 
   it('does not split a thought with a single sentence', () => {
