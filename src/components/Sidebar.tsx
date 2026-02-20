@@ -5,6 +5,7 @@ import _ from 'lodash'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
+import { token } from '../../styled-system/tokens'
 import { longPressActionCreator as longPress } from '../actions/longPress'
 import { toggleSidebarActionCreator } from '../actions/toggleSidebar'
 import { isSafari } from '../browser'
@@ -61,6 +62,9 @@ const SidebarLink = ({
     </a>
   )
 }
+
+/** The xl breakpoint in pixels, used for JS-based responsive checks. */
+const XL_BREAKPOINT = parseInt(token('breakpoints.xl'))
 
 /** The sidebar gradient overlay. */
 const SidebarGradient = ({
@@ -211,10 +215,10 @@ const Sidebar = () => {
   // ============================
 
   /** Dynamically determine the width of the sidebar. */
-  const width = innerWidth < 768 ? '100%' : '400px'
+  const width = innerWidth < XL_BREAKPOINT ? '100%' : '400px'
 
   /** Get the width of the sidebar in pixels, which is used for progress-based animations. */
-  const widthPx = innerWidth < 768 ? innerWidth : 400
+  const widthPx = innerWidth < XL_BREAKPOINT ? innerWidth : 400
 
   /** Track the current x position of the sidebar. Used for animations and swipe tracking. */
   const x = useMotionValue(showSidebar ? 0 : -widthPx)
@@ -490,7 +494,7 @@ const Sidebar = () => {
                 })}
               >
                 {/* Tap zone on the right 10% of the sidebar to close it on mobile */}
-                {innerWidth < 768 && (
+                {innerWidth < XL_BREAKPOINT && (
                   <div
                     aria-hidden='true'
                     onClick={() => toggleSidebar(false)}
