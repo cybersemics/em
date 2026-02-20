@@ -68,7 +68,7 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
         })}
       >
         <div className={css({ width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 })}>
-          <section.icon size={28} fill='#C5EFF2' />
+          <section.icon size={28} fill='rgba(255, 255, 255, 0.75)' />
         </div>
         <SidebarSectionLabel>{section.label}</SidebarSectionLabel>
         <ChevronImg
@@ -130,7 +130,7 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
                   })}
                 >
                   <div className={css({ width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 })}>
-                    <s.icon size={32} fill='#C5EFF2' />
+                    <s.icon size={32} fill='rgba(255, 255, 255, 0.75)' />
                   </div>
                   <SidebarSectionLabel active={false}>{s.label}</SidebarSectionLabel>
                 </div>
@@ -147,7 +147,6 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
 const SidebarSectionLabel = ({ children, active }: { children: React.ReactNode, active: boolean }) => {
   return (
     <div className={css({
-      background: active ? 'linear-gradient(180deg, #ffffff 17.78%, rgba(255, 255, 255, 0.75) 82.22%)' : 'none',
       backgroundClip: active ? 'text' : undefined,
       WebkitTextFillColor: active ? 'transparent' : undefined,
       color: 'rgba(255, 255, 255, 0.75)',
