@@ -346,6 +346,7 @@ const Sidebar = () => {
   const dispatch = useDispatch()
   const [sectionId, setSectionId] = useState<SidebarSectionId>('favorites')
   const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [isScrolled, setIsScrolled] = useState(false)
   const [dropdownHeight, setDropdownHeight] = useState(0)
   const innerWidth = viewportStore.useSelector(state => state.innerWidth)
 
@@ -743,32 +744,24 @@ const Sidebar = () => {
                     aria-label='sidebar'
                     className={css({
                       background: 'transparent',
-                      overflowY: dropdownOpen ? 'hidden' : 'scroll',
-                      overflowX: 'hidden',
-                      overscrollBehavior: 'contain',
                       boxSizing: 'border-box',
+                      display: 'flex',
+                      flexDirection: 'column',
                       width: '100%',
                       height: '100%',
                       color: 'fg',
-                      scrollbarWidth: 'thin',
                       lineHeight: 1.8,
-                      '&::-webkit-scrollbar': {
-                        width: '0px',
-                        background: 'transparent',
-                        display: 'none',
-                      },
                       userSelect: 'none',
-                      // must be position:relative to ensure drop hovers are positioned correctly when sidebar is scrolled
                       position: 'relative',
                       padding: '0 1em',
                     })}
-                    data-scroll-at-edge
                   >
                     {/* Visually hidden title for screen readers */}
                     <VisuallyHidden.Root>
                       <Dialog.Title>{SECTIONS.find(s => s.id === sectionId)?.label}</Dialog.Title>
                     </VisuallyHidden.Root>
 
+                    {/* Header – does not scroll */}
                     <FadeTransition type='fast' in={showSidebar}>
                       <div
                         style={{
@@ -786,9 +779,33 @@ const Sidebar = () => {
                       </div>
                     </FadeTransition>
 
+                    {/* Scrollable content area */}
                     <motion.div
                       animate={{ paddingTop: dropdownOpen ? `${dropdownHeight}px` : '0px' }}
                       transition={{ duration: durations.get('medium') / 1000, ease: EASE_OUT }}
+                      data-scroll-at-edge
+                      onScroll={(e) => {
+                        const scrolled = e.currentTarget.scrollTop > 0
+                        if (scrolled !== isScrolled) setIsScrolled(scrolled)
+                      }}
+                      className={css({
+                        flex: 1,
+                        overflowY: dropdownOpen ? 'hidden' : 'scroll',
+                        overflowX: 'hidden',
+                        overscrollBehavior: 'contain',
+                        scrollbarWidth: 'thin',
+                        '&::-webkit-scrollbar': {
+                          width: '0px',
+                          background: 'transparent',
+                          display: 'none',
+                        },
+                        // must be position:relative to ensure drop hovers are positioned correctly when sidebar is scrolled
+                        position: 'relative',
+                      })}
+                      style={{
+                        maskImage: isScrolled ? 'linear-gradient(to bottom, transparent, black 48px)' : 'none',
+                        WebkitMaskImage: isScrolled ? 'linear-gradient(to bottom, transparent, black 48px)' : 'none',
+                      }}
                     >
                       {sectionId === 'favorites' ? (
                         <Favorites disableDragAndDrop={isSwiping} />
