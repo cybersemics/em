@@ -417,7 +417,6 @@ export default defineConfig({
           modalPadding: { value: '8%' },
           safeAreaTop: { value: 'env(safe-area-inset-top)' },
           safeAreaBottom: { value: 'env(safe-area-inset-bottom)' },
-          editableClipBottom: { value: '0.1em' },
         },
         /* z-index schedule
         Keep these in one place to make it easier to determine interactions and prevent conflicts. */
