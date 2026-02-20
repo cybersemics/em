@@ -84,17 +84,26 @@ const tweenConfig: SheetTweenConfig = {
 }
 
 /**
- * Custom hook that returns the sheet's height and blur height transforms.
- * The blur height extends 110px beyond the sheet height for the progressive blur effect.
+ * Custom hook that returns reactive transforms for a draggable sheet.
  */
-const useSheetDimensions = (ref: React.RefObject<SheetRef | null>) => {
+const useSheetTransforms = (ref: React.RefObject<SheetRef | null>) => {
   const height = useTransform(() => {
     return ref.current?.yInverted.get() ?? 0
   })
 
-  const blurHeight = useTransform(height, height => height + 110)
+  const sheetProgress = useTransform(() => {
+    const y = ref.current?.yInverted.get() ?? 0
+    const height = ref.current?.height ?? 0
+    if (height === 0) return 0
+    return Math.min(Math.max(y / height, 0), 1)
+  })
 
-  return { height, blurHeight }
+  const blurHeight = useTransform(height, height => {
+    // Start at 0, then smoothly grow with progress
+    return height + 110 * sheetProgress.get()
+  })
+
+  return { height, opacity: sheetProgress, blurHeight }
 }
 
 /**
@@ -106,13 +115,7 @@ const CommandCenter = ({ mountPoint }: Pick<SheetProps, 'mountPoint'>) => {
   const isTutorialOn = useSelector(isTutorial)
   const ref = useRef<SheetRef>(null)
 
-  const { height, blurHeight } = useSheetDimensions(ref)
-  const opacity = useTransform(() => {
-    const y = ref.current?.yInverted.get() ?? 0
-    const height = ref.current?.height ?? 0
-    if (height === 0) return 0
-    return Math.min(Math.max(y / height, 0), 1)
-  })
+  const { height, opacity, blurHeight } = useSheetTransforms(ref)
 
   /** The bottom position of the sheet container, negated from the y-position for proper positioning. */
   const bottom = useTransform(() => {
