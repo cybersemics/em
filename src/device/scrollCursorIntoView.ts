@@ -1,5 +1,6 @@
 import { isSafari, isTouch } from '../browser'
 import { PREVENT_AUTOSCROLL_TIMEOUT, isPreventAutoscrollInProgress } from '../device/preventAutoscroll'
+import testFlags from '../e2e/testFlags'
 import viewportStore from '../stores/viewport'
 
 /** Scrolls the minimum amount necessary to move the viewport so that it includes the element. */
@@ -62,6 +63,7 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
 
 /** Scrolls the cursor into view if needed. */
 const scrollCursorIntoView = (y: number, height: number) => {
+  if (testFlags.disableScrollCursorIntoView) return
   // bump scroll on Mobile Safari
   // otherwise Safari scrolls to the top after MultiGesture
   // See: touchmove in MultiGesture.tsx

@@ -8,10 +8,13 @@ const testFlags: {
   simulateDrag: boolean
   /** Render drop targets as blocks of color. */
   simulateDrop: boolean
+  /** If true, scrollCursorIntoView is a no-op. Use to verify whether frame waits are for scroll/layout. */
+  disableScrollCursorIntoView: boolean
 } = {
   expandHoverDelay: null,
   replicationDelay: 0,
   simulateDrag: false,
   simulateDrop: false,
+  disableScrollCursorIntoView: false,
 }
 export default testFlags

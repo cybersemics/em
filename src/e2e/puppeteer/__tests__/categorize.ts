@@ -1,11 +1,14 @@
 import path from 'path'
+import { WindowEm } from '../../../initialize'
 import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import screenshot from '../helpers/screenshot-with-no-antialiasing'
-import waitForFrames from '../helpers/waitForFrames'
+// import waitForFrames from '../helpers/waitForFrames'
 import { page } from '../setup'
+
+const em = window.em as WindowEm
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
@@ -20,6 +23,10 @@ describe('categorize', () => {
       height: 1400,
     })
 
+    await page.evaluate((value: boolean) => {
+      em.testFlags.disableScrollCursorIntoView = value
+    }, true)
+
     const topParagraphText =
       'Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Donec pede justo, fringilla vel, aliquet nec, vulputate eget, arcu. In enim justo, rhoncus ut, imperdiet a, venenatis vitae, justo. Nullam dictum felis eu pede mollis pretium. Integer tincidunt. Cras dapibus. Vivamus elementum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitae, eleifend ac, enim. Aliquam lorem ante, dapibus in, viverra quis, feugiat a, tellus. Phasellus viverra nulla ut metus varius laoreet. Nullam dictum felis eu pede mollis pretium. Integer tincidunt. Cras dapibus. Vivamus elementum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitae, eleifend ac, enim. Aliquam lorem ante, dapibus in, viverra quis, feugiat a, tellus. Phasellus viverra nulla ut metus varius laoreet. Nullam dictum felis eu pede mollis pretium. Integer tincidunt. Cras dapibus. Vivamus elementum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitae, eleifend ac, enim. Aliquam lorem ante, dapibus in, viverra quis, feugiat a, tellus. Phasellus viverra nulla ut metus varius laoreet.'
     await paste(`
@@ -29,9 +36,9 @@ describe('categorize', () => {
         - Fusce vulputate eleifend sapien. Vestibulum purus quam, scelerisque ut, mollis sed, nonummy id, metus. Nullam accumsan lorem in dui. Cras ultricies mi eu turpis hendrerit fringilla. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; In ac dui quis mi consectetuer lacinia.
     `)
 
-    // Wait 4 frames due to multiple rounds of requestAnimationFrame in useLayoutAnimationFrameEffect
-    // which requires several frame cycles to complete regardless of content complexity
-    await waitForFrames(4)
+    // // Wait 4 frames due to multiple rounds of requestAnimationFrame in useLayoutAnimationFrameEffect
+    // // which requires several frame cycles to complete regardless of content complexity
+    // await waitForFrames(4)
     // Perform multiple categorize operations
     await clickThought(topParagraphText)
 
@@ -57,5 +64,9 @@ describe('categorize', () => {
 
     const imageCategorized = await screenshot()
     expect(imageCategorized).toMatchImageSnapshot()
+
+    await page.evaluate((value: boolean) => {
+      em.testFlags.disableScrollCursorIntoView = value
+    }, false)
   })
 })
