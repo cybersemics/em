@@ -530,13 +530,9 @@ const Sidebar = () => {
                       width: '100%',
                       height: '100%',
                       color: 'fg',
-                      scrollbarWidth: 'thin',
                       lineHeight: 1.8,
-                      '&::-webkit-scrollbar': {
-                        width: '0px',
-                        background: 'transparent',
-                        display: 'none',
-                      },
+                      scrollbarWidth: 'thin',
+                      scrollbarColor: '{colors.fgOverlay20} transparent',
                       userSelect: 'none',
                       // must be position:relative to ensure drop hovers are positioned correctly when sidebar is scrolled
                       position: 'relative',
