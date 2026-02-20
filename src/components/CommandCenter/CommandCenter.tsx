@@ -127,25 +127,26 @@ const CommandCenter = ({ mountPoint }: Pick<SheetProps, 'mountPoint'>) => {
   if (isTouch && !isTutorialOn) {
     return (
       <>
-        <motion.div
-          /*
-           * Progressive blur effect. Must be placed outside the Sheet to avoid separation
-           * from the background content due to the fixed position of the parent.
-           */
-          className={css({
-            position: 'fixed',
-            pointerEvents: 'none',
-            backdropFilter: 'blur(2px)',
-            mask: 'linear-gradient(180deg, {colors.bgTransparent} 0%, black 110px, black 100%)',
-            bottom: 0,
-            width: '100%',
-            height: 'calc(100% + 110px)',
-            zIndex: 'commandCenterBlur',
-          })}
-          style={{
-            height: blurHeight,
-          }}
-        />
+        {showCommandCenter && (
+          <motion.div
+            /*
+             * Progressive blur effect. Must be placed outside the Sheet to avoid separation
+             * from the background content due to the fixed position of the parent.
+             */
+            className={css({
+              position: 'fixed',
+              pointerEvents: 'none',
+              backdropFilter: 'blur(2px)',
+              mask: 'linear-gradient(180deg, {colors.bgTransparent} 0%, black 110px, black 100%)',
+              bottom: 0,
+              width: '100%',
+              zIndex: 'commandCenterBlur',
+            })}
+            style={{
+              height: blurHeight,
+            }}
+          />
+        )}
         <HiddenOverlay />
         <Sheet
           data-testid='command-center-panel'
