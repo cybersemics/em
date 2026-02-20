@@ -92,9 +92,12 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
               {...fastClick(() => setIsOpen(false))}
               className={css({
                 position: 'absolute',
+                // Set position cover the entire screen,
+                // adding extra padding to cover uneven edges
+                // created by the backdrop filter's blur
                 top: 'calc(100% - 16px)',
-                left: '-1em',
-                right: '-1em',
+                left: '-16px',
+                right: '-16px',
                 height: '100vh',
                 backdropFilter: 'blur(8px)',
                 background: 'rgba(0, 0, 0, 0.001)',
@@ -153,9 +156,9 @@ const SidebarSectionLabel = ({ children, active }: { children: React.ReactNode, 
       fontSize: '1.4rem',
       lineHeight: '1.4rem',
       letterSpacing: '-0.25px',
-marginTop: 4,
+      marginTop: 4,
       fontWeight: 300
-
+      
     })}>{children}</div>
   )
 }
