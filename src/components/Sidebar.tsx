@@ -92,13 +92,15 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
               {...fastClick(() => setIsOpen(false))}
               className={css({
                 position: 'absolute',
-                top: '100%',
+                top: 'calc(100% - 16px)',
                 left: '-1em',
                 right: '-1em',
                 height: '100vh',
                 backdropFilter: 'blur(8px)',
                 background: 'rgba(0, 0, 0, 0.001)',
                 cursor: 'pointer',
+                maskImage: 'linear-gradient(to bottom, transparent, black 16px)',
+                WebkitMaskImage: 'linear-gradient(to bottom, transparent, black 16px)',
               })}
             />
             <motion.div
@@ -107,7 +109,7 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: durations.get('medium') / 1000, ease: [0.16, 0.6, 0.2, 1] }}
-              style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginTop: '0.4rem', gap: '0.4rem' }}
+              style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginTop: '0rem', gap: '0.4rem' }}
             >
               {otherSections.map((s) => (
                 <div
@@ -145,10 +147,11 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
 const SidebarSectionLabel = ({ children, active }: { children: React.ReactNode, active: boolean }) => {
   return (
     <div className={css({
-      background: 'linear-gradient(180deg, #C7F4FF 17.78%, rgba(199, 244, 255, 0.75) 82.22%)',
-      backgroundClip: 'text',
-      WebkitTextFillColor: 'transparent',
-      fontSize: '1.6rem',
+      background: active ? 'linear-gradient(180deg, #ffffff 17.78%, rgba(255, 255, 255, 0.75) 82.22%)' : 'none',
+      backgroundClip: active ? 'text' : undefined,
+      WebkitTextFillColor: active ? 'transparent' : undefined,
+      color: 'rgba(255, 255, 255, 0.75)',
+      fontSize: '1.4rem',
       lineHeight: '1.6rem',
       letterSpacing: '-0.25px',
       fontWeight: 300
@@ -157,13 +160,21 @@ const SidebarSectionLabel = ({ children, active }: { children: React.ReactNode, 
 }
 
 /** Overlay layer positioned under the collapsible switcher. Expands when the dropdown opens. */
-const SidebarOverlay1 = ({ width, opacity, expanded, expandedHeight }: { width: string, opacity: MotionValue<number>, expanded: boolean, expandedHeight: number }) => {
+const SidebarOverlay1 = ({ width, opacity, expanded, expandedHeight, hue, sat }: { width: string, opacity: MotionValue<number>, expanded: boolean, expandedHeight: number, hue: MotionValue<number>, sat: MotionValue<number> }) => {
+  const brightness = useMotionValue(1)
+
+  useEffect(() => {
+    animate(brightness, expanded ? 1.15 : 1, { duration: durations.get('medium') / 1000, ease: [0.16, 0.6, 0.2, 1] })
+  }, [expanded])
+
+  const filter = useTransform([brightness, hue, sat], ([b, h, s]) => `brightness(${b}) hue-rotate(${h}deg) saturate(${s})`)
+
   return (
     <motion.div
       data-test-id={'sidebar-overlay-1'}
-      style={{ opacity }}
-      initial={{ y: '-8.75%', backgroundSize: '200%', filter: 'brightness(1.0)' }}
-      animate={{ y: expanded ? '-15%' : '-8.75%', backgroundSize: expanded ? '300%' : '200%', filter: expanded ? 'brightness(1.15)' : 'brightness(1)' }}
+      style={{ opacity, filter }}
+      initial={{ y: '-8.75%', backgroundSize: '200%' }}
+      animate={{ y: expanded ? '-15%' : '-8.75%', backgroundSize: expanded ? '300%' : '200%' }}
       transition={{ duration: durations.get('medium') / 1000, ease: [0.16, 0.6, 0.2, 1] }}
       className={css({
         position: 'absolute',
