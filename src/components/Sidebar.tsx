@@ -161,6 +161,7 @@ const Sidebar = () => {
   const [isSwiping, setIsSwiping] = useState(false)
   const showSidebar = useSelector(state => state.showSidebar)
   const fontSize = useSelector(state => state.fontSize)
+  const longPressState = useSelector(state => state.longPress)
   const dispatch = useDispatch()
   const [sectionId, setSectionId] = useState<SidebarSectionId>('favorites')
   const innerWidth = viewportStore.useSelector(state => state.innerWidth)
@@ -171,6 +172,10 @@ const Sidebar = () => {
 
   /** Ref to the drawer element, used to detect if touches are inside the drawer. */
   const drawerRef = useRef<HTMLDivElement>(null)
+
+  /** Mirror longPressState into a ref so document-level touch handlers always see the current value without re-registering. */
+  const longPressRef = useRef(longPressState)
+  longPressRef.current = longPressState
 
   /** MUI-style uncertainty threshold for direction detection (in pixels). */
   const UNCERTAINTY_THRESHOLD = 3
@@ -328,6 +333,10 @@ const Sidebar = () => {
     const handleTouchMove = (e: TouchEvent) => {
       const swipe = swipeState.current
       if (!swipe.active) return
+
+      // Don't swipe the sidebar closed while a thought is being dragged
+      if (longPressRef.current === LongPressState.DragHold || longPressRef.current === LongPressState.DragInProgress)
+        return
 
       const touchX = e.touches[0].clientX
       const touchY = e.touches[0].clientY
