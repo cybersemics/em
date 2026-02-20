@@ -151,9 +151,11 @@ const SidebarSectionLabel = ({ children, active }: { children: React.ReactNode, 
       WebkitTextFillColor: active ? 'transparent' : undefined,
       color: 'rgba(255, 255, 255, 0.75)',
       fontSize: '1.4rem',
-      lineHeight: '1.6rem',
+      lineHeight: '1.4rem',
       letterSpacing: '-0.25px',
+marginTop: 4,
       fontWeight: 300
+
     })}>{children}</div>
   )
 }
