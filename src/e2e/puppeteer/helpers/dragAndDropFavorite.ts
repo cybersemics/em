@@ -1,4 +1,5 @@
 import { page } from '../setup'
+import waitForSelector from './waitForSelector'
 import waitUntil from './waitUntil'
 
 /**
@@ -44,6 +45,8 @@ const dragAndDropFavorite = async (
 
   await page.mouse.move(dragPosition.x, dragPosition.y)
   await page.mouse.down()
+  // Trigger native dragstart (HTML5 DnD often needs a small movement after mousedown)
+  await page.mouse.move(dragPosition.x + 2, dragPosition.y)
 
   if (destValue) {
     const destElement = await findFavoriteItem(destValue)
@@ -64,7 +67,7 @@ const dragAndDropFavorite = async (
     await page.mouse.move(dropPosition.x, dropPosition.y)
   }
 
-  await page.locator('[data-drag-in-progress="true"]').wait()
+  await waitForSelector('[data-drag-in-progress="true"]', { visible: true, timeout: 5000 })
 
   if (mouseUp) {
     await page.mouse.up()
