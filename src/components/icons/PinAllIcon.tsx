@@ -3,7 +3,15 @@ import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/08-pin-subthought_3.json'
 
 /** PinAll Icon with Conditional Lottie Animation. */
-const PinAllIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const PinAllIcon = ({
+  fill,
+  size = 18,
+  style = {},
+  cssRaw,
+  animated,
+  animationComplete,
+  active,
+}: IconType & { active?: boolean }) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' style={{ ...style, width: '100%', height: '100%' }}>
@@ -15,7 +23,7 @@ const PinAllIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationCo
                 stroke='currentColor'
                 strokeLinecap='round'
                 strokeLinejoin='round'
-                fill='none'
+                fill={!animated && active ? style.fill : 'none'}
                 cx='6.73'
                 cy='7.26'
                 rx='3.34'
@@ -25,7 +33,7 @@ const PinAllIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationCo
                 stroke='currentColor'
                 strokeLinecap='round'
                 strokeLinejoin='round'
-                fill='none'
+                fill={!animated && active ? style.fill : 'none'}
                 d='M8.74,12.82a4.45,4.45,0,0,1,2.35,3.93h0a14.58,14.58,0,0,1-8.91,0h0a4.46,4.46,0,0,1,2.42-4'
               />
               <line
@@ -59,7 +67,7 @@ const PinAllIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationCo
                 stroke='currentColor'
                 strokeLinecap='round'
                 strokeLinejoin='round'
-                fill='none'
+                fill={!animated && active ? style.fill : 'none'}
                 cx='17.45'
                 cy='3.69'
                 rx='3.34'
@@ -69,7 +77,7 @@ const PinAllIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationCo
                 stroke='currentColor'
                 strokeLinecap='round'
                 strokeLinejoin='round'
-                fill='none'
+                fill={!animated && active ? style.fill : 'none'}
                 d='M19.47,9.25a4.44,4.44,0,0,1,2.35,3.92h0a14.58,14.58,0,0,1-8.91,0h0a4.45,4.45,0,0,1,2.42-4'
               />
               <line
