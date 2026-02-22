@@ -2,7 +2,13 @@ import { ScreenshotOptions } from 'puppeteer'
 import { page } from '../setup'
 
 interface ScreenshotWithNoAntialiasingOptions extends ScreenshotOptions {
-  /** If true, applies hardware acceleration properties that help with text rendering consistency but may interfere with popups. Default: true. */
+  /**
+   * If true, applies CSS that promotes layers for GPU rendering (backface-visibility, perspective).
+   * Helps keep text and heavy/custom fonts visually consistent across snapshots (especially in CI).
+   * When true, these properties create new stacking contexts and can break z-index ordering (e.g.
+   * modals, popovers, tooltips appearing behind other content). Set to false if your test relies on
+   * correct overlay stacking (like in case of modal.ts, drag-and-drop.ts, sidebar.ts, ui.ts). Default: true.
+   */
   hardwareAcceleration?: boolean
 }
 
