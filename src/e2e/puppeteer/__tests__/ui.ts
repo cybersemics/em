@@ -25,9 +25,13 @@ it('CommandPalette', async () => {
   // wait for the command palette to appear before taking screenshot
   await waitForSelector('[data-testid=command-palette]')
 
-  expect(await screenshot()).toMatchImageSnapshot({ customSnapshotIdentifier: 'commandPalette' })
+  expect(await screenshot({ hardwareAcceleration: false })).toMatchImageSnapshot({
+    customSnapshotIdentifier: 'commandPalette',
+  })
   await setTheme('Light')
-  expect(await screenshot()).toMatchImageSnapshot({ customSnapshotIdentifier: 'commandPalette-light' })
+  expect(await screenshot({ hardwareAcceleration: false })).toMatchImageSnapshot({
+    customSnapshotIdentifier: 'commandPalette-light',
+  })
 })
 
 it('GestureMenu', async () => {
@@ -46,7 +50,7 @@ it('GestureMenu', async () => {
   // wait for the gesture menu to appear
   await waitForSelector('[data-testid=popup-value]')
 
-  expect(await screenshot()).toMatchImageSnapshot()
+  expect(await screenshot({ hardwareAcceleration: false })).toMatchImageSnapshot()
 })
 
 it('CommandCenter', async () => {
@@ -66,5 +70,5 @@ it('CommandCenter', async () => {
   // wait for the command center panel to appear before taking screenshot
   await waitForSelector('[data-testid=command-center-panel]')
 
-  expect(await screenshot()).toMatchImageSnapshot()
+  expect(await screenshot({ hardwareAcceleration: false })).toMatchImageSnapshot()
 })

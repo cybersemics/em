@@ -3,7 +3,7 @@ import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
-import screenshot from '../helpers/screenshot-with-no-antialiasing'
+import screenshot from '../helpers/screenshot'
 import waitForFrames from '../helpers/waitForFrames'
 import { page } from '../setup'
 
