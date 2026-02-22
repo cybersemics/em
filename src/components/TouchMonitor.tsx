@@ -14,8 +14,8 @@ const TouchMonitor: FC<PropsWithChildren> = ({ children }) => {
   // turn off touching when app becomes hidden
   useEffect(() => {
     lifecycle.addEventListener('statechange', onStateChange)
-    return () => lifecycle.addEventListener('statechange', onStateChange)
-  })
+    return () => lifecycle.removeEventListener('statechange', onStateChange)
+  }, [])
 
   return (
     <div

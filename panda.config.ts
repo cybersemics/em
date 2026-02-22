@@ -244,7 +244,7 @@ const globalCss = defineGlobalStyles({
       caretColor: 'transparent',
     },
   },
-  'html, body, #root, #app': { height: '100%', fontSize: '16px' },
+  'html, body, #root, #app': { height: '100%', fontSize: '16px', WebkitTextSizeAdjust: '100%' },
   'body, textarea': {
     fontWeight: 300,
     fontFamily: "'Helvetica'",

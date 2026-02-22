@@ -204,7 +204,7 @@ export const chainCommand = (command: Command): Command => {
   return chainedCommand
 }
 
-const eventNoop = { preventDefault: noop } as Event
+const eventNoop = { preventDefault: noop, stopPropagation: noop } as Event
 
 /** Filter the cursors based on the filter type. Cursors are sorted in document order. */
 const filterCursors = (state: State, cursors: Path[], filter: MulticursorFilter = 'all') => {

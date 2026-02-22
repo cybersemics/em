@@ -97,6 +97,7 @@ const gesture = (p1: Point, p2: Point, minDistanceSquared: number, bias: BiasTyp
 class MultiGesture extends React.Component<MultiGestureProps> {
   abandon = false
   clientStart: Point | null = null
+  contentRef = React.createRef<HTMLDivElement>()
   currentStart: Point | null = null
   leftHanded = false
   minDistanceSquared = 0
@@ -105,6 +106,12 @@ class MultiGesture extends React.Component<MultiGestureProps> {
   panResponder: PanResponderInstance
   scrolling = false
   sequence: GesturePath = ''
+
+  // Store handler references for cleanup in componentWillUnmount
+  private handleBodyTouchMove: (e: TouchEvent) => void
+  private handleBodyTouchStart: (e: TouchEvent) => void
+  private handleWindowTouchEnd: () => void
+  private handleWindowTouchCancel: (e: TouchEvent) => void
 
   constructor(props: MultiGestureProps) {
     super(props)
@@ -122,19 +129,16 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     // Note: This breaks window.scrollTo on Mobile Safari when using asyncFocus and scrollY is 0.
     // Other methods of disabling scroll such as overflow: hidden have unintended side effects.
     // This only workable solution I found is to ensure the scroll bar is not at 0 with window.scrollTo(0, 1)
-    document.body.addEventListener(
-      'touchmove',
-      e => {
-        if (this.disableScroll) {
-          e.preventDefault()
-        }
-      },
-      { passive: false },
-    )
+    this.handleBodyTouchMove = (e: TouchEvent) => {
+      if (this.disableScroll) {
+        e.preventDefault()
+      }
+    }
+    document.body.addEventListener('touchmove', this.handleBodyTouchMove, { passive: false })
 
     // enable/disable scrolling based on where the user clicks
     // TODO: Could this be moved to onMoveShouldSetResponder?
-    document.body.addEventListener('touchstart', e => {
+    this.handleBodyTouchStart = (e: TouchEvent) => {
       if (e?.touches.length > 0) {
         const x = e.touches[0].clientX
         const y = e.touches[0].clientY
@@ -147,19 +151,22 @@ class MultiGesture extends React.Component<MultiGestureProps> {
           this.abandon = true
         }
       }
-    })
+    }
+    document.body.addEventListener('touchstart', this.handleBodyTouchStart)
 
     // Since we set this.disableScroll or this.abandon on touchstart, we need to reset them on touchend.
     // This occurs, for eample, on tap.
-    window.addEventListener('touchend', () => {
+    this.handleWindowTouchEnd = () => {
       this.reset()
-    })
+    }
+    window.addEventListener('touchend', this.handleWindowTouchEnd)
 
     // touchcancel is fired when the user switches apps by swiping from the bottom of the screen
-    window.addEventListener('touchcancel', e => {
+    this.handleWindowTouchCancel = (e: TouchEvent) => {
       this.props.onCancel?.({ clientStart: this.clientStart, e })
       this.reset()
-    })
+    }
+    window.addEventListener('touchcancel', this.handleWindowTouchCancel)
 
     this.panResponder = PanResponder.create({
       // Prevent gesture when any text is selected.
@@ -258,6 +265,13 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     this.leftHanded = !!nextProps.leftHanded
   }
 
+  componentWillUnmount() {
+    document.body.removeEventListener('touchmove', this.handleBodyTouchMove)
+    document.body.removeEventListener('touchstart', this.handleBodyTouchStart)
+    window.removeEventListener('touchend', this.handleWindowTouchEnd)
+    window.removeEventListener('touchcancel', this.handleWindowTouchCancel)
+  }
+
   reset() {
     this.abandon = false
     this.currentStart = null
@@ -268,12 +282,11 @@ class MultiGesture extends React.Component<MultiGestureProps> {
   }
 
   render() {
-    const ref = React.createRef<HTMLDivElement>()
     return (
       <View panHandlers={this.panResponder.panHandlers}>
-        <TraceGesture eventNodeRef={ref} />
+        <TraceGesture eventNodeRef={this.contentRef} />
         <ScrollZone leftHanded={this.leftHanded} />
-        <div ref={ref}>{this.props.children}</div>
+        <div ref={this.contentRef}>{this.props.children}</div>
       </View>
     )
   }

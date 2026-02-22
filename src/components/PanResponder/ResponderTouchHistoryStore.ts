@@ -30,7 +30,7 @@ class ResponderTouchHistoryStore {
     // Use touch identifier modulo touchBank size to prevent out-of-bounds
     // Touch identifiers are typically sequential and small, but this is safer
     const index = key % this.touchBank.length
-    const timestamp = Date.now()
+    const timestamp = performance.now()
     const pageX = touch.pageX
     const pageY = touch.pageY
 

@@ -77,9 +77,14 @@ const ResponderView: React.FC<ResponderViewProps> = ({ children, panHandlers, ..
      * Handles touch end events.
      */
     const handleTouchEnd = (e: TouchEvent) => {
+      // Always process the event to update touch history (calls removeTouchTrack).
+      // Without this, taps (touchstart → touchend with no move) leave stale
+      // "active" entries in the touch history, corrupting numberActiveTouches
+      // and centroid calculations for subsequent gestures.
+      const pressEvent = createPressEventFromTouchEvent(e, element)
+
       if (!panHandlers || !isResponderRef.current) return
 
-      const pressEvent = createPressEventFromTouchEvent(e, element)
       panHandlers.onResponderRelease?.(pressEvent)
       panHandlers.onResponderEnd?.(pressEvent)
       isResponderRef.current = false
@@ -89,9 +94,11 @@ const ResponderView: React.FC<ResponderViewProps> = ({ children, panHandlers, ..
      * Handles touch cancel events.
      */
     const handleTouchCancel = (e: TouchEvent) => {
+      // Always process the event to update touch history (calls removeTouchTrack).
+      const pressEvent = createPressEventFromTouchEvent(e, element)
+
       if (!panHandlers || !isResponderRef.current) return
 
-      const pressEvent = createPressEventFromTouchEvent(e, element)
       const shouldTerminate = panHandlers.onResponderTerminationRequest?.(pressEvent) ?? true
 
       if (shouldTerminate) {
@@ -105,13 +112,10 @@ const ResponderView: React.FC<ResponderViewProps> = ({ children, panHandlers, ..
      */
     const handleClickCapture = (e: MouseEvent) => {
       if (panHandlers.onClickCapture) {
-        // Convert DOM MouseEvent to React MouseEvent format
-        const reactEvent = {
-          ...e,
-          currentTarget: e.currentTarget as HTMLElement,
-          target: e.target as HTMLElement,
-        } as unknown as React.MouseEvent<HTMLElement>
-        panHandlers.onClickCapture(reactEvent)
+        // Cast native MouseEvent directly rather than spreading it.
+        // Spreading a native event object does not copy prototype methods
+        // (stopPropagation, preventDefault), which causes TypeError on iOS.
+        panHandlers.onClickCapture(e as unknown as React.MouseEvent<HTMLElement>)
       }
     }
 
@@ -134,10 +138,13 @@ const ResponderView: React.FC<ResponderViewProps> = ({ children, panHandlers, ..
 
   const { style, ...otherProps } = props
 
-  // Layout-transparent wrapper - only handles touch events without affecting layout.
-  // No flex or positioning styles to avoid layout shifts.
+  // Match react-native-web's View defaults for consistent cross-platform touch behavior.
+  // touch-action: manipulation is critical on iOS — it eliminates the 300ms tap delay
+  // and standardizes how the browser handles touch sequences, preventing WKWebView (Capacitor)
+  // and newer Safari versions from aggressively claiming touches for native gestures.
   const viewStyle: React.CSSProperties = {
     boxSizing: 'border-box',
+    touchAction: 'manipulation',
     ...style,
   }
 

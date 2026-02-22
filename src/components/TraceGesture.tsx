@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import SignaturePad from 'react-signature-pad-wrapper'
 import { css } from '../../styled-system/css'
@@ -53,6 +53,15 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
   const innerHeight = viewportStore.useSelector(state => state.innerHeight)
   const innerWidth = viewportStore.useSelector(state => state.innerWidth)
   const signaturePadRef = useRef<SignaturePad | null>(null)
+  // Track when the SignaturePad ref is assigned so the touch-listener effect re-runs.
+  // Without this, a cold WebView start (e.g. first install) can hit a timing window where
+  // signaturePadRef.current is still null when the effect first fires, and since the
+  // stable eventNodeRef never changes, the effect never retries.
+  const [signaturePadReady, setSignaturePadReady] = useState(false)
+  const signaturePadCallbackRef = useCallback((node: SignaturePad | null) => {
+    signaturePadRef.current = node
+    setSignaturePadReady(!!node)
+  }, [])
 
   // Clear the signature pad when the stroke starts.
   // This is easier than clearing when the stroke ends where we would have to account for the fade timeout.
@@ -163,7 +172,7 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
       eventNode?.removeEventListener('touchcancel', onTouchCancel)
       signaturePad.removeEventListener('beginStroke', onBeginStroke)
     }
-  }, [eventNodeRef, onBeginStroke, leftHanded])
+  }, [eventNodeRef, onBeginStroke, leftHanded, signaturePadReady])
 
   return (
     <div
@@ -191,7 +200,7 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
       >
         <SignaturePad
           height={innerHeight}
-          ref={signaturePadRef}
+          ref={signaturePadCallbackRef}
           options={{
             penColor: colors.fg,
           }}

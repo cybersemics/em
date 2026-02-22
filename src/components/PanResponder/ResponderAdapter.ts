@@ -24,7 +24,7 @@ function touchToNativeTouchEvent(touch: Touch, target: HTMLElement): NativeTouch
     pageY: touch.pageY,
     locationX,
     locationY,
-    timestamp: Date.now(),
+    timestamp: performance.now(),
     target: target,
     force: (touch as Touch & { force?: number }).force || 0,
     touches: [],
@@ -68,7 +68,7 @@ function createPressEventFromTouchEvent(
       pageY: 0,
       locationX: 0,
       locationY: 0,
-      timestamp: Date.now(),
+      timestamp: performance.now(),
       target,
       force: 0,
       touches,
@@ -131,7 +131,7 @@ function createPressEventFromTouchEvent(
       // No-op for web
     },
     target: (event.target || target) as HTMLElement,
-    timeStamp: event.timeStamp || Date.now(),
+    timeStamp: event.timeStamp || performance.now(),
     type: event.type,
     touchHistory,
   }
