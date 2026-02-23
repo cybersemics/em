@@ -29,6 +29,7 @@ const click = async (
 
   // if nodeHandleOrSelector is a selector and there is no text offset or x,y offset, simply call page.click or page.tap
   if (typeof nodeHandleOrSelector === 'string' && !offset && !x && !y) {
+    await page.waitForSelector(nodeHandleOrSelector, { visible: true })
     return page[isMobile ? 'tap' : 'click'](nodeHandleOrSelector)
   }
 
