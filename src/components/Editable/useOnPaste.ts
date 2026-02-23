@@ -55,7 +55,7 @@ const useOnPaste = ({
             path,
             text: escapeHtml(plainText),
             html: htmlText,
-            rawDestValue: strip(contentRef.current!.innerHTML, { preventTrim: true }),
+            rawDestValue: strip(contentRef.current!.innerHTML, { preserveFormatting: true, preventTrim: true }),
             transient,
             isEmText,
           }),

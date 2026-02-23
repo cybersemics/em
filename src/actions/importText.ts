@@ -36,6 +36,23 @@ import uncategorize from './uncategorize'
 // a list item tag
 const REGEX_LIST_ITEM = /<li(?:\s|>)/gim
 
+/** Converts a plain text offset to the corresponding offset in an HTML string, skipping over HTML tags. Returns the HTML string length if the text offset exceeds the text content length. */
+const textOffsetToHtmlOffset = (html: string, textOffset: number): number => {
+  let textCount = 0
+  let inTag = false
+  for (let i = 0; i < html.length; i++) {
+    if (html[i] === '<') {
+      inTag = true
+    } else if (html[i] === '>') {
+      inTag = false
+    } else if (!inTag) {
+      if (textCount === textOffset) return i
+      textCount++
+    }
+  }
+  return html.length
+}
+
 export interface ImportTextPayload {
   caretPosition?: number
 
@@ -108,14 +125,18 @@ const importText = (
   if (!preventInline && numLines <= 1 && !isRoam && !isRoot(path)) {
     // insert the text into the destValue in the correct place
     // if cursorCleared is true i.e. clearThought is enabled we don't have to use existing thought to be appended
+
+    // Convert text offsets to HTML offsets since destValue may contain formatting tags.
+    const htmlCaretPosition = textOffsetToHtmlOffset(destValue, caretPosition)
+    const htmlReplaceStart = replaceStart != null ? textOffsetToHtmlOffset(destValue, replaceStart) : undefined
+    const htmlReplaceEnd = replaceEnd != null ? textOffsetToHtmlOffset(destValue, replaceEnd) : undefined
+
     const replacedDestValue = state.cursorCleared
       ? ''
-      : destValue.slice(0, replaceStart || 0) + destValue.slice(replaceEnd || 0)
+      : destValue.slice(0, htmlReplaceStart || 0) + destValue.slice(htmlReplaceEnd || 0)
 
-    const newValue = `${replacedDestValue.slice(
-      0,
-      replaceStart || caretPosition,
-    )}${text}${replacedDestValue.slice(replaceStart || caretPosition)}`
+    const insertPosition = htmlReplaceStart || htmlCaretPosition
+    const newValue = `${replacedDestValue.slice(0, insertPosition)}${text}${replacedDestValue.slice(insertPosition)}`
     const offset = caretPosition + getTextContentFromHTML(text).length
 
     return reducerFlow([
