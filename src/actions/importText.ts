@@ -206,6 +206,8 @@ const importText = (
         return appendToPath(pathStart, ...pathMiddle, thought ? id : idMerged()!)
       }
 
+      console.info('imported.lastImported :', JSON.stringify(imported.lastImported, null, 2))
+      console.info('shouldImportIntoDummy :', shouldImportIntoDummy)
       const newCursor = imported.lastImported
         ? shouldImportIntoDummy
           ? getLastImportedAfterCollapse()
@@ -214,6 +216,7 @@ const importText = (
           // Note: Failing to call setCursor may not be noticeable in the app if expandThoughts gets triggered by another action, such as updateThoughts. However ommitting this will fail component tests that rely on the expanded state immediately after importText.
           state.cursor
 
+      console.info('newCursor :', JSON.stringify(newCursor, null, 2))
       return setCursor(state, { path: newCursor })
     }
 

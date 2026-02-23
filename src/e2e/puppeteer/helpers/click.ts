@@ -1,5 +1,6 @@
 import { JSHandle } from 'puppeteer'
 import { page } from '../setup'
+import waitForSelector from './waitForSelector'
 
 interface Options {
   /** Click on the inside edge of the editable. Default: left. */
@@ -35,7 +36,7 @@ const click = async (
   // otherwise if nodeHandleOrSelector is a selector, fetch the node handle
   const nodeHandle =
     typeof nodeHandleOrSelector === 'string'
-      ? await page.waitForSelector(nodeHandleOrSelector, { timeout: 1000 })
+      ? await waitForSelector(nodeHandleOrSelector, { timeout: 5000 })
       : (nodeHandleOrSelector as JSHandle).asElement()!
   const boundingBox = await nodeHandle?.boundingBox()
 

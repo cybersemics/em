@@ -54,6 +54,7 @@ const setCursor = (
     preserveMulticursor?: boolean
   },
 ): State => {
+  console.info('setCursor', JSON.stringify(path, null, 2))
   // ✗ []
   // ✗ [HOME_TOKEN]
   if (path && (path.length === 0 || (path.length === 1 && path[0] === HOME_TOKEN))) {
