@@ -95,8 +95,9 @@ export const importDataActionCreator = ({
       dispatch(
         importText({
           // use caret position to correctly track the last navigated point for caret
-          // calculated on the basis of node type we are currently focused on. `state.cursorOffset` doesn't really keep track of updated caret position when navigating within single thought. Hence selection.offset() is also used depending upon which node type we are on.
-          caretPosition: (selection.isText() ? selection.offset() || 0 : state.cursorOffset) || 0,
+          // offsetThought returns the offset relative to the entire thought's text content, not just the current text node.
+          // This is necessary because rawDestValue is stripped of HTML tags, so a plain text offset is needed.
+          caretPosition: (selection.isText() ? selection.offsetThought() || 0 : state.cursorOffset) || 0,
           path,
           text: processedText,
           // text/plain may contain text that ultimately looks like html (contains <li>) and should be parsed as html
