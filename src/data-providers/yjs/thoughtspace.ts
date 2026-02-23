@@ -308,22 +308,21 @@ export const updateThought = async (id: ThoughtId, thought: Thought): Promise<vo
       const lexemeKey = hashThought(thought.value)
       const lexemeDoc = lexemeDocs.get(lexemeKey)
       if (!lexemeDoc && id !== HOME_TOKEN && id !== EM_TOKEN) {
-        // TODO: Why does throwing an error get suppressed?
         console.error(`updateThought: Missing Lexeme doc for thought ${id}`)
-        return
       }
 
       // delete from old parent
-      const thoughtDocOld = thoughtDocs.get(docKey)
+      const docKeyOld = docKey
+      const thoughtDocOld = thoughtDocs.get(docKeyOld)
       thoughtDocOld?.transact(() => {
         const yChildren = thoughtDocOld.getMap<Y.Map<ThoughtYjs>>('children')
         yChildren.delete(id)
-        docKey = thought.parentId
-        docKeys.set(id, docKey)
       }, thoughtDocOld.clientID)
+      docKey = thought.parentId
+      docKeys.set(id, docKey)
 
       // subscribe to thoughtPersistence directly since thoughtIDBSynced can await websocketSynced on new devices
-      thoughtOldIDBSynced = thoughtPersistence.get(docKey)?.whenSynced
+      thoughtOldIDBSynced = thoughtPersistence.get(docKeyOld)?.whenSynced
 
       // update Lexeme context docKey
       if (lexemeDoc) {

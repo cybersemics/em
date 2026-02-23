@@ -39,3 +39,8 @@ browserstack.log
 local.log
 /log
 /logs
+
+# AI/tooling artifacts
+.claude/
+.sisyphus/
+qa-evidence/

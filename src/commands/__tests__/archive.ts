@@ -8,10 +8,10 @@ import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import archiveCommand from '../archive'
 
-beforeEach(initStore)
-
 describe('archive', () => {
   describe('multicursor', () => {
+    beforeEach(initStore)
+
     it('archives multiple thoughts', async () => {
       store.dispatch([
         importText({
@@ -164,6 +164,42 @@ describe('archive', () => {
       - ${'' /* prevent trim_trailing_whitespace */}
         - d`
 
+      expect(exported).toEqual(expectedOutput)
+    })
+
+    // Regression test for #3780: archiving all siblings should move all to =archive.
+    // The persistence aspect (thoughts surviving reload) is covered by manual QA,
+    // as the root cause was a silent early return in updateThought (thoughtspace.ts)
+    // when the Lexeme Y.Doc was not cached during parent-change writes.
+    it('archives all thoughts when all siblings are selected', async () => {
+      store.dispatch([
+        importText({
+          text: `
+            - a
+            - b
+            - c
+            - d
+            - e
+          `,
+        }),
+        setCursor(['a']),
+        addMulticursor(['a']),
+        addMulticursor(['b']),
+        addMulticursor(['c']),
+        addMulticursor(['d']),
+        addMulticursor(['e']),
+      ])
+
+      executeCommandWithMulticursor(archiveCommand, { store })
+
+      const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+      const expectedOutput = `- ${HOME_TOKEN}
+  - =archive
+    - e
+    - d
+    - c
+    - b
+    - a`
       expect(exported).toEqual(expectedOutput)
     })
   })
