@@ -80,9 +80,11 @@ export const importDataActionCreator = ({
     // Eventually importFiles should be modified to insert single-line content at the cursor offset.
     const singleLineHtml = cleanedHtml?.match(REGEX_HTML_SINGLE_LINE)?.[1]
 
-    const processedText = singleLineHtml ?? (cleanedHtml ? cleanedHtml.replace(/\n\s*\n+/g, '\n') : (text?.trim() ?? ''))
+    const processedText =
+      singleLineHtml ?? (cleanedHtml ? cleanedHtml.replace(/\n\s*\n+/g, '\n') : (text?.trim() ?? ''))
     const multiline =
-      !singleLineHtml && (cleanedHtml ? REGEX_NONFORMATTING_HTML.test(cleanedHtml) : !!processedText?.trim().includes('\n'))
+      !singleLineHtml &&
+      (cleanedHtml ? REGEX_NONFORMATTING_HTML.test(cleanedHtml) : !!processedText?.trim().includes('\n'))
 
     // Check if the text is markdown, if so, prefer importText over importFiles
     const markdown = isMarkdown(processedText)
