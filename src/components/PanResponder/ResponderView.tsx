@@ -105,11 +105,16 @@ const ResponderView: React.FC<ResponderViewProps> = ({ children, panHandlers, ..
      */
     const handleClickCapture = (e: MouseEvent) => {
       if (panHandlers.onClickCapture) {
-        // Convert DOM MouseEvent to React MouseEvent format
+        // Convert DOM MouseEvent to React MouseEvent format.
+        // Note: Spreading a DOM event does not copy prototype methods (stopPropagation, preventDefault),
+        // so they must be explicitly delegated.
         const reactEvent = {
-          ...e,
           currentTarget: e.currentTarget as HTMLElement,
           target: e.target as HTMLElement,
+          stopPropagation: () => e.stopPropagation(),
+          preventDefault: () => e.preventDefault(),
+          type: e.type,
+          timeStamp: e.timeStamp,
         } as unknown as React.MouseEvent<HTMLElement>
         panHandlers.onClickCapture(reactEvent)
       }
