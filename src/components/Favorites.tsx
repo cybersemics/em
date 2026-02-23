@@ -43,11 +43,11 @@ const DragAndDropFavorite = ({
   const dragHoldResult = useDragHold({ isDragging, simplePath, sourceZone: DragThoughtZone.Favorites })
 
   return (
-    // Set overflow:auto so the drop target fully wraps its contents.
+    // Set overflow:hidden so the drop target fully wraps its contents.
     // Otherwise the context-breadcrumbs margin-top will leak out and create a dead zone where the favorite cannot be dropped.
     <div
       {...dragHoldResult.props}
-      className={css({ overflow: 'auto' })}
+      className={css({ overflow: 'hidden' })}
       data-testid='drag-and-drop-favorite'
       ref={dndRef(node => dragSource(dropTarget(node)))}
     >
