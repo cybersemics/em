@@ -4,7 +4,7 @@ import { shallowEqual, useSelector } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
 import { css } from '../../styled-system/css'
 import { extendTapRecipe } from '../../styled-system/recipes'
-import { token } from '../../styled-system/tokens'
+import { ColorToken, token } from '../../styled-system/tokens'
 import { SystemStyleObject } from '../../styled-system/types'
 import Path from '../@types/Path'
 import ThoughtId from '../@types/ThoughtId'
@@ -179,7 +179,7 @@ const ContextBreadcrumbs = ({
   thoughtsLimit?: number
   linkCssRaw?: SystemStyleObject
   variant?: ContextBreadcrumbsVariant
-  color?: string
+  color?: ColorToken
 }) => {
   const [disabled, setDisabled] = React.useState(false)
   const simplePath = useSelector(state => simplifyPath(state, path), shallowEqual)

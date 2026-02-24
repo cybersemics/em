@@ -1,7 +1,6 @@
 import { useRef } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
-import { token } from '../../styled-system/tokens/index.mjs'
 import Path from '../@types/Path'
 import { isTouch } from '../browser'
 import { BASE_FONT_SIZE } from '../constants'
@@ -28,7 +27,7 @@ const CursorBreadcrumbs = ({ position }: { position: string }) => {
     >
       <ContextBreadcrumbs
         variant='small'
-        color={token('colors.breadcrumbs')}
+        color='breadcrumbs'
         linkCssRaw={css.raw({
           '&:hover': {
             color: 'fg',
