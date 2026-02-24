@@ -63,3 +63,47 @@ it('swap thought and note', () => {
 
   expectPathToEqual(stateNew, stateNew.cursor, ['a', 'b'])
 })
+
+it('moves grandchildren to parent when thought with children is converted to note', () => {
+  const text = `
+    - a
+      - b
+        - c
+  `
+  const steps = [importText({ text }), setCursor(['a', 'b']), swapNote]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - =note
+      - b
+    - c`)
+
+  expectPathToEqual(stateNew, stateNew.cursor, ['a'])
+})
+
+it('moves multiple grandchildren to parent when thought with children is converted to note', () => {
+  const text = `
+    - a
+      - b
+        - c
+        - d
+        - e
+  `
+  const steps = [importText({ text }), setCursor(['a', 'b']), swapNote]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - =note
+      - b
+    - c
+    - d
+    - e`)
+
+  expectPathToEqual(stateNew, stateNew.cursor, ['a'])
+})

@@ -3,7 +3,7 @@ import Thunk from '../@types/Thunk'
 import alert from '../actions/alert'
 import moveThought from '../actions/moveThought'
 import findDescendant from '../selectors/findDescendant'
-import { anyChild } from '../selectors/getChildren'
+import { anyChild, getChildrenRanked } from '../selectors/getChildren'
 import getRankAfter from '../selectors/getRankAfter'
 import isContextViewActive from '../selectors/isContextViewActive'
 import pathToThought from '../selectors/pathToThought'
@@ -61,6 +61,10 @@ const swapNote = (state: State): State => {
     })
   }
 
+  // Get children of the cursor thought (B) sorted by rank, in reverse order.
+  // Moving them in reverse order while using getRankAfter(B) each time preserves their relative order in the parent.
+  const cursorChildrenReversed = getChildrenRanked(state, thoughtId).reverse()
+
   return reducerFlow(
     // if the cursor thought has a note, then convert the note to a thought
     noteId
@@ -114,6 +118,18 @@ const swapNote = (state: State): State => {
                 })
               : null
           },
+          // move the cursor's children to the parent (in reverse rank order to preserve relative order)
+          // Moving in reverse order works because getRankAfter(cursor) returns the rank between B and
+          // its new next sibling after each move, inserting each subsequent child between B and the
+          // previously moved child and thus preserving the original relative order of children.
+          ...cursorChildrenReversed.map(
+            child => (state: State) =>
+              moveThought(state, {
+                oldPath: appendToPath(cursor, child.id),
+                newPath: appendToPath(parentOf(cursor), child.id),
+                newRank: getRankAfter(state, simplifyPath(state, cursor)),
+              }),
+          ),
           // move the cursor into =note
           state => {
             return moveThought(state, {
