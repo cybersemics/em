@@ -154,7 +154,6 @@ BreadCrumb.displayName = 'BreadCrumb'
 /** Renders the ancestor chain of a path as links. */
 const ContextBreadcrumbs = ({
   charLimit,
-  cssRaw,
   hideArchive,
   hidden,
   homeContext,
@@ -163,9 +162,9 @@ const ContextBreadcrumbs = ({
   thoughtsLimit,
   linkCssRaw,
   variant = 'default',
+  color,
 }: {
   charLimit?: number
-  cssRaw?: SystemStyleObject
   /** Hide just the =archive thought, but show the rest of the path. */
   hideArchive?: boolean
   /**
@@ -180,6 +179,7 @@ const ContextBreadcrumbs = ({
   thoughtsLimit?: number
   linkCssRaw?: SystemStyleObject
   variant?: ContextBreadcrumbsVariant
+  color?: string
 }) => {
   const [disabled, setDisabled] = React.useState(false)
   const simplePath = useSelector(state => simplifyPath(state, path), shallowEqual)
@@ -213,15 +213,12 @@ const ContextBreadcrumbs = ({
   return (
     <div
       aria-label={hidden ? undefined : 'context-breadcrumbs'}
-      className={css(
-        {
-          fontSize,
-          color: 'gray66',
-          minHeight: `${fontSize}`,
-          visibility: hidden ? 'hidden' : undefined,
-        },
-        cssRaw,
-      )}
+      className={css({
+        fontSize,
+        color: color || 'gray66',
+        minHeight: `${fontSize}`,
+        visibility: hidden ? 'hidden' : undefined,
+      })}
     >
       {isRoot(simplePath) ? (
         /*

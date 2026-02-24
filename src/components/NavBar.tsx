@@ -1,6 +1,7 @@
 import { useRef } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
+import { token } from '../../styled-system/tokens/index.mjs'
 import Path from '../@types/Path'
 import { isTouch } from '../browser'
 import { BASE_FONT_SIZE } from '../constants'
@@ -22,18 +23,13 @@ const CursorBreadcrumbs = ({ position }: { position: string }) => {
   )
 
   return (
-    <div className={css({ marginLeft: '3.7px', marginTop: '7.462px' })}>
+    <div
+      className={css({ marginLeft: '3.7px', marginTop: '7.462px', width: 'calc(100% - 40px)', paddingLeft: '35px' })}
+    >
       <ContextBreadcrumbs
         variant='small'
-        cssRaw={css.raw({
-          width: '100%',
-          color: 'breadcrumbs',
-          paddingLeft: '15px',
-          verticalAlign: 'bottom',
-          ...(position === 'bottom' && { width: 'calc(100% - 40px)', paddingLeft: '35px' }),
-        })}
+        color={token('colors.breadcrumbs')}
         linkCssRaw={css.raw({
-          color: 'breadcrumbs',
           '&:hover': {
             color: 'fg',
           },
