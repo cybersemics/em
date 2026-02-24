@@ -34,6 +34,8 @@ type OverflowChild = {
 
 type OverflowPath = OverflowChild[]
 
+type ContextBreadcrumbsVariant = 'small' | 'default'
+
 /** Ellipsizes thoughts in a path by thoughtsLimit and charLimit. Complexity: O(n), but does not work if thoughtsLimit or charLimit are undefined. */
 const useEllipsizedThoughts = (
   path: Path,
@@ -160,6 +162,7 @@ const ContextBreadcrumbs = ({
   staticText,
   thoughtsLimit,
   linkCssRaw,
+  variant = 'default',
 }: {
   charLimit?: number
   cssRaw?: SystemStyleObject
@@ -176,6 +179,7 @@ const ContextBreadcrumbs = ({
   staticText?: boolean
   thoughtsLimit?: number
   linkCssRaw?: SystemStyleObject
+  variant?: ContextBreadcrumbsVariant
 }) => {
   const [disabled, setDisabled] = React.useState(false)
   const simplePath = useSelector(state => simplifyPath(state, path), shallowEqual)
@@ -203,16 +207,19 @@ const ContextBreadcrumbs = ({
 
   const homeIconStyle: React.CSSProperties = { position: 'relative', left: -1, top: 2 }
 
+  // If variant is small, use 14px font size, otherwise use 0.867rem which scales with the user's font size
+  const fontSize = variant === 'default' ? '0.867rem' : '14px'
+
   return (
     <div
       aria-label={hidden ? undefined : 'context-breadcrumbs'}
       className={css(
         {
-          fontSize: '0.867rem',
+          fontSize,
           color: 'gray66',
           marginLeft: 'calc(1.1271rem - 14.5px)',
           marginTop: '0.462rem',
-          minHeight: '0.867rem',
+          minHeight: `${fontSize}`,
           visibility: hidden ? 'hidden' : undefined,
         },
         cssRaw,

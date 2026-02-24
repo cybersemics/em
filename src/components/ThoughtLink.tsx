@@ -40,6 +40,7 @@ const ThoughtLink = ({
     <div>
       {!hideContext && (
         <ContextBreadcrumbs
+          variant='small'
           hideArchive={hideArchive}
           path={parentPath}
           staticText={staticBreadcrumbs}

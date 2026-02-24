@@ -23,6 +23,7 @@ const CursorBreadcrumbs = ({ position }: { position: string }) => {
 
   return (
     <ContextBreadcrumbs
+      variant='small'
       cssRaw={css.raw({
         width: '100%',
         color: 'breadcrumbs',
@@ -37,7 +38,6 @@ const CursorBreadcrumbs = ({ position }: { position: string }) => {
         },
       })}
       path={breadcrumbSimplePath}
-      variant='small'
     />
   )
 }
