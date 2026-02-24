@@ -1,4 +1,4 @@
-import { JSHandle } from 'puppeteer'
+import { ElementHandle, JSHandle } from 'puppeteer'
 import { page } from '../setup'
 
 interface Options {
@@ -27,18 +27,21 @@ const click = async (
     )
   }
 
-  // if nodeHandleOrSelector is a selector and there is no text offset or x,y offset, simply call page.click or page.tap
-  if (typeof nodeHandleOrSelector === 'string' && !offset && !x && !y) {
-    await page.waitForSelector(nodeHandleOrSelector, { visible: true })
-    return page[isMobile ? 'tap' : 'click'](nodeHandleOrSelector)
+  // if nodeHandleOrSelector is a selector, wait for it to be visible and get the node handle
+  const nodeHandle = (
+    typeof nodeHandleOrSelector === 'string'
+      ? await page.waitForSelector(nodeHandleOrSelector, { visible: true, timeout: 1000 })
+      : (nodeHandleOrSelector as JSHandle).asElement()!
+  ) as ElementHandle<Element> | null
+
+  if (!nodeHandle) throw new Error('Element not found.')
+
+  // if there is no text offset or x,y offset, simply click or tap
+  if (!offset && !x && !y) {
+    return isMobile ? nodeHandle.tap() : nodeHandle.click()
   }
 
-  // otherwise if nodeHandleOrSelector is a selector, fetch the node handle
-  const nodeHandle =
-    typeof nodeHandleOrSelector === 'string'
-      ? await page.waitForSelector(nodeHandleOrSelector, { timeout: 1000 })
-      : (nodeHandleOrSelector as JSHandle).asElement()!
-  const boundingBox = await nodeHandle?.boundingBox()
+  const boundingBox = await nodeHandle.boundingBox()
 
   if (!boundingBox) throw new Error('Bounding box of element not found.')
 
