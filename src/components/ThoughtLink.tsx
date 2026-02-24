@@ -9,7 +9,6 @@ import head from '../util/head'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
 import Link from './Link'
 import Superscript from './Superscript'
-import useBreadcrumbScaler from './scaler/useBreadcrumbScaler'
 
 /** Renders a link to a thought and its ancestors as ContextBreadcrumbs. */
 const ThoughtLink = ({
@@ -37,27 +36,18 @@ const ThoughtLink = ({
     return thought?.value
   })
 
-  const breadcrumbScaler = useBreadcrumbScaler('small')
   return (
     <div>
       {!hideContext && (
-        <div
-          style={{
-            marginTop: `${breadcrumbScaler * 0.867}rem`,
-            marginLeft: `calc(-${breadcrumbScaler * 1.1271}rem + 14.5px)`,
-            lineHeight: 1.5,
-          }}
-        >
-          <ContextBreadcrumbs
-            hideArchive={hideArchive}
-            path={parentPath}
-            variant='small'
-            staticText={staticBreadcrumbs}
-            charLimit={charLimit || 32}
-            thoughtsLimit={thoughtsLimit || 10}
-            linkCssRaw={css.raw({ fontWeight: 'inherit' })}
-          />
-        </div>
+        <ContextBreadcrumbs
+          hideArchive={hideArchive}
+          path={parentPath}
+          staticText={staticBreadcrumbs}
+          charLimit={charLimit || 32}
+          cssRaw={css.raw({ marginTop: '1em', marginLeft: '0', lineHeight: 1.5 })}
+          thoughtsLimit={thoughtsLimit || 10}
+          linkCssRaw={css.raw({ fontWeight: 'inherit' })}
+        />
       )}
       <Link
         cssRaw={css.raw({ fontWeight: 'inherit', color: 'fg' })}
