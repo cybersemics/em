@@ -4,7 +4,6 @@ import newThoughtCommand from '../../../commands/newThought'
 import exportThoughts from '../helpers/exportThoughts'
 import gesture from '../helpers/gesture'
 import keyboard from '../helpers/keyboard'
-import waitForFrames from '../helpers/waitForFrames'
 import { page } from '../setup'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
@@ -35,8 +34,6 @@ describe('alerts', () => {
     // Perform an incomplete gesture (no touchEnd) - create a new thought
     await gesture(newSubthoughtCommand, { hold: true })
 
-    await waitForFrames()
-
     // Check that no alert content is visible during gesture progress
     const alertContent = await page.$('[data-testid=alert-content]')
     expect(alertContent).toBeNull()
@@ -52,8 +49,6 @@ describe('alerts', () => {
   it('should show alert after gesture completion', async () => {
     // Perform a complete gesture - create a new thought
     await gesture(newSubthoughtCommand)
-
-    await waitForFrames()
 
     // Check that alert content is visible after gesture completion
     const alertContent = await page.$('[data-testid=alert-content]')
