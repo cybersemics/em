@@ -97,7 +97,7 @@ function ProgressiveBlur() {
         pointerEvents: 'none',
         position: 'absolute',
         backdropFilter: 'blur(5px)',
-        mask: 'linear-gradient(180deg, {colors.black} 0%, {colors.bgOverlay80} calc(100% - 20px), {colors.bgTransparent} 100%)',
+        mask: 'linear-gradient(180deg, {colors.black} 0%, {colors.bgOverlay80} 80%, {colors.bgTransparent} 100%)',
         width: '100%',
         top: 0,
         height: '100%',
@@ -148,8 +148,7 @@ function Overlay() {
       className={css({
         pointerEvents: 'none',
         position: 'absolute',
-        background: 'linear-gradient(180deg, {colors.black} 0%, {colors.bgOverlay80} 30%, {colors.bgTransparent} 100%)',
-
+        background: 'linear-gradient(180deg, {colors.black} 0%, {colors.bgOverlay80} 70%, {colors.bgTransparent} 100%)',
         top: 0,
         width: '100%',
         height: '100%',
@@ -223,31 +222,20 @@ const GestureMenuWithTransition: FC = () => {
           onEntered={onGestureMenuEntered}
           onExited={onGestureMenuExited}
         >
-          <>
-            <div
-              className={css({
-                background: 'bgOverlay50',
-                position: 'absolute',
-                inset: 0,
-                width: '100%',
-                height: '100vh',
-              })}
-            />
-            <div
-              ref={overlayRef}
-              className={css({
-                position: 'relative',
-                // prevent mix-blend-mode and backdrop-filter from affecting each other
-                isolation: 'isolate',
-                width: '100%',
-                paddingBottom: '200px',
-              })}
-            >
-              <Overlay />
-              <Glow />
-              <GestureMenu commands={commands} />
-            </div>
-          </>
+          <div
+            ref={overlayRef}
+            className={css({
+              position: 'relative',
+              // prevent mix-blend-mode and backdrop-filter from affecting each other
+              isolation: 'isolate',
+              width: '100%',
+              paddingBottom: '200px',
+            })}
+          >
+            <Overlay />
+            <Glow />
+            <GestureMenu commands={commands} />
+          </div>
         </FadeTransition>
       </div>
     </PopupBase>
