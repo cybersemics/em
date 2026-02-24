@@ -40,7 +40,7 @@ export const onGestureMenuExited = () => {
 }
 
 /** Updates the gesture during tracking. */
-export const updateGesture = (gesture: GesturePath) => {
+export const updateGesture = (gesture: string) => {
   gestureStore.update({ gesture })
 }
 
