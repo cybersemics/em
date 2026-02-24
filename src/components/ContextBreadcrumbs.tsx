@@ -217,8 +217,6 @@ const ContextBreadcrumbs = ({
         {
           fontSize,
           color: 'gray66',
-          marginLeft: 'calc(1.1271rem - 14.5px)',
-          marginTop: '0.462rem',
           minHeight: `${fontSize}`,
           visibility: hidden ? 'hidden' : undefined,
         },

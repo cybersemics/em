@@ -174,6 +174,8 @@ export default function BulletCursorOverlay({
             /* Use padding-top instead of margin-top to ensure this gets included in the dynamic height of each thought.
             Otherwise the accumulated y value will not be correct. */
             paddingTop: '0.4335rem',
+            marginLeft: 'calc(1.1271rem - 14.5px)',
+            marginTop: '0.462rem',
           })}
         >
           <ContextBreadcrumbs hidden path={parentOf(simplePath)} homeContext={homeContext} />
