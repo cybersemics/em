@@ -8,7 +8,8 @@ const rgbToHex = (color: string): string => {
     return color
   }
 
-  const match = color.match(RGB_RGBA_REGEX)
+  // Normalize to lowercase to handle uppercase/mixed-case RGB/RGBA values (e.g. after applying UpperCase letter case)
+  const match = color.toLowerCase().match(RGB_RGBA_REGEX)
 
   if (!match) {
     throw new Error('Invalid RGB/RGBA or hex color format')
