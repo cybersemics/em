@@ -11,11 +11,10 @@ function getItem(key: string): string | null
 function getItem(key: string, defaultValue: string | (() => string)): string
 /** Gets the item from local storage. If it does not exist and defaultValue is provided, sets the value in local storage to defaultValue and returns it. */
 function getItem(key: string, defaultValue?: string | (() => string)) {
-  const storage = localStorage
-  let value = storage.getItem(key)
+  let value = localStorage.getItem(key)
   if (value === null && defaultValue !== undefined) {
     value = typeof defaultValue === 'function' ? defaultValue() : defaultValue
-    storage.setItem(key, value)
+    localStorage.setItem(key, value)
   }
   return value
 }

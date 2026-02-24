@@ -404,17 +404,16 @@ export const updateThought = async (id: ThoughtId, thought: Thought): Promise<vo
           }
         })
 
-        // add children that are not in the yjs thought (guard: Yjs cannot encode undefined)
+        // add children that are not in the yjs thought
         Object.entries(thoughtDb[thoughtKeyToDb.childrenMap]).forEach(([key, childId]) => {
-          if (key != null && childId != null && !childrenMap.has(key)) {
+          if (!childrenMap.has(key)) {
             childrenMap.set(key, childId)
           }
         })
       }
-      // other keys (guard: Yjs cannot encode undefined in writeString)
+      // other keys
       else {
         const value = thoughtDb[key]
-        if (value === undefined) return
         // Only set a value if it has changed.
         // Otherwise YJS adds another update.
         if (value !== thoughtMap.get(key)) {
@@ -491,8 +490,6 @@ export const updateLexeme = async (
         })
       } else {
         const value = lexemeNew[key]
-        // Guard: Yjs cannot encode undefined in writeString
-        if (value === undefined) return
         // Only set a value if it has changed.
         // Otherwise YJS adds another update.
         if (value !== lexemeMap.get(lexemeKeyToDb[key])) {
