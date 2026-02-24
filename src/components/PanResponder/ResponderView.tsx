@@ -1,5 +1,14 @@
+/**
+ * Copyright (c) Nicolas Gallagher.
+ *
+ * Faithful TypeScript port of react-native-web's useResponderEvents/index.js
+ * integrated into a View component wrapper.
+ *
+ * Registers components with the centralized ResponderSystem for gesture handling.
+ */
 import React, { HTMLAttributes, useEffect, useRef } from 'react'
-import { createPressEventFromTouchEvent } from './ResponderAdapter'
+import type { ResponderConfig } from './ResponderSystem'
+import * as ResponderSystem from './ResponderSystem'
 import type { PanResponderHandlers } from './index'
 
 interface ResponderViewProps extends HTMLAttributes<HTMLDivElement> {
@@ -7,102 +16,89 @@ interface ResponderViewProps extends HTMLAttributes<HTMLDivElement> {
   panHandlers?: PanResponderHandlers
 }
 
+let idCounter = 0
+
+/**
+ * Converts PanResponderHandlers to a ResponderConfig compatible with the ResponderSystem.
+ */
+function toResponderConfig(panHandlers: PanResponderHandlers): ResponderConfig {
+  return {
+    onStartShouldSetResponder: panHandlers.onStartShouldSetResponder,
+    onStartShouldSetResponderCapture: panHandlers.onStartShouldSetResponderCapture,
+    onMoveShouldSetResponder: panHandlers.onMoveShouldSetResponder,
+    onMoveShouldSetResponderCapture: panHandlers.onMoveShouldSetResponderCapture,
+    onResponderGrant: panHandlers.onResponderGrant,
+    onResponderReject: panHandlers.onResponderReject,
+    onResponderMove: panHandlers.onResponderMove,
+    onResponderRelease: panHandlers.onResponderRelease,
+    onResponderStart: panHandlers.onResponderStart,
+    onResponderEnd: panHandlers.onResponderEnd,
+    onResponderTerminate: panHandlers.onResponderTerminate,
+    onResponderTerminationRequest: panHandlers.onResponderTerminationRequest,
+  }
+}
+
 /**
  * Converts DOM touch events to PressEvent format and calls PanResponder handlers.
- * Layout-transparent wrapper that only handles touch events without affecting layout.
+ * Uses the centralized ResponderSystem (document-level event listeners) matching
+ * the original react-native-web architecture.
  */
 const ResponderView: React.FC<ResponderViewProps> = ({ children, panHandlers, ...props }) => {
   const ref = useRef<HTMLDivElement>(null)
-  const isResponderRef = useRef(false)
+  // Stable ID per component instance (matches useResponderEvents pattern)
+  const idRef = useRef<number | null>(null)
+  if (idRef.current == null) {
+    idRef.current = idCounter++
+  }
+  const id = idRef.current
+  const isAttachedRef = useRef(false)
 
+  // This is a separate effect so it doesn't run when the config changes.
+  // On initial mount, attach global listeners if needed.
+  // On unmount, remove node potentially attached to the Responder System.
+  useEffect(() => {
+    ResponderSystem.attachListeners()
+    return () => {
+      ResponderSystem.removeNode(id)
+    }
+  }, [id])
+
+  // Register and unregister with the Responder System as necessary
+  useEffect(() => {
+    if (!panHandlers) {
+      if (isAttachedRef.current) {
+        ResponderSystem.removeNode(id)
+        isAttachedRef.current = false
+      }
+      return
+    }
+
+    const config = toResponderConfig(panHandlers)
+
+    const requiresResponderSystem =
+      config.onMoveShouldSetResponder != null ||
+      config.onMoveShouldSetResponderCapture != null ||
+      config.onStartShouldSetResponder != null ||
+      config.onStartShouldSetResponderCapture != null
+
+    const node = ref.current
+
+    if (requiresResponderSystem && node) {
+      ResponderSystem.addNode(id, node, config)
+      isAttachedRef.current = true
+    } else if (isAttachedRef.current) {
+      ResponderSystem.removeNode(id)
+      isAttachedRef.current = false
+    }
+  }, [panHandlers, id])
+
+  // Handle onClickCapture separately (not part of the responder system).
+  // PanResponder uses this to prevent click events after gestures.
   useEffect(() => {
     const element = ref.current
-    if (!element || !panHandlers) return
+    if (!element || !panHandlers?.onClickCapture) return
 
-    /**
-     * Handles touch start events.
-     */
-    const handleTouchStart = (e: TouchEvent) => {
-      if (!panHandlers) return
-
-      const pressEvent = createPressEventFromTouchEvent(e, element)
-
-      const shouldStartCapture = panHandlers.onStartShouldSetResponderCapture?.(pressEvent) || false
-      const shouldStart = shouldStartCapture || panHandlers.onStartShouldSetResponder?.(pressEvent) || false
-
-      if (shouldStart && !isResponderRef.current) {
-        isResponderRef.current = true
-        const shouldBlock = panHandlers.onResponderGrant?.(pressEvent)
-        if (shouldBlock !== false) {
-          panHandlers.onResponderStart?.(pressEvent)
-          e.preventDefault()
-          // Don't stop propagation - allow events to reach child elements (e.g., TraceGesture)
-        }
-      }
-    }
-
-    /**
-     * Handles touch move events.
-     */
-    const handleTouchMove = (e: TouchEvent) => {
-      if (!panHandlers) return
-
-      const pressEvent = createPressEventFromTouchEvent(e, element)
-
-      if (!isResponderRef.current) {
-        const shouldMoveCapture = panHandlers.onMoveShouldSetResponderCapture?.(pressEvent) || false
-        const shouldMove = shouldMoveCapture || panHandlers.onMoveShouldSetResponder?.(pressEvent) || false
-
-        if (shouldMove) {
-          isResponderRef.current = true
-          const shouldBlock = panHandlers.onResponderGrant?.(pressEvent)
-          if (shouldBlock !== false) {
-            panHandlers.onResponderStart?.(pressEvent)
-            // Don't prevent default here - let MultiGesture handle scroll prevention via document.body listener
-            // Don't stop propagation
-            panHandlers.onResponderMove?.(pressEvent)
-          }
-        }
-        return
-      }
-
-      // Don't prevent default here
-      // Let MultiGesture handle scroll prevention via document.body listener
-
-      // Don't stop propagation
-      panHandlers.onResponderMove?.(pressEvent)
-    }
-
-    /**
-     * Handles touch end events.
-     */
-    const handleTouchEnd = (e: TouchEvent) => {
-      if (!panHandlers || !isResponderRef.current) return
-
-      const pressEvent = createPressEventFromTouchEvent(e, element)
-      panHandlers.onResponderRelease?.(pressEvent)
-      panHandlers.onResponderEnd?.(pressEvent)
-      isResponderRef.current = false
-    }
-
-    /**
-     * Handles touch cancel events.
-     */
-    const handleTouchCancel = (e: TouchEvent) => {
-      if (!panHandlers || !isResponderRef.current) return
-
-      const pressEvent = createPressEventFromTouchEvent(e, element)
-      const shouldTerminate = panHandlers.onResponderTerminationRequest?.(pressEvent) ?? true
-
-      if (shouldTerminate) {
-        panHandlers.onResponderTerminate?.(pressEvent)
-        isResponderRef.current = false
-      }
-    }
-
-    /**
-     * Handles click capture events.
-     */
+    /** Captures click events and forwards to PanResponder's onClickCapture handler. */
     const handleClickCapture = (e: MouseEvent) => {
       if (panHandlers.onClickCapture) {
         // Convert DOM MouseEvent to React MouseEvent format.
@@ -120,20 +116,9 @@ const ResponderView: React.FC<ResponderViewProps> = ({ children, panHandlers, ..
       }
     }
 
-    // Use capture phase and non-passive listeners to allow preventDefault()
-    element.addEventListener('touchstart', handleTouchStart, { capture: true, passive: false })
-    element.addEventListener('touchmove', handleTouchMove, { capture: true, passive: false })
-    element.addEventListener('touchend', handleTouchEnd, { capture: true, passive: false })
-    element.addEventListener('touchcancel', handleTouchCancel, { capture: true, passive: false })
     element.addEventListener('click', handleClickCapture, true)
-
     return () => {
-      element.removeEventListener('touchstart', handleTouchStart, { capture: true } as EventListenerOptions)
-      element.removeEventListener('touchmove', handleTouchMove, { capture: true } as EventListenerOptions)
-      element.removeEventListener('touchend', handleTouchEnd, { capture: true } as EventListenerOptions)
-      element.removeEventListener('touchcancel', handleTouchCancel, { capture: true } as EventListenerOptions)
       element.removeEventListener('click', handleClickCapture, true)
-      isResponderRef.current = false
     }
   }, [panHandlers])
 

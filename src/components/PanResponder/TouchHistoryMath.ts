@@ -1,22 +1,4 @@
-export interface TouchTrack {
-  touchActive: boolean
-  startPageX: number
-  startPageY: number
-  startTimeStamp: number
-  currentPageX: number
-  currentPageY: number
-  currentTimeStamp: number
-  previousPageX: number
-  previousPageY: number
-  previousTimeStamp: number
-}
-
-export interface TouchHistory {
-  indexOfSingleActiveTouch: number
-  mostRecentTimeStamp: number
-  numberActiveTouches: number
-  touchBank: readonly (TouchTrack | null)[]
-}
+import type { TouchHistory } from './CoreEventTypes'
 
 const TouchHistoryMath = {
   /**

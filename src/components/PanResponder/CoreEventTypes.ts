@@ -5,34 +5,41 @@
  * LICENSE file in the root directory of this source tree.
  *
  * Type definitions for React Native event types.
+ * Updated to align with the original react-native-web responder system types.
  */
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 export interface SyntheticEvent<T> {
-  readonly bubbles?: boolean
-  readonly cancelable?: boolean
-  readonly currentTarget: HTMLElement
-  readonly defaultPrevented?: boolean
-  readonly dispatchConfig: {
-    readonly registrationName: string
+  bubbles: boolean
+  cancelable: boolean
+  currentTarget: any
+  defaultPrevented?: boolean | null
+  dispatchConfig: {
+    registrationName?: string
+    phasedRegistrationNames?: {
+      bubbled: string
+      captured: string
+    }
   }
-  readonly eventPhase?: number
+  eventPhase?: number | null
   preventDefault: () => void
   isDefaultPrevented: () => boolean
   stopPropagation: () => void
   isPropagationStopped: () => boolean
-  readonly isTrusted?: boolean
-  readonly nativeEvent: T
+  isTrusted?: boolean | null
+  nativeEvent: T
   persist: () => void
-  readonly target?: HTMLElement
-  readonly timeStamp: number
-  readonly type?: string
+  target?: any
+  timeStamp: number
+  type?: string
 }
 
 export interface TouchHistory {
-  readonly indexOfSingleActiveTouch: number
-  readonly mostRecentTimeStamp: number
-  readonly numberActiveTouches: number
-  readonly touchBank: readonly (Readonly<{
+  indexOfSingleActiveTouch: number
+  mostRecentTimeStamp: number
+  numberActiveTouches: number
+  touchBank: ({
     touchActive: boolean
     startPageX: number
     startPageY: number
@@ -43,25 +50,29 @@ export interface TouchHistory {
     previousPageX: number
     previousPageY: number
     previousTimeStamp: number
-  }> | null)[]
+  } | null)[]
 }
 
 export interface ResponderSyntheticEvent<T> extends SyntheticEvent<T> {
-  readonly touchHistory: TouchHistory
+  touchHistory: TouchHistory
 }
 
 export interface NativeTouchEvent {
-  // changedTouches and touches can be empty arrays to avoid infinite recursion in type checking
-  readonly changedTouches: readonly NativeTouchEvent[]
-  readonly force: number
-  readonly identifier: number
-  readonly locationX: number
-  readonly locationY: number
-  readonly pageX: number
-  readonly pageY: number
-  readonly target?: HTMLElement
-  readonly timestamp: number
-  readonly touches: readonly NativeTouchEvent[]
+  altKey?: boolean
+  ctrlKey?: boolean
+  metaKey?: boolean
+  shiftKey?: boolean
+  changedTouches: any[]
+  force: number
+  identifier: number
+  locationX: any
+  locationY: any
+  pageX: number
+  pageY: number
+  target?: any
+  timestamp: number
+  touches: any[]
+  type?: string
 }
 
 export type PressEvent = ResponderSyntheticEvent<NativeTouchEvent>
