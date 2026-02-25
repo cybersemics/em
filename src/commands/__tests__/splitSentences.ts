@@ -163,7 +163,7 @@ describe('splitSentences', () => {
     - B 1.1`)
   })
 
-  it('does not split on dash when decimal number is present and already split', () => {
+  it('does not split decimal numbers', () => {
     store.dispatch([
       importText({
         text: `
