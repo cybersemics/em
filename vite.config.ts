@@ -48,7 +48,6 @@ export default defineConfig({
     createHtmlPlugin({ minify: true }),
   ],
   server: {
-    host: '0.0.0.0',
     // Allow bs-local.com for BrowserStack local testing
     allowedHosts: ['bs-local.com'],
     ...(process.env.PUPPETEER
