@@ -53,6 +53,11 @@ describe('normal view', () => {
     // The cursor should be on 'a' in the proper location, not using the stale path
     expectPathToEqual(stateNew, stateNew.cursor, ['', 'a'])
   })
+
+  it('cursor should stay null on the root', () => {
+    const stateNew = reducerFlow([cursorForward])(initialState())
+    expect(stateNew.cursor).toEqual(null)
+  })
 })
 
 describe('context view', () => {

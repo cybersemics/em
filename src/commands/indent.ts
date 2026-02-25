@@ -1,5 +1,6 @@
 import Command from '../@types/Command'
 import { indentActionCreator as indent } from '../actions/indent'
+import { isTouch } from '../browser'
 import IndentIcon from '../components/icons/IndentIcon'
 import editingValueStore from '../stores/editingValue'
 import isDocumentEditable from '../util/isDocumentEditable'
@@ -30,7 +31,12 @@ const indentCommand: Command = {
     // Otherwise bail and allow default browser behavior (inserting a space).
     if (type === 'keyboard' && editingValueStore.getState() !== '') return
 
-    e.preventDefault()
+    // Default browser behavior allows for autocapitalization on mobile, so cannot be prevented.
+    // Instead, beforeinput is prevented in the keyDown handler in commands.ts to prevent the space character from being inserted.
+    if (!isTouch) {
+      e.preventDefault()
+    }
+
     dispatch(indent())
   },
   hideTitleInPanels: true,

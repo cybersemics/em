@@ -32,9 +32,10 @@ All contributions must be submitted through public pull requests on the repo at 
 
 - Enter a descriptive title for all PR's.
 - Add the issue number to the description (not the title).
-- Commit messages should be a succinct and provide a relevant summary of the contained changes.
+- Commit messages should be succinct and provide a relevant summary of the contained changes.
 - Each commit should correspond to a single, unified set of changes for a single purpose.
 - Resolve, respond, and/or inquire about all requested changes before requesting another review.
+- Do not include unrelated changes in submissions, such as fixing security vulnerabilities.
 
 ## Regressions
 

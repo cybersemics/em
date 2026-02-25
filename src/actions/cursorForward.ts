@@ -12,6 +12,7 @@ import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 import headValue from '../util/headValue'
+import isRoot from '../util/isRoot'
 import unroot from '../util/unroot'
 
 /** Moves the cursor forward in the cursorHistory. */
@@ -39,7 +40,9 @@ const cursorForward = (state: State): State => {
         ? appendToPath(cursor, head(cursorFromHistory))
         : firstChild
           ? unroot([...cursor, firstChild.id])
-          : cursor
+          : isRoot(cursor)
+            ? null
+            : cursor
   }
 
   return cursorNew

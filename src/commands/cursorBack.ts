@@ -41,7 +41,7 @@ const cursorBackCommand: Command = {
     // As a convenience, allow cursorBack to scroll to the top if the cursor is already null.
     // Only do this after the cursor is already null to avoid disrupting the user when they are simply moving up a level to adjust autofocus and immediately back down a level to a sibling.
     if (!cursor) {
-      scrollTo('top')
+      scrollTo('top', 'smooth')
     }
   }),
 }

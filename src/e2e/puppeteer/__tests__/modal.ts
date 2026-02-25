@@ -15,12 +15,12 @@ vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
 /** Returns snapshot images for light and dark themes for modal. */
 const modalSnapshots = async (id: Modal) => {
   await openModal(id)
-  const darkImage = await screenshot()
+  const darkImage = await screenshot({ hardwareAcceleration: false })
 
   await setTheme('Light')
   await openModal(id)
 
-  const lightImage = await screenshot()
+  const lightImage = await screenshot({ hardwareAcceleration: false })
 
   await setTheme('Dark')
   return {
