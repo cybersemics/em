@@ -2164,12 +2164,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@capacitor/haptics@npm:^8.0.0":
-  version: 8.0.0
-  resolution: "@capacitor/haptics@npm:8.0.0"
+"@capacitor/haptics@npm:^8.0.1":
+  version: 8.0.1
+  resolution: "@capacitor/haptics@npm:8.0.1"
   peerDependencies:
     "@capacitor/core": ">=8.0.0"
-  checksum: 10c0/3d9f0b7925c11fb11ca095de78fa6c2785e86fdc198262082858f01af44205484d307ab442ba03aec24df0ab93c8b962c88919e197f867c2a3f5d3abcd30f0ae
+  checksum: 10c0/f7f1e42f315c92c91be6ed0f730fe590f7f54d6cf3aae93df03d5443b28abfcfa40b9ef19fa70c7458179852362707d02432e478cab135bab3c0fa550183fa84
   languageName: node
   linkType: hard
 
@@ -2182,12 +2182,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@capacitor/keyboard@npm:^8.0.0":
-  version: 8.0.0
-  resolution: "@capacitor/keyboard@npm:8.0.0"
+"@capacitor/keyboard@npm:^8.0.1":
+  version: 8.0.1
+  resolution: "@capacitor/keyboard@npm:8.0.1"
   peerDependencies:
     "@capacitor/core": ">=8.0.0"
-  checksum: 10c0/755ef1ccf80c3d9fa46be595e7c4115d252f64b299d2e40cf01e8c42b5cb75c2677a142b1f2f19c7e134a033099c92ac65b4f8267feebc22ea171cddfb704bba
+  checksum: 10c0/75166755513209d6ccd9dd2f97e93f67a6f4bcb8510dd56d2e6bf812af3ad2820c21d16065ff8e74b71f126a8c3e6519a7d507ce771ff714aa1b3c81c8963062
   languageName: node
   linkType: hard
 
@@ -10580,9 +10580,9 @@ __metadata:
     "@capacitor/cli": "npm:^8.1.0"
     "@capacitor/clipboard": "npm:^8.0.1"
     "@capacitor/core": "npm:^8.1.0"
-    "@capacitor/haptics": "npm:^8.0.0"
+    "@capacitor/haptics": "npm:^8.0.1"
     "@capacitor/ios": "npm:^8.1.0"
-    "@capacitor/keyboard": "npm:^8.0.0"
+    "@capacitor/keyboard": "npm:^8.0.1"
     "@capacitor/status-bar": "npm:^8.0.1"
     "@emotion/react": "npm:^11.14.0"
     "@emotion/styled": "npm:^11.14.1"
