@@ -7,7 +7,7 @@ import toggleContextView from '../../actions/toggleContextView'
 import { HOME_TOKEN } from '../../constants'
 import contextToPath from '../../selectors/contextToPath'
 import expandThoughts from '../../selectors/expandThoughts'
-import addMulticursorAtFirstMatch from '../../test-helpers/addMulticursorAtFirstMatch'
+import addMulticursor from '../../test-helpers/addMulticursorAtFirstMatch'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import hashPath from '../../util/hashPath'
 import initialState from '../../util/initialState'
@@ -871,30 +871,13 @@ describe('multicursor', () => {
       - d
     `
 
-    const steps = [importText({ text }), setCursor(['d']), addMulticursorAtFirstMatch(['a', 'b', 'c'])]
+    const steps = [importText({ text }), setCursor(['d']), addMulticursor(['a', 'b', 'c'])]
 
     const stateNew = reducerFlow(steps)(initialState())
 
     expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
     expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
     expect(isContextExpanded(stateNew, ['a', 'b', 'c'])).toBeTruthy()
-  })
-
-  it('ancestors of a multicursor path are expanded even when cursor is on an unrelated thought', () => {
-    const text = `
-      - a
-        - b
-          - c
-      - d
-    `
-
-    // Reproduces the issue: cursor on d, multicursor on a/b/c → a should stay expanded
-    const steps = [importText({ text }), setCursor(['d']), addMulticursorAtFirstMatch(['a', 'b', 'c'])]
-
-    const stateNew = reducerFlow(steps)(initialState())
-
-    expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
-    expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
   })
 
   it('cursor ancestors are still expanded alongside multicursor ancestors', () => {
@@ -906,7 +889,7 @@ describe('multicursor', () => {
         - e
     `
 
-    const steps = [importText({ text }), setCursor(['d', 'e']), addMulticursorAtFirstMatch(['a', 'b', 'c'])]
+    const steps = [importText({ text }), setCursor(['d', 'e']), addMulticursor(['a', 'b', 'c'])]
 
     const stateNew = reducerFlow(steps)(initialState())
 
