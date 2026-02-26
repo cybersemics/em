@@ -38,6 +38,8 @@ const GestureMenu: FC<{
         maxWidth: '100%',
         maxHeight: '100dvh',
         overflow: 'hidden',
+        // maxHeight: `calc(100vh - ${token('spacing.safeAreaBottom')} - ${token('spacing.safeAreaTop')})`,
+        // paddingTop: 'safeAreaTop',
       })}
     >
       <div

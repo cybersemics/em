@@ -1,3 +1,4 @@
+import { Capacitor } from '@capacitor/core'
 import React, { PropsWithChildren, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
@@ -123,6 +124,13 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
         // merge style with useSwipeToDismissProps.style (transform, transition, and touchAction for sticking to user's touch)
         style={{
           ...positionFixedStyles,
+          // if fullScreen prop is true & was opened via Capacitor, so we need to set the top and bottom to 0 to make the popup take up the full height of the screen
+          ...(fullScreen && Capacitor.isNativePlatform()
+            ? {
+                top: 0,
+                bottom: 0,
+              }
+            : {}),
           background,
           fontSize,
           padding,
