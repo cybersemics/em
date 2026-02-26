@@ -676,6 +676,33 @@ describe('parenthetical content', () => {
   })
 })
 
+describe('decimal number with dash', () => {
+  it('splits thought with dash when decimal number is present', () => {
+    const value = 'A - B 1.1'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - A
+    - B 1.1`)
+  })
+
+  it('does not split thought with only a decimal number (no dash)', () => {
+    const value = 'B 1.1'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - B 1.1`)
+  })
+
+  it('does not apply dash split for non-decimal dot patterns like a.a', () => {
+    const value = 'A - B a.a'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - A - B a.a`)
+  })
+})
+
 describe('dash splitting', () => {
   it('splits thought with dash into main thought and subthought', () => {
     const value = 'one - 1'

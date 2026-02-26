@@ -163,6 +163,20 @@ const splitSentence = (value: string): SplitResult[] => {
   const res = resultSentences.split(SEPARATOR_TOKEN).filter(s => /\S+/.test(s))
   const hasOnlyPeriodSplitterAtEnd = !/;!?$/.test(resultSentences)
   if (res.length === 1 && hasOnlyPeriodSplitterAtEnd) {
+    // If the value contains a decimal number (digit.digit), the period may have prevented sentence
+    // splitting. In this case, try dash splitting before falling back to comma/and.
+    if (/\d\.\d/.test(value)) {
+      const dashMatch = res[0].match(/^(.+?)\s*([-–—])\s*(.+)$/)
+      if (dashMatch) {
+        const [_, leftPart, __, rightPart] = dashMatch
+        const trimmedLeft = leftPart.trim()
+        const trimmedRight = rightPart.trim()
+        if (trimmedLeft && trimmedRight) {
+          return [{ value: trimmedLeft }, { value: trimmedRight, insertNewSubThought: true }]
+        }
+      }
+    }
+
     return resultSentences
       .replace(/,/g, `${SEPARATOR_TOKEN}`)
       .split(SEPARATOR_TOKEN)
