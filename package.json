@@ -107,7 +107,7 @@
     "emoji-regex": "^10.6.0",
     "fast-json-patch": "^3.1.1",
     "fp-and-or": "^1.0.2",
-    "framer-motion": "^12.29.2",
+    "framer-motion": "^12.34.3",
     "himalaya": "^1.1.1",
     "html-escaper": "^3.0.3",
     "idb-keyval": "^6.2.2",
