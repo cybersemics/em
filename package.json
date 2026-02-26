@@ -98,7 +98,7 @@
     "@radix-ui/react-visually-hidden": "^1.2.4",
     "@redux-devtools/extension": "^3.3.0",
     "@stylistic/eslint-plugin-ts": "^4.4.1",
-    "algoliasearch": "^5.40.1",
+    "algoliasearch": "^5.49.1",
     "axios": "^1.13.5",
     "clipboard": "^2.0.11",
     "dnd-core": "^16.0.1",
