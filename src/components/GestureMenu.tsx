@@ -35,8 +35,9 @@ const GestureMenu: FC<{
       className={css({
         display: 'flex',
         flexDirection: 'column',
-        maxHeight: '100%',
         maxWidth: '100%',
+        maxHeight: `calc(100vh - ${token('spacing.safeAreaBottom')} - ${token('spacing.safeAreaTop')})`,
+        paddingTop: 'safeAreaTop',
       })}
     >
       <div
