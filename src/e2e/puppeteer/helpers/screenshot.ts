@@ -1,41 +1,23 @@
 import { ScreenshotOptions } from 'puppeteer'
 import { page } from '../setup'
 
-interface ScreenshotWithNoAntialiasingOptions extends ScreenshotOptions {
-  /**
-   * If true, applies CSS that promotes layers for GPU rendering (backface-visibility, perspective).
-   * Helps keep text and heavy/custom fonts visually consistent across snapshots (especially in CI).
-   * When true, these properties create new stacking contexts and can break z-index ordering (e.g.
-   * modals, popovers, tooltips appearing behind other content). Set to false if your test relies on
-   * correct overlay stacking (like in case of modal.ts, drag-and-drop.ts, sidebar.ts, ui.ts). Default: true.
-   */
-  hardwareAcceleration?: boolean
-}
-
 // Constants for the style element
 const ANTIALIASING_DISABLER_ID = 'screenshot-antialiasing-disable'
 
-/** Generate CSS based on whether hardware acceleration should be applied. */
-const getAntialiasingCSS = (hardwareAcceleration: boolean) => `
+/** Generate CSS for disabling antialiasing.*/
+const getAntialiasingCSS = () => `
    *, *::before, *::after {
         -webkit-font-smoothing: none !important;
         -moz-osx-font-smoothing: unset !important;
         font-smooth: never !important;
-        text-rendering: optimizeSpeed !important;
+        text-rendering: geometricPrecision !important;
         image-rendering: pixelated !important;
         image-rendering: -moz-crisp-edges !important;
         image-rendering: crisp-edges !important;
-
-            ${
-              hardwareAcceleration
-                ? `
         backface-visibility: hidden !important;
-        perspective: 1000px !important;
         -webkit-backface-visibility: hidden !important;
-        -webkit-perspective: 1000px !important;
-        `
-                : ''
-            }
+
+
         
         /* Disable any potential blur effects */
         filter: none !important;
@@ -55,9 +37,7 @@ const getAntialiasingCSS = (hardwareAcceleration: boolean) => `
 `
 
 /** Takes a screenshot with antialiasing disabled.*/
-const screenshot = async (options: ScreenshotWithNoAntialiasingOptions = {}): Promise<Buffer> => {
-  const { hardwareAcceleration = true, ...screenshotOptions } = options
-
+const screenshot = async (options: ScreenshotOptions = {}): Promise<Buffer> => {
   // Ensure antialiasing is disabled
   await page.evaluate(
     ({ id, css }) => {
@@ -72,7 +52,7 @@ const screenshot = async (options: ScreenshotWithNoAntialiasingOptions = {}): Pr
     },
     {
       id: ANTIALIASING_DISABLER_ID,
-      css: getAntialiasingCSS(hardwareAcceleration),
+      css: getAntialiasingCSS(),
     },
   )
 
@@ -86,7 +66,7 @@ const screenshot = async (options: ScreenshotWithNoAntialiasingOptions = {}): Pr
     ANTIALIASING_DISABLER_ID,
   )
 
-  const screenshotBuffer = await Buffer.from(await page.screenshot(screenshotOptions))
+  const screenshotBuffer = await Buffer.from(await page.screenshot(options))
 
   // Clean up
   await page.evaluate(id => {
