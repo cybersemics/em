@@ -1,10 +1,14 @@
 import State from '../@types/State'
+import Thought from '../@types/Thought'
 import Thunk from '../@types/Thunk'
 import alert from '../actions/alert'
 import moveThought from '../actions/moveThought'
 import findDescendant from '../selectors/findDescendant'
-import { anyChild, getChildrenRanked } from '../selectors/getChildren'
+import { anyChild, findAnyChild, getChildrenRanked } from '../selectors/getChildren'
 import getRankAfter from '../selectors/getRankAfter'
+import getRankBefore from '../selectors/getRankBefore'
+import getSortPreference from '../selectors/getSortPreference'
+import getSortedRank from '../selectors/getSortedRank'
 import isContextViewActive from '../selectors/isContextViewActive'
 import pathToThought from '../selectors/pathToThought'
 import simplifyPath from '../selectors/simplifyPath'
@@ -13,6 +17,7 @@ import appendToPath from '../util/appendToPath'
 import ellipsize from '../util/ellipsize'
 import head from '../util/head'
 import headValue from '../util/headValue'
+import isAttribute from '../util/isAttribute'
 import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
@@ -60,10 +65,6 @@ const swapNote = (state: State): State => {
       value: `A context in the context view cannot be converted to a note.`,
     })
   }
-
-  // Get children of the cursor thought (B) sorted by rank, in reverse order.
-  // Moving them in reverse order while using getRankAfter(B) each time preserves their relative order in the parent.
-  const cursorChildrenReversed = getChildrenRanked(state, thoughtId).reverse()
 
   return reducerFlow(
     // if the cursor thought has a note, then convert the note to a thought
@@ -118,18 +119,42 @@ const swapNote = (state: State): State => {
                 })
               : null
           },
-          // move the cursor's children to the parent (in reverse rank order to preserve relative order)
-          // Moving in reverse order works because getRankAfter(cursor) returns the rank between B and
-          // its new next sibling after each move, inserting each subsequent child between B and the
-          // previously moved child and thus preserving the original relative order of children.
-          ...cursorChildrenReversed.map(
-            child => (state: State) =>
-              moveThought(state, {
-                oldPath: appendToPath(cursor, child.id),
-                newPath: appendToPath(parentOf(cursor), child.id),
-                newRank: getRankAfter(state, simplifyPath(state, cursor)),
-              }),
-          ),
+          // move the cursor's children to the parent before moving the cursor into =note
+          // follows uncategorize's rank strategy to preserve order amidst sort preferences and siblings
+          state => {
+            const simplePath = simplifyPath(state, cursor)
+            const parentId = head(parentOf(simplePath))
+            const contextHasSortPreference = getSortPreference(state, thoughtId).type !== 'None'
+            const parentHasSortPreference = getSortPreference(state, parentId).type !== 'None'
+            const cursorChildren = getChildrenRanked(state, thoughtId)
+
+            if (cursorChildren.length === 0) return state
+
+            /** Calculates the new rank for a child being moved to the parent. */
+            const getNewRank = (state: State, child: Thought) => {
+              if (contextHasSortPreference || parentHasSortPreference)
+                return getSortedRank(state, parentId, child.value)
+              if (isAttribute(child.value)) {
+                const firstNonMetaChild = findAnyChild(state, parentId, thought => !isAttribute(thought.value))
+                return getRankBefore(
+                  state,
+                  firstNonMetaChild ? appendToPath(parentOf(simplePath), firstNonMetaChild.id) : simplePath,
+                )
+              }
+              return getRankBefore(state, simplePath)
+            }
+
+            return reducerFlow(
+              cursorChildren.map(
+                child => (state: State) =>
+                  moveThought(state, {
+                    oldPath: appendToPath(cursor, child.id),
+                    newPath: appendToPath(parentOf(cursor), child.id),
+                    newRank: getNewRank(state, child),
+                  }),
+              ),
+            )(state)
+          },
           // move the cursor into =note
           state => {
             return moveThought(state, {
