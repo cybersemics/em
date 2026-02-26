@@ -63,8 +63,8 @@ const swapNote = (state: State): State => {
     })
   }
 
-  // Capture B's value before uncategorize may delete it (when B has children)
-  const bValue = headValue(state, cursor) ?? ''
+  // Capture the cursor thought's value before uncategorize may delete it (when it has children)
+  const value = headValue(state, cursor) ?? ''
   const simplePath = simplifyPath(state, cursor)
 
   return reducerFlow(
@@ -135,7 +135,7 @@ const swapNote = (state: State): State => {
                   at: appendToPath(parentOf(cursor), noteId),
                   insertNewSubthought: true,
                   preventSetCursor: true,
-                  value: bValue,
+                  value: value,
                 })
           },
           setCursor({ path: parentNoteChildId ? appendToPath(parentOf(cursor), parentNoteChildId) : parentOf(cursor) }),
