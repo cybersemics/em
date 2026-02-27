@@ -44,7 +44,6 @@ const ActiveButtonGlowImage: FC<ActiveButtonGlowImageProps> = ({ isActive, type 
           backgroundGradient: 'activeGlow',
           borderRadius: '0px',
           pointerEvents: 'none',
-          mixBlendMode: type === 'luminosity' ? 'luminosity' : 'saturation',
           filter: 'blur(23px)',
           padding: 40 /* Expands the Paint Rect so it includes all of the blur. */,
           margin: -40 /* Pulls it back so layout doesn't break. */,
