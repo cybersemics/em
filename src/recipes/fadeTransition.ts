@@ -93,7 +93,7 @@ const fadeTransitionRecipe = defineSlotRecipe({
       disappearingUpperRight: {
         enter: {
           transform: 'skew(-100deg) translateX(10%) translateY(-100%)',
-          textShadow: '0px 0px 2em {colors.fg}',
+          filter: 'blur(8px)',
           // See: Safari skew note above
           _safari: {
             transform: 'skew(100deg) translateX(10%) translateY(-100%)',
@@ -101,21 +101,20 @@ const fadeTransitionRecipe = defineSlotRecipe({
         },
         enterActive: {
           transform: 'skew(0) translateX(0) translateY(0)',
-          textShadow: '0px 0px 0px {colors.fg}',
-          transition: `opacity {durations.disappearingUpperRight} {easings.easeInSmooth}, transform {durations.disappearingUpperRight} {easings.easeInSmooth}, text-shadow {durations.disappearingUpperRight} {easings.easeInSmooth}`,
+          filter: 'blur(0px)',
+          transition: `opacity {durations.disappearingUpperRight} {easings.easeInSmooth}, transform {durations.disappearingUpperRight} {easings.easeInSmooth}, filter {durations.disappearingUpperRight} {easings.easeInSmooth}`,
           // See: Safari skew note above
           _safari: {
             transform: 'skew(0) translateX(0) translateY(0)',
           },
         },
         exit: {
-          textShadow: '0px 0px 0px {colors.fg}',
+          filter: 'blur(0px)',
         },
         exitActive: {
           transform: 'skew(-100deg) translateX(10%) translateY(-100%)',
-          textShadow: '0px 0px 2em {colors.fg}',
-          color: 'transparent',
-          transition: `opacity {durations.disappearingUpperRight} ease, color {durations.disappearingUpperRight} ease, transform {durations.disappearingUpperRight} ease, text-shadow {durations.disappearingUpperRight} ease`,
+          filter: 'blur(8px)',
+          transition: `opacity {durations.disappearingUpperRight} ease, transform {durations.disappearingUpperRight} ease, filter {durations.disappearingUpperRight} ease`,
           // See: Safari skew note above
           _safari: {
             transform: 'skew(100deg) translateX(10%) translateY(-100%)',
@@ -126,7 +125,7 @@ const fadeTransitionRecipe = defineSlotRecipe({
       disappearingLowerLeft: {
         enter: {
           transform: 'skew(-100deg) translateY(100%)',
-          textShadow: '0px 0px 2em {colors.fg}',
+          filter: 'blur(8px)',
           // See: Safari skew note above
           _safari: {
             transform: 'skew(100deg) translateY(100%)',
@@ -134,21 +133,20 @@ const fadeTransitionRecipe = defineSlotRecipe({
         },
         enterActive: {
           transform: 'skew(0) translateX(0) translateY(0)',
-          textShadow: '0px 0px 2em {colors.fg}',
-          transition: `opacity {durations.disappearingLowerLeft} {easings.easeInSmooth}, transform {durations.disappearingLowerLeft} {easings.easeInSmooth}, text-shadow {durations.disappearingLowerLeft} {easings.easeInSmooth}`,
+          filter: 'blur(0px)',
+          transition: `opacity {durations.disappearingLowerLeft} {easings.easeInSmooth}, transform {durations.disappearingLowerLeft} {easings.easeInSmooth}, filter {durations.disappearingLowerLeft} {easings.easeInSmooth}`,
           // See: Safari skew note above
           _safari: {
             transform: 'skew(0) translateX(0) translateY(0)',
           },
         },
         exit: {
-          textShadow: '0px 0px 0px {colors.fg}',
+          filter: 'blur(0px)',
         },
         exitActive: {
           transform: 'skew(-100deg) translateY(100%)',
-          textShadow: '0px 0px 2em {colors.fg}',
-          color: 'transparent',
-          transition: `opacity {durations.disappearingLowerLeft} ease, color {durations.disappearingLowerLeft} ease, transform {durations.disappearingLowerLeft} ease, text-shadow {durations.disappearingLowerLeft} ease`,
+          filter: 'blur(8px)',
+          transition: `opacity {durations.disappearingLowerLeft} ease, transform {durations.disappearingLowerLeft} ease, filter {durations.disappearingLowerLeft} ease`,
           // See: Safari skew note above
           _safari: {
             transform: 'skew(100deg) translateY(100%)',
