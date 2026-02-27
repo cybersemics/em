@@ -117,12 +117,6 @@ const CommandCenter = ({ mountPoint }: Pick<SheetProps, 'mountPoint'>) => {
 
   const { height, opacity, blurHeight } = useSheetTransforms(ref)
 
-  /** The bottom position of the sheet container, negated from the y-position for proper positioning. */
-  const bottom = useTransform(() => {
-    const y = ref.current?.y.get() ?? 0
-    return -y
-  })
-
   const onClose = useCallback(() => {
     dispatch([toggleDropdown({ dropDownType: 'commandCenter', value: false }), clearMulticursors()])
   }, [dispatch])
@@ -204,17 +198,7 @@ const CommandCenter = ({ mountPoint }: Pick<SheetProps, 'mountPoint'>) => {
               pointerEvents: 'auto',
               boxShadow: 'none',
               zIndex: 'auto',
-              bottom,
             }}
-            className={css({
-              /**
-               * Override inline transform styles, to rely only on bottom.
-               * This way no new stacking context is created.
-               * This needs to be set in className, as react-modal-sheet
-               * will override the transform value passed in inside style.
-               */
-              transform: 'none !important',
-            })}
             onScroll={e => {
               /**
                * Prevent scroll events in command center from bubbling up
@@ -244,42 +228,23 @@ const CommandCenter = ({ mountPoint }: Pick<SheetProps, 'mountPoint'>) => {
                   })}
                 >
                   <MultiselectMessage />
-                  <div
+                  <button
+                    {...fastClick(onClose)}
                     className={css({
-                      display: 'grid',
-                      // Define a single area for stacking. Cannot use position relative,
-                      // since that will create a new stacking context and break mix-blend-mode.
-                      gridTemplateAreas: '"button"',
+                      all: 'unset',
                       fontSize: '0.85em',
                       fontWeight: 500,
                       letterSpacing: '-0.011em',
                       color: 'fg',
+                      opacity: 0.5,
+                      borderRadius: 46,
+                      cursor: 'pointer',
+                      padding: '8px 16px',
+                      background: 'commandCenterDoneButton',
                     })}
                   >
-                    <div
-                      className={css({
-                        gridArea: 'button',
-                        background: 'fgOverlay20',
-                        borderRadius: 46,
-                        mixBlendMode: 'soft-light',
-                        // Safari fix: will-change forces GPU layer creation which fixes blend mode rendering bug.
-                        willChange: 'transform',
-                      })}
-                    />
-                    <button
-                      {...fastClick(onClose)}
-                      className={css({
-                        all: 'unset',
-                        gridArea: 'button',
-                        opacity: 0.5,
-                        fontWeight: 500,
-                        cursor: 'pointer',
-                        padding: '8px 16px',
-                      })}
-                    >
-                      Done
-                    </button>
-                  </div>
+                    Done
+                  </button>
                 </div>
                 <div
                   className={css({
