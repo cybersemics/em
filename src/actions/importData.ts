@@ -70,15 +70,21 @@ export const importDataActionCreator = ({
       )
     }
 
+    // When pasting from em, Chrome may inject a <meta charset='utf-8'> wrapper around the clipboard HTML.
+    // Strip it so that REGEX_NONFORMATTING_HTML does not incorrectly detect the content as multiline.
+    const cleanedHtml = isEmText ? html?.replace(/<meta[^>]*charset[^>]*>/i, '') || null : html
+
     // Copying a single word from a PDF on macOS results in text/html, which by default get processed as multiline.
     // In order to insert it directly at the caret offset of the cursor thought, we need a special case regex to match single-line content between the body tags. See importData tests for examples.
     // Otherwise it will be passed to importFiles and import as a child of the current thought.
     // Eventually importFiles should be modified to insert single-line content at the cursor offset.
-    const singleLineHtml = html?.match(REGEX_HTML_SINGLE_LINE)?.[1]
+    const singleLineHtml = cleanedHtml?.match(REGEX_HTML_SINGLE_LINE)?.[1]
 
-    const processedText = singleLineHtml ?? (html ? html.replace(/\n\s*\n+/g, '\n') : (text?.trim() ?? ''))
+    const processedText =
+      singleLineHtml ?? (cleanedHtml ? cleanedHtml.replace(/\n\s*\n+/g, '\n') : (text?.trim() ?? ''))
     const multiline =
-      !singleLineHtml && (html ? REGEX_NONFORMATTING_HTML.test(html) : !!processedText?.trim().includes('\n'))
+      !singleLineHtml &&
+      (cleanedHtml ? REGEX_NONFORMATTING_HTML.test(cleanedHtml) : !!processedText?.trim().includes('\n'))
 
     // Check if the text is markdown, if so, prefer importText over importFiles
     const markdown = isMarkdown(processedText)
@@ -89,8 +95,9 @@ export const importDataActionCreator = ({
       dispatch(
         importText({
           // use caret position to correctly track the last navigated point for caret
-          // calculated on the basis of node type we are currently focused on. `state.cursorOffset` doesn't really keep track of updated caret position when navigating within single thought. Hence selection.offset() is also used depending upon which node type we are on.
-          caretPosition: (selection.isText() ? selection.offset() || 0 : state.cursorOffset) || 0,
+          // offsetThought returns the offset relative to the entire thought's text content, not just the current text node.
+          // This is necessary because rawDestValue is stripped of HTML tags, so a plain text offset is needed.
+          caretPosition: (selection.isText() ? selection.offsetThought() || 0 : state.cursorOffset) || 0,
           path,
           text: processedText,
           // text/plain may contain text that ultimately looks like html (contains <li>) and should be parsed as html

@@ -244,7 +244,7 @@ const globalCss = defineGlobalStyles({
       caretColor: 'transparent',
     },
   },
-  'html, body, #root, #app': { height: '100%', fontSize: '16px' },
+  'html, body, #root, #app': { height: '100%', fontSize: '16px', WebkitTextSizeAdjust: '100%' },
   'body, textarea': {
     fontWeight: 300,
     fontFamily: "'Helvetica'",
@@ -255,7 +255,7 @@ const globalCss = defineGlobalStyles({
     fontWeight: 600,
   },
   /* Disables pull-to-refresh but allows overscroll glow effects. */
-  body: { overscrollBehaviorY: 'contain', color: 'fg', backgroundColor: 'bg' },
+  body: { margin: 0, overscrollBehaviorY: 'contain', color: 'fg', backgroundColor: 'bg' },
   button: { fontSize: '1.2em' },
   a: {
     cursor: 'pointer',

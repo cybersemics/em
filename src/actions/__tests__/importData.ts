@@ -1109,6 +1109,60 @@ p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 9.0px Helvetica; color: #000000}
   - a*foo*`)
 })
 
+it('paste em text with browser-injected meta charset as inline, not subthought', async () => {
+  vi.useFakeTimers()
+  const { cleanup } = await initialize()
+
+  store.dispatch([
+    newThought({ value: 'a' }),
+    (dispatch, getState) =>
+      dispatch(
+        importDataActionCreator({
+          path: contextToPath(getState(), ['a'])!,
+          html: `<meta charset='utf-8'>Hello`,
+          text: 'Hello',
+          isEmText: true,
+        }),
+      ),
+  ])
+
+  await vi.runOnlyPendingTimersAsync()
+
+  const exported = exportContext(store.getState(), HOME_PATH, 'text/plain')
+
+  cleanup()
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - aHello`)
+})
+
+it('paste em text with formatted html and meta charset as inline', async () => {
+  vi.useFakeTimers()
+  const { cleanup } = await initialize()
+
+  store.dispatch([
+    newThought({ value: 'a' }),
+    (dispatch, getState) =>
+      dispatch(
+        importDataActionCreator({
+          path: contextToPath(getState(), ['a'])!,
+          html: `<meta charset='utf-8'><b>Hello</b>`,
+          text: 'Hello',
+          isEmText: true,
+        }),
+      ),
+  ])
+
+  await vi.runOnlyPendingTimersAsync()
+
+  const exported = exportContext(store.getState(), HOME_PATH, 'text/html')
+
+  cleanup()
+
+  expect(exported).toContain('<b>Hello</b>')
+  expect(exported).not.toContain('<meta')
+})
+
 it('do not insert html with newlines as a single-line', async () => {
   const html = `<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html>
