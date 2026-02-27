@@ -135,6 +135,7 @@ const SidebarBackground = ({
           pointerEvents: showSidebar ? 'auto' : 'none',
           cursor: 'pointer',
           userSelect: 'none',
+          touchAction: 'none',
         })}
       />
 
@@ -342,6 +343,13 @@ const Sidebar = () => {
       if (longPressRef.current === LongPressState.DragHold || longPressRef.current === LongPressState.DragInProgress)
         return
 
+      // Immediately prevent default for all backdrop-initiated touches. There's nothing
+      // scrollable on the backdrop, and waiting for the 3px direction-detection threshold
+      // gives Android enough time to start its overscroll bounce animation.
+      if (swipe.startedOnBackdrop && e.cancelable) {
+        e.preventDefault()
+      }
+
       const touchX = e.touches[0].clientX
       const touchY = e.touches[0].clientY
       const now = performance.now()
@@ -506,6 +514,7 @@ const Sidebar = () => {
                       width: '10%',
                       zIndex: 1,
                       cursor: 'pointer',
+                      touchAction: 'none',
                     })}
                   />
                 )}
