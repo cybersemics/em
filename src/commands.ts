@@ -1,14 +1,13 @@
 /* eslint-disable import/prefer-default-export */
 /** Defines global keyboard shortcuts and gestures. */
 import Emitter from 'emitter20'
-import { GestureResponderEvent } from 'react-native'
 import { Store } from 'redux'
 import { ArrowKey } from './@types/ArrowKey'
 import Command from './@types/Command'
 import CommandId from './@types/CommandId'
 import CommandType from './@types/CommandType'
 import Direction from './@types/Direction'
-import GesturePath from './@types/GesturePath'
+import Gesture from './@types/Gesture'
 import Index from './@types/IndexType'
 import Key from './@types/Key'
 import MulticursorFilter from './@types/MulticursorFilter'
@@ -25,6 +24,7 @@ import { suppressExpansionActionCreator as suppressExpansion } from './actions/s
 import { isMac } from './browser'
 import * as commandsObject from './commands/index'
 import openGestureCheatsheetCommand from './commands/openGestureCheatsheet'
+import { GestureResponderEvent } from './components/PanResponder'
 import { AlertType, COMMAND_PALETTE_TIMEOUT, HOME_PATH, LongPressState, Settings, noop } from './constants'
 import * as selection from './device/selection'
 import globals from './globals'
@@ -34,6 +34,7 @@ import hasMulticursor from './selectors/hasMulticursor'
 import isAllSelected from './selectors/isAllSelected'
 import thoughtToPath from './selectors/thoughtToPath'
 import store from './stores/app'
+import editingValueStore from './stores/editingValue'
 import gestureStore from './stores/gesture'
 import equalPath from './util/equalPath'
 import haptics from './util/haptics'
@@ -185,8 +186,8 @@ let gestureMenuTimeout: number | undefined
 const { commandKeyIndex, commandIdIndex, commandGestureIndex } = index()
 
 /** Gets the canonical gesture of the command as a string, ignoring aliases. Returns an empty string if the command does not have a gesture. */
-export const gestureString = (command: Command): string =>
-  (typeof command.gesture === 'string' ? command.gesture : command.gesture?.[0] || '') as string
+export const gestureString = (command: Command): Gesture =>
+  typeof command.gesture === 'string' ? command.gesture : command.gesture?.[0] || ''
 
 /** Get a command by its id. Only use this for dynamic ids that are only known at runtime. If you know the id of the command at compile time, use a static import. */
 export const commandById = (id: CommandId): Command => commandIdIndex[id]
@@ -412,7 +413,7 @@ export const executeCommandWithMulticursor = (
  * - gesture menu from invalid gesture (e.g. ←↓, hold, ←↓←).
  * - Change gesture menu to basic gesture hint on gesture end.
  */
-export const handleGestureSegment = ({ sequence }: { gesture: Direction | null; sequence: GesturePath }) => {
+export const handleGestureSegment = ({ sequence }: { gesture: Direction | null; sequence: Gesture }) => {
   const state = store.getState()
 
   if (state.showModal || state.longPress === LongPressState.DragInProgress || state.showGestureCheatsheet) return
@@ -442,7 +443,7 @@ export const handleGestureSegment = ({ sequence }: { gesture: Direction | null; 
 }
 
 /** Executes a valid gesture and closes the gesture hint. Special handling for chainable commands. */
-export const handleGestureEnd = ({ sequence, e }: { sequence: GesturePath | null; e: GestureResponderEvent }) => {
+export const handleGestureEnd = ({ sequence, e }: { sequence: Gesture | null; e: GestureResponderEvent }) => {
   const state = store.getState()
 
   // Get the command from the command gesture index.
@@ -450,32 +451,14 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: GesturePath | null
 
   const openGestureCheatsheetGesture = gestureString(openGestureCheatsheetCommand)
 
-  // The chainable command that is in progress (only if there is at least one additional swipe). Otherwise null.
-  const chainableCommandInProgressExclusive: Command | undefined = globalCommands.find(
-    command =>
-      command.isChainable &&
-      sequence?.toString().startsWith(gestureString(command)) &&
-      sequence?.toString()?.length > gestureString(command).length,
-  )
-
   // If sequence ends with help gesture, use help command.
   // If sequence starts with a chainable command gesture and has additional swipes, use the chained command with the longest matching gesture.
   // Otherwise use the normal command lookup.
-  let command: Command | null | undefined = null
+  let command: Command | null = null
 
   // gesture cheatsheet
   if (sequence?.toString().endsWith(openGestureCheatsheetGesture)) {
     command = openGestureCheatsheetCommand
-  }
-  // chained command
-  else if (chainableCommandInProgressExclusive) {
-    const chainedGesture1 = gestureString(chainableCommandInProgressExclusive)
-    const chainedGestureCollapsed = sequence!.toString().slice(chainedGesture1.length - 1)
-    const chainedGesture = sequence!.toString().slice(chainedGesture1.length)
-    const commandMatch = commandGestureIndex[chainedGestureCollapsed] ?? commandGestureIndex[chainedGesture]
-    if (commandMatch) {
-      command = chainCommand(chainableCommandInProgressExclusive, commandMatch)
-    }
   }
   // normal command
   else {
@@ -483,6 +466,28 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: GesturePath | null
       !state.showCommandPalette || !commandGestureIndex[sequence as string]?.hideFromHelp
         ? commandGestureIndex[sequence as string]
         : null
+  }
+
+  // The chainable command that is in progress (only if there is at least one additional swipe). Otherwise null.
+  const chainableCommandInProgressExclusive: Command | undefined = command
+    ? undefined
+    : globalCommands.find(
+        command =>
+          command.isChainable &&
+          sequence?.toString().startsWith(gestureString(command)) &&
+          sequence?.toString()?.length > gestureString(command).length,
+      )
+
+  // chained command
+  // only if there is no exact match command
+  if (!command && chainableCommandInProgressExclusive) {
+    const chainedGesture1 = gestureString(chainableCommandInProgressExclusive)
+    const chainedGestureCollapsed = sequence!.toString().slice(chainedGesture1.length - 1)
+    const chainedGesture = sequence!.toString().slice(chainedGesture1.length)
+    const commandMatch = commandGestureIndex[chainedGestureCollapsed] ?? commandGestureIndex[chainedGesture]
+    if (commandMatch) {
+      command = chainCommand(chainableCommandInProgressExclusive, commandMatch)
+    }
   }
 
   // execute command
@@ -564,10 +569,11 @@ export const handleGestureCancel = () => {
   })
 }
 
-/** In the specific case of the newThought command, prevent default in beforeinput event instead of keydown to preserve default iOS
- * auto-capitalization behavior. The Enter character needs to be prevented so that it doesn't get inserted into the new thought (#3707). */
+/** In the specific case of the newThought and indent commands, prevent default in beforeinput event instead of keydown to preserve default iOS auto-capitalization behavior. The Enter and space characters needs to be prevented so that it doesn't get inserted into the thought (#3707). */
 export const beforeInput = (e: InputEvent) => {
-  if (keyCommandId === 'newThought') e.preventDefault()
+  if (keyCommandId === 'newThought' || (keyCommandId === 'indent' && editingValueStore.getState() === '')) {
+    e.preventDefault()
+  }
 }
 
 /** Global keyUp handler. */

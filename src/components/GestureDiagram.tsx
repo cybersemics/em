@@ -3,7 +3,7 @@ import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import { SystemStyleObject } from '../../styled-system/types'
 import Direction from '../@types/Direction'
-import GesturePath from '../@types/GesturePath'
+import Gesture from '../@types/Gesture'
 import { GESTURE_GLOW_BLUR, GESTURE_GLOW_COLOR } from '../constants'
 import createId from '../util/createId'
 
@@ -14,7 +14,7 @@ interface GestureDiagramProps {
   maxHeight?: number
   // highlight the first n segments of the gesture diagram
   highlight?: number
-  path: GesturePath | null
+  path: Gesture | null
   reversalOffset?: number
   size?: number
   strokeWidth?: number
@@ -136,7 +136,7 @@ const generateArcCoordinates = (index: number, pathDirs: Direction[], size: numb
 }
 
 /** Generates radial gradients for curved segments of the gesture. */
-const ArcGradient = ({ index, extendedPath, size }: { index: number; extendedPath: GesturePath; size: number }) => {
+const ArcGradient = ({ index, extendedPath, size }: { index: number; extendedPath: Gesture; size: number }) => {
   const { startX, startY, radius } = generateArcCoordinates(index, Array.from(extendedPath) as Direction[], size)
   return (
     <radialGradient
@@ -154,7 +154,7 @@ const ArcGradient = ({ index, extendedPath, size }: { index: number; extendedPat
 }
 
 /** Generate CSS rules defining the colors for the gradients that are applied to gesture diagram path segments. */
-const GradientStyleBlock = ({ color, highlight, path }: { color?: string; highlight?: number; path: GesturePath }) => {
+const GradientStyleBlock = ({ color, highlight, path }: { color?: string; highlight?: number; path: Gesture }) => {
   const index = path === 'rdl' ? 3 : path === 'ldr' ? 2 : undefined
   // The initial path segment should start at 25% opacity. Subsequent path segmenets should start at 50% opacity.
   // The final path segment should start at 75% opacity.
@@ -431,7 +431,7 @@ const GestureDiagram = ({
                         ? 'M 54,40.5 Q 45,49.5 45,58.5'
                         : 'M 45,58.5 L 45,72'
                   : rounded
-                    ? generateArcPath(i, path as Direction[])
+                    ? generateArcPath(i, Array.from(path) as Direction[])
                     : `M ${x} ${y} l ${segment.dx * scale} ${segment.dy * scale}`
               }
               // segments do not change independently, so we can use index as the key

@@ -1,4 +1,4 @@
-const RGB_RGBA_REGEX = /^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[01]?\.?\d*)?\)$/
+const RGB_RGBA_REGEX = /^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[01]?\.?\d*)?\)$/i
 const HEX_REGEX = /^#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})$/
 
 /** Convert RGB/RGBA color values to a hexadecimal color string. If the input is already a hex color, returns it as-is. Alpha channel is ignored if present. */

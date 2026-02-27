@@ -22,23 +22,20 @@ const CursorBreadcrumbs = ({ position }: { position: string }) => {
   )
 
   return (
-    <ContextBreadcrumbs
-      cssRaw={css.raw({
-        width: '100%',
-        color: 'breadcrumbs',
-        paddingLeft: '15px',
-        fontSize: '14px',
-        verticalAlign: 'bottom',
-        ...(position === 'bottom' && { width: 'calc(100% - 40px)', paddingLeft: '35px' }),
-      })}
-      linkCssRaw={css.raw({
-        color: 'breadcrumbs',
-        '&:hover': {
-          color: 'fg',
-        },
-      })}
-      path={breadcrumbSimplePath}
-    />
+    <div
+      className={css({ marginLeft: '3.7px', marginTop: '7.462px', width: 'calc(100% - 40px)', paddingLeft: '35px' })}
+    >
+      <ContextBreadcrumbs
+        variant='small'
+        color='breadcrumbs'
+        linkCssRaw={css.raw({
+          '&:hover': {
+            color: 'fg',
+          },
+        })}
+        path={breadcrumbSimplePath}
+      />
+    </div>
   )
 }
 

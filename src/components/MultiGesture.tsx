@@ -1,10 +1,10 @@
 import React, { PropsWithChildren } from 'react'
-import { GestureResponderEvent, PanResponder, PanResponderInstance, View } from 'react-native'
 import Direction from '../@types/Direction'
-import GesturePath from '../@types/GesturePath'
+import Gesture from '../@types/Gesture'
 import { noop } from '../constants'
 import gestureStore from '../stores/gesture'
 import isInGestureZone from '../util/isInGestureZone'
+import { GestureResponderEvent, PanResponder, PanResponderInstance, View } from './PanResponder'
 import ScrollZone from './ScrollZone'
 import TraceGesture from './TraceGesture'
 
@@ -27,13 +27,13 @@ type MultiGestureProps = PropsWithChildren<{
   // fired when a new gesture is added to the sequence
   onGesture?: (args: {
     gesture: Direction | null
-    sequence: GesturePath
+    sequence: Gesture
     clientStart: Point
     e: GestureResponderEvent
   }) => void
   // fired when all gestures have completed
   onEnd?: (args: {
-    sequence: GesturePath | null
+    sequence: Gesture | null
     clientStart: Point | null
     clientEnd: Point | null
     e: GestureResponderEvent
@@ -104,7 +104,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
   disableScroll = false
   panResponder: PanResponderInstance
   scrolling = false
-  sequence: GesturePath = ''
+  sequence: Gesture = ''
 
   constructor(props: MultiGestureProps) {
     super(props)
@@ -270,7 +270,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
   render() {
     const ref = React.createRef<HTMLDivElement>()
     return (
-      <View {...this.panResponder.panHandlers}>
+      <View panHandlers={this.panResponder.panHandlers}>
         <TraceGesture eventNodeRef={ref} />
         <ScrollZone leftHanded={this.leftHanded} />
         <div ref={ref}>{this.props.children}</div>

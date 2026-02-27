@@ -10,7 +10,6 @@ import { VitePWA } from 'vite-plugin-pwa'
 export default defineConfig({
   resolve: {
     alias: {
-      'react-native': 'react-native-web',
       'webview-background': path.resolve(__dirname, 'packages/webview/dist/esm'),
     },
   },
@@ -29,6 +28,7 @@ export default defineConfig({
       filename: 'service-worker.ts',
       injectManifest: {
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024, // Increase limit to 4 MiB
+        globPatterns: ['**/*.{js,css,html,webp}'],
       },
       manifest: {
         name: 'em',

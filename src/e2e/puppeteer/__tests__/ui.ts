@@ -25,9 +25,13 @@ it('CommandPalette', async () => {
   // wait for the command palette to appear before taking screenshot
   await waitForSelector('[data-testid=command-palette]')
 
-  expect(await screenshot()).toMatchImageSnapshot({ customSnapshotIdentifier: 'commandPalette' })
+  expect(await screenshot()).toMatchImageSnapshot({
+    customSnapshotIdentifier: 'commandPalette',
+  })
   await setTheme('Light')
-  expect(await screenshot()).toMatchImageSnapshot({ customSnapshotIdentifier: 'commandPalette-light' })
+  expect(await screenshot()).toMatchImageSnapshot({
+    customSnapshotIdentifier: 'commandPalette-light',
+  })
 })
 
 it('GestureMenu', async () => {

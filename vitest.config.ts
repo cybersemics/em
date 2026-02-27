@@ -13,7 +13,9 @@ export default defineConfig({
           exclude: ['node_modules/**', '**/e2e/**', 'packages/**'],
           environment: 'jsdom',
           mockReset: false,
-          setupFiles: ['src/setupTests.js'],
+          // localStorage is mocked by vitest-localstorage-mock first before setupTests.js runs.
+          // This is done to ensure that localStorage is always defined (especially in CI environment).
+          setupFiles: ['vitest-localstorage-mock', 'src/setupTests.js'],
         },
       },
       {
