@@ -74,7 +74,8 @@ const Tip: FC<
         pointerEvents: 'none',
         // allow dragging through the tip overlay
         _dragHold: { pointerEvents: 'none' },
-        display: 'flex'
+        display: 'flex',
+        userSelect: 'none'
       })}
       style={{
         ...positionFixedStyles,
@@ -90,7 +91,10 @@ const Tip: FC<
           inset: 0,
           background: 'linear-gradient(180deg, {colors.bgTransparent} 0%, {colors.bg} 100%)',
           backdropFilter: 'blur(24px)',
-          mask: 'linear-gradient(180deg, transparent 0%, black 50%)',
+          mask: {
+            base: 'linear-gradient(180deg, transparent 0%, black 50%)',
+            md: 'linear-gradient(180deg, transparent 50%, black 100%)',
+          },
           pointerEvents: 'none'
         })}
         style={{ opacity: isDismissing ? 0 : swipeOpacity, transition: fadeOut }}
@@ -102,7 +106,6 @@ const Tip: FC<
           animation: 'fademostlyin 400ms ease',
           position: 'absolute',
           pointerEvents: 'none',
-          mixBlendMode: 'screen',
           opacity: 0.85,
           backgroundImage: 'url(/img/tip/tip-glow.webp)',
           backgroundRepeat: 'no-repeat',
@@ -132,11 +135,12 @@ const Tip: FC<
           flexDirection: 'column',
           pointerEvents: 'auto',
           // Mobile portrait: align left; landscape/desktop: align right
+          marginLeft: { base: 0, md: 'auto' },
           alignItems: { base: 'flex-start', md: 'flex-end' },
           textAlign: { base: 'left', md: 'right' },
           padding: '1rem 1.5rem',
           paddingTop: '4.5rem',
-          paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))',
+          paddingBottom: { base: 'calc(1rem + env(safe-area-inset-bottom))', md: '1rem' }
         })}
         style={{ opacity: isDismissing ? 0 : swipeOpacity, transition: fadeOut, touchAction: 'none' }}
         onTouchStart={onTouchStart}
