@@ -1,6 +1,7 @@
 import React, { FC, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
+import { token } from '../../styled-system/tokens'
 import Command from '../@types/Command'
 import { gestureString } from '../commands'
 import openMobileCommandUniverseCommand from '../commands/openMobileCommandUniverse'
@@ -88,11 +89,10 @@ const GestureMenu: FC<{
 
 /** Renders a blur effect overlay for the gesture menu. */
 function ProgressiveBlur() {
-  const ref = useRef<HTMLDivElement>(null)
+  const animationState = gestureStore.useSelector(state => state.gestureMenuAnimationState)
 
   return (
     <div
-      ref={ref}
       className={css({
         pointerEvents: 'none',
         position: 'absolute',
@@ -102,6 +102,12 @@ function ProgressiveBlur() {
         top: 0,
         height: '100%',
       })}
+      style={{
+        // Use ease-out on enter so the blur appears immediately, and easeInSlow on exit so it lingers before fading.
+        // easeInSlow is pre-set during entering to visible (when opacity doesn't change), so only opacity changes on exiting and the transition fires correctly.
+        transition: `opacity ${token('durations.fast')} ${animationState === 'entering' ? 'ease-out' : token('easings.easeInSlow')}`,
+        opacity: animationState === 'visible' || animationState === 'entering' ? 1 : 0,
+      }}
     />
   )
 }
