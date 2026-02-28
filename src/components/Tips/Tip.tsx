@@ -1,4 +1,4 @@
-import { FC, PropsWithChildren, useCallback, useState } from 'react'
+import React, { FC, PropsWithChildren, useCallback, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import TipId from '../../@types/TipId'
@@ -6,6 +6,9 @@ import { dismissTipActionCreator as dismissTip } from '../../actions/dismissTip'
 import usePositionFixed from '../../hooks/usePositionFixed'
 import fastClick from '../../util/fastClick'
 import CloseIcon from '../icons/CloseIcon'
+
+/** Distance in px at which a swipe fully fades and dismisses the tip. */
+const SWIPE_DISMISS_THRESHOLD = 150
 
 /** A tip that gets displayed at the bottom of the window with a Liminal UI overlay design. */
 const Tip: FC<
@@ -19,6 +22,10 @@ const Tip: FC<
 
   const [isDismissing, setIsDismissing] = useState(false)
 
+  // Swipe-to-dismiss: track touch origin and current distance
+  const touchOrigin = useRef<{ x: number; y: number } | null>(null)
+  const [swipeDistance, setSwipeDistance] = useState(0)
+
   const handleClose = useCallback(() => {
     setIsDismissing(true)
   }, [])
@@ -27,6 +34,30 @@ const Tip: FC<
     dispatch(dismissTip())
     setIsDismissing(false)
   }, [dispatch])
+
+  const onTouchStart = useCallback((e: React.TouchEvent) => {
+    const touch = e.touches[0]
+    touchOrigin.current = { x: touch.pageX, y: touch.pageY }
+    setSwipeDistance(0)
+  }, [])
+
+  const onTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!touchOrigin.current) return
+    const touch = e.touches[0]
+    const dx = touch.pageX - touchOrigin.current.x
+    const dy = touch.pageY - touchOrigin.current.y
+    setSwipeDistance(Math.sqrt(dx * dx + dy * dy))
+  }, [])
+
+  const onTouchEnd = useCallback(() => {
+    if (swipeDistance >= SWIPE_DISMISS_THRESHOLD) {
+      dispatch(dismissTip())
+    }
+    touchOrigin.current = null
+    setSwipeDistance(0)
+  }, [dispatch, swipeDistance])
+
+  const swipeOpacity = Math.max(0, 1 - swipeDistance / SWIPE_DISMISS_THRESHOLD)
 
   const value = tip === tipId ? children : null
 
@@ -62,7 +93,7 @@ const Tip: FC<
           mask: 'linear-gradient(180deg, transparent 0%, black 50%)',
           pointerEvents: 'none'
         })}
-        style={{ opacity: isDismissing ? 0 : undefined, transition: fadeOut }}
+        style={{ opacity: isDismissing ? 0 : swipeOpacity, transition: fadeOut }}
       />
 
       {/* Layer 2: Glow image */}
@@ -72,7 +103,7 @@ const Tip: FC<
           position: 'absolute',
           pointerEvents: 'none',
           mixBlendMode: 'screen',
-          opacity: .85,
+          opacity: 0.85,
           backgroundImage: 'url(/img/tip/tip-glow.webp)',
           backgroundRepeat: 'no-repeat',
           backgroundSize: 'cover',
@@ -86,7 +117,7 @@ const Tip: FC<
           right: { base: 'auto', md: 0 },
           transform: { base: 'scaleX(-1)', md: 'none' },
         })}
-        style={{ opacity: isDismissing ? 0 : undefined, transition: fadeOut }}
+        style={{ opacity: isDismissing ? 0 : swipeOpacity * 0.85, transition: fadeOut }}
       />
 
       {/* Layer 3: Content */}
@@ -107,7 +138,11 @@ const Tip: FC<
           paddingTop: '4.5rem',
           paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))',
         })}
-        style={{ opacity: isDismissing ? 0 : undefined, transition: fadeOut }}
+        style={{ opacity: isDismissing ? 0 : swipeOpacity, transition: fadeOut, touchAction: 'none' }}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+        onTouchCancel={onTouchEnd}
         onTransitionEnd={handleFadeOutEnd}
       >
         {/* TIP label */}
