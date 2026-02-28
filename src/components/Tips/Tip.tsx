@@ -1,4 +1,5 @@
-import React, { FC, PropsWithChildren, useCallback, useRef, useState } from 'react'
+import { animate, useMotionValue } from 'framer-motion'
+import React, { FC, PropsWithChildren, useCallback, useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import TipId from '../../@types/TipId'
@@ -6,6 +7,7 @@ import { dismissTipActionCreator as dismissTip } from '../../actions/dismissTip'
 import usePositionFixed from '../../hooks/usePositionFixed'
 import fastClick from '../../util/fastClick'
 import CloseIcon from '../icons/CloseIcon'
+import ProgressiveBlur from '../ProgressiveBlur'
 
 /** Distance in px at which a swipe fully fades and dismisses the tip. */
 const SWIPE_DISMISS_THRESHOLD = 150
@@ -59,6 +61,18 @@ const Tip: FC<
 
   const swipeOpacity = Math.max(0, 1 - swipeDistance / SWIPE_DISMISS_THRESHOLD)
 
+  // MotionValue for ProgressiveBlur opacity — avoids Safari bug where
+  // animating opacity on a parent of backdrop-filter children breaks the blur.
+  const blurOpacity = useMotionValue(1)
+  useEffect(() => {
+    if (isDismissing) {
+      const controls = animate(blurOpacity, 0, { duration: 0.4, ease: 'easeOut' })
+      return () => controls.stop()
+    } else {
+      blurOpacity.set(swipeOpacity)
+    }
+  }, [isDismissing, swipeOpacity, blurOpacity])
+
   const value = tip === tipId ? children : null
 
   const fadeIn = 'fadein 400ms ease'
@@ -86,19 +100,51 @@ const Tip: FC<
       {/* Layer 1: Gradient overlay with progressive blur */}
       <div
         className={css({
-          animation: fadeIn,
           position: 'absolute',
           inset: 0,
-          background: 'linear-gradient(180deg, {colors.bgTransparent} 0%, {colors.bg} 100%)',
-          backdropFilter: 'blur(24px)',
-          mask: {
-            base: 'linear-gradient(180deg, transparent 0%, black 50%)',
-            lg: 'linear-gradient(180deg, transparent 50%, black 100%)',
-          },
-          pointerEvents: 'none'
+          pointerEvents: 'none',
         })}
-        style={{ opacity: isDismissing ? 0 : swipeOpacity, transition: fadeOut }}
-      />
+      >
+        {/* Mobile: full-width blur, no feather */}
+        <div
+          className={css({
+            display: { base: 'block', lg: 'none' },
+            position: 'absolute',
+            inset: 0,
+            overflow: 'hidden',
+          })}
+        >
+          <ProgressiveBlur direction='to top' maxBlur={24} layers={3} opacity={blurOpacity} />
+        </div>
+        {/* Desktop: right-aligned blur with left-edge feather */}
+        <div
+          className={css({
+            display: { base: 'none', lg: 'block' },
+            position: 'absolute',
+            inset: 0,
+            left: 'auto',
+            width: 800,
+            overflow: 'hidden',
+          })}
+        >
+          <ProgressiveBlur
+            direction='to top'
+            maxBlur={24}
+            layers={3}
+            opacity={blurOpacity}
+            mask='linear-gradient(to right, transparent, black 60%)'
+          />
+        </div>
+        <div
+          className={css({
+            animation: fadeIn,
+            position: 'absolute',
+            inset: 0,
+            background: 'linear-gradient(180deg, {colors.bgTransparent} 0%, {colors.bg} 100%)',
+          })}
+          style={{ opacity: isDismissing ? 0 : swipeOpacity, transition: fadeOut }}
+        />
+      </div>
 
       {/* Layer 2: Glow image */}
       <div
@@ -107,18 +153,19 @@ const Tip: FC<
           position: 'absolute',
           pointerEvents: 'none',
           opacity: 0.85,
-          backgroundImage: 'url(/img/tip/tip-glow.webp)',
+          backgroundImage: 'url(/img/tip/tip-glow-alpha.webp)',
           backgroundRepeat: 'no-repeat',
           backgroundSize: 'cover',
           backgroundPosition: 'top right',
           // The glow is intentionally much larger than the viewport.
           // Only ~40% is visible; the rest overflows off-screen and is clipped by the parent's overflow:hidden.
-          width: { base: '100vw', lg: 600 },
+          width: { base: 'calc(100vw + 16px)', lg: 600 },
           height: 300,
           // Mobile portrait: bottom-left, flipped horizontally
-          left: { base: 0, lg: 'auto' },
-          right: { base: 'auto', lg: 0 },
+          left: { base: -8, lg: 'auto' },
+          right: { base: 'auto', lg: -8 },
           transform: { base: 'scaleX(-1)', lg: 'none' },
+          filter: 'blur(8px)'
         })}
         style={{ opacity: isDismissing ? 0 : swipeOpacity * 0.85, transition: fadeOut }}
       />
