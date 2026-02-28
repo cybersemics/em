@@ -6,8 +6,8 @@ import TipId from '../../@types/TipId'
 import { dismissTipActionCreator as dismissTip } from '../../actions/dismissTip'
 import usePositionFixed from '../../hooks/usePositionFixed'
 import fastClick from '../../util/fastClick'
-import CloseIcon from '../icons/CloseIcon'
 import ProgressiveBlur from '../ProgressiveBlur'
+import CloseIcon from '../icons/CloseIcon'
 
 /** Distance in px at which a swipe fully fades and dismisses the tip. */
 const SWIPE_DISMISS_THRESHOLD = 150
@@ -89,7 +89,7 @@ const Tip: FC<
         // allow dragging through the tip overlay
         _dragHold: { pointerEvents: 'none' },
         display: 'flex',
-        userSelect: 'none'
+        userSelect: 'none',
       })}
       style={{
         ...positionFixedStyles,
@@ -165,7 +165,7 @@ const Tip: FC<
           left: { base: -8, lg: 'auto' },
           right: { base: 'auto', lg: -8 },
           transform: { base: 'scaleX(-1)', lg: 'none' },
-          filter: 'blur(8px)'
+          filter: 'blur(8px)',
         })}
         style={{ opacity: isDismissing ? 0 : swipeOpacity * 0.85, transition: fadeOut }}
       />
@@ -187,7 +187,7 @@ const Tip: FC<
           textAlign: { base: 'left', lg: 'right' },
           padding: '1rem 1.5rem',
           paddingTop: '4.5rem',
-          paddingBottom: { base: 'calc(1rem + env(safe-area-inset-bottom))', lg: '1rem' }
+          paddingBottom: { base: 'calc(1rem + env(safe-area-inset-bottom))', lg: '1rem' },
         })}
         style={{ opacity: isDismissing ? 0 : swipeOpacity, transition: fadeOut, touchAction: 'none' }}
         onTouchStart={onTouchStart}
@@ -204,8 +204,8 @@ const Tip: FC<
             textTransform: 'uppercase',
             color: 'white',
             mixBlendMode: 'overlay',
-            opacity: .6,
-            textShadow: '0 0 8px rgba(255, 255, 255, 0.2)'
+            opacity: 0.6,
+            textShadow: '0 0 8px rgba(255, 255, 255, 0.2)',
           })}
         >
           TIP
@@ -216,7 +216,7 @@ const Tip: FC<
           className={css({
             color: 'fg',
             maxWidth: '24em',
-            opacity: .8,
+            opacity: 0.8,
             mixBlendMode: 'plus-lighter',
             lineHeight: 1.4,
             fontWeight: 600,
@@ -234,7 +234,7 @@ const Tip: FC<
             cursor: 'pointer',
             color: 'white',
             mixBlendMode: 'overlay',
-            opacity: .6,
+            opacity: 0.6,
           })}
           {...fastClick(handleClose)}
         >
