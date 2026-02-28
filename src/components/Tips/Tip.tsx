@@ -93,7 +93,7 @@ const Tip: FC<
           backdropFilter: 'blur(24px)',
           mask: {
             base: 'linear-gradient(180deg, transparent 0%, black 50%)',
-            md: 'linear-gradient(180deg, transparent 50%, black 100%)',
+            lg: 'linear-gradient(180deg, transparent 50%, black 100%)',
           },
           pointerEvents: 'none'
         })}
@@ -113,12 +113,12 @@ const Tip: FC<
           backgroundPosition: 'top right',
           // The glow is intentionally much larger than the viewport.
           // Only ~40% is visible; the rest overflows off-screen and is clipped by the parent's overflow:hidden.
-          width: '100vw',
+          width: { base: '100vw', lg: 600 },
           height: 300,
           // Mobile portrait: bottom-left, flipped horizontally
-          left: { base: 0, md: 'auto' },
-          right: { base: 'auto', md: 0 },
-          transform: { base: 'scaleX(-1)', md: 'none' },
+          left: { base: 0, lg: 'auto' },
+          right: { base: 'auto', lg: 0 },
+          transform: { base: 'scaleX(-1)', lg: 'none' },
         })}
         style={{ opacity: isDismissing ? 0 : swipeOpacity * 0.85, transition: fadeOut }}
       />
@@ -135,12 +135,12 @@ const Tip: FC<
           flexDirection: 'column',
           pointerEvents: 'auto',
           // Mobile portrait: align left; landscape/desktop: align right
-          marginLeft: { base: 0, md: 'auto' },
-          alignItems: { base: 'flex-start', md: 'flex-end' },
-          textAlign: { base: 'left', md: 'right' },
+          marginLeft: { base: 0, lg: 'auto' },
+          alignItems: { base: 'flex-start', lg: 'flex-end' },
+          textAlign: { base: 'left', lg: 'right' },
           padding: '1rem 1.5rem',
           paddingTop: '4.5rem',
-          paddingBottom: { base: 'calc(1rem + env(safe-area-inset-bottom))', md: '1rem' }
+          paddingBottom: { base: 'calc(1rem + env(safe-area-inset-bottom))', lg: '1rem' }
         })}
         style={{ opacity: isDismissing ? 0 : swipeOpacity, transition: fadeOut, touchAction: 'none' }}
         onTouchStart={onTouchStart}
