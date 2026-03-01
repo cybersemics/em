@@ -1,4 +1,4 @@
-import React, { FC, useRef, useState } from 'react'
+import React, { FC, useEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
@@ -192,20 +192,31 @@ const GestureMenuWithTransition: FC = () => {
     }
   }, [showGestureMenu, animationState])
 
-  // // Transition from 'entering' to 'visible' to trigger the fade-in animation.
-  // // Component mounts with in={false} when 'entering', then in={true} when 'visible'.
+  // Transition from 'entering' to 'visible' to trigger the fade-in animation.
+  // Component mounts with in={false} when 'entering', then in={true} when 'visible'.
   React.useEffect(() => {
     if (animationState === 'entering') {
       onGestureMenuEntered()
     }
   }, [animationState])
 
+  useEffect(() => {
+    /** Prefetch the gesture menu glow background image to improve initial menu appearance. */
+    const prefetchGlowBackground = async () => {
+      const img = new Image()
+      img.src = '/img/gesture-menu/glow.webp'
+      await img.decode()
+    }
+
+    prefetchGlowBackground()
+  }, [])
+
   // fadeIn is true only when 'visible' - this gives CSSTransition a frame with in={false} when mounting
   const fadeIn = animationState === 'visible'
 
-  // Only render hidden glow background when animationState is 'hidden'
-  // This prefetches the glow background so it appears immediately when the menu is shown
-  if (animationState === 'hidden') return <Glow hidden />
+  // Don't render if hidden
+  if (animationState === 'hidden') return null
+
   return (
     <PopupBase background='transparent' ref={popupRef} fullScreen>
       <div
