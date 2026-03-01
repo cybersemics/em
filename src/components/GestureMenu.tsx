@@ -113,7 +113,7 @@ function ProgressiveBlur() {
 }
 
 /** Renders the glow effect for the gesture menu. */
-function Glow() {
+function Glow({ hidden }: { hidden?: boolean }) {
   return (
     <div
       className={css({
@@ -142,6 +142,9 @@ function Glow() {
             transform: 'translateX(-40%) scaleX(2.5)',
           },
         })}
+        style={{
+          visibility: hidden ? 'hidden' : 'visible',
+        }}
       />
     </div>
   )
@@ -189,19 +192,20 @@ const GestureMenuWithTransition: FC = () => {
     }
   }, [showGestureMenu, animationState])
 
-  // Transition from 'entering' to 'visible' to trigger the fade-in animation.
-  // Component mounts with in={false} when 'entering', then in={true} when 'visible'.
+  // // Transition from 'entering' to 'visible' to trigger the fade-in animation.
+  // // Component mounts with in={false} when 'entering', then in={true} when 'visible'.
   React.useEffect(() => {
     if (animationState === 'entering') {
       onGestureMenuEntered()
     }
   }, [animationState])
 
-  // Don't render if hidden
-  if (animationState === 'hidden') return null
-
   // fadeIn is true only when 'visible' - this gives CSSTransition a frame with in={false} when mounting
   const fadeIn = animationState === 'visible'
+
+  // Only render hidden glow background when animationState is 'hidden'
+  // This prefetches the glow background so it appears immediately when the menu is shown
+  if (animationState === 'hidden') return <Glow hidden />
   return (
     <PopupBase background='transparent' ref={popupRef} fullScreen>
       <div
@@ -220,14 +224,7 @@ const GestureMenuWithTransition: FC = () => {
         <ProgressiveBlur />
         {/* Apply the fade transition only to the glow, overlay, and gesture menu contents 
         to prevent the progressive blur from appearing only after the animation ends. */}
-        <FadeTransition
-          nodeRef={overlayRef}
-          in={fadeIn}
-          type='fast'
-          unmountOnExit
-          onEntered={onGestureMenuEntered}
-          onExited={onGestureMenuExited}
-        >
+        <FadeTransition nodeRef={overlayRef} in={fadeIn} type='fast' unmountOnExit onExited={onGestureMenuExited}>
           <div
             ref={overlayRef}
             className={css({
