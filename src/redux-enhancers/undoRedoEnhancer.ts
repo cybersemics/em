@@ -258,7 +258,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       // - Chained commands will be merged into the previous command, e.g. Select All + Categorize
       if (
         (isNavigation(actionType) && isNavigation(lastAction?.type)) ||
-        editThoughtDirection === lastEditThoughtDirection ||
+        (actionType === 'editThought' && editThoughtDirection === lastEditThoughtDirection) ||
         actionType === 'closeAlert' ||
         state.isMulticursorExecuting ||
         (lastAction as UnknownAction)?.mergeUndo
