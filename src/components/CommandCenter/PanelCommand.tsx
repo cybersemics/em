@@ -23,11 +23,11 @@ interface ActiveButtonGlowImageProps {
 }
 
 /** Glow image for active button state. */
-const ActiveButtonGlowImage: FC<ActiveButtonGlowImageProps> = ({ isActive  }) => {
+const ActiveButtonGlowImage: FC<ActiveButtonGlowImageProps> = ({ isActive }) => {
   const nodeRef = useRef<HTMLDivElement>(null)
   return (
     <FadeTransition
-      type="activeButtonGlow"
+      type='activeButtonGlow'
       in={isActive}
       unmountOnExit
       nodeRef={nodeRef}
