@@ -51,7 +51,6 @@ const MultiselectMessage: FC = () => {
           color: 'fg',
           fontWeight: 700,
           letterSpacing: '-0.011em',
-          mixBlendMode: 'screen',
           opacity: 0.6,
           fontSize: '1.3em',
         })}
@@ -178,7 +177,6 @@ const CommandCenter = ({ mountPoint }: Pick<SheetProps, 'mountPoint'>) => {
               backgroundImage: 'url(/img/command-center/overlay.webp)',
               backgroundSize: 'cover',
               backgroundPosition: 'center bottom',
-              mixBlendMode: 'screen',
               height: '100vh',
               width: '100%',
               bottom: 0,
