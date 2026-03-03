@@ -20,15 +20,14 @@ interface PanelCommandProps {
 interface ActiveButtonGlowImageProps {
   size?: 'small' | 'medium'
   isActive: boolean | undefined
-  type: 'luminosity' | 'saturation'
 }
 
 /** Glow image for active button state. */
-const ActiveButtonGlowImage: FC<ActiveButtonGlowImageProps> = ({ isActive, type }) => {
+const ActiveButtonGlowImage: FC<ActiveButtonGlowImageProps> = ({ isActive  }) => {
   const nodeRef = useRef<HTMLDivElement>(null)
   return (
     <FadeTransition
-      type={type === 'luminosity' ? 'activeButtonGlowLuminosity' : 'activeButtonGlowSaturation'}
+      type="activeButtonGlow"
       in={isActive}
       unmountOnExit
       nodeRef={nodeRef}
@@ -92,8 +91,7 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
       })}
     >
       {/* For the first fade in to work properly, ActiveButtonGlowImage must be already mounted with opacity 0. */}
-      <ActiveButtonGlowImage isActive={isButtonActive} type='luminosity' />
-      <ActiveButtonGlowImage isActive={isButtonActive} type='saturation' />
+      <ActiveButtonGlowImage isActive={isButtonActive} />
       <div
         className={cx(
           panelCommandRecipe({
