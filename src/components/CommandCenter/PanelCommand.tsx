@@ -17,13 +17,13 @@ interface PanelCommandProps {
   size?: 'small' | 'medium'
 }
 
-interface ActiveButtonGlowImageProps {
+interface ActiveButtonGlowGradientProps {
   size?: 'small' | 'medium'
   isActive: boolean | undefined
 }
 
-/** Glow image for active button state. */
-const ActiveButtonGlowImage: FC<ActiveButtonGlowImageProps> = ({ isActive }) => {
+/** Glow gradient for active button state. */
+const ActiveButtonGlowGradient: FC<ActiveButtonGlowGradientProps> = ({ isActive }) => {
   const nodeRef = useRef<HTMLDivElement>(null)
   return (
     <FadeTransition
@@ -90,8 +90,8 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
           : { gridColumn: 'span 1', gridTemplateColumns: 'auto', gridTemplateAreas: `"command"` }),
       })}
     >
-      {/* For the first fade in to work properly, ActiveButtonGlowImage must be already mounted with opacity 0. */}
-      <ActiveButtonGlowImage isActive={isButtonActive} />
+      {/* For the first fade in to work properly, ActiveButtonGlowGradient must be already mounted with opacity 0. */}
+      <ActiveButtonGlowGradient isActive={isButtonActive} />
       <div
         className={cx(
           panelCommandRecipe({
