@@ -5,6 +5,7 @@ import { css } from '../../../styled-system/css'
 import TipId from '../../@types/TipId'
 import { dismissTipActionCreator as dismissTip } from '../../actions/dismissTip'
 import usePositionFixed from '../../hooks/usePositionFixed'
+import durations from '../../util/durations'
 import fastClick from '../../util/fastClick'
 import ProgressiveBlur from '../ProgressiveBlur'
 import CloseIcon from '../icons/CloseIcon'
@@ -53,14 +54,23 @@ const Tip: FC<
     setSwipeDistance(Math.sqrt(dx * dx + dy * dy))
   }, [])
 
-  const onTouchEnd = useCallback((e: React.TouchEvent) => {
-    e.stopPropagation()
-    if (swipeDistance >= SWIPE_DISMISS_THRESHOLD) {
-      dispatch(dismissTip())
-    }
-    touchOrigin.current = null
-    setSwipeDistance(0)
-  }, [dispatch, swipeDistance])
+  const onTouchEnd = useCallback(
+    (e: React.TouchEvent) => {
+      e.stopPropagation()
+      touchOrigin.current = null
+      if (swipeDistance >= SWIPE_DISMISS_THRESHOLD) {
+        dispatch(dismissTip())
+        setSwipeDistance(0)
+      } else if (swipeDistance > 0) {
+        animate(swipeDistance, 0, {
+          duration: durations.get('fast') / 1000,
+          ease: 'easeOut',
+          onUpdate: v => setSwipeDistance(v),
+        })
+      }
+    },
+    [dispatch, swipeDistance],
+  )
 
   const swipeOpacity = Math.max(0, 1 - swipeDistance / SWIPE_DISMISS_THRESHOLD)
 
