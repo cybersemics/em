@@ -38,12 +38,14 @@ const Tip: FC<
   }, [dispatch])
 
   const onTouchStart = useCallback((e: React.TouchEvent) => {
+    e.stopPropagation()
     const touch = e.touches[0]
     touchOrigin.current = { x: touch.pageX, y: touch.pageY }
     setSwipeDistance(0)
   }, [])
 
   const onTouchMove = useCallback((e: React.TouchEvent) => {
+    e.stopPropagation()
     if (!touchOrigin.current) return
     const touch = e.touches[0]
     const dx = touch.pageX - touchOrigin.current.x
@@ -51,7 +53,8 @@ const Tip: FC<
     setSwipeDistance(Math.sqrt(dx * dx + dy * dy))
   }, [])
 
-  const onTouchEnd = useCallback(() => {
+  const onTouchEnd = useCallback((e: React.TouchEvent) => {
+    e.stopPropagation()
     if (swipeDistance >= SWIPE_DISMISS_THRESHOLD) {
       dispatch(dismissTip())
     }
