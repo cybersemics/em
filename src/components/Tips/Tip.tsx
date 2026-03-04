@@ -294,6 +294,10 @@ const Tip: FC<
             color: 'white',
             mixBlendMode: 'overlay',
             opacity: 0.6,
+            WebkitTapHighlightColor: 'transparent',
+            transition: 'opacity 150ms ease',
+            _hover: { opacity: 0.8 },
+            _active: { opacity: 0.4 },
           })}
           {...fastClick(handleClose)}
         >
