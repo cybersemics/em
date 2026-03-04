@@ -66,17 +66,29 @@ const Tip: FC<
 
   // MotionValue for ProgressiveBlur opacity — avoids Safari bug where
   // animating opacity on a parent of backdrop-filter children breaks the blur.
-  const blurOpacity = useMotionValue(1)
+  const blurOpacity = useMotionValue(0)
+  const isVisible = tip === tipId
+  const wasVisible = useRef(false)
   useEffect(() => {
+    // Fade in blur when the tip becomes visible, matching the CSS fadein on other layers.
+    if (isVisible && !wasVisible.current) {
+      wasVisible.current = true
+      blurOpacity.set(0)
+      const controls = animate(blurOpacity, 1, { duration: 0.4, ease: 'easeOut' })
+      return () => controls.stop()
+    }
+    if (!isVisible) {
+      wasVisible.current = false
+      return
+    }
     if (isDismissing) {
       const controls = animate(blurOpacity, 0, { duration: 0.4, ease: 'easeOut' })
       return () => controls.stop()
-    } else {
-      blurOpacity.set(swipeOpacity)
     }
-  }, [isDismissing, swipeOpacity, blurOpacity])
+    blurOpacity.set(swipeOpacity)
+  }, [isVisible, isDismissing, swipeOpacity, blurOpacity])
 
-  const value = tip === tipId ? children : null
+  const value = isVisible ? children : null
 
   const fadeIn = 'fadein 400ms ease'
   const fadeOut = isDismissing ? 'opacity 400ms ease' : undefined
