@@ -3,6 +3,7 @@ import configureSnapshots from '../configureSnapshots'
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
 import command from '../helpers/command'
+import exportThoughts from '../helpers/exportThoughts'
 import hide from '../helpers/hide'
 import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
@@ -10,6 +11,7 @@ import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import scroll from '../helpers/scroll'
 import setTheme from '../helpers/setTheme'
+import { page } from '../setup'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
@@ -244,5 +246,37 @@ describe('Superscripts', () => {
 
     await hideHUD()
     expect(await screenshot()).toMatchImageSnapshot()
+  })
+
+  it('paste text from a note into a thought', async () => {
+    const importText = `
+      - This is a thought
+        - =note
+          - This is a note
+    `
+
+    await paste(importText)
+
+    // Double click inside the left edge to select the first word
+    const note = await page.$('[aria-label=note-editable]')
+    const boundingBox = await note?.boundingBox()
+
+    if (!boundingBox) throw new Error('boundingBox not found')
+
+    const x = boundingBox.x + 1
+    const y = boundingBox.y + boundingBox.height / 2
+
+    await page.mouse.click(x, y, { clickCount: 2 })
+
+    await press('c', { ctrl: true })
+    await clickThought('This is a thought')
+    await press('v', { ctrl: true })
+
+    // get exported html and compress all indentation (whitespace before/after newline)
+    const output = (await exportThoughts({ mimeType: 'text/html' })).replace(/\s*\n\s*/g, '')
+
+    const expected = `<ul><li>__ROOT__<ul><li>This is a Thisthought<ul><li>=note<ul><li>This is a note</li></ul></li></ul></li></ul></li></ul>`
+
+    expect(output).toBe(expected)
   })
 })

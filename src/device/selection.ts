@@ -372,7 +372,7 @@ export const set = (
 /**
  * Split given root node into two different ranges at the given selection.
  */
-function splitNode(root: HTMLElement, range: Range): { left: Range; right: Range } | null {
+export function splitNode(root: HTMLElement, range: Range): { left: Range; right: Range } | null {
   const { firstChild, lastChild } = root
 
   if (!firstChild || !lastChild) return null
@@ -473,7 +473,10 @@ export const html = () => {
         containerHtml = clonedElement ? clonedElement.innerHTML : null
       }
     }
-    return containerHtml?.replace(range.startContainer.textContent!, selection.toString())
+
+    // iOS Safari converts non-breaking spaces into UTF-8 characters when accessing range textContent.
+    // Convert them back into HTML character entities to ensure that REGEX_HTML_SINGLE_LINE matches (#3779).
+    return containerHtml?.replace(range.startContainer.textContent!.replace(/\u00A0/g, '&nbsp;'), selection.toString())
   }
 
   const div = document.createElement('div')

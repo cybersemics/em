@@ -22,6 +22,7 @@ const HomeLink = ({ color, size, iconStyle, className, breadcrumb }: HomeLinkPro
       <a
         tabIndex={-1}
         href='/'
+        onContextMenu={e => e.preventDefault()}
         {...fastClick(e => {
           e.preventDefault()
           dispatch(home())

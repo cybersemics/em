@@ -1,3 +1,4 @@
+import * as selection from '../device/selection'
 import isAbbreviation from './isAbbreviation'
 import once from './once'
 
@@ -26,6 +27,17 @@ function calculateRemoveFront(str1: string, s: string, matched: string[]) {
 }
 
 /**
+ * Function: isStyle.
+ *
+ * @param str The previous sentence plus the previous splitter.
+ * @returns A boolean that says whether the semicolon is part of a CSS style block.
+ */
+function isStyle(str: string) {
+  const stylePattern = /style="[^"]+;$/
+  return stylePattern.test(str)
+}
+
+/**
  * Function: isUrl.
  *
  * @param str1 The previous sentence plus the previous splitter.
@@ -45,6 +57,26 @@ function isUrl(str1: string, s: string) {
   const combinedSentence = firstPart[len - 1] + s.split(' ')[0]
 
   return urlPattern.test(combinedSentence)
+}
+
+/**
+ * The reduce function return a string, which is a combination of all the sentences, we then use __SEP__ to seperate each qualified sentence that can be split during the next step.
+ */
+const SEPARATOR_TOKEN = '__SEP__'
+
+/**
+ * Inserts separators in place of commas, unless the comma is part of a style within a font tag (#3455).
+ */
+function separateByComma(str: string) {
+  const EMBEDDED_COMMA_TOKEN = '__COMMA__'
+  const styleRegex = /style="[^"]+$/
+
+  return str
+    .split(',')
+    .reduce((str, s) => {
+      return str + s + (styleRegex.test(str + s) ? EMBEDDED_COMMA_TOKEN : SEPARATOR_TOKEN)
+    }, '')
+    .replaceAll(EMBEDDED_COMMA_TOKEN, ',')
 }
 
 interface SplitResult {
@@ -109,11 +141,6 @@ const splitSentence = (value: string): SplitResult[] => {
    * When the setences can be split, it has multiple situations.
    */
   const sentences = value.split(mainSplitRegex)
-
-  /**
-   * The reduce function return a string, which is a combination of all the sentences, we then use __SEP__ to seperate each qualified sentence that can be split during the next step.
-   */
-  const SEPARATOR_TOKEN = '__SEP__'
   const initialValue = sentences[0]
 
   const resultSentences = sentences.reduce((newSentence: string, s: string, i: number) => {
@@ -128,7 +155,7 @@ const splitSentence = (value: string): SplitResult[] => {
      * Case1: ending with url address
      * Case2: ending with Mr., Dr., Apt., i.e., Ph.D..
      */
-    if (isAbbreviation(prevSentence, s) || isUrl(prevSentence, s)) {
+    if (isAbbreviation(prevSentence, s) || isUrl(prevSentence, s) || isStyle(prevSentence)) {
       return newSentence + currSentence
     }
 
@@ -160,17 +187,61 @@ const splitSentence = (value: string): SplitResult[] => {
   }, initialValue)
 
   // if the return string is one sentence that ends with no other main split characters except one period at the end, split the thought by comma
-  const res = resultSentences.split(SEPARATOR_TOKEN).filter(s => /\S+/.test(s))
   const hasOnlyPeriodSplitterAtEnd = !/;!?$/.test(resultSentences)
-  if (res.length === 1 && hasOnlyPeriodSplitterAtEnd) {
-    return resultSentences
-      .replace(/,/g, `${SEPARATOR_TOKEN}`)
-      .split(SEPARATOR_TOKEN)
-      .filter(s => /\S+/.test(s))
-      .map(s => ({ value: s.trim() }))
+
+  let right =
+    !resultSentences.match(SEPARATOR_TOKEN) && hasOnlyPeriodSplitterAtEnd
+      ? separateByComma(resultSentences)
+          .split(SEPARATOR_TOKEN)
+          .filter(s => /\S+/.test(s))
+          .map(s => s.trim())
+          .join(SEPARATOR_TOKEN)
+      : resultSentences
+          .split(SEPARATOR_TOKEN)
+          .map(s => s.trim())
+          .join(SEPARATOR_TOKEN)
+
+  let res: string[] = []
+  let match = right.match(SEPARATOR_TOKEN)
+
+  const div = document.createElement('div')
+  div.innerHTML = right
+
+  // Find the separator token within the div's text content, then traverse to find the correct offset within the DOM fragment. (#3615)
+  while (match) {
+    const range = document.createRange()
+    const index = div.textContent!.indexOf(match[0])
+
+    if (index < 0) break
+
+    const nodeOffset = selection.offsetFromClosestParent(div, index)
+    if (!nodeOffset?.node) break
+
+    range.setStart(nodeOffset.node, nodeOffset.offset)
+    range.setEnd(nodeOffset.node, nodeOffset.offset + match[0].length)
+
+    const splitNodesResult = selection.splitNode(div, range)
+
+    if (!splitNodesResult) break
+
+    const leftDiv = document.createElement('div')
+    const rightDiv = document.createElement('div')
+
+    leftDiv.appendChild(splitNodesResult.left.cloneContents())
+    rightDiv.appendChild(splitNodesResult.right.cloneContents())
+
+    // Add the next sentence, with properly-formatted HTML tags, to the results
+    res = [...res, leftDiv.innerHTML]
+    right = rightDiv.innerHTML
+
+    // Move on to the next match
+    match = right.match(SEPARATOR_TOKEN)
+    div.innerHTML = right
   }
 
-  return res.map(s => ({ value: s.trim() }))
+  if (right.length) res = [...res, right]
+
+  return res.map(value => ({ value }))
 }
 
 export default splitSentence

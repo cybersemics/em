@@ -1,6 +1,7 @@
 /* eslint-disable import/prefer-default-export */
 /** Defines global keyboard shortcuts and gestures. */
 import Emitter from 'emitter20'
+import { GestureResponderEvent } from 'react-native'
 import { Store } from 'redux'
 import { ArrowKey } from './@types/ArrowKey'
 import Command from './@types/Command'
@@ -24,7 +25,6 @@ import { suppressExpansionActionCreator as suppressExpansion } from './actions/s
 import { isMac } from './browser'
 import * as commandsObject from './commands/index'
 import openGestureCheatsheetCommand from './commands/openGestureCheatsheet'
-import { GestureResponderEvent } from './components/PanResponder'
 import { AlertType, COMMAND_PALETTE_TIMEOUT, HOME_PATH, LongPressState, Settings, noop } from './constants'
 import * as selection from './device/selection'
 import globals from './globals'

@@ -22,6 +22,7 @@ import equalPathHead from '../util/equalPathHead'
 import head from '../util/head'
 import noteValue from '../util/noteValue'
 import strip from '../util/strip'
+import useOnCut from './Editable/useOnCut'
 import FauxCaret from './FauxCaret'
 
 /** Renders an editable note that modifies the content of the hidden =note attribute. */
@@ -152,6 +153,20 @@ const Note = React.memo(
 
     const onMouseDown = useCallback(() => preventAutoscroll(noteRef.current), [noteRef])
 
+    const onCopy = useCallback((e: React.ClipboardEvent) => {
+      const html = selection.html()
+      const text = selection.text()
+
+      if (!html || !text) return
+
+      e.clipboardData.setData('text/html', html)
+      e.clipboardData.setData('text/plain', text)
+      e.clipboardData.setData('text/em', 'true')
+      e.preventDefault()
+    }, [])
+
+    const onCut = useOnCut()
+
     if (note === null) return null
 
     return (
@@ -202,6 +217,9 @@ const Note = React.memo(
           onDrop={isTouch ? (e: React.DragEvent) => e.preventDefault() : undefined}
           onKeyDown={onKeyDown}
           onChange={onChange}
+          // Text copied from a note and pasted on a thought should not bring along the note's default color and italicization. (#3779)
+          onCopy={onCopy}
+          onCut={onCut}
           onPaste={() => {
             // set justPasted so onChange can strip HTML from the new value
             // the default onPaste behavior is maintained for easier caret and selection management

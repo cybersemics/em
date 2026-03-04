@@ -1163,6 +1163,50 @@ it('paste em text with formatted html and meta charset as inline', async () => {
   expect(exported).not.toContain('<meta')
 })
 
+it('insert single-line HTML copied from Windows desktop Chrome at end of thought', async () => {
+  const html = `<html>
+<body>
+<!--StartFragment-->foo<!--EndFragment-->
+</body>
+</html>`
+  vi.useFakeTimers()
+  const { cleanup } = await initialize()
+
+  store.dispatch([
+    newThought({ value: 'a' }),
+    (dispatch, getState) => dispatch(importDataActionCreator({ path: contextToPath(getState(), ['a'])!, html })),
+  ])
+
+  await vi.runOnlyPendingTimersAsync()
+
+  const exported = exportContext(store.getState(), HOME_PATH, 'text/plain')
+
+  cleanup()
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - afoo`)
+})
+
+it('insert single-line HTML copied from Mac desktop Chrome at end of thought', async () => {
+  const html = `<meta charset='utf-8'>foo`
+  vi.useFakeTimers()
+  const { cleanup } = await initialize()
+
+  store.dispatch([
+    newThought({ value: 'a' }),
+    (dispatch, getState) => dispatch(importDataActionCreator({ path: contextToPath(getState(), ['a'])!, html })),
+  ])
+
+  await vi.runOnlyPendingTimersAsync()
+
+  const exported = exportContext(store.getState(), HOME_PATH, 'text/plain')
+
+  cleanup()
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - afoo`)
+})
+
 it('do not insert html with newlines as a single-line', async () => {
   const html = `<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html>
