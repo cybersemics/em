@@ -24,24 +24,33 @@ const Tip: FC<
   const positionFixedStyles = usePositionFixed({ fromBottom: true })
 
   const [isDismissing, setIsDismissing] = useState(false)
+  const isSwipeDismiss = useRef(false)
 
-  // Swipe-to-dismiss: track touch origin and current distance
+  // Swipe-to-dismiss: track touch origin, distance, and velocity
   const touchOrigin = useRef<{ x: number; y: number } | null>(null)
   const [swipeDistance, setSwipeDistance] = useState(0)
+  const velocity = useRef(0)
+  const lastTouch = useRef<{ x: number; y: number; time: number } | null>(null)
 
   const handleClose = useCallback(() => {
     setIsDismissing(true)
   }, [])
 
-  const handleFadeOutEnd = useCallback(() => {
+  const handleFadeOutEnd = useCallback((e: React.TransitionEvent) => {
+    // Ignore transitionend events bubbling up from children (e.g. the clear button's hover/active transitions).
+    if (e.target !== e.currentTarget) return
     dispatch(dismissTip())
     setIsDismissing(false)
+    isSwipeDismiss.current = false
+    setSwipeDistance(0)
   }, [dispatch])
 
   const onTouchStart = useCallback((e: React.TouchEvent) => {
     e.stopPropagation()
     const touch = e.touches[0]
     touchOrigin.current = { x: touch.pageX, y: touch.pageY }
+    lastTouch.current = { x: touch.pageX, y: touch.pageY, time: performance.now() }
+    velocity.current = 0
     setSwipeDistance(0)
   }, [])
 
@@ -52,15 +61,33 @@ const Tip: FC<
     const dx = touch.pageX - touchOrigin.current.x
     const dy = touch.pageY - touchOrigin.current.y
     setSwipeDistance(Math.sqrt(dx * dx + dy * dy))
+
+    // Smoothed velocity (exponential moving average)
+    const now = performance.now()
+    if (lastTouch.current) {
+      const dt = now - lastTouch.current.time
+      if (dt > 0) {
+        const moveDx = touch.pageX - lastTouch.current.x
+        const moveDy = touch.pageY - lastTouch.current.y
+        const instantVelocity = (Math.sqrt(moveDx * moveDx + moveDy * moveDy) / dt) * 1000
+        velocity.current = velocity.current * 0.4 + instantVelocity * 0.6
+      }
+    }
+    lastTouch.current = { x: touch.pageX, y: touch.pageY, time: now }
   }, [])
 
   const onTouchEnd = useCallback(
     (e: React.TouchEvent) => {
       e.stopPropagation()
       touchOrigin.current = null
-      if (swipeDistance >= SWIPE_DISMISS_THRESHOLD) {
-        dispatch(dismissTip())
+      lastTouch.current = null
+
+      // Combined score: distance and velocity compensate for each other
+      const score = swipeDistance + velocity.current * 0.5
+      if (score >= SWIPE_DISMISS_THRESHOLD) {
+        isSwipeDismiss.current = true
         setSwipeDistance(0)
+        setIsDismissing(true)
       } else if (swipeDistance > 0) {
         animate(swipeDistance, 0, {
           duration: durations.get('fast') / 1000,
@@ -68,6 +95,7 @@ const Tip: FC<
           onUpdate: v => setSwipeDistance(v),
         })
       }
+      velocity.current = 0
     },
     [dispatch, swipeDistance],
   )
@@ -92,7 +120,8 @@ const Tip: FC<
       return
     }
     if (isDismissing) {
-      const controls = animate(blurOpacity, 0, { duration: durations.get('medium') / 1000, ease: 'easeOut' })
+      const dismissDuration = isSwipeDismiss.current ? 'fast' : 'medium'
+      const controls = animate(blurOpacity, 0, { duration: durations.get(dismissDuration) / 1000, ease: 'easeOut' })
       return () => controls.stop()
     }
     blurOpacity.set(swipeOpacity)
@@ -101,7 +130,8 @@ const Tip: FC<
   const value = isVisible ? children : null
 
   const fadeIn = `fadein ${durations.get('medium')}ms ease`
-  const fadeOut = isDismissing ? `opacity ${durations.get('medium')}ms ease` : undefined
+  const dismissDuration = isSwipeDismiss.current ? 'fast' : 'medium'
+  const fadeOut = isDismissing ? `opacity ${durations.get(dismissDuration)}ms ease` : undefined
 
   return value ? (
     <div
