@@ -26,8 +26,7 @@ const Tip: FC<
   const [isDismissing, setIsDismissing] = useState(false)
   const isSwipeDismiss = useRef(false)
 
-  // Swipe-to-dismiss: track touch origin, distance, and velocity
-  const touchOrigin = useRef<{ x: number; y: number } | null>(null)
+  // Swipe-to-dismiss: track cumulative distance and velocity
   const [swipeDistance, setSwipeDistance] = useState(0)
   const velocity = useRef(0)
   const lastTouch = useRef<{ x: number; y: number; time: number } | null>(null)
@@ -48,7 +47,6 @@ const Tip: FC<
   const onTouchStart = useCallback((e: React.TouchEvent) => {
     e.stopPropagation()
     const touch = e.touches[0]
-    touchOrigin.current = { x: touch.pageX, y: touch.pageY }
     lastTouch.current = { x: touch.pageX, y: touch.pageY, time: performance.now() }
     velocity.current = 0
     setSwipeDistance(0)
@@ -56,38 +54,45 @@ const Tip: FC<
 
   const onTouchMove = useCallback((e: React.TouchEvent) => {
     e.stopPropagation()
-    if (!touchOrigin.current) return
+    if (!lastTouch.current) return
     const touch = e.touches[0]
-    const dx = touch.pageX - touchOrigin.current.x
-    const dy = touch.pageY - touchOrigin.current.y
-    setSwipeDistance(Math.sqrt(dx * dx + dy * dy))
+    const now = performance.now()
+
+    const moveDx = touch.pageX - lastTouch.current.x
+    const moveDy = touch.pageY - lastTouch.current.y
+    const segmentDistance = Math.sqrt(moveDx * moveDx + moveDy * moveDy)
+
+    // Accumulate total distance traveled
+    setSwipeDistance(prev => prev + segmentDistance)
 
     // Smoothed velocity (exponential moving average)
-    const now = performance.now()
-    if (lastTouch.current) {
-      const dt = now - lastTouch.current.time
-      if (dt > 0) {
-        const moveDx = touch.pageX - lastTouch.current.x
-        const moveDy = touch.pageY - lastTouch.current.y
-        const instantVelocity = (Math.sqrt(moveDx * moveDx + moveDy * moveDy) / dt) * 1000
-        velocity.current = velocity.current * 0.4 + instantVelocity * 0.6
-      }
+    const dt = now - lastTouch.current.time
+    if (dt > 0) {
+      const instantVelocity = (segmentDistance / dt) * 1000
+      velocity.current = velocity.current * 0.4 + instantVelocity * 0.6
     }
+
     lastTouch.current = { x: touch.pageX, y: touch.pageY, time: now }
   }, [])
 
   const onTouchEnd = useCallback(
     (e: React.TouchEvent) => {
       e.stopPropagation()
-      touchOrigin.current = null
       lastTouch.current = null
 
       // Combined score: distance and velocity compensate for each other
       const score = swipeDistance + velocity.current * 0.5
       if (score >= SWIPE_DISMISS_THRESHOLD) {
-        isSwipeDismiss.current = true
-        setSwipeDistance(0)
-        setIsDismissing(true)
+        // If the swipe has already fully faded the tip, dismiss immediately.
+        // Otherwise, trigger a fade-out animation from the current opacity.
+        if (swipeOpacity <= 0) {
+          dispatch(dismissTip())
+          setSwipeDistance(0)
+        } else {
+          isSwipeDismiss.current = true
+          setSwipeDistance(0)
+          setIsDismissing(true)
+        }
       } else if (swipeDistance > 0) {
         animate(swipeDistance, 0, {
           duration: durations.get('fast') / 1000,
