@@ -84,7 +84,7 @@ const Tip: FC<
     if (isVisible && !wasVisible.current) {
       wasVisible.current = true
       blurOpacity.set(0)
-      const controls = animate(blurOpacity, 1, { duration: 0.4, ease: 'easeOut' })
+      const controls = animate(blurOpacity, 1, { duration: durations.get('medium') / 1000, ease: 'easeOut' })
       return () => controls.stop()
     }
     if (!isVisible) {
@@ -92,7 +92,7 @@ const Tip: FC<
       return
     }
     if (isDismissing) {
-      const controls = animate(blurOpacity, 0, { duration: 0.4, ease: 'easeOut' })
+      const controls = animate(blurOpacity, 0, { duration: durations.get('medium') / 1000, ease: 'easeOut' })
       return () => controls.stop()
     }
     blurOpacity.set(swipeOpacity)
@@ -100,8 +100,8 @@ const Tip: FC<
 
   const value = isVisible ? children : null
 
-  const fadeIn = 'fadein 400ms ease'
-  const fadeOut = isDismissing ? 'opacity 400ms ease' : undefined
+  const fadeIn = `fadein ${durations.get('medium')}ms ease`
+  const fadeOut = isDismissing ? `opacity ${durations.get('medium')}ms ease` : undefined
 
   return value ? (
     <div
@@ -174,7 +174,7 @@ const Tip: FC<
       {/* Layer 2: Glow image */}
       <div
         className={css({
-          animation: 'fademostlyin 400ms ease',
+          animation: `fademostlyin ${durations.get('medium')}ms ease`,
           position: 'absolute',
           pointerEvents: 'none',
           opacity: 0.85,
