@@ -104,9 +104,8 @@ function ProgressiveBlur() {
       })}
       style={{
         // Use ease-out on enter so the blur appears immediately, and easeInSlow on exit so it lingers before fading.
-        // easeInSlow is pre-set during entering to visible (when opacity doesn't change), so only opacity changes on exiting and the transition fires correctly.
-        transition: `opacity ${token('durations.fast')} ${animationState === 'entering' ? 'ease-out' : token('easings.easeInSlow')}`,
-        opacity: animationState === 'visible' || animationState === 'entering' ? 1 : 0,
+        transition: `opacity ${token('durations.fast')} ${animationState === 'exiting' ? token('easings.easeInSlow') : 'ease-out'}`,
+        opacity: animationState === 'visible' ? 1 : 0,
       }}
     />
   )
