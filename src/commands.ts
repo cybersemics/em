@@ -8,7 +8,7 @@ import Command from './@types/Command'
 import CommandId from './@types/CommandId'
 import CommandType from './@types/CommandType'
 import Direction from './@types/Direction'
-import GesturePath from './@types/GesturePath'
+import Gesture from './@types/Gesture'
 import Index from './@types/IndexType'
 import Key from './@types/Key'
 import MulticursorFilter from './@types/MulticursorFilter'
@@ -25,7 +25,6 @@ import { suppressExpansionActionCreator as suppressExpansion } from './actions/s
 import { isMac } from './browser'
 import * as commandsObject from './commands/index'
 import openGestureCheatsheetCommand from './commands/openGestureCheatsheet'
-import selectAllCommand from './commands/selectAll'
 import { AlertType, COMMAND_PALETTE_TIMEOUT, HOME_PATH, LongPressState, Settings, noop } from './constants'
 import * as selection from './device/selection'
 import globals from './globals'
@@ -35,6 +34,7 @@ import hasMulticursor from './selectors/hasMulticursor'
 import isAllSelected from './selectors/isAllSelected'
 import thoughtToPath from './selectors/thoughtToPath'
 import store from './stores/app'
+import editingValueStore from './stores/editingValue'
 import gestureStore from './stores/gesture'
 import equalPath from './util/equalPath'
 import haptics from './util/haptics'
@@ -47,6 +47,8 @@ import UnreachableError from './util/unreachable'
 export const globalCommands: Command[] = Object.values(commandsObject)
 
 export const commandEmitter = new Emitter()
+
+let keyCommandId: string | null = null
 
 /* A mapping of key codes to uppercase letters.
  * {
@@ -184,22 +186,24 @@ let gestureMenuTimeout: number | undefined
 const { commandKeyIndex, commandIdIndex, commandGestureIndex } = index()
 
 /** Gets the canonical gesture of the command as a string, ignoring aliases. Returns an empty string if the command does not have a gesture. */
-export const gestureString = (command: Command): string =>
-  (typeof command.gesture === 'string' ? command.gesture : command.gesture?.[0] || '') as string
+export const gestureString = (command: Command): Gesture =>
+  typeof command.gesture === 'string' ? command.gesture : command.gesture?.[0] || ''
 
 /** Get a command by its id. Only use this for dynamic ids that are only known at runtime. If you know the id of the command at compile time, use a static import. */
 export const commandById = (id: CommandId): Command => commandIdIndex[id]
 
-/** Generates a synthetic Command object that is the result of chaining Select All with another command. Prefixes gesture and label. */
-export const chainCommand = (command: Command): Command => {
-  const selectAllGesture = selectAllCommand.gesture as string
-  const commandGesture = gestureString(command)
-  // collapse duplicate swipes when the command starts with the same character that selectAllCommand.gesture ends with
-  const chainedGesture = selectAllGesture + commandGesture.slice(selectAllGesture.endsWith(commandGesture[0]) ? 1 : 0)
+/** Generates a synthetic Command object that is the result of chaining two commands together. Prefixes gesture and label. */
+export const chainCommand = (command1: Command, command2: Command): Command => {
+  const command1GestureString = gestureString(command1)
+  const command2GestureString = gestureString(command2)
+  // collapse duplicate swipes when the command starts with the same character that the first gesture ends with
+  const chainedGesture =
+    command1GestureString +
+    command2GestureString.slice(command1GestureString.endsWith(command2GestureString[0]) ? 1 : 0)
   const chainedCommand: Command = {
-    ...command,
+    ...command2,
     gesture: chainedGesture,
-    label: `Select All + ${command.label}`,
+    label: `${command1.label} + ${command2.label}`,
   }
   return chainedCommand
 }
@@ -409,7 +413,7 @@ export const executeCommandWithMulticursor = (
  * - gesture menu from invalid gesture (e.g. ←↓, hold, ←↓←).
  * - Change gesture menu to basic gesture hint on gesture end.
  */
-export const handleGestureSegment = ({ sequence }: { gesture: Direction | null; sequence: GesturePath }) => {
+export const handleGestureSegment = ({ sequence }: { gesture: Direction | null; sequence: Gesture }) => {
   const state = store.getState()
 
   if (state.showModal || state.longPress === LongPressState.DragInProgress || state.showGestureCheatsheet) return
@@ -438,8 +442,8 @@ export const handleGestureSegment = ({ sequence }: { gesture: Direction | null; 
   )
 }
 
-/** Executes a valid gesture and closes the gesture hint. Special handling for Select All chaining. */
-export const handleGestureEnd = ({ sequence, e }: { sequence: GesturePath | null; e: GestureResponderEvent }) => {
+/** Executes a valid gesture and closes the gesture hint. Special handling for chainable commands. */
+export const handleGestureEnd = ({ sequence, e }: { sequence: Gesture | null; e: GestureResponderEvent }) => {
   const state = store.getState()
 
   // Get the command from the command gesture index.
@@ -447,29 +451,43 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: GesturePath | null
 
   const openGestureCheatsheetGesture = gestureString(openGestureCheatsheetCommand)
 
-  // If sequence ends with help gesture, use help command
-  // Otherwise use the normal command lookup
-  const selectAllGesture = selectAllCommand.gesture as string
-  // True if the current gesture-in-progress starts with the Select All gesture, but is not the Select All gesture itself.
-  const selectAllInProgressExclusive =
-    sequence?.toString().startsWith(selectAllGesture) && sequence?.toString() !== selectAllGesture
+  // If sequence ends with help gesture, use help command.
+  // If sequence starts with a chainable command gesture and has additional swipes, use the chained command with the longest matching gesture.
+  // Otherwise use the normal command lookup.
+  let command: Command | null = null
 
-  let command: Command | null | undefined = null
-
+  // gesture cheatsheet
   if (sequence?.toString().endsWith(openGestureCheatsheetGesture)) {
     command = openGestureCheatsheetCommand
-  } else if (selectAllInProgressExclusive) {
-    const chainedGestureCollapsed = sequence!.toString().slice(selectAllGesture.length - 1)
-    const chainedGesture = sequence!.toString().slice(selectAllGesture.length)
-    const commandMatch = commandGestureIndex[chainedGestureCollapsed] ?? commandGestureIndex[chainedGesture]
-    if (commandMatch) {
-      command = chainCommand(commandMatch)
-    }
-  } else {
+  }
+  // normal command
+  else {
     command =
       !state.showCommandPalette || !commandGestureIndex[sequence as string]?.hideFromHelp
         ? commandGestureIndex[sequence as string]
         : null
+  }
+
+  // The chainable command that is in progress (only if there is at least one additional swipe). Otherwise null.
+  const chainableCommandInProgressExclusive: Command | undefined = command
+    ? undefined
+    : globalCommands.find(
+        command =>
+          command.isChainable &&
+          sequence?.toString().startsWith(gestureString(command)) &&
+          sequence?.toString()?.length > gestureString(command).length,
+      )
+
+  // chained command
+  // only if there is no exact match command
+  if (!command && chainableCommandInProgressExclusive) {
+    const chainedGesture1 = gestureString(chainableCommandInProgressExclusive)
+    const chainedGestureCollapsed = sequence!.toString().slice(chainedGesture1.length - 1)
+    const chainedGesture = sequence!.toString().slice(chainedGesture1.length)
+    const commandMatch = commandGestureIndex[chainedGestureCollapsed] ?? commandGestureIndex[chainedGesture]
+    if (commandMatch) {
+      command = chainCommand(chainableCommandInProgressExclusive, commandMatch)
+    }
   }
 
   // execute command
@@ -481,12 +499,12 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: GesturePath | null
     state.longPress !== LongPressState.DragInProgress
   ) {
     commandEmitter.trigger('command', command)
-    if (selectAllInProgressExclusive && !isAllSelected(state)) {
-      executeCommandWithMulticursor(selectAllCommand, {
+    if (chainableCommandInProgressExclusive && !isAllSelected(state)) {
+      executeCommandWithMulticursor(chainableCommandInProgressExclusive, {
         event: {
           ...e,
           // Hacky magic value, but it's the easiest way to tell the command that this is a chained gesture so that it can adjust the undo behavior.
-          // Select All and the chained command need to be undone together, and this is not a property of the Command object but of the way it is invoked, so is somewhat appropriately stored on the event object, albeit ad hoc.
+          // Both commands need to be undone together, and this is not a property of the Command object but of the way it is invoked, so is somewhat appropriately stored on the event object, albeit ad hoc.
           type: 'chainedGesture',
         },
         type: 'gesture',
@@ -551,12 +569,20 @@ export const handleGestureCancel = () => {
   })
 }
 
+/** In the specific case of the newThought and indent commands, prevent default in beforeinput event instead of keydown to preserve default iOS auto-capitalization behavior. The Enter and space characters needs to be prevented so that it doesn't get inserted into the thought (#3707). */
+export const beforeInput = (e: InputEvent) => {
+  if (keyCommandId === 'newThought' || (keyCommandId === 'indent' && editingValueStore.getState() === '')) {
+    e.preventDefault()
+  }
+}
+
 /** Global keyUp handler. */
 export const keyUp = (e: KeyboardEvent) => {
   // track meta key for expansion algorithm
   if (e.key === (isMac ? 'Meta' : 'Control') && globals.suppressExpansion) {
     store.dispatch(suppressExpansion(false))
   }
+  keyCommandId = null
 }
 
 /** Global keyDown handler. */
@@ -580,6 +606,7 @@ export const keyDown = (e: KeyboardEvent) => {
   if (state.showCommandPalette) return
 
   const command = commandKeyIndex[hashKeyDown(e)]
+  keyCommandId = command?.id
 
   // disable if modal is shown, except for navigation commands
   if (!command || state.showGestureCheatsheet || (state.showModal && !command.allowExecuteFromModal)) return

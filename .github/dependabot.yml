@@ -12,74 +12,78 @@ updates:
     open-pull-requests-limit: 10
     # Group related deps into single PR
     groups:
-      react:
-        patterns:
-          - "react"
-          - "react-dom"
-          - "@types/react"
-          - "@types/react-dom"
-      capacitor:
-        patterns:
-          - "@capacitor/*"
-      mui-emotion:
-        patterns:
-          - "@mui/*"
-          - "@emotion/*"
-      react-dnd:
-        patterns:
-          - "react-dnd*"
-          - "dnd-core"
-      redux:
-        patterns:
-          - "redux"
-          - "redux-*"
-          - "react-redux"
-          - "reselect"
-          - "redux-mock-store"
-          - "@types/react-redux"
-          - "@types/redux-mock-store"
-      testing-library:
-        patterns:
-          - "@testing-library/*"
-      sinon-fake-timers:
-        patterns:
-          - "@sinonjs/fake-timers"
-          - "@types/sinonjs__fake-timers"
-      jest:
-        patterns:
-          - "jest"
-          - "jest-*"
-          - "jest-environment-*"
-          - "@types/jest"
-          - "@types/jest-*"
-      vitest-vite:
-        patterns:
-          - "vitest"
-          - "vitest-*"
-          - "vite"
-          - "vite-*"
-          - "@vitejs/*"
-      eslint:
-        patterns:
-          - "eslint"
-          - "eslint-*"
-          - "eslint-plugin-*"
-          - "eslint-config-*"
-          - "@typescript-eslint/*"
-          - "@stylistic/*"
-      prettier:
-        patterns:
-          - "prettier"
-          - "@trivago/prettier-plugin-*"
-      pandacss:
-        patterns:
-          - "@pandacss/*"
       babel:
         patterns:
-          - "@babel/*"
-      workbox:
+          - '@babel/*'
+      capacitor:
         patterns:
-          - "workbox-*"
+          - '@capacitor/*'
+      eslint:
+        patterns:
+          - 'eslint'
+          - 'eslint-*'
+          - 'eslint-plugin-*'
+          - 'eslint-config-*'
+          - '@typescript-eslint/*'
+          - '@stylistic/*'
+      jest:
+        patterns:
+          - 'jest'
+          - 'jest-*'
+          - 'jest-environment-*'
+          - '@types/jest'
+          - '@types/jest-*'
+      lodash:
+        patterns:
+          - 'lodash'
+          - '@types/lodash'
+      mui-emotion:
+        patterns:
+          - '@mui/*'
+          - '@emotion/*'
+      pandacss:
+        patterns:
+          - '@pandacss/*'
+      prettier:
+        patterns:
+          - 'prettier'
+          - '@trivago/prettier-plugin-*'
+      react:
+        patterns:
+          - 'react'
+          - 'react-dom'
+          - '@types/react'
+          - '@types/react-dom'
+      react-dnd:
+        patterns:
+          - 'react-dnd*'
+          - 'dnd-core'
+      redux:
+        patterns:
+          - 'redux'
+          - 'redux-*'
+          - 'react-redux'
+          - 'reselect'
+          - 'redux-mock-store'
+          - '@types/react-redux'
+          - '@types/redux-mock-store'
+      sinon-fake-timers:
+        patterns:
+          - '@sinonjs/fake-timers'
+          - '@types/sinonjs__fake-timers'
+      testing-library:
+        patterns:
+          - '@testing-library/*'
+      vitest-vite:
+        patterns:
+          - 'vitest'
+          - 'vitest-*'
+          - 'vite'
+          - 'vite-*'
+          - '@vitejs/*'
       wdio:
         patterns:
-          - "@wdio/*"
+          - '@wdio/*'
+      workbox:
+        patterns:
+          - 'workbox-*'

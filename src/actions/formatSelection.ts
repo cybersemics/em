@@ -1,5 +1,4 @@
 /* eslint-disable import/prefer-default-export */
-import { rgbToHex } from '@mui/material'
 import Thunk from '../@types/Thunk'
 import { ColorToken } from '../colors.config'
 import { ALLOWED_ATTR } from '../constants'
@@ -11,6 +10,7 @@ import themeColors from '../selectors/themeColors'
 import { updateCommandState } from '../stores/commandStateStore'
 import suppressFocusStore from '../stores/suppressFocus'
 import head from '../util/head'
+import rgbToHex from '../util/rgbToHex'
 import strip from '../util/strip'
 import { editThoughtActionCreator as editThought } from './editThought'
 

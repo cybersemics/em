@@ -11,7 +11,7 @@ import { gestureMenuActionCreator as gestureMenu } from '../actions/gestureMenu'
 import { longPressActionCreator as longPress } from '../actions/longPress'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { isAndroidWebView, isIOS, isSafari, isTouch } from '../browser'
-import { keyDown, keyUp } from '../commands'
+import { beforeInput, keyDown, keyUp } from '../commands'
 import { AlertType, LongPressState } from '../constants'
 import * as selection from '../device/selection'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
@@ -366,6 +366,7 @@ const initEvents = (store: Store<State, any>) => {
   window.history.scrollRestoration = 'manual'
 
   document.addEventListener('selectionchange', onSelectionChange)
+  window.addEventListener('beforeinput', beforeInput)
   window.addEventListener('keydown', keyDown)
   window.addEventListener('keyup', keyUp)
   window.addEventListener('popstate', onPopstate)
@@ -400,6 +401,7 @@ const initEvents = (store: Store<State, any>) => {
   const cleanup = () => {
     unsubscribeSaveErrorReload()
     document.removeEventListener('selectionchange', onSelectionChange)
+    window.removeEventListener('beforeinput', beforeInput)
     window.removeEventListener('keydown', keyDown)
     window.removeEventListener('keyup', keyUp)
     window.removeEventListener('popstate', onPopstate)

@@ -5,7 +5,6 @@ import * as matchers from 'jest-extended'
 import { noop } from 'lodash'
 import { TextDecoder, TextEncoder } from 'util'
 import 'vi-canvas-mock'
-import 'vitest-localstorage-mock'
 
 expect.extend(matchers)
 
@@ -35,6 +34,3 @@ vi.stubGlobal('ResizeObserver', ResizeObserverMock)
 
 // stub jest globally. This is needed incase jest is being directly referenced in the code.
 vi.stubGlobal('jest', vi)
-
-// stub localStorage globally.This is needed because modules like storage.ts reference localStorage directly
-vi.stubGlobal('localStorage', globalThis.localStorage)

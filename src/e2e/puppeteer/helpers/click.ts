@@ -1,5 +1,6 @@
 import { JSHandle } from 'puppeteer'
 import { page } from '../setup'
+import waitForSelector from './waitForSelector'
 
 interface Options {
   /** Click on the inside edge of the editable. Default: left. */
@@ -27,16 +28,17 @@ const click = async (
     )
   }
 
-  // if nodeHandleOrSelector is a selector and there is no text offset or x,y offset, simply call page.click or page.tap
+  // otherwise if nodeHandleOrSelector is a selector, fetch the node handle
+  const nodeHandle =
+    typeof nodeHandleOrSelector === 'string'
+      ? await waitForSelector(nodeHandleOrSelector)
+      : nodeHandleOrSelector.asElement()
+
+  // if nodeHandleOrSelector is a selector and there is no text offset or x,y offset, simply call page.click or page.tap without having to fetch the bounding box and click on specific coordinates
   if (typeof nodeHandleOrSelector === 'string' && !offset && !x && !y) {
     return page[isMobile ? 'tap' : 'click'](nodeHandleOrSelector)
   }
 
-  // otherwise if nodeHandleOrSelector is a selector, fetch the node handle
-  const nodeHandle =
-    typeof nodeHandleOrSelector === 'string'
-      ? await page.waitForSelector(nodeHandleOrSelector, { timeout: 1000 })
-      : (nodeHandleOrSelector as JSHandle).asElement()!
   const boundingBox = await nodeHandle?.boundingBox()
 
   if (!boundingBox) throw new Error('Bounding box of element not found.')

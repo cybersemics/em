@@ -26,7 +26,7 @@ import head from '../util/head'
 import pathToContext from '../util/pathToContext'
 
 /**
- * Sets the cursor on a thought.
+ * Sets the cursor on a thought. The cursor is represented as a Path, which is an array of thought IDs from the root to the thought. The root is represented by null, not by an empty array or [HOME_TOKEN].
  */
 const setCursor = (
   state: State,
@@ -54,19 +54,25 @@ const setCursor = (
     preserveMulticursor?: boolean
   },
 ): State => {
-  if (path && path.length > 1 && path[0] === HOME_TOKEN) {
+  // ✗ []
+  // ✗ [HOME_TOKEN]
+  if (path && (path.length === 0 || (path.length === 1 && path[0] === HOME_TOKEN))) {
     // log error instead of throwing since it can cause the pullQueue to enter an infinite loop
     console.error(
       new Error(
-        `setCursor: Invalid Path ${JSON.stringify(
-          pathToContext(state, path),
-        )}. Non-root Paths should omit ${HOME_TOKEN}`,
+        `${JSON.stringify(pathToContext(state, path))} is not a valid cursor. The root node is represented by null.`,
       ),
     )
     return state
-  } else if (path && path.length === 0) {
+  }
+  // ✗ ["__ROOT__", ...]
+  else if (path && path[0] === HOME_TOKEN) {
     // log error instead of throwing since it can cause the pullQueue to enter an infinite loop
-    console.error(new Error(`[] is not a valid path. Use [${HOME_TOKEN}].`))
+    console.error(
+      new Error(
+        `setCursor: Invalid Path ${JSON.stringify(pathToContext(state, path))}. Non-root Paths should omit "${HOME_TOKEN}".`,
+      ),
+    )
     return state
   }
 

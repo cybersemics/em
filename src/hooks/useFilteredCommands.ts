@@ -5,11 +5,10 @@ import Command from '../@types/Command'
 import CommandId from '../@types/CommandId'
 import State from '../@types/State'
 import { isTouch } from '../browser'
-import { chainCommand, commandById, gestureString, globalCommands } from '../commands'
+import { chainCommand, gestureString, globalCommands } from '../commands'
 import gestureStore from '../stores/gesture'
 
 const visibleCommands = globalCommands.filter(command => !command.hideFromCommandPalette && !command.hideFromHelp)
-const selectAllCommand = commandById('selectAll')
 
 /** Returns true if the command can be executed. */
 const isExecutable = (state: State, command: Command) =>
@@ -31,29 +30,26 @@ const useFilteredCommands = (
     sortActiveCommandsFirst?: boolean
   },
 ): Command[] => {
-  const gestureInProgress = gestureStore.useSelector(state => state.gesture)
-  // True if the current gesture-in-progress starts with the Select All gesture or is the Select All gesture itself.
-  const selectAllInProgressInclusive = (gestureInProgress as string).startsWith(selectAllCommand.gesture as string)
+  const gestureInProgress = gestureStore.useSelector(state => state.gesture as string)
+  // The chainable command that is in progress (including when there are no other swipes). Otherwise null.
+  const chainableCommandInProgressInclusive: Command | undefined = visibleCommands.find(
+    command => command.isChainable && gestureInProgress.startsWith(gestureString(command)),
+  )
   const store = useStore()
 
   const possibleCommandsSorted = useMemo(() => {
-    // if Select All is in progress, extend the command list with all multicursor commands prefixed with Select All
-    const visibleCommandsChained = selectAllInProgressInclusive
-      ? [
-          // always include Select All, Gesture Cheatsheet, and Cancel commands
-          ...visibleCommands.filter(command => ['selectAll', 'openGestureCheatsheet', 'cancel'].includes(command.id)),
-          // append chainable multicursor commands
-          ...visibleCommands
-            .filter(
-              command =>
-                // platformCommandsOnly will filter out commands without gestures on mobile, but filter them out here anyway since they can't be used after Select All.
-                // It is more performant and it makes the Select All tests platformCommandsOnly agnostic.
-                // Unfortunately categorize is a special case since it has multicursor: false but can still handle multicursor in the action.
-                command.gesture && (command.multicursor || command.id === 'categorize'),
-            )
-            .map(chainCommand),
-        ]
-      : visibleCommands
+    // if a chainable command is in progress, extend the command list with chained commands (first command + second command)
+    const visibleCommandsChained = [
+      ...visibleCommands,
+      ...(chainableCommandInProgressInclusive
+        ? [
+            // append chainable commands
+            ...visibleCommands
+              .filter(command => chainableCommandInProgressInclusive.isChainable?.(command))
+              .map(command => chainCommand(chainableCommandInProgressInclusive, command)),
+          ]
+        : []),
+    ]
 
     const possibleCommands = visibleCommandsChained.filter(command => {
       // Always include help command in gesture mode
@@ -68,11 +64,14 @@ const useFilteredCommands = (
       // gesture
       if (isTouch) {
         const commandGesture = gestureString(command)
-        // collapse duplicate swipes when the command starts with the same character that selectAllCommand.gesture ends with
+        // collapse duplicate swipes when the command starts with the same character that the chainable gesture ends with
         const chainedGesture = commandGesture.slice(
-          selectAllInProgressInclusive && (selectAllCommand.gesture as string).endsWith(commandGesture[0]) ? 1 : 0,
+          chainableCommandInProgressInclusive &&
+            gestureString(chainableCommandInProgressInclusive).endsWith(commandGesture[0])
+            ? 1
+            : 0,
         )
-        return (!platformCommandsOnly || command.gesture) && chainedGesture.startsWith(gestureInProgress as string)
+        return (!platformCommandsOnly || command.gesture) && chainedGesture.startsWith(gestureInProgress)
       }
       // keyboard
       else {
@@ -159,7 +158,7 @@ const useFilteredCommands = (
     recentCommands,
     store,
     platformCommandsOnly,
-    selectAllInProgressInclusive,
+    chainableCommandInProgressInclusive,
   ])
 
   // persist possible commands to gestureStore so that they can be accessed by the onGestureSegment in commands.ts

@@ -1,4 +1,3 @@
-import { rgbToHex } from '@mui/material'
 import React, { FC } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
@@ -11,6 +10,7 @@ import getThoughtById from '../selectors/getThoughtById'
 import themeColors from '../selectors/themeColors'
 import commandStateStore from '../stores/commandStateStore'
 import head from '../util/head'
+import rgbToHex from '../util/rgbToHex'
 import Popover from './Popover'
 import TextColorIcon from './icons/TextColor'
 

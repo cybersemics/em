@@ -3,7 +3,6 @@ import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { textNoteRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
-import GesturePath from '../@types/GesturePath'
 import { isTouch } from '../browser'
 import { gestureString } from '../commands'
 import newThoughtCommand from '../commands/newThought'
@@ -58,7 +57,7 @@ const EmptyThoughtspace = ({ isTutorial }: { isTutorial?: boolean }) => {
                   Swipe{' '}
                   <GestureDiagram
                     inGestureContainer
-                    path={gestureString(newThoughtCommand) as GesturePath}
+                    path={gestureString(newThoughtCommand)}
                     size={30}
                     color={token('colors.gray66')}
                   />

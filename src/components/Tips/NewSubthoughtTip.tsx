@@ -2,7 +2,6 @@ import { FC } from 'react'
 import { useDispatch } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { token } from '../../../styled-system/tokens'
-import GesturePath from '../../@types/GesturePath'
 import TipId from '../../@types/TipId'
 import { dismissTipActionCreator as dismissTip } from '../../actions/dismissTip'
 import { showModalActionCreator as showModal } from '../../actions/showModal'
@@ -21,7 +20,7 @@ const NewSubthoughtTip: FC = () => {
     <span>
       You can add a new subthought by swiping
       <GestureDiagram
-        path={gestureString(newSubthoughtCommand) as GesturePath}
+        path={gestureString(newSubthoughtCommand)}
         size={30}
         color={token('colors.gray66')}
         cssRaw={css.raw({ verticalAlign: 'middle' })}

@@ -41,7 +41,7 @@ const LetterCasePicker: FC<{ size?: number }> = memo(({ size }) => {
         {casingTypes.map(type => (
           <div
             key={type}
-            title={type}
+            title={type.replace(/([a-z])([A-Z])/g, '$1 $2')}
             className={css({
               margin: '2px',
               lineHeight: '0',

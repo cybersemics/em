@@ -167,18 +167,19 @@ export default function BulletCursorOverlay({
       isMounted
     >
       {showContexts && simplePath?.length > 1 && (
-        <ContextBreadcrumbs
-          hidden
-          cssRaw={css.raw({
+        <div
+          className={css({
             /* Tighten up the space between the context-breadcrumbs and the thought (similar to the space above a note). */
             marginBottom: '-0.21675rem',
             /* Use padding-top instead of margin-top to ensure this gets included in the dynamic height of each thought.
             Otherwise the accumulated y value will not be correct. */
             paddingTop: '0.4335rem',
+            marginLeft: 'calc(1.1271rem - 14.5px)',
+            marginTop: '0.462rem',
           })}
-          path={parentOf(simplePath)}
-          homeContext={homeContext}
-        />
+        >
+          <ContextBreadcrumbs hidden path={parentOf(simplePath)} homeContext={homeContext} />
+        </div>
       )}
       <ThoughtPositioner path={path} hideBullet={hideBullet} cursorOverlay>
         {!isMulticursorActive && (
