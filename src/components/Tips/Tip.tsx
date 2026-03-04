@@ -11,7 +11,7 @@ import ProgressiveBlur from '../ProgressiveBlur'
 import CloseIcon from '../icons/CloseIcon'
 
 /** Distance in px at which a swipe fully fades and dismisses the tip. */
-const SWIPE_DISMISS_THRESHOLD = 150
+const SWIPE_DISMISS_THRESHOLD = 100
 
 /** A tip that gets displayed at the bottom of the window with a Liminal UI overlay design. */
 const Tip: FC<
@@ -212,7 +212,11 @@ const Tip: FC<
           textAlign: { base: 'left', lg: 'right' },
           padding: '1rem 1.5rem',
           paddingTop: '4.5rem',
-          paddingBottom: { base: 'calc(1rem + env(safe-area-inset-bottom))', lg: '1rem' },
+          /** paddingBottom: on devices that have safe area insets, add 1rem to the bottom inset and use that as padding.
+           *  for devices that don't, use 1.5rem to match the horizontal padding
+           *  for lg (desktop), always use 1.5rem
+          */
+          paddingBottom: { base: 'max(1.5rem, calc(1rem + env(safe-area-inset-bottom)))', lg: '1.5rem' },
         })}
         style={{ opacity: isDismissing ? 0 : swipeOpacity, transition: fadeOut, touchAction: 'none' }}
         onTouchStart={onTouchStart}
