@@ -6,8 +6,9 @@ const TOOLBAR_HEIGHT = 50
 const isInGestureZone = (x: number, y: number, leftHanded: boolean) => {
   const viewport = viewportStore.getState()
   const scrollZoneWidth = viewport.scrollZoneWidth
-
-  return (leftHanded ? x > scrollZoneWidth : x < viewport.innerWidth - scrollZoneWidth) && y > TOOLBAR_HEIGHT
+  const isInGestureZone =
+    (leftHanded ? x > scrollZoneWidth : x < viewport.innerWidth - scrollZoneWidth) && y > TOOLBAR_HEIGHT
+  return isInGestureZone
 }
 
 export default isInGestureZone
