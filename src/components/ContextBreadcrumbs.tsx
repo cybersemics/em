@@ -19,6 +19,7 @@ import head from '../util/head'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import strip from '../util/strip'
+import stripTags from '../util/stripTags'
 import FadeTransition from './FadeTransition'
 import HomeLink from './HomeLink'
 import Link from './Link'
@@ -61,7 +62,8 @@ const useEllipsizedThoughts = (
 
   // if charLimit is exceeded then replace the remaining characters with an ellipsis
   const charLimitedThoughts: OverflowPath = path.map((id, i) => {
-    const value = thoughtValuesLive[i]
+    const value = thoughtValuesLive[i] ? stripTags(thoughtValuesLive[i]) : null
+
     return {
       // It is possible that the thought is no longer in state, in which case value will be null.
       // The component is hopefully being unmounted, so the value shouldn't matter as long as it does not error out.
