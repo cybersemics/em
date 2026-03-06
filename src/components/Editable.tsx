@@ -56,6 +56,7 @@ import isDocumentEditable from '../util/isDocumentEditable'
 import strip from '../util/strip'
 import stripEmptyFormattingTags from '../util/stripEmptyFormattingTags'
 import trimHtml from '../util/trimHtml'
+import wrapHtml from '../util/wrapHtml'
 import ContentEditable, { ContentEditableEvent } from './ContentEditable'
 import useEditMode from './Editable/useEditMode'
 import useOnCopy from './Editable/useOnCopy'
@@ -121,6 +122,23 @@ const Editable = ({
   const rank = useSelector(state => getThoughtById(state, head(simplePath))?.rank || 0)
   const fontSize = useSelector(state => state.fontSize)
   const isCursorCleared = useSelector(state => !!isEditing && state.cursorCleared)
+
+  // When the cursor is cleared, there may be an existing style that wraps the entire thought.
+  // That style should be re-applied once they type something. (#3673)
+  const cursorClearedWrapper = useSelector(state => {
+    if (!isEditing || !state.cursorCleared) return null
+
+    const div = document.createElement('div')
+    div.innerHTML = value
+
+    if (
+      div.childNodes.length > 1 ||
+      div.firstChild?.nodeType === Node.TEXT_NODE ||
+      !(div.firstChild instanceof HTMLElement)
+    )
+      return null
+    return div.firstChild
+  })
   const hasMulticursor = useSelector(hasMulticursorSelector)
   // store the old value so that we have a transcendental head when it is changed
   const oldValueRef = useRef(value)
@@ -238,7 +256,10 @@ const Editable = ({
    * Debounced from onChangeHandler.
    * Since variables inside this function won't get updated between re-render so passing latest context, rank etc as params.
    */
-  const thoughtChangeHandler = (newValue: string, { rank, simplePath }: { rank: number; simplePath: SimplePath }) => {
+  const thoughtChangeHandler = (
+    newValue: string,
+    { force, rank, simplePath }: { force?: boolean; rank: number; simplePath: SimplePath },
+  ) => {
     // Note: Don't update innerHTML of contentEditable here. Since thoughtChangeHandler may be debounced, it may cause contentEditable to be out of sync.
     invalidStateError(null)
 
@@ -265,6 +286,7 @@ const Editable = ({
         // Otherwise, the selection offset will not be restored correctly on undo/redo.
         // This will have no effect on useEditMode, which does not subscribe to state.cursorOffset reactively.
         cursorOffset: selection.offsetThought() ?? undefined,
+        force,
       }),
     )
 
@@ -352,7 +374,7 @@ const Editable = ({
 
       editingValueUntrimmedStore.update(e.target.value)
 
-      const newValue = stripEmptyFormattingTags(addEmojiSpace(trimHtml(e.target.value)))
+      const newValue = stripEmptyFormattingTags(addEmojiSpace(trimHtml(wrapHtml(e.target.value, cursorClearedWrapper))))
 
       /* The realtime editingValue must always be updated (and not short-circuited) since oldValueRef is throttled. Otherwise, editingValueStore becomes stale and heights are not recalculated in VirtualThought.
 
@@ -423,17 +445,20 @@ const Editable = ({
         }
 
         // run the thoughtChangeHandler immediately if superscript changes or it's a url (also when it changes true to false)
-        if (transient || contextLengthChange || urlChange || isEmpty || isDivider(newValue)) {
+        // run it immediately is there is a style wrapper that needs to be applied to the editable after a clearThought action (#3673)
+        if (cursorClearedWrapper || transient || contextLengthChange || urlChange || isEmpty || isDivider(newValue)) {
           // update new supercript value and url boolean
           throttledChangeRef.current.flush()
-          thoughtChangeHandler(newValue, { rank, simplePath })
+          // if a style needs to be re-applied with cursorClearedWrapper, the editable needs to re-render immediately to prevent
+          // a flash of unstyled content
+          thoughtChangeHandler(newValue, { force: !!cursorClearedWrapper, rank, simplePath })
         } else {
           throttledChangeRef.current(newValue, { rank, simplePath })
         }
       })
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [readonly, uneditable /* TODO: options */],
+    [cursorClearedWrapper, readonly, uneditable /* TODO: options */],
   )
 
   /** Imports text that is pasted onto the thought. */
