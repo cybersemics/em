@@ -473,6 +473,40 @@ describe('grouping', () => {
     expect(exported).toEqual(expectedOutput)
   })
 
+  it('formatting edits should not be grouped with newThought on undo', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+          - b`,
+      }),
+      newThought({ value: 'c' }),
+      newThought({ value: 'd' }),
+      // content edit: 'd' → 'd1'
+      editThought(['d'], 'd1', { rankInContext: 3 }),
+      // formatting-only edit: same text content, different HTML (e.g. bold)
+      editThought(['d1'], '<b>d1</b>'),
+      // undo should only revert the formatting, not the content edit or the newThought
+      undo(),
+    ])
+
+    // formatting undone; thought still exists with plain text content
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toEqual(`- ${HOME_TOKEN}
+  - a
+  - b
+  - c
+  - d1`)
+
+    // a second undo reverts the content edit, but grouped with preceding newThought → thought deleted
+    store.dispatch(undo())
+    const exportedSecond = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exportedSecond).toEqual(`- ${HOME_TOKEN}
+  - a
+  - b
+  - c`)
+  })
+
   it('contiguous edits should be grouped', () => {
     store.dispatch([
       importText({
