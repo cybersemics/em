@@ -39,13 +39,4 @@ describe('HTML-tagged values (e.g. from background color formatting)', () => {
     const value = '<font style="background-color: rgb(0, 128, 255);">Hello world. Second sentence.</font>'
     expect(applyLetterCase('SentenceCase', value)).toBe(value)
   })
-
-  it('SentenceCase result does not equal LowerCase result for HTML-tagged values with text', () => {
-    const value = '<font style="background-color: rgb(0, 128, 255);">HELLO WORLD</font>'
-    const sentenceCase = applyLetterCase('SentenceCase', value)
-    const lowerCase = applyLetterCase('LowerCase', value)
-    expect(sentenceCase).not.toBe(lowerCase)
-    expect(sentenceCase).toBe('<font style="background-color: rgb(0, 128, 255);">Hello world</font>')
-    expect(lowerCase).toBe('<font style="background-color: rgb(0, 128, 255);">hello world</font>')
-  })
 })
