@@ -15,13 +15,17 @@ import getThoughtById from '../selectors/getThoughtById'
 import { isNavigation, isUndoable } from '../util/actionMetadata.registry'
 import headValue from '../util/headValue'
 import reducerFlow from '../util/reducerFlow'
+import stripTags from '../util/stripTags'
 
 /** Track a stream of editThought actions so that they can be merged,
- * allowing edits to be treated as a single undo/redo step when they involve adding new characters or else removing old characters. */
+ * allowing edits to be treated as a single undo/redo step when they involve adding new characters or else removing old characters.
+ * Formatting edits (where only HTML markup changes, not the plain text content) are tracked separately so they are not merged with content edits and do not trigger the newThought+edit double-undo behavior. */
 enum EditThoughtDirection {
   None = 'None',
   Longer = 'Longer',
   Shorter = 'Shorter',
+  /** A formatting-only edit: the plain text content is unchanged but the HTML markup differs (e.g. bold, italic, text color). */
+  Formatting = 'Formatting',
 }
 
 /** Interface for the setIsMulticursorExecuting action. */
@@ -243,16 +247,20 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         return newState
       }
 
-      // Determine if an edit is an addition or a deletion
+      // Determine if an edit is an addition, deletion, or formatting-only change.
+      // Formatting edits change the HTML markup but not the plain text content (e.g. bold, italic, text color).
+      // They are kept separate from content edits so they do not merge with them and do not trigger the newThought+edit double-undo.
       const editThoughtDirection = isEditThoughtAction(action)
-        ? action.newValue.length > action.oldValue.length
-          ? EditThoughtDirection.Longer
-          : EditThoughtDirection.Shorter
+        ? stripTags(action.newValue) === stripTags(action.oldValue)
+          ? EditThoughtDirection.Formatting
+          : action.newValue.length > action.oldValue.length
+            ? EditThoughtDirection.Longer
+            : EditThoughtDirection.Shorter
         : EditThoughtDirection.None
 
       // Some actions are merged together into a single undo/redo patch.
       // - Navigation actions are merged with the previous non-navigation action. This matches the behavior of most word processors where undo will revert the last destructive action, and the cursor will be restored to where it was before. For example, if the user edits 'a' to 'aa', moves the cursor to 'b', and then undoes, the cursor will be restored to 'aa' then the edit will be undone.
-      // - Contiguous edits are merged into a single edit action. For example, if the user edits 'a' to 'ab' and then 'ab' to 'abc', the undo will revert to 'a' in one step.
+      // - Contiguous edits in the same direction are merged into a single edit action. For example, if the user edits 'a' to 'ab' and then 'ab' to 'abc', the undo will revert to 'a' in one step. Formatting edits (Formatting direction) are never merged with content edits (Longer/Shorter) since they have a different direction value.
       // - The closeAlert action is merged with the previous action so that the alert can be undone.
       // - All actions during the execution of a multicursor command will be merged together. The prevous action will always be setIsMulticursorExecuting.
       // - Chained commands will be merged into the previous command, e.g. Select All + Categorize
