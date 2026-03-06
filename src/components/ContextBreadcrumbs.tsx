@@ -18,7 +18,6 @@ import fastClick from '../util/fastClick'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
-import strip from '../util/strip'
 import stripTags from '../util/stripTags'
 import FadeTransition from './FadeTransition'
 import HomeLink from './HomeLink'
@@ -73,10 +72,8 @@ const useEllipsizedThoughts = (
       // add ellipsized label
       ...(!disabled && value != null
         ? {
-            label: strip(
-              // subtract 2 so that additional '...' is still within the char limit
-              value.length > charLimit! - 2 ? value.slice(0, charLimit! - 2) + '...' : value,
-            ),
+            // subtract 2 so that additional '...' is still within the char limit
+            label: value.length > charLimit! - 2 ? value.slice(0, charLimit! - 2) + '...' : value,
           }
         : {}),
     }
