@@ -159,7 +159,9 @@ describe('undo', () => {
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
-    expect(exported).toEqual(`- ${HOME_TOKEN}`)
+    // only importText is undone; the preceding newThought still exists as an empty thought
+    expect(exported).toEqual(`- ${HOME_TOKEN}
+  - ${''}`)
   })
 
   it('cursor should restore to same thought if the thought has been edited after undo', () => {
@@ -449,7 +451,7 @@ describe('grouping', () => {
     expect(exportedAfterSecondUndo).toEqual(expectedOutputAfterSecondUndo)
   })
 
-  it('newThought action should be grouped with the succeeding patch', () => {
+  it('newThought action should not be grouped with the succeeding editThought patch', () => {
     store.dispatch([
       importText({
         text: `
@@ -459,18 +461,32 @@ describe('grouping', () => {
       newThought({ value: 'c' }),
       newThought({ value: 'd' }),
       editThought(['d'], 'd1', { rankInContext: 3 }),
-      // undo thought change and preceding newThought action
+      // undo only the thought change, not the preceding newThought action
       undo(),
     ])
 
+    // only the edit is undone; thought 'd' still exists
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
     const expectedOutput = `- ${HOME_TOKEN}
   - a
   - b
-  - c`
+  - c
+  - d`
 
     expect(exported).toEqual(expectedOutput)
+
+    // a second undo removes the newThought
+    store.dispatch(undo())
+
+    const exportedAfterSecondUndo = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+
+    const expectedOutputAfterSecondUndo = `- ${HOME_TOKEN}
+  - a
+  - b
+  - c`
+
+    expect(exportedAfterSecondUndo).toEqual(expectedOutputAfterSecondUndo)
   })
 
   it('contiguous edits should be grouped', () => {
