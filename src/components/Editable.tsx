@@ -17,7 +17,7 @@ import { newThoughtActionCreator as newThought } from '../actions/newThought'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import { tutorialNextActionCreator as tutorialNext } from '../actions/tutorialNext'
-import { isMac, isTouch } from '../browser'
+import { isMac, isSafari, isTouch } from '../browser'
 import { commandEmitter } from '../commands'
 import {
   EDIT_THROTTLE,
@@ -49,6 +49,7 @@ import addEmojiSpace from '../util/addEmojiSpace'
 import containsURL from '../util/containsURL'
 import ellipsize from '../util/ellipsize'
 import equalPath from '../util/equalPath'
+import getNodeOffsetForVoidArea from '../util/getNodeOffsetForVoidArea'
 import haptics from '../util/haptics'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
@@ -126,6 +127,7 @@ const Editable = ({
   const oldValueRef = useRef(value)
   const nullRef = useRef<HTMLInputElement>(null)
   const contentRef = editableRef || nullRef
+  // const overlayRef = useRef<HTMLDivElement>(null)
   const isCursor = useSelector(state => equalPath(path, state.cursor))
   const editingOrOnCursor = useSelector(state => isCursor || state.isKeyboardOpen)
   // Stop dragover events from propagating up on non-cursor thoughts or notes, otherwise text selection drag-and-drop will be canceled by
@@ -155,6 +157,9 @@ const Editable = ({
   //   hasNoteFocus,
   //   isCursorCleared,
   // })
+  const pendingCaretOffsetRef = useRef<number | null>(null)
+  const touchStartPosRef = useRef<{ x: number; y: number } | null>(null)
+  const SCROLL_THRESHOLD_PX = 10
 
   const childrenLabel = useSelector(state => {
     const labelId = findDescendant(state, parentId, '=label')
@@ -527,6 +532,23 @@ const Editable = ({
     [value, setCursorOnThought],
   )
 
+  /** Sets the caret offset. */
+  const setCaretOffset = useCallback(
+    (nodeOffset: number) => {
+      //Directly set the DOM selection to ensure the caret moves immediately
+      selection.set(contentRef.current, { offset: nodeOffset })
+
+      // Update Redux cursor state
+      dispatch(
+        setCursor({
+          path,
+          offset: nodeOffset,
+        }),
+      )
+    },
+    [dispatch, path, contentRef],
+  )
+
   const onMouseDown = useCallback(
     (e: React.MouseEvent) => {
       // If CMD/CTRL is pressed, don't focus the editable.
@@ -547,7 +569,24 @@ const Editable = ({
           bottomMargin: fontSize * 2,
         })
 
-        allowDefaultSelection()
+        // Handle manual caret offset for non-touch devices only
+        if (!isTouch || !isSafari()) {
+          const nodeOffset = getNodeOffsetForVoidArea(contentRef.current, {
+            clientX: e.clientX,
+            clientY: e.clientY,
+          })
+
+          // nodeOffset is null only when the click is outside the editable bounds.
+          // Note: nodeOffset can be 0 (beginning of text) which is a valid offset.
+          if (nodeOffset !== null) {
+            e.preventDefault()
+            setCaretOffset(nodeOffset)
+          } else {
+            allowDefaultSelection()
+          }
+        } else {
+          allowDefaultSelection()
+        }
       }
       // There are areas on the outside edge of the thought that will fail to trigger onTouchEnd.
       // In those cases, it is best to prevent onFocus or onClick, otherwise keyboard is open will be incorrectly activated.
@@ -557,7 +596,7 @@ const Editable = ({
         e.preventDefault()
       }
     },
-    [contentRef, editingOrOnCursor, fontSize, allowDefaultSelection, hasMulticursor],
+    [contentRef, editingOrOnCursor, fontSize, allowDefaultSelection, hasMulticursor, setCaretOffset],
   )
 
   /** Sets the cursor on the thought on touchend or click. Handles hidden elements, drags, and editing mode. */
@@ -614,6 +653,67 @@ const Editable = ({
     },
     [disabled, dispatch, editingOrOnCursor, isVisible, setCursorOnThought],
   )
+
+  // Manually attach touchstart listener with { passive: false } to allow preventDefault
+  useEffect(() => {
+    if (!isTouch || !isSafari()) return
+    const editable = contentRef.current
+    if (!editable) return
+
+    /** Handle touch start event to set the pending caret offset and prevent default behavior when tapping on a void area. */
+    const onTouchStart = (e: TouchEvent) => {
+      if (editingOrOnCursor && !hasMulticursor && e.touches.length > 0) {
+        const touch = e.touches[0]
+        if (!touch) return
+        const pos = { x: touch.clientX, y: touch.clientY }
+        const nodeOffset = getNodeOffsetForVoidArea(editable, {
+          clientX: touch.clientX,
+          clientY: touch.clientY,
+        })
+
+        if (nodeOffset !== null) {
+          e.preventDefault()
+          pendingCaretOffsetRef.current = nodeOffset
+        } else {
+          allowDefaultSelection()
+        }
+        // update the touch start position
+        touchStartPosRef.current = pos
+      }
+    }
+
+    /** Handle touch move event to cancel the pending caret offset if the user scrolls. */
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length > 0 && touchStartPosRef.current) {
+        const touch = e.touches[0]
+        const dx = touch.clientX - touchStartPosRef.current.x
+        const dy = touch.clientY - touchStartPosRef.current.y
+        if (Math.sqrt(dx * dx + dy * dy) > SCROLL_THRESHOLD_PX) {
+          pendingCaretOffsetRef.current = null
+        }
+      }
+    }
+
+    /** Handle touch end event to set the caret offset. */
+    const handleTouchEnd = (e: TouchEvent) => {
+      const offset = pendingCaretOffsetRef.current
+
+      if (offset !== null && e.changedTouches.length > 0) {
+        e.preventDefault()
+        setCaretOffset(offset)
+      }
+      pendingCaretOffsetRef.current = null
+      touchStartPosRef.current = null
+    }
+    editable.addEventListener('touchstart', onTouchStart, { passive: false })
+    editable.addEventListener('touchmove', handleTouchMove, { passive: true })
+    editable.addEventListener('touchend', handleTouchEnd, { passive: false })
+    return () => {
+      editable.removeEventListener('touchstart', onTouchStart)
+      editable.removeEventListener('touchmove', handleTouchMove)
+      editable.removeEventListener('touchend', handleTouchEnd)
+    }
+  }, [contentRef, editingOrOnCursor, hasMulticursor, allowDefaultSelection, setCaretOffset])
 
   return (
     <ContentEditable
