@@ -81,7 +81,7 @@ interface EditableProps {
   onEdit?: (args: { path: Path; oldValue: string; newValue: string }) => void
 }
 
-/* If value is wrapped in a formatting tag, return an ElementNode representing that tag. Otherwise, return null. */
+/** If value is wrapped in a formatting tag, return an ElementNode representing that tag. Otherwise, return null. */
 const getElementNodeWrapper = (value: string) => {
   const div = document.createElement('div')
   div.innerHTML = value
