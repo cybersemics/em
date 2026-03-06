@@ -153,7 +153,7 @@ const undoReducer = (state: State, undoPatches: Patch[]): State => {
 
   if (!undoPatches.length) return state
 
-  const undoTwice = isNavigation(lastAction) && isUndoable(penultimateAction)
+  const undoTwice = isNavigation(lastAction) ? isUndoable(penultimateAction) : penultimateAction === 'newThought'
 
   const poppedUndoPatches = undoTwice ? [penultimateUndoPatch, lastUndoPatch] : [lastUndoPatch]
 
@@ -174,7 +174,7 @@ const redoReducer = (state: State, redoPatches: Patch[]): State => {
 
   if (!redoPatches.length) return state
 
-  const redoTwice = isNavigation(lastAction)
+  const redoTwice = lastAction && (isNavigation(lastAction) || lastAction === 'newThought')
 
   const poppedRedoPatches = redoTwice ? [nthLast(redoPatches, 2), lastRedoPatch] : [lastRedoPatch]
 
