@@ -134,7 +134,6 @@ const Tip: FC<
 
   const value = isVisible ? children : null
 
-  const fadeIn = `fadein ${durations.get('medium')}ms ease`
   const dismissDuration = isSwipeDismiss.current ? 'fast' : 'medium'
   const fadeOut = isDismissing ? `opacity ${durations.get(dismissDuration)}ms ease` : undefined
 
@@ -197,7 +196,7 @@ const Tip: FC<
         </div>
         <div
           className={css({
-            animation: fadeIn,
+            animation: 'fadein {durations.medium} ease',
             position: 'absolute',
             inset: 0,
             background: 'linear-gradient(180deg, {colors.bgTransparent} 0%, {colors.bg} 100%)',
@@ -209,21 +208,21 @@ const Tip: FC<
       {/* Layer 2: Glow image */}
       <div
         className={css({
-          animation: `fademostlyin ${durations.get('medium')}ms ease`,
+          animation: 'fademostlyin {durations.medium} ease',
           position: 'absolute',
           pointerEvents: 'none',
-          opacity: 0.85,
+          opacity: 1,
           backgroundImage: 'url(/img/tip/tip-glow-alpha.webp)',
           backgroundRepeat: 'no-repeat',
           backgroundSize: 'cover',
           backgroundPosition: 'top right',
           // The glow is intentionally much larger than the viewport.
           // Only ~40% is visible; the rest overflows off-screen and is clipped by the parent's overflow:hidden.
-          width: { base: 'calc(100vw + 16px)', lg: 600 },
+          width: { base: 'calc(100vw + 32px)', lg: 600 },
           height: 300,
           // Mobile portrait: bottom-left, flipped horizontally
-          left: { base: -8, lg: 'auto' },
-          right: { base: 'auto', lg: -8 },
+          left: { base: -16, lg: 'auto' },
+          right: { base: 'auto', lg: -16 },
           transform: { base: 'scaleX(-1)', lg: 'none' },
           filter: 'blur(8px)',
         })}
@@ -233,7 +232,7 @@ const Tip: FC<
       {/* Layer 3: Content */}
       <div
         className={css({
-          animation: fadeIn,
+          animation: 'fadein {durations.medium} ease',
           position: 'relative',
           // prevent mix-blend-mode and backdrop-filter from affecting each other
           isolation: 'isolate',
