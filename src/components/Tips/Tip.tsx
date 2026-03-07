@@ -17,15 +17,15 @@ const SWIPE_DISMISS_THRESHOLD = 100
  * A tip that gets displayed at the bottom of the screen, with a Liminal UI design style.
  *
  * The component is composed of three visual layers (back to front):
- *   1. Gradient overlay + progressive blur — darkens and blurs the content behind the tip.
- *   2. Glow image — a decorative glow background loaded from a pre-rendered webp image file.
- *   3. Content — the TIP label, message text, and Clear button.
+ * 1. Gradient overlay + progressive blur — darkens and blurs the content behind the tip.
+ * 2. Glow image — a decorative glow background loaded from a pre-rendered webp image file.
+ * 3. Content — the TIP label, message text, and Clear button.
  *
  * There are two ways to dismiss the tip:
- *   - Tap/click the Clear button – the tip fades out
- *   - On touch devices, swipe anywhere on the tip: the tip fades out tracking the user's cumulative swipe distance.
- *     A combined distance + velocity score determines whether the tip is dismissed on touch end.
- *     If the score is below the threshold, the opacity snaps back with a framer-motion spring.
+ * - Tap/click the Clear button – the tip fades out.
+ * - On touch devices, swipe anywhere on the tip: the tip fades out tracking the user's cumulative swipe distance.
+ * A combined distance + velocity score determines whether the tip is dismissed on touch end.
+ * If the score is below the threshold, the opacity snaps back with a framer-motion spring.
  */
 const Tip: FC<
   PropsWithChildren<{
@@ -61,13 +61,16 @@ const Tip: FC<
    * Called when the CSS fade-out transition ends. Dispatches the actual dismissTip action
    * and resets all dismissal state so the component is ready for next use.
    */
-  const handleFadeOutEnd = useCallback((e: React.TransitionEvent) => {
-    // Ignore transitionend events bubbling up from children (e.g. the clear button's hover/active transitions).
-    if (e.target !== e.currentTarget) return
-    dispatch(dismissTip())
-    setIsDismissing(false)
-    setSwipeDistance(0)
-  }, [dispatch])
+  const handleFadeOutEnd = useCallback(
+    (e: React.TransitionEvent) => {
+      // Ignore transitionend events bubbling up from children (e.g. the clear button's hover/active transitions).
+      if (e.target !== e.currentTarget) return
+      dispatch(dismissTip())
+      setIsDismissing(false)
+      setSwipeDistance(0)
+    },
+    [dispatch],
+  )
 
   /** Records the initial touch position and resets velocity/distance for a new swipe gesture. */
   const onTouchStart = useCallback((e: React.TouchEvent) => {
@@ -104,6 +107,9 @@ const Tip: FC<
     lastTouch.current = { x: touch.pageX, y: touch.pageY, time: now }
   }, [])
 
+  /** Opacity derived from swipe progress. Linearly decreases from 1 → 0 as the user swipes. */
+  const swipeOpacity = Math.max(0, 1 - swipeDistance / SWIPE_DISMISS_THRESHOLD)
+
   /**
    * On touch end, decides whether to dismiss or snap back based on a combined score
    * of cumulative distance and velocity. This lets a short fast flick dismiss the tip
@@ -137,13 +143,8 @@ const Tip: FC<
       }
       velocity.current = 0
     },
-    [dispatch, swipeDistance],
+    [dispatch, swipeDistance, swipeOpacity],
   )
-
-  // ── Derived values ──────────────────────────────────────────────────────
-
-  /** Opacity derived from swipe progress. Linearly decreases from 1 → 0 as the user swipes. */
-  const swipeOpacity = Math.max(0, 1 - swipeDistance / SWIPE_DISMISS_THRESHOLD)
 
   // ── Blur opacity (MotionValue) ──────────────────────────────────────────
   // The blur layer uses a framer-motion MotionValue instead of inline CSS opacity.
