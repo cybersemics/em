@@ -208,13 +208,16 @@ const Tip: FC<
       {/* Layer 2: Glow image */}
       <div
         className={css({
-          animation: 'fademostlyin {durations.medium} ease',
+          animation: 'fadein {durations.medium} ease',
           position: 'absolute',
           pointerEvents: 'none',
           opacity: 1,
           backgroundImage: 'url(/img/tip/tip-glow-alpha.webp)',
           backgroundRepeat: 'no-repeat',
-          backgroundSize: 'cover',
+          backgroundSize: {
+            base: '200%',
+            lg: 'cover',
+          },
           backgroundPosition: 'top right',
           // The glow is intentionally much larger than the viewport.
           // Only ~40% is visible; the rest overflows off-screen and is clipped by the parent's overflow:hidden.
@@ -226,7 +229,7 @@ const Tip: FC<
           transform: { base: 'scaleX(-1)', lg: 'none' },
           filter: 'blur(8px)',
         })}
-        style={{ opacity: isDismissing ? 0 : swipeOpacity * 0.85, transition: fadeOut }}
+        style={{ opacity: isDismissing ? 0 : swipeOpacity, transition: fadeOut }}
       />
 
       {/* Layer 3: Content */}
