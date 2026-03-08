@@ -36,6 +36,7 @@ import _ from 'lodash'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
+import { token } from '../../styled-system/tokens'
 import { longPressActionCreator as longPress } from '../actions/longPress'
 import { toggleSidebarActionCreator } from '../actions/toggleSidebar'
 import { isSafari } from '../browser'
@@ -357,14 +358,12 @@ const SidebarOverlay2 = ({ width, opacity, hue, sat }: { width: string, opacity:
         left: 0,
         bottom: 0,
         backgroundImage: 'url(/img/sidebar/overlay-layer-2.avif)',
-        backgroundSize: '90%',
+        backgroundSize: '90% 800px',
         backgroundPosition: 'top left',
         backgroundRepeat: 'no-repeat',
         mixBlendMode: 'normal',
         pointerEvents: 'none',
         zIndex: 'sidebar',
-        // Fade off the rightmost edge of the overlay to prevent harsh cutoff against the main content
-        
       })}
     />
   )
@@ -614,12 +613,15 @@ const Sidebar = () => {
   // Derived values
   // ============================
 
+  /** Breakpoint (in px) at which the sidebar switches from full-width mobile to fixed-width desktop. */
+  const desktopBreakpoint = parseInt(token('breakpoints.lg'))
+
   /**
    * Sidebar width as a CSS value.
-   * - Mobile (<768px): full viewport width so the sidebar covers the entire screen
-   * - Desktop (≥768px): fixed 400px, leaving the main content partially visible
+   * - Mobile: full viewport width so the sidebar covers the entire screen
+   * - Desktop: fixed 400px, leaving the main content partially visible
    */
-  const width = innerWidth < 768 ? '100%' : '400px'
+  const width = innerWidth < desktopBreakpoint ? '100%' : '400px'
 
   /**
    * Sidebar width in raw pixels. Needed for:
@@ -627,7 +629,7 @@ const Sidebar = () => {
    * - Progress-based animation transforms (mapping x position to opacity, etc.)
    * - Swipe gesture hit detection (checking if finger is within drawer bounds)
    */
-  const widthPx = innerWidth < 768 ? innerWidth : 400
+  const widthPx = innerWidth < desktopBreakpoint ? innerWidth : 400
 
   /**
    * The current x-axis translation of the sidebar drawer.
@@ -983,7 +985,7 @@ const Sidebar = () => {
                  * screen on mobile, users need a way to close it without swiping.
                  * Tapping this strip closes the sidebar.
                  */}
-                {innerWidth < 768 && (
+                {innerWidth < desktopBreakpoint && (
                   <div
                     aria-hidden='true'
                     onClick={() => toggleSidebar(false)}
