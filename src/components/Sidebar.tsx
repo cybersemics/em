@@ -61,10 +61,11 @@ import ChevronImg from './ChevronImg'
  */
 const EASE_OUT = [0.16, 0.6, 0.2, 1] as const
 
-/** When true, the dropdown backdrop uses a blur effect to separate it from the content below.
- * When false, the content below fades to lower opacity instead.
- * Enabled on Safari/iOS where backdrop-filter blur performs well. */
-const DROPDOWN_BLUR = isSafari()
+/** Whether to enable blur effects throughout the sidebar (overlay filters, dropdown backdrop).
+ * Safari/iOS composites at high bit depth and handles blur efficiently, so blur is enabled
+ * to reduce gradient banding. Chromium clamps to 8-bit and blur causes expensive per-frame
+ * recompositing, so it is disabled — using opacity fades and dithering instead. */
+const BLUR_ENABLED = isSafari()
 
 /**
  * A gentler ease-out curve used specifically when *closing* the sidebar.
@@ -184,10 +185,10 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
           <>
             {/*
              * Full-screen backdrop behind the dropdown.
-             * When DROPDOWN_BLUR is true: uses backdrop-filter blur to separate dropdown from content.
+             * When BLUR_ENABLED is true: uses backdrop-filter blur to separate dropdown from content.
              * When false: just a transparent click target (content fades via opacity instead).
              */}
-            {DROPDOWN_BLUR ? (
+            {BLUR_ENABLED ? (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -312,7 +313,7 @@ const SidebarOverlay1 = ({ opacity, expanded, hue, sat }: { width: string, opaci
 
   // Safari: include blur to reduce gradient banding (Safari composites at high bit depth so blur is cheap).
   // Chromium: omit blur to avoid expensive per-frame recompositing during animations.
-  const blur = isSafari() ? 'blur(4px) ' : ''
+  const blur = BLUR_ENABLED ? 'blur(4px) ' : ''
   const filter = useTransform([brightness, hue, sat], ([b, h, s]) => `${blur}brightness(${b}) hue-rotate(${h}deg) saturate(${s})`)
 
   // Style variants for the collapsed and expanded states.
@@ -363,7 +364,7 @@ const SidebarOverlay1 = ({ opacity, expanded, hue, sat }: { width: string, opaci
  */
 const SidebarOverlay2 = ({ width, opacity, hue, sat }: { width: string, opacity: MotionValue<number>, hue: MotionValue<number>, sat: MotionValue<number> }) => {
   // Safari: include blur to reduce gradient banding. Chromium: omit for performance.
-  const blur = isSafari() ? 'blur(8px) ' : ''
+  const blur = BLUR_ENABLED ? 'blur(8px) ' : ''
   const filter = useTransform([hue, sat], ([h, s]) => `${blur}hue-rotate(${h}deg) saturate(${s})`)
 
   return (
@@ -375,7 +376,7 @@ const SidebarOverlay2 = ({ width, opacity, hue, sat }: { width: string, opacity:
         left: 0,
         bottom: 0,
         backgroundImage: 'url(/img/sidebar/overlay-layer-2.avif)',
-        backgroundSize: '90% 800px',
+        backgroundSize: '100% 800px',
         backgroundPosition: 'top left',
         backgroundRepeat: 'no-repeat',
         mixBlendMode: 'normal',
@@ -1126,7 +1127,7 @@ const Sidebar = () => {
                     <motion.div
                       animate={{
                         paddingTop: dropdownOpen ? `${dropdownHeight}px` : '0px',
-                        ...(DROPDOWN_BLUR
+                        ...(BLUR_ENABLED
                           ? { filter: dropdownOpen ? 'blur(8px)' : 'blur(0px)' }
                           : { opacity: dropdownOpen ? 0.3 : 1 }),
                       }}
@@ -1152,12 +1153,12 @@ const Sidebar = () => {
                         padding: '0 1em',
                       })}
                       style={{
-                        maskImage: !DROPDOWN_BLUR && dropdownOpen
+                        maskImage: !BLUR_ENABLED && dropdownOpen
                           ? `linear-gradient(to bottom, transparent ${dropdownHeight}px, black ${dropdownHeight + 48}px)`
                           : isScrolled
                             ? 'linear-gradient(to bottom, transparent, black 48px)'
                             : 'none',
-                        WebkitMaskImage: !DROPDOWN_BLUR && dropdownOpen
+                        WebkitMaskImage: !BLUR_ENABLED && dropdownOpen
                           ? `linear-gradient(to bottom, transparent ${dropdownHeight}px, black ${dropdownHeight + 48}px)`
                           : isScrolled
                             ? 'linear-gradient(to bottom, transparent, black 48px)'
