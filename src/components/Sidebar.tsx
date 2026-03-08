@@ -196,15 +196,11 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
                 {...fastClick(() => setIsOpen(false))}
                 className={css({
                   position: 'absolute',
-                  top: 'calc(100% - 16px)',
-                  left: '-16px',
+                  top: '100%',
+                  left: 0,
                   right: 0,
                   height: '100vh',
-                  backdropFilter: 'blur(8px)',
-                  background: 'rgba(0, 0, 0, 0.001)',
                   cursor: 'pointer',
-                  maskImage: 'linear-gradient(to bottom, transparent, black 16px)',
-                  WebkitMaskImage: 'linear-gradient(to bottom, transparent, black 16px)',
                 })}
               />
             ) : (
@@ -1074,6 +1070,8 @@ const Sidebar = () => {
                       lineHeight: 1.8,
                       userSelect: 'none',
                       position: 'relative',
+                      overflow: 'hidden',
+                      isolation: 'isolate',
                     })}
                   >
                     {/* Visually hidden title for screen readers – announces the active section name */}
@@ -1124,7 +1122,9 @@ const Sidebar = () => {
                     <motion.div
                       animate={{
                         paddingTop: dropdownOpen ? `${dropdownHeight}px` : '0px',
-                        ...(!DROPDOWN_BLUR ? { opacity: dropdownOpen ? 0.3 : 1 } : {}),
+                        ...(DROPDOWN_BLUR
+                          ? { filter: dropdownOpen ? 'blur(8px)' : 'blur(0px)' }
+                          : { opacity: dropdownOpen ? 0.3 : 1 }),
                       }}
                       transition={{ duration: durations.get('medium') / 1000, ease: EASE_OUT }}
                       data-scroll-at-edge
