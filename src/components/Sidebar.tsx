@@ -61,6 +61,11 @@ import ChevronImg from './ChevronImg'
  */
 const EASE_OUT = [0.16, 0.6, 0.2, 1] as const
 
+/** When true, the dropdown backdrop uses a blur effect to separate it from the content below.
+ * When false, the content below fades to lower opacity instead.
+ * Enabled on Safari/iOS where backdrop-filter blur performs well. */
+const DROPDOWN_BLUR = isSafari()
+
 /**
  * A gentler ease-out curve used specifically when *closing* the sidebar.
  * The less aggressive start (x1=0.25 vs 0.16) prevents the sidebar from
@@ -179,34 +184,46 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
           <>
             {/*
              * Full-screen backdrop behind the dropdown.
-             * - Positioned absolutely starting from below the header row
-             * - Has a subtle backdrop-filter blur to visually separate dropdown from content
-             * - The -16px offsets and mask-image compensate for the blur's edge artifacts
-             * - The nearly-transparent background (0.001 alpha) ensures the element is
-             *   interactive (clickable to dismiss) without visually obstructing content
+             * When DROPDOWN_BLUR is true: uses backdrop-filter blur to separate dropdown from content.
+             * When false: just a transparent click target (content fades via opacity instead).
              */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: durations.get('medium') / 1000, ease: EASE_OUT }}
-              {...fastClick(() => setIsOpen(false))}
-              className={css({
-                position: 'absolute',
-                // Set position cover the entire screen,
-                // adding extra padding to cover uneven edges
-                // created by the backdrop filter's blur
-                top: 'calc(100% - 16px)',
-                left: '-16px',
-                right: '-16px',
-                height: '100vh',
-                backdropFilter: 'blur(8px)',
-                background: 'rgba(0, 0, 0, 0.001)',
-                cursor: 'pointer',
-                maskImage: 'linear-gradient(to bottom, transparent, black 16px)',
-                WebkitMaskImage: 'linear-gradient(to bottom, transparent, black 16px)',
-              })}
-            />
+            {DROPDOWN_BLUR ? (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: durations.get('medium') / 1000, ease: EASE_OUT }}
+                {...fastClick(() => setIsOpen(false))}
+                className={css({
+                  position: 'absolute',
+                  top: 'calc(100% - 16px)',
+                  left: '-16px',
+                  right: 0,
+                  height: '100vh',
+                  backdropFilter: 'blur(8px)',
+                  background: 'rgba(0, 0, 0, 0.001)',
+                  cursor: 'pointer',
+                  maskImage: 'linear-gradient(to bottom, transparent, black 16px)',
+                  WebkitMaskImage: 'linear-gradient(to bottom, transparent, black 16px)',
+                })}
+              />
+            ) : (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: durations.get('medium') / 1000, ease: EASE_OUT }}
+                {...fastClick(() => setIsOpen(false))}
+                className={css({
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  height: '100vh',
+                  cursor: 'pointer',
+                })}
+              />
+            )}
             {/*
              * Dropdown menu containing the non-active sections.
              * Animates from height:0 → auto using Framer Motion's layout animation.
@@ -1105,7 +1122,10 @@ const Sidebar = () => {
                      *   in the Favorites drag-and-drop system
                      */}
                     <motion.div
-                      animate={{ paddingTop: dropdownOpen ? `${dropdownHeight}px` : '0px' }}
+                      animate={{
+                        paddingTop: dropdownOpen ? `${dropdownHeight}px` : '0px',
+                        ...(!DROPDOWN_BLUR ? { opacity: dropdownOpen ? 0.3 : 1 } : {}),
+                      }}
                       transition={{ duration: durations.get('medium') / 1000, ease: EASE_OUT }}
                       data-scroll-at-edge
                       onScroll={(e) => {
@@ -1128,8 +1148,16 @@ const Sidebar = () => {
                         padding: '0 1em',
                       })}
                       style={{
-                        maskImage: isScrolled ? 'linear-gradient(to bottom, transparent, black 48px)' : 'none',
-                        WebkitMaskImage: isScrolled ? 'linear-gradient(to bottom, transparent, black 48px)' : 'none',
+                        maskImage: !DROPDOWN_BLUR && dropdownOpen
+                          ? `linear-gradient(to bottom, transparent ${dropdownHeight}px, black ${dropdownHeight + 48}px)`
+                          : isScrolled
+                            ? 'linear-gradient(to bottom, transparent, black 48px)'
+                            : 'none',
+                        WebkitMaskImage: !DROPDOWN_BLUR && dropdownOpen
+                          ? `linear-gradient(to bottom, transparent ${dropdownHeight}px, black ${dropdownHeight + 48}px)`
+                          : isScrolled
+                            ? 'linear-gradient(to bottom, transparent, black 48px)'
+                            : 'none',
                       }}
                     >
                       {/* Render the active section's content component */}
