@@ -311,7 +311,7 @@ const SidebarOverlay1 = ({ opacity, expanded, hue, sat }: { width: string, opaci
   const brightness = useMotionValue(1)
 
   useEffect(() => {
-    animate(brightness, expanded ? 1.4 : 1, { duration: durations.get('medium') / 1000, ease: EASE_OUT })
+    animate(brightness, expanded ? 1.75 : 1, { duration: durations.get('medium') / 1000, ease: EASE_OUT })
   }, [expanded])
 
   const filter = useTransform([brightness, hue, sat], ([b, h, s]) => `blur(4px) brightness(${b}) hue-rotate(${h}deg) saturate(${s})`)
@@ -321,9 +321,9 @@ const SidebarOverlay1 = ({ opacity, expanded, hue, sat }: { width: string, opaci
   //   Width stays at 50% of native; height scales from 50% → 75% on expand.
   // backgroundPositionY: negative offset crops the top of the image, revealing
   //   only the lower glow region. Increases on expand to keep the glow centered.
-  const safeY = (px: number) => `calc(${px}px + env(safe-area-inset-top, 0px))`
+  const safeY = (px: number) => `calc(${px}px + env(safe-area-inset-top))`
   const collapsed = { backgroundSize: 'calc(1482px * 0.475) calc(744px * 0.475)', backgroundPositionY: safeY(-84) }
-  const open = { backgroundSize: 'calc(1482px * 0.475) calc(744px * 0.75)', backgroundPositionY: safeY(-144) }
+  const open = { backgroundSize: 'calc(1482px * 0.475) calc(744px * 0.825)', backgroundPositionY: safeY(-144) }
 
   return (
     <motion.div
