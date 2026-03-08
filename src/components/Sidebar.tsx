@@ -35,7 +35,7 @@ type SidebarSectionId = 'favorites' | 'recentlyEdited' | 'recentlyDeleted'
 type SidebarSection = {
   id: SidebarSectionId
   label: string
-  icon: React.ComponentType
+  icon: React.ComponentType<{ size?: number; fill?: string }>
   hue: number
   saturate: number
 }
@@ -53,7 +53,7 @@ const SECTIONS: SidebarSection[] = [
  */
 const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen, onDropdownHeight } : { sections: SidebarSection[], sectionId: SidebarSectionId, onSectionChange: (id: SidebarSectionId) => void, isOpen: boolean, setIsOpen: (open: boolean) => void, onDropdownHeight: (height: number) => void }) =>  {
   const dropdownRef = useRef<HTMLDivElement>(null)
-  const section = sections.find((s) => s.id === sectionId)
+  const section = sections.find((s) => s.id === sectionId)!
   const otherSections = sections.filter((s) => s.id !== sectionId)
 
   useEffect(() => {
@@ -76,7 +76,7 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
         <div className={css({ width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 })}>
           <section.icon size={28} fill='rgba(255, 255, 255, 0.75)' />
         </div>
-        <SidebarSectionLabel>{section.label}</SidebarSectionLabel>
+        <SidebarSectionLabel active>{section.label}</SidebarSectionLabel>
         <ChevronImg
           onClickHandle={() => setIsOpen(!isOpen)}
           additonalStyle={{
@@ -156,15 +156,12 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
 const SidebarSectionLabel = ({ children, active }: { children: React.ReactNode, active: boolean }) => {
   return (
     <div className={css({
-      backgroundClip: active ? 'text' : undefined,
-      WebkitTextFillColor: active ? 'transparent' : undefined,
       color: 'rgba(255, 255, 255, 0.75)',
       fontSize: '1.4rem',
       lineHeight: '1.4rem',
       letterSpacing: '-0.25px',
       marginTop: 4,
       fontWeight: 300
-      
     })}>{children}</div>
   )
 }
@@ -198,7 +195,7 @@ const SidebarOverlay1 = ({ width, opacity, expanded, expandedHeight, hue, sat }:
   return (
     <motion.div
       data-test-id={'sidebar-overlay-1'}
-      style={{ opacity, filter }}
+      style={{ opacity, filter, width: `calc(${width} + 64px)` }}
       initial={collapsed}
       animate={expanded ? open : collapsed}
       transition={{ duration: durations.get('medium') / 1000, ease: EASE_OUT }}
@@ -206,9 +203,8 @@ const SidebarOverlay1 = ({ width, opacity, expanded, expandedHeight, hue, sat }:
         position: 'absolute',
         top: 0,
         left: 0,
-        width,
         height: '100vh',
-        backgroundImage: 'url(/img/sidebar/overlay-layer-1.webp)',
+        backgroundImage: 'url(/img/sidebar/overlay-layer-1.avif)',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
         mixBlendMode: 'lighten',
@@ -225,16 +221,16 @@ const SidebarOverlay2 = ({ width, opacity, hue, sat }: { width: string, opacity:
 
   return (
     <motion.div
-      style={{ opacity, filter }}
+      style={{ opacity, filter, width }}
       className={css({
         position: 'absolute',
         top: 0,
         left: 0,
         bottom: 0,
-        width,
-        backgroundImage: 'url(/img/sidebar/overlay-layer-2.webp)',
-        backgroundSize: 'cover',
+        backgroundImage: 'url(/img/sidebar/overlay-layer-2.avif)',
+        backgroundSize: '100%',
         backgroundPosition: 'top center',
+        backgroundRepeat: 'no-repeat',
         mixBlendMode: 'screen',
         pointerEvents: 'none',
         zIndex: 'sidebar',
@@ -341,7 +337,6 @@ const Sidebar = () => {
   // ============================
   const [isSwiping, setIsSwiping] = useState(false)
   const showSidebar = useSelector(state => state.showSidebar)
-  const fontSize = useSelector(state => state.fontSize)
   const longPressState = useSelector(state => state.longPress)
   const dispatch = useDispatch()
   const [sectionId, setSectionId] = useState<SidebarSectionId>('favorites')
@@ -378,6 +373,10 @@ const Sidebar = () => {
 
   /** Ref to the drawer element, used to detect if touches are inside the drawer. */
   const drawerRef = useRef<HTMLDivElement>(null)
+
+  /** Mirror longPressState into a ref so document-level touch handlers always see the current value without re-registering. */
+  const longPressRef = useRef(longPressState)
+  longPressRef.current = longPressState
 
   /** MUI-style uncertainty threshold for direction detection (in pixels). */
   const UNCERTAINTY_THRESHOLD = 3
