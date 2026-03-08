@@ -385,16 +385,23 @@ const SidebarGradient = ({
   width,
   showSidebar,
   toggleSidebar,
+  hue,
+  sat,
 }: {
   opacity: MotionValue<number>
   width: string
   showSidebar: boolean
   toggleSidebar: (value: boolean) => void
-}) => (
+  hue: MotionValue<number>
+  sat: MotionValue<number>
+}) => {
+  const filter = useTransform([hue, sat], ([h, s]) => `hue-rotate(${h}deg) saturate(${s})`)
+
+  return (
   <motion.div
     aria-label='sidebar-gradient'
     aria-hidden='true'
-    style={{ opacity }}
+    style={{ opacity, filter }}
     onClick={() => toggleSidebar(false)}
     className={css({
       position: 'absolute',
@@ -404,9 +411,13 @@ const SidebarGradient = ({
       pointerEvents: showSidebar ? 'auto' : 'none',
       cursor: 'pointer',
       userSelect: 'none',
+      // Safari doesn't repaint filter changes on this element unless the
+      // element is promoted to its own compositing layer.
+      willChange: 'filter',
     })}
   />
-)
+  )
+}
 
 /**
  * The sidebar background – a fixed, full-screen layer that sits behind the
@@ -430,12 +441,16 @@ const SidebarBackground = ({
   showSidebar,
   toggleSidebar,
   width,
+  hue,
+  sat,
 }: {
   x: MotionValue<number>
   widthPx: number
   showSidebar: boolean
   toggleSidebar: (value: boolean) => void
   width: string
+  hue: MotionValue<number>
+  sat: MotionValue<number>
 }) => {
   // Derive opacity from sidebar x position, then apply cubic ease-in
   // so the background fades in gently and catches up as the sidebar settles.
@@ -472,13 +487,13 @@ const SidebarBackground = ({
        */}
       {isSafari() ? (
         <>
-          <SidebarGradient opacity={opacity} width={width} showSidebar={showSidebar} toggleSidebar={toggleSidebar} />
+          <SidebarGradient opacity={opacity} width={width} showSidebar={showSidebar} toggleSidebar={toggleSidebar} hue={hue} sat={sat} />
           <ProgressiveBlur direction='to right' minBlur={0} maxBlur={32} layers={4} width={width} opacity={opacity} />
         </>
       ) : (
         <>
           <ProgressiveBlur direction='to right' minBlur={0} maxBlur={32} layers={4} width={width} opacity={opacity} />
-          <SidebarGradient opacity={opacity} width={width} showSidebar={showSidebar} toggleSidebar={toggleSidebar} />
+          <SidebarGradient opacity={opacity} width={width} showSidebar={showSidebar} toggleSidebar={toggleSidebar} hue={hue} sat={sat} />
         </>
       )}
     </div>
@@ -927,6 +942,8 @@ const Sidebar = () => {
               showSidebar={showSidebar}
               toggleSidebar={toggleSidebar}
               width={width}
+              hue={hue}
+              sat={sat}
             />
 
             {/* Primary glow overlay (lighten blend) – responds to dropdown expansion */}
