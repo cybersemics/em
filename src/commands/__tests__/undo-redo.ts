@@ -413,7 +413,7 @@ describe('grouping', () => {
       }),
       setCursor(['b']),
       indent(),
-      editThought(['a', 'b'], 'b1', { rankInContext: 0 }),
+      editThought(['a', 'b'], 'b1'),
       cursorBack(),
       moveThoughtDown(),
       cursorDown(),
@@ -458,7 +458,7 @@ describe('grouping', () => {
       }),
       newThought({ value: 'c' }),
       newThought({ value: 'd' }),
-      editThought(['d'], 'd1', { rankInContext: 3 }),
+      editThought(['d'], 'd1'),
       // undo thought change and preceding newThought action
       undo(),
     ])
@@ -533,7 +533,7 @@ describe('grouping', () => {
           - d`,
       }),
       setCursor(null),
-      editThought(['a', 'b'], 'bd', { rankInContext: 0 }),
+      editThought(['a', 'b'], 'bd'),
       // dispensible set cursor (which only updates datanonce)
       setCursor(null),
       // undo setCursor and thoughtChange in a sinle action
