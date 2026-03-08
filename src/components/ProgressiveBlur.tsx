@@ -46,7 +46,19 @@ const ProgressiveBlur = ({
     const end = ((i + 1) / layers) * 100
     const feather = (100 / layers) * 2 // Double feather for smoother blending
 
-    return { radius, start, end, feather }
+    // The mask has four stops: fadeStart → opaqueStart → opaqueEnd → fadeEnd.
+    // Negative fadeStart values are fine (browser clamps to 0, keeping the layer
+    // fully opaque from the start). But fadeEnd > 100% gets clipped by the
+    // container's overflow:hidden, creating a hard cutoff. When that happens,
+    // clamp fadeEnd to 100% and pull opaqueEnd inward to preserve a fade region.
+    const fadeStart = start - feather
+    const opaqueStart = start
+    const rawFadeEnd = end + feather
+    const fadeEnd = Math.min(rawFadeEnd, 100)
+    const minFadeRegion = (100 / layers) * 0.5
+    const opaqueEnd = rawFadeEnd > 100 ? Math.min(end, fadeEnd - minFadeRegion) : end
+
+    return { radius, fadeStart, opaqueStart, opaqueEnd, fadeEnd }
   })
 
   return (
@@ -60,24 +72,25 @@ const ProgressiveBlur = ({
       })}
       style={{ width, ...props.style }}
     >
-      {blurLayers.map((layer, i) => (
-        <motion.div
-          key={i}
-          className={css({
-            position: 'absolute',
-            inset: 0,
-          })}
-          style={{
-            opacity,
-            backdropFilter: `blur(${layer.radius.toFixed(2)}px)`,
-            WebkitBackdropFilter: `blur(${layer.radius.toFixed(2)}px)`,
-
-            // Sliced mask with overlap (feather)
-            maskImage: `linear-gradient(${direction}, transparent ${layer.start - layer.feather}%, black ${layer.start}%, black ${layer.end}%, transparent ${layer.end + layer.feather}%)`,
-            WebkitMaskImage: `linear-gradient(${direction}, transparent ${layer.start - layer.feather}%, black ${layer.start}%, black ${layer.end}%, transparent ${layer.end + layer.feather}%)`,
-          }}
-        />
-      ))}
+      {blurLayers.map((layer, i) => {
+        const mask = `linear-gradient(${direction}, transparent ${layer.fadeStart}%, black ${layer.opaqueStart}%, black ${layer.opaqueEnd}%, transparent ${layer.fadeEnd}%)`
+        return (
+          <motion.div
+            key={i}
+            className={css({
+              position: 'absolute',
+              inset: 0,
+            })}
+            style={{
+              opacity,
+              backdropFilter: `blur(${layer.radius.toFixed(2)}px)`,
+              WebkitBackdropFilter: `blur(${layer.radius.toFixed(2)}px)`,
+              maskImage: mask,
+              WebkitMaskImage: mask,
+            }}
+          />
+        )
+      })}
     </div>
   )
 }
