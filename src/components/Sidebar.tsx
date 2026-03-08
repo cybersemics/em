@@ -274,12 +274,16 @@ const SidebarSectionLabel = ({ children, active }: { children: React.ReactNode, 
 }
 
 /** Glow overlay behind the sidebar header. Uses a background image (lighten blend)
- * whose width scales with the sidebar and whose height is fixed in px so it
- * stays anchored to the header regardless of viewport dimensions.
+ * sized in fixed px (derived from the source image's native 1482×744 dimensions)
+ * so the crop region stays consistent regardless of container or viewport size.
+ *
+ * The image is positioned with a negative X offset to crop the left portion,
+ * showing only the right ~80% of the glow. The element itself spans 100vw so
+ * the glow bleeds beyond the sidebar edge on desktop.
  *
  * Animated properties:
- * - backgroundSize width: zooms from 200% → 300% when the dropdown expands
- * - backgroundSize height: grows from 400px → 500px to cover the expanded dropdown
+ * - backgroundSize: scales from 50% → 75% of native height when dropdown expands
+ * - backgroundPositionY: shifts upward on expand to keep the glow centered
  * - brightness: increases on expand to intensify the glow
  * - hue-rotate / saturate: driven by the parent's shared motion values to
  *   tint the glow when switching sidebar sections
@@ -289,30 +293,35 @@ const SidebarOverlay1 = ({ width, opacity, expanded, expandedHeight, hue, sat }:
   const brightness = useMotionValue(1)
 
   useEffect(() => {
-    animate(brightness, expanded ? 1.5 : 1.2, { duration: durations.get('medium') / 1000, ease: EASE_OUT })
+    animate(brightness, expanded ? 1.4 : 1, { duration: durations.get('medium') / 1000, ease: EASE_OUT })
   }, [expanded])
 
   const filter = useTransform([brightness, hue, sat], ([b, h, s]) => `blur(4px) brightness(${b}) hue-rotate(${h}deg) saturate(${s})`)
 
   // Style variants for the collapsed and expanded states.
+  // backgroundSize: fixed px values derived from the source image (1482×744).
+  //   Width stays at 50% of native; height scales from 50% → 75% on expand.
+  // backgroundPositionY: negative offset crops the top of the image, revealing
+  //   only the lower glow region. Increases on expand to keep the glow centered.
   const safeY = (px: number) => `calc(${px}px + env(safe-area-inset-top, 0px))`
-  const collapsed = { backgroundSize: '200% 400px', backgroundPositionY: safeY(-104) }
-  const open = { backgroundSize: '250% 600px', backgroundPositionY: safeY(-168) }
+  const collapsed = { backgroundSize: 'calc(1482px * 0.475) calc(744px * 0.475)', backgroundPositionY: safeY(-84) }
+  const open = { backgroundSize: 'calc(1482px * 0.475) calc(744px * 0.75)', backgroundPositionY: safeY(-144) }
 
   return (
     <motion.div
       data-test-id={'sidebar-overlay-1'}
-      style={{ opacity, filter, width: `calc(${width} + 64px)` }}
+      style={{ opacity, filter }}
       initial={collapsed}
       animate={expanded ? open : collapsed}
       transition={{ duration: durations.get('medium') / 1000, ease: EASE_OUT }}
       className={css({
         position: 'absolute',
-        top: 0,
+        top: 0, 
         left: 0,
         height: '100vh',
-        backgroundImage: 'url(/img/sidebar/overlay-layer-1.avif)',
-        backgroundPosition: 'center',
+        width: '100vw',
+        backgroundImage: 'url(/img/sidebar/overlay-layer-1-alpha.avif)',
+        backgroundPositionX: '-150px',
         backgroundRepeat: 'no-repeat',
         mixBlendMode: 'lighten',
         pointerEvents: 'none',
@@ -348,12 +357,14 @@ const SidebarOverlay2 = ({ width, opacity, hue, sat }: { width: string, opacity:
         left: 0,
         bottom: 0,
         backgroundImage: 'url(/img/sidebar/overlay-layer-2.avif)',
-        backgroundSize: '100%',
-        backgroundPosition: 'top center',
+        backgroundSize: '90%',
+        backgroundPosition: 'top left',
         backgroundRepeat: 'no-repeat',
         mixBlendMode: 'normal',
         pointerEvents: 'none',
         zIndex: 'sidebar',
+        // Fade off the rightmost edge of the overlay to prevent harsh cutoff against the main content
+        
       })}
     />
   )
@@ -917,8 +928,7 @@ const Sidebar = () => {
             />
 
             {/* Primary glow overlay (lighten blend) – responds to dropdown expansion */}
-            {/* <SidebarOverlay1 width={width} opacity={contentOpacity} expanded={dropdownOpen} expandedHeight={dropdownHeight} hue={hue} sat={sat} /> */}
-            {/* <SidebarOverlay1 width={'100%'} opacity={contentOpacity} expanded={dropdownOpen} expandedHeight={dropdownHeight} hue={hue} sat={sat} /> */}
+            <SidebarOverlay1 width={width} opacity={contentOpacity} expanded={dropdownOpen} expandedHeight={dropdownHeight} hue={hue} sat={sat} />
             {/* Secondary glow overlay (screen blend) – adds middle tones */}
             <SidebarOverlay2 width={width} opacity={contentOpacity} hue={hue} sat={sat} />
 
