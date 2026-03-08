@@ -278,7 +278,7 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
  * The `active` prop is available for future styling differentiation but currently
  * both active and inactive labels share the same visual treatment.
  */
-const SidebarSectionLabel = ({ children, active }: { children: React.ReactNode, active: boolean }) => {
+const SidebarSectionLabel = ({ children, active: _active }: { children: React.ReactNode, active: boolean }) => {
   return (
     <div className={css({
       color: 'rgba(255, 255, 255, 0.75)',
@@ -307,7 +307,7 @@ const SidebarSectionLabel = ({ children, active }: { children: React.ReactNode, 
  *   tint the glow when switching sidebar sections
  * - opacity: fades in/out with the sidebar open/close via the parent's contentOpacity
  */
-const SidebarOverlay1 = ({ width, opacity, expanded, expandedHeight, hue, sat }: { width: string, opacity: MotionValue<number>, expanded: boolean, expandedHeight: number, hue: MotionValue<number>, sat: MotionValue<number> }) => {
+const SidebarOverlay1 = ({ opacity, expanded, hue, sat }: { width: string, opacity: MotionValue<number>, expanded: boolean, expandedHeight: number, hue: MotionValue<number>, sat: MotionValue<number> }) => {
   const brightness = useMotionValue(1)
 
   useEffect(() => {
