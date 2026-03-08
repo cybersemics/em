@@ -486,17 +486,19 @@ describe('grouping', () => {
       editThought(['d'], 'd1', { rankInContext: 3 }),
       // formatting-only edit: same text content, different HTML (e.g. bold)
       editThought(['d1'], '<b>d1</b>'),
-      // undo should only revert the formatting, not the content edit or the newThought
-      undo(),
     ])
 
-    // formatting undone; thought still exists with plain text content
-    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toEqual(`- ${HOME_TOKEN}
-  - a
-  - b
-  - c
-  - d1`)
+    // verify the bold formatting was applied before undo
+    const exportedBeforeUndo = exportContext(store.getState(), [HOME_TOKEN], 'text/html')
+    expect(exportedBeforeUndo).toContain('<li><b>d1</b></li>')
+
+    // undo should only revert the formatting, not the content edit or the newThought
+    store.dispatch(undo())
+
+    // formatting undone; verify the bold is gone but thought still exists with plain text value
+    const exportedAfterUndo = exportContext(store.getState(), [HOME_TOKEN], 'text/html')
+    expect(exportedAfterUndo).not.toContain('<b>')
+    expect(exportedAfterUndo).toContain('<li>d1</li>')
 
     // a second undo reverts the content edit, but grouped with preceding newThought → thought deleted
     store.dispatch(undo())
