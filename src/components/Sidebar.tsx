@@ -310,7 +310,10 @@ const SidebarOverlay1 = ({ opacity, expanded, hue, sat }: { width: string, opaci
     animate(brightness, expanded ? 1.35 : 1, { duration: durations.get('medium') / 1000, ease: EASE_OUT })
   }, [expanded])
 
-  const filter = useTransform([brightness, hue, sat], ([b, h, s]) => `blur(4px) brightness(${b}) hue-rotate(${h}deg) saturate(${s})`)
+  // Safari: include blur to reduce gradient banding (Safari composites at high bit depth so blur is cheap).
+  // Chromium: omit blur to avoid expensive per-frame recompositing during animations.
+  const blur = isSafari() ? 'blur(4px) ' : ''
+  const filter = useTransform([brightness, hue, sat], ([b, h, s]) => `${blur}brightness(${b}) hue-rotate(${h}deg) saturate(${s})`)
 
   // Style variants for the collapsed and expanded states.
   // backgroundSize: fixed px values derived from the source image (1482×744).
@@ -330,7 +333,7 @@ const SidebarOverlay1 = ({ opacity, expanded, hue, sat }: { width: string, opaci
       transition={{ duration: durations.get('medium') / 1000, ease: EASE_OUT }}
       className={css({
         position: 'absolute',
-        top: 0, 
+        top: 0,
         left: 0,
         height: '100vh',
         width: '100vw',
@@ -359,8 +362,9 @@ const SidebarOverlay1 = ({ opacity, expanded, hue, sat }: { width: string, opaci
  * as the user switches between sidebar sections.
  */
 const SidebarOverlay2 = ({ width, opacity, hue, sat }: { width: string, opacity: MotionValue<number>, hue: MotionValue<number>, sat: MotionValue<number> }) => {
-  /** Combine hue-rotate and saturate into a single CSS filter string, driven by motion values. */
-  const filter = useTransform([hue, sat], ([h, s]) => `blur(8px) hue-rotate(${h}deg) saturate(${s})`)
+  // Safari: include blur to reduce gradient banding. Chromium: omit for performance.
+  const blur = isSafari() ? 'blur(8px) ' : ''
+  const filter = useTransform([hue, sat], ([h, s]) => `${blur}hue-rotate(${h}deg) saturate(${s})`)
 
   return (
     <motion.div
