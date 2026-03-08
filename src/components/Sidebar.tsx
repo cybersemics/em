@@ -1040,7 +1040,6 @@ const Sidebar = () => {
                       lineHeight: 1.8,
                       userSelect: 'none',
                       position: 'relative',
-                      padding: '0 1em',
                     })}
                   >
                     {/* Visually hidden title for screen readers – announces the active section name */}
@@ -1057,7 +1056,8 @@ const Sidebar = () => {
                     <FadeTransition type='fast' in={showSidebar}>
                       <div
                         style={{
-                          marginTop: '3.75rem'
+                          marginTop: '3.75rem',
+                          padding: '0 1em',
                         }}
                       >
                         <SidebarHeader
@@ -1097,16 +1097,18 @@ const Sidebar = () => {
                       }}
                       className={css({
                         flex: 1,
-                        overflowY: dropdownOpen ? 'hidden' : 'scroll',
+                        overflowY: 'scroll',
                         overflowX: 'hidden',
                         overscrollBehavior: 'contain',
                         scrollbarWidth: 'thin',
+                        scrollbarColor: 'rgba(255,255,255,0.3) transparent',
                         '&::-webkit-scrollbar': {
                           width: '0px',
                           background: 'transparent',
                           display: 'none',
                         },
                         position: 'relative',
+                        padding: '0 1em',
                       })}
                       style={{
                         maskImage: isScrolled ? 'linear-gradient(to bottom, transparent, black 48px)' : 'none',
