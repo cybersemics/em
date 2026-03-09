@@ -381,7 +381,6 @@ const Editable = ({
         // That style should be re-applied once they type something. (#3673)
 
         const wrappedValue = state.cursorCleared ? applyOuterTag(e.target.value, oldValue) : e.target.value
-        console.log(wrappedValue)
         const newValue = stripEmptyFormattingTags(addEmojiSpace(trimHtml(wrappedValue)))
 
         /* The realtime editingValue must always be updated (and not short-circuited) since oldValueRef is throttled. Otherwise, editingValueStore becomes stale and heights are not recalculated in VirtualThought.
