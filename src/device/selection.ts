@@ -61,7 +61,11 @@ export const isEditable = (node?: Node | EventTarget | null) => {
   return (
     !!element &&
     element.nodeType === Node.ELEMENT_NODE &&
-    (element.hasAttribute('data-editable') || element.ariaLabel === 'note-editable')
+    (element.hasAttribute('data-editable') ||
+      element.ariaLabel === 'note-editable' ||
+      // If the selected element is a formatting tag, then its direct parent will be the editable (#3805)
+      element.parentElement?.hasAttribute('data-editable') ||
+      element.parentElement?.ariaLabel === 'note-editable')
   )
 }
 
