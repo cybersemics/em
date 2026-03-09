@@ -215,6 +215,11 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       // Handle undo and redo.
       // They are defined in the redux enhancer rather than in /actions.
       if (actionType === 'undo' || actionType === 'redo') {
+        // Reset the edit-direction tracking so the next action after an undo/redo does not
+        // accidentally merge with whatever patch happens to be at the top of the stack.
+        lastAction = undefined
+        lastEditThoughtDirection = EditThoughtDirection.None
+
         const undoOrRedoState =
           actionType === 'undo'
             ? undoReducer(state, undoPatches)
@@ -260,13 +265,15 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
 
       // Some actions are merged together into a single undo/redo patch.
       // - Navigation actions are merged with the previous non-navigation action. This matches the behavior of most word processors where undo will revert the last destructive action, and the cursor will be restored to where it was before. For example, if the user edits 'a' to 'aa', moves the cursor to 'b', and then undoes, the cursor will be restored to 'aa' then the edit will be undone.
-      // - Contiguous edits in the same direction are merged into a single edit action. For example, if the user edits 'a' to 'ab' and then 'ab' to 'abc', the undo will revert to 'a' in one step. Formatting edits (Formatting direction) are never merged with content edits (Longer/Shorter) since they have a different direction value.
+      // - Contiguous edits in the same direction are merged into a single edit action. For example, if the user edits 'a' to 'ab' and then 'ab' to 'abc', the undo will revert to 'a' in one step. Formatting edits (Formatting direction) are never merged with any other edits — each formatting change (bold, italic, color) gets its own separate undo step.
       // - The closeAlert action is merged with the previous action so that the alert can be undone.
       // - All actions during the execution of a multicursor command will be merged together. The prevous action will always be setIsMulticursorExecuting.
       // - Chained commands will be merged into the previous command, e.g. Select All + Categorize
       if (
         (isNavigation(actionType) && isNavigation(lastAction?.type)) ||
-        (actionType === 'editThought' && editThoughtDirection === lastEditThoughtDirection) ||
+        (actionType === 'editThought' &&
+          editThoughtDirection === lastEditThoughtDirection &&
+          editThoughtDirection !== EditThoughtDirection.Formatting) ||
         actionType === 'closeAlert' ||
         state.isMulticursorExecuting ||
         (lastAction as UnknownAction)?.mergeUndo
