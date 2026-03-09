@@ -259,7 +259,6 @@ const Editable = ({
       editThought({
         oldValue,
         newValue,
-        rankInContext: rank,
         path: simplePath,
         // Set cursorOffset so that it is included in the undo patch.
         // Otherwise, the selection offset will not be restored correctly on undo/redo.
