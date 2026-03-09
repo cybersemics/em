@@ -484,9 +484,10 @@ describe('grouping', () => {
       newThought({ value: 'd' }),
       // content edit: 'd' → 'd1'
       editThought(['d'], 'd1', { rankInContext: 3 }),
-      // formatting-only edit: same text content, different HTML (e.g. bold)
-      editThought(['d1'], '<b>d1</b>'),
     ])
+    // formatting-only edit: same text content, different HTML (e.g. bold)
+    // dispatched separately to avoid TypeScript inferring a narrower type for editThought
+    store.dispatch(editThought(['d1'], '<b>d1</b>'))
 
     // verify the bold formatting was applied before undo
     const exportedBeforeUndo = exportContext(store.getState(), [HOME_TOKEN], 'text/html')
