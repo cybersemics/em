@@ -2,6 +2,7 @@ import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
+import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 
 beforeEach(createTestApp)
@@ -12,10 +13,12 @@ it('strips HTML tags from breadcrumbs', async () => {
     importText({
       text: `
 - A
-  - <font style="fff">B</font>
+  - B
     - C
+      - =favorite
 `,
     }),
+    editThought(['A', 'B'], '<font color="#ffffff"><b><i>B</i></b></font>'),
   ])
 
   await act(vi.runOnlyPendingTimersAsync)
@@ -24,7 +27,9 @@ it('strips HTML tags from breadcrumbs', async () => {
 
   await act(vi.runOnlyPendingTimersAsync)
 
-  const contextBreadcrumbs = document.querySelector('[aria-label="context-breadcrumbs"]')
+  const contextBreadcrumbs = Array.from(
+    document.querySelectorAll('[data-testid="favorites"] [aria-label="context-breadcrumbs"] [role="button"]'),
+  ).map(breadcrumb => breadcrumb.innerHTML)
 
-  expect(contextBreadcrumbs?.textContent).toEqual('A • B • C')
+  expect(contextBreadcrumbs).toEqual(['A', 'B'])
 })
