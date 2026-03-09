@@ -1,6 +1,7 @@
 /* eslint-disable no-restricted-properties */
 /** Wraps the browser Selection API in a device-agnostic interface. */
 import SplitResult from '../@types/SplitResult'
+import { ALLOWED_FORMATTING_TAGS } from '../constants'
 
 export type SelectionOptionsType = {
   offset?: number
@@ -57,15 +58,20 @@ export const isActive = (): boolean => !!window.getSelection()?.focusNode
 
 /** Returns true if the Node is an editable. */
 export const isEditable = (node?: Node | EventTarget | null) => {
-  const element = node as HTMLElement
+  let element = node as HTMLElement
+
+  // If the selected element is a formatting tag, then one of its parents may be the editable (#3805)
+  while (
+    element.tagName &&
+    element.parentElement &&
+    ALLOWED_FORMATTING_TAGS.includes(element.tagName.toLocaleLowerCase())
+  )
+    element = element.parentElement
+
   return (
     !!element &&
     element.nodeType === Node.ELEMENT_NODE &&
-    (element.hasAttribute('data-editable') ||
-      element.ariaLabel === 'note-editable' ||
-      // If the selected element is a formatting tag, then its direct parent will be the editable (#3805)
-      element.parentElement?.hasAttribute('data-editable') ||
-      element.parentElement?.ariaLabel === 'note-editable')
+    (element.hasAttribute('data-editable') || element.ariaLabel === 'note-editable')
   )
 }
 
