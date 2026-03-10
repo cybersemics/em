@@ -500,8 +500,8 @@ const getNodeOffsetForVoidArea = (editable: HTMLElement | null, { clientX, clien
   const offset = range.startOffset
   const nodeTextLength = node.textContent?.length || 0
 
-  // If the node is empty (placeholder text), return caret position at offset 0
-  if (nodeTextLength === 0) return 0
+  // If the node is empty (placeholder text), return null
+  if (nodeTextLength === 0) return null
 
   /** Get the bounding rectangle for a character at the given offset. */
   const getCharRect = (targetOffset: number): DOMRect | null => {
@@ -536,27 +536,25 @@ const getNodeOffsetForVoidArea = (editable: HTMLElement | null, { clientX, clien
     return clientY >= rect.top && clientY <= rect.bottom
   }
 
-  // For iOS Safari, expand the range of offsets to check due to positioning inaccuracies
-  const offsetsToCheck = isSafari()
-    ? [offset, offset - 1, offset + 1].filter(o => o >= 0 && o < nodeTextLength)
-    : [offset, offset - 1].filter(o => o >= 0 && o < nodeTextLength)
+  /** Checks whether the coordinates land on the character at the current offset or a neighbor. Most common case. */
+  const isClickOnCharacter = () => {
+    const offsetsToCheck = isSafari()
+      ? [offset, offset - 1, offset + 1].filter(o => o >= 0 && o < nodeTextLength)
+      : [offset, offset - 1].filter(o => o >= 0 && o < nodeTextLength)
+    return offsetsToCheck.some(checkOffset => isInsideCharRect(getCharRect(checkOffset)))
+  }
 
-  // Check whether the coordinates land on the character at the current offset or the one before it.
-  const isClickOnCharacter = offsetsToCheck.some(checkOffset => isInsideCharRect(getCharRect(checkOffset)))
-
-  // Allow coordinates horizontally beyond text if vertically aligned with the text line
-  const isValidEdgeClick =
+  /** Checks if the coordinates are horizontally beyond text but vertically aligned with the text line. */
+  const isValidEdgeClick = () =>
     (offset === 0 || offset === nodeTextLength) &&
     isVerticallyContained(getCharRect(offset === 0 ? 0 : nodeTextLength - 1))
 
-  // Check for end-of-line gaps in multiline text
-  const isMultilineEdgeClick = isValidEdgeClickInMultiline(node, offset, clientX, clientY)
+  /** Checks for end-of-line gaps in multiline text. */
+  const isMultilineEdgeClick = () => isValidEdgeClickInMultiline(node, offset, clientX, clientY)
 
-  // Let browser handle if clicking on a character, valid edge, or multiline gap
-  if (isClickOnCharacter || isValidEdgeClick || isMultilineEdgeClick) return null
+  if (isClickOnCharacter() || isValidEdgeClick() || isMultilineEdgeClick()) return null
 
-  const offsetResult = getOffset(editable, clientX, clientY)
-  return offsetResult
+  return getOffset(editable, clientX, clientY)
 }
 
 export default getNodeOffsetForVoidArea
