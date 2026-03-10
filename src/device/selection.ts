@@ -62,7 +62,7 @@ export const isEditable = (node?: Node | EventTarget | null) => {
 
   // If the selected element is a formatting tag, then one of its parents may be the editable (#3805)
   while (
-    element.tagName &&
+    element?.tagName &&
     element.parentElement &&
     ALLOWED_FORMATTING_TAGS.includes(element.tagName.toLocaleLowerCase())
   )
