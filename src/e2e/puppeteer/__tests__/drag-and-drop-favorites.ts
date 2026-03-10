@@ -5,7 +5,7 @@ import paste from '../helpers/paste'
 import press from '../helpers/press'
 import { page } from '../setup'
 
-vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
+vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
 /** Get the order of favorites as displayed in the sidebar. */
 const selectFavoritesText = async () => {
