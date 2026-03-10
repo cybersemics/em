@@ -537,6 +537,25 @@ describe('grouping', () => {
     expect(exportedAfterSecondUndo).not.toContain('<b>')
   })
 
+  it('formatting edit applied directly after newThought should not delete the thought on undo', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a`,
+      }),
+      newThought({ value: 'hello' }),
+    ])
+    // formatting-only edit: no content edit between newThought and formatting
+    store.dispatch(editThought(['hello'], '<b>hello</b>'))
+
+    // undo should only revert the formatting, not delete the thought (newThought is penultimate)
+    store.dispatch(undo())
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/html')
+    expect(exported).not.toContain('<b>')
+    expect(exported).toContain('<li>hello</li>')
+  })
+
   it('applying formatting after undoing a formatting edit should not delete the thought on the next undo', () => {
     store.dispatch([
       importText({
