@@ -112,9 +112,9 @@ const CommandCenter = ({ mountPoint }: Pick<SheetProps, 'mountPoint'>) => {
   const dispatch = useDispatch()
   const showCommandCenter = useSelector(state => state.showCommandCenter)
   const isTutorialOn = useSelector(isTutorial)
-  const ref = useRef<SheetRef>(null)
+  const sheetRef = useRef<SheetRef>(null)
 
-  const { height, opacity, blurHeight } = useSheetTransforms(ref)
+  const { height, opacity, blurHeight } = useSheetTransforms(sheetRef)
 
   const onClose = useCallback(() => {
     dispatch([toggleDropdown({ dropDownType: 'commandCenter', value: false }), clearMulticursors()])
@@ -146,7 +146,7 @@ const CommandCenter = ({ mountPoint }: Pick<SheetProps, 'mountPoint'>) => {
         <HiddenOverlay />
         <Sheet
           data-testid='command-center-panel'
-          ref={ref}
+          ref={sheetRef}
           isOpen={showCommandCenter}
           onClose={onClose}
           detent='content'
