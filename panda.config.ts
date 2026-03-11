@@ -244,7 +244,7 @@ const globalCss = defineGlobalStyles({
       caretColor: 'transparent',
     },
   },
-  'html, body, #root, #app': { height: '100%', fontSize: '16px', WebkitTextSizeAdjust: '100%' },
+  'html, body, #root, #app': { height: '100%', fontSize: '16px' },
   'body, textarea': {
     fontWeight: 300,
     fontFamily: "'Helvetica'",
@@ -255,7 +255,7 @@ const globalCss = defineGlobalStyles({
     fontWeight: 600,
   },
   /* Disables pull-to-refresh but allows overscroll glow effects. */
-  body: { margin: 0, overscrollBehaviorY: 'contain', color: 'fg', backgroundColor: 'bg' },
+  body: { overscrollBehaviorY: 'contain', color: 'fg', backgroundColor: 'bg' },
   button: { fontSize: '1.2em' },
   a: {
     cursor: 'pointer',
@@ -377,7 +377,7 @@ export default defineConfig({
         sm: '320px', // approx size of iPhone SE
         md: '400px', // approx size of iPhone 12 Pro
         lg: '600px', // approx size of iPad
-        xl: '800px', // approx size of a laptop
+        xl: '768px', // approx size of landscape tablet or laptop
         '2xl': '1000px', // approx size of a desktop
         '3xl': '1200px', // approx size of a large desktop
       },

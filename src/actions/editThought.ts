@@ -37,7 +37,6 @@ export interface editThoughtPayload {
   oldValue: string
   newValue: string
   path: SimplePath
-  rankInContext?: number
 }
 
 /** Changes the text of an existing thought. */

@@ -16,6 +16,14 @@ import { isNavigation, isUndoable } from '../util/actionMetadata.registry'
 import headValue from '../util/headValue'
 import reducerFlow from '../util/reducerFlow'
 
+/** Track a stream of editThought actions so that they can be merged,
+ * allowing edits to be treated as a single undo/redo step when they involve adding new characters or else removing old characters. */
+enum EditThoughtDirection {
+  None = 'None',
+  Longer = 'Longer',
+  Shorter = 'Shorter',
+}
+
 /** Interface for the setIsMulticursorExecuting action. */
 interface SetIsMulticursorExecutingAction extends Action<'setIsMulticursorExecuting'> {
   value: boolean
@@ -189,8 +197,8 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let lastAction: Action<any> | undefined
 
-    /** True if the last edit was an addition of characters (vs a deletion of characters). Undo steps of contiguous edits in the same direction are combined (e.g. "one" -> "one two" -> "one two three"); Undo steps of continiguous edits in the opposite direction are not combined (e.g. "hello world" -> "hello" -> "hello universe"). */
-    let lastIsEditAddition = true
+    /** Longer if the last edit was an addition of characters, Shorter if a deletion of characters. Undo steps of contiguous edits in the same direction are combined (e.g. "one" -> "one two" -> "one two three"); Undo steps of continiguous edits in the opposite direction are not combined (e.g. "hello world" -> "hello" -> "hello universe"). */
+    let lastEditThoughtDirection = EditThoughtDirection.None
 
     /**
      * Reducer to handle undo/redo actions and add/merge inverse-redoPatches for other actions.
@@ -236,11 +244,11 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       }
 
       // Determine if an edit is an addition or a deletion
-      const isEditAddition =
-        lastAction?.type === 'editThought' &&
-        actionType === 'editThought' &&
-        isEditThoughtAction(action) &&
-        action.newValue.length > action.oldValue.length
+      const editThoughtDirection = isEditThoughtAction(action)
+        ? action.newValue.length > action.oldValue.length
+          ? EditThoughtDirection.Longer
+          : EditThoughtDirection.Shorter
+        : EditThoughtDirection.None
 
       // Some actions are merged together into a single undo/redo patch.
       // - Navigation actions are merged with the previous non-navigation action. This matches the behavior of most word processors where undo will revert the last destructive action, and the cursor will be restored to where it was before. For example, if the user edits 'a' to 'aa', moves the cursor to 'b', and then undoes, the cursor will be restored to 'aa' then the edit will be undone.
@@ -250,7 +258,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       // - Chained commands will be merged into the previous command, e.g. Select All + Categorize
       if (
         (isNavigation(actionType) && isNavigation(lastAction?.type)) ||
-        (lastAction?.type === 'editThought' && actionType === 'editThought' && isEditAddition === lastIsEditAddition) ||
+        (actionType === 'editThought' && editThoughtDirection === lastEditThoughtDirection) ||
         actionType === 'closeAlert' ||
         state.isMulticursorExecuting ||
         (lastAction as UnknownAction)?.mergeUndo
@@ -287,7 +295,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       }
 
       lastAction = action
-      lastIsEditAddition = isEditAddition
+      lastEditThoughtDirection = editThoughtDirection
 
       // add a new undo patch
       const undoPatch = diffState(newState as Index, state)

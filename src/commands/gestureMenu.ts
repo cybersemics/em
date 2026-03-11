@@ -7,6 +7,7 @@ const gestureMenuCommand: Command = {
   label: 'Gesture Menu',
   description: 'Opens the gesture menu where commands can be executed by gesture.',
   hideFromCommandPalette: true,
+  hideFromGestureMenu: true,
   multicursor: false,
   svg: CommandPaletteIcon,
   exec: dispatch => dispatch(gestureMenu()),
