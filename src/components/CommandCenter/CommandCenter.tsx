@@ -3,7 +3,7 @@ import { useTransform } from 'motion/react'
 import { motion } from 'motion/react'
 import pluralize from 'pluralize'
 import { FC, useCallback, useRef } from 'react'
-import { Sheet, SheetProps, SheetRef, SheetTweenConfig } from 'react-modal-sheet'
+import { Sheet, SheetRef, SheetTweenConfig } from 'react-modal-sheet'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { token } from '../../../styled-system/tokens'
@@ -108,7 +108,7 @@ const useSheetTransforms = (ref: React.RefObject<SheetRef | null>) => {
 /**
  * A panel that displays the Command Center.
  */
-const CommandCenter = ({ mountPoint }: Pick<SheetProps, 'mountPoint'>) => {
+const CommandCenter = () => {
   const dispatch = useDispatch()
   const showCommandCenter = useSelector(state => state.showCommandCenter)
   const isTutorialOn = useSelector(isTutorial)
@@ -151,7 +151,6 @@ const CommandCenter = ({ mountPoint }: Pick<SheetProps, 'mountPoint'>) => {
           onClose={onClose}
           detent='content'
           unstyled
-          mountPoint={mountPoint}
           tweenConfig={tweenConfig}
           style={{
             /** Override default Sheet zIndex. */
