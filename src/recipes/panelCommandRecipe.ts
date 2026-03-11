@@ -13,8 +13,6 @@ export default defineRecipe({
     '--panel-command-radius-inner': '24px',
     borderRadius: 'var(--panel-command-radius)',
     overflow: 'hidden',
-    mixBlendMode: 'color-dodge',
-
     cursor: 'pointer',
     transition: 'opacity {durations.medium} ease, background-color {durations.medium} ease',
     opacity: 1,
@@ -32,7 +30,6 @@ export default defineRecipe({
       left: '0%',
       right: '0%',
       bottom: '0%',
-      mixBlendMode: 'color-dodge',
       background: `radial-gradient(
         121.9% 149.44% at 57.5% 55.06%,
         rgba(130, 108, 203, 0) 0%,
@@ -46,7 +43,6 @@ export default defineRecipe({
       left: '0%',
       right: '0%',
       bottom: '0%',
-      mixBlendMode: 'color-dodge',
       background: `radial-gradient(
             121.9% 149.44% at 57.5% 55.06%,
             {colors.panelCommandBorderGradientPurple} 0%,
