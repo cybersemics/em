@@ -153,7 +153,10 @@ const CommandCenter = ({ mountPoint }: Pick<SheetProps, 'mountPoint'>) => {
           unstyled
           mountPoint={mountPoint}
           tweenConfig={tweenConfig}
-          style={{ zIndex: token('zIndex.commandCenter') }}
+          style={{
+            /** Override default Sheet zIndex. */
+            zIndex: token('zIndex.commandCenter'),
+          }}
           /** Fixes sheet shifting up on ios when it opens. */
           disableScrollLocking
         >
@@ -206,9 +209,9 @@ const CommandCenter = ({ mountPoint }: Pick<SheetProps, 'mountPoint'>) => {
             }}
           >
             <Sheet.Content
-              style={{
+              className={css({
                 overflow: 'visible',
-              }}
+              })}
             >
               <div
                 className={css({
