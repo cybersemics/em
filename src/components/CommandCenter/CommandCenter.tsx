@@ -188,16 +188,14 @@ const CommandCenter = ({ mountPoint }: Pick<SheetProps, 'mountPoint'>) => {
           />
           <Sheet.Container
             data-testid='command-menu-panel'
-            style={{
+            className={css({
               backgroundColor: 'transparent',
-              // Make sure it overrides any inline styles
-              display: 'flex',
-              flexDirection: 'column',
-              width: '100%',
               overflow: 'visible',
-              maxHeight: '70%',
-              pointerEvents: 'auto',
               boxShadow: 'none',
+            })}
+            style={{
+              // override default Sheet.Container styles
+              maxHeight: '70%',
               zIndex: 'auto',
             }}
             onScroll={e => {
