@@ -31,7 +31,10 @@ const ActiveButtonGlowGradient: FC<ActiveButtonGlowGradientProps> = ({ isActive 
       in={isActive}
       unmountOnExit
       nodeRef={nodeRef}
-      /** When `in={true}` on mount, ensures the initial opacity of the element is correct. */
+      /**
+       * When `in={true}` on mount, we need appear={true} to trigger the enter transition.
+       * We need the enter transition, because the opacity is set inside the transition styles.
+       **/
       appear
     >
       <div
