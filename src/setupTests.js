@@ -32,5 +32,7 @@ const ResizeObserverMock = vi.fn(
 
 vi.stubGlobal('ResizeObserver', ResizeObserverMock)
 
+HTMLImageElement.prototype.decode = vi.fn().mockResolvedValue(undefined)
+
 // stub jest globally. This is needed incase jest is being directly referenced in the code.
 vi.stubGlobal('jest', vi)
