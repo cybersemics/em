@@ -1,10 +1,11 @@
 import { animate, MotionValue, useMotionValue } from 'framer-motion'
-import React, { FC, PropsWithChildren, useCallback, useEffect, useRef, useState } from 'react'
+import React, { FC, PropsWithChildren, useCallback, useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import TipId from '../../@types/TipId'
 import { dismissTipActionCreator as dismissTip } from '../../actions/dismissTip'
 import usePrefetchImages from '../../hooks/usePrefetchImages'
+import usePrevious from '../../hooks/usePrevious'
 import durations from '../../util/durations'
 import fastClick from '../../util/fastClick'
 import ProgressiveBlur from '../ProgressiveBlur'
@@ -190,19 +191,15 @@ const Tip: FC<
   // children breaks the blur rendering.
   const blurOpacity = useMotionValue(0)
   const isVisible = tip === tipId
-  const wasVisible = useRef(false)
+  const wasVisible = usePrevious(isVisible)
   useEffect(() => {
     // Fade in blur when the tip becomes visible, matching the CSS fadein on other layers.
-    if (isVisible && !wasVisible.current) {
-      wasVisible.current = true
+    if (isVisible && !wasVisible) {
       blurOpacity.set(0)
       const controls = animate(blurOpacity, 1, { duration: durations.get('medium') / 1000, ease: 'easeOut' })
       return () => controls.stop()
     }
-    if (!isVisible) {
-      wasVisible.current = false
-      return
-    }
+    if (!isVisible) return
     // Fade out blur when dismissing.
     if (isDismissing) {
       const controls = animate(blurOpacity, 0, { duration: durations.get('medium') / 1000, ease: 'easeOut' })
