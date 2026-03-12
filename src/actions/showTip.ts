@@ -16,7 +16,12 @@ export const showTipActionCreator =
   (dispatch, getState) => {
     // Close any open dropdown (e.g. Command Center) so the tip is visible.
     const state = getState()
-    const hasOpenDropdown = state.showCommandCenter || state.showColorPicker || state.showLetterCase || state.showSortPicker || state.showUndoSlider
+    const hasOpenDropdown =
+      state.showCommandCenter ||
+      state.showColorPicker ||
+      state.showLetterCase ||
+      state.showSortPicker ||
+      state.showUndoSlider
     if (hasOpenDropdown) {
       dispatch(toggleDropdown())
     }
