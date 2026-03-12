@@ -1,10 +1,9 @@
-import { animate, useMotionValue } from 'framer-motion'
+import { animate, MotionValue, useMotionValue } from 'framer-motion'
 import React, { FC, PropsWithChildren, useCallback, useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import TipId from '../../@types/TipId'
 import { dismissTipActionCreator as dismissTip } from '../../actions/dismissTip'
-import usePositionFixed from '../../hooks/usePositionFixed'
 import usePrefetchImages from '../../hooks/usePrefetchImages'
 import durations from '../../util/durations'
 import fastClick from '../../util/fastClick'
@@ -15,12 +14,112 @@ import useSwipeToClear from './useSwipeToClear'
 /** Cumulative swipe distance (in px) at which a swipe fully fades and dismisses the tip. */
 const SWIPE_DISMISS_THRESHOLD = 200
 
+/** Layer 1: Gradient overlay + progressive blur — darkens and blurs the content behind the tip. */
+const TipBlur: FC<{
+  blurOpacity: MotionValue<number>
+  layerStyle: React.CSSProperties
+}> = ({ blurOpacity, layerStyle }) => (
+  <div
+    className={css({
+      position: 'absolute',
+      inset: 0,
+      pointerEvents: 'none',
+    })}
+  >
+    {/* Mobile: full-width blur with no horizontal feathering. */}
+    <div
+      className={css({
+        display: { base: 'block', lg: 'none' },
+        position: 'absolute',
+        inset: 0,
+        overflow: 'hidden',
+      })}
+    >
+      <ProgressiveBlur direction='to top' maxBlur={24} layers={3} opacity={blurOpacity} />
+    </div>
+
+    {/* Desktop: blur is right-aligned (800px wide) with a left-edge feather mask
+        so it fades smoothly into the unblurred content on the left. */}
+    <div
+      className={css({
+        display: { base: 'none', lg: 'block' },
+        position: 'absolute',
+        inset: 0,
+        left: 'auto',
+        width: 800,
+        overflow: 'hidden',
+      })}
+    >
+      <ProgressiveBlur
+        direction='to top'
+        maxBlur={24}
+        layers={3}
+        opacity={blurOpacity}
+        mask='linear-gradient(to right, transparent, black 60%)'
+      />
+    </div>
+
+    {/* Semi-transparent gradient from bgTransparent → bg, providing the darkening effect.
+        Uses a CSS keyframe animation for fade-in (must be a static string for Panda CSS
+        build-time extraction — dynamic template literals won't generate CSS rules). */}
+    <div
+      className={css({
+        animation: 'fadein {durations.medium} ease',
+        position: 'absolute',
+        inset: 0,
+        background: 'linear-gradient(180deg, {colors.bgTransparent} 0%, {colors.bg} 100%)',
+      })}
+      style={layerStyle}
+    />
+  </div>
+)
+
+/** Layer 2: Glow image — a pre-rendered WebP light-leak effect positioned behind the text content. */
+const TipGlow: FC<{
+  layerStyle: React.CSSProperties
+}> = ({ layerStyle }) => (
+  <div
+    className={css({
+      animation: 'fadein {durations.medium} ease',
+      position: 'absolute',
+      pointerEvents: 'none',
+      opacity: 1,
+      backgroundImage: 'url(/img/tip/tip-glow-alpha.webp)',
+      backgroundRepeat: 'no-repeat',
+
+      // Mobile portrait: Scale the image up 2x, matching the mockups.
+      // Larger: just use background-size: cover.
+      backgroundSize: {
+        base: '200%',
+        lg: 'cover',
+      },
+      backgroundPosition: 'top right',
+
+      // Mobile portrait: 32px extra bleed (16px per side) compensates for filter: blur feathering the edges.
+      // Larger: clamped between 1000–1500px so the glow covers enough area without stretching too far.
+      width: { base: 'calc(100vw + 32px)', lg: 'clamp(1000px, calc(100vw + 32px), 1500px)' },
+      height: 300,
+
+      // Positioning: on mobile portrait, the glow comes from the left edge. On landscape mobile and larger, it comes from the right edge.
+      left: { base: -16, lg: 'auto' },
+      right: { base: 'auto', lg: -16 },
+
+      // Flip the glow image horizontally on mobile so the brighter part of the glow is on the left side.
+      transform: { base: 'scaleX(-1)', lg: 'none' },
+
+      // Applying filter: blur helps us eliminate banding artifacts in the glow image.
+      filter: 'blur(8px)',
+    })}
+    style={layerStyle}
+  />
+)
+
 /**
  * A tip that gets displayed at the bottom of the screen, with a Liminal UI design style.
  *
  * The component is composed of three visual layers (back to front):
- * 1. Gradient overlay + progressive blur — darkens and blurs the content behind the tip.
- * 2. Glow image — a decorative glow background loaded from a pre-rendered webp image file.
+ * 1. TipBlur — darkens and blurs the content behind the tip.
+ * 2. TipGlow — a decorative glow background loaded from a pre-rendered webp image file.
  * 3. Content — the TIP label, message text, and Clear button.
  *
  * There are two ways to dismiss the tip:
@@ -36,8 +135,7 @@ const Tip: FC<
 > = ({ tipId, children }) => {
   const dispatch = useDispatch()
   const tip = useSelector(state => state.tip)
-  const positionFixedStyles = usePositionFixed({ fromBottom: true })
-  
+
   /** Prefetch the glow image used in the tip, so that the user doesn't see a loading delay when the tip first becomes visible. */
   usePrefetchImages(['/img/tip/tip-glow-alpha.webp'])
 
@@ -118,9 +216,11 @@ const Tip: FC<
 
   const value = isVisible ? children : null
 
-  // CSS transition applied to all layers during the fade-out. Only set when dismissing,
-  // so it doesn't interfere with the CSS fadein animation on mount.
-  const fadeOut = isDismissing ? `opacity ${durations.get('medium')}ms ease` : undefined
+  /** Shared style applied to all visual layers. */
+  const layerStyle: React.CSSProperties = {
+    opacity: isDismissing ? 0 : swipeOpacity,
+    transition: isDismissing ? `opacity ${durations.get('medium')}ms ease` : undefined,
+  }
 
   return value ? (
     <div
@@ -138,98 +238,8 @@ const Tip: FC<
         position: 'fixed'
       })}
     >
-      {/* ── Layer 1: Gradient overlay + progressive blur ─────────────────── */}
-      <div
-        className={css({
-          position: 'absolute',
-          inset: 0,
-          pointerEvents: 'none',
-        })}
-      >
-        {/* Mobile: full-width blur with no horizontal feathering. */}
-        <div
-          className={css({
-            display: { base: 'block', lg: 'none' },
-            position: 'absolute',
-            inset: 0,
-            overflow: 'hidden',
-          })}
-        >
-          <ProgressiveBlur direction='to top' maxBlur={24} layers={3} opacity={blurOpacity} />
-        </div>
-
-        {/* Desktop: blur is right-aligned (800px wide) with a left-edge feather mask
-            so it fades smoothly into the unblurred content on the left. */}
-        <div
-          className={css({
-            display: { base: 'none', lg: 'block' },
-            position: 'absolute',
-            inset: 0,
-            left: 'auto',
-            width: 800,
-            overflow: 'hidden',
-          })}
-        >
-          <ProgressiveBlur
-            direction='to top'
-            maxBlur={24}
-            layers={3}
-            opacity={blurOpacity}
-            mask='linear-gradient(to right, transparent, black 60%)'
-          />
-        </div>
-
-        {/* Semi-transparent gradient from bgTransparent → bg, providing the darkening effect.
-            Uses a CSS keyframe animation for fade-in (must be a static string for Panda CSS
-            build-time extraction — dynamic template literals won't generate CSS rules). */}
-        <div
-          className={css({
-            animation: 'fadein {durations.medium} ease',
-            position: 'absolute',
-            inset: 0,
-            background: 'linear-gradient(180deg, {colors.bgTransparent} 0%, {colors.bg} 100%)',
-          })}
-          style={{ opacity: isDismissing ? 0 : swipeOpacity, transition: fadeOut }}
-        />
-      </div>
-
-      {/* ── Layer 2: Glow image ──────────────────────────────────────────── */}
-      {/* A pre-rendered WebP light-leak effect positioned behind the text content.
-          On mobile it appears from the left (flipped via scaleX(-1)); on desktop from the right. */}
-      <div
-        className={css({
-          animation: 'fadein {durations.medium} ease',
-          position: 'absolute',
-          pointerEvents: 'none',
-          opacity: 1,
-          backgroundImage: 'url(/img/tip/tip-glow-alpha.webp)',
-          backgroundRepeat: 'no-repeat',
-
-          // Mobile portrait: Scale the image up 2x, matching the mockups.
-          // Larger: just use background-size: cover.
-          backgroundSize: {
-            base: '200%',
-            lg: 'cover',
-          },
-          backgroundPosition: 'top right',
-
-          // Mobile portrait: 32px extra bleed (16px per side) compensates for filter: blur feathering the edges.
-          // Larger: clamped between 1000–1500px so the glow covers enough area without stretching too far.
-          width: { base: 'calc(100vw + 32px)', lg: 'clamp(1000px, calc(100vw + 32px), 1500px)' },
-          height: 300,
-
-          // Positioning: on mobile portrait, the glow comes from the left edge. On landscape mobile and larger, it comes from the right edge.
-          left: { base: -16, lg: 'auto' },
-          right: { base: 'auto', lg: -16 },
-
-          // Flip the glow image horizontally on mobile so the brighter part of the glow is on the left side.
-          transform: { base: 'scaleX(-1)', lg: 'none' },
-
-          // Applying filter: blur helps us eliminate banding artifacts in the glow image.
-          filter: 'blur(8px)',
-        })}
-        style={{ opacity: isDismissing ? 0 : swipeOpacity, transition: fadeOut }}
-      />
+      <TipBlur blurOpacity={blurOpacity} layerStyle={layerStyle} />
+      <TipGlow layerStyle={layerStyle} />
 
       {/* ── Layer 3: Content ─────────────────────────────────────────────── */}
       {/* Contains the TIP label, message text, and Clear button.
@@ -255,7 +265,7 @@ const Tip: FC<
           // On devices without, fall back to 1.5rem. Desktop always uses 1.5rem.
           paddingBottom: { base: 'max(1.5rem, calc(0.5rem + env(safe-area-inset-bottom)))', lg: '1.5rem' },
         })}
-        style={{ opacity: isDismissing ? 0 : swipeOpacity, transition: fadeOut, touchAction: 'none' }}
+        style={{ ...layerStyle, touchAction: 'none' }}
         {...touchHandlers}
         onTransitionEnd={handleFadeOutEnd}
       >
