@@ -11,7 +11,7 @@ import ProgressiveBlur from '../ProgressiveBlur'
 import CloseIcon from '../icons/CloseIcon'
 
 /** Cumulative swipe distance (in px) at which a swipe fully fades and dismisses the tip. */
-const SWIPE_DISMISS_THRESHOLD = 100
+const SWIPE_DISMISS_THRESHOLD = 200
 
 /**
  * A tip that gets displayed at the bottom of the screen, with a Liminal UI design style.
