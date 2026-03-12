@@ -5,6 +5,7 @@ import { css } from '../../../styled-system/css'
 import TipId from '../../@types/TipId'
 import { dismissTipActionCreator as dismissTip } from '../../actions/dismissTip'
 import usePositionFixed from '../../hooks/usePositionFixed'
+import usePrefetchImages from '../../hooks/usePrefetchImages'
 import durations from '../../util/durations'
 import fastClick from '../../util/fastClick'
 import ProgressiveBlur from '../ProgressiveBlur'
@@ -36,6 +37,9 @@ const Tip: FC<
   const dispatch = useDispatch()
   const tip = useSelector(state => state.tip)
   const positionFixedStyles = usePositionFixed({ fromBottom: true })
+  
+  /** Prefetch the glow image used in the tip, so that the user doesn't see a loading delay when the tip first becomes visible. */
+  usePrefetchImages(['/img/tip/tip-glow-alpha.webp'])
 
   /** True while the fade-out CSS transition is running (after the user taps Clear or completes a swipe). */
   const [isDismissing, setIsDismissing] = useState(false)
@@ -58,7 +62,7 @@ const Tip: FC<
     onDismiss: onSwipeDismiss,
   })
 
-  /** Opacity derived from swipe completion. Linearly decreases from 1 → 0. */
+  /** Opacity derived from swipe completion. Linearly decreases from 1 -> 0. */
   const swipeOpacity = 1 - completion
 
   // ── Handlers ────────────────────────────────────────────────────────────
