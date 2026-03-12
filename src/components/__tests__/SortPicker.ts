@@ -178,6 +178,42 @@ describe('Created', () => {
     expect(thoughtValues).toMatchObject(['a', 'b', 'c'])
   })
 
+  it('Ascending + edit thought should not cause re-ranking', async () => {
+    act(() => {
+      store.dispatch([
+        importText({
+          text: `
+          - a
+          - b
+        `,
+        }),
+        setCursor(['a']),
+      ])
+    })
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // Click sort picker and select Created sort
+    await click('[data-testid="toolbar-icon"][aria-label="Sort Picker"]')
+    await act(vi.runOnlyPendingTimersAsync)
+    await click('[aria-label="sort options"] [aria-label="Created"]')
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // Edit thought 'a'
+    act(() => {
+      store.dispatch([editThoughtByContext(['a'], 'aa')])
+    })
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // Get all thoughts in order
+    const thoughts = screen.getAllByLabelText('thought-container')
+    const thoughtValues = thoughts.map(t => t.textContent)
+
+    // Verify thoughts are sorted by creation time ascending (aa, b)
+    expect(thoughtValues).toMatchObject(['aa', 'b'])
+  })
+
   it('Descending', async () => {
     // Import initial thought 'a'
     act(() => {
