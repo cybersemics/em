@@ -9,6 +9,7 @@ import durations from '../../util/durations'
 import fastClick from '../../util/fastClick'
 import ProgressiveBlur from '../ProgressiveBlur'
 import CloseIcon from '../icons/CloseIcon'
+import useSwipeToClear from './useSwipeToClear'
 
 /** Cumulative swipe distance (in px) at which a swipe fully fades and dismisses the tip. */
 const SWIPE_DISMISS_THRESHOLD = 200
@@ -39,16 +40,26 @@ const Tip: FC<
   /** True while the fade-out CSS transition is running (after the user taps Clear or completes a swipe). */
   const [isDismissing, setIsDismissing] = useState(false)
 
-  // ── Swipe-to-dismiss state ──────────────────────────────────────────────
+  // ── Swipe-to-dismiss ────────────────────────────────────────────────────
 
-  /** Cumulative distance (px) the user's finger has traveled during the current touch. */
-  const [swipeDistance, setSwipeDistance] = useState(0)
+  const onSwipeDismiss = useCallback(
+    (immediate: boolean) => {
+      if (immediate) {
+        dispatch(dismissTip())
+      } else {
+        setIsDismissing(true)
+      }
+    },
+    [dispatch],
+  )
 
-  /** Smoothed swipe velocity (px/s) using an exponential moving average. */
-  const velocity = useRef(0)
+  const { completion, touchHandlers } = useSwipeToClear({
+    threshold: SWIPE_DISMISS_THRESHOLD,
+    onDismiss: onSwipeDismiss,
+  })
 
-  /** Tracks the last known touch position and timestamp for per-segment velocity calculation. */
-  const lastTouch = useRef<{ x: number; y: number; time: number } | null>(null)
+  /** Opacity derived from swipe completion. Linearly decreases from 1 → 0. */
+  const swipeOpacity = 1 - completion
 
   // ── Handlers ────────────────────────────────────────────────────────────
 
@@ -67,83 +78,8 @@ const Tip: FC<
       if (e.target !== e.currentTarget) return
       dispatch(dismissTip())
       setIsDismissing(false)
-      setSwipeDistance(0)
     },
     [dispatch],
-  )
-
-  /** Records the initial touch position and resets velocity/distance for a new swipe gesture. */
-  const onTouchStart = useCallback((e: React.TouchEvent) => {
-    e.stopPropagation()
-    const touch = e.touches[0]
-    lastTouch.current = { x: touch.pageX, y: touch.pageY, time: performance.now() }
-    velocity.current = 0
-    setSwipeDistance(0)
-  }, [])
-
-  /** Accumulates swipe distance and updates the smoothed velocity on each touch move. */
-  const onTouchMove = useCallback((e: React.TouchEvent) => {
-    e.stopPropagation()
-    if (!lastTouch.current) return
-    const touch = e.touches[0]
-    const now = performance.now()
-
-    // Calculate the distance of this individual move segment.
-    const moveDx = touch.pageX - lastTouch.current.x
-    const moveDy = touch.pageY - lastTouch.current.y
-    const segmentDistance = Math.sqrt(moveDx * moveDx + moveDy * moveDy)
-
-    // Accumulate total distance traveled (direction-agnostic — any movement counts).
-    setSwipeDistance(prev => prev + segmentDistance)
-
-    // Smoothed velocity via exponential moving average (40% previous, 60% current).
-    // This dampens jitter while staying responsive to quick flicks.
-    const dt = now - lastTouch.current.time
-    if (dt > 0) {
-      const instantVelocity = (segmentDistance / dt) * 1000
-      velocity.current = velocity.current * 0.4 + instantVelocity * 0.6
-    }
-
-    lastTouch.current = { x: touch.pageX, y: touch.pageY, time: now }
-  }, [])
-
-  /** Opacity derived from swipe progress. Linearly decreases from 1 → 0 as the user swipes. */
-  const swipeOpacity = Math.max(0, 1 - swipeDistance / SWIPE_DISMISS_THRESHOLD)
-
-  /**
-   * On touch end, decides whether to dismiss or snap back based on a combined score
-   * of cumulative distance and velocity. This lets a short fast flick dismiss the tip
-   * just as effectively as a long slow drag.
-   */
-  const onTouchEnd = useCallback(
-    (e: React.TouchEvent) => {
-      e.stopPropagation()
-      lastTouch.current = null
-
-      // Combined score: distance and velocity compensate for each other.
-      // The 0.5 weight on velocity means 200px/s of velocity is equivalent to 100px of distance.
-      const score = swipeDistance + velocity.current * 0.5
-      if (score >= SWIPE_DISMISS_THRESHOLD) {
-        // If the swipe has already fully faded the tip, dismiss immediately.
-        // Otherwise, trigger a fade-out animation from the current opacity.
-        if (swipeOpacity <= 0) {
-          dispatch(dismissTip())
-          setSwipeDistance(0)
-        } else {
-          setSwipeDistance(0)
-          setIsDismissing(true)
-        }
-      } else if (swipeDistance > 0) {
-        // Below threshold — snap the opacity back to 1 with a fast ease-out animation.
-        animate(swipeDistance, 0, {
-          duration: durations.get('fast') / 1000,
-          ease: 'easeOut',
-          onUpdate: v => setSwipeDistance(v),
-        })
-      }
-      velocity.current = 0
-    },
-    [dispatch, swipeDistance, swipeOpacity],
   )
 
   // ── Blur opacity (MotionValue) ──────────────────────────────────────────
@@ -319,10 +255,7 @@ const Tip: FC<
           paddingBottom: { base: 'max(1.5rem, calc(0.5rem + env(safe-area-inset-bottom)))', lg: '1.5rem' },
         })}
         style={{ opacity: isDismissing ? 0 : swipeOpacity, transition: fadeOut, touchAction: 'none' }}
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
-        onTouchCancel={onTouchEnd}
+        {...touchHandlers}
         onTransitionEnd={handleFadeOutEnd}
       >
         {/* TIP label — uses plus-lighter blend mode for a subtle luminous effect against the gradient. */}
