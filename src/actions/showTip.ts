@@ -2,19 +2,24 @@ import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import TipId from '../@types/TipId'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
+import { toggleDropdownActionCreator as toggleDropdown } from './toggleDropdown'
 
-/** Shows a popup with a tip and clears any existing alert. */
+/** Shows a tip popup at the bottom of the screen. */
 const showTip = (state: State, { tip }: { tip: TipId }): State => ({
   ...state,
   tip,
-  // clear any existing alert when showing a tip
-  alert: null,
 })
 
 /** Action-creator for showTip. */
 export const showTipActionCreator =
   (payload: Parameters<typeof showTip>[1]): Thunk =>
-  dispatch => {
+  (dispatch, getState) => {
+    // Close any open dropdown (e.g. Command Center) so the tip is visible.
+    const state = getState()
+    const hasOpenDropdown = state.showCommandCenter || state.showColorPicker || state.showLetterCase || state.showSortPicker || state.showUndoSlider
+    if (hasOpenDropdown) {
+      dispatch(toggleDropdown())
+    }
     dispatch({ type: 'showTip', ...payload })
   }
 

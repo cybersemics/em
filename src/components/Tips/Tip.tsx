@@ -1,4 +1,4 @@
-import { animate, MotionValue, useMotionValue } from 'framer-motion'
+import { animate, motion, MotionValue, useMotionValue } from 'framer-motion'
 import React, { FC, PropsWithChildren, useCallback, useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
@@ -17,9 +17,8 @@ const SWIPE_DISMISS_THRESHOLD = 200
 
 /** Layer 1: Gradient overlay + progressive blur — darkens and blurs the content behind the tip. */
 const TipBlur: FC<{
-  blurOpacity: MotionValue<number>
-  layerStyle: React.CSSProperties
-}> = ({ blurOpacity, layerStyle }) => (
+  opacity: MotionValue<number>
+}> = ({ opacity }) => (
   <div
     className={css({
       position: 'absolute',
@@ -36,7 +35,7 @@ const TipBlur: FC<{
         overflow: 'hidden',
       })}
     >
-      <ProgressiveBlur direction='to top' maxBlur={24} layers={3} opacity={blurOpacity} />
+      <ProgressiveBlur direction='to top' maxBlur={24} layers={3} opacity={opacity} />
     </div>
 
     {/* Desktop: blur is right-aligned (800px wide) with a left-edge feather mask
@@ -55,7 +54,7 @@ const TipBlur: FC<{
         direction='to top'
         maxBlur={24}
         layers={3}
-        opacity={blurOpacity}
+        opacity={opacity}
         mask='linear-gradient(to right, transparent, black 60%)'
       />
     </div>
@@ -63,22 +62,19 @@ const TipBlur: FC<{
     {/* Semi-transparent gradient from bgTransparent → bg, providing the darkening effect.
         Uses a CSS keyframe animation for fade-in (must be a static string for Panda CSS
         build-time extraction — dynamic template literals won't generate CSS rules). */}
-    <div
+    <motion.div
+      style={{ opacity: opacity }}
       className={css({
-        animation: 'fadein {durations.medium} ease',
         position: 'absolute',
         inset: 0,
         background: 'linear-gradient(180deg, {colors.bgTransparent} 0%, {colors.bg} 100%)',
       })}
-      style={layerStyle}
     />
   </div>
 )
 
 /** Layer 2: Glow image — a pre-rendered WebP light-leak effect positioned behind the text content. */
-const TipGlow: FC<{
-  layerStyle: React.CSSProperties
-}> = ({ layerStyle }) => (
+const TipGlow: FC = () => (
   <div
     className={css({
       animation: 'fadein {durations.medium} ease',
@@ -111,7 +107,6 @@ const TipGlow: FC<{
       // Applying filter: blur helps us eliminate banding artifacts in the glow image.
       filter: 'blur(8px)',
     })}
-    style={layerStyle}
   />
 )
 
@@ -136,6 +131,12 @@ const Tip: FC<
 > = ({ tipId, children }) => {
   const dispatch = useDispatch()
   const tip = useSelector(state => state.tip)
+
+  // Selectors for UI state that should temporarily hide the tip when active to avoid visual conflicts.
+  const isKeyboardOpen = useSelector(state => state.isKeyboardOpen)
+  const showCommandCenter = useSelector(state => state.showCommandCenter)
+  const showSidebar = useSelector(state => state.showSidebar)
+  const hasAlert = useSelector(state => !!state.alert)
 
   /** Prefetch the glow image used in the tip, so that the user doesn't see a loading delay when the tip first becomes visible. */
   usePrefetchImages(['/img/tip/tip-glow-alpha.webp'])
@@ -179,47 +180,55 @@ const Tip: FC<
     (e: React.TransitionEvent) => {
       // Ignore transitionend events bubbling up from children (e.g. the clear button's hover/active transitions).
       if (e.target !== e.currentTarget) return
-      dispatch(dismissTip())
-      setIsDismissing(false)
+      // Only dispatch dismissTip for user-initiated dismissals (Clear button / swipe),
+      // not when the tip is temporarily hidden by the keyboard or command center.
+      if (isDismissing) {
+        dispatch(dismissTip())
+        setIsDismissing(false)
+      }
     },
-    [dispatch],
+    [dispatch, isDismissing],
   )
 
-  // ── Blur opacity (MotionValue) ──────────────────────────────────────────
-  // The blur layer uses a framer-motion MotionValue instead of inline CSS opacity.
-  // This avoids a Safari bug where animating opacity on a parent of backdrop-filter
-  // children breaks the blur rendering.
-  const blurOpacity = useMotionValue(0)
-  const isVisible = tip === tipId
+  const isTipActive = tip === tipId
+  const isHidden = isKeyboardOpen || showCommandCenter || showSidebar || hasAlert
+  const isVisible = isTipActive && !isHidden
   const wasVisible = usePrevious(isVisible)
+
+  // ── Tip opacity (MotionValue) ──────────────────────────────────────────
+  // A single MotionValue drives the opacity of all visual layers.
+  // Passed directly to ProgressiveBlur and to the motion.div wrapper for glow + content.
+  // Handles all opacity conditions: visibility transitions, dismiss, and swipe.
+  const opacity = useMotionValue(isVisible ? 1 : 0)
+
   useEffect(() => {
-    // Fade in blur when the tip becomes visible, matching the CSS fadein on other layers.
     if (isVisible && !wasVisible) {
-      blurOpacity.set(0)
-      const controls = animate(blurOpacity, 1, { duration: durations.get('medium') / 1000, ease: 'easeOut' })
+      // Fade in — tip becoming visible (initial or reappearing after temporary hide).
+      const duration = durations.get(wasVisible === false ? 'fast' : 'medium') / 1000
+      opacity.set(0)
+      const controls = animate(opacity, 1, { duration, ease: 'easeOut' })
+      return () => controls.stop()
+    }
+    if (!isVisible && wasVisible) {
+      // Fade out — temporarily hidden by keyboard/command center/sidebar/alert.
+      const duration = durations.get('fast') / 1000
+      const controls = animate(opacity, 0, { duration, ease: 'easeOut' })
       return () => controls.stop()
     }
     if (!isVisible) return
-    // Fade out blur when dismissing.
+    // Fade out when user dismisses (Clear button triggers CSS transition via handleFadeOutEnd).
     if (isDismissing) {
-      const controls = animate(blurOpacity, 0, { duration: durations.get('medium') / 1000, ease: 'easeOut' })
+      const duration = durations.get('medium') / 1000
+      const controls = animate(opacity, 0, { duration, ease: 'easeOut' })
       return () => controls.stop()
     }
-    // During an active swipe, sync blur opacity directly to swipe progress.
-    blurOpacity.set(swipeOpacity)
-  }, [isVisible, isDismissing, swipeOpacity, blurOpacity])
+    // During an active swipe, sync opacity directly to swipe progress.
+    opacity.set(swipeOpacity)
+  }, [isVisible, isDismissing, swipeOpacity])
 
   // ── Render ──────────────────────────────────────────────────────────────
 
-  const value = isVisible ? children : null
-
-  /** Shared style applied to all visual layers. */
-  const layerStyle: React.CSSProperties = {
-    opacity: isDismissing ? 0 : swipeOpacity,
-    transition: isDismissing ? `opacity ${durations.get('medium')}ms ease` : undefined,
-  }
-
-  return value ? (
+  return isTipActive ? (
     <div
       key={tipId}
       className={css({
@@ -235,13 +244,17 @@ const Tip: FC<
         position: 'fixed'
       })}
     >
-      <TipBlur blurOpacity={blurOpacity} layerStyle={layerStyle} />
-      <TipGlow layerStyle={layerStyle} />
+      {/* Blur layer is outside the opacity wrapper because ProgressiveBlur requires
+          its own opacity to work around a Safari backdrop-filter bug. */}
+      <TipBlur opacity={opacity} />
+      {/* Glow and content layers are wrapped in a motion.div driven by opacity. */}
+      <motion.div style={{ opacity: opacity, display: 'flex', width: '100%' }}>
+        <TipGlow />
 
-      {/* ── Layer 3: Content ─────────────────────────────────────────────── */}
-      {/* Contains the TIP label, message text, and Clear button.
-          This is the only layer with pointerEvents enabled, and handles swipe-to-dismiss touch events. */}
-      <div
+        {/* ── Layer 3: Content ─────────────────────────────────────────────── */}
+        {/* Contains the TIP label, message text, and Clear button.
+            This is the only layer with pointerEvents enabled, and handles swipe-to-dismiss touch events. */}
+        <div
         className={css({
           animation: 'fadein {durations.medium} ease',
           position: 'relative',
@@ -250,7 +263,7 @@ const Tip: FC<
           display: 'flex',
           gap: '.5rem',
           flexDirection: 'column',
-          pointerEvents: 'auto',
+          pointerEvents: isVisible ? 'auto' : 'none',
           // Mobile portrait: align left; landscape/desktop: align right
           marginLeft: { base: 0, lg: 'auto' },
           alignItems: { base: 'flex-start', lg: 'flex-end' },
@@ -262,7 +275,7 @@ const Tip: FC<
           // On devices without, fall back to 1.5rem. Desktop always uses 1.5rem.
           paddingBottom: { base: 'max(1.5rem, calc(0.5rem + env(safe-area-inset-bottom)))', lg: '1.5rem' },
         })}
-        style={{ ...layerStyle, touchAction: 'none' }}
+        style={{ touchAction: 'none' }}
         {...touchHandlers}
         onTransitionEnd={handleFadeOutEnd}
       >
@@ -294,7 +307,7 @@ const Tip: FC<
             textShadow: '0 0 4px {colors.fgOverlay40}',
           })}
         >
-          {value}
+          {children}
         </div>
 
         {/* Clear button — overlay blend mode keeps it visually subtle until hovered. */}
@@ -320,6 +333,7 @@ const Tip: FC<
           <span className={css({ fontSize: '0.8em' })}>Clear</span>
         </div>
       </div>
+      </motion.div>
     </div>
   ) : null
 }
