@@ -128,18 +128,15 @@ const Tip: FC<
       className={css({
         left: 0,
         right: 0,
+        bottom: 0,
         zIndex: 'popup',
         pointerEvents: 'none',
         // Allow dragging through the tip overlay so drag-and-drop still works.
         _dragHold: { pointerEvents: 'none' },
         display: 'flex',
         userSelect: 'none',
+        position: 'fixed'
       })}
-      style={{
-        ...positionFixedStyles,
-        // Override usePositionFixed bottom offset to sit flush at the bottom of the viewport.
-        bottom: 0,
-      }}
     >
       {/* ── Layer 1: Gradient overlay + progressive blur ─────────────────── */}
       <div
