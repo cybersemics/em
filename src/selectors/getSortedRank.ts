@@ -47,11 +47,15 @@ const getSortedRank = (state: State, id: ThoughtId, value: string) => {
     return calculateRank(thoughtsVisible, index)
   }
 
+  // Ignore font tags when alphabetically sorting thoughts (#3927)
+  const FONT_TAG_REGEX = /<font color="[^"]+">|<\/font>/gm
+  const cleanedValue = value.replaceAll(FONT_TAG_REGEX, '')
+
   // For alphabetical sorting
   const index = children.findIndex(child =>
     isDescending
-      ? compareReasonableDescending(child.value, value) !== -1
-      : compareReasonable(child.value, value) !== -1,
+      ? compareReasonableDescending(child.value.replaceAll(FONT_TAG_REGEX, ''), cleanedValue) !== -1
+      : compareReasonable(child.value.replaceAll(FONT_TAG_REGEX, ''), cleanedValue) !== -1,
   )
   return calculateRank(children, index)
 }
