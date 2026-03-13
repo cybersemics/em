@@ -141,7 +141,7 @@ const editThought = (state: State, { cursorOffset, force, oldValue, newValue, pa
     ...editedThought,
     ...(editedThought.generating ? { generating: false } : null),
     rank:
-      newValue !== '' && (sortType === 'Alphabetical' || sortType === 'Created' || sortType === 'Updated')
+      newValue !== '' && (sortType === 'Alphabetical' || sortType === 'Updated')
         ? getSortedRank(state, editedThought.parentId, newValue)
         : editedThought.rank,
     value: newValue,

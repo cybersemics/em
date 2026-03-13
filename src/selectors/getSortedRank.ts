@@ -31,7 +31,7 @@ const getSortedRank = (state: State, id: ThoughtId, value: string) => {
   const thoughts = children.filter(thought => !state.cursor || thought.id !== state.cursor[state.cursor.length - 1])
 
   // Handle Created/Updated sorting
-  if (sortPreference.type === 'Created' || sortPreference.type === 'Updated') {
+  if (sortPreference.type === 'Updated') {
     return isDescending ? thoughts[0].rank - 1 : (thoughts[thoughts.length - 1]?.rank || 0) + 1
   }
 
