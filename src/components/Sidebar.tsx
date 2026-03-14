@@ -30,6 +30,7 @@ import _ from 'lodash'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
+import { token } from '../../styled-system/tokens'
 import { longPressActionCreator as longPress } from '../actions/longPress'
 import { toggleSidebarActionCreator } from '../actions/toggleSidebar'
 import { isSafari } from '../browser'
@@ -38,16 +39,16 @@ import useBreakpoint from '../hooks/useBreakpoint'
 import viewportStore from '../stores/viewport'
 import durations from '../util/durations'
 import fastClick from '../util/fastClick'
+import safeY from '../util/safeY'
 import ChevronImg from './ChevronImg'
 import FadeTransition from './FadeTransition'
 import Favorites from './Favorites'
-import { ProgressiveBlur } from './ProgressiveBlur'
+import ProgressiveBlur from './ProgressiveBlur'
 import RecentlyDeleted from './RecentlyDeleted'
 import RecentlyEdited from './RecentlyEdited'
 import DeleteIcon from './icons/DeleteIcon'
 import FavoritesIcon from './icons/FavoritesIcon'
 import PencilIcon from './icons/PencilIcon'
-import safeY from '../util/safeY'
 
 /**
  * Cubic-bezier ease-out curve used for most sidebar animations (opening, overlay transitions).
@@ -65,6 +66,12 @@ const EASE_OUT_GENTLE = [0.25, 0.1, 0.25, 1] as const
 /** Whether to enable blur effects throughout the sidebar.
  * In Chromium, blur effects significantly reduce performance, so we disable them there. */
 const BLUR_ENABLED = isSafari()
+
+/** Fixed width of the sidebar on large devices (px). On small screens, the sidebar spans 100% of the viewport. */
+const SIDEBAR_WIDTH_PX = 400
+
+/** Height (px) of the scroll fade mask at the top of the scrollable content area in the sidebar. */
+const SCROLL_MASK_HEIGHT = 48
 
 /** Valid sidebar section IDs. */
 type SidebarSectionId = 'favorites' | 'recentlyEdited' | 'recentlyDeleted'
@@ -85,7 +92,7 @@ type SidebarSection = {
  * The hue values are chosen to create visually distinct color tints:
  * - Favorites: 0° (no rotation, uses the base overlay color)
  * - Recently Edited: -45° (shifts toward cooler tones)
- * - Recently Deleted: 128° (shifts toward green/teal tones).
+ * - Recently Deleted: 128° (shifts toward warmer tones).
  */
 const SECTIONS: SidebarSection[] = [
   { id: 'favorites', label: 'Favorites', icon: FavoritesIcon, hue: 0, saturate: 1 },
@@ -228,6 +235,7 @@ const SidebarHeader = ({
               {...fastClick(() => setIsOpen(false))}
               className={css({
                 position: 'absolute',
+                zIndex: 1,
                 top: '100%',
                 left: 0,
                 right: 0,
@@ -237,7 +245,7 @@ const SidebarHeader = ({
             />
             {/*
              * Dropdown menu containing the non-active sections.
-             * Animates from height:0 → auto using Framer Motion's layout animation.
+             * Animates from height:0 > auto using Framer Motion's layout animation.
              * Positioned absolutely below the header row so it doesn't affect
              * the header's layout.
              */}
@@ -256,7 +264,7 @@ const SidebarHeader = ({
                 flexDirection: 'column',
                 alignItems: 'flex-start',
                 marginTop: 0,
-                gap: '0.4rem',
+                gap: '0.5rem',
               }}
             >
               {/* Render each non-active section as a clickable row */}
@@ -343,10 +351,7 @@ const SidebarOverlay1 = ({
   const blur = BLUR_ENABLED ? 'blur(8px) ' : ''
 
   // Combine the hue, saturation and blur filters into a single CSS filter string.
-  const filter = useTransform(
-    [hue, sat],
-    ([h, s]) => `${blur}hue-rotate(${h}deg) saturate(${s})`,
-  )
+  const filter = useTransform([hue, sat], ([h, s]) => `${blur}hue-rotate(${h}deg) saturate(${s})`)
 
   // Styles for collapsed and expanded states of the overlay.
   // backgroundSize: fixed px values derived from the source image (1482×744).
@@ -396,7 +401,7 @@ const SidebarOverlay1 = ({
  *
  * Unlike SidebarOverlay1 (which uses lighten blend mode and responds to the
  * dropdown expanded state), this overlay:
- * - Uses screen blend mode for softer, more subtle light mixing
+ * - Doesn't need a blend mode
  * - Applies a heavier blur (8px vs 4px) for a more diffuse effect
  * - Does not animate based on dropdown state (simpler, always the same)
  * - Covers the full height of the sidebar (top:0 to bottom:0).
@@ -420,8 +425,12 @@ const SidebarOverlay2 = ({
   hue: MotionValue<number>
   sat: MotionValue<number>
 }) => {
-  // Safari: include blur to reduce gradient banding. Chromium: omit for performance.
+  // Applying blur to overlay images helps substantially with gradient banding artifacts in Safari,
+  // with no observed performance impact – even on older/slower iPhones.
+  // Unfortunately, banding is visible in Chromium regardless of blur, so we disable it here.
   const blur = BLUR_ENABLED ? 'blur(8px) ' : ''
+
+  // Combine the hue, saturation and blur filters into a single CSS filter string.
   const filter = useTransform([hue, sat], ([h, s]) => `${blur}hue-rotate(${h}deg) saturate(${s})`)
 
   return (
@@ -492,7 +501,7 @@ const SidebarGradient = ({
       className={css({
         position: 'absolute',
         inset: 0,
-        background: 'linear-gradient(to right, rgba(10, 10, 18, 1) 0%, {colors.bgTransparent} 100%)',
+        background: 'linear-gradient(to right, {colors.sidebarBg} 0%, {colors.bgTransparent} 100%)',
         width,
         pointerEvents: showSidebar ? 'auto' : 'none',
         cursor: 'pointer',
@@ -702,7 +711,7 @@ const Sidebar = () => {
   const [isScrolled, setIsScrolled] = useState(false)
 
   /** Current viewport width from the viewport store – used for responsive
-   * layout decisions (full-width vs fixed 400px). */
+   * layout decisions (full-width vs fixed size determined by SIDEBAR_WIDTH_PX). */
   const innerWidth = viewportStore.useSelector(state => state.innerWidth)
 
   const { dropdownOpen, setDropdownOpen, dropdownHeight, setDropdownHeight } = useDropdownState(showSidebar)
@@ -767,7 +776,7 @@ const Sidebar = () => {
    * - Progress-based animation transforms (mapping x position to opacity, etc.)
    * - Swipe gesture hit detection (checking if finger is within drawer bounds).
    */
-  const widthPx = isDesktop ? 400 : innerWidth
+  const widthPx = isLargeDevice ? SIDEBAR_WIDTH_PX : innerWidth
 
   /**
    * The current x-axis translation of the sidebar drawer.
@@ -1228,7 +1237,6 @@ const Sidebar = () => {
                      *   providing a visual cue that content extends above
                      * - overscrollBehavior:'contain' prevents scroll chaining to the
                      *   body (which is already scroll-locked via useEffect)
-                     * - data-scroll-at-edge is a marker for external scroll detection
                      * - position:relative is required for correct drop hover positioning
                      *   in the Favorites drag-and-drop system
                      */}
@@ -1263,19 +1271,21 @@ const Sidebar = () => {
                       style={{
                         maskImage:
                           !BLUR_ENABLED && dropdownOpen
-                            ? `linear-gradient(to bottom, transparent ${dropdownHeight}px, black ${dropdownHeight + 48}px)`
-                            : 'linear-gradient(to bottom, transparent, black 48px)',
+                            ? `linear-gradient(to bottom, transparent ${dropdownHeight}px, black ${dropdownHeight + SCROLL_MASK_HEIGHT}px)`
+                            : `linear-gradient(to bottom, transparent, black ${SCROLL_MASK_HEIGHT}px)`,
                         WebkitMaskImage:
                           !BLUR_ENABLED && dropdownOpen
-                            ? `linear-gradient(to bottom, transparent ${dropdownHeight}px, black ${dropdownHeight + 48}px)`
-                            : 'linear-gradient(to bottom, transparent, black 48px)',
-                        maskPosition: !BLUR_ENABLED && dropdownOpen ? '0 0' : isScrolled ? '0 0' : '0 -48px',
-                        WebkitMaskPosition: !BLUR_ENABLED && dropdownOpen ? '0 0' : isScrolled ? '0 0' : '0 -48px',
+                            ? `linear-gradient(to bottom, transparent ${dropdownHeight}px, black ${dropdownHeight + SCROLL_MASK_HEIGHT}px)`
+                            : `linear-gradient(to bottom, transparent, black ${SCROLL_MASK_HEIGHT}px)`,
+                        maskPosition:
+                          !BLUR_ENABLED && dropdownOpen ? '0 0' : isScrolled ? '0 0' : `0 -${SCROLL_MASK_HEIGHT}px`,
+                        WebkitMaskPosition:
+                          !BLUR_ENABLED && dropdownOpen ? '0 0' : isScrolled ? '0 0' : `0 -${SCROLL_MASK_HEIGHT}px`,
                         maskRepeat: 'no-repeat',
                         WebkitMaskRepeat: 'no-repeat',
-                        maskSize: '100% calc(100% + 48px)',
-                        WebkitMaskSize: '100% calc(100% + 48px)',
-                        transition: 'mask-position 0.3s ease-out, -webkit-mask-position 0.3s ease-out',
+                        maskSize: `100% calc(100% + ${SCROLL_MASK_HEIGHT}px)`,
+                        WebkitMaskSize: `100% calc(100% + ${SCROLL_MASK_HEIGHT}px)`,
+                        transition: `mask-position ${durations.get('fast')}ms ease-out, -webkit-mask-position ${durations.get('fast')}ms ease-out`,
                       }}
                     >
                       {/* Render the active section's content component */}
