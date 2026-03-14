@@ -62,9 +62,8 @@ export const isEditable = (node?: Node | EventTarget | null) => {
 
   // If the selected element is a formatting tag, then one of its parents may be the editable (#3805)
   while (
-    element?.tagName &&
-    element.parentElement &&
-    ALLOWED_FORMATTING_TAGS.includes(element.tagName.toLocaleLowerCase())
+    element?.parentElement &&
+    (element.nodeType === Node.TEXT_NODE || ALLOWED_FORMATTING_TAGS.includes(element.tagName.toLocaleLowerCase()))
   )
     element = element.parentElement
 
@@ -83,24 +82,7 @@ export const isNote = () => {
 
 /** Returns true if the selection is on a thought. */
 // We should see if it is possible to just use state.isKeyboardOpen and selection.isActive()
-export const isThought = (): boolean => {
-  // type classList as optional
-  const focusNode = window.getSelection()?.focusNode
-  if (!focusNode) return false
-  // check focusNode and focusNode.parentNode, since it could be on the TEXT_NODE or the ELEMENT_NODE
-  return isEditable(focusNode) || isEditable(focusNode.parentNode)
-}
-
-/** Returns true if the selection is on a thought. */
-export const isOnThought = (): boolean => {
-  let focusNode = window.getSelection()?.focusNode
-  while (focusNode && (focusNode as HTMLElement)?.tagName !== 'DIV') {
-    if (isEditable(focusNode)) return true
-    focusNode = focusNode?.parentNode
-  }
-  // check focusNode if it is on the TEXT_NODE or the ELEMENT_NODE
-  return isEditable(focusNode)
-}
+export const isThought = (): boolean => isEditable(window.getSelection()?.focusNode)
 
 /** Returns true if the selection is  on the first line of a multi-line text node. Returns true if there is no selection or if the text node is only a single line. */
 export const isOnFirstLine = (): boolean => {
