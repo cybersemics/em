@@ -1,34 +1,32 @@
 /**
- * Sidebar.tsx
+ * Sidebar.tsx.
  *
  * The main sidebar component for the application. This sidebar slides in from
- * the left edge and provides access to three sections: Favorites, Recently
- * Edited, and Recently Deleted.
+ * the left edge and provides access to Favorites, Recently Edited, and Recently Deleted.
  *
  * Architecture overview:
  * - Uses Radix UI Dialog for accessibility (focus trapping, screen reader support)
  * - Uses Framer Motion for physics-based animations and gesture handling
  * - Implements custom touch/swipe handling adapted from MUI's SwipeableDrawer
- *   pattern, because Framer Motion's built-in drag doesn't support the
- *   "wait and see" direction detection phase we need
+ * pattern, because Framer Motion's built-in drag doesn't support the
+ * "wait and see" direction detection phase we need
  * - Multiple visual overlay layers (SidebarOverlay1, SidebarOverlay2) create
  *   the glow/lighting effects behind the sidebar content
- * - Responsive: full-width on mobile (<768px), fixed 400px on desktop
+ * - Responsive: full-width on mobile (<600px), fixed 400px on desktop.
  *
  * Component hierarchy:
  *   Sidebar (root)
  *   ├── SidebarBackground (dimming overlay + progressive blur + gradient)
  *   ├── SidebarOverlay1 (primary glow effect, lighten blend)
- *   ├── SidebarOverlay2 (secondary glow effect, screen blend)
+ *   ├── SidebarOverlay2 (secondary glow effect)
  *   └── Dialog.Content (the actual drawer panel)
  *       ├── SidebarHeader (section picker with animated dropdown)
  *       │   └── SidebarSectionLabel (styled text label)
  *       └── Scrollable content area
  *           ├── Favorites
  *           ├── RecentlyEdited
- *           └── RecentlyDeleted
+ *           └── RecentlyDeleted.
  */
-
 import * as Dialog from '@radix-ui/react-dialog'
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden'
 import { AnimatePresence, MotionValue, animate, motion, useMotionValue, useTransform } from 'framer-motion'
@@ -44,47 +42,38 @@ import { LongPressState } from '../constants'
 import viewportStore from '../stores/viewport'
 import durations from '../util/durations'
 import fastClick from '../util/fastClick'
+import ChevronImg from './ChevronImg'
 import FadeTransition from './FadeTransition'
 import Favorites from './Favorites'
 import { ProgressiveBlur } from './ProgressiveBlur'
 import RecentlyDeleted from './RecentlyDeleted'
 import RecentlyEdited from './RecentlyEdited'
+import DeleteIcon from './icons/DeleteIcon'
 import FavoritesIcon from './icons/FavoritesIcon'
 import PencilIcon from './icons/PencilIcon'
-import DeleteIcon from './icons/DeleteIcon'
-import ChevronImg from './ChevronImg'
 
 /**
  * Cubic-bezier ease-out curve used for most sidebar animations (opening, overlay transitions).
- * This is a fairly aggressive ease-out: the animation starts quickly and decelerates smoothly.
- * Control points: [x1, y1, x2, y2] per the CSS cubic-bezier() spec.
+ * The animation starts quickly and decelerates smoothly.
  */
 const EASE_OUT = [0.16, 0.6, 0.2, 1] as const
 
-/** Whether to enable blur effects throughout the sidebar (overlay filters, dropdown backdrop).
- * Safari/iOS composites at high bit depth and handles blur efficiently, so blur is enabled
- * to reduce gradient banding. Chromium clamps to 8-bit and blur causes expensive per-frame
- * recompositing, so it is disabled — using opacity fades and dithering instead. */
-const BLUR_ENABLED = isSafari()
-
 /**
  * A gentler ease-out curve used specifically when *closing* the sidebar.
- * The less aggressive start (x1=0.25 vs 0.16) prevents the sidebar from
+ * The less aggressive start (0.25 vs 0.16) prevents the sidebar from
  * appearing to "jump" when the user releases their finger after a swipe.
  */
 const EASE_OUT_GENTLE = [0.25, 0.1, 0.25, 1] as const
 
-/** Valid sidebar section IDs – used as discriminated union for the active section. */
+/** Whether to enable blur effects throughout the sidebar.
+ * In Chromium, blur effects significantly reduce performance, so we disable them there. */
+const BLUR_ENABLED = isSafari()
+
+/** Valid sidebar section IDs. */
 type SidebarSectionId = 'favorites' | 'recentlyEdited' | 'recentlyDeleted'
 
 /**
- * Configuration for a sidebar section. Each section has:
- * - id: unique identifier used for state management
- * - label: display name shown in the header
- * - icon: React component rendered next to the label
- * - hue: CSS hue-rotate value (in degrees) applied to the glow overlays
- *         when this section is active, creating a distinct color tint per section
- * - saturate: CSS saturate multiplier for the glow overlays
+ * Configuration for a sidebar section.
  */
 type SidebarSection = {
   id: SidebarSectionId
@@ -98,8 +87,8 @@ type SidebarSection = {
  * All available sidebar sections, in display order.
  * The hue values are chosen to create visually distinct color tints:
  * - Favorites: 0° (no rotation, uses the base overlay color)
- * - Recently Edited: -45° (shifts toward cooler/blue tones)
- * - Recently Deleted: 128° (shifts toward green/teal tones)
+ * - Recently Edited: -45° (shifts toward cooler tones)
+ * - Recently Deleted: 128° (shifts toward green/teal tones).
  */
 const SECTIONS: SidebarSection[] = [
   { id: 'favorites', label: 'Favorites', icon: FavoritesIcon, hue: 0, saturate: 1 },
@@ -108,35 +97,72 @@ const SECTIONS: SidebarSection[] = [
 ]
 
 /**
+ * A styled text label for a sidebar section name.
+ * Used in both the header (for the active section) and the dropdown (for inactive sections).
+ *
+ * @param children - The label text content.
+ */
+const SidebarSectionLabel = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <div
+      className={css({
+        color: 'rgba(255, 255, 255, 0.75)',
+        fontSize: '1.4rem',
+        lineHeight: '1.4rem',
+        letterSpacing: '-0.25px',
+        marginTop: 4,
+        fontWeight: 300,
+      })}
+    >
+      {children}
+    </div>
+  )
+}
+
+/** Props for the SidebarHeader component. */
+interface SidebarHeaderProps {
+  sections: SidebarSection[]
+  sectionId: SidebarSectionId
+  onSectionChange: (id: SidebarSectionId) => void
+  isOpen: boolean
+  setIsOpen: (open: boolean) => void
+  onDropdownHeight: (height: number) => void
+}
+
+/**
  * The header for the sidebar, which by default shows the icon and label
  * for the current SidebarSection. It can be tapped to toggle a dropdown
  * view, which shows all SidebarSections.
  *
  * When the dropdown is open:
- * - A full-screen backdrop with a subtle blur appears behind the dropdown
- *   (tapping it closes the dropdown)
- * - The non-active sections animate in from height:0 with opacity
- * - The scrollable content area below pushes down via animated paddingTop
- *   (handled by the parent Sidebar component using the onDropdownHeight callback)
+ * - The contents of the sidebar are blurred (Safari) or dimmed (Chromium/Firefox)
+ * - The non-active sections animate into view
+ * - The scrollable content area below pushes down to make room for the dropdown.
  *
- * Props:
- * - sections: all available sidebar sections
- * - sectionId: the currently active section
- * - onSectionChange: callback when user selects a different section
- * - isOpen: whether the dropdown is currently expanded
- * - setIsOpen: toggle the dropdown open/closed
- * - onDropdownHeight: reports the pixel height of the dropdown when opened,
- *   so the parent can animate the content area down by the same amount
+ * @param sections - All available sidebar sections.
+ * @param sectionId - The currently active section.
+ * @param onSectionChange - Callback when user selects a different section.
+ * @param isOpen - Whether the dropdown is currently expanded.
+ * @param setIsOpen - Toggle the dropdown open/closed.
+ * @param onDropdownHeight - Used by the parent to adjust the content area's position
+ * when the dropdown expands/contracts.
  */
-const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen, onDropdownHeight } : { sections: SidebarSection[], sectionId: SidebarSectionId, onSectionChange: (id: SidebarSectionId) => void, isOpen: boolean, setIsOpen: (open: boolean) => void, onDropdownHeight: (height: number) => void }) =>  {
-  /** Ref to the dropdown container, used to measure its scrollHeight for the push-down animation. */
+const SidebarHeader = ({
+  sections,
+  sectionId,
+  onSectionChange,
+  isOpen,
+  setIsOpen,
+  onDropdownHeight,
+}: SidebarHeaderProps) => {
+  /** Ref to the dropdown container, used to measure its height for the push-down animation. */
   const dropdownRef = useRef<HTMLDivElement>(null)
 
-  /** The currently active section (always exists since sectionId comes from SECTIONS). */
-  const section = sections.find((s) => s.id === sectionId)!
+  /** The currently active section. */
+  const section = sections.find(s => s.id === sectionId)!
 
   /** Sections that are NOT currently active – these appear in the dropdown. */
-  const otherSections = sections.filter((s) => s.id !== sectionId)
+  const otherSections = sections.filter(s => s.id !== sectionId)
 
   /**
    * When the dropdown opens or the active section changes, measure the
@@ -148,7 +174,7 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
     if (isOpen && dropdownRef.current) {
       onDropdownHeight(dropdownRef.current.scrollHeight)
     }
-  }, [isOpen, sectionId])
+  }, [isOpen, sectionId, onDropdownHeight])
 
   return (
     // position:relative creates a stacking context for the absolutely-positioned dropdown
@@ -160,21 +186,30 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
           display: 'inline-flex',
           alignItems: 'center',
           gap: '0.75rem',
-          cursor: 'pointer'
+          cursor: 'pointer',
         })}
       >
         {/* Icon container – fixed 36x36 to maintain consistent alignment */}
-        <div className={css({ width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 })}>
+        <div
+          className={css({
+            width: '36px',
+            height: '36px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+          })}
+        >
           <section.icon size={28} fill='rgba(255, 255, 255, 0.75)' />
         </div>
-        <SidebarSectionLabel active>{section.label}</SidebarSectionLabel>
+        <SidebarSectionLabel>{section.label}</SidebarSectionLabel>
         {/* Chevron rotates 180° when dropdown is open to indicate toggle state */}
         <ChevronImg
           onClickHandle={() => setIsOpen(!isOpen)}
           additonalStyle={{
             transition: 'transform 0.2s ease-out',
             transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-            opacity: 0.4
+            opacity: 0.4,
           }}
         />
       </div>
@@ -183,44 +218,22 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
       <AnimatePresence>
         {isOpen && (
           <>
-            {/*
-             * Full-screen backdrop behind the dropdown.
-             * When BLUR_ENABLED is true: uses backdrop-filter blur to separate dropdown from content.
-             * When false: just a transparent click target (content fades via opacity instead).
-             */}
-            {BLUR_ENABLED ? (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: durations.get('medium') / 1000, ease: EASE_OUT }}
-                {...fastClick(() => setIsOpen(false))}
-                className={css({
-                  position: 'absolute',
-                  top: '100%',
-                  left: 0,
-                  right: 0,
-                  height: '100vh',
-                  cursor: 'pointer',
-                })}
-              />
-            ) : (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: durations.get('medium') / 1000, ease: EASE_OUT }}
-                {...fastClick(() => setIsOpen(false))}
-                className={css({
-                  position: 'absolute',
-                  top: '100%',
-                  left: 0,
-                  right: 0,
-                  height: '100vh',
-                  cursor: 'pointer',
-                })}
-              />
-            )}
+            {/* Full-screen backdrop behind the dropdown. When clicked, it dismisses the dropdown. */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: durations.get('medium') / 1000, ease: EASE_OUT }}
+              {...fastClick(() => setIsOpen(false))}
+              className={css({
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                right: 0,
+                height: '100vh',
+                cursor: 'pointer',
+              })}
+            />
             {/*
              * Dropdown menu containing the non-active sections.
              * Animates from height:0 → auto using Framer Motion's layout animation.
@@ -233,10 +246,20 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: durations.get('medium') / 1000, ease: EASE_OUT }}
-              style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginTop: '0rem', gap: '0.4rem' }}
+              style={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                zIndex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+                marginTop: 0,
+                gap: '0.4rem',
+              }}
             >
               {/* Render each non-active section as a clickable row */}
-              {otherSections.map((s) => (
+              {otherSections.map(s => (
                 <div
                   key={s.id}
                   {...fastClick(() => {
@@ -255,10 +278,19 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
                     transition: 'opacity 0.15s ease-out',
                   })}
                 >
-                  <div className={css({ width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 })}>
+                  <div
+                    className={css({
+                      width: '36px',
+                      height: '36px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    })}
+                  >
                     <s.icon size={32} fill='rgba(255, 255, 255, 0.75)' />
                   </div>
-                  <SidebarSectionLabel active={false}>{s.label}</SidebarSectionLabel>
+                  <SidebarSectionLabel>{s.label}</SidebarSectionLabel>
                 </div>
               ))}
             </motion.div>
@@ -270,58 +302,67 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
 }
 
 /**
- * A styled text label for a sidebar section name.
- * Used in both the header (for the active section) and the dropdown (for inactive sections).
- * The `active` prop is available for future styling differentiation but currently
- * both active and inactive labels share the same visual treatment.
- */
-const SidebarSectionLabel = ({ children, active: _active }: { children: React.ReactNode, active: boolean }) => {
-  return (
-    <div className={css({
-      color: 'rgba(255, 255, 255, 0.75)',
-      fontSize: '1.4rem',
-      lineHeight: '1.4rem',
-      letterSpacing: '-0.25px',
-      marginTop: 4,
-      fontWeight: 300
-    })}>{children}</div>
-  )
-}
-
-/** Glow overlay behind the sidebar header. Uses a background image (lighten blend)
- * sized in fixed px (derived from the source image's native 1482×744 dimensions)
- * so the crop region stays consistent regardless of container or viewport size.
+ * Glow overlay behind the sidebar header. Uses a background image and displays
+ * a specific cropped region of that image.
  *
- * The image is positioned with a negative X offset to crop the left portion,
- * showing only the right ~80% of the glow. The element itself spans 100vw so
- * the glow bleeds beyond the sidebar edge on desktop.
+ * The image is positioned with a negative x offset to crop the left portion of the
+ * image. The element itself spans 100vw so the glow bleeds beyond the sidebar edge on desktop.
  *
- * Animated properties:
- * - backgroundSize: scales from 50% → 75% of native height when dropdown expands
+ * We animate a lot of the styles on this element to create a dynamic glow effect that responds
+ * to user interactions:
+ *
+ * - backgroundSize: scales from 50% to 75% of native height when dropdown expands
  * - backgroundPositionY: shifts upward on expand to keep the glow centered
  * - brightness: increases on expand to intensify the glow
  * - hue-rotate / saturate: driven by the parent's shared motion values to
- *   tint the glow when switching sidebar sections
- * - opacity: fades in/out with the sidebar open/close via the parent's contentOpacity
+ * tint the glow when switching sidebar sections
+ * - opacity: fades in/out with the sidebar open/close via the parent's contentOpacity.
+ *
+ * @param opacity - Shared motion value providing opacity derived from the sidebar's x position.
+ * @param expanded - Whether the dropdown is currently expanded.
+ * @param hue - Shared motion value driving CSS hue-rotate on the overlay.
+ * @param sat - Shared motion value driving CSS saturate on the overlay.
  */
-const SidebarOverlay1 = ({ opacity, expanded, hue, sat }: { width: string, opacity: MotionValue<number>, expanded: boolean, expandedHeight: number, hue: MotionValue<number>, sat: MotionValue<number> }) => {
+const SidebarOverlay1 = ({
+  opacity,
+  expanded,
+  hue,
+  sat,
+}: {
+  opacity: MotionValue<number>
+  expanded: boolean
+  hue: MotionValue<number>
+  sat: MotionValue<number>
+}) => {
+  /** CSS brightness multiplier – increases when the dropdown expands to intensify the glow. */
   const brightness = useMotionValue(1)
 
+  /** Animate brightness up when the dropdown expands, back to normal when it collapses. */
   useEffect(() => {
     animate(brightness, expanded ? 1.35 : 1, { duration: durations.get('medium') / 1000, ease: EASE_OUT })
-  }, [expanded])
+  }, [expanded, brightness])
 
-  // Safari: include blur to reduce gradient banding (Safari composites at high bit depth so blur is cheap).
-  // Chromium: omit blur to avoid expensive per-frame recompositing during animations.
+  // Applying blur to overlay images helps substantially with gradient banding artifacts in Safari,
+  // with no observed performance impact – even on older/slower iPhones.
+  // Unfortunately, banding is visible in Chromium regardless of blur, so we disable it here.
   const blur = BLUR_ENABLED ? 'blur(4px) ' : ''
-  const filter = useTransform([brightness, hue, sat], ([b, h, s]) => `${blur}brightness(${b}) hue-rotate(${h}deg) saturate(${s})`)
 
-  // Style variants for the collapsed and expanded states.
+  // Combine all filter effects into a single CSS filter string. The hue and saturation filters
+  // change the color of the glow based on the active section, and
+  // brightness increases when the dropdown is expanded.
+  const filter = useTransform(
+    [brightness, hue, sat],
+    ([b, h, s]) => `${blur}brightness(${b}) hue-rotate(${h}deg) saturate(${s})`,
+  )
+
+  /** Helper function that calculates y values that account for the safe area inset. */
+  const safeY = (px: number) => `calc(${px}px + env(safe-area-inset-top))`
+
+  // Styles for collapsed and expanded states of the overlay.
   // backgroundSize: fixed px values derived from the source image (1482×744).
   //   Width stays at 50% of native; height scales from 50% → 75% on expand.
   // backgroundPositionY: negative offset crops the top of the image, revealing
   //   only the lower glow region. Increases on expand to keep the glow centered.
-  const safeY = (px: number) => `calc(${px}px + env(safe-area-inset-top))`
   const collapsed = { backgroundSize: 'calc(1482px * 0.475) calc(744px * 0.475)', backgroundPositionY: safeY(-84) }
   const open = { backgroundSize: 'calc(1482px * 0.475) calc(744px * 0.825)', backgroundPositionY: safeY(-164) }
 
@@ -357,12 +398,27 @@ const SidebarOverlay1 = ({ opacity, expanded, hue, sat }: { width: string, opaci
  * - Uses screen blend mode for softer, more subtle light mixing
  * - Applies a heavier blur (8px vs 4px) for a more diffuse effect
  * - Does not animate based on dropdown state (simpler, always the same)
- * - Covers the full height of the sidebar (top:0 to bottom:0)
+ * - Covers the full height of the sidebar (top:0 to bottom:0).
  *
  * Together, the two overlays create a layered glow effect that shifts color
  * as the user switches between sidebar sections.
+ *
+ * @param width - CSS width of the overlay (e.g. '100%' or '400px').
+ * @param opacity - Opacity derived from the sidebar's x position.
+ * @param hue - Shared motion value driving CSS hue-rotate on the overlay.
+ * @param sat - Shared motion value driving CSS saturate on the overlay.
  */
-const SidebarOverlay2 = ({ width, opacity, hue, sat }: { width: string, opacity: MotionValue<number>, hue: MotionValue<number>, sat: MotionValue<number> }) => {
+const SidebarOverlay2 = ({
+  width,
+  opacity,
+  hue,
+  sat,
+}: {
+  width: string
+  opacity: MotionValue<number>
+  hue: MotionValue<number>
+  sat: MotionValue<number>
+}) => {
   // Safari: include blur to reduce gradient banding. Chromium: omit for performance.
   const blur = BLUR_ENABLED ? 'blur(8px) ' : ''
   const filter = useTransform([hue, sat], ([h, s]) => `${blur}hue-rotate(${h}deg) saturate(${s})`)
@@ -379,7 +435,6 @@ const SidebarOverlay2 = ({ width, opacity, hue, sat }: { width: string, opacity:
         backgroundSize: '100% 800px',
         backgroundPosition: 'top left',
         backgroundRepeat: 'no-repeat',
-        mixBlendMode: 'normal',
         pointerEvents: 'none',
         zIndex: 'sidebar',
       })}
@@ -397,6 +452,13 @@ const SidebarOverlay2 = ({ width, opacity, hue, sat }: { width: string, opacity:
  * (see SidebarBackground) to avoid rendering artifacts specific to each engine.
  *
  * Clicking this overlay closes the sidebar (acts as a dismiss target).
+ *
+ * @param opacity - Opacity derived from the sidebar's x position.
+ * @param width - CSS width of the gradient overlay.
+ * @param showSidebar - Whether the sidebar is currently open.
+ * @param toggleSidebar - Callback to open/close the sidebar.
+ * @param hue - Shared motion value driving CSS hue-rotate.
+ * @param sat - Shared motion value driving CSS saturate.
  */
 const SidebarGradient = ({
   opacity,
@@ -416,24 +478,24 @@ const SidebarGradient = ({
   const filter = useTransform([hue, sat], ([h, s]) => `hue-rotate(${h}deg) saturate(${s})`)
 
   return (
-  <motion.div
-    aria-label='sidebar-gradient'
-    aria-hidden='true'
-    style={{ opacity, filter }}
-    onClick={() => toggleSidebar(false)}
-    className={css({
-      position: 'absolute',
-      inset: 0,
-      background: 'linear-gradient(to right, rgba(10, 10, 18, 1) 0%, {colors.bgTransparent} 100%)',
-      width,
-      pointerEvents: showSidebar ? 'auto' : 'none',
-      cursor: 'pointer',
-      userSelect: 'none',
-      // Safari doesn't repaint filter changes on this element unless the
-      // element is promoted to its own compositing layer.
-      willChange: 'filter',
-    })}
-  />
+    <motion.div
+      aria-label='sidebar-gradient'
+      aria-hidden='true'
+      style={{ opacity, filter }}
+      onClick={() => toggleSidebar(false)}
+      className={css({
+        position: 'absolute',
+        inset: 0,
+        background: 'linear-gradient(to right, rgba(10, 10, 18, 1) 0%, {colors.bgTransparent} 100%)',
+        width,
+        pointerEvents: showSidebar ? 'auto' : 'none',
+        cursor: 'pointer',
+        userSelect: 'none',
+        // Safari doesn't repaint filter changes on this element unless the
+        // element is promoted to its own compositing layer.
+        willChange: 'filter',
+      })}
+    />
   )
 }
 
@@ -443,7 +505,7 @@ const SidebarGradient = ({
  *
  * 1. A dimming overlay that darkens the entire viewport (clicks it to dismiss)
  * 2. A ProgressiveBlur that gradually blurs the main content near the sidebar edge
- * 3. A SidebarGradient that provides a smooth color transition
+ * 3. A SidebarGradient that provides a smooth color transition.
  *
  * The opacity of all three effects is derived from the sidebar's x position,
  * with a cubic ease-in applied so the background fades in gently as the
@@ -451,7 +513,15 @@ const SidebarGradient = ({
  *
  * Browser-specific rendering order:
  * - Safari/iOS: gradient is rendered ABOVE the blur (avoids patchy artifacts)
- * - Chrome: blur is rendered ABOVE the gradient (avoids visible banding)
+ * - Chrome: blur is rendered ABOVE the gradient (avoids visible banding).
+ *
+ * @param x - The sidebar's current x-axis translation motion value.
+ * @param widthPx - Sidebar width in pixels, used to derive opacity from x position.
+ * @param showSidebar - Whether the sidebar is currently open.
+ * @param toggleSidebar - Callback to open/close the sidebar.
+ * @param width - CSS width string for child overlay components.
+ * @param hue - Shared motion value driving CSS hue-rotate.
+ * @param sat - Shared motion value driving CSS saturate.
  */
 const SidebarBackground = ({
   x,
@@ -505,13 +575,27 @@ const SidebarBackground = ({
        */}
       {isSafari() ? (
         <>
-          <SidebarGradient opacity={opacity} width={width} showSidebar={showSidebar} toggleSidebar={toggleSidebar} hue={hue} sat={sat} />
+          <SidebarGradient
+            opacity={opacity}
+            width={width}
+            showSidebar={showSidebar}
+            toggleSidebar={toggleSidebar}
+            hue={hue}
+            sat={sat}
+          />
           <ProgressiveBlur direction='to right' minBlur={0} maxBlur={32} layers={4} width={width} opacity={opacity} />
         </>
       ) : (
         <>
           <ProgressiveBlur direction='to right' minBlur={0} maxBlur={32} layers={4} width={width} opacity={opacity} />
-          <SidebarGradient opacity={opacity} width={width} showSidebar={showSidebar} toggleSidebar={toggleSidebar} hue={hue} sat={sat} />
+          <SidebarGradient
+            opacity={opacity}
+            width={width}
+            showSidebar={showSidebar}
+            toggleSidebar={toggleSidebar}
+            hue={hue}
+            sat={sat}
+          />
         </>
       )}
     </div>
@@ -527,7 +611,7 @@ const SidebarBackground = ({
  * - Section switching (Favorites / Recently Edited / Recently Deleted)
  * - Visual overlay animations (glow effects that change color per section)
  * - Keyboard accessibility (Escape to close)
- * - Body scroll locking when open
+ * - Body scroll locking when open.
  *
  * The sidebar is always mounted in the DOM (via Radix Dialog's forceMount)
  * to match legacy MUI drawer behavior. It slides in/out using Framer Motion's
@@ -571,7 +655,7 @@ const Sidebar = () => {
   /**
    * Motion values for the overlay glow color.
    * - hue: drives CSS hue-rotate() on overlay images. Accumulates continuously
-   *   (not clamped to 0-360) so Framer Motion can interpolate shortest-path.
+   * (not clamped to 0-360) so Framer Motion can interpolate shortest-path.
    * - sat: drives CSS saturate() on overlay images.
    * Both are shared across SidebarOverlay1 and SidebarOverlay2 via props.
    */
@@ -594,7 +678,7 @@ const Sidebar = () => {
     const t = { duration: durations.get('slow') / 1000, ease: EASE_OUT }
     animate(hue, currentHue + diff, t)
     animate(sat, section.saturate, t)
-  }, [sectionId])
+  }, [sectionId, hue, sat])
 
   /** Reset the dropdown to closed whenever the sidebar itself closes,
    * so it doesn't appear pre-expanded next time the sidebar opens. */
@@ -652,7 +736,7 @@ const Sidebar = () => {
   /**
    * Sidebar width as a CSS value.
    * - Mobile: full viewport width so the sidebar covers the entire screen
-   * - Desktop: fixed 400px, leaving the main content partially visible
+   * - Desktop: fixed 400px, leaving the main content partially visible.
    */
   const width = innerWidth < desktopBreakpoint ? '100%' : '400px'
 
@@ -660,7 +744,7 @@ const Sidebar = () => {
    * Sidebar width in raw pixels. Needed for:
    * - Calculating the off-screen x position (-widthPx = fully hidden)
    * - Progress-based animation transforms (mapping x position to opacity, etc.)
-   * - Swipe gesture hit detection (checking if finger is within drawer bounds)
+   * - Swipe gesture hit detection (checking if finger is within drawer bounds).
    */
   const widthPx = innerWidth < desktopBreakpoint ? innerWidth : 400
 
@@ -678,10 +762,13 @@ const Sidebar = () => {
    * Uses a two-stage transform:
    * 1. Linear map: x position → [0, 1] (fully closed → fully open)
    * 2. Quadratic ease: v² makes the content stay readable while the sidebar
-   *    is mostly open, then fade rapidly as it approaches the edge.
+   * is mostly open, then fade rapidly as it approaches the edge.
    * This is applied to the drawer content AND the overlay layers.
    */
-  const contentOpacity = useTransform(useTransform(x, [-widthPx, 0], [0, 1]), v => v * v)
+  const contentOpacity = useTransform(x, v => {
+    const linear = Math.max(0, Math.min(1, (v + widthPx) / widthPx))
+    return linear * linear
+  })
 
   /**
    * Animation transition config, memoized to avoid recreating on every render.
@@ -716,10 +803,10 @@ const Sidebar = () => {
    * (offset) and how fast they were moving (velocity). This allows two natural
    * gestures to close the sidebar:
    * - A slow, deliberate drag past the midpoint (high offset, low velocity)
-   * - A quick flick that doesn't travel far (low offset, high velocity)
+   * - A quick flick that doesn't travel far (low offset, high velocity).
    *
-   * @param offset - How far the sidebar has been dragged from its open position (px)
-   * @param velocity - The instantaneous swipe velocity at release (px/s)
+   * @param offset - How far the sidebar has been dragged from its open position (px).
+   * @param velocity - The instantaneous swipe velocity at release (px/s).
    */
   const handleSwipeEnd = useCallback(
     (offset: number, velocity: number) => {
@@ -965,7 +1052,7 @@ const Sidebar = () => {
             />
 
             {/* Primary glow overlay (lighten blend) – responds to dropdown expansion */}
-            <SidebarOverlay1 width={width} opacity={contentOpacity} expanded={dropdownOpen} expandedHeight={dropdownHeight} hue={hue} sat={sat} />
+            <SidebarOverlay1 opacity={contentOpacity} expanded={dropdownOpen} hue={hue} sat={sat} />
             {/* Secondary glow overlay (screen blend) – adds middle tones */}
             <SidebarOverlay2 width={width} opacity={contentOpacity} hue={hue} sat={sat} />
 
@@ -1114,8 +1201,8 @@ const Sidebar = () => {
                      * Key behaviors:
                      * - paddingTop animates to push content down when dropdown is open,
                      *   creating a smooth "push" effect rather than content overlap
-                     * - Scrolling is disabled (overflowY:'hidden') while dropdown is open
-                     *   to prevent conflicting scroll interactions
+                     * - Content is visually obscured (blurred on Safari, dimmed on Chromium)
+                     *   while the dropdown is open to discourage interaction
                      * - A top fade mask (linear-gradient) appears when scrolled down,
                      *   providing a visual cue that content extends above
                      * - overscrollBehavior:'contain' prevents scroll chaining to the
@@ -1133,7 +1220,7 @@ const Sidebar = () => {
                       }}
                       transition={{ duration: durations.get('medium') / 1000, ease: EASE_OUT }}
                       data-scroll-at-edge
-                      onScroll={(e) => {
+                      onScroll={e => {
                         const scrolled = e.currentTarget.scrollTop > 0
                         if (scrolled !== isScrolled) setIsScrolled(scrolled)
                       }}
@@ -1143,7 +1230,7 @@ const Sidebar = () => {
                         overflowX: 'hidden',
                         overscrollBehavior: 'contain',
                         scrollbarWidth: 'thin',
-                        scrollbarColor: 'rgba(255,255,255,0.3) transparent',
+                        scrollbarColor: '{colors.fgOverlay30} transparent',
                         '&::-webkit-scrollbar': {
                           width: '0px',
                           background: 'transparent',
@@ -1153,16 +1240,18 @@ const Sidebar = () => {
                         padding: '0 1em',
                       })}
                       style={{
-                        maskImage: !BLUR_ENABLED && dropdownOpen
-                          ? `linear-gradient(to bottom, transparent ${dropdownHeight}px, black ${dropdownHeight + 48}px)`
-                          : isScrolled
-                            ? 'linear-gradient(to bottom, transparent, black 48px)'
-                            : 'none',
-                        WebkitMaskImage: !BLUR_ENABLED && dropdownOpen
-                          ? `linear-gradient(to bottom, transparent ${dropdownHeight}px, black ${dropdownHeight + 48}px)`
-                          : isScrolled
-                            ? 'linear-gradient(to bottom, transparent, black 48px)'
-                            : 'none',
+                        maskImage:
+                          !BLUR_ENABLED && dropdownOpen
+                            ? `linear-gradient(to bottom, transparent ${dropdownHeight}px, black ${dropdownHeight + 48}px)`
+                            : isScrolled
+                              ? 'linear-gradient(to bottom, transparent, black 48px)'
+                              : 'none',
+                        WebkitMaskImage:
+                          !BLUR_ENABLED && dropdownOpen
+                            ? `linear-gradient(to bottom, transparent ${dropdownHeight}px, black ${dropdownHeight + 48}px)`
+                            : isScrolled
+                              ? 'linear-gradient(to bottom, transparent, black 48px)'
+                              : 'none',
                       }}
                     >
                       {/* Render the active section's content component */}
