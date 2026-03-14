@@ -443,6 +443,11 @@ const SidebarOverlay2 = ({
         backgroundRepeat: 'no-repeat',
         pointerEvents: 'none',
         zIndex: 'sidebar',
+        
+        // on lg+ screens fade off the last 10% veritcally to prevent a hard line at the bottom edge
+        lg: {
+          maskImage: 'linear-gradient(to right, black 95%, transparent 100%)'
+        }
       })}
     />
   )
