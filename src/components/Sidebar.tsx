@@ -389,6 +389,10 @@ const SidebarOverlay1 = ({
         mixBlendMode: 'lighten',
         pointerEvents: 'none',
         zIndex: 'sidebar',
+        // fade out the bottom edge of the overlay on portrait mobile for a smoother transition to the background
+        lgDown: {
+          maskImage: 'linear-gradient(to top, transparent 200px, black 80%)',
+        },
       })}
     />
   )
@@ -1253,7 +1257,7 @@ const Sidebar = () => {
                      */}
                     <motion.div
                       animate={{
-                        paddingTop: dropdownOpen ? `${dropdownHeight}px` : '0px',
+                        y: dropdownOpen ? dropdownHeight : 0,
                         ...(BLUR_ENABLED
                           ? { filter: dropdownOpen ? 'blur(8px)' : 'blur(0px)' }
                           : { opacity: dropdownOpen ? 0.3 : 1 }),
@@ -1280,23 +1284,21 @@ const Sidebar = () => {
                         padding: '0 1em',
                       })}
                       style={{
-                        maskImage:
-                          !BLUR_ENABLED && dropdownOpen
-                            ? `linear-gradient(to bottom, transparent ${dropdownHeight}px, black ${dropdownHeight + SCROLL_MASK_HEIGHT}px)`
-                            : `linear-gradient(to bottom, transparent, black ${SCROLL_MASK_HEIGHT}px)`,
-                        WebkitMaskImage:
-                          !BLUR_ENABLED && dropdownOpen
-                            ? `linear-gradient(to bottom, transparent ${dropdownHeight}px, black ${dropdownHeight + SCROLL_MASK_HEIGHT}px)`
-                            : `linear-gradient(to bottom, transparent, black ${SCROLL_MASK_HEIGHT}px)`,
-                        maskPosition:
-                          !BLUR_ENABLED && dropdownOpen ? '0 0' : isScrolled ? '0 0' : `0 -${SCROLL_MASK_HEIGHT}px`,
-                        WebkitMaskPosition:
-                          !BLUR_ENABLED && dropdownOpen ? '0 0' : isScrolled ? '0 0' : `0 -${SCROLL_MASK_HEIGHT}px`,
-                        maskRepeat: 'no-repeat',
-                        WebkitMaskRepeat: 'no-repeat',
-                        maskSize: `100% calc(100% + ${SCROLL_MASK_HEIGHT}px)`,
-                        WebkitMaskSize: `100% calc(100% + ${SCROLL_MASK_HEIGHT}px)`,
-                        transition: `mask-position ${durations.get('fast')}ms ease-out, -webkit-mask-position ${durations.get('fast')}ms ease-out`,
+                        // On Chromium, disable the mask entirely while the dropdown is open to avoid
+                        // expensive mask + layout animation interactions that cause flicker on Android.
+                        ...((!BLUR_ENABLED && dropdownOpen)
+                          ? {}
+                          : {
+                              maskImage: `linear-gradient(to bottom, transparent, black ${SCROLL_MASK_HEIGHT}px)`,
+                              WebkitMaskImage: `linear-gradient(to bottom, transparent, black ${SCROLL_MASK_HEIGHT}px)`,
+                              maskPosition: isScrolled ? '0 0' : `0 -${SCROLL_MASK_HEIGHT}px`,
+                              WebkitMaskPosition: isScrolled ? '0 0' : `0 -${SCROLL_MASK_HEIGHT}px`,
+                              maskRepeat: 'no-repeat',
+                              WebkitMaskRepeat: 'no-repeat',
+                              maskSize: `100% calc(100% + ${SCROLL_MASK_HEIGHT}px)`,
+                              WebkitMaskSize: `100% calc(100% + ${SCROLL_MASK_HEIGHT}px)`,
+                              transition: `mask-position ${durations.get('fast')}ms ease-out, -webkit-mask-position ${durations.get('fast')}ms ease-out`,
+                            }),
                       }}
                     >
                       {/* Render the active section's content component */}
