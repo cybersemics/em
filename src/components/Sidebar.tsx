@@ -339,13 +339,13 @@ const SidebarOverlay1 = ({
 
   /** Animate brightness up when the dropdown expands, back to normal when it collapses. */
   useEffect(() => {
-    animate(brightness, expanded ? 1.35 : 1, { duration: durations.get('medium') / 1000, ease: EASE_OUT })
+    animate(brightness, expanded ? 2 : 1.5, { duration: durations.get('medium') / 1000, ease: EASE_OUT })
   }, [expanded, brightness])
 
   // Applying blur to overlay images helps substantially with gradient banding artifacts in Safari,
   // with no observed performance impact – even on older/slower iPhones.
   // Unfortunately, banding is visible in Chromium regardless of blur, so we disable it here.
-  const blur = BLUR_ENABLED ? 'blur(4px) ' : ''
+  const blur = BLUR_ENABLED ? 'blur(8px) ' : ''
 
   // Combine all filter effects into a single CSS filter string. The hue and saturation filters
   // change the color of the glow based on the active section, and
@@ -364,11 +364,10 @@ const SidebarOverlay1 = ({
   // backgroundPositionY: negative offset crops the top of the image, revealing
   //   only the lower glow region. Increases on expand to keep the glow centered.
   const collapsed = { backgroundSize: 'calc(1482px * 0.475) calc(744px * 0.475)', backgroundPositionY: safeY(-84) }
-  const open = { backgroundSize: 'calc(1482px * 0.475) calc(744px * 0.825)', backgroundPositionY: safeY(-164) }
+  const open = { backgroundSize: 'calc(1482px * 0.85) calc(744px * 0.85)', backgroundPositionY: safeY(-158), backgroundPositionX: '-320px' }
 
   return (
     <motion.div
-      data-test-id={'sidebar-overlay-1'}
       style={{ opacity, filter }}
       initial={collapsed}
       animate={expanded ? open : collapsed}
@@ -380,11 +379,12 @@ const SidebarOverlay1 = ({
         height: '100vh',
         width: '100vw',
         backgroundImage: 'url(/img/sidebar/overlay-layer-1-alpha.avif)',
-        backgroundPositionX: '-150px',
+        backgroundPositionX: '-150px', // negative offset to crop the left edge of the image
         backgroundRepeat: 'no-repeat',
         mixBlendMode: 'lighten',
         pointerEvents: 'none',
         zIndex: 'sidebar',
+        maskImage: 'linear-gradient(to top, transparent 0%, black 70%)', // fade out the bottom edge for a smoother transition to the background
       })}
     />
   )
