@@ -262,9 +262,9 @@ const SidebarHeader = ({
                 zIndex: 1,
                 display: 'flex',
                 flexDirection: 'column',
-                alignItems: 'flex-start',
                 marginTop: 0,
                 gap: '0.5rem',
+                width: '100%',
               }}
             >
               {/* Render each non-active section as a clickable row */}
