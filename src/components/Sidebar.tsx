@@ -97,17 +97,32 @@ const SECTIONS: SidebarSection[] = [
   { id: 'recentlyDeleted', label: 'Recently Deleted', icon: DeleteIcon, hue: 128, saturate: 1.1 },
 ]
 
-/**
- * A styled text label for a sidebar section name.
- * Used in both the header (for the active section) and the dropdown (for inactive sections).
- *
- * @param children - The label text content.
- */
-const SidebarSectionLabel = ({ children }: { children: React.ReactNode }) => {
-  return (
+/** A sidebar section row: icon + label. Used for both the active header and dropdown items. */
+const SidebarSectionRow = ({
+  icon: Icon,
+  label,
+  iconSize = 28,
+}: {
+  icon: React.ComponentType<{ size?: number; fill?: string }>
+  label: string
+  iconSize?: number
+}) => (
+  <div className={css({ display: 'inline-flex', alignItems: 'center', gap: '0.75rem' })}>
     <div
       className={css({
-        color: 'rgba(255, 255, 255, 0.75)',
+        width: '36px',
+        height: '36px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0,
+      })}
+    >
+      <Icon size={iconSize} fill={token('colors.fgOverlay75')} />
+    </div>
+    <div
+      className={css({
+        color: 'fgOverlay75',
         fontSize: '1.4rem',
         lineHeight: '1.4rem',
         letterSpacing: '-0.25px',
@@ -115,10 +130,10 @@ const SidebarSectionLabel = ({ children }: { children: React.ReactNode }) => {
         fontWeight: 300,
       })}
     >
-      {children}
+      {label}
     </div>
-  )
-}
+  </div>
+)
 
 /** Props for the SidebarHeader component. */
 interface SidebarHeaderProps {
@@ -143,10 +158,11 @@ interface SidebarHeaderProps {
  * @param sections - All available sidebar sections.
  * @param sectionId - The currently active section.
  * @param onSectionChange - Callback when user selects a different section.
- * @param isOpen - Whether the dropdown is currently expanded.
- * @param setIsOpen - Toggle the dropdown open/closed.
- * @param onDropdownHeight - Used by the parent to adjust the content area's position
- * when the dropdown expands/contracts.
+ * @param isOpen - State determining whether the dropdown is currently expanded.
+ * @param setIsOpen - State setter to toggle the dropdown open/closed.
+ * @param onDropdownHeight - The parent needs to know when the dropdown height changes
+ * so it can adjust the scrollable content area's paddingTop to "push" it down. This
+ * callback reports the dropdown's pixel height whenever it changes.
  */
 const SidebarHeader = ({
   sections,
@@ -190,25 +206,12 @@ const SidebarHeader = ({
           cursor: 'pointer',
         })}
       >
-        {/* Icon container – fixed 36x36 to maintain consistent alignment */}
-        <div
-          className={css({
-            width: '36px',
-            height: '36px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-          })}
-        >
-          <section.icon size={28} fill='rgba(255, 255, 255, 0.75)' />
-        </div>
-        <SidebarSectionLabel>{section.label}</SidebarSectionLabel>
+        <SidebarSectionRow icon={section.icon} label={section.label} />
         {/* Chevron rotates 180° when dropdown is open to indicate toggle state */}
         <ChevronImg
           onClickHandle={() => setIsOpen(!isOpen)}
           additonalStyle={{
-            transition: 'transform 0.2s ease-out',
+            transition: `transform ${durations.get('fast')}ms ease-out`,
             transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
             opacity: 0.4,
           }}
@@ -268,30 +271,16 @@ const SidebarHeader = ({
                     setIsOpen(false)
                   })}
                   className={css({
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.75rem',
                     cursor: 'pointer',
                     marginTop: '0.5rem',
+                    display: 'flex',
                     // Dimmed by default; brightens on hover (only on devices that support hover)
                     opacity: 0.6,
                     '@media (hover: hover)': { _hover: { opacity: 1 } },
-                    transition: 'opacity 0.15s ease-out',
+                    transition: `opacity ${durations.get('veryFast')}ms ease-out`,
                   })}
                 >
-                  <div
-                    className={css({
-                      width: '36px',
-                      height: '36px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                    })}
-                  >
-                    <s.icon size={32} fill='rgba(255, 255, 255, 0.75)' />
-                  </div>
-                  <SidebarSectionLabel>{s.label}</SidebarSectionLabel>
+                  <SidebarSectionRow icon={s.icon} label={s.label} iconSize={32} />
                 </div>
               ))}
             </motion.div>
