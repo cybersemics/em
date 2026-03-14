@@ -1,31 +1,27 @@
 /**
- * Sidebar.tsx.
- *
  * The main sidebar component for the application. This sidebar slides in from
  * the left edge and provides access to Favorites, Recently Edited, and Recently Deleted.
  *
- * Architecture overview:
+ * Overview:
  * - Uses Radix UI Dialog for accessibility (focus trapping, screen reader support)
  * - Uses Framer Motion for physics-based animations and gesture handling
- * - Implements custom touch/swipe handling adapted from MUI's SwipeableDrawer
- * pattern, because Framer Motion's built-in drag doesn't support the
- * "wait and see" direction detection phase we need
+ * - Implements custom touch/swipe handling adapted from MUI's SwipeableDrawer pattern
  * - Multiple visual overlay layers (SidebarOverlay1, SidebarOverlay2) create
- *   the glow/lighting effects behind the sidebar content
- * - Responsive: full-width on mobile (<600px), fixed 400px on desktop.
+ * a liminal glow/lighting effects behind the sidebar content
+ * - Responsive: full-width on small screens (<600px), fixed size determined by SIDEBAR_WIDTH_PX on landscape mobile and larger ("large devices").
  *
  * Component hierarchy:
- *   Sidebar (root)
- *   ├── SidebarBackground (dimming overlay + progressive blur + gradient)
- *   ├── SidebarOverlay1 (primary glow effect, lighten blend)
- *   ├── SidebarOverlay2 (secondary glow effect)
- *   └── Dialog.Content (the actual drawer panel)
- *       ├── SidebarHeader (section picker with animated dropdown)
- *       │   └── SidebarSectionLabel (styled text label)
- *       └── Scrollable content area
- *           ├── Favorites
- *           ├── RecentlyEdited
- *           └── RecentlyDeleted.
+ * Sidebar (root)
+ * ├── SidebarBackground (dimming overlay + progressive blur + gradient)
+ * ├── SidebarOverlay1 (primary glow effect, lighten blend)
+ * ├── SidebarOverlay2 (secondary glow effect)
+ * └── Dialog.Content (the actual drawer panel)
+ * ├── SidebarHeader (section picker with animated dropdown)
+ * │ └── SidebarSectionRow (icon + label)
+ * └── Scrollable content area
+ * ├── Favorites
+ * ├── RecentlyEdited
+ * └── RecentlyDeleted.
  */
 import * as Dialog from '@radix-ui/react-dialog'
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden'
@@ -194,9 +190,10 @@ const SidebarHeader = ({
   }, [isOpen, sectionId, onDropdownHeight])
 
   return (
-    // position:relative creates a stacking context for the absolutely-positioned dropdown
-    <div className={css({ position: 'relative', zIndex: 1 })}>
-      {/* Clickable header row: icon + label + chevron */}
+    // position:relative creates a stacking context for the absolutely-positioned dropdown.
+    // this allows the dropdown's options to appear above the header without affecting the header's layout.
+    <div className={css({ position: 'relative' })}>
+      {/* Clickable header row: section row + chevron */}
       <div
         {...fastClick(() => setIsOpen(!isOpen))}
         className={css({
@@ -296,17 +293,19 @@ const SidebarHeader = ({
  * a specific cropped region of that image.
  *
  * The image is positioned with a negative x offset to crop the left portion of the
- * image. The element itself spans 100vw so the glow bleeds beyond the sidebar edge on desktop.
+ * image. The element itself spans 100vw so the glow bleeds beyond the sidebar edge on large devices.
  *
- * We animate a lot of the styles on this element to create a dynamic glow effect that responds
- * to user interactions:
+ * A bottom mask fades the image out for a smoother transition to the background.
  *
- * - backgroundSize: scales from 50% to 75% of native height when dropdown expands
+ * Animated styles that create a dynamic glow effect responding to user interactions:
+ *
+ * - backgroundSize: scales up when dropdown expands (with separate small/large screen strategies —
+ * small screens scale both dimensions large to fill the full-width sidebar, large devices only scale height)
  * - backgroundPositionY: shifts upward on expand to keep the glow centered
- * - brightness: increases on expand to intensify the glow
+ * - opacity: a local dropdownOpacity ramp (0.8 → 1.0) is multiplied with the parent's
+ * contentOpacity to intensify the glow when the dropdown opens
  * - hue-rotate / saturate: driven by the parent's shared motion values to
- * tint the glow when switching sidebar sections
- * - opacity: fades in/out with the sidebar open/close via the parent's contentOpacity.
+ * tint the glow when switching sidebar sections.
  *
  * @param opacity - Shared motion value providing opacity derived from the sidebar's x position.
  * @param expanded - Whether the dropdown is currently expanded.
@@ -324,10 +323,13 @@ const SidebarOverlay1 = ({
   hue: MotionValue<number>
   sat: MotionValue<number>
 }) => {
-  const isDesktop = useBreakpoint('lg')
-  /** Local opacity that ramps from 0.8 (collapsed) to 1.0 (expanded) to intensify the glow when the dropdown opens. */
-  const dropdownOpacity = useMotionValue(0.75)
+  /** Whether the viewport is at or above the lg breakpoint (landscape mobile and larger). */
+  const isLargeDevice = useBreakpoint('lg')
 
+  /** Local opacity that ramps from 0.8 (collapsed) to 1.0 (expanded) to intensify the glow when the dropdown opens. */
+  const dropdownOpacity = useMotionValue(0.8)
+
+  /** When the dropdown expansion state changes, animate the dropdownOpacity to create a subtle intensification of the glow when the dropdown is open. */
   useEffect(() => {
     animate(dropdownOpacity, expanded ? 1 : 0.8, { duration: durations.get('medium') / 1000, ease: EASE_OUT })
   }, [expanded, dropdownOpacity])
@@ -352,14 +354,18 @@ const SidebarOverlay1 = ({
   //   only the lower glow region. Increases on expand to keep the glow centered.
   //
   // Two sizing strategies for the expanded state:
-  // - Mobile (full-width sidebar): scale both dimensions large with an x offset,
+  // - Small screens (full-width sidebar): scale both dimensions large with an x offset,
   //   so the glow fills the full-width sidebar.
-  // - Desktop (fixed-width sidebar): keep width narrow and only scale height,
+  // - Large devices (fixed-width sidebar): keep width narrow and only scale height,
   //   which looks better when the sidebar is a fixed-width panel.
-  const collapsed = { backgroundSize: 'calc(1482px * 0.475) calc(744px * 0.475)', backgroundPositionY: safeY(-84) }
-  const open = isDesktop
-    ? { backgroundSize: 'calc(1482px * 0.475) calc(744px * 0.825)', backgroundPositionY: safeY(-164) }
-    : { backgroundSize: 'calc(1482px * 0.85) calc(744px * 0.85)', backgroundPositionY: safeY(-158), backgroundPositionX: '-320px' }
+  const collapsed = { backgroundSize: 'calc(1482px * 0.425) calc(744px * 0.475)', backgroundPositionY: safeY(-84) }
+  const open = isLargeDevice
+    ? { backgroundSize: 'calc(1482px * 0.425) calc(744px * 0.825)', backgroundPositionY: safeY(-164) }
+    : {
+        backgroundSize: 'calc(1482px * 0.85) calc(744px * 0.85)',
+        backgroundPositionY: safeY(-158),
+        backgroundPositionX: '-320px',
+      }
 
   return (
     <motion.div
@@ -398,7 +404,7 @@ const SidebarOverlay1 = ({
  * Together, the two overlays create a layered glow effect that shifts color
  * as the user switches between sidebar sections.
  *
- * @param width - CSS width of the overlay (e.g. '100%' or '400px').
+ * @param width - CSS width of the overlay (either '100%' or '400px').
  * @param opacity - Opacity derived from the sidebar's x position.
  * @param hue - Shared motion value driving CSS hue-rotate on the overlay.
  * @param sat - Shared motion value driving CSS saturate on the overlay.
@@ -432,11 +438,11 @@ const SidebarOverlay2 = ({
         backgroundRepeat: 'no-repeat',
         pointerEvents: 'none',
         zIndex: 'sidebar',
-        
-        // on lg+ screens fade off the last 10% veritcally to prevent a hard line at the bottom edge
+
+        // on lg+ (landscape mobile and larger) screens, fade off the last 10% vertically to prevent a hard line at the bottom edge
         lg: {
-          maskImage: 'linear-gradient(to right, black 95%, transparent 100%)'
-        }
+          maskImage: 'linear-gradient(to right, black 95%, transparent 100%)',
+        },
       })}
     />
   )
@@ -746,14 +752,14 @@ const Sidebar = () => {
   // Derived values
   // ============================
 
-  const isDesktop = useBreakpoint('lg')
+  const isLargeDevice = useBreakpoint('lg')
 
   /**
    * Sidebar width as a CSS value.
-   * - Mobile: full viewport width so the sidebar covers the entire screen
-   * - Desktop: fixed 400px, leaving the main content partially visible.
+   * - Small screens: full viewport width so the sidebar covers the entire screen
+   * - Large devices (lg+): fixed size determined by SIDEBAR_WIDTH_PX, leaving the main content partially visible.
    */
-  const width = isDesktop ? '400px' : '100%'
+  const width = isLargeDevice ? `${SIDEBAR_WIDTH_PX}px` : '100%'
 
   /**
    * Sidebar width in raw pixels. Needed for:
@@ -1117,12 +1123,12 @@ const Sidebar = () => {
                 })}
               >
                 {/*
-                 * Mobile-only tap zone: an invisible strip on the right 10% of
+                 * Small-screen-only tap zone: an invisible strip on the right 10% of
                  * the full-width sidebar. Since the sidebar covers the entire
-                 * screen on mobile, users need a way to close it without swiping.
+                 * screen on small devices, users need a way to close it without swiping.
                  * Tapping this strip closes the sidebar.
                  */}
-                {!isDesktop && (
+                {!isLargeDevice && (
                   <div
                     aria-hidden='true'
                     onClick={() => toggleSidebar(false)}
