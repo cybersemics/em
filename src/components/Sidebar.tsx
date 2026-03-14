@@ -51,6 +51,7 @@ import RecentlyEdited from './RecentlyEdited'
 import DeleteIcon from './icons/DeleteIcon'
 import FavoritesIcon from './icons/FavoritesIcon'
 import PencilIcon from './icons/PencilIcon'
+import safeY from '../util/safeY'
 
 /**
  * Cubic-bezier ease-out curve used for most sidebar animations (opening, overlay transitions).
@@ -334,41 +335,46 @@ const SidebarOverlay1 = ({
   hue: MotionValue<number>
   sat: MotionValue<number>
 }) => {
-  /** CSS brightness multiplier – increases when the dropdown expands to intensify the glow. */
-  const brightness = useMotionValue(1)
+  const isDesktop = useBreakpoint('lg')
+  /** Local opacity that ramps from 0.8 (collapsed) to 1.0 (expanded) to intensify the glow when the dropdown opens. */
+  const dropdownOpacity = useMotionValue(0.75)
 
-  /** Animate brightness up when the dropdown expands, back to normal when it collapses. */
   useEffect(() => {
-    animate(brightness, expanded ? 2 : 1.5, { duration: durations.get('medium') / 1000, ease: EASE_OUT })
-  }, [expanded, brightness])
+    animate(dropdownOpacity, expanded ? 1 : 0.8, { duration: durations.get('medium') / 1000, ease: EASE_OUT })
+  }, [expanded, dropdownOpacity])
+
+  /** Combined opacity: parent's sidebar open/close opacity multiplied by the dropdown expansion ramp. */
+  const combinedOpacity = useTransform([opacity, dropdownOpacity], ([o, d]: number[]) => o * d)
 
   // Applying blur to overlay images helps substantially with gradient banding artifacts in Safari,
   // with no observed performance impact – even on older/slower iPhones.
   // Unfortunately, banding is visible in Chromium regardless of blur, so we disable it here.
   const blur = BLUR_ENABLED ? 'blur(8px) ' : ''
 
-  // Combine all filter effects into a single CSS filter string. The hue and saturation filters
-  // change the color of the glow based on the active section, and
-  // brightness increases when the dropdown is expanded.
+  // Combine the hue, saturation and blur filters into a single CSS filter string.
   const filter = useTransform(
-    [brightness, hue, sat],
-    ([b, h, s]) => `${blur}brightness(${b}) hue-rotate(${h}deg) saturate(${s})`,
+    [hue, sat],
+    ([h, s]) => `${blur}hue-rotate(${h}deg) saturate(${s})`,
   )
-
-  /** Helper function that calculates y values that account for the safe area inset. */
-  const safeY = (px: number) => `calc(${px}px + env(safe-area-inset-top))`
 
   // Styles for collapsed and expanded states of the overlay.
   // backgroundSize: fixed px values derived from the source image (1482×744).
-  //   Width stays at 50% of native; height scales from 50% → 75% on expand.
   // backgroundPositionY: negative offset crops the top of the image, revealing
   //   only the lower glow region. Increases on expand to keep the glow centered.
+  //
+  // Two sizing strategies for the expanded state:
+  // - Mobile (full-width sidebar): scale both dimensions large with an x offset,
+  //   so the glow fills the full-width sidebar.
+  // - Desktop (fixed-width sidebar): keep width narrow and only scale height,
+  //   which looks better when the sidebar is a fixed-width panel.
   const collapsed = { backgroundSize: 'calc(1482px * 0.475) calc(744px * 0.475)', backgroundPositionY: safeY(-84) }
-  const open = { backgroundSize: 'calc(1482px * 0.85) calc(744px * 0.85)', backgroundPositionY: safeY(-158), backgroundPositionX: '-320px' }
+  const open = isDesktop
+    ? { backgroundSize: 'calc(1482px * 0.475) calc(744px * 0.825)', backgroundPositionY: safeY(-164) }
+    : { backgroundSize: 'calc(1482px * 0.85) calc(744px * 0.85)', backgroundPositionY: safeY(-158), backgroundPositionX: '-320px' }
 
   return (
     <motion.div
-      style={{ opacity, filter }}
+      style={{ opacity: combinedOpacity, filter }}
       initial={collapsed}
       animate={expanded ? open : collapsed}
       transition={{ duration: durations.get('medium') / 1000, ease: EASE_OUT }}
