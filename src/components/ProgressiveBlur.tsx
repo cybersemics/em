@@ -95,5 +95,4 @@ const ProgressiveBlur = ({
   )
 }
 
-export { ProgressiveBlur }
 export default ProgressiveBlur
