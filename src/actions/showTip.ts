@@ -15,16 +15,7 @@ export const showTipActionCreator =
   (payload: Parameters<typeof showTip>[1]): Thunk =>
   (dispatch, getState) => {
     // Close any open dropdown (e.g. Command Center) so the tip is visible.
-    const state = getState()
-    const hasOpenDropdown =
-      state.showCommandCenter ||
-      state.showColorPicker ||
-      state.showLetterCase ||
-      state.showSortPicker ||
-      state.showUndoSlider
-    if (hasOpenDropdown) {
-      dispatch(toggleDropdown())
-    }
+    dispatch(toggleDropdown())
     dispatch({ type: 'showTip', ...payload })
   }
 
