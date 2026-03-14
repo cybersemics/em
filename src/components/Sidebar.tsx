@@ -859,6 +859,18 @@ const Sidebar = () => {
   // Effects
   // ============================
 
+  /** Preload glow overlay images so they appear instantly when the sidebar first opens. */
+  useEffect(() => {
+    /** Decode an image so the browser caches it before it's needed. */
+    const preload = async (src: string) => {
+      const img = new Image()
+      img.src = src
+      await img.decode()
+    }
+    preload('/img/sidebar/overlay-layer-1.avif')
+    preload('/img/sidebar/overlay-layer-2.avif')
+  }, [])
+
   /** Lock body scroll when sidebar is open. */
   useEffect(() => {
     if (showSidebar) {
