@@ -518,10 +518,8 @@ const Editable = ({
         if (blurring) {
           blurring = false
           // reset editingValue on mobile if we have really blurred to avoid a spurious duplicate thought error (#895)
-          // if enabled on desktop, it will break "clicking a bullet, the caret should move to the beginning of the thought" test)
-          if (isTouch) {
-            editingValueStore.update(null)
-          }
+          editingValueStore.update(null)
+
           // temporary states such as duplicate error states and cursorCleared are reset on blur
           dispatch(cursorCleared({ value: false }))
         }
