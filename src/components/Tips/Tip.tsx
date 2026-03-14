@@ -5,7 +5,6 @@ import { css } from '../../../styled-system/css'
 import TipId from '../../@types/TipId'
 import { dismissTipActionCreator as dismissTip } from '../../actions/dismissTip'
 import usePrefetchImages from '../../hooks/usePrefetchImages'
-import usePrevious from '../../hooks/usePrevious'
 import durations from '../../util/durations'
 import fastClick from '../../util/fastClick'
 import ProgressiveBlur from '../ProgressiveBlur'
@@ -133,10 +132,12 @@ const Tip: FC<
   const tip = useSelector(state => state.tip)
 
   // Selectors for UI state that should temporarily hide the tip when active to avoid visual conflicts.
-  const isKeyboardOpen = useSelector(state => state.isKeyboardOpen)
-  const showCommandCenter = useSelector(state => state.showCommandCenter)
-  const showSidebar = useSelector(state => state.showSidebar)
-  const hasAlert = useSelector(state => !!state.alert)
+  const { isKeyboardOpen, showCommandCenter, showSidebar, hasAlert } = useSelector(state => ({
+    isKeyboardOpen: state.isKeyboardOpen,
+    showCommandCenter: state.showCommandCenter,
+    showSidebar: state.showSidebar,
+    hasAlert: !!state.alert
+  }))
 
   /** Prefetch the glow image used in the tip, so that the user doesn't see a loading delay when the tip first becomes visible. */
   usePrefetchImages(['/img/tip/tip-glow-alpha.webp'])
@@ -175,7 +176,6 @@ const Tip: FC<
   const isTipActive = tip === tipId
   const isHidden = isKeyboardOpen || showCommandCenter || showSidebar || hasAlert
   const isVisible = isTipActive && !isHidden
-  const wasVisible = usePrevious(isVisible)
 
   // ── Tip opacity (MotionValue) ──────────────────────────────────────────
   // A single MotionValue drives the opacity of all visual layers.
@@ -184,41 +184,43 @@ const Tip: FC<
   const opacity = useMotionValue(isVisible ? 1 : 0)
 
   useEffect(() => {
-    if (isVisible && !wasVisible) {
-      // Fade in — tip becoming visible (initial or reappearing after temporary hide).
-      const duration = durations.get(wasVisible === false ? 'fast' : 'medium') / 1000
-      opacity.set(0)
-      const controls = animate(opacity, 1, { duration, ease: 'easeOut' })
+    if (isVisible) {
+      if (isDismissing) {
+        const duration = durations.get('medium') / 1000
+        const controls = animate(opacity, 0, {
+          duration,
+          ease: 'easeOut',
+          onComplete: () => {
+            dispatch(dismissTip())
+            setIsDismissing(false)
+          },
+        })
+        return () => controls.stop()
+      }
+      // During an active swipe, sync opacity directly to swipe progress.
+      if (swipeOpacity < 1) {
+        opacity.set(swipeOpacity)
+        return
+      }
+      // Animate toward 1. From 1 this is a no-op; from 0 (after a hide) it fades in.
+      const controls = animate(opacity, 1, { duration: durations.get('medium') / 1000, ease: 'easeOut' })
+      return () => controls.stop()
+    } else {
+      // Animate toward 0. Safe to re-run — starts from the current value.
+      const controls = animate(opacity, 0, { duration: durations.get('fast') / 1000, ease: 'easeOut' })
       return () => controls.stop()
     }
-    if (!isVisible && wasVisible) {
-      // Fade out — temporarily hidden by keyboard/command center/sidebar/alert.
-      const duration = durations.get('fast') / 1000
-      const controls = animate(opacity, 0, { duration, ease: 'easeOut' })
-      return () => controls.stop()
-    }
-    if (!isVisible) return
-    // Fade out when user dismisses (Clear button or swipe-to-dismiss).
-    if (isDismissing) {
-      const duration = durations.get('medium') / 1000
-      const controls = animate(opacity, 0, {
-        duration,
-        ease: 'easeOut',
-        onComplete: () => {
-          dispatch(dismissTip())
-          setIsDismissing(false)
-        },
-      })
-      return () => controls.stop()
-    }
-    // During an active swipe, sync opacity directly to swipe progress.
-    opacity.set(swipeOpacity)
-  }, [isVisible, wasVisible, isDismissing, swipeOpacity, opacity, dispatch])
+  }, [isVisible, isDismissing, swipeOpacity, opacity, dispatch])
 
   // ── Render ──────────────────────────────────────────────────────────────
 
-  return isTipActive ? (
-    <div
+  return (
+    <>
+    {/* Debug overlay */}
+    <div style={{ position: 'fixed', top: 128, left: 0, zIndex: 9999, background: 'rgba(0,0,0,0.7)', color: '#0f0', fontFamily: 'monospace', fontSize: 12, padding: '4px 8px', pointerEvents: 'none' }}>
+      keyboard:{String(isKeyboardOpen)} | cmdCenter:{String(showCommandCenter)} | sidebar:{String(showSidebar)} | alert:{String(hasAlert)}
+    </div>
+    {isTipActive && <div
       key={tipId}
       className={css({
         left: 0,
@@ -322,8 +324,8 @@ const Tip: FC<
           </div>
         </div>
       </motion.div>
-    </div>
-  ) : null
+    </div>}
+  </>)
 }
 
 Tip.displayName = 'Tip'
