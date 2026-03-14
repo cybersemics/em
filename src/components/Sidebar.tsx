@@ -1285,7 +1285,7 @@ const Sidebar = () => {
                       style={{
                         // On Chromium, disable the mask entirely while the dropdown is open to avoid
                         // expensive mask + layout animation interactions that cause flicker on Android.
-                        ...((!BLUR_ENABLED && dropdownOpen)
+                        ...(!BLUR_ENABLED && dropdownOpen
                           ? {}
                           : {
                               maskImage: `linear-gradient(to bottom, transparent, black ${SCROLL_MASK_HEIGHT}px)`,
