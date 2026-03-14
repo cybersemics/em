@@ -1,17 +1,23 @@
 import { KnownDevices } from 'puppeteer'
 import categorizeCommand from '../../../commands/categorize'
+import newThoughtCommand from '../../../commands/newThought'
+import openCommandCenterCommand from '../../../commands/openCommandCenter'
+import { WindowEm } from '../../../initialize'
 import click from '../helpers/click'
 import clickBullet from '../helpers/clickBullet'
 import clickThought from '../helpers/clickThought'
+import closeKeyboard from '../helpers/closeKeyboard'
 import emulate from '../helpers/emulate'
 import gesture from '../helpers/gesture'
 import getEditingText from '../helpers/getEditingText'
 import getSelection from '../helpers/getSelection'
+import keyboard from '../helpers/keyboard'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import refresh from '../helpers/refresh'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForHiddenEditable from '../helpers/waitForHiddenEditable'
+import waitForSelector from '../helpers/waitForSelector'
 import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
 import waitUntil from '../helpers/waitUntil'
 
@@ -339,5 +345,33 @@ describe('mobile only', () => {
 
     const textContext = await getEditingText()
     expect(textContext).toBe('a')
+  })
+
+  it('tapping a thought after opening and closing Command Center via Done should not open the keyboard', async () => {
+    // Step 1: create a thought
+    await gesture(newThoughtCommand)
+    await keyboard.type('a')
+
+    // Step 2: open the Command Center with the ↑ gesture
+    await gesture(openCommandCenterCommand)
+    await waitForSelector('[data-testid=command-center-panel]')
+
+    // Step 3: close the Command Center via the Done button
+    await click('[data-testid="command-center-done"]')
+    await waitForSelector('[data-testid=command-center-panel]', { hidden: true })
+
+    // Step 4: create a second thought
+    await gesture(newThoughtCommand)
+
+    // Step 5: close the keyboard via the native Done button (blur the active element)
+    await closeKeyboard()
+
+    // Step 6: tap the first thought — keyboard should NOT open
+    await clickThought('a')
+
+    // isKeyboardOpen should remain false; if it becomes true the test will time out
+    // TODO: Find a less invasive way to confirm the keyboard is closed
+    const em = window.em as WindowEm
+    await waitUntil(() => !em.testHelpers.getState().isKeyboardOpen)
   })
 })
