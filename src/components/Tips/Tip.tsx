@@ -10,6 +10,7 @@ import fastClick from '../../util/fastClick'
 import ProgressiveBlur from '../ProgressiveBlur'
 import CloseIcon from '../icons/CloseIcon'
 import useSwipeToClear from './useSwipeToClear'
+import { isTouch } from '../../browser'
 
 /** Cumulative swipe distance (in px) at which a swipe fully fades and dismisses the tip. */
 const SWIPE_DISMISS_THRESHOLD = 200
@@ -137,7 +138,7 @@ const Tip: FC<
     showCommandCenter: state.showCommandCenter,
     showSidebar: state.showSidebar,
     hasAlert: !!state.alert
-  }))
+  }));
 
   /** Prefetch the glow image used in the tip, so that the user doesn't see a loading delay when the tip first becomes visible. */
   usePrefetchImages(['/img/tip/tip-glow-alpha.webp'])
@@ -174,7 +175,7 @@ const Tip: FC<
   }, [])
 
   const isTipActive = tip === tipId
-  const isHidden = isKeyboardOpen || showCommandCenter || showSidebar || hasAlert
+  const isHidden = (isKeyboardOpen && isTouch) || showCommandCenter || showSidebar || hasAlert
   const isVisible = isTipActive && !isHidden
 
   // ── Tip opacity (MotionValue) ──────────────────────────────────────────
