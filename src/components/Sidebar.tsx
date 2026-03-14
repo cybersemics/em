@@ -384,13 +384,13 @@ const SidebarOverlay1 = ({
         left: 0,
         height: '100vh',
         width: '100vw',
-        backgroundImage: 'url(/img/sidebar/overlay-layer-1-alpha.avif)',
+        backgroundImage: 'url(/img/sidebar/overlay-layer-1.avif)',
         backgroundPositionX: '-150px', // negative offset to crop the left edge of the image
         backgroundRepeat: 'no-repeat',
         mixBlendMode: 'lighten',
         pointerEvents: 'none',
         zIndex: 'sidebar',
-        maskImage: 'linear-gradient(to top, transparent 0%, black 70%)', // fade out the bottom edge for a smoother transition to the background
+        maskImage: 'linear-gradient(to top, transparent 200px, black 80%)', // fade out the bottom edge of the image for a smoother transition to the background
       })}
     />
   )
