@@ -98,11 +98,6 @@ const applyOuterTag = (newValue: string, oldValue: string): string => {
   return div.firstChild.outerHTML
 }
 
-// track if a thought is blurring so that we can avoid an extra dispatch of setEditingValue in onFocus
-// otherwise it can trigger unnecessary re-renders
-// intended to be global, not local state
-let blurring = false
-
 // this flag is used to ensure that the browser selection is not restored after the initial setCursorOnThought
 let cursorOffsetInitialized = false
 
@@ -479,8 +474,6 @@ const Editable = ({
   /** Flushes edits and updates certain state variables on blur. */
   const onBlur: FocusEventHandler<HTMLElement> = useCallback(
     e => {
-      blurring = true
-
       throttledChangeRef.current.flush()
 
       // update the ContentEditable if the new scrubbed value is different (i.e. stripped, space after emoji added, etc)
@@ -506,33 +499,23 @@ const Editable = ({
 
       if (isRelatedTargetEditableOrNote) return
 
-      // if related target is not editable wait until the next render to determine if we have really blurred
-      // otherwise isKeyboardOpen may be incorrectly set to false when clicking on another thought when keyboard is open (which results in a blur and focus in quick succession)
-      setTimeout(() => {
-        // detect speech-to-text
-        // needs to be deferred to the next tick, otherwise causes store.getState() to be invoked in a reducer (???)
-        if (value.split(/<div>/g).length > 1) {
-          dispatch(importSpeechToText({ simplePath, value: (e.target as HTMLInputElement).value }))
-        }
+      // detect speech-to-text
+      // needs to be deferred to the next tick, otherwise causes store.getState() to be invoked in a reducer (???)
+      if (value.split(/<div>/g).length > 1) {
+        setTimeout(() => dispatch(importSpeechToText({ simplePath, value: (e.target as HTMLInputElement).value })))
+      }
 
-        if (blurring) {
-          blurring = false
-          // reset editingValue on mobile if we have really blurred to avoid a spurious duplicate thought error (#895)
-          // if enabled on desktop, it will break "clicking a bullet, the caret should move to the beginning of the thought" test)
-          if (isTouch) {
-            editingValueStore.update(null)
-          }
-          // temporary states such as duplicate error states and cursorCleared are reset on blur
-          dispatch(cursorCleared({ value: false }))
-        }
+      // reset editingValue on mobile if we have really blurred to avoid a spurious duplicate thought error (#895)
+      // if enabled on desktop, it will break "clicking a bullet, the caret should move to the beginning of the thought" test)
+      if (isTouch) {
+        editingValueStore.update(null)
+      }
+      // temporary states such as duplicate error states and cursorCleared are reset on blur
+      dispatch(cursorCleared({ value: false }))
 
-        if (isTouch) {
-          // Set editing to false if user exits editing mode by tapping on a non-editable element.
-          if (!selection.isThought()) {
-            dispatch(keyboardOpenActionCreator({ value: false }))
-          }
-        }
-      })
+      if (isTouch) {
+        dispatch(keyboardOpenActionCreator({ value: false }))
+      }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [simplePath],
@@ -546,9 +529,6 @@ const Editable = ({
     () => {
       preventAutoscrollEnd(contentRef.current)
       if (suppressFocusStore.getState()) return
-      // do not allow blur to setEditingValue when it is followed immediately by a focus
-      blurring = false
-
       // Update editingValueUntrimmedStore with the current value
       editingValueUntrimmedStore.update(value)
 
