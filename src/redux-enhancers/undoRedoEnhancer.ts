@@ -15,13 +15,17 @@ import getThoughtById from '../selectors/getThoughtById'
 import { isNavigation, isUndoable } from '../util/actionMetadata.registry'
 import headValue from '../util/headValue'
 import reducerFlow from '../util/reducerFlow'
+import stripTags from '../util/stripTags'
 
 /** Track a stream of editThought actions so that they can be merged,
- * allowing edits to be treated as a single undo/redo step when they involve adding new characters or else removing old characters. */
+ * allowing edits to be treated as a single undo/redo step when they involve adding new characters or else removing old characters.
+ * Formatting edits (where only HTML markup changes, not the plain text content) are tracked separately so they are not merged with content edits and do not trigger the newThought+edit double-undo behavior. */
 enum EditThoughtDirection {
   None = 'None',
   Longer = 'Longer',
   Shorter = 'Shorter',
+  /** A formatting-only edit: the plain text content is unchanged but the HTML markup differs (e.g. bold, italic, text color). */
+  Formatting = 'Formatting',
 }
 
 /** Interface for the setIsMulticursorExecuting action. */
@@ -92,9 +96,9 @@ const diffState = <T>(newValue: Index<T>, value: Index<T>): Operation[] =>
 /**
  * Append action names to all operations of a Patch.
  */
-const addActionsToPatch = (patch: Operation[], actions: ActionType[]): Patch =>
+const addActionsToPatch = (patch: Operation[], actions: ActionType[], isFormatting?: boolean): Patch =>
   // TODO: Fix Patch type to support any Operation, not just GetOperation. See Patch.ts.
-  patch.map(operation => ({ ...operation, actions })) as Patch
+  patch.map(operation => ({ ...operation, actions, isFormatting })) as Patch
 
 /**
  * Gets the first action from a patch.
@@ -114,7 +118,11 @@ const undoOneReducer = (state: State): State => {
   const lastUndoPatch = nthLast(undoPatches, 1)
   if (!lastUndoPatch) return state
   const newState = produce(state, (state: State) => applyPatch(state, lastUndoPatch).newDocument)
-  const correspondingRedoPatch = addActionsToPatch(diffState(newState as Index, state), [...lastUndoPatch[0]?.actions])
+  const correspondingRedoPatch = addActionsToPatch(
+    diffState(newState as Index, state),
+    [...lastUndoPatch[0]?.actions],
+    lastUndoPatch[0]?.isFormatting,
+  )
   return {
     ...newState,
     redoPatches: [...redoPatches, correspondingRedoPatch],
@@ -132,7 +140,11 @@ const redoOneReducer = (state: State): State => {
   const lastRedoPatch = nthLast(redoPatches, 1)
   if (!lastRedoPatch) return state
   const newState = produce(state, (state: State) => applyPatch(state, lastRedoPatch).newDocument)
-  const correspondingUndoPatch = addActionsToPatch(diffState(newState as Index, state), [...lastRedoPatch[0]?.actions])
+  const correspondingUndoPatch = addActionsToPatch(
+    diffState(newState as Index, state),
+    [...lastRedoPatch[0]?.actions],
+    lastRedoPatch[0]?.isFormatting,
+  )
   return {
     ...newState,
     redoPatches: redoPatches.slice(0, -1),
@@ -153,7 +165,14 @@ const undoReducer = (state: State, undoPatches: Patch[]): State => {
 
   if (!undoPatches.length) return state
 
-  const undoTwice = isNavigation(lastAction) ? isUndoable(penultimateAction) : penultimateAction === 'newThought'
+  // Do not fire undoTwice if the last patch is a formatting-only edit.
+  // Formatting edits should always be their own undo step — even when the preceding action was newThought.
+  // (Without this guard, formatting a brand-new thought would also delete the thought on undo.)
+  const lastPatchIsFormatting = lastUndoPatch?.[0]?.isFormatting === true
+
+  const undoTwice = isNavigation(lastAction)
+    ? isUndoable(penultimateAction)
+    : penultimateAction === 'newThought' && !lastPatchIsFormatting
 
   const poppedUndoPatches = undoTwice ? [penultimateUndoPatch, lastUndoPatch] : [lastUndoPatch]
 
@@ -211,6 +230,11 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       // Handle undo and redo.
       // They are defined in the redux enhancer rather than in /actions.
       if (actionType === 'undo' || actionType === 'redo') {
+        // Reset the edit-direction tracking so the next action after an undo/redo does not
+        // accidentally merge with whatever patch happens to be at the top of the stack.
+        lastAction = undefined
+        lastEditThoughtDirection = EditThoughtDirection.None
+
         const undoOrRedoState =
           actionType === 'undo'
             ? undoReducer(state, undoPatches)
@@ -243,22 +267,28 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         return newState
       }
 
-      // Determine if an edit is an addition or a deletion
+      // Determine if an edit is an addition, deletion, or formatting-only change.
+      // Formatting edits change the HTML markup but not the plain text content (e.g. bold, italic, text color).
+      // They are kept separate from content edits so they do not merge with them and do not trigger the newThought+edit double-undo.
       const editThoughtDirection = isEditThoughtAction(action)
-        ? action.newValue.length > action.oldValue.length
-          ? EditThoughtDirection.Longer
-          : EditThoughtDirection.Shorter
+        ? stripTags(action.newValue) === stripTags(action.oldValue)
+          ? EditThoughtDirection.Formatting
+          : action.newValue.length > action.oldValue.length
+            ? EditThoughtDirection.Longer
+            : EditThoughtDirection.Shorter
         : EditThoughtDirection.None
 
       // Some actions are merged together into a single undo/redo patch.
       // - Navigation actions are merged with the previous non-navigation action. This matches the behavior of most word processors where undo will revert the last destructive action, and the cursor will be restored to where it was before. For example, if the user edits 'a' to 'aa', moves the cursor to 'b', and then undoes, the cursor will be restored to 'aa' then the edit will be undone.
-      // - Contiguous edits are merged into a single edit action. For example, if the user edits 'a' to 'ab' and then 'ab' to 'abc', the undo will revert to 'a' in one step.
+      // - Contiguous edits in the same direction are merged into a single edit action. For example, if the user edits 'a' to 'ab' and then 'ab' to 'abc', the undo will revert to 'a' in one step. Formatting edits (Formatting direction) are never merged with any other edits — each formatting change (bold, italic, color) gets its own separate undo step.
       // - The closeAlert action is merged with the previous action so that the alert can be undone.
       // - All actions during the execution of a multicursor command will be merged together. The prevous action will always be setIsMulticursorExecuting.
       // - Chained commands will be merged into the previous command, e.g. Select All + Categorize
       if (
         (isNavigation(actionType) && isNavigation(lastAction?.type)) ||
-        (actionType === 'editThought' && editThoughtDirection === lastEditThoughtDirection) ||
+        (actionType === 'editThought' &&
+          editThoughtDirection === lastEditThoughtDirection &&
+          editThoughtDirection !== EditThoughtDirection.Formatting) ||
         actionType === 'closeAlert' ||
         state.isMulticursorExecuting ||
         (lastAction as UnknownAction)?.mergeUndo
@@ -306,11 +336,15 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
             redoPatches: [],
             undoPatches: [
               ...newState.undoPatches,
-              addActionsToPatch(undoPatch, [
-                // Override the action label with undoLabel so that the command label is used in the alert on undo/redo of a multicursor command.
-                // TODO: A better solution would add a label to the Patch itself.
-                isSetIsMulticursorExecutingAction(action) ? (action.undoLabel as ActionType) : lastAction.type,
-              ]),
+              addActionsToPatch(
+                undoPatch,
+                [
+                  // Override the action label with undoLabel so that the command label is used in the alert on undo/redo of a multicursor command.
+                  // TODO: A better solution would add a label to the Patch itself.
+                  isSetIsMulticursorExecutingAction(action) ? (action.undoLabel as ActionType) : lastAction.type,
+                ],
+                editThoughtDirection === EditThoughtDirection.Formatting,
+              ),
             ],
           }
         : newState
