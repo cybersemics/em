@@ -245,15 +245,14 @@ const SidebarHeader = ({
             />
             {/*
              * Dropdown menu containing the non-active sections.
-             * Animates from height:0 > auto using Framer Motion's layout animation.
-             * Positioned absolutely below the header row so it doesn't affect
-             * the header's layout.
+             * Fades in/out with opacity. Positioned absolutely below the header
+             * row so it doesn't affect the header's layout.
              */}
             <motion.div
               ref={dropdownRef}
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               transition={{ duration: durations.get('medium') / 1000, ease: EASE_OUT }}
               style={{
                 position: 'absolute',
