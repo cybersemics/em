@@ -390,7 +390,6 @@ const SidebarOverlay1 = ({
         mixBlendMode: 'lighten',
         pointerEvents: 'none',
         zIndex: 'sidebar',
-        maskImage: 'linear-gradient(to top, transparent 200px, black 80%)', // fade out the bottom edge of the image for a smoother transition to the background
       })}
     />
   )
