@@ -1269,15 +1269,18 @@ const Sidebar = () => {
                         maskImage:
                           !BLUR_ENABLED && dropdownOpen
                             ? `linear-gradient(to bottom, transparent ${dropdownHeight}px, black ${dropdownHeight + 48}px)`
-                            : isScrolled
-                              ? 'linear-gradient(to bottom, transparent, black 48px)'
-                              : 'none',
+                            : 'linear-gradient(to bottom, transparent, black 48px)',
                         WebkitMaskImage:
                           !BLUR_ENABLED && dropdownOpen
                             ? `linear-gradient(to bottom, transparent ${dropdownHeight}px, black ${dropdownHeight + 48}px)`
-                            : isScrolled
-                              ? 'linear-gradient(to bottom, transparent, black 48px)'
-                              : 'none',
+                            : 'linear-gradient(to bottom, transparent, black 48px)',
+                        maskPosition: !BLUR_ENABLED && dropdownOpen ? '0 0' : isScrolled ? '0 0' : '0 -48px',
+                        WebkitMaskPosition: !BLUR_ENABLED && dropdownOpen ? '0 0' : isScrolled ? '0 0' : '0 -48px',
+                        maskRepeat: 'no-repeat',
+                        WebkitMaskRepeat: 'no-repeat',
+                        maskSize: '100% calc(100% + 48px)',
+                        WebkitMaskSize: '100% calc(100% + 48px)',
+                        transition: 'mask-position 0.3s ease-out, -webkit-mask-position 0.3s ease-out',
                       }}
                     >
                       {/* Render the active section's content component */}
