@@ -386,7 +386,6 @@ const SidebarOverlay1 = ({
         backgroundImage: 'url(/img/sidebar/overlay-layer-1.avif)',
         backgroundPositionX: '-150px', // negative offset to crop the left edge of the image
         backgroundRepeat: 'no-repeat',
-        mixBlendMode: 'lighten',
         pointerEvents: 'none',
         zIndex: 'sidebar',
         // fade out the bottom edge of the overlay on portrait mobile for a smoother transition to the background
@@ -1095,9 +1094,9 @@ const Sidebar = () => {
               sat={sat}
             />
 
-            {/* Primary glow overlay (lighten blend) – responds to dropdown expansion */}
+            {/* Primary glow overlay – responds to dropdown expansion */}
             <SidebarOverlay1 opacity={contentOpacity} expanded={dropdownOpen} hue={hue} sat={sat} />
-            {/* Secondary glow overlay (screen blend) – adds middle tones */}
+            {/* Secondary glow overlay – adds middle tones */}
             <SidebarOverlay2 width={width} opacity={contentOpacity} hue={hue} sat={sat} />
 
             {/*
