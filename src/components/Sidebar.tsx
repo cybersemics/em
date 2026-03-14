@@ -603,6 +603,60 @@ const SidebarBackground = ({
 }
 
 /**
+ * Manages the sidebar header dropdown open/close state.
+ * Automatically resets the dropdown to closed when the sidebar closes.
+ *
+ * @param showSidebar - Whether the sidebar is currently open.
+ */
+const useDropdownState = (showSidebar: boolean) => {
+  /** Whether the section picker dropdown in the header is expanded. */
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+
+  /** The measured pixel height of the dropdown menu when expanded.
+   * Used to animate the content area's paddingTop to "push" it down. */
+  const [dropdownHeight, setDropdownHeight] = useState(0)
+
+  /** Reset the dropdown to closed whenever the sidebar itself closes,
+   * so it doesn't appear pre-expanded next time the sidebar opens. */
+  useEffect(() => {
+    if (!showSidebar) setDropdownOpen(false)
+  }, [showSidebar])
+
+  return { dropdownOpen, setDropdownOpen, dropdownHeight, setDropdownHeight }
+}
+
+/**
+ * Manages the overlay glow color, animating hue and saturation when
+ * the active sidebar section changes. Uses shortest-path calculation
+ * around the color wheel to avoid the animation going "the long way
+ * around" (e.g., 350deg to 10deg should go +20deg, not -340deg).
+ *
+ * @param sectionId - The currently active sidebar section.
+ */
+const useSectionHue = (sectionId: SidebarSectionId) => {
+  /** Drives CSS hue-rotate() on overlay images. Accumulates continuously
+   * (not clamped to 0-360) so Framer Motion can interpolate shortest-path. */
+  const hue = useMotionValue(0)
+
+  /** Drives CSS saturate() on overlay images. */
+  const sat = useMotionValue(1)
+
+  useEffect(() => {
+    const section = SECTIONS.find(s => s.id === sectionId)!
+    const currentHue = hue.get()
+    // Normalize current hue to [0, 360) then find shortest-path diff in [-180, 180]
+    let diff = section.hue - (((currentHue % 360) + 360) % 360)
+    if (diff > 180) diff -= 360
+    if (diff < -180) diff += 360
+    const t = { duration: durations.get('slow') / 1000, ease: EASE_OUT }
+    animate(hue, currentHue + diff, t)
+    animate(sat, section.saturate, t)
+  }, [sectionId, hue, sat])
+
+  return { hue, sat }
+}
+
+/**
  * The main Sidebar component.
  *
  * This component orchestrates the entire sidebar experience:
@@ -637,54 +691,16 @@ const Sidebar = () => {
   /** Which section is currently displayed (favorites, recentlyEdited, recentlyDeleted). */
   const [sectionId, setSectionId] = useState<SidebarSectionId>('favorites')
 
-  /** Whether the section picker dropdown in the header is expanded. */
-  const [dropdownOpen, setDropdownOpen] = useState(false)
-
   /** Whether the scrollable content area has been scrolled down.
    * Used to conditionally show a top fade-out mask for scroll overflow indication. */
   const [isScrolled, setIsScrolled] = useState(false)
-
-  /** The measured pixel height of the dropdown menu when expanded.
-   * Used to animate the content area's paddingTop to "push" it down. */
-  const [dropdownHeight, setDropdownHeight] = useState(0)
 
   /** Current viewport width from the viewport store – used for responsive
    * layout decisions (full-width vs fixed 400px). */
   const innerWidth = viewportStore.useSelector(state => state.innerWidth)
 
-  /**
-   * Motion values for the overlay glow color.
-   * - hue: drives CSS hue-rotate() on overlay images. Accumulates continuously
-   * (not clamped to 0-360) so Framer Motion can interpolate shortest-path.
-   * - sat: drives CSS saturate() on overlay images.
-   * Both are shared across SidebarOverlay1 and SidebarOverlay2 via props.
-   */
-  const hue = useMotionValue(0)
-  const sat = useMotionValue(1)
-
-  /**
-   * Animate hue/saturate when the active section changes.
-   * Uses shortest-path calculation around the color wheel to avoid
-   * the animation going "the long way around" (e.g., 350° → 10° should
-   * go +20°, not -340°).
-   */
-  useEffect(() => {
-    const section = SECTIONS.find(s => s.id === sectionId)!
-    const currentHue = hue.get()
-    // Normalize current hue to [0, 360) then find shortest-path diff in [-180, 180]
-    let diff = section.hue - (((currentHue % 360) + 360) % 360)
-    if (diff > 180) diff -= 360
-    if (diff < -180) diff += 360
-    const t = { duration: durations.get('slow') / 1000, ease: EASE_OUT }
-    animate(hue, currentHue + diff, t)
-    animate(sat, section.saturate, t)
-  }, [sectionId, hue, sat])
-
-  /** Reset the dropdown to closed whenever the sidebar itself closes,
-   * so it doesn't appear pre-expanded next time the sidebar opens. */
-  useEffect(() => {
-    if (!showSidebar) setDropdownOpen(false)
-  }, [showSidebar])
+  const { dropdownOpen, setDropdownOpen, dropdownHeight, setDropdownHeight } = useDropdownState(showSidebar)
+  const { hue, sat } = useSectionHue(sectionId)
 
   // ============================
   // Refs
