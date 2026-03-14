@@ -34,11 +34,11 @@ import _ from 'lodash'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
-import { token } from '../../styled-system/tokens'
 import { longPressActionCreator as longPress } from '../actions/longPress'
 import { toggleSidebarActionCreator } from '../actions/toggleSidebar'
 import { isSafari } from '../browser'
 import { LongPressState } from '../constants'
+import useBreakpoint from '../hooks/useBreakpoint'
 import viewportStore from '../stores/viewport'
 import durations from '../util/durations'
 import fastClick from '../util/fastClick'
@@ -746,15 +746,14 @@ const Sidebar = () => {
   // Derived values
   // ============================
 
-  /** Breakpoint (in px) at which the sidebar switches from full-width mobile to fixed-width desktop. */
-  const desktopBreakpoint = parseInt(token('breakpoints.lg'))
+  const isDesktop = useBreakpoint('lg')
 
   /**
    * Sidebar width as a CSS value.
    * - Mobile: full viewport width so the sidebar covers the entire screen
    * - Desktop: fixed 400px, leaving the main content partially visible.
    */
-  const width = innerWidth < desktopBreakpoint ? '100%' : '400px'
+  const width = isDesktop ? '400px' : '100%'
 
   /**
    * Sidebar width in raw pixels. Needed for:
@@ -762,7 +761,7 @@ const Sidebar = () => {
    * - Progress-based animation transforms (mapping x position to opacity, etc.)
    * - Swipe gesture hit detection (checking if finger is within drawer bounds).
    */
-  const widthPx = innerWidth < desktopBreakpoint ? innerWidth : 400
+  const widthPx = isDesktop ? 400 : innerWidth
 
   /**
    * The current x-axis translation of the sidebar drawer.
@@ -1123,7 +1122,7 @@ const Sidebar = () => {
                  * screen on mobile, users need a way to close it without swiping.
                  * Tapping this strip closes the sidebar.
                  */}
-                {innerWidth < desktopBreakpoint && (
+                {!isDesktop && (
                   <div
                     aria-hidden='true'
                     onClick={() => toggleSidebar(false)}
