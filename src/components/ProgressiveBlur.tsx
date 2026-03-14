@@ -37,22 +37,28 @@ const ProgressiveBlur = ({
   ...props
 }: ProgressiveBlurProps) => {
   const blurLayers = Array.from({ length: layers }).map((_, i) => {
-    // Blur radius follows a quadratic curve, reaching 0 at the trailing edge
-    // so the last layer applies no blur and the transition is seamless.
-    const t = layers <= 1 ? 1 : (layers - 1 - i) / (layers - 1)
-    const radius = minBlur + Math.pow(t, 2) * (maxBlur - minBlur)
+    // Blur radius follows a quadratic curve for a more natural look.
+    // We add the minBlur as a constant baseline.
+    const radius = minBlur + Math.pow((layers - i) / layers, 2) * (maxBlur - minBlur)
 
     // Each layer covers a specific slice with a generous overlap (feather) to ensure smoothness.
     const start = (i / layers) * 100
     const end = ((i + 1) / layers) * 100
     const feather = (100 / layers) * 2 // Double feather for smoother blending
 
-    // Clamp feather stops within bounds so trailing layers fade out
-    // inside the container instead of getting clipped by overflow:hidden.
-    const leadingStop = Math.max(start - feather, 0)
-    const trailingStop = Math.min(end + feather, 100)
+    // The mask has four stops: fadeStart → opaqueStart → opaqueEnd → fadeEnd.
+    // Negative fadeStart values are fine (browser clamps to 0, keeping the layer
+    // fully opaque from the start). But fadeEnd > 100% gets clipped by the
+    // container's overflow:hidden, creating a hard cutoff. When that happens,
+    // clamp fadeEnd to 100% and pull opaqueEnd inward to preserve a fade region.
+    const fadeStart = start - feather
+    const opaqueStart = start
+    const rawFadeEnd = end + feather
+    const fadeEnd = Math.min(rawFadeEnd, 100)
+    const minFadeRegion = (100 / layers) * 0.5
+    const opaqueEnd = rawFadeEnd > 100 ? Math.min(end, fadeEnd - minFadeRegion) : end
 
-    return { radius, start, end, leadingStop, trailingStop }
+    return { radius, fadeStart, opaqueStart, opaqueEnd, fadeEnd }
   })
 
   return (
@@ -66,24 +72,25 @@ const ProgressiveBlur = ({
       })}
       style={{ width, ...props.style }}
     >
-      {blurLayers.map((layer, i) => (
-        <motion.div
-          key={i}
-          className={css({
-            position: 'absolute',
-            inset: 0,
-          })}
-          style={{
-            opacity,
-            backdropFilter: `blur(${layer.radius.toFixed(2)}px)`,
-            WebkitBackdropFilter: `blur(${layer.radius.toFixed(2)}px)`,
-
-            // Sliced mask with overlap (feather), clamped to container bounds
-            maskImage: `linear-gradient(${direction}, transparent ${layer.leadingStop}%, black ${layer.start}%, black ${layer.end}%, transparent ${layer.trailingStop}%)`,
-            WebkitMaskImage: `linear-gradient(${direction}, transparent ${layer.leadingStop}%, black ${layer.start}%, black ${layer.end}%, transparent ${layer.trailingStop}%)`,
-          }}
-        />
-      ))}
+      {blurLayers.map((layer, i) => {
+        const mask = `linear-gradient(${direction}, transparent ${layer.fadeStart}%, black ${layer.opaqueStart}%, black ${layer.opaqueEnd}%, transparent ${layer.fadeEnd}%)`
+        return (
+          <motion.div
+            key={i}
+            className={css({
+              position: 'absolute',
+              inset: 0,
+            })}
+            style={{
+              opacity,
+              backdropFilter: `blur(${layer.radius.toFixed(2)}px)`,
+              WebkitBackdropFilter: `blur(${layer.radius.toFixed(2)}px)`,
+              maskImage: mask,
+              WebkitMaskImage: mask,
+            }}
+          />
+        )
+      })}
     </div>
   )
 }
