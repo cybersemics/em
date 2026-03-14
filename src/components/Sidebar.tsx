@@ -1205,6 +1205,7 @@ const Sidebar = () => {
                       position: 'relative',
                       overflow: 'hidden',
                       isolation: 'isolate',
+                      paddingLeft: 'env(safe-area-inset-left)', // prevent notch from clipping content in landscape
                     })}
                   >
                     {/* Visually hidden title for screen readers – announces the active section name */}
