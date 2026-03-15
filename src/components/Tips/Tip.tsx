@@ -128,19 +128,15 @@ const Tip: FC<
   const dispatch = useDispatch()
   const tip = useSelector(state => state.tip)
 
-  // Selectors for UI state that should temporarily hide the tip when active to avoid visual conflicts.
-  const { isKeyboardOpen, showCommandCenter, showSidebar, hasAlert } = useSelector(state => ({
-    isKeyboardOpen: state.isKeyboardOpen,
-    showCommandCenter: state.showCommandCenter,
-    showSidebar: state.showSidebar,
-    hasAlert: !!state.alert,
-  }))
+  // Selector for UI state that should temporarily hide the tip when active to avoid visual conflicts.
+  const isHidden = useSelector(
+    state => (state.isKeyboardOpen && isTouch) || state.showCommandCenter || state.showSidebar || !!state.alert,
+  )
 
   /** Prefetch the glow image used in the tip, so that the user doesn't see a loading delay when the tip first becomes visible. */
   usePrefetchImages(['/img/tip/tip-glow-alpha.webp'])
 
   const isTipActive = tip === tipId
-  const isHidden = (isKeyboardOpen && isTouch) || showCommandCenter || showSidebar || hasAlert
   const isVisible = isTipActive && !isHidden
 
   // ── Tip opacity (MotionValue) ──────────────────────────────────────────
