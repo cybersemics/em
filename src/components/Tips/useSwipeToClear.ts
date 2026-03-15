@@ -3,16 +3,20 @@ import React, { useCallback, useRef, useState } from 'react'
 import useSafeArea from '../../hooks/useSafeArea'
 import durations from '../../util/durations'
 
+/** Default value for the swipe-to-clear threshold. */
+const DEFAULT_SWIPE_DISMISS_THRESHOLD = 200
+
 /**
  * Tracks a cumulative-distance swipe gesture and returns a 0→1 completion value.
  * A combined distance + velocity score determines whether the gesture dismisses on touch end.
  * If below threshold, completion animates back to 0.
  */
 const useSwipeToClear = ({
-  threshold,
+  threshold = DEFAULT_SWIPE_DISMISS_THRESHOLD,
   onDismiss,
 }: {
-  threshold: number
+  /** Cumulative swipe distance (in px) at which a swipe fully fades and dismisses the tip. */
+  threshold?: number
   /** Called when the swipe decides to dismiss. `immediate` is true when the gesture already fully completed (completion reached 1). */
   onDismiss: (immediate: boolean) => void
 }) => {
@@ -22,6 +26,7 @@ const useSwipeToClear = ({
   const safeArea = useSafeArea()
 
   const completion = Math.min(1, swipeDistance / threshold)
+
 
   const onTouchStart = useCallback(
     (e: React.TouchEvent) => {

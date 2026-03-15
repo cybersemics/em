@@ -12,9 +12,6 @@ import ProgressiveBlur from '../ProgressiveBlur'
 import CloseIcon from '../icons/CloseIcon'
 import useSwipeToClear from './useSwipeToClear'
 
-/** Cumulative swipe distance (in px) at which a swipe fully fades and dismisses the tip. */
-const SWIPE_DISMISS_THRESHOLD = 200
-
 /** Layer 1: Gradient overlay + progressive blur — darkens and blurs the content behind the tip. */
 const TipBlur: FC<{
   opacity: MotionValue<number>
@@ -160,7 +157,6 @@ const Tip: FC<
   )
 
   const { completion, touchHandlers } = useSwipeToClear({
-    threshold: SWIPE_DISMISS_THRESHOLD,
     onDismiss: onSwipeDismiss,
   })
 
