@@ -23,22 +23,23 @@ const useSwipeToClear = ({
 
   const completion = Math.min(1, swipeDistance / threshold)
 
-  const onTouchStart = useCallback((e: React.TouchEvent) => {
-    e.stopPropagation()
-    const touch = e.touches[0]
+  const onTouchStart = useCallback(
+    (e: React.TouchEvent) => {
+      e.stopPropagation()
+      const touch = e.touches[0]
 
-    // Ignore touches that start in safe areas, since those are likely accidental touches from users trying to interact with system UI.
-    if (
-      touch.clientY < safeArea.top || touch.clientY > window.innerHeight - safeArea.bottom
-    ) {
-      lastTouch.current = null
-      return
-    }
+      // Ignore touches that start in safe areas, since those are likely accidental touches from users trying to interact with system UI.
+      if (touch.clientY < safeArea.top || touch.clientY > window.innerHeight - safeArea.bottom) {
+        lastTouch.current = null
+        return
+      }
 
-    lastTouch.current = { x: touch.pageX, y: touch.pageY, time: performance.now() }
-    velocity.current = 0
-    setSwipeDistance(0)
-  }, [])
+      lastTouch.current = { x: touch.pageX, y: touch.pageY, time: performance.now() }
+      velocity.current = 0
+      setSwipeDistance(0)
+    },
+    [safeArea.top, safeArea.bottom],
+  )
 
   const onTouchMove = useCallback((e: React.TouchEvent) => {
     e.stopPropagation()

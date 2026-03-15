@@ -4,13 +4,13 @@ import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import TipId from '../../@types/TipId'
 import { dismissTipActionCreator as dismissTip } from '../../actions/dismissTip'
+import { isTouch } from '../../browser'
 import usePrefetchImages from '../../hooks/usePrefetchImages'
 import durations from '../../util/durations'
 import fastClick from '../../util/fastClick'
 import ProgressiveBlur from '../ProgressiveBlur'
 import CloseIcon from '../icons/CloseIcon'
 import useSwipeToClear from './useSwipeToClear'
-import { isTouch } from '../../browser'
 
 /** Cumulative swipe distance (in px) at which a swipe fully fades and dismisses the tip. */
 const SWIPE_DISMISS_THRESHOLD = 200
@@ -137,8 +137,8 @@ const Tip: FC<
     isKeyboardOpen: state.isKeyboardOpen,
     showCommandCenter: state.showCommandCenter,
     showSidebar: state.showSidebar,
-    hasAlert: !!state.alert
-  }));
+    hasAlert: !!state.alert,
+  }))
 
   /** Prefetch the glow image used in the tip, so that the user doesn't see a loading delay when the tip first becomes visible. */
   usePrefetchImages(['/img/tip/tip-glow-alpha.webp'])
@@ -217,116 +217,115 @@ const Tip: FC<
 
   return (
     <>
-    {/* Debug overlay */}
-    <div style={{ position: 'fixed', top: 128, left: 0, zIndex: 9999, background: 'rgba(0,0,0,0.7)', color: '#0f0', fontFamily: 'monospace', fontSize: 12, padding: '4px 8px', pointerEvents: 'none' }}>
-      keyboard:{String(isKeyboardOpen)} | cmdCenter:{String(showCommandCenter)} | sidebar:{String(showSidebar)} | alert:{String(hasAlert)}
-    </div>
-    {isTipActive && <div
-      key={tipId}
-      className={css({
-        left: 0,
-        right: 0,
-        bottom: 0,
-        zIndex: 'popup',
-        pointerEvents: 'none',
-        // Allow dragging through the tip overlay so drag-and-drop still works.
-        _dragHold: { pointerEvents: 'none' },
-        display: 'flex',
-        userSelect: 'none',
-        position: 'fixed',
-      })}
-    >
-      {/* Blur layer is outside the opacity wrapper because ProgressiveBlur requires
-          its own opacity to work around a Safari backdrop-filter bug. */}
-      <TipBlur opacity={opacity} />
-      {/* Glow and content layers are wrapped in a motion.div driven by opacity. */}
-      <motion.div style={{ opacity: opacity, display: 'flex', width: '100%' }}>
-        <TipGlow />
-
-        {/* ── Layer 3: Content ─────────────────────────────────────────────── */}
-        {/* Contains the TIP label, message text, and Clear button.
-            This is the only layer with pointerEvents enabled, and handles swipe-to-dismiss touch events. */}
+      {isTipActive && (
         <div
+          key={tipId}
           className={css({
-            animation: 'fadein {durations.medium} ease',
-            position: 'relative',
-            // Isolation prevents mix-blend-mode and backdrop-filter from interacting across layers.
-            isolation: 'isolate',
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 'popup',
+            pointerEvents: 'none',
+            // Allow dragging through the tip overlay so drag-and-drop still works.
+            _dragHold: { pointerEvents: 'none' },
             display: 'flex',
-            gap: '.5rem',
-            flexDirection: 'column',
-            pointerEvents: isVisible ? 'auto' : 'none',
-            // Mobile portrait: align left; landscape/desktop: align right
-            marginLeft: { base: 0, lg: 'auto' },
-            alignItems: { base: 'flex-start', lg: 'flex-end' },
-            textAlign: { base: 'left', lg: 'right' },
-            padding: '1rem 1.5rem',
-            // Extra top padding creates visual breathing room above the text.
-            paddingTop: '4.5rem',
-            // On devices with safe area insets (notch/home indicator), add the inset to the bottom padding.
-            // On devices without, fall back to 1.5rem. Desktop always uses 1.5rem.
-            paddingBottom: { base: 'max(1.5rem, calc(0.5rem + env(safe-area-inset-bottom)))', lg: '1.5rem' },
+            userSelect: 'none',
+            position: 'fixed',
           })}
-          style={{ touchAction: 'none' }}
-          {...touchHandlers}
         >
-          {/* TIP label — uses plus-lighter blend mode for a subtle luminous effect against the gradient. */}
-          <span
-            className={css({
-              fontSize: '0.85em',
-              fontWeight: 800,
-              textTransform: 'uppercase',
-              color: 'fg',
-              mixBlendMode: 'plus-lighter',
-              opacity: 0.5,
-              textShadow: '0 0 8px {colors.fgOverlay40}',
-            })}
-          >
-            TIP
-          </span>
+          {/* Blur layer is outside the opacity wrapper because ProgressiveBlur requires
+          its own opacity to work around a Safari backdrop-filter bug. */}
+          <TipBlur opacity={opacity} />
+          {/* Glow and content layers are wrapped in a motion.div driven by opacity. */}
+          <motion.div style={{ opacity: opacity, display: 'flex', width: '100%' }}>
+            <TipGlow />
 
-          {/* Tip content — the actual message passed as children. */}
-          <div
-            className={css({
-              color: 'fg',
-              maxWidth: '24em',
-              opacity: 0.8,
-              fontSize: '1.2em',
-              mixBlendMode: 'plus-lighter',
-              lineHeight: 1.4,
-              fontWeight: 600,
-              textShadow: '0 0 4px {colors.fgOverlay40}',
-            })}
-          >
-            {children}
-          </div>
+            {/* ── Layer 3: Content ─────────────────────────────────────────────── */}
+            {/* Contains the TIP label, message text, and Clear button.
+            This is the only layer with pointerEvents enabled, and handles swipe-to-dismiss touch events. */}
+            <div
+              className={css({
+                animation: 'fadein {durations.medium} ease',
+                position: 'relative',
+                // Isolation prevents mix-blend-mode and backdrop-filter from interacting across layers.
+                isolation: 'isolate',
+                display: 'flex',
+                gap: '.5rem',
+                flexDirection: 'column',
+                pointerEvents: isVisible ? 'auto' : 'none',
+                // Mobile portrait: align left; landscape/desktop: align right
+                marginLeft: { base: 0, lg: 'auto' },
+                alignItems: { base: 'flex-start', lg: 'flex-end' },
+                textAlign: { base: 'left', lg: 'right' },
+                padding: '1rem 1.5rem',
+                // Extra top padding creates visual breathing room above the text.
+                paddingTop: '4.5rem',
+                // On devices with safe area insets (notch/home indicator), add the inset to the bottom padding.
+                // On devices without, fall back to 1.5rem. Desktop always uses 1.5rem.
+                paddingBottom: { base: 'max(1.5rem, calc(0.5rem + env(safe-area-inset-bottom)))', lg: '1.5rem' },
+              })}
+              style={{ touchAction: 'none' }}
+              {...touchHandlers}
+            >
+              {/* TIP label — uses plus-lighter blend mode for a subtle luminous effect against the gradient. */}
+              <span
+                className={css({
+                  fontSize: '0.85em',
+                  fontWeight: 800,
+                  textTransform: 'uppercase',
+                  color: 'fg',
+                  mixBlendMode: 'plus-lighter',
+                  opacity: 0.5,
+                  textShadow: '0 0 8px {colors.fgOverlay40}',
+                })}
+              >
+                TIP
+              </span>
 
-          {/* Clear button — overlay blend mode keeps it visually subtle until hovered. */}
-          <div
-            className={css({
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.4em',
-              cursor: 'pointer',
-              color: 'fg',
-              mixBlendMode: 'overlay',
-              opacity: 0.6,
-              textShadow: '0 0 8px {colors.fgOverlay20}',
-              // Prevent the default tap highlight on iOS/Android.
-              WebkitTapHighlightColor: 'transparent',
-              transition: 'opacity 150ms ease',
-              _hover: { opacity: 0.8 },
-              _active: { opacity: 0.4 },
-            })}
-            {...fastClick(handleClose)}
-          >
-            <CloseIcon size={12} />
-            <span className={css({ fontSize: '0.8em' })}>Clear</span>
-          </div>
+              {/* Tip content — the actual message passed as children. */}
+              <div
+                className={css({
+                  color: 'fg',
+                  maxWidth: '24em',
+                  opacity: 0.8,
+                  fontSize: '1.2em',
+                  mixBlendMode: 'plus-lighter',
+                  lineHeight: 1.4,
+                  fontWeight: 600,
+                  textShadow: '0 0 4px {colors.fgOverlay40}',
+                })}
+              >
+                {children}
+              </div>
+
+              {/* Clear button — overlay blend mode keeps it visually subtle until hovered. */}
+              <div
+                className={css({
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4em',
+                  cursor: 'pointer',
+                  color: 'fg',
+                  mixBlendMode: 'overlay',
+                  opacity: 0.6,
+                  textShadow: '0 0 8px {colors.fgOverlay20}',
+                  // Prevent the default tap highlight on iOS/Android.
+                  WebkitTapHighlightColor: 'transparent',
+                  transition: 'opacity 150ms ease',
+                  _hover: { opacity: 0.8 },
+                  _active: { opacity: 0.4 },
+                })}
+                {...fastClick(handleClose)}
+              >
+                <CloseIcon size={12} />
+                <span className={css({ fontSize: '0.8em' })}>Clear</span>
+              </div>
+            </div>
+          </motion.div>
         </div>
-      </motion.div>
-    </div>}
-  </>)
+      )}
+    </>
+  )
 }
 
 Tip.displayName = 'Tip'
