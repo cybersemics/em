@@ -70,16 +70,27 @@ const findClosestLine = (lines: TextNodeLine[], clientY: number): TextNodeLine =
 }
 
 /**
- * Checks if a click is in the end-of-line gap of a multiline text node.
- * When text wraps, non-last lines have horizontal empty space after their last character.
+ * Checks if a click is in the end-of-line gap of a  text node.
+ * For multiline thoughts, when text wraps, non-last lines have horizontal empty space after their last character.
  * Clicking in this gap is a valid position that the browser can handle correctly
  * (it places the caret at the end of the line), so we return true to defer to native behavior.
  */
-const isValidEdgeClickInMultiline = (node: Text, clientX: number, clientY: number): boolean => {
-  const lines = getTextNodeLines(node)
-  if (lines.length <= 1) return false
+const isValidEdgeClickInLine = (node: Text, clientX: number, clientY: number): boolean => {
+  const text = node.nodeValue ?? ''
+  if (!text.length) return false
 
+  const lines = getTextNodeLines(node)
   const clickedLine = findClosestLine(lines, clientY)
+  const range = document.createRange()
+
+  // Left-side gap: to the left of the first character of the line (any line count).
+  range.setStart(node, clickedLine.start)
+  range.setEnd(node, Math.min(clickedLine.start + 1, text.length))
+  const firstCharRect = range.getBoundingClientRect()
+  if (clientX < firstCharRect.left - 1) return true
+
+  // Right-side gap only for multiline.
+  if (lines.length <= 1) return false
 
   // Vertical tolerance – stay within the line’s vertical bounds
   const verticalTolerance = clickedLine.rect.height * 0.5
@@ -90,13 +101,11 @@ const isValidEdgeClickInMultiline = (node: Text, clientX: number, clientY: numbe
   // If the line has no characters (e.g., collapsed whitespace), there’s no gap to detect
   if (clickedLine.start === clickedLine.end) return false
 
-  const text = node.nodeValue ?? ''
   const lineText = text.substring(clickedLine.start, clickedLine.end)
   const trimmedLength = lineText.trimEnd().length
   if (trimmedLength === 0) return false
 
   const lastVisibleCharIndex = clickedLine.start + trimmedLength - 1
-  const range = document.createRange()
   const checkIndices = isSafari()
     ? [
         lastVisibleCharIndex,
@@ -113,8 +122,6 @@ const isValidEdgeClickInMultiline = (node: Text, clientX: number, clientY: numbe
     rightmostPosition = Math.max(rightmostPosition, rect.right)
   }
 
-  // Any tap at or after the last visible character's right edge is in the trailing-whitespace gap.
-  // Use a 1px buffer so rounding/subpixel taps still count as gap and scrolling works.
   return clientX > rightmostPosition - 1
 }
 
@@ -442,7 +449,7 @@ const getNodeOffsetForVoidArea = (editable: HTMLElement | null, { clientX, clien
     return null
   }
 
-  if (isValidEdgeClickInMultiline(nearest.node, clientX, clientY)) return null
+  if (isValidEdgeClickInLine(nearest.node, clientX, clientY)) return null
 
   const offsetInNode = calculateOffset(nearest.node, clientX, clientY)
   return domPositionToUnformattedOffset(editable, nearest.node, offsetInNode)
