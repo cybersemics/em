@@ -1,5 +1,5 @@
 import { MotionValue, animate, motion, useMotionValue } from 'framer-motion'
-import { FC, PropsWithChildren, useCallback, useEffect, useState } from 'react'
+import { FC, PropsWithChildren, useCallback, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import TipId from '../../@types/TipId'
@@ -140,8 +140,25 @@ const Tip: FC<
   /** Prefetch the glow image used in the tip, so that the user doesn't see a loading delay when the tip first becomes visible. */
   usePrefetchImages(['/img/tip/tip-glow-alpha.webp'])
 
-  /** True while the fade-out CSS transition is running (after the user taps Clear or completes a swipe). */
-  const [isDismissing, setIsDismissing] = useState(false)
+  const isTipActive = tip === tipId
+  const isHidden = (isKeyboardOpen && isTouch) || showCommandCenter || showSidebar || hasAlert
+  const isVisible = isTipActive && !isHidden
+
+  // ── Tip opacity (MotionValue) ──────────────────────────────────────────
+  // A single MotionValue drives the opacity of all visual layers.
+  // Passed directly to ProgressiveBlur and to the motion.div wrapper for glow + content.
+  // Handles all opacity conditions: visibility transitions, dismiss, and swipe.
+  const opacity = useMotionValue(isVisible ? 1 : 0)
+
+  /** Animates opacity to 0 and dispatches dismissTip on completion. */
+  const animateDismiss = useCallback(() => {
+    const duration = durations.get('medium') / 1000
+    animate(opacity, 0, {
+      duration,
+      ease: 'easeOut',
+      onComplete: () => dispatch(dismissTip()),
+    })
+  }, [opacity, dispatch])
 
   // ── Swipe-to-dismiss ────────────────────────────────────────────────────
 
@@ -150,10 +167,10 @@ const Tip: FC<
       if (immediate) {
         dispatch(dismissTip())
       } else {
-        setIsDismissing(true)
+        animateDismiss()
       }
     },
-    [dispatch],
+    [dispatch, animateDismiss],
   )
 
   const { completion, touchHandlers } = useSwipeToClear({
@@ -167,33 +184,11 @@ const Tip: FC<
 
   /** Begins the fade-out transition when the user taps the Clear button. */
   const handleClose = useCallback(() => {
-    setIsDismissing(true)
-  }, [])
-
-  const isTipActive = tip === tipId
-  const isHidden = (isKeyboardOpen && isTouch) || showCommandCenter || showSidebar || hasAlert
-  const isVisible = isTipActive && !isHidden
-
-  // ── Tip opacity (MotionValue) ──────────────────────────────────────────
-  // A single MotionValue drives the opacity of all visual layers.
-  // Passed directly to ProgressiveBlur and to the motion.div wrapper for glow + content.
-  // Handles all opacity conditions: visibility transitions, dismiss, and swipe.
-  const opacity = useMotionValue(isVisible ? 1 : 0)
+    animateDismiss()
+  }, [animateDismiss])
 
   useEffect(() => {
     if (isVisible) {
-      if (isDismissing) {
-        const duration = durations.get('medium') / 1000
-        const controls = animate(opacity, 0, {
-          duration,
-          ease: 'easeOut',
-          onComplete: () => {
-            dispatch(dismissTip())
-            setIsDismissing(false)
-          },
-        })
-        return () => controls.stop()
-      }
       // During an active swipe, sync opacity directly to swipe progress.
       if (swipeOpacity < 1) {
         opacity.set(swipeOpacity)
@@ -207,7 +202,7 @@ const Tip: FC<
       const controls = animate(opacity, 0, { duration: durations.get('fast') / 1000, ease: 'easeOut' })
       return () => controls.stop()
     }
-  }, [isVisible, isDismissing, swipeOpacity, opacity, dispatch])
+  }, [isVisible, swipeOpacity, opacity])
 
   // ── Render ──────────────────────────────────────────────────────────────
 
