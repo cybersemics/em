@@ -17,7 +17,7 @@ import { newThoughtActionCreator as newThought } from '../actions/newThought'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import { tutorialNextActionCreator as tutorialNext } from '../actions/tutorialNext'
-import { isMac, isTouch } from '../browser'
+import { isMac, isSafari, isTouch } from '../browser'
 import { commandEmitter } from '../commands'
 import {
   EDIT_THROTTLE,
@@ -49,6 +49,7 @@ import addEmojiSpace from '../util/addEmojiSpace'
 import containsURL from '../util/containsURL'
 import ellipsize from '../util/ellipsize'
 import equalPath from '../util/equalPath'
+import getNodeOffsetForVoidArea from '../util/getNodeOffsetForVoidArea'
 import haptics from '../util/haptics'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
@@ -105,6 +106,23 @@ let blurring = false
 
 // this flag is used to ensure that the browser selection is not restored after the initial setCursorOnThought
 let cursorOffsetInitialized = false
+
+// Tracks the last touch coordinates globally so that onFocus can calculate the correct
+// caret offset when iOS Safari focuses a contenteditable from a tap outside the element
+// (e.g. tapping below the last thought).
+let lastTouchCoordinates: { clientX: number; clientY: number; timestamp: number } | null = null
+if (typeof document !== 'undefined' && isTouch) {
+  document.addEventListener(
+    'touchstart',
+    (e: TouchEvent) => {
+      if (e.touches.length > 0) {
+        const touch = e.touches[0]
+        lastTouchCoordinates = { clientX: touch.clientX, clientY: touch.clientY, timestamp: Date.now() }
+      }
+    },
+    { passive: true, capture: true },
+  )
+}
 
 /**
  * An editable thought with throttled editing.
@@ -173,6 +191,19 @@ const Editable = ({
   //   hasNoteFocus,
   //   isCursorCleared,
   // })
+
+  /**
+   * Stores a custom caret position for iOS touch interactions temporarily.
+   * The position is calculated on touch start but applied on touch end (why on touch end? See onTouchEnd).
+   * If the user scrolls instead of tapping, it is cleared so the browser can handle the interaction normally.
+   */
+  const pendingCaretOffsetRef = useRef<number | null>(null)
+
+  /** Stores the initial touch position to detect tap vs scroll; if focus occurs without it, the tap was outside the editable and we place the caret manually.*/
+  const touchStartPosRef = useRef<{ x: number; y: number } | null>(null)
+
+  /** Squared movement threshold (for performance) used to detect scroll vs tap; if finger movement exceeds ~10px, it is treated as a scroll and custom caret placement is cancelled. */
+  const SCROLL_THRESHOLD_PX = 100
 
   const childrenLabel = useSelector(state => {
     const labelId = findDescendant(state, parentId, '=label')
@@ -552,6 +583,48 @@ const Editable = ({
       // Update editingValueUntrimmedStore with the current value
       editingValueUntrimmedStore.update(value)
 
+      // On iOS Safari, the browser may focus a contenteditable from a tap outside its bounds
+      // (e.g. below the last thought). In that case, the editable's onTouchStart never fires so
+      // touchStartPosRef is null. Detect this and calculate the correct caret offset using the
+      // global touch coordinates instead of letting the browser default to the end of text.
+      const editable = contentRef.current
+      if (
+        isSafari() &&
+        isTouch &&
+        editable &&
+        !touchStartPosRef.current &&
+        lastTouchCoordinates &&
+        Date.now() - lastTouchCoordinates.timestamp < 500
+      ) {
+        const editableRect = editable.getBoundingClientRect()
+        const isTouchOutsideEditable =
+          lastTouchCoordinates.clientX < editableRect.left ||
+          lastTouchCoordinates.clientX > editableRect.right ||
+          lastTouchCoordinates.clientY < editableRect.top ||
+          lastTouchCoordinates.clientY > editableRect.bottom
+        if (isTouchOutsideEditable) {
+          const nodeOffset = getNodeOffsetForVoidArea(editable, lastTouchCoordinates)
+          if (nodeOffset !== null) {
+            // Defer selection.set to the next frame. The browser applies its own default
+            // caret placement (end of text) AFTER focus event handlers return, so a
+            // synchronous selection.set here would be immediately overwritten.
+            requestAnimationFrame(() => {
+              selection.set(editable, { offset: nodeOffset })
+            })
+            dispatch(
+              setCursor({
+                cursorHistoryClear: true,
+                preserveMulticursor: true,
+                isKeyboardOpen: true,
+                offset: nodeOffset,
+                path,
+              }),
+            )
+            return
+          }
+        }
+      }
+
       dispatch((dispatch, getState) => {
         const { longPress } = getState()
         if (longPress === LongPressState.Inactive) {
@@ -560,11 +633,74 @@ const Editable = ({
       })
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [value, setCursorOnThought],
+    [value, setCursorOnThought, dispatch, path],
   )
 
-  const onMouseDown = useCallback(
-    (e: React.MouseEvent) => {
+  /** Sets the caret offset. */
+  const setCaretOffset = useCallback(
+    (nodeOffset: number) => {
+      //Directly set the DOM selection to ensure the caret moves immediately
+      selection.set(contentRef.current, { offset: nodeOffset })
+
+      // Update Redux cursor state
+      dispatch(
+        setCursor({
+          path,
+          offset: nodeOffset,
+        }),
+      )
+    },
+    [dispatch, path, contentRef],
+  )
+
+  /**
+   * Shared on tap logic dispatched after both click and touchend.
+   * Checks long-press, multicursor, disabled, and visibility to decide whether to set the cursor.
+   */
+  const handleTapBehavior = useCallback(
+    (ev: { preventDefault: () => void }) => {
+      dispatch((dispatch, getState) => {
+        const state = getState()
+
+        // If long press is in progress, don't allow the editable to receive focus or iOS Safari will scroll it.
+        if (state.longPress !== LongPressState.Inactive) {
+          ev.preventDefault()
+          return
+        }
+
+        if (
+          // disable editing when multicursor is enabled
+          hasMulticursorSelector(state) ||
+          disabled ||
+          // do not set cursor on hidden thought
+          // dragInProgress: not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be safe
+          (!globals.touching && (!editingOrOnCursor || !isVisible))
+        ) {
+          ev.preventDefault()
+
+          if (!isVisible) {
+            selection.clear()
+
+            // close all popups when clicking on a thought
+            dispatch(toggleDropdown())
+          } else {
+            setCursorOnThought()
+          }
+        }
+      })
+    },
+    [disabled, dispatch, editingOrOnCursor, isVisible, setCursorOnThought],
+  )
+
+  /** Registers native event listeners for pointer (mousedown, click) and touch (touchstart, touchmove, touchend). */
+  useEffect(() => {
+    const editable = contentRef.current
+    if (!editable) return
+
+    const isTouchSafari = isTouch && isSafari()
+
+    /** Handles mousedown on the editable to manage caret and selection behavior. */
+    const onMouseDown = (e: MouseEvent) => {
       // If CMD/CTRL is pressed, don't focus the editable.
       const isMultiselectClick = isMac ? e.metaKey : e.ctrlKey
       if (isMultiselectClick) {
@@ -583,7 +719,21 @@ const Editable = ({
           bottomMargin: fontSize * 2,
         })
 
-        allowDefaultSelection()
+        if (!isTouchSafari) {
+          const nodeOffset = getNodeOffsetForVoidArea(editable, {
+            clientX: e.clientX,
+            clientY: e.clientY,
+          })
+
+          if (nodeOffset !== null) {
+            e.preventDefault()
+            setCaretOffset(nodeOffset)
+          } else {
+            allowDefaultSelection()
+          }
+        } else {
+          allowDefaultSelection()
+        }
       }
       // There are areas on the outside edge of the thought that will fail to trigger onTouchEnd.
       // In those cases, it is best to prevent onFocus or onClick, otherwise keyboard is open will be incorrectly activated.
@@ -592,18 +742,10 @@ const Editable = ({
       else {
         e.preventDefault()
       }
-    },
-    [contentRef, editingOrOnCursor, fontSize, allowDefaultSelection, hasMulticursor],
-  )
+    }
 
-  /** Sets the cursor on the thought on touchend or click. Handles hidden elements, drags, and editing mode. */
-  const onTap = useCallback(
-    (e: React.MouseEvent | React.TouchEvent) => {
-      // Avoid triggering haptics twice since this handler is used for both onClick and onTouchEnd.
-      if (e.type !== 'touchend') {
-        haptics.light()
-      }
-
+    /** Sets the cursor on the thought on click. Handles hidden elements, drags, and editing mode. */
+    const onClick = (e: MouseEvent) => {
       // If CMD/CTRL is pressed, don't focus the editable.
       const isMultiselectClick = isMac ? e.metaKey : e.ctrlKey
       if (isMultiselectClick) {
@@ -611,45 +753,88 @@ const Editable = ({
         return
       }
 
-      // when the MultiGesture is below the gesture threshold it is possible that onTap and onTouchEnd are both triggered
-      // in this case, we need to prevent onTap from being called a second time via onTouchEnd
-      // https://github.com/cybersemics/em/issues/1268
-      else if (globals.touching && e.cancelable) {
-        e.preventDefault()
+      handleTapBehavior(e)
+    }
+
+    /**
+     * Calculates caret offset position on touch start, not touch end, because
+     * preventDefault() must be called at the same moment. Once the touch
+     * ends it's too late to override the browser. The result is saved and
+     * applied on touch end, unless the user scrolled in between.
+     */
+    const onTouchStart = (e: TouchEvent) => {
+      if (editingOrOnCursor && !hasMulticursor && e.touches.length > 0) {
+        const touch = e.touches[0]
+        if (!touch) return
+        touchStartPosRef.current = { x: touch.clientX, y: touch.clientY }
+
+        const nodeOffset = getNodeOffsetForVoidArea(editable, {
+          clientX: touch.clientX,
+          clientY: touch.clientY,
+        })
+        if (nodeOffset !== null) {
+          // This prevents the browser from making the caret jump to the end/beginning of the thought
+          e.preventDefault()
+          pendingCaretOffsetRef.current = nodeOffset
+        } else {
+          allowDefaultSelection()
+        }
       }
+    }
 
-      dispatch((dispatch, getState) => {
-        const state = getState()
-
-        // If long press is in progress, don't allow the editable to receive focus or iOS Safari will scroll it.
-        if (state.longPress !== LongPressState.Inactive) {
-          e.preventDefault()
-          return
+    /** Sets the pending caret offset to null if the user scrolls past the threshold. */
+    const onTouchMove = (e: TouchEvent) => {
+      if (e.touches.length > 0 && touchStartPosRef.current) {
+        const touch = e.touches[0]
+        const dx = touch.clientX - touchStartPosRef.current.x
+        const dy = touch.clientY - touchStartPosRef.current.y
+        if (dx * dx + dy * dy > SCROLL_THRESHOLD_PX) {
+          pendingCaretOffsetRef.current = null
         }
+      }
+    }
 
-        if (
-          // disable editing when multicursor is enabled
-          hasMulticursorSelector(state) ||
-          disabled ||
-          // do not set cursor on hidden thought
-          // dragInProgress: not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be safe
-          (!globals.touching && (!editingOrOnCursor || !isVisible))
-        ) {
-          e.preventDefault()
+    /** Applies the pending caret offset computed at touchstart (void-area or computed position). */
+    const onTouchEnd = (e: TouchEvent) => {
+      const offset = pendingCaretOffsetRef.current
+      if (offset !== null && e.changedTouches.length > 0) setCaretOffset(offset)
 
-          if (!isVisible) {
-            selection.clear()
+      pendingCaretOffsetRef.current = null
+      touchStartPosRef.current = null
 
-            // close all popups when clicking on a thought
-            dispatch(toggleDropdown())
-          } else {
-            setCursorOnThought()
-          }
-        }
-      })
-    },
-    [disabled, dispatch, editingOrOnCursor, isVisible, setCursorOnThought],
-  )
+      haptics.light()
+
+      handleTapBehavior(e)
+    }
+
+    editable.addEventListener('mousedown', onMouseDown)
+    editable.addEventListener('click', onClick)
+
+    if (isTouchSafari) {
+      editable.addEventListener('touchstart', onTouchStart, { passive: false })
+      editable.addEventListener('touchmove', onTouchMove, { passive: true })
+      editable.addEventListener('touchend', onTouchEnd, { passive: false })
+    }
+
+    return () => {
+      editable.removeEventListener('mousedown', onMouseDown)
+      editable.removeEventListener('click', onClick)
+      if (isTouchSafari) {
+        editable.removeEventListener('touchstart', onTouchStart)
+        editable.removeEventListener('touchmove', onTouchMove)
+        editable.removeEventListener('touchend', onTouchEnd)
+      }
+    }
+  }, [
+    contentRef,
+    editingOrOnCursor,
+    hasMulticursor,
+    disabled,
+    fontSize,
+    allowDefaultSelection,
+    setCaretOffset,
+    handleTapBehavior,
+  ])
 
   return (
     <ContentEditable
@@ -671,9 +856,6 @@ const Editable = ({
               : (childrenLabel ?? value)
       }
       placeholder={placeholder}
-      onMouseDown={onMouseDown}
-      onClick={onTap}
-      onTouchEnd={onTap}
       onFocus={onFocus}
       onBlur={onBlur}
       onChange={onChangeHandler}
