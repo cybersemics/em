@@ -8,9 +8,7 @@ const usePrefetchImages = (srcs: string[]) => {
       img.src = src
       img.decode()
     })
-    // Prefetch only on mount since srcs are static and a new array reference is created each render.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [srcs])
 }
 
 export default usePrefetchImages
