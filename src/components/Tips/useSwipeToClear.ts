@@ -27,7 +27,6 @@ const useSwipeToClear = ({
 
   const completion = Math.min(1, swipeDistance / threshold)
 
-
   const onTouchStart = useCallback(
     (e: React.TouchEvent) => {
       e.stopPropagation()
