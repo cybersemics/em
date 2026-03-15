@@ -38,17 +38,18 @@ describe('all platforms', () => {
     expect(offset).toBe(0)
   })
 
-  it('clicking a bullet, the caret should move to the beginning of the thought', async () => {
+  it('clicking a bullet, the caret should move to the beginning of the parent thought', async () => {
     const importText = `
-    - Don't stay awake for too long
-      - I don't wanna fall asleep`
+    - a
+      - b
+        - c`
 
     await paste(importText)
 
-    const editableNodeHandle = await waitForEditable("I don't wanna fall asleep")
-    await click(editableNodeHandle, { offset: 10 })
+    const editableNodeHandle = await waitForEditable('b')
+    await click(editableNodeHandle, { offset: 1 })
 
-    await clickBullet("Don't stay awake for too long")
+    await clickBullet('b')
     const offset = await getSelection().focusOffset
     expect(offset).toBe(0)
   })

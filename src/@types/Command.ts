@@ -88,8 +88,11 @@ interface Command {
   /** Do not show the alert after the command is executed in training mode. */
   hideAlert?: boolean
 
-  /** Hide the command in the CommandPalette. */
+  /** Hide the command in the desktop CommandPalette. */
   hideFromCommandPalette?: boolean
+
+  /** Hide the command in the mobile GestureMenu. */
+  hideFromGestureMenu?: boolean
 
   /** Hide the command in the Help modal and CommandPalette. */
   hideFromHelp?: boolean

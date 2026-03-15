@@ -82,6 +82,23 @@ interface EditableProps {
   onEdit?: (args: { path: Path; oldValue: string; newValue: string }) => void
 }
 
+/** If oldValue is wrapped in a formatting node, transfer that wrapper to the new value. */
+const applyOuterTag = (newValue: string, oldValue: string): string => {
+  const div = document.createElement('div')
+  div.innerHTML = oldValue
+
+  if (
+    div.childNodes.length > 1 ||
+    div.firstChild?.nodeType === Node.TEXT_NODE ||
+    !(div.firstChild instanceof HTMLElement)
+  )
+    return newValue
+
+  div.firstChild.innerHTML = newValue
+
+  return div.firstChild.outerHTML
+}
+
 // track if a thought is blurring so that we can avoid an extra dispatch of setEditingValue in onFocus
 // otherwise it can trigger unnecessary re-renders
 // intended to be global, not local state
@@ -139,6 +156,7 @@ const Editable = ({
   const rank = useSelector(state => getThoughtById(state, head(simplePath))?.rank || 0)
   const fontSize = useSelector(state => state.fontSize)
   const isCursorCleared = useSelector(state => !!isEditing && state.cursorCleared)
+
   const hasMulticursor = useSelector(hasMulticursorSelector)
   // store the old value so that we have a transcendental head when it is changed
   const oldValueRef = useRef(value)
@@ -269,7 +287,10 @@ const Editable = ({
    * Debounced from onChangeHandler.
    * Since variables inside this function won't get updated between re-render so passing latest context, rank etc as params.
    */
-  const thoughtChangeHandler = (newValue: string, { rank, simplePath }: { rank: number; simplePath: SimplePath }) => {
+  const thoughtChangeHandler = (
+    newValue: string,
+    { force, rank, simplePath }: { force?: boolean; rank: number; simplePath: SimplePath },
+  ) => {
     // Note: Don't update innerHTML of contentEditable here. Since thoughtChangeHandler may be debounced, it may cause contentEditable to be out of sync.
     invalidStateError(null)
 
@@ -290,12 +311,12 @@ const Editable = ({
       editThought({
         oldValue,
         newValue,
-        rankInContext: rank,
         path: simplePath,
         // Set cursorOffset so that it is included in the undo patch.
         // Otherwise, the selection offset will not be restored correctly on undo/redo.
         // This will have no effect on useEditMode, which does not subscribe to state.cursorOffset reactively.
         cursorOffset: selection.offsetThought() ?? undefined,
+        force,
       }),
     )
 
@@ -383,9 +404,16 @@ const Editable = ({
 
       editingValueUntrimmedStore.update(e.target.value)
 
-      const newValue = stripEmptyFormattingTags(addEmojiSpace(trimHtml(e.target.value)))
+      dispatch((dispatch, getState) => {
+        const state = getState()
 
-      /* The realtime editingValue must always be updated (and not short-circuited) since oldValueRef is throttled. Otherwise, editingValueStore becomes stale and heights are not recalculated in VirtualThought.
+        // When the cursor is cleared, there may be an existing style that wraps the entire thought.
+        // That style should be re-applied once they type something. (#3673)
+
+        const wrappedValue = state.cursorCleared ? applyOuterTag(e.target.value, oldValue) : e.target.value
+        const newValue = stripEmptyFormattingTags(addEmojiSpace(trimHtml(wrappedValue)))
+
+        /* The realtime editingValue must always be updated (and not short-circuited) since oldValueRef is throttled. Otherwise, editingValueStore becomes stale and heights are not recalculated in VirtualThought.
 
         e.g.
 
@@ -396,48 +424,46 @@ const Editable = ({
           5. onChangeHandler short circuits since throttledChangeRef has not resolved and newValue === oldValue
           6. editingValueStore must be updated, otherwise it will retain the stale value aa
       */
-      editingValueStore.update(newValue)
+        editingValueStore.update(newValue)
 
-      // TODO: Disable keypress
-      // e.preventDefault() does not work
-      // disabled={readonly} removes contenteditable property
+        // TODO: Disable keypress
+        // e.preventDefault() does not work
+        // disabled={readonly} removes contenteditable property
 
-      if (newValue === oldValue) {
+        if (newValue === oldValue) {
+          if (contentRef.current) {
+            contentRef.current.style.opacity = '1.0'
+          }
+
+          if (readonly || uneditable || options) invalidStateError(null)
+
+          // if we cancel the edit, we have to cancel pending its
+          // this can occur for example by editing a value away from and back to its
+          throttledChangeRef.current.cancel()
+
+          return
+        }
+
+        const oldValueClean = oldValue === EM_TOKEN ? 'em' : ellipsize(oldValue)
+
         if (contentRef.current) {
           contentRef.current.style.opacity = '1.0'
         }
 
-        if (readonly || uneditable || options) invalidStateError(null)
+        if (readonly) {
+          dispatch(error({ value: `"${ellipsize(oldValueClean)}" is read-only and cannot be edited.` }))
+          throttledChangeRef.current.cancel() // see above
+          return
+        } else if (uneditable) {
+          dispatch(error({ value: `"${ellipsize(oldValueClean)}" is uneditable.` }))
+          throttledChangeRef.current.cancel() // see above
+          return
+        } else if (options && !options.includes(newValue.toLowerCase())) {
+          invalidStateError(newValue)
+          throttledChangeRef.current.cancel() // see above
+          return
+        }
 
-        // if we cancel the edit, we have to cancel pending its
-        // this can occur for example by editing a value away from and back to its
-        throttledChangeRef.current.cancel()
-
-        return
-      }
-
-      const oldValueClean = oldValue === EM_TOKEN ? 'em' : ellipsize(oldValue)
-
-      if (contentRef.current) {
-        contentRef.current.style.opacity = '1.0'
-      }
-
-      if (readonly) {
-        dispatch(error({ value: `"${ellipsize(oldValueClean)}" is read-only and cannot be edited.` }))
-        throttledChangeRef.current.cancel() // see above
-        return
-      } else if (uneditable) {
-        dispatch(error({ value: `"${ellipsize(oldValueClean)}" is uneditable.` }))
-        throttledChangeRef.current.cancel() // see above
-        return
-      } else if (options && !options.includes(newValue.toLowerCase())) {
-        invalidStateError(newValue)
-        throttledChangeRef.current.cancel() // see above
-        return
-      }
-
-      dispatch((dispatch, getState) => {
-        const state = getState()
         const newNumContext = getContexts(state, newValue).length
         const isNewValueURL = containsURL(newValue)
 
@@ -454,10 +480,20 @@ const Editable = ({
         }
 
         // run the thoughtChangeHandler immediately if superscript changes or it's a url (also when it changes true to false)
-        if (transient || contextLengthChange || urlChange || isEmpty || isDivider(newValue)) {
+        // run it immediately is there is a style wrapper that needs to be applied to the editable after a clearThought action (#3673)
+        if (
+          wrappedValue !== e.target.value ||
+          transient ||
+          contextLengthChange ||
+          urlChange ||
+          isEmpty ||
+          isDivider(newValue)
+        ) {
           // update new supercript value and url boolean
           throttledChangeRef.current.flush()
-          thoughtChangeHandler(newValue, { rank, simplePath })
+          // if a style needs to be re-applied with cursorClearedWrapper, the editable needs to re-render immediately to prevent
+          // a flash of unstyled content
+          thoughtChangeHandler(newValue, { force: wrappedValue !== e.target.value, rank, simplePath })
         } else {
           throttledChangeRef.current(newValue, { rank, simplePath })
         }

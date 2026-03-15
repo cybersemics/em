@@ -8,8 +8,6 @@ import { isTouch } from '../browser'
 import { chainCommand, gestureString, globalCommands } from '../commands'
 import gestureStore from '../stores/gesture'
 
-const visibleCommands = globalCommands.filter(command => !command.hideFromCommandPalette && !command.hideFromHelp)
-
 /** Returns true if the command can be executed. */
 const isExecutable = (state: State, command: Command) =>
   (!command.canExecute || command.canExecute(state)) &&
@@ -32,7 +30,7 @@ const useFilteredCommands = (
 ): Command[] => {
   const gestureInProgress = gestureStore.useSelector(state => state.gesture as string)
   // The chainable command that is in progress (including when there are no other swipes). Otherwise null.
-  const chainableCommandInProgressInclusive: Command | undefined = visibleCommands.find(
+  const chainableCommandInProgressInclusive: Command | undefined = globalCommands.find(
     command => command.isChainable && gestureInProgress.startsWith(gestureString(command)),
   )
   const store = useStore()
@@ -40,11 +38,11 @@ const useFilteredCommands = (
   const possibleCommandsSorted = useMemo(() => {
     // if a chainable command is in progress, extend the command list with chained commands (first command + second command)
     const visibleCommandsChained = [
-      ...visibleCommands,
+      ...globalCommands,
       ...(chainableCommandInProgressInclusive
         ? [
             // append chainable commands
-            ...visibleCommands
+            ...globalCommands
               .filter(command => chainableCommandInProgressInclusive.isChainable?.(command))
               .map(command => chainCommand(chainableCommandInProgressInclusive, command)),
           ]
@@ -54,15 +52,13 @@ const useFilteredCommands = (
     const possibleCommands = visibleCommandsChained.filter(command => {
       // Always include help command in gesture mode
       if (isTouch && command.id === 'openGestureCheatsheet') return true
-      // Always exclude gestureCheatsheet command in keyboard mode
-      if (!isTouch && command.id === 'openGestureCheatsheet') return false
       // Show cancel command on touch devices when a gesture is in progress
       if (isTouch && command.id === 'cancel' && gestureInProgress) return true
-      // Always exclude cancel command in keyboard mode
-      if (!isTouch && command.id === 'cancel') return false
 
       // gesture
       if (isTouch) {
+        if (command.hideFromGestureMenu) return false
+
         const commandGesture = gestureString(command)
         // collapse duplicate swipes when the command starts with the same character that the chainable gesture ends with
         const chainedGesture = commandGesture.slice(
@@ -75,6 +71,8 @@ const useFilteredCommands = (
       }
       // keyboard
       else {
+        if (command.hideFromHelp || command.hideFromCommandPalette) return false
+
         // only commands with keyboard shortcuts are visible
         if (platformCommandsOnly && !command.keyboard) return false
 

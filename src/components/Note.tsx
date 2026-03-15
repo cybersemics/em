@@ -203,6 +203,7 @@ const Note = React.memo(
           html={note || ''}
           innerRef={noteRef as React.RefObject<HTMLElement>}
           aria-label='note-editable'
+          data-thought-id={head(path)}
           placeholder='Enter a note'
           className={css({
             display: 'inline-block',
