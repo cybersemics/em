@@ -74,7 +74,6 @@ const TipBlur: FC<{
 const TipGlow: FC = () => (
   <div
     className={css({
-      animation: 'fadein {durations.medium} ease',
       position: 'absolute',
       pointerEvents: 'none',
       opacity: 1,
@@ -148,7 +147,7 @@ const Tip: FC<
   // A single MotionValue drives the opacity of all visual layers.
   // Passed directly to ProgressiveBlur and to the motion.div wrapper for glow + content.
   // Handles all opacity conditions: visibility transitions, dismiss, and swipe.
-  const opacity = useMotionValue(isVisible ? 1 : 0)
+  const opacity = useMotionValue(0)
 
   /** Animates opacity to 0 and dispatches dismissTip on completion. */
   const animateDismiss = useCallback(() => {
@@ -194,11 +193,11 @@ const Tip: FC<
         opacity.set(swipeOpacity)
         return
       }
-      // Animate toward 1. From 1 this is a no-op; from 0 (after a hide) it fades in.
+      // Animate toward 1 (visible)
       const controls = animate(opacity, 1, { duration: durations.get('medium') / 1000, ease: 'easeOut' })
       return () => controls.stop()
     } else {
-      // Animate toward 0. Safe to re-run — starts from the current value.
+      // Animate toward 0 (invisible)
       const controls = animate(opacity, 0, { duration: durations.get('fast') / 1000, ease: 'easeOut' })
       return () => controls.stop()
     }
@@ -236,7 +235,6 @@ const Tip: FC<
             This is the only layer with pointerEvents enabled, and handles swipe-to-dismiss touch events. */}
             <div
               className={css({
-                animation: 'fadein {durations.medium} ease',
                 position: 'relative',
                 // Isolation prevents mix-blend-mode and backdrop-filter from interacting across layers.
                 isolation: 'isolate',
