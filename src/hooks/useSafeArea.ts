@@ -25,11 +25,12 @@ const read = (): SafeAreaInsets => {
   }
 }
 
-/** Returns cached safe area insets (top, right, bottom, left) in pixels. Updates on resize. */
+/** Provides cached mobile device safe area insets (top, right, bottom, left), as integer values. Updates on resize. */
 const useSafeArea = (): SafeAreaInsets => {
   const insets = useRef(read())
 
   useEffect(() => {
+    /** Updates safe area insets from computed CSS values. */
     const update = () => {
       insets.current = read()
     }
