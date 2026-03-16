@@ -174,19 +174,6 @@ const Editable = ({
   //   isCursorCleared,
   // })
 
-  /**
-   * Stores a custom caret position for iOS touch interactions temporarily.
-   * The position is calculated on touch start but applied on touch end (why on touch end? See onTouchStart).
-   * If the user scrolls instead of tapping, it is cleared so the browser can handle the interaction normally.
-   */
-  const pendingCaretOffsetRef = useRef<number | null>(null)
-
-  /** Stores the initial touch position to detect tap vs scroll; if focus occurs without it, the tap was outside the editable and we place the caret manually.*/
-  const touchStartPosRef = useRef<{ x: number; y: number } | null>(null)
-
-  /** Squared movement threshold (for performance) used to detect scroll vs tap; if finger movement exceeds ~10px, it is treated as a scroll and custom caret placement is cancelled. */
-  const SCROLL_THRESHOLD_PX = 100
-
   const childrenLabel = useSelector(state => {
     const labelId = findDescendant(state, parentId, '=label')
     return anyChild(state, labelId)?.value
@@ -623,7 +610,7 @@ const Editable = ({
     [disabled, dispatch, editingOrOnCursor, isVisible, setCursorOnThought],
   )
 
-  /** Registers native event listeners for pointer (mousedown, click) and touch (touchstart, touchmove, touchend). */
+  /** Registers native event listeners for pointer (mousedown, click) and touch (touchend with passive: false). */
   useEffect(() => {
     const editable = contentRef.current
     if (!editable) return
@@ -672,36 +659,8 @@ const Editable = ({
       handleTapBehavior(e)
     }
 
-    /**
-     * Calculates caret offset position on touch start, not touch end, because
-     * preventDefault() must be called at the same moment. Once the touch
-     * ends it's too late to override the browser. The result is saved and
-     * applied on touch end, unless the user scrolled in between.
-     */
-    const onTouchStart = (e: TouchEvent) => {
-      if (editingOrOnCursor && !hasMulticursor && e.touches.length > 0) {
-        const touch = e.touches[0]
-        if (!touch) return
-        touchStartPosRef.current = { x: touch.clientX, y: touch.clientY }
-        // TODO: Manual caret placement calculation
-      }
-    }
-
-    /** Sets the pending caret offset to null if the user scrolls past the threshold. */
-    const onTouchMove = (e: TouchEvent) => {
-      if (e.touches.length > 0 && touchStartPosRef.current) {
-        const touch = e.touches[0]
-        const dx = touch.clientX - touchStartPosRef.current.x
-        const dy = touch.clientY - touchStartPosRef.current.y
-        if (dx * dx + dy * dy > SCROLL_THRESHOLD_PX) {
-          pendingCaretOffsetRef.current = null
-        }
-      }
-    }
-
-    /** Applies the pending caret offset computed at touchstart (void-area or computed position). */
+    /** Sets the cursor on the thought on touchend. Handles hidden elements, drags, and editing mode. */
     const onTouchEnd = (e: TouchEvent) => {
-      // TODO: Manual caret placement calculation
       haptics.light()
       handleTapBehavior(e)
     }
@@ -710,8 +669,6 @@ const Editable = ({
     editable.addEventListener('click', onClick)
 
     if (isTouchSafari) {
-      editable.addEventListener('touchstart', onTouchStart, { passive: false })
-      editable.addEventListener('touchmove', onTouchMove, { passive: true })
       editable.addEventListener('touchend', onTouchEnd, { passive: false })
     }
 
@@ -719,8 +676,6 @@ const Editable = ({
       editable.removeEventListener('mousedown', onMouseDown)
       editable.removeEventListener('click', onClick)
       if (isTouchSafari) {
-        editable.removeEventListener('touchstart', onTouchStart)
-        editable.removeEventListener('touchmove', onTouchMove)
         editable.removeEventListener('touchend', onTouchEnd)
       }
     }
