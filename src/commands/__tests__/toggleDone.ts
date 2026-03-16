@@ -1,4 +1,5 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import { executeCommand, executeCommandWithMulticursor } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
@@ -11,6 +12,16 @@ import toggleDoneCommand from '../toggleDone'
 beforeEach(initStore)
 
 describe('toggleDone', () => {
+  it('does not mark an empty thought as done', () => {
+    store.dispatch([newThought({ value: '' })])
+
+    executeCommand(toggleDoneCommand, { store })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- __ROOT__
+  - `)
+  })
+
   it('marks a thought as done', () => {
     store.dispatch([
       importText({

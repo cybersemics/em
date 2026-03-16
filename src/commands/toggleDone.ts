@@ -2,6 +2,7 @@ import Command from '../@types/Command'
 import { toggleThoughtActionCreator as toggleThought } from '../actions/toggleThought'
 import Icon from '../components/icons/Check'
 import findDescendant from '../selectors/findDescendant'
+import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursor from '../selectors/hasMulticursor'
 import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
@@ -16,7 +17,11 @@ const toggleDone: Command = {
   keyboard: { alt: true, shift: true, key: 'Enter' },
   multicursor: true,
   canExecute: state => {
-    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
+    if (!isDocumentEditable()) return false
+    if (!state.cursor && !hasMulticursor(state)) return false
+    // do not allow marking empty thoughts as done
+    if (state.cursor && getThoughtById(state, head(state.cursor))?.value === '') return false
+    return true
   },
   isActive: state => {
     const cursor = state.cursor
