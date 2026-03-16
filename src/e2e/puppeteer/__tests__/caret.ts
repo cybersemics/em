@@ -2,7 +2,6 @@ import { KnownDevices } from 'puppeteer'
 import categorizeCommand from '../../../commands/categorize'
 import newThoughtCommand from '../../../commands/newThought'
 import openCommandCenterCommand from '../../../commands/openCommandCenter'
-import { WindowEm } from '../../../initialize'
 import click from '../helpers/click'
 import clickBullet from '../helpers/clickBullet'
 import clickThought from '../helpers/clickThought'
@@ -369,9 +368,7 @@ describe('mobile only', () => {
     // Step 6: tap the first thought — keyboard should NOT open
     await clickThought('a')
 
-    // isKeyboardOpen should remain false; if it becomes true the test will time out
-    // TODO: Find a less invasive way to confirm the keyboard is closed
-    const em = window.em as WindowEm
-    await waitUntil(() => !em.testHelpers.getState().isKeyboardOpen)
+    // keyboard should not open, so the active element should be the body or null
+    await waitUntil(() => !document.activeElement || document.activeElement === document.body)
   })
 })
