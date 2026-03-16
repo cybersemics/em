@@ -573,7 +573,7 @@ const Editable = ({
       })
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [value, setCursorOnThought, dispatch, path],
+    [value, setCursorOnThought],
   )
 
   /**
