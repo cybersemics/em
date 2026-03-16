@@ -107,23 +107,6 @@ let blurring = false
 // this flag is used to ensure that the browser selection is not restored after the initial setCursorOnThought
 let cursorOffsetInitialized = false
 
-// Tracks the last touch coordinates globally so that onFocus can calculate the correct
-// caret offset when iOS Safari focuses a contenteditable from a tap outside the element
-// (e.g. tapping below the last thought).
-let lastTouchCoordinates: { clientX: number; clientY: number; timestamp: number } | null = null
-if (typeof document !== 'undefined' && isTouch) {
-  document.addEventListener(
-    'touchstart',
-    (e: TouchEvent) => {
-      if (e.touches.length > 0) {
-        const touch = e.touches[0]
-        lastTouchCoordinates = { clientX: touch.clientX, clientY: touch.clientY, timestamp: Date.now() }
-      }
-    },
-    { passive: true, capture: true },
-  )
-}
-
 /**
  * An editable thought with throttled editing.
  * Use rank instead of headRank(simplePath) as it will be different for context view.
@@ -194,7 +177,7 @@ const Editable = ({
 
   /**
    * Stores a custom caret position for iOS touch interactions temporarily.
-   * The position is calculated on touch start but applied on touch end (why on touch end? See onTouchEnd).
+   * The position is calculated on touch start but applied on touch end (why on touch end? See onTouchStart).
    * If the user scrolls instead of tapping, it is cleared so the browser can handle the interaction normally.
    */
   const pendingCaretOffsetRef = useRef<number | null>(null)
@@ -593,17 +576,17 @@ const Editable = ({
         isTouch &&
         editable &&
         !touchStartPosRef.current &&
-        lastTouchCoordinates &&
-        Date.now() - lastTouchCoordinates.timestamp < 500
+        globals.lastTouchCoordinates &&
+        Date.now() - globals.lastTouchCoordinates.timestamp < 500
       ) {
         const editableRect = editable.getBoundingClientRect()
         const isTouchOutsideEditable =
-          lastTouchCoordinates.clientX < editableRect.left ||
-          lastTouchCoordinates.clientX > editableRect.right ||
-          lastTouchCoordinates.clientY < editableRect.top ||
-          lastTouchCoordinates.clientY > editableRect.bottom
+          globals.lastTouchCoordinates.clientX < editableRect.left ||
+          globals.lastTouchCoordinates.clientX > editableRect.right ||
+          globals.lastTouchCoordinates.clientY < editableRect.top ||
+          globals.lastTouchCoordinates.clientY > editableRect.bottom
         if (isTouchOutsideEditable) {
-          const nodeOffset = getNodeOffsetForVoidArea(editable, lastTouchCoordinates)
+          const nodeOffset = getNodeOffsetForVoidArea(editable, globals.lastTouchCoordinates)
           if (nodeOffset !== null) {
             // Defer selection.set to the next frame. The browser applies its own default
             // caret placement (end of text) AFTER focus event handlers return, so a
@@ -658,13 +641,21 @@ const Editable = ({
    * Checks long-press, multicursor, disabled, and visibility to decide whether to set the cursor.
    */
   const handleTapBehavior = useCallback(
-    (ev: { preventDefault: () => void }) => {
+    (e: MouseEvent | TouchEvent) => {
+      // When MultiGesture is below the gesture threshold it is possible that onTap and onTouchEnd
+      // both trigger. Prevent handleTapBehavior from running a second time via touchend in that case.
+      // https://github.com/cybersemics/em/issues/1268
+      if (e.type === 'touchend' && globals.touching && e.cancelable) {
+        e.preventDefault()
+        return
+      }
+
       dispatch((dispatch, getState) => {
         const state = getState()
 
         // If long press is in progress, don't allow the editable to receive focus or iOS Safari will scroll it.
         if (state.longPress !== LongPressState.Inactive) {
-          ev.preventDefault()
+          e.preventDefault()
           return
         }
 
@@ -676,7 +667,7 @@ const Editable = ({
           // dragInProgress: not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be safe
           (!globals.touching && (!editingOrOnCursor || !isVisible))
         ) {
-          ev.preventDefault()
+          e.preventDefault()
 
           if (!isVisible) {
             selection.clear()
@@ -696,7 +687,6 @@ const Editable = ({
   useEffect(() => {
     const editable = contentRef.current
     if (!editable) return
-
     const isTouchSafari = isTouch && isSafari()
 
     /** Handles mousedown on the editable to manage caret and selection behavior. */
@@ -719,18 +709,14 @@ const Editable = ({
           bottomMargin: fontSize * 2,
         })
 
-        if (!isTouchSafari) {
-          const nodeOffset = getNodeOffsetForVoidArea(editable, {
-            clientX: e.clientX,
-            clientY: e.clientY,
-          })
+        const nodeOffset = getNodeOffsetForVoidArea(editable, {
+          clientX: e.clientX,
+          clientY: e.clientY,
+        })
 
-          if (nodeOffset !== null) {
-            e.preventDefault()
-            setCaretOffset(nodeOffset)
-          } else {
-            allowDefaultSelection()
-          }
+        if (nodeOffset !== null) {
+          e.preventDefault()
+          setCaretOffset(nodeOffset)
         } else {
           allowDefaultSelection()
         }

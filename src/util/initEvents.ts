@@ -14,6 +14,7 @@ import { isAndroidWebView, isIOS, isSafari, isTouch } from '../browser'
 import { beforeInput, keyDown, keyUp } from '../commands'
 import { AlertType, LongPressState } from '../constants'
 import * as selection from '../device/selection'
+import globals from '../globals'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import pathExists from '../selectors/pathExists'
 import store from '../stores/app'
@@ -289,6 +290,18 @@ const initEvents = (store: Store<State, any>) => {
     scrollAtEdge.stop()
   }
 
+  /** Store last touch coordinates for Editable onFocus (iOS Safari tap-outside-contenteditable caret placement). */
+  const onTouchStart = (e: TouchEvent) => {
+    if (e.touches.length > 0) {
+      const touch = e.touches[0]
+      globals.lastTouchCoordinates = {
+        clientX: touch.clientX,
+        clientY: touch.clientY,
+        timestamp: Date.now(),
+      }
+    }
+  }
+
   /** Handle a page lifecycle state change, i.e. switching apps. */
   const onStateChange = ({ oldState, newState }: { oldState: LifecycleState; newState: LifecycleState }) => {
     clearTimeout(passiveTimeout)
@@ -366,6 +379,7 @@ const initEvents = (store: Store<State, any>) => {
   window.history.scrollRestoration = 'manual'
 
   document.addEventListener('selectionchange', onSelectionChange)
+  document.addEventListener('touchstart', onTouchStart)
   window.addEventListener('beforeinput', beforeInput)
   window.addEventListener('keydown', keyDown)
   window.addEventListener('keyup', keyUp)
@@ -401,6 +415,7 @@ const initEvents = (store: Store<State, any>) => {
   const cleanup = () => {
     unsubscribeSaveErrorReload()
     document.removeEventListener('selectionchange', onSelectionChange)
+    document.removeEventListener('touchstart', onTouchStart)
     window.removeEventListener('beforeinput', beforeInput)
     window.removeEventListener('keydown', keyDown)
     window.removeEventListener('keyup', keyUp)
