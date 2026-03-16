@@ -15,7 +15,7 @@ const cursorChangedMiddleware: ThunkMiddleware<State> = ({ getState }) => {
     const thought = state.cursor ? getThoughtById(state, head(state.cursor)) : null
     const value = thought?.value ?? ''
     if (
-      (!state.cursor && selection.isThought()) ||
+      (!state.cursor && (selection.isThought() || selection.isNote())) ||
       isDivider(value) ||
       // Check if the head of the cursor is the root thought.
       // This occurs when navigating a root child in the context view.

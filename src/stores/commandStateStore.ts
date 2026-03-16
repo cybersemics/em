@@ -34,7 +34,7 @@ export const updateCommandState = () => {
   const state = store.getState()
   if (!state.cursor) return
   const action =
-    selection.isActive() && selection.isThought()
+    selection.isActive() && (selection.isThought() || selection.isNote())
       ? getCommandState(selection.html() ?? '')
       : getCommandState(pathToThought(state, state.cursor)?.value ?? '')
   commandStateStore.update(action)
