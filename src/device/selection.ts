@@ -75,14 +75,14 @@ export const isEditable = (node?: Node | EventTarget | null) => {
 }
 
 /** Returns true if the focusNode is a note. */
-export const isNote = () => {
-  const element = window.getSelection()?.focusNode as HTMLElement
-  return !!element && element.nodeType === Node.ELEMENT_NODE && element.ariaLabel === 'note-editable'
-}
+export const isNote = () =>
+  !!document.activeElement &&
+  document.activeElement.nodeType === Node.ELEMENT_NODE &&
+  document.activeElement.ariaLabel === 'note-editable'
 
 /** Returns true if the selection is on a thought. */
 // We should see if it is possible to just use state.isKeyboardOpen and selection.isActive()
-export const isThought = (): boolean => isEditable(window.getSelection()?.focusNode)
+export const isThought = (): boolean => isEditable(document.activeElement)
 
 /** Returns true if the selection is  on the first line of a multi-line text node. Returns true if there is no selection or if the text node is only a single line. */
 export const isOnFirstLine = (): boolean => {
