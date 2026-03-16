@@ -18,7 +18,7 @@ const pullJumpHistory = (): Thunk<Promise<void>> => async (dispatch, getState) =
   await Promise.all(
     paths.map(async path => {
       try {
-        await dispatch(pullAncestors(path, { force: true, maxDepth: 0 }))
+        await dispatch(pullAncestors(path, { maxDepth: 0 }))
       } catch (e) {
         // TODO: Missing docKey error
         console.warn(e)
