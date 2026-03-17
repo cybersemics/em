@@ -116,7 +116,7 @@ const SidebarSectionRow = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        flexShrink: 0,
+        flexShrink: 0
       })}
     >
       <Icon size={iconSize} fill={token('colors.fgOverlay75')} />
@@ -170,15 +170,12 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
   return (
     // position:relative creates a stacking context for the absolutely-positioned dropdown.
     // this allows the dropdown's options to appear above the header without affecting the header's layout.
-    <div className={css({ position: 'relative' })}>
-      {/* Clickable header row: section row + chevron */}
+    <div {...fastClick(() => setIsOpen(!isOpen))} className={css({ position: 'relative', cursor: 'pointer' })}>
       <div
-        {...fastClick(() => setIsOpen(!isOpen))}
         className={css({
           display: 'inline-flex',
           alignItems: 'center',
-          gap: '0.75rem',
-          cursor: 'pointer',
+          gap: '0.5rem',
         })}
       >
         <SidebarSectionRow icon={section.icon} label={section.label} />
@@ -231,8 +228,7 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
                 zIndex: 1,
                 display: 'flex',
                 flexDirection: 'column',
-                marginTop: 0,
-                gap: '0.5rem',
+                margin: 0,
                 width: '100%',
               })}
             >
@@ -246,12 +242,12 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
                   })}
                   className={css({
                     cursor: 'pointer',
-                    marginTop: '0.5rem',
+                    padding: '0.5rem 0',
                     display: 'flex',
                     // Dimmed by default; brightens on hover (only on devices that support hover)
                     opacity: 0.6,
                     '@media (hover: hover)': { _hover: { opacity: 1 } },
-                    transition: `opacity ${durations.get('veryFast')}ms ease-out`,
+                    transition: 'opacity {durations.fast} ease-out',
                   })}
                 >
                   <SidebarSectionRow icon={s.icon} label={s.label} iconSize={32} />
