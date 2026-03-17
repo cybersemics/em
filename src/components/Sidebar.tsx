@@ -244,9 +244,10 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
                     cursor: 'pointer',
                     padding: '0.5rem 0',
                     display: 'flex',
-                    // Dimmed by default; brightens on hover (only on devices that support hover)
+                    // Dimmed by default; brightens on hover or touch press
                     opacity: 0.6,
                     '@media (hover: hover)': { _hover: { opacity: 1 } },
+                    '@media (hover: none)': { _active: { opacity: 1 } },
                     transition: 'opacity {durations.fast} ease-out',
                   })}
                 >
