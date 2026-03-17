@@ -647,7 +647,6 @@ const Editable = ({
       // https://github.com/cybersemics/em/issues/1268
       if (e.type === 'touchend' && globals.touching && e.cancelable) {
         e.preventDefault()
-        return
       }
 
       dispatch((dispatch, getState) => {
@@ -687,7 +686,6 @@ const Editable = ({
   useEffect(() => {
     const editable = contentRef.current
     if (!editable) return
-    const isTouchSafari = isTouch && isSafari()
 
     /** Handles mousedown on the editable to manage caret and selection behavior. */
     const onMouseDown = (e: MouseEvent) => {
@@ -796,20 +794,16 @@ const Editable = ({
     editable.addEventListener('mousedown', onMouseDown)
     editable.addEventListener('click', onClick)
 
-    if (isTouchSafari) {
-      editable.addEventListener('touchstart', onTouchStart, { passive: false })
-      editable.addEventListener('touchmove', onTouchMove, { passive: true })
-      editable.addEventListener('touchend', onTouchEnd, { passive: false })
-    }
+    editable.addEventListener('touchstart', onTouchStart, { passive: false })
+    editable.addEventListener('touchmove', onTouchMove, { passive: true })
+    editable.addEventListener('touchend', onTouchEnd, { passive: false })
 
     return () => {
       editable.removeEventListener('mousedown', onMouseDown)
       editable.removeEventListener('click', onClick)
-      if (isTouchSafari) {
-        editable.removeEventListener('touchstart', onTouchStart)
-        editable.removeEventListener('touchmove', onTouchMove)
-        editable.removeEventListener('touchend', onTouchEnd)
-      }
+      editable.removeEventListener('touchstart', onTouchStart)
+      editable.removeEventListener('touchmove', onTouchMove)
+      editable.removeEventListener('touchend', onTouchEnd)
     }
   }, [
     contentRef,
