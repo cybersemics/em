@@ -170,7 +170,7 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
   return (
     // position:relative creates a stacking context for the absolutely-positioned dropdown.
     // this allows the dropdown's options to appear above the header without affecting the header's layout.
-    <div {...fastClick(() => setIsOpen(!isOpen))} className={css({ position: 'relative', cursor: 'pointer' })}>
+    <div data-testid='sidebar-section-picker' {...fastClick(() => setIsOpen(!isOpen))} className={css({ position: 'relative', cursor: 'pointer' })}>
       <div
         className={css({
           display: 'inline-flex',
@@ -236,6 +236,7 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
               {otherSections.map(s => (
                 <div
                   key={s.id}
+                  data-testid={`sidebar-${s.id}`}
                   {...fastClick(() => {
                     onSectionChange(s.id)
                     setIsOpen(false)
@@ -661,9 +662,11 @@ const Sidebar = () => {
   /** Whether the dropdown is open. */
   const [dropdownOpen, setDropdownOpen] = useState(false)
 
-  /** Reset the dropdown to closed whenever the sidebar itself closes. */
+  /** Reset the dropdown and release focus whenever the sidebar closes. */
   useEffect(() => {
-    if (!showSidebar) setDropdownOpen(false)
+    if (!showSidebar) {
+      setDropdownOpen(false)
+    }
   }, [showSidebar])
   const { hue, sat } = useSectionHue(sectionId)
 
