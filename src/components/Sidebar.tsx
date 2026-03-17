@@ -138,10 +138,15 @@ const SidebarSectionRow = ({
 
 /** Props for the SidebarHeader component. */
 interface SidebarHeaderProps {
+  /** All available sidebar sections. */
   sections: SidebarSection[]
+  /** The currently active section. */
   sectionId: SidebarSectionId
+  /** Callback when user selects a different section. */
   onSectionChange: (id: SidebarSectionId) => void
+  /** Whether the dropdown is currently expanded. */
   isOpen: boolean
+  /** State setter to toggle the dropdown open/closed. */
   setIsOpen: (open: boolean) => void
 }
 
@@ -154,11 +159,6 @@ interface SidebarHeaderProps {
  * - The non-active sections animate into view
  * - The scrollable content area gently fades out.
  *
- * @param sections - All available sidebar sections.
- * @param sectionId - The currently active section.
- * @param onSectionChange - Callback when user selects a different section.
- * @param isOpen - State determining whether the dropdown is currently expanded.
- * @param setIsOpen - State setter to toggle the dropdown open/closed.
  */
 const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen }: SidebarHeaderProps) => {
   /** The currently active section. */
@@ -281,10 +281,6 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
  * - hue-rotate / saturate: driven by the parent's shared motion values to
  * tint the glow when switching sidebar sections.
  *
- * @param opacity - Shared motion value providing opacity derived from the sidebar's x position.
- * @param expanded - Whether the dropdown is currently expanded.
- * @param hue - Shared motion value driving CSS hue-rotate on the overlay.
- * @param sat - Shared motion value driving CSS saturate on the overlay.
  */
 const SidebarOverlay1 = ({
   opacity,
@@ -292,9 +288,13 @@ const SidebarOverlay1 = ({
   hue,
   sat,
 }: {
+  /** Shared motion value providing opacity derived from the sidebar's x position. */
   opacity: MotionValue<number>
+  /** Whether the dropdown is currently expanded. */
   expanded: boolean
+  /** Shared motion value driving CSS hue-rotate on the overlay. */
   hue: MotionValue<number>
+  /** Shared motion value driving CSS saturate on the overlay. */
   sat: MotionValue<number>
 }) => {
   /** Whether the viewport is at or above the lg breakpoint (landscape mobile and larger). */
@@ -377,10 +377,6 @@ const SidebarOverlay1 = ({
  * Together, the two overlays create a layered glow effect that shifts color
  * as the user switches between sidebar sections.
  *
- * @param width - CSS width of the overlay (either '100%' or '400px').
- * @param opacity - Opacity derived from the sidebar's x position.
- * @param hue - Shared motion value driving CSS hue-rotate on the overlay.
- * @param sat - Shared motion value driving CSS saturate on the overlay.
  */
 const SidebarOverlay2 = ({
   width,
@@ -388,9 +384,13 @@ const SidebarOverlay2 = ({
   hue,
   sat,
 }: {
+  /** CSS width of the overlay (either '100%' or '400px'). */
   width: string
+  /** Opacity derived from the sidebar's x position. */
   opacity: MotionValue<number>
+  /** Shared motion value driving CSS hue-rotate on the overlay. */
   hue: MotionValue<number>
+  /** Shared motion value driving CSS saturate on the overlay. */
   sat: MotionValue<number>
 }) => {
   // Applying blur to overlay images helps substantially with gradient banding artifacts in Safari,
@@ -436,12 +436,6 @@ const SidebarOverlay2 = ({
  *
  * Clicking this overlay closes the sidebar (acts as a dismiss target).
  *
- * @param opacity - Opacity derived from the sidebar's x position.
- * @param width - CSS width of the gradient overlay.
- * @param showSidebar - Whether the sidebar is currently open.
- * @param toggleSidebar - Callback to open/close the sidebar.
- * @param hue - Shared motion value driving CSS hue-rotate.
- * @param sat - Shared motion value driving CSS saturate.
  */
 const SidebarGradient = ({
   opacity,
@@ -451,11 +445,17 @@ const SidebarGradient = ({
   hue,
   sat,
 }: {
+  /** Opacity derived from the sidebar's x position. */
   opacity: MotionValue<number>
+  /** CSS width of the gradient overlay. */
   width: string
+  /** Whether the sidebar is currently open. */
   showSidebar: boolean
+  /** Callback to open/close the sidebar. */
   toggleSidebar: (value: boolean) => void
+  /** Shared motion value driving CSS hue-rotate. */
   hue: MotionValue<number>
+  /** Shared motion value driving CSS saturate. */
   sat: MotionValue<number>
 }) => {
   const filter = useTransform([hue, sat], ([h, s]) => `hue-rotate(${h}deg) saturate(${s})`)
@@ -498,13 +498,6 @@ const SidebarGradient = ({
  * - Safari/iOS: gradient is rendered ABOVE the blur (avoids patchy artifacts)
  * - Chrome: blur is rendered ABOVE the gradient (avoids visible banding).
  *
- * @param x - The sidebar's current x-axis translation motion value.
- * @param widthPx - Sidebar width in pixels, used to derive opacity from x position.
- * @param showSidebar - Whether the sidebar is currently open.
- * @param toggleSidebar - Callback to open/close the sidebar.
- * @param width - CSS width string for child overlay components.
- * @param hue - Shared motion value driving CSS hue-rotate.
- * @param sat - Shared motion value driving CSS saturate.
  */
 const SidebarBackground = ({
   x,
@@ -515,12 +508,19 @@ const SidebarBackground = ({
   hue,
   sat,
 }: {
+  /** The sidebar's current x-axis translation motion value. */
   x: MotionValue<number>
+  /** Sidebar width in pixels, used to derive opacity from x position. */
   widthPx: number
+  /** Whether the sidebar is currently open. */
   showSidebar: boolean
+  /** Callback to open/close the sidebar. */
   toggleSidebar: (value: boolean) => void
+  /** CSS width string for child overlay components. */
   width: string
+  /** Shared motion value driving CSS hue-rotate. */
   hue: MotionValue<number>
+  /** Shared motion value driving CSS saturate. */
   sat: MotionValue<number>
 }) => {
   // Derive opacity from sidebar x position, then apply cubic ease-in
@@ -591,9 +591,8 @@ const SidebarBackground = ({
  * around the color wheel to avoid the animation going "the long way
  * around" (e.g., 350deg to 10deg should go +20deg, not -340deg).
  *
- * @param sectionId - The currently active sidebar section.
  */
-const useSectionHue = (sectionId: SidebarSectionId) => {
+const useSectionHue = (/** The currently active sidebar section. */ sectionId: SidebarSectionId) => {
   /** Drives CSS hue-rotate() on overlay images. Accumulates continuously
    * (not clamped to 0-360) so Framer Motion can interpolate shortest-path. */
   const hue = useMotionValue(0)
@@ -786,11 +785,9 @@ const Sidebar = () => {
    * - A slow, deliberate drag past the midpoint (high offset, low velocity)
    * - A quick flick that doesn't travel far (low offset, high velocity).
    *
-   * @param offset - How far the sidebar has been dragged from its open position (px).
-   * @param velocity - The instantaneous swipe velocity at release (px/s).
    */
   const handleSwipeEnd = useCallback(
-    (offset: number, velocity: number) => {
+    (/** How far the sidebar has been dragged from its open position (px). */ offset: number, /** The instantaneous swipe velocity at release (px/s). */ velocity: number) => {
       // Combined score: offset and velocity can compensate for each other.
       // The 0.5 multiplier on velocity means 1px of drag ≈ 2px/s of velocity.
       const closeScore = offset + velocity * 0.5
