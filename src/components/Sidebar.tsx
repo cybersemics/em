@@ -1024,7 +1024,7 @@ const Sidebar = () => {
            */}
           <div
             data-testid='sidebar'
-            aria-hidden={!showSidebar}
+            inert={!showSidebar}
             className={css({
               position: 'fixed',
               inset: 0,
