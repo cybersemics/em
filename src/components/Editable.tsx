@@ -17,7 +17,7 @@ import { newThoughtActionCreator as newThought } from '../actions/newThought'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import { tutorialNextActionCreator as tutorialNext } from '../actions/tutorialNext'
-import { isMac, isSafari, isTouch } from '../browser'
+import { isMac, isTouch } from '../browser'
 import { commandEmitter } from '../commands'
 import {
   EDIT_THROTTLE,
@@ -614,7 +614,6 @@ const Editable = ({
   useEffect(() => {
     const editable = contentRef.current
     if (!editable) return
-    const isTouchSafari = isTouch && isSafari()
 
     /** Handles mousedown on the editable to manage caret and selection behavior. */
     const onMouseDown = (e: MouseEvent) => {
@@ -667,17 +666,12 @@ const Editable = ({
 
     editable.addEventListener('mousedown', onMouseDown)
     editable.addEventListener('click', onClick)
-
-    if (isTouchSafari) {
-      editable.addEventListener('touchend', onTouchEnd, { passive: false })
-    }
+    editable.addEventListener('touchend', onTouchEnd, { passive: false })
 
     return () => {
       editable.removeEventListener('mousedown', onMouseDown)
       editable.removeEventListener('click', onClick)
-      if (isTouchSafari) {
-        editable.removeEventListener('touchend', onTouchEnd)
-      }
+      editable.removeEventListener('touchend', onTouchEnd)
     }
   }, [contentRef, editingOrOnCursor, hasMulticursor, disabled, fontSize, allowDefaultSelection, handleTapBehavior])
 
