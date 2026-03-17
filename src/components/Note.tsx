@@ -131,14 +131,17 @@ const Note = React.memo(
     )
 
     /** Set state.noteFocus if Note lost focus and did not move to another Note. Set state.keyboardOpen if keyboard is closed. */
-    const onBlur = useCallback(() => {
-      if (!selection.isNote()) {
-        dispatch(setNoteFocus({ value: false }))
-      }
-      if (isTouch && !selection.isThought()) {
-        dispatch(keyboardOpen({ value: false }))
-      }
-    }, [dispatch])
+    const onBlur = useCallback(
+      (e: React.FocusEvent) => {
+        if (!selection.isNote(e.relatedTarget)) {
+          dispatch(setNoteFocus({ value: false }))
+        }
+        if (isTouch && !selection.isThought()) {
+          dispatch(keyboardOpen({ value: false }))
+        }
+      },
+      [dispatch],
+    )
 
     const onMouseDown = useCallback(() => preventAutoscroll(noteRef.current), [noteRef])
 
