@@ -39,9 +39,9 @@ describe('toggle sidebar', () => {
     await click(editableNodeHandle, { offset: 2 })
 
     await click('[aria-label=menu]')
-    await waitUntil(() => !document.querySelector('[data-testid="sidebar"][aria-hidden="true"]'))
+    await waitUntil(() => !document.querySelector('[data-testid="sidebar"][inert]'))
     await press('Escape')
-    await page.locator('[data-testid="sidebar"][aria-hidden="true"]').wait()
+    await page.locator('[data-testid="sidebar"][inert]').wait()
 
     // the focus must be after 'e' after cursor down
     const textContext = await getSelection().focusNode?.textContent
