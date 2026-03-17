@@ -29,7 +29,8 @@ import { AnimatePresence, MotionValue, animate, motion, useMotionValue, useTrans
 import _ from 'lodash'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { css } from '../../styled-system/css'
+import { css, cx } from '../../styled-system/css'
+import { sidebarContentMaskRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
 import { longPressActionCreator as longPress } from '../actions/longPress'
 import { toggleSidebarActionCreator } from '../actions/toggleSidebar'
@@ -69,13 +70,6 @@ const BLUR_ENABLED = isSafari()
 
 /** Fixed width of the sidebar on large devices (px). On small screens, the sidebar spans 100% of the viewport. */
 const SIDEBAR_WIDTH_PX = 400
-
-/** Height (px) of the scroll fade mask at the top of the scrollable content area in the sidebar. */
-const SCROLL_MASK_HEIGHT = 48
-
-/** Height (px) of the fade mask applied to the content area when the dropdown is open,
- * creating a gradient ramp from transparent (under the dropdown) to visible content below. */
-const DROPDOWN_MASK_HEIGHT = 120
 
 /** Valid sidebar section IDs. */
 type SidebarSectionId = 'favorites' | 'recentlyEdited' | 'recentlyDeleted'
@@ -1221,36 +1215,24 @@ const Sidebar = () => {
                         const scrolled = e.currentTarget.scrollTop > 0
                         if (scrolled !== isScrolled) setIsScrolled(scrolled)
                       }}
-                      className={css({
-                        flex: 1,
-                        overflowY: 'scroll',
-                        overflowX: 'hidden',
-                        overscrollBehavior: 'contain',
-                        scrollbarWidth: 'thin',
-                        scrollbarColor: '{colors.fgOverlay30} transparent',
-                        '&::-webkit-scrollbar': {
-                          width: '0px',
-                          background: 'transparent',
-                          display: 'none',
-                        },
-                        position: 'relative',
-                        padding: '0 1em',
-                      })}
-                      style={(() => {
-                        const h = dropdownOpen ? DROPDOWN_MASK_HEIGHT : SCROLL_MASK_HEIGHT
-                        const showMask = dropdownOpen || isScrolled
-                        const maskImage = `linear-gradient(to bottom, transparent, black ${h}px)`
-                        return {
-                          maskImage,
-                          maskPosition: showMask ? '0 0' : `0 -${h}px`,
-                          WebkitMaskPosition: showMask ? '0 0' : `0 -${h}px`,
-                          maskRepeat: 'no-repeat',
-                          WebkitMaskRepeat: 'no-repeat',
-                          maskSize: `100% calc(100% + ${h}px)`,
-                          WebkitMaskSize: `100% calc(100% + ${h}px)`,
-                          transition: `mask-position ${durations.get('fast')}ms ease-out, -webkit-mask-position ${durations.get('fast')}ms ease-out, mask-image ${durations.get('medium')}ms ease-out, -webkit-mask-image ${durations.get('medium')}ms ease-out`,
-                        }
-                      })()}
+                      className={cx(
+                        css({
+                          flex: 1,
+                          overflowY: 'scroll',
+                          overflowX: 'hidden',
+                          overscrollBehavior: 'contain',
+                          scrollbarWidth: 'thin',
+                          scrollbarColor: '{colors.fgOverlay30} transparent',
+                          '&::-webkit-scrollbar': {
+                            width: '0px',
+                            background: 'transparent',
+                            display: 'none',
+                          },
+                          position: 'relative',
+                          padding: '0 1em',
+                        }),
+                        sidebarContentMaskRecipe({ dropdownOpen, isScrolled }),
+                      )}
                     >
                       {/* Render the active section's content component */}
                       {sectionId === 'favorites' ? (
