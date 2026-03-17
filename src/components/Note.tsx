@@ -140,16 +140,8 @@ const Note = React.memo(
           dispatch(setNoteFocus({ value: false }))
         }
 
-        if (isTouch && !selection.isActive()) {
-          // if we know that the focus is changing to another editable or note then do not set editing to false
-          // (does not work when clicking a bullet as it is set to null)
-          const isRelatedTargetEditableOrNote =
-            e.relatedTarget instanceof Element &&
-            (e.relatedTarget.hasAttribute?.('data-editable') || isRelatedTargetNote)
-
-          if (!isRelatedTargetEditableOrNote) {
-            setTimeout(() => dispatch(keyboardOpen({ value: false })))
-          }
+        if (isTouch && !selection.isThought()) {
+          dispatch(keyboardOpen({ value: false }))
         }
       },
       [dispatch],
