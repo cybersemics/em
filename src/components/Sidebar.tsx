@@ -73,6 +73,10 @@ const SIDEBAR_WIDTH_PX = 400
 /** Height (px) of the scroll fade mask at the top of the scrollable content area in the sidebar. */
 const SCROLL_MASK_HEIGHT = 48
 
+/** Height (px) of the fade mask applied to the content area when the dropdown is open,
+ * creating a gradient ramp from transparent (under the dropdown) to visible content below. */
+const DROPDOWN_MASK_HEIGHT = 120
+
 /** Valid sidebar section IDs. */
 type SidebarSectionId = 'favorites' | 'recentlyEdited' | 'recentlyDeleted'
 
@@ -145,7 +149,6 @@ interface SidebarHeaderProps {
   onSectionChange: (id: SidebarSectionId) => void
   isOpen: boolean
   setIsOpen: (open: boolean) => void
-  onDropdownHeight: (height: number) => void
 }
 
 /**
@@ -154,47 +157,21 @@ interface SidebarHeaderProps {
  * view, which shows all SidebarSections.
  *
  * When the dropdown is open:
- * - The contents of the sidebar are blurred (Safari) or dimmed (Chromium/Firefox)
  * - The non-active sections animate into view
- * - The scrollable content area below pushes down to make room for the dropdown.
+ * - The scrollable content area gently fades out.
  *
  * @param sections - All available sidebar sections.
  * @param sectionId - The currently active section.
  * @param onSectionChange - Callback when user selects a different section.
  * @param isOpen - State determining whether the dropdown is currently expanded.
  * @param setIsOpen - State setter to toggle the dropdown open/closed.
- * @param onDropdownHeight - The parent needs to know when the dropdown height changes
- * so it can adjust the scrollable content area's paddingTop to "push" it down. This
- * callback reports the dropdown's pixel height whenever it changes.
  */
-const SidebarHeader = ({
-  sections,
-  sectionId,
-  onSectionChange,
-  isOpen,
-  setIsOpen,
-  onDropdownHeight,
-}: SidebarHeaderProps) => {
-  /** Ref to the dropdown container, used to measure its height for the push-down animation. */
-  const dropdownRef = useRef<HTMLDivElement>(null)
-
+const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen }: SidebarHeaderProps) => {
   /** The currently active section. */
   const section = sections.find(s => s.id === sectionId)!
 
   /** Sections that are NOT currently active – these appear in the dropdown. */
   const otherSections = sections.filter(s => s.id !== sectionId)
-
-  /**
-   * When the dropdown opens or the active section changes, measure the
-   * dropdown's natural height and report it to the parent. The parent uses
-   * this to animate the scrollable content area downward by the same amount,
-   * creating a "push" effect rather than an overlay.
-   */
-  useEffect(() => {
-    if (isOpen && dropdownRef.current) {
-      onDropdownHeight(dropdownRef.current.scrollHeight)
-    }
-  }, [isOpen, sectionId, onDropdownHeight])
 
   return (
     // position:relative creates a stacking context for the absolutely-positioned dropdown.
@@ -249,7 +226,6 @@ const SidebarHeader = ({
              * row so it doesn't affect the header's layout.
              */}
             <motion.div
-              ref={dropdownRef}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -376,7 +352,7 @@ const SidebarOverlay1 = ({
       style={{ opacity: combinedOpacity, filter }}
       initial={collapsed}
       animate={expanded ? open : collapsed}
-      transition={{ duration: durations.get('medium') / 1000, ease: EASE_OUT }}
+      transition={{ duration: durations.get('slow') / 1000, ease: EASE_OUT }}
       className={css({
         position: 'absolute',
         top: 0,
@@ -619,29 +595,6 @@ const SidebarBackground = ({
 }
 
 /**
- * Manages the sidebar header dropdown open/close state.
- * Automatically resets the dropdown to closed when the sidebar closes.
- *
- * @param showSidebar - Whether the sidebar is currently open.
- */
-const useDropdownState = (showSidebar: boolean) => {
-  /** Whether the section picker dropdown in the header is expanded. */
-  const [dropdownOpen, setDropdownOpen] = useState(false)
-
-  /** The measured pixel height of the dropdown menu when expanded.
-   * Used to animate the content area's paddingTop to "push" it down. */
-  const [dropdownHeight, setDropdownHeight] = useState(0)
-
-  /** Reset the dropdown to closed whenever the sidebar itself closes,
-   * so it doesn't appear pre-expanded next time the sidebar opens. */
-  useEffect(() => {
-    if (!showSidebar) setDropdownOpen(false)
-  }, [showSidebar])
-
-  return { dropdownOpen, setDropdownOpen, dropdownHeight, setDropdownHeight }
-}
-
-/**
  * Manages the overlay glow color, animating hue and saturation when
  * the active sidebar section changes. Uses shortest-path calculation
  * around the color wheel to avoid the animation going "the long way
@@ -715,7 +668,13 @@ const Sidebar = () => {
    * layout decisions (full-width vs fixed size determined by SIDEBAR_WIDTH_PX). */
   const innerWidth = viewportStore.useSelector(state => state.innerWidth)
 
-  const { dropdownOpen, setDropdownOpen, dropdownHeight, setDropdownHeight } = useDropdownState(showSidebar)
+  /** Whether the dropdown is open. */
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+
+  /** Reset the dropdown to closed whenever the sidebar itself closes. */
+  useEffect(() => {
+    if (!showSidebar) setDropdownOpen(false)
+  }, [showSidebar])
   const { hue, sat } = useSectionHue(sectionId)
 
   // ============================
@@ -1234,7 +1193,6 @@ const Sidebar = () => {
                           onSectionChange={setSectionId}
                           isOpen={dropdownOpen}
                           setIsOpen={setDropdownOpen}
-                          onDropdownHeight={setDropdownHeight}
                         />
                       </div>
                     </FadeTransition>
@@ -1243,10 +1201,7 @@ const Sidebar = () => {
                      * Scrollable content area – takes up remaining vertical space (flex:1).
                      *
                      * Key behaviors:
-                     * - paddingTop animates to push content down when dropdown is open,
-                     *   creating a smooth "push" effect rather than content overlap
-                     * - Content is visually obscured (blurred on Safari, dimmed on Chromium)
-                     *   while the dropdown is open to discourage interaction
+                     * - Content fades out when dropdown is open
                      * - A top fade mask (linear-gradient) appears when scrolled down,
                      *   providing a visual cue that content extends above
                      * - overscrollBehavior:'contain' prevents scroll chaining to the
@@ -1256,7 +1211,6 @@ const Sidebar = () => {
                      */}
                     <motion.div
                       animate={{
-                        y: dropdownOpen ? dropdownHeight : 0,
                         ...(BLUR_ENABLED
                           ? { filter: dropdownOpen ? 'blur(8px)' : 'blur(0px)' }
                           : { opacity: dropdownOpen ? 0.3 : 1 }),
@@ -1282,23 +1236,21 @@ const Sidebar = () => {
                         position: 'relative',
                         padding: '0 1em',
                       })}
-                      style={{
-                        // On Chromium, disable the mask entirely while the dropdown is open to avoid
-                        // expensive mask + layout animation interactions that cause flicker on Android.
-                        ...(!BLUR_ENABLED && dropdownOpen
-                          ? {}
-                          : {
-                              maskImage: `linear-gradient(to bottom, transparent, black ${SCROLL_MASK_HEIGHT}px)`,
-                              WebkitMaskImage: `linear-gradient(to bottom, transparent, black ${SCROLL_MASK_HEIGHT}px)`,
-                              maskPosition: isScrolled ? '0 0' : `0 -${SCROLL_MASK_HEIGHT}px`,
-                              WebkitMaskPosition: isScrolled ? '0 0' : `0 -${SCROLL_MASK_HEIGHT}px`,
-                              maskRepeat: 'no-repeat',
-                              WebkitMaskRepeat: 'no-repeat',
-                              maskSize: `100% calc(100% + ${SCROLL_MASK_HEIGHT}px)`,
-                              WebkitMaskSize: `100% calc(100% + ${SCROLL_MASK_HEIGHT}px)`,
-                              transition: `mask-position ${durations.get('fast')}ms ease-out, -webkit-mask-position ${durations.get('fast')}ms ease-out`,
-                            }),
-                      }}
+                      style={(() => {
+                        const h = dropdownOpen ? DROPDOWN_MASK_HEIGHT : SCROLL_MASK_HEIGHT
+                        const showMask = dropdownOpen || isScrolled
+                        const maskImage = `linear-gradient(to bottom, transparent, black ${h}px)`
+                        return {
+                          maskImage,
+                          maskPosition: showMask ? '0 0' : `0 -${h}px`,
+                          WebkitMaskPosition: showMask ? '0 0' : `0 -${h}px`,
+                          maskRepeat: 'no-repeat',
+                          WebkitMaskRepeat: 'no-repeat',
+                          maskSize: `100% calc(100% + ${h}px)`,
+                          WebkitMaskSize: `100% calc(100% + ${h}px)`,
+                          transition: `mask-position ${durations.get('fast')}ms ease-out, -webkit-mask-position ${durations.get('fast')}ms ease-out, mask-image ${durations.get('medium')}ms ease-out, -webkit-mask-image ${durations.get('medium')}ms ease-out`,
+                        }
+                      })()}
                     >
                       {/* Render the active section's content component */}
                       {sectionId === 'favorites' ? (
