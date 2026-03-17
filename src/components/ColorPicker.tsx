@@ -62,8 +62,7 @@ const ColorSwatch: FC<{
       (commandStateColor === '#ccccccff' && commandStateBackgroundColor === '#333333ff') ||
       (commandStateColor === addAlphaToHex(rgbToHex(themeColor.fg)) &&
         commandStateBackgroundColor === addAlphaToHex(rgbToHex(themeColor.bg)) &&
-        !selection.isThought() &&
-        !selection.isNote())
+        !selection.isThought())
     ) {
       const colorMatches = currentThoughtValue.match(colorRegex) || []
 

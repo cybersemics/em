@@ -130,26 +130,15 @@ const Note = React.memo(
       [dispatch, path, justPasted],
     )
 
-    /** Set editing to false onBlur, if keyboard is closed. */
-    const onBlur = useCallback(
-      (e: React.FocusEvent) => {
-        if (!(e.relatedTarget instanceof Element)) return
-
-        const isRelatedTargetNote = !!e.relatedTarget.matches('[aria-label="note-editable"]')
-
-        if (!isRelatedTargetNote) dispatch(setNoteFocus({ value: false }))
-
-        if (isTouch && !selection.isActive()) {
-          // if we know that the focus is changing to another editable or note then do not set editing to false
-          // (does not work when clicking a bullet as it is set to null)
-          const isRelatedTargetEditableOrNote =
-            e.relatedTarget && (e.relatedTarget.hasAttribute?.('data-editable') || isRelatedTargetNote)
-
-          if (!isRelatedTargetEditableOrNote) setTimeout(() => dispatch(keyboardOpen({ value: false })))
-        }
-      },
-      [dispatch],
-    )
+    /** Set state.noteFocus if Note lost focus and did not move to another Note. Set state.keyboardOpen if keyboard is closed. */
+    const onBlur = useCallback(() => {
+      if (!selection.isNote()) {
+        dispatch(setNoteFocus({ value: false }))
+      }
+      if (isTouch && !selection.isThought()) {
+        dispatch(keyboardOpen({ value: false }))
+      }
+    }, [dispatch])
 
     const onMouseDown = useCallback(() => preventAutoscroll(noteRef.current), [noteRef])
 

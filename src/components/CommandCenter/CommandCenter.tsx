@@ -231,6 +231,7 @@ const CommandCenter = () => {
                   />
                   <button
                     {...fastClick(onClose)}
+                    data-testid='command-center-done'
                     className={css({
                       all: 'unset',
                       gridArea: 'button',
