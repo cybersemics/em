@@ -116,7 +116,7 @@ const SidebarSectionRow = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        flexShrink: 0
+        flexShrink: 0,
       })}
     >
       <Icon size={iconSize} fill={token('colors.fgOverlay75')} />
@@ -170,7 +170,11 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
   return (
     // position:relative creates a stacking context for the absolutely-positioned dropdown.
     // this allows the dropdown's options to appear above the header without affecting the header's layout.
-    <div data-testid='sidebar-section-picker' {...fastClick(() => setIsOpen(!isOpen))} className={css({ position: 'relative', cursor: 'pointer' })}>
+    <div
+      data-testid='sidebar-section-picker'
+      {...fastClick(() => setIsOpen(!isOpen))}
+      className={css({ position: 'relative', cursor: 'pointer' })}
+    >
       <div
         className={css({
           display: 'inline-flex',
@@ -790,7 +794,10 @@ const Sidebar = () => {
    *
    */
   const handleSwipeEnd = useCallback(
-    (/** How far the sidebar has been dragged from its open position (px). */ offset: number, /** The instantaneous swipe velocity at release (px/s). */ velocity: number) => {
+    (
+      /** How far the sidebar has been dragged from its open position (px). */ offset: number,
+      /** The instantaneous swipe velocity at release (px/s). */ velocity: number,
+    ) => {
       // Combined score: offset and velocity can compensate for each other.
       // The 0.5 multiplier on velocity means 1px of drag ≈ 2px/s of velocity.
       const closeScore = offset + velocity * 0.5
