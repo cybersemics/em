@@ -1,9 +1,11 @@
+import _ from 'lodash'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import alert from '../actions/alert'
 import moveThought from '../actions/moveThought'
 import * as selection from '../device/selection'
 import findDescendant from '../selectors/findDescendant'
+import { getChildrenRanked } from '../selectors/getChildren'
 import getNextRank from '../selectors/getNextRank'
 import isContextViewActive from '../selectors/isContextViewActive'
 import prevSibling from '../selectors/prevSibling'
@@ -56,12 +58,17 @@ const indent = (state: State): State => {
 
   const cursorNew = appendToPath(parentOf(cursor), prev.id, head(cursor))
 
+  // For treecrdt: afterId must be a sibling (child of new parent), not the parent.
+  // Tab indent should place as last child of prev, so use last child of prev; undefined if prev has no children.
+  const prevChildren = getChildrenRanked(state, prev.id)
+  const lastChildOfPrev = _.last(prevChildren)
+
   return moveThought(state, {
     oldPath: cursor,
     newPath: cursorNew,
     ...(offset != null ? { offset } : null),
     newRank: getNextRank(state, prev.id),
-    afterId: prev.id,
+    afterId: lastChildOfPrev?.id,
   })
 }
 
