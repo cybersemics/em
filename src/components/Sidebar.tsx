@@ -230,7 +230,7 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: durations.get('medium') / 1000, ease: EASE_OUT }}
-              style={{
+              className={css({
                 position: 'absolute',
                 top: '100%',
                 left: 0,
@@ -240,7 +240,7 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
                 marginTop: 0,
                 gap: '0.5rem',
                 width: '100%',
-              }}
+              })}
             >
               {/* Render each non-active section as a clickable row */}
               {otherSections.map(s => (
@@ -1180,12 +1180,12 @@ const Sidebar = () => {
                      * The 3.75rem top margin provides spacing from the top of the viewport
                      * (below the safe area inset).
                      */}
-                    <FadeTransition type='fast' in={showSidebar}>
+                    <FadeTransition type='medium' in={showSidebar}>
                       <div
-                        style={{
+                        className={css({
                           marginTop: '3.75rem',
                           padding: '0 1em',
-                        }}
+                        })}
                       >
                         <SidebarHeader
                           sections={SECTIONS}
