@@ -4,7 +4,7 @@ import ComparatorFunction from '../@types/ComparatorFunction'
 import ComparatorValue from '../@types/ComparatorValue'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
-import { ALLOWED_FORMATTING_TAGS, EMOJI_REGEX, REGEX_EMOJI_GLOBAL } from '../constants'
+import { ALLOWED_FORMATTING_TAGS, EMOJI_REGEX, FONT_TAG_REGEX, REGEX_EMOJI_GLOBAL } from '../constants'
 import thoughtToPath from '../selectors/thoughtToPath'
 import compareByRank from './compareByRank'
 import isAttribute from './isAttribute'
@@ -214,14 +214,17 @@ const compareReadableText: ComparatorFunction<string> = makeOrderedComparator<st
  * 3. Emoji.
  * 4. CompareReadableText on text without emoji.
  */
-export const compareReasonable: ComparatorFunction<string> = makeOrderedComparator<string>([
-  compareEmpty,
-  comparePunctuationAndOther,
-  compareFormatting,
-  compareStringsWithMetaAttributes,
-  compareStringsWithEmoji,
-  (a, b) => compareReadableText(normalizeCharacters(a), normalizeCharacters(b)),
-])
+export const compareReasonable: ComparatorFunction<string> = (a: string, b: string) => {
+  const comparator = makeOrderedComparator<string>([
+    compareEmpty,
+    comparePunctuationAndOther,
+    compareFormatting,
+    compareStringsWithMetaAttributes,
+    compareStringsWithEmoji,
+    (a, b) => compareReadableText(normalizeCharacters(a), normalizeCharacters(b)),
+  ])
+  return comparator(a.replaceAll(FONT_TAG_REGEX, ''), b.replaceAll(FONT_TAG_REGEX, ''))
+}
 
 /** A comparator that sorts anything in descending order. Not a strict reversal of compareReasonable, as empty strings, formatting, punctuation, and meta attributes are still sorted above plain text.
  * 1. Empty string.
@@ -231,14 +234,17 @@ export const compareReasonable: ComparatorFunction<string> = makeOrderedComparat
  * 3. Emoji.
  * 4. CompareReadableText on text without emoji.
  */
-export const compareReasonableDescending: ComparatorFunction<string> = makeOrderedComparator<string>([
-  compareFormatting,
-  compareEmpty,
-  _.flip(comparePunctuationAndOther),
-  _.flip(compareStringsWithMetaAttributes),
-  _.flip(compareStringsWithEmoji),
-  (a, b) => compareReadableText(normalizeCharacters(b), normalizeCharacters(a)),
-])
+export const compareReasonableDescending: ComparatorFunction<string> = (a: string, b: string) => {
+  const comparator = makeOrderedComparator<string>([
+    compareFormatting,
+    compareEmpty,
+    _.flip(comparePunctuationAndOther),
+    _.flip(compareStringsWithMetaAttributes),
+    _.flip(compareStringsWithEmoji),
+    (a, b) => compareReadableText(normalizeCharacters(b), normalizeCharacters(a)),
+  ])
+  return comparator(a.replaceAll(FONT_TAG_REGEX, ''), b.replaceAll(FONT_TAG_REGEX, ''))
+}
 
 /** Compare the value of two thoughts. */
 export const compareThought: ComparatorFunction<Thought> = (a: Thought, b: Thought) =>

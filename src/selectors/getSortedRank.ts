@@ -1,5 +1,6 @@
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
+import { FONT_TAG_REGEX } from '../constants'
 import { compareReasonable, compareReasonableDescending } from '../util/compareThought'
 import noteValue from '../util/noteValue'
 import { getAllChildrenSorted, isVisible } from './getChildren'
@@ -48,7 +49,6 @@ const getSortedRank = (state: State, id: ThoughtId, value: string) => {
   }
 
   // Ignore font tags when alphabetically sorting thoughts (#3927)
-  const FONT_TAG_REGEX = /<font color="[^"]+">|<\/font>/gm
   const cleanedValue = value.replaceAll(FONT_TAG_REGEX, '')
 
   // For alphabetical sorting

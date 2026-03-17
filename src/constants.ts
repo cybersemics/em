@@ -250,6 +250,10 @@ export const REGEX_HTML = /<\/?[a-z][\s\S]*>/i
 // can be used to replace all HTML in a string
 export const REGEX_TAGS = /(<([^>]+)>)/gi
 
+// Match fonts tags for color and background color
+// can be used to strip font tags before sorting (#3927)
+export const FONT_TAG_REGEX = /<font color="[^"]+"\s*(?:style="[^"]+")?>|<\/font>/gm
+
 /** Matches HTML tags that indicate the snippet is a block of proper HTML, not just text formatted with HTML tags. Includes <html>, <body>, <li>, <meta>, <ol>, <ul>. Does not match strings that just contain formattings tags like <b>, <i>, or <u>. */
 export const REGEX_NONFORMATTING_HTML = /<(html|\!doctype|li|meta|ol|ul)/i
 
