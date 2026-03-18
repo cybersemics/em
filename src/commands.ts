@@ -597,7 +597,7 @@ export const keyDown = (e: KeyboardEvent) => {
 
   // For some reason, when the caret is at the beginning of the thought, alt + ArrowLeft sets the caret to the end.
   // Prevent this default behavior, as the caret should have nowhere to go when it is already at the beginning.
-  if (e.altKey && e.key === 'ArrowLeft' && selection.offset() === 0 && (selection.isThought() || selection.isNote())) {
+  if (e.altKey && e.key === 'ArrowLeft' && selection.offset() === 0 && selection.isThought()) {
     e.preventDefault()
     return
   }

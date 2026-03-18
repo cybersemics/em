@@ -69,7 +69,7 @@ const Content: FC = () => {
         e => {
           // make sure the the actual Content element has been clicked
           // otherwise it will incorrectly be called on mobile due to touch vs click ordering (#1029)
-          if (!selection.isThought(e.target) && !selection.isNote(e.target)) dispatch(clickOnEmptySpace)
+          if (!selection.isThought(e.target)) dispatch(clickOnEmptySpace)
         },
         { enableHaptics: false },
       )}

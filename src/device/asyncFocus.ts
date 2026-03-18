@@ -33,7 +33,7 @@ export const AsyncFocus: () => () => void = () => {
   document.body.prepend(hiddenInput)
   return () => {
     // do not set the selection if it is already on a thought or a note
-    if (!selection.isThought() && !selection.isNote()) {
+    if (!selection.isThought()) {
       hiddenInput.disabled = false
       hiddenInput.focus()
       // the hidden input should not be a valid focus target unless this function was invoked
