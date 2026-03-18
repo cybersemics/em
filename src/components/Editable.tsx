@@ -569,12 +569,11 @@ const Editable = ({
    */
   const handleTapBehavior = useCallback(
     (e: MouseEvent | TouchEvent) => {
-      // When MultiGesture is below the gesture threshold it is possible that onTap and onTouchEnd
+      // When MultiGesture is below the gesture threshold it is possible that onClick and onTouchEnd
       // both trigger. Prevent handleTapBehavior from running a second time via touchend in that case.
       // https://github.com/cybersemics/em/issues/1268
       if (e.type === 'touchend' && globals.touching && e.cancelable) {
         e.preventDefault()
-        return
       }
 
       dispatch((dispatch, getState) => {
