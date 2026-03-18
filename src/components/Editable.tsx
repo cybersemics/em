@@ -17,7 +17,7 @@ import { newThoughtActionCreator as newThought } from '../actions/newThought'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import { tutorialNextActionCreator as tutorialNext } from '../actions/tutorialNext'
-import { isMac, isSafari, isTouch } from '../browser'
+import { isMac, isTouch } from '../browser'
 import { commandEmitter } from '../commands'
 import {
   EDIT_THROTTLE,
@@ -177,10 +177,13 @@ const Editable = ({
 
   /**
    * Stores a custom caret position for iOS touch interactions temporarily.
-   * The position is calculated on touch start but applied on touch end (why on touch end? See onTouchStart).
-   * If the user scrolls instead of tapping, it is cleared so the browser can handle the interaction normally.
+   * Computed on touchstart. Applied on touchend, or on mousedown if it runs first or touchend doesn't run at all.
+   * The following mousedown clears state so synthetic mouse does not re-run node offset calculation. Touchmove clears pending on scroll.
    */
   const pendingCaretOffsetRef = useRef<number | null>(null)
+
+  /** True once pending void-area offset was applied (touchend or mousedown), until gesture ends. */
+  const voidAreaCaretAppliedRef = useRef(false)
 
   /** Stores the initial touch position to detect tap vs scroll; if focus occurs without it, the tap was outside the editable and we place the caret manually.*/
   const touchStartPosRef = useRef<{ x: number; y: number } | null>(null)
@@ -566,48 +569,6 @@ const Editable = ({
       // Update editingValueUntrimmedStore with the current value
       editingValueUntrimmedStore.update(value)
 
-      // On iOS Safari, the browser may focus a contenteditable from a tap outside its bounds
-      // (e.g. below the last thought). In that case, the editable's onTouchStart never fires so
-      // touchStartPosRef is null. Detect this and calculate the correct caret offset using the
-      // global touch coordinates instead of letting the browser default to the end of text.
-      const editable = contentRef.current
-      if (
-        isSafari() &&
-        isTouch &&
-        editable &&
-        !touchStartPosRef.current &&
-        globals.lastTouchCoordinates &&
-        Date.now() - globals.lastTouchCoordinates.timestamp < 500
-      ) {
-        const editableRect = editable.getBoundingClientRect()
-        const isTouchOutsideEditable =
-          globals.lastTouchCoordinates.clientX < editableRect.left ||
-          globals.lastTouchCoordinates.clientX > editableRect.right ||
-          globals.lastTouchCoordinates.clientY < editableRect.top ||
-          globals.lastTouchCoordinates.clientY > editableRect.bottom
-        if (isTouchOutsideEditable) {
-          const nodeOffset = getNodeOffsetForVoidArea(editable, globals.lastTouchCoordinates)
-          if (nodeOffset !== null) {
-            // Defer selection.set to the next frame. The browser applies its own default
-            // caret placement (end of text) AFTER focus event handlers return, so a
-            // synchronous selection.set here would be immediately overwritten.
-            requestAnimationFrame(() => {
-              selection.set(editable, { offset: nodeOffset })
-            })
-            dispatch(
-              setCursor({
-                cursorHistoryClear: true,
-                preserveMulticursor: true,
-                isKeyboardOpen: true,
-                offset: nodeOffset,
-                path,
-              }),
-            )
-            return
-          }
-        }
-      }
-
       dispatch((dispatch, getState) => {
         const { longPress } = getState()
         if (longPress === LongPressState.Inactive) {
@@ -642,7 +603,7 @@ const Editable = ({
    */
   const handleTapBehavior = useCallback(
     (e: MouseEvent | TouchEvent) => {
-      // When MultiGesture is below the gesture threshold it is possible that onTap and onTouchEnd
+      // When MultiGesture is below the gesture threshold it is possible that onClick and onTouchEnd
       // both trigger. Prevent handleTapBehavior from running a second time via touchend in that case.
       // https://github.com/cybersemics/em/issues/1268
       if (e.type === 'touchend' && globals.touching && e.cancelable) {
@@ -707,6 +668,20 @@ const Editable = ({
           bottomMargin: fontSize * 2,
         })
 
+        // Apply pending offset from touchstart if mousedown runs before touchend or touchend doesn't run at all;
+        // otherwise touchend already applied so we only clear such that we do not recalculate on synthetic mouse.
+        if (pendingCaretOffsetRef.current !== null) {
+          const offset = pendingCaretOffsetRef.current
+          if (!voidAreaCaretAppliedRef.current) {
+            e.preventDefault()
+            setCaretOffset(offset)
+            voidAreaCaretAppliedRef.current = true
+          }
+          pendingCaretOffsetRef.current = null
+          touchStartPosRef.current = null
+          return
+        }
+
         const nodeOffset = getNodeOffsetForVoidArea(editable, {
           clientX: e.clientX,
           clientY: e.clientY,
@@ -744,12 +719,13 @@ const Editable = ({
      * Calculates caret offset position on touch start, not touch end, because
      * preventDefault() must be called at the same moment. Once the touch
      * ends it's too late to override the browser. The result is saved and
-     * applied on touch end, unless the user scrolled in between.
+     * applied on touch end or mousedown, unless the user scrolled in between.
      */
     const onTouchStart = (e: TouchEvent) => {
       if (editingOrOnCursor && !hasMulticursor && e.touches.length > 0) {
         const touch = e.touches[0]
         if (!touch) return
+        voidAreaCaretAppliedRef.current = false
         touchStartPosRef.current = { x: touch.clientX, y: touch.clientY }
 
         const nodeOffset = getNodeOffsetForVoidArea(editable, {
@@ -761,6 +737,7 @@ const Editable = ({
           e.preventDefault()
           pendingCaretOffsetRef.current = nodeOffset
         } else {
+          pendingCaretOffsetRef.current = null
           allowDefaultSelection()
         }
       }
@@ -774,6 +751,7 @@ const Editable = ({
         const dy = touch.clientY - touchStartPosRef.current.y
         if (dx * dx + dy * dy > SCROLL_THRESHOLD_PX) {
           pendingCaretOffsetRef.current = null
+          voidAreaCaretAppliedRef.current = false
         }
       }
     }
@@ -781,9 +759,10 @@ const Editable = ({
     /** Applies the pending caret offset computed at touchstart (void-area or computed position). */
     const onTouchEnd = (e: TouchEvent) => {
       const offset = pendingCaretOffsetRef.current
-      if (offset !== null && e.changedTouches.length > 0) setCaretOffset(offset)
-
-      pendingCaretOffsetRef.current = null
+      if (offset !== null && e.changedTouches.length > 0 && !voidAreaCaretAppliedRef.current) {
+        setCaretOffset(offset)
+        voidAreaCaretAppliedRef.current = true
+      }
       touchStartPosRef.current = null
 
       haptics.light()

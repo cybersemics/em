@@ -6,9 +6,6 @@
 // not related to react-dnd
 let touching = false
 
-/** Last touch coordinates (set by initEvents touchstart). Used by Editable onFocus to compute caret offset when iOS Safari focuses a contenteditable from a tap outside the element (e.g. below the last thought). */
-let lastTouchCoordinates: { clientX: number; clientY: number; timestamp: number } | null = null
-
 // track whether the page has rendered yet to simulate onload event
 let rendered = false
 
@@ -33,16 +30,7 @@ let freeThoughtsThreshold = 500
 let abandonImport = false
 
 // check duplicate ranks within the same context for debugging
-const globals: {
-  abandonImport: boolean
-  freeThoughtsThreshold: number
-  errorTimer: number
-  offlineTimer: number
-  rendered: boolean
-  suppressExpansion: boolean
-  touching: boolean
-  lastTouchCoordinates: { clientX: number; clientY: number; timestamp: number } | null
-} = {
+const globals = {
   abandonImport,
   freeThoughtsThreshold,
   errorTimer,
@@ -50,7 +38,6 @@ const globals: {
   rendered,
   suppressExpansion,
   touching,
-  lastTouchCoordinates,
 }
 
 export default globals
