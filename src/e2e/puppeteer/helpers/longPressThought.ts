@@ -22,12 +22,22 @@ const longPressThought = async (
 
   if (!boundingBox) throw new Error('Bounding box of element not found.')
 
-  const thoughtContainer = await page.evaluateHandle(editableNode => {
+  // Find the specific bullet element associated with this thought
+  const bulletElement = await page.evaluateHandle(editableNode => {
     if (!editableNode) throw new Error('Node handle does not contain a valid Element')
-    return editableNode.closest('[aria-label="thought-container"]')
+
+    // Find the thought container that contains this editable
+    const thoughtContainer = editableNode.closest('[aria-label="thought-container"]')
+    if (!thoughtContainer) throw new Error('Thought container not found')
+
+    // Find the bullet element within this specific thought container
+    const bullet = thoughtContainer.querySelector('[aria-label="bullet"]')
+    if (!bullet) throw new Error('Bullet not found in thought container')
+
+    return bullet
   }, nodeHandle)
 
-  if (!(thoughtContainer instanceof ElementHandle)) throw new Error('Thought container not found')
+  if (!(bulletElement instanceof ElementHandle)) throw new Error('Bullet element not found')
 
   const coordinate = {
     x: boundingBox.x + (edge ? (edge === 'left' ? 1 : boundingBox.width - 1) : boundingBox.width / 2) + x,
@@ -35,7 +45,14 @@ const longPressThought = async (
   }
 
   await page.touchscreen.touchStart(coordinate.x, coordinate.y)
-  await thoughtContainer.waitForSelector('[aria-label="bullet"][data-highlighted=true]')
+
+  // Wait for this specific bullet to be highlighted
+  await page.waitForFunction(
+    (bulletEl: Element) => bulletEl.getAttribute('data-highlighted') === 'true',
+    { timeout: 5000 },
+    bulletElement,
+  )
+
   await page.touchscreen.touchEnd()
 }
 

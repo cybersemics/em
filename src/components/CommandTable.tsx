@@ -26,7 +26,7 @@ if (commandsUngrouped.length > 0) {
   throw new Error(
     `CommandTable groups are missing command(s). Please add ${conjunction(
       commandsUngrouped.map(command => command.id),
-    )} to the appropriate group, or add hideFromHelp: true to the Command.`,
+    )} to the appropriate group in COMMAND_GROUPS (constants.ts), or add hideFromHelp: true to the Command.`,
   )
 }
 

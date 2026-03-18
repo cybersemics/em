@@ -8,6 +8,7 @@ import { importTextActionCreator as importText } from '../../actions/importText'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import { toggleAttributeActionCreator as toggleAttribute } from '../../actions/toggleAttribute'
 import { toggleSortActionCreator } from '../../actions/toggleSort'
+import { executeCommand, executeCommandWithMulticursor } from '../../commands'
 import { EM_TOKEN, HOME_PATH, HOME_TOKEN } from '../../constants'
 import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
@@ -22,7 +23,6 @@ import findThoughtByText from '../../test-helpers/queries/findThoughtByText'
 import getDescendantsOfContext from '../../test-helpers/queries/getDescendantsOfContext'
 import getThoughtByContext from '../../test-helpers/queries/getThoughtByContext'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
-import executeCommand, { executeCommandWithMulticursor } from '../../util/executeCommand'
 import hashPath from '../../util/hashPath'
 import toggleSortCommand from '../toggleSort'
 
@@ -57,7 +57,7 @@ describe('DOM', () => {
       const thoughtC = getThoughtByContext(['c'])
       expect(thoughtC).toBeTruthy()
 
-      const thoughts = screen.getAllByTestId(/thought/)
+      const thoughts = screen.getAllByLabelText('thought-container')
 
       expect(thoughts.map((child: HTMLElement) => child.textContent)).toMatchObject(['a', 'b', 'c'])
     })
@@ -87,6 +87,9 @@ describe('DOM', () => {
       const subthoughtsOfA = getDescendantsOfContext(['a'])
 
       expect(subthoughtsOfA.map((child: HTMLElement) => child.textContent)).toMatchObject(['1', '2', '3'])
+
+      // TODO: Why does the next test fail if we don't wait for all timers here?
+      await act(() => vi.runAllTimersAsync())
     })
 
     it('home: Desc', async () => {
@@ -112,7 +115,7 @@ describe('DOM', () => {
       const thought = getThoughtByContext(['c'])
       expect(thought).toBeTruthy()
 
-      const thoughts = screen.getAllByTestId(/thought/)
+      const thoughts = screen.getAllByLabelText('thought-container')
 
       expect(thoughts.map((child: HTMLElement) => child.textContent)).toMatchObject(['c', 'b', 'a'])
     })
@@ -259,7 +262,7 @@ describe('DOM', () => {
 
       await act(() => vi.runAllTimersAsync())
 
-      const thoughts = screen.getAllByTestId(/thought/)
+      const thoughts = screen.getAllByLabelText('thought-container')
       const childrenString = thoughts
         .map((child: HTMLElement) => child.textContent)
         .map(value => value || '_')
@@ -289,7 +292,7 @@ describe('DOM', () => {
 
       await act(() => vi.runAllTimersAsync())
 
-      const thoughts = screen.getAllByTestId(/thought/)
+      const thoughts = screen.getAllByLabelText('thought-container')
 
       const childrenString = thoughts
         .map((child: HTMLElement) => child.textContent)
@@ -320,7 +323,7 @@ describe('DOM', () => {
 
       await act(() => vi.runAllTimersAsync())
 
-      const thoughts = screen.getAllByTestId(/thought/)
+      const thoughts = screen.getAllByLabelText('thought-container')
 
       const childrenString = thoughts
         .map((child: HTMLElement) => child.textContent)
@@ -351,7 +354,7 @@ describe('DOM', () => {
 
       await act(() => vi.runAllTimersAsync())
 
-      const thoughts = screen.getAllByTestId(/thought/)
+      const thoughts = screen.getAllByLabelText('thought-container')
 
       const childrenString = thoughts
         .map((child: HTMLElement) => child.textContent)
@@ -382,7 +385,7 @@ describe('DOM', () => {
 
       await act(() => vi.runAllTimersAsync())
 
-      const thoughts = screen.getAllByTestId(/thought/)
+      const thoughts = screen.getAllByLabelText('thought-container')
 
       const childrenString = thoughts
         .map((child: HTMLElement) => child.textContent)
@@ -413,7 +416,7 @@ describe('DOM', () => {
 
       await act(() => vi.runAllTimersAsync())
 
-      const thoughts = screen.getAllByTestId(/thought/)
+      const thoughts = screen.getAllByLabelText('thought-container')
 
       const childrenString = thoughts
         .map((child: HTMLElement) => child.textContent)
@@ -450,7 +453,7 @@ describe('DOM', () => {
 
       await act(() => vi.runAllTimersAsync())
 
-      const thoughts = screen.getAllByTestId(/thought/)
+      const thoughts = screen.getAllByLabelText('thought-container')
 
       const childrenString = thoughts
         .map((child: HTMLElement) => child.textContent)
@@ -481,7 +484,7 @@ describe('DOM', () => {
 
       await act(() => vi.runAllTimersAsync())
 
-      const thoughts = screen.getAllByTestId(/thought/)
+      const thoughts = screen.getAllByLabelText('thought-container')
 
       const childrenString = thoughts
         .map((child: HTMLElement) => child.textContent)
@@ -513,7 +516,7 @@ describe('DOM', () => {
 
       await act(() => vi.runAllTimersAsync())
 
-      const thoughts = screen.getAllByTestId(/thought/)
+      const thoughts = screen.getAllByLabelText('thought-container')
 
       const childrenString = thoughts
         .map((child: HTMLElement) => child.textContent)
@@ -544,7 +547,7 @@ describe('DOM', () => {
 
       await act(() => vi.runAllTimersAsync())
 
-      const thoughts = screen.getAllByTestId(/thought/)
+      const thoughts = screen.getAllByLabelText('thought-container')
 
       const childrenString = thoughts
         .map((child: HTMLElement) => child.textContent)
@@ -575,7 +578,7 @@ describe('DOM', () => {
 
       await act(() => vi.runAllTimersAsync())
 
-      const thoughts = screen.getAllByTestId(/thought/)
+      const thoughts = screen.getAllByLabelText('thought-container')
 
       const childrenString = thoughts
         .map((child: HTMLElement) => child.textContent)
@@ -612,7 +615,7 @@ describe('DOM', () => {
 
       await act(() => vi.runAllTimersAsync())
 
-      const thoughts = screen.getAllByTestId(/thought/)
+      const thoughts = screen.getAllByLabelText('thought-container')
 
       const childrenString = thoughts
         .map((child: HTMLElement) => child.textContent)

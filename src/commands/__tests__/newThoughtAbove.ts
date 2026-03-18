@@ -1,4 +1,5 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { executeCommandWithMulticursor } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import hasMulticursor from '../../selectors/hasMulticursor'
@@ -7,7 +8,6 @@ import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../..
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
-import { executeCommandWithMulticursor } from '../../util/executeCommand'
 import newThoughtCommand from '../newThoughtAbove'
 
 beforeEach(initStore)

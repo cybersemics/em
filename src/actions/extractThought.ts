@@ -33,7 +33,7 @@ const extractThought = (state: State): State => {
     return state
   }
 
-  const { value, rank } = cursorThought
+  const { value } = cursorThought
   const newValue = `${value.slice(0, selectionStart)}${value.slice(selectionEnd, value.length)}`.trim()
   const childValue = value.slice(selectionStart, selectionEnd)
 
@@ -42,7 +42,6 @@ const extractThought = (state: State): State => {
       oldValue: value,
       newValue,
       path: simplifyPath(state, cursor),
-      rankInContext: rank,
     }),
     newThought({ value: childValue, insertNewSubthought: true, preventSetCursor: true }),
   ]

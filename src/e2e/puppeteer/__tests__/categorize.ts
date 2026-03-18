@@ -3,8 +3,7 @@ import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
-import screenshot from '../helpers/screenshot-with-no-antialiasing'
-import waitForFrames from '../helpers/waitForFrames'
+import screenshot from '../helpers/screenshot'
 import { page } from '../setup'
 
 expect.extend({
@@ -29,9 +28,6 @@ describe('categorize', () => {
         - Fusce vulputate eleifend sapien. Vestibulum purus quam, scelerisque ut, mollis sed, nonummy id, metus. Nullam accumsan lorem in dui. Cras ultricies mi eu turpis hendrerit fringilla. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; In ac dui quis mi consectetuer lacinia.
     `)
 
-    // Wait 4 frames due to multiple rounds of requestAnimationFrame in useLayoutAnimationFrameEffect
-    // which requires several frame cycles to complete regardless of content complexity
-    await waitForFrames(4)
     // Perform multiple categorize operations
     await clickThought(topParagraphText)
 

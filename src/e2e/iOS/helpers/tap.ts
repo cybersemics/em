@@ -1,4 +1,4 @@
-import { Browser, Element } from 'webdriverio'
+import type { Element } from 'webdriverio'
 
 // import getNativeElementRect from './getNativeElementRect'
 
@@ -17,13 +17,27 @@ interface Options {
 
 /**
  * Tap a node with an optional text offset or x,y offset.
+ * Uses the global browser object from WDIO.
  */
 const tap = async (
-  browser: Browser,
   nodeHandle: Element,
   { horizontalTapLine = 'left', offset, x = 0, y = 0, releaseDelayMs = 100 }: Options = {},
 ) => {
-  const boundingBox = await browser.getElementRect(nodeHandle.elementId)
+  // Ensure element exists and has an elementId
+  const exists = await nodeHandle.isExisting()
+  if (!exists) {
+    throw new Error('Element does not exist in the DOM.')
+  }
+
+  // Get elementId - it's a property, not a promise
+  const elementId = nodeHandle.elementId
+  if (!elementId) {
+    throw new Error(
+      'Element does not have an elementId. Make sure the element was obtained from a browser query (e.g., browser.$() or getEditable()).',
+    )
+  }
+
+  const boundingBox = await browser.getElementRect(elementId)
   if (!boundingBox) throw new Error('Bounding box of editable not found.')
 
   /** Get cordinates for specific text node if the given node has text child. */
@@ -76,7 +90,29 @@ const tap = async (
 
   console.info(`Tapping at coordinates {x: ${finalCoords.x}, y: ${finalCoords.y}}`)
 
-  await browser.action('pointer').move(finalCoords).down().pause(releaseDelayMs).up().perform()
+  // Use performActions directly to avoid the automatic releaseActions call
+  // Safari/XCUITest doesn't support the DELETE /actions endpoint (releaseActions)
+  // which WebDriverIO's action().perform() calls automatically after performing
+  // Note: pointerType defaults to 'mouse' in WebDriverIO's action API
+  await browser.performActions([
+    {
+      type: 'pointer',
+      id: 'pointer1',
+      parameters: { pointerType: 'mouse' },
+      actions: [
+        {
+          type: 'pointerMove',
+          duration: 0,
+          x: Math.round(finalCoords.x),
+          y: Math.round(finalCoords.y),
+          origin: 'viewport',
+        },
+        { type: 'pointerDown', button: 0 },
+        { type: 'pause', duration: releaseDelayMs },
+        { type: 'pointerUp', button: 0 },
+      ],
+    },
+  ])
 }
 
 export default tap

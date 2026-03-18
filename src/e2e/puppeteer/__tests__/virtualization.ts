@@ -77,6 +77,7 @@ describe('virtualizaton', { retry: 3 }, () => {
     // })
 
     await paste(text)
+    await clickThought('a1')
 
     // 1. Thoughts below the bottom of the screen should be virtualizated when the cursor is null.
     await press('Escape')

@@ -10,11 +10,11 @@ import { toggleUserSettingActionCreator as toggleUserSetting } from '../actions/
 import { Settings } from '../constants'
 import useDragAndDropFavorites from '../hooks/useDragDropFavorites'
 import useDragHold from '../hooks/useDragHold'
-import useDropHoverWidth from '../hooks/useDropHoverWidth'
 import { getLexeme } from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
 import getUserSetting from '../selectors/getUserSetting'
 import thoughtToPath from '../selectors/thoughtToPath'
+import dndRef from '../util/dndRef'
 import fastClick from '../util/fastClick'
 import head from '../util/head'
 import nonNull from '../util/nonNull'
@@ -41,16 +41,16 @@ const DragAndDropFavorite = ({
     path: simplePath,
   })
   const dragHoldResult = useDragHold({ isDragging, simplePath, sourceZone: DragThoughtZone.Favorites })
-  const dropHoverLength = useDropHoverWidth()
 
   return (
-    // Set overflow:auto so the drop target fully wraps its contents.
+    // Set display:flow-root to create a new block formatting context so the drop target fully wraps its contents.
     // Otherwise the context-breadcrumbs margin-top will leak out and create a dead zone where the favorite cannot be dropped.
+    // Note: overflow:auto also creates a BFC but causes a scrollbar on empty thoughts (#3817). overflow:hidden clips content.
     <div
       {...dragHoldResult.props}
-      className={css({ overflow: 'auto' })}
+      className={css({ display: 'flow-root' })}
       data-testid='drag-and-drop-favorite'
-      ref={node => dragSource(dropTarget(node))}
+      ref={dndRef(node => dragSource(dropTarget(node)))}
     >
       {!disableDragAndDrop && isHovering && (
         <span
@@ -62,7 +62,6 @@ const DragAndDropFavorite = ({
               marginTop: '-0.4em',
             }),
           )}
-          style={{ width: dropHoverLength }}
         />
       )}
       <ThoughtLink
@@ -87,21 +86,18 @@ const DropEnd = ({ disableDragAndDrop }: { disableDragAndDrop?: boolean }) => {
   const { dropTarget, isHovering } = useDragAndDropFavorites({
     disableDragAndDrop,
   })
-  const dropHoverLength = useDropHoverWidth()
 
   return (
-    <div className={css({ height: '4em' })} ref={dropTarget}>
+    <div className={css({ height: '4em' })} ref={dndRef(dropTarget)}>
       <span
         className={cx(
           dropHoverRecipe(),
           css({
             marginLeft: 0,
             marginTop: 0,
-            width: 'calc(100% - 4em)',
             background: isHovering ? 'highlight2' : undefined,
           }),
         )}
-        style={{ width: dropHoverLength }}
       />
     </div>
   )

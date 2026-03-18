@@ -46,7 +46,7 @@ const SortOption: FC<SortOptionProps> = ({ type, supportsDirection, label, sortP
         justifyContent: 'center',
         border: isSelected ? `solid 1px {colors.fg}` : `solid 1px {colors.transparent}`,
         cursor: 'pointer',
-        fontSize: '0.9em',
+        fontSize: '0.8rem',
         borderRadius: '2px',
       })}
       aria-label={type}

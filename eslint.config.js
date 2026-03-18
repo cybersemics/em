@@ -86,6 +86,7 @@ export default [
     ignores: [
       'node_modules/**',
       'packages/**/dist/**/*',
+      'packages/**/.build/**/*',
       '**/styled-system/*',
       '**/ios/*',
       '**/android/**',

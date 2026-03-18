@@ -29,6 +29,7 @@ export default defineConfig({
       filename: 'service-worker.ts',
       injectManifest: {
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024, // Increase limit to 4 MiB
+        globPatterns: ['**/*.{js,css,html,webp}'],
       },
       manifest: {
         name: 'em',
@@ -48,17 +49,23 @@ export default defineConfig({
     // minify and add EJS capabilities to index.html
     createHtmlPlugin({ minify: true }),
   ],
-  ...(process.env.PUPPETEER
-    ? {
-        // Serve the dev server over HTTPS in puppeteer tests to enable clipboard access
-        server: {
+  server: {
+    // Allow bs-local.com for BrowserStack local testing
+    allowedHosts: ['bs-local.com'],
+    ...(process.env.PUPPETEER
+      ? {
+          // Serve the dev server over HTTPS in puppeteer tests to enable clipboard access
           https: {
             key: fs.readFileSync('./src/e2e/puppeteer/puppeteer-key.pem'),
             cert: fs.readFileSync('./src/e2e/puppeteer/puppeteer.pem'),
           },
-          // Disable HMR in puppeteer tests to not interrupt running tests
-          hmr: false,
-        },
-      }
-    : {}),
+          // protocol `wss` is required to resolve websocket connection failure
+          hmr: {
+            host: 'host.docker.internal',
+            // wss uses a secure websocket(wss://) connection. This was necessary to resolve mixed content security error which was observed when using ws protocol only.
+            protocol: 'wss',
+          },
+        }
+      : {}),
+  },
 })

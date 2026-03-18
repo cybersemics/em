@@ -4,7 +4,7 @@ import { type Environment, builtinEnvironments, populateGlobal } from 'vitest/en
 /** Puppeteer Environment for vitest. */
 const PuppeteerEnvironment: Environment = {
   name: 'puppeteer-environment',
-  transformMode: 'web',
+  viteEnvironment: 'client',
   async setup(global, options) {
     builtinEnvironments['happy-dom'].setup(global, options)
 

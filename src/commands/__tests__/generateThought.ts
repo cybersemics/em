@@ -1,12 +1,12 @@
 import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { executeCommand } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
 import dispatch from '../../test-helpers/dispatch'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
-import executeCommand from '../../util/executeCommand'
 import generateThought from '../generateThought'
 
 // Mock fetch for testing

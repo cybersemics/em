@@ -22,12 +22,7 @@ const pinCommand: Command = {
   },
   multicursor: {
     onComplete(filteredCursors, dispatch) {
-      dispatch(
-        alert(`Pinned ${pluralize('thought', filteredCursors.length, true)}.`, {
-          clearDelay: 2000,
-          showCloseLink: false,
-        }),
-      )
+      dispatch(alert(`Pinned ${pluralize('thought', filteredCursors.length, true)}.`))
     },
   },
   exec: (dispatch, getState, e, { type }) => {
@@ -39,7 +34,7 @@ const pinCommand: Command = {
     // since the user won't have the visual feedbavk from the toolbar due to the toolbar hiding logic
     if (type === 'keyboard') {
       const pinned = isPinned(state, head(cursor))
-      dispatch(alert(pinned ? 'Unpinned thought' : 'Pinned thought', { clearDelay: 2000, showCloseLink: false }))
+      dispatch(alert(pinned ? 'Unpinned thought' : 'Pinned thought'))
     }
 
     dispatch(

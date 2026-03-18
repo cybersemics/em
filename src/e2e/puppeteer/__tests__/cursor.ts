@@ -148,10 +148,10 @@ it('move cursor from formatted thought to first unformatted thought in descendin
   await clickThought('apple')
 
   // Toggle sort twice (ascending then descending)
-  await click('[data-testid="toolbar-icon"][aria-label="SortPicker"]')
+  await click('[data-testid="toolbar-icon"][aria-label="Sort Picker"]')
   await click('[aria-label="sort options"] [aria-label="Alphabetical"]')
 
-  await click('[data-testid="toolbar-icon"][aria-label="SortPicker"]')
+  await click('[data-testid="toolbar-icon"][aria-label="Sort Picker"]')
   await click('[aria-label="sort options"] [aria-label="Alphabetical"]')
 
   // Make text bold using the toolbar

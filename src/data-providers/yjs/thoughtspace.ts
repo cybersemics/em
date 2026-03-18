@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // there are multiple function callling it self (recursive) so we just disable the lint error
-
 /* eslint-disable @typescript-eslint/no-use-before-define */
 import { IndexeddbPersistence, clearDocument } from 'y-indexeddb'
 import * as Y from 'yjs'
@@ -14,10 +13,12 @@ import Timestamp from '../../@types/Timestamp'
 import ValueOf from '../../@types/ValueOf'
 import { UpdateThoughtsOptions } from '../../actions/updateThoughts'
 import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, ROOT_CONTEXTS, ROOT_PARENT_ID } from '../../constants'
+import testFlags from '../../e2e/testFlags'
 import groupObjectBy from '../../util/groupObjectBy'
 import hashThought from '../../util/hashThought'
 import mergeBatch from '../../util/mergeBatch'
 import nonNull from '../../util/nonNull'
+import sleep from '../../util/sleep'
 import taskQueue, { TaskQueue } from '../../util/taskQueue'
 import throttleConcat from '../../util/throttleConcat'
 import { DataProvider } from '../DataProvider'
@@ -591,6 +592,11 @@ export const replicateChildren = async (
     remote?: boolean
   } = {},
 ): Promise<Thought[] | undefined> => {
+  // Inject test delay if configured (for e2e testing slow data loading)
+  if (!!testFlags.replicationDelay) {
+    await sleep(testFlags.replicationDelay)
+  }
+
   // Only await the config promise once. Otherwise the initial call to replicateChildren for a given docKey will not set thoughtDocs synchronously, and we will lose memoization of concurrent calls.
   if (!configCache) {
     await config

@@ -9,8 +9,14 @@ const applyLetterCase = (command: LetterCaseType, value: string): string => {
     case 'UpperCase':
       return value.toUpperCase()
     case 'SentenceCase': {
-      const sentenceCaseRegex = /(^\w|\.\s*\w)/gi
-      return value.toLowerCase().replace(sentenceCaseRegex, match => match.toUpperCase())
+      const lower = value.toLowerCase()
+      // Capitalize the first word character after each period, skipping any HTML tags in between.
+      const afterPeriod = lower.replace(
+        /(\.\s*(?:<[^>]+>\s*)*)(\w)/g,
+        (match, prefix, char) => prefix + char.toUpperCase(),
+      )
+      // Capitalize the first word character of the string, skipping any leading whitespace or HTML tags.
+      return afterPeriod.replace(/^(\s*(?:<[^>]+>\s*)*)(\w)/, (match, prefix, char) => prefix + char.toUpperCase())
     }
     case 'TitleCase':
       return titleCase(value.toLowerCase())

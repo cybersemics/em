@@ -185,7 +185,14 @@ function expandThoughts(state: State, path: Path | null): Index<Path | Context> 
     throw new Error(`Invalid path ${path}. No thought found with id ${head(path)}`)
   }
 
-  return expandThoughtsRecursive(state, path || HOME_PATH, HOME_PATH)
+  // Expand ancestors of the cursor path and all multicursor paths so that selected thoughts remain visible.
+  return [path || HOME_PATH, ...Object.values(state.multicursors)].reduce(
+    (acc, expansionPath) => ({
+      ...acc,
+      ...expandThoughtsRecursive(state, expansionPath, HOME_PATH),
+    }),
+    {} as Index<Path | Context>,
+  )
 }
 
 export default expandThoughts

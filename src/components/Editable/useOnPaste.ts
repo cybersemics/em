@@ -13,7 +13,7 @@ const useOnPaste = ({
   simplePath,
   transient,
 }: {
-  contentRef: React.RefObject<HTMLInputElement>
+  contentRef: React.RefObject<HTMLInputElement | null>
   simplePath: SimplePath
   transient?: boolean
 }) => {
@@ -55,7 +55,7 @@ const useOnPaste = ({
             path,
             text: escapeHtml(plainText),
             html: htmlText,
-            rawDestValue: strip(contentRef.current!.innerHTML, { preventTrim: true }),
+            rawDestValue: strip(contentRef.current!.innerHTML, { preserveFormatting: true, preventTrim: true }),
             transient,
             isEmText,
           }),

@@ -11,6 +11,7 @@ import hashPath from '../../util/hashPath'
 import hashThought from '../../util/hashThought'
 import head from '../../util/head'
 import isAttribute from '../../util/isAttribute'
+import isRoot from '../../util/isRoot'
 import keyValueBy from '../../util/keyValueBy'
 import never from '../../util/never'
 import nonNull from '../../util/nonNull'
@@ -209,13 +210,53 @@ async function* fetchDescendants(
           }
         } else {
           thoughtIdQueue.add(childrenIds)
-          return thought
+          return {
+            ...thought,
+            // Always mark parents as pending.
+            // Mark parents as pending ONLY if at least one direct child is not yet loaded.
+            // This prevents propagating the pending state up the entire ancestor chain.
+            // updateThoughts will still clear pending once the missing direct children are loaded.
+            pending:
+              !isRoot([thought.id]) &&
+              // If every child already exists in state (regardless of its own pending status),
+              // the parent itself should not be considered pending.
+              // This ensures that pending is applied only to the direct ancestor of the node(s)
+              // currently being fetched rather than all ancestors.
+              childrenIds.some(childId => !getThoughtById(updatedState, childId)),
+          }
         }
       })
       .filter(nonNull)
 
-    // Note: Since Parent.children is now array of ids instead of Child we need to inclued the non pending leaves as well.
-    const thoughtIndex = keyValueBy(thoughtIdsValidated, (id, i) => ({ [id]: thoughts[i] }))
+    // If =pin is encountered, we need to load its children before yielding.
+    // Otherwise thoughts with =pin/false will flash expanded while it waits for "false" to load.
+    // See: https://github.com/cybersemics/em/issues/3268
+    const pinIds = thoughts.map(thought => thought.childrenMap['=pin']).filter(nonNull)
+    let pinIdsValidated: ThoughtId[] = []
+    let pinChildrenIdsValidated: ThoughtId[] = []
+    const pinnedThoughtsRaw = await provider.getThoughtsByIds(pinIds)
+    const pinnedThoughtsValidated = pinnedThoughtsRaw.filter(nonNull)
+    const pinnedThoughtIndex: Index<Thought> = keyValueBy(pinnedThoughtsValidated, (thought, i) => ({
+      [pinIds[i]]: thought,
+    }))
+    accumulatedThoughts.thoughtIndex = { ...accumulatedThoughts.thoughtIndex, ...pinnedThoughtIndex }
+    pinIdsValidated = pinIds.filter(id => pinnedThoughtIndex[id])
+    const pinChildrenIds = pinnedThoughtsValidated.flatMap(thought => Object.values(thought.childrenMap))
+    const pinnedChildrenRaw = await provider.getThoughtsByIds(pinChildrenIds)
+    const pinnedChildrenValidated = pinnedChildrenRaw.filter(nonNull)
+    const pinnedChildrenIndex: Index<Thought> = keyValueBy(pinnedChildrenValidated, (thought, i) => ({
+      [pinChildrenIds[i]]: thought,
+    }))
+    accumulatedThoughts.thoughtIndex = { ...accumulatedThoughts.thoughtIndex, ...pinnedChildrenIndex }
+    pinChildrenIdsValidated = pinChildrenIds.filter(id => pinnedChildrenIndex[id])
+
+    // Note: Since Parent.children is now array of ids instead of Child we need to include the non pending leaves as well.
+    const thoughtIndex = keyValueBy(
+      [...thoughtIdsValidated, ...pinIdsValidated, ...pinChildrenIdsValidated],
+      (id, i) => ({
+        [id]: thoughts[i] ?? accumulatedThoughts.thoughtIndex[id],
+      }),
+    )
 
     const thoughtHashes = thoughtIdsValidated.map(id => {
       const thought = getThoughtById(updatedState, id)

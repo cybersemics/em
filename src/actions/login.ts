@@ -12,6 +12,6 @@ export const loginActionCreator = (): Thunk => dispatch => {
 
   // for some reason a delay is needed and this needs to go after signInWithRedirect, otherwise the alert flickers and is hidden
   setTimeout(() => {
-    dispatch(alert('Redirecting to login...'))
+    dispatch(alert('Redirecting to login...', { clearDelay: null }))
   })
 }

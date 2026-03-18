@@ -45,13 +45,13 @@ const CommandsGroup: FC<CommandsGroupProps> = ({
           modalClasses.subtitle,
           css({
             ...(viewType === 'grid' && {
-              fontSize: '1.3rem',
+              fontSize: '1.156rem',
               borderBottom: 'none',
               position: 'sticky',
-              top: '-1.5rem',
+              top: '-1.333rem',
               background: 'linear-gradient(to bottom, {colors.bg} 85%, transparent)',
-              padding: '0.7rem 0',
-              margin: '0.5rem 0 0 0',
+              padding: '0.622rem 0',
+              margin: '0.444rem 0 0 0',
               zIndex: 1,
             }),
           }),

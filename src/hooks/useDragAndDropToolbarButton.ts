@@ -15,7 +15,6 @@ import findDescendant from '../selectors/findDescendant'
 import { getChildrenRanked } from '../selectors/getChildren'
 import getRankBefore from '../selectors/getRankBefore'
 import store from '../stores/app'
-import longPressStore from '../stores/longPressStore'
 import appendToPath from '../util/appendToPath'
 import haptics from '../util/haptics'
 
@@ -85,11 +84,7 @@ const useDragAndDropToolbarButton = ({ commandId, customize }: { commandId: Comm
       return { command, zone: DragCommandZone.Toolbar }
     },
     canDrag: () => !!customize,
-    end: () => {
-      // Reset the lock to allow immediate long press after drag ends
-      longPressStore.unlock()
-      store.dispatch(dragCommand(null))
-    },
+    end: () => store.dispatch(dragCommand(null)),
     collect: monitor => ({
       isDragging: monitor.isDragging(),
     }),

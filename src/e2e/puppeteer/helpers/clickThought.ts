@@ -6,7 +6,7 @@ import waitForEditable from './waitForEditable'
 const clickThought = async (value: string) => {
   // use a short timeout to make time for a render and async page communication
   // precede clickThought by a longer waitForEditable for steps that are known to take time, such as refreshing the page
-  const editableNode = await waitForEditable(value, { timeout: 1000 })
+  const editableNode = await waitForEditable(value)
   // @ts-expect-error - https://github.com/puppeteer/puppeteer/issues/8852
   await editableNode.asElement()?.click()
 }

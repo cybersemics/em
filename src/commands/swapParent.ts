@@ -8,6 +8,7 @@ const swapParent: Command = {
   id: 'swapParent',
   label: 'Swap Parent',
   description: 'Swap the current thought with its parent.',
+  gesture: 'ul',
   multicursor: {
     disallow: true,
     error: 'Cannot swap parent with multiple thoughts.',

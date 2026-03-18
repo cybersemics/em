@@ -1,11 +1,12 @@
 import { isEqual, throttle } from 'lodash'
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { RefObject, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
 import { css, cx } from '../../styled-system/css'
 import Index from '../@types/IndexType'
 import ThoughtId from '../@types/ThoughtId'
 import { isTouch } from '../browser'
+import { CONTENT_BOX_PADDING_LEFT, LongPressState } from '../constants'
 import testFlags from '../e2e/testFlags'
 import usePositionedThoughts from '../hooks/usePositionedThoughts'
 import useSizeTracking from '../hooks/useSizeTracking'
@@ -42,7 +43,7 @@ const useSingleLineHeight = (sizes: Index<{ height: number; width?: number; isVi
   const singleLineHeight = useMemo(() => {
     // The estimatedHeight calculation is ostensibly related to the font size, line height, and padding, though the process of determination was guess-and-check. This formula appears to work across font sizes.
     // If estimatedHeight is off, then totalHeight will fluctuate as actual sizes are saved (due to estimatedHeight differing from the actual single-line height).
-    const estimatedHeight = fontSize * 2 - 2
+    const estimatedHeight = fontSize * 2
 
     const singleLineHeightMeasured = Object.values(sizes).find(
       // TODO: This does not differentiate between leaves, non-leaves, cliff thoughts, which all have different sizes.
@@ -85,8 +86,8 @@ const useNavAndFooterHeight = () => {
   }
 }
 
-/** When navigating deep within the hierarchy, many ancestors and siblings of ancestors are hidden, resulting in a large blank space above the cursor. If the user scrolls up, the entire screen will be blank. To avoid this, crop the space above and simultaneously scroll up by the same amount so that the thoughts do not appear to move (relative to the viewport), but the empty space above is eliminated. */
-const useHideSpaceAbove = (spaceAbove: number) => {
+/** When navigating deep within the hierarchy, many ancestors and siblings of ancestors are hidden, resulting in a large blank space above the cursor. If the user scrolls up, the entire screen will be blank. To avoid this, crop the space above and simultaneously scroll up by the same amount so that the thoughts do not appear to move (relative to the viewport), but the empty space above is eliminated. Returns the number of pixels that all thoughts should be shifted off. */
+const useAutocrop = (spaceAbove: number): number => {
   // get the scroll position before the render so it can be preserved
   const scrollY = window.scrollY
 
@@ -108,6 +109,23 @@ const useHideSpaceAbove = (spaceAbove: number) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [spaceAboveExtended],
   )
+
+  // add a full viewport height's space above to ensure that there is room to scroll by the same amount as spaceAbove
+  return -spaceAboveExtended + viewportHeight
+}
+
+/** A hook that returns a ref to the content div and updates the viewport store's layoutTreeTop property on mount. */
+const useLayoutTreeTop = (
+  ref: RefObject<HTMLElement | null>,
+  /** The amount that the layout tree is shifted up is needed to produce the correct layoutTreeTop value. See: useAutocrop. */
+  autocrop: number,
+) => {
+  useEffect(() => {
+    if (!ref.current) return
+    viewportStore.update({ layoutTreeTop: (ref.current?.offsetTop || 0) + autocrop })
+  }, [ref, autocrop])
+
+  return ref
 }
 
 /** Lays out thoughts as DOM siblings with manual x,y positioning. */
@@ -116,8 +134,8 @@ const LayoutTree = () => {
   const { sizes, setSize } = useSizeTracking()
   const treeThoughts = useSelector(linearizeTree, isEqual)
   const fontSize = useSelector(state => state.fontSize)
-  const dragInProgress = useSelector(state => state.dragInProgress)
-  const ref = useRef<HTMLDivElement | null>(null)
+  const dragInProgress = useSelector(state => state.longPress === LongPressState.DragInProgress)
+  const ref = useRef<HTMLDivElement>(null)
   const indentDepth = useSelector(state =>
     state.cursor && state.cursor.length > 2
       ? // when the cursor is on a leaf, the indention level should not change
@@ -125,8 +143,8 @@ const LayoutTree = () => {
       : 0,
   )
 
-  // Width of thought bullet
-  const [bulletWidth, setBulletWidth] = useState(0)
+  // Width of thought bullet, using the default from Bullet.tsx
+  const [bulletWidth, setBulletWidth] = useState(fontSize * 1.25)
   // Distance from toolbar to the first visible thought
   const [layoutTop, setLayoutTop] = useState(0)
 
@@ -138,14 +156,18 @@ const LayoutTree = () => {
 
       setLayoutTop(ref.current?.getBoundingClientRect().top ?? 0)
     }
-  }, [dragInProgress])
+  }, [dragInProgress, ref])
 
   const singleLineHeight = useSingleLineHeight(sizes)
 
   // cursor depth, taking into account that a leaf cursor has the same autofocus depth as its parent
   const autofocusDepth = useSelector(state => {
     // only set during drag-and-drop to avoid re-renders
-    if ((!state.dragInProgress && !testFlags.simulateDrag && !testFlags.simulateDrop) || !state.cursor) return 0
+    if (
+      (state.longPress !== LongPressState.DragInProgress && !testFlags.simulateDrag && !testFlags.simulateDrop) ||
+      !state.cursor
+    )
+      return 0
     const isCursorLeaf = !hasChildren(state, head(state.cursor))
     return state.cursor.length + (isCursorLeaf ? -1 : 0)
   })
@@ -153,7 +175,11 @@ const LayoutTree = () => {
   // first uncle of the cursor used for DropUncle
   const cursorUncleId = useSelector(state => {
     // only set during drag-and-drop to avoid re-renders
-    if ((!state.dragInProgress && !testFlags.simulateDrag && !testFlags.simulateDrop) || !state.cursor) return null
+    if (
+      (state.longPress !== LongPressState.DragInProgress && !testFlags.simulateDrag && !testFlags.simulateDrop) ||
+      !state.cursor
+    )
+      return null
     const isCursorLeaf = !hasChildren(state, head(state.cursor))
     const cursorParentId = state.cursor[state.cursor.length - (isCursorLeaf ? 3 : 2)] as ThoughtId | null
     return (cursorParentId && nextSibling(state, cursorParentId)?.id) || null
@@ -218,31 +244,45 @@ const LayoutTree = () => {
   )
 
   // compare between state.cursor and the position of the thought
-  const cursorThoughtPositioned = treeThoughtsPositioned.find(thought => thought.isCursor)
+  const cursorThoughtPositionedIndex = treeThoughtsPositioned.findIndex(thought => thought.isCursor)
+  const cursorThoughtPositioned = treeThoughtsPositioned[cursorThoughtPositionedIndex]
 
   // The indentDepth multipicand (0.9) causes the horizontal counter-indentation to fall short of the actual indentation, causing a progressive shifting right as the user navigates deeper. This provides an additional cue for the user's depth, which is helpful when autofocus obscures the actual depth, but it must stay small otherwise the thought width becomes too small.
   // The indentCursorAncestorTables multipicand (0.5) is smaller, since animating over by the entire width of column 1 is too abrupt.
   // (The same multiplicand is applied to the vertical translation that crops hidden thoughts above the cursor.)
   const indent = indentDepth * 0.9 + indentCursorAncestorTables / fontSize
 
-  const spaceAboveExtended = useHideSpaceAbove(spaceAbove)
+  const autocrop = useAutocrop(spaceAbove)
 
   /** The space added below the last rendered thought and the breadcrumbs/footer. This is calculated such that there is a total of one viewport of height between the last rendered thought and the bottom of the document. This ensures that when the keyboard is closed, the scroll position will not change. If the caret is on a thought at the top edge of the screen when the keyboard is closed, then the document will shrink by the height of the virtual keyboard. The scroll position will only be forced to change if the document height is less than window.scrollY + window.innerHeight. */
   // Subtract singleLineHeight since we can assume that the last rendered thought is within the viewport. (It would be more accurate to use its exact rendered height, but it just means that there may be slightly more space at the bottom, which is not a problem. The scroll position is only forced to change when there is not enough space.)
   const spaceBelow = viewportHeight - navAndFooterHeight - CONTENT_PADDING_BOTTOM - singleLineHeight
 
+  useLayoutTreeTop(ref, autocrop)
+
+  const treeThoughtsMemoized = useMemo(
+    () =>
+      treeThoughtsPositioned.map(thought => ({
+        ...thought,
+        style: {
+          ...thought.style,
+          // Ensure that transforming the thought's position by its indent level cannot push it off-screen.
+          // The extra 17px is to make sure it doesn't get cut off under the scrollbar
+          maxWidth: `calc(${window.innerWidth > 560 ? '90' : '100'}vw - ${CONTENT_BOX_PADDING_LEFT + thought.x}px - ${1.5 - indent}em)`,
+        },
+      })),
+    [indent, treeThoughtsPositioned],
+  )
+
   return (
     <div
       className={cx(
         css({
-          marginTop: '0.501em',
+          marginTop: '0.501rem',
         }),
         fauxCaretTreeProvider(indent),
       )}
-      style={{
-        // add a full viewport height's space above to ensure that there is room to scroll by the same amount as spaceAbove
-        transform: `translateY(${-spaceAboveExtended + viewportHeight}px)`,
-      }}
+      style={{ transform: `translateY(${autocrop}px)` }}
       ref={ref}
     >
       <HoverArrow
@@ -259,7 +299,8 @@ const LayoutTree = () => {
           // Use translateX instead of marginLeft to prevent multiline thoughts from continuously recalculating layout as their width changes during the transition.
           // Instead of using spaceAbove, we use -min(spaceAbove, c) + c, where c is the number of pixels of hidden thoughts above the cursor before cropping kicks in.
           transform: `translateX(${1.5 - indent}em`,
-          // Add a negative marginRight equal to translateX to ensure the thought takes up the full width. Not animated for a more stable visual experience.
+          // Add a negative marginRight equal to translateX to ensure the thought takes up the full width.
+          // Not animated for a more stable visual experience.
           marginRight: `${-indent + (isTouch ? 2 : -1)}em`,
         }}
       >
@@ -268,6 +309,7 @@ const LayoutTree = () => {
             isTableCol1={cursorThoughtPositioned.isTableCol1}
             path={cursorThoughtPositioned.path}
             simplePath={cursorThoughtPositioned.simplePath}
+            height={cursorThoughtPositioned.height}
             x={cursorThoughtPositioned.x}
             y={cursorThoughtPositioned.y}
             showContexts={cursorThoughtPositioned.showContexts}
@@ -276,7 +318,7 @@ const LayoutTree = () => {
           />
         )}
         <TransitionGroup>
-          {treeThoughtsPositioned.map((thought, index) => (
+          {treeThoughtsMemoized.map((thought, index) => (
             <TreeNode
               {...thought}
               index={index}

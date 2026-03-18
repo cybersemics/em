@@ -114,7 +114,6 @@ const initialState = (created: Timestamp = timestamp()) => {
     cursorHistory: [],
     cursorInitialized: false,
     cursorOffset: 0,
-    dragInProgress: false,
     draggingThoughts: [],
     editableNonce: 0,
     isKeyboardOpen: null,
@@ -142,6 +141,7 @@ const initialState = (created: Timestamp = timestamp()) => {
     schemaVersion: SCHEMA_LATEST,
     search: null,
     showCommandPalette: false,
+    showGestureMenu: false,
     remoteSearch: false,
     searchContexts: null,
     showHiddenThoughts: false,
@@ -152,7 +152,7 @@ const initialState = (created: Timestamp = timestamp()) => {
     pushQueue: [],
     thoughts: initialThoughts(created),
     undoPatches: [],
-    showCommandMenu: false,
+    showCommandCenter: false,
   }
 
   /**

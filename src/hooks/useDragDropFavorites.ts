@@ -6,15 +6,13 @@ import DragThoughtZone from '../@types/DragThoughtZone'
 import Lexeme from '../@types/Lexeme'
 import SimplePath from '../@types/SimplePath'
 import { alertActionCreator as alert } from '../actions/alert'
-import { dragHoldActionCreator as dragHold } from '../actions/dragHold'
-import { dragInProgressActionCreator as dragInProgress } from '../actions/dragInProgress'
+import { longPressActionCreator as longPress } from '../actions/longPress'
 import { updateThoughtsActionCreator as updateThoughts } from '../actions/updateThoughts'
-import { AlertType } from '../constants'
+import { AlertType, LongPressState } from '../constants'
 import * as selection from '../device/selection'
 import { getLexeme } from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
 import store from '../stores/app'
-import longPressStore from '../stores/longPressStore'
 import haptics from '../util/haptics'
 import hashThought from '../util/hashThought'
 import head from '../util/head'
@@ -29,8 +27,8 @@ const beginDrag = ({ path, simplePath }: DragThoughtItem): DragThoughtItem[] => 
   const offset = selection.offset()
 
   store.dispatch(
-    dragInProgress({
-      value: true,
+    longPress({
+      value: LongPressState.DragInProgress,
       draggingThoughts: [simplePath],
       sourceZone: DragThoughtZone.Favorites,
       ...(offset != null ? { offset } : null),
@@ -40,18 +38,15 @@ const beginDrag = ({ path, simplePath }: DragThoughtItem): DragThoughtItem[] => 
 }
 
 /** Handles drag end. */
-const endDrag = () => {
-  longPressStore.unlock()
+const endDrag = () =>
   store.dispatch([
-    dragInProgress({ value: false }),
-    dragHold({ value: false }),
+    longPress({ value: LongPressState.Inactive }),
     (dispatch, getState) => {
       if (getState().alert?.alertType === AlertType.DragAndDropHint) {
         dispatch(alert(null))
       }
     },
   ])
-}
 
 /** Returns true if the Favorite can be dropped at the given DropTarget. */
 //eslint disable rule because monitor use in canDrop function

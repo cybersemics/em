@@ -1,5 +1,4 @@
 /* eslint-disable import/prefer-default-export */
-
 /** Defines client/browser-specific variables that do not change over the course of a session. */
 import { Capacitor } from '@capacitor/core'
 

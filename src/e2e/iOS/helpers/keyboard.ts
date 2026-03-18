@@ -1,8 +1,10 @@
-import { Browser } from 'webdriverio'
-
-/** Type text on the keyboard. */
+/**
+ * Keyboard utilities.
+ * Uses the global browser object from WDIO.
+ */
 const keyboard = {
-  type: (browser: Browser, text: string) => browser.sendKeys([text]),
+  /** Type text on the keyboard. */
+  type: (text: string) => browser.sendKeys([text]),
 }
 
 export default keyboard

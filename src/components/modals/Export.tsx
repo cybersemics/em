@@ -243,7 +243,7 @@ const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
   }, [])
 
   const dropDownRef = React.useRef<HTMLDivElement>(null)
-  useOnClickOutside(dropDownRef, closeDropdown)
+  useOnClickOutside(dropDownRef as React.RefObject<HTMLDivElement>, closeDropdown)
 
   return (
     <span ref={dropDownRef} className={css({ position: 'relative', whiteSpace: 'nowrap', userSelect: 'none' })}>
@@ -362,12 +362,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
     // Note: clipboard leaves unwanted text selection after copy operation. so removing it to prevent issue with gesture handler
     selection.clear()
 
-    dispatch([
-      closeModal(),
-      alert(`Copied ${exportThoughtsPhraseFinal} to the clipboard`, {
-        clearDelay: 3000,
-      }),
-    ])
+    dispatch([closeModal(), alert(`Copied ${exportThoughtsPhraseFinal} to the clipboard`)])
 
     clearTimeout(globals.errorTimer)
   }, [dispatch, exportThoughtsPhraseFinal])

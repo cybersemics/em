@@ -33,7 +33,7 @@ const SearchCommands: FC<{ onInput?: (value: string) => void }> = ({ onInput }) 
             boxSizing: 'border-box',
             width: '100%',
             minWidth: '100%',
-            paddingLeft: '2rem',
+            paddingLeft: '1.78rem',
             borderRadius: '8px',
           })}
         />

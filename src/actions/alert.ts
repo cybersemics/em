@@ -11,18 +11,17 @@ import dismissTip from './dismissTip'
 
 interface Options {
   alertType?: keyof typeof AlertType
-  showCloseLink?: boolean
   value: string | null
   // used to cancel imports
   importFileId?: string
-  clearDelay?: number
+  clearDelay?: number | null
 }
 
 /** A special alert value that is masked by alertStore. This just needs to be a non-empty stable value to avoid Redux state changes. */
 const ALERT_WITH_MINITORE = '__ALERT_WITH_MINITORE__'
 
 /** Set an alert with an optional close link. */
-const alertReducer = (state: State, { alertType, showCloseLink, value, importFileId, clearDelay }: Options) => {
+const alertReducer = (state: State, { alertType, value, importFileId, clearDelay }: Options) => {
   if (value === state.alert?.value) return state
   return {
     ...(value ? dismissTip(state) : state),
@@ -31,10 +30,10 @@ const alertReducer = (state: State, { alertType, showCloseLink, value, importFil
     alert: value
       ? {
           alertType,
-          showCloseLink: showCloseLink !== false,
           value,
           importFileId,
-          clearDelay,
+          // Default clearDelay to 5000ms when undefined. Use null to prevent auto-dismiss.
+          clearDelay: clearDelay === undefined ? 5000 : clearDelay,
         }
       : null,
   }
@@ -44,20 +43,18 @@ const alertReducer = (state: State, { alertType, showCloseLink, value, importFil
  * Dispatches an alert action.
  *
  * @param value The string or React Component that will be rendered in the alert.
- * @param showCloseLink Show a small 'x' in the upper right corner that allows the user to close the alert. Default: true.
  * @param type An arbitrary alert type that can be added to the alert. This is useful if specific alerts needs to be detected later on, for example, to determine if the alert should be closed, or if it has been superceded by a different alert type.
- * @param clearDelay Timeout after which alert will be cleared.
+ * @param clearDelay Timeout after which alert will be cleared. Default: 5000ms. Set to null to prevent auto-dismiss. When clearDelay is set, a close link is shown.
  */
 export const alertActionCreator =
   (
     value: string | FC | null,
     {
       alertType,
-      showCloseLink,
       clearDelay,
       importFileId,
     }: Omit<Alert, 'value'> & {
-      clearDelay?: number
+      clearDelay?: number | null
     } = {},
   ): Thunk =>
   (dispatch, getState) => {
@@ -75,7 +72,6 @@ export const alertActionCreator =
     dispatch({
       type: 'alert',
       alertType,
-      showCloseLink,
       value,
       importFileId,
       clearDelay,
@@ -87,7 +83,7 @@ export const alertWithMinistore =
   (
     value: string | null,
     options?: Omit<Alert, 'value'> & {
-      clearDelay?: number
+      clearDelay?: number | null
     },
   ): Thunk =>
   dispatch => {

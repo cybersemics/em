@@ -2,6 +2,7 @@ import _ from 'lodash'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
+import { AlertType } from '../constants'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import hashPath from '../util/hashPath'
 
@@ -11,6 +12,7 @@ const removeMulticursor = (state: State, { path }: { path: Path }): State => {
 
   return {
     ...state,
+    ...(state.alert?.alertType === AlertType.ScrollZoneHelp ? { alert: null } : null),
     multicursors: remainingMulticursors,
   }
 }

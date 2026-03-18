@@ -5,6 +5,7 @@ import CursorForwardIcon from '../components/icons/CursorForwardIcon'
 const cursorForwardCommand: Command = {
   id: 'cursorForward',
   description: 'Move the cursor down a level.',
+  hideAlert: true,
   label: 'Forward',
   multicursor: false,
   gesture: 'l',

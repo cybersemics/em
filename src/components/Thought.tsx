@@ -13,7 +13,7 @@ import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
-import { isMac, isSafari, isTouch } from '../browser'
+import { isMac, isTouch } from '../browser'
 import { AlertType, REGEX_TAGS } from '../constants'
 import { MIN_CONTENT_WIDTH_EM } from '../constants'
 import testFlags from '../e2e/testFlags'
@@ -21,7 +21,6 @@ import useDragAndDropThought from '../hooks/useDragAndDropThought'
 import useDragHold from '../hooks/useDragHold'
 import useDragLeave from '../hooks/useDragLeave'
 import useHideBullet from '../hooks/useHideBullet'
-import useHoveringPath from '../hooks/useHoveringPath'
 import useThoughtStyle from '../hooks/useThoughtStyle'
 import useThoughtStyleContainer from '../hooks/useThoughtStyleContainer'
 import attribute from '../selectors/attribute'
@@ -35,12 +34,13 @@ import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import col1MaxWidthStore from '../stores/col1MaxWidthStore'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
+import selectionRangeStore from '../stores/selectionRangeStore'
 import containsURL from '../util/containsURL'
+import dndRef from '../util/dndRef'
 import durations from '../util/durations'
 import equalPath from '../util/equalPath'
 import equalThoughtRanked from '../util/equalThoughtRanked'
 import getBulletWidth from '../util/getBulletWidth'
-import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
 import isDescendantPath from '../util/isDescendantPath'
@@ -55,6 +55,7 @@ import ContextBreadcrumbs from './ContextBreadcrumbs'
 import DropHover from './DropHover'
 import Note from './Note'
 import StaticThought from './StaticThought'
+import ThoughtPositioner from './ThoughtPositioner'
 
 /**********************************************************************
  * Redux
@@ -284,15 +285,23 @@ const ThoughtContainer = ({
     return equalPath(parentOf(state.cursor), path)
   })
 
-  const { isDragging, dragSource, isHovering, isBeingHoveredOver, dropTarget, canDropThought, isDeepHovering } =
-    useDragAndDropThought({
-      path,
-      simplePath,
-      isVisible,
-      isCursorParent,
-    })
+  const {
+    isDragging,
+    dragPreview,
+    dragSourceBullet,
+    dragSourceEditable,
+    isHovering,
+    dropTarget,
+    canDropThought,
+    isDeepHovering,
+  } = useDragAndDropThought({
+    path,
+    simplePath,
+    isVisible,
+    isCursorParent,
+    hoverZone: DropThoughtZone.ThoughtDrop,
+  })
 
-  useHoveringPath(path, isBeingHoveredOver, DropThoughtZone.ThoughtDrop)
   useDragLeave({ isDeepHovering, canDropThought })
 
   // check if the cursor is editing a thought directly
@@ -403,8 +412,8 @@ const ThoughtContainer = ({
     return isSubthoughtsDropTarget || isThoughtDropTarget
   })
 
-  /** True if the the user is dragging the thought and hovering over the DeleteDrop QuickDrop icon. */
-  const isQuickDropDeleteHovering = useSelector(
+  /** True if the the user is dragging the thought and hovering over the DeleteDrop DropGutter icon. */
+  const isDropGutterDeleteHovering = useSelector(
     state => isDragging && state.alert?.alertType === AlertType.DeleteDropHint,
   )
 
@@ -437,7 +446,7 @@ const ThoughtContainer = ({
           animation: `pulseLight {durations.slowPulse} linear infinite alternate`,
           color: 'highlight',
         }
-      : isQuickDropDeleteHovering
+      : isDropGutterDeleteHovering
         ? {
             WebkitTextStrokeWidth: '0.05em',
             animation: `pulseLight {durations.mediumPulse} linear infinite alternate`,
@@ -518,6 +527,8 @@ const ThoughtContainer = ({
     isTableCol1,
   })
 
+  const hasSelectionRange = selectionRangeStore.useState()
+
   // thought does not exist
   if (value == null) return null
 
@@ -527,15 +538,10 @@ const ThoughtContainer = ({
 
   return (
     <div
-      {...dragHoldResult.props}
-      ref={node => dragSource(dropTarget(node))}
+      ref={dndRef(node => dragPreview(dropTarget(node)))}
       aria-label='child'
       data-divider={isDivider(value)}
       data-editing={isEditing}
-      // HTML5Backend will override this to be "true" on platforms that use it.
-      // iOS Safari needs it to be true to disable native long press behavior. (#2953, #2931, #2964)
-      // Android works better if draggable is false.
-      draggable={isTouch && isSafari()}
       onClick={isTouch ? undefined : handleMultiselect}
       style={{
         transition: `transform ${token('durations.layoutSlowShift')} ease-out, opacity ${token('durations.layoutSlowShift')} ease-out`,
@@ -561,34 +567,27 @@ const ThoughtContainer = ({
       )}
     >
       {showContexts && simplePath.length > 1 && (
-        <ContextBreadcrumbs
-          cssRaw={css.raw({
+        <div
+          className={css({
             /* Tighten up the space between the context-breadcrumbs and the thought (similar to the space above a note). */
-            marginBottom: '-0.25em',
+            marginBottom: '-0.21675rem',
             /* Use padding-top instead of margin-top to ensure this gets included in the dynamic height of each thought.
               Otherwise the accumulated y value will not be correct. */
-            paddingTop: '0.5em',
+            paddingTop: '0.4335rem',
+            marginLeft: 'calc(1.1271rem - 14.5px)',
+            marginTop: '0.462rem',
           })}
-          path={parentOf(simplePath)}
-          homeContext={homeContext}
-        />
+        >
+          <ContextBreadcrumbs path={parentOf(simplePath)} homeContext={homeContext} />
+        </div>
       )}
 
-      <div
-        aria-label='thought-container'
-        data-testid={'thought-' + hashPath(path)}
-        className={css({
-          /* Use line-height to vertically center the text and bullet. We cannot use padding since it messes up the selection. This needs to be overwritten on multiline elements. See ".child .editable" below. */
-          /* must match value used in Editable useMultiline */
-          lineHeight: '2',
-          // ensure that ThoughtAnnotation is positioned correctly
-          position: 'relative',
-          ...(hideBullet ? { marginLeft: -12 } : null),
-        })}
-      >
+      <ThoughtPositioner path={path} hideBullet={hideBullet}>
         {!(publish && simplePath.length === 0) && (!leaf || !isPublishChild) && !hideBullet && (
           <div style={alignmentTransition.bullet}>
             <Bullet
+              dragSource={dragSourceBullet}
+              longPressProps={dragHoldResult.props}
               isContextPending={isContextPending}
               isDragging={isDragging}
               isEditing={isEditing}
@@ -609,6 +608,11 @@ const ThoughtContainer = ({
         <div style={alignmentTransition.editable}>
           <StaticThought
             allowSingleContext={allowSingleContext}
+            dragSource={dragSourceEditable}
+            // Disallow long press on mobile when there is a selection range, otherwise it will interfere with native selection controls like
+            // adjusting the selection or selection drag-and-drop. This is part of matching logic across StaticThought, Thought, and
+            // useDragAndDropThought that disables long press when there is a selection range.
+            longPressProps={isTouch && !hasSelectionRange ? dragHoldResult.props : undefined}
             env={env}
             isContextPending={isContextPending}
             isEditing={isEditing}
@@ -630,7 +634,7 @@ const ThoughtContainer = ({
           />
         </div>
         <Note path={path} disabled={!isVisible} />
-      </div>
+      </ThoughtPositioner>
 
       {publish && simplePath.length === 0 && <Byline id={head(parentOf(simplePath))} />}
 

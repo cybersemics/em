@@ -1,16 +1,16 @@
-import { rgbToHex } from '@mui/material'
-import { FC } from 'react'
+import React, { FC } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import { formatSelectionActionCreator as formatSelection } from '../actions/formatSelection'
+import { isTouch } from '../browser'
 import { ColorToken } from '../colors.config'
 import * as selection from '../device/selection'
 import getThoughtById from '../selectors/getThoughtById'
 import themeColors from '../selectors/themeColors'
 import commandStateStore from '../stores/commandStateStore'
-import fastClick from '../util/fastClick'
 import head from '../util/head'
+import rgbToHex from '../util/rgbToHex'
 import Popover from './Popover'
 import TextColorIcon from './icons/TextColor'
 
@@ -62,7 +62,7 @@ const ColorSwatch: FC<{
       (commandStateColor === '#ccccccff' && commandStateBackgroundColor === '#333333ff') ||
       (commandStateColor === addAlphaToHex(rgbToHex(themeColor.fg)) &&
         commandStateBackgroundColor === addAlphaToHex(rgbToHex(themeColor.bg)) &&
-        !selection.isOnThought())
+        !selection.isThought())
     ) {
       const colorMatches = currentThoughtValue.match(colorRegex) || []
 
@@ -104,16 +104,20 @@ const ColorSwatch: FC<{
     dispatch(formatSelection('backColor', selected ? 'bg' : (backgroundColor ?? 'bg')))
   }
 
+  /** Toggles the text color onTouchEnd or onClick on desktop. */
+  const tapUp = (e: React.MouseEvent | React.TouchEvent) => {
+    // stop toolbar button dip and click empty space
+    e.stopPropagation()
+    e.preventDefault()
+
+    toggleTextColor()
+  }
+
   return (
     <span
       aria-label={label || color || backgroundColor}
-      {...fastClick(e => {
-        // stop toolbar button dip and click empty space
-        e.stopPropagation()
-        e.preventDefault()
-
-        toggleTextColor()
-      })}
+      onClick={isTouch ? undefined : tapUp}
+      onTouchEnd={isTouch ? tapUp : undefined}
       className={css({ cursor: 'pointer' })}
     >
       {shape === 'bullet' ? (

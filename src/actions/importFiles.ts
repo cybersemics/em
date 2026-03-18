@@ -1,7 +1,5 @@
 // there are multiple function callling it self (recursive) so we just disable the lint error
-
 /* eslint-disable @typescript-eslint/no-use-before-define */
-
 /* eslint-disable import/prefer-default-export */
 import * as idb from 'idb-keyval'
 import _ from 'lodash'
@@ -241,7 +239,8 @@ export const importFilesActionCreator =
             dispatch(
               alertWithMinistore(`Importing ${fileProgressString}... ${importProgressString}%`, {
                 alertType: AlertType.ImportFile,
-                clearDelay: i === numThoughts - 1 ? 5000 : undefined,
+                // Don't auto-dismiss intermediate progress alerts, but do auto-dismiss the final one
+                clearDelay: i === numThoughts - 1 ? undefined : null,
                 importFileId: file.id,
               }),
             )

@@ -39,15 +39,18 @@ const ThoughtLink = ({
   return (
     <div>
       {!hideContext && (
-        <ContextBreadcrumbs
-          hideArchive={hideArchive}
-          path={parentPath}
-          staticText={staticBreadcrumbs}
-          charLimit={charLimit || 32}
-          thoughtsLimit={thoughtsLimit || 10}
-          cssRaw={css.raw({ marginTop: '1em', marginLeft: '0', lineHeight: 1.5 })}
-          linkCssRaw={css.raw({ fontWeight: 'inherit' })}
-        />
+        // Use static 14px marginTop to replicate the previous 1em spacing (font size was fixed at 14px).
+        <div className={css({ marginTop: '14px', lineHeight: 1.5 })}>
+          <ContextBreadcrumbs
+            variant='small'
+            hideArchive={hideArchive}
+            path={parentPath}
+            staticText={staticBreadcrumbs}
+            charLimit={charLimit || 32}
+            thoughtsLimit={thoughtsLimit || 10}
+            linkCssRaw={css.raw({ fontWeight: 'inherit' })}
+          />
+        </div>
       )}
       <Link
         cssRaw={css.raw({ fontWeight: 'inherit', color: 'fg' })}

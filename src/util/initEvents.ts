@@ -6,12 +6,13 @@ import Path from '../@types/Path'
 import State from '../@types/State'
 import { alertActionCreator as alert } from '../actions/alert'
 import { commandPaletteActionCreator as commandPalette } from '../actions/commandPalette'
-import { dragInProgressActionCreator as dragInProgress } from '../actions/dragInProgress'
 import { errorActionCreator as error } from '../actions/error'
+import { gestureMenuActionCreator as gestureMenu } from '../actions/gestureMenu'
+import { longPressActionCreator as longPress } from '../actions/longPress'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { isAndroidWebView, isIOS, isSafari, isTouch } from '../browser'
-import { inputHandlers } from '../commands'
-import { AlertType } from '../constants'
+import { beforeInput, keyDown, keyUp } from '../commands'
+import { AlertType, LongPressState } from '../constants'
 import * as selection from '../device/selection'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import pathExists from '../selectors/pathExists'
@@ -20,6 +21,7 @@ import { updateCommandState } from '../stores/commandStateStore'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
 import { updateSafariKeyboardState } from '../stores/safariKeyboardStore'
 import { updateScrollTop } from '../stores/scrollTop'
+import selectionRangeStore from '../stores/selectionRangeStore'
 import storageModel from '../stores/storageModel'
 import syncStatusStore from '../stores/syncStatus'
 import { updateSize } from '../stores/viewport'
@@ -28,12 +30,6 @@ import pathToContext from '../util/pathToContext'
 import durations from './durations'
 import equalPath from './equalPath'
 import handleKeyboardVisibility from './handleKeyboardVisibility'
-
-declare global {
-  interface Window {
-    __inputHandlers: ReturnType<typeof inputHandlers>
-  }
-}
 
 // the width of the scroll-at-edge zone at the top/bottom of the screen (for vertical scrolling) or left/right of the screen (for horizontal scrolling)
 const TOOLBAR_SCROLLATEDGE_SIZE = 50
@@ -203,6 +199,8 @@ const initEvents = (store: Store<State, any>) => {
   /** Save selection offset to storage, throttled. */
   const saveSelectionOffset = _.throttle(
     () => {
+      // editables are not long-pressable on desktop, so the range will only be a concern on mobile
+      if (isTouch) selectionRangeStore.update(!selection.isCollapsed())
       storageModel.set('cursor', value => ({
         path: value?.path || store.getState().cursor,
         offset: selection.offsetThought(),
@@ -258,8 +256,11 @@ const initEvents = (store: Store<State, any>) => {
         scrollAtEdge.stop()
       }
     }
-    // do not scroll-at-edge when hovering over QuickDrop component
-    else if (state.dragInProgress && !(state.alert?.alertType === AlertType.DeleteDropHint)) {
+    // do not scroll-at-edge when hovering over DropGutter component
+    else if (
+      state.longPress === LongPressState.DragInProgress &&
+      !(state.alert?.alertType === AlertType.DeleteDropHint)
+    ) {
       const y = e.touches[0].clientY
       scrollContainer = (target.closest('[data-scroll-at-edge]') as HTMLElement) || window
 
@@ -301,6 +302,9 @@ const initEvents = (store: Store<State, any>) => {
       if (state.showCommandPalette) {
         store.dispatch(commandPalette())
       }
+      if (state.showGestureMenu) {
+        store.dispatch(gestureMenu())
+      }
       // we could also persist unsaved data here
     }
     // If the app is backgounded while keyboard is open, then the keyboard will not open when switching back to the app, even when focusNode, document.activeElement, and visualViewport.height all indicate that the keyboard is open. Strangely, the app enters the 'passive' state after hidden -> passive -> active completes. The invalid state can be detected with document.hasFocus(). Since there is no way to force the app to be active when it is passive, then we do not bother trying to re-open the keyboard, and instead disable keyboard is open so that at least it matches what the user sees. Use a timeout to ensure that this is called only when the device stays in the passive state, not when it is moving from hidden -> passive -> active.
@@ -322,21 +326,28 @@ const initEvents = (store: Store<State, any>) => {
       // e.dataTransfer.types is not available in dragLeave for some reason, so we check state.draggingFile
       const state = getState()
       if (state.draggingFile) {
-        dispatch([alert(null), dragInProgress({ value: false })])
+        dispatch([alert(null), longPress({ value: LongPressState.Inactive })])
       }
     })
   }, 100)
 
-  /** Drag enter handler for file drag-and-drop. Sets state.dragInProgress and state.draggingFile to true. */
+  /** Drag enter handler for file drag-and-drop. Sets state.longPress to DragInProgress and state.draggingFile to true. */
   const dragEnter = (e: DragEvent) => {
     // dragEnter and dragLeave are called in alternating pairs as the user drags over nested elements: ENTER, LEAVE, ENTER, LEAVE, ENTER
     // In order to detect the end of dragging a file, we need to debounce the dragLeave event and cancel it if dragEnter occurs.
     // Inspired by: https://stackoverflow.com/questions/3144881/how-do-i-detect-a-html5-drag-event-entering-and-leaving-the-window-like-gmail-d
+
+    const hasSelectionRange = selectionRangeStore.getState()
+    if (hasSelectionRange) return
+
     setTimeout(() => {
       dragLeave.cancel()
     })
     if (e.dataTransfer?.types.includes('Files')) {
-      store.dispatch([alert('Drop to import file'), dragInProgress({ value: true, draggingFile: true })])
+      store.dispatch([
+        alert('Drop to import file'),
+        longPress({ value: LongPressState.DragInProgress, draggingFile: true }),
+      ])
     }
   }
 
@@ -346,18 +357,16 @@ const initEvents = (store: Store<State, any>) => {
       // wait until the next tick so that the thought/subthought drop handler has a chance to be called before draggingFile is reset
       // See: DragAndDropThought and DragAndDropSubthoughts
       setTimeout(() => {
-        store.dispatch([alert(null), dragInProgress({ value: false })])
+        store.dispatch([alert(null), longPress({ value: LongPressState.Inactive })])
       })
     }
   }
-
-  // store input handlers so they can be removed on cleanup
-  const { keyDown, keyUp } = (window.__inputHandlers = inputHandlers(store))
 
   // prevent browser from restoring the scroll position so that we can do it manually
   window.history.scrollRestoration = 'manual'
 
   document.addEventListener('selectionchange', onSelectionChange)
+  window.addEventListener('beforeinput', beforeInput)
   window.addEventListener('keydown', keyDown)
   window.addEventListener('keyup', keyUp)
   window.addEventListener('popstate', onPopstate)
@@ -389,9 +398,10 @@ const initEvents = (store: Store<State, any>) => {
   const unsubscribeSaveErrorReload = syncStatusStore.subscribeSelector(state => state.savingProgress, saveErrorReload)
 
   /** Remove window event handlers. */
-  const cleanup = ({ keyDown, keyUp } = window.__inputHandlers || {}) => {
+  const cleanup = () => {
     unsubscribeSaveErrorReload()
     document.removeEventListener('selectionchange', onSelectionChange)
+    window.removeEventListener('beforeinput', beforeInput)
     window.removeEventListener('keydown', keyDown)
     window.removeEventListener('keyup', keyUp)
     window.removeEventListener('popstate', onPopstate)

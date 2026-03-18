@@ -13,7 +13,9 @@ const categorizeCommand: Command = {
     { key: 'o', meta: true, alt: true },
     { key: ']', meta: true },
   ],
-  // multicursor functionality is handled in the categorize action
+  // Multicursor functionality is handled in the categorize action.
+  // TODO: Implement this with multicursor: true so that we don't need to make a special case of this command in Select All chaining.
+  // See: useFilteredCommands
   multicursor: false,
   svg: CategorizeIcon,
   canExecute: state => {

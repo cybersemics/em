@@ -1,4 +1,3 @@
-import { rgbToHex } from '@mui/material'
 import { PropsWithChildren } from 'react'
 import { useSelector } from 'react-redux'
 import { css, cx } from '../../../styled-system/css'
@@ -8,6 +7,7 @@ import IconType from '../../@types/IconType'
 import LottieData from '../../@types/lottie/LottieData'
 import { ICON_SCALING_FACTOR } from '../../constants'
 import themeColors from '../../selectors/themeColors'
+import rgbToHex from '../../util/rgbToHex'
 import LottieAnimation from './LottieAnimation'
 
 interface AnimatedIconType extends IconType, PropsWithChildren {

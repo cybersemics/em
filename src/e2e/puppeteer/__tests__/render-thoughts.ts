@@ -2,13 +2,16 @@ import path from 'path'
 import configureSnapshots from '../configureSnapshots'
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
+import command from '../helpers/command'
+import exportThoughts from '../helpers/exportThoughts'
 import hide from '../helpers/hide'
 import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
-import screenshot from '../helpers/screenshot-with-no-antialiasing'
+import screenshot from '../helpers/screenshot'
 import scroll from '../helpers/scroll'
 import setTheme from '../helpers/setTheme'
+import { page } from '../setup'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
@@ -172,8 +175,7 @@ describe('multiline', () => {
 })
 
 describe('Color Theme', () => {
-  // ProtocolError: Protocol error (Target.createBrowserContext): Session with given id not found.
-  it.skip('superscript on light theme', async () => {
+  it('superscript on light theme', async () => {
     await setTheme('Light')
 
     await hideHUD()
@@ -190,10 +192,7 @@ describe('Color Theme', () => {
     expect(await screenshot()).toMatchImageSnapshot()
   })
 
-  // TODO: Test stopped working inexplicably when #2935 was merged, although the changes are unrelated.
-  // ProtocolError: Protocol error (Target.createBrowserContext): Session with given id not found.
-  // https://github.com/cybersemics/em/actions/runs/14957632125?pr=2936
-  it.skip('colored and highlighted text', async () => {
+  it('colored and highlighted text', async () => {
     const importText = `
     - Labrador
     - Golden Retriever`
@@ -210,5 +209,74 @@ describe('Color Theme', () => {
     await hideHUD()
 
     expect(await screenshot()).toMatchImageSnapshot()
+  })
+})
+
+describe('Superscripts', () => {
+  it('table', async () => {
+    await paste(`
+      - a
+        - =view
+          - Table
+        - b
+          - b
+    `)
+
+    await hideHUD()
+    expect(await screenshot()).toMatchImageSnapshot()
+  })
+
+  it('context view', async () => {
+    await paste(`
+      - a
+        - m
+          - x
+      - b
+        - m
+          - y
+      - c
+        - a
+        - b
+    `)
+
+    await clickThought('a')
+    await clickThought('m')
+
+    await command('toggleContextView')
+
+    await hideHUD()
+    expect(await screenshot()).toMatchImageSnapshot()
+  })
+
+  it('paste text from a note into a thought', async () => {
+    const importText = `
+      - This is a thought
+        - =note
+          - This is a note
+    `
+
+    await paste(importText)
+
+    // Double click inside the left edge to select the first word
+    const note = await page.$('[aria-label=note-editable]')
+    const boundingBox = await note?.boundingBox()
+
+    if (!boundingBox) throw new Error('boundingBox not found')
+
+    const x = boundingBox.x + 1
+    const y = boundingBox.y + boundingBox.height / 2
+
+    await page.mouse.click(x, y, { clickCount: 2 })
+
+    await press('c', { ctrl: true })
+    await clickThought('This is a thought')
+    await press('v', { ctrl: true })
+
+    // get exported html and compress all indentation (whitespace before/after newline)
+    const output = (await exportThoughts({ mimeType: 'text/html' })).replace(/\s*\n\s*/g, '')
+
+    const expected = `<ul><li>__ROOT__<ul><li>This is a Thisthought<ul><li>=note<ul><li>This is a note</li></ul></li></ul></li></ul></li></ul>`
+
+    expect(output).toBe(expected)
   })
 })

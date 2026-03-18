@@ -13,7 +13,7 @@ import isInGestureZone from '../util/isInGestureZone'
 interface TraceGestureProps {
   // Change the node to which pointer event handlers are attached. Defaults to the signature pad canvas.
   // This is necessary for gesture tracing since the signature pad canvas cannot be a descendant of Thoughts, and Thoughts cannot be a descendant of the canvas. Therefore, we cannot rely on event bubbling for both Thoughts and the signature pad canvas to receive pointer events. When an eventNode is given, signature_pad's internal _handlePointerStart and _handlePointerMove are added to eventNode and user-events:none is set on the signature pad canvas.
-  eventNodeRef?: React.RefObject<HTMLElement>
+  eventNodeRef?: React.RefObject<HTMLElement | null>
 }
 
 type SignaturePadEventType = 'beginStroke' | 'endStroke' | 'beforeUpdateStroke' | 'afterUpdateStroke'
@@ -32,12 +32,12 @@ interface SignaturePadOverride {
 
 /** A hook that detects when there is a cancelled gesture in progress. Handles GestureHint and: CommandPaletteGesture which have different ways of showing a cancelled gesture. */
 const useGestureCancelled = () => {
-  const showCommandPalette = useSelector(state => state.showCommandPalette)
+  const showGestureMenu = useSelector(state => state.showGestureMenu)
 
   const invalidGesture = gestureStore.useSelector(
     state =>
       state.gesture &&
-      showCommandPalette &&
+      showGestureMenu &&
       !globalCommands.some(command => !command.hideFromHelp && gestureString(command) === state.gesture),
   )
 
@@ -51,6 +51,7 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
   const show = gestureStore.useSelector(state => state.gesture.length > 0)
   const cancelled = useGestureCancelled()
   const innerHeight = viewportStore.useSelector(state => state.innerHeight)
+  const innerWidth = viewportStore.useSelector(state => state.innerWidth)
   const signaturePadRef = useRef<SignaturePad | null>(null)
 
   // Clear the signature pad when the stroke starts.
@@ -69,6 +70,16 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
     signaturePad._ctx.shadowOffsetY = 0
     signaturePad._ctx.shadowBlur = GESTURE_GLOW_BLUR
   }, [colors])
+
+  // Resize the signature pad when the screen orientation changes.
+  useEffect(() => {
+    if (!signaturePadRef.current) return
+
+    const signaturePad = signaturePadRef.current['signaturePad'] as SignaturePadOverride
+
+    signaturePad.canvas.width = innerWidth
+    signaturePad.canvas.height = innerHeight
+  }, [innerHeight, innerWidth])
 
   useEffect(() => {
     if (!signaturePadRef.current) return

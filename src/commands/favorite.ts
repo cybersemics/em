@@ -6,6 +6,7 @@ import FavoritesIcon from '../components/icons/FavoritesIcon'
 import findDescendant from '../selectors/findDescendant'
 import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursor from '../selectors/hasMulticursor'
+import ellipsize from '../util/ellipsize'
 import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
 
@@ -52,7 +53,11 @@ const favorite: Command = {
     dispatch([
       // TODO: Fix single value to not overwrite other thought
       toggleAttribute({ path: cursor, values: ['=favorite', 'true'] }),
-      alert(isFavorite ? `Removed ${thought.value} from favorites` : `Added ${thought.value} to favorites`),
+      alert(
+        isFavorite
+          ? `Removed "${ellipsize(thought.value)}" from favorites`
+          : `Added "${ellipsize(thought.value)}" to favorites`,
+      ),
     ])
   },
 }

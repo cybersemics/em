@@ -1,11 +1,11 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { executeCommandWithMulticursor } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
-import { executeCommandWithMulticursor } from '../../util/executeCommand'
 import archiveCommand from '../archive'
 
 beforeEach(initStore)

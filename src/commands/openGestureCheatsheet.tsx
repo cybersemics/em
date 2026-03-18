@@ -9,6 +9,8 @@ const openGestureCheatsheetCommand: Command = {
   description: 'Opens a list of all the gestures.',
   gesture: 'rdld',
   multicursor: false,
+  hideAlert: true,
+  hideFromCommandPalette: true,
   svg: GestureCheatsheetIcon,
   canExecute: () => isDocumentEditable(),
   exec: dispatch => {

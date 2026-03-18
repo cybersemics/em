@@ -126,6 +126,14 @@ const keyframes = defineKeyframes({
       opacity: 0.5,
     },
   },
+  pulseBackgroundHighlight: {
+    from: {
+      backgroundColor: 'highlight0',
+    },
+    to: {
+      backgroundColor: 'highlight10',
+    },
+  },
   ripple_loader: {
     '0%': {
       top: '100%',
@@ -164,15 +172,25 @@ const keyframes = defineKeyframes({
       transform: 'translateX(-50%) translateY(0)',
     },
   },
-  moveThoughtOver: {
-    '0%': { transform: 'scale3d(1, 1, 1)' },
-    '50%': { transform: 'scale3d(1.5, 1.5, 1)' },
-    '100%': { transform: 'scale3d(1, 1, 1)' },
+  /**
+   * Clone drop animation: translate to destination and apply subtle fade/scale.
+   * Combines translate and scale in a single transform to avoid property conflicts.
+   * Uses CSS vars (--clone-dx, --clone-dy) set per-instance for dynamic positioning.
+   */
+  cloneDragToCollapsed: {
+    from: {
+      transform: 'translate(0, 0) scale(1)',
+      opacity: 1,
+    },
+    to: {
+      transform: 'translate(var(--clone-dx, 0px), var(--clone-dy, 0px)) scale(0.985)',
+      opacity: 0.98,
+    },
   },
-  moveThoughtUnder: {
-    '0%': { transform: 'scale3d(1, 1, 1)', opacity: 1, filter: 'blur(0)' },
-    '50%': { transform: 'scale3d(0.5, 0.5, 1)', opacity: 0.5, filter: 'blur(2px)' },
-    '100%': { transform: 'scale3d(1, 1, 1)', opacity: 1, filter: 'blur(0)' },
+  bulletGrow: {
+    '0%': { transform: 'scale3d(1, 1, 1)' },
+    '70%': { transform: 'scale3d(1.2, 1.2, 1)' },
+    '100%': { transform: 'scale3d(1, 1, 1)' },
   },
   // the hideCaret animation must run every time the indent changes on iOS Safari, which necessitates replacing the animation with an identical substitute with a different name
   // See: recipes/hideCaret.ts
@@ -325,6 +343,17 @@ const globalCss = defineGlobalStyles({
     content: 'attr(placeholder)',
     cursor: 'text',
   },
+  // PandaCSS does not directly support fallbacks: https://github.com/chakra-ui/panda/discussions/846
+  ':root': {
+    '--active-glow-gradient':
+      'linear-gradient(180deg, {colors.commandCenterBlue} 0%, {colors.commandCenterPurple} 100%)',
+  },
+  '@supports (background-image: linear-gradient(180deg in oklch, #000))': {
+    ':root': {
+      '--active-glow-gradient':
+        'linear-gradient(180deg in oklch, {colors.commandCenterBlue} 0%, {colors.commandCenterPurple} 100%)',
+    },
+  },
 })
 
 export default defineConfig({
@@ -348,7 +377,7 @@ export default defineConfig({
         sm: '320px', // approx size of iPhone SE
         md: '400px', // approx size of iPhone 12 Pro
         lg: '600px', // approx size of iPad
-        xl: '800px', // approx size of a laptop
+        xl: '768px', // approx size of landscape tablet or laptop
         '2xl': '1000px', // approx size of a desktop
         '3xl': '1200px', // approx size of a large desktop
       },
@@ -375,21 +404,20 @@ export default defineConfig({
           nodeCurveYLayerClockwise: {
             value: 'cubic-bezier(0.8,0.2,0.8,1)',
           },
-          nodeCurveSortXLayer: {
-            value: 'cubic-bezier(.1, 0, .1, .5)',
-          },
-          nodeCurveSortYLayer: {
-            value: 'cubic-bezier(0.5, 0, 0.5, 1)',
-          },
         },
         fontSizes: {
           sm: { value: '80%' },
           md: { value: '90%' },
         },
+        /** The width for drop hover bars during drag-and-drop operations. */
+        sizes: {
+          dropHover: { value: '50vw' },
+        },
         spacing: {
           modalPadding: { value: '8%' },
           safeAreaTop: { value: 'env(safe-area-inset-top)' },
           safeAreaBottom: { value: 'env(safe-area-inset-bottom)' },
+          editableClipBottom: { value: '0.1em' },
         },
         /* z-index schedule
         Keep these in one place to make it easier to determine interactions and prevent conflicts. */
@@ -398,11 +426,13 @@ export default defineConfig({
             'dialog',
             'dialogContainer',
             'popup',
+            'cloneDroppedThought',
             'hoverArrow',
             'gestureTrace',
             'hamburgerMenu',
             'sidebar',
             'modal',
+            'footer',
             'toolbarContainer',
             'toolbarOverlay',
             'toolbarArrow',
@@ -459,6 +489,11 @@ export default defineConfig({
           },
         },
         durations,
+        gradients: {
+          activeGlow: {
+            value: 'var(--active-glow-gradient)',
+          },
+        },
       },
     },
   },

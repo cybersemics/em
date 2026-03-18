@@ -10,7 +10,7 @@ import isRoot from '../util/isRoot'
 
 const toggleSortCommand: Command = {
   id: 'toggleSortPicker',
-  label: 'SortPicker',
+  label: 'Sort Picker',
   description: 'Open a sort picker to pick the sort option and sort by option.',
   multicursor: false,
   hideFromHelp: true,

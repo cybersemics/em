@@ -81,7 +81,7 @@ describe('drag', () => {
       - d
     `)
 
-    await dragAndDropThought('a', null, { position: 'none', showAlert: true })
+    await dragAndDropThought('a', null, { hold: true, position: 'none', showAlert: true })
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
@@ -95,7 +95,7 @@ describe('drag', () => {
       - d
     `)
 
-    await dragAndDropThought('a', 'd', { position: 'after' })
+    await dragAndDropThought('a', 'd', { hold: true, position: 'after' })
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
@@ -109,7 +109,7 @@ describe('drag', () => {
       - d
     `)
 
-    await dragAndDropThought('a', 'b', { position: 'child' })
+    await dragAndDropThought('a', 'b', { hold: true, position: 'child' })
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
@@ -125,7 +125,7 @@ describe('drag', () => {
 
     await clickThought('a')
 
-    await dragAndDropThought('x', 'c', { position: 'after' })
+    await dragAndDropThought('x', 'c', { hold: true, position: 'after' })
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
@@ -143,7 +143,7 @@ describe('drag', () => {
 
     await clickThought('b')
     await clickThought('c')
-    await dragAndDropThought('c', 'e', { position: 'before', dropUncle: true })
+    await dragAndDropThought('c', 'e', { hold: true, position: 'before', dropUncle: true })
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot({
@@ -168,7 +168,7 @@ describe('drag', () => {
     `)
 
     await clickThought('x')
-    await dragAndDropThought('x', 'd', { position: 'after', dropUncle: true })
+    await dragAndDropThought('x', 'd', { hold: true, position: 'after', dropUncle: true })
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
@@ -189,7 +189,7 @@ describe('drag', () => {
     `)
 
     await clickThought('x')
-    await dragAndDropThought('x', 'c', { position: 'after' })
+    await dragAndDropThought('x', 'c', { hold: true, position: 'after' })
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
@@ -210,7 +210,7 @@ describe('drag', () => {
     `)
 
     await clickThought('x')
-    await dragAndDropThought('x', 'd', { position: 'after' })
+    await dragAndDropThought('x', 'd', { hold: true, position: 'after' })
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
@@ -233,7 +233,7 @@ describe('drag', () => {
     await simulateDragAndDrop({ drop: true })
 
     await clickThought('x')
-    await dragAndDropThought('x', 'd', { position: 'before' })
+    await dragAndDropThought('x', 'd', { hold: true, position: 'before' })
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
@@ -253,7 +253,7 @@ describe('drag', () => {
     `)
 
     await clickThought('x')
-    await dragAndDropThought('x', 'd', { position: 'before' })
+    await dragAndDropThought('x', 'd', { hold: true, position: 'before' })
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
@@ -274,7 +274,7 @@ describe('drag', () => {
 
     await clickThought('a')
     await clickThought('b')
-    await dragAndDropThought('e', 'f', { position: 'after' })
+    await dragAndDropThought('e', 'f', { hold: true, position: 'after' })
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
@@ -289,13 +289,13 @@ describe('drag', () => {
 
     await simulateDragAndDrop({ drop: true })
 
-    await dragAndDropThought('b', 'c', { position: 'after' })
+    await dragAndDropThought('b', 'c', { hold: true, position: 'after' })
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
   })
 
-  it('should show alert and quick drop panels when long pressing after drag operation', async () => {
+  it('should show alert', async () => {
     await paste(`
       - a
       - b
@@ -304,13 +304,12 @@ describe('drag', () => {
     // First, drag thought 'a' after thought 'b' (resulting in b followed by a)
     await dragAndDropThought('a', 'b', {
       position: 'after',
-      mouseUp: true,
       showAlert: true,
     })
 
     await dragAndDropThought('a', null, {
+      hold: true,
       position: 'none',
-      mouseUp: false,
       showAlert: true,
     })
 
@@ -332,7 +331,7 @@ describe('drag', () => {
           - e
     `)
 
-    await dragAndDropThought('x', 'e', { position: 'before' })
+    await dragAndDropThought('x', 'e', { hold: true, position: 'before' })
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
@@ -342,7 +341,7 @@ describe('drag', () => {
 describe('drop', () => {
   beforeEach(hideHUD)
 
-  // TODO: Fails intermittently due to mouseup: true.
+  // TODO: Fails intermittently due to hold: false
   // See previous attempts to fix: https://github.com/cybersemics/em/pull/2701
   it.skip('DragAndDropThought', async () => {
     await simulateDragAndDrop({ drag: true, drop: true })
@@ -354,7 +353,7 @@ describe('drop', () => {
       - d
     `)
 
-    await dragAndDropThought('a', 'd', { position: 'after', mouseUp: true })
+    await dragAndDropThought('a', 'd', { position: 'after' })
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
@@ -382,7 +381,7 @@ describe('drop', () => {
             - c
       `)
 
-      await dragAndDropThought('c', 'c', { position: 'after' })
+      await dragAndDropThought('c', 'c', { hold: true, position: 'after' })
 
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
@@ -442,7 +441,7 @@ describe('hover expansion', () => {
         `)
 
     // Start dragging thought C
-    await dragAndDropThought('C', 'A', { position: 'child' })
+    await dragAndDropThought('C', 'A', { hold: true, position: 'child' })
 
     // Wait for expansion to occur
     await sleep(MOCK_EXPAND_HOVER_DELAY)
@@ -464,13 +463,13 @@ describe('hover expansion', () => {
           - C
           `)
     // First expand thought A by dragging over it
-    await dragAndDropThought('C', 'A', { position: 'child' })
+    await dragAndDropThought('C', 'A', { hold: true, position: 'child' })
 
     // Wait for expansion to occur
     await sleep(MOCK_EXPAND_HOVER_DELAY)
 
     // Now drag to thought B instead
-    await dragAndDropThought('C', 'B', { position: 'after', skipMouseDown: true })
+    await dragAndDropThought('C', 'B', { hold: true, position: 'after', skipMouseDown: true })
 
     await sleep(MOCK_EXPAND_HOVER_DELAY)
 
@@ -494,13 +493,13 @@ describe('hover expansion', () => {
     `)
 
     // First expand thought A by dragging over it
-    await dragAndDropThought('C', 'A', { position: 'child' })
+    await dragAndDropThought('C', 'A', { hold: true, position: 'child' })
 
     // Wait for expansion to occur
     await sleep(MOCK_EXPAND_HOVER_DELAY)
 
     // Now move to A1 using the dragAndDropThought function with skipMouseDown
-    await dragAndDropThought('C', 'A1', { position: 'child', skipMouseDown: true })
+    await dragAndDropThought('C', 'A1', { hold: true, position: 'child', skipMouseDown: true })
 
     // Wait for A1 to expand
     await sleep(MOCK_EXPAND_HOVER_DELAY)
@@ -513,7 +512,7 @@ describe('hover expansion', () => {
     expect(a12Editable).toBeTruthy()
 
     // Now drag to A2
-    await dragAndDropThought('C', 'A2', { position: 'child', skipMouseDown: true })
+    await dragAndDropThought('C', 'A2', { hold: true, position: 'child', skipMouseDown: true })
 
     // Wait for any state changes
     await sleep(MOCK_EXPAND_HOVER_DELAY)
@@ -526,7 +525,7 @@ describe('hover expansion', () => {
     expect(a12Visible).toBe(false)
 
     // Now drag completely away to B
-    await dragAndDropThought('C', 'B', { position: 'after', skipMouseDown: true })
+    await dragAndDropThought('C', 'B', { hold: true, position: 'after', skipMouseDown: true })
 
     await sleep(MOCK_EXPAND_HOVER_DELAY)
 

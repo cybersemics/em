@@ -8,13 +8,13 @@ import DragCommandZone from '../@types/DragCommandZone'
 import State from '../@types/State'
 import { isTouch } from '../browser'
 import { commandById, formatKeyboardShortcut } from '../commands'
+import { executeCommandWithMulticursor } from '../commands'
 import { TOOLBAR_BUTTON_PADDING } from '../constants'
 import useDragAndDropToolbarButton from '../hooks/useDragAndDropToolbarButton'
 import useLongPress from '../hooks/useLongPress'
 import store from '../stores/app'
 import commandStateStore from '../stores/commandStateStore'
-import { executeCommandWithMulticursor } from '../util/executeCommand'
-import fastClick from '../util/fastClick'
+import dndRef from '../util/dndRef'
 import getCursorSortDirection from '../util/getCursorSortDirection'
 import haptics from '../util/haptics'
 
@@ -50,6 +50,9 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
 
   /** Tracks if long press was activated and the command has a longPress handler. Used to show the UndoSlider when the Undo or Redo toolbar buttons are long pressed. */
   const isPressedRef = useRef(false)
+
+  /** Tracks if mousedown occurred on this button, independent of React's render cycle. This prevents a race condition where the React-prop isPressing (derived from the parent Toolbar's pressingToolbarId state) hasn't updated between mousedown and click events dispatched in rapid succession (e.g. by Puppeteer under CI load). */
+  const isMouseDownRef = useRef(false)
 
   const command = commandById(commandId)
   if (!command) {
@@ -109,11 +112,13 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
   const tapUp = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
       longPress.props[isTouch ? 'onTouchEnd' : 'onMouseUp']?.()
+      const wasMouseDown = isMouseDownRef.current
+      isMouseDownRef.current = false
       const iconEl = e.target as HTMLElement
       const toolbarEl = iconEl.closest('#toolbar')!
       const scrolled = isTouch && Math.abs(lastScrollLeft.current - toolbarEl.scrollLeft) >= 5
 
-      if (!customize && isButtonExecutable && !disabled && !scrolled && isPressing) {
+      if (!customize && isButtonExecutable && !disabled && !scrolled && (isPressing || wasMouseDown)) {
         haptics.light()
 
         if (!isPressedRef.current) {
@@ -162,6 +167,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
   /** Handles the onMouseDown/onTouchEnd event. Updates lastScrollPosition for tapUp. */
   const tapDown = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
+      isMouseDownRef.current = true
       const iconEl = e.target as HTMLElement
       const toolbarEl = iconEl.closest('#toolbar')!
       longPressTapDown?.(e)
@@ -200,7 +206,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
       {...longPress.props}
       aria-label={command.label}
       data-testid='toolbar-icon'
-      ref={node => dragSource(dropTarget(node))}
+      ref={dndRef(node => dragSource(dropTarget(node)))}
       key={commandId}
       title={`${command.label}${(command.keyboard ?? command.overlay?.keyboard) ? ` (${formatKeyboardShortcut((command.keyboard ?? command.overlay?.keyboard)!)})` : ''}${buttonError ? '\nError: ' + buttonError : ''}`}
       className={cx(
@@ -235,8 +241,14 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
         // must match toolbar marginBottom
         padding: `14px ${TOOLBAR_BUTTON_PADDING}px ${isDraggingAny ? '7em' : 0}px ${TOOLBAR_BUTTON_PADDING}px`,
       }}
-      onMouseLeave={onMouseLeave}
-      {...fastClick(tapUp, { enableHaptics: false, tapDown })}
+      onMouseLeave={() => {
+        isMouseDownRef.current = false
+        onMouseLeave?.()
+      }}
+      onMouseDown={isTouch ? undefined : tapDown}
+      onClick={isTouch ? undefined : tapUp}
+      onTouchStart={isTouch ? tapDown : undefined}
+      onTouchEnd={isTouch ? tapUp : undefined}
     >
       {
         // selected top dash

@@ -1,10 +1,9 @@
 import { createPortal } from 'react-dom'
 import { css } from '../../../styled-system/css'
 import Command from '../../@types/Command'
-import GesturePath from '../../@types/GesturePath'
 import GestureDiagram from '../GestureDiagram'
 
-/** During the totirla, a portal is used for rendering gestures on top of the thought space. It's the ID for the portal element. */
+/** During the tutorial, a portal is used for rendering gestures on top of the thought space. It's the ID for the portal element. */
 const TUTORIAL_GESTURE_PORTAL_DOM_ID = 'tutorial-gesture-diagram-portal'
 
 /** A portal for conditionally rendering Gesture hints. Used to show an appropriate gesture  below the tutorial UI up top, thus Portal. */
@@ -31,7 +30,7 @@ const TutorialGestureDiagram = ({ gesture }: { gesture: Command['gesture'] }) =>
         })}
       >
         <GestureDiagram
-          path={displayGesture as GesturePath}
+          path={displayGesture ?? null}
           size={250}
           strokeWidth={5}
           arrowSize={50}

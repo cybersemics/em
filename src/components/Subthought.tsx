@@ -81,6 +81,9 @@ const Subthought = ({
         findAnyChild(state, grandparentId, child => child.value === '=grandchildren')?.id) ||
       null,
   )
+  const isSplitThought = useSelector(
+    state => state.lastUndoableActionType === 'splitThought' && state.cursor && head(state.cursor) === head(simplePath),
+  )
   const hideBullet = useSelector(state => {
     const hideBulletsChildren = attributeEquals(state, childrenAttributeId, '=bullet', 'None')
     if (hideBulletsChildren) return true
@@ -129,7 +132,8 @@ const Subthought = ({
           //   See: https://github.com/cybersemics/em/actions/runs/14115358795?pr=2872
           // Do not fade in empty thoughts. An instant snap in feels better here.
           // opacity creates a new stacking context, so it must only be applied to Thought, not to the outer VirtualThought which contains DropChild. Otherwise subsequent DropChild will be obscured.
-          opacity: thought.value === '' || navigator.webdriver ? opacity : '0',
+          // Do not fade in when a split creates a new thought; it should snap in instantly.
+          opacity: thought.value === '' || navigator.webdriver || isSplitThought ? opacity : '0',
           // When autofocus changes, use a slow (750ms) ease-out to provide a gentle transition to non-focal thoughts.
           // If autofocus has not changed, it means that the thought is being rendered for the first time, such as the children of a thought that was just expanded. In this case, match the tree-node top animation (150ms) to ensure that the newly rendered thoughts fade in to fill the space that is being opened up from the next uncle animating down.
           // Note that ease-in is used in contrast to the tree-node's ease-out. This gives a little more time for the next uncle to animate down and clear space before the newly rendered thought fades in. Otherwise they overlap too much during the transition.

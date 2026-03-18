@@ -1,8 +1,10 @@
 import { DropTargetMonitor, useDrop } from 'react-dnd'
 import { NativeTypes } from 'react-dnd-html5-backend'
+import { useDispatch } from 'react-redux'
 import DragAndDropType from '../@types/DragAndDropType'
 import DragThoughtItem from '../@types/DragThoughtItem'
 import DragThoughtOrFiles from '../@types/DragThoughtOrFiles'
+import DragThoughtZone from '../@types/DragThoughtZone'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -10,9 +12,10 @@ import State from '../@types/State'
 import { alertActionCreator as alert } from '../actions/alert'
 import { errorActionCreator as error } from '../actions/error'
 import { importFilesActionCreator as importFiles } from '../actions/importFiles'
+import { longPressActionCreator as longPress } from '../actions/longPress'
 import { moveThoughtActionCreator as moveThought } from '../actions/moveThought'
 import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from '../actions/setIsMulticursorExecuting'
-import { HOME_TOKEN } from '../constants'
+import { HOME_TOKEN, LongPressState } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
 import getNextRank from '../selectors/getNextRank'
 import getPrevRank from '../selectors/getPrevRank'
@@ -22,6 +25,7 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import visibleDistanceAboveCursor from '../selectors/visibleDistanceAboveCursor'
 import store from '../stores/app'
+import animateDroppedThought from '../util/animateDroppedThought'
 import appendToPath from '../util/appendToPath'
 import ellipsize from '../util/ellipsize'
 import equalPath from '../util/equalPath'
@@ -34,9 +38,9 @@ import isDivider from '../util/isDivider'
 import isDraggedFile from '../util/isDraggedFile'
 import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
+import throttleByMousePosition from '../util/throttleByMousePosition'
 import { DropValidationResult } from './useDragAndDropThought'
 import useDragLeave from './useDragLeave'
-import useHoveringPath from './useHoveringPath'
 
 interface DroppableSubthoughts {
   path: Path
@@ -78,7 +82,7 @@ const canDrop = ({ path: thoughtsTo }: DroppableSubthoughts, monitor: DropTarget
 
   return (
     // dragInProgress can be set to false to abort the drag (e.g. by shaking)
-    state.dragInProgress &&
+    state.longPress === LongPressState.DragInProgress &&
     // do not drop on thoughts hidden by autofocus
     (!isHidden() || isClosestHiddenParent()) &&
     // do not drop on descendants
@@ -174,6 +178,18 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
     return head(rootedParentOf(state, item.path)) !== head(rootedParentOf(state, pathTo))
   })
 
+  // If the destination is collapsed, animate a clone of the dragged thought to the destination thought's position.
+  // Trigger animation before dispatching the move to capture positions before layout shifts.
+  if (draggedItems.length === 1) {
+    const isDestinationExpanded = isPathExpanded(state, props.path)
+    if (!isDestinationExpanded) {
+      const fromPath = hashPath(draggedItems[0].path)
+      const toPath = hashPath(props.path)
+      // kick off animation before DOM updates - it will query DOM elements and handle layout shifts
+      animateDroppedThought({ fromPath, toPath })
+    }
+  }
+
   store.dispatch((dispatch, getState) => {
     /** Returns true if the thought should be dropped at the top of a collapsed parent. */
     const shouldDropAtTop = (pathTo: Path) => {
@@ -239,11 +255,7 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
           ? ` in the context of ${ellipsize(headValue(state, props.simplePath ?? props.path) || 'MISSING_CONTEXT')}`
           : ''
 
-        store.dispatch(
-          alert(`${alertFrom} moved to${dropTop ? ' top of' : ''} ${alertTo}${inContext}.`, {
-            clearDelay: 5000,
-          }),
-        )
+        store.dispatch(alert(`${alertFrom} moved to${dropTop ? ' top of' : ''} ${alertTo}${inContext}.`))
       }, 100)
     }
   })
@@ -260,17 +272,41 @@ const dropCollect = (monitor: DropTargetMonitor) => ({
 
 /** A draggable and droppable SubThought hook. */
 const useDragAndDropSubThought = (props: DroppableSubthoughts) => {
-  const [{ isHovering, isBeingHoveredOver, isDeepHovering, canDropThought }, dropTarget] = useDrop({
+  const dispatch = useDispatch()
+
+  const [{ isHovering, isDeepHovering, canDropThought }, dropTarget] = useDrop({
     accept: [DragAndDropType.Thought, NativeTypes.FILE],
     canDrop: (item, monitor) => canDrop(props, monitor),
     drop: (item, monitor) => drop(props, monitor),
     collect: dropCollect,
+    hover: (_, monitor) =>
+      throttleByMousePosition(() => {
+        dispatch((dispatch, getState) => {
+          const state = getState()
+
+          // If the drag has been canceled, ignore hoveringPath behavior
+          if (
+            state.longPress === LongPressState.DragCanceled ||
+            (state.hoveringPath === props.path && state.hoverZone === DropThoughtZone.SubthoughtsDrop)
+          )
+            return
+
+          dispatch(
+            longPress({
+              value: state.longPress,
+              draggingThoughts: state.draggingThoughts,
+              hoveringPath: props.path,
+              hoverZone: DropThoughtZone.SubthoughtsDrop,
+              sourceZone: DragThoughtZone.Thoughts,
+            }),
+          )
+        })
+      }, monitor.getClientOffset()),
   })
 
-  useHoveringPath(props.path, isHovering, DropThoughtZone.SubthoughtsDrop)
   useDragLeave({ isDeepHovering, canDropThought })
 
-  return { isHovering, isBeingHoveredOver, isDeepHovering, dropTarget }
+  return { isHovering, isDeepHovering, dropTarget }
 }
 
 export default useDragAndDropSubThought

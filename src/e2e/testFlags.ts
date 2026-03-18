@@ -1,17 +1,20 @@
 /** Test flags that are injected into window.em.testFlags. */
 const testFlags: {
+  logActions: boolean
   /** Delay in ms before expanding the hovering thought. */
   expandHoverDelay: number | null
+  /** Delay in ms to mock data replication, for simulating network latency in tests. */
+  replicationDelay: number
   /** Render drop-hover elements as blocks of color. */
   simulateDrag: boolean
   /** Render drop targets as blocks of color. */
   simulateDrop: boolean
 } = {
-  /** Delay in ms before expanding the hovering thought. Set in drag-and-drop test.  If null, EXPAND_HOVER_DELAY is use instead. */
+  logActions: false,
   expandHoverDelay: null,
-  /** Render drop-hover elements as blocks of color. */
+  replicationDelay: 0,
   simulateDrag: false,
-  /** Render drop targets as blocks of color. */
   simulateDrop: false,
 }
+
 export default testFlags

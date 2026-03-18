@@ -1,6 +1,4 @@
-import path from 'path'
 import { KnownDevices } from 'puppeteer'
-import configureSnapshots from '../configureSnapshots'
 import emulate from '../helpers/emulate'
 import longPressThought from '../helpers/longPressThought'
 import multiselectThoughts from '../helpers/multiselectThoughts'
@@ -8,9 +6,7 @@ import paste from '../helpers/paste'
 import waitForEditable from '../helpers/waitForEditable'
 import { page } from '../setup'
 
-expect.extend({
-  toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
-})
+vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
 describe('multiselect', () => {
   it('should multiselect two thoughts at once', async () => {
@@ -21,7 +17,7 @@ describe('multiselect', () => {
 
     await multiselectThoughts(['a', 'b'])
 
-    const highlightedBullets = await page.$$('.bullet[data-highlighted=true]')
+    const highlightedBullets = await page.$$('[aria-label="bullet"][data-highlighted="true"]')
     const alertContent = await page.$eval('[data-testid=alert-content]', el => el.textContent)
 
     expect(highlightedBullets.length).toBe(2)
@@ -31,7 +27,7 @@ describe('multiselect', () => {
 
 describe('mobile only', () => {
   beforeEach(async () => {
-    await emulate(KnownDevices['iPhone 11'])
+    await emulate(KnownDevices['iPhone 15 Pro'])
   }, 10000)
 
   it('should multiselect two thoughts at once', async () => {
@@ -44,13 +40,21 @@ describe('mobile only', () => {
     const a = await waitForEditable('a')
     const b = await waitForEditable('b')
 
-    await longPressThought(a, { edge: 'right', x: 100 })
-    await longPressThought(b, { edge: 'right', x: 100 })
+    await longPressThought(a, { edge: 'right' })
+    await longPressThought(b, { edge: 'right' })
 
-    const highlightedBullets = await page.$$('.bullet[data-highlighted=true]')
-    const commandMenuPanelTextContent = await page.$eval('[data-testid=command-menu-panel]', el => el.textContent)
+    // In CI, sometimes the count of highlighted bullets are incorrect. The selector query runs immediately after both long presses, but react might not have finished re-rendering all bullet components.
+    // Wait for the Command Center to show "2 thoughts selected" before we query for highlighted bullets.
+    await page.waitForFunction(
+      () => {
+        const panel = document.querySelector('[data-testid=command-center-panel]')
+        return panel?.textContent?.includes('2 thoughts selected') ?? false
+      },
+      { timeout: 6000 },
+    )
+
+    const highlightedBullets = await page.$$('[aria-label="bullet"][data-highlighted="true"]')
 
     expect(highlightedBullets.length).toBe(2)
-    expect(commandMenuPanelTextContent).toContain('2 thoughts selected')
   })
 })

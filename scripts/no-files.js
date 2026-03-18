@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-
 /** Fails with exit code 1 if any of the given files exists. */
 import fs from 'fs'
 import path from 'path'

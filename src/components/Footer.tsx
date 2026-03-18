@@ -129,16 +129,15 @@ const Footer = () => {
   //   fontSize,
   // })
 
-  const firstUpdate = useRef(true)
+  const _fontSize = useRef(fontSize)
 
   // alert when font size changes
   useEffect(() => {
     // prevent alert dispatch when rendered for first time
-    if (!firstUpdate.current) {
-      dispatch(alert(`Font size: ${fontSize}`, { clearDelay: 2000 }))
+    if (_fontSize.current !== fontSize) {
+      dispatch(alert(`Font size: ${fontSize}`))
       scrollTo('bottom')
-    } else {
-      firstUpdate.current = false
+      _fontSize.current = fontSize
     }
   }, [dispatch, fontSize])
 
@@ -160,7 +159,7 @@ const Footer = () => {
         backgroundColor: 'footerBg',
         boxSizing: 'border-box',
         width: '100%',
-        zIndex: 'modal',
+        zIndex: 'footer',
         color: 'fg',
       })}
     >

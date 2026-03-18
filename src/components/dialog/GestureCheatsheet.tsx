@@ -1,7 +1,6 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { toggleGestureCheatsheetActionCreator } from '../../actions/toggleGestureCheatsheet'
-import allowScroll from '../../device/allowScroll'
 import CommandTable from '../CommandTable'
 import FadeTransition from '../FadeTransition'
 import Dialog from './Dialog'
@@ -22,15 +21,6 @@ const GestureCheatsheet: React.FC = () => {
   const handleClose = () => {
     dispatch(toggleGestureCheatsheetActionCreator({ value: false }))
   }
-
-  useEffect(() => {
-    /** Disable scrolling when the dialog is open. */
-    allowScroll(!isOpen)
-
-    return () => {
-      allowScroll(true)
-    }
-  }, [isOpen])
 
   return (
     <FadeTransition in={isOpen} unmountOnExit type='medium' nodeRef={nodeRef}>
