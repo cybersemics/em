@@ -172,17 +172,12 @@ const Tip: FC<
     onDismiss: onSwipeDismiss,
   })
 
-  /** Opacity derived from swipe completion. Linearly decreases from 1 -> 0. */
-  const swipeOpacity = 1 - completion
-
   // ── Handlers ────────────────────────────────────────────────────────────
 
-  /** Begins the fade-out transition when the user taps the Clear button. */
-  const handleClose = useCallback(() => {
-    animateDismiss()
-  }, [animateDismiss])
-
   useEffect(() => {
+    /** Opacity derived from swipe completion. Linearly decreases from 1 -> 0. */
+      const swipeOpacity = 1 - completion
+
     if (isVisible) {
       // During an active swipe, sync opacity directly to swipe progress.
       if (swipeOpacity < 1) {
@@ -197,7 +192,7 @@ const Tip: FC<
       const controls = animate(opacity, 0, { duration: durations.get('fast') / 1000, ease: 'easeOut' })
       return () => controls.stop()
     }
-  }, [isVisible, swipeOpacity, opacity])
+  }, [isVisible, opacity])
 
   // ── Render ──────────────────────────────────────────────────────────────
 
