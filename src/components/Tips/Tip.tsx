@@ -218,7 +218,7 @@ const Tip: FC<
           its own opacity to work around a Safari backdrop-filter bug. */}
           <TipBlur opacity={opacity} />
           {/* Glow and content layers are wrapped in a motion.div driven by opacity. */}
-          <motion.div style={{ opacity: opacity, display: 'flex', width: '100%' }}>
+          <motion.div className={css({ display: 'flex', width: '100%' })} style={{ opacity }}>
             <TipGlow />
 
             {/* ── Layer 3: Content ─────────────────────────────────────────────── */}
@@ -243,8 +243,8 @@ const Tip: FC<
                 // On devices with safe area insets (notch/home indicator), add the inset to the bottom padding.
                 // On devices without, fall back to 1.5rem. Desktop always uses 1.5rem.
                 paddingBottom: { base: 'max(1.5rem, calc(0.5rem + env(safe-area-inset-bottom)))', lg: '1.5rem' },
+                touchAction: 'none'
               })}
-              style={{ touchAction: 'none' }}
               {...touchHandlers}
             >
               {/* TIP label — uses plus-lighter blend mode for a subtle luminous effect against the gradient. */}
