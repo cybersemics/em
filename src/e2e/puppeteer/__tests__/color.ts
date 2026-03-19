@@ -10,6 +10,7 @@ import getSuperscriptColor from '../helpers/getSuperScriptColor'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import setSelection from '../helpers/setSelection'
+import { page } from '../setup'
 
 vi.setConfig({ testTimeout: 60000, hookTimeout: 60000 })
 
@@ -229,4 +230,21 @@ it('Verify superscript colors in different views', async () => {
   const supColor3 = await getSuperscriptColor()
   expect(supColor3).toBeTruthy()
   expect(rgbToHex(supColor3!)).toBe(rgbaToHex(colors.light.green)) // Superscript should match the green color in context view
+})
+
+it('Clicking on a formatting tag does not close color dropdown', async () => {
+  const importText = `
+  - Golden Retriever`
+
+  await paste(importText)
+
+  await clickThought('Golden Retriever')
+
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="text color swatches"] [aria-label="blue"]')
+  await clickThought('<font color="#00c7e6">Golden Retriever</font>')
+
+  const textColorSwatch = await page.$('[aria-label="text color swatches"] [aria-label="blue"]')
+
+  expect(textColorSwatch).toBeTruthy()
 })

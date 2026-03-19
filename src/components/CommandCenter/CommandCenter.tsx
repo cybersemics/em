@@ -228,6 +228,7 @@ const CommandCenter = () => {
                   <MultiselectMessage />
                   <button
                     {...fastClick(onClose)}
+                    data-testid='command-center-done'
                     className={css({
                       all: 'unset',
                       fontSize: '0.85em',

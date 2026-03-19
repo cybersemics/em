@@ -1,9 +1,11 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import { executeCommand, executeCommandWithMulticursor } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
+import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import toggleDoneCommand from '../toggleDone'
@@ -11,6 +13,33 @@ import toggleDoneCommand from '../toggleDone'
 beforeEach(initStore)
 
 describe('toggleDone', () => {
+  it('does not mark an empty thought as done', () => {
+    store.dispatch([newThought({ value: '' })])
+
+    executeCommand(toggleDoneCommand, { store })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- __ROOT__
+  - `)
+  })
+
+  it('removes =done when a thought is edited to empty', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - =done
+        `,
+      }),
+      setCursor(['a']),
+      editThought(['a'], ''),
+    ])
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- __ROOT__
+  - `)
+  })
+
   it('marks a thought as done', () => {
     store.dispatch([
       importText({
