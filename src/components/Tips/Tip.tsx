@@ -295,7 +295,7 @@ const Tip: FC<
                   _hover: { opacity: 0.8 },
                   _active: { opacity: 0.4 },
                 })}
-                {...fastClick(handleClose)}
+                {...fastClick(animateDismiss)}
               >
                 <CloseIcon size={12} />
                 <span className={css({ fontSize: '0.8em' })}>Clear</span>
