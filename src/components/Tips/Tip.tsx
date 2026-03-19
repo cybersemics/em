@@ -60,7 +60,7 @@ const TipBlur: FC<{
         Uses a CSS keyframe animation for fade-in (must be a static string for Panda CSS
         build-time extraction — dynamic template literals won't generate CSS rules). */}
     <motion.div
-      style={{ opacity: opacity }}
+      style={{ opacity }}
       className={css({
         position: 'absolute',
         inset: 0,
