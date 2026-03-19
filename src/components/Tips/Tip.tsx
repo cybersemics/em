@@ -176,7 +176,7 @@ const Tip: FC<
 
   useEffect(() => {
     /** Opacity derived from swipe completion. Linearly decreases from 1 -> 0. */
-      const swipeOpacity = 1 - completion
+    const swipeOpacity = 1 - completion
 
     if (isVisible) {
       // During an active swipe, sync opacity directly to swipe progress.
@@ -192,7 +192,7 @@ const Tip: FC<
       const controls = animate(opacity, 0, { duration: durations.get('fast') / 1000, ease: 'easeOut' })
       return () => controls.stop()
     }
-  }, [isVisible, opacity])
+  }, [isVisible, completion, opacity])
 
   // ── Render ──────────────────────────────────────────────────────────────
 
@@ -243,14 +243,14 @@ const Tip: FC<
                 // On devices with safe area insets (notch/home indicator), add the inset to the bottom padding.
                 // On devices without, fall back to 1.5rem. Desktop always uses 1.5rem.
                 paddingBottom: { base: 'max(1.5rem, calc(0.5rem + env(safe-area-inset-bottom)))', lg: '1.5rem' },
-                touchAction: 'none'
+                touchAction: 'none',
               })}
               {...touchHandlers}
             >
               {/* TIP label — uses plus-lighter blend mode for a subtle luminous effect against the gradient. */}
               <span
                 className={css({
-                  fontSize: '0.85em',
+                  fontSize: '0.75rem',
                   fontWeight: 800,
                   textTransform: 'uppercase',
                   color: 'fg',
@@ -268,7 +268,7 @@ const Tip: FC<
                   color: 'fg',
                   maxWidth: '24em',
                   opacity: 0.8,
-                  fontSize: '1.2em',
+                  fontSize: '1rem',
                   mixBlendMode: 'plus-lighter',
                   lineHeight: 1.4,
                   fontWeight: 600,
@@ -298,7 +298,7 @@ const Tip: FC<
                 {...fastClick(animateDismiss)}
               >
                 <CloseIcon size={12} />
-                <span className={css({ fontSize: '0.8em' })}>Clear</span>
+                <span className={css({ fontSize: '0.75rem' })}>Clear</span>
               </div>
             </div>
           </motion.div>
