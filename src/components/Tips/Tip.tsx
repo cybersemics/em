@@ -80,18 +80,15 @@ const TipGlow: FC = () => (
       backgroundImage: 'url(/img/tip/tip-glow-alpha.webp)',
       backgroundRepeat: 'no-repeat',
 
-      // Mobile portrait: Scale the image up 2x, matching the mockups.
-      // Larger: just use background-size: cover.
-      backgroundSize: {
-        base: '200%',
-        lg: 'cover',
-      },
+      backgroundSize: 'cover',
       backgroundPosition: 'top right',
 
       // Mobile portrait: 32px extra bleed (16px per side) compensates for filter: blur feathering the edges.
       // Larger: clamped between 1000–1500px so the glow covers enough area without stretching too far.
       width: { base: 'calc(100vw + 32px)', lg: 'clamp(1000px, calc(100vw + 32px), 1500px)' },
-      height: 300,
+      // Use 100% so the glow grows with tip content, with 100vh as a minimum so it
+      // always covers at least the full viewport height for short tips.
+      height: 'max(100vh, 100%)',
 
       // Positioning: on mobile portrait, the glow comes from the left edge. On landscape mobile and larger, it comes from the right edge.
       left: { base: -16, lg: 'auto' },
@@ -130,12 +127,7 @@ const Tip: FC<
 
   // Selector for UI state that should temporarily hide the tip when active to avoid visual conflicts.
   const isHidden = useSelector(
-    state =>
-      (state.isKeyboardOpen && isTouch) ||
-      state.showCommandCenter ||
-      state.showSidebar ||
-      !!state.alert ||
-      !!state.showModal,
+    state => (state.isKeyboardOpen && isTouch) || state.showCommandCenter || state.showSidebar || !!state.showModal,
   )
 
   /** Prefetch the glow image used in the tip, so that the user doesn't see a loading delay when the tip first becomes visible. */
@@ -210,7 +202,7 @@ const Tip: FC<
             left: 0,
             right: 0,
             bottom: 0,
-            zIndex: 'popup',
+            zIndex: 'tip',
             pointerEvents: 'none',
             // Allow dragging through the tip overlay so drag-and-drop still works.
             _dragHold: { pointerEvents: 'none' },
@@ -223,7 +215,7 @@ const Tip: FC<
           its own opacity to work around a Safari backdrop-filter bug. */}
           <TipBlur opacity={opacity} />
           {/* Glow and content layers are wrapped in a motion.div driven by opacity. */}
-          <motion.div className={css({ display: 'flex', width: '100%' })} style={{ opacity }}>
+          <motion.div className={css({ display: 'flex', width: '100%', position: 'relative' })} style={{ opacity }}>
             <TipGlow />
 
             {/* ── Layer 3: Content ─────────────────────────────────────────────── */}
@@ -271,7 +263,7 @@ const Tip: FC<
               <div
                 className={css({
                   color: 'fg',
-                  maxWidth: '24em',
+                  maxWidth: '24rem',
                   opacity: 0.8,
                   fontSize: '1rem',
                   mixBlendMode: 'plus-lighter',
@@ -288,7 +280,7 @@ const Tip: FC<
                 className={css({
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.4em',
+                  gap: '0.4rem',
                   cursor: 'pointer',
                   color: 'fg',
                   mixBlendMode: 'overlay',
