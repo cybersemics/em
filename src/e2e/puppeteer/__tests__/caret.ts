@@ -249,6 +249,9 @@ describe('all platforms', () => {
 
     await paste(importText)
 
+    // click Two first so its note becomes active/enabled
+    await clickThought('Two')
+
     // click the note to set the caret there
     await clickNote('Note')
 
