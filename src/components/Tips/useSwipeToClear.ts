@@ -71,7 +71,7 @@ const useSwipeToClear = ({
       e.stopPropagation()
       lastTouch.current = null
 
-      const score = swipeDistance + velocity.current * 1.5
+      const score = swipeDistance + velocity.current * 2.0
       if (score >= threshold) {
         const immediate = swipeDistance >= threshold
         setSwipeDistance(0)
