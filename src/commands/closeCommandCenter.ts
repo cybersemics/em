@@ -3,6 +3,7 @@ import { alertActionCreator as alert } from '../actions/alert'
 import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/clearMulticursors'
 import HelpIcon from '../components/icons/HelpIcon'
 import { AlertType } from '../constants'
+import * as selection from '../device/selection'
 import hasMulticursor from '../selectors/hasMulticursor'
 import scrollZoneHelpMessage from '../selectors/scrollZoneHelpMessage'
 
@@ -21,6 +22,12 @@ const closeCommandCenterCommand: Command = {
   svg: HelpIcon,
   exec: (dispatch, getState) => {
     const state = getState()
+
+    // if the Command Center is not open and the keyboard is open, close the keyboard instead.
+    if (!hasMulticursor(state) && selection.isThought()) {
+      selection.clear()
+      return
+    }
 
     // Always clear the timeout, even if opening the Command Center was a success.
     // Otherwise quickly closing and opening the Command Center will inadvertently trigger the special alert.
