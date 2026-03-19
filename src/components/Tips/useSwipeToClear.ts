@@ -4,7 +4,7 @@ import useSafeArea from '../../hooks/useSafeArea'
 import durations from '../../util/durations'
 
 /** Default value for the swipe-to-clear threshold. */
-const DEFAULT_SWIPE_DISMISS_THRESHOLD = 200
+const DEFAULT_SWIPE_DISMISS_THRESHOLD = 150
 
 /**
  * Tracks a cumulative-distance swipe gesture and returns a 0→1 completion value.
