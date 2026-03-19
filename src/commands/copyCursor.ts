@@ -51,15 +51,20 @@ const copyCursorCommand: Command = {
       // Get new state after pull
       const stateAfterPull = getState()
 
-      // Export and copy all selected thoughts
+      // Export and copy all selected thoughts, including metaprogramming attributes
       const exported = filteredCursors
         .map(cursor => exportContext(stateAfterPull, head(cursor), 'text/plain'))
+        .join('\n')
+
+      // Export visible thoughts only when counting descendants
+      const exportedVisible = filteredCursors
+        .map(cursor => exportContext(stateAfterPull, head(cursor), 'text/plain', { excludeMeta: true }))
         .join('\n')
 
       copy(trimBullet(exported))
 
       const numThoughts = filteredCursors.length
-      const numDescendants = exported.split('\n').length - numThoughts
+      const numDescendants = exportedVisible.split('\n').length - numThoughts
 
       dispatch(
         alert(
@@ -93,9 +98,12 @@ const copyCursorCommand: Command = {
 
     const exported = strip(exportContext(stateAfterPull, head(simplePath), 'text/plain'))
 
+    // Export visible thoughts only when counting descendants
+    const exportedVisible = exportContext(stateAfterPull, head(simplePath), 'text/plain', { excludeMeta: true })
+
     copy(trimBullet(exported))
 
-    const numDescendants = exported ? exported.split('\n').length - 1 : 0
+    const numDescendants = exportedVisible ? exportedVisible.split('\n').length - 1 : 0
     const phrase = exportPhrase(head(simplePath), numDescendants, {
       value: getThoughtById(stateAfterPull, head(simplePath))?.value,
     })
