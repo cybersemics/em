@@ -1,5 +1,8 @@
 import Thought from '../../@types/Thought'
+import Timestamp from '../../@types/Timestamp'
+import importText from '../../actions/importText'
 import { HOME_TOKEN } from '../../constants'
+import contextToThought from '../../test-helpers/contextToThought'
 import timestamp from '../../util/timestamp'
 import {
   compare,
@@ -10,12 +13,23 @@ import {
   compareNumbers,
   comparePunctuationAndOther,
   compareReasonable,
+  compareReasonableDescending,
   compareStringsWithEmoji,
+  compareStringsWithMetaAttributes,
+  compareThought,
+  compareThoughtByCreated,
+  compareThoughtByCreatedDescending,
+  compareThoughtByNoteAndRank,
+  compareThoughtByNoteDescendingAndRank,
+  compareThoughtByUpdated,
+  compareThoughtByUpdatedDescending,
   compareThoughtDescending,
   isDatePattern,
   makeOrderedComparator,
 } from '../compareThought'
 import createId from '../createId'
+import initialState from '../initialState'
+import reducerFlow from '../reducerFlow'
 
 /** Build a test thought with the given value. */
 const thought = (value: string): Thought => ({
@@ -203,6 +217,31 @@ describe('compareReasonable', () => {
 })
 
 describe('compareThought', () => {
+  describe('ascending', () => {
+    it('basic comparison', () => {
+      expect(compareThought(thought('a'), thought('a'))).toBe(0)
+      expect(compareThought(thought('a'), thought('b'))).toBe(-1)
+      expect(compareThought(thought('b'), thought('a'))).toBe(1)
+    })
+
+    it('meta-attributes sort above plain text', () => {
+      expect(compareThought(thought('=test'), thought('a'))).toBe(-1)
+      expect(compareThought(thought('a'), thought('=test'))).toBe(1)
+      expect(compareThought(thought('=test'), thought('=test'))).toBe(0)
+    })
+
+    it('emojis sort above plain text', () => {
+      expect(compareThought(thought('🍍 a'), thought('a'))).toBe(-1)
+      expect(compareThought(thought('a'), thought('🍍 a'))).toBe(1)
+      expect(compareThought(thought('🍍 a'), thought('🍍 a'))).toBe(0)
+    })
+
+    it('empty string sorts first', () => {
+      expect(compareThought(thought(''), thought('a'))).toBe(-1)
+      expect(compareThought(thought('a'), thought(''))).toBe(1)
+    })
+  })
+
   describe('descending', () => {
     it('sort emojis above non-emojis and sort within emoji group in descending order', () => {
       expect(compareThoughtDescending(thought('a'), thought('a'))).toBe(0)
@@ -230,6 +269,25 @@ describe('compareThought', () => {
       expect(compareThoughtDescending(thought('the apple'), thought('theatre'))).toBe(1)
       expect(compareThoughtDescending(thought('🍍 the apple'), thought('🍍 book'))).toBe(1)
       expect(compareThoughtDescending(thought('🍍 the apple'), thought('🍍 apple'))).toBe(0)
+    })
+
+    it('empty string sorts near the top (after formatting)', () => {
+      expect(compareThoughtDescending(thought(''), thought('a'))).toBe(-1)
+      expect(compareThoughtDescending(thought('a'), thought(''))).toBe(1)
+    })
+
+    it('formatted text floats to top in descending mode', () => {
+      expect(compareThoughtDescending(thought('<b>bold</b>'), thought('apple'))).toBe(-1)
+      expect(compareThoughtDescending(thought('apple'), thought('<b>bold</b>'))).toBe(1)
+      expect(compareThoughtDescending(thought('<b>bold</b>'), thought(''))).toBe(-1)
+      expect(compareThoughtDescending(thought(''), thought('<b>bold</b>'))).toBe(1)
+    })
+
+    it('date and number descending order', () => {
+      expect(compareThoughtDescending(thought('3/4'), thought('3/3'))).toBe(-1)
+      expect(compareThoughtDescending(thought('3/3'), thought('3/4'))).toBe(1)
+      expect(compareThoughtDescending(thought('10'), thought('5'))).toBe(-1)
+      expect(compareThoughtDescending(thought('5'), thought('10'))).toBe(1)
     })
   })
 })
@@ -334,5 +392,356 @@ describe('compareDateStrings', () => {
     expect(compareDateStrings('abc', '6/1')).toBe(0) // Let other comparators handle non-date vs date
     expect(compareDateStrings('6/1', 'abc')).toBe(0) // Let other comparators handle date vs non-date
     expect(compareDateStrings('abc', 'def')).toBe(0) // Let other comparators handle non-dates
+  })
+
+  it('dash-format dates with year', () => {
+    expect(compareDateStrings('6-21-2025', '6-22-2025')).toBe(-1)
+    expect(compareDateStrings('6-22-2025', '6-21-2025')).toBe(1)
+    expect(compareDateStrings('6-21-2025', '6-21-2025')).toBe(0)
+  })
+
+  it('year-based ordering in numeric format', () => {
+    expect(compareDateStrings('3/3/2020', '3/3/2021')).toBe(-1)
+    expect(compareDateStrings('3/3/2021', '3/3/2020')).toBe(1)
+  })
+
+  it('cross-format cross-year comparison', () => {
+    expect(compareDateStrings('3/3/2020', 'March 3, 2021')).toBe(-1)
+    expect(compareDateStrings('March 3, 2021', '3/3/2020')).toBe(1)
+  })
+})
+
+it('compareStringsWithMetaAttributes', () => {
+  expect(compareStringsWithMetaAttributes('=test', 'a')).toBe(-1)
+  expect(compareStringsWithMetaAttributes('a', '=test')).toBe(1)
+  expect(compareStringsWithMetaAttributes('=test', '=test')).toBe(0)
+  expect(compareStringsWithMetaAttributes('=a', '=b')).toBe(0)
+  expect(compareStringsWithMetaAttributes('a', 'b')).toBe(0)
+  expect(compareStringsWithMetaAttributes('=view', 'hello')).toBe(-1)
+  expect(compareStringsWithMetaAttributes('hello', '=view')).toBe(1)
+})
+
+describe('compareNumbers (additional)', () => {
+  it('₹ and ₠ currency symbols', () => {
+    expect(compareNumbers('₹9', '₹10')).toBe(-1)
+    expect(compareNumbers('₠9', '₠10')).toBe(-1)
+    expect(compareNumbers('₹9', '₠10')).toBe(-1)
+    expect(compareNumbers('₠10', '₹9')).toBe(1)
+  })
+
+  it('decimal numbers', () => {
+    expect(compareNumbers('1.5', '2.3')).toBe(-1)
+    expect(compareNumbers('2.3', '1.5')).toBe(1)
+    expect(compareNumbers('1.5', '1.5')).toBe(0)
+  })
+})
+
+describe('comparePunctuationAndOther (additional)', () => {
+  it('other punctuation characters sort above plain text', () => {
+    expect(comparePunctuationAndOther('!test', 'a')).toBe(-1)
+    expect(comparePunctuationAndOther('#test', 'a')).toBe(-1)
+    expect(comparePunctuationAndOther('$test', 'a')).toBe(-1)
+    expect(comparePunctuationAndOther('(test', 'a')).toBe(-1)
+    expect(comparePunctuationAndOther('.test', 'a')).toBe(-1)
+    expect(comparePunctuationAndOther('a', '!')).toBe(1)
+    expect(comparePunctuationAndOther('a', '#test')).toBe(1)
+  })
+})
+
+describe('compareFormatting (additional)', () => {
+  it('formatting tags with HTML attributes', () => {
+    expect(compareFormatting('<span class="x">text</span>', 'plain')).toBe(-1)
+    expect(compareFormatting('plain', '<span class="x">text</span>')).toBe(1)
+    expect(compareFormatting('<b style="color:red">text</b>', 'plain')).toBe(-1)
+  })
+
+  it('mismatched open/close tags are still detected as formatted since the regex does not enforce matching tag names', () => {
+    expect(compareFormatting('<b>text</i>', 'plain')).toBe(-1)
+    expect(compareFormatting('plain', '<b>text</i>')).toBe(1)
+  })
+})
+
+describe('makeOrderedComparator (additional)', () => {
+  it('empty comparator array always returns 0', () => {
+    expect(makeOrderedComparator<string | number>([])(1, 2)).toBe(0)
+    expect(makeOrderedComparator<string>([])('a', 'b')).toBe(0)
+    expect(makeOrderedComparator<string>([])('b', 'a')).toBe(0)
+  })
+})
+
+describe('compareReasonable (additional)', () => {
+  it('empty string sorts first', () => {
+    expect(compareReasonable('', 'a')).toBe(-1)
+    expect(compareReasonable('a', '')).toBe(1)
+    expect(compareReasonable('', '')).toBe(0)
+    expect(compareReasonable('', '=meta')).toBe(-1)
+  })
+
+  it('punctuation sorts above plain text', () => {
+    expect(compareReasonable('=test', 'apple')).toBe(-1)
+    expect(compareReasonable('apple', '=test')).toBe(1)
+    expect(compareReasonable('#1', 'apple')).toBe(-1)
+    expect(compareReasonable('!important', 'apple')).toBe(-1)
+  })
+
+  it('formatted text sorts above non-formatting punctuation', () => {
+    expect(compareReasonable('<b>bold</b>', '=meta')).toBe(-1)
+    expect(compareReasonable('=meta', '<b>bold</b>')).toBe(1)
+  })
+
+  it('meta-attributes sort above other punctuation', () => {
+    expect(compareReasonable('=view', '!punc')).toBe(-1)
+    expect(compareReasonable('!punc', '=view')).toBe(1)
+  })
+
+  it('dates sort above plain text', () => {
+    expect(compareReasonable('3/3', 'apple')).toBe(-1)
+    expect(compareReasonable('apple', '3/3')).toBe(1)
+  })
+
+  it('numbers sort above plain text', () => {
+    expect(compareReasonable('5', 'apple')).toBe(-1)
+    expect(compareReasonable('apple', '5')).toBe(1)
+  })
+
+  it('full priority ordering: empty → formatting → meta-attribute → other punctuation → emoji → date → number → text', () => {
+    const items = ['apple', '5', '3/3', '🍍 emoji', '=meta', '<b>bold</b>', '!punc', '']
+    const sorted = [...items].sort(compareReasonable)
+    expect(sorted).toEqual(['', '<b>bold</b>', '=meta', '!punc', '🍍 emoji', '3/3', '5', 'apple'])
+  })
+})
+
+describe('compareReasonableDescending', () => {
+  it('formatting floats to the top', () => {
+    expect(compareReasonableDescending('<b>bold</b>', 'apple')).toBe(-1)
+    expect(compareReasonableDescending('apple', '<b>bold</b>')).toBe(1)
+  })
+
+  it('empty string sorts near the top (after formatting)', () => {
+    expect(compareReasonableDescending('', 'apple')).toBe(-1)
+    expect(compareReasonableDescending('apple', '')).toBe(1)
+    expect(compareReasonableDescending('<b>bold</b>', '')).toBe(-1)
+    expect(compareReasonableDescending('', '<b>bold</b>')).toBe(1)
+  })
+
+  it('plain text sorts before punctuation in descending mode', () => {
+    expect(compareReasonableDescending('apple', '=meta')).toBe(-1)
+    expect(compareReasonableDescending('=meta', 'apple')).toBe(1)
+  })
+
+  it('content sorts in descending order (Z before A)', () => {
+    expect(compareReasonableDescending('b', 'a')).toBe(-1)
+    expect(compareReasonableDescending('a', 'b')).toBe(1)
+  })
+
+  it('dates sort in descending order (later date first)', () => {
+    expect(compareReasonableDescending('3/4', '3/3')).toBe(-1)
+    expect(compareReasonableDescending('3/3', '3/4')).toBe(1)
+  })
+
+  it('numbers sort in descending order (larger number first)', () => {
+    expect(compareReasonableDescending('10', '5')).toBe(-1)
+    expect(compareReasonableDescending('5', '10')).toBe(1)
+  })
+})
+
+describe('compareThoughtByCreated', () => {
+  it('sorts by created timestamp ascending (oldest first)', () => {
+    const older = { ...thought('a'), created: 1000000 as Timestamp }
+    const newer = { ...thought('b'), created: 2000000 as Timestamp }
+    expect(compareThoughtByCreated(older, newer)).toBe(-1)
+    expect(compareThoughtByCreated(newer, older)).toBe(1)
+    expect(compareThoughtByCreated(older, { ...older })).toBe(0)
+  })
+
+  it('falls back to compareReasonable when created timestamps are equal', () => {
+    const ts = 1000000 as Timestamp
+    const a = { ...thought('a'), created: ts }
+    const b = { ...thought('b'), created: ts }
+    expect(compareThoughtByCreated(a, b)).toBe(-1)
+    expect(compareThoughtByCreated(b, a)).toBe(1)
+    expect(compareThoughtByCreated(a, { ...a })).toBe(0)
+  })
+})
+
+describe('compareThoughtByCreatedDescending', () => {
+  it('sorts by created timestamp descending (newest first)', () => {
+    const older = { ...thought('a'), created: 1000000 as Timestamp }
+    const newer = { ...thought('b'), created: 2000000 as Timestamp }
+    expect(compareThoughtByCreatedDescending(newer, older)).toBe(-1)
+    expect(compareThoughtByCreatedDescending(older, newer)).toBe(1)
+    expect(compareThoughtByCreatedDescending(newer, { ...newer })).toBe(0)
+  })
+
+  it('falls back to compareReasonable when created timestamps are equal', () => {
+    const ts = 1000000 as Timestamp
+    const a = { ...thought('a'), created: ts }
+    const b = { ...thought('b'), created: ts }
+    expect(compareThoughtByCreatedDescending(a, b)).toBe(-1)
+    expect(compareThoughtByCreatedDescending(b, a)).toBe(1)
+  })
+})
+
+describe('compareThoughtByUpdated', () => {
+  it('sorts by lastUpdated timestamp ascending (least recently updated first)', () => {
+    const older = { ...thought('a'), lastUpdated: 1000000 as Timestamp }
+    const newer = { ...thought('b'), lastUpdated: 2000000 as Timestamp }
+    expect(compareThoughtByUpdated(older, newer)).toBe(-1)
+    expect(compareThoughtByUpdated(newer, older)).toBe(1)
+    expect(compareThoughtByUpdated(older, { ...older })).toBe(0)
+  })
+
+  it('falls back to compareReasonable when lastUpdated timestamps are equal', () => {
+    const ts = 1000000 as Timestamp
+    const a = { ...thought('a'), lastUpdated: ts }
+    const b = { ...thought('b'), lastUpdated: ts }
+    expect(compareThoughtByUpdated(a, b)).toBe(-1)
+    expect(compareThoughtByUpdated(b, a)).toBe(1)
+  })
+})
+
+describe('compareThoughtByUpdatedDescending', () => {
+  it('sorts by lastUpdated timestamp descending (most recently updated first)', () => {
+    const older = { ...thought('a'), lastUpdated: 1000000 as Timestamp }
+    const newer = { ...thought('b'), lastUpdated: 2000000 as Timestamp }
+    expect(compareThoughtByUpdatedDescending(newer, older)).toBe(-1)
+    expect(compareThoughtByUpdatedDescending(older, newer)).toBe(1)
+    expect(compareThoughtByUpdatedDescending(newer, { ...newer })).toBe(0)
+  })
+
+  it('falls back to compareReasonable when lastUpdated timestamps are equal', () => {
+    const ts = 1000000 as Timestamp
+    const a = { ...thought('a'), lastUpdated: ts }
+    const b = { ...thought('b'), lastUpdated: ts }
+    expect(compareThoughtByUpdatedDescending(a, b)).toBe(-1)
+    expect(compareThoughtByUpdatedDescending(b, a)).toBe(1)
+  })
+})
+
+describe('compareThoughtByNoteAndRank', () => {
+  it('sorts thoughts with notes before thoughts without notes', () => {
+    const state = reducerFlow([
+      importText({
+        text: `
+          - a
+            - =note
+              - apple note
+          - b
+          `,
+      }),
+    ])(initialState())
+
+    const thoughtA = contextToThought(state, ['a'])!
+    const thoughtB = contextToThought(state, ['b'])!
+
+    expect(compareThoughtByNoteAndRank(state)(thoughtA, thoughtB)).toBe(-1)
+    expect(compareThoughtByNoteAndRank(state)(thoughtB, thoughtA)).toBe(1)
+  })
+
+  it('sorts by note value ascending when both thoughts have notes', () => {
+    const state = reducerFlow([
+      importText({
+        text: `
+          - a
+            - =note
+              - apple note
+          - b
+            - =note
+              - banana note
+          `,
+      }),
+    ])(initialState())
+
+    const thoughtA = contextToThought(state, ['a'])!
+    const thoughtB = contextToThought(state, ['b'])!
+
+    expect(compareThoughtByNoteAndRank(state)(thoughtA, thoughtB)).toBe(-1)
+    expect(compareThoughtByNoteAndRank(state)(thoughtB, thoughtA)).toBe(1)
+    expect(compareThoughtByNoteAndRank(state)(thoughtA, { ...thoughtA })).toBe(0)
+  })
+
+  it('falls back to rank when notes are equal', () => {
+    const state = reducerFlow([
+      importText({
+        text: `
+          - x
+            - =note
+              - same note
+          - y
+            - =note
+              - same note
+          `,
+      }),
+    ])(initialState())
+
+    const thoughtX = contextToThought(state, ['x'])!
+    const thoughtY = contextToThought(state, ['y'])!
+
+    // x has a lower rank than y since it was imported first; tiebreak by rank
+    expect(compareThoughtByNoteAndRank(state)(thoughtX, thoughtY)).toBe(-1)
+    expect(compareThoughtByNoteAndRank(state)(thoughtY, thoughtX)).toBe(1)
+  })
+})
+
+describe('compareThoughtByNoteDescendingAndRank', () => {
+  it('sorts thoughts with notes before thoughts without notes', () => {
+    const state = reducerFlow([
+      importText({
+        text: `
+          - a
+            - =note
+              - apple note
+          - b
+          `,
+      }),
+    ])(initialState())
+
+    const thoughtA = contextToThought(state, ['a'])!
+    const thoughtB = contextToThought(state, ['b'])!
+
+    expect(compareThoughtByNoteDescendingAndRank(state)(thoughtA, thoughtB)).toBe(-1)
+    expect(compareThoughtByNoteDescendingAndRank(state)(thoughtB, thoughtA)).toBe(1)
+  })
+
+  it('sorts by note value descending when both thoughts have notes', () => {
+    const state = reducerFlow([
+      importText({
+        text: `
+          - a
+            - =note
+              - apple note
+          - b
+            - =note
+              - banana note
+          `,
+      }),
+    ])(initialState())
+
+    const thoughtA = contextToThought(state, ['a'])!
+    const thoughtB = contextToThought(state, ['b'])!
+
+    expect(compareThoughtByNoteDescendingAndRank(state)(thoughtA, thoughtB)).toBe(1)
+    expect(compareThoughtByNoteDescendingAndRank(state)(thoughtB, thoughtA)).toBe(-1)
+  })
+
+  it('falls back to rank when notes are equal', () => {
+    const state = reducerFlow([
+      importText({
+        text: `
+          - x
+            - =note
+              - same note
+          - y
+            - =note
+              - same note
+          `,
+      }),
+    ])(initialState())
+
+    const thoughtX = contextToThought(state, ['x'])!
+    const thoughtY = contextToThought(state, ['y'])!
+
+    expect(compareThoughtByNoteDescendingAndRank(state)(thoughtX, thoughtY)).toBe(-1)
+    expect(compareThoughtByNoteDescendingAndRank(state)(thoughtY, thoughtX)).toBe(1)
   })
 })
