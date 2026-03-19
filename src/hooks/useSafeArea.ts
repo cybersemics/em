@@ -25,7 +25,12 @@ const read = (): SafeAreaInsets => {
   }
 }
 
-/** Provides cached mobile device safe area insets (top, right, bottom, left), as integer values. Updates on resize. */
+/** Provides cached mobile device safe area insets (top, right, bottom, left), as integer values. Updates on resize.
+ *
+ * NOTE: The returned value is not reactive, so a safe area change alone will not trigger a re-render.
+ * Something else in the component must cause a render to pick up the new value.
+ * If stale values become a problem, switch to local reactive state (possibly throttled).
+ */
 const useSafeArea = (): SafeAreaInsets => {
   const insets = useRef(read())
 
