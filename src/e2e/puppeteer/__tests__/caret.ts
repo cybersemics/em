@@ -4,6 +4,7 @@ import newThoughtCommand from '../../../commands/newThought'
 import openCommandCenterCommand from '../../../commands/openCommandCenter'
 import click from '../helpers/click'
 import clickBullet from '../helpers/clickBullet'
+import clickNote from '../helpers/clickNote'
 import clickThought from '../helpers/clickThought'
 import closeKeyboard from '../helpers/closeKeyboard'
 import emulate from '../helpers/emulate'
@@ -236,6 +237,29 @@ describe('all platforms', () => {
 
     // no assertions needed, the test will fail if the caret is not in the editable
     // If the waitUntil succeeds, the expect will always pass since we just confirmed that exact condition. If waitUntil times out, we never reach the expect anyway.
+  })
+
+  // https://github.com/cybersemics/em/issues/3956
+  it('clicking a thought after editing a note should move the caret to the clicked thought', async () => {
+    const importText = `
+    - One
+    - Two
+      - =note
+        - Note`
+
+    await paste(importText)
+
+    // click the note to set the caret there
+    await clickNote('Note')
+
+    // click thought "One"
+    await clickThought('One')
+
+    // caret should be on "One", not "Two"
+    await waitUntil(() => window.getSelection()?.focusNode?.textContent === 'One')
+
+    const textContent = await getSelection().focusNode?.textContent
+    expect(textContent).toBe('One')
   })
 })
 
