@@ -130,7 +130,12 @@ const Tip: FC<
 
   // Selector for UI state that should temporarily hide the tip when active to avoid visual conflicts.
   const isHidden = useSelector(
-    state => (state.isKeyboardOpen && isTouch) || state.showCommandCenter || state.showSidebar || !!state.alert,
+    state =>
+      (state.isKeyboardOpen && isTouch) ||
+      state.showCommandCenter ||
+      state.showSidebar ||
+      !!state.alert ||
+      !!state.showModal,
   )
 
   /** Prefetch the glow image used in the tip, so that the user doesn't see a loading delay when the tip first becomes visible. */
