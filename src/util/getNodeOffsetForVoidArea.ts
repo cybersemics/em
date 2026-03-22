@@ -279,10 +279,48 @@ const getTextNodes = (root: HTMLElement): Text[] => {
 }
 
 /**
- * Finds the character index at the given coordinates within a text node.
- * Includes whitespace characters so taps on spaces (e.g. trailing space at a
- * line break) can be detected and handled at word/line edges.
- * Returns the index of the character whose bounding rect contains the point, or -1.
+ * Returns tight pixel bounds for a single character in a text node.
+ * Returns `null` for whitespace, zero-size glyphs, etc.
+ */
+const getTightCharacterBounds = (
+  node: Text,
+  charIndex: number,
+  range: Range,
+): { left: number; right: number; top: number; bottom: number } | null => {
+  const text = node.nodeValue ?? ''
+  if (charIndex < 0 || charIndex >= text.length || /\s/.test(text[charIndex])) return null
+
+  // Collapse a caret at the start of the character to get its x-position and line-box height.
+  range.setStart(node, charIndex)
+  range.collapse(true)
+  const startCaretRect = range.getBoundingClientRect()
+  if (startCaretRect.height === 0) return null
+
+  // Collapse a caret at the end of the character to get the other horizontal edge.
+  range.setStart(node, charIndex + 1)
+  range.collapse(true)
+  const endCaretLeft = range.getBoundingClientRect().left
+
+  // min/max gives correct left/right regardless of text direction (LTR or RTL).
+  const left = Math.min(startCaretRect.left, endCaretLeft)
+  const right = Math.max(startCaretRect.left, endCaretLeft)
+  if (right - left < 1) return null
+
+  // Line-height is taller than the letters; trim the extra space above and below
+  // so hit testing matches the visible text, not the full line box.
+  const parent = node.parentElement
+  const emHeight = parent ? parseFloat(getComputedStyle(parent).fontSize) : startCaretRect.height
+  const halfLeading = Math.max(0, (startCaretRect.height - emHeight) / 2)
+  const top = startCaretRect.top + halfLeading
+  const bottom = startCaretRect.bottom - halfLeading
+  if (top >= bottom) return null
+
+  return { left, right, top, bottom }
+}
+
+/**
+ * Returns which character (if any) the tap hits inside this text node.
+ * Whitespace is ignored. Returns -1 if the tap is not on visible text.
  */
 const findCharacterAtPoint = (node: Text, clientX: number, clientY: number): number => {
   const text = node.nodeValue ?? ''
@@ -291,18 +329,15 @@ const findCharacterAtPoint = (node: Text, clientX: number, clientY: number): num
   const range = document.createRange()
 
   for (let i = 0; i < text.length; i++) {
-    if (/\s/.test(text[i])) continue
-    range.setStart(node, i)
-    range.setEnd(node, i + 1)
-
-    const rects = Array.from(range.getClientRects())
-
-    for (const rect of rects) {
-      if (rect.height === 0 || rect.width === 0) continue
-
-      if (clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom) {
-        return i
-      }
+    const bounds = getTightCharacterBounds(node, i, range)
+    if (
+      bounds &&
+      clientX >= bounds.left &&
+      clientX <= bounds.right &&
+      clientY >= bounds.top &&
+      clientY <= bounds.bottom
+    ) {
+      return i
     }
   }
 
@@ -325,26 +360,18 @@ const getDistanceToNearestCharacter = (
   let closestRect: DOMRect | null = null
 
   for (let i = 0; i < text.length; i++) {
-    if (/\s/.test(text[i])) continue
+    const bounds = getTightCharacterBounds(node, i, range)
+    if (!bounds) continue
 
-    range.setStart(node, i)
-    range.setEnd(node, i + 1)
+    const verticalDist =
+      clientY < bounds.top ? bounds.top - clientY : clientY > bounds.bottom ? clientY - bounds.bottom : 0
+    const horizontalDist =
+      clientX < bounds.left ? bounds.left - clientX : clientX > bounds.right ? clientX - bounds.right : 0
+    const dist = verticalDist * 1000 + horizontalDist
 
-    const rects = Array.from(range.getClientRects())
-
-    for (const rect of rects) {
-      if (rect.height === 0 || rect.width === 0) continue
-
-      const verticalDist = clientY < rect.top ? rect.top - clientY : clientY > rect.bottom ? clientY - rect.bottom : 0
-
-      const horizontalDist = clientX < rect.left ? rect.left - clientX : clientX > rect.right ? clientX - rect.right : 0
-
-      const dist = verticalDist * 1000 + horizontalDist
-
-      if (dist < minDist) {
-        minDist = dist
-        closestRect = rect
-      }
+    if (dist < minDist) {
+      minDist = dist
+      closestRect = new DOMRect(bounds.left, bounds.top, bounds.right - bounds.left, bounds.bottom - bounds.top)
     }
   }
 
