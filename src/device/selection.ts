@@ -73,12 +73,19 @@ const getEditableCandidate = (node?: EventTarget | null) => {
 }
 
 /** Returns true if the node is part of a note. Defaults to using the active selection. */
-export const isNote = (node: EventTarget | null = document.activeElement): boolean =>
-  getEditableCandidate(node)?.ariaLabel === 'note-editable'
+export const isNote = (node?: EventTarget | null): boolean => {
+  if (node === undefined) return document.activeElement?.ariaLabel === 'note-editable'
+  return getEditableCandidate(node)?.ariaLabel === 'note-editable'
+}
 
 /** Returns true if the node is part of a thought. Defaults to using the active selection. */
 // We should see if it is possible to just use state.isKeyboardOpen and selection.isActive()
-export const isThought = (node: EventTarget | null = document.activeElement): boolean => {
+export const isThought = (node?: EventTarget | null): boolean => {
+  if (node === undefined)
+    return (
+      document.activeElement?.hasAttribute('data-editable') || document.activeElement?.ariaLabel === 'note-editable'
+    )
+
   const editable = getEditableCandidate(node)
   return !!editable && (editable.hasAttribute('data-editable') || editable.ariaLabel === 'note-editable')
 }
