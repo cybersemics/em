@@ -17,9 +17,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout 🛎️
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
-          # If you're using actions/checkout@v2 you must set persist-credentials to false in most cases for the deployment to work correctly.
+          # For GitHub Pages deployment, persist-credentials: false is often required.
           persist-credentials: false
 
       - name: Install npm dependencies 🛠

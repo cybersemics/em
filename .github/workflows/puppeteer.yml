@@ -31,13 +31,13 @@ jobs:
 
     steps:
       - name: Clone repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Enable Corepack
         run: corepack enable
 
       - name: Set Node.js version
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 22
 
@@ -90,7 +90,7 @@ jobs:
 
       - name: Upload snapshot diff artifact
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: __diff_output__
           path: src/e2e/puppeteer/__tests__/__image_snapshots__/**/__diff_output__/
