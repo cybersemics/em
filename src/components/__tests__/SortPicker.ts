@@ -235,7 +235,7 @@ describe('Created', () => {
     await click('[aria-label="sort options"] [aria-label="Created"]')
     await act(vi.runOnlyPendingTimersAsync)
 
-    // Edit thought 'a'
+    // Edit thought 'c'
     act(() => {
       store.dispatch([newThought({ value: '' }), editThoughtByContext([''], 'c')])
     })
@@ -246,7 +246,7 @@ describe('Created', () => {
     const thoughts = screen.getAllByLabelText('thought-container')
     const thoughtValues = thoughts.map(t => t.textContent)
 
-    // Verify thoughts are sorted by creation time ascending (aa, b)
+    // Verify thoughts are sorted by creation time ascending (a, b, c)
     expect(thoughtValues).toMatchObject(['a', 'b', 'c'])
   })
 
@@ -271,7 +271,7 @@ describe('Created', () => {
     await click('[aria-label="sort options"] [aria-label="Alphabetical"]')
     await act(vi.runOnlyPendingTimersAsync)
 
-    // Edit thought 'a'
+    // Edit thought 'b'
     act(() => {
       store.dispatch([editThoughtByContext(['b'], '<font color="#ffffff">b</font>')])
     })
@@ -307,7 +307,7 @@ describe('Created', () => {
     await click('[aria-label="sort options"] [aria-label="Alphabetical"]')
     await act(vi.runOnlyPendingTimersAsync)
 
-    // Edit thought 'a'
+    // Edit thought 'b'
     act(() => {
       store.dispatch([
         editThoughtByContext(['b'], '<font color="#000000" style="background-color: rgb(255, 255, 255);">b</font>'),

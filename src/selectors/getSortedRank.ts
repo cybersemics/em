@@ -1,6 +1,5 @@
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
-import { FONT_TAG_REGEX } from '../constants'
 import { compare, compareReasonable, compareReasonableDescending } from '../util/compareThought'
 import noteValue from '../util/noteValue'
 import { getAllChildrenSorted, isVisible } from './getChildren'
@@ -21,7 +20,11 @@ const calculateRank = (thoughts: { rank: number }[], index: number): number => {
   return (thoughts[index - 1].rank + thoughts[index].rank) / 2
 }
 
-/** Gets the new rank of a value to be inserted into a sorted context. */
+/** Gets the new rank of a value to be inserted into a sorted context.
+ * If the sort preference is Created, then the created timestamp is the sort criteria instead.
+ * This is currently optional to reflect the fact that most call sites do not need to call this function for newly-created thoughts.
+ * Instead, they can assume that a newly-created thought goes at the end of the list if sort preference is Created (#3782).
+ */
 const getSortedRank = (state: State, id: ThoughtId, value: string, created?: number) => {
   const children = id ? getAllChildrenSorted(state, id) : []
 
@@ -36,7 +39,7 @@ const getSortedRank = (state: State, id: ThoughtId, value: string, created?: num
     return isDescending ? thoughts[0].rank - 1 : (thoughts[thoughts.length - 1]?.rank || 0) + 1
   }
 
-  // Handle created sorting (#3782/#3927)
+  // Handle Created sorting (#3782)
   if (created && sortPreference.type === 'Created') {
     const index = children.findIndex(child =>
       isDescending ? compare(created, child.created) !== -1 : compare(child.created, created) !== -1,
@@ -56,14 +59,11 @@ const getSortedRank = (state: State, id: ThoughtId, value: string, created?: num
     return calculateRank(thoughtsVisible, index)
   }
 
-  // Ignore font tags when alphabetically sorting thoughts (#3927)
-  const cleanedValue = value.replaceAll(FONT_TAG_REGEX, '')
-
   // For alphabetical sorting
   const index = children.findIndex(child =>
     isDescending
-      ? compareReasonableDescending(child.value.replaceAll(FONT_TAG_REGEX, ''), cleanedValue) !== -1
-      : compareReasonable(child.value.replaceAll(FONT_TAG_REGEX, ''), cleanedValue) !== -1,
+      ? compareReasonableDescending(child.value, value) !== -1
+      : compareReasonable(child.value, value) !== -1,
   )
   return calculateRank(children, index)
 }

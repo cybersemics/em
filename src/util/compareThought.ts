@@ -4,7 +4,7 @@ import ComparatorFunction from '../@types/ComparatorFunction'
 import ComparatorValue from '../@types/ComparatorValue'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
-import { ALLOWED_FORMATTING_TAGS, EMOJI_REGEX, FONT_TAG_REGEX, REGEX_EMOJI_GLOBAL } from '../constants'
+import { ALLOWED_FORMATTING_TAGS, EMOJI_REGEX, REGEX_EMOJI_GLOBAL } from '../constants'
 import thoughtToPath from '../selectors/thoughtToPath'
 import compareByRank from './compareByRank'
 import isAttribute from './isAttribute'
@@ -40,6 +40,10 @@ const REGEX_DATE_COMBINED = new RegExp(
 // - Month Day (written format without year)
 // Allows mixed separators since it's only for parsing, not validation
 const REGEX_SHORT_DATE_PARSE = new RegExp(`^(\\d{1,2}[\\/-]\\d{1,2}|(${MONTH_NAMES})\\s+\\d{1,2})$`, 'i')
+
+// Match fonts tags for color and background color
+// can be used to strip font tags before sorting (#3782)
+const FONT_TAG_REGEX = /<font color="[^"]+"\s*(?:style="[^"]+")?>|<\/font>/gm
 
 // removeDiacritics borrowed from modern-diacritics package
 // modern-diacritics does not currently import so it is copied here
@@ -223,6 +227,7 @@ export const compareReasonable: ComparatorFunction<string> = (a: string, b: stri
     compareStringsWithEmoji,
     (a, b) => compareReadableText(normalizeCharacters(a), normalizeCharacters(b)),
   ])
+  // Ignore font tags when sorting thoughts (#3782)
   return comparator(a.replaceAll(FONT_TAG_REGEX, ''), b.replaceAll(FONT_TAG_REGEX, ''))
 }
 
@@ -243,6 +248,7 @@ export const compareReasonableDescending: ComparatorFunction<string> = (a: strin
     _.flip(compareStringsWithEmoji),
     (a, b) => compareReadableText(normalizeCharacters(b), normalizeCharacters(a)),
   ])
+  // Ignore font tags when sorting thoughts (#3782)
   return comparator(a.replaceAll(FONT_TAG_REGEX, ''), b.replaceAll(FONT_TAG_REGEX, ''))
 }
 
