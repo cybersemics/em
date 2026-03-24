@@ -27,4 +27,12 @@ export const closeTreecrdt = async (): Promise<void> => {
   }
 }
 
-export default { initTreecrdt, getTreecrdtClient, closeTreecrdt }
+/** Drops storage and closes the TreeCRDT client. */
+export const dropTreecrdt = async (): Promise<void> => {
+  if (client) {
+    await client.drop()
+    client = null
+  }
+}
+
+export default { initTreecrdt, getTreecrdtClient, closeTreecrdt, dropTreecrdt }

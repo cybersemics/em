@@ -24,7 +24,7 @@ const permissionsModel: { [key in keyof Routes['share']]: any } = {
     store.dispatch(alert(`Added ${name ? `"${name}"` : 'device'}`))
     return { accessToken }
   },
-  delete: (accessToken: string, { name }: { name?: string } = {}) => {
+  delete: async (accessToken: string, { name }: { name?: string } = {}) => {
     permissionsMap.delete(accessToken)
 
     // removed other device
@@ -38,8 +38,7 @@ const permissionsModel: { [key in keyof Routes['share']]: any } = {
     // remove last device
     else {
       storage.clear()
-      // TODO: check if it possible to make async and wait
-      void db.clear().catch(err => console.error('Failed to clear thoughtspace:', err))
+      await db.clear()
       store.dispatch(clearActionCreator())
 
       // TODO: Do a full reset without refreshing the page.

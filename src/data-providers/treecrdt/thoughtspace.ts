@@ -5,7 +5,7 @@ import type ThoughtId from '../../@types/ThoughtId'
 import type Timestamp from '../../@types/Timestamp'
 import { ABSOLUTE_TOKEN, EM_TOKEN, GLOBAL_ROOT_TOKEN, HOME_TOKEN, ROOT_PARENT_ID } from '../../constants'
 import type { DataProvider } from '../DataProvider'
-import { getTreecrdtClient } from './treecrdt'
+import { dropTreecrdt, getTreecrdtClient } from './treecrdt'
 
 export type ThoughtPayload = {
   value: string
@@ -166,22 +166,12 @@ const freeLexeme = async (_key: string): Promise<void> => {
   // no-op
 }
 
-/** Clears all thoughts from the tree. */
+/** Clears all thoughts by dropping storage and closing the client. */
 const clear = async (): Promise<void> => {
   if (!replicaId) throw new Error('TreeCRDT DataProvider: init not called')
 
-  const client = getTreecrdtClient()
-
-  /** Recursively deletes a subtree. */
-  async function deleteSubtree(parentId: string): Promise<void> {
-    const children = await client.tree.children(parentId)
-    for (const childId of children) {
-      await deleteSubtree(childId)
-      await client.local.delete(replicaId!, childId)
-    }
-  }
-
-  await deleteSubtree(GLOBAL_ROOT_TOKEN)
+  await dropTreecrdt()
+  replicaId = null
 }
 
 /** Returns undefined as lexemes are not stored in treecrdt. */
