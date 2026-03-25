@@ -5,6 +5,7 @@ import {
   compare,
   compareDateStrings,
   compareFormatting,
+  compareFormattingTagPriority,
   compareLowercase,
   compareNumberAndOther,
   compareNumbers,
@@ -125,6 +126,32 @@ it('compareFormatting', () => {
   expect(compareFormatting('<b>A</b>', '<strike>B</strike>')).toBe(0)
 })
 
+it('compareFormattingTagPriority', () => {
+  // bold < italic < underline < strikethrough
+  expect(compareFormattingTagPriority('<b>A</b>', '<i>B</i>')).toBe(-1)
+  expect(compareFormattingTagPriority('<i>A</i>', '<b>B</b>')).toBe(1)
+  expect(compareFormattingTagPriority('<b>A</b>', '<u>B</u>')).toBe(-1)
+  expect(compareFormattingTagPriority('<i>A</i>', '<u>B</u>')).toBe(-1)
+  expect(compareFormattingTagPriority('<u>A</u>', '<strike>B</strike>')).toBe(-1)
+  expect(compareFormattingTagPriority('<strike>A</strike>', '<u>B</u>')).toBe(1)
+
+  // same tag = 0
+  expect(compareFormattingTagPriority('<b>A</b>', '<b>B</b>')).toBe(0)
+  expect(compareFormattingTagPriority('<u>A</u>', '<u>B</u>')).toBe(0)
+  expect(compareFormattingTagPriority('<strike>A</strike>', '<strike>B</strike>')).toBe(0)
+
+  // non-formatted = 0
+  expect(compareFormattingTagPriority('a', 'b')).toBe(0)
+  expect(compareFormattingTagPriority('<b>A</b>', 'b')).toBe(0)
+  expect(compareFormattingTagPriority('a', '<b>B</b>')).toBe(0)
+
+  // strong/em aliases
+  expect(compareFormattingTagPriority('<strong>A</strong>', '<i>B</i>')).toBe(-1)
+  expect(compareFormattingTagPriority('<em>A</em>', '<b>B</b>')).toBe(1)
+  expect(compareFormattingTagPriority('<em>A</em>', '<strong>B</strong>')).toBe(1)
+  expect(compareFormattingTagPriority('<strong>A</strong>', '<em>B</em>')).toBe(-1)
+})
+
 it('compareDateStrings', () => {
   expect(compareDateStrings('9/11', '9/11')).toBe(0)
   expect(compareDateStrings('9/11', '10/11')).toBe(-1)
@@ -230,6 +257,14 @@ describe('compareThought', () => {
       expect(compareThoughtDescending(thought('the apple'), thought('theatre'))).toBe(1)
       expect(compareThoughtDescending(thought('🍍 the apple'), thought('🍍 book'))).toBe(1)
       expect(compareThoughtDescending(thought('🍍 the apple'), thought('🍍 apple'))).toBe(0)
+    })
+
+    it('sort formatted thoughts in canonical tag priority order (bold < italic < underline < strikethrough) in descending sort', () => {
+      expect(compareThoughtDescending(thought('<b>A</b>'), thought('<i>B</i>'))).toBe(-1)
+      expect(compareThoughtDescending(thought('<i>A</i>'), thought('<b>B</b>'))).toBe(1)
+      expect(compareThoughtDescending(thought('<i>A</i>'), thought('<u>B</u>'))).toBe(-1)
+      expect(compareThoughtDescending(thought('<u>A</u>'), thought('<strike>B</strike>'))).toBe(-1)
+      expect(compareThoughtDescending(thought('<strike>A</strike>'), thought('<u>B</u>'))).toBe(1)
     })
   })
 })
