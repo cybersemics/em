@@ -69,7 +69,10 @@ const ProgressiveBlur = ({
       })}
       style={{ width, ...props.style }}
     >
-      {blurLayers.map((layer, i) => (
+      {blurLayers.map((layer, i) => {
+        const sliceMask = `linear-gradient(${direction}, transparent ${layer.leadingStop}%, black ${layer.start}%, black ${layer.end}%, transparent ${layer.trailingStop}%)`
+        const compositeMask = mask ? `${sliceMask}, ${mask}` : sliceMask
+        return (
         <motion.div
           key={i}
           className={css({
@@ -84,19 +87,16 @@ const ProgressiveBlur = ({
             // Sliced mask with overlap (feather), clamped to container bounds.
             // When an extra mask is provided, intersect it with the slice mask
             // so both fade directions apply per-layer (required for backdrop-filter).
-            maskImage: mask
-              ? `linear-gradient(${direction}, transparent ${layer.leadingStop}%, black ${layer.start}%, black ${layer.end}%, transparent ${layer.trailingStop}%), ${mask}`
-              : `linear-gradient(${direction}, transparent ${layer.leadingStop}%, black ${layer.start}%, black ${layer.end}%, transparent ${layer.trailingStop}%)`,
-            WebkitMaskImage: mask
-              ? `linear-gradient(${direction}, transparent ${layer.leadingStop}%, black ${layer.start}%, black ${layer.end}%, transparent ${layer.trailingStop}%), ${mask}`
-              : `linear-gradient(${direction}, transparent ${layer.leadingStop}%, black ${layer.start}%, black ${layer.end}%, transparent ${layer.trailingStop}%)`,
+            maskImage: compositeMask,
+            WebkitMaskImage: compositeMask,
             ...(mask && {
               maskComposite: 'intersect',
               WebkitMaskComposite: 'source-in' as string,
             }),
           }}
         />
-      ))}
+      )})}
+
     </div>
   )
 }
