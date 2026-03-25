@@ -131,6 +131,7 @@ const Tip: FC<
     state => (state.isKeyboardOpen && isTouch) || state.showCommandCenter || state.showSidebar || !!state.showModal,
   )
 
+
   /** Prefetch the glow image used in the tip, so that the user doesn't see a loading delay when the tip first becomes visible. */
   usePrefetchImages(['/img/tip/tip-glow-alpha.webp'])
 
@@ -289,7 +290,7 @@ const Tip: FC<
                   textShadow: '0 0 8px {colors.fgOverlay20}',
                   // Prevent the default tap highlight on iOS/Android.
                   WebkitTapHighlightColor: 'transparent',
-                  transition: 'opacity 150ms ease',
+                  transition: 'opacity {durations.fast} ease',
                   _hover: { opacity: 0.8 },
                   _active: { opacity: 0.4 },
                 })}
