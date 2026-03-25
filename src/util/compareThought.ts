@@ -17,9 +17,7 @@ const CURRENT_YEAR = new Date().getFullYear()
 
 const REGEX_PUNCTUATION = /^[!@#$%^&*()\-_=+[\]{};:'"<>.,?\\/].*/
 const REGEX_IGNORED_PREFIXES = new RegExp(`^(${IGNORED_PREFIXES.join('|')})(.*)`, 'gmi')
-const REGEX_FORMATTING = new RegExp(
-  `^<(${ALLOWED_FORMATTING_TAGS.join('|')})[^>]*>(.*?)<\\s*/\\s*(${ALLOWED_FORMATTING_TAGS.join('|')})>`,
-)
+const REGEX_FORMATTING = new RegExp(`^<(${ALLOWED_FORMATTING_TAGS.join('|')})[^>]*>`)
 
 // Date pattern regex constants for performance optimization
 // Month names for reuse across date patterns (pipe-separated for regex)
@@ -152,9 +150,9 @@ export const comparePunctuationAndOther = <T, U>(a: T, b: U): ComparatorValue =>
 
 /** A comparator function that sorts strings that contain HTML formatting above others. */
 export const compareFormatting = <T, U>(a: T, b: U): ComparatorValue => {
-  const aIsHtml = typeof a === 'string' && REGEX_FORMATTING.test(a)
-  const bIsHtml = typeof b === 'string' && REGEX_FORMATTING.test(b)
-  return aIsHtml && !bIsHtml ? -1 : bIsHtml && !aIsHtml ? 1 : 0
+  const aStartsWithHtml = typeof a === 'string' && REGEX_FORMATTING.test(a)
+  const bStartsWithHtml = typeof b === 'string' && REGEX_FORMATTING.test(b)
+  return aStartsWithHtml && !bStartsWithHtml ? -1 : bStartsWithHtml && !aStartsWithHtml ? 1 : 0
 }
 
 /** A comparison function that sorts date strings. Only handles date vs date comparisons. */
