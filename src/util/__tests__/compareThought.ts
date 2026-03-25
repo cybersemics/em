@@ -128,28 +128,38 @@ it('compareFormatting', () => {
 
 it('compareFormattingTagPriority', () => {
   // bold < italic < underline < strikethrough
-  expect(compareFormattingTagPriority('<b>A</b>', '<i>B</i>')).toBe(-1)
-  expect(compareFormattingTagPriority('<i>A</i>', '<b>B</b>')).toBe(1)
-  expect(compareFormattingTagPriority('<b>A</b>', '<u>B</u>')).toBe(-1)
-  expect(compareFormattingTagPriority('<i>A</i>', '<u>B</u>')).toBe(-1)
-  expect(compareFormattingTagPriority('<u>A</u>', '<strike>B</strike>')).toBe(-1)
-  expect(compareFormattingTagPriority('<strike>A</strike>', '<u>B</u>')).toBe(1)
+  expect(compareFormattingTagPriority('<b>A</b>', '<i>A</i>')).toBe(-1)
+  expect(compareFormattingTagPriority('<i>A</i>', '<b>A</b>')).toBe(1)
+  expect(compareFormattingTagPriority('<b>A</b>', '<u>A</u>')).toBe(-1)
+  expect(compareFormattingTagPriority('<i>A</i>', '<u>A</u>')).toBe(-1)
+  expect(compareFormattingTagPriority('<u>A</u>', '<strike>A</strike>')).toBe(-1)
+  expect(compareFormattingTagPriority('<strike>A</strike>', '<u>A</u>')).toBe(1)
 
   // same tag = 0
-  expect(compareFormattingTagPriority('<b>A</b>', '<b>B</b>')).toBe(0)
-  expect(compareFormattingTagPriority('<u>A</u>', '<u>B</u>')).toBe(0)
-  expect(compareFormattingTagPriority('<strike>A</strike>', '<strike>B</strike>')).toBe(0)
+  expect(compareFormattingTagPriority('<b>A</b>', '<b>A</b>')).toBe(0)
+  expect(compareFormattingTagPriority('<u>A</u>', '<u>A</u>')).toBe(0)
+  expect(compareFormattingTagPriority('<strike>A</strike>', '<strike>A</strike>')).toBe(0)
 
   // non-formatted = 0
   expect(compareFormattingTagPriority('a', 'b')).toBe(0)
   expect(compareFormattingTagPriority('<b>A</b>', 'b')).toBe(0)
   expect(compareFormattingTagPriority('a', '<b>B</b>')).toBe(0)
 
-  // strong/em aliases
-  expect(compareFormattingTagPriority('<strong>A</strong>', '<i>B</i>')).toBe(-1)
-  expect(compareFormattingTagPriority('<em>A</em>', '<b>B</b>')).toBe(1)
-  expect(compareFormattingTagPriority('<em>A</em>', '<strong>B</strong>')).toBe(1)
-  expect(compareFormattingTagPriority('<strong>A</strong>', '<em>B</em>')).toBe(-1)
+  // strong/b aliases = 0
+  expect(compareFormattingTagPriority('<strong>A</strong>', '<b>A</b>')).toBe(0)
+  expect(compareFormattingTagPriority('<b>A</b>', '<strong>A</strong>')).toBe(0)
+
+  // em/i aliases = 0
+  expect(compareFormattingTagPriority('<em>A</em>', '<i>A</i>')).toBe(0)
+  expect(compareFormattingTagPriority('<i>A</i>', '<em>A</em>')).toBe(0)
+
+  // s/strike aliases = 0
+  expect(compareFormattingTagPriority('<s>A</s>', '<strike>A</strike>')).toBe(0)
+  expect(compareFormattingTagPriority('<strike>A</strike>', '<s>A</s>')).toBe(0)
+
+  // strong/em ordering (strong = bold priority, em = italic priority)
+  expect(compareFormattingTagPriority('<strong>A</strong>', '<i>A</i>')).toBe(-1)
+  expect(compareFormattingTagPriority('<em>A</em>', '<b>A</b>')).toBe(1)
 })
 
 it('compareDateStrings', () => {

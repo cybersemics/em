@@ -35,6 +35,13 @@ const FORMATTING_TAG_PRIORITY: Record<string, number> = {
   span: 7,
 }
 
+const FORMATTING_PRIORITY_TAG_NAMES = Object.keys(FORMATTING_TAG_PRIORITY)
+
+/** Matches the outermost formatting tag of a string for priority ordering. Includes all tags in FORMATTING_TAG_PRIORITY (e.g. s as an alias for strike). */
+const REGEX_FORMATTING_PRIORITY = new RegExp(
+  `^<(${FORMATTING_PRIORITY_TAG_NAMES.join('|')})[^>]*>(.*?)<\\s*/\\s*(${FORMATTING_PRIORITY_TAG_NAMES.join('|')})>`,
+)
+
 // Date pattern regex constants for performance optimization
 // Month names for reuse across date patterns (pipe-separated for regex)
 const MONTH_NAMES = 'January|February|March|April|May|June|July|August|September|October|November|December'
@@ -173,7 +180,7 @@ export const compareFormatting = <T, U>(a: T, b: U): ComparatorValue => {
 
 /** Extracts the priority of the outermost formatting tag from an HTML string, or undefined if the string is not a recognized formatting tag. */
 const getFormattingTagPriority = (html: string): number | undefined => {
-  const match = REGEX_FORMATTING.exec(html)
+  const match = REGEX_FORMATTING_PRIORITY.exec(html)
   return match ? FORMATTING_TAG_PRIORITY[match[1]] : undefined
 }
 
