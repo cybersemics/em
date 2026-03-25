@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 
 interface SafeAreaInsets {
   top: number
@@ -35,20 +36,12 @@ const useSafeArea = (): SafeAreaInsets => {
   const insets = useRef(read())
 
   useEffect(() => {
-    let rafId: number | null = null
     /** Re-reads safe area insets from computed CSS on resize, throttled to one read per frame. */
-    const update = () => {
-      if (rafId !== null) return
-      rafId = requestAnimationFrame(() => {
-        insets.current = read()
-        rafId = null
-      })
-    }
+    const update = throttleByAnimationFrame(() => {
+      insets.current = read()
+    })
     window.addEventListener('resize', update)
-    return () => {
-      window.removeEventListener('resize', update)
-      if (rafId !== null) cancelAnimationFrame(rafId)
-    }
+    return () => window.removeEventListener('resize', update)
   }, [])
 
   return insets.current
