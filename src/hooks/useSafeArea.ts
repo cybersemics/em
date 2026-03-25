@@ -35,12 +35,19 @@ const useSafeArea = (): SafeAreaInsets => {
   const insets = useRef(read())
 
   useEffect(() => {
-    /** Updates safe area insets from computed CSS values. */
+    let rafId: number | null = null
     const update = () => {
-      insets.current = read()
+      if (rafId !== null) return
+      rafId = requestAnimationFrame(() => {
+        insets.current = read()
+        rafId = null
+      })
     }
     window.addEventListener('resize', update)
-    return () => window.removeEventListener('resize', update)
+    return () => {
+      window.removeEventListener('resize', update)
+      if (rafId !== null) cancelAnimationFrame(rafId)
+    }
   }, [])
 
   return insets.current
