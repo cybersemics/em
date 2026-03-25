@@ -39,6 +39,10 @@ const REGEX_DATE_COMBINED = new RegExp(
 // Allows mixed separators since it's only for parsing, not validation
 const REGEX_SHORT_DATE_PARSE = new RegExp(`^(\\d{1,2}[\\/-]\\d{1,2}|(${MONTH_NAMES})\\s+\\d{1,2})$`, 'i')
 
+// Match fonts tags for color and background color
+// can be used to strip font tags before sorting (#3782)
+const FONT_TAG_REGEX = /<font color="[^"]+"\s*(?:style="[^"]+")?>|<\/font>/gm
+
 // removeDiacritics borrowed from modern-diacritics package
 // modern-diacritics does not currently import so it is copied here
 // See: https://github.com/Mitsunee/modern-diacritics/blob/master/src/removeDiacritics.ts
@@ -212,14 +216,18 @@ const compareReadableText: ComparatorFunction<string> = makeOrderedComparator<st
  * 3. Emoji.
  * 4. CompareReadableText on text without emoji.
  */
-export const compareReasonable: ComparatorFunction<string> = makeOrderedComparator<string>([
-  compareEmpty,
-  comparePunctuationAndOther,
-  compareFormatting,
-  compareStringsWithMetaAttributes,
-  compareStringsWithEmoji,
-  (a, b) => compareReadableText(normalizeCharacters(a), normalizeCharacters(b)),
-])
+export const compareReasonable: ComparatorFunction<string> = (a: string, b: string) => {
+  const comparator = makeOrderedComparator<string>([
+    compareEmpty,
+    comparePunctuationAndOther,
+    compareFormatting,
+    compareStringsWithMetaAttributes,
+    compareStringsWithEmoji,
+    (a, b) => compareReadableText(normalizeCharacters(a), normalizeCharacters(b)),
+  ])
+  // Ignore font tags when sorting thoughts (#3782)
+  return comparator(a.replaceAll(FONT_TAG_REGEX, ''), b.replaceAll(FONT_TAG_REGEX, ''))
+}
 
 /** A comparator that sorts anything in descending order. Not a strict reversal of compareReasonable, as empty strings, formatting, punctuation, and meta attributes are still sorted above plain text.
  * 1. Empty string.
@@ -229,14 +237,18 @@ export const compareReasonable: ComparatorFunction<string> = makeOrderedComparat
  * 3. Emoji.
  * 4. CompareReadableText on text without emoji.
  */
-export const compareReasonableDescending: ComparatorFunction<string> = makeOrderedComparator<string>([
-  compareFormatting,
-  compareEmpty,
-  _.flip(comparePunctuationAndOther),
-  _.flip(compareStringsWithMetaAttributes),
-  _.flip(compareStringsWithEmoji),
-  (a, b) => compareReadableText(normalizeCharacters(b), normalizeCharacters(a)),
-])
+export const compareReasonableDescending: ComparatorFunction<string> = (a: string, b: string) => {
+  const comparator = makeOrderedComparator<string>([
+    compareFormatting,
+    compareEmpty,
+    _.flip(comparePunctuationAndOther),
+    _.flip(compareStringsWithMetaAttributes),
+    _.flip(compareStringsWithEmoji),
+    (a, b) => compareReadableText(normalizeCharacters(b), normalizeCharacters(a)),
+  ])
+  // Ignore font tags when sorting thoughts (#3782)
+  return comparator(a.replaceAll(FONT_TAG_REGEX, ''), b.replaceAll(FONT_TAG_REGEX, ''))
+}
 
 /** Compare the value of two thoughts. */
 export const compareThought: ComparatorFunction<Thought> = (a: Thought, b: Thought) =>
