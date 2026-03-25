@@ -3,7 +3,10 @@ import React, { useCallback, useRef, useState } from 'react'
 import useSafeArea from '../../hooks/useSafeArea'
 import durations from '../../util/durations'
 
-/** Default value for the swipe-to-clear threshold. */
+// Dismiss score threshold (px-equivalent). The dismiss score is computed as
+// swipeDistance + velocity * 2.0, so a pure-distance swipe needs 150px of
+// cumulative movement, while a fast flick can dismiss with less distance
+// (e.g. 50px at 50 px/s → score 50 + 100 = 150).
 const DEFAULT_SWIPE_DISMISS_THRESHOLD = 150
 
 /**
