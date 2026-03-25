@@ -131,7 +131,6 @@ const Tip: FC<
     state => (state.isKeyboardOpen && isTouch) || state.showCommandCenter || state.showSidebar || !!state.showModal,
   )
 
-
   /** Prefetch the glow image used in the tip, so that the user doesn't see a loading delay when the tip first becomes visible. */
   usePrefetchImages(['/img/tip/tip-glow-alpha.webp'])
 

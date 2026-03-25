@@ -36,6 +36,7 @@ const useSafeArea = (): SafeAreaInsets => {
 
   useEffect(() => {
     let rafId: number | null = null
+    /** Re-reads safe area insets from computed CSS on resize, throttled to one read per frame. */
     const update = () => {
       if (rafId !== null) return
       rafId = requestAnimationFrame(() => {

@@ -73,30 +73,30 @@ const ProgressiveBlur = ({
         const sliceMask = `linear-gradient(${direction}, transparent ${layer.leadingStop}%, black ${layer.start}%, black ${layer.end}%, transparent ${layer.trailingStop}%)`
         const compositeMask = mask ? `${sliceMask}, ${mask}` : sliceMask
         return (
-        <motion.div
-          key={i}
-          className={css({
-            position: 'absolute',
-            inset: 0,
-          })}
-          style={{
-            opacity,
-            backdropFilter: `blur(${layer.radius.toFixed(2)}px)`,
-            WebkitBackdropFilter: `blur(${layer.radius.toFixed(2)}px)`,
+          <motion.div
+            key={i}
+            className={css({
+              position: 'absolute',
+              inset: 0,
+            })}
+            style={{
+              opacity,
+              backdropFilter: `blur(${layer.radius.toFixed(2)}px)`,
+              WebkitBackdropFilter: `blur(${layer.radius.toFixed(2)}px)`,
 
-            // Sliced mask with overlap (feather), clamped to container bounds.
-            // When an extra mask is provided, intersect it with the slice mask
-            // so both fade directions apply per-layer (required for backdrop-filter).
-            maskImage: compositeMask,
-            WebkitMaskImage: compositeMask,
-            ...(mask && {
-              maskComposite: 'intersect',
-              WebkitMaskComposite: 'source-in' as string,
-            }),
-          }}
-        />
-      )})}
-
+              // Sliced mask with overlap (feather), clamped to container bounds.
+              // When an extra mask is provided, intersect it with the slice mask
+              // so both fade directions apply per-layer (required for backdrop-filter).
+              maskImage: compositeMask,
+              WebkitMaskImage: compositeMask,
+              ...(mask && {
+                maskComposite: 'intersect',
+                WebkitMaskComposite: 'source-in' as string,
+              }),
+            }}
+          />
+        )
+      })}
     </div>
   )
 }
