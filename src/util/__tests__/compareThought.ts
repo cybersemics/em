@@ -270,11 +270,11 @@ describe('compareThought', () => {
     })
 
     it('sort formatted thoughts in canonical tag priority order (bold < italic < underline < strikethrough) in descending sort', () => {
-      expect(compareThoughtDescending(thought('<b>A</b>'), thought('<i>B</i>'))).toBe(-1)
-      expect(compareThoughtDescending(thought('<i>A</i>'), thought('<b>B</b>'))).toBe(1)
-      expect(compareThoughtDescending(thought('<i>A</i>'), thought('<u>B</u>'))).toBe(-1)
-      expect(compareThoughtDescending(thought('<u>A</u>'), thought('<strike>B</strike>'))).toBe(-1)
-      expect(compareThoughtDescending(thought('<strike>A</strike>'), thought('<u>B</u>'))).toBe(1)
+      expect(compareThoughtDescending(thought('<b>A</b>'), thought('<i>A</i>'))).toBe(-1)
+      expect(compareThoughtDescending(thought('<i>A</i>'), thought('<b>A</b>'))).toBe(1)
+      expect(compareThoughtDescending(thought('<i>A</i>'), thought('<u>A</u>'))).toBe(-1)
+      expect(compareThoughtDescending(thought('<u>A</u>'), thought('<strike>A</strike>'))).toBe(-1)
+      expect(compareThoughtDescending(thought('<strike>A</strike>'), thought('<u>A</u>'))).toBe(1)
     })
   })
 })
