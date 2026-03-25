@@ -83,13 +83,13 @@ const TipGlow: FC = () => (
       backgroundSize: 'cover',
       backgroundPosition: 'top right',
 
-      // Mobile portrait: 32px extra bleed (16px per side) compensates for filter: blur feathering the edges.
+      // Mobile portrait: 175vw – push some of the glow image off-screen
       // Larger: clamped between 1000–1500px so the glow covers enough area without stretching too far.
-      width: { base: 'calc(100vw + 32px)', lg: 'clamp(1000px, calc(100vw + 32px), 1500px)' },
+      width: { base: '175vw', lg: 'clamp(1000px, calc(100vw + 32px), 1500px)' },
       // Content-relative height: 100% tracks the tip text area, plus fixed headroom
       // so the glow extends above the text. As the tip grows taller, the glow grows with it.
       height: 'calc(100% + 64px)',
-      bottom: { base: -84, lg: 0 },
+      bottom: { base: -72, lg: -64 },
 
       // Positioning: on mobile portrait, the glow comes from the left edge. On landscape mobile and larger, it comes from the right edge.
       left: { base: -16, lg: 'auto' },
