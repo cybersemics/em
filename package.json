@@ -84,13 +84,13 @@
     "packages/*"
   ],
   "dependencies": {
-    "@capacitor/android": "^8.2.0",
+    "@capacitor/android": "^8.3.0",
     "@capacitor/clipboard": "^8.0.1",
-    "@capacitor/core": "^8.2.0",
+    "@capacitor/core": "^8.3.0",
     "@capacitor/haptics": "^8.0.1",
-    "@capacitor/ios": "^8.2.0",
-    "@capacitor/keyboard": "^8.0.1",
-    "@capacitor/status-bar": "^8.0.1",
+    "@capacitor/ios": "^8.3.0",
+    "@capacitor/keyboard": "^8.0.2",
+    "@capacitor/status-bar": "^8.0.2",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@mui/material": "^7.3.9",
@@ -162,7 +162,7 @@
   "devDependencies": {
     "@babel/core": "^7.29.0",
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
-    "@capacitor/cli": "^8.2.0",
+    "@capacitor/cli": "^8.3.0",
     "@pandacss/dev": "^1.9.0",
     "@pandacss/eslint-plugin": "^0.3.2",
     "@sinonjs/fake-timers": "^15.1.1",
