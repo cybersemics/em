@@ -125,7 +125,7 @@ function Glow({ hidden }: { hidden?: boolean }) {
     >
       <div
         className={css({
-          backgroundImage: 'url(/img/gesture-menu/glow.webp)',
+          backgroundImage: 'url(/img/gesture-menu/glow.avif)',
           backgroundRepeat: 'no-repeat',
           mixBlendMode: 'screen',
           position: 'absolute',
@@ -203,7 +203,7 @@ const GestureMenuWithTransition: FC = () => {
     /** Prefetch the gesture menu glow background image to improve initial menu appearance. */
     const prefetchGlowBackground = async () => {
       const img = new Image()
-      img.src = '/img/gesture-menu/glow.webp'
+      img.src = '/img/gesture-menu/glow.avif'
       await img.decode()
     }
 
