@@ -17,9 +17,7 @@ const CURRENT_YEAR = new Date().getFullYear()
 
 const REGEX_PUNCTUATION = /^[!@#$%^&*()\-_=+[\]{};:'"<>.,?\\/].*/
 const REGEX_IGNORED_PREFIXES = new RegExp(`^(${IGNORED_PREFIXES.join('|')})(.*)`, 'gmi')
-const REGEX_FORMATTING = new RegExp(
-  `^<(${ALLOWED_FORMATTING_TAGS.join('|')})[^>]*>(.*?)<\\s*/\\s*(${ALLOWED_FORMATTING_TAGS.join('|')})>`,
-)
+const REGEX_FORMATTING = new RegExp(`^<(${ALLOWED_FORMATTING_TAGS.join('|')})[^>]*>`)
 
 // Date pattern regex constants for performance optimization
 // Month names for reuse across date patterns (pipe-separated for regex)
@@ -40,6 +38,10 @@ const REGEX_DATE_COMBINED = new RegExp(
 // - Month Day (written format without year)
 // Allows mixed separators since it's only for parsing, not validation
 const REGEX_SHORT_DATE_PARSE = new RegExp(`^(\\d{1,2}[\\/-]\\d{1,2}|(${MONTH_NAMES})\\s+\\d{1,2})$`, 'i')
+
+// Match fonts tags for color and background color
+// can be used to strip font tags before sorting (#3782)
+const FONT_TAG_REGEX = /<font color="[^"]+"\s*(?:style="[^"]+")?>|<\/font>/gm
 
 // removeDiacritics borrowed from modern-diacritics package
 // modern-diacritics does not currently import so it is copied here
@@ -152,9 +154,9 @@ export const comparePunctuationAndOther = <T, U>(a: T, b: U): ComparatorValue =>
 
 /** A comparator function that sorts strings that contain HTML formatting above others. */
 export const compareFormatting = <T, U>(a: T, b: U): ComparatorValue => {
-  const aIsHtml = typeof a === 'string' && REGEX_FORMATTING.test(a)
-  const bIsHtml = typeof b === 'string' && REGEX_FORMATTING.test(b)
-  return aIsHtml && !bIsHtml ? -1 : bIsHtml && !aIsHtml ? 1 : 0
+  const aStartsWithHtml = typeof a === 'string' && REGEX_FORMATTING.test(a)
+  const bStartsWithHtml = typeof b === 'string' && REGEX_FORMATTING.test(b)
+  return aStartsWithHtml && !bStartsWithHtml ? -1 : bStartsWithHtml && !aStartsWithHtml ? 1 : 0
 }
 
 /** A comparison function that sorts date strings. Only handles date vs date comparisons. */
@@ -214,14 +216,18 @@ const compareReadableText: ComparatorFunction<string> = makeOrderedComparator<st
  * 3. Emoji.
  * 4. CompareReadableText on text without emoji.
  */
-export const compareReasonable: ComparatorFunction<string> = makeOrderedComparator<string>([
-  compareEmpty,
-  comparePunctuationAndOther,
-  compareFormatting,
-  compareStringsWithMetaAttributes,
-  compareStringsWithEmoji,
-  (a, b) => compareReadableText(normalizeCharacters(a), normalizeCharacters(b)),
-])
+export const compareReasonable: ComparatorFunction<string> = (a: string, b: string) => {
+  const comparator = makeOrderedComparator<string>([
+    compareEmpty,
+    comparePunctuationAndOther,
+    compareFormatting,
+    compareStringsWithMetaAttributes,
+    compareStringsWithEmoji,
+    (a, b) => compareReadableText(normalizeCharacters(a), normalizeCharacters(b)),
+  ])
+  // Ignore font tags when sorting thoughts (#3782)
+  return comparator(a.replaceAll(FONT_TAG_REGEX, ''), b.replaceAll(FONT_TAG_REGEX, ''))
+}
 
 /** A comparator that sorts anything in descending order. Not a strict reversal of compareReasonable, as empty strings, formatting, punctuation, and meta attributes are still sorted above plain text.
  * 1. Empty string.
@@ -231,14 +237,18 @@ export const compareReasonable: ComparatorFunction<string> = makeOrderedComparat
  * 3. Emoji.
  * 4. CompareReadableText on text without emoji.
  */
-export const compareReasonableDescending: ComparatorFunction<string> = makeOrderedComparator<string>([
-  compareFormatting,
-  compareEmpty,
-  _.flip(comparePunctuationAndOther),
-  _.flip(compareStringsWithMetaAttributes),
-  _.flip(compareStringsWithEmoji),
-  (a, b) => compareReadableText(normalizeCharacters(b), normalizeCharacters(a)),
-])
+export const compareReasonableDescending: ComparatorFunction<string> = (a: string, b: string) => {
+  const comparator = makeOrderedComparator<string>([
+    compareFormatting,
+    compareEmpty,
+    _.flip(comparePunctuationAndOther),
+    _.flip(compareStringsWithMetaAttributes),
+    _.flip(compareStringsWithEmoji),
+    (a, b) => compareReadableText(normalizeCharacters(b), normalizeCharacters(a)),
+  ])
+  // Ignore font tags when sorting thoughts (#3782)
+  return comparator(a.replaceAll(FONT_TAG_REGEX, ''), b.replaceAll(FONT_TAG_REGEX, ''))
+}
 
 /** Compare the value of two thoughts. */
 export const compareThought: ComparatorFunction<Thought> = (a: Thought, b: Thought) =>

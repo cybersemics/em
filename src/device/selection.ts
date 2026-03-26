@@ -1,5 +1,6 @@
 /* eslint-disable no-restricted-properties */
 /** Wraps the browser Selection API in a device-agnostic interface. */
+import { isHTMLElement } from 'framer-motion'
 import SplitResult from '../@types/SplitResult'
 import { ALLOWED_FORMATTING_TAGS } from '../constants'
 
@@ -56,31 +57,38 @@ export const isCollapsed = (): boolean => !!window.getSelection()?.isCollapsed
 /** Returns true if there is an active selection. */
 export const isActive = (): boolean => !!window.getSelection()?.focusNode
 
-/** Returns true if the Node is an editable. */
-export const isEditable = (node?: Node | EventTarget | null) => {
-  let element = node as HTMLElement
+/** Traverses a node's parents until it finds an element node that is not a formatting tag. Returns null if a suitable parent cannot be found. */
+const getEditableCandidate = (node?: EventTarget | null) => {
+  if (!isHTMLElement(node)) return null
+  let element = node
 
   // If the selected element is a formatting tag, then one of its parents may be the editable (#3805)
   while (
-    element?.tagName &&
     element.parentElement &&
-    ALLOWED_FORMATTING_TAGS.includes(element.tagName.toLocaleLowerCase())
+    (element.nodeType === Node.TEXT_NODE || ALLOWED_FORMATTING_TAGS.includes(element.tagName.toLocaleLowerCase()))
   )
     element = element.parentElement
 
-  return (
-    !!element &&
-    element.nodeType === Node.ELEMENT_NODE &&
-    (element.hasAttribute('data-editable') || element.ariaLabel === 'note-editable')
-  )
+  return element.nodeType === Node.ELEMENT_NODE ? element : null
 }
 
-/** Returns true if the focusNode is a note. */
-export const isNote = () => document.activeElement?.ariaLabel === 'note-editable'
+/** Check the node, if it exists, for a data-editable attribute. */
+const isContentEditable = (node: Element | null): boolean => node?.hasAttribute('data-editable') ?? false
 
-/** Returns true if the active element is an editable thought or note. */
-export const isThought = (): boolean =>
-  !!document.activeElement?.hasAttribute('data-editable') || document.activeElement?.ariaLabel === 'note-editable'
+/** Check the node, if it exists, for an ariaLabel set to note-editable. */
+const isNoteEditable = (node: Element | null): boolean => node?.ariaLabel === 'note-editable'
+
+/** Returns true if the node is part of a note. Defaults to using the active selection. */
+export const isNote = (node?: EventTarget | null): boolean => {
+  const editable = node === undefined ? document.activeElement : getEditableCandidate(node)
+  return isNoteEditable(editable)
+}
+/** Returns true if the node is part of a thought. Defaults to using the active selection. */
+// We should see if it is possible to just use state.isKeyboardOpen and selection.isActive()
+export const isThought = (node?: EventTarget | null): boolean => {
+  const editable = node === undefined ? document.activeElement : getEditableCandidate(node)
+  return isContentEditable(editable) || isNoteEditable(editable)
+}
 
 /** Returns true if the selection is  on the first line of a multi-line text node. Returns true if there is no selection or if the text node is only a single line. */
 export const isOnFirstLine = (): boolean => {
