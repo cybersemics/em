@@ -4,8 +4,8 @@ import { css } from '../../styled-system/css'
 import Dispatch from '../@types/Dispatch'
 import SimplePath from '../@types/SimplePath'
 import { Thunk } from '../@types/Thunk'
+import { closeDropdownsActionCreator as closeDropdowns } from '../actions/closeDropdowns'
 import { closeModalActionCreator as closeModal } from '../actions/closeModal'
-import { closeDropdownsActionCreator as closeDropdowns } from '../actions/toggleDropdown'
 import { isTouch } from '../browser'
 import {
   ABSOLUTE_PATH,
