@@ -1,9 +1,9 @@
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
+import { DROPDOWN_STATE_KEYS } from '../constants'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import reducerFlow from '../util/reducerFlow'
 import clearMulticursors from './clearMulticursors'
-import { DROPDOWN_STATE_KEYS } from './toggleDropdown'
 
 /** Closes all open dropdowns. */
 const closeDropdowns = (state: State): State =>

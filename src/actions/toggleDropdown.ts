@@ -1,26 +1,9 @@
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
+import { DROPDOWN_STATE_KEYS, DropdownType } from '../constants'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import reducerFlow from '../util/reducerFlow'
 import clearMulticursors from './clearMulticursors'
-
-export type DropdownType = 'colorPicker' | 'letterCase' | 'sortPicker' | 'commandCenter' | 'undoSlider'
-
-type DropdownStateKeys =
-  | 'showColorPicker'
-  | 'showLetterCase'
-  | 'showSortPicker'
-  | 'showCommandCenter'
-  | 'showUndoSlider'
-
-// Map dropdown types to their state keys
-export const DROPDOWN_STATE_KEYS: Record<DropdownType, DropdownStateKeys> = {
-  colorPicker: 'showColorPicker',
-  letterCase: 'showLetterCase',
-  sortPicker: 'showSortPicker',
-  commandCenter: 'showCommandCenter',
-  undoSlider: 'showUndoSlider',
-}
 
 /** Toggle a specific dropdown and close all others. */
 const toggleDropdown = (state: State, { dropDownType, value }: { dropDownType: DropdownType; value?: boolean }) => {

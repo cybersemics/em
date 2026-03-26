@@ -615,3 +615,22 @@ export const DELETE_VIBRATE_DURATION = 80
 /** Right padding and Left padding of the Content component in px. */
 export const CONTENT_BOX_PADDING_RIGHT = 10
 export const CONTENT_BOX_PADDING_LEFT = 50
+
+/** The types of dropdowns that can be shown. */
+export type DropdownType = 'colorPicker' | 'letterCase' | 'sortPicker' | 'commandCenter' | 'undoSlider'
+
+type DropdownStateKeys =
+  | 'showColorPicker'
+  | 'showLetterCase'
+  | 'showSortPicker'
+  | 'showCommandCenter'
+  | 'showUndoSlider'
+
+/** Maps dropdown types to their corresponding State keys. */
+export const DROPDOWN_STATE_KEYS: Record<DropdownType, DropdownStateKeys> = {
+  colorPicker: 'showColorPicker',
+  letterCase: 'showLetterCase',
+  sortPicker: 'showSortPicker',
+  commandCenter: 'showCommandCenter',
+  undoSlider: 'showUndoSlider',
+}
