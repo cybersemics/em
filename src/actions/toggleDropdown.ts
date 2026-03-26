@@ -57,6 +57,11 @@ export const toggleDropdownActionCreator =
     }
   }
 
+/** Closes all open dropdowns. */
+export const closeDropdownsActionCreator = (): Thunk => dispatch => {
+  dispatch(toggleDropdownActionCreator())
+}
+
 export default toggleDropdown
 
 registerActionMetadata('toggleDropdown', {

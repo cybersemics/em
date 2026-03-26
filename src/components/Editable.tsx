@@ -15,7 +15,7 @@ import { setInvalidStateActionCreator as setInvalidState } from '../actions/inva
 import { keyboardOpenActionCreator } from '../actions/keyboardOpen'
 import { newThoughtActionCreator as newThought } from '../actions/newThought'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
-import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
+import { closeDropdownsActionCreator as closeDropdowns } from '../actions/toggleDropdown'
 import { tutorialNextActionCreator as tutorialNext } from '../actions/tutorialNext'
 import { isMac, isTouch } from '../browser'
 import { commandEmitter } from '../commands'
@@ -579,7 +579,7 @@ const Editable = ({
             selection.clear()
 
             // close all popups when clicking on a thought
-            dispatch(toggleDropdown())
+            dispatch(closeDropdowns())
           } else {
             setCursorOnThought()
           }
