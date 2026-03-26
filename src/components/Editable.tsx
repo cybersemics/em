@@ -98,11 +98,6 @@ const applyOuterTag = (newValue: string, oldValue: string): string => {
   return div.firstChild.outerHTML
 }
 
-// track if a thought is blurring so that we can avoid an extra dispatch of setEditingValue in onFocus
-// otherwise it can trigger unnecessary re-renders
-// intended to be global, not local state
-let blurring = false
-
 // this flag is used to ensure that the browser selection is not restored after the initial setCursorOnThought
 let cursorOffsetInitialized = false
 
@@ -479,8 +474,6 @@ const Editable = ({
   /** Flushes edits and updates certain state variables on blur. */
   const onBlur: FocusEventHandler<HTMLElement> = useCallback(
     e => {
-      blurring = true
-
       throttledChangeRef.current.flush()
 
       // update the ContentEditable if the new scrubbed value is different (i.e. stripped, space after emoji added, etc)
@@ -506,33 +499,23 @@ const Editable = ({
 
       if (isRelatedTargetEditableOrNote) return
 
-      // if related target is not editable wait until the next render to determine if we have really blurred
-      // otherwise isKeyboardOpen may be incorrectly set to false when clicking on another thought when keyboard is open (which results in a blur and focus in quick succession)
-      setTimeout(() => {
-        // detect speech-to-text
-        // needs to be deferred to the next tick, otherwise causes store.getState() to be invoked in a reducer (???)
-        if (value.split(/<div>/g).length > 1) {
-          dispatch(importSpeechToText({ simplePath, value: (e.target as HTMLInputElement).value }))
-        }
+      // detect speech-to-text
+      // needs to be deferred to the next tick, otherwise causes store.getState() to be invoked in a reducer (???)
+      if (value.split(/<div>/g).length > 1) {
+        setTimeout(() => dispatch(importSpeechToText({ simplePath, value: (e.target as HTMLInputElement).value })))
+      }
 
-        if (blurring) {
-          blurring = false
-          // reset editingValue on mobile if we have really blurred to avoid a spurious duplicate thought error (#895)
-          // if enabled on desktop, it will break "clicking a bullet, the caret should move to the beginning of the thought" test)
-          if (isTouch) {
-            editingValueStore.update(null)
-          }
-          // temporary states such as duplicate error states and cursorCleared are reset on blur
-          dispatch(cursorCleared({ value: false }))
-        }
+      // reset editingValue on mobile if we have really blurred to avoid a spurious duplicate thought error (#895)
+      // if enabled on desktop, it will break "clicking a bullet, the caret should move to the beginning of the thought" test)
+      if (isTouch) {
+        editingValueStore.update(null)
+      }
+      // temporary states such as duplicate error states and cursorCleared are reset on blur
+      dispatch(cursorCleared({ value: false }))
 
-        if (isTouch) {
-          // Set editing to false if user exits editing mode by tapping on a non-editable element.
-          if (!selection.isThought()) {
-            dispatch(keyboardOpenActionCreator({ value: false }))
-          }
-        }
-      })
+      if (isTouch) {
+        dispatch(keyboardOpenActionCreator({ value: false }))
+      }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [simplePath],
@@ -546,9 +529,6 @@ const Editable = ({
     () => {
       preventAutoscrollEnd(contentRef.current)
       if (suppressFocusStore.getState()) return
-      // do not allow blur to setEditingValue when it is followed immediately by a focus
-      blurring = false
-
       // Update editingValueUntrimmedStore with the current value
       editingValueUntrimmedStore.update(value)
 
@@ -563,58 +543,16 @@ const Editable = ({
     [value, setCursorOnThought],
   )
 
-  const onMouseDown = useCallback(
-    (e: React.MouseEvent) => {
-      // If CMD/CTRL is pressed, don't focus the editable.
-      const isMultiselectClick = isMac ? e.metaKey : e.ctrlKey
-      if (isMultiselectClick) {
-        e.preventDefault()
-        return
-      }
-
-      // If editing or the cursor is on the thought, allow the default browser selection so the offset is correct.
-      // Otherwise useEditMode will programmatically set the selection to the beginning of the thought.
-      // See: #981
-      if (editingOrOnCursor && !hasMulticursor) {
-        // Prevent the browser from autoscrolling to this editable element.
-        // For some reason doesn't work on touchend.
-        preventAutoscroll(contentRef.current, {
-          // about the height of a single-line thought
-          bottomMargin: fontSize * 2,
-        })
-
-        allowDefaultSelection()
-      }
-      // There are areas on the outside edge of the thought that will fail to trigger onTouchEnd.
-      // In those cases, it is best to prevent onFocus or onClick, otherwise keyboard is open will be incorrectly activated.
-      // Steps to Reproduce: https://github.com/cybersemics/em/pull/2948#issuecomment-2887186117
-      // Explanation and demo: https://github.com/cybersemics/em/pull/2948#issuecomment-2887803425
-      else {
-        e.preventDefault()
-      }
-    },
-    [contentRef, editingOrOnCursor, fontSize, allowDefaultSelection, hasMulticursor],
-  )
-
-  /** Sets the cursor on the thought on touchend or click. Handles hidden elements, drags, and editing mode. */
-  const onTap = useCallback(
-    (e: React.MouseEvent | React.TouchEvent) => {
-      // Avoid triggering haptics twice since this handler is used for both onClick and onTouchEnd.
-      if (e.type !== 'touchend') {
-        haptics.light()
-      }
-
-      // If CMD/CTRL is pressed, don't focus the editable.
-      const isMultiselectClick = isMac ? e.metaKey : e.ctrlKey
-      if (isMultiselectClick) {
-        e.preventDefault()
-        return
-      }
-
-      // when the MultiGesture is below the gesture threshold it is possible that onTap and onTouchEnd are both triggered
-      // in this case, we need to prevent onTap from being called a second time via onTouchEnd
+  /**
+   * Shared on tap logic dispatched after both click and touchend.
+   * Checks long-press, multicursor, disabled, and visibility to decide whether to set the cursor.
+   */
+  const handleTapBehavior = useCallback(
+    (e: MouseEvent | TouchEvent) => {
+      // When MultiGesture is below the gesture threshold it is possible that onClick and onTouchEnd
+      // both trigger. Prevent handleTapBehavior from running a second time via touchend in that case.
       // https://github.com/cybersemics/em/issues/1268
-      else if (globals.touching && e.cancelable) {
+      if (e.type === 'touchend' && globals.touching && e.cancelable) {
         e.preventDefault()
       }
 
@@ -651,6 +589,71 @@ const Editable = ({
     [disabled, dispatch, editingOrOnCursor, isVisible, setCursorOnThought],
   )
 
+  /** Registers native event listeners for pointer (mousedown, click) and touch (touchend with passive: false). */
+  useEffect(() => {
+    const editable = contentRef.current
+    if (!editable) return
+
+    /** Handles mousedown on the editable to manage caret and selection behavior. */
+    const onMouseDown = (e: MouseEvent) => {
+      // If CMD/CTRL is pressed, don't focus the editable.
+      const isMultiselectClick = isMac ? e.metaKey : e.ctrlKey
+      if (isMultiselectClick) {
+        e.preventDefault()
+        return
+      }
+
+      // If editing or the cursor is on the thought, allow the default browser selection so the offset is correct.
+      // Otherwise useEditMode will programmatically set the selection to the beginning of the thought.
+      // See: #981
+      if (editingOrOnCursor && !hasMulticursor) {
+        // Prevent the browser from autoscrolling to this editable element.
+        // For some reason doesn't work on touchend.
+        preventAutoscroll(contentRef.current, {
+          // about the height of a single-line thought
+          bottomMargin: fontSize * 2,
+        })
+
+        allowDefaultSelection()
+      }
+      // There are areas on the outside edge of the thought that will fail to trigger onTouchEnd.
+      // In those cases, it is best to prevent onFocus or onClick, otherwise keyboard is open will be incorrectly activated.
+      // Steps to Reproduce: https://github.com/cybersemics/em/pull/2948#issuecomment-2887186117
+      // Explanation and demo: https://github.com/cybersemics/em/pull/2948#issuecomment-2887803425
+      else {
+        e.preventDefault()
+      }
+    }
+
+    /** Sets the cursor on the thought on click. Handles hidden elements, drags, and editing mode. */
+    const onClick = (e: MouseEvent) => {
+      // If CMD/CTRL is pressed, don't focus the editable.
+      const isMultiselectClick = isMac ? e.metaKey : e.ctrlKey
+      if (isMultiselectClick) {
+        e.preventDefault()
+        return
+      }
+
+      handleTapBehavior(e)
+    }
+
+    /** Sets the cursor on the thought on touchend. Handles hidden elements, drags, and editing mode. */
+    const onTouchEnd = (e: TouchEvent) => {
+      haptics.light()
+      handleTapBehavior(e)
+    }
+
+    editable.addEventListener('mousedown', onMouseDown)
+    editable.addEventListener('click', onClick)
+    editable.addEventListener('touchend', onTouchEnd, { passive: false })
+
+    return () => {
+      editable.removeEventListener('mousedown', onMouseDown)
+      editable.removeEventListener('click', onClick)
+      editable.removeEventListener('touchend', onTouchEnd)
+    }
+  }, [contentRef, editingOrOnCursor, hasMulticursor, disabled, fontSize, allowDefaultSelection, handleTapBehavior])
+
   return (
     <ContentEditable
       disabled={disabled}
@@ -671,9 +674,6 @@ const Editable = ({
               : (childrenLabel ?? value)
       }
       placeholder={placeholder}
-      onMouseDown={onMouseDown}
-      onClick={onTap}
-      onTouchEnd={onTap}
       onFocus={onFocus}
       onBlur={onBlur}
       onChange={onChangeHandler}

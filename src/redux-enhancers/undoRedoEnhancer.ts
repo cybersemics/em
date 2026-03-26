@@ -208,6 +208,13 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       const { redoPatches, undoPatches } = state as State
       const actionType = action.type
 
+      // Clear the last edit thought direction when the clear action is executed.
+      if (actionType === 'clear') {
+        lastAction = undefined
+        lastEditThoughtDirection = EditThoughtDirection.None
+        return reducer(state, action)
+      }
+
       // Handle undo and redo.
       // They are defined in the redux enhancer rather than in /actions.
       if (actionType === 'undo' || actionType === 'redo') {

@@ -3,6 +3,9 @@ name: 'Copilot Setup Steps'
 # Allow testing of the setup steps from your repository's "Actions" tab.
 on: workflow_dispatch
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   # The job MUST be called `copilot-setup-steps` or it will not be picked up by Copilot.
   copilot-setup-steps:
@@ -12,15 +15,15 @@ jobs:
     # If you do not check out your code, Copilot will do this for you.
     steps:
       - name: Clone repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Enable Corepack
         run: corepack enable
 
       - name: Set Node.js version
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Install npm dependencies
         run: yarn

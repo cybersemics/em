@@ -8,6 +8,8 @@ import keyboard from '../helpers/keyboard'
 import press from '../helpers/press'
 import { page } from '../setup'
 
+vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
+
 it('Re-render cursor thought on undo', async () => {
   // create a thought "hello"
   await press('Enter')

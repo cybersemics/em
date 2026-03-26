@@ -1,17 +1,22 @@
 import { KnownDevices } from 'puppeteer'
 import categorizeCommand from '../../../commands/categorize'
+import newThoughtCommand from '../../../commands/newThought'
+import openCommandCenterCommand from '../../../commands/openCommandCenter'
 import click from '../helpers/click'
 import clickBullet from '../helpers/clickBullet'
 import clickThought from '../helpers/clickThought'
+import closeKeyboard from '../helpers/closeKeyboard'
 import emulate from '../helpers/emulate'
 import gesture from '../helpers/gesture'
 import getEditingText from '../helpers/getEditingText'
 import getSelection from '../helpers/getSelection'
+import keyboard from '../helpers/keyboard'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import refresh from '../helpers/refresh'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForHiddenEditable from '../helpers/waitForHiddenEditable'
+import waitForSelector from '../helpers/waitForSelector'
 import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
 import waitUntil from '../helpers/waitUntil'
 
@@ -38,17 +43,18 @@ describe('all platforms', () => {
     expect(offset).toBe(0)
   })
 
-  it('clicking a bullet, the caret should move to the beginning of the thought', async () => {
+  it('clicking a bullet, the caret should move to the beginning of the parent thought', async () => {
     const importText = `
-    - Don't stay awake for too long
-      - I don't wanna fall asleep`
+    - a
+      - b
+        - c`
 
     await paste(importText)
 
-    const editableNodeHandle = await waitForEditable("I don't wanna fall asleep")
-    await click(editableNodeHandle, { offset: 10 })
+    const editableNodeHandle = await waitForEditable('b')
+    await click(editableNodeHandle, { offset: 1 })
 
-    await clickBullet("Don't stay awake for too long")
+    await clickBullet('b')
     const offset = await getSelection().focusOffset
     expect(offset).toBe(0)
   })
@@ -339,5 +345,31 @@ describe('mobile only', () => {
 
     const textContext = await getEditingText()
     expect(textContext).toBe('a')
+  })
+
+  it('tapping a thought after opening and closing Command Center via Done should not open the keyboard', async () => {
+    // Step 1: create a thought
+    await gesture(newThoughtCommand)
+    await keyboard.type('a')
+
+    // Step 2: open the Command Center with the ↑ gesture
+    await gesture(openCommandCenterCommand)
+    await waitForSelector('[data-testid=command-center-panel]')
+
+    // Step 3: close the Command Center via the Done button
+    await click('[data-testid="command-center-done"]')
+    await waitForSelector('[data-testid=command-center-panel]', { hidden: true })
+
+    // Step 4: create a second thought
+    await gesture(newThoughtCommand)
+
+    // Step 5: close the keyboard via the native Done button (blur the active element)
+    await closeKeyboard()
+
+    // Step 6: tap the first thought — keyboard should NOT open
+    await clickThought('a')
+
+    // keyboard should not open, so the active element should be the body or null
+    await waitUntil(() => !document.activeElement || document.activeElement === document.body)
   })
 })
