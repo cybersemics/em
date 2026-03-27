@@ -1,17 +1,13 @@
 import _ from 'lodash'
+import { AnimationPlaybackControls, animate } from 'motion'
 import VirtualKeyboardHandler from '../../../@types/VirtualKeyboardHandler'
 import { isSafari, isTouch } from '../../../browser'
 import store from '../../../stores/app'
 import viewportStore, { updateSize } from '../../../stores/viewport'
 import virtualKeyboardStore from '../../../stores/virtualKeyboardStore'
 
-// An approximation of how long it takes the keyboard to open
-const VIRTUAL_KEYBOARD_OPEN_DURATION = 400
-// An approximation of how long it takes the keyboard to close
-const VIRTUAL_KEYBOARD_CLOSE_DURATION = 350
-
-let openingInterval: ReturnType<typeof setInterval> | null = null
-let closingInterval: ReturnType<typeof setInterval> | null = null
+/** Provides control over the spring animation. */
+let controls: AnimationPlaybackControls | null = null
 
 /** Updates the virtualKeyboardStore state based on the selection. */
 const updateIOSSafariKeyboardState = () => {
@@ -25,45 +21,40 @@ const updateIOSSafariKeyboardState = () => {
     const keyboardIsVisible = isKeyboardOpen === true
 
     if (keyboardIsVisible && !virtualKeyboardStore.getState().open) {
-      if (openingInterval) clearInterval(openingInterval)
-      if (closingInterval) clearInterval(closingInterval)
+      // Stop any existing animation to prevent conflicts
+      controls?.stop()
 
-      // Animate the keyboard opening
-      const start = Date.now()
-      openingInterval = setInterval(() => {
-        const duration = Date.now() - start
-        const progress = Math.min(1, duration / VIRTUAL_KEYBOARD_OPEN_DURATION)
-        const height = targetHeight * progress
-        virtualKeyboardStore.update({
-          open: true,
-          height: height || 0,
-          source: 'ios-safari',
-        })
-        if (progress === 1) {
-          clearInterval(openingInterval!)
-          openingInterval = null
-        }
-      }, 16.666)
+      virtualKeyboardStore.update({ open: true, source: 'ios-safari' })
+
+      // Approximate iOS' keyboard spring animation (same curve as iOSCapacitorHandler)
+      controls = animate(virtualKeyboardStore.getState().height, targetHeight, {
+        type: 'spring',
+        stiffness: 3600,
+        damping: 220,
+        mass: 1.2,
+        onUpdate: value => {
+          virtualKeyboardStore.update({ height: value })
+        },
+      })
     } else if (!keyboardIsVisible && virtualKeyboardStore.getState().open) {
-      if (openingInterval) clearInterval(openingInterval)
-      if (closingInterval) clearInterval(closingInterval)
+      // Stop any existing animation to prevent conflicts
+      controls?.stop()
 
-      // Animate the keyboard closing
-      const start = Date.now()
-      closingInterval = setInterval(() => {
-        const duration = Date.now() - start
-        const progress = Math.min(1, duration / VIRTUAL_KEYBOARD_CLOSE_DURATION)
-        const height = targetHeight * (1 - progress)
-        virtualKeyboardStore.update({
-          open: progress < 1,
-          height: height || 0,
-          source: 'ios-safari',
-        })
-        if (progress === 1) {
-          clearInterval(closingInterval!)
-          closingInterval = null
-        }
-      }, 16.666)
+      // Keep open: true during the closing animation so consumers still account for the keyboard
+      virtualKeyboardStore.update({ open: true, source: 'ios-safari' })
+
+      controls = animate(virtualKeyboardStore.getState().height, 0, {
+        type: 'spring',
+        stiffness: 3600,
+        damping: 220,
+        mass: 1.2,
+        onUpdate: value => {
+          virtualKeyboardStore.update({ height: value })
+        },
+        onComplete: () => {
+          virtualKeyboardStore.update({ open: false, height: 0, source: 'ios-safari' })
+        },
+      })
     }
   }, 0)
 }
@@ -86,8 +77,7 @@ const iOSSafariHandler: VirtualKeyboardHandler = {
     document.removeEventListener('selectionchange', updateIOSSafariKeyboardState)
     const resizeHost = window.visualViewport || window
     resizeHost.removeEventListener('resize', onResize)
-    if (openingInterval) clearInterval(openingInterval)
-    if (closingInterval) clearInterval(closingInterval)
+    controls?.stop()
   },
 }
 
