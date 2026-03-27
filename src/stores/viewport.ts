@@ -39,18 +39,28 @@ export const updateSize = _.throttle(
     const isPortrait = window.innerHeight > window.innerWidth
     const currentKeyboardHeight = window.visualViewport ? window.innerHeight - window.visualViewport.height : 0
 
-    // update the cached virtual keyboard height every time there is a valid visualViewport in case the keyboard has changed
-    if (isPortrait) {
-      virtualKeyboardHeightPortrait = currentKeyboardHeight
-    } else {
-      virtualKeyboardHeightLandscape = currentKeyboardHeight
+    // Only update the cached keyboard height when the keyboard is actually open (nonzero height).
+    // When the keyboard closes, currentKeyboardHeight is 0 — preserving the cache ensures
+    // iOSSafariHandler can still read the last-known height for its opening animation.
+    if (currentKeyboardHeight > 0) {
+      if (isPortrait) {
+        virtualKeyboardHeightPortrait = currentKeyboardHeight
+      } else {
+        virtualKeyboardHeightLandscape = currentKeyboardHeight
+      }
     }
 
     viewportStore.update({
       innerWidth: window.innerWidth,
       innerHeight: window.innerHeight,
-      // when the keyboard is closed, use the cached height
-      virtualKeyboardHeight: currentKeyboardHeight,
+      // When the keyboard is closed, fall back to the cached height so consumers
+      // (e.g. iOSSafariHandler) still know the keyboard's expected height for animations.
+      virtualKeyboardHeight:
+        currentKeyboardHeight > 0
+          ? currentKeyboardHeight
+          : isPortrait
+            ? virtualKeyboardHeightPortrait
+            : virtualKeyboardHeightLandscape,
     })
   },
   // lock to 60 fps
