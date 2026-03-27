@@ -267,18 +267,18 @@ export const compareReasonable: ComparatorFunction<string> = (a: string, b: stri
 
 /** A comparator that sorts anything in descending order. Not a strict reversal of compareReasonable, as empty strings, formatting, punctuation, and meta attributes are still sorted above plain text.
  * 1. Empty string.
- * 2. Punctuation (=, +, #hi, =test).
- * 3. Formatting (b, i, u, em, strong, span, strike, code, font).
- * 4. Formatting tag priority (bold < italic < underline < strikethrough) — not reversed, so formatted thoughts always appear in canonical priority order.
+ * 2. Formatting (b, i, u, em, strong, span, strike, code, font).
+ * 3. Formatting tag priority (bold < italic < underline < strikethrough) — not reversed, so formatted thoughts always appear in canonical priority order.
+ * 4. Punctuation (=, +, #hi, =test).
  * 5. Meta attributes.
  * 6. Emoji.
  * 7. CompareReadableText on text without emoji.
  */
 export const compareReasonableDescending: ComparatorFunction<string> = (a: string, b: string) => {
   const comparator = makeOrderedComparator<string>([
+    compareEmpty,
     compareFormatting,
     compareFormattingTagPriority,
-    compareEmpty,
     _.flip(comparePunctuationAndOther),
     _.flip(compareStringsWithMetaAttributes),
     _.flip(compareStringsWithEmoji),
