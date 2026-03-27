@@ -1,6 +1,7 @@
 /* eslint-disable import/prefer-default-export */
 /** Defines app-wide constants. */
 import CommandId from './@types/CommandId'
+import DropdownType from './@types/DropdownType'
 import SimplePath from './@types/SimplePath'
 import ThoughtId from './@types/ThoughtId'
 import { ColorToken } from './colors.config'
@@ -615,9 +616,6 @@ export const DELETE_VIBRATE_DURATION = 80
 /** Right padding and Left padding of the Content component in px. */
 export const CONTENT_BOX_PADDING_RIGHT = 10
 export const CONTENT_BOX_PADDING_LEFT = 50
-
-/** The types of dropdowns that can be shown. */
-export type DropdownType = 'colorPicker' | 'letterCase' | 'sortPicker' | 'commandCenter' | 'undoSlider'
 
 type DropdownStateKeys =
   | 'showColorPicker'
