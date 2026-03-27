@@ -1,7 +1,9 @@
-import SwipeableDrawer from '@mui/material/SwipeableDrawer'
 import _ from 'lodash'
+import { useTransform } from 'motion/react'
+import { motion } from 'motion/react'
 import pluralize from 'pluralize'
 import { FC, useCallback, useRef } from 'react'
+import { Sheet, SheetRef, SheetTweenConfig } from 'react-modal-sheet'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { token } from '../../../styled-system/tokens'
@@ -20,7 +22,6 @@ import uncategorize from '../../commands/uncategorize'
 import isTutorial from '../../selectors/isTutorial'
 import durations from '../../util/durations'
 import fastClick from '../../util/fastClick'
-import FadeTransition from '../FadeTransition'
 import PanelCommand from './PanelCommand'
 import PanelCommandGroup from './PanelCommandGroup'
 
@@ -50,7 +51,6 @@ const MultiselectMessage: FC = () => {
           color: 'fg',
           fontWeight: 700,
           letterSpacing: '-0.011em',
-          mixBlendMode: 'screen',
           opacity: 0.6,
           fontSize: '1.3em',
         })}
@@ -58,31 +58,6 @@ const MultiselectMessage: FC = () => {
         {displayNumMulticursors} {pluralize('thought', displayNumMulticursors, false)} selected
       </span>
     </div>
-  )
-}
-
-/** Command center gradient overlay. Fades in when the Command Center opens. */
-const Overlay = () => {
-  const showCommandCenter = useSelector(state => state.showCommandCenter)
-  const ref = useRef<HTMLDivElement>(null)
-  return (
-    <FadeTransition nodeRef={ref} in={showCommandCenter} type='commandCenterDrawer' unmountOnExit>
-      <div
-        // Passing the ref in is required, due to position absolute child.
-        ref={ref}
-        className={css({
-          position: 'absolute',
-          pointerEvents: 'none',
-          backgroundImage: 'url(/img/command-center/overlay.webp)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center bottom',
-          mixBlendMode: 'screen',
-          height: '100vh',
-          width: '100%',
-          bottom: 0,
-        })}
-      />
-    </FadeTransition>
   )
 }
 
@@ -102,6 +77,34 @@ const HiddenOverlay = () => {
   )
 }
 
+const tweenConfig: SheetTweenConfig = {
+  duration: durations.get('medium') / 1000,
+  ease: 'easeOut',
+}
+
+/**
+ * Custom hook that returns reactive transforms for a draggable sheet.
+ */
+const useSheetTransforms = (ref: React.RefObject<SheetRef | null>) => {
+  const height = useTransform(() => {
+    return ref.current?.yInverted.get() ?? 0
+  })
+
+  const sheetProgress = useTransform(() => {
+    const y = ref.current?.yInverted.get() ?? 0
+    const height = ref.current?.height ?? 0
+    if (height === 0) return 0
+    return Math.min(Math.max(y / height, 0), 1)
+  })
+
+  const blurHeight = useTransform(height, height => {
+    // Start at 0, then smoothly grow with progress
+    return height + 110 * sheetProgress.get()
+  })
+
+  return { height, opacity: sheetProgress, blurHeight }
+}
+
 /**
  * A panel that displays the Command Center.
  */
@@ -109,10 +112,9 @@ const CommandCenter = () => {
   const dispatch = useDispatch()
   const showCommandCenter = useSelector(state => state.showCommandCenter)
   const isTutorialOn = useSelector(isTutorial)
+  const sheetRef = useRef<SheetRef>(null)
 
-  const onOpen = useCallback(() => {
-    dispatch(toggleDropdown({ dropDownType: 'commandCenter', value: true }))
-  }, [dispatch])
+  const { height, opacity, blurHeight } = useSheetTransforms(sheetRef)
 
   const onClose = useCallback(() => {
     dispatch([toggleDropdown({ dropDownType: 'commandCenter', value: false }), clearMulticursors()])
@@ -121,156 +123,154 @@ const CommandCenter = () => {
   if (isTouch && !isTutorialOn) {
     return (
       <>
-        <HiddenOverlay />
-        <SwipeableDrawer
-          data-testid='command-center-panel'
-          // Disable swipe to open - this removes the swipe-up-to-open functionality
-          disableSwipeToOpen={true}
-          transitionDuration={durations.get('commandCenterDrawer')}
-          // Remove the SwipeAreaProps since we don't want to enable swipe to open
-          anchor='bottom'
-          // Keep onOpen for programmatic opening
-          onOpen={onOpen}
-          // Keep onClose for swipe to dismiss
-          onClose={onClose}
-          open={showCommandCenter}
-          hideBackdrop={true}
-          disableScrollLock={true}
-          PaperProps={{
-            style: {
-              backgroundColor: 'transparent',
-              // Make sure it overrides any inline styles
-              display: 'flex',
-              flexDirection: 'column',
-              width: '100%',
-              overflow: 'visible',
-              maxHeight: '70%',
-              pointerEvents: 'auto',
-              boxShadow: 'none',
-            },
-          }}
-          ModalProps={{
-            disableAutoFocus: true,
-            disableEnforceFocus: true,
-            disableRestoreFocus: true,
-            style: {
-              pointerEvents: 'none',
-              zIndex: token('zIndex.modal'),
-              backgroundColor: 'transparent',
-            },
-          }}
-        >
-          <div
-            /** Progressive Blur. */
+        {showCommandCenter && (
+          <motion.div
+            /*
+             * Progressive blur effect. Must be placed outside the Sheet to avoid separation
+             * from the background content due to the fixed position of the parent.
+             */
             className={css({
+              position: 'fixed',
               pointerEvents: 'none',
-              position: 'absolute',
               backdropFilter: 'blur(2px)',
               mask: 'linear-gradient(180deg, {colors.bgTransparent} 0%, black 110px, black 100%)',
               bottom: 0,
               width: '100%',
-              height: 'calc(100% + 110px)',
+              zIndex: 'commandCenterBlur',
             })}
+            style={{
+              height: blurHeight,
+            }}
           />
-          <div
+        )}
+        <HiddenOverlay />
+        <Sheet
+          data-testid='command-center-panel'
+          ref={sheetRef}
+          isOpen={showCommandCenter}
+          onClose={onClose}
+          detent='content'
+          unstyled
+          tweenConfig={tweenConfig}
+          style={{
+            /** Override default Sheet zIndex. */
+            zIndex: token('zIndex.commandCenter'),
+          }}
+          /** Fixes sheet shifting up on ios when it opens. */
+          disableScrollLocking
+        >
+          <motion.div
+            /** Falloff. */
             className={css({
-              position: 'relative',
-              // prevent mix-blend-mode and backdrop-filter from affecting each other
-              isolation: 'isolate',
+              pointerEvents: 'none',
+              position: 'absolute',
+              background: 'linear-gradient(180deg, {colors.bgTransparent} 0%, {colors.bg} 1.2rem)',
+              paddingTop: '0.711rem',
+              bottom: 0,
+              width: '100%',
+              height: '100%',
             })}
+            style={{ height }}
+          />
+          <motion.div
+            className={css({
+              position: 'fixed',
+              pointerEvents: 'none',
+              backgroundImage: 'url(/img/command-center/overlay.webp)',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center bottom',
+              height: '100vh',
+              width: '100%',
+              bottom: 0,
+            })}
+            style={{ opacity }}
+          />
+          <Sheet.Container
+            data-testid='command-menu-panel'
+            className={css({
+              backgroundColor: 'transparent',
+              overflow: 'visible',
+              boxShadow: 'none',
+            })}
+            style={{
+              // override default Sheet.Container styles
+              maxHeight: '70%',
+              zIndex: 'auto',
+            }}
+            onScroll={e => {
+              /**
+               * Prevent scroll events in command center from bubbling up
+               * to window scroll listeners.
+               */
+              e.stopPropagation()
+            }}
           >
-            <div
-              /** Falloff. */
+            <Sheet.Content
               className={css({
-                pointerEvents: 'none',
-                position: 'absolute',
-                background: 'linear-gradient(180deg, {colors.bgTransparent} 0%, {colors.bg} 1.067rem)',
-                paddingTop: '0.711rem',
-                bottom: 0,
-                width: '100%',
-                height: '100%',
-              })}
-            />
-            <Overlay />
-
-            <div
-              className={css({
-                display: 'flex',
-                flexDirection: 'column',
-                margin: '0 1.333rem calc(1.333rem + env(safe-area-inset-bottom)) 1.333rem',
-                gap: '0.889rem',
+                overflow: 'visible',
               })}
             >
               <div
                 className={css({
                   display: 'flex',
-                  alignItems: 'flex-end',
-                  justifyContent: 'space-between',
+                  flexDirection: 'column',
+                  margin: '0 1.333rem calc(1.333rem + env(safe-area-inset-bottom)) 1.333rem',
+                  gap: '0.889rem',
                 })}
               >
-                <MultiselectMessage />
                 <div
                   className={css({
-                    display: 'grid',
-                    // Define a single area for stacking. Cannot use position relative,
-                    // since that will create a new stacking context and break mix-blend-mode.
-                    gridTemplateAreas: '"button"',
-                    fontSize: '0.85em',
-                    fontWeight: 500,
-                    letterSpacing: '-0.011em',
-                    color: 'fg',
+                    display: 'flex',
+                    alignItems: 'flex-end',
+                    justifyContent: 'space-between',
                   })}
                 >
-                  <div
-                    className={css({
-                      gridArea: 'button',
-                      background: 'fgOverlay20',
-                      borderRadius: 46,
-                      mixBlendMode: 'soft-light',
-                    })}
-                  />
+                  <MultiselectMessage />
                   <button
                     {...fastClick(onClose)}
                     data-testid='command-center-done'
                     className={css({
                       all: 'unset',
-                      gridArea: 'button',
-                      mixBlendMode: 'lighten',
-                      opacity: 0.5,
+                      fontSize: '0.85em',
                       fontWeight: 500,
+                      letterSpacing: '-0.011em',
+                      color: 'fg',
+                      opacity: 0.5,
+                      borderRadius: 46,
                       cursor: 'pointer',
                       padding: '8px 16px',
+                      background: 'commandCenterDoneButton',
                     })}
                   >
                     Done
                   </button>
                 </div>
+                <div
+                  className={css({
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(4, 1fr)',
+                    gridTemplateRows: 'auto',
+                    gridAutoFlow: 'row',
+                    gap: '0.622rem',
+                    gridRowGap: '0.889rem',
+                  })}
+                >
+                  <PanelCommand command={{ ...copyCursorCommand, label: 'Copy' }} size='small' />
+                  <PanelCommand command={note} size='small' />
+                  <PanelCommand command={{ ...favorite, label: 'Favorite' }} size='small' />
+                  <PanelCommand command={deleteCommand} size='small' />
+                  <PanelCommandGroup commandSize='small' commandCount={2}>
+                    <PanelCommand command={{ ...outdent, label: '' }} size='small' />
+                    <PanelCommand command={{ ...indent, label: '' }} size='small' />
+                  </PanelCommandGroup>
+                  <PanelCommand command={swapParent} size='medium' />
+                  <PanelCommand command={categorize} size='medium' />
+                  <PanelCommand command={uncategorize} size='medium' />
+                </div>
               </div>
-              <div
-                className={css({
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(4, 1fr)',
-                  gridTemplateRows: 'auto',
-                  gridAutoFlow: 'row',
-                  gap: '0.622rem',
-                  gridRowGap: '0.889rem',
-                })}
-              >
-                <PanelCommand command={{ ...copyCursorCommand, label: 'Copy' }} size='small' />
-                <PanelCommand command={note} size='small' />
-                <PanelCommand command={{ ...favorite, label: 'Favorite' }} size='small' />
-                <PanelCommand command={deleteCommand} size='small' />
-                <PanelCommandGroup commandSize='small' commandCount={2}>
-                  <PanelCommand command={{ ...outdent, label: '' }} size='small' />
-                  <PanelCommand command={{ ...indent, label: '' }} size='small' />
-                </PanelCommandGroup>
-                <PanelCommand command={swapParent} size='medium' />
-                <PanelCommand command={categorize} size='medium' />
-                <PanelCommand command={uncategorize} size='medium' />
-              </div>
-            </div>
-          </div>
-        </SwipeableDrawer>
+            </Sheet.Content>
+          </Sheet.Container>
+        </Sheet>
       </>
     )
   }
