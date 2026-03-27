@@ -5,7 +5,7 @@ const cancelShortcut: Command = {
   id: 'cancel',
   label: 'Cancel',
   description: 'Cancel the current gesture.',
-  gesture: undefined,
+  hideFromCommandPalette: true,
   multicursor: false,
   exec: noop,
 }

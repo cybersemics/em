@@ -29,6 +29,7 @@ export default defineConfig({
       filename: 'service-worker.ts',
       injectManifest: {
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024, // Increase limit to 4 MiB
+        globPatterns: ['**/*.{js,css,html,webp}'],
       },
       manifest: {
         name: 'em',

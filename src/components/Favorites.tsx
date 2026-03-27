@@ -43,11 +43,12 @@ const DragAndDropFavorite = ({
   const dragHoldResult = useDragHold({ isDragging, simplePath, sourceZone: DragThoughtZone.Favorites })
 
   return (
-    // Set overflow:auto so the drop target fully wraps its contents.
+    // Set display:flow-root to create a new block formatting context so the drop target fully wraps its contents.
     // Otherwise the context-breadcrumbs margin-top will leak out and create a dead zone where the favorite cannot be dropped.
+    // Note: overflow:auto also creates a BFC but causes a scrollbar on empty thoughts (#3817). overflow:hidden clips content.
     <div
       {...dragHoldResult.props}
-      className={css({ overflow: 'auto' })}
+      className={css({ display: 'flow-root' })}
       data-testid='drag-and-drop-favorite'
       ref={dndRef(node => dragSource(dropTarget(node)))}
     >

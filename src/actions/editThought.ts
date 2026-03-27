@@ -25,6 +25,7 @@ import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
 import removeContext from '../util/removeContext'
 import timestamp from '../util/timestamp'
+import deleteAttribute from './deleteAttribute'
 import deleteThought from './deleteThought'
 import setCursor from './setCursor'
 import updateThoughts from './updateThoughts'
@@ -37,7 +38,6 @@ export interface editThoughtPayload {
   oldValue: string
   newValue: string
   path: SimplePath
-  rankInContext?: number
 }
 
 /** Changes the text of an existing thought. */
@@ -143,7 +143,7 @@ const editThought = (state: State, { cursorOffset, force, oldValue, newValue, pa
     ...(editedThought.generating ? { generating: false } : null),
     rank:
       newValue !== '' && (sortType === 'Alphabetical' || sortType === 'Created' || sortType === 'Updated')
-        ? getSortedRank(state, editedThought.parentId, newValue)
+        ? getSortedRank(state, editedThought.parentId, newValue, editedThought.created)
         : editedThought.rank,
     value: newValue,
     lastUpdated: timestamp(),
@@ -205,12 +205,15 @@ const editThought = (state: State, { cursorOffset, force, oldValue, newValue, pa
     ...(force ? { editableNonce: state.editableNonce + 1 } : null),
   }
 
-  return updateThoughts(stateNew, {
+  const stateAfterUpdate = updateThoughts(stateNew, {
     cursorOffset,
     lexemeIndexUpdates,
     thoughtIndexUpdates,
     // recentlyEdited,
   })
+
+  // remove =done when thought is edited to empty to prevent strikethrough on the placeholder
+  return newValue === '' ? deleteAttribute({ path, value: '=done' })(stateAfterUpdate) : stateAfterUpdate
 }
 
 /** Action-creator for editThought. */

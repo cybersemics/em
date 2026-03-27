@@ -9,7 +9,7 @@ const swapNote: Command = {
   label: 'Swap Note',
   description: 'Convert a thought to a note.',
   keyboard: { key: 'n', alt: true, shift: true },
-  gesture: 'rld',
+  gesture: 'ulr',
   multicursor: true,
   canExecute: state => {
     return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))

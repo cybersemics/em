@@ -44,7 +44,7 @@ describe('sidebar', () => {
     await keyboard.type('a')
 
     await openSidebar()
-    await click('[data-testid=sidebar-recentEdited]')
+    await click('[data-testid=sidebar-recentlyEdited]')
 
     expect(await screenshotWithoutToolbarIcons()).toMatchImageSnapshot({
       customSnapshotIdentifier: 'sidebar-recently-edited',

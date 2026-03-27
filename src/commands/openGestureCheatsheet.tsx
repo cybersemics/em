@@ -10,6 +10,7 @@ const openGestureCheatsheetCommand: Command = {
   gesture: 'rdld',
   multicursor: false,
   hideAlert: true,
+  hideFromCommandPalette: true,
   svg: GestureCheatsheetIcon,
   canExecute: () => isDocumentEditable(),
   exec: dispatch => {

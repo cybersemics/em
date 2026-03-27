@@ -1,14 +1,15 @@
 /** Test coverage of basic UI appearance. Snapashots only. Do not place behavioral tests here. If a component has snapshot and behavioral tests, move them to a separate test file. */
 import path from 'path'
 import { KnownDevices } from 'puppeteer'
+import openCommandCenterCommand from '../../../commands/openCommandCenter'
 import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
+import gesture from '../helpers/gesture'
 import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import setTheme from '../helpers/setTheme'
-import swipe from '../helpers/swipe'
 import waitForSelector from '../helpers/waitForSelector'
 import { page } from '../setup'
 
@@ -24,9 +25,13 @@ it('CommandPalette', async () => {
   // wait for the command palette to appear before taking screenshot
   await waitForSelector('[data-testid=command-palette]')
 
-  expect(await screenshot()).toMatchImageSnapshot({ customSnapshotIdentifier: 'commandPalette' })
+  expect(await screenshot()).toMatchImageSnapshot({
+    customSnapshotIdentifier: 'commandPalette',
+  })
   await setTheme('Light')
-  expect(await screenshot()).toMatchImageSnapshot({ customSnapshotIdentifier: 'commandPalette-light' })
+  expect(await screenshot()).toMatchImageSnapshot({
+    customSnapshotIdentifier: 'commandPalette-light',
+  })
 })
 
 it('GestureMenu', async () => {
@@ -40,7 +45,7 @@ it('GestureMenu', async () => {
   await clickThought('Hello')
 
   // swipe and hold an invalid gesture so that the snapshot just includes Cancel and Open Gesture Cheatsheet and does not need to be updated every time a gesture is added or changed.
-  await swipe('rdldrd')
+  await gesture('rdldrd', { hold: true })
 
   // wait for the gesture menu to appear
   await waitForSelector('[data-testid=popup-value]')
@@ -60,7 +65,7 @@ it('CommandCenter', async () => {
   await clickThought('Hello')
 
   // open the Command Center
-  await swipe('u', true)
+  await gesture(openCommandCenterCommand)
 
   // wait for the command center panel to appear before taking screenshot
   await waitForSelector('[data-testid=command-center-panel]')

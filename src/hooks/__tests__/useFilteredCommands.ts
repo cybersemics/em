@@ -40,16 +40,11 @@ vi.mock('../../browser')
 
 vi.mock('../../commands', async () => {
   const actual = await vi.importActual('../../commands')
+
+  /** Gets the actual Command object by id. */
+  const actualCommand = (id: CommandId) => (actual.commandById as (id: CommandId) => Command)(id) as Command
+
   const globalCommands: Command[] = [
-    {
-      id: 'newThought' as CommandId,
-      label: 'New Thought',
-      gesture: 'rd',
-      keyboard: { key: 'Enter' },
-      multicursor: false,
-      // No canExecute means always enabled
-      exec: vi.fn(),
-    },
     {
       id: 'newSubthought' as CommandId,
       label: 'New Subthought',
@@ -57,7 +52,7 @@ vi.mock('../../commands', async () => {
       keyboard: { key: 'Enter', meta: true },
       multicursor: false,
       exec: vi.fn(),
-      canExecute: () => true, // This command is enabled
+      canExecute: () => true,
     },
     {
       id: 'newGrandChild' as CommandId,
@@ -81,12 +76,13 @@ vi.mock('../../commands', async () => {
       keyboard: { key: 's', shift: true, alt: true },
       multicursor: false,
       exec: vi.fn(),
-      canExecute: () => false, // This command is disabled
+      canExecute: () => false,
     },
     {
       id: 'openGestureCheatsheet' as CommandId,
       label: 'Gesture Cheatsheet',
       gesture: 'rdld',
+      hideFromCommandPalette: true,
       multicursor: false,
       exec: vi.fn(),
     },
@@ -98,16 +94,10 @@ vi.mock('../../commands', async () => {
       exec: vi.fn(),
     },
     {
-      id: 'newThought' as CommandId,
-      label: 'New Thought',
-      gesture: 'rd',
-      multicursor: true,
-      exec: vi.fn(),
-    },
-    {
       id: 'cancel' as CommandId,
       label: 'Cancel',
       gesture: undefined,
+      hideFromCommandPalette: true,
       multicursor: false,
       exec: vi.fn(),
     },
@@ -130,6 +120,7 @@ vi.mock('../../commands', async () => {
       label: 'Hidden Command',
       gesture: 'du',
       multicursor: false,
+      hideFromGestureMenu: true,
       hideFromCommandPalette: true,
       exec: vi.fn(),
     },
@@ -142,22 +133,7 @@ vi.mock('../../commands', async () => {
       keyboard: { key: 'h', shift: true, alt: true },
       multicursor: false,
       exec: vi.fn(),
-      isActive: () => true, // This command is active
-    },
-    {
-      id: 'selectAll' as CommandId,
-      label: 'Select All',
-      labelInverse: 'Deselect All',
-      description: 'Selects all thoughts at the current level. May reduce wrist strain.',
-      descriptionInverse: 'Deselects all thoughts at the current level.',
-      gesture: 'ldr',
-      exec: vi.fn(),
-      multicursor: false,
-      keyboard: [
-        { key: 'a', meta: true, alt: true },
-        { key: 'a', meta: true },
-      ],
-      isActive: () => false, // This command is inactive
+      isActive: () => true,
     },
     {
       id: 'neitherCommand' as CommandId,
@@ -165,13 +141,17 @@ vi.mock('../../commands', async () => {
       multicursor: false,
       exec: vi.fn(),
     },
+    actualCommand('newThought'),
+    {
+      ...actualCommand('selectAll'),
+      isActive: () => false,
+    },
   ]
   return {
     chainCommand: actual.chainCommand,
-    commandById: (id: CommandId) => globalCommands.find(command => command.id === id),
+    commandById: actual.commandById,
+    gestureString: actual.gestureString,
     globalCommands,
-    gestureString: (command: Command): string =>
-      (typeof command.gesture === 'string' ? command.gesture : command.gesture?.[0] || '') as string,
   }
 })
 

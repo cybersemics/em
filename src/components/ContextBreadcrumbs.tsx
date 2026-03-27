@@ -4,7 +4,7 @@ import { shallowEqual, useSelector } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
 import { css } from '../../styled-system/css'
 import { extendTapRecipe } from '../../styled-system/recipes'
-import { token } from '../../styled-system/tokens'
+import { ColorToken, token } from '../../styled-system/tokens'
 import { SystemStyleObject } from '../../styled-system/types'
 import Path from '../@types/Path'
 import ThoughtId from '../@types/ThoughtId'
@@ -18,7 +18,7 @@ import fastClick from '../util/fastClick'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
-import strip from '../util/strip'
+import stripTags from '../util/stripTags'
 import FadeTransition from './FadeTransition'
 import HomeLink from './HomeLink'
 import Link from './Link'
@@ -33,6 +33,8 @@ type OverflowChild = {
 }
 
 type OverflowPath = OverflowChild[]
+
+type ContextBreadcrumbsVariant = 'small' | 'default'
 
 /** Ellipsizes thoughts in a path by thoughtsLimit and charLimit. Complexity: O(n), but does not work if thoughtsLimit or charLimit are undefined. */
 const useEllipsizedThoughts = (
@@ -59,7 +61,8 @@ const useEllipsizedThoughts = (
 
   // if charLimit is exceeded then replace the remaining characters with an ellipsis
   const charLimitedThoughts: OverflowPath = path.map((id, i) => {
-    const value = thoughtValuesLive[i]
+    const value = thoughtValuesLive[i] ? stripTags(thoughtValuesLive[i]) : null
+
     return {
       // It is possible that the thought is no longer in state, in which case value will be null.
       // The component is hopefully being unmounted, so the value shouldn't matter as long as it does not error out.
@@ -69,10 +72,8 @@ const useEllipsizedThoughts = (
       // add ellipsized label
       ...(!disabled && value != null
         ? {
-            label: strip(
-              // subtract 2 so that additional '...' is still within the char limit
-              value.length > charLimit! - 2 ? value.slice(0, charLimit! - 2) + '...' : value,
-            ),
+            // subtract 2 so that additional '...' is still within the char limit
+            label: value.length > charLimit! - 2 ? value.slice(0, charLimit! - 2) + '...' : value,
           }
         : {}),
     }
@@ -152,7 +153,6 @@ BreadCrumb.displayName = 'BreadCrumb'
 /** Renders the ancestor chain of a path as links. */
 const ContextBreadcrumbs = ({
   charLimit,
-  cssRaw,
   hideArchive,
   hidden,
   homeContext,
@@ -160,9 +160,10 @@ const ContextBreadcrumbs = ({
   staticText,
   thoughtsLimit,
   linkCssRaw,
+  variant = 'default',
+  color,
 }: {
   charLimit?: number
-  cssRaw?: SystemStyleObject
   /** Hide just the =archive thought, but show the rest of the path. */
   hideArchive?: boolean
   /**
@@ -176,6 +177,8 @@ const ContextBreadcrumbs = ({
   staticText?: boolean
   thoughtsLimit?: number
   linkCssRaw?: SystemStyleObject
+  variant?: ContextBreadcrumbsVariant
+  color?: ColorToken
 }) => {
   const [disabled, setDisabled] = React.useState(false)
   const simplePath = useSelector(state => simplifyPath(state, path), shallowEqual)
@@ -203,20 +206,18 @@ const ContextBreadcrumbs = ({
 
   const homeIconStyle: React.CSSProperties = { position: 'relative', left: -1, top: 2 }
 
+  // If variant is small, use 14px font size, otherwise use 0.867rem which scales with the user's font size
+  const fontSize = variant === 'default' ? '0.867rem' : '14px'
+
   return (
     <div
       aria-label={hidden ? undefined : 'context-breadcrumbs'}
-      className={css(
-        {
-          fontSize: '0.867rem',
-          color: 'gray66',
-          marginLeft: 'calc(1.1271rem - 14.5px)',
-          marginTop: '0.533em',
-          minHeight: '0.867rem',
-          visibility: hidden ? 'hidden' : undefined,
-        },
-        cssRaw,
-      )}
+      className={css({
+        fontSize,
+        color: color || 'gray66',
+        minHeight: `${fontSize}`,
+        visibility: hidden ? 'hidden' : undefined,
+      })}
     >
       {isRoot(simplePath) ? (
         /*

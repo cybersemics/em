@@ -135,12 +135,16 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
     return lastChild ? appendToPath(simplePath, lastChild.id) : null
   })
 
+  // if the sort preference is Created, then the current timestamp will be used to sort the new thought into place (#3782)
+  const created = Date.now()
+  const sortPreference = getSortPreference(state, insertId)
+
   // if meta key is pressed, add a child instead of a sibling of the current thought
   // if shift key is pressed, insert the child before the current thought
   const newRank = insertContext
     ? getNextRank(state, ABSOLUTE_TOKEN)
-    : value !== '' && getSortPreference(state, insertId).type === 'Alphabetical'
-      ? getSortedRank(state, insertId, value)
+    : sortPreference.type === 'Created' || (value !== '' && sortPreference.type === 'Alphabetical')
+      ? getSortedRank(state, insertId, value, created)
       : insertBefore
         ? insertNewSubthought || !simplePath || isRoot(simplePath)
           ? getPrevRank(state, insertId, { aboveMeta })
@@ -148,7 +152,7 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
         : insertNewSubthought || !simplePath
           ? // if inserting an empty thought into a sorted context via insertNewSubthought, get the rank after the last sorted child rather than incrementing the highest rank
             // otherwise the empty thought will not be correctly sorted by resortEmptyInPlace
-            value === '' && getSortPreference(state, insertId).type === 'Alphabetical' && getLastSortedChildPath()
+            value === '' && sortPreference.type === 'Alphabetical' && getLastSortedChildPath()
             ? getRankAfter(state, getLastSortedChildPath()!)
             : getNextRank(state, insertId)
           : getRankAfter(state, simplePath)

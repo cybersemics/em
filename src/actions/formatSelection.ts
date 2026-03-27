@@ -1,5 +1,4 @@
 /* eslint-disable import/prefer-default-export */
-import { rgbToHex } from '@mui/material'
 import Thunk from '../@types/Thunk'
 import { ColorToken } from '../colors.config'
 import { ALLOWED_ATTR } from '../constants'
@@ -11,6 +10,7 @@ import themeColors from '../selectors/themeColors'
 import { updateCommandState } from '../stores/commandStateStore'
 import suppressFocusStore from '../stores/suppressFocus'
 import head from '../util/head'
+import rgbToHex from '../util/rgbToHex'
 import strip from '../util/strip'
 import { editThoughtActionCreator as editThought } from './editThought'
 
@@ -29,8 +29,12 @@ export const formatSelectionActionCreator =
     suppressFocusStore.update(true)
 
     // format whole thought (if there is no selection)
-    const thoughtContentEditable = document.querySelector(`[aria-label="editable-${thought.id}"]`)
-    if (!thoughtContentEditable) return
+    const contentEditable = document.querySelector(
+      state.noteFocus
+        ? `[aria-label="note-editable"][data-thought-id="${thought.id}"]`
+        : `[aria-label="editable-${thought.id}"]`,
+    )
+    if (!contentEditable) return
 
     if (
       (selection.text()?.length === 0 && strip(thought.value).length !== 0) ||
@@ -39,7 +43,7 @@ export const formatSelectionActionCreator =
       const hasCustomBackgroundColor = /background-color\s*:\s*[^;]+;?/.test(thought.value)
       const savedSelection = selection.save()
       // Note that we must suppress focus events in the Editable component, otherwise selecting text will set editing:true on mobile.
-      selection.select(thoughtContentEditable)
+      selection.select(contentEditable)
       if (!(command === 'backColor' && color === 'bg' && !hasCustomBackgroundColor)) {
         document.execCommand(command, false, color ? colors[color] : '')
       }

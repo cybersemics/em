@@ -22,6 +22,7 @@ import equalPathHead from '../util/equalPathHead'
 import head from '../util/head'
 import noteValue from '../util/noteValue'
 import strip from '../util/strip'
+import useOnCut from './Editable/useOnCut'
 import FauxCaret from './FauxCaret'
 
 /** Renders an editable note that modifies the content of the hidden =note attribute. */
@@ -129,24 +130,34 @@ const Note = React.memo(
       [dispatch, path, justPasted],
     )
 
-    /** Set editing to false onBlur, if keyboard is closed. */
+    /** Set state.noteFocus if Note lost focus and did not move to another Note. Set state.keyboardOpen if keyboard is closed. */
     const onBlur = useCallback(
       (e: React.FocusEvent) => {
-        if (isTouch && !selection.isActive()) {
-          // if we know that the focus is changing to another editable or note then do not set editing to false
-          // (does not work when clicking a bullet as it is set to null)
-          const isRelatedTargetEditableOrNote =
-            e.relatedTarget &&
-            ((e.relatedTarget as Element).hasAttribute?.('data-editable') ||
-              !!(e.relatedTarget as Element).matches('[aria-label="note-editable"]'))
-
-          if (!isRelatedTargetEditableOrNote) setTimeout(() => dispatch(keyboardOpen({ value: false })))
+        if (!selection.isNote(e.relatedTarget)) {
+          dispatch(setNoteFocus({ value: false }))
+        }
+        if (isTouch && !selection.isThought()) {
+          dispatch(keyboardOpen({ value: false }))
         }
       },
       [dispatch],
     )
 
     const onMouseDown = useCallback(() => preventAutoscroll(noteRef.current), [noteRef])
+
+    const onCopy = useCallback((e: React.ClipboardEvent) => {
+      const html = selection.html()
+      const text = selection.text()
+
+      if (!html || !text) return
+
+      e.clipboardData.setData('text/html', html)
+      e.clipboardData.setData('text/plain', text)
+      e.clipboardData.setData('text/em', 'true')
+      e.preventDefault()
+    }, [])
+
+    const onCut = useOnCut()
 
     if (note === null) return null
 
@@ -184,6 +195,7 @@ const Note = React.memo(
           html={note || ''}
           innerRef={noteRef as React.RefObject<HTMLElement>}
           aria-label='note-editable'
+          data-thought-id={head(path)}
           placeholder='Enter a note'
           className={css({
             display: 'inline-block',
@@ -192,8 +204,15 @@ const Note = React.memo(
           // For some reason, pointerEvents: 'none' on ContentEditable or its parent does prevent onFocus.
           // This is strange, as it seems to prevent onFocus in Subthought.tsx.
           disabled={disabled}
+          // Prevent drag-and-drop of text selection between thoughts and notes. This also disables dragging
+          // text within the note, which was previously possible on mobile but not desktop. This may be addressed
+          // on both platforms by https://github.com/cybersemics/em/issues/3739.
+          onDrop={isTouch ? (e: React.DragEvent) => e.preventDefault() : undefined}
           onKeyDown={onKeyDown}
           onChange={onChange}
+          // Text copied from a note and pasted on a thought should not bring along the note's default color and italicization. (#3779)
+          onCopy={onCopy}
+          onCut={onCut}
           onPaste={() => {
             // set justPasted so onChange can strip HTML from the new value
             // the default onPaste behavior is maintained for easier caret and selection management
