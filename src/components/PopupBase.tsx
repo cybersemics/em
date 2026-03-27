@@ -67,7 +67,7 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
       if (innerRef.current && anchorFromBottom) {
         setHeight(innerRef.current.getBoundingClientRect().height)
       }
-    }, [anchorFromBottom, children]) // measure on mount and whenever children (content) changes
+    }, [anchorFromBottom]) // measure on mount
     const useSwipeToDismissProps = useSwipeToDismiss({
       // dismiss after animation is complete to avoid touch events going to the Toolbar
       onDismissEnd: () => {
