@@ -276,6 +276,14 @@ describe('compareThought', () => {
       expect(compareThoughtDescending(thought('<u>A</u>'), thought('<strike>A</strike>'))).toBe(-1)
       expect(compareThoughtDescending(thought('<strike>A</strike>'), thought('<u>A</u>'))).toBe(1)
     })
+
+    it('sort empty thought above formatted thoughts in descending order', () => {
+      expect(compareThoughtDescending(thought(''), thought('<b>A</b>'))).toBe(-1)
+      expect(compareThoughtDescending(thought('<b>A</b>'), thought(''))).toBe(1)
+      expect(compareThoughtDescending(thought(''), thought('<i>A</i>'))).toBe(-1)
+      expect(compareThoughtDescending(thought(''), thought('<u>A</u>'))).toBe(-1)
+      expect(compareThoughtDescending(thought(''), thought('<strike>A</strike>'))).toBe(-1)
+    })
   })
 })
 
