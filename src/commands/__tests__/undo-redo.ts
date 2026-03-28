@@ -473,6 +473,121 @@ describe('grouping', () => {
     expect(exported).toEqual(expectedOutput)
   })
 
+  it('formatting edits should not be grouped with newThought on undo', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+          - b`,
+      }),
+      newThought({ value: 'c' }),
+      newThought({ value: 'd' }),
+      editThought(['d'], 'd1'),
+      editThought(['d1'], '<b>d1</b>'),
+    ])
+
+    // verify the bold formatting was applied before undo
+    const exportedBeforeUndo = exportContext(store.getState(), [HOME_TOKEN], 'text/html')
+    expect(exportedBeforeUndo).toContain('<li><b>d1</b></li>')
+
+    // undo should only revert the formatting, not the content edit or the newThought
+    store.dispatch(undo())
+
+    // formatting undone; verify the bold is gone but thought still exists with plain text value
+    const exportedAfterUndo = exportContext(store.getState(), [HOME_TOKEN], 'text/html')
+    expect(exportedAfterUndo).not.toContain('<b>')
+    expect(exportedAfterUndo).toContain('<li>d1</li>')
+
+    // a second undo reverts the content edit, but grouped with preceding newThought → thought deleted
+    store.dispatch(undo())
+    const exportedSecond = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exportedSecond).toEqual(`- ${HOME_TOKEN}
+  - a
+  - b
+  - c`)
+  })
+
+  it('multiple consecutive formatting edits should each be a separate undo step', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a`,
+      }),
+      // content edit: 'a' → 'hello'
+      editThought(['a'], 'hello'),
+      // first formatting-only edit: plain → bold
+      editThought(['hello'], '<b>hello</b>'),
+      // second formatting-only edit: bold → bold+italic (context must match the current thought value)
+      editThought(['<b>hello</b>'], '<b><i>hello</i></b>'),
+    ])
+
+    // verify bold+italic was applied
+    const exportedBeforeUndo = exportContext(store.getState(), [HOME_TOKEN], 'text/html')
+    expect(exportedBeforeUndo).toContain('<li><b><i>hello</i></b></li>')
+
+    // first undo should only revert the italic (second formatting edit)
+    store.dispatch(undo())
+    const exportedAfterFirstUndo = exportContext(store.getState(), [HOME_TOKEN], 'text/html')
+    expect(exportedAfterFirstUndo).toContain('<li><b>hello</b></li>')
+
+    // second undo should only revert the bold (first formatting edit)
+    store.dispatch(undo())
+    const exportedAfterSecondUndo = exportContext(store.getState(), [HOME_TOKEN], 'text/html')
+    expect(exportedAfterSecondUndo).toContain('<li>hello</li>')
+    expect(exportedAfterSecondUndo).not.toContain('<b>')
+  })
+
+  it('formatting edit applied directly after newThought should not delete the thought on undo', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a`,
+      }),
+      newThought({ value: 'hello' }),
+    ])
+    // formatting-only edit: no content edit between newThought and formatting
+    store.dispatch(editThought(['hello'], '<b>hello</b>'))
+
+    // undo should only revert the formatting, not delete the thought (newThought is penultimate)
+    store.dispatch(undo())
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/html')
+    expect(exported).not.toContain('<b>')
+    expect(exported).toContain('<li>hello</li>')
+  })
+
+  it('applying formatting after undoing a formatting edit should not delete the thought on the next undo', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a`,
+      }),
+      // content edit: 'a' → 'hello'
+      editThought(['a'], 'hello'),
+      // formatting-only edit: plain → bold
+      editThought(['hello'], '<b>hello</b>'),
+    ])
+
+    // undo the bold formatting
+    store.dispatch(undo())
+    const exportedAfterUndo = exportContext(store.getState(), [HOME_TOKEN], 'text/html')
+    expect(exportedAfterUndo).toContain('<li>hello</li>')
+    expect(exportedAfterUndo).not.toContain('<b>')
+
+    // apply a different formatting after the undo (e.g. italic)
+    store.dispatch(editThought(['hello'], '<i>hello</i>'))
+
+    // verify italic was applied
+    const exportedAfterReformat = exportContext(store.getState(), [HOME_TOKEN], 'text/html')
+    expect(exportedAfterReformat).toContain('<li><i>hello</i></li>')
+
+    // undo the italic — should only revert the formatting, thought must still exist
+    store.dispatch(undo())
+    const exportedAfterSecondUndo = exportContext(store.getState(), [HOME_TOKEN], 'text/html')
+    expect(exportedAfterSecondUndo).toContain('<li>hello</li>')
+    expect(exportedAfterSecondUndo).not.toContain('<i>')
+  })
+
   it('contiguous edits should be grouped', () => {
     store.dispatch([
       importText({
