@@ -6,6 +6,7 @@ import { editableRecipe, invalidOptionRecipe, multilineRecipe } from '../../styl
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import TutorialChoice from '../@types/TutorialChoice'
+import { closeDropdownsActionCreator as closeDropdowns } from '../actions/closeDropdowns'
 import { cursorClearedActionCreator as cursorCleared } from '../actions/cursorCleared'
 import { editThoughtActionCreator as editThought } from '../actions/editThought'
 import { errorActionCreator as error } from '../actions/error'
@@ -15,7 +16,6 @@ import { setInvalidStateActionCreator as setInvalidState } from '../actions/inva
 import { keyboardOpenActionCreator } from '../actions/keyboardOpen'
 import { newThoughtActionCreator as newThought } from '../actions/newThought'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
-import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import { tutorialNextActionCreator as tutorialNext } from '../actions/tutorialNext'
 import { isMac, isTouch } from '../browser'
 import { commandEmitter } from '../commands'
@@ -579,7 +579,7 @@ const Editable = ({
             selection.clear()
 
             // close all popups when clicking on a thought
-            dispatch(toggleDropdown())
+            dispatch(closeDropdowns())
           } else {
             setCursorOnThought()
           }
