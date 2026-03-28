@@ -47,8 +47,15 @@ const iOSCapacitorHandler: VirtualKeyboardHandler = {
       // Stop any existing animation to prevent conflict.
       controls?.stop()
 
-      // Start storing animated height values in virtualKeyboardStore.
-      controls = animate(virtualKeyboardStore.getState().height, 0, {
+      // Animate to safe-area-bottom instead of 0 so bottom-anchored elements
+      // smoothly settle at the safe area inset rather than snapping.
+      const safeAreaDiv = document.createElement('div')
+      safeAreaDiv.style.cssText = 'position:fixed;bottom:0;height:env(safe-area-inset-bottom);visibility:hidden'
+      document.body.appendChild(safeAreaDiv)
+      const safeAreaBottom = safeAreaDiv.getBoundingClientRect().height
+      document.body.removeChild(safeAreaDiv)
+
+      controls = animate(virtualKeyboardStore.getState().height, safeAreaBottom, {
         type: 'spring',
         stiffness: 3600,
         damping: 220,
@@ -61,7 +68,7 @@ const iOSCapacitorHandler: VirtualKeyboardHandler = {
 
     Keyboard.addListener('keyboardDidHide', () => {
       controls?.stop()
-      virtualKeyboardStore.update({ open: false, height: 0, source: 'ios-capacitor' })
+      virtualKeyboardStore.update({ open: false, source: 'ios-capacitor' })
     })
   },
   destroy: () => {

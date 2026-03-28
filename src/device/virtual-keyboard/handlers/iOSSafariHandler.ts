@@ -43,7 +43,15 @@ const updateIOSSafariKeyboardState = () => {
       // Keep open: true during the closing animation so consumers still account for the keyboard
       virtualKeyboardStore.update({ open: true, source: 'ios-safari' })
 
-      controls = animate(virtualKeyboardStore.getState().height, 0, {
+      // Animate to safe-area-bottom instead of 0 so bottom-anchored elements
+      // smoothly settle at the safe area inset rather than snapping.
+      const safeAreaDiv = document.createElement('div')
+      safeAreaDiv.style.cssText = 'position:fixed;bottom:0;height:env(safe-area-inset-bottom);visibility:hidden'
+      document.body.appendChild(safeAreaDiv)
+      const safeAreaBottom = safeAreaDiv.getBoundingClientRect().height
+      document.body.removeChild(safeAreaDiv)
+
+      controls = animate(virtualKeyboardStore.getState().height, safeAreaBottom, {
         type: 'spring',
         stiffness: 3600,
         damping: 220,
@@ -52,7 +60,7 @@ const updateIOSSafariKeyboardState = () => {
           virtualKeyboardStore.update({ height: value })
         },
         onComplete: () => {
-          virtualKeyboardStore.update({ open: false, height: 0, source: 'ios-safari' })
+          virtualKeyboardStore.update({ open: false, source: 'ios-safari' })
         },
       })
     }

@@ -50,11 +50,10 @@ const usePositionFixed = ({
   const scrollTop = useScrollTop({ disabled: position === 'fixed' })
   const { innerHeight } = viewportStore.useState()
 
-  // Use max() to smoothly transition between keyboard height and safe-area-bottom.
-  // When the keyboard is open, virtualKeyboard.height > safeAreaBottom, so it dominates.
-  // As the keyboard closing animation brings height toward 0, it naturally settles at
-  // safeAreaBottom with no discontinuous snap.
-  const bottomInset = `max(${virtualKeyboard.height}px, ${token('spacing.safeAreaBottom')})`
+  // virtualKeyboard.height incorporates the safe-area-bottom inset: the closing
+  // animation targets safe-area-bottom (not 0), so the height smoothly settles at
+  // the safe area value before open becomes false. This means we can use it directly
+  // as the bottom inset without additional safe-area offsets for fromBottom elements.
 
   let top, bottom
 
@@ -69,11 +68,11 @@ const usePositionFixed = ({
       // We clamp this to document.body.scrollHeight so the element never extends past
       // the document boundary (e.g. when the page is shorter than the viewport).
       //
-      // Then subtract the element's own height, offset, and bottomInset (the larger of
-      // keyboard height or safe-area-bottom).
+      // Then subtract virtualKeyboard.height (which includes safe-area-bottom during
+      // the closing animation), the element's own height, and offset.
       //
       const visibleBottom = Math.min(document.body.scrollHeight, scrollTop + innerHeight)
-      top = `calc(${visibleBottom - (height ?? 0) - offset}px - ${bottomInset})`
+      top = `${visibleBottom - virtualKeyboard.height - (height ?? 0) - offset}px`
     } else {
       // fromTop
       // Position the element at the top of the visible area.
@@ -86,9 +85,9 @@ const usePositionFixed = ({
   // Calculate values for normal `position: fixed`.
   if (position === 'fixed') {
     if (fromBottom) {
-      // bottomInset handles both keyboard avoidance and safe-area in a single value,
-      // smoothly transitioning between them as the keyboard animates.
-      bottom = `calc(${bottomInset} + ${offset}px)`
+      // virtualKeyboard.height already includes the safe-area-bottom inset during
+      // the closing animation, so no additional safe-area offset is needed.
+      bottom = `${virtualKeyboard.height + offset}px`
     } else {
       // fromTop
       // Normal fixed positioning anchored to the top — safe-area-top keeps the element
