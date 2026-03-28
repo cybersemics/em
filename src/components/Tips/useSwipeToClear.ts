@@ -4,10 +4,10 @@ import useSafeArea from '../../hooks/useSafeArea'
 import durations from '../../util/durations'
 
 // Dismiss score threshold (px-equivalent). The dismiss score is computed as
-// swipeDistance + velocity * 2.0, so a pure-distance swipe needs 150px of
+// swipeDistance + velocity * 1.75, so a pure-distance swipe needs 150px of
 // cumulative movement, while a fast flick can dismiss with less distance
 // (e.g. 50px at 50 px/s → score 50 + 100 = 150).
-const DEFAULT_SWIPE_DISMISS_THRESHOLD = 150
+const DEFAULT_SWIPE_DISMISS_THRESHOLD = 125
 
 /**
  * Tracks a cumulative-distance swipe gesture and returns a 0→1 completion value.
@@ -74,7 +74,7 @@ const useSwipeToClear = ({
       e.stopPropagation()
       lastTouch.current = null
 
-      const score = swipeDistance + velocity.current * 2.0
+      const score = swipeDistance + velocity.current * 1.75
       if (score >= threshold) {
         const immediate = swipeDistance >= threshold
         setSwipeDistance(0)
