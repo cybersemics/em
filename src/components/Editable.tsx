@@ -49,6 +49,7 @@ import addEmojiSpace from '../util/addEmojiSpace'
 import containsURL from '../util/containsURL'
 import ellipsize from '../util/ellipsize'
 import equalPath from '../util/equalPath'
+import getNodeOffsetForVoidArea from '../util/getNodeOffsetForVoidArea'
 import haptics from '../util/haptics'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
@@ -168,6 +169,22 @@ const Editable = ({
   //   hasNoteFocus,
   //   isCursorCleared,
   // })
+
+  /**
+   * Stores a custom caret position for iOS touch interactions temporarily.
+   * Computed on touchstart. Applied on touchend, or on mousedown if it runs first or touchend doesn't run at all.
+   * The following mousedown clears state so synthetic mouse does not re-run node offset calculation. Touchmove clears pending on scroll.
+   */
+  const pendingCaretOffsetRef = useRef<number | null>(null)
+
+  /** True once pending void-area offset was applied (touchend or mousedown), until gesture ends. */
+  const voidAreaCaretAppliedRef = useRef(false)
+
+  /** Stores the initial touch position to detect tap vs scroll; if focus occurs without it, the tap was outside the editable and we place the caret manually.*/
+  const touchStartPosRef = useRef<{ x: number; y: number } | null>(null)
+
+  /** Squared movement threshold (for performance) used to detect scroll vs tap; if finger movement exceeds ~10px, it is treated as a scroll and custom caret placement is cancelled. */
+  const SCROLL_THRESHOLD_PX = 100
 
   const childrenLabel = useSelector(state => {
     const labelId = findDescendant(state, parentId, '=label')
@@ -543,6 +560,23 @@ const Editable = ({
     [value, setCursorOnThought],
   )
 
+  /** Sets the caret offset. */
+  const setCaretOffset = useCallback(
+    (nodeOffset: number) => {
+      //Directly set the DOM selection to ensure the caret moves immediately
+      selection.set(contentRef.current, { offset: nodeOffset })
+
+      // Update Redux cursor state
+      dispatch(
+        setCursor({
+          path,
+          offset: nodeOffset,
+        }),
+      )
+    },
+    [dispatch, path, contentRef],
+  )
+
   /**
    * Shared on tap logic dispatched after both click and touchend.
    * Checks long-press, multicursor, disabled, and visibility to decide whether to set the cursor.
@@ -589,7 +623,7 @@ const Editable = ({
     [disabled, dispatch, editingOrOnCursor, isVisible, setCursorOnThought],
   )
 
-  /** Registers native event listeners for pointer (mousedown, click) and touch (touchend with passive: false). */
+  /** Registers native event listeners for pointer (mousedown, click) and touch (touchstart, touchmove, touchend). */
   useEffect(() => {
     const editable = contentRef.current
     if (!editable) return
@@ -614,7 +648,32 @@ const Editable = ({
           bottomMargin: fontSize * 2,
         })
 
-        allowDefaultSelection()
+        // Always preventDefault when a pending void-area offset exists so the
+        // browser's synthetic mousedown cannot override the caret. Re-apply the
+        // offset and restore caret visibility.
+        if (pendingCaretOffsetRef.current !== null) {
+          if (!voidAreaCaretAppliedRef.current) {
+            e.preventDefault()
+            setCaretOffset(pendingCaretOffsetRef.current)
+            voidAreaCaretAppliedRef.current = true
+          }
+          pendingCaretOffsetRef.current = null
+          touchStartPosRef.current = null
+          editable.style.caretColor = ''
+          return
+        }
+
+        const nodeOffset = getNodeOffsetForVoidArea(editable, {
+          clientX: e.clientX,
+          clientY: e.clientY,
+        })
+
+        if (nodeOffset !== null) {
+          e.preventDefault()
+          setCaretOffset(nodeOffset)
+        } else {
+          allowDefaultSelection()
+        }
       }
       // There are areas on the outside edge of the thought that will fail to trigger onTouchEnd.
       // In those cases, it is best to prevent onFocus or onClick, otherwise keyboard is open will be incorrectly activated.
@@ -637,22 +696,94 @@ const Editable = ({
       handleTapBehavior(e)
     }
 
-    /** Sets the cursor on the thought on touchend. Handles hidden elements, drags, and editing mode. */
+    /**
+     * Sets the caret for void-area taps immediately and hides the native caret
+     * so the browser's subsequent repositioning (between touchstart and
+     * mousedown) is invisible. The correct position is re-applied and the caret
+     * revealed in mousedown (with preventDefault) or via a rAF in touchend.
+     */
+    const onTouchStart = (e: TouchEvent) => {
+      if (editingOrOnCursor && !hasMulticursor && e.touches.length > 0) {
+        const touch = e.touches[0]
+        if (!touch) return
+        voidAreaCaretAppliedRef.current = false
+        touchStartPosRef.current = { x: touch.clientX, y: touch.clientY }
+
+        const nodeOffset = getNodeOffsetForVoidArea(editable, {
+          clientX: touch.clientX,
+          clientY: touch.clientY,
+        })
+        if (nodeOffset !== null) {
+          editable.style.caretColor = 'transparent'
+          setCaretOffset(nodeOffset)
+          pendingCaretOffsetRef.current = nodeOffset
+          voidAreaCaretAppliedRef.current = true
+        } else {
+          pendingCaretOffsetRef.current = null
+          allowDefaultSelection()
+        }
+      }
+    }
+
+    /** Sets the pending caret offset to null if the user scrolls past the threshold. */
+    const onTouchMove = (e: TouchEvent) => {
+      if (e.touches.length > 0 && touchStartPosRef.current) {
+        const touch = e.touches[0]
+        const dx = touch.clientX - touchStartPosRef.current.x
+        const dy = touch.clientY - touchStartPosRef.current.y
+        if (dx * dx + dy * dy > SCROLL_THRESHOLD_PX) {
+          pendingCaretOffsetRef.current = null
+          voidAreaCaretAppliedRef.current = false
+          editable.style.caretColor = ''
+        }
+      }
+    }
+
+    /** Finalizes the void-area caret after touch processing completes. */
     const onTouchEnd = (e: TouchEvent) => {
+      // Schedule a rAF to re-apply the correct caret and restore visibility
+      // after the browser finishes all native touch/selection handling.
+      if (pendingCaretOffsetRef.current !== null) {
+        const offset = pendingCaretOffsetRef.current
+        requestAnimationFrame(() => {
+          if (pendingCaretOffsetRef.current !== null) {
+            setCaretOffset(offset)
+            pendingCaretOffsetRef.current = null
+            editable.style.caretColor = ''
+          }
+        })
+      }
+
       haptics.light()
+
       handleTapBehavior(e)
     }
 
     editable.addEventListener('mousedown', onMouseDown)
     editable.addEventListener('click', onClick)
+
+    editable.addEventListener('touchstart', onTouchStart, { passive: false })
+    editable.addEventListener('touchmove', onTouchMove, { passive: true })
     editable.addEventListener('touchend', onTouchEnd, { passive: false })
 
     return () => {
       editable.removeEventListener('mousedown', onMouseDown)
       editable.removeEventListener('click', onClick)
+      editable.removeEventListener('touchstart', onTouchStart)
+      editable.removeEventListener('touchmove', onTouchMove)
       editable.removeEventListener('touchend', onTouchEnd)
+      editable.style.caretColor = ''
     }
-  }, [contentRef, editingOrOnCursor, hasMulticursor, disabled, fontSize, allowDefaultSelection, handleTapBehavior])
+  }, [
+    contentRef,
+    editingOrOnCursor,
+    hasMulticursor,
+    disabled,
+    fontSize,
+    allowDefaultSelection,
+    setCaretOffset,
+    handleTapBehavior,
+  ])
 
   return (
     <ContentEditable
