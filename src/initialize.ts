@@ -17,7 +17,8 @@ import getLexemeHelper from './data-providers/data-helpers/getLexeme'
 import { dumpTreecrdt } from './data-providers/treecrdt/debug'
 import db, { init as initTreecrdtThoughtspace } from './data-providers/treecrdt/thoughtspace'
 import { getTreecrdtClient, initTreecrdt } from './data-providers/treecrdt/treecrdt'
-import { clientIdReady } from './data-providers/yjs'
+import { initPermissionsStore } from './data-providers/permissionsStore'
+import { clientIdReady } from './data-providers/thoughtspaceSession'
 import * as selection from './device/selection'
 import testFlags from './e2e/testFlags'
 import contextToThoughtId from './selectors/contextToThoughtId'
@@ -67,6 +68,7 @@ export const initialize = async () => {
   // Initialize clientId before treecrdt thoughtspace (needs replicaId) and before any actions that create thoughts
   const clientId = await clientIdReady
 
+  await initPermissionsStore()
   await initTreecrdt()
   // TreeCRDT expects 32-byte replicaId; clientId is base64 of SHA-256 (44 chars) — decode to get 32 bytes
   const replicaId =

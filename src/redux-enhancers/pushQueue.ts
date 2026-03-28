@@ -48,7 +48,7 @@ const cacheSetting = (name: keyof typeof cachedSettingsIds, value: string | null
   }
 }
 
-/** Merges state.pushQueue batches and pushes them to Yjs, frees memory from state-only batches, and caches settings. */
+/** Merges state.pushQueue batches and pushes them to the data provider, frees memory from state-only batches, and caches settings. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const pushQueue: StoreEnhancer<any> =
   (createStore: StoreEnhancerStoreCreator) =>

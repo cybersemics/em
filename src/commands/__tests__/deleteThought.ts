@@ -182,7 +182,7 @@ it.skip('delete pending descendants', async () => {
   })
 })
 
-// TODO: y-indexeddb breaks tests so it is disabled
+// TODO: IndexedDB in tests is disabled where it breaks fake-indexeddb
 it.skip('delete many pending descendants', async () => {
   timer.useFakeTimer()
   initialize()

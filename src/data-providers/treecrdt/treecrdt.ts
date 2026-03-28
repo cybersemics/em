@@ -1,5 +1,5 @@
 import { type TreecrdtClient, createTreecrdtClient } from '@treecrdt/wa-sqlite/client'
-import { tsid } from '../yjs'
+import { tsid } from '../thoughtspaceSession'
 
 let client: TreecrdtClient | null = null
 
