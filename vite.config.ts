@@ -1,3 +1,4 @@
+import basicSsl from '@vitejs/plugin-basic-ssl'
 import react from '@vitejs/plugin-react'
 import fs from 'fs'
 import path from 'path'
@@ -5,6 +6,8 @@ import { defineConfig } from 'vite'
 import checker from 'vite-plugin-checker'
 import { createHtmlPlugin } from 'vite-plugin-html'
 import { VitePWA } from 'vite-plugin-pwa'
+
+const useHttps = !process.env.HTTP
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -48,6 +51,9 @@ export default defineConfig({
     }),
     // minify and add EJS capabilities to index.html
     createHtmlPlugin({ minify: true }),
+    // Use HTTPS for dev server by default. Set HTTP=1 to disable.
+    // Puppeteer uses its own certs; otherwise use @vitejs/plugin-basic-ssl for a self-signed cert.
+    ...(useHttps && !process.env.PUPPETEER ? [basicSsl()] : []),
   ],
   server: {
     // Allow bs-local.com for BrowserStack local testing
