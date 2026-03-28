@@ -6,6 +6,7 @@ import { tsid } from './thoughtspaceSession'
 
 type PermissionsState = { entries: Index<Share> }
 
+/** Key for the idb-keyval permissions blob scoped to the active tsid. */
 const storageKey = (): string => `em-permissions:${tsid}`
 
 /** Device permissions for the thoughtspace (indexed by access token). */
@@ -34,4 +35,10 @@ export const persistPermissions = async (): Promise<void> => {
     return
   }
   await set(storageKey(), permissionsStore.getState().entries)
+}
+
+export default {
+  permissionsStore,
+  initPermissionsStore,
+  persistPermissions,
 }

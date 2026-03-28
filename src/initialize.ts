@@ -14,11 +14,11 @@ import { pullActionCreator as pull } from './actions/pull'
 import { setCursorActionCreator as setCursor } from './actions/setCursor'
 import { commandById, executeCommand } from './commands'
 import getLexemeHelper from './data-providers/data-helpers/getLexeme'
+import { initPermissionsStore } from './data-providers/permissionsStore'
+import { clientIdReady } from './data-providers/thoughtspaceSession'
 import { dumpTreecrdt } from './data-providers/treecrdt/debug'
 import db, { init as initTreecrdtThoughtspace } from './data-providers/treecrdt/thoughtspace'
 import { getTreecrdtClient, initTreecrdt } from './data-providers/treecrdt/treecrdt'
-import { initPermissionsStore } from './data-providers/permissionsStore'
-import { clientIdReady } from './data-providers/thoughtspaceSession'
 import * as selection from './device/selection'
 import testFlags from './e2e/testFlags'
 import contextToThoughtId from './selectors/contextToThoughtId'
@@ -70,6 +70,7 @@ export const initialize = async () => {
 
   await initPermissionsStore()
   await initTreecrdt()
+  // TODO: revisit the clientId to replicaId conversion
   // TreeCRDT expects 32-byte replicaId; clientId is base64 of SHA-256 (44 chars) — decode to get 32 bytes
   const replicaId =
     clientId.length === 44
@@ -204,8 +205,7 @@ const windowEm = {
   dumpTreecrdt: async (opts?: { includeTombstones?: boolean }) => {
     try {
       const rows = await dumpTreecrdt(opts)
-
-      // eslint-disable-next-line no-console -- table format for dumpTreecrdt debug output
+      //eslint-disable-next-line no-console -- devtools-friendly table for window.em debugging
       console.table(rows)
       return rows
     } catch (err) {

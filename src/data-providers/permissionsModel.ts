@@ -4,13 +4,14 @@ import Routes from '../@types/Routes'
 import Share from '../@types/Share'
 import { alertActionCreator as alert } from '../actions/alert'
 import { clearActionCreator } from '../actions/clear'
-import db from './treecrdt/thoughtspace'
 import store from '../stores/app'
 import storage from '../util/storage'
 import timestamp from '../util/timestamp'
-import { accessTokenLocal } from './thoughtspaceSession'
 import { permissionsStore, persistPermissions } from './permissionsStore'
+import { accessTokenLocal } from './thoughtspaceSession'
+import db from './treecrdt/thoughtspace'
 
+/** Snapshot of device permissions keyed by access token. */
 const entries = (): Index<Share> => permissionsStore.getState().entries
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
