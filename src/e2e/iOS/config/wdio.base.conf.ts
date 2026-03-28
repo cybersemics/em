@@ -6,7 +6,8 @@ import path from 'path'
  * @throws Error if the app is not running.
  */
 export const checkAppRunning = (): Promise<void> => {
-  const errorMessage = 'App is not running on https://localhost:3000. Please start the app locally before running tests.'
+  const errorMessage =
+    'App is not running on https://localhost:3000. Please start the app locally before running tests.'
   return new Promise((resolve, reject) => {
     const req = https.get('https://localhost:3000', { timeout: 2000, rejectUnauthorized: false }, res => {
       res.on('data', () => {})
