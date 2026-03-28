@@ -248,3 +248,18 @@ it('Clicking on a formatting tag does not close color dropdown', async () => {
 
   expect(textColorSwatch).toBeTruthy()
 })
+
+it('Setting note foreground color should remove background color', async () => {
+  await paste(`
+    - a
+      - =note
+        - <font style="background-color: #FFFFFF" color="#000000">Note</font>
+  `)
+
+  await click('[aria-label="note-editable"]')
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="text color swatches"] [aria-label="yellow"]')
+
+  const result = await page.evaluate(() => document.querySelector('[aria-label="note-editable"]')?.innerHTML)
+  expect(result).toBe('<font color="#ffd014">Note</font>')
+})
