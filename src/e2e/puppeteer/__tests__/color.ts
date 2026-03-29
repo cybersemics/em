@@ -3,26 +3,16 @@ import rgbToHex from '../../../util/rgbToHex'
 import rgbaToHex from '../../../util/rgbaToHex'
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
+import extractColor from '../helpers/extractColor'
 import getBulletColor from '../helpers/getBulletColor'
 import getEditingText from '../helpers/getEditingText'
 import getSuperscriptColor from '../helpers/getSuperScriptColor'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import setSelection from '../helpers/setSelection'
+import { page } from '../setup'
 
 vi.setConfig({ testTimeout: 60000, hookTimeout: 60000 })
-
-/**
- * Extract the Style of html string.
- */
-const extractStyleProperty = (html: string) => {
-  const colorMatch = html.match(/color=['"]?(#[0-9a-fA-F]{6}|[a-zA-Z]+)['"]?/)
-  const backgroundColorMatch = html.match(/background-color:\s*([^;]+)/)
-
-  const color = colorMatch ? colorMatch[1] : null
-  const backgroundColor = backgroundColorMatch ? backgroundColorMatch[1].trim() : null
-  return { color, backgroundColor }
-}
 
 it('Set the text color of the text and bullet', async () => {
   const importText = `
@@ -38,7 +28,7 @@ it('Set the text color of the text and bullet', async () => {
 
   const cursorText = await getEditingText()
   const bulletColor = await getBulletColor()
-  const result = extractStyleProperty(cursorText!)
+  const result = extractColor(cursorText!)
   expect(rgbToHex(bulletColor!)).toBe(rgbaToHex(colors.light.blue))
   expect(result?.color).toBe(rgbaToHex(colors.light.blue))
   expect(result?.backgroundColor).toBe(null)
@@ -57,7 +47,7 @@ it('Set the background color of the text', async () => {
 
   const cursorText = await getEditingText()
   const bulletColor = await getBulletColor()
-  const result = extractStyleProperty(cursorText!)
+  const result = extractColor(cursorText!)
   expect(rgbToHex(bulletColor!)).toBe(rgbaToHex(colors.light.green))
   expect(result?.backgroundColor && rgbToHex(result.backgroundColor)).toBe(rgbaToHex(colors.light.green))
 })
@@ -71,18 +61,18 @@ it('Clear the background color when selecting text color', async () => {
 
   await clickThought('Golden Retriever')
   let cursorText = await getEditingText()
-  expect(extractStyleProperty(cursorText!)?.backgroundColor).toBe(null)
+  expect(extractColor(cursorText!)?.backgroundColor).toBe(null)
 
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="background color swatches"] [aria-label="green"]')
   cursorText = await getEditingText()
-  let style = extractStyleProperty(cursorText!)
+  let style = extractColor(cursorText!)
   expect(style?.backgroundColor && rgbToHex(style.backgroundColor)).toBe(rgbaToHex(colors.light.green))
   expect(style?.color).toBe(rgbaToHex(colors.light.black))
 
   await click('[aria-label="text color swatches"] [aria-label="purple"]')
   cursorText = await getEditingText()
-  style = extractStyleProperty(cursorText!)
+  style = extractColor(cursorText!)
   expect(style?.color).toBe(rgbaToHex(colors.light.purple))
   expect(style?.backgroundColor).toBe(null)
 })
@@ -96,16 +86,16 @@ it('Clear the text color when setting background color', async () => {
 
   await clickThought('Golden Retriever')
   let cursorText = await getEditingText()
-  expect(extractStyleProperty(cursorText!)?.color).toBe(null)
+  expect(extractColor(cursorText!)?.color).toBe(null)
 
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="text color swatches"] [aria-label="green"]')
   cursorText = await getEditingText()
-  expect(extractStyleProperty(cursorText!)?.color).toBe(rgbaToHex(colors.light.green))
+  expect(extractColor(cursorText!)?.color).toBe(rgbaToHex(colors.light.green))
 
   await click('[aria-label="background color swatches"] [aria-label="purple"]')
   cursorText = await getEditingText()
-  const style = extractStyleProperty(cursorText!)
+  const style = extractColor(cursorText!)
   expect(style?.backgroundColor && rgbToHex(style?.backgroundColor)).toBe(rgbaToHex(colors.light.purple))
   expect(style?.color).toBe(rgbaToHex(colors.light.black))
 })
@@ -240,4 +230,21 @@ it('Verify superscript colors in different views', async () => {
   const supColor3 = await getSuperscriptColor()
   expect(supColor3).toBeTruthy()
   expect(rgbToHex(supColor3!)).toBe(rgbaToHex(colors.light.green)) // Superscript should match the green color in context view
+})
+
+it('Clicking on a formatting tag does not close color dropdown', async () => {
+  const importText = `
+  - Golden Retriever`
+
+  await paste(importText)
+
+  await clickThought('Golden Retriever')
+
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="text color swatches"] [aria-label="blue"]')
+  await clickThought('<font color="#00c7e6">Golden Retriever</font>')
+
+  const textColorSwatch = await page.$('[aria-label="text color swatches"] [aria-label="blue"]')
+
+  expect(textColorSwatch).toBeTruthy()
 })
