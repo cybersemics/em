@@ -1,16 +1,37 @@
-/** Position fixed breaks in mobile Safari when the keyboard is up. This module provides functionality to emulate position:fixed by changing all top navigation to position:absolute and updating on scroll. */
 import { token } from '../../styled-system/tokens'
-import safariKeyboardStore from '../stores/safariKeyboardStore'
+import { isCapacitor, isSafari } from '../browser'
 import viewportStore from '../stores/viewport'
+import virtualKeyboardStore from '../stores/virtualKeyboardStore'
 import useScrollTop from './useScrollTop'
 
-/** Emulates position fixed on mobile Safari with positon absolute. Returns { position, top, bottom } in absolute mode. */
+/**
+ * Safe-area-aware, keyboard-aware and iOS-safe fixed positioning for mobile.
+ *
+ * Returns `{ position, top, bottom }` styles that keep an element pinned to a viewport edge, while offsetting the
+ * position of the element to ensure it remains visible when the keyboard is open and avoids safe areas.
+ *
+ * The hook handles three concerns:
+ *
+ * 1. Safe-area insets: Offsets elements from the notch/status bar (top) and home indicator
+ * (bottom) on rounded screens via `spacing.safeAreaTop` / `spacing.safeAreaBottom` tokens.
+ *
+ * 2. Keyboard avoidance: For bottom-anchored elements, offsets y position by the virtual keyboard
+ * height – ensuring they remain visible even when the keyboard is open.
+ *
+ * 3. Broken `position: fixed` on iOS Safari: In MobileSafari, position: fixed is disabled when the keyboard
+ * opens, leaving elements to scroll out of place. The workaround is to switch to `position: absolute`\
+ * and recompute `top` from the current scroll position on every scroll frame, effectively re-implementing
+ * fixed positioning.
+ *
+ */
 const usePositionFixed = ({
   fromBottom,
   offset = 0,
   height,
 }: {
+  /** Anchor position for the element. */
   fromBottom?: boolean
+  /** Additional pixel offset from the anchored edge (top or bottom). */
   offset?: number
   /** The height of the container, used to calculate the bottom offset on mobile safari. Only use with `fromBottom`. */
   height?: number
@@ -19,22 +40,56 @@ const usePositionFixed = ({
   top?: string
   bottom?: string
 } => {
-  const safariKeyboard = safariKeyboardStore.useState()
-  const position = safariKeyboard.open ? 'absolute' : 'fixed'
+  const virtualKeyboard = virtualKeyboardStore.useState()
+
+  // On iOS Safari, emulate `position: fixed` using absolute positioning when the virtual keyboard is open.
+  const position = virtualKeyboard.open && isSafari() && !isCapacitor() ? 'absolute' : 'fixed'
+
+  // Only subscribe to scroll events when emulating with position: fixed. mode — in fixed mode, scroll position
+  // is irrelevant and listening would cause unnecessary re-renders.
   const scrollTop = useScrollTop({ disabled: position === 'fixed' })
   const { innerHeight } = viewportStore.useState()
 
   let top, bottom
+
+  // Calculate `top` values for absolute positioning (emulating `position: fixed`)
   if (position === 'absolute') {
-    top = fromBottom
-      ? `${Math.min(document.body.scrollHeight, scrollTop + innerHeight - safariKeyboard.height) - (height ?? 0) - offset}px`
-      : `${scrollTop + offset}px`
-  } else if (fromBottom) {
-    // spacing.safeAreaBottom applies to rounded screens
-    bottom = `calc(${token('spacing.safeAreaBottom')} + ${offset}px)`
-  } else {
-    // spacing.safeAreaTop applies to rounded screens
-    top = `calc(${token('spacing.safeAreaTop')} + ${offset}px)`
+    if (fromBottom) {
+      // Position the element at the bottom of the visible area, above the keyboard.
+      //
+      // The visible bottom edge is calculated with:
+      //   scrollTop + innerHeight - virtualKeyboard.height
+      //
+      // We clamp this to document.body.scrollHeight so the element never extends past
+      // the document boundary (e.g. when the page is shorter than the viewport).
+      //
+      // Then subtract the element's own height and offset if provided by the caller, and subtract the
+      // safe-area-bottom inset so the element doesn't overlap the rounded-screen home indicator.
+      //
+      const visibleBottom = Math.min(document.body.scrollHeight, scrollTop + innerHeight - virtualKeyboard.height)
+      top = `calc(${visibleBottom - (height ?? 0) - offset}px - ${token('spacing.safeAreaBottom')})`
+    } else {
+      // fromTop
+      // Position the element at the top of the visible area.
+      // scrollTop gives the top of the visible viewport. Add safe-area-top for
+      // rounded screens (e.g. iPhone notch) and any additional offset if provided.
+      top = `calc(${scrollTop}px + ${token('spacing.safeAreaTop')} + ${offset}px)`
+    }
+  }
+
+  // Calculate `top` values for normal `position: fixed`.
+  if (position === 'fixed') {
+    if (fromBottom) {
+      // Normal fixed positioning anchored to the bottom — safe-area-bottom keeps the element
+      // above the home indicator on rounded screens, and virtualKeyboard.height pushes it
+      // above the keyboard when open.
+      bottom = `calc(${token('spacing.safeAreaBottom')} + ${virtualKeyboard.height}px + ${offset}px)`
+    } else {
+      // fromTop
+      // Normal fixed positioning anchored to the top — safe-area-top keeps the element
+      // below the notch/status bar on rounded screens.
+      top = `calc(${token('spacing.safeAreaTop')} + ${offset}px)`
+    }
   }
 
   return {
