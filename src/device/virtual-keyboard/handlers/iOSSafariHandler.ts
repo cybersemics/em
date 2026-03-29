@@ -5,6 +5,7 @@ import { isSafari, isTouch } from '../../../browser'
 import store from '../../../stores/app'
 import viewportStore, { updateSize } from '../../../stores/viewport'
 import virtualKeyboardStore from '../../../stores/virtualKeyboardStore'
+import measureSafeAreaBottom from '../safeArea'
 
 /** Provides control over the spring animation. */
 let controls: AnimationPlaybackControls | null = null
@@ -14,8 +15,14 @@ const updateIOSSafariKeyboardState = () => {
   // A timeout is necessary to ensure the isKeyboardOpen state is updated after the selection change.
   // This places the function call in the next event loop, after the state has been updated.
   setTimeout(() => {
+    // Get the raw height of the keyboard from the viewport store...
     const { virtualKeyboardHeight } = viewportStore.getState()
-    const targetHeight = virtualKeyboardHeight || 0
+    const rawHeight = virtualKeyboardHeight || 0
+
+    // ...then subtract the safe-area-bottom inset to get the height above the safe-area baseline.
+    // Because we always add a safe-area-bottom inset whenever we position elements, this normalized height
+    // is the value we actually need. Consider this an additional 'safe area inset' that applies only when the keyboard is open.
+    const targetHeight = rawHeight - measureSafeAreaBottom()
 
     const isKeyboardOpen = store.getState().isKeyboardOpen
     const keyboardIsVisible = isKeyboardOpen === true
@@ -43,15 +50,7 @@ const updateIOSSafariKeyboardState = () => {
       // Keep open: true during the closing animation so consumers still account for the keyboard
       virtualKeyboardStore.update({ open: true, source: 'ios-safari' })
 
-      // Animate to safe-area-bottom instead of 0 so bottom-anchored elements
-      // smoothly settle at the safe area inset rather than snapping.
-      const safeAreaDiv = document.createElement('div')
-      safeAreaDiv.style.cssText = 'position:fixed;bottom:0;height:env(safe-area-inset-bottom);visibility:hidden'
-      document.body.appendChild(safeAreaDiv)
-      const safeAreaBottom = safeAreaDiv.getBoundingClientRect().height
-      document.body.removeChild(safeAreaDiv)
-
-      controls = animate(virtualKeyboardStore.getState().height, safeAreaBottom, {
+      controls = animate(virtualKeyboardStore.getState().height, 0, {
         type: 'spring',
         stiffness: 3600,
         damping: 220,
@@ -60,7 +59,7 @@ const updateIOSSafariKeyboardState = () => {
           virtualKeyboardStore.update({ height: value })
         },
         onComplete: () => {
-          virtualKeyboardStore.update({ open: false, source: 'ios-safari' })
+          virtualKeyboardStore.update({ open: false, height: 0, source: 'ios-safari' })
         },
       })
     }

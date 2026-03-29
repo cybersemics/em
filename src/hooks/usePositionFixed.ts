@@ -50,11 +50,6 @@ const usePositionFixed = ({
   const scrollTop = useScrollTop({ disabled: position === 'fixed' })
   const { innerHeight } = viewportStore.useState()
 
-  // virtualKeyboard.height incorporates the safe-area-bottom inset: the closing
-  // animation targets safe-area-bottom (not 0), so the height smoothly settles at
-  // the safe area value before open becomes false. This means we can use it directly
-  // as the bottom inset without additional safe-area offsets for fromBottom elements.
-
   let top, bottom
 
   // Calculate `top` values for absolute positioning (emulating `position: fixed`)
@@ -62,17 +57,17 @@ const usePositionFixed = ({
     if (fromBottom) {
       // Position the element at the bottom of the visible area, above the keyboard.
       //
-      // The visible bottom edge is:
-      //   scrollTop + innerHeight
+      // The visible bottom edge is calculated with:
+      //   scrollTop + innerHeight - virtualKeyboard.height
       //
       // We clamp this to document.body.scrollHeight so the element never extends past
       // the document boundary (e.g. when the page is shorter than the viewport).
       //
-      // Then subtract virtualKeyboard.height (which includes safe-area-bottom during
-      // the closing animation), the element's own height, and offset.
+      // Then subtract the element's own height and offset if provided by the caller, and subtract the
+      // safe-area-bottom inset so the element doesn't overlap the rounded-screen home indicator.
       //
-      const visibleBottom = Math.min(document.body.scrollHeight, scrollTop + innerHeight)
-      top = `${visibleBottom - virtualKeyboard.height - (height ?? 0) - offset}px`
+      const visibleBottom = Math.min(document.body.scrollHeight, scrollTop + innerHeight - virtualKeyboard.height)
+      top = `calc(${visibleBottom - (height ?? 0) - offset}px - ${token('spacing.safeAreaBottom')})`
     } else {
       // fromTop
       // Position the element at the top of the visible area.
@@ -82,12 +77,13 @@ const usePositionFixed = ({
     }
   }
 
-  // Calculate values for normal `position: fixed`.
+  // Calculate `top` values for normal `position: fixed`.
   if (position === 'fixed') {
     if (fromBottom) {
-      // virtualKeyboard.height already includes the safe-area-bottom inset during
-      // the closing animation, so no additional safe-area offset is needed.
-      bottom = `${virtualKeyboard.height + offset}px`
+      // Normal fixed positioning anchored to the bottom — safe-area-bottom keeps the element
+      // above the home indicator on rounded screens, and virtualKeyboard.height pushes it
+      // above the keyboard when open.
+      bottom = `calc(${token('spacing.safeAreaBottom')} + ${virtualKeyboard.height}px + ${offset}px)`
     } else {
       // fromTop
       // Normal fixed positioning anchored to the top — safe-area-top keeps the element
