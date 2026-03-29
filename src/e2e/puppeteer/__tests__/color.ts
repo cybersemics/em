@@ -12,6 +12,7 @@ import press from '../helpers/press'
 import setSelection from '../helpers/setSelection'
 import { page } from '../setup'
 
+/** Retrieve the innerHTML of the first note on the page. Assumes that there will be only a single note. */
 const getFirstNoteText = () => page.evaluate(() => document.querySelector('[aria-label="note-editable"]')?.innerHTML)
 
 vi.setConfig({ testTimeout: 60000, hookTimeout: 60000 })
