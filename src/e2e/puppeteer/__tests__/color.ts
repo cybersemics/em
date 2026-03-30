@@ -235,6 +235,23 @@ it('Verify superscript colors in different views', async () => {
   expect(rgbToHex(supColor3!)).toBe(rgbaToHex(colors.light.green)) // Superscript should match the green color in context view
 })
 
+it('Clicking on a formatting tag does not close color dropdown', async () => {
+  const importText = `
+  - Golden Retriever`
+
+  await paste(importText)
+
+  await clickThought('Golden Retriever')
+
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="text color swatches"] [aria-label="blue"]')
+  await clickThought('<font color="#00c7e6">Golden Retriever</font>')
+
+  const textColorSwatch = await page.$('[aria-label="text color swatches"] [aria-label="blue"]')
+
+  expect(textColorSwatch).toBeTruthy()
+})
+
 it('Set the background color of the note', async () => {
   await paste(`
     - a
@@ -266,23 +283,6 @@ it('Toggling note background color on and off should remove formatting tag', asy
 
   const result = await getFirstNoteText()
   expect(result).toBe('Note')
-})
-
-it('Clicking on a formatting tag does not close color dropdown', async () => {
-  const importText = `
-  - Golden Retriever`
-
-  await paste(importText)
-
-  await clickThought('Golden Retriever')
-
-  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
-  await click('[aria-label="text color swatches"] [aria-label="blue"]')
-  await clickThought('<font color="#00c7e6">Golden Retriever</font>')
-
-  const textColorSwatch = await page.$('[aria-label="text color swatches"] [aria-label="blue"]')
-
-  expect(textColorSwatch).toBeTruthy()
 })
 
 it('Setting note foreground color should remove background color', async () => {
