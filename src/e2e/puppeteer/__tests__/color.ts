@@ -12,6 +12,9 @@ import press from '../helpers/press'
 import setSelection from '../helpers/setSelection'
 import { page } from '../setup'
 
+/** Retrieve the innerHTML of the first note on the page. Assumes that there will be only a single note. */
+const getFirstNoteText = () => page.evaluate(() => document.querySelector('[aria-label="note-editable"]')?.innerHTML)
+
 vi.setConfig({ testTimeout: 60000, hookTimeout: 60000 })
 
 it('Set the text color of the text and bullet', async () => {
@@ -230,6 +233,39 @@ it('Verify superscript colors in different views', async () => {
   const supColor3 = await getSuperscriptColor()
   expect(supColor3).toBeTruthy()
   expect(rgbToHex(supColor3!)).toBe(rgbaToHex(colors.light.green)) // Superscript should match the green color in context view
+})
+
+it('Set the background color of the note', async () => {
+  await paste(`
+    - a
+      - =note
+        - Note
+  `)
+
+  await click('[aria-label="note-editable"]')
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="background color swatches"] [aria-label="green"]')
+
+  const result = await getFirstNoteText()
+  expect(result).toBe('<font color="#000000" style="background-color: rgb(0, 214, 136);">Note</font>')
+
+  await click('[aria-label="background color swatches"] [aria-label="green"]')
+})
+
+it('Toggling note background color on and off should remove formatting tag', async () => {
+  await paste(`
+    - a
+      - =note
+        - Note
+  `)
+
+  await click('[aria-label="note-editable"]')
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="background color swatches"] [aria-label="green"]')
+  await click('[aria-label="background color swatches"] [aria-label="green"]')
+
+  const result = await getFirstNoteText()
+  expect(result).toBe('Note')
 })
 
 it('Clicking on a formatting tag does not close color dropdown', async () => {
