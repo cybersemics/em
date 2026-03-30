@@ -1,9 +1,13 @@
-import { CSSProperties, ReactNode, useLayoutEffect, useState } from 'react'
+import { CSSProperties, ReactNode, useLayoutEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Path from '../@types/Path'
 import State from '../@types/State'
+import ThoughtId from '../@types/ThoughtId'
 import isCursorGreaterThanParent from '../selectors/isCursorGreaterThanParent'
+import getThoughtById from '../selectors/getThoughtById'
+import store from '../stores/app'
+import debugFlags from '../util/debugFlags'
 import equalPath from '../util/equalPath'
 import hashPath from '../util/hashPath'
 import parentOf from '../util/parentOf'
@@ -75,6 +79,36 @@ const TreeNodePositioner = ({
     // Without this additional render, updates get batched and subsequent CSS transitions may not work properly. For example, when moving a thought down, it would not animate.
     setY(_y)
   }, [_y])
+
+  /** Last laid-out `y` for y-position debug; null until first layout pass. */
+  const yDebugLastRef = useRef<number | null>(null)
+
+  useLayoutEffect(() => {
+    if (!debugFlags.yPosition || cursorOverlay) return
+
+    const value = getThoughtById(store.getState(), thoughtId as ThoughtId)?.value ?? ''
+    const label = value === '' ? '(empty)' : `"${value}"`
+
+    if (yDebugLastRef.current === null) {
+      yDebugLastRef.current = _y
+      return
+    }
+
+    const delta = _y - yDebugLastRef.current
+    if (Math.abs(delta) < 0.01) return
+
+    // Skip logging one large jump when layout first gets a real `y` (e.g. 0 → stacked position). Manual check targets small drift after that.
+    if (Math.abs(delta) > 25) {
+      yDebugLastRef.current = _y
+      return
+    }
+
+    // Smaller y = higher on screen → "up"
+    const direction = delta < 0 ? 'up' : 'down'
+    console.info(`[y] ${label}  shifted ${direction} ${Math.abs(delta).toFixed(1)}px after first layout`)
+
+    yDebugLastRef.current = _y
+  }, [_y, thoughtId, cursorOverlay])
 
   const outerDivStyle: CSSProperties = {
     // Cannot use transform because it creates a new stacking context, which causes later siblings' DropChild to be covered by previous siblings'.
