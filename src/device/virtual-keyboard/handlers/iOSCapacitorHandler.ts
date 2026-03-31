@@ -23,8 +23,8 @@ const iOSCapacitorHandler: VirtualKeyboardHandler = {
       // ...then subtract the safe-area-bottom inset to get the height above the safe-area baseline.
       // Because we always add a safe-area-bottom inset whenever we position elements, this normalized height
       // is the value we actually need. Consider this an additional 'safe area inset' that applies only when the keyboard is open.
-      const height = rawHeight - measureSafeAreaBottom()
-      viewportStore.update({ virtualKeyboardHeight: rawHeight })
+      const targetHeight = rawHeight - measureSafeAreaBottom()
+      viewportStore.update({ virtualKeyboardHeight: targetHeight })
       virtualKeyboardStore.update({ open: true })
 
       // Stop any existing animation to prevent conflicts
@@ -32,7 +32,7 @@ const iOSCapacitorHandler: VirtualKeyboardHandler = {
 
       // Start storing animated height values in virtualKeyboardStore
       // The animation provided is an approximation of iOS' keyboard spring animation
-      controls = animate(virtualKeyboardStore.getState().height, height, {
+      controls = animate(virtualKeyboardStore.getState().height, targetHeight, {
         type: 'spring',
         stiffness: 3600,
         damping: 220,
@@ -45,9 +45,9 @@ const iOSCapacitorHandler: VirtualKeyboardHandler = {
 
     Keyboard.addListener('keyboardDidShow', info => {
       const rawHeight = info.keyboardHeight || 0
-      const height = rawHeight - measureSafeAreaBottom()
+      const targetHeight = rawHeight - measureSafeAreaBottom()
       controls?.stop()
-      virtualKeyboardStore.update({ open: true, height })
+      virtualKeyboardStore.update({ open: true, height: targetHeight })
     })
 
     Keyboard.addListener('keyboardWillHide', () => {
