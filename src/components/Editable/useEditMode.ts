@@ -10,7 +10,7 @@ import * as selection from '../../device/selection'
 import usePrevious from '../../hooks/usePrevious'
 import hasMulticursor from '../../selectors/hasMulticursor'
 import equalPath from '../../util/equalPath'
-import getNodeOffsetForVoidArea from '../../util/getNodeOffsetForVoidArea'
+import getCaretOffset from '../../util/getCaretOffset'
 
 /** Squared movement threshold (px²) for distinguishing taps from scrolls; ~10px finger movement. */
 const SCROLL_THRESHOLD_SQ = 100
@@ -61,7 +61,7 @@ const useEditMode = ({
   const pendingCaretOffsetRef = useRef<number | null>(null)
 
   /** True once pending void-area offset was applied (touchend or mousedown), until gesture ends. */
-  const voidAreaCaretAppliedRef = useRef(false)
+  const manualCaretAppliedRef = useRef(false)
 
   /** Stores the initial touch position to detect tap vs scroll; if focus occurs without it, the tap was outside the editable and we place the caret manually. */
   const touchStartPosRef = useRef<{ x: number; y: number } | null>(null)
@@ -163,50 +163,63 @@ const useEditMode = ({
     }
 
     /**
-     * Handles mousedown for void-area caret positioning.
-     * On desktop, computes the void-area offset directly.
-     * On touch devices, the caret is already transparent from touchstart;
-     * we let the browser handle the synthetic mousedown and defer to the
-     * touchend rAF to apply the correct offset and reveal the caret.
+     * Handles the mousedown event for the editable element.
+     * Prevents focus on non-cursor thoughts or during multiselect clicks.
+     * When editing or cursor is present (and multicursor is not active), computes and sets the caret position manually.
+     * Prevents default behavior and manages autoscroll for certain edge cases where browser selection would be incorrect.
      */
     const onMouseDown = (e: MouseEvent) => {
+      // If CMD/CTRL is pressed, don't focus the editable.
       const isMultiselectClick = isMac ? e.metaKey : e.ctrlKey
-      if (isMultiselectClick || !editingOrOnCursor || isMulticursor) return
-
-      // Prevent the browser from autoscrolling to this editable element.
-      // For some reason doesn't work on touchend.
-      preventAutoscroll(editable, {
-        // about the height of a single-line thought
-        bottomMargin: fontSize * 2,
-      })
-
-      // If the caret was already applied, do not apply it again
-      if (voidAreaCaretAppliedRef.current) {
-        voidAreaCaretAppliedRef.current = false
+      if (isMultiselectClick) {
+        e.preventDefault()
         return
       }
 
-      const { isVoidArea, offset: nodeOffset } = getNodeOffsetForVoidArea(editable, {
-        clientX: e.clientX,
-        clientY: e.clientY,
-      })
+      // If editing or the cursor is on the thought, allow the default browser selection or perform manual caret positioning so the offset is correct.
+      // See: #981
+      if (editingOrOnCursor && !isMulticursor) {
+        // Prevent the browser from autoscrolling to this editable element.
+        // For some reason doesn't work on touchend.
+        preventAutoscroll(editable, {
+          // about the height of a single-line thought
+          bottomMargin: fontSize * 2,
+        })
 
-      if (nodeOffset !== null) {
-        // do not prevent default if the tap is on a valid character bounding box
-        if (isVoidArea) {
-          e.preventDefault()
+        // If the caret was already applied (i.e. onTouchEnd), exit early so that we do not perform the computation again.
+        if (manualCaretAppliedRef.current) {
+          manualCaretAppliedRef.current = false
+          return
         }
-        setCaretOffset(nodeOffset)
+
+        const { inVoidArea, offset: nodeOffset } = getCaretOffset(editable, {
+          clientX: e.clientX,
+          clientY: e.clientY,
+        })
+
+        if (nodeOffset !== null) {
+          // do not prevent default if the tap is on a valid character bounding box.
+          // this preserves native browser behavior for text selection.
+          if (inVoidArea) {
+            e.preventDefault()
+          }
+          setCaretOffset(nodeOffset)
+        } else {
+          allowDefaultSelection()
+        }
       } else {
-        allowDefaultSelection()
+        // There are areas on the outside edge of the thought that will fail to trigger onTouchEnd.
+        // In those cases, it is best to prevent onFocus or onClick, otherwise keyboard is open will be incorrectly activated.
+        // Steps to Reproduce: https://github.com/cybersemics/em/pull/2948#issuecomment-2887186117
+        // Explanation and demo: https://github.com/cybersemics/em/pull/2948#issuecomment-2887803425
+        e.preventDefault()
       }
     }
 
     /**
-     * Sets the caret for void-area taps immediately and hides the native caret
-     * so the browser's subsequent repositioning (between touchstart and
-     * mousedown) is invisible. The correct position is re-applied and the caret
-     * revealed in mousedown (with preventDefault) or via a rAF in touchend.
+     * Handles touchstart for manual caret positioning on iOS Safari.
+     * Sets up the necessary state to determine if a caret offset needs to be applied after touchend.
+     * Only runs on iOS Safari; skips on Android Chrome (manual caret positioning is handled in onMouseDown).
      */
     const onTouchStart = (e: TouchEvent) => {
       // Android Chrome manual caret positioning is handled in onMouseDown
@@ -218,7 +231,7 @@ const useEditMode = ({
 
       touchStartPosRef.current = { x: touch.clientX, y: touch.clientY }
 
-      const { offset: nodeOffset } = getNodeOffsetForVoidArea(editable, {
+      const { offset: nodeOffset } = getCaretOffset(editable, {
         clientX: touch.clientX,
         clientY: touch.clientY,
       })
@@ -243,11 +256,11 @@ const useEditMode = ({
       if (dx * dx + dy * dy > SCROLL_THRESHOLD_SQ) {
         pendingCaretOffsetRef.current = null
         editable.style.caretColor = ''
-        voidAreaCaretAppliedRef.current = false
+        manualCaretAppliedRef.current = false
       }
     }
 
-    /** Finalizes the void-area caret after touch processing completes. */
+    /** Finalizes the manual caret positioning after touch processing completes. */
     const onTouchEnd = () => {
       // Android Chrome manual caret positioning is handled in onMouseDown
       if (!isSafari()) return
@@ -255,11 +268,12 @@ const useEditMode = ({
       const pendingCaretOffset = pendingCaretOffsetRef.current
       if (pendingCaretOffset === null) return
 
-      voidAreaCaretAppliedRef.current = true
+      manualCaretAppliedRef.current = true
       pendingCaretOffsetRef.current = null
       touchStartPosRef.current = null
 
       // Apply the pending offset after next two frames to prevent the browser from repositioning the caret incorrectly.
+      // Double requestAnimationFrame seems to be the most reliable way to prevent the visual caret glitch where the ios bug causes caret to jump unexpectedly before restoring manually to correct offset.
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           setCaretOffset(pendingCaretOffset)
@@ -278,10 +292,6 @@ const useEditMode = ({
       editable.removeEventListener('touchstart', onTouchStart)
       editable.removeEventListener('touchmove', onTouchMove)
       editable.removeEventListener('touchend', onTouchEnd)
-      editable.style.caretColor = ''
-      pendingCaretOffsetRef.current = null
-      touchStartPosRef.current = null
-      voidAreaCaretAppliedRef.current = false
     }
   }, [contentRef, editingOrOnCursor, isMulticursor, fontSize, onCaretOffset, allowDefaultSelection])
 

@@ -596,28 +596,10 @@ const Editable = ({
     [disabled, dispatch, editingOrOnCursor, isVisible, setCursorOnThought],
   )
 
-  /** Registers native event listeners for tap behavior (multicursor, long press, visibility).   */
+  /** Registers native event listeners for tap behavior (click and touchend). */
   useEffect(() => {
     const editable = contentRef.current
     if (!editable) return
-
-    /** Prevents focus on non-cursor thoughts or during multiselect clicks. */
-    const onMouseDown = (e: MouseEvent) => {
-      // If CMD/CTRL is pressed, don't focus the editable.
-      const isMultiselectClick = isMac ? e.metaKey : e.ctrlKey
-      if (isMultiselectClick) {
-        e.preventDefault()
-        return
-      }
-
-      // There are areas on the outside edge of the thought that will fail to trigger onTouchEnd.
-      // In those cases, it is best to prevent onFocus or onClick, otherwise keyboard is open will be incorrectly activated.
-      // Steps to Reproduce: https://github.com/cybersemics/em/pull/2948#issuecomment-2887186117
-      // Explanation and demo: https://github.com/cybersemics/em/pull/2948#issuecomment-2887803425
-      if (!(editingOrOnCursor && !hasMulticursor)) {
-        e.preventDefault()
-      }
-    }
 
     /** Sets the cursor on the thought on click. Handles hidden elements, drags, and editing mode. */
     const onClick = (e: MouseEvent) => {
@@ -637,12 +619,10 @@ const Editable = ({
       handleTapBehavior(e)
     }
 
-    editable.addEventListener('mousedown', onMouseDown)
     editable.addEventListener('click', onClick)
     editable.addEventListener('touchend', onTouchEnd, { passive: false })
 
     return () => {
-      editable.removeEventListener('mousedown', onMouseDown)
       editable.removeEventListener('click', onClick)
       editable.removeEventListener('touchend', onTouchEnd)
     }

@@ -22,8 +22,9 @@ interface Coordinates {
   clientY: number
 }
 
-interface VoidAreaResult {
-  isVoidArea?: boolean
+interface CaretOffsetResult {
+  /** True if the tap/click is in a void area (i.e. outside the text node's visible characters). */
+  inVoidArea?: boolean
   offset: number | null
 }
 
@@ -73,62 +74,6 @@ const findClosestLine = (lines: TextNodeLine[], clientY: number): TextNodeLine =
     { line: lines[0], dist: Infinity },
   ).line
 }
-
-/**
- * Checks if a click is in the end-of-line gap of a  text node.
- * For multiline thoughts, when text wraps, non-last lines have horizontal empty space after their last character.
- * Clicking in this gap is a valid position that the browser can handle correctly
- * (it places the caret at the end of the line), so we return true to defer to native behavior.
- */
-// const isValidEdgeClickInLine = (node: Text, clientX: number, clientY: number): boolean => {
-//   const text = node.nodeValue ?? ''
-//   if (!text.length) return false
-
-//   const lines = getTextNodeLines(node)
-//   const clickedLine = findClosestLine(lines, clientY)
-//   const range = document.createRange()
-
-//   // Left-side gap: to the left of the first character of the line (any line count).
-//   range.setStart(node, clickedLine.start)
-//   range.setEnd(node, Math.min(clickedLine.start + 1, text.length))
-//   const firstCharRect = range.getBoundingClientRect()
-//   if (clientX < firstCharRect.left - 1) return true
-
-//   // Right-side gap only for multiline.
-//   if (lines.length <= 1) return false
-
-//   // Vertical tolerance – stay within the line’s vertical bounds
-//   const verticalTolerance = clickedLine.rect.height * 0.5
-//   if (clientY < clickedLine.rect.top - verticalTolerance || clientY > clickedLine.rect.bottom + verticalTolerance) {
-//     return false
-//   }
-
-//   // If the line has no characters (e.g., collapsed whitespace), there’s no gap to detect
-//   if (clickedLine.start === clickedLine.end) return false
-
-//   const lineText = text.substring(clickedLine.start, clickedLine.end)
-//   const trimmedLength = lineText.trimEnd().length
-//   if (trimmedLength === 0) return false
-
-//   const lastVisibleCharIndex = clickedLine.start + trimmedLength - 1
-//   const checkIndices = isSafari()
-//     ? [
-//         lastVisibleCharIndex,
-//         Math.max(clickedLine.start, lastVisibleCharIndex - 1),
-//         Math.max(clickedLine.start, lastVisibleCharIndex - 2),
-//       ]
-//     : [lastVisibleCharIndex]
-
-//   let rightmostPosition = -Infinity
-//   for (const charIndex of checkIndices) {
-//     range.setStart(node, charIndex)
-//     range.setEnd(node, charIndex + 1)
-//     const rect = range.getBoundingClientRect()
-//     rightmostPosition = Math.max(rightmostPosition, rect.right)
-//   }
-
-//   return clientX > rightmostPosition - 1
-// }
 
 /** Checks if a character is a word separator for caret snap purposes (whitespace or hyphen). */
 const isWordSeparator = (char: string): boolean => /[\s\-]/.test(char)
@@ -350,6 +295,21 @@ const isClickWithinTextNodeCharacters = (node: Text, clientX: number, clientY: n
     }
   }
 
+  // Treat line-edge gaps (left of first char / right of last char) as valid positions
+  // so that taps in the editable padding near boundary characters are not void areas.
+  const lines = getTextNodeLines(node)
+  for (const line of lines) {
+    if (clientY < line.rect.top || clientY > line.rect.bottom) continue
+
+    range.setStart(node, line.start)
+    range.setEnd(node, line.end)
+    const lineRect = range.getBoundingClientRect()
+    const tolerance = line.rect.height * 0.5
+    if (clientX >= lineRect.left - tolerance && clientX <= lineRect.right + tolerance) {
+      return true
+    }
+  }
+
   return false
 }
 
@@ -452,8 +412,8 @@ const domPositionToUnformattedOffset = (root: HTMLElement, node: Node, offset: n
 }
 
 /**
- * Detects if a coordinate is in a void area and calculates the appropriate caret position.
- *
+ * Calculates the appropriate caret position for a given click/tap coordinate.
+ * Also detects if the click/tap is in a void area or within valid character bounds.
  * A void area is defined as:
  * - Empty space (padding, margins, line height gaps) within the editable element.
  * - Areas where the browser cannot detect a valid caret position.
@@ -462,9 +422,9 @@ const domPositionToUnformattedOffset = (root: HTMLElement, node: Node, offset: n
  * @param editable - The editable element containing the text.
  * @param clientX - The X coordinate.
  * @param clientY - The Y coordinate.
- * @returns The character offset where the caret should be placed, or null if it is on a valid character.
+ * @returns The character offset where the caret should be placed, and a boolean indicating if the click/tap is in a void area.
  */
-const getNodeOffsetForVoidArea = (editable: HTMLElement | null, { clientX, clientY }: Coordinates): VoidAreaResult => {
+const getCaretOffset = (editable: HTMLElement | null, { clientX, clientY }: Coordinates): CaretOffsetResult => {
   if (!editable) return { offset: null }
 
   const textNodes = getTextNodes(editable)
@@ -475,9 +435,9 @@ const getNodeOffsetForVoidArea = (editable: HTMLElement | null, { clientX, clien
 
   const offsetInNode = calculateOffset(nearest.node, clientX, clientY)
   return {
-    isVoidArea: !isClickWithinTextNodeCharacters(nearest.node, clientX, clientY),
+    inVoidArea: !isClickWithinTextNodeCharacters(nearest.node, clientX, clientY),
     offset: domPositionToUnformattedOffset(editable, nearest.node, offsetInNode),
   }
 }
 
-export default getNodeOffsetForVoidArea
+export default getCaretOffset
