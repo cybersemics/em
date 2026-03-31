@@ -167,6 +167,7 @@ const useEditMode = ({
      * Prevents focus on non-cursor thoughts or during multiselect clicks.
      * When editing or cursor is present (and multicursor is not active), computes and sets the caret position manually.
      * Prevents default behavior and manages autoscroll for certain edge cases where browser selection would be incorrect.
+     * On a touch device, the browser fires touch events first, then synthesises mouse events afterwards for backward compatibility, hence mousedown is always guaranteed to be fired after touch events.
      */
     const onMouseDown = (e: MouseEvent) => {
       // If CMD/CTRL is pressed, don't focus the editable.
@@ -219,12 +220,8 @@ const useEditMode = ({
     /**
      * Handles touchstart for manual caret positioning on iOS Safari.
      * Sets up the necessary state to determine if a caret offset needs to be applied after touchend.
-     * Only runs on iOS Safari; skips on Android Chrome (manual caret positioning is handled in onMouseDown).
      */
     const onTouchStart = (e: TouchEvent) => {
-      // Android Chrome manual caret positioning is handled in onMouseDown
-      if (!isSafari()) return
-
       if (!editingOrOnCursor || isMulticursor || e.touches.length === 0) return
       const touch = e.touches[0]
       if (!touch) return
@@ -246,9 +243,6 @@ const useEditMode = ({
 
     /** Cancels the pending void-area caret offset if the user scrolls past the threshold. */
     const onTouchMove = (e: TouchEvent) => {
-      // Android Chrome manual caret positioning is handled in onMouseDown
-      if (!isSafari()) return
-
       if (e.touches.length === 0 || !touchStartPosRef.current) return
       const touch = e.touches[0]
       const dx = touch.clientX - touchStartPosRef.current.x
@@ -262,9 +256,6 @@ const useEditMode = ({
 
     /** Finalizes the manual caret positioning after touch processing completes. */
     const onTouchEnd = () => {
-      // Android Chrome manual caret positioning is handled in onMouseDown
-      if (!isSafari()) return
-
       const pendingCaretOffset = pendingCaretOffsetRef.current
       if (pendingCaretOffset === null) return
 
@@ -283,15 +274,43 @@ const useEditMode = ({
     }
 
     editable.addEventListener('mousedown', onMouseDown)
-    editable.addEventListener('touchstart', onTouchStart)
-    editable.addEventListener('touchmove', onTouchMove)
-    editable.addEventListener('touchend', onTouchEnd)
+
+    /**
+     * Registers touch event listeners exclusively for iOS Safari to handle
+     * caret positioning quirks that cannot be addressed via `mousedown`.
+     *
+     * ## Browser differences
+     *
+     * **Chrome** — Caret misbehaviour is limited to clicks on void space and is
+     * reliably prevented by calling `preventDefault()` during `mousedown`.
+     *
+     * **iOS Safari** — Caret positioning is fundamentally different and more
+     * unpredictable. The caret can jump even at valid text boundaries, making
+     * `mousedown` based correction insufficient. Reliable detection of intent
+     * requires observing the full touch lifecycle: `touchstart`, `touchmove`,
+     * and `touchend`.
+     *
+     * ## Workaround
+     * The correction is deferred via `requestAnimationFrame` to prevent the visual glitch.
+     * During this window the caret is made transparent to mask the visual
+     * glitch before the corrected position is applied.
+     *
+     * Touch listeners are therefore registered only when the runtime is
+     * identified as iOS Safari.
+     */
+    if (isTouch && isSafari()) {
+      editable.addEventListener('touchstart', onTouchStart)
+      editable.addEventListener('touchmove', onTouchMove)
+      editable.addEventListener('touchend', onTouchEnd)
+    }
 
     return () => {
       editable.removeEventListener('mousedown', onMouseDown)
-      editable.removeEventListener('touchstart', onTouchStart)
-      editable.removeEventListener('touchmove', onTouchMove)
-      editable.removeEventListener('touchend', onTouchEnd)
+      if (isTouch && isSafari()) {
+        editable.removeEventListener('touchstart', onTouchStart)
+        editable.removeEventListener('touchmove', onTouchMove)
+        editable.removeEventListener('touchend', onTouchEnd)
+      }
     }
   }, [contentRef, editingOrOnCursor, isMulticursor, fontSize, onCaretOffset, allowDefaultSelection])
 
