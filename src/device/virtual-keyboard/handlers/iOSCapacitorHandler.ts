@@ -4,7 +4,7 @@ import { AnimationPlaybackControls, animate } from 'framer-motion'
 import VirtualKeyboardHandler from '../../../@types/VirtualKeyboardHandler'
 import viewportStore from '../../../stores/viewport'
 import virtualKeyboardStore from '../../../stores/virtualKeyboardStore'
-import measureSafeAreaBottom from '../measureSafeAreaBottom'
+import getSafeAreaBottom from '../getSafeAreaBottom'
 
 /** A virtual keyboard handler for iOS Capacitor that uses native events and spring physics.
  * Normalizes native keyboard height by subtracting safe-area-bottom, so the store value
@@ -23,7 +23,7 @@ const iOSCapacitorHandler: VirtualKeyboardHandler = {
       // ...then subtract the safe-area-bottom inset to get the height above the safe-area baseline.
       // Because we always add a safe-area-bottom inset whenever we position elements, this normalized height
       // is the value we actually need. Consider this an additional 'safe area inset' that applies only when the keyboard is open.
-      const targetHeight = rawHeight - measureSafeAreaBottom()
+      const targetHeight = rawHeight - getSafeAreaBottom()
       viewportStore.update({ virtualKeyboardHeight: targetHeight })
       virtualKeyboardStore.update({ open: true })
 
@@ -45,7 +45,7 @@ const iOSCapacitorHandler: VirtualKeyboardHandler = {
 
     Keyboard.addListener('keyboardDidShow', info => {
       const rawHeight = info.keyboardHeight || 0
-      const targetHeight = rawHeight - measureSafeAreaBottom()
+      const targetHeight = rawHeight - getSafeAreaBottom()
       controls?.stop()
       virtualKeyboardStore.update({ open: true, height: targetHeight })
     })

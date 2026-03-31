@@ -5,7 +5,7 @@ import { isSafari, isTouch } from '../../../browser'
 import store from '../../../stores/app'
 import viewportStore, { updateSize } from '../../../stores/viewport'
 import virtualKeyboardStore from '../../../stores/virtualKeyboardStore'
-import measureSafeAreaBottom from '../measureSafeAreaBottom'
+import getSafeAreaBottom from '../getSafeAreaBottom'
 
 /** Provides control over the spring animation. */
 let controls: AnimationPlaybackControls | null = null
@@ -22,7 +22,7 @@ const updateIOSSafariKeyboardState = () => {
     // ...then subtract the safe-area-bottom inset to get the height above the safe-area baseline.
     // Because we always add a safe-area-bottom inset whenever we position elements, this normalized height
     // is the value we actually need. Consider this an additional 'safe area inset' that applies only when the keyboard is open.
-    const targetHeight = rawHeight - measureSafeAreaBottom()
+    const targetHeight = rawHeight - getSafeAreaBottom()
 
     const isKeyboardOpen = store.getState().isKeyboardOpen
     const keyboardIsVisible = isKeyboardOpen === true
