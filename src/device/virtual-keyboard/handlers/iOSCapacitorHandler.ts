@@ -4,7 +4,7 @@ import { AnimationPlaybackControls, animate } from 'framer-motion'
 import VirtualKeyboardHandler from '../../../@types/VirtualKeyboardHandler'
 import viewportStore from '../../../stores/viewport'
 import virtualKeyboardStore from '../../../stores/virtualKeyboardStore'
-import measureSafeAreaBottom from '../safeArea'
+import measureSafeAreaBottom from '../measureSafeAreaBottom'
 
 /** A virtual keyboard handler for iOS Capacitor that uses native events and spring physics.
  * Normalizes native keyboard height by subtracting safe-area-bottom, so the store value
