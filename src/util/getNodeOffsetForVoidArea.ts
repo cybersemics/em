@@ -22,6 +22,11 @@ interface Coordinates {
   clientY: number
 }
 
+interface VoidAreaResult {
+  isVoidArea?: boolean
+  offset: number | null
+}
+
 /**
  * Splits a text node into individual lines based on vertical position.
  * Returns an array of line objects with start/end character positions and bounding boxes.
@@ -75,55 +80,55 @@ const findClosestLine = (lines: TextNodeLine[], clientY: number): TextNodeLine =
  * Clicking in this gap is a valid position that the browser can handle correctly
  * (it places the caret at the end of the line), so we return true to defer to native behavior.
  */
-const isValidEdgeClickInLine = (node: Text, clientX: number, clientY: number): boolean => {
-  const text = node.nodeValue ?? ''
-  if (!text.length) return false
+// const isValidEdgeClickInLine = (node: Text, clientX: number, clientY: number): boolean => {
+//   const text = node.nodeValue ?? ''
+//   if (!text.length) return false
 
-  const lines = getTextNodeLines(node)
-  const clickedLine = findClosestLine(lines, clientY)
-  const range = document.createRange()
+//   const lines = getTextNodeLines(node)
+//   const clickedLine = findClosestLine(lines, clientY)
+//   const range = document.createRange()
 
-  // Left-side gap: to the left of the first character of the line (any line count).
-  range.setStart(node, clickedLine.start)
-  range.setEnd(node, Math.min(clickedLine.start + 1, text.length))
-  const firstCharRect = range.getBoundingClientRect()
-  if (clientX < firstCharRect.left - 1) return true
+//   // Left-side gap: to the left of the first character of the line (any line count).
+//   range.setStart(node, clickedLine.start)
+//   range.setEnd(node, Math.min(clickedLine.start + 1, text.length))
+//   const firstCharRect = range.getBoundingClientRect()
+//   if (clientX < firstCharRect.left - 1) return true
 
-  // Right-side gap only for multiline.
-  if (lines.length <= 1) return false
+//   // Right-side gap only for multiline.
+//   if (lines.length <= 1) return false
 
-  // Vertical tolerance – stay within the line’s vertical bounds
-  const verticalTolerance = clickedLine.rect.height * 0.5
-  if (clientY < clickedLine.rect.top - verticalTolerance || clientY > clickedLine.rect.bottom + verticalTolerance) {
-    return false
-  }
+//   // Vertical tolerance – stay within the line’s vertical bounds
+//   const verticalTolerance = clickedLine.rect.height * 0.5
+//   if (clientY < clickedLine.rect.top - verticalTolerance || clientY > clickedLine.rect.bottom + verticalTolerance) {
+//     return false
+//   }
 
-  // If the line has no characters (e.g., collapsed whitespace), there’s no gap to detect
-  if (clickedLine.start === clickedLine.end) return false
+//   // If the line has no characters (e.g., collapsed whitespace), there’s no gap to detect
+//   if (clickedLine.start === clickedLine.end) return false
 
-  const lineText = text.substring(clickedLine.start, clickedLine.end)
-  const trimmedLength = lineText.trimEnd().length
-  if (trimmedLength === 0) return false
+//   const lineText = text.substring(clickedLine.start, clickedLine.end)
+//   const trimmedLength = lineText.trimEnd().length
+//   if (trimmedLength === 0) return false
 
-  const lastVisibleCharIndex = clickedLine.start + trimmedLength - 1
-  const checkIndices = isSafari()
-    ? [
-        lastVisibleCharIndex,
-        Math.max(clickedLine.start, lastVisibleCharIndex - 1),
-        Math.max(clickedLine.start, lastVisibleCharIndex - 2),
-      ]
-    : [lastVisibleCharIndex]
+//   const lastVisibleCharIndex = clickedLine.start + trimmedLength - 1
+//   const checkIndices = isSafari()
+//     ? [
+//         lastVisibleCharIndex,
+//         Math.max(clickedLine.start, lastVisibleCharIndex - 1),
+//         Math.max(clickedLine.start, lastVisibleCharIndex - 2),
+//       ]
+//     : [lastVisibleCharIndex]
 
-  let rightmostPosition = -Infinity
-  for (const charIndex of checkIndices) {
-    range.setStart(node, charIndex)
-    range.setEnd(node, charIndex + 1)
-    const rect = range.getBoundingClientRect()
-    rightmostPosition = Math.max(rightmostPosition, rect.right)
-  }
+//   let rightmostPosition = -Infinity
+//   for (const charIndex of checkIndices) {
+//     range.setStart(node, charIndex)
+//     range.setEnd(node, charIndex + 1)
+//     const rect = range.getBoundingClientRect()
+//     rightmostPosition = Math.max(rightmostPosition, rect.right)
+//   }
 
-  return clientX > rightmostPosition - 1
-}
+//   return clientX > rightmostPosition - 1
+// }
 
 /** Checks if a character is a word separator for caret snap purposes (whitespace or hyphen). */
 const isWordSeparator = (char: string): boolean => /[\s\-]/.test(char)
@@ -216,6 +221,44 @@ const findOffsetAtX = (node: Text, clientX: number, lo: number, hi: number): num
 }
 
 /**
+ * Adjusts an offset to skip trailing whitespaces in a line.
+ * If the offset is in whitespace, moves it to after the last non-whitespace character in that line.
+ *
+ * @param text - The text content.
+ * @param offset - The calculated offset.
+ * @param lineStart - The start of the line containing the offset.
+ * @param lineEnd - The end of the line containing the offset.
+ * @returns The adjusted offset, skipping trailing whitespaces.
+ */
+const skipTrailingWhitespace = (text: string, offset: number, lineStart: number, lineEnd: number): number => {
+  const lineText = text.substring(lineStart, lineEnd)
+  const offsetInLine = offset - lineStart
+  const lastNonWhitespaceIndex = lineText.trimEnd().length
+
+  // If offset is beyond the last non-whitespace character, place after it
+  if (offsetInLine > lastNonWhitespaceIndex) {
+    return lineStart + lastNonWhitespaceIndex
+  }
+
+  /** If offset is in whitespace, find the last non-whitespace before it. */
+  const isWhitespace = (char: string) => /\s/.test(char)
+
+  if (isWhitespace(lineText[offsetInLine])) {
+    // Find last non-whitespace character before the offset using reduceRight
+    const charsBeforeOffset = Array.from(lineText.slice(0, offsetInLine))
+    const lastNonWhitespaceIndex = charsBeforeOffset.reduceRight<number | null>(
+      (foundIndex, char, index) => foundIndex ?? (!isWhitespace(char) ? index : null),
+      null,
+    )
+
+    // If found, place after it; otherwise place at start of line
+    return lastNonWhitespaceIndex !== null ? lineStart + lastNonWhitespaceIndex + 1 : lineStart
+  }
+
+  return offset
+}
+
+/**
  * Converts a tap position (clientX, clientY) into the correct caret position within a text node.
  * The vertical coordinate determines the line, and the horizontal coordinate determines the position within that line.
  * Used when the browser places the caret incorrectly, such as in empty areas or at the end of a word.
@@ -259,7 +302,7 @@ const calculateOffset = (node: Text, clientX: number, clientY: number): number =
     offset = snapToWordBoundary(text, offset)
   }
 
-  return offset
+  return skipTrailingWhitespace(text, offset, lineStart, lineEnd)
 }
 
 /**
@@ -279,69 +322,35 @@ const getTextNodes = (root: HTMLElement): Text[] => {
 }
 
 /**
- * Returns tight pixel bounds for a single character in a text node.
- * Returns `null` for whitespace, zero-size glyphs, etc.
+ * Checks if a click coordinate is actually within the visible character bounds of a text node.
+ * This is more accurate than checking the overall bounding box, especially for text nodes
+ * with trailing spaces that extend beyond visible characters.
  */
-const getTightCharacterBounds = (
-  node: Text,
-  charIndex: number,
-  range: Range,
-): { left: number; right: number; top: number; bottom: number } | null => {
+const isClickWithinTextNodeCharacters = (node: Text, clientX: number, clientY: number): boolean => {
   const text = node.nodeValue ?? ''
-  if (charIndex < 0 || charIndex >= text.length || /\s/.test(text[charIndex])) return null
-
-  // Collapse a caret at the start of the character to get its x-position and line-box height.
-  range.setStart(node, charIndex)
-  range.collapse(true)
-  const startCaretRect = range.getBoundingClientRect()
-  if (startCaretRect.height === 0) return null
-
-  // Collapse a caret at the end of the character to get the other horizontal edge.
-  range.setStart(node, charIndex + 1)
-  range.collapse(true)
-  const endCaretLeft = range.getBoundingClientRect().left
-
-  // min/max gives correct left/right regardless of text direction (LTR or RTL).
-  const left = Math.min(startCaretRect.left, endCaretLeft)
-  const right = Math.max(startCaretRect.left, endCaretLeft)
-  if (right - left < 1) return null
-
-  // Line-height is taller than the letters; trim the extra space above and below
-  // so hit testing matches the visible text, not the full line box.
-  const parent = node.parentElement
-  const emHeight = parent ? parseFloat(getComputedStyle(parent).fontSize) : startCaretRect.height
-  const halfLeading = Math.max(0, (startCaretRect.height - emHeight) / 2)
-  const top = startCaretRect.top + halfLeading
-  const bottom = startCaretRect.bottom - halfLeading
-  if (top >= bottom) return null
-
-  return { left, right, top, bottom }
-}
-
-/**
- * Returns which character (if any) the tap hits inside this text node.
- * Whitespace is ignored. Returns -1 if the tap is not on visible text.
- */
-const findCharacterAtPoint = (node: Text, clientX: number, clientY: number): number => {
-  const text = node.nodeValue ?? ''
-  if (!text.trim()) return -1
+  if (!text.trim()) return false // ignore pure whitespace nodes
 
   const range = document.createRange()
 
   for (let i = 0; i < text.length; i++) {
-    const bounds = getTightCharacterBounds(node, i, range)
-    if (
-      bounds &&
-      clientX >= bounds.left &&
-      clientX <= bounds.right &&
-      clientY >= bounds.top &&
-      clientY <= bounds.bottom
-    ) {
-      return i
+    // Skip whitespace characters early
+    if (/\s/.test(text[i])) continue
+
+    range.setStart(node, i)
+    range.setEnd(node, i + 1)
+
+    const rects = Array.from(range.getClientRects())
+
+    for (const rect of rects) {
+      if (rect.height === 0 || rect.width === 0) continue
+
+      if (clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom) {
+        return true
+      }
     }
   }
 
-  return -1
+  return false
 }
 
 /**
@@ -360,18 +369,26 @@ const getDistanceToNearestCharacter = (
   let closestRect: DOMRect | null = null
 
   for (let i = 0; i < text.length; i++) {
-    const bounds = getTightCharacterBounds(node, i, range)
-    if (!bounds) continue
+    if (/\s/.test(text[i])) continue
 
-    const verticalDist =
-      clientY < bounds.top ? bounds.top - clientY : clientY > bounds.bottom ? clientY - bounds.bottom : 0
-    const horizontalDist =
-      clientX < bounds.left ? bounds.left - clientX : clientX > bounds.right ? clientX - bounds.right : 0
-    const dist = verticalDist * 1000 + horizontalDist
+    range.setStart(node, i)
+    range.setEnd(node, i + 1)
 
-    if (dist < minDist) {
-      minDist = dist
-      closestRect = new DOMRect(bounds.left, bounds.top, bounds.right - bounds.left, bounds.bottom - bounds.top)
+    const rects = Array.from(range.getClientRects())
+
+    for (const rect of rects) {
+      if (rect.height === 0 || rect.width === 0) continue
+
+      const verticalDist = clientY < rect.top ? rect.top - clientY : clientY > rect.bottom ? clientY - rect.bottom : 0
+
+      const horizontalDist = clientX < rect.left ? rect.left - clientX : clientX > rect.right ? clientX - rect.right : 0
+
+      const dist = verticalDist * 1000 + horizontalDist
+
+      if (dist < minDist) {
+        minDist = dist
+        closestRect = rect
+      }
     }
   }
 
@@ -396,7 +413,7 @@ const getDistanceToNearestCharacter = (
  * Prioritizes text nodes where the click is directly inside visible character bounds.
  */
 const findNearestTextNode = (textNodes: Text[], clientX: number, clientY: number): TextNodeWithRect | null => {
-  const nodesWithinCharBounds = textNodes.filter(node => findCharacterAtPoint(node, clientX, clientY) >= 0)
+  const nodesWithinCharBounds = textNodes.filter(node => isClickWithinTextNodeCharacters(node, clientX, clientY))
 
   if (nodesWithinCharBounds.length > 0) {
     const node = nodesWithinCharBounds[0]
@@ -447,39 +464,20 @@ const domPositionToUnformattedOffset = (root: HTMLElement, node: Node, offset: n
  * @param clientY - The Y coordinate.
  * @returns The character offset where the caret should be placed, or null if it is on a valid character.
  */
-const getNodeOffsetForVoidArea = (editable: HTMLElement | null, { clientX, clientY }: Coordinates): number | null => {
-  if (!editable) return null
+const getNodeOffsetForVoidArea = (editable: HTMLElement | null, { clientX, clientY }: Coordinates): VoidAreaResult => {
+  if (!editable) return { offset: null }
 
   const textNodes = getTextNodes(editable)
-  if (textNodes.length === 0) return null
+  if (textNodes.length === 0) return { offset: null }
 
   const nearest = findNearestTextNode(textNodes, clientX, clientY)
-  if (!nearest) return null
-
-  const charIndex = findCharacterAtPoint(nearest.node, clientX, clientY)
-  if (charIndex >= 0) {
-    // On iOS Safari, tapping the last character of a word causes the native caret
-    // to snap to the beginning of the next word or the end of text. For taps that
-    // land on the last character of a word (within its full vertical or horizontal
-    // span), calculate the offset ourselves to prevent this incorrect jump.
-    if (isSafari() && isTouch) {
-      const text = nearest.node.nodeValue ?? ''
-      const nextChar = charIndex + 1 < text.length ? text[charIndex + 1] : null
-
-      // Last character of a word: next char is a separator or doesn't exist.
-      // Calculate the offset ourselves to prevent iOS's native caret jump.
-      if (nextChar === null || isWordSeparator(nextChar)) {
-        const offsetInNode = calculateOffset(nearest.node, clientX, clientY)
-        return domPositionToUnformattedOffset(editable, nearest.node, offsetInNode)
-      }
-    }
-    return null
-  }
-
-  if (isValidEdgeClickInLine(nearest.node, clientX, clientY)) return null
+  if (!nearest) return { offset: null }
 
   const offsetInNode = calculateOffset(nearest.node, clientX, clientY)
-  return domPositionToUnformattedOffset(editable, nearest.node, offsetInNode)
+  return {
+    isVoidArea: !isClickWithinTextNodeCharacters(nearest.node, clientX, clientY),
+    offset: domPositionToUnformattedOffset(editable, nearest.node, offsetInNode),
+  }
 }
 
 export default getNodeOffsetForVoidArea

@@ -165,8 +165,9 @@ const useEditMode = ({
     /**
      * Handles mousedown for void-area caret positioning.
      * On desktop, computes the void-area offset directly.
-     * On touch devices, applies any pending offset from touchstart and prevents
-     * the browser's synthetic mousedown from overriding the caret position.
+     * On touch devices, the caret is already transparent from touchstart;
+     * we let the browser handle the synthetic mousedown and defer to the
+     * touchend rAF to apply the correct offset and reveal the caret.
      */
     const onMouseDown = (e: MouseEvent) => {
       const isMultiselectClick = isMac ? e.metaKey : e.ctrlKey
@@ -179,28 +180,22 @@ const useEditMode = ({
         bottomMargin: fontSize * 2,
       })
 
-      // Always preventDefault when a pending void-area offset exists so the
-      // browser's synthetic mousedown cannot override the caret. Re-apply the
-      // offset and restore caret visibility.
-      if (pendingCaretOffsetRef.current !== null) {
-        e.preventDefault()
-        if (!voidAreaCaretAppliedRef.current) {
-          setCaretOffset(pendingCaretOffsetRef.current)
-          voidAreaCaretAppliedRef.current = true
-        }
-        pendingCaretOffsetRef.current = null
-        touchStartPosRef.current = null
-        editable.style.caretColor = ''
+      // If the caret was already applied, do not apply it again
+      if (voidAreaCaretAppliedRef.current) {
+        voidAreaCaretAppliedRef.current = false
         return
       }
 
-      const nodeOffset = getNodeOffsetForVoidArea(editable, {
+      const { isVoidArea, offset: nodeOffset } = getNodeOffsetForVoidArea(editable, {
         clientX: e.clientX,
         clientY: e.clientY,
       })
 
       if (nodeOffset !== null) {
-        e.preventDefault()
+        // do not prevent default if the tap is on a valid character bounding box
+        if (isVoidArea) {
+          e.preventDefault()
+        }
         setCaretOffset(nodeOffset)
       } else {
         allowDefaultSelection()
@@ -214,14 +209,16 @@ const useEditMode = ({
      * revealed in mousedown (with preventDefault) or via a rAF in touchend.
      */
     const onTouchStart = (e: TouchEvent) => {
+      // Android Chrome manual caret positioning is handled in onMouseDown
+      if (!isSafari()) return
+
       if (!editingOrOnCursor || isMulticursor || e.touches.length === 0) return
       const touch = e.touches[0]
       if (!touch) return
 
-      voidAreaCaretAppliedRef.current = false
       touchStartPosRef.current = { x: touch.clientX, y: touch.clientY }
 
-      const nodeOffset = getNodeOffsetForVoidArea(editable, {
+      const { offset: nodeOffset } = getNodeOffsetForVoidArea(editable, {
         clientX: touch.clientX,
         clientY: touch.clientY,
       })
@@ -236,37 +233,45 @@ const useEditMode = ({
 
     /** Cancels the pending void-area caret offset if the user scrolls past the threshold. */
     const onTouchMove = (e: TouchEvent) => {
+      // Android Chrome manual caret positioning is handled in onMouseDown
+      if (!isSafari()) return
+
       if (e.touches.length === 0 || !touchStartPosRef.current) return
       const touch = e.touches[0]
       const dx = touch.clientX - touchStartPosRef.current.x
       const dy = touch.clientY - touchStartPosRef.current.y
       if (dx * dx + dy * dy > SCROLL_THRESHOLD_SQ) {
         pendingCaretOffsetRef.current = null
-        voidAreaCaretAppliedRef.current = false
         editable.style.caretColor = ''
+        voidAreaCaretAppliedRef.current = false
       }
     }
 
     /** Finalizes the void-area caret after touch processing completes. */
     const onTouchEnd = () => {
-      if (pendingCaretOffsetRef.current === null) return
+      // Android Chrome manual caret positioning is handled in onMouseDown
+      if (!isSafari()) return
+
+      const pendingCaretOffset = pendingCaretOffsetRef.current
+      if (pendingCaretOffset === null) return
+
+      voidAreaCaretAppliedRef.current = true
+      pendingCaretOffsetRef.current = null
+      touchStartPosRef.current = null
 
       // Apply the pending offset after next two frames to prevent the browser from repositioning the caret incorrectly.
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          if (pendingCaretOffsetRef.current === null) return
-          setCaretOffset(pendingCaretOffsetRef.current)
-          voidAreaCaretAppliedRef.current = true
-          pendingCaretOffsetRef.current = null
+          setCaretOffset(pendingCaretOffset)
           editable.style.caretColor = ''
         })
       })
     }
 
     editable.addEventListener('mousedown', onMouseDown)
-    editable.addEventListener('touchstart', onTouchStart, { passive: false })
-    editable.addEventListener('touchmove', onTouchMove, { passive: true })
-    editable.addEventListener('touchend', onTouchEnd, { passive: false })
+    editable.addEventListener('touchstart', onTouchStart)
+    editable.addEventListener('touchmove', onTouchMove)
+    editable.addEventListener('touchend', onTouchEnd)
 
     return () => {
       editable.removeEventListener('mousedown', onMouseDown)
@@ -274,6 +279,9 @@ const useEditMode = ({
       editable.removeEventListener('touchmove', onTouchMove)
       editable.removeEventListener('touchend', onTouchEnd)
       editable.style.caretColor = ''
+      pendingCaretOffsetRef.current = null
+      touchStartPosRef.current = null
+      voidAreaCaretAppliedRef.current = false
     }
   }, [contentRef, editingOrOnCursor, isMulticursor, fontSize, onCaretOffset, allowDefaultSelection])
 
