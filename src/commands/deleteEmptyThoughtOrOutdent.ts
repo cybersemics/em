@@ -64,7 +64,7 @@ const canExecute = (state: State): boolean =>
 // eslint-disable-next-line jsdoc/require-jsdoc
 const exec: Command['exec'] = (dispatch, getState) => {
   const state = getState()
-  if (hasMulticursor(state)) {
+  if (state.isMulticursorExecuting) {
     dispatch(deleteThoughtWithCursor())
   } else if (state.cursorCleared) {
     dispatch(deleteEmptyThought)
