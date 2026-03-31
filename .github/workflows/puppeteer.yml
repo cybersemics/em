@@ -45,9 +45,6 @@ jobs:
       - name: Install npm dependencies
         run: yarn
 
-      - name: Start SSL proxy
-        run: docker run -d --rm --add-host=host.docker.internal:host-gateway -e "PORT=3000" -p 2552:443 esplo/docker-local-ssl-termination-proxy
-
       - name: Build
         run: yarn build
 
@@ -65,7 +62,7 @@ jobs:
             fi
 
             # Test the full request path and check for 502 errors
-            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -k https://localhost:2552 2>/dev/null || echo "000")
+            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -k https://localhost:3000 2>/dev/null || echo "000")
 
             if [ "$HTTP_STATUS" = "200" ]; then
               echo "Server is ready and responding with 200!"
