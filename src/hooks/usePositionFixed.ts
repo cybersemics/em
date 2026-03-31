@@ -1,4 +1,3 @@
-import { token } from '../../styled-system/tokens'
 import { isCapacitor, isSafari } from '../browser'
 import viewportStore from '../stores/viewport'
 import virtualKeyboardStore from '../stores/virtualKeyboardStore'
@@ -13,7 +12,7 @@ import useScrollTop from './useScrollTop'
  * The hook handles three concerns:
  *
  * 1. Safe-area insets: Offsets elements from the notch/status bar (top) and home indicator
- * (bottom) on rounded screens via `spacing.safeAreaTop` / `spacing.safeAreaBottom` tokens.
+ * (bottom) on rounded screens via `env(safe-area-inset-top)` / `env(safe-area-inset-bottom)`.
  *
  * 2. Keyboard avoidance: For bottom-anchored elements, offsets y position by the virtual keyboard
  * height – ensuring they remain visible even when the keyboard is open.
@@ -67,13 +66,13 @@ const usePositionFixed = ({
       // safe-area-bottom inset so the element doesn't overlap the rounded-screen home indicator.
       //
       const visibleBottom = Math.min(document.body.scrollHeight, scrollTop + innerHeight - virtualKeyboard.height)
-      top = `calc(${visibleBottom - (height ?? 0) - offset}px - ${token('spacing.safeAreaBottom')})`
+      top = `calc(${visibleBottom - (height ?? 0) - offset}px - env(safe-area-inset-bottom))`
     } else {
       // fromTop
       // Position the element at the top of the visible area.
       // scrollTop gives the top of the visible viewport. Add safe-area-top for
       // rounded screens (e.g. iPhone notch) and any additional offset if provided.
-      top = `calc(${scrollTop}px + ${token('spacing.safeAreaTop')} + ${offset}px)`
+      top = `calc(${scrollTop}px + env(safe-area-inset-top) + ${offset}px)`
     }
   }
 
@@ -83,12 +82,12 @@ const usePositionFixed = ({
       // Normal fixed positioning anchored to the bottom — safe-area-bottom keeps the element
       // above the home indicator on rounded screens, and virtualKeyboard.height pushes it
       // above the keyboard when open.
-      bottom = `calc(${token('spacing.safeAreaBottom')} + ${virtualKeyboard.height}px + ${offset}px)`
+      bottom = `calc(env(safe-area-inset-bottom) + ${virtualKeyboard.height}px + ${offset}px)`
     } else {
       // fromTop
       // Normal fixed positioning anchored to the top — safe-area-top keeps the element
       // below the notch/status bar on rounded screens.
-      top = `calc(${token('spacing.safeAreaTop')} + ${offset}px)`
+      top = `calc(env(safe-area-inset-top) + ${offset}px)`
     }
   }
 
