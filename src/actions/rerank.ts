@@ -16,6 +16,7 @@ const rerank = (state: State, simplePath: SimplePath): State => {
         oldPath: appendToPath(simplePath, child.id),
         newPath: appendToPath(simplePath, child.id),
         skipRerank: true,
+        skipSortDeletion: true,
         newRank: i,
       }),
     ),

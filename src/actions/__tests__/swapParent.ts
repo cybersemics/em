@@ -1,10 +1,11 @@
-import { HOME_TOKEN } from '../../constants'
+import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 import importText from '../importText'
+import setSortPreference from '../setSortPreference'
 import swapParent from '../swapParent'
 import toggleContextView from '../toggleContextView'
 
@@ -226,5 +227,30 @@ describe('context view', () => {
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'a', 'x'])
 
     expect(stateNew.alert?.value).toBeTruthy()
+  })
+})
+
+describe('sort', () => {
+  it('does not throw when re-swapping parent with Created sort active', () => {
+    const text = `
+    - a
+      - b
+    - c
+    - d
+  `
+
+    const steps = [
+      importText({ text }),
+      setSortPreference({ simplePath: HOME_PATH, sortPreference: { type: 'Created', direction: 'Desc' } }),
+      setCursor(['a', 'b']),
+      swapParent,
+      swapParent,
+    ]
+
+    // Should not throw
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+    expect(exported).toContain('- a')
+    expect(exported).toContain('- b')
   })
 })

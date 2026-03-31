@@ -34,13 +34,19 @@ export interface MoveThoughtPayload {
   offset?: number
   // skip the auto rerank to prevent infinite loop
   skipRerank?: boolean
+  /** Skips the automatic sort deletion that occurs when a thought is moved within a sorted context.
+   * Used by rerank to avoid disabling sort during internal rank normalization. */
+  skipSortDeletion?: boolean
   /** The new rank of the destination thought. This will be ignored if the thought is moved into a sorted context. */
   newRank: number
 }
 
 // @MIGRATION_TODO: use (sourceId and destinationId) or simplePath instead of passing paths. Should low level handle context view logic ??
 /** Moves a thought from one context to another, or within the same context. */
-const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRank }: MoveThoughtPayload) => {
+const moveThought = (
+  state: State,
+  { oldPath, newPath, offset, skipRerank, skipSortDeletion, newRank }: MoveThoughtPayload,
+) => {
   // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
   const recentlyEdited = state.recentlyEdited
   // try {
@@ -104,7 +110,11 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
 
   return reducerFlow([
     // disable sort when moving within the same context
-    sameContext && newRank !== sourceThought.rank && getSortPreference(state, destinationThoughtId).type !== 'None'
+    // skip if skipSortDeletion is set (e.g. rerank) to avoid disabling sort during internal rank normalization
+    sameContext &&
+    !skipSortDeletion &&
+    newRank !== sourceThought.rank &&
+    getSortPreference(state, destinationThoughtId).type !== 'None'
       ? reducerFlow([
           alert({
             value: 'Switched to manual sort because thought was moved',
