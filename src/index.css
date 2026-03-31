@@ -3,11 +3,3 @@
   See: https://panda-css.com/docs/concepts/writing-styles
 */
 @layer reset, base, tokens, recipes, utilities;
-
-:root {
-  /* If needed, global CSS variables can be defined here as a last resort.
-     Prefer styling within PandaCSS using tokens instead. */
-
-  /* Declare CSS variables for safe-area insets, so they can be read in JS */
-  --safe-area-inset-bottom: env(safe-area-inset-bottom);
-}

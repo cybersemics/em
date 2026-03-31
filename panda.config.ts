@@ -347,6 +347,7 @@ const globalCss = defineGlobalStyles({
   ':root': {
     '--active-glow-gradient':
       'linear-gradient(180deg, {colors.commandCenterBlue} 0%, {colors.commandCenterPurple} 100%)',
+    '--safe-area-inset-bottom': 'env(safe-area-inset-bottom)',
   },
   '@supports (background-image: linear-gradient(180deg in oklch, #000))': {
     ':root': {
