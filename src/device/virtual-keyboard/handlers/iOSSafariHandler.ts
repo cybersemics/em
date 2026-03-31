@@ -31,7 +31,7 @@ const updateIOSSafariKeyboardState = () => {
       // Stop any existing animation to prevent conflicts
       controls?.stop()
 
-      virtualKeyboardStore.update({ open: true, source: 'ios-safari' })
+      virtualKeyboardStore.update({ open: true })
 
       // Approximate iOS' keyboard spring animation (same curve as iOSCapacitorHandler)
       controls = animate(virtualKeyboardStore.getState().height, targetHeight, {
@@ -48,7 +48,7 @@ const updateIOSSafariKeyboardState = () => {
       controls?.stop()
 
       // Keep open: true during the closing animation so consumers still account for the keyboard
-      virtualKeyboardStore.update({ open: true, source: 'ios-safari' })
+      virtualKeyboardStore.update({ open: true })
 
       controls = animate(virtualKeyboardStore.getState().height, 0, {
         type: 'spring',
@@ -59,7 +59,7 @@ const updateIOSSafariKeyboardState = () => {
           virtualKeyboardStore.update({ height: value })
         },
         onComplete: () => {
-          virtualKeyboardStore.update({ open: false, height: 0, source: 'ios-safari' })
+          virtualKeyboardStore.update({ open: false, height: 0 })
         },
       })
     }

@@ -25,7 +25,7 @@ const iOSCapacitorHandler: VirtualKeyboardHandler = {
       // is the value we actually need. Consider this an additional 'safe area inset' that applies only when the keyboard is open.
       const height = rawHeight - measureSafeAreaBottom()
       viewportStore.update({ virtualKeyboardHeight: rawHeight })
-      virtualKeyboardStore.update({ open: true, source: 'ios-capacitor' })
+      virtualKeyboardStore.update({ open: true })
 
       // Stop any existing animation to prevent conflicts
       controls?.stop()
@@ -47,12 +47,12 @@ const iOSCapacitorHandler: VirtualKeyboardHandler = {
       const rawHeight = info.keyboardHeight || 0
       const height = rawHeight - measureSafeAreaBottom()
       controls?.stop()
-      virtualKeyboardStore.update({ open: true, height, source: 'ios-capacitor' })
+      virtualKeyboardStore.update({ open: true, height })
     })
 
     Keyboard.addListener('keyboardWillHide', () => {
       // note: leave open: true until the keyboard has fully hidden
-      virtualKeyboardStore.update({ open: true, source: 'ios-capacitor' })
+      virtualKeyboardStore.update({ open: true })
 
       // Stop any existing animation to prevent conflict.
       controls?.stop()
@@ -71,7 +71,7 @@ const iOSCapacitorHandler: VirtualKeyboardHandler = {
 
     Keyboard.addListener('keyboardDidHide', () => {
       controls?.stop()
-      virtualKeyboardStore.update({ open: false, height: 0, source: 'ios-capacitor' })
+      virtualKeyboardStore.update({ open: false, height: 0 })
     })
   },
   destroy: () => {
