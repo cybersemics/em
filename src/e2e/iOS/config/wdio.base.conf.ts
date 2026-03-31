@@ -48,6 +48,7 @@ const baseConfig = {
     platformName: 'iOS' as const,
     browserName: 'Safari' as const,
     'appium:automationName': 'XCUITest' as const,
+    acceptInsecureCerts: true,
   },
 
   // Test Configurations
