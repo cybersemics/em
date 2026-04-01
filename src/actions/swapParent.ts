@@ -2,6 +2,7 @@ import _ from 'lodash'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import moveThought from '../actions/moveThought'
+import sort from '../actions/sort'
 import { getChildrenRanked } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
@@ -85,6 +86,10 @@ const swapParent = (state: State): State => {
         newRank: grandchild.rank,
       }),
     ),
+
+    // If an active sort preference exists on the new parent (e.g. =sort migrated from the old parent
+    // as a sibling), rerank its children to match the sort order and prevent a false rank mismatch error.
+    sort(childId),
 
     // Keep cursor on the child at its new position
     setCursor({
