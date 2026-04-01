@@ -66,7 +66,6 @@ const useEditMode = ({
   /** Stores the initial touch position to detect tap vs scroll; if focus occurs without it, the tap was outside the editable and we place the caret manually. */
   const touchStartPosRef = useRef<{ x: number; y: number } | null>(null)
 
-  // Declarative selection effect: sets selection when the thought should be selected.
   useEffect(
     () => {
       // Get the cursorOffset directly from the store rather than subscribing to it reactively with useSelector.
