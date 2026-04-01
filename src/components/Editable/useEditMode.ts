@@ -31,7 +31,7 @@ const useEditMode = ({
   path: Path
   style: React.CSSProperties | undefined
   transient: boolean | undefined
-  /** Called when the void-area logic sets a caret position, allowing the caller to update Redux cursor state. */
+  /** Called when the caret offset is set, allowing the caller to update Redux cursor state. */
   onCaretOffset: (offset: number) => void
 }) => {
   // must re-render when noteFocus changes in order to set the selection
@@ -60,7 +60,7 @@ const useEditMode = ({
    */
   const pendingCaretOffsetRef = useRef<number | null>(null)
 
-  /** True once pending void-area offset was applied (touchend or mousedown), until gesture ends. */
+  /** True once pending caret offset was applied (touchend or mousedown), until gesture ends. */
   const manualCaretAppliedRef = useRef(false)
 
   /** Stores the initial touch position to detect tap vs scroll; if focus occurs without it, the tap was outside the editable and we place the caret manually. */
@@ -148,9 +148,7 @@ const useEditMode = ({
     })
   }, [])
 
-  // Void-area caret positioning: attaches native event handlers (with passive: false
-  // where needed for preventDefault) to compute and apply caret offsets when the user
-  // taps/clicks on empty space within the editable element.
+  // Handles the caret positioning logic for the editable element.
   useEffect(() => {
     const editable = contentRef.current
     if (!editable) return
@@ -240,7 +238,7 @@ const useEditMode = ({
       }
     }
 
-    /** Cancels the pending void-area caret offset if the user scrolls past the threshold. */
+    /** Cancels the pending caret offset if the user scrolls past the threshold. */
     const onTouchMove = (e: TouchEvent) => {
       if (e.touches.length === 0 || !touchStartPosRef.current) return
       const touch = e.touches[0]
