@@ -1,4 +1,6 @@
+import toggleSortPickerCommand from '../../commands/toggleSortPicker'
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
+import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
@@ -252,5 +254,30 @@ describe('sort', () => {
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
     expect(exported).toContain('- a')
     expect(exported).toContain('- b')
+  })
+
+  it('sort icon shows no error after swapParent when Created sort is active on parent', () => {
+    const text = `
+    - a
+      - b
+    - c
+    - d
+  `
+
+    // Set Created sort on A (not root), swap B with A, then set cursor on A (now a child of B) — error should be null
+    const steps = [
+      importText({ text }),
+      (state: import('../../@types/State').default) => {
+        const aPath = contextToPath(state, ['a'])
+        if (!aPath) return state
+        return setSortPreference({ simplePath: aPath, sortPreference: { type: 'Created', direction: 'Asc' } })(state)
+      },
+      setCursor(['a', 'b']),
+      swapParent,
+      setCursor(['b', 'a']),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    expect(toggleSortPickerCommand.error!(stateNew)).toBeNull()
   })
 })

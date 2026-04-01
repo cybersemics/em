@@ -6,6 +6,7 @@ import getSortPreference from '../selectors/getSortPreference'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
+import isAttribute from '../util/isAttribute'
 import isRoot from '../util/isRoot'
 
 const toggleSortCommand: Command = {
@@ -41,9 +42,9 @@ const toggleSortCommand: Command = {
     const sortPreference = getSortPreference(state, id)
     if (sortPreference.type === 'None') return null
 
-    // ignore empty thoughts since they are not sorted
-    const childrenSorted = getAllChildrenSorted(state, id).filter(child => child.value)
-    const childrenRanked = getChildrenRanked(state, id).filter(child => child.value)
+    // ignore empty thoughts and meta attributes since they are not sorted
+    const childrenSorted = getAllChildrenSorted(state, id).filter(child => child.value && !isAttribute(child.value))
+    const childrenRanked = getChildrenRanked(state, id).filter(child => child.value && !isAttribute(child.value))
 
     return childrenSorted.length === childrenRanked.length &&
       !childrenRanked.every((_, i) => childrenRanked[i].id === childrenSorted[i].id)
