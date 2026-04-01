@@ -614,12 +614,8 @@ export const keyDown = (e: KeyboardEvent) => {
   // execute the command
   commandEmitter.trigger('command', command)
 
-  // Allowing native browser undo to proceed creates problems when document.execCommand has been used for formatting. (#3879)
-  // There's no need to allow native browser undo since it should be handled using the undo stack, or blocked if the stack is empty.
-  if (keyCommandId === 'undo') e.preventDefault()
-
   if (!command.canExecute || command.preventDefault || command.canExecute(store.getState())) {
-    if (keyCommandId !== 'undo' && !command.permitDefault) {
+    if (!command.permitDefault) {
       e.preventDefault()
     }
 
