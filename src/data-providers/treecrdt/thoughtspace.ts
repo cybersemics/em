@@ -5,6 +5,14 @@ import type ThoughtId from '../../@types/ThoughtId'
 import type Timestamp from '../../@types/Timestamp'
 import { ABSOLUTE_TOKEN, EM_TOKEN, GLOBAL_ROOT_TOKEN, HOME_TOKEN, ROOT_PARENT_ID } from '../../constants'
 import type { DataProvider } from '../DataProvider'
+import {
+  deleteAllLexemes,
+  deleteLexeme as deleteLexemeRow,
+  ensureLexemesSchema,
+  getLexemeById as getLexemeByIdSql,
+  getLexemesByIds as getLexemesByIdsSql,
+  upsertLexeme,
+} from './lexemes'
 import { dropTreecrdt, getTreecrdtClient } from './treecrdt'
 
 export type ThoughtPayload = {
@@ -70,6 +78,7 @@ const getThoughtsByIds = (ids: ThoughtId[]): Promise<(Thought | undefined)[]> =>
 /** Applies thought index updates and move placements to the tree. */
 const updateThoughts = async ({
   thoughtIndexUpdates,
+  lexemeIndexUpdates,
   movePlacements,
 }: {
   thoughtIndexUpdates: Index<Thought | null>
@@ -81,6 +90,14 @@ const updateThoughts = async ({
   if (!replicaId) throw new Error('TreeCRDT DataProvider: init not called')
 
   const client = getTreecrdtClient()
+
+  for (const [id, lexeme] of Object.entries(lexemeIndexUpdates)) {
+    if (lexeme === null) {
+      await deleteLexemeRow(client, id)
+    } else {
+      await upsertLexeme(client, id, lexeme)
+    }
+  }
 
   const updates: Index<Thought> = {}
   const deletes: ThoughtId[] = []
@@ -161,9 +178,10 @@ const freeThought = async (_id: ThoughtId): Promise<void> => {
   // no-op
 }
 
-/** No-op for freeing a lexeme. */
-const freeLexeme = async (_key: string): Promise<void> => {
-  // no-op
+/** Removes a lexeme row from SQLite. */
+const freeLexeme = async (key: string): Promise<void> => {
+  const client = getTreecrdtClient()
+  await deleteLexemeRow(client, key)
 }
 
 /** Clears all thoughts by dropping storage and closing the client. */
@@ -174,12 +192,26 @@ const clear = async (): Promise<void> => {
   replicaId = null
 }
 
-/** Returns undefined as lexemes are not stored in treecrdt. */
-const getLexemeById = async (_key: string): Promise<Lexeme | undefined> => undefined
+/** Loads a lexeme by hash key from database. */
+const getLexemeById = async (key: string): Promise<Lexeme | undefined> => {
+  const client = getTreecrdtClient()
+  return getLexemeByIdSql(client, key)
+}
 
-/** Returns undefined for each key as lexemes are not stored in treecrdt. */
-const getLexemesByIds = async (keys: string[]): Promise<(Lexeme | undefined)[]> =>
-  Promise.resolve(keys.map(() => undefined))
+/** Loads lexemes for hash keys in parallel order. */
+const getLexemesByIds = async (keys: string[]): Promise<(Lexeme | undefined)[]> => {
+  const client = getTreecrdtClient()
+  return getLexemesByIdsSql(client, keys)
+}
+
+/** Replaces all stored lexemes with the given index (tests / provider hook). */
+const updateLexemeIndex = async (lexemeIndex: Index<Lexeme>): Promise<void> => {
+  const client = getTreecrdtClient()
+  await deleteAllLexemes(client)
+  for (const [id, lexeme] of Object.entries(lexemeIndex)) {
+    await upsertLexeme(client, id, lexeme)
+  }
+}
 
 const ROOT_PAYLOAD = encodeThoughtPayload({
   value: GLOBAL_ROOT_TOKEN,
@@ -193,6 +225,7 @@ const ROOT_PAYLOAD = encodeThoughtPayload({
 export const init = async (replicaIdArg: Uint8Array): Promise<void> => {
   replicaId = replicaIdArg
   const client = getTreecrdtClient()
+  await ensureLexemesSchema(client)
   // Ensure root has payload so getThoughtById can use the generic path
   await client.local.payload(replicaIdArg, GLOBAL_ROOT_TOKEN, ROOT_PAYLOAD)
   for (const id of [HOME_TOKEN, EM_TOKEN, ABSOLUTE_TOKEN]) {
@@ -226,6 +259,7 @@ const thoughtspaceDataProvider: DataProvider<[Uint8Array]> = {
   updateThoughts,
   freeThought,
   freeLexeme,
+  updateLexemeIndex,
 }
 
 export default thoughtspaceDataProvider
