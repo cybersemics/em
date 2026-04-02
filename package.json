@@ -87,7 +87,7 @@
     "@capacitor/android": "^8.3.0",
     "@capacitor/clipboard": "^8.0.1",
     "@capacitor/core": "^8.3.0",
-    "@capacitor/haptics": "^8.0.1",
+    "@capacitor/haptics": "^8.0.2",
     "@capacitor/ios": "^8.3.0",
     "@capacitor/keyboard": "^8.0.2",
     "@capacitor/status-bar": "^8.0.2",
