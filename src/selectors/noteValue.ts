@@ -1,8 +1,8 @@
 import Path from '../@types/Path'
 import State from '../@types/State'
-import { firstVisibleChild } from '../selectors/getChildren'
-import resolveNotePath from '../selectors/resolveNotePath'
-import head from './head'
+import head from '../util/head'
+import { firstVisibleChild } from './getChildren'
+import resolveNotePath from './resolveNotePath'
 
 /** Gets the value of a thought's note. Returns null if the thought does not have a note. */
 const noteValue = (state: State, path: Path) => {

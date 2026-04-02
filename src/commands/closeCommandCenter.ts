@@ -3,6 +3,7 @@ import { alertActionCreator as alert } from '../actions/alert'
 import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/clearMulticursors'
 import HelpIcon from '../components/icons/HelpIcon'
 import { AlertType } from '../constants'
+import * as selection from '../device/selection'
 import hasMulticursor from '../selectors/hasMulticursor'
 import scrollZoneHelpMessage from '../selectors/scrollZoneHelpMessage'
 
@@ -26,23 +27,31 @@ const closeCommandCenterCommand: Command = {
     // Otherwise quickly closing and opening the Command Center will inadvertently trigger the special alert.
     clearTimeout(scrollZoneHelpAlertTimeout)
 
-    if (!hasMulticursor(state)) {
-      if (showScrollZoneHelpAlert) {
-        dispatch(alert(scrollZoneHelpMessage(state), { alertType: AlertType.ScrollZoneHelp }))
-      }
+    // Command Center is open
+    if (hasMulticursor(state)) {
+      dispatch(clearMulticursors())
 
-      // Set a timer for 10 seconds. If the Command Center is opened without a cursor within that time, an alert will be shown that tries to help the user if they are confused about the scroll zone.
-      showScrollZoneHelpAlert = true
-      scrollZoneHelpAlertTimeout = window.setTimeout(() => {
-        showScrollZoneHelpAlert = false
-      }, 10000) as number
-
-      return
+      showScrollZoneHelpAlert = false
     }
+    // Command Center is closed
+    else {
+      // close keyboard
+      if (selection.isThought()) {
+        selection.clear()
+      }
+      // scroll zone help alert
+      else {
+        if (showScrollZoneHelpAlert) {
+          dispatch(alert(scrollZoneHelpMessage(state), { alertType: AlertType.ScrollZoneHelp }))
+        }
 
-    dispatch(clearMulticursors())
-
-    showScrollZoneHelpAlert = false
+        // Set a timer for 10 seconds. If the Command Center is opened without a cursor within that time, an alert will be shown that tries to help the user if they are confused about the scroll zone.
+        showScrollZoneHelpAlert = true
+        scrollZoneHelpAlertTimeout = window.setTimeout(() => {
+          showScrollZoneHelpAlert = false
+        }, 10000) as number
+      }
+    }
   },
 }
 

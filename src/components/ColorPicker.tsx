@@ -93,12 +93,16 @@ const ColorSwatch: FC<{
 
   /** Toggles the text color to the clicked swatch. If the swatch is already selected, sets text color and background color back to default. */
   const toggleTextColor = () => {
-    dispatch(
-      formatSelection(
-        'foreColor',
-        selected ? 'fg' : color || (backgroundColor && backgroundColor !== 'fg' ? 'black' : 'bg'),
-      ),
-    )
+    dispatch((dispatch, getState) => {
+      // Note is semi-transparent by default and its color must be reset to that rather than white, which is the fg color for thoughts. (#3902)
+      const fgColor = getState().noteFocus ? 'fgNote' : 'fg'
+      dispatch(
+        formatSelection(
+          'foreColor',
+          selected ? fgColor : color || (backgroundColor && backgroundColor !== 'fg' ? 'black' : 'bg'),
+        ),
+      )
+    })
 
     // Apply background color to the selection
     dispatch(formatSelection('backColor', selected ? 'bg' : (backgroundColor ?? 'bg')))
