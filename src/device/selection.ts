@@ -3,6 +3,7 @@
 import { isHTMLElement } from 'framer-motion'
 import SplitResult from '../@types/SplitResult'
 import { ALLOWED_FORMATTING_TAGS } from '../constants'
+import rgbToHex from '../util/rgbToHex'
 
 export type SelectionOptionsType = {
   offset?: number
@@ -510,4 +511,25 @@ export const isNear = (
   const bottom = rect.bottom + distance
 
   return x >= left && y >= top && x <= right && y <= bottom
+}
+
+/** Returns the node that contains the start of the selection, or null if there is no selection. */
+const getSelectedElementNode = (): Node | null => {
+  const selection = window.getSelection()
+  const node = selection && selection.rangeCount ? selection.getRangeAt(0).startContainer : null
+  return (node?.nodeType === Node.ELEMENT_NODE ? node : node?.parentElement) ?? null
+}
+
+/** Returns the hex color of the current selection, or null if there is no selection. */
+export const getSelectedHexColor = () => {
+  const container = getSelectedElementNode()
+  return container instanceof HTMLElement && container.hasAttribute('color')
+    ? rgbToHex(container.getAttribute('color')!)
+    : null
+}
+
+/** Returns the hex background color of the current selection, or null if there is no selection. */
+export const getSelectedHexBackgroundColor = () => {
+  const container = getSelectedElementNode()
+  return container instanceof HTMLElement ? rgbToHex(container.style.backgroundColor) : null
 }
