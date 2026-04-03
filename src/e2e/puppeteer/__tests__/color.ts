@@ -341,3 +341,50 @@ it('Can change the background color of a note to match its thought', async () =>
   const note = await getFirstNoteText()
   expect(note).toBe('<font color="#000000" style="background-color: rgb(255, 87, 61);">Note</font>')
 })
+
+it('applying text color after underline should produce correct HTML structure', async () => {
+  await paste(`
+    - One
+  `)
+
+  await clickThought('One')
+  await click('[data-testid="toolbar-icon"][aria-label="Underline"]')
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="text color swatches"] [aria-label="red"]')
+
+  const result = await getEditingText()
+  // Color tag must wrap the decoration tag (not the other way around) so text-decoration-color inherits correctly
+  expect(result).toBe('<font color="#ff573d"><u>One</u></font>')
+})
+
+it('applying background color after underline should produce correct HTML structure', async () => {
+  await paste(`
+    - Two
+  `)
+
+  await clickThought('Two')
+  await click('[data-testid="toolbar-icon"][aria-label="Underline"]')
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="background color swatches"] [aria-label="red"]')
+
+  const result = await getEditingText()
+  // Color tags must wrap the decoration tag so text-decoration-color inherits correctly
+  expect(result).toBe(
+    '<font color="#000000"><u><span style="background-color: rgb(255, 87, 61);">Two</span></u></font>',
+  )
+})
+
+it('applying text color after strikethrough should produce correct HTML structure', async () => {
+  await paste(`
+    - Three
+  `)
+
+  await clickThought('Three')
+  await click('[data-testid="toolbar-icon"][aria-label="Strikethrough"]')
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="text color swatches"] [aria-label="red"]')
+
+  const result = await getEditingText()
+  // Color tag must wrap the decoration tag so text-decoration-color inherits correctly
+  expect(result).toBe('<font color="#ff573d"><strike>Three</strike></font>')
+})

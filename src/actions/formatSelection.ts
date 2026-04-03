@@ -17,6 +17,50 @@ import strip from '../util/strip'
 import { editThoughtActionCreator as editThought } from './editThought'
 import { setDescendantActionCreator as setDescendant } from './setDescendant'
 
+/** Checks if a DOM element is a color-setting element (font tag or span with color/background-color). */
+const isColorElement = (el: Element): boolean => {
+  const tag = el.tagName.toLowerCase()
+  if (tag === 'font') return true
+  if (tag === 'span') {
+    const style = (el as HTMLElement).style
+    return !!(style.color || style.backgroundColor)
+  }
+  return false
+}
+
+/**
+ * Moves color tags outside of text decoration tags to fix text-decoration-color inheritance.
+ * When a color element (font/span) is the sole child of a decoration element (u/strike),
+ * the decoration uses the parent element's inherited color rather than the color element's color,
+ * resulting in white underlines/strikethroughs in dark mode.
+ * e.g. `<u><font color="#000000">text</font></u>` → `<font color="#000000"><u>text</u></font>`.
+ */
+const normalizeColoredDecoration = (html: string): string => {
+  const div = document.createElement('div')
+  div.innerHTML = html
+
+  // Process bottom-up (deepest first) to correctly handle nested decorations
+  const decorationElements = Array.from(div.querySelectorAll('u, strike'))
+  for (let i = decorationElements.length - 1; i >= 0; i--) {
+    const decorEl = decorationElements[i]
+    // Only normalize when the decoration has exactly one child that is a color element
+    if (decorEl.childNodes.length !== 1) continue
+    const child = decorEl.firstElementChild
+    if (!child || !isColorElement(child)) continue
+
+    // Move child's children into a new decoration element, then wrap with the color element
+    // <u><font color="...">content</font></u> → <font color="..."><u>content</u></font>
+    const newDecoration = document.createElement(decorEl.tagName.toLowerCase())
+    while (child.firstChild) {
+      newDecoration.appendChild(child.firstChild)
+    }
+    child.appendChild(newDecoration)
+    decorEl.parentNode!.replaceChild(child, decorEl)
+  }
+
+  return div.innerHTML
+}
+
 /** Format the browser selection or cursor thought as bold, italic, strikethrough, underline. */
 export const formatSelectionActionCreator =
   (
@@ -58,6 +102,19 @@ export const formatSelectionActionCreator =
         selection.restore(savedSelection)
       } else {
         selection.clear()
+      }
+
+      // Normalize the HTML after applying foreColor to fix text-decoration-color inheritance.
+      // When foreColor wraps decoration tags (u/strike), the decoration uses the parent's
+      // inherited color (e.g. white in dark mode) instead of the foreColor value.
+      // Normalizing moves the color tag outside the decoration tag so the decoration
+      // inherits the correct color.
+      if (command === 'foreColor') {
+        const normalizedHTML = normalizeColoredDecoration(contentEditable.innerHTML)
+        if (normalizedHTML !== contentEditable.innerHTML) {
+          contentEditable.innerHTML = normalizedHTML
+          contentEditable.dispatchEvent(new InputEvent('input', { bubbles: true }))
+        }
       }
     }
     // format selected text only
