@@ -341,3 +341,35 @@ it('Can change the background color of a note to match its thought', async () =>
   const note = await getFirstNoteText()
   expect(note).toBe('<font color="#000000" style="background-color: rgb(255, 87, 61);">Note</font>')
 })
+
+it('Removing background color after applying text formatting should work on repeated toggles', async () => {
+  const importText = `
+  - Hello`
+
+  await paste(importText)
+
+  await clickThought('Hello')
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+
+  // Apply red background
+  await click('[aria-label="background color swatches"] [aria-label="red"]')
+
+  // Apply underline
+  await click('[data-testid="toolbar-icon"][aria-label="Underline"]')
+
+  // Open Text Color picker again
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+
+  // Remove red background (first time - should work)
+  await click('[aria-label="background color swatches"] [aria-label="red"]')
+
+  // Re-apply red background
+  await click('[aria-label="background color swatches"] [aria-label="red"]')
+
+  // Remove red background (second time - this is the bug case)
+  await click('[aria-label="background color swatches"] [aria-label="red"]')
+
+  const result = await getEditingText()
+  // Background color should be removed; only underline formatting should remain
+  expect(result).not.toContain('background-color')
+})
