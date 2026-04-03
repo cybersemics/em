@@ -5,6 +5,7 @@ import setCursor from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 import importText from '../importText'
+import newThought from '../newThought'
 import setSortPreference from '../setSortPreference'
 import swapParent from '../swapParent'
 import toggleContextView from '../toggleContextView'
@@ -255,35 +256,36 @@ describe('sort', () => {
   })
 
   it('root children are re-sorted after swapParent with active sort', () => {
-    const text = `
-    - a
-      - z
-    - c
-    - d
-  `
-
-    // Set Alphabetical sort on root, then swap z (child of a) with a.
-    // z sorts after c and d alphabetically, so if root children are not re-sorted,
-    // z would inherit a's rank and appear before c and d — a rank mismatch.
+    // Reproduce the issue: cursor on A, set Created sort, create subthought B, swap B with A.
+    // B must be created as a separate step so its creation order is after A, C, D.
     const steps = [
-      importText({ text }),
-      setSortPreference({ simplePath: HOME_PATH, sortPreference: { type: 'Alphabetical', direction: 'Asc' } }),
-      setCursor(['a', 'z']),
+      importText({
+        text: `
+        - a
+        - c
+        - d
+      `,
+      }),
+      setCursor(['a']),
+      setSortPreference({ simplePath: HOME_PATH, sortPreference: { type: 'Created', direction: 'Asc' } }),
+      newThought({ value: 'b', insertNewSubthought: true }),
+      setCursor(['a', 'b']),
       swapParent,
     ]
 
     const stateNew = reducerFlow(steps)(initialState())
-    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-    // After swapParent, z is at root and a is z's child.
-    // sort(HOME_TOKEN) reranks root children in Alphabetical order: =sort < c < d < z.
+    // Use excludeMeta to focus on regular thoughts only.
+    // b was created last (separate newThought step), so it always sorts after c and d in Created Asc order.
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain', { excludeMeta: true })
+
+    // After swapParent, b is at root and a is b's child.
+    // Without the fix, b would inherit a's rank (first) and appear before c and d.
+    // With sort(HOME_TOKEN), b is ranked last since it was created after c and d.
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - =sort
-    - Alphabetical
-      - Asc
   - c
   - d
-  - z
+  - b
     - a`)
   })
 })
