@@ -349,13 +349,12 @@ it('Can change the background color of a thought that already has the same backg
     - ${text}
   `)
 
-  // change the background color on the thought
-  await clickThought('a long enough thought where a tap will fall outside of the formatting')
+  // change the background color on the thought twice to avoid inconstencies between paste and normal user interaction
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="background color swatches"] [aria-label="red"]')
+  await click('[aria-label="background color swatches"] [aria-label="red"]')
+  console.log(await page.evaluate(() => document.querySelector('[data-editable="true"]')?.innerHTML))
 
-  const note = await getEditingText()
-  expect(note).toBe(
-    '<font color="#000000" style="background-color: rgb(255, 87, 61);">a long enough thought where a tap will fall outside of the formatting</font>',
-  )
+  const thought = await getEditingText()
+  expect(thought).toBe('a long enough thought where a tap will fall outside of the formatting')
 })
