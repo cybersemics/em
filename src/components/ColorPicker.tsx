@@ -58,7 +58,6 @@ const ColorSwatch: FC<{
        document.execCommand('foreColor') always sets the color as hex whether the value is rgb or hex. And document.execCommand('backColor') always sets the background with the rgb
     */
     const colorRegex = /color="#([0-9a-fA-F]{6})"/g
-    const bgColorRegex = /background-color:\s*(rgb\(\d{1,3},\s?\d{1,3},\s?\d{1,3}\))/g
     const textHexColor = color ? addAlphaToHex(rgbToHex(themeColor[color])) : undefined
     const backHexColor = backgroundColor ? addAlphaToHex(rgbToHex(themeColor[backgroundColor])) : undefined
     if (
@@ -70,7 +69,7 @@ const ColorSwatch: FC<{
     ) {
       const colorMatches = currentEditableValue.match(colorRegex) || []
 
-      let matchColor, match
+      let matchColor
       // Get the colors and background colors used in current thought's value
       const fgColors: Set<string> = new Set()
       if (colorMatches) {
@@ -80,14 +79,7 @@ const ColorSwatch: FC<{
         matchColor = fgColors.size > 1 ? null : fgColors.values().next().value
       }
 
-      const bgColors: Set<string> = new Set()
-      while ((match = bgColorRegex.exec(currentEditableValue)) !== null) if (match[1]) bgColors.add(match[1])
-      const matchBgColor = bgColors.size > 1 ? null : bgColors.values().next().value
-
-      return !!(
-        (textHexColor && textHexColor === (matchColor && addAlphaToHex(rgbToHex(matchColor)))) ||
-        (backHexColor && backHexColor === (matchBgColor && addAlphaToHex(rgbToHex(matchBgColor))))
-      )
+      return !!(textHexColor && textHexColor === (matchColor && addAlphaToHex(rgbToHex(matchColor))))
     }
     return !!(
       (textHexColor && textHexColor === commandStateColor) ||
