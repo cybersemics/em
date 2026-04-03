@@ -343,10 +343,8 @@ it('Can change the background color of a note to match its thought', async () =>
 })
 
 it('Removing background color after applying text formatting should work on repeated toggles', async () => {
-  const importText = `
-  - Hello`
-
-  await paste(importText)
+  await paste(`
+- Hello`)
 
   await clickThought('Hello')
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
