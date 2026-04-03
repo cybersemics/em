@@ -2,6 +2,8 @@ import _ from 'lodash'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import moveThought from '../actions/moveThought'
+import sort from '../actions/sort'
+import { HOME_TOKEN } from '../constants'
 import { getChildrenRanked } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
@@ -53,6 +55,9 @@ const swapParent = (state: State): State => {
   // Get the grandparent path
   const grandparent = parentOf(parent)
 
+  // The grandparent context id (HOME_TOKEN when the parent is a root thought)
+  const grandparentId = grandparent.length > 0 ? head(grandparent) : HOME_TOKEN
+
   return reducerFlow([
     // First move the child to replace its parent's position
     moveThought({
@@ -85,6 +90,15 @@ const swapParent = (state: State): State => {
         newRank: grandchild.rank,
       }),
     ),
+
+    // If an active sort preference exists on the grandparent context (e.g. the root), re-rank its
+    // children so that the child thought that just moved in gets the correct rank.
+    sort(grandparentId),
+
+    // If an active sort preference migrated to the child (e.g. =sort was a sibling of the child
+    // under the original parent and is now a sibling of the moved parent under the child), re-rank
+    // the child's new children to match the sort order.
+    sort(childId),
 
     // Keep cursor on the child at its new position
     setCursor({

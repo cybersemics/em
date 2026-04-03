@@ -253,4 +253,37 @@ describe('sort', () => {
     expect(exported).toContain('- a')
     expect(exported).toContain('- b')
   })
+
+  it('root children are re-sorted after swapParent with active sort', () => {
+    const text = `
+    - a
+      - z
+    - c
+    - d
+  `
+
+    // Set Alphabetical sort on root, then swap z (child of a) with a.
+    // z sorts after c and d alphabetically, so if root children are not re-sorted,
+    // z would inherit a's rank and appear before c and d — a rank mismatch.
+    const steps = [
+      importText({ text }),
+      setSortPreference({ simplePath: HOME_PATH, sortPreference: { type: 'Alphabetical', direction: 'Asc' } }),
+      setCursor(['a', 'z']),
+      swapParent,
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    // After swapParent, z is at root and a is z's child.
+    // sort(HOME_TOKEN) reranks root children in Alphabetical order: =sort < c < d < z.
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - =sort
+    - Alphabetical
+      - Asc
+  - c
+  - d
+  - z
+    - a`)
+  })
 })
