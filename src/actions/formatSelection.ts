@@ -34,6 +34,11 @@ const isColorElement = (el: Element): boolean => {
  * the decoration uses the parent element's inherited color rather than the color element's color,
  * resulting in white underlines/strikethroughs in dark mode.
  * e.g. `<u><font color="#000000">text</font></u>` → `<font color="#000000"><u>text</u></font>`.
+ *
+ * Only normalizes when the decoration element has exactly one child that is a color element.
+ * This covers the whole-thought color application use case. Partial selections with multiple
+ * color elements (e.g. `<u><font>part1</font><font>part2</font></u>`) are intentionally excluded
+ * since they are uncommon and the fix is more complex.
  */
 const normalizeColoredDecoration = (html: string): string => {
   const div = document.createElement('div')
@@ -51,7 +56,7 @@ const normalizeColoredDecoration = (html: string): string => {
       // Move child's children into a new decoration element, then wrap with the color element
       // <u><font color="...">content</font></u> → <font color="..."><u>content</u></font>
       const newDecoration = document.createElement(decorEl.tagName.toLowerCase())
-      Array.from(child.childNodes).forEach(node => newDecoration.appendChild(node))
+      newDecoration.append(...Array.from(child.childNodes))
       child.appendChild(newDecoration)
       decorEl.parentNode!.replaceChild(child, decorEl)
     })

@@ -368,7 +368,9 @@ it('applying background color after underline should produce correct HTML struct
   await click('[aria-label="background color swatches"] [aria-label="red"]')
 
   const result = await getEditingText()
-  // Color tags must wrap the decoration tag so text-decoration-color inherits correctly
+  // The foreColor tag (#000000) is normalized outside the decoration tag, so <u> inherits color: black
+  // and draws its underline in black. The background-color span stays inside <u>, which is correct:
+  // it doesn't affect the underline color since <u> already inherits from the outer font tag.
   expect(result).toBe(
     '<font color="#000000"><u><span style="background-color: rgb(255, 87, 61);">Two</span></u></font>',
   )
