@@ -40,23 +40,21 @@ const normalizeColoredDecoration = (html: string): string => {
   div.innerHTML = html
 
   // Process bottom-up (deepest first) to correctly handle nested decorations
-  const decorationElements = Array.from(div.querySelectorAll('u, strike'))
-  for (let i = decorationElements.length - 1; i >= 0; i--) {
-    const decorEl = decorationElements[i]
-    // Only normalize when the decoration has exactly one child that is a color element
-    if (decorEl.childNodes.length !== 1) continue
-    const child = decorEl.firstElementChild
-    if (!child || !isColorElement(child)) continue
+  Array.from(div.querySelectorAll('u, strike'))
+    .reverse()
+    .forEach(decorEl => {
+      // Only normalize when the decoration has exactly one child that is a color element
+      if (decorEl.childNodes.length !== 1) return
+      const child = decorEl.firstElementChild
+      if (!child || !isColorElement(child)) return
 
-    // Move child's children into a new decoration element, then wrap with the color element
-    // <u><font color="...">content</font></u> → <font color="..."><u>content</u></font>
-    const newDecoration = document.createElement(decorEl.tagName.toLowerCase())
-    while (child.firstChild) {
-      newDecoration.appendChild(child.firstChild)
-    }
-    child.appendChild(newDecoration)
-    decorEl.parentNode!.replaceChild(child, decorEl)
-  }
+      // Move child's children into a new decoration element, then wrap with the color element
+      // <u><font color="...">content</font></u> → <font color="..."><u>content</u></font>
+      const newDecoration = document.createElement(decorEl.tagName.toLowerCase())
+      Array.from(child.childNodes).forEach(node => newDecoration.appendChild(node))
+      child.appendChild(newDecoration)
+      decorEl.parentNode!.replaceChild(child, decorEl)
+    })
 
   return div.innerHTML
 }
