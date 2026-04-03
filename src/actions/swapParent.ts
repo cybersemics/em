@@ -93,11 +93,13 @@ const swapParent = (state: State): State => {
 
     // If an active sort preference exists on the grandparent context (e.g. the root), re-rank its
     // children so that the child thought that just moved in gets the correct rank.
+    // No-op when no sort preference is active (sort returns early for type === 'None').
     sort(grandparentId),
 
     // If an active sort preference migrated to the child (e.g. =sort was a sibling of the child
     // under the original parent and is now a sibling of the moved parent under the child), re-rank
     // the child's new children to match the sort order.
+    // No-op when no sort preference is active (sort returns early for type === 'None').
     sort(childId),
 
     // Keep cursor on the child at its new position
