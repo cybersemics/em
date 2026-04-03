@@ -4,7 +4,7 @@
   "description": "A small plugin to change the background of a webview.",
   "main": "dist/plugin.cjs.js",
   "module": "dist/esm/index.js",
-  "types": "dist/esm/index.d.ts",
+  "types": "dist/esm/src/index.d.ts",
   "unpkg": "dist/plugin.js",
   "files": [
     "dist/",
