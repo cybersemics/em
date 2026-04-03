@@ -353,7 +353,6 @@ it('Can change the background color of a thought that already has the same backg
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="background color swatches"] [aria-label="red"]')
   await click('[aria-label="background color swatches"] [aria-label="red"]')
-  console.log(await page.evaluate(() => document.querySelector('[data-editable="true"]')?.innerHTML))
 
   const thought = await getEditingText()
   expect(thought).toBe('a long enough thought where a tap will fall outside of the formatting')
