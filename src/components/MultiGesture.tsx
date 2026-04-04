@@ -248,7 +248,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         this.reset()
       },
 
-      onPanResponderTerminationRequest: () => true,
+      onPanResponderTerminationRequest: () => !this.disableScroll,
     })
   }
 
