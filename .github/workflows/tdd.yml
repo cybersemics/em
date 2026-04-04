@@ -10,6 +10,9 @@ on:
         description: 'Optional ID for tracking repeated runs'
         required: false
 
+permissions:
+  contents: read
+
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   CI: true
@@ -70,8 +73,14 @@ jobs:
           # All test files (union of the above)
           ALL_TEST_FILES=$(printf '%s\n' "$UNIT_FILES" "$PUPPETEER_FILES" "$IOS_FILES" | sed '/^$/d' | sort -u)
 
-          # Non-test files: everything except test files, test helpers, e2e helpers/config, and non-source files
-          NON_TEST_FILES=$(echo "$CHANGED_FILES" | grep -v -E '(/__tests__/|/test-helpers/|/e2e/.*/(helpers|config|setup)/)' | grep -v -E '(\.md$|\.yml$|\.json$|\.js$|\.css$|\.html$)' | grep -E '\.(ts|tsx)$' || true)
+          # Non-test application files: TypeScript source files that are not test files,
+          # test helpers, or e2e infrastructure (helpers, config, setup).
+          # Excludes non-source files (markdown, yaml, json, js, css, html) to focus
+          # on actual application logic changes.
+          NON_TEST_FILES=$(echo "$CHANGED_FILES" \
+            | grep -v -E '(/__tests__/|/test-helpers/|/e2e/.*/(helpers|config|setup)/)' \
+            | grep -v -E '(\.md$|\.yml$|\.json$|\.js$|\.css$|\.html$)' \
+            | grep -E '\.(ts|tsx)$' || true)
 
           echo ""
           echo "=== Unit test files ==="
@@ -151,10 +160,14 @@ jobs:
 
           # 4. Check for /skip-tdd marker in the test diff
           if [ "$SKIP" = "false" ]; then
-            TEST_DIFF=$(git diff "$BASE_SHA" "$HEAD_SHA" -- $(git diff --name-only "$BASE_SHA" "$HEAD_SHA" -- | grep -E '/__tests__/' || true) 2>/dev/null || true)
-            if echo "$TEST_DIFF" | grep -q '/skip-tdd'; then
-              SKIP="true"
-              REASON="Found /skip-tdd marker in changed test diff"
+            TEST_FILE_LIST=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" -- | grep -E '/__tests__/' || true)
+            if [ -n "$TEST_FILE_LIST" ]; then
+              # shellcheck disable=SC2086
+              TEST_DIFF=$(git diff "$BASE_SHA" "$HEAD_SHA" -- $TEST_FILE_LIST 2>/dev/null || true)
+              if echo "$TEST_DIFF" | grep -q '/skip-tdd'; then
+                SKIP="true"
+                REASON="Found /skip-tdd marker in changed test diff"
+              fi
             fi
           fi
 
