@@ -62,30 +62,6 @@ jobs:
             sleep 1
           done
 
-      - name: Start cloudflared tunnel
-        run: |
-          # Install cloudflared
-          curl -fsSL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o /usr/local/bin/cloudflared
-          chmod +x /usr/local/bin/cloudflared
-
-          # Start tunnel and capture the public URL
-          cloudflared tunnel --url https://localhost:3000 --no-tls-verify > /tmp/cloudflared.log 2>&1 &
-          echo "Waiting for cloudflared tunnel..."
-          for i in {1..30}; do
-            TUNNEL_URL=$(grep -oE 'https://[a-z0-9-]+\.trycloudflare\.com' /tmp/cloudflared.log | head -1)
-            if [ -n "$TUNNEL_URL" ]; then
-              echo "Tunnel URL: $TUNNEL_URL"
-              echo "CLOUDFLARED_URL=$TUNNEL_URL" >> $GITHUB_ENV
-              break
-            fi
-            if [ $i -eq 30 ]; then
-              echo "Failed to get cloudflared tunnel URL"
-              cat /tmp/cloudflared.log
-              exit 1
-            fi
-            sleep 1
-          done
-
       - name: Test iOS on BrowserStack
         run: yarn test:ios
         env:
