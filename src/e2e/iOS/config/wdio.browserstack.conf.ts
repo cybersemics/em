@@ -1,4 +1,7 @@
+import { type ChildProcess, spawn } from 'child_process'
+import { bin, install } from 'cloudflared'
 import dotenv from 'dotenv'
+import fs from 'fs'
 import path from 'path'
 import baseConfig from './wdio.base.conf.js'
 
@@ -17,15 +20,53 @@ if (!process.env.BROWSERSTACK_ACCESS_KEY) {
 const user = process.env.BROWSERSTACK_USERNAME
 const date = new Date().toISOString().slice(0, 10)
 
-// In CI, cloudflared provides a public HTTPS URL with a trusted cert,
-// so the BrowserStack Local tunnel is not needed.
-const useCloudflared = !!process.env.CLOUDFLARED_URL
+let tunnelProcess: ChildProcess | null = null
+
+/**
+ * Starts a cloudflared tunnel and returns the public HTTPS URL.
+ * Safari blocks localStorage on self-signed HTTPS, so we use cloudflared
+ * to get a real CA-signed cert (*.trycloudflare.com).
+ */
+async function startTunnel(): Promise<string> {
+  // Install the cloudflared binary if not already present
+  if (!fs.existsSync(bin)) {
+    await install(bin)
+  }
+
+  return new Promise((resolve, reject) => {
+    const proc = spawn(bin, ['tunnel', '--url', 'https://localhost:3000', '--no-tls-verify'], {
+      stdio: ['ignore', 'pipe', 'pipe'],
+    })
+    tunnelProcess = proc
+
+    let output = ''
+    const timeout = setTimeout(() => {
+      reject(new Error('cloudflared tunnel timed out'))
+    }, 30000)
+
+    /** Scan cloudflared output for the tunnel URL. */
+    const onData = (data: Buffer) => {
+      output += data.toString()
+      const match = output.match(/https:\/\/[a-z0-9-]+\.trycloudflare\.com/)
+      if (match) {
+        clearTimeout(timeout)
+        resolve(match[0])
+      }
+    }
+
+    proc.stdout?.on('data', onData)
+    proc.stderr?.on('data', onData)
+    proc.on('error', err => {
+      clearTimeout(timeout)
+      reject(new Error(`Failed to start cloudflared: ${err.message}`))
+    })
+  })
+}
 
 /**
  * WDIO configuration for BrowserStack iOS testing.
- *
- * In CI: Uses cloudflared tunnel for HTTPS with a trusted cert (no BrowserStack Local needed).
- * Locally: Uses BrowserStack Local tunnel to connect to the dev server.
+ * Uses cloudflared tunnel to expose the local HTTPS dev server via a public
+ * URL with a real CA-signed cert, avoiding Safari's self-signed cert restrictions.
  *
  * Prerequisites:
  * 1. Set BROWSERSTACK_USERNAME and BROWSERSTACK_ACCESS_KEY env vars.
@@ -52,8 +93,6 @@ export const config: WebdriverIO.Config = {
         projectName: process.env.BROWSERSTACK_PROJECT_NAME || 'em',
         buildName: process.env.BROWSERSTACK_BUILD_NAME || `Local - ${user} - ${date}`,
         sessionName: 'iOS Safari Tests',
-        // BrowserStack Local tunnel is only needed when not using cloudflared.
-        local: !useCloudflared,
         debug: true,
         networkLogs: true,
         consoleLogs: 'verbose',
@@ -67,21 +106,28 @@ export const config: WebdriverIO.Config = {
     [
       'browserstack',
       {
-        // Only start BrowserStack Local tunnel when not using cloudflared.
-        browserstackLocal: !useCloudflared,
         testObservability: true,
-        ...(useCloudflared
-          ? {}
-          : {
-              opts: {
-                verbose: true,
-                forceLocal: true,
-                logFile: 'browserstack.log',
-              },
-            }),
       },
     ],
   ],
+
+  onPrepare: async function () {
+    // Start cloudflared tunnel if not already set (e.g. by a CI workflow step)
+    if (!process.env.CLOUDFLARED_URL) {
+      const url = await startTunnel()
+      process.env.CLOUDFLARED_URL = url
+      console.info(`cloudflared tunnel: ${url}`)
+    }
+
+    await baseConfig.onPrepare()
+  },
+
+  onComplete: function () {
+    if (tunnelProcess) {
+      tunnelProcess.kill()
+      tunnelProcess = null
+    }
+  },
 }
 
 export default config
