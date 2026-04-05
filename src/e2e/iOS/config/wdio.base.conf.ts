@@ -84,6 +84,11 @@ const baseConfig = {
   // Navigate once at the start of the session
   before: async function () {
     await browser.url('https://bs-local.com:3000')
+
+    // Safari does not support the acceptInsecureCerts WebDriver capability.
+    // BrowserStack provides a custom executor action to accept self-signed certs on Safari.
+    await browser.execute('browserstack_executor: {"action": "acceptSsl"}')
+
     await browser.waitUntil(
       async () => {
         const body = await browser.$('body')
