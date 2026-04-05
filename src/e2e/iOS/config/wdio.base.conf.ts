@@ -48,7 +48,6 @@ const baseConfig = {
     platformName: 'iOS' as const,
     browserName: 'Safari' as const,
     'appium:automationName': 'XCUITest' as const,
-    acceptInsecureCerts: true,
   },
 
   // Test Configurations
@@ -81,29 +80,20 @@ const baseConfig = {
     }
   },
 
-  // Navigate once at the start of the session
+  // Navigate once at the start of the session.
+  // CLOUDFLARED_URL: set in CI — a public HTTPS URL via cloudflared tunnel with a trusted cert.
+  // bs-local.com: used for local BrowserStack testing via BrowserStack Local tunnel.
+  // localhost: used for local Appium testing.
   before: async function () {
-    await browser.url('https://bs-local.com:3000')
+    const baseUrl =
+      process.env.CLOUDFLARED_URL ||
+      (process.env.BROWSERSTACK_ACCESS_KEY ? 'https://bs-local.com:3000' : 'https://localhost:3000')
+    await browser.url(baseUrl)
 
-    // Debug: log what Safari is actually showing after navigating to the HTTPS URL
     await browser.waitUntil(
       async () => {
         const body = await browser.$('body')
         return body.isExisting()
-      },
-      { timeout: 30000 },
-    )
-    const pageTitle = await browser.getTitle()
-    const pageUrl = await browser.getUrl()
-    const bodyText = await browser.execute(() => document.body?.innerText?.substring(0, 500))
-    console.info(`[DEBUG] Page title: ${pageTitle}`)
-    console.info(`[DEBUG] Page URL: ${pageUrl}`)
-    console.info(`[DEBUG] Body text: ${bodyText}`)
-
-    await browser.waitUntil(
-      async () => {
-        const skipTutorial = await browser.$('#skip-tutorial')
-        return skipTutorial.isExisting()
       },
       { timeout: 30000 },
     )

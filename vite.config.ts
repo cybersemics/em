@@ -51,7 +51,7 @@ export default defineConfig({
     // minify and add EJS capabilities to index.html
     createHtmlPlugin({ minify: true }),
     // Use HTTPS for dev server by default. Set HTTP=1 to disable.
-    ...(useHttps ? [basicSsl({ domains: ['localhost', 'bs-local.com'] })] : []),
+    ...(useHttps ? [basicSsl()] : []),
   ],
   server: {
     // Allow bs-local.com for BrowserStack local testing

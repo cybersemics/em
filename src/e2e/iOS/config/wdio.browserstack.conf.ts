@@ -17,9 +17,15 @@ if (!process.env.BROWSERSTACK_ACCESS_KEY) {
 const user = process.env.BROWSERSTACK_USERNAME
 const date = new Date().toISOString().slice(0, 10)
 
+// In CI, cloudflared provides a public HTTPS URL with a trusted cert,
+// so the BrowserStack Local tunnel is not needed.
+const useCloudflared = !!process.env.CLOUDFLARED_URL
+
 /**
  * WDIO configuration for BrowserStack iOS testing.
- * Uses @wdio/browserstack-service for automatic tunnel management.
+ *
+ * In CI: Uses cloudflared tunnel for HTTPS with a trusted cert (no BrowserStack Local needed).
+ * Locally: Uses BrowserStack Local tunnel to connect to the dev server.
  *
  * Prerequisites:
  * 1. Set BROWSERSTACK_USERNAME and BROWSERSTACK_ACCESS_KEY env vars.
@@ -46,7 +52,8 @@ export const config: WebdriverIO.Config = {
         projectName: process.env.BROWSERSTACK_PROJECT_NAME || 'em',
         buildName: process.env.BROWSERSTACK_BUILD_NAME || `Local - ${user} - ${date}`,
         sessionName: 'iOS Safari Tests',
-        local: true,
+        // BrowserStack Local tunnel is only needed when not using cloudflared.
+        local: !useCloudflared,
         debug: true,
         networkLogs: true,
         consoleLogs: 'verbose',
@@ -60,15 +67,18 @@ export const config: WebdriverIO.Config = {
     [
       'browserstack',
       {
-        browserstackLocal: true,
+        // Only start BrowserStack Local tunnel when not using cloudflared.
+        browserstackLocal: !useCloudflared,
         testObservability: true,
-        opts: {
-          verbose: true,
-          forceLocal: true,
-          logFile: 'browserstack.log',
-          // Note: useCaCertificate breaks the BrowserStack Local binary's tunnel connection.
-          // Safari cert handling is done via acceptSsl in wdio.base.conf.ts instead.
-        },
+        ...(useCloudflared
+          ? {}
+          : {
+              opts: {
+                verbose: true,
+                forceLocal: true,
+                logFile: 'browserstack.log',
+              },
+            }),
       },
     ],
   ],
