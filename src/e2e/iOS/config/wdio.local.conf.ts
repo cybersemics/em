@@ -1,3 +1,5 @@
+import { execSync } from 'child_process'
+import path from 'path'
 import baseConfig from './wdio.base.conf.js'
 
 const HOST = process.env.APPIUM_HOST || '127.0.0.1'
@@ -20,6 +22,21 @@ const PORT = process.env.APPIUM_PORT ? parseInt(process.env.APPIUM_PORT, 10) : 4
  */
 export const config: WebdriverIO.Config = {
   ...baseConfig,
+
+  // Install the dev server's self-signed cert into the iOS Simulator's trust store
+  // so Safari treats HTTPS as fully trusted (no localStorage/sessionStorage restrictions).
+  // Runs after Appium boots the simulator, before navigating to the app.
+  before: async function () {
+    const certPath = path.resolve(process.cwd(), 'node_modules/.vite/basic-ssl/_cert.pem')
+    try {
+      execSync(`xcrun simctl keychain booted add-root-cert ${certPath}`, { stdio: 'pipe' })
+    } catch {
+      console.warn('Could not install cert in simulator.')
+    }
+
+    // Call base before hook (navigates to the app)
+    await baseConfig.before()
+  },
 
   // Runner Configuration
   hostname: HOST,
