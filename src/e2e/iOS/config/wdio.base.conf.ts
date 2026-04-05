@@ -87,15 +87,18 @@ const baseConfig = {
 
     // Safari doesn't support acceptInsecureCerts. Use BrowserStack's acceptSsl action
     // to dismiss the self-signed cert warning, then re-navigate to load the actual page.
-    // We need to wait for the cert warning page to fully render before accepting.
-    await browser.pause(3000)
+    await browser.waitUntil(
+      async () => {
+        const body = await browser.$('body')
+        return body.isExisting()
+      },
+      { timeout: 30000 },
+    )
     await browser.execute('browserstack_executor: {"action": "acceptSsl"}')
-    await browser.pause(2000)
     await browser.url('https://bs-local.com:3000')
 
     await browser.waitUntil(
       async () => {
-        // Check for an app-specific element, not just body (which exists on the cert warning page too)
         const skipTutorial = await browser.$('#skip-tutorial')
         return skipTutorial.isExisting()
       },
