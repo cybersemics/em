@@ -1,5 +1,5 @@
 import { MotionValue, animate, motion, useMotionValue } from 'framer-motion'
-import { FC, PropsWithChildren, useCallback, useEffect } from 'react'
+import { FC, PropsWithChildren, useCallback, useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import TipId from '../../@types/TipId'
@@ -143,13 +143,19 @@ const Tip: FC<
   // Handles all opacity conditions: visibility transitions, dismiss, and swipe.
   const opacity = useMotionValue(0)
 
+  const dismissing = useRef(false)
+
   /** Animates opacity to 0 and dispatches dismissTip on completion. */
   const animateDismiss = useCallback(() => {
+    dismissing.current = true
     const duration = durations.get('medium') / 1000
     animate(opacity, 0, {
       duration,
       ease: 'easeOut',
-      onComplete: () => dispatch(dismissTip()),
+      onComplete: () => {
+        dismissing.current = false
+        dispatch(dismissTip())
+      },
     })
   }, [opacity, dispatch])
 
@@ -173,6 +179,9 @@ const Tip: FC<
   // ── Handlers ────────────────────────────────────────────────────────────
 
   useEffect(() => {
+    // Don't override a dismiss animation in progress
+    if (dismissing.current) return
+
     /** Opacity derived from swipe completion. Linearly decreases from 1 -> 0. */
     const swipeOpacity = 1 - completion
 
