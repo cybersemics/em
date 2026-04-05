@@ -1,6 +1,5 @@
 import basicSsl from '@vitejs/plugin-basic-ssl'
 import react from '@vitejs/plugin-react'
-import fs from 'fs'
 import path from 'path'
 import { defineConfig } from 'vite'
 import checker from 'vite-plugin-checker'
@@ -52,20 +51,13 @@ export default defineConfig({
     // minify and add EJS capabilities to index.html
     createHtmlPlugin({ minify: true }),
     // Use HTTPS for dev server by default. Set HTTP=1 to disable.
-    // Puppeteer uses its own certs; otherwise use @vitejs/plugin-basic-ssl for a self-signed cert.
-    ...(useHttps && !process.env.PUPPETEER ? [basicSsl()] : []),
+    ...(useHttps ? [basicSsl()] : []),
   ],
   server: {
     // Allow bs-local.com for BrowserStack local testing
     allowedHosts: ['bs-local.com'],
     ...(process.env.PUPPETEER
       ? {
-          // Serve the dev server over HTTPS in puppeteer tests to enable clipboard access
-          https: {
-            key: fs.readFileSync('./src/e2e/puppeteer/puppeteer-key.pem'),
-            cert: fs.readFileSync('./src/e2e/puppeteer/puppeteer.pem'),
-          },
-          // protocol `wss` is required to resolve websocket connection failure
           hmr: {
             host: 'host.docker.internal',
             // wss uses a secure websocket(wss://) connection. This was necessary to resolve mixed content security error which was observed when using ws protocol only.
