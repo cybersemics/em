@@ -44,7 +44,23 @@ jobs:
         run: yarn build
 
       - name: Serve
-        run: yarn servebuild &
+        run: |
+          yarn servebuild &
+
+          echo "Waiting for server to be ready..."
+          for i in {1..30}; do
+            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -k https://localhost:3000 2>/dev/null || echo "000")
+            if [ "$HTTP_STATUS" = "200" ]; then
+              echo "Server is ready!"
+              break
+            fi
+            echo "Attempt $i/30: status $HTTP_STATUS"
+            if [ $i -eq 30 ]; then
+              echo "Server failed to respond after 30 attempts"
+              exit 1
+            fi
+            sleep 1
+          done
 
       - name: Test iOS on BrowserStack
         run: yarn test:ios

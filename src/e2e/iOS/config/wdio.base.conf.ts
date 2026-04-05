@@ -89,6 +89,9 @@ const baseConfig = {
     // BrowserStack provides a custom executor action to accept self-signed certs on Safari.
     await browser.execute('browserstack_executor: {"action": "acceptSsl"}')
 
+    // After accepting the SSL cert, reload to actually load the page content.
+    await browser.url('https://bs-local.com:3000')
+
     await browser.waitUntil(
       async () => {
         const body = await browser.$('body')
