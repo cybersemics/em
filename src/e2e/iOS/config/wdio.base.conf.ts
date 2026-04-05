@@ -85,8 +85,7 @@ const baseConfig = {
   before: async function () {
     await browser.url('https://bs-local.com:3000')
 
-    // Safari doesn't support acceptInsecureCerts. Use BrowserStack's acceptSsl action
-    // to dismiss the self-signed cert warning, then re-navigate to load the actual page.
+    // Debug: log what Safari is actually showing after navigating to the HTTPS URL
     await browser.waitUntil(
       async () => {
         const body = await browser.$('body')
@@ -94,8 +93,12 @@ const baseConfig = {
       },
       { timeout: 30000 },
     )
-    await browser.execute('browserstack_executor: {"action": "acceptSsl"}')
-    await browser.url('https://bs-local.com:3000')
+    const pageTitle = await browser.getTitle()
+    const pageUrl = await browser.getUrl()
+    const bodyText = await browser.execute(() => document.body?.innerText?.substring(0, 500))
+    console.info(`[DEBUG] Page title: ${pageTitle}`)
+    console.info(`[DEBUG] Page URL: ${pageUrl}`)
+    console.info(`[DEBUG] Body text: ${bodyText}`)
 
     await browser.waitUntil(
       async () => {
