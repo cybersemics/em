@@ -40,26 +40,65 @@ async function startTunnel(): Promise<string> {
     tunnelProcess = proc
 
     let output = ''
-    const timeout = setTimeout(() => {
-      reject(new Error('cloudflared tunnel timed out'))
-    }, 30000)
+    let settled = false
 
     /** Scan cloudflared output for the tunnel URL. */
     const onData = (data: Buffer) => {
       output += data.toString()
       const match = output.match(/https:\/\/[a-z0-9-]+\.trycloudflare\.com/)
-      if (match) {
-        clearTimeout(timeout)
-        resolve(match[0])
-      }
+      return match ? resolveAndCleanup(match[0]) : null
     }
+
+    /** Reject if cloudflared exits before printing the tunnel URL. */
+    const onExit = (code: number | null, signal: NodeJS.Signals | null) =>
+      rejectAndCleanup(
+        new Error(
+          `cloudflared exited before tunnel URL was available${code !== null ? ` (code ${code})` : ''}${signal ? ` (signal ${signal})` : ''}`,
+        ),
+      )
+
+    /** Reject on process startup errors. */
+    const onError = (err: Error) => rejectAndCleanup(new Error(`Failed to start cloudflared: ${err.message}`))
+
+    /** Remove listeners and timeout after the Promise settles. */
+    const cleanup = () => {
+      clearTimeout(timeout)
+      proc.stdout?.removeListener('data', onData)
+      proc.stderr?.removeListener('data', onData)
+      proc.removeListener('error', onError)
+      proc.removeListener('exit', onExit)
+    }
+
+    /** Resolve once and release listeners. */
+    const resolveAndCleanup = (url: string) => {
+      if (settled) return
+      settled = true
+      cleanup()
+      resolve(url)
+    }
+
+    /** Reject once, terminate the child, and release listeners. */
+    const rejectAndCleanup = (error: Error) => {
+      if (settled) return
+      settled = true
+      cleanup()
+      if (!proc.killed) {
+        proc.kill()
+      }
+      if (tunnelProcess === proc) {
+        tunnelProcess = null
+      }
+      reject(error)
+    }
+
+    const timeout = setTimeout(() => {
+      rejectAndCleanup(new Error('cloudflared tunnel timed out'))
+    }, 30000)
 
     proc.stdout?.on('data', onData)
     proc.stderr?.on('data', onData)
-    proc.on('error', err => {
-      clearTimeout(timeout)
-      reject(new Error(`Failed to start cloudflared: ${err.message}`))
-    })
+    proc.once('error', onError)
+    proc.once('exit', onExit)
   })
 }
 
