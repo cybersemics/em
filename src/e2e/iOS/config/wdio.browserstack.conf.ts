@@ -42,31 +42,16 @@ async function startTunnel(): Promise<string> {
     let output = ''
     let settled = false
 
-    /** Scan cloudflared output for the tunnel URL. */
-    const onData = (data: Buffer) => {
-      output += data.toString()
-      const match = output.match(/https:\/\/[a-z0-9-]+\.trycloudflare\.com/)
-      return match ? resolveAndCleanup(match[0]) : null
-    }
+    // Use a wrapper object so cleanup can reference timeout before it's assigned
+    const state = { timeout: undefined as ReturnType<typeof setTimeout> | undefined }
 
-    /** Reject if cloudflared exits before printing the tunnel URL. */
-    const onExit = (code: number | null, signal: NodeJS.Signals | null) =>
-      rejectAndCleanup(
-        new Error(
-          `cloudflared exited before tunnel URL was available${code !== null ? ` (code ${code})` : ''}${signal ? ` (signal ${signal})` : ''}`,
-        ),
-      )
-
-    /** Reject on process startup errors. */
-    const onError = (err: Error) => rejectAndCleanup(new Error(`Failed to start cloudflared: ${err.message}`))
-
-    /** Remove listeners and timeout after the Promise settles. */
+    /** Remove all listeners and cancel the timeout after the Promise settles. */
     const cleanup = () => {
-      clearTimeout(timeout)
-      proc.stdout?.removeListener('data', onData)
-      proc.stderr?.removeListener('data', onData)
-      proc.removeListener('error', onError)
-      proc.removeListener('exit', onExit)
+      if (state.timeout !== undefined) clearTimeout(state.timeout)
+      proc.stdout?.removeAllListeners('data')
+      proc.stderr?.removeAllListeners('data')
+      proc.removeAllListeners('error')
+      proc.removeAllListeners('exit')
     }
 
     /** Resolve once and release listeners. */
@@ -91,7 +76,25 @@ async function startTunnel(): Promise<string> {
       reject(error)
     }
 
-    const timeout = setTimeout(() => {
+    /** Scan cloudflared output for the tunnel URL. */
+    const onData = (data: Buffer) => {
+      output += data.toString()
+      const match = output.match(/https:\/\/[a-z0-9-]+\.trycloudflare\.com/)
+      return match ? resolveAndCleanup(match[0]) : null
+    }
+
+    /** Reject if cloudflared exits before printing the tunnel URL. */
+    const onExit = (code: number | null, signal: NodeJS.Signals | null) =>
+      rejectAndCleanup(
+        new Error(
+          `cloudflared exited before tunnel URL was available${code !== null ? ` (code ${code})` : ''}${signal ? ` (signal ${signal})` : ''}`,
+        ),
+      )
+
+    /** Reject on process startup errors. */
+    const onError = (err: Error) => rejectAndCleanup(new Error(`Failed to start cloudflared: ${err.message}`))
+
+    state.timeout = setTimeout(() => {
       rejectAndCleanup(new Error('cloudflared tunnel timed out'))
     }, 30000)
 
