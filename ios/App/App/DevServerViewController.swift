@@ -1,14 +1,15 @@
 import Capacitor
 import WebKit
 
-/// For debug (development builds), this view controller is used instead of
-/// the default CAPBridgeViewController.
+/// This storyboard-referenced view controller is included in both debug and
+/// release builds.
 ///
-/// This allows us to ignore the warnings that come with using a self-signed
-/// certificate for the development server.
+/// In debug (development) builds, it customizes `CAPBridgeViewController` to
+/// ignore the warnings that come with using a self-signed certificate for the
+/// development server.
 ///
-/// This doesn't cause any security issues because we are still strict in
-/// production. 
+/// In release builds, the debug-only SSL handling is compiled out by `#if
+/// DEBUG`, so production behavior remains strict.
 class DevServerViewController: CAPBridgeViewController {
 
     #if DEBUG
