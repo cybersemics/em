@@ -24,6 +24,7 @@ const useSwipeToClear = ({
   onDismiss: (immediate: boolean) => void
 }) => {
   const [swipeDistance, setSwipeDistance] = useState(0)
+  const swipeDistanceRef = useRef(0)
   const velocity = useRef(0)
   const lastTouch = useRef<{ x: number; y: number; time: number } | null>(null)
   const safeArea = useSafeArea()
@@ -43,52 +44,63 @@ const useSwipeToClear = ({
 
       lastTouch.current = { x: touch.pageX, y: touch.pageY, time: performance.now() }
       velocity.current = 0
+      swipeDistanceRef.current = 0
       setSwipeDistance(0)
     },
     [safeArea.top, safeArea.bottom],
   )
 
-  const onTouchMove = useCallback((e: React.TouchEvent) => {
-    e.stopPropagation()
-    if (!lastTouch.current) return
-    const touch = e.touches[0]
-    const now = performance.now()
+  const onTouchMove = useCallback(
+    (e: React.TouchEvent) => {
+      e.stopPropagation()
+      if (!lastTouch.current) return
+      const touch = e.touches[0]
+      const now = performance.now()
 
-    const moveDx = touch.pageX - lastTouch.current.x
-    const moveDy = touch.pageY - lastTouch.current.y
-    const segmentDistance = Math.sqrt(moveDx * moveDx + moveDy * moveDy)
+      const moveDx = touch.pageX - lastTouch.current.x
+      const moveDy = touch.pageY - lastTouch.current.y
+      const segmentDistance = Math.sqrt(moveDx * moveDx + moveDy * moveDy)
 
-    setSwipeDistance(prev => prev + segmentDistance)
+      const dt = now - lastTouch.current.time
+      if (dt > 0) {
+        const instantVelocity = (segmentDistance / dt) * 1000
+        velocity.current = velocity.current * 0.4 + instantVelocity * 0.6
+      }
 
-    const dt = now - lastTouch.current.time
-    if (dt > 0) {
-      const instantVelocity = (segmentDistance / dt) * 1000
-      velocity.current = velocity.current * 0.4 + instantVelocity * 0.6
-    }
+      lastTouch.current = { x: touch.pageX, y: touch.pageY, time: now }
 
-    lastTouch.current = { x: touch.pageX, y: touch.pageY, time: now }
-  }, [])
+      swipeDistanceRef.current += segmentDistance
+      setSwipeDistance(swipeDistanceRef.current)
+    },
+    [],
+  )
 
   const onTouchEnd = useCallback(
     (e: React.TouchEvent) => {
       e.stopPropagation()
       lastTouch.current = null
 
-      const score = swipeDistance + velocity.current * 1.75
+      const dist = swipeDistanceRef.current
+      const score = dist + velocity.current * 1.75
+
       if (score >= threshold) {
-        const immediate = swipeDistance >= threshold
+        const immediate = dist >= threshold
+        swipeDistanceRef.current = 0
         setSwipeDistance(0)
         onDismiss(immediate)
-      } else if (swipeDistance > 0) {
-        animate(swipeDistance, 0, {
+      } else if (dist > 0) {
+        animate(dist, 0, {
           duration: durations.get('fast') / 1000,
           ease: 'easeOut',
-          onUpdate: v => setSwipeDistance(v),
+          onUpdate: v => {
+            swipeDistanceRef.current = v
+            setSwipeDistance(v)
+          },
         })
       }
       velocity.current = 0
     },
-    [swipeDistance, threshold, onDismiss],
+    [threshold, onDismiss],
   )
 
   return {
