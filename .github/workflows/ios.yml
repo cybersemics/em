@@ -45,6 +45,8 @@ jobs:
 
       - name: Serve
         run: |
+          # Delete cached cert so it regenerates with bs-local.com in the SAN
+          rm -f node_modules/.vite/basic-ssl/_cert.pem
           yarn servebuild &
 
           echo "Waiting for server to be ready..."
