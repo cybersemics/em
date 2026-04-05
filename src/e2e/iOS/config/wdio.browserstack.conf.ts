@@ -66,9 +66,8 @@ export const config: WebdriverIO.Config = {
           verbose: true,
           forceLocal: true,
           logFile: 'browserstack.log',
-          // In CI, use a combined CA bundle (system CAs + self-signed dev cert) so BrowserStack
-          // Local can connect to both BrowserStack servers and the local HTTPS dev server.
-          ...(process.env.CI ? { useCaCertificate: '/tmp/combined-ca.pem' } : {}),
+          // Note: useCaCertificate breaks the BrowserStack Local binary's tunnel connection.
+          // Safari cert handling is done via acceptSsl in wdio.base.conf.ts instead.
         },
       },
     ],

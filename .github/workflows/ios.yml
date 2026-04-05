@@ -62,11 +62,6 @@ jobs:
             sleep 1
           done
 
-      - name: Create combined CA bundle
-        run: |
-          cat /etc/ssl/certs/ca-certificates.crt node_modules/.vite/basic-ssl/_cert.pem > /tmp/combined-ca.pem
-          echo "Combined CA bundle created at /tmp/combined-ca.pem"
-
       - name: Test iOS on BrowserStack
         run: yarn test:ios
         env:
