@@ -43,7 +43,7 @@ async function startTunnel(): Promise<string> {
     let settled = false
 
     // Use a wrapper object so cleanup can reference timeout before it's assigned
-    const state = { timeout: undefined as ReturnType<typeof setTimeout> | undefined }
+    const state = { timeout: undefined as NodeJS.Timeout | undefined }
 
     /** Remove all listeners and cancel the timeout after the Promise settles. */
     const cleanup = () => {

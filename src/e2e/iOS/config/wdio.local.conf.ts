@@ -32,7 +32,7 @@ export const config: WebdriverIO.Config = {
 
     if (!fs.existsSync(certPath)) {
       throw new Error(
-        `Self-signed cert not found at ${certPath}. Run 'yarn start' at least once to generate it, then re-run the tests.`,
+        `Self-signed cert not found at node_modules/.vite/basic-ssl/_cert.pem. Run 'yarn start' at least once to generate it, then re-run the tests.`,
       )
     }
 
