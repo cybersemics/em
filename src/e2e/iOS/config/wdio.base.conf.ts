@@ -81,17 +81,14 @@ const baseConfig = {
   },
 
   // Navigate once at the start of the session.
-  // Navigate once at the start of the session
+  // CLOUDFLARED_URL: set in CI — a public HTTPS URL via cloudflared tunnel with a trusted cert.
+  // bs-local.com: used for local BrowserStack testing via BrowserStack Local tunnel.
+  // localhost: used for local Appium testing.
   before: async function () {
-    const baseUrl = process.env.BROWSERSTACK_ACCESS_KEY ? 'https://bs-local.com:3000' : 'https://localhost:3000'
+    const baseUrl =
+      process.env.CLOUDFLARED_URL ||
+      (process.env.BROWSERSTACK_ACCESS_KEY ? 'https://bs-local.com:3000' : 'https://localhost:3000')
     await browser.url(baseUrl)
-
-    // Safari doesn't support the acceptInsecureCerts WebDriver capability.
-    // BrowserStack provides a custom executor to dismiss the self-signed cert warning.
-    if (process.env.BROWSERSTACK_ACCESS_KEY) {
-      await browser.execute('browserstack_executor: {"action": "acceptSsl"}')
-      await browser.url(baseUrl)
-    }
 
     await browser.waitUntil(
       async () => {
