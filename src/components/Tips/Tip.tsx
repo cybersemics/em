@@ -12,6 +12,11 @@ import ProgressiveBlur from '../ProgressiveBlur'
 import CloseIcon from '../icons/CloseIcon'
 import useSwipeToClear from './useSwipeToClear'
 
+/** Minimum swipe-dismiss fade duration (seconds) — floor for very fast flicks. */
+const MIN_SWIPE_DISMISS_DURATION = 0.08
+/** Maximum swipe-dismiss fade duration (seconds) — ceiling for slow drags. */
+const MAX_SWIPE_DISMISS_DURATION = 0.45
+
 /** Layer 1: Gradient overlay + progressive blur — darkens and blurs the content behind the tip. */
 const TipBlur: FC<{
   opacity: MotionValue<number>
@@ -162,14 +167,31 @@ const Tip: FC<
   // ── Swipe-to-dismiss ────────────────────────────────────────────────────
 
   const onSwipeDismiss = useCallback(
-    (immediate: boolean) => {
+    (immediate: boolean, vel: number, threshold: number) => {
       if (immediate) {
         dispatch(dismissTip())
       } else {
-        animateDismiss()
+        // Derive fade duration from the swipe's momentum: treat the remaining
+        // opacity as a physical distance (scaled by threshold) and compute
+        // how long it would take to cross it at the current velocity.
+        const remainingPx = opacity.get() * threshold
+        const duration = Math.max(
+          MIN_SWIPE_DISMISS_DURATION,
+          Math.min(MAX_SWIPE_DISMISS_DURATION, remainingPx / Math.max(vel, 1)),
+        )
+
+        dismissing.current = true
+        animate(opacity, 0, {
+          duration,
+          ease: 'easeOut',
+          onComplete: () => {
+            dismissing.current = false
+            dispatch(dismissTip())
+          },
+        })
       }
     },
-    [dispatch, animateDismiss],
+    [dispatch, opacity],
   )
 
   const { completion, touchHandlers } = useSwipeToClear({

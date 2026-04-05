@@ -4,10 +4,10 @@ import useSafeArea from '../../hooks/useSafeArea'
 import durations from '../../util/durations'
 
 // Dismiss score threshold (px-equivalent). The dismiss score is computed as
-// swipeDistance + velocity * 1.75, so a pure-distance swipe needs 150px of
+// swipeDistance + velocity * 1.75, so a pure-distance swipe needs 175px of
 // cumulative movement, while a fast flick can dismiss with less distance
-// (e.g. 50px at 50 px/s → score 50 + 100 = 150).
-const DEFAULT_SWIPE_DISMISS_THRESHOLD = 125
+// (e.g. 80px at 60 px/s → score 80 + 105 = 185 ≥ 175).
+const DEFAULT_SWIPE_DISMISS_THRESHOLD = 175
 
 /**
  * Tracks a cumulative-distance swipe gesture and returns a 0→1 completion value.
@@ -20,8 +20,8 @@ const useSwipeToClear = ({
 }: {
   /** Cumulative swipe distance (in px) at which a swipe fully fades and dismisses the tip. */
   threshold?: number
-  /** Called when the swipe decides to dismiss. `immediate` is true when the gesture already fully completed (completion reached 1). */
-  onDismiss: (immediate: boolean) => void
+  /** Called when the swipe decides to dismiss. `immediate` is true when the gesture already fully completed (completion reached 1). `velocity` is the smoothed swipe velocity in px/s at the moment of release. `threshold` is the dismiss threshold in px used for the score calculation. */
+  onDismiss: (immediate: boolean, velocity: number, threshold: number) => void
 }) => {
   const [swipeDistance, setSwipeDistance] = useState(0)
   const swipeDistanceRef = useRef(0)
@@ -50,30 +50,28 @@ const useSwipeToClear = ({
     [safeArea.top, safeArea.bottom],
   )
 
-  const onTouchMove = useCallback(
-    (e: React.TouchEvent) => {
-      e.stopPropagation()
-      if (!lastTouch.current) return
-      const touch = e.touches[0]
-      const now = performance.now()
+  const onTouchMove = useCallback((e: React.TouchEvent) => {
+    e.stopPropagation()
+    if (!lastTouch.current) return
+    const touch = e.touches[0]
+    const now = performance.now()
 
-      const moveDx = touch.pageX - lastTouch.current.x
-      const moveDy = touch.pageY - lastTouch.current.y
-      const segmentDistance = Math.sqrt(moveDx * moveDx + moveDy * moveDy)
+    const moveDx = touch.pageX - lastTouch.current.x
+    const moveDy = touch.pageY - lastTouch.current.y
+    const segmentDistance = Math.sqrt(moveDx * moveDx + moveDy * moveDy)
 
-      const dt = now - lastTouch.current.time
-      if (dt > 0) {
-        const instantVelocity = (segmentDistance / dt) * 1000
-        velocity.current = velocity.current * 0.4 + instantVelocity * 0.6
-      }
+    const dt = now - lastTouch.current.time
+    if (dt > 0) {
+      const instantVelocity = (segmentDistance / dt) * 1000
+      // Exponential moving average: 60% weight on latest sample for responsive tracking, 40% on history to smooth jitter.
+      velocity.current = velocity.current * 0.4 + instantVelocity * 0.6
+    }
 
-      lastTouch.current = { x: touch.pageX, y: touch.pageY, time: now }
+    lastTouch.current = { x: touch.pageX, y: touch.pageY, time: now }
 
-      swipeDistanceRef.current += segmentDistance
-      setSwipeDistance(swipeDistanceRef.current)
-    },
-    [],
-  )
+    swipeDistanceRef.current += segmentDistance
+    setSwipeDistance(swipeDistanceRef.current)
+  }, [])
 
   const onTouchEnd = useCallback(
     (e: React.TouchEvent) => {
@@ -87,7 +85,7 @@ const useSwipeToClear = ({
         const immediate = dist >= threshold
         swipeDistanceRef.current = 0
         setSwipeDistance(0)
-        onDismiss(immediate)
+        onDismiss(immediate, velocity.current, threshold)
       } else if (dist > 0) {
         animate(dist, 0, {
           duration: durations.get('fast') / 1000,
