@@ -12,6 +12,9 @@ import press from '../helpers/press'
 import setSelection from '../helpers/setSelection'
 import { page } from '../setup'
 
+/** Click the first note. Assumes that there will be only a single note. */
+const clickFirstNote = () => click('[aria-label="note-editable"]')
+
 /** Retrieve the innerHTML of the first note on the page. Assumes that there will be only a single note. */
 const getFirstNoteText = () => page.evaluate(() => document.querySelector('[aria-label="note-editable"]')?.innerHTML)
 
@@ -259,7 +262,7 @@ it('Set the background color of the note', async () => {
         - Note
   `)
 
-  await click('[aria-label="note-editable"]')
+  await clickFirstNote()
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="background color swatches"] [aria-label="green"]')
 
@@ -276,7 +279,7 @@ it('Toggling note background color on and off should remove formatting tag', asy
         - Note
   `)
 
-  await click('[aria-label="note-editable"]')
+  await clickFirstNote()
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="background color swatches"] [aria-label="green"]')
   await click('[aria-label="background color swatches"] [aria-label="green"]')
@@ -292,10 +295,49 @@ it('Setting note foreground color should remove background color', async () => {
         - <font style="background-color: #FFFFFF" color="#000000">Note</font>
   `)
 
-  await click('[aria-label="note-editable"]')
+  await clickFirstNote()
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="text color swatches"] [aria-label="yellow"]')
 
   const result = await page.evaluate(() => document.querySelector('[aria-label="note-editable"]')?.innerHTML)
   expect(result).toBe('<font color="#ffd014">Note</font>')
+})
+
+it('A thought and a note can have the same background color', async () => {
+  await paste(`
+    - a
+      - =note
+        - Note
+  `)
+
+  // set the background color on the thought
+  await clickThought('a')
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="background color swatches"] [aria-label="green"]')
+
+  // set the background color on the note
+  await clickFirstNote()
+  await click('[aria-label="background color swatches"] [aria-label="green"]')
+
+  const thought = await getEditingText()
+  expect(thought).toBe('<font color="#000000" style="background-color: rgb(0, 214, 136);">a</font>')
+
+  const note = await getFirstNoteText()
+  expect(note).toBe('<font color="#000000" style="background-color: rgb(0, 214, 136);">Note</font>')
+})
+
+it('Can change the background color of a note to match its thought', async () => {
+  await paste(`
+    - <font color="#000000" style="background-color: rgb(255, 87, 61);">a</font>  
+      - =note      
+        - <font color="#000000" style="background-color: rgb(0, 214, 136);">Note</font>
+  `)
+
+  // change the background color on the note
+  await clickFirstNote()
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="background color swatches"] [aria-label="red"]')
+
+  const note = await getFirstNoteText()
+  expect(note).toBe('<font color="#000000" style="background-color: rgb(255, 87, 61);">Note</font>')
 })
