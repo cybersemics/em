@@ -25,7 +25,7 @@ const GestureCheatsheet: React.FC = () => {
   return (
     <FadeTransition in={isOpen} unmountOnExit type='medium' nodeRef={nodeRef}>
       <Dialog onClose={handleClose} nodeRef={nodeRef}>
-        <DialogTitle onClose={handleClose}>Gesture Cheatsheet</DialogTitle>
+        <DialogTitle onClose={handleClose}>All Commands</DialogTitle>
         <DialogContent>
           <CommandTable viewType='grid' />
         </DialogContent>

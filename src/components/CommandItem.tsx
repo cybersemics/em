@@ -30,7 +30,7 @@ const isExecutable = (state: State, command: Command) =>
 
 const strokeWidth = 4
 
-/** Renders a command in a variety of contexts, including the Command Palette, Gesture Menu, Gesture Cheatsheet, and Help modal. */
+/** Renders a command in a variety of contexts, including the Command Palette, Gesture Menu, All Commands, and Help modal. */
 const CommandItem: FC<{
   viewType?: CommandViewType
   search?: string

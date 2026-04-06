@@ -5,7 +5,7 @@ import isDocumentEditable from '../util/isDocumentEditable'
 
 const openGestureCheatsheetCommand: Command = {
   id: 'openGestureCheatsheet',
-  label: 'Gesture Cheatsheet',
+  label: 'All Commands',
   description: 'Opens a list of all the gestures.',
   gesture: 'rdld',
   multicursor: false,

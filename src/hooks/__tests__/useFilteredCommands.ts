@@ -80,7 +80,7 @@ vi.mock('../../commands', async () => {
     },
     {
       id: 'openGestureCheatsheet' as CommandId,
-      label: 'Gesture Cheatsheet',
+      label: 'All Commands',
       gesture: 'rdld',
       hideFromCommandPalette: true,
       multicursor: false,
@@ -477,7 +477,7 @@ describe('useFilteredCommands', () => {
         expect(commandIds).toContain('categorize')
       })
 
-      it('should show Select All, Open Gesture Cheatsheet, and Cancel commands unchanged', () => {
+      it('should show Select All, Open All Commands, and Cancel commands unchanged', () => {
         act(() => {
           gestureStore.update({ gesture: selectAllCommand.gesture as string })
         })
