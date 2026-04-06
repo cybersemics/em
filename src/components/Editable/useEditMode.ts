@@ -60,8 +60,8 @@ const useEditMode = ({
    */
   const pendingCaretOffsetRef = useRef<number | null>(null)
 
-  /** True once pending caret offset was applied (touchend or mousedown), until gesture ends. */
-  const manualCaretAppliedRef = useRef(false)
+  /** Prevents `getCaretOffset` from running twice on touch devices (onMousedown after onTouchEnd). */
+  const pendingCaretHandledRef = useRef(false)
 
   /** Stores the initial touch position to detect tap vs scroll; if focus occurs without it, the tap was outside the editable and we place the caret manually. */
   const touchStartPosRef = useRef<{ x: number; y: number } | null>(null)
@@ -185,8 +185,8 @@ const useEditMode = ({
         })
 
         // If the caret was already applied (i.e. onTouchEnd), exit early so that we do not perform the computation again.
-        if (manualCaretAppliedRef.current) {
-          manualCaretAppliedRef.current = false
+        if (pendingCaretHandledRef.current) {
+          pendingCaretHandledRef.current = false
           return
         }
 
@@ -247,7 +247,7 @@ const useEditMode = ({
       if (dx * dx + dy * dy > SCROLL_THRESHOLD_SQ) {
         pendingCaretOffsetRef.current = null
         editable.style.caretColor = ''
-        manualCaretAppliedRef.current = false
+        pendingCaretHandledRef.current = false
       }
     }
 
@@ -256,7 +256,7 @@ const useEditMode = ({
       const pendingCaretOffset = pendingCaretOffsetRef.current
       if (pendingCaretOffset === null) return
 
-      manualCaretAppliedRef.current = true
+      pendingCaretHandledRef.current = true
       pendingCaretOffsetRef.current = null
       touchStartPosRef.current = null
 
@@ -264,6 +264,11 @@ const useEditMode = ({
       // Double requestAnimationFrame seems to be the most reliable way to prevent the visual caret glitch where the ios bug causes caret to jump unexpectedly before restoring manually to correct offset.
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
+          // If the selection is not collapsed, skip the programmatic selection.set().
+          if (!selection.getSelection()?.isCollapsed) {
+            editable.style.caretColor = ''
+            return
+          }
           setCaretOffset(pendingCaretOffset)
           editable.style.caretColor = ''
         })

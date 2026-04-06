@@ -21,6 +21,9 @@ export interface SavedSelection {
   offset: number
 }
 
+/** Returns the current document selection, or null if unavailable. */
+export const getSelection = (): Selection | null => window.getSelection()
+
 /** Gets the padding of an element as an array of numbers [top, right, bottom, left]. */
 const getElementPaddings = (element: HTMLElement): [number, number, number, number] => {
   const paddings = window.getComputedStyle(element, null).getPropertyValue('padding').split('px').map(Number)
@@ -52,7 +55,7 @@ export const clear = (): void => {
 }
 
 /** Returns true if the selection is a collapsed caret, i.e. the beginning and end of the selection are the same. Returns undefined if there is no selection. */
-export const isCollapsed = (): boolean => !!window.getSelection()?.isCollapsed
+export const isCollapsed = (): boolean => !!getSelection()?.isCollapsed
 
 /** Returns true if there is an active selection. */
 export const isActive = (): boolean => !!window.getSelection()?.focusNode
