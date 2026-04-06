@@ -6,8 +6,8 @@ import exportThoughts from '../helpers/exportThoughts'
 import gesture from '../helpers/gesture'
 import keyboard from '../helpers/keyboard'
 import paste from '../helpers/paste'
+import waitForAlertContent from '../helpers/waitForAlertContent'
 import waitForEditable from '../helpers/waitForEditable'
-import waitUntil from '../helpers/waitUntil'
 import { page } from '../setup'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
@@ -110,8 +110,13 @@ describe('drag to Home with duplicate thought', () => {
   /**
    * Regression test for: [Mobile] Unable to draw tracing after moving a duplicate thought to Home (root).
    *
-   * When a thought (C) that already exists at root level is dragged from under a parent (B) to root above B,
-   * the drag alert gets stuck and prevents gesture tracing from working afterward.
+   * When subthought C (under B) is dragged to root level where C already exists, the drag-and-drop
+   * handler in useDragAndDropThought exits early without clearing the longPress DragInProgress state.
+   * This leaves shouldCancelGesture returning true, blocking all subsequent gesture tracing.
+   *
+   * Root cause: parentOf(rootThought.simplePath) is an empty array, so head([]) is undefined,
+   * getThoughtById returns undefined, and the early `if (!parentThought) return` skips the alert
+   * dispatch that would have been the only code path to clean up the stuck state.
    */
   it('should allow gestures after moving a duplicate thought above the existing copy to Home', async () => {
     await paste(`
@@ -121,17 +126,17 @@ describe('drag to Home with duplicate thought', () => {
       - C
     `)
 
-    // Get the first C in document order, which is the subthought C under B
+    // Get the first C in document order — the subthought C under B (drag source)
     const subthoughtC = await waitForEditable('C')
     const subthoughtCBox = await subthoughtC.asElement()?.boundingBox()
     if (!subthoughtCBox) throw new Error('Bounding box not found for subthought C')
 
-    // Get thought A to calculate the drag target position (between A and B = above B at root)
-    const thoughtA = await waitForEditable('A')
-    const thoughtABox = await thoughtA.asElement()?.boundingBox()
-    if (!thoughtABox) throw new Error('Bounding box not found for thought A')
+    // Get thought B — touching its drop zone causes C to be dropped before B at root level
+    const thoughtBEditable = await waitForEditable('B')
+    const thoughtBBox = await thoughtBEditable.asElement()?.boundingBox()
+    if (!thoughtBBox) throw new Error('Bounding box not found for thought B')
 
-    // Find the bullet element within subthought C's container for the long press
+    // Find the bullet element for subthought C to detect when the drag hold is activated
     const bulletElement = await page.evaluateHandle(editableNode => {
       if (!editableNode) throw new Error('editableNode not found')
       const thoughtContainer = editableNode.closest('[aria-label="thought-container"]')
@@ -146,21 +151,23 @@ describe('drag to Home with duplicate thought', () => {
     const startX = subthoughtCBox.x + 1
     const startY = subthoughtCBox.y + subthoughtCBox.height / 2
 
-    // Long press to activate drag
+    // Initiate long press to start the drag
     await page.touchscreen.touchStart(startX, startY)
 
-    // Wait for bullet to be highlighted (indicates drag has been activated)
+    // Wait for the bullet to be highlighted — this confirms React DnD's TouchBackend has fired
+    // the dragStart event and DragInProgress state has been entered
     await page.waitForFunction(
       (bulletEl: Element) => bulletEl.getAttribute('data-highlighted') === 'true',
       { timeout: 5000 },
       bulletElement,
     )
 
-    // Target position: just below thought A (between A and B at root level = above B)
-    const targetX = thoughtABox.x + thoughtABox.width / 2
-    const targetY = thoughtABox.y + thoughtABox.height + 5
+    // Target: center of thought B's editable, which lies within B's aria-label="child" drop zone.
+    // Dropping on a root-level thought triggers the buggy useDragAndDropThought drop handler.
+    const targetX = thoughtBBox.x + thoughtBBox.width / 2
+    const targetY = thoughtBBox.y + thoughtBBox.height / 2
 
-    // Drag from subthought C upward to between A and B
+    // Drag from subthought C up to thought B
     const steps = 20
     for (let i = 1; i <= steps; i++) {
       const curX = startX + ((targetX - startX) * i) / steps
@@ -168,22 +175,23 @@ describe('drag to Home with duplicate thought', () => {
       await page.touchscreen.touchMove(curX, curY)
     }
 
-    await page.touchscreen.touchEnd()
+    // Wait for the drag-and-drop alert to confirm the drag is in progress and DnD is active
+    await waitForAlertContent('Drag and drop')
 
-    // Wait for the drag state to fully clear before proceeding
-    await waitUntil(() => {
-      const dragInProgress = document.querySelector('[data-drag-in-progress="true"]')
-      const dragHold = document.querySelector('[data-drag-hold="true"]')
-      return !dragInProgress && !dragHold
-    })
+    // Release — React DnD fires drop() for the target under the touch point.
+    // With the bug: DnD prevents onTouchEnd from reaching React handlers, so longPress stays
+    // as DragInProgress and shouldCancelGesture() returns true, blocking gesture tracing.
+    await page.touchscreen.touchEnd()
 
     // Capture the thought count before attempting a gesture
     const beforeCount = countThoughts(await exportThoughts())
 
-    // Attempt a gesture to create a new thought — this should work after the drag
+    // Attempt a gesture to create a new thought.
+    // With the bug present, shouldCancelGesture() returns true (longPress !== Inactive),
+    // MultiGesture abandons the gesture, and no new thought is created.
     await gesture(newThoughtCommand)
 
-    // Poll in the browser context until a new thought appears, confirming gesture tracing is functional
+    // Poll for a new thought to appear — this times out and fails when the bug is present
     await page.waitForFunction(
       (beforeCount: number) => {
         const em = window.em as WindowEm
