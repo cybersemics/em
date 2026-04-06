@@ -1,8 +1,10 @@
-import { useState } from 'react'
+import { FC, PropsWithChildren, useState } from 'react'
 import { SwitchTransition } from 'react-transition-group'
-import { css, cva } from '../../styled-system/css'
+import { css, cva, cx } from '../../styled-system/css'
+import { modalTextRecipe } from '../../styled-system/recipes'
 import Command from '../@types/Command'
 import CommandSortType from '../@types/CommandSortType'
+import { CommandViewType } from '../@types/CommandViewType'
 import { isTouch } from '../browser'
 import { commandById, globalCommands } from '../commands'
 import { COMMAND_GROUPS } from '../constants'
@@ -16,7 +18,7 @@ import SortButton from './SortButton'
 
 // assert that groups include all necessary commands
 const commandsGroupedMap = keyValueBy(
-  COMMAND_GROUPS.flatMap(group => group.commands),
+  COMMAND_GROUPS.flatMap(level => level.groups.flatMap(group => group.commands)),
   true,
 )
 const commandsUngrouped = globalCommands.filter(
@@ -35,14 +37,19 @@ if (commandsUngrouped.length > 0) {
 // TODO: Currently, CommandTable uses a constant value COMMAND_GROUPS as the source of
 // truth for commands. This needs to change to address #2863.
 
-/* Commands grouped by type. Current platform only. */
-const commandsGroupedByType = COMMAND_GROUPS.map(group => ({
-  title: group.title,
-  commands: group.commands.map(commandById).filter(command => (isTouch ? command.gesture : command.keyboard)),
-})).filter(group => group.commands.length > 0)
+/* Commands grouped by difficulty level and type. Current platform only. */
+const commandsGroupedByType = COMMAND_GROUPS.map(level => ({
+  title: level.title,
+  groups: level.groups
+    .map(group => ({
+      title: group.title,
+      commands: group.commands.map(commandById).filter(command => (isTouch ? command.gesture : command.keyboard)),
+    }))
+    .filter(group => group.commands.length > 0),
+})).filter(level => level.groups.length > 0)
 
 /* Commands sorted by label, A-Z. Current platform only. */
-const commandsSortedByLabel = COMMAND_GROUPS.flatMap(group => group.commands)
+const commandsSortedByLabel = COMMAND_GROUPS.flatMap(level => level.groups.flatMap(group => group.commands))
   .map(commandById)
   .filter(command => (isTouch ? command.gesture : command.keyboard))
   .sort((a, b) => a.label.localeCompare(b.label))
@@ -59,6 +66,42 @@ interface CommandTableContentProps extends CommandTableProps {
   commands: Command[]
   sortOrder: CommandSortType
   isMobileGestures: boolean
+}
+
+/** Renders a difficulty level heading with its child category groups. */
+const CommandDifficultyGroup: FC<PropsWithChildren<{ title: string; viewType?: CommandViewType }>> = ({
+  title,
+  viewType,
+  children,
+}) => {
+  const modalClasses = modalTextRecipe()
+
+  return (
+    <div>
+      <h2
+        className={cx(
+          modalClasses.subtitle,
+          css({
+            fontSize: '1.2em',
+            marginTop: '1.2em',
+            marginBottom: '0.2em',
+            ...(viewType === 'grid' && {
+              fontSize: '1.4rem',
+              borderBottom: 'none',
+              position: 'sticky',
+              top: '-1.333rem',
+              background: 'linear-gradient(to bottom, {colors.bg} 85%, transparent)',
+              padding: '0.622rem 0',
+              zIndex: 1,
+            }),
+          }),
+        )}
+      >
+        {title}
+      </h2>
+      {children}
+    </div>
+  )
 }
 
 /** Renders the content of the command table.
@@ -92,23 +135,23 @@ const CommandTableContent = ({
       />
     )
   } else if (sortOrder === 'type') {
-    /* Show commands grouped by type */
-    return commandsGroupedByType.map(group => {
-      const commands = group.commands
-
-      return (
-        <CommandsGroup
-          title={group.title}
-          commands={commands}
-          customize={customize}
-          key={group.title}
-          onSelect={onSelect}
-          selectedCommand={selectedCommand}
-          viewType={viewType}
-          isMobileGestures={isMobileGestures}
-        />
-      )
-    })
+    /* Show commands grouped by difficulty level and type */
+    return commandsGroupedByType.map(level => (
+      <CommandDifficultyGroup key={level.title} title={level.title} viewType={viewType}>
+        {level.groups.map(group => (
+          <CommandsGroup
+            title={group.title}
+            commands={group.commands}
+            customize={customize}
+            key={group.title}
+            onSelect={onSelect}
+            selectedCommand={selectedCommand}
+            viewType={viewType}
+            isMobileGestures={isMobileGestures}
+          />
+        ))}
+      </CommandDifficultyGroup>
+    ))
   } else {
     /* All commands sorted by label, A-Z */
     return (
