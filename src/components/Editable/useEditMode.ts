@@ -15,6 +15,9 @@ import getCaretOffset from '../../util/getCaretOffset'
 /** Squared movement threshold (px²) for distinguishing taps from scrolls; ~10px finger movement. */
 const SCROLL_THRESHOLD_SQ = 100
 
+/** Max ms between two touchstarts at the same coordinates to treat the second as double-tap (word selection). */
+const DOUBLE_TAP_TOUCHSTART_MS = 350
+
 /** Automatically sets the selection on the given contentRef element when the thought should be selected. Handles a variety of conditions that determine whether this should occur. */
 const useEditMode = ({
   contentRef,
@@ -65,6 +68,13 @@ const useEditMode = ({
 
   /** Stores the initial touch position to detect tap vs scroll; if focus occurs without it, the tap was outside the editable and we place the caret manually. */
   const touchStartPosRef = useRef<{ x: number; y: number } | null>(null)
+
+  /** Previous touchstart time/position — used to detect double-tap on the second touchstart. */
+  const lastTouchStartAtRef = useRef(0)
+  const lastTouchStartPosRef = useRef<{ x: number; y: number } | null>(null)
+
+  /** Second tap of a double-tap: skip manual caret in touchend and let WebKit select the word. */
+  const skipManualCaretForTouchEndRef = useRef(false)
 
   useEffect(
     () => {
@@ -223,7 +233,32 @@ const useEditMode = ({
       const touch = e.touches[0]
       if (!touch) return
 
+      // Early exit if the touch is a double tap. We can safely allow the default selection in this case.
+      // This is because the native iOS behavior is to show the context menu when tapping on the caret.
+      // We don't want to override this behavior.
+      const now = Date.now()
+      const prevTime = lastTouchStartAtRef.current
+      const prevPos = lastTouchStartPosRef.current
+      const isDoubleTap =
+        prevPos !== null &&
+        prevTime > 0 &&
+        now - prevTime < DOUBLE_TAP_TOUCHSTART_MS &&
+        (touch.clientX - prevPos.x) ** 2 + (touch.clientY - prevPos.y) ** 2 <= SCROLL_THRESHOLD_SQ
+
+      lastTouchStartAtRef.current = now
+      lastTouchStartPosRef.current = { x: touch.clientX, y: touch.clientY }
+
       touchStartPosRef.current = { x: touch.clientX, y: touch.clientY }
+
+      if (isDoubleTap) {
+        skipManualCaretForTouchEndRef.current = true
+        pendingCaretOffsetRef.current = null
+        editable.style.caretColor = ''
+        allowDefaultSelection()
+        return
+      }
+
+      skipManualCaretForTouchEndRef.current = false
 
       const { offset: nodeOffset } = getCaretOffset(editable, {
         clientX: touch.clientX,
@@ -248,11 +283,19 @@ const useEditMode = ({
         pendingCaretOffsetRef.current = null
         editable.style.caretColor = ''
         pendingCaretHandledRef.current = false
+        skipManualCaretForTouchEndRef.current = false
       }
     }
 
     /** Finalizes the manual caret positioning after touch processing completes. */
     const onTouchEnd = () => {
+      if (skipManualCaretForTouchEndRef.current) {
+        skipManualCaretForTouchEndRef.current = false
+        pendingCaretHandledRef.current = true
+        touchStartPosRef.current = null
+        return
+      }
+
       const pendingCaretOffset = pendingCaretOffsetRef.current
       if (pendingCaretOffset === null) return
 
@@ -264,11 +307,6 @@ const useEditMode = ({
       // Double requestAnimationFrame seems to be the most reliable way to prevent the visual caret glitch where the ios bug causes caret to jump unexpectedly before restoring manually to correct offset.
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          // If the selection is not collapsed, skip the programmatic selection.set().
-          if (!selection.getSelection()?.isCollapsed) {
-            editable.style.caretColor = ''
-            return
-          }
           setCaretOffset(pendingCaretOffset)
           editable.style.caretColor = ''
         })
