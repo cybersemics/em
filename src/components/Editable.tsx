@@ -31,7 +31,6 @@ import {
   TUTORIAL_CONTEXT1_PARENT,
   TUTORIAL_CONTEXT2_PARENT,
 } from '../constants'
-import { preventAutoscrollEnd } from '../device/preventAutoscroll'
 import * as selection from '../device/selection'
 import globals from '../globals'
 import findDescendant from '../selectors/findDescendant'
@@ -534,7 +533,6 @@ const Editable = ({
    */
   const onFocus = useCallback(
     () => {
-      preventAutoscrollEnd(contentRef.current)
       if (suppressFocusStore.getState()) return
       // Update editingValueUntrimmedStore with the current value
       editingValueUntrimmedStore.update(value)
