@@ -3,7 +3,6 @@ import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import moveThought from '../actions/moveThought'
 import sort from '../actions/sort'
-import { HOME_TOKEN } from '../constants'
 import { getChildrenRanked } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
@@ -52,11 +51,8 @@ const swapParent = (state: State): State => {
   const parentChildren = getChildrenRanked(state, parentId)
   const siblings = parentChildren.filter(sibling => sibling.id !== childId)
 
-  // Get the grandparent path
   const grandparent = parentOf(parent)
-
-  // The grandparent context id (HOME_TOKEN when the parent is a root thought)
-  const grandparentId = grandparent.length > 0 ? head(grandparent) : HOME_TOKEN
+  const grandparentId = head(rootedParentOf(state, parent))
 
   return reducerFlow([
     // First move the child to replace its parent's position
