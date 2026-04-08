@@ -23,11 +23,14 @@ const tags = {
 
 /** Extracts the foreground and background colors from the given string.
  * Returns an object with foreColor and backColor properties.
- * If the string does not contain a font or span tag, undefined is returned.
+ * The colors must apply to the entire string, so other tags are permitted
+ * before the color tag, but the color tag must encompass the entire text (#3904).
+ * Otherwise, undefined is returned.
  */
 const extractColors = (savedValue: string) => {
-  const foreColorRegex = /<(?:span|font)[^>]*\s(?:color=["']?([^"']+)["']?[^>]*>)/i
-  const backColorRegex = /<(?:span|font)[^>]*\sstyle=["'][^"']*background-color:\s*([^;"']+)/i
+  const foreColorRegex = /^(?:<(?:b|i|u|strike|code)>)*<(?:span|font)[^>]*\s(?:color=["']?([^"']+)["']?[^>]*>)/i
+  const backColorRegex =
+    /^(?:<(?:b|i|u|strike|code)>)*<(?:span|font)[^>]*\sstyle=["'][^"']*background-color:\s*([^;"']+)/i
 
   // Attempt to extract the font color
   const foreColorMatch = savedValue.match(foreColorRegex)

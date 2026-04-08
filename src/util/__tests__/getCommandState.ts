@@ -138,7 +138,7 @@ it.skip('text and background color on span tag', () => {
 it('fully styled thought', () => {
   expect(
     getCommandState(
-      '<b><i><u><strike><code><font color="rgb(255, 0, 0)"><span style="background-color: rgb(0, 0, 255)">text</span></font></code></strike></u></i></b>',
+      '<b><i><u><strike><code><font color="#000000" style="background-color: rgb(0, 0, 255)">text</font></code></strike></u></i></b>',
     ),
   ).toStrictEqual({
     bold: true,
@@ -146,7 +146,7 @@ it('fully styled thought', () => {
     underline: true,
     strikethrough: true,
     code: true,
-    foreColor: 'rgb(255, 0, 0)',
+    foreColor: '#000000',
     backColor: 'rgb(0, 0, 255)',
   })
 })
@@ -154,7 +154,7 @@ it('fully styled thought', () => {
 it('fully styled thought without text content', () => {
   expect(
     getCommandState(
-      '<b><i><u><strike><code><font color="rgb(255, 0, 0)"><span style="background-color: rgb(0, 0, 255)"></span></font></code></strike></u></i></b>',
+      '<b><i><u><strike><code><font color="#000000" style="background-color: rgb(0, 0, 255)"></font></code></strike></u></i></b>',
     ),
   ).toStrictEqual({
     bold: true,
@@ -162,7 +162,7 @@ it('fully styled thought without text content', () => {
     underline: true,
     strikethrough: true,
     code: true,
-    foreColor: 'rgb(255, 0, 0)',
+    foreColor: '#000000',
     backColor: 'rgb(0, 0, 255)',
   })
 })
