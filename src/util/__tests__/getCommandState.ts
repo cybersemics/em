@@ -135,6 +135,7 @@ it.skip('text and background color on span tag', () => {
   })
 })
 
+// /skip-tdd
 it('fully styled thought', () => {
   expect(
     getCommandState(
@@ -151,6 +152,7 @@ it('fully styled thought', () => {
   })
 })
 
+// /skip-tdd
 it('fully styled thought without text content', () => {
   expect(
     getCommandState(
