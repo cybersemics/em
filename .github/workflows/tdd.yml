@@ -39,11 +39,7 @@ jobs:
       - name: Clone repository
         uses: actions/checkout@v6
         with:
-          # Fetch enough history to diff against the base branch
-          fetch-depth: 0
-
-      - name: Fetch base ref
-        run: git fetch origin ${{ github.event.pull_request.base.sha }} --depth=1 || true
+          fetch-depth: 100
 
       - name: Classify changed files
         id: classify
@@ -192,10 +188,10 @@ jobs:
         uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.base.sha }}
-          fetch-depth: 0
+          fetch-depth: 100
 
       - name: Fetch PR head
-        run: git fetch origin ${{ github.event.pull_request.head.sha }} --depth=1
+        run: git fetch origin ${{ github.event.pull_request.head.sha }}
 
       - name: Generate and apply test diff
         id: patch
@@ -298,10 +294,10 @@ jobs:
         uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.base.sha }}
-          fetch-depth: 0
+          fetch-depth: 100
 
       - name: Fetch PR head
-        run: git fetch origin ${{ github.event.pull_request.head.sha }} --depth=1
+        run: git fetch origin ${{ github.event.pull_request.head.sha }}
 
       - name: Generate and apply test diff
         id: patch
@@ -360,38 +356,7 @@ jobs:
 
       - name: Serve
         if: steps.patch.outputs.empty != 'true'
-        run: |
-          yarn servebuild &
-          SERVER_PID=$!
-          echo "Server PID: $SERVER_PID"
-
-          echo "Waiting for server to be ready..."
-          for i in {1..30}; do
-            if ! kill -0 $SERVER_PID 2>/dev/null; then
-              echo "Server process died!"
-              exit 1
-            fi
-
-            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -k https://localhost:2552 2>/dev/null || echo "000")
-
-            if [ "$HTTP_STATUS" = "200" ]; then
-              echo "Server is ready and responding with 200!"
-              break
-            elif [ "$HTTP_STATUS" = "502" ]; then
-              echo "Attempt $i/30: Server running but returning 502 (Bad Gateway) - proxy not ready"
-            elif [ "$HTTP_STATUS" = "000" ]; then
-              echo "Attempt $i/30: Server not responding yet"
-            else
-              echo "Attempt $i/30: Server responding with status $HTTP_STATUS"
-            fi
-
-            if [ $i -eq 30 ]; then
-              echo "Server failed to respond properly after 30 attempts (last status: $HTTP_STATUS)"
-              exit 1
-            fi
-
-            sleep 1
-          done
+        uses: ./.github/actions/serve
 
       - name: Run changed puppeteer tests on base (expect failure)
         if: steps.patch.outputs.empty != 'true'
