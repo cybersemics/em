@@ -28,9 +28,10 @@ const tags = {
  * Otherwise, undefined is returned.
  */
 const extractColors = (savedValue: string) => {
-  const foreColorRegex = /^(?:<(?:b|i|u|strike|code)>)*<(?:span|font)[^>]*\s(?:color=["']?([^"']+)["']?[^>]*>)/i
+  const foreColorRegex =
+    /^(?:<(?:b|i|u|strike|code)>)*<(?:span|font)[^>]*\s(?:color=["']?([^"']+)["']?[^>]*>).*<\/(?:span|font)>(?:<\/(?:b|i|u|strike|code)>)*$/i
   const backColorRegex =
-    /^(?:<(?:b|i|u|strike|code)>)*<(?:span|font)[^>]*\sstyle=["'][^"']*background-color:\s*([^;"']+)/i
+    /^(?:<(?:b|i|u|strike|code)>)*<(?:span|font)[^>]*\sstyle=["'][^"']*background-color:\s*([^;"']+).*<\/(?:span|font)>(?:<\/(?:b|i|u|strike|code)>)*$/i
 
   // Attempt to extract the font color
   const foreColorMatch = savedValue.match(foreColorRegex)
