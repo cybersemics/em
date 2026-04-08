@@ -135,6 +135,22 @@ it.skip('text and background color on span tag', () => {
   })
 })
 
+it('partially styled thought with color and background color', () => {
+  expect(
+    getCommandState(
+      '<b><i><u><strike><code><font color="#000000" style="background-color: rgb(0, 0, 255)">text</font> but only partly</code></strike></u></i></b>',
+    ),
+  ).toStrictEqual({
+    bold: true,
+    italic: true,
+    underline: true,
+    strikethrough: true,
+    code: true,
+    foreColor: undefined,
+    backColor: undefined,
+  })
+})
+
 // /skip-tdd
 it('fully styled thought', () => {
   expect(
