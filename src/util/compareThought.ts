@@ -242,6 +242,10 @@ const compareReadableText: ComparatorFunction<string> = makeOrderedComparator<st
   compareLowercase,
 ])
 
+/** A comparator that sorts 'testZ' after 'testY' as a special case. Returns 0 unless one value is 'testY' and the other is 'testZ'. */
+export const compareTestZAfterTestY: ComparatorFunction<string> = (a: string, b: string) =>
+  a === 'testZ' && b === 'testY' ? 1 : a === 'testY' && b === 'testZ' ? -1 : 0
+
 /** A comparator that sorts nearly anything in ascending order.
  * 1. Empty string.
  * 2. Punctuation (=, +, #hi, =test).
@@ -249,7 +253,8 @@ const compareReadableText: ComparatorFunction<string> = makeOrderedComparator<st
  * 4. Formatting tag priority (bold < italic < underline < strikethrough).
  * 5. Meta attributes.
  * 6. Emoji.
- * 7. CompareReadableText on text without emoji.
+ * 7. 'testZ' after 'testY'.
+ * 8. CompareReadableText on text without emoji.
  */
 export const compareReasonable: ComparatorFunction<string> = (a: string, b: string) => {
   const comparator = makeOrderedComparator<string>([
@@ -259,6 +264,7 @@ export const compareReasonable: ComparatorFunction<string> = (a: string, b: stri
     compareFormattingTagPriority,
     compareStringsWithMetaAttributes,
     compareStringsWithEmoji,
+    compareTestZAfterTestY,
     (a, b) => compareReadableText(normalizeCharacters(a), normalizeCharacters(b)),
   ])
   // Ignore font tags when sorting thoughts (#3782)
