@@ -124,6 +124,8 @@ jobs:
 
       - name: Check skip conditions
         id: skip
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
         run: |
           HAS_UNIT="${{ steps.classify.outputs.has_unit }}"
           HAS_PUPPETEER="${{ steps.classify.outputs.has_puppeteer }}"
@@ -156,8 +158,7 @@ jobs:
 
           # 4. Check for /skip-tdd marker in the PR description
           if [ "$SKIP" = "false" ]; then
-            PR_BODY='${{ github.event.pull_request.body }}'
-            if echo "$PR_BODY" | grep -q '/skip-tdd'; then
+            if echo "$PR_BODY" | grep -qF '/skip-tdd'; then
               SKIP="true"
               REASON="Found /skip-tdd marker in PR description"
             fi
