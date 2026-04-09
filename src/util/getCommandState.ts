@@ -23,8 +23,8 @@ const tags = {
 
 /** Extracts the foreground and background colors from the given string.
  * Returns an object with foreColor and backColor properties.
- * The colors must apply to the entire string, so other tags are permitted
- * before the color tag, but the color tag must encompass the entire text (#3904).
+ * The colors must apply to the entire string, so other tags are permitted before the color tag
+ * or after the closing color tag, but the color tag must encompass the entire text (#3904).
  * Otherwise, undefined is returned.
  */
 const extractColors = (savedValue: string) => {
