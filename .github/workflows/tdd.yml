@@ -299,6 +299,10 @@ jobs:
       - name: Fetch PR head
         run: git fetch origin ${{ github.event.pull_request.head.sha }}
 
+      - name: Restore GitHub Actions files from PR HEAD
+        if: github.event_name == 'pull_request'
+        run: git checkout FETCH_HEAD -- .github/actions/
+
       - name: Generate and apply test diff
         id: patch
         run: |
