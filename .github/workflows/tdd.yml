@@ -154,16 +154,12 @@ jobs:
             REASON="Only test files changed (no application code) — likely coverage-only"
           fi
 
-          # 4. Check for /skip-tdd marker in the test diff
+          # 4. Check for /skip-tdd marker in the PR description
           if [ "$SKIP" = "false" ]; then
-            TEST_FILE_LIST=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" -- | grep -E '/__tests__/' || true)
-            if [ -n "$TEST_FILE_LIST" ]; then
-              # shellcheck disable=SC2086
-              TEST_DIFF=$(git diff "$BASE_SHA" "$HEAD_SHA" -- $TEST_FILE_LIST 2>/dev/null || true)
-              if echo "$TEST_DIFF" | grep -q '/skip-tdd'; then
-                SKIP="true"
-                REASON="Found /skip-tdd marker in changed test diff"
-              fi
+            PR_BODY='${{ github.event.pull_request.body }}'
+            if echo "$PR_BODY" | grep -q '/skip-tdd'; then
+              SKIP="true"
+              REASON="Found /skip-tdd marker in PR description"
             fi
           fi
 
@@ -468,7 +464,7 @@ jobs:
             echo ""
             echo "TDD validation failed. Changed tests should fail on the base branch"
             echo "to prove they cover new functionality. If this is intentional, add the"
-            echo "'skip-tdd' label to the PR or include '/skip-tdd' in a test file comment."
+            echo "'skip-tdd' label to the PR or include '/skip-tdd' in the PR description."
             exit 1
           fi
 
