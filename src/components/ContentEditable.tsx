@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { isTouch } from '../browser'
 
-interface ContentEditableProps extends React.HTMLProps<HTMLDivElement> {
+interface ContentEditableProps extends Omit<React.HTMLProps<HTMLDivElement>, 'onChange'> {
   style?: React.CSSProperties
   html: string
   disabled?: boolean
@@ -18,7 +18,7 @@ interface ContentEditableProps extends React.HTMLProps<HTMLDivElement> {
  * Content Editable Component.
  */
 const ContentEditable = React.memo(
-  ({ style, html, disabled, innerRef, stopDragOver, ...props }: ContentEditableProps) => {
+  ({ style, html, disabled, innerRef, onChange, stopDragOver, ...props }: ContentEditableProps) => {
     const newContentRef = useRef<HTMLDivElement>(null)
     const contentRef = innerRef || newContentRef
     const prevHtmlRef = useRef<string>(html)
@@ -57,7 +57,7 @@ const ContentEditable = React.memo(
     }, [editableNonce])
 
     // eslint-disable-next-line jsdoc/require-jsdoc
-    const handleInput = (originalEvent: React.SyntheticEvent<HTMLInputElement>) => {
+    const handleInput = (originalEvent: React.SyntheticEvent<HTMLDivElement>) => {
       const innerHTML = contentRef!.current!.innerHTML
 
       // prevent innerHTML update when editing
@@ -69,7 +69,7 @@ const ContentEditable = React.memo(
         },
       })
 
-      props.onChange(event)
+      onChange(event)
     }
 
     return (
@@ -84,7 +84,7 @@ const ContentEditable = React.memo(
         // disable spellCheck when running in Puppeteer, otherwise red squiggly lines can break the snapshot tests
         spellCheck={!navigator.webdriver}
         style={style}
-        onBlur={(originalEvent: React.FocusEvent<HTMLInputElement>) => {
+        onBlur={(originalEvent: React.FocusEvent<HTMLDivElement>) => {
           const innerHTML = contentRef!.current!.innerHTML
 
           // allow innerHTML updates after blur
@@ -113,7 +113,7 @@ const ContentEditable = React.memo(
 
 ContentEditable.displayName = 'ContentEditable'
 
-export declare type ContentEditableEvent = React.SyntheticEvent<HTMLInputElement, Event> & {
+export declare type ContentEditableEvent = React.SyntheticEvent<HTMLDivElement, Event> & {
   target: {
     value: string
   }
