@@ -3,9 +3,9 @@ import { toggleNoteActionCreator as toggleNote } from '../actions/toggleNote'
 import PencilIcon from '../components/icons/PencilIcon'
 import { HOME_PATH } from '../constants'
 import asyncFocus from '../device/asyncFocus'
+import noteValue from '../selectors/noteValue'
 import simplifyPath from '../selectors/simplifyPath'
 import isDocumentEditable from '../util/isDocumentEditable'
-import noteValue from '../util/noteValue'
 
 const noteCommand: Command = {
   id: 'note',

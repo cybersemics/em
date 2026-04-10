@@ -7,6 +7,7 @@ import { isTouch } from '../browser'
 import { ColorToken } from '../colors.config'
 import * as selection from '../device/selection'
 import getThoughtById from '../selectors/getThoughtById'
+import noteValue from '../selectors/noteValue'
 import themeColors from '../selectors/themeColors'
 import commandStateStore from '../stores/commandStateStore'
 import head from '../util/head'
@@ -47,9 +48,12 @@ const ColorSwatch: FC<{
   size = size || fontSize * 1.2
 
   const selected = useSelector(state => {
-    const currentThoughtValue = (!!state.cursor && getThoughtById(state, head(state.cursor))?.value) || ''
+    const currentEditableValue =
+      (!!state.cursor &&
+        (state.noteFocus ? noteValue(state, state.cursor) : getThoughtById(state, head(state.cursor))?.value)) ||
+      ''
     const themeColor = themeColors(state)
-    /* Define the color and background color regex to get the current color of current thought
+    /* Define the color and background color regex to get the current color of current thought or note
        document.execCommand('foreColor') adds the color attribute with hex and document.execCommand('backColor') adds the background-color attribute with the rgb
        document.execCommand('foreColor') always sets the color as hex whether the value is rgb or hex. And document.execCommand('backColor') always sets the background with the rgb
     */
@@ -64,7 +68,7 @@ const ColorSwatch: FC<{
         commandStateBackgroundColor === addAlphaToHex(rgbToHex(themeColor.bg)) &&
         !selection.isThought())
     ) {
-      const colorMatches = currentThoughtValue.match(colorRegex) || []
+      const colorMatches = currentEditableValue.match(colorRegex) || []
 
       let matchColor, match
       // Get the colors and background colors used in current thought's value
@@ -77,7 +81,7 @@ const ColorSwatch: FC<{
       }
 
       const bgColors: Set<string> = new Set()
-      while ((match = bgColorRegex.exec(currentThoughtValue)) !== null) if (match[1]) bgColors.add(match[1])
+      while ((match = bgColorRegex.exec(currentEditableValue)) !== null) if (match[1]) bgColors.add(match[1])
       const matchBgColor = bgColors.size > 1 ? null : bgColors.values().next().value
 
       return !!(
@@ -93,12 +97,16 @@ const ColorSwatch: FC<{
 
   /** Toggles the text color to the clicked swatch. If the swatch is already selected, sets text color and background color back to default. */
   const toggleTextColor = () => {
-    dispatch(
-      formatSelection(
-        'foreColor',
-        selected ? 'fg' : color || (backgroundColor && backgroundColor !== 'fg' ? 'black' : 'bg'),
-      ),
-    )
+    dispatch((dispatch, getState) => {
+      // Note is semi-transparent by default and its color must be reset to that rather than white, which is the fg color for thoughts. (#3902)
+      const fgColor = getState().noteFocus ? 'fgNote' : 'fg'
+      dispatch(
+        formatSelection(
+          'foreColor',
+          selected ? fgColor : color || (backgroundColor && backgroundColor !== 'fg' ? 'black' : 'bg'),
+        ),
+      )
+    })
 
     // Apply background color to the selection
     dispatch(formatSelection('backColor', selected ? 'bg' : (backgroundColor ?? 'bg')))

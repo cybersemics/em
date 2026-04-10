@@ -24,8 +24,8 @@ const SearchCommands: FC<{ onInput?: (value: string) => void }> = ({ onInput }) 
         <input
           type='text'
           placeholder='Search commands...'
-          onInput={(e: React.ChangeEvent<HTMLInputElement>) => {
-            onInput?.(e.target.value)
+          onInput={(e: React.FormEvent<HTMLInputElement>) => {
+            onInput?.(e.currentTarget.value)
           }}
           className={css({
             marginLeft: 0,
