@@ -44,7 +44,10 @@ jobs:
         run: yarn build
 
       - name: Generate tunnel token
-        run: echo "TUNNEL_TOKEN=$(openssl rand -hex 16)" >> "$GITHUB_ENV"
+        run: |
+          TOKEN=$(openssl rand -hex 16)
+          echo "::add-mask::$TOKEN"
+          echo "TUNNEL_TOKEN=$TOKEN" >> "$GITHUB_ENV"
 
       - name: Serve
         run: |
