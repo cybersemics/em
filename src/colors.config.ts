@@ -12,6 +12,7 @@ const colors = {
     darkgray: 'rgba(17, 17, 17, 1)', // #111111
     fg85: 'rgba(217, 217, 217, 1)', // #d9d9d9
     fg: 'rgba(255, 255, 255, 1)',
+    fgNote: 'rgba(255, 255, 255, 0.5)',
     fgOverlay10: 'rgba(255, 255, 255, 0.1)',
     fgOverlay20: 'rgba(255, 255, 255, 0.2)',
     fgOverlay30: 'rgba(255, 255, 255, 0.3)',
@@ -101,6 +102,7 @@ const colors = {
     darkgray: 'rgba(237, 237, 237, 1)', // #ededed
     fg85: 'rgba(39, 39, 39, 1)', // #272727
     fg: 'rgba(0, 0, 0, 1)',
+    fgNote: 'rgba(0, 0, 0, 0.5)',
     fgOverlay10: 'rgba(0, 0, 0, 0.1)',
     fgOverlay20: 'rgba(0, 0, 0, 0.2)',
     fgOverlay30: 'rgba(0, 0, 0, 0.3)',

@@ -21,6 +21,7 @@ jobs:
   run:
     name: BrowserStack
     runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request_target' || github.event.pull_request.changed_files > 0
 
     steps:
       - name: Clone repository
