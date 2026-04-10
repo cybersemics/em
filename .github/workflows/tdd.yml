@@ -35,6 +35,8 @@ jobs:
       merge_base: ${{ steps.classify.outputs.merge_base }}
       skip: ${{ steps.skip.outputs.skip }}
       skip_reason: ${{ steps.skip.outputs.reason }}
+      skip_unit: ${{ steps.skip.outputs.skip_unit }}
+      skip_puppeteer: ${{ steps.skip.outputs.skip_puppeteer }}
 
     steps:
       - name: Clone repository
@@ -142,12 +144,24 @@ jobs:
 
           SKIP="false"
           REASON=""
+          SKIP_UNIT="false"
+          SKIP_PUPPETEER="false"
 
           # 1. Check for skip-tdd label
           LABELS='${{ toJSON(github.event.pull_request.labels.*.name) }}'
           if echo "$LABELS" | grep -q '"skip-tdd"'; then
             SKIP="true"
             REASON="PR has skip-tdd label"
+          fi
+
+          # 1b. Check for granular skip labels
+          if echo "$LABELS" | grep -q '"skip-tdd-unit"'; then
+            SKIP_UNIT="true"
+            REASON="PR has skip-tdd-unit label"
+          fi
+          if echo "$LABELS" | grep -q '"skip-tdd-puppeteer"'; then
+            SKIP_PUPPETEER="true"
+            REASON="${REASON:+$REASON; }PR has skip-tdd-puppeteer label"
           fi
 
           # 2. No changed tests at all
@@ -164,10 +178,14 @@ jobs:
 
           echo "skip=$SKIP" >> "$GITHUB_OUTPUT"
           echo "reason=$REASON" >> "$GITHUB_OUTPUT"
+          echo "skip_unit=$SKIP_UNIT" >> "$GITHUB_OUTPUT"
+          echo "skip_puppeteer=$SKIP_PUPPETEER" >> "$GITHUB_OUTPUT"
 
           echo "=== Skip decision ==="
           echo "Skip: $SKIP"
           echo "Reason: $REASON"
+          echo "Skip unit: $SKIP_UNIT"
+          echo "Skip puppeteer: $SKIP_PUPPETEER"
 
   # ---------------------------------------------------------------------------
   # Unit: apply changed unit test diff to base, run them, expect failure.
@@ -175,7 +193,7 @@ jobs:
   unit:
     name: TDD — Unit tests
     needs: detect
-    if: needs.detect.outputs.skip != 'true' && needs.detect.outputs.has_unit == 'true'
+    if: needs.detect.outputs.skip != 'true' && needs.detect.outputs.skip_unit != 'true' && needs.detect.outputs.has_unit == 'true'
     runs-on: ubuntu-latest
 
     steps:
@@ -274,7 +292,7 @@ jobs:
   puppeteer:
     name: TDD — Puppeteer tests
     needs: detect
-    if: needs.detect.outputs.skip != 'true' && needs.detect.outputs.has_puppeteer == 'true'
+    if: needs.detect.outputs.skip != 'true' && needs.detect.outputs.skip_puppeteer != 'true' && needs.detect.outputs.has_puppeteer == 'true'
     runs-on: ubuntu-latest
     services:
       browserless:
@@ -424,12 +442,18 @@ jobs:
         run: |
           SKIP="${{ needs.detect.outputs.skip }}"
           SKIP_REASON="${{ needs.detect.outputs.skip_reason }}"
+          SKIP_UNIT="${{ needs.detect.outputs.skip_unit }}"
+          SKIP_PUPPETEER="${{ needs.detect.outputs.skip_puppeteer }}"
 
           echo "=== TDD Validation Summary ==="
 
           if [ "$SKIP" = "true" ]; then
             echo "⏭️  Skipped: $SKIP_REASON"
             exit 0
+          fi
+
+          if [ -n "$SKIP_REASON" ]; then
+            echo "⏭️  Partial skip: $SKIP_REASON"
           fi
 
           # Check each job result
@@ -467,7 +491,8 @@ jobs:
             echo ""
             echo "TDD validation failed. Changed tests should fail on the base branch"
             echo "to prove they cover new functionality. If this is intentional, add the"
-            echo "'skip-tdd' label to the PR."
+            echo "'skip-tdd' label to skip all TDD checks, or use 'skip-tdd-unit' /"
+            echo "'skip-tdd-puppeteer' to skip only the relevant job."
             exit 1
           fi
 
