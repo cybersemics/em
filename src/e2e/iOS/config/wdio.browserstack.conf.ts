@@ -1,7 +1,4 @@
-import { type ChildProcess, spawn } from 'child_process'
-import { bin, install } from 'cloudflared'
 import dotenv from 'dotenv'
-import fs from 'fs'
 import path from 'path'
 import baseConfig from './wdio.base.conf.js'
 
@@ -20,95 +17,13 @@ if (!process.env.BROWSERSTACK_ACCESS_KEY) {
 const user = process.env.BROWSERSTACK_USERNAME
 const date = new Date().toISOString().slice(0, 10)
 
-let tunnelProcess: ChildProcess | null = null
-
-/**
- * Starts a cloudflared tunnel and returns the public HTTPS URL.
- * Safari blocks localStorage on self-signed HTTPS, so we use cloudflared
- * to get a real CA-signed cert (*.trycloudflare.com).
- */
-async function startTunnel(): Promise<string> {
-  // Install the cloudflared binary if not already present
-  if (!fs.existsSync(bin)) {
-    await install(bin)
-  }
-
-  return new Promise((resolve, reject) => {
-    const proc = spawn(bin, ['tunnel', '--url', 'https://localhost:3000', '--no-tls-verify'], {
-      stdio: ['ignore', 'pipe', 'pipe'],
-    })
-    tunnelProcess = proc
-
-    let output = ''
-    let settled = false
-
-    // Use a wrapper object so cleanup can reference timeout before it's assigned
-    const state = { timeout: undefined as NodeJS.Timeout | undefined }
-
-    /** Remove all listeners and cancel the timeout after the Promise settles. */
-    const cleanup = () => {
-      if (state.timeout !== undefined) clearTimeout(state.timeout)
-      proc.stdout?.removeAllListeners('data')
-      proc.stderr?.removeAllListeners('data')
-      proc.removeAllListeners('error')
-      proc.removeAllListeners('exit')
-    }
-
-    /** Resolve once and release listeners. */
-    const resolveAndCleanup = (url: string) => {
-      if (settled) return
-      settled = true
-      cleanup()
-      resolve(url)
-    }
-
-    /** Reject once, terminate the child, and release listeners. */
-    const rejectAndCleanup = (error: Error) => {
-      if (settled) return
-      settled = true
-      cleanup()
-      if (!proc.killed) {
-        proc.kill()
-      }
-      if (tunnelProcess === proc) {
-        tunnelProcess = null
-      }
-      reject(error)
-    }
-
-    /** Scan cloudflared output for the tunnel URL. */
-    const onData = (data: Buffer) => {
-      output += data.toString()
-      const match = output.match(/https:\/\/[a-z0-9-]+\.trycloudflare\.com/)
-      return match ? resolveAndCleanup(match[0]) : null
-    }
-
-    /** Reject if cloudflared exits before printing the tunnel URL. */
-    const onExit = (code: number | null, signal: NodeJS.Signals | null) =>
-      rejectAndCleanup(
-        new Error(
-          `cloudflared exited before tunnel URL was available${code !== null ? ` (code ${code})` : ''}${signal ? ` (signal ${signal})` : ''}`,
-        ),
-      )
-
-    /** Reject on process startup errors. */
-    const onError = (err: Error) => rejectAndCleanup(new Error(`Failed to start cloudflared: ${err.message}`))
-
-    state.timeout = setTimeout(() => {
-      rejectAndCleanup(new Error('cloudflared tunnel timed out'))
-    }, 30000)
-
-    proc.stdout?.on('data', onData)
-    proc.stderr?.on('data', onData)
-    proc.once('error', onError)
-    proc.once('exit', onExit)
-  })
-}
-
 /**
  * WDIO configuration for BrowserStack iOS testing.
- * Uses cloudflared tunnel to expose the local HTTPS dev server via a public
- * URL with a real CA-signed cert, avoiding Safari's self-signed cert restrictions.
+ * Uses BrowserStack Local to tunnel traffic privately between CI and BrowserStack
+ * devices. The networkLogs capability causes BrowserStack to set up an mitmproxy
+ * that installs trusted certs on the device, giving Safari a secure context
+ * (enabling localStorage, sessionStorage, SubtleCrypto, etc.) even though the
+ * local dev server uses a self-signed cert.
  *
  * Prerequisites:
  * 1. Set BROWSERSTACK_USERNAME and BROWSERSTACK_ACCESS_KEY env vars.
@@ -143,32 +58,24 @@ export const config: WebdriverIO.Config = {
     },
   ],
 
-  // Services
+  // Services — BrowserStack Local creates a private tunnel (no public exposure)
   services: [
     [
       'browserstack',
       {
+        browserstackLocal: true,
+        opts: {
+          forceLocal: 'true',
+        },
         testObservability: true,
       },
     ],
   ],
 
   onPrepare: async function () {
-    // Start cloudflared tunnel if not already set (e.g. by a CI workflow step)
-    if (!process.env.CLOUDFLARED_URL) {
-      const url = await startTunnel()
-      process.env.CLOUDFLARED_URL = url
-      console.info(`cloudflared tunnel: ${url}`)
-    }
-
+    // Tell base config to navigate to bs-local.com (BrowserStack Local resolves this to localhost)
+    process.env.BS_LOCAL_URL = 'https://bs-local.com:3000'
     await baseConfig.onPrepare()
-  },
-
-  onComplete: function () {
-    if (tunnelProcess) {
-      tunnelProcess.kill()
-      tunnelProcess = null
-    }
   },
 }
 

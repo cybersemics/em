@@ -81,10 +81,10 @@ const baseConfig = {
   },
 
   // Navigate once at the start of the session.
-  // CLOUDFLARED_URL: set by BrowserStack config (or CI) — a public HTTPS URL with a trusted cert.
+  // BS_LOCAL_URL: set by wdio.browserstack.conf.ts when using BrowserStack Local tunnel.
   // localhost: used for local Appium testing.
   before: async function () {
-    const baseUrl = process.env.CLOUDFLARED_URL || 'https://localhost:3000'
+    const baseUrl = process.env.BS_LOCAL_URL || 'https://localhost:3000'
     await browser.url(baseUrl)
 
     await browser.waitUntil(
