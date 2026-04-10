@@ -25,6 +25,7 @@ jobs:
   detect:
     name: Detect changed tests
     runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request' || github.event.pull_request.changed_files > 0
     outputs:
       has_unit: ${{ steps.classify.outputs.has_unit }}
       has_puppeteer: ${{ steps.classify.outputs.has_puppeteer }}
@@ -422,10 +423,16 @@ jobs:
     steps:
       - name: Evaluate results
         run: |
+          DETECT_RESULT="${{ needs.detect.result }}"
           SKIP="${{ needs.detect.outputs.skip }}"
           SKIP_REASON="${{ needs.detect.outputs.skip_reason }}"
 
           echo "=== TDD Validation Summary ==="
+
+          if [ "$DETECT_RESULT" = "skipped" ]; then
+            echo "⏭️  Skipped: No file changes"
+            exit 0
+          fi
 
           if [ "$SKIP" = "true" ]; then
             echo "⏭️  Skipped: $SKIP_REASON"
