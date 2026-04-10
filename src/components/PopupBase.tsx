@@ -108,7 +108,6 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
           right: 0,
           width: 'max-content',
           ...borderStyles,
-          ...fullScreenStyles,
           '&:hover': {
             '& [data-close-button]': {
               opacity: showXOnHover ? 1 : undefined,
@@ -123,6 +122,7 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
         // merge style with useSwipeToDismissProps.style (transform, transition, and touchAction for sticking to user's touch)
         style={{
           ...positionFixedStyles,
+          ...fullScreenStyles,
           background,
           fontSize,
           padding,
