@@ -32,6 +32,7 @@ jobs:
       unit_files: ${{ steps.classify.outputs.unit_files }}
       puppeteer_files: ${{ steps.classify.outputs.puppeteer_files }}
       ios_files: ${{ steps.classify.outputs.ios_files }}
+      merge_base: ${{ steps.classify.outputs.merge_base }}
       skip: ${{ steps.skip.outputs.skip }}
       skip_reason: ${{ steps.skip.outputs.reason }}
 
@@ -39,7 +40,7 @@ jobs:
       - name: Clone repository
         uses: actions/checkout@v6
         with:
-          fetch-depth: 100
+          fetch-depth: 999
 
       - name: Classify changed files
         id: classify
@@ -50,8 +51,14 @@ jobs:
           echo "Base SHA: $BASE_SHA"
           echo "Head SHA: $HEAD_SHA"
 
+          # Compute the merge base so we only diff files changed in this PR,
+          # not files from other PRs merged into the base branch since the PR
+          # was originally branched off.
+          MERGE_BASE=$(git merge-base "$BASE_SHA" "$HEAD_SHA")
+          echo "Merge base: $MERGE_BASE"
+
           # All changed files in the PR
-          CHANGED_FILES=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" --)
+          CHANGED_FILES=$(git diff --name-only "$MERGE_BASE" "$HEAD_SHA" --)
 
           echo "=== All changed files ==="
           echo "$CHANGED_FILES"
@@ -109,6 +116,7 @@ jobs:
           echo "unit_files=$(echo "$UNIT_FILES" | base64 -w 0)" >> "$GITHUB_OUTPUT"
           echo "puppeteer_files=$(echo "$PUPPETEER_FILES" | base64 -w 0)" >> "$GITHUB_OUTPUT"
           echo "ios_files=$(echo "$IOS_FILES" | base64 -w 0)" >> "$GITHUB_OUTPUT"
+          echo "merge_base=$MERGE_BASE" >> "$GITHUB_OUTPUT"
 
           # Store whether any non-test app code changed
           HAS_APP_CHANGES="false"
@@ -175,7 +183,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.base.sha }}
-          fetch-depth: 100
+          fetch-depth: 999
 
       - name: Fetch PR head
         run: git fetch origin ${{ github.event.pull_request.head.sha }}
@@ -183,7 +191,7 @@ jobs:
       - name: Generate and apply test diff
         id: patch
         run: |
-          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          MERGE_BASE="${{ needs.detect.outputs.merge_base }}"
           HEAD_SHA="${{ github.event.pull_request.head.sha }}"
 
           # Decode the file list
@@ -194,7 +202,7 @@ jobs:
 
           # Generate diff for only the changed test files
           # shellcheck disable=SC2086
-          git diff "$BASE_SHA" "$HEAD_SHA" -- $UNIT_FILES > /tmp/test.patch || true
+          git diff "$MERGE_BASE" "$HEAD_SHA" -- $UNIT_FILES > /tmp/test.patch || true
 
           if [ ! -s /tmp/test.patch ]; then
             echo "Empty patch — nothing to apply"
@@ -281,7 +289,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.base.sha }}
-          fetch-depth: 100
+          fetch-depth: 999
 
       - name: Fetch PR head
         run: git fetch origin ${{ github.event.pull_request.head.sha }}
@@ -293,7 +301,7 @@ jobs:
       - name: Generate and apply test diff
         id: patch
         run: |
-          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          MERGE_BASE="${{ needs.detect.outputs.merge_base }}"
           HEAD_SHA="${{ github.event.pull_request.head.sha }}"
 
           PUPPETEER_FILES=$(echo "${{ needs.detect.outputs.puppeteer_files }}" | base64 -d)
@@ -302,7 +310,7 @@ jobs:
           echo "$PUPPETEER_FILES"
 
           # shellcheck disable=SC2086
-          git diff "$BASE_SHA" "$HEAD_SHA" -- $PUPPETEER_FILES > /tmp/test.patch || true
+          git diff "$MERGE_BASE" "$HEAD_SHA" -- $PUPPETEER_FILES > /tmp/test.patch || true
 
           if [ ! -s /tmp/test.patch ]; then
             echo "Empty patch — nothing to apply"
