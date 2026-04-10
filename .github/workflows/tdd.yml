@@ -124,8 +124,6 @@ jobs:
 
       - name: Check skip conditions
         id: skip
-        env:
-          PR_BODY: ${{ github.event.pull_request.body }}
         run: |
           HAS_UNIT="${{ steps.classify.outputs.has_unit }}"
           HAS_PUPPETEER="${{ steps.classify.outputs.has_puppeteer }}"
@@ -154,14 +152,6 @@ jobs:
           if [ "$SKIP" = "false" ] && [ "$HAS_APP_CHANGES" = "false" ]; then
             SKIP="true"
             REASON="Only test files changed (no application code) — likely coverage-only"
-          fi
-
-          # 4. Check for /skip-tdd marker in the PR description
-          if [ "$SKIP" = "false" ]; then
-            if echo "$PR_BODY" | grep -qF '/skip-tdd'; then
-              SKIP="true"
-              REASON="Found /skip-tdd marker in PR description"
-            fi
           fi
 
           echo "skip=$SKIP" >> "$GITHUB_OUTPUT"
@@ -469,7 +459,7 @@ jobs:
             echo ""
             echo "TDD validation failed. Changed tests should fail on the base branch"
             echo "to prove they cover new functionality. If this is intentional, add the"
-            echo "'skip-tdd' label to the PR or include '/skip-tdd' in the PR description."
+            echo "'skip-tdd' label to the PR."
             exit 1
           fi
 
