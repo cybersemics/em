@@ -65,7 +65,7 @@ export const config: WebdriverIO.Config = {
       {
         browserstackLocal: true,
         opts: {
-          forceLocal: 'true',
+          forceLocal: true,
         },
         testObservability: true,
       },
