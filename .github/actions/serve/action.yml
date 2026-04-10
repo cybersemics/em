@@ -7,7 +7,7 @@ runs:
     - name: Serve
       shell: bash
       run: |
-        yarn servebuild &
+        yarn servebuild --host &
         SERVER_PID=$!
         echo "Server PID: $SERVER_PID"
 
