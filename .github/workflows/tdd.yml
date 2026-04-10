@@ -76,6 +76,25 @@ jobs:
           # iOS tests: src/e2e/iOS/__tests__/**/*.ts
           IOS_FILES=$(echo "$CHANGED_FILES" | grep -E '^src/e2e/iOS/__tests__/.*\.ts$' || true)
 
+          # Filter a newline-separated list of test files to only those where the diff
+          # adds new test definitions (new it() or test() calls). This prevents triggering
+          # TDD for changes that only modify existing test internals (e.g. replacing
+          # sleep() with waitUntil()). Matches both it(...) and test(...) regardless of
+          # indentation. Usage: filter_new_tests "$FILES" "$MERGE_BASE" "$HEAD_SHA"
+          filter_new_tests() {
+            local files="$1" merge_base="$2" head_sha="$3" result=""
+            for f in $files; do
+              if git diff "$merge_base" "$head_sha" -- "$f" | grep -qE '^\+[ \t]*(it|test)\b'; then
+                result="$result"$'\n'"$f"
+              fi
+            done
+            echo "$result" | sed '/^$/d'
+          }
+
+          UNIT_FILES=$(filter_new_tests "$UNIT_FILES" "$MERGE_BASE" "$HEAD_SHA")
+          PUPPETEER_FILES=$(filter_new_tests "$PUPPETEER_FILES" "$MERGE_BASE" "$HEAD_SHA")
+          IOS_FILES=$(filter_new_tests "$IOS_FILES" "$MERGE_BASE" "$HEAD_SHA")
+
           # All test files (union of the above)
           ALL_TEST_FILES=$(printf '%s\n' "$UNIT_FILES" "$PUPPETEER_FILES" "$IOS_FILES" | sed '/^$/d' | sort -u)
 
