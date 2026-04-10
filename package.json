@@ -205,7 +205,7 @@
     "@wdio/types": "^9.27.0",
     "chalk": "^5.6.2",
     "dotenv": "17.3.1",
-    "eslint": "^10.2.0",
+    "eslint": "^9.39.4",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-export-default-identifier": "0.3.0",
     "eslint-plugin-import": "^2.32.0",
