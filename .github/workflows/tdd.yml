@@ -157,9 +157,11 @@ jobs:
           # 1b. Check for granular skip labels
           if echo "$LABELS" | grep -q '"skip-tdd-unit"'; then
             SKIP_UNIT="true"
+            REASON="PR has skip-tdd-unit label"
           fi
           if echo "$LABELS" | grep -q '"skip-tdd-puppeteer"'; then
             SKIP_PUPPETEER="true"
+            REASON="${REASON:+$REASON; }PR has skip-tdd-puppeteer label"
           fi
 
           # 2. No changed tests at all
@@ -440,12 +442,18 @@ jobs:
         run: |
           SKIP="${{ needs.detect.outputs.skip }}"
           SKIP_REASON="${{ needs.detect.outputs.skip_reason }}"
+          SKIP_UNIT="${{ needs.detect.outputs.skip_unit }}"
+          SKIP_PUPPETEER="${{ needs.detect.outputs.skip_puppeteer }}"
 
           echo "=== TDD Validation Summary ==="
 
           if [ "$SKIP" = "true" ]; then
             echo "⏭️  Skipped: $SKIP_REASON"
             exit 0
+          fi
+
+          if [ -n "$SKIP_REASON" ]; then
+            echo "⏭️  Partial skip: $SKIP_REASON"
           fi
 
           # Check each job result
