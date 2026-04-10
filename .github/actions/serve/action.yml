@@ -1,5 +1,5 @@
 name: Serve build
-description: Start the build server and wait for it to be ready behind the SSL proxy
+description: Start the HTTPS build server and wait for it to be ready
 
 runs:
   using: composite
@@ -19,7 +19,7 @@ runs:
           fi
 
           # Test the full request path and check for 502 errors
-          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -k https://localhost:2552 2>/dev/null || echo "000")
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -k https://localhost:3000 2>/dev/null || echo "000")
 
           if [ "$HTTP_STATUS" = "200" ]; then
             echo "Server is ready and responding with 200!"
