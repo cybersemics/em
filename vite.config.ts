@@ -1,8 +1,8 @@
 import basicSsl from '@vitejs/plugin-basic-ssl'
 import react from '@vitejs/plugin-react'
-import crypto from 'crypto'
+import type { IncomingMessage, ServerResponse } from 'http'
 import path from 'path'
-import { type Plugin, defineConfig } from 'vite'
+import { type Plugin, type PreviewServer, type ViteDevServer, defineConfig } from 'vite'
 import checker from 'vite-plugin-checker'
 import { createHtmlPlugin } from 'vite-plugin-html'
 import { VitePWA } from 'vite-plugin-pwa'
@@ -20,8 +20,9 @@ function tunnelTokenGate(): Plugin | undefined {
   const token = process.env.TUNNEL_TOKEN
   if (!token) return undefined
 
-  const gate = (server: { middlewares: { use: (fn: Function) => void } }) => {
-    server.middlewares.use((req: { url?: string }, res: { statusCode: number; end: (s: string) => void }, next: () => void) => {
+  /** Middleware that rejects requests missing the tunnel token. */
+  const gate = (server: ViteDevServer | PreviewServer) => {
+    server.middlewares.use((req: IncomingMessage, res: ServerResponse, next: () => void) => {
       const url = new URL(req.url || '/', 'http://localhost')
       if (url.searchParams.get('__token') === token) {
         return next()
