@@ -1,5 +1,5 @@
 import puppeteer from 'puppeteer-core'
-import { type Environment, builtinEnvironments, populateGlobal } from 'vitest/runtime'
+import { type Environment, builtinEnvironments, populateGlobal } from 'vitest/environments'
 
 /** Puppeteer Environment for vitest. */
 const PuppeteerEnvironment: Environment = {
