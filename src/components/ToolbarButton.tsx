@@ -118,7 +118,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
       const toolbarEl = iconEl.closest('#toolbar')!
       const scrolled = isTouch && Math.abs(lastScrollLeft.current - toolbarEl.scrollLeft) >= 5
 
-      if (!customize && isButtonExecutable && !disabled && !scrolled && (isPressing || wasMouseDown)) {
+      if (!customize && !disabled && !scrolled && (isPressing || wasMouseDown)) {
         haptics.light()
 
         if (!isPressedRef.current) {

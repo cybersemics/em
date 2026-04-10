@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import React, { FC, useRef } from 'react'
-import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
+import _ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
 import { useDispatch } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { childRecipe, editableRecipe, thoughtRecipe } from '../../styled-system/recipes'
@@ -10,6 +10,12 @@ import store from '../stores/app'
 import strip from '../util/strip'
 import SearchIcon from './SearchIcon'
 import SearchSubthoughts from './SearchSubthoughts'
+
+// Rolldown (Vite 8) wraps CJS modules with __esModule:true differently than Rollup (Vite 7),
+// causing the default export to be the module namespace object instead of the component.
+// Access .default if it exists (Rolldown), otherwise use the import directly (Rollup/correct behavior).
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const ContentEditable = ((_ContentEditable as any).default ?? _ContentEditable) as typeof _ContentEditable
 
 // milliseconds to delay the search function for performance
 const SEARCH_DEBOUNCE_WAIT = 180

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
+import _ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
 import { useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { textNoteRecipe } from '../../styled-system/recipes'
@@ -24,6 +24,12 @@ import head from '../util/head'
 import strip from '../util/strip'
 import useOnCut from './Editable/useOnCut'
 import FauxCaret from './FauxCaret'
+
+// Rolldown (Vite 8) wraps CJS modules with __esModule:true differently than Rollup (Vite 7),
+// causing the default export to be the module namespace object instead of the component.
+// Access .default if it exists (Rolldown), otherwise use the import directly (Rollup/correct behavior).
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const ContentEditable = ((_ContentEditable as any).default ?? _ContentEditable) as typeof _ContentEditable
 
 /** Renders an editable note that modifies the content of the hidden =note attribute. */
 const Note = React.memo(
