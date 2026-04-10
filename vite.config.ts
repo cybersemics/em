@@ -1,12 +1,42 @@
 import basicSsl from '@vitejs/plugin-basic-ssl'
 import react from '@vitejs/plugin-react'
+import crypto from 'crypto'
 import path from 'path'
-import { defineConfig } from 'vite'
+import { type Plugin, defineConfig } from 'vite'
 import checker from 'vite-plugin-checker'
 import { createHtmlPlugin } from 'vite-plugin-html'
 import { VitePWA } from 'vite-plugin-pwa'
 
 const useHttps = !process.env.HTTP
+
+/**
+ * Vite plugin that gates access behind a secret token when TUNNEL_TOKEN is set.
+ * Used in CI to prevent unauthorized access when the dev server is exposed via
+ * a public cloudflared tunnel. Requests without ?__token=<secret> get a 403.
+ * The token is set in the CI workflow and appended to the tunnel URL by the
+ * test config.
+ */
+function tunnelTokenGate(): Plugin | undefined {
+  const token = process.env.TUNNEL_TOKEN
+  if (!token) return undefined
+
+  const gate = (server: { middlewares: { use: (fn: Function) => void } }) => {
+    server.middlewares.use((req: { url?: string }, res: { statusCode: number; end: (s: string) => void }, next: () => void) => {
+      const url = new URL(req.url || '/', 'http://localhost')
+      if (url.searchParams.get('__token') === token) {
+        return next()
+      }
+      res.statusCode = 403
+      res.end('Forbidden')
+    })
+  }
+
+  return {
+    name: 'tunnel-token-gate',
+    configureServer: gate,
+    configurePreviewServer: gate,
+  }
+}
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -52,6 +82,8 @@ export default defineConfig({
     createHtmlPlugin({ minify: true }),
     // Use HTTPS for dev server by default. Set HTTP=1 to disable.
     ...(useHttps ? [basicSsl()] : []),
+    // Gate access behind a token when exposed via cloudflared tunnel in CI.
+    tunnelTokenGate(),
   ],
   server: {
     // Allow bs-local.com for BrowserStack local testing

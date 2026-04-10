@@ -10033,6 +10033,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"cloudflared@npm:^0.7.1":
+  version: 0.7.1
+  resolution: "cloudflared@npm:0.7.1"
+  bin:
+    cloudflared: lib/cloudflared.js
+  checksum: 10c0/e5cb2a44f514c19f80078eed019cf772d545ff58e528359b5d31a96de0885e959085fee37b21d3c99053d93b5a4abeb8c23b5cb66127257ad4dc92ef01912626
+  languageName: node
+  linkType: hard
+
 "clsx@npm:^2.1.1":
   version: 2.1.1
   resolution: "clsx@npm:2.1.1"
@@ -11334,6 +11343,7 @@ __metadata:
     axios: "npm:^1.13.6"
     chalk: "npm:^5.6.2"
     clipboard: "npm:^2.0.11"
+    cloudflared: "npm:^0.7.1"
     dnd-core: "npm:^16.0.1"
     dompurify: "npm:^3.3.2"
     dotenv: "npm:17.3.1"
