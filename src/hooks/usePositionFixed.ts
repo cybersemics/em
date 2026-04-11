@@ -46,19 +46,18 @@ const usePositionFixed = ({
 
     let animation: Animation | undefined
 
-    /** Calculates the initial top offset for the element (without the scroll contribution). */
-    const initialTop = fromBottom ? innerHeight - safariKeyboard.height - (height ?? 0) - offset : offset
-
     /** Creates or recreates the scroll-driven animation based on the current document scroll range. */
     const setupAnimation = () => {
       animation?.cancel()
-      const maxScroll = scrollingElement.scrollHeight - window.innerHeight
+      // Use clientHeight rather than window.innerHeight for accuracy when viewport-affecting UI is present.
+      const maxScroll = scrollingElement.scrollHeight - scrollingElement.clientHeight
       if (!elementRef.current || maxScroll <= 0) return
       const timeline = new ScrollTimeline({ source: scrollingElement, axis: 'block' })
-      // Animate translateY from 0 (no scroll) to maxScroll (fully scrolled) so that the absolute-
-      // positioned element tracks the viewport as the user scrolls, matching position:fixed behaviour.
+      // Animate translateY from 0 (at top of page) to maxScroll (fully scrolled) so that the
+      // absolute-positioned element tracks the viewport as the user scrolls, matching position:fixed
+      // behaviour. The layout top is already set to initialTop via the inline style.
       animation = elementRef.current.animate(
-        [{ transform: `translateY(${initialTop}px)` }, { transform: `translateY(${initialTop + maxScroll}px)` }],
+        [{ transform: 'translateY(0px)' }, { transform: `translateY(${maxScroll}px)` }],
         { timeline, fill: 'both' },
       )
     }
@@ -78,9 +77,10 @@ const usePositionFixed = ({
   let top, bottom
   if (position === 'absolute') {
     if (supportsScrollTimeline) {
-      // With ScrollTimeline the animation drives translateY on top of top:0, so return top:0 as the
-      // layout base. The animation keyframes incorporate initialTop so the rendered position is correct.
-      top = '0'
+      // Set the layout top to the initial viewport-relative offset. The ScrollTimeline animation
+      // then adds translateY(scrollY) on top of this to keep the element fixed in the viewport.
+      const initialTop = fromBottom ? innerHeight - safariKeyboard.height - (height ?? 0) - offset : offset
+      top = `${initialTop}px`
     } else {
       // Fallback: compute the absolute top position reactively using scrollTop.
       top = fromBottom
