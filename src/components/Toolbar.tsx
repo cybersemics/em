@@ -104,6 +104,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   const arrowWidth = fontSize / 3
   const showDropdown = useSelector(state => state.showColorPicker || state.showLetterCase)
   const positionFixedStyles = usePositionFixed()
+  const { ref: positionFixedRef, ...positionFixedStyleValues } = positionFixedStyles
 
   // re-render only (why?)
   useSelector(state => state.showHiddenThoughts)
@@ -210,6 +211,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
     <FadeTransition in={!distractionFreeTyping} type='distractionFreeTyping' unmountOnExit>
       <div
         aria-label='toolbar'
+        ref={positionFixedRef as React.RefObject<HTMLDivElement>}
         className={cx(
           // When a dropdown like ColorPicker or LetterCase is open, set pointer-events: none, otherwise the toolbar will block the editor. This will be overridden by the toolbar buttons to allow interaction.
           showDropdown && toolbarPointerEventsRecipe(),
@@ -231,7 +233,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
           }),
         )}
         style={{
-          ...(!customize ? positionFixedStyles : null),
+          ...(!customize ? positionFixedStyleValues : null),
           // make toolbar flush with left padding
           marginLeft: customize ? -5 : 0,
           // offset extended drop area of ToolbarButton

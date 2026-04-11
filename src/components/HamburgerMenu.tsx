@@ -59,6 +59,7 @@ const HamburgerMenu = () => {
   const dispatch = useDispatch()
   const fontSize = useSelector(state => state.fontSize)
   const positionFixedStyles = usePositionFixed()
+  const { ref: positionFixedRef, ...positionFixedStyleValues } = positionFixedStyles
 
   const width = fontSize * 1.3
   const paddingTop = 15 + fontSize * 0.1
@@ -67,6 +68,7 @@ const HamburgerMenu = () => {
     <FadeTransition in={!distractionFreeTyping} type='distractionFreeTyping' unmountOnExit>
       <div
         aria-label='menu'
+        ref={positionFixedRef as React.RefObject<HTMLDivElement>}
         className={css({
           zIndex: 'hamburgerMenu',
           userSelect: 'none',
@@ -78,11 +80,11 @@ const HamburgerMenu = () => {
           },
         })}
         style={{
-          ...positionFixedStyles,
+          ...positionFixedStyleValues,
           padding: `${paddingTop}px 15px 10px 15px`,
           // On macOS, if the user cancels a drag and then switches tabs, upon returning mouseup will fire at coordinates (0,0), triggering fastClick on any element located at (0,0).
           // Therefore, position the HamburgerMenu at top: 1px so that the sidebar is not accidentally opened on tab change.
-          top: `calc(${positionFixedStyles.top} + 1px)`,
+          top: `calc(${positionFixedStyleValues.top} + 1px)`,
         }}
         {...fastClick(e => {
           // TODO: Why does the sidebar not open with fastClick or onTouchEnd without a setTimeout?

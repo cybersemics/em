@@ -1,4 +1,4 @@
-import { FC } from 'react'
+import React, { FC } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
 import { css } from '../../styled-system/css'
@@ -12,12 +12,14 @@ const ErrorMessage: FC = () => {
   const value = useSelector(state => state.error)
   const dispatch = useDispatch()
   const positionFixedStyles = usePositionFixed()
+  const { ref: positionFixedRef, ...positionFixedStyleValues } = positionFixedStyles
 
   return (
     <TransitionGroup>
       {value ? (
         <FadeTransition type='fast'>
           <div
+            ref={positionFixedRef as React.RefObject<HTMLDivElement>}
             className={css({
               left: '0',
               right: '0',
@@ -29,7 +31,7 @@ const ErrorMessage: FC = () => {
               wordBreak: 'break-word',
             })}
             style={{
-              ...positionFixedStyles,
+              ...positionFixedStyleValues,
             }}
           >
             {value.toString()}

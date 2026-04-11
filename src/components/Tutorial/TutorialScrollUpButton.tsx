@@ -1,4 +1,4 @@
-import { FC, useCallback } from 'react'
+import React, { FC, useCallback } from 'react'
 import { css, cx } from '../../../styled-system/css'
 import scrollTo from '../../device/scrollTo'
 import usePositionFixed from '../../hooks/usePositionFixed'
@@ -7,6 +7,7 @@ import TutorialNavigationButton from './TutorialNavigationButton'
 /** A button to scroll up to the tutorial. */
 const TutorialScrollUpButton: FC<{ show: boolean }> = ({ show }) => {
   const positionFixedStyles = usePositionFixed()
+  const { ref: positionFixedRef, ...positionFixedStyleValues } = positionFixedStyles
 
   /** Scrolls to the top of the window. */
   const scrollUp = useCallback(() => {
@@ -18,6 +19,7 @@ const TutorialScrollUpButton: FC<{ show: boolean }> = ({ show }) => {
 
   return (
     <div
+      ref={positionFixedRef as React.RefObject<HTMLDivElement>}
       className={css({
         left: 0,
 
@@ -26,7 +28,7 @@ const TutorialScrollUpButton: FC<{ show: boolean }> = ({ show }) => {
         pointerEvents: 'none',
         width: '100%',
       })}
-      style={positionFixedStyles}
+      style={positionFixedStyleValues}
     >
       <div
         className={css({

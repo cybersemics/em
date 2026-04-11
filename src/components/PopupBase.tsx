@@ -65,6 +65,7 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
       offset: anchorOffset,
       height,
     })
+    const { ref: positionFixedRef, ...positionFixedStyleValues } = positionFixedStyles
     const useSwipeToDismissProps = useSwipeToDismiss({
       // dismiss after animation is complete to avoid touch events going to the Toolbar
       onDismissEnd: () => {
@@ -88,7 +89,7 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
           width: '100%',
           height: '100%',
           // when absolutely-positioned, the top position is calculated in usePositionFixed (#3222)
-          marginBlock: positionFixedStyles.position === 'fixed' ? 'auto' : undefined,
+          marginBlock: positionFixedStyleValues.position === 'fixed' ? 'auto' : undefined,
           top: 0,
           bottom: 0,
         }
@@ -119,10 +120,10 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
         })}
         // disable swipe-to-dismiss when multicursor is active
         {...(!multicursor && useSwipeToDismissProps)}
-        ref={useCombinedRefs([ref, useSwipeToDismissProps.ref])}
+        ref={useCombinedRefs([ref, useSwipeToDismissProps.ref, positionFixedRef as React.Ref<HTMLDivElement>])}
         // merge style with useSwipeToDismissProps.style (transform, transition, and touchAction for sticking to user's touch)
         style={{
-          ...positionFixedStyles,
+          ...positionFixedStyleValues,
           background,
           fontSize,
           padding,
