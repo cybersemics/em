@@ -100,7 +100,6 @@ class MultiGesture extends React.Component<MultiGestureProps> {
   currentStart: Point | null = null
   leftHanded = false
   minDistanceSquared = 0
-  rootRef = React.createRef<View>()
   scrollYStart: number | null = null
   disableScroll = false
   panResponder: PanResponderInstance
@@ -136,14 +135,6 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     // enable/disable scrolling based on where the user clicks
     // TODO: Could this be moved to onMoveShouldSetResponder?
     document.body.addEventListener('touchstart', e => {
-      // Ignore touches outside MultiGesture's DOM tree (e.g. portaled overlays).
-      // Set disableScroll to prevent the browser from capturing the touch for native scrolling,
-      // which would break the overlay's own drag handling (e.g. sheet drag).
-      if (this.rootRef.current instanceof HTMLElement && !this.rootRef.current.contains(e.target as Node)) {
-        this.disableScroll = true
-        this.abandon = true
-        return
-      }
       if (e?.touches.length > 0) {
         const x = e.touches[0].clientX
         const y = e.touches[0].clientY
@@ -279,7 +270,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
   render() {
     const ref = React.createRef<HTMLDivElement>()
     return (
-      <View ref={this.rootRef} {...this.panResponder.panHandlers}>
+      <View {...this.panResponder.panHandlers}>
         <TraceGesture eventNodeRef={ref} />
         <ScrollZone leftHanded={this.leftHanded} />
         <div ref={ref}>{this.props.children}</div>

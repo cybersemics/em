@@ -1,9 +1,8 @@
 import _ from 'lodash'
-import { useTransform } from 'motion/react'
-import { motion } from 'motion/react'
+import { motion, useTransform } from 'motion/react'
 import pluralize from 'pluralize'
 import { FC, useCallback, useRef } from 'react'
-import { Sheet, SheetRef, SheetTweenConfig } from 'react-modal-sheet'
+import { Sheet, SheetRef } from 'react-modal-sheet'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { token } from '../../../styled-system/tokens'
@@ -77,11 +76,6 @@ const HiddenOverlay = () => {
   )
 }
 
-const tweenConfig: SheetTweenConfig = {
-  duration: durations.get('medium') / 1000,
-  ease: 'easeOut',
-}
-
 /**
  * Custom hook that returns reactive transforms for a draggable sheet.
  */
@@ -113,8 +107,15 @@ const CommandCenter = () => {
   const showCommandCenter = useSelector(state => state.showCommandCenter)
   const isTutorialOn = useSelector(isTutorial)
   const sheetRef = useRef<SheetRef>(null)
-
   const { height, opacity, blurHeight } = useSheetTransforms(sheetRef)
+
+  /** Prevent native page scroll when dragging the sheet. The page body is scrollable, and without this the browser scrolls the body on touchmove, stealing touch from the sheet's drag handler. React touch handlers are passive so we need a non-passive listener via addEventListener. */
+  const preventTouchMoveRef = useCallback((el: HTMLDivElement | null) => {
+    if (!el) return
+    /** Prevent native page scroll on touchmove. */
+    const handler: EventListenerOrEventListenerObject = e => e.preventDefault()
+    el.addEventListener('touchmove', handler, { passive: false })
+  }, [])
 
   const onClose = useCallback(() => {
     dispatch([toggleDropdown({ dropDownType: 'commandCenter', value: false }), clearMulticursors()])
@@ -151,7 +152,7 @@ const CommandCenter = () => {
           onClose={onClose}
           detent='content'
           unstyled
-          tweenConfig={tweenConfig}
+          tweenConfig={{ duration: durations.get('medium') / 1000, ease: 'easeOut' }}
           style={{
             /** Override default Sheet zIndex. */
             zIndex: token('zIndex.commandCenter'),
@@ -186,6 +187,7 @@ const CommandCenter = () => {
             style={{ opacity }}
           />
           <Sheet.Container
+            ref={preventTouchMoveRef}
             data-testid='command-menu-panel'
             className={css({
               backgroundColor: 'transparent',
@@ -196,13 +198,6 @@ const CommandCenter = () => {
               // override default Sheet.Container styles
               maxHeight: '70%',
               zIndex: 'auto',
-            }}
-            onScroll={e => {
-              /**
-               * Prevent scroll events in command center from bubbling up
-               * to window scroll listeners.
-               */
-              e.stopPropagation()
             }}
           >
             <Sheet.Content
