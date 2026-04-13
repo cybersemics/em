@@ -5,12 +5,8 @@ import { token } from '../../styled-system/tokens'
 import { formatSelectionActionCreator as formatSelection } from '../actions/formatSelection'
 import { isTouch } from '../browser'
 import { ColorToken } from '../colors.config'
-import * as selection from '../device/selection'
-import getThoughtById from '../selectors/getThoughtById'
-import noteValue from '../selectors/noteValue'
 import themeColors from '../selectors/themeColors'
 import commandStateStore from '../stores/commandStateStore'
-import head from '../util/head'
 import rgbToHex from '../util/rgbToHex'
 import Popover from './Popover'
 import TextColorIcon from './icons/TextColor'
@@ -48,39 +44,14 @@ const ColorSwatch: FC<{
   size = size || fontSize * 1.2
 
   const selected = useSelector(state => {
-    const currentEditableValue =
-      (!!state.cursor &&
-        (state.noteFocus ? noteValue(state, state.cursor) : getThoughtById(state, head(state.cursor))?.value)) ||
-      ''
     const themeColor = themeColors(state)
-    /* Define the color and background color regex to get the current color of current thought or note
+    /* Compare the swatch color to the command state color.
        document.execCommand('foreColor') adds the color attribute with hex and document.execCommand('backColor') adds the background-color attribute with the rgb
        document.execCommand('foreColor') always sets the color as hex whether the value is rgb or hex. And document.execCommand('backColor') always sets the background with the rgb
     */
-    const colorRegex = /color="#([0-9a-fA-F]{6})"/g
     const textHexColor = color ? addAlphaToHex(rgbToHex(themeColor[color])) : undefined
     const backHexColor = backgroundColor ? addAlphaToHex(rgbToHex(themeColor[backgroundColor])) : undefined
-    if (
-      (!commandStateColor && !commandStateBackgroundColor) ||
-      (commandStateColor === '#ccccccff' && commandStateBackgroundColor === '#333333ff') ||
-      (commandStateColor === addAlphaToHex(rgbToHex(themeColor.fg)) &&
-        commandStateBackgroundColor === addAlphaToHex(rgbToHex(themeColor.bg)) &&
-        !selection.isThought())
-    ) {
-      const colorMatches = currentEditableValue.match(colorRegex) || []
 
-      let matchColor
-      // Get the colors and background colors used in current thought's value
-      const fgColors: Set<string> = new Set()
-      if (colorMatches) {
-        // colorMatches will be like this : [color="#ee82ee", color="#ff823e"] and match.slice(7, -1) will be #ee82ee
-        // If the thought is colored with many colors, matchColor will be null and if the thought is colored with one color, matchColor will be that color
-        colorMatches.forEach(match => fgColors.add(match.slice(7, -1)))
-        matchColor = fgColors.size > 1 ? null : fgColors.values().next().value
-      }
-
-      return !!(textHexColor && textHexColor === (matchColor && addAlphaToHex(rgbToHex(matchColor))))
-    }
     return !!(
       (textHexColor && textHexColor === commandStateColor) ||
       (backHexColor && backHexColor === commandStateBackgroundColor)
