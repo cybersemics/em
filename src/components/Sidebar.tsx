@@ -25,7 +25,7 @@
  */
 import * as Dialog from '@radix-ui/react-dialog'
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden'
-import { AnimatePresence, MotionValue, animate, motion, useMotionValue, useTransform } from 'framer-motion'
+import { MotionValue, animate, motion, useMotionValue, useTransform } from 'framer-motion'
 import _ from 'lodash'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
@@ -148,6 +148,8 @@ interface SidebarHeaderProps {
   isOpen: boolean
   /** State setter to toggle the dropdown open/closed. */
   setIsOpen: (open: boolean) => void
+  /** Callback reporting the bottom y-coordinate of the dropdown menu (used to position the background mask). */
+  onDropdownBottom?: (bottom: number) => void
 }
 
 /**
@@ -160,12 +162,54 @@ interface SidebarHeaderProps {
  * - The scrollable content area gently fades out.
  *
  */
-const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen }: SidebarHeaderProps) => {
+const SidebarHeader = ({
+  sections,
+  sectionId,
+  onSectionChange,
+  isOpen,
+  setIsOpen,
+  onDropdownBottom,
+}: SidebarHeaderProps) => {
   /** The currently active section. */
   const section = sections.find(s => s.id === sectionId)!
 
-  /** Sections that are NOT currently active – these appear in the dropdown. */
-  const otherSections = sections.filter(s => s.id !== sectionId)
+  /** Ref to the dropdown menu container, used to measure its bottom position. */
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  /** Measure the dropdown menu's bottom position and report it to the parent when the dropdown opens. */
+  useEffect(() => {
+    if (isOpen && dropdownRef.current && onDropdownBottom) {
+      requestAnimationFrame(() => {
+        if (dropdownRef.current) {
+          onDropdownBottom(dropdownRef.current.getBoundingClientRect().bottom)
+        }
+      })
+    }
+  }, [isOpen, onDropdownBottom])
+
+  /** Duration for each stage of the two-stage animation (in seconds). */
+  const stageDuration = durations.get('fast') / 1000
+
+  /** Refs to each dropdown item element, keyed by section id, for measuring Y offsets. */
+  const itemEls = useRef<Record<string, HTMLDivElement | null>>({})
+
+  /** Measure the selected item's Y offset within the dropdown.
+   * Falls back to a computed estimate if the element isn't mounted yet. */
+  const getSelectedOffset = useCallback(() => {
+    const el = itemEls.current[sectionId]
+    if (el) return el.offsetTop
+    // Fallback: compute from index. Row 0 = 44px (36 content + 8 padBottom),
+    // subsequent rows = 52px (8 padTop + 36 content + 8 padBottom).
+    const idx = sections.findIndex(s => s.id === sectionId)
+    return idx <= 0 ? 0 : 44 + (idx - 1) * 52
+  }, [sectionId, sections])
+
+  const selectedOffset = getSelectedOffset()
+
+  // TODO: remove debug log
+  useEffect(() => {
+    console.log('[SidebarHeader]', { sectionId, isOpen, selectedOffset })
+  }, [sectionId, isOpen, selectedOffset])
 
   return (
     // position:relative creates a stacking context for the absolutely-positioned dropdown.
@@ -175,7 +219,17 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
       {...fastClick(() => setIsOpen(!isOpen))}
       className={css({ position: 'relative', cursor: 'pointer' })}
     >
-      <div
+      {/*
+       * Header row: instantly hidden when opening (selected dropdown item takes over),
+       * instantly shown after the close slide completes (stage 2 end).
+       */}
+      <motion.div
+        initial={false}
+        animate={{ opacity: isOpen ? 0 : 1 }}
+        transition={{
+          duration: 0,
+          delay: isOpen ? 0 : stageDuration * 2,
+        }}
         className={css({
           display: 'inline-flex',
           alignItems: 'center',
@@ -192,77 +246,123 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
             opacity: 0.4,
           }}
         />
-      </div>
+      </motion.div>
 
-      {/* AnimatePresence enables exit animations for the dropdown when it unmounts */}
-      <AnimatePresence>
-        {isOpen && (
-          <>
-            {/* Full-screen backdrop behind the dropdown. When clicked, it dismisses the dropdown. */}
+      {/* Full-screen backdrop behind the dropdown. When clicked, it dismisses the dropdown. */}
+      <motion.div
+        initial={false}
+        animate={{ opacity: isOpen ? 1 : 0 }}
+        transition={{ duration: stageDuration, ease: EASE_OUT }}
+        {...fastClick(() => setIsOpen(false))}
+        className={css({
+          position: 'absolute',
+          zIndex: 1,
+          top: '100%',
+          left: 0,
+          right: 0,
+          height: '100vh',
+          cursor: 'pointer',
+          pointerEvents: isOpen ? 'auto' : 'none',
+        })}
+      />
+
+      {/*
+       * Dropdown menu containing all sections in their original order.
+       * Two-stage animation:
+       * - Opening: selected item appears immediately (stage 1), then others fade in (stage 2)
+       * - Closing: non-selected items fade out (stage 1), then selected item fades out (stage 2)
+       */}
+      <div
+        ref={dropdownRef}
+        className={css({
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          zIndex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          margin: 0,
+          width: '100%',
+          pointerEvents: isOpen ? 'auto' : 'none',
+        })}
+      >
+        {/* Blur backdrop – sits behind the menu items, blurs only the content visible through this region */}
+        <motion.div
+          initial={false}
+          animate={{ opacity: isOpen ? 1 : 0 }}
+          transition={{ duration: stageDuration, ease: EASE_OUT }}
+          className={css({
+            position: 'absolute',
+            top: '-48px',
+            left: '-1em',
+            right: '-1em',
+            bottom: '-48px',
+            zIndex: -1,
+            maskImage: 'linear-gradient(to bottom, transparent, black 48px, black calc(100% - 48px), transparent)',
+            ...(BLUR_ENABLED
+              ? { backdropFilter: 'blur(8px)' }
+              : { backgroundColor: 'rgba(0, 0, 0, 0.5)' }),
+          })}
+        />
+        {sections.map((s, i) => {
+          const isSelected = s.id === sectionId
+          return (
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: durations.get('medium') / 1000, ease: EASE_OUT }}
-              {...fastClick(() => setIsOpen(false))}
-              className={css({
-                position: 'absolute',
-                zIndex: 1,
-                top: '100%',
-                left: 0,
-                right: 0,
-                height: '100vh',
-                cursor: 'pointer',
-              })}
-            />
-            {/*
-             * Dropdown menu containing the non-active sections.
-             * Fades in/out with opacity. Positioned absolutely below the header
-             * row so it doesn't affect the header's layout.
-             */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: durations.get('medium') / 1000, ease: EASE_OUT }}
-              className={css({
-                position: 'absolute',
-                top: '100%',
-                left: 0,
-                zIndex: 1,
-                display: 'flex',
-                flexDirection: 'column',
-                margin: 0,
-                width: '100%',
-              })}
+              key={s.id}
+              ref={(el: HTMLDivElement | null) => {
+                itemEls.current[s.id] = el
+              }}
+              initial={false}
+              animate={{
+                opacity: isOpen ? 1 : 0,
+                y: isSelected ? (isOpen ? 0 : -selectedOffset) : 0,
+              }}
+              transition={
+                isSelected
+                  ? {
+                      // Selected item: slides between header and list position.
+                      // Opacity swaps instantly; y animates over stageDuration.
+                      opacity: {
+                        duration: 0,
+                        delay: isOpen ? 0 : stageDuration * 2,
+                      },
+                      y: {
+                        duration: stageDuration,
+                        ease: EASE_OUT,
+                        delay: isOpen ? 0 : stageDuration,
+                      },
+                    }
+                  : {
+                      // Non-selected items: fade in after slide (stage 2), fade out first (stage 1).
+                      duration: stageDuration,
+                      ease: EASE_OUT,
+                      delay: isOpen ? stageDuration : 0,
+                    }
+              }
             >
-              {/* Render each non-active section as a clickable row */}
-              {otherSections.map(s => (
-                <div
-                  key={s.id}
-                  data-testid={`sidebar-${s.id}`}
-                  {...fastClick(() => {
-                    onSectionChange(s.id)
-                    setIsOpen(false)
-                  })}
-                  className={css({
-                    cursor: 'pointer',
-                    padding: '0.5rem 0',
-                    display: 'flex',
-                    // Dimmed by default; brightens on hover or touch press
-                    opacity: 0.6,
-                    '@media (hover: hover)': { _hover: { opacity: 1 } },
-                    '@media (hover: none)': { _active: { opacity: 1 } },
-                    transition: 'opacity {durations.fast} ease-out',
-                  })}
-                >
-                  <SidebarSectionRow icon={s.icon} label={s.label} iconSize={32} />
-                </div>
-              ))}
+              <div
+                data-testid={`sidebar-${s.id}`}
+                {...fastClick(() => {
+                  onSectionChange(s.id)
+                  setIsOpen(false)
+                })}
+                className={css({
+                  cursor: 'pointer',
+                  paddingTop: i === 0 ? 0 : '0.5rem',
+                  paddingBottom: '0.5rem',
+                  display: 'flex',
+                  opacity: isSelected ? 1 : 0.6,
+                  '@media (hover: hover)': { _hover: { opacity: 1 } },
+                  '@media (hover: none)': { _active: { opacity: 1 } },
+                  transition: 'opacity {durations.fast} ease-out',
+                })}
+              >
+                <SidebarSectionRow icon={s.icon} label={s.label} iconSize={32} />
+              </div>
             </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -512,6 +612,8 @@ const SidebarBackground = ({
   width,
   hue,
   sat,
+  dropdownOpen,
+  dropdownBottom,
 }: {
   /** The sidebar's current x-axis translation motion value. */
   x: MotionValue<number>
@@ -527,6 +629,10 @@ const SidebarBackground = ({
   hue: MotionValue<number>
   /** Shared motion value driving CSS saturate. */
   sat: MotionValue<number>
+  /** Whether the section dropdown is currently open. */
+  dropdownOpen: boolean
+  /** Bottom y-coordinate of the dropdown menu, used to position the mask. */
+  dropdownBottom: number
 }) => {
   // Derive opacity from sidebar x position, then apply cubic ease-in
   // so the background fades in gently and catches up as the sidebar settles.
@@ -666,6 +772,9 @@ const Sidebar = () => {
   /** Whether the dropdown is open. */
   const [dropdownOpen, setDropdownOpen] = useState(false)
 
+  /** Bottom y-coordinate of the dropdown menu, used to position the background mask. */
+  const [dropdownBottom, setDropdownBottom] = useState(0)
+
   /** Reset the dropdown and release focus whenever the sidebar closes. */
   useEffect(() => {
     if (!showSidebar) {
@@ -680,6 +789,9 @@ const Sidebar = () => {
 
   /** Ref to the drawer element, used to detect if touches are inside the drawer. */
   const drawerRef = useRef<HTMLDivElement>(null)
+
+  /** Ref to the scrollable content area, used to compute the dropdown mask offset. */
+  const contentRef = useRef<HTMLDivElement>(null)
 
   /** Mirror longPressState into a ref so document-level touch handlers always see the current value without re-registering. */
   const longPressRef = useRef(longPressState)
@@ -1049,6 +1161,8 @@ const Sidebar = () => {
               width={width}
               hue={hue}
               sat={sat}
+              dropdownOpen={dropdownOpen}
+              dropdownBottom={dropdownBottom}
             />
 
             {/* Primary glow overlay – responds to dropdown expansion */}
@@ -1191,6 +1305,7 @@ const Sidebar = () => {
                           onSectionChange={setSectionId}
                           isOpen={dropdownOpen}
                           setIsOpen={setDropdownOpen}
+                          onDropdownBottom={setDropdownBottom}
                         />
                       </div>
                     </FadeTransition>
@@ -1208,12 +1323,7 @@ const Sidebar = () => {
                      *   in the Favorites drag-and-drop system
                      */}
                     <motion.div
-                      animate={{
-                        ...(BLUR_ENABLED
-                          ? { filter: dropdownOpen ? 'blur(8px)' : 'blur(0px)' }
-                          : { opacity: dropdownOpen ? 0.3 : 1 }),
-                      }}
-                      transition={{ duration: durations.get('medium') / 1000, ease: EASE_OUT }}
+                      ref={contentRef}
                       data-scroll-at-edge
                       onScroll={e => {
                         const scrolled = e.currentTarget.scrollTop > 0

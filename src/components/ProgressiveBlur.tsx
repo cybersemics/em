@@ -84,7 +84,6 @@ const ProgressiveBlur = ({
             style={{
               opacity,
               backdropFilter: `blur(${layer.radius.toFixed(2)}px)`,
-              WebkitBackdropFilter: `blur(${layer.radius.toFixed(2)}px)`,
               maskImage: mask,
               WebkitMaskImage: mask,
             }}
