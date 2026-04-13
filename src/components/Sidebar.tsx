@@ -1,7 +1,7 @@
 import * as Dialog from '@radix-ui/react-dialog'
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden'
-import { MotionValue, animate, motion, useMotionValue, useTransform } from 'motion/react'
 import _ from 'lodash'
+import { MotionValue, animate, motion, useMotionValue, useTransform } from 'motion/react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
