@@ -1,9 +1,9 @@
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import { compare, compareReasonable, compareReasonableDescending } from '../util/compareThought'
-import noteValue from '../util/noteValue'
 import { getAllChildrenSorted, isVisible } from './getChildren'
 import getSortPreference from './getSortPreference'
+import noteValue from './noteValue'
 import thoughtToPath from './thoughtToPath'
 
 /** Calculates the rank for a given index in a sorted array of thoughts. */

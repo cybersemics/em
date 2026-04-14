@@ -1,0 +1,526 @@
+name: TDD
+
+on:
+  pull_request:
+    branches:
+      - '**'
+  workflow_dispatch:
+    inputs:
+      rerun_id:
+        description: 'Optional ID for tracking repeated runs'
+        required: false
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  CI: true
+  COPILOT_AGENT_FIREWALL_ALLOW_LIST_ADDITIONS: googlechromelabs.github.io,storage.googleapis.com
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Detect: classify changed files, decide which downstream jobs to run.
+  # ---------------------------------------------------------------------------
+  detect:
+    name: Detect changed tests
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request' || github.event.pull_request.changed_files > 0
+    outputs:
+      has_unit: ${{ steps.classify.outputs.has_unit }}
+      has_puppeteer: ${{ steps.classify.outputs.has_puppeteer }}
+      has_ios: ${{ steps.classify.outputs.has_ios }}
+      unit_files: ${{ steps.classify.outputs.unit_files }}
+      puppeteer_files: ${{ steps.classify.outputs.puppeteer_files }}
+      ios_files: ${{ steps.classify.outputs.ios_files }}
+      merge_base: ${{ steps.classify.outputs.merge_base }}
+      skip: ${{ steps.skip.outputs.skip }}
+      skip_reason: ${{ steps.skip.outputs.reason }}
+      skip_unit: ${{ steps.skip.outputs.skip_unit }}
+      skip_puppeteer: ${{ steps.skip.outputs.skip_puppeteer }}
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 999
+
+      - name: Classify changed files
+        id: classify
+        run: |
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+
+          echo "Base SHA: $BASE_SHA"
+          echo "Head SHA: $HEAD_SHA"
+
+          # Compute the merge base so we only diff files changed in this PR,
+          # not files from other PRs merged into the base branch since the PR
+          # was originally branched off.
+          MERGE_BASE=$(git merge-base "$BASE_SHA" "$HEAD_SHA")
+          echo "Merge base: $MERGE_BASE"
+
+          # All changed files in the PR
+          CHANGED_FILES=$(git diff --name-only "$MERGE_BASE" "$HEAD_SHA" --)
+
+          echo "=== All changed files ==="
+          echo "$CHANGED_FILES"
+
+          # Classify test files into categories
+          # Unit tests: any __tests__/**/*.ts EXCLUDING e2e directories
+          UNIT_FILES=$(echo "$CHANGED_FILES" | grep -E '^src/.*/__tests__/.*\.ts$' | grep -v '^src/e2e/' || true)
+
+          # Puppeteer tests: src/e2e/puppeteer/__tests__/*.ts
+          PUPPETEER_FILES=$(echo "$CHANGED_FILES" | grep -E '^src/e2e/puppeteer/__tests__/.*\.ts$' || true)
+
+          # iOS tests: src/e2e/iOS/__tests__/**/*.ts
+          IOS_FILES=$(echo "$CHANGED_FILES" | grep -E '^src/e2e/iOS/__tests__/.*\.ts$' || true)
+
+          # Filter a newline-separated list of test files to only those where the diff
+          # adds new test definitions (new it() or test() calls). This prevents triggering
+          # TDD for changes that only modify existing test internals (e.g. replacing
+          # sleep() with waitUntil()). Matches both it(...) and test(...) regardless of
+          # indentation. Usage: filter_new_tests "$FILES" "$MERGE_BASE" "$HEAD_SHA"
+          filter_new_tests() {
+            local files="$1" merge_base="$2" head_sha="$3" result=""
+            for f in $files; do
+              if git diff "$merge_base" "$head_sha" -- "$f" | grep -qE '^\+[ \t]*(it|test)\b'; then
+                result="$result"$'\n'"$f"
+              fi
+            done
+            echo "$result" | sed '/^$/d'
+          }
+
+          UNIT_FILES=$(filter_new_tests "$UNIT_FILES" "$MERGE_BASE" "$HEAD_SHA")
+          PUPPETEER_FILES=$(filter_new_tests "$PUPPETEER_FILES" "$MERGE_BASE" "$HEAD_SHA")
+          IOS_FILES=$(filter_new_tests "$IOS_FILES" "$MERGE_BASE" "$HEAD_SHA")
+
+          # All test files (union of the above)
+          ALL_TEST_FILES=$(printf '%s\n' "$UNIT_FILES" "$PUPPETEER_FILES" "$IOS_FILES" | sed '/^$/d' | sort -u)
+
+          # Non-test application files: TypeScript source files that are not test files,
+          # test helpers, or e2e infrastructure (helpers, config, setup).
+          # Excludes non-source files (markdown, yaml, json, js, css, html) to focus
+          # on actual application logic changes.
+          NON_TEST_FILES=$(echo "$CHANGED_FILES" \
+            | grep -v -E '(/__tests__/|/test-helpers/|/e2e/.*/(helpers|config|setup)/)' \
+            | grep -v -E '(\.md$|\.yml$|\.json$|\.js$|\.css$|\.html$)' \
+            | grep -E '\.(ts|tsx)$' || true)
+
+          echo ""
+          echo "=== Unit test files ==="
+          echo "$UNIT_FILES"
+          echo ""
+          echo "=== Puppeteer test files ==="
+          echo "$PUPPETEER_FILES"
+          echo ""
+          echo "=== iOS test files ==="
+          echo "$IOS_FILES"
+          echo ""
+          echo "=== Non-test application files ==="
+          echo "$NON_TEST_FILES"
+
+          # Set outputs
+          HAS_UNIT="false"
+          HAS_PUPPETEER="false"
+          HAS_IOS="false"
+
+          if [ -n "$UNIT_FILES" ]; then HAS_UNIT="true"; fi
+          if [ -n "$PUPPETEER_FILES" ]; then HAS_PUPPETEER="true"; fi
+          if [ -n "$IOS_FILES" ]; then HAS_IOS="true"; fi
+
+          echo "has_unit=$HAS_UNIT" >> "$GITHUB_OUTPUT"
+          echo "has_puppeteer=$HAS_PUPPETEER" >> "$GITHUB_OUTPUT"
+          echo "has_ios=$HAS_IOS" >> "$GITHUB_OUTPUT"
+
+          # Store file lists (newline-separated) for downstream jobs
+          # Use base64 to safely pass through GITHUB_OUTPUT
+          echo "unit_files=$(echo "$UNIT_FILES" | base64 -w 0)" >> "$GITHUB_OUTPUT"
+          echo "puppeteer_files=$(echo "$PUPPETEER_FILES" | base64 -w 0)" >> "$GITHUB_OUTPUT"
+          echo "ios_files=$(echo "$IOS_FILES" | base64 -w 0)" >> "$GITHUB_OUTPUT"
+          echo "merge_base=$MERGE_BASE" >> "$GITHUB_OUTPUT"
+
+          # Store whether any non-test app code changed
+          HAS_APP_CHANGES="false"
+          if [ -n "$NON_TEST_FILES" ]; then HAS_APP_CHANGES="true"; fi
+          echo "has_app_changes=$HAS_APP_CHANGES" >> "$GITHUB_OUTPUT"
+
+          echo ""
+          echo "=== Summary ==="
+          echo "Has unit tests: $HAS_UNIT"
+          echo "Has puppeteer tests: $HAS_PUPPETEER"
+          echo "Has iOS tests: $HAS_IOS"
+          echo "Has app code changes: $HAS_APP_CHANGES"
+
+      - name: Check skip conditions
+        id: skip
+        run: |
+          HAS_UNIT="${{ steps.classify.outputs.has_unit }}"
+          HAS_PUPPETEER="${{ steps.classify.outputs.has_puppeteer }}"
+          HAS_IOS="${{ steps.classify.outputs.has_ios }}"
+          HAS_APP_CHANGES="${{ steps.classify.outputs.has_app_changes }}"
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+
+          SKIP="false"
+          REASON=""
+          SKIP_UNIT="false"
+          SKIP_PUPPETEER="false"
+
+          # 1. Check for skip-tdd label
+          LABELS='${{ toJSON(github.event.pull_request.labels.*.name) }}'
+          if echo "$LABELS" | grep -q '"skip-tdd"'; then
+            SKIP="true"
+            REASON="PR has skip-tdd label"
+          fi
+
+          # 1b. Check for granular skip labels
+          if echo "$LABELS" | grep -q '"skip-tdd-unit"'; then
+            SKIP_UNIT="true"
+            REASON="PR has skip-tdd-unit label"
+          fi
+          if echo "$LABELS" | grep -q '"skip-tdd-puppeteer"'; then
+            SKIP_PUPPETEER="true"
+            REASON="${REASON:+$REASON; }PR has skip-tdd-puppeteer label"
+          fi
+
+          # 2. No changed tests at all
+          if [ "$SKIP" = "false" ] && [ "$HAS_UNIT" = "false" ] && [ "$HAS_PUPPETEER" = "false" ] && [ "$HAS_IOS" = "false" ]; then
+            SKIP="true"
+            REASON="No changed test files detected"
+          fi
+
+          # 3. Only test files changed, no application code changed (coverage-only)
+          if [ "$SKIP" = "false" ] && [ "$HAS_APP_CHANGES" = "false" ]; then
+            SKIP="true"
+            REASON="Only test files changed (no application code) — likely coverage-only"
+          fi
+
+          echo "skip=$SKIP" >> "$GITHUB_OUTPUT"
+          echo "reason=$REASON" >> "$GITHUB_OUTPUT"
+          echo "skip_unit=$SKIP_UNIT" >> "$GITHUB_OUTPUT"
+          echo "skip_puppeteer=$SKIP_PUPPETEER" >> "$GITHUB_OUTPUT"
+
+          echo "=== Skip decision ==="
+          echo "Skip: $SKIP"
+          echo "Reason: $REASON"
+          echo "Skip unit: $SKIP_UNIT"
+          echo "Skip puppeteer: $SKIP_PUPPETEER"
+
+  # ---------------------------------------------------------------------------
+  # Unit: apply changed unit test diff to base, run them, expect failure.
+  # ---------------------------------------------------------------------------
+  unit:
+    name: TDD — Unit tests
+    needs: detect
+    if: needs.detect.outputs.skip != 'true' && needs.detect.outputs.skip_unit != 'true' && needs.detect.outputs.has_unit == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          fetch-depth: 999
+
+      - name: Fetch PR head
+        run: git fetch origin ${{ github.event.pull_request.head.sha }}
+
+      - name: Generate and apply test diff
+        id: patch
+        run: |
+          MERGE_BASE="${{ needs.detect.outputs.merge_base }}"
+          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+
+          # Decode the file list
+          UNIT_FILES=$(echo "${{ needs.detect.outputs.unit_files }}" | base64 -d)
+
+          echo "=== Changed unit test files ==="
+          echo "$UNIT_FILES"
+
+          # Generate diff for only the changed test files
+          # shellcheck disable=SC2086
+          git diff "$MERGE_BASE" "$HEAD_SHA" -- $UNIT_FILES > /tmp/test.patch || true
+
+          if [ ! -s /tmp/test.patch ]; then
+            echo "Empty patch — nothing to apply"
+            echo "empty=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "=== Patch preview (first 100 lines) ==="
+          head -100 /tmp/test.patch
+
+          # Apply the patch; allow failures for new files (--3way helps)
+          if git apply --3way /tmp/test.patch 2>/tmp/patch-error.log; then
+            echo "Patch applied successfully"
+            echo "empty=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::Patch application had issues (may be expected for new test files)"
+            cat /tmp/patch-error.log
+            # Try with --reject to apply what we can
+            git apply --reject /tmp/test.patch 2>/dev/null || true
+            echo "empty=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Enable Corepack
+        if: steps.patch.outputs.empty != 'true'
+        run: corepack enable
+
+      - name: Set Node.js version
+        if: steps.patch.outputs.empty != 'true'
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Install npm dependencies
+        if: steps.patch.outputs.empty != 'true'
+        run: yarn
+
+      - name: Run changed unit tests on base (expect failure)
+        if: steps.patch.outputs.empty != 'true'
+        id: run_tests
+        run: |
+          UNIT_FILES=$(echo "${{ needs.detect.outputs.unit_files }}" | base64 -d)
+
+          echo "=== Running changed unit tests ==="
+          echo "$UNIT_FILES"
+
+          # Run only the changed test files
+          # vitest accepts file paths as positional args
+          set +e
+          yarn vitest run --project unit $UNIT_FILES 2>&1
+          TEST_EXIT=$?
+          set -e
+
+          echo "test_exit=$TEST_EXIT" >> "$GITHUB_OUTPUT"
+
+          if [ "$TEST_EXIT" -ne 0 ]; then
+            echo ""
+            echo "✅ TDD validated: changed tests FAIL on the base branch (exit code $TEST_EXIT)."
+            echo "This means the tests are genuinely covering new behavior."
+          else
+            echo ""
+            echo "❌ TDD concern: changed tests PASS on the base branch."
+            echo "This may indicate the tests do not cover new functionality introduced by this PR."
+            exit 1
+          fi
+
+  # ---------------------------------------------------------------------------
+  # Puppeteer: apply changed puppeteer test diff to base, run them, expect failure.
+  # ---------------------------------------------------------------------------
+  puppeteer:
+    name: TDD — Puppeteer tests
+    needs: detect
+    if: needs.detect.outputs.skip != 'true' && needs.detect.outputs.skip_puppeteer != 'true' && needs.detect.outputs.has_puppeteer == 'true'
+    runs-on: ubuntu-latest
+    services:
+      browserless:
+        image: browserless/chrome:latest
+        ports:
+          - 7566:3000
+        env:
+          CONNECTION_TIMEOUT: -1
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          fetch-depth: 999
+
+      - name: Fetch PR head
+        run: git fetch origin ${{ github.event.pull_request.head.sha }}
+
+      - name: Restore GitHub Actions files from PR HEAD
+        if: github.event_name == 'pull_request'
+        run: git checkout FETCH_HEAD -- .github/actions/
+
+      - name: Generate and apply test diff
+        id: patch
+        run: |
+          MERGE_BASE="${{ needs.detect.outputs.merge_base }}"
+          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+
+          PUPPETEER_FILES=$(echo "${{ needs.detect.outputs.puppeteer_files }}" | base64 -d)
+
+          echo "=== Changed puppeteer test files ==="
+          echo "$PUPPETEER_FILES"
+
+          # shellcheck disable=SC2086
+          git diff "$MERGE_BASE" "$HEAD_SHA" -- $PUPPETEER_FILES > /tmp/test.patch || true
+
+          if [ ! -s /tmp/test.patch ]; then
+            echo "Empty patch — nothing to apply"
+            echo "empty=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "=== Patch preview (first 100 lines) ==="
+          head -100 /tmp/test.patch
+
+          if git apply --3way /tmp/test.patch 2>/tmp/patch-error.log; then
+            echo "Patch applied successfully"
+            echo "empty=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::Patch application had issues"
+            cat /tmp/patch-error.log
+            git apply --reject /tmp/test.patch 2>/dev/null || true
+            echo "empty=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Enable Corepack
+        if: steps.patch.outputs.empty != 'true'
+        run: corepack enable
+
+      - name: Set Node.js version
+        if: steps.patch.outputs.empty != 'true'
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Install npm dependencies
+        if: steps.patch.outputs.empty != 'true'
+        run: yarn
+
+      - name: Start SSL proxy
+        if: steps.patch.outputs.empty != 'true'
+        run: docker run -d --rm --add-host=host.docker.internal:host-gateway -e "PORT=3000" -p 2552:443 esplo/docker-local-ssl-termination-proxy
+
+      - name: Build
+        if: steps.patch.outputs.empty != 'true'
+        run: yarn build
+
+      - name: Serve
+        if: steps.patch.outputs.empty != 'true'
+        uses: ./.github/actions/serve
+
+      - name: Run changed puppeteer tests on base (expect failure)
+        if: steps.patch.outputs.empty != 'true'
+        id: run_tests
+        run: |
+          PUPPETEER_FILES=$(echo "${{ needs.detect.outputs.puppeteer_files }}" | base64 -d)
+
+          echo "=== Running changed puppeteer tests ==="
+          echo "$PUPPETEER_FILES"
+
+          set +e
+          yarn vitest run --project puppeteer-e2e $PUPPETEER_FILES 2>&1
+          TEST_EXIT=$?
+          set -e
+
+          echo "test_exit=$TEST_EXIT" >> "$GITHUB_OUTPUT"
+
+          if [ "$TEST_EXIT" -ne 0 ]; then
+            echo ""
+            echo "✅ TDD validated: changed puppeteer tests FAIL on the base branch (exit code $TEST_EXIT)."
+            echo "This means the tests are genuinely covering new behavior."
+          else
+            echo ""
+            echo "❌ TDD concern: changed puppeteer tests PASS on the base branch."
+            echo "This may indicate the tests do not cover new functionality introduced by this PR."
+            exit 1
+          fi
+
+  # ---------------------------------------------------------------------------
+  # iOS BrowserStack: skipped in v1.
+  #
+  # BrowserStack iOS tests require BROWSERSTACK_USERNAME and
+  # BROWSERSTACK_ACCESS_KEY secrets, a running local server tunneled via
+  # BrowserStack Local, and real device time. Running these against the base
+  # branch just for TDD validation is expensive and complex.
+  #
+  # For now, if iOS tests change alongside app code, we note it but do not
+  # gate the PR. A future iteration can add this when cost/benefit is clearer.
+  # ---------------------------------------------------------------------------
+  ios:
+    name: TDD — iOS (skipped)
+    needs: detect
+    if: needs.detect.outputs.skip != 'true' && needs.detect.outputs.has_ios == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: iOS TDD check not yet implemented
+        run: |
+          echo "⚠️ Changed iOS test files detected, but BrowserStack TDD validation"
+          echo "is not yet implemented (requires secrets, device time, tunneling)."
+          echo ""
+          echo "Changed files:"
+          echo "${{ needs.detect.outputs.ios_files }}" | base64 -d
+          echo ""
+          echo "Skipping — this will be addressed in a future iteration."
+
+  # ---------------------------------------------------------------------------
+  # Summary: single status check that downstream branch protection can require.
+  # ---------------------------------------------------------------------------
+  summary:
+    name: TDD
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [detect, unit, puppeteer, ios]
+    steps:
+      - name: Evaluate results
+        run: |
+          DETECT_RESULT="${{ needs.detect.result }}"
+          SKIP="${{ needs.detect.outputs.skip }}"
+          SKIP_REASON="${{ needs.detect.outputs.skip_reason }}"
+          SKIP_UNIT="${{ needs.detect.outputs.skip_unit }}"
+          SKIP_PUPPETEER="${{ needs.detect.outputs.skip_puppeteer }}"
+
+          echo "=== TDD Validation Summary ==="
+
+          if [ "$DETECT_RESULT" = "skipped" ]; then
+            echo "⏭️  Skipped: No file changes"
+            exit 0
+          fi
+
+          if [ "$SKIP" = "true" ]; then
+            echo "⏭️  Skipped: $SKIP_REASON"
+            exit 0
+          fi
+
+          if [ -n "$SKIP_REASON" ]; then
+            echo "⏭️  Partial skip: $SKIP_REASON"
+          fi
+
+          # Check each job result
+          UNIT_RESULT="${{ needs.unit.result }}"
+          PUPPETEER_RESULT="${{ needs.puppeteer.result }}"
+          IOS_RESULT="${{ needs.ios.result }}"
+
+          echo "Unit:      $UNIT_RESULT"
+          echo "Puppeteer: $PUPPETEER_RESULT"
+          echo "iOS:       $IOS_RESULT"
+          echo ""
+
+          FAILED="false"
+
+          # A job result of "failure" means the tests passed on base (TDD violation)
+          # A job result of "success" means the tests failed on base (TDD validated)
+          # A job result of "skipped" means no changed tests of that type
+
+          if [ "$UNIT_RESULT" = "failure" ]; then
+            echo "❌ Unit tests passed on base branch — TDD concern"
+            FAILED="true"
+          fi
+
+          if [ "$PUPPETEER_RESULT" = "failure" ]; then
+            echo "❌ Puppeteer tests passed on base branch — TDD concern"
+            FAILED="true"
+          fi
+
+          # iOS is informational only in v1
+          if [ "$IOS_RESULT" = "failure" ]; then
+            echo "⚠️ iOS job had an issue (informational only)"
+          fi
+
+          if [ "$FAILED" = "true" ]; then
+            echo ""
+            echo "TDD validation failed. Changed tests should fail on the base branch"
+            echo "to prove they cover new functionality. If this is intentional, add the"
+            echo "'skip-tdd' label to skip all TDD checks, or use 'skip-tdd-unit' /"
+            echo "'skip-tdd-puppeteer' to skip only the relevant job."
+            exit 1
+          fi
+
+          echo ""
+          echo "✅ TDD validation passed!"
