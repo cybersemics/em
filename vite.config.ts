@@ -12,19 +12,27 @@ const useHttps = !process.env.HTTP
 /**
  * Vite plugin that gates access behind a secret token when TUNNEL_TOKEN is set.
  * Used in CI to prevent unauthorized access when the dev server is exposed via
- * a public cloudflared tunnel. Requests without ?__token=<secret> get a 403.
- * The token is set in the CI workflow and appended to the tunnel URL by the
- * test config.
+ * a public cloudflared tunnel. The first request must include ?__token=<secret>;
+ * the gate then sets a session cookie so subsequent asset/HMR requests are
+ * allowed without the query param. Requests with neither get a 403.
  */
 function tunnelTokenGate(): Plugin | undefined {
   const token = process.env.TUNNEL_TOKEN
   if (!token) return undefined
 
-  /** Middleware that rejects requests missing the tunnel token. */
+  const cookieName = '__tunnel_token'
+
   const gate = (server: ViteDevServer | PreviewServer) => {
     server.middlewares.use((req: IncomingMessage, res: ServerResponse, next: () => void) => {
+      // Accept an existing session cookie set on a previous authenticated request.
+      const cookieHeader = req.headers.cookie || ''
+      if (cookieHeader.split(';').some(c => c.trim() === `${cookieName}=${token}`)) {
+        return next()
+      }
+      // Accept a token in the URL and issue the session cookie.
       const url = new URL(req.url || '/', 'http://localhost')
       if (url.searchParams.get('__token') === token) {
+        res.setHeader('Set-Cookie', `${cookieName}=${token}; Path=/; HttpOnly; Secure; SameSite=None`)
         return next()
       }
       res.statusCode = 403
