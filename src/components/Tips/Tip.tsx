@@ -1,4 +1,4 @@
-import { MotionValue, animate, motion, useMotionValue } from 'framer-motion'
+import { MotionValue, animate, motion, useMotionValue, useMotionValueEvent } from 'framer-motion'
 import { FC, PropsWithChildren, useCallback, useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
@@ -200,28 +200,21 @@ const Tip: FC<
 
   // ── Handlers ────────────────────────────────────────────────────────────
 
+  // Drive opacity directly from swipe completion (and its spring-back animation)
+  // without triggering React renders on every frame of the gesture.
+  useMotionValueEvent(completion, 'change', c => {
+    if (dismissing.current || !isVisible) return
+    opacity.set(1 - c)
+  })
+
   useEffect(() => {
     // Don't override a dismiss animation in progress
     if (dismissing.current) return
-
-    /** Opacity derived from swipe completion. Linearly decreases from 1 -> 0. */
-    const swipeOpacity = 1 - completion
-
-    if (isVisible) {
-      // During an active swipe, sync opacity directly to swipe progress.
-      if (swipeOpacity < 1) {
-        opacity.set(swipeOpacity)
-        return
-      }
-      // Animate toward 1 (visible)
-      const controls = animate(opacity, 1, { duration: durations.get('medium') / 1000, ease: 'easeOut' })
-      return () => controls.stop()
-    } else {
-      // Animate toward 0 (invisible)
-      const controls = animate(opacity, 0, { duration: durations.get('fast') / 1000, ease: 'easeOut' })
-      return () => controls.stop()
-    }
-  }, [isVisible, completion, opacity])
+    const target = isVisible ? 1 : 0
+    const duration = (isVisible ? durations.get('medium') : durations.get('fast')) / 1000
+    const controls = animate(opacity, target, { duration, ease: 'easeOut' })
+    return () => controls.stop()
+  }, [isVisible, opacity])
 
   // ── Render ──────────────────────────────────────────────────────────────
 
