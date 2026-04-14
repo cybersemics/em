@@ -11211,7 +11211,6 @@ __metadata:
     fake-indexeddb: "npm:^6.2.5"
     fast-json-patch: "npm:^3.1.1"
     fp-and-or: "npm:^1.0.2"
-    framer-motion: "npm:^12.38.0"
     happy-dom: "npm:^20.8.9"
     himalaya: "npm:^1.1.1"
     html-escaper: "npm:^3.0.3"
@@ -11229,6 +11228,7 @@ __metadata:
     lottie-react: "npm:^2.4.1"
     marked: "npm:^18.0.0"
     moize: "npm:^6.1.7"
+    motion: "npm:^12.23.26"
     murmurhash3js: "npm:^3.0.1"
     nanoid: "npm:^5.1.7"
     npm-run-all2: "npm:^8.0.4"
@@ -11250,6 +11250,7 @@ __metadata:
     react-dom: "npm:^19.2.5"
     react-error-boundary: "npm:^6.0.2"
     react-gravatar: "npm:^2.6.3"
+    react-modal-sheet: "npm:^5.2.1"
     react-native-web: "npm:^0.21.2"
     react-redux: "npm:^9.2.0"
     react-signature-pad-wrapper: "npm:^4.2.0"
@@ -18030,6 +18031,27 @@ __metadata:
   languageName: node
   linkType: hard
 
+"motion@npm:^12.23.26":
+  version: 12.38.0
+  resolution: "motion@npm:12.38.0"
+  dependencies:
+    framer-motion: "npm:^12.38.0"
+    tslib: "npm:^2.4.0"
+  peerDependencies:
+    "@emotion/is-prop-valid": "*"
+    react: ^18.0.0 || ^19.0.0
+    react-dom: ^18.0.0 || ^19.0.0
+  peerDependenciesMeta:
+    "@emotion/is-prop-valid":
+      optional: true
+    react:
+      optional: true
+    react-dom:
+      optional: true
+  checksum: 10c0/661a08b17592295b267df6a4a4887e9da78b29c310aaf60860fcfa68dac6cf2c39ce03701d6182159ad6f3000f28b8c62c3c6d139e620435d56b3bb5f28c5c1b
+  languageName: node
+  linkType: hard
+
 "mrmime@npm:^2.0.0":
   version: 2.0.1
   resolution: "mrmime@npm:2.0.1"
@@ -20356,6 +20378,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-modal-sheet@npm:^5.2.1":
+  version: 5.6.0
+  resolution: "react-modal-sheet@npm:5.6.0"
+  dependencies:
+    react-use-measure: "npm:2.1.7"
+  peerDependencies:
+    motion: ">=11"
+    react: ">=16"
+  checksum: 10c0/4a64422e273984cdafef9fc8c14a1b15faae95cd9621c033b8325f5e5e59f8df975c74e92ac1d23b52fd63518e698983c3fbdf1dfa78b28fb01856ef7b52ce58
+  languageName: node
+  linkType: hard
+
 "react-native-web@npm:^0.21.2":
   version: 0.21.2
   resolution: "react-native-web@npm:0.21.2"
@@ -20539,6 +20573,19 @@ __metadata:
     react: ">=16.6.0"
     react-dom: ">=16.6.0"
   checksum: 10c0/2ba754ba748faefa15f87c96dfa700d5525054a0141de8c75763aae6734af0740e77e11261a1e8f4ffc08fd9ab78510122e05c21c2d79066c38bb6861a886c82
+  languageName: node
+  linkType: hard
+
+"react-use-measure@npm:2.1.7":
+  version: 2.1.7
+  resolution: "react-use-measure@npm:2.1.7"
+  peerDependencies:
+    react: ">=16.13"
+    react-dom: ">=16.13"
+  peerDependenciesMeta:
+    react-dom:
+      optional: true
+  checksum: 10c0/ff24130e6f95e853feb6892fb74af08dbc5aae3574b701169e3bc3adb392c3162f51a58ddfe39bb7337db13ae609bbec0bb51a9de8b5fae5420f9d17e1f8b542
   languageName: node
   linkType: hard
 
