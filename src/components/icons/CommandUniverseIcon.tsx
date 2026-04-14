@@ -1,9 +1,9 @@
 import IconType from '../../@types/IconType'
 import AnimatedIcon from './AnimatedIcon'
-import animationData from './animations/27-command-palette.json'
+import animationData from './animations/27-command-universe.json'
 
-/** CommandPalette Icon with Conditional Lottie Animation. */
-const CommandPaletteIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+/** Command Universe Icon with Conditional Lottie Animation. */
+const CommandUniverseIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg
@@ -25,4 +25,4 @@ const CommandPaletteIcon = ({ fill, size = 18, style = {}, cssRaw, animated, ani
   )
 }
 
-export default CommandPaletteIcon
+export default CommandUniverseIcon

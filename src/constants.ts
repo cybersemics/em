@@ -153,7 +153,7 @@ export const FONT_SCALE_INCREMENT = 1
 // to detect if field has multiline
 export const MIN_LINE_HEIGHT = 26
 
-// delay after gesture hint is activated before command palette appears
+// delay after gesture hint is activated before desktop command universe appears
 export const COMMAND_PALETTE_TIMEOUT = 400
 
 // delay to show executed command after gesture is completed
@@ -525,7 +525,7 @@ export const COMMAND_GROUPS: {
       'jumpForward',
       'moveCursorBackward',
       'moveCursorForward',
-      'commandPalette',
+      'desktopCommandUniverse',
       'home',
       'search',
       'selectAll',
@@ -601,7 +601,7 @@ export const COMMAND_GROUPS: {
   },
   {
     title: 'Help',
-    commands: ['help', 'openGestureCheatsheet'],
+    commands: ['help', 'openMobileCommandUniverse'],
   },
   {
     title: 'Cancel',

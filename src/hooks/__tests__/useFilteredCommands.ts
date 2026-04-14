@@ -12,12 +12,12 @@
  * - Sort contiguous matches above noncontiguous matches
  * - Param: platformCommandsOnly filtering
  * - Mobile: Always show cancel command when gesture in progress
- * - Mobile: Always show gesture cheatsheet
+ * - Mobile: Always show mobile command universe
  * - Sort enabled commands above disabled commands (when sortActiveCommandsFirst is true)
  * - Sort recent commands to top
  * - Sort selected command to top
  * - Mobile: Sort cancel to bottom
- * - Mobile: Sort gesture cheatsheet second-to-bottom
+ * - Mobile: Sort mobile command universe second-to-bottom
  * - Mobile: Filter commands that match gesture in progress
  * - Mobile: Sort commands by gesture length first, then by label (fewer swipes first)
  * - Edge cases: empty search, spaces-only search, commands without keyboard/gesture.
@@ -30,7 +30,7 @@ import CommandId from '../../@types/CommandId'
 import * as browser from '../../browser'
 import { gestureString } from '../../commands'
 import categorizeCommand from '../../commands/categorize'
-import openGestureCheatsheetCommand from '../../commands/openGestureCheatsheet'
+import openMobileCommandUniverseCommand from '../../commands/openMobileCommandUniverse'
 import selectAllCommand from '../../commands/selectAll'
 import store from '../../stores/app'
 import gestureStore from '../../stores/gesture'
@@ -79,10 +79,10 @@ vi.mock('../../commands', async () => {
       canExecute: () => false,
     },
     {
-      id: 'openGestureCheatsheet' as CommandId,
-      label: 'All Commands',
+      id: 'openMobileCommandUniverse' as CommandId,
+      label: 'Command Universe',
       gesture: 'rdld',
-      hideFromCommandPalette: true,
+      hideFromDesktopCommandUniverse: true,
       multicursor: false,
       exec: vi.fn(),
     },
@@ -97,7 +97,7 @@ vi.mock('../../commands', async () => {
       id: 'cancel' as CommandId,
       label: 'Cancel',
       gesture: undefined,
-      hideFromCommandPalette: true,
+      hideFromDesktopCommandUniverse: true,
       multicursor: false,
       exec: vi.fn(),
     },
@@ -121,7 +121,7 @@ vi.mock('../../commands', async () => {
       gesture: 'du',
       multicursor: false,
       hideFromGestureMenu: true,
-      hideFromCommandPalette: true,
+      hideFromDesktopCommandUniverse: true,
       exec: vi.fn(),
     },
     {
@@ -189,7 +189,7 @@ describe('useFilteredCommands', () => {
         expect(commandIds).toContain('newSubthought')
         expect(commandIds).toContain('back')
         expect(commandIds).toContain('contextView')
-        expect(commandIds).not.toContain('openGestureCheatsheet')
+        expect(commandIds).not.toContain('openMobileCommandUniverse')
         expect(commandIds).not.toContain('cancel')
         expect(commandIds).not.toContain('hiddenCommand')
       })
@@ -388,11 +388,11 @@ describe('useFilteredCommands', () => {
         expect(commandIds).toContain('cancel')
       })
 
-      it('should always show gesture cheatsheet command', () => {
+      it('should always show mobile command universe command', () => {
         const { result } = renderHook(() => useFilteredCommands('', {}), { wrapper })
 
         const commandIds = result.current.map(cmd => cmd.id)
-        expect(commandIds).toContain('openGestureCheatsheet')
+        expect(commandIds).toContain('openMobileCommandUniverse')
       })
     })
 
@@ -405,7 +405,7 @@ describe('useFilteredCommands', () => {
         const { result } = renderHook(() => useFilteredCommands('', {}), { wrapper })
 
         // Find commands that start with 'r'
-        const rCommands = result.current.filter(cmd => cmd.id !== 'openGestureCheatsheet' && cmd.id !== 'cancel')
+        const rCommands = result.current.filter(cmd => cmd.id !== 'openMobileCommandUniverse' && cmd.id !== 'cancel')
 
         // Should be sorted: 'r' (1), then 'rd'/'ru' (2), then 'rdr' (3), then 'rdrd' (4)
         const gestureLengths = rCommands.map(cmd => {
@@ -428,7 +428,9 @@ describe('useFilteredCommands', () => {
         const { result } = renderHook(() => useFilteredCommands('', {}), { wrapper })
 
         // The command with exact gesture match should be first (excluding special commands)
-        const firstNonSpecial = result.current.find(cmd => cmd.id !== 'openGestureCheatsheet' && cmd.id !== 'cancel')
+        const firstNonSpecial = result.current.find(
+          cmd => cmd.id !== 'openMobileCommandUniverse' && cmd.id !== 'cancel',
+        )
         expect(firstNonSpecial?.id).toBe('newThought')
       })
 
@@ -443,7 +445,7 @@ describe('useFilteredCommands', () => {
         expect(lastCommand.id).toBe('cancel')
       })
 
-      it('should sort gesture cheatsheet second-to-bottom', () => {
+      it('should sort mobile command universe second-to-bottom', () => {
         act(() => {
           gestureStore.update({ gesture: 'r' })
         })
@@ -451,7 +453,7 @@ describe('useFilteredCommands', () => {
         const { result } = renderHook(() => useFilteredCommands('', {}), { wrapper })
 
         const secondToLast = result.current[result.current.length - 2]
-        expect(secondToLast.id).toBe('openGestureCheatsheet')
+        expect(secondToLast.id).toBe('openMobileCommandUniverse')
       })
     })
 
@@ -477,7 +479,7 @@ describe('useFilteredCommands', () => {
         expect(commandIds).toContain('categorize')
       })
 
-      it('should show Select All, Open All Commands, and Cancel commands unchanged', () => {
+      it('should show Select All, Command Universe, and Cancel commands unchanged', () => {
         act(() => {
           gestureStore.update({ gesture: selectAllCommand.gesture as string })
         })
@@ -486,16 +488,16 @@ describe('useFilteredCommands', () => {
 
         const commandIds = result.current.map(cmd => cmd.id)
         expect(commandIds).toContain('selectAll')
-        expect(commandIds).toContain('openGestureCheatsheet')
+        expect(commandIds).toContain('openMobileCommandUniverse')
         expect(commandIds).toContain('cancel')
 
         const selectAllCategorizeCommand = result.current.find(command => command.id === 'selectAll')
         expect(selectAllCategorizeCommand!.gesture).toEqual(selectAllCommand.gesture)
         expect(selectAllCategorizeCommand!.label).toEqual(selectAllCommand.label)
 
-        const gestureCheatsheetCommand = result.current.find(command => command.id === 'openGestureCheatsheet')
-        expect(gestureCheatsheetCommand!.gesture).toEqual(openGestureCheatsheetCommand.gesture)
-        expect(gestureCheatsheetCommand!.label).toEqual(openGestureCheatsheetCommand.label)
+        const mobileCommandUniverseCommand = result.current.find(command => command.id === 'openMobileCommandUniverse')
+        expect(mobileCommandUniverseCommand!.gesture).toEqual(openMobileCommandUniverseCommand.gesture)
+        expect(mobileCommandUniverseCommand!.label).toEqual(openMobileCommandUniverseCommand.label)
 
         const cancelCommand = result.current.find(command => command.id === 'cancel')
         expect(cancelCommand!.gesture).toEqual(cancelCommand!.gesture)

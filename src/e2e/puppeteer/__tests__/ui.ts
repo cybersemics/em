@@ -19,18 +19,18 @@ expect.extend({
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
-it('CommandPalette', async () => {
+it('DesktopCommandUniverse', async () => {
   await press('P', { meta: true })
 
-  // wait for the command palette to appear before taking screenshot
-  await waitForSelector('[data-testid=command-palette]')
+  // wait for the desktop command universe to appear before taking screenshot
+  await waitForSelector('[data-testid=desktop-command-universe]')
 
   expect(await screenshot()).toMatchImageSnapshot({
-    customSnapshotIdentifier: 'commandPalette',
+    customSnapshotIdentifier: 'desktopCommandUniverse',
   })
   await setTheme('Light')
   expect(await screenshot()).toMatchImageSnapshot({
-    customSnapshotIdentifier: 'commandPalette-light',
+    customSnapshotIdentifier: 'desktopCommandUniverse-light',
   })
 })
 
@@ -44,7 +44,7 @@ it('GestureMenu', async () => {
   // When cursor is on the thought, gesture menu is rendered with two new options. When cursor is null, those options are not shown. Hence always be consistent and set cursor to the thought.
   await clickThought('Hello')
 
-  // swipe and hold an invalid gesture so that the snapshot just includes Cancel and Open All Commands and does not need to be updated every time a gesture is added or changed.
+  // swipe and hold an invalid gesture so that the snapshot just includes Cancel and Command Universe and does not need to be updated every time a gesture is added or changed.
   await gesture('rdldrd', { hold: true })
 
   // wait for the gesture menu to appear

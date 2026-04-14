@@ -1,6 +1,6 @@
 import React from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { toggleGestureCheatsheetActionCreator } from '../../actions/toggleGestureCheatsheet'
+import { toggleMobileCommandUniverseActionCreator } from '../../actions/toggleMobileCommandUniverse'
 import CommandTable from '../CommandTable'
 import FadeTransition from '../FadeTransition'
 import Dialog from './Dialog'
@@ -8,24 +8,24 @@ import DialogContent from './DialogContent'
 import DialogTitle from './DialogTitle'
 
 /**
- * Gesture cheatsheet component.
+ * Mobile Command Universe component.
  */
-const GestureCheatsheet: React.FC = () => {
+const MobileCommandUniverse: React.FC = () => {
   const dispatch = useDispatch()
-  const isOpen = useSelector(state => state.showGestureCheatsheet)
+  const isOpen = useSelector(state => state.showMobileCommandUniverse)
   const nodeRef = React.useRef<HTMLDivElement>(null)
 
   /**
-   * Handles the closure of the gesture cheatsheet.
+   * Handles the closure of the mobile command universe.
    */
   const handleClose = () => {
-    dispatch(toggleGestureCheatsheetActionCreator({ value: false }))
+    dispatch(toggleMobileCommandUniverseActionCreator({ value: false }))
   }
 
   return (
     <FadeTransition in={isOpen} unmountOnExit type='medium' nodeRef={nodeRef}>
       <Dialog onClose={handleClose} nodeRef={nodeRef}>
-        <DialogTitle onClose={handleClose}>All Commands</DialogTitle>
+        <DialogTitle onClose={handleClose}>Command Universe</DialogTitle>
         <DialogContent>
           <CommandTable viewType='grid' />
         </DialogContent>
@@ -34,4 +34,4 @@ const GestureCheatsheet: React.FC = () => {
   )
 }
 
-export default GestureCheatsheet
+export default MobileCommandUniverse

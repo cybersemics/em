@@ -2,8 +2,8 @@ import IconType from '../../@types/IconType'
 import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/02-new-subthought_2.json'
 
-/** New Subthought Icon with Conditional Lottie Animation. */
-const GestureCheatsheetIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+/** Mobile Command Universe Icon with Conditional Lottie Animation. */
+const MobileCommandUniverseIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg
@@ -29,4 +29,4 @@ const GestureCheatsheetIcon = ({ fill, size = 18, style = {}, cssRaw, animated, 
   )
 }
 
-export default GestureCheatsheetIcon
+export default MobileCommandUniverseIcon

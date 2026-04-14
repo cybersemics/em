@@ -6,10 +6,10 @@ import { token } from '../../styled-system/tokens'
 import Command from '../@types/Command'
 import CommandId from '../@types/CommandId'
 import Key from '../@types/Key'
-import { commandPaletteActionCreator as commandPalette } from '../actions/commandPalette'
+import { desktopCommandUniverseActionCreator as desktopCommandUniverse } from '../actions/desktopCommandUniverse'
 import { hashCommand, hashKeyDown } from '../commands'
 import { executeCommandWithMulticursor } from '../commands'
-import commandPaletteCommand from '../commands/commandPalette'
+import desktopCommandUniverseCommand from '../commands/desktopCommandUniverse'
 import * as selection from '../device/selection'
 import useFilteredCommands from '../hooks/useFilteredCommands'
 import storageModel from '../stores/storageModel'
@@ -22,15 +22,15 @@ import PopupBase from './PopupBase'
  * Constants
  **********************************************************************/
 
-/** The maximum number of recent commands to store for the command palette. */
+/** The maximum number of recent commands to store for the desktop command universe. */
 const MAX_RECENT_COMMANDS = 5
 
 /**********************************************************************
  * Components
  **********************************************************************/
 
-/** Search input for the Command Palette. */
-const CommandSearch: FC<{
+/** Search input for the Desktop Command Universe. */
+const DesktopCommandUniverseSearch: FC<{
   onExecute?: (e: KeyboardEvent, value: string) => void
   onInput?: (value: string) => void
   onSelectDown?: (e: KeyboardEvent) => void
@@ -40,17 +40,17 @@ const CommandSearch: FC<{
 }> = ({ onExecute, onInput, onSelectDown, onSelectUp, onSelectTop, onSelectBottom }) => {
   const dispatch = useDispatch()
   const inputRef = useRef<HTMLInputElement | null>(null)
-  /** Handle command palette commands. */
+  /** Handle desktop command universe commands. */
   const onKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (
         e.key === 'Escape' ||
-        // manually check if the commandPalette command is entered since global commands are disabled while the command palette is open
-        hashCommand(commandPaletteCommand.keyboard as Key) === hashKeyDown(e)
+        // manually check if the desktopCommandUniverse command is entered since global commands are disabled while the desktop command universe is open
+        hashCommand(desktopCommandUniverseCommand.keyboard as Key) === hashKeyDown(e)
       ) {
         e.preventDefault()
         e.stopPropagation()
-        dispatch(commandPalette())
+        dispatch(desktopCommandUniverse())
       } else if (e.key === 'Enter') {
         onExecute?.(e, inputRef.current?.value || '')
       } else if (e.key === 'ArrowDown') {
@@ -79,7 +79,7 @@ const CommandSearch: FC<{
   }, [])
 
   // save selection and add event listeners on desktop
-  // cleanup when command palette is hidden
+  // cleanup when desktop command universe is hidden
   useEffect(() => {
     const throttledOnKeyDown = throttleByAnimationFrame(onKeyDown)
     window.addEventListener('keydown', throttledOnKeyDown)
@@ -110,8 +110,8 @@ const CommandSearch: FC<{
   )
 }
 
-/** Render a command palette with keyboard. */
-const CommandPalette: FC<{
+/** Render a desktop command universe with keyboard. */
+const DesktopCommandUniverse: FC<{
   commands: Command[]
   recentCommands: CommandId[]
   setRecentCommands: (commandIds: CommandId[]) => void
@@ -140,8 +140,8 @@ const CommandPalette: FC<{
       )
         return
       const commandsNew = [command.id, ...recentCommands].slice(0, MAX_RECENT_COMMANDS)
-      dispatch(commandPalette())
-      executeCommandWithMulticursor(command, { event: e, type: 'commandPalette', store })
+      dispatch(desktopCommandUniverse())
+      executeCommandWithMulticursor(command, { event: e, type: 'desktopCommandUniverse', store })
       storageModel.set('recentCommands', commandsNew)
       setRecentCommands(commandsNew)
     },
@@ -215,7 +215,7 @@ const CommandPalette: FC<{
 
   return (
     <div
-      data-testid='command-palette'
+      data-testid='desktop-command-universe'
       className={css({
         display: 'flex',
         flexDirection: 'column',
@@ -239,8 +239,8 @@ const CommandPalette: FC<{
           marginBottom: '1em',
         })}
         /**
-         * Clicking anywhere outside this element will close the command palette.
-         * `e.stopPropagation()` prevents the command palette from closing when clicked.
+         * Clicking anywhere outside this element will close the desktop command universe.
+         * `e.stopPropagation()` prevents the desktop command universe from closing when clicked.
          * See `onClick` on parent.
          * */
         onClick={e => e.stopPropagation()}
@@ -252,7 +252,7 @@ const CommandPalette: FC<{
             borderBottom: 'solid 1px {colors.gray15}',
           })}
         >
-          <CommandSearch
+          <DesktopCommandUniverseSearch
             onExecute={onExecuteSelected}
             onInput={setSearch}
             onSelectUp={onSelectUp}
@@ -291,8 +291,8 @@ const CommandPalette: FC<{
   )
 }
 
-/** A CommandPalette component that fades in and out based on state.showCommandPalette. */
-const CommandPaletteWithTransition: FC = () => {
+/** A DesktopCommandUniverse component that fades in and out based on state.showDesktopCommandUniverse. */
+const DesktopCommandUniverseWithTransition: FC = () => {
   const [isDismissed, setDismiss] = useState(false)
   const dispatch = useDispatch()
   const popupRef = useRef<HTMLDivElement>(null)
@@ -300,12 +300,12 @@ const CommandPaletteWithTransition: FC = () => {
   /** Dismiss the alert on close. */
   const onClose = useCallback(() => {
     setDismiss(true)
-    dispatch(commandPalette())
+    dispatch(desktopCommandUniverse())
   }, [dispatch])
 
-  const showCommandPalette = useSelector(state => state.showCommandPalette)
+  const showDesktopCommandUniverse = useSelector(state => state.showDesktopCommandUniverse)
 
-  // Commands need to be calculated even if the command palette is not shown because useFilteredCommands is responsible for updating gestureStore's possibleCommands which is needed to prevent haptics when there are no more possible commands. Otherwise, either haptics would continue to fire when there are no more possible commands, or would falsely fire when the current sequence is not a valid gesture but there are possible commands with additional swipes.
+  // Commands need to be calculated even if the desktop command universe is not shown because useFilteredCommands is responsible for updating gestureStore's possibleCommands which is needed to prevent haptics when there are no more possible commands. Otherwise, either haptics would continue to fire when there are no more possible commands, or would falsely fire when the current sequence is not a valid gesture but there are possible commands with additional swipes.
   const [recentCommands, setRecentCommands] = useState(storageModel.get('recentCommands'))
   const [search, setSearch] = useState('')
   const commands = useFilteredCommands(search, {
@@ -313,12 +313,12 @@ const CommandPaletteWithTransition: FC = () => {
     sortActiveCommandsFirst: true,
   })
 
-  // clear search when command palette is closed
+  // clear search when desktop command universe is closed
   useEffect(() => {
-    if (!showCommandPalette) {
+    if (!showDesktopCommandUniverse) {
       setSearch('')
     }
-  }, [showCommandPalette])
+  }, [showDesktopCommandUniverse])
 
   // if dismissed, set timeout to 0 to remove alert component immediately. Otherwise it will block toolbar interactions until the timeout completes.
   return (
@@ -327,7 +327,7 @@ const CommandPaletteWithTransition: FC = () => {
         !isDismissed ? child : React.cloneElement(child, { timeout: 0 })
       }
     >
-      {showCommandPalette ? (
+      {showDesktopCommandUniverse ? (
         <FadeTransition
           type='fast'
           // for some reason doesn't fade in correctly when default nodeRef is used
@@ -348,7 +348,7 @@ const CommandPaletteWithTransition: FC = () => {
               })}
               onClick={onClose}
             >
-              <CommandPalette
+              <DesktopCommandUniverse
                 search={search}
                 setSearch={setSearch}
                 commands={commands}
@@ -363,4 +363,4 @@ const CommandPaletteWithTransition: FC = () => {
   )
 }
 
-export default CommandPaletteWithTransition
+export default DesktopCommandUniverseWithTransition
