@@ -35,7 +35,8 @@ const useSwipeToClear = ({
       const touch = e.touches[0]
 
       // Ignore touches that start in safe areas, since those are likely accidental touches from users trying to interact with system UI.
-      if (touch.clientY < safeArea.top || touch.clientY > window.innerHeight - safeArea.bottom) {
+      // Extra 16px buffer above the bottom inset absorbs imprecise home-swipe starts that land just above the indicator.
+      if (touch.clientY < safeArea.top || touch.clientY > window.innerHeight - safeArea.bottom - 16) {
         lastTouch.current = null
         return
       }
