@@ -25,7 +25,7 @@
  */
 import * as Dialog from '@radix-ui/react-dialog'
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden'
-import { MotionValue, animate, motion, useMotionValue, useMotionValueEvent, useTransform } from 'framer-motion'
+import { MotionValue, animate, motion, useMotionValue, useTransform } from 'framer-motion'
 import _ from 'lodash'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
@@ -245,15 +245,15 @@ const SidebarHeader = ({
    *
    * Implementation note: framer-motion applies a CSS transform to each item's motion.div wrapper
    * (via style.y). In Chromium/WebKit, an element with a transform becomes the offsetParent of
-   * its descendants. That means sectionRow.offsetTop returns different things depending on
-   * whether the motion.div currently has a transform:
-   *   - With transform (e.g. closed state): offsetParent is the motion.div, so offsetTop only
-   *     covers the inner div's paddingTop (~9px) and we have to add motion.div's own offsetTop.
-   *   - Without transform (e.g. open state, transform: none): offsetParent skips the motion.div
-   *     and is the dropdown container, so offsetTop already includes the motion.div's static y.
-   * We branch on the actual offsetParent so the result is the same total (~54px for row 1)
-   * either way. Without this, non-Favorites sections end up either way under-translated (only
-   * ~9px) or over-translated (~99px) and the slide lands far from the header row. */
+   * its descendants, so sectionRow.offsetTop returns different things depending on whether the
+   * motion.div currently has a transform applied. With a transform (e.g. closed state) the
+   * offsetParent is the motion.div, so offsetTop only covers the inner div's paddingTop (~9px),
+   * and we have to add the motion.div's own offsetTop. Without a transform (e.g. open state)
+   * offsetParent skips the motion.div and is the dropdown container, so offsetTop already
+   * includes the motion.div's static y. We branch on the actual offsetParent so the result is
+   * the same total (~54px for row 1) either way. Without this, non-Favorites sections end up
+   * either under-translated (~9px) or over-translated (~99px) and the slide lands far from the
+   * header row. */
   const getSelectedOffset = useCallback(() => {
     const inner = itemEls.current[sectionId]
     const sectionRow = inner?.firstElementChild as HTMLElement | null
@@ -845,10 +845,7 @@ const Sidebar = () => {
   const [displayedSectionId, setDisplayedSectionId] = useState<SidebarSectionId>('favorites')
   useEffect(() => {
     if (sectionId === displayedSectionId) return
-    const id = setTimeout(
-      () => setDisplayedSectionId(sectionId),
-      STAGE_DURATION * (animationB ? 1 : 2) * 1000,
-    )
+    const id = setTimeout(() => setDisplayedSectionId(sectionId), STAGE_DURATION * (animationB ? 1 : 2) * 1000)
     return () => clearTimeout(id)
   }, [sectionId, displayedSectionId, animationB])
 
@@ -864,13 +861,12 @@ const Sidebar = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false)
 
   /** Whether the dropdown's open animation has progressed past stage 1 (the selected-item
-   * slide). Used for two related things:
-   *   1. Deciding whether a close is "interrupted" (and should reverse in place) vs. "staged"
-   *      (the normal two-stage close).
-   *   2. Gating dropdown-item taps: items only become tappable after stage 1, so during the
-   *      slide the user can interrupt via the header/backdrop but cannot select another
-   *      section. This prevents the messy "two items moving in opposite directions" close
-   *      that otherwise happens when a section change collides with an in-flight slide.
+   * slide). Used for two related things. First, deciding whether a close is "interrupted"
+   * (and should reverse in place) vs. "staged" (the normal two-stage close). Second, gating
+   * dropdown-item taps: items only become tappable after stage 1, so during the slide the
+   * user can interrupt via the header/backdrop but cannot select another section. This
+   * prevents the messy "two items moving in opposite directions" close that otherwise
+   * happens when a section change collides with an in-flight slide.
    *
    * Initialized true so the very first close — there hasn't been an open yet — still
    * counts as "non-interrupted". */
@@ -913,17 +909,6 @@ const Sidebar = () => {
   // including the stage-2 delay on close. 1 when fully closed (mask offset = -128), 0.5 when open.
   const maskOpacity = useTransform(dropdownMaskY, v => 0.5 + (0.5 * v) / DROPDOWN_MASK_OFFSET)
 
-  // TODO: remove debug instrumentation
-  useMotionValueEvent(dropdownMaskY, 'change', v => {
-    console.log(`[dropdownMaskY] ${performance.now().toFixed(0)} t=${v.toFixed(2)}`)
-  })
-  useMotionValueEvent(scrollHintMaskY, 'change', v => {
-    console.log(`[scrollHintMaskY] ${performance.now().toFixed(0)} t=${v.toFixed(2)}`)
-  })
-  useMotionValueEvent(maskPositionY, 'change', v => {
-    console.log(`[maskPositionY] ${performance.now().toFixed(0)} t=${v}`)
-  })
-
   /** True while the dropdown close animation is running (stage 1 + stage 2 window). Used to
    * block the scroll-hint effect from interrupting the stage-2-delayed mask animation with a
    * zero-delay one if isScrolled happens to flip during the close (e.g. from a section swap
@@ -931,10 +916,6 @@ const Sidebar = () => {
   const dropdownCloseInProgress = useRef(false)
 
   useEffect(() => {
-    // TODO: remove debug
-    console.log(
-      `[dropdownMask EFFECT FIRES] ${performance.now().toFixed(0)} dropdownOpen=${dropdownOpen} current=${dropdownMaskY.get().toFixed(2)} interrupted=${closeInterrupted}`,
-    )
     if (dropdownOpen) {
       // Open runs during stage 1 — start immediately, no delay.
       animate(dropdownMaskY, 0, { duration: STAGE_DURATION, ease: EASE_OUT })
@@ -958,9 +939,12 @@ const Sidebar = () => {
     const startId = setTimeout(() => {
       animate(dropdownMaskY, DROPDOWN_MASK_OFFSET, { duration: STAGE_DURATION, ease: EASE_OUT })
     }, STAGE_DURATION * 1000)
-    const clearId = setTimeout(() => {
-      dropdownCloseInProgress.current = false
-    }, STAGE_DURATION * 2 * 1000)
+    const clearId = setTimeout(
+      () => {
+        dropdownCloseInProgress.current = false
+      },
+      STAGE_DURATION * 2 * 1000,
+    )
     return () => {
       clearTimeout(startId)
       clearTimeout(clearId)
