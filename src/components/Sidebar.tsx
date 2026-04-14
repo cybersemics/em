@@ -161,6 +161,10 @@ interface SidebarHeaderProps {
   /** True iff the current close is reversing an open that hadn't fully completed. When set,
    * close-side transitions drop their stage-1 hold so the partial open unwinds in place. */
   interrupted: boolean
+  /** True when the dropdown's open animation has finished (past stage 1). Used by the
+   * dropdown item click handler to decide whether a section change should fire immediately
+   * or be deferred until the in-flight open has reversed cleanly. */
+  openComplete: boolean
 }
 
 /**
@@ -180,6 +184,7 @@ const SidebarHeader = ({
   isOpen,
   setIsOpen,
   interrupted,
+  openComplete,
 }: SidebarHeaderProps) => {
   /** The currently active section. */
   const section = sections.find(s => s.id === sectionId)!
@@ -380,8 +385,20 @@ const SidebarHeader = ({
                 }}
                 data-testid={`sidebar-${s.id}`}
                 {...fastClick(() => {
-                  onSectionChange(s.id)
+                  // If the open animation hasn't completed yet, the close will run as an
+                  // interrupted reverse — and we want the OLD selected item (still on screen
+                  // mid-slide) to slide back UP to the header position, not jump to the new
+                  // item. Defer the section change by one stage so it lands at the moment
+                  // the reverse slide completes and the opacity snap hands off to the header
+                  // row. Without the defer, the section change happens immediately, the OLD
+                  // item becomes non-selected and continues forward to its row position
+                  // while the NEW item slides up — two items moving in opposite directions.
                   setIsOpen(false)
+                  if (isOpen && !openComplete && s.id !== sectionId) {
+                    setTimeout(() => onSectionChange(s.id), STAGE_DURATION * 1000)
+                  } else {
+                    onSectionChange(s.id)
+                  }
                 })}
                 className={css({
                   cursor: 'pointer',
@@ -1475,6 +1492,7 @@ const Sidebar = () => {
                           isOpen={dropdownOpen}
                           setIsOpen={setDropdownOpen}
                           interrupted={closeInterrupted}
+                          openComplete={dropdownOpenComplete}
                         />
                       </div>
                     </FadeTransition>
