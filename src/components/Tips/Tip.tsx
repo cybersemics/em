@@ -150,19 +150,21 @@ const Tip: FC<
 
   const dismissing = useRef(false)
 
-  /** Animates opacity to 0 and dispatches dismissTip on completion. */
-  const animateDismiss = useCallback(() => {
-    dismissing.current = true
-    const duration = durations.get('medium') / 1000
-    animate(opacity, 0, {
-      duration,
-      ease: 'easeOut',
-      onComplete: () => {
-        dismissing.current = false
-        dispatch(dismissTip())
-      },
-    })
-  }, [opacity, dispatch])
+  /** Animates opacity to 0 over the given duration (seconds) and dispatches dismissTip on completion. */
+  const animateDismiss = useCallback(
+    (duration: number = durations.get('medium') / 1000) => {
+      dismissing.current = true
+      animate(opacity, 0, {
+        duration,
+        ease: 'easeOut',
+        onComplete: () => {
+          dismissing.current = false
+          dispatch(dismissTip())
+        },
+      })
+    },
+    [opacity, dispatch],
+  )
 
   // ── Swipe-to-dismiss ────────────────────────────────────────────────────
 
@@ -170,28 +172,19 @@ const Tip: FC<
     (immediate: boolean, vel: number, threshold: number) => {
       if (immediate) {
         dispatch(dismissTip())
-      } else {
-        // Derive fade duration from the swipe's momentum: treat the remaining
-        // opacity as a physical distance (scaled by threshold) and compute
-        // how long it would take to cross it at the current velocity.
-        const remainingPx = opacity.get() * threshold
-        const duration = Math.max(
-          MIN_SWIPE_DISMISS_DURATION,
-          Math.min(MAX_SWIPE_DISMISS_DURATION, remainingPx / Math.max(vel, 1)),
-        )
-
-        dismissing.current = true
-        animate(opacity, 0, {
-          duration,
-          ease: 'easeOut',
-          onComplete: () => {
-            dismissing.current = false
-            dispatch(dismissTip())
-          },
-        })
+        return
       }
+      // Derive fade duration from the swipe's momentum: treat the remaining
+      // opacity as a physical distance (scaled by threshold) and compute
+      // how long it would take to cross it at the current velocity.
+      const remainingPx = opacity.get() * threshold
+      const duration = Math.max(
+        MIN_SWIPE_DISMISS_DURATION,
+        Math.min(MAX_SWIPE_DISMISS_DURATION, remainingPx / Math.max(vel, 1)),
+      )
+      animateDismiss(duration)
     },
-    [dispatch, opacity],
+    [dispatch, opacity, animateDismiss],
   )
 
   const { completion, touchHandlers } = useSwipeToClear({
@@ -317,7 +310,7 @@ const Tip: FC<
                   _hover: { opacity: 0.8 },
                   _active: { opacity: 0.4 },
                 })}
-                {...fastClick(animateDismiss)}
+                {...fastClick(() => animateDismiss())}
               >
                 <CloseIcon size={12} />
                 <span className={css({ fontSize: '0.75rem' })}>Clear</span>
