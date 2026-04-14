@@ -11,6 +11,7 @@ import themeColors from '../selectors/themeColors'
 import { updateCommandState } from '../stores/commandStateStore'
 import suppressFocusStore from '../stores/suppressFocus'
 import head from '../util/head'
+import rgbToHex from '../util/rgbToHex'
 import strip from '../util/strip'
 import { editThoughtActionCreator as editThought } from './editThought'
 import { setDescendantActionCreator as setDescendant } from './setDescendant'
@@ -85,6 +86,19 @@ export const formatSelectionActionCreator =
           const doc = new DOMParser().parseFromString(value, 'text/html')
 
           for (const el of Array.from(doc.body.querySelectorAll<HTMLElement>('font, span'))) {
+            // Remove background-color if it matches the default background color
+            if (el.style.backgroundColor && rgbToHex(el.style.backgroundColor) === rgbToHex(colors.bg)) {
+              el.style.removeProperty('background-color')
+              if (!el.getAttribute('style')?.trim()) {
+                el.removeAttribute('style')
+              }
+            }
+
+            // Remove color if it matches the default text color
+            if (el.style.color && rgbToHex(el.style.color) === rgbToHex(state.noteFocus ? colors.fg : colors.fgNote)) {
+              el.style.removeProperty('color')
+            }
+
             // Unwrap tags that have no meaningful style or color attributes
             if (!el.getAttribute('style')?.trim() && !el.getAttribute('color')?.trim()) {
               el.replaceWith(...Array.from(el.childNodes))
