@@ -385,20 +385,14 @@ const SidebarHeader = ({
                 }}
                 data-testid={`sidebar-${s.id}`}
                 {...fastClick(() => {
-                  // If the open animation hasn't completed yet, the close will run as an
-                  // interrupted reverse — and we want the OLD selected item (still on screen
-                  // mid-slide) to slide back UP to the header position, not jump to the new
-                  // item. Defer the section change by one stage so it lands at the moment
-                  // the reverse slide completes and the opacity snap hands off to the header
-                  // row. Without the defer, the section change happens immediately, the OLD
-                  // item becomes non-selected and continues forward to its row position
-                  // while the NEW item slides up — two items moving in opposite directions.
+                  // Ignore taps until the slide (stage 1) has finished. During the slide the
+                  // user can still interrupt via the header — which bubbles up via this
+                  // element's parent click and closes the dropdown — but cannot pick a new
+                  // section. This avoids the messy collision where a mid-slide section
+                  // change leaves two items moving in opposite directions during the close.
+                  if (!openComplete) return
+                  onSectionChange(s.id)
                   setIsOpen(false)
-                  if (isOpen && !openComplete && s.id !== sectionId) {
-                    setTimeout(() => onSectionChange(s.id), STAGE_DURATION * 1000)
-                  } else {
-                    onSectionChange(s.id)
-                  }
                 })}
                 className={css({
                   cursor: 'pointer',
@@ -849,15 +843,14 @@ const Sidebar = () => {
   /** Whether the dropdown is open. */
   const [dropdownOpen, setDropdownOpen] = useState(false)
 
-  /** Whether the dropdown's open animation has progressed past stage 1. Tracked so a close
-   * that fires before the slide finishes can reverse the in-flight open in place rather than
-   * playing the (delayed, two-stage) standard close, which would freeze for stage 1.
-   *
-   * Threshold is STAGE_DURATION (end of stage 1), not 2·STAGE_DURATION (end of stage 2).
-   * After stage 1 the selected item has finished sliding into position and the dropdown is
-   * "fully open" from the user's perspective — stage 2 is just a fade-in of the non-selected
-   * items, during which a click on a dropdown item is a deliberate selection, not an
-   * interruption, and should get the staged close.
+  /** Whether the dropdown's open animation has progressed past stage 1 (the selected-item
+   * slide). Used for two related things:
+   *   1. Deciding whether a close is "interrupted" (and should reverse in place) vs. "staged"
+   *      (the normal two-stage close).
+   *   2. Gating dropdown-item taps: items only become tappable after stage 1, so during the
+   *      slide the user can interrupt via the header/backdrop but cannot select another
+   *      section. This prevents the messy "two items moving in opposite directions" close
+   *      that otherwise happens when a section change collides with an in-flight slide.
    *
    * Initialized true so the very first close — there hasn't been an open yet — still
    * counts as "non-interrupted". */
