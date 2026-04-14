@@ -367,3 +367,19 @@ it('Can change the background color of a thought that already has the same backg
   const thought = await getEditingText()
   expect(thought).toBe('<font color="#000000" style="background-color: rgb(255, 87, 61);">some formatted text</font>')
 })
+
+it('Can change the color of a note that already has the same color applied to part of its text', async () => {
+  await paste(`
+    - a
+      - =note      
+        - some formatted <font color="#ff573d">text</font>
+  `)
+
+  // change the color on the note
+  await clickFirstNote()
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="text color swatches"] [aria-label="red"]')
+
+  const note = await getFirstNoteText()
+  expect(note).toBe('<font color="#ff573d">some formatted text</font>')
+})
