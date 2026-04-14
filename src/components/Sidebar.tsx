@@ -158,6 +158,9 @@ interface SidebarHeaderProps {
   isOpen: boolean
   /** State setter to toggle the dropdown open/closed. */
   setIsOpen: (open: boolean) => void
+  /** True iff the current close is reversing an open that hadn't fully completed. When set,
+   * close-side transitions drop their stage-1 hold so the partial open unwinds in place. */
+  interrupted: boolean
 }
 
 /**
@@ -170,7 +173,14 @@ interface SidebarHeaderProps {
  * - The scrollable content area gently fades out.
  *
  */
-const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen }: SidebarHeaderProps) => {
+const SidebarHeader = ({
+  sections,
+  sectionId,
+  onSectionChange,
+  isOpen,
+  setIsOpen,
+  interrupted,
+}: SidebarHeaderProps) => {
   /** The currently active section. */
   const section = sections.find(s => s.id === sectionId)!
 
@@ -178,56 +188,72 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
   const stageDuration = STAGE_DURATION
 
   /*
-   * Two-stage animation schedule. The dropdown open/close is choreographed as two
-   * back-to-back stages of equal length (total = stageDuration * 2). Open and close
-   * use the same stage timings — what differs is which element runs in which stage.
+   * Two-stage animation schedule:
+   * The dropdown open/close is choreographed as two back-to-back stages of equal length,
+   * which is defined as `stageDuration`:
    *
-   *   Opening (t=0 → 2d):
-   *     stage 1: selected item slides from header position down into the list
+   *   Opening:
+   *     stage 1: selected item slides from header position down into the list along with color glow intensification
    *     stage 2: non-selected items fade in
    *
-   *   Closing (t=0 → 2d):
+   *   Closing:
    *     stage 1: non-selected items fade out
-   *     stage 2: selected item slides back up into the header position
+   *     stage 2: selected item slides back up into the header position along with color glow dimming
    *
-   * atStart / atEnd are instantaneous opacity swaps at the very edges of the whole
-   * animation — used to hand off between the header row and the selected dropdown
-   * item without a crossfade (the slide carries the visual continuity instead).
+   * atStart / atEnd play at the very start/end of the animation, and are responsible for
+   * swapping between the static header row at the top, and the *selected* item
+   * inside the dropdown menu.
+   *
    */
   const stage1 = { duration: stageDuration, ease: EASE_OUT, delay: 0 }
   const stage2 = { duration: stageDuration, ease: EASE_OUT, delay: stageDuration }
   const atStart = { duration: 0, delay: 0 }
   const atEnd = { duration: 0, delay: stageDuration * 2 }
 
-  /** Refs to each dropdown item's SidebarSectionRow wrapper, keyed by section id, for measuring Y offsets.
-   * We measure the SidebarSectionRow itself (not the motion.div wrapper) so that offsetTop includes
-   * the inner div's paddingTop — otherwise the slide lands ~padTop px below the header row and snaps
-   * when the opacity swap hands off to the header row at the end of the close animation. */
+  /*
+   * Close transitions. `interrupted` is true if the open animation never finished,
+   * so we just reverse the opening animation in place without any delays or the two-stage sequence.
+   * When false (the dropdown was fully open before the close), we use the staged
+   * choreography described above.
+   */
+  const closeSlide = interrupted ? stage1 : stage2
+  const closeSelectedOpacity = interrupted ? { duration: 0, delay: stageDuration } : atEnd
+  const closeHeaderRow = closeSelectedOpacity
+  const closeChevron = interrupted
+    ? { duration: stageDuration, ease: EASE_OUT, delay: 0 }
+    : { duration: stageDuration, delay: stageDuration * 2, ease: EASE_OUT }
+
+  /** Refs to each dropdown item's inner padded div, keyed by section id, for measuring Y offsets. */
   const itemEls = useRef<Record<string, HTMLDivElement | null>>({})
 
-  /** Measure the selected item's SidebarSectionRow Y offset (relative to the absolutely-positioned
-   * dropdown, which itself starts at y=0 within sidebar-section-picker). Falls back to a computed
-   * estimate if the element isn't mounted yet. */
+  /** Measure the selected item's SidebarSectionRow Y position within the dropdown container.
+   * This is the distance the selected item must translate UP to overlay the header row at y=0.
+   *
+   * Implementation note: framer-motion applies a CSS transform to each item's motion.div wrapper
+   * (via style.y). In Chromium/WebKit, an element with a transform becomes the offsetParent of
+   * its descendants. That means sectionRow.offsetTop returns different things depending on
+   * whether the motion.div currently has a transform:
+   *   - With transform (e.g. closed state): offsetParent is the motion.div, so offsetTop only
+   *     covers the inner div's paddingTop (~9px) and we have to add motion.div's own offsetTop.
+   *   - Without transform (e.g. open state, transform: none): offsetParent skips the motion.div
+   *     and is the dropdown container, so offsetTop already includes the motion.div's static y.
+   * We branch on the actual offsetParent so the result is the same total (~54px for row 1)
+   * either way. Without this, non-Favorites sections end up either way under-translated (only
+   * ~9px) or over-translated (~99px) and the slide lands far from the header row. */
   const getSelectedOffset = useCallback(() => {
     const inner = itemEls.current[sectionId]
-    // Measure the SidebarSectionRow (first child of the inner padded div) so the y transform
-    // accounts for the inner div's paddingTop. Measuring the inner div alone would leave the
-    // slide ~padTop px short of the header row and cause a visible snap at the end of the close.
     const sectionRow = inner?.firstElementChild as HTMLElement | null
-    if (sectionRow) return sectionRow.offsetTop
-    // Fallback: each row's SidebarSectionRow sits 54px below the previous one
-    // (padTop 0.5rem ≈ 9px + content 36px + padBot 0.5rem ≈ 9px). Row 0 has no padTop
-    // so its SidebarSectionRow aligns with the header row at y=0.
+    const motionDiv = inner?.parentElement as HTMLElement | null
+    if (sectionRow && motionDiv) {
+      const includesMotionDivOffset = sectionRow.offsetParent !== motionDiv
+      return sectionRow.offsetTop + (includesMotionDivOffset ? 0 : motionDiv.offsetTop)
+    }
+    // If the elements aren't mounted yet, estimate based on index * row height
     const idx = sections.findIndex(s => s.id === sectionId)
     return Math.max(0, idx) * 54
   }, [sectionId, sections])
 
   const selectedOffset = getSelectedOffset()
-
-  // TODO: remove debug log
-  useEffect(() => {
-    console.log('[SidebarHeader]', { sectionId, isOpen, selectedOffset })
-  }, [sectionId, isOpen, selectedOffset])
 
   return (
     // position:relative creates a stacking context for the absolutely-positioned dropdown.
@@ -251,7 +277,7 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
         <motion.div
           initial={false}
           animate={{ opacity: isOpen ? 0 : 1 }}
-          transition={isOpen ? atStart : atEnd}
+          transition={isOpen ? atStart : closeHeaderRow}
         >
           <SidebarSectionRow icon={section.icon} label={section.label} />
         </motion.div>
@@ -262,9 +288,7 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
         <motion.div
           initial={false}
           animate={{ opacity: isOpen ? 0 : 1 }}
-          transition={
-            isOpen ? stage1 : { duration: stageDuration, delay: stageDuration * 2, ease: EASE_OUT }
-          }
+          transition={isOpen ? stage1 : closeChevron}
           className={css({ display: 'inline-flex' })}
         >
           <ChevronImg
@@ -339,9 +363,10 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
                   ? {
                       // Selected item: opacity swaps instantly at the edges; y slides over one stage
                       // (stage 1 on open so the slide precedes the others fading in, stage 2 on close
-                      // so the slide happens after the others have faded out).
-                      opacity: isOpen ? atStart : atEnd,
-                      y: isOpen ? stage1 : stage2,
+                      // so the slide happens after the others have faded out — except on an interrupted
+                      // close, where the slide unwinds immediately during stage 1).
+                      opacity: isOpen ? atStart : closeSelectedOpacity,
+                      y: isOpen ? stage1 : closeSlide,
                     }
                   : // Non-selected items: fade in during stage 2 on open, fade out during stage 1 on close.
                     isOpen
@@ -402,6 +427,7 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
 const SidebarOverlay1 = ({
   opacity,
   expanded,
+  interrupted,
   hue,
   sat,
 }: {
@@ -409,6 +435,8 @@ const SidebarOverlay1 = ({
   opacity: MotionValue<number>
   /** Whether the dropdown is currently expanded. */
   expanded: boolean
+  /** True if the current close is reversing an open that hadn't fully completed. */
+  interrupted: boolean
   /** Shared motion value driving CSS hue-rotate on the overlay. */
   hue: MotionValue<number>
   /** Shared motion value driving CSS saturate on the overlay. */
@@ -428,9 +456,9 @@ const SidebarOverlay1 = ({
     animate(dropdownOpacity, expanded ? 1 : 0.8, {
       duration: durations.get('medium') / 1000,
       ease: EASE_OUT,
-      delay: expanded ? 0 : STAGE_DURATION,
+      delay: expanded || interrupted ? 0 : STAGE_DURATION,
     })
-  }, [expanded, dropdownOpacity])
+  }, [expanded, interrupted, dropdownOpacity])
 
   /** Combined opacity: parent's sidebar open/close opacity multiplied by the dropdown expansion ramp. */
   const combinedOpacity = useTransform([opacity, dropdownOpacity], ([o, d]: number[]) => o * d)
@@ -469,7 +497,11 @@ const SidebarOverlay1 = ({
       animate={expanded ? open : collapsed}
       // Open: start stretching immediately (stage 1). Close: hold the stretched state through
       // stage 1 and only begin shrinking during stage 2, in sync with the header-slide close.
-      transition={{ duration: durations.get('slow') / 1000, ease: EASE_OUT, delay: expanded ? 0 : STAGE_DURATION }}
+      transition={{
+        duration: durations.get('slow') / 1000,
+        ease: EASE_OUT,
+        delay: expanded || interrupted ? 0 : STAGE_DURATION,
+      }}
       className={css({
         position: 'absolute',
         top: 0,
@@ -800,6 +832,29 @@ const Sidebar = () => {
   /** Whether the dropdown is open. */
   const [dropdownOpen, setDropdownOpen] = useState(false)
 
+  /** Whether the dropdown's open animation has progressed past stage 1. Tracked so a close
+   * that fires before the slide finishes can reverse the in-flight open in place rather than
+   * playing the (delayed, two-stage) standard close, which would freeze for stage 1.
+   *
+   * Threshold is STAGE_DURATION (end of stage 1), not 2·STAGE_DURATION (end of stage 2).
+   * After stage 1 the selected item has finished sliding into position and the dropdown is
+   * "fully open" from the user's perspective — stage 2 is just a fade-in of the non-selected
+   * items, during which a click on a dropdown item is a deliberate selection, not an
+   * interruption, and should get the staged close.
+   *
+   * Initialized true so the very first close — there hasn't been an open yet — still
+   * counts as "non-interrupted". */
+  const [dropdownOpenComplete, setDropdownOpenComplete] = useState(true)
+  useEffect(() => {
+    if (!dropdownOpen) return
+    setDropdownOpenComplete(false)
+    const t = setTimeout(() => setDropdownOpenComplete(true), STAGE_DURATION * 1000)
+    return () => clearTimeout(t)
+  }, [dropdownOpen])
+  /** True if we're currently closing an open that never finished. Stays stable across
+   * the whole close because dropdownOpenComplete is only reset on the next open. */
+  const closeInterrupted = !dropdownOpen && !dropdownOpenComplete
+
   /** Reset the dropdown and release focus whenever the sidebar closes. */
   useEffect(() => {
     if (!showSidebar) {
@@ -848,17 +903,27 @@ const Sidebar = () => {
   useEffect(() => {
     // TODO: remove debug
     console.log(
-      `[dropdownMask EFFECT FIRES] ${performance.now().toFixed(0)} dropdownOpen=${dropdownOpen} current=${dropdownMaskY.get().toFixed(2)}`,
+      `[dropdownMask EFFECT FIRES] ${performance.now().toFixed(0)} dropdownOpen=${dropdownOpen} current=${dropdownMaskY.get().toFixed(2)} interrupted=${closeInterrupted}`,
     )
     if (dropdownOpen) {
       // Open runs during stage 1 — start immediately, no delay.
       animate(dropdownMaskY, 0, { duration: STAGE_DURATION, ease: EASE_OUT })
       return
     }
-    // Close runs during stage 2. Framer-motion's built-in `delay` option drops ~60ms (4 frames)
-    // in practice, which causes the mask to start moving visibly in the last frames of stage 1
-    // instead of at the stage 1/2 boundary. We use an explicit setTimeout instead for a guaranteed
-    // hold that lines up with the title-slide's stage 2 start.
+    if (closeInterrupted) {
+      // Reverse the in-flight open immediately — no stage-1 hold. Framer interpolates
+      // smoothly from whatever partial value dropdownMaskY currently holds.
+      dropdownCloseInProgress.current = true
+      animate(dropdownMaskY, DROPDOWN_MASK_OFFSET, { duration: STAGE_DURATION, ease: EASE_OUT })
+      const clearId = setTimeout(() => {
+        dropdownCloseInProgress.current = false
+      }, STAGE_DURATION * 1000)
+      return () => clearTimeout(clearId)
+    }
+    // Staged close runs during stage 2. Framer-motion's built-in `delay` option drops ~60ms
+    // (4 frames) in practice, which causes the mask to start moving visibly in the last frames
+    // of stage 1 instead of at the stage 1/2 boundary. We use an explicit setTimeout instead
+    // for a guaranteed hold that lines up with the title-slide's stage 2 start.
     dropdownCloseInProgress.current = true
     const startId = setTimeout(() => {
       animate(dropdownMaskY, DROPDOWN_MASK_OFFSET, { duration: STAGE_DURATION, ease: EASE_OUT })
@@ -870,7 +935,7 @@ const Sidebar = () => {
       clearTimeout(startId)
       clearTimeout(clearId)
     }
-  }, [dropdownOpen, dropdownMaskY])
+  }, [dropdownOpen, dropdownMaskY, closeInterrupted])
 
   useEffect(() => {
     // Never interrupt the dropdown animation: while the dropdown is open or mid-close, the
@@ -1264,7 +1329,13 @@ const Sidebar = () => {
             />
 
             {/* Primary glow overlay – responds to dropdown expansion */}
-            <SidebarOverlay1 opacity={contentOpacity} expanded={dropdownOpen} hue={hue} sat={sat} />
+            <SidebarOverlay1
+              opacity={contentOpacity}
+              expanded={dropdownOpen}
+              interrupted={closeInterrupted}
+              hue={hue}
+              sat={sat}
+            />
             {/* Secondary glow overlay – adds middle tones */}
             <SidebarOverlay2 width={width} opacity={contentOpacity} hue={hue} sat={sat} />
 
@@ -1403,6 +1474,7 @@ const Sidebar = () => {
                           onSectionChange={setSectionId}
                           isOpen={dropdownOpen}
                           setIsOpen={setDropdownOpen}
+                          interrupted={closeInterrupted}
                         />
                       </div>
                     </FadeTransition>
