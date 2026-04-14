@@ -35,8 +35,9 @@ import { token } from '../../styled-system/tokens'
 import { longPressActionCreator as longPress } from '../actions/longPress'
 import { toggleSidebarActionCreator } from '../actions/toggleSidebar'
 import { isSafari } from '../browser'
-import { LongPressState } from '../constants'
+import { LongPressState, Settings } from '../constants'
 import useBreakpoint from '../hooks/useBreakpoint'
+import getUserSetting from '../selectors/getUserSetting'
 import viewportStore from '../stores/viewport'
 import durations from '../util/durations'
 import fastClick from '../util/fastClick'
@@ -165,6 +166,10 @@ interface SidebarHeaderProps {
    * dropdown item click handler to decide whether a section change should fire immediately
    * or be deferred until the in-flight open has reversed cleanly. */
   openComplete: boolean
+  /** Debug toggle: when true, use the single-stage animation B (selected slide and
+   * non-selected fade-in/out happen concurrently in one stageDuration window). When false,
+   * use the standard two-stage animation A. */
+  animationB: boolean
 }
 
 /**
@@ -185,6 +190,7 @@ const SidebarHeader = ({
   setIsOpen,
   interrupted,
   openComplete,
+  animationB,
 }: SidebarHeaderProps) => {
   /** The currently active section. */
   const section = sections.find(s => s.id === sectionId)!
@@ -210,10 +216,13 @@ const SidebarHeader = ({
    * inside the dropdown menu.
    *
    */
+  // Animation B collapses stage 2 onto stage 1: there's only a single stageDuration window
+  // for both open and close, so things that would normally wait one stage now fire immediately,
+  // and things that would normally land at t=2·stage now land at t=stage.
   const stage1 = { duration: stageDuration, ease: EASE_OUT, delay: 0 }
-  const stage2 = { duration: stageDuration, ease: EASE_OUT, delay: stageDuration }
+  const stage2 = { duration: stageDuration, ease: EASE_OUT, delay: animationB ? 0 : stageDuration }
   const atStart = { duration: 0, delay: 0 }
-  const atEnd = { duration: 0, delay: stageDuration * 2 }
+  const atEnd = { duration: 0, delay: stageDuration * (animationB ? 1 : 2) }
 
   /*
    * Close transitions. `interrupted` is true if the open animation never finished,
@@ -226,7 +235,7 @@ const SidebarHeader = ({
   const closeHeaderRow = closeSelectedOpacity
   const closeChevron = interrupted
     ? { duration: stageDuration, ease: EASE_OUT, delay: 0 }
-    : { duration: stageDuration, delay: stageDuration * 2, ease: EASE_OUT }
+    : { duration: stageDuration, delay: stageDuration * (animationB ? 1 : 2), ease: EASE_OUT }
 
   /** Refs to each dropdown item's inner padded div, keyed by section id, for measuring Y offsets. */
   const itemEls = useRef<Record<string, HTMLDivElement | null>>({})
@@ -439,6 +448,7 @@ const SidebarOverlay1 = ({
   opacity,
   expanded,
   interrupted,
+  animationB,
   hue,
   sat,
 }: {
@@ -448,6 +458,8 @@ const SidebarOverlay1 = ({
   expanded: boolean
   /** True if the current close is reversing an open that hadn't fully completed. */
   interrupted: boolean
+  /** Debug toggle: single-stage open/close. Drops the stage-1 hold on close. */
+  animationB: boolean
   /** Shared motion value driving CSS hue-rotate on the overlay. */
   hue: MotionValue<number>
   /** Shared motion value driving CSS saturate on the overlay. */
@@ -467,9 +479,9 @@ const SidebarOverlay1 = ({
     animate(dropdownOpacity, expanded ? 1 : 0.8, {
       duration: durations.get('medium') / 1000,
       ease: EASE_OUT,
-      delay: expanded || interrupted ? 0 : STAGE_DURATION,
+      delay: expanded || interrupted || animationB ? 0 : STAGE_DURATION,
     })
-  }, [expanded, interrupted, dropdownOpacity])
+  }, [expanded, interrupted, animationB, dropdownOpacity])
 
   /** Combined opacity: parent's sidebar open/close opacity multiplied by the dropdown expansion ramp. */
   const combinedOpacity = useTransform([opacity, dropdownOpacity], ([o, d]: number[]) => o * d)
@@ -511,7 +523,7 @@ const SidebarOverlay1 = ({
       transition={{
         duration: durations.get('slow') / 1000,
         ease: EASE_OUT,
-        delay: expanded || interrupted ? 0 : STAGE_DURATION,
+        delay: expanded || interrupted || animationB ? 0 : STAGE_DURATION,
       }}
       className={css({
         position: 'absolute',
@@ -811,6 +823,11 @@ const Sidebar = () => {
   /** Whether the sidebar is open – sourced from Redux store. */
   const showSidebar = useSelector(state => state.showSidebar)
 
+  /** Debug toggle: animation B replaces the two-stage open/close with a single combined
+   * stage. Selected slide and non-selected fade-in/out happen concurrently in one
+   * stageDuration window. Read from user settings via the OPTIONS panel. */
+  const animationB = !!useSelector(getUserSetting(Settings.sidebarAnimationB))
+
   /** Current long-press state – used to prevent sidebar swipe-close during
    * thought drag-and-drop operations. */
   const longPressState = useSelector(state => state.longPress)
@@ -828,9 +845,12 @@ const Sidebar = () => {
   const [displayedSectionId, setDisplayedSectionId] = useState<SidebarSectionId>('favorites')
   useEffect(() => {
     if (sectionId === displayedSectionId) return
-    const id = setTimeout(() => setDisplayedSectionId(sectionId), STAGE_DURATION * 2 * 1000)
+    const id = setTimeout(
+      () => setDisplayedSectionId(sectionId),
+      STAGE_DURATION * (animationB ? 1 : 2) * 1000,
+    )
     return () => clearTimeout(id)
-  }, [sectionId, displayedSectionId])
+  }, [sectionId, displayedSectionId, animationB])
 
   /** Whether the scrollable content area has been scrolled down.
    * Used to conditionally show a top fade-out mask for scroll overflow indication. */
@@ -920,9 +940,9 @@ const Sidebar = () => {
       animate(dropdownMaskY, 0, { duration: STAGE_DURATION, ease: EASE_OUT })
       return
     }
-    if (closeInterrupted) {
-      // Reverse the in-flight open immediately — no stage-1 hold. Framer interpolates
-      // smoothly from whatever partial value dropdownMaskY currently holds.
+    if (closeInterrupted || animationB) {
+      // Reverse / single-stage close: animate immediately with no stage-1 hold. Framer
+      // interpolates smoothly from whatever partial value dropdownMaskY currently holds.
       dropdownCloseInProgress.current = true
       animate(dropdownMaskY, DROPDOWN_MASK_OFFSET, { duration: STAGE_DURATION, ease: EASE_OUT })
       const clearId = setTimeout(() => {
@@ -945,7 +965,7 @@ const Sidebar = () => {
       clearTimeout(startId)
       clearTimeout(clearId)
     }
-  }, [dropdownOpen, dropdownMaskY, closeInterrupted])
+  }, [dropdownOpen, dropdownMaskY, closeInterrupted, animationB])
 
   useEffect(() => {
     // Never interrupt the dropdown animation: while the dropdown is open or mid-close, the
@@ -1343,6 +1363,7 @@ const Sidebar = () => {
               opacity={contentOpacity}
               expanded={dropdownOpen}
               interrupted={closeInterrupted}
+              animationB={animationB}
               hue={hue}
               sat={sat}
             />
@@ -1486,6 +1507,7 @@ const Sidebar = () => {
                           setIsOpen={setDropdownOpen}
                           interrupted={closeInterrupted}
                           openComplete={dropdownOpenComplete}
+                          animationB={animationB}
                         />
                       </div>
                     </FadeTransition>

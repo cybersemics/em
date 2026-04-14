@@ -113,6 +113,7 @@ const FavoritesOptions = ({
 }) => {
   const dispatch = useDispatch()
   const hideContexts = useSelector(getUserSetting(Settings.favoritesHideContexts))
+  const sidebarAnimationB = useSelector(getUserSetting(Settings.sidebarAnimationB))
   const formRef = useRef<HTMLFormElement>(null)
 
   return (
@@ -163,6 +164,13 @@ const FavoritesOptions = ({
                 dispatch(toggleUserSetting({ key: Settings.favoritesHideContexts }))
               }}
             />
+            <Checkbox
+              checked={!!sidebarAnimationB}
+              title='Sidebar animation B (single-stage open/close)'
+              onChange={() => {
+                dispatch(toggleUserSetting({ key: Settings.sidebarAnimationB }))
+              }}
+            />
           </form>
         </SlideTransition>
       </div>
@@ -190,19 +198,17 @@ const Favorites = ({ disableDragAndDrop }: { disableDragAndDrop?: boolean }) => 
   return (
     <div className='favorites' data-testid='favorites'>
       <div>
+        <FavoritesOptions setShowOptions={setShowOptions} showOptions={showOptions} />
         {simplePaths.length > 0 ? (
-          <div>
-            <FavoritesOptions setShowOptions={setShowOptions} showOptions={showOptions} />
-            <div className={css({ marginTop: '1em' })}>
-              {simplePaths.map(simplePath => (
-                <DragAndDropFavorite
-                  key={head(simplePath)}
-                  simplePath={simplePath}
-                  disableDragAndDrop={disableDragAndDrop}
-                  hideContext={hideContexts}
-                />
-              ))}
-            </div>
+          <div className={css({ marginTop: '1em' })}>
+            {simplePaths.map(simplePath => (
+              <DragAndDropFavorite
+                key={head(simplePath)}
+                simplePath={simplePath}
+                disableDragAndDrop={disableDragAndDrop}
+                hideContext={hideContexts}
+              />
+            ))}
           </div>
         ) : (
           <div className={css({ marginTop: '1em', maxWidth: 450 })}>
