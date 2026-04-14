@@ -22,6 +22,7 @@ function tunnelTokenGate(): Plugin | undefined {
 
   const cookieName = '__tunnel_token'
 
+  /** Middleware that allows requests bearing a valid token (via cookie or query param) and rejects all others. */
   const gate = (server: ViteDevServer | PreviewServer) => {
     server.middlewares.use((req: IncomingMessage, res: ServerResponse, next: () => void) => {
       // Accept an existing session cookie set on a previous authenticated request.
