@@ -17,7 +17,7 @@ import { newThoughtActionCreator as newThought } from '../actions/newThought'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import { tutorialNextActionCreator as tutorialNext } from '../actions/tutorialNext'
-import { isMac, isTouch } from '../browser'
+import { isMac, isSafari, isTouch } from '../browser'
 import { commandEmitter } from '../commands'
 import {
   EDIT_THROTTLE,
@@ -533,6 +533,29 @@ const Editable = ({
    */
   const onFocus = useCallback(
     () => {
+      /**
+       * On iOS, a long press between 415–650ms will trigger onFocus even when preventDefault is called in touchend, thus opening the virtual keyboard on top of the Command Center. There appears to be no way to prevent focus in this case. Therefore, we clear the selection and disable edit mode manually as soon as the focus triggers.
+       *
+       * Unfortunatly, doing this synchronously results in 1) iOS Writing Tools getting stuck open, and 2) the selection gets restored after the Command Center is closed (presumably because state.isKeyboardOpen is incorrectly set to true at some point). Clearing the selection after two animation frames fixes the issue.
+       *
+       * See: https://github.com/cybersemics/em/issues/3387.
+       * */
+      if (isTouch && isSafari()) {
+        dispatch((dispatch, getState) => {
+          const state = getState()
+          if (state.showCommandCenter) {
+            selection.clear()
+            dispatch(keyboardOpenActionCreator({ value: false }))
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                selection.clear()
+                dispatch(keyboardOpenActionCreator({ value: false }))
+              })
+            })
+          }
+        })
+      }
+
       if (suppressFocusStore.getState()) return
       // Update editingValueUntrimmedStore with the current value
       editingValueUntrimmedStore.update(value)
