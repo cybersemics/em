@@ -230,16 +230,13 @@ const useEditMode = ({
 
       skipManualCaretForTouchEndRef.current = false
 
-      const { offset: nodeOffset } = getCaretOffset(editable, {
+      const { offset } = getCaretOffset(editable, {
         clientX: touch.clientX,
         clientY: touch.clientY,
       })
-      if (nodeOffset !== null) {
-        pendingCaretOffsetRef.current = nodeOffset
-      } else {
-        pendingCaretOffsetRef.current = null
-        allowDefaultSelection()
-      }
+
+      pendingCaretOffsetRef.current = offset
+      allowDefaultSelection()
     }
 
     /** Cancels the pending caret offset if the user scrolls past the threshold. */
