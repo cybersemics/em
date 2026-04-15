@@ -67,64 +67,62 @@ export const formatSelectionActionCreator =
 
     suppressFocusStore.update(false)
 
-    if (command === 'backColor') {
-      if (color === 'bg') {
-        dispatch((dispatch, getState) => {
-          const state = getState()
-          if (!state.cursor) return
+    if (command === 'backColor' || command === 'foreColor') {
+      dispatch((dispatch, getState) => {
+        const state = getState()
+        if (!state.cursor) return
 
-          // Could be formatting either a thought or a note (#3901)
-          const value = state.noteFocus
-            ? noteValue(state, state.cursor)
-            : getThoughtById(state, head(state.cursor))?.value
-          if (!value) return
+        // Could be formatting either a thought or a note (#3901)
+        const value = state.noteFocus
+          ? noteValue(state, state.cursor)
+          : getThoughtById(state, head(state.cursor))?.value
+        if (!value) return
 
-          const path = state.noteFocus ? resolveNotePath(state, state.cursor) : state.cursor
-          if (!path) return
+        const path = state.noteFocus ? resolveNotePath(state, state.cursor) : state.cursor
+        if (!path) return
 
-          // Use DOMParser to remove background-color and unwrap font/span tags that have no meaningful attributes
-          const doc = new DOMParser().parseFromString(value, 'text/html')
+        // Use DOMParser to remove background-color and unwrap font/span tags that have no meaningful attributes
+        const doc = new DOMParser().parseFromString(value, 'text/html')
 
-          for (const el of Array.from(doc.body.querySelectorAll<HTMLElement>('font, span'))) {
-            // Remove background-color if it matches the default background color
-            if (el.style.backgroundColor && rgbToHex(el.style.backgroundColor) === rgbToHex(colors.bg)) {
-              el.style.removeProperty('background-color')
-              if (!el.getAttribute('style')?.trim()) {
-                el.removeAttribute('style')
-              }
-            }
-
-            // Remove color if it matches the default text color
-            if (el.style.color && rgbToHex(el.style.color) === rgbToHex(state.noteFocus ? colors.fg : colors.fgNote)) {
-              el.style.removeProperty('color')
-            }
-
-            // Unwrap tags that have no meaningful style or color attributes
-            if (!el.getAttribute('style')?.trim() && !el.getAttribute('color')?.trim()) {
-              el.replaceWith(...Array.from(el.childNodes))
+        for (const el of Array.from(doc.body.querySelectorAll<HTMLElement>('font, span'))) {
+          // Remove background-color if it matches the default background color
+          if (el.style.backgroundColor && rgbToHex(el.style.backgroundColor) === rgbToHex(colors.bg)) {
+            el.style.removeProperty('background-color')
+            if (!el.getAttribute('style')?.trim()) {
+              el.removeAttribute('style')
             }
           }
 
-          const newValue = doc.body.innerHTML
+          // Remove color if it matches the default text color
+          if (el.style.color && rgbToHex(el.style.color) === rgbToHex(state.noteFocus ? colors.fg : colors.fgNote)) {
+            el.style.removeProperty('color')
+          }
 
-          // Overwrite the value of the thought or note with the stripped value in order to remove background highlighting (#3901)
-          if (newValue !== value)
-            dispatch(
-              state.noteFocus
-                ? setDescendant({
-                    path,
-                    values: [newValue],
-                  })
-                : editThought({
-                    cursorOffset: selection.offsetThought() ?? undefined,
-                    oldValue: value,
-                    newValue: newValue,
-                    path: simplifyPath(state, path),
-                    // force the ContentEditable to update
-                    force: true,
-                  }),
-            )
-        })
-      }
+          // Unwrap tags that have no meaningful style or color attributes
+          if (!el.getAttribute('style')?.trim() && !el.getAttribute('color')?.trim()) {
+            el.replaceWith(...Array.from(el.childNodes))
+          }
+        }
+
+        const newValue = doc.body.innerHTML
+
+        // Overwrite the value of the thought or note with the stripped value in order to remove background highlighting (#3901)
+        if (newValue !== value)
+          dispatch(
+            state.noteFocus
+              ? setDescendant({
+                  path,
+                  values: [newValue],
+                })
+              : editThought({
+                  cursorOffset: selection.offsetThought() ?? undefined,
+                  oldValue: value,
+                  newValue: newValue,
+                  path: simplifyPath(state, path),
+                  // force the ContentEditable to update
+                  force: true,
+                }),
+          )
+      })
     }
   }
