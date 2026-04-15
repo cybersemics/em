@@ -46,7 +46,9 @@ const useGestureCancelled = () => {
 const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
   const colors = useSelector(themeColors)
   const leftHanded = useSelector(getUserSetting(Settings.leftHanded))
-  const show = gestureStore.useSelector(state => state.gesture.length > 0)
+  const show = gestureStore.useSelector(
+    state => state.gesture.length > 0 && state.gestureMenuAnimationState !== 'exiting',
+  )
   const cancelled = useGestureCancelled()
   const innerHeight = viewportStore.useSelector(state => state.innerHeight)
   const innerWidth = viewportStore.useSelector(state => state.innerWidth)
