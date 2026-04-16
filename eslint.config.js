@@ -192,6 +192,7 @@ export default [
         },
       ],
       '@pandacss/no-property-renaming': 2,
+      '@typescript-eslint/return-await': ['error', 'in-try-catch'],
     },
   },
 
