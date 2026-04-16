@@ -17,6 +17,14 @@ const rules = {
   'no-loop-func': 1,
   'no-useless-constructor': 1,
   'react/display-name': 2,
+  'no-restricted-globals': [
+    2,
+    {
+      name: 'localStorage',
+      message:
+        "Use the storage abstraction (import storage from '../util/storage') instead of accessing localStorage directly. This ensures cross-platform compatibility.",
+    },
+  ],
   'no-restricted-properties': [
     2,
     {
@@ -128,6 +136,7 @@ export default [
   {
     files: ['src/e2e/**', '**/__tests__/*'],
     rules: {
+      'no-restricted-globals': 0,
       'no-restricted-properties': 0,
       'jsdoc/check-tag-names': 0,
     },
@@ -202,6 +211,13 @@ export default [
     files: ['./src/e2e/**/*.ts'],
     rules: {
       'jsdoc/check-tag-names': 0,
+    },
+  },
+  // Allow direct localStorage access only in the storage abstraction layer
+  {
+    files: ['./src/util/storage.ts'],
+    rules: {
+      'no-restricted-globals': 0,
     },
   },
 ]
