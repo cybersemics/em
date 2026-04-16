@@ -10,21 +10,16 @@ import { page } from '../setup'
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
 /**
- * Measures the y position of a thought's tree-node across multiple animation frames and returns the maximum deviation from the first sample. Runs entirely in the browser context via page.evaluate.
+ * Measures the y position stability of the currently editing thought (data-editing=true) across multiple animation frames. Returns the maximum y deviation from the first sampled position.
  */
-const measureYStability = (value: string, { numFrames = 10 }: { numFrames?: number } = {}): Promise<number> =>
+const measureEditingThoughtYStability = ({ numFrames = 10 }: { numFrames?: number } = {}): Promise<number> =>
   page.evaluate(
-    (value: string, numFrames: number) =>
+    (numFrames: number) =>
       new Promise<number>((resolve, reject) => {
-        /** Finds the tree-node element for a thought by matching its editable text content. */
-        const findTreeNode = (): Element | null => {
-          const editable = Array.from(document.querySelectorAll('[data-editable]')).find(el => el.textContent === value)
-          return editable?.closest('[aria-label="tree-node"]') || null
-        }
-
-        const treeNode = findTreeNode()
+        const editingEl = document.querySelector('[data-editing=true]')
+        const treeNode = editingEl?.closest('[aria-label="tree-node"]')
         if (!treeNode) {
-          reject(new Error(`Tree node for thought "${value}" not found`))
+          reject(new Error('No currently editing thought found'))
           return
         }
 
@@ -47,7 +42,6 @@ const measureYStability = (value: string, { numFrames = 10 }: { numFrames?: numb
 
         requestAnimationFrame(sample)
       }),
-    value,
     numFrames,
   )
 
@@ -119,8 +113,8 @@ describe('thought y position stability', { retry: 3 }, () => {
       // Wait a moment for the new thought to be rendered and layout to settle
       await sleep(100)
 
-      // Measure y stability of the empty new thought (which is the last sibling)
-      const maxDelta = await measureYStability('', { numFrames: 15 })
+      // Measure y stability of the newly created thought (identified via data-editing=true)
+      const maxDelta = await measureEditingThoughtYStability({ numFrames: 15 })
       expect(maxDelta).toBeLessThanOrEqual(Y_TOLERANCE)
     })
   })
@@ -140,8 +134,8 @@ describe('thought y position stability', { retry: 3 }, () => {
 
       await sleep(100)
 
-      // The new thought is an empty editable that appears after 'a'
-      const maxDelta = await measureYStability('', { numFrames: 15 })
+      // Measure y stability of the newly created thought (identified via data-editing=true)
+      const maxDelta = await measureEditingThoughtYStability({ numFrames: 15 })
       expect(maxDelta).toBeLessThanOrEqual(Y_TOLERANCE)
     })
   })
