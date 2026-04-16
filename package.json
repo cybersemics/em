@@ -89,7 +89,7 @@
     "@capacitor/core": "^8.3.0",
     "@capacitor/haptics": "^8.0.2",
     "@capacitor/ios": "^8.3.0",
-    "@capacitor/keyboard": "^8.0.2",
+    "@capacitor/keyboard": "^8.0.3",
     "@capacitor/status-bar": "^8.0.2",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
