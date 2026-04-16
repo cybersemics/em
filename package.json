@@ -229,7 +229,7 @@
     "lockfile-lint": "^5.0.0",
     "npm-run-all2": "^8.0.4",
     "postinstall-postinstall": "^2.1.0",
-    "prettier": "^3.8.1",
+    "prettier": "^3.8.3",
     "puppeteer": "^24.40.0",
     "react-dnd-test-backend": "^16.0.1",
     "react-dnd-test-utils": "^16.0.1",
