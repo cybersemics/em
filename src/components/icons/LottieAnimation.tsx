@@ -19,7 +19,7 @@ interface LottieAnimationProps {
 }
 
 type LottieRefCurrentProps = import('lottie-react').LottieRefCurrentProps
-type LottiePlayerComponent = React.ComponentType<Record<string, unknown>>
+type LottiePlayerComponent = React.ComponentType<import('lottie-react').LottieComponentProps>
 
 /** Resolves the lottie-react component across default export interop shapes. */
 const resolvePlayer = (): LottiePlayerComponent => {
@@ -32,7 +32,9 @@ const resolvePlayer = (): LottiePlayerComponent => {
     if (typeof nestedDefault === 'function') return nestedDefault as LottiePlayerComponent
   }
 
-  return LottieReact as unknown as LottiePlayerComponent
+  if (typeof LottieReact === 'function') return LottieReact as unknown as LottiePlayerComponent
+
+  throw new Error('Unable to resolve lottie-react Player export.')
 }
 
 const Player = resolvePlayer()
