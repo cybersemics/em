@@ -19,7 +19,23 @@ interface LottieAnimationProps {
 }
 
 type LottieRefCurrentProps = import('lottie-react').LottieRefCurrentProps
-const Player = LottieReact.default
+type PlayerComponent = React.ComponentType<Record<string, unknown>>
+
+/** Resolves the lottie-react component across default export interop shapes. */
+const resolvePlayer = (): PlayerComponent => {
+  const module = LottieReact as unknown as { default?: unknown }
+
+  if (typeof module.default === 'function') return module.default as PlayerComponent
+
+  if (module.default && typeof module.default === 'object') {
+    const nestedDefault = (module.default as { default?: unknown }).default
+    if (typeof nestedDefault === 'function') return nestedDefault as PlayerComponent
+  }
+
+  return LottieReact as unknown as PlayerComponent
+}
+
+const Player = resolvePlayer()
 
 /**
  * Converts hex color to RGBA.
