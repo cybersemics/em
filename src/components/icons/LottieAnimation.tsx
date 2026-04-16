@@ -1,5 +1,6 @@
 import _ from 'lodash'
-import Player, { LottieRefCurrentProps } from 'lottie-react'
+import * as LottieReact from 'lottie-react'
+import { LottieRefCurrentProps } from 'lottie-react'
 import React, { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import AnimatedColor from '../../@types/lottie/AnimatedColor'
 import ColorProperty from '../../@types/lottie/ColorProperty'
@@ -17,6 +18,8 @@ interface LottieAnimationProps {
   color: string
   onComplete?: () => void
 }
+
+const Player = (LottieReact as { default: (typeof import('lottie-react'))['default'] }).default
 
 /**
  * Converts hex color to RGBA.
