@@ -136,17 +136,19 @@ const CommandCenter = () => {
           open={showCommandCenter}
           hideBackdrop={true}
           disableScrollLock={true}
-          PaperProps={{
-            style: {
-              backgroundColor: 'transparent',
-              // Make sure it overrides any inline styles
-              display: 'flex',
-              flexDirection: 'column',
-              width: '100%',
-              overflow: 'visible',
-              maxHeight: '70%',
-              pointerEvents: 'auto',
-              boxShadow: 'none',
+          slotProps={{
+            paper: {
+              style: {
+                backgroundColor: 'transparent',
+                // Make sure it overrides any inline styles
+                display: 'flex',
+                flexDirection: 'column',
+                width: '100%',
+                overflow: 'visible',
+                maxHeight: '70%',
+                pointerEvents: 'auto',
+                boxShadow: 'none',
+              },
             },
           }}
           ModalProps={{
