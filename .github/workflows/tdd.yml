@@ -386,7 +386,8 @@ jobs:
           let changedLines = 0
 
           targetLines.forEach((lines, fileName) => {
-            const content = fs.readFileSync(fileName, 'utf8').split(/(?<=\n)/)
+            const source = fs.readFileSync(fileName, 'utf8')
+            const content = source.match(/[^\n]*\n|[^\n]+$/g) || []
 
             Array.from(lines)
               .sort((a, b) => a - b)
@@ -588,7 +589,8 @@ jobs:
           let changedLines = 0
 
           targetLines.forEach((lines, fileName) => {
-            const content = fs.readFileSync(fileName, 'utf8').split(/(?<=\n)/)
+            const source = fs.readFileSync(fileName, 'utf8')
+            const content = source.match(/[^\n]*\n|[^\n]+$/g) || []
 
             Array.from(lines)
               .sort((a, b) => a - b)
