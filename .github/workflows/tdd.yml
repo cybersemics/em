@@ -327,79 +327,85 @@ jobs:
 
           export SKIPPED_FILES
 
-          python - <<'PY'
-          import os
-          import re
-          import subprocess
+          node <<'NODE'
+          const fs = require('node:fs')
+          const { execFileSync } = require('node:child_process')
 
-          merge_base = os.environ["MERGE_BASE"]
-          head_sha = os.environ["HEAD_SHA"]
-          files = [f for f in os.environ["SKIPPED_FILES"].splitlines() if f.strip()]
+          const mergeBase = process.env.MERGE_BASE
+          const headSha = process.env.HEAD_SHA
+          const files = (process.env.SKIPPED_FILES || '').split('\n').map(file => file.trim()).filter(Boolean)
 
-          if not files:
-            print("No files detected after decoding.")
-            raise SystemExit(0)
+          if (files.length === 0) {
+            console.log('No files detected after decoding.')
+            process.exit(0)
+          }
 
-          diff = subprocess.run(
-            ["git", "diff", "--unified=0", merge_base, head_sha, "--", *files],
-            check=True,
-            capture_output=True,
-            text=True,
-          ).stdout.splitlines()
+          const diff = execFileSync('git', ['diff', '--unified=0', mergeBase, headSha, '--', ...files], {
+            encoding: 'utf8',
+          }).split('\n')
 
-          hunk_pattern = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)")
-          skip_pattern = re.compile(r"\b(it|test)\.skip\b")
+          const hunkPattern = /^@@ -\d+(?:,\d+)? \+(\d+)/
+          const skipPattern = /\b(it|test)\.skip\b/
+          const targetLines = new Map()
 
-          target_lines = {}
-          current_file = None
-          current_new_line = None
+          let currentFile = null
+          let currentNewLine = null
 
-          for line in diff:
-            if line.startswith("+++ b/"):
-              current_file = line[6:]
-              continue
+          diff.forEach(line => {
+            if (line.startsWith('+++ b/')) {
+              currentFile = line.slice(6)
+              return
+            }
 
-            if line.startswith("@@ "):
-              match = hunk_pattern.match(line)
-              current_new_line = int(match.group(1)) - 1 if match else None
-              continue
+            if (line.startsWith('@@ ')) {
+              const match = line.match(hunkPattern)
+              currentNewLine = match ? Number(match[1]) - 1 : null
+              return
+            }
 
-            if current_file is None or current_new_line is None:
-              continue
+            if (!currentFile || currentNewLine == null) return
 
-            if line.startswith("+") and not line.startswith("+++"):
-              current_new_line += 1
-              if skip_pattern.search(line[1:]):
-                target_lines.setdefault(current_file, set()).add(current_new_line)
-              continue
+            if (line.startsWith('+') && !line.startsWith('+++')) {
+              currentNewLine += 1
+              if (skipPattern.test(line.slice(1))) {
+                const existing = targetLines.get(currentFile) || new Set()
+                existing.add(currentNewLine)
+                targetLines.set(currentFile, existing)
+              }
+              return
+            }
 
-            if line.startswith(" "):
-              current_new_line += 1
-              continue
+            if (line.startsWith(' ')) currentNewLine += 1
+          })
 
-          if not target_lines:
-            print("No added skipped unit test lines found.")
-            raise SystemExit(0)
+          if (targetLines.size === 0) {
+            console.log('No added skipped unit test lines found.')
+            process.exit(0)
+          }
 
-          changed_lines = 0
+          let changedLines = 0
 
-          for file_name, lines in target_lines.items():
-            with open(file_name, encoding="utf-8") as file:
-              content = file.read().splitlines(keepends=True)
+          targetLines.forEach((lines, fileName) => {
+            const content = fs.readFileSync(fileName, 'utf8').split(/(?<=\n)/)
 
-            for line_number in sorted(lines):
-              index = line_number - 1
-              if 0 <= index < len(content):
-                updated = re.sub(r"\b(it|test)\.skip\b", r"\1", content[index], count=1)
-                if updated != content[index]:
+            Array.from(lines)
+              .sort((a, b) => a - b)
+              .forEach(lineNumber => {
+                const index = lineNumber - 1
+                if (index < 0 || index >= content.length) return
+
+                const updated = content[index].replace(skipPattern, '$1')
+                if (updated !== content[index]) {
                   content[index] = updated
-                  changed_lines += 1
+                  changedLines += 1
+                }
+              })
 
-            with open(file_name, "w", encoding="utf-8") as file:
-              file.writelines(content)
+            fs.writeFileSync(fileName, content.join(''))
+          })
 
-          print(f"Unskipped {changed_lines} added unit test line(s).")
-          PY
+          console.log(`Unskipped ${changedLines} added unit test line(s).`)
+          NODE
 
       - name: Set Node.js version
         if: steps.patch.outputs.empty != 'true'
@@ -523,79 +529,85 @@ jobs:
 
           export SKIPPED_FILES
 
-          python - <<'PY'
-          import os
-          import re
-          import subprocess
+          node <<'NODE'
+          const fs = require('node:fs')
+          const { execFileSync } = require('node:child_process')
 
-          merge_base = os.environ["MERGE_BASE"]
-          head_sha = os.environ["HEAD_SHA"]
-          files = [f for f in os.environ["SKIPPED_FILES"].splitlines() if f.strip()]
+          const mergeBase = process.env.MERGE_BASE
+          const headSha = process.env.HEAD_SHA
+          const files = (process.env.SKIPPED_FILES || '').split('\n').map(file => file.trim()).filter(Boolean)
 
-          if not files:
-            print("No files detected after decoding.")
-            raise SystemExit(0)
+          if (files.length === 0) {
+            console.log('No files detected after decoding.')
+            process.exit(0)
+          }
 
-          diff = subprocess.run(
-            ["git", "diff", "--unified=0", merge_base, head_sha, "--", *files],
-            check=True,
-            capture_output=True,
-            text=True,
-          ).stdout.splitlines()
+          const diff = execFileSync('git', ['diff', '--unified=0', mergeBase, headSha, '--', ...files], {
+            encoding: 'utf8',
+          }).split('\n')
 
-          hunk_pattern = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)")
-          skip_pattern = re.compile(r"\b(it|test)\.skip\b")
+          const hunkPattern = /^@@ -\d+(?:,\d+)? \+(\d+)/
+          const skipPattern = /\b(it|test)\.skip\b/
+          const targetLines = new Map()
 
-          target_lines = {}
-          current_file = None
-          current_new_line = None
+          let currentFile = null
+          let currentNewLine = null
 
-          for line in diff:
-            if line.startswith("+++ b/"):
-              current_file = line[6:]
-              continue
+          diff.forEach(line => {
+            if (line.startsWith('+++ b/')) {
+              currentFile = line.slice(6)
+              return
+            }
 
-            if line.startswith("@@ "):
-              match = hunk_pattern.match(line)
-              current_new_line = int(match.group(1)) - 1 if match else None
-              continue
+            if (line.startsWith('@@ ')) {
+              const match = line.match(hunkPattern)
+              currentNewLine = match ? Number(match[1]) - 1 : null
+              return
+            }
 
-            if current_file is None or current_new_line is None:
-              continue
+            if (!currentFile || currentNewLine == null) return
 
-            if line.startswith("+") and not line.startswith("+++"):
-              current_new_line += 1
-              if skip_pattern.search(line[1:]):
-                target_lines.setdefault(current_file, set()).add(current_new_line)
-              continue
+            if (line.startsWith('+') && !line.startsWith('+++')) {
+              currentNewLine += 1
+              if (skipPattern.test(line.slice(1))) {
+                const existing = targetLines.get(currentFile) || new Set()
+                existing.add(currentNewLine)
+                targetLines.set(currentFile, existing)
+              }
+              return
+            }
 
-            if line.startswith(" "):
-              current_new_line += 1
-              continue
+            if (line.startsWith(' ')) currentNewLine += 1
+          })
 
-          if not target_lines:
-            print("No added skipped puppeteer test lines found.")
-            raise SystemExit(0)
+          if (targetLines.size === 0) {
+            console.log('No added skipped puppeteer test lines found.')
+            process.exit(0)
+          }
 
-          changed_lines = 0
+          let changedLines = 0
 
-          for file_name, lines in target_lines.items():
-            with open(file_name, encoding="utf-8") as file:
-              content = file.read().splitlines(keepends=True)
+          targetLines.forEach((lines, fileName) => {
+            const content = fs.readFileSync(fileName, 'utf8').split(/(?<=\n)/)
 
-            for line_number in sorted(lines):
-              index = line_number - 1
-              if 0 <= index < len(content):
-                updated = re.sub(r"\b(it|test)\.skip\b", r"\1", content[index], count=1)
-                if updated != content[index]:
+            Array.from(lines)
+              .sort((a, b) => a - b)
+              .forEach(lineNumber => {
+                const index = lineNumber - 1
+                if (index < 0 || index >= content.length) return
+
+                const updated = content[index].replace(skipPattern, '$1')
+                if (updated !== content[index]) {
                   content[index] = updated
-                  changed_lines += 1
+                  changedLines += 1
+                }
+              })
 
-            with open(file_name, "w", encoding="utf-8") as file:
-              file.writelines(content)
+            fs.writeFileSync(fileName, content.join(''))
+          })
 
-          print(f"Unskipped {changed_lines} added puppeteer test line(s).")
-          PY
+          console.log(`Unskipped ${changedLines} added puppeteer test line(s).`)
+          NODE
 
       - name: Set Node.js version
         if: steps.patch.outputs.empty != 'true'
