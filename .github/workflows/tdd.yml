@@ -356,6 +356,33 @@ jobs:
             echo ""
             echo "❌ TDD concern: changed tests PASS on the base branch."
             echo "This may indicate the tests do not cover new functionality introduced by this PR."
+
+            # Emit GitHub diff annotations for each added it()/test() call so the
+            # TDD violation is highlighted directly in the PR file changes view.
+            if [ -f /tmp/test.patch ]; then
+              awk '
+                /^diff --git/ { file = "" }
+                /^\+\+\+ b\// { file = substr($0, 7); next }
+                /^@@/ {
+                  match($0, /\+([0-9]+)/, m)
+                  new_line = m[1] + 0 - 1
+                  next
+                }
+                /^\+\+\+/ { next }
+                /^---/ { next }
+                /^\+/ {
+                  new_line++
+                  line = substr($0, 2)
+                  if (file != "" && (line ~ /^[[:space:]]*(it|test)[[:space:]]*\(/ || line ~ /^[[:space:]]*(it|test)\.(skip|only|todo)[[:space:]]*\(/)) {
+                    print "::error file=" file ",line=" new_line "::TDD: This test passes on the base branch. New tests must fail on base to confirm they cover new behavior."
+                  }
+                  next
+                }
+                /^-/ { next }
+                { new_line++ }
+              ' /tmp/test.patch
+            fi
+
             exit 1
           fi
 
@@ -481,6 +508,33 @@ jobs:
             echo ""
             echo "❌ TDD concern: changed puppeteer tests PASS on the base branch."
             echo "This may indicate the tests do not cover new functionality introduced by this PR."
+
+            # Emit GitHub diff annotations for each added it()/test() call so the
+            # TDD violation is highlighted directly in the PR file changes view.
+            if [ -f /tmp/test.patch ]; then
+              awk '
+                /^diff --git/ { file = "" }
+                /^\+\+\+ b\// { file = substr($0, 7); next }
+                /^@@/ {
+                  match($0, /\+([0-9]+)/, m)
+                  new_line = m[1] + 0 - 1
+                  next
+                }
+                /^\+\+\+/ { next }
+                /^---/ { next }
+                /^\+/ {
+                  new_line++
+                  line = substr($0, 2)
+                  if (file != "" && (line ~ /^[[:space:]]*(it|test)[[:space:]]*\(/ || line ~ /^[[:space:]]*(it|test)\.(skip|only|todo)[[:space:]]*\(/)) {
+                    print "::error file=" file ",line=" new_line "::TDD: This test passes on the base branch. New tests must fail on base to confirm they cover new behavior."
+                  }
+                  next
+                }
+                /^-/ { next }
+                { new_line++ }
+              ' /tmp/test.patch
+            fi
+
             exit 1
           fi
 
