@@ -22,7 +22,7 @@ const errorsIndex = {
 
 type errorCode = keyof typeof errorsIndex
 
-type SubmitAction = (closeModal: () => void, email: string, password?: string) => Promise<void>
+type SubmitAction = (closeModal: () => void, email: string, password?: string) => void | Promise<void>
 
 interface Mode {
   name: string
@@ -59,7 +59,7 @@ const ModalAuth = () => {
 
   /** Reset password using reset email. */
   const resetPassword: SubmitAction = useCallback(
-    async closeModal => {
+    closeModal => {
       updateIsSubmitting(true)
 
       throw new Error('Not implemented')
@@ -78,7 +78,7 @@ const ModalAuth = () => {
   )
 
   /** Login with email and password. */
-  const loginWithEmailAndPassword: SubmitAction = useCallback(async closeModal => {
+  const loginWithEmailAndPassword: SubmitAction = useCallback(closeModal => {
     updateIsSubmitting(true)
     throw new Error('Not implemented')
     try {

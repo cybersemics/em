@@ -67,7 +67,7 @@ const metricsAuthMiddleware = basicAuth({
     !hasMetricsCredentials ? METRICS_DISABLED_MESSAGE : !req.auth ? 'Basic auth required' : 'Unauthorized',
 })
 
-app.get('/', async (req, res) => {
+app.get('/', (req, res) => {
   res.type('text').send('Server is running')
 })
 

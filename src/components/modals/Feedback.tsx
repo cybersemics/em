@@ -26,7 +26,7 @@ const ModalFeedback = () => {
   const onChange = (e: ChangeEvent<HTMLTextAreaElement>) => setFeedback(e.target.value)
 
   /** Submit handler. */
-  const onSubmit = async ({ close }: { close: () => void }) => {
+  const onSubmit = ({ close }: { close: () => void }) => {
     setSubmitAttempts(submitAttempts + 1)
 
     // minimum characters

@@ -92,14 +92,18 @@ export const initialize = async () => {
     cursor: decodeThoughtsUrl(store.getState()).path,
     accessToken,
     /** Returns true if the Thought or its parent is in State. */
-    isThoughtLoaded: async (thought: Thought | undefined): Promise<boolean> => {
+    isThoughtLoaded: (thought: Thought | undefined): Promise<boolean> => {
       const state = store.getState()
-      return !!(thought && (getThoughtById(state, thought.parentId) || getThoughtById(state, thought.id)))
+      return Promise.resolve(
+        !!(thought && (getThoughtById(state, thought.parentId) || getThoughtById(state, thought.id))),
+      )
     },
     /** Returns true if the Lexeme or one of its contexts are in State. */
-    isLexemeLoaded: async (key: string, lexeme: Lexeme | undefined): Promise<boolean> => {
+    isLexemeLoaded: (key: string, lexeme: Lexeme | undefined): Promise<boolean> => {
       const state = store.getState()
-      return !!((lexeme && getLexeme(state, key)) || lexeme?.contexts.some(cxid => getThoughtById(state, cxid)))
+      return Promise.resolve(
+        !!((lexeme && getLexeme(state, key)) || lexeme?.contexts.some(cxid => getThoughtById(state, cxid))),
+      )
     },
     onError: (message, object) => {
       store.dispatch(error({ value: message }))

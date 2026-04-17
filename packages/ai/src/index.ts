@@ -55,7 +55,7 @@ const metricsAuthMiddleware = basicAuth({
  * Routes
  ***********************/
 
-app.get('/', async (req, res) => {
+app.get('/', (req, res) => {
   res.type('text').send('Server is running')
 })
 

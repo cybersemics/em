@@ -34,7 +34,7 @@ const getUserInviteCodes = (userId: string): Promise<string[]> => {
 /** Generates three user invites. */
 const generateUserInvites = (userId: string) =>
   Promise.all(
-    Array.from({ length: 3 }).map<Promise<InviteCode>>(async () => {
+    Array.from({ length: 3 }).map<InviteCode>(() => {
       const inviteId = nanoid(8)
 
       const newInviteCode: Omit<InviteCode, 'id'> = {
@@ -94,7 +94,7 @@ const Invites = () => {
   /**
    * Handle when a invite code is seen by user.
    */
-  const onInviteCodeSeen = async (inviteCodeId: string) => {
+  const onInviteCodeSeen = (inviteCodeId: string) => {
     const inviteCode = inviteCodes[inviteCodeId]
 
     if (!inviteCode) {
