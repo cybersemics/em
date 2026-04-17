@@ -9,6 +9,13 @@ import { page } from '../setup'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
+// Maximum time to wait for the target element to appear and stabilize (ms).
+const OVERALL_TIMEOUT = 8000
+
+// Tolerance in pixels for acceptable y position drift.
+// Subpixel rounding differences up to 1px are acceptable.
+const Y_TOLERANCE = 1
+
 /**
  * Uses MutationObserver + ResizeObserver to track a thought's y position from the very first moment it appears in the DOM. Returns a Promise of the maximum y deviation from the first sampled position.
  *
@@ -21,18 +28,18 @@ vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
  */
 const waitAndMeasureYStability = (value: string, { settleTime = 400 }: { settleTime?: number } = {}): Promise<number> =>
   page.evaluate(
-    (value: string, settleTime: number) =>
+    (value: string, settleTime: number, overallTimeoutMs: number) =>
       new Promise<number>((resolve, reject) => {
         let firstTop: number | null = null
         let maxDelta = 0
         let targetTreeNode: Element | null = null
         let settleTimer: ReturnType<typeof setTimeout> | null = null
         let resizeObs: ResizeObserver | null = null
-        let overallTimeout: ReturnType<typeof setTimeout> | null = null
+        let overallTimer: ReturnType<typeof setTimeout> | null = null
 
-        /** Disconnects all observers and clears timers. Must be called after mutationObs is initialized. */
+        /** Disconnects all observers and clears timers. Safe to reference mutationObs here because cleanup is only ever called from asynchronous callbacks (setTimeout/observers) that fire after all const declarations complete. */
         const cleanup = () => {
-          if (overallTimeout) clearTimeout(overallTimeout)
+          if (overallTimer) clearTimeout(overallTimer)
           if (settleTimer) clearTimeout(settleTimer)
           // eslint-disable-next-line @typescript-eslint/no-use-before-define
           mutationObs.disconnect()
@@ -78,10 +85,10 @@ const waitAndMeasureYStability = (value: string, { settleTime = 400 }: { settleT
           }
         })
 
-        overallTimeout = setTimeout(() => {
+        overallTimer = setTimeout(() => {
           cleanup()
           reject(new Error(`Timed out waiting for thought "${value}"`))
-        }, 8000)
+        }, overallTimeoutMs)
 
         // Observe the document body for all DOM mutations (childList for new elements,
         // attributes for style/class changes that affect position).
@@ -97,11 +104,8 @@ const waitAndMeasureYStability = (value: string, { settleTime = 400 }: { settleT
       }),
     value,
     settleTime,
+    OVERALL_TIMEOUT,
   )
-
-// Tolerance in pixels for acceptable y position drift.
-// Subpixel rounding differences up to 1px are acceptable.
-const Y_TOLERANCE = 1
 
 describe('thought y position stability', { retry: 3 }, () => {
   describe('#2783 - New thought at end should not shift up', () => {
