@@ -35,6 +35,11 @@ function isSetIsMulticursorExecutingAction(action: Action<string>): action is Se
   return action.type === 'setIsMulticursorExecuting'
 }
 
+/** Type guard for editThought action. */
+function isEditThoughtAction(action: UnknownAction): action is UnknownAction & editThoughtPayload {
+  return action.type === 'editThought'
+}
+
 /** Compare the text contents of the old and new values to determine the direction of the edit.
  * Returns None if the action is not an editThought action or if the text content length is the same.
  */
@@ -53,10 +58,6 @@ function getEditThoughtDirection(action: UnknownAction): EditThoughtDirection {
       : EditThoughtDirection.Shorter
 }
 
-/** Type guard for editThought action. */
-function isEditThoughtAction(action: UnknownAction): action is UnknownAction & editThoughtPayload {
-  return action.type === 'editThought'
-}
 /** Properties that are ignored when generating state patches. */
 const statePropertiesToOmit: (keyof State)[] = ['alert', 'cursorCleared', 'pushQueue']
 
