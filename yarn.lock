@@ -12035,6 +12035,12 @@ __metadata:
   languageName: node
   linkType: hard
 
+"eslint-plugin-em@workspace:packages/eslint-plugin-em":
+  version: 0.0.0-use.local
+  resolution: "eslint-plugin-em@workspace:packages/eslint-plugin-em"
+  languageName: unknown
+  linkType: soft
+
 "eslint-plugin-es-x@npm:^7.8.0":
   version: 7.8.0
   resolution: "eslint-plugin-es-x@npm:7.8.0"

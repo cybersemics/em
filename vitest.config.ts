@@ -10,7 +10,7 @@ export default defineConfig({
           name: 'unit',
           globals: true,
           include: ['**/__tests__/**/*.ts'],
-          exclude: ['node_modules/**', '**/e2e/**', 'packages/**'],
+          exclude: ['node_modules/**', '**/e2e/**'],
           environment: 'jsdom',
           mockReset: false,
           // localStorage is mocked by vitest-localstorage-mock first before setupTests.js runs.
