@@ -32,7 +32,7 @@ const plugin = {
          *
          * @param importPath
          */
-        const isMinistoreImport = function isMinistoreImport(importPath) {
+        const isMinistoreImport = importPath => {
           if (typeof importPath !== 'string') return false
 
           const normalizedImportPath = importPath.replaceAll('\\', '/')
