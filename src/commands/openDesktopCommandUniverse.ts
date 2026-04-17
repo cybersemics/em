@@ -2,8 +2,8 @@ import Command from '../@types/Command'
 import { desktopCommandUniverseActionCreator as desktopCommandUniverse } from '../actions/desktopCommandUniverse'
 import CommandUniverseIcon from '../components/icons/CommandUniverseIcon'
 
-const desktopCommandUniverseCommand: Command = {
-  id: 'desktopCommandUniverse',
+const openDesktopCommandUniverseCommand: Command = {
+  id: 'openDesktopCommandUniverse',
   label: 'Command Universe',
   description: 'Opens the Command Universe.',
   hideFromDesktopCommandUniverse: true,
@@ -14,4 +14,4 @@ const desktopCommandUniverseCommand: Command = {
   allowExecuteFromModal: true,
 }
 
-export default desktopCommandUniverseCommand
+export default openDesktopCommandUniverseCommand

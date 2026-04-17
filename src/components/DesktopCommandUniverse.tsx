@@ -9,7 +9,7 @@ import Key from '../@types/Key'
 import { desktopCommandUniverseActionCreator as desktopCommandUniverse } from '../actions/desktopCommandUniverse'
 import { hashCommand, hashKeyDown } from '../commands'
 import { executeCommandWithMulticursor } from '../commands'
-import desktopCommandUniverseCommand from '../commands/desktopCommandUniverse'
+import openDesktopCommandUniverseCommand from '../commands/openDesktopCommandUniverse'
 import * as selection from '../device/selection'
 import useFilteredCommands from '../hooks/useFilteredCommands'
 import storageModel from '../stores/storageModel'
@@ -46,7 +46,7 @@ const DesktopCommandUniverseSearch: FC<{
       if (
         e.key === 'Escape' ||
         // manually check if the desktopCommandUniverse command is entered since global commands are disabled while the desktop command universe is open
-        hashCommand(desktopCommandUniverseCommand.keyboard as Key) === hashKeyDown(e)
+        hashCommand(openDesktopCommandUniverseCommand.keyboard as Key) === hashKeyDown(e)
       ) {
         e.preventDefault()
         e.stopPropagation()

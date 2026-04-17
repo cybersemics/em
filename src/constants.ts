@@ -525,7 +525,7 @@ export const COMMAND_GROUPS: {
       'jumpForward',
       'moveCursorBackward',
       'moveCursorForward',
-      'desktopCommandUniverse',
+      'openDesktopCommandUniverse',
       'home',
       'search',
       'selectAll',
