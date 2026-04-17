@@ -10,6 +10,7 @@ import globals from '../../globals'
 import getUserSetting from '../../selectors/getUserSetting'
 import fastClick from '../../util/fastClick'
 import haptics from '../../util/haptics'
+import storage from '../../util/storage'
 import ThemeSwitch from '../ThemeSwitch'
 import ActionButton from './../ActionButton'
 import Checkbox from './../Checkbox'
@@ -170,7 +171,7 @@ const ModalSettings = () => {
             // This is a workaround for a bug that has not been resolved.
             globals.abandonImport = true
             setTimeout(() => {
-              localStorage.removeItem('resume-imports')
+              storage.removeItem('resume-imports')
               window.location.reload()
             })
           }}

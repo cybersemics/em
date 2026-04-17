@@ -94,8 +94,8 @@ const DesktopCommandUniverseSearch: FC<{
         type='text'
         placeholder='Search for a command'
         ref={inputRef}
-        onInput={(e: React.ChangeEvent<HTMLInputElement>) => {
-          onInput?.(e.target.value)
+        onInput={(e: React.FormEvent<HTMLInputElement>) => {
+          onInput?.(e.currentTarget.value)
         }}
         className={css({
           lineHeight: '1.5',

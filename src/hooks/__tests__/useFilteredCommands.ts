@@ -19,7 +19,9 @@
  * - Mobile: Sort cancel to bottom
  * - Mobile: Sort mobile command universe second-to-bottom
  * - Mobile: Filter commands that match gesture in progress
+ * - Mobile: Do not show commands whose gesture does not start with the gesture in progress (e.g. →↓ should not show ↓→↓)
  * - Mobile: Sort commands by gesture length first, then by label (fewer swipes first)
+ * - Mobile: New Thought + Outdent chaining
  * - Edge cases: empty search, spaces-only search, commands without keyboard/gesture.
  */
 import { renderHook } from '@testing-library/react'
@@ -30,7 +32,9 @@ import CommandId from '../../@types/CommandId'
 import * as browser from '../../browser'
 import { gestureString } from '../../commands'
 import categorizeCommand from '../../commands/categorize'
+import newThoughtCommand from '../../commands/newThought'
 import openMobileCommandUniverseCommand from '../../commands/openMobileCommandUniverse'
+import outdentCommand from '../../commands/outdent'
 import selectAllCommand from '../../commands/selectAll'
 import store from '../../stores/app'
 import gestureStore from '../../stores/gesture'
@@ -94,6 +98,13 @@ vi.mock('../../commands', async () => {
       exec: vi.fn(),
     },
     {
+      id: 'bumpThoughtDown' as CommandId,
+      label: 'Bump Thought Down',
+      gesture: 'drd',
+      multicursor: false,
+      exec: vi.fn(),
+    },
+    {
       id: 'cancel' as CommandId,
       label: 'Cancel',
       gesture: undefined,
@@ -142,6 +153,7 @@ vi.mock('../../commands', async () => {
       exec: vi.fn(),
     },
     actualCommand('newThought'),
+    actualCommand('outdent'),
     {
       ...actualCommand('selectAll'),
       isActive: () => false,
@@ -388,6 +400,18 @@ describe('useFilteredCommands', () => {
         expect(commandIds).toContain('cancel')
       })
 
+      it('should not show commands whose gesture does not start with the gesture in progress', () => {
+        // gesture →↓ ('rd') is in progress; bumpThoughtDown has gesture ↓→↓ ('drd') which does not start with 'rd'
+        act(() => {
+          gestureStore.update({ gesture: 'rd' })
+        })
+
+        const { result } = renderHook(() => useFilteredCommands('', {}), { wrapper })
+
+        const commandIds = result.current.map(cmd => cmd.id)
+        expect(commandIds).not.toContain('bumpThoughtDown')
+      })
+
       it('should always show mobile command universe command', () => {
         const { result } = renderHook(() => useFilteredCommands('', {}), { wrapper })
 
@@ -564,6 +588,106 @@ describe('useFilteredCommands', () => {
         // Should be 'ldrd' not 'ldrrd' - duplicate 'r' should be collapsed
         expect(selectAllNewThoughtCommand!.gesture).toEqual('ldrd')
         expect(selectAllNewThoughtCommand!.label).toEqual('Select All + New Thought')
+      })
+    })
+
+    describe('New Thought + Outdent chaining', () => {
+      it('should show outdent command when newThought gesture is complete', () => {
+        act(() => {
+          gestureStore.update({ gesture: gestureString(newThoughtCommand) })
+        })
+
+        const { result } = renderHook(() => useFilteredCommands('', {}), { wrapper })
+
+        const commandIds = result.current.map(cmd => cmd.id)
+        expect(commandIds).toContain('outdent')
+      })
+
+      it('should show newThought, openMobileCommandUniverse, and cancel commands unchanged', () => {
+        act(() => {
+          gestureStore.update({ gesture: gestureString(newThoughtCommand) })
+        })
+
+        const { result } = renderHook(() => useFilteredCommands('', {}), { wrapper })
+
+        const commandIds = result.current.map(cmd => cmd.id)
+        expect(commandIds).toContain('newThought')
+        expect(commandIds).toContain('openMobileCommandUniverse')
+        expect(commandIds).toContain('cancel')
+
+        // The original newThought command is shown unchanged (no label prefix)
+        const newThoughtResult = result.current.find(cmd => cmd.id === 'newThought')
+        expect(newThoughtResult!.gesture).toEqual(newThoughtCommand.gesture)
+        expect(newThoughtResult!.label).toEqual(newThoughtCommand.label)
+      })
+
+      it('should prefix outdent label with "New Thought + "', () => {
+        act(() => {
+          gestureStore.update({ gesture: gestureString(newThoughtCommand) })
+        })
+
+        const { result } = renderHook(() => useFilteredCommands('', {}), { wrapper })
+
+        const chainedOutdent = result.current.find(cmd => cmd.id === 'outdent')
+        expect(chainedOutdent!.label).toEqual('New Thought + Outdent')
+      })
+
+      it('should append outdent gesture after newThought gesture without duplicate collapse', () => {
+        // newThought ends with 'd' (gestureString = 'rd'), outdent starts with 'l' (gesture = 'lrl')
+        // Since 'd' !== 'l', no duplicate collapse occurs; chained gesture is 'rdlrl' not 'rdrl'
+        act(() => {
+          gestureStore.update({ gesture: gestureString(newThoughtCommand) })
+        })
+
+        const { result } = renderHook(() => useFilteredCommands('', {}), { wrapper })
+
+        const chainedOutdent = result.current.find(cmd => cmd.id === 'outdent')
+        expect(chainedOutdent!.gesture).toEqual(gestureString(newThoughtCommand) + gestureString(outdentCommand))
+      })
+
+      it('should filter chained outdent command to match gesture in progress partway through', () => {
+        // gestureInProgress = 'rdl' — past newThought's 'rd', into outdent's 'lrl'
+        const partialChainedGesture = (gestureString(newThoughtCommand) + gestureString(outdentCommand)).slice(0, 3)
+        act(() => {
+          gestureStore.update({ gesture: partialChainedGesture })
+        })
+
+        const { result } = renderHook(() => useFilteredCommands('', {}), { wrapper })
+
+        const commandIds = result.current.map(cmd => cmd.id)
+        expect(commandIds).toContain('outdent')
+
+        const chainedOutdent = result.current.find(cmd => cmd.id === 'outdent')
+        expect(chainedOutdent!.label).toEqual('New Thought + Outdent')
+      })
+
+      it('should match chained outdent command when full chained gesture is in progress', () => {
+        act(() => {
+          gestureStore.update({ gesture: gestureString(newThoughtCommand) + gestureString(outdentCommand) })
+        })
+
+        const { result } = renderHook(() => useFilteredCommands('', {}), { wrapper })
+
+        const commandIds = result.current.map(cmd => cmd.id)
+        expect(commandIds).toContain('outdent')
+
+        const chainedOutdent = result.current.find(cmd => cmd.id === 'outdent')
+        expect(chainedOutdent!.gesture).toEqual(gestureString(newThoughtCommand) + gestureString(outdentCommand))
+      })
+
+      it('should not show original outdent (non-chained) when newThought gesture is active', () => {
+        // Original outdent has gesture 'lrl' which does not start with 'rd';
+        // only the chained 'New Thought + Outdent' (gesture 'rdlrl') should appear
+        act(() => {
+          gestureStore.update({ gesture: gestureString(newThoughtCommand) })
+        })
+
+        const { result } = renderHook(() => useFilteredCommands('', {}), { wrapper })
+
+        // The outdent entry in results should be the chained version, not the original
+        const outdentResult = result.current.find(cmd => cmd.id === 'outdent')
+        expect(outdentResult!.label).toEqual('New Thought + Outdent')
+        expect(outdentResult!.gesture).not.toEqual(outdentCommand.gesture)
       })
     })
   })

@@ -6,6 +6,7 @@ import paste from '../helpers/paste'
 import press from '../helpers/press'
 import refresh from '../helpers/refresh'
 import waitForEditable from '../helpers/waitForEditable'
+import waitUntil from '../helpers/waitUntil'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
@@ -160,10 +161,8 @@ it('move cursor from formatted thought to first unformatted thought in descendin
   // Press arrow down to move cursor
   await press('ArrowDown')
 
-  // TODO: Wait for specific state
-  // Succeeds 10/10 with sleep.
-  // Fails 8/10 without sleep.
-  await sleep(200)
+  // Wait for cursor to move to 'pear'
+  await waitUntil(() => document.querySelector('[data-editing=true] [data-editable]')?.innerHTML === 'pear')
 
   // Verify cursor moved to 'pear' (when cursorDown)
   const downThoughtValue = await getEditingText()
@@ -171,6 +170,9 @@ it('move cursor from formatted thought to first unformatted thought in descendin
 
   await press('ArrowUp')
   await press('ArrowUp')
+
+  // Wait for cursor to move to 'fruits'
+  await waitUntil(() => document.querySelector('[data-editing=true] [data-editable]')?.innerHTML === 'fruits')
 
   // Verify cursor moved to 'fruits' (when cursorUp)
   const upThoughtValue = await getEditingText()
