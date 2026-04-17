@@ -25,7 +25,7 @@ it('does not unescape encoded thought values in ContextBreadcrumbs', async () =>
   await dispatch([
     importText({
       text: `
-          - &lt;hello world="" of="" beautiful="" people=""&gt;&lt;/hello&gt;
+          - &lt;x y="" z=""&gt;&lt;/x&gt;
       `,
     }),
   ])
@@ -33,6 +33,6 @@ it('does not unescape encoded thought values in ContextBreadcrumbs', async () =>
   await act(vi.runOnlyPendingTimersAsync)
 
   const contextBreadcrumbs = document.querySelector('[aria-label="context-breadcrumbs"]')!
-  expect(contextBreadcrumbs.innerHTML).toContain('&lt;hello world="" of="" beautifu...')
-  expect(contextBreadcrumbs.innerHTML).not.toContain('<hello world="" of="" beautifu...')
+  expect(contextBreadcrumbs.innerHTML).toContain('&lt;x y="" z=""&gt;&lt;/x&gt;')
+  expect(contextBreadcrumbs.innerHTML).not.toContain('<x y="" z=""></x>')
 })
