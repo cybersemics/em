@@ -1,4 +1,4 @@
-import FakeTimer, { Clock } from '@sinonjs/fake-timers'
+import FakeTimer, { InstalledClock } from '@sinonjs/fake-timers'
 
 /**
  * Wraps sinon fake clock to reuse in a test file.
@@ -6,7 +6,7 @@ import FakeTimer, { Clock } from '@sinonjs/fake-timers'
  * See: https://github.com/facebook/jest/issues/10221.
  */
 const testTimer = () => {
-  let clock: Clock | null = null
+  let clock: InstalledClock | null = null
 
   /**
    * Install timer.
