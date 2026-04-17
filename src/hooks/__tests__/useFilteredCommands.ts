@@ -19,6 +19,7 @@
  * - Mobile: Sort cancel to bottom
  * - Mobile: Sort gesture cheatsheet second-to-bottom
  * - Mobile: Filter commands that match gesture in progress
+ * - Mobile: Do not show commands whose gesture does not start with the gesture in progress (e.g. →↓ should not show ↓→↓)
  * - Mobile: Sort commands by gesture length first, then by label (fewer swipes first)
  * - Mobile: New Thought + Outdent chaining
  * - Edge cases: empty search, spaces-only search, commands without keyboard/gesture.
@@ -94,6 +95,13 @@ vi.mock('../../commands', async () => {
       label: 'Categorize',
       gesture: 'lu',
       multicursor: true,
+      exec: vi.fn(),
+    },
+    {
+      id: 'bumpThoughtDown' as CommandId,
+      label: 'Bump Thought Down',
+      gesture: 'drd',
+      multicursor: false,
       exec: vi.fn(),
     },
     {
@@ -390,6 +398,18 @@ describe('useFilteredCommands', () => {
 
         const commandIds = result.current.map(cmd => cmd.id)
         expect(commandIds).toContain('cancel')
+      })
+
+      it('should not show commands whose gesture does not start with the gesture in progress', () => {
+        // gesture →↓ ('rd') is in progress; bumpThoughtDown has gesture ↓→↓ ('drd') which does not start with 'rd'
+        act(() => {
+          gestureStore.update({ gesture: 'rd' })
+        })
+
+        const { result } = renderHook(() => useFilteredCommands('', {}), { wrapper })
+
+        const commandIds = result.current.map(cmd => cmd.id)
+        expect(commandIds).not.toContain('bumpThoughtDown')
       })
 
       it('should always show gesture cheatsheet command', () => {
