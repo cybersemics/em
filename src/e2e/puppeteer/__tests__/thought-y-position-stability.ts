@@ -10,43 +10,9 @@ import { page } from '../setup'
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
 /**
- * Measures the y position stability of the currently editing thought (data-editing=true) across multiple animation frames. Returns the maximum y deviation from the first sampled position.
- */
-const measureEditingThoughtYStability = ({ numFrames = 10 }: { numFrames?: number } = {}): Promise<number> =>
-  page.evaluate(
-    (numFrames: number) =>
-      new Promise<number>((resolve, reject) => {
-        const editingEl = document.querySelector('[data-editing=true]')
-        const treeNode = editingEl?.closest('[aria-label="tree-node"]')
-        if (!treeNode) {
-          reject(new Error('No currently editing thought found'))
-          return
-        }
-
-        const firstTop = treeNode.getBoundingClientRect().top
-        let maxDelta = 0
-        let frameCount = 0
-
-        /** Samples the y position on each animation frame. */
-        const sample = () => {
-          const currentTop = treeNode.getBoundingClientRect().top
-          const delta = Math.abs(currentTop - firstTop)
-          if (delta > maxDelta) maxDelta = delta
-          frameCount++
-          if (frameCount < numFrames) {
-            requestAnimationFrame(sample)
-          } else {
-            resolve(maxDelta)
-          }
-        }
-
-        requestAnimationFrame(sample)
-      }),
-    numFrames,
-  )
-
-/**
- * Waits for a thought's editable to appear, then immediately begins measuring its y position stability across animation frames. Returns the maximum y deviation from the first sampled position. Useful for catching y-drift that occurs as a thought fades in or the layout recalculates after the first render.
+ * Starts polling for a thought's editable to appear in the DOM, and immediately begins measuring its y position stability from the very first frame it exists. Returns a Promise of the maximum y deviation from the first sampled position.
+ *
+ * IMPORTANT: Call this function BEFORE the action that causes the thought to appear (e.g. expand, new thought) so that the rAF polling loop is already running in the browser when the element is first inserted. This ensures the first sample captures the thought's initial y position before any subsequent layout recalculations.
  */
 const waitAndMeasureYStability = (value: string, { numFrames = 10 }: { numFrames?: number } = {}): Promise<number> =>
   page.evaluate(
@@ -76,7 +42,7 @@ const waitAndMeasureYStability = (value: string, { numFrames = 10 }: { numFrames
           requestAnimationFrame(sample)
         }
 
-        /** Polls for the tree-node by matching editable text content. */
+        /** Polls every animation frame for the tree-node matching the given editable text content. */
         const poll = () => {
           const editable = Array.from(document.querySelectorAll('[data-editable]')).find(el => el.textContent === value)
           const treeNode = editable?.closest('[aria-label="tree-node"]')
@@ -107,14 +73,14 @@ describe('thought y position stability', { retry: 3 }, () => {
 
       await waitForEditable('a')
 
+      // Start polling for the new empty thought BEFORE pressing Enter so the rAF loop is already
+      // running in the browser when the element is first inserted into the DOM.
+      const measurePromise = waitAndMeasureYStability('', { numFrames: 15 })
+
       // Create a new thought after 'a'
       await press('Enter')
 
-      // Wait a moment for the new thought to be rendered and layout to settle
-      await sleep(100)
-
-      // Measure y stability of the newly created thought (identified via data-editing=true)
-      const maxDelta = await measureEditingThoughtYStability({ numFrames: 15 })
+      const maxDelta = await measurePromise
       expect(maxDelta).toBeLessThanOrEqual(Y_TOLERANCE)
     })
   })
@@ -129,13 +95,14 @@ describe('thought y position stability', { retry: 3 }, () => {
       await waitForEditable('a')
       await clickThought('a')
 
+      // Start polling for the new empty thought BEFORE pressing Enter so the rAF loop is already
+      // running in the browser when the element is first inserted into the DOM.
+      const measurePromise = waitAndMeasureYStability('', { numFrames: 15 })
+
       // Create a new sibling after 'a' (which has child 'b')
       await press('Enter')
 
-      await sleep(100)
-
-      // Measure y stability of the newly created thought (identified via data-editing=true)
-      const maxDelta = await measureEditingThoughtYStability({ numFrames: 15 })
+      const maxDelta = await measurePromise
       expect(maxDelta).toBeLessThanOrEqual(Y_TOLERANCE)
     })
   })
@@ -155,11 +122,14 @@ describe('thought y position stability', { retry: 3 }, () => {
       await press('Escape')
       await sleep(200)
 
+      // Start polling for 'c' BEFORE re-expanding so the rAF loop is already running in the browser
+      // when the element is first inserted into the DOM.
+      const measurePromise = waitAndMeasureYStability('c', { numFrames: 15 })
+
       // Quickly re-expand by clicking b again (within the 1 second cache window)
       await clickThought('b')
 
-      // Measure y stability of 'c' as it re-appears
-      const maxDelta = await waitAndMeasureYStability('c', { numFrames: 15 })
+      const maxDelta = await measurePromise
       expect(maxDelta).toBeLessThanOrEqual(Y_TOLERANCE)
     })
   })
@@ -179,11 +149,14 @@ describe('thought y position stability', { retry: 3 }, () => {
       await clickBullet('a')
       await sleep(400)
 
+      // Start polling for 'b' BEFORE expanding so the rAF loop is already running in the browser
+      // when the element is first inserted into the DOM.
+      const measurePromise = waitAndMeasureYStability('b', { numFrames: 15 })
+
       // Expand 'a' by clicking its bullet again
       await clickBullet('a')
 
-      // Measure y stability of 'b' (non-last subthought) as it re-appears
-      const maxDelta = await waitAndMeasureYStability('b', { numFrames: 15 })
+      const maxDelta = await measurePromise
       expect(maxDelta).toBeLessThanOrEqual(Y_TOLERANCE)
     })
   })
@@ -206,11 +179,14 @@ describe('thought y position stability', { retry: 3 }, () => {
       await press('Escape')
       await sleep(400)
 
+      // Start polling for 'E' BEFORE expanding X so the rAF loop is already running in the browser
+      // when the element is first inserted into the DOM.
+      const measurePromise = waitAndMeasureYStability('E', { numFrames: 15 })
+
       // Set cursor on X to expand its children
       await clickThought('X')
 
-      // Measure y stability of 'E' (last subthought) as it re-appears
-      const maxDelta = await waitAndMeasureYStability('E', { numFrames: 15 })
+      const maxDelta = await measurePromise
       expect(maxDelta).toBeLessThanOrEqual(Y_TOLERANCE)
     })
   })
