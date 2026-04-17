@@ -1,4 +1,13 @@
-/** Converts a single pseudo-tag string into plain words, e.g. "<hello world>" => "hello world". */
+/** Parses a single pseudo-tag thought value and returns plain words.
+ *
+ * This only matches a single opening tag-like token with optional attribute-like words,
+ * with an optional matching closing tag and no inner text.
+ *
+ * Examples include:
+ * - "<hello world of people>" => "hello world of people".
+ * - "<hello world=\"\" of=\"\"></hello>" => "hello world of".
+ * - "<b>test</b>" => null (handled by stripParsedHtml instead).
+ */
 const parseLiteralAngleBracketText = (value: string) => {
   const trimmed = value.trim()
   const openingTagEnd = trimmed.indexOf('>')
@@ -21,7 +30,7 @@ const parseLiteralAngleBracketText = (value: string) => {
   return openingWords.join(' ')
 }
 
-/** Removes html tags by parsing with the browser html parser and returning text content. */
+/** Strips html tags by parsing the string as html and returning text content. */
 const stripParsedHtml = (value: string) => {
   const template = document.createElement('template')
   template.innerHTML = value
