@@ -119,26 +119,28 @@ function sliceHtmlByTextOffsets(htmlValue: string, startOffset: number, endOffse
 function splitFormattedHtmlByPlainValues(htmlValue: string, plainValues: string[]) {
   if (plainValues.length <= 1) return [trimHtml(htmlValue)]
 
+  const fallbackValues = plainValues.map(splitValue => trimHtml(splitValue))
+
   let remaining = htmlValue
   let remainingText = getTextContentFromHTML(remaining)
   const htmlValues: string[] = []
 
   for (const nextPlainValue of plainValues.slice(1)) {
     const splitOffset = remainingText.indexOf(nextPlainValue)
-    if (splitOffset < 0) return plainValues
+    if (splitOffset < 0) return fallbackValues
 
     const div = document.createElement('div')
     div.innerHTML = remaining
 
     const nodeOffset = selection.offsetFromClosestParent(div, splitOffset)
-    if (!nodeOffset?.node) return plainValues
+    if (!nodeOffset?.node) return fallbackValues
 
     const range = document.createRange()
     range.setStart(nodeOffset.node, nodeOffset.offset)
     range.setEnd(nodeOffset.node, nodeOffset.offset)
 
     const splitNodesResult = selection.splitNode(div, range)
-    if (!splitNodesResult) return plainValues
+    if (!splitNodesResult) return fallbackValues
 
     const leftDiv = document.createElement('div')
     const rightDiv = document.createElement('div')
@@ -255,7 +257,7 @@ const splitSentence = (value: string): SplitResult[] => {
   }
 
   /**
-   * When the setences can be split, it has multiple situations.
+   * When the sentences can be split, it has multiple situations.
    */
   const sentences = plainValue.split(mainSplitRegex)
   const initialValue = sentences[0]
