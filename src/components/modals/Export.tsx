@@ -555,7 +555,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
         checked: shouldIncludeMarkdownFormatting,
         title: 'Formatting Characters',
         description:
-          'Include **double asteriskss** for bold and *single asterisks* for italics. If unchecked, formatting will be lost.',
+          'Include **double asterisks** for bold and *single asterisk* for italics. If unchecked, formatting will be lost.',
       },
     ],
 

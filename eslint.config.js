@@ -9,6 +9,7 @@ import prettier from 'eslint-plugin-prettier'
 import react from 'eslint-plugin-react'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
+import em from './packages/eslint-plugin-em/index.js'
 
 const rules = {
   'no-irregular-whitespace': 2,
@@ -17,6 +18,14 @@ const rules = {
   'no-loop-func': 1,
   'no-useless-constructor': 1,
   'react/display-name': 2,
+  'no-restricted-globals': [
+    2,
+    {
+      name: 'localStorage',
+      message:
+        "Use the storage abstraction (import storage from '../util/storage') instead of accessing localStorage directly. This ensures cross-platform compatibility.",
+    },
+  ],
   'no-restricted-properties': [
     2,
     {
@@ -116,6 +125,7 @@ export default [
       import: importPlugin,
       'react-hooks': reactHooks,
       '@pandacss': panda,
+      em,
     },
     rules,
     settings: {
@@ -128,6 +138,7 @@ export default [
   {
     files: ['src/e2e/**', '**/__tests__/*'],
     rules: {
+      'no-restricted-globals': 0,
       'no-restricted-properties': 0,
       'jsdoc/check-tag-names': 0,
     },
@@ -172,6 +183,7 @@ export default [
       '@typescript-eslint/array-type': 2,
       'jsx-quotes': [2, 'prefer-single'],
       'react-refresh/only-export-components': 2,
+      'em/no-store-subscribe-in-components': 2,
       ...panda.configs.recommended.rules,
       '@pandacss/no-config-function-in-source': 0,
       '@pandacss/prefer-longhand-properties': 2,
@@ -202,6 +214,13 @@ export default [
     files: ['./src/e2e/**/*.ts'],
     rules: {
       'jsdoc/check-tag-names': 0,
+    },
+  },
+  // Allow direct localStorage access only in the storage abstraction layer
+  {
+    files: ['./src/util/storage.ts'],
+    rules: {
+      'no-restricted-globals': 0,
     },
   },
 ]
