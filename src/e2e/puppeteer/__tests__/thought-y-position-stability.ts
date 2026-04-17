@@ -10,54 +10,93 @@ import { page } from '../setup'
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
 /**
- * Starts polling for a thought's editable to appear in the DOM, and immediately begins measuring its y position stability from the very first frame it exists. Returns a Promise of the maximum y deviation from the first sampled position.
+ * Uses MutationObserver + ResizeObserver to track a thought's y position from the very first moment it appears in the DOM. Returns a Promise of the maximum y deviation from the first sampled position.
  *
- * IMPORTANT: Call this function BEFORE the action that causes the thought to appear (e.g. expand, new thought) so that the rAF polling loop is already running in the browser when the element is first inserted. This ensures the first sample captures the thought's initial y position before any subsequent layout recalculations.
+ * Unlike rAF-based sampling, MutationObserver fires synchronously after each DOM mutation — before the browser paints — so it catches position changes that occur between animation frames. ResizeObserver supplements this by detecting size-driven layout shifts.
+ *
+ * IMPORTANT: Call this BEFORE the action that causes the thought to appear (e.g. expand, new thought) so the observer is already active when the element is first inserted.
+ *
+ * @param value - Text content of the thought's editable to match.
+ * @param settleTime - Milliseconds of no position changes after which the measurement resolves.
  */
-const waitAndMeasureYStability = (value: string, { numFrames = 10 }: { numFrames?: number } = {}): Promise<number> =>
+const waitAndMeasureYStability = (value: string, { settleTime = 400 }: { settleTime?: number } = {}): Promise<number> =>
   page.evaluate(
-    (value: string, numFrames: number) =>
+    (value: string, settleTime: number) =>
       new Promise<number>((resolve, reject) => {
-        const timeout = setTimeout(() => reject(new Error(`Timed out waiting for thought "${value}"`)), 6000)
+        let firstTop: number | null = null
+        let maxDelta = 0
+        let targetTreeNode: Element | null = null
+        let settleTimer: ReturnType<typeof setTimeout> | null = null
+        let resizeObs: ResizeObserver | null = null
+        let overallTimeout: ReturnType<typeof setTimeout> | null = null
 
-        /** Samples the y position across animation frames once the element is found. */
-        const startSampling = (treeNode: Element) => {
-          const firstTop = treeNode.getBoundingClientRect().top
-          let maxDelta = 0
-          let frameCount = 0
+        /** Disconnects all observers and clears timers. Must be called after mutationObs is initialized. */
+        const cleanup = () => {
+          if (overallTimeout) clearTimeout(overallTimeout)
+          if (settleTimer) clearTimeout(settleTimer)
+          // eslint-disable-next-line @typescript-eslint/no-use-before-define
+          mutationObs.disconnect()
+          if (resizeObs) resizeObs.disconnect()
+        }
 
-          /** Records the y position delta on each animation frame. */
-          const sample = () => {
-            const currentTop = treeNode.getBoundingClientRect().top
-            const delta = Math.abs(currentTop - firstTop)
+        /** Records the current y position and updates the max deviation from the first recorded position. Resets the settle timer on every call. */
+        const recordPosition = () => {
+          if (!targetTreeNode) return
+          const top = targetTreeNode.getBoundingClientRect().top
+          if (firstTop === null) {
+            firstTop = top
+          } else {
+            const delta = Math.abs(top - firstTop)
             if (delta > maxDelta) maxDelta = delta
-            frameCount++
-            if (frameCount < numFrames) {
-              requestAnimationFrame(sample)
-            } else {
-              resolve(maxDelta)
-            }
           }
-
-          requestAnimationFrame(sample)
+          // Reset settle timer — resolve once no further changes occur for settleTime ms
+          if (settleTimer) clearTimeout(settleTimer)
+          settleTimer = setTimeout(() => {
+            cleanup()
+            resolve(maxDelta)
+          }, settleTime)
         }
 
-        /** Polls every animation frame for the tree-node matching the given editable text content. */
-        const poll = () => {
+        /** Finds the target tree-node by matching editable text content and starts observing it for size changes. */
+        const tryFindElement = () => {
           const editable = Array.from(document.querySelectorAll('[data-editable]')).find(el => el.textContent === value)
-          const treeNode = editable?.closest('[aria-label="tree-node"]')
-          if (treeNode) {
-            clearTimeout(timeout)
-            startSampling(treeNode)
-            return
+          const treeNode = editable?.closest('[aria-label="tree-node"]') ?? null
+          if (treeNode && treeNode !== targetTreeNode) {
+            targetTreeNode = treeNode
+            resizeObs = new ResizeObserver(() => recordPosition())
+            resizeObs.observe(treeNode)
+            recordPosition()
           }
-          requestAnimationFrame(poll)
         }
 
-        poll()
+        // Create the MutationObserver to detect element insertion and track subsequent DOM changes.
+        const mutationObs = new MutationObserver(() => {
+          if (!targetTreeNode) {
+            tryFindElement()
+          } else {
+            recordPosition()
+          }
+        })
+
+        overallTimeout = setTimeout(() => {
+          cleanup()
+          reject(new Error(`Timed out waiting for thought "${value}"`))
+        }, 8000)
+
+        // Observe the document body for all DOM mutations (childList for new elements,
+        // attributes for style/class changes that affect position).
+        mutationObs.observe(document.body, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+          attributeFilter: ['style', 'class'],
+        })
+
+        // Check immediately in case the element already exists
+        tryFindElement()
       }),
     value,
-    numFrames,
+    settleTime,
   )
 
 // Tolerance in pixels for acceptable y position drift.
@@ -73,9 +112,9 @@ describe('thought y position stability', { retry: 3 }, () => {
 
       await waitForEditable('a')
 
-      // Start polling for the new empty thought BEFORE pressing Enter so the rAF loop is already
-      // running in the browser when the element is first inserted into the DOM.
-      const measurePromise = waitAndMeasureYStability('', { numFrames: 15 })
+      // Start MutationObserver BEFORE pressing Enter so it catches the thought from the very
+      // first DOM insertion and tracks all subsequent style/layout mutations.
+      const measurePromise = waitAndMeasureYStability('')
 
       // Create a new thought after 'a'
       await press('Enter')
@@ -95,9 +134,9 @@ describe('thought y position stability', { retry: 3 }, () => {
       await waitForEditable('a')
       await clickThought('a')
 
-      // Start polling for the new empty thought BEFORE pressing Enter so the rAF loop is already
-      // running in the browser when the element is first inserted into the DOM.
-      const measurePromise = waitAndMeasureYStability('', { numFrames: 15 })
+      // Start MutationObserver BEFORE pressing Enter so it catches the thought from the very
+      // first DOM insertion and tracks all subsequent style/layout mutations.
+      const measurePromise = waitAndMeasureYStability('')
 
       // Create a new sibling after 'a' (which has child 'b')
       await press('Enter')
@@ -122,9 +161,9 @@ describe('thought y position stability', { retry: 3 }, () => {
       await press('Escape')
       await sleep(200)
 
-      // Start polling for 'c' BEFORE re-expanding so the rAF loop is already running in the browser
-      // when the element is first inserted into the DOM.
-      const measurePromise = waitAndMeasureYStability('c', { numFrames: 15 })
+      // Start MutationObserver BEFORE re-expanding so it catches the thought from the very
+      // first DOM insertion and tracks all subsequent style/layout mutations.
+      const measurePromise = waitAndMeasureYStability('c')
 
       // Quickly re-expand by clicking b again (within the 1 second cache window)
       await clickThought('b')
@@ -149,9 +188,9 @@ describe('thought y position stability', { retry: 3 }, () => {
       await clickBullet('a')
       await sleep(400)
 
-      // Start polling for 'b' BEFORE expanding so the rAF loop is already running in the browser
-      // when the element is first inserted into the DOM.
-      const measurePromise = waitAndMeasureYStability('b', { numFrames: 15 })
+      // Start MutationObserver BEFORE expanding so it catches the thought from the very
+      // first DOM insertion and tracks all subsequent style/layout mutations.
+      const measurePromise = waitAndMeasureYStability('b')
 
       // Expand 'a' by clicking its bullet again
       await clickBullet('a')
@@ -179,9 +218,9 @@ describe('thought y position stability', { retry: 3 }, () => {
       await press('Escape')
       await sleep(400)
 
-      // Start polling for 'E' BEFORE expanding X so the rAF loop is already running in the browser
-      // when the element is first inserted into the DOM.
-      const measurePromise = waitAndMeasureYStability('E', { numFrames: 15 })
+      // Start MutationObserver BEFORE expanding X so it catches the thought from the very
+      // first DOM insertion and tracks all subsequent style/layout mutations.
+      const measurePromise = waitAndMeasureYStability('E')
 
       // Set cursor on X to expand its children
       await clickThought('X')
