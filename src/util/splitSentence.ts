@@ -119,7 +119,7 @@ function sliceHtmlByTextOffsets(htmlValue: string, startOffset: number, endOffse
 function splitFormattedHtmlByPlainValues(htmlValue: string, plainValues: string[]) {
   if (plainValues.length <= 1) return [trimHtml(htmlValue)]
 
-  const fallbackValues = plainValues.map(splitValue => trimHtml(splitValue))
+  const fallbackValues = plainValues.map(splitValue => splitValue.trim())
 
   let remaining = htmlValue
   let remainingText = getTextContentFromHTML(remaining)
@@ -172,7 +172,7 @@ function splitFormattedHtmlByCommaAndAnd(htmlValue: string, plainValue: string) 
     const startOffset = offset
     const endOffset = startOffset + splitValue.length
     const htmlSplitValue = sliceHtmlByTextOffsets(htmlValue, startOffset, endOffset)
-    const formattedValue = trimHtml(htmlSplitValue ?? splitValue)
+    const formattedValue = htmlSplitValue ? trimHtml(htmlSplitValue) : splitValue.trim()
 
     const trailingText = plainValue.slice(endOffset)
     const delimiterMatch = trailingText.match(delimiterRegex)
