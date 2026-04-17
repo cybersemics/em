@@ -249,10 +249,7 @@ const splitSentence = (value: string): SplitResult[] => {
       .split(/,|and/i)
       .map(s => s.trim())
       .filter(s => s !== '')
-    const values =
-      plainValue !== value
-        ? splitFormattedHtmlByCommaAndAnd(value, plainValue)
-        : splitValues.map(splitValue => splitValue)
+    const values = plainValue !== value ? splitFormattedHtmlByCommaAndAnd(value, plainValue) : splitValues
     return values.map(value => ({ value }))
   }
 
