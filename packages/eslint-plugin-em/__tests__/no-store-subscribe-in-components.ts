@@ -19,13 +19,27 @@ ruleTester.run('no-store-subscribe-in-components', plugin.rules['no-store-subscr
       filename: '/repo/src/components/Component.tsx',
     },
     {
-      code: 'store.useEffect(() => {})',
+      code: "import utilityStore from '../util/utilityStore'\nutilityStore.subscribe(() => {})",
+      filename: '/repo/src/components/Component.tsx',
+    },
+    {
+      code: "import store from '../stores/app'\nstore.useEffect(() => {})",
       filename: '/repo/src/components/Component.tsx',
     },
   ],
   invalid: [
     {
-      code: 'store.subscribe(() => {})',
+      code: "import store from '../stores/app'\nstore.subscribe(() => {})",
+      filename: '/repo/src/components/Component.tsx',
+      errors: [{ messageId: 'noStoreSubscribe' }],
+    },
+    {
+      code: "import editingValueStore from '../stores/editingValue'\neditingValueStore.subscribe(() => {})",
+      filename: '/repo/src/components/Component.tsx',
+      errors: [{ messageId: 'noStoreSubscribe' }],
+    },
+    {
+      code: "import viewportStore from '/repo/src/stores/viewport'\nviewportStore.subscribe(() => {})",
       filename: '/repo/src/components/Component.tsx',
       errors: [{ messageId: 'noStoreSubscribe' }],
     },
