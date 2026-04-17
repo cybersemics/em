@@ -512,100 +512,112 @@ export const GESTURE_GLOW_COLOR: ColorToken = 'highlight'
 // define the grouping and ordering of commands
 export const COMMAND_GROUPS: {
   title: string
-  commands: CommandId[]
+  groups: {
+    title: string
+    commands: CommandId[]
+  }[]
 }[] = [
   {
-    title: 'Navigation',
-    commands: [
-      'cursorBack',
-      'cursorForward',
-      'cursorNext',
-      'cursorPrev',
-      'jumpBack',
-      'jumpForward',
-      'moveCursorBackward',
-      'moveCursorForward',
-      'commandPalette',
-      'home',
-      'search',
-      'selectAll',
-      'selectBetween',
+    title: 'Beginner',
+    groups: [
+      {
+        title: 'Creating Thoughts',
+        commands: ['newThought', 'newThoughtAbove', 'newSubthought', 'newSubthoughtTop'],
+      },
+      {
+        title: 'Navigation',
+        commands: [
+          'cursorBack',
+          'cursorForward',
+          'cursorNext',
+          'cursorPrev',
+          'jumpBack',
+          'jumpForward',
+          'moveCursorBackward',
+          'moveCursorForward',
+          'commandPalette',
+          'home',
+          'search',
+          'selectAll',
+          'selectBetween',
+          'closeCommandCenter',
+          'openCommandCenter',
+          'help',
+          'openGestureCheatsheet',
+          'cancel',
+        ],
+      },
+      {
+        title: 'Contexts',
+        commands: ['toggleContextView'],
+      },
     ],
   },
   {
-    title: 'Creating thoughts',
-    commands: [
-      'categorize',
-      'newThought',
-      'newThoughtAbove',
-      'newSubthought',
-      'newSubthoughtTop',
-      'newUncle',
-      'newGrandChild',
-      'extractThought',
-      'generateThought',
+    title: 'Intermediate',
+    groups: [
+      {
+        title: 'Categorizing',
+        commands: ['categorize', 'uncategorize', 'extractThought'],
+      },
+      {
+        title: 'Nudging',
+        commands: ['indent', 'outdent', 'bumpThoughtDown', 'moveThoughtDown', 'moveThoughtUp', 'swapParent'],
+      },
+      {
+        title: 'Deleting',
+        commands: ['delete', 'archive', 'clearThought'],
+      },
     ],
   },
   {
-    title: 'Deleting thoughts',
-    commands: ['delete', 'archive', 'uncategorize', 'clearThought'],
-  },
-  {
-    title: 'Moving thoughts',
-    commands: ['indent', 'outdent', 'bumpThoughtDown', 'moveThoughtDown', 'moveThoughtUp', 'swapParent'],
-  },
-  {
-    title: 'Editing thoughts',
-    commands: [
-      'join',
-      'splitSentences',
-      'bold',
-      'italic',
-      'strikethrough',
-      'underline',
-      'code',
-      'copyCursor',
-      'closeCommandCenter',
-      'openCommandCenter',
-      'removeFormat',
+    title: 'Advanced',
+    groups: [
+      {
+        title: 'Creating Thoughts II',
+        commands: [
+          'newUncle',
+          'newGrandChild',
+          'generateThought',
+          'join',
+          'splitSentences',
+          'bold',
+          'italic',
+          'strikethrough',
+          'underline',
+          'code',
+          'copyCursor',
+          'removeFormat',
+        ],
+      },
+      {
+        title: 'Edit History',
+        commands: ['undo', 'redo'],
+      },
+      {
+        title: 'Notes',
+        commands: ['note', 'swapNote'],
+      },
+      {
+        title: 'Views',
+        commands: [
+          'proseView',
+          'toggleTableView',
+          'toggleSort',
+          'heading0',
+          'heading1',
+          'heading2',
+          'heading3',
+          'heading4',
+          'heading5',
+          'pin',
+          'pinAll',
+          'toggleDone',
+          'toggleHiddenThoughts',
+          'customizeToolbar',
+        ],
+      },
     ],
-  },
-  {
-    title: 'Oops',
-    commands: ['undo', 'redo'],
-  },
-  {
-    title: 'Special Views',
-    commands: [
-      'note',
-      'swapNote',
-      'toggleContextView',
-      'proseView',
-      'toggleTableView',
-      'toggleSort',
-      'heading0',
-      'heading1',
-      'heading2',
-      'heading3',
-      'heading4',
-      'heading5',
-    ],
-  },
-  {
-    title: 'Visibility',
-    commands: ['pin', 'pinAll', 'toggleDone', 'toggleHiddenThoughts'],
-  },
-  {
-    title: 'Settings',
-    commands: ['customizeToolbar'],
-  },
-  {
-    title: 'Help',
-    commands: ['help', 'openGestureCheatsheet'],
-  },
-  {
-    title: 'Cancel',
-    commands: ['cancel'],
   },
 ]
 
