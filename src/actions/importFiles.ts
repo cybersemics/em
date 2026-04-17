@@ -149,7 +149,7 @@ resumeImportsManager.getFiles = (): Promise<ResumableFile[]> => {
       text: async () => {
         const text = await idb.get<string>(resumeImportKey(resumeImport.id))
         if (text == null) {
-          console.warn(`Resume file missing from IDB: %{resumeImport.id}`, resumeImport)
+          console.warn(`Resume file missing from IDB: ${resumeImport.id}`, resumeImport)
           return ''
         }
         return text
