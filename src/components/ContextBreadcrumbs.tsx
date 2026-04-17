@@ -180,6 +180,7 @@ const ContextBreadcrumbs = ({
   variant?: ContextBreadcrumbsVariant
   color?: ColorToken
 }) => {
+  editingValueStore.subscribe(() => null)
   const [disabled, setDisabled] = React.useState(false)
   const simplePath = useSelector(state => simplifyPath(state, path), shallowEqual)
   const pathFiltered = useSelector(
