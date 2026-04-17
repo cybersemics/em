@@ -1,5 +1,5 @@
-import { MotionValue, animate, motion, useMotionValue, useMotionValueEvent } from 'framer-motion'
-import { FC, PropsWithChildren, useCallback, useEffect, useRef } from 'react'
+import { MotionValue, animate, motion, useMotionValue, useTransform } from 'framer-motion'
+import { FC, PropsWithChildren, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import TipId from '../../@types/TipId'
@@ -11,11 +11,6 @@ import fastClick from '../../util/fastClick'
 import ProgressiveBlur from '../ProgressiveBlur'
 import CloseIcon from '../icons/CloseIcon'
 import useSwipeToClear from './useSwipeToClear'
-
-/** Minimum swipe-dismiss fade duration (seconds) — floor for very fast flicks. */
-const MIN_SWIPE_DISMISS_DURATION = 0.08
-/** Maximum swipe-dismiss fade duration (seconds) — ceiling for slow drags. */
-const MAX_SWIPE_DISMISS_DURATION = 0.45
 
 /** Layer 1: Gradient overlay + progressive blur — darkens and blurs the content behind the tip. */
 const TipBlur: FC<{
@@ -142,72 +137,27 @@ const Tip: FC<
   const isTipActive = tip === tipId
   const isVisible = isTipActive && !isHidden
 
-  // ── Tip opacity (MotionValue) ──────────────────────────────────────────
-  // A single MotionValue drives the opacity of all visual layers.
-  // Passed directly to ProgressiveBlur and to the motion.div wrapper for glow + content.
-  // Handles all opacity conditions: visibility transitions, dismiss, and swipe.
-  const opacity = useMotionValue(0)
-
-  const dismissing = useRef(false)
-
-  /** Animates opacity to 0 over the given duration (seconds) and dispatches dismissTip on completion. */
-  const animateDismiss = useCallback(
-    (duration: number = durations.get('medium') / 1000) => {
-      dismissing.current = true
-      animate(opacity, 0, {
-        duration,
-        ease: 'easeOut',
-        onComplete: () => {
-          dismissing.current = false
-          dispatch(dismissTip())
-        },
-      })
-    },
-    [opacity, dispatch],
-  )
-
   // ── Swipe-to-dismiss ────────────────────────────────────────────────────
 
-  const onSwipeDismiss = useCallback(
-    (immediate: boolean, vel: number, threshold: number) => {
-      if (immediate) {
-        dispatch(dismissTip())
-        return
-      }
-      // Derive fade duration from the swipe's momentum: treat the remaining
-      // opacity as a physical distance (scaled by threshold) and compute
-      // how long it would take to cross it at the current velocity.
-      const remainingPx = opacity.get() * threshold
-      const duration = Math.max(
-        MIN_SWIPE_DISMISS_DURATION,
-        Math.min(MAX_SWIPE_DISMISS_DURATION, remainingPx / Math.max(vel, 1)),
-      )
-      animateDismiss(duration)
-    },
-    [dispatch, opacity, animateDismiss],
-  )
-
-  const { completion, touchHandlers } = useSwipeToClear({
-    onDismiss: onSwipeDismiss,
+  const { completion, touchHandlers, dismiss } = useSwipeToClear({
+    onDismissed: () => dispatch(dismissTip()),
   })
 
-  // ── Handlers ────────────────────────────────────────────────────────────
-
-  // Drive opacity directly from swipe completion (and its spring-back animation)
-  // without triggering React renders on every frame of the gesture.
-  useMotionValueEvent(completion, 'change', c => {
-    if (dismissing.current || !isVisible) return
-    opacity.set(1 - c)
-  })
+  // ── Tip opacity ────────────────────────────────────────────────────────
+  // Two independent MotionValues are multiplied to produce the final opacity:
+  // - swipeOpacity: derived from the hook's completion (0→1 maps to 1→0)
+  // - visibilityOpacity: animated by Tip based on isVisible (show/hide transitions)
+  // This avoids coordination guards — each concern drives its own value independently.
+  const swipeOpacity = useTransform(completion, c => 1 - c)
+  const visibilityOpacity = useMotionValue(0)
+  const opacity = useTransform([swipeOpacity, visibilityOpacity], ([s, v]) => (s as number) * (v as number))
 
   useEffect(() => {
-    // Don't override a dismiss animation in progress
-    if (dismissing.current) return
     const target = isVisible ? 1 : 0
     const duration = (isVisible ? durations.get('medium') : durations.get('fast')) / 1000
-    const controls = animate(opacity, target, { duration, ease: 'easeOut' })
+    const controls = animate(visibilityOpacity, target, { duration, ease: 'easeOut' })
     return () => controls.stop()
-  }, [isVisible, opacity])
+  }, [isVisible, visibilityOpacity])
 
   // ── Render ──────────────────────────────────────────────────────────────
 
@@ -310,7 +260,7 @@ const Tip: FC<
                   _hover: { opacity: 0.8 },
                   _active: { opacity: 0.4 },
                 })}
-                {...fastClick(() => animateDismiss())}
+                {...fastClick(() => dismiss())}
               >
                 <CloseIcon size={12} />
                 <span className={css({ fontSize: '0.75rem' })}>Clear</span>

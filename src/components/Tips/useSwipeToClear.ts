@@ -9,29 +9,64 @@ import durations from '../../util/durations'
 // (e.g. 80px at 60 px/s → score 80 + 105 = 185 ≥ 175).
 const DEFAULT_SWIPE_DISMISS_THRESHOLD = 175
 
+/** Minimum swipe-dismiss animation duration (seconds). */
+const MIN_SWIPE_DISMISS_DURATION = 0.08
+/** Maximum swipe-dismiss animation duration (seconds). */
+const MAX_SWIPE_DISMISS_DURATION = 0.45
+
 /**
  * Tracks a cumulative-distance swipe gesture and returns a 0→1 completion MotionValue.
  * A combined distance + velocity score determines whether the gesture dismisses on touch end.
  * If below threshold, completion animates back to 0.
+ *
+ * All visual outcomes (dismiss, spring-back, cancel) flow through the completion MotionValue.
+ * The consumer maps completion to whatever visual property it needs (e.g. opacity = 1 - completion).
+ * An imperative dismiss() method is provided for non-swipe dismiss paths (e.g. a Clear button).
  */
 const useSwipeToClear = ({
   threshold = DEFAULT_SWIPE_DISMISS_THRESHOLD,
-  onDismiss,
+  onDismissed,
 }: {
   /** Cumulative swipe distance (in px) at which a swipe fully fades and dismisses the tip. */
   threshold?: number
-  /** Called when the swipe decides to dismiss. `immediate` is true when the gesture already fully completed (completion reached 1). `velocity` is the smoothed swipe velocity in px/s at the moment of release. `threshold` is the dismiss threshold in px used for the score calculation. */
-  onDismiss: (immediate: boolean, velocity: number, threshold: number) => void
+  /** Called when the dismiss completes — either immediately (swipe distance reached threshold) or after the dismiss animation finishes. */
+  onDismissed: () => void
 }) => {
   const swipeDistance = useMotionValue(0)
   const completion = useTransform(swipeDistance, [0, threshold], [0, 1], { clamp: true })
   const velocity = useRef(0)
   const lastTouch = useRef<{ x: number; y: number; time: number } | null>(null)
+  const dismissing = useRef(false)
   const safeArea = useSafeArea()
+
+  /** Animates swipeDistance to threshold (completion → 1), then calls onDismissed. When called without a duration (e.g. from a Clear button), uses the default medium duration. */
+  const dismiss = useCallback(
+    (duration: number = durations.get('medium') / 1000) => {
+      dismissing.current = true
+      animate(swipeDistance, threshold, {
+        duration,
+        ease: 'easeOut',
+        onComplete: () => {
+          dismissing.current = false
+          onDismissed()
+        },
+      })
+    },
+    [swipeDistance, threshold, onDismissed],
+  )
+
+  /** Animates swipeDistance back to 0 (completion → 0). */
+  const animateSpringBack = useCallback(() => {
+    animate(swipeDistance, 0, {
+      duration: durations.get('fast') / 1000,
+      ease: 'easeOut',
+    })
+  }, [swipeDistance])
 
   const onTouchStart = useCallback(
     (e: React.TouchEvent) => {
       e.stopPropagation()
+      if (dismissing.current) return
       const touch = e.touches[0]
 
       // Ignore touches that start in safe areas, since those are likely accidental touches from users trying to interact with system UI.
@@ -82,18 +117,39 @@ const useSwipeToClear = ({
       const score = dist + velocity.current * 1.75
 
       if (score >= threshold) {
-        const immediate = dist >= threshold
-        swipeDistance.set(0)
-        onDismiss(immediate, velocity.current, threshold)
+        if (dist >= threshold) {
+          // Swipe distance already reached threshold — completion is already 1, dismiss immediately.
+          onDismissed()
+        } else {
+          // Velocity-boosted dismiss — animate the remaining distance to threshold.
+          const remainingPx = threshold - dist
+          const duration = Math.max(
+            MIN_SWIPE_DISMISS_DURATION,
+            Math.min(MAX_SWIPE_DISMISS_DURATION, remainingPx / Math.max(velocity.current, 1)),
+          )
+          dismiss(duration)
+        }
       } else if (dist > 0) {
-        animate(swipeDistance, 0, {
-          duration: durations.get('fast') / 1000,
-          ease: 'easeOut',
-        })
+        animateSpringBack()
       }
       velocity.current = 0
     },
-    [swipeDistance, threshold, onDismiss],
+    [swipeDistance, threshold, onDismissed, dismiss, animateSpringBack],
+  )
+
+  // When the OS intercepts a touch (e.g. iOS home-indicator swipe or app-switcher swipe),
+  // it fires touchcancel instead of touchend. We must NOT evaluate the dismiss score here
+  // because the partial swipe distance + velocity can exceed the threshold even though the
+  // user never intended to dismiss — they were navigating at the OS level.
+  const onTouchCancel = useCallback(
+    (_e: React.TouchEvent) => {
+      lastTouch.current = null
+      velocity.current = 0
+      if (swipeDistance.get() > 0) {
+        animateSpringBack()
+      }
+    },
+    [swipeDistance, animateSpringBack],
   )
 
   return {
@@ -102,8 +158,9 @@ const useSwipeToClear = ({
       onTouchStart,
       onTouchMove,
       onTouchEnd,
-      onTouchCancel: onTouchEnd,
+      onTouchCancel,
     },
+    dismiss,
   }
 }
 
