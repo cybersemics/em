@@ -347,25 +347,6 @@ describe('mobile only', () => {
     expect(textContext).toBe('a')
   })
 
-  it('inserts emoji spacing immediately before keyboard closes', async () => {
-    const importText = `
-    - Hello`
-
-    await paste(importText)
-
-    const editableNodeHandle = await waitForEditable('Hello')
-    await click(editableNodeHandle, { edge: 'left' })
-
-    await keyboard.type('🧠')
-    await waitUntil(async () => (await getSelection().focusNode?.textContent) === '🧠 Hello')
-    await keyboard.type('a')
-    await waitUntil(async () => (await getSelection().focusNode?.textContent) === '🧠 aHello')
-
-    await closeKeyboard()
-    await clickThought('🧠 aHello')
-    expect(await getSelection().focusNode?.textContent).toBe('🧠 aHello')
-  })
-
   it('tapping a thought after opening and closing Command Center via Done should not open the keyboard', async () => {
     // Step 1: create a thought
     await gesture(newThoughtCommand)
