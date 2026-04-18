@@ -98,6 +98,19 @@ const applyOuterTag = (newValue: string, oldValue: string): string => {
   return div.firstChild.outerHTML
 }
 
+/** Returns the insertion index if nextValue is currentValue with exactly one inserted character. */
+const getSingleInsertionIndex = (currentValue: string, nextValue: string): number | null => {
+  if (nextValue.length !== currentValue.length + 1) return null
+
+  const mismatchIndex =
+    Array.from({ length: currentValue.length }, (_, i) => i).find(i => currentValue[i] !== nextValue[i]) ??
+    currentValue.length
+
+  return `${nextValue.slice(0, mismatchIndex)}${nextValue.slice(mismatchIndex + 1)}` === currentValue
+    ? mismatchIndex
+    : null
+}
+
 // this flag is used to ensure that the browser selection is not restored after the initial setCursorOnThought
 let cursorOffsetInitialized = false
 
@@ -375,7 +388,10 @@ const Editable = ({
         // That style should be re-applied once they type something. (#3673)
 
         const wrappedValue = state.cursorCleared ? applyOuterTag(e.target.value, oldValue) : e.target.value
-        const newValue = stripEmptyFormattingTags(addEmojiSpace(trimHtml(wrappedValue)))
+        const trimmedWrappedValue = trimHtml(wrappedValue)
+        const valueWithEmojiSpace = addEmojiSpace(trimmedWrappedValue)
+        const newValue = stripEmptyFormattingTags(valueWithEmojiSpace)
+        const emojiSpaceInsertionIndex = getSingleInsertionIndex(trimmedWrappedValue, valueWithEmojiSpace)
 
         /* The realtime editingValue must always be updated (and not short-circuited) since oldValueRef is throttled. Otherwise, editingValueStore becomes stale and heights are not recalculated in VirtualThought.
 
@@ -389,6 +405,23 @@ const Editable = ({
           6. editingValueStore must be updated, otherwise it will retain the stale value aa
       */
         editingValueStore.update(newValue)
+
+        // Update editable content immediately when addEmojiSpace inserts a space so that mobile keyboard close does not
+        // apply a delayed content change and caret remains after the inserted space.
+        if (
+          emojiSpaceInsertionIndex != null &&
+          contentRef.current &&
+          document.activeElement === contentRef.current &&
+          contentRef.current.innerHTML !== newValue
+        ) {
+          const offset = selection.offsetThought()
+          contentRef.current.innerHTML = newValue
+          if (offset != null) {
+            selection.set(contentRef.current, {
+              offset: offset < emojiSpaceInsertionIndex ? offset : offset + 1,
+            })
+          }
+        }
 
         // TODO: Disable keypress
         // e.preventDefault() does not work
