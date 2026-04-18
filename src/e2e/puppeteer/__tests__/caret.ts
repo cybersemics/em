@@ -350,7 +350,6 @@ describe('mobile only', () => {
   it('inserts emoji spacing immediately before keyboard closes', async () => {
     const importText = `
     - Hello`
-    const emojiWithSpaceLength = '🧠 '.length
 
     await paste(importText)
 
@@ -359,11 +358,12 @@ describe('mobile only', () => {
 
     await keyboard.type('🧠')
     await waitUntil(async () => (await getEditingText()) === '🧠 Hello')
-    await waitUntil(async () => (await getSelection().focusOffset) === emojiWithSpaceLength)
+    await keyboard.type('a')
+    await waitUntil(async () => (await getEditingText()) === '🧠 aHello')
 
     await closeKeyboard()
 
-    expect(await getEditingText()).toBe('🧠 Hello')
+    expect(await getEditingText()).toBe('🧠 aHello')
   })
 
   it('tapping a thought after opening and closing Command Center via Done should not open the keyboard', async () => {
