@@ -357,13 +357,13 @@ describe('mobile only', () => {
     await click(editableNodeHandle, { edge: 'left' })
 
     await keyboard.type('🧠')
-    await waitUntil(async () => (await getEditingText()) === '🧠 Hello')
+    await waitUntil(async () => (await getSelection().focusNode?.textContent) === '🧠 Hello')
     await keyboard.type('a')
-    await waitUntil(async () => (await getEditingText()) === '🧠 aHello')
+    await waitUntil(async () => (await getSelection().focusNode?.textContent) === '🧠 aHello')
 
     await closeKeyboard()
-
-    expect(await getEditingText()).toBe('🧠 aHello')
+    await clickThought('🧠 aHello')
+    expect(await getSelection().focusNode?.textContent).toBe('🧠 aHello')
   })
 
   it('tapping a thought after opening and closing Command Center via Done should not open the keyboard', async () => {
