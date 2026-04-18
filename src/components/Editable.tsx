@@ -98,17 +98,30 @@ const applyOuterTag = (newValue: string, oldValue: string): string => {
   return div.firstChild.outerHTML
 }
 
-/** Returns the insertion index if nextValue is currentValue with exactly one inserted character. */
+/**
+ * Returns the insertion index if nextValue is currentValue with exactly one inserted character.
+ *
+ * @param currentValue Current editable value.
+ * @param nextValue Scrubbed value after applying addEmojiSpace.
+ * @returns The insertion index when nextValue differs by exactly one inserted character, otherwise null.
+ */
 const getSingleInsertionIndex = (currentValue: string, nextValue: string): number | null => {
   if (nextValue.length !== currentValue.length + 1) return null
 
-  const mismatchIndex =
-    Array.from({ length: currentValue.length }, (_, i) => i).find(i => currentValue[i] !== nextValue[i]) ??
-    currentValue.length
+  let insertionIndex = currentValue.length
 
-  return `${nextValue.slice(0, mismatchIndex)}${nextValue.slice(mismatchIndex + 1)}` === currentValue
-    ? mismatchIndex
-    : null
+  for (let i = 0; i < currentValue.length; i++) {
+    if (currentValue[i] !== nextValue[i]) {
+      insertionIndex = i
+      break
+    }
+  }
+
+  for (let i = insertionIndex; i < currentValue.length; i++) {
+    if (currentValue[i] !== nextValue[i + 1]) return null
+  }
+
+  return insertionIndex
 }
 
 // this flag is used to ensure that the browser selection is not restored after the initial setCursorOnThought

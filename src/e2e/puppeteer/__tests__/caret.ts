@@ -350,6 +350,7 @@ describe('mobile only', () => {
   it('inserts emoji spacing immediately before keyboard closes', async () => {
     const importText = `
     - Hello`
+    const emojiWithSpaceLength = '🧠 '.length
 
     await paste(importText)
 
@@ -358,7 +359,7 @@ describe('mobile only', () => {
 
     await keyboard.type('🧠')
     await waitUntil(async () => (await getEditingText()) === '🧠 Hello')
-    await waitUntil(async () => (await getSelection().focusOffset) === '🧠 '.length)
+    await waitUntil(async () => (await getSelection().focusOffset) === emojiWithSpaceLength)
 
     await closeKeyboard()
 
