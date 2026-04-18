@@ -100,8 +100,8 @@ const swapParent = (state: State): State => {
 
     // Keep cursor on the child at its new position
     setCursor({
-      path: [...grandparent, childId, parentId],
-      offset: parentThought.value.length,
+      path: [...grandparent, childId],
+      offset: childThought.value.length,
     }),
   ])(state)
 }
