@@ -17,6 +17,7 @@ import State from './@types/State'
 import ThoughtId from './@types/ThoughtId'
 import { addMulticursorActionCreator as addMulticursor } from './actions/addMulticursor'
 import { alertActionCreator as alert } from './actions/alert'
+import { clearMulticursorsActionCreator as clearMulticursors } from './actions/clearMulticursors'
 import { gestureMenuActionCreator as gestureMenu } from './actions/gestureMenu'
 import { setCursorActionCreator as setCursor } from './actions/setCursor'
 import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from './actions/setIsMulticursorExecuting'
@@ -512,6 +513,9 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: Gesture | null; e:
       })
     }
     executeCommandWithMulticursor(command, { event: e, type: 'gesture', store })
+    if (chainableCommandInProgressExclusive?.id === 'selectAll') {
+      store.dispatch(clearMulticursors())
+    }
     if (store.getState().enableLatestCommandsDiagram) store.dispatch(showLatestCommands(command))
   }
 
