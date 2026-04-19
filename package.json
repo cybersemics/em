@@ -134,7 +134,7 @@
     "react-gravatar": "^2.6.3",
     "react-native-web": "^0.21.2",
     "react-redux": "^9.2.0",
-    "react-signature-pad-wrapper": "^4.2.0",
+    "react-signature-pad-wrapper": "^4.3.2",
     "react-transition-group": "^4.4.5",
     "redux": "^5.0.1",
     "redux-thunk": "^3.1.0",
