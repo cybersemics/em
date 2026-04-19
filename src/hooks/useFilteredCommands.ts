@@ -60,14 +60,7 @@ const useFilteredCommands = (
         if (command.hideFromGestureMenu) return false
 
         const commandGesture = gestureString(command)
-        // collapse duplicate swipes when the command starts with the same character that the chainable gesture ends with
-        const chainedGesture = commandGesture.slice(
-          chainableCommandInProgressInclusive &&
-            gestureString(chainableCommandInProgressInclusive).endsWith(commandGesture[0])
-            ? 1
-            : 0,
-        )
-        return (!platformCommandsOnly || command.gesture) && chainedGesture.startsWith(gestureInProgress)
+        return (!platformCommandsOnly || command.gesture) && commandGesture.startsWith(gestureInProgress)
       }
       // keyboard
       else {
