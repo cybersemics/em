@@ -3,14 +3,12 @@ import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Path from '../@types/Path'
 import State from '../@types/State'
-import ThoughtId from '../@types/ThoughtId'
 import isCursorGreaterThanParent from '../selectors/isCursorGreaterThanParent'
-import getThoughtById from '../selectors/getThoughtById'
-import store from '../stores/app'
 import debugFlags from '../util/debugFlags'
 import equalPath from '../util/equalPath'
 import hashPath from '../util/hashPath'
 import parentOf from '../util/parentOf'
+import { thoughtDebugLabel } from '../util/thoughtLayoutDebug'
 
 type ContextAnimation = 'disappearingLowerLeft' | 'disappearingUpperRight' | null
 
@@ -82,12 +80,13 @@ const TreeNodePositioner = ({
 
   /** Last laid-out `y` for y-position debug; null until first layout pass. */
   const yDebugLastRef = useRef<number | null>(null)
+  /** Positioned wrapper (absolute `top`/`left`); used for viewport rect logging. */
+  const layoutOuterRef = useRef<HTMLDivElement>(null)
 
   useLayoutEffect(() => {
     if (!debugFlags.yPosition || cursorOverlay) return
 
-    const value = getThoughtById(store.getState(), thoughtId as ThoughtId)?.value ?? ''
-    const label = value === '' ? '(empty)' : `"${value}"`
+    const label = thoughtDebugLabel(thoughtId)
 
     if (yDebugLastRef.current === null) {
       yDebugLastRef.current = _y
@@ -133,6 +132,7 @@ const TreeNodePositioner = ({
 
   return (
     <div
+      ref={layoutOuterRef}
       // The key must be unique to the thought, both in normal view and context view, in case they are both on screen.
       // It should not be based on editable values such as Path, value, rank, etc, otherwise moving the thought would make it appear to be a completely new thought to React.
       aria-label={cursorOverlay ? 'cursor-overlay-tree-node' : 'tree-node'}
