@@ -49,6 +49,8 @@ const useSwipeToClear = ({
         onComplete: () => {
           dismissing.current = false
           onDismissed()
+          // Reset so the next showing of the tip starts with completion = 0.
+          swipeDistance.set(0)
         },
       })
     },
@@ -120,6 +122,8 @@ const useSwipeToClear = ({
         if (dist >= threshold) {
           // Swipe distance already reached threshold — completion is already 1, dismiss immediately.
           onDismissed()
+          // Reset completion back to 0.
+          swipeDistance.set(0)
         } else {
           // Velocity-boosted dismiss — animate the remaining distance to threshold.
           const remainingPx = threshold - dist
