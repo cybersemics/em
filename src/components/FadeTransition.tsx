@@ -1,8 +1,20 @@
 import { PropsWithChildren, useRef } from 'react'
 import { CSSTransition } from 'react-transition-group'
 import { TransitionProps } from 'react-transition-group/Transition'
-import { FadeTransitionRecipeVariant, fadeTransitionRecipe } from '../../styled-system/recipes'
+import type { ConditionalValue } from '../../styled-system/types/conditions'
+import { fadeTransitionRecipe } from '../../styled-system/recipes'
+import type { FadeTransitionRecipeVariantProps } from '../../styled-system/recipes/fade-transition-recipe'
 import durations from '../util/durations'
+import durationsConfig from '../durations.config'
+
+/**
+ * Base string union for the fade `type` variant (unwraps Panda `ConditionalValue` / optional recipe props).
+ * Intersect with duration keys so `durations.get(type)` type-checks.
+ */
+type FadeTransitionType = Extract<
+  keyof typeof durationsConfig,
+  NonNullable<FadeTransitionRecipeVariantProps['type']> extends ConditionalValue<infer U> ? U : never
+>
 
 type RemoveFields<Type> = {
   [Property in keyof Type as Exclude<Property, 'timeout' | 'addEndListener'>]: Type[Property]
@@ -25,7 +37,7 @@ const FadeTransition = ({
      */
     id?: string | number
     /** The type of fade transition, which determines both duration and easing. Corresponds to variants in recipes/fadeTransition. Basic transitions such as "fast", "medium", or "slow" use ease-out or ease, while specialized transitions such as "disappearingUpperRight" use custom easing functions. */
-    type: FadeTransitionRecipeVariant['type']
+    type: FadeTransitionType
     /*
       Optionally override the nodeRef that is passed to CSSTransition. If CSSTransition's nodeRef property is not explicitly provided, it will result in a findDOMNode deprecation warning. In order to avoid making the parent provide the ref every time, we wrap the children in a <span> and use that as the nodeRef by default.
 

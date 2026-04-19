@@ -693,7 +693,7 @@ const Editable = ({
       // iOS Safari delays event handling in case the DOM is modified during setTimeout inside an event handler,
       // unless it is given a hint that the element is some sort of form control
       role='button'
-      style={style}
+      style={{ ...style }}
     />
   )
 }
