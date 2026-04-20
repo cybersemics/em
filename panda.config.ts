@@ -20,6 +20,7 @@ import modalTextRecipe from './src/recipes/modalText'
 import multilineRecipe from './src/recipes/multiline'
 import panelCommandGroupRecipe from './src/recipes/panelCommandGroupRecipe'
 import panelCommandRecipe from './src/recipes/panelCommandRecipe'
+import sidebarContentMaskRecipe from './src/recipes/sidebarContentMask'
 import slideTransitionRecipe from './src/recipes/slideTransition'
 import textNoteRecipe from './src/recipes/textNote'
 import thoughtRecipe from './src/recipes/thought'
@@ -376,8 +377,8 @@ export default defineConfig({
       breakpoints: {
         sm: '320px', // approx size of iPhone SE
         md: '400px', // approx size of iPhone 12 Pro
-        lg: '600px', // approx size of iPad
-        xl: '768px', // approx size of landscape tablet or laptop
+        lg: '600px', // landscape mobile devices and larger
+        xl: '800px', // approx size of a laptop
         '2xl': '1000px', // approx size of a desktop
         '3xl': '1200px', // approx size of a large desktop
       },
@@ -473,6 +474,7 @@ export default defineConfig({
         invalidOptionRecipe,
         panelCommandGroupRecipe,
         panelCommandRecipe,
+        sidebarContentMaskRecipe,
       },
       slotRecipes: {
         dialogRecipe,

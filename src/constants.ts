@@ -486,6 +486,7 @@ export enum Settings {
   leftHanded = 'leftHanded',
   favoritesHideContexts = 'favoritesHideContexts',
   hideSuperscripts = 'hideSuperscripts',
+  sidebarAnimationB = 'sidebarAnimationB',
 }
 
 // max time attempting to connect before moving to offline mode (milliseconds)
