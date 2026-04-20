@@ -195,7 +195,7 @@ const splitSentence = (value: string): SplitResult[] => {
   // "This is a thought (and a subthought)" -> "-This is a thought   -and a subthought"
   const parentheticalMatch = plainValue.match(/^(.*?)\s*\((.*?)\)\.?$/)
   if (parentheticalMatch) {
-    const [_, mainThought] = parentheticalMatch
+    const [, mainThought] = parentheticalMatch
     const parentheticalIndex = plainValue.indexOf('(', mainThought.length)
     const closingParentheticalIndex = plainValue.lastIndexOf(')')
     const mainHtml = sliceHtmlByTextOffsets(value, 0, mainThought.length)
