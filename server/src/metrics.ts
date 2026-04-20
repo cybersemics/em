@@ -1,15 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { groupBy } from 'lodash'
+import fetch from 'node-fetch'
 import { register } from 'prom-client'
 import Index from '../../src/@types/IndexType'
 import keyValueBy from '../../src/util/keyValueBy'
 import throttleConcat from '../../src/util/throttleConcat'
 import './env'
-
-// import is not working in commonjs build
-// require only works with node-fetch v2
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const fetch = require('node-fetch')
 
 // MetricType enum does not seem to be properly exported from prom-client.
 // https://github.com/siimon/prom-client/issues/336
