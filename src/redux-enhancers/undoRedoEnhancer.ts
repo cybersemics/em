@@ -226,9 +226,10 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
               : null
 
         // do not omit pushQueue because that includes updates added by updateThoughts
+        // do not omit editableNonce because editableRender bumps it to force ContentEditable to re-render after undo/redo
         const omitted = _.pick(
           state,
-          statePropertiesToOmit.filter(k => k !== 'pushQueue'),
+          statePropertiesToOmit.filter(k => k !== 'pushQueue' && k !== 'editableNonce'),
         )
 
         return { ...undoOrRedoState!, ...omitted }
