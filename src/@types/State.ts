@@ -141,7 +141,7 @@ interface State {
   searchLimit?: number
   showColorPicker?: boolean
   showLetterCase?: boolean
-  showCommandPalette: boolean
+  showDesktopCommandUniverse: boolean
   showGestureMenu: boolean
   showHiddenThoughts: boolean
   showSortPicker?: boolean
@@ -153,7 +153,7 @@ interface State {
    */
   showModal?: Modal | null
   showSidebar: boolean
-  showGestureCheatsheet?: boolean
+  showMobileCommandUniverse?: boolean
   showUndoSlider?: boolean
   /* Status:
       'disconnected'   Logged out or yet to connect, but not in explicit offline mode.

@@ -181,8 +181,8 @@ const ShareList = React.forwardRef<
   /** Keyboad shortcuts. */
   const onKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      // TODO: Handle modal-specific keyboard shortcuts in a more general way so that they can be used in other modals and so this component does not need to know about showCommandPalette
-      if (e.key === 'Enter' && !showDeviceForm && !store.getState().showCommandPalette) {
+      // TODO: Handle modal-specific keyboard shortcuts in a more general way so that they can be used in other modals and so this component does not need to know about showDesktopCommandUniverse
+      if (e.key === 'Enter' && !showDeviceForm && !store.getState().showDesktopCommandUniverse) {
         e.stopPropagation()
         setShowDeviceForm(true)
       }
