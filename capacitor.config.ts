@@ -15,7 +15,6 @@ const serverConfig =
     ? {
         server: {
           url: process.env.CAPACITOR_SERVER_URL,
-          cleartext: true,
         },
         webDir: 'public',
       }

@@ -1,10 +1,52 @@
+import basicSsl from '@vitejs/plugin-basic-ssl'
 import react from '@vitejs/plugin-react'
-import fs from 'fs'
+import type { IncomingMessage, ServerResponse } from 'http'
 import path from 'path'
-import { defineConfig } from 'vite'
+import { type Plugin, type PreviewServer, type ViteDevServer, defineConfig } from 'vite'
 import checker from 'vite-plugin-checker'
 import { createHtmlPlugin } from 'vite-plugin-html'
 import { VitePWA } from 'vite-plugin-pwa'
+
+const useHttps = !process.env.HTTP
+
+/**
+ * Vite plugin that gates access behind a secret token when TUNNEL_TOKEN is set.
+ * Used in CI to prevent unauthorized access when the dev server is exposed via
+ * a public cloudflared tunnel. The first request must include ?__token=<secret>;
+ * the gate then sets a session cookie so subsequent asset/HMR requests are
+ * allowed without the query param. Requests with neither get a 403.
+ */
+function tunnelTokenGate(): Plugin | undefined {
+  const token = process.env.TUNNEL_TOKEN
+  if (!token) return undefined
+
+  const cookieName = '__tunnel_token'
+
+  /** Middleware that allows requests bearing a valid token (via cookie or query param) and rejects all others. */
+  const gate = (server: ViteDevServer | PreviewServer) => {
+    server.middlewares.use((req: IncomingMessage, res: ServerResponse, next: () => void) => {
+      // Accept an existing session cookie set on a previous authenticated request.
+      const cookieHeader = req.headers.cookie || ''
+      if (cookieHeader.split(';').some(c => c.trim() === `${cookieName}=${token}`)) {
+        return next()
+      }
+      // Accept a token in the URL and issue the session cookie.
+      const url = new URL(req.url || '/', 'http://localhost')
+      if (url.searchParams.get('__token') === token) {
+        res.setHeader('Set-Cookie', `${cookieName}=${token}; Path=/; HttpOnly; Secure; SameSite=None`)
+        return next()
+      }
+      res.statusCode = 403
+      res.end('Forbidden')
+    })
+  }
+
+  return {
+    name: 'tunnel-token-gate',
+    configureServer: gate,
+    configurePreviewServer: gate,
+  }
+}
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -48,18 +90,16 @@ export default defineConfig({
     }),
     // minify and add EJS capabilities to index.html
     createHtmlPlugin({ minify: true }),
+    // Use HTTPS for dev server by default. Set HTTP=1 to disable.
+    ...(useHttps ? [basicSsl()] : []),
+    // Gate access behind a token when exposed via cloudflared tunnel in CI.
+    tunnelTokenGate(),
   ],
   server: {
     // Allow bs-local.com for BrowserStack local testing
     allowedHosts: ['bs-local.com'],
     ...(process.env.PUPPETEER
       ? {
-          // Serve the dev server over HTTPS in puppeteer tests to enable clipboard access
-          https: {
-            key: fs.readFileSync('./src/e2e/puppeteer/puppeteer-key.pem'),
-            cert: fs.readFileSync('./src/e2e/puppeteer/puppeteer.pem'),
-          },
-          // protocol `wss` is required to resolve websocket connection failure
           hmr: {
             host: 'host.docker.internal',
             // wss uses a secure websocket(wss://) connection. This was necessary to resolve mixed content security error which was observed when using ws protocol only.
