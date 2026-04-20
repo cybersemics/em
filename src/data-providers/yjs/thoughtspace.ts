@@ -900,7 +900,7 @@ export const freeThought = async (docKey: string): Promise<void> => {
 }
 
 /** Deallocates the cached thought and associated providers (without permanently deleting the persisted data). If the thought is retained, noop. Call freeThought to both safely unretain the thought and trigger deallocation when replication completes. */
-const tryDeallocateThought = (docKey: string): void => {
+const tryDeallocateThought = async (docKey: string): Promise<void> => {
   if (thoughtRetained.has(docKey)) return
 
   // Destroying the doc does not remove top level shared type observers, so we need to unobserve onLexemeChange.
@@ -987,7 +987,7 @@ export const freeLexeme = async (key: string): Promise<void> => {
 }
 
 /** Deallocates the cached lexeme and associated providers (without permanently deleting the persisted data). If the lexeme is retained, noop. Call freeLexeme to both safely unretain the lexeme and trigger deallocation when replication completes. */
-const tryDeallocateLexeme = (key: string): void => {
+const tryDeallocateLexeme = async (key: string): Promise<void> => {
   if (lexemeRetained.has(key)) return
 
   // Destroying the doc does not remove top level shared type observers, so we need to unobserve onLexemeChange.

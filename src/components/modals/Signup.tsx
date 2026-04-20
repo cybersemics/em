@@ -49,7 +49,7 @@ const ModalSignup = () => {
    * Gets the invitation code from url and the validates it.
    */
   const handleInvitationCode = useCallback(
-    () => {
+    async () => {
       const invitationCodeId = getQueryParam('code')
 
       // TODO: Send user back to another screen if user has no valid code.
@@ -93,7 +93,7 @@ const ModalSignup = () => {
 
   /** Sign up with email and password. */
   const submitAction = useCallback(
-    (closeModal: () => void) => {
+    async (closeModal: () => void) => {
       updateIsSubmitting(true)
       throw new Error('Not implemented')
       try {

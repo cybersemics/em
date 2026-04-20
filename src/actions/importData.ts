@@ -127,7 +127,7 @@ export const importDataActionCreator = ({
               lastModified: timestamp(),
               name: 'from clipboard',
               size: processedText.length * 8,
-              text: () => Promise.resolve(processedText),
+              text: async () => processedText,
             },
           ],
         }),

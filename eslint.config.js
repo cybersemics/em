@@ -193,7 +193,6 @@ export default [
       ],
       '@pandacss/no-property-renaming': 2,
       '@typescript-eslint/return-await': ['error', 'in-try-catch'],
-      '@typescript-eslint/require-await': 'error',
     },
   },
 
@@ -220,13 +219,6 @@ export default [
     files: ['./src/util/storage.ts'],
     rules: {
       'no-restricted-globals': 0,
-    },
-  },
-  // Disable rules that are intentionally relaxed in test files
-  {
-    files: ['src/e2e/**', '**/__tests__/*', 'src/test-helpers/**'],
-    rules: {
-      '@typescript-eslint/require-await': 0,
     },
   },
 ]

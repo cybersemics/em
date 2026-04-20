@@ -108,7 +108,7 @@ const resumeImportsManager = (file: ResumableFile) => {
 
   /** Updates the persisted ResumeImport file to the latest number of imported thoughts. */
   // TODO: throttling update breaks resume file.path for some reason
-  const update = (path: Path | null, thoughtsImported: number, insertBefore?: boolean) => {
+  const update = async (path: Path | null, thoughtsImported: number, insertBefore?: boolean) => {
     if (globals.abandonImport) return
 
     const resumeImports = parseJsonSafe<Index<ResumeImport>>(storage.getItem(RESUME_IMPORTS_KEY) || '{}', {})
@@ -135,27 +135,25 @@ const resumeImportsManager = (file: ResumableFile) => {
 }
 
 /** Gets all saved imports as ResumableFiles. */
-resumeImportsManager.getFiles = (): Promise<ResumableFile[]> => {
+resumeImportsManager.getFiles = async (): Promise<ResumableFile[]> => {
   const resumeImports = parseJsonSafe<Index<ResumeImport>>(storage.getItem(RESUME_IMPORTS_KEY) || '{}', {})
-  return Promise.resolve(
-    Object.values(resumeImports).map(resumeImport => ({
-      id: resumeImport.id,
-      insertBefore: resumeImport.insertBefore,
-      lastModified: resumeImport.lastModified,
-      thoughtsImported: resumeImport.thoughtsImported,
-      name: resumeImport.name,
-      path: resumeImport.path,
-      size: resumeImport.size,
-      text: async () => {
-        const text = await idb.get<string>(resumeImportKey(resumeImport.id))
-        if (text == null) {
-          console.warn(`Resume file missing from IDB: ${resumeImport.id}`, resumeImport)
-          return ''
-        }
-        return text
-      },
-    })),
-  )
+  return Object.values(resumeImports).map(resumeImport => ({
+    id: resumeImport.id,
+    insertBefore: resumeImport.insertBefore,
+    lastModified: resumeImport.lastModified,
+    thoughtsImported: resumeImport.thoughtsImported,
+    name: resumeImport.name,
+    path: resumeImport.path,
+    size: resumeImport.size,
+    text: async () => {
+      const text = await idb.get<string>(resumeImportKey(resumeImport.id))
+      if (text == null) {
+        console.warn(`Resume file missing from IDB: ${resumeImport.id}`, resumeImport)
+        return ''
+      }
+      return text
+    },
+  }))
 }
 
 /** Pulls the thoughts in the given context if they exist. */

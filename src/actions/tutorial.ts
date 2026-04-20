@@ -18,7 +18,7 @@ const tutorial = (state: State, { value }: { value?: boolean }) => ({
 /** Updates the tutorial. Waits for tutorial settings to load first. */
 export const tutorialActionCreator =
   ({ value }: { value: boolean }): Thunk =>
-  dispatch => {
+  async dispatch => {
     // TODO: Consolidate with cached Settings
     storage.setItem('Settings/Tutorial', value ? 'On' : 'Off')
     dispatch({ type: 'tutorial', value })
