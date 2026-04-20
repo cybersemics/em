@@ -35,8 +35,9 @@ const GestureMenu: FC<{
       className={css({
         display: 'flex',
         flexDirection: 'column',
-        maxHeight: '100%',
         maxWidth: '100%',
+        maxHeight: '100dvh',
+        overflow: 'hidden',
       })}
     >
       <div
@@ -119,7 +120,7 @@ function Glow({ hidden }: { hidden?: boolean }) {
         position: 'absolute',
         pointerEvents: 'none',
         width: '100vw',
-        height: '100vh',
+        height: '100dvh',
         overflow: 'hidden',
       })}
     >
@@ -243,6 +244,7 @@ const GestureMenuWithTransition: FC = () => {
               isolation: 'isolate',
               width: '100%',
               paddingBottom: '200px',
+              maxHeight: '100dvh',
             })}
           >
             <Overlay />
