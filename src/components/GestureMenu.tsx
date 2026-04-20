@@ -5,7 +5,7 @@ import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import Command from '../@types/Command'
 import { gestureString } from '../commands'
-import openGestureCheatsheetCommand from '../commands/openGestureCheatsheet'
+import openMobileCommandUniverseCommand from '../commands/openMobileCommandUniverse'
 import useFilteredCommands from '../hooks/useFilteredCommands'
 import gestureStore from '../stores/gesture'
 import storageModel from '../stores/storageModel'
@@ -58,17 +58,20 @@ const GestureMenu: FC<{
           >
             {commands.map((command, index) => {
               // Check if the current gesture sequence ends with help gesture
-              const cheatsheetInProgress = gestureInProgress
+              const mobileCommandUniverseInProgress = gestureInProgress
                 ?.toString()
-                .endsWith(gestureString(openGestureCheatsheetCommand))
-              const isCheatsheetMatch = command.id === 'openGestureCheatsheet' && cheatsheetInProgress
-              const isCancelMatch = command.id === 'cancel' && !hasMatchingCommand && !cheatsheetInProgress
+                .endsWith(gestureString(openMobileCommandUniverseCommand))
+              const isMobileCommandUniverseMatch =
+                command.id === 'openMobileCommandUniverse' && mobileCommandUniverseInProgress
+              const isCancelMatch = command.id === 'cancel' && !hasMatchingCommand && !mobileCommandUniverseInProgress
 
               return (
                 <CommandItem
                   gestureInProgress={gestureInProgress as string}
                   key={command.id}
-                  selected={isCheatsheetMatch || gestureInProgress === gestureString(command) || isCancelMatch}
+                  selected={
+                    isMobileCommandUniverseMatch || gestureInProgress === gestureString(command) || isCancelMatch
+                  }
                   command={command}
                   isFirstCommand={index === 0}
                   isLastCommand={index === commands.length - 1}

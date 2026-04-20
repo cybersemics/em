@@ -140,7 +140,7 @@ const initialState = (created: Timestamp = timestamp()) => {
     rootContext: [HOME_TOKEN],
     schemaVersion: SCHEMA_LATEST,
     search: null,
-    showCommandPalette: false,
+    showDesktopCommandUniverse: false,
     showGestureMenu: false,
     remoteSearch: false,
     searchContexts: null,

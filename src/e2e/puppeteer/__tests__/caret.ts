@@ -219,7 +219,7 @@ describe('all platforms', () => {
     })
   })
 
-  it('caret should move to editable after closing the command palette, then executing a cursor down command', async () => {
+  it('caret should move to editable after closing the desktop command universe, then executing a cursor down command', async () => {
     const importText = `
       - a`
 
@@ -230,7 +230,7 @@ describe('all platforms', () => {
     await press('ArrowDown')
 
     // Wait for the caret to move to the editable
-    // because the closing of command palette is asynchronous and the caret may not be in the editable yet
+    // because the closing of desktop command universe is asynchronous and the caret may not be in the editable yet
     // otherwise the test intermittently fails in CI.
     await waitUntil(() => window.getSelection()?.focusNode?.textContent === 'a')
 

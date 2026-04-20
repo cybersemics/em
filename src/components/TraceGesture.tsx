@@ -30,7 +30,7 @@ interface SignaturePadOverride {
   removeEventListener: (event: SignaturePadEventType, listener: (e: Event) => void) => void
 }
 
-/** A hook that detects when there is a cancelled gesture in progress. Handles GestureHint and: CommandPaletteGesture which have different ways of showing a cancelled gesture. */
+/** A hook that detects when there is a cancelled gesture in progress. Handles GestureHint and: DesktopCommandUniverseGesture which have different ways of showing a cancelled gesture. */
 const useGestureCancelled = () => {
   const showGestureMenu = useSelector(state => state.showGestureMenu)
 
@@ -187,9 +187,9 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
 /** Renders the TraceGesture component as long as it is not disabled in the settings. */
 const TraceGestureWrapper = (props: TraceGestureProps) => {
   const showModal = useSelector(state => state.showModal)
-  const showGestureCheatsheet = useSelector(state => state.showGestureCheatsheet)
+  const showMobileCommandUniverse = useSelector(state => state.showMobileCommandUniverse)
   const disableGestureTracing = useSelector(getUserSetting(Settings.disableGestureTracing))
-  return <>{!disableGestureTracing && !showModal && !showGestureCheatsheet && <TraceGesture {...props} />}</>
+  return <>{!disableGestureTracing && !showModal && !showMobileCommandUniverse && <TraceGesture {...props} />}</>
 }
 
 export default TraceGestureWrapper

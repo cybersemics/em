@@ -53,8 +53,8 @@ const oppositeDirection = (dir: Direction) =>
     d: 'u',
   })[dir]
 
-/** Generate a list of pre-computed gradients for the special case of the gesture cheatsheet question mark diagram. */
-const GestureCheatsheetGradients = () => (
+/** Generate a list of pre-computed gradients for the special case of the mobile command universe question mark diagram. */
+const MobileCommandUniverseGradients = () => (
   <>
     <radialGradient
       cx={29.7}
@@ -391,7 +391,7 @@ const GestureDiagram = ({
             />
           </marker>
           {extendedPath === 'rdld' ? (
-            <GestureCheatsheetGradients />
+            <MobileCommandUniverseGradients />
           ) : (
             pathSegments.map((segment, i) => {
               return rounded ? (
