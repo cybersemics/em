@@ -24,7 +24,7 @@ import { showLatestCommandsActionCreator as showLatestCommands } from './actions
 import { suppressExpansionActionCreator as suppressExpansion } from './actions/suppressExpansion'
 import { isMac } from './browser'
 import * as commandsObject from './commands/index'
-import openGestureCheatsheetCommand from './commands/openGestureCheatsheet'
+import openMobileCommandUniverseCommand from './commands/openMobileCommandUniverse'
 import { AlertType, COMMAND_PALETTE_TIMEOUT, HOME_PATH, LongPressState, Settings, noop } from './constants'
 import * as selection from './device/selection'
 import globals from './globals'
@@ -416,7 +416,7 @@ export const executeCommandWithMulticursor = (
 export const handleGestureSegment = ({ sequence }: { gesture: Direction | null; sequence: Gesture }) => {
   const state = store.getState()
 
-  if (state.showModal || state.longPress === LongPressState.DragInProgress || state.showGestureCheatsheet) return
+  if (state.showModal || state.longPress === LongPressState.DragInProgress || state.showMobileCommandUniverse) return
 
   // Stop gesture segment haptics when there are no more possible commands that can be completed from the current sequence.
   // useFilteredCommands updates the possibleCommands in a back channel for efficiency.
@@ -449,21 +449,21 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: Gesture | null; e:
   // Get the command from the command gesture index.
   // When the gesture menu  is displayed, disable gesture aliases (i.e. gestures hidden from instructions). This is because the gesture hints are meant only as an aid when entering gestures quickly.
 
-  const openGestureCheatsheetGesture = gestureString(openGestureCheatsheetCommand)
+  const openMobileCommandUniverseGesture = gestureString(openMobileCommandUniverseCommand)
 
   // If sequence ends with help gesture, use help command.
   // If sequence starts with a chainable command gesture and has additional swipes, use the chained command with the longest matching gesture.
   // Otherwise use the normal command lookup.
   let command: Command | null = null
 
-  // gesture cheatsheet
-  if (sequence?.toString().endsWith(openGestureCheatsheetGesture)) {
-    command = openGestureCheatsheetCommand
+  // mobile command universe
+  if (sequence?.toString().endsWith(openMobileCommandUniverseGesture)) {
+    command = openMobileCommandUniverseCommand
   }
   // normal command
   else {
     command =
-      !state.showCommandPalette || !commandGestureIndex[sequence as string]?.hideFromHelp
+      !state.showDesktopCommandUniverse || !commandGestureIndex[sequence as string]?.hideFromHelp
         ? commandGestureIndex[sequence as string]
         : null
   }
@@ -495,7 +495,7 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: Gesture | null; e:
   if (
     command &&
     !state.showModal &&
-    !state.showGestureCheatsheet &&
+    !state.showMobileCommandUniverse &&
     state.longPress !== LongPressState.DragInProgress
   ) {
     commandEmitter.trigger('command', command)
@@ -602,14 +602,14 @@ export const keyDown = (e: KeyboardEvent) => {
     return
   }
 
-  // disable if command palette is displayed
-  if (state.showCommandPalette) return
+  // disable if desktop command universe is displayed
+  if (state.showDesktopCommandUniverse) return
 
   const command = commandKeyIndex[hashKeyDown(e)]
   keyCommandId = command?.id
 
   // disable if modal is shown, except for navigation commands
-  if (!command || state.showGestureCheatsheet || (state.showModal && !command.allowExecuteFromModal)) return
+  if (!command || state.showMobileCommandUniverse || (state.showModal && !command.allowExecuteFromModal)) return
 
   // execute the command
   commandEmitter.trigger('command', command)
