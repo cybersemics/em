@@ -93,13 +93,15 @@ interface SplitResult {
  * @param startOffset Inclusive text offset.
  * @param endOffset Exclusive text offset.
  */
-function sliceHtmlByTextOffsets(htmlValue: string, startOffset: number, endOffset: number) {
+function sliceHtmlByTextOffsets(htmlValue: string, startOffset: number, endOffset: number): string {
   const div = document.createElement('div')
   div.innerHTML = htmlValue
 
   const start = selection.offsetFromClosestParent(div, startOffset)
   const end = selection.offsetFromClosestParent(div, endOffset)
-  if (!start?.node || !end?.node) return null
+  if (!start?.node || !end?.node) {
+    throw new Error(`Unable to map text offsets to HTML nodes: [${startOffset}, ${endOffset}]`)
+  }
 
   const range = document.createRange()
   range.setStart(start.node, start.offset)
@@ -116,10 +118,8 @@ function sliceHtmlByTextOffsets(htmlValue: string, startOffset: number, endOffse
  * @param htmlValue The original HTML thought value.
  * @param plainValues The split values calculated from plain text.
  */
-function splitFormattedHtmlByPlainValues(htmlValue: string, plainValues: string[]) {
+function splitFormattedHtmlByPlainValues(htmlValue: string, plainValues: string[]): string[] {
   if (plainValues.length <= 1) return [trimHtml(htmlValue)]
-
-  const fallbackValues = plainValues.map(splitValue => splitValue.trim())
 
   let remaining = htmlValue
   let remainingText = getTextContentFromHTML(remaining)
@@ -127,20 +127,22 @@ function splitFormattedHtmlByPlainValues(htmlValue: string, plainValues: string[
 
   for (const nextPlainValue of plainValues.slice(1)) {
     const splitOffset = remainingText.indexOf(nextPlainValue)
-    if (splitOffset < 0) return fallbackValues
+    if (splitOffset < 0) {
+      throw new Error(`Unable to find split boundary in remaining text: "${nextPlainValue}"`)
+    }
 
     const div = document.createElement('div')
     div.innerHTML = remaining
 
     const nodeOffset = selection.offsetFromClosestParent(div, splitOffset)
-    if (!nodeOffset?.node) return fallbackValues
+    if (!nodeOffset?.node) throw new Error(`Unable to resolve split node at offset: ${splitOffset}`)
 
     const range = document.createRange()
     range.setStart(nodeOffset.node, nodeOffset.offset)
     range.setEnd(nodeOffset.node, nodeOffset.offset)
 
     const splitNodesResult = selection.splitNode(div, range)
-    if (!splitNodesResult) return fallbackValues
+    if (!splitNodesResult) throw new Error('Unable to split HTML node at sentence boundary')
 
     const leftDiv = document.createElement('div')
     const rightDiv = document.createElement('div')
@@ -163,7 +165,7 @@ function splitFormattedHtmlByPlainValues(htmlValue: string, plainValues: string[
  * @param htmlValue The original HTML thought value.
  * @param plainValue The plain text thought value.
  */
-function splitFormattedHtmlByCommaAndAnd(htmlValue: string, plainValue: string) {
+function splitFormattedHtmlByCommaAndAnd(htmlValue: string, plainValue: string): string[] {
   const delimiterRegex = /^(,|and)/i
   const splitValues = plainValue.split(/,|and/i)
   let offset = 0
@@ -172,7 +174,7 @@ function splitFormattedHtmlByCommaAndAnd(htmlValue: string, plainValue: string) 
     const startOffset = offset
     const endOffset = startOffset + splitValue.length
     const htmlSplitValue = sliceHtmlByTextOffsets(htmlValue, startOffset, endOffset)
-    const formattedValue = htmlSplitValue ? trimHtml(htmlSplitValue) : splitValue.trim()
+    const formattedValue = trimHtml(htmlSplitValue)
 
     const trailingText = plainValue.slice(endOffset)
     const delimiterMatch = trailingText.match(delimiterRegex)
@@ -193,19 +195,15 @@ const splitSentence = (value: string): SplitResult[] => {
   // "This is a thought (and a subthought)" -> "-This is a thought   -and a subthought"
   const parentheticalMatch = plainValue.match(/^(.*?)\s*\((.*?)\)\.?$/)
   if (parentheticalMatch) {
-    const [_, mainThought, subThought] = parentheticalMatch
+    const [_, mainThought] = parentheticalMatch
     const parentheticalIndex = plainValue.indexOf('(', mainThought.length)
     const closingParentheticalIndex = plainValue.lastIndexOf(')')
     const mainHtml = sliceHtmlByTextOffsets(value, 0, mainThought.length)
-    const subHtml =
-      parentheticalIndex >= 0 && closingParentheticalIndex >= 0
-        ? sliceHtmlByTextOffsets(value, parentheticalIndex + 1, closingParentheticalIndex)
-        : null
+    const subHtml = sliceHtmlByTextOffsets(value, parentheticalIndex + 1, closingParentheticalIndex)
 
-    return [
-      { value: trimHtml(mainHtml ?? mainThought.trim()) },
-      { value: trimHtml(subHtml ?? subThought.trim()), insertNewSubThought: true },
-    ].filter(s => s.value !== '')
+    return [{ value: trimHtml(mainHtml) }, { value: trimHtml(subHtml), insertNewSubThought: true }].filter(
+      s => s.value !== '',
+    )
   }
 
   // pattern1, single symbol: . ; ! ?
@@ -235,11 +233,8 @@ const splitSentence = (value: string): SplitResult[] => {
       if (trimmedLeft && trimmedRight) {
         const rightPartStart = plainValue.lastIndexOf(rightPart)
         const leftHtml = sliceHtmlByTextOffsets(value, 0, leftPart.length)
-        const rightHtml = rightPartStart >= 0 ? sliceHtmlByTextOffsets(value, rightPartStart, plainValue.length) : null
-        return [
-          { value: trimHtml(leftHtml ?? trimmedLeft) },
-          { value: trimHtml(rightHtml ?? trimmedRight), insertNewSubThought: true },
-        ]
+        const rightHtml = sliceHtmlByTextOffsets(value, rightPartStart, plainValue.length)
+        return [{ value: trimHtml(leftHtml) }, { value: trimHtml(rightHtml), insertNewSubThought: true }]
       }
     }
 
