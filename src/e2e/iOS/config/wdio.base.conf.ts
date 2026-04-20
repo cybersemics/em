@@ -1,4 +1,4 @@
-import https from 'https'
+import http from 'http'
 import path from 'path'
 
 /**
@@ -6,10 +6,9 @@ import path from 'path'
  * @throws Error if the app is not running.
  */
 export const checkAppRunning = (): Promise<void> => {
-  const errorMessage =
-    'App is not running on https://localhost:3000. Please start the app locally before running tests.'
+  const errorMessage = 'App is not running on http://localhost:3000. Please start the app locally before running tests.'
   return new Promise((resolve, reject) => {
-    const req = https.get('https://localhost:3000', { timeout: 2000, rejectUnauthorized: false }, res => {
+    const req = http.get('http://localhost:3000', { timeout: 2000 }, res => {
       res.on('data', () => {})
       res.on('end', () => resolve())
     })
@@ -74,19 +73,15 @@ const baseConfig = {
       try {
         await checkAppRunning()
       } catch (error) {
-        console.error(error instanceof Error ? error.message : 'App is not running on https://localhost:3000')
+        console.error(error instanceof Error ? error.message : 'App is not running on http://localhost:3000')
         process.exit(1)
       }
     }
   },
 
-  // Navigate once at the start of the session.
-  // CLOUDFLARED_URL: set by BrowserStack config (or CI) — a public HTTPS URL with a trusted cert.
-  // localhost: used for local Appium testing.
+  // Navigate once at the start of the session
   before: async function () {
-    const baseUrl = process.env.CLOUDFLARED_URL || 'https://localhost:3000'
-    await browser.url(baseUrl)
-
+    await browser.url('http://bs-local.com:3000')
     await browser.waitUntil(
       async () => {
         const body = await browser.$('body')
