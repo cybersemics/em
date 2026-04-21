@@ -38,6 +38,7 @@ jobs:
       skipped_unit_files: ${{ steps.classify.outputs.skipped_unit_files }}
       skipped_puppeteer_files: ${{ steps.classify.outputs.skipped_puppeteer_files }}
       merge_base: ${{ steps.classify.outputs.merge_base }}
+      tdd_commit: ${{ steps.tdd_commit.outputs.tdd_commit }}
       skip: ${{ steps.skip.outputs.skip }}
       skip_reason: ${{ steps.skip.outputs.reason }}
       skip_unit: ${{ steps.skip.outputs.skip_unit }}
@@ -189,6 +190,24 @@ jobs:
           echo "Has puppeteer skipped tests: $HAS_SKIPPED_PUPPETEER"
           echo "Has app code changes: $HAS_APP_CHANGES"
 
+      - name: Parse /tdd command from PR description
+        id: tdd_commit
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+
+          # Look for /tdd <commit> at the beginning of a line (7–40 lowercase hex chars)
+          TDD_COMMIT=$(printf '%s' "$PR_BODY" | grep -oP '^/tdd\s+\K[a-f0-9]{7,40}' | head -1 || true)
+
+          if [ -n "$TDD_COMMIT" ]; then
+            echo "Found /tdd command — using commit: $TDD_COMMIT"
+            echo "tdd_commit=$TDD_COMMIT" >> "$GITHUB_OUTPUT"
+          else
+            echo "No /tdd command found — using base SHA: $BASE_SHA"
+            echo "tdd_commit=$BASE_SHA" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Check skip conditions
         id: skip
         run: |
@@ -264,7 +283,7 @@ jobs:
       - name: Clone repository
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.event.pull_request.base.sha }}
+          ref: ${{ needs.detect.outputs.tdd_commit }}
           fetch-depth: 999
 
       - name: Fetch PR head
@@ -379,7 +398,7 @@ jobs:
       - name: Clone repository
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.event.pull_request.base.sha }}
+          ref: ${{ needs.detect.outputs.tdd_commit }}
           fetch-depth: 999
 
       - name: Fetch PR head
