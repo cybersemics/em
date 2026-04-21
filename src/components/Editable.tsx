@@ -400,13 +400,16 @@ const Editable = ({
         editingValueStore.update(newValue)
 
         const cursorOffset = selection.offsetThought()
-        /** Calculates the new cursor offset when addEmojiSpace inserts a space. */
-        const calculateCursorOffsetAfterEmojiSpace = (): number | undefined => {
-          if (emojiSpaceInsertionIndex == null || emojiSpaceInsertionIndex < 0 || cursorOffset == null)
-            return cursorOffset === null ? undefined : cursorOffset
-          return cursorOffset < emojiSpaceInsertionIndex ? cursorOffset : cursorOffset + 1
+        // If addEmojiSpace inserts a space, keep the caret in the same visual position after re-render.
+        let cursorOffsetWithEmojiSpace = cursorOffset === null ? undefined : cursorOffset
+        if (
+          emojiSpaceInsertionIndex != null &&
+          emojiSpaceInsertionIndex >= 0 &&
+          cursorOffset != null &&
+          cursorOffset >= emojiSpaceInsertionIndex
+        ) {
+          cursorOffsetWithEmojiSpace = cursorOffset + 1
         }
-        const cursorOffsetWithEmojiSpace = calculateCursorOffsetAfterEmojiSpace()
 
         // TODO: Disable keypress
         // e.preventDefault() does not work
