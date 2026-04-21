@@ -2,6 +2,7 @@ import { fireEvent } from '@testing-library/dom'
 import userEvent from '@testing-library/user-event'
 import { act } from 'react'
 import { HOME_TOKEN } from '../../constants'
+import * as selection from '../../device/selection'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
@@ -55,4 +56,25 @@ it('"paste" from clipboard app into non-empty thought', async () => {
     - a
       - b
         - c`)
+})
+
+it('inserts emoji spacing immediately and allows Delete at the emoji boundary', async () => {
+  act(() => {
+    windowEvent('keydown', { key: 'Enter' })
+  })
+
+  const editable = (await findThoughtByText(''))!
+  expect(editable).toBeVisible()
+
+  editable.innerHTML = '🧠Hello'
+  fireEvent.input(editable, { bubbles: true })
+  expect(editable.textContent).toBe('🧠 Hello')
+
+  const user = userEvent.setup({ delay: null })
+  editable.focus()
+  selection.set(editable, { offset: '🧠 '.length })
+  await user.keyboard('{Delete}')
+  await act(vi.runAllTimersAsync)
+
+  expect(editable.textContent).toBe('🧠 ello')
 })

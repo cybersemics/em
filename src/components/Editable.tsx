@@ -98,32 +98,6 @@ const applyOuterTag = (newValue: string, oldValue: string): string => {
   return div.firstChild.outerHTML
 }
 
-/**
- * Returns the insertion index if nextValue is currentValue with exactly one inserted character.
- *
- * @param currentValue Current editable value.
- * @param nextValue Scrubbed value after applying addEmojiSpace.
- * @returns The insertion index when nextValue differs by exactly one inserted character, otherwise null.
- */
-const getSingleInsertionIndex = (currentValue: string, nextValue: string): number | null => {
-  if (nextValue.length !== currentValue.length + 1) return null
-
-  let insertionIndex = currentValue.length
-
-  for (let i = 0; i < currentValue.length; i++) {
-    if (currentValue[i] !== nextValue[i]) {
-      insertionIndex = i
-      break
-    }
-  }
-
-  for (let i = insertionIndex; i < currentValue.length; i++) {
-    if (currentValue[i] !== nextValue[i + 1]) return null
-  }
-
-  return insertionIndex
-}
-
 // this flag is used to ensure that the browser selection is not restored after the initial setCursorOnThought
 let cursorOffsetInitialized = false
 
@@ -409,7 +383,8 @@ const Editable = ({
         const trimmedWrappedValue = trimHtml(wrappedValue)
         const valueWithEmojiSpace = addEmojiSpace(trimmedWrappedValue)
         const newValue = stripEmptyFormattingTags(valueWithEmojiSpace)
-        const emojiSpaceInsertionIndex = getSingleInsertionIndex(trimmedWrappedValue, valueWithEmojiSpace)
+        const emojiSpaceAdded = valueWithEmojiSpace !== trimmedWrappedValue
+        const emojiSpaceInsertionIndex = emojiSpaceAdded ? valueWithEmojiSpace.indexOf(' ') : null
 
         /* The realtime editingValue must always be updated (and not short-circuited) since oldValueRef is throttled. Otherwise, editingValueStore becomes stale and heights are not recalculated in VirtualThought.
 
@@ -427,7 +402,7 @@ const Editable = ({
         const cursorOffset = selection.offsetThought()
         /** Calculates the new cursor offset when addEmojiSpace inserts a space. */
         const calculateCursorOffsetAfterEmojiSpace = (): number | undefined => {
-          if (emojiSpaceInsertionIndex == null || cursorOffset == null)
+          if (emojiSpaceInsertionIndex == null || emojiSpaceInsertionIndex < 0 || cursorOffset == null)
             return cursorOffset === null ? undefined : cursorOffset
           return cursorOffset < emojiSpaceInsertionIndex ? cursorOffset : cursorOffset + 1
         }
@@ -490,7 +465,7 @@ const Editable = ({
         // run it immediately is there is a style wrapper that needs to be applied to the editable after a clearThought action (#3673)
         if (
           wrappedValue !== e.target.value ||
-          emojiSpaceInsertionIndex != null ||
+          emojiSpaceAdded ||
           transient ||
           contextLengthChange ||
           urlChange ||
@@ -502,7 +477,7 @@ const Editable = ({
           // if a style needs to be re-applied with cursorClearedWrapper, the editable needs to re-render immediately to prevent
           // a flash of unstyled content
           thoughtChangeHandler(newValue, {
-            force: wrappedValue !== e.target.value || emojiSpaceInsertionIndex != null,
+            force: wrappedValue !== e.target.value || emojiSpaceAdded,
             rank,
             simplePath,
             cursorOffset: cursorOffsetWithEmojiSpace,
