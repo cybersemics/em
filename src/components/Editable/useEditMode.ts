@@ -151,7 +151,6 @@ const useEditMode = ({
      * Prevents focus on non-cursor thoughts or during multiselect clicks.
      * When editing or cursor is present (and multicursor is not active), computes and sets the caret position manually.
      * Prevents default behavior and manages autoscroll for certain edge cases where browser selection would be incorrect.
-     * On a touch device, the browser fires touch events first, then synthesises mouse events afterwards for backward compatibility, hence mousedown is always guaranteed to be fired after touch events.
      */
     const onMouseDown = (e: MouseEvent) => {
       // If CMD/CTRL is pressed, don't focus the editable.
