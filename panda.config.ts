@@ -416,7 +416,9 @@ export default defineConfig({
         spacing: {
           modalPadding: { value: '8%' },
           safeAreaTop: { value: 'env(safe-area-inset-top)' },
+          safeAreaRight: { value: 'env(safe-area-inset-right)' },
           safeAreaBottom: { value: 'env(safe-area-inset-bottom)' },
+          safeAreaLeft: { value: 'env(safe-area-inset-left)' },
         },
         /* z-index schedule
         Keep these in one place to make it easier to determine interactions and prevent conflicts. */
@@ -425,6 +427,7 @@ export default defineConfig({
             'dialog',
             'dialogContainer',
             'popup',
+            'tip',
             'cloneDroppedThought',
             'hoverArrow',
             'gestureTrace',
