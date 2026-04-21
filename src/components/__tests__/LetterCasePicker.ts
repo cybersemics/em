@@ -1,4 +1,5 @@
 import { act } from 'react'
+import { addAllMulticursorActionCreator as addAllMulticursor } from '../../actions/addAllMulticursor'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
@@ -64,4 +65,23 @@ it('Set Title Case to the current thought', async () => {
   const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
   expect(exported).toEqual(`- __ROOT__
   - Hello Everyone, This Is Rose. Thanks for Your Help.`)
+})
+
+it('Set Upper Case with multicursor selection', async () => {
+  await dispatch([
+    newThought({ value: 'Hello everyone, this is Rose. Thanks for your help.' }),
+    newThought({ value: 'Goodbye everyone, this is Max. Thanks for your help.' }),
+    addAllMulticursor({}),
+  ])
+  await click('[data-testid="toolbar-icon"][aria-label="Letter Case"]')
+  await click('[aria-label="letter case swatches"] [aria-label="UpperCase"]')
+
+  await act(vi.runOnlyPendingTimersAsync)
+
+  const state = store.getState()
+
+  const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
+  expect(exported).toEqual(`- __ROOT__
+  - HELLO EVERYONE, THIS IS ROSE. THANKS FOR YOUR HELP.
+  - GOODBYE EVERYONE, THIS IS MAX. THANKS FOR YOUR HELP.`)
 })

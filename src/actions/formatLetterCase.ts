@@ -2,9 +2,11 @@
 import LetterCaseType from '../@types/LetterCaseType'
 import Thunk from '../@types/Thunk'
 import * as selection from '../device/selection'
+import documentSort from '../selectors/documentSort'
 import pathToThought from '../selectors/pathToThought'
 import simplifyPath from '../selectors/simplifyPath'
 import applyLetterCase from '../util/applyLetterCase'
+import hashPath from '../util/hashPath'
 import { editThoughtActionCreator as editThought } from './editThought'
 import { setCursorActionCreator as setCursor } from './setCursor'
 
@@ -16,22 +18,34 @@ export const formatLetterCaseActionCreator =
     const cursor = state.cursor
     if (!cursor) return
 
-    const thought = pathToThought(state, cursor)
-    if (!thought) return state
-
-    const oldValue = thought.value
-    const newValue = applyLetterCase(command, oldValue)
-    const simplePath = simplifyPath(state, cursor)
+    const multicursorPaths = documentSort(state, Object.values(state.multicursors))
+    const multicursorPathSet = new Set(multicursorPaths.map(hashPath))
+    const paths =
+      multicursorPaths.length === 0
+        ? [cursor]
+        : multicursorPathSet.has(hashPath(cursor))
+          ? multicursorPaths
+          : [...multicursorPaths, cursor]
     const offset = selection.offsetThought()
 
-    dispatch(
-      editThought({
-        oldValue,
-        newValue,
-        path: simplePath,
-        force: true,
-      }),
-    )
+    paths.forEach(path => {
+      const currentState = getState()
+      const thought = pathToThought(currentState, path)
+      if (!thought) return
 
-    dispatch(setCursor({ path: simplePath, offset: offset }))
+      const oldValue = thought.value
+      const newValue = applyLetterCase(command, oldValue)
+      const simplePath = simplifyPath(currentState, path)
+
+      dispatch(
+        editThought({
+          oldValue,
+          newValue,
+          path: simplePath,
+          force: true,
+        }),
+      )
+    })
+
+    dispatch(setCursor({ path: simplifyPath(getState(), cursor), offset: offset }))
   }
