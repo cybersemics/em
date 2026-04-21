@@ -351,9 +351,18 @@ const initEvents = (store: Store<State, any>) => {
     }
   }
 
+  /** Drag over handler for file drag-and-drop. Prevents the browser from showing the "open file" cursor and ensures drop events fire outside of react-dnd drop targets. */
+  const dragOver = (e: DragEvent) => {
+    if (e.dataTransfer?.types.includes('Files')) {
+      e.preventDefault()
+    }
+  }
+
   /** Drop handler for file drag-and-drop. */
   const drop = (e: DragEvent) => {
     if (e.dataTransfer?.types.includes('Files')) {
+      // Prevent the browser from opening the dropped file in a new tab.
+      e.preventDefault()
       // wait until the next tick so that the thought/subthought drop handler has a chance to be called before draggingFile is reset
       // See: DragAndDropThought and DragAndDropSubthoughts
       setTimeout(() => {
@@ -378,6 +387,7 @@ const initEvents = (store: Store<State, any>) => {
   window.addEventListener('scroll', updateScrollTop)
   window.addEventListener('dragenter', dragEnter)
   window.addEventListener('dragleave', dragLeave)
+  window.addEventListener('dragover', dragOver)
   window.addEventListener('drop', drop)
 
   const resizeHost = window.visualViewport || window
@@ -412,6 +422,7 @@ const initEvents = (store: Store<State, any>) => {
     window.removeEventListener('scroll', updateScrollTop)
     window.removeEventListener('dragenter', dragEnter)
     window.removeEventListener('dragleave', dragLeave)
+    window.removeEventListener('dragover', dragOver)
     window.removeEventListener('drop', drop)
     lifecycle.removeEventListener('statechange', onStateChange)
     resizeHost.removeEventListener('resize', updateSize)
