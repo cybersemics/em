@@ -17,6 +17,24 @@ declare global {
   interface Navigator {
     standalone: boolean
   }
+
+  /** Options for constructing a ScrollTimeline. */
+  interface ScrollTimelineOptions {
+    /** The scrollable element whose scroll position drives the timeline. */
+    source?: Element | null
+    /** The scroll axis to use. */
+    axis?: 'block' | 'inline' | 'x' | 'y'
+  }
+
+  /**
+   * A scroll-driven AnimationTimeline for use with the Web Animations API.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/ScrollTimeline
+   */
+  class ScrollTimeline implements AnimationTimeline {
+    constructor(options?: ScrollTimelineOptions)
+    readonly currentTime: CSSNumberish | null
+  }
 }
 
 /** Extends store.dispatch to allow arrays and thunks.
