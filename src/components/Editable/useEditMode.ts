@@ -12,9 +12,6 @@ import hasMulticursor from '../../selectors/hasMulticursor'
 import equalPath from '../../util/equalPath'
 import getCaretOffset from '../../util/getCaretOffset'
 
-/** Squared movement threshold (px²) for distinguishing taps from scrolls; ~10px finger movement. */
-const SCROLL_THRESHOLD_SQ = 100
-
 /** Automatically sets the selection on the given contentRef element when the thought should be selected. Handles a variety of conditions that determine whether this should occur. */
 const useEditMode = ({
   contentRef,
@@ -53,21 +50,8 @@ const useEditMode = ({
   const editMode = !isTouch || editing
   const editingOrOnCursor = isCursor || editing
 
-  /**
-   * Stores a custom caret position for iOS touch interactions temporarily.
-   * Computed on touchstart. Applied on touchend, or on mousedown if it runs first or touchend doesn't run at all.
-   * The following mousedown clears state so synthetic mouse does not re-run node offset calculation. Touchmove clears pending on scroll.
-   */
-  const pendingCaretOffsetRef = useRef<number | null>(null)
-
   /** Prevents `getCaretOffset` from running twice on touch devices (onMousedown after onTouchEnd). */
   const pendingCaretHandledRef = useRef(false)
-
-  /** Stores the initial touch position to detect tap vs scroll; if focus occurs without it, the tap was outside the editable and we place the caret manually. */
-  const touchStartPosRef = useRef<{ x: number; y: number } | null>(null)
-
-  /** Second tap of a double-tap: skip manual caret in touchend and let WebKit select the word. */
-  const skipManualCaretForTouchEndRef = useRef(false)
 
   useEffect(
     () => {
@@ -217,109 +201,15 @@ const useEditMode = ({
       }
     }
 
-    /**
-     * Handles touchstart for manual caret positioning on iOS Safari.
-     * Sets up the necessary state to determine if a caret offset needs to be applied after touchend.
-     */
-    const onTouchStart = (e: TouchEvent) => {
-      if (!editingOrOnCursor || isMulticursor || e.touches.length === 0) return
-      const touch = e.touches[0]
-      if (!touch) return
-
-      touchStartPosRef.current = { x: touch.clientX, y: touch.clientY }
-
-      skipManualCaretForTouchEndRef.current = false
-
-      const { offset } = getCaretOffset(editable, {
-        clientX: touch.clientX,
-        clientY: touch.clientY,
-      })
-
-      pendingCaretOffsetRef.current = offset
-      allowDefaultSelection()
-    }
-
-    /** Cancels the pending caret offset if the user scrolls past the threshold. */
-    const onTouchMove = (e: TouchEvent) => {
-      if (e.touches.length === 0 || !touchStartPosRef.current) return
-      const touch = e.touches[0]
-      const dx = touch.clientX - touchStartPosRef.current.x
-      const dy = touch.clientY - touchStartPosRef.current.y
-      if (dx * dx + dy * dy > SCROLL_THRESHOLD_SQ) {
-        pendingCaretOffsetRef.current = null
-        pendingCaretHandledRef.current = false
-        skipManualCaretForTouchEndRef.current = false
-      }
-    }
-
-    /** Finalizes the manual caret positioning after touch processing completes. */
-    const onTouchEnd = () => {
-      if (skipManualCaretForTouchEndRef.current) {
-        skipManualCaretForTouchEndRef.current = false
-        pendingCaretHandledRef.current = true
-        touchStartPosRef.current = null
-        return
-      }
-
-      const pendingCaretOffset = pendingCaretOffsetRef.current
-      if (pendingCaretOffset === null) return
-
-      pendingCaretHandledRef.current = true
-      pendingCaretOffsetRef.current = null
-      touchStartPosRef.current = null
-
-      // Apply the pending offset after next two frames to prevent the browser from repositioning the caret incorrectly.
-      // Double requestAnimationFrame seems to be the most reliable way to prevent the visual caret glitch where the ios bug causes caret to jump unexpectedly before restoring manually to correct offset.
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          setCaretOffset(pendingCaretOffset)
-        })
-      })
-    }
-
     /** Prevents the thought from autoscrolling to the bottom of the screen when the keyboard is open. */
     const onFocus = () => preventAutoscrollEnd(editable)
 
     editable.addEventListener('mousedown', onMouseDown)
     editable.addEventListener('focus', onFocus)
 
-    /**
-     * Registers touch event listeners exclusively for iOS Safari to handle
-     * caret positioning quirks that cannot be addressed via `mousedown`.
-     *
-     * ## Browser differences
-     *
-     * **Chrome** — Caret misbehaviour is limited to clicks on void space and is
-     * reliably prevented by calling `preventDefault()` during `mousedown`.
-     *
-     * **iOS Safari** — Caret positioning is fundamentally different and more
-     * unpredictable. The caret can jump even at valid text boundaries, making
-     * `mousedown` based correction insufficient. Reliable detection of intent
-     * requires observing the full touch lifecycle: `touchstart`, `touchmove`,
-     * and `touchend`.
-     *
-     * ## Workaround
-     * The correction is deferred via `requestAnimationFrame` to prevent the visual glitch.
-     * During this window the caret is made transparent to mask the visual
-     * glitch before the corrected position is applied.
-     *
-     * Touch listeners are therefore registered only when the runtime is
-     * identified as iOS Safari.
-     */
-    if (isTouch && isSafari()) {
-      editable.addEventListener('touchstart', onTouchStart)
-      editable.addEventListener('touchmove', onTouchMove)
-      editable.addEventListener('touchend', onTouchEnd)
-    }
-
     return () => {
       editable.removeEventListener('mousedown', onMouseDown)
       editable.removeEventListener('focus', onFocus)
-      if (isTouch && isSafari()) {
-        editable.removeEventListener('touchstart', onTouchStart)
-        editable.removeEventListener('touchmove', onTouchMove)
-        editable.removeEventListener('touchend', onTouchEnd)
-      }
     }
   }, [contentRef, editingOrOnCursor, isMulticursor, fontSize, onCaretOffset, allowDefaultSelection])
 
