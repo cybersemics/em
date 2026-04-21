@@ -279,7 +279,12 @@ const Editable = ({
    */
   const thoughtChangeHandler = (
     newValue: string,
-    { force, rank, simplePath }: { force?: boolean; rank: number; simplePath: SimplePath },
+    {
+      force,
+      rank,
+      simplePath,
+      cursorOffset,
+    }: { force?: boolean; rank: number; simplePath: SimplePath; cursorOffset?: number },
   ) => {
     // Note: Don't update innerHTML of contentEditable here. Since thoughtChangeHandler may be debounced, it may cause contentEditable to be out of sync.
     invalidStateError(null)
@@ -305,7 +310,7 @@ const Editable = ({
         // Set cursorOffset so that it is included in the undo patch.
         // Otherwise, the selection offset will not be restored correctly on undo/redo.
         // This will have no effect on useEditMode, which does not subscribe to state.cursorOffset reactively.
-        cursorOffset: selection.offsetThought() ?? undefined,
+        cursorOffset: cursorOffset ?? selection.offsetThought() ?? undefined,
         force,
       }),
     )
@@ -419,22 +424,14 @@ const Editable = ({
       */
         editingValueStore.update(newValue)
 
-        // Update editable content immediately when addEmojiSpace inserts a space so that mobile keyboard close does not
-        // apply a delayed content change and caret remains after the inserted space.
-        if (
-          emojiSpaceInsertionIndex != null &&
-          contentRef.current &&
-          document.activeElement === contentRef.current &&
-          contentRef.current.innerHTML !== newValue
-        ) {
-          const offset = selection.offsetThought()
-          contentRef.current.innerHTML = newValue
-          if (offset != null) {
-            selection.set(contentRef.current, {
-              offset: offset < emojiSpaceInsertionIndex ? offset : offset + 1,
-            })
-          }
+        const cursorOffset = selection.offsetThought()
+        /** Calculates the new cursor offset when addEmojiSpace inserts a space. */
+        const calculateCursorOffsetAfterEmojiSpace = (): number | undefined => {
+          if (emojiSpaceInsertionIndex == null || cursorOffset == null)
+            return cursorOffset === null ? undefined : cursorOffset
+          return cursorOffset < emojiSpaceInsertionIndex ? cursorOffset : cursorOffset + 1
         }
+        const cursorOffsetWithEmojiSpace = calculateCursorOffsetAfterEmojiSpace()
 
         // TODO: Disable keypress
         // e.preventDefault() does not work
@@ -493,6 +490,7 @@ const Editable = ({
         // run it immediately is there is a style wrapper that needs to be applied to the editable after a clearThought action (#3673)
         if (
           wrappedValue !== e.target.value ||
+          emojiSpaceInsertionIndex != null ||
           transient ||
           contextLengthChange ||
           urlChange ||
@@ -503,7 +501,12 @@ const Editable = ({
           throttledChangeRef.current.flush()
           // if a style needs to be re-applied with cursorClearedWrapper, the editable needs to re-render immediately to prevent
           // a flash of unstyled content
-          thoughtChangeHandler(newValue, { force: wrappedValue !== e.target.value, rank, simplePath })
+          thoughtChangeHandler(newValue, {
+            force: wrappedValue !== e.target.value || emojiSpaceInsertionIndex != null,
+            rank,
+            simplePath,
+            cursorOffset: cursorOffsetWithEmojiSpace,
+          })
         } else {
           throttledChangeRef.current(newValue, { rank, simplePath })
         }
