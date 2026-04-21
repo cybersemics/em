@@ -19,45 +19,26 @@ export const formatLetterCaseActionCreator =
     if (!cursor) return
 
     const multicursorPaths = documentSort(state, Object.values(state.multicursors))
-    const multicursorPathSet = new Set(multicursorPaths.map(hashPath))
-    const paths =
-      multicursorPaths.length === 0
-        ? [cursor]
-        : multicursorPathSet.has(hashPath(cursor))
-          ? multicursorPaths
-          : [...multicursorPaths, cursor]
+    const cursorHash = hashPath(cursor)
+    const multicursorHasCursor = multicursorPaths.some(path => hashPath(path) === cursorHash)
+    const shouldAppendCursor = multicursorPaths.length === 0 || !multicursorHasCursor
+    const paths = shouldAppendCursor ? [...multicursorPaths, cursor] : multicursorPaths
     const offset = selection.offsetThought()
     const cursorSimplePath = simplifyPath(state, cursor)
 
-    paths
-      .map(path => {
-        const thought = pathToThought(state, path)
-        if (!thought) return null
-        return {
+    paths.forEach(path => {
+      const thought = pathToThought(state, path)
+      if (!thought) return
+
+      dispatch(
+        editThought({
           oldValue: thought.value,
           newValue: applyLetterCase(command, thought.value),
           path: simplifyPath(state, path),
-        }
-      })
-      .filter(
-        (
-          edit,
-        ): edit is {
-          oldValue: string
-          newValue: string
-          path: ReturnType<typeof simplifyPath>
-        } => !!edit,
+          force: true,
+        }),
       )
-      .forEach(edit =>
-        dispatch(
-          editThought({
-            oldValue: edit.oldValue,
-            newValue: edit.newValue,
-            path: edit.path,
-            force: true,
-          }),
-        ),
-      )
+    })
 
     dispatch(setCursor({ path: cursorSimplePath, offset }))
   }
