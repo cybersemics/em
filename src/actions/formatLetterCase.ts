@@ -27,25 +27,37 @@ export const formatLetterCaseActionCreator =
           ? multicursorPaths
           : [...multicursorPaths, cursor]
     const offset = selection.offsetThought()
+    const cursorSimplePath = simplifyPath(state, cursor)
 
-    paths.forEach(path => {
-      const currentState = getState()
-      const thought = pathToThought(currentState, path)
-      if (!thought) return
-
-      const oldValue = thought.value
-      const newValue = applyLetterCase(command, oldValue)
-      const simplePath = simplifyPath(currentState, path)
-
-      dispatch(
-        editThought({
-          oldValue,
-          newValue,
-          path: simplePath,
-          force: true,
-        }),
+    paths
+      .map(path => {
+        const thought = pathToThought(state, path)
+        if (!thought) return null
+        return {
+          oldValue: thought.value,
+          newValue: applyLetterCase(command, thought.value),
+          path: simplifyPath(state, path),
+        }
+      })
+      .filter(
+        (
+          edit,
+        ): edit is {
+          oldValue: string
+          newValue: string
+          path: ReturnType<typeof simplifyPath>
+        } => !!edit,
       )
-    })
+      .forEach(edit =>
+        dispatch(
+          editThought({
+            oldValue: edit.oldValue,
+            newValue: edit.newValue,
+            path: edit.path,
+            force: true,
+          }),
+        ),
+      )
 
-    dispatch(setCursor({ path: simplifyPath(getState(), cursor), offset: offset }))
+    dispatch(setCursor({ path: cursorSimplePath, offset }))
   }
