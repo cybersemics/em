@@ -10,7 +10,7 @@ import MulticursorFilter from './MulticursorFilter'
 import Path from './Path'
 import State from './State'
 
-/** A command that the user initiates via keyboard, gesture, toolbar, or Command Palette. When creating a new command, carefully think through all the properties that are appropriate. */
+/** A command that the user initiates via keyboard, gesture, toolbar, or Command Universe. When creating a new command, carefully think through all the properties that are appropriate. */
 interface Command {
   /**************************
    * REQUIRED
@@ -33,7 +33,7 @@ interface Command {
   /**
    * Determines how the command behaves when multiple thoughts are selected. This is a required property because multicursor support is nontrivial, and it must be thought through for each new command that is added.
    * - If true, the command will be executed for each cursor. Optional object for more control.
-   * - If false, the command will be executed as if there were no multicursors. The command will be executed on state.cursor as usual and any thoughts that are selected will stay selected. This is ideal for commands that do not interact with the thoughtspace, such as opening the Command Palette or navigating to a modal. If instead you want to disallow the command when multiple thoughts are selected, set { disallow: true }.
+   * - If false, the command will be executed as if there were no multicursors. The command will be executed on state.cursor as usual and any thoughts that are selected will stay selected. This is ideal for commands that do not interact with the thoughtspace, such as opening the Command Universe or navigating to a modal. If instead you want to disallow the command when multiple thoughts are selected, set { disallow: true }.
    **/
   multicursor:
     | boolean
@@ -88,13 +88,13 @@ interface Command {
   /** Do not show the alert after the command is executed in training mode. */
   hideAlert?: boolean
 
-  /** Hide the command in the desktop CommandPalette. */
-  hideFromCommandPalette?: boolean
+  /** Hide the command in the DesktopCommandUniverse. */
+  hideFromDesktopCommandUniverse?: boolean
 
   /** Hide the command in the mobile GestureMenu. */
   hideFromGestureMenu?: boolean
 
-  /** Hide the command in the Help modal and CommandPalette. */
+  /** Hide the command in the Help modal and DesktopCommandUniverse. */
   hideFromHelp?: boolean
 
   /** A function that returns true if the command should be highlighted in the Toolbar. */
