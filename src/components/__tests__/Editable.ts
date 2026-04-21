@@ -58,7 +58,7 @@ it('"paste" from clipboard app into non-empty thought', async () => {
         - c`)
 })
 
-it('inserts emoji spacing immediately and allows Delete at the emoji boundary', async () => {
+it('inserts emoji spacing immediately and allows Backspace at the emoji boundary', async () => {
   act(() => {
     windowEvent('keydown', { key: 'Enter' })
   })
@@ -73,8 +73,8 @@ it('inserts emoji spacing immediately and allows Delete at the emoji boundary', 
   const user = userEvent.setup({ delay: null })
   editable.focus()
   selection.set(editable, { offset: '🧠 '.length })
-  await user.keyboard('{Delete}')
+  await user.keyboard('{Backspace}')
   await act(vi.runAllTimersAsync)
 
-  expect(editable.textContent).toBe('🧠 ello')
+  expect(editable.textContent).toBe('🧠Hello')
 })
