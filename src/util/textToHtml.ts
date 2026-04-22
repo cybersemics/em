@@ -23,8 +23,8 @@ const REGEX_RTF = /^\s*\{\\rtf/i
 const RTF_IGNORED_DESTINATIONS = new Set([
   'annotation',
   'atnauthor',
-  'atrfend',
-  'atrfstart',
+  'atnrefend',
+  'atnrefstart',
   'colortbl',
   'datastore',
   'filetbl',
@@ -110,8 +110,8 @@ const rtfToTaggedText = (rtf: string) => {
 
     if (char === '}') {
       flushBuffer()
-      formattingStack.pop()
-      skipDestinationStack.pop()
+      if (formattingStack.length > 1) formattingStack.pop()
+      if (skipDestinationStack.length > 1) skipDestinationStack.pop()
       index += 1
       continue
     }
