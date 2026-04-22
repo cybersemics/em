@@ -223,17 +223,18 @@ export const importFilesActionCreator =
         }))
       : await resumeImportsManager.getFiles()
 
-    const unsupportedFileExtensions = _.uniq(
-      resumableFiles
-        .map(file => getFileExtension(file.name))
-        .filter(extension => UNSUPPORTED_IMPORT_FILE_EXTENSIONS.includes(extension))
-        .map(extension => `.${extension}`),
-    )
+    const unsupportedFileExtensions = resumableFiles.reduce<string[]>((extensions, file) => {
+      const extension = getFileExtension(file.name)
+      const extensionWithDot = `.${extension}`
+      return UNSUPPORTED_IMPORT_FILE_EXTENSIONS.includes(extension) && !extensions.includes(extensionWithDot)
+        ? [...extensions, extensionWithDot]
+        : extensions
+    }, [])
 
     if (unsupportedFileExtensions.length > 0) {
       dispatch(
         alertWithMinistore(
-          `Unsupported file type${unsupportedFileExtensions.length > 1 ? 's' : ''} for import: ${unsupportedFileExtensions.join(', ')}.`,
+          `Import canceled. Unsupported file type${unsupportedFileExtensions.length > 1 ? 's' : ''}: ${unsupportedFileExtensions.join(', ')}.`,
           { alertType: AlertType.ImportFile },
         ),
       )
