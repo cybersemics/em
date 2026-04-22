@@ -356,20 +356,14 @@ it('Set text color with multicursor selection', async () => {
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="text color swatches"] [aria-label="blue"]')
 
-  const labradorText = await page.evaluate(
-    () => Array.from(document.querySelectorAll('[data-editable]')).find(el => el.textContent === 'Labrador')?.innerHTML,
-  )
-  const goldenText = await page.evaluate(
-    () =>
-      Array.from(document.querySelectorAll('[data-editable]')).find(el => el.textContent === 'Golden Retriever')
-        ?.innerHTML,
-  )
+  // Verify the cursor thought (Golden Retriever) has the correct color.
+  const goldenText = await getEditingText()
+  expect(extractColor(goldenText!)?.color).toBe(rgbaToHex(colors.light.blue))
 
-  const labradorColor = labradorText ? extractColor(labradorText)?.color : null
-  const goldenColor = goldenText ? extractColor(goldenText)?.color : null
-
-  expect(labradorColor).toBe(rgbaToHex(colors.light.blue))
-  expect(goldenColor).toBe(rgbaToHex(colors.light.blue))
+  // Navigate to Labrador and verify its color was also applied.
+  await press('ArrowUp')
+  const labradorText = await getEditingText()
+  expect(extractColor(labradorText!)?.color).toBe(rgbaToHex(colors.light.blue))
 })
 
 it('Set background color with multicursor selection', async () => {
@@ -385,18 +379,14 @@ it('Set background color with multicursor selection', async () => {
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="background color swatches"] [aria-label="green"]')
 
-  const labradorText = await page.evaluate(
-    () => Array.from(document.querySelectorAll('[data-editable]')).find(el => el.textContent === 'Labrador')?.innerHTML,
-  )
-  const goldenText = await page.evaluate(
-    () =>
-      Array.from(document.querySelectorAll('[data-editable]')).find(el => el.textContent === 'Golden Retriever')
-        ?.innerHTML,
-  )
-
-  const labradorBgColor = labradorText ? extractColor(labradorText)?.backgroundColor : null
-  const goldenBgColor = goldenText ? extractColor(goldenText)?.backgroundColor : null
-
-  expect(labradorBgColor && rgbToHex(labradorBgColor)).toBe(rgbaToHex(colors.light.green))
+  // Verify the cursor thought (Golden Retriever) has the correct background color.
+  const goldenText = await getEditingText()
+  const goldenBgColor = extractColor(goldenText!)?.backgroundColor
   expect(goldenBgColor && rgbToHex(goldenBgColor)).toBe(rgbaToHex(colors.light.green))
+
+  // Navigate to Labrador and verify its background color was also applied.
+  await press('ArrowUp')
+  const labradorText = await getEditingText()
+  const labradorBgColor = extractColor(labradorText!)?.backgroundColor
+  expect(labradorBgColor && rgbToHex(labradorBgColor)).toBe(rgbaToHex(colors.light.green))
 })

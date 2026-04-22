@@ -23,10 +23,8 @@ const shouldRemoveStyle = (styleString: string, bgColor: string) => {
   const styleLower = styleString.toLowerCase()
   const colorMatch = styleLower.match(/background-color\s*:\s*([^;]+);?/)
   const elementColor = colorMatch ? colorMatch[1].trim() : null
-  const isSameColor = elementColor && rgbToHex(elementColor) === rgbToHex(bgColor)
-  return !!(elementColor && isSameColor)
+  return !!(elementColor && rgbToHex(elementColor) === rgbToHex(bgColor))
 }
-
 /** Collects tag names from an HTML string that have no meaningful attributes. */
 const collectTagsWithoutAttributes = (text: string, pattern: RegExp): string[] =>
   Array.from(text.matchAll(pattern))
