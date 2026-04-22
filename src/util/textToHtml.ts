@@ -68,7 +68,16 @@ const applyFormatting = (value: string, formatting: RtfFormattingState) => {
   return formatting.strikethrough ? `<strike>${withUnderline}</strike>` : withUnderline
 }
 
-/** Converts an RTF document into plaintext with inline formatting tags. */
+/** Converts an RTF document into plaintext with inline formatting tags.
+ *
+ * Supports a focused subset of RTF for dropped files:
+ * - text and line breaks.
+ * - bold/italic/underline/strikethrough toggles.
+ * - unicode escapes (\uN with \ucN fallback semantics).
+ *
+ * Ignores non-content destination groups such as font and color tables.
+ * Returns normalized text that may contain `<b>`, `<i>`, `<u>`, and `<strike>` tags.
+ */
 const rtfToTaggedText = (rtf: string) => {
   const formattingStack: RtfFormattingState[] = [{ bold: false, italic: false, underline: false, strikethrough: false }]
   const skipDestinationStack = [false]
@@ -161,6 +170,7 @@ const rtfToTaggedText = (rtf: string) => {
     if (rtf[cursor] === ' ') cursor += 1
 
     if (word === 'uc' && param != null) {
+      // \ucN defines how many fallback characters after \uN should be skipped.
       unicodeFallbackLength = Math.max(0, param)
       index = cursor
       continue
