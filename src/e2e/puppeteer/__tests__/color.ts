@@ -350,8 +350,8 @@ it('Set text color with multicursor selection', async () => {
 
   await paste(importText)
 
-  await clickThought('Labrador')
-  await multiselectThoughts('Golden Retriever')
+  // Ctrl+click both thoughts to add them both to the multicursor set.
+  await multiselectThoughts(['Labrador', 'Golden Retriever'])
 
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="text color swatches"] [aria-label="blue"]')
@@ -373,8 +373,8 @@ it('Set background color with multicursor selection', async () => {
 
   await paste(importText)
 
-  await clickThought('Labrador')
-  await multiselectThoughts('Golden Retriever')
+  // Ctrl+click both thoughts to add them both to the multicursor set.
+  await multiselectThoughts(['Labrador', 'Golden Retriever'])
 
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="background color swatches"] [aria-label="green"]')
