@@ -61,7 +61,7 @@ const getTextNodeLines = (node: Text): TextNodeLine[] => {
   }
 
   return entries.reduce<TextNodeLine[]>((lines, { i, size, rect }) => {
-    if (!lastRect || Math.abs(lastRect.top - rect.top) > rect.height / 2) {
+    if (!lastRect || Math.abs(lastRect.bottom - rect.bottom) >= rect.height / 2) {
       lines.push({ start: i, end: i + size, rect })
     } else {
       lines[lines.length - 1].end = i + size
