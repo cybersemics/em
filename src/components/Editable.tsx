@@ -31,6 +31,7 @@ import {
   TUTORIAL_CONTEXT1_PARENT,
   TUTORIAL_CONTEXT2_PARENT,
 } from '../constants'
+import { preventAutoscrollEnd } from '../device/preventAutoscroll'
 import * as selection from '../device/selection'
 import globals from '../globals'
 import findDescendant from '../selectors/findDescendant'
@@ -533,6 +534,7 @@ const Editable = ({
    */
   const onFocus = useCallback(
     () => {
+      preventAutoscrollEnd(contentRef.current)
       /**
        * On iOS, a long press between 415–650ms will trigger onFocus even when preventDefault is called in touchend, thus opening the virtual keyboard on top of the Command Center. There appears to be no way to prevent focus in this case. Therefore, we clear the selection and disable edit mode manually as soon as the focus triggers.
        *
