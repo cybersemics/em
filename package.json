@@ -6,7 +6,8 @@
   "license": "NoHarm-draft",
   "private": true,
   "engines": {
-    "node": ">=22.13.0"
+    "node": ">=22.13.0",
+    "npm-check-updates": ">=21.0.3"
   },
   "browserslist": {
     "production": [
