@@ -10,10 +10,7 @@ const textColor: Command = {
   description: 'Change the text color or highlight color to your liking.',
   svg: TextColorWithColorPicker,
   canExecute: state => isDocumentEditable() && !!state.cursor,
-  multicursor: {
-    disallow: true,
-    error: 'Cannot change text color with multiple thoughts.',
-  },
+  multicursor: false,
   exec: (dispatch, _) => {
     dispatch(toggleDropdown({ dropDownType: 'colorPicker' }))
   },

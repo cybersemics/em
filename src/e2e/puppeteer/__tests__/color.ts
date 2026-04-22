@@ -7,6 +7,7 @@ import extractColor from '../helpers/extractColor'
 import getBulletColor from '../helpers/getBulletColor'
 import getEditingText from '../helpers/getEditingText'
 import getSuperscriptColor from '../helpers/getSuperScriptColor'
+import multiselectThoughts from '../helpers/multiselectThoughts'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import setSelection from '../helpers/setSelection'
@@ -340,4 +341,62 @@ it('Can change the background color of a note to match its thought', async () =>
 
   const note = await getFirstNoteText()
   expect(note).toBe('<font color="#000000" style="background-color: rgb(255, 87, 61);">Note</font>')
+})
+
+it('Set text color with multicursor selection', async () => {
+  const importText = `
+  - Labrador
+  - Golden Retriever`
+
+  await paste(importText)
+
+  await clickThought('Labrador')
+  await multiselectThoughts('Golden Retriever')
+
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="text color swatches"] [aria-label="blue"]')
+
+  const labradorText = await page.evaluate(
+    () => Array.from(document.querySelectorAll('[data-editable]')).find(el => el.textContent === 'Labrador')?.innerHTML,
+  )
+  const goldenText = await page.evaluate(
+    () =>
+      Array.from(document.querySelectorAll('[data-editable]')).find(el => el.textContent === 'Golden Retriever')
+        ?.innerHTML,
+  )
+
+  const labradorColor = labradorText ? extractColor(labradorText)?.color : null
+  const goldenColor = goldenText ? extractColor(goldenText)?.color : null
+
+  expect(labradorColor).toBe(rgbaToHex(colors.light.blue))
+  expect(goldenColor).toBe(rgbaToHex(colors.light.blue))
+})
+
+it('Set background color with multicursor selection', async () => {
+  const importText = `
+  - Labrador
+  - Golden Retriever`
+
+  await paste(importText)
+
+  await clickThought('Labrador')
+  await multiselectThoughts('Golden Retriever')
+
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="background color swatches"] [aria-label="green"]')
+
+  const labradorText = await page.evaluate(
+    () => Array.from(document.querySelectorAll('[data-editable]')).find(el => el.textContent === 'Labrador')?.innerHTML,
+  )
+  const goldenText = await page.evaluate(
+    () =>
+      Array.from(document.querySelectorAll('[data-editable]')).find(el => el.textContent === 'Golden Retriever')
+        ?.innerHTML,
+  )
+
+  const labradorBgColor = labradorText ? extractColor(labradorText)?.backgroundColor : null
+  const goldenBgColor = goldenText ? extractColor(goldenText)?.backgroundColor : null
+
+  expect(labradorBgColor && rgbToHex(labradorBgColor)).toBe(rgbaToHex(colors.light.green))
+  expect(goldenBgColor && rgbToHex(goldenBgColor)).toBe(rgbaToHex(colors.light.green))
 })
