@@ -28,6 +28,14 @@ interface CaretOffsetResult {
   offset: number | null
 }
 
+/** Returns the number of UTF-16 code units for the code point at the given index (2 for surrogate pairs, 1 otherwise). */
+const codePointSize = (text: string, i: number): number =>
+  i < text.length - 1 && text.charCodeAt(i) >= 0xd800 && text.charCodeAt(i) <= 0xdbff ? 2 : 1
+
+/** Checks if the code unit at the given index is a low surrogate (second half of a surrogate pair). */
+const isLowSurrogate = (text: string, i: number): boolean =>
+  i > 0 && i < text.length && text.charCodeAt(i) >= 0xdc00 && text.charCodeAt(i) <= 0xdfff
+
 /**
  * Splits a text node into individual lines based on vertical position.
  * Returns an array of line objects with start/end character positions and bounding boxes.
@@ -39,22 +47,28 @@ const getTextNodeLines = (node: Text): TextNodeLine[] => {
   const range = document.createRange()
   let lastRect: DOMRect | null = null
 
-  return Array.from(text, (_, i) => {
-    range.setStart(node, i)
-    range.setEnd(node, i + 1)
+  const entries: { i: number; size: number; rect: DOMRect }[] = []
+  let idx = 0
+  while (idx < text.length) {
+    const size = codePointSize(text, idx)
+    range.setStart(node, idx)
+    range.setEnd(node, idx + size)
     const rect = range.getBoundingClientRect()
-    return rect.height ? { i, rect } : null
-  })
-    .filter((item): item is { i: number; rect: DOMRect } => item !== null)
-    .reduce<TextNodeLine[]>((lines, { i, rect }) => {
-      if (!lastRect || Math.abs(lastRect.top - rect.top) > rect.height / 2) {
-        lines.push({ start: i, end: i + 1, rect })
-      } else {
-        lines[lines.length - 1].end = i + 1
-      }
-      lastRect = rect
-      return lines
-    }, [])
+    if (rect.height) {
+      entries.push({ i: idx, size, rect })
+    }
+    idx += size
+  }
+
+  return entries.reduce<TextNodeLine[]>((lines, { i, size, rect }) => {
+    if (!lastRect || Math.abs(lastRect.top - rect.top) > rect.height / 2) {
+      lines.push({ start: i, end: i + size, rect })
+    } else {
+      lines[lines.length - 1].end = i + size
+    }
+    lastRect = rect
+    return lines
+  }, [])
 }
 
 /**
@@ -88,20 +102,27 @@ const findWordBoundaries = (text: string, offset: number): { start: number; end:
     return null
   }
 
-  const checkIndex = offset === text.length ? offset - 1 : offset
+  let checkIndex = offset === text.length ? offset - 1 : offset
+  // Snap to code point boundary
+  if (isLowSurrogate(text, checkIndex)) checkIndex--
 
-  if (checkIndex >= 0 && checkIndex < text.length && isWordSeparator(text[checkIndex])) {
+  const checkSize = codePointSize(text, checkIndex)
+  if (checkIndex >= 0 && checkIndex < text.length && isWordSeparator(text.slice(checkIndex, checkIndex + checkSize))) {
     return null
   }
 
   let start = checkIndex
-  while (start > 0 && !isWordSeparator(text[start - 1])) {
-    start--
+  while (start > 0) {
+    const prev = isLowSurrogate(text, start - 1) ? start - 2 : start - 1
+    if (prev < 0 || isWordSeparator(text.slice(prev, prev + codePointSize(text, prev)))) break
+    start = prev
   }
 
-  let end = checkIndex
-  while (end < text.length && !isWordSeparator(text[end])) {
-    end++
+  let end = checkIndex + checkSize
+  while (end < text.length) {
+    const size = codePointSize(text, end)
+    if (isWordSeparator(text.slice(end, end + size))) break
+    end += size
   }
 
   return { start, end }
@@ -143,22 +164,27 @@ const snapToWordBoundary = (text: string, offset: number): number => {
  * @returns The character offset where the caret should be placed.
  */
 const findOffsetAtX = (node: Text, clientX: number, lo: number, hi: number): number => {
+  const text = node.nodeValue ?? ''
   while (lo < hi) {
-    const mid = (lo + hi) >> 1
+    let mid = (lo + hi) >> 1
+    // Snap mid to a code point boundary (don't split surrogate pairs)
+    if (isLowSurrogate(text, mid)) mid--
+
+    const size = codePointSize(text, mid)
 
     const r = document.createRange()
     r.setStart(node, mid)
-    r.setEnd(node, Math.min(mid + 1, hi))
+    r.setEnd(node, Math.min(mid + size, hi))
 
     const rect = r.getBoundingClientRect()
 
     if (clientX < rect.left) {
       hi = mid
     } else if (clientX > rect.right) {
-      lo = mid + 1
+      lo = mid + size
     } else {
       const center = rect.left + rect.width / 2
-      return clientX < center ? mid : mid + 1
+      return clientX < center ? mid : Math.min(mid + size, hi)
     }
   }
 
@@ -189,15 +215,19 @@ const skipTrailingWhitespace = (text: string, offset: number, lineStart: number,
   const isWhitespace = (char: string) => /\s/.test(char)
 
   if (isWhitespace(lineText[offsetInLine])) {
-    // Find last non-whitespace character before the offset using reduceRight
-    const charsBeforeOffset = Array.from(lineText.slice(0, offsetInLine))
-    const lastNonWhitespaceIndex = charsBeforeOffset.reduceRight<number | null>(
-      (foundIndex, char, index) => foundIndex ?? (!isWhitespace(char) ? index : null),
-      null,
-    )
+    // Find last non-whitespace character before the offset
+    let lastNonWsEnd = -1
+    let i = 0
+    while (i < offsetInLine) {
+      const size = codePointSize(lineText, i)
+      if (!isWhitespace(lineText[i])) {
+        lastNonWsEnd = i + size
+      }
+      i += size
+    }
 
     // If found, place after it; otherwise place at start of line
-    return lastNonWhitespaceIndex !== null ? lineStart + lastNonWhitespaceIndex + 1 : lineStart
+    return lastNonWsEnd >= 0 ? lineStart + lastNonWsEnd : lineStart
   }
 
   return offset
@@ -225,12 +255,16 @@ const calculateOffset = (node: Text, clientX: number, clientY: number): number =
 
   // // Safari: getBoundingClientRect can be off by a few characters (±2 characters); pick the offset whose caret is closest to clientX
   if (isSafari() && offset >= lineStart && offset <= lineEnd) {
-    const lo = Math.max(lineStart, offset - 2)
+    let lo = Math.max(lineStart, offset - 2)
     const hi = Math.min(lineEnd, offset + 2)
+    // Snap lo to a code point boundary
+    if (isLowSurrogate(text, lo)) lo = Math.max(lineStart, lo - 1)
     const r = document.createRange()
     let bestOffset = offset
     let bestDist = Infinity
     for (let i = lo; i <= hi; i++) {
+      // Skip low surrogates (not valid caret positions)
+      if (isLowSurrogate(text, i)) continue
       r.setStart(node, i)
       r.collapse(true)
       const d = Math.abs(clientX - r.getBoundingClientRect().left)
@@ -277,12 +311,13 @@ const isClickWithinTextNodeCharacters = (node: Text, clientX: number, clientY: n
 
   const range = document.createRange()
 
-  for (let i = 0; i < text.length; i++) {
+  for (let i = 0; i < text.length; i += codePointSize(text, i)) {
+    const size = codePointSize(text, i)
     // Skip whitespace characters early
     if (/\s/.test(text[i])) continue
 
     range.setStart(node, i)
-    range.setEnd(node, i + 1)
+    range.setEnd(node, i + size)
 
     const rects = Array.from(range.getClientRects())
 
@@ -328,11 +363,12 @@ const getDistanceToNearestCharacter = (
   let minDist = Infinity
   let closestRect: DOMRect | null = null
 
-  for (let i = 0; i < text.length; i++) {
+  for (let i = 0; i < text.length; i += codePointSize(text, i)) {
+    const size = codePointSize(text, i)
     if (/\s/.test(text[i])) continue
 
     range.setStart(node, i)
-    range.setEnd(node, i + 1)
+    range.setEnd(node, i + size)
 
     const rects = Array.from(range.getClientRects())
 
