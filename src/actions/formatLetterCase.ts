@@ -2,11 +2,10 @@
 import LetterCaseType from '../@types/LetterCaseType'
 import Thunk from '../@types/Thunk'
 import * as selection from '../device/selection'
-import documentSort from '../selectors/documentSort'
+import hasMulticursor from '../selectors/hasMulticursor'
 import pathToThought from '../selectors/pathToThought'
 import simplifyPath from '../selectors/simplifyPath'
 import applyLetterCase from '../util/applyLetterCase'
-import hashPath from '../util/hashPath'
 import { editThoughtActionCreator as editThought } from './editThought'
 import { setCursorActionCreator as setCursor } from './setCursor'
 
@@ -18,27 +17,24 @@ export const formatLetterCaseActionCreator =
     const cursor = state.cursor
     if (!cursor) return
 
-    const multicursorPaths = documentSort(state, Object.values(state.multicursors))
-    const cursorHash = hashPath(cursor)
-    const multicursorHasCursor = multicursorPaths.some(path => hashPath(path) === cursorHash)
-    const shouldAppendCursor = multicursorPaths.length === 0 || !multicursorHasCursor
-    const paths = shouldAppendCursor ? [...multicursorPaths, cursor] : multicursorPaths
+    const paths = hasMulticursor(state) ? Object.values(state.multicursors) : [cursor]
     const offset = selection.offsetThought()
     const cursorSimplePath = simplifyPath(state, cursor)
-
-    paths.forEach(path => {
+    const editActions = paths.flatMap(path => {
       const thought = pathToThought(state, path)
-      if (!thought) return
-
-      dispatch(
-        editThought({
-          oldValue: thought.value,
-          newValue: applyLetterCase(command, thought.value),
-          path: simplifyPath(state, path),
-          force: true,
-        }),
-      )
+      return thought
+        ? [
+            editThought({
+              oldValue: thought.value,
+              newValue: applyLetterCase(command, thought.value),
+              path: simplifyPath(state, path),
+              force: true,
+            }),
+          ]
+        : []
     })
+
+    dispatch(editActions)
 
     dispatch(setCursor({ path: cursorSimplePath, offset }))
   }
