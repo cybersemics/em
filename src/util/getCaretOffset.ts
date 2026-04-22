@@ -76,7 +76,7 @@ const findClosestLine = (lines: TextNodeLine[], clientY: number): TextNodeLine =
 }
 
 /** Checks if a character is a word separator for caret snap purposes (whitespace or hyphen). */
-const isWordSeparator = (char: string): boolean => /[\s\-]/.test(char)
+const isWordSeparator = (char: string): boolean => /[\s\-\p{P}]/u.test(char)
 
 /**
  * Finds word boundaries around a given offset.
