@@ -87,6 +87,10 @@ interface ImportFilesPayload {
 // key for localStorage ResumeImport manifest
 // base for idb resume import file
 const RESUME_IMPORTS_KEY = 'resume-imports'
+const UNSUPPORTED_IMPORT_FILE_EXTENSIONS = ['png', 'jpg', 'jpeg', 'mov', 'mp4']
+
+/** Returns the lowercase file extension without the leading ".". */
+const getFileExtension = (filename: string) => filename.split('.').pop()?.toLowerCase() || ''
 
 /** Generate the IDB key for a ResumeImport file. */
 const resumeImportKey = (id: string) => `${RESUME_IMPORTS_KEY}-${id}`
@@ -218,6 +222,23 @@ export const importFilesActionCreator =
           text: () => file.text(),
         }))
       : await resumeImportsManager.getFiles()
+
+    const unsupportedFileExtensions = _.uniq(
+      resumableFiles
+        .map(file => getFileExtension(file.name))
+        .filter(extension => UNSUPPORTED_IMPORT_FILE_EXTENSIONS.includes(extension))
+        .map(extension => `.${extension}`),
+    )
+
+    if (unsupportedFileExtensions.length > 0) {
+      dispatch(
+        alertWithMinistore(
+          `Unsupported file type${unsupportedFileExtensions.length > 1 ? 's' : ''} for import: ${unsupportedFileExtensions.join(', ')}.`,
+          { alertType: AlertType.ImportFile },
+        ),
+      )
+      return
+    }
 
     // Keep track of whether the cursor has been set.
     // This is necessary because the cursor is set on the first visible thought that is imported, which may be preceded by one or more hidden meta attributes. We wait until the first visible thought, then flip didSetCursor so that the cursor is not set again.
