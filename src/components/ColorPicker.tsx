@@ -6,6 +6,7 @@ import { formatSelectionActionCreator as formatSelection } from '../actions/form
 import { isTouch } from '../browser'
 import { ColorToken } from '../colors.config'
 import themeColors from '../selectors/themeColors'
+import batchEditingStore from '../stores/batchEditing'
 import commandStateStore from '../stores/commandStateStore'
 import rgbToHex from '../util/rgbToHex'
 import Popover from './Popover'
@@ -71,8 +72,10 @@ const ColorSwatch: FC<{
       )
     })
 
+    batchEditingStore.update(true)
     // Apply background color to the selection
     dispatch(formatSelection('backColor', selected ? 'bg' : (backgroundColor ?? 'bg')))
+    batchEditingStore.update(false)
   }
 
   /** Toggles the text color onTouchEnd or onClick on desktop. */
