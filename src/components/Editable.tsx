@@ -640,16 +640,12 @@ const Editable = ({
       handleTapBehavior(e)
     }
 
-    const onFocus = () => console.log('addEventListener onFocus', Date.now())
-
     editable.addEventListener('click', onClick)
     editable.addEventListener('touchend', onTouchEnd, { passive: false })
-    editable.addEventListener('focus', onFocus)
 
     return () => {
       editable.removeEventListener('click', onClick)
       editable.removeEventListener('touchend', onTouchEnd)
-      editable.removeEventListener('focus', onFocus)
     }
   }, [contentRef, editingOrOnCursor, hasMulticursor, handleTapBehavior])
 

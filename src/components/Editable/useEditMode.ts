@@ -66,7 +66,6 @@ const useEditMode = ({
         if (style?.visibility === 'hidden') {
           selection.clear()
         } else {
-          console.log('setSelectionToCursorOffset', Date.now())
           selection.set(contentRef.current, { offset: cursorOffset ?? 0 })
         }
       }
