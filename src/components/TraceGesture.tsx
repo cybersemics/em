@@ -23,6 +23,7 @@ interface SignaturePadOverride {
   _handleTouchStart: (e: TouchEvent) => void
   _handleTouchMove: (e: TouchEvent) => void
   _handleTouchEnd: (e: TouchEvent) => void
+  _handlePointerMove: (e: PointerEvent) => void
   _ctx: CanvasRenderingContext2D
   addEventListener: (event: SignaturePadEventType, listener: (e: Event) => void) => void
   canvas: HTMLCanvasElement
@@ -30,7 +31,7 @@ interface SignaturePadOverride {
   removeEventListener: (event: SignaturePadEventType, listener: (e: Event) => void) => void
 }
 
-/** A hook that detects when there is a cancelled gesture in progress. Handles GestureHint and: CommandPaletteGesture which have different ways of showing a cancelled gesture. */
+/** A hook that detects when there is a cancelled gesture in progress. Handles GestureHint and: DesktopCommandUniverseGesture which have different ways of showing a cancelled gesture. */
 const useGestureCancelled = () => {
   const showGestureMenu = useSelector(state => state.showGestureMenu)
 
@@ -80,6 +81,29 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
     signaturePad.canvas.width = innerWidth
     signaturePad.canvas.height = innerHeight
   }, [innerHeight, innerWidth])
+
+  /** Disable signaturePad’s preventDefault on move events since newer version of signaturePad breaks iOS native text-selection drag feature. See issue: https://github.com/cybersemics/em/issues/3483. */
+  useEffect(() => {
+    if (!signaturePadRef.current) return
+
+    const signaturePad = signaturePadRef.current['signaturePad'] as SignaturePadOverride
+
+    /** Neutralize the move handler to prevent the default behavior. */
+    const neutralizeMoveHandler =
+      <E extends Event>(handler: (e: E) => void) =>
+      (e: E) => {
+        const originalPreventDefault = e.preventDefault
+        e.preventDefault = noop
+        try {
+          handler(e)
+        } finally {
+          e.preventDefault = originalPreventDefault
+        }
+      }
+
+    signaturePad._handleTouchMove = neutralizeMoveHandler(signaturePad._handleTouchMove)
+    signaturePad._handlePointerMove = neutralizeMoveHandler(signaturePad._handlePointerMove)
+  }, [])
 
   useEffect(() => {
     if (!signaturePadRef.current) return
@@ -187,9 +211,9 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
 /** Renders the TraceGesture component as long as it is not disabled in the settings. */
 const TraceGestureWrapper = (props: TraceGestureProps) => {
   const showModal = useSelector(state => state.showModal)
-  const showGestureCheatsheet = useSelector(state => state.showGestureCheatsheet)
+  const showMobileCommandUniverse = useSelector(state => state.showMobileCommandUniverse)
   const disableGestureTracing = useSelector(getUserSetting(Settings.disableGestureTracing))
-  return <>{!disableGestureTracing && !showModal && !showGestureCheatsheet && <TraceGesture {...props} />}</>
+  return <>{!disableGestureTracing && !showModal && !showMobileCommandUniverse && <TraceGesture {...props} />}</>
 }
 
 export default TraceGestureWrapper

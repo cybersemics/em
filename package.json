@@ -1,12 +1,13 @@
 {
   "name": "em",
-  "version": "346.0.0",
+  "version": "347.0.0",
   "author": "Raine Revere <raine@cybersemics.org>",
   "description": "A beautiful, minimalistic note-taking app for personal sensemaking.",
   "license": "NoHarm-draft",
   "private": true,
   "engines": {
-    "node": ">=22.13.0"
+    "node": ">=22.13.0",
+    "npm-check-updates": ">=21.0.3"
   },
   "browserslist": {
     "production": [
@@ -134,7 +135,7 @@
     "react-gravatar": "^2.6.3",
     "react-native-web": "^0.21.2",
     "react-redux": "^9.2.0",
-    "react-signature-pad-wrapper": "^4.2.0",
+    "react-signature-pad-wrapper": "^4.3.2",
     "react-transition-group": "^4.4.5",
     "redux": "^5.0.1",
     "redux-thunk": "^3.1.0",
@@ -163,6 +164,7 @@
     "@babel/core": "^7.29.0",
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@capacitor/cli": "^8.3.0",
+    "@eslint-community/eslint-plugin-eslint-comments": "^4.7.1",
     "@pandacss/dev": "^1.9.1",
     "@pandacss/eslint-plugin": "^0.3.2",
     "@sinonjs/fake-timers": "^15.3.2",

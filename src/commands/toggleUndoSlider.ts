@@ -8,7 +8,7 @@ const toggleUndoSlider: Command = {
   description: 'Toggle a handy slider that lets you rewind edits.',
   multicursor: false,
   hideFromHelp: true,
-  hideFromCommandPalette: true,
+  hideFromDesktopCommandUniverse: true,
   svg: Icon,
   exec: dispatch => {
     dispatch(toggleDropdown({ dropDownType: 'undoSlider' }))

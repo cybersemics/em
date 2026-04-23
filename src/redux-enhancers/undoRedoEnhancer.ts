@@ -59,7 +59,7 @@ function getEditThoughtDirection(action: UnknownAction): EditThoughtDirection {
 }
 
 /** Properties that are ignored when generating state patches. */
-const statePropertiesToOmit: (keyof State)[] = ['alert', 'cursorCleared', 'pushQueue']
+const statePropertiesToOmit: (keyof State)[] = ['alert', 'cursorCleared', 'editableNonce', 'pushQueue']
 
 /**
  * Manually recreate the pushQueue for thought and thought index updates from patches.
@@ -245,9 +245,10 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
               : null
 
         // do not omit pushQueue because that includes updates added by updateThoughts
+        // do not omit editableNonce because editableRender bumps it to force ContentEditable to re-render after undo/redo
         const omitted = _.pick(
           state,
-          statePropertiesToOmit.filter(k => k !== 'pushQueue'),
+          statePropertiesToOmit.filter(k => k !== 'pushQueue' && k !== 'editableNonce'),
         )
 
         return { ...undoOrRedoState!, ...omitted }

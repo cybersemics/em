@@ -48,6 +48,13 @@ it('Undo Select All + Categorize chained command in one step', async () => {
   // Select All + Categorize
   await gesture('ldr' + 'lu')
 
+  // make sure multicursor is disabled after chained command
+  const highlightedCountAfterChain = await page.evaluate(
+    () => document.querySelectorAll('[data-highlighted=true]').length,
+  )
+
+  expect(highlightedCountAfterChain).toBe(0)
+
   const exported1 = await exportThoughts()
   expect(exported1).toBe(`
 - 
