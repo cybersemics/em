@@ -5,7 +5,7 @@ import Path from '../../@types/Path'
 import { isMac, isSafari, isTouch } from '../../browser'
 import { LongPressState } from '../../constants'
 import asyncFocus from '../../device/asyncFocus'
-import preventAutoscroll from '../../device/preventAutoscroll'
+import preventAutoscroll, { preventAutoscrollEnd } from '../../device/preventAutoscroll'
 import * as selection from '../../device/selection'
 import usePrevious from '../../hooks/usePrevious'
 import hasMulticursor from '../../selectors/hasMulticursor'
@@ -66,6 +66,7 @@ const useEditMode = ({
         if (style?.visibility === 'hidden') {
           selection.clear()
         } else {
+          console.log('setSelectionToCursorOffset', Date.now())
           selection.set(contentRef.current, { offset: cursorOffset ?? 0 })
         }
       }
@@ -200,10 +201,15 @@ const useEditMode = ({
       }
     }
 
+    /** Prevents the thought from autoscrolling to the bottom of the screen when the keyboard is open. */
+    const onFocus = () => queueMicrotask(() => preventAutoscrollEnd(editable))
+
     editable.addEventListener('mousedown', onMouseDown)
+    editable.addEventListener('focus', onFocus)
 
     return () => {
       editable.removeEventListener('mousedown', onMouseDown)
+      editable.removeEventListener('focus', onFocus)
     }
   }, [contentRef, editingOrOnCursor, isMulticursor, fontSize, onCaretOffset, allowDefaultSelection])
 
