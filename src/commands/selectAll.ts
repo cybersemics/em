@@ -50,7 +50,7 @@ const selectAllCommand: Command = {
         : addAllMulticursor({
             // Hacky magic value, but it's the easiest way to tell the command that this is a chained gesture so that it can adjust the undo behavior.
             // Select All and the chained command need to be undone together, and this is not a property of the Command object but of the way it is invoked, so is somewhat appropriately stored on the event object, albeit ad hoc.
-            mergeUndo: e.type === 'chainedGesture',
+            mergeNext: e.type === 'chainedGesture',
           }),
     )
   },

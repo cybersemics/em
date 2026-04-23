@@ -287,7 +287,8 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         shouldMergeWithLastEditThought ||
         actionType === 'closeAlert' ||
         state.isMulticursorExecuting ||
-        (isEditThoughtAction(action) && action.mergeWithLast)
+        (lastAction as UnknownAction)?.mergeNext ||
+        (isEditThoughtAction(action) && action.mergePrev)
       ) {
         lastAction = action
         const lastUndoPatch = nthLast(state.undoPatches, 1)

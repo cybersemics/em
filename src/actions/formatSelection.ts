@@ -121,7 +121,7 @@ export const formatSelectionActionCreator =
                   path: simplifyPath(state, path),
                   // force the ContentEditable to update
                   force: true,
-                  mergeWithLast: true,
+                  mergePrev: true,
                 }),
           )
       })
