@@ -1,14 +1,12 @@
-import { CSSProperties, ReactNode, useLayoutEffect, useRef, useState } from 'react'
+import { CSSProperties, ReactNode, useLayoutEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import isCursorGreaterThanParent from '../selectors/isCursorGreaterThanParent'
-import debugFlags from '../util/debugFlags'
 import equalPath from '../util/equalPath'
 import hashPath from '../util/hashPath'
 import parentOf from '../util/parentOf'
-import { thoughtDebugLabel } from '../util/thoughtLayoutDebug'
 
 type ContextAnimation = 'disappearingLowerLeft' | 'disappearingUpperRight' | null
 
@@ -78,37 +76,6 @@ const TreeNodePositioner = ({
     setY(_y)
   }, [_y])
 
-  /** Last laid-out `y` for y-position debug; null until first layout pass. */
-  const yDebugLastRef = useRef<number | null>(null)
-  /** Positioned wrapper (absolute `top`/`left`); used for viewport rect logging. */
-  const layoutOuterRef = useRef<HTMLDivElement>(null)
-
-  useLayoutEffect(() => {
-    if (!debugFlags.yPosition || cursorOverlay) return
-
-    const label = thoughtDebugLabel(thoughtId)
-
-    if (yDebugLastRef.current === null) {
-      yDebugLastRef.current = _y
-      return
-    }
-
-    const delta = _y - yDebugLastRef.current
-    if (Math.abs(delta) < 0.01) return
-
-    // Skip logging one large jump when layout first gets a real `y` (e.g. 0 → stacked position). Manual check targets small drift after that.
-    if (Math.abs(delta) > 25) {
-      yDebugLastRef.current = _y
-      return
-    }
-
-    // Smaller y = higher on screen → "up"
-    const direction = delta < 0 ? 'up' : 'down'
-    console.info(`[y] ${label}  shifted ${direction} ${Math.abs(delta).toFixed(1)}px after first layout`)
-
-    yDebugLastRef.current = _y
-  }, [_y, thoughtId, cursorOverlay])
-
   const outerDivStyle: CSSProperties = {
     // Cannot use transform because it creates a new stacking context, which causes later siblings' DropChild to be covered by previous siblings'.
     // Unfortunately left causes layout recalculation, so we may want to hoist DropChild into a parent and manually control the position.
@@ -132,7 +99,6 @@ const TreeNodePositioner = ({
 
   return (
     <div
-      ref={layoutOuterRef}
       // The key must be unique to the thought, both in normal view and context view, in case they are both on screen.
       // It should not be based on editable values such as Path, value, rank, etc, otherwise moving the thought would make it appear to be a completely new thought to React.
       aria-label={cursorOverlay ? 'cursor-overlay-tree-node' : 'tree-node'}

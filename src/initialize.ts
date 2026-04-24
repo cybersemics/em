@@ -38,7 +38,6 @@ import offlineStatusStore, { init as initOfflineStatusStore } from './stores/off
 import syncStatusStore from './stores/syncStatus'
 import importToContext from './test-helpers/importToContext'
 import prettyPath from './test-helpers/prettyPath'
-import debugFlags from './util/debugFlags'
 import hashThought from './util/hashThought'
 import initEvents from './util/initEvents'
 import isRoot from './util/isRoot'
@@ -215,7 +214,6 @@ const testHelpers = {
 // add useful functions to window.em for debugging
 const windowEm = {
   contextToThoughtId: withState((state: State, thoughts: Context) => contextToThoughtId(state, thoughts)),
-  debugFlags,
   exportContext: (contextOrThoughtId: Context | ThoughtId, format?: MimeType) =>
     exportContext(store.getState(), contextOrThoughtId, format),
   getContexts: withState(getContexts),

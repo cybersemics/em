@@ -17,10 +17,8 @@ import nextSibling from '../selectors/nextSibling'
 import reactMinistore from '../stores/react-ministore'
 import scrollTopStore from '../stores/scrollTop'
 import viewportStore from '../stores/viewport'
-import debugFlags from '../util/debugFlags'
 import head from '../util/head'
 import parentOf from '../util/parentOf'
-import { thoughtDebugLabel } from '../util/thoughtLayoutDebug'
 import BulletCursorOverlay from './BulletCursorOverlay'
 import HoverArrow from './HoverArrow'
 import TreeNode from './TreeNode'
@@ -138,9 +136,6 @@ const LayoutTree = () => {
   const fontSize = useSelector(state => state.fontSize)
   const dragInProgress = useSelector(state => state.longPress === LongPressState.DragInProgress)
   const ref = useRef<HTMLDivElement>(null)
-  /** Last render's y-position by thought key for manual layout verification. */
-  const yPositionLastByKeyRef = useRef<Record<string, number>>({})
-  const yPositionRenderCountRef = useRef(0)
   const indentDepth = useSelector(state =>
     state.cursor && state.cursor.length > 2
       ? // when the cursor is on a leaf, the indention level should not change
@@ -247,38 +242,6 @@ const LayoutTree = () => {
       sizes,
     },
   )
-
-  useLayoutEffect(() => {
-    if (!debugFlags.thoughtLayoutVerbose) return
-
-    yPositionRenderCountRef.current += 1
-    const renderNumber = yPositionRenderCountRef.current
-    const yPositionNextByKey: Record<string, number> = {}
-
-    for (const thought of treeThoughtsPositioned) {
-      const label = thoughtDebugLabel(thought.thoughtId)
-      const prevY = yPositionLastByKeyRef.current[thought.key]
-      const nextY = thought.y
-      yPositionNextByKey[thought.key] = nextY
-
-      if (prevY == null) {
-        console.info(
-          `[LayoutTree y-compare] #${renderNumber} ${label} first-seen y=${nextY.toFixed(2)} depth=${thought.depth} cliff=${thought.cliff} height=${thought.height.toFixed(2)}`,
-        )
-        continue
-      }
-
-      const delta = nextY - prevY
-      if (Math.abs(delta) < 0.01) continue
-
-      const direction = delta < 0 ? 'up' : 'down'
-      console.info(
-        `[LayoutTree y-compare] #${renderNumber} ${label} y ${prevY.toFixed(2)} -> ${nextY.toFixed(2)} (delta ${Math.abs(delta).toFixed(2)}px ${direction}) depth=${thought.depth} cliff=${thought.cliff} singleLineWithCliff=${thought.singleLineHeightWithCliff.toFixed(2)} height=${thought.height.toFixed(2)} autofocus=${thought.autofocus}`,
-      )
-    }
-
-    yPositionLastByKeyRef.current = yPositionNextByKey
-  }, [treeThoughtsPositioned])
 
   // compare between state.cursor and the position of the thought
   const cursorThoughtPositionedIndex = treeThoughtsPositioned.findIndex(thought => thought.isCursor)
