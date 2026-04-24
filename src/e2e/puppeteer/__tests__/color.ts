@@ -255,7 +255,7 @@ it('Clicking on a formatting tag does not close color dropdown', async () => {
   expect(textColorSwatch).toBeTruthy()
 })
 
-it('Set the background color of the note', async () => {
+it('Toggle the background color of the note', async () => {
   await paste(`
     - a
       - =note
@@ -266,10 +266,13 @@ it('Set the background color of the note', async () => {
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="background color swatches"] [aria-label="green"]')
 
-  const result = await getFirstNoteText()
-  expect(result).toBe('<font color="#000000" style="background-color: rgb(0, 214, 136);">Note</font>')
+  const intermediate = await getFirstNoteText()
+  expect(intermediate).toBe('<font color="#000000" style="background-color: rgb(0, 214, 136);">Note</font>')
 
   await click('[aria-label="background color swatches"] [aria-label="green"]')
+
+  const result = await getFirstNoteText()
+  expect(result).toBe('Note')
 })
 
 it('Toggling note background color on and off should remove formatting tag', async () => {
