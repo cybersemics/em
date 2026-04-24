@@ -116,12 +116,7 @@ const TreeNode = ({
     return animation
   })
 
-  const onResize: OnResize = useCallback(
-    props => {
-      setSize({ ...props, cliff })
-    },
-    [cliff, setSize],
-  )
+  const onResize: OnResize = useCallback(props => setSize({ ...props, cliff }), [cliff, setSize])
 
   // List Virtualization
   // Do not render thoughts that are below the viewport.
@@ -143,9 +138,7 @@ const TreeNode = ({
       type={type}
       nodeRef={fadeThoughtRef}
       in={transitionGroupsProps.in}
-      onEnter={() => {
-        setIsMounted(true)
-      }}
+      onEnter={() => setIsMounted(true)}
       onExit={() => setIsMounted(false)}
       unmountOnExit
     >
