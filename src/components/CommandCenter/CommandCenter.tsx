@@ -152,7 +152,7 @@ const CommandCenter = () => {
           onClose={onClose}
           detent='content'
           unstyled
-          tweenConfig={{ duration: durations.get('medium') / 1000, ease: 'easeOut' }}
+          tweenConfig={{ duration: durations.get('commandCenterDrawer') / 1000, ease: 'easeOut' }}
           style={{
             /** Override default Sheet zIndex. */
             zIndex: token('zIndex.commandCenter'),

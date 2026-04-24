@@ -37,6 +37,8 @@ const durationsConfig = {
   /* Duration for context view disappearing text animations */
   disappearingUpperRight: 500,
   disappearingLowerLeft: 500,
+  /* Duration for command center sheet animation. Lower than medium to compensate for Framer Motion's easeOut lingering more than MUI's default cubic-bezier curve. */
+  commandCenterDrawer: 300,
   activeButtonGlow: 400,
 } as const
 
