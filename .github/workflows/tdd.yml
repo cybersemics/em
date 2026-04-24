@@ -30,10 +30,15 @@ jobs:
       has_unit: ${{ steps.classify.outputs.has_unit }}
       has_puppeteer: ${{ steps.classify.outputs.has_puppeteer }}
       has_ios: ${{ steps.classify.outputs.has_ios }}
+      has_skipped_unit: ${{ steps.classify.outputs.has_skipped_unit }}
+      has_skipped_puppeteer: ${{ steps.classify.outputs.has_skipped_puppeteer }}
       unit_files: ${{ steps.classify.outputs.unit_files }}
       puppeteer_files: ${{ steps.classify.outputs.puppeteer_files }}
       ios_files: ${{ steps.classify.outputs.ios_files }}
+      skipped_unit_files: ${{ steps.classify.outputs.skipped_unit_files }}
+      skipped_puppeteer_files: ${{ steps.classify.outputs.skipped_puppeteer_files }}
       merge_base: ${{ steps.classify.outputs.merge_base }}
+      tdd_commit: ${{ steps.tdd_commit.outputs.tdd_commit }}
       skip: ${{ steps.skip.outputs.skip }}
       skip_reason: ${{ steps.skip.outputs.reason }}
       skip_unit: ${{ steps.skip.outputs.skip_unit }}
@@ -91,6 +96,23 @@ jobs:
             echo "$result" | sed '/^$/d'
           }
 
+          # Filter a newline-separated list of test files to those where the diff adds
+          # new skipped test definitions (it.skip/test.skip). These need a special TDD
+          # flow that unskips them on base before execution.
+          # Usage: filter_added_skipped_tests "$FILES" "$MERGE_BASE" "$HEAD_SHA"
+          filter_added_skipped_tests() {
+            local files="$1" merge_base="$2" head_sha="$3" result=""
+            for f in $files; do
+              if git diff "$merge_base" "$head_sha" -- "$f" | grep -qE '^\+[ \t]*(it|test)\.skip\b'; then
+                result="$result"$'\n'"$f"
+              fi
+            done
+            echo "$result" | sed '/^$/d'
+          }
+
+          UNIT_SKIPPED_FILES=$(filter_added_skipped_tests "$UNIT_FILES" "$MERGE_BASE" "$HEAD_SHA")
+          PUPPETEER_SKIPPED_FILES=$(filter_added_skipped_tests "$PUPPETEER_FILES" "$MERGE_BASE" "$HEAD_SHA")
+
           UNIT_FILES=$(filter_new_tests "$UNIT_FILES" "$MERGE_BASE" "$HEAD_SHA")
           PUPPETEER_FILES=$(filter_new_tests "$PUPPETEER_FILES" "$MERGE_BASE" "$HEAD_SHA")
           IOS_FILES=$(filter_new_tests "$IOS_FILES" "$MERGE_BASE" "$HEAD_SHA")
@@ -117,6 +139,12 @@ jobs:
           echo "=== iOS test files ==="
           echo "$IOS_FILES"
           echo ""
+          echo "=== Unit files with added skipped tests ==="
+          echo "$UNIT_SKIPPED_FILES"
+          echo ""
+          echo "=== Puppeteer files with added skipped tests ==="
+          echo "$PUPPETEER_SKIPPED_FILES"
+          echo ""
           echo "=== Non-test application files ==="
           echo "$NON_TEST_FILES"
 
@@ -124,20 +152,28 @@ jobs:
           HAS_UNIT="false"
           HAS_PUPPETEER="false"
           HAS_IOS="false"
+          HAS_SKIPPED_UNIT="false"
+          HAS_SKIPPED_PUPPETEER="false"
 
           if [ -n "$UNIT_FILES" ]; then HAS_UNIT="true"; fi
           if [ -n "$PUPPETEER_FILES" ]; then HAS_PUPPETEER="true"; fi
           if [ -n "$IOS_FILES" ]; then HAS_IOS="true"; fi
+          if [ -n "$UNIT_SKIPPED_FILES" ]; then HAS_SKIPPED_UNIT="true"; fi
+          if [ -n "$PUPPETEER_SKIPPED_FILES" ]; then HAS_SKIPPED_PUPPETEER="true"; fi
 
           echo "has_unit=$HAS_UNIT" >> "$GITHUB_OUTPUT"
           echo "has_puppeteer=$HAS_PUPPETEER" >> "$GITHUB_OUTPUT"
           echo "has_ios=$HAS_IOS" >> "$GITHUB_OUTPUT"
+          echo "has_skipped_unit=$HAS_SKIPPED_UNIT" >> "$GITHUB_OUTPUT"
+          echo "has_skipped_puppeteer=$HAS_SKIPPED_PUPPETEER" >> "$GITHUB_OUTPUT"
 
           # Store file lists (newline-separated) for downstream jobs
           # Use base64 to safely pass through GITHUB_OUTPUT
           echo "unit_files=$(echo "$UNIT_FILES" | base64 -w 0)" >> "$GITHUB_OUTPUT"
           echo "puppeteer_files=$(echo "$PUPPETEER_FILES" | base64 -w 0)" >> "$GITHUB_OUTPUT"
           echo "ios_files=$(echo "$IOS_FILES" | base64 -w 0)" >> "$GITHUB_OUTPUT"
+          echo "skipped_unit_files=$(echo "$UNIT_SKIPPED_FILES" | base64 -w 0)" >> "$GITHUB_OUTPUT"
+          echo "skipped_puppeteer_files=$(echo "$PUPPETEER_SKIPPED_FILES" | base64 -w 0)" >> "$GITHUB_OUTPUT"
           echo "merge_base=$MERGE_BASE" >> "$GITHUB_OUTPUT"
 
           # Store whether any non-test app code changed
@@ -150,7 +186,33 @@ jobs:
           echo "Has unit tests: $HAS_UNIT"
           echo "Has puppeteer tests: $HAS_PUPPETEER"
           echo "Has iOS tests: $HAS_IOS"
+          echo "Has unit skipped tests: $HAS_SKIPPED_UNIT"
+          echo "Has puppeteer skipped tests: $HAS_SKIPPED_PUPPETEER"
           echo "Has app code changes: $HAS_APP_CHANGES"
+
+      - name: Parse /tdd command from PR description
+        id: tdd_commit
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+
+          # Look for /tdd <commit> at the beginning of a line (7–40 lowercase hex chars)
+          TDD_COMMIT=$(printf '%s' "$PR_BODY" | grep -oP '^/tdd\s+\K[a-f0-9]{7,40}' | head -1 || true)
+
+          if [ -n "$TDD_COMMIT" ]; then
+            # Validate the commit exists in the repository
+            if git cat-file -t "$TDD_COMMIT" >/dev/null 2>&1; then
+              echo "Found /tdd command — using commit: $TDD_COMMIT"
+              echo "tdd_commit=$TDD_COMMIT" >> "$GITHUB_OUTPUT"
+            else
+              echo "::warning::/tdd commit '$TDD_COMMIT' not found in repository — falling back to base SHA: $BASE_SHA"
+              echo "tdd_commit=$BASE_SHA" >> "$GITHUB_OUTPUT"
+            fi
+          else
+            echo "No /tdd command found — using base SHA: $BASE_SHA"
+            echo "tdd_commit=$BASE_SHA" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Check skip conditions
         id: skip
@@ -159,6 +221,8 @@ jobs:
           HAS_PUPPETEER="${{ steps.classify.outputs.has_puppeteer }}"
           HAS_IOS="${{ steps.classify.outputs.has_ios }}"
           HAS_APP_CHANGES="${{ steps.classify.outputs.has_app_changes }}"
+          HAS_SKIPPED_UNIT="${{ steps.classify.outputs.has_skipped_unit }}"
+          HAS_SKIPPED_PUPPETEER="${{ steps.classify.outputs.has_skipped_puppeteer }}"
           BASE_SHA="${{ github.event.pull_request.base.sha }}"
           HEAD_SHA="${{ github.event.pull_request.head.sha }}"
 
@@ -191,7 +255,12 @@ jobs:
           fi
 
           # 3. Only test files changed, no application code changed (coverage-only)
-          if [ "$SKIP" = "false" ] && [ "$HAS_APP_CHANGES" = "false" ]; then
+          # Keep running when skipped tests were added so they can be unskipped and
+          # validated against base.
+          if [ "$SKIP" = "false" ] \
+            && [ "$HAS_APP_CHANGES" = "false" ] \
+            && [ "$HAS_SKIPPED_UNIT" = "false" ] \
+            && [ "$HAS_SKIPPED_PUPPETEER" = "false" ]; then
             SKIP="true"
             REASON="Only test files changed (no application code) — likely coverage-only"
           fi
@@ -220,7 +289,7 @@ jobs:
       - name: Clone repository
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.event.pull_request.base.sha }}
+          ref: ${{ needs.detect.outputs.tdd_commit }}
           fetch-depth: 999
 
       - name: Fetch PR head
@@ -266,6 +335,15 @@ jobs:
       - name: Enable Corepack
         if: steps.patch.outputs.empty != 'true'
         run: corepack enable
+
+      - name: Unskip added unit tests before running on base
+        if: steps.patch.outputs.empty != 'true' && needs.detect.outputs.has_skipped_unit == 'true'
+        uses: ./.github/actions/unskip-added-tests
+        with:
+          merge-base: ${{ needs.detect.outputs.merge_base }}
+          head-sha: ${{ github.event.pull_request.head.sha }}
+          skipped-files: ${{ needs.detect.outputs.skipped_unit_files }}
+          no-files-message: No unit skipped test files to unskip.
 
       - name: Set Node.js version
         if: steps.patch.outputs.empty != 'true'
@@ -326,7 +404,7 @@ jobs:
       - name: Clone repository
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.event.pull_request.base.sha }}
+          ref: ${{ needs.detect.outputs.tdd_commit }}
           fetch-depth: 999
 
       - name: Fetch PR head
@@ -372,6 +450,15 @@ jobs:
       - name: Enable Corepack
         if: steps.patch.outputs.empty != 'true'
         run: corepack enable
+
+      - name: Unskip added puppeteer tests before running on base
+        if: steps.patch.outputs.empty != 'true' && needs.detect.outputs.has_skipped_puppeteer == 'true'
+        uses: ./.github/actions/unskip-added-tests
+        with:
+          merge-base: ${{ needs.detect.outputs.merge_base }}
+          head-sha: ${{ github.event.pull_request.head.sha }}
+          skipped-files: ${{ needs.detect.outputs.skipped_puppeteer_files }}
+          no-files-message: No puppeteer skipped test files to unskip.
 
       - name: Set Node.js version
         if: steps.patch.outputs.empty != 'true'

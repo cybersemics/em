@@ -14,7 +14,7 @@ const toggleSortCommand: Command = {
   description: 'Open a sort picker to pick the sort option and sort by option.',
   multicursor: false,
   hideFromHelp: true,
-  hideFromCommandPalette: true,
+  hideFromDesktopCommandUniverse: true,
   svg: Icon,
   exec: (dispatch, getState, e, { type }) => {
     const state = getState()

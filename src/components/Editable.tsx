@@ -253,7 +253,12 @@ const Editable = ({
    */
   const thoughtChangeHandler = (
     newValue: string,
-    { force, rank, simplePath }: { force?: boolean; rank: number; simplePath: SimplePath },
+    {
+      force,
+      rank,
+      simplePath,
+      cursorOffset,
+    }: { force?: boolean; rank: number; simplePath: SimplePath; cursorOffset?: number },
   ) => {
     // Note: Don't update innerHTML of contentEditable here. Since thoughtChangeHandler may be debounced, it may cause contentEditable to be out of sync.
     invalidStateError(null)
@@ -279,7 +284,7 @@ const Editable = ({
         // Set cursorOffset so that it is included in the undo patch.
         // Otherwise, the selection offset will not be restored correctly on undo/redo.
         // This will have no effect on useEditMode, which does not subscribe to state.cursorOffset reactively.
-        cursorOffset: selection.offsetThought() ?? undefined,
+        cursorOffset: cursorOffset ?? selection.offsetThought() ?? undefined,
         force,
       }),
     )
@@ -375,7 +380,11 @@ const Editable = ({
         // That style should be re-applied once they type something. (#3673)
 
         const wrappedValue = state.cursorCleared ? applyOuterTag(e.target.value, oldValue) : e.target.value
-        const newValue = stripEmptyFormattingTags(addEmojiSpace(trimHtml(wrappedValue)))
+        const trimmedWrappedValue = trimHtml(wrappedValue)
+        const valueWithEmojiSpace = addEmojiSpace(trimmedWrappedValue)
+        const newValue = stripEmptyFormattingTags(valueWithEmojiSpace)
+        const emojiSpaceAdded = valueWithEmojiSpace !== trimmedWrappedValue
+        const emojiSpaceInsertionIndex = emojiSpaceAdded ? valueWithEmojiSpace.indexOf(' ') : null
 
         /* The realtime editingValue must always be updated (and not short-circuited) since oldValueRef is throttled. Otherwise, editingValueStore becomes stale and heights are not recalculated in VirtualThought.
 
@@ -389,6 +398,18 @@ const Editable = ({
           6. editingValueStore must be updated, otherwise it will retain the stale value aa
       */
         editingValueStore.update(newValue)
+
+        const cursorOffset = selection.offsetThought()
+        // If addEmojiSpace inserts a space, keep the caret in the same visual position after re-render.
+        let cursorOffsetWithEmojiSpace = cursorOffset === null ? undefined : cursorOffset
+        if (
+          emojiSpaceInsertionIndex != null &&
+          emojiSpaceInsertionIndex >= 0 &&
+          cursorOffset != null &&
+          cursorOffset >= emojiSpaceInsertionIndex
+        ) {
+          cursorOffsetWithEmojiSpace = cursorOffset + 1
+        }
 
         // TODO: Disable keypress
         // e.preventDefault() does not work
@@ -447,6 +468,7 @@ const Editable = ({
         // run it immediately is there is a style wrapper that needs to be applied to the editable after a clearThought action (#3673)
         if (
           wrappedValue !== e.target.value ||
+          emojiSpaceAdded ||
           transient ||
           contextLengthChange ||
           urlChange ||
@@ -457,7 +479,12 @@ const Editable = ({
           throttledChangeRef.current.flush()
           // if a style needs to be re-applied with cursorClearedWrapper, the editable needs to re-render immediately to prevent
           // a flash of unstyled content
-          thoughtChangeHandler(newValue, { force: wrappedValue !== e.target.value, rank, simplePath })
+          thoughtChangeHandler(newValue, {
+            force: wrappedValue !== e.target.value || emojiSpaceAdded,
+            rank,
+            simplePath,
+            cursorOffset: cursorOffsetWithEmojiSpace,
+          })
         } else {
           throttledChangeRef.current(newValue, { rank, simplePath })
         }
