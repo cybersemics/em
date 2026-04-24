@@ -1,7 +1,6 @@
 import React from 'react'
 import { css, cx } from '../../styled-system/css'
-import { anchorButtonRecipe } from '../../styled-system/recipes'
-import type { AnchorButtonRecipeVariantProps } from '../../styled-system/recipes/anchor-button-recipe'
+import { AnchorButtonRecipeVariantProps, anchorButtonRecipe } from '../../styled-system/recipes'
 import fastClick from '../util/fastClick'
 import haptics from '../util/haptics'
 import Loader from './Loader'
