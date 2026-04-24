@@ -1,11 +1,11 @@
 import { PropsWithChildren, useRef } from 'react'
 import { CSSTransition } from 'react-transition-group'
 import { TransitionProps } from 'react-transition-group/Transition'
-import type { ConditionalValue } from '../../styled-system/types/conditions'
 import { fadeTransitionRecipe } from '../../styled-system/recipes'
 import type { FadeTransitionRecipeVariantProps } from '../../styled-system/recipes/fade-transition-recipe'
-import durations from '../util/durations'
+import type { ConditionalValue } from '../../styled-system/types/conditions'
 import durationsConfig from '../durations.config'
+import durations from '../util/durations'
 
 /**
  * Base string union for the fade `type` variant (unwraps Panda `ConditionalValue` / optional recipe props).
