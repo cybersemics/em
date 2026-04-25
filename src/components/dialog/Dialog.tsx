@@ -87,7 +87,7 @@ const Rainbow: FC<{ clipped?: boolean }> = ({ clipped }) => (
       backgroundSize: 'cover',
       backgroundRepeat: 'no-repeat',
       backgroundPosition: 'bottom center',
-      opacity: clipped ? 0.1 : 0.05,
+      opacity: clipped ? 0.08 : 0.05,
       mixBlendMode: 'screen',
       pointerEvents: 'none',
     })}
