@@ -188,7 +188,7 @@ const CommandItem: FC<{
         className={css(
           { boxSizing: 'border-box' },
           viewType === 'grid'
-            ? { minWidth: { base: '8.889rem', _mobile: 'auto' }, width: '100%' }
+            ? { minWidth: 0, width: '100%' }
             : {
                 display: 'flex',
                 justifyContent: 'center',
@@ -251,7 +251,8 @@ const CommandItem: FC<{
           className={css({
             minWidth: '4em',
             lineHeight: '1em',
-            whiteSpace: 'nowrap',
+            whiteSpace: viewType === 'grid' ? 'normal' : 'nowrap',
+            overflowWrap: viewType === 'grid' ? 'break-word' : undefined,
             fontSize: viewType === 'grid' ? '0.8rem' : '0.9em',
             color: disabled
               ? 'gray45'
