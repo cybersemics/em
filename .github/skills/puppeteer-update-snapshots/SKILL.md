@@ -1,6 +1,7 @@
 ---
 name: puppeteer-update-snapshots
-description: Regenerate Puppeteer image snapshots using Docker. Use this skill when Puppeteer tests fail due to missing or outdated snapshots (e.g. "New snapshot was not written" errors or image mismatch failures after visual changes).
+description: Regenerate Puppeteer image snapshots using Docker. Use this skill when Puppeteer tests fail due to missing or outdated snapshots. Only use if the UI change was intentional, matches the user’s request or if you otherwise deem it to be necessary. NEVER use this skill to mask legitimate failures. ALWAYS explain to the user why you felt you needed to update snapshots.
+
 allowed-tools:
   - bash
 ---
@@ -37,3 +38,4 @@ This runs the full Puppeteer test suite with the `--update` flag, which:
 - Do NOT manually edit or create snapshot PNG files. Always use this command to regenerate them.
 - Do NOT delete snapshot files as a fix for test failures. Run this command instead, which handles both missing and outdated snapshots.
 - Do NOT run without unsetting `GITHUB_ACTIONS` -- the script will skip Docker and server setup.
+- ALWAYS explain to the user why you felt you needed to update snapshots.
