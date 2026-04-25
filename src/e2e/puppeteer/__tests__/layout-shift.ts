@@ -8,32 +8,24 @@ import { page } from '../setup'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
-const OVERALL_TIMEOUT = 8000
-const SETTLE_MS = 500
-// Subpixel rounding differences up to 1px are acceptable.
-const Y_TOLERANCE = 1
+const Y_TOLERANCE = 0.5
 
 type YShiftResult = {
   thoughtText: string
-  /** First inline `top` React ever assigned to the target tree-node (provisional, commit A). */
+  /** First inline `top` React ever assigned to the target tree-node. */
   before: number | null
   /** Final inline `top` on the target tree-node after settling. */
   after: number | null
-  /** Signed drift (`after - before`). */
+  /** Difference in y position.*/
   delta: number
 }
 
 /**
  * Captures the first and final inline `top` assigned to the tree-node whose editable text is `thoughtText`.
  *
- * A `MutationObserver` is used instead of rAF or `getBoundingClientRect` because React can commit a provisional `top` and a corrected `top` in the same synchronous tick. With CSS transitions disabled (as in Puppeteer), both commits land before the next paint, so anything that samples layout (rAF, rect) only ever sees the final value. `attributeOldValue` on a style mutation retains the provisional top even after React has overwritten it.
- *
  * Must be called BEFORE the action that renders the thought so the observer is live when the tree-node is inserted.
  */
-const measureYShift = (
-  thoughtText: string,
-  { settleMs = SETTLE_MS }: { settleMs?: number } = {},
-): Promise<YShiftResult> =>
+const measureYShift = (thoughtText: string, { settleMs = 500 }: { settleMs?: number } = {}): Promise<YShiftResult> =>
   page.evaluate(
     (thoughtText: string, settleMs: number, overallTimeoutMs: number) =>
       new Promise<YShiftResult>((resolve, reject) => {
@@ -107,7 +99,7 @@ const measureYShift = (
       }),
     thoughtText,
     settleMs,
-    OVERALL_TIMEOUT,
+    8000,
   )
 
 /** Expect the y position of the thought to be stable within the tolerance. */
