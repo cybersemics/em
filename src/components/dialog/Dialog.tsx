@@ -12,8 +12,7 @@ const ContainerBackground: FC = () => (
       inset: 0,
       borderRadius: '32px',
       pointerEvents: 'none',
-      background:
-        'radial-gradient(140% 89% at 50% 29%, {colors.dialogGlassFillTop} 0%, {colors.dialogGlassFillMid} 52%, {colors.transparent} 87%)',
+      backgroundGradient: 'dialogContainerBg',
     })}
   />
 )
@@ -102,8 +101,8 @@ const GlassStroke: FC = () => (
       inset: 0,
       borderRadius: '32px',
       pointerEvents: 'none',
-      maskImage: 'radial-gradient(94.3% 90.61% at 46.96% 13.01%, white 0%, {colors.dialogGlassMaskFade} 94.3%)',
-      WebkitMaskImage: 'radial-gradient(94.3% 90.61% at 46.96% 13.01%, white 0%, {colors.dialogGlassMaskFade} 94.3%)',
+      maskImage: 'var(--dialog-glass-stroke-mask)',
+      WebkitMaskImage: 'var(--dialog-glass-stroke-mask)',
     })}
   >
     <div
