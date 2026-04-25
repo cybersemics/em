@@ -5,7 +5,6 @@ import anchorButtonRecipe from './src/recipes/anchorButton'
 import bulletRecipe from './src/recipes/bullet'
 import buttonRecipe from './src/recipes/button'
 import childRecipe from './src/recipes/child'
-import dialogRecipe from './src/recipes/dialog'
 import dropEndRecipe from './src/recipes/dropEnd'
 import dropHoverRecipe from './src/recipes/dropHover'
 import editableRecipe from './src/recipes/editable'
@@ -475,7 +474,6 @@ export default defineConfig({
         panelCommandRecipe,
       },
       slotRecipes: {
-        dialogRecipe,
         modalRecipe,
         modalTextRecipe,
         fadeTransitionRecipe,
