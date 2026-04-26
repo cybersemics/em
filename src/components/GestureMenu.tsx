@@ -302,7 +302,9 @@ const GestureMenuWithTransition: FC = () => {
           >
             <Overlay />
             <Glow />
-            <GestureMenu commands={commands} />
+            <div style={{ position: 'relative', zIndex: 1 }}>
+              <GestureMenu commands={commands} />
+            </div>
           </div>
         </FadeTransition>
       </div>
