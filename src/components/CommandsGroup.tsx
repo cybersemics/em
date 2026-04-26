@@ -32,7 +32,13 @@ const CommandsGroup: FC<CommandsGroupProps> = ({
   const modalClasses = modalTextRecipe()
 
   return (
-    <div className={css({ position: 'relative' })}>
+    <div
+      className={css({
+        position: 'relative',
+        // Layout/paint containment — preserves the existing rendering in the table view (CustomizeToolbar etc.) where removing it produced subpixel diffs.
+        contain: 'layout paint',
+      })}
+    >
       <h2
         className={cx(
           modalClasses.subtitle,
