@@ -5,6 +5,7 @@ import anchorButtonRecipe from './src/recipes/anchorButton'
 import bulletRecipe from './src/recipes/bullet'
 import buttonRecipe from './src/recipes/button'
 import childRecipe from './src/recipes/child'
+import dialogRecipe from './src/recipes/dialogRecipe'
 import dropEndRecipe from './src/recipes/dropEnd'
 import dropHoverRecipe from './src/recipes/dropHover'
 import editableRecipe from './src/recipes/editable'
@@ -346,10 +347,6 @@ const globalCss = defineGlobalStyles({
   ':root': {
     '--active-glow-gradient':
       'linear-gradient(180deg, {colors.commandCenterBlue} 0%, {colors.commandCenterPurple} 100%)',
-    '--dialog-container-bg-gradient':
-      'radial-gradient(140% 89% at 50% 29%, {colors.dialogGlassFillTop} 0%, {colors.dialogGlassFillMid} 52%, {colors.transparent} 87%)',
-    '--dialog-glass-stroke-mask':
-      'radial-gradient(94.3% 90.61% at 46.96% 13.01%, {colors.white} 0%, {colors.dialogGlassMaskFade} 94.3%)',
   },
   '@supports (background-image: linear-gradient(180deg in oklch, #000))': {
     ':root': {
@@ -478,6 +475,7 @@ export default defineConfig({
         panelCommandRecipe,
       },
       slotRecipes: {
+        dialogRecipe,
         modalRecipe,
         modalTextRecipe,
         fadeTransitionRecipe,
@@ -494,9 +492,6 @@ export default defineConfig({
         gradients: {
           activeGlow: {
             value: 'var(--active-glow-gradient)',
-          },
-          dialogContainerBg: {
-            value: 'var(--dialog-container-bg-gradient)',
           },
         },
       },
