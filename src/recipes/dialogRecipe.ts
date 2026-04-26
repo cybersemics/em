@@ -30,6 +30,7 @@ const dialogRecipe = defineSlotRecipe({
     'titleText',
   ],
   base: {
+    /** Full-viewport backdrop — transparent fill plus the backdrop blur that softens whatever's behind the dialog. */
     overlay: {
       position: 'fixed',
       top: 0,
@@ -45,6 +46,7 @@ const dialogRecipe = defineSlotRecipe({
       overflow: 'hidden',
       touchAction: 'none',
     },
+    /** Soft full-screen color glow rendered behind the glass sheet to add subtle ambient color to the backdrop. */
     backgroundGlow: {
       position: 'fixed',
       top: 0,
@@ -58,11 +60,13 @@ const dialogRecipe = defineSlotRecipe({
       opacity: 0.3,
       pointerEvents: 'none',
     },
+    /** Wrapper around the glass sheet that lets unclipped highlight/rainbow layers bleed past the glass edges. */
     wrapper: {
       position: 'relative',
       maxWidth: '500px',
       width: '87.5%',
     },
+    /** Light highlight image pinned to the top of the viewport — bleeds past the top edge of the glass to suggest light spilling onto the surrounding screen. */
     highlightUnclipped: {
       position: 'fixed',
       top: -72,
@@ -76,6 +80,7 @@ const dialogRecipe = defineSlotRecipe({
       opacity: 0.1,
       pointerEvents: 'none',
     },
+    /** Same highlight image clipped to the glass — paired with highlightUnclipped to suggest light "trapped" inside the glass. */
     highlightClipped: {
       position: 'absolute',
       top: 'calc(-50vh + 50%)',
@@ -90,6 +95,7 @@ const dialogRecipe = defineSlotRecipe({
       opacity: 0.2,
       pointerEvents: 'none',
     },
+    /** Rainbow refraction image that bleeds past the top edge of the glass. */
     rainbowUnclipped: {
       position: 'absolute',
       top: 'calc(-50vh + 50%)',
@@ -105,6 +111,7 @@ const dialogRecipe = defineSlotRecipe({
       mixBlendMode: 'screen',
       pointerEvents: 'none',
     },
+    /** Same rainbow refraction clipped to the glass — paired with rainbowUnclipped to suggest refractions trapped inside the glass. */
     rainbowClipped: {
       position: 'absolute',
       top: 'calc(-50vh + 50%)',
@@ -120,6 +127,7 @@ const dialogRecipe = defineSlotRecipe({
       mixBlendMode: 'screen',
       pointerEvents: 'none',
     },
+    /** The glass sheet itself — rounded translucent panel that hosts the dialog content and decorative layers. */
     glassSheet: {
       color: 'fg',
       paddingTop: '0.75rem',
@@ -130,6 +138,7 @@ const dialogRecipe = defineSlotRecipe({
       position: 'relative',
       maxHeight: '80dvh',
     },
+    /** Muted-purple radial fill concentrated near the top of the glass and fading toward the bottom. */
     containerBackground: {
       position: 'absolute',
       inset: 0,
@@ -138,12 +147,14 @@ const dialogRecipe = defineSlotRecipe({
       background:
         'radial-gradient(140% 89% at 50% 29%, {colors.dialogGlassFillTop} 0%, {colors.dialogGlassFillMid} 52%, {colors.transparent} 87%)',
     },
+    /** Rounded clip region containing the highlight/rainbow layers "trapped" inside the glass. */
     glassClipWrapper: {
       position: 'absolute',
       inset: 0,
       pointerEvents: 'none',
       clipPath: 'inset(0 round 32px)',
     },
+    /** Luminance mask that fades the glass stroke off toward the bottom — simulates light falling off across the glass surface. */
     glassStrokeMask: {
       position: 'absolute',
       inset: 0,
@@ -154,6 +165,7 @@ const dialogRecipe = defineSlotRecipe({
       WebkitMaskImage:
         'radial-gradient(94.3% 90.61% at 46.96% 13.01%, {colors.white} 0%, {colors.dialogGlassMaskFade} 94.3%)',
     },
+    /** Gradient border on the glass sheet that approximates light refracting through the glass edge. CSS can't paint a linear gradient as a real border, so this paints a 1px transparent border with a gradient background and uses a padding-box/border-box mask to keep only the border slice visible. */
     glassStrokeBorder: {
       position: 'absolute',
       inset: 0,
@@ -168,9 +180,11 @@ const dialogRecipe = defineSlotRecipe({
       mask: 'linear-gradient(white 0 0) padding-box, linear-gradient(white 0 0)',
       maskComposite: 'exclude',
     },
+    /** Wrapper around the dialog children (title + body) — establishes its own stacking context so content paints above the decorative layers. */
     contentLayer: {
       position: 'relative',
     },
+    /** Bottom-anchored fade — visual cue that the dialog content is scrollable. */
     scrollGradient: {
       position: 'absolute',
       bottom: 0,
@@ -184,6 +198,7 @@ const dialogRecipe = defineSlotRecipe({
       height: 48,
       background: 'linear-gradient(to top, {colors.dialogScrollShadow} 0%, {colors.transparent} 100%)',
     },
+    /** Scrollable content region — owns the scroll behavior, scrollbar styling, and the responsive font size. */
     content: {
       fontSize: '1.125rem',
       color: 'fg',
@@ -207,15 +222,18 @@ const dialogRecipe = defineSlotRecipe({
       },
       overscrollBehavior: 'contain',
     },
+    /** Inner wrapper inside `content` that carries the horizontal text inset. Kept separate from `content` so the scrollbar gutter doesn't push text in further. */
     contentInner: {
       // Left matches titleContainer.paddingInline so title and content text share a consistent inset; right is reduced because the scrollbar gutter consumes the rest.
       paddingLeft: '1.25rem',
       paddingRight: '0.75rem',
     },
+    /** Empty buffer at the end of the scrollable content — keeps the last line of text above where the scroll-edge gradient becomes opaque. */
     contentBottomSpacer: {
       // Half of scrollGradient.height — keeps the last content line above where the scroll-edge gradient becomes opaque.
       height: 24,
     },
+    /** Header row — flex row that lays out the title text and the close button. */
     titleContainer: {
       display: 'flex',
       justifyContent: 'space-between',
@@ -223,6 +241,7 @@ const dialogRecipe = defineSlotRecipe({
       // Matches contentInner.paddingLeft so the title shares a consistent inset with the content text.
       paddingInline: '1.25rem',
     },
+    /** The title heading itself — bold, with a responsive size bump on larger screens. */
     titleText: {
       fontWeight: '700',
       color: 'fg',
