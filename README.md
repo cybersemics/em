@@ -73,10 +73,10 @@ Runs off the local Vite development server. Ideal for rapid prototyping, debuggi
    Update your local development environment file (`.env.development.local`) by setting the following variable to the URL of your Vite dev server.
 
    ```sh
-   CAPACITOR_SERVER_URL=https://192.168.x.x:3000
+   CAPACITOR_SERVER_URL=http://192.168.x.x:3000
    ```
 
-   **Note**: Use your machine's local network IP (e.g., https://192.168.x.x:3000) rather than localhost (https://localhost:3000).
+   **Note**: Use your machine's local network IP (e.g., http://192.168.x.x:3000) rather than localhost (http://localhost:3000).
 
 2. Start the Vite development server
 

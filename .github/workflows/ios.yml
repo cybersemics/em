@@ -44,36 +44,14 @@ jobs:
       - name: Build
         run: yarn build
 
-      - name: Generate tunnel token
-        run: |
-          TOKEN=$(openssl rand -hex 16)
-          echo "::add-mask::$TOKEN"
-          echo "TUNNEL_TOKEN=$TOKEN" >> "$GITHUB_ENV"
-
       - name: Serve
-        run: |
-          yarn servebuild &
-
-          echo "Waiting for server to be ready..."
-          for i in {1..30}; do
-            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -k "https://localhost:3000?__token=$TUNNEL_TOKEN" 2>/dev/null || echo "000")
-            if [ "$HTTP_STATUS" = "200" ]; then
-              echo "Server is ready!"
-              break
-            fi
-            echo "Attempt $i/30: status $HTTP_STATUS"
-            if [ $i -eq 30 ]; then
-              echo "Server failed to respond after 30 attempts"
-              exit 1
-            fi
-            sleep 1
-          done
+        run: yarn servebuild &
 
       - name: Test iOS on BrowserStack
         run: yarn test:ios
         env:
+          # BrowserStack credentials - WDIO's browserstack-service handles the tunnel
           BROWSERSTACK_USERNAME: ${{secrets.BROWSERSTACK_USERNAME}}
           BROWSERSTACK_ACCESS_KEY: ${{secrets.BROWSERSTACK_ACCESS_KEY}}
           BROWSERSTACK_BUILD_NAME: 'CI - ${{github.run_id}}'
           BROWSERSTACK_PROJECT_NAME: 'em'
-          TUNNEL_TOKEN: ${{env.TUNNEL_TOKEN}}
