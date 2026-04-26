@@ -23,6 +23,8 @@ interface ProgressiveBlurProps extends React.HTMLAttributes<HTMLDivElement> {
   width?: string | number
   /** Optional MotionValue to animate the opacity of the progressive blur effect. Avoids the Safari bug where animating opacity on a parent of backdrop-filter elements breaks the blur. */
   opacity?: MotionValue<number>
+  /** Additional CSS mask-image to intersect with each layer's slice mask. Applied per-layer so it works with backdrop-filter (unlike masking a parent). */
+  mask?: string
 }
 
 /** A progressive blur component using a multi-layered slice technique with backdrop-filter. */
@@ -33,6 +35,7 @@ const ProgressiveBlur = ({
   layers = 8,
   width = '100%',
   opacity,
+  mask,
   className,
   ...props
 }: ProgressiveBlurProps) => {
@@ -66,24 +69,34 @@ const ProgressiveBlur = ({
       })}
       style={{ width, ...props.style }}
     >
-      {blurLayers.map((layer, i) => (
-        <motion.div
-          key={i}
-          className={css({
-            position: 'absolute',
-            inset: 0,
-          })}
-          style={{
-            opacity,
-            backdropFilter: `blur(${layer.radius.toFixed(2)}px)`,
-            WebkitBackdropFilter: `blur(${layer.radius.toFixed(2)}px)`,
+      {blurLayers.map((layer, i) => {
+        const sliceMask = `linear-gradient(${direction}, transparent ${layer.leadingStop}%, black ${layer.start}%, black ${layer.end}%, transparent ${layer.trailingStop}%)`
+        const compositeMask = mask ? `${sliceMask}, ${mask}` : sliceMask
+        return (
+          <motion.div
+            key={i}
+            className={css({
+              position: 'absolute',
+              inset: 0,
+            })}
+            style={{
+              opacity,
+              backdropFilter: `blur(${layer.radius.toFixed(2)}px)`,
+              WebkitBackdropFilter: `blur(${layer.radius.toFixed(2)}px)`,
 
-            // Sliced mask with overlap (feather), clamped to container bounds
-            maskImage: `linear-gradient(${direction}, transparent ${layer.leadingStop}%, black ${layer.start}%, black ${layer.end}%, transparent ${layer.trailingStop}%)`,
-            WebkitMaskImage: `linear-gradient(${direction}, transparent ${layer.leadingStop}%, black ${layer.start}%, black ${layer.end}%, transparent ${layer.trailingStop}%)`,
-          }}
-        />
-      ))}
+              // Sliced mask with overlap (feather), clamped to container bounds.
+              // When an extra mask is provided, intersect it with the slice mask
+              // so both fade directions apply per-layer (required for backdrop-filter).
+              maskImage: compositeMask,
+              WebkitMaskImage: compositeMask,
+              ...(mask && {
+                maskComposite: 'intersect',
+                WebkitMaskComposite: 'source-in' as string,
+              }),
+            }}
+          />
+        )
+      })}
     </div>
   )
 }

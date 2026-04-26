@@ -48,6 +48,22 @@ describe('splitSentences', () => {
   - **This is sentence three.**`)
   })
 
+  it('splits a thought when only the period is formatted', () => {
+    store.dispatch([newThought({ value: '' }), setCursor(['']), editThought([''], 'Hello<b>.</b> World.')])
+
+    executeCommand(splitSentencesCommand, { store })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/html')
+    expect(exported).toBe(`<ul>
+  <li>__ROOT__  
+    <ul>
+      <li>Hello<b>.</b></li>
+      <li>World.</li>
+    </ul>
+  </li>
+</ul>`)
+  })
+
   it('does not split a thought with a single sentence and a font tag', () => {
     store.dispatch([
       newThought({ value: '' }),

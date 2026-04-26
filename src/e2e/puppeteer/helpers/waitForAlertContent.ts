@@ -8,7 +8,7 @@ interface Options {
  * Wait for alert content that includes the given text.
  */
 const waitForAlertContent = async (text: string, { timeout }: Options = { timeout: 6000 }) =>
-  await page.waitForFunction(
+  page.waitForFunction(
     (text: string) => {
       const alertElement = document.querySelector('[data-testid="alert-content"]')
       return alertElement?.textContent?.includes(text)
