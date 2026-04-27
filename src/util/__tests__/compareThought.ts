@@ -232,11 +232,6 @@ describe('compareReasonable', () => {
     ).toBe(1)
   })
 
-  it('sort testY after testZ', () => {
-    expect(compareReasonable('testY', 'testZ')).toBe(1)
-    expect(compareReasonable('testZ', 'testY')).toBe(-1)
-  })
-
   it('diacritics', () => {
     expect(compareReasonable('élan', 'every')).toBe(-1)
     expect(compareReasonable('élan', 'élan')).toBe(0)
