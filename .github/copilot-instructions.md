@@ -20,6 +20,7 @@ You will autonomously manage lifecycle of code changes: create a new branch, com
 - Run `yarn build` to build the project (builds packages, styles, and Vite bundle).
 
 ## Methodology
+
 - First, read the entirety of this file, and all of the other custom instructions provided to you. If you have done so, please provide a short summary of all the custom instructions you have read in your output before beginning your task.
 - Then, begin your work by creating a new branch for the work. If a previous agent working on the same task already created a branch and a PR, use that branch.
 - When opening a PR, include the bare issue number at the top of the description (e.g. "#1234").
@@ -32,29 +33,34 @@ You will autonomously manage lifecycle of code changes: create a new branch, com
 - After each fix, push to the branch and repeat the CI monitoring process until all checks pass.
 
 ## Best practices
+
 - Document each commit with clear, concise messages.
 - Use atomic commits for logically separate changes.
 - Always verify the root cause of CI failures before applying fixes.
 - If unsure, ask the user for clarification or guidance.
 
 ## Branch naming
+
 - Use the pattern: `copilot/<type>/<short-description>` (e.g., `copilot/fix/login-redirect`, `copilot/feat/dark-mode-toggle`)
 - If working from a GitHub issue, include the number: `copilot/fix/123-login-redirect`
 - Keep it lowercase, hyphen-separated, under 50 characters
 - Valid types: `feat`, `fix`, `refactor`, `chore`, `docs`, `test`
 
 ## Fixing CI errors
+
 - Prioritize fixing errors that block CI success.
 - If multiple failures occur, address them in order of build, lint, test, then snapshot.
 - If a fix is ambiguous, seek clarification from the user.
 - If CI still fails after 5 fix-push cycles, stop and escalate to the user.
 
 ## Output and commumication
+
 - Summarize actions taken at each step (branch creation, commits, PR creation, CI status, fixes applied).
 - When opening a PR, include the PR URL and status.
 - When CI fails, provide a concise diagnosis and the steps taken to resolve.
 
 ## When to escalate to the user
+
 - If you encounter ambiguous failures, unclear test intent, or repeated CI flakiness, ask the user for clarification before proceeding.
 - If you are unable to resolve a CI failure after reasonable attempts, summarize your investigation and request guidance.
 - Default to autonomous action. Escalate only when the correct path is genuinely ambiguous.

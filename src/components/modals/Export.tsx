@@ -11,7 +11,6 @@ import React, {
   useState,
 } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import useOnClickOutside from 'use-onclickoutside'
 import { css, cx } from '../../../styled-system/css'
 import { extendTapRecipe } from '../../../styled-system/recipes'
 import ExportOption from '../../@types/ExportOption'
@@ -243,7 +242,20 @@ const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
   }, [])
 
   const dropDownRef = React.useRef<HTMLDivElement>(null)
-  useOnClickOutside(dropDownRef as React.RefObject<HTMLDivElement>, closeDropdown)
+
+  // Close the dropdown when clicking outside of it. Inlined from the unmaintained use-onclickoutside package.
+  useEffect(() => {
+    const listener = (e: MouseEvent | TouchEvent) => {
+      if (!dropDownRef.current || dropDownRef.current.contains(e.target as Node)) return
+      closeDropdown()
+    }
+    document.addEventListener('mousedown', listener)
+    document.addEventListener('touchstart', listener, { passive: true })
+    return () => {
+      document.removeEventListener('mousedown', listener)
+      document.removeEventListener('touchstart', listener)
+    }
+  }, [closeDropdown])
 
   return (
     <span ref={dropDownRef} className={css({ position: 'relative', whiteSpace: 'nowrap', userSelect: 'none' })}>
