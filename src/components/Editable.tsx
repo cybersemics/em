@@ -315,15 +315,7 @@ const Editable = ({
   // using useRef hook to store throttled function so that it can persist even between component re-renders, so that throttle.flush method can be used properly
   const throttledChangeRef = useRef(_.throttle(thoughtChangeHandler, EDIT_THROTTLE, { leading: false }))
 
-  /** Callback for useEditMode when the we manually set a caret position, dispatching setCursor to sync Redux state. */
-  const onCaretOffset = useCallback(
-    (offset: number) => {
-      dispatch(setCursor({ path, offset }))
-    },
-    [dispatch, path],
-  )
-
-  useEditMode({ contentRef, isEditing, path, style, transient, onCaretOffset })
+  useEditMode({ contentRef, isEditing, path, style, transient })
 
   useEffect(() => {
     /** Flushes pending edits. */

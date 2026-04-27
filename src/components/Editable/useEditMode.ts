@@ -1,7 +1,9 @@
 import React, { useCallback, useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { useStore } from 'react-redux'
+import { useDispatch } from 'react-redux'
 import Path from '../../@types/Path'
+import { setCursorActionCreator as setCursor } from '../../actions/setCursor'
 import { isMac, isSafari, isTouch } from '../../browser'
 import { LongPressState } from '../../constants'
 import asyncFocus from '../../device/asyncFocus'
@@ -19,7 +21,6 @@ const useEditMode = ({
   path,
   style,
   transient,
-  onCaretOffset,
 }: {
   // expect all arguments to be passed, even if undefined
   // otherwise the hook will not be able to determine all conditions
@@ -28,8 +29,6 @@ const useEditMode = ({
   path: Path
   style: React.CSSProperties | undefined
   transient: boolean | undefined
-  /** Called when the caret offset is set, allowing the caller to update Redux cursor state. */
-  onCaretOffset: (offset: number) => void
 }) => {
   // must re-render when noteFocus changes in order to set the selection
   const hasNoteFocus = useSelector(state => state.noteFocus && equalPath(state.cursor, path))
@@ -45,6 +44,7 @@ const useEditMode = ({
   const isCursor = useSelector(state => equalPath(path, state.cursor))
   const hadSidebar = usePrevious(showSidebar)
   const store = useStore()
+  const dispatch = useDispatch()
 
   // focus on the ContentEditable element if editing or on desktop
   const editMode = !isTouch || editing
@@ -137,10 +137,10 @@ const useEditMode = ({
     const editable = contentRef.current
     if (!editable) return
 
-    /** Sets the DOM selection and notifies the caller to update Redux cursor state. */
-    const setCaretOffset = (nodeOffset: number) => {
-      selection.set(editable, { offset: nodeOffset })
-      onCaretOffset(nodeOffset)
+    /** Sets the DOM selection and updates the Redux cursor state. */
+    const setCaretOffset = (offset: number) => {
+      selection.set(editable, { offset })
+      dispatch(setCursor({ path, offset }))
     }
 
     /**
@@ -167,19 +167,19 @@ const useEditMode = ({
           bottomMargin: fontSize * 2,
         })
 
-        const { inVoidArea, offset: nodeOffset } = getCaretOffset(editable, {
+        const { inVoidArea, offset } = getCaretOffset(editable, {
           clientX: e.clientX,
           clientY: e.clientY,
         })
 
-        if (nodeOffset !== null) {
+        if (offset !== null) {
           // It's important to avoid preventDefault when the tap is somewhere that can be handled by native browser selection behavior.
           // If the tap is prevented, it will interfere with functionality like double tap or the context menu. If the selection is
           // truly in a void area, then preventDefault will stop the caret from being placed on the wrong thought.
           if (inVoidArea) {
             e.preventDefault()
           }
-          setCaretOffset(nodeOffset)
+          setCaretOffset(offset)
         } else {
           allowDefaultSelection()
         }
@@ -205,7 +205,7 @@ const useEditMode = ({
       editable.removeEventListener('mousedown', onMouseDown)
       editable.removeEventListener('focus', onFocus)
     }
-  }, [contentRef, editingOrOnCursor, isMulticursor, fontSize, onCaretOffset, allowDefaultSelection])
+  }, [contentRef, editingOrOnCursor, isMulticursor, fontSize, allowDefaultSelection])
 
   // Resume focus if sidebar was just closed and isEditing is true.
   // Disable focus restoration on mobile until the hamburger menu & sidebar backdrop can be made to
