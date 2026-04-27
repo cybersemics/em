@@ -23,19 +23,19 @@ const DialogTitle: React.FC<PropsWithChildren<DialogTitleProps>> = ({ children, 
     <div className={dialog.titleContainer}>
       <div className={dialog.headerSide}>
         <CircularModalButton ariaLabel='Back'>
-          <ArrowLeftIcon size={18} />
+          <ArrowLeftIcon size={24} />
         </CircularModalButton>
         <CircularModalButton ariaLabel='Forward'>
-          <ArrowRightIcon size={18} />
+          <ArrowRightIcon size={24} />
         </CircularModalButton>
       </div>
       <h2 className={dialog.titleText}>{children}</h2>
       <div className={dialog.headerSide}>
         <CircularModalButton ariaLabel='Help'>
-          <InfoGenieIcon size={18} />
+          <InfoGenieIcon size={24} />
         </CircularModalButton>
         <CircularModalButton ariaLabel='Close' onClick={onClose}>
-          <XIcon size={18} />
+          <XIcon size={24} />
         </CircularModalButton>
       </div>
     </div>

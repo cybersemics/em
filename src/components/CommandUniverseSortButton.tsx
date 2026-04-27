@@ -12,7 +12,7 @@ interface CommandUniverseSortButtonProps {
 
 /**
  * Group/sort button used by the Mobile Command Universe dialog. Flush styling (no
- * border or background) with the new 18×18 list glyph.
+ * border or background) with the new 24×24 list glyph.
  *
  * Distinct from SortButton (used by Help / CustomizeToolbar via CommandTable),
  * which keeps the legacy bordered look.
@@ -46,8 +46,8 @@ const CommandUniverseSortButton = ({ onSortChange }: CommandUniverseSortButtonPr
       aria-label='Group commands'
       onClick={() => setDropdownOpen(!isDropdownOpen)}
       className={css({
-        width: '1.75rem',
-        height: '1.75rem',
+        width: '24px',
+        height: '24px',
         border: 'none',
         background: 'transparent',
         padding: 0,
@@ -59,7 +59,7 @@ const CommandUniverseSortButton = ({ onSortChange }: CommandUniverseSortButtonPr
         color: 'fg',
       })}
     >
-      <CommandsListIcon size={18} fill={token('colors.fg')} />
+      <CommandsListIcon size={24} fill={token('colors.fg')} />
       <FadeTransition in={isDropdownOpen} type='fast' unmountOnExit>
         <div
           className={cx(

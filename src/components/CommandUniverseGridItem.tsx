@@ -45,7 +45,8 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, se
         flexDirection: 'column',
         gap: '0.533rem',
         justifyContent: 'flex-start',
-        alignItems: 'center',
+        // Children are flush-left so the command icon + title sit at the cell's left edge.
+        alignItems: 'flex-start',
       })}
     >
       {/* Gesture trace (touch). Box removed per spec — the artwork itself stays as-is. */}
@@ -83,19 +84,20 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, se
           width: '100%',
         })}
       >
-        {/* Command icon inline with the title, per spec — replaces the previous stacked layout. */}
+        {/* Command icon inline with the title, left-aligned and flush — no gap between glyph and title. */}
         <div
           className={css({
             display: 'flex',
             alignItems: 'center',
-            gap: '0.4rem',
+            justifyContent: 'flex-start',
+            gap: 0,
             width: '100%',
           })}
         >
           {Icon && (
             <Icon
               cssRaw={css.raw({ flexShrink: 0 })}
-              size={16}
+              size={28}
               fill={token(disabled ? 'colors.gray50' : 'colors.fg')}
             />
           )}
@@ -105,10 +107,9 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, se
               lineHeight: '1em',
               whiteSpace: 'normal',
               overflowWrap: 'break-word',
-              // Command title — 14pt (0.875rem), white, slightly stronger weight per spec.
-              fontSize: '0.875rem',
+              fontSize: '0.85rem',
               color: disabled ? 'gray45' : 'fg',
-              fontWeight: 600,
+              fontWeight: 500,
             })}
           >
             <HighlightedText value={label} match={search} disabled={disabled} />
@@ -117,8 +118,7 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, se
 
         <p
           className={css({
-            // 13.5pt (0.84375rem), white at 75% opacity per spec.
-            fontSize: '0.84375rem',
+            fontSize: '0.75rem',
             color: 'fgOverlay75',
             marginTop: '0.267rem',
             marginBottom: '0.267rem',

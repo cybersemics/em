@@ -33,7 +33,7 @@ const CommandUniverseSearch: FC<{ onInput?: (value: string) => void }> = ({ onIn
           color: 'fgOverlay50',
         })}
       >
-        <CommandsSearchIcon size={18} fill={token('colors.fgOverlay50')} />
+        <CommandsSearchIcon size={24} fill={token('colors.fgOverlay50')} />
       </div>
       <input
         type='text'
@@ -47,14 +47,18 @@ const CommandUniverseSearch: FC<{ onInput?: (value: string) => void }> = ({ onIn
           boxSizing: 'border-box',
           width: '100%',
           minWidth: '100%',
-          // Indent so typed text starts past the search glyph.
-          paddingLeft: '1.625rem',
+          // Indent so typed text starts past the 24×24 search glyph.
+          paddingLeft: '2rem',
           paddingBlock: '0.25rem',
           background: 'transparent',
           border: 'none',
           outline: 'none',
           color: 'fg',
-          fontSize: '0.9rem',
+          fontSize: '1rem',
+          // Form controls don't inherit font-family by default — opt in so the dialog's Radio Canada Big applies to the placeholder and typed text.
+          fontFamily: 'inherit',
+          // plus-lighter brightens the input text against the dialog's translucent glass — additive blend lifts the placeholder & typed text out of the background.
+          mixBlendMode: 'plus-lighter',
           _placeholder: {
             color: 'fgOverlay50',
           },

@@ -137,6 +137,8 @@ const dialogRecipe = defineSlotRecipe({
     /** The glass sheet itself — rounded translucent panel that hosts the dialog content and decorative layers. */
     glassSheet: {
       color: 'fg',
+      // Self-hosted in /public/fonts/radio-canada-big.css; loaded from index.html. Scoped to the dialog tree (not global) — fallback chain matches the rest of the app.
+      fontFamily: "'Radio Canada Big', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
       borderRadius: '32px',
       width: '100%',
       boxSizing: 'border-box',
@@ -261,27 +263,24 @@ const dialogRecipe = defineSlotRecipe({
     },
     /** Inner wrapper inside `content` that carries the horizontal text inset. Kept separate from `content` so the scrollbar gutter doesn't push text in further. */
     contentInner: {
-      // Left matches titleContainer.paddingInline so title and content text share a consistent inset; right is reduced because the scrollbar gutter consumes the rest.
-      paddingLeft: '1.25rem',
-      paddingRight: '0.75rem',
+      // 1rem matches the rest of the dialog inset (titleContainer, headerSearchRow); the parent `content` slot also has 0.5rem paddingRight reserved for the scrollbar gutter.
+      paddingLeft: '1rem',
+      paddingRight: '0.5rem',
       // Add bottom padding to the inner content wrapper, so the mask doesn't fade out the last bit of content.
       paddingBottom: '2rem',
     },
     /**
-     * Header row — flex row laying out: left button cluster, gradient line, centered title,
-     * gradient line, right button cluster. The clusters take their natural width while
-     * the lines flex-grow into the available space so the title stays optically centered.
-     *
-     * paddingInline is offset from the content's 1.25rem inset so the *visible glyph*
-     * inside the back button optically aligns with the search glyph and section-header
-     * text down the left edge of the panel (the button has built-in inset around its icon).
+     * Header row — flex row laying out: left button cluster, centered title, right button
+     * cluster. The flex:1 cluster wrappers balance the row so the title stays centered.
      */
     titleContainer: {
       display: 'flex',
       alignItems: 'center',
-      // paddingInline and paddingBlock are kept equal so the buttons sit the same distance from the dialog's top edge as from its left/right edges.
-      paddingInline: '0.6875rem',
-      paddingBlock: '0.6875rem',
+      // 1rem inset on the sides and the top edge of the dialog; the bottom is tighter
+      // so the search row that follows sits closer to the header.
+      paddingInline: '1rem',
+      paddingTop: '1rem',
+      paddingBottom: '0.5rem',
     },
     /**
      * Left/right cluster wrapper — flex row that holds the circular header buttons.
@@ -343,8 +342,7 @@ const dialogRecipe = defineSlotRecipe({
       alignItems: 'center',
       justifyContent: 'space-between',
       gap: '0.5rem',
-      paddingLeft: '1.25rem',
-      paddingRight: '1.25rem',
+      paddingInline: '1rem',
       paddingBlock: '0.5rem',
     },
     /**
@@ -355,12 +353,14 @@ const dialogRecipe = defineSlotRecipe({
     sectionHeader: {
       display: 'flex',
       alignItems: 'center',
-      gap: '0.5rem',
-      paddingBlock: '1rem 0.75rem',
+      // 1rem horizontal gap leaves a comfortable margin between the title text and
+      // the gradient hairlines that fade outward on either side.
+      gap: '1rem',
+      paddingBlock: '0.5rem 0.75rem',
     },
     /** Centered text of a section header — sits between the two gradient lines. */
     sectionHeaderText: {
-      fontSize: '1rem',
+      fontSize: '1.125rem',
       fontWeight: 500,
       color: 'fg',
       borderBottom: 'none',
