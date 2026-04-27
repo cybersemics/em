@@ -1,13 +1,17 @@
-import React, { FC, ReactElement, useRef, useState } from 'react'
+import { FC, useEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
-import { TransitionGroup } from 'react-transition-group'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import Command from '../@types/Command'
 import { gestureString } from '../commands'
 import openMobileCommandUniverseCommand from '../commands/openMobileCommandUniverse'
 import useFilteredCommands from '../hooks/useFilteredCommands'
-import gestureStore from '../stores/gesture'
+import gestureStore, {
+  onGestureMenuEntered,
+  onGestureMenuExited,
+  startGestureMenuEnter,
+  startGestureMenuExit,
+} from '../stores/gesture'
 import storageModel from '../stores/storageModel'
 import CommandItem from './CommandItem'
 import FadeTransition from './FadeTransition'
@@ -31,16 +35,15 @@ const GestureMenu: FC<{
       className={css({
         display: 'flex',
         flexDirection: 'column',
-        maxHeight: '100%',
         maxWidth: '100%',
+        maxHeight: '100dvh',
+        overflow: 'hidden',
       })}
     >
       <div
         className={css({
           marginBottom: 0,
           textAlign: 'left',
-          border: '1px solid {colors.gray15}',
-          backgroundColor: 'gray09',
           maxWidth: '100%',
           maxHeight: '100%',
           width: 826,
@@ -85,12 +88,91 @@ const GestureMenu: FC<{
   )
 }
 
+/** Renders a blur effect overlay for the gesture menu. */
+function ProgressiveBlur() {
+  const animationState = gestureStore.useSelector(state => state.gestureMenuAnimationState)
+
+  return (
+    <div
+      className={css({
+        pointerEvents: 'none',
+        position: 'absolute',
+        backdropFilter: 'blur(5px)',
+        mask: 'linear-gradient(180deg, {colors.black} 0%, {colors.bgOverlay80} 80%, {colors.bgTransparent} 100%)',
+        width: '100%',
+        top: 0,
+        height: '100%',
+      })}
+      style={{
+        // Use ease-out on enter so the blur appears immediately, and easeInSlow on exit so it lingers before fading.
+        transition: `opacity ${token('durations.fast')} ${animationState === 'exiting' ? token('easings.easeInSlow') : 'ease-out'}`,
+        opacity: animationState === 'visible' ? 1 : 0,
+      }}
+    />
+  )
+}
+
+/** Renders the glow effect for the gesture menu. */
+function Glow({ hidden }: { hidden?: boolean }) {
+  return (
+    <div
+      className={css({
+        position: 'absolute',
+        pointerEvents: 'none',
+        width: '100vw',
+        height: '100dvh',
+        overflow: 'hidden',
+      })}
+    >
+      <div
+        className={css({
+          backgroundImage: 'url(/img/gesture-menu/glow.avif)',
+          backgroundRepeat: 'no-repeat',
+          mixBlendMode: 'screen',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100vh',
+          backgroundSize: 'cover',
+          '@media (max-width: 1024px)': {
+            transform: 'translateX(-30%) scaleX(3.3)',
+          },
+          '@media (max-width: 560px)': {
+            transform: 'translateX(-40%) scaleX(2.5)',
+          },
+        })}
+        style={{
+          visibility: hidden ? 'hidden' : 'visible',
+        }}
+      />
+    </div>
+  )
+}
+
+/** Renders a gradient overlay for the gesture menu. */
+function Overlay() {
+  return (
+    <div
+      className={css({
+        pointerEvents: 'none',
+        position: 'absolute',
+        background: 'linear-gradient(180deg, {colors.black} 0%, {colors.bgOverlay80} 70%, {colors.bgTransparent} 100%)',
+        top: 0,
+        width: '100%',
+        height: '100%',
+      })}
+    />
+  )
+}
+
 /** A GestureMenu component that fades in and out based on state.showGestureMenu. */
 const GestureMenuWithTransition: FC = () => {
-  const [isDismissed, setDismiss] = useState(false)
   const popupRef = useRef<HTMLDivElement>(null)
+  const overlayRef = useRef<HTMLDivElement>(null)
 
   const showGestureMenu = useSelector(state => state.showGestureMenu)
+  const animationState = gestureStore.useSelector(state => state.gestureMenuAnimationState)
 
   // Commands need to be calculated even if the gesture menu is not shown because useFilteredCommands is responsible for updating gestureStore's possibleCommands which is needed to prevent haptics when there are no more possible commands. Otherwise, either haptics would continue to fire when there are no more possible commands, or would falsely fire when the current sequence is not a valid gesture but there are possible commands with additional swipes.
   const [recentCommands] = useState(storageModel.get('recentCommands'))
@@ -99,38 +181,79 @@ const GestureMenuWithTransition: FC = () => {
     sortActiveCommandsFirst: true,
   })
 
-  // if dismissed, set timeout to 0 to remove alert component immediately. Otherwise it will block toolbar interactions until the timeout completes.
+  // Sync Redux showGestureMenu to gestureStore animation state
+  useEffect(() => {
+    if (showGestureMenu && animationState === 'hidden') {
+      // Start enter animation only when menu opens and we're in hidden state
+      startGestureMenuEnter()
+    } else if (!showGestureMenu && animationState !== 'hidden' && animationState !== 'exiting') {
+      // Start exit animation only when menu closes and we're not already hidden or exiting
+      startGestureMenuExit()
+    }
+  }, [showGestureMenu, animationState])
+
+  // Transition from 'entering' to 'visible' to trigger the fade-in animation.
+  // Component mounts with in={false} when 'entering', then in={true} when 'visible'.
+  useEffect(() => {
+    if (animationState === 'entering') {
+      onGestureMenuEntered()
+    }
+  }, [animationState])
+
+  useEffect(() => {
+    /** Prefetch the gesture menu glow background image to improve initial menu appearance. */
+    const prefetchGlowBackground = async () => {
+      const img = new Image()
+      img.src = '/img/gesture-menu/glow.avif'
+      await img.decode()
+    }
+
+    prefetchGlowBackground()
+  }, [])
+
+  // fadeIn is true only when 'visible' - this gives CSSTransition a frame with in={false} when mounting
+  const fadeIn = animationState === 'visible'
+
+  // Don't render if hidden
+  if (animationState === 'hidden') return null
+
   return (
-    <TransitionGroup
-      childFactory={(child: ReactElement<{ timeout: number }>) =>
-        !isDismissed ? child : React.cloneElement(child, { timeout: 0 })
-      }
-    >
-      {showGestureMenu ? (
-        <FadeTransition
-          type='fast'
-          // for some reason doesn't fade in correctly when default nodeRef is used
-          nodeRef={popupRef}
-          onEntering={() => setDismiss(false)}
-        >
-          <PopupBase background={token('colors.bgOverlay50')} ref={popupRef} fullScreen>
-            <div
-              data-testid='popup-value'
-              className={css({
-                height: '100%',
-                boxSizing: 'border-box',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'start',
-                alignItems: 'center',
-              })}
-            >
-              <GestureMenu commands={commands} />
-            </div>
-          </PopupBase>
+    <PopupBase background='transparent' ref={popupRef} fullScreen>
+      <div
+        data-testid='popup-value'
+        className={css({
+          boxSizing: 'border-box',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'start',
+          alignItems: 'center',
+          width: '100%',
+          position: 'absolute',
+          top: 0,
+        })}
+      >
+        <ProgressiveBlur />
+        {/* Apply the fade transition only to the glow, overlay, and gesture menu contents 
+        to prevent the progressive blur from appearing only after the animation ends. */}
+        <FadeTransition nodeRef={overlayRef} in={fadeIn} type='fast' unmountOnExit onExited={onGestureMenuExited}>
+          <div
+            ref={overlayRef}
+            className={css({
+              position: 'relative',
+              // prevent mix-blend-mode and backdrop-filter from affecting each other
+              isolation: 'isolate',
+              width: '100%',
+              paddingBottom: '200px',
+              maxHeight: '100dvh',
+            })}
+          >
+            <Overlay />
+            <Glow />
+            <GestureMenu commands={commands} />
+          </div>
         </FadeTransition>
-      ) : null}
-    </TransitionGroup>
+      </div>
+    </PopupBase>
   )
 }
 
