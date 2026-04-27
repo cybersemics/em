@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react'
-import { useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
+import { token } from '../../styled-system/tokens'
 import CommandSortType from '../@types/CommandSortType'
-import theme from '../selectors/theme'
 import FadeTransition from './FadeTransition'
 import SortOption from './SortOption'
-import SortIcon from './icons/SortIcon'
+import CommandsListIcon from './icons/CommandsListIcon'
 
 interface SortButtonProps {
   onSortChange: (sortOrder: CommandSortType) => void
@@ -15,7 +14,6 @@ interface SortButtonProps {
  * SortButton component.
  * */
 const SortButton = ({ onSortChange }: SortButtonProps) => {
-  const isLightTheme = useSelector(state => theme(state) === 'Light')
   const [isDropdownOpen, setDropdownOpen] = useState(false)
   const [selectedSort, setSelectedSort] = useState<CommandSortType>('type')
 
@@ -44,25 +42,18 @@ const SortButton = ({ onSortChange }: SortButtonProps) => {
     <button
       onClick={() => setDropdownOpen(!isDropdownOpen)}
       className={css({
-        width: '45px',
-        border: 'solid 1px {colors.gray50}',
-        backgroundColor: 'darkgray',
-        borderRadius: '8px',
+        // Borderless icon button so the row reads as: glyph · text · glyph (matching the search icon on the left), not a search input next to a chunky form control.
+        background: 'transparent',
+        border: 'none',
+        padding: 0,
+        cursor: 'pointer',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         position: 'relative',
       })}
     >
-      <div
-        className={css({
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        })}
-      >
-        <SortIcon size={20} fill={isLightTheme ? '{colors.lightgray}' : '{colors.fg}'} />
-      </div>
+      <CommandsListIcon size={24} fill={token('colors.fgOverlay50')} />
       <FadeTransition in={isDropdownOpen} type='fast' unmountOnExit>
         <div
           className={cx(
