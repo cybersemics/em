@@ -24,6 +24,7 @@ When CI checks fail, follow this loop:
 6. If checks still fail, return to step 1.
 
 IMPORTANT:
+
 - Never skip this loop. Always verify checks pass before claiming success.
 - Never assume tests pass without checking. Hallucinating test results is the worst failure mode.
 - If CI still fails after 5 fix-push cycles, stop and escalate to the user with a summary of what you tried and what you observed.
