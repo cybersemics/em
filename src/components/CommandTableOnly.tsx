@@ -2,7 +2,7 @@ import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Command from '../@types/Command'
 import nonNull from '../util/nonNull'
-import CommandItem from './CommandItem'
+import CommandTableItem from './CommandTableItem'
 
 /** Renders a table of commands, with nothing else added. */
 const CommandTableOnly = ({
@@ -19,7 +19,7 @@ const CommandTableOnly = ({
   onSelect?: (command: Command | null) => void
   /** Search text that will be highlighted within the matched command title. */
   search?: string
-  /** See: CommandItem['isMobileGestures']. */
+  /** See: CommandTableItem['isMobileGestures']. */
   isMobileGestures?: boolean
 }) => {
   const fontSize = useSelector(state => state.fontSize)
@@ -33,8 +33,7 @@ const CommandTableOnly = ({
         {commands.filter(nonNull).map(command => {
           const selected = selectedCommand && command?.id === selectedCommand.id
           return (
-            <CommandItem
-              viewType='table'
+            <CommandTableItem
               customize={customize}
               key={command.id}
               onClick={
@@ -46,8 +45,6 @@ const CommandTableOnly = ({
               selected={selected}
               command={command}
               search={search}
-              alwaysShowDescription
-              tableMode
               isMobileGestures={isMobileGestures}
             />
           )

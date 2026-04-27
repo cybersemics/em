@@ -2,7 +2,7 @@ import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Command from '../@types/Command'
 import nonNull from '../util/nonNull'
-import CommandItem from './CommandItem'
+import CommandUniverseGridItem from './CommandUniverseGridItem'
 
 interface CommandUniverseGridProps {
   commands: Command[]
@@ -30,8 +30,7 @@ const CommandUniverseGrid = ({ commands, selectedCommand, onSelect, onHover, sea
         {commands.filter(nonNull).map(command => {
           const selected = selectedCommand && command.id === selectedCommand.id
           return (
-            <CommandItem
-              viewType='grid'
+            <CommandUniverseGridItem
               key={command.id}
               onClick={
                 onSelect &&
@@ -43,8 +42,6 @@ const CommandUniverseGrid = ({ commands, selectedCommand, onSelect, onHover, sea
               selected={selected}
               command={command}
               search={search}
-              alwaysShowDescription
-              tableMode
             />
           )
         })}
