@@ -1,9 +1,14 @@
 import { KnownDevices } from 'puppeteer'
+import click from '../helpers/click'
+import command from '../helpers/command'
 import emulate from '../helpers/emulate'
+import exportThoughts from '../helpers/exportThoughts'
 import longPressThought from '../helpers/longPressThought'
 import multiselectThoughts from '../helpers/multiselectThoughts'
 import paste from '../helpers/paste'
+import press from '../helpers/press'
 import waitForEditable from '../helpers/waitForEditable'
+import waitUntil from '../helpers/waitUntil'
 import { page } from '../setup'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
@@ -22,6 +27,24 @@ describe('multiselect', () => {
 
     expect(highlightedBullets.length).toBe(2)
     expect(alertContent).toContain('2 thoughts selected')
+  })
+  it('should delete all selected thoughts when Backspace is pressed with Select All active', async () => {
+    await paste(`
+        - A
+        - B
+        - C
+        `)
+
+    // Place caret at the beginning of C (as specified in the Steps to Reproduce)
+    const editableC = await waitForEditable('C')
+    await click(editableC, { edge: 'left' })
+    await waitUntil(() => window.getSelection()?.focusOffset === 0)
+
+    await command('selectAll')
+    await press('Backspace')
+
+    const exported = await exportThoughts()
+    expect(exported).toBe('')
   })
 })
 
