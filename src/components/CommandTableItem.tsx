@@ -1,15 +1,29 @@
-import React, { FC } from 'react'
+import React, { FC, useEffect, useRef } from 'react'
+import { DragSourceMonitor, useDrag } from 'react-dnd'
+import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import Command from '../@types/Command'
+import DragAndDropType from '../@types/DragAndDropType'
+import DragCommandZone from '../@types/DragCommandZone'
+import DragToolbarItem from '../@types/DragToolbarItem'
+import State from '../@types/State'
+import { dragCommandActionCreator as dragCommand } from '../actions/dragCommand'
 import { isTouch } from '../browser'
 import { gestureString } from '../commands'
-import useCommandItem from '../hooks/useCommandItem'
+import { noop } from '../constants'
+import useLottieIntervalAnimation from '../hooks/useLottieIntervalAnimation'
+import store from '../stores/app'
 import CommandKeyboardShortcut from './CommandKeyboardShortcut'
 import GestureDiagram from './GestureDiagram'
 import HighlightedText from './HighlightedText'
 
 const strokeWidth = 4
+
+/** Returns true if the command can be executed in the current state. */
+const isExecutable = (state: State, command: Command) =>
+  (!command.canExecute || command.canExecute(state)) &&
+  (command.allowExecuteFromModal || !state.showModal || !state.showMobileCommandUniverse)
 
 interface CommandTableItemProps {
   command: Command
@@ -26,7 +40,7 @@ interface CommandTableItemProps {
   isMobileGestures?: boolean
 }
 
-/** Renders a command as a table row inside a CommandTable (Help and CustomizeToolbar). */
+/** Renders a command as a table row inside a CommandTable (Help and CustomizeToolbar). Handles selection styling, drag-and-drop reordering for the toolbar customizer, and the keyboard-driven scroll-into-view behavior. */
 const CommandTableItem: FC<CommandTableItemProps> = ({
   command,
   search = '',
@@ -39,22 +53,63 @@ const CommandTableItem: FC<CommandTableItemProps> = ({
   isLastCommand,
   isMobileGestures = isTouch,
 }) => {
-  const { setRef, isDragging, isSelectedStyle, disabled, label, description, isAnimated, onAnimationComplete } =
-    useCommandItem({
-      command,
-      selected,
-      customize,
-      shouldScrollSelectedIntoView,
-      isFirstCommand,
-      isLastCommand,
-      animateOnSelect: !isTouch && !!command.svg,
-    })
+  const ref = useRef<HTMLTableRowElement | null>(null)
+
+  const [{ isDragging }, dragSource] = useDrag({
+    type: DragAndDropType.ToolbarButton,
+    item: (): DragToolbarItem => {
+      store.dispatch(dragCommand(command?.id || null))
+      return { command: command, zone: DragCommandZone.Remove }
+    },
+    canDrag: () => !!command && !!customize,
+    end: () => store.dispatch(dragCommand(null)),
+    collect: (monitor: DragSourceMonitor) => {
+      const item = monitor.getItem() as DragToolbarItem
+      return {
+        dragPreview: noop,
+        isDragging: monitor.isDragging(),
+        zone: item?.zone,
+      }
+    },
+  })
+
+  const isActive = command.isActive?.(store.getState())
+  const disabled = useSelector(state => !isExecutable(state, command))
+  const label = command.labelInverse && isActive ? command.labelInverse : command.label
+  const description = useSelector(state => {
+    const descriptionStringOrFunction = (isActive && command.descriptionInverse) || command.description
+    return typeof descriptionStringOrFunction === 'function'
+      ? descriptionStringOrFunction(state)
+      : descriptionStringOrFunction
+  })
+  const { isAnimated, onAnimationComplete } = useLottieIntervalAnimation({
+    enabled: !isTouch && !!command.svg && !!selected,
+  })
+
+  const isSelectedStyle = !!(selected || isDragging)
+
+  // Scroll-into-view runs every render where the row is selected (no dep array) so that dynamic scroll-container layout changes still re-anchor the selection correctly.
+  useEffect(() => {
+    if (!selected || !shouldScrollSelectedIntoView) return
+    if (!isFirstCommand && !isLastCommand) {
+      ref.current?.scrollIntoView({ block: 'nearest' })
+      return
+    }
+    // Edge rows: jump the scroll container to its absolute top/bottom rather than scrolling the row into view, so the list visibly anchors at its edge.
+    const scrollContainer = ref.current?.parentElement
+    if (scrollContainer) {
+      scrollContainer.scrollTop = isFirstCommand ? 0 : scrollContainer.scrollHeight
+    }
+  })
 
   const Icon = command.svg
 
   return (
     <tr
-      ref={setRef}
+      ref={current => {
+        ref.current = current
+        dragSource(current)
+      }}
       onMouseMove={onHover?.bind(null, command)}
       className={css({
         cursor: onClick && !disabled ? 'pointer' : undefined,

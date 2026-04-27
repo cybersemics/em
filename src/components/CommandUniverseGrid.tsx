@@ -6,15 +6,12 @@ import CommandUniverseGridItem from './CommandUniverseGridItem'
 
 interface CommandUniverseGridProps {
   commands: Command[]
-  selectedCommand?: Command
-  onSelect?: (command: Command | null) => void
-  onHover?: (command: Command) => void
   /** Search text that will be highlighted within the matched command title. */
   search?: string
 }
 
 /** Renders a 2-column grid of commands for the Command Universe surfaces. Pure presentation: receives pre-filtered commands and renders them. Chrome (search bar, sort button) lives in the parent. */
-const CommandUniverseGrid = ({ commands, selectedCommand, onSelect, onHover, search }: CommandUniverseGridProps) => {
+const CommandUniverseGrid = ({ commands, search }: CommandUniverseGridProps) => {
   const fontSize = useSelector(state => state.fontSize)
   return (
     <table className={css({ fontSize: '14px' })}>
@@ -27,24 +24,9 @@ const CommandUniverseGrid = ({ commands, selectedCommand, onSelect, onHover, sea
         // anchor all `em` units used in children to `fontSize`
         style={{ fontSize }}
       >
-        {commands.filter(nonNull).map(command => {
-          const selected = selectedCommand && command.id === selectedCommand.id
-          return (
-            <CommandUniverseGridItem
-              key={command.id}
-              onClick={
-                onSelect &&
-                ((_, command) => {
-                  onSelect(selected ? null : command)
-                })
-              }
-              onHover={onHover}
-              selected={selected}
-              command={command}
-              search={search}
-            />
-          )
-        })}
+        {commands.filter(nonNull).map(command => (
+          <CommandUniverseGridItem key={command.id} command={command} search={search} />
+        ))}
       </tbody>
     </table>
   )

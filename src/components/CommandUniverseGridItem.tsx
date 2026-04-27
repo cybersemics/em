@@ -1,70 +1,52 @@
-import React, { FC } from 'react'
+import { FC } from 'react'
+import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import Command from '../@types/Command'
+import State from '../@types/State'
 import { isTouch } from '../browser'
 import { gestureString } from '../commands'
-import useCommandItem from '../hooks/useCommandItem'
+import store from '../stores/app'
 import GestureDiagram from './GestureDiagram'
 import HighlightedText from './HighlightedText'
 
+/** Returns true if the command can be executed in the current state. */
+const isExecutable = (state: State, command: Command) =>
+  (!command.canExecute || command.canExecute(state)) &&
+  (command.allowExecuteFromModal || !state.showModal || !state.showMobileCommandUniverse)
+
 interface CommandUniverseGridItemProps {
   command: Command
+  /** Search text that will be highlighted within the matched command title. */
   search?: string
-  /** Click handler for the command. Applies pointer styles when defined. */
-  onClick?: (e: React.MouseEvent, command: Command) => void
-  selected?: boolean
-  onHover?: (command: Command) => void
-  shouldScrollSelectedIntoView?: boolean
-  isFirstCommand?: boolean
-  isLastCommand?: boolean
 }
 
-/** Renders a command as a grid cell inside a CommandUniverseGrid (Mobile/Desktop Command Universe). */
-const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({
-  command,
-  search = '',
-  onClick,
-  selected,
-  onHover,
-  shouldScrollSelectedIntoView,
-  isFirstCommand,
-  isLastCommand,
-}) => {
-  const { setRef, isDragging, isSelectedStyle, disabled, label, description, isAnimated, onAnimationComplete } =
-    useCommandItem({
-      command,
-      selected,
-      shouldScrollSelectedIntoView,
-      isFirstCommand,
-      isLastCommand,
-      animateOnSelect: !isTouch && !!command.svg,
-    })
+/** Renders a single command as a cell in CommandUniverseGrid. Browse-only — no selection, drag, or animation, since the Command Universe is for discovering commands rather than executing them. */
+const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, search = '' }) => {
+  const isActive = command.isActive?.(store.getState())
+  const disabled = useSelector(state => !isExecutable(state, command))
+  const label = command.labelInverse && isActive ? command.labelInverse : command.label
+  const description = useSelector(state => {
+    const descriptionStringOrFunction = (isActive && command.descriptionInverse) || command.description
+    return typeof descriptionStringOrFunction === 'function'
+      ? descriptionStringOrFunction(state)
+      : descriptionStringOrFunction
+  })
 
   const Icon = command.svg
 
   return (
     <tr
-      ref={setRef}
-      onMouseMove={onHover?.bind(null, command)}
       className={css({
-        cursor: onClick && !disabled ? 'pointer' : undefined,
         position: 'relative',
         textAlign: 'left',
-        backgroundColor: isSelectedStyle ? 'commandSelectedBg' : undefined,
         borderRadius: '8px',
         display: 'flex',
         flexDirection: 'column',
         gap: '0.533rem',
         justifyContent: 'flex-start',
         alignItems: 'center',
-        opacity: isDragging ? 0.5 : 1,
       })}
-      onClick={e => {
-        if (!disabled) {
-          onClick?.(e, command)
-        }
-      }}
     >
       <td
         className={css({
@@ -94,16 +76,8 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({
             />
           </div>
         ) : Icon ? (
-          <Icon
-            cssRaw={css.raw({
-              cursor: !disabled && onClick ? 'pointer' : 'default',
-            })}
-            fill={token(disabled ? 'colors.gray50' : 'colors.fg')}
-            animated={isAnimated}
-            animationComplete={onAnimationComplete}
-          />
+          <Icon fill={token(disabled ? 'colors.gray50' : 'colors.fg')} />
         ) : (
-          // placeholder for icon to keep spacing consistent
           <div className={css({ width: 24, height: 24 })} />
         )}
       </td>
