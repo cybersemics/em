@@ -33,6 +33,8 @@ interface GestureDiagramProps {
   styleCancelAsRegularGesture?: boolean
   /** Which kind of arrowhead to draw gesture diagrams with. By default, the arrowhead is filled. */
   arrowhead?: 'filled' | 'outlined'
+  /** When supplied, the per-segment fade interpolates between these two colors instead of the default single-color → bg fade. The path starts near `from` and ends near `to` (the arrowhead). */
+  gradient?: { from: string; to: string }
 }
 
 /** Returns the direction resulting from a 90 degree clockwise rotation. */
@@ -154,7 +156,17 @@ const ArcGradient = ({ index, extendedPath, size }: { index: number; extendedPat
 }
 
 /** Generate CSS rules defining the colors for the gradients that are applied to gesture diagram path segments. */
-const GradientStyleBlock = ({ color, highlight, path }: { color?: string; highlight?: number; path: Gesture }) => {
+const GradientStyleBlock = ({
+  color,
+  gradient,
+  highlight,
+  path,
+}: {
+  color?: string
+  gradient?: { from: string; to: string }
+  highlight?: number
+  path: Gesture
+}) => {
   const index = path === 'rdl' ? 3 : path === 'ldr' ? 2 : undefined
   // The initial path segment should start at 25% opacity. Subsequent path segmenets should start at 50% opacity.
   // The final path segment should start at 75% opacity.
@@ -172,9 +184,19 @@ const GradientStyleBlock = ({ color, highlight, path }: { color?: string; highli
             ? token('colors.vividHighlight')
             : color || token('colors.fg')
 
+        // When `gradient` is supplied, fade between the two given colors per segment instead of
+        // the default single-color → bg fade. Higher percentages weight `to`, so the path starts
+        // near `from` and ends near `to`.
+        const startMix = gradient
+          ? `color-mix(in srgb, ${gradient.to} ${startPercent}%, ${gradient.from})`
+          : `color-mix(in srgb, ${stopColor} ${startPercent}%, ${token('colors.bg')})`
+        const stopMix = gradient
+          ? `color-mix(in srgb, ${gradient.to} ${stopPercent}%, ${gradient.from})`
+          : `color-mix(in srgb, ${stopColor} ${stopPercent}%, ${token('colors.bg')})`
+
         return `
-            .${path}-gradient-${i}-start { stop-color: color-mix(in srgb, ${stopColor} ${startPercent}%, ${token('colors.bg')}) }
-            .${path}-gradient-${i}-stop { stop-color: color-mix(in srgb, ${stopColor} ${stopPercent}%, ${token('colors.bg')}) }
+            .${path}-gradient-${i}-start { stop-color: ${startMix} }
+            .${path}-gradient-${i}-stop { stop-color: ${stopMix} }
           `
       })}
     </style>
@@ -205,6 +227,7 @@ const GestureDiagram = ({
   rounded,
   styleCancelAsRegularGesture,
   arrowhead = 'filled',
+  gradient,
 }: GestureDiagramProps) => {
   const [id] = useState(createId())
 
@@ -348,6 +371,11 @@ const GestureDiagram = ({
     return `M ${startX} ${startY} A ${radius} ${radius} 0 0 ${sweepFlag} ${endX} ${endY}`
   }
 
+  // When a two-color gradient is supplied for a straight (non-rounded, non-rdld) gesture, render
+  // the whole gesture as a single <path> with one chord-aligned linear gradient. This avoids the
+  // visible seams that per-segment paths produce at their overlapping rounded joins.
+  const useSingleGradient = !!gradient && path !== 'rdld' && !rounded
+
   return (
     <span
       className={css({ display: 'inline-block' }, cssRaw)}
@@ -385,13 +413,27 @@ const GestureDiagram = ({
                     ? token('colors.vividHighlight')
                     : color || token('colors.fg')
               }
-              stroke={arrowhead === 'outlined' ? color || token('colors.fg') : 'none'}
+              stroke={
+                arrowhead === 'outlined' ? gradient?.to ?? color ?? token('colors.fg') : 'none'
+              }
               strokeWidth={arrowhead === 'outlined' ? strokeWidth / 3 : 0}
               style={{ filter: dropShadow }}
             />
           </marker>
           {extendedPath === 'rdld' ? (
             <MobileCommandUniverseGradients />
+          ) : useSingleGradient ? (
+            <linearGradient
+              id={`${extendedPath}-gradient-single`}
+              gradientUnits='userSpaceOnUse'
+              x1={positions[0].x}
+              y1={positions[0].y}
+              x2={positions[positions.length - 1].x}
+              y2={positions[positions.length - 1].y}
+            >
+              <stop offset='0%' stopColor={gradient!.from} />
+              <stop offset='100%' stopColor={gradient!.to} />
+            </linearGradient>
           ) : (
             pathSegments.map((segment, i) => {
               return rounded ? (
@@ -414,41 +456,60 @@ const GestureDiagram = ({
           )}
         </defs>
 
-        <GradientStyleBlock color={color} highlight={highlight} path={extendedPath} />
+        {!useSingleGradient && (
+          <GradientStyleBlock color={color} gradient={gradient} highlight={highlight} path={extendedPath} />
+        )}
 
-        {pathSegments.map((segment, i) => {
-          const { x, y } = positions[i]
-          return (
-            <path
-              d={
-                // use a custom '?' path for the Help gesture
-                path === 'rdld'
-                  ? i === 0
-                    ? 'M 29.7,13.5 Q 46.8,-4.5 63,13.5'
-                    : i === 1
-                      ? 'M 63,13.5 Q 72,27 54,40.5'
-                      : i === 2
-                        ? 'M 54,40.5 Q 45,49.5 45,58.5'
-                        : 'M 45,58.5 L 45,72'
-                  : rounded
-                    ? generateArcPath(i, Array.from(path) as Direction[])
-                    : `M ${x} ${y} l ${segment.dx * scale} ${segment.dy * scale}`
-              }
-              // segments do not change independently, so we can use index as the key
-              key={i}
-              stroke={`url(#${extendedPath}-gradient-${i})`}
-              strokeWidth={strokeWidth * 1.5}
-              strokeLinecap='round'
-              strokeLinejoin='round'
-              fill='none'
-              markerEnd={
-                // the help gesture does not have an arrowhead
-                i === pathSegments.length - 1 && path !== 'rdld' ? `url(#${id})` : undefined
-              }
-              style={{ filter: dropShadow }}
-            />
-          )
-        })}
+        {useSingleGradient ? (
+          // Render the entire path as one stroke so segment joins are part of a single
+          // continuous gradient instead of overlapping per-segment paths with their own fades.
+          <path
+            d={positions
+              .map((p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`))
+              .join(' ')}
+            stroke={`url(#${extendedPath}-gradient-single)`}
+            strokeWidth={strokeWidth * 1.5}
+            strokeLinecap='round'
+            strokeLinejoin='round'
+            fill='none'
+            markerEnd={`url(#${id})`}
+            style={{ filter: dropShadow }}
+          />
+        ) : (
+          pathSegments.map((segment, i) => {
+            const { x, y } = positions[i]
+            return (
+              <path
+                d={
+                  // use a custom '?' path for the Help gesture
+                  path === 'rdld'
+                    ? i === 0
+                      ? 'M 29.7,13.5 Q 46.8,-4.5 63,13.5'
+                      : i === 1
+                        ? 'M 63,13.5 Q 72,27 54,40.5'
+                        : i === 2
+                          ? 'M 54,40.5 Q 45,49.5 45,58.5'
+                          : 'M 45,58.5 L 45,72'
+                    : rounded
+                      ? generateArcPath(i, Array.from(path) as Direction[])
+                      : `M ${x} ${y} l ${segment.dx * scale} ${segment.dy * scale}`
+                }
+                // segments do not change independently, so we can use index as the key
+                key={i}
+                stroke={`url(#${extendedPath}-gradient-${i})`}
+                strokeWidth={strokeWidth * 1.5}
+                strokeLinecap='round'
+                strokeLinejoin='round'
+                fill='none'
+                markerEnd={
+                  // the help gesture does not have an arrowhead
+                  i === pathSegments.length - 1 && path !== 'rdld' ? `url(#${id})` : undefined
+                }
+                style={{ filter: dropShadow }}
+              />
+            )
+          })
+        )}
       </svg>
     </span>
   )
