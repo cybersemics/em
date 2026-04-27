@@ -1,8 +1,8 @@
 import React from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { SwitchTransition } from 'react-transition-group'
-import { css, cx } from '../../../styled-system/css'
-import { modalTextRecipe } from '../../../styled-system/recipes'
+import { css } from '../../../styled-system/css'
+import { dialogRecipe } from '../../../styled-system/recipes'
 import { toggleMobileCommandUniverseActionCreator } from '../../actions/toggleMobileCommandUniverse'
 import useCommandList from '../../hooks/useCommandList'
 import CommandUniverseGrid from '../CommandUniverseGrid'
@@ -28,57 +28,46 @@ const HiddenDialogAssets = () => (
  * Body of the dialog. Split out from MobileCommandUniverse so that useCommandList only runs while the dialog is open.
  * If it ran always, useFilteredCommands inside the hook would remain subscribed to gestureStore, and this would
  * trigger unnecessary re-renders when gestures are inputted.
+ *
+ * Renders the search row as a sibling of DialogContent (rather than inside the scroll container)
+ * so the search input lives directly under the dialog header and the command list scrolls
+ * underneath it without ever passing behind it.
  */
 const MobileCommandUniverseContent = () => {
   const { search, setSearch, sortOrder, setSortOrder, groups } = useCommandList()
-  const modalClasses = modalTextRecipe()
+  const dialog = dialogRecipe()
 
   return (
     <>
-      <div
-        className={css({
-          display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          gap: '5px',
-          position: 'relative',
-          zIndex: 1,
-        })}
-      >
+      <div className={dialog.headerSearchRow}>
         <SearchCommands onInput={setSearch} />
         <SortButton onSortChange={setSortOrder} />
       </div>
 
-      <SwitchTransition>
-        <FadeTransition key={`${sortOrder}-${search}`} in={true} type='medium' unmountOnExit>
-          <div>
-            {groups.map(group => (
-              <div
-                key={group.title}
-                className={css({
-                  position: 'relative',
-                  contain: 'layout paint',
-                })}
-              >
-                <h2
-                  className={cx(
-                    modalClasses.subtitle,
-                    css({
-                      fontSize: '1.15rem',
-                      borderBottom: 'none',
-                      padding: '0.5rem 0 1rem 0',
-                      margin: '0.444rem 0 0 0',
-                    }),
-                  )}
+      <DialogContent>
+        <SwitchTransition>
+          <FadeTransition key={`${sortOrder}-${search}`} in={true} type='medium' unmountOnExit>
+            <div>
+              {groups.map(group => (
+                <div
+                  key={group.title}
+                  className={css({
+                    position: 'relative',
+                    contain: 'layout paint',
+                  })}
                 >
-                  {group.title}
-                </h2>
-                <CommandUniverseGrid commands={group.commands} search={search} />
-              </div>
-            ))}
-          </div>
-        </FadeTransition>
-      </SwitchTransition>
+                  <div className={dialog.sectionHeader}>
+                    <div className={dialog.sectionHeaderLineLeft} />
+                    <h2 className={dialog.sectionHeaderText}>{group.title}</h2>
+                    <div className={dialog.sectionHeaderLineRight} />
+                  </div>
+                  <CommandUniverseGrid commands={group.commands} search={search} />
+                </div>
+              ))}
+            </div>
+          </FadeTransition>
+        </SwitchTransition>
+      </DialogContent>
     </>
   )
 }
@@ -103,10 +92,8 @@ const MobileCommandUniverse: React.FC = () => {
       <HiddenDialogAssets />
       <FadeTransition in={isOpen} unmountOnExit type='medium' nodeRef={nodeRef}>
         <Dialog onClose={handleClose} nodeRef={nodeRef}>
-          <DialogTitle onClose={handleClose}>Command Universe</DialogTitle>
-          <DialogContent>
-            <MobileCommandUniverseContent />
-          </DialogContent>
+          <DialogTitle onClose={handleClose}>Commands</DialogTitle>
+          <MobileCommandUniverseContent />
         </Dialog>
       </FadeTransition>
     </>

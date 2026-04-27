@@ -48,39 +48,29 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, se
         alignItems: 'center',
       })}
     >
-      <td
-        className={css({
-          boxSizing: 'border-box',
-          minWidth: 0,
-          width: '100%',
-        })}
-      >
-        {isTouch ? (
-          <div
-            className={css({
-              border: '1px solid {colors.fgOverlay50}',
-              borderRadius: '8px',
-              textAlign: { _mobile: 'center' },
+      {/* Gesture trace (touch). Box removed per spec — the artwork itself stays as-is. */}
+      {isTouch ? (
+        <td
+          className={css({
+            boxSizing: 'border-box',
+            minWidth: 0,
+            width: '100%',
+            textAlign: 'center',
+          })}
+        >
+          <GestureDiagram
+            cssRaw={css.raw({
+              width: { sm: '80px', md: '130px' },
+              height: { sm: '80px', md: '130px' },
             })}
-          >
-            <GestureDiagram
-              cssRaw={css.raw({
-                width: { sm: '80px', md: '130px' },
-                height: { sm: '80px', md: '130px' },
-              })}
-              path={gestureString(command)}
-              size={130}
-              arrowSize={25}
-              strokeWidth={7.5}
-              arrowhead={'outlined'}
-            />
-          </div>
-        ) : Icon ? (
-          <Icon fill={token(disabled ? 'colors.gray50' : 'colors.fg')} />
-        ) : (
-          <div className={css({ width: 24, height: 24 })} />
-        )}
-      </td>
+            path={gestureString(command)}
+            size={130}
+            arrowSize={25}
+            strokeWidth={7.5}
+            arrowhead={'outlined'}
+          />
+        </td>
+      ) : null}
 
       <td
         className={css({
@@ -93,25 +83,46 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, se
           width: '100%',
         })}
       >
-        <b
+        {/* Command icon inline with the title, per spec — replaces the previous stacked layout. */}
+        <div
           className={css({
-            minWidth: '4em',
-            lineHeight: '1em',
-            whiteSpace: 'normal',
-            overflowWrap: 'break-word',
-            fontSize: '0.8rem',
-            color: disabled ? 'gray45' : 'fg',
-            fontWeight: 'normal',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.4rem',
+            width: '100%',
           })}
         >
-          <HighlightedText value={label} match={search} disabled={disabled} />
-        </b>
+          {Icon && (
+            <Icon
+              cssRaw={css.raw({ flexShrink: 0 })}
+              size={16}
+              fill={token(disabled ? 'colors.gray50' : 'colors.fg')}
+            />
+          )}
+          <b
+            className={css({
+              minWidth: '4em',
+              lineHeight: '1em',
+              whiteSpace: 'normal',
+              overflowWrap: 'break-word',
+              // Command title — 14pt (0.875rem), white, slightly stronger weight per spec.
+              fontSize: '0.875rem',
+              color: disabled ? 'gray45' : 'fg',
+              fontWeight: 600,
+            })}
+          >
+            <HighlightedText value={label} match={search} disabled={disabled} />
+          </b>
+        </div>
 
         <p
           className={css({
-            fontSize: '0.622rem',
+            // 13.5pt (0.84375rem), white at 75% opacity per spec.
+            fontSize: '0.84375rem',
+            color: 'fgOverlay75',
             marginTop: '0.267rem',
             marginBottom: '0.267rem',
+            lineHeight: '1.25em',
           })}
         >
           {description}

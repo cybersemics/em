@@ -28,6 +28,13 @@ const dialogRecipe = defineSlotRecipe({
     'scrollbarThumb',
     'titleContainer',
     'titleText',
+    'headerSide',
+    'headerButton',
+    'headerSearchRow',
+    'sectionHeader',
+    'sectionHeaderText',
+    'sectionHeaderLineLeft',
+    'sectionHeaderLineRight',
   ],
   base: {
     /** Full-viewport backdrop — transparent fill plus the backdrop blur that softens whatever's behind the dialog. */
@@ -130,7 +137,6 @@ const dialogRecipe = defineSlotRecipe({
     /** The glass sheet itself — rounded translucent panel that hosts the dialog content and decorative layers. */
     glassSheet: {
       color: 'fg',
-      paddingTop: '0.75rem',
       borderRadius: '32px',
       width: '100%',
       boxSizing: 'border-box',
@@ -261,24 +267,120 @@ const dialogRecipe = defineSlotRecipe({
       // Add bottom padding to the inner content wrapper, so the mask doesn't fade out the last bit of content.
       paddingBottom: '2rem',
     },
-    /** Header row — flex row that lays out the title text and the close button. */
+    /**
+     * Header row — flex row laying out: left button cluster, gradient line, centered title,
+     * gradient line, right button cluster. The clusters take their natural width while
+     * the lines flex-grow into the available space so the title stays optically centered.
+     *
+     * paddingInline is offset from the content's 1.25rem inset so the *visible glyph*
+     * inside the back button optically aligns with the search glyph and section-header
+     * text down the left edge of the panel (the button has built-in inset around its icon).
+     */
     titleContainer: {
       display: 'flex',
-      justifyContent: 'space-between',
       alignItems: 'center',
-      // Matches contentInner.paddingLeft so the title shares a consistent inset with the content text.
-      paddingInline: '1.25rem',
+      // paddingInline and paddingBlock are kept equal so the buttons sit the same distance from the dialog's top edge as from its left/right edges.
+      paddingInline: '0.6875rem',
+      paddingBlock: '0.6875rem',
     },
-    /** The title heading itself — bold, with a responsive size bump on larger screens. */
+    /**
+     * Left/right cluster wrapper — flex row that holds the circular header buttons.
+     * `flex: 1` lets each cluster claim half the row so the centered title sits in the
+     * middle. `&:last-child` aligns the right cluster's buttons to the trailing edge.
+     */
+    headerSide: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0.25rem',
+      flex: 1,
+      '&:last-child': {
+        justifyContent: 'flex-end',
+      },
+    },
+    /**
+     * Reusable circular modal button — used four times in the dialog header
+     * (Back, Forward, Help, Close). The icon is supplied by the consumer.
+     */
+    headerButton: {
+      width: '36px',
+      height: '36px',
+      minWidth: '36px',
+      minHeight: '36px',
+      borderRadius: '50%',
+      backgroundColor: 'dialogHeaderButtonBg',
+      border: '1px solid {colors.dialogHeaderButtonBorder}',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      cursor: 'pointer',
+      padding: 0,
+      color: 'fg',
+      transition: 'background-color {durations.fast} ease-in-out',
+      _hover: {
+        backgroundColor: 'dialogHeaderButtonBgHover',
+      },
+    },
+    /** The title heading itself — slightly smaller than the original dialog title, centered between the button clusters. */
     titleText: {
-      fontWeight: '700',
+      fontWeight: '600',
       color: 'fg',
       borderBottom: 'none',
       fontSize: '1.25rem',
-      margin: '0.625rem 0',
-      '@media (min-width: 1200px)': {
-        fontSize: '1.75rem',
-      },
+      margin: 0,
+      textAlign: 'center',
+      whiteSpace: 'nowrap',
+    },
+    /**
+     * Search row that lives between the header and the scrollable content. Sits outside
+     * the scroll container so the command list scrolls underneath the dialog header,
+     * and the search input itself stays put with no need for sticky positioning.
+     * Left padding matches contentInner so the search glyph aligns with the section
+     * headers and command list down the left edge of the panel.
+     */
+    headerSearchRow: {
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: '0.5rem',
+      paddingLeft: '1.25rem',
+      paddingRight: '1.25rem',
+      paddingBlock: '0.5rem',
+    },
+    /**
+     * Section header row inside the command list — centered title flanked by gradient lines
+     * that fade outward into the panel. Used to delimit each command group ("Creating
+     * Thoughts", "Navigation", etc.) within the scrollable content.
+     */
+    sectionHeader: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0.5rem',
+      paddingBlock: '1rem 0.75rem',
+    },
+    /** Centered text of a section header — sits between the two gradient lines. */
+    sectionHeaderText: {
+      fontSize: '1rem',
+      fontWeight: 500,
+      color: 'fg',
+      borderBottom: 'none',
+      margin: 0,
+      whiteSpace: 'nowrap',
+    },
+    /**
+     * Left gradient hairline of the section header — fades from transparent (far left edge
+     * of the panel) to solid near the section title.
+     */
+    sectionHeaderLineLeft: {
+      flexGrow: 1,
+      height: '1px',
+      background: 'linear-gradient(to right, {colors.transparent} 0%, {colors.dialogHeaderDivider} 100%)',
+    },
+    /** Mirror on the right side: solid near the title, fading to transparent toward the panel edge. */
+    sectionHeaderLineRight: {
+      flexGrow: 1,
+      height: '1px',
+      background: 'linear-gradient(to right, {colors.dialogHeaderDivider} 0%, {colors.transparent} 100%)',
     },
   },
 })
