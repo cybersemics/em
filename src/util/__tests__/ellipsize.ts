@@ -10,7 +10,6 @@ it('ellipsize', () => {
   expect(ellipsize('<b>Lorem Ipsum <i>is</i> simply</b> dummy text')).toEqual('<b>Lorem Ipsum <i>is...</i></b>')
 })
 
-it.skip('ellipsize with custom limit', () => {
-  expect(ellipsize('Hello World', 8)).toEqual('Hello ...')
-  expect(ellipsize('Hi', 8)).toEqual('Hi')
+it.skip('ellipsize - tdd skip modify', () => {
+  expect(ellipsize('Hello World')).toEqual('NOT IMPLEMENTED')
 })
