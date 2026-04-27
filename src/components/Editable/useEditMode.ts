@@ -205,7 +205,7 @@ const useEditMode = ({
       editable.removeEventListener('mousedown', onMouseDown)
       editable.removeEventListener('focus', onFocus)
     }
-  }, [contentRef, editingOrOnCursor, isMulticursor, fontSize, allowDefaultSelection])
+  }, [contentRef, editingOrOnCursor, isMulticursor, fontSize, allowDefaultSelection, path, dispatch])
 
   // Resume focus if sidebar was just closed and isEditing is true.
   // Disable focus restoration on mobile until the hamburger menu & sidebar backdrop can be made to
