@@ -32,8 +32,8 @@ const CommandTableOnly = ({
         className={css({
           display: viewType === 'grid' ? 'grid' : 'table-row-group',
           ...(viewType === 'grid' && {
-            gridTemplateColumns: '1fr 1fr',
-            gap: '0.889rem',
+            gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
+            gap: '0.75rem',
           }),
         })}
         // anchor all `em` units used in children to `fontSize`

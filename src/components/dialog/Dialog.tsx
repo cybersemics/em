@@ -7,11 +7,11 @@ interface DialogProps {
 }
 
 /**
- * Dialog component.
+ * Dialog component with liminal glass treatment. All styling lives in dialogRecipe.
  */
 const Dialog: React.FC<PropsWithChildren<DialogProps>> = ({ children, onClose, nodeRef }) => {
   const dialogRef = useRef<HTMLDivElement | null>(null)
-  const dialogClasses = dialogRecipe()
+  const dialog = dialogRecipe()
 
   /**
    * Calls the onClose function when the user clicks outside the dialog.
@@ -21,7 +21,8 @@ const Dialog: React.FC<PropsWithChildren<DialogProps>> = ({ children, onClose, n
 
     /** When the user clicks outside the dialog, close the dialog. */
     const handleClickOutside = (event: MouseEvent) => {
-      if (currentDialogRef && !currentDialogRef.contains(event.target as Node)) {
+      const target = event.target as Node
+      if (currentDialogRef && !currentDialogRef.contains(target)) {
         onClose()
       }
     }
@@ -46,8 +47,8 @@ const Dialog: React.FC<PropsWithChildren<DialogProps>> = ({ children, onClose, n
 
     /** This event handler prevents touch events from propagating to the page. */
     const preventTouchMove = (e: TouchEvent) => {
-      if (!dialogElement.contains(e.target as Node)) {
-        // Only prevent scrolling if NOT inside dialog content
+      const target = e.target as Node
+      if (!dialogElement.contains(target)) {
         e.preventDefault()
       }
     }
@@ -60,10 +61,39 @@ const Dialog: React.FC<PropsWithChildren<DialogProps>> = ({ children, onClose, n
   }, [nodeRef])
 
   return (
-    <div ref={nodeRef} className={dialogClasses.overlay}>
-      <div ref={dialogRef} className={dialogClasses.container}>
-        {children}
-        <div className={dialogClasses.gradient} />
+    // Full-viewport backdrop with blur.
+    <div ref={nodeRef} className={dialog.overlay}>
+      {/* Soft full-screen color glow rendered behind the glass. */}
+      <div className={dialog.backgroundGlow} />
+
+      {/* Wrapper around the glass sheet — lets unclipped highlights bleed past the glass edges. */}
+      <div className={dialog.wrapper}>
+        {/* Top-of-screen light highlight that bleeds past the glass top edge. */}
+        <div className={dialog.highlightUnclipped} />
+        {/* Rainbow refraction that bleeds past the glass top edge. */}
+        <div className={dialog.rainbowUnclipped} />
+
+        {/* The glass sheet itself. Decorative layers stack via DOM order: container fill → clipped highlights → glass stroke → content → scroll gradient. */}
+        <div ref={dialogRef} className={dialog.glassSheet}>
+          {/* Muted-purple radial fill concentrated near the top of the glass. */}
+          <div className={dialog.containerBackground} />
+          {/* Rounded clip region containing the highlights "trapped" inside the glass. */}
+          <div className={dialog.glassClipWrapper}>
+            {/* Light highlight trapped inside the glass. */}
+            <div className={dialog.highlightClipped} />
+            {/* Rainbow refraction trapped inside the glass. */}
+            <div className={dialog.rainbowClipped} />
+          </div>
+          {/* Luminance mask that fades the glass stroke off toward the bottom. */}
+          <div className={dialog.glassStrokeMask}>
+            {/* Gradient border simulating light refracting through the glass edge. */}
+            <div className={dialog.glassStrokeBorder} />
+          </div>
+          {/* Dialog content (title + body). */}
+          <div className={dialog.contentLayer}>{children}</div>
+          {/* Bottom fade — visual cue that the dialog content is scrollable. */}
+          <div className={dialog.scrollGradient} />
+        </div>
       </div>
     </div>
   )

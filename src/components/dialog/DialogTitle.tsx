@@ -10,11 +10,10 @@ interface DialogTitleProps {
  * Dialog title.
  */
 const DialogTitle: React.FC<PropsWithChildren<DialogTitleProps>> = ({ children, onClose }) => {
-  const dialogClasses = dialogRecipe()
-
+  const dialog = dialogRecipe()
   return (
-    <div className={dialogClasses.titleContainer}>
-      <h2 className={dialogClasses.title}>{children}</h2>
+    <div className={dialog.titleContainer}>
+      <h2 className={dialog.titleText}>{children}</h2>
       <CloseButton onClick={onClose} />
     </div>
   )
