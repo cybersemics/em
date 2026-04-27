@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useRef, useState } from 'react'
+import { FC, useEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
@@ -182,7 +182,7 @@ const GestureMenuWithTransition: FC = () => {
   })
 
   // Sync Redux showGestureMenu to gestureStore animation state
-  React.useEffect(() => {
+  useEffect(() => {
     if (showGestureMenu && animationState === 'hidden') {
       // Start enter animation only when menu opens and we're in hidden state
       startGestureMenuEnter()
@@ -194,7 +194,7 @@ const GestureMenuWithTransition: FC = () => {
 
   // Transition from 'entering' to 'visible' to trigger the fade-in animation.
   // Component mounts with in={false} when 'entering', then in={true} when 'visible'.
-  React.useEffect(() => {
+  useEffect(() => {
     if (animationState === 'entering') {
       onGestureMenuEntered()
     }
