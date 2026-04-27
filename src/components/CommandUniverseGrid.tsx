@@ -3,6 +3,7 @@ import { css } from '../../styled-system/css'
 import Command from '../@types/Command'
 import nonNull from '../util/nonNull'
 import CommandUniverseGridItem from './CommandUniverseGridItem'
+import { useCommandUniverseDebug } from './dialog/CommandUniverseDebug'
 
 interface CommandUniverseGridProps {
   commands: Command[]
@@ -13,16 +14,16 @@ interface CommandUniverseGridProps {
 /** Renders a 2-column grid of commands for the Command Universe surfaces. Pure presentation: receives pre-filtered commands and renders them. Chrome (search bar, sort button) lives in the parent. */
 const CommandUniverseGrid = ({ commands, search }: CommandUniverseGridProps) => {
   const fontSize = useSelector(state => state.fontSize)
+  const { state: debug } = useCommandUniverseDebug()
   return (
     <table className={css({ fontSize: '14px' })}>
       <tbody
         className={css({
           display: 'grid',
           gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
-          gap: '0.75rem',
         })}
-        // anchor all `em` units used in children to `fontSize`
-        style={{ fontSize }}
+        // anchor all `em` units used in children to `fontSize`; gap is debug-tunable.
+        style={{ fontSize, gap: `${debug.gridGap}rem` }}
       >
         {commands.filter(nonNull).map(command => (
           <CommandUniverseGridItem key={command.id} command={command} search={search} />

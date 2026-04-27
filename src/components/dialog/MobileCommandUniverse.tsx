@@ -9,6 +9,11 @@ import CommandUniverseGrid from '../CommandUniverseGrid'
 import CommandUniverseSearch from '../CommandUniverseSearch'
 import CommandUniverseSortButton from '../CommandUniverseSortButton'
 import FadeTransition from '../FadeTransition'
+import {
+  CommandUniverseDebugProvider,
+  CommandUniverseDebugUI,
+  useCommandUniverseDebug,
+} from './CommandUniverseDebug'
 import Dialog from './Dialog'
 import DialogContent from './DialogContent'
 import DialogTitle from './DialogTitle'
@@ -36,6 +41,7 @@ const HiddenDialogAssets = () => (
 const MobileCommandUniverseContent = () => {
   const { search, setSearch, sortOrder, setSortOrder, groups } = useCommandList()
   const dialog = dialogRecipe()
+  const { state: debug } = useCommandUniverseDebug()
 
   return (
     <>
@@ -48,7 +54,7 @@ const MobileCommandUniverseContent = () => {
         <SwitchTransition>
           <FadeTransition key={`${sortOrder}-${search}`} in={true} type='medium' unmountOnExit>
             <div>
-              {groups.map(group => (
+              {groups.map((group, index) => (
                 <div
                   key={group.title}
                   className={css({
@@ -56,9 +62,18 @@ const MobileCommandUniverseContent = () => {
                     contain: 'layout paint',
                   })}
                 >
-                  <div className={dialog.sectionHeader}>
+                  <div
+                    className={dialog.sectionHeader}
+                    style={{
+                      gap: `${debug.sectionGap}rem`,
+                      paddingTop: index === 0 ? 0 : `${debug.sectionPaddingTop}rem`,
+                      paddingBottom: `${debug.sectionPaddingBottom}rem`,
+                    }}
+                  >
                     <div className={dialog.sectionHeaderLineLeft} />
-                    <h2 className={dialog.sectionHeaderText}>{group.title}</h2>
+                    <h2 className={dialog.sectionHeaderText} style={{ fontSize: `${debug.sectionTitleSize}rem` }}>
+                      {group.title}
+                    </h2>
                     <div className={dialog.sectionHeaderLineRight} />
                   </div>
                   <CommandUniverseGrid commands={group.commands} search={search} />
@@ -90,12 +105,16 @@ const MobileCommandUniverse: React.FC = () => {
   return (
     <>
       <HiddenDialogAssets />
-      <FadeTransition in={isOpen} unmountOnExit type='medium' nodeRef={nodeRef}>
-        <Dialog onClose={handleClose} nodeRef={nodeRef}>
-          <DialogTitle onClose={handleClose}>Commands</DialogTitle>
-          <MobileCommandUniverseContent />
-        </Dialog>
-      </FadeTransition>
+      <CommandUniverseDebugProvider>
+        <FadeTransition in={isOpen} unmountOnExit type='medium' nodeRef={nodeRef}>
+          <Dialog onClose={handleClose} nodeRef={nodeRef}>
+            <DialogTitle onClose={handleClose}>Commands</DialogTitle>
+            <MobileCommandUniverseContent />
+          </Dialog>
+        </FadeTransition>
+        {/* Live design-tuning overlay (toggled via the floating "DEBUG" pill). */}
+        {isOpen && <CommandUniverseDebugUI />}
+      </CommandUniverseDebugProvider>
     </>
   )
 }

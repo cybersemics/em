@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { css, cx } from '../../styled-system/css'
-import { token } from '../../styled-system/tokens'
 import CommandSortType from '../@types/CommandSortType'
+import { useCommandUniverseDebug } from './dialog/CommandUniverseDebug'
+import AToZIcon from './icons/AToZIcon'
 import CommandsListIcon from './icons/CommandsListIcon'
 import FadeTransition from './FadeTransition'
 import SortOption from './SortOption'
@@ -20,6 +21,7 @@ interface CommandUniverseSortButtonProps {
 const CommandUniverseSortButton = ({ onSortChange }: CommandUniverseSortButtonProps) => {
   const [isDropdownOpen, setDropdownOpen] = useState(false)
   const [selectedSort, setSelectedSort] = useState<CommandSortType>('type')
+  const { state: debug } = useCommandUniverseDebug()
 
   /** Closes the sort dropdown when the user scrolls. */
   const handleScroll = () => {
@@ -46,8 +48,6 @@ const CommandUniverseSortButton = ({ onSortChange }: CommandUniverseSortButtonPr
       aria-label='Group commands'
       onClick={() => setDropdownOpen(!isDropdownOpen)}
       className={css({
-        width: '24px',
-        height: '24px',
         border: 'none',
         background: 'transparent',
         padding: 0,
@@ -57,9 +57,48 @@ const CommandUniverseSortButton = ({ onSortChange }: CommandUniverseSortButtonPr
         justifyContent: 'center',
         position: 'relative',
         color: 'fg',
+        flex: 'none',
       })}
+      style={{ width: debug.sortIconSize, height: debug.sortIconSize }}
     >
-      <CommandsListIcon size={24} fill={token('colors.fg')} />
+      {/*
+       * `flex: none` cancels iconRecipe's base `flex: 1`, which would otherwise let the
+       * glyph grow or shrink to whatever size the flex parent gives it. The wrapping div
+       * has explicit size = sortIconSize so the icon always renders at its declared size.
+       */}
+      <div
+        className={css({
+          flex: 'none',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        })}
+        style={{
+          width: debug.sortIconSize,
+          height: debug.sortIconSize,
+          opacity: debug.sortIconOpacity,
+          // Same plus-lighter blend as the search icon and gradient text so the row
+          // reads as one continuous luminous element.
+          mixBlendMode: debug.iconsPlusLighter ? 'plus-lighter' : 'normal',
+        }}
+      >
+        {/* Reflect the active sort mode: A→Z glyph for alphabetical, list/group glyph for type. */}
+        {selectedSort === 'alphabetical' ? (
+          <AToZIcon
+            size={debug.sortIconSize}
+            fill={debug.sortIconColor}
+            strokeWidth={debug.sortIconStroke}
+            cssRaw={css.raw({ flex: 'none' })}
+          />
+        ) : (
+          <CommandsListIcon
+            size={debug.sortIconSize}
+            fill={debug.sortIconColor}
+            strokeWidth={debug.sortIconStroke}
+            cssRaw={css.raw({ flex: 'none' })}
+          />
+        )}
+      </div>
       <FadeTransition in={isDropdownOpen} type='fast' unmountOnExit>
         <div
           className={cx(
