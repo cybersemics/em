@@ -3,7 +3,10 @@ import newSubthoughtCommand from '../../../commands/newSubthought'
 import newThoughtCommand from '../../../commands/newThought'
 import exportThoughts from '../helpers/exportThoughts'
 import gesture from '../helpers/gesture'
+import getEditingText from '../helpers/getEditingText'
 import keyboard from '../helpers/keyboard'
+import paste from '../helpers/paste'
+import waitForEditable from '../helpers/waitForEditable'
 import { page } from '../setup'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
@@ -92,5 +95,44 @@ describe('chaining commands', () => {
 - a
   - 
 `)
+  })
+})
+
+describe('cursor during gesture', () => {
+  beforeEach(async () => {
+    await page.emulate(KnownDevices['iPhone 15 Pro'])
+  })
+
+  /** Regression test for https://github.com/cybersemics/em/issues/3888. */
+  it.skip('cursor should not move to a thought when a gesture starts on it', async () => {
+    await paste(`
+      - a
+      - b
+      - c
+    `)
+
+    // set cursor on a
+    const aEditable = await waitForEditable('a')
+    // @ts-expect-error - https://github.com/puppeteer/puppeteer/issues/8852
+    await aEditable.asElement()?.click()
+
+    // get the screen position of thought b
+    const bEditable = await waitForEditable('b')
+    const boundingBox = await bEditable.asElement()?.boundingBox()
+    if (!boundingBox) throw new Error('Could not get bounding box of thought b')
+
+    const x = boundingBox.x + boundingBox.width / 2
+    const y = boundingBox.y + boundingBox.height / 2
+
+    // start a downward gesture (↓) with touchStart directly on thought b
+    await page.touchscreen.touchStart(x, y)
+    for (let step = 1; step <= 8; step++) {
+      await page.touchscreen.touchMove(x, y + step * 10)
+    }
+    await page.touchscreen.touchEnd()
+
+    // cursor should not have moved to b
+    const cursorText = await getEditingText()
+    expect(cursorText).toBe('a')
   })
 })
