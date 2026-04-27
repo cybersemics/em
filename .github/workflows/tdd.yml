@@ -295,6 +295,10 @@ jobs:
       - name: Fetch PR head
         run: git fetch origin ${{ github.event.pull_request.head.sha }}
 
+      - name: Restore GitHub scripts from PR HEAD
+        if: github.event_name == 'pull_request'
+        run: git checkout FETCH_HEAD -- .github/scripts/
+
       - name: Generate and apply test diff
         id: patch
         run: |
@@ -381,6 +385,11 @@ jobs:
             echo ""
             echo "❌ TDD concern: changed tests PASS on the base branch."
             echo "This may indicate the tests do not cover new functionality introduced by this PR."
+
+            # Emit GitHub diff annotations for each added it()/test() call so the
+            # TDD violation is highlighted directly in the PR file changes view.
+            sh .github/scripts/annotate-tdd-violations.sh /tmp/test.patch
+
             exit 1
           fi
 
@@ -412,7 +421,7 @@ jobs:
 
       - name: Restore GitHub Actions files from PR HEAD
         if: github.event_name == 'pull_request'
-        run: git checkout FETCH_HEAD -- .github/actions/
+        run: git checkout FETCH_HEAD -- .github/actions/ .github/scripts/
 
       - name: Generate and apply test diff
         id: patch
@@ -506,6 +515,11 @@ jobs:
             echo ""
             echo "❌ TDD concern: changed puppeteer tests PASS on the base branch."
             echo "This may indicate the tests do not cover new functionality introduced by this PR."
+
+            # Emit GitHub diff annotations for each added it()/test() call so the
+            # TDD violation is highlighted directly in the PR file changes view.
+            sh .github/scripts/annotate-tdd-violations.sh /tmp/test.patch
+
             exit 1
           fi
 
