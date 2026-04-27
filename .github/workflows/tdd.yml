@@ -295,42 +295,31 @@ jobs:
       - name: Fetch PR head
         run: git fetch origin ${{ github.event.pull_request.head.sha }}
 
-      - name: Generate and apply test diff
+      - name: Checkout test files from PR head
         id: patch
         run: |
-          MERGE_BASE="${{ needs.detect.outputs.merge_base }}"
-          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
-
           # Decode the file list
           UNIT_FILES=$(echo "${{ needs.detect.outputs.unit_files }}" | base64 -d)
 
           echo "=== Changed unit test files ==="
           echo "$UNIT_FILES"
 
-          # Generate diff for only the changed test files
-          # shellcheck disable=SC2086
-          git diff "$MERGE_BASE" "$HEAD_SHA" -- $UNIT_FILES > /tmp/test.patch || true
-
-          if [ ! -s /tmp/test.patch ]; then
-            echo "Empty patch — nothing to apply"
+          if [ -z "$UNIT_FILES" ]; then
+            echo "No unit test files to process"
             echo "empty=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
-          echo "=== Patch preview (first 100 lines) ==="
-          head -100 /tmp/test.patch
+          # Check out each test file directly from the PR head. This reliably handles
+          # both modified files and brand-new test files (including new directories),
+          # where git apply --3way can fail because there is no base blob to merge.
+          echo "=== Checking out test files from PR head ==="
+          for f in $UNIT_FILES; do
+            echo "Checking out: $f"
+            git checkout FETCH_HEAD -- "$f"
+          done
 
-          # Apply the patch; allow failures for new files (--3way helps)
-          if git apply --3way /tmp/test.patch 2>/tmp/patch-error.log; then
-            echo "Patch applied successfully"
-            echo "empty=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "::warning::Patch application had issues (may be expected for new test files)"
-            cat /tmp/patch-error.log
-            # Try with --reject to apply what we can
-            git apply --reject /tmp/test.patch 2>/dev/null || true
-            echo "empty=false" >> "$GITHUB_OUTPUT"
-          fi
+          echo "empty=false" >> "$GITHUB_OUTPUT"
 
       - name: Enable Corepack
         if: steps.patch.outputs.empty != 'true'
@@ -414,38 +403,30 @@ jobs:
         if: github.event_name == 'pull_request'
         run: git checkout FETCH_HEAD -- .github/actions/
 
-      - name: Generate and apply test diff
+      - name: Checkout test files from PR head
         id: patch
         run: |
-          MERGE_BASE="${{ needs.detect.outputs.merge_base }}"
-          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
-
           PUPPETEER_FILES=$(echo "${{ needs.detect.outputs.puppeteer_files }}" | base64 -d)
 
           echo "=== Changed puppeteer test files ==="
           echo "$PUPPETEER_FILES"
 
-          # shellcheck disable=SC2086
-          git diff "$MERGE_BASE" "$HEAD_SHA" -- $PUPPETEER_FILES > /tmp/test.patch || true
-
-          if [ ! -s /tmp/test.patch ]; then
-            echo "Empty patch — nothing to apply"
+          if [ -z "$PUPPETEER_FILES" ]; then
+            echo "No puppeteer test files to process"
             echo "empty=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
-          echo "=== Patch preview (first 100 lines) ==="
-          head -100 /tmp/test.patch
+          # Check out each test file directly from the PR head. This reliably handles
+          # both modified files and brand-new test files (including new directories),
+          # where git apply --3way can fail because there is no base blob to merge.
+          echo "=== Checking out puppeteer test files from PR head ==="
+          for f in $PUPPETEER_FILES; do
+            echo "Checking out: $f"
+            git checkout FETCH_HEAD -- "$f"
+          done
 
-          if git apply --3way /tmp/test.patch 2>/tmp/patch-error.log; then
-            echo "Patch applied successfully"
-            echo "empty=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "::warning::Patch application had issues"
-            cat /tmp/patch-error.log
-            git apply --reject /tmp/test.patch 2>/dev/null || true
-            echo "empty=false" >> "$GITHUB_OUTPUT"
-          fi
+          echo "empty=false" >> "$GITHUB_OUTPUT"
 
       - name: Enable Corepack
         if: steps.patch.outputs.empty != 'true'
