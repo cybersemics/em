@@ -39,6 +39,25 @@ function isSetIsMulticursorExecutingAction(action: Action<string>): action is Se
 function isEditThoughtAction(action: UnknownAction): action is UnknownAction & editThoughtPayload {
   return action.type === 'editThought'
 }
+
+/** Compare the text contents of the old and new values to determine the direction of the edit.
+ * Returns None if the action is not an editThought action or if the text content length is the same.
+ */
+function getEditThoughtDirection(action: UnknownAction): EditThoughtDirection {
+  if (!isEditThoughtAction(action)) return EditThoughtDirection.None
+
+  const oldElement = document.createElement('div')
+  const newElement = document.createElement('div')
+  oldElement.innerHTML = action.oldValue
+  newElement.innerHTML = action.newValue
+
+  return newElement.textContent.length === oldElement.textContent.length
+    ? EditThoughtDirection.None
+    : newElement.textContent.length > oldElement.textContent.length
+      ? EditThoughtDirection.Longer
+      : EditThoughtDirection.Shorter
+}
+
 /** Properties that are ignored when generating state patches. */
 const statePropertiesToOmit: (keyof State)[] = ['alert', 'cursorCleared', 'editableNonce', 'pushQueue']
 
@@ -252,11 +271,10 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       }
 
       // Determine if an edit is an addition or a deletion
-      const editThoughtDirection = isEditThoughtAction(action)
-        ? action.newValue.length > action.oldValue.length
-          ? EditThoughtDirection.Longer
-          : EditThoughtDirection.Shorter
-        : EditThoughtDirection.None
+      const editThoughtDirection = getEditThoughtDirection(action)
+
+      const shouldMergeWithLastEditThought =
+        editThoughtDirection !== EditThoughtDirection.None && editThoughtDirection === lastEditThoughtDirection
 
       // Some actions are merged together into a single undo/redo patch.
       // - Navigation actions are merged with the previous non-navigation action. This matches the behavior of most word processors where undo will revert the last destructive action, and the cursor will be restored to where it was before. For example, if the user edits 'a' to 'aa', moves the cursor to 'b', and then undoes, the cursor will be restored to 'aa' then the edit will be undone.
@@ -266,10 +284,11 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       // - Chained commands will be merged into the previous command, e.g. Select All + Categorize
       if (
         (isNavigation(actionType) && isNavigation(lastAction?.type)) ||
-        (actionType === 'editThought' && editThoughtDirection === lastEditThoughtDirection) ||
+        shouldMergeWithLastEditThought ||
         actionType === 'closeAlert' ||
         state.isMulticursorExecuting ||
-        (lastAction as UnknownAction)?.mergeUndo
+        (lastAction as UnknownAction)?.mergeNext ||
+        (isEditThoughtAction(action) && action.mergePrev)
       ) {
         lastAction = action
         const lastUndoPatch = nthLast(state.undoPatches, 1)
