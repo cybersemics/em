@@ -397,11 +397,11 @@ const dialogRecipe = defineSlotRecipe({
       // 1rem horizontal gap leaves a comfortable margin between the title text and
       // the gradient hairlines that fade outward on either side.
       gap: '1rem',
-      paddingBlock: '0.5rem 0.75rem',
+      paddingBlock: '1.25rem',
     },
     /** Centered text of a section header — sits between the two gradient lines. */
     sectionHeaderText: {
-      fontSize: '1.125rem',
+      fontSize: '1rem',
       fontWeight: 500,
       color: 'fg',
       borderBottom: 'none',
