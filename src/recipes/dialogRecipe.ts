@@ -306,22 +306,63 @@ const dialogRecipe = defineSlotRecipe({
       minWidth: '36px',
       minHeight: '36px',
       borderRadius: '50%',
-      backgroundColor: 'dialogHeaderButtonBg',
-      border: '1px solid {colors.dialogHeaderButtonBorder}',
+      border: 'none',
+      // Subtle white sheen from upper-left to lower-right (Figma 11:2315) — softens the otherwise flat translucent fill into something glassy.
+      background:
+        'linear-gradient(191.32deg, {colors.dialogHeaderButtonBg} 5.64%, {colors.dialogHeaderButtonBgFade} 83.21%)',
+      // Soft lavender outer glow — Figma 11:2314 drop-shadow. Uses --btn-shadow-opacity (default 0.05, dialed-in value) so the debug overlay can override it live.
+      boxShadow: '0 0 8.7px rgba(179, 164, 255, var(--btn-shadow-opacity, 0.05))',
+      // The gradient border (Figma 11:2314 stroke) is painted by the ::before overlay using the same padding-box/border-box mask trick as `glassStrokeBorder`. Done with a pseudo so the inner fill above stays a clean single-gradient `background` (mixing two gradients with different clip boxes via the `background` shorthand was rendering wrong in Panda). --btn-stroke-opacity dials the whole stroke from the debug overlay.
+      position: 'relative',
+      _before: {
+        content: '""',
+        position: 'absolute',
+        inset: 0,
+        borderRadius: 'inherit',
+        padding: '1px',
+        background:
+          'linear-gradient(180deg, {colors.dialogHeaderButtonBorder} 0%, {colors.dialogHeaderButtonBorderFade} 100%)',
+        WebkitMask: 'linear-gradient(white 0 0) content-box, linear-gradient(white 0 0)',
+        WebkitMaskComposite: 'xor',
+        mask: 'linear-gradient(white 0 0) content-box, linear-gradient(white 0 0)',
+        maskComposite: 'exclude',
+        pointerEvents: 'none',
+        opacity: 'var(--btn-stroke-opacity, 0.35)',
+      },
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       cursor: 'pointer',
       padding: 0,
       color: 'fg',
-      transition: 'background-color {durations.fast} ease-in-out',
-      _hover: {
-        backgroundColor: 'dialogHeaderButtonBgHover',
+      // Press-only feedback (no hover state). The brighter active fill is painted as an
+      // ::after overlay with z-index: -1 (renders between the button's bg and its content
+      // — `isolation: isolate` keeps the negative z-index from escaping). Transitioning
+      // *opacity* on the overlay rather than the gradient itself gives a smooth eased fade
+      // both into and out of the active state — `background` shorthand transitions on
+      // gradients aren't reliably interpolated cross-browser and tend to snap.
+      isolation: 'isolate',
+      _after: {
+        content: '""',
+        position: 'absolute',
+        inset: 0,
+        borderRadius: 'inherit',
+        background:
+          'linear-gradient(191.32deg, {colors.dialogHeaderButtonBgHover} 5.64%, {colors.dialogHeaderButtonBgFade} 83.21%)',
+        opacity: 0,
+        transition: 'opacity {durations.fast} ease-out',
+        pointerEvents: 'none',
+        zIndex: -1,
+      },
+      _active: {
+        _after: {
+          opacity: 1,
+        },
       },
     },
     /** The title heading itself — slightly smaller than the original dialog title, centered between the button clusters. */
     titleText: {
-      fontWeight: '600',
+      fontWeight: '400',
       color: 'fg',
       borderBottom: 'none',
       fontSize: '1.25rem',

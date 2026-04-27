@@ -96,9 +96,19 @@ const colors = {
     dialogGlassStrokeBright: 'hsla(0, 0%, 100%, 0.74)',
     dialogGlassMaskFade: 'rgba(255, 255, 255, 0.07)',
     dialogScrollShadow: 'rgba(0, 0, 0, 0.4)',
-    dialogHeaderButtonBg: 'rgba(255, 255, 255, 0.06)',
-    dialogHeaderButtonBgHover: 'rgba(255, 255, 255, 0.12)',
-    dialogHeaderButtonBorder: 'rgba(255, 255, 255, 0.12)',
+    // Gradient top stop for the dialog header circular button — matches Figma 11:2314.
+    dialogHeaderButtonBg: 'rgba(255, 255, 255, 0.04)',
+    // Gradient bottom stop for the dialog header circular button — fully transparent.
+    dialogHeaderButtonBgFade: 'rgba(255, 255, 255, 0)',
+    dialogHeaderButtonBgHover: 'rgba(255, 255, 255, 0.10)',
+    // Border gradient top stop — bright glass-edge highlight per Figma.
+    dialogHeaderButtonBorder: 'rgba(255, 255, 255, 0.46)',
+    // Border gradient bottom stop — dim fade so the stroke softens toward the bottom.
+    dialogHeaderButtonBorderFade: 'rgba(255, 255, 255, 0.04)',
+    // Icon color (Back / Forward / Help / Close glyphs) — soft lavender that picks up the button's drop-shadow tint.
+    dialogHeaderButtonIcon: '#CECAED',
+    // Soft lavender outer glow on the circular button — matches Figma drop-shadow.
+    dialogHeaderButtonShadow: 'rgba(179, 164, 255, 0.5)',
     dialogHeaderDivider: 'rgba(255, 255, 255, 0.12)',
   },
   light: {
@@ -198,9 +208,14 @@ const colors = {
     dialogGlassStrokeBright: 'hsla(0, 0%, 100%, 0.74)',
     dialogGlassMaskFade: 'rgba(255, 255, 255, 0.07)',
     dialogScrollShadow: 'rgba(0, 0, 0, 0.4)',
-    dialogHeaderButtonBg: 'rgba(255, 255, 255, 0.06)',
-    dialogHeaderButtonBgHover: 'rgba(255, 255, 255, 0.12)',
-    dialogHeaderButtonBorder: 'rgba(255, 255, 255, 0.12)',
+    // Light theme keeps parity with dark — same Figma values for the circular header button.
+    dialogHeaderButtonBg: 'rgba(255, 255, 255, 0.04)',
+    dialogHeaderButtonBgFade: 'rgba(255, 255, 255, 0)',
+    dialogHeaderButtonBgHover: 'rgba(255, 255, 255, 0.10)',
+    dialogHeaderButtonBorder: 'rgba(255, 255, 255, 0.46)',
+    dialogHeaderButtonBorderFade: 'rgba(255, 255, 255, 0.04)',
+    dialogHeaderButtonIcon: '#CECAED',
+    dialogHeaderButtonShadow: 'rgba(179, 164, 255, 0.5)',
     dialogHeaderDivider: 'rgba(255, 255, 255, 0.12)',
   },
 } as const
