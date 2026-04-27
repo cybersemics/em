@@ -24,7 +24,11 @@ const HiddenDialogAssets = () => (
   </>
 )
 
-/** Renders the search/sort chrome and the filtered command grid groups. */
+/**
+ * Body of the dialog. Split out from MobileCommandUniverse so that useCommandList only runs while the dialog is open.
+ * If it ran always, useFilteredCommands inside the hook would remain subscribed to gestureStore, and this would
+ * trigger unnecessary re-renders when gestures are inputted.
+ */
 const MobileCommandUniverseContent = () => {
   const { search, setSearch, sortOrder, setSortOrder, groups } = useCommandList()
   const modalClasses = modalTextRecipe()
