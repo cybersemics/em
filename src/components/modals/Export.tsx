@@ -245,6 +245,7 @@ const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
 
   // Close the dropdown when clicking outside of it. Inlined from the unmaintained use-onclickoutside package.
   useEffect(() => {
+    /** Closes the dropdown on mousedown/touchstart outside the dropdown element. */
     const listener = (e: MouseEvent | TouchEvent) => {
       if (!dropDownRef.current || dropDownRef.current.contains(e.target as Node)) return
       closeDropdown()
