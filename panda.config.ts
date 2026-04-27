@@ -435,6 +435,8 @@ export default defineConfig({
             'hamburgerMenu',
             'sidebar',
             'modal',
+            'commandCenter',
+            'commandCenterBlur',
             'footer',
             'toolbarContainer',
             'toolbarOverlay',
