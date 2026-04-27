@@ -1,13 +1,11 @@
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Command from '../@types/Command'
-import { CommandViewType } from '../@types/CommandViewType'
 import nonNull from '../util/nonNull'
 import CommandItem from './CommandItem'
 
 /** Renders a table of commands, with nothing else added. */
 const CommandTableOnly = ({
-  viewType = 'table',
   commands,
   selectedCommand,
   customize,
@@ -15,7 +13,6 @@ const CommandTableOnly = ({
   search,
   isMobileGestures,
 }: {
-  viewType?: CommandViewType
   commands: Command[]
   selectedCommand?: Command
   customize?: boolean
@@ -27,15 +24,9 @@ const CommandTableOnly = ({
 }) => {
   const fontSize = useSelector(state => state.fontSize)
   return (
-    <table className={css({ fontSize: '14px', width: viewType === 'grid' ? undefined : '100%' })}>
+    <table className={css({ fontSize: '14px', width: '100%' })}>
       <tbody
-        className={css({
-          display: viewType === 'grid' ? 'grid' : 'table-row-group',
-          ...(viewType === 'grid' && {
-            gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
-            gap: '0.75rem',
-          }),
-        })}
+        className={css({ display: 'table-row-group' })}
         // anchor all `em` units used in children to `fontSize`
         style={{ fontSize }}
       >
@@ -43,7 +34,7 @@ const CommandTableOnly = ({
           const selected = selectedCommand && command?.id === selectedCommand.id
           return (
             <CommandItem
-              viewType={viewType}
+              viewType='table'
               customize={customize}
               key={command.id}
               onClick={

@@ -13,7 +13,6 @@ interface CommandTableProps {
   customize?: boolean
   onSelect?: (command: Command | null) => void
   selectedCommand?: Command
-  viewType?: 'table' | 'grid'
 }
 
 const toggleButton = cva({
@@ -55,7 +54,7 @@ const MobileGestureToggle = ({
 }
 
 /** Renders a table of commands with a fade-in animation when sorting changes. */
-const CommandTable = ({ customize, onSelect, selectedCommand, viewType = 'table' }: CommandTableProps) => {
+const CommandTable = ({ customize, onSelect, selectedCommand }: CommandTableProps) => {
   const { search, setSearch, sortOrder, setSortOrder, groups } = useCommandList()
   const [isMobileGestures, setIsMobileGestures] = useState(isTouch)
 
@@ -73,9 +72,7 @@ const CommandTable = ({ customize, onSelect, selectedCommand, viewType = 'table'
       >
         <SearchCommands onInput={setSearch} />
         <SortButton onSortChange={setSortOrder} />
-        {viewType !== 'grid' && (
-          <MobileGestureToggle isMobileGestures={isMobileGestures} setIsMobileGestures={setIsMobileGestures} />
-        )}
+        <MobileGestureToggle isMobileGestures={isMobileGestures} setIsMobileGestures={setIsMobileGestures} />
       </div>
 
       <SwitchTransition>
@@ -89,7 +86,6 @@ const CommandTable = ({ customize, onSelect, selectedCommand, viewType = 'table'
                 key={group.title}
                 onSelect={onSelect}
                 selectedCommand={selectedCommand}
-                viewType={viewType}
                 isMobileGestures={isMobileGestures}
                 search={search}
               />
