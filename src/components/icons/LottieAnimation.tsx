@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import Player, { LottieRefCurrentProps } from 'lottie-react'
+import * as LottieReact from 'lottie-react'
 import React, { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import AnimatedColor from '../../@types/lottie/AnimatedColor'
 import ColorProperty from '../../@types/lottie/ColorProperty'
@@ -17,6 +17,27 @@ interface LottieAnimationProps {
   color: string
   onComplete?: () => void
 }
+
+type LottieRefCurrentProps = import('lottie-react').LottieRefCurrentProps
+type LottiePlayerComponent = React.ComponentType<import('lottie-react').LottieComponentProps>
+
+/** Resolves the lottie-react component across default export interop shapes. */
+const resolvePlayer = (): LottiePlayerComponent => {
+  const lottieModule = LottieReact as unknown as { default?: unknown }
+
+  if (typeof lottieModule.default === 'function') return lottieModule.default as LottiePlayerComponent
+
+  if (lottieModule.default && typeof lottieModule.default === 'object') {
+    const nestedDefault = (lottieModule.default as { default?: unknown }).default
+    if (typeof nestedDefault === 'function') return nestedDefault as LottiePlayerComponent
+  }
+
+  if (typeof LottieReact === 'function') return LottieReact as unknown as LottiePlayerComponent
+
+  throw new Error('Unable to resolve lottie-react Player export.')
+}
+
+const Player = resolvePlayer()
 
 /**
  * Converts hex color to RGBA.
