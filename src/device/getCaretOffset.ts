@@ -28,6 +28,9 @@ interface CaretOffsetResult {
   offset: number | null
 }
 
+const WORD_SEPARATOR_REGEX = /[\s\-\p{P}]/u
+const WHITESPACE_REGEX = /\s/
+
 /** Returns the number of UTF-16 code units for the code point at the given index (2 for surrogate pairs, 1 otherwise). */
 const codePointSize = (text: string, i: number): number =>
   i < text.length - 1 && text.charCodeAt(i) >= 0xd800 && text.charCodeAt(i) <= 0xdbff ? 2 : 1
@@ -90,7 +93,7 @@ const findClosestLine = (lines: TextNodeLine[], clientY: number): TextNodeLine =
 }
 
 /** Checks if a character is a word separator for caret snap purposes (whitespace or hyphen). */
-const isWordSeparator = (char: string): boolean => /[\s\-\p{P}]/u.test(char)
+const isWordSeparator = (char: string): boolean => WORD_SEPARATOR_REGEX.test(char)
 
 /**
  * Finds word boundaries around a given offset.
@@ -212,7 +215,7 @@ const skipTrailingWhitespace = (text: string, offset: number, lineStart: number,
   }
 
   /** If offset is in whitespace, find the last non-whitespace before it. */
-  const isWhitespace = (char: string) => /\s/.test(char)
+  const isWhitespace = (char: string) => WHITESPACE_REGEX.test(char)
 
   if (isWhitespace(lineText[offsetInLine])) {
     // Find last non-whitespace character before the offset
@@ -305,16 +308,16 @@ const getTextNodes = (root: HTMLElement): Text[] => {
  * This is more accurate than checking the overall bounding box, especially for text nodes
  * with trailing spaces that extend beyond visible characters.
  */
-const isClickWithinTextNodeCharacters = (node: Text, clientX: number, clientY: number): boolean => {
+const isWithinVoidArea = (node: Text, clientX: number, clientY: number): boolean => {
   const text = node.nodeValue ?? ''
-  if (!text.trim()) return false // ignore pure whitespace nodes
+  if (!text.trim()) return true // ignore pure whitespace nodes
 
   const range = document.createRange()
 
   for (let i = 0; i < text.length; i += codePointSize(text, i)) {
     const size = codePointSize(text, i)
     // Skip whitespace characters early
-    if (/\s/.test(text[i])) continue
+    if (WHITESPACE_REGEX.test(text[i])) continue
 
     range.setStart(node, i)
     range.setEnd(node, i + size)
@@ -325,7 +328,7 @@ const isClickWithinTextNodeCharacters = (node: Text, clientX: number, clientY: n
       if (rect.height === 0 || rect.width === 0) continue
 
       if (clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom) {
-        return true
+        return false
       }
     }
   }
@@ -341,11 +344,11 @@ const isClickWithinTextNodeCharacters = (node: Text, clientX: number, clientY: n
     const lineRect = range.getBoundingClientRect()
     const tolerance = line.rect.height * 0.5
     if (clientX >= lineRect.left - tolerance && clientX <= lineRect.right + tolerance) {
-      return true
+      return false
     }
   }
 
-  return false
+  return true
 }
 
 /**
@@ -365,7 +368,7 @@ const getDistanceToNearestCharacter = (
 
   for (let i = 0; i < text.length; i += codePointSize(text, i)) {
     const size = codePointSize(text, i)
-    if (/\s/.test(text[i])) continue
+    if (WHITESPACE_REGEX.test(text[i])) continue
 
     range.setStart(node, i)
     range.setEnd(node, i + size)
@@ -408,26 +411,21 @@ const getDistanceToNearestCharacter = (
  * Returns the text node with the smallest distance to its nearest visible character.
  * Prioritizes text nodes where the click is directly inside visible character bounds.
  */
-const findNearestTextNode = (textNodes: Text[], clientX: number, clientY: number): TextNodeWithRect | null => {
-  const nodesWithinCharBounds = textNodes.filter(node => isClickWithinTextNodeCharacters(node, clientX, clientY))
+const findNearestTextNode = (textNodes: Text[], clientX: number, clientY: number): Text | null => {
+  const nodesWithinCharBounds = textNodes.filter(node => !isWithinVoidArea(node, clientX, clientY))
 
   if (nodesWithinCharBounds.length > 0) {
     const node = nodesWithinCharBounds[0]
     const range = document.createRange()
     range.selectNodeContents(node)
-    return { node, rect: range.getBoundingClientRect() }
+    return node
   }
 
   return (
     textNodes.reduce<{ result: TextNodeWithRect; dist: number } | null>((closest, node) => {
       const { dist, rect } = getDistanceToNearestCharacter(node, clientX, clientY)
-
-      if (!closest || dist < closest.dist) {
-        return { result: { node, rect }, dist }
-      }
-
-      return closest
-    }, null)?.result ?? null
+      return !closest || dist < closest.dist ? { result: { node, rect }, dist } : closest
+    }, null)?.result.node ?? null
   )
 }
 
@@ -469,10 +467,10 @@ const getCaretOffset = (editable: HTMLElement | null, { clientX, clientY }: Coor
   const nearest = findNearestTextNode(textNodes, clientX, clientY)
   if (!nearest) return { offset: null }
 
-  const offsetInNode = calculateOffset(nearest.node, clientX, clientY)
+  const offsetInNode = calculateOffset(nearest, clientX, clientY)
   return {
-    inVoidArea: !isClickWithinTextNodeCharacters(nearest.node, clientX, clientY),
-    offset: domPositionToUnformattedOffset(editable, nearest.node, offsetInNode),
+    inVoidArea: isWithinVoidArea(nearest, clientX, clientY),
+    offset: domPositionToUnformattedOffset(editable, nearest, offsetInNode),
   }
 }
 

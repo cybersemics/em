@@ -5,12 +5,12 @@ import Path from '../../@types/Path'
 import { isMac, isSafari, isTouch } from '../../browser'
 import { LongPressState } from '../../constants'
 import asyncFocus from '../../device/asyncFocus'
+import getCaretOffset from '../../device/getCaretOffset'
 import preventAutoscroll, { preventAutoscrollEnd } from '../../device/preventAutoscroll'
 import * as selection from '../../device/selection'
 import usePrevious from '../../hooks/usePrevious'
 import hasMulticursor from '../../selectors/hasMulticursor'
 import equalPath from '../../util/equalPath'
-import getCaretOffset from '../../util/getCaretOffset'
 
 /** Automatically sets the selection on the given contentRef element when the thought should be selected. Handles a variety of conditions that determine whether this should occur. */
 const useEditMode = ({
@@ -49,9 +49,6 @@ const useEditMode = ({
   // focus on the ContentEditable element if editing or on desktop
   const editMode = !isTouch || editing
   const editingOrOnCursor = isCursor || editing
-
-  /** Prevents `getCaretOffset` from running twice on touch devices (onMousedown after onTouchEnd). */
-  const pendingCaretHandledRef = useRef(false)
 
   useEffect(
     () => {
@@ -170,20 +167,15 @@ const useEditMode = ({
           bottomMargin: fontSize * 2,
         })
 
-        // If the caret was already applied (i.e. onTouchEnd), exit early so that we do not perform the computation again.
-        if (pendingCaretHandledRef.current) {
-          pendingCaretHandledRef.current = false
-          return
-        }
-
         const { inVoidArea, offset: nodeOffset } = getCaretOffset(editable, {
           clientX: e.clientX,
           clientY: e.clientY,
         })
 
         if (nodeOffset !== null) {
-          // do not prevent default if the tap is on a valid character bounding box.
-          // this preserves native browser behavior for text selection.
+          // It's important to avoid preventDefault when the tap is somewhere that can be handled by native browser selection behavior.
+          // If the tap is prevented, it will interfere with functionality like double tap or the context menu. If the selection is
+          // truly in a void area, then preventDefault will stop the caret from being placed on the wrong thought.
           if (inVoidArea) {
             e.preventDefault()
           }
@@ -200,7 +192,10 @@ const useEditMode = ({
       }
     }
 
-    /** Prevents the thought from autoscrolling to the bottom of the screen when the keyboard is open. */
+    /** Prevents the thought from autoscrolling to the bottom of the screen when the keyboard is open.
+     * Autoscroll must be prevented until focus handling is complete, so preventAutoscrollEnd is deferred
+     * using queueMicrotask without introducing any additional delay.
+     */
     const onFocus = () => queueMicrotask(() => preventAutoscrollEnd(editable))
 
     editable.addEventListener('mousedown', onMouseDown)
