@@ -1,21 +1,23 @@
 import { useEffect, useState } from 'react'
-import { useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
+import { token } from '../../styled-system/tokens'
 import CommandSortType from '../@types/CommandSortType'
-import theme from '../selectors/theme'
+import CommandsListIcon from './icons/CommandsListIcon'
 import FadeTransition from './FadeTransition'
 import SortOption from './SortOption'
-import SortIcon from './icons/SortIcon'
 
-interface SortButtonProps {
+interface CommandUniverseSortButtonProps {
   onSortChange: (sortOrder: CommandSortType) => void
 }
 
 /**
- * SortButton component.
- * */
-const SortButton = ({ onSortChange }: SortButtonProps) => {
-  const isLightTheme = useSelector(state => theme(state) === 'Light')
+ * Group/sort button used by the Mobile Command Universe dialog. Flush styling (no
+ * border or background) with the new 18×18 list glyph.
+ *
+ * Distinct from SortButton (used by Help / CustomizeToolbar via CommandTable),
+ * which keeps the legacy bordered look.
+ */
+const CommandUniverseSortButton = ({ onSortChange }: CommandUniverseSortButtonProps) => {
   const [isDropdownOpen, setDropdownOpen] = useState(false)
   const [selectedSort, setSelectedSort] = useState<CommandSortType>('type')
 
@@ -31,9 +33,7 @@ const SortButton = ({ onSortChange }: SortButtonProps) => {
     }
   }, [])
 
-  /**
-   * Handles the sort change.
-   */
+  /** Selects a sort order, propagates the change, and closes the dropdown. */
   const handleSortChange = (sortOrder: CommandSortType) => {
     setSelectedSort(sortOrder)
     onSortChange(sortOrder)
@@ -42,27 +42,24 @@ const SortButton = ({ onSortChange }: SortButtonProps) => {
 
   return (
     <button
+      type='button'
+      aria-label='Group commands'
       onClick={() => setDropdownOpen(!isDropdownOpen)}
       className={css({
-        width: '45px',
-        border: 'solid 1px {colors.gray50}',
-        backgroundColor: 'darkgray',
-        borderRadius: '8px',
+        width: '1.75rem',
+        height: '1.75rem',
+        border: 'none',
+        background: 'transparent',
+        padding: 0,
+        cursor: 'pointer',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         position: 'relative',
+        color: 'fg',
       })}
     >
-      <div
-        className={css({
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        })}
-      >
-        <SortIcon size={20} fill={isLightTheme ? '{colors.lightgray}' : '{colors.fg}'} />
-      </div>
+      <CommandsListIcon size={18} fill={token('colors.fg')} />
       <FadeTransition in={isDropdownOpen} type='fast' unmountOnExit>
         <div
           className={cx(
@@ -106,4 +103,4 @@ const SortButton = ({ onSortChange }: SortButtonProps) => {
   )
 }
 
-export default SortButton
+export default CommandUniverseSortButton

@@ -6,9 +6,9 @@ import { dialogRecipe } from '../../../styled-system/recipes'
 import { toggleMobileCommandUniverseActionCreator } from '../../actions/toggleMobileCommandUniverse'
 import useCommandList from '../../hooks/useCommandList'
 import CommandUniverseGrid from '../CommandUniverseGrid'
+import CommandUniverseSearch from '../CommandUniverseSearch'
+import CommandUniverseSortButton from '../CommandUniverseSortButton'
 import FadeTransition from '../FadeTransition'
-import SearchCommands from '../SearchCommands'
-import SortButton from '../SortButton'
 import Dialog from './Dialog'
 import DialogContent from './DialogContent'
 import DialogTitle from './DialogTitle'
@@ -40,8 +40,8 @@ const MobileCommandUniverseContent = () => {
   return (
     <>
       <div className={dialog.headerSearchRow}>
-        <SearchCommands onInput={setSearch} />
-        <SortButton onSortChange={setSortOrder} />
+        <CommandUniverseSearch onInput={setSearch} />
+        <CommandUniverseSortButton onSortChange={setSortOrder} />
       </div>
 
       <DialogContent>
