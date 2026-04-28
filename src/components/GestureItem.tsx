@@ -51,6 +51,7 @@ const GestureItem: FC<{
         flexDirection: 'row',
         alignItems: 'center',
         gap: '0.67em',
+        paddingBlock: '6px',
       })}
     >
       <div
