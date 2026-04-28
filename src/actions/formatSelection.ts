@@ -103,9 +103,9 @@ export const formatSelectionActionCreator =
       const colorValue = color ? colors[color] : ''
 
       dispatch(
-        paths.flatMap(path => {
+        paths.map(path => {
           const pathThought = pathToThought(state, path)
-          if (!pathThought) return []
+          if (!pathThought) return null
           const oldValue = pathThought.value
           const newValue =
             command === 'backColor' && color === 'bg'
@@ -113,8 +113,8 @@ export const formatSelectionActionCreator =
                 stripBackgroundColor(oldValue, colors.bg)
               : applyColorToHtml(oldValue, command, colorValue)
           return newValue !== oldValue
-            ? [editThought({ oldValue, newValue, path: simplifyPath(state, path), force: true })]
-            : []
+            ? editThought({ oldValue, newValue, path: simplifyPath(state, path), force: true })
+            : null
         }),
       )
 
