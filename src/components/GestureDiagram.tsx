@@ -236,7 +236,9 @@ const GestureDiagram = ({
         style={{
           ...style,
           ...(styleCancelAsRegularGesture
-            ? { paddingLeft: size / 10, paddingRight: size / 3 }
+            ? arrowhead === 'none'
+              ? {}
+              : { paddingLeft: size / 10, paddingRight: size / 3 }
             : { marginTop: '12px', marginBottom: '20px', marginLeft: '20px' }),
         }}
         viewBox='0 0 24 24'
@@ -246,7 +248,7 @@ const GestureDiagram = ({
           stroke={
             highlight != null && highlight > 0
               ? (highlightColor ?? token('colors.vividHighlight'))
-              : color ?? token('colors.fg')
+              : (color ?? token('colors.fg'))
           }
           strokeWidth={1.25}
           strokeLinecap='round'
@@ -419,9 +421,9 @@ const GestureDiagram = ({
                     ? 'none'
                     : highlight != null && highlight >= path.length
                       ? (highlightColor ?? token('colors.vividHighlight'))
-                      : color ?? token('colors.fg')
+                      : (color ?? token('colors.fg'))
                 }
-                stroke={arrowhead === 'outlined' ? color ?? token('colors.fg') : 'none'}
+                stroke={arrowhead === 'outlined' ? (color ?? token('colors.fg')) : 'none'}
                 strokeWidth={arrowhead === 'outlined' ? strokeWidth / 3 : 0}
                 style={dropShadow ? { filter: dropShadow } : undefined}
               />
@@ -487,7 +489,7 @@ const GestureDiagram = ({
                   ? `url(#${extendedPath}-gradient-${i})`
                   : highlight != null && (i < highlight || highlight === path.length)
                     ? (highlightColor ?? token('colors.vividHighlight'))
-                    : color ?? token('colors.fg')
+                    : (color ?? token('colors.fg'))
               }
               strokeWidth={strokeWidth * 1.5}
               strokeLinecap='round'
