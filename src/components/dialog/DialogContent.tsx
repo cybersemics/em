@@ -8,10 +8,7 @@ const DialogContent: React.FC<PropsWithChildren> = ({ children }) => {
   const dialog = dialogRecipe()
   return (
     <div className={dialog.content}>
-      <div className={dialog.contentInner}>
-        {children}
-        <div className={dialog.contentBottomSpacer} />
-      </div>
+      <div className={dialog.contentInner}>{children}</div>
     </div>
   )
 }

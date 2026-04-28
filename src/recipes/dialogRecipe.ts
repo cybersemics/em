@@ -2,9 +2,9 @@ import { defineSlotRecipe } from '@pandacss/dev'
 
 /**
  * Slot recipe for the liminal-glass Dialog. Owns every style for the dialog tree
- * (Dialog.tsx, DialogTitle.tsx, DialogContent.tsx) so coupled values — radii,
- * paddings, the scrollGradient/contentBottomSpacer height pair — sit next to
- * each other rather than being kept in sync across files.
+ * (Dialog.tsx, DialogTitle.tsx, DialogContent.tsx) so coupled values — radii, paddings,
+ * the scroll-fade mask — sit next to each other rather than being kept in sync across
+ * files.
  */
 const dialogRecipe = defineSlotRecipe({
   className: 'dialog',
@@ -22,10 +22,8 @@ const dialogRecipe = defineSlotRecipe({
     'glassStrokeMask',
     'glassStrokeBorder',
     'contentLayer',
-    'scrollGradient',
     'content',
     'contentInner',
-    'contentBottomSpacer',
     'titleContainer',
     'titleText',
   ],
@@ -184,20 +182,6 @@ const dialogRecipe = defineSlotRecipe({
     contentLayer: {
       position: 'relative',
     },
-    /** Bottom-anchored fade — visual cue that the dialog content is scrollable. */
-    scrollGradient: {
-      position: 'absolute',
-      bottom: 0,
-      right: 0,
-      left: 0,
-      // Clears the scrollbar gutter so the gradient ends flush with the content area, not under the scrollbar.
-      marginRight: 20,
-      pointerEvents: 'none',
-      display: 'block',
-      // Must be twice contentBottomSpacer.height — the spacer keeps the last content line above where the gradient becomes opaque.
-      height: 48,
-      background: 'linear-gradient(to top, {colors.dialogScrollShadow} 0%, {colors.transparent} 100%)',
-    },
     /** Scrollable content region — owns the scroll behavior, scrollbar styling, and the responsive font size. */
     content: {
       fontSize: '1.125rem',
@@ -206,7 +190,7 @@ const dialogRecipe = defineSlotRecipe({
       overflowX: 'hidden',
       overflowY: 'auto',
       // Horizontal text padding lives on contentInner; this paddingRight gives the scrollbar breathing room from the modal edge.
-      paddingBlock: '0.5rem',
+      paddingTop: '0.5rem',
       paddingRight: '0.5rem',
       scrollbarColor: '{colors.fg} {colors.bg}',
       scrollbarWidth: 'thin',
@@ -221,17 +205,19 @@ const dialogRecipe = defineSlotRecipe({
         fontSize: '1.5rem',
       },
       overscrollBehavior: 'contain',
+      // Static bottom-edge fade as a scrollability cue.
+      maskImage:
+        'linear-gradient(to bottom, {colors.black} 0, {colors.black} calc(100% - 1.5rem), {colors.transparent} 100%)',
+      WebkitMaskImage:
+        'linear-gradient(to bottom, {colors.black} 0, {colors.black} calc(100% - 1.5rem), {colors.transparent} 100%)',
     },
     /** Inner wrapper inside `content` that carries the horizontal text inset. Kept separate from `content` so the scrollbar gutter doesn't push text in further. */
     contentInner: {
       // Left matches titleContainer.paddingInline so title and content text share a consistent inset; right is reduced because the scrollbar gutter consumes the rest.
       paddingLeft: '1.25rem',
       paddingRight: '0.75rem',
-    },
-    /** Empty buffer at the end of the scrollable content — keeps the last line of text above where the scroll-edge gradient becomes opaque. */
-    contentBottomSpacer: {
-      // Half of scrollGradient.height — keeps the last content line above where the scroll-edge gradient becomes opaque.
-      height: 24,
+      // Add bottom padding to the inner content wrapper, so the mask doesn't fade out the last bit of content.
+      paddingBottom: '2rem',
     },
     /** Header row — flex row that lays out the title text and the close button. */
     titleContainer: {

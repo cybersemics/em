@@ -73,7 +73,7 @@ const Dialog: React.FC<PropsWithChildren<DialogProps>> = ({ children, onClose, n
         {/* Rainbow refraction that bleeds past the glass top edge. */}
         <div className={dialog.rainbowUnclipped} />
 
-        {/* The glass sheet itself. Decorative layers stack via DOM order: container fill → clipped highlights → glass stroke → content → scroll gradient. */}
+        {/* The glass sheet itself. Decorative layers stack via DOM order: container fill → clipped highlights → glass stroke → content. */}
         <div ref={dialogRef} className={dialog.glassSheet}>
           {/* Muted-purple radial fill concentrated near the top of the glass. */}
           <div className={dialog.containerBackground} />
@@ -91,8 +91,6 @@ const Dialog: React.FC<PropsWithChildren<DialogProps>> = ({ children, onClose, n
           </div>
           {/* Dialog content (title + body). */}
           <div className={dialog.contentLayer}>{children}</div>
-          {/* Bottom fade — visual cue that the dialog content is scrollable. */}
-          <div className={dialog.scrollGradient} />
         </div>
       </div>
     </div>

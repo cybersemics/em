@@ -93,7 +93,6 @@ const colors = {
     dialogGlassStrokeMuted: 'hsla(0, 0%, 100%, 0.18)',
     dialogGlassStrokeBright: 'hsla(0, 0%, 100%, 0.74)',
     dialogGlassMaskFade: 'rgba(255, 255, 255, 0.07)',
-    dialogScrollShadow: 'rgba(0, 0, 0, 0.4)',
   },
   light: {
     // Background colors in capacitor app needs to be in hexadecimal codes
@@ -189,7 +188,6 @@ const colors = {
     dialogGlassStrokeMuted: 'hsla(0, 0%, 100%, 0.18)',
     dialogGlassStrokeBright: 'hsla(0, 0%, 100%, 0.74)',
     dialogGlassMaskFade: 'rgba(255, 255, 255, 0.07)',
-    dialogScrollShadow: 'rgba(0, 0, 0, 0.4)',
   },
 } as const
 
