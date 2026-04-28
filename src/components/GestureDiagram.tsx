@@ -464,45 +464,122 @@ const GestureDiagram = ({
 
         {useGradient && <GradientStyleBlock color={color} highlight={highlight} path={extendedPath} />}
 
-        {pathSegments.map((segment, i) => {
-          const { x, y } = positions[i]
-          return (
-            <path
-              d={
-                // use a custom '?' path for the Help gesture
-                path === 'rdld'
-                  ? i === 0
-                    ? 'M 29.7,13.5 Q 46.8,-4.5 63,13.5'
-                    : i === 1
-                      ? 'M 63,13.5 Q 72,27 54,40.5'
-                      : i === 2
-                        ? 'M 54,40.5 Q 45,49.5 45,58.5'
-                        : 'M 45,58.5 L 45,72'
-                  : rounded
+        {(() => {
+          const commonPathProps = {
+            strokeWidth: strokeWidth * 1.5,
+            strokeLinecap: 'round' as const,
+            strokeLinejoin: 'round' as const,
+            fill: 'none' as const,
+            style: dropShadow ? { filter: dropShadow } : undefined,
+          }
+
+          // When no per-segment gradient is needed, combine all positions into a single
+          // <path> with strokeLinejoin='round'. This eliminates overlapping round caps at
+          // joints, which become visible as blobs/beads when strokeWidth is large relative
+          // to segment length (e.g. multi-segment paths where scale < 1 shortens segments).
+          if (!useGradient && !rounded && path !== 'rdld') {
+            const makePath = (pts: typeof positions) =>
+              pts.map((pos, i) => `${i === 0 ? 'M' : 'L'} ${pos.x} ${pos.y}`).join(' ')
+            const allHighlighted = highlight != null && highlight >= path.length
+            const noneHighlighted = highlight == null || highlight === 0
+
+            if (allHighlighted || noneHighlighted) {
+              return (
+                <path
+                  d={makePath(positions)}
+                  stroke={allHighlighted ? (highlightColor ?? token('colors.vividHighlight')) : (color ?? token('colors.fg'))}
+                  markerEnd={arrowhead !== 'none' ? `url(#${id})` : undefined}
+                  {...commonPathProps}
+                />
+              )
+            }
+
+            // Partial highlight: two combined paths sharing one endpoint at the boundary.
+            return (
+              <>
+                <path
+                  d={makePath(positions.slice(0, highlight! + 1))}
+                  stroke={highlightColor ?? token('colors.vividHighlight')}
+                  {...commonPathProps}
+                />
+                <path
+                  d={makePath(positions.slice(highlight))}
+                  stroke={color ?? token('colors.fg')}
+                  markerEnd={arrowhead !== 'none' ? `url(#${id})` : undefined}
+                  {...commonPathProps}
+                />
+              </>
+            )
+          }
+
+          // Same combined-path fix for the rdld (Command Universe) special case.
+          // The 4 custom Bezier segments share endpoints, so stripping the redundant
+          // "M x,y" from each continuation lets us join them into one <path>.
+          if (!useGradient && path === 'rdld') {
+            const rdldSegments = [
+              'M 29.7,13.5 Q 46.8,-4.5 63,13.5',
+              'M 63,13.5 Q 72,27 54,40.5',
+              'M 54,40.5 Q 45,49.5 45,58.5',
+              'M 45,58.5 L 45,72',
+            ]
+            const joinSegments = (segs: string[]) =>
+              segs.reduce((acc, seg, i) => (i === 0 ? seg : `${acc} ${seg.replace(/^M [\d.,]+ /, '')}`), '')
+
+            const allHighlighted = highlight != null && highlight >= path.length
+            const noneHighlighted = highlight == null || highlight === 0
+
+            if (allHighlighted || noneHighlighted) {
+              return (
+                <path
+                  d={joinSegments(rdldSegments)}
+                  stroke={allHighlighted ? (highlightColor ?? token('colors.vividHighlight')) : (color ?? token('colors.fg'))}
+                  {...commonPathProps}
+                />
+              )
+            }
+
+            return (
+              <>
+                {highlight! > 0 && (
+                  <path
+                    d={joinSegments(rdldSegments.slice(0, highlight))}
+                    stroke={highlightColor ?? token('colors.vividHighlight')}
+                    {...commonPathProps}
+                  />
+                )}
+                <path
+                  d={joinSegments(rdldSegments.slice(highlight))}
+                  stroke={color ?? token('colors.fg')}
+                  {...commonPathProps}
+                />
+              </>
+            )
+          }
+
+          // Per-segment rendering for gradient or rounded paths.
+          return pathSegments.map((segment, i) => {
+            const { x, y } = positions[i]
+            return (
+              <path
+                d={
+                  rounded
                     ? generateArcPath(i, Array.from(path) as Direction[])
                     : `M ${x} ${y} l ${segment.dx * scale} ${segment.dy * scale}`
-              }
-              // segments do not change independently, so we can use index as the key
-              key={i}
-              stroke={
-                useGradient
-                  ? `url(#${extendedPath}-gradient-${i})`
-                  : highlight != null && (i < highlight || highlight === path.length)
-                    ? (highlightColor ?? token('colors.vividHighlight'))
-                    : (color ?? token('colors.fg'))
-              }
-              strokeWidth={strokeWidth * 1.5}
-              strokeLinecap='round'
-              strokeLinejoin='round'
-              fill='none'
-              markerEnd={
-                // the help gesture does not have an arrowhead
-                i === pathSegments.length - 1 && path !== 'rdld' && arrowhead !== 'none' ? `url(#${id})` : undefined
-              }
-              style={dropShadow ? { filter: dropShadow } : undefined}
-            />
-          )
-        })}
+                }
+                key={i}
+                stroke={
+                  useGradient
+                    ? `url(#${extendedPath}-gradient-${i})`
+                    : highlight != null && (i < highlight || highlight === path.length)
+                      ? (highlightColor ?? token('colors.vividHighlight'))
+                      : (color ?? token('colors.fg'))
+                }
+                {...commonPathProps}
+                markerEnd={i === pathSegments.length - 1 && arrowhead !== 'none' ? `url(#${id})` : undefined}
+              />
+            )
+          })
+        })()}
       </svg>
     </span>
   )
