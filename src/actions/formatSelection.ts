@@ -102,30 +102,21 @@ export const formatSelectionActionCreator =
       const paths = Object.values(state.multicursors)
       const colorValue = color ? colors[color] : ''
 
-      paths.forEach(path => {
-        const pathThought = pathToThought(state, path)
-        if (!pathThought) return
-        const oldValue = pathThought.value
-
-        let newValue: string
-        if (command === 'backColor' && color === 'bg') {
-          // Strip background color from the thought value.
-          newValue = stripBackgroundColor(oldValue, colors.bg)
-        } else {
-          newValue = applyColorToHtml(oldValue, command, colorValue)
-        }
-
-        if (newValue !== oldValue) {
-          dispatch(
-            editThought({
-              oldValue,
-              newValue,
-              path: simplifyPath(state, path),
-              force: true,
-            }),
-          )
-        }
-      })
+      dispatch(
+        paths.flatMap(path => {
+          const pathThought = pathToThought(state, path)
+          if (!pathThought) return []
+          const oldValue = pathThought.value
+          const newValue =
+            command === 'backColor' && color === 'bg'
+              ? // Strip background color from the thought value.
+                stripBackgroundColor(oldValue, colors.bg)
+              : applyColorToHtml(oldValue, command, colorValue)
+          return newValue !== oldValue
+            ? [editThought({ oldValue, newValue, path: simplifyPath(state, path), force: true })]
+            : []
+        }),
+      )
 
       suppressFocusStore.update(false)
       return
