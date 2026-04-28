@@ -333,21 +333,6 @@ const isWithinVoidArea = (node: Text, clientX: number, clientY: number): boolean
     }
   }
 
-  // Treat line-edge gaps (left of first char / right of last char) as valid positions
-  // so that taps in the editable padding near boundary characters are not void areas.
-  const lines = getTextNodeLines(node)
-  for (const line of lines) {
-    if (clientY < line.rect.top || clientY > line.rect.bottom) continue
-
-    range.setStart(node, line.start)
-    range.setEnd(node, line.end)
-    const lineRect = range.getBoundingClientRect()
-    const tolerance = line.rect.height * 0.5
-    if (clientX >= lineRect.left - tolerance && clientX <= lineRect.right + tolerance) {
-      return false
-    }
-  }
-
   return true
 }
 
