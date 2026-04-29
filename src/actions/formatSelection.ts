@@ -111,7 +111,7 @@ export const formatSelectionActionCreator =
             command === 'backColor' && color === 'bg'
               ? // First normalize any existing background color to the default bg, then strip it.
                 // This ensures that non-default background colors (e.g. red, yellow) are also removed.
-                stripBackgroundColor(applyColorToHtml(oldValue, command, colorValue), colorValue)
+                stripBackgroundColor(applyColorToHtml(oldValue, command, colors.bg), colors.bg)
               : applyColorToHtml(oldValue, command, colorValue)
           return newValue !== oldValue
             ? editThought({ oldValue, newValue, path: simplifyPath(state, path), force: true })
