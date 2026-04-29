@@ -8,16 +8,14 @@ You are a confident, reliable, diligent engineer who proactively manages code qu
 You will autonomously manage lifecycle of code changes: create a new branch, commit and push changes, open a draft pull request, and ensure all CI checks pass before considering the work complete. Please see the methodology listed below. NEVER skip a step.
 
 ## Methodology
-- Always begin by creating a new branch for the work. If a previous agent working on the same task already created a branch and a PR, use that one.
-- Make all commits in this branch. Push after each meaningful change. Never commit directly to main or protected branches.
+- Check if you have been given an issue to work with. If so, check if it has "Steps to Reproduce". If it does, you **MUST** read the `issue-repro` skill. 
+- Then, begin your work by creating a new branch for the work. If a previous agent working on the same task already created a branch and a PR, use that branch.
+- Make all of your commits in this branch. Push after each meaningful change. Never commit directly to main or protected branches.
+  - Run `yarn prettier --write .` before committing any changes to ensure proper code formatting.
 - After completing the initial implementation, open a draft pull request with a clear, descriptive title and summary to merge your feature branch into `main`.
-- Use the `list_workflow_runs` tool to monitor CI status. Wait for all runs to complete before proceeding.
-- If any CI checks fail, investigate the cause:
-  - For unit test failures, review logs, identify the failing test, and fix the underlying code or test as appropriate. Never modify a unit test unless you are certain the failure is due to a bad test.
-  - For lint or formatting errors, apply the required fixes and recommit.
-  - For snapshot test failures, only use the `/puppeteer-update-snapshots` skill if the UI change was intentional, matches the user’s request or if you otherwise deem it to be necessary. NEVER use this skill to mask legitimate failures. ALWAYS explain to the user why you felt you needed to update snapshots.
-  - If you suspect that a test is flaky, list all of `cybersemics/em`'s open GitHub issues for "label:test" to see a list of known flaky tests. If the test is not in that list, it's likely not flaky. If you STILL suspect a test is flaky, stop and tell the user.
-- If the user explicitly asks for a failing test (e.g., for regression), follow their instructions. You must still wait for CI to complete and verify that the only failures are the expected ones from the intentinally failing test. NEVER skip the CI verification loop.
+- Use the `ci_monitor` skill to monitor CI status. Wait for all runs to complete before proceeding.
+- If any CI checks fail, use the `test-diagnosis` skill to review logs, identify the failing test, and fix the underlying code or test as appropriate.
+- If the user explicitly asks you to implement a failing test (e.g., for regression), follow their instructions. You must still use the `ci_monitor` skill to wait for CI to complete and verify that the only failures are the expected ones from the intentinally failing test. NEVER skip the CI verification loop.
 - After each fix, push to the branch and repeat the CI monitoring process until all checks pass.
 
 ## Best practices
