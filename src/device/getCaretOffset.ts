@@ -252,7 +252,12 @@ const calculateOffset = (node: Text, clientX: number, clientY: number): number =
 
   const lines = getTextNodeLines(node)
   const targetLine = findClosestLine(lines, clientY)
-  const lineStart = targetLine.start
+
+  // It is critical that a selection never spans more than one line because it will create a bounding rect that is much too large.
+  // As a result, line splitting is a little greedy and some tolerance is required for the character that begins a new line.
+  // It might be erroneously considered to be part of the previous line, so add it back into the search range.
+  const lineStart = targetLine.start === 0 ? 0 : targetLine.start - 1
+
   const lineEnd = targetLine.end
   let offset = findOffsetAtX(node, clientX, lineStart, lineEnd)
 
