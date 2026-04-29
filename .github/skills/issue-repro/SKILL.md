@@ -1,25 +1,27 @@
 ---
 name: issue-repro
 description: >-
-  Use this skill when asked to reproduce, investigate, or fix a GitHub issue.
-  Reads the issue's Steps to Reproduce, Current Behavior, and Expected Behavior
-  sections, then drives a browser to confirm the bug exists, and after a fix is
-  applied, re-runs the same steps to validate the expected behavior is observed.
+  Always use this skill working on an issue that has "Steps to Reproduce" / "Current Behavior" / "Expected Behavior" sections.
 allowed-tools:
   - bash
+  - chrome-devtools
 ---
 
-# Issue Reproduction & Fix Validation
+If you are working on a GitHub issue that includes "Steps to Reproduce", "Current Behavior", and "Expected Behavior" sections, follow this step-by-step guide to confirming the bug exists and validate your fix.
 
-This skill turns a GitHub issue into a live, browser-driven test harness. It
-uses the issue's own documented steps as the ground truth for both confirming a
-bug and validating a fix — no speculation, no guessing.
+You should follow these instructions **directly**. You **must** continue to use the `ci-monitor`, `puppeteer-update-snapshots`, and `test-diagnosis` skills as needed, and you **must** continue to follow the remainder of your normal workflow for debugging and fixing the issue, including all custom instructions and system prompts.
+
+By following the documented steps in the issue, you can reliably reproduce the problem and ensure your solution works as intended without no guesswork, no assumptions.
+
+## Background
+
+Rather than jumping straight to code, this skill emphasizes a disciplined process of understanding the issue, reproducing it in a controlled environment, and validating fixes against the original problem statement. This approach minimizes wasted effort on incorrect assumptions and ensures that your work directly addresses the user's reported experience.
 
 ## Overview
 
 1. **Parse** — extract Steps to Reproduce, Current Behavior, Expected Behavior from the issue.
 2. **Start** — ensure the dev server is running.
-3. **Reproduce** — drive a browser through the steps; confirm the failure mode fires.
+3. **Reproduce** — drive the Chrome DevTools MCP through the steps; confirm the failure mode fires.
 4. **Fix** — root-cause and fix the code.
 5. **Validate** — re-run the steps; confirm the failure is gone and the expected behavior is observed.
 
@@ -29,9 +31,7 @@ A fix is **not complete** until both Step 4 and Step 5 pass.
 
 ## Step 1: Parse the Issue
 
-Use the GitHub MCP `get_issue` tool (or fetch the issue URL) to read the full
-issue body. Extract these three sections — headings vary slightly across issues,
-so match loosely:
+Use the GitHub MCP `get_issue` tool to read the full issue body. Extract these three sections — headings vary slightly across issues so match loosely:
 
 | Section | Common headings |
 |---|---|
@@ -64,7 +64,7 @@ Poll until port 3000 responds before continuing. The server takes ~5–15 second
 
 ## Step 3: Use Chrome DevTools MCP
 
-Use the **Chrome DevTools MCP** (`chrome-devtools`) for all browser automation. Do **not** use the Playwright MCP — it is currently unstable and unreliable.
+Use the **Chrome DevTools MCP** (`chrome-devtools`) for all browser automation. Do **not** use the Playwright MCP — it is unstable and unreliable.
 
 The Chrome DevTools MCP provides tools such as `navigate`, `screenshot`, `evaluate`, `click`, `type`, and `get_console_logs`. Use these throughout the reproduction and validation steps.
 
@@ -84,10 +84,7 @@ The Chrome DevTools MCP provides tools such as `navigate`, `screenshot`, `evalua
    reflects the expected intermediate state before continuing.
 
 4. After the final step, check whether the **Current Behavior** described in the
-   issue occurs. Look for:
-   - Red error banners in the UI (these are uncaught errors surfaced by the app)
-   - Unexpected UI states or missing elements
-   - JavaScript console errors
+   issue occurs. Observe UI state, console log messages, or any other indication as stated in the issue.
 
 5. **Document what you observed** — quote the error message or describe the UI
    state. If the failure does not occur, note this explicitly and do not proceed
@@ -96,30 +93,19 @@ The Chrome DevTools MCP provides tools such as `navigate`, `screenshot`, `evalua
 
 ### em App Interaction Reference
 
-| Action | How to perform |
-|---|---|
-| Create a new thought | Press `Enter` |
-| Create a subthought (indent) | Press `Tab` on a new thought, or `Enter` on an indented thought |
-| Unindent thought | Press `Shift+Tab` |
-| Edit a thought | Click or tap it to place cursor |
-| Access a command (e.g. Swap Parent) | Long-press or right-click a thought → Command menu; or open Command Universe |
-| Dismiss / cancel | Press `Escape` |
-| Open Command Universe (desktop) | `Ctrl+Shift+P` / `Cmd+Shift+P`, or the ⚡ toolbar button |
+- You can use the keyboard and mouse tools in the Chrome DevTools MCP to interact with the app as needed.
+- Read **em**'s UI code to understand how to trigger certain behaviors if the steps are not explicit.
 
-For issues tagged `[Android]` or `[Mobile]`, enable mobile device emulation
-in the browser's devtools (e.g. iPhone 14 or Pixel 7) before following the
-steps.
+For issues tagged `[Android]` or `[Mobile]`, enable mobile device emulation using the `emulate` tool and simulate the appropriate mobile devvice (e.g. iPhone 14 or Pixel 7) **before** following the steps.
 
 ---
 
 ## Step 5: Fix the Issue
 
-1. Use the reproduction evidence (error message, stack trace, console output) to
-   locate the root cause. Read the relevant source code. Do not guess.
-2. Implement a targeted fix. Prefer the smallest change that addresses the root
-   cause without breaking related behavior.
-3. Restart or hot-reload the app. (`yarn start` hot-reloads on file change, so
-   a page reload is usually sufficient. For build-level changes, re-run `yarn build`.)
+1. Use the reproduction evidence (error message, stack trace, console output) to locate the root cause. Read the relevant source code. Do not guess the cause without evidence.
+2. Implement a targeted fix. Prefer the smallest change that addresses the root cause without breaking related behavior.
+3. Ensure related behavior is not broken by taking a moment to analyze any potential impact of your change on the surrounding code and features. Fix any issues you identify before proceeding to validation.
+4. Restart or hot-reload the app. (`yarn start` hot-reloads on file change, so a page reload is usually sufficient. For build-level changes, re-run `yarn build`.)
 
 ---
 
@@ -165,12 +151,7 @@ Never claim success without completing both 6a and 6b. Never skip the loop.
 
 ## Escalation Rules
 
-- If the bug cannot be reproduced in Step 4 after a thorough attempt, stop and
-  report to the user with what you observed. Do not proceed to fixing.
-- If the fix-validate loop reaches 5 attempts without success, stop and
-  summarize: what you tried, what changed, and what still fails.
-- If the steps reference a mobile-only gesture that cannot be simulated in a
-  desktop browser, note the limitation and ask the user if device testing is
-  available.
-- Default to autonomous action. Escalate only when the correct path is
-  genuinely ambiguous.
+- If the bug cannot be reproduced in Step 4 after a thorough attempt, stop and report to the user with what you observed. Do not proceed to fixing.
+- If the fix-validate loop reaches 5 attempts without success, stop and summarize: what you tried, what changed, and what still fails.
+- If the steps reference a mobile-only gesture or feaure, use the `emulate` tool to enable mobile emulation before reproducing.
+- Default to autonomous action. Escalate only when the correct path is genuinely ambiguous.
