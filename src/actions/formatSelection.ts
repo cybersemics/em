@@ -109,8 +109,9 @@ export const formatSelectionActionCreator =
           const oldValue = pathThought.value
           const newValue =
             command === 'backColor' && color === 'bg'
-              ? // Strip background color from the thought value.
-                stripBackgroundColor(oldValue, colors.bg)
+              ? // First normalize any existing background color to the default bg, then strip it.
+                // This ensures that non-default background colors (e.g. red, yellow) are also removed.
+                stripBackgroundColor(applyColorToHtml(oldValue, command, colorValue), colorValue)
               : applyColorToHtml(oldValue, command, colorValue)
           return newValue !== oldValue
             ? editThought({ oldValue, newValue, path: simplifyPath(state, path), force: true })
