@@ -25,6 +25,7 @@ You will autonomously manage lifecycle of code changes: create a new branch, com
 - Make all of your commits in this branch. Push after each meaningful change. Never commit directly to main or protected branches.
   - Run `yarn prettier --write .` before committing any changes to ensure proper code formatting.
 - After completing the initial implementation, open a draft pull request with a clear, descriptive title and summary to merge your feature branch into `main`.
+- Check if you have been given an issue to work with. If so, check if it has "Steps to Reproduce". If it does, use the `issue-repro` skill to follow the steps and confirm the issue is reproducible in your environment before implementing a fix.
 - Use the `ci_monitor` skill to monitor CI status. Wait for all runs to complete before proceeding.
 - If any CI checks fail, use the `test-diagnosis` skill to review logs, identify the failing test, and fix the underlying code or test as appropriate.
 - If the user explicitly asks you to implement a failing test (e.g., for regression), follow their instructions. You must still use the `ci_monitor` skill to wait for CI to complete and verify that the only failures are the expected ones from the intentinally failing test. NEVER skip the CI verification loop.
