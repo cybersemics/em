@@ -1,23 +1,19 @@
 ---
 name: issue-repro
 description: >-
-  Always use this skill working on an issue that has "Steps to Reproduce" / "Current Behavior" / "Expected Behavior" sections.
+  ALWAYS USE THIS SKILL when working on an issue that has "Steps to Reproduce".
 allowed-tools:
   - bash
   - chrome-devtools
 ---
 
-If you are working on a GitHub issue that includes "Steps to Reproduce", "Current Behavior", and "Expected Behavior" sections, follow this step-by-step guide to confirming the bug exists and validate your fix.
+If you are working on a GitHub issue that includes "Steps to Reproduce", "Current Behavior", and "Expected Behavior" sections, you must follow this step-by-step guide to confirming the bug exists and validate your fix.
 
-You should follow these instructions **directly**. You **must** continue to use the `ci-monitor`, `puppeteer-update-snapshots`, and `test-diagnosis` skills as needed, and you **must** continue to follow the remainder of your normal workflow for debugging and fixing the issue, including all custom instructions and system prompts.
+Follow these instructions **directly**. You **must** continue to follow the remainder of your normal workflow for debugging and fixing the issue, including all custom instructions and system prompts.
 
 By following the documented steps in the issue, you can reliably reproduce the problem and ensure your solution works as intended without guesswork or assumptions.
 
-## Background
-
-Rather than jumping straight to code, this skill emphasizes a disciplined process of understanding the issue, reproducing it in a controlled environment, and validating fixes against the original problem statement. This approach minimizes wasted effort on incorrect assumptions and ensures that your work directly addresses the user's reported experience.
-
-## Overview
+## Stages
 
 1. **Parse** — extract Steps to Reproduce, Current Behavior, Expected Behavior from the issue.
 2. **Start** — ensure the dev server is running.
@@ -25,7 +21,8 @@ Rather than jumping straight to code, this skill emphasizes a disciplined proces
 4. **Fix** — root-cause and fix the code.
 5. **Validate** — re-run the steps; confirm the failure is gone and the expected behavior is observed.
 
-**You MUST** be able to reproduce the issue directly – if you cannot, DO NOT assume the cause without first confirming with the user.
+**You MUST** be able to reproduce the issue directly – if you cannot, **DO NOT** assume the cause without first confirming with the user.
+**DO NOT explore a fix** until you have successfully reproduced the issue. **This is your priority.** If you **CANNOT FULLY REPRODUCE** the steps, **FAIL AND ESCALATE TO THE USER.**
 Similarly, a fix is **not complete** until both Step 4 and Step 5 pass.
 
 ---
@@ -73,6 +70,8 @@ The Chrome DevTools MCP provides tools such as `navigate`, `screenshot`, `evalua
 
 ## Step 4: Reproduce the Failure
 
+For issues tagged `[Android]` or `[Mobile]`, or where testing was done on mobile, enable mobile device emulation using the `emulate` tool and simulate the appropriate mobile devvice (e.g. iPhone 14 or Pixel 7) **before** following the steps.
+
 1. Open a fresh browser tab at `http://localhost:3000`.
 
 2. **Clear app state** so you start from a clean slate. In the browser console run:
@@ -92,12 +91,12 @@ The Chrome DevTools MCP provides tools such as `navigate`, `screenshot`, `evalua
    **to fixing**. Instead, report to the user and ask for clarification (different
    browser, platform, version, or data state required?).
 
+**YOU MUST ESCALATE NOW IF YOU CANNOT EXPLICITLY REPRODUCE**
+
 ### em App Interaction Reference
 
 - You can use the keyboard and mouse tools in the Chrome DevTools MCP to interact with the app as needed.
 - Read **em**'s UI code to understand how to trigger certain behaviors if the steps are not explicit.
-
-For issues tagged `[Android]` or `[Mobile]`, enable mobile device emulation using the `emulate` tool and simulate the appropriate mobile devvice (e.g. iPhone 14 or Pixel 7) **before** following the steps.
 
 ---
 
