@@ -11,7 +11,7 @@ If you are working on a GitHub issue that includes "Steps to Reproduce", "Curren
 
 You should follow these instructions **directly**. You **must** continue to use the `ci-monitor`, `puppeteer-update-snapshots`, and `test-diagnosis` skills as needed, and you **must** continue to follow the remainder of your normal workflow for debugging and fixing the issue, including all custom instructions and system prompts.
 
-By following the documented steps in the issue, you can reliably reproduce the problem and ensure your solution works as intended without no guesswork, no assumptions.
+By following the documented steps in the issue, you can reliably reproduce the problem and ensure your solution works as intended without guesswork or assumptions.
 
 ## Background
 
@@ -25,7 +25,8 @@ Rather than jumping straight to code, this skill emphasizes a disciplined proces
 4. **Fix** — root-cause and fix the code.
 5. **Validate** — re-run the steps; confirm the failure is gone and the expected behavior is observed.
 
-A fix is **not complete** until both Step 4 and Step 5 pass.
+**You MUST** be able to reproduce the issue directly – if you cannot, DO NOT assume the cause without first confirming with the user.
+Similarly, a fix is **not complete** until both Step 4 and Step 5 pass.
 
 ---
 
@@ -87,8 +88,8 @@ The Chrome DevTools MCP provides tools such as `navigate`, `screenshot`, `evalua
    issue occurs. Observe UI state, console log messages, or any other indication as stated in the issue.
 
 5. **Document what you observed** — quote the error message or describe the UI
-   state. If the failure does not occur, note this explicitly and do not proceed
-   to fixing. Instead, report to the user and ask for clarification (different
+   state. If the failure does not occur, **note this explicitly and do not proceed**
+   **to fixing**. Instead, report to the user and ask for clarification (different
    browser, platform, version, or data state required?).
 
 ### em App Interaction Reference
