@@ -9,6 +9,7 @@ import useGestureHighlight from '../hooks/useGestureHighlight'
 import store from '../stores/app'
 import GestureDiagram from './GestureDiagram'
 
+/** Returns true if the command can be executed in the current state. */
 const isExecutable = (state: State, command: Command) =>
   (!command.canExecute || command.canExecute(state)) &&
   (command.allowExecuteFromModal || !state.showModal || !state.showMobileCommandUniverse)
@@ -104,7 +105,7 @@ const GestureItem: FC<{
           <p
             className={css({
               fontSize: '14px',
-              color: 'rgba(255, 255, 255, 0.78)',
+              color: 'fgOverlay75',
               marginBlock: 0,
               lineHeight: '1em',
             })}

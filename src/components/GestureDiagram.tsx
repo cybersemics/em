@@ -478,6 +478,7 @@ const GestureDiagram = ({
           // joints, which become visible as blobs/beads when strokeWidth is large relative
           // to segment length (e.g. multi-segment paths where scale < 1 shortens segments).
           if (!useGradient && !rounded && path !== 'rdld') {
+            /** Maps position array to SVG path data string. */
             const makePath = (pts: typeof positions) =>
               pts.map((pos, i) => `${i === 0 ? 'M' : 'L'} ${pos.x} ${pos.y}`).join(' ')
             const allHighlighted = highlight != null && highlight >= path.length
@@ -487,7 +488,9 @@ const GestureDiagram = ({
               return (
                 <path
                   d={makePath(positions)}
-                  stroke={allHighlighted ? (highlightColor ?? token('colors.vividHighlight')) : (color ?? token('colors.fg'))}
+                  stroke={
+                    allHighlighted ? (highlightColor ?? token('colors.vividHighlight')) : (color ?? token('colors.fg'))
+                  }
                   markerEnd={arrowhead !== 'none' ? `url(#${id})` : undefined}
                   {...commonPathProps}
                 />
@@ -522,6 +525,7 @@ const GestureDiagram = ({
               'M 54,40.5 Q 45,49.5 45,58.5',
               'M 45,58.5 L 45,72',
             ]
+            /** Joins rdld Bezier segments into a single path string by stripping redundant move commands. */
             const joinSegments = (segs: string[]) =>
               segs.reduce((acc, seg, i) => (i === 0 ? seg : `${acc} ${seg.replace(/^M [\d.,]+ /, '')}`), '')
 
@@ -532,7 +536,9 @@ const GestureDiagram = ({
               return (
                 <path
                   d={joinSegments(rdldSegments)}
-                  stroke={allHighlighted ? (highlightColor ?? token('colors.vividHighlight')) : (color ?? token('colors.fg'))}
+                  stroke={
+                    allHighlighted ? (highlightColor ?? token('colors.vividHighlight')) : (color ?? token('colors.fg'))
+                  }
                   {...commonPathProps}
                 />
               )

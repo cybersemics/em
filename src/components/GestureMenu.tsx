@@ -13,8 +13,8 @@ import gestureStore, {
   startGestureMenuExit,
 } from '../stores/gesture'
 import storageModel from '../stores/storageModel'
-import GestureItem from './GestureItem'
 import FadeTransition from './FadeTransition'
+import GestureItem from './GestureItem'
 import PopupBase from './PopupBase'
 
 /**********************************************************************

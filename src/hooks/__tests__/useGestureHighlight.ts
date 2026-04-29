@@ -2,6 +2,7 @@ import { renderHook } from '@testing-library/react'
 import Command from '../../@types/Command'
 import useGestureHighlight from '../useGestureHighlight'
 
+/** Creates a minimal Command fixture for testing. */
 const cmd = (id: string, gesture?: string): Command =>
   ({ id, label: id, gesture, multicursor: false, exec: () => {} }) as Command
 

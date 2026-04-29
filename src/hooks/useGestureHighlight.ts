@@ -12,7 +12,7 @@ import { gestureString } from '../commands'
  *
  * Special cases:
  * - `openMobileCommandUniverse`: uses longest-suffix matching so it lights up even when
- *   the universe-opener sequence appears at the end of a longer in-progress gesture.
+ * the universe-opener sequence appears at the end of a longer in-progress gesture.
  * - `cancel`: has no gesture path; shows a fixed highlight of 1 only when selected.
  *
  * @param command - The command whose gesture diagram to highlight.
