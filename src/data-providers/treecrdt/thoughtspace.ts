@@ -1,3 +1,4 @@
+import type { Operation } from '@treecrdt/interface'
 import type Index from '../../@types/IndexType'
 import type Lexeme from '../../@types/Lexeme'
 import type Thought from '../../@types/Thought'
@@ -86,10 +87,11 @@ const updateThoughts = async ({
   lexemeIndexUpdatesOld: Index<Lexeme | undefined>
   schemaVersion: number
   movePlacements?: Index<ThoughtId | undefined>
-}): Promise<void> => {
+}): Promise<readonly Operation[]> => {
   if (!replicaId) throw new Error('TreeCRDT DataProvider: init not called')
 
   const client = getTreecrdtClient()
+  const ops: Operation[] = []
 
   for (const [id, lexeme] of Object.entries(lexemeIndexUpdates)) {
     if (lexeme === null) {
@@ -112,7 +114,7 @@ const updateThoughts = async ({
   }
 
   for (const id of deletes) {
-    await client.local.delete(replicaId, id)
+    ops.push(await client.local.delete(replicaId, id))
   }
 
   for (const [id, thought] of Object.entries(updates)) {
@@ -136,12 +138,14 @@ const updateThoughts = async ({
         : { type: 'last' as const }
 
     if (!exists) {
-      await client.local.insert(
-        replicaId,
-        thought.parentId === ROOT_PARENT_ID ? GLOBAL_ROOT_TOKEN : thought.parentId,
-        thoughtId,
-        placement,
-        payloadBytes,
+      ops.push(
+        await client.local.insert(
+          replicaId,
+          thought.parentId === ROOT_PARENT_ID ? GLOBAL_ROOT_TOKEN : thought.parentId,
+          thoughtId,
+          placement,
+          payloadBytes,
+        ),
       )
     } else {
       const existing = await getThoughtById(thoughtId)
@@ -150,11 +154,13 @@ const updateThoughts = async ({
       const parentChanged = existing.parentId !== thought.parentId
       const orderChanged = thoughtId in (movePlacements || {})
       if (parentChanged || orderChanged) {
-        await client.local.move(
-          replicaId,
-          thoughtId,
-          thought.parentId === ROOT_PARENT_ID ? GLOBAL_ROOT_TOKEN : thought.parentId,
-          placement,
+        ops.push(
+          await client.local.move(
+            replicaId,
+            thoughtId,
+            thought.parentId === ROOT_PARENT_ID ? GLOBAL_ROOT_TOKEN : thought.parentId,
+            placement,
+          ),
         )
       }
 
@@ -167,10 +173,12 @@ const updateThoughts = async ({
         existing.archived !== thought.archived
 
       if (payloadChanged) {
-        await client.local.payload(replicaId, thoughtId, payloadBytes)
+        ops.push(await client.local.payload(replicaId, thoughtId, payloadBytes))
       }
     }
   }
+
+  return ops
 }
 
 /** No-op for freeing a thought. */

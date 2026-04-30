@@ -1,3 +1,4 @@
+import type { Operation } from '@treecrdt/interface'
 import _ from 'lodash'
 import { Action, Store, StoreEnhancer, StoreEnhancerStoreCreator } from 'redux'
 import Index from '../@types/IndexType'
@@ -5,6 +6,7 @@ import PushBatch from '../@types/PushBatch'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import { CACHED_SETTINGS, EM_TOKEN } from '../constants'
+import { pushTreecrdtLocalOpsToRemote } from '../data-providers/treecrdt/sync'
 import db from '../data-providers/treecrdt/thoughtspace'
 import contextToThoughtId from '../selectors/contextToThoughtId'
 import { getChildrenRanked } from '../selectors/getChildren'
@@ -97,7 +99,10 @@ const pushQueue: StoreEnhancer<any> =
               schemaVersion: batch.updates?.schemaVersion ?? 0,
               movePlacements: batch.movePlacements,
             }
-            await db.updateThoughts(batchPayload)
+            const maybeOps = await db.updateThoughts(batchPayload)
+            if (batch.local && Array.isArray(maybeOps) && maybeOps.length > 0) {
+              void pushTreecrdtLocalOpsToRemote(maybeOps as readonly Operation[])
+            }
           }
         }
 

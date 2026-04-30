@@ -1,3 +1,4 @@
+import type { Operation } from '@treecrdt/interface'
 import type { MaterializationEvent } from '@treecrdt/interface/engine'
 import { type TreecrdtWebSocketSync, connectTreecrdtWebSocketSync } from '@treecrdt/sync'
 import type { TreecrdtClient } from '@treecrdt/wa-sqlite/client'
@@ -86,5 +87,15 @@ export async function tryStartTreecrdtWebSocketSyncFromEnv(
     await startTreecrdtWebSocketSync(client, options)
   } catch (err) {
     console.warn('TreeCRDT WebSocket sync failed to start', err)
+  }
+}
+
+/** Upload TreeCRDT ops produced by local edits to the remote peer when WebSocket sync is active. */
+export async function pushTreecrdtLocalOpsToRemote(ops: readonly Operation[]): Promise<void> {
+  if (!syncHandle || ops.length === 0) return
+  try {
+    await syncHandle.pushLocalOps(ops)
+  } catch (err) {
+    console.warn('TreeCRDT pushLocalOps failed', err)
   }
 }
