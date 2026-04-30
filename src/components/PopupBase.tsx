@@ -87,10 +87,11 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
           display: 'block',
           width: '100%',
           height: '100%',
-          // when absolutely-positioned, the top position is calculated in usePositionFixed (#3222)
           marginBlock: positionFixedStyles.position === 'fixed' ? 'auto' : undefined,
-          top: 0,
-          bottom: 0,
+          // when keyboard is open, position is 'absolute' and top is scroll-adjusted — preserve it
+          // when keyboard is closed, position is 'fixed' so top/bottom 0 covers the full viewport
+          top: positionFixedStyles.position === 'absolute' ? positionFixedStyles.top : 0,
+          bottom: positionFixedStyles.position === 'absolute' ? positionFixedStyles.bottom : 0,
         }
       : {}
 
