@@ -238,7 +238,7 @@ const windowEm = {
     try {
       const rows = await dumpTreecrdt(opts)
 
-      console.table(rows)
+      console.table(rows) // eslint-disable-line no-console -- window.em.dumpTreecrdt devtools
       return rows
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
