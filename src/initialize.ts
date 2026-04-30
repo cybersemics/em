@@ -4,6 +4,7 @@ import CommandId from './@types/CommandId'
 import Context from './@types/Context'
 import MimeType from './@types/MimeType'
 import State from './@types/State'
+import Thought from './@types/Thought'
 import ThoughtId from './@types/ThoughtId'
 import Thunk from './@types/Thunk'
 import { importFilesActionCreator as importFiles } from './actions/importFiles'
@@ -12,12 +13,13 @@ import { loadFromUrlActionCreator as loadFromUrl } from './actions/loadFromUrl'
 import { preloadSourcesActionCreator as preloadSources } from './actions/preloadSources'
 import { pullActionCreator as pull } from './actions/pull'
 import { setCursorActionCreator as setCursor } from './actions/setCursor'
+import { updateThoughtsActionCreator } from './actions/updateThoughts'
 import { commandById, executeCommand } from './commands'
 import getLexemeHelper from './data-providers/data-helpers/getLexeme'
 import { initPermissionsStore } from './data-providers/permissionsStore'
-import { tryStartTreecrdtWebSocketSyncFromEnv } from './data-providers/treecrdt/sync'
 import { clientIdReady } from './data-providers/thoughtspaceSession'
 import { dumpTreecrdt } from './data-providers/treecrdt/debug'
+import { tryStartTreecrdtWebSocketSyncFromEnv as tryStartTreecrdtWebSocketSync } from './data-providers/treecrdt/sync'
 import db, { init as initTreecrdtThoughtspace } from './data-providers/treecrdt/thoughtspace'
 import { getTreecrdtClient, initTreecrdt } from './data-providers/treecrdt/treecrdt'
 import * as selection from './device/selection'
@@ -83,7 +85,35 @@ export const initialize = async () => {
           return out
         })()
   await initTreecrdtThoughtspace(replicaId)
-  await tryStartTreecrdtWebSocketSyncFromEnv(getTreecrdtClient())
+
+  /** Pushes one TreeCRDT-backed thought into Redux when remote sync materializes SQLite (pending flags preserved). */
+  const onRemoteThoughtChange = (thought: Thought) => {
+    store.dispatch((dispatch, getState) => {
+      const state = getState()
+      const thoughtInState = getThoughtById(state, thought.id)
+      const parentInState = getThoughtById(state, thought.parentId)
+      const pending = thoughtInState?.pending || parentInState?.pending
+
+      dispatch(
+        updateThoughtsActionCreator({
+          thoughtIndexUpdates: {
+            [thought.id]: {
+              ...thought,
+              ...(pending ? { pending } : {}),
+            },
+          },
+          lexemeIndexUpdates: {},
+          local: false,
+          remote: false,
+          repairCursor: true,
+        }),
+      )
+    })
+  }
+
+  await tryStartTreecrdtWebSocketSync(getTreecrdtClient(), {
+    onThoughtChange: onRemoteThoughtChange,
+  })
 
   // load local state unless loading a public context or source url
   // await initDB()
