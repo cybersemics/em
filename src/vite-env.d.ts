@@ -5,6 +5,7 @@ interface ImportMetaEnv {
   readonly VITE_WEBSOCKET_HOST: string
   readonly VITE_WEBSOCKET_PORT: number
   readonly VITE_AI_URL: string
+  readonly VITE_TREECRDT_SYNC_BASE_URL?: string
 }
 
 interface ImportMeta {

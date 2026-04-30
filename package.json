@@ -53,8 +53,7 @@
     "test:puppeteer": "./src/e2e/puppeteer/test-puppeteer.sh",
     "test": "vitest --project unit",
     "websocket-server": "cd server && yarn build && yarn start",
-    "build:treecrdt": "cd treecrdt && COREPACK_ENABLE_STRICT=0 pnpm -C packages/treecrdt-ts run build && COREPACK_ENABLE_STRICT=0 pnpm -C packages/treecrdt-wa-sqlite run build:ts",
-    "build:treecrdt:full": "cd treecrdt && COREPACK_ENABLE_STRICT=0 pnpm run build"
+    "treecrdt": "COREPACK_ENABLE_STRICT=0 pnpm -C treecrdt run build"
   },
   "lockfile-lint": {
     "allowed-schemes": [
@@ -100,7 +99,13 @@
     "@radix-ui/react-visually-hidden": "^1.2.4",
     "@redux-devtools/extension": "^4.0.0",
     "@stylistic/eslint-plugin-ts": "^4.4.1",
+    "@treecrdt/auth": "link:treecrdt/packages/treecrdt-auth",
+    "@treecrdt/discovery": "link:treecrdt/packages/discovery",
     "@treecrdt/interface": "link:treecrdt/packages/treecrdt-ts",
+    "@treecrdt/riblt-wasm": "link:treecrdt/packages/treecrdt-riblt-wasm-js",
+    "@treecrdt/sync": "link:treecrdt/packages/treecrdt-sync",
+    "@treecrdt/sync-protocol": "link:treecrdt/packages/sync-protocol/protocol",
+    "@treecrdt/sync-sqlite": "link:treecrdt/packages/sync-protocol/material/sqlite",
     "@treecrdt/wa-sqlite": "link:treecrdt/packages/treecrdt-wa-sqlite",
     "algoliasearch": "^5.49.1",
     "axios": "^1.15.0",

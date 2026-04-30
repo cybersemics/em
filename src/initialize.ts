@@ -15,6 +15,7 @@ import { setCursorActionCreator as setCursor } from './actions/setCursor'
 import { commandById, executeCommand } from './commands'
 import getLexemeHelper from './data-providers/data-helpers/getLexeme'
 import { initPermissionsStore } from './data-providers/permissionsStore'
+import { tryStartTreecrdtWebSocketSyncFromEnv } from './data-providers/treecrdt/sync'
 import { clientIdReady } from './data-providers/thoughtspaceSession'
 import { dumpTreecrdt } from './data-providers/treecrdt/debug'
 import db, { init as initTreecrdtThoughtspace } from './data-providers/treecrdt/thoughtspace'
@@ -82,6 +83,7 @@ export const initialize = async () => {
           return out
         })()
   await initTreecrdtThoughtspace(replicaId)
+  await tryStartTreecrdtWebSocketSyncFromEnv(getTreecrdtClient())
 
   // load local state unless loading a public context or source url
   // await initDB()
@@ -205,7 +207,7 @@ const windowEm = {
   dumpTreecrdt: async (opts?: { includeTombstones?: boolean }) => {
     try {
       const rows = await dumpTreecrdt(opts)
-      //eslint-disable-next-line no-console -- devtools-friendly table for window.em debugging
+
       console.table(rows)
       return rows
     } catch (err) {

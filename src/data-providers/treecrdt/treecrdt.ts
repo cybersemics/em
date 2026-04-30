@@ -3,6 +3,23 @@ import { tsid } from '../thoughtspaceSession'
 
 let client: TreecrdtClient | null = null
 
+const beforeCloseHandlers = new Set<() => Promise<void>>()
+
+/** Runs before `client.close()` / `client.drop()` (e.g. tear down WebSocket sync). Returns an unregister function. */
+export const registerBeforeTreecrdtClose = (handler: () => Promise<void>): (() => void) => {
+  beforeCloseHandlers.add(handler)
+  return () => {
+    beforeCloseHandlers.delete(handler)
+  }
+}
+
+/** Invokes all registered pre-close handlers (e.g. sync teardown). */
+async function runBeforeTreecrdtClose(): Promise<void> {
+  const handlers = [...beforeCloseHandlers]
+  beforeCloseHandlers.clear()
+  await Promise.all(handlers.map(h => h()))
+}
+
 /** Initializes the TreeCRDT client with OPFS storage. */
 export const initTreecrdt = async (): Promise<TreecrdtClient> => {
   client = await createTreecrdtClient({
@@ -22,6 +39,7 @@ export const getTreecrdtClient = (): TreecrdtClient => {
 /** Closes the TreeCRDT client. */
 export const closeTreecrdt = async (): Promise<void> => {
   if (client) {
+    await runBeforeTreecrdtClose()
     await client.close()
     client = null
   }
@@ -30,9 +48,10 @@ export const closeTreecrdt = async (): Promise<void> => {
 /** Drops storage and closes the TreeCRDT client. */
 export const dropTreecrdt = async (): Promise<void> => {
   if (client) {
+    await runBeforeTreecrdtClose()
     await client.drop()
     client = null
   }
 }
 
-export default { initTreecrdt, getTreecrdtClient, closeTreecrdt, dropTreecrdt }
+export default { initTreecrdt, getTreecrdtClient, closeTreecrdt, dropTreecrdt, registerBeforeTreecrdtClose }
