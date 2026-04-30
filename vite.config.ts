@@ -18,6 +18,9 @@ export default defineConfig({
   build: {
     outDir: 'build',
   },
+  worker: {
+    format: 'es',
+  },
   plugins: [
     treecrdt({ outDir: 'public/wa-sqlite' }),
     react(),

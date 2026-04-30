@@ -23,9 +23,13 @@ async function runBeforeTreecrdtClose(): Promise<void> {
 /** Initializes the TreeCRDT client with OPFS storage. */
 export const initTreecrdt = async (): Promise<TreecrdtClient> => {
   client = await createTreecrdtClient({
-    storage: 'opfs',
+    storage: {
+      type: 'opfs',
+      filename: `/treecrdt-em-${tsid}.db`,
+      fallback: 'throw',
+    },
+    runtime: typeof SharedWorker === 'undefined' ? { type: 'auto' } : { type: 'shared-worker' },
     docId: tsid,
-    filename: `/treecrdt-em-${tsid}.db`,
   })
   return client
 }

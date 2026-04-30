@@ -19,9 +19,12 @@ import getLexemeHelper from './data-providers/data-helpers/getLexeme'
 import { initPermissionsStore } from './data-providers/permissionsStore'
 import { clientIdReady } from './data-providers/thoughtspaceSession'
 import { dumpTreecrdt } from './data-providers/treecrdt/debug'
-import { tryStartTreecrdtWebSocketSyncFromEnv as tryStartTreecrdtWebSocketSync } from './data-providers/treecrdt/sync'
+import {
+  applyMaterializedThoughtsToStore,
+  tryStartTreecrdtWebSocketSyncFromEnv as tryStartTreecrdtWebSocketSync,
+} from './data-providers/treecrdt/sync'
 import db, { init as initTreecrdtThoughtspace } from './data-providers/treecrdt/thoughtspace'
-import { getTreecrdtClient, initTreecrdt } from './data-providers/treecrdt/treecrdt'
+import { getTreecrdtClient, initTreecrdt, registerBeforeTreecrdtClose } from './data-providers/treecrdt/treecrdt'
 import * as selection from './device/selection'
 import testFlags from './e2e/testFlags'
 import contextToThoughtId from './selectors/contextToThoughtId'
@@ -72,7 +75,7 @@ export const initialize = async () => {
   const clientId = await clientIdReady
 
   await initPermissionsStore()
-  await initTreecrdt()
+  const treecrdtClient = await initTreecrdt()
   // TODO: revisit the clientId to replicaId conversion
   // TreeCRDT expects 32-byte replicaId; clientId is base64 of SHA-256 (44 chars) — decode to get 32 bytes
   const replicaId =
@@ -86,8 +89,8 @@ export const initialize = async () => {
         })()
   await initTreecrdtThoughtspace(replicaId)
 
-  /** Pushes one TreeCRDT-backed thought into Redux when remote sync materializes SQLite (pending flags preserved). */
-  const onRemoteThoughtChange = (thought: Thought) => {
+  /** Pushes one TreeCRDT-backed thought into Redux when TreeCRDT materializes SQLite (pending flags preserved). */
+  const onMaterializedThoughtChange = (thought: Thought) => {
     store.dispatch((dispatch, getState) => {
       const state = getState()
       const thoughtInState = getThoughtById(state, thought.id)
@@ -110,10 +113,6 @@ export const initialize = async () => {
       )
     })
   }
-
-  await tryStartTreecrdtWebSocketSync(getTreecrdtClient(), {
-    onThoughtChange: onRemoteThoughtChange,
-  })
 
   // load local state unless loading a public context or source url
   // await initDB()
@@ -138,6 +137,17 @@ export const initialize = async () => {
   await thoughtsLocalPromise
 
   await initializeCursor()
+
+  const unsubscribeMaterialized = treecrdtClient.onMaterialized(event => {
+    void applyMaterializedThoughtsToStore(event, onMaterializedThoughtChange).catch(err =>
+      console.error('TreeCRDT materialized UI sync failed', err),
+    )
+  })
+  registerBeforeTreecrdtClose(async () => {
+    unsubscribeMaterialized()
+  })
+
+  await tryStartTreecrdtWebSocketSync(treecrdtClient)
 
   return {
     thoughtsLocalPromise,
