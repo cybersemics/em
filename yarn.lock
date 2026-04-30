@@ -11275,7 +11275,7 @@ __metadata:
     idb-keyval: "npm:^6.2.2"
     immer: "npm:^11.1.4"
     ipfs-http-client: "npm:^43.0.1"
-    it-all: "npm:^3.0.9"
+    it-all: "npm:^3.0.11"
     jest: "npm:^30.3.0"
     jest-environment-node: "npm:^30.3.0"
     jest-extended: "npm:^7.0.0"
@@ -15519,10 +15519,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"it-all@npm:^3.0.9":
-  version: 3.0.9
-  resolution: "it-all@npm:3.0.9"
-  checksum: 10c0/811bd0889b3b293ef921c700b58dd82e1281c21d15655f2c00c910a461c1b16c68e9ac84e856cb7b03df790a6819c941fbd91c25f77910a3bb1652eb40ff48ef
+"it-all@npm:^3.0.11":
+  version: 3.0.11
+  resolution: "it-all@npm:3.0.11"
+  checksum: 10c0/04e67f82e24f1f00a71378af9dcce01a21f4f80ef80f101aa445efccee484837eaac2d53620dda9e937fb8053c398e5ba21d58b0dd83377f826b98ffb9f95615
   languageName: node
   linkType: hard
 

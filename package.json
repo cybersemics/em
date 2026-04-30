@@ -221,7 +221,7 @@
     "eslint-plugin-react-refresh": "^0.5.2",
     "fake-indexeddb": "^6.2.5",
     "happy-dom": "^20.9.0",
-    "it-all": "^3.0.9",
+    "it-all": "^3.0.11",
     "jest": "^30.3.0",
     "jest-environment-node": "^30.3.0",
     "jest-extended": "^7.0.0",
