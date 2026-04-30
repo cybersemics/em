@@ -86,7 +86,8 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
           border: 'none',
           display: 'block',
           width: '100%',
-          height: '100%',
+          // use 100dvh for fixed positioning so Android WebView reliably fills the visual viewport
+          height: positionFixedStyles.position === 'fixed' ? '100dvh' : '100%',
           marginBlock: positionFixedStyles.position === 'fixed' ? 'auto' : undefined,
           // when keyboard is open, position is 'absolute' and top is scroll-adjusted — preserve it
           // when keyboard is closed, position is 'fixed' so top/bottom 0 covers the full viewport
