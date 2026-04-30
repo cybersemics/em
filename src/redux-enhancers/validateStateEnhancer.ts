@@ -1,6 +1,7 @@
 import { Action, Store, StoreEnhancer, StoreEnhancerStoreCreator } from 'redux'
 import State from '../@types/State'
 import { EM_TOKEN, HOME_TOKEN } from '../constants'
+import { tsidShared } from '../data-providers/thoughtspaceSession'
 import isTutorial from '../selectors/isTutorial'
 import equalPath from '../util/equalPath'
 
@@ -19,6 +20,8 @@ const validateNextState = (nextState: State, action: Action): void => {
     !isLoading &&
     showModal !== 'welcome' &&
     !isTutorial(nextState) &&
+    // Shared links skip the welcome flow that normally creates EM/Settings, so EM may stay empty in a valid shared doc.
+    !tsidShared &&
     // guard against EM thought not yet loaded
     emThought &&
     !emThought.pending &&
