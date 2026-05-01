@@ -309,11 +309,9 @@ const getTextNodes = (root: HTMLElement): Text[] => {
 }
 
 /**
- * Checks if a click coordinate is actually within the visible character bounds of a text node.
- * This is more accurate than checking the overall bounding box, especially for text nodes
- * with trailing spaces that extend beyond visible characters.
+ * Checks if a click coordinate are over a visible character in a text node, ignoring whitespace-only nodes.
  */
-const isWithinVoidArea = (node: Text, clientX: number, clientY: number): boolean => {
+const isWithinTextNode = (node: Text, clientX: number, clientY: number): boolean => {
   const text = node.nodeValue ?? ''
   if (!text.trim()) return true // ignore pure whitespace nodes
 
@@ -333,13 +331,24 @@ const isWithinVoidArea = (node: Text, clientX: number, clientY: number): boolean
       if (rect.height === 0 || rect.width === 0) continue
 
       if (clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom) {
-        return false
+        return true
       }
     }
   }
 
-  // Treat line-edge gaps (left of first char / right of last char) as valid positions
-  // so that taps in the editable padding near boundary characters are not void areas.
+  return false
+}
+
+/**
+ * Checks if a click coordinate is within the line boundaries of a text node.
+ * Line-edge gaps (e.g. padding) are considered valid positions, and taps in the editable padding near boundary characters are not void areas.
+ */
+const isWithinTextNodeLines = (node: Text, clientX: number, clientY: number): boolean => {
+  const text = node.nodeValue ?? ''
+  if (!text.trim()) return true // ignore pure whitespace nodes
+
+  const range = document.createRange()
+
   const lines = getTextNodeLines(node)
   for (const line of lines) {
     if (clientY < line.rect.top || clientY > line.rect.bottom) continue
@@ -349,11 +358,20 @@ const isWithinVoidArea = (node: Text, clientX: number, clientY: number): boolean
     const lineRect = range.getBoundingClientRect()
     const tolerance = line.rect.height * 0.5
     if (clientX >= lineRect.left - tolerance && clientX <= lineRect.right + tolerance) {
-      return false
+      return true
     }
   }
 
-  return true
+  return false
+}
+
+/**
+ * Checks if a click coordinate is actually within the visible character bounds of a text node.
+ * This is more accurate than checking the overall bounding box, especially for text nodes
+ * with trailing spaces that extend beyond visible characters.
+ */
+const isWithinVoidArea = (node: Text, clientX: number, clientY: number): boolean => {
+  return !isWithinTextNode(node, clientX, clientY) && !isWithinTextNodeLines(node, clientX, clientY)
 }
 
 /**
@@ -417,10 +435,22 @@ const getDistanceToNearestCharacter = (
  * Prioritizes text nodes where the click is directly inside visible character bounds.
  */
 const findNearestTextNode = (textNodes: Text[], clientX: number, clientY: number): Text | null => {
-  const nodesWithinCharBounds = textNodes.filter(node => !isWithinVoidArea(node, clientX, clientY))
+  // First check if any text node has visible characters directly under the click.
+  // These are the most likely intended targets and should be prioritized over hits within a line but outside character bounds.
+  const nodesWithinCharBounds = textNodes.filter(node => isWithinTextNode(node, clientX, clientY))
 
   if (nodesWithinCharBounds.length > 0) {
     const node = nodesWithinCharBounds[0]
+    const range = document.createRange()
+    range.selectNodeContents(node)
+    return node
+  }
+
+  // If no nodes contain the click within character bounds, check if any are within line bounds (including line-edge gaps).
+  const nodesWithinLineBounds = textNodes.filter(node => isWithinTextNodeLines(node, clientX, clientY))
+
+  if (nodesWithinLineBounds.length > 0) {
+    const node = nodesWithinLineBounds[0]
     const range = document.createRange()
     range.selectNodeContents(node)
     return node
