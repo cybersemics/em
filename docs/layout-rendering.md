@@ -106,6 +106,8 @@ When the cursor is deep, many ancestors and ancestor-siblings are hidden by auto
 
 Net effect: the outer container is shifted up off-screen by exactly enough that one viewport's worth of empty space sits above the cursor. The user can scroll into that empty space; visible thoughts don't jump.
 
+History: the original autocrop work is [issue #1751](https://github.com/cybersemics/em/issues/1751); the uncle-handling refinement is [issue #3055](https://github.com/cybersemics/em/issues/3055).
+
 ## Indent (horizontal autocrop)
 
 The same idea applied horizontally. As the cursor descends, the entire tree slides left so the cursor stays roughly center-screen, and table-col1 widths are absorbed.
