@@ -110,69 +110,63 @@ There are several common selectors that are used to access a parent, child, or s
       - z
 ```
 
-- To get the **parent** `Thought` of `Thought` `c`: `thoughtB ≅ getThoughtById(state, thoughtC.parentId)`. See: [getThoughtById](https://github.com/cybersemics/em/blob/main/src/selectors/getThoughtById.ts).
-- To get the **parent** `Path` of `Path` `a/b/c`: `pathAB ≅ rootedParentOf(state, pathABC)`. See: [rootedParentOf](https://github.com/cybersemics/em/blob/main/src/selectors/rootedParentOf.ts).
-  - Note: `rootedParentOf` always return a valid `Path`. If passed a child of the ROOT context, `rootedParentOf` returns `[HOME_TOKEN]`. If [parentOf](https://github.com/cybersemics/em/blob/main/src/util/parentOf.ts) is passed a child of the ROOT context, it returns an empty array, which is not a valid `Path`. `parentOf` should only be used if one or more additional thoughts are immediately appended, e.g. `appendToPath(parentOf(path), thoughtId)`. This is not currently reflected in the return type of `parentOf`.
-- To get the **children** of `Thought` `c`: `childrenOfC ≅ getAllChildrenAsThoughtsById(state, thoughtC.id)`. If you have the `Context` of `c` rather than its ID, you can use: `childrenOfC ≅ getAllChildren(state, contextABC)`. See: [getChildren.ts](https://github.com/cybersemics/em/blob/main/src/selectors/getChildren.ts).
-- To get the **next sibling** of `Thought` y: `thoughtZ ≅ nextSibling(state, 'y', contextABC)`. See: [nextSibling](https://github.com/cybersemics/em/blob/main/src/selectors/nextSibling).
-- To get the **previous sibling** of `Thought` y: `thoughtX ≅ prevSibling(state, 'y', contextABC)`. See: [prevSibling](https://github.com/cybersemics/em/blob/main/src/selectors/prevSibling).
+- To get the **parent** `Thought` of `Thought` `c`: `thoughtB ≅ getThoughtById(state, thoughtC.parentId)`. See: [getThoughtById](../src/selectors/getThoughtById.ts).
+- To get the **parent** `Path` of `Path` `a/b/c`: `pathAB ≅ rootedParentOf(state, pathABC)`. See: [rootedParentOf](../src/selectors/rootedParentOf.ts).
+  - Note: `rootedParentOf` always return a valid `Path`. If passed a child of the ROOT context, `rootedParentOf` returns `[HOME_TOKEN]`. If [parentOf](../src/util/parentOf.ts) is passed a child of the ROOT context, it returns an empty array, which is not a valid `Path`. `parentOf` should only be used if one or more additional thoughts are immediately appended, e.g. `appendToPath(parentOf(path), thoughtId)`. This is not currently reflected in the return type of `parentOf`.
+- To get the **children** of `Thought` `c`: `childrenOfC ≅ getAllChildrenAsThoughts(state, thoughtC.id)`. If you have only the id, you can also use: `childIdsOfC ≅ getAllChildren(state, thoughtC.id)`. See: [getChildren.ts](../src/selectors/getChildren.ts).
+- To get the **next sibling** of `Thought` y: `thoughtZ ≅ nextSibling(state, thoughtY.id)`. See: [nextSibling](../src/selectors/nextSibling.ts).
+- To get the **previous sibling** of `Thought` y: `thoughtX ≅ prevSibling(state, pathABCy)`. See: [prevSibling](../src/selectors/prevSibling.ts).
 
 Those are just the most basic. There are many selectors and util functions which can be used to traverse, navigate, and convert between `Thought`, `ThoughtId`, `Context`, and `Path`:
 
 - basic traversal
-  - [parentOfThought](https://github.com/cybersemics/em/blob/main/src/selectors/parentOfThought.ts) - Returns the parent Thought of a given ThoughtId.
-  - [nextSibling](https://github.com/cybersemics/em/blob/main/src/selectors/nextSibling.ts)/[prevSibling](https://github.com/cybersemics/em/blob/main/src/selectors/prevSibling.ts) - Gets the next/previous sibling of a thought, according to its parent's sort preference.
-  - [rootedParentOf](https://github.com/cybersemics/em/blob/main/src/selectors/rootedParentOf.ts) - Gets the parent Context/Path of a given Context/Path. If passed a child of the root thought, returns `[HOME_TOKEN]` or `[ABSOLUTE_TOKEN]` as appropriate.
-  - [parentOf](https://github.com/cybersemics/em/blob/main/src/util/parentOf.ts) - Gets the parent of a Context or Path. Use [rootedParentOf](https://github.com/cybersemics/em/blob/main/src/selectors/rootedParentOf.ts) instead unless you are immediately appending an additional thoughtnn
-  - [appendToPath](https://github.com/cybersemics/em/blob/main/src/util/appendToPath.ts) - Appends one or more child nodes to a `Path` or SimplePath. Ensures the root thought is removed.
+  - [parentOfThought](../src/selectors/parentOfThought.ts) - Returns the parent Thought of a given ThoughtId.
+  - [nextSibling](../src/selectors/nextSibling.ts)/[prevSibling](../src/selectors/prevSibling.ts) - Gets the next/previous sibling of a thought, according to its parent's sort preference.
+  - [rootedParentOf](../src/selectors/rootedParentOf.ts) - Gets the parent Context/Path of a given Context/Path. If passed a child of the root thought, returns `[HOME_TOKEN]` or `[ABSOLUTE_TOKEN]` as appropriate.
+  - [parentOf](../src/util/parentOf.ts) - Gets the parent of a Context or Path. Use [rootedParentOf](../src/selectors/rootedParentOf.ts) instead unless you are immediately appending an additional thought.
+  - [appendToPath](../src/util/appendToPath.ts) - Appends one or more child nodes to a `Path` or SimplePath. Ensures the root thought is removed.
 - children
-  - [getChildren](https://github.com/cybersemics/em/blob/ae4a381efe08316e2dbc4554a7c217b22103c70e/src/selectors/getChildren.ts#L73-L74) - Gets all visible children of a Context, unordered.
-  - [getAllChildren](https://github.com/cybersemics/em/blob/ae4a381efe08316e2dbc4554a7c217b22103c70e/src/selectors/getChildren.ts#L46-L50) - Returns the subthoughts (as ThoughtIds) of the given context unordered. If the subthoughts have not changed, returns the same object reference.
-  - [getAllChildrenAsThoughts](https://github.com/cybersemics/em/blob/ae4a381efe08316e2dbc4554a7c217b22103c70e/src/selectors/getChildren.ts#L38-L40) - Returns the subthoughts (as Thoughts) of the given context unordered.
-  - [getAllChildrenAsThoughtsById](https://github.com/cybersemics/em/blob/ae4a381efe08316e2dbc4554a7c217b22103c70e/src/selectors/getChildren.ts#L42-L44) - Returns the subthoughts (as Thoughts) of the given ThoughtId unordered.
-  - [getAllChildrenSorted](https://github.com/cybersemics/em/blob/ae4a381efe08316e2dbc4554a7c217b22103c70e/src/selectors/getChildren.ts#L76-L81) - Gets all children of a Context sorted by rank or sort preference.
-  - [getChildrenRanked](https://github.com/cybersemics/em/blob/ae4a381efe08316e2dbc4554a7c217b22103c70e/src/selectors/getChildren.ts#L162-L164) - Gets all children of a Context sorted by their ranking. Returns a new object reference even if the children have not changed.
-  - [getChildrenRankedById](https://github.com/cybersemics/em/blob/ae4a381efe08316e2dbc4554a7c217b22103c70e/src/selectors/getChildren.ts#L166-L171)  - Gets all children of a ThoughtId sorted by their ranking. Returns a new object reference even if the children have not changed.
-  - [getChildrenSorted](https://github.com/cybersemics/em/blob/ae4a381efe08316e2dbc4554a7c217b22103c70e/src/selectors/getChildren.ts#L83-L86) - Gets all visible children of a Context sorted by rank or sort preference.
+  - [getChildren](../src/selectors/getChildren.ts) - Gets all visible children of a ThoughtId, unordered.
+  - [getAllChildren](../src/selectors/getChildren.ts) - Returns the subthoughts (as ThoughtIds) of the given ThoughtId unordered. If the subthoughts have not changed, returns the same object reference.
+  - [getAllChildrenAsThoughts](../src/selectors/getChildren.ts) - Returns the subthoughts (as Thoughts) of the given ThoughtId unordered.
+  - [getAllChildrenSorted](../src/selectors/getChildren.ts) - Gets all children of a ThoughtId sorted by rank or sort preference.
+  - [getChildrenRanked](../src/selectors/getChildren.ts) - Gets all children of a ThoughtId sorted by their ranking. Returns a new object reference even if the children have not changed.
+  - [getChildrenSorted](../src/selectors/getChildren.ts) - Gets all visible children of a ThoughtId sorted by rank or sort preference.
 - lookup/conversion
-  - [getThoughtById](https://github.com/cybersemics/em/blob/main/src/selectors/getThoughtById.ts) - Gets a Thought by its ThoughtId.
-  - [pathToThought](https://github.com/cybersemics/em/blob/main/src/selectors/pathToThought.ts) - Gets the head Thought of a path.
-  - [pathToContext](https://github.com/cybersemics/em/blob/main/src/util/pathToContext.ts) - Converts a Path to a Context.
-  - [contextToPath](https://github.com/cybersemics/em/blob/main/src/selectors/contextToPath.ts) - DEPRECATED: Converts a Context to a Path. This is a lossy function! If there is a duplicate thought in the same context, it takes the first. It should be removed. Build up the `Path` from information that is already in scope, or use [thoughtToPath](https://github.com/cybersemics/em/blob/main/src/selectors/thoughtToPath.ts) instead.
-  - [thoughtToPath](https://github.com/cybersemics/em/blob/main/src/selectors/thoughtToPath.ts) - Generates the Path for a Thought by traversing upwards to the root thought.
-  - [head](https://github.com/cybersemics/em/blob/main/src/util/head.ts) - Gets the last ThoughtId or value in a Path or Context.
-  - [childIdsToThoughts](https://github.com/cybersemics/em/blob/main/src/selectors/childIdsToThoughts.ts) - Converts a list of ThoughtIds to a list of Thoughts. If any one of the thoughts are not found, returns null.
-  - [thoughtToContext](https://github.com/cybersemics/em/blob/main/src/selectors/thoughtToContext.ts) - Generates the Context for a Thought by traversing upwards to the ROOT thought.
-  - [contextToThought](https://github.com/cybersemics/em/blob/main/src/selectors/contextToThought.ts) - Gets the head Thought of a context.
-  - [contextToThoughtId](https://github.com/cybersemics/em/blob/main/src/util/contextToThoughtId.ts) - Recursively finds the thought represented by the context and returns the id. This is the part of the independent migration strategy. Will likely be changed to some other name later.
-  - [unroot](https://github.com/cybersemics/em/blob/main/src/util/unroot.ts) - Removes the root token from the beginning of a Context or Path.
+  - [getThoughtById](../src/selectors/getThoughtById.ts) - Gets a Thought by its ThoughtId.
+  - [pathToThought](../src/selectors/pathToThought.ts) - Gets the head Thought of a path.
+  - [pathToContext](../src/util/pathToContext.ts) - Converts a Path to a Context.
+  - [contextToPath](../src/selectors/contextToPath.ts) - DEPRECATED: Converts a Context to a Path. This is a lossy function! If there is a duplicate thought in the same context, it takes the first. It should be removed. Build up the `Path` from information that is already in scope, or use [thoughtToPath](../src/selectors/thoughtToPath.ts) instead.
+  - [thoughtToPath](../src/selectors/thoughtToPath.ts) - Generates the Path for a Thought by traversing upwards to the root thought.
+  - [head](../src/util/head.ts) - Gets the last ThoughtId or value in a Path or Context.
+  - [childIdsToThoughts](../src/selectors/childIdsToThoughts.ts) - Converts a list of ThoughtIds to a list of Thoughts. If any one of the thoughts are not found, returns null.
+  - [thoughtToContext](../src/selectors/thoughtToContext.ts) - Generates the Context for a Thought by traversing upwards to the ROOT thought.
+  - [contextToThoughtId](../src/selectors/contextToThoughtId.ts) - Recursively finds the thought represented by the context and returns the id.
+  - [unroot](../src/util/unroot.ts) - Removes the root token from the beginning of a Context or Path.
 - ancestors/descendants
-  - [getAncestorBy](https://github.com/cybersemics/em/blob/main/src/selectors/getAncestorBy.ts) - Traverses the thought tree upwards from the given thought and returns the first ancestor that passes the check function.
-  - [getDescendantContexts](https://github.com/cybersemics/em/blob/ae4a381efe08316e2dbc4554a7c217b22103c70e/src/selectors/getDescendants.ts#L29-L44) - Generates a flat list of all descendant Contexts. If a filterFunction is provided, descendants of thoughts that are filtered out are not traversed.
-  - [getDescendantThoughtIds](https://github.com/cybersemics/em/blob/ae4a381efe08316e2dbc4554a7c217b22103c70e/src/selectors/getDescendants.ts#L46-L70) - Generates a flat list of all descendant Paths. If a filterFunction is provided, descendants of thoughts that are filtered out are not traversed.
-  - [ancestors](https://github.com/cybersemics/em/blob/main/src/util/ancestors.ts) - Returns a subpath of ancestor children up to the given thought (inclusive).
-  - [isDescendant](https://github.com/cybersemics/em/blob/main/src/util/isDescendant.ts)
-  - [isDescendantPath](https://github.com/cybersemics/em/blob/main/src/util/isDescendantPath.ts)
+  - [getAncestorBy / getAncestorByValue](../src/selectors/getAncestorByValue.ts) - Traverses the thought tree upwards from the given thought and returns the first ancestor that passes the check function (or matches the given value).
+  - [getDescendantThoughtIds](../src/selectors/getDescendantThoughtIds.ts) - Generates a flat list of all descendant ThoughtIds. If a filterFunction is provided, descendants of thoughts that are filtered out are not traversed.
+  - [someDescendants](../src/selectors/someDescendants.ts) - Returns true if any descendant of the given thought matches a predicate.
+  - [isDescendant](../src/util/isDescendant.ts)
+  - [isDescendantPath](../src/util/isDescendantPath.ts)
 - predicates
-  - [isHome](https://github.com/cybersemics/em/blob/main/src/util/isHome.ts) - Returns true if the Thoughts or Path is the home context.
-  - [isRoot](https://github.com/cybersemics/em/blob/main/src/util/isRoot.ts) - Returns true if the Thoughts or Path is the one of the root contexts.
-  - [hasChild](https://github.com/cybersemics/em/blob/main/src/selectors/hasChild.ts)
-  - [hasLexeme](https://github.com/cybersemics/em/blob/main/src/selectors/hasLexeme.ts)
-  - [equalPath](https://github.com/cybersemics/em/blob/main/src/util/equalPath.ts)
-  - [equalThoughtRanked](https://github.com/cybersemics/em/blob/main/src/util/equalThoughtRanked.ts)
-  - [equalThoughtSorted](https://github.com/cybersemics/em/blob/main/src/util/equalThoughtSorted.ts)
-  - [equalThoughtValue](https://github.com/cybersemics/em/blob/main/src/util/equalThoughtValue.ts)
+  - [isHome](../src/util/isHome.ts) - Returns true if the Thoughts or Path is the home context.
+  - [isRoot](../src/util/isRoot.ts) - Returns true if the Thoughts or Path is the one of the root contexts.
+  - [hasLexeme](../src/selectors/hasLexeme.ts)
+  - [equalPath](../src/util/equalPath.ts)
+  - [equalThoughtRanked](../src/util/equalThoughtRanked.ts)
+  - [equalThoughtSorted](../src/util/equalThoughtSorted.ts)
+  - [equalThoughtValue](../src/util/equalThoughtValue.ts)
 - attributes
-  - [attribute](https://github.com/cybersemics/em/blob/main/src/selectors/attribute.ts)
-  - [attributeEquals](https://github.com/cybersemics/em/blob/main/src/selectors/attributeEquals.ts)
+  - [attribute](../src/selectors/attribute.ts)
+  - [attributeEquals](../src/selectors/attributeEquals.ts)
 - lexemes
-  - [getLexeme](https://github.com/cybersemics/em/blob/main/src/selectors/getLexeme.ts) - Gets the Lexeme of a given value.
-  - [getLexemeById](https://github.com/cybersemics/em/blob/main/src/selectors/getLexeme.ts) - Gets the Lexeme at the given lexemeIndex key.
-  - [getContexts](https://github.com/cybersemics/em/blob/main/src/selectors/getContexts.ts) - Returns all of the Thoughts of a thought's Lexeme.
+  - [getLexeme](../src/selectors/getLexeme.ts) - Gets the Lexeme of a given value.
+  - [getContexts](../src/selectors/getContexts.ts) - Returns all of the Thoughts of a thought's Lexeme.
 - context view
-  - [appendChildToPath](https://github.com/cybersemics/em/blob/main/src/selectors/appendChildToPath.ts) - Appends the head of a child `SimplePath` to a parent `Path`. In case of a parent with an active context view, it appends the head of the parent of the childPath.
-  - [getChildPath](https://github.com/cybersemics/em/blob/main/src/selectors/getChildPath.ts)
-  - [simplifyPath](https://github.com/cybersemics/em/blob/main/src/selectors/simplifyPath.ts) - Infers the path from a path that may cross one or more context views.
+  - [appendChildPath](../src/selectors/appendChildPath.ts) - Appends the head of a child `SimplePath` to a parent `Path`. In case of a parent with an active context view, it appends the head of the parent of the childPath.
+  - [getChildPath](../src/selectors/getChildPath.ts)
+  - [simplifyPath](../src/selectors/simplifyPath.ts) - Infers the path from a path that may cross one or more context views.
 
 ## Views
 
@@ -317,8 +311,8 @@ The cursor `/Books/Read/C.S. Peirce/Philosophical Writings/Philosophy of Math~/P
 
 Other functions related to `contextChain` are:
 
-- [chain](https://github.com/cybersemics/em/blob/main/src/selectors/chain.ts)
-- [contextChainToPath](https://github.com/cybersemics/em/blob/main/src/util/contextChainToPath.ts)
-- [lastThoughtsFromContextChain](https://github.com/cybersemics/em/blob/main/src/selectors/lastThoughtsFromContextChain.ts)
-- [splitChain](https://github.com/cybersemics/em/blob/main/src/selectors/splitChain.ts)
-- [thoughtsEditingFromChain](https://github.com/cybersemics/em/blob/main/src/selectors/thoughtsEditingFromChain.ts)
+- [chain](../src/selectors/chain.ts)
+- [contextChainToPath](../src/util/contextChainToPath.ts)
+- [lastThoughtsFromContextChain](../src/selectors/lastThoughtsFromContextChain.ts)
+- [splitChain](../src/selectors/splitChain.ts)
+- [thoughtsEditingFromChain](../src/selectors/thoughtsEditingFromChain.ts)

@@ -2,7 +2,7 @@
 
 Rather than rely on the hierarchy of the DOM, thoughts are rendered as a flat list of siblings, and are absolutely positioned to create a visual hierarchy. This allows smooth animation of thoughts across levels between any arbitrary states.
 
-The rendering algorithm is contained in the [TreeLayout](https://github.com/cybersemics/em/blob/main/src/components/LayoutTree.tsx) component.
+The rendering algorithm is contained in the [LayoutTree](../src/components/LayoutTree.tsx) component.
 
 Each rendering of the tree generates two lists of nodes:
 
@@ -12,27 +12,32 @@ Each rendering of the tree generates two lists of nodes:
 Thoughts are rendered in two passes:
 
 - The **first render** positions all thoughts with an estimated height based on the current font size.
-- Next, the VirtualThought component measures each thought's height in a layout effect and passes it up to the `LayoutTree` via `onResize`. If any of the heights differ from their original estimate, a re-render is triggered.
+- Next, the [VirtualThought](../src/components/VirtualThought.tsx) component measures each thought's height in a layout effect and passes it up to the `LayoutTree` via `onResize`. If any of the heights differ from their original estimate, a re-render is triggered.
 - The **second render** recalculates `treeThoughtsPositioned` with each thought's measured height. Any updates to thought y coordinates are smoothly animated into place via a CSS transition.
 
-## LayoutTree Documentation
+## LayoutTree Structure
 
-[In progress]
+`LayoutTree` orchestrates the two-pass layout via a small set of hooks and selectors:
+
+- [`linearizeTree`](../src/selectors/linearizeTree.ts) - Redux selector that produces the flat `treeThoughts` list (in-order traversal with depth and table-view metadata).
+- [`useSizeTracking`](../src/hooks/useSizeTracking.ts) - maintains the `sizes` map keyed by `crossContextualKey`, populated by each `VirtualThought` via `onResize`/`setSize`.
+- `useSingleLineHeight` - derives an estimated single-line height (initially from `fontSize`, later from a measured single-line thought) used for unmeasured thoughts.
+- [`usePositionedThoughts`](../src/hooks/usePositionedThoughts.ts) - second-pass hook that consumes `treeThoughts` and `sizes` and returns `treeThoughtsPositioned`, `indentCursorAncestorTables`, and `hoverArrowVisibility`.
+- `useNavAndFooterHeight` - measures the nav and footer heights for `spaceBelow`.
+- `useAutocrop` - crops the empty space above the cursor and counter-scrolls so thoughts appear stationary.
+
+The render tree is roughly:
 
 ```
-linearizeTree
-
-useSizeTracking ->
-  useSingleLineHeight
-  useTreeThoughtsPositioned
-  useAutofocusViewport <- useNavAndFooterHeight
-
-div - vertical (instant)
-  div - horizontal (slow)
-    for each node
-      div - absolutely positioned for animating across levels
-        VirtualThought
-        DropCliff
+div - outer container (translateY for autocrop)
+  HoverArrow
+  div - inner container (translateX for indent, transitioned)
+    BulletCursorOverlay (when cursor is positioned)
+    TransitionGroup
+      for each thought in treeThoughtsPositioned
+        TreeNode
+          VirtualThought (measures height -> setSize -> onResize)
+          DropChild / DropUncle
 ```
 
 ## Table View

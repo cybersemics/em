@@ -1,8 +1,8 @@
 # Commands
 
-There are more than 50 commands within the app that are available to the user for editing, navigating, and other activities. Each can be activated with a toolbar button, keyboard shortcut, and/or gesture. The command palette brings up a list of all commands on desktop (Command/Ctrl + P).
+There are about 80 commands within the app that are available to the user for editing, navigating, and other activities. Each can be activated with a toolbar button, keyboard shortcut, and/or gesture. The Command Universe brings up a list of all commands on desktop (Command/Ctrl + P).
 
-For the latest commands, go straight to the source: https://github.com/cybersemics/em/tree/main/src/shortcuts
+For the latest commands, go straight to the source: [../src/commands](../src/commands)
 
 ## Back
 
@@ -11,6 +11,22 @@ Move the cursor up a level.
 <kbd>Escape</kbd>
 
 https://github.com/user-attachments/assets/ab558971-0839-4a46-a421-e074509795f0
+
+## Forward
+
+Move the cursor down a level.
+
+## Cursor Up
+
+Move the cursor up.
+
+<kbd>↑</kbd>
+
+## Cursor Down
+
+Move the cursor down.
+
+<kbd>↓</kbd>
 
 ## Next Thought
 
@@ -28,11 +44,23 @@ Move the cursor to the previous thought.
 
 https://github.com/user-attachments/assets/425a64ce-6634-465e-ab5b-c7562fd11c40
 
+## Move Cursor Forward
+
+Move the current thought to the end of the previous thought or to next column in table view.
+
+<kbd>Tab</kbd>
+
+## Move Cursor Backward
+
+Move the current thought to the next sibling of its context or to previous column in table view.
+
+<kbd>Shift + Tab</kbd>
+
 ## Jump Back
 
 Move the cursor to the last thought that was edited.
 
-<kbd>Command + j
+<kbd>Command + j</kbd>
 
 https://github.com/user-attachments/assets/8ed929ad-e8cb-4843-9f8d-3b8581bceeb1
 
@@ -46,7 +74,7 @@ https://github.com/user-attachments/assets/6c294b5d-0a02-4298-9069-9471cc52667d
 
 ## Indent
 
-Move a thought down a level, i.e. increase its indentation level.
+Indent the current thought one level deeper.
 
 <kbd>Tab</kbd>
 
@@ -54,7 +82,7 @@ https://github.com/user-attachments/assets/85c8e16a-4861-4002-8c49-2b6fc69e284c
 
 ## Outdent
 
-Move a thought up a level, i.e. decrease its indentation level.
+Outdent? De-indent? Whatever the opposite of indent is. Move the current thought up a level.
 
 <kbd>Shift + Tab</kbd>
 
@@ -66,17 +94,35 @@ Swap the current thought with its parent.
 
 https://github.com/user-attachments/assets/0ca1a77b-e174-4884-9606-739a94cde039
 
-## Command Palette
+## Bind Context
 
-Opens the command palette where commands can be executed by name.
+Bind two different contexts of a thought so that they always have the same children.
+
+<kbd>Option + Shift + B</kbd>
+
+## Command Universe
+
+Opens the Command Universe, where commands can be executed by name.
 
 <kbd>Command + p</kbd>
 
 https://github.com/user-attachments/assets/5466ad2a-6b7c-4869-a23c-03d9d752dc9b
 
+## Open Command Center
+
+Opens a special keyboard which contains commands that can be executed on the cursor thought.
+
+## Close Command Center
+
+Closes the command center if it's open. You can also just tap on the empty space.
+
+## Gesture Menu
+
+Opens the gesture menu where commands can be executed by gesture.
+
 ## Help
 
-Opens the Help manual, which contains the tutorials and a list of all keyboard shortcuts.
+Opens the Help screen, which contains the tutorials and a list of all commands.
 
 <kbd>Command + /</kbd>
 
@@ -92,7 +138,7 @@ https://github.com/user-attachments/assets/f9d81d8f-f03e-45d3-850e-55f9f4b56a0d
 
 ## Search
 
-Open the Search input. Use the same shortcut to close.
+Open the Search input. Use the same command to close.
 
 <kbd>Command + Option + f</kbd>
 
@@ -109,8 +155,6 @@ https://github.com/user-attachments/assets/a45722e9-efad-421c-80fd-bb71e65398fb
 ## New Thought (above)
 
 Create a new thought immediately above the current thought.
-
-<kbd>Shift + Enter</kbd>
 
 https://github.com/user-attachments/assets/bbeb1798-468d-49a9-b9de-de5bcf7d52de
 
@@ -138,25 +182,29 @@ Add a new thought one level up. Same as creating a new thought and then outdenti
 
 https://github.com/user-attachments/assets/e7077d5d-2387-48b5-8a60-c944d38889ec
 
-## Subcategorize
+## New Grandchild
+
+Create a thought within the first subthought.
+
+## Categorize
 
 Move the current thought into a new, empty thought at the same level.
 
-<kbd>Command + Option + o</kbd>
+<kbd>Command + Option + o</kbd> or <kbd>Command + ]</kbd>
 
 https://github.com/user-attachments/assets/4255766e-8c9d-4cdf-a140-573ab82399ae
 
-## Subcategorize All
+## Uncategorize
 
-Move all thoughts at the current level into a new, empty thought.
+Deletes the current thought and moves all its subthoughts up a level.
 
-<kbd>Command + Option + a</kbd>
+<kbd>Command + Option + c</kbd>
 
-https://github.com/user-attachments/assets/f1277eb6-a70b-42a9-906c-fe6f46714835
+https://github.com/user-attachments/assets/a0da2b2a-925e-4f6a-9924-3bba37b7feb2
 
 ## Extract
 
-Extract selected part of a thought as its child
+Extract selected part of a thought as its child.
 
 <kbd>Command + Control + e</kbd>
 
@@ -172,7 +220,7 @@ Generates a thought using AI.
 
 Say goodbye to the current thought. Hit undo if you are not ready to part ways.
 
-<kbd>Command + Shift + Backspace</kbd>
+<kbd>Command + Option + Shift + Backspace</kbd>
 
 https://github.com/user-attachments/assets/34a928f4-bcac-49bd-b417-bbd1e4a4c1ef
 
@@ -180,17 +228,9 @@ https://github.com/user-attachments/assets/34a928f4-bcac-49bd-b417-bbd1e4a4c1ef
 
 Move the thought to a hidden archive. It can be recovered or viewed by toggling hidden thoughts.
 
-<kbd>Command + Option + Shift + Backspace</kbd>
+<kbd>Command + Shift + Backspace</kbd>
 
 https://github.com/user-attachments/assets/4818bbbd-6df5-44a1-843d-658252ebb822
-
-## Collapse
-
-Deletes the current thought and moves all its subthoughts up a level.
-
-<kbd>Command + Option + c</kbd>
-
-https://github.com/user-attachments/assets/a0da2b2a-925e-4f6a-9924-3bba37b7feb2
 
 ## Clear Thought
 
@@ -204,9 +244,9 @@ https://github.com/user-attachments/assets/95f037cc-cf88-4392-98fb-4d79cdae4fba
 
 Bump the current thought down one level and replace it with a new, empty thought.
 
-https://github.com/user-attachments/assets/838c3546-4aa0-4256-af89-621356b455ad
-
 <kbd>Command + Option + d</kbd>
+
+https://github.com/user-attachments/assets/838c3546-4aa0-4256-af89-621356b455ad
 
 ## Move Thought Down
 
@@ -226,9 +266,9 @@ https://github.com/user-attachments/assets/74dc6532-f7aa-42a3-acaa-9621fbaf4dd8
 
 ## Join Thoughts
 
-Join all siblings and merge their children.
+Join all thoughts at the same level into a single thought.
 
-<kbd>Option + Shift + I</kbd>
+<kbd>Option + j</kbd>
 
 https://github.com/user-attachments/assets/1f7a91e0-4dd5-4054-b463-9e3b724a8d57
 
@@ -242,29 +282,69 @@ Splits multiple sentences in a single thought into separate thoughts.
 
 https://github.com/user-attachments/assets/690450bb-30a2-4858-aa44-132a38498ebb
 
+## Select All
+
+Selects all thoughts at the current level. May reduce wrist strain.
+
+<kbd>Command + Option + a</kbd> or <kbd>Command + a</kbd>
+
+## Select Between
+
+Selects all thoughts between two selected thoughts.
+
+## Copy Cursor
+
+Copies the cursor and all descendants.
+
+<kbd>Command + c</kbd>
+
+## Delete Empty Thought Or Outdent
+
+<kbd>Backspace</kbd>
+
 ## Bold
 
-Bolds the a thought or selected text.
+Bolds the current thought or selected text.
 
 <kbd>Command + b</kbd>
 
 ## Italic
 
-Italicizes a thought or selected text.
+Italicizes the current thought or selected text.
 
 <kbd>Command + i</kbd>
 
 ## Strikethrough
 
-Formats a thought or selected text with strikethrough.
+Formats the current thought or selected text with strikethrough.
 
 <kbd>Command + s</kbd>
 
 ## Underline
 
-Underlines a thought or selected text.
+Underlines the current thought or selected text.
 
 <kbd>Command + u</kbd>
+
+## Code
+
+Formats the current thought or selected text as code.
+
+<kbd>Command + k</kbd>
+
+## Clear Formatting
+
+Clears all formatting from the current thought or selected text.
+
+<kbd>Command + 0</kbd>
+
+## Letter Case
+
+Change the Letter case.
+
+## Text Color
+
+Change the text color or highlight color to your liking.
 
 ## Note
 
@@ -272,7 +352,7 @@ Add a small note beneath a thought. Cute!
 
 <kbd>Command + Option + n</kbd>
 
-## Convert to Note
+## Swap Note
 
 <kbd>Option + Shift + N</kbd>
 
@@ -286,7 +366,7 @@ https://github.com/user-attachments/assets/f25656ff-c347-4543-9da6-f47a46c656ef
 
 ## Context View
 
-Opens the context view of the current thought. The context view shows all contexts throughout your thoughtspace in which the thought can be found. Use the same shortcut to close the context view.
+Opens the context view of the current thought. The context view shows all contexts throughout your thoughtspace in which the thought can be found. Use the same command to close the context view.
 
 <kbd>Option + Shift + S</kbd>
 
@@ -298,11 +378,9 @@ Display subthoughts of the current thought as indented paragraphs.
 
 <kbd>Option + Shift + P</kbd>
 
-*Not implemented*
-
 ## Table View
 
-Display the current thought as a table, where each subthought is a separate column.
+Display the current list as a table, with subthoughts rendered in the second column.
 
 <kbd>Option + Shift + T</kbd>
 
@@ -315,6 +393,10 @@ Change the sorting option for the current context. Rotates through manual, alpha
 <kbd>Command + Option + s</kbd>
 
 https://github.com/user-attachments/assets/00a3c72f-2947-478a-a515-db8e5892c434
+
+## Sort Picker
+
+Open a sort picker to pick the sort option and sort by option.
 
 ## Normal Text
 
@@ -360,9 +442,9 @@ Pins open a thought so its subthoughts are always visible.
 
 https://github.com/user-attachments/assets/464834b6-2d7a-453c-afcf-f821b620db55
 
-## Pin Subthoughts
+## Pin All
 
-Pins open the current thought's subthoughts.
+Pins open all thoughts at the current level.
 
 <kbd>Command + Shift + P</kbd>
 
@@ -383,3 +465,57 @@ Show all hidden thoughts.
 <kbd>Option + Shift + H</kbd>
 
 https://github.com/user-attachments/assets/43886846-cc85-4ac2-9f1a-02add856ef24
+
+## Add to Favorites
+
+Add the current thought to your Favorites list.
+
+## Toggle Recently Edited
+
+Open the recently edited sidebar.
+
+<kbd>Option + r</kbd>
+
+## Increase Font Size
+
+Increase the font size. Bigger is better!
+
+## Decrease Font Size
+
+Decrease the font size. Get your reading glasses.
+
+## Undo
+
+Undo the last action.
+
+<kbd>Command + z</kbd>
+
+## Redo
+
+Redo the last undone action.
+
+<kbd>Command + Shift + z</kbd>
+
+## Toggle Undo Slider
+
+Toggle a handy slider that lets you rewind edits.
+
+## Export
+
+Download or copy the current context as plain text or html.
+
+## Customize Toolbar
+
+Add or remove buttons from the toolbar.
+
+## Settings
+
+Customize your experience of em.
+
+## Device Management
+
+Add or remove devices that can access and edit this thoughtspace.
+
+## Cancel
+
+Cancel the current gesture.

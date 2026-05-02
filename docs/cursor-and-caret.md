@@ -16,13 +16,13 @@ The cursor is a dark gray circle surrounding the bullet of the active thought. I
 
 ![image](https://user-images.githubusercontent.com/750276/151666504-8548ed98-515c-4894-856a-994af38203e0.png)
 
-You can call `setCursor` to set `state.cursor`. `setCursor` does not set the browser selection, although it does maintain some state for the position of the caret in `caretOffset`.
+You can call `setCursor` to set `state.cursor` (see [`../src/actions/setCursor.ts`](../src/actions/setCursor.ts)). `setCursor` does not set the browser selection directly; it accepts an `offset` argument that is used downstream to place the caret when selection is applied.
 
 ## Caret / Browser Selection
 
 The caret is the native browser selection, i.e. `window.getSelection()`. We use the name "caret" because it is shorter, and is distinguishable from "cursor". Unless otherwise specified, the caret refers to a browser selection that is collapsed, i.e. no text is selected.
 
-Caret position is set by `selection.set(...)`. This is typically handled automatically by the `Editable` component. Each `Editable` instance checks if the caret should be active on that thought when it is rendered. That is, it maintains the browser selection even when thoughts are re-rendered during navigation. There are [other checks](https://github.com/cybersemics/em/blob/8962a674749b0be57449af83a44573d533dff473/src/components/Editable.tsx#L395-L417) related to edit mode on mobile, drag-and-drop, etc.
+Caret position is set by `selection.set(...)`. This is typically handled automatically by the `Editable` component. Each `Editable` instance checks if the caret should be active on that thought when it is rendered. That is, it maintains the browser selection even when thoughts are re-rendered during navigation. There are [other checks](../src/components/Editable.tsx) related to edit mode on mobile, drag-and-drop, etc.
 
 ### Desktop
 
@@ -30,15 +30,15 @@ On desktop, the caret is always on the cursor thought. Edit mode is always enabl
 
 ### Mobile
 
-On mobile, the caret is only set when in edit mode. Otherwise the `cursor` changes without any browser selection. This allows the user to navigate thoughts without opening the virtual keyboard. Edit mode is stored in `state.editing`. When the user closes their mobile keyboard, `state.editing` is set to false.
+On mobile, the caret is only set when in edit mode. Otherwise the `cursor` changes without any browser selection. This allows the user to navigate thoughts without opening the virtual keyboard. Edit mode is tracked by `state.isKeyboardOpen` and toggled via the [`keyboardOpen`](../src/actions/keyboardOpen.ts) action. When the user closes their mobile keyboard, `state.isKeyboardOpen` is set to false.
 
-- To enter `editing` mode, the user taps on the *cursor* thought or activates a shortcut that modifies a visible thought, such as `newThought`, `clearText`, `subcategorizeOne`, etc.
+- To enter edit mode, the user taps on the *cursor* thought or activates a shortcut that modifies a visible thought, such as `newThought`, `clearText`, `subcategorizeOne`, etc.
 - Tapping on a non-cursor thought while not in edit mode will not activate edit mode.
-- To close `editing` mode, the user closes the virtual keyboard or navigates to the root.
+- To exit edit mode, the user closes the virtual keyboard or navigates to the root.
 
 #### Edit mode behaviour
 
-In **em**, edit mode is true when the caret is on a thought and the virtual keyboard is up. Edit mode is only relevant on mobile. Edit mode is represented in the Redux store by `state.editing`.
+In **em**, edit mode is true when the caret is on a thought and the virtual keyboard is up. Edit mode is only relevant on mobile. Edit mode is represented in the Redux store by `state.isKeyboardOpen`.
 
 Here's how edit mode works on mobile:
 
@@ -47,7 +47,7 @@ Here's how edit mode works on mobile:
 - When the user taps a thought a second time (i.e. when the user taps the cursor thought), then edit mode is activated and the virtual keyboard comes up for editing.
 - To close the keyboard and turn off edit mode, the user can hit "Done" on the virtual keyboard or tap on an empty area of the screen.
 
-Setting the selection on the cursor thought to open the keyboard is handled in a custom hook, [useEditMode](https://github.com/cybersemics/em/blob/main/src/components/Editable/useEditMode.ts). This hook is used in each Editable component, though only the cursor thought will activate it at a given time. There are a variety of conditions that must be met for edit mode to be activated, such as the cursor thought being the same as the thought that was tapped, the thought being editable, no drag-and-drop in progress, etc.
+Setting the selection on the cursor thought to open the keyboard is handled in a custom hook, [useEditMode](../src/components/Editable/useEditMode.ts). This hook is used in each Editable component, though only the cursor thought will activate it at a given time. There are a variety of conditions that must be met for edit mode to be activated, such as the cursor thought being the same as the thought that was tapped, the thought being editable, no drag-and-drop in progress, etc.
 
 **useEditMode is declarative and automatically sets the selection on the cursor thought when the conditions are correct. Thus, it should be preferred over manually setting the selection on the cursor thought.** That said, there are cases when the selection will not update automatically and needs to be manually set.
 
@@ -64,7 +64,7 @@ The following are important files in **em** with functionality related to the br
 
 ### asyncFocus.ts
 
-https://github.com/cybersemics/em/blob/main/src/device/asyncFocus.ts
+[../src/device/asyncFocus.ts](../src/device/asyncFocus.ts)
 
 If there is no active selection, Mobile Safari will only allow programmatic selection within a click or touch event handler. Otherwise trying to focus or set the selection does nothing. To be able to set the selection in an asynchronous callback, you have to first set the selection to an arbitrary element in the initial click or touch handler. Then setting the selection will work.
 
@@ -72,13 +72,13 @@ Import and call `asyncFocus()` before a command is activated, inside a click or 
 
 ### clearSelection.ts
 
-https://github.com/cybersemics/em/blob/main/src/redux-middleware/clearSelection.ts
+[../src/redux-middleware/clearSelection.ts](../src/redux-middleware/clearSelection.ts)
 
 This Redux middleware is responsible for clearing the browser selection when the cursor is null or on a divider.
 
 ### selection.ts
 
-https://github.com/cybersemics/em/blob/main/src/device/selection.ts
+[../src/device/selection.ts](../src/device/selection.ts)
 
 All direct access to `window.getSelection` and the native browser selection API functionality is contained in selection.ts. This is encapsulated in order to create a clean API for selection manipulation, and keep browser-specific implementation details separated. There is a lint rule that is set up to prevent direct access to `window.getSelection` in the rest of the codebase. Please do not disable it.
 
@@ -86,7 +86,7 @@ Get to know the methods available in selection.ts, and feel free to extend it if
 
 ### useEditMode.ts
 
-https://github.com/cybersemics/em/blob/main/src/components/Editable/useEditMode.ts
+[../src/components/Editable/useEditMode.ts](../src/components/Editable/useEditMode.ts)
 
 See [Mobile](#mobile) above.
 

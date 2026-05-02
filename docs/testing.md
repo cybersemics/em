@@ -63,7 +63,7 @@ These headings should be populated as follows:
 > - `b` should be expanded.
 > - Subthoughts with no siblings should be expanded.
 
-Here's a real example from [#2733](https://github.com/cybersemics/em/issues/2733):
+Here's a real example from issue #2733:
 
 > ## Steps to Reproduce
 > ```
@@ -99,15 +99,15 @@ Use the lowest level that is sufficient for your test case. If your test case do
 
 Basic unit tests are great for testing pure functions directly.
 
-Related tests: [actions](https://github.com/cybersemics/em/tree/main/src/actions/__tests__), [selectors](https://github.com/cybersemics/em/tree/main/src/selectors/__tests__), [util](https://github.com/cybersemics/em/tree/main/src/util/__tests__)
+Related tests: [actions](../src/actions/__tests__), [selectors](../src/selectors/__tests__), [util](../src/util/__tests__)
 
 ### 2. Store Tests
 
 ⚡️⚡️⚡️ 1–20ms each
 
-The shortcut tests require dispatching Redux actions but do not need a DOM. You can use the helpers `createTestStore` and `executeShortcut` to operate directly on a Redux store, then make assertions about `store.getState()`. This allows shortcuts to be tested independently of the user device.
+The command tests require dispatching Redux actions but do not need a DOM. You can use the helpers `createTestStore` and `executeCommand` to operate directly on a Redux store, then make assertions about `store.getState()`. This allows commands to be tested independently of the user device.
 
-Related tests: [shortcuts](https://github.com/cybersemics/em/tree/main/src/shortcuts/__tests__)
+Related tests: [commands](../src/commands/__tests__)
 
 ### 3. JSDOM Tests
 
@@ -117,7 +117,7 @@ Anything that tests a rendered component requires a DOM. If there are no browser
 
 - [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/) (RTL)
 
-Related tests: [components](https://github.com/cybersemics/em/tree/main/src/components/__tests__)
+Related tests: [components](../src/components/__tests__)
 
 ### 4. Puppeteer Tests
 
@@ -131,11 +131,13 @@ Puppeteer is a Node.js library that provides a high-level API for controlling a 
 
 Puppeteer allows you to launch a real browser instance (headless or visible), navigate to pages, interact with the DOM, execute JavaScript in the page context, capture screenshots or PDFs, and observe network or performance behavior programmatically.
 
-Related tests: [/src/e2e/puppeteer](https://github.com/cybersemics/em/tree/main/src/e2e/puppeteer)
+Related tests: [/src/e2e/puppeteer](../src/e2e/puppeteer)
+
+The Puppeteer tests are run via Vitest using the `puppeteer-e2e` project defined in [vitest.config.ts](../vitest.config.ts), which uses a custom [puppeteer-environment.ts](../src/e2e/puppeteer-environment.ts). The runner script lives at [src/e2e/puppeteer/test-puppeteer.sh](../src/e2e/puppeteer/test-puppeteer.sh) and starts the browserless container along with a dedicated Vite dev server on port 2552.
 
 #### Tips
 
-High level helper functions are available for executing common user interactions: [/src/e2e/puppeteer/helpers](https://github.com/cybersemics/em/tree/main/src/e2e/puppeteer/helpers)
+High level helper functions are available for executing common user interactions: [/src/e2e/puppeteer/helpers](../src/e2e/puppeteer/helpers)
 
 Mobile devices can be emulated in puppeteer. This is good for testing non-platform specific mobile functionality, such as gestures. If you can test it with the Chrome Device Toolbar, you can emulate it in puppeteer.
 
@@ -146,7 +148,7 @@ Mobile devices can be emulated in puppeteer. This is good for testing non-platfo
   await keyboard.type('a')
 ```
 
-While we prefer to avoid backdoor access to state in integration tests, it is recommended that you use the [exportThoughts](https://github.com/cybersemics/em/blob/feb215fcc7d8f90fb75e98daf057deb21d3fde28/src/e2e/puppeteer/helpers/exportThoughts.ts) helper for asserting the overall thought structure. Parsing the DOM, activating the Export modal, or taking a snapshot are either too slow or too tightly coupled to other functionality. `exportThoughts` is fast, direct, and makes for readable tests.
+While we prefer to avoid backdoor access to state in integration tests, it is recommended that you use the [exportThoughts](../src/e2e/puppeteer/helpers/exportThoughts.ts) helper for asserting the overall thought structure. Parsing the DOM, activating the Export modal, or taking a snapshot are either too slow or too tightly coupled to other functionality. `exportThoughts` is fast, direct, and makes for readable tests.
 
 ```ts
   const exported2 = await exportThoughts()
@@ -197,23 +199,23 @@ WebdriverIO tests provide automated test coverage of actual iOS devices (among o
 
 `wdio` executes test suites with native `WebDriver` support via `@wdio/mocha-framework` and ` @wdio/browserstack-service` which is responsible for automatic tunnel, session, and credential management. `wdio` also provides lifecycle hooks that are very helpful for initiating a session more efficiently.
 
-The configuration files are now divided between `wdio.base.conf.ts`  which contains common settings for iOS Safari testing, `wdio.browserstack.conf.ts` using `@wdio/browserstack-service` that creates an automatic tunnel with the cloud browserstack service, and `wdio.local.conf.ts` for local Appium testing which is only used in case we need to run tests on a local iOS simulator.
+The configuration files live in [src/e2e/iOS/config](../src/e2e/iOS/config) and are divided between [wdio.base.conf.ts](../src/e2e/iOS/config/wdio.base.conf.ts) which contains common settings for iOS Safari testing, [wdio.browserstack.conf.ts](../src/e2e/iOS/config/wdio.browserstack.conf.ts) using `@wdio/browserstack-service` that creates an automatic tunnel with the cloud browserstack service, and [wdio.local.conf.ts](../src/e2e/iOS/config/wdio.local.conf.ts) for local Appium testing which is only used in case we need to run tests on a local iOS simulator.
 
 wdio documentation:
 
-- https://v6.webdriver.io/docs/clioptions.html
-- https://v6.webdriver.io/docs/configurationfile.html
-- https://v6.webdriver.io/docs/browserstack-service.html
+- https://webdriver.io/docs/cli
+- https://webdriver.io/docs/configurationfile
+- https://webdriver.io/docs/browserstack-service
 
-Related tests: [/src/e2e/iOS](https://github.com/cybersemics/em/tree/main/src/e2e/iOS)
+Related tests: [/src/e2e/iOS](../src/e2e/iOS)
 
 # Test Flags
 
-[testFlags](https://github.com/cybersemics/em/blob/ad173daa1d01c12003e33973f863072fdc852023/src/e2e/testFlags.ts) are used to alter runtime behavior of the app during tests. This is generally forbidden, as the automated test environment should be as close as possible to production so that it is testing the same behavior the end user sees. But there are some conditions that are difficult or impossible to create through normal user behavior (e.g. network latency) or that can enhance test readability (e.g. visualizations) when runtime alternation is warranted.
+[testFlags](../src/e2e/testFlags.ts) are used to alter runtime behavior of the app during tests. This is generally forbidden, as the automated test environment should be as close as possible to production so that it is testing the same behavior the end user sees. But there are some conditions that are difficult or impossible to create through normal user behavior (e.g. network latency) or that can enhance test readability (e.g. visualizations) when runtime alternation is warranted.
 
 ## Drag-and-drop visualization
 
-You can enable drop target visualization boxes by running `em.testFlags.simulateDrop = true` in the JS console or setting `testFlags.simulateDrop` to true in https://github.com/cybersemics/em/blob/ad173daa1d01c12003e33973f863072fdc852023/src/e2e/testFlags.ts#L18-L19. 
+You can enable drop target visualization boxes by running `em.testFlags.simulateDrop = true` in the JS console or setting `testFlags.simulateDrop` to true in [src/e2e/testFlags.ts](../src/e2e/testFlags.ts).
 
 <img width="320" height="314" alt="Screenshot 2025-12-24 16 01 49" src="https://github.com/user-attachments/assets/9072a8d2-1324-41fb-9487-8f4f2c1165f2" />
 
