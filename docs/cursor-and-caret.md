@@ -1,97 +1,159 @@
 # Cursor and Caret
 
-As **em** is a highly optimized custom editor, control of the browser selection or text cursor ("caret") is critical. This document defines consistent terminology and provides an overview of browser selection usage in the codebase.
+Because **em** is a custom editor — not a textarea, not a contenteditable region the browser fully owns — controlling the browser selection precisely is a load-bearing concern. Misplaced carets, vanished keyboards, and intermittent focus loss are easy to introduce. This document defines the terminology, explains how the **cursor** (em's notion of "the active thought") and the **caret** (the browser's text-selection caret) interact, and walks through the files that own each piece of the puzzle.
 
 ## Terminology
 
-- **Caret (or "text cursor")**: The vertical line in an input or editable element indicating that the user can type. While sometimes colloquially referred to as the "cursor", this term should be avoided as it is ambiguous.
-- **Browser Selection**: When the user has selected text in an input or editable element, the browser selection has a start and end offset. When no text is selected, the browser selection is *collapsed*. That is, when no text is selected, the browser selection is just the caret.
-- **Focus Node**: The DOM node that has the active selection. This is a TEXT_NODE when editing, but can also be an ELEMENT_NODE.
-- **Offset**: If the focus node is a TEXT_NODE, then offset refers to the character offset of the caret. If the focus node is an ELEMENT_NODE, then offset is the index of the element before the caret. For example, offset: 1 on an ELEMENT_NODE means the caret is *after* the focus node. Thus, do not mistakenly assume the offset is always a character offset.
-- **Cursor (or "cursor thought")**: The active thought that is being viewed or edited. Represented in the Redux store as `state.cursor`. Indicated in the UI by a gray circle around the thought's bullet. The cursor is the center of interactivity for the user. The user moves the cursor to navigate throughout their thoughtspace. All commands operate on the cursor or relative to the cursor. For example, when you activate Delete, it deletes the cursor thought. When you activate New Subthought, it creates a new thought beneath the cursor thought. Thoughts automatically expand and collapse, fade in and fade out, relative to the cursor.
+- **Caret** (or "text cursor"). The vertical line that the browser renders inside an editable element to mark the insertion point. Sometimes called the "cursor" colloquially, but in this codebase **never** — that name is reserved for em's cursor thought.
+- **Browser selection.** The full `window.getSelection()` object, which has start and end offsets. When start equals end, the selection is *collapsed* and the caret is just the insertion point. When start differs from end, the user has actively selected text.
+- **Focus node.** The DOM node that holds the active selection. Usually a `TEXT_NODE` while editing, but can be an `ELEMENT_NODE` (e.g. when the caret is between rather than within text nodes).
+- **Offset.** If the focus node is a `TEXT_NODE`, this is a character offset. If it's an `ELEMENT_NODE`, it is the *index of the child node* before the caret (so `offset: 1` on an element means the caret is *after* the first child, not after the first character). Treat element-node offsets and text-node offsets as different things.
+- **Cursor** (or "cursor thought"). em's notion of the active thought, stored as a `Path` in `state.cursor`. Indicated visually by a gray circle around the bullet. The cursor is the focal point of every command — Delete operates on the cursor thought, New Subthought adds a child of the cursor thought, autofocus fades and reveals thoughts relative to the cursor, etc.
 
 ## Cursor
 
-The cursor is a dark gray circle surrounding the bullet of the active thought. It is stored as a `Path` in `state.cursor`. Only one thought can have the cursor at a time. All shortcuts operate on the cursor thought or its children, so it serves as the main point of interaction for the user while editing. The cursor is **not** the browser selection (see below), however the cursor thought contains the browser selection (caret) while editing.
+The cursor is stored as `state.cursor: Path | null`. Only one thought has the cursor at a time. The cursor is **not** the browser selection — they're independent pieces of state that the system carefully keeps in sync.
+
+To move the cursor, dispatch [`setCursor`](../src/actions/setCursor.ts):
+
+```ts
+dispatch(setCursor({ path: newPath, offset: 5 }))
+```
+
+`setCursor` does **not** set the browser selection directly — it stores `path` (and `offset`, in `state.cursorOffset`) so the next time an `Editable` is rendered for that path, it can place the caret at the requested offset. This split lets the cursor change in response to keyboard navigation without forcibly re-grabbing the caret on every render (which would interrupt typing).
 
 ![image](https://user-images.githubusercontent.com/750276/151666504-8548ed98-515c-4894-856a-994af38203e0.png)
 
-You can call `setCursor` to set `state.cursor` (see [`../src/actions/setCursor.ts`](../src/actions/setCursor.ts)). `setCursor` does not set the browser selection directly; it accepts an `offset` argument that is used downstream to place the caret when selection is applied.
-
 ## Caret / Browser Selection
 
-The caret is the native browser selection, i.e. `window.getSelection()`. We use the name "caret" because it is shorter, and is distinguishable from "cursor". Unless otherwise specified, the caret refers to a browser selection that is collapsed, i.e. no text is selected.
+The caret is the native browser selection — `window.getSelection()`. We use the name "caret" because it's shorter and unambiguous. Unless otherwise noted, "caret" means a *collapsed* browser selection.
 
-Caret position is set by `selection.set(...)`. This is typically handled automatically by the `Editable` component. Each `Editable` instance checks if the caret should be active on that thought when it is rendered. That is, it maintains the browser selection even when thoughts are re-rendered during navigation. There are [other checks](../src/components/Editable.tsx) related to edit mode on mobile, drag-and-drop, etc.
+All access to the browser selection API goes through [`device/selection.ts`](../src/device/selection.ts). A lint rule prevents calling `window.getSelection` directly elsewhere; do not disable it. The wrapper exists to:
+
+- Hide browser-specific differences behind a clean API.
+- Make it possible to mock the selection in tests.
+- Keep DOM walking and edge-case handling (formatting tags, text-vs-element nodes, padding) in one place.
+
+The `selection.ts` module groups its functions roughly into:
+
+- **Reads:** `isActive()`, `isCollapsed()`, `isText()`, `isThought()`, `isNote()`, `isOnFirstLine()`, `isOnLastLine()`, `isStartOfElementNode()`, `isEndOfElementNode()`, `offset()`, `offsetThought()`, `offsetStart()`, `offsetEnd()`, `text()`, `html()`, `getBoundingClientRect()`, `isNear(x, y, distance)`.
+- **Writes:** `set(node, { offset?, end? })`, `clear()`, `select(el)`, `removeCurrentSelection()`.
+- **Save/restore:** `save()` returns a `SavedSelection` opaque object; `restore(saved)` puts it back. Used when an action that re-renders the DOM needs to preserve the caret across the render.
+- **Split helpers:** `split(el)` and `splitNode(root, range)` return the HTML before/after the caret with formatting tags re-balanced. Used by the Split Sentences command and the Extract command.
+
+The two reads worth calling out:
+
+- **`isOnFirstLine()` / `isOnLastLine()`** — used by the `cursorUp` and `cursorDown` commands so that pressing arrow at the bounds of a multi-line thought moves to the next thought rather than re-positioning the caret within the same thought.
+- **`isThought()`** — true if the focus node is inside a thought editable; used pervasively as a guard before dispatching selection-changing actions.
+
+Caret position is set via [`Editable`](../src/components/Editable.tsx)'s use of `selection.set`. The hook that actually decides *when* to set the selection is [`useEditMode`](#useeditmode), described below.
 
 ### Desktop
 
-On desktop, the caret is always on the cursor thought. Edit mode is always enabled, so it can basically be ignored.
+On desktop, the caret is always on the cursor thought. Edit mode is implicit (the keyboard is always available), so `state.isKeyboardOpen` is effectively a no-op on desktop and the cursor change always pulls the caret along.
 
 ### Mobile
 
-On mobile, the caret is only set when in edit mode. Otherwise the `cursor` changes without any browser selection. This allows the user to navigate thoughts without opening the virtual keyboard. Edit mode is tracked by `state.isKeyboardOpen` and toggled via the [`keyboardOpen`](../src/actions/keyboardOpen.ts) action. When the user closes their mobile keyboard, `state.isKeyboardOpen` is set to false.
+On mobile the caret is only set when the user has explicitly entered edit mode. While not editing, the user can move the cursor with taps and gestures without having the virtual keyboard pop up — which is what makes em navigable on mobile in the first place.
 
-- To enter edit mode, the user taps on the *cursor* thought or activates a shortcut that modifies a visible thought, such as `newThought`, `clearText`, `subcategorizeOne`, etc.
-- Tapping on a non-cursor thought while not in edit mode will not activate edit mode.
-- To exit edit mode, the user closes the virtual keyboard or navigates to the root.
+Edit mode is tracked by `state.isKeyboardOpen` (boolean), toggled via the [`keyboardOpen`](../src/actions/keyboardOpen.ts) action. When the user closes the virtual keyboard, `isKeyboardOpen` is set to `false`.
 
-#### Edit mode behaviour
+The two-tap pattern:
 
-In **em**, edit mode is true when the caret is on a thought and the virtual keyboard is up. Edit mode is only relevant on mobile. Edit mode is represented in the Redux store by `state.isKeyboardOpen`.
+- By default, edit mode is off. Tapping a non-cursor thought moves the cursor but does **not** open the keyboard.
+- Tapping the cursor thought a second time activates edit mode and opens the keyboard.
+- Closing the keyboard (or navigating to the root) exits edit mode.
 
-Here's how edit mode works on mobile:
+There are also commands that activate edit mode by side effect, because they modify the visible thought: `newThought`, `newSubthought`, `clearText`, `subcategorizeOne`, etc.
 
-- By default, edit mode is false (the keyboard is down).
-- When the user first taps a thought, the cursor moves to the thought but edit mode stays false. The keyboard stays down so that the user can see more thoughts while navigating.
-- When the user taps a thought a second time (i.e. when the user taps the cursor thought), then edit mode is activated and the virtual keyboard comes up for editing.
-- To close the keyboard and turn off edit mode, the user can hit "Done" on the virtual keyboard or tap on an empty area of the screen.
+### `useEditMode`
 
-Setting the selection on the cursor thought to open the keyboard is handled in a custom hook, [useEditMode](../src/components/Editable/useEditMode.ts). This hook is used in each Editable component, though only the cursor thought will activate it at a given time. There are a variety of conditions that must be met for edit mode to be activated, such as the cursor thought being the same as the thought that was tapped, the thought being editable, no drag-and-drop in progress, etc.
+[`useEditMode`](../src/components/Editable/useEditMode.ts) is the declarative hook that lives inside every `Editable`. It does the work of "if this thought should have the caret right now, set it." Each `Editable` instance runs the hook, but the conditions inside ensure that exactly one thought (the cursor thought, or a transient editable) actually claims the caret.
 
-**useEditMode is declarative and automatically sets the selection on the cursor thought when the conditions are correct. Thus, it should be preferred over manually setting the selection on the cursor thought.** That said, there are cases when the selection will not update automatically and needs to be manually set.
+The conditions for setting the selection are roughly:
+
+- `isEditing` — the thought is the current cursor target, or
+- `transient` — a transient editable (e.g. a freshly created thought before its `setCursor` has flushed)
+
+AND the following are all true:
+
+- `editMode` is true (i.e. `!isTouch || state.isKeyboardOpen`).
+- Not in note focus (`!state.noteFocus`).
+- The element ref is mounted.
+- A `cursorOffset` is set, *or* the existing selection is not on a thought (so we don't steal the caret if it's already correctly placed).
+- No multicursor selection is active.
+- We're not in `LongPressState.DragHold` (the user is mid-long-press; don't hijack their selection).
+- The hook hasn't been temporarily disabled via `allowDefaultSelection` (see below).
+
+When all conditions pass, the hook calls `selection.set(contentRef.current, { offset: cursorOffset ?? 0 })`. Three Mobile Safari workarounds are layered in here:
+
+- **Hidden-thoughts guard.** If `style.visibility === 'hidden'`, the hook calls `selection.clear()` instead of setting — otherwise switching tabs and back can fire a faulty focus event ([issue #1596](https://github.com/cybersemics/em/issues/1596)).
+- **Auto-Capitalization.** When a thought is created on iOS Safari, the Shift key needs to be on at the moment the selection is set — but synchronous selection-setting breaks Auto-Capitalization ([issue #999](https://github.com/cybersemics/em/issues/999)). Calling [`asyncFocus()`](#asyncfocusts) before the set fixes it. Doing this only when the existing selection isn't already on a thought avoids an infinite loop with nested empty thoughts.
+- **Keyboard stability during rapid edits.** [`requestAnimationFrame`](https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame) is used instead of `setTimeout` (in some places) to keep the keyboard from flickering closed during rapid delete sequences ([issue #3129](https://github.com/cybersemics/em/issues/3129)). For `swapParent`, the selection is set synchronously to keep focus stable across the swap.
+
+`useEditMode` returns an `allowDefaultSelection` callback. Calling it disables the hook for one tick, which lets the user click somewhere else inside a thought (e.g. to position the caret in the middle of a non-cursor thought) without the hook stomping their click. Used by `Editable`'s click handler.
+
+There is also a small effect that re-focuses the editable when the sidebar closes on desktop, so editing resumes seamlessly.
+
+**Prefer `useEditMode` over manually calling `selection.set`.** The hook handles ordering, edge cases, and platform quirks; manual calls tend to introduce subtle inconsistencies. There are still cases where manual selection is unavoidable (e.g. after a programmatic content edit), but those are minimized.
 
 ## Philosophy
 
-Browser selection can get incredibly tricky. There are many edge cases, and behavior can often be different on mobile where touch events are used instead of click events, the browser automatically scrolls to the selection, text can be selected with long tap, and more. Thus, there is no one-size-fits-all solution to handling browser selection. Nevertheless, every effort should be made to generalize solutions and avoid increasing complexity with many edge cases.
+Browser selection is unforgiving. Touch events vs. click events, automatic scroll-to-selection on mobile, long-press text selection, magnifying glasses, IME composition — these all conspire to make any direct manipulation of selection fragile. Two rules:
 
-- Control the browser selection in a declarative manner when possible, i.e. defining a hook or middleware that can automatically set the selection when the right conditions are met.
-- Avoid adding `setTimeout` to fix browser selection issues. This tends to increase complexity, decrease performance, and introduce more timing issues down the road.
+- **Be declarative.** Use a hook or middleware that automatically sets the selection when the conditions are right (`useEditMode` is the canonical example). Avoid one-shot calls that nudge the selection inside event handlers — they accumulate, and the order in which they fire is hard to reason about.
+- **No `setTimeout` band-aids.** It is tempting to wrap a flaky selection update in a 0ms `setTimeout`. This is almost never the right fix. It introduces a frame of latency, races with other timeouts, and tends to mask the real issue (which is usually that the selection was already being set elsewhere by a competing handler). When you need to defer to the next paint, use `requestAnimationFrame`.
 
-## Selection-Related Files
+## Selection-related files
 
-The following are important files in **em** with functionality related to the browser selection.
+### `selection.ts`
 
-### asyncFocus.ts
+[`src/device/selection.ts`](../src/device/selection.ts).
 
-[../src/device/asyncFocus.ts](../src/device/asyncFocus.ts)
+The full `window.getSelection()` wrapper. Adding a new selection-shaped helper here is preferred over reaching for `window.getSelection` in feature code. Get to know the methods listed in [Caret / Browser Selection](#caret--browser-selection) and extend the file when you need something new.
 
-If there is no active selection, Mobile Safari will only allow programmatic selection within a click or touch event handler. Otherwise trying to focus or set the selection does nothing. To be able to set the selection in an asynchronous callback, you have to first set the selection to an arbitrary element in the initial click or touch handler. Then setting the selection will work.
+### `useEditMode.ts`
 
-Import and call `asyncFocus()` before a command is activated, inside a click or touch handler, then the next asynchronous focus will work (including `useEditMode`).
+[`src/components/Editable/useEditMode.ts`](../src/components/Editable/useEditMode.ts).
 
-### clearSelection.ts
+The declarative selection-setting hook used by every `Editable`. See [`useEditMode`](#useeditmode) above.
 
-[../src/redux-middleware/clearSelection.ts](../src/redux-middleware/clearSelection.ts)
+### `asyncFocus.ts`
 
-This Redux middleware is responsible for clearing the browser selection when the cursor is null or on a divider.
+[`src/device/asyncFocus.ts`](../src/device/asyncFocus.ts).
 
-### selection.ts
+Mobile Safari restricts programmatic `focus()` and `setSelection()` to direct descendants of click/touch event handlers. If you call them inside an asynchronous callback (e.g. after `await`), they silently no-op. The workaround is to keep an invisible disabled `<input>` element pinned to the document body, briefly enable + focus it during the user's touch event, and then run the real focus asynchronously. Once an active selection exists, Safari allows further programmatic changes.
 
-[../src/device/selection.ts](../src/device/selection.ts)
+`asyncFocus()` is a singleton — call it from inside a click/touch handler before the action fires, and the next async focus will work. It's a no-op on non-touch platforms and on focus targets that are already inside a thought (to avoid the infinite-loop case in `useEditMode`).
 
-All direct access to `window.getSelection` and the native browser selection API functionality is contained in selection.ts. This is encapsulated in order to create a clean API for selection manipulation, and keep browser-specific implementation details separated. There is a lint rule that is set up to prevent direct access to `window.getSelection` in the rest of the codebase. Please do not disable it.
+### `clearSelection.ts`
 
-Get to know the methods available in selection.ts, and feel free to extend it if there is missing functionality.
+[`src/redux-middleware/clearSelection.ts`](../src/redux-middleware/clearSelection.ts).
 
-### useEditMode.ts
+A Redux middleware that listens to every action and clears the browser selection when:
 
-[../src/components/Editable/useEditMode.ts](../src/components/Editable/useEditMode.ts)
+- The cursor is `null` and the selection is currently on a thought.
+- The cursor is on a divider thought.
+- The cursor is on a root child reached via the context view (`isRoot(cursor.slice(-1))`).
 
-See [Mobile](#mobile) above.
+This catches cases where the cursor moves but no `Editable` re-renders to pull the caret along — e.g. dismissing a divider with arrow keys, or navigating into a context-view root.
+
+### `selectionRangeStore`
+
+[`src/stores/selectionRangeStore.ts`](../src/stores/selectionRangeStore.ts).
+
+A non-Redux ministore tracking whether there is an active *non-collapsed* selection range — i.e. whether the user has selected text. It is updated from a `selectionchange` event handler (throttled by `SELECTION_CHANGE_THROTTLE`) and is always `false` on desktop.
+
+The main consumer is [`useDragAndDropThought`](../src/hooks/useDragAndDropThought.tsx)'s `canDrag`: when the user has a text range selected on touch, dragging is disabled so they can use the iOS magnifier and copy/paste UI without inadvertently starting a drag. See [drag-and-drop.md](drag-and-drop.md).
+
+### `preventAutoscroll.ts`
+
+[`src/device/preventAutoscroll.ts`](../src/device/preventAutoscroll.ts).
+
+When `selection.set` runs on a thought that's near the bottom of the viewport, the browser will sometimes scroll the editable into view. This is fine in theory but can fight with em's own viewport autocrop logic and produce a jumpy keyboard. `preventAutoscroll` temporarily applies CSS that puts the element near the viewport center (so the browser thinks no scroll is needed), restores the original styles after a 10 ms timeout, and is invoked by `useEditMode` before `selection.set`.
 
 ## Testing
 
-All browser selection testing should occur in puppeteer tests.
+All browser-selection testing should happen in puppeteer e2e tests, since they run against a real browser whose selection API behaves correctly.
 
-In react-testing-library, the browser selection API is mocked in JSDOM, but cannot be relied on for realistic behavior.
+In `react-testing-library` / JSDOM, the selection API is partially mocked but does not produce realistic behavior — `selection.isOnLastLine`, `setSelectionRange`, and `getBoundingClientRect` against a `Range` are unreliable. Don't write selection-dependent assertions there; use the puppeteer suite instead. See [testing.md](testing.md) for how the puppeteer harness is set up.
