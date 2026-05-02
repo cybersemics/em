@@ -17,6 +17,7 @@ GITHUB_ACTIONS="" yarn test:puppeteer --update
 ```
 
 This runs the full Puppeteer test suite with the `--update` flag, which:
+
 1. Creates any missing snapshot files
 2. Overwrites existing snapshots with the current UI rendering
 3. Uses the same Docker + Vite setup as normal test runs

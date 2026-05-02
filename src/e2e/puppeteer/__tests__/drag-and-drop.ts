@@ -39,7 +39,7 @@ vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
  * @returns Promise<boolean> True if the element is visible, false otherwise.
  */
 const isElementVisible = async (text: string, selector = '[data-editable]'): Promise<boolean> => {
-  return await page.evaluate(
+  return page.evaluate(
     (text, selector) => {
       const elements = Array.from(document.querySelectorAll(selector))
       const element = elements.find(el => el.innerHTML === text)

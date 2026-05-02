@@ -1,5 +1,6 @@
 name: 'Copilot Setup Steps'
 
+# Allow testing of the setup steps from your repository's "Actions" tab.
 # Run automatically when this file changes (for easy validation), and allow
 # manual runs from the Actions tab.
 on:
