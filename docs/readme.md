@@ -17,8 +17,5 @@ The in-repo documentation for **em**. The GitHub wiki is being deprecated in fav
 ## Reference
 
 - [Commands](commands.md) — All user-facing commands and keyboard shortcuts.
-- [Roadmap](Roadmap.md) — High-level project vision and direction.
-- [Performance Optimization](Performance-Optimization.md) — Performance practices and tooling.
-- [Testing](Testing.md) — Testing approach, platforms, and frameworks.
-- [Autohide](Autohide.md) — Autohide behaviour.
-- [Local-First Sync Engine](Local‐First-Sync-Engine.md) — Proposal for the new sync engine.
+- [Testing](testing.md) — Testing approach, platforms, and frameworks.
+- [Autohide](autohide.md) — Autohide behaviour.
