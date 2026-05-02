@@ -21,7 +21,9 @@ You will autonomously manage lifecycle of code changes: create a new branch, com
 
 ## Methodology
 
-- First, read the entirety of this file, and all of the other custom instructions provided to you. If you have done so, please provide a short summary of all the custom instructions you have read in your output before beginning your task.
+- First, read the entirety of this file, and all of the other custom instructions provided to you.
+- Check if you have been given an issue to work with. Read the entirety of the issue carefully to fully understand the scope of your assigned task.
+  - If the issue contains "Steps to Reproduce", you MUST read the `issue-repro` skill NOW. NEVER skip this step.
 - Then, begin your work by creating a new branch for the work. If a previous agent working on the same task already created a branch and a PR, use that branch.
 - When opening a PR, include the bare issue number at the top of the description (e.g. "#1234").
 - Make all of your commits in this branch. Push after each meaningful change. Never commit directly to main or protected branches.

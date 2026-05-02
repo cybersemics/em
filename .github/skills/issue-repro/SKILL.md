@@ -29,7 +29,7 @@ Similarly, a fix is **not complete** until both Step 4 and Step 5 pass.
 
 ## Step 1: Parse the Issue
 
-Use the GitHub MCP `get_issue` tool to read the full issue body. Extract these three sections — headings vary slightly across issues so match loosely:
+Use the GitHub MCP `get_issue` tool to read the full issue body.  Extract these three sections — headings vary slightly across issues so match loosely:
 
 | Section | Common headings |
 |---|---|
@@ -39,6 +39,8 @@ Use the GitHub MCP `get_issue` tool to read the full issue body. Extract these t
 
 If the issue body is ambiguous, read any attached comments before asking the
 user for clarification. If a section is genuinely absent, stop and ask.
+
+Sometimes, there may be multiple steps to reproduce within a single issue. If so, you must reproduce and fix each one separately, following the same process for each. Do not attempt to fix multiple reproduction paths at once.
 
 ---
 
@@ -56,7 +58,7 @@ If the response is not `200`, start it:
 yarn start
 ```
 
-Poll until port 3000 responds before continuing. The server takes ~5–15 seconds.
+Poll until port 3000 responds before continuing. The server takes ~5–15 seconds to start.
 
 ---
 
