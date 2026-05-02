@@ -1,3 +1,7 @@
+# Commands
+
+There are more than 50 commands within the app that are available to the user for editing, navigating, and other activities. Each can be activated with a toolbar button, keyboard shortcut, and/or gesture. The command palette brings up a list of all commands on desktop (Command/Ctrl + P).
+
 For the latest commands, go straight to the source: https://github.com/cybersemics/em/tree/main/src/shortcuts
 
 ## Back
