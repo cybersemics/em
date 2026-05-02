@@ -209,6 +209,40 @@ wdio documentation:
 
 Related tests: [/src/e2e/iOS](../src/e2e/iOS)
 
+## Vitest configuration
+
+[`vitest.config.ts`](../vitest.config.ts) defines two projects, both extending [`vite.config.ts`](../vite.config.ts):
+
+- **`unit`** — `jsdom` environment, picks up everything under `**/__tests__/**/*.ts` excluding `e2e/`. Setup files: [`vitest-localstorage-mock`](https://www.npmjs.com/package/vitest-localstorage-mock) (loaded first to ensure `localStorage` is defined in CI), then [`src/setupTests.js`](../src/setupTests.js). Used by `yarn test`.
+- **`puppeteer-e2e`** — custom environment [`puppeteer-environment.ts`](../src/e2e/puppeteer-environment.ts), setup file [`puppeteer/setup.ts`](../src/e2e/puppeteer/setup.ts), only includes `src/e2e/puppeteer/__tests__/*.ts`. The `vite-plugin-terminal` plugin pipes `console.log` from the page back to the terminal so puppeteer test failures are debuggable. Used by `yarn test:puppeteer` (which also starts the Browserless container and a dedicated Vite dev server on port 2552, see [`test-puppeteer.sh`](../src/e2e/puppeteer/test-puppeteer.sh)).
+
+iOS tests are not part of the Vitest config — they run under WDIO, see [WebdriverIO tests](#5-webdriverio-tests).
+
+# Test Helpers
+
+There are two helper directories. Use them before reaching for raw Redux dispatches or DOM queries.
+
+## `src/test-helpers/` — for unit, store, and JSDOM tests
+
+The helpers in [`../src/test-helpers/`](../src/test-helpers) cover store setup and operations that are otherwise verbose to write by hand:
+
+- [`createTestApp`](../src/test-helpers/createTestApp.tsx) — mounts `<App />` into the JSDOM environment via `@testing-library/react`, runs `initialize()`, swaps in `react-dnd-test-backend`, opts into fake timers, and closes the welcome modal. Use this when a test touches the rendered app. Pair every call with `cleanupTestApp` (it clears `localStorage`, the local YJS db, the store, and event handlers).
+- [`initStore`](../src/test-helpers/initStore.ts) — initializes the store without mounting the React tree, for store-level tests that don't need a DOM.
+- [`importToContext`](../src/test-helpers/importToContext.ts) — seeds the store with a tree from a multi-line plaintext outline (the same format the `Import` modal accepts). Most fixture setup goes through this.
+- [`dispatch`](../src/test-helpers/dispatch.ts) — a thin wrapper that lets a test dispatch synchronously without re-typing `store.dispatch(...)` plumbing.
+- **Operate-by-value helpers.** Where a test would otherwise need to look up a `ThoughtId` to dispatch an action, prefer the value-keyed variants:
+  - [`newThoughtAtFirstMatch`](../src/test-helpers/newThoughtAtFirstMatch.ts), [`editThoughtByContext`](../src/test-helpers/editThoughtByContext.ts), [`moveThoughtAtFirstMatch`](../src/test-helpers/moveThoughtAtFirstMatch.ts), [`deleteThoughtAtFirstMatch`](../src/test-helpers/deleteThoughtAtFirstMatch.ts), [`addMulticursorAtFirstMatch`](../src/test-helpers/addMulticursorAtFirstMatch.ts).
+- **Read-by-value helpers.** [`getAllChildrenByContext`](../src/test-helpers/getAllChildrenByContext.ts), [`getChildrenRankedByContext`](../src/test-helpers/getChildrenRankedByContext.ts), [`getAllChildrenAsThoughtsByContext`](../src/test-helpers/getAllChildrenAsThoughtsByContext.ts), [`attributeByContext`](../src/test-helpers/attributeByContext.ts), [`contextToThought`](../src/test-helpers/contextToThought.ts).
+- [`expectPathToEqual`](../src/test-helpers/expectPathToEqual.ts) — Jest matcher that compares paths by their thought *values* rather than ids, so test failures are readable.
+- [`checkDataIntegrity`](../src/test-helpers/checkDataIntegrity.ts) — assertions that catch parent/child mismatches, missing Lexemes, and orphaned thoughts. Useful as a final assertion in mutation-heavy tests.
+- [`dataProviderTest`](../src/test-helpers/dataProviderTest.ts) — the alternate `DataProvider` implementation used by tests that exercise the storage layer without going through Yjs. (See [persistence.md](persistence.md) for the live YJS provider.)
+
+## `src/e2e/puppeteer/helpers/` — for puppeteer tests
+
+[`../src/e2e/puppeteer/helpers/`](../src/e2e/puppeteer/helpers) contains the user-action helpers: `click`, `tap`, `type`, `swipe`, `scrollUp`, `clickThought`, `clickBullet`, `keyboardShortcut`, `dragAndDrop`, `dragAndDropFavorite`, plus per-feature waiters like `waitForCommandUniverse`, `waitForContextHasChildWithValue`, `waitForEditable`. Every puppeteer test should be a sequence of these helpers — composing them gives readable, user-centric tests.
+
+The most important helper is [`exportThoughts`](../src/e2e/puppeteer/helpers/exportThoughts.ts), which hits a backdoor on `window.em` to pull the entire current thought tree as the same outline format `importToContext` accepts. Asserting against the exported text is far faster, more readable, and more stable than parsing the DOM. It is the only sanctioned backdoor; everything else should go through user-facing affordances.
+
 # Test Flags
 
 [testFlags](../src/e2e/testFlags.ts) are used to alter runtime behavior of the app during tests. This is generally forbidden, as the automated test environment should be as close as possible to production so that it is testing the same behavior the end user sees. But there are some conditions that are difficult or impossible to create through normal user behavior (e.g. network latency) or that can enhance test readability (e.g. visualizations) when runtime alternation is warranted.
@@ -218,6 +252,20 @@ Related tests: [/src/e2e/iOS](../src/e2e/iOS)
 You can enable drop target visualization boxes by running `em.testFlags.simulateDrop = true` in the JS console or setting `testFlags.simulateDrop` to true in [src/e2e/testFlags.ts](../src/e2e/testFlags.ts).
 
 <img width="320" height="314" alt="Screenshot 2025-12-24 16 01 49" src="https://github.com/user-attachments/assets/9072a8d2-1324-41fb-9487-8f4f2c1165f2" />
+
+# CI workflows
+
+Three GitHub Actions workflows run on every push to `main` and every pull request. All three accept `workflow_dispatch` with an optional `rerun_id` so the `ghworkflow` shell function (see [Tips](#triggering-github-actions-workflows-manually)) can fan out manually-triggered runs for flake hunting.
+
+| Workflow | File | What it runs | Notes |
+|---|---|---|---|
+| **Test** | [`.github/workflows/test.yml`](../.github/workflows/test.yml) | `yarn test` (Vitest unit + jsdom) | The fast tier. Should always pass. |
+| **Puppeteer** | [`.github/workflows/puppeteer.yml`](../.github/workflows/puppeteer.yml) | `yarn test:puppeteer` against a `browserless/chrome:latest` service container on port 7566. Image-snapshot diffs are uploaded as a `snapshot-diff` artifact when tests fail. | The slow tier. Triggered only when changed-files > 0. |
+| **BrowserStack** | [`.github/workflows/ios.yml`](../.github/workflows/ios.yml) | `yarn test:ios:browserstack` against real iOS devices via BrowserStack. | Trigger is `pull_request_target` (so credentials can be exposed to the workflow), guarded by `changed_files > 0`. |
+
+Other workflows live in [`.github/workflows/`](../.github/workflows) — `lint.yml`, `tdd.yml`, `docs.yml`, `update-browserslist.yml`, `copilot-setup-steps.yml` — but the three above are the test pipelines proper.
+
+When a Puppeteer snapshot test fails, the visual diff is downloadable from the workflow run page; locally, the diff path is printed in the test runner output. See [Visual snapshot tests](#visual-snapshot-tests).
 
 # Manual Test Cases
 
