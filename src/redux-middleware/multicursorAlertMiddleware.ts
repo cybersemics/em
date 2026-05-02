@@ -28,18 +28,7 @@ const multicursorAlertMiddleware: ThunkMiddleware<State> = ({ getState, dispatch
     if (isTouch) {
       if (numMulticursors === 0 && state.showCommandCenter) {
         dispatch(toggleDropdown({ dropDownType: 'commandCenter', value: false }))
-      } else if (
-        numMulticursors > 0 &&
-        !state.showCommandCenter &&
-        // Do not re-open the Command Center if any toolbar dropdown is currently open.
-        // Opening a toolbar dropdown (e.g. ColorPicker) closes the Command Center via toggleDropdown,
-        // but the Command Center should remain closed while that dropdown is visible.
-        // Add new toolbar dropdown state keys here as they are introduced.
-        !state.showColorPicker &&
-        !state.showLetterCase &&
-        !state.showSortPicker &&
-        !state.showUndoSlider
-      ) {
+      } else if (numMulticursors > 0 && !state.showCommandCenter) {
         dispatch(toggleDropdown({ dropDownType: 'commandCenter', value: true }))
       }
     }
