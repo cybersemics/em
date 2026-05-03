@@ -1,7 +1,16 @@
 name: 'Copilot Setup Steps'
 
 # Allow testing of the setup steps from your repository's "Actions" tab.
-on: workflow_dispatch
+# Run automatically when this file changes (for easy validation), and allow
+# manual runs from the Actions tab.
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+  pull_request:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -10,6 +19,8 @@ jobs:
   # The job MUST be called `copilot-setup-steps` or it will not be picked up by Copilot.
   copilot-setup-steps:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     # You can define any steps you want, and they will run before the agent starts.
     # If you do not check out your code, Copilot will do this for you.
@@ -24,6 +35,24 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: 22
+          cache: 'yarn'
 
       - name: Install npm dependencies
         run: yarn
+
+      # Install Xvfb to provide a virtual X display so Chrome can run in the
+      # Cloud Agent environment (which has no physical display).
+      - name: Install Xvfb
+        run: sudo apt-get install -y xvfb
+
+      # Start Xvfb in the background and export DISPLAY so Chrome DevTools MCP
+      # (and any other tools that need a display) can find it automatically.
+      - name: Start virtual display
+        run: |
+          nohup Xvfb :99 -screen 0 1280x1024x24 >/dev/null 2>&1 &
+          disown
+          echo "DISPLAY=:99" >> $GITHUB_ENV
+
+      # ubuntu-latest ships google-chrome-stable; just verify it's present.
+      - name: Verify Chrome
+        run: google-chrome --version

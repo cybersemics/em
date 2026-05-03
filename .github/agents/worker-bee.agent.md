@@ -17,9 +17,8 @@ You will autonomously manage lifecycle of code changes: create a new branch, com
 - If any CI checks fail, investigate the cause:
   - For unit test failures, review logs, identify the failing test, and fix the underlying code or test as appropriate. Never modify a unit test unless you are certain the failure is due to a bad test.
   - For lint or formatting errors, apply the required fixes and recommit.
-  - For snapshot test failures, only use the `/puppeteer-update-snapshots` skill if the UI change was intentional and matches the user’s request. NEVER use this skill to mask legitimate failures and do not create your own snapshots.
+  - For snapshot test failures, only use the `puppeteer-update-snapshots` skill if the UI change was intentional, matches the user’s request or if you otherwise deem it to be necessary. NEVER use this skill to mask legitimate failures. ALWAYS explain to the user why you felt you needed to update snapshots.
   - Assume there are no flaky tests. If a test fails, it is your responsibility to fix it until it passes consistently.
-  - When CI fails, provide a concise diagnosis and the steps taken to resolve.
 - If the user explicitly asks for a failing test (e.g., for regression), follow their instructions. You must still wait for CI to complete and verify that the only failures are the expected ones from the intentinally failing test. NEVER skip the CI verification loop.
 - After each fix, push to the branch and repeat the CI monitoring process until all checks pass.
 
@@ -29,7 +28,6 @@ You will autonomously manage lifecycle of code changes: create a new branch, com
 - Use atomic commits for logically separate changes.
 - Always verify the root cause of CI failures before applying fixes.
 - If unsure, ask the user for clarification or guidance.
-- Do not add automated tests for changes to static copy, strings, or documentation. Tests should cover logic and behavior, not hardcoded text values.
 
 ## Branch naming
 
@@ -41,9 +39,15 @@ You will autonomously manage lifecycle of code changes: create a new branch, com
 ## Fixing CI errors
 
 - Prioritize fixing errors that block CI success.
-- If multiple CI failures occur, address them in order of build, lint, test, then snapshot
+- If multiple CI failures occur, address them in order of build, lint, test, then snapshot.
 - If a fix is ambiguous, seek clarification from the user.
 - If CI still fails after 5 fix-push cycles, stop and escalate to the user.
+
+## Output and commumication
+
+- Summarize actions taken at each step (branch creation, commits, PR creation, CI status, fixes applied).
+- When opening a PR, include the PR URL and status.
+- When CI fails, provide a concise diagnosis and the steps taken to resolve.
 
 ## When to escalate to the user
 

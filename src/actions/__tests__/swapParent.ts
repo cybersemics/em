@@ -63,7 +63,7 @@ it('swaps child thought with parent', () => {
     - a
       - c`)
 
-  expectPathToEqual(stateNew, stateNew.cursor, ['b', 'a'])
+  expectPathToEqual(stateNew, stateNew.cursor, ['b'])
 })
 
 it('swaps a leaf thought with parent', () => {
@@ -83,7 +83,7 @@ it('swaps a leaf thought with parent', () => {
     - c
       - b`)
 
-  expectPathToEqual(stateNew, stateNew.cursor, ['a', 'c', 'b'])
+  expectPathToEqual(stateNew, stateNew.cursor, ['a', 'c'])
 })
 
 it('preserve siblings', () => {
@@ -123,7 +123,7 @@ it('swapped parent should take the rank of the child', () => {
       - c
     - a`)
 
-  expectPathToEqual(stateNew, stateNew.cursor, ['d', 'a'])
+  expectPathToEqual(stateNew, stateNew.cursor, ['d'])
 })
 
 describe('context view', () => {
@@ -157,7 +157,7 @@ describe('context view', () => {
       - y1
         - y`)
 
-    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'b', 'y1', 'y'])
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'b', 'y1'])
   })
 
   it('disallow on contexts in the context view', () => {

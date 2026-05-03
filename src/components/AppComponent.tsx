@@ -148,11 +148,11 @@ const AppComponent: FC = () => {
 
     if (Capacitor.isNativePlatform()) {
       StatusBar.setStyle({ style: dark ? Style.Dark : Style.Light })
-      // Android only, set statusbar color to black.
       if (Capacitor.getPlatform() === 'android') {
-        StatusBar.setBackgroundColor({
-          color: colors.bg,
-        })
+        // Make the WebView extend behind the status bar (edge-to-edge), matching iOS behavior.
+        // safeAreaTop (env(safe-area-inset-top)) will equal the status bar height, and the
+        // AppComponent wrapper's paddingTop: safeAreaTop keeps normal content below the status bar.
+        StatusBar.setOverlaysWebView({ overlay: true })
       }
     }
   }, [colors, dark])

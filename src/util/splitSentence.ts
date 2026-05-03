@@ -1,6 +1,8 @@
+import getTextContentFromHTML from '../device/getTextContentFromHTML'
 import * as selection from '../device/selection'
 import isAbbreviation from './isAbbreviation'
 import once from './once'
+import trimHtml from './trimHtml'
 
 /**
  * Function: calculateRemoveFront.
@@ -85,16 +87,121 @@ interface SplitResult {
 }
 
 /**
+ * Returns HTML between text offsets while preserving valid tag structure.
+ *
+ * @param htmlValue The source HTML.
+ * @param startOffset Inclusive text offset.
+ * @param endOffset Exclusive text offset.
+ */
+function sliceHtmlByTextOffsets(htmlValue: string, startOffset: number, endOffset: number): string {
+  const div = document.createElement('div')
+  div.innerHTML = htmlValue
+
+  const start = selection.offsetFromClosestParent(div, startOffset)
+  const end = selection.offsetFromClosestParent(div, endOffset)
+  if (!start?.node || !end?.node) {
+    throw new Error(`Unable to map text offsets to HTML nodes: [${startOffset}, ${endOffset}]`)
+  }
+
+  const range = document.createRange()
+  range.setStart(start.node, start.offset)
+  range.setEnd(end.node, end.offset)
+
+  const fragmentDiv = document.createElement('div')
+  fragmentDiv.appendChild(range.cloneContents())
+  return fragmentDiv.innerHTML
+}
+
+/**
+ * Splits formatted HTML into parts by plain text sentence values.
+ *
+ * @param htmlValue The original HTML thought value.
+ * @param plainValues The split values calculated from plain text.
+ */
+function splitFormattedHtmlByPlainValues(htmlValue: string, plainValues: string[]): string[] {
+  if (plainValues.length <= 1) return [trimHtml(htmlValue)]
+
+  let remaining = htmlValue
+  let remainingText = getTextContentFromHTML(remaining)
+  const htmlValues: string[] = []
+
+  for (const nextPlainValue of plainValues.slice(1)) {
+    const splitOffset = remainingText.indexOf(nextPlainValue)
+    if (splitOffset < 0) {
+      throw new Error(`Unable to find split boundary in remaining text: "${nextPlainValue}"`)
+    }
+
+    const div = document.createElement('div')
+    div.innerHTML = remaining
+
+    const nodeOffset = selection.offsetFromClosestParent(div, splitOffset)
+    if (!nodeOffset?.node) throw new Error(`Unable to resolve split node at offset: ${splitOffset}`)
+
+    const range = document.createRange()
+    range.setStart(nodeOffset.node, nodeOffset.offset)
+    range.setEnd(nodeOffset.node, nodeOffset.offset)
+
+    const splitNodesResult = selection.splitNode(div, range)
+    if (!splitNodesResult) throw new Error('Unable to split HTML node at sentence boundary')
+
+    const leftDiv = document.createElement('div')
+    const rightDiv = document.createElement('div')
+
+    leftDiv.appendChild(splitNodesResult.left.cloneContents())
+    rightDiv.appendChild(splitNodesResult.right.cloneContents())
+
+    htmlValues.push(trimHtml(leftDiv.innerHTML))
+    remaining = rightDiv.innerHTML
+    remainingText = getTextContentFromHTML(remaining)
+  }
+
+  htmlValues.push(trimHtml(remaining))
+  return htmlValues
+}
+
+/**
+ * Splits formatted HTML by comma/"and" delimiters based on plain text offsets.
+ *
+ * @param htmlValue The original HTML thought value.
+ * @param plainValue The plain text thought value.
+ */
+function splitFormattedHtmlByCommaAndAnd(htmlValue: string, plainValue: string): string[] {
+  const delimiterRegex = /^(,|and)/i
+  const splitValues = plainValue.split(/,|and/i)
+  let offset = 0
+
+  return splitValues.reduce((accum: string[], splitValue) => {
+    const startOffset = offset
+    const endOffset = startOffset + splitValue.length
+    const htmlSplitValue = sliceHtmlByTextOffsets(htmlValue, startOffset, endOffset)
+    const formattedValue = trimHtml(htmlSplitValue)
+
+    const trailingText = plainValue.slice(endOffset)
+    const delimiterMatch = trailingText.match(delimiterRegex)
+    offset = endOffset + (delimiterMatch ? delimiterMatch[0].length : 0)
+
+    return getTextContentFromHTML(formattedValue).trim() ? [...accum, formattedValue] : accum
+  }, [])
+}
+
+/**
  * Splits given value by special characters.
  */
 const splitSentence = (value: string): SplitResult[] => {
+  const plainValue = getTextContentFromHTML(value)
+
   // Check for parenthetical content at the end of the thought first
   // pattern : ), ).
   // "This is a thought (and a subthought)" -> "-This is a thought   -and a subthought"
-  const parentheticalMatch = value.match(/^(.*?)\s*\((.*?)\)\.?$/)
+  const parentheticalMatch = plainValue.match(/^(.*?)\s*\((.*?)\)\.?$/)
   if (parentheticalMatch) {
-    const [_, mainThought, subThought] = parentheticalMatch
-    return [{ value: mainThought.trim() }, { value: subThought.trim(), insertNewSubThought: true }].filter(
+    const [, mainThought] = parentheticalMatch
+    const parentheticalIndex = plainValue.indexOf('(', mainThought.length)
+    const closingParentheticalIndex = plainValue.lastIndexOf(')')
+    const mainHtml = sliceHtmlByTextOffsets(value, 0, mainThought.length)
+    const subHtml = sliceHtmlByTextOffsets(value, parentheticalIndex + 1, closingParentheticalIndex)
+
+    return [{ value: trimHtml(mainHtml) }, { value: trimHtml(subHtml), insertNewSubThought: true }].filter(
       s => s.value !== '',
     )
   }
@@ -103,13 +210,13 @@ const splitSentence = (value: string): SplitResult[] => {
   // pattern2, multiple symbols: ?! !!! ...
   const mainSplitRegex = /[.;!?]+/g
 
-  const sentenceSplitters = value.match(mainSplitRegex)
+  const sentenceSplitters = plainValue.match(mainSplitRegex)
 
   /**
    * Checks if the value has no other main split characters  except one period at the end, i.e. value is just one sentence.
    * If so, allow split on comma only if there are no main split characters in the value or has only one period at the end.
    */
-  const hasOnlyPeriodAtEnd = once(() => /^[^.;!?]*\.$[^.;!?]*/.test(value.trim()))
+  const hasOnlyPeriodAtEnd = once(() => /^[^.;!?]*\.$[^.;!?]*/.test(plainValue.trim()))
 
   // if we're sub-sentence or in one sentence territory, check for dash splitting first
   // e.g. "one - 1" -> "- one   - 1" (as child)
@@ -117,30 +224,34 @@ const splitSentence = (value: string): SplitResult[] => {
     // Check for dash (-, –, or —) and split into child if found
     // This handles Case 1: Split into child when there's only one sentence
     // Match the first dash that has content on both sides
-    const dashMatch = value.match(/^(.+?)\s*([-–—])\s*(.+)$/)
+    const dashMatch = plainValue.match(/^(.+?)\s*([-–—])\s*(.+)$/)
     if (dashMatch) {
       const [_, leftPart, __, rightPart] = dashMatch
       const trimmedLeft = leftPart.trim()
       const trimmedRight = rightPart.trim()
       // Only split if both parts have content
       if (trimmedLeft && trimmedRight) {
-        return [{ value: trimmedLeft }, { value: trimmedRight, insertNewSubThought: true }]
+        const rightPartStart = plainValue.lastIndexOf(rightPart)
+        const leftHtml = sliceHtmlByTextOffsets(value, 0, leftPart.length)
+        const rightHtml = sliceHtmlByTextOffsets(value, rightPartStart, plainValue.length)
+        return [{ value: trimHtml(leftHtml) }, { value: trimHtml(rightHtml), insertNewSubThought: true }]
       }
     }
 
     // if we're sub-sentence or in one sentence territory, split by comma and "and"
     // e.g. "john, johnson, and john doe" -> "- john - johnson - john doe"
-    return value
+    const splitValues = plainValue
       .split(/,|and/i)
       .map(s => s.trim())
       .filter(s => s !== '')
-      .map(value => ({ value }))
+    const values = plainValue !== value ? splitFormattedHtmlByCommaAndAnd(value, plainValue) : splitValues
+    return values.map(value => ({ value }))
   }
 
   /**
-   * When the setences can be split, it has multiple situations.
+   * When the sentences can be split, it has multiple situations.
    */
-  const sentences = value.split(mainSplitRegex)
+  const sentences = plainValue.split(mainSplitRegex)
   const initialValue = sentences[0]
 
   const resultSentences = sentences.reduce((newSentence: string, s: string, i: number) => {
@@ -189,7 +300,7 @@ const splitSentence = (value: string): SplitResult[] => {
   // if the return string is one sentence that ends with no other main split characters except one period at the end, split the thought by comma
   const hasOnlyPeriodSplitterAtEnd = !/;!?$/.test(resultSentences)
 
-  let right =
+  const right =
     !resultSentences.match(SEPARATOR_TOKEN) && hasOnlyPeriodSplitterAtEnd
       ? separateByComma(resultSentences)
           .split(SEPARATOR_TOKEN)
@@ -201,47 +312,15 @@ const splitSentence = (value: string): SplitResult[] => {
           .map(s => s.trim())
           .join(SEPARATOR_TOKEN)
 
-  let res: string[] = []
-  let match = right.match(SEPARATOR_TOKEN)
+  const splitValues = right
+    .split(SEPARATOR_TOKEN)
+    .map(sentence => sentence.trim())
+    .filter(Boolean)
 
-  const div = document.createElement('div')
-  div.innerHTML = right
+  const values =
+    splitValues.length > 1 && plainValue !== value ? splitFormattedHtmlByPlainValues(value, splitValues) : splitValues
 
-  // Find the separator token within the div's text content, then traverse to find the correct offset within the DOM fragment. (#3615)
-  while (match) {
-    const range = document.createRange()
-    const index = div.textContent!.indexOf(match[0])
-
-    if (index < 0) break
-
-    const nodeOffset = selection.offsetFromClosestParent(div, index)
-    if (!nodeOffset?.node) break
-
-    range.setStart(nodeOffset.node, nodeOffset.offset)
-    range.setEnd(nodeOffset.node, nodeOffset.offset + match[0].length)
-
-    const splitNodesResult = selection.splitNode(div, range)
-
-    if (!splitNodesResult) break
-
-    const leftDiv = document.createElement('div')
-    const rightDiv = document.createElement('div')
-
-    leftDiv.appendChild(splitNodesResult.left.cloneContents())
-    rightDiv.appendChild(splitNodesResult.right.cloneContents())
-
-    // Add the next sentence, with properly-formatted HTML tags, to the results
-    res = [...res, leftDiv.innerHTML]
-    right = rightDiv.innerHTML
-
-    // Move on to the next match
-    match = right.match(SEPARATOR_TOKEN)
-    div.innerHTML = right
-  }
-
-  if (right.length) res = [...res, right]
-
-  return res.map(value => ({ value }))
+  return values.map(value => ({ value }))
 }
 
 export default splitSentence
