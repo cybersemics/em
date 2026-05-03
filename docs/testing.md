@@ -400,8 +400,9 @@ Test `enter` and `leave` on each of the following actions:
 
     ```
     - one
-      - =pinChildren
-        - true
+      - =children
+        - =pin
+          - true
       - a
         - =view
           - Table
@@ -416,8 +417,9 @@ Test `enter` and `leave` on each of the following actions:
         - oof
           - woof
       - x
-        - =pinChildren
-          - true
+        - =children
+          - =pin
+            - true
         - y
           - y1
         - z
