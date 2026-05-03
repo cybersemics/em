@@ -182,11 +182,11 @@ const dialogRecipe = defineSlotRecipe({
     contentLayer: {
       position: 'relative',
     },
-    /** Scrollable content region — owns the scroll behavior, scrollbar styling, and the responsive font size. */
+    /** Scrollable content region — owns the scroll behavior, scrollbar styling, and the responsive font size. `dvh` (rather than `vh`) on the max-height matches the `glassSheet` parent's unit so the two heights track the same viewport when the iOS address bar shows/hides; otherwise `70vh` can resolve larger than `glassSheet`'s `80dvh` budget allows, and the bottom of `content` (where the mask fade lives) gets clipped off by `glassSheet`'s `overflow: hidden`. */
     content: {
       fontSize: '1.125rem',
       color: 'fg',
-      maxHeight: '70vh',
+      maxHeight: '70dvh',
       overflowX: 'hidden',
       overflowY: 'auto',
       // Horizontal text padding lives on contentInner; this paddingRight gives the scrollbar breathing room from the modal edge.
