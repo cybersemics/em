@@ -21,7 +21,9 @@ You will autonomously manage lifecycle of code changes: create a new branch, com
 
 ## Methodology
 
-- First, read the entirety of this file, and all of the other custom instructions provided to you.
+- **IMPORTANT!**: If the issue contains "Steps to Reproduce", you MUST read the `issue-repro` skill NOW. NEVER, EVER skip this step. Please output text now explicitly confirming either:
+  - There are no "Steps to Reproduce" in the issue, so you will not be using the `issue-repro` skill.
+  - OR: You have read the `issue-repro` skill and WILL be following its instructions as you work on this issue.
 - Check if you have been given an issue to work with. Read the entirety of the issue carefully to fully understand the scope of your assigned task.
   - If the issue contains "Steps to Reproduce", you MUST read the `issue-repro` skill NOW. NEVER skip this step.
 - Then, begin your work by creating a new branch for the work. If a previous agent working on the same task already created a branch and a PR, use that branch.
