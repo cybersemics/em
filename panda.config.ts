@@ -192,6 +192,18 @@ const keyframes = defineKeyframes({
     '70%': { transform: 'scale3d(1.2, 1.2, 1)' },
     '100%': { transform: 'scale3d(1, 1, 1)' },
   },
+  /**
+   * These keyframes define a progressive top-edge fade on the Dialog's scrollable `content` as the user scrolls down.
+   * `mask-image` can't be animated directly, so instead we animate a custom
+   * property that the gradient references. That then allows the browser to
+   * interpolate that value smoothly, updating the gradient without the need
+   * for JavaScript.
+   */
+  dialogContentScrollFade: {
+    to: {
+      '--dialog-content-mask-fade-top': '1.5rem',
+    },
+  },
   // the hideCaret animation must run every time the indent changes on iOS Safari, which necessitates replacing the animation with an identical substitute with a different name
   // See: recipes/hideCaret.ts
   // TODO: FauxCaret will break if hideCaretAnimationNames is imported from hideCaret.config.ts into hideCaret.ts, and vice versa into panda.config.ts, so we are stuck with duplicate definitions in two files.
@@ -502,6 +514,19 @@ export default defineConfig({
   },
 
   globalCss,
+
+  /* Registering `--dialog-content-mask-fade-top` as a `<length>`
+  is what makes the scroll-driven mask animation in dialogRecipe.ts
+  interpolate smoothly.
+  An unregistered custom property would animate as a discrete string
+  swap and would flash in abruptly rather than smoothly animating. */
+  globalVars: {
+    '--dialog-content-mask-fade-top': {
+      syntax: '<length>',
+      inherits: false,
+      initialValue: '0px',
+    },
+  },
 
   conditions: {
     light: '[data-color-mode=light] &',

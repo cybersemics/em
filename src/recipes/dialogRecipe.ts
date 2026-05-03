@@ -210,6 +210,23 @@ const dialogRecipe = defineSlotRecipe({
         'linear-gradient(to bottom, {colors.black} 0, {colors.black} calc(100% - 1.5rem), {colors.transparent} 100%)',
       WebkitMaskImage:
         'linear-gradient(to bottom, {colors.black} 0, {colors.black} calc(100% - 1.5rem), {colors.transparent} 100%)',
+      // Animated top-edge fade mask that ramps up as the user scrolls.
+      // Relies on `animation-timeline`, which has been supported in Chrome
+      // since 2023 and Safari since 2025.
+      // If `animation-timeline` isn't supported, we don't add the top-edge
+      // fade at all.
+      '@supports (animation-timeline: scroll(self))': {
+        maskImage:
+          'linear-gradient(to bottom, {colors.transparent} 0, {colors.black} var(--dialog-content-mask-fade-top), {colors.black} calc(100% - 1.5rem), {colors.transparent} 100%)',
+        WebkitMaskImage:
+          'linear-gradient(to bottom, {colors.transparent} 0, {colors.black} var(--dialog-content-mask-fade-top), {colors.black} calc(100% - 1.5rem), {colors.transparent} 100%)',
+        animationName: 'dialogContentScrollFade',
+        animationDuration: '1s',
+        animationTimingFunction: 'linear',
+        animationFillMode: 'both',
+        animationTimeline: 'scroll(self)',
+        animationRange: '0 4rem',
+      },
     },
     /** Inner wrapper inside `content` that carries the horizontal text inset. Kept separate from `content` so the scrollbar gutter doesn't push text in further. */
     contentInner: {
