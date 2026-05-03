@@ -31,10 +31,26 @@ interface GestureDiagramProps {
   rounded?: boolean
   /** If true, the cancel gesture will have the same styling as the other gestures. Otherwise, there are additional sizing and margin styles applied. */
   styleCancelAsRegularGesture?: boolean
-  /** Which kind of arrowhead to draw gesture diagrams with. By default, the arrowhead is filled. */
-  arrowhead?: 'filled' | 'outlined'
+  /** Which kind of arrowhead to draw gesture diagrams with. By default, the arrowhead is filled.
+   * 'outlined-wide' renders a continuous chevron whose apex sits at the path's natural tip and
+   * whose legs splay backward, matching the spec mockup for the Mobile Command Universe. */
+  arrowhead?: 'filled' | 'outlined' | 'outlined-wide'
+  /** Apex interior angle in degrees for the 'outlined-wide' chevron. Smaller = sharper. Default 80. */
+  chevronApexAngle?: number
+  /** Half-span of the 'outlined-wide' chevron in multiples of the path stroke. Larger = longer chevron legs at a fixed apex angle. Default 2. */
+  chevronSize?: number
+  /** Radius (user-space units) of the rounded bend at each interior vertex when rendering a single-gradient straight gesture. 0 = sharp. Only applied to the single-gradient code path. */
+  cornerRadius?: number
+  /** Extra length (user-space units) added to just the last segment so there is more breathing room between the final bend and the arrowhead tip. Default 0. */
+  tipExtension?: number
+  /** When true, the wrapping span sizes itself to its parent (`width: 100%; height: 100%`) instead of using a fixed pixel size derived from `size`/`maxWidth`/`maxHeight`. Pair with a parent that constrains the aspect ratio. */
+  fillContainer?: boolean
+  /** Show a 1px blue debug outline around the diagram's bounding box. Off by default. */
+  debugBorder?: boolean
   /** When supplied, the per-segment fade interpolates between these two colors instead of the default single-color → bg fade. The path starts near `from` and ends near `to` (the arrowhead). */
   gradient?: { from: string; to: string }
+  /** Whether to apply the soft drop-shadow glow around the gesture. Defaults to true to preserve existing rendering. */
+  glow?: boolean
 }
 
 /** Returns the direction resulting from a 90 degree clockwise rotation. */
@@ -227,13 +243,22 @@ const GestureDiagram = ({
   rounded,
   styleCancelAsRegularGesture,
   arrowhead = 'filled',
+  chevronApexAngle = 80,
+  chevronSize = 2.2,
+  cornerRadius = 0,
+  tipExtension = 0,
+  fillContainer = false,
+  debugBorder = false,
   gradient,
+  glow = true,
 }: GestureDiagramProps) => {
   const [id] = useState(createId())
 
   // match signaturePad shadow in TraceGesture component
   // TODO: Why isn't this working?
-  const dropShadow = `drop-shadow(0 0 ${(GESTURE_GLOW_BLUR * 2) / 3}px ${token(`colors.${GESTURE_GLOW_COLOR}` as const)})`
+  const dropShadow = glow
+    ? `drop-shadow(0 0 ${(GESTURE_GLOW_BLUR * 2) / 3}px ${token(`colors.${GESTURE_GLOW_COLOR}` as const)})`
+    : 'none'
 
   arrowSize = arrowSize ? +arrowSize : strokeWidth * 5
   reversalOffset = reversalOffset ? +reversalOffset : size * 0.3
@@ -244,7 +269,11 @@ const GestureDiagram = ({
       <svg
         width={styleCancelAsRegularGesture ? size / 2 : 20}
         height={styleCancelAsRegularGesture ? size / 2 : 24}
-        className={css(inGestureContainer && { position: 'relative', top: '10px' }, cssRaw)}
+        className={css(
+          debugBorder && { border: '1px solid blue' },
+          inGestureContainer && { position: 'relative', top: '10px' },
+          cssRaw,
+        )}
         style={{
           ...style,
           ...(styleCancelAsRegularGesture
@@ -349,20 +378,80 @@ const GestureDiagram = ({
     }
   }
 
+  // Extend the last segment outward by `tipExtension` user-space units so the final bend has
+  // more breathing room before the arrowhead. The chevron, gradient chord, and bbox all derive
+  // from `positions`, so they stay in sync automatically.
+  if (tipExtension > 0 && positions.length >= 2) {
+    const tip = positions[positions.length - 1]
+    const prev = positions[positions.length - 2]
+    const dxRaw = tip.x - prev.x
+    const dyRaw = tip.y - prev.y
+    const len = Math.hypot(dxRaw, dyRaw) || 1
+    positions[positions.length - 1] = {
+      x: tip.x + (dxRaw / len) * tipExtension,
+      y: tip.y + (dyRaw / len) * tipExtension,
+    }
+  }
+
   /** Crop the viewbox to the diagram and adjust the svg element's height when first rendered. */
   const onRef = (el: SVGGraphicsElement | null) => {
     if (!el) return
+    if (viewBox) return
 
-    // crop viewbox to diagram
-    if (!viewBox) {
-      const bbox = el.getBBox()
+    // For straight (non-rounded, non-rdld) gestures, derive the bbox from the precomputed
+    // vertex positions instead of getBBox. Browsers disagree about whether getBBox includes
+    // marker geometry, and a marker that extends asymmetrically (e.g. a tall arrowhead at the
+    // end of "rur") biases the centering of the path within the cell.
+    if (path !== 'rdld' && !rounded) {
+      // Include chevron leg endpoints in the bbox so the viewBox accommodates them.
+      const allPts = chevronPoints
+        ? [...positions, chevronPoints.leg1Open, chevronPoints.leg2Open]
+        : positions
+      const xs = allPts.map(p => p.x)
+      const ys = allPts.map(p => p.y)
+      const minX = Math.min(...xs)
+      const maxX = Math.max(...xs)
+      const minY = Math.min(...ys)
+      const maxY = Math.max(...ys)
+      const padX = arrowSize! + strokeWidth * 4
+      const padY = arrowSize! + strokeWidth * 2
+      if (fillContainer) {
+        // Force a square viewBox centered on the bbox center so every gesture fits-to-cell at
+        // the same scale. We also clamp the side to a minimum of `size + tipExtension` (the max
+        // extent a straight gesture can reach) so rounded and rdld gestures — whose natural
+        // bboxes are smaller — share the same fit-scale and render strokes at the same on-screen
+        // thickness as straight gestures.
+        const pad = Math.max(padX, padY)
+        const side = Math.max(maxX - minX, maxY - minY, size + tipExtension) + pad * 2
+        const cx = (minX + maxX) / 2
+        const cy = (minY + maxY) / 2
+        el.setAttribute('viewBox', `${cx - side / 2} ${cy - side / 2} ${side} ${side}`)
+        return
+      }
       el.setAttribute(
         'viewBox',
-        `${bbox.x - arrowSize! - strokeWidth * 4} ${bbox.y - arrowSize! - strokeWidth * 2} ${
-          +bbox.width + +arrowSize! * (arrowhead === 'outlined' ? 2 : 5) + +strokeWidth * 8
-        } ${+bbox.height + +arrowSize! * 2 + +strokeWidth * 4}`,
+        `${minX - padX} ${minY - padY} ${maxX - minX + padX * 2} ${maxY - minY + padY * 2}`,
       )
+      return
     }
+
+    const bbox = el.getBBox()
+    if (fillContainer) {
+      // Same square-viewBox treatment we apply to straight gestures, with the same clamp to
+      // `size + tipExtension` so rounded/rdld gestures share the straight-gesture fit-scale.
+      const pad = arrowSize! + strokeWidth * 4
+      const side = Math.max(bbox.width, bbox.height, size + tipExtension) + pad * 2
+      const cx = bbox.x + bbox.width / 2
+      const cy = bbox.y + bbox.height / 2
+      el.setAttribute('viewBox', `${cx - side / 2} ${cy - side / 2} ${side} ${side}`)
+      return
+    }
+    el.setAttribute(
+      'viewBox',
+      `${bbox.x - arrowSize! - strokeWidth * 4} ${bbox.y - arrowSize! - strokeWidth * 2} ${
+        +bbox.width + +arrowSize! * (arrowhead === 'outlined' ? 2 : 5) + +strokeWidth * 8
+      } ${+bbox.height + +arrowSize! * 2 + +strokeWidth * 4}`,
+    )
   }
 
   /** Generates an SVG path string for a curved segment of the gesture.*/
@@ -371,15 +460,94 @@ const GestureDiagram = ({
     return `M ${startX} ${startY} A ${radius} ${radius} 0 0 ${sweepFlag} ${endX} ${endY}`
   }
 
-  // When a two-color gradient is supplied for a straight (non-rounded, non-rdld) gesture, render
-  // the whole gesture as a single <path> with one chord-aligned linear gradient. This avoids the
-  // visible seams that per-segment paths produce at their overlapping rounded joins.
-  const useSingleGradient = !!gradient && path !== 'rdld' && !rounded
+  // When a two-color gradient is supplied, render the whole gesture as a single <path> with one
+  // chord-aligned linear gradient. This avoids the visible seams that per-segment paths produce
+  // at their overlapping rounded joins, and applies to straight, `rounded`, and the special-case
+  // 'rdld' help glyph.
+  const useSingleGradient = !!gradient
+
+  // In fillContainer mode, scale up the geometry of rounded and rdld gestures so their natural
+  // bboxes match the straight-gesture extent (`size + tipExtension`). This keeps the viewBox
+  // (and thus the rendered stroke thickness) uniform across gestures while letting each one
+  // fill its cell at a similar visual size.
+  // - rounded: radius = arcSize * 0.4. We want 2*radius = size + tipExtension (the extent of a
+  //   270° arc, which is the typical case), so arcSize = (size + tipExtension) / 0.8.
+  // - rdld: hardcoded path's natural max dimension is ~76 (height from y=-4.5 to y=72), so
+  //   scale = (size + tipExtension) / 76 normalizes it to the same extent.
+  const RDLD_NATURAL_MAX = 76
+  const arcSize = fillContainer ? (size + tipExtension) / 0.8 : size
+  const rdldScale = fillContainer ? (size + tipExtension) / RDLD_NATURAL_MAX : 1
+
+  // Endpoints of the gradient chord. For straight gestures, run from first vertex to tip. For
+  // rounded gestures, run from the start of the first arc to the end of the last arc. For rdld,
+  // run from the top of the question mark to the bottom of its stem (matching the hardcoded
+  // path).
+  const gradientChord = useSingleGradient
+    ? path === 'rdld'
+      ? {
+          start: { x: 29.7 * rdldScale, y: 13.5 * rdldScale },
+          end: { x: 45 * rdldScale, y: 72 * rdldScale },
+        }
+      : rounded
+        ? (() => {
+            const dirs = Array.from(path!) as Direction[]
+            const first = generateArcCoordinates(0, dirs, arcSize)
+            const last = generateArcCoordinates(dirs.length - 1, dirs, arcSize)
+            return {
+              start: { x: first.startX, y: first.startY },
+              end: { x: last.endX, y: last.endY },
+            }
+          })()
+        : { start: positions[0], end: positions[positions.length - 1] }
+    : null
+
+  // 'outlined-wide' renders the chevron as a separate <path> whose apex sits at the gesture's
+  // natural tip, with two legs splaying BACKWARD (≈65° apex by default). Independent of
+  // `gradient`: the chevron can use the gesture's gradient or fall back to a solid color.
+  const useChevronArrowhead =
+    arrowhead === 'outlined-wide' && path !== 'rdld' && !rounded && positions.length >= 2
+
+  const chevronPoints = useChevronArrowhead
+    ? (() => {
+        const tip = positions[positions.length - 1]
+        const prev = positions[positions.length - 2]
+        const dxRaw = tip.x - prev.x
+        const dyRaw = tip.y - prev.y
+        const len = Math.hypot(dxRaw, dyRaw) || 1
+        // Unit vector along last segment (forward toward apex).
+        const ux = dxRaw / len
+        const uy = dyRaw / len
+        // Perpendicular (clockwise from forward): r→down, l→up, u→right, d→left.
+        const px = -uy
+        const py = ux
+        // Chevron span scales with `chevronSize` (multiples of path stroke); leg projection is
+        // derived from the apex angle so the legs always meet at exactly `chevronApexAngle`
+        // regardless of stroke width or chosen size.
+        const pathStroke = strokeWidth * 1.5
+        const halfSpan = pathStroke * chevronSize
+        const halfAngleRad = (chevronApexAngle / 2) * (Math.PI / 180)
+        // legBack / halfSpan = cot(halfAngle); guard against very wide angles where cot → 0.
+        const legBack = halfSpan / Math.max(Math.tan(halfAngleRad), 0.01)
+        const leg1Open = {
+          x: tip.x - ux * legBack + px * halfSpan,
+          y: tip.y - uy * legBack + py * halfSpan,
+        }
+        const leg2Open = {
+          x: tip.x - ux * legBack - px * halfSpan,
+          y: tip.y - uy * legBack - py * halfSpan,
+        }
+        return { tip, leg1Open, leg2Open }
+      })()
+    : null
 
   return (
     <span
-      className={css({ display: 'inline-block' }, cssRaw)}
-      style={{ width: `${maxWidth ?? size}px`, height: `${maxHeight ?? size}px` }}
+      className={css({ display: 'inline-block' }, debugBorder && { border: '1px solid blue' }, cssRaw)}
+      style={
+        fillContainer
+          ? { width: '100%', height: '100%' }
+          : { width: `${maxWidth ?? size}px`, height: `${maxHeight ?? size}px` }
+      }
     >
       <svg
         className={css(inGestureContainer && { position: 'relative', top: '10px' }, { width: '100%', height: '100%' })}
@@ -391,10 +559,15 @@ const GestureDiagram = ({
           <marker
             id={id}
             viewBox='0 0 10 10'
-            refX={rounded ? '0' : '5'}
+            // refX=0 puts the open side of the ">" at the path endpoint so the chevron extends
+            // past the path tip rather than overlapping it.
+            refX={rounded ? '0' : arrowhead === 'outlined' ? '0' : '5'}
             refY='5'
-            markerWidth={arrowSize! * (arrowhead === 'outlined' ? 2 : 1)}
-            markerHeight={arrowSize! * (arrowhead === 'outlined' ? 3 : 1)}
+            // Marker is sized so its strokes can equal the path stroke in user space (per
+            // spec) while the chevron still reads as a clearly hollow ">". The 4× factor
+            // gives chevron span ≈ 4× path-stroke thickness, matching the mockup proportions.
+            markerWidth={arrowSize! * (arrowhead === 'outlined' ? 4 : 1)}
+            markerHeight={arrowSize! * (arrowhead === 'outlined' ? 4 : 1)}
             markerUnits='userSpaceOnUse'
             orient='auto-start-reverse'
           >
@@ -403,7 +576,9 @@ const GestureDiagram = ({
                 arrowhead === 'filled'
                   ? 'M 0 0 L 10 5 L 0 10 z'
                   : arrowhead === 'outlined'
-                    ? 'M 0 0 L 5 5 L 0 10'
+                    ? // 70° apex (w/h ≈ 1.43, half-span 3.3 vb ≈ 2× path-stroke). Centered on
+                      // refY=5 so the chevron is symmetric around the path.
+                      'M 0 1.7 L 4.71 5 L 0 8.3'
                     : undefined
               }
               fill={
@@ -416,20 +591,27 @@ const GestureDiagram = ({
               stroke={
                 arrowhead === 'outlined' ? gradient?.to ?? color ?? token('colors.fg') : 'none'
               }
-              strokeWidth={arrowhead === 'outlined' ? strokeWidth / 3 : 0}
+              // 1:1 thickness with the path stroke in user space (per spec). With
+              // markerUnits='userSpaceOnUse' the marker's strokeWidth is in viewBox units;
+              // path stroke (user) = strokeWidth * 1.5, viewBox-to-user scale = markerWidth/10
+              // = arrowSize * 0.4, so equivalent vb stroke = (strokeWidth * 1.5) /
+              // (arrowSize * 0.4) = strokeWidth * 3.75 / arrowSize.
+              strokeWidth={arrowhead === 'outlined' ? (strokeWidth * 3.75) / arrowSize! : 0}
+              strokeLinecap={arrowhead === 'outlined' ? 'round' : undefined}
+              strokeLinejoin={arrowhead === 'outlined' ? 'round' : undefined}
               style={{ filter: dropShadow }}
             />
           </marker>
-          {extendedPath === 'rdld' ? (
+          {extendedPath === 'rdld' && !useSingleGradient ? (
             <MobileCommandUniverseGradients />
           ) : useSingleGradient ? (
             <linearGradient
               id={`${extendedPath}-gradient-single`}
               gradientUnits='userSpaceOnUse'
-              x1={positions[0].x}
-              y1={positions[0].y}
-              x2={positions[positions.length - 1].x}
-              y2={positions[positions.length - 1].y}
+              x1={gradientChord!.start.x}
+              y1={gradientChord!.start.y}
+              x2={gradientChord!.end.x}
+              y2={gradientChord!.end.y}
             >
               <stop offset='0%' stopColor={gradient!.from} />
               <stop offset='100%' stopColor={gradient!.to} />
@@ -461,18 +643,77 @@ const GestureDiagram = ({
         )}
 
         {useSingleGradient ? (
-          // Render the entire path as one stroke so segment joins are part of a single
-          // continuous gradient instead of overlapping per-segment paths with their own fades.
+          // Single continuous gesture path with chord-aligned gradient. For straight gestures,
+          // interior vertices may be softened with quadratic curves (cornerRadius > 0) so the
+          // bends look like rounded turns rather than mitered joins. For `rounded` gestures,
+          // concatenate the per-segment arcs into one continuous path so segment joins
+          // disappear and the gradient flows as one stroke.
           <path
-            d={positions
-              .map((p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`))
-              .join(' ')}
+            d={(() => {
+              if (path === 'rdld') {
+                // Concatenate the four hardcoded ?-glyph segments into one continuous path so
+                // their rounded caps no longer overlap as four discrete blobs. Coords are scaled
+                // by `rdldScale` so the glyph's bbox matches `size + tipExtension` in
+                // fillContainer mode (otherwise scale = 1 and we render at natural size).
+                const r = rdldScale
+                return (
+                  `M ${29.7 * r},${13.5 * r}` +
+                  ` Q ${46.8 * r},${-4.5 * r} ${63 * r},${13.5 * r}` +
+                  ` Q ${72 * r},${27 * r} ${54 * r},${40.5 * r}` +
+                  ` Q ${45 * r},${49.5 * r} ${45 * r},${58.5 * r}` +
+                  ` L ${45 * r},${72 * r}`
+                )
+              }
+              if (rounded) {
+                const dirs = Array.from(path!) as Direction[]
+                const cmds: string[] = []
+                for (let i = 0; i < dirs.length; i++) {
+                  const { startX, startY, radius, sweepFlag, endX, endY } = generateArcCoordinates(i, dirs, arcSize)
+                  if (i === 0) cmds.push(`M ${startX} ${startY}`)
+                  cmds.push(`A ${radius} ${radius} 0 0 ${sweepFlag} ${endX} ${endY}`)
+                }
+                return cmds.join(' ')
+              }
+              if (cornerRadius <= 0 || positions.length < 3) {
+                return positions
+                  .map((p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`))
+                  .join(' ')
+              }
+              const cmds: string[] = [`M ${positions[0].x} ${positions[0].y}`]
+              for (let i = 1; i < positions.length - 1; i++) {
+                const prev = positions[i - 1]
+                const curr = positions[i]
+                const next = positions[i + 1]
+                const dxIn = curr.x - prev.x
+                const dyIn = curr.y - prev.y
+                const lenIn = Math.hypot(dxIn, dyIn) || 1
+                // Cap the corner radius at half the segment length so adjacent corners don't
+                // overlap on short segments.
+                const inLen = Math.min(cornerRadius, lenIn / 2)
+                const dxOut = next.x - curr.x
+                const dyOut = next.y - curr.y
+                const lenOut = Math.hypot(dxOut, dyOut) || 1
+                const outLen = Math.min(cornerRadius, lenOut / 2)
+                const beforeX = curr.x - (dxIn / lenIn) * inLen
+                const beforeY = curr.y - (dyIn / lenIn) * inLen
+                const afterX = curr.x + (dxOut / lenOut) * outLen
+                const afterY = curr.y + (dyOut / lenOut) * outLen
+                cmds.push(`L ${beforeX} ${beforeY}`)
+                cmds.push(`Q ${curr.x} ${curr.y} ${afterX} ${afterY}`)
+              }
+              const last = positions[positions.length - 1]
+              cmds.push(`L ${last.x} ${last.y}`)
+              return cmds.join(' ')
+            })()}
             stroke={`url(#${extendedPath}-gradient-single)`}
             strokeWidth={strokeWidth * 1.5}
             strokeLinecap='round'
             strokeLinejoin='round'
             fill='none'
-            markerEnd={`url(#${id})`}
+            // When the chevron arrowhead is rendered as a separate path (non-rounded outlined-wide),
+            // skip markerEnd so we don't double-draw the arrowhead. The 'rdld' help glyph has no
+            // arrowhead at all. Otherwise the marker handles it.
+            markerEnd={useChevronArrowhead || path === 'rdld' ? undefined : `url(#${id})`}
             style={{ filter: dropShadow }}
           />
         ) : (
@@ -502,13 +743,39 @@ const GestureDiagram = ({
                 strokeLinejoin='round'
                 fill='none'
                 markerEnd={
-                  // the help gesture does not have an arrowhead
-                  i === pathSegments.length - 1 && path !== 'rdld' ? `url(#${id})` : undefined
+                  // skip markerEnd when the 'outlined-wide' chevron is drawn separately below
+                  i === pathSegments.length - 1 && path !== 'rdld' && !useChevronArrowhead
+                    ? `url(#${id})`
+                    : undefined
                 }
                 style={{ filter: dropShadow }}
               />
             )
           })
+        )}
+
+        {/* Chevron arrowhead for 'outlined-wide': a separate <path> whose apex coincides with
+            the gesture path's tip, with two legs splaying backward. When the gesture path uses
+            a single chord-aligned gradient, the chevron uses the same gradient so brightness
+            flows continuously through the arrowhead instead of jumping to a flat color. */}
+        {chevronPoints && (
+          <path
+            d={
+              `M ${chevronPoints.leg1Open.x} ${chevronPoints.leg1Open.y}` +
+              ` L ${chevronPoints.tip.x} ${chevronPoints.tip.y}` +
+              ` L ${chevronPoints.leg2Open.x} ${chevronPoints.leg2Open.y}`
+            }
+            stroke={
+              useSingleGradient
+                ? `url(#${extendedPath}-gradient-single)`
+                : color ?? token('colors.fg')
+            }
+            strokeWidth={strokeWidth * 1.5}
+            strokeLinecap='round'
+            strokeLinejoin='round'
+            fill='none'
+            style={{ filter: dropShadow }}
+          />
         )}
       </svg>
     </span>
