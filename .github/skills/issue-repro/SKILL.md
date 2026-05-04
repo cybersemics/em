@@ -16,10 +16,11 @@ By following the documented steps in the issue, you can reliably reproduce the p
 ## Stages
 
 1. **Parse** — extract Steps to Reproduce, Current Behavior, Expected Behavior from the issue.
-2. **Start** — ensure the dev server is running.
-3. **Reproduce** — drive the Chrome DevTools MCP through the steps; confirm the failure mode fires.
-4. **Fix** — root-cause and fix the code.
-5. **Validate** — re-run the steps; confirm the failure is gone and the expected behavior is observed.
+2. **Emulate** — decide whether mobile emulation is required and apply it **before any navigation**.
+3. **Start** — ensure the dev server is running.
+4. **Reproduce** — drive the Chrome DevTools MCP through the steps; confirm the failure mode fires.
+5. **Fix** — root-cause and fix the code.
+6. **Validate** — re-run the steps; confirm the failure is gone and the expected behavior is observed.
 
 **You MUST** be able to reproduce the issue directly – if you cannot, **DO NOT** assume the cause without first confirming with the user.
 **DO NOT explore a fix** until you have successfully reproduced the issue. **This is your priority.** If you **CANNOT FULLY REPRODUCE** the steps, **FAIL AND ESCALATE TO THE USER.**
@@ -44,7 +45,32 @@ Sometimes, there may be multiple steps to reproduce within a single issue. If so
 
 ---
 
-## Step 2: Start the App
+## Step 2: Configure Device Emulation
+
+Decide whether the issue requires mobile emulation **before doing anything else in the browser**. The Chrome DevTools MCP keeps a persistent Chrome instance, so emulation must be applied before the first navigation — otherwise the initial page load happens under the wrong profile and reproductions become unreliable.
+
+### When to enable mobile emulation
+
+Enable mobile emulation if **any** of the following are true about the issue:
+
+- It is tagged `[Mobile]`, `[Android]`, or `[iOS]`, or its title/body explicitly mentions mobile, iPhone, Android, or "on my phone".
+- The Steps to Reproduce reference touch interactions: **tap**, **swipe**, **long-press**, **pinch**, **drag with finger**, **two-finger**, or any gesture that does not exist on a mouse. Mouse-only language ("click", "hover", "right-click") does not count.
+- The Current Behavior is described in terms of mobile-only UI (bottom sheet, mobile keyboard, on-screen keyboard, viewport zoom, virtual keyboard overlay, etc.).
+
+If none of those signals are present, skip this step — the desktop default is correct.
+
+### How to enable it
+
+Call the Chrome DevTools MCP `emulate` tool with an iPhone-class profile, **before any `navigate` call**:
+
+- `viewport`: `390x844x3,mobile,touch` — iPhone 14 dimensions (390×844 CSS px), DPR 3. The `mobile` flag triggers mobile media queries; the `touch` flag delivers touch events instead of mouse events so swipe/tap/long-press behave correctly.
+- `userAgent`: a current iOS Safari UA, e.g. `Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1`.
+
+If you have already navigated by mistake, re-apply emulation and re-navigate so the page loads cleanly under the mobile profile.
+
+---
+
+## Step 3: Start the App
 
 Check whether the dev server is already running:
 
@@ -62,7 +88,7 @@ Poll until port 3000 responds before continuing. The server takes ~5–15 second
 
 ---
 
-## Step 3: Use Chrome DevTools MCP
+## Step 4: Use Chrome DevTools MCP
 
 Use the **Chrome DevTools MCP** (`chrome-devtools`) for all browser automation. Do **not** use the Playwright MCP — it is unstable and unreliable.
 
@@ -70,9 +96,9 @@ The Chrome DevTools MCP provides tools such as `navigate`, `screenshot`, `evalua
 
 ---
 
-## Step 4: Reproduce the Failure
+## Step 5: Reproduce the Failure
 
-For issues tagged `[Android]` or `[Mobile]`, or where testing was done on mobile, enable mobile device emulation using the `emulate` tool and simulate the appropriate mobile devvice (e.g. iPhone 14 or Pixel 7) **before** following the steps.
+If Step 2 determined that mobile emulation is required, confirm `emulate` has already been applied before proceeding — the first navigation below must happen under the mobile profile, not after.
 
 1. Open a fresh browser tab at `http://localhost:3000`.
 
@@ -102,7 +128,7 @@ For issues tagged `[Android]` or `[Mobile]`, or where testing was done on mobile
 
 ---
 
-## Step 5: Fix the Issue
+## Step 6: Fix the Issue
 
 1. Use the reproduction evidence (error message, stack trace, console output) to locate the root cause. Read the relevant source code. Do not guess the cause without evidence.
 2. Implement a targeted fix. Prefer the smallest change that addresses the root cause without breaking related behavior.
@@ -111,7 +137,7 @@ For issues tagged `[Android]` or `[Mobile]`, or where testing was done on mobile
 
 ---
 
-## Step 6: Fix-Validate Loop (Mandatory)
+## Step 7: Fix-Validate Loop (Mandatory)
 
 After applying a fix, validate it immediately. If validation fails, fix and
 validate again. Repeat until the issue is resolved or the attempt limit is reached.
@@ -122,14 +148,14 @@ of what you tried and what you observed each time.
 
 ### Validation criteria (both must pass)
 
-**6a — Failure no longer triggers**
+**7a — Failure no longer triggers**
 
 1. Open a fresh browser tab at `http://localhost:3000`.
 2. Clear app state: `localStorage.clear(); location.reload();`
 3. Follow the **Steps to Reproduce** exactly.
 4. Confirm the **Current Behavior** (the bug) does **not** occur.
 
-**6b — Expected behavior is observed**
+**7b — Expected behavior is observed**
 
 1. In the same or a fresh tab, follow the steps again.
 2. Confirm the **Expected Behavior** from the issue is observed exactly as described.
@@ -139,21 +165,20 @@ of what you tried and what you observed each time.
 ```
 attempt = 1
 loop:
-  fix the code (Step 5)
-  run validation 6a and 6b
+  fix the code (Step 6)
+  run validation 7a and 7b
   if both pass → done, summarize what you changed
   if either fails → diagnose what still went wrong
   attempt += 1
   if attempt > 5 → escalate to user
 ```
 
-Never claim success without completing both 6a and 6b. Never skip the loop.
+Never claim success without completing both 7a and 7b. Never skip the loop.
 
 ---
 
 ## Escalation Rules
 
-- If the bug cannot be reproduced in Step 4 after a thorough attempt, stop and report to the user with what you observed. Do not proceed to fixing.
+- If the bug cannot be reproduced in Step 5 after a thorough attempt, stop and report to the user with what you observed. Do not proceed to fixing.
 - If the fix-validate loop reaches 5 attempts without success, stop and summarize: what you tried, what changed, and what still fails.
-- If the steps reference a mobile-only gesture or feaure, use the `emulate` tool to enable mobile emulation before reproducing.
 - Default to autonomous action. Escalate only when the correct path is genuinely ambiguous.
