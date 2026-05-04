@@ -173,9 +173,10 @@ const useEditMode = ({
           clientY: e.clientY,
         })
 
-        offsetRef.current = offset
-
         if (offset !== null) {
+          if (isTouch && isSafari()) offsetRef.current = offset
+          else setCaretOffset(offset)
+
           // It's important to avoid preventDefault when the tap is somewhere that can be handled by native browser selection behavior.
           // If the tap is prevented, it will interfere with functionality like double tap or the context menu. If the selection is
           // truly in a void area, then preventDefault will stop the caret from being placed on the wrong thought.
@@ -211,12 +212,12 @@ const useEditMode = ({
     const onFocus = () => queueMicrotask(() => preventAutoscrollEnd(editable))
 
     editable.addEventListener('mousedown', onMouseDown)
-    editable.addEventListener('mouseup', onMouseUp)
+    if (isTouch && isSafari()) editable.addEventListener('mouseup', onMouseUp)
     editable.addEventListener('focus', onFocus)
 
     return () => {
       editable.removeEventListener('mousedown', onMouseDown)
-      editable.removeEventListener('mouseup', onMouseUp)
+      if (isTouch && isSafari()) editable.removeEventListener('mouseup', onMouseUp)
       editable.removeEventListener('focus', onFocus)
     }
   }, [contentRef, editingOrOnCursor, isMulticursor, fontSize, allowDefaultSelection, path, dispatch])
