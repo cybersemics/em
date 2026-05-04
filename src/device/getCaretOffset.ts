@@ -23,6 +23,8 @@ interface Coordinates {
 }
 
 interface CaretOffsetResult {
+  /** True if the caret is at the end of a line. This offset is ambiguous because the end of one line and the start of the next line share the same position. Native behavior will set the caret to the correct position. */
+  isLineEnd?: boolean
   /** True if the tap/click is in a void area (i.e. outside the text node's visible characters). */
   inVoidArea?: boolean
   offset: number | null
@@ -192,104 +194,6 @@ const findOffsetAtX = (node: Text, clientX: number, lo: number, hi: number): num
   }
 
   return lo
-}
-
-/**
- * Adjusts an offset to skip trailing whitespaces in a line.
- * If the offset is in whitespace, moves it to after the last non-whitespace character in that line.
- *
- * @param text - The text content.
- * @param offset - The calculated offset.
- * @param lineStart - The start of the line containing the offset.
- * @param lineEnd - The end of the line containing the offset.
- * @returns The adjusted offset, skipping trailing whitespaces.
- */
-const skipTrailingWhitespace = (text: string, offset: number, lineStart: number, lineEnd: number): number => {
-  const lineText = text.substring(lineStart, lineEnd)
-  const offsetInLine = offset - lineStart
-  const lastNonWhitespaceIndex = lineText.trimEnd().length
-
-  // If offset is beyond the last non-whitespace character, place after it
-  if (offsetInLine > lastNonWhitespaceIndex) {
-    return lineStart + lastNonWhitespaceIndex
-  }
-
-  /** If offset is in whitespace, find the last non-whitespace before it. */
-  const isWhitespace = (char: string) => WHITESPACE_REGEX.test(char)
-
-  if (isWhitespace(lineText[offsetInLine])) {
-    // Find last non-whitespace character before the offset
-    let lastNonWsEnd = -1
-    let i = 0
-    while (i < offsetInLine) {
-      const size = codePointSize(lineText, i)
-      if (!isWhitespace(lineText[i])) {
-        lastNonWsEnd = i + size
-      }
-      i += size
-    }
-
-    // If found, place after it; otherwise place at start of line
-    return lastNonWsEnd >= 0 ? lineStart + lastNonWsEnd : lineStart
-  }
-
-  return offset
-}
-
-/**
- * Converts a tap position (clientX, clientY) into the correct caret position within a text node.
- * The vertical coordinate determines the line, and the horizontal coordinate determines the position within that line.
- * Used when the browser places the caret incorrectly, such as in empty areas or at the end of a word.
- *
- * @param node - The text node to search within.
- * @param clientX - The X coordinate of the tap/click (position within the line).
- * @param clientY - The Y coordinate of the tap/click (selects which line in multiline text).
- * @returns The character offset (index) where the caret should be placed.
- */
-const calculateOffset = (node: Text, clientX: number, clientY: number): number => {
-  const text = node.nodeValue ?? ''
-  if (!text) return 0
-
-  const lines = getTextNodeLines(node)
-  const targetLine = findClosestLine(lines, clientY)
-
-  // It is critical that a selection never spans more than one line because it will create a bounding rect that is much too large.
-  // As a result, line splitting is a little greedy and some tolerance is required for the character that begins a new line.
-  // It might be erroneously considered to be part of the previous line, so add it back into the search range.
-  const lineStart = targetLine.start === 0 ? 0 : targetLine.start - 1
-
-  const lineEnd = targetLine.end
-  let offset = findOffsetAtX(node, clientX, lineStart, lineEnd)
-
-  // // Safari: getBoundingClientRect can be off by a few characters (±2 characters); pick the offset whose caret is closest to clientX
-  if (isSafari() && offset >= lineStart && offset <= lineEnd) {
-    let lo = Math.max(lineStart, offset - 2)
-    const hi = Math.min(lineEnd, offset + 2)
-    // Snap lo to a code point boundary
-    if (isLowSurrogate(text, lo)) lo = Math.max(lineStart, lo - 1)
-    const r = document.createRange()
-    let bestOffset = offset
-    let bestDist = Infinity
-    for (let i = lo; i <= hi; i++) {
-      // Skip low surrogates (not valid caret positions)
-      if (isLowSurrogate(text, i)) continue
-      r.setStart(node, i)
-      r.collapse(true)
-      const d = Math.abs(clientX - r.getBoundingClientRect().left)
-      if (d < bestDist) {
-        bestDist = d
-        bestOffset = i
-      }
-    }
-    offset = bestOffset
-  }
-
-  // iOS Safari: snap to word boundary like native iOS behavior
-  if (isSafari() && isTouch) {
-    offset = snapToWordBoundary(text, offset)
-  }
-
-  return skipTrailingWhitespace(text, offset, lineStart, lineEnd)
 }
 
 /**
@@ -496,16 +400,42 @@ const domPositionToUnformattedOffset = (root: HTMLElement, node: Node, offset: n
 const getCaretOffset = (editable: HTMLElement | null, { clientX, clientY }: Coordinates): CaretOffsetResult => {
   if (!editable) return { offset: null }
 
+  /**
+   * Converts a tap position (clientX, clientY) into the correct caret position within a text node.
+   * The vertical coordinate determines the line, and the horizontal coordinate determines the position within that line.
+   * Used when the browser places the caret incorrectly, such as in empty areas or at the end of a word.
+   */
   const textNodes = getTextNodes(editable)
   if (textNodes.length === 0) return { offset: null }
 
   const nearest = findNearestTextNode(textNodes, clientX, clientY)
   if (!nearest) return { offset: null }
 
-  const offsetInNode = calculateOffset(nearest, clientX, clientY)
+  const text = nearest.nodeValue ?? ''
+  if (!text) return { offset: 0 }
+
+  const lines = getTextNodeLines(nearest)
+  const targetLine = findClosestLine(lines, clientY)
+  const lineIndex = lines.indexOf(targetLine)
+
+  // It is critical that a selection never spans more than one line because it will create a bounding rect that is much too large.
+  // As a result, line splitting is a little greedy and some tolerance is required for the character that begins a new line.
+  // It might be erroneously considered to be part of the previous line, so add it back into the search range.
+  const lineStart = targetLine.start === 0 ? 0 : targetLine.start - 1
+  const lineEnd = lineIndex === lines.length - 1 ? targetLine.end : targetLine.end - 1
+
+  let offset = findOffsetAtX(nearest, clientX, lineStart, lineEnd)
+  const isLineEnd = offset >= lineEnd - 1
+
+  // iOS Safari: snap to word boundary like native iOS behavior
+  if (isSafari() && isTouch && !isLineEnd) {
+    offset = snapToWordBoundary(text, offset)
+  }
+
   return {
+    isLineEnd,
     inVoidArea: isWithinVoidArea(nearest, clientX, clientY),
-    offset: domPositionToUnformattedOffset(editable, nearest, offsetInNode),
+    offset: domPositionToUnformattedOffset(editable, nearest, offset),
   }
 }
 

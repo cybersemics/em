@@ -139,8 +139,8 @@ const useEditMode = ({
     if (!editable) return
 
     /** Sets the DOM selection and updates the Redux cursor state. */
-    const setCaretOffset = (offset: number) => {
-      selection.set(editable, { offset })
+    const setCaretOffset = (offset: number, setSelection: boolean = true) => {
+      if (setSelection) selection.set(editable, { offset })
       dispatch(setCursor({ path, offset }))
     }
 
@@ -168,14 +168,22 @@ const useEditMode = ({
           bottomMargin: fontSize * 2,
         })
 
-        const { inVoidArea, offset } = getCaretOffset(editable, {
+        const { isLineEnd, inVoidArea, offset } = getCaretOffset(editable, {
           clientX: e.clientX,
           clientY: e.clientY,
         })
 
         if (offset !== null) {
-          if (isTouch && isSafari()) offsetRef.current = offset
-          else setCaretOffset(offset)
+          if (isTouch && isSafari()) {
+            if (isLineEnd) {
+              offsetRef.current = null
+              setCaretOffset(offset, false)
+            } else {
+              offsetRef.current = offset
+            }
+          } else {
+            setCaretOffset(offset)
+          }
 
           // It's important to avoid preventDefault when the tap is somewhere that can be handled by native browser selection behavior.
           // If the tap is prevented, it will interfere with functionality like double tap or the context menu. If the selection is
