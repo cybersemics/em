@@ -57,12 +57,14 @@ jobs:
 
       # Start the Vite dev server in the background so it's already running
       # when the agent session begins. Logs go to /tmp/dev-server.log.
+      # Vite may serve HTTP or HTTPS depending on local config, so probe both.
       - name: Start dev server
         run: |
           nohup yarn start >/tmp/dev-server.log 2>&1 &
           disown
           for i in {1..30}; do
-            if curl -fsS -o /dev/null http://localhost:3000; then
+            if curl -fsS -o /dev/null http://localhost:3000 2>/dev/null \
+              || curl -fsSk -o /dev/null https://localhost:3000 2>/dev/null; then
               echo "Dev server ready after ${i}s"
               exit 0
             fi

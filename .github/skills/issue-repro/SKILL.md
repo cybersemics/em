@@ -72,19 +72,20 @@ If you have already navigated by mistake, re-apply emulation and re-navigate so 
 
 ## Step 3: Start the App
 
-Check whether the dev server is already running:
+Check whether the dev server is already running on port 3000. Vite may serve HTTP or HTTPS depending on local config, so probe both (the `-k` flag accepts the self-signed dev cert):
 
 ```bash
-curl -s -o /dev/null -w "%{http_code}" http://localhost:3000
+curl -fsS -o /dev/null http://localhost:3000 \
+  || curl -fsSk -o /dev/null https://localhost:3000
 ```
 
-If the response is not `200`, start it:
+If neither responds successfully, start it:
 
 ```bash
 yarn start
 ```
 
-Poll until port 3000 responds before continuing. The server takes ~5–15 seconds to start.
+Poll until port 3000 responds before continuing. The server takes ~5–15 seconds to start. Note which scheme (HTTP vs HTTPS) responded — you'll use that when navigating in the next steps.
 
 ---
 
