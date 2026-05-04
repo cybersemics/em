@@ -425,7 +425,7 @@ const getCaretOffset = (editable: HTMLElement | null, { clientX, clientY }: Coor
   const lineEnd = lineIndex === lines.length - 1 ? targetLine.end : targetLine.end - 1
 
   let offset = findOffsetAtX(nearest, clientX, lineStart, lineEnd)
-  const isLineEnd = offset >= lineEnd - 1
+  const isLineEnd = lineIndex < lines.length - 1 && offset >= lineEnd
 
   // iOS Safari: snap to word boundary like native iOS behavior
   if (isSafari() && isTouch && !isLineEnd) {
