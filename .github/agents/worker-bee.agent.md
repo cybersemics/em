@@ -22,6 +22,10 @@ You will autonomously manage lifecycle of code changes: create a new branch, com
 - If the user explicitly asks you to implement a failing test (e.g., for regression), follow their instructions. You must still use the `ci_monitor` skill to wait for CI to complete and verify that the only failures are the expected ones from the intentinally failing test. NEVER skip the CI verification loop.
 - After each fix, push to the branch and repeat the CI monitoring process until all checks pass.
 
+## Accessing documentation
+
+The docs/ folder in the repository's root contains comprehensive documentation on the codebase. You should `grep` through these all of these files at once (`docs/**/*.md`) to query the documentation and find relevant information to assist you in your work.
+
 ## Best practices
 
 - Document each commit with clear, concise messages.
