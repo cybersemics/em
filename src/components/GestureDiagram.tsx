@@ -568,9 +568,17 @@ const GestureDiagram = ({
             return (
               <path
                 d={
-                  rounded
-                    ? generateArcPath(i, Array.from(path) as Direction[])
-                    : `M ${x} ${y} l ${segment.dx * scale} ${segment.dy * scale}`
+                  path === 'rdld'
+                    ? i === 0
+                      ? 'M 29.7,13.5 Q 46.8,-4.5 63,13.5'
+                      : i === 1
+                        ? 'M 63,13.5 Q 72,27 54,40.5'
+                        : i === 2
+                          ? 'M 54,40.5 Q 45,49.5 45,58.5'
+                          : 'M 45,58.5 L 45,72'
+                    : rounded
+                      ? generateArcPath(i, Array.from(path) as Direction[])
+                      : `M ${x} ${y} l ${segment.dx * scale} ${segment.dy * scale}`
                 }
                 key={i}
                 stroke={
@@ -581,7 +589,9 @@ const GestureDiagram = ({
                       : (color ?? token('colors.fg'))
                 }
                 {...commonPathProps}
-                markerEnd={i === pathSegments.length - 1 && arrowhead !== 'none' ? `url(#${id})` : undefined}
+                markerEnd={
+                  i === pathSegments.length - 1 && path !== 'rdld' && arrowhead !== 'none' ? `url(#${id})` : undefined
+                }
               />
             )
           })
