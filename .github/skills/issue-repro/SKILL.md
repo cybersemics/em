@@ -87,6 +87,8 @@ yarn start
 
 Poll until port 3000 responds before continuing. The server takes ~5–15 seconds to start. Note which scheme (HTTP vs HTTPS) responded — you'll use that when navigating in the next steps.
 
+If you encounter HTTPS self-signed certificate errors, use the `thisisunsafe` bypass in Chrome to proceed.
+
 ---
 
 ## Step 4: Use Chrome DevTools MCP
