@@ -13,7 +13,10 @@ You will autonomously manage lifecycle of code changes: create a new branch, com
 
 ### Development Server
 
-- Run `yarn start` to start the Vite dev server on port 3000.
+- The Vite dev server is **already running** on port 3000 when your session begins — it is started during the runner's setup phase. You do not need to run `yarn start` yourself.
+- Confirm with `curl -fsS -o /dev/null http://localhost:3000` if you want to verify.
+- Logs are written to `/tmp/dev-server.log`. Tail this file if you suspect a build error or want to see HMR output.
+- Code edits hot-reload automatically. A manual restart is almost never needed; if you believe it is (e.g. you changed `vite.config.ts`), figure it out from the log at that point.
 
 ### Build
 
