@@ -147,7 +147,7 @@ const useEditMode = ({
     /**
      * Handles the mousedown event for the editable element.
      * Prevents focus on non-cursor thoughts or during multiselect clicks.
-     * When editing or cursor is present (and multicursor is not active), computes and sets the caret position manually.
+     * When editing or cursor is present (and multicursor is not active), computes the caret position manually so that it can be set on mouseup.
      * Prevents default behavior and manages autoscroll for certain edge cases where browser selection would be incorrect.
      */
     const onMouseDown = (e: MouseEvent) => {
@@ -194,6 +194,10 @@ const useEditMode = ({
       }
     }
 
+    /**
+     * Handles the mouseup event for the editable element.
+     * Preserve native drag selection behavior by deferring setCaretOffset until mouseup.
+     */
     const onMouseUp = (e: MouseEvent) => {
       if (offsetRef.current !== null) {
         setCaretOffset(offsetRef.current)
