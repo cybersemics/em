@@ -24,7 +24,9 @@ You will autonomously manage lifecycle of code changes: create a new branch, com
 
 ## Accessing documentation
 
-The docs/ folder in the repository's root contains comprehensive documentation on the codebase. You should `grep` through these all of these files at once (`docs/**/*.md`) to query the documentation and find relevant information to assist you in your work.
+- The docs/ folder in the repository's root contains comprehensive documentation on the codebase.
+- Starting at the very beginning investigation, you should `grep` through these all of these files at once (`docs/**/*.md`) to query the documentation for relevant information that might assist you during your work.
+- You should continue to query the documentation periodically, especially if you encounter something you don't understand or need more context on.
 
 ## Best practices
 
