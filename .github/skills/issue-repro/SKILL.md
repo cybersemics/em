@@ -127,6 +127,68 @@ If Step 2 determined that mobile emulation is required, confirm `emulate` has al
 - You can use the keyboard and mouse tools in the Chrome DevTools MCP to interact with the app as needed.
 - Read **em**'s UI code to understand how to trigger certain behaviors if the steps are not explicit.
 
+### Executing swipe gestures
+
+Some steps to reproduce will describe **swipe gestures** in the gesture zone (the left side of the screen in right-handed mode, below the 50px toolbar). Issues describe these in two interchangeable notations — both refer to the same thing:
+
+| Notation | Example | Meaning |
+|---|---|---|
+| Letters | `rdr` | `r`=right, `l`=left, `u`=up, `d`=down |
+| Arrows  | `→↓→` | `→`=r, `←`=l, `↑`=u, `↓`=d |
+
+**Mobile emulation must be active** (Step 2) — the gesture detector listens for touch events, which require `hasTouch: true`.
+
+To execute gestures, dispatch synthetic touch events via `evaluate_script`. The canonical reference is `src/e2e/puppeteer/helpers/gesture.ts`. Use these parameters — they have been validated to register reliably with the gesture detector:
+
+- **Start at `(150, 350)`** — comfortably inside the gesture zone for an iPhone 14 viewport.
+- **80px per direction**, broken into ~10px substeps with ~16ms between each `touchmove` and a 40ms pause at each direction change. Smaller distances or faster pacing flash the gesture trace UI but fail to commit a command.
+- **Hold ~80ms before `touchend`** so `onPanResponderRelease` fires with the full sequence intact.
+
+Working snippet — change `directions` to your gesture:
+
+```js
+async () => {
+  const directions = ['r', 'd']; // e.g. ['l','d','r','l','d','l'] for ldrldl
+  const startX = 150, startY = 350, stepSize = 80, substep = 10;
+  const target = document.elementFromPoint(startX, startY) || document.body;
+  const mkTouch = (x, y) => new Touch({
+    identifier: 1, target,
+    clientX: x, clientY: y, pageX: x, pageY: y,
+    screenX: x, screenY: y,
+    radiusX: 1, radiusY: 1, rotationAngle: 0, force: 1,
+  });
+  const fire = (type, x, y) => {
+    const t = mkTouch(x, y);
+    target.dispatchEvent(new TouchEvent(type, {
+      cancelable: true, bubbles: true, composed: true,
+      touches: type === 'touchend' ? [] : [t],
+      targetTouches: type === 'touchend' ? [] : [t],
+      changedTouches: [t],
+    }));
+  };
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  let x = startX, y = startY;
+  fire('touchstart', x, y);
+  await sleep(50);
+  for (const dir of directions) {
+    let dx = 0, dy = 0;
+    if (dir === 'r') dx = stepSize;
+    else if (dir === 'l') dx = -stepSize;
+    else if (dir === 'd') dy = stepSize;
+    else if (dir === 'u') dy = -stepSize;
+    const steps = Math.max(1, Math.ceil(Math.hypot(dx, dy) / substep));
+    for (let i = 1; i <= steps; i++) {
+      x += dx / steps; y += dy / steps;
+      fire('touchmove', Math.round(x), Math.round(y));
+      await sleep(16);
+    }
+    await sleep(40);
+  }
+  await sleep(80);
+  fire('touchend', Math.round(x), Math.round(y));
+}
+```
+
 ---
 
 ## Step 6: Fix the Issue
