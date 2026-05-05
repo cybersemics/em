@@ -18,11 +18,13 @@ import note from '../../commands/note'
 import outdent from '../../commands/outdent'
 import swapParent from '../../commands/swapParent'
 import uncategorize from '../../commands/uncategorize'
+import durationsConfig from '../../durations.config'
 import isTutorial from '../../selectors/isTutorial'
-import durations from '../../util/durations'
 import fastClick from '../../util/fastClick'
 import PanelCommand from './PanelCommand'
 import PanelCommandGroup from './PanelCommandGroup'
+
+const bezierDefinition = [0, 0, 0.2, 1] as const
 
 /**
  * A custom hook that returns the last non-zero number of multicursors.
@@ -152,7 +154,7 @@ const CommandCenter = () => {
           onClose={onClose}
           detent='content'
           unstyled
-          tweenConfig={{ duration: durations.get('commandCenterDrawer') / 1000, ease: 'easeOut' }}
+          tweenConfig={{ duration: durationsConfig.medium / 1000, ease: bezierDefinition }}
           style={{
             /** Override default Sheet zIndex. */
             zIndex: token('zIndex.commandCenter'),
