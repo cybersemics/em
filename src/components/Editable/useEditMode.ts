@@ -211,22 +211,20 @@ const useEditMode = ({
       if (offsetRef.current !== null) {
         setCaretOffset(offsetRef.current)
       }
-    }
 
-    /** Prevents the thought from autoscrolling to the bottom of the screen when the keyboard is open.
-     * Autoscroll must be prevented until focus handling is complete, so preventAutoscrollEnd is deferred
-     * using queueMicrotask without introducing any additional delay.
-     */
-    const onFocus = () => queueMicrotask(() => preventAutoscrollEnd(editable))
+      /** Prevents the thought from autoscrolling to the bottom of the screen when the keyboard is open.
+       * Autoscroll must be prevented until focus handling is complete, so preventAutoscrollEnd is deferred
+       * using queueMicrotask without introducing any additional delay.
+       */
+      queueMicrotask(() => preventAutoscrollEnd(editable))
+    }
 
     editable.addEventListener('mousedown', onMouseDown)
     if (isTouch && isSafari()) editable.addEventListener('mouseup', onMouseUp)
-    editable.addEventListener('focus', onFocus)
 
     return () => {
       editable.removeEventListener('mousedown', onMouseDown)
       if (isTouch && isSafari()) editable.removeEventListener('mouseup', onMouseUp)
-      editable.removeEventListener('focus', onFocus)
     }
   }, [contentRef, editingOrOnCursor, isMulticursor, fontSize, allowDefaultSelection, path, dispatch])
 
