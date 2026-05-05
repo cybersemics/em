@@ -1,13 +1,13 @@
-import tap from './tap'
-import waitForElement from './waitForElement'
-
 /** Click a node by selector. */
 const click = async (selector: string) => {
-  const el = await waitForElement(selector, { timeout: 10000 })
+  const el = $(selector)
 
-  if (!el) throw new Error(`editable node for the given selector(${selector}) not found.`)
-
-  await tap(el)
+  await browser.execute(function (el) {
+    if (!el) throw new Error('Element not found in the DOM.')
+    el.dispatchEvent(new MouseEvent('mousedown', { button: 0 }))
+    el.dispatchEvent(new MouseEvent('mouseup', { button: 0 }))
+    el.click()
+  }, el)
 }
 
 export default click
