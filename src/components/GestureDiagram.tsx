@@ -393,47 +393,11 @@ const GestureDiagram = ({
     }
   }
 
-  /** Crop the viewbox to the diagram and adjust the svg element's height when first rendered. */
+  /** Crop the viewbox to the diagram and adjust the svg element's height when first rendered. Only used for the rounded/rdld branch where we need getBBox; straight gestures compute their viewBox during render so that React owns the attribute (iOS Safari has been inconsistent about repainting after imperative setAttribute('viewBox', …)). */
   const onRef = (el: SVGGraphicsElement | null) => {
     if (!el) return
     if (viewBox) return
-
-    // For straight (non-rounded, non-rdld) gestures, derive the bbox from the precomputed
-    // vertex positions instead of getBBox. Browsers disagree about whether getBBox includes
-    // marker geometry, and a marker that extends asymmetrically (e.g. a tall arrowhead at the
-    // end of "rur") biases the centering of the path within the cell.
-    if (path !== 'rdld' && !rounded) {
-      // Include chevron leg endpoints in the bbox so the viewBox accommodates them.
-      const allPts = chevronPoints
-        ? [...positions, chevronPoints.leg1Open, chevronPoints.leg2Open]
-        : positions
-      const xs = allPts.map(p => p.x)
-      const ys = allPts.map(p => p.y)
-      const minX = Math.min(...xs)
-      const maxX = Math.max(...xs)
-      const minY = Math.min(...ys)
-      const maxY = Math.max(...ys)
-      const padX = arrowSize! + strokeWidth * 4
-      const padY = arrowSize! + strokeWidth * 2
-      if (fillContainer) {
-        // Force a square viewBox centered on the bbox center so every gesture fits-to-cell at
-        // the same scale. We also clamp the side to a minimum of `size + tipExtension` (the max
-        // extent a straight gesture can reach) so rounded and rdld gestures — whose natural
-        // bboxes are smaller — share the same fit-scale and render strokes at the same on-screen
-        // thickness as straight gestures.
-        const pad = Math.max(padX, padY)
-        const side = Math.max(maxX - minX, maxY - minY, size + tipExtension) + pad * 2
-        const cx = (minX + maxX) / 2
-        const cy = (minY + maxY) / 2
-        el.setAttribute('viewBox', `${cx - side / 2} ${cy - side / 2} ${side} ${side}`)
-        return
-      }
-      el.setAttribute(
-        'viewBox',
-        `${minX - padX} ${minY - padY} ${maxX - minX + padX * 2} ${maxY - minY + padY * 2}`,
-      )
-      return
-    }
+    if (path !== 'rdld' && !rounded) return
 
     const bbox = el.getBBox()
     if (fillContainer) {
@@ -540,20 +504,65 @@ const GestureDiagram = ({
       })()
     : null
 
+  // Compute viewBox during render for straight (non-rounded, non-rdld) gestures, so React owns
+  // the attribute. The previous implementation set the viewBox imperatively in onRef, but iOS
+  // Safari has been inconsistent about repainting after setAttribute('viewBox', …) — the SVG
+  // would render at user-space=pixel-space briefly, then the post-mount attribute update wouldn't
+  // always trigger a repaint with the new coordinate system, leaving content offset within the
+  // SVG box. Computing during render eliminates that race entirely.
+  const computedViewBox: string | undefined = (() => {
+    if (viewBox) return viewBox
+    if (path === 'rdld' || rounded) return undefined
+    const allPts = chevronPoints
+      ? [...positions, chevronPoints.leg1Open, chevronPoints.leg2Open]
+      : positions
+    const xs = allPts.map(p => p.x)
+    const ys = allPts.map(p => p.y)
+    const minX = Math.min(...xs)
+    const maxX = Math.max(...xs)
+    const minY = Math.min(...ys)
+    const maxY = Math.max(...ys)
+    const padX = arrowSize! + strokeWidth * 4
+    const padY = arrowSize! + strokeWidth * 2
+    if (fillContainer) {
+      const pad = Math.max(padX, padY)
+      const side = Math.max(maxX - minX, maxY - minY, size + tipExtension) + pad * 2
+      const cx = (minX + maxX) / 2
+      const cy = (minY + maxY) / 2
+      return `${cx - side / 2} ${cy - side / 2} ${side} ${side}`
+    }
+    return `${minX - padX} ${minY - padY} ${maxX - minX + padX * 2} ${maxY - minY + padY * 2}`
+  })()
+
   return (
     <span
-      className={css({ display: 'inline-block' }, debugBorder && { border: '1px solid blue' }, cssRaw)}
+      className={css(
+        { display: fillContainer ? 'block' : 'inline-block' },
+        debugBorder && { border: '1px solid blue' },
+        cssRaw,
+      )}
       style={
         fillContainer
-          ? { width: '100%', height: '100%' }
+          ? // Width-only on the span; height comes from the SVG's intrinsic aspect ratio (its
+            // square viewBox + width: 100%). Avoids iOS Safari's bug where a parent's
+            // aspect-ratio-derived height isn't treated as definite for percentage-height
+            // descendants — the previous `height: 100%` chain collapsed on iOS, leaving the SVG
+            // taller than the span.
+            { width: '100%' }
           : { width: `${maxWidth ?? size}px`, height: `${maxHeight ?? size}px` }
       }
     >
       <svg
-        className={css(inGestureContainer && { position: 'relative', top: '10px' }, { width: '100%', height: '100%' })}
+        className={css(
+          inGestureContainer && { position: 'relative', top: '10px' },
+          // In fillContainer mode the SVG sizes itself from width + intrinsic ratio (square
+          // viewBox). The span wraps to that height. In fixed-size mode, fill the span.
+          fillContainer ? { width: '100%', display: 'block' } : { width: '100%', height: '100%', display: 'block' },
+        )}
         style={style}
         ref={onRef}
-        viewBox={viewBox}
+        viewBox={computedViewBox}
+        preserveAspectRatio='xMidYMid meet'
       >
         <defs>
           <marker
