@@ -168,14 +168,14 @@ const useEditMode = ({
           bottomMargin: fontSize * 2,
         })
 
-        const { isLineEnd, inVoidArea, offset } = getCaretOffset(editable, {
+        const { isEndOfWrappingLine, inVoidArea, offset } = getCaretOffset(editable, {
           clientX: e.clientX,
           clientY: e.clientY,
         })
 
         if (offset !== null) {
           if (isTouch && isSafari()) {
-            if (isLineEnd) {
+            if (isEndOfWrappingLine) {
               offsetRef.current = null
               setCaretOffset(offset, false)
             } else {

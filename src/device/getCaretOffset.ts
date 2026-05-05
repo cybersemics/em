@@ -24,7 +24,7 @@ interface Coordinates {
 
 interface CaretOffsetResult {
   /** True if the caret is at the end of a line. This offset is ambiguous because the end of one line and the start of the next line share the same position. Native behavior will set the caret to the correct position. */
-  isLineEnd?: boolean
+  isEndOfWrappingLine?: boolean
   /** True if the tap/click is in a void area (i.e. outside the text node's visible characters). */
   inVoidArea?: boolean
   offset: number | null
@@ -425,15 +425,15 @@ const getCaretOffset = (editable: HTMLElement | null, { clientX, clientY }: Coor
   const lineEnd = lineIndex === lines.length - 1 ? targetLine.end : targetLine.end - 1
 
   let offset = findOffsetAtX(nearest, clientX, lineStart, lineEnd)
-  const isLineEnd = lineIndex < lines.length - 1 && offset >= lineEnd
+  const isEndOfWrappingLine = lineIndex < lines.length - 1 && offset >= lineEnd
 
   // iOS Safari: snap to word boundary like native iOS behavior
-  if (isSafari() && isTouch && !isLineEnd) {
+  if (isSafari() && isTouch && !isEndOfWrappingLine) {
     offset = snapToWordBoundary(text, offset)
   }
 
   return {
-    isLineEnd,
+    isEndOfWrappingLine,
     inVoidArea: isWithinVoidArea(nearest, clientX, clientY),
     offset: domPositionToUnformattedOffset(editable, nearest, offset),
   }
