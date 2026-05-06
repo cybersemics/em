@@ -23,8 +23,6 @@ interface Coordinates {
 }
 
 interface CaretOffsetResult {
-  /** True if the caret is at the end of a line. This offset is ambiguous because the end of one line and the start of the next line share the same position. Native behavior will set the caret to the correct position. */
-  isEndOfWrappingLine?: boolean
   /** True if the tap/click is in a void area (i.e. outside the text node's visible characters). */
   inVoidArea?: boolean
   offset: number | null
@@ -196,6 +194,47 @@ const findOffsetAtX = (node: Text, clientX: number, lo: number, hi: number): num
   return lo
 }
 
+/**
+ * Adjusts an offset to skip trailing whitespaces in a line.
+ * If the offset is in whitespace, moves it to after the last non-whitespace character in that line.
+ *
+ * @param text - The text content.
+ * @param offset - The calculated offset.
+ * @param lineStart - The start of the line containing the offset.
+ * @param lineEnd - The end of the line containing the offset.
+ * @returns The adjusted offset, skipping trailing whitespaces.
+ */
+const skipTrailingWhitespace = (text: string, offset: number, lineStart: number, lineEnd: number): number => {
+  const lineText = text.substring(lineStart, lineEnd)
+  const offsetInLine = offset - lineStart
+  const lastNonWhitespaceIndex = lineText.trimEnd().length
+
+  // If offset is beyond the last non-whitespace character, place after it
+  if (offsetInLine > lastNonWhitespaceIndex) {
+    return lineStart + lastNonWhitespaceIndex
+  }
+
+  /** If offset is in whitespace, find the last non-whitespace before it. */
+  const isWhitespace = (char: string) => WHITESPACE_REGEX.test(char)
+
+  if (isWhitespace(lineText[offsetInLine])) {
+    // Find last non-whitespace character before the offset
+    let lastNonWsEnd = -1
+    let i = 0
+    while (i < offsetInLine) {
+      const size = codePointSize(lineText, i)
+      if (!isWhitespace(lineText[i])) {
+        lastNonWsEnd = i + size
+      }
+      i += size
+    }
+
+    // If found, place after it; otherwise place at start of line
+    return lastNonWsEnd >= 0 ? lineStart + lastNonWsEnd : lineStart
+  }
+
+  return offset
+}
 /**
  * Gets all text nodes within an element that can receive a caret.
  * Filters out empty or whitespace-only text nodes.
@@ -432,8 +471,11 @@ const getCaretOffset = (editable: HTMLElement | null, { clientX, clientY }: Coor
     offset = snapToWordBoundary(text, offset)
   }
 
+  if (isEndOfWrappingLine) {
+    offset = skipTrailingWhitespace(text, offset, lineStart, lineEnd)
+  }
+
   return {
-    isEndOfWrappingLine,
     inVoidArea: isWithinVoidArea(nearest, clientX, clientY),
     offset: domPositionToUnformattedOffset(editable, nearest, offset),
   }
