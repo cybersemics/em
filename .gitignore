@@ -24,7 +24,6 @@ local.log
 
 /coverage
 /build
-/docs
 
 # diff images output from failed Puppeteer snapshot tests
 __diff_output__
