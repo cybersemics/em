@@ -141,7 +141,12 @@ const useEditMode = ({
     /** Sets the DOM selection and updates the Redux cursor state. */
     const setCaretOffset = (offset: number, setSelection: boolean = true) => {
       if (setSelection) selection.set(editable, { offset })
-      dispatch(setCursor({ path, offset }))
+
+      // If the cursor thought is moving to this thought, then setCursor has already been dispatched.
+      // In addition to double-dispatching, this can also cause preventAutoscroll to be called twice, which
+      // overwrites transformOld with an in-progress value and stops preventAutoscrollEnd from working correctly.
+      // TODO: The other dispatch of setCursor has a null offset which can cause the caret to be incorrectly set to the beginning of the thought.
+      if (isCursor) dispatch(setCursor({ path, offset }))
     }
 
     /**
@@ -226,7 +231,7 @@ const useEditMode = ({
       editable.removeEventListener('mousedown', onMouseDown)
       if (isTouch && isSafari()) editable.removeEventListener('mouseup', onMouseUp)
     }
-  }, [contentRef, editingOrOnCursor, isMulticursor, fontSize, allowDefaultSelection, path, dispatch])
+  }, [contentRef, editingOrOnCursor, isCursor, isMulticursor, fontSize, allowDefaultSelection, path, dispatch])
 
   // Resume focus if sidebar was just closed and isEditing is true.
   // Disable focus restoration on mobile until the hamburger menu & sidebar backdrop can be made to
