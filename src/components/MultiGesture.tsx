@@ -135,6 +135,11 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     // enable/disable scrolling based on where the user clicks
     // TODO: Could this be moved to onMoveShouldSetResponder?
     document.body.addEventListener('touchstart', e => {
+      // If a gesture is already in progress (this.currentStart is set in onPanResponderMove),
+      // ignore additional touchstarts. Otherwise a stray finger landing outside the gesture zone
+      // would set this.abandon = true, which causes onPanResponderRelease to skip props.onEnd —
+      // leaving the gesture menu and transparent overlay stuck on screen. See #3887.
+      if (this.currentStart) return
       if (e?.touches.length > 0) {
         const x = e.touches[0].clientX
         const y = e.touches[0].clientY
