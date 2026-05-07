@@ -47,8 +47,6 @@ const baseConfig = {
     platformName: 'iOS' as const,
     browserName: 'Safari' as const,
     'appium:automationName': 'XCUITest' as const,
-    // Enable the XCUITest 'safariConsole' log bucket so afterTest can drain browser console output via getLogs('safariConsole').
-    'appium:showSafariConsoleLog': true as const,
   },
 
   // Test Configurations
@@ -111,7 +109,27 @@ const baseConfig = {
     // Refresh to apply the cleared storage (much faster than full navigation)
     await browser.refresh()
 
-    // TEMP canary: emit a recognisable browser-side console.info so the afterTest hook has something to drain even when a test produces no app logs. Remove once safariConsole capture is verified in CI.
+    // Install in-page console proxy. getLogs('safariConsole') returned nothing on this BrowserStack/Appium stack despite appium:showSafariConsoleLog being set, so we capture browser-side logs into window.__capturedLogs__ for the afterTest hook to drain.
+    await browser.execute(() => {
+      const w = window as Window & { __capturedLogs__?: { level: string; message: string }[] }
+      const logs: { level: string; message: string }[] = []
+      w.__capturedLogs__ = logs
+      const c = console as unknown as Record<string, (...args: unknown[]) => void>
+      for (const method of ['log', 'warn', 'error', 'info', 'debug']) {
+        const orig = c[method].bind(console)
+        c[method] = (...args: unknown[]) => {
+          try {
+            const message = args.map(a => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ')
+            logs.push({ level: method, message })
+          } catch {
+            // Serialization failure (e.g. circular refs) — drop this entry rather than fail the test.
+          }
+          orig(...args)
+        }
+      }
+    })
+
+    // TEMP canary: emit a recognisable browser-side console.info so the afterTest hook has something to drain even when a test produces no app logs. Remove once console-proxy capture is verified in CI.
     await browser.execute(() => console.info('SAFARI_CONSOLE_CANARY: beforeTest reached'))
 
     // Wait for the tutorial skip button and click it
@@ -125,18 +143,23 @@ const baseConfig = {
     await emptyThoughtspace.waitForExist({ timeout: 90000 })
   },
 
-  // After each test: drain the safariConsole log bucket and print it under the test title so browser-side console output is grouped per-it() in CI logs.
+  // After each test: drain window.__capturedLogs__ and print it under the test title so browser-side console output is grouped per-it() in CI logs.
   afterTest: async function (test: { fullTitle: string; title: string; parent: string }) {
     const title = test.fullTitle || `${test.parent} › ${test.title}`
     try {
-      const logs = (await browser.getLogs('safariConsole')) as { level?: string; message?: string }[]
+      const logs = await browser.execute(() => {
+        const w = window as Window & { __capturedLogs__?: { level: string; message: string }[] }
+        const collected = w.__capturedLogs__ ?? []
+        w.__capturedLogs__ = []
+        return collected
+      })
       if (!logs?.length) return
       console.info(`\n[browser console] ${title} (${logs.length} entries)`)
       for (const l of logs) {
-        console.info(`  [${l.level ?? 'log'}] ${l.message ?? JSON.stringify(l)}`)
+        console.info(`  [${l.level}] ${l.message}`)
       }
     } catch {
-      // safariConsole bucket may not be available on this driver — skip silently rather than failing the test.
+      // Page may have navigated away or execute failed — skip silently rather than fail the test.
     }
   },
 }
