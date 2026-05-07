@@ -158,8 +158,9 @@ const baseConfig = {
       for (const l of logs) {
         console.info(`  [${l.level}] ${l.message}`)
       }
-    } catch {
-      // Page may have navigated away or execute failed — skip silently rather than fail the test.
+    } catch (err) {
+      // Diagnostic: surface the failure so we can see why drain failed for specific tests, without failing the test itself.
+      console.info(`[browser console] ${title} — drain failed: ${err instanceof Error ? err.message : String(err)}`)
     }
   },
 }
