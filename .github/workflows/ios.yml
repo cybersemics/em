@@ -48,8 +48,11 @@ jobs:
             curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
           fi
 
-      - name: Install Emscripten Rust target
-        run: rustup target add wasm32-unknown-emscripten
+      - name: Set up Rust
+        run: |
+          rustup toolchain install 1.87.0 --profile minimal
+          rustup target add wasm32-unknown-unknown --toolchain 1.87.0
+          rustup target add wasm32-unknown-emscripten --toolchain 1.87.0
 
       - name: Set up Emscripten
         uses: mymindstorm/setup-emsdk@v14
@@ -58,6 +61,8 @@ jobs:
 
       - name: Build TreeCRDT packages
         run: yarn treecrdt
+        env:
+          RUSTUP_TOOLCHAIN: 1.87.0
 
       - name: Build
         run: yarn build
