@@ -176,6 +176,7 @@ const useEditMode = ({
         if (offset !== null) {
           if (isTouch && isSafari()) {
             offsetRef.current = offset
+            allowDefaultSelection()
           } else {
             setCaretOffset(offset)
           }
@@ -204,6 +205,10 @@ const useEditMode = ({
      */
     const onMouseUp = (e: MouseEvent) => {
       if (offsetRef.current !== null) {
+        // Certain taps that are outside of the regular bounds of the editable element will fail to trigger onMouseUp.
+        // In those cases, allowDefaultSelection will be activated in onMouseDown, which will allow the native browser
+        // selection behavior to take over instead of responding to setCursor with a null offset.
+        disabledRef.current = false
         setCaretOffset(offsetRef.current)
       }
 
