@@ -64,7 +64,12 @@ const getTextNodeLines = (node: Text): TextNodeLine[] => {
   }
 
   return entries.reduce<TextNodeLine[]>((lines, { i, size, rect }) => {
-    if (!lastRect || Math.abs(lastRect.top - rect.top) > rect.height / 2) {
+    // Normally, it is critical that a selection never spans more than one line because it will create a bounding rect that is much too large.
+    // As a result, line splitting is a little greedy. However, none of this applies when the last character creates a new line
+    // because its bounding box won't obscure anything after it, and also the character won't be selectable if it is merged with the previous line.
+    const isTrailingCharacter = lastRect && i + size >= text.length && rect.height > lastRect.height
+
+    if (isTrailingCharacter || !lastRect || Math.abs(lastRect.top - rect.top) > rect.height / 2) {
       lines.push({ start: i, end: i + size, rect })
     } else {
       lines[lines.length - 1].end = i + size
@@ -456,15 +461,16 @@ const getCaretOffset = (editable: HTMLElement | null, { clientX, clientY }: Coor
   const lines = getTextNodeLines(nearest)
   const targetLine = findClosestLine(lines, clientY)
   const lineIndex = lines.indexOf(targetLine)
+  const lastLineIndex = lines.length - 1
 
   // It is critical that a selection never spans more than one line because it will create a bounding rect that is much too large.
   // As a result, line splitting is a little greedy and some tolerance is required for the character that begins a new line.
   // It might be erroneously considered to be part of the previous line, so add it back into the search range.
   const lineStart = targetLine.start === 0 ? 0 : targetLine.start - 1
-  const lineEnd = lineIndex === lines.length - 1 ? targetLine.end : targetLine.end - 1
+  const lineEnd = lineIndex === lastLineIndex ? targetLine.end : targetLine.end - 1
 
   let offset = findOffsetAtX(nearest, clientX, lineStart, lineEnd)
-  const isEndOfWrappingLine = lineIndex < lines.length - 1 && offset >= lineEnd
+  const isEndOfWrappingLine = lineIndex < lastLineIndex && offset >= lineEnd
 
   // iOS Safari: snap to word boundary like native iOS behavior
   if (isSafari() && isTouch && !isEndOfWrappingLine) {
