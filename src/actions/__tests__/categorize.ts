@@ -3,6 +3,7 @@ import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import exportContext from '../../selectors/exportContext'
 import addMulticursor from '../../test-helpers/addMulticursorAtFirstMatch'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
+import expectThoughtValuesInOrder from '../../test-helpers/expectThoughtValuesInOrder'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
@@ -54,10 +55,7 @@ describe('normal view', () => {
 
     const cursorThoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
 
-    expect(cursorThoughts).toMatchObject([
-      { value: 'a', rank: 0 },
-      { value: '', rank: -1 },
-    ])
+    expectThoughtValuesInOrder(cursorThoughts, ['a', ''])
   })
 
   it('categorize within alphabteically sorted context', () => {

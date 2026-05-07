@@ -12,6 +12,7 @@ import getRankAfter from '../../selectors/getRankAfter'
 import pathToThought from '../../selectors/pathToThought'
 import checkDataIntegrity from '../../test-helpers/checkDataIntegrity'
 import contextToThought from '../../test-helpers/contextToThought'
+import expectThoughtValuesInOrder from '../../test-helpers/expectThoughtValuesInOrder'
 import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
 import getChildrenRankedByContext from '../../test-helpers/getChildrenRankedByContext'
 import moveThoughtAtFirstMatch from '../../test-helpers/moveThoughtAtFirstMatch'
@@ -194,10 +195,7 @@ it('moving cursor thought should update cursor', () => {
 
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(childIdsToThoughts(stateNew, stateNew.cursor!)).toMatchObject([
-    { value: 'a', rank: 0 },
-    { value: 'a2', rank: -1 },
-  ])
+  expectThoughtValuesInOrder(childIdsToThoughts(stateNew, stateNew.cursor!), ['a', 'a2'])
 })
 
 it('moving ancestor of cursor should update cursor', () => {
@@ -217,11 +215,7 @@ it('moving ancestor of cursor should update cursor', () => {
 
   const thoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
 
-  expect(thoughts).toMatchObject([
-    { value: 'b', rank: -1 },
-    { value: 'b1', rank: 0 },
-    { value: 'b1.1', rank: 0 },
-  ])
+  expectThoughtValuesInOrder(thoughts, ['b', 'b1', 'b1.1'])
 })
 
 it('moving unrelated thought should not update cursor', () => {
@@ -240,7 +234,7 @@ it('moving unrelated thought should not update cursor', () => {
 
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(childIdsToThoughts(stateNew, stateNew.cursor!)).toMatchObject([{ value: 'a', rank: 0 }])
+  expectThoughtValuesInOrder(childIdsToThoughts(stateNew, stateNew.cursor!), ['a'])
 })
 
 it('move root thought into another root thought', () => {

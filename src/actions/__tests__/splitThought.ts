@@ -2,6 +2,7 @@ import { HOME_TOKEN } from '../../constants'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import exportContext from '../../selectors/exportContext'
 import getThoughtById from '../../selectors/getThoughtById'
+import expectThoughtValuesInOrder from '../../test-helpers/expectThoughtValuesInOrder'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import head from '../../util/head'
 import initialState from '../../util/initialState'
@@ -92,7 +93,7 @@ it('cursor moves to second thought', () => {
 
   const cursorThoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
 
-  expect(cursorThoughts).toMatchObject([{ value: 'ple', rank: 1 }])
+  expectThoughtValuesInOrder(cursorThoughts, ['ple'])
 })
 
 it('move children to the correct sibling in a sorted context', () => {

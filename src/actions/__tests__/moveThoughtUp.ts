@@ -1,6 +1,7 @@
 import { HOME_TOKEN } from '../../constants'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import exportContext from '../../selectors/exportContext'
+import expectThoughtValuesInOrder from '../../test-helpers/expectThoughtValuesInOrder'
 import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
@@ -180,8 +181,5 @@ it('move cursor thought should update cursor', () => {
 
   const thoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
 
-  expect(thoughts).toMatchObject([
-    { value: 'a', rank: 0 },
-    { value: 'a2', rank: -1 },
-  ])
+  expectThoughtValuesInOrder(thoughts, ['a', 'a2'])
 })

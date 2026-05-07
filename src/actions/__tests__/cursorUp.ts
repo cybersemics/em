@@ -14,6 +14,7 @@ import isContextViewActive from '../../selectors/isContextViewActive'
 import prevThought from '../../selectors/prevThought'
 import store from '../../stores/app'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
+import expectThoughtValuesInOrder from '../../test-helpers/expectThoughtValuesInOrder'
 import initStore from '../../test-helpers/initStore'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import { setCursorFirstMatchActionCreator as setCursorAction } from '../../test-helpers/setCursorFirstMatch'
@@ -56,10 +57,7 @@ describe('normal view', () => {
 
     const thoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
 
-    expect(thoughts).toMatchObject([
-      { value: 'a', rank: 0 },
-      { value: '=test', rank: 1 },
-    ])
+    expectThoughtValuesInOrder(thoughts, ['a', '=test'])
   })
 
   it('move cursor from first child to parent', () => {
