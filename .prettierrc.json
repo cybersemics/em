@@ -1,7 +1,7 @@
 {
   "arrowParens": "avoid",
   "jsxSingleQuote": true,
-  "importOrder": ["^\\.\\./", "^\\./"],
+  "importOrder": ["^\\./util/iOSConsoleProxy$", "<THIRD_PARTY_MODULES>", "^\\.\\./", "^\\./"],
   "importOrderSortSpecifiers": true,
   "overrides": [{ "files": "*.ts", "options": { "parser": "typescript" } }],
   "plugins": ["@trivago/prettier-plugin-sort-imports"],

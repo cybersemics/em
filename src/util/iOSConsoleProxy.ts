@@ -63,3 +63,6 @@ const installiOSConsoleProxy = (): void => {
 }
 
 export default installiOSConsoleProxy
+
+// Self-install at module load. Importing this file (e.g. as the first line of src/index.tsx) installs the proxy before any other module body runs, so app-bootstrap logs are captured. No-op when ?__ios_console_proxy isn't in the URL.
+installiOSConsoleProxy()
