@@ -110,22 +110,15 @@ const baseConfig = {
     // Refresh to apply the cleared storage (much faster than full navigation)
     await browser.refresh()
 
-    // TEMP canary + immediate diagnostic: emit a recognisable browser-side console.info, then check whether the proxy actually intercepted it. Remove once iOS console proxy capture is verified in CI.
-    const canaryDiag = await browser.execute(() => {
-      const lengthBefore = window.__iOSConsoleProxy__?.length ?? -1
-      const infoSrc = console.info.toString()
-      console.info('IOS_CONSOLE_PROXY_CANARY: beforeTest reached')
-      const lengthAfter = window.__iOSConsoleProxy__?.length ?? -1
-      return {
-        bufferExists: Array.isArray(window.__iOSConsoleProxy__),
-        drainExists: typeof window.__drainiOSConsoleLogs__ === 'function',
-        lengthBefore,
-        lengthAfter,
-        infoSrcHead: infoSrc.slice(0, 80),
-        url: location.href,
-      }
+    // Wait for the iOS console proxy to finish installing (initialize.ts runs at app bootstrap, but browser.refresh may return before that completes). Without this wait, the canary below can fire before console.* has been wrapped, in which case the entry hits native console.info and is lost.
+    await browser.waitUntil(async () => browser.execute(() => typeof window.__drainiOSConsoleLogs__ === 'function'), {
+      timeout: 30000,
+      timeoutMsg:
+        'iOS console proxy did not install within 30s — check ?__ios_console_proxy URL flag and src/util/iOSConsoleProxy.ts',
     })
-    console.info(`[canary diagnostic] ${JSON.stringify(canaryDiag)}`)
+
+    // TEMP canary: emit a recognisable browser-side console.info so the afterTest hook has something to drain even when a test produces no app logs. Remove once iOS console proxy capture is verified in CI.
+    await browser.execute(() => console.info('IOS_CONSOLE_PROXY_CANARY: beforeTest reached'))
 
     // Wait for the tutorial skip button and click it
     const skipElement = await $('#skip-tutorial')

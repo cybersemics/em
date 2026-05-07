@@ -2,30 +2,47 @@ type CapturedLog = { level: string; message: string }
 
 declare global {
   interface Window {
-    __iOSConsoleProxy__?: CapturedLog[]
     __drainiOSConsoleLogs__?: () => CapturedLog[]
   }
 }
 
-const logs: CapturedLog[] = []
+// sessionStorage key for the captured-log buffer. Using sessionStorage rather than an in-memory array means the buffer survives same-tab page reloads, which iOS Safari occasionally does mid-test (the new window object would otherwise wipe an in-memory buffer).
+const KEY = '__iOSConsoleLogs__'
+
+/** Reads the buffer from sessionStorage. Returns [] on parse failure or missing buffer. */
+const read = (): CapturedLog[] => {
+  try {
+    return JSON.parse(sessionStorage.getItem(KEY) ?? '[]') as CapturedLog[]
+  } catch {
+    return []
+  }
+}
 
 /** Atomically reads and clears the iOS console proxy buffer. Returns [] when nothing has been captured. */
-export const drainiOSConsoleLogs = (): CapturedLog[] => logs.splice(0)
+export const drainiOSConsoleLogs = (): CapturedLog[] => {
+  const collected = read()
+  sessionStorage.setItem(KEY, '[]')
+  return collected
+}
 
 /**
  * Installs a console proxy that captures console.{log,warn,error,info,debug} into
- * window.__iOSConsoleProxy__ when ?__ios_console_proxy is in the URL.
+ * sessionStorage when ?__ios_console_proxy is in the URL.
  * BrowserStack does not provide access to logs natively due to Safari WebDriver
  * limitations, so we need this workaround to access console logs.
  * The proxy still calls the original console method, so
  * app behaviour is unchanged when enabled.
+ *
+ * The buffer is stored in sessionStorage (key __iOSConsoleLogs__) so it survives
+ * same-tab page reloads. Drain via window.__drainiOSConsoleLogs__() (or
+ * drainiOSConsoleLogs() from this module) — that returns the entries and clears
+ * the buffer atomically. To peek without draining, run
+ * `JSON.parse(sessionStorage.getItem('__iOSConsoleLogs__'))` in DevTools.
  */
 const installiOSConsoleProxy = (): void => {
   if (!new URLSearchParams(window.location.search).has('__ios_console_proxy')) return
-  if (window.__iOSConsoleProxy__) return
+  if (window.__drainiOSConsoleLogs__) return
 
-  // Expose references so the WDIO config can reach them via browser.execute. The buffer (logs) is the same array drainiOSConsoleLogs closes over.
-  window.__iOSConsoleProxy__ = logs
   window.__drainiOSConsoleLogs__ = drainiOSConsoleLogs
 
   const c = console as unknown as Record<string, (...args: unknown[]) => void>
@@ -34,9 +51,11 @@ const installiOSConsoleProxy = (): void => {
     c[method] = (...args: unknown[]) => {
       try {
         const message = args.map(a => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ')
-        logs.push({ level: method, message })
+        const buf = read()
+        buf.push({ level: method, message })
+        sessionStorage.setItem(KEY, JSON.stringify(buf))
       } catch {
-        // Serialization failure (e.g. circular refs) — drop this entry.
+        // Serialization or storage failure (e.g. circular refs, quota) — drop this entry.
       }
       orig(...args)
     }
