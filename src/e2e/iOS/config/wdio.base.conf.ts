@@ -110,8 +110,22 @@ const baseConfig = {
     // Refresh to apply the cleared storage (much faster than full navigation)
     await browser.refresh()
 
-    // TEMP canary: emit a recognisable browser-side console.info so the afterTest hook has something to drain even when a test produces no app logs. Remove once iOS console proxy capture is verified in CI.
-    await browser.execute(() => console.info('IOS_CONSOLE_PROXY_CANARY: beforeTest reached'))
+    // TEMP canary + immediate diagnostic: emit a recognisable browser-side console.info, then check whether the proxy actually intercepted it. Remove once iOS console proxy capture is verified in CI.
+    const canaryDiag = await browser.execute(() => {
+      const lengthBefore = window.__iOSConsoleProxy__?.length ?? -1
+      const infoSrc = console.info.toString()
+      console.info('IOS_CONSOLE_PROXY_CANARY: beforeTest reached')
+      const lengthAfter = window.__iOSConsoleProxy__?.length ?? -1
+      return {
+        bufferExists: Array.isArray(window.__iOSConsoleProxy__),
+        drainExists: typeof window.__drainiOSConsoleLogs__ === 'function',
+        lengthBefore,
+        lengthAfter,
+        infoSrcHead: infoSrc.slice(0, 80),
+        url: location.href,
+      }
+    })
+    console.info(`[canary diagnostic] ${JSON.stringify(canaryDiag)}`)
 
     // Wait for the tutorial skip button and click it
     const skipElement = await $('#skip-tutorial')
