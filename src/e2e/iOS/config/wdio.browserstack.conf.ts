@@ -19,7 +19,8 @@ const date = new Date().toISOString().slice(0, 10)
 
 /**
  * WDIO configuration for BrowserStack iOS testing.
- * Uses @wdio/browserstack-service for automatic tunnel management.
+ * Uses @wdio/browserstack-service for automatic BrowserStack Local tunnel management,
+ * exposing the local HTTP dev server to the BrowserStack iOS device via bs-local.com:3000.
  *
  * Prerequisites:
  * 1. Set BROWSERSTACK_USERNAME and BROWSERSTACK_ACCESS_KEY env vars.

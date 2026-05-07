@@ -1,5 +1,4 @@
 import react from '@vitejs/plugin-react'
-import fs from 'fs'
 import path from 'path'
 import { defineConfig } from 'vite'
 import checker from 'vite-plugin-checker'
@@ -54,12 +53,6 @@ export default defineConfig({
     allowedHosts: ['bs-local.com'],
     ...(process.env.PUPPETEER
       ? {
-          // Serve the dev server over HTTPS in puppeteer tests to enable clipboard access
-          https: {
-            key: fs.readFileSync('./src/e2e/puppeteer/puppeteer-key.pem'),
-            cert: fs.readFileSync('./src/e2e/puppeteer/puppeteer.pem'),
-          },
-          // protocol `wss` is required to resolve websocket connection failure
           hmr: {
             host: 'host.docker.internal',
             // wss uses a secure websocket(wss://) connection. This was necessary to resolve mixed content security error which was observed when using ws protocol only.
