@@ -5,6 +5,7 @@ description: >-
 allowed-tools:
   - bash
   - chrome-devtools
+  - wdio
 ---
 
 If you are working on a GitHub issue that includes "Steps to Reproduce", "Current Behavior", and "Expected Behavior" sections, you must follow this step-by-step guide to confirming the bug exists and validate your fix.
@@ -15,22 +16,21 @@ By following the documented steps in the issue, you can reliably reproduce the p
 
 ## Stages
 
-1. **Parse** — extract Steps to Reproduce, Current Behavior, Expected Behavior from the issue.
-2. **Emulate** — decide whether mobile emulation is required and apply it **before any navigation**.
-3. **Start** — ensure the dev server is running.
-4. **Reproduce** — drive the Chrome DevTools MCP through the steps; confirm the failure mode fires.
-5. **Fix** — root-cause and fix the code.
-6. **Validate** — re-run the steps; confirm the failure is gone and the expected behavior is observed.
+1. **Parse** — extract Steps to Reproduce, Current Behavior, Expected Behavior, and the **target platform** (web / android / ios) from the issue.
+2. **Set up the browser** — pass the target platform to `browser-control`, which attaches the right MCP, applies emulation, and navigates to the dev server.
+3. **Reproduce** — drive the browser MCP through the steps; confirm the failure mode fires.
+4. **Fix** — root-cause and fix the code.
+5. **Validate** — re-run the steps; confirm the failure is gone and the expected behavior is observed.
 
 **You MUST** be able to reproduce the issue directly – if you cannot, **DO NOT** assume the cause without first confirming with the user.
 **DO NOT explore a fix** until you have successfully reproduced the issue. **This is your priority.** If you **CANNOT FULLY REPRODUCE** the steps, **FAIL AND ESCALATE TO THE USER.**
-Similarly, a fix is **not complete** until both Step 4 and Step 5 pass.
+Similarly, a fix is **not complete** until both Step 5a and Step 5b pass.
 
 ---
 
 ## Step 1: Parse the Issue
 
-Use the GitHub MCP `get_issue` tool to read the full issue body.  Extract these three sections — headings vary slightly across issues so match loosely:
+Use the GitHub MCP `get_issue` tool to read the full issue body. Extract these three sections — headings vary slightly across issues so match loosely:
 
 | Section | Common headings |
 |---|---|
@@ -43,81 +43,64 @@ user for clarification. If a section is genuinely absent, stop and ask.
 
 Sometimes, there may be multiple steps to reproduce within a single issue. If so, you must reproduce and fix each one separately, following the same process for each. Do not attempt to fix multiple reproduction paths at once.
 
----
+### Determine the target platform
 
-## Step 2: Configure Device Emulation
+Pick exactly one of `web`, `android`, or `ios` — `browser-control` is going to need it in Step 2. Use issue tags first, fall back to keyword scan, default to `web`.
 
-Decide whether the issue requires mobile emulation **before doing anything else in the browser**. The Chrome DevTools MCP keeps a persistent Chrome instance, so emulation must be applied before the first navigation — otherwise the initial page load happens under the wrong profile and reproductions become unreliable.
+**Tags (primary):**
 
-### When to enable mobile emulation
+| Tag                                | Target  |
+|------------------------------------|---------|
+| `[iOS]`, `[Safari]`                | `ios`   |
+| `[Android]`, `[Mobile]`            | `android` |
+| no platform tag                    | `web`   |
 
-Enable mobile emulation if **any** of the following are true about the issue:
+`[Mobile]` without `[iOS]` is treated as `android` — that is the cheaper environment and reproduces almost all mobile-only behavior. Only switch to `ios` when the issue is explicitly about iOS Safari.
 
-- It is tagged `[Mobile]`, `[Android]`, or `[iOS]`, or its title/body explicitly mentions mobile, iPhone, Android, or "on my phone".
-- The Steps to Reproduce reference touch interactions: **tap**, **swipe**, **long-press**, **pinch**, **drag with finger**, **two-finger**, or any gesture that does not exist on a mouse. Mouse-only language ("click", "hover", "right-click") does not count.
-- The Current Behavior is described in terms of mobile-only UI (bottom sheet, mobile keyboard, on-screen keyboard, viewport zoom, virtual keyboard overlay, etc.).
+**Body keywords (fallback):**
 
-If none of those signals are present, skip this step — the desktop default is correct.
+If no tag is present, scan the title and body. If any of the iOS-specific terms below appear (and no Android-specific terms), pick `ios`:
 
-### How to enable it
+- iOS-specific: "iPhone", "iPad", "iOS", "Safari", "WebKit", "Mobile Safari".
+- Android-specific: "Android", "Chrome on mobile".
+- Generic mobile (no platform commitment): "tap", "swipe", "long-press", "pinch", "on my phone", "bottom sheet", "on-screen keyboard", "virtual keyboard". These imply `android` unless paired with an iOS-specific term above.
 
-Call the Chrome DevTools MCP `emulate` tool with an iPhone-class profile, **before any `navigate` call**:
+If desktop-only language is used ("click", "hover", "right-click", no mobile hints), pick `web`.
 
-- `viewport`: `390x844x3,mobile,touch` — iPhone 14 dimensions (390×844 CSS px), DPR 3. The `mobile` flag triggers mobile media queries; the `touch` flag delivers touch events instead of mouse events so swipe/tap/long-press behave correctly.
-- `userAgent`: a current iOS Safari UA, e.g. `Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1`.
+If you cannot determine the target after this — for example, an issue mentioning both iOS and Android — stop and ask the user which platform to reproduce on. Do not guess: an iOS-only bug will not reproduce under Android emulation and vice-versa.
 
-If you have already navigated by mistake, re-apply emulation and re-navigate so the page loads cleanly under the mobile profile.
-
----
-
-## Step 3: Start the App
-
-Check whether the dev server is already running on port 3000. Vite may serve HTTP or HTTPS depending on local config, so probe both (the `-k` flag accepts the self-signed dev cert):
-
-```bash
-curl -fsS -o /dev/null http://localhost:3000 \
-  || curl -fsSk -o /dev/null https://localhost:3000
-```
-
-If neither responds successfully, start it:
-
-```bash
-yarn start
-```
-
-Poll until port 3000 responds before continuing. The server takes ~5–15 seconds to start. Note which scheme (HTTP vs HTTPS) responded — you'll use that when navigating in the next steps.
-
-If you encounter HTTPS self-signed certificate errors, use the `thisisunsafe` bypass in Chrome to proceed.
+State the chosen target out loud before continuing, e.g. `issue-repro: target = android (issue tagged [Mobile], body mentions "swipe").`
 
 ---
 
-## Step 4: Use Chrome DevTools MCP
+## Step 2: Set Up the Browser
 
-Use the **Chrome DevTools MCP** (`chrome-devtools`) for all browser automation. Do **not** use the Playwright MCP — it is unstable and unreliable.
+Hand the target platform you picked in Step 1 to the **`browser-control`** skill. It will:
 
-The Chrome DevTools MCP provides tools such as `navigate`, `screenshot`, `evaluate`, `click`, `type`, and `get_console_logs`. Use these throughout the reproduction and validation steps.
+1. Attach the correct MCP — `chrome-devtools` for `web`/`android`, `wdio` for `ios` — and apply mobile emulation if needed, **before any navigation**.
+2. Navigate to the dev server.
+
+Do not pick the MCP, apply emulation, or start a dev server yourself — `browser-control` owns all of that. Wait for it to confirm the environment is up before continuing.
 
 ---
 
-## Step 5: Reproduce the Failure
+## Step 3: Reproduce the Failure
 
-If Step 2 determined that mobile emulation is required, confirm `emulate` has already been applied before proceeding — the first navigation below must happen under the mobile profile, not after.
+The browser environment is now ready (Step 2). Use the MCP that `browser-control` selected — `chrome-devtools` for web/android targets, `wdio` for iOS.
 
-1. Open a fresh browser tab at `http://localhost:3000`.
-
-2. **Clear app state** so you start from a clean slate. In the browser console run:
+1. **Clear app state** so you start from a clean slate. In the page console (`chrome-devtools` `evaluate_script` or `wdio` `execute_script`), run:
    ```js
    localStorage.clear(); location.reload();
    ```
 
-3. Follow the **Steps to Reproduce** from the issue **exactly as written** —
+2. Follow the **Steps to Reproduce** from the issue **exactly as written** —
    same order, same actions, no shortcuts. After each step, verify the UI
    reflects the expected intermediate state before continuing.
 
-4. After the final step, check whether the **Current Behavior** described in the
+3. After the final step, check whether the **Current Behavior** described in the
    issue occurs. Observe UI state, console log messages, or any other indication as stated in the issue.
 
-5. **Document what you observed** — quote the error message or describe the UI
+4. **Document what you observed** — quote the error message or describe the UI
    state. If the failure does not occur, **note this explicitly and do not proceed**
    **to fixing**. Instead, report to the user and ask for clarification (different
    browser, platform, version, or data state required?).
@@ -126,74 +109,13 @@ If Step 2 determined that mobile emulation is required, confirm `emulate` has al
 
 ### em App Interaction Reference
 
-- You can use the keyboard and mouse tools in the Chrome DevTools MCP to interact with the app as needed.
+- For keyboard / mouse / tap / type interactions, use the tools provided by whichever MCP `browser-control` attached.
+- For **swipe gestures** in the em gesture zone (notations like `rdr` or `→↓→`), use the **`interaction-gestures`** skill — it has the per-platform gesture dispatch (continuous touch with proper pacing) that the em gesture detector requires. Do not improvise gestures with raw `swipe` / `click` calls; they will not commit.
 - Read **em**'s UI code to understand how to trigger certain behaviors if the steps are not explicit.
-
-### Executing swipe gestures
-
-Some steps to reproduce will describe **swipe gestures** in the gesture zone (the left side of the screen in right-handed mode, below the 50px toolbar). Issues describe these in two interchangeable notations — both refer to the same thing:
-
-| Notation | Example | Meaning |
-|---|---|---|
-| Letters | `rdr` | `r`=right, `l`=left, `u`=up, `d`=down |
-| Arrows  | `→↓→` | `→`=r, `←`=l, `↑`=u, `↓`=d |
-
-**Mobile emulation must be active** (Step 2) — the gesture detector listens for touch events, which require `hasTouch: true`.
-
-To execute gestures, dispatch synthetic touch events via `evaluate_script`. The canonical reference is `src/e2e/puppeteer/helpers/gesture.ts`. Use these parameters — they have been validated to register reliably with the gesture detector:
-
-- **Start at `(150, 350)`** — comfortably inside the gesture zone for an iPhone 14 viewport.
-- **80px per direction**, broken into ~10px substeps with ~16ms between each `touchmove` and a 40ms pause at each direction change. Smaller distances or faster pacing flash the gesture trace UI but fail to commit a command.
-- **Hold ~80ms before `touchend`** so `onPanResponderRelease` fires with the full sequence intact.
-
-Working snippet — change `directions` to your gesture:
-
-```js
-async () => {
-  const directions = ['r', 'd']; // e.g. ['l','d','r','l','d','l'] for ldrldl
-  const startX = 150, startY = 350, stepSize = 80, substep = 10;
-  const target = document.elementFromPoint(startX, startY) || document.body;
-  const mkTouch = (x, y) => new Touch({
-    identifier: 1, target,
-    clientX: x, clientY: y, pageX: x, pageY: y,
-    screenX: x, screenY: y,
-    radiusX: 1, radiusY: 1, rotationAngle: 0, force: 1,
-  });
-  const fire = (type, x, y) => {
-    const t = mkTouch(x, y);
-    target.dispatchEvent(new TouchEvent(type, {
-      cancelable: true, bubbles: true, composed: true,
-      touches: type === 'touchend' ? [] : [t],
-      targetTouches: type === 'touchend' ? [] : [t],
-      changedTouches: [t],
-    }));
-  };
-  const sleep = ms => new Promise(r => setTimeout(r, ms));
-  let x = startX, y = startY;
-  fire('touchstart', x, y);
-  await sleep(50);
-  for (const dir of directions) {
-    let dx = 0, dy = 0;
-    if (dir === 'r') dx = stepSize;
-    else if (dir === 'l') dx = -stepSize;
-    else if (dir === 'd') dy = stepSize;
-    else if (dir === 'u') dy = -stepSize;
-    const steps = Math.max(1, Math.ceil(Math.hypot(dx, dy) / substep));
-    for (let i = 1; i <= steps; i++) {
-      x += dx / steps; y += dy / steps;
-      fire('touchmove', Math.round(x), Math.round(y));
-      await sleep(16);
-    }
-    await sleep(40);
-  }
-  await sleep(80);
-  fire('touchend', Math.round(x), Math.round(y));
-}
-```
 
 ---
 
-## Step 6: Fix the Issue
+## Step 4: Fix the Issue
 
 1. Use the reproduction evidence (error message, stack trace, console output) to locate the root cause. Read the relevant source code. Do not guess the cause without evidence.
 2. Implement a targeted fix. Prefer the smallest change that addresses the root cause without breaking related behavior.
@@ -202,7 +124,7 @@ async () => {
 
 ---
 
-## Step 7: Fix-Validate Loop (Mandatory)
+## Step 5: Fix-Validate Loop (Mandatory)
 
 After applying a fix, validate it immediately. If validation fails, fix and
 validate again. Repeat until the issue is resolved or the attempt limit is reached.
@@ -213,14 +135,14 @@ of what you tried and what you observed each time.
 
 ### Validation criteria (both must pass)
 
-**7a — Failure no longer triggers**
+**5a — Failure no longer triggers**
 
-1. Open a fresh browser tab at `http://localhost:3000`.
+1. Re-navigate to the dev server in the same browser environment `browser-control` set up. (If the session has been lost, re-run Step 2.)
 2. Clear app state: `localStorage.clear(); location.reload();`
 3. Follow the **Steps to Reproduce** exactly.
 4. Confirm the **Current Behavior** (the bug) does **not** occur.
 
-**7b — Expected behavior is observed**
+**5b — Expected behavior is observed**
 
 1. In the same or a fresh tab, follow the steps again.
 2. Confirm the **Expected Behavior** from the issue is observed exactly as described.
@@ -230,20 +152,20 @@ of what you tried and what you observed each time.
 ```
 attempt = 1
 loop:
-  fix the code (Step 6)
-  run validation 7a and 7b
+  fix the code (Step 4)
+  run validation 5a and 5b
   if both pass → done, summarize what you changed
   if either fails → diagnose what still went wrong
   attempt += 1
   if attempt > 5 → escalate to user
 ```
 
-Never claim success without completing both 7a and 7b. Never skip the loop.
+Never claim success without completing both 5a and 5b. Never skip the loop.
 
 ---
 
 ## Escalation Rules
 
-- If the bug cannot be reproduced in Step 5 after a thorough attempt, stop and report to the user with what you observed. Do not proceed to fixing.
+- If the bug cannot be reproduced in Step 3 after a thorough attempt, stop and report to the user with what you observed. Do not proceed to fixing.
 - If the fix-validate loop reaches 5 attempts without success, stop and summarize: what you tried, what changed, and what still fails.
 - Default to autonomous action. Escalate only when the correct path is genuinely ambiguous.
