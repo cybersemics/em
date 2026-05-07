@@ -53,6 +53,8 @@ jobs:
 
       - name: Set up Emscripten
         uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: 3.1.61
 
       - name: Build TreeCRDT packages
         run: yarn treecrdt
