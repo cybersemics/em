@@ -47,9 +47,11 @@ export const config: WebdriverIO.Config = {
         buildName: process.env.BROWSERSTACK_BUILD_NAME || `Local - ${user} - ${date}`,
         sessionName: 'iOS Safari Tests',
         local: true,
-        debug: true,
-        networkLogs: true,
-        consoleLogs: 'verbose',
+        // These flags collect diagnostic data on BrowserStack's web dashboard,
+        // which we don't need/use.
+        debug: false,
+        networkLogs: false,
+        consoleLogs: 'errors',
         idleTimeout: 60,
       },
     },
@@ -63,7 +65,8 @@ export const config: WebdriverIO.Config = {
         browserstackLocal: true,
         testObservability: true,
         opts: {
-          verbose: true,
+          // logFile still captures local-tunnel debug output; verbose stdout would only duplicate it into the runner log.
+          verbose: false,
           forceLocal: true,
           logFile: 'browserstack.log',
         },
