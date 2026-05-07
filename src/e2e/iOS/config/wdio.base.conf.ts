@@ -110,15 +110,12 @@ const baseConfig = {
     // Refresh to apply the cleared storage (much faster than full navigation)
     await browser.refresh()
 
-    // Wait for the iOS console proxy to finish installing (initialize.ts runs at app bootstrap, but browser.refresh may return before that completes). Without this wait, the canary below can fire before console.* has been wrapped, in which case the entry hits native console.info and is lost.
+    // Wait for the iOS console proxy to finish installing (initialize.ts runs at app bootstrap, but browser.refresh may return before that completes). Without this wait, app code that logs early can fire before console.* has been wrapped and those entries hit native console and are lost.
     await browser.waitUntil(async () => browser.execute(() => typeof window.__drainiOSConsoleLogs__ === 'function'), {
       timeout: 30000,
       timeoutMsg:
         'iOS console proxy did not install within 30s — check ?__ios_console_proxy URL flag and src/util/iOSConsoleProxy.ts',
     })
-
-    // TEMP canary: emit a recognisable browser-side console.info so the afterTest hook has something to drain even when a test produces no app logs. Remove once iOS console proxy capture is verified in CI.
-    await browser.execute(() => console.info('IOS_CONSOLE_PROXY_CANARY: beforeTest reached'))
 
     // Wait for the tutorial skip button and click it
     const skipElement = await $('#skip-tutorial')
@@ -135,19 +132,14 @@ const baseConfig = {
   afterTest: async function (test: { fullTitle: string; title: string; parent: string }) {
     const title = test.fullTitle || `${test.parent} › ${test.title}`
     try {
-      const result = await browser.execute(() => {
-        const collected = window.__drainiOSConsoleLogs__?.() ?? []
-        const proxyInstalled = typeof window.__drainiOSConsoleLogs__ === 'function'
-        return { logs: collected, proxyInstalled, href: location.href }
-      })
-      console.info(
-        `\n[browser console] ${title} — drained ${result.logs.length} entries (proxy installed: ${result.proxyInstalled}, url: ${result.href})`,
-      )
-      for (const l of result.logs) {
+      const logs = await browser.execute(() => window.__drainiOSConsoleLogs__?.() ?? [])
+      if (!logs.length) return
+      console.info(`\n[browser console] ${title} (${logs.length} entries)`)
+      for (const l of logs) {
         console.info(`  [${l.level}] ${l.message}`)
       }
     } catch (err) {
-      // Diagnostic: surface the failure so we can see why drain failed for specific tests, without failing the test itself.
+      // Surface the failure so it isn't silently swallowed, without failing the test itself.
       console.info(`[browser console] ${title} — drain failed: ${err instanceof Error ? err.message : String(err)}`)
     }
   },
