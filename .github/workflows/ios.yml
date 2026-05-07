@@ -22,6 +22,9 @@ jobs:
     name: BrowserStack
     runs-on: ubuntu-latest
     if: github.event_name != 'pull_request_target' || github.event.pull_request.changed_files > 0
+    env:
+      BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
+      BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
 
     steps:
       - name: Clone repository
@@ -40,37 +43,49 @@ jobs:
           node-version: 22
 
       - name: Install npm dependencies
+        if: env.BROWSERSTACK_USERNAME != '' && env.BROWSERSTACK_ACCESS_KEY != ''
         run: yarn
 
       - name: Install wasm-pack
+        if: env.BROWSERSTACK_USERNAME != '' && env.BROWSERSTACK_ACCESS_KEY != ''
         run: |
           if ! command -v wasm-pack >/dev/null 2>&1; then
             curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
           fi
 
       - name: Set up Rust
+        if: env.BROWSERSTACK_USERNAME != '' && env.BROWSERSTACK_ACCESS_KEY != ''
         run: |
           rustup toolchain install 1.87.0 --profile minimal
           rustup target add wasm32-unknown-unknown --toolchain 1.87.0
           rustup target add wasm32-unknown-emscripten --toolchain 1.87.0
 
       - name: Set up Emscripten
+        if: env.BROWSERSTACK_USERNAME != '' && env.BROWSERSTACK_ACCESS_KEY != ''
         uses: mymindstorm/setup-emsdk@v14
         with:
           version: 4.0.16
 
       - name: Build TreeCRDT packages
+        if: env.BROWSERSTACK_USERNAME != '' && env.BROWSERSTACK_ACCESS_KEY != ''
         run: yarn treecrdt
         env:
           RUSTUP_TOOLCHAIN: 1.87.0
 
       - name: Build
+        if: env.BROWSERSTACK_USERNAME != '' && env.BROWSERSTACK_ACCESS_KEY != ''
         run: yarn build
 
       - name: Serve
+        if: env.BROWSERSTACK_USERNAME != '' && env.BROWSERSTACK_ACCESS_KEY != ''
         run: yarn servebuild &
 
+      - name: Skip BrowserStack
+        if: env.BROWSERSTACK_USERNAME == '' || env.BROWSERSTACK_ACCESS_KEY == ''
+        run: echo "Skipping BrowserStack because credentials are not configured."
+
       - name: Test iOS on BrowserStack
+        if: env.BROWSERSTACK_USERNAME != '' && env.BROWSERSTACK_ACCESS_KEY != ''
         run: yarn test:ios
         env:
           # BrowserStack credentials - WDIO's browserstack-service handles the tunnel
