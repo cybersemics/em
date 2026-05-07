@@ -111,8 +111,8 @@ const baseConfig = {
     // Refresh to apply the cleared storage (much faster than full navigation)
     await browser.refresh()
 
-    // TEMP canary: emit a recognisable browser-side console.log so the afterTest hook has something to drain even when a test produces no app logs. Remove once safariConsole capture is verified in CI.
-    await browser.execute(() => console.log('SAFARI_CONSOLE_CANARY: beforeTest reached'))
+    // TEMP canary: emit a recognisable browser-side console.info so the afterTest hook has something to drain even when a test produces no app logs. Remove once safariConsole capture is verified in CI.
+    await browser.execute(() => console.info('SAFARI_CONSOLE_CANARY: beforeTest reached'))
 
     // Wait for the tutorial skip button and click it
     const skipElement = await $('#skip-tutorial')
@@ -131,9 +131,9 @@ const baseConfig = {
     try {
       const logs = (await browser.getLogs('safariConsole')) as { level?: string; message?: string }[]
       if (!logs?.length) return
-      console.log(`\n[browser console] ${title} (${logs.length} entries)`)
+      console.info(`\n[browser console] ${title} (${logs.length} entries)`)
       for (const l of logs) {
-        console.log(`  [${l.level ?? 'log'}] ${l.message ?? JSON.stringify(l)}`)
+        console.info(`  [${l.level ?? 'log'}] ${l.message ?? JSON.stringify(l)}`)
       }
     } catch {
       // safariConsole bucket may not be available on this driver — skip silently rather than failing the test.
