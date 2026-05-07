@@ -147,15 +147,17 @@ const baseConfig = {
   afterTest: async function (test: { fullTitle: string; title: string; parent: string }) {
     const title = test.fullTitle || `${test.parent} › ${test.title}`
     try {
-      const logs = await browser.execute(() => {
+      const result = await browser.execute(() => {
         const w = window as Window & { __capturedLogs__?: { level: string; message: string }[] }
         const collected = w.__capturedLogs__ ?? []
+        const proxyInstalled = '__capturedLogs__' in w
         w.__capturedLogs__ = []
-        return collected
+        return { logs: collected, proxyInstalled, href: location.href }
       })
-      if (!logs?.length) return
-      console.info(`\n[browser console] ${title} (${logs.length} entries)`)
-      for (const l of logs) {
+      console.info(
+        `\n[browser console] ${title} — drained ${result.logs.length} entries (proxy installed: ${result.proxyInstalled}, url: ${result.href})`,
+      )
+      for (const l of result.logs) {
         console.info(`  [${l.level}] ${l.message}`)
       }
     } catch (err) {
