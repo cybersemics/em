@@ -39,16 +39,12 @@ import syncStatusStore from './stores/syncStatus'
 import importToContext from './test-helpers/importToContext'
 import prettyPath from './test-helpers/prettyPath'
 import hashThought from './util/hashThought'
-import installiOSConsoleProxy from './util/iOSConsoleProxy'
 import initEvents from './util/initEvents'
 import isRoot from './util/isRoot'
 import mergeBatch from './util/mergeBatch'
 import owner from './util/owner'
 import throttleConcat from './util/throttleConcat'
 import urlDataSource from './util/urlDataSource'
-
-// Install the iOS console proxy at module load (before initialize() runs and before most app code logs anything). No-op unless ?__ios_console_proxy is in the URL.
-installiOSConsoleProxy()
 
 /** Number of milliseconds to throttle dispatching updateThoughts on thought/lexeme change. */
 const UPDATE_THOUGHTS_THROTTLE = 100
