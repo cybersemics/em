@@ -29,6 +29,7 @@ jobs:
         with:
           ref: ${{github.event.pull_request.head.ref}}
           repository: ${{github.event.pull_request.head.repo.full_name}}
+          submodules: recursive
 
       - name: Enable Corepack
         run: corepack enable
@@ -40,6 +41,21 @@ jobs:
 
       - name: Install npm dependencies
         run: yarn
+
+      - name: Install wasm-pack
+        run: |
+          if ! command -v wasm-pack >/dev/null 2>&1; then
+            curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+          fi
+
+      - name: Install Emscripten Rust target
+        run: rustup target add wasm32-unknown-emscripten
+
+      - name: Set up Emscripten
+        uses: mymindstorm/setup-emsdk@v14
+
+      - name: Build TreeCRDT packages
+        run: yarn treecrdt
 
       - name: Build
         run: yarn build
