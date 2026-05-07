@@ -86,9 +86,10 @@ const baseConfig = {
     }
   },
 
-  // Navigate once at the start of the session
+  // Navigate once at the start of the session.
+  // ?__ios_console_proxy activates the iOS console proxy installed by src/util/iOSConsoleProxy.ts.
   before: async function () {
-    await browser.url('http://bs-local.com:3000')
+    await browser.url('http://bs-local.com:3000?__ios_console_proxy')
     await browser.waitUntil(
       async () => {
         const body = await browser.$('body')
@@ -109,28 +110,8 @@ const baseConfig = {
     // Refresh to apply the cleared storage (much faster than full navigation)
     await browser.refresh()
 
-    // Install in-page console proxy. getLogs('safariConsole') returned nothing on this BrowserStack/Appium stack despite appium:showSafariConsoleLog being set, so we capture browser-side logs into window.__capturedLogs__ for the afterTest hook to drain.
-    await browser.execute(() => {
-      const w = window as Window & { __capturedLogs__?: { level: string; message: string }[] }
-      const logs: { level: string; message: string }[] = []
-      w.__capturedLogs__ = logs
-      const c = console as unknown as Record<string, (...args: unknown[]) => void>
-      for (const method of ['log', 'warn', 'error', 'info', 'debug']) {
-        const orig = c[method].bind(console)
-        c[method] = (...args: unknown[]) => {
-          try {
-            const message = args.map(a => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ')
-            logs.push({ level: method, message })
-          } catch {
-            // Serialization failure (e.g. circular refs) — drop this entry rather than fail the test.
-          }
-          orig(...args)
-        }
-      }
-    })
-
-    // TEMP canary: emit a recognisable browser-side console.info so the afterTest hook has something to drain even when a test produces no app logs. Remove once console-proxy capture is verified in CI.
-    await browser.execute(() => console.info('SAFARI_CONSOLE_CANARY: beforeTest reached'))
+    // TEMP canary: emit a recognisable browser-side console.info so the afterTest hook has something to drain even when a test produces no app logs. Remove once iOS console proxy capture is verified in CI.
+    await browser.execute(() => console.info('IOS_CONSOLE_PROXY_CANARY: beforeTest reached'))
 
     // Wait for the tutorial skip button and click it
     const skipElement = await $('#skip-tutorial')
@@ -143,15 +124,13 @@ const baseConfig = {
     await emptyThoughtspace.waitForExist({ timeout: 90000 })
   },
 
-  // After each test: drain window.__capturedLogs__ and print it under the test title so browser-side console output is grouped per-it() in CI logs.
+  // After each test: drain the iOS console proxy buffer and print it under the test title so browser-side console output is grouped per-it() in CI logs.
   afterTest: async function (test: { fullTitle: string; title: string; parent: string }) {
     const title = test.fullTitle || `${test.parent} › ${test.title}`
     try {
       const result = await browser.execute(() => {
-        const w = window as Window & { __capturedLogs__?: { level: string; message: string }[] }
-        const collected = w.__capturedLogs__ ?? []
-        const proxyInstalled = '__capturedLogs__' in w
-        w.__capturedLogs__ = []
+        const collected = window.__drainiOSConsoleLogs__?.() ?? []
+        const proxyInstalled = typeof window.__drainiOSConsoleLogs__ === 'function'
         return { logs: collected, proxyInstalled, href: location.href }
       })
       console.info(
