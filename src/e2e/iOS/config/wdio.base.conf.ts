@@ -47,14 +47,23 @@ const baseConfig = {
     platformName: 'iOS' as const,
     browserName: 'Safari' as const,
     'appium:automationName': 'XCUITest' as const,
+    // Enable the XCUITest 'safariConsole' log bucket so afterTest can drain browser console output via getLogs('safariConsole').
+    'appium:showSafariConsoleLog': true as const,
   },
 
   // Test Configurations
-  logLevel: 'info' as const,
+  logLevel: 'warn' as const,
+  // Per-package override: silence @wdio/browserstack-service's observability bookkeeping (plumbing for BrowserStack's dashboard, not diagnostic).
+  logLevels: {
+    '@wdio/browserstack-service': 'error' as const,
+  },
   bail: 0,
   waitforTimeout: 20000,
   connectionRetryTimeout: 120000,
   connectionRetryCount: 3,
+
+  // Spec reporter gives per-it() pass/fail visibility in CI logs.
+  reporters: ['spec'],
 
   // Framework Configuration
   framework: 'mocha' as const,
@@ -102,6 +111,9 @@ const baseConfig = {
     // Refresh to apply the cleared storage (much faster than full navigation)
     await browser.refresh()
 
+    // TEMP canary: emit a recognisable browser-side console.log so the afterTest hook has something to drain even when a test produces no app logs. Remove once safariConsole capture is verified in CI.
+    await browser.execute(() => console.log('SAFARI_CONSOLE_CANARY: beforeTest reached'))
+
     // Wait for the tutorial skip button and click it
     const skipElement = await $('#skip-tutorial')
     await skipElement.waitForExist({ timeout: 90000 })
@@ -111,6 +123,21 @@ const baseConfig = {
     // Wait for the empty thoughtspace to be ready
     const emptyThoughtspace = await $('[aria-label="empty-thoughtspace"]')
     await emptyThoughtspace.waitForExist({ timeout: 90000 })
+  },
+
+  // After each test: drain the safariConsole log bucket and print it under the test title so browser-side console output is grouped per-it() in CI logs.
+  afterTest: async function (test: { fullTitle: string; title: string; parent: string }) {
+    const title = test.fullTitle || `${test.parent} › ${test.title}`
+    try {
+      const logs = (await browser.getLogs('safariConsole')) as { level?: string; message?: string }[]
+      if (!logs?.length) return
+      console.log(`\n[browser console] ${title} (${logs.length} entries)`)
+      for (const l of logs) {
+        console.log(`  [${l.level ?? 'log'}] ${l.message ?? JSON.stringify(l)}`)
+      }
+    } catch {
+      // safariConsole bucket may not be available on this driver — skip silently rather than failing the test.
+    }
   },
 }
 
