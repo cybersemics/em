@@ -74,16 +74,28 @@ start_session({
     'appium:automationName': 'XCUITest',
     'appium:deviceName': 'iPhone 15',
     'appium:platformVersion': '17',
+    'appium:newCommandTimeout': 300,
     'bstack:options': {
       deviceName: 'iPhone 15',
       osVersion: '17',
       realMobile: 'true',
       appiumVersion: '2.0.0',
       local: true,
+      idleTimeout: 300,
     },
   },
 })
 ```
+
+Both timeouts are set to 300 — the documented maximum for `idleTimeout` on Automate, and a generous ceiling for Appium's `newCommandTimeout`. This is the most BrowserStack will give you before declaring the session idle. To stretch sessions past 300s of agent thinking time, see the heartbeat instruction below.
+
+**Start the heartbeat** immediately after `start_session` returns. The wdio MCP's response includes the session ID — capture it and run:
+
+```bash
+.github/skills/browser-control/heartbeat.sh "<session-id>" &
+```
+
+The script pings the BrowserStack hub every 240s (under the 300s cap) using the same `BROWSERSTACK_USERNAME` / `BROWSERSTACK_ACCESS_KEY` env vars as the wdio MCP. It self-exits after 3 consecutive failures, so it dies on its own when the session ends — no need to track or kill the PID.
 
 - `browserstackLocal: true` is the default for this skill. The wdio MCP launches the BrowserStack Local tunnel binary itself, so the remote device reaches the runner's `localhost:3000` via `bs-local.com:3000`. Without it the device cannot see the dev server.
 - Do **not** call `launch_chrome` — that's for Chrome only.
@@ -95,6 +107,10 @@ start_session({
 - After `start_session`, subsequent `navigate`, `tap_element`, `swipe`, `execute_script` operate on the open session. Do not start a new session per step — each `start_session` call closes the previous one.
 
 If the wdio MCP is not available in this environment, stop and report back to the caller: iOS reproduction requires the wdio MCP. Do not attempt to fall back to Chrome with an iOS UA string — that does not exercise WebKit and will produce false reproductions.
+
+### If the session terminates mid-run
+
+If a tool call fails with `Session not started or terminated when running "execute/sync"` (or similar), the BrowserStack session ended — typically because the agent thought for longer than the idle window, or because of a transient backend hiccup. **This is recoverable, not a sign that the wdio MCP is broken.** Call `start_session` again with the same caps, restart the heartbeat with the new session ID, re-run Step 2 (navigate + wait-for-mount), and continue. Do not switch MCPs — wdio is the only path to real iOS Safari, and chrome-devtools / playwright cannot reach this session.
 
 ---
 
@@ -135,6 +151,8 @@ execute_script(() => new Promise(resolve => {
 If the script returns `false`, drain `window.__drainiOSConsoleLogs__()` and check the dev server log before retrying — the page is genuinely stuck, not just slow.
 
 **Drain the console at meaningful checkpoints** — after every `tap_element`, `swipe`, or any action whose effect isn't directly visible — by calling `execute_script(() => window.__drainiOSConsoleLogs__())`. Gesture-detector warnings, network errors, and React warnings live there and would otherwise be invisible to the agent. Before assuming a tap or swipe didn't register, drain first; the answer is often in the buffer.
+
+**Expect HMR reloads when you edit source files.** Vite's hot-module-replacement reloads the page on the iOS device whenever a watched source file changes. The console proxy reinstalls automatically on reload (it's wired into `src/initialize.ts`), but **in-memory app state is gone** — any thoughts you created, cursor positions, modal dismissals, etc. will be reset. After editing source mid-session, re-run the wait-for-mount predicate and re-create any in-app state you need before continuing. Don't conclude HMR is broken just because the page looks different than you left it — that's the reload doing its job.
 
 After navigation, the environment is ready. Hand back to the calling skill.
 
