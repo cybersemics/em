@@ -86,21 +86,16 @@ Do not pick the MCP, apply emulation, or start a dev server yourself — `browse
 
 ## Step 3: Reproduce the Failure
 
-The browser environment is now ready (Step 2). Use the MCP that `browser-control` selected — `chrome-devtools` for web/android targets, `wdio` for iOS.
+The browser environment is now ready (Step 2) with a fresh browser profile and an empty `localStorage` — no app-state cleanup is needed before the first reproduction. Use the MCP that `browser-control` selected — `chrome-devtools` for web/android targets, `wdio` for iOS.
 
-1. **Clear app state** so you start from a clean slate. In the page console (`chrome-devtools` `evaluate_script` or `wdio` `execute_script`), run:
-   ```js
-   localStorage.clear(); location.reload();
-   ```
-
-2. Follow the **Steps to Reproduce** from the issue **exactly as written** —
+1. Follow the **Steps to Reproduce** from the issue **exactly as written** —
    same order, same actions, no shortcuts. After each step, verify the UI
    reflects the expected intermediate state before continuing.
 
-3. After the final step, check whether the **Current Behavior** described in the
+2. After the final step, check whether the **Current Behavior** described in the
    issue occurs. Observe UI state, console log messages, or any other indication as stated in the issue.
 
-4. **Document what you observed** — quote the error message or describe the UI
+3. **Document what you observed** — quote the error message or describe the UI
    state. If the failure does not occur, **note this explicitly and do not proceed**
    **to fixing**. Instead, report to the user and ask for clarification (different
    browser, platform, version, or data state required?).
@@ -138,7 +133,7 @@ of what you tried and what you observed each time.
 **5a — Failure no longer triggers**
 
 1. Re-navigate to the dev server in the same browser environment `browser-control` set up. (If the session has been lost, re-run Step 2.)
-2. Clear app state: `localStorage.clear(); location.reload();`
+2. Clear app state from the previous attempt: `localStorage.clear(); location.reload();`. After the reload, wait for the page to re-mount (poll for `#skip-tutorial` or `[aria-label="empty-thoughtspace"]`) before continuing — the React bundle re-runs from scratch.
 3. Follow the **Steps to Reproduce** exactly.
 4. Confirm the **Current Behavior** (the bug) does **not** occur.
 
