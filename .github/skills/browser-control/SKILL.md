@@ -88,7 +88,10 @@ start_session({
 - `browserstackLocal: true` is the default for this skill. The wdio MCP launches the BrowserStack Local tunnel binary itself, so the remote device reaches the runner's `localhost:3000` via `bs-local.com:3000`. Without it the device cannot see the dev server.
 - Do **not** call `launch_chrome` — that's for Chrome only.
 - Do **not** call `emulate_device` on a real iOS Safari session; the device already serves the real iOS UA, viewport, and touch events.
+- **Use only the `wdio` MCP for the rest of the iOS session.** Once a session is open, do not reach for `chrome-devtools`, `playwright`, or any other browser MCP — each manages its own browser instance and has no view of the iOS session. Tools like `playwright`'s `browser_wait_for` will return "no open pages" rather than do anything useful. Stay inside `wdio` for navigate, eval, screenshots, and waits.
 - Use **`tap_element`, not `click_element`**, for element interactions. On iOS the WebDriver `element.click()` is silently ignored — `click_element` will appear to succeed but produce no effect. Default to `tap_element`.
+- **`tap_element` by selector, never by coordinates, on BrowserStack iOS.** Coordinate-based `tap_element({ x, y })` fails with `Unhandled endpoint: /session/.../actions with method DELETE` — the W3C Actions API DELETE call isn't implemented on this Appium/BrowserStack stack. Use a CSS or attribute selector. If a selector path genuinely doesn't exist for the target, fall back to dispatching a synthetic `TouchEvent` via `execute_script` — the same touch-dispatch pattern `interaction-gestures` documents for swipes works for a single-point tap.
+- **Prefer CSS / ID / `aria-label` selectors over text-content matching.** `tap_element({ selector: '#skip-tutorial' })` is reliable; partial-text-content forms like `tap_element({ selector: "*='New, empty thoughtspace'" })` often return "element wasn't found" — either because the resolver is stricter than wdio's full browser command, or because the element isn't rendered yet. The em app's major landmarks have stable IDs and `aria-label`s; when in doubt, read the existing iOS specs in `src/e2e/iOS/__tests__/` for the canonical selectors rather than guessing.
 - After `start_session`, subsequent `navigate`, `tap_element`, `swipe`, `execute_script` operate on the open session. Do not start a new session per step — each `start_session` call closes the previous one.
 
 If the wdio MCP is not available in this environment, stop and report back to the caller: iOS reproduction requires the wdio MCP. Do not attempt to fall back to Chrome with an iOS UA string — that does not exercise WebKit and will produce false reproductions.
@@ -112,6 +115,26 @@ Note which scheme (HTTP vs HTTPS) responded. Then navigate using the MCP for you
 - `ios`: `wdio` `navigate` to `http://bs-local.com:3000?__ios_console_proxy`. The `bs-local.com:3000` host is BrowserStack Local's well-known hostname — the tunnel started by `browserstackLocal: true` routes it back to the runner's `localhost:3000`. The `?__ios_console_proxy` query param activates the in-app console proxy (`src/util/iOSConsoleProxy.ts`) so console output is captured into `window.__iOSConsoleProxy__`. To read captured logs at any point: `execute_script(() => window.__drainiOSConsoleLogs__())` — atomically returns and clears the buffer.
 
 If you encounter HTTPS self-signed certificate errors on Chrome, use the `thisisunsafe` bypass to proceed. On iOS Safari, accept the certificate via the wdio MCP's dialog handler if prompted.
+
+### After navigate (iOS)
+
+The React bundle hydrates a few seconds after `navigate` returns. Reaching for `tap_element` / `get_elements` immediately hits an empty `<div id="root"></div>` and burns round-trips on diagnostic poking before the agent realises the page just isn't ready yet. Wait for a known landmark before any interaction — `#skip-tutorial` for the welcome screen, `[aria-label="empty-thoughtspace"]` once the tutorial is dismissed:
+
+```ts
+// Single execute_script that polls in-page; resolves true when ready, false on 10s timeout.
+execute_script(() => new Promise(resolve => {
+  const check = () => {
+    if (document.querySelector('#skip-tutorial, [aria-label="empty-thoughtspace"]')) return resolve(true)
+    setTimeout(check, 100)
+  }
+  check()
+  setTimeout(() => resolve(false), 10000)
+}))
+```
+
+If the script returns `false`, drain `window.__drainiOSConsoleLogs__()` and check the dev server log before retrying — the page is genuinely stuck, not just slow.
+
+**Drain the console at meaningful checkpoints** — after every `tap_element`, `swipe`, or any action whose effect isn't directly visible — by calling `execute_script(() => window.__drainiOSConsoleLogs__())`. Gesture-detector warnings, network errors, and React warnings live there and would otherwise be invisible to the agent. Before assuming a tap or swipe didn't register, drain first; the answer is often in the buffer.
 
 After navigation, the environment is ready. Hand back to the calling skill.
 
