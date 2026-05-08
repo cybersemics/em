@@ -172,7 +172,7 @@
     "@eslint-community/eslint-plugin-eslint-comments": "^4.7.1",
     "@pandacss/dev": "^1.11.0",
     "@pandacss/eslint-plugin": "^0.3.2",
-    "@sinonjs/fake-timers": "^15.3.2",
+    "@sinonjs/fake-timers": "^15.4.0",
     "@stylistic/eslint-plugin": "^5.10.0",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
