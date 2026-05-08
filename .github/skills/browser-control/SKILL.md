@@ -58,7 +58,9 @@ If you have already navigated by mistake, re-apply emulation and re-navigate so 
 
 ### Target = `ios`
 
-Use this **exact** `start_session` call. Do not modify any field, do not substitute the wdio MCP's top-level shortcut params for the `capabilities` block, do not "improve" the device or version. The MCP's schema lets you pass alternatives — none of them produce a real iOS Safari session.
+Open a remote iOS Safari session via the `wdio` MCP. The MCP's `platform: 'ios'` mode is wired for native apps and requires `appPath` / `app` / `noReset`. For a real iOS **Safari** session, use `platform: 'browser'` + `browser: 'safari'` and pass the iOS specifics through the `capabilities` escape hatch.
+
+Call `start_session` with this shape (bump `deviceName` / `platformVersion` to whatever's current):
 
 ```ts
 start_session({
@@ -85,16 +87,17 @@ start_session({
 })
 ```
 
-If `start_session` returns an error, **stop and report to the caller.** Do not retry with different parameters — the call above is the only invocation that produces a real iOS Safari session, and a failure means an environmental problem (creds, BrowserStack quota, network) that the caller needs to resolve.
+Both timeouts are set to 300 — the documented maximum for `idleTimeout` on Automate, and a generous ceiling for Appium's `newCommandTimeout`. This is the most BrowserStack will give you before declaring the session idle. To stretch sessions past 300s of agent thinking time, see the heartbeat instruction below.
 
-If it returns a session ID, capture the ID and immediately start the heartbeat so the session doesn't idle-out while you think:
+**Start the heartbeat** immediately after `start_session` returns. The wdio MCP's response includes the session ID — capture it and run:
 
 ```bash
 .github/skills/browser-control/heartbeat.sh "<session-id>" &
 ```
 
-The script pings the BrowserStack hub every 240s, uses the same `BROWSERSTACK_USERNAME` / `BROWSERSTACK_ACCESS_KEY` env vars as the wdio MCP, and self-terminates after 3 consecutive failures so it dies on its own when the session ends.
+The script pings the BrowserStack hub every 240s (under the 300s cap) using the same `BROWSERSTACK_USERNAME` / `BROWSERSTACK_ACCESS_KEY` env vars as the wdio MCP. It self-exits after 3 consecutive failures, so it dies on its own when the session ends — no need to track or kill the PID.
 
+- `browserstackLocal: true` is the default for this skill. The wdio MCP launches the BrowserStack Local tunnel binary itself, so the remote device reaches the runner's `localhost:3000` via `bs-local.com:3000`. Without it the device cannot see the dev server.
 - Do **not** call `launch_chrome` — that's for Chrome only.
 - Do **not** call `emulate_device` on a real iOS Safari session; the device already serves the real iOS UA, viewport, and touch events.
 - **Use only the `wdio` MCP for the rest of the iOS session.** Once a session is open, do not reach for `chrome-devtools`, `playwright`, or any other browser MCP — each manages its own browser instance and has no view of the iOS session. Tools like `playwright`'s `browser_wait_for` will return "no open pages" rather than do anything useful. Stay inside `wdio` for navigate, eval, screenshots, and waits.
@@ -131,19 +134,21 @@ If you encounter HTTPS self-signed certificate errors on Chrome, use the `thisis
 
 ### After navigate (iOS)
 
-The React bundle hydrates a few seconds after `navigate` returns. Reaching for `tap_element` / `get_elements` immediately hits an empty `<div id="root"></div>`. Wait for a known landmark before any interaction — `#skip-tutorial` for the welcome screen, `[aria-label="empty-thoughtspace"]` once the tutorial is dismissed.
-
-Use this **exact** synchronous check. Pass it to `execute_script` as a literal string (no wrapping in arrow functions, no `await`, no `new Promise(...)` — those forms break in the WebDriver eval context). If it returns `false`, run `sleep 1` in bash and call again. Do not run `tap_element`, `get_elements`, or any other interaction tool until you see `true`:
+The React bundle hydrates a few seconds after `navigate` returns. Reaching for `tap_element` / `get_elements` immediately hits an empty `<div id="root"></div>` and burns round-trips on diagnostic poking before the agent realises the page just isn't ready yet. Wait for a known landmark before any interaction — `#skip-tutorial` for the welcome screen, `[aria-label="empty-thoughtspace"]` once the tutorial is dismissed:
 
 ```ts
-execute_script({
-  script: `return !!document.querySelector('#skip-tutorial, [aria-label="empty-thoughtspace"]')`
-})
+// Single execute_script that polls in-page; resolves true when ready, false on 10s timeout.
+execute_script(() => new Promise(resolve => {
+  const check = () => {
+    if (document.querySelector('#skip-tutorial, [aria-label="empty-thoughtspace"]')) return resolve(true)
+    setTimeout(check, 100)
+  }
+  check()
+  setTimeout(() => resolve(false), 10000)
+}))
 ```
 
-If you still see `false` after ~10 retries, drain `window.__drainiOSConsoleLogs__()` and check the dev server log — the page is genuinely stuck, not just slow.
-
-**Re-run this same wait** after any `location.reload()` or `localStorage.clear(); location.reload()`. Reload re-runs `initialize.ts` from scratch, so the landmark briefly disappears while React rehydrates. Skipping the re-wait will give you a `false` element-exists check and wasted retry attempts.
+If the script returns `false`, drain `window.__drainiOSConsoleLogs__()` and check the dev server log before retrying — the page is genuinely stuck, not just slow.
 
 **Drain the console at meaningful checkpoints** — after every `tap_element`, `swipe`, or any action whose effect isn't directly visible — by calling `execute_script(() => window.__drainiOSConsoleLogs__())`. Gesture-detector warnings, network errors, and React warnings live there and would otherwise be invisible to the agent. Before assuming a tap or swipe didn't register, drain first; the answer is often in the buffer.
 
