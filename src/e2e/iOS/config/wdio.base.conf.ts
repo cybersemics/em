@@ -1,4 +1,4 @@
-import https from 'https'
+import http from 'http'
 import path from 'path'
 
 /**
@@ -6,10 +6,9 @@ import path from 'path'
  * @throws Error if the app is not running.
  */
 export const checkAppRunning = (): Promise<void> => {
-  const errorMessage =
-    'App is not running on https://localhost:3000. Please start the app locally before running tests.'
+  const errorMessage = 'App is not running on http://localhost:3000. Please start the app locally before running tests.'
   return new Promise((resolve, reject) => {
-    const req = https.get('https://localhost:3000', { timeout: 2000, rejectUnauthorized: false }, res => {
+    const req = http.get('http://localhost:3000', { timeout: 2000 }, res => {
       res.on('data', () => {})
       res.on('end', () => resolve())
     })
@@ -51,11 +50,18 @@ const baseConfig = {
   },
 
   // Test Configurations
-  logLevel: 'info' as const,
+  logLevel: 'warn' as const,
+  // Per-package override: silence @wdio/browserstack-service's observability bookkeeping (plumbing for BrowserStack's dashboard, not diagnostic).
+  logLevels: {
+    '@wdio/browserstack-service': 'error' as const,
+  },
   bail: 0,
   waitforTimeout: 20000,
   connectionRetryTimeout: 120000,
   connectionRetryCount: 3,
+
+  // Spec reporter gives per-it() pass/fail visibility in CI logs.
+  reporters: ['spec'],
 
   // Framework Configuration
   framework: 'mocha' as const,
@@ -74,19 +80,16 @@ const baseConfig = {
       try {
         await checkAppRunning()
       } catch (error) {
-        console.error(error instanceof Error ? error.message : 'App is not running on https://localhost:3000')
+        console.error(error instanceof Error ? error.message : 'App is not running on http://localhost:3000')
         process.exit(1)
       }
     }
   },
 
   // Navigate once at the start of the session.
-  // CLOUDFLARED_URL: set by BrowserStack config (or CI) — a public HTTPS URL with a trusted cert.
-  // localhost: used for local Appium testing.
+  // ?__ios_console_proxy activates the iOS console proxy installed by src/util/iOSConsoleProxy.ts.
   before: async function () {
-    const baseUrl = process.env.CLOUDFLARED_URL || 'https://localhost:3000'
-    await browser.url(baseUrl)
-
+    await browser.url('http://bs-local.com:3000?__ios_console_proxy')
     await browser.waitUntil(
       async () => {
         const body = await browser.$('body')
@@ -107,6 +110,13 @@ const baseConfig = {
     // Refresh to apply the cleared storage (much faster than full navigation)
     await browser.refresh()
 
+    // Wait for the iOS console proxy to finish installing (initialize.ts runs at app bootstrap, but browser.refresh may return before that completes). Without this wait, app code that logs early can fire before console.* has been wrapped and those entries hit native console and are lost.
+    await browser.waitUntil(async () => browser.execute(() => typeof window.__drainiOSConsoleLogs__ === 'function'), {
+      timeout: 30000,
+      timeoutMsg:
+        'iOS console proxy did not install within 30s — check ?__ios_console_proxy URL flag and src/util/iOSConsoleProxy.ts',
+    })
+
     // Wait for the tutorial skip button and click it
     const skipElement = await $('#skip-tutorial')
     await skipElement.waitForExist({ timeout: 90000 })
@@ -116,6 +126,22 @@ const baseConfig = {
     // Wait for the empty thoughtspace to be ready
     const emptyThoughtspace = await $('[aria-label="empty-thoughtspace"]')
     await emptyThoughtspace.waitForExist({ timeout: 90000 })
+  },
+
+  // After each test: drain the iOS console proxy buffer and print it under the test title so browser-side console output is grouped per-it() in CI logs.
+  afterTest: async function (test: { fullTitle: string; title: string; parent: string }) {
+    const title = test.fullTitle || `${test.parent} › ${test.title}`
+    try {
+      const logs = await browser.execute(() => window.__drainiOSConsoleLogs__?.() ?? [])
+      if (!logs.length) return
+      console.info(`\n[browser console] ${title} (${logs.length} entries)`)
+      for (const l of logs) {
+        console.info(`  [${l.level}] ${l.message}`)
+      }
+    } catch (err) {
+      // Surface the failure so it isn't silently swallowed, without failing the test itself.
+      console.info(`[browser console] ${title} — drain failed: ${err instanceof Error ? err.message : String(err)}`)
+    }
   },
 }
 
