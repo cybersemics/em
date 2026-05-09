@@ -7,11 +7,14 @@ import { setCursorActionCreator as setCursor } from '../../actions/setCursor'
 import { isMac, isSafari, isTouch } from '../../browser'
 import { LongPressState } from '../../constants'
 import asyncFocus from '../../device/asyncFocus'
+import focusWithoutAutoscroll from '../../device/focusWithoutAutoscroll'
 import getCaretOffset from '../../device/getCaretOffset'
 import preventAutoscroll, { preventAutoscrollEnd } from '../../device/preventAutoscroll'
 import * as selection from '../../device/selection'
 import usePrevious from '../../hooks/usePrevious'
 import hasMulticursor from '../../selectors/hasMulticursor'
+import { getAutoscrollTechnique } from '../../util/autoscrollTechnique'
+import { debugLog, editableLabel, selectionSnapshot } from '../../util/debugAutoscrollLog'
 import equalPath from '../../util/equalPath'
 
 /** Automatically sets the selection on the given contentRef element when the thought should be selected. Handles a variety of conditions that determine whether this should occur. */
@@ -79,6 +82,13 @@ const useEditMode = ({
           !isMulticursor &&
           !dragHold &&
           !disabledRef.current)
+
+      if (getAutoscrollTechnique() === 'v2') {
+        debugLog(
+          'useEffect',
+          `el=${editableLabel(contentRef.current)} cursorOffset=${cursorOffset} shouldSet=${shouldSetSelection} active=${editableLabel(document.activeElement)} ${selectionSnapshot()}`,
+        )
+      }
 
       if (shouldSetSelection) {
         preventAutoscroll(contentRef.current)
@@ -151,6 +161,13 @@ const useEditMode = ({
      * Prevents default behavior and manages autoscroll for certain edge cases where browser selection would be incorrect.
      */
     const onMouseDown = (e: MouseEvent) => {
+      if (getAutoscrollTechnique() === 'v2') {
+        debugLog(
+          'mousedown.entry',
+          `el=${editableLabel(editable)} editingOrOnCursor=${editingOrOnCursor} isMulticursor=${isMulticursor} active=${editableLabel(document.activeElement)}`,
+        )
+      }
+
       // If CMD/CTRL is pressed, don't focus the editable.
       const isMultiselectClick = isMac ? e.metaKey : e.ctrlKey
       if (isMultiselectClick) {
@@ -161,36 +178,85 @@ const useEditMode = ({
       // If editing or the cursor is on the thought, allow the default browser selection or perform manual caret positioning so the offset is correct.
       // See: #981
       if (editingOrOnCursor && !isMulticursor) {
-        // Prevent the browser from autoscrolling to this editable element.
-        // For some reason doesn't work on touchend.
-        preventAutoscroll(editable, {
-          // about the height of a single-line thought
-          bottomMargin: fontSize * 2,
-        })
+        // A/B toggle for issue #3765 — see src/util/autoscrollTechnique.ts.
+        const technique = getAutoscrollTechnique()
 
-        const { inVoidArea, offset } = getCaretOffset(editable, {
-          clientX: e.clientX,
-          clientY: e.clientY,
-        })
+        if (technique === 'v2') {
+          // v2 strategy for issue #3765:
+          //   1. Dispatch setCursor first — so when focus() below fires Editable.onFocus, its
+          //      setCursorOnThought call sees state.cursor already equal to this path and
+          //      returns early, instead of clobbering cursorOffset to 0.
+          //   2. focusWithoutAutoscroll: preventDefault on mousedown to block native focus
+          //      + native caret positioning; el.focus({ preventScroll: true }) to take focus
+          //      programmatically without triggering iOS autoscroll (the cause of position:fixed
+          //      elements jumping in #3765).
+          //   3. selection.set: place the caret AFTER focus, so iOS doesn't drop our selection
+          //      during the focus transition.
+          const { offset } = getCaretOffset(editable, {
+            clientX: e.clientX,
+            clientY: e.clientY,
+          })
 
-        if (offset !== null) {
-          if (isTouch && isSafari()) {
-            offsetRef.current = offset
-            allowDefaultSelection()
-          } else {
-            setCaretOffset(offset)
+          debugLog(
+            'mousedown',
+            `el=${editableLabel(editable)} active=${editableLabel(document.activeElement)} offset=${offset}`,
+          )
+
+          if (offset !== null) {
+            dispatch(
+              setCursor({
+                path,
+                offset,
+                isKeyboardOpen: true,
+                cursorHistoryClear: true,
+                preserveMulticursor: true,
+              }),
+            )
           }
 
-          // It's important to avoid preventDefault when the tap is somewhere that can be handled by native browser selection behavior.
-          // If the tap is prevented, it will interfere with functionality like double tap or the context menu. If the selection is
-          // truly in a void area, then preventDefault will stop the caret from being placed on the wrong thought.
-          if (inVoidArea) {
-            e.preventDefault()
+          focusWithoutAutoscroll(editable, e)
+
+          debugLog('postFocus', `active=${editableLabel(document.activeElement)} ${selectionSnapshot()}`)
+
+          if (offset !== null) {
+            selection.set(editable, { offset })
+            debugLog('selection.set', `${selectionSnapshot()}`)
           }
         } else {
-          allowDefaultSelection()
+          // v1: existing centering hack. Prevent the browser from autoscrolling to this editable element.
+          // For some reason doesn't work on touchend.
+          preventAutoscroll(editable, {
+            // about the height of a single-line thought
+            bottomMargin: fontSize * 2,
+          })
+
+          const { inVoidArea, offset } = getCaretOffset(editable, {
+            clientX: e.clientX,
+            clientY: e.clientY,
+          })
+
+          if (offset !== null) {
+            if (isTouch && isSafari()) {
+              offsetRef.current = offset
+              allowDefaultSelection()
+            } else {
+              setCaretOffset(offset)
+            }
+
+            // It's important to avoid preventDefault when the tap is somewhere that can be handled by native browser selection behavior.
+            // If the tap is prevented, it will interfere with functionality like double tap or the context menu. If the selection is
+            // truly in a void area, then preventDefault will stop the caret from being placed on the wrong thought.
+            if (inVoidArea) {
+              e.preventDefault()
+            }
+          } else {
+            allowDefaultSelection()
+          }
         }
       } else {
+        if (getAutoscrollTechnique() === 'v2') {
+          debugLog('mousedown.elseBranch', `el=${editableLabel(editable)} (preventDefault, no v2 logic)`)
+        }
         // There are areas on the outside edge of the thought that will fail to trigger onTouchEnd.
         // In those cases, it is best to prevent onFocus or onClick, otherwise keyboard is open will be incorrectly activated.
         // Steps to Reproduce: https://github.com/cybersemics/em/pull/2948#issuecomment-2887186117

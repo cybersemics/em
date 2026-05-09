@@ -12,6 +12,8 @@ import { setDescendantActionCreator as setDescendant } from '../actions/setDesce
 import { setNoteFocusActionCreator as setNoteFocus } from '../actions/setNoteFocus'
 import { toggleNoteActionCreator as toggleNote } from '../actions/toggleNote'
 import { isTouch } from '../browser'
+import focusWithoutAutoscroll from '../device/focusWithoutAutoscroll'
+import getCaretOffset from '../device/getCaretOffset'
 import preventAutoscroll, { preventAutoscrollEnd } from '../device/preventAutoscroll'
 import * as selection from '../device/selection'
 import useFreshCallback from '../hooks/useFreshCallback'
@@ -20,6 +22,7 @@ import noteValue from '../selectors/noteValue'
 import resolveNotePath from '../selectors/resolveNotePath'
 import store from '../stores/app'
 import batchEditingStore from '../stores/batchEditing'
+import { getAutoscrollTechnique } from '../util/autoscrollTechnique'
 import equalPathHead from '../util/equalPathHead'
 import head from '../util/head'
 import strip from '../util/strip'
@@ -150,7 +153,26 @@ const Note = React.memo(
       [dispatch],
     )
 
-    const onMouseDown = useCallback(() => preventAutoscroll(noteRef.current), [noteRef])
+    const onMouseDown = useCallback((e: React.MouseEvent) => {
+      const note = noteRef.current
+      if (!note) return
+
+      // A/B toggle for issue #3765 — see src/util/autoscrollTechnique.ts.
+      if (getAutoscrollTechnique() === 'v2') {
+        // v2: focusWithoutAutoscroll blocks native focus+autoscroll and takes focus programmatically
+        // with preventScroll: true. Note.onFocus then runs and dispatches noteOffset:null +
+        // noteFocus:true, which is fine — Note's selection useEffect bails when noteOffset is null,
+        // so our manual selection.set is left in place.
+        const { offset } = getCaretOffset(note, { clientX: e.clientX, clientY: e.clientY })
+        focusWithoutAutoscroll(note, e.nativeEvent)
+        if (offset !== null) {
+          selection.set(note, { offset })
+        }
+      } else {
+        // v1: existing centering hack.
+        preventAutoscroll(note)
+      }
+    }, [])
 
     const onCopy = useCallback((e: React.ClipboardEvent) => {
       const html = selection.html()

@@ -20,6 +20,7 @@ import isDocumentEditable from '../util/isDocumentEditable'
 import Alert from './Alert'
 import CommandCenter from './CommandCenter/CommandCenter'
 import Content from './Content'
+import DebugAutoscrollToggle from './DebugAutoscrollToggle'
 import DesktopCommandUniverse from './DesktopCommandUniverse'
 import DropGutter from './DropGutter'
 import ErrorMessage from './ErrorMessage'
@@ -174,6 +175,7 @@ const AppComponent: FC = () => {
     >
       <Alert />
       <Tips />
+      {isTouch && <DebugAutoscrollToggle />}
       {!isTouch && <DesktopCommandUniverse />}
       {isTouch && <GestureMenu />}
       <ErrorMessage />
