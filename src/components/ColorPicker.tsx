@@ -3,7 +3,6 @@ import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import { formatSelectionActionCreator as formatSelection } from '../actions/formatSelection'
-import { isTouch } from '../browser'
 import { ColorToken } from '../colors.config'
 import themeColors from '../selectors/themeColors'
 import batchEditingStore from '../stores/batchEditing'
@@ -90,8 +89,8 @@ const ColorSwatch: FC<{
   return (
     <span
       aria-label={label || color || backgroundColor}
-      onClick={isTouch ? undefined : tapUp}
-      onTouchEnd={isTouch ? tapUp : undefined}
+      onClick={tapUp}
+      onTouchEnd={tapUp}
       className={css({ cursor: 'pointer' })}
     >
       {shape === 'bullet' ? (

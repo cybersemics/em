@@ -1,16 +1,47 @@
 import tap from './tap'
 import waitForElement from './waitForElement'
 
-/**
- * Click a node by selector or element with an optional x,y offset.
- * Note: The text character offset option from the Puppeteer version is not supported in WDIO/XCUITest.
- */
-const click = async (selector: string) => {
+export type ClickOptions = {
+  /**
+   * Dispatch `mousedown` / `mouseup` / `click` in the page with `dispatchEvent` instead of WebDriver click.
+   * WebDriver clicks move native focus onto the toolbar or popover, which blurs the note and clears
+   * `noteFocus` before formatting runs. Use on toolbar Text Color and color swatches while editing a note.
+   */
+  preserveActiveFocus?: boolean
+}
+
+/** Click a node by selector or element with synthetic DOM clicks */
+const dispatchSyntheticClick = (sel: string) => {
+  const target = document.querySelector(sel)
+  if (!(target instanceof HTMLElement)) {
+    throw new Error(`preserveActiveFocus: no HTMLElement for selector: ${sel}`)
+  }
+  const o = { bubbles: true, cancelable: true, view: window }
+  target.dispatchEvent(new MouseEvent('mousedown', o))
+  target.dispatchEvent(new MouseEvent('mouseup', o))
+  target.dispatchEvent(new MouseEvent('click', o))
+}
+
+const click = async (selector: string, options: ClickOptions = {}) => {
+  const { preserveActiveFocus = false } = options
   const el = await waitForElement(selector, { timeout: 10000 })
 
   if (!el) throw new Error(`editable node for the given selector(${selector}) not found.`)
 
-  await tap(el)
+  if (preserveActiveFocus) {
+    await browser.execute(dispatchSyntheticClick, selector)
+    return
+  } else {
+    // Prefer WebDriver Element Click for UI controls (menu/toolbar/swatches).
+    // It is more reliable in iOS Safari WebView for dispatching a real DOM click.
+    // Fall back to coordinate tap only when element click fails.
+    try {
+      await el.waitForClickable({ timeout: 10000 })
+      await el.click()
+    } catch {
+      await tap(el)
+    }
+  }
 }
 
 export default click
