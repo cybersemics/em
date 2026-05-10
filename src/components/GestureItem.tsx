@@ -93,9 +93,10 @@ const GestureItem: FC<{
             whiteSpace: 'nowrap',
             color: disabled ? 'gray45' : selected ? '#ffffff' : 'rgba(255, 255, 255, 0.6)',
             fontWeight: selected ? 600 : 500,
-            textShadow: selected
-              ? '0px 0px 24px rgba(255, 255, 255, 0.8), 0px 0px 12px rgba(255, 255, 255, 0.6)'
-              : undefined,
+            textShadow:
+              selected && !disabled
+                ? '0px 0px 24px rgba(255, 255, 255, 0.8), 0px 0px 12px rgba(255, 255, 255, 0.6)'
+                : undefined,
           })}
         >
           {command.label}
