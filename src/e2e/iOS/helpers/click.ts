@@ -10,7 +10,7 @@ export type ClickOptions = {
   preserveActiveFocus?: boolean
 }
 
-/** Click a node by selector or element with synthetic DOM clicks */
+/** Click a node by selector or element with synthetic DOM clicks. */
 const dispatchSyntheticClick = (sel: string) => {
   const target = document.querySelector(sel)
   if (!(target instanceof HTMLElement)) {
@@ -22,6 +22,7 @@ const dispatchSyntheticClick = (sel: string) => {
   target.dispatchEvent(new MouseEvent('click', o))
 }
 
+/** Click a node by selector or element with WebDriver click or synthetic DOM clicks. */
 const click = async (selector: string, options: ClickOptions = {}) => {
   const { preserveActiveFocus = false } = options
   const el = await waitForElement(selector, { timeout: 10000 })
@@ -30,7 +31,6 @@ const click = async (selector: string, options: ClickOptions = {}) => {
 
   if (preserveActiveFocus) {
     await browser.execute(dispatchSyntheticClick, selector)
-    return
   } else {
     // Prefer WebDriver Element Click for UI controls (menu/toolbar/swatches).
     // It is more reliable in iOS Safari WebView for dispatching a real DOM click.
