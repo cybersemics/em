@@ -12,7 +12,7 @@ const click = async (selector: string) => {
     {
       type: 'pointer',
       id: 'finger1',
-      parameters: { pointerType: 'touch' },
+      parameters: { pointerType: 'mouse' },
       actions: [
         { type: 'pointerMove', duration: 0, x: Math.round(centerX), y: Math.round(centerY), origin: 'viewport' },
         { type: 'pointerDown', button: 0 },
