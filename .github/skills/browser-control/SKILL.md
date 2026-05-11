@@ -74,28 +74,38 @@ start_session({
     'appium:automationName': 'XCUITest',
     'appium:deviceName': 'iPhone 15',
     'appium:platformVersion': '17',
-    'appium:newCommandTimeout': 300,
+    'appium:newCommandTimeout': 900,
     'bstack:options': {
       deviceName: 'iPhone 15',
       osVersion: '17',
       realMobile: 'true',
       appiumVersion: '2.0.0',
       local: true,
-      idleTimeout: 300,
+      idleTimeout: 900,
     },
   },
 })
 ```
 
-Both timeouts are set to 300 — the documented maximum for `idleTimeout` on Automate, and a generous ceiling for Appium's `newCommandTimeout`. This is the most BrowserStack will give you before declaring the session idle. To stretch sessions past 300s of agent thinking time, see the heartbeat instruction below.
+Both timeouts are set to **900** — the maximum BrowserStack accepts for `idleTimeout` in practice, with `appium:newCommandTimeout` raised to match so the Appium-side timer doesn't fire before the BrowserStack-side one. The official capabilities reference still documents the range as 0–300 and the timeouts docs page shows `idleTimeout: 350` as an example, so neither page is authoritative; 900 is what works in real sessions. If a session is rejected at `start_session` with a caps validation error, drop back to 600 then 300 and report.
 
-**Start the heartbeat** immediately after `start_session` returns. The wdio MCP's response includes the session ID — capture it and run:
+**Why this matters:** at 300s the session dies whenever the agent thinks for longer than the cap (large diffs, slow tool calls, sequential reads). The session loss is recoverable (see below), but losing the open page mid-investigation also loses any in-app state — created thoughts, cursor position, dismissed modals — and forces a re-navigation and wait-for-mount. 900 gives enough headroom that idle-timeout firing should be rare.
+
+**Start the heartbeat** immediately after `start_session` returns, even though the cap is now 900s. The heartbeat is the safety net: it keeps the session warm in case a single agent turn ever stretches past the cap, and it provides the early-fail signal if the session dies for non-timeout reasons (BrowserStack-side hiccup, network blip). The wdio MCP's response includes the session ID — capture it and run:
 
 ```bash
-.github/skills/browser-control/heartbeat.sh "<session-id>" &
+.github/skills/browser-control/heartbeat.sh "<session-id>"
 ```
 
-The script pings the BrowserStack hub every 240s (under the 300s cap) using the same `BROWSERSTACK_USERNAME` / `BROWSERSTACK_ACCESS_KEY` env vars as the wdio MCP. It self-exits after 3 consecutive failures, so it dies on its own when the session ends — no need to track or kill the PID.
+**Do not** add a trailing `&` — the script self-daemonizes (setsid + nohup) and the foreground call returns immediately with `[heartbeat] launched pid=… log=…`. This is deliberate: a bare `&` from a Bash tool call does **not** survive the tool call's shell exiting; that was the original "heartbeat there but session still died" bug. Trust the daemonized form.
+
+The script pings the BrowserStack hub on launch, then every 240s thereafter, using the same `BROWSERSTACK_USERNAME` / `BROWSERSTACK_ACCESS_KEY` env vars as the wdio MCP. It calls `GET /session/<id>/url`, which is a real W3C WebDriver command and resets both BrowserStack's idle timer and Appium's `newCommandTimeout`. Every ping (success or failure) is logged to `/tmp/heartbeat-<session-id>.log` with a UTC timestamp. The script self-exits after 3 consecutive failures, so it dies on its own when the session ends — no need to track or kill the PID.
+
+**If a session ever dies unexpectedly**, `cat /tmp/heartbeat-<session-id>.log` first. The log distinguishes:
+
+- File missing or only `[heartbeat] launched…` line → the daemon died on launch. Likely env (`BROWSERSTACK_USERNAME` / `BROWSERSTACK_ACCESS_KEY` unset in the daemonized child), or `setsid`/`nohup` unavailable.
+- File ends with periodic `ping ok status=200` lines, last one within ~240s of the session death → BrowserStack killed the session despite an active heartbeat. Not an agent-side bug; check the dashboard for the timeout reason (idle vs. session-limit vs. backend error) and escalate.
+- File shows a run of `ping FAIL status=…` lines ending with `giving up` → session ended before the agent noticed, heartbeat correctly detected and stopped.
 
 - `browserstackLocal: true` is the default for this skill. The wdio MCP launches the BrowserStack Local tunnel binary itself, so the remote device reaches the runner's `localhost:3000` via `bs-local.com:3000`. Without it the device cannot see the dev server.
 - Do **not** call `launch_chrome` — that's for Chrome only.
