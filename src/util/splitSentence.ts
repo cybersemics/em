@@ -206,9 +206,9 @@ const splitSentence = (value: string): SplitResult[] => {
     )
   }
 
-  // pattern1, single symbol: . ; ! ?
+  // pattern1, single symbol: ; ! ? or a period not followed by a digit (excludes decimals like 1.1)
   // pattern2, multiple symbols: ?! !!! ...
-  const mainSplitRegex = /[.;!?]+/g
+  const mainSplitRegex = /[;!?]+|\.(?!\d)/g
 
   const sentenceSplitters = plainValue.match(mainSplitRegex)
 
