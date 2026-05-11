@@ -248,8 +248,8 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
       }}
       onMouseDown={isTouch ? undefined : tapDown}
       onClick={isTouch ? undefined : tapUp}
-      onTouchStart={isTouch ? tapDown : undefined}
-      onTouchEnd={isTouch ? tapUp : undefined}
+      onTouchStart={tapDown}
+      onTouchEnd={tapUp}
     >
       {
         // selected top dash
