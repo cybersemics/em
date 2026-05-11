@@ -8,12 +8,19 @@ const click = async (selector: string) => {
   const centerX = rect.x + rect.width / 2
   const centerY = rect.y + rect.height / 2
 
-  await browser
-    .action('pointer', { parameters: { pointerType: 'touch' } })
-    .move({ x: Math.round(centerX), y: Math.round(centerY), origin: 'viewport' })
-    .down()
-    .up()
-    .perform()
+  await browser.performActions([
+    {
+      type: 'pointer',
+      id: 'finger1',
+      parameters: { pointerType: 'touch' },
+      actions: [
+        { type: 'pointerMove', duration: 0, x: Math.round(centerX), y: Math.round(centerY), origin: 'viewport' },
+        { type: 'pointerDown', button: 0 },
+        { type: 'pause', duration: 100 },
+        { type: 'pointerUp', button: 0 },
+      ],
+    },
+  ])
 }
 
 export default click
