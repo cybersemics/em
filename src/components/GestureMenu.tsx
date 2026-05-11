@@ -41,6 +41,7 @@ const GestureMenu: FC<{
         maxWidth: '100%',
         maxHeight: '100dvh',
         overflow: 'hidden',
+        fontFamily: 'token(fonts.radioCanada)',
       })}
     >
       <div
