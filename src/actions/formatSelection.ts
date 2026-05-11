@@ -1,7 +1,6 @@
 /* eslint-disable import/prefer-default-export */
 import Thunk from '../@types/Thunk'
 import { ColorToken } from '../colors.config'
-import { ALLOWED_ATTR } from '../constants'
 import * as selection from '../device/selection'
 import getThoughtById from '../selectors/getThoughtById'
 import noteValue from '../selectors/noteValue'
@@ -68,82 +67,63 @@ export const formatSelectionActionCreator =
 
     suppressFocusStore.update(false)
 
-    if (command === 'backColor') {
-      if (color === 'bg') {
-        /** Function to check if a style(background) should be removed based on the color and background-color. */
-        const shouldRemoveStyle = (styleString: string) => {
-          const styleLower = styleString.toLowerCase()
-          const colorMatch = styleLower.match(/background-color\s*:\s*([^;]+);?/)
-          const elementColor = colorMatch ? colorMatch[1].trim() : null
-          const isSameColor = elementColor && rgbToHex(elementColor) === rgbToHex(colors.bg)
-          if (elementColor && isSameColor) return true
-          return false
+    if (command === 'backColor' || command === 'foreColor') {
+      dispatch((dispatch, getState) => {
+        const state = getState()
+        if (!state.cursor) return
+
+        // Could be formatting either a thought or a note (#3901)
+        const value = state.noteFocus
+          ? noteValue(state, state.cursor)
+          : getThoughtById(state, head(state.cursor))?.value
+        if (!value) return
+
+        const path = state.noteFocus ? resolveNotePath(state, state.cursor) : state.cursor
+        if (!path) return
+
+        // Use DOMParser to remove background-color and unwrap font/span tags that have no meaningful attributes
+        const doc = new DOMParser().parseFromString(value, 'text/html')
+
+        for (const el of Array.from(doc.body.querySelectorAll<HTMLElement>('font, span'))) {
+          // Remove background-color if it matches the default background color
+          if (el.style.backgroundColor && rgbToHex(el.style.backgroundColor) === rgbToHex(colors.bg)) {
+            el.style.removeProperty('background-color')
+            if (!el.getAttribute('style')?.trim()) {
+              el.removeAttribute('style')
+            }
+          }
+
+          // Remove color if it matches the default text color
+          if (el.style.color && rgbToHex(el.style.color) === rgbToHex(state.noteFocus ? colors.fg : colors.fgNote)) {
+            el.style.removeProperty('color')
+          }
+
+          // Unwrap tags that have no meaningful style or color attributes
+          if (!el.getAttribute('style')?.trim() && !el.getAttribute('color')?.trim()) {
+            el.replaceWith(...Array.from(el.childNodes))
+          }
         }
 
-        /** Function to collect tag names without significant attributes. */
-        const collectTagsWithoutAttributes = (text: string, pattern: RegExp): string[] =>
-          Array.from(text.matchAll(pattern))
-            // Filter out tags that lack meaningful attributes
-            .filter(([, , attributes]) => {
-              const meaningfulAttributes = ALLOWED_ATTR.map(attr => `${attr}=`)
-              // Return true if attributes are absent or do not contain any meaningful attributes
-              return !attributes || !meaningfulAttributes.some(attr => attributes.includes(attr))
-            })
-            // Map to extract the tag names from matches
-            .map(([, tagName]) => tagName)
+        const newValue = doc.body.innerHTML
 
-        /** Function to create a new text string with specified tags and their content removed. */
-        const removeTags = (text: string, tags: string[]): string =>
-          // Use reduce to accumulate a new string without the unwanted tags
-          tags.reduce((acc, tagName) => {
-            const openingTagPattern = new RegExp(`<${tagName}(\\s[^>]*)?>`, 'gi')
-            const closingTagPattern = new RegExp(`</${tagName}>`, 'gi')
-            // Replace both opening and closing tags with an empty string
-            return acc.replace(openingTagPattern, '').replace(closingTagPattern, '')
-          }, text)
-
-        dispatch((dispatch, getState) => {
-          const state = getState()
-          if (!state.cursor) return
-
-          // Could be formatting either a thought or a note (#3901)
-          const value = state.noteFocus
-            ? noteValue(state, state.cursor)
-            : getThoughtById(state, head(state.cursor))?.value
-          if (!value) return
-
-          const path = state.noteFocus ? resolveNotePath(state, state.cursor) : state.cursor
-          if (!path) return
-
-          const styleAttrPattern = /style\s*=\s*["'][^"']*["']/gi
-          const tagWithoutStylePattern = /<(span|font)(\s[^>]*)?>/gi
-
-          //Replace style attributes based on the conditions
-          const styleRemovedThought = value.replace(styleAttrPattern, match => {
-            if (shouldRemoveStyle(match)) return ''
-            return match
-          })
-          const tagsToRemove = collectTagsWithoutAttributes(styleRemovedThought, tagWithoutStylePattern)
-          const newValue = removeTags(styleRemovedThought, tagsToRemove)
-
-          // Overwrite the value of the thought or note with the stripped value in order to remove background highlighting (#3901)
-          if (newValue !== value)
-            dispatch(
-              state.noteFocus
-                ? setDescendant({
-                    path,
-                    values: [newValue],
-                  })
-                : editThought({
-                    cursorOffset: selection.offsetThought() ?? undefined,
-                    oldValue: value,
-                    newValue: newValue,
-                    path: simplifyPath(state, path),
-                    // force the ContentEditable to update
-                    force: true,
-                  }),
-            )
-        })
-      }
+        // Overwrite the value of the thought or note with the stripped value in order to remove background highlighting (#3901)
+        if (newValue !== value)
+          dispatch(
+            state.noteFocus
+              ? setDescendant({
+                  path,
+                  values: [newValue],
+                })
+              : editThought({
+                  cursorOffset: selection.offsetThought() ?? undefined,
+                  oldValue: value,
+                  newValue: newValue,
+                  path: simplifyPath(state, path),
+                  // force the ContentEditable to update
+                  force: true,
+                  mergePrev: true,
+                }),
+          )
+      })
     }
   }
