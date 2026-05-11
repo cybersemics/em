@@ -106,6 +106,8 @@ const ContentEditable = React.memo(
         onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
           if (props.onKeyDown) props.onKeyDown(e)
         }}
+        onTouchStart={() => console.info('ContentEditable onTouchStart')}
+        onTouchEnd={() => console.info('ContentEditable onTouchEnd')}
       />
     )
   },

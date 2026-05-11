@@ -710,6 +710,8 @@ const Editable = ({
       // unless it is given a hint that the element is some sort of form control
       role='button'
       style={style}
+      onTouchStart={() => console.info('Editable onTouchStart')}
+      onTouchEnd={() => console.info('Editable onTouchEnd')}
     />
   )
 }
