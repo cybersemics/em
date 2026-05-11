@@ -199,13 +199,14 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
   )
 
   useEffect(() => {
+    const buttonEl = buttonRef.current
     buttonRef.current?.addEventListener('touchstart', tapDown)
     buttonRef.current?.addEventListener('touchend', tapUp)
     return () => {
-      buttonRef.current?.removeEventListener('touchstart', tapDown)
-      buttonRef.current?.removeEventListener('touchend', tapUp)
+      buttonEl?.removeEventListener('touchstart', tapDown)
+      buttonEl?.removeEventListener('touchend', tapUp)
     }
-  }, [])
+  }, [tapDown, tapUp])
   return (
     <div
       {...longPress.props}
