@@ -120,7 +120,24 @@ If the wdio MCP is not available in this environment, stop and report back to th
 
 ### If the session terminates mid-run
 
-If a tool call fails with `Session not started or terminated when running "execute/sync"` (or similar), the BrowserStack session ended — typically because the agent thought for longer than the idle window, or because of a transient backend hiccup. **This is recoverable, not a sign that the wdio MCP is broken.** Call `start_session` again with the same caps, restart the heartbeat with the new session ID, re-run Step 2 (navigate + wait-for-mount), and continue. Do not switch MCPs — wdio is the only path to real iOS Safari, and chrome-devtools / playwright cannot reach this session.
+If a tool call fails with `Session not started or terminated when running "execute/sync"` (or similar), the BrowserStack session ended — typically because the agent thought for longer than the idle window, or because of a transient backend hiccup. **This is recoverable, not a sign that the wdio MCP is broken.**
+
+**Before** doing anything else (no investigation, no re-`start_session`, no MCP switching), you MUST capture the heartbeat log for the dead session and surface it in your output. This is the only diagnostic signal available inside a Copilot cloud agent run — there is no other way to tell why the session died after the fact:
+
+```bash
+echo "=== heartbeat log for dead session <OLD_SESSION_ID> ==="
+cat "/tmp/heartbeat-<OLD_SESSION_ID>.log" 2>&1 || echo "(log file missing)"
+echo "=== end heartbeat log ==="
+```
+
+Substitute `<OLD_SESSION_ID>` with the session ID you captured after the original `start_session`. Run this **as a Bash tool call** so its full output lands in the transcript — do not summarize it from memory. Then classify what the log shows using the three buckets in the heartbeat section above (file missing → daemon died on launch; trails `ping ok` near the death timestamp → BrowserStack-side kill; ends in `ping FAIL` + `giving up` → session died and heartbeat noticed). State which bucket fired in one line so a human reading the transcript later can pick up immediately.
+
+Only **after** the log has been printed and classified, recover:
+
+1. Call `start_session` again with the same caps.
+2. Restart the heartbeat with the **new** session ID — the previous daemon has already self-exited (or will once it hits 3 fails).
+3. Re-run Step 2 (navigate + wait-for-mount).
+4. Continue from where you were. Do not switch MCPs — wdio is the only path to real iOS Safari, and chrome-devtools / playwright cannot reach this session.
 
 ---
 
