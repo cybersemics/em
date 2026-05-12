@@ -115,11 +115,19 @@ export const formatSelectionActionCreator =
           const path = state.noteFocus ? resolveNotePath(state, state.cursor) : state.cursor
           if (!path) return
 
+          // Read the current DOM value instead of the potentially stale Redux state value. After execCommand
+          // runs, the DOM is immediately updated but the Redux state may not yet reflect the change due to
+          // throttled updates. Reading from the DOM ensures we correctly identify background-color: colors.bg
+          // artifacts left by execCommand, even when the state still has a custom background color from a
+          // previous application. This prevents a nested structure bug where the cleanup only removes the outer
+          // colors.bg artifact but misses the inner custom background from a re-applied color. (#4050)
+          const currentHtml = contentEditable?.innerHTML ?? value
+
           const styleAttrPattern = /style\s*=\s*["'][^"']*["']/gi
           const tagWithoutStylePattern = /<(span|font)(\s[^>]*)?>/gi
 
           //Replace style attributes based on the conditions
-          const styleRemovedThought = value.replace(styleAttrPattern, match => {
+          const styleRemovedThought = currentHtml.replace(styleAttrPattern, match => {
             if (shouldRemoveStyle(match)) return ''
             return match
           })
