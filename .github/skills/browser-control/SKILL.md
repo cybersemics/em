@@ -177,27 +177,6 @@ execute_script(() => new Promise(resolve => {
 
 If the script returns `false`, drain `window.__drainiOSConsoleLogs__()` and check the dev server log before retrying — the page is genuinely stuck, not just slow.
 
-**Reading return values from `execute_script` on iOS.** The wdio MCP's `execute_script` does not reliably surface a user script's return value through this Appium/BrowserStack iOS stack — even a one-line arrow-function predicate like `() => document.body.innerHTML.includes('editable')` shows up as "Script executed successfully (no return value)". Treat `execute_script` as fire-and-forget for values on iOS, and route results through the console proxy: have the script `console.log` its result with a sentinel marker, then drain the buffer to read it.
-
-```ts
-// Instead of: execute_script(() => document.body.innerHTML.includes('editable'))
-execute_script(() => {
-  const result = document.body.innerHTML.includes('editable')
-  console.log('__SCRIPT_RESULT__', JSON.stringify(result))
-})
-// Then read it back:
-execute_script(() => window.__drainiOSConsoleLogs__())
-// Find the entry whose message starts with '__SCRIPT_RESULT__ ' and JSON.parse the remainder.
-```
-
-A few notes:
-
-- Always `JSON.stringify` the value — even primitives — so the parse round-trip is uniform across booleans, numbers, strings, and objects. The proxy already JSON-stringifies non-string `console.log` args (see `src/util/iOSConsoleProxy.ts`), but stringifying yourself keeps the on-the-wire shape explicit and the parse step trivial.
-- Apply this for **any** value you need back from the page: predicates, DOM queries (count of editable thoughts, current cursor path), state probes, error checks. Don't wait until you've already burned a round-trip on "(no return value)" to switch patterns.
-- If multiple scripts run before you drain, each emits its own marker line — use distinct markers (`__VISIBLE__`, `__CURSOR__`, …) or include an index, so the parse step doesn't have to guess.
-- The drain call itself (`execute_script(() => window.__drainiOSConsoleLogs__())`) does return the buffer back through the MCP — that path is reliable because the wdio MCP serializes the returned array. The unreliable case is user code expecting its own return value to surface; the proxy lets you sidestep it.
-- For async work (e.g. polling like the wait-for-mount predicate above), do the same: `console.log` the final marker inside the `resolve(...)` callback rather than relying on the resolved Promise value reaching the MCP.
-
 **Drain the console at meaningful checkpoints** — after every `tap_element`, `swipe`, or any action whose effect isn't directly visible — by calling `execute_script(() => window.__drainiOSConsoleLogs__())`. Gesture-detector warnings, network errors, and React warnings live there and would otherwise be invisible to the agent. Before assuming a tap or swipe didn't register, drain first; the answer is often in the buffer.
 
 **Expect HMR reloads when you edit source files.** Vite's hot-module-replacement reloads the page on the iOS device whenever a watched source file changes. The console proxy reinstalls automatically on reload (it's wired into `src/initialize.ts`), but **in-memory app state is gone** — any thoughts you created, cursor positions, modal dismissals, etc. will be reset. After editing source mid-session, re-run the wait-for-mount predicate and re-create any in-app state you need before continuing. Don't conclude HMR is broken just because the page looks different than you left it — that's the reload doing its job.
