@@ -1,6 +1,5 @@
 import { FC, PropsWithChildren } from 'react'
 import { css, cx } from '../../styled-system/css'
-import { multilineRecipe } from '../../styled-system/recipes'
 import { SystemStyleObject } from '../../styled-system/types'
 import { MIN_CONTENT_WIDTH_EM } from '../constants'
 import isAttribute from '../util/isAttribute'
@@ -27,7 +26,6 @@ const ThoughtAnnotationWrapper: FC<
 > = ({
   cursorOverlay,
   ellipsizedUrl,
-  multiline,
   value,
   styleAnnotation,
   cssRaw,
@@ -66,7 +64,6 @@ const ThoughtAnnotationWrapper: FC<
       <div
         className={
           cx(
-            multiline ? multilineRecipe() : null,
             css({
               ...(value &&
                 isAttribute(value) && {
@@ -84,7 +81,7 @@ const ThoughtAnnotationWrapper: FC<
                   This margin should match the margin set in editableRecipe (#3353).
                 */
               margin: '-0.5px calc(18px - 1em) 0 calc(1em - 18px)',
-              paddingRight: multiline ? '1em' : '0.333em',
+              paddingRight: '0.333em',
               textAlign: isTableCol1 ? 'right' : 'left',
             }),
           )
