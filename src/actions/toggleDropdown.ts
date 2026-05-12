@@ -26,13 +26,25 @@ const DROPDOWN_STATE_KEYS: Record<DropdownType, DropdownStateKeys> = {
 /**
  * Toggle a specific dropdown and close all others.
  * If no dropdown type is provided, all dropdowns will be closed.
+ * The commandCenter is not in a mutually exclusive relationship with the toolbar dropdowns
+ * (colorPicker, letterCase, sortPicker, undoSlider); they can be open at the same time.
  */
 const toggleDropdown = (state: State, { dropDownType, value }: { dropDownType?: DropdownType; value?: boolean }) => {
   const dropdownStates = Object.fromEntries(
-    Object.entries(DROPDOWN_STATE_KEYS).map(([type, stateKey]) => [
-      stateKey,
-      dropDownType === type ? (value ?? !state[stateKey as keyof State]) : false,
-    ]),
+    Object.entries(DROPDOWN_STATE_KEYS).map(([type, stateKey]) => {
+      // commandCenter is not mutually exclusive with other dropdowns; preserve its state when
+      // toggling a toolbar dropdown, and preserve other dropdowns' states when toggling commandCenter.
+      const isCommandCenterIndependent =
+        dropDownType !== undefined && (type === 'commandCenter' || dropDownType === 'commandCenter')
+      return [
+        stateKey,
+        dropDownType === type
+          ? (value ?? !state[stateKey as keyof State])
+          : isCommandCenterIndependent
+            ? (state[stateKey as keyof State] as boolean)
+            : false,
+      ]
+    }),
   )
 
   return reducerFlow([
