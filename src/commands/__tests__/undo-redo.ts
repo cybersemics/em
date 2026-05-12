@@ -6,12 +6,14 @@ import { importTextActionCreator as importText } from '../../actions/importText'
 import { indentActionCreator as indent } from '../../actions/indent'
 import { moveThoughtDownActionCreator as moveThoughtDown } from '../../actions/moveThoughtDown'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
+import { setDescendantActionCreator as setDescendant } from '../../actions/setDescendant'
 import { undoActionCreator as undo } from '../../actions/undo'
 import { executeCommandWithMulticursor } from '../../commands'
 import moveThoughtDownCommand from '../../commands/moveThoughtDown'
 import { HOME_TOKEN } from '../../constants'
 import { initialize } from '../../initialize'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
+import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
 import { getLexeme } from '../../selectors/getLexeme'
 import store from '../../stores/app'
@@ -492,6 +494,61 @@ describe('grouping', () => {
   - B`
 
     expect(exported).toEqual(expectedOutput)
+  })
+
+  it('contiguous edits to notes should be grouped', () => {
+    store.dispatch(
+      importText({
+        text: `
+        - A
+          - =note
+            - note`,
+      }),
+    )
+
+    const notePath = contextToPath(store.getState(), ['A', '=note'])!
+
+    store.dispatch([
+      setDescendant({ path: notePath, values: ['note text'] }),
+      setDescendant({ path: notePath, values: ['note text here'] }),
+      undo(),
+    ])
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toEqual(`- ${HOME_TOKEN}
+  - A
+    - =note
+      - note`)
+  })
+
+  it('adding foreColor and backColor to note should be grouped', () => {
+    store.dispatch(
+      importText({
+        text: `
+        - A
+          - =note
+            - note`,
+      }),
+    )
+
+    const notePath = contextToPath(store.getState(), ['A', '=note'])!
+
+    store.dispatch([
+      setDescendant({ path: notePath, values: ['<font color="#000000">note</font>'] }),
+      setDescendant({
+        path: notePath,
+        values: ['<font color="#000000" style="background-color: rgb(0, 214, 136);">note</font>'],
+      }),
+      undo(),
+    ])
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toEqual(`- ${HOME_TOKEN}
+  - A
+    - =note
+      - note`)
   })
 
   it('contiguous edit additions should should not be grouped with deletions', () => {
