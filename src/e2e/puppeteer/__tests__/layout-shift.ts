@@ -10,6 +10,9 @@ vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
 const Y_TOLERANCE = 0.5
 
+/** One CDP round-trip so a prior `page.evaluate` (e.g. `measureYShift`) has run before keyboard/DOM actions (CI ordering). */
+const yieldForPendingEvaluate = () => page.evaluate(() => undefined)
+
 type YShiftResult = {
   /** The value of the thought whose y position is being measured. */
   thoughtValue: string
@@ -60,7 +63,12 @@ const measureYShift = (thoughtValue: string, { settleMs = 500 }: { settleMs?: nu
             if (!target && m.type === 'childList') {
               for (const n of Array.from(m.addedNodes)) {
                 if (!(n instanceof Element)) continue
-                const treeNode = Array.from(n.querySelectorAll('[data-editable]'))
+                // querySelectorAll is descendants-only; `n` may be the editable or an ancestor wrapper (e.g. transition span).
+                const editables: Element[] = [
+                  ...(n.matches('[data-editable]') ? [n] : []),
+                  ...Array.from(n.querySelectorAll('[data-editable]')),
+                ]
+                const treeNode = editables
                   .find(el => (el.textContent ?? '').trim() === thoughtValue)
                   ?.closest('[aria-label="tree-node"]') as HTMLElement | null
                 if (treeNode) {
@@ -100,7 +108,7 @@ const measureYShift = (thoughtValue: string, { settleMs = 500 }: { settleMs?: nu
       }),
     thoughtValue,
     settleMs,
-    8000,
+    12_000,
   )
 
 /** Expect the y position of the thought to be stable within the tolerance. */
@@ -120,6 +128,7 @@ describe('thought y position stability', { retry: 3 }, () => {
     await waitForEditable('a')
 
     const measurePromise = measureYShift('')
+    await yieldForPendingEvaluate()
     await press('Enter')
     expectStableY(await measurePromise)
   })
@@ -133,6 +142,7 @@ describe('thought y position stability', { retry: 3 }, () => {
     await clickThought('a')
 
     const measurePromise = measureYShift('')
+    await yieldForPendingEvaluate()
     await press('Enter')
     expectStableY(await measurePromise)
   })
@@ -148,6 +158,7 @@ describe('thought y position stability', { retry: 3 }, () => {
     await press('Escape')
 
     const measurePromise = measureYShift('c')
+    await yieldForPendingEvaluate()
     await clickThought('b')
     expectStableY(await measurePromise)
   })
