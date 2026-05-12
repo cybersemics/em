@@ -7,6 +7,8 @@ import ActionType from './ActionType'
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 interface ExtendedOperation<T = any> extends GetOperation<T> {
   actions: ActionType[]
+  /** True if the patch represents a formatting-only edit (the plain text content is unchanged but the HTML markup differs, e.g. bold, italic, text color). Used by undoReducer to avoid erroneously grouping the patch with a preceding newThought and deleting the thought. */
+  isFormatting?: boolean
 }
 
 type Patch = ExtendedOperation[]
