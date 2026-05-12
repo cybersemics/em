@@ -42,6 +42,7 @@ const urlLinkStyle = css({
   display: 'inline-block',
   overflow: 'hidden',
   position: 'relative',
+  top: '0.375em',
   zIndex: 'thoughtAnnotationLink',
   marginLeft: 3,
   textDecoration: 'none',

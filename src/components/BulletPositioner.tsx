@@ -326,7 +326,6 @@ const BulletPositioner = forwardRef<SVGSVGElement, PropsWithChildren<BulletPosit
           }),
         )}
         style={{
-          top: -extendClickHeight,
           left: -extendClickWidth + marginLeft,
           paddingTop: extendClickHeight,
           paddingLeft: extendClickWidth,
