@@ -18,7 +18,7 @@ import { commandById, executeCommand } from './commands'
 import getLexemeHelper from './data-providers/data-helpers/getLexeme'
 import { initPermissionsStore } from './data-providers/permissionsStore'
 import { clientIdReady } from './data-providers/thoughtspaceSession'
-import { dumpTreecrdt } from './data-providers/treecrdt/debug'
+import { dumpTreecrdt, treeFromJson } from './data-providers/treecrdt/debug'
 import {
   applyMaterializedThoughtsToStore,
   tryStartTreecrdtWebSocketSyncFromEnv as tryStartTreecrdtWebSocketSync,
@@ -244,11 +244,23 @@ const windowEm = {
   testHelpers,
   thoughtToContext: withState((state: State, thoughtId: ThoughtId) => thoughtToContext(state, thoughtId)),
   treecrdtClient: getTreecrdtClient,
+  treecrdtNodeCount: async () => {
+    try {
+      return await getTreecrdtClient().tree.nodeCount()
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      if (msg.includes('not initialized')) {
+        console.warn('TreeCRDT not initialized (test mode?)')
+        return 0
+      }
+      throw err
+    }
+  },
   dumpTreecrdt: async (opts?: { includeTombstones?: boolean }) => {
     try {
       const rows = await dumpTreecrdt(opts)
 
-      console.table(rows) // eslint-disable-line no-console -- window.em.dumpTreecrdt devtools
+      console.table(rows)
       return rows
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
@@ -258,6 +270,19 @@ const windowEm = {
         throw err
       }
       return []
+    }
+  },
+  treeFromJson: async () => {
+    try {
+      return await treeFromJson()
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      if (msg.includes('not initialized')) {
+        console.warn('TreeCRDT not initialized (test mode?)')
+      } else {
+        throw err
+      }
+      return null
     }
   },
 }

@@ -40,6 +40,12 @@ export function decodeThoughtPayload(bytes: Uint8Array): ThoughtPayload {
 
 let replicaId: Uint8Array | null = null
 
+/** Session replica identity (passed to `init`); minted ops use this for correct CRDT attribution. */
+export function getThoughtspaceReplicaId(): Uint8Array {
+  if (!replicaId) throw new Error('TreeCRDT DataProvider: init not called')
+  return replicaId
+}
+
 /** Fetches a thought by ID from the tree. */
 const getThoughtById = async (id: ThoughtId): Promise<Thought | undefined> => {
   const client = getTreecrdtClient()
