@@ -10,8 +10,29 @@ vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
 const Y_TOLERANCE = 0.5
 
-/** One CDP round-trip so a prior `page.evaluate` (e.g. `measureYShift`) has run before keyboard/DOM actions (CI ordering). */
-// const yieldForPendingEvaluate = () => page.evaluate(() => undefined)
+/**
+ * Puppeteer communicates with Chrome using the Chrome DevTools Protocol (CDP).
+ * Each awaited `page.*` call is effectively a browser round trip:
+ * Node sends a command → Chrome executes it → Node waits for the response.
+ *
+ * In `measureYShift`, `page.evaluate()` is used to register a
+ * `MutationObserver` that waits for DOM changes. However, starting
+ * `page.evaluate()` only queues the work in Chrome, it does not guarantee
+ * the observer has already been registered.
+ *
+ * If a `press()` or `click()` happens immediately after, Chrome may process
+ * the input before the observer is ready, especially under load (e.g. CI).
+ * In that case, the new node mounts before anything is listening for it,
+ * causing the observer to miss the change and eventually timeout.
+ *
+ * Awaiting a trivial `page.evaluate()` afterward acts as a synchronization
+ * point. It forces another completed browser round trip, making it far more
+ * likely that the observer is registered before the following input event.
+ *
+ * In short: this avoids a race condition where the input can happen before
+ * the observer starts listening.
+ */
+const yieldForPendingEvaluate = () => page.evaluate(() => undefined)
 
 type YShiftResult = {
   /** The value of the thought whose y position is being measured. */
@@ -128,7 +149,7 @@ describe('thought y position stability', { retry: 3 }, () => {
     await waitForEditable('a')
 
     const measurePromise = measureYShift('')
-    // await yieldForPendingEvaluate()
+    await yieldForPendingEvaluate()
     await press('Enter')
     expectStableY(await measurePromise)
   })
@@ -142,7 +163,7 @@ describe('thought y position stability', { retry: 3 }, () => {
     await clickThought('a')
 
     const measurePromise = measureYShift('')
-    // await yieldForPendingEvaluate()
+    await yieldForPendingEvaluate()
     await press('Enter')
     expectStableY(await measurePromise)
   })
@@ -158,7 +179,7 @@ describe('thought y position stability', { retry: 3 }, () => {
     await press('Escape')
 
     const measurePromise = measureYShift('c')
-    // await yieldForPendingEvaluate()
+    await yieldForPendingEvaluate()
     await clickThought('b')
     expectStableY(await measurePromise)
   })
