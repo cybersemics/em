@@ -259,7 +259,7 @@ const windowEm = {
   dumpTreecrdt: async (opts?: { includeTombstones?: boolean }) => {
     try {
       const rows = await dumpTreecrdt(opts)
-
+      // eslint-disable-next-line no-console
       console.table(rows)
       return rows
     } catch (err) {
