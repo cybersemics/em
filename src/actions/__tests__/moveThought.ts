@@ -3,7 +3,6 @@ import importText from '../../actions/importText'
 import newSubthought from '../../actions/newSubthought'
 import newThought from '../../actions/newThought'
 import { HOME_TOKEN } from '../../constants'
-import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
 import getContexts from '../../selectors/getContexts'
@@ -12,7 +11,7 @@ import getRankAfter from '../../selectors/getRankAfter'
 import pathToThought from '../../selectors/pathToThought'
 import checkDataIntegrity from '../../test-helpers/checkDataIntegrity'
 import contextToThought from '../../test-helpers/contextToThought'
-import expectThoughtValuesInOrder from '../../test-helpers/expectThoughtValuesInOrder'
+import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
 import getChildrenRankedByContext from '../../test-helpers/getChildrenRankedByContext'
 import moveThoughtAtFirstMatch from '../../test-helpers/moveThoughtAtFirstMatch'
@@ -195,7 +194,7 @@ it('moving cursor thought should update cursor', () => {
 
   const stateNew = reducerFlow(steps)(initialState())
 
-  expectThoughtValuesInOrder(childIdsToThoughts(stateNew, stateNew.cursor!), ['a', 'a2'])
+  expectPathToEqual(stateNew, stateNew.cursor, ['a', 'a2'])
 })
 
 it('moving ancestor of cursor should update cursor', () => {
@@ -213,9 +212,7 @@ it('moving ancestor of cursor should update cursor', () => {
 
   const stateNew = reducerFlow(steps)(initialState())
 
-  const thoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
-
-  expectThoughtValuesInOrder(thoughts, ['b', 'b1', 'b1.1'])
+  expectPathToEqual(stateNew, stateNew.cursor, ['b', 'b1', 'b1.1'])
 })
 
 it('moving unrelated thought should not update cursor', () => {
@@ -234,7 +231,7 @@ it('moving unrelated thought should not update cursor', () => {
 
   const stateNew = reducerFlow(steps)(initialState())
 
-  expectThoughtValuesInOrder(childIdsToThoughts(stateNew, stateNew.cursor!), ['a'])
+  expectPathToEqual(stateNew, stateNew.cursor, ['a'])
 })
 
 it('move root thought into another root thought', () => {

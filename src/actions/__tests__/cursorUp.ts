@@ -8,13 +8,11 @@ import toggleContextView from '../../actions/toggleContextView'
 import toggleHiddenThoughts from '../../actions/toggleHiddenThoughts'
 import { executeCommand } from '../../commands'
 import newSubthoughtTopCommand from '../../commands/newSubthoughtTop'
-import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import contextToPath from '../../selectors/contextToPath'
 import isContextViewActive from '../../selectors/isContextViewActive'
 import prevThought from '../../selectors/prevThought'
 import store from '../../stores/app'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
-import expectThoughtValuesInOrder from '../../test-helpers/expectThoughtValuesInOrder'
 import initStore from '../../test-helpers/initStore'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import { setCursorFirstMatchActionCreator as setCursorAction } from '../../test-helpers/setCursorFirstMatch'
@@ -55,9 +53,7 @@ describe('normal view', () => {
 
     const stateNew = reducerFlow(steps)(initialState())
 
-    const thoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
-
-    expectThoughtValuesInOrder(thoughts, ['a', '=test'])
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', '=test'])
   })
 
   it('move cursor from first child to parent', () => {

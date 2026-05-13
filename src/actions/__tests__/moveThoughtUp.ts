@@ -1,7 +1,6 @@
 import { HOME_TOKEN } from '../../constants'
-import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import exportContext from '../../selectors/exportContext'
-import expectThoughtValuesInOrder from '../../test-helpers/expectThoughtValuesInOrder'
+import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
@@ -179,7 +178,5 @@ it('move cursor thought should update cursor', () => {
 
   const stateNew = reducerFlow(steps)(initialState())
 
-  const thoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
-
-  expectThoughtValuesInOrder(thoughts, ['a', 'a2'])
+  expectPathToEqual(stateNew, stateNew.cursor, ['a', 'a2'])
 })

@@ -2,7 +2,6 @@ import importText from '../../actions/importText'
 import newSubthought from '../../actions/newSubthought'
 import newThought from '../../actions/newThought'
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
-import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import contextToThoughtId from '../../selectors/contextToThoughtId'
 import exportContext from '../../selectors/exportContext'
 import getContexts from '../../selectors/getContexts'
@@ -12,7 +11,6 @@ import checkDataIntegrity from '../../test-helpers/checkDataIntegrity'
 import contextToThought from '../../test-helpers/contextToThought'
 import editThought from '../../test-helpers/editThoughtByContext'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
-import expectThoughtValuesInOrder from '../../test-helpers/expectThoughtValuesInOrder'
 import getAllChildrenAsThoughtsByContext from '../../test-helpers/getAllChildrenAsThoughtsByContext'
 import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
 import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
@@ -189,9 +187,7 @@ it('move cursor to existing meta programming thought if any', () => {
       - color
         - lightblue`)
 
-  const cursorThoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
-
-  expectThoughtValuesInOrder(cursorThoughts, ['a', '=style'])
+  expectPathToEqual(stateNew, stateNew.cursor, ['a', '=style'])
 })
 
 it('edit a thought that exists in another context', () => {
