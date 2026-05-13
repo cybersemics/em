@@ -11,7 +11,7 @@ vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 const Y_TOLERANCE = 0.5
 
 /** One CDP round-trip so a prior `page.evaluate` (e.g. `measureYShift`) has run before keyboard/DOM actions (CI ordering). */
-const yieldForPendingEvaluate = () => page.evaluate(() => undefined)
+// const yieldForPendingEvaluate = () => page.evaluate(() => undefined)
 
 type YShiftResult = {
   /** The value of the thought whose y position is being measured. */
@@ -128,7 +128,7 @@ describe('thought y position stability', { retry: 3 }, () => {
     await waitForEditable('a')
 
     const measurePromise = measureYShift('')
-    await yieldForPendingEvaluate()
+    // await yieldForPendingEvaluate()
     await press('Enter')
     expectStableY(await measurePromise)
   })
@@ -142,7 +142,7 @@ describe('thought y position stability', { retry: 3 }, () => {
     await clickThought('a')
 
     const measurePromise = measureYShift('')
-    await yieldForPendingEvaluate()
+    // await yieldForPendingEvaluate()
     await press('Enter')
     expectStableY(await measurePromise)
   })
@@ -158,7 +158,7 @@ describe('thought y position stability', { retry: 3 }, () => {
     await press('Escape')
 
     const measurePromise = measureYShift('c')
-    await yieldForPendingEvaluate()
+    // await yieldForPendingEvaluate()
     await clickThought('b')
     expectStableY(await measurePromise)
   })
