@@ -129,7 +129,7 @@ const measureYShift = (thoughtValue: string, { settleMs = 500 }: { settleMs?: nu
       }),
     thoughtValue,
     settleMs,
-    12_000,
+    8000,
   )
 
 /** Expect the y position of the thought to be stable within the tolerance. */
