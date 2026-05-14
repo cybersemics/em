@@ -1,6 +1,7 @@
 import { KnownDevices } from 'puppeteer'
 import newThoughtCommand from '../../../commands/newThought'
 import clickThought from '../helpers/clickThought'
+import emulate from '../helpers/emulate'
 import exportThoughts from '../helpers/exportThoughts'
 import gesture from '../helpers/gesture'
 import getEditingText from '../helpers/getEditingText'
@@ -33,7 +34,7 @@ it('Re-render cursor thought on undo', async () => {
 
 // We have to test this in puppeteer because chained commands are executed as separate commands at a higher level than action-creators and undone with an ad hoc mergeUndo property on the action.
 it('Undo Select All + Categorize chained command in one step', async () => {
-  await page.emulate(KnownDevices['iPhone 15 Pro'])
+  await emulate(KnownDevices['iPhone 15 Pro'])
 
   // create thoughts a, b, c
   await gesture(newThoughtCommand)

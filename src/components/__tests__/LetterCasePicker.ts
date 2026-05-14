@@ -20,7 +20,7 @@ it('Set Lower Case to the current thought', async () => {
   const state = store.getState()
 
   const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
-  expect(exported).toEqual(`- __ROOT__
+  expect(exported).toEqual(`- ${HOME_TOKEN}
   - hello everyone, this is rose. thanks for your help.`)
 })
 
@@ -34,7 +34,7 @@ it('Set Upper Case to the current thought', async () => {
   const state = store.getState()
 
   const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
-  expect(exported).toEqual(`- __ROOT__
+  expect(exported).toEqual(`- ${HOME_TOKEN}
   - HELLO EVERYONE, THIS IS ROSE. THANKS FOR YOUR HELP.`)
 })
 
@@ -48,7 +48,7 @@ it('Set Sentence Case to the current thought', async () => {
   const state = store.getState()
 
   const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
-  expect(exported).toEqual(`- __ROOT__
+  expect(exported).toEqual(`- ${HOME_TOKEN}
   - Hello everyone, this is rose. Thanks for your help.`)
 })
 
@@ -62,6 +62,6 @@ it('Set Title Case to the current thought', async () => {
   const state = store.getState()
 
   const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
-  expect(exported).toEqual(`- __ROOT__
+  expect(exported).toEqual(`- ${HOME_TOKEN}
   - Hello Everyone, This Is Rose. Thanks for Your Help.`)
 })

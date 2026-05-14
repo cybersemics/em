@@ -1,5 +1,6 @@
 import { JSHandle } from 'puppeteer'
 import { page } from '../setup'
+import waitForEmIdle from './waitForEmIdle'
 import waitForSelector from './waitForSelector'
 
 interface Options {
@@ -36,7 +37,9 @@ const click = async (
 
   // if nodeHandleOrSelector is a selector and there is no text offset or x,y offset, simply call page.click or page.tap without having to fetch the bounding box and click on specific coordinates
   if (typeof nodeHandleOrSelector === 'string' && !offset && !x && !y) {
-    return page[isMobile ? 'tap' : 'click'](nodeHandleOrSelector)
+    await page[isMobile ? 'tap' : 'click'](nodeHandleOrSelector)
+    await waitForEmIdle()
+    return
   }
 
   const boundingBox = await nodeHandle?.boundingBox()
@@ -71,6 +74,7 @@ const click = async (
   if (!coordinate) throw new Error('Coordinate not found.')
 
   await page.mouse.click(coordinate.x + x, coordinate.y + y)
+  await waitForEmIdle()
 }
 
 export default click

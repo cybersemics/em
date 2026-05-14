@@ -8,6 +8,7 @@ import ThoughtId from '../@types/ThoughtId'
 import { CACHED_SETTINGS, EM_TOKEN } from '../constants'
 import { pushTreecrdtLocalOpsToRemote } from '../data-providers/treecrdt/sync'
 import db from '../data-providers/treecrdt/thoughtspace'
+import { withTreecrdtWriteBarrier } from '../data-providers/treecrdt/writeBarrier'
 import contextToThoughtId from '../selectors/contextToThoughtId'
 import { getChildrenRanked } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
@@ -106,7 +107,7 @@ const pushQueue: StoreEnhancer<any> =
           }
         }
 
-        applyDbQueue().then(() => {
+        withTreecrdtWriteBarrier(applyDbQueue).then(() => {
           dbQueue?.forEach(batch => batch.idbSynced?.())
         })
       }

@@ -1,8 +1,7 @@
-import { WindowEm } from '../../../initialize'
+import type { WindowEm } from '../../../initialize'
 import sleep from '../../../util/sleep'
 import { page } from '../setup'
-
-const em = window.em as WindowEm
+import waitForEmIdle from './waitForEmIdle'
 
 /** Set color theme to light or dark by directly dispatching settings action. */
 const setTheme = async (theme: 'Light' | 'Dark'): Promise<void> => {
@@ -10,8 +9,10 @@ const setTheme = async (theme: 'Light' | 'Dark'): Promise<void> => {
   await sleep(200)
 
   await page.evaluate(theme => {
+    const em = window.em as WindowEm
     em.store.dispatch({ type: 'settings', key: 'Theme', value: theme })
   }, theme)
+  await waitForEmIdle()
 
   // TODO
   // Waiting for requestAnimationFrame does not fix the issue.

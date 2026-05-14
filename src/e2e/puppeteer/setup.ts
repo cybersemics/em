@@ -1,6 +1,7 @@
 /* eslint-disable import/prefer-default-export */
 import chalk from 'chalk'
 import { Browser, BrowserContext, ConsoleMessage, Device, Page } from 'puppeteer'
+import waitForAppReady from './helpers/waitForAppReady'
 
 // eslint-disable-next-line @typescript-eslint/no-namespace, @typescript-eslint/prefer-namespace-keyword
 declare module global {
@@ -9,6 +10,7 @@ declare module global {
 
 export let page: Page
 let context: BrowserContext
+let sessionCounter = 0
 
 /** Opens em in a new incognito window in Puppeteer. */
 const setup = async ({
@@ -35,6 +37,19 @@ const setup = async ({
   if (emulatedDevice) {
     await page.emulate(emulatedDevice)
   }
+
+  const sessionId = `puppeteer-${Date.now()}-${sessionCounter++}-${Math.random().toString(36).slice(2)}`
+
+  await page.evaluateOnNewDocument(sessionId => {
+    if (!sessionStorage.getItem('__em_puppeteer_storage_initialized')) {
+      localStorage.clear()
+      sessionStorage.setItem('__em_puppeteer_storage_initialized', '1')
+    }
+
+    localStorage.setItem('tsid', sessionId)
+    localStorage.setItem('accessToken', sessionId)
+    localStorage.setItem('treecrdtRuntime', 'dedicated-worker')
+  }, sessionId)
 
   page.on('dialog', async dialog => dialog.accept())
 
@@ -64,6 +79,7 @@ const setup = async ({
   })
 
   await page.goto(url)
+  await waitForAppReady(page)
 
   if (skipTutorial) {
     // wait for welcome modal to appear

@@ -1,4 +1,5 @@
 import waitForEditable from './waitForEditable'
+import waitForEmIdle from './waitForEmIdle'
 
 /**
  * Click the thought for the given thought value. Waits for the thought at the beginning in case it hasn't been rendered yet.
@@ -9,6 +10,7 @@ const clickThought = async (value: string) => {
   const editableNode = await waitForEditable(value)
   // @ts-expect-error - https://github.com/puppeteer/puppeteer/issues/8852
   await editableNode.asElement()?.click()
+  await waitForEmIdle()
 }
 
 export default clickThought
