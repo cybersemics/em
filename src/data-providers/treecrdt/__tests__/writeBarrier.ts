@@ -1,7 +1,7 @@
 import {
-  isTreecrdtLocalWriteInProgress,
+  createTreecrdtLocalWriteOptions,
+  isTreecrdtLocalMaterialization,
   waitForTreecrdtWriteBarrier,
-  withTreecrdtLocalWrite,
   withTreecrdtWriteBarrier,
 } from '../writeBarrier'
 
@@ -32,24 +32,26 @@ it('waits for TreeCRDT writes queued while waiting for idle', async () => {
   expect(order).toEqual(['first:start', 'first:end', 'second', 'idle'])
 })
 
-it('marks only the current async scope as a local TreeCRDT write', async () => {
-  expect(isTreecrdtLocalWriteInProgress()).toBe(false)
+it('identifies only this tab local TreeCRDT materialization events', () => {
+  const first = createTreecrdtLocalWriteOptions()
+  const second = createTreecrdtLocalWriteOptions()
 
-  await withTreecrdtLocalWrite(async () => {
-    expect(isTreecrdtLocalWriteInProgress()).toBe(true)
-    await Promise.resolve()
-    expect(isTreecrdtLocalWriteInProgress()).toBe(true)
-  })
+  expect(first.writeId).toBeDefined()
+  expect(second.writeId).toBeDefined()
+  expect(second.writeId).not.toBe(first.writeId)
 
-  expect(isTreecrdtLocalWriteInProgress()).toBe(false)
-})
-
-it('clears the local write marker after a failed TreeCRDT write', async () => {
-  await expect(
-    withTreecrdtLocalWrite(async () => {
-      throw new Error('write failed')
+  expect(isTreecrdtLocalMaterialization({ headSeq: 1, changes: [], writeIds: [first.writeId!] })).toBe(true)
+  expect(isTreecrdtLocalMaterialization({ headSeq: 1, changes: [], writeIds: ['remote-write'] })).toBe(false)
+  expect(
+    isTreecrdtLocalMaterialization({
+      headSeq: 1,
+      changes: [{ kind: 'payload', node: 'local-a', payload: null }],
     }),
-  ).rejects.toThrow('write failed')
-
-  expect(isTreecrdtLocalWriteInProgress()).toBe(false)
+  ).toBe(false)
+  expect(
+    isTreecrdtLocalMaterialization({
+      headSeq: 1,
+      changes: [{ kind: 'payload', node: 'remote-a', payload: null }],
+    }),
+  ).toBe(false)
 })

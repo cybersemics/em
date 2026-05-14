@@ -37,13 +37,17 @@ export interface MoveThoughtPayload {
   skipRerank?: boolean
   /** The new rank of the destination thought. This will be ignored if the thought is moved into a sorted context. */
   newRank: number
-  /** ID of sibling after which to place (for treecrdt). Undefined = place first. Callers should provide this; fallback uses rank. */
-  afterId?: ThoughtId
+  /**
+   * ID of sibling after which to place in TreeCRDT.
+   * Explicit null means first child. Omitted/undefined means legacy caller; fallback bridges from rank.
+   */
+  afterId?: ThoughtId | null
 }
 
 // @MIGRATION_TODO: use (sourceId and destinationId) or simplePath instead of passing paths. Should low level handle context view logic ??
 /** Moves a thought from one context to another, or within the same context. */
-const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRank, afterId }: MoveThoughtPayload) => {
+const moveThought = (state: State, payload: MoveThoughtPayload) => {
+  const { oldPath, newPath, offset, skipRerank, newRank, afterId } = payload
   // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
   const recentlyEdited = state.recentlyEdited
   // try {
@@ -86,8 +90,21 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
 
   const sameContext = sourceParentThought.id === destinationThoughtId
   const childrenOfDestination = getChildrenRanked(state, destinationThoughtId)
-  const effectiveAfterId: ThoughtId | undefined =
-    afterId ?? childrenOfDestination.filter(c => c.rank < newRank).pop()?.id ?? undefined
+  const hasExplicitPlacement = afterId !== undefined
+  // TreeCRDT stores sibling order as relative placement. Prefer caller-provided placement and only derive it from
+  // rank for legacy callers that have not been updated to pass an explicit sibling.
+  const validExplicitAfterId =
+    afterId != null && afterId !== sourceThought.id && childrenOfDestination.some(child => child.id === afterId)
+      ? afterId
+      : undefined
+  const rankFallbackAfterId = childrenOfDestination.filter(c => c.id !== sourceThought.id && c.rank < newRank).pop()?.id
+  const effectiveAfterId =
+    hasExplicitPlacement && afterId === null
+      ? undefined
+      : hasExplicitPlacement && validExplicitAfterId
+        ? validExplicitAfterId
+        : rankFallbackAfterId
+  const treecrdtPlacementAfterId = hasExplicitPlacement && afterId === null ? null : effectiveAfterId
 
   /**
    * Find first normalized duplicate thought.
@@ -182,7 +199,7 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
         lexemeIndexUpdates: {},
         recentlyEdited,
         preventExpandThoughts: true,
-        movePlacements: { [sourceThought.id]: effectiveAfterId },
+        movePlacements: { [sourceThought.id]: treecrdtPlacementAfterId },
       })
     },
     // update cursor if moved path is on the cursor

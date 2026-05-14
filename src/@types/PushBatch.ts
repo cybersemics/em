@@ -33,8 +33,8 @@ interface PushBatch {
    */
   remote?: boolean
   thoughtIndexUpdates: Index<Thought | null>
-  /** For treecrdt: per-moved-thought placement. Key = moved thought id, value = id of sibling after which to place (undefined = first). */
-  movePlacements?: Index<ThoughtId | undefined>
+  /** For treecrdt: per-moved-thought placement. Key = moved thought id, value = id of sibling after which to place (null = first). */
+  movePlacements?: Index<ThoughtId | null | undefined>
   /** Arbitrary updates: use with caution! */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   updates?: Index<any>

@@ -4,7 +4,6 @@ import CommandId from './@types/CommandId'
 import Context from './@types/Context'
 import MimeType from './@types/MimeType'
 import State from './@types/State'
-import Thought from './@types/Thought'
 import ThoughtId from './@types/ThoughtId'
 import Thunk from './@types/Thunk'
 import { importFilesActionCreator as importFiles } from './actions/importFiles'
@@ -13,19 +12,18 @@ import { loadFromUrlActionCreator as loadFromUrl } from './actions/loadFromUrl'
 import { preloadSourcesActionCreator as preloadSources } from './actions/preloadSources'
 import { pullActionCreator as pull } from './actions/pull'
 import { setCursorActionCreator as setCursor } from './actions/setCursor'
-import { updateThoughtsActionCreator } from './actions/updateThoughts'
 import { commandById, commandEmitter, executeCommand } from './commands'
 import getLexemeHelper from './data-providers/data-helpers/getLexeme'
 import { initPermissionsStore } from './data-providers/permissionsStore'
 import { clientIdReady } from './data-providers/thoughtspaceSession'
 import { dumpTreecrdt, treeFromJson } from './data-providers/treecrdt/debug'
 import {
-  applyMaterializedThoughtsToStore,
+  enqueueMaterializedThoughtsToStore,
   tryStartTreecrdtWebSocketSyncFromEnv as tryStartTreecrdtWebSocketSync,
 } from './data-providers/treecrdt/sync'
 import db, { init as initTreecrdtThoughtspace } from './data-providers/treecrdt/thoughtspace'
 import { getTreecrdtClient, initTreecrdt, registerBeforeTreecrdtClose } from './data-providers/treecrdt/treecrdt'
-import { waitForTreecrdtWriteBarrier } from './data-providers/treecrdt/writeBarrier'
+import { isTreecrdtLocalMaterialization, waitForTreecrdtWriteBarrier } from './data-providers/treecrdt/writeBarrier'
 import * as selection from './device/selection'
 import testFlags from './e2e/testFlags'
 import contextToThoughtId from './selectors/contextToThoughtId'
@@ -68,7 +66,7 @@ const initializeCursor = async () => {
   }
 }
 
-/** Initialize local db and window events. */
+/** Initilaize local db and window events. */
 const initializeInternal = async () => {
   initOfflineStatusStore(/* websocket */)
 
@@ -89,31 +87,6 @@ const initializeInternal = async () => {
           return out
         })()
   await initTreecrdtThoughtspace(replicaId)
-
-  /** Pushes one TreeCRDT-backed thought into Redux when TreeCRDT materializes SQLite (pending flags preserved). */
-  const onMaterializedThoughtChange = (thought: Thought) => {
-    store.dispatch((dispatch, getState) => {
-      const state = getState()
-      const thoughtInState = getThoughtById(state, thought.id)
-      const parentInState = getThoughtById(state, thought.parentId)
-      const pending = thoughtInState?.pending || parentInState?.pending
-
-      dispatch(
-        updateThoughtsActionCreator({
-          thoughtIndexUpdates: {
-            [thought.id]: {
-              ...thought,
-              ...(pending ? { pending } : {}),
-            },
-          },
-          lexemeIndexUpdates: {},
-          local: false,
-          remote: false,
-          repairCursor: true,
-        }),
-      )
-    })
-  }
 
   // load local state unless loading a public context or source url
   // await initDB()
@@ -140,7 +113,11 @@ const initializeInternal = async () => {
   await initializeCursor()
 
   const unsubscribeMaterialized = treecrdtClient.onMaterialized(event => {
-    void applyMaterializedThoughtsToStore(event, onMaterializedThoughtChange).catch(err =>
+    // Local TreeCRDT writes are already reflected optimistically in Redux. Peer-tab and server-sync writes arrive
+    // without this tab's write id, so those materialization events must be read back into Redux.
+    if (isTreecrdtLocalMaterialization(event)) return
+
+    void enqueueMaterializedThoughtsToStore(event).catch(err =>
       console.error('TreeCRDT materialized UI sync failed', err),
     )
   })

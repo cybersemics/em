@@ -15,6 +15,7 @@ import {
   upsertLexeme,
 } from './lexemes'
 import { dropTreecrdt, getTreecrdtClient } from './treecrdt'
+import { createTreecrdtLocalWriteOptions } from './writeBarrier'
 
 export type ThoughtPayload = {
   value: string
@@ -28,6 +29,8 @@ export type ThoughtPayload = {
 const encoder = new TextEncoder()
 const decoder = new TextDecoder()
 
+type TreecrdtPlacement = { type: 'first' } | { type: 'last' } | { type: 'after'; after: ThoughtId }
+
 /** Encodes a thought payload to bytes. */
 export function encodeThoughtPayload(payload: ThoughtPayload): Uint8Array {
   return encoder.encode(JSON.stringify(payload))
@@ -39,8 +42,8 @@ export function decodeThoughtPayload(bytes: Uint8Array): ThoughtPayload {
 }
 
 let replicaId: Uint8Array | null = null
-// Unit tests exercise the DataProvider contract without loading wa-sqlite/OPFS browser assets.
-// Keep this path test-only; browser/runtime coverage uses the real TreeCRDT client.
+// Unit tests still exercise em's DataProvider contract without loading wa-sqlite/OPFS assets.
+// Keep this in-memory path test-only; browser/runtime coverage uses the real TreeCRDT client.
 let testThoughtIndex: Index<Thought> = {}
 let testLexemeIndex: Index<Lexeme> = {}
 
@@ -116,6 +119,56 @@ const getThoughtById = async (id: ThoughtId): Promise<Thought | undefined> => {
 /** Fetches multiple thoughts by IDs. */
 const getThoughtsByIds = (ids: ThoughtId[]): Promise<(Thought | undefined)[]> => Promise.all(ids.map(getThoughtById))
 
+/** Converts em's root parent id to TreeCRDT's global root id. */
+const treeParentId = (id: ThoughtId): ThoughtId => (id === ROOT_PARENT_ID ? GLOBAL_ROOT_TOKEN : id)
+
+/**
+ * Derives TreeCRDT relative placement from em's numeric rank payload.
+ * This is the compatibility bridge while the app still treats rank as canonical display order.
+ */
+const getRankPlacement = async (
+  parentId: ThoughtId,
+  thoughtId: ThoughtId,
+  rank: number,
+): Promise<TreecrdtPlacement> => {
+  const client = getTreecrdtClient()
+  const childIds = await client.tree.children(parentId)
+  let after: Thought | undefined
+
+  for (const childId of childIds) {
+    if (childId === thoughtId) continue
+    const child = await getThoughtById(childId as ThoughtId)
+    if (child && child.rank < rank && (!after || child.rank > after.rank)) {
+      after = child
+    }
+  }
+
+  return after ? { type: 'after', after: after.id } : { type: 'first' }
+}
+
+/** Resolves caller-provided TreeCRDT placement, falling back to rank when old callers or stale siblings omit it. */
+const getTreecrdtPlacement = async (
+  thoughtId: ThoughtId,
+  thought: Thought,
+  movePlacements?: Index<ThoughtId | null | undefined>,
+): Promise<TreecrdtPlacement> => {
+  const client = getTreecrdtClient()
+  const parentId = treeParentId(thought.parentId)
+
+  if (!movePlacements || !Object.prototype.hasOwnProperty.call(movePlacements, thoughtId)) {
+    return getRankPlacement(parentId, thoughtId, thought.rank)
+  }
+
+  const afterId = movePlacements[thoughtId]
+  if (afterId == null) return { type: 'first' }
+  if (afterId === thoughtId) return getRankPlacement(parentId, thoughtId, thought.rank)
+
+  const childIds = await client.tree.children(parentId)
+  return childIds.includes(afterId)
+    ? { type: 'after', after: afterId }
+    : getRankPlacement(parentId, thoughtId, thought.rank)
+}
+
 /** Applies thought index updates and move placements to the tree. */
 const updateThoughts = async ({
   thoughtIndexUpdates,
@@ -126,7 +179,7 @@ const updateThoughts = async ({
   lexemeIndexUpdates: Index<Lexeme | null>
   lexemeIndexUpdatesOld: Index<Lexeme | undefined>
   schemaVersion: number
-  movePlacements?: Index<ThoughtId | undefined>
+  movePlacements?: Index<ThoughtId | null | undefined>
 }): Promise<readonly Operation[]> => {
   if (!replicaId) {
     if (isTestMode()) return []
@@ -154,6 +207,7 @@ const updateThoughts = async ({
   }
 
   const client = getTreecrdtClient()
+  const activeReplicaId = replicaId
   const ops: Operation[] = []
 
   for (const [id, lexeme] of Object.entries(lexemeIndexUpdates)) {
@@ -177,7 +231,7 @@ const updateThoughts = async ({
   }
 
   for (const id of deletes) {
-    ops.push(await client.local.delete(replicaId, id))
+    ops.push(await client.local.delete(activeReplicaId, id, createTreecrdtLocalWriteOptions()))
   }
 
   for (const [id, thought] of Object.entries(updates)) {
@@ -192,22 +246,18 @@ const updateThoughts = async ({
     })
 
     const exists = await client.tree.exists(thoughtId)
-
-    const placement =
-      thoughtId in (movePlacements || {})
-        ? movePlacements![thoughtId] != null
-          ? { type: 'after' as const, after: movePlacements![thoughtId]! }
-          : { type: 'first' as const }
-        : { type: 'last' as const }
+    const parentId = treeParentId(thought.parentId)
 
     if (!exists) {
+      const placement = await getTreecrdtPlacement(thoughtId, thought, movePlacements)
       ops.push(
         await client.local.insert(
-          replicaId,
-          thought.parentId === ROOT_PARENT_ID ? GLOBAL_ROOT_TOKEN : thought.parentId,
+          activeReplicaId,
+          parentId,
           thoughtId,
           placement,
           payloadBytes,
+          createTreecrdtLocalWriteOptions(),
         ),
       )
     } else {
@@ -217,13 +267,9 @@ const updateThoughts = async ({
       const parentChanged = existing.parentId !== thought.parentId
       const orderChanged = thoughtId in (movePlacements || {})
       if (parentChanged || orderChanged) {
+        const placement = await getTreecrdtPlacement(thoughtId, thought, movePlacements)
         ops.push(
-          await client.local.move(
-            replicaId,
-            thoughtId,
-            thought.parentId === ROOT_PARENT_ID ? GLOBAL_ROOT_TOKEN : thought.parentId,
-            placement,
-          ),
+          await client.local.move(activeReplicaId, thoughtId, parentId, placement, createTreecrdtLocalWriteOptions()),
         )
       }
 
@@ -236,7 +282,9 @@ const updateThoughts = async ({
         existing.archived !== thought.archived
 
       if (payloadChanged) {
-        ops.push(await client.local.payload(replicaId, thoughtId, payloadBytes))
+        ops.push(
+          await client.local.payload(activeReplicaId, thoughtId, payloadBytes, createTreecrdtLocalWriteOptions()),
+        )
       }
     }
   }
