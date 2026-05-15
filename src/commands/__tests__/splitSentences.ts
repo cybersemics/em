@@ -55,7 +55,7 @@ describe('splitSentences', () => {
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/html')
     expect(exported).toBe(`<ul>
-  <li>__ROOT__  
+  <li>${HOME_TOKEN}${EMPTY_SPACE}
     <ul>
       <li>Hello<b>.</b></li>
       <li>World.</li>

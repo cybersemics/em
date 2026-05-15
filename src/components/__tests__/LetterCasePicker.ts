@@ -82,7 +82,7 @@ it('Set Upper Case with multicursor selection', async () => {
   const state = store.getState()
 
   const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
-  expect(exported).toEqual(`- __ROOT__
+  expect(exported).toEqual(`- ${HOME_TOKEN}
   - HELLO EVERYONE, THIS IS ROSE. THANKS FOR YOUR HELP.
   - GOODBYE EVERYONE, THIS IS MAX. THANKS FOR YOUR HELP.`)
 })
