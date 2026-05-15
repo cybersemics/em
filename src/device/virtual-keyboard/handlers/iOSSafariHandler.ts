@@ -10,6 +10,13 @@ import getSafeAreaBottom from '../getSafeAreaBottom'
 /** Provides control over the spring animation. */
 let controls: AnimationPlaybackControls | null = null
 
+/** The spring's current target height. Unlike Capacitor — which delivers the keyboard's final height
+ * upfront via `keyboardWillShow` — Safari only exposes the height progressively, via
+ * `visualViewport.resize` events that fire as the keyboard slides in. We must re-target the spring
+ * as new measurements arrive; this also covers prediction-bar toggles, emoji-keyboard switches,
+ * and orientation changes that resize the keyboard mid-edit. */
+let currentTargetHeight: number | null = null
+
 /** Updates the virtualKeyboardStore state based on the selection. */
 const updateIOSSafariKeyboardState = () => {
   // A timeout is necessary to ensure the isKeyboardOpen state is updated after the selection change.
@@ -27,11 +34,14 @@ const updateIOSSafariKeyboardState = () => {
     const isKeyboardOpen = store.getState().isKeyboardOpen
     const keyboardIsVisible = isKeyboardOpen === true
 
-    if (keyboardIsVisible && !virtualKeyboardStore.getState().open) {
-      // Stop any existing animation to prevent conflicts
-      controls?.stop()
+    if (keyboardIsVisible) {
+      // No-op for cursor-move events that don't change the keyboard height (e.g. selectionchange
+      // while already editing).
+      if (targetHeight === currentTargetHeight) return
 
+      controls?.stop()
       virtualKeyboardStore.update({ open: true })
+      currentTargetHeight = targetHeight
 
       // Approximate iOS' keyboard spring animation (same curve as iOSCapacitorHandler)
       controls = animate(virtualKeyboardStore.getState().height, targetHeight, {
@@ -43,12 +53,14 @@ const updateIOSSafariKeyboardState = () => {
           virtualKeyboardStore.update({ height: value })
         },
       })
-    } else if (!keyboardIsVisible && virtualKeyboardStore.getState().open) {
-      // Stop any existing animation to prevent conflicts
+    } else if (virtualKeyboardStore.getState().open) {
+      if (currentTargetHeight === 0) return
+
       controls?.stop()
 
       // Keep open: true during the closing animation so consumers still account for the keyboard
       virtualKeyboardStore.update({ open: true })
+      currentTargetHeight = 0
 
       controls = animate(virtualKeyboardStore.getState().height, 0, {
         type: 'spring',
@@ -60,6 +72,7 @@ const updateIOSSafariKeyboardState = () => {
         },
         onComplete: () => {
           virtualKeyboardStore.update({ open: false, height: 0 })
+          currentTargetHeight = null
         },
       })
     }
@@ -85,6 +98,7 @@ const iOSSafariHandler: VirtualKeyboardHandler = {
     const resizeHost = window.visualViewport || window
     resizeHost.removeEventListener('resize', onResize)
     controls?.stop()
+    currentTargetHeight = null
   },
 }
 
