@@ -108,7 +108,7 @@ export async function treeFromJson(): Promise<void | null> {
     }
 
     /* eslint-disable @typescript-eslint/no-use-before-define -- promise executor handlers refer to each other */
-    return await new Promise<File | null>(resolve => {
+    return new Promise<File | null>(resolve => {
       const input = document.createElement('input')
       input.type = 'file'
       input.accept = 'application/json,.json'
