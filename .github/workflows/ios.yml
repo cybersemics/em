@@ -32,7 +32,6 @@ jobs:
         with:
           ref: ${{github.event.pull_request.head.ref}}
           repository: ${{github.event.pull_request.head.repo.full_name}}
-          submodules: recursive
 
       - name: Enable Corepack
         run: corepack enable
@@ -45,32 +44,6 @@ jobs:
       - name: Install npm dependencies
         if: env.BROWSERSTACK_USERNAME != '' && env.BROWSERSTACK_ACCESS_KEY != ''
         run: yarn
-
-      - name: Install wasm-pack
-        if: env.BROWSERSTACK_USERNAME != '' && env.BROWSERSTACK_ACCESS_KEY != ''
-        run: |
-          if ! command -v wasm-pack >/dev/null 2>&1; then
-            curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
-          fi
-
-      - name: Set up Rust
-        if: env.BROWSERSTACK_USERNAME != '' && env.BROWSERSTACK_ACCESS_KEY != ''
-        run: |
-          rustup toolchain install 1.87.0 --profile minimal
-          rustup target add wasm32-unknown-unknown --toolchain 1.87.0
-          rustup target add wasm32-unknown-emscripten --toolchain 1.87.0
-
-      - name: Set up Emscripten
-        if: env.BROWSERSTACK_USERNAME != '' && env.BROWSERSTACK_ACCESS_KEY != ''
-        uses: mymindstorm/setup-emsdk@v14
-        with:
-          version: 4.0.16
-
-      - name: Build TreeCRDT packages
-        if: env.BROWSERSTACK_USERNAME != '' && env.BROWSERSTACK_ACCESS_KEY != ''
-        run: yarn treecrdt
-        env:
-          RUSTUP_TOOLCHAIN: 1.87.0
 
       - name: Build
         if: env.BROWSERSTACK_USERNAME != '' && env.BROWSERSTACK_ACCESS_KEY != ''

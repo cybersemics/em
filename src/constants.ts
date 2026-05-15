@@ -119,6 +119,9 @@ export const ROOT_PARENT_ID = GLOBAL_ROOT_TOKEN
 
 export const HOME_TOKEN = '00000000000000000000000000000001' as ThoughtId
 
+// Display/export-only label for the fixed Home root. Do not store this as the root thought value.
+export const HOME_DISPLAY_VALUE = '__ROOT__'
+
 export const EM_TOKEN = '00000000000000000000000000000002' as ThoughtId
 
 export const ABSOLUTE_TOKEN = '00000000000000000000000000000003' as ThoughtId

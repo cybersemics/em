@@ -1,9 +1,21 @@
 import { type TreecrdtClient, createTreecrdtClient } from '@treecrdt/wa-sqlite/client'
+import storage from '../../util/storage'
 import { tsid } from '../thoughtspaceSession'
 
 let client: TreecrdtClient | null = null
 
 const beforeCloseHandlers = new Set<() => Promise<void>>()
+
+/** Creates the minimal test client needed by initialize without loading wa-sqlite assets in Vitest. */
+const createTestTreecrdtClient = (): TreecrdtClient =>
+  ({
+    mode: 'direct',
+    runtime: 'direct',
+    storage: 'memory',
+    onMaterialized: () => () => undefined,
+    close: async () => undefined,
+    drop: async () => undefined,
+  }) as unknown as TreecrdtClient
 
 /** Runs before `client.close()` / `client.drop()` (e.g. tear down WebSocket sync). Returns an unregister function. */
 export const registerBeforeTreecrdtClose = (handler: () => Promise<void>): (() => void) => {
@@ -22,13 +34,27 @@ async function runBeforeTreecrdtClose(): Promise<void> {
 
 /** Initializes the TreeCRDT client with OPFS storage. */
 export const initTreecrdt = async (): Promise<TreecrdtClient> => {
+  if (import.meta.env.MODE === 'test') {
+    client = createTestTreecrdtClient()
+    return client
+  }
+
+  // SharedWorker is the intended browser runtime for one OPFS store across tabs. Keep a local override so we can
+  // compare dedicated-worker behavior while Antonov's fork is still validating the TreeCRDT backend.
+  const runtime =
+    storage.getItem('treecrdtRuntime') === 'dedicated-worker'
+      ? { type: 'dedicated-worker' as const }
+      : typeof SharedWorker === 'undefined'
+        ? { type: 'auto' as const }
+        : { type: 'shared-worker' as const }
+
   client = await createTreecrdtClient({
     storage: {
       type: 'opfs',
       filename: `/treecrdt-em-${tsid}.db`,
       fallback: 'throw',
     },
-    runtime: typeof SharedWorker === 'undefined' ? { type: 'auto' } : { type: 'shared-worker' },
+    runtime,
     docId: tsid,
   })
   return client

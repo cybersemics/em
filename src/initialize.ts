@@ -14,7 +14,7 @@ import { preloadSourcesActionCreator as preloadSources } from './actions/preload
 import { pullActionCreator as pull } from './actions/pull'
 import { setCursorActionCreator as setCursor } from './actions/setCursor'
 import { updateThoughtsActionCreator } from './actions/updateThoughts'
-import { commandById, executeCommand } from './commands'
+import { commandById, commandEmitter, executeCommand } from './commands'
 import getLexemeHelper from './data-providers/data-helpers/getLexeme'
 import { initPermissionsStore } from './data-providers/permissionsStore'
 import { clientIdReady } from './data-providers/thoughtspaceSession'
@@ -25,6 +25,7 @@ import {
 } from './data-providers/treecrdt/sync'
 import db, { init as initTreecrdtThoughtspace } from './data-providers/treecrdt/thoughtspace'
 import { getTreecrdtClient, initTreecrdt, registerBeforeTreecrdtClose } from './data-providers/treecrdt/treecrdt'
+import { waitForTreecrdtWriteBarrier } from './data-providers/treecrdt/writeBarrier'
 import * as selection from './device/selection'
 import testFlags from './e2e/testFlags'
 import contextToThoughtId from './selectors/contextToThoughtId'
@@ -67,8 +68,8 @@ const initializeCursor = async () => {
   }
 }
 
-/** Initilaize local db and window events. */
-export const initialize = async () => {
+/** Initialize local db and window events. */
+const initializeInternal = async () => {
   initOfflineStatusStore(/* websocket */)
 
   // Initialize clientId before treecrdt thoughtspace (needs replicaId) and before any actions that create thoughts
@@ -155,6 +156,19 @@ export const initialize = async () => {
   }
 }
 
+let initializePromise: ReturnType<typeof initializeInternal> | null = null
+
+/** Initialize local db and window events. */
+export const initialize = (): ReturnType<typeof initializeInternal> => {
+  initializePromise = initializeInternal()
+  return initializePromise
+}
+
+/** Waits for app initialization to finish. Used by e2e tests before interacting with exposed helpers. */
+export const waitForInitialized = async (): Promise<void> => {
+  await initializePromise
+}
+
 /** Partially apply state to a function. */
 const withState =
   <T, R>(f: (state: State, ...args: T[]) => R) =>
@@ -177,6 +191,11 @@ const testHelpers = {
   executeCommandById: (id: CommandId) => {
     executeCommand(commandById(id))
   },
+  flushPendingEdits: () => {
+    commandEmitter.trigger('command')
+  },
+  waitForInitialized,
+  waitForTreecrdtIdle: waitForTreecrdtWriteBarrier,
   setSelection: selection.set,
   importToContext: withDispatch(importToContext),
   getLexemeFromIndexedDB: (value: string) => getLexemeHelper(db, value),

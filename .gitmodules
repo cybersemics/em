@@ -1,4 +1,0 @@
-[submodule "treecrdt"]
-	path = treecrdt
-	url = https://github.com/marcus-pousette/treecrdt
-	branch = runtime-storage-api-cross-tab

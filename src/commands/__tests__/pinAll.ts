@@ -29,7 +29,7 @@ it('toggle on when there is no =children attribute', () => {
   executeCommand(pinAllCommand, { store })
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-  expect(exported).toEqual(`- __ROOT__
+  expect(exported).toEqual(`- ${HOME_TOKEN}
   - a
     - =children
       - =pin
@@ -65,7 +65,7 @@ it('toggle on when =children/=pin is false', () => {
   executeCommand(pinAllCommand, { store })
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-  expect(exported).toEqual(`- __ROOT__
+  expect(exported).toEqual(`- ${HOME_TOKEN}
   - a
     - =children
       - =pin
@@ -101,7 +101,7 @@ it('remove =children when toggling off from =pin/true', () => {
   executeCommand(pinAllCommand, { store })
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-  expect(exported).toEqual(`- __ROOT__
+  expect(exported).toEqual(`- ${HOME_TOKEN}
   - a
     - b
       - c
@@ -133,7 +133,7 @@ it('remove =children when toggling off from =pin', () => {
   executeCommand(pinAllCommand, { store })
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-  expect(exported).toEqual(`- __ROOT__
+  expect(exported).toEqual(`- ${HOME_TOKEN}
   - a
     - b
       - c
@@ -169,7 +169,7 @@ it('remove =pin/false from all subthoughts when toggling on', () => {
   executeCommand(pinAllCommand, { store })
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-  expect(exported).toEqual(`- __ROOT__
+  expect(exported).toEqual(`- ${HOME_TOKEN}
   - a
     - =children
       - =pin

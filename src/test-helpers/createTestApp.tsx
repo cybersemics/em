@@ -62,7 +62,7 @@ export const cleanupTestApp = async () => {
     // run out timers before db.clear, otherwise pending calls to replicateThought may resolve after thoughts have been deleted, triggering the "Missing docKey for thought" error
     await vi.runAllTimersAsync()
 
-    db.clear()
+    await db.clear()
     await vi.runAllTimersAsync()
 
     // set url back to home

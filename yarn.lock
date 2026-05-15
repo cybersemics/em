@@ -2311,6 +2311,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@bufbuild/protobuf@npm:^2.10.2":
+  version: 2.12.0
+  resolution: "@bufbuild/protobuf@npm:2.12.0"
+  checksum: 10c0/28959e371fd2e7c8d67d52af9e3c8f8e6770e2e116dcc5508f469ca736afa6905e216bc76183835898a5f3deb8aa2e7db47d4a0e706fba76115e9a1996893191
+  languageName: node
+  linkType: hard
+
 "@bufbuild/protobuf@npm:^2.5.2":
   version: 2.10.2
   resolution: "@bufbuild/protobuf@npm:2.10.2"
@@ -4227,6 +4234,63 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@justtemporary/auth@npm:0.1.0, @treecrdt/auth@npm:@justtemporary/auth@0.1.0":
+  version: 0.1.0
+  resolution: "@justtemporary/auth@npm:0.1.0"
+  dependencies:
+    "@justtemporary/interface": "npm:0.1.0"
+    "@justtemporary/sync-protocol": "npm:0.1.0"
+    "@noble/ed25519": "npm:^3.0.0"
+    "@noble/hashes": "npm:^1.8.0"
+    cborg: "npm:^4.3.2"
+  checksum: 10c0/eff37965195e057515ebbc62372000f24bd9f4d110985d7f6f4fc42148276eb763d0d297a32f3af0d7b05c9b7d84bdcd2949d77ac32b9c553e9c3f25d03363fc
+  languageName: node
+  linkType: hard
+
+"@justtemporary/discovery@npm:0.1.0, @treecrdt/discovery@npm:@justtemporary/discovery@0.1.0":
+  version: 0.1.0
+  resolution: "@justtemporary/discovery@npm:0.1.0"
+  checksum: 10c0/502133038391d1cad7d49ebff711b3b195ba7e7b9577538cd33d7ec0db129d3055fa477122fa707c6e13b718e19a478d62d0c7f6fe9d78f1c6d73b957b5362c1
+  languageName: node
+  linkType: hard
+
+"@justtemporary/interface@npm:0.1.0, @treecrdt/interface@npm:@justtemporary/interface@0.1.0":
+  version: 0.1.0
+  resolution: "@justtemporary/interface@npm:0.1.0"
+  checksum: 10c0/82d0ef4e70379861816d18d56dbe75fa0eaf73c0f69c883e88d779aa8ec85a1902eef0f26bc7fb1b9ea16de6c191698c89a4e2dd55d625cd2fd6403458684b94
+  languageName: node
+  linkType: hard
+
+"@justtemporary/riblt-wasm@npm:0.1.0, @treecrdt/riblt-wasm@npm:@justtemporary/riblt-wasm@0.1.0":
+  version: 0.1.0
+  resolution: "@justtemporary/riblt-wasm@npm:0.1.0"
+  checksum: 10c0/3c8c62b9bc568737ead2502503d25007f8cdb55da1a28460e106ed24cca969b1312a18c8aa6e815999503b82f874ae3bcdc8fd656cf032045d44eaaed2038dab
+  languageName: node
+  linkType: hard
+
+"@justtemporary/sync-protocol@npm:0.1.0, @treecrdt/sync-protocol@npm:@justtemporary/sync-protocol@0.1.0":
+  version: 0.1.0
+  resolution: "@justtemporary/sync-protocol@npm:0.1.0"
+  dependencies:
+    "@bufbuild/protobuf": "npm:^2.10.2"
+    "@justtemporary/interface": "npm:0.1.0"
+    "@justtemporary/riblt-wasm": "npm:0.1.0"
+    "@noble/hashes": "npm:^1.8.0"
+  checksum: 10c0/4641c022b552f5391763404004ffd69829de6647a19fe0ed019662632ac074f81426f73bb12e21b8a0932c5502b72f8d8bd6ba0de366f8f701bb01dd151b8bde
+  languageName: node
+  linkType: hard
+
+"@justtemporary/sync-sqlite@npm:0.1.0, @treecrdt/sync-sqlite@npm:@justtemporary/sync-sqlite@0.1.0":
+  version: 0.1.0
+  resolution: "@justtemporary/sync-sqlite@npm:0.1.0"
+  dependencies:
+    "@justtemporary/auth": "npm:0.1.0"
+    "@justtemporary/interface": "npm:0.1.0"
+    "@justtemporary/sync-protocol": "npm:0.1.0"
+  checksum: 10c0/8d05090a4850476506e599f1d2d6adbee5fb9429c4da415c10a8665fe0fc19815200330b3e8478a1aad1a40ccd55f017c5f4d936c9fb0aecc7870652038a9849
+  languageName: node
+  linkType: hard
+
 "@modelcontextprotocol/sdk@npm:^1.25.1":
   version: 1.25.2
   resolution: "@modelcontextprotocol/sdk@npm:1.25.2"
@@ -4412,6 +4476,20 @@ __metadata:
     "@emnapi/runtime": "npm:^1.4.3"
     "@tybys/wasm-util": "npm:^0.10.0"
   checksum: 10c0/6d07922c0613aab30c6a497f4df297ca7c54e5b480e00035e0209b872d5c6aab7162fc49477267556109c2c7ed1eb9c65a174e27e9b87568106a87b0a6e3ca7d
+  languageName: node
+  linkType: hard
+
+"@noble/ed25519@npm:^3.0.0":
+  version: 3.1.0
+  resolution: "@noble/ed25519@npm:3.1.0"
+  checksum: 10c0/6317722130649cf5884eff57d540b36ec1006cf68145b09ff427d88df359a3b12baaaf420aad87b747f49d30c5ae56065bf31e5ebde1a6d59c3ce9d0b6a68fdb
+  languageName: node
+  linkType: hard
+
+"@noble/hashes@npm:^1.8.0":
+  version: 1.8.0
+  resolution: "@noble/hashes@npm:1.8.0"
+  checksum: 10c0/06a0b52c81a6fa7f04d67762e08b2c476a00285858150caeaaff4037356dd5e119f45b2a530f638b77a5eeca013168ec1b655db41bae3236cb2e9d511484fc77
   languageName: node
   linkType: hard
 
@@ -6405,53 +6483,37 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@treecrdt/auth@link:treecrdt/packages/treecrdt-auth::locator=em%40workspace%3A.":
-  version: 0.0.0-use.local
-  resolution: "@treecrdt/auth@link:treecrdt/packages/treecrdt-auth::locator=em%40workspace%3A."
+"@treecrdt/sync-server-core@npm:@justtemporary/sync-server-core@0.1.0":
+  version: 0.1.0
+  resolution: "@justtemporary/sync-server-core@npm:0.1.0"
+  dependencies:
+    "@justtemporary/sync-protocol": "npm:0.1.0"
+    ws: "npm:^8.18.3"
+  checksum: 10c0/edb426779e960f98cb3d73e9814bc4ee31f8d3d3a13428ae9f4a1a3285f902ec26e56d6f2008653c6e7a9d087d3d87fe268bf9e504b51cfb8cb8d9e5dc7792fb
   languageName: node
-  linkType: soft
+  linkType: hard
 
-"@treecrdt/discovery@link:treecrdt/packages/discovery::locator=em%40workspace%3A.":
-  version: 0.0.0-use.local
-  resolution: "@treecrdt/discovery@link:treecrdt/packages/discovery::locator=em%40workspace%3A."
+"@treecrdt/sync@npm:@justtemporary/sync@0.1.0":
+  version: 0.1.0
+  resolution: "@justtemporary/sync@npm:0.1.0"
+  dependencies:
+    "@justtemporary/discovery": "npm:0.1.0"
+    "@justtemporary/interface": "npm:0.1.0"
+    "@justtemporary/sync-protocol": "npm:0.1.0"
+    "@justtemporary/sync-sqlite": "npm:0.1.0"
+  checksum: 10c0/8b84ee9ccbd0f59ee374727d26c64615b9b06b2c3590110ad334eb22ac01f18cc3c54e7d249444b537486d9a743adafa15c3cdeb1ef79117f332e87a17316b96
   languageName: node
-  linkType: soft
+  linkType: hard
 
-"@treecrdt/interface@link:treecrdt/packages/treecrdt-ts::locator=em%40workspace%3A.":
-  version: 0.0.0-use.local
-  resolution: "@treecrdt/interface@link:treecrdt/packages/treecrdt-ts::locator=em%40workspace%3A."
+"@treecrdt/wa-sqlite@npm:@justtemporary/wa-sqlite@0.1.2":
+  version: 0.1.2
+  resolution: "@justtemporary/wa-sqlite@npm:0.1.2"
+  dependencies:
+    "@justtemporary/interface": "npm:0.1.0"
+    "@justtemporary/sync-sqlite": "npm:0.1.0"
+  checksum: 10c0/ec484af0e1c05c64d02f2f5516f1685d372516755f9cf4ea7a361a005070ac1bbd923943a22fd308b7260c20d6b66b8798ba65cc6574521298aeaefbff83a460
   languageName: node
-  linkType: soft
-
-"@treecrdt/riblt-wasm@link:treecrdt/packages/treecrdt-riblt-wasm-js::locator=em%40workspace%3A.":
-  version: 0.0.0-use.local
-  resolution: "@treecrdt/riblt-wasm@link:treecrdt/packages/treecrdt-riblt-wasm-js::locator=em%40workspace%3A."
-  languageName: node
-  linkType: soft
-
-"@treecrdt/sync-protocol@link:treecrdt/packages/sync-protocol/protocol::locator=em%40workspace%3A.":
-  version: 0.0.0-use.local
-  resolution: "@treecrdt/sync-protocol@link:treecrdt/packages/sync-protocol/protocol::locator=em%40workspace%3A."
-  languageName: node
-  linkType: soft
-
-"@treecrdt/sync-sqlite@link:treecrdt/packages/sync-protocol/material/sqlite::locator=em%40workspace%3A.":
-  version: 0.0.0-use.local
-  resolution: "@treecrdt/sync-sqlite@link:treecrdt/packages/sync-protocol/material/sqlite::locator=em%40workspace%3A."
-  languageName: node
-  linkType: soft
-
-"@treecrdt/sync@link:treecrdt/packages/treecrdt-sync::locator=em%40workspace%3A.":
-  version: 0.0.0-use.local
-  resolution: "@treecrdt/sync@link:treecrdt/packages/treecrdt-sync::locator=em%40workspace%3A."
-  languageName: node
-  linkType: soft
-
-"@treecrdt/wa-sqlite@link:treecrdt/packages/treecrdt-wa-sqlite::locator=em%40workspace%3A.":
-  version: 0.0.0-use.local
-  resolution: "@treecrdt/wa-sqlite@link:treecrdt/packages/treecrdt-wa-sqlite::locator=em%40workspace%3A."
-  languageName: node
-  linkType: soft
+  linkType: hard
 
 "@trivago/prettier-plugin-sort-imports@npm:^6.0.2":
   version: 6.0.2
@@ -9575,6 +9637,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"cborg@npm:^4.3.2":
+  version: 4.5.8
+  resolution: "cborg@npm:4.5.8"
+  bin:
+    cborg: lib/bin.js
+  checksum: 10c0/9703fc3201aeb9814c6f27358f079f63bd2361bb946aae4fc82db3ea389418516251a2ea85a728839af887ff43fd67f9900353aae6daa0c0d8b1bc6f20addeb4
+  languageName: node
+  linkType: hard
+
 "chai@npm:^6.2.1":
   version: 6.2.1
   resolution: "chai@npm:6.2.1"
@@ -11203,14 +11274,15 @@ __metadata:
     "@testing-library/react": "npm:^16.3.2"
     "@testing-library/user-event": "npm:^14.6.1"
     "@total-typescript/ts-reset": "npm:^0.6.1"
-    "@treecrdt/auth": "link:treecrdt/packages/treecrdt-auth"
-    "@treecrdt/discovery": "link:treecrdt/packages/discovery"
-    "@treecrdt/interface": "link:treecrdt/packages/treecrdt-ts"
-    "@treecrdt/riblt-wasm": "link:treecrdt/packages/treecrdt-riblt-wasm-js"
-    "@treecrdt/sync": "link:treecrdt/packages/treecrdt-sync"
-    "@treecrdt/sync-protocol": "link:treecrdt/packages/sync-protocol/protocol"
-    "@treecrdt/sync-sqlite": "link:treecrdt/packages/sync-protocol/material/sqlite"
-    "@treecrdt/wa-sqlite": "link:treecrdt/packages/treecrdt-wa-sqlite"
+    "@treecrdt/auth": "npm:@justtemporary/auth@0.1.0"
+    "@treecrdt/discovery": "npm:@justtemporary/discovery@0.1.0"
+    "@treecrdt/interface": "npm:@justtemporary/interface@0.1.0"
+    "@treecrdt/riblt-wasm": "npm:@justtemporary/riblt-wasm@0.1.0"
+    "@treecrdt/sync": "npm:@justtemporary/sync@0.1.0"
+    "@treecrdt/sync-protocol": "npm:@justtemporary/sync-protocol@0.1.0"
+    "@treecrdt/sync-server-core": "npm:@justtemporary/sync-server-core@0.1.0"
+    "@treecrdt/sync-sqlite": "npm:@justtemporary/sync-sqlite@0.1.0"
+    "@treecrdt/wa-sqlite": "npm:@justtemporary/wa-sqlite@0.1.2"
     "@trivago/prettier-plugin-sort-imports": "npm:^6.0.2"
     "@types/clipboard": "npm:^2.0.10"
     "@types/dompurify": "npm:^3.2.0"

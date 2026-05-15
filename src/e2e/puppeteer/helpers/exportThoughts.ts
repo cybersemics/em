@@ -1,10 +1,9 @@
 import MimeType from '../../../@types/MimeType'
 import { HOME_TOKEN } from '../../../constants'
-import { WindowEm } from '../../../initialize'
+import type { WindowEm } from '../../../initialize'
 import removeHome from '../../../util/removeHome'
 import { page } from '../setup'
-
-const em = window.em as WindowEm
+import waitForEmIdle from './waitForEmIdle'
 
 /**
  * Export the current state of thoughts as plain text.
@@ -13,8 +12,9 @@ const em = window.em as WindowEm
 const exportThoughts = async (
   { mimeType = 'text/plain' }: { mimeType: MimeType } = { mimeType: 'text/plain' },
 ): Promise<string> => {
+  await waitForEmIdle()
   const exported = await page.evaluate(
-    (HOME_TOKEN, mimeType) => em.exportContext([HOME_TOKEN], mimeType),
+    (HOME_TOKEN, mimeType) => (window.em as WindowEm).exportContext([HOME_TOKEN], mimeType),
     HOME_TOKEN,
     mimeType,
   )

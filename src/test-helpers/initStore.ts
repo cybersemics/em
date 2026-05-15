@@ -1,4 +1,5 @@
 import { clearActionCreator as clear } from '../actions/clear'
+import { resetTestThoughtspace } from '../data-providers/treecrdt/thoughtspace'
 import store from '../stores/app'
 
 interface Params {
@@ -22,7 +23,10 @@ const initStore = ({ persist, allowTutorial }: Params = {}) => {
   // This makes tests deterministic and prevents post-teardown access to window/localStorage.
   vi.useFakeTimers()
 
-  if (!persist) store.dispatch(clear())
+  if (!persist) {
+    resetTestThoughtspace()
+    store.dispatch(clear())
+  }
 
   if (!allowTutorial) {
     store.dispatch([
