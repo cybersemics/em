@@ -14,11 +14,11 @@ allowed-tools:
 
 The em app runs on the web, on Android (mobile Chrome), and on iOS Safari. The right way to drive a browser depends on which of those you are targeting:
 
-| Target              | MCP             | How Chrome / Safari is launched                       |
-|---------------------|-----------------|-------------------------------------------------------|
-| `web` (desktop)     | `chrome-devtools` | First MCP call launches headless Chrome under Xvfb. |
-| `android` (mobile)  | `chrome-devtools` | Same Chrome instance, with mobile device emulation. |
-| `ios` (Safari)      | `wdio`           | `start_session` opens a remote iOS Safari session.   |
+| Target             | MCP               | How Chrome / Safari is launched                     |
+| ------------------ | ----------------- | --------------------------------------------------- |
+| `web` (desktop)    | `chrome-devtools` | First MCP call launches headless Chrome under Xvfb. |
+| `android` (mobile) | `chrome-devtools` | Same Chrome instance, with mobile device emulation. |
+| `ios` (Safari)     | `wdio`            | `start_session` opens a remote iOS Safari session.  |
 
 Use this skill **before any browser interaction** (navigation, evaluate, click, swipe, etc.). Calling browser tools without first running through this skill leads to the wrong MCP being used, or the page being loaded under the wrong device profile and gestures not registering.
 
@@ -155,29 +155,39 @@ If neither responds, check `/tmp/dev-server.log` and report — do not start a s
 Note which scheme (HTTP vs HTTPS) responded. Then navigate using the MCP for your target:
 
 - `web` / `android`: `chrome-devtools` `navigate` to `http://localhost:3000` (or `https://` if that is what responded).
-- `ios`: `wdio` `navigate` to `http://bs-local.com:3000?__ios_console_proxy`. The `bs-local.com:3000` host is BrowserStack Local's well-known hostname — the tunnel started by `browserstackLocal: true` routes it back to the runner's `localhost:3000`. The `?__ios_console_proxy` query param activates the in-app console proxy (`src/util/iOSConsoleProxy.ts`) so console output is captured into `window.__iOSConsoleProxy__`. To read captured logs at any point: `execute_script(() => window.__drainiOSConsoleLogs__())` — atomically returns and clears the buffer.
+- `ios`: `wdio` `navigate` to `http://bs-local.com:3000?__ios_console_proxy`. The `bs-local.com:3000` host is BrowserStack Local's well-known hostname — the tunnel started by `browserstackLocal: true` routes it back to the runner's `localhost:3000`. The `?__ios_console_proxy` query param activates the in-app console proxy (`src/util/iOSConsoleProxy.ts`) so console output is captured into `window.__iOSConsoleProxy__`. To read captured logs at any point: `execute_script({ script: 'return window.__drainiOSConsoleLogs__()' })` — atomically returns and clears the buffer. (Note the `return` — see the script-shape rule in the post-navigate section.)
 
 If you encounter HTTPS self-signed certificate errors on Chrome, use the `thisisunsafe` bypass to proceed. On iOS Safari, accept the certificate via the wdio MCP's dialog handler if prompted.
 
 ### After navigate (iOS)
 
+**`execute_script` script shape (wdio MCP).** The wdio MCP's `execute_script` tool passes its `script` argument straight through to WebdriverIO's `browser.execute`, which treats the string as a **function body** — _not_ a function literal — per the W3C WebDriver spec. The MCP's own tool description even says: _"pass JS in script, use 'return' for values."_ So:
+
+| Form passed as `script:`                              | What runs                                                                            | Result                                             |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------ | -------------------------------------------------- |
+| `() => doc.body.innerHTML.includes('editable')`       | Defines an arrow function as an expression statement and discards it. Never invoked. | `"Script executed successfully (no return value)"` |
+| `return document.body.innerHTML.includes('editable')` | Returns the boolean.                                                                 | `Result: true`                                     |
+
+**Always start the script with `return …;`** when you want a value back. This is not iOS-specific — the same rule applies to every browser the wdio MCP drives — but iOS is where it bites hardest because there is no DevTools console open beside you to fall back on. If you find yourself wrapping in `console.log` + drain to read a value, stop: it's almost always a sign the script is shaped wrong.
+
+WebdriverIO's `browser.execute` is documented as synchronous (the d.ts says: _"The executed script is assumed to be synchronous"_) — don't return a Promise and expect it to be awaited. For "wait until X is true" logic, poll from the agent side instead: call `execute_script` repeatedly with a simple `return …;` predicate, sleeping ~500 ms between calls via the Bash tool, until truthy or a timeout fires.
+
 The React bundle hydrates a few seconds after `navigate` returns. Reaching for `tap_element` / `get_elements` immediately hits an empty `<div id="root"></div>` and burns round-trips on diagnostic poking before the agent realises the page just isn't ready yet. Wait for a known landmark before any interaction — `#skip-tutorial` for the welcome screen, `[aria-label="empty-thoughtspace"]` once the tutorial is dismissed:
 
+Poll agent-side, sleeping in Bash between calls:
+
 ```ts
-// Single execute_script that polls in-page; resolves true when ready, false on 10s timeout.
-execute_script(() => new Promise(resolve => {
-  const check = () => {
-    if (document.querySelector('#skip-tutorial, [aria-label="empty-thoughtspace"]')) return resolve(true)
-    setTimeout(check, 100)
-  }
-  check()
-  setTimeout(() => resolve(false), 10000)
-}))
+// Each iteration — call execute_script with a plain return-predicate:
+execute_script({
+  script: 'return !!document.querySelector(\'#skip-tutorial, [aria-label="empty-thoughtspace"]\')',
+})
+// Then via Bash: sleep 0.5
+// Repeat up to ~20 iterations (~10s total). Stop on the first true.
 ```
 
-If the script returns `false`, drain `window.__drainiOSConsoleLogs__()` and check the dev server log before retrying — the page is genuinely stuck, not just slow.
+If the predicate is still `false` after the timeout, drain the console buffer (see below) and check the dev server log before retrying — the page is genuinely stuck, not just slow.
 
-**Drain the console at meaningful checkpoints** — after every `tap_element`, `swipe`, or any action whose effect isn't directly visible — by calling `execute_script(() => window.__drainiOSConsoleLogs__())`. Gesture-detector warnings, network errors, and React warnings live there and would otherwise be invisible to the agent. Before assuming a tap or swipe didn't register, drain first; the answer is often in the buffer.
+**Drain the console at meaningful checkpoints** — after every `tap_element`, `swipe`, or any action whose effect isn't directly visible — by calling `execute_script({ script: 'return window.__drainiOSConsoleLogs__()' })`. Gesture-detector warnings, network errors, and React warnings live there and would otherwise be invisible to the agent. Before assuming a tap or swipe didn't register, drain first; the answer is often in the buffer.
 
 **Expect HMR reloads when you edit source files.** Vite's hot-module-replacement reloads the page on the iOS device whenever a watched source file changes. The console proxy reinstalls automatically on reload (it's wired into `src/initialize.ts`), but **in-memory app state is gone** — any thoughts you created, cursor positions, modal dismissals, etc. will be reset. After editing source mid-session, re-run the wait-for-mount predicate and re-create any in-app state you need before continuing. Don't conclude HMR is broken just because the page looks different than you left it — that's the reload doing its job.
 
