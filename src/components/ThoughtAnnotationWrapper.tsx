@@ -80,7 +80,7 @@ const ThoughtAnnotationWrapper: FC<
                   This margin should match the margin set in editableRecipe (#3353).
                 */
               margin: '0 calc(18px - 1em) 0 calc(1em - 18px)',
-              padding: '0.375em 1em 0.375em 0.333em',
+              padding: '0.375em 0.333em 0.375em 0.333em',
               textAlign: isTableCol1 ? 'right' : 'left',
             }),
           )
