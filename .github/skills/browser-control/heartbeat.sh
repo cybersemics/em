@@ -13,17 +13,24 @@
 # session death, `cat /tmp/heartbeat-<session-id>.log`.
 #
 # Required env: BROWSERSTACK_USERNAME, BROWSERSTACK_ACCESS_KEY.
-# Optional env: HEARTBEAT_INTERVAL (seconds, default 240).
+# Optional env: HEARTBEAT_INTERVAL (seconds, default 90).
 #
-# 240s is well under the configured 900s idle cap (see browser-control
-# SKILL.md). Any read against the session endpoint resets the clock; we use
-# GET /url because it's small, universally supported, and a real W3C
-# WebDriver command (so it resets both BrowserStack's idle timer and
-# Appium's newCommandTimeout).
+# We ping every 90s, well under any plausible idle cap. Earlier runs with a
+# 240s interval saw real-device iOS Safari sessions die ~2 min after a
+# confirmed-alive ping despite idleTimeout: 900 — either the cap is silently
+# clamped lower on real devices or the timer we were resetting wasn't the one
+# actually killing the session.
+#
+# We use POST /execute/sync (script: "return 1") rather than GET /url for the
+# ping. /execute/sync forces the full WebDriver → Appium → XCUITest →
+# safaridriver → page JS bridge round trip, which is harder to mis-classify as
+# "no real activity" than a metadata GET. GET /url was the original choice
+# because it was small and W3C-standard, but the field evidence suggests at
+# least one timer on this stack ignores it.
 set -uo pipefail
 
 SESSION_ID="${1:?session id required}"
-INTERVAL="${HEARTBEAT_INTERVAL:-240}"
+INTERVAL="${HEARTBEAT_INTERVAL:-90}"
 MAX_FAILS=3
 LOG="/tmp/heartbeat-${SESSION_ID}.log"
 
@@ -58,8 +65,11 @@ while true; do
   # t=INTERVAL. Otherwise a long agent turn immediately after start_session
   # could let the idle timer fire before we ever poke it.
   STATUS=$(curl -sS -o /dev/null -w "%{http_code}" \
+    -X POST \
+    -H "Content-Type: application/json" \
     -u "$BROWSERSTACK_USERNAME:$BROWSERSTACK_ACCESS_KEY" \
-    "https://hub.browserstack.com/wd/hub/session/$SESSION_ID/url" 2>/dev/null \
+    --data '{"script":"return 1","args":[]}' \
+    "https://hub.browserstack.com/wd/hub/session/$SESSION_ID/execute/sync" 2>/dev/null \
     || echo "000")
   if [[ "$STATUS" =~ ^[23] ]]; then
     echo "[$(ts)] ping ok status=$STATUS"
@@ -69,6 +79,15 @@ while true; do
     echo "[$(ts)] ping FAIL status=$STATUS fails=$FAILS/$MAX_FAILS"
     if (( FAILS >= MAX_FAILS )); then
       echo "[$(ts)] giving up — session likely ended"
+      # Fetch BrowserStack's post-mortem on the session so future debugging
+      # has a concrete reason field instead of "the heartbeat noticed it was
+      # gone." Best-effort; quietly skipped if the API is unreachable or the
+      # session is too young to have a record.
+      POSTMORTEM=$(curl -sS \
+        -u "$BROWSERSTACK_USERNAME:$BROWSERSTACK_ACCESS_KEY" \
+        "https://api.browserstack.com/automate/sessions/$SESSION_ID.json" 2>/dev/null \
+        || echo '{"error":"api fetch failed"}')
+      echo "[$(ts)] browserstack session post-mortem: $POSTMORTEM"
       exit 0
     fi
   fi
