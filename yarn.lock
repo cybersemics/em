@@ -4331,7 +4331,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@modelcontextprotocol/sdk@npm:^1.29.0":
+"@modelcontextprotocol/sdk@npm:^1.25.2":
   version: 1.29.0
   resolution: "@modelcontextprotocol/sdk@npm:1.29.0"
   dependencies:
@@ -6828,18 +6828,6 @@ __metadata:
     "@justtemporary/interface": "npm:0.1.0"
     "@justtemporary/sync-sqlite": "npm:0.1.0"
   checksum: 10c0/ec484af0e1c05c64d02f2f5516f1685d372516755f9cf4ea7a361a005070ac1bbd923943a22fd308b7260c20d6b66b8798ba65cc6574521298aeaefbff83a460
-  languageName: node
-  linkType: hard
-
-"@trickfilm400/rollup-plugin-off-main-thread@npm:^3.0.0-pre1":
-  version: 3.0.0-pre1
-  resolution: "@trickfilm400/rollup-plugin-off-main-thread@npm:3.0.0-pre1"
-  dependencies:
-    ejs: "npm:^3.1.10"
-    json5: "npm:^2.2.3"
-    magic-string: "npm:^0.30.21"
-    string.prototype.matchall: "npm:^4.0.12"
-  checksum: 10c0/60d4ff15295413e8b4092221f2683681d13168fb136d94b0c1ca472810e4b28c51b1f88be5fa1aa44327e18b620fd6ca9a3201cb2679034b29adf7bdbde014e0
   languageName: node
   linkType: hard
 
