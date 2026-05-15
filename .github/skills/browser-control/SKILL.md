@@ -208,7 +208,24 @@ execute_script({
 
 If the predicate is still `false` after the timeout, drain the console buffer (see below) and check the dev server log before retrying — the page is genuinely stuck, not just slow.
 
-**Drain the console at meaningful checkpoints** — after every `tap_element`, `swipe`, or any action whose effect isn't directly visible — by calling `execute_script({ script: 'return JSON.stringify(window.__drainiOSConsoleLogs__?.() ?? null)' })`, then `JSON.parse` the `Result:` payload. Gesture-detector warnings, network errors, and React warnings live there and would otherwise be invisible to the agent. Before assuming a tap or swipe didn't register, drain first; the answer is often in the buffer. If parse yields `null`, the proxy didn't install — check that the URL still has `?__ios_console_proxy` after any reload.
+**Drain the console after every interaction.** This is **mandatory**, not optional. After every `tap_element`, `swipe`, `execute_script` that dispatches touches, `location.reload()`, or any other action that interacts with the page, your **very next** `execute_script` call MUST be:
+
+```ts
+execute_script({ script: 'return JSON.stringify(window.__drainiOSConsoleLogs__?.() ?? null)' })
+```
+
+`JSON.parse` the `Result:` payload. **Drain even when your DOM-state predicate already told you the action "worked"** — the buffer contains gesture-detector warnings, network errors, React warnings, and app-side `console.warn`s explaining _why_ the next thing is about to fail. Without these the agent is debugging blind.
+
+Rationale: in production agent runs we saw the agent skip drain entirely across ~40 `execute_script` calls because direct DOM predicates were answering its immediate questions. That's the wrong tradeoff — DOM tells you _what_ happened, console tells you _what the app complained about while it happened_. The cost of one drain call is ~200-500ms; the cost of missing a gesture-detector warning is debugging a failing test from a screenshot.
+
+Interpret the parsed payload:
+
+| Parsed value                                                         | Meaning                                                                                                                                                       |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `[]`                                                                 | Buffer was empty. Action produced no console output — fine, continue.                                                                                         |
+| `[{ level, message }, ...]`                                          | Each entry is one `console.<level>` call. Print them in your transcript so a human reading later can see the app-side signal.                                 |
+| `null`                                                               | `window.__drainiOSConsoleLogs__` is undefined — proxy didn't install. Check that the URL still has `?__ios_console_proxy` after any reload, then re-navigate. |
+| `"Script executed successfully (no return value)"` (raw MCP message) | The wrap itself failed — shouldn't happen with the `?? null` guard, but if it does, see Rule 1 / Rule 2 above.                                                |
 
 **Expect HMR reloads when you edit source files.** Vite's hot-module-replacement reloads the page on the iOS device whenever a watched source file changes. The console proxy reinstalls automatically on reload (it's wired into `src/initialize.ts`), but **in-memory app state is gone** — any thoughts you created, cursor positions, modal dismissals, etc. will be reset. After editing source mid-session, re-run the wait-for-mount predicate and re-create any in-app state you need before continuing. Don't conclude HMR is broken just because the page looks different than you left it — that's the reload doing its job.
 
