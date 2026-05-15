@@ -43,13 +43,6 @@ const iOSCapacitorHandler: VirtualKeyboardHandler = {
       })
     })
 
-    Keyboard.addListener('keyboardDidShow', info => {
-      const rawHeight = info.keyboardHeight || 0
-      const targetHeight = rawHeight - getSafeAreaBottom()
-      controls?.stop()
-      virtualKeyboardStore.update({ open: true, height: targetHeight })
-    })
-
     Keyboard.addListener('keyboardWillHide', () => {
       // note: leave open: true until the keyboard has fully hidden
       virtualKeyboardStore.update({ open: true })
@@ -66,12 +59,10 @@ const iOSCapacitorHandler: VirtualKeyboardHandler = {
         onUpdate: value => {
           virtualKeyboardStore.update({ height: value })
         },
+        onComplete: () => {
+          virtualKeyboardStore.update({ open: false, height: 0 })
+        },
       })
-    })
-
-    Keyboard.addListener('keyboardDidHide', () => {
-      controls?.stop()
-      virtualKeyboardStore.update({ open: false, height: 0 })
     })
   },
   destroy: () => {
