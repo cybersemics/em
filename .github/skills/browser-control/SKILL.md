@@ -155,39 +155,60 @@ If neither responds, check `/tmp/dev-server.log` and report — do not start a s
 Note which scheme (HTTP vs HTTPS) responded. Then navigate using the MCP for your target:
 
 - `web` / `android`: `chrome-devtools` `navigate` to `http://localhost:3000` (or `https://` if that is what responded).
-- `ios`: `wdio` `navigate` to `http://bs-local.com:3000?__ios_console_proxy`. The `bs-local.com:3000` host is BrowserStack Local's well-known hostname — the tunnel started by `browserstackLocal: true` routes it back to the runner's `localhost:3000`. The `?__ios_console_proxy` query param activates the in-app console proxy (`src/util/iOSConsoleProxy.ts`) so console output is captured into `window.__iOSConsoleProxy__`. To read captured logs at any point: `execute_script({ script: 'return window.__drainiOSConsoleLogs__()' })` — atomically returns and clears the buffer. (Note the `return` — see the script-shape rule in the post-navigate section.)
+- `ios`: `wdio` `navigate` to `http://bs-local.com:3000?__ios_console_proxy`. The `bs-local.com:3000` host is BrowserStack Local's well-known hostname — the tunnel started by `browserstackLocal: true` routes it back to the runner's `localhost:3000`. The `?__ios_console_proxy` query param activates the in-app console proxy (`src/util/iOSConsoleProxy.ts`) so console output is captured into `window.__iOSConsoleProxy__`. To read captured logs at any point: `execute_script({ script: 'return JSON.stringify(window.__drainiOSConsoleLogs__?.() ?? null)' })` — atomically returns and clears the buffer. The `JSON.stringify(… ?? null)` wrap is mandatory on this stack — see the script-shape rule in the post-navigate section.
 
 If you encounter HTTPS self-signed certificate errors on Chrome, use the `thisisunsafe` bypass to proceed. On iOS Safari, accept the certificate via the wdio MCP's dialog handler if prompted.
 
 ### After navigate (iOS)
 
-**`execute_script` script shape (wdio MCP).** The wdio MCP's `execute_script` tool passes its `script` argument straight through to WebdriverIO's `browser.execute`, which treats the string as a **function body** — _not_ a function literal — per the W3C WebDriver spec. The MCP's own tool description even says: _"pass JS in script, use 'return' for values."_ So:
+**`execute_script` script shape (wdio MCP on iOS).** Two rules, both required. Getting either wrong looks identical from the outside (`"Script executed successfully (no return value)"`), so apply both unconditionally.
+
+**Rule 1 — start the body with `return`.** The MCP forwards the `script` string to WebdriverIO's `browser.execute`, which sends it straight to `/execute/sync` as the W3C-defined **function body** (wrapped in `function() { … }` server-side). A top-level `return` is valid and required:
 
 | Form passed as `script:`                              | What runs                                                                            | Result                                             |
 | ----------------------------------------------------- | ------------------------------------------------------------------------------------ | -------------------------------------------------- |
 | `() => doc.body.innerHTML.includes('editable')`       | Defines an arrow function as an expression statement and discards it. Never invoked. | `"Script executed successfully (no return value)"` |
-| `return document.body.innerHTML.includes('editable')` | Returns the boolean.                                                                 | `Result: true`                                     |
+| `return document.body.innerHTML.includes('editable')` | Returns the boolean — but on iOS see Rule 2 before trusting this.                    | varies                                             |
 
-**Always start the script with `return …;`** when you want a value back. This is not iOS-specific — the same rule applies to every browser the wdio MCP drives — but iOS is where it bites hardest because there is no DevTools console open beside you to fall back on. If you find yourself wrapping in `console.log` + drain to read a value, stop: it's almost always a sign the script is shaped wrong.
+**Rule 2 — wrap the value in `JSON.stringify(<expr> ?? null)`.** This stack — `@wdio/mcp` → `webdriverio@9` non-BiDi → BrowserStack → Appium XCUITest → Safari iOS real device — has two well-documented hazards that hit the unwrapped-string path used by the MCP but **not** our e2e suite (which calls `browser.execute(fn)` and so gets WebdriverIO's polyfill+wrapping for free):
 
-WebdriverIO's `browser.execute` is documented as synchronous (the d.ts says: _"The executed script is assumed to be synchronous"_) — don't return a Promise and expect it to be awaited. For "wait until X is true" logic, poll from the agent side instead: call `execute_script` repeatedly with a simple `return …;` predicate, sleeping ~500 ms between calls via the Bash tool, until truthy or a timeout fires.
+1. WebdriverIO 9 only injects its `webdriverioPolyfill` when the input is a function; strings are forwarded verbatim. Any reference inside the script to a hoisted helper the polyfill normally provides produces a `ReferenceError` the Selenium atom silently swallows, returning `value: undefined` ([webdriverio#13444](https://github.com/webdriverio/webdriverio/issues/13444)).
+2. The Appium-remote-debugger `Runtime.evaluate` path coerces non-primitive return values fragilely on real iOS devices. Empty arrays, plain-object arrays, and `undefined` all collapse to `undefined` at the wire boundary ([appium#9107](https://github.com/appium/appium/issues/9107), [webdriverio#4515](https://github.com/webdriverio/webdriverio/issues/4515)). The MCP then prints both `undefined` and `null` as `"Script executed successfully (no return value)"`.
+
+Returning a JSON string sidesteps both: primitives serialise reliably, and `?? null` ensures even a missing function or `undefined` produces a real return value rather than an empty wire frame. The canonical iOS shape is therefore:
+
+```ts
+execute_script({ script: 'return JSON.stringify(<expr> ?? null)' })
+```
+
+`JSON.parse` the `Result:` payload on the agent side. Interpret outcomes as:
+
+| MCP returns                                      | Meaning                                                                                       |
+| ------------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| `Result: <json>`                                 | Script ran. `JSON.parse` the payload to recover the value (`"null"` ⇒ `null` after parsing).  |
+| `Script executed successfully (no return value)` | Script threw inside the atom (likely Rule 1 violation, or a `ReferenceError` from Rule 2 #1). |
+| `Error executing script: …`                      | Pre-script parse error or transport-level failure. Read the message.                          |
+
+If you see "no return value" on a script you believe is shaped correctly, the fast diagnostic is to swap the body for `return JSON.stringify((function () { try { return <expr> } catch (e) { return 'ERR:' + e.message } })())` once — that surfaces whatever the atom was swallowing.
+
+WebdriverIO's `browser.execute` is documented as synchronous — don't return a Promise expecting it to be awaited. For "wait until X is true" logic, poll from the agent side: call `execute_script` repeatedly with a `return JSON.stringify(<predicate>)` body, sleeping ~500 ms between calls via the Bash tool, until truthy or a timeout fires.
 
 The React bundle hydrates a few seconds after `navigate` returns. Reaching for `tap_element` / `get_elements` immediately hits an empty `<div id="root"></div>` and burns round-trips on diagnostic poking before the agent realises the page just isn't ready yet. Wait for a known landmark before any interaction — `#skip-tutorial` for the welcome screen, `[aria-label="empty-thoughtspace"]` once the tutorial is dismissed:
 
 Poll agent-side, sleeping in Bash between calls:
 
 ```ts
-// Each iteration — call execute_script with a plain return-predicate:
+// Each iteration — call execute_script with a JSON.stringify-wrapped predicate:
 execute_script({
-  script: 'return !!document.querySelector(\'#skip-tutorial, [aria-label="empty-thoughtspace"]\')',
+  script: 'return JSON.stringify(!!document.querySelector(\'#skip-tutorial, [aria-label="empty-thoughtspace"]\'))',
 })
-// Then via Bash: sleep 0.5
-// Repeat up to ~20 iterations (~10s total). Stop on the first true.
+// Result is `Result: true` or `Result: false` — JSON.parse the payload.
+// Then via Bash: sleep 0.5. Repeat up to ~20 iterations (~10s total). Stop on the first true.
 ```
 
 If the predicate is still `false` after the timeout, drain the console buffer (see below) and check the dev server log before retrying — the page is genuinely stuck, not just slow.
 
-**Drain the console at meaningful checkpoints** — after every `tap_element`, `swipe`, or any action whose effect isn't directly visible — by calling `execute_script({ script: 'return window.__drainiOSConsoleLogs__()' })`. Gesture-detector warnings, network errors, and React warnings live there and would otherwise be invisible to the agent. Before assuming a tap or swipe didn't register, drain first; the answer is often in the buffer.
+**Drain the console at meaningful checkpoints** — after every `tap_element`, `swipe`, or any action whose effect isn't directly visible — by calling `execute_script({ script: 'return JSON.stringify(window.__drainiOSConsoleLogs__?.() ?? null)' })`, then `JSON.parse` the `Result:` payload. Gesture-detector warnings, network errors, and React warnings live there and would otherwise be invisible to the agent. Before assuming a tap or swipe didn't register, drain first; the answer is often in the buffer. If parse yields `null`, the proxy didn't install — check that the URL still has `?__ios_console_proxy` after any reload.
 
 **Expect HMR reloads when you edit source files.** Vite's hot-module-replacement reloads the page on the iOS device whenever a watched source file changes. The console proxy reinstalls automatically on reload (it's wired into `src/initialize.ts`), but **in-memory app state is gone** — any thoughts you created, cursor positions, modal dismissals, etc. will be reset. After editing source mid-session, re-run the wait-for-mount predicate and re-create any in-app state you need before continuing. Don't conclude HMR is broken just because the page looks different than you left it — that's the reload doing its job.
 
