@@ -1,5 +1,6 @@
 import http from 'http'
 import path from 'path'
+import { drainConsoleProxy, waitForConsoleProxy } from '../../../util/consoleProxy'
 
 /**
  * Checks if the app is running on locally.
@@ -87,9 +88,8 @@ const baseConfig = {
   },
 
   // Navigate once at the start of the session.
-  // ?__ios_console_proxy activates the iOS console proxy installed by src/util/iOSConsoleProxy.ts.
   before: async function () {
-    await browser.url('http://bs-local.com:3000?__ios_console_proxy')
+    await browser.url('http://bs-local.com:3000')
     await browser.waitUntil(
       async () => {
         const body = await browser.$('body')
@@ -110,12 +110,12 @@ const baseConfig = {
     // Refresh to apply the cleared storage (much faster than full navigation)
     await browser.refresh()
 
-    // Wait for the iOS console proxy to finish installing (initialize.ts runs at app bootstrap, but browser.refresh may return before that completes). Without this wait, app code that logs early can fire before console.* has been wrapped and those entries hit native console and are lost.
-    await browser.waitUntil(async () => browser.execute(() => typeof window.__drainiOSConsoleLogs__ === 'function'), {
-      timeout: 30000,
-      timeoutMsg:
-        'iOS console proxy did not install within 30s — check ?__ios_console_proxy URL flag and src/util/iOSConsoleProxy.ts',
-    })
+    // Due to limitations in BrowserStack, we need to proxy console.log
+    // calls and store output in a buffer to access them.
+    // We do this with a "console proxy" (see src/util/consoleProxy.ts).
+    // The proxy can be selectively enabled using VITE_BROWSER_CONSOLE_CAPTURE=1,
+    // which we set in .github/workflows/ios.yml.
+    await waitForConsoleProxy()
 
     // Wait for the tutorial skip button and click it
     const skipElement = await $('#skip-tutorial')
@@ -128,11 +128,11 @@ const baseConfig = {
     await emptyThoughtspace.waitForExist({ timeout: 90000 })
   },
 
-  // After each test: drain the iOS console proxy buffer and print it under the test title so browser-side console output is grouped per-it() in CI logs.
+  // After each test: drain the console proxy buffer and print it under the test title so browser-side console output is grouped per-it() in CI logs.
   afterTest: async function (test: { fullTitle: string; title: string; parent: string }) {
     const title = test.fullTitle || `${test.parent} › ${test.title}`
     try {
-      const logs = await browser.execute(() => window.__drainiOSConsoleLogs__?.() ?? [])
+      const logs = await drainConsoleProxy()
       if (!logs.length) return
       console.info(`\n[browser console] ${title} (${logs.length} entries)`)
       for (const l of logs) {
