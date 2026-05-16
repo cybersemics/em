@@ -112,7 +112,7 @@
     "himalaya": "^1.1.1",
     "html-escaper": "^3.0.3",
     "idb-keyval": "^6.2.2",
-    "immer": "^11.1.4",
+    "immer": "^11.1.8",
     "ipfs-http-client": "^43.0.1",
     "lodash": "^4.18.1",
     "lottie-react": "^2.4.1",
