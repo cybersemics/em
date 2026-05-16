@@ -24,7 +24,10 @@ import fastClick from '../../util/fastClick'
 import PanelCommand from './PanelCommand'
 import PanelCommandGroup from './PanelCommandGroup'
 
-const bezierDefinition = [0, 0, 0.2, 1] as const
+/** MUI easeOut — matches the open curve used by main's SwipeableDrawer. */
+const easeOpen = [0, 0, 0.2, 1] as const
+/** MUI sharp — matches the close curve used by main's SwipeableDrawer. Slow first frame avoids a large initial gap. */
+const easeClose = [0.4, 0, 0.6, 1] as const
 
 /**
  * A custom hook that returns the last non-zero number of multicursors.
@@ -154,7 +157,10 @@ const CommandCenter = () => {
           onClose={onClose}
           detent='content'
           unstyled
-          tweenConfig={{ duration: durationsConfig.medium / 1000, ease: bezierDefinition }}
+          tweenConfig={{
+            duration: durationsConfig.medium / 1000,
+            ease: showCommandCenter ? easeOpen : easeClose,
+          }}
           style={{
             /** Override default Sheet zIndex. */
             zIndex: token('zIndex.commandCenter'),
