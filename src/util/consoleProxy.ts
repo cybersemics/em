@@ -25,6 +25,9 @@ let installed = false
  * Installs the console-proxy.
  */
 const installConsoleProxy = (): void => {
+  // Node safety first: this module is also loaded by WDIO's config in Node, where `import.meta.env` is undefined and a direct property access would throw. `typeof window` short-circuits before Vite's static replacement is reached.
+  if (typeof window === 'undefined') return
+  // Direct property access (no optional chaining) so Vite statically replaces this with the env-var literal at build time, enabling Rollup to dead-code-eliminate the rest when the var is unset.
   if (!import.meta.env.VITE_BROWSER_CONSOLE_CAPTURE) return
 
   // Idempotency guard – ensure the proxy is only installed once per session.
