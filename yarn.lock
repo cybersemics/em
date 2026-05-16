@@ -11277,15 +11277,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dompurify@npm:^3.4.1":
-  version: 3.4.1
-  resolution: "dompurify@npm:3.4.1"
+"dompurify@npm:^3.4.3":
+  version: 3.4.3
+  resolution: "dompurify@npm:3.4.3"
   dependencies:
     "@types/trusted-types": "npm:^2.0.7"
   dependenciesMeta:
     "@types/trusted-types":
       optional: true
-  checksum: 10c0/440a4246020cb54b82ef2cb66381e4d310a0c470f9994655e61b6122811f0eaa00a2f9665d2bed30ca3f58932ba7bb0d5e26fdfce61c8daf35d21a3f5a799e48
+  checksum: 10c0/88b9e1a6d0a990e15fab46f4eb96163ef79f20634705b21c82651ffce1ccc5236e4007397d920234afab86123d49be863f2367bd6aacdf28a401aef4d177e0f9
   languageName: node
   linkType: hard
 
@@ -11535,7 +11535,7 @@ __metadata:
     chalk: "npm:^5.6.2"
     clipboard: "npm:^2.0.11"
     dnd-core: "npm:^16.0.1"
-    dompurify: "npm:^3.4.1"
+    dompurify: "npm:^3.4.3"
     dotenv: "npm:17.4.2"
     emitter20: "npm:^2.0.0"
     emoji-regex: "npm:^10.6.0"
