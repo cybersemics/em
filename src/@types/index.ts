@@ -12,8 +12,6 @@ declare global {
     debug: (message: string) => void
     // FIX: Used only in puppeteer test environment. So need way to switch global context based on environment.
     delay: (ms: number) => Promise<boolean>
-    /** Puppeteer layout-shift tests: true after `measureYShift`'s MutationObserver has called `observe()`. */
-    layoutShiftObserverReady?: boolean
   }
 
   interface Navigator {

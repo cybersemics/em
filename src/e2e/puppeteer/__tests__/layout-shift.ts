@@ -1,4 +1,5 @@
 import { describe, expect } from 'vitest'
+import { WindowEm } from '../../../initialize'
 import clickBullet from '../helpers/clickBullet'
 import clickThought from '../helpers/clickThought'
 import paste from '../helpers/paste'
@@ -12,7 +13,7 @@ const Y_TOLERANCE = 0.5
 
 /** Wait until `measureYShift`'s observer is observing `document.body`. */
 const waitForLayoutShiftObserver = () =>
-  page.waitForFunction(() => window.layoutShiftObserverReady === true, { timeout: 8000 })
+  page.waitForFunction(() => (window.em as WindowEm).testFlags.layoutShiftObserverReady === true, { timeout: 8000 })
 
 type YShiftResult = {
   /** The value of the thought whose y position is being measured. */
@@ -32,7 +33,8 @@ const measureYShift = (thoughtValue: string, { settleMs = 500 }: { settleMs?: nu
   page.evaluate(
     (thoughtValue: string, settleMs: number, overallTimeoutMs: number) =>
       new Promise<YShiftResult>((resolve, reject) => {
-        window.layoutShiftObserverReady = false
+        const testFlags = (window.em as WindowEm).testFlags
+        testFlags.layoutShiftObserverReady = false
 
         /** The target tree-node whose y position is being measured. */
         let target: HTMLElement | null = null
@@ -56,7 +58,7 @@ const measureYShift = (thoughtValue: string, { settleMs = 500 }: { settleMs?: nu
           if (resolveDebounceTimer) clearTimeout(resolveDebounceTimer)
           resolveDebounceTimer = setTimeout(() => {
             observer?.disconnect()
-            window.layoutShiftObserverReady = false
+            testFlags.layoutShiftObserverReady = false
             resolve({ thoughtValue: thoughtValue, before, after })
           }, settleMs)
         }
@@ -101,13 +103,13 @@ const measureYShift = (thoughtValue: string, { settleMs = 500 }: { settleMs?: nu
           attributeFilter: ['style'],
           attributeOldValue: true,
         })
-        window.layoutShiftObserverReady = true
+        testFlags.layoutShiftObserverReady = true
 
         setTimeout(() => {
           if (!target) {
             observer?.disconnect()
             if (resolveDebounceTimer) clearTimeout(resolveDebounceTimer)
-            window.layoutShiftObserverReady = false
+            testFlags.layoutShiftObserverReady = false
             reject(new Error(`Timed out waiting for thought "${thoughtValue}" within ${overallTimeoutMs}ms.`))
           }
         }, overallTimeoutMs)
