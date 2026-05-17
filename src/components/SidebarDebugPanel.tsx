@@ -4,7 +4,7 @@
  * blur fade band (Safari edge softness), glow floor (SidebarOverlay1 expansion intensification).
  * Remove this file + its four call sites in Sidebar.tsx when done tuning. */
 /* eslint-disable react-refresh/only-export-components */
-import { useSyncExternalStore } from 'react'
+import { useRef, useState, useSyncExternalStore } from 'react'
 import { createPortal } from 'react-dom'
 import { isSafari } from '../browser'
 
@@ -89,13 +89,36 @@ const Row = ({
 /** Floating, position-fixed panel of sliders that live-tune the sidebar dim/blur. */
 const SidebarDebugPanel = () => {
   const { maskOpacityFloor, dropdownBlurPx, blurBandPx, glowFloor } = useSidebarDebug()
+  const panelRef = useRef<HTMLDivElement>(null)
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null)
+  const dragOffset = useRef<{ x: number; y: number } | null>(null)
+
+  /** Begin a drag: capture the cursor offset from the panel's top-left and pin pointer events. */
+  const onPointerDown = (e: React.PointerEvent<HTMLSpanElement>) => {
+    if (!panelRef.current) return
+    const rect = panelRef.current.getBoundingClientRect()
+    dragOffset.current = { x: e.clientX - rect.left, y: e.clientY - rect.top }
+    setPos({ top: rect.top, left: rect.left })
+    e.currentTarget.setPointerCapture(e.pointerId)
+  }
+  /** Update the panel's top-left as the pointer moves, preserving the original grab offset. */
+  const onPointerMove = (e: React.PointerEvent<HTMLSpanElement>) => {
+    if (!dragOffset.current) return
+    setPos({ top: e.clientY - dragOffset.current.y, left: e.clientX - dragOffset.current.x })
+  }
+  /** End the drag and release pointer capture. */
+  const onPointerUp = (e: React.PointerEvent<HTMLSpanElement>) => {
+    dragOffset.current = null
+    e.currentTarget.releasePointerCapture(e.pointerId)
+  }
+
   if (typeof document === 'undefined') return null
   return createPortal(
     <div
+      ref={panelRef}
       style={{
         position: 'fixed',
-        bottom: 16,
-        right: 16,
+        ...(pos ? { top: pos.top, left: pos.left } : { bottom: 16, right: 16 }),
         zIndex: 2147483647,
         background: 'rgba(0,0,0,0.85)',
         color: '#fff',
@@ -109,7 +132,14 @@ const SidebarDebugPanel = () => {
       }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-        <span style={{ fontWeight: 600 }}>Sidebar dim/blur debug</span>
+        <span
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          style={{ fontWeight: 600, cursor: 'move', flex: 1, touchAction: 'none' }}
+        >
+          Sidebar dim/blur debug
+        </span>
         <button
           type='button'
           onClick={reset}
