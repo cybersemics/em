@@ -1,6 +1,6 @@
 import { describe, expect } from 'vitest'
 import { WindowEm } from '../../../initialize'
-import type { TestFlags } from '../../testFlags'
+import { TestFlags } from '../../testFlags'
 import clickBullet from '../helpers/clickBullet'
 import clickThought from '../helpers/clickThought'
 import paste from '../helpers/paste'
