@@ -297,7 +297,7 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
           initial={false}
           animate={{ opacity: isOpen ? 0 : 1 }}
           transition={isOpen ? slide : { duration: STAGE_DURATION, delay: STAGE_DURATION, ease: EASE_OUT }}
-          className={css({ display: 'inline-flex' })}
+          className={css({ display: 'inline-flex', paddingTop: '0.375rem' })}
         >
           <ChevronImg
             onClickHandle={() => setIsOpen(!isOpen)}
