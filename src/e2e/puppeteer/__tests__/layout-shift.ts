@@ -1,5 +1,6 @@
 import { describe, expect } from 'vitest'
 import { WindowEm } from '../../../initialize'
+import type { TestFlags } from '../../testFlags'
 import clickBullet from '../helpers/clickBullet'
 import clickThought from '../helpers/clickThought'
 import paste from '../helpers/paste'
@@ -13,7 +14,9 @@ const Y_TOLERANCE = 0.5
 
 /** Wait until `measureYShift`'s observer is observing `document.body`. */
 const waitForLayoutShiftObserver = () =>
-  page.waitForFunction(() => (window.em as WindowEm).testFlags.layoutShiftObserverReady === true, { timeout: 8000 })
+  page.waitForFunction(() => ((window.em as WindowEm).testFlags as TestFlags).layoutShiftObserverReady === true, {
+    timeout: 8000,
+  })
 
 type YShiftResult = {
   /** The value of the thought whose y position is being measured. */
@@ -33,7 +36,7 @@ const measureYShift = (thoughtValue: string, { settleMs = 500 }: { settleMs?: nu
   page.evaluate(
     (thoughtValue: string, settleMs: number, overallTimeoutMs: number) =>
       new Promise<YShiftResult>((resolve, reject) => {
-        const testFlags = (window.em as WindowEm).testFlags
+        const testFlags = (window.em as WindowEm).testFlags as TestFlags
         testFlags.layoutShiftObserverReady = false
 
         /** The target tree-node whose y position is being measured. */
