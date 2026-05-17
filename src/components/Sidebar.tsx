@@ -47,7 +47,6 @@ import Favorites from './Favorites'
 import ProgressiveBlur from './ProgressiveBlur'
 import RecentlyDeleted from './RecentlyDeleted'
 import RecentlyEdited from './RecentlyEdited'
-import SidebarDebugPanel, { useSidebarDebug } from './SidebarDebugPanel'
 import DeleteIcon from './icons/DeleteIcon'
 import FavoritesIcon from './icons/FavoritesIcon'
 import PencilIcon from './icons/PencilIcon'
@@ -161,7 +160,6 @@ interface SidebarHeaderProps {
  * concurrently with the open.
  */
 const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen }: SidebarHeaderProps) => {
-  const { dropdownBlurPx, blurBandPx } = useSidebarDebug()
   /** The currently active section. */
   const section = sections.find(s => s.id === sectionId)!
 
@@ -342,25 +340,6 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
           pointerEvents: isOpen ? 'auto' : 'none',
         })}
       >
-        {/* Blur backdrop – sits behind the menu items, blurs only the content visible through this region. Fades concurrent with the open/close. */}
-        <motion.div
-          initial={false}
-          animate={{ opacity: isOpen ? 1 : 0 }}
-          transition={slide}
-          style={{
-            maskImage: `linear-gradient(to bottom, transparent, black ${blurBandPx}px, black calc(100% - ${blurBandPx}px), transparent)`,
-            WebkitMaskImage: `linear-gradient(to bottom, transparent, black ${blurBandPx}px, black calc(100% - ${blurBandPx}px), transparent)`,
-            ...(dropdownBlurPx > 0 && { backdropFilter: `blur(${dropdownBlurPx}px)` }),
-          }}
-          className={css({
-            position: 'absolute',
-            top: '-48px',
-            left: '-1em',
-            right: '-1em',
-            bottom: '-48px',
-            zIndex: -1,
-          })}
-        />
         {sections.map((s, i) => {
           const isSelected = s.id === sectionId
           return (
@@ -427,14 +406,13 @@ const SidebarOverlay1 = ({
   sat: MotionValue<number>
 }) => {
   const isLargeDevice = useBreakpoint('lg')
-  const { glowFloor } = useSidebarDebug()
 
-  /** Ramps from glowFloor (collapsed) to 1.0 (expanded), making the glow brighten when the
-   * dropdown opens. Multiplied with the parent-supplied `opacity` for the final overlay opacity. */
-  const dropdownOpacity = useMotionValue(glowFloor)
+  /** Ramps from 0.8 (collapsed) to 1.0 (expanded), making the glow brighten when the dropdown
+   * opens. Multiplied with the parent-supplied `opacity` for the final overlay opacity. */
+  const dropdownOpacity = useMotionValue(0.8)
   useEffect(() => {
-    animate(dropdownOpacity, expanded ? 1 : glowFloor, { duration: durations.get('medium') / 1000, ease: EASE_OUT })
-  }, [expanded, glowFloor, dropdownOpacity])
+    animate(dropdownOpacity, expanded ? 1 : 0.8, { duration: durations.get('medium') / 1000, ease: EASE_OUT })
+  }, [expanded, dropdownOpacity])
 
   const combinedOpacity = useTransform([opacity, dropdownOpacity], ([o, d]: number[]) => o * d)
 
@@ -774,16 +752,8 @@ const Sidebar = () => {
     ([d, s]) => `${d + (s * d) / DROPDOWN_MASK_OFFSET}px`,
   )
   // Opacity is derived from dropdownMaskY so the dim-out stays in lockstep with the slide.
-  // 1 when fully closed (dropdownMaskY = DROPDOWN_MASK_OFFSET), maskOpacityFloor when fully open.
-  const { maskOpacityFloor } = useSidebarDebug()
-  const floorMV = useMotionValue(maskOpacityFloor)
-  useEffect(() => {
-    floorMV.set(maskOpacityFloor)
-  }, [maskOpacityFloor, floorMV])
-  const maskOpacity = useTransform<number, number>(
-    [dropdownMaskY, floorMV],
-    ([v, floor]) => floor + ((1 - floor) * v) / DROPDOWN_MASK_OFFSET,
-  )
+  // 1 when fully closed (dropdownMaskY = DROPDOWN_MASK_OFFSET), 0.5 when fully open.
+  const maskOpacity = useTransform(dropdownMaskY, v => 0.5 + (0.5 * v) / DROPDOWN_MASK_OFFSET)
 
   /** True while the dropdown close animation is running. Used to block the scroll-hint effect
    * from interrupting the close mask animation if isScrolled happens to flip during the close
@@ -1117,7 +1087,6 @@ const Sidebar = () => {
 
   return (
     <>
-      <SidebarDebugPanel />
       {/*
        * Radix Dialog provides accessible modal behavior:
        * - Focus trapping within the sidebar when open
