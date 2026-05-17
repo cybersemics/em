@@ -10,16 +10,9 @@ vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
 const Y_TOLERANCE = 0.5
 
-/** Set in the browser when `measureYShift`'s MutationObserver has called `observe()`. */
-declare global {
-  interface Window {
-    __layoutShiftObserverReady?: boolean
-  }
-}
-
 /** Wait until `measureYShift`'s observer is observing `document.body`. */
 const waitForLayoutShiftObserver = () =>
-  page.waitForFunction(() => window.__layoutShiftObserverReady === true, { timeout: 8000 })
+  page.waitForFunction(() => window.layoutShiftObserverReady === true, { timeout: 8000 })
 
 type YShiftResult = {
   /** The value of the thought whose y position is being measured. */
@@ -39,7 +32,7 @@ const measureYShift = (thoughtValue: string, { settleMs = 500 }: { settleMs?: nu
   page.evaluate(
     (thoughtValue: string, settleMs: number, overallTimeoutMs: number) =>
       new Promise<YShiftResult>((resolve, reject) => {
-        window.__layoutShiftObserverReady = false
+        window.layoutShiftObserverReady = false
 
         /** The target tree-node whose y position is being measured. */
         let target: HTMLElement | null = null
@@ -63,7 +56,7 @@ const measureYShift = (thoughtValue: string, { settleMs = 500 }: { settleMs?: nu
           if (resolveDebounceTimer) clearTimeout(resolveDebounceTimer)
           resolveDebounceTimer = setTimeout(() => {
             observer?.disconnect()
-            window.__layoutShiftObserverReady = false
+            window.layoutShiftObserverReady = false
             resolve({ thoughtValue: thoughtValue, before, after })
           }, settleMs)
         }
@@ -108,13 +101,13 @@ const measureYShift = (thoughtValue: string, { settleMs = 500 }: { settleMs?: nu
           attributeFilter: ['style'],
           attributeOldValue: true,
         })
-        window.__layoutShiftObserverReady = true
+        window.layoutShiftObserverReady = true
 
         setTimeout(() => {
           if (!target) {
             observer?.disconnect()
             if (resolveDebounceTimer) clearTimeout(resolveDebounceTimer)
-            window.__layoutShiftObserverReady = false
+            window.layoutShiftObserverReady = false
             reject(new Error(`Timed out waiting for thought "${thoughtValue}" within ${overallTimeoutMs}ms.`))
           }
         }, overallTimeoutMs)
