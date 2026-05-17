@@ -68,7 +68,7 @@ const moveThoughtDown = (state: State): State => {
     newPath,
     ...(offset != null ? { offset } : null),
     newRank: rankNew,
-    afterId: nextThought ? nextThought.id : undefined,
+    afterId: nextThought ? nextThought.id : null,
   })
 }
 

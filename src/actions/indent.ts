@@ -68,7 +68,7 @@ const indent = (state: State): State => {
     newPath: cursorNew,
     ...(offset != null ? { offset } : null),
     newRank: getNextRank(state, prev.id),
-    afterId: lastChildOfPrev?.id,
+    afterId: lastChildOfPrev?.id ?? null,
   })
 }
 

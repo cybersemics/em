@@ -21,7 +21,7 @@ import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
 import removeContext from '../util/removeContext'
 import timestamp from '../util/timestamp'
-import moveThought from './moveThought'
+import { moveThoughtByRank } from './moveThought'
 import updateThoughts from './updateThoughts'
 
 /**
@@ -116,7 +116,7 @@ const mergeThoughts = (
   const newStateAfterMove = reducerFlow([
     ...Object.values(sourceThought.childrenMap).map(
       (childId, index) => (updatedState: State) =>
-        moveThought(updatedState, {
+        moveThoughtByRank(updatedState, {
           oldPath: appendToPath(sourceThoughtPath, childId),
           newPath: appendToPath(targetThoughtPath, childId),
           newRank: nextRank + index,

@@ -6,7 +6,7 @@ import ThoughtId from '../@types/ThoughtId'
 import Thunk from '../@types/Thunk'
 import alert from '../actions/alert'
 import deleteThought from '../actions/deleteThought'
-import moveThought from '../actions/moveThought'
+import { moveThoughtByRank } from '../actions/moveThought'
 import newThought from '../actions/newThought'
 import setCursor from '../actions/setCursor'
 import { HOME_PATH } from '../constants'
@@ -137,7 +137,7 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
           // execute moveThought after newThought has updated the state
           (state: State) => {
             const { path: newPath, rank } = pathAndRankToArchive(state, path!, pathParent)!
-            return moveThought(state, {
+            return moveThoughtByRank(state, {
               oldPath: path,
               // TODO: Are we sure pathToArchive cannot return null?
               newPath: newPath!,

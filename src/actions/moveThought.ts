@@ -39,9 +39,23 @@ export interface MoveThoughtPayload {
   newRank: number
   /**
    * ID of sibling after which to place in TreeCRDT.
-   * Explicit null means first child. Omitted/undefined means legacy caller; fallback bridges from rank.
+   * Explicit null means first child.
    */
-  afterId?: ThoughtId | null
+  afterId: ThoughtId | null
+}
+
+/** Derives an explicit TreeCRDT afterId from em's temporary rank ordering. */
+export const getMoveThoughtAfterIdByRank = (
+  state: State,
+  destinationThoughtId: ThoughtId,
+  sourceThoughtId: ThoughtId,
+  newRank: number,
+): ThoughtId | null => {
+  const after = getChildrenRanked(state, destinationThoughtId)
+    .filter(child => child.id !== sourceThoughtId && child.rank < newRank)
+    .at(-1)
+
+  return after?.id ?? null
 }
 
 // @MIGRATION_TODO: use (sourceId and destinationId) or simplePath instead of passing paths. Should low level handle context view logic ??
@@ -90,21 +104,12 @@ const moveThought = (state: State, payload: MoveThoughtPayload) => {
 
   const sameContext = sourceParentThought.id === destinationThoughtId
   const childrenOfDestination = getChildrenRanked(state, destinationThoughtId)
-  const hasExplicitPlacement = afterId !== undefined
-  // TreeCRDT stores sibling order as relative placement. Prefer caller-provided placement and only derive it from
-  // rank for legacy callers that have not been updated to pass an explicit sibling.
-  const validExplicitAfterId =
-    afterId != null && afterId !== sourceThought.id && childrenOfDestination.some(child => child.id === afterId)
-      ? afterId
-      : undefined
-  const rankFallbackAfterId = childrenOfDestination.filter(c => c.id !== sourceThought.id && c.rank < newRank).pop()?.id
-  const effectiveAfterId =
-    hasExplicitPlacement && afterId === null
-      ? undefined
-      : hasExplicitPlacement && validExplicitAfterId
-        ? validExplicitAfterId
-        : rankFallbackAfterId
-  const treecrdtPlacementAfterId = hasExplicitPlacement && afterId === null ? null : effectiveAfterId
+  if (
+    afterId === sourceThought.id ||
+    (afterId !== null && !childrenOfDestination.some(child => child.id === afterId))
+  ) {
+    throw new Error(`moveThought: afterId must be null or a child of the destination context.`)
+  }
 
   /**
    * Find first normalized duplicate thought.
@@ -199,7 +204,7 @@ const moveThought = (state: State, payload: MoveThoughtPayload) => {
         lexemeIndexUpdates: {},
         recentlyEdited,
         preventExpandThoughts: true,
-        movePlacements: { [sourceThought.id]: treecrdtPlacementAfterId },
+        movePlacements: { [sourceThought.id]: afterId },
       })
     },
     // update cursor if moved path is on the cursor
@@ -245,11 +250,45 @@ const moveThought = (state: State, payload: MoveThoughtPayload) => {
   ])(state)
 }
 
+export type MoveThoughtByRankPayload = Omit<MoveThoughtPayload, 'afterId'>
+
+/** Explicitly adapts a rank-based move to TreeCRDT relative placement while rank remains in em's action model. */
+const moveThoughtByRankImpl = (state: State, payload: MoveThoughtByRankPayload): State =>
+  moveThought(state, {
+    ...payload,
+    afterId: getMoveThoughtAfterIdByRank(
+      state,
+      head(rootedParentOf(state, payload.newPath)),
+      head(payload.oldPath),
+      payload.newRank,
+    ),
+  })
+
+export const moveThoughtByRank = _.curryRight(moveThoughtByRankImpl, 2)
+
 /** Action-creator for moveThought. */
 export const moveThoughtActionCreator =
   (payload: Parameters<typeof moveThought>[1]): Thunk =>
   dispatch =>
     dispatch({ type: 'moveThought', ...payload })
+
+/** Action-creator for rank-based moves that still need an explicit TreeCRDT placement bridge. */
+export const moveThoughtByRankActionCreator =
+  (payload: MoveThoughtByRankPayload): Thunk =>
+  (dispatch, getState) => {
+    const state = getState()
+    dispatch(
+      moveThoughtActionCreator({
+        ...payload,
+        afterId: getMoveThoughtAfterIdByRank(
+          state,
+          head(rootedParentOf(state, payload.newPath)),
+          head(payload.oldPath),
+          payload.newRank,
+        ),
+      }),
+    )
+  }
 
 export default _.curryRight(moveThought, 2)
 

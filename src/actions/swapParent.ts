@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
-import moveThought from '../actions/moveThought'
+import { moveThoughtByRank } from '../actions/moveThought'
 import sort from '../actions/sort'
 import { getChildrenRanked } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
@@ -56,14 +56,14 @@ const swapParent = (state: State): State => {
 
   return reducerFlow([
     // First move the child to replace its parent's position
-    moveThought({
+    moveThoughtByRank({
       oldPath: simplifyPath(state, cursor),
       newPath: simplifyPath(state, parent),
       newRank: parentThought.rank,
     }),
 
     // Then move the parent under the child
-    moveThought({
+    moveThoughtByRank({
       oldPath: simplifyPath(state, parent),
       newPath: simplifyPath(state, [...grandparent, childId, parentId]),
       newRank: childThought.rank,
@@ -71,7 +71,7 @@ const swapParent = (state: State): State => {
 
     // Move siblings under the child
     ...siblings.map(sibling =>
-      moveThought({
+      moveThoughtByRank({
         oldPath: simplifyPath(state, [...parent, sibling.id]),
         newPath: simplifyPath(state, [...grandparent, childId, sibling.id]),
         newRank: sibling.rank,
@@ -80,7 +80,7 @@ const swapParent = (state: State): State => {
 
     // Move grandchildren under the parent's new position
     ...childChildren.map(grandchild =>
-      moveThought({
+      moveThoughtByRank({
         oldPath: simplifyPath(state, [...cursor, grandchild.id]),
         newPath: simplifyPath(state, [...grandparent, childId, parentId, grandchild.id]),
         newRank: grandchild.rank,

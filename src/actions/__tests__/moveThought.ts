@@ -98,7 +98,7 @@ it('move within context (rank only)', () => {
   expect(getContexts(stateNew, 'a2')).toMatchObject([thoughtA2.id])
 })
 
-it('rank fallback placement excludes the moved thought', () => {
+it('rank adapter placement excludes the moved thought', () => {
   const state = reducerFlow([newThought('a'), newThought('b'), newThought('c')])(initialState())
 
   const thoughtA = contextToThought(state, ['a'])!
@@ -131,21 +131,19 @@ it('explicit first placement is not inferred from rank', () => {
   expect(stateNew.pushQueue.at(-1)?.movePlacements?.[thoughtC.id]).toBeNull()
 })
 
-it('undefined placement falls back to rank', () => {
+it('rejects placement after the moved thought', () => {
   const state = reducerFlow([newThought('a'), newThought('b'), newThought('c')])(initialState())
 
-  const thoughtA = contextToThought(state, ['a'])!
   const thoughtB = contextToThought(state, ['b'])!
-  const thoughtC = contextToThought(state, ['c'])!
 
-  const stateNew = moveThoughtAtFirstMatch({
-    from: ['c'],
-    to: ['c'],
-    newRank: (thoughtA.rank + thoughtB.rank) / 2,
-    afterId: undefined,
-  })(state)
-
-  expect(stateNew.pushQueue.at(-1)?.movePlacements?.[thoughtC.id]).toBe(thoughtA.id)
+  expect(() =>
+    moveThoughtAtFirstMatch({
+      from: ['b'],
+      to: ['b'],
+      newRank: thoughtB.rank,
+      afterId: thoughtB.id,
+    })(state),
+  ).toThrow('afterId must be null or a child of the destination context')
 })
 
 it('move across contexts', () => {

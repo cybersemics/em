@@ -5,7 +5,7 @@ import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import editThought from '../actions/editThought'
 import editableRender from '../actions/editableRender'
-import moveThought from '../actions/moveThought'
+import { moveThoughtByRank } from '../actions/moveThought'
 import newThought from '../actions/newThought'
 import { getChildrenRanked } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
@@ -68,7 +68,7 @@ const splitThought = (state: State, { path, splitResult }: { path?: Path; splitR
 
       return reducerFlow(
         children.map((child, i) =>
-          moveThought({
+          moveThoughtByRank({
             oldPath: appendToPath(pathLeft, child.id),
             newPath: appendToPath(pathRight, child.id),
             newRank: i,

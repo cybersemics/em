@@ -5,6 +5,7 @@ import alert from '../actions/alert'
 import moveThought from '../actions/moveThought'
 import * as selection from '../device/selection'
 import findDescendant from '../selectors/findDescendant'
+import { getChildrenRanked } from '../selectors/getChildren'
 import getNextRank from '../selectors/getNextRank'
 import getRankBefore from '../selectors/getRankBefore'
 import getThoughtBefore from '../selectors/getThoughtBefore'
@@ -71,7 +72,9 @@ const moveThoughtUp = (state: State): State => {
     newPath,
     ...(offset != null ? { offset } : null),
     newRank: rankNew,
-    afterId: prevThought ? (prevSibling(state, appendToPath(pathParent, prevThought.id))?.id ?? undefined) : undefined,
+    afterId: prevThought
+      ? (prevSibling(state, appendToPath(pathParent, prevThought.id))?.id ?? null)
+      : (getChildrenRanked(state, head(prevUnclePath!)).at(-1)?.id ?? null),
   })
 }
 

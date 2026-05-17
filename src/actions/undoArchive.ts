@@ -4,7 +4,7 @@ import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import alert from '../actions/alert'
 import deleteThought from '../actions/deleteThought'
-import moveThought from '../actions/moveThought'
+import { moveThoughtByRank } from '../actions/moveThought'
 import setCursor from '../actions/setCursor'
 import { getAllChildren, getChildrenRanked } from '../selectors/getChildren'
 import rootedParentOf from '../selectors/rootedParentOf'
@@ -30,7 +30,7 @@ const undoArchive = (
       }),
 
     // move thought out of archive
-    moveThought({
+    moveThoughtByRank({
       oldPath: currPath,
       newPath: originalPath,
       offset,

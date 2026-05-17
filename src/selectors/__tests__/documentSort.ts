@@ -1,5 +1,5 @@
 import importText from '../../actions/importText'
-import moveThought from '../../actions/moveThought'
+import { moveThoughtByRank as moveThought } from '../../actions/moveThought'
 import initialState from '../../util/initialState'
 import pathToContext from '../../util/pathToContext'
 import reducerFlow from '../../util/reducerFlow'

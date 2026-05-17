@@ -1,14 +1,23 @@
 import _ from 'lodash'
 import Path from '../@types/Path'
 import State from '../@types/State'
+import ThoughtId from '../@types/ThoughtId'
 import Thunk from '../@types/Thunk'
-import moveThought, { MoveThoughtPayload, moveThoughtActionCreator } from '../actions/moveThought'
+import moveThought, {
+  MoveThoughtPayload,
+  getMoveThoughtAfterIdByRank,
+  moveThoughtActionCreator,
+} from '../actions/moveThought'
 import contextToPath from '../selectors/contextToPath'
 import rootedParentOf from '../selectors/rootedParentOf'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 
-type Payload = Omit<MoveThoughtPayload, 'oldPath' | 'newPath'> & { from: string[]; to: string[] }
+type Payload = Omit<MoveThoughtPayload, 'oldPath' | 'newPath' | 'afterId'> & {
+  afterId?: ThoughtId | null
+  from: string[]
+  to: string[]
+}
 
 /**
  * Get ranked old and new paths for the unranked paths.
@@ -36,8 +45,14 @@ const getMovePaths = (state: State, from: string[], to: string[]): [Path, Path] 
  */
 const moveThoughtAtFirstMatch = _.curryRight((state: State, payload: Payload) => {
   const [oldPath, newPath] = getMovePaths(state, payload.from, payload.to)
+  const afterId =
+    Object.prototype.hasOwnProperty.call(payload, 'afterId') && payload.afterId !== undefined
+      ? payload.afterId
+      : getMoveThoughtAfterIdByRank(state, head(rootedParentOf(state, newPath)), head(oldPath), payload.newRank)
+
   return moveThought(state, {
     ...payload,
+    afterId,
     oldPath,
     newPath,
   })
@@ -49,10 +64,16 @@ const moveThoughtAtFirstMatch = _.curryRight((state: State, payload: Payload) =>
 export const moveThoughtAtFirstMatchActionCreator =
   (payload: Payload): Thunk =>
   (dispatch, getState) => {
-    const [oldPath, newPath] = getMovePaths(getState(), payload.from, payload.to)
+    const state = getState()
+    const [oldPath, newPath] = getMovePaths(state, payload.from, payload.to)
+    const afterId =
+      Object.prototype.hasOwnProperty.call(payload, 'afterId') && payload.afterId !== undefined
+        ? payload.afterId
+        : getMoveThoughtAfterIdByRank(state, head(rootedParentOf(state, newPath)), head(oldPath), payload.newRank)
     dispatch(
       moveThoughtActionCreator({
         ...payload,
+        afterId,
         oldPath,
         newPath,
       }),

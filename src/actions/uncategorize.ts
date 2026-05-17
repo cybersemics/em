@@ -3,7 +3,7 @@ import Path from '../@types/Path'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import Thunk from '../@types/Thunk'
-import moveThought from '../actions/moveThought'
+import { moveThoughtByRank } from '../actions/moveThought'
 import setCursor from '../actions/setCursor'
 import findDescendant from '../selectors/findDescendant'
 import { findAnyChild, getChildren, getChildrenRanked, isVisible } from '../selectors/getChildren'
@@ -117,7 +117,7 @@ const uncategorize = (state: State, { at }: Options): State => {
     // Sort preference must be moved up before sort to prevent conversion to manual sort.
     contextHasSortPreference && !parentHasSortPreference
       ? reducerFlow([
-          moveThought({
+          moveThoughtByRank({
             oldPath: appendToPath(simplePath, sortId!),
             newPath: appendToPath(parentOf(simplePath), sortId!),
             newRank: getRankBefore(state, simplePath),
@@ -131,7 +131,7 @@ const uncategorize = (state: State, { at }: Options): State => {
       // Skip =sort since it has already been moved to the parent.
       if (contextHasSortPreference && child.value === '=sort') return state
 
-      return moveThought(state, {
+      return moveThoughtByRank(state, {
         oldPath: appendToPath(simplePath, child.id),
         newPath: appendToPath(parentOf(simplePath), child.id),
         newRank: getNewRank(state, child),

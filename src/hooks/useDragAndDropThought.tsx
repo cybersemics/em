@@ -226,7 +226,7 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
               oldPath: thoughtFrom,
               newPath,
               newRank: getRankBefore(state, props.simplePath),
-              afterId: prevSibling(state, props.simplePath)?.id ?? undefined,
+              afterId: prevSibling(state, props.simplePath)?.id ?? null,
             }),
       )
     })
