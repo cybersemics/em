@@ -10,29 +10,16 @@ vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
 const Y_TOLERANCE = 0.5
 
-/**
- * Puppeteer communicates with Chrome using the Chrome DevTools Protocol (CDP).
- * Each awaited `page.*` call is effectively a browser round trip:
- * Node sends a command → Chrome executes it → Node waits for the response.
- *
- * In `measureYShift`, `page.evaluate()` is used to register a
- * `MutationObserver` that waits for DOM changes. However, starting
- * `page.evaluate()` only queues the work in Chrome, it does not guarantee
- * the observer has already been registered.
- *
- * If a `press()` or `click()` happens immediately after, Chrome may process
- * the input before the observer is ready, especially under load (e.g. CI).
- * In that case, the new node mounts before anything is listening for it,
- * causing the observer to miss the change and eventually timeout.
- *
- * Awaiting a trivial `page.evaluate()` afterward acts as a synchronization
- * point. It forces another completed browser round trip, making it far more
- * likely that the observer is registered before the following input event.
- *
- * In short: this avoids a race condition where the input can happen before
- * the observer starts listening.
- */
-const yieldForPendingEvaluate = () => page.evaluate(() => undefined)
+/** Set in the browser when `measureYShift`'s MutationObserver has called `observe()`. */
+declare global {
+  interface Window {
+    __layoutShiftObserverReady?: boolean
+  }
+}
+
+/** Wait until `measureYShift`'s observer is observing `document.body`. */
+const waitForLayoutShiftObserver = () =>
+  page.waitForFunction(() => window.__layoutShiftObserverReady === true, { timeout: 8000 })
 
 type YShiftResult = {
   /** The value of the thought whose y position is being measured. */
@@ -52,6 +39,8 @@ const measureYShift = (thoughtValue: string, { settleMs = 500 }: { settleMs?: nu
   page.evaluate(
     (thoughtValue: string, settleMs: number, overallTimeoutMs: number) =>
       new Promise<YShiftResult>((resolve, reject) => {
+        window.__layoutShiftObserverReady = false
+
         /** The target tree-node whose y position is being measured. */
         let target: HTMLElement | null = null
         /** The first inline `top` React ever assigned to the target tree-node. */
@@ -74,6 +63,7 @@ const measureYShift = (thoughtValue: string, { settleMs = 500 }: { settleMs?: nu
           if (resolveDebounceTimer) clearTimeout(resolveDebounceTimer)
           resolveDebounceTimer = setTimeout(() => {
             observer?.disconnect()
+            window.__layoutShiftObserverReady = false
             resolve({ thoughtValue: thoughtValue, before, after })
           }, settleMs)
         }
@@ -118,11 +108,13 @@ const measureYShift = (thoughtValue: string, { settleMs = 500 }: { settleMs?: nu
           attributeFilter: ['style'],
           attributeOldValue: true,
         })
+        window.__layoutShiftObserverReady = true
 
         setTimeout(() => {
           if (!target) {
             observer?.disconnect()
             if (resolveDebounceTimer) clearTimeout(resolveDebounceTimer)
+            window.__layoutShiftObserverReady = false
             reject(new Error(`Timed out waiting for thought "${thoughtValue}" within ${overallTimeoutMs}ms.`))
           }
         }, overallTimeoutMs)
@@ -149,7 +141,7 @@ describe('thought y position stability', { retry: 3 }, () => {
     await waitForEditable('a')
 
     const measurePromise = measureYShift('')
-    await yieldForPendingEvaluate()
+    await waitForLayoutShiftObserver()
     await press('Enter')
     expectStableY(await measurePromise)
   })
@@ -163,7 +155,7 @@ describe('thought y position stability', { retry: 3 }, () => {
     await clickThought('a')
 
     const measurePromise = measureYShift('')
-    await yieldForPendingEvaluate()
+    await waitForLayoutShiftObserver()
     await press('Enter')
     expectStableY(await measurePromise)
   })
@@ -179,7 +171,7 @@ describe('thought y position stability', { retry: 3 }, () => {
     await press('Escape')
 
     const measurePromise = measureYShift('c')
-    await yieldForPendingEvaluate()
+    await waitForLayoutShiftObserver()
     await clickThought('b')
     expectStableY(await measurePromise)
   })
@@ -195,6 +187,7 @@ describe('thought y position stability', { retry: 3 }, () => {
     await clickBullet('a')
 
     const measurePromise = measureYShift('b')
+    await waitForLayoutShiftObserver()
     await clickBullet('a')
     expectStableY(await measurePromise)
   })
@@ -212,6 +205,7 @@ describe('thought y position stability', { retry: 3 }, () => {
     await press('Escape')
 
     const measurePromise = measureYShift('E')
+    await waitForLayoutShiftObserver()
     await clickThought('X')
     expectStableY(await measurePromise)
   })
