@@ -25,9 +25,9 @@
  */
 import * as Dialog from '@radix-ui/react-dialog'
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden'
-import { MotionValue, animate, motion, useMotionValue, useTransform } from 'framer-motion'
+import { MotionValue, animate, motion, motionValue, useMotionValue, useTransform } from 'framer-motion'
 import _ from 'lodash'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { sidebarContentMaskRecipe } from '../../styled-system/recipes'
@@ -35,9 +35,8 @@ import { token } from '../../styled-system/tokens'
 import { longPressActionCreator as longPress } from '../actions/longPress'
 import { toggleSidebarActionCreator } from '../actions/toggleSidebar'
 import { isSafari } from '../browser'
-import { LongPressState, Settings } from '../constants'
+import { LongPressState } from '../constants'
 import useBreakpoint from '../hooks/useBreakpoint'
-import getUserSetting from '../selectors/getUserSetting'
 import viewportStore from '../stores/viewport'
 import durations from '../util/durations'
 import fastClick from '../util/fastClick'
@@ -52,42 +51,31 @@ import DeleteIcon from './icons/DeleteIcon'
 import FavoritesIcon from './icons/FavoritesIcon'
 import PencilIcon from './icons/PencilIcon'
 
-/**
- * Cubic-bezier ease-out curve used for most sidebar animations (opening, overlay transitions).
- * The animation starts quickly and decelerates smoothly.
- */
+/** Default ease-out used for most sidebar animations. */
 const EASE_OUT = [0.16, 0.6, 0.2, 1] as const
 
-/**
- * A gentler ease-out curve used specifically when *closing* the sidebar.
- * The less aggressive start (0.25 vs 0.16) prevents the sidebar from
- * appearing to "jump" when the user releases their finger after a swipe.
- */
+/** Softer ease-out used when *closing* the sidebar. The less aggressive start prevents the
+ * drawer from appearing to "jump" when the user releases a swipe. */
 const EASE_OUT_GENTLE = [0.25, 0.1, 0.25, 1] as const
 
-/** Whether to enable blur effects throughout the sidebar.
- * In Chromium, blur effects significantly reduce performance, so we disable them there. */
+/** Backdrop-filter blur is too slow in Chromium to use freely, so we gate it to Safari. */
 const BLUR_ENABLED = isSafari()
 
-/** Duration (in seconds) of a single stage of the two-stage dropdown open/close animation.
- * The full animation takes 2 * STAGE_DURATION. Kept at module scope so both SidebarHeader
- * and the parent Sidebar component can reference it when coordinating the mask transition. */
+/** Duration (seconds) of the dropdown open/close animation. */
 const STAGE_DURATION = durations.get('medium') / 1000
 
-/** Pixel offsets used by the scrollable content mask. The mask gradient has a 128px transparent
- * band followed by a 48px fade to black; these values slide that shape in and out of view. */
+/** Y offsets that slide the scrollable content's mask in and out. The mask gradient is a
+ * 128px transparent band followed by a 48px fade to black; these constants position that
+ * shape relative to the scroll area's top edge. */
 const DROPDOWN_MASK_OFFSET = -128
 const SCROLL_HINT_MASK_OFFSET = -48
 
-/** Fixed width of the sidebar on large devices (px). On small screens, the sidebar spans 100% of the viewport. */
+/** Fixed sidebar width on large devices (px). Small screens use 100vw. */
 const SIDEBAR_WIDTH_PX = 400
 
 /** Valid sidebar section IDs. */
 type SidebarSectionId = 'favorites' | 'recentlyEdited' | 'recentlyDeleted'
 
-/**
- * Configuration for a sidebar section.
- */
 type SidebarSection = {
   id: SidebarSectionId
   label: string
@@ -119,7 +107,7 @@ const SidebarSectionRow = ({
   label: string
   iconSize?: number
 }) => (
-  <div className={css({ display: 'inline-flex', alignItems: 'center', gap: '0.75rem' })}>
+  <div className={css({ display: 'flex', alignItems: 'center', gap: '0.75rem' })}>
     <div
       className={css({
         width: '36px',
@@ -159,17 +147,6 @@ interface SidebarHeaderProps {
   isOpen: boolean
   /** State setter to toggle the dropdown open/closed. */
   setIsOpen: (open: boolean) => void
-  /** True iff the current close is reversing an open that hadn't fully completed. When set,
-   * close-side transitions drop their stage-1 hold so the partial open unwinds in place. */
-  interrupted: boolean
-  /** True when the dropdown's open animation has finished (past stage 1). Used by the
-   * dropdown item click handler to decide whether a section change should fire immediately
-   * or be deferred until the in-flight open has reversed cleanly. */
-  openComplete: boolean
-  /** Debug toggle: when true, use the single-stage animation B (selected slide and
-   * non-selected fade-in/out happen concurrently in one stageDuration window). When false,
-   * use the standard two-stage animation A. */
-  animationB: boolean
 }
 
 /**
@@ -177,83 +154,100 @@ interface SidebarHeaderProps {
  * for the current SidebarSection. It can be tapped to toggle a dropdown
  * view, which shows all SidebarSections.
  *
- * When the dropdown is open:
- * - The non-active sections animate into view
- * - The scrollable content area gently fades out.
- *
+ * Toggle animation: the selected item slides between the header position and its row in the
+ * dropdown list while the non-selected items fade in/out. Both run concurrently over a single
+ * STAGE_DURATION window. The scrollable content area below the header gently fades out
+ * concurrently with the open.
  */
-const SidebarHeader = ({
-  sections,
-  sectionId,
-  onSectionChange,
-  isOpen,
-  setIsOpen,
-  interrupted,
-  openComplete,
-  animationB,
-}: SidebarHeaderProps) => {
+const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen }: SidebarHeaderProps) => {
   /** The currently active section. */
   const section = sections.find(s => s.id === sectionId)!
 
-  /** Duration for each stage of the two-stage animation (in seconds). */
-  const stageDuration = STAGE_DURATION
-
-  /*
-   * Two-stage animation schedule:
-   * The dropdown open/close is choreographed as two back-to-back stages of equal length,
-   * which is defined as `stageDuration`:
-   *
-   *   Opening:
-   *     stage 1: selected item slides from header position down into the list along with color glow intensification
-   *     stage 2: non-selected items fade in
-   *
-   *   Closing:
-   *     stage 1: non-selected items fade out
-   *     stage 2: selected item slides back up into the header position along with color glow dimming
-   *
-   * atStart / atEnd play at the very start/end of the animation, and are responsible for
-   * swapping between the static header row at the top, and the *selected* item
-   * inside the dropdown menu.
-   *
-   */
-  // Animation B collapses stage 2 onto stage 1: there's only a single stageDuration window
-  // for both open and close, so things that would normally wait one stage now fire immediately,
-  // and things that would normally land at t=2·stage now land at t=stage.
-  const stage1 = { duration: stageDuration, ease: EASE_OUT, delay: 0 }
-  const stage2 = { duration: stageDuration, ease: EASE_OUT, delay: animationB ? 0 : stageDuration }
+  // Three framer-motion transition presets, all sharing the same animation window of
+  // STAGE_DURATION seconds. Different motion.divs in the dropdown reach for different
+  // ones depending on whether the property should tween or snap, and at which edge of
+  // the window:
+  //   slide   — tween smoothly across the whole window (the workhorse: y-translate, fades)
+  //   atStart — duration 0; snap the property at the moment the open begins (t=0)
+  //   atEnd   — duration 0 with delay = STAGE_DURATION; snap at the moment the close ends
+  // The instant snaps exist so we can swap two stacked elements (e.g. the static header
+  // row vs. the selected dropdown item) at exactly the start or end of the window without
+  // an interpolated fade in between.
+  const slide = { duration: STAGE_DURATION, ease: EASE_OUT, delay: 0 }
   const atStart = { duration: 0, delay: 0 }
-  const atEnd = { duration: 0, delay: stageDuration * (animationB ? 1 : 2) }
+  const atEnd = { duration: 0, delay: STAGE_DURATION }
 
-  /*
-   * Close transitions. `interrupted` is true if the open animation never finished,
-   * so we just reverse the opening animation in place without any delays or the two-stage sequence.
-   * When false (the dropdown was fully open before the close), we use the staged
-   * choreography described above.
-   */
-  const closeSlide = interrupted ? stage1 : stage2
-  const closeSelectedOpacity = interrupted ? { duration: 0, delay: stageDuration } : atEnd
-  const closeHeaderRow = closeSelectedOpacity
-  const closeChevron = interrupted
-    ? { duration: stageDuration, ease: EASE_OUT, delay: 0 }
-    : { duration: stageDuration, delay: stageDuration * (animationB ? 1 : 2), ease: EASE_OUT }
-
-  /** Refs to each dropdown item's inner padded div, keyed by section id, for measuring Y offsets. */
+  /** Refs to each dropdown item's inner div, keyed by section id. Used by getSelectedOffset
+   * below to measure where the selected row currently sits, which determines how far the
+   * selected item must translate up to land on the header row. */
   const itemEls = useRef<Record<string, HTMLDivElement | null>>({})
 
-  /** Measure the selected item's SidebarSectionRow Y position within the dropdown container.
-   * This is the distance the selected item must translate UP to overlay the header row at y=0.
+  /** One motion value per section driving its dropdown-item opacity. We control opacity
+   * imperatively (instead of via animate prop + keyframes) so the selected item's "snap to
+   * 1, hold, snap to 0 at the end of the close" can be expressed as exact zero-duration
+   * `set()` calls. The declarative keyframe form has a non-zero interp window between
+   * adjacent times — even when shrunk to <1ms, an unlucky rAF tick can sample inside it
+   * and produce a sub-frame partial-opacity flicker right as the static header swaps in.
+   * Imperative `set()` has no such window. */
+  const itemOpacities = useRef<Record<string, MotionValue<number>>>({})
+  sections.forEach(s => {
+    if (!itemOpacities.current[s.id]) {
+      itemOpacities.current[s.id] = motionValue(0)
+    }
+  })
+
+  // Drive each item's opacity based on the open state and which section is selected. Re-runs
+  // when sectionId changes — that's how mid-open section switches snap the newly-selected
+  // item to full opacity before its slide to the header position. useLayoutEffect (rather
+  // than useEffect) so the snap is applied between commit and paint, otherwise the first
+  // post-tap paint can land before the snap and show a frame of the newly-selected item at
+  // its mid-fade-in opacity — perceptible as a brief dim.
+  useLayoutEffect(() => {
+    const cancellers: (() => void)[] = []
+    for (const s of sections) {
+      const opacity = itemOpacities.current[s.id]
+      const isSel = s.id === sectionId
+      if (isOpen) {
+        if (isSel) {
+          // Selected during open: snap to 1. The static header simultaneously snaps to 0
+          // (atStart), so this row visually takes its place and slides into the dropdown.
+          opacity.set(1)
+        } else {
+          const controls = animate(opacity, 1, { duration: STAGE_DURATION, ease: EASE_OUT })
+          cancellers.push(() => controls.stop())
+        }
+      } else {
+        if (isSel) {
+          // Selected during close: snap to 1, hold while sliding to the header position,
+          // snap to 0 at the very end — exactly when the static header snaps to 1.
+          // The snap-to-0 uses framer-motion's delay-based scheduling (same mechanism as
+          // the static header's atEnd) so the two snaps land on the same rAF tick rather
+          // than drifting by a frame, which would show as a flicker.
+          opacity.set(1)
+          const controls = animate(opacity, 0, { duration: 0, delay: STAGE_DURATION })
+          cancellers.push(() => controls.stop())
+        } else {
+          const controls = animate(opacity, 0, { duration: STAGE_DURATION, ease: EASE_OUT })
+          cancellers.push(() => controls.stop())
+        }
+      }
+    }
+    return () => cancellers.forEach(c => c())
+  }, [isOpen, sectionId, sections])
+
+  /** Returns the y-offset of the selected item's SidebarSectionRow within the dropdown
+   * container — i.e. the distance the selected item must translate UP to overlay the
+   * header row at y=0.
    *
-   * Implementation note: framer-motion applies a CSS transform to each item's motion.div wrapper
-   * (via style.y). In Chromium/WebKit, an element with a transform becomes the offsetParent of
-   * its descendants, so sectionRow.offsetTop returns different things depending on whether the
-   * motion.div currently has a transform applied. With a transform (e.g. closed state) the
-   * offsetParent is the motion.div, so offsetTop only covers the inner div's paddingTop (~9px),
-   * and we have to add the motion.div's own offsetTop. Without a transform (e.g. open state)
-   * offsetParent skips the motion.div and is the dropdown container, so offsetTop already
-   * includes the motion.div's static y. We branch on the actual offsetParent so the result is
-   * the same total (~54px for row 1) either way. Without this, non-Favorites sections end up
-   * either under-translated (~9px) or over-translated (~99px) and the slide lands far from the
-   * header row. */
+   * Why the offsetParent branch: framer-motion applies a CSS transform to each item's
+   * motion.div wrapper (via style.y). A transformed element becomes the offsetParent of
+   * its descendants in both Chromium and WebKit, so sectionRow.offsetTop returns different
+   * values depending on whether the motion.div currently has a transform applied. With a
+   * transform (closed state) offsetParent is the motion.div, so offsetTop covers only the
+   * inner div's padding (~9px) and we have to add the motion.div's own offsetTop. Without
+   * a transform (open state) offsetParent skips up to the dropdown container, so offsetTop
+   * already includes the motion.div's static y. Without this branch, non-Favorites sections
+   * end up either under- or over-translated and the slide lands far from the header row. */
   const getSelectedOffset = useCallback(() => {
     const inner = itemEls.current[sectionId]
     const sectionRow = inner?.firstElementChild as HTMLElement | null
@@ -288,21 +282,21 @@ const SidebarHeader = ({
          * Selected section row: instantly hidden when opening (selected dropdown item takes over),
          * instantly shown after the close slide completes.
          */}
-        <motion.div
-          initial={false}
-          animate={{ opacity: isOpen ? 0 : 1 }}
-          transition={isOpen ? atStart : closeHeaderRow}
-        >
+        <motion.div initial={false} animate={{ opacity: isOpen ? 0 : 1 }} transition={isOpen ? atStart : atEnd}>
           <SidebarSectionRow icon={section.icon} label={section.label} />
         </motion.div>
         {/*
-         * Chevron: fades out during stage 1 when opening, fades back in after the
-         * close animation fully completes (delay of stage1 + stage2).
+         * Chevron timing:
+         *   - Open: fades out concurrent with the rest of the dropdown.
+         *   - Close (full or interrupted): hold through the close window, then fade back in
+         *     over the next STAGE_DURATION on the now-static header row. On an interrupted
+         *     close the chevron is mid-fade, but framer-motion freezes its current opacity
+         *     during the delay so it doesn't compete with the reverse slide.
          */}
         <motion.div
           initial={false}
           animate={{ opacity: isOpen ? 0 : 1 }}
-          transition={isOpen ? stage1 : closeChevron}
+          transition={isOpen ? slide : { duration: STAGE_DURATION, delay: STAGE_DURATION, ease: EASE_OUT }}
           className={css({ display: 'inline-flex' })}
         >
           <ChevronImg
@@ -314,11 +308,11 @@ const SidebarHeader = ({
         </motion.div>
       </div>
 
-      {/* Full-screen backdrop behind the dropdown. When clicked, it dismisses the dropdown. Fades concurrent with stage 1 in either direction. */}
+      {/* Full-screen backdrop behind the dropdown. When clicked, it dismisses the dropdown. Fades concurrent with the open/close. */}
       <motion.div
         initial={false}
         animate={{ opacity: isOpen ? 1 : 0 }}
-        transition={stage1}
+        transition={slide}
         {...fastClick(() => setIsOpen(false))}
         className={css({
           position: 'absolute',
@@ -332,7 +326,7 @@ const SidebarHeader = ({
         })}
       />
 
-      {/* Dropdown menu containing all sections in their original order. See stage schedule above for per-element timing. */}
+      {/* Dropdown menu containing all sections in their original order. See animation schedule above for per-element timing. */}
       <div
         className={css({
           position: 'absolute',
@@ -346,11 +340,11 @@ const SidebarHeader = ({
           pointerEvents: isOpen ? 'auto' : 'none',
         })}
       >
-        {/* Blur backdrop – sits behind the menu items, blurs only the content visible through this region. Fades concurrent with stage 1 in either direction. */}
+        {/* Blur backdrop – sits behind the menu items, blurs only the content visible through this region. Fades concurrent with the open/close. */}
         <motion.div
           initial={false}
           animate={{ opacity: isOpen ? 1 : 0 }}
-          transition={stage1}
+          transition={slide}
           className={css({
             position: 'absolute',
             top: '-48px',
@@ -368,25 +362,11 @@ const SidebarHeader = ({
             <motion.div
               key={s.id}
               initial={false}
+              style={{ opacity: itemOpacities.current[s.id] }}
               animate={{
-                opacity: isOpen ? 1 : 0,
                 y: isSelected ? (isOpen ? 0 : -selectedOffset) : 0,
               }}
-              transition={
-                isSelected
-                  ? {
-                      // Selected item: opacity swaps instantly at the edges; y slides over one stage
-                      // (stage 1 on open so the slide precedes the others fading in, stage 2 on close
-                      // so the slide happens after the others have faded out — except on an interrupted
-                      // close, where the slide unwinds immediately during stage 1).
-                      opacity: isOpen ? atStart : closeSelectedOpacity,
-                      y: isOpen ? stage1 : closeSlide,
-                    }
-                  : // Non-selected items: fade in during stage 2 on open, fade out during stage 1 on close.
-                    isOpen
-                    ? stage2
-                    : stage1
-              }
+              transition={slide}
             >
               <div
                 ref={(el: HTMLDivElement | null) => {
@@ -394,12 +374,6 @@ const SidebarHeader = ({
                 }}
                 data-testid={`sidebar-${s.id}`}
                 {...fastClick(() => {
-                  // Ignore taps until the slide (stage 1) has finished. During the slide the
-                  // user can still interrupt via the header — which bubbles up via this
-                  // element's parent click and closes the dropdown — but cannot pick a new
-                  // section. This avoids the messy collision where a mid-slide section
-                  // change leaves two items moving in opposite directions during the close.
-                  if (!openComplete) return
                   onSectionChange(s.id)
                   setIsOpen(false)
                 })}
@@ -425,30 +399,16 @@ const SidebarHeader = ({
 }
 
 /**
- * Glow overlay behind the sidebar header. Uses a background image and displays
- * a specific cropped region of that image.
+ * Primary glow overlay behind the sidebar header. Renders a cropped region of a background
+ * image and animates its size/position when the dropdown expands, giving a soft glow that
+ * intensifies and shifts when the user opens the section picker. Hue-rotate / saturate
+ * filters (driven by motion values from the parent) re-tint the glow per section.
  *
- * The image is positioned with a negative x offset to crop the left portion of the
- * image. The element itself spans 100vw so the glow bleeds beyond the sidebar edge on large devices.
- *
- * A bottom mask fades the image out for a smoother transition to the background.
- *
- * Animated styles that create a dynamic glow effect responding to user interactions:
- *
- * - backgroundSize: scales up when dropdown expands (with separate small/large screen strategies —
- * small screens scale both dimensions large to fill the full-width sidebar, large devices only scale height)
- * - backgroundPositionY: shifts upward on expand to keep the glow centered
- * - opacity: a local dropdownOpacity ramp (0.8 → 1.0) is multiplied with the parent's
- * contentOpacity to intensify the glow when the dropdown opens
- * - hue-rotate / saturate: driven by the parent's shared motion values to
- * tint the glow when switching sidebar sections.
- *
+ * Spans 100vw so the glow bleeds beyond the sidebar's right edge on large devices.
  */
 const SidebarOverlay1 = ({
   opacity,
   expanded,
-  interrupted,
-  animationB,
   hue,
   sat,
 }: {
@@ -456,54 +416,33 @@ const SidebarOverlay1 = ({
   opacity: MotionValue<number>
   /** Whether the dropdown is currently expanded. */
   expanded: boolean
-  /** True if the current close is reversing an open that hadn't fully completed. */
-  interrupted: boolean
-  /** Debug toggle: single-stage open/close. Drops the stage-1 hold on close. */
-  animationB: boolean
   /** Shared motion value driving CSS hue-rotate on the overlay. */
   hue: MotionValue<number>
   /** Shared motion value driving CSS saturate on the overlay. */
   sat: MotionValue<number>
 }) => {
-  /** Whether the viewport is at or above the lg breakpoint (landscape mobile and larger). */
   const isLargeDevice = useBreakpoint('lg')
 
-  /** Local opacity that ramps from 0.8 (collapsed) to 1.0 (expanded) to intensify the glow when the dropdown opens. */
+  /** Ramps from 0.8 (collapsed) to 1.0 (expanded), making the glow brighten when the dropdown
+   * opens. Multiplied with the parent-supplied `opacity` for the final overlay opacity. */
   const dropdownOpacity = useMotionValue(0.8)
-
-  /** When the dropdown expansion state changes, animate the dropdownOpacity to create a subtle
-   * intensification of the glow when the dropdown is open. Open runs during stage 1; close is
-   * delayed to stage 2 so the glow holds its intensified state while the rest of stage 1 plays,
-   * and only dims back once the title starts sliding up. */
   useEffect(() => {
-    animate(dropdownOpacity, expanded ? 1 : 0.8, {
-      duration: durations.get('medium') / 1000,
-      ease: EASE_OUT,
-      delay: expanded || interrupted || animationB ? 0 : STAGE_DURATION,
-    })
-  }, [expanded, interrupted, animationB, dropdownOpacity])
+    animate(dropdownOpacity, expanded ? 1 : 0.8, { duration: durations.get('medium') / 1000, ease: EASE_OUT })
+  }, [expanded, dropdownOpacity])
 
-  /** Combined opacity: parent's sidebar open/close opacity multiplied by the dropdown expansion ramp. */
   const combinedOpacity = useTransform([opacity, dropdownOpacity], ([o, d]: number[]) => o * d)
 
-  // Applying blur to overlay images helps substantially with gradient banding artifacts in Safari,
-  // with no observed performance impact – even on older/slower iPhones.
-  // Unfortunately, banding is visible in Chromium regardless of blur, so we disable it here.
+  // Blurring the overlay image kills gradient banding in Safari (no perf cost, even on old
+  // iPhones). Chromium still bands regardless, so the blur is gated to Safari only.
   const blur = BLUR_ENABLED ? 'blur(8px) ' : ''
-
-  // Combine the hue, saturation and blur filters into a single CSS filter string.
   const filter = useTransform([hue, sat], ([h, s]) => `${blur}hue-rotate(${h}deg) saturate(${s})`)
 
-  // Styles for collapsed and expanded states of the overlay.
-  // backgroundSize: fixed px values derived from the source image (1482×744).
-  // backgroundPositionY: negative offset crops the top of the image, revealing
-  //   only the lower glow region. Increases on expand to keep the glow centered.
-  //
-  // Two sizing strategies for the expanded state:
-  // - Small screens (full-width sidebar): scale both dimensions large with an x offset,
-  //   so the glow fills the full-width sidebar.
-  // - Large devices (fixed-width sidebar): keep width narrow and only scale height,
-  //   which looks better when the sidebar is a fixed-width panel.
+  // Collapsed/expanded background styles. The background image is 1482×744; the multipliers
+  // here scale it, and backgroundPositionY's negative offset crops the top so only the lower
+  // glow region shows. Two expanded strategies because the sidebar's geometry differs by
+  // breakpoint:
+  //   - Large devices: fixed-width sidebar, so we keep the width narrow and only stretch height.
+  //   - Small screens: full-width sidebar, so we scale both dimensions and offset x to fill it.
   const collapsed = { backgroundSize: 'calc(1482px * 0.425) calc(744px * 0.475)', backgroundPositionY: safeY(-84) }
   const open = isLargeDevice
     ? { backgroundSize: 'calc(1482px * 0.425) calc(744px * 0.825)', backgroundPositionY: safeY(-164) }
@@ -518,12 +457,9 @@ const SidebarOverlay1 = ({
       style={{ opacity: combinedOpacity, filter }}
       initial={collapsed}
       animate={expanded ? open : collapsed}
-      // Open: start stretching immediately (stage 1). Close: hold the stretched state through
-      // stage 1 and only begin shrinking during stage 2, in sync with the header-slide close.
       transition={{
         duration: durations.get('slow') / 1000,
         ease: EASE_OUT,
-        delay: expanded || interrupted || animationB ? 0 : STAGE_DURATION,
       }}
       className={css({
         position: 'absolute',
@@ -546,18 +482,9 @@ const SidebarOverlay1 = ({
 }
 
 /**
- * Secondary overlay layer that adds middle tones to the sidebar's colour blend.
- *
- * Unlike SidebarOverlay1 (which uses lighten blend mode and responds to the
- * dropdown expanded state), this overlay:
- * - Doesn't need a blend mode
- * - Applies a heavier blur (8px vs 4px) for a more diffuse effect
- * - Does not animate based on dropdown state (simpler, always the same)
- * - Covers the full height of the sidebar (top:0 to bottom:0).
- *
- * Together, the two overlays create a layered glow effect that shifts color
- * as the user switches between sidebar sections.
- *
+ * Secondary glow overlay. Adds mid-tone color over the full sidebar height to layer with
+ * SidebarOverlay1 — together they produce the per-section tinted glow. Unlike Overlay1,
+ * this layer is static (no dropdown response, no blend mode) and uses a stronger blur.
  */
 const SidebarOverlay2 = ({
   width,
@@ -574,12 +501,8 @@ const SidebarOverlay2 = ({
   /** Shared motion value driving CSS saturate on the overlay. */
   sat: MotionValue<number>
 }) => {
-  // Applying blur to overlay images helps substantially with gradient banding artifacts in Safari,
-  // with no observed performance impact – even on older/slower iPhones.
-  // Unfortunately, banding is visible in Chromium regardless of blur, so we disable it here.
+  // See SidebarOverlay1 for why blur is Safari-only.
   const blur = BLUR_ENABLED ? 'blur(8px) ' : ''
-
-  // Combine the hue, saturation and blur filters into a single CSS filter string.
   const filter = useTransform([hue, sat], ([h, s]) => `${blur}hue-rotate(${h}deg) saturate(${s})`)
 
   return (
@@ -607,16 +530,10 @@ const SidebarOverlay2 = ({
 }
 
 /**
- * The sidebar gradient overlay – a left-to-right linear gradient that darkens
- * the left edge of the viewport, creating a smooth visual transition between
- * the sidebar content and the main application content behind it.
- *
- * This gradient works in tandem with the ProgressiveBlur component. The
- * rendering order of these two components differs between Safari and Chrome
- * (see SidebarBackground) to avoid rendering artifacts specific to each engine.
- *
- * Clicking this overlay closes the sidebar (acts as a dismiss target).
- *
+ * Left-to-right gradient over the viewport edge. Sits next to ProgressiveBlur (see
+ * SidebarBackground for why their stacking order is browser-specific) and provides a smooth
+ * color transition from the sidebar into the main content. Also acts as a click-to-dismiss
+ * target.
  */
 const SidebarGradient = ({
   opacity,
@@ -664,21 +581,13 @@ const SidebarGradient = ({
 }
 
 /**
- * The sidebar background – a fixed, full-screen layer that sits behind the
- * sidebar drawer. It provides three visual effects:
+ * Full-screen layer behind the drawer. Stacks a dimming overlay, ProgressiveBlur, and
+ * SidebarGradient — all driven by the sidebar's x position with a cubic ease-in so the
+ * background fades in gently as the drawer slides and catches up as it settles.
  *
- * 1. A dimming overlay that darkens the entire viewport (clicks it to dismiss)
- * 2. A ProgressiveBlur that gradually blurs the main content near the sidebar edge
- * 3. A SidebarGradient that provides a smooth color transition.
- *
- * The opacity of all three effects is derived from the sidebar's x position,
- * with a cubic ease-in applied so the background fades in gently as the
- * sidebar slides open and catches up as it settles into place.
- *
- * Browser-specific rendering order:
- * - Safari/iOS: gradient is rendered ABOVE the blur (avoids patchy artifacts)
- * - Chrome: blur is rendered ABOVE the gradient (avoids visible banding).
- *
+ * Blur and gradient are rendered in different orders per engine: in Safari the gradient
+ * goes above the blur (otherwise patchy artifacts), in Chromium the blur goes above the
+ * gradient (otherwise visible banding).
  */
 const SidebarBackground = ({
   x,
@@ -797,19 +706,13 @@ const useSectionHue = (/** The currently active sidebar section. */ sectionId: S
 }
 
 /**
- * The main Sidebar component.
+ * Top-level Sidebar component. Composes the background layers, glow overlays, drawer panel,
+ * and section content. Handles open/close (Redux), swipe-to-close gestures, section
+ * switching, Escape key, and body scroll lock.
  *
- * This component orchestrates the entire sidebar experience:
- * - Opening/closing via Redux state (showSidebar)
- * - Swipe-to-close gesture handling on touch devices
- * - Section switching (Favorites / Recently Edited / Recently Deleted)
- * - Visual overlay animations (glow effects that change color per section)
- * - Keyboard accessibility (Escape to close)
- * - Body scroll locking when open.
- *
- * The sidebar is always mounted in the DOM (via Radix Dialog's forceMount)
- * to match legacy MUI drawer behavior. It slides in/out using Framer Motion's
- * x transform, with manual touch handling for swipe gestures.
+ * The drawer is always mounted (Radix forceMount, inherited from the previous MUI drawer)
+ * and slides via a framer-motion x transform; swipe gestures are handled manually because
+ * framer-motion's drag has no "wait and see" phase for direction detection.
  */
 const Sidebar = () => {
   // ============================
@@ -820,34 +723,16 @@ const Sidebar = () => {
    * within Favorites is disabled to prevent conflicting gesture interactions. */
   const [isSwiping, setIsSwiping] = useState(false)
 
-  /** Whether the sidebar is open – sourced from Redux store. */
+  /** Whether the sidebar is open. */
   const showSidebar = useSelector(state => state.showSidebar)
 
-  /** Debug toggle: animation B replaces the two-stage open/close with a single combined
-   * stage. Selected slide and non-selected fade-in/out happen concurrently in one
-   * stageDuration window. Read from user settings via the OPTIONS panel. */
-  const animationB = !!useSelector(getUserSetting(Settings.sidebarAnimationB))
-
-  /** Current long-press state – used to prevent sidebar swipe-close during
-   * thought drag-and-drop operations. */
+  /** Check if there is a long-press in progress anywhere in the app. If so, disable sidebar's swipe
+   * gesture to prevent conflicts with thought drag-and-drop operations. */
   const longPressState = useSelector(state => state.longPress)
   const dispatch = useDispatch()
 
-  /** Which section is currently selected. Updates immediately on dropdown selection so the header
-   * label and hue can update during stage 2 of the close animation. */
+  /** Which section is currently selected. */
   const [sectionId, setSectionId] = useState<SidebarSectionId>('favorites')
-
-  /** Which section's content is currently rendered in the scroll area. Lags `sectionId` by one
-   * full dropdown close animation so that the new section's children (with their own mount
-   * animations, e.g. ContextBreadcrumbs' FadeTransition on each breadcrumb) don't fire while the
-   * close is still playing — otherwise those child fade-ins read as "a mask revealing thoughts"
-   * between stage 1 and stage 2 of the close. */
-  const [displayedSectionId, setDisplayedSectionId] = useState<SidebarSectionId>('favorites')
-  useEffect(() => {
-    if (sectionId === displayedSectionId) return
-    const id = setTimeout(() => setDisplayedSectionId(sectionId), STAGE_DURATION * (animationB ? 1 : 2) * 1000)
-    return () => clearTimeout(id)
-  }, [sectionId, displayedSectionId, animationB])
 
   /** Whether the scrollable content area has been scrolled down.
    * Used to conditionally show a top fade-out mask for scroll overflow indication. */
@@ -860,96 +745,51 @@ const Sidebar = () => {
   /** Whether the dropdown is open. */
   const [dropdownOpen, setDropdownOpen] = useState(false)
 
-  /** Whether the dropdown's open animation has progressed past stage 1 (the selected-item
-   * slide). Used for two related things. First, deciding whether a close is "interrupted"
-   * (and should reverse in place) vs. "staged" (the normal two-stage close). Second, gating
-   * dropdown-item taps: items only become tappable after stage 1, so during the slide the
-   * user can interrupt via the header/backdrop but cannot select another section. This
-   * prevents the messy "two items moving in opposite directions" close that otherwise
-   * happens when a section change collides with an in-flight slide.
-   *
-   * Initialized true so the very first close — there hasn't been an open yet — still
-   * counts as "non-interrupted". */
-  const [dropdownOpenComplete, setDropdownOpenComplete] = useState(true)
-  useEffect(() => {
-    if (!dropdownOpen) return
-    setDropdownOpenComplete(false)
-    const t = setTimeout(() => setDropdownOpenComplete(true), STAGE_DURATION * 1000)
-    return () => clearTimeout(t)
-  }, [dropdownOpen])
-  /** True if we're currently closing an open that never finished. Stays stable across
-   * the whole close because dropdownOpenComplete is only reset on the next open. */
-  const closeInterrupted = !dropdownOpen && !dropdownOpenComplete
-
-  /** Reset the dropdown and release focus whenever the sidebar closes. */
+  /** Reset the dropdown whenever the sidebar closes. */
   useEffect(() => {
     if (!showSidebar) {
       setDropdownOpen(false)
     }
   }, [showSidebar])
+
   const { hue, sat } = useSectionHue(sectionId)
 
-  /*
-   * Scrollable content mask position, driven as two independent motion values that are
-   * summed into a single mask-position-y. Splitting them lets the dropdown-hide slide
-   * (asymmetric: stage 1 on open, stage 2 on close) and the scroll-hint fade (symmetric,
-   * no delay) each have their own transition timing without fighting for the same
-   * CSS transition slot.
-   */
+  // The scroll area's CSS mask is composed from two independent motion values: dropdownMaskY
+  // (the dim-out triggered by the dropdown) and scrollHintMaskY (the top-edge fade when the
+  // user has scrolled). They get summed into a single mask-position-y. Splitting them in two
+  // lets each one have its own animation timing without fighting for the same CSS slot.
   const dropdownMaskY = useMotionValue(dropdownOpen ? 0 : DROPDOWN_MASK_OFFSET)
   const scrollHintMaskY = useMotionValue(isScrolled ? 0 : SCROLL_HINT_MASK_OFFSET)
-  // The scroll-hint contribution is linearly blended in proportion to how closed the dropdown
-  // is (0 when fully open, full weight when fully closed). This keeps the composition smooth
-  // during the dropdown close animation.
+  // The scroll-hint contribution is weighted by how closed the dropdown is (0 when fully
+  // open, full weight when fully closed) so the two effects compose smoothly during the
+  // dropdown's close animation.
   const maskPositionY = useTransform<number, string>(
     [dropdownMaskY, scrollHintMaskY],
     ([d, s]) => `${d + (s * d) / DROPDOWN_MASK_OFFSET}px`,
   )
-  // Opacity is derived from dropdownMaskY so the dim-out stays in lockstep with the slide,
-  // including the stage-2 delay on close. 1 when fully closed (mask offset = -128), 0.5 when open.
+  // Opacity is derived from dropdownMaskY so the dim-out stays in lockstep with the slide.
+  // 1 when fully closed (dropdownMaskY = DROPDOWN_MASK_OFFSET), 0.5 when fully open.
   const maskOpacity = useTransform(dropdownMaskY, v => 0.5 + (0.5 * v) / DROPDOWN_MASK_OFFSET)
 
-  /** True while the dropdown close animation is running (stage 1 + stage 2 window). Used to
-   * block the scroll-hint effect from interrupting the stage-2-delayed mask animation with a
-   * zero-delay one if isScrolled happens to flip during the close (e.g. from a section swap
-   * triggering an onScroll via scrollTop clamp). */
+  /** True while the dropdown close animation is running. Used to block the scroll-hint effect
+   * from interrupting the close mask animation if isScrolled happens to flip during the close
+   * (e.g. from a section swap triggering an onScroll via scrollTop clamp). */
   const dropdownCloseInProgress = useRef(false)
 
   useEffect(() => {
     if (dropdownOpen) {
-      // Open runs during stage 1 — start immediately, no delay.
       animate(dropdownMaskY, 0, { duration: STAGE_DURATION, ease: EASE_OUT })
       return
     }
-    if (closeInterrupted || animationB) {
-      // Reverse / single-stage close: animate immediately with no stage-1 hold. Framer
-      // interpolates smoothly from whatever partial value dropdownMaskY currently holds.
-      dropdownCloseInProgress.current = true
-      animate(dropdownMaskY, DROPDOWN_MASK_OFFSET, { duration: STAGE_DURATION, ease: EASE_OUT })
-      const clearId = setTimeout(() => {
-        dropdownCloseInProgress.current = false
-      }, STAGE_DURATION * 1000)
-      return () => clearTimeout(clearId)
-    }
-    // Staged close runs during stage 2. Framer-motion's built-in `delay` option drops ~60ms
-    // (4 frames) in practice, which causes the mask to start moving visibly in the last frames
-    // of stage 1 instead of at the stage 1/2 boundary. We use an explicit setTimeout instead
-    // for a guaranteed hold that lines up with the title-slide's stage 2 start.
+    // Single-stage close: animate immediately. Framer interpolates smoothly from whatever
+    // partial value dropdownMaskY currently holds, so an interrupted open unwinds in place.
     dropdownCloseInProgress.current = true
-    const startId = setTimeout(() => {
-      animate(dropdownMaskY, DROPDOWN_MASK_OFFSET, { duration: STAGE_DURATION, ease: EASE_OUT })
+    animate(dropdownMaskY, DROPDOWN_MASK_OFFSET, { duration: STAGE_DURATION, ease: EASE_OUT })
+    const clearId = setTimeout(() => {
+      dropdownCloseInProgress.current = false
     }, STAGE_DURATION * 1000)
-    const clearId = setTimeout(
-      () => {
-        dropdownCloseInProgress.current = false
-      },
-      STAGE_DURATION * 2 * 1000,
-    )
-    return () => {
-      clearTimeout(startId)
-      clearTimeout(clearId)
-    }
-  }, [dropdownOpen, dropdownMaskY, closeInterrupted, animationB])
+    return () => clearTimeout(clearId)
+  }, [dropdownOpen, dropdownMaskY])
 
   useEffect(() => {
     // Never interrupt the dropdown animation: while the dropdown is open or mid-close, the
@@ -969,9 +809,6 @@ const Sidebar = () => {
   /** Ref to the drawer element, used to detect if touches are inside the drawer. */
   const drawerRef = useRef<HTMLDivElement>(null)
 
-  /** Ref to the scrollable content area, used to compute the dropdown mask offset. */
-  const contentRef = useRef<HTMLDivElement>(null)
-
   /** Mirror longPressState into a ref so document-level touch handlers always see the current value without re-registering. */
   const longPressRef = useRef(longPressState)
   longPressRef.current = longPressState
@@ -979,29 +816,23 @@ const Sidebar = () => {
   /** MUI-style uncertainty threshold for direction detection (in pixels). */
   const UNCERTAINTY_THRESHOLD = 3
 
-  /**
-   * Swipe state for manual touch handling (MUI's SwipeableDrawer pattern).
-   * We handle all touches manually instead of using Framer Motion's drag,
-   * because FM's drag doesn't have a "wait and see" phase for direction detection.
-   */
+  /** Per-touch swipe state for the manual touch handler. We don't use framer-motion's drag
+   * because it has no "wait and see" phase to disambiguate horizontal swipe from vertical
+   * scroll — this state machine, adapted from MUI's SwipeableDrawer, fills that gap. */
   const swipeState = useRef({
     /** Whether a touch is currently being tracked. */
     active: false,
-    /** Whether we've determined the swipe direction yet. Null means undetermined, true means horizontal, false means vertical. */
+    /** Null = direction not yet determined, true = horizontal swipe, false = vertical scroll. */
     isSwiping: null as boolean | null,
-    /** Whether the touch started on the backdrop (outside drawer). */
+    /** True if the touch started outside the drawer (i.e. on the backdrop). */
     startedOnBackdrop: false,
-    /** Whether the finger has entered the drawer area (for backdrop-initiated swipes). */
+    /** For backdrop-initiated swipes: true once the finger has crossed onto the drawer. */
     drawerHit: false,
-    /** Starting X position. */
     startX: 0,
-    /** Starting Y position. */
     startY: 0,
-    /** Timestamp of the last touch move, for velocity calculation. */
+    /** Last-move timestamp + position, used to compute a smoothed release velocity. */
     lastTime: 0,
-    /** The last x position, for velocity calculation. */
     lastX: 0,
-    /** Accumulated velocity during the swipe. */
     velocity: 0,
   })
 
@@ -1011,48 +842,30 @@ const Sidebar = () => {
 
   const isLargeDevice = useBreakpoint('lg')
 
-  /**
-   * Sidebar width as a CSS value.
-   * - Small screens: full viewport width so the sidebar covers the entire screen
-   * - Large devices (lg+): fixed size determined by SIDEBAR_WIDTH_PX, leaving the main content partially visible.
-   */
+  /** Sidebar width as a CSS value: fixed on large devices (so the main content stays
+   * partially visible), full-viewport on small screens. */
   const width = isLargeDevice ? `${SIDEBAR_WIDTH_PX}px` : '100%'
 
-  /**
-   * Sidebar width in raw pixels. Needed for:
-   * - Calculating the off-screen x position (-widthPx = fully hidden)
-   * - Progress-based animation transforms (mapping x position to opacity, etc.)
-   * - Swipe gesture hit detection (checking if finger is within drawer bounds).
-   */
+  /** Same as `width` but in raw px. Needed wherever we do arithmetic on the width — the
+   * off-screen x position (-widthPx = fully hidden), x-to-opacity transforms, and swipe-
+   * gesture hit detection. */
   const widthPx = isLargeDevice ? SIDEBAR_WIDTH_PX : innerWidth
 
-  /**
-   * The current x-axis translation of the sidebar drawer.
-   * - 0 = fully open (default position)
-   * - -widthPx = fully closed (slid completely off-screen to the left)
-   * This motion value is driven both by Framer Motion's animate prop and
-   * by manual touch handling during swipe gestures (x.set()).
-   */
+  /** The drawer's x-axis translation. 0 = fully open, -widthPx = fully closed (off-screen
+   * to the left). Driven by both framer-motion (during open/close animations) and direct
+   * `x.set()` calls (during a swipe). */
   const x = useMotionValue(showSidebar ? 0 : -widthPx)
 
-  /**
-   * Opacity for the sidebar's content, derived from its x position.
-   * Uses a two-stage transform:
-   * 1. Linear map: x position → [0, 1] (fully closed → fully open)
-   * 2. Quadratic ease: v² makes the content stay readable while the sidebar
-   * is mostly open, then fade rapidly as it approaches the edge.
-   * This is applied to the drawer content AND the overlay layers.
-   */
+  /** Content opacity derived from x. Linear-maps x to [0,1] then squares it, so the content
+   * stays readable while the sidebar is mostly open and fades rapidly as it approaches the
+   * left edge. Applied to both the drawer content and the overlay layers. */
   const contentOpacity = useTransform(x, v => {
     const linear = Math.max(0, Math.min(1, (v + widthPx) / widthPx))
     return linear * linear
   })
 
-  /**
-   * Animation transition config, memoized to avoid recreating on every render.
-   * Uses EASE_OUT (aggressive) when opening and EASE_OUT_GENTLE (softer) when
-   * closing, so the close animation doesn't feel jarring after a finger release.
-   */
+  /** The open/close transition. Aggressive ease-out on open, gentler one on close so the
+   * drawer doesn't appear to "jump" if the close kicks off from a swipe-release. */
   const transition = useMemo(
     () => ({
       duration: durations.get('medium') / 1000,
@@ -1073,31 +886,23 @@ const Sidebar = () => {
     [dispatch],
   )
 
-  /**
-   * Shared logic for deciding whether to close the sidebar or snap it back
-   * after a swipe ends.
+  /** On swipe-release, decide whether to close the sidebar or snap it back open.
    *
-   * Uses a combined "close score" that considers both how far the user dragged
-   * (offset) and how fast they were moving (velocity). This allows two natural
-   * gestures to close the sidebar:
-   * - A slow, deliberate drag past the midpoint (high offset, low velocity)
-   * - A quick flick that doesn't travel far (low offset, high velocity).
-   *
-   */
+   * Uses a combined "close score" of offset + 0.5·velocity so two distinct gestures both
+   * close the sidebar: a slow drag past the midpoint, or a quick flick that didn't travel
+   * far. The 0.5 weight is the px ↔ px/s exchange rate. */
   const handleSwipeEnd = useCallback(
     (
-      /** How far the sidebar has been dragged from its open position (px). */ offset: number,
-      /** The instantaneous swipe velocity at release (px/s). */ velocity: number,
+      /** Distance dragged from the open position, in px. */ offset: number,
+      /** Instantaneous swipe velocity at release, in px/s. */ velocity: number,
     ) => {
-      // Combined score: offset and velocity can compensate for each other.
-      // The 0.5 multiplier on velocity means 1px of drag ≈ 2px/s of velocity.
       const closeScore = offset + velocity * 0.5
       const closeThreshold = 150
 
       if (closeScore > closeThreshold) {
         toggleSidebar(false)
       } else {
-        // Score too low – the user didn't drag/flick hard enough, snap back to open
+        // Not a hard enough drag/flick — snap the drawer back to fully open.
         animate(x, 0, transition)
       }
     },
@@ -1343,14 +1148,7 @@ const Sidebar = () => {
             />
 
             {/* Primary glow overlay – responds to dropdown expansion */}
-            <SidebarOverlay1
-              opacity={contentOpacity}
-              expanded={dropdownOpen}
-              interrupted={closeInterrupted}
-              animationB={animationB}
-              hue={hue}
-              sat={sat}
-            />
+            <SidebarOverlay1 opacity={contentOpacity} expanded={dropdownOpen} hue={hue} sat={sat} />
             {/* Secondary glow overlay – adds middle tones */}
             <SidebarOverlay2 width={width} opacity={contentOpacity} hue={hue} sat={sat} />
 
@@ -1372,14 +1170,9 @@ const Sidebar = () => {
               onEscapeKeyDown={e => e.preventDefault()}
               aria-describedby={undefined} // Suppress Radix console warning – not applicable here
             >
-              {/*
-               * The drawer panel itself. Slides horizontally via the x motion value.
-               * - initial={false}: skip the enter animation on first mount (prevents
-               *   the sidebar from animating in when the page loads)
-               * - animate: target x position based on open/closed state
-               * - style.x: allows manual swipe control to override the animated value
-               * - style.opacity: content fades with the quadratic contentOpacity curve
-               */}
+              {/* The drawer panel. Slides horizontally via the x motion value; initial={false}
+                  skips the enter animation on first mount so the sidebar doesn't animate in on
+                  page load. style.x lets a manual swipe override the animated value mid-flight. */}
               <motion.div
                 ref={drawerRef}
                 style={{ x, opacity: contentOpacity }}
@@ -1399,12 +1192,9 @@ const Sidebar = () => {
                   pointerEvents: 'auto',
                 })}
               >
-                {/*
-                 * Small-screen-only tap zone: an invisible strip on the right 10% of
-                 * the full-width sidebar. Since the sidebar covers the entire
-                 * screen on small devices, users need a way to close it without swiping.
-                 * Tapping this strip closes the sidebar.
-                 */}
+                {/* Tap-to-close strip on small screens. The full-width sidebar covers the whole
+                    viewport, so users need an alternative to swipe; the right 10% acts as a
+                    dismiss target. */}
                 {!isLargeDevice && (
                   <div
                     aria-hidden='true'
@@ -1421,14 +1211,9 @@ const Sidebar = () => {
                   />
                 )}
 
-                {/*
-                 * Touch event wrapper that detects when the sidebar is being
-                 * swiped closed and disables Favorites drag-and-drop to prevent
-                 * conflicting gestures. The throttled onTouchMove checks the
-                 * sidebar's x offset every 10ms (skipping the first trigger since
-                 * x hasn't changed yet). If x !== 0, the sidebar is moving and
-                 * we set isSwiping=true + cancel any active long press.
-                 */}
+                {/* Detects when the sidebar is mid-swipe-close and disables Favorites
+                    drag-and-drop so the two gestures don't fight. Throttles to once per 10ms;
+                    leading:false skips the first event before x has moved. */}
                 <div
                   onTouchMove={_.throttle(
                     () => {
@@ -1470,12 +1255,8 @@ const Sidebar = () => {
                       <Dialog.Title>{SECTIONS.find(s => s.id === sectionId)?.label}</Dialog.Title>
                     </VisuallyHidden.Root>
 
-                    {/*
-                     * Header section (non-scrolling).
-                     * Wrapped in FadeTransition so it fades in when the sidebar opens.
-                     * The 3.75rem top margin provides spacing from the top of the viewport
-                     * (below the safe area inset).
-                     */}
+                    {/* Non-scrolling header. Fades in with the sidebar; the 3.75rem top margin
+                        sits just below the safe-area inset. */}
                     <FadeTransition type='medium' in={showSidebar}>
                       <div
                         className={css({
@@ -1489,27 +1270,17 @@ const Sidebar = () => {
                           onSectionChange={setSectionId}
                           isOpen={dropdownOpen}
                           setIsOpen={setDropdownOpen}
-                          interrupted={closeInterrupted}
-                          openComplete={dropdownOpenComplete}
-                          animationB={animationB}
                         />
                       </div>
                     </FadeTransition>
 
-                    {/*
-                     * Scrollable content area – takes up remaining vertical space (flex:1).
-                     *
-                     * Key behaviors:
-                     * - Content fades out when dropdown is open
-                     * - A top fade mask (linear-gradient) appears when scrolled down,
-                     *   providing a visual cue that content extends above
-                     * - overscrollBehavior:'contain' prevents scroll chaining to the
-                     *   body (which is already scroll-locked via useEffect)
-                     * - position:relative is required for correct drop hover positioning
-                     *   in the Favorites drag-and-drop system
-                     */}
+                    {/* Scrollable content area; takes the remaining vertical space. The CSS mask
+                        composed from maskPositionY + maskOpacity does double duty: it dims the
+                        list when the dropdown opens, and adds a top fade when the user scrolls
+                        down. overscrollBehavior:contain keeps overscroll local (body is already
+                        scroll-locked); position:relative is required for the Favorites drop-
+                        hover positioning. */}
                     <motion.div
-                      ref={contentRef}
                       data-scroll-at-edge
                       onScroll={e => {
                         const scrolled = e.currentTarget.scrollTop > 0

@@ -113,7 +113,6 @@ const FavoritesOptions = ({
 }) => {
   const dispatch = useDispatch()
   const hideContexts = useSelector(getUserSetting(Settings.favoritesHideContexts))
-  const sidebarAnimationB = useSelector(getUserSetting(Settings.sidebarAnimationB))
   const formRef = useRef<HTMLFormElement>(null)
 
   return (
@@ -162,13 +161,6 @@ const FavoritesOptions = ({
               title='Show full contexts'
               onChange={() => {
                 dispatch(toggleUserSetting({ key: Settings.favoritesHideContexts }))
-              }}
-            />
-            <Checkbox
-              checked={!!sidebarAnimationB}
-              title='Sidebar animation B (single-stage open/close)'
-              onChange={() => {
-                dispatch(toggleUserSetting({ key: Settings.sidebarAnimationB }))
               }}
             />
           </form>
