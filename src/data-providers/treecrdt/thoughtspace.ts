@@ -19,7 +19,6 @@ import { createTreecrdtLocalWriteOptions } from './writeBarrier'
 
 export type ThoughtPayload = {
   value: string
-  rank: number
   created: number
   lastUpdated: number
   updatedBy: string
@@ -94,6 +93,8 @@ const getThoughtById = async (id: ThoughtId): Promise<Thought | undefined> => {
 
   const parentIdRaw = await client.tree.parent(id)
   const parentId: ThoughtId = parentIdRaw === null ? (ROOT_PARENT_ID as ThoughtId) : (parentIdRaw as ThoughtId)
+  const siblingIds = parentIdRaw === null ? [] : await client.tree.children(parentIdRaw)
+  const rank = parentIdRaw === null ? 0 : Math.max(0, siblingIds.indexOf(id))
 
   const childIds = await client.tree.children(id)
   const childrenMap: Index<ThoughtId> = {}
@@ -104,7 +105,7 @@ const getThoughtById = async (id: ThoughtId): Promise<Thought | undefined> => {
   const thought: Thought = {
     id,
     value: payload.value,
-    rank: payload.rank,
+    rank,
     created: payload.created as Timestamp,
     lastUpdated: payload.lastUpdated as Timestamp,
     updatedBy: payload.updatedBy,
@@ -244,7 +245,6 @@ const updateThoughts = async ({
     const thoughtId = id as ThoughtId
     const payloadBytes = encodeThoughtPayload({
       value: thought.value,
-      rank: thought.rank,
       created: thought.created,
       lastUpdated: thought.lastUpdated,
       updatedBy: thought.updatedBy,
@@ -281,7 +281,6 @@ const updateThoughts = async ({
 
       const payloadChanged =
         existing.value !== thought.value ||
-        existing.rank !== thought.rank ||
         existing.created !== thought.created ||
         existing.lastUpdated !== thought.lastUpdated ||
         existing.updatedBy !== thought.updatedBy ||
@@ -365,7 +364,6 @@ const updateLexemeIndex = async (lexemeIndex: Index<Lexeme>): Promise<void> => {
 
 const ROOT_PAYLOAD = encodeThoughtPayload({
   value: GLOBAL_ROOT_TOKEN,
-  rank: 0,
   created: 0,
   lastUpdated: 0,
   updatedBy: '',
@@ -392,7 +390,6 @@ export const init = async (replicaIdArg: Uint8Array): Promise<void> => {
         { type: 'last' },
         encodeThoughtPayload({
           value: id,
-          rank: 0,
           created: Date.now(),
           lastUpdated: Date.now(),
           updatedBy: '',

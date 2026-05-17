@@ -189,9 +189,6 @@ export async function treeFromJson(): Promise<void | null> {
     }
     const o = raw as Record<string, unknown>
     if (typeof o.value !== 'string') throw new Error(`operations[${index}].thought.value: string expected`)
-    if (typeof o.rank !== 'number' || !Number.isFinite(o.rank)) {
-      throw new Error(`operations[${index}].thought.rank: number expected`)
-    }
     if (typeof o.created !== 'number' || !Number.isFinite(o.created)) {
       throw new Error(`operations[${index}].thought.created: number (ms) expected`)
     }
@@ -203,7 +200,6 @@ export async function treeFromJson(): Promise<void | null> {
     }
     const base: ThoughtPayload = {
       value: o.value,
-      rank: o.rank,
       created: o.created,
       lastUpdated: o.lastUpdated,
       updatedBy: o.updatedBy,
