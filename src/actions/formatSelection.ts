@@ -113,6 +113,7 @@ export const formatSelectionActionCreator =
               ? setDescendant({
                   path,
                   values: [newValue],
+                  mergePrev: true,
                 })
               : editThought({
                   cursorOffset: selection.offsetThought() ?? undefined,
