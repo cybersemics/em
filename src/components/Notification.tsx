@@ -31,6 +31,7 @@ const Notification: FC<
   return (
     <TransitionGroup
       data-testid='alert'
+      className={css({ position: 'relative', zIndex: 'popup' })}
       childFactory={(child: React.ReactElement<{ timeout: number }>) =>
         !isDismissed ? child : React.cloneElement(child, { timeout: 0 })
       }

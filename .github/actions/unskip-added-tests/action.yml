@@ -1,0 +1,115 @@
+name: Unskip added tests
+description: Unskip added it.skip/test.skip lines in patched test files on base checkout.
+
+inputs:
+  merge-base:
+    description: Merge base commit SHA.
+    required: true
+  head-sha:
+    description: PR head commit SHA.
+    required: true
+  skipped-files:
+    description: Base64 encoded newline-delimited list of skipped test files.
+    required: true
+  no-files-message:
+    description: Message shown when there are no skipped files to process.
+    required: false
+    default: No skipped test files to unskip.
+
+runs:
+  using: composite
+  steps:
+    - name: Unskip added tests
+      shell: bash
+      run: |
+        SKIPPED_FILES=$(echo "${{ inputs.skipped-files }}" | base64 -d)
+
+        if [ -z "$SKIPPED_FILES" ]; then
+          echo "${{ inputs.no-files-message }}"
+          exit 0
+        fi
+
+        export MERGE_BASE="${{ inputs.merge-base }}"
+        export HEAD_SHA="${{ inputs.head-sha }}"
+        export SKIPPED_FILES
+
+        node <<'NODE'
+        const fs = require('node:fs')
+        const { execFileSync } = require('node:child_process')
+
+        const mergeBase = process.env.MERGE_BASE
+        const headSha = process.env.HEAD_SHA
+        const files = (process.env.SKIPPED_FILES || '').split('\n').map(file => file.trim()).filter(Boolean)
+
+        if (files.length === 0) {
+          console.log('No files detected after decoding.')
+          process.exit(0)
+        }
+
+        const diff = execFileSync('git', ['diff', '--unified=0', mergeBase, headSha, '--', ...files], {
+          encoding: 'utf8',
+        }).split('\n')
+
+        const hunkPattern = /^@@ -\d+(?:,\d+)? \+(\d+)/
+        const skipPattern = /\b(it|test)\.skip\b/
+        const targetLines = new Map()
+
+        let currentFile = null
+        let currentNewLine = null
+
+        diff.forEach(line => {
+          if (line.startsWith('+++ b/')) {
+            currentFile = line.slice(6)
+            return
+          }
+
+          if (line.startsWith('@@ ')) {
+            const match = line.match(hunkPattern)
+            currentNewLine = match ? Number(match[1]) - 1 : null
+            return
+          }
+
+          if (!currentFile || currentNewLine == null) return
+
+          if (line.startsWith('+') && !line.startsWith('+++')) {
+            currentNewLine += 1
+            if (skipPattern.test(line.slice(1))) {
+              const existing = targetLines.get(currentFile) || new Set()
+              existing.add(currentNewLine)
+              targetLines.set(currentFile, existing)
+            }
+            return
+          }
+
+          if (line.startsWith(' ')) currentNewLine += 1
+        })
+
+        if (targetLines.size === 0) {
+          console.log('No added skipped test lines found.')
+          process.exit(0)
+        }
+
+        let changedLines = 0
+
+        targetLines.forEach((lines, fileName) => {
+          const source = fs.readFileSync(fileName, 'utf8')
+          const content = source.match(/[^\n]*\n|[^\n]+$/g) || []
+
+          Array.from(lines)
+            .sort((a, b) => a - b)
+            .forEach(lineNumber => {
+              const index = lineNumber - 1
+              if (index < 0 || index >= content.length) return
+
+              const updated = content[index].replace(skipPattern, '$1')
+              if (updated !== content[index]) {
+                content[index] = updated
+                changedLines += 1
+              }
+            })
+
+          fs.writeFileSync(fileName, content.join(''))
+        })
+
+        console.log(`Unskipped ${changedLines} added test line(s).`)
+        NODE

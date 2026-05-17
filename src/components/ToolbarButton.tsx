@@ -51,6 +51,9 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
   /** Tracks if long press was activated and the command has a longPress handler. Used to show the UndoSlider when the Undo or Redo toolbar buttons are long pressed. */
   const isPressedRef = useRef(false)
 
+  /** Tracks if mousedown occurred on this button, independent of React's render cycle. This prevents a race condition where the React-prop isPressing (derived from the parent Toolbar's pressingToolbarId state) hasn't updated between mousedown and click events dispatched in rapid succession (e.g. by Puppeteer under CI load). */
+  const isMouseDownRef = useRef(false)
+
   const command = commandById(commandId)
   if (!command) {
     console.error('Missing command: ' + commandId)
@@ -109,11 +112,13 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
   const tapUp = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
       longPress.props[isTouch ? 'onTouchEnd' : 'onMouseUp']?.()
+      const wasMouseDown = isMouseDownRef.current
+      isMouseDownRef.current = false
       const iconEl = e.target as HTMLElement
       const toolbarEl = iconEl.closest('#toolbar')!
       const scrolled = isTouch && Math.abs(lastScrollLeft.current - toolbarEl.scrollLeft) >= 5
 
-      if (!customize && isButtonExecutable && !disabled && !scrolled && isPressing) {
+      if (!customize && isButtonExecutable && !disabled && !scrolled && (isPressing || wasMouseDown)) {
         haptics.light()
 
         if (!isPressedRef.current) {
@@ -162,6 +167,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
   /** Handles the onMouseDown/onTouchEnd event. Updates lastScrollPosition for tapUp. */
   const tapDown = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
+      isMouseDownRef.current = true
       const iconEl = e.target as HTMLElement
       const toolbarEl = iconEl.closest('#toolbar')!
       longPressTapDown?.(e)
@@ -235,7 +241,10 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
         // must match toolbar marginBottom
         padding: `14px ${TOOLBAR_BUTTON_PADDING}px ${isDraggingAny ? '7em' : 0}px ${TOOLBAR_BUTTON_PADDING}px`,
       }}
-      onMouseLeave={onMouseLeave}
+      onMouseLeave={() => {
+        isMouseDownRef.current = false
+        onMouseLeave?.()
+      }}
       onMouseDown={isTouch ? undefined : tapDown}
       onClick={isTouch ? undefined : tapUp}
       onTouchStart={isTouch ? tapDown : undefined}

@@ -23,6 +23,8 @@ interface ProgressiveBlurProps extends React.HTMLAttributes<HTMLDivElement> {
   width?: string | number
   /** Optional MotionValue to animate the opacity of the progressive blur effect. Avoids the Safari bug where animating opacity on a parent of backdrop-filter elements breaks the blur. */
   opacity?: MotionValue<number>
+  /** Additional CSS mask-image to intersect with each layer's slice mask. Applied per-layer so it works with backdrop-filter (unlike masking a parent). */
+  mask?: string
 }
 
 /** A progressive blur component using a multi-layered slice technique with backdrop-filter. */
@@ -33,32 +35,27 @@ const ProgressiveBlur = ({
   layers = 8,
   width = '100%',
   opacity,
+  mask,
   className,
   ...props
 }: ProgressiveBlurProps) => {
   const blurLayers = Array.from({ length: layers }).map((_, i) => {
-    // Blur radius follows a quadratic curve for a more natural look.
-    // We add the minBlur as a constant baseline.
-    const radius = minBlur + Math.pow((layers - i) / layers, 2) * (maxBlur - minBlur)
+    // Blur radius follows a quadratic curve, reaching 0 at the trailing edge
+    // so the last layer applies no blur and the transition is seamless.
+    const t = layers <= 1 ? 1 : (layers - 1 - i) / (layers - 1)
+    const radius = minBlur + Math.pow(t, 2) * (maxBlur - minBlur)
 
     // Each layer covers a specific slice with a generous overlap (feather) to ensure smoothness.
     const start = (i / layers) * 100
     const end = ((i + 1) / layers) * 100
     const feather = (100 / layers) * 2 // Double feather for smoother blending
 
-    // The mask has four stops: fadeStart → opaqueStart → opaqueEnd → fadeEnd.
-    // Negative fadeStart values are fine (browser clamps to 0, keeping the layer
-    // fully opaque from the start). But fadeEnd > 100% gets clipped by the
-    // container's overflow:hidden, creating a hard cutoff. When that happens,
-    // clamp fadeEnd to 100% and pull opaqueEnd inward to preserve a fade region.
-    const fadeStart = start - feather
-    const opaqueStart = start
-    const rawFadeEnd = end + feather
-    const fadeEnd = Math.min(rawFadeEnd, 100)
-    const minFadeRegion = (100 / layers) * 0.5
-    const opaqueEnd = rawFadeEnd > 100 ? Math.min(end, fadeEnd - minFadeRegion) : end
+    // Clamp feather stops within bounds so trailing layers fade out
+    // inside the container instead of getting clipped by overflow:hidden.
+    const leadingStop = Math.max(start - feather, 0)
+    const trailingStop = Math.min(end + feather, 100)
 
-    return { radius, fadeStart, opaqueStart, opaqueEnd, fadeEnd }
+    return { radius, start, end, leadingStop, trailingStop }
   })
 
   return (
@@ -73,7 +70,8 @@ const ProgressiveBlur = ({
       style={{ width, ...props.style }}
     >
       {blurLayers.map((layer, i) => {
-        const mask = `linear-gradient(${direction}, transparent ${layer.fadeStart}%, black ${layer.opaqueStart}%, black ${layer.opaqueEnd}%, transparent ${layer.fadeEnd}%)`
+        const sliceMask = `linear-gradient(${direction}, transparent ${layer.leadingStop}%, black ${layer.start}%, black ${layer.end}%, transparent ${layer.trailingStop}%)`
+        const compositeMask = mask ? `${sliceMask}, ${mask}` : sliceMask
         return (
           <motion.div
             key={i}
@@ -84,8 +82,17 @@ const ProgressiveBlur = ({
             style={{
               opacity,
               backdropFilter: `blur(${layer.radius.toFixed(2)}px)`,
-              maskImage: mask,
-              WebkitMaskImage: mask,
+              WebkitBackdropFilter: `blur(${layer.radius.toFixed(2)}px)`,
+
+              // Sliced mask with overlap (feather), clamped to container bounds.
+              // When an extra mask is provided, intersect it with the slice mask
+              // so both fade directions apply per-layer (required for backdrop-filter).
+              maskImage: compositeMask,
+              WebkitMaskImage: compositeMask,
+              ...(mask && {
+                maskComposite: 'intersect',
+                WebkitMaskComposite: 'source-in' as string,
+              }),
             }}
           />
         )

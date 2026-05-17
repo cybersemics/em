@@ -8,6 +8,8 @@ import keyboard from '../helpers/keyboard'
 import press from '../helpers/press'
 import { page } from '../setup'
 
+vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
+
 it('Re-render cursor thought on undo', async () => {
   // create a thought "hello"
   await press('Enter')
@@ -43,6 +45,13 @@ it('Undo Select All + Categorize chained command in one step', async () => {
 
   // Select All + Categorize
   await gesture('ldr' + 'lu')
+
+  // make sure multicursor is disabled after chained command
+  const highlightedCountAfterChain = await page.evaluate(
+    () => document.querySelectorAll('[data-highlighted=true]').length,
+  )
+
+  expect(highlightedCountAfterChain).toBe(0)
 
   const exported1 = await exportThoughts()
   expect(exported1).toBe(`

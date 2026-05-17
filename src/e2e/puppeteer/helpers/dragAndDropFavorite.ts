@@ -6,7 +6,7 @@ import waitUntil from './waitUntil'
  * Uses XPath to find the thought-link with exact text, not in breadcrumbs, within drag-and-drop-favorite.
  */
 const findFavoriteItem = async (value: string) => {
-  return await page.evaluateHandle(value => {
+  return page.evaluateHandle(value => {
     // XPath to find thought-link with exact text value which is not in breadcrumbs but just within drag-and-drop-favorite
     const xpath = `//*[@data-testid='drag-and-drop-favorite'][.//*[@data-thought-link and not(ancestor::*[@aria-label='context-breadcrumbs']) and normalize-space()='${value}']]`
 

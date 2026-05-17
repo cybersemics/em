@@ -178,6 +178,152 @@ describe('Created', () => {
     expect(thoughtValues).toMatchObject(['a', 'b', 'c'])
   })
 
+  it('Ascending + edit thought should not cause re-ranking', async () => {
+    act(() => {
+      store.dispatch([
+        importText({
+          text: `
+          - a
+          - b
+        `,
+        }),
+        setCursor(['a']),
+      ])
+    })
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // Click sort picker and select Created sort
+    await click('[data-testid="toolbar-icon"][aria-label="Sort Picker"]')
+    await act(vi.runOnlyPendingTimersAsync)
+    await click('[aria-label="sort options"] [aria-label="Created"]')
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // Edit thought 'a'
+    act(() => {
+      store.dispatch([editThoughtByContext(['a'], 'aa')])
+    })
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // Get all thoughts in order
+    const thoughts = screen.getAllByLabelText('thought-container')
+    const thoughtValues = thoughts.map(t => t.textContent)
+
+    // Verify thoughts are sorted by creation time ascending (aa, b)
+    expect(thoughtValues).toMatchObject(['aa', 'b'])
+  })
+
+  it('Ascending + new thought + edit thought should cause re-ranking', async () => {
+    act(() => {
+      store.dispatch([
+        importText({
+          text: `
+          - a
+          - b
+        `,
+        }),
+        setCursor(['a']),
+      ])
+    })
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // Click sort picker and select Created sort
+    await click('[data-testid="toolbar-icon"][aria-label="Sort Picker"]')
+    await act(vi.runOnlyPendingTimersAsync)
+    await click('[aria-label="sort options"] [aria-label="Created"]')
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // Edit thought 'c'
+    act(() => {
+      store.dispatch([newThought({ value: '' }), editThoughtByContext([''], 'c')])
+    })
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // Get all thoughts in order
+    const thoughts = screen.getAllByLabelText('thought-container')
+    const thoughtValues = thoughts.map(t => t.textContent)
+
+    // Verify thoughts are sorted by creation time ascending (a, b, c)
+    expect(thoughtValues).toMatchObject(['a', 'b', 'c'])
+  })
+
+  it('Ascending + color formatting should ignore font tag when re-ranking', async () => {
+    act(() => {
+      store.dispatch([
+        importText({
+          text: `
+          - a
+          - b
+        `,
+        }),
+        setCursor(['a']),
+      ])
+    })
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // Click sort picker and select Created sort
+    await click('[data-testid="toolbar-icon"][aria-label="Sort Picker"]')
+    await act(vi.runOnlyPendingTimersAsync)
+    await click('[aria-label="sort options"] [aria-label="Alphabetical"]')
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // Edit thought 'b'
+    act(() => {
+      store.dispatch([editThoughtByContext(['b'], '<font color="#ffffff">b</font>')])
+    })
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // Get all thoughts in order
+    const thoughts = screen.getAllByLabelText('thought-container')
+    const thoughtValues = thoughts.map(t => t.textContent)
+
+    // Verify thoughts are sorted alphabetically ascending (a, b)
+    expect(thoughtValues).toMatchObject(['a', 'b'])
+  })
+
+  it('Ascending + background color should ignore font tag when re-ranking', async () => {
+    act(() => {
+      store.dispatch([
+        importText({
+          text: `
+          - a
+          - b
+        `,
+        }),
+        setCursor(['a']),
+      ])
+    })
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // Click sort picker and select Created sort
+    await click('[data-testid="toolbar-icon"][aria-label="Sort Picker"]')
+    await act(vi.runOnlyPendingTimersAsync)
+    await click('[aria-label="sort options"] [aria-label="Alphabetical"]')
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // Edit thought 'b'
+    act(() => {
+      store.dispatch([
+        editThoughtByContext(['b'], '<font color="#000000" style="background-color: rgb(255, 255, 255);">b</font>'),
+      ])
+    })
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // Get all thoughts in order
+    const thoughts = screen.getAllByLabelText('thought-container')
+    const thoughtValues = thoughts.map(t => t.textContent)
+
+    // Verify thoughts are sorted alphabetically ascending (a, b)
+    expect(thoughtValues).toMatchObject(['a', 'b'])
+  })
+
   it('Descending', async () => {
     // Import initial thought 'a'
     act(() => {

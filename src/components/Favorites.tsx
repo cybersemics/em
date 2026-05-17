@@ -40,7 +40,7 @@ const DragAndDropFavorite = ({
     simplePath,
     path: simplePath,
   })
-  const dragHoldResult = useDragHold({ isDragging, simplePath, sourceZone: DragThoughtZone.Favorites })
+  const dragHoldResult = useDragHold({ simplePath, sourceZone: DragThoughtZone.Favorites })
 
   return (
     // Set display:flow-root to create a new block formatting context so the drop target fully wraps its contents.

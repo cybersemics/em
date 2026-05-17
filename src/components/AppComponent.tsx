@@ -19,8 +19,8 @@ import store from '../stores/app'
 import isDocumentEditable from '../util/isDocumentEditable'
 import Alert from './Alert'
 import CommandCenter from './CommandCenter/CommandCenter'
-import CommandPalette from './CommandPalette'
 import Content from './Content'
+import DesktopCommandUniverse from './DesktopCommandUniverse'
 import DropGutter from './DropGutter'
 import ErrorMessage from './ErrorMessage'
 import Footer from './Footer'
@@ -34,7 +34,7 @@ import Tips from './Tips/Tips'
 import Toolbar from './Toolbar'
 import Tutorial from './Tutorial'
 import UndoSlider from './UndoSlider'
-import GestureCheatsheet from './dialog/GestureCheatsheet'
+import MobileCommandUniverse from './dialog/MobileCommandUniverse'
 import * as modals from './modals'
 
 /** A hook that sets an attribute on the document.body element. */
@@ -78,7 +78,7 @@ const shouldCancelGesture = (
     state.longPress !== LongPressState.Inactive ||
     !!state.showModal ||
     state.showSidebar ||
-    !!state.showGestureCheatsheet
+    !!state.showMobileCommandUniverse
   )
 }
 
@@ -148,11 +148,11 @@ const AppComponent: FC = () => {
 
     if (Capacitor.isNativePlatform()) {
       StatusBar.setStyle({ style: dark ? Style.Dark : Style.Light })
-      // Android only, set statusbar color to black.
       if (Capacitor.getPlatform() === 'android') {
-        StatusBar.setBackgroundColor({
-          color: colors.bg,
-        })
+        // Make the WebView extend behind the status bar (edge-to-edge), matching iOS behavior.
+        // safeAreaTop (env(safe-area-inset-top)) will equal the status bar height, and the
+        // AppComponent wrapper's paddingTop: safeAreaTop keeps normal content below the status bar.
+        StatusBar.setOverlaysWebView({ overlay: true })
       }
     }
   }, [colors, dark])
@@ -172,11 +172,11 @@ const AppComponent: FC = () => {
     >
       <Alert />
       <Tips />
-      {!isTouch && <CommandPalette />}
+      {!isTouch && <DesktopCommandUniverse />}
       {isTouch && <GestureMenu />}
       <ErrorMessage />
       {enableLatestCommandsDiagram && <LatestCommandsDiagram position='bottom' />}
-      <GestureCheatsheet />
+      <MobileCommandUniverse />
 
       {isDocumentEditable() && !tutorial && !showModal && (
         <>

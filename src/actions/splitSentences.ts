@@ -19,7 +19,7 @@ const splitSentences = (state: State): State => {
   if (!cursor) return state
   const cursorThought = getThoughtById(state, head(cursor))
   if (!cursorThought) return state
-  const { value, rank } = cursorThought
+  const { value } = cursorThought
 
   const sentences = splitSentence(value)
 
@@ -34,7 +34,6 @@ const splitSentences = (state: State): State => {
       oldValue: value,
       newValue: firstSentence.value,
       path: simplifyPath(state, cursor),
-      rankInContext: rank,
     }),
     ...otherSentences.map(sentence =>
       newThought({ value: sentence.value, insertNewSubthought: sentence.insertNewSubThought }),
