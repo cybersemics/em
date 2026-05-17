@@ -1282,10 +1282,7 @@ const Sidebar = () => {
                         hover positioning. */}
                     <motion.div
                       data-scroll-at-edge
-                      onScroll={e => {
-                        const scrolled = e.currentTarget.scrollTop > 0
-                        if (scrolled !== isScrolled) setIsScrolled(scrolled)
-                      }}
+                      onScroll={e => setIsScrolled(e.currentTarget.scrollTop > 0)}
                       style={
                         {
                           maskPositionY,
