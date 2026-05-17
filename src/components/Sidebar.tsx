@@ -697,7 +697,7 @@ const useSectionHue = (/** The currently active sidebar section. */ sectionId: S
     let diff = section.hue - (((currentHue % 360) + 360) % 360)
     if (diff > 180) diff -= 360
     if (diff < -180) diff += 360
-    const t = { duration: durations.get('slow') / 1000, ease: EASE_OUT }
+    const t = { duration: durations.get('slow') / 1000, ease: 'linear' as const }
     animate(hue, currentHue + diff, t)
     animate(sat, section.saturate, t)
   }, [sectionId, hue, sat])
