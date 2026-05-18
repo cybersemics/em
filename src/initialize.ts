@@ -284,5 +284,4 @@ window.em = windowEm
 // moize.collectStats()
 
 export type TestHelpers = typeof windowEm.testHelpers
-export type { TestFlags } from './e2e/testFlags'
 export type WindowEm = typeof windowEm

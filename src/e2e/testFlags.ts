@@ -1,5 +1,5 @@
 /** Test flags that are injected into window.em.testFlags. */
-export type TestFlags = {
+const testFlags: {
   logActions: boolean
   logMultigesture: boolean
   /** Delay in ms before expanding the hovering thought. */
@@ -12,9 +12,7 @@ export type TestFlags = {
   simulateDrop: boolean
   /** Puppeteer layout-shift tests: true after `measureYShift`'s MutationObserver has called `observe()`. */
   layoutShiftObserverReady: boolean
-}
-
-const testFlags: TestFlags = {
+} = {
   logActions: false,
   logMultigesture: false,
   expandHoverDelay: null,

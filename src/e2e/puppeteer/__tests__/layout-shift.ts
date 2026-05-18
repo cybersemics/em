@@ -14,7 +14,7 @@ const Y_TOLERANCE = 0.5
 
 /** Wait until `measureYShift`'s observer is observing `document.body`. */
 const waitForLayoutShiftObserver = () =>
-  page.waitForFunction(() => (window.em as WindowEm).testFlags.layoutShiftObserverReady === true, {
+  page.waitForFunction(() => em.testFlags.layoutShiftObserverReady === true, {
     timeout: 8000,
   })
 
