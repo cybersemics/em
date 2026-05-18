@@ -1,15 +1,9 @@
-// import { ElementHandle } from 'puppeteer'
-import { token } from '../../../../styled-system/tokens'
-import { DEFAULT_FONT_SIZE } from '../../../constants'
 import clickThought from '../helpers/clickThought'
 import getEditable from '../helpers/getEditable'
 import getEditingText from '../helpers/getEditingText'
 import getSelection from '../helpers/getSelection'
 import paste from '../helpers/paste'
 import { page } from '../setup'
-
-// Calculate the clip height from the PandaCSS token to ensure we stay in sync with editable.ts and convert it to pixels
-const CLIP_HEIGHT = parseFloat(token('spacing.editableClipBottom')) * DEFAULT_FONT_SIZE
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
@@ -49,8 +43,7 @@ async function testClickBetweenThoughts(thought1: string, thought2: string) {
   }
 
   // Calculate overlap (expected to be negative due to intentional overlap)
-  // Account for clipHeight which clips from the bottom of the first thought
-  const firstThoughtBottom = rect1.y + rect1.height - CLIP_HEIGHT
+  const firstThoughtBottom = rect1.y + rect1.height
   const secondThoughtTop = rect2.y
 
   // Note: negative = overlap
@@ -60,7 +53,7 @@ async function testClickBetweenThoughts(thought1: string, thought2: string) {
   const clickX = rect1.x + rect1.width / 2
 
   // Test 1: Click in top edge of the overlap zone (should be in first thought)
-  await page.mouse.click(clickX, firstThoughtBottom + overlapHeight)
+  await page.mouse.click(clickX, firstThoughtBottom + overlapHeight - 1)
 
   expect(await isSelectionLost()).toBe(false)
   expect(await getEditingText()).toBe(thought1)

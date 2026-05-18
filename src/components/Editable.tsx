@@ -31,7 +31,6 @@ import {
   TUTORIAL_CONTEXT1_PARENT,
   TUTORIAL_CONTEXT2_PARENT,
 } from '../constants'
-import preventAutoscroll, { preventAutoscrollEnd } from '../device/preventAutoscroll'
 import * as selection from '../device/selection'
 import globals from '../globals'
 import findDescendant from '../selectors/findDescendant'
@@ -131,7 +130,6 @@ const Editable = ({
   // it is possible that the thought is deleted and the Editable is re-rendered before it unmounts, so guard against undefined thought
   const value = useSelector(state => getThoughtById(state, head(simplePath))?.value || '')
   const rank = useSelector(state => getThoughtById(state, head(simplePath))?.rank || 0)
-  const fontSize = useSelector(state => state.fontSize)
   const isCursorCleared = useSelector(state => !!isEditing && state.cursorCleared)
 
   const hasMulticursor = useSelector(hasMulticursorSelector)
@@ -322,7 +320,7 @@ const Editable = ({
   // using useRef hook to store throttled function so that it can persist even between component re-renders, so that throttle.flush method can be used properly
   const throttledChangeRef = useRef(_.throttle(thoughtChangeHandler, EDIT_THROTTLE, { leading: false }))
 
-  const allowDefaultSelection = useEditMode({ contentRef, isEditing, path, style, transient })
+  useEditMode({ contentRef, isEditing, path, style, transient })
 
   useEffect(() => {
     /** Flushes pending edits. */
@@ -554,8 +552,6 @@ const Editable = ({
    */
   const onFocus = useCallback(
     () => {
-      preventAutoscrollEnd(contentRef.current)
-
       /**
        * On iOS, a long press between 415–650ms will trigger onFocus even when preventDefault is called in touchend, thus opening the virtual keyboard on top of the Command Center. There appears to be no way to prevent focus in this case. Therefore, we clear the selection and disable edit mode manually as soon as the focus triggers.
        *
@@ -640,41 +636,10 @@ const Editable = ({
     [disabled, dispatch, editingOrOnCursor, isVisible, setCursorOnThought],
   )
 
-  /** Registers native event listeners for pointer (mousedown, click) and touch (touchend with passive: false). */
+  /** Registers native event listeners for tap behavior (click and touchend). */
   useEffect(() => {
     const editable = contentRef.current
     if (!editable) return
-
-    /** Handles mousedown on the editable to manage caret and selection behavior. */
-    const onMouseDown = (e: MouseEvent) => {
-      // If CMD/CTRL is pressed, don't focus the editable.
-      const isMultiselectClick = isMac ? e.metaKey : e.ctrlKey
-      if (isMultiselectClick) {
-        e.preventDefault()
-        return
-      }
-
-      // If editing or the cursor is on the thought, allow the default browser selection so the offset is correct.
-      // Otherwise useEditMode will programmatically set the selection to the beginning of the thought.
-      // See: #981
-      if (editingOrOnCursor && !hasMulticursor) {
-        // Prevent the browser from autoscrolling to this editable element.
-        // For some reason doesn't work on touchend.
-        preventAutoscroll(contentRef.current, {
-          // about the height of a single-line thought
-          bottomMargin: fontSize * 2,
-        })
-
-        allowDefaultSelection()
-      }
-      // There are areas on the outside edge of the thought that will fail to trigger onTouchEnd.
-      // In those cases, it is best to prevent onFocus or onClick, otherwise keyboard is open will be incorrectly activated.
-      // Steps to Reproduce: https://github.com/cybersemics/em/pull/2948#issuecomment-2887186117
-      // Explanation and demo: https://github.com/cybersemics/em/pull/2948#issuecomment-2887803425
-      else {
-        e.preventDefault()
-      }
-    }
 
     /** Sets the cursor on the thought on click. Handles hidden elements, drags, and editing mode. */
     const onClick = (e: MouseEvent) => {
@@ -688,22 +653,20 @@ const Editable = ({
       handleTapBehavior(e)
     }
 
-    /** Sets the cursor on the thought on touchend. Handles hidden elements, drags, and editing mode. */
+    /** Handles touchend for haptics and tap behavior. */
     const onTouchEnd = (e: TouchEvent) => {
       haptics.light()
       handleTapBehavior(e)
     }
 
-    editable.addEventListener('mousedown', onMouseDown)
     editable.addEventListener('click', onClick)
     editable.addEventListener('touchend', onTouchEnd, { passive: false })
 
     return () => {
-      editable.removeEventListener('mousedown', onMouseDown)
       editable.removeEventListener('click', onClick)
       editable.removeEventListener('touchend', onTouchEnd)
     }
-  }, [contentRef, editingOrOnCursor, hasMulticursor, disabled, fontSize, allowDefaultSelection, handleTapBehavior])
+  }, [contentRef, editingOrOnCursor, hasMulticursor, handleTapBehavior])
 
   return (
     <ContentEditable

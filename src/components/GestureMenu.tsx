@@ -39,8 +39,9 @@ const GestureMenu: FC<{
         display: 'flex',
         flexDirection: 'column',
         maxWidth: '100%',
-        maxHeight: '100dvh',
         overflow: 'hidden',
+        maxHeight: `calc(100dvh - ${token('spacing.safeAreaBottom')} - ${token('spacing.safeAreaTop')})`,
+        paddingTop: 'safeAreaTop',
         fontFamily: 'token(fonts.radioCanada)',
       })}
     >
