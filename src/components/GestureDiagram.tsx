@@ -387,11 +387,11 @@ const GestureDiagram = ({
         className={css(inGestureContainer && { position: 'relative', top: '10px' }, cssRaw)}
         style={{
           ...style,
-          ...(styleCancelAsRegularGesture
-            ? arrowhead === 'none'
-              ? {}
-              : { paddingLeft: size / 10, paddingRight: size / 3 }
-            : { marginTop: '12px', marginBottom: '20px', marginLeft: '20px' }),
+          ...(arrowhead === 'none'
+            ? {}
+            : styleCancelAsRegularGesture
+              ? { paddingLeft: size / 10, paddingRight: size / 3 }
+              : { marginTop: '12px', marginBottom: '20px', marginLeft: '20px' }),
         }}
         viewBox='0 0 24 24'
       >

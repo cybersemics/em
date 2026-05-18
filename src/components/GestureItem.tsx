@@ -50,18 +50,16 @@ const GestureItem: FC<{
       className={css({
         display: 'flex',
         flexDirection: 'row',
-        alignItems: 'center',
-        gap: '0.67em',
-        paddingBlock: '6px',
+        alignItems: selected ? 'stretch' : 'center',
+        gap: '16px',
+        paddingBlock: selected ? '4px' : 0,
       })}
     >
       <div
         className={css({
-          width: 32,
-          height: 32,
           display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
+          justifyContent: 'flex-start',
+          alignItems: selected ? 'flex-start' : 'center',
           flexShrink: 0,
         })}
       >
@@ -74,8 +72,8 @@ const GestureItem: FC<{
           color={token('colors.dim')}
           highlightColor={token('colors.fg')}
           strokeWidth={3}
-          maxHeight={32}
-          styleCancelAsRegularGesture
+          maxHeight={18}
+          maxWidth={18}
         />
       </div>
 
@@ -86,13 +84,13 @@ const GestureItem: FC<{
           gap: '0.5em',
         })}
       >
-        <b
+        <div
           className={css({
             fontSize: '17px',
             lineHeight: '1em',
             whiteSpace: 'nowrap',
             color: disabled ? 'gray45' : selected ? '#ffffff' : 'rgba(255, 255, 255, 0.6)',
-            fontWeight: selected ? 600 : 500,
+            fontWeight: selected ? 600 : 400,
             textShadow:
               selected && !disabled
                 ? '0px 0px 24px rgba(255, 255, 255, 0.8), 0px 0px 12px rgba(255, 255, 255, 0.6)'
@@ -100,12 +98,13 @@ const GestureItem: FC<{
           })}
         >
           {command.label}
-        </b>
+        </div>
 
         {selected && (
           <p
             className={css({
               fontSize: '14px',
+              fontWeight: 400,
               color: 'fgOverlay75',
               marginBlock: 0,
               lineHeight: '1em',

@@ -42,7 +42,7 @@ const GestureMenu: FC<{
         overflow: 'hidden',
         maxHeight: `calc(100dvh - ${token('spacing.safeAreaBottom')} - ${token('spacing.safeAreaTop')})`,
         paddingTop: 'safeAreaTop',
-        fontFamily: 'token(fonts.radioCanada)',
+        fontFamily: 'radioCanada',
       })}
     >
       <div
@@ -65,11 +65,11 @@ const GestureMenu: FC<{
             })}
           >
             {/* Header */}
-            <div className={css({ marginBottom: '1em' })}>
+            <div className={css({ marginBottom: '25px' })}>
               <div
                 style={{
                   color: 'rgb(255, 255, 255, 0.7)',
-                  marginBottom: '0.75em',
+                  marginBottom: '8px',
                   fontSize: '16px',
                   fontWeight: 500,
                 }}
@@ -86,32 +86,46 @@ const GestureMenu: FC<{
             </div>
 
             {/* Main commands */}
-            {mainCommands.map((command, index) => {
-              // Check if the current gesture sequence ends with help gesture
-              const mobileCommandUniverseInProgress = gestureInProgress
-                ?.toString()
-                .endsWith(gestureString(openMobileCommandUniverseCommand))
-              const isMobileCommandUniverseMatch =
-                command.id === 'openMobileCommandUniverse' && mobileCommandUniverseInProgress
-              const isCancelMatch = command.id === 'cancel' && !hasMatchingCommand && !mobileCommandUniverseInProgress
+            <div
+              className={css({
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '16px',
+              })}
+            >
+              {mainCommands.map((command, index) => {
+                // Check if the current gesture sequence ends with help gesture
+                const mobileCommandUniverseInProgress = gestureInProgress
+                  ?.toString()
+                  .endsWith(gestureString(openMobileCommandUniverseCommand))
+                const isMobileCommandUniverseMatch =
+                  command.id === 'openMobileCommandUniverse' && mobileCommandUniverseInProgress
+                const isCancelMatch = command.id === 'cancel' && !hasMatchingCommand && !mobileCommandUniverseInProgress
 
-              return (
-                <GestureItem
-                  gestureInProgress={gestureInProgress as string}
-                  key={command.id}
-                  selected={
-                    isMobileCommandUniverseMatch || gestureInProgress === gestureString(command) || isCancelMatch
-                  }
-                  command={command}
-                  isFirstCommand={index === 0}
-                  isLastCommand={index === mainCommands.length - 1}
-                />
-              )
-            })}
-
+                return (
+                  <GestureItem
+                    gestureInProgress={gestureInProgress as string}
+                    key={command.id}
+                    selected={
+                      isMobileCommandUniverseMatch || gestureInProgress === gestureString(command) || isCancelMatch
+                    }
+                    command={command}
+                    isFirstCommand={index === 0}
+                    isLastCommand={index === mainCommands.length - 1}
+                  />
+                )
+              })}
+            </div>
             {/* Cancel / Cheatsheet block */}
             {separatedCommands.length > 0 && (
-              <div className={css({ marginTop: '28px' })}>
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  marginTop: !mainCommands.length ? 0 : '28px',
+                  gap: '16px',
+                }}
+              >
                 {separatedCommands.map((command, index) => {
                   const mobileCommandUniverseInProgress = gestureInProgress
                     ?.toString()
