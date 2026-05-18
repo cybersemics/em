@@ -13,8 +13,8 @@ import gestureStore, {
   startGestureMenuExit,
 } from '../stores/gesture'
 import storageModel from '../stores/storageModel'
-import CommandItem from './CommandItem'
 import FadeTransition from './FadeTransition'
+import GestureItem from './GestureItem'
 import PopupBase from './PopupBase'
 
 /**********************************************************************
@@ -30,6 +30,9 @@ const GestureMenu: FC<{
 
   const hasMatchingCommand = commands.some(cmd => (gestureInProgress as string) === gestureString(cmd))
 
+  const mainCommands = commands.filter(cmd => cmd.id !== 'cancel' && cmd.id !== 'openMobileCommandUniverse')
+  const separatedCommands = commands.filter(cmd => cmd.id === 'cancel' || cmd.id === 'openMobileCommandUniverse')
+
   return (
     <div
       className={css({
@@ -39,6 +42,7 @@ const GestureMenu: FC<{
         overflow: 'hidden',
         maxHeight: `calc(100dvh - ${token('spacing.safeAreaBottom')} - ${token('spacing.safeAreaTop')})`,
         paddingTop: 'safeAreaTop',
+        fontFamily: 'radioCanada',
       })}
     >
       <div
@@ -57,31 +61,95 @@ const GestureMenu: FC<{
         {gestureInProgress && (
           <div
             className={css({
-              padding: '0.85em 0.66em',
+              padding: '1.85rem',
             })}
           >
-            {commands.map((command, index) => {
-              // Check if the current gesture sequence ends with help gesture
-              const mobileCommandUniverseInProgress = gestureInProgress
-                ?.toString()
-                .endsWith(gestureString(openMobileCommandUniverseCommand))
-              const isMobileCommandUniverseMatch =
-                command.id === 'openMobileCommandUniverse' && mobileCommandUniverseInProgress
-              const isCancelMatch = command.id === 'cancel' && !hasMatchingCommand && !mobileCommandUniverseInProgress
+            {/* Header */}
+            <div className={css({ marginBottom: '25px' })}>
+              <div
+                style={{
+                  color: 'rgb(255, 255, 255, 0.7)',
+                  marginBottom: '8px',
+                  fontSize: '16px',
+                  fontWeight: 500,
+                }}
+              >
+                Gestures
+              </div>
+              <div
+                style={{
+                  height: '1px',
+                  width: '100%',
+                  background: 'linear-gradient(90deg, rgba(174, 168, 214, 0.59) 0%, rgba(28, 27, 36, 0) 100%)',
+                }}
+              />
+            </div>
 
-              return (
-                <CommandItem
-                  gestureInProgress={gestureInProgress as string}
-                  key={command.id}
-                  selected={
-                    isMobileCommandUniverseMatch || gestureInProgress === gestureString(command) || isCancelMatch
-                  }
-                  command={command}
-                  isFirstCommand={index === 0}
-                  isLastCommand={index === commands.length - 1}
-                />
-              )
-            })}
+            {/* Main commands */}
+            <div
+              className={css({
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '16px',
+              })}
+            >
+              {mainCommands.map((command, index) => {
+                // Check if the current gesture sequence ends with help gesture
+                const mobileCommandUniverseInProgress = gestureInProgress
+                  ?.toString()
+                  .endsWith(gestureString(openMobileCommandUniverseCommand))
+                const isMobileCommandUniverseMatch =
+                  command.id === 'openMobileCommandUniverse' && mobileCommandUniverseInProgress
+                const isCancelMatch = command.id === 'cancel' && !hasMatchingCommand && !mobileCommandUniverseInProgress
+
+                return (
+                  <GestureItem
+                    gestureInProgress={gestureInProgress as string}
+                    key={command.id}
+                    selected={
+                      isMobileCommandUniverseMatch || gestureInProgress === gestureString(command) || isCancelMatch
+                    }
+                    command={command}
+                    isFirstCommand={index === 0}
+                    isLastCommand={index === mainCommands.length - 1}
+                  />
+                )
+              })}
+            </div>
+            {/* Cancel / Cheatsheet block */}
+            {separatedCommands.length > 0 && (
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  marginTop: !mainCommands.length ? 0 : '28px',
+                  gap: '16px',
+                }}
+              >
+                {separatedCommands.map((command, index) => {
+                  const mobileCommandUniverseInProgress = gestureInProgress
+                    ?.toString()
+                    .endsWith(gestureString(openMobileCommandUniverseCommand))
+                  const isMobileCommandUniverseMatch =
+                    command.id === 'openMobileCommandUniverse' && mobileCommandUniverseInProgress
+                  const isCancelMatch =
+                    command.id === 'cancel' && !hasMatchingCommand && !mobileCommandUniverseInProgress
+
+                  return (
+                    <GestureItem
+                      gestureInProgress={gestureInProgress as string}
+                      key={command.id}
+                      selected={
+                        isMobileCommandUniverseMatch || gestureInProgress === gestureString(command) || isCancelMatch
+                      }
+                      command={command}
+                      isFirstCommand={index === 0}
+                      isLastCommand={index === separatedCommands.length - 1}
+                    />
+                  )
+                })}
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -250,7 +318,9 @@ const GestureMenuWithTransition: FC = () => {
           >
             <Overlay />
             <Glow />
-            <GestureMenu commands={commands} />
+            <div style={{ position: 'relative', zIndex: 1 }}>
+              <GestureMenu commands={commands} />
+            </div>
           </div>
         </FadeTransition>
       </div>
