@@ -1,6 +1,5 @@
 import { describe, expect } from 'vitest'
 import { WindowEm } from '../../../initialize'
-import { TestFlags } from '../../testFlags'
 import clickBullet from '../helpers/clickBullet'
 import clickThought from '../helpers/clickThought'
 import paste from '../helpers/paste'
@@ -9,12 +8,13 @@ import waitForEditable from '../helpers/waitForEditable'
 import { page } from '../setup'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
+const em = window.em as WindowEm
 
 const Y_TOLERANCE = 0.5
 
 /** Wait until `measureYShift`'s observer is observing `document.body`. */
 const waitForLayoutShiftObserver = () =>
-  page.waitForFunction(() => ((window.em as WindowEm).testFlags as TestFlags).layoutShiftObserverReady === true, {
+  page.waitForFunction(() => (window.em as WindowEm).testFlags.layoutShiftObserverReady === true, {
     timeout: 8000,
   })
 
@@ -36,8 +36,7 @@ const measureYShift = (thoughtValue: string, { settleMs = 500 }: { settleMs?: nu
   page.evaluate(
     (thoughtValue: string, settleMs: number, overallTimeoutMs: number) =>
       new Promise<YShiftResult>((resolve, reject) => {
-        const testFlags = (window.em as WindowEm).testFlags as TestFlags
-        testFlags.layoutShiftObserverReady = false
+        em.testFlags.layoutShiftObserverReady = false
 
         /** The target tree-node whose y position is being measured. */
         let target: HTMLElement | null = null
@@ -61,7 +60,7 @@ const measureYShift = (thoughtValue: string, { settleMs = 500 }: { settleMs?: nu
           if (resolveDebounceTimer) clearTimeout(resolveDebounceTimer)
           resolveDebounceTimer = setTimeout(() => {
             observer?.disconnect()
-            testFlags.layoutShiftObserverReady = false
+            em.testFlags.layoutShiftObserverReady = false
             resolve({ thoughtValue: thoughtValue, before, after })
           }, settleMs)
         }
@@ -106,13 +105,13 @@ const measureYShift = (thoughtValue: string, { settleMs = 500 }: { settleMs?: nu
           attributeFilter: ['style'],
           attributeOldValue: true,
         })
-        testFlags.layoutShiftObserverReady = true
+        em.testFlags.layoutShiftObserverReady = true
 
         setTimeout(() => {
           if (!target) {
             observer?.disconnect()
             if (resolveDebounceTimer) clearTimeout(resolveDebounceTimer)
-            testFlags.layoutShiftObserverReady = false
+            em.testFlags.layoutShiftObserverReady = false
             reject(new Error(`Timed out waiting for thought "${thoughtValue}" within ${overallTimeoutMs}ms.`))
           }
         }, overallTimeoutMs)
