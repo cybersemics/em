@@ -108,6 +108,15 @@ beforeEach(setup, 60000)
 
 afterEach(async () => {
   if (page) {
+    await page
+      .evaluate(async () => {
+        await (window.em as Partial<WindowEm> | undefined)?.testHelpers?.waitForTreecrdtIdle?.()
+        await (window.em as Partial<WindowEm> | undefined)?.testHelpers?.dropTreecrdt?.()
+      })
+      .catch(() => {
+        // Ignore teardown errors when a failing test has already closed or navigated the page.
+      })
+
     await page.close().catch(() => {
       // Ignore errors when closing the page.
     })

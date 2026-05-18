@@ -22,7 +22,12 @@ import {
   tryStartTreecrdtWebSocketSyncFromEnv as tryStartTreecrdtWebSocketSync,
 } from './data-providers/treecrdt/sync'
 import db, { init as initTreecrdtThoughtspace } from './data-providers/treecrdt/thoughtspace'
-import { getTreecrdtClient, initTreecrdt, registerBeforeTreecrdtClose } from './data-providers/treecrdt/treecrdt'
+import {
+  dropTreecrdt,
+  getTreecrdtClient,
+  initTreecrdt,
+  registerBeforeTreecrdtClose,
+} from './data-providers/treecrdt/treecrdt'
 import { isTreecrdtLocalMaterialization, waitForTreecrdtWriteBarrier } from './data-providers/treecrdt/writeBarrier'
 import * as selection from './device/selection'
 import testFlags from './e2e/testFlags'
@@ -171,6 +176,7 @@ const testHelpers = {
   flushPendingEdits: () => {
     commandEmitter.trigger('command')
   },
+  dropTreecrdt,
   waitForInitialized,
   waitForTreecrdtIdle: waitForTreecrdtWriteBarrier,
   setSelection: selection.set,
