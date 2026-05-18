@@ -505,18 +505,9 @@ const GestureDiagram = ({
         // Without an arrowhead the path has no directional asymmetry, so we use
         // a single uniform padding value on all four sides.
 
-        // Half the stroke diameter extends outside the path centerline on each side;
-        // the extra 0.25 adds a small buffer so the stroke is never flush with the edge.
-        const strokePad = strokeWidth * 0.75
-
-        // Fixed allowance for the drop-shadow glow filter, which bleeds beyond the stroke.
-        const glowPad = 2
-
-        // Proportional breathing room so the path doesn't feel cramped. Scales with
-        // `size` so larger diagrams get a visually consistent margin, not a fixed gap.
-        const visualMargin = size * 0.15
-
-        const pad = strokePad + glowPad + visualMargin
+        // Only pad enough to keep the stroke from being clipped at the SVG edge.
+        // Half the stroke diameter sits outside the path centerline on each side.
+        const pad = strokeWidth / 2
         el.setAttribute('viewBox', `${bbox.x - pad} ${bbox.y - pad} ${bbox.width + pad * 2} ${bbox.height + pad * 2}`)
       } else {
         // When an arrowhead is present the geometry is asymmetric — the marker
