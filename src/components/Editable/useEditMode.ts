@@ -59,17 +59,7 @@ const useEditMode = ({
       // Get the cursorOffset directly from the store rather than subscribing to it reactively with useSelector.
       // Otherwise, it will try to set the selection while typing.
       const { cursorOffset, lastUndoableActionType } = store.getState()
-
-      /** Set the selection to the current Editable at the cursor offset. */
-      const setSelectionToCursorOffset = () => {
-        // do not set the selection on hidden thoughts, otherwise it will cause a faulty focus event when switching windows
-        // https://github.com/cybersemics/em/issues/1596
-        if (style?.visibility === 'hidden') {
-          selection.clear()
-        } else {
-          selection.set(contentRef.current, { offset: cursorOffset ?? 0 })
-        }
-      }
+      const technique = getAutoscrollTechnique()
 
       // allow transient editable to have focus on render
       const shouldSetSelection =
@@ -83,14 +73,28 @@ const useEditMode = ({
           !dragHold &&
           !disabledRef.current)
 
-      if (getAutoscrollTechnique() === 'v2') {
+      if (technique === 'v2') {
         debugLog(
           'useEffect',
           `el=${editableLabel(contentRef.current)} cursorOffset=${cursorOffset} shouldSet=${shouldSetSelection} active=${editableLabel(document.activeElement)} ${selectionSnapshot()}`,
         )
       }
 
-      if (shouldSetSelection) {
+      if (!shouldSetSelection) return
+
+      // do not set the selection on hidden thoughts, otherwise it will cause a faulty focus event when switching windows
+      // https://github.com/cybersemics/em/issues/1596
+      if (style?.visibility === 'hidden') {
+        selection.clear()
+        return
+      }
+
+      if (technique === 'v2') {
+        // Chokepoint — handles focus, selection.set with autoscroll suppression, and deferred
+        // scroll. This is the path for all programmatic cursor changes: Return-new-thought,
+        // arrow keys (incl. bluetooth on iPad), gestures, sidebar restore.
+        focusWithoutAutoscroll(contentRef.current, { offset: cursorOffset ?? 0 })
+      } else {
         preventAutoscroll(contentRef.current)
 
         /*
@@ -110,7 +114,7 @@ const useEditMode = ({
           asyncFocus()
         }
 
-        setSelectionToCursorOffset()
+        selection.set(contentRef.current, { offset: cursorOffset ?? 0 })
       }
     },
     // React Hook useEffect has missing dependencies: 'contentRef', 'editMode', and 'style?.visibility'.
@@ -182,16 +186,14 @@ const useEditMode = ({
         const technique = getAutoscrollTechnique()
 
         if (technique === 'v2') {
-          // v2 strategy for issue #3765:
-          //   1. Dispatch setCursor first — so when focus() below fires Editable.onFocus, its
-          //      setCursorOnThought call sees state.cursor already equal to this path and
-          //      returns early, instead of clobbering cursorOffset to 0.
-          //   2. focusWithoutAutoscroll: preventDefault on mousedown to block native focus
-          //      + native caret positioning; el.focus({ preventScroll: true }) to take focus
-          //      programmatically without triggering iOS autoscroll (the cause of position:fixed
-          //      elements jumping in #3765).
-          //   3. selection.set: place the caret AFTER focus, so iOS doesn't drop our selection
-          //      during the focus transition.
+          // v2 strategy for issue #3765. All cursor changes (taps, Return, arrow keys, gestures)
+          // converge on `focusWithoutAutoscroll` — see its docstring. Mousedown calls it inline
+          // here, synchronously within the user gesture, so:
+          //   - iOS Safari accepts the focus (no asyncFocus dance needed for the tap path)
+          //   - same-thought re-taps reposition the caret (cursorOffset is not a useEffect dep,
+          //     so we cannot rely on the useEffect for offset-only changes)
+          // The cursor-change useEffect also calls focusWithoutAutoscroll for programmatic
+          // paths; the function is idempotent so the second call is a no-op.
           const { offset } = getCaretOffset(editable, {
             clientX: e.clientX,
             clientY: e.clientY,
@@ -202,26 +204,28 @@ const useEditMode = ({
             `el=${editableLabel(editable)} active=${editableLabel(document.activeElement)} offset=${offset}`,
           )
 
-          if (offset !== null) {
-            dispatch(
-              setCursor({
-                path,
-                offset,
-                isKeyboardOpen: true,
-                cursorHistoryClear: true,
-                preserveMulticursor: true,
-              }),
-            )
-          }
+          // Block the native focus + native caret-from-tap before they fire.
+          e.preventDefault()
 
-          focusWithoutAutoscroll(editable, e)
+          // getCaretOffset returns null for empty thoughts (no text nodes). We still need to take
+          // focus on those — otherwise tapping an empty thought that is already the cursor leaves
+          // it unfocused and the keyboard never opens.
+          const targetOffset = offset ?? 0
 
+          // Dispatch setCursor first so Editable.onFocus's setCursorOnThought sees
+          // state.cursor === path and early-returns instead of clobbering cursorOffset to 0.
+          dispatch(
+            setCursor({
+              path,
+              offset: targetOffset,
+              isKeyboardOpen: true,
+              cursorHistoryClear: true,
+              preserveMulticursor: true,
+            }),
+          )
+
+          focusWithoutAutoscroll(editable, { offset: targetOffset })
           debugLog('postFocus', `active=${editableLabel(document.activeElement)} ${selectionSnapshot()}`)
-
-          if (offset !== null) {
-            selection.set(editable, { offset })
-            debugLog('selection.set', `${selectionSnapshot()}`)
-          }
         } else {
           // v1: existing centering hack. Prevent the browser from autoscrolling to this editable element.
           // For some reason doesn't work on touchend.

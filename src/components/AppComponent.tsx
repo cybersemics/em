@@ -16,6 +16,7 @@ import isTutorial from '../selectors/isTutorial'
 import theme from '../selectors/theme'
 import themeColors from '../selectors/themeColors'
 import store from '../stores/app'
+import { installScrollInstrumentation } from '../util/debugAutoscrollLog'
 import isDocumentEditable from '../util/isDocumentEditable'
 import Alert from './Alert'
 import CommandCenter from './CommandCenter/CommandCenter'
@@ -37,6 +38,11 @@ import Tutorial from './Tutorial'
 import UndoSlider from './UndoSlider'
 import MobileCommandUniverse from './dialog/MobileCommandUniverse'
 import * as modals from './modals'
+
+// Patch focus/scroll APIs and listen for scroll bursts so the v2 debug log can show
+// what's actually causing native autoscroll (e.g. selection.set after newThought). Idempotent.
+// Remove with the rest of the v2 debug scaffolding once #3765 is resolved.
+installScrollInstrumentation()
 
 /** A hook that sets an attribute on the document.body element. */
 const useBodyAttribute = (name: string, value: string) => {

@@ -159,14 +159,14 @@ const Note = React.memo(
 
       // A/B toggle for issue #3765 — see src/util/autoscrollTechnique.ts.
       if (getAutoscrollTechnique() === 'v2') {
-        // v2: focusWithoutAutoscroll blocks native focus+autoscroll and takes focus programmatically
-        // with preventScroll: true. Note.onFocus then runs and dispatches noteOffset:null +
-        // noteFocus:true, which is fine — Note's selection useEffect bails when noteOffset is null,
-        // so our manual selection.set is left in place.
+        // v2: block native focus + native caret-from-tap, then route through focusWithoutAutoscroll
+        // (same chokepoint Editable uses) which focuses with preventScroll, places the caret at
+        // the tap offset, suppresses selection-driven autoscroll, and schedules the post-keyboard
+        // scroll into view.
         const { offset } = getCaretOffset(note, { clientX: e.clientX, clientY: e.clientY })
-        focusWithoutAutoscroll(note, e.nativeEvent)
         if (offset !== null) {
-          selection.set(note, { offset })
+          e.preventDefault()
+          focusWithoutAutoscroll(note, { offset })
         }
       } else {
         // v1: existing centering hack.

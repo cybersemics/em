@@ -1,53 +1,51 @@
-import { isTouch } from '../browser'
+import { isSafari, isTouch } from '../browser'
 import { getAutoscrollTechnique } from '../util/autoscrollTechnique'
-import { debugLog, editableLabel, selectionSnapshot } from '../util/debugAutoscrollLog'
+import { debugLog, editableLabel } from '../util/debugAutoscrollLog'
+import asyncFocus from './asyncFocus'
+import * as selection from './selection'
 
-/**
- * v2 technique for issue #3765.
- *
- * Blocks the browser's native focus + autoscroll path entirely, so iOS WebKit
- * never runs its autoscroll and `position: fixed` elements (toolbar) never
- * jump. Must be invoked from a `mousedown` handler — `preventDefault` on
- * mousedown is what suppresses native focus.
- *
- * The caller is then responsible for placing the caret (e.g. via
- * `getCaretOffset` + `selection.set`) and for scrolling the editor with
- * `scrollCursorIntoView`.
- *
- * Returns true if focus was taken over, false if the call was a no-op (caller
- * should fall back to default behavior).
- */
-const focusWithoutAutoscroll = (el: HTMLElement | null | undefined, e: MouseEvent | TouchEvent): boolean => {
-  if (!isTouch || !el) return false
+/** V2 chokepoint for issue #3765. Focuses an editable, places the caret at the given offset, and suppresses the native autoscroll triggered by focus and selection placement. Called from useEditMode's mousedown (synchronously within the user gesture so iOS accepts the focus, and so same-thought re-taps reposition the caret — cursorOffset is not a useEffect dep) and from its cursor-change useEffect (for programmatic cursor changes such as Return-new-thought, arrow keys, gestures, and sidebar restore). Idempotent — safe to call from both back-to-back. Strategy: (1) focus({preventScroll: true}) blocks the focus-driven autoscroll; (2) save/restore window.scrollY around selection.set to suppress the selection-driven autoscroll the browser fires when adding a Range inside a contentEditable. Keeping the cursor visible after the keyboard opens is handled separately by useScrollCursorIntoView in BulletCursorOverlay — this function intentionally does NOT scroll. */
+const focusWithoutAutoscroll = (el: HTMLElement | null | undefined, { offset }: { offset: number }): void => {
+  if (!el || getAutoscrollTechnique() !== 'v2') return
 
-  // Order matters on iOS WebKit:
-  //
-  // 1) Focus first, while the user-activation gesture from the tap is still valid.
-  //    `preventScroll: true` (iOS Safari 15.5+) suppresses the autoscroll that normally accompanies
-  //    focus changes, which is what causes `position: fixed` elements to jump (issue #3765).
-  //    Calling focus() before preventDefault preserves caret-rendering: when preventDefault runs
-  //    first, iOS sometimes registers the activeElement change but does NOT paint a caret until
-  //    another user gesture arrives, so the caller's manual selection.set is invisible.
-  //
-  // 2) Then preventDefault to suppress the native caret-from-tap that would otherwise overwrite
-  //    the caller's manual caret placement after this function returns.
-  const v2Logging = getAutoscrollTechnique() === 'v2'
   const wasFocused = el === document.activeElement
+  const currentOffset = wasFocused ? selection.offsetThought() : null
+
+  // Idempotency guard — already focused at this offset, nothing to do.
+  if (wasFocused && currentOffset === offset) {
+    debugLog('focusWithoutAutoscroll.noop', `el=${editableLabel(el)} offset=${offset}`)
+    return
+  }
+
+  debugLog(
+    'focusWithoutAutoscroll',
+    `el=${editableLabel(el)} offset=${offset} wasFocused=${wasFocused} currentOffset=${currentOffset}`,
+  )
+
+  // iOS Safari rejects programmatic selection outside a user gesture unless an asyncFocus has
+  // primed it. The condition mirrors useEditMode's v1 path.
+  if (isTouch && isSafari() && !selection.isThought()) {
+    asyncFocus()
+  }
 
   if (!wasFocused) {
-    if (v2Logging) {
-      debugLog('focus.before', `target=${editableLabel(el)} active=${editableLabel(document.activeElement)}`)
-    }
     el.focus({ preventScroll: true })
-    if (v2Logging) {
-      debugLog('focus.after', `active=${editableLabel(document.activeElement)} ${selectionSnapshot()}`)
-    }
-  } else if (v2Logging) {
-    debugLog('focus.skip', `target=${editableLabel(el)} (already active)`)
+    debugLog('focus.after', `active=${editableLabel(document.activeElement)}`)
   }
-  e.preventDefault()
 
-  return true
+  // Suppress selection-driven autoscroll: setting a Range inside a contentEditable makes the
+  // browser scroll the caret into view, independently of focus. Capture and revert any scrollY
+  // shift synchronously. The system-wide useScrollCursorIntoView in BulletCursorOverlay handles
+  // bringing the cursor into view once layout settles — we must not scroll here, otherwise the
+  // two sources interrupt each other on rapid cursor changes (spam-Enter) and the page jumps to
+  // a mid-screen position.
+  const yBefore = window.scrollY
+  selection.set(el, { offset })
+  if (window.scrollY !== yBefore) {
+    const delta = window.scrollY - yBefore
+    debugLog('selection.set.scrollSuppressed', `Δ=${delta.toFixed(0)}`)
+    window.scrollTo(window.scrollX, yBefore)
+  }
 }
 
 export default focusWithoutAutoscroll
