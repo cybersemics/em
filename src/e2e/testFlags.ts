@@ -10,6 +10,8 @@ const testFlags: {
   simulateDrag: boolean
   /** Render drop targets as blocks of color. */
   simulateDrop: boolean
+  /** Puppeteer layout-shift tests: true after `measureYShift`'s MutationObserver has called `observe()`. */
+  layoutShiftObserverReady: boolean
 } = {
   logActions: false,
   logMultigesture: false,
@@ -17,6 +19,7 @@ const testFlags: {
   replicationDelay: 0,
   simulateDrag: false,
   simulateDrop: false,
+  layoutShiftObserverReady: false,
 }
 
 export default testFlags
