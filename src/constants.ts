@@ -6,6 +6,8 @@ import ThoughtId from './@types/ThoughtId'
 import { ColorToken } from './colors.config'
 import emojiRegex from './emojiRegex'
 
+export const TOOLBAR_HEIGHT = 50
+
 // maximum number of characters of children to allow expansion
 export const MAX_DISTANCE_FROM_CURSOR = 3
 export const MAX_DEPTH = 20
@@ -153,7 +155,7 @@ export const FONT_SCALE_INCREMENT = 1
 // to detect if field has multiline
 export const MIN_LINE_HEIGHT = 26
 
-// delay after gesture hint is activated before command palette appears
+// delay after gesture hint is activated before desktop command universe appears
 export const COMMAND_PALETTE_TIMEOUT = 400
 
 // delay to show executed command after gesture is completed
@@ -525,7 +527,7 @@ export const COMMAND_GROUPS: {
       'jumpForward',
       'moveCursorBackward',
       'moveCursorForward',
-      'commandPalette',
+      'openDesktopCommandUniverse',
       'home',
       'search',
       'selectAll',
@@ -601,7 +603,7 @@ export const COMMAND_GROUPS: {
   },
   {
     title: 'Help',
-    commands: ['help', 'openGestureCheatsheet'],
+    commands: ['help', 'openMobileCommandUniverse'],
   },
   {
     title: 'Cancel',

@@ -122,7 +122,7 @@ const canDrop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   if (state.longPress !== LongPressState.DragInProgress) return false
 
   const item = monitor.getItem() as DragThoughtOrFiles
-  const draggedItems = item as DragThoughtItem[]
+  const draggedItems = isDraggedFile(item) ? [] : item
 
   const thoughtsTo = props.path
   const showContexts = thoughtsTo && isContextViewActive(state, parentOf(thoughtsTo))
@@ -143,7 +143,7 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
     return
   }
 
-  const draggedItems = item as DragThoughtItem[]
+  const draggedItems = isDraggedFile(item) ? [] : item
 
   // Validation checks
   if (draggedItems.some(item => !item.path)) {

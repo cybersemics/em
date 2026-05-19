@@ -57,7 +57,7 @@ const canDrop = ({ path: thoughtsTo }: DroppableSubthoughts, monitor: DropTarget
   const state = store.getState()
 
   const item = monitor.getItem() as DragThoughtOrFiles
-  const draggedItems = item as DragThoughtItem[]
+  const draggedItems = isDraggedFile(item) ? [] : item
 
   /** If the epxand hover top is active then all the descenendants of the current active expand hover top path should be droppable. */
   const isExpandedTop = () =>
@@ -106,11 +106,7 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
   }
 
   // Handle multiselect drag operations
-  const draggedItems = item as DragThoughtItem[]
-  if (!props.path) {
-    console.warn('props.path not defined', { item: draggedItems })
-    return
-  }
+  const draggedItems = isDraggedFile(item) ? [] : item
 
   /** Get the path to drop the item to. */
   const getPathTo = (state: State, itemPath: Path) =>

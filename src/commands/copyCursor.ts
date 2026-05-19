@@ -1,6 +1,9 @@
 import pluralize from 'pluralize'
 import Command from '../@types/Command'
+import Dispatch from '../@types/Dispatch'
 import Path from '../@types/Path'
+import State from '../@types/State'
+import ThoughtId from '../@types/ThoughtId'
 import { alertActionCreator as alert } from '../actions/alert'
 import { pullActionCreator as pull } from '../actions/pull'
 import SettingsIcon from '../components/icons/SettingsIcon'
@@ -18,6 +21,30 @@ import isDocumentEditable from '../util/isDocumentEditable'
 import strip from '../util/strip'
 import trimBullet from '../util/trimBullet'
 
+/** Pulls any pending descendants for the given thought IDs, exports them to plain text, copies to clipboard, and returns data for constructing the alert message. */
+const copyThoughts = async (ids: ThoughtId[], dispatch: Dispatch, getState: () => State): Promise<string> => {
+  const state = getState()
+  const needsPull = ids.some(id =>
+    someDescendants(state, id, child => isPending(state, getThoughtById(state, child.id))),
+  )
+
+  if (needsPull) {
+    dispatch(alert('Loading thoughts...', { clearDelay: null }))
+    await dispatch(pull(ids, { maxDepth: Infinity }))
+  }
+
+  const stateAfterPull = getState()
+
+  const exported = ids.map(id => strip(exportContext(stateAfterPull, id, 'text/plain'))).join('\n')
+  const exportedVisible = ids
+    .map(id => exportContext(stateAfterPull, id, 'text/plain', { excludeMeta: true }))
+    .join('\n')
+
+  copy(trimBullet(exported))
+
+  return exportedVisible
+}
+
 const copyCursorCommand: Command = {
   id: 'copyCursor',
   label: 'Copy Cursor',
@@ -25,41 +52,20 @@ const copyCursorCommand: Command = {
   keyboard: { key: 'c', meta: true },
   multicursor: {
     execMulticursor: async (cursors, dispatch, getState) => {
-      const state = getState()
-
       const filteredCursors = cursors.reduce<Path[]>((acc, cur) => {
         const hasAncestor = acc.some(p => cur.includes(head(p)))
         if (hasAncestor) return acc
         return [...acc.filter(p => !p.includes(head(cur))), cur]
       }, [])
 
-      // Pull all thoughts if any are pending
-      const needsPull = filteredCursors.some(cursor =>
-        someDescendants(state, head(cursor), child => isPending(state, getThoughtById(state, child.id))),
+      const exportedVisible = await copyThoughts(
+        filteredCursors.map(cursor => head(cursor)),
+        dispatch,
+        getState,
       )
 
-      if (needsPull) {
-        dispatch(alert('Loading thoughts...', { clearDelay: null }))
-        await dispatch(
-          pull(
-            filteredCursors.map(cursor => head(cursor)),
-            { maxDepth: Infinity },
-          ),
-        )
-      }
-
-      // Get new state after pull
-      const stateAfterPull = getState()
-
-      // Export and copy all selected thoughts
-      const exported = filteredCursors
-        .map(cursor => exportContext(stateAfterPull, head(cursor), 'text/plain'))
-        .join('\n')
-
-      copy(trimBullet(exported))
-
       const numThoughts = filteredCursors.length
-      const numDescendants = exported.split('\n').length - numThoughts
+      const numDescendants = exportedVisible.split('\n').length - numThoughts
 
       dispatch(
         alert(
@@ -81,23 +87,11 @@ const copyCursorCommand: Command = {
     const state = getState()
     const simplePath = simplifyPath(state, state.cursor!)
 
-    // if there are any pending descendants, do a pull
-    // otherwise copy whatever is in state
-    if (someDescendants(state, head(simplePath), child => isPending(state, getThoughtById(state, child.id)))) {
-      dispatch(alert('Loading thoughts...', { clearDelay: null }))
-      await dispatch(pull([head(simplePath)], { maxDepth: Infinity }))
-    }
+    const exportedVisible = await copyThoughts([head(simplePath)], dispatch, getState)
 
-    // get new state after pull
-    const stateAfterPull = getState()
-
-    const exported = strip(exportContext(stateAfterPull, head(simplePath), 'text/plain'))
-
-    copy(trimBullet(exported))
-
-    const numDescendants = exported ? exported.split('\n').length - 1 : 0
+    const numDescendants = exportedVisible ? exportedVisible.split('\n').length - 1 : 0
     const phrase = exportPhrase(head(simplePath), numDescendants, {
-      value: getThoughtById(stateAfterPull, head(simplePath))?.value,
+      value: getThoughtById(getState(), head(simplePath))?.value,
     })
 
     dispatch(alert(`Copied ${phrase} to the clipboard`))

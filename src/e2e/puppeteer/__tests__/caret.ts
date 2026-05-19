@@ -87,8 +87,10 @@ describe('all platforms', () => {
     await waitUntil(() => window.getSelection()?.focusOffset === 0)
     await click(editableNodeHandle, { edge: 'right' })
 
+    // Manual caret placement may put the selection on the element (offset 1) or the text node (offset length)
+    const nodeType = await getSelection().focusNode?.nodeType
     const offset = await getSelection().focusOffset
-    expect(offset).toBe('Richard Feynman'.length)
+    expect(offset).toBe(nodeType === Node.TEXT_NODE ? 'Richard Feynman'.length : 1)
   })
 
   it('clicking in the middle of a thought, the caret should be set to the point that is clicked.', async () => {
@@ -219,7 +221,7 @@ describe('all platforms', () => {
     })
   })
 
-  it('caret should move to editable after closing the command palette, then executing a cursor down command', async () => {
+  it('caret should move to editable after closing the desktop command universe, then executing a cursor down command', async () => {
     const importText = `
       - a`
 
@@ -230,7 +232,7 @@ describe('all platforms', () => {
     await press('ArrowDown')
 
     // Wait for the caret to move to the editable
-    // because the closing of command palette is asynchronous and the caret may not be in the editable yet
+    // because the closing of desktop command universe is asynchronous and the caret may not be in the editable yet
     // otherwise the test intermittently fails in CI.
     await waitUntil(() => window.getSelection()?.focusNode?.textContent === 'a')
 

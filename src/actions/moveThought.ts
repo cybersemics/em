@@ -104,7 +104,11 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
 
   return reducerFlow([
     // disable sort when moving within the same context
-    sameContext && newRank !== sourceThought.rank && getSortPreference(state, destinationThoughtId).type !== 'None'
+    // skip if skipRerank is set (e.g. rerank) to avoid disabling sort during internal rank normalization
+    sameContext &&
+    !skipRerank &&
+    newRank !== sourceThought.rank &&
+    getSortPreference(state, destinationThoughtId).type !== 'None'
       ? reducerFlow([
           alert({
             value: 'Switched to manual sort because thought was moved',

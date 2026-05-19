@@ -16,11 +16,11 @@ import preventAutoscroll, { preventAutoscrollEnd } from '../device/preventAutosc
 import * as selection from '../device/selection'
 import useFreshCallback from '../hooks/useFreshCallback'
 import getThoughtById from '../selectors/getThoughtById'
+import noteValue from '../selectors/noteValue'
 import resolveNotePath from '../selectors/resolveNotePath'
 import store from '../stores/app'
 import equalPathHead from '../util/equalPathHead'
 import head from '../util/head'
-import noteValue from '../util/noteValue'
 import strip from '../util/strip'
 import useOnCut from './Editable/useOnCut'
 import FauxCaret from './FauxCaret'
@@ -131,14 +131,17 @@ const Note = React.memo(
     )
 
     /** Set state.noteFocus if Note lost focus and did not move to another Note. Set state.keyboardOpen if keyboard is closed. */
-    const onBlur = useCallback(() => {
-      if (!selection.isNote()) {
-        dispatch(setNoteFocus({ value: false }))
-      }
-      if (isTouch && !selection.isThought()) {
-        dispatch(keyboardOpen({ value: false }))
-      }
-    }, [dispatch])
+    const onBlur = useCallback(
+      (e: React.FocusEvent) => {
+        if (!selection.isNote(e.relatedTarget)) {
+          dispatch(setNoteFocus({ value: false }))
+        }
+        if (isTouch && !selection.isThought()) {
+          dispatch(keyboardOpen({ value: false }))
+        }
+      },
+      [dispatch],
+    )
 
     const onMouseDown = useCallback(() => preventAutoscroll(noteRef.current), [noteRef])
 
