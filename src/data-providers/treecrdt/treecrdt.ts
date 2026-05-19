@@ -1,4 +1,4 @@
-import { type ClientOptions, type TreecrdtClient, createTreecrdtClient } from '@treecrdt/wa-sqlite/client'
+import { type ClientOptions, type TreecrdtClient, createTreecrdtClient } from '@treecrdt/wa-sqlite'
 import storage from '../../util/storage'
 import { tsid } from '../thoughtspaceSession'
 

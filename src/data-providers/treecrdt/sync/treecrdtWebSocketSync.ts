@@ -1,7 +1,7 @@
 /* eslint-disable import/prefer-default-export -- sync module exposes lifecycle functions */
 import type { Operation } from '@treecrdt/interface'
 import { type TreecrdtWebSocketSync, connectTreecrdtWebSocketSync } from '@treecrdt/sync'
-import type { TreecrdtClient } from '@treecrdt/wa-sqlite/client'
+import type { TreecrdtClient } from '@treecrdt/wa-sqlite'
 import { registerBeforeTreecrdtClose } from '../treecrdt'
 import { getTreecrdtSyncBaseUrl } from './config'
 
