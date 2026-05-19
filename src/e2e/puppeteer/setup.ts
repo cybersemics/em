@@ -49,7 +49,7 @@ const setup = async ({
 
     localStorage.setItem('tsid', sessionId)
     localStorage.setItem('accessToken', sessionId)
-    localStorage.setItem('treecrdtRuntime', 'direct')
+    localStorage.setItem('treecrdtRuntime', 'dedicated-worker')
   }, sessionId)
 
   page.on('dialog', async dialog => dialog.accept())

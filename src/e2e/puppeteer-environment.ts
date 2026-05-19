@@ -8,12 +8,15 @@ const PuppeteerEnvironment: Environment = {
   async setup(global, options) {
     builtinEnvironments['happy-dom'].setup(global, options)
 
-    // Keep cross-origin isolation enabled so direct OPFS can run in Puppeteer.
+    // Disable Chrome features that crash GitHub Actions with "Protocol error (Target.createTarget): Target closed."
+    // See: https://stackoverflow.com/a/66994528/480608
     // List of Chromium switches: https://peter.sh/experiments/chromium-command-line-switches/
     const args = [
       '--deterministic-fetch',
       '--disable-dev-shm-usage',
+      '--disable-features=IsolateOrigins',
       '--disable-setuid-sandbox',
+      '--disable-site-isolation-trials',
       '--no-first-run',
       '--no-sandbox',
       '--no-zygote',
