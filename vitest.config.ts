@@ -23,9 +23,6 @@ export default defineConfig({
         test: {
           name: 'puppeteer-e2e',
           globals: true,
-          // Browserless runs all e2e pages in one Chrome service. Even with TreeCRDT on the direct runtime, parallel
-          // app sessions still starve startup/editable waits and produce false negatives.
-          fileParallelism: false,
           include: ['src/e2e/puppeteer/__tests__/*.ts'],
           exclude: ['node_modules/**'],
           environment: './src/e2e/puppeteer-environment.ts',
