@@ -4,19 +4,12 @@ import waitForEmIdle from './waitForEmIdle'
 
 type Options = Parameters<Keyboard['press']>[1]
 
-/** Makes sure global keyboard shortcuts are sent to the app when no input owns focus. */
-const focusAppKeyboardTargetIfNeeded = async (): Promise<void> => {
+/** Focuses the app shell only when the document itself owns focus, without stealing focus from controls. */
+const focusAppShellIfDocumentHasFocus = async (): Promise<void> => {
   await page.evaluate(() => {
     const active = document.activeElement as HTMLElement | null
-    const isKeyboardTarget =
-      active &&
-      (active.hasAttribute('data-editable') ||
-        active.getAttribute('aria-label') === 'note-editable' ||
-        active.tagName === 'INPUT' ||
-        active.tagName === 'TEXTAREA' ||
-        active.tagName === 'SELECT')
 
-    if (isKeyboardTarget) return
+    if (active && active !== document.body && active !== document.documentElement) return
 
     const content = document.getElementById('content')
     const target = content || document.body
@@ -36,7 +29,7 @@ const press = async (
     ...options
   }: Options & { alt?: boolean; ctrl?: boolean; meta?: boolean; shift?: boolean } = {},
 ) => {
-  await focusAppKeyboardTargetIfNeeded()
+  await focusAppShellIfDocumentHasFocus()
 
   if (ctrl) await page.keyboard.down('Control')
   if (meta) await page.keyboard.down('Meta')
