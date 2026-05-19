@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
-import { moveThoughtByRank } from '../actions/moveThought'
+import moveThought from '../actions/moveThought'
 import { getChildrenRanked } from '../selectors/getChildren'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
@@ -12,7 +12,7 @@ import reducerFlow from '../util/reducerFlow'
 const rerank = (state: State, simplePath: SimplePath): State => {
   return reducerFlow(
     getChildrenRanked(state, head(simplePath)).map((child, i) =>
-      moveThoughtByRank({
+      moveThought({
         oldPath: appendToPath(simplePath, child.id),
         newPath: appendToPath(simplePath, child.id),
         skipRerank: true,

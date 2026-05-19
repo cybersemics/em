@@ -3,7 +3,7 @@ import Thunk from '../@types/Thunk'
 import deleteThought from '../actions/deleteThought'
 import deleteThoughtWithCursor from '../actions/deleteThoughtWithCursor'
 import editThought from '../actions/editThought'
-import { moveThoughtByRank } from '../actions/moveThought'
+import moveThought from '../actions/moveThought'
 import setCursor from '../actions/setCursor'
 import getTextContentFromHTML from '../device/getTextContentFromHTML'
 import findDescendant from '../selectors/findDescendant'
@@ -72,7 +72,7 @@ const deleteEmptyThought = (state: State): State => {
       state => {
         const childArchive = findAnyChild(state, head(cursor), child => child.value === '=archive')
         return childArchive
-          ? moveThoughtByRank(state, {
+          ? moveThought(state, {
               oldPath: [...cursor, childArchive.id],
               newPath: [...parentOf(cursor), childArchive.id],
               newRank: childArchive.rank,
@@ -109,7 +109,7 @@ const deleteEmptyThought = (state: State): State => {
         // merge children
         ...allChildren.map(
           (child, i) => (state: State) =>
-            moveThoughtByRank(state, {
+            moveThought(state, {
               oldPath: appendToPath(simplePath, child.id),
               newPath: appendToPath(pathPrevNew, child.id),
               newRank: getNextRank(state, head(pathPrevNew)) + i,

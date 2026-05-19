@@ -21,7 +21,7 @@ import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
 import alert from './alert'
 import createThought from './createThought'
-import { moveThoughtByRank } from './moveThought'
+import moveThought from './moveThought'
 import setCursor from './setCursor'
 
 /** Inserts a new thought and adds the given thought as a subthought. */
@@ -80,7 +80,7 @@ const categorize = (state: State): State => {
     }),
     ...(multicursorPaths.length === 0
       ? [
-          moveThoughtByRank({
+          moveThought({
             oldPath: simplePath,
             newPath: appendToPath(
               isInContextView ? rootedParentOf(state, simplePath) : cursorParent,
@@ -95,7 +95,7 @@ const categorize = (state: State): State => {
           // we ignore thoughts at cursor that are somehow missing, see getThoughtById
           .filter(path => getThoughtById(state, head(path)))
           .map(path =>
-            moveThoughtByRank({
+            moveThought({
               oldPath: path,
               newPath: appendToPath(parentOf(simplePath), newThoughtId, head(path)),
               newRank: getThoughtById(state, head(path))!.rank,

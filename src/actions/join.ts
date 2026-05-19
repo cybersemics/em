@@ -17,7 +17,7 @@ import reducerFlow from '../util/reducerFlow'
 import deleteThought from './deleteThought'
 import editThought from './editThought'
 import editableRender from './editableRender'
-import { moveThoughtByRank } from './moveThought'
+import moveThought from './moveThought'
 
 /** Trailing hyphen that should be removed when joining block formatted text from print or pdf. */
 const REGEX_HYPHEN = /-$/
@@ -52,7 +52,7 @@ const join = (state: State, { paths }: { paths?: Path[] } = {}) => {
       return grandchildren.map(child => {
         const oldPath = getChildPath(state, child, pathToSibling)
         const newPath = appendToPath(path, child)
-        return moveThoughtByRank({ oldPath, newPath, newRank: (minNextRank += 1) })
+        return moveThought({ oldPath, newPath, newRank: (minNextRank += 1) })
       })
     })
     .flat()

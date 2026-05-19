@@ -1,7 +1,7 @@
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import alert from '../actions/alert'
-import { moveThoughtByRank } from '../actions/moveThought'
+import moveThought from '../actions/moveThought'
 import findDescendant from '../selectors/findDescendant'
 import { anyChild } from '../selectors/getChildren'
 import getRankAfter from '../selectors/getRankAfter'
@@ -81,7 +81,7 @@ const swapNote = (state: State): State => {
 
             return note
               ? reducerFlow([
-                  moveThoughtByRank({ oldPath, newPath, newRank }),
+                  moveThought({ oldPath, newPath, newRank }),
                   // delete =note
                   deleteThought({
                     pathParent: cursor,
@@ -107,7 +107,7 @@ const swapNote = (state: State): State => {
           // move the existing =note child into the parent if it exists
           state => {
             return parentNoteChildId
-              ? moveThoughtByRank(state, {
+              ? moveThought(state, {
                   oldPath: appendToPath(
                     parentOf(cursor),
                     findDescendant(state, head(parentOf(cursor)), '=note')!,
@@ -126,7 +126,7 @@ const swapNote = (state: State): State => {
           state => {
             const noteId = findDescendant(state, head(parentOf(cursor)), '=note')!
             return getThoughtById(state, thoughtId)
-              ? moveThoughtByRank(state, {
+              ? moveThought(state, {
                   oldPath: cursor,
                   newPath: appendToPath(parentOf(cursor), noteId, thoughtId),
                   newRank: 0,
