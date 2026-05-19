@@ -7,7 +7,7 @@ import { page } from '../setup'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
-const thoughtCount = 50
+const thoughtCount = 30
 
 /** Counts the number of rendered nodes. */
 const countNodes = () =>
@@ -52,7 +52,10 @@ const clickRenderedThought = async (value: string): Promise<void> => {
 
 describe('virtualizaton', () => {
   it('virtualize thoughts that are not in the viewport', async () => {
-    const text = Array.from({ length: thoughtCount }, (_, i) => `- a${i + 1}`).join('\n')
+    const text = Array.from({ length: thoughtCount }, (_, i) => {
+      const value = i === 0 ? 'a1' : `a${i + 1} virtualization filler text`
+      return `- ${value}`
+    }).join('\n')
 
     // TODO: Why doesn't setViewport work?
     // Possibly need to pass to browserless?

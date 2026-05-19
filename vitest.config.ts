@@ -27,6 +27,9 @@ export default defineConfig({
           exclude: ['node_modules/**'],
           environment: './src/e2e/puppeteer-environment.ts',
           setupFiles: ['./src/e2e/puppeteer/setup.ts'],
+          // Browserless runs all Puppeteer files in one Chrome service. Unbounded file parallelism overloads
+          // touch/focus handling and OPFS cleanup, so keep bounded parallelism instead of serializing the suite.
+          maxWorkers: process.env.CI ? 2 : undefined,
         },
         plugins: [
           Terminal({
