@@ -46,7 +46,7 @@
     "lint:tsc": "tsc",
     "lint": "FORCE_COLOR=1 npm-run-all --serial \"lint:*\"",
     "postinstall": "yarn build:packages && git config core.hooksPath .hooks && yarn build:styles",
-    "servebuild": "npx serve -s build -l 3000",
+    "servebuild": "vite preview --host 0.0.0.0 --port 3000",
     "start": "vite --host --port 3000",
     "test:ios": "wdio run src/e2e/iOS/config/wdio.browserstack.conf.ts",
     "test:ios:local": "wdio run src/e2e/iOS/config/wdio.local.conf.ts",

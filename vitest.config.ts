@@ -27,8 +27,6 @@ export default defineConfig({
           exclude: ['node_modules/**'],
           environment: './src/e2e/puppeteer-environment.ts',
           setupFiles: ['./src/e2e/puppeteer/setup.ts'],
-          // Browserless runs many full app sessions through one Chrome service. Serializing e2e files avoids CI-only focus/editable timeouts under TreeCRDT persistence load.
-          fileParallelism: false,
         },
         plugins: [
           Terminal({
