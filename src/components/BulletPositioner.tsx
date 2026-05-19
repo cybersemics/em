@@ -287,7 +287,7 @@ const BulletPositioner = forwardRef<SVGSVGElement, PropsWithChildren<BulletPosit
 
     // offset margin with padding by equal amounts proportional to the font size to extend the click area
     const extendClickWidth = fontSize * 1.2
-    const extendClickHeight = fontSize / 3
+    const extendClickHeight = fontSize / 3 + 1
     const lineHeight = fontSize * 1.25
 
     const width = getBulletWidth(fontSize) + (!isInContextView && isTableCol1 ? fontSize / 4 : 0)
@@ -329,7 +329,7 @@ const BulletPositioner = forwardRef<SVGSVGElement, PropsWithChildren<BulletPosit
           left: -extendClickWidth + marginLeft,
           paddingTop: extendClickHeight,
           paddingLeft: extendClickWidth,
-          paddingBottom: extendClickHeight + 2,
+          paddingBottom: extendClickHeight,
           width,
           /* Ensuring the cursor overlay will always show behind the original bullet component.
           We want to avoid a situation where the active thought can’t be dragged and dropped */
