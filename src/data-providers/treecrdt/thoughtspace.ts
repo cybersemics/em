@@ -4,7 +4,16 @@ import type Lexeme from '../../@types/Lexeme'
 import type Thought from '../../@types/Thought'
 import type ThoughtId from '../../@types/ThoughtId'
 import type Timestamp from '../../@types/Timestamp'
-import { ABSOLUTE_TOKEN, EM_TOKEN, GLOBAL_ROOT_TOKEN, HOME_TOKEN, ROOT_PARENT_ID } from '../../constants'
+import {
+  ABSOLUTE_TOKEN,
+  EM_TOKEN,
+  GLOBAL_ROOT_TOKEN,
+  HOME_TOKEN,
+  ROOT_PARENT_ID,
+  SETTINGS_TOKEN,
+  SETTINGS_VALUE,
+} from '../../constants'
+import hashThought from '../../util/hashThought'
 import type { DataProvider } from '../DataProvider'
 import {
   deleteAllLexemes,
@@ -41,6 +50,11 @@ export function decodeThoughtPayload(bytes: Uint8Array): ThoughtPayload {
 }
 
 let replicaId: Uint8Array | null = null
+let initialized = false
+let initReadyResolve: (() => void) | null = null
+let initReady = new Promise<void>(resolve => {
+  initReadyResolve = resolve
+})
 // Unit tests still exercise em's DataProvider contract without loading wa-sqlite/OPFS assets.
 // Keep this in-memory path test-only; browser/runtime coverage uses the real TreeCRDT client.
 let testThoughtIndex: Index<Thought> = {}
@@ -48,6 +62,30 @@ let testLexemeIndex: Index<Lexeme> = {}
 
 /** Checks if the current runtime is Vitest. */
 const isTestMode = (): boolean => import.meta.env.MODE === 'test'
+
+/** Resets the provider readiness barrier used by writes that race startup. */
+const resetInitReady = (): void => {
+  initialized = false
+  initReady = new Promise<void>(resolve => {
+    initReadyResolve = resolve
+  })
+}
+
+/** Marks provider init complete so queued writes can safely use the TreeCRDT client. */
+const resolveInitReady = (): void => {
+  initialized = true
+  initReadyResolve?.()
+  initReadyResolve = null
+}
+
+/** Waits for `init` to finish before writes touch the TreeCRDT client. */
+const waitForInitReady = async (): Promise<Uint8Array> => {
+  if (!initialized) {
+    await initReady
+  }
+  if (!replicaId) throw new Error('TreeCRDT DataProvider: init not called')
+  return replicaId
+}
 
 /** Ensures the fixed root thoughts exist in the test provider. */
 const ensureTestRootThoughts = (): void => {
@@ -64,6 +102,34 @@ const ensureTestRootThoughts = (): void => {
       childrenMap: {},
     }
   }
+
+  testThoughtIndex[EM_TOKEN] = {
+    ...testThoughtIndex[EM_TOKEN],
+    childrenMap: {
+      ...testThoughtIndex[EM_TOKEN].childrenMap,
+      [SETTINGS_TOKEN]: SETTINGS_TOKEN,
+    },
+  }
+
+  if (!testThoughtIndex[SETTINGS_TOKEN]) {
+    testThoughtIndex[SETTINGS_TOKEN] = {
+      id: SETTINGS_TOKEN,
+      value: SETTINGS_VALUE,
+      rank: 0,
+      created: 0 as Timestamp,
+      lastUpdated: 0 as Timestamp,
+      updatedBy: '',
+      parentId: EM_TOKEN,
+      childrenMap: {},
+    }
+  }
+
+  testLexemeIndex[hashThought(SETTINGS_VALUE)] = {
+    contexts: [SETTINGS_TOKEN],
+    created: 0 as Timestamp,
+    lastUpdated: 0 as Timestamp,
+    updatedBy: '',
+  }
 }
 
 /** Resets the in-memory TreeCRDT provider used by unit tests. */
@@ -72,6 +138,7 @@ export const resetTestThoughtspace = (): void => {
   testThoughtIndex = {}
   testLexemeIndex = {}
   replicaId = null
+  resetInitReady()
 }
 
 /** Session replica identity (passed to `init`); minted ops use this for correct CRDT attribution. */
@@ -188,12 +255,9 @@ const updateThoughts = async ({
   schemaVersion: number
   movePlacements?: Index<ThoughtId | null>
 }): Promise<readonly Operation[]> => {
-  if (!replicaId) {
-    if (isTestMode()) return []
-    throw new Error('TreeCRDT DataProvider: init not called')
-  }
-
   if (isTestMode()) {
+    if (!replicaId) return []
+
     for (const [id, lexeme] of Object.entries(lexemeIndexUpdates)) {
       if (lexeme === null) {
         delete testLexemeIndex[id]
@@ -213,8 +277,8 @@ const updateThoughts = async ({
     return []
   }
 
+  const activeReplicaId = await waitForInitReady()
   const client = getTreecrdtClient()
-  const activeReplicaId = replicaId
   const ops: Operation[] = []
 
   for (const [id, lexeme] of Object.entries(lexemeIndexUpdates)) {
@@ -330,6 +394,7 @@ const clear = async (): Promise<void> => {
 
   await dropTreecrdt()
   replicaId = null
+  resetInitReady()
 }
 
 /** Loads a lexeme by hash key from database. */
@@ -374,15 +439,17 @@ export const init = async (replicaIdArg: Uint8Array): Promise<void> => {
   replicaId = replicaIdArg
   if (isTestMode()) {
     ensureTestRootThoughts()
+    resolveInitReady()
     return
   }
 
   const client = getTreecrdtClient()
   await ensureLexemesSchema(client)
   // Ensure root has payload so getThoughtById can use the generic path
-  await client.local.payload(replicaIdArg, GLOBAL_ROOT_TOKEN, ROOT_PAYLOAD)
+  await client.local.payload(replicaIdArg, GLOBAL_ROOT_TOKEN, ROOT_PAYLOAD, createTreecrdtLocalWriteOptions())
   for (const id of [HOME_TOKEN, EM_TOKEN, ABSOLUTE_TOKEN]) {
     if (!(await client.tree.exists(id))) {
+      const now = Date.now()
       await client.local.insert(
         replicaId,
         GLOBAL_ROOT_TOKEN,
@@ -390,13 +457,63 @@ export const init = async (replicaIdArg: Uint8Array): Promise<void> => {
         { type: 'last' },
         encodeThoughtPayload({
           value: id,
-          created: Date.now(),
-          lastUpdated: Date.now(),
+          created: now,
+          lastUpdated: now,
           updatedBy: '',
         }),
+        createTreecrdtLocalWriteOptions(),
       )
     }
   }
+
+  let settingsId: ThoughtId | null = null
+  for (const childId of await client.tree.children(EM_TOKEN)) {
+    const payloadBytes = await client.tree.getPayload(childId)
+    if (!payloadBytes) continue
+    const payload = decodeThoughtPayload(payloadBytes)
+    if (payload.value === SETTINGS_VALUE) {
+      settingsId = childId as ThoughtId
+      break
+    }
+  }
+
+  if (
+    !settingsId &&
+    (await client.tree.exists(SETTINGS_TOKEN)) &&
+    (await client.tree.parent(SETTINGS_TOKEN)) === EM_TOKEN
+  ) {
+    settingsId = SETTINGS_TOKEN
+  }
+
+  if (!settingsId) {
+    const now = Date.now()
+    await client.local.insert(
+      replicaId,
+      EM_TOKEN,
+      SETTINGS_TOKEN,
+      { type: 'last' },
+      encodeThoughtPayload({
+        value: SETTINGS_VALUE,
+        created: now,
+        lastUpdated: now,
+        updatedBy: '',
+      }),
+      createTreecrdtLocalWriteOptions(),
+    )
+    settingsId = SETTINGS_TOKEN
+  }
+
+  if (settingsId) {
+    const now = Date.now()
+    await upsertLexeme(client, hashThought(SETTINGS_VALUE), {
+      contexts: [settingsId],
+      created: now as Timestamp,
+      lastUpdated: now as Timestamp,
+      updatedBy: '',
+    })
+  }
+
+  resolveInitReady()
 }
 
 /** TreeCRDT data provider for thoughtspace. */
