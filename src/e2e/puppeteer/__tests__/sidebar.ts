@@ -14,10 +14,11 @@ expect.extend({
 
 vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
 
+/** Reveal controls that are hidden by distraction-free typing. */
+const revealHud = () => page.mouse.move(1, 1)
+
 /** Open sidebar and wait for it to slide all the way open. */
 const openSidebar = async () => {
-  // Typing hides the HUD in distraction-free mode. Moving the pointer reveals the menu before opening the sidebar.
-  await page.mouse.move(1, 1)
   await click('[aria-label=menu]')
   // Wait for aria-hidden="false" and the first link to be on-screen (rect.left >= 0), since the outer sidebar is always mounted and doesn’t reflect the drawer’s slide-in animation.
   await page.waitForFunction(() => {
@@ -55,6 +56,8 @@ describe('sidebar', () => {
     await press('Enter')
     await keyboard.type('a')
 
+    // Typing hides the hamburger menu in distraction-free mode. Moving the pointer reveals it before opening the sidebar.
+    await revealHud()
     await openSidebar()
     await click('[data-testid=sidebar-recentlyEdited]')
 
