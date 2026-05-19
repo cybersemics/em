@@ -3,22 +3,16 @@ import configureSnapshots from '../configureSnapshots'
 import click from '../helpers/click'
 import hideVisibility from '../helpers/hideVisibility'
 import keyboard from '../helpers/keyboard'
+import openSidebar from '../helpers/openSidebar'
 import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import setTheme from '../helpers/setTheme'
-import { page } from '../setup'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
 })
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
-
-/** Open sidebar and wait for it to slide all the way open. */
-const openSidebar = async () => {
-  await click('[aria-label=menu]')
-  await page.locator('[data-testid="sidebar"]').wait()
-}
 
 /** Screenshot without the toolbar. */
 const screenshotWithoutToolbarIcons = async () => {
