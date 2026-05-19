@@ -1,11 +1,12 @@
 import { describe } from 'vitest'
-import sleep from '../../../util/sleep'
-import clickThought from '../helpers/clickThought'
 import paste from '../helpers/paste'
-import press from '../helpers/press'
+import waitForBrowserSettled from '../helpers/waitForBrowserSettled'
+import waitForEditable from '../helpers/waitForEditable'
 import { page } from '../setup'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
+
+const thoughtCount = 50
 
 /** Counts the number of rendered nodes. */
 const countNodes = () =>
@@ -13,59 +14,30 @@ const countNodes = () =>
     return document.querySelectorAll('[aria-label="tree-node"]').length
   })
 
-describe('virtualizaton', { retry: 3 }, () => {
+/** Waits until the rendered node count proves that some offscreen thoughts are virtualized. */
+const waitForVirtualizedNodes = () =>
+  page.waitForFunction(
+    thoughtCount => {
+      const count = document.querySelectorAll('[aria-label="tree-node"]').length
+      return count > 0 && count < thoughtCount
+    },
+    {
+      timeout: 6000,
+    },
+    thoughtCount,
+  )
+
+/** Clicks a rendered thought without waiting for persistence work that cannot affect virtualization. */
+const clickRenderedThought = async (value: string): Promise<void> => {
+  const editableNode = await waitForEditable(value)
+  // @ts-expect-error - https://github.com/puppeteer/puppeteer/issues/8852
+  await editableNode.asElement()?.click()
+  await waitForBrowserSettled()
+}
+
+describe('virtualizaton', () => {
   it('virtualize thoughts that are not in the viewport', async () => {
-    const text = `
-- a1
-- a2
-- a3
-- a4
-- a5
-- a6
-- a7
-- a8
-- a9
-- a10
-- a11
-- a12
-- a13
-- a14
-- a15
-- a16
-- a17
-- a18
-- a19
-- a20
-- a21
-- a22
-- a23
-- a24
-- a25
-- a26
-- a27
-- a28
-- a29
-- a30
-- a31
-- a32
-- a33
-- a34
-- a35
-- a36
-- a37
-- a38
-- a39
-- a40
-- a41
-- a42
-- a43
-- a44
-- a45
-- a46
-- a47
-- a48
-- a49
-- a50`
+    const text = Array.from({ length: thoughtCount }, (_, i) => `- a${i + 1}`).join('\n')
 
     // TODO: Why doesn't setViewport work?
     // Possibly need to pass to browserless?
@@ -77,29 +49,24 @@ describe('virtualizaton', { retry: 3 }, () => {
     // })
 
     await paste(text)
-    await clickThought('a1')
+    await clickRenderedThought('a1')
 
     // 1. Thoughts below the bottom of the screen should be virtualizated when the cursor is null.
-    await press('Escape')
-
-    // TODO: Identify and wait for specific condition instead of fixed time.
-    // Fails intermittently up to at least 100ms.
-    await sleep(200)
+    await page.keyboard.press('Escape')
+    await waitForBrowserSettled()
+    await waitForVirtualizedNodes()
 
     const numNodesBefore = await countNodes()
     expect(numNodesBefore).toBeGreaterThan(0)
-    expect(numNodesBefore).toBeLessThan(50)
+    expect(numNodesBefore).toBeLessThan(thoughtCount)
 
     // 2. Thoughts below the bottom of the screen should be virtualized when the cursor is on a root thought.
-    await clickThought('a1')
-
-    // TODO: Identify and wait for specific condition instead of fixed time.
-    // Fails intermittently up to at least 100ms.
-    await sleep(200)
+    await clickRenderedThought('a1')
+    await waitForVirtualizedNodes()
 
     const numNodesAfter = await countNodes()
     expect(numNodesAfter).toBeGreaterThan(0)
-    expect(numNodesAfter).toBeLessThan(50)
+    expect(numNodesAfter).toBeLessThan(thoughtCount)
 
     // NOT IMPLEMENTED
 
