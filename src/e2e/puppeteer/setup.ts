@@ -1,6 +1,7 @@
 /* eslint-disable import/prefer-default-export */
 import chalk from 'chalk'
 import { Browser, BrowserContext, ConsoleMessage, Device, Page } from 'puppeteer'
+import type { WindowEm } from '../../initialize'
 import waitForAppReady from './helpers/waitForAppReady'
 
 // eslint-disable-next-line @typescript-eslint/no-namespace, @typescript-eslint/prefer-namespace-keyword
@@ -90,6 +91,16 @@ const setup = async ({
 
     // wait for welcome modal to disappear
     await page.waitForFunction(() => !document.getElementById('skip-tutorial'))
+
+    // The skip action clears storage, closes the modal, and rerenders the empty thoughtspace.
+    // Wait until the first real e2e key command can be handled by the app shell.
+    await page.waitForSelector('#content')
+    await page.waitForSelector('[aria-label=menu]')
+    await page.waitForFunction(() => !document.querySelector('[aria-label=modal]'))
+    await page.waitForFunction(() => document.querySelector('[aria-label=empty-thoughtspace], [data-editable]'))
+    await page.evaluate(async () => {
+      await (window.em as Partial<WindowEm> | undefined)?.testHelpers?.waitForTreecrdtIdle?.()
+    })
   }
 }
 

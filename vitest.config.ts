@@ -23,6 +23,9 @@ export default defineConfig({
         test: {
           name: 'puppeteer-e2e',
           globals: true,
+          // Browserless runs all e2e pages in one Chrome service. The app startup/persistence path is heavy
+          // enough that parallel app sessions can starve user-input waits and produce false negatives.
+          fileParallelism: false,
           include: ['src/e2e/puppeteer/__tests__/*.ts'],
           exclude: ['node_modules/**'],
           environment: './src/e2e/puppeteer-environment.ts',
