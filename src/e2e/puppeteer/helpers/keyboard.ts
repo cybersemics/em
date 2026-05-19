@@ -2,6 +2,9 @@ import type { WindowEm } from '../../../initialize'
 import { page } from '../setup'
 import waitForEmIdle from './waitForEmIdle'
 
+// Match waitForEditable's default: parallel Puppeteer runs can make browser round trips exceed 1s.
+const editableReadyTimeout = 6000
+
 /** Ensures typed text goes to the current thought when mobile gesture commands leave focus on body. */
 const focusEditingElementIfNeeded = async (): Promise<void> => {
   const editingSelector = '[data-editing=true] [data-editable], [data-editable][data-editing=true]'
@@ -18,7 +21,7 @@ const focusEditingElementIfNeeded = async (): Promise<void> => {
         document.querySelector(selector)
       )
     },
-    { timeout: 1000 },
+    { timeout: editableReadyTimeout },
     editingSelector,
   )
 

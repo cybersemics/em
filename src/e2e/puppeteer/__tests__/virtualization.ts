@@ -1,5 +1,6 @@
 import { describe } from 'vitest'
-import paste from '../helpers/paste'
+import { HOME_TOKEN } from '../../../constants'
+import type { WindowEm } from '../../../initialize'
 import waitForBrowserSettled from '../helpers/waitForBrowserSettled'
 import waitForEditable from '../helpers/waitForEditable'
 import { page } from '../setup'
@@ -13,6 +14,20 @@ const countNodes = () =>
   page.evaluate(async () => {
     return document.querySelectorAll('[aria-label="tree-node"]').length
   })
+
+/** Imports directly into Redux and waits for render; persistence can finish in teardown. */
+const importThoughtsForRender = async (text: string): Promise<void> => {
+  await page.evaluate(
+    (homeToken, text) => {
+      const testHelpers = (window.em as WindowEm).testHelpers
+      testHelpers.importToContext([homeToken], text)
+    },
+    HOME_TOKEN,
+    text,
+  )
+  await waitForEditable('a1')
+  await waitForBrowserSettled()
+}
 
 /** Waits until the rendered node count proves that some offscreen thoughts are virtualized. */
 const waitForVirtualizedNodes = () =>
@@ -48,7 +63,7 @@ describe('virtualizaton', () => {
     //   height: 600,
     // })
 
-    await paste(text)
+    await importThoughtsForRender(text)
     await clickRenderedThought('a1')
 
     // 1. Thoughts below the bottom of the screen should be virtualizated when the cursor is null.
