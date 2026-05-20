@@ -16,7 +16,7 @@ import {
   upsertLexeme,
 } from './lexemes'
 import { decodeThoughtPayload, encodeThoughtPayload } from './payload'
-import { SYSTEM_ROOT_THOUGHT_IDS } from './systemThoughts'
+import { SYSTEM_ROOT_THOUGHT_IDS } from './systemThoughtIds'
 import { dropTreecrdt, getTreecrdtClient } from './treecrdt'
 import { createTreecrdtLocalWriteOptions } from './writeBarrier'
 

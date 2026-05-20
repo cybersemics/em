@@ -7,8 +7,8 @@ import hashThought from '../../util/hashThought'
 
 export const SYSTEM_ROOT_THOUGHT_IDS = [HOME_TOKEN, EM_TOKEN, ABSOLUTE_TOKEN] as const
 
-/** Creates the fixed system thought graph used by TreeCRDT test storage. */
-export const createSystemThoughtIndexes = (
+/** Creates em-style test indexes for the in-memory unit-test provider. Runtime storage is seeded via TreeCRDT ops. */
+export const createTestSystemThoughtIndexes = (
   created: Timestamp = 0 as Timestamp,
 ): {
   thoughtIndex: Index<Thought>
@@ -62,5 +62,5 @@ export const createSystemThoughtIndexes = (
 
 export default {
   SYSTEM_ROOT_THOUGHT_IDS,
-  createSystemThoughtIndexes,
+  createTestSystemThoughtIndexes,
 }

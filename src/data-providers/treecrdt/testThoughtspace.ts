@@ -4,7 +4,7 @@ import type Lexeme from '../../@types/Lexeme'
 import type Thought from '../../@types/Thought'
 import type ThoughtId from '../../@types/ThoughtId'
 import type { DataProvider } from '../DataProvider'
-import { createSystemThoughtIndexes } from './systemThoughts'
+import { createTestSystemThoughtIndexes } from './systemThoughtIds'
 
 let replicaId: Uint8Array | null = null
 let testThoughtIndex: Index<Thought> = {}
@@ -12,7 +12,7 @@ let testLexemeIndex: Index<Lexeme> = {}
 
 /** Seeds the in-memory test provider with TreeCRDT's fixed system thoughts. */
 const seedSystemThoughts = (): void => {
-  const seed = createSystemThoughtIndexes()
+  const seed = createTestSystemThoughtIndexes()
   testThoughtIndex = {
     ...seed.thoughtIndex,
     ...testThoughtIndex,
