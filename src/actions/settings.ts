@@ -1,11 +1,10 @@
 import _ from 'lodash'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
-import createThought from '../actions/createThought'
-import { EM_TOKEN, SETTINGS_TOKEN, SETTINGS_VALUE } from '../constants'
+import { EM_TOKEN, SETTINGS_VALUE } from '../constants'
 import findDescendant from '../selectors/findDescendant'
-import getPrevRank from '../selectors/getPrevRank'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
+import ensureSettingsThought from './ensureSettingsThought'
 import toggleAttribute from './toggleAttribute'
 
 /** Sets a setting thought. */
@@ -14,17 +13,7 @@ const settings = (state: State, { key, value }: { key: string; value: string }) 
   const exists = !!findDescendant(state, EM_TOKEN, emContext)
   if (exists) return state
 
-  // TreeCRDT seeds /EM/Settings with a fixed id. Reuse it when local settings are created before that child is loaded.
-  const stateWithSettings = findDescendant(state, EM_TOKEN, SETTINGS_VALUE)
-    ? state
-    : createThought(state, {
-        id: SETTINGS_TOKEN,
-        path: [EM_TOKEN],
-        value: SETTINGS_VALUE,
-        rank: getPrevRank(state, EM_TOKEN),
-      })
-
-  return toggleAttribute(stateWithSettings, { path: [EM_TOKEN], values: emContext })
+  return toggleAttribute(ensureSettingsThought(state), { path: [EM_TOKEN], values: emContext })
 }
 
 /** Action-creator for settings. */

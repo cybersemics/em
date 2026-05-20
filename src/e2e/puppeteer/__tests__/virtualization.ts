@@ -15,7 +15,7 @@ const countNodes = () =>
     return document.querySelectorAll('[aria-label="tree-node"]').length
   })
 
-/** Imports directly into Redux and waits for render; persistence can finish in teardown. */
+/** Imports directly into Redux because this test only asserts render virtualization, not paste/persistence behavior. */
 const importThoughtsForRender = async (text: string): Promise<void> => {
   await page.evaluate(
     (homeToken, text) => {

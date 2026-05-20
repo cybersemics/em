@@ -71,7 +71,7 @@ const initializeCursor = async () => {
   }
 }
 
-/** Initilaize local db and window events. */
+/** Initialize local db and window events. */
 const initializeInternal = async () => {
   initOfflineStatusStore(/* websocket */)
 

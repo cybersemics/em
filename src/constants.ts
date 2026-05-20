@@ -128,7 +128,7 @@ export const EM_TOKEN = '00000000000000000000000000000002' as ThoughtId
 
 export const ABSOLUTE_TOKEN = '00000000000000000000000000000003' as ThoughtId
 
-// Fixed /EM/Settings identity used by the TreeCRDT-backed thoughtspace.
+// Fixed /EM/Settings identity used by system thought bootstrap and the TreeCRDT-backed thoughtspace.
 export const SETTINGS_TOKEN = '00000000000000000000000000000004' as ThoughtId
 export const SETTINGS_VALUE = 'Settings'
 

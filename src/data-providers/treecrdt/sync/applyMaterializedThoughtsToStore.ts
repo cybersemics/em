@@ -1,12 +1,28 @@
 /* eslint-disable import/prefer-default-export -- bridge module */
 import type { MaterializationEvent } from '@treecrdt/interface/engine'
 import type Index from '../../../@types/IndexType'
+import type Lexeme from '../../../@types/Lexeme'
 import type Thought from '../../../@types/Thought'
 import { updateThoughtsActionCreator } from '../../../actions/updateThoughts'
 import store from '../../../stores/app'
 import thoughtspaceDb from '../thoughtspace'
 import { waitForTreecrdtWriteBarrier } from '../writeBarrier'
 import { refreshThoughtsFromMaterializationChanges } from './materializationThoughtUpdates'
+
+/** Persists lexemes that em derives locally from materialized TreeCRDT thoughts. */
+const persistDerivedLexemeUpdates = async (
+  lexemeIndexUpdates: Index<Lexeme | null>,
+  schemaVersion: number,
+): Promise<void> => {
+  if (Object.keys(lexemeIndexUpdates).length === 0) return
+
+  await thoughtspaceDb.updateThoughts({
+    thoughtIndexUpdates: {},
+    lexemeIndexUpdates,
+    lexemeIndexUpdatesOld: {},
+    schemaVersion,
+  })
+}
 
 /**
  * After remote TreeCRDT ops are materialized into SQLite, refresh Redux in one batch.
@@ -26,14 +42,7 @@ export async function applyMaterializedThoughtsToStore(event: MaterializationEve
     stateBefore,
   )
 
-  if (Object.keys(lexemeIndexUpdates).length > 0) {
-    await thoughtspaceDb.updateThoughts({
-      thoughtIndexUpdates: {},
-      lexemeIndexUpdates,
-      lexemeIndexUpdatesOld: {},
-      schemaVersion: stateBefore.schemaVersion,
-    })
-  }
+  await persistDerivedLexemeUpdates(lexemeIndexUpdates, stateBefore.schemaVersion)
 
   const thoughtIndexUpdates: Index<Thought | null> = {}
 

@@ -103,6 +103,7 @@ const treeParentId = (id: ThoughtId): ThoughtId => (id === ROOT_PARENT_ID ? GLOB
 /**
  * Derives TreeCRDT relative placement from em's numeric rank payload.
  * This is the compatibility bridge while the app still treats rank as canonical display order.
+ * TODO: Remove when create/import/newThought paths pass explicit placement and selectors read provider-backed order.
  */
 const getRankPlacement = async (
   parentId: ThoughtId,
@@ -283,7 +284,7 @@ const getLexemesByIds = async (keys: string[]): Promise<(Lexeme | undefined)[]> 
   return getLexemesByIdsSql(client, keys)
 }
 
-/** Replaces all stored lexemes with the given index (tests / provider hook). */
+/** Replaces all stored lexemes. Required by DataProvider conformance tests. */
 const updateLexemeIndex = async (lexemeIndex: Index<Lexeme>): Promise<void> => {
   const client = getTreecrdtClient()
   await deleteAllLexemes(client)

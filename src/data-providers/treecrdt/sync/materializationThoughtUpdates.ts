@@ -173,6 +173,7 @@ export async function refreshThoughtsFromMaterializationChanges(
 
   // Current em selectors still sort by numeric rank. For remote/order-only TreeCRDT changes, derive a local rank
   // projection from the authoritative TreeCRDT child order without exposing TreeCRDT's internal order keys.
+  // TODO: Remove when read-side selectors consume provider-backed sibling order instead of rank projection.
   for (const parentId of orderParents) {
     await addTreeOrderRankProjection(thoughtIndexUpdates, db, parentId)
   }
