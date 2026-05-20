@@ -19,6 +19,26 @@ const read = (): CapturedLog[] => {
   }
 }
 
+/**
+ * Atomically reads and clears the buffer for `key`. Runs IN THE REMOTE BROWSER:
+ * drainConsoleProxy ships this via browser.execute, which serializes the function
+ * source and drops all closure scope, so it must reference only its `key` param and
+ * browser globals (no module-scope helpers, no STORAGE_KEY capture). Single source of
+ * truth for the drain wire format.
+ */
+const drainBuffer = (key: string): CapturedLog[] => {
+  try {
+    const logs = JSON.parse(sessionStorage.getItem(key) ?? '[]') as CapturedLog[]
+    sessionStorage.setItem(key, '[]')
+    return logs
+  } catch {
+    return []
+  }
+}
+
+/** Readiness probe for waitForConsoleProxy. Self-contained for the same browser.execute serialization reason as drainBuffer. The buffer key exists iff installConsoleProxy has run. */
+const isProxyInstalled = (key: string): boolean => sessionStorage.getItem(key) !== null
+
 let installed = false
 
 /**
@@ -59,15 +79,7 @@ const installConsoleProxy = (): void => {
 /** Atomically reads and clears the console-proxy buffer in the remote browser. Returns [] when capture is not enabled or nothing has been captured. */
 export const drainConsoleProxy = async (): Promise<CapturedLog[]> => {
   if (!process.env.VITE_BROWSER_CONSOLE_CAPTURE) return []
-  return browser.execute((key: string) => {
-    try {
-      const logs = JSON.parse(sessionStorage.getItem(key) ?? '[]') as CapturedLog[]
-      sessionStorage.setItem(key, '[]')
-      return logs
-    } catch {
-      return []
-    }
-  }, STORAGE_KEY)
+  return browser.execute(drainBuffer, STORAGE_KEY)
 }
 
 /**
@@ -77,13 +89,10 @@ export const drainConsoleProxy = async (): Promise<CapturedLog[]> => {
  */
 export const waitForConsoleProxy = async (timeout = 30000): Promise<void> => {
   if (!process.env.VITE_BROWSER_CONSOLE_CAPTURE) return
-  await browser.waitUntil(
-    async () => browser.execute((key: string) => sessionStorage.getItem(key) !== null, STORAGE_KEY),
-    {
-      timeout,
-      timeoutMsg: `Console proxy did not install within ${timeout}ms — VITE_BROWSER_CONSOLE_CAPTURE is set on the WDIO process but the served bundle was likely built without it. Rebuild with \`VITE_BROWSER_CONSOLE_CAPTURE=1 yarn build\` and re-serve.`,
-    },
-  )
+  await browser.waitUntil(async () => browser.execute(isProxyInstalled, STORAGE_KEY), {
+    timeout,
+    timeoutMsg: `Console proxy did not install within ${timeout}ms — VITE_BROWSER_CONSOLE_CAPTURE is set on the WDIO process but the served bundle was likely built without it. Rebuild with \`VITE_BROWSER_CONSOLE_CAPTURE=1 yarn build\` and re-serve.`,
+  })
 }
 
 export default installConsoleProxy
