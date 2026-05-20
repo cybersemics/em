@@ -106,6 +106,7 @@ const setup = async ({
 
 beforeEach(setup, 60000)
 
+// TreeCRDT teardown can drain OPFS writes from import-heavy tests before dropping storage.
 afterEach(async () => {
   if (page) {
     await page
@@ -127,4 +128,4 @@ afterEach(async () => {
       // Ignore errors when closing the context.
     })
   }
-})
+}, 60000)
