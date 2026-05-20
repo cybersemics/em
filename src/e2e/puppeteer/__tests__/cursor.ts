@@ -169,6 +169,10 @@ it('move cursor from formatted thought to first unformatted thought in descendin
   expect(downThoughtValue).toBe('pear')
 
   await press('ArrowUp')
+
+  // Before doing consecutive arrow up presses, wait until the cursor is on the apple thought then proceed with the arrow up press once again. The reason for doing is cursorUp and cursorDown are throttled to run once per animation frame, so repeated keypresses within the same frame might be ignored especially when running in CI.
+  await waitUntil(() => document.querySelector('[data-editing=true] [data-editable]')?.innerHTML === '<b>apple</b>')
+
   await press('ArrowUp')
 
   // Wait for cursor to move to 'fruits'

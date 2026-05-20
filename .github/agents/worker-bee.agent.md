@@ -9,18 +9,34 @@ You will autonomously manage lifecycle of code changes: create a new branch, com
 
 ## Methodology
 
-- Always begin by creating a new branch for the work. If a previous agent working on the same task already created a branch and a PR, use that one.
+The first three steps below are sequential and must be performed **in order**, before any other action. Do not skip ahead, do not interleave them with other work.
+
+1. **Read the issue first.** Check whether you have been given an issue. Read the entire issue body — including comments — before doing anything else. At this point you must not yet investigate code, hypothesize causes, create a branch, or edit any file.
+
+2. **Apply the issue-repro gate.** If the issue body (or any comment on it) contains a "Steps to Reproduce" section — or close variants such as "Step to Reproduce" or "How to reproduce" — you MUST execute the `issue-repro` skill end-to-end through its Reproduce stage **before any other work on this issue**.
+   - Until you have successfully reproduced the failure described in the issue, you MUST NOT: read source code to form hypotheses, speculate about the cause, edit any file, or open a PR. Investigation of the cause begins inside the skill's "Fix the Issue" step, **not before**.
+   - Merely reading the skill file is **not** sufficient — you must actually execute its steps. The point of this gate is to confirm the bug exists and observe its real failure mode before you go looking for it in the code and potentially draw incorrect conclusions.
+
+3. **Confirm the gate explicitly.** Before continuing past step 3, output exactly one of the following two lines, verbatim, on its own line:
+   - `issue-repro: not applicable — the issue has no Steps to Reproduce.`
+   - `issue-repro: applicable — executing .github/skills/issue-repro/SKILL.md before any investigation.`
+
+Once the gate is satisfied (or determined not to apply), continue with the lifecycle below:
+
+- Begin by creating a new branch for the work. If a previous agent working on the same task already created a branch and a PR, use that one.
 - When opening a PR, include the bare issue number at the top of the description (e.g. "#1234").
 - Make all commits in this branch. Push after each meaningful change. Never commit directly to main or protected branches.
 - After completing the initial implementation, open a draft pull request with a clear, descriptive title and summary to merge your feature branch into `main`.
-- Use the `list_workflow_runs` tool to monitor CI status. Wait for all runs to complete before proceeding.
-- If any CI checks fail, investigate the cause:
-  - For unit test failures, review logs, identify the failing test, and fix the underlying code or test as appropriate. Never modify a unit test unless you are certain the failure is due to a bad test.
-  - For lint or formatting errors, apply the required fixes and recommit.
-  - For snapshot test failures, only use the `puppeteer-update-snapshots` skill if the UI change was intentional, matches the user’s request or if you otherwise deem it to be necessary. NEVER use this skill to mask legitimate failures. ALWAYS explain to the user why you felt you needed to update snapshots.
-  - Assume there are no flaky tests. If a test fails, it is your responsibility to fix it until it passes consistently.
-- If the user explicitly asks for a failing test (e.g., for regression), follow their instructions. You must still wait for CI to complete and verify that the only failures are the expected ones from the intentinally failing test. NEVER skip the CI verification loop.
+- Use the `ci_monitor` skill to monitor CI status. Wait for all runs to complete before proceeding.
+- If any CI checks fail, use the `test-diagnosis` skill to review logs, identify the failing test, and fix the underlying code or test as appropriate.
+- If the user explicitly asks you to implement a failing test (e.g., for regression), follow their instructions. You must still use the `ci_monitor` skill to wait for CI to complete and verify that the only failures are the expected ones from the intentinally failing test. NEVER skip the CI verification loop.
 - After each fix, push to the branch and repeat the CI monitoring process until all checks pass.
+
+## Accessing documentation
+
+- The docs/ folder in the repository's root contains comprehensive documentation on the codebase.
+- Once the issue-repro gate is satisfied and you begin investigating the cause, you should `grep` through all of these files at once (`docs/**/*.md`) to query the documentation for relevant information that might assist you during your work.
+- You should continue to query the documentation periodically, especially if you encounter something you don't understand or need more context on.
 
 ## Best practices
 

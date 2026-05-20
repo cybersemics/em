@@ -368,8 +368,9 @@ jobs:
             echo "This means the tests are genuinely covering new behavior."
           else
             echo ""
-            echo "❌ TDD concern: changed tests PASS on the base branch."
-            echo "This may indicate the tests do not cover new functionality introduced by this PR."
+            echo "❌ TDD flagged: changed tests PASS on the base branch."
+            echo "New tests that accompany bug fixes are expected to FAIL on the base branch and PASS on the PR, demonstrating that the issue has been fixed. Please review your tests and make sure they fail on the base branch."
+            echo "If you are extending the test coverage over previously working behavior, add the 'skip-tdd' or 'skip-tdd-unit' label to the PR to skip this workflow."
             exit 1
           fi
 
@@ -485,8 +486,9 @@ jobs:
             echo "This means the tests are genuinely covering new behavior."
           else
             echo ""
-            echo "❌ TDD concern: changed puppeteer tests PASS on the base branch."
-            echo "This may indicate the tests do not cover new functionality introduced by this PR."
+            echo "❌ TDD flagged: changed puppeteer tests PASS on the base branch."
+            echo "New tests that accompany bug fixes are expected to FAIL on the base branch and PASS on the PR, demonstrating that the issue has been fixed. Please review your tests and make sure they fail on the base branch."
+            echo "If you are extending the test coverage over previously working behavior, add the 'skip-tdd' or 'skip-tdd-unit' label to the PR to skip this workflow."
             exit 1
           fi
 
@@ -567,12 +569,12 @@ jobs:
           # A job result of "skipped" means no changed tests of that type
 
           if [ "$UNIT_RESULT" = "failure" ]; then
-            echo "❌ Unit tests passed on base branch — TDD concern"
+            echo "❌ Unit tests passed on base branch — TDD flagged"
             FAILED="true"
           fi
 
           if [ "$PUPPETEER_RESULT" = "failure" ]; then
-            echo "❌ Puppeteer tests passed on base branch — TDD concern"
+            echo "❌ Puppeteer tests passed on base branch — TDD flagged"
             FAILED="true"
           fi
 
