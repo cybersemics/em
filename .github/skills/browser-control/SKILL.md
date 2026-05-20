@@ -12,13 +12,13 @@ allowed-tools:
   - wdio
 ---
 
-The em app runs on the web, on Android (mobile Chrome), and on iOS Safari. The right way to drive a browser depends on which of those you are targeting:
+The em app runs on the web, on Android (mobile Chrome), and on iOS. This skill is the **entry point**: it takes the caller's target and brings up the right environment, delegating the platform specifics to a sub-skill so only the relevant detail loads.
 
-| Target             | MCP               | How Chrome / Safari is launched                     |
-| ------------------ | ----------------- | --------------------------------------------------- |
-| `web` (desktop)    | `chrome-devtools` | First MCP call launches headless Chrome under Xvfb. |
-| `android` (mobile) | `chrome-devtools` | Same Chrome instance, with mobile device emulation. |
-| `ios` (Safari)     | `wdio`            | `start_session` opens a remote iOS Safari session.  |
+| Target             | Handled by                         |
+| ------------------ | ---------------------------------- |
+| `web` (desktop)    | `browser-control-chrome` sub-skill |
+| `android` (mobile) | `browser-control-chrome` sub-skill |
+| `ios`              | the `Target = ios` section below   |
 
 Use this skill **before any browser interaction** (navigation, evaluate, click, swipe, etc.). Calling browser tools without first running through this skill leads to the wrong MCP being used, or the page being loaded under the wrong device profile and gestures not registering.
 
@@ -41,20 +41,9 @@ Once these stages complete, the caller can drive the browser. For touch gestures
 
 The runner's setup phase has already started Xvfb and the Vite dev server. Chrome is **not** pre-launched — it boots when the `chrome-devtools` MCP makes its first call. Do not start Chrome yourself; just call the MCP.
 
-### Target = `web`
+### Target = `web` or `android`
 
-No emulation. The first `chrome-devtools` call (e.g. `navigate`) launches Chrome with a desktop default viewport (1280×1024 from Xvfb). Skip directly to Step 2.
-
-### Target = `android`
-
-Apply mobile emulation **before any `navigate` call** — the MCP keeps a persistent Chrome, so the first navigation must happen under the mobile profile or the initial render is wrong.
-
-Call `chrome-devtools` `emulate` with a Pixel-class mobile profile:
-
-- `viewport`: `412x915x2.625,mobile,touch` — Pixel 7 dimensions in CSS px, DPR 2.625. The `mobile` flag triggers mobile media queries; `touch` delivers touch events instead of mouse events.
-- `userAgent`: a current mobile Chrome UA, e.g. `Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36`.
-
-If you have already navigated by mistake, re-apply emulation and re-navigate so the page loads cleanly under the mobile profile.
+Invoke the **`browser-control-chrome`** sub-skill — it owns Chrome bring-up, mobile emulation (android), and navigation. Hand it the target, wait for it to confirm the environment is up, then return to the caller.
 
 ### Target = `ios`
 
@@ -156,7 +145,7 @@ If neither responds, check `/tmp/dev-server.log` and report — do not start a s
 
 Note which scheme (HTTP vs HTTPS) responded. Then navigate using the MCP for your target:
 
-- `web` / `android`: `chrome-devtools` `navigate` to `http://localhost:3000` (or `https://` if that is what responded).
+- `web` / `android`: handled by the `browser-control-chrome` sub-skill (it navigates after bring-up).
 - `ios`: `wdio` `navigate` to `http://bs-local.com:3000?__ios_console_proxy`. The `bs-local.com:3000` host is BrowserStack Local's well-known hostname — the tunnel started by `browserstackLocal: true` routes it back to the runner's `localhost:3000`. The `?__ios_console_proxy` query param activates the in-app console proxy (`src/util/iOSConsoleProxy.ts`) so console output is captured into `window.__iOSConsoleProxy__`. To read captured logs at any point: `execute_script({ script: 'return JSON.stringify(window.__drainiOSConsoleLogs__?.() ?? null)' })` — atomically returns and clears the buffer. The `JSON.stringify(… ?? null)` wrap is mandatory on this stack — see the script-shape rule in the post-navigate section.
 
 If you encounter HTTPS self-signed certificate errors on Chrome, use the `thisisunsafe` bypass to proceed. On iOS Safari, accept the certificate via the wdio MCP's dialog handler if prompted.
@@ -239,5 +228,5 @@ After navigation, the environment is ready. Hand back to the calling skill.
 
 There is no required cleanup step. The Chrome instance and the wdio session both terminate with the agent session. If you need to start over with a clean profile mid-session:
 
-- `web` / `android`: `localStorage.clear(); location.reload();` in the page console is normally enough. Re-apply `emulate` if you reset the Chrome profile.
+- `web` / `android`: see the `browser-control-chrome` sub-skill.
 - `ios`: call `wdio` `close_session` and then re-run Step 2 for `ios`.
