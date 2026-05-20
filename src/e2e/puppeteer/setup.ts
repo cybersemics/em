@@ -12,6 +12,18 @@ declare module global {
 export let page: Page
 let context: BrowserContext
 let sessionCounter = 0
+let treecrdtStorage: 'memory' | 'opfs' = 'memory'
+
+/** Use persistent OPFS storage for tests that verify reload/materialization from storage. */
+export const usePersistentTreecrdtStorage = () => {
+  beforeAll(() => {
+    treecrdtStorage = 'opfs'
+  })
+
+  afterAll(() => {
+    treecrdtStorage = 'memory'
+  })
+}
 
 /** Opens em in a new incognito window in Puppeteer. */
 const setup = async ({
@@ -41,16 +53,20 @@ const setup = async ({
 
   const sessionId = `puppeteer-${Date.now()}-${sessionCounter++}-${Math.random().toString(36).slice(2)}`
 
-  await page.evaluateOnNewDocument(sessionId => {
-    if (!sessionStorage.getItem('__em_puppeteer_storage_initialized')) {
-      localStorage.clear()
-      sessionStorage.setItem('__em_puppeteer_storage_initialized', '1')
-    }
+  await page.evaluateOnNewDocument(
+    ({ sessionId, treecrdtStorage }) => {
+      if (!sessionStorage.getItem('__em_puppeteer_storage_initialized')) {
+        localStorage.clear()
+        sessionStorage.setItem('__em_puppeteer_storage_initialized', '1')
+      }
 
-    localStorage.setItem('tsid', sessionId)
-    localStorage.setItem('accessToken', sessionId)
-    localStorage.setItem('treecrdtRuntime', 'direct')
-  }, sessionId)
+      localStorage.setItem('tsid', sessionId)
+      localStorage.setItem('accessToken', sessionId)
+      localStorage.setItem('treecrdtRuntime', 'direct')
+      localStorage.setItem('treecrdtStorage', treecrdtStorage)
+    },
+    { sessionId, treecrdtStorage },
+  )
 
   page.on('dialog', async dialog => dialog.accept())
 

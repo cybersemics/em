@@ -6,11 +6,12 @@ import refresh from '../helpers/refresh'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
 import waitUntil from '../helpers/waitUntil'
-import { page } from '../setup'
+import { page, usePersistentTreecrdtStorage } from '../setup'
 
 const MOCK_REPLICATION_DELAY = 100
 
 vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
+usePersistentTreecrdtStorage()
 
 describe('scrollCursorIntoView', () => {
   it('should scroll cursor into view after page refresh with delayed replicateChildren', async () => {
