@@ -14,8 +14,6 @@ let context: BrowserContext
 let sessionCounter = 0
 let treecrdtStorage: 'memory' | 'opfs' = 'memory'
 
-type TreecrdtTeardownDurations = Partial<Record<'waitForTreecrdtIdle' | 'dropTreecrdt', number>>
-
 /** Use persistent OPFS storage for tests that verify reload/materialization from storage. */
 export const usePersistentTreecrdtStorage = () => {
   beforeAll(() => {
@@ -24,15 +22,6 @@ export const usePersistentTreecrdtStorage = () => {
 
   afterAll(() => {
     treecrdtStorage = 'memory'
-  })
-}
-
-/** Logs unusually slow TreeCRDT teardown steps so the timeout has observable evidence behind it. */
-const warnSlowTreecrdtTeardown = (durations: TreecrdtTeardownDurations): void => {
-  Object.entries(durations).forEach(([name, duration]) => {
-    if (duration > 1000) {
-      console.warn(`TreeCRDT Puppeteer teardown ${name} took ${Math.round(duration)}ms`)
-    }
   })
 }
 
@@ -138,21 +127,9 @@ afterEach(async () => {
   if (page) {
     await page
       .evaluate(async () => {
-        const durations: TreecrdtTeardownDurations = {}
-        /** Measures one optional teardown step. */
-        const time = async (name: keyof TreecrdtTeardownDurations, work?: () => Promise<unknown>) => {
-          if (!work) return
-          const started = performance.now()
-          await work()
-          durations[name] = performance.now() - started
-        }
-
-        const testHelpers = (window.em as Partial<WindowEm> | undefined)?.testHelpers
-        await time('waitForTreecrdtIdle', testHelpers?.waitForTreecrdtIdle)
-        await time('dropTreecrdt', testHelpers?.dropTreecrdt)
-        return durations
+        await (window.em as Partial<WindowEm> | undefined)?.testHelpers?.waitForTreecrdtIdle?.()
+        await (window.em as Partial<WindowEm> | undefined)?.testHelpers?.dropTreecrdt?.()
       })
-      .then(warnSlowTreecrdtTeardown)
       .catch(() => {
         // Ignore teardown errors when a failing test has already closed or navigated the page.
       })
