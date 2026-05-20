@@ -1,5 +1,5 @@
 import { clearActionCreator as clear } from '../actions/clear'
-import { resetTestThoughtspace } from '../data-providers/treecrdt/thoughtspace'
+import { resetTestThoughtspace } from '../data-providers/treecrdt/testThoughtspace'
 import store from '../stores/app'
 
 interface Params {

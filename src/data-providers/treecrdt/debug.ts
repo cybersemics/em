@@ -1,13 +1,9 @@
 import type { Operation } from '@treecrdt/interface'
 import type { TreecrdtSqlitePlacement } from '@treecrdt/interface/sqlite'
 import { GLOBAL_ROOT_TOKEN, ROOT_PARENT_ID } from '../../constants'
+import { type ThoughtPayload, decodeThoughtPayload, encodeThoughtPayload } from './payload'
 import { pushTreecrdtLocalOpsToRemote } from './sync'
-import {
-  type ThoughtPayload,
-  decodeThoughtPayload,
-  encodeThoughtPayload,
-  getThoughtspaceReplicaId,
-} from './thoughtspace'
+import { getThoughtspaceReplicaId } from './thoughtspace'
 import { getTreecrdtClient } from './treecrdt'
 
 type TreeDumpRow = { node: string; parent: string | null; tombstone: boolean }

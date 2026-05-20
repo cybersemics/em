@@ -1,4 +1,4 @@
-import { encodeThoughtPayload } from '../thoughtspace'
+import { encodeThoughtPayload } from '../payload'
 
 it('keeps em rank out of the serialized TreeCRDT thought payload', () => {
   const encoded = encodeThoughtPayload({
