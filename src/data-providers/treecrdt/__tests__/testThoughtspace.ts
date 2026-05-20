@@ -1,6 +1,6 @@
 import { EM_TOKEN, SETTINGS_TOKEN, SETTINGS_VALUE } from '../../../constants'
+import testThoughtspace, { init, resetTestThoughtspace } from '../../../test-helpers/treecrdt/testThoughtspace'
 import hashThought from '../../../util/hashThought'
-import testThoughtspace, { init, resetTestThoughtspace } from '../testThoughtspace'
 
 beforeEach(() => {
   resetTestThoughtspace()

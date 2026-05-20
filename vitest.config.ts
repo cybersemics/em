@@ -3,9 +3,7 @@ import type { Plugin } from 'vite'
 import Terminal from 'vite-plugin-terminal'
 import { defineConfig } from 'vitest/config'
 
-const testThoughtspacePath = fileURLToPath(
-  new URL('./src/data-providers/treecrdt/testThoughtspace.ts', import.meta.url),
-)
+const testThoughtspacePath = fileURLToPath(new URL('./src/test-helpers/treecrdt/testThoughtspace.ts', import.meta.url))
 
 /** Redirects unit tests to the in-memory provider without changing runtime or Puppeteer imports. */
 const treecrdtTestThoughtspacePlugin = (): Plugin => ({
