@@ -144,4 +144,4 @@ afterEach(async () => {
       // Ignore errors when closing the context.
     })
   }
-}, 60000)
+})
