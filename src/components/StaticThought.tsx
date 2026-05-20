@@ -189,6 +189,8 @@ const StaticThought = ({
         draggable={!!longPressProps && isSafari()}
         ref={isTouch ? dndRef(ref => dragSource(ref)) : undefined}
         style={{ minWidth: `${MIN_CONTENT_WIDTH_EM}em` }}
+        onTouchStart={() => console.info('StaticThought onTouchStart')}
+        onTouchEnd={() => console.info('StaticThought onTouchEnd')}
       >
         {homeContext ? (
           // left, top are eyeballed for different font sizes

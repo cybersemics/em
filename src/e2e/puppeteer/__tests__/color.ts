@@ -255,7 +255,7 @@ it('Clicking on a formatting tag does not close color dropdown', async () => {
   expect(textColorSwatch).toBeTruthy()
 })
 
-it('Set the background color of the note', async () => {
+it('Toggle the background color of the note', async () => {
   await paste(`
     - a
       - =note
@@ -266,10 +266,13 @@ it('Set the background color of the note', async () => {
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="background color swatches"] [aria-label="green"]')
 
-  const result = await getFirstNoteText()
-  expect(result).toBe('<font color="#000000" style="background-color: rgb(0, 214, 136);">Note</font>')
+  const intermediate = await getFirstNoteText()
+  expect(intermediate).toBe('<font color="#000000" style="background-color: rgb(0, 214, 136);">Note</font>')
 
   await click('[aria-label="background color swatches"] [aria-label="green"]')
+
+  const result = await getFirstNoteText()
+  expect(result).toBe('Note')
 })
 
 it('Toggling note background color on and off should remove formatting tag', async () => {
@@ -340,4 +343,46 @@ it('Can change the background color of a note to match its thought', async () =>
 
   const note = await getFirstNoteText()
   expect(note).toBe('<font color="#000000" style="background-color: rgb(255, 87, 61);">Note</font>')
+})
+
+it('Can change the color of a thought that already has the same color applied to part of its text', async () => {
+  await paste(`
+    - some <font color="#ff573d">formatted</font> text
+  `)
+
+  // change the color on the thought
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="text color swatches"] [aria-label="red"]')
+
+  const thought = await getEditingText()
+  expect(thought).toBe('<font color="#ff573d">some formatted text</font>')
+})
+
+it('Can change the background color of a thought that already has the same background color applied to part of its text', async () => {
+  await paste(`
+    - some <font color="#000000" style="background-color: rgb(255, 87, 61);">formatted</font> text
+  `)
+
+  // change the background color on the thought
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="background color swatches"] [aria-label="red"]')
+
+  const thought = await getEditingText()
+  expect(thought).toBe('<font color="#000000" style="background-color: rgb(255, 87, 61);">some formatted text</font>')
+})
+
+it('Can change the color of a note that already has the same color applied to part of its text', async () => {
+  await paste(`
+    - a
+      - =note      
+        - some formatted <font color="#ff573d">text</font>
+  `)
+
+  // change the color on the note
+  await clickFirstNote()
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="text color swatches"] [aria-label="red"]')
+
+  const note = await getFirstNoteText()
+  expect(note).toBe('<font color="#ff573d">some formatted text</font>')
 })

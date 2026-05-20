@@ -1,4 +1,4 @@
-import React, { FC, MutableRefObject, useCallback, useMemo, useRef, useState } from 'react'
+import React, { FC, MutableRefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { toolbarPointerEventsRecipe } from '../../styled-system/recipes'
@@ -14,7 +14,6 @@ import useDragAndDropToolbarButton from '../hooks/useDragAndDropToolbarButton'
 import useLongPress from '../hooks/useLongPress'
 import store from '../stores/app'
 import commandStateStore from '../stores/commandStateStore'
-import dndRef from '../util/dndRef'
 import getCursorSortDirection from '../util/getCursorSortDirection'
 import haptics from '../util/haptics'
 
@@ -54,6 +53,8 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
   /** Tracks if mousedown occurred on this button, independent of React's render cycle. This prevents a race condition where the React-prop isPressing (derived from the parent Toolbar's pressingToolbarId state) hasn't updated between mousedown and click events dispatched in rapid succession (e.g. by Puppeteer under CI load). */
   const isMouseDownRef = useRef(false)
 
+  const buttonRef = useRef<HTMLDivElement>(null)
+
   const command = commandById(commandId)
   if (!command) {
     console.error('Missing command: ' + commandId)
@@ -75,7 +76,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
   const buttonError = useSelector(state => (!customize && command.error ? command.error(state) : null))
   const isButtonExecutable = useSelector(state => customize || !canExecute || canExecute(state))
 
-  const { isDragging, dragSource, isHovering, dropTarget } = useDragAndDropToolbarButton({
+  const { isDragging, isHovering } = useDragAndDropToolbarButton({
     commandId,
     customize,
   })
@@ -110,7 +111,8 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
 
   /** Handles the onMouseUp/onTouchEnd event. Makes sure that we are actually clicking and not scrolling the toolbar. */
   const tapUp = useCallback(
-    (e: React.MouseEvent | React.TouchEvent) => {
+    (e: TouchEvent) => {
+      console.info('tapUp tapUp')
       longPress.props[isTouch ? 'onTouchEnd' : 'onMouseUp']?.()
       const wasMouseDown = isMouseDownRef.current
       isMouseDownRef.current = false
@@ -142,10 +144,6 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
       }
 
       lastScrollLeft.current = toolbarEl.scrollLeft
-
-      if (!disabled) {
-        onTapUp?.(commandId, e)
-      }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
@@ -166,17 +164,15 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
 
   /** Handles the onMouseDown/onTouchEnd event. Updates lastScrollPosition for tapUp. */
   const tapDown = useCallback(
-    (e: React.MouseEvent | React.TouchEvent) => {
+    (e: TouchEvent) => {
       isMouseDownRef.current = true
       const iconEl = e.target as HTMLElement
       const toolbarEl = iconEl.closest('#toolbar')!
-      longPressTapDown?.(e)
-
+      console.info('tapDown')
       lastScrollLeft.current = toolbarEl.scrollLeft
 
       if (!disabled) {
         haptics.medium()
-        onTapDown?.(commandId, e)
       }
 
       if (!customize && !isTouch) {
@@ -201,12 +197,22 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
     }),
     [buttonError, fontSize, isButtonActive, isButtonExecutable, isDragging],
   )
+
+  useEffect(() => {
+    const buttonEl = buttonRef.current
+    buttonRef.current?.addEventListener('touchstart', tapDown)
+    buttonRef.current?.addEventListener('touchend', tapUp)
+    return () => {
+      buttonEl?.removeEventListener('touchstart', tapDown)
+      buttonEl?.removeEventListener('touchend', tapUp)
+    }
+  }, [tapDown, tapUp])
   return (
     <div
       {...longPress.props}
       aria-label={command.label}
       data-testid='toolbar-icon'
-      ref={dndRef(node => dragSource(dropTarget(node)))}
+      ref={buttonRef}
       key={commandId}
       title={`${command.label}${(command.keyboard ?? command.overlay?.keyboard) ? ` (${formatKeyboardShortcut((command.keyboard ?? command.overlay?.keyboard)!)})` : ''}${buttonError ? '\nError: ' + buttonError : ''}`}
       className={cx(
@@ -245,10 +251,6 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
         isMouseDownRef.current = false
         onMouseLeave?.()
       }}
-      onMouseDown={isTouch ? undefined : tapDown}
-      onClick={isTouch ? undefined : tapUp}
-      onTouchStart={isTouch ? tapDown : undefined}
-      onTouchEnd={isTouch ? tapUp : undefined}
     >
       {
         // selected top dash
