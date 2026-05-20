@@ -13,9 +13,6 @@ import waitForEditable from '../helpers/waitForEditable'
 
 describe('Home', () => {
   it('click home link to set the cursor to null', async () => {
-    // TEMP canary: prove the refactored consoleProxy drain path captures iOS-side output in CI. Remove after verification.
-    await browser.execute(() => console.info('CI-PROXY-CANARY', Date.now()))
-
     const text = `
   - a
     - b`
