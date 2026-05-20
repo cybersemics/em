@@ -21,7 +21,7 @@ No emulation. The first `chrome-devtools` call (e.g. `navigate`) launches Chrome
 
 ### Target = `android` (mobile Chrome)
 
-Apply mobile emulation **before any `navigate` call** — the MCP keeps a persistent Chrome, so the first navigation must happen under the mobile profile or the initial render is wrong.
+Apply mobile emulation **before any `navigate` call**. **em** checks the device's layout and interaction profile **once during launch**, so the first navigation must happen under the mobile profile or the initial render is wrong.
 
 Call `chrome-devtools` `emulate` with a Pixel-class profile:
 

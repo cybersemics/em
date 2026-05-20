@@ -10,7 +10,7 @@ allowed-tools:
   - wdio
 ---
 
-This sub-skill drives the **real em Capacitor app** on BrowserStack **App Automate** (Appium/XCUITest), which exposes both the native and web layers in one session — unlike the retired Safari-over-tunnel path, which had no native access. `browser-control` routes here when the target is `ios`.
+This sub-skill drives the **em Capacitor app** on BrowserStack **App Automate** (Appium/XCUITest). This exposes both the native and web layers in one session. `browser-control` routes here when the target is `ios`.
 
 ## Model: prefer web, drop to native only when needed
 
@@ -26,7 +26,7 @@ For "find and tap an element," stay in web — going native is slower, more brit
 
 ## Step 1: Open the App Automate session
 
-Open the app session via the `wdio` MCP. Unlike Safari (`platform: 'browser'`), this uses `platform: 'ios'` with an uploaded app and **no** `browserName`:
+Open the app session via the `wdio` MCP:
 
 ```ts
 start_session({
@@ -51,11 +51,13 @@ start_session({
 })
 ```
 
-Bump `deviceName` / `platformVersion` to whatever's current (default to iOS 26). `browserstackLocal: true` is required — the app's WKWebView loads the runner's dev server through the tunnel (see Step 2). Timeouts at 900 for the same reason as any BrowserStack iOS session; drop to 600 then 300 and report if a caps-validation error is returned.
+If a specific iOS version is requested in the issue body or the user's query, replace `platformVersion` and `deviceName` as specified.
+
+`browserstackLocal: true` is required — the app's WKWebView loads the runner's dev server through the tunnel (see Step 2). Timeouts at 900 for the same reason as any BrowserStack iOS session; drop to 600 then 300 and report if a caps-validation error is returned.
 
 ### App binary
 
-The session drives a pre-built **server-mode** IPA already uploaded to BrowserStack under the `custom_id` **`em-server-mode`** — a thin native shell whose WKWebView loads the **live dev server over the tunnel**, so day-to-day web changes need no rebuild. Reference it by `custom_id`; do not rebuild per run. If `start_session` fails with an app-not-found error, the pre-warmed app has lapsed (BrowserStack deletes apps 30 days after last use) — **escalate to the user** to re-upload it (manual reuse; this skill does not build IPAs).
+The session drives a pre-built **server-mode** build of **em**'s Capacitor app. The IPA file for this build is already uploaded to BrowserStack under the `custom_id` **`em-server-mode`**, so day-to-day web changes need no rebuild. Reference it by `custom_id`; do **not** rebuild the native app per run. If `start_session` fails with an app-not-found error, the pre-warmed app has lapsed (BrowserStack deletes apps 30 days after last use) — **escalate to the user** to re-upload it (they need to do it manually; there is no tooling to automatically build IPAs yet).
 
 ### Heartbeat
 
@@ -65,7 +67,7 @@ Immediately after `start_session` returns, capture the session ID and start the 
 .github/skills/browser-control-ios/heartbeat.sh "<session-id>"
 ```
 
-It pings the hub every 90s, logs to `/tmp/heartbeat-<id>.log`, self-exits after 3 consecutive failures, and appends BrowserStack's session post-mortem on give-up — the only post-hoc signal for why a session died.
+This heartbeat keeps the BrowserStack session alive, even during very long agent sessions. It pings the hub every 90s, logs to `/tmp/heartbeat-<id>.log`, self-exits after 3 consecutive failures, and appends BrowserStack's session post-mortem on give-up — the only post-hoc signal for why a session died.
 
 ## Step 2: Land in the webview context (the default lens)
 
@@ -103,10 +105,10 @@ A `null` result means the proxy is **not** active in this build (it installs fro
 
 ## Native augmentation (drop down only when the model above calls for it)
 
-`switch_context` to `NATIVE_APP` for system UI / visual verification, then switch back. Warm swaps are cheap — don't avoid them, but don't live in native either.
+`switch_context` to `NATIVE_APP` for system UI / visual verification, then switch back. Warm swaps are cheap.
 
-- **Screenshots — always native.** A native device screenshot captures the full screen (status bar, keyboard, selection handles, gesture-menu overlay, system dialogs) that a web screenshot can't see, and it's **context-independent** (grab it without switching). Capture one after native interactions, and after web actions that can summon native UI (focus → keyboard, selection → menu).
-- **Accessibility tree — scoped.** Use `get_elements` with a **specific** `-ios predicate string` / class chain to find a target; don't dump the full tree (broad scans are slow). The native tree mirrors rendered web content, so some web facts are readable from native without switching — but for precise web work, use the DOM.
+- **Screenshots — always native.** A native device screenshot captures the full screen (status bar, keyboard, selection handles, gesture-menu overlay, system dialogs) that a web screenshot can't see, and it's **context-independent** (can grab screenshot without switching context). Capture one after native interactions, after web actions that can summon native UI (focus → keyboard, selection → menu), and whenever in iteration you feel you need visual context.
+- **Always query the accessibility tree with scope.** Use `get_elements` with a **specific** `-ios predicate string` / class chain to find a target; don't dump the full tree (broad scans are slow). The native tree mirrors rendered web content, so some web facts are readable from native without switching — but for precise web work, use the DOM.
 - **Text selection → "Text Tools".** Double-tap a word via `mobile: doubleTap {x,y}` (compute the point from the editable's `getBoundingClientRect` in web first); read the native edit menu as `XCUIElementTypeMenuItem` (`Cut`/`Copy`/`Paste`/…). The selection _state_ is still readable in web via `getSelection()`.
 - **em gestures (native or held)** → use the **`interaction-gestures`** skill; it documents the native `performActions` dispatch (skipping the unsupported `releaseActions`/DELETE) and the synthetic-held technique for em's Gesture Menu.
 

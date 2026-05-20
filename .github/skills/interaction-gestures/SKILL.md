@@ -3,9 +3,7 @@ name: interaction-gestures
 description: >-
   Use this skill ONLY for em's own gesture-zone gestures — the multi-direction
   swipes the em gesture detector interprets as commands (notations like `rdr` /
-  `→↓→`). NOT for system menus, native taps, or text selection — those belong to
-  browser-control-ios. Covers gesture dispatch on web/android (Chrome DevTools
-  MCP) and iOS (WebdriverIO MCP), including the iOS App Automate native context.
+  `→↓→`).
 allowed-tools:
   - chrome-devtools
   - wdio
