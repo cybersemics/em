@@ -10,6 +10,13 @@ import childIdsToThoughts from '../childIdsToThoughts'
 import contextToPath from '../contextToPath'
 import getDescendantThoughtIds from '../getDescendantThoughtIds'
 
+/** Tests thought values without asserting order. */
+const expectThoughtsUnordered = (thoughts: { value: string }[], values: string[]) => {
+  const thoughtValues = thoughts.map(thought => thought.value)
+  expect(thoughtValues).toHaveLength(values.length)
+  expect(thoughtValues).toEqual(expect.arrayContaining(values))
+}
+
 it('get descendants', () => {
   const text = `
     - a
@@ -23,12 +30,12 @@ it('get descendants', () => {
   const descendantThoughtIds = getDescendantThoughtIds(state, HOME_TOKEN)
   const descendantsAllThoughts = childIdsToThoughts(state, descendantThoughtIds)
 
-  expect(descendantsAllThoughts.map(thought => thought.value)).toEqual(['a', 'b', 'c', 'd', 'e', 'f'])
+  expectThoughtsUnordered(descendantsAllThoughts, ['a', 'b', 'c', 'd', 'e', 'f'])
 
   const descendantsIdsOfA = getDescendantThoughtIds(state, head(contextToPath(state, ['a']) as SimplePath))
   const descendantsAThoughts = childIdsToThoughts(state, descendantsIdsOfA)
 
-  expect(descendantsAThoughts.map(thought => thought.value)).toEqual(['b', 'c', 'd'])
+  expectThoughtsUnordered(descendantsAThoughts, ['b', 'c', 'd'])
 })
 
 it('get descendants ordered by rank', () => {
@@ -45,7 +52,7 @@ it('get descendants ordered by rank', () => {
   // unordered
   const descendantsUnordered = childIdsToThoughts(state, getDescendantThoughtIds(state, HOME_TOKEN))
 
-  expect(descendantsUnordered.map(thought => thought.value)).toEqual(['a', 'b', 'c', 'x'])
+  expectThoughtsUnordered(descendantsUnordered, ['a', 'b', 'c', 'x'])
 
   // ordered
   const descendantsOrdered = childIdsToThoughts(state, getDescendantThoughtIds(state, HOME_TOKEN, { ordered: true }))
@@ -79,7 +86,7 @@ it('filter descendants', () => {
     }),
   )
 
-  expect(descendantsAll.map(thought => thought.value)).toEqual(['a', 'b', 'c', 'd', 'e'])
+  expectThoughtsUnordered(descendantsAll, ['a', 'b', 'c', 'd', 'e'])
 
   // short circuit
   // [e, f, g, h] should never be touched
@@ -108,5 +115,5 @@ it('filter and continue traversing', () => {
     }),
   )
 
-  expect(descendantsAll.map(thought => thought.value)).toEqual(['b', 'c', 'd', 'e'])
+  expectThoughtsUnordered(descendantsAll, ['b', 'c', 'd', 'e'])
 })

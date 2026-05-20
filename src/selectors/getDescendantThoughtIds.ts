@@ -22,7 +22,11 @@ interface OptionsInternal extends Options {
   recur?: boolean
 }
 
-/** Generates a flat pre-order list of descendant ThoughtIds, excluding the starting thought. If a filterFunction is provided, descendants of thoughts that are filtered out are not traversed. */
+/**
+ * Generates a flat pre-order list of descendant ThoughtIds, excluding the starting thought.
+ * Sibling order is only guaranteed when ordered is true, which sorts each sibling level by rank.
+ * If a filterFunction is provided, descendants of thoughts that are filtered out are not traversed.
+ */
 const getDescendantThoughtIds = (state: State, thoughtId: ThoughtId, options: Options = {}): ThoughtId[] => {
   const { exclude, filterFunction, filterAndTraverse, ordered, recur } = options as OptionsInternal
   const thought = getThoughtById(state, thoughtId)
