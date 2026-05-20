@@ -122,12 +122,11 @@ const setup = async ({
 
 beforeEach(setup, 60000)
 
-// TreeCRDT teardown can drain OPFS writes from import-heavy tests before dropping storage.
+// Drop without waiting for em's write barrier so we can measure whether forced teardown helps Puppeteer runtime.
 afterEach(async () => {
   if (page) {
     await page
       .evaluate(async () => {
-        await (window.em as Partial<WindowEm> | undefined)?.testHelpers?.waitForTreecrdtIdle?.()
         await (window.em as Partial<WindowEm> | undefined)?.testHelpers?.dropTreecrdt?.()
       })
       .catch(() => {
