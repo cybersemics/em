@@ -1,10 +1,11 @@
 ---
 name: interaction-gestures
 description: >-
-  Use this skill when a step requires a swipe gesture in the em app's
-  gesture zone. Tells you how to dispatch a multi-direction touch gesture on
-  web/android (Chrome DevTools MCP) and on iOS (WebdriverIO MCP) so the gesture
-  detector commits the expected command.
+  Use this skill ONLY for em's own gesture-zone gestures — the multi-direction
+  swipes the em gesture detector interprets as commands (notations like `rdr` /
+  `→↓→`). NOT for system menus, native taps, or text selection — those belong to
+  browser-control-ios. Covers gesture dispatch on web/android (Chrome DevTools
+  MCP) and iOS (WebdriverIO MCP), including the iOS App Automate native context.
 allowed-tools:
   - chrome-devtools
   - wdio
@@ -132,9 +133,18 @@ Two things to get right when crossing into the wdio MCP, both rooted in the fact
 
 If a step truly is a single straight-line swipe (not an em command — e.g. scrolling a list, dismissing a sheet), the simpler `swipe` tool is fine.
 
+### iOS App Automate: native dispatch and the Gesture Menu
+
+`browser-control-ios` runs the app on App Automate with both contexts. Two ways to drive an em gesture there:
+
+- **Synthetic dispatch in the webview context** (the snippet above) — works exactly as for the old Safari path; use it to commit a gesture command while operating in the WKWebView.
+- **Native dispatch in the `NATIVE_APP` context** — a real OS touch via `performActions` (a `pointer` / `touch` sequence). Use it when the bug is about genuine native touch handling. **Critical:** call `performActions` **directly and do not** let the client auto-call `releaseActions` — the W3C Actions `DELETE` endpoint is unimplemented on this BrowserStack stack and errors. This mirrors `src/e2e/iOS/helpers/gesture.ts`, which builds the pointer sequence and deliberately skips the release.
+
+**em's Gesture Menu (held gesture):** the menu only renders while a gesture is _in progress_. To inspect it, dispatch `touchstart` + `touchmove`s **without** the final `touchend` (the synthetic snippet, minus its `touchend`) so the gesture stays held, then read the menu (`[data-testid=popup-value]`) in the webview; dispatch `touchend` afterward to release. This is the same `{ hold: true }` pattern em's puppeteer suite uses. Native `performActions` **cannot** be held across separate calls on this stack (it completes and releases), so use the synthetic-held approach for the menu.
+
 ### Adjusting starting coordinates on iOS
 
-The 50px toolbar offset is the same on iOS Safari, but the safe-area insets at the top of the viewport mean a starting Y of 350 is safe across all current iPhones. If you change the viewport (rotate to landscape, etc.), recompute a start point that is inside the gesture zone for that viewport.
+The 50px toolbar offset is the same on iOS, but the safe-area insets at the top of the viewport mean a starting Y of 350 is safe across all current iPhones. If you change the viewport (rotate to landscape, etc.), recompute a start point that is inside the gesture zone for that viewport.
 
 ---
 
