@@ -8,6 +8,8 @@ description: >-
   browser-control-ios).
 allowed-tools:
   - bash
+  - chrome-devtools
+  - wdio
 ---
 
 The em app runs on the web, on Android (mobile Chrome), and on iOS (the Capacitor app on BrowserStack App Automate). This skill is the **entry point**: it takes the caller's target and brings up the right environment, delegating the platform specifics to a sub-skill so only the relevant detail loads.

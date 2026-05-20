@@ -5,6 +5,7 @@ description: >-
   swipes the em gesture detector interprets as commands (notations like `rdr` /
   `→↓→`).
 allowed-tools:
+  - bash
   - chrome-devtools
   - wdio
 ---

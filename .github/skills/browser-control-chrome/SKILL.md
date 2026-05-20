@@ -7,6 +7,7 @@ description: >-
 allowed-tools:
   - bash
   - chrome-devtools
+  - wdio
 ---
 
 This sub-skill brings up the **web** and **Android** environments. `browser-control` routes here when the caller's target is `web` or `android`. For iOS, see `browser-control-ios`.

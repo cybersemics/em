@@ -7,6 +7,7 @@ description: >-
   called directly.
 allowed-tools:
   - bash
+  - chrome-devtools
   - wdio
 ---
 
