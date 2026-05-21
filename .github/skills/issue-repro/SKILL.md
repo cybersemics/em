@@ -26,17 +26,19 @@ By following the documented steps in the issue, you can reliably reproduce the p
 **DO NOT explore a fix** until you have successfully reproduced the issue. **This is your priority.** If you **CANNOT FULLY REPRODUCE** the steps, **FAIL AND ESCALATE TO THE USER.**
 Similarly, a fix is **not complete** until both Step 5a and Step 5b pass.
 
+> **iOS is fully reproducible here — never opt out.** iOS issues run on **real iOS devices via BrowserStack App Automate**, driven by the `wdio` MCP through `browser-control` → `browser-control-ios`. You do **not** need a local Mac, a physical device, or a simulator. "This is iOS-specific / needs a physical device / I can't automate iOS" is **never** a valid reason to skip reproduction or to jump straight to a fix. If `target = ios`, hand off to `browser-control` and reproduce on the cloud device exactly as you would for web or android.
+
 ---
 
 ## Step 1: Parse the Issue
 
 Use the GitHub MCP `get_issue` tool to read the full issue body. Extract these three sections — headings vary slightly across issues so match loosely:
 
-| Section | Common headings |
-|---|---|
+| Section            | Common headings                                               |
+| ------------------ | ------------------------------------------------------------- |
 | Steps to reproduce | "Steps to Reproduce", "Step to Reproduce", "How to reproduce" |
-| Failure | "Current Behavior", "Current behavior", "Actual Behavior" |
-| Goal | "Expected Behavior", "Expected behavior" |
+| Failure            | "Current Behavior", "Current behavior", "Actual Behavior"     |
+| Goal               | "Expected Behavior", "Expected behavior"                      |
 
 If the issue body is ambiguous, read any attached comments before asking the
 user for clarification. If a section is genuinely absent, stop and ask.
@@ -49,11 +51,11 @@ Pick exactly one of `web`, `android`, or `ios` — `browser-control` is going to
 
 **Tags (primary):**
 
-| Tag                                | Target  |
-|------------------------------------|---------|
-| `[iOS]`, `[Safari]`                | `ios`   |
-| `[Android]`, `[Mobile]`            | `android` |
-| no platform tag                    | `web`   |
+| Tag                     | Target    |
+| ----------------------- | --------- |
+| `[iOS]`, `[Safari]`     | `ios`     |
+| `[Android]`, `[Mobile]` | `android` |
+| no platform tag         | `web`     |
 
 `[Mobile]` without `[iOS]` is treated as `android` — that is the cheaper environment and reproduces almost all mobile-only behavior. Only switch to `ios` when the issue is explicitly about iOS Safari.
 
@@ -162,5 +164,6 @@ Never claim success without completing both 5a and 5b. Never skip the loop.
 ## Escalation Rules
 
 - If the bug cannot be reproduced in Step 3 after a thorough attempt, stop and report to the user with what you observed. Do not proceed to fixing.
+- Lacking a local device or simulator is **not** an escalation reason for iOS — iOS reproduces on BrowserStack real devices via `browser-control`. Only escalate an iOS issue after a genuine reproduction attempt through `browser-control-ios` has actually failed.
 - If the fix-validate loop reaches 5 attempts without success, stop and summarize: what you tried, what changed, and what still fails.
 - Default to autonomous action. Escalate only when the correct path is genuinely ambiguous.
