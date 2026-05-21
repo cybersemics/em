@@ -143,7 +143,7 @@ const dialogRecipe = defineSlotRecipe({
       borderRadius: '32px',
       pointerEvents: 'none',
       background:
-        'radial-gradient(140% 89% at 50% 29%, {colors.dialogGlassFillTop} 0%, {colors.dialogGlassFillMid} 52%, {colors.transparent} 87%)',
+        'radial-gradient(140% 89% at 50% 29%, {colors.dialogGlassFillTop} 0%, {colors.dialogGlassFillMid} 52%, {colors.dialogGlassFillBottom} 87%)',
     },
     /** Rounded clip region containing the highlight/rainbow layers "trapped" inside the glass. */
     glassClipWrapper: {
@@ -205,11 +205,13 @@ const dialogRecipe = defineSlotRecipe({
         fontSize: '1.5rem',
       },
       overscrollBehavior: 'contain',
-      // Static bottom-edge fade as a scrollability cue.
+      // Static bottom-edge fade as a scrollability cue. The plateau ends 3.75rem above the
+      // bottom edge and the mask completes its fade 0.25rem before the very bottom — leaving
+      // a 0.25rem fully-transparent strip at the very bottom for a clean edge.
       maskImage:
-        'linear-gradient(to bottom, {colors.black} 0, {colors.black} calc(100% - 1.5rem), {colors.transparent} 100%)',
+        'linear-gradient(to bottom, {colors.black} 0, {colors.black} calc(100% - 3.75rem), {colors.transparent} calc(100% - 0.25rem))',
       WebkitMaskImage:
-        'linear-gradient(to bottom, {colors.black} 0, {colors.black} calc(100% - 1.5rem), {colors.transparent} 100%)',
+        'linear-gradient(to bottom, {colors.black} 0, {colors.black} calc(100% - 3.75rem), {colors.transparent} calc(100% - 0.25rem))',
       // Animated top-edge fade mask that ramps up as the user scrolls.
       // Relies on `animation-timeline`, which has been supported in Chrome
       // since 2023 and Safari since 2025.
@@ -217,9 +219,9 @@ const dialogRecipe = defineSlotRecipe({
       // fade at all.
       '@supports (animation-timeline: scroll(self))': {
         maskImage:
-          'linear-gradient(to bottom, {colors.transparent} 0, {colors.black} var(--dialog-content-mask-fade-top), {colors.black} calc(100% - 1.5rem), {colors.transparent} 100%)',
+          'linear-gradient(to bottom, {colors.transparent} 0, {colors.black} var(--dialog-content-mask-fade-top), {colors.black} calc(100% - 3.75rem), {colors.transparent} calc(100% - 0.25rem))',
         WebkitMaskImage:
-          'linear-gradient(to bottom, {colors.transparent} 0, {colors.black} var(--dialog-content-mask-fade-top), {colors.black} calc(100% - 1.5rem), {colors.transparent} 100%)',
+          'linear-gradient(to bottom, {colors.transparent} 0, {colors.black} var(--dialog-content-mask-fade-top), {colors.black} calc(100% - 3.75rem), {colors.transparent} calc(100% - 0.25rem))',
         animationName: 'dialogContentScrollFade',
         animationDuration: '1s',
         animationTimingFunction: 'linear',

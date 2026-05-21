@@ -201,7 +201,7 @@ const keyframes = defineKeyframes({
    */
   dialogContentScrollFade: {
     to: {
-      '--dialog-content-mask-fade-top': '1.5rem',
+      '--dialog-content-mask-fade-top': '2.2rem',
     },
   },
   // the hideCaret animation must run every time the indent changes on iOS Safari, which necessitates replacing the animation with an identical substitute with a different name
