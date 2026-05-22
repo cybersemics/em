@@ -40,8 +40,24 @@ it('identifies only this tab local TreeCRDT materialization events', () => {
   expect(second.writeId).toBeDefined()
   expect(second.writeId).not.toBe(first.writeId)
 
-  expect(isTreecrdtLocalMaterialization({ headSeq: 1, changes: [], writeIds: [first.writeId!] })).toBe(true)
-  expect(isTreecrdtLocalMaterialization({ headSeq: 1, changes: [], writeIds: ['remote-write'] })).toBe(false)
+  expect(
+    isTreecrdtLocalMaterialization({
+      headSeq: 1,
+      changes: [{ kind: 'payload', node: 'local-a', payload: null, source: { writeIds: [first.writeId!] } }],
+    }),
+  ).toBe(true)
+  expect(
+    isTreecrdtLocalMaterialization({
+      headSeq: 1,
+      changes: [{ kind: 'payload', node: 'remote-a', payload: null, source: { writeIds: ['remote-write'] } }],
+    }),
+  ).toBe(false)
+  expect(
+    isTreecrdtLocalMaterialization({
+      headSeq: 1,
+      changes: [],
+    }),
+  ).toBe(false)
   expect(
     isTreecrdtLocalMaterialization({
       headSeq: 1,

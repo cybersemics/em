@@ -40,8 +40,13 @@ export function createTreecrdtLocalWriteOptions(): LocalWriteOptions {
 
 /** True when a materialization event was produced by this tab's own optimistic TreeCRDT write. */
 export const isTreecrdtLocalMaterialization = (event: MaterializationEvent): boolean => {
-  const writeIds = event.writeIds
-  return !!writeIds?.length && writeIds.every(writeId => writeId.startsWith(localWriteIdPrefix))
+  return (
+    event.changes.length > 0 &&
+    event.changes.every(change => {
+      const writeIds = change.source?.writeIds
+      return !!writeIds?.length && writeIds.every(writeId => writeId.startsWith(localWriteIdPrefix))
+    })
+  )
 }
 
 export default {
