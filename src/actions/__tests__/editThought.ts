@@ -2,7 +2,6 @@ import importText from '../../actions/importText'
 import newSubthought from '../../actions/newSubthought'
 import newThought from '../../actions/newThought'
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
-import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import contextToThoughtId from '../../selectors/contextToThoughtId'
 import exportContext from '../../selectors/exportContext'
 import getContexts from '../../selectors/getContexts'
@@ -46,13 +45,11 @@ it('edit a thought', () => {
       id: contextToThoughtId(stateNew, ['aa'])!,
       value: 'aa',
       parentId: HOME_TOKEN,
-      rank: 0,
     },
     {
       id: contextToThoughtId(stateNew, ['b'])!,
       value: 'b',
       parentId: HOME_TOKEN,
-      rank: 1,
     },
   ])
 
@@ -124,12 +121,10 @@ it('edit a thought with descendants', () => {
   expect(getAllChildrenAsThoughtsByContext(stateNew, ['aa'])).toMatchObject([
     {
       value: 'a1',
-      rank: 0,
       id: thoughtA1?.id,
     },
     {
       value: 'a2',
-      rank: 1,
       id: thoughtA2?.id,
     },
   ])
@@ -170,7 +165,6 @@ it('edit a thought existing in mutliple contexts', () => {
   expect(getAllChildrenAsThoughtsByContext(stateNew, ['a'])).toMatchObject([
     {
       value: 'abc',
-      rank: 0,
       id: thoughtABC.id,
     },
   ])
@@ -193,14 +187,7 @@ it('move cursor to existing meta programming thought if any', () => {
       - color
         - lightblue`)
 
-  const expectedCursor = [
-    { value: 'a', rank: 0 },
-    { value: '=style', rank: 0 },
-  ]
-
-  const cursorThoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
-
-  expect(cursorThoughts).toMatchObject(expectedCursor)
+  expectPathToEqual(stateNew, stateNew.cursor, ['a', '=style'])
 })
 
 it('edit a thought that exists in another context', () => {
@@ -236,14 +223,11 @@ it('edit a thought that exists in another context', () => {
   expect(getAllChildrenAsThoughtsByContext(stateNew, ['a'])).toMatchObject([
     {
       value: 'ab',
-      rank: 0,
       id: thoughtInContextA.id,
     },
   ])
 
-  expect(getAllChildrenAsThoughtsByContext(stateNew, ['b'])).toMatchObject([
-    { value: 'ab', rank: 0, id: thoughtInContextB.id },
-  ])
+  expect(getAllChildrenAsThoughtsByContext(stateNew, ['b'])).toMatchObject([{ value: 'ab', id: thoughtInContextB.id }])
 })
 
 it('edit a child with the same value as its parent', () => {
@@ -268,9 +252,7 @@ it('edit a child with the same value as its parent', () => {
   expect(getContexts(stateNew, 'ab')).toMatchObject([thoughtInContextA!.id])
 
   expect(thoughtInContextA?.parentId).toBe(thoughtA.id)
-  expect(getAllChildrenAsThoughtsByContext(stateNew, ['a'])).toMatchObject([
-    { value: 'ab', rank: 0, id: thoughtInContextA.id },
-  ])
+  expect(getAllChildrenAsThoughtsByContext(stateNew, ['a'])).toMatchObject([{ value: 'ab', id: thoughtInContextA.id }])
 
   expectPathToEqual(stateNew, stateNew.cursor, ['a', 'ab'])
 })

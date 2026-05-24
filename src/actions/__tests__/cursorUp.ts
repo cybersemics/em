@@ -8,7 +8,6 @@ import toggleContextView from '../../actions/toggleContextView'
 import toggleHiddenThoughts from '../../actions/toggleHiddenThoughts'
 import { executeCommand } from '../../commands'
 import newSubthoughtTopCommand from '../../commands/newSubthoughtTop'
-import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import contextToPath from '../../selectors/contextToPath'
 import isContextViewActive from '../../selectors/isContextViewActive'
 import prevThought from '../../selectors/prevThought'
@@ -54,12 +53,7 @@ describe('normal view', () => {
 
     const stateNew = reducerFlow(steps)(initialState())
 
-    const thoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
-
-    expect(thoughts).toMatchObject([
-      { value: 'a', rank: 0 },
-      { value: '=test', rank: 1 },
-    ])
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', '=test'])
   })
 
   it('move cursor from first child to parent', () => {
