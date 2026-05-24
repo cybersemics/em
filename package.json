@@ -228,7 +228,7 @@
     "jest-image-snapshot": "^6.5.2",
     "jsdom": "^29.1.1",
     "lockfile-lint": "^5.0.0",
-    "npm-run-all2": "^8.0.4",
+    "npm-run-all2": "^9.0.0",
     "postinstall-postinstall": "^2.1.0",
     "prettier": "^3.8.3",
     "puppeteer": "^24.42.0",
