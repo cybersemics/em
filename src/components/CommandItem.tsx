@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useMemo } from 'react'
+import React, { FC, useEffect } from 'react'
 import { DragSourceMonitor, useDrag } from 'react-dnd'
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
@@ -13,6 +13,7 @@ import { dragCommandActionCreator as dragCommand } from '../actions/dragCommand'
 import { isTouch } from '../browser'
 import { gestureString } from '../commands'
 import { noop } from '../constants'
+import useGestureHighlight from '../hooks/useGestureHighlight'
 import useLottieIntervalAnimation from '../hooks/useLottieIntervalAnimation'
 import store from '../stores/app'
 import CommandKeyboardShortcut from './CommandKeyboardShortcut'
@@ -124,25 +125,7 @@ const CommandItem: FC<{
     }
   })
 
-  /** The first n segments of the gesture diagram to highlight. */
-  const gestureHighlight = useMemo(() => {
-    if (disabled || gestureInProgress === undefined) return undefined
-    if (command.id === 'openMobileCommandUniverse') {
-      // For mobile command universe command, find the longest matching end portion
-
-      const mobileCommandUniverseGesture = gestureString(command)
-      return (
-        [...mobileCommandUniverseGesture]
-          .map((_, i) => mobileCommandUniverseGesture.length - i)
-          .find(len => gestureInProgress.endsWith(mobileCommandUniverseGesture.slice(0, len))) ?? 0
-      )
-    }
-    // For other commands, use normal highlighting
-    if (command.id === 'cancel') {
-      return selected ? 1 : undefined
-    }
-    return gestureInProgress.length
-  }, [disabled, gestureInProgress, command, selected])
+  const gestureHighlight = useGestureHighlight(command, gestureInProgress, selected, disabled)
 
   const Container = tableMode ? 'tr' : 'div'
   const Cell = tableMode ? 'td' : 'div'

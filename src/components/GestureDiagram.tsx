@@ -31,8 +31,14 @@ interface GestureDiagramProps {
   rounded?: boolean
   /** If true, the cancel gesture will have the same styling as the other gestures. Otherwise, there are additional sizing and margin styles applied. */
   styleCancelAsRegularGesture?: boolean
-  /** Which kind of arrowhead to draw gesture diagrams with. By default, the arrowhead is filled. */
-  arrowhead?: 'filled' | 'outlined'
+  /** Which kind of arrowhead to draw. 'none' skips the marker entirely. */
+  arrowhead?: 'filled' | 'outlined' | 'none'
+  /** When true, disables the drop-shadow glow filter on all path segments. Default: false. */
+  disableGlow?: boolean
+  /** When true (default), renders gradient strokes via <defs> + GradientStyleBlock. When false, uses solid strokes from highlightColor/color. */
+  useGradient?: boolean
+  /** Stroke color for highlighted segments when useGradient=false. Default: token('colors.vividHighlight'). */
+  highlightColor?: string
 }
 
 /** Returns the direction resulting from a 90 degree clockwise rotation. */
@@ -181,6 +187,158 @@ const GradientStyleBlock = ({ color, highlight, path }: { color?: string; highli
   )
 }
 
+// The 4 custom Bezier segments for the rdld (Command Universe) question-mark gesture.
+const RDLD_SEGMENTS = [
+  'M 29.7,13.5 Q 46.8,-4.5 63,13.5',
+  'M 63,13.5 Q 72,27 54,40.5',
+  'M 54,40.5 Q 45,49.5 45,58.5',
+  'M 45,58.5 L 45,72',
+]
+
+/** Joins SVG path segments into one path by stripping redundant leading move commands from continuations. */
+const joinRdldSegments = (segments: string[]) =>
+  segments.reduce((acc, segment, i) => (i === 0 ? segment : `${acc} ${segment.replace(/^M [\d.,]+ /, '')}`), '')
+
+interface GesturePathProps {
+  path: Gesture
+  extendedPath: Gesture
+  positions: { x: number; y: number }[]
+  pathSegments: { dx: number; dy: number }[]
+  scale: number
+  size: number
+  highlight?: number
+  color?: string
+  highlightColor?: string
+  useGradient: boolean
+  rounded?: boolean
+  arrowhead: 'filled' | 'outlined' | 'none'
+  strokeWidth: number
+  dropShadow: string | undefined
+  markerId: string
+}
+
+/** Renders the gesture stroke(s). Picks one of three rendering strategies based on path/gradient/rounded. */
+const GesturePath = ({
+  path,
+  extendedPath,
+  positions,
+  pathSegments,
+  scale,
+  size,
+  highlight,
+  color,
+  highlightColor,
+  useGradient,
+  rounded,
+  arrowhead,
+  strokeWidth,
+  dropShadow,
+  markerId,
+}: GesturePathProps) => {
+  const commonPathProps = {
+    strokeWidth: strokeWidth * 1.5,
+    strokeLinecap: 'round' as const,
+    strokeLinejoin: 'round' as const,
+    fill: 'none' as const,
+    style: dropShadow ? { filter: dropShadow } : undefined,
+  }
+  const allHighlighted = highlight != null && highlight >= path.length
+  const noneHighlighted = highlight == null || highlight === 0
+  const markerEnd = arrowhead !== 'none' ? `url(#${markerId})` : undefined
+  const activeColor = highlightColor ?? token('colors.vividHighlight')
+  const inactiveColor = color ?? token('colors.fg')
+
+  // Combined-path rendering for straight, solid-color paths. Using a single <path>
+  // with strokeLinejoin='round' avoids overlapping round caps at joints, which
+  // become visible as blobs/beads when strokeWidth is large relative to segment length.
+  if (!useGradient && !rounded && path !== 'rdld') {
+    /** Maps a position array to an SVG path data string. */
+    const makePath = (points: typeof positions) =>
+      points.map((pos, i) => `${i === 0 ? 'M' : 'L'} ${pos.x} ${pos.y}`).join(' ')
+
+    if (allHighlighted || noneHighlighted) {
+      return (
+        <path
+          d={makePath(positions)}
+          stroke={allHighlighted ? activeColor : inactiveColor}
+          markerEnd={markerEnd}
+          {...commonPathProps}
+        />
+      )
+    }
+
+    return (
+      <>
+        <path d={makePath(positions.slice(0, highlight! + 1))} stroke={activeColor} {...commonPathProps} />
+        <path
+          d={makePath(positions.slice(highlight))}
+          stroke={inactiveColor}
+          markerEnd={markerEnd}
+          {...commonPathProps}
+        />
+      </>
+    )
+  }
+
+  // Combined-path rendering for the rdld (Command Universe) solid-color special case.
+  if (!useGradient && path === 'rdld') {
+    if (allHighlighted || noneHighlighted) {
+      return (
+        <path
+          d={joinRdldSegments(RDLD_SEGMENTS)}
+          stroke={allHighlighted ? activeColor : inactiveColor}
+          {...commonPathProps}
+        />
+      )
+    }
+
+    return (
+      <>
+        {highlight! > 0 && (
+          <path d={joinRdldSegments(RDLD_SEGMENTS.slice(0, highlight))} stroke={activeColor} {...commonPathProps} />
+        )}
+        <path d={joinRdldSegments(RDLD_SEGMENTS.slice(highlight))} stroke={inactiveColor} {...commonPathProps} />
+      </>
+    )
+  }
+
+  // Per-segment rendering for gradient or rounded paths.
+  return (
+    <>
+      {pathSegments.map((segment, i) => {
+        const { x, y } = positions[i]
+        const d =
+          path === 'rdld'
+            ? RDLD_SEGMENTS[i]
+            : rounded
+              ? (() => {
+                  const { startX, startY, radius, sweepFlag, endX, endY } = generateArcCoordinates(
+                    i,
+                    Array.from(path) as Direction[],
+                    size,
+                  )
+                  return `M ${startX} ${startY} A ${radius} ${radius} 0 0 ${sweepFlag} ${endX} ${endY}`
+                })()
+              : `M ${x} ${y} l ${segment.dx * scale} ${segment.dy * scale}`
+        const stroke = useGradient
+          ? `url(#${extendedPath}-gradient-${i})`
+          : highlight != null && (i < highlight || highlight === path.length)
+            ? activeColor
+            : inactiveColor
+        return (
+          <path
+            d={d}
+            key={i}
+            stroke={stroke}
+            {...commonPathProps}
+            markerEnd={i === pathSegments.length - 1 && path !== 'rdld' && arrowhead !== 'none' ? markerEnd : undefined}
+          />
+        )
+      })}
+    </>
+  )
+}
+
 /** Renders an SVG representation of a gesture.
  *
  * @param path Any combination of l/r/u/d,or null for a cancel gesture (X).
@@ -205,12 +363,17 @@ const GestureDiagram = ({
   rounded,
   styleCancelAsRegularGesture,
   arrowhead = 'filled',
+  disableGlow = false,
+  useGradient = true,
+  highlightColor,
 }: GestureDiagramProps) => {
   const [id] = useState(createId())
 
   // match signaturePad shadow in TraceGesture component
   // TODO: Why isn't this working?
-  const dropShadow = `drop-shadow(0 0 ${(GESTURE_GLOW_BLUR * 2) / 3}px ${token(`colors.${GESTURE_GLOW_COLOR}` as const)})`
+  const dropShadow = disableGlow
+    ? undefined
+    : `drop-shadow(0 0 ${(GESTURE_GLOW_BLUR * 2) / 3}px ${token(`colors.${GESTURE_GLOW_COLOR}` as const)})`
 
   arrowSize = arrowSize ? +arrowSize : strokeWidth * 5
   reversalOffset = reversalOffset ? +reversalOffset : size * 0.3
@@ -224,19 +387,25 @@ const GestureDiagram = ({
         className={css(inGestureContainer && { position: 'relative', top: '10px' }, cssRaw)}
         style={{
           ...style,
-          ...(styleCancelAsRegularGesture
-            ? { paddingLeft: size / 10, paddingRight: size / 3 }
-            : { marginTop: '12px', marginBottom: '20px', marginLeft: '20px' }),
+          ...(arrowhead === 'none'
+            ? {}
+            : styleCancelAsRegularGesture
+              ? { paddingLeft: size / 10, paddingRight: size / 3 }
+              : { marginTop: '12px', marginBottom: '20px', marginLeft: '20px' }),
         }}
         viewBox='0 0 24 24'
       >
         <path
           d='M9.2725 0.714111C7.51965 3.8284 5.38488 6.62757 3.32706 9.53916C2.78228 10.31 2.34409 10.9449 1.86001 11.742C1.61923 12.1385 1.24853 12.6919 1.15146 13.1773C1.13411 13.264 1.17847 13.2863 1.25138 13.2681C1.67295 13.1627 2.15668 12.9113 2.52768 12.7276C7.4968 10.2679 11.7666 6.68876 16.4261 3.73452C18.1996 2.61011 20.1063 1.47669 22.1308 0.863996C22.8342 0.651122 22.5133 1.3142 22.3443 1.74968C21.91 2.86867 21.1473 3.86772 20.4094 4.80188C18.9097 6.70051 16.9227 8.26976 15.0181 9.74354C12.4635 11.7203 9.78768 13.554 7.29674 15.6118C6.3193 16.4192 5.37795 17.2552 4.47618 18.1462C4.01607 18.6008 3.51334 19.0404 3.18172 19.6042C3.0095 19.8969 3.10278 19.9327 3.39519 19.9221C4.08649 19.897 4.79822 19.8572 5.47541 19.7086C7.05389 19.3623 8.53153 18.5857 10.0219 17.9872C11.5619 17.3688 13.1128 16.7992 14.632 16.1296C17.0018 15.085 19.356 14.0449 21.4995 12.5777C22.2937 12.0341 23.0976 11.5068 23.884 10.9517C24.1828 10.7408 24.8514 10.0682 24.8514 10.4339C24.8514 10.8715 24.3341 11.4593 24.1247 11.7874C23.4648 12.8219 22.7443 13.8086 21.99 14.776C20.5168 16.6656 18.6452 17.9367 16.6759 19.2726C15.9788 19.7455 15.2156 20.2057 14.5821 20.7669C14.4752 20.8616 14.332 21.0133 14.2777 21.153C14.1713 21.4267 14.8675 21.199 15.1589 21.1621C16.8507 20.9478 18.5347 20.6994 20.2277 20.4989'
-          stroke={highlight != null && highlight > 0 ? token('colors.vividHighlight') : color || token('colors.fg')}
+          stroke={
+            highlight != null && highlight > 0
+              ? (highlightColor ?? token('colors.vividHighlight'))
+              : (color ?? token('colors.fg'))
+          }
           strokeWidth={1.25}
           strokeLinecap='round'
           fill='none'
-          style={styleCancelAsRegularGesture ? undefined : { filter: dropShadow }}
+          style={styleCancelAsRegularGesture ? undefined : dropShadow ? { filter: dropShadow } : undefined}
         />
       </svg>
     )
@@ -330,22 +499,27 @@ const GestureDiagram = ({
   const onRef = (el: SVGGraphicsElement | null) => {
     if (!el) return
 
-    // crop viewbox to diagram
     if (!viewBox) {
       const bbox = el.getBBox()
-      el.setAttribute(
-        'viewBox',
-        `${bbox.x - arrowSize! - strokeWidth * 4} ${bbox.y - arrowSize! - strokeWidth * 2} ${
-          +bbox.width + +arrowSize! * (arrowhead === 'outlined' ? 2 : 5) + +strokeWidth * 8
-        } ${+bbox.height + +arrowSize! * 2 + +strokeWidth * 4}`,
-      )
-    }
-  }
+      if (arrowhead === 'none') {
+        // Without an arrowhead the path has no directional asymmetry, so we use
+        // a single uniform padding value on all four sides.
 
-  /** Generates an SVG path string for a curved segment of the gesture.*/
-  const generateArcPath = (index: number, pathDirs: Direction[]) => {
-    const { startX, startY, radius, sweepFlag, endX, endY } = generateArcCoordinates(index, pathDirs, size)
-    return `M ${startX} ${startY} A ${radius} ${radius} 0 0 ${sweepFlag} ${endX} ${endY}`
+        // Only pad enough to keep the stroke from being clipped at the SVG edge.
+        // Half the stroke diameter sits outside the path centerline on each side.
+        const pad = strokeWidth / 2
+        el.setAttribute('viewBox', `${bbox.x - pad} ${bbox.y - pad} ${bbox.width + pad * 2} ${bbox.height + pad * 2}`)
+      } else {
+        // When an arrowhead is present the geometry is asymmetric — the marker
+        // protrudes past the path end — so padding differs per axis.
+        el.setAttribute(
+          'viewBox',
+          `${bbox.x - arrowSize! - strokeWidth * 4} ${bbox.y - arrowSize! - strokeWidth * 2} ${
+            +bbox.width + +arrowSize! * (arrowhead === 'outlined' ? 2 : 5) + +strokeWidth * 8
+          } ${+bbox.height + +arrowSize! * 2 + +strokeWidth * 4}`,
+        )
+      }
+    }
   }
 
   return (
@@ -360,95 +534,90 @@ const GestureDiagram = ({
         viewBox={viewBox}
       >
         <defs>
-          <marker
-            id={id}
-            viewBox='0 0 10 10'
-            refX={rounded ? '0' : '5'}
-            refY='5'
-            markerWidth={arrowSize! * (arrowhead === 'outlined' ? 2 : 1)}
-            markerHeight={arrowSize! * (arrowhead === 'outlined' ? 3 : 1)}
-            markerUnits='userSpaceOnUse'
-            orient='auto-start-reverse'
-          >
-            <path
-              d={
-                arrowhead === 'filled'
-                  ? 'M 0 0 L 10 5 L 0 10 z'
-                  : arrowhead === 'outlined'
-                    ? 'M 0 0 L 5 5 L 0 10'
-                    : undefined
-              }
-              fill={
-                arrowhead === 'outlined'
-                  ? 'none'
-                  : highlight != null && highlight >= path.length
-                    ? token('colors.vividHighlight')
-                    : color || token('colors.fg')
-              }
-              stroke={arrowhead === 'outlined' ? color || token('colors.fg') : 'none'}
-              strokeWidth={arrowhead === 'outlined' ? strokeWidth / 3 : 0}
-              style={{ filter: dropShadow }}
-            />
-          </marker>
-          {extendedPath === 'rdld' ? (
-            <MobileCommandUniverseGradients />
-          ) : (
-            pathSegments.map((segment, i) => {
-              return rounded ? (
-                <ArcGradient key={`${extendedPath}-gradient-${i}`} index={i} extendedPath={extendedPath} size={size} />
+          {arrowhead !== 'none' && (
+            <marker
+              id={id}
+              viewBox='0 0 10 10'
+              refX={rounded ? '0' : '5'}
+              refY='5'
+              markerWidth={arrowSize! * (arrowhead === 'outlined' ? 2 : 1)}
+              markerHeight={arrowSize! * (arrowhead === 'outlined' ? 3 : 1)}
+              markerUnits='userSpaceOnUse'
+              orient='auto-start-reverse'
+            >
+              <path
+                d={
+                  arrowhead === 'filled'
+                    ? 'M 0 0 L 10 5 L 0 10 z'
+                    : arrowhead === 'outlined'
+                      ? 'M 0 0 L 5 5 L 0 10'
+                      : undefined
+                }
+                fill={
+                  arrowhead === 'outlined'
+                    ? 'none'
+                    : highlight != null && highlight >= path.length
+                      ? (highlightColor ?? token('colors.vividHighlight'))
+                      : (color ?? token('colors.fg'))
+                }
+                stroke={arrowhead === 'outlined' ? (color ?? token('colors.fg')) : 'none'}
+                strokeWidth={arrowhead === 'outlined' ? strokeWidth / 3 : 0}
+                style={dropShadow ? { filter: dropShadow } : undefined}
+              />
+            </marker>
+          )}
+          {useGradient && (
+            <>
+              {extendedPath === 'rdld' ? (
+                <MobileCommandUniverseGradients />
               ) : (
-                <linearGradient
-                  id={`${extendedPath}-gradient-${i}`}
-                  key={`${extendedPath}-gradient-${i}`}
-                  gradientUnits='userSpaceOnUse'
-                  x1={positions[i].x}
-                  x2={positions[i].x + segment.dx * scale}
-                  y1={positions[i].y}
-                  y2={positions[i].y + segment.dy * scale}
-                >
-                  <stop offset='0%' className={`${extendedPath}-gradient-${i}-start`} />
-                  <stop offset='100%' className={`${extendedPath}-gradient-${i}-stop`} />
-                </linearGradient>
-              )
-            })
+                pathSegments.map((segment, i) => {
+                  return rounded ? (
+                    <ArcGradient
+                      key={`${extendedPath}-gradient-${i}`}
+                      index={i}
+                      extendedPath={extendedPath}
+                      size={size}
+                    />
+                  ) : (
+                    <linearGradient
+                      id={`${extendedPath}-gradient-${i}`}
+                      key={`${extendedPath}-gradient-${i}`}
+                      gradientUnits='userSpaceOnUse'
+                      x1={positions[i].x}
+                      x2={positions[i].x + segment.dx * scale}
+                      y1={positions[i].y}
+                      y2={positions[i].y + segment.dy * scale}
+                    >
+                      <stop offset='0%' className={`${extendedPath}-gradient-${i}-start`} />
+                      <stop offset='100%' className={`${extendedPath}-gradient-${i}-stop`} />
+                    </linearGradient>
+                  )
+                })
+              )}
+            </>
           )}
         </defs>
 
-        <GradientStyleBlock color={color} highlight={highlight} path={extendedPath} />
+        {useGradient && <GradientStyleBlock color={color} highlight={highlight} path={extendedPath} />}
 
-        {pathSegments.map((segment, i) => {
-          const { x, y } = positions[i]
-          return (
-            <path
-              d={
-                // use a custom '?' path for the Help gesture
-                path === 'rdld'
-                  ? i === 0
-                    ? 'M 29.7,13.5 Q 46.8,-4.5 63,13.5'
-                    : i === 1
-                      ? 'M 63,13.5 Q 72,27 54,40.5'
-                      : i === 2
-                        ? 'M 54,40.5 Q 45,49.5 45,58.5'
-                        : 'M 45,58.5 L 45,72'
-                  : rounded
-                    ? generateArcPath(i, Array.from(path) as Direction[])
-                    : `M ${x} ${y} l ${segment.dx * scale} ${segment.dy * scale}`
-              }
-              // segments do not change independently, so we can use index as the key
-              key={i}
-              stroke={`url(#${extendedPath}-gradient-${i})`}
-              strokeWidth={strokeWidth * 1.5}
-              strokeLinecap='round'
-              strokeLinejoin='round'
-              fill='none'
-              markerEnd={
-                // the help gesture does not have an arrowhead
-                i === pathSegments.length - 1 && path !== 'rdld' ? `url(#${id})` : undefined
-              }
-              style={{ filter: dropShadow }}
-            />
-          )
-        })}
+        <GesturePath
+          path={path}
+          extendedPath={extendedPath}
+          positions={positions}
+          pathSegments={pathSegments}
+          scale={scale}
+          size={size}
+          highlight={highlight}
+          color={color}
+          highlightColor={highlightColor}
+          useGradient={useGradient}
+          rounded={rounded}
+          arrowhead={arrowhead}
+          strokeWidth={strokeWidth}
+          dropShadow={dropShadow}
+          markerId={id}
+        />
       </svg>
     </span>
   )
