@@ -16,6 +16,9 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   CI: true
   COPILOT_AGENT_FIREWALL_ALLOW_LIST_ADDITIONS: googlechromelabs.github.io,storage.googleapis.com
+  # Activates the console proxy (src/util/consoleProxy.ts), which we need because BrowserStack
+  # can't access iOS console logs.
+  VITE_BROWSER_CONSOLE_CAPTURE: 1
 
 jobs:
   run:

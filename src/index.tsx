@@ -1,5 +1,5 @@
-// Side-effect import: must come first so the iOS console proxy installs before any other module body runs and captures bootstrap logs.
-import './util/iOSConsoleProxy'
+// This import must come first so the console proxy installs before any other module body runs and captures all subsequent logs.
+import './util/consoleProxy'
 import { createRoot } from 'react-dom/client'
 import App from './components/App'
 import './index.css'

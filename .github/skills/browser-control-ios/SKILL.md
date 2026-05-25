@@ -90,13 +90,13 @@ For "wait until X" logic, poll agent-side: repeat `execute_script` with `return 
 
 ### Console drain
 
-If the build activates the in-app console proxy, capture app-side console output after a touch-dispatching interaction:
+If the build was compiled with `VITE_BROWSER_CONSOLE_CAPTURE=1` (the in-app console proxy, `src/util/consoleProxy.ts`), capture app-side console output after a touch-dispatching interaction:
 
 ```ts
-execute_script({ script: 'return JSON.stringify(window.__drainiOSConsoleLogs__?.() ?? null)' })
+execute_script({ script: 'return JSON.stringify(window.__drainConsoleProxy__?.() ?? null)' })
 ```
 
-A `null` result means the proxy is **not** active in this build (it installs from a `?__ios_console_proxy` query param, which the server-mode `server.url` does not currently include — unverified). If you get `null`, fall back to in-script error surfacing: `return JSON.stringify((function(){ try { return <expr> } catch (e) { return 'ERR:' + e.message } })())`.
+A `null` result means the proxy is **not** active in this build (it self-installs only when `VITE_BROWSER_CONSOLE_CAPTURE` is set at **build time**; the pre-warmed `em-server-mode` IPA is not currently built with it — unverified). If you get `null`, fall back to in-script error surfacing: `return JSON.stringify((function(){ try { return <expr> } catch (e) { return 'ERR:' + e.message } })())`.
 
 ### Interaction notes (web context)
 

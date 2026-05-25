@@ -22,7 +22,7 @@ const plugin = {
        * @param context
        */
       create(context) {
-        const filename = context.getFilename()
+        const filename = context.filename
         const isComponentFile = filename.includes('/src/components/')
         if (!isComponentFile) return {}
         const ministoreIdentifiers = new Set()

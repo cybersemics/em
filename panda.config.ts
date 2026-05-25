@@ -347,6 +347,7 @@ const globalCss = defineGlobalStyles({
   ':root': {
     '--active-glow-gradient':
       'linear-gradient(180deg, {colors.commandCenterBlue} 0%, {colors.commandCenterPurple} 100%)',
+    '--safe-area-inset-bottom': 'env(safe-area-inset-bottom)',
   },
   '@supports (background-image: linear-gradient(180deg in oklch, #000))': {
     ':root': {
@@ -419,7 +420,6 @@ export default defineConfig({
           safeAreaRight: { value: 'env(safe-area-inset-right)' },
           safeAreaBottom: { value: 'env(safe-area-inset-bottom)' },
           safeAreaLeft: { value: 'env(safe-area-inset-left)' },
-          editableClipBottom: { value: '0.1em' },
         },
         /* z-index schedule
         Keep these in one place to make it easier to determine interactions and prevent conflicts. */
