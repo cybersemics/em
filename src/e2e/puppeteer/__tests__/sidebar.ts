@@ -7,16 +7,12 @@ import openSidebar from '../helpers/openSidebar'
 import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import setTheme from '../helpers/setTheme'
-import { page } from '../setup'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
 })
 
 vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
-
-/** Reveal controls that are hidden by distraction-free typing. */
-const revealHud = () => page.mouse.move(1, 1)
 
 /** Screenshot without the toolbar. */
 const screenshotWithoutToolbarIcons = async () => {
@@ -43,8 +39,6 @@ describe('sidebar', () => {
     await press('Enter')
     await keyboard.type('a')
 
-    // Typing hides the hamburger menu in distraction-free mode. Moving the pointer reveals it before opening the sidebar.
-    await revealHud()
     await openSidebar()
     await click('[data-testid=sidebar-recentlyEdited]')
 
