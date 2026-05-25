@@ -27,6 +27,7 @@ const getPromptVersion = (repoRoot: string): string => {
   }
 }
 
+/** Main entry point for the issue-opened estimation workflow. */
 const main = async () => {
   const githubToken = process.env.GITHUB_TOKEN
   if (!githubToken) throw new Error('GITHUB_TOKEN is required')

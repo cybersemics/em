@@ -7,7 +7,7 @@ export interface IssueInput {
   labels: string[]
 }
 
-/** Builds the estimation prompt from instructions, samples, and the issue to estimate. */
+/** Builds the full estimation prompt from instructions, sample data, and the target issue. */
 const buildPrompt = (instructions: string, samples: EstimateSample[], issue: IssueInput): string => {
   let prompt = `${instructions}\n\n`
 

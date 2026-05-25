@@ -20,7 +20,7 @@ export interface EstimateSample {
   }
 }
 
-/** Loads all estimation samples from the samples directory. */
+/** Loads all estimation samples from the samples directory. Throws if sample count exceeds MAX_SAMPLES. */
 const loadSamples = (repoRoot: string): EstimateSample[] => {
   const samplesPath = path.join(repoRoot, SAMPLES_DIR)
   if (!fs.existsSync(samplesPath)) {

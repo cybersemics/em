@@ -34,4 +34,4 @@ const hoursToSeconds = (hours: number): number => hours * 3600
 /** Gets the estimate in seconds for a category. */
 export const categoryToSeconds = (category: EstimateCategory): number => hoursToSeconds(CATEGORY_TO_HOURS[category])
 
-export default { ESTIMATE_CATEGORIES, CATEGORY_TO_HOURS, HOURS_TO_CATEGORY, VALID_HOURS, categoryToSeconds }
+export default categoryToSeconds
