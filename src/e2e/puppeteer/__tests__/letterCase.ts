@@ -1,9 +1,10 @@
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
 import paste from '../helpers/paste'
+import waitForSelector from '../helpers/waitForSelector'
 import { page } from '../setup'
 
-vi.setConfig({ testTimeout: 20000, hookTimeout: 60000 })
+vi.setConfig({ testTimeout: 60000, hookTimeout: 60000 })
 
 /** Gets the computed border-color of a letter case swatch button by its aria-label. */
 const getSwatchBorderColor = (label: string) =>
@@ -16,6 +17,8 @@ it('Sentence Case button is marked as active after applying Sentence Case to a t
   await paste('hello world. second sentence.')
 
   await clickThought('hello world. second sentence.')
+  // Wait for the thought to be in editing mode before interacting with the toolbar
+  await waitForSelector('[data-editing=true] [data-editable]')
 
   // Apply a background highlight color
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')

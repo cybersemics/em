@@ -10,6 +10,8 @@ import getSuperscriptColor from '../helpers/getSuperScriptColor'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import setSelection from '../helpers/setSelection'
+import waitForEditable from '../helpers/waitForEditable'
+import waitForSelector from '../helpers/waitForSelector'
 import { page } from '../setup'
 
 /** Click the first note. Assumes that there will be only a single note. */
@@ -202,6 +204,8 @@ it('Verify superscript colors in different views', async () => {
   // Test 1: Verify that partial text coloring doesn't affect superscript
   await clickThought('hello world')
   await setSelection(6, 11) // Select only "world" in "hello world"
+  // Re-wait for editable after setSelection to ensure cursor state is stable before toolbar interaction
+  await waitForEditable('hello world')
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="text color swatches"] [aria-label="red"]')
 
@@ -245,6 +249,8 @@ it('Clicking on a formatting tag does not close color dropdown', async () => {
   await paste(importText)
 
   await clickThought('Golden Retriever')
+  // Wait for the thought to be in editing mode before interacting with the toolbar
+  await waitForSelector('[data-editing=true] [data-editable]')
 
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="text color swatches"] [aria-label="blue"]')
@@ -262,6 +268,8 @@ it('Toggle the background color of the note', async () => {
         - Note
   `)
 
+  // Wait for the parent thought 'a' to render before clicking note
+  await waitForEditable('a')
   await clickFirstNote()
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="background color swatches"] [aria-label="green"]')
@@ -282,6 +290,8 @@ it('Toggling note background color on and off should remove formatting tag', asy
         - Note
   `)
 
+  // Wait for the parent thought 'a' to render before clicking note
+  await waitForEditable('a')
   await clickFirstNote()
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="background color swatches"] [aria-label="green"]')
@@ -298,6 +308,8 @@ it('Setting note foreground color should remove background color', async () => {
         - <font style="background-color: #FFFFFF" color="#000000">Note</font>
   `)
 
+  // Wait for the parent thought 'a' to render before clicking note
+  await waitForEditable('a')
   await clickFirstNote()
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="text color swatches"] [aria-label="yellow"]')
@@ -314,6 +326,8 @@ it('A thought and a note can have the same background color', async () => {
   `)
 
   // set the background color on the thought
+  // Wait for 'a' to render before interacting (ensures note-editable also renders)
+  await waitForEditable('a')
   await clickThought('a')
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="background color swatches"] [aria-label="green"]')
@@ -337,6 +351,8 @@ it('Can change the background color of a note to match its thought', async () =>
   `)
 
   // change the background color on the note
+  // Wait for the parent thought 'a' to render before clicking note
+  await waitForEditable('a')
   await clickFirstNote()
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="background color swatches"] [aria-label="red"]')
@@ -351,6 +367,8 @@ it('Can change the color of a thought that already has the same color applied to
   `)
 
   // change the color on the thought
+  // Wait for the thought to be in editing mode before interacting with the toolbar
+  await waitForSelector('[data-editing=true] [data-editable]')
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="text color swatches"] [aria-label="red"]')
 
@@ -364,6 +382,8 @@ it('Can change the background color of a thought that already has the same backg
   `)
 
   // change the background color on the thought
+  // Wait for the thought to be in editing mode before interacting with the toolbar
+  await waitForSelector('[data-editing=true] [data-editable]')
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="background color swatches"] [aria-label="red"]')
 
@@ -379,6 +399,8 @@ it('Can change the color of a note that already has the same color applied to pa
   `)
 
   // change the color on the note
+  // Wait for the parent thought 'a' to render before clicking note
+  await waitForEditable('a')
   await clickFirstNote()
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="text color swatches"] [aria-label="red"]')

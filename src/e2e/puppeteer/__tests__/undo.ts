@@ -8,6 +8,7 @@ import getEditingText from '../helpers/getEditingText'
 import keyboard from '../helpers/keyboard'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
+import waitForEditable from '../helpers/waitForEditable'
 import { page } from '../setup'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
@@ -84,10 +85,13 @@ it('Should revert background color changes back to previous values', async () =>
 
   await paste(importText)
 
+  // Wait for thought to render before interacting with the toolbar
+  await waitForEditable('Lorem Ipsum Dolor Sit Amet')
+
   // open the ColorPicker
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
 
-  const thought = await page.$('[aria-label=thought] [data-editable=true]')
+  const thought = await page.waitForSelector('[aria-label=thought] [data-editable=true]')
   const boundingBox = await thought?.boundingBox()
 
   if (!boundingBox) throw new Error('boundingBox not found')

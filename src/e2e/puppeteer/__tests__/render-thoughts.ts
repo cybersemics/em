@@ -11,6 +11,7 @@ import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import scroll from '../helpers/scroll'
 import setTheme from '../helpers/setTheme'
+import waitForSelector from '../helpers/waitForSelector'
 import { page } from '../setup'
 
 expect.extend({
@@ -200,6 +201,8 @@ describe('Color Theme', () => {
     await paste(importText)
 
     await clickThought('Golden Retriever')
+    // Wait for the thought to be in editing mode before interacting with the toolbar
+    await waitForSelector('[data-editing=true] [data-editable]')
     await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
     await click('[aria-label="background color swatches"] [aria-label="green"]')
 
@@ -258,7 +261,7 @@ describe('Superscripts', () => {
     await paste(importText)
 
     // Double click inside the left edge to select the first word
-    const note = await page.$('[aria-label=note-editable]')
+    const note = await page.waitForSelector('[aria-label=note-editable]')
     const boundingBox = await note?.boundingBox()
 
     if (!boundingBox) throw new Error('boundingBox not found')
