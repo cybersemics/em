@@ -11,14 +11,15 @@ describe('sample schema validation', () => {
     const files = fs.readdirSync(samplesDir).filter(f => f.endsWith('.json'))
     for (const file of files) {
       const content = fs.readFileSync(path.join(samplesDir, file), 'utf-8')
-      const sample = JSON.parse(content)
+      const sample = JSON.parse(content) as Record<string, unknown>
+      const input = sample.input as Record<string, unknown>
 
       // Required fields
       expect(sample).toHaveProperty('input')
-      expect(sample.input).toHaveProperty('title')
-      expect(sample.input).toHaveProperty('body')
-      expect(sample.input).toHaveProperty('labels')
-      expect(Array.isArray(sample.input.labels)).toBe(true)
+      expect(input).toHaveProperty('title')
+      expect(input).toHaveProperty('body')
+      expect(input).toHaveProperty('labels')
+      expect(Array.isArray(input.labels)).toBe(true)
       expect(sample).toHaveProperty('expected')
       expect(['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL']).toContain(sample.expected)
     }

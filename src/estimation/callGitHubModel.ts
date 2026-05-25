@@ -45,7 +45,7 @@ const callGitHubModel = async ({ token, prompt }: CallOptions): Promise<string[]
 
     // Try to parse and validate immediately
     try {
-      const parsed = JSON.parse(content)
+      const parsed = JSON.parse(content) as Record<string, unknown>
       if (parsed.estimate) {
         return outputs
       }
