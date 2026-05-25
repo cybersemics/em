@@ -64,7 +64,6 @@ it('basic import with proper thought structure', () => {
       lastUpdated: never(),
       // TODO: Is this expected?
       pending: true,
-      rank: 0,
     },
     [contextToThoughtId(stateNew, [HOME_TOKEN])!]: {
       childrenMap: { [childAId]: childAId },
@@ -78,13 +77,11 @@ it('basic import with proper thought structure', () => {
     [contextToThoughtId(stateNew, ['a'])!]: {
       id: childAId,
       value: 'a',
-      rank: 0,
       childrenMap: { [childBId]: childBId },
     },
     [contextToThoughtId(stateNew, ['a', 'b'])!]: {
       id: childBId,
       value: 'b',
-      rank: 0,
       childrenMap: {},
     },
   })
