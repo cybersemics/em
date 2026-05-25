@@ -16,18 +16,12 @@ import { commandById, commandEmitter, executeCommand } from './commands'
 import getLexemeHelper from './data-providers/data-helpers/getLexeme'
 import { initPermissionsStore } from './data-providers/permissionsStore'
 import { clientIdReady } from './data-providers/thoughtspaceSession'
-import { dumpTreecrdt, treeFromJson } from './data-providers/treecrdt/debug'
 import {
   enqueueMaterializedThoughtsToStore,
   tryStartTreecrdtWebSocketSyncFromEnv as tryStartTreecrdtWebSocketSync,
 } from './data-providers/treecrdt/sync'
 import db, { init as initTreecrdtThoughtspace } from './data-providers/treecrdt/thoughtspace'
-import {
-  dropTreecrdt,
-  getTreecrdtClient,
-  initTreecrdt,
-  registerBeforeTreecrdtClose,
-} from './data-providers/treecrdt/treecrdt'
+import { dropTreecrdt, initTreecrdt, registerBeforeTreecrdtClose } from './data-providers/treecrdt/treecrdt'
 import { isTreecrdtLocalMaterialization, waitForTreecrdtWriteBarrier } from './data-providers/treecrdt/writeBarrier'
 import * as selection from './device/selection'
 import testFlags from './e2e/testFlags'
@@ -245,48 +239,6 @@ const windowEm = {
   testFlags,
   testHelpers,
   thoughtToContext: withState((state: State, thoughtId: ThoughtId) => thoughtToContext(state, thoughtId)),
-  treecrdtClient: getTreecrdtClient,
-  treecrdtNodeCount: async () => {
-    try {
-      return await getTreecrdtClient().tree.nodeCount()
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err)
-      if (msg.includes('not initialized')) {
-        console.warn('TreeCRDT not initialized (test mode?)')
-        return 0
-      }
-      throw err
-    }
-  },
-  dumpTreecrdt: async (opts?: { includeTombstones?: boolean }) => {
-    try {
-      const rows = await dumpTreecrdt(opts)
-      // eslint-disable-next-line no-console
-      console.table(rows)
-      return rows
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err)
-      if (msg.includes('not initialized')) {
-        console.warn('TreeCRDT not initialized (test mode?)')
-      } else {
-        throw err
-      }
-      return []
-    }
-  },
-  treeFromJson: async () => {
-    try {
-      return await treeFromJson()
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err)
-      if (msg.includes('not initialized')) {
-        console.warn('TreeCRDT not initialized (test mode?)')
-      } else {
-        throw err
-      }
-      return null
-    }
-  },
 }
 
 window.em = windowEm
