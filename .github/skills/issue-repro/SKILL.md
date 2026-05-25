@@ -114,6 +114,8 @@ The browser environment is now ready (Step 2) with a fresh browser profile and a
 
 ## Step 4: Fix the Issue
 
+> **Plan gate first.** Before you write any fix, execute the `plan` skill (Plan + Critique) using the reproduction evidence you just gathered. Root-cause investigation, the build-vs-extend decision, and the adjacent-behaviour check happen inside `plan` — return here to implement only once its Critique stage has passed.
+
 1. Use the reproduction evidence (error message, stack trace, console output) to locate the root cause. Read the relevant source code. Do not guess the cause without evidence.
 2. Implement a targeted fix. Prefer the smallest change that addresses the root cause without breaking related behavior.
 3. Ensure related behavior is not broken by taking a moment to analyze any potential impact of your change on the surrounding code and features. Fix any issues you identify before proceeding to validation.
