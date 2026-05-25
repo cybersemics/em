@@ -1,5 +1,14 @@
+import type { LocalWriteOptions, MaterializationEvent } from '@treecrdt/interface/engine'
+
 let pendingTreecrdtWrite = Promise.resolve()
-let localTreecrdtWriteDepth = 0
+let localWriteCounter = 0
+
+const localWriteSourceId =
+  typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+    ? crypto.randomUUID()
+    : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`
+
+const localWriteIdPrefix = `em-local:${localWriteSourceId}:`
 
 /**
  * Queues em -> TreeCRDT persistence work and exposes an idle barrier for materialization refreshes.
@@ -23,22 +32,26 @@ export async function waitForTreecrdtWriteBarrier(): Promise<void> {
   } while (pending !== pendingTreecrdtWrite)
 }
 
-/** Runs a TreeCRDT local write while marking same-tab materialization events as already applied optimistically. */
-export async function withTreecrdtLocalWrite<T>(work: () => Promise<T>): Promise<T> {
-  localTreecrdtWriteDepth += 1
-  try {
-    return await work()
-  } finally {
-    localTreecrdtWriteDepth -= 1
-  }
+/** Creates local write metadata used to identify materialization events already applied optimistically in Redux. */
+export function createTreecrdtLocalWriteOptions(): LocalWriteOptions {
+  localWriteCounter += 1
+  return { writeId: `${localWriteIdPrefix}${localWriteCounter}` }
 }
 
-/** True while this tab is applying an optimistic local write to TreeCRDT. */
-export const isTreecrdtLocalWriteInProgress = (): boolean => localTreecrdtWriteDepth > 0
+/** True when a materialization event was produced by this tab's own optimistic TreeCRDT write. */
+export const isTreecrdtLocalMaterialization = (event: MaterializationEvent): boolean => {
+  return (
+    event.changes.length > 0 &&
+    event.changes.every(change => {
+      const writeIds = change.source?.writeIds
+      return !!writeIds?.length && writeIds.every(writeId => writeId.startsWith(localWriteIdPrefix))
+    })
+  )
+}
 
 export default {
-  isTreecrdtLocalWriteInProgress,
+  createTreecrdtLocalWriteOptions,
+  isTreecrdtLocalMaterialization,
   waitForTreecrdtWriteBarrier,
-  withTreecrdtLocalWrite,
   withTreecrdtWriteBarrier,
 }

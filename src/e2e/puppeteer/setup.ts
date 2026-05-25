@@ -1,6 +1,7 @@
 /* eslint-disable import/prefer-default-export */
 import chalk from 'chalk'
 import { Browser, BrowserContext, ConsoleMessage, Device, Page } from 'puppeteer'
+import type { WindowEm } from '../../initialize'
 import waitForAppReady from './helpers/waitForAppReady'
 
 // eslint-disable-next-line @typescript-eslint/no-namespace, @typescript-eslint/prefer-namespace-keyword
@@ -11,6 +12,18 @@ declare module global {
 export let page: Page
 let context: BrowserContext
 let sessionCounter = 0
+let treecrdtStorage: 'memory' | 'opfs' = 'memory'
+
+/** Use persistent OPFS storage for tests that verify reload/materialization from storage. */
+export const usePersistentTreecrdtStorage = () => {
+  beforeAll(() => {
+    treecrdtStorage = 'opfs'
+  })
+
+  afterAll(() => {
+    treecrdtStorage = 'memory'
+  })
+}
 
 /** Opens em in a new incognito window in Puppeteer. */
 const setup = async ({
@@ -40,16 +53,20 @@ const setup = async ({
 
   const sessionId = `puppeteer-${Date.now()}-${sessionCounter++}-${Math.random().toString(36).slice(2)}`
 
-  await page.evaluateOnNewDocument(sessionId => {
-    if (!sessionStorage.getItem('__em_puppeteer_storage_initialized')) {
-      localStorage.clear()
-      sessionStorage.setItem('__em_puppeteer_storage_initialized', '1')
-    }
+  await page.evaluateOnNewDocument(
+    ({ sessionId, treecrdtStorage }) => {
+      if (!sessionStorage.getItem('__em_puppeteer_storage_initialized')) {
+        localStorage.clear()
+        sessionStorage.setItem('__em_puppeteer_storage_initialized', '1')
+      }
 
-    localStorage.setItem('tsid', sessionId)
-    localStorage.setItem('accessToken', sessionId)
-    localStorage.setItem('treecrdtRuntime', 'dedicated-worker')
-  }, sessionId)
+      localStorage.setItem('tsid', sessionId)
+      localStorage.setItem('accessToken', sessionId)
+      localStorage.setItem('treecrdtRuntime', 'direct')
+      localStorage.setItem('treecrdtStorage', treecrdtStorage)
+    },
+    { sessionId, treecrdtStorage },
+  )
 
   page.on('dialog', async dialog => dialog.accept())
 
@@ -90,13 +107,33 @@ const setup = async ({
 
     // wait for welcome modal to disappear
     await page.waitForFunction(() => !document.getElementById('skip-tutorial'))
+
+    // The skip action clears storage, closes the modal, and rerenders the empty thoughtspace.
+    // Wait until the first real e2e key command can be handled by the app shell.
+    await page.waitForSelector('#content')
+    await page.waitForSelector('[aria-label=menu]')
+    await page.waitForFunction(() => !document.querySelector('[aria-label=modal]'))
+    await page.waitForFunction(() => document.querySelector('[aria-label=empty-thoughtspace], [data-editable]'))
+    await page.evaluate(async () => {
+      await (window.em as Partial<WindowEm> | undefined)?.testHelpers?.waitForTreecrdtIdle?.()
+    })
   }
 }
 
 beforeEach(setup, 60000)
 
+// TreeCRDT teardown can drain OPFS writes from import-heavy tests before dropping storage.
 afterEach(async () => {
   if (page) {
+    await page
+      .evaluate(async () => {
+        await (window.em as Partial<WindowEm> | undefined)?.testHelpers?.waitForTreecrdtIdle?.()
+        await (window.em as Partial<WindowEm> | undefined)?.testHelpers?.dropTreecrdt?.()
+      })
+      .catch(() => {
+        // Ignore teardown errors when a failing test has already closed or navigated the page.
+      })
+
     await page.close().catch(() => {
       // Ignore errors when closing the page.
     })
@@ -107,4 +144,4 @@ afterEach(async () => {
       // Ignore errors when closing the context.
     })
   }
-})
+}, 60000)

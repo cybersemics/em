@@ -1,4 +1,4 @@
-import { type TreecrdtClient, createTreecrdtClient } from '@treecrdt/wa-sqlite/client'
+import { type ClientOptions, type TreecrdtClient, createTreecrdtClient } from '@treecrdt/wa-sqlite'
 import storage from '../../util/storage'
 import { tsid } from '../thoughtspaceSession'
 
@@ -32,29 +32,37 @@ async function runBeforeTreecrdtClose(): Promise<void> {
   await Promise.all(handlers.map(h => h()))
 }
 
-/** Initializes the TreeCRDT client with OPFS storage. */
+/** Gets the configured TreeCRDT runtime for persistent browser sessions. */
+const getRuntime = (): NonNullable<ClientOptions['runtime']> => {
+  const runtimeOverride = storage.getItem('treecrdtRuntime')
+
+  if (runtimeOverride === 'direct' || runtimeOverride === 'dedicated-worker' || runtimeOverride === 'shared-worker') {
+    return { type: runtimeOverride }
+  }
+
+  return typeof SharedWorker === 'undefined' ? { type: 'auto' } : { type: 'shared-worker' }
+}
+
+/** Initializes the TreeCRDT client. */
 export const initTreecrdt = async (): Promise<TreecrdtClient> => {
   if (import.meta.env.MODE === 'test') {
     client = createTestTreecrdtClient()
     return client
   }
 
-  // SharedWorker is the intended browser runtime for one OPFS store across tabs. Keep a local override so we can
-  // compare dedicated-worker behavior while Antonov's fork is still validating the TreeCRDT backend.
-  const runtime =
-    storage.getItem('treecrdtRuntime') === 'dedicated-worker'
-      ? { type: 'dedicated-worker' as const }
-      : typeof SharedWorker === 'undefined'
-        ? { type: 'auto' as const }
-        : { type: 'shared-worker' as const }
+  const useTransientMemory = storage.getItem('treecrdtStorage') === 'memory'
 
   client = await createTreecrdtClient({
-    storage: {
-      type: 'opfs',
-      filename: `/treecrdt-em-${tsid}.db`,
-      fallback: 'throw',
-    },
-    runtime,
+    storage: useTransientMemory
+      ? { type: 'memory' }
+      : {
+          type: 'opfs',
+          filename: `/treecrdt-em-${tsid}.db`,
+          fallback: 'throw',
+        },
+    // Tests may opt into memory storage when persistence is irrelevant. Normal browser sessions use SharedWorker+OPFS
+    // so the one-store-across-tabs path remains the default behavior.
+    runtime: useTransientMemory ? { type: 'direct' } : getRuntime(),
     docId: tsid,
   })
   return client

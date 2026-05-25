@@ -1,5 +1,5 @@
 /* eslint-disable import/prefer-default-export */
-import type { TreecrdtClient } from '@treecrdt/wa-sqlite/client'
+import type { TreecrdtClient } from '@treecrdt/wa-sqlite'
 import type Lexeme from '../../@types/Lexeme'
 
 /** Application-owned lexeme rows in the same SQLite DB as TreeCRDT (not part of the CRDT tree). */
