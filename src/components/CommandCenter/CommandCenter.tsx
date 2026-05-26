@@ -24,9 +24,9 @@ import fastClick from '../../util/fastClick'
 import PanelCommand from './PanelCommand'
 import PanelCommandGroup from './PanelCommandGroup'
 
-/** MUI easeOut — matches the open curve used by main's SwipeableDrawer. */
-const easeOpen = [0, 0, 0.2, 1] as const
-/** MUI sharp — matches the close curve used by main's SwipeableDrawer. Slow first frame avoids a large initial gap. */
+/** Close to MUI easeOut, but with a 20% head start to catch up with the finger. Otherwise it feels sluggish. The animation can't start until touchend, so we can't afford to smoothly animate from 0. */
+const easeOpen = [0.1, 0.2, 0.2, 1] as const
+/** MUI sharp — matches the close curve used by SwipeableDrawer. Slow first frame avoids a large initial gap. */
 const easeClose = [0.4, 0, 0.6, 1] as const
 
 /**
@@ -158,7 +158,7 @@ const CommandCenter = () => {
           detent='content'
           unstyled
           tweenConfig={{
-            duration: durationsConfig.medium / 1000,
+            duration: durationsConfig.commandCenter / 1000,
             ease: showCommandCenter ? easeOpen : easeClose,
           }}
           style={{

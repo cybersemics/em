@@ -38,6 +38,7 @@ const durationsConfig = {
   disappearingUpperRight: 500,
   disappearingLowerLeft: 500,
   activeButtonGlow: 400,
+  commandCenter: 320,
 } as const
 
 export default durationsConfig
