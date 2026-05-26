@@ -1,5 +1,5 @@
 ---
-name: browser-control-ios-select-text
+name: interaction-ios-select-text
 description: >-
   Select a word inside an em editable on iOS App Automate so the native
   `Cut | Copy | Paste` edit menu appears and `window.getSelection()` reflects

@@ -95,7 +95,7 @@ Verified: two `tap` actions, 100 ms gap, at the focused-state word center. iOS d
     {"action":"tap","options":{"x":'$CX','"y":'$CY'}}]'
 ```
 
-The higher-level recipe (focus → re-fetch coords → dispatch → verify) lives in [`browser-control-ios-select-text`](../browser-control-ios-select-text/SKILL.md); reach for that one for the text-selection use case rather than calling this directly.
+The higher-level recipe (focus → re-fetch coords → dispatch → verify) lives in [`interaction-ios-select-text`](../interaction-ios-select-text/SKILL.md); reach for that one for the text-selection use case rather than calling this directly.
 
 ---
 
