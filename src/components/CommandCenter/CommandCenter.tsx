@@ -18,8 +18,8 @@ import note from '../../commands/note'
 import outdent from '../../commands/outdent'
 import swapParent from '../../commands/swapParent'
 import uncategorize from '../../commands/uncategorize'
-import durationsConfig from '../../durations.config'
 import isTutorial from '../../selectors/isTutorial'
+import durations from '../../util/durations'
 import fastClick from '../../util/fastClick'
 import PanelCommand from './PanelCommand'
 import PanelCommandGroup from './PanelCommandGroup'
@@ -158,7 +158,7 @@ const CommandCenter = () => {
           detent='content'
           unstyled
           tweenConfig={{
-            duration: durationsConfig.commandCenter / 1000,
+            duration: durations.get('commandCenter') / 1000,
             ease: showCommandCenter ? easeOpen : easeClose,
           }}
           style={{
