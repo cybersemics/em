@@ -62,9 +62,10 @@ The session drives a pre-built **server-mode** build of **em**'s Capacitor app. 
 
 ### Heartbeat
 
-Immediately after `start_session` returns, capture the session ID and start the heartbeat (it self-daemonizes — **no** trailing `&`):
+Immediately after `start_session` returns, capture the session ID. Save it to `/tmp/em-bs-session.txt` (the `browser-control-ios-touch-fallback` skill reads it from there) and start the heartbeat (it self-daemonizes — **no** trailing `&`):
 
 ```bash
+echo "<session-id>" > /tmp/em-bs-session.txt
 .github/skills/browser-control-ios/heartbeat.sh "<session-id>"
 ```
 
@@ -101,7 +102,7 @@ A `null` result means the proxy is **not** active in this build (it self-install
 ### Interaction notes (web context)
 
 - Use **`tap_element`**, not `click_element` (the WebDriver `element.click()` is silently ignored on iOS).
-- **`tap_element` by selector, never coordinates** — coordinate taps fail with `Unhandled endpoint: /session/.../actions with method DELETE` (the W3C Actions DELETE call is unimplemented on this stack). Prefer CSS / ID / `aria-label`; read `src/e2e/iOS/__tests__/` for the canonical em selectors rather than guessing.
+- **`tap_element` by selector when you can** — selectors are more robust against em's focus-driven layout shifts (the editable moves ~26 px when the keyboard opens). Coord-based `tap_element { x, y }` works fine for single taps; for multi-touch sequences (double-tap, custom timing) drop down to [`browser-control-ios-touch-fallback`](../browser-control-ios-touch-fallback/SKILL.md). Prefer CSS / ID / `aria-label`; read `src/e2e/iOS/__tests__/` for the canonical em selectors rather than guessing.
 - Expect **HMR reloads** when you edit source files — the page reloads on the device and in-memory app state (created thoughts, cursor, dismissed modals) resets. Re-run wait-for-mount and re-create state after edits.
 
 ## Native augmentation (drop down only when the model above calls for it)
@@ -110,11 +111,8 @@ A `null` result means the proxy is **not** active in this build (it self-install
 
 - **Screenshots — always native.** A native device screenshot captures the full screen (status bar, keyboard, selection handles, gesture-menu overlay, system dialogs) that a web screenshot can't see, and it's **context-independent** (can grab screenshot without switching context). Capture one after native interactions, after web actions that can summon native UI (focus → keyboard, selection → menu), and whenever in iteration you feel you need visual context.
 - **Always query the accessibility tree with scope.** Use `get_elements` with a **specific** `-ios predicate string` / class chain to find a target; don't dump the full tree (broad scans are slow). The native tree mirrors rendered web content, so some web facts are readable from native without switching — but for precise web work, use the DOM.
-- **Text selection → native double-tap (flaky by nature — make it a verified, retrying step):**
-  1. **Compute the point in web, use it raw.** Take the editable's center from `getBoundingClientRect()` on the `//div[@data-editable …]` node (see `getEditable` in `src/e2e/iOS/helpers/`). For em's full-screen Capacitor webview the web CSS-px origin ≈ the native screen-point origin (offset ≈ 0), so pass the rect center straight to the native touch. **Do not** add a native-element offset — the Safari-era `getElementRectByScreen` adds the rect of `XCUIElementTypeOther[@name="em"]`, which in the app is the _scroll content_ (`y ≈ -26`) and pushes the tap off the word — and **do not** use screenshot pixels (those are points × DPR ≈ ×3).
-  2. **Double-tap via `performActions`, well-formed.** `mobile: doubleTap` and 0-duration taps register as two single taps (cursor placement → keyboard — the "keyboard closes / wrong place" symptom), so dispatch the pair yourself with a real hold and inter-tap gap: `pointerDown → pause 70 → pointerUp → pause 130 → pointerDown → pause 70 → pointerUp` (one `pointer`/`touch` sequence, mouse button 0, as in `src/e2e/iOS/helpers/tap.ts`). Call `performActions` **directly**; do not let the client auto-`releaseActions` (the W3C Actions `DELETE` endpoint is unimplemented on this stack).
-  3. **Verify and retry.** Even well-formed, this selects only ~50% of the time. After the double-tap, read `getSelection().toString()` in the webview; if it is empty (cursor only, no selection), re-tap and re-check (cap at ~3 attempts, then escalate). Never trust the tap call's success — confirm the selection in web.
-  - The native edit menu (`Cut`/`Copy`/`Paste`/…) is the visual confirmation, but **its element type is iOS-version-specific** — `XCUIElementTypeMenuItem` returns empty on iOS 26 (the menu moved to a different class). Query it with a scoped predicate and don't hard-code the type. The selection _state_ is most reliably read in web via `getSelection()`.
+- **Text selection (double-tap-to-select a word)** → use the [**`browser-control-ios-select-text`**](../browser-control-ios-select-text/SKILL.md) skill. It composes focus + coord re-fetch + a native double-tap (via the touch-fallback skill) + verification. The standard MCP touch tools (`mobile: doubleTap`, `tap_element` x/y, `performActions`) all **blur** the editable on this stack — WebKit's select-word recognizer only honours touches dispatched through the legacy JSONWP `/touch/perform` route.
+- **Other iOS gestures where the standard MCP tools misbehave** (e.g. visibly wrong outcome vs a real finger) → fall back to the [**`browser-control-ios-touch-fallback`**](../browser-control-ios-touch-fallback/SKILL.md) skill, which posts raw JSONWP TouchAction sequences. Use it only when needed — it's slower per call and you have to manage coordinates yourself.
 - **em gestures (native or held)** → use the **`interaction-gestures`** skill; it documents the native `performActions` dispatch (skipping the unsupported `releaseActions`/DELETE) and the synthetic-held technique for em's Gesture Menu.
 
 ## If the session terminates mid-run
