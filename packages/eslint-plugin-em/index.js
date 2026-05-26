@@ -3,6 +3,41 @@ import path from 'node:path'
 /** @type {import('eslint').ESLint.Plugin} */
 const plugin = {
   rules: {
+    'no-direct-durations-config-import': {
+      meta: {
+        type: 'problem',
+        docs: {
+          description:
+            'Disallow direct imports of durations.config. Use the durations utility (util/durations) instead.',
+        },
+        schema: [],
+        messages: {
+          noDirectDurationsConfigImport:
+            "Do not import durations.config directly. Use the durations utility (import durations from '../util/durations') instead.",
+        },
+      },
+      /**
+       * Reports direct imports of durations.config from files other than the durations util or test files.
+       *
+       * @param context
+       */
+      create(context) {
+        const filename = context.filename.replaceAll('\\', '/')
+        const isDurationsUtil = filename.endsWith('/util/durations.ts')
+        const isTestFile = filename.includes('/__tests__/')
+        const isPandaConfig = filename.endsWith('/panda.config.ts')
+        if (isDurationsUtil || isTestFile || isPandaConfig) return {}
+
+        return {
+          ImportDeclaration(node) {
+            const importPath = node.source.value
+            if (typeof importPath === 'string' && importPath.includes('durations.config')) {
+              context.report({ node, messageId: 'noDirectDurationsConfigImport' })
+            }
+          },
+        }
+      },
+    },
     'no-store-subscribe-in-components': {
       meta: {
         type: 'problem',
