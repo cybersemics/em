@@ -212,22 +212,24 @@ const dialogRecipe = defineSlotRecipe({
         'linear-gradient(to bottom, {colors.black} 0, {colors.black} calc(100% - 3.75rem), {colors.transparent} calc(100% - 0.25rem))',
       WebkitMaskImage:
         'linear-gradient(to bottom, {colors.black} 0, {colors.black} calc(100% - 3.75rem), {colors.transparent} calc(100% - 0.25rem))',
-      // Animated top-edge fade mask that ramps up as the user scrolls.
-      // Relies on `animation-timeline`, which has been supported in Chrome
-      // since 2023 and Safari since 2025.
-      // If `animation-timeline` isn't supported, we don't add the top-edge
-      // fade at all.
+      // Scroll-driven mask animations. Two effects share this element:
+      //   1. Top-edge fade ramps up as the user scrolls down (off at scroll = 0).
+      //   2. Bottom-edge fade collapses into the tail as the user reaches the bottom,
+      //      so the scrollability cue disappears once there's nothing left to scroll to.
+      // Relies on `animation-timeline`, which has been supported in Chrome since 2023
+      // and Safari since 2025.
       '@supports (animation-timeline: scroll(self))': {
         maskImage:
-          'linear-gradient(to bottom, {colors.transparent} 0, {colors.black} var(--dialog-content-mask-fade-top), {colors.black} calc(100% - 3.75rem), {colors.transparent} calc(100% - 0.25rem))',
+          'linear-gradient(to bottom, {colors.transparent} 0, {colors.black} var(--dialog-content-mask-fade-top), {colors.black} calc(100% - var(--dialog-content-mask-fade-bottom)), {colors.transparent} calc(100% - 0.25rem))',
         WebkitMaskImage:
-          'linear-gradient(to bottom, {colors.transparent} 0, {colors.black} var(--dialog-content-mask-fade-top), {colors.black} calc(100% - 3.75rem), {colors.transparent} calc(100% - 0.25rem))',
-        animationName: 'dialogContentScrollFade',
-        animationDuration: '1s',
-        animationTimingFunction: 'linear',
-        animationFillMode: 'both',
-        animationTimeline: 'scroll(self)',
-        animationRange: '0 4rem',
+          'linear-gradient(to bottom, {colors.transparent} 0, {colors.black} var(--dialog-content-mask-fade-top), {colors.black} calc(100% - var(--dialog-content-mask-fade-bottom)), {colors.transparent} calc(100% - 0.25rem))',
+        animationName: 'dialogContentScrollFade, dialogContentScrollFadeBottom',
+        animationDuration: '1s, 1s',
+        animationTimingFunction: 'linear, linear',
+        animationFillMode: 'both, both',
+        animationTimeline: 'scroll(self), scroll(self)',
+        // Top fade ramps over the first 4rem of scroll; bottom fade collapses over the last 1rem.
+        animationRange: '0 4rem, calc(100% - 1rem) 100%',
       },
     },
     /** Inner wrapper inside `content` that carries the horizontal text inset. Kept separate from `content` so the scrollbar gutter doesn't push text in further. */
