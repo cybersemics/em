@@ -8,6 +8,8 @@ export interface EverhourEstimate {
 export interface EverhourTask {
   id: string
   name: string
+  /** GitHub issue number string returned by some Everhour API versions for GitHub-linked tasks. */
+  foreignId?: string
   time?: { total?: number }
   estimate?: EverhourEstimate
   projects?: string[]

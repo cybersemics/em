@@ -7,20 +7,7 @@ import loadSamples from '../src/estimation/loadSamples'
 import validateEstimate from '../src/estimation/validateEstimate'
 import EverhourClient from '../src/everhour/client'
 import { CATEGORY_TO_HOURS, EstimateCategory, categoryToSeconds } from '../src/everhour/estimates'
-import { EverhourTask } from '../src/everhour/types'
-
-/** Extracts GitHub issue number from an Everhour task ID (format: gh:REPO_ID:ISSUE_NUMBER or similar). */
-const extractIssueNumber = (task: EverhourTask): number | null => {
-  // Everhour GitHub tasks typically have IDs like "gh:REPO_ID:ISSUE_NUMBER"
-  const parts = task.id.split(':')
-  if (parts.length >= 3) {
-    const num = parseInt(parts[parts.length - 1], 10)
-    return isNaN(num) ? null : num
-  }
-  // Also try to match from task name like "#123 Issue title"
-  const match = task.name.match(/^#(\d+)\s/)
-  return match ? parseInt(match[1], 10) : null
-}
+import extractIssueNumber from '../src/everhour/extractIssueNumber'
 
 /** Gets the prompt version. */
 const getPromptVersion = (repoRoot: string): string => {
@@ -81,7 +68,7 @@ const main = async () => {
 
     const issueNumber = extractIssueNumber(task)
     if (issueNumber === null) {
-      console.info(`  Skipping task "${task.name}" - cannot extract issue number`)
+      console.info(`  Skipping task "${task.name}" (${task.id}) - no GitHub issue number found`)
       continue
     }
 
@@ -146,4 +133,3 @@ main().catch(err => {
   process.exit(1)
 })
 
-export { extractIssueNumber }
