@@ -1,11 +1,12 @@
 import { EverhourTask } from './types'
 
 /**
- * Extracts a GitHub issue number from an Everhour task using three strategies:
+ * Extracts a GitHub issue number from an Everhour task.
  *
+ * Tries three strategies in order:
  * 1. **Task ID** — standard Everhour GitHub format `gh:REPO_ID:ISSUE_NUMBER`
  * 2. **foreignId** — numeric string returned by some Everhour API versions for GitHub-linked tasks
- * 3. **Task name** — `#NUMBER` appearing anywhere in the name (e.g. `"Fix bug (#123)"` or `"#123 Title"`)
+ * 3. **Task name** — `#NUMBER` appearing anywhere in the name (e.g. `"Fix bug (#123)"` or `"#123 Title"`).
  *
  * Returns `null` when no issue number can be extracted (e.g. manually-created Everhour tasks that have
  * no GitHub counterpart).
