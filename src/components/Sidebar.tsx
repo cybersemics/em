@@ -29,8 +29,7 @@ import { MotionValue, animate, motion, useMotionValue, useTransform } from 'fram
 import _ from 'lodash'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { css, cx } from '../../styled-system/css'
-import { sidebarContentMaskRecipe } from '../../styled-system/recipes'
+import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import { longPressActionCreator as longPress } from '../actions/longPress'
 import { toggleSidebarActionCreator } from '../actions/toggleSidebar'
@@ -1289,24 +1288,27 @@ const Sidebar = () => {
                           opacity: maskOpacity,
                         } as unknown as React.CSSProperties
                       }
-                      className={cx(
-                        css({
-                          flex: 1,
-                          overflowY: 'scroll',
-                          overflowX: 'hidden',
-                          overscrollBehavior: 'contain',
-                          scrollbarWidth: 'thin',
-                          scrollbarColor: '{colors.fgOverlay30} transparent',
-                          '&::-webkit-scrollbar': {
-                            width: '0px',
-                            background: 'transparent',
-                            display: 'none',
-                          },
-                          position: 'relative',
-                          padding: '0 1em',
-                        }),
-                        sidebarContentMaskRecipe(),
-                      )}
+                      className={css({
+                        flex: 1,
+                        overflowY: 'scroll',
+                        overflowX: 'hidden',
+                        overscrollBehavior: 'contain',
+                        scrollbarWidth: 'thin',
+                        scrollbarColor: '{colors.fgOverlay30} transparent',
+                        '&::-webkit-scrollbar': {
+                          width: '0px',
+                          background: 'transparent',
+                          display: 'none',
+                        },
+                        position: 'relative',
+                        padding: '0 1em',
+                        // Mask gradient (128px transparent band followed by a 48px fade to black) that
+                        // drives the dim-on-dropdown-open and scroll-fade effects. mask-position-y and
+                        // opacity are animated imperatively via framer-motion (above).
+                        maskRepeat: 'no-repeat',
+                        maskImage: 'linear-gradient(to bottom, transparent 0, transparent 128px, black 176px)',
+                        maskSize: '100% calc(100% + 176px)',
+                      })}
                     >
                       {/* Render the active section's content component */}
                       {sectionId === 'favorites' ? (
