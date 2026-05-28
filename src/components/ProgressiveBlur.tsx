@@ -1,4 +1,4 @@
-import { MotionValue, motion } from 'framer-motion'
+import { MotionValue, motion } from 'motion/react'
 import React from 'react'
 import { css } from '../../styled-system/css'
 

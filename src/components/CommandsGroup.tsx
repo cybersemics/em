@@ -35,8 +35,7 @@ const CommandsGroup: FC<CommandsGroupProps> = ({
     <div
       className={css({
         position: 'relative',
-        // We need to create a new a stacking context for the sticky title – otherwise, there are some visual artifacts
-        // when the title is sticky and the commands are scrolling on iOS.
+        // Layout/paint containment — preserves the existing rendering in the table view (CustomizeToolbar etc.) where removing it produced subpixel diffs.
         contain: 'layout paint',
       })}
     >
@@ -45,14 +44,10 @@ const CommandsGroup: FC<CommandsGroupProps> = ({
           modalClasses.subtitle,
           css({
             ...(viewType === 'grid' && {
-              fontSize: '1.156rem',
+              fontSize: '1.15rem',
               borderBottom: 'none',
-              position: 'sticky',
-              top: '-1.333rem',
-              background: 'linear-gradient(to bottom, {colors.bg} 85%, transparent)',
-              padding: '0.622rem 0',
+              padding: '0.5rem 0 1rem 0',
               margin: '0.444rem 0 0 0',
-              zIndex: 1,
             }),
           }),
         )}

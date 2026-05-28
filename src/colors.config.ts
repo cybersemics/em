@@ -82,12 +82,19 @@ const colors = {
     exportTextareaColor: 'rgba(170, 170, 170, 1)', // #aaa, also used in anchorButton
     panelBorder: 'rgba(36, 36, 36, 1)',
     panelBg: 'rgba(23, 23, 23, 1)', // #171717
-    commandCenterBlue: 'rgba(106, 154, 181, 1)',
-    commandCenterPurple: 'rgba(45, 8, 126, 1)', // #2d087e
+    commandCenterBlue: 'rgba(108, 150, 174, 1)', // #6c96ae
+    commandCenterPurple: 'rgba(54, 27, 112, 1)', // #361b70
+    commandCenterDoneButton: 'rgba(100, 100, 100, 0.1)',
     panelCommandBorderGradientPurple: 'rgba(130, 108, 203, 0)',
     panelCommandBorderGradientBlue: 'rgba(127, 172, 255, 0.08)',
     panelCommandBorderGradientGray: 'rgba(186, 187, 187, 0.26)',
     panelCommandBorderGradientPurpleLight: 'rgba(208, 210, 224, 0)',
+    dialogGlassFillTop: 'hsla(233, 24%, 30%, 0.24)',
+    dialogGlassFillMid: 'hsla(216, 24%, 49%, 0.12)',
+    dialogGlassFillBottom: 'hsla(245, 9%, 23%, 0.12)',
+    dialogGlassStrokeMuted: 'hsla(0, 0%, 100%, 0.18)',
+    dialogGlassStrokeBright: 'hsla(0, 0%, 100%, 0.74)',
+    dialogGlassMaskFade: 'rgba(255, 255, 255, 0.07)',
   },
   light: {
     // Background colors in capacitor app needs to be in hexadecimal codes
@@ -174,10 +181,17 @@ const colors = {
     panelBg: 'rgba(232, 232, 232, 1)', // #171717
     commandCenterBlue: 'rgba(106, 154, 181, 1)',
     commandCenterPurple: 'rgba(45, 8, 126, 1)', // #2d087e
+    commandCenterDoneButton: 'rgba(155, 155, 155, 0.1)',
     panelCommandBorderGradientPurple: 'rgba(130, 108, 203, 0)',
     panelCommandBorderGradientBlue: 'rgba(127, 172, 255, 0.08)',
     panelCommandBorderGradientGray: 'rgba(186, 187, 187, 0.26)',
     panelCommandBorderGradientPurpleLight: 'rgba(208, 210, 224, 0)',
+    dialogGlassFillTop: 'hsla(233, 24%, 30%, 0.24)',
+    dialogGlassFillMid: 'hsla(216, 24%, 49%, 0.12)',
+    dialogGlassFillBottom: 'hsla(245, 9%, 23%, 0.12)',
+    dialogGlassStrokeMuted: 'hsla(0, 0%, 100%, 0.18)',
+    dialogGlassStrokeBright: 'hsla(0, 0%, 100%, 0.74)',
+    dialogGlassMaskFade: 'rgba(255, 255, 255, 0.07)',
   },
 } as const
 
