@@ -1,5 +1,6 @@
 import { FC, PropsWithChildren } from 'react'
 import { css, cx } from '../../styled-system/css'
+import { editableRecipe } from '../../styled-system/recipes'
 import { SystemStyleObject } from '../../styled-system/types'
 import { MIN_CONTENT_WIDTH_EM } from '../constants'
 import isAttribute from '../util/isAttribute'
@@ -64,6 +65,7 @@ const ThoughtAnnotationWrapper: FC<
       <div
         className={
           cx(
+            editableRecipe(),
             css({
               ...(value &&
                 isAttribute(value) && {
@@ -80,7 +82,7 @@ const ThoughtAnnotationWrapper: FC<
                   This margin should match the margin set in editableRecipe (#3353).
                 */
               margin: '0 calc(18px - 1em) 0 calc(1em - 18px)',
-              padding: '0.375em 1em 0.375em 0.333em',
+              paddingRight: ellipsizedUrl ? '0.333em' : '1em',
               textAlign: isTableCol1 ? 'right' : 'left',
             }),
           )
