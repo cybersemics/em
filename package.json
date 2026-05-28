@@ -160,7 +160,7 @@
     "yjs": "^13.6.30"
   },
   "devDependencies": {
-    "@babel/core": "^7.29.0",
+    "@babel/core": "^7.29.7",
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@capacitor/cli": "^8.3.4",
     "@eslint-community/eslint-plugin-eslint-comments": "^4.7.1",
