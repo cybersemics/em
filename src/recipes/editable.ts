@@ -6,7 +6,7 @@ const editableRecipe = defineRecipe({
   base: {
     /* Add some padding-right for increased click area. */
     /* Add some padding-left otherwise caret is invisible on empty elements. */
-    padding: '0.375em 1em 0.3757233089870876736em 0.333em',
+    padding: '0.375em 1em 0.375em 0.333em',
     boxSizing: 'border-box',
     // Adjust the space between the bullet and the text with margin-left. When font size is greater than 18px, the space will be increased. When the font size is less than 18th, the space will be decreased.
     // The margin-right must offset margin-left to ensure that urls are not incorrectly ellipsized on smaller font sizes. This is because text-overflow: 'ellipsis' applied to the ThoughtAnnotation does not account for the negative margin of the child.
