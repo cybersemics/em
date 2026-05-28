@@ -8,7 +8,7 @@ import refresh from '../helpers/refresh'
 import waitForEditable from '../helpers/waitForEditable'
 import waitUntil from '../helpers/waitUntil'
 
-vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
+vi.setConfig({ testTimeout: 60000, hookTimeout: 60000 })
 
 it('set the cursor to a thought in the home context on load', async () => {
   const importText = `

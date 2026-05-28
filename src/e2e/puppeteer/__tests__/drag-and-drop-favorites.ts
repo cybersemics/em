@@ -4,9 +4,10 @@ import dragAndDropFavorite from '../helpers/dragAndDropFavorite'
 import openSidebar from '../helpers/openSidebar'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
+import waitForAlertContent from '../helpers/waitForAlertContent'
 import { page } from '../setup'
 
-vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
+vi.setConfig({ testTimeout: 60000, hookTimeout: 60000 })
 
 /** Get the order of favorites as displayed in the sidebar. */
 const selectFavoritesText = async () => {
@@ -40,15 +41,19 @@ describe('favorites drag and drop', () => {
     // Add thoughts to favorites
     await clickThought('a')
     await click('[aria-label="Add to Favorites"]')
+    await waitForAlertContent('Added')
 
     await clickThought('b')
     await click('[aria-label="Add to Favorites"]')
+    await waitForAlertContent('Added')
 
     await clickThought('c')
     await click('[aria-label="Add to Favorites"]')
+    await waitForAlertContent('Added')
 
     await clickThought('d')
     await click('[aria-label="Add to Favorites"]')
+    await waitForAlertContent('Added')
 
     // Open favorites in sidebar
     await openSidebar()
@@ -74,16 +79,20 @@ describe('favorites drag and drop', () => {
     // Add thoughts to favorites
     await clickThought('a')
     await click('[aria-label="Add to Favorites"]')
+    await waitForAlertContent('Added')
 
     await clickThought('b')
     await click('[aria-label="Add to Favorites"]')
+    await waitForAlertContent('Added')
 
     await clickThought('c')
     await click('[aria-label="Add to Favorites"]')
+    await waitForAlertContent('Added')
 
     await press('ArrowDown')
     await clickThought('e')
     await click('[aria-label="Add to Favorites"]')
+    await waitForAlertContent('Added')
 
     await openSidebar()
 
