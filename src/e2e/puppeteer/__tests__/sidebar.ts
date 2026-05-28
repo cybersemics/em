@@ -38,6 +38,7 @@ describe('sidebar', () => {
     await keyboard.type('a')
 
     await openSidebar()
+    await click('[data-testid=sidebar-section-picker]')
     await click('[data-testid=sidebar-recentlyEdited]')
 
     expect(await screenshotWithoutToolbarIcons()).toMatchImageSnapshot({
