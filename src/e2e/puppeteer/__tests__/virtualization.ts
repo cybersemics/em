@@ -7,7 +7,7 @@ import { page } from '../setup'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
-const thoughtCount = 30
+const thoughtCount = 50
 
 /** Counts the number of rendered nodes. */
 const countNodes = () =>

@@ -22,7 +22,6 @@ import waitUntil from '../helpers/waitUntil'
 import { usePersistentTreecrdtStorage } from '../setup'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
-usePersistentTreecrdtStorage()
 
 describe('all platforms', () => {
   // TODO: Why is this failing?
@@ -132,29 +131,6 @@ describe('all platforms', () => {
     expect(offset).toBe(0)
   })
 
-  it('when cursor is null, clicking on a thought after refreshing page, caret should be set on first click', async () => {
-    const importText = `
-    - a
-    - b`
-
-    await paste(importText)
-    await clickThought('a')
-
-    // Set cursor to null
-    await click('#content')
-
-    await waitForThoughtExistInDb('a')
-    await waitForThoughtExistInDb('b')
-
-    await refresh()
-
-    await waitForEditable('b')
-    await clickThought('b')
-
-    const textContext = await getSelection().focusNode?.textContent
-    expect(textContext).toBe('b')
-  })
-
   // https://github.com/cybersemics/em/issues/1568
   it('caret at the end of a thought should be preserved on indent and outdent', async () => {
     const importText = `
@@ -240,6 +216,33 @@ describe('all platforms', () => {
 
     // no assertions needed, the test will fail if the caret is not in the editable
     // If the waitUntil succeeds, the expect will always pass since we just confirmed that exact condition. If waitUntil times out, we never reach the expect anyway.
+  })
+})
+
+describe('persistent storage', () => {
+  usePersistentTreecrdtStorage()
+
+  it('when cursor is null, clicking on a thought after refreshing page, caret should be set on first click', async () => {
+    const importText = `
+    - a
+    - b`
+
+    await paste(importText)
+    await clickThought('a')
+
+    // Set cursor to null
+    await click('#content')
+
+    await waitForThoughtExistInDb('a')
+    await waitForThoughtExistInDb('b')
+
+    await refresh()
+
+    await waitForEditable('b')
+    await clickThought('b')
+
+    const textContext = await getSelection().focusNode?.textContent
+    expect(textContext).toBe('b')
   })
 })
 
