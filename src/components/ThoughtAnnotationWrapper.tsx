@@ -1,6 +1,6 @@
 import { FC, PropsWithChildren } from 'react'
 import { css, cx } from '../../styled-system/css'
-import { multilineRecipe } from '../../styled-system/recipes'
+import { editableRecipe } from '../../styled-system/recipes'
 import { SystemStyleObject } from '../../styled-system/types'
 import { MIN_CONTENT_WIDTH_EM } from '../constants'
 import isAttribute from '../util/isAttribute'
@@ -27,7 +27,6 @@ const ThoughtAnnotationWrapper: FC<
 > = ({
   cursorOverlay,
   ellipsizedUrl,
-  multiline,
   value,
   styleAnnotation,
   cssRaw,
@@ -66,7 +65,7 @@ const ThoughtAnnotationWrapper: FC<
       <div
         className={
           cx(
-            multiline ? multilineRecipe() : null,
+            editableRecipe(),
             css({
               ...(value &&
                 isAttribute(value) && {
@@ -75,7 +74,6 @@ const ThoughtAnnotationWrapper: FC<
                 }),
               display: 'inline-block',
               maxWidth: '100%',
-              paddingLeft: '0.333em',
               boxSizing: 'border-box',
               whiteSpace: ellipsizedUrl ? 'nowrap' : undefined,
               /*
@@ -83,8 +81,8 @@ const ThoughtAnnotationWrapper: FC<
                   To make sure all lines are aligned need to apply the margin here, and remove margin from the .editable-annotation-text.
                   This margin should match the margin set in editableRecipe (#3353).
                 */
-              margin: '-0.5px calc(18px - 1em) 0 calc(1em - 18px)',
-              paddingRight: multiline ? '1em' : '0.333em',
+              margin: '0 calc(18px - 1em) 0 calc(1em - 18px)',
+              paddingRight: ellipsizedUrl ? '0.333em' : '1em',
               textAlign: isTableCol1 ? 'right' : 'left',
             }),
           )

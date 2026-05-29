@@ -17,7 +17,6 @@ import linkRecipe from './src/recipes/link'
 import modalRecipe from './src/recipes/modal'
 import modalActionLinkRecipe from './src/recipes/modalActionLink'
 import modalTextRecipe from './src/recipes/modalText'
-import multilineRecipe from './src/recipes/multiline'
 import panelCommandGroupRecipe from './src/recipes/panelCommandGroupRecipe'
 import panelCommandRecipe from './src/recipes/panelCommandRecipe'
 import slideTransitionRecipe from './src/recipes/slideTransition'
@@ -496,7 +495,6 @@ export default defineConfig({
         thoughtRecipe,
         editableRecipe,
         textNoteRecipe,
-        multilineRecipe,
         modalActionLinkRecipe,
         toolbarPointerEventsRecipe,
         tutorialBulletRecipe,
