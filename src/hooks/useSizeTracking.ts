@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useSelector } from 'react-redux'
 import Index from '../@types/IndexType'
 import ThoughtId from '../@types/ThoughtId'
 
@@ -7,7 +6,6 @@ import ThoughtId from '../@types/ThoughtId'
 const useSizeTracking = () => {
   // Track dynamic thought sizes from inner refs via VirtualThought. These are used to set the absolute y position which enables animation between any two states. isVisible is used to crop hidden thoughts.
   const [sizes, setSizes] = useState<Index<{ height: number; width?: number; isVisible: boolean }>>({})
-  const fontSize = useSelector(state => state.fontSize)
   const unmounted = useRef(false)
 
   const removeSize = useCallback((key: string) => {
@@ -52,7 +50,7 @@ const useSizeTracking = () => {
         removeSize(key)
       }
     },
-    [fontSize, removeSize],
+    [removeSize],
   )
 
   useEffect(() => {
