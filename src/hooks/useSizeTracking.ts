@@ -35,18 +35,13 @@ const useSizeTracking = () => {
       key: string
     }) => {
       if (height !== null) {
-        const lineHeightOverlap = fontSize / 8
-        const heightClipped = height - lineHeightOverlap
-
         setSizes(sizesOld =>
-          heightClipped === sizesOld[key]?.height &&
-          width === sizesOld[key]?.width &&
-          isVisible === sizesOld[key]?.isVisible
+          height === sizesOld[key]?.height && width === sizesOld[key]?.width && isVisible === sizesOld[key]?.isVisible
             ? sizesOld
             : {
                 ...sizesOld,
                 [key]: {
-                  height: heightClipped,
+                  height,
                   width: width || undefined,
                   cliff,
                   isVisible,
