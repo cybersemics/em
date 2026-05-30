@@ -1,0 +1,10 @@
+{
+  "input": {
+    "title": "Button alignment off on mobile",
+    "body": "The action buttons in the toolbar are misaligned on smaller screens. They overlap with the thought text.",
+    "labels": ["bug", "frontend"]
+  },
+  "expected": {
+    "milestone": "ux-polish"
+  }
+}
