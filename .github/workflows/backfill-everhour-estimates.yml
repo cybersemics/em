@@ -1,0 +1,36 @@
+name: Backfill Everhour estimates
+on:
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: 'Maximum number of tasks to estimate'
+        required: true
+        default: '10'
+      dry_run:
+        description: 'Preview candidates without updating Everhour or commenting'
+        required: true
+        default: 'true'
+        type: choice
+        options: ['true', 'false']
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: yarn install --frozen-lockfile
+      - name: Backfill Everhour estimates
+        run: yarn estimate:backfill
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EVERHOUR_API_KEY: ${{ secrets.EVERHOUR_API_KEY }}
+          EVERHOUR_PROJECT_ID: ${{ vars.EVERHOUR_PROJECT_ID }}
+          LIMIT: ${{ inputs.limit }}
+          DRY_RUN: ${{ inputs.dry_run }}

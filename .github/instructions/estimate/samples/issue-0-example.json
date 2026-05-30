@@ -1,0 +1,8 @@
+{
+  "input": {
+    "title": "Fix typo in README",
+    "body": "There's a typo in the README.md file. 'recieve' should be 'receive'.",
+    "labels": ["documentation"]
+  },
+  "expected": "XXS"
+}
