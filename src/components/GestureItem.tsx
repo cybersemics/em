@@ -61,6 +61,8 @@ const GestureItem: FC<{
           justifyContent: 'flex-start',
           alignItems: selected ? 'flex-start' : 'center',
           flexShrink: 0,
+          width: 18,
+          height: 18,
         })}
       >
         <GestureDiagram
