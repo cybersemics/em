@@ -94,9 +94,12 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
       aria-label='divider'
       ref={dividerRef}
       className={css({
+        // The line-height of single-line thoughts was 2em before #3598, and then was reduced by 0.125em by lineHeightOverlap in useSizeTracking.
+        // So the correct height is 1.875em minus the padding, plus the negative margin. 10px + 16px - 2px - 5px = 19px.
+        height: 'calc(1.875em - 19px)',
         margin: '-2px -4px -5px',
         marginLeft: '-20px',
-        padding: '10px 4px 1.6em',
+        padding: '10px 4px 16px',
         position: 'relative',
         zIndex: 'stack',
       })}
