@@ -31,7 +31,7 @@ describe('Split', () => {
     await tap(editableNodeHandle, { y: 60, x: 25 })
     await tapReturnKey()
 
-    await waitForEmIdle();
+    await waitForEmIdle()
 
     const offset = await getSelection()?.focusOffset
     expect(offset).toBe(0)

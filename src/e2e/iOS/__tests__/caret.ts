@@ -178,7 +178,7 @@ describe('Caret', () => {
 
     await tap(editableNodeHandle, { y: 60, x: 20 })
 
-    await waitForEmIdle();
+    await waitForEmIdle()
 
     const editingText = await getEditingText()
     expect(editingText).toBe('foo')
