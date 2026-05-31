@@ -1,6 +1,6 @@
 import reactMinistore from './react-ministore'
 
-/** A store that tracks state related to syncing. Updated by yjs/thouguhtspace. */
+/** A store that tracks state related to syncing. Updated by the treecrdt thoughtspace data provider. */
 const syncStatusStore = reactMinistore<{
   /** Tracks if the pullQueue is currently pulling. */
   isPulling: boolean

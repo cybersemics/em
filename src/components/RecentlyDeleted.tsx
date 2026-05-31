@@ -5,7 +5,7 @@ import { css } from '../../styled-system/css'
 import Thunk from '../@types/Thunk'
 import { pullActionCreator as pull } from '../actions/pull'
 import { pullAncestorsActionCreator as pullAncestors } from '../actions/pullAncestors'
-import { getLexemeById } from '../data-providers/yjs/thoughtspace'
+import db from '../data-providers/treecrdt/thoughtspace'
 import useDelayedState from '../hooks/useDelayedState'
 import getChildPath from '../selectors/getChildPath'
 import { getAllChildren } from '../selectors/getChildren'
@@ -21,7 +21,7 @@ import ThoughtLink from './ThoughtLink'
 /** An action-creator that pulls all deleted thoughts, i.e. children of contexts of =archive. */
 const pullDeleted = (): Thunk<Promise<void>> => async (dispatch, getState) => {
   // pull the =archive lexeme
-  const lexeme = await getLexemeById(hashThought('=archive'))
+  const lexeme = await db.getLexemeById(hashThought('=archive'))
   // pull all ancestors of all contexts of =archive
   await dispatch(pullAncestors(lexeme?.contexts ?? [], { force: true, maxDepth: 0 }))
   const state = getState()

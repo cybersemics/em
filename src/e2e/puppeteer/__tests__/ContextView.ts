@@ -6,8 +6,10 @@ import scrollBy from '../helpers/scrollBy'
 import scrollIntoView from '../helpers/scrollIntoView'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
+import { usePersistentTreecrdtStorage } from '../setup'
 
 vi.setConfig({ testTimeout: 20000 })
+usePersistentTreecrdtStorage()
 
 // using a puppeteer test since I can't get refresh to work in RTL tests
 it('load buffered ancestors of contexts when context view is activated', async () => {

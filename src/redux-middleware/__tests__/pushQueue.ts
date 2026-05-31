@@ -1,7 +1,7 @@
 import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import getLexemeFromProvider from '../../data-providers/data-helpers/getLexeme'
-import db from '../../data-providers/yjs/thoughtspace'
+import db from '../../data-providers/treecrdt/thoughtspace'
 import getLexemeFromState from '../../selectors/getLexeme'
 import store from '../../stores/app'
 import contextToThought from '../../test-helpers/contextToThought'

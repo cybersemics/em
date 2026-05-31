@@ -1,5 +1,6 @@
 import { ScreenshotOptions } from 'puppeteer'
 import { page } from '../setup'
+import waitForEmIdle from './waitForEmIdle'
 
 // Constants for the style element
 const ANTIALIASING_DISABLER_ID = 'screenshot-antialiasing-disable'
@@ -38,6 +39,8 @@ const getAntialiasingCSS = () => `
 
 /** Takes a screenshot with antialiasing disabled.*/
 const screenshot = async (options: ScreenshotOptions = {}): Promise<Buffer> => {
+  await waitForEmIdle()
+
   // Ensure antialiasing is disabled
   await page.evaluate(
     ({ id, css }) => {

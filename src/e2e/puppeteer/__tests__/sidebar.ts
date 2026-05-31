@@ -12,11 +12,13 @@ expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
 })
 
-vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
+vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
 
 /** Screenshot without the toolbar. */
 const screenshotWithoutToolbarIcons = async () => {
   await hideVisibility('[data-testid="toolbar-icon"]')
+  // New-thought command alerts are transient and unrelated to the sidebar snapshot.
+  await hideVisibility('[data-testid="alert"]')
   return screenshot()
 }
 

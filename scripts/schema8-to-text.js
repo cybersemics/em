@@ -17,10 +17,10 @@ if (!path) {
 
 const input = fs.readFileSync(path, 'utf-8')
 const state = JSON.parse(input)
-const root = state.thoughtIndex.__ROOT__
+const root = state.thoughtIndex['00000000000000000000000000000000']
 
 const traverse = (thought, { indent = 0 } = {}) => {
-  const isRoot = thought.id === '__ROOT__'
+  const isRoot = thought.id === '00000000000000000000000000000000'
   if (!isRoot) {
     console.info(`${repeat(' ', indent)}- ${thought.value}`)
   }

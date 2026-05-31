@@ -95,6 +95,7 @@ export default [
   {
     ignores: [
       'node_modules/**',
+      'treecrdt/**',
       'packages/**/dist/**/*',
       'packages/**/.build/**/*',
       '**/styled-system/*',
@@ -104,6 +105,7 @@ export default [
       '**/docs/*',
       '**/functions/*',
       '**/scripts/*',
+      'public/wa-sqlite/**',
     ],
   },
   {

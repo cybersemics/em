@@ -5,7 +5,7 @@ import ThoughtId from '../@types/ThoughtId'
 import Thunk from '../@types/Thunk'
 import { createThoughtActionCreator as createThought } from '../actions/createThought'
 import { updateThoughtsActionCreator as updateThoughts } from '../actions/updateThoughts'
-import { replicateThought } from '../data-providers/yjs/thoughtspace'
+import db from '../data-providers/treecrdt/thoughtspace'
 import getLexemeSelector from '../selectors/getLexeme'
 import isContextViewActive from '../selectors/isContextViewActive'
 import thoughtToPath from '../selectors/thoughtToPath'
@@ -44,8 +44,7 @@ export const repairThoughtActionCreator =
       }
       // repair invalid parent
       else {
-        // replicating the parent should use the cached synced promise
-        replicateThought(thought.parentId, { background: true }).then(parent => {
+        db.getThoughtById(thought.parentId).then(parent => {
           if (parent) {
             const childKey = isFunction(thought.value) ? thought.value : thought.id
             if (!parent.childrenMap[childKey]) {

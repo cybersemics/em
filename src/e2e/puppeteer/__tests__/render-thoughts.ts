@@ -1,4 +1,5 @@
 import path from 'path'
+import { HOME_TOKEN } from '../../../constants'
 import configureSnapshots from '../configureSnapshots'
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
@@ -275,7 +276,7 @@ describe('Superscripts', () => {
     // get exported html and compress all indentation (whitespace before/after newline)
     const output = (await exportThoughts({ mimeType: 'text/html' })).replace(/\s*\n\s*/g, '')
 
-    const expected = `<ul><li>__ROOT__<ul><li>This is a Thisthought<ul><li>=note<ul><li>This is a note</li></ul></li></ul></li></ul></li></ul>`
+    const expected = `<ul><li>${HOME_TOKEN}<ul><li>This is a Thisthought<ul><li>=note<ul><li>This is a note</li></ul></li></ul></li></ul></li></ul>`
 
     expect(output).toBe(expected)
   })

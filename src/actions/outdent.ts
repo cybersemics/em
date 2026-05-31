@@ -58,11 +58,13 @@ const outdent = (state: State): State => {
 
   const cursorNew: Path = appendToPath(parentOf(parentOf(cursor)), head(cursor))
 
+  const parentPath = parentOf(simplifyPath(state, cursor))
   return moveThought(state, {
     oldPath: cursor,
     newPath: cursorNew,
     ...(offset != null ? { offset } : null),
-    newRank: getRankAfter(state, parentOf(simplifyPath(state, cursor))),
+    newRank: getRankAfter(state, parentPath),
+    afterId: head(parentPath),
   })
 }
 

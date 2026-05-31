@@ -24,7 +24,7 @@ let repair = (maxDepth = 100) => {
   let inconsistentRanks = 0
   let duplicateThoughtContextIds = 0
 
-  const HOME_TOKEN = '__ROOT__'
+  const HOME_TOKEN = '00000000000000000000000000000000'
 
   /** Generate a timestamp of now. */
   const timestamp = () => new Date().toISOString()
@@ -200,7 +200,7 @@ let repair = (maxDepth = 100) => {
   }
 
   // start recursion
-  generateUpdates(['__ROOT__'])
+  generateUpdates(['00000000000000000000000000000000'])
 
   console.info('')
   console.info(`Duplicate child ranks: ${duplicateRanks}`)

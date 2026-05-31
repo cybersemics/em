@@ -115,15 +115,22 @@ export const SCHEMA_THOUGHT_WITH_CHILDREN = 7 // store all children in the Thoug
 export const SCHEMA_LEMMA = 8
 export const SCHEMA_LATEST = 8
 
-// store the root string as a token that is not likely to be written by the user (bad things will happen)
-export const HOME_TOKEN = '__ROOT__' as ThoughtId
+export const GLOBAL_ROOT_TOKEN = '00000000000000000000000000000000' as ThoughtId
 
-export const ROOT_PARENT_ID = '__ROOT_PARENT_ID__' as ThoughtId
+export const ROOT_PARENT_ID = GLOBAL_ROOT_TOKEN
 
-// token for hidden system context
-export const EM_TOKEN = '__EM__' as ThoughtId
+export const HOME_TOKEN = '00000000000000000000000000000001' as ThoughtId
 
-export const ABSOLUTE_TOKEN = '__ABSOLUTE__' as ThoughtId
+// Display/export-only label for the fixed Home root. Do not store this as the root thought value.
+export const HOME_DISPLAY_VALUE = '__ROOT__'
+
+export const EM_TOKEN = '00000000000000000000000000000002' as ThoughtId
+
+export const ABSOLUTE_TOKEN = '00000000000000000000000000000003' as ThoughtId
+
+// Fixed /EM/Settings identity used by system thought bootstrap and the TreeCRDT-backed thoughtspace.
+export const SETTINGS_TOKEN = '00000000000000000000000000000004' as ThoughtId
+export const SETTINGS_VALUE = 'Settings'
 
 export const ROOT_CONTEXTS = [HOME_TOKEN, ABSOLUTE_TOKEN]
 

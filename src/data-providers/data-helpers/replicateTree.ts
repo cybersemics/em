@@ -2,13 +2,12 @@ import Index from '../../@types/IndexType'
 import Thought from '../../@types/Thought'
 import ThoughtId from '../../@types/ThoughtId'
 import taskQueue from '../../util/taskQueue'
-import { replicateChildren, replicateThought } from '../yjs/thoughtspace'
+import db from '../treecrdt/thoughtspace'
 
-/** Replicates an entire subtree, starting at a given thought. Replicates in the background (not populating the Redux state). Does not wait for Websocket to sync. */
+/** Replicates an entire subtree, starting at a given thought. Replicates in the background (not populating the Redux state). */
 const replicateTree = (
   id: ThoughtId,
   {
-    remote,
     onThought,
   }: {
     /** Sync with Websocket. Default: true. */
@@ -29,30 +28,36 @@ const replicateTree = (
   let abort = false
 
   /** Creates a task to replicate all children of the given id and add them to the thoughtIndex. Queues up grandchildren replication. */
-  const replicateDescendantsRecursive = async (id: ThoughtId) => {
+  const replicateDescendantsRecursive = async (parentId: ThoughtId) => {
     if (abort) return
-    const children = await replicateChildren(id, { background: true, remote })
+    const parentThought = await db.getThoughtById(parentId)
+    if (abort || !parentThought) return
+
+    const childIds = Object.values(parentThought.childrenMap)
+    if (childIds.length === 0) return
+
+    const children = await db.getThoughtsByIds(childIds)
     if (abort) return
 
-    children?.forEach(child => {
-      thoughtIndexAccum[child.id] = child
-      onThought?.(child, thoughtIndexAccum)
+    children.forEach(child => {
+      if (child) {
+        thoughtIndexAccum[child.id] = child
+        onThought?.(child, thoughtIndexAccum)
 
-      queue.add({
-        function: () => replicateDescendantsRecursive(child.id),
-        description: `replicateTree: ${child.id}`,
-      })
+        queue.add({
+          function: () => replicateDescendantsRecursive(child.id),
+          description: `replicateTree: ${child.id}`,
+        })
+      }
     })
   }
 
   /** Replicates the starting thoughts and all descendants by populating the initial replication queue and waiting for all tasks to resolve. */
   const replicateDescendants = async () => {
-    // kick off the descendant replication by enqueueing a task for start thought's children
     queue.add([
-      // replicate the starting thought individually (should already be cached)
       {
         function: async () => {
-          const startThought = await replicateThought(id, { background: true, remote })
+          const startThought = await db.getThoughtById(id)
 
           if (!startThought) {
             throw new Error(`Thought ${id} not replicated. Either replication is broken or this is a timing issue.`)
@@ -63,7 +68,6 @@ const replicateTree = (
         },
         description: `replicateTree: ${id} (starting thought)`,
       },
-      // replicate the starting thought's children
       {
         function: () => replicateDescendantsRecursive(id),
         description: `replicateTree: ${id}`,

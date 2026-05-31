@@ -27,7 +27,7 @@ import EmptyThoughtspace from './EmptyThoughtspace'
 import LayoutTree from './LayoutTree'
 import Search from './Search'
 
-const transientChildPath = ['TRANSIENT_THOUGHT_ID'] as SimplePath
+const transientChildPath = ['00000000000000000000000000ffffff'] as SimplePath
 
 /*
   Transient Editable represents a child that is yet not in the state.

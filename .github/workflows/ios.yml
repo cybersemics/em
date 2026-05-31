@@ -25,6 +25,9 @@ jobs:
     name: BrowserStack
     runs-on: ubuntu-latest
     if: github.event_name != 'pull_request_target' || github.event.pull_request.changed_files > 0
+    env:
+      BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
+      BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
 
     steps:
       - name: Clone repository
@@ -42,15 +45,23 @@ jobs:
           node-version: 22
 
       - name: Install npm dependencies
+        if: env.BROWSERSTACK_USERNAME != '' && env.BROWSERSTACK_ACCESS_KEY != ''
         run: yarn
 
       - name: Build
+        if: env.BROWSERSTACK_USERNAME != '' && env.BROWSERSTACK_ACCESS_KEY != ''
         run: yarn build
 
       - name: Serve
+        if: env.BROWSERSTACK_USERNAME != '' && env.BROWSERSTACK_ACCESS_KEY != ''
         run: yarn servebuild &
 
+      - name: Skip BrowserStack
+        if: env.BROWSERSTACK_USERNAME == '' || env.BROWSERSTACK_ACCESS_KEY == ''
+        run: echo "Skipping BrowserStack because credentials are not configured."
+
       - name: Test iOS on BrowserStack
+        if: env.BROWSERSTACK_USERNAME != '' && env.BROWSERSTACK_ACCESS_KEY != ''
         run: yarn test:ios
         env:
           # BrowserStack credentials - WDIO's browserstack-service handles the tunnel

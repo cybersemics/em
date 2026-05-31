@@ -1,3 +1,4 @@
+import type { Operation } from '@treecrdt/interface'
 import _ from 'lodash'
 import { Action, Store, StoreEnhancer, StoreEnhancerStoreCreator } from 'redux'
 import Index from '../@types/IndexType'
@@ -5,7 +6,9 @@ import PushBatch from '../@types/PushBatch'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import { CACHED_SETTINGS, EM_TOKEN } from '../constants'
-import db from '../data-providers/yjs/thoughtspace'
+import { pushTreecrdtLocalOpsToRemote } from '../data-providers/treecrdt/sync'
+import db from '../data-providers/treecrdt/thoughtspace'
+import { withTreecrdtWriteBarrier } from '../data-providers/treecrdt/writeBarrier'
 import contextToThoughtId from '../selectors/contextToThoughtId'
 import { getChildrenRanked } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
@@ -48,7 +51,7 @@ const cacheSetting = (name: keyof typeof cachedSettingsIds, value: string | null
   }
 }
 
-/** Merges state.pushQueue batches and pushes them to Yjs, frees memory from state-only batches, and caches settings. */
+/** Merges state.pushQueue batches and pushes them to the data provider, frees memory from state-only batches, and caches settings. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const pushQueue: StoreEnhancer<any> =
   (createStore: StoreEnhancerStoreCreator) =>
@@ -90,16 +93,21 @@ const pushQueue: StoreEnhancer<any> =
          */
         const applyDbQueue = async () => {
           for (const batch of dbQueue ?? []) {
-            await db.updateThoughts({
+            const batchPayload = {
               thoughtIndexUpdates: batch.thoughtIndexUpdates,
               lexemeIndexUpdates: batch.lexemeIndexUpdates,
               lexemeIndexUpdatesOld: batch.lexemeIndexUpdatesOld,
-              schemaVersion: batch.updates?.schemaVersion,
-            })
+              schemaVersion: batch.updates?.schemaVersion ?? 0,
+              movePlacements: batch.movePlacements,
+            }
+            const maybeOps = await db.updateThoughts(batchPayload)
+            if (batch.local && Array.isArray(maybeOps) && maybeOps.length > 0) {
+              void pushTreecrdtLocalOpsToRemote(maybeOps as readonly Operation[])
+            }
           }
         }
 
-        applyDbQueue().then(() => {
+        withTreecrdtWriteBarrier(applyDbQueue).then(() => {
           dbQueue?.forEach(batch => batch.idbSynced?.())
         })
       }

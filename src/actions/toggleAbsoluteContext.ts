@@ -6,7 +6,7 @@ import { registerActionMetadata } from '../util/actionMetadata.registry'
 import isHome from '../util/isHome'
 import timestamp from '../util/timestamp'
 
-const TRANSIENT_THOUGHT_ID = 'TRANSIENT_THOUGHT' as ThoughtId
+const TRANSIENT_THOUGHT_ID = '00000000000000000000000000ffffff' as ThoughtId
 
 /** Toggles starting context. */
 const toggleAbsoluteContext = (state: State): State => ({

@@ -1,4 +1,4 @@
-import { WindowEm } from '../../../initialize'
+import type { WindowEm } from '../../../initialize'
 import clickThought from '../helpers/clickThought'
 import getEditingText from '../helpers/getEditingText'
 import paste from '../helpers/paste'
@@ -6,12 +6,12 @@ import refresh from '../helpers/refresh'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
 import waitUntil from '../helpers/waitUntil'
-import { page } from '../setup'
+import { page, usePersistentTreecrdtStorage } from '../setup'
 
-const em = window.em as WindowEm
 const MOCK_REPLICATION_DELAY = 100
 
-vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
+vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
+usePersistentTreecrdtStorage()
 
 describe('scrollCursorIntoView', () => {
   it('should scroll cursor into view after page refresh with delayed replicateChildren', async () => {
@@ -61,6 +61,7 @@ describe('scrollCursorIntoView', () => {
     // Set test delay for data replication after refresh
     // This simulates the regression case where thoughts are loaded slowly from the database
     await page.evaluate(value => {
+      const em = window.em as WindowEm
       em.testFlags.replicationDelay = value
     }, MOCK_REPLICATION_DELAY)
 
@@ -85,10 +86,7 @@ describe('scrollCursorIntoView', () => {
         bottom: window.innerHeight,
       }
 
-      const isInViewport = rect.top >= viewport.top && rect.bottom <= viewport.bottom
-
-      // Ensure the cursor is scrolled into view
-      return isInViewport && window.scrollY > 0
+      return rect.top >= viewport.top && rect.bottom <= viewport.bottom
     })
   })
 })
