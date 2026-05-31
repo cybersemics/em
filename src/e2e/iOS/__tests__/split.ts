@@ -2,6 +2,7 @@
  * IOS Safari thought splitting tests.
  * Uses WDIO test runner with Mocha framework.
  */
+import waitForEmIdle from '../../puppeteer/helpers/waitForEmIdle'
 import clickThought from '../helpers/clickThought'
 import getEditingText from '../helpers/getEditingText'
 import getSelection from '../helpers/getSelection'
@@ -29,6 +30,8 @@ describe('Split', () => {
     await tap(editableNodeHandle, { y: 60, x: 25 })
     await tap(editableNodeHandle, { y: 60, x: 25 })
     await tapReturnKey()
+
+    await waitForEmIdle()
 
     const offset = await getSelection()?.focusOffset
     expect(offset).toBe(0)
