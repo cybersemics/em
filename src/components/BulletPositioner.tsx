@@ -287,7 +287,7 @@ const BulletPositioner = forwardRef<SVGSVGElement, PropsWithChildren<BulletPosit
 
     // offset margin with padding by equal amounts proportional to the font size to extend the click area
     const extendClickWidth = fontSize * 1.2
-    const extendClickHeight = fontSize * 0.376
+    const extendClickHeight = fontSize * 0.375
     const lineHeight = fontSize * 1.25
 
     const width = getBulletWidth(fontSize) + (!isInContextView && isTableCol1 ? fontSize / 4 : 0)
