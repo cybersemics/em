@@ -96,7 +96,7 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
       className={css({
         margin: '-2px -4px -5px',
         marginLeft: '-20px',
-        padding: '10px 4px 1.73em',
+        padding: '10px 4px 1.6em',
         position: 'relative',
         zIndex: 'stack',
       })}
