@@ -3,7 +3,6 @@
  * Uses WDIO test runner with Mocha framework.
  */
 import gestures from '../../../test-helpers/gestures'
-import waitForEmIdle from '../../puppeteer/helpers/waitForEmIdle'
 import clickThought from '../helpers/clickThought'
 import editThought from '../helpers/editThought'
 import gesture from '../helpers/gesture'
@@ -17,6 +16,7 @@ import newThought from '../helpers/newThought'
 import paste from '../helpers/paste'
 import tap from '../helpers/tap'
 import waitForEditable from '../helpers/waitForEditable'
+import waitForEmIdle from '../helpers/waitForEmIdle'
 import waitUntil from '../helpers/waitUntil'
 
 // tests succeeds individually, but fails when there are too many tests running in parallel
@@ -184,7 +184,7 @@ describe('Caret', () => {
     expect(editingText).toBe('foo')
 
     const selectionTextContent = await getSelection().focusNode?.textContent
-    expect(selectionTextContent).toBe(null)
+    expect(selectionTextContent).toBe('foo')
   })
 
   it.skip('Swipe over hidden thought', async () => {

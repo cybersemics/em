@@ -2,7 +2,6 @@
  * IOS Safari thought splitting tests.
  * Uses WDIO test runner with Mocha framework.
  */
-import waitForEmIdle from '../../puppeteer/helpers/waitForEmIdle'
 import clickThought from '../helpers/clickThought'
 import getEditingText from '../helpers/getEditingText'
 import getSelection from '../helpers/getSelection'
@@ -10,6 +9,7 @@ import paste from '../helpers/paste'
 import tap from '../helpers/tap'
 import tapReturnKey from '../helpers/tapReturnKey'
 import waitForEditable from '../helpers/waitForEditable'
+import waitForEmIdle from '../helpers/waitForEmIdle'
 
 describe('Split', () => {
   it('split a thought when the caret is in the middle', async () => {
