@@ -15,6 +15,17 @@ vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
 beforeEach(hideHUD)
 
 describe('Divider', () => {
+  it('render', async () => {
+    await paste(`
+        - a
+        - ---
+        - b
+      `)
+
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
+
   it('highlight', async () => {
     await paste(`
         - a
