@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import Command from '../@types/Command'
+import { isBrowser } from '../browser'
 import { gestureString } from '../commands'
 import openMobileCommandUniverseCommand from '../commands/openMobileCommandUniverse'
 import useFilteredCommands from '../hooks/useFilteredCommands'
@@ -61,7 +62,8 @@ const GestureMenu: FC<{
         {gestureInProgress && (
           <div
             className={css({
-              padding: '1.85rem',
+              padding: '2.25rem',
+              paddingTop: !isBrowser ? '0.6rem' : undefined,
             })}
           >
             {/* Header */}
@@ -90,7 +92,7 @@ const GestureMenu: FC<{
               className={css({
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '16px',
+                gap: '1.2rem',
               })}
             >
               {mainCommands.map((command, index) => {
@@ -122,8 +124,8 @@ const GestureMenu: FC<{
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
-                  marginTop: !mainCommands.length ? 0 : '28px',
-                  gap: '16px',
+                  marginTop: !mainCommands.length ? 0 : '2.15rem',
+                  gap: '1.2rem',
                 }}
               >
                 {separatedCommands.map((command, index) => {
