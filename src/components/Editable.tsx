@@ -602,9 +602,27 @@ const Editable = ({
       editingValueUntrimmedStore.update(value)
 
       dispatch((dispatch, getState) => {
-        const { longPress } = getState()
+        const state = getState()
+        const { longPress } = state
         if (longPress === LongPressState.Inactive) {
-          setCursorOnThought({ isKeyboardOpen: true })
+          // After cursorUp clears the app cursor on iOS Safari, tapping the thought should only restore em's
+          // cursor. Safari may still focus the contenteditable, so keep native edit mode closed in that case.
+          const shouldPreserveCursorOnly = !state.isKeyboardOpen && state.cursor === null
+
+          if (isTouch && isSafari() && shouldPreserveCursorOnly) {
+            selection.clear()
+            dispatch(keyboardOpenActionCreator({ value: false }))
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                // WebKit can restore selection after focus settles, so clear it once more after paint.
+                selection.clear()
+                dispatch(keyboardOpenActionCreator({ value: false }))
+              })
+            })
+            setCursorOnThought()
+          } else {
+            setCursorOnThought({ isKeyboardOpen: true })
+          }
         }
       })
     },

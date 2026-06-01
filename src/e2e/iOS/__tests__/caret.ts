@@ -184,7 +184,7 @@ describe('Caret', () => {
     expect(editingText).toBe('foo')
 
     const selectionTextContent = await getSelection().focusNode?.textContent
-    expect(selectionTextContent).toBe('foo')
+    expect(selectionTextContent).toBe(null)
   })
 
   it.skip('Swipe over hidden thought', async () => {
