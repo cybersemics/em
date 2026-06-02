@@ -19,12 +19,13 @@ By following the documented steps in the issue, you can reliably reproduce the p
 1. **Parse** — extract Steps to Reproduce, Current Behavior, Expected Behavior, and the **target platform** (web / android / ios) from the issue.
 2. **Set up the browser** — pass the target platform to `browser-control`, which attaches the right MCP, applies emulation, and navigates to the dev server.
 3. **Reproduce** — drive the browser MCP through the steps; confirm the failure mode fires.
-4. **Fix** — root-cause and fix the code.
-5. **Validate** — re-run the steps; confirm the failure is gone and the expected behavior is observed.
+4. **Write the failing test** — invoke `tdd-write-failing-test` to turn the reproduction into an automated regression test and prove it fails for the right reason, *before* fixing.
+5. **Fix** — root-cause and fix the code.
+6. **Validate** — re-run the test via `run-test`; it must now pass (the failure is gone and the expected behavior holds).
 
 **You MUST** be able to reproduce the issue directly – if you cannot, **DO NOT** assume the cause without first confirming with the user.
-**DO NOT explore a fix** until you have successfully reproduced the issue. **This is your priority.** If you **CANNOT FULLY REPRODUCE** the steps, **FAIL AND ESCALATE TO THE USER** — except for an ambiguous `[Mobile]` issue, where you first retry on `ios` before escalating (see Step 3).
-Similarly, a fix is **not complete** until both Step 5a and Step 5b pass.
+**DO NOT explore a fix** until you have successfully reproduced the issue **and written the failing test (Step 4)**. **This is your priority.** If you **CANNOT FULLY REPRODUCE** the steps, **FAIL AND ESCALATE TO THE USER** — except for an ambiguous `[Mobile]` issue, where you first retry on `ios` before escalating (see Step 3).
+Similarly, a fix is **not complete** until the test written in Step 4 passes (Step 6).
 
 > **iOS is fully reproducible here — never opt out.** iOS issues run on **real iOS devices via BrowserStack App Automate**, driven by the `wdio` MCP through `browser-control` → `browser-control-ios`. You do **not** need a local Mac, a physical device, or a simulator. "This is iOS-specific / needs a physical device / I can't automate iOS" is **never** a valid reason to skip reproduction or to jump straight to a fix. If `target = ios`, hand off to `browser-control` and reproduce on the cloud device exactly as you would for web or android.
 
@@ -127,7 +128,15 @@ Split every interaction into **observing** vs **actuating** — the kind decides
 
 ---
 
-## Step 4: Fix the Issue
+## Step 4: Write the Failing Test (Mandatory)
+
+Before exploring a fix, turn the reproduction into a permanent automated test. **Execute the `tdd-write-failing-test` skill end-to-end.** It reuses the same e2e helpers you drove during reproduction, asserts the issue's **Expected Behavior**, and confirms the test fails **for the right reason** (on the assertion, with the buggy value you observed — not a timeout or setup error) against the unfixed code.
+
+Do not skip this and do not proceed to the fix until the test fails for the right reason. The reproduction is fresh in hand now — this is when the transfer to a test is near-free. Carry forward the helper sequence you used and the buggy-vs-expected values you observed.
+
+---
+
+## Step 5: Fix the Issue
 
 1. Use the reproduction evidence (error message, stack trace, console output) to locate the root cause. Read the relevant source code. Do not guess the cause without evidence.
 2. Implement a targeted fix. Prefer the smallest change that addresses the root cause without breaking related behavior.
@@ -136,43 +145,35 @@ Split every interaction into **observing** vs **actuating** — the kind decides
 
 ---
 
-## Step 5: Fix-Validate Loop (Mandatory)
+## Step 6: Fix-Validate Loop (Mandatory)
 
 After applying a fix, validate it immediately. If validation fails, fix and
 validate again. Repeat until the issue is resolved or the attempt limit is reached.
 
-**Maximum attempts: 5.** Track the attempt count. If the issue still reproduces
+**Maximum attempts: 5.** Track the attempt count. If the test still fails
 after 5 fix-and-validate cycles, stop and escalate to the user with a summary
 of what you tried and what you observed each time.
 
-### Validation criteria (both must pass)
+### Validation criteria
 
-**5a — Failure no longer triggers**
+**6a — The failing test from Step 4 now passes (the mandatory gate).** Re-run it via the **`run-test`** skill. It must pass on the assertion that previously failed — that green run *is* the proof the bug is fixed, and it replaces manual re-reproduction. A test that now errors for an infra reason (timeout, selector) is **not** a pass; diagnose it.
 
-1. Re-navigate to the dev server in the same browser environment `browser-control` set up. (If the session has been lost, re-run Step 2.)
-2. Clear app state from the previous attempt: `localStorage.clear(); location.reload();`. After the reload, wait for the page to re-mount (poll for `#skip-tutorial` or `[aria-label="empty-thoughtspace"]`) before continuing — the React bundle re-runs from scratch.
-3. Follow the **Steps to Reproduce** exactly.
-4. Confirm the **Current Behavior** (the bug) does **not** occur.
-
-**5b — Expected behavior is observed**
-
-1. In the same or a fresh tab, follow the steps again.
-2. Confirm the **Expected Behavior** from the issue is observed exactly as described.
+**6b — Optional end-to-end confirmation.** For extra confidence (or if the test had to assert a proxy for the visible symptom), re-drive the **Steps to Reproduce** once in the live environment `browser-control` set up — clear app state first (`localStorage.clear(); location.reload();`, then wait for `#skip-tutorial` or `[aria-label="empty-thoughtspace"]`) — and confirm the **Expected Behavior** holds and the **Current Behavior** is gone.
 
 ### Loop
 
 ```
 attempt = 1
 loop:
-  fix the code (Step 4)
-  run validation 5a and 5b
-  if both pass → done, summarize what you changed
-  if either fails → diagnose what still went wrong
+  fix the code (Step 5)
+  run the Step 4 test via run-test (6a)
+  if it passes → done, summarize what you changed
+  if it fails → read the assertion diff, diagnose what still went wrong
   attempt += 1
   if attempt > 5 → escalate to user
 ```
 
-Never claim success without completing both 5a and 5b. Never skip the loop.
+Never claim success without the Step 4 test passing (6a). Never skip the loop.
 
 ---
 

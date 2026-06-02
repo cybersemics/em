@@ -13,17 +13,18 @@ The first five steps below are sequential and must be performed **in order**, be
 
 1. **Read the issue first.** Check whether you have been given an issue. Read the entire issue body — including comments — before doing anything else. At this point you must not yet investigate code, hypothesize causes, create a branch, or edit any file.
 
-2. **Apply the issue-repro gate.** If the issue body (or any comment on it) contains a "Steps to Reproduce" section — or close variants such as "Step to Reproduce" or "How to reproduce" — you MUST execute the `issue-repro` skill end-to-end through its Reproduce stage **before any other work on this issue**.
-   - Until you have successfully reproduced the failure described in the issue, you MUST NOT: read source code to form hypotheses, speculate about the cause, edit any file, or open a PR. Investigation of the cause begins inside the skill's "Fix the Issue" step, **not before**.
-   - Merely reading the skill file is **not** sufficient — you must actually execute its steps. The point of this gate is to confirm the bug exists and observe its real failure mode before you go looking for it in the code and potentially draw incorrect conclusions.
+2. **Apply the issue-repro gate.** If the issue body (or any comment on it) contains a "Steps to Reproduce" section — or close variants such as "Step to Reproduce" or "How to reproduce" — you MUST execute the `issue-repro` skill through its **Write-the-failing-test stage (Step 4)** **before any other work on this issue**: that is, reproduce the bug **and** write the automated test that fails for the right reason, while the reproduction is fresh.
+   - Until you have successfully reproduced the failure described in the issue, you MUST NOT: read source code to form hypotheses, speculate about the cause, edit any file, or open a PR. Cause investigation begins inside the skill's "Fix the Issue" step, **not before**.
+   - Writing the failing test (issue-repro Step 4, via `tdd-write-failing-test`) comes **after** reproduction and **before** the fix. It is behavioural — it reuses the e2e helpers and asserts the issue's Expected Behavior — so it is not cause-investigation and not blocked by this gate; it is required by it. A minimal, test-only `data-testid` hook the test needs is part of writing the test, not the fix.
+   - Merely reading the skill file is **not** sufficient — you must actually execute its steps. The point of this gate is to confirm the bug exists, observe its real failure mode, and capture it in a failing test before you go looking for the cause in the code and potentially draw incorrect conclusions.
 
 3. **Confirm the gate explicitly.** Before continuing past step 3, output exactly one of the following two lines, verbatim, on its own line:
    - `issue-repro: not applicable — the issue has no Steps to Reproduce.`
    - `issue-repro: applicable — executing .github/skills/issue-repro/SKILL.md before any investigation.`
 
 4. **Apply the plan gate.** Before you create a branch, edit any file, or write a fix, you MUST execute the `plan` skill end-to-end — both its **Plan** and **Critique** stages — producing a written architectural plan grounded in the existing code and a self-critique that passes before any implementation.
-   - The plan gate runs **after** reproduction. For an issue with Steps to Reproduce, satisfy the issue-repro gate first (you cannot judge adjacent-behaviour impact until you have seen the real failure), then run `plan`, then implement.
-   - You MUST NOT write implementation code until the `plan` skill's Critique stage has passed. Reading source code to build the plan's surface-area section is required; writing the change is not.
+   - The plan gate runs **after** reproduction **and after the failing test is written** (issue-repro Step 4). For an issue with Steps to Reproduce: reproduce → write the failing test → satisfy this plan gate → implement the fix → the test passes (issue-repro Step 6). You cannot judge adjacent-behaviour impact until you have seen the real failure and captured it.
+   - You MUST NOT write implementation (fix) code until the `plan` skill's Critique stage has passed. The Step 4 failing test (and any minimal test-only `data-testid` hook) is **not** implementation code — it is written before this gate. Reading source code to build the plan's surface-area section is required; writing the fix is not.
    - Merely reading the skill file is **not** sufficient — you must actually produce the plan and run the critique.
 
 5. **Confirm the plan gate explicitly.** Before continuing past step 5, output exactly this line, verbatim, on its own line:
