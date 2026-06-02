@@ -5,6 +5,7 @@ import { cx } from '../../styled-system/css'
 import { editableRecipe, invalidOptionRecipe, multilineRecipe } from '../../styled-system/recipes'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
+import State from '../@types/State'
 import TutorialChoice from '../@types/TutorialChoice'
 import { cursorClearedActionCreator as cursorCleared } from '../actions/cursorCleared'
 import { editThoughtActionCreator as editThought } from '../actions/editThought'
@@ -101,6 +102,35 @@ const applyOuterTag = (newValue: string, oldValue: string): string => {
 // this flag is used to ensure that the browser selection is not restored after the initial setCursorOnThought
 let cursorOffsetInitialized = false
 
+interface FocusDiagnosticInteraction {
+  type: string
+  isTrusted: boolean
+  cancelable: boolean
+  defaultPrevented: boolean
+  time: number
+  activeElement: string | null
+  target: string | null
+  state?: {
+    cursor: State['cursor']
+    isKeyboardOpen: State['isKeyboardOpen']
+    longPress: State['longPress']
+    showCommandCenter: State['showCommandCenter']
+  }
+}
+
+/** Returns a compact element label for iOS focus diagnostics. */
+const describeElementForFocusDiagnostic = (element: Element | null): string | null => {
+  if (!element) return null
+
+  const attributes = [
+    element.getAttribute('aria-label'),
+    element.getAttribute('data-editable') != null ? 'data-editable' : null,
+    element.getAttribute('data-editing') != null ? `data-editing=${element.getAttribute('data-editing')}` : null,
+  ].filter(Boolean)
+
+  return [element.tagName.toLowerCase(), ...attributes].join(' ')
+}
+
 /**
  * An editable thought with throttled editing.
  * Use rank instead of headRank(simplePath) as it will be different for context view.
@@ -138,6 +168,7 @@ const Editable = ({
   const oldValueRef = useRef(value)
   const nullRef = useRef<HTMLInputElement>(null)
   const contentRef = editableRef || nullRef
+  const lastFocusDiagnosticInteractionRef = useRef<FocusDiagnosticInteraction | null>(null)
   const isCursor = useSelector(state => equalPath(path, state.cursor))
   const editingOrOnCursor = useSelector(state => isCursor || state.isKeyboardOpen)
   // Stop dragover events from propagating up on non-cursor thoughts or notes, otherwise text selection drag-and-drop will be canceled by
@@ -573,7 +604,16 @@ const Editable = ({
    * Prevented by touchend event above for hidden thoughts.
    */
   const onFocus = useCallback(
-    () => {
+    (e: Parameters<FocusEventHandler<HTMLElement>>[0]) => {
+      const focusTime = performance.now()
+      const focusTarget = e.target instanceof Element ? e.target : null
+      const focusSelection = {
+        isActive: selection.isActive(),
+        isCollapsed: selection.isCollapsed(),
+        offset: selection.offset(),
+        text: selection.text(),
+      }
+
       /**
        * On iOS, a long press between 415–650ms will trigger onFocus even when preventDefault is called in touchend, thus opening the virtual keyboard on top of the Command Center. There appears to be no way to prevent focus in this case. Therefore, we clear the selection and disable edit mode manually as soon as the focus triggers.
        *
@@ -602,7 +642,28 @@ const Editable = ({
       editingValueUntrimmedStore.update(value)
 
       dispatch((dispatch, getState) => {
-        const { longPress } = getState()
+        const state = getState()
+        const { longPress } = state
+        console.info('[ios-focus-diagnostic]', {
+          activeElement: describeElementForFocusDiagnostic(document.activeElement),
+          cursor: state.cursor,
+          eventIsTrusted: e.isTrusted,
+          focusTarget: describeElementForFocusDiagnostic(focusTarget),
+          isKeyboardOpen: state.isKeyboardOpen,
+          lastInteraction: lastFocusDiagnosticInteractionRef.current
+            ? {
+                ...lastFocusDiagnosticInteractionRef.current,
+                msAgo: Math.round(focusTime - lastFocusDiagnosticInteractionRef.current.time),
+              }
+            : null,
+          longPress: state.longPress,
+          path,
+          selection: focusSelection,
+          showCommandCenter: state.showCommandCenter,
+          simplePath,
+          suppressFocus: suppressFocusStore.getState(),
+          value,
+        })
         if (longPress === LongPressState.Inactive) {
           setCursorOnThought({ isKeyboardOpen: true })
         }
@@ -618,6 +679,17 @@ const Editable = ({
    */
   const handleTapBehavior = useCallback(
     (e: MouseEvent | TouchEvent) => {
+      const interaction: FocusDiagnosticInteraction = {
+        activeElement: describeElementForFocusDiagnostic(document.activeElement),
+        cancelable: e.cancelable,
+        defaultPrevented: e.defaultPrevented,
+        isTrusted: e.isTrusted,
+        target: e.target instanceof Element ? describeElementForFocusDiagnostic(e.target) : null,
+        time: performance.now(),
+        type: e.type,
+      }
+      lastFocusDiagnosticInteractionRef.current = interaction
+
       // When MultiGesture is below the gesture threshold it is possible that onClick and onTouchEnd
       // both trigger. Prevent handleTapBehavior from running a second time via touchend in that case.
       // https://github.com/cybersemics/em/issues/1268
@@ -627,6 +699,16 @@ const Editable = ({
 
       dispatch((dispatch, getState) => {
         const state = getState()
+        lastFocusDiagnosticInteractionRef.current = {
+          ...interaction,
+          defaultPrevented: e.defaultPrevented,
+          state: {
+            cursor: state.cursor,
+            isKeyboardOpen: state.isKeyboardOpen,
+            longPress: state.longPress,
+            showCommandCenter: state.showCommandCenter,
+          },
+        }
 
         // If long press is in progress, don't allow the editable to receive focus or iOS Safari will scroll it.
         if (state.longPress !== LongPressState.Inactive) {
