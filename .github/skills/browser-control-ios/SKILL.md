@@ -62,7 +62,7 @@ The session drives a pre-built **server-mode** build of **em**'s Capacitor app. 
 
 ### Heartbeat
 
-Immediately after `start_session` returns, capture the session ID. Save it to `/tmp/em-bs-session.txt` (the `browser-control-ios-touch-fallback` skill reads it from there) and start the heartbeat (it self-daemonizes — **no** trailing `&`):
+Immediately after `start_session` returns, capture the session ID. Save it to `/tmp/em-bs-session.txt` (the e2e bridge reads it from there — see **Driving em via the e2e bridge**) and start the heartbeat (it self-daemonizes — **no** trailing `&`):
 
 ```bash
 echo "<session-id>" > /tmp/em-bs-session.txt
@@ -102,8 +102,40 @@ A `null` result means the proxy is **not** active in this build (it self-install
 ### Interaction notes (web context)
 
 - Use **`tap_element`**, not `click_element` (the WebDriver `element.click()` is silently ignored on iOS).
-- **`tap_element` by selector when you can** — selectors are more robust against em's focus-driven layout shifts (the editable moves ~26 px when the keyboard opens). Coord-based `tap_element { x, y }` works fine for single taps; for multi-touch sequences (double-tap, custom timing) drop down to [`browser-control-ios-touch-fallback`](../browser-control-ios-touch-fallback/SKILL.md). Prefer CSS / ID / `aria-label`; read `src/e2e/iOS/__tests__/` for the canonical em selectors rather than guessing.
+- **`tap_element` by selector when you can** — selectors are more robust against em's focus-driven layout shifts (the editable moves ~26 px when the keyboard opens). Coord-based `tap_element { x, y }` works fine for single taps. For em interactions (gestures, editing, selection, multi-touch) use the e2e helpers via the bridge — see **Driving em via the e2e bridge**. Prefer CSS / ID / `aria-label`; read `src/e2e/iOS/__tests__/` for the canonical em selectors rather than guessing.
 - Expect **HMR reloads** when you edit source files — the page reloads on the device and in-memory app state (created thoughts, cursor, dismissed modals) resets. Re-run wait-for-mount and re-create state after edits.
+
+## Driving em via the e2e bridge
+
+em's own interactions — gestures, editing, text selection, thought manipulation — are driven by the **canonical e2e helpers** in `src/e2e/iOS/helpers/`, executed against this live session via `attachLiveSession()` in `src/e2e/iOS/agents.ts`. They are the same helpers the wdio suite uses; do not re-derive their logic in prose or inline (see `browser-control`'s "Driving em interactions").
+
+**How it works.** `attachLiveSession()` (in `src/e2e/iOS/agents.ts`) `attach`es a WebdriverIO client to the live session (by the session id this skill saved to `/tmp/em-bs-session.txt` during bring-up), installs it as the global `browser` the helpers read, and switches into the WKWebView context. It attaches as a *second* client alongside the `wdio` MCP — both drive the same session.
+
+**To run an interaction:**
+
+1. Write a **temp** snippet — e.g. `/tmp/em-bridge.ts` — typed TypeScript that imports `attachLiveSession` and the helpers you need **by absolute path** (the repo root is your working directory), composes them inside an async `main()`, and prints any result as JSON. Glue only — call and compose helpers, never reimplement them. Wrap in `main()`; `tsx` runs the temp file as CommonJS, so top-level `await` is not available.
+
+   ```ts
+   import { attachLiveSession } from '<repo>/src/e2e/iOS/agents'
+   import setSelection from '<repo>/src/e2e/iOS/helpers/setSelection'
+   import showEditMenu from '<repo>/src/e2e/iOS/helpers/showEditMenu'
+
+   const main = async () => {
+     await attachLiveSession() // reads /tmp/em-bs-session.txt; BrowserStack creds from env
+     const selection = await setSelection(0, 9)
+     await showEditMenu()
+     console.log(JSON.stringify({ selection }))
+   }
+   main().catch(e => { console.error(e); process.exit(1) })
+   ```
+
+2. Run it with `npx tsx /tmp/em-bridge.ts`. Read the JSON it prints, and capture a **native screenshot** to confirm any native UI (keyboard, selection handles, edit menu). The temp file is never committed — delete it when done.
+
+**Common helpers** (`src/e2e/iOS/helpers/`): `newThought(value)`, `gesture(path)` (a gesture string like `'rd'` or a `gestures.*` entry), `setSelection(start, end)` (DOM range, any boundary), `showEditMenu()` (native `Cut | Copy | Paste` on the current selection), `getEditingText()`, `getSelection()`, `waitForEditable(value)`, `tap(handle)`.
+
+**Cross-boundary conventions:** pass values, character offsets, and gesture strings — serializable data; element handles resolve in-process from a locator inside the helper. On iOS, gestures are gesture strings, never `Command` objects (the em command registry can't be imported outside the app runtime; the gesture handler resolves and executes the command from the replayed gesture).
+
+**If no helper covers the interaction**, propose a new one for `src/e2e/iOS/helpers/` and escalate — do not improvise touch/gesture logic inline.
 
 ## Native augmentation (drop down only when the model above calls for it)
 
@@ -111,9 +143,8 @@ A `null` result means the proxy is **not** active in this build (it self-install
 
 - **Screenshots — always native.** A native device screenshot captures the full screen (status bar, keyboard, selection handles, gesture-menu overlay, system dialogs) that a web screenshot can't see, and it's **context-independent** (can grab screenshot without switching context). Capture one after native interactions, after web actions that can summon native UI (focus → keyboard, selection → menu), and whenever in iteration you feel you need visual context.
 - **Always query the accessibility tree with scope.** Use `get_elements` with a **specific** `-ios predicate string` / class chain to find a target; don't dump the full tree (broad scans are slow). The native tree mirrors rendered web content, so some web facts are readable from native without switching — but for precise web work, use the DOM.
-- **Text selection (double-tap-to-select a word)** → use the [**`interaction-ios-select-text`**](../interaction-ios-select-text/SKILL.md) skill. It composes focus + coord re-fetch + a native double-tap (via the touch-fallback skill) + verification. The standard MCP touch tools (`mobile: doubleTap`, `tap_element` x/y, `performActions`) all **blur** the editable on this stack — WebKit's select-word recognizer only honours touches dispatched through the legacy JSONWP `/touch/perform` route.
-- **Other iOS gestures where the standard MCP tools misbehave** (e.g. visibly wrong outcome vs a real finger) → fall back to the [**`browser-control-ios-touch-fallback`**](../browser-control-ios-touch-fallback/SKILL.md) skill, which posts raw JSONWP TouchAction sequences. Use it only when needed — it's slower per call and you have to manage coordinates yourself.
-- **em gestures (native or held)** → use the **`interaction-gestures`** skill; it documents the native `performActions` dispatch (skipping the unsupported `releaseActions`/DELETE) and the synthetic-held technique for em's Gesture Menu.
+- **Text selection (select a word/span + the native `Cut | Copy | Paste` menu)** → `setSelection(start, end)` + `showEditMenu()` via the bridge (see **Driving em via the e2e bridge**). Selecting via the DOM and then tapping to reveal the menu works on Appium 2 **and** 3; do not use `mobile: doubleTap` / `performActions` to *select* — they blur the editable.
+- **em gestures (including held gestures / the Gesture Menu)** → the `gesture` helper via the bridge, composing its hold option for held gestures — rather than hand-dispatching touches.
 
 ## If the session terminates mid-run
 

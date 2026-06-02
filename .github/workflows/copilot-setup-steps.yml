@@ -72,6 +72,25 @@ jobs:
       - name: Verify Chrome
         run: google-chrome --version
 
+      # Launch a single shared Chrome exposing a CDP endpoint on :9222 that BOTH the chrome-devtools MCP
+      # (configured with --browser-url=http://127.0.0.1:9222) and the web executor bridge
+      # (src/e2e/puppeteer/agents.ts, via puppeteer.connect) attach to — so the agent and the bridge drive one
+      # browser. The MCP with --browser-url does NOT launch Chrome itself, so it must already be running.
+      - name: Start shared Chrome (remote debugging on :9222)
+        run: |
+          nohup node scripts/shared-chrome.mjs >/tmp/shared-chrome.log 2>&1 &
+          disown
+          for i in {1..30}; do
+            if curl -fsS -o /dev/null http://127.0.0.1:9222/json/version 2>/dev/null; then
+              echo "Shared Chrome ready after ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Shared Chrome did not come up within 30s — log:" >&2
+          cat /tmp/shared-chrome.log >&2
+          exit 1
+
       # Start the Vite dev server in the background so it's already running
       # when the agent session begins. Logs go to /tmp/dev-server.log.
       # Vite may serve HTTP or HTTPS depending on local config, so probe both.

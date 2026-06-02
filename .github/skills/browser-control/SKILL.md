@@ -33,7 +33,7 @@ If the caller has not stated a platform, stop and ask before doing anything. Pic
 1. **Probe** the dev server (shared, below).
 2. **Bring up** the environment by invoking the right sub-skill for the target.
 
-Once the sub-skill confirms the environment is up, the caller can drive it. For em gesture-zone swipes, use the `interaction-gestures` skill.
+Once the sub-skill confirms the environment is up, the caller can drive it — see **Driving em interactions** below.
 
 ## Step 1: Probe the dev server
 
@@ -51,3 +51,16 @@ If neither responds, check `/tmp/dev-server.log` and report — do not start a s
 - `ios` → invoke **`browser-control-ios`**. It opens the BrowserStack App Automate session (the Capacitor app, native + web), lands in the webview context, and waits for mount.
 
 Hand the target to the sub-skill, wait for it to confirm the environment is ready, then hand back to the caller.
+
+## Driving em interactions
+
+Drive em's own interactions — gestures, editing, text selection, thought manipulation — through the **canonical e2e helpers** in `src/e2e/<platform>/helpers`, executed against the live session by the **executor bridge**. These are the same helpers the e2e test suite uses, so they are the single source of truth for how the app is interacted with. Do **not** re-derive interaction logic (synthetic touch dispatch, gesture cadence, selection recipes) in prose or inline — that drift is exactly what this model removes.
+
+- **Compose** complex actions from simple helpers (e.g. "select a word and open its edit menu" = `setSelection(start, end)` + `showEditMenu()`).
+- **If no helper — and no composition of helpers — covers the em interaction you need: STOP.** Propose a new helper for `src/e2e/<platform>/helpers` (sketch its signature and which helpers it composes) and escalate it for review. Do not hand-roll the interaction inline. A missing helper is a gap to fill in the single source of truth, not a license to improvise.
+- **Mechanical / system / browser operations are not em interactions** — navigation, screenshots, context switching, waiting for mount, native taps on system UI (keyboard "Done", share sheet), scrolling a list — and use the MCP tools directly. Reach for a helper only for em's own behaviour.
+
+Platform specifics:
+
+- **iOS** → run helpers via the bridge; see `browser-control-ios` ("Driving em via the e2e bridge").
+- **web / android** → run helpers via the bridge; see `browser-control-chrome` ("Driving em via the e2e bridge").

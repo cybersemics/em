@@ -4,7 +4,7 @@ import newThoughtCommand from '../../../commands/newThought'
 import exportThoughts from '../helpers/exportThoughts'
 import gesture from '../helpers/gesture'
 import keyboard from '../helpers/keyboard'
-import { page } from '../setup'
+import { page } from '../session'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 

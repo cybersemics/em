@@ -106,8 +106,8 @@ The browser environment is now ready (Step 2) with a fresh browser profile and a
 
 ### em App Interaction Reference
 
-- For keyboard / mouse / tap / type interactions, use the tools provided by whichever MCP `browser-control` attached.
-- For **swipe gestures** in the em gesture zone (notations like `rdr` or `→↓→`), use the **`interaction-gestures`** skill — it has the per-platform gesture dispatch (continuous touch with proper pacing) that the em gesture detector requires. Do not improvise gestures with raw `swipe` / `click` calls; they will not commit.
+- For mechanical / system interactions (navigate, screenshot, switch context, scroll, taps on system UI), use the tools provided by whichever MCP `browser-control` attached.
+- For **em's own interactions** (gestures, editing, text selection, thought manipulation), drive the canonical e2e helpers via the executor bridge — see `browser-control`'s **Driving em interactions**. Compose helpers; if none covers the interaction, propose a new helper rather than improvising. (Both iOS and web/android run helpers through the bridge — see the platform `browser-control-*` sub-skill.)
 - Read **em**'s UI code to understand how to trigger certain behaviors if the steps are not explicit.
 
 ---
