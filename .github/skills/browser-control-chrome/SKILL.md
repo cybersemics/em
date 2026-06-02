@@ -75,7 +75,9 @@ em's own interactions — gestures, editing, text selection, thought manipulatio
 
 2. Run it with `npx tsx /tmp/em-bridge.ts`. Gestures need the android (touch) profile from Step 1. The temp file is never committed — delete it when done.
 
-**If no helper covers the interaction**, propose a new one for `src/e2e/puppeteer/helpers/` and escalate — do not improvise touch/gesture logic inline.
+**Tapping any em control goes through the `click` helper** (`src/e2e/puppeteer/helpers/click.ts`) — `click('[data-testid="toolbar-icon"][aria-label="Export"]')`, `click('<thought-selector>')`. It calls `page.tap` under mobile emulation and `page.click` on desktop. **A raw `page.click` / MCP `click` / `elementHandle.click()` silently no-ops on a touch-emulated page** because em's controls fire on `fastClick`'s touch events — you'll see no error and wrongly conclude the control is broken. A tap is not "mechanical" just because it's a tap; if it's em's UI, use the helper (see `browser-control`'s **Driving em interactions**).
+
+**If no helper covers the interaction**, drive it directly with the `chrome-devtools` MCP and keep going — reproduction is exploratory and must not be blocked. (Note the gap as a candidate helper for `src/e2e/puppeteer/helpers/` if you like, but don't wait on it.) Only avoid hand-reimplementing the internals of a helper that already exists.
 
 ## Cleanup
 

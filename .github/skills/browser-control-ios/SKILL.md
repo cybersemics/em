@@ -135,7 +135,7 @@ em's own interactions — gestures, editing, text selection, thought manipulatio
 
 **Cross-boundary conventions:** pass values, character offsets, and gesture strings — serializable data; element handles resolve in-process from a locator inside the helper. On iOS, gestures are gesture strings, never `Command` objects (the em command registry can't be imported outside the app runtime; the gesture handler resolves and executes the command from the replayed gesture).
 
-**If no helper covers the interaction**, propose a new one for `src/e2e/iOS/helpers/` and escalate — do not improvise touch/gesture logic inline.
+**If no helper covers the interaction**, drive it directly with the `wdio` MCP (web context, or native when the model above calls for it) and keep going — reproduction is exploratory and must not be blocked. (Note the gap as a candidate helper for `src/e2e/iOS/helpers/` if you like, but don't wait on it.) Only avoid hand-reimplementing the internals of a helper that already exists.
 
 ## Native augmentation (drop down only when the model above calls for it)
 

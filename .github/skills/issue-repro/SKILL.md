@@ -23,7 +23,7 @@ By following the documented steps in the issue, you can reliably reproduce the p
 5. **Validate** — re-run the steps; confirm the failure is gone and the expected behavior is observed.
 
 **You MUST** be able to reproduce the issue directly – if you cannot, **DO NOT** assume the cause without first confirming with the user.
-**DO NOT explore a fix** until you have successfully reproduced the issue. **This is your priority.** If you **CANNOT FULLY REPRODUCE** the steps, **FAIL AND ESCALATE TO THE USER.**
+**DO NOT explore a fix** until you have successfully reproduced the issue. **This is your priority.** If you **CANNOT FULLY REPRODUCE** the steps, **FAIL AND ESCALATE TO THE USER** — except for an ambiguous `[Mobile]` issue, where you first retry on `ios` before escalating (see Step 3).
 Similarly, a fix is **not complete** until both Step 5a and Step 5b pass.
 
 > **iOS is fully reproducible here — never opt out.** iOS issues run on **real iOS devices via BrowserStack App Automate**, driven by the `wdio` MCP through `browser-control` → `browser-control-ios`. You do **not** need a local Mac, a physical device, or a simulator. "This is iOS-specific / needs a physical device / I can't automate iOS" is **never** a valid reason to skip reproduction or to jump straight to a fix. If `target = ios`, hand off to `browser-control` and reproduce on the cloud device exactly as you would for web or android.
@@ -57,7 +57,7 @@ Pick exactly one of `web`, `android`, or `ios` — `browser-control` is going to
 | `[Android]`, `[Mobile]` | `android` |
 | no platform tag         | `web`     |
 
-`[Mobile]` without `[iOS]` is treated as `android` — that is the cheaper environment and reproduces almost all mobile-only behavior. Only switch to `ios` when the issue is explicitly about iOS Safari.
+`[Mobile]` without `[iOS]` is treated as **`android`** — the cheaper environment (mobile Chrome via the puppeteer suite; no iOS device to spin up) that reproduces almost all mobile-only behavior. For these **ambiguous-mobile** cases (the `[Mobile]` tag, or the generic mobile language below), `android` is a **default with an iOS fallback**, not a commitment: if you cannot reproduce on mobile Chrome, the bug is most likely iOS-specific, so retry on `ios` before escalating (see Step 3). Explicit `[Android]` (or "Chrome on mobile") stays `android` with **no** fallback; explicit `[iOS]`/`[Safari]` goes straight to `ios`.
 
 **Body keywords (fallback):**
 
@@ -71,7 +71,7 @@ If desktop-only language is used ("click", "hover", "right-click", no mobile hin
 
 If you cannot determine the target after this — for example, an issue mentioning both iOS and Android — stop and ask the user which platform to reproduce on. Do not guess: an iOS-only bug will not reproduce under Android emulation and vice-versa.
 
-State the chosen target out loud before continuing, e.g. `issue-repro: target = android (issue tagged [Mobile], body mentions "swipe").`
+State the chosen target out loud before continuing — and for an ambiguous-mobile default, note the iOS fallback, e.g. `issue-repro: target = android (issue tagged [Mobile], body mentions "swipe"); iOS fallback if mobile-Chrome repro fails.`
 
 ---
 
@@ -99,15 +99,30 @@ The browser environment is now ready (Step 2) with a fresh browser profile and a
 
 3. **Document what you observed** — quote the error message or describe the UI
    state. If the failure does not occur, **note this explicitly and do not proceed**
-   **to fixing**. Instead, report to the user and ask for clarification (different
-   browser, platform, version, or data state required?).
+   **to fixing**.
 
-**YOU MUST ESCALATE NOW IF YOU CANNOT EXPLICITLY REPRODUCE**
+   **Ambiguous-mobile → iOS fallback.** If the target was an ambiguous-mobile default
+   (`android` chosen from `[Mobile]` or generic mobile language — *not* explicit `[Android]`)
+   and the issue did **not** reproduce on mobile Chrome, re-run Step 2 with `target = ios`
+   and attempt the reproduction on the real iOS device **before escalating** — a mobile bug
+   that won't repro in Chrome is most likely iOS-specific. Only if it **also** fails on iOS
+   do you escalate.
+
+   Otherwise — explicit `web`/`android`/`ios` (or iOS already retried and failed) — report to
+   the user and ask for clarification (different browser, platform, version, or data state
+   required?).
+
+**YOU MUST ESCALATE IF YOU CANNOT EXPLICITLY REPRODUCE** — but for an ambiguous `[Mobile]` issue, run the iOS fallback above first.
 
 ### em App Interaction Reference
 
-- For mechanical / system interactions (navigate, screenshot, switch context, scroll, taps on system UI), use the tools provided by whichever MCP `browser-control` attached.
-- For **em's own interactions** (gestures, editing, text selection, thought manipulation), drive the canonical e2e helpers via the executor bridge — see `browser-control`'s **Driving em interactions**. Compose helpers; if none covers the interaction, propose a new helper rather than improvising. (Both iOS and web/android run helpers through the bridge — see the platform `browser-control-*` sub-skill.)
+Split every interaction into **observing** vs **actuating** — the kind decides the tool (full detail in `browser-control`'s **Driving em interactions**).
+
+- **Observing is exploratory** — reading state to figure out what's happening (evaluate scripts, inspect the DOM, screenshots, console, network). Use the full MCP/tool surface freely; nothing is off-limits.
+- **Actuating em goes through the canonical e2e helpers when one exists** — anything that *drives* em's behaviour: tapping **any** em control (a thought, a button, a toolbar icon, a menu item), typing into a thought, gestures, selection. Drive them via the executor bridge. Two reasons: they encapsulate dispatch that's easy to get wrong by hand, and a repro built from helper calls transfers near-free into the automated test.
+- **The trap:** em controls use `fastClick` (touch events under mobile emulation), so a **raw mouse click silently no-ops** on a touch-emulated page — no error, you just misread it as "the button doesn't work." The **`click` helper** taps right per platform (`page.tap` mobile / `page.click` desktop). A tap is **not** "mechanical" just because it's a tap — if it's em's own UI, use the helper. Check the catalog before assuming otherwise.
+- **If no helper covers an actuation, drive it with the MCP/tooling and keep going** — no stopping, no escalation; just don't hand-reimplement an existing helper. (Note the gap as a candidate helper.) (Both iOS and web/android run helpers through the bridge — see the platform `browser-control-*` sub-skill.)
+- To find helpers, list `src/e2e/<platform>/helpers/` and read the relevant helper's source for its signature before composing — that directory is the catalog.
 - Read **em**'s UI code to understand how to trigger certain behaviors if the steps are not explicit.
 
 ---
