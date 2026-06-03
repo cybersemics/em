@@ -16,11 +16,11 @@ import {
   upsertLexeme,
 } from './lexemes'
 import { decodeThoughtPayload, encodeThoughtPayload } from './payload'
-import { SYSTEM_ROOT_THOUGHT_IDS } from './systemThoughtIds'
 import {
   enqueueMaterializedThoughtsToStore,
   tryStartTreecrdtWebSocketSyncFromEnv as tryStartTreecrdtWebSocketSync,
 } from './sync'
+import { SYSTEM_ROOT_THOUGHT_IDS } from './systemThoughtIds'
 import { dropTreecrdt, getTreecrdtClient, registerBeforeTreecrdtClose } from './treecrdt'
 import { createTreecrdtLocalWriteOptions, isTreecrdtLocalMaterialization } from './writeBarrier'
 
