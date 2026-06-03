@@ -6,7 +6,7 @@ import { Page } from 'puppeteer'
  * page". It knows nothing about how the page is produced; producers publish into it via `setPage`:
  *
  * - the **test fixture** (`setup.ts`) creates a fresh page per test and publishes it, and
- * - the **agent bridge** (`src/e2e/puppeteer/agents.ts`) binds the live tab it attached to.
+ * - the **agent bridge** (`src/e2e/puppeteer/attachExistingBrowserInstance.ts`) binds the live tab it attached to.
  *
  * Helpers `import { page }` from here and use it as a live binding (ESM re-export semantics), so they
  * always see whatever the current producer published.

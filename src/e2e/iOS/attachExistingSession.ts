@@ -69,7 +69,7 @@ const ensureWebviewContext = async (session: WebdriverIO.Browser): Promise<strin
  * Reads the session id from the session file (see `SESSION_FILE`) and the endpoint from the environment
  * (see `resolveEndpoint`).
  */
-export const attachLiveSession = async (): Promise<WebdriverIO.Browser> => {
+export const attachExistingSession = async (): Promise<WebdriverIO.Browser> => {
   const sessionId = readFileSync(SESSION_FILE, 'utf8').trim()
   if (!sessionId) throw new Error(`No session id found in ${SESSION_FILE}.`)
 
@@ -92,4 +92,4 @@ export const attachLiveSession = async (): Promise<WebdriverIO.Browser> => {
   return session
 }
 
-export default attachLiveSession
+export default attachExistingSession

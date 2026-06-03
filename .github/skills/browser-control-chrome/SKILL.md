@@ -49,20 +49,20 @@ After navigation, hand back to the caller. To drive em's own interactions, see *
 
 ## Driving em via the e2e bridge
 
-em's own interactions — gestures, editing, text selection, thought manipulation — are driven by the **canonical e2e helpers** in `src/e2e/puppeteer/helpers/`, executed against the shared Chrome via `attachLivePage()` in `src/e2e/puppeteer/agents.ts`. They are the same helpers the puppeteer test suite uses; do not re-derive interaction logic (synthetic touch dispatch, gesture cadence) in prose or inline — see `browser-control`'s "Driving em interactions".
+em's own interactions — gestures, editing, text selection, thought manipulation — are driven by the **canonical e2e helpers** in `src/e2e/puppeteer/helpers/`, executed against the shared Chrome via `attachExistingBrowserInstance()` in `src/e2e/puppeteer/attachExistingBrowserInstance.ts`. They are the same helpers the puppeteer test suite uses; do not re-derive interaction logic (synthetic touch dispatch, gesture cadence) in prose or inline — see `browser-control`'s "Driving em interactions".
 
-**How it works.** `attachLivePage()` (in `src/e2e/puppeteer/agents.ts`) does `puppeteer.connect` to the shared Chrome (the same one the MCP drives via `--browser-url`), finds the live em tab, and binds it as the helpers' `page`. A puppeteer connection restores `page.touchscreen` (real CDP touch) that the chrome-devtools MCP tool surface doesn't expose — so the real `gesture.ts` runs, identical to the test suite.
+**How it works.** `attachExistingBrowserInstance()` (in `src/e2e/puppeteer/attachExistingBrowserInstance.ts`) does `puppeteer.connect` to the shared Chrome (the same one the MCP drives via `--browser-url`), finds the live em tab, and binds it as the helpers' `page`. A puppeteer connection restores `page.touchscreen` (real CDP touch) that the chrome-devtools MCP tool surface doesn't expose — so the real `gesture.ts` runs, identical to the test suite.
 
 **To run an interaction:**
 
-1. Write a **temp** snippet — e.g. `/tmp/em-bridge.ts` — typed TypeScript that imports `attachLivePage` and the helpers you need **by absolute path** (the repo root is your working directory), composes them inside an async `main()`, and prints any result as JSON. **Disconnect, never close** (the MCP shares this Chrome). Glue only — never reimplement helpers. Wrap in `main()`; `tsx` runs the temp file as CommonJS, so top-level `await` is not available.
+1. Write a **temp** snippet — e.g. `/tmp/em-bridge.ts` — typed TypeScript that imports `attachExistingBrowserInstance` and the helpers you need **by absolute path** (the repo root is your working directory), composes them inside an async `main()`, and prints any result as JSON. **Disconnect, never close** (the MCP shares this Chrome). Glue only — never reimplement helpers. Wrap in `main()`; `tsx` runs the temp file as CommonJS, so top-level `await` is not available.
 
    ```ts
-   import { attachLivePage } from '<repo>/src/e2e/puppeteer/agents'
+   import { attachExistingBrowserInstance } from '<repo>/src/e2e/puppeteer/attachExistingBrowserInstance'
    import gesture from '<repo>/src/e2e/puppeteer/helpers/gesture'
 
    const main = async () => {
-     const { browser, page } = await attachLivePage()
+     const { browser, page } = await attachExistingBrowserInstance()
      try {
        await gesture('rd') // real CDP touch via page.touchscreen
        console.log(JSON.stringify(await page.evaluate(() => document.querySelectorAll('[data-editable]').length)))

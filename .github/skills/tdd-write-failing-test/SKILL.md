@@ -19,7 +19,7 @@ This is **v1**: write a real failing test, run it locally, confirm it fails *for
 
 You reproduced the bug by composing e2e helpers in a temp bridge script. A test composes the **same helpers** — only two things change:
 
-- the **test fixture supplies `page` / `browser`**, so you drop the bridge `attachLivePage()` / `attachLiveSession()` line entirely;
+- the **test fixture supplies `page` / `browser`**, so you drop the bridge `attachExistingBrowserInstance()` / `attachExistingSession()` line entirely;
 - you add an **`expect()`** on the value you observed, asserting the **expected (fixed)** behaviour.
 
 Because the helpers are identical, the transfer is near-free. Reuse the helper calls from your repro verbatim; do **not** re-derive interaction logic.

@@ -92,7 +92,7 @@ jobs:
 
       # Launch a single shared Chrome exposing a CDP endpoint on :9222 that BOTH the chrome-devtools MCP
       # (configured with --browser-url=http://127.0.0.1:9222) and the web executor bridge
-      # (src/e2e/puppeteer/agents.ts, via puppeteer.connect) attach to — so the agent and the bridge drive one
+      # (src/e2e/puppeteer/attachExistingBrowserInstance.ts, via puppeteer.connect) attach to — so the agent and the bridge drive one
       # browser. The MCP with --browser-url does NOT launch Chrome itself, so it must already be running.
       - name: Start shared Chrome (remote debugging on :9222)
         run: |

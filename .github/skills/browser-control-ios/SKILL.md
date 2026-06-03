@@ -107,21 +107,21 @@ A `null` result means the proxy is **not** active in this build (it self-install
 
 ## Driving em via the e2e bridge
 
-em's own interactions — gestures, editing, text selection, thought manipulation — are driven by the **canonical e2e helpers** in `src/e2e/iOS/helpers/`, executed against this live session via `attachLiveSession()` in `src/e2e/iOS/agents.ts`. They are the same helpers the wdio suite uses; do not re-derive their logic in prose or inline (see `browser-control`'s "Driving em interactions").
+em's own interactions — gestures, editing, text selection, thought manipulation — are driven by the **canonical e2e helpers** in `src/e2e/iOS/helpers/`, executed against this live session via `attachExistingSession()` in `src/e2e/iOS/attachExistingSession.ts`. They are the same helpers the wdio suite uses; do not re-derive their logic in prose or inline (see `browser-control`'s "Driving em interactions").
 
-**How it works.** `attachLiveSession()` (in `src/e2e/iOS/agents.ts`) `attach`es a WebdriverIO client to the live session (by the session id this skill saved to `/tmp/em-bs-session.txt` during bring-up), installs it as the global `browser` the helpers read, and switches into the WKWebView context. It attaches as a *second* client alongside the `wdio` MCP — both drive the same session.
+**How it works.** `attachExistingSession()` (in `src/e2e/iOS/attachExistingSession.ts`) `attach`es a WebdriverIO client to the live session (by the session id this skill saved to `/tmp/em-bs-session.txt` during bring-up), installs it as the global `browser` the helpers read, and switches into the WKWebView context. It attaches as a *second* client alongside the `wdio` MCP — both drive the same session.
 
 **To run an interaction:**
 
-1. Write a **temp** snippet — e.g. `/tmp/em-bridge.ts` — typed TypeScript that imports `attachLiveSession` and the helpers you need **by absolute path** (the repo root is your working directory), composes them inside an async `main()`, and prints any result as JSON. Glue only — call and compose helpers, never reimplement them. Wrap in `main()`; `tsx` runs the temp file as CommonJS, so top-level `await` is not available.
+1. Write a **temp** snippet — e.g. `/tmp/em-bridge.ts` — typed TypeScript that imports `attachExistingSession` and the helpers you need **by absolute path** (the repo root is your working directory), composes them inside an async `main()`, and prints any result as JSON. Glue only — call and compose helpers, never reimplement them. Wrap in `main()`; `tsx` runs the temp file as CommonJS, so top-level `await` is not available.
 
    ```ts
-   import { attachLiveSession } from '<repo>/src/e2e/iOS/agents'
+   import { attachExistingSession } from '<repo>/src/e2e/iOS/attachExistingSession'
    import setSelection from '<repo>/src/e2e/iOS/helpers/setSelection'
    import showEditMenu from '<repo>/src/e2e/iOS/helpers/showEditMenu'
 
    const main = async () => {
-     await attachLiveSession() // reads /tmp/em-bs-session.txt; BrowserStack creds from env
+     await attachExistingSession() // reads /tmp/em-bs-session.txt; BrowserStack creds from env
      const selection = await setSelection(0, 9)
      await showEditMenu()
      console.log(JSON.stringify({ selection }))
