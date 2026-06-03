@@ -21,11 +21,13 @@ The puppeteer harness is **self-contained**: `test-puppeteer.sh` starts a browse
 
 ```bash
 # whole file
-./src/e2e/puppeteer/test-puppeteer.sh src/e2e/puppeteer/__tests__/<file>.ts
+GITHUB_ACTIONS="" ./src/e2e/puppeteer/test-puppeteer.sh src/e2e/puppeteer/__tests__/<file>.ts
 
 # a single test by name
-./src/e2e/puppeteer/test-puppeteer.sh src/e2e/puppeteer/__tests__/<file>.ts -t "<it name>"
+GITHUB_ACTIONS="" ./src/e2e/puppeteer/test-puppeteer.sh src/e2e/puppeteer/__tests__/<file>.ts -t "<it name>"
 ```
+
+**The `GITHUB_ACTIONS=""` prefix is required here.** The script only starts browserless + the `:2552` server when `GITHUB_ACTIONS` is unset; in real CI those are provided by the workflow, so it skips them. An agent runner sets `GITHUB_ACTIONS=true` (so the script would skip) but does **not** provide those services — the test would then fail connecting to `ws://localhost:7566`. Clearing the var **only for this command** makes the script self-provision; leave `CI` set (the harness still needs it). This mirrors the `puppeteer-update-snapshots` skill.
 
 Prerequisite: **Docker** available (for browserless). The script manages the container and dev server itself — do not start your own, and do not point it at the shared `:9222` Chrome / `:3000` server used during exploration.
 
