@@ -1,10 +1,26 @@
-import { FC } from 'react'
+import { FC, useEffect, useRef } from 'react'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
+import { isTouch } from '../browser'
 import SearchIcon from './icons/SearchIcon'
 
 /** Search bar for filtering commands. */
 const SearchCommands: FC<{ onInput?: (value: string) => void }> = ({ onInput }) => {
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  // Dismiss the virtual keyboard when the user scrolls the search results on touch devices.
+  useEffect(() => {
+    if (!isTouch) return
+    /** Blurs the input to dismiss the virtual keyboard. */
+    const handleScroll = () => {
+      inputRef.current?.blur()
+    }
+    window.addEventListener('scroll', handleScroll, true)
+    return () => {
+      window.removeEventListener('scroll', handleScroll, true)
+    }
+  }, [])
+
   return (
     <div id='search' className={css({ flexGrow: 1, border: 'solid 1px {colors.gray50}', borderRadius: '8px' })}>
       <div className={css({ position: 'relative' })}>
@@ -22,6 +38,7 @@ const SearchCommands: FC<{ onInput?: (value: string) => void }> = ({ onInput }) 
           <SearchIcon size={16} fill={token('colors.lightgray')} />
         </div>
         <input
+          ref={inputRef}
           type='text'
           placeholder='Search commands...'
           onInput={(e: React.FormEvent<HTMLInputElement>) => {
