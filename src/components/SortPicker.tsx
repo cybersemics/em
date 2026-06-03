@@ -1,5 +1,5 @@
 import { isEqual } from 'lodash'
-import React, { FC, memo, useEffect, useRef } from 'react'
+import React, { FC, memo } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import SortPreference from '../@types/SortPreference'
@@ -69,7 +69,6 @@ const SortOption: FC<SortOptionProps> = ({ type, supportsDirection, label, sortP
 const SortPicker: FC<{ size?: number }> = memo(({ size }) => {
   const dispatch = useDispatch()
   const showSortPicker = useSelector(state => state.showSortPicker)
-  const popoverRef = useRef<HTMLDivElement>(null)
 
   const sortPreference = useSelector(state => {
     if (!state.cursor || isRoot(state.cursor)) return { type: 'None', direction: null }
@@ -108,68 +107,46 @@ const SortPicker: FC<{ size?: number }> = memo(({ size }) => {
     })
   }
 
-  /** Dismisses the keyboard when the user interacts with the sort picker. */
-  const handleInteraction = () => {
-    const activeElement = document.activeElement
-    if (activeElement && activeElement instanceof HTMLInputElement) {
-      activeElement.blur()
-    }
-  }
-
-  useEffect(() => {
-    const popoverElement = popoverRef.current
-    if (!popoverElement) return
-
-    popoverElement.addEventListener('click', handleInteraction)
-    popoverElement.addEventListener('touchstart', handleInteraction)
-    return () => {
-      popoverElement.removeEventListener('click', handleInteraction)
-      popoverElement.removeEventListener('touchstart', handleInteraction)
-    }
-  }, [])
-
   return (
-    <div ref={popoverRef}>
-      <Popover show={showSortPicker} size={size}>
-        <div aria-label='sort options' className={css({ whiteSpace: 'wrap' })}>
-          <SortOption
-            type='None'
-            supportsDirection={false}
-            label='None'
-            sortPreference={sortPreference}
-            onClick={toggleSortOption}
-          />
-          <SortOption
-            type='Alphabetical'
-            supportsDirection={true}
-            label='Alphabetical'
-            sortPreference={sortPreference}
-            onClick={toggleSortOption}
-          />
-          <SortOption
-            type='Created'
-            supportsDirection={true}
-            label='Created'
-            sortPreference={sortPreference}
-            onClick={toggleSortOption}
-          />
-          <SortOption
-            type='Updated'
-            supportsDirection={true}
-            label='Updated'
-            sortPreference={sortPreference}
-            onClick={toggleSortOption}
-          />
-          <SortOption
-            type='Note'
-            supportsDirection={true}
-            label='Note'
-            sortPreference={sortPreference}
-            onClick={toggleSortOption}
-          />
-        </div>
-      </Popover>
-    </div>
+    <Popover show={showSortPicker} size={size}>
+      <div aria-label='sort options' className={css({ whiteSpace: 'wrap' })}>
+        <SortOption
+          type='None'
+          supportsDirection={false}
+          label='None'
+          sortPreference={sortPreference}
+          onClick={toggleSortOption}
+        />
+        <SortOption
+          type='Alphabetical'
+          supportsDirection={true}
+          label='Alphabetical'
+          sortPreference={sortPreference}
+          onClick={toggleSortOption}
+        />
+        <SortOption
+          type='Created'
+          supportsDirection={true}
+          label='Created'
+          sortPreference={sortPreference}
+          onClick={toggleSortOption}
+        />
+        <SortOption
+          type='Updated'
+          supportsDirection={true}
+          label='Updated'
+          sortPreference={sortPreference}
+          onClick={toggleSortOption}
+        />
+        <SortOption
+          type='Note'
+          supportsDirection={true}
+          label='Note'
+          sortPreference={sortPreference}
+          onClick={toggleSortOption}
+        />
+      </div>
+    </Popover>
   )
 })
 
