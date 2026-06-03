@@ -7,17 +7,19 @@ import SearchIcon from './icons/SearchIcon'
 const SearchCommands: FC<{ onInput?: (value: string) => void }> = ({ onInput }) => {
   const inputRef = useRef<HTMLInputElement>(null)
 
-  /** Blurs the search input when the user scrolls. */
-  const handleScroll = () => {
+  /** Blurs the search input when the user scrolls or drags the results. */
+  const blurInput = () => {
     if (inputRef.current && document.activeElement === inputRef.current) {
       inputRef.current.blur()
     }
   }
 
   useEffect(() => {
-    window.addEventListener('scroll', handleScroll, true)
+    window.addEventListener('scroll', blurInput, true)
+    window.addEventListener('touchmove', blurInput, true)
     return () => {
-      window.removeEventListener('scroll', handleScroll, true)
+      window.removeEventListener('scroll', blurInput, true)
+      window.removeEventListener('touchmove', blurInput, true)
     }
   }, [])
 
