@@ -1,6 +1,7 @@
 import http from 'http'
 import path from 'path'
 import { drainConsoleProxy, waitForConsoleProxy } from '../../../util/consoleProxy'
+import resetApp from '../helpers/resetApp'
 
 /**
  * Checks if the app is running on locally.
@@ -99,33 +100,14 @@ const baseConfig = {
     )
   },
 
-  // Before each test: clear storage and refresh (faster than full navigation)
+  // Before each test: reset to a clean, empty thoughtspace (clear storage, refresh, dismiss the tutorial).
   beforeTest: async function () {
-    // Clear localStorage and sessionStorage to ensure fresh state
-    await browser.execute(() => {
-      localStorage.clear()
-      sessionStorage.clear()
-    })
+    await resetApp()
 
-    // Refresh to apply the cleared storage (much faster than full navigation)
-    await browser.refresh()
-
-    // Due to limitations in BrowserStack, we need to proxy console.log
-    // calls and store output in a buffer to access them.
-    // We do this with a "console proxy" (see src/util/consoleProxy.ts).
-    // The proxy can be selectively enabled using VITE_BROWSER_CONSOLE_CAPTURE=1,
-    // which we set in .github/workflows/ios.yml.
+    // Due to limitations in BrowserStack, we proxy console.log calls into a buffer to access them
+    // (the "console proxy", src/util/consoleProxy.ts, enabled via VITE_BROWSER_CONSOLE_CAPTURE=1 — see
+    // .github/workflows/ios.yml). Wait for it to install after the reload resetApp performed.
     await waitForConsoleProxy()
-
-    // Wait for the tutorial skip button and click it
-    const skipElement = await $('#skip-tutorial')
-    await skipElement.waitForExist({ timeout: 90000 })
-    await skipElement.waitForClickable({ timeout: 10000 })
-    await skipElement.click()
-
-    // Wait for the empty thoughtspace to be ready
-    const emptyThoughtspace = await $('[aria-label="empty-thoughtspace"]')
-    await emptyThoughtspace.waitForExist({ timeout: 90000 })
   },
 
   // After each test: drain the console proxy buffer and print it under the test title so browser-side console output is grouped per-it() in CI logs.
