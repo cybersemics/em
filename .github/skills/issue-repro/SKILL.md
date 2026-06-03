@@ -141,7 +141,8 @@ Do not skip this and do not proceed to the fix until the test fails for the righ
 1. Use the reproduction evidence (error message, stack trace, console output) to locate the root cause. Read the relevant source code. Do not guess the cause without evidence.
 2. Implement a targeted fix. Prefer the smallest change that addresses the root cause without breaking related behavior.
 3. Ensure related behavior is not broken by taking a moment to analyze any potential impact of your change on the surrounding code and features. Fix any issues you identify before proceeding to validation.
-4. Restart or hot-reload the app. (`yarn start` hot-reloads on file change, so a page reload is usually sufficient. For build-level changes, re-run `yarn build`.)
+4. **Remove the `.skip`** from the regression test written in Step 4 (`it.skip` → `it`) — it was committed skipped to keep CI green while red; the fix must make it pass **un-skipped**, leaving permanent coverage. Never merge it still skipped (see `tdd-write-failing-test` Step 6).
+5. Restart or hot-reload the app. (`yarn start` hot-reloads on file change, so a page reload is usually sufficient. For build-level changes, re-run `yarn build`.)
 
 ---
 

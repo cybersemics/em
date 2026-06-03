@@ -15,6 +15,19 @@ The test runs in the **Vitest / WDIO runner**, *not* through the `chrome-devtool
 
 **Inputs:** the **target platform** (`web`/`android` or `ios`) and the **test file** (optionally a single `it` name).
 
+## Always run the target — never honor `.skip`
+
+A regression test is committed `it.skip(...)` while it is red-but-not-yet-fixed (see `tdd-write-failing-test`), so the normal suite and CI stay green. The runner would otherwise **skip** it and report "0 tests run" — which reads exactly like a pass. run-test must **never let a `.skip` hide a result**: un-skip the target for the run, then restore the file.
+
+```bash
+cp <file> /tmp/run-test.bak                                   # back up (works for tracked or new files)
+perl -i -pe 's/\b(it|test|describe)\.skip\b/$1/g' <file>      # un-skip for this run only
+# ... run the platform command below, filtered to your test by name ...
+cp /tmp/run-test.bak <file> && rm /tmp/run-test.bak           # restore the file exactly, even if the run errored
+```
+
+Always pair the un-skip with a **name filter** (`-t "<name>"` for Vitest, `--mochaOpts.grep "<name>"` for WDIO/iOS) so you don't accidentally un-skip unrelated `.skip` siblings in the same file. If the suite reports the target as **skipped / 0 tests**, that is **not** a pass — you forgot to strip the skip.
+
 ## web / android — Vitest + puppeteer
 
 The puppeteer harness is **self-contained**: `test-puppeteer.sh` starts a browserless Chrome (docker, `:7566`) and its own vite dev server (`:2552`), then runs Vitest. Pass the spec path straight through:

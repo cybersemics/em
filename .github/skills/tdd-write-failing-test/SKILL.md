@@ -13,7 +13,14 @@ You have just reproduced a bug by driving em's e2e helpers through the executor 
 
 **Mandate (project):** every bug fix ships with an automated test.
 
-This is **v1**: write a real failing test, run it locally, confirm it fails *for the right reason*, then hand back for the fix; validation later re-runs it green. Do **not** add `.skip` or any CI/TDD-inversion machinery — that is a deliberately later iteration.
+The failing test ships **`it.skip`** so the normal suite and CI stay green while it is red — *before* the fix exists. The skip is what makes it safe to commit the test at any point. Two separate checks then give the skipped test meaning:
+
+- the **TDD workflow** (`.github/workflows/tdd.yml`) un-skips it and runs it **on the base branch, expecting it to fail** — proving it captures a real bug (a test that passes on base tests nothing);
+- once the fix lands and you **remove the `.skip`**, the **normal suite** runs it **expecting it to pass** — proving the fix and leaving permanent regression coverage.
+
+**`run-test` always runs the test regardless of `.skip`** (it un-skips for the run), so your local validation is never fooled into reading a skipped test as a pass.
+
+> **Failure semantics — a TDD failure and a test failure mean opposite things.** When the TDD workflow runs your skipped test on base, **failing is good** (captures the bug → TDD passes) and **passing is bad** (doesn't test the bug → TDD fails). After the skip is removed, the normal suite inverts it: passing is good, failing means the bug isn't fixed. So "CI failed" does **not** by itself mean "bug not fixed" — read *which* check failed.
 
 ## The core idea: the reproduction IS the test
 
@@ -67,7 +74,8 @@ describe('command center', () => {
   }, 10000)
 
   // Regression test for https://github.com/cybersemics/em/issues/4331
-  it('overlay stays solid after a modal opened over it is closed', async () => {
+  // .skip keeps normal CI green while the test is red; remove the .skip when the fix lands (Step 6).
+  it.skip('overlay stays solid after a modal opened over it is closed', async () => {
     await newThought('hello world')
     await gesture('u') // swipe up → open Command Center
     await click('[data-testid="toolbar-icon"][aria-label="Settings"]') // open Settings modal
@@ -90,7 +98,8 @@ import tap from '../helpers/tap'
 
 describe('command center', () => {
   // Regression test for https://github.com/cybersemics/em/issues/4331
-  it('overlay stays solid after a modal opened over it is closed', async () => {
+  // .skip keeps normal CI green while the test is red; remove the .skip when the fix lands (Step 6).
+  it.skip('overlay stays solid after a modal opened over it is closed', async () => {
     await newThought('hello world')
     await gesture('u') // swipe up → open Command Center
 
@@ -119,13 +128,21 @@ If the element you assert on has **no stable selector** (no `data-testid` / `ari
 
 ## Step 5: Prove it fails for the right reason (the gate)
 
-Run the new test against the **current, unfixed** code by executing the **`run-test`** skill (it knows the single-test command per platform). The test MUST fail — and it must fail **on your assertion**, with the expected/received diff matching the reproduction (e.g. `expected '1', received '0'`).
+Run the new test against the **current, unfixed** code by executing the **`run-test`** skill (it knows the single-test command per platform, and it **un-skips the test for the run**, so the `.skip` does not hide the result). The test MUST fail — and it must fail **on your assertion**, with the expected/received diff matching the reproduction (e.g. `expected '1', received '0'`).
 
 - ✅ Fails on the assertion, showing the buggy value you observed → **valid failing test. Proceed.**
 - ❌ Fails on a **timeout, missing selector, setup error, or anything other than the assertion** → the *test* is wrong, not the bug. Fix the **test** (never the app) and re-run via `run-test` until it fails red on the intended assertion.
 
 A test that errors for the wrong reason is the core hallucination risk: it looks like coverage but proves nothing. Do not accept it.
 
-## Step 6: Hand back
+## Step 6: Commit the skipped test, then hand back
 
-Once the test fails for the right reason, hand back to the caller. The fix proceeds in the normal flow (plan → implement). After the fix, **validation re-runs this same test via `run-test` and it must pass** — that green run replaces the old manual re-reproduction.
+Commit the **`it.skip`** test together with any test-only `data-testid` hook from Step 4. Because it is skipped, the normal suite and CI stay green even though the bug is unfixed — so committing it now is safe (this is what closes the "red CI on a legitimately-failing test" problem). The TDD workflow will un-skip it on base and confirm it fails.
+
+Then hand back to the caller. The fix proceeds in the normal flow (plan → implement). **After the fix:**
+
+1. **Remove the `.skip`** (`it.skip` → `it`).
+2. Re-run via **`run-test`** — it must now **pass** (the green that proves the fix and turns on permanent coverage).
+3. Commit the fix **and** the skip-removal together, so the merged test is a normal, passing, ongoing-coverage test.
+
+**Never leave the test `.skip`ped in the final merged PR** — a permanently-skipped test gives zero regression protection. The skip is a transient safety marker that is removed when the fix lands.
