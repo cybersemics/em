@@ -68,6 +68,18 @@ jobs:
           echo "BROWSERSTACK_USERNAME=$BROWSERSTACK_USERNAME" >> $GITHUB_ENV
           echo "BROWSERSTACK_ACCESS_KEY=$BROWSERSTACK_ACCESS_KEY" >> $GITHUB_ENV
 
+      # The line above puts the creds on later workflow *steps*, but does NOT reach the agent's Bash
+      # shell, so `yarn test:ios:browserstack` sees BROWSERSTACK_USERNAME undefined. The wdio configs
+      # load .env.test.local via dotenv, and the workspace persists into the agent session — so write
+      # the creds there too. .env.test.local is gitignored (.env*.local), so the secrets can't be committed.
+      - name: Write BrowserStack creds for the test runner
+        env:
+          BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
+          BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
+        run: |
+          printf 'BROWSERSTACK_USERNAME=%s\nBROWSERSTACK_ACCESS_KEY=%s\n' \
+            "$BROWSERSTACK_USERNAME" "$BROWSERSTACK_ACCESS_KEY" >> .env.test.local
+
       # ubuntu-latest ships google-chrome-stable; just verify it's present.
       - name: Verify Chrome
         run: google-chrome --version
