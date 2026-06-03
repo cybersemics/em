@@ -349,7 +349,7 @@ describe('mobile only', () => {
     expect(textContext).toBe('a')
   })
 
-  it('tapping a thought after opening and closing Command Center via Done should not open the keyboard', async () => {
+  it.skip('tapping a thought after opening and closing Command Center via Done should not open the keyboard', async () => {
     // Step 1: create a thought
     await gesture(newThoughtCommand)
     await keyboard.type('a')

@@ -1,6 +1,6 @@
 /* eslint-disable no-restricted-properties */
 /** Wraps the browser Selection API in a device-agnostic interface. */
-import { isHTMLElement } from 'framer-motion'
+import { isHTMLElement } from 'motion/react'
 import SplitResult from '../@types/SplitResult'
 import { ALLOWED_FORMATTING_TAGS } from '../constants'
 

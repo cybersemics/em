@@ -50,6 +50,9 @@ it('GestureMenu', async () => {
   // wait for the gesture menu to appear
   await waitForSelector('[data-testid=popup-value]')
 
+  // wait for the glow background image to load before taking snapshot
+  await waitForSelector('[data-testid=glow-background]')
+
   expect(await screenshot()).toMatchImageSnapshot()
 })
 

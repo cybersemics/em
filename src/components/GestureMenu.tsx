@@ -184,9 +184,10 @@ function ProgressiveBlur() {
 }
 
 /** Renders the glow effect for the gesture menu. */
-function Glow({ hidden }: { hidden?: boolean }) {
+function Glow() {
   return (
     <div
+      data-testid='glow-background'
       className={css({
         position: 'absolute',
         pointerEvents: 'none',
@@ -213,9 +214,6 @@ function Glow({ hidden }: { hidden?: boolean }) {
             transform: 'translateX(-40%) scaleX(2.5)',
           },
         })}
-        style={{
-          visibility: hidden ? 'hidden' : 'visible',
-        }}
       />
     </div>
   )
@@ -252,6 +250,8 @@ const GestureMenuWithTransition: FC = () => {
     sortActiveCommandsFirst: true,
   })
 
+  const [isGlowBackgroundLoaded, setIsGlowBackgroundLoaded] = useState(false)
+
   // Sync Redux showGestureMenu to gestureStore animation state
   useEffect(() => {
     if (showGestureMenu && animationState === 'hidden') {
@@ -279,7 +279,7 @@ const GestureMenuWithTransition: FC = () => {
       await img.decode()
     }
 
-    prefetchGlowBackground()
+    prefetchGlowBackground().finally(() => setIsGlowBackgroundLoaded(true))
   }, [])
 
   // fadeIn is true only when 'visible' - this gives CSSTransition a frame with in={false} when mounting
@@ -319,7 +319,7 @@ const GestureMenuWithTransition: FC = () => {
             })}
           >
             <Overlay />
-            <Glow />
+            {isGlowBackgroundLoaded && <Glow />}
             <div style={{ position: 'relative', zIndex: 1 }}>
               <GestureMenu commands={commands} />
             </div>

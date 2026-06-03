@@ -1,5 +1,5 @@
 import panda from '@pandacss/eslint-plugin'
-import stylisticTs from '@stylistic/eslint-plugin'
+import stylistic from '@stylistic/eslint-plugin'
 import typescriptEslint from '@typescript-eslint/eslint-plugin'
 import typescriptParser from '@typescript-eslint/parser'
 import exportDefaultIdentifier from 'eslint-plugin-export-default-identifier'
@@ -77,10 +77,10 @@ const rules = {
     },
   ],
   'jsx-a11y/anchor-is-valid': 0,
-  'react/jsx-curly-spacing': 2,
-  'react/jsx-equals-spacing': 2,
+  '@stylistic/jsx-curly-spacing': 2,
+  '@stylistic/jsx-equals-spacing': 2,
   'react/react-in-jsx-scope': 0,
-  'react/jsx-tag-spacing': [2, { beforeSelfClosing: 'allow' }],
+  '@stylistic/jsx-tag-spacing': [2, { beforeSelfClosing: 'allow' }],
   'react/no-children-prop': 0,
   'react/no-unescaped-entities': 0,
   'react/prop-types': 0,
@@ -88,6 +88,7 @@ const rules = {
   'prettier/prettier': 2,
   'arrow-body-style': 0,
   'prefer-arrow-callback': 0,
+  'em/no-direct-durations-config-import': 2,
 }
 
 export default [
@@ -115,7 +116,8 @@ export default [
       },
     },
     plugins: {
-      '@stylistic/ts': stylisticTs,
+      '@stylistic': stylistic,
+      '@stylistic/ts': stylistic,
       'export-default-identifier': exportDefaultIdentifier,
       jsdoc,
       react,
@@ -130,7 +132,7 @@ export default [
     rules,
     settings: {
       react: {
-        version: 'detect',
+        version: '19',
       },
     },
   },
