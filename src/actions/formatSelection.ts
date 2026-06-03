@@ -17,6 +17,8 @@ import strip from '../util/strip'
 import { editThoughtActionCreator as editThought } from './editThought'
 import { setDescendantActionCreator as setDescendant } from './setDescendant'
 
+const BACKGROUND_COLOR_REGEX = /background-color\s*:\s*([^;]+);?/i
+
 /** Format the browser selection or cursor thought as bold, italic, strikethrough, underline. */
 export const formatSelectionActionCreator =
   (
@@ -44,7 +46,7 @@ export const formatSelectionActionCreator =
       selection.text()?.length === strip(thought.value).length
     ) {
       // Check the value of the note or thought for a custom background color (#3901)
-      const hasCustomBackgroundColor = /background-color\s*:\s*[^;]+;?/.test(
+      const hasCustomBackgroundColor = BACKGROUND_COLOR_REGEX.test(
         state.noteFocus ? (noteValue(state, state.cursor) ?? '') : thought.value,
       )
       const savedSelection = selection.save()
@@ -73,7 +75,7 @@ export const formatSelectionActionCreator =
         /** Function to check if a style(background) should be removed based on the color and background-color. */
         const shouldRemoveStyle = (styleString: string) => {
           const styleLower = styleString.toLowerCase()
-          const colorMatch = styleLower.match(/background-color\s*:\s*([^;]+);?/)
+          const colorMatch = styleLower.match(BACKGROUND_COLOR_REGEX)
           const elementColor = colorMatch ? colorMatch[1].trim() : null
           const isSameColor = elementColor && rgbToHex(elementColor) === rgbToHex(colors.bg)
           if (elementColor && isSameColor) return true
