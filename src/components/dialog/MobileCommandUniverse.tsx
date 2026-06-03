@@ -14,7 +14,7 @@ import DialogContent from './DialogContent'
 import DialogTitle from './DialogTitle'
 
 /**
- * Pre-rendered hidden divs that force the browser to fetch the dialog's decorative AVIFs ahead of time, so they are cached when the dialog opens. Same workaround pattern used by CommandCenter's H[...]
+ * Pre-rendered hidden divs that force the browser to fetch the dialog's decorative AVIFs ahead of time, so they are cached when the dialog opens. Same workaround pattern used by CommandCenter's HiddenOverlay.
  */
 const HiddenDialogAssets = () => (
   <>

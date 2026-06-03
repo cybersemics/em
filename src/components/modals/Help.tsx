@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, useEffect } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { Tab } from '../../@types/Tab'
@@ -218,9 +218,8 @@ const About = () => {
           <a href='https://thenounproject.com'>Noun Project</a>
         </div>
         <div>
-          Hidden Thoughts icon by{' '}
-          <a href='https://thenounproject.com/search/?q=show%20hidden&i=1791510'>Joyce Lau</a> from the{' '}
-          <a href='https://thenounproject.com'>Noun Project</a>
+          Hidden Thoughts icon by <a href='https://thenounproject.com/search/?q=show%20hidden&i=1791510'>Joyce Lau</a>{' '}
+          from the <a href='https://thenounproject.com'>Noun Project</a>
         </div>
         <div>
           Indent icons by{' '}
