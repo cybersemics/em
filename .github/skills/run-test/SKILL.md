@@ -31,24 +31,32 @@ GITHUB_ACTIONS="" ./src/e2e/puppeteer/test-puppeteer.sh src/e2e/puppeteer/__test
 
 Prerequisite: **Docker** available (for browserless). The script manages the container and dev server itself — do not start your own, and do not point it at the shared `:9222` Chrome / `:3000` server used during exploration.
 
-## iOS — WDIO + Appium + simulator
+## iOS — WDIO + Appium
 
-Prerequisites the harness does **not** bring up (start them first, exactly as for iOS reproduction):
+iOS tests run on **BrowserStack** real devices, exactly as iOS reproduction does (see `browser-control-ios`). **This is the path in the agent/Copilot environment — there is no local simulator there.** A local simulator is a local-developer convenience only.
 
-- dev server on `:3000` (`yarn start`),
-- Appium on `:4723` (`appium`),
-- a **booted** iOS simulator with the em app installed.
+### BrowserStack (default — and the only option in the agent environment)
+
+Prerequisites the harness does **not** bring up (the agent environment already provides them): `BROWSERSTACK_USERNAME` / `BROWSERSTACK_ACCESS_KEY` in env, and the dev server on `:3000` (`yarn start`). The BrowserStack Local tunnel is managed automatically by `@wdio/browserstack-service` in the config — you do **not** start it yourself, and this is independent of the interactive session `browser-control-ios` opened (the runner starts its own).
 
 Run a single spec:
+
+```bash
+yarn test:ios:browserstack --spec src/e2e/iOS/__tests__/<file>.ts
+```
+
+### Local simulator (local development only — NOT the agent environment)
+
+Only when you have a booted simulator locally. Also needs Appium on `:4723` and the em app installed on the sim, plus the dev server on `:3000`:
 
 ```bash
 IOS_DEVICE_NAME="iPhone 17 Pro" IOS_PLATFORM_VERSION="26.2" \
   yarn test:ios:local --spec src/e2e/iOS/__tests__/<file>.ts
 ```
 
-`wdio.local.conf.ts` defaults to `iPhone 15 Plus` / `18.3`; override `IOS_DEVICE_NAME` / `IOS_PLATFORM_VERSION` to match the **booted** simulator (check `xcrun simctl list devices booted`). The harness clears storage and skips the tutorial before each test.
+`wdio.local.conf.ts` defaults to `iPhone 15 Plus` / `18.3`; override to match the booted sim (`xcrun simctl list devices booted`).
 
-> BrowserStack alternative: `yarn test:ios:browserstack` (tunnels to the dev server, no local sim). The local simulator is faster for the write→run→fix loop; prefer it unless the bug is BrowserStack-specific.
+Either config clears storage and skips the tutorial before each test.
 
 ## Reading the result
 
