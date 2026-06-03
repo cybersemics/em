@@ -13,6 +13,7 @@ import {
   CONTENT_BOX_PADDING_RIGHT,
   HOME_PATH,
   LongPressState,
+  TRANSIENT_THOUGHT_ID,
   TUTORIAL2_STEP_SUCCESS,
 } from '../constants'
 import * as selection from '../device/selection'
@@ -27,7 +28,7 @@ import EmptyThoughtspace from './EmptyThoughtspace'
 import LayoutTree from './LayoutTree'
 import Search from './Search'
 
-const transientChildPath = ['00000000000000000000000000ffffff'] as SimplePath
+const transientChildPath = [TRANSIENT_THOUGHT_ID] as SimplePath
 
 /*
   Transient Editable represents a child that is yet not in the state.
