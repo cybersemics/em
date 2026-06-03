@@ -2,6 +2,7 @@
  * IOS Safari caret positioning tests.
  * Uses WDIO test runner with Mocha framework.
  */
+import type { WindowEm } from '../../../initialize'
 import gestures from '../../../test-helpers/gestures'
 import clickThought from '../helpers/clickThought'
 import editThought from '../helpers/editThought'
@@ -15,12 +16,19 @@ import isKeyboardShown from '../helpers/isKeyboardShown'
 import newThought from '../helpers/newThought'
 import paste from '../helpers/paste'
 import tap from '../helpers/tap'
+import waitForBrowserSettled from '../helpers/waitForBrowserSettled'
 import waitForEditable from '../helpers/waitForEditable'
 import waitUntil from '../helpers/waitUntil'
 
 // tests succeeds individually, but fails when there are too many tests running in parallel
 // https://github.com/cybersemics/em/issues/1475
 // https://github.com/cybersemics/em/issues/1523
+
+/** Expects em to be in cursor-only mode, without native keyboard/edit mode. */
+const expectKeyboardClosed = async () => {
+  const keyboardOpen = await browser.execute(() => (window.em as WindowEm).testHelpers.getState().isKeyboardOpen)
+  expect(keyboardOpen).not.toBe(true)
+}
 
 describe('Caret', () => {
   it('Enter edit mode', async () => {
@@ -179,6 +187,41 @@ describe('Caret', () => {
 
     const editingText = await getEditingText()
     expect(editingText).toBe('foo')
+
+    const selectionTextContent = await getSelection().focusNode?.textContent
+    expect(selectionTextContent).toBe(null)
+  })
+
+  it('Swipe back to parent and tap child preserves cursor-only mode', async () => {
+    const importText = `
+    - parent
+      - child`
+
+    await newThought()
+    await paste([''], importText)
+    await clickThought('parent')
+    await clickThought('child')
+    await hideKeyboardByTappingDone()
+
+    const childEditable = await waitForEditable('child')
+    const childRect = await getElementRectByScreen(childEditable)
+
+    await gesture('r', {
+      xStart: childRect.x + 5,
+      yStart: childRect.y + childRect.height / 2,
+      segmentLength: childRect.width,
+    })
+
+    await waitUntil(async () => (await getEditingText()) === 'parent')
+    await expectKeyboardClosed()
+
+    await tap(childEditable, { y: 60, x: 20 })
+    await waitForBrowserSettled()
+
+    const editingText = await getEditingText()
+    expect(editingText).toBe('child')
+
+    await expectKeyboardClosed()
 
     const selectionTextContent = await getSelection().focusNode?.textContent
     expect(selectionTextContent).toBe(null)
