@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { SwitchTransition } from 'react-transition-group'
 import { css, cx } from '../../../styled-system/css'
@@ -14,7 +14,7 @@ import DialogContent from './DialogContent'
 import DialogTitle from './DialogTitle'
 
 /**
- * Pre-rendered hidden divs that force the browser to fetch the dialog's decorative AVIFs ahead of time, so they are cached when the dialog opens. Same workaround pattern used by CommandCenter's HiddenOverlay. Always mounted because the parent is rendered at the AppComponent level.
+ * Pre-rendered hidden divs that force the browser to fetch the dialog's decorative AVIFs ahead of time, so they are cached when the dialog opens. Same workaround pattern used by CommandCenter's H[...]
  */
 const HiddenDialogAssets = () => (
   <>
@@ -90,6 +90,7 @@ const MobileCommandUniverse: React.FC = () => {
   const dispatch = useDispatch()
   const isOpen = useSelector(state => state.showMobileCommandUniverse)
   const nodeRef = React.useRef<HTMLDivElement>(null)
+  const contentRef = useRef<HTMLDivElement>(null)
 
   /**
    * Handles the closure of the mobile command universe.
@@ -98,16 +99,36 @@ const MobileCommandUniverse: React.FC = () => {
     dispatch(toggleMobileCommandUniverseActionCreator({ value: false }))
   }
 
+  /** Dismisses the keyboard when the user scrolls within the dialog. */
+  const handleScroll = () => {
+    const activeElement = document.activeElement
+    if (activeElement && activeElement instanceof HTMLInputElement) {
+      activeElement.blur()
+    }
+  }
+
+  useEffect(() => {
+    const contentElement = contentRef.current
+    if (!contentElement) return
+
+    contentElement.addEventListener('scroll', handleScroll)
+    return () => {
+      contentElement.removeEventListener('scroll', handleScroll)
+    }
+  }, [])
+
   return (
     <>
       <HiddenDialogAssets />
       <FadeTransition in={isOpen} unmountOnExit type='medium' nodeRef={nodeRef}>
-        <Dialog onClose={handleClose} nodeRef={nodeRef}>
-          <DialogTitle onClose={handleClose}>Command Universe</DialogTitle>
-          <DialogContent>
-            <MobileCommandUniverseContent />
-          </DialogContent>
-        </Dialog>
+        <div ref={contentRef} className={css({ overflowY: 'auto', maxHeight: '100vh' })}>
+          <Dialog onClose={handleClose} nodeRef={nodeRef}>
+            <DialogTitle onClose={handleClose}>Command Universe</DialogTitle>
+            <DialogContent>
+              <MobileCommandUniverseContent />
+            </DialogContent>
+          </Dialog>
+        </div>
       </FadeTransition>
     </>
   )

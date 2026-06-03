@@ -109,115 +109,136 @@ const ModalCustomizeToolbar: FC = () => {
   const dispatch = useDispatch()
 
   const commandsContainerRef = useRef<HTMLDivElement>(null)
+  const modalContentRef = useRef<HTMLDivElement>(null)
   const commands = useMemo(() => (selectedCommand ? [selectedCommand] : []), [selectedCommand])
 
   const id = 'customizeToolbar'
   const modalClasses = modalRecipe({ id })
 
+  /** Dismisses the keyboard when the user scrolls within the modal. */
+  const handleScroll = () => {
+    const activeElement = document.activeElement
+    if (activeElement && activeElement instanceof HTMLInputElement) {
+      activeElement.blur()
+    }
+  }
+
+  useEffect(() => {
+    const modalElement = modalContentRef.current
+    if (!modalElement) return
+
+    modalElement.addEventListener('scroll', handleScroll)
+    return () => {
+      modalElement.removeEventListener('scroll', handleScroll)
+    }
+  }, [])
+
   return (
-    <ModalComponent
-      id={id}
-      // omit title since we need to make room for the toolbar
-      title=''
-    >
-      <h1 className={modalClasses.title}>Customize Toolbar</h1>
-      <p className={css({ marginTop: '-1em', marginBottom: '1em' })}>
-        &lt;{' '}
-        <a {...fastClick(() => dispatch(showModal({ id: 'settings' })))} className={extendTapRecipe()}>
-          Back to Settings
-        </a>
-      </p>
-
-      <div
-        className={css({
-          // mask the selected bar that is rendered outside thn left edge of the CommandRow
-          backgroundColor: selectedCommand ? 'bg' : undefined,
-          position: 'sticky',
-          top: '0px',
-          marginBottom: '1em',
-          // extend element to mask the selected bar that is rendered outside thn left edge of the CommandRow
-          marginLeft: '-modalPadding',
-          paddingLeft: 'modalPadding',
-          // above CommandRow, which has position: relative for the selected bar
-          zIndex: 1,
-        })}
+    <div ref={modalContentRef} className={css({ overflowY: 'auto', maxHeight: '100%' })}>
+      <ModalComponent
+        id={id}
+        // omit title since we need to make room for the toolbar
+        title=''
       >
-        <Toolbar customize onSelect={toggleSelectedCommand} selected={selectedCommand?.id} />
+        <h1 className={modalClasses.title}>Customize Toolbar</h1>
+        <p className={css({ marginTop: '-1em', marginBottom: '1em' })}>
+          &lt;{' '}
+          <a {...fastClick(() => dispatch(showModal({ id: 'settings' })))} className={extendTapRecipe()}>
+            Back to Settings
+          </a>
+        </p>
 
-        {/* selected toolbar button details */}
-        <FadeTransition type='fast' nodeRef={commandsContainerRef} in={!!selectedCommand} exit={false} unmountOnExit>
-          <div
-            ref={commandsContainerRef}
-            className={css({
-              backgroundColor: 'bg',
-              // add bottom drop-shadow
-              // mask gap between this and the toolbar
-              // do not overlap modal close x
-              boxShadow: `0 -8px 20px 15px {colors.bg}`,
-            })}
-          >
+        <div
+          className={css({
+            // mask the selected bar that is rendered outside thn left edge of the CommandRow
+            backgroundColor: selectedCommand ? 'bg' : undefined,
+            position: 'sticky',
+            top: '0px',
+            marginBottom: '1em',
+            // extend element to mask the selected bar that is rendered outside thn left edge of the CommandRow
+            marginLeft: '-modalPadding',
+            paddingLeft: 'modalPadding',
+            // above CommandRow, which has position: relative for the selected bar
+            zIndex: 1,
+          })}
+        >
+          <Toolbar customize onSelect={toggleSelectedCommand} selected={selectedCommand?.id} />
+
+          {/* selected toolbar button details */}
+          <FadeTransition type='fast' nodeRef={commandsContainerRef} in={!!selectedCommand} exit={false} unmountOnExit>
             <div
+              ref={commandsContainerRef}
               className={css({
-                backgroundColor: 'gray15',
-                marginTop: '0.5em',
-                padding: '1em',
-                position: 'relative',
+                backgroundColor: 'bg',
+                // add bottom drop-shadow
+                // mask gap between this and the toolbar
+                // do not overlap modal close x
+                boxShadow: `0 -8px 20px 15px {colors.bg}`,
               })}
             >
-              <CommandTableOnly commands={commands} />
+              <div
+                className={css({
+                  backgroundColor: 'gray15',
+                  marginTop: '0.5em',
+                  padding: '1em',
+                  position: 'relative',
+                })}
+              >
+                <CommandTableOnly commands={commands} />
+              </div>
             </div>
+          </FadeTransition>
+        </div>
+
+        <FadeTransition type='fast' in={!selectedCommand} exit={false} unmountOnExit>
+          <div className={css({ marginTop: '2em', marginBottom: '2.645em', color: 'dim' })}>
+            <p>Drag-and-drop to rearrange toolbar.</p>
+            <p>{isTouch ? 'Tap' : 'Click'} a command for details.</p>
           </div>
         </FadeTransition>
-      </div>
 
-      <FadeTransition type='fast' in={!selectedCommand} exit={false} unmountOnExit>
-        <div className={css({ marginTop: '2em', marginBottom: '2.645em', color: 'dim' })}>
-          <p>Drag-and-drop to rearrange toolbar.</p>
-          <p>{isTouch ? 'Tap' : 'Click'} a command for details.</p>
-        </div>
-      </FadeTransition>
+        <DropToRemoveFromToolbar>
+          <CommandTable customize selectedCommand={selectedCommand ?? undefined} onSelect={setSelectedCommand} />
+        </DropToRemoveFromToolbar>
 
-      <DropToRemoveFromToolbar>
-        <CommandTable customize selectedCommand={selectedCommand ?? undefined} onSelect={setSelectedCommand} />
-      </DropToRemoveFromToolbar>
-
-      <p className={css({ marginTop: '2em', marginBottom: '2em' })}>
-        &lt;{' '}
-        <a {...fastClick(() => dispatch(showModal({ id: 'settings' })))} className={extendTapRecipe()}>
-          Back to Settings
-        </a>
-      </p>
-
-      <div className={css({ textAlign: 'center' })}>
-        <a
-          {...fastClick(() => dispatch(closeModal()))}
-          className={cx(
-            anchorButtonRecipe({
-              actionButton: true,
-            }),
-            css({ color: 'bg', marginBottom: '1em', marginTop: '2em' }),
-          )}
-        >
-          Close
-        </a>
-
-        <div className={css({ fontSize: 'sm', marginTop: '4em' })}>
-          <p className={css({ color: 'gray66', marginTop: '0.5em' })}>
-            Reset the toolbar to its factory settings. Your current toolbar customization will be permanently deleted.
-          </p>
-          <a
-            {...fastClick(() => {
-              if (window.confirm('Reset toolbar to factory settings?')) {
-                dispatch([initUserToolbar({ force: true }), alert('Toolbar reset')])
-              }
-            })}
-            className={cx(extendTapRecipe(), css({ color: 'red' }))}
-          >
-            Reset toolbar
+        <p className={css({ marginTop: '2em', marginBottom: '2em' })}>
+          &lt;{' '}
+          <a {...fastClick(() => dispatch(showModal({ id: 'settings' })))} className={extendTapRecipe()}>
+            Back to Settings
           </a>
+        </p>
+
+        <div className={css({ textAlign: 'center' })}>
+          <a
+            {...fastClick(() => dispatch(closeModal()))}
+            className={cx(
+              anchorButtonRecipe({
+                actionButton: true,
+              }),
+              css({ color: 'bg', marginBottom: '1em', marginTop: '2em' }),
+            )}
+          >
+            Close
+          </a>
+
+          <div className={css({ fontSize: 'sm', marginTop: '4em' })}>
+            <p className={css({ color: 'gray66', marginTop: '0.5em' })}>
+              Reset the toolbar to its factory settings. Your current toolbar customization will be permanently deleted.
+            </p>
+            <a
+              {...fastClick(() => {
+                if (window.confirm('Reset toolbar to factory settings?')) {
+                  dispatch([initUserToolbar({ force: true }), alert('Toolbar reset')])
+                }
+              })}
+              className={cx(extendTapRecipe(), css({ color: 'red' }))}
+            >
+              Reset toolbar
+            </a>
+          </div>
         </div>
-      </div>
-    </ModalComponent>
+      </ModalComponent>
+    </div>
   )
 }
 
