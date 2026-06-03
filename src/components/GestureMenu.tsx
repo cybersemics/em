@@ -52,7 +52,7 @@ const GestureMenu: FC<{
           textAlign: 'left',
           maxWidth: '100%',
           maxHeight: '100%',
-          width: 826,
+          width: '45.889rem',
           cursor: 'default',
           display: 'flex',
           flexDirection: 'column',
@@ -67,12 +67,12 @@ const GestureMenu: FC<{
             })}
           >
             {/* Header */}
-            <div className={css({ marginBottom: '25px' })}>
+            <div className={css({ marginBottom: '1.389rem' })}>
               <div
                 style={{
                   color: 'rgb(255, 255, 255, 0.7)',
-                  marginBottom: '8px',
-                  fontSize: '16px',
+                  marginBottom: '0.444rem',
+                  fontSize: '0.889rem',
                   fontWeight: 500,
                 }}
               >
@@ -314,7 +314,7 @@ const GestureMenuWithTransition: FC = () => {
               // prevent mix-blend-mode and backdrop-filter from affecting each other
               isolation: 'isolate',
               width: '100%',
-              paddingBottom: '200px',
+              paddingBottom: '11.111rem',
               maxHeight: '100dvh',
             })}
           >

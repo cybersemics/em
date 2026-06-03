@@ -51,7 +51,7 @@ const GestureItem: FC<{
         display: 'flex',
         flexDirection: 'row',
         alignItems: selected ? 'stretch' : 'center',
-        gap: '16px',
+        gap: '0.89rem',
         paddingTop: selected ? '0.5rem' : 0,
         paddingBottom: selected ? '0.1rem' : 0,
       })}
@@ -62,8 +62,8 @@ const GestureItem: FC<{
           justifyContent: 'flex-start',
           alignItems: selected ? 'flex-start' : 'center',
           flexShrink: 0,
-          width: 18,
-          height: 18,
+          width: '1rem',
+          height: '1rem',
         })}
       >
         <GestureDiagram
@@ -89,7 +89,7 @@ const GestureItem: FC<{
       >
         <div
           className={css({
-            fontSize: '17px',
+            fontSize: '0.94rem',
             lineHeight: '1em',
             whiteSpace: 'nowrap',
             color: disabled ? 'gray45' : selected ? '#ffffff' : 'rgba(255, 255, 255, 0.6)',
@@ -106,7 +106,7 @@ const GestureItem: FC<{
         {selected && (
           <p
             className={css({
-              fontSize: '14px',
+              fontSize: '0.78rem',
               fontWeight: 400,
               color: 'fgOverlay75',
               marginBlock: 0,
