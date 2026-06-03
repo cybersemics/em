@@ -1,3 +1,5 @@
+import { DebouncedFunc } from 'lodash'
+
 /** Test flags that are injected into window.em.testFlags. */
 const testFlags: {
   logActions: boolean
@@ -10,6 +12,8 @@ const testFlags: {
   simulateDrag: boolean
   /** Render drop targets as blocks of color. */
   simulateDrop: boolean
+  /** The throttled scrollCursorIntoView function. Exposed so that tests can cancel its pending trailing call before asserting on the scroll position. */
+  throttledScrollCursorIntoView: DebouncedFunc<(y: number, height: number) => void> | null
 } = {
   logActions: false,
   logMultigesture: false,
@@ -17,6 +21,7 @@ const testFlags: {
   replicationDelay: 0,
   simulateDrag: false,
   simulateDrop: false,
+  throttledScrollCursorIntoView: null,
 }
 
 export default testFlags
