@@ -1,8 +1,15 @@
+import { WindowEm } from '../../../initialize'
 import dragAndDropThought from '../helpers/dragAndDropThought'
 import exportThoughts from '../helpers/exportThoughts'
 import hideHUD from '../helpers/hideHUD'
 import multiselectThoughts from '../helpers/multiselectThoughts'
 import paste from '../helpers/paste'
+import { page } from '../setup'
+
+const em = window.em as WindowEm
+
+/** Returns the number of active multicursors. */
+const getNumMulticursors = () => page.evaluate(() => Object.keys(em.testHelpers.getState().multicursors).length)
 
 vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
 
@@ -69,6 +76,9 @@ describe('drag and drop multiple thoughts', () => {
   - y
   - z
 `)
+
+    // the multicursor selection (and the Command Center on mobile) should be dismissed after the drop (#4348)
+    expect(await getNumMulticursors()).toBe(0)
   })
 
   it('should preserve document order of multiselected thoughts when dropping', async () => {

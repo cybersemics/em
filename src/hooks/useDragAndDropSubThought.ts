@@ -10,6 +10,7 @@ import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import { alertActionCreator as alert } from '../actions/alert'
+import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/clearMulticursors'
 import { errorActionCreator as error } from '../actions/error'
 import { importFilesActionCreator as importFiles } from '../actions/importFiles'
 import { longPressActionCreator as longPress } from '../actions/longPress'
@@ -20,6 +21,7 @@ import attributeEquals from '../selectors/attributeEquals'
 import getNextRank from '../selectors/getNextRank'
 import getPrevRank from '../selectors/getPrevRank'
 import getThoughtById from '../selectors/getThoughtById'
+import hasMulticursor from '../selectors/hasMulticursor'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
@@ -228,6 +230,13 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
     // Clear isMulticursorExecuting after all operations are complete and isMulticursorExecuting is true
     if (getState().isMulticursorExecuting) {
       dispatch(setIsMulticursorExecuting({ value: false }))
+    }
+
+    // Dismiss the multicursor selection (and, on mobile, the Command Center via multicursorAlertMiddleware) now that the drop is complete.
+    // The drop handler is the deterministic completion point on all platforms, whereas the longPress(Inactive) cleanup that normally clears
+    // the multicursor is not reliably reached on iOS after a subthought drop. The cursor itself is left untouched, so it remains where it was. (#4348)
+    if (hasMulticursor(getState())) {
+      dispatch(clearMulticursors())
     }
 
     // Alert user if context changed
