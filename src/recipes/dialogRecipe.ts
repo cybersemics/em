@@ -310,9 +310,9 @@ const dialogRecipe = defineSlotRecipe({
       // Subtle white sheen from upper-left to lower-right (Figma 11:2315) — softens the otherwise flat translucent fill into something glassy.
       background:
         'linear-gradient(191.32deg, {colors.dialogHeaderButtonBg} 5.64%, {colors.dialogHeaderButtonBgFade} 83.21%)',
-      // Soft lavender outer glow — Figma 11:2314 drop-shadow. Uses --btn-shadow-opacity (default 0.05, dialed-in value) so the debug overlay can override it live.
-      boxShadow: '0 0 8.7px rgba(179, 164, 255, var(--btn-shadow-opacity, 0.05))',
-      // The gradient border (Figma 11:2314 stroke) is painted by the ::before overlay using the same padding-box/border-box mask trick as `glassStrokeBorder`. Done with a pseudo so the inner fill above stays a clean single-gradient `background` (mixing two gradients with different clip boxes via the `background` shorthand was rendering wrong in Panda). --btn-stroke-opacity dials the whole stroke from the debug overlay.
+      // Soft lavender outer glow — Figma 11:2314 drop-shadow.
+      boxShadow: '0 0 8.7px rgba(179, 164, 255, 0.05)',
+      // The gradient border (Figma 11:2314 stroke) is painted by the ::before overlay using the same padding-box/border-box mask trick as `glassStrokeBorder`. Done with a pseudo so the inner fill above stays a clean single-gradient `background` (mixing two gradients with different clip boxes via the `background` shorthand was rendering wrong in Panda).
       position: 'relative',
       _before: {
         content: '""',
@@ -327,7 +327,7 @@ const dialogRecipe = defineSlotRecipe({
         mask: 'linear-gradient(white 0 0) content-box, linear-gradient(white 0 0)',
         maskComposite: 'exclude',
         pointerEvents: 'none',
-        opacity: 'var(--btn-stroke-opacity, 0.35)',
+        opacity: 0.35,
       },
       display: 'flex',
       alignItems: 'center',

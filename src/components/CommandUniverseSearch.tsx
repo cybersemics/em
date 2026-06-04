@@ -1,7 +1,8 @@
 import { FC } from 'react'
 import { css } from '../../styled-system/css'
-import { useCommandUniverseDebug } from './dialog/CommandUniverseDebug'
 import CommandsSearchIcon from './icons/CommandsSearchIcon'
+
+const SEARCH_ICON_SIZE = 28
 
 /**
  * Search input used by the Mobile Command Universe dialog. Sits flush against the
@@ -12,7 +13,6 @@ import CommandsSearchIcon from './icons/CommandsSearchIcon'
  * which keeps the legacy bordered look.
  */
 const CommandUniverseSearch: FC<{ onInput?: (value: string) => void }> = ({ onInput }) => {
-  const { state: debug } = useCommandUniverseDebug()
   return (
     <div
       className={css({
@@ -28,28 +28,25 @@ const CommandUniverseSearch: FC<{ onInput?: (value: string) => void }> = ({ onIn
           left: 0,
           top: '50%',
           transform: 'translateY(-50%)',
-          // `flex: none` cancels iconRecipe's base `flex: 1`. Explicit width/height (sized
-          // from debug state) keep the glyph at its declared dimensions regardless of
-          // parent flex behavior.
+          // `flex: none` cancels iconRecipe's base `flex: 1`. Explicit width/height keep the
+          // glyph at its declared dimensions regardless of parent flex behavior.
           flex: 'none',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           pointerEvents: 'none',
-        })}
-        style={{
-          width: debug.searchIconSize,
-          height: debug.searchIconSize,
-          opacity: debug.searchIconOpacity,
+          width: '28px',
+          height: '28px',
+          opacity: 0.5,
           // plus-lighter additively brightens the glyph against the dialog glass, same as
           // the gradient text — so search icon, text, and sort icon read as one element.
-          mixBlendMode: debug.iconsPlusLighter ? 'plus-lighter' : 'normal',
-        }}
+          mixBlendMode: 'plus-lighter',
+        })}
       >
         <CommandsSearchIcon
-          size={debug.searchIconSize}
-          fill={debug.searchIconColor}
-          strokeWidth={debug.searchIconStroke}
+          size={SEARCH_ICON_SIZE}
+          fill='#E3BECD'
+          strokeWidth={1.5}
           cssRaw={css.raw({ flex: 'none' })}
         />
       </div>
@@ -59,15 +56,15 @@ const CommandUniverseSearch: FC<{ onInput?: (value: string) => void }> = ({ onIn
         onInput={(e: React.FormEvent<HTMLInputElement>) => {
           onInput?.(e.currentTarget.value)
         }}
-        // paddingLeft scales with the search glyph size so typed text always clears it,
-        // regardless of the size dialed in via the debug overlay (8px gap past the icon).
-        style={{ paddingLeft: debug.searchIconSize + 8 }}
         className={css({
           marginLeft: 0,
           marginBottom: 0,
           boxSizing: 'border-box',
           width: '100%',
           minWidth: '100%',
+          // SEARCH_ICON_SIZE (28px) + 8px gap so typed text always clears the glyph. Written
+          // as a literal because Panda's `css()` is compile-time and won't evaluate `${expr}`.
+          paddingLeft: '36px',
           paddingBlock: '0.25rem',
           border: 'none',
           outline: 'none',

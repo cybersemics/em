@@ -9,8 +9,9 @@ import { gestureString } from '../commands'
 import store from '../stores/app'
 import GestureDiagram from './GestureDiagram'
 import HighlightedText from './HighlightedText'
-import { useCommandUniverseDebug } from './dialog/CommandUniverseDebug'
 import SettingsIcon from './icons/SettingsIcon'
+
+const COMMAND_ICON_SIZE = 20
 
 /** Returns true if the command can be executed in the current state. */
 const isExecutable = (state: State, command: Command) =>
@@ -36,7 +37,6 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, se
   })
 
   const Icon = command.svg ?? SettingsIcon
-  const { state: debug } = useCommandUniverseDebug()
 
   return (
     <tr
@@ -50,16 +50,8 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, se
         justifyContent: 'flex-start',
         // Children are flush-left so the command icon + title sit at the cell's left edge.
         alignItems: 'flex-start',
-        // Dialed-in production default; the debug overlay's inline style overrides this when sliders are touched.
         marginInline: '0.2rem',
       })}
-      style={{
-        marginInline: `${debug.gridItemMarginX}rem`,
-        marginBlock: `${debug.gridItemMarginY}rem`,
-        paddingInline: `${debug.gridItemPaddingX}rem`,
-        paddingBlock: `${debug.gridItemPaddingY}rem`,
-        outline: debug.gridItemOutline ? '1px dashed rgba(255, 255, 255, 0.4)' : 'none',
-      }}
     >
       {/* Gesture trace (touch). Box removed per spec — the artwork itself stays as-is. */}
       {isTouch ? (
@@ -96,28 +88,28 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, se
           width: '100%',
         })}
       >
-        {/* Command icon inline with the title. iconTitleGap is debug-tunable. */}
+        {/* Command icon inline with the title. */}
         <div
           className={css({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'flex-start',
             width: '100%',
+            gap: '0.75rem',
           })}
-          style={{ gap: `${debug.iconTitleGap}rem` }}
         >
           {/* `flex: none` cancels iconRecipe's base `flex: 1`, which would otherwise let the
               glyph grow or shrink to fill space — making it tiny when the title is long and
               huge when it's short. The wrapping div has explicit width/height = size, so the
-              icon now always renders at exactly `commandIconSize`. Commands without a custom
+              icon now always renders at exactly COMMAND_ICON_SIZE. Commands without a custom
               icon fall back to SettingsIcon as a placeholder. */}
           <div
             className={css({ flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' })}
-            style={{ width: debug.commandIconSize, height: debug.commandIconSize }}
+            style={{ width: COMMAND_ICON_SIZE, height: COMMAND_ICON_SIZE }}
           >
             <Icon
               cssRaw={css.raw({ flex: 'none' })}
-              size={debug.commandIconSize}
+              size={COMMAND_ICON_SIZE}
               fill={token(disabled ? 'colors.gray50' : 'colors.fg')}
             />
           </div>
@@ -127,16 +119,10 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, se
               whiteSpace: 'normal',
               overflowWrap: 'break-word',
               color: disabled ? 'gray45' : 'fg',
-              // Dialed-in production defaults — debug inline style overrides while sliders are touched.
               fontSize: '0.75rem',
               fontWeight: 500,
               lineHeight: 1.35,
             })}
-            style={{
-              fontSize: `${debug.commandTitleSize}rem`,
-              fontWeight: debug.commandTitleWeight,
-              lineHeight: debug.commandTitleLineHeight,
-            }}
           >
             <HighlightedText value={label} match={search} disabled={disabled} />
           </b>
@@ -147,18 +133,11 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, se
             color: 'fgOverlay75',
             marginTop: '0.267rem',
             marginBottom: '0.267rem',
-            // Dialed-in production defaults — debug inline style overrides while sliders are touched.
             fontSize: '0.6875rem',
             opacity: 0.8,
             marginLeft: '-0.2rem',
             lineHeight: 1.3,
           })}
-          style={{
-            fontSize: `${debug.commandDescriptionSize}rem`,
-            opacity: debug.commandDescriptionOpacity,
-            marginLeft: `${debug.commandDescriptionMarginLeft}rem`,
-            lineHeight: debug.commandDescriptionLineHeight,
-          }}
         >
           {description}
         </p>
