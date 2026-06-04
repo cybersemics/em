@@ -200,6 +200,13 @@ const dialogRecipe = defineSlotRecipe({
       '&::-webkit-scrollbar-track': {
         background: 'transparent',
       },
+      // WebKit fallback for the scrollbar thumb. Older WebKit (e.g. iOS < 18.2) ignores the
+      // standard `scrollbarColor` above and would otherwise render a dark default thumb, so the
+      // thumb color is set explicitly here to keep it white and consistent with Chromium/newer Safari.
+      '&::-webkit-scrollbar-thumb': {
+        background: '{colors.fg}',
+        borderRadius: '4px',
+      },
       position: 'relative',
       '@media (min-width: 1200px)': {
         fontSize: '1.5rem',
