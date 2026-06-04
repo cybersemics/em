@@ -16,13 +16,9 @@ import { commandById, commandEmitter, executeCommand } from './commands'
 import getLexemeHelper from './data-providers/data-helpers/getLexeme'
 import { initPermissionsStore } from './data-providers/permissionsStore'
 import { clientIdReady } from './data-providers/thoughtspaceSession'
-import {
-  enqueueMaterializedThoughtsToStore,
-  tryStartTreecrdtWebSocketSyncFromEnv as tryStartTreecrdtWebSocketSync,
-} from './data-providers/treecrdt/sync'
 import db, { init as initTreecrdtThoughtspace } from './data-providers/treecrdt/thoughtspace'
-import { dropTreecrdt, initTreecrdt, registerBeforeTreecrdtClose } from './data-providers/treecrdt/treecrdt'
-import { isTreecrdtLocalMaterialization, waitForTreecrdtWriteBarrier } from './data-providers/treecrdt/writeBarrier'
+import { dropTreecrdt, initTreecrdt } from './data-providers/treecrdt/treecrdt'
+import { waitForTreecrdtWriteBarrier } from './data-providers/treecrdt/writeBarrier'
 import * as selection from './device/selection'
 import testFlags from './e2e/testFlags'
 import contextToThoughtId from './selectors/contextToThoughtId'
@@ -73,7 +69,7 @@ const initializeInternal = async () => {
   const clientId = await clientIdReady
 
   await initPermissionsStore()
-  const treecrdtClient = await initTreecrdt()
+  await initTreecrdt()
   // TODO: revisit the clientId to replicaId conversion
   // TreeCRDT expects 32-byte replicaId; clientId is base64 of SHA-256 (44 chars) — decode to get 32 bytes
   const replicaId =
@@ -110,21 +106,6 @@ const initializeInternal = async () => {
   await thoughtsLocalPromise
 
   await initializeCursor()
-
-  const unsubscribeMaterialized = treecrdtClient.onMaterialized(event => {
-    // Local TreeCRDT writes are already reflected optimistically in Redux. Peer-tab and server-sync writes arrive
-    // without this tab's write id, so those materialization events must be read back into Redux.
-    if (isTreecrdtLocalMaterialization(event)) return
-
-    void enqueueMaterializedThoughtsToStore(event).catch(err =>
-      console.error('TreeCRDT materialized UI sync failed', err),
-    )
-  })
-  registerBeforeTreecrdtClose(async () => {
-    unsubscribeMaterialized()
-  })
-
-  await tryStartTreecrdtWebSocketSync(treecrdtClient)
 
   return {
     thoughtsLocalPromise,

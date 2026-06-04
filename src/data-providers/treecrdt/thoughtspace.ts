@@ -16,9 +16,13 @@ import {
   upsertLexeme,
 } from './lexemes'
 import { decodeThoughtPayload, encodeThoughtPayload } from './payload'
+import {
+  enqueueMaterializedThoughtsToStore,
+  tryStartTreecrdtWebSocketSyncFromEnv as tryStartTreecrdtWebSocketSync,
+} from './sync'
 import { SYSTEM_ROOT_THOUGHT_IDS } from './systemThoughtIds'
-import { dropTreecrdt, getTreecrdtClient } from './treecrdt'
-import { createTreecrdtLocalWriteOptions } from './writeBarrier'
+import { dropTreecrdt, getTreecrdtClient, registerBeforeTreecrdtClose } from './treecrdt'
+import { createTreecrdtLocalWriteOptions, isTreecrdtLocalMaterialization } from './writeBarrier'
 
 type TreecrdtPlacement = { type: 'first' } | { type: 'last' } | { type: 'after'; after: ThoughtId }
 
@@ -375,6 +379,21 @@ export const init = async (replicaIdArg: Uint8Array): Promise<void> => {
   }
 
   resolveInitReady()
+
+  const unsubscribeMaterialized = client.onMaterialized(event => {
+    // Local TreeCRDT writes are already reflected optimistically in Redux. Peer-tab and server-sync writes arrive
+    // without this tab's write id, so those materialization events must be read back into Redux.
+    if (isTreecrdtLocalMaterialization(event)) return
+
+    void enqueueMaterializedThoughtsToStore(event).catch(err =>
+      console.error('TreeCRDT materialized UI sync failed', err),
+    )
+  })
+  registerBeforeTreecrdtClose(async () => {
+    unsubscribeMaterialized()
+  })
+
+  await tryStartTreecrdtWebSocketSync(client)
 }
 
 /** TreeCRDT data provider for thoughtspace. */
