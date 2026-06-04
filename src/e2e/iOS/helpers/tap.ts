@@ -1,15 +1,13 @@
 import type { Element } from 'webdriverio'
 
-// import getNativeElementRect from './getNativeElementRect'
-
 interface Options {
-  // Where in the horizontal line (inside) of the target node should be tapped
-  horizontalTapLine?: 'left' | 'right'
-  // Specify specific node on editable to tap. Overrides horizontalClickLine
+  // Where on the horizontal axis of the target node's bounding box to tap.
+  horizontalTapLine?: 'left' | 'center' | 'right'
+  // Specify the offset on a text child of the target node. Overrides horizontalTapLine.
   offset?: number
-  // Number of pixels of x offset to add to the tap coordinates
+  // Pixels of x offset to add to the tap coordinates (after horizontalTapLine/offset).
   x?: number
-  // Number of pixels of y offset to add to the tap coordinates
+  // Pixels of y offset to add to the tap coordinates (after horizontalTapLine/offset).
   y?: number
   // Milliseconds to delay the release of the tap.
   releaseDelayMs?: number
@@ -17,12 +15,23 @@ interface Options {
 
 /**
  * Tap a node with an optional text offset or x,y offset.
- * Uses the global browser object from WDIO.
+ *
+ * Coordinates are first calculated in WebView/viewport space (via
+ * `getElementRect` / DOM `Range`) and then translated to device screen
+ * coordinates by adding the WebView container's screen origin. The tap is
+ * finally dispatched in NATIVE_APP context with `pointerType: 'touch'`, so it
+ * goes through iOS's real touch input pipeline.
  */
 const tap = async (
   nodeHandle: Element,
   { horizontalTapLine = 'left', offset, x = 0, y = 0, releaseDelayMs = 100 }: Options = {},
 ) => {
+  // Get scroll position before tap
+  const scrollBefore = await browser.execute(() => ({
+    x: window.scrollX,
+    y: window.scrollY,
+  }))
+
   // Ensure element exists and has an elementId
   const exists = await nodeHandle.isExisting()
   if (!exists) {
@@ -37,82 +46,88 @@ const tap = async (
     )
   }
 
-  const boundingBox = await browser.getElementRect(elementId)
-  if (!boundingBox) throw new Error('Bounding box of editable not found.')
+  // Compute the tap target in WebView viewport coordinates (scroll-exclusive)
+  // via getBoundingClientRect / DOM Range — NOT browser.getElementRect, which
+  // returns page coordinates that include window.scrollY and break once the
+  // page is scrolled after gesture actions.
+  const viewportCoordinate = (await browser.execute(
+    function (ele, horizontalTapLine, offset) {
+      const el = ele as unknown as HTMLElement
 
-  /** Get cordinates for specific text node if the given node has text child. */
-  const offsetCoordinates = () =>
-    browser.execute(
-      function (ele, offset) {
-        // Element does not contain native properties like nodeName, textContent, etc
-        // Not sure what the actual WebDriverIO type that is returned by findElement
-        // Node does not contain property elementId; it is only a Node inside browser.execute, so we cannot change the typeo of the nodeHandle argument
-        const textNode = (ele as unknown as Node).firstChild
-        if (!textNode || textNode.nodeName !== '#text') return
+      if (offset !== undefined && offset !== null) {
+        const textNode = (el as unknown as Node).firstChild
+        if (!textNode || textNode.nodeName !== '#text') return null
         const range = document.createRange()
-        range.setStart(textNode, offset ?? 0)
+        range.setStart(textNode, offset)
         const { right, top, height } = range.getBoundingClientRect()
-        return {
-          x: right,
-          y: top + height / 2,
-        }
-      },
-      nodeHandle,
-      offset,
+        return { x: right, y: top + height / 2 }
+      }
+
+      const r = el.getBoundingClientRect()
+      const cx =
+        horizontalTapLine === 'left' ? r.left : horizontalTapLine === 'right' ? r.right - 1 : r.left + r.width / 2
+      return { x: cx, y: r.top + r.height / 2 }
+    },
+    nodeHandle,
+    horizontalTapLine,
+    offset,
+  )) as { x: number; y: number } | null
+
+  if (!viewportCoordinate) throw new Error('Coordinate not found.')
+
+  // Translate WebView viewport coordinates to device screen coordinates and
+  // dispatch the tap through XCUITest's native input pipeline.
+  const oldContext = ((await browser.getContext()) as string) || 'NATIVE_APP'
+  try {
+    await browser.switchContext('NATIVE_APP')
+
+    const webContainer = await browser.$('//XCUIElementTypeOther[@name="em"]').getElement()
+    const { x: webOriginX, y: webOriginY } = await browser.getElementRect(webContainer.elementId)
+
+    const finalCoords = {
+      x: Math.round(viewportCoordinate.x + x + webOriginX),
+      y: Math.round(viewportCoordinate.y + y + webOriginY),
+    }
+
+    console.info(
+      `Tap: viewport=(${viewportCoordinate.x}, ${viewportCoordinate.y}) ` +
+        `offset=(${x}, ${y}) webOrigin=(${webOriginX}, ${webOriginY}) ` +
+        `screen=(${finalCoords.x}, ${finalCoords.y})`,
     )
 
-  const coordinate = !offset
-    ? {
-        x:
-          boundingBox.x +
-          (horizontalTapLine === 'left'
-            ? 0
-            : horizontalTapLine === 'right'
-              ? boundingBox.width - 1
-              : boundingBox.width / 2),
-        y: boundingBox.y + boundingBox.height / 2,
-      }
-    : await offsetCoordinates()
-
-  if (!coordinate) throw new Error('Coordinate not found.')
-
-  // const topBarRect = await getNativeElementRect(browser, '//XCUIElementTypeOther[@name="topBrowserBar"]')
-  // console.log('topbarrect', topBarRect)
-
-  console.info(
-    `Coordinates: x ${coordinate.x} y ${coordinate.y} x-offset ${x} y-offset ${y} bb-x ${boundingBox.x} bby ${boundingBox.y}`,
-  )
-
-  const finalCoords = {
-    x: coordinate.x + x,
-    y: coordinate.y + y,
+    // Use performActions directly to avoid the automatic releaseActions call
+    // that WebDriverIO's `action().perform()` issues, which Safari/XCUITest
+    // does not support (no DELETE /actions endpoint).
+    await browser.performActions([
+      {
+        type: 'pointer',
+        id: 'finger1',
+        parameters: { pointerType: 'touch' },
+        actions: [
+          {
+            type: 'pointerMove',
+            duration: 0,
+            x: finalCoords.x,
+            y: finalCoords.y,
+            origin: 'viewport',
+          },
+          { type: 'pointerDown', button: 0 },
+          { type: 'pause', duration: releaseDelayMs },
+          { type: 'pointerUp', button: 0 },
+        ],
+      },
+    ])
+  } finally {
+    await browser.switchContext(oldContext)
+    await browser.execute(({ x, y }) => window.scrollTo(x, y), scrollBefore)
+    await browser.waitUntil(
+      async () => {
+        const current = await browser.execute(() => ({ x: window.scrollX, y: window.scrollY }))
+        return current.x === scrollBefore.x && current.y === scrollBefore.y
+      },
+      { timeout: 3000, timeoutMsg: 'Failed to restore scroll position after tap' },
+    )
   }
-
-  console.info(`Tapping at coordinates {x: ${finalCoords.x}, y: ${finalCoords.y}}`)
-
-  // Use performActions directly to avoid the automatic releaseActions call
-  // Safari/XCUITest doesn't support the DELETE /actions endpoint (releaseActions)
-  // which WebDriverIO's action().perform() calls automatically after performing
-  // Note: pointerType defaults to 'mouse' in WebDriverIO's action API
-  await browser.performActions([
-    {
-      type: 'pointer',
-      id: 'pointer1',
-      parameters: { pointerType: 'mouse' },
-      actions: [
-        {
-          type: 'pointerMove',
-          duration: 0,
-          x: Math.round(finalCoords.x),
-          y: Math.round(finalCoords.y),
-          origin: 'viewport',
-        },
-        { type: 'pointerDown', button: 0 },
-        { type: 'pause', duration: releaseDelayMs },
-        { type: 'pointerUp', button: 0 },
-      ],
-    },
-  ])
 }
 
 export default tap
