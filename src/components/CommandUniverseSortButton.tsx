@@ -6,8 +6,6 @@ import CommandsListIcon from './icons/CommandsListIcon'
 import FadeTransition from './FadeTransition'
 import SortOption from './SortOption'
 
-const SORT_ICON_SIZE = 28
-
 interface CommandUniverseSortButtonProps {
   onSortChange: (sortOrder: CommandSortType) => void
 }
@@ -73,8 +71,8 @@ const CommandUniverseSortButton = ({ onSortChange }: CommandUniverseSortButtonPr
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          width: `${SORT_ICON_SIZE}px`,
-          height: `${SORT_ICON_SIZE}px`,
+          width: '28px',
+          height: '28px',
           opacity: 0.5,
           // Same plus-lighter blend as the search icon and gradient text so the row
           // reads as one continuous luminous element.
@@ -83,9 +81,9 @@ const CommandUniverseSortButton = ({ onSortChange }: CommandUniverseSortButtonPr
       >
         {/* Reflect the active sort mode: A→Z glyph for alphabetical, list/group glyph for type. */}
         {selectedSort === 'alphabetical' ? (
-          <AToZIcon size={SORT_ICON_SIZE} fill='#D9D3D5' strokeWidth={0} cssRaw={css.raw({ flex: 'none' })} />
+          <AToZIcon size={28} fill='#D9D3D5' strokeWidth={0} cssRaw={css.raw({ flex: 'none' })} />
         ) : (
-          <CommandsListIcon size={SORT_ICON_SIZE} fill='#D9D3D5' strokeWidth={0} cssRaw={css.raw({ flex: 'none' })} />
+          <CommandsListIcon size={28} fill='#D9D3D5' strokeWidth={0} cssRaw={css.raw({ flex: 'none' })} />
         )}
       </div>
       <FadeTransition in={isDropdownOpen} type='fast' unmountOnExit>

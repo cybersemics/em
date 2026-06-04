@@ -11,8 +11,6 @@ import GestureDiagram from './GestureDiagram'
 import HighlightedText from './HighlightedText'
 import SettingsIcon from './icons/SettingsIcon'
 
-const COMMAND_ICON_SIZE = 20
-
 /** Returns true if the command can be executed in the current state. */
 const isExecutable = (state: State, command: Command) =>
   (!command.canExecute || command.canExecute(state)) &&
@@ -100,11 +98,11 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, se
           {/* `flex: none` overrides iconRecipe's `flex: 1` default so width/height set the size. */}
           <div
             className={css({ flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' })}
-            style={{ width: COMMAND_ICON_SIZE, height: COMMAND_ICON_SIZE }}
+            style={{ width: 20, height: 20 }}
           >
             <Icon
               cssRaw={css.raw({ flex: 'none' })}
-              size={COMMAND_ICON_SIZE}
+              size={20}
               fill={token(disabled ? 'colors.gray50' : 'colors.fg')}
             />
           </div>

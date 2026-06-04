@@ -2,8 +2,6 @@ import { FC } from 'react'
 import { css } from '../../styled-system/css'
 import CommandsSearchIcon from './icons/CommandsSearchIcon'
 
-const SEARCH_ICON_SIZE = 28
-
 /**
  * Search input used by the Mobile Command Universe dialog. Sits flush against the
  * surrounding panel with no border or background, and the search glyph left-aligns
@@ -44,7 +42,7 @@ const CommandUniverseSearch: FC<{ onInput?: (value: string) => void }> = ({ onIn
         })}
       >
         <CommandsSearchIcon
-          size={SEARCH_ICON_SIZE}
+          size={28}
           fill='#E3BECD'
           strokeWidth={1.5}
           cssRaw={css.raw({ flex: 'none' })}
@@ -62,7 +60,7 @@ const CommandUniverseSearch: FC<{ onInput?: (value: string) => void }> = ({ onIn
           boxSizing: 'border-box',
           width: '100%',
           minWidth: '100%',
-          // SEARCH_ICON_SIZE (28px) + 8px gap so typed text always clears the glyph. Written
+          // 28 (28px) + 8px gap so typed text always clears the glyph. Written
           // as a literal because Panda's `css()` is compile-time and won't evaluate `${expr}`.
           paddingLeft: '36px',
           paddingBlock: '0.25rem',
