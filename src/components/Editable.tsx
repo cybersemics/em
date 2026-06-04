@@ -18,7 +18,7 @@ import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import { tutorialNextActionCreator as tutorialNext } from '../actions/tutorialNext'
 import { isMac, isSafari, isTouch } from '../browser'
-import { beforeInput, commandEmitter, keyDown } from '../commands'
+import { commandEmitter } from '../commands'
 import {
   EDIT_THROTTLE,
   EM_TOKEN,
@@ -498,26 +498,6 @@ const Editable = ({
   const onPaste = useOnPaste({ contentRef, simplePath, transient })
   const onCopy = useOnCopy({ thoughtId })
   const onCut = useOnCut()
-
-  /** Handles iOS Safari keyboard events at the editable target. BrowserStack/Appium key events do not reliably reach the global listener. */
-  const onEditableKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (isTouch && isSafari()) {
-      keyDown(e.nativeEvent)
-      e.stopPropagation()
-    }
-  }, [])
-
-  /** Handles iOS Safari beforeinput at the editable target so native paragraph insertion can be prevented before WebKit mutates the contenteditable. */
-  const onEditableBeforeInput = useCallback((e: React.FormEvent<HTMLDivElement>) => {
-    if (isTouch && isSafari()) {
-      beforeInput(e.nativeEvent as InputEvent)
-      if (e.nativeEvent.defaultPrevented) {
-        e.preventDefault()
-      }
-      e.stopPropagation()
-    }
-  }, [])
-
   /** Flushes edits and updates certain state variables on blur. */
   const onBlur: FocusEventHandler<HTMLElement> = useCallback(
     e => {
@@ -602,27 +582,9 @@ const Editable = ({
       editingValueUntrimmedStore.update(value)
 
       dispatch((dispatch, getState) => {
-        const state = getState()
-        const { longPress } = state
+        const { longPress } = getState()
         if (longPress === LongPressState.Inactive) {
-          // After cursorUp clears the app cursor on iOS Safari, tapping the thought should only restore em's
-          // cursor. Safari may still focus the contenteditable, so keep native edit mode closed in that case.
-          const shouldPreserveCursorOnly = !state.isKeyboardOpen && state.cursor === null
-
-          if (isTouch && isSafari() && shouldPreserveCursorOnly) {
-            selection.clear()
-            dispatch(keyboardOpenActionCreator({ value: false }))
-            requestAnimationFrame(() => {
-              requestAnimationFrame(() => {
-                // WebKit can restore selection after focus settles, so clear it once more after paint.
-                selection.clear()
-                dispatch(keyboardOpenActionCreator({ value: false }))
-              })
-            })
-            setCursorOnThought()
-          } else {
-            setCursorOnThought({ isKeyboardOpen: true })
-          }
+          setCursorOnThought({ isKeyboardOpen: true })
         }
       })
     },
@@ -730,9 +692,7 @@ const Editable = ({
       placeholder={placeholder}
       onFocus={onFocus}
       onBlur={onBlur}
-      onBeforeInput={onEditableBeforeInput}
       onChange={onChangeHandler}
-      onKeyDown={onEditableKeyDown}
       onCopy={onCopy}
       onCut={e => {
         // flush the last edit, otherwise if cut occurs in quick succession the new value can be overwritten by the throttled change
