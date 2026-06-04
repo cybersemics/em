@@ -69,7 +69,7 @@ const CommandUniverseSearch: FC<{ onInput?: (value: string) => void }> = ({ onIn
           border: 'none',
           outline: 'none',
           fontSize: '0.9rem',
-          // Form controls don't inherit font-family by default — opt in so the dialog's Radio Canada Big applies to the placeholder and typed text.
+          // Form controls don't inherit font-family by default — opt in so the dialog's font applies to the placeholder and typed text.
           fontFamily: 'inherit',
           // plus-lighter brightens the input text against the dialog's translucent glass — additive blend lifts the placeholder & typed text out of the background.
           mixBlendMode: 'plus-lighter',

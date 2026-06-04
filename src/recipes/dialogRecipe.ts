@@ -137,8 +137,6 @@ const dialogRecipe = defineSlotRecipe({
     /** The glass sheet itself — rounded translucent panel that hosts the dialog content and decorative layers. */
     glassSheet: {
       color: 'fg',
-      // Self-hosted in /public/fonts/radio-canada-big.css; loaded from index.html. Scoped to the dialog tree (not global) — fallback chain matches the rest of the app.
-      fontFamily: "'Radio Canada Big', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
       borderRadius: '32px',
       width: '100%',
       boxSizing: 'border-box',
