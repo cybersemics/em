@@ -1,7 +1,7 @@
 import React, { PropsWithChildren } from 'react'
 import { dialogRecipe } from '../../../styled-system/recipes'
 
-interface CircularModalButtonProps {
+interface CircleButtonProps {
   onClick?: () => void
   ariaLabel: string
   disabled?: boolean
@@ -12,7 +12,7 @@ interface CircularModalButtonProps {
  * (Back, Forward, Help, Close). Styling is owned by `dialogRecipe.headerButton`; the
  * caller supplies the icon as children.
  */
-const CircularModalButton: React.FC<PropsWithChildren<CircularModalButtonProps>> = ({
+const CircleButton: React.FC<PropsWithChildren<CircleButtonProps>> = ({
   onClick,
   ariaLabel,
   disabled,
@@ -26,4 +26,4 @@ const CircularModalButton: React.FC<PropsWithChildren<CircularModalButtonProps>>
   )
 }
 
-export default CircularModalButton
+export default CircleButton

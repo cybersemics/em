@@ -5,7 +5,7 @@ import ArrowLeftIcon from '../icons/ArrowLeftIcon'
 import ArrowRightIcon from '../icons/ArrowRightIcon'
 import InfoGenieIcon from '../icons/InfoGenieIcon'
 import XIcon from '../icons/XIcon'
-import CircularModalButton from './CircularModalButton'
+import CircleButton from './CircleButton'
 
 interface DialogTitleProps {
   onClose: () => void
@@ -24,21 +24,21 @@ const DialogTitle: React.FC<PropsWithChildren<DialogTitleProps>> = ({ children, 
   return (
     <div className={dialog.titleContainer}>
       <div className={dialog.headerSide}>
-        <CircularModalButton ariaLabel='Back'>
+        <CircleButton ariaLabel='Back'>
           <ArrowLeftIcon size={24} fill={iconFill} />
-        </CircularModalButton>
-        <CircularModalButton ariaLabel='Forward'>
+        </CircleButton>
+        <CircleButton ariaLabel='Forward'>
           <ArrowRightIcon size={24} fill={iconFill} />
-        </CircularModalButton>
+        </CircleButton>
       </div>
       <h2 className={dialog.titleText}>{children}</h2>
       <div className={dialog.headerSide}>
-        <CircularModalButton ariaLabel='Help'>
+        <CircleButton ariaLabel='Help'>
           <InfoGenieIcon size={24} fill={iconFill} />
-        </CircularModalButton>
-        <CircularModalButton ariaLabel='Close' onClick={onClose}>
+        </CircleButton>
+        <CircleButton ariaLabel='Close' onClick={onClose}>
           <XIcon size={24} fill={iconFill} />
-        </CircularModalButton>
+        </CircleButton>
       </div>
     </div>
   )
