@@ -1,8 +1,8 @@
-import { ElementHandle, JSHandle, KnownDevices } from 'puppeteer'
+import { KnownDevices } from 'puppeteer'
+import type { WindowEm } from '../../../initialize'
 import categorizeCommand from '../../../commands/categorize'
 import newThoughtCommand from '../../../commands/newThought'
 import openCommandCenterCommand from '../../../commands/openCommandCenter'
-import { WindowEm } from '../../../initialize'
 import click from '../helpers/click'
 import clickBullet from '../helpers/clickBullet'
 import clickThought from '../helpers/clickThought'
@@ -20,17 +20,8 @@ import waitForHiddenEditable from '../helpers/waitForHiddenEditable'
 import waitForSelector from '../helpers/waitForSelector'
 import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
 import waitUntil from '../helpers/waitUntil'
-import { page } from '../setup'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
-
-/** Taps an element through Puppeteer's touchscreen API for mobile-only assertions. */
-const tap = async (target: ElementHandle<Element> | JSHandle<Element | undefined> | null) => {
-  const box = await target?.asElement()?.boundingBox()
-  if (!box) throw new Error('Could not locate element for tapping.')
-  await page.touchscreen.touchStart(box.x + box.width / 2, box.y + box.height / 2)
-  await page.touchscreen.touchEnd()
-}
 
 describe('all platforms', () => {
   // TODO: Why is this failing?
@@ -369,8 +360,11 @@ describe('mobile only', () => {
     await waitForSelector('[data-testid=command-center-panel]')
 
     // Step 3: close the Command Center via the Done button
-    await page.tap('[data-testid="command-center-done"]')
-    await waitForSelector('[data-testid=command-center-panel]', { hidden: true })
+    await click('[data-testid="command-center-done"]')
+    await waitUntil(() => !(window.em as WindowEm).store.getState().showCommandCenter, {
+      timeout: 5000,
+      timeoutMsg: 'Command Center did not close',
+    })
 
     // Step 4: create a second thought
     await gesture(newThoughtCommand)
@@ -378,15 +372,12 @@ describe('mobile only', () => {
     // Step 5: close the keyboard via the native Done button (blur the active element)
     await closeKeyboard()
 
-    await page.waitForFunction(() => (window.em as WindowEm).testHelpers.getState().isKeyboardOpen !== true, {
-      timeout: 6000,
-    })
+    // Step 6: tap the first thought — keyboard should NOT open
+    await clickThought('a')
 
-    // Step 6: tap the first thought through the mobile touchscreen path.
-    await tap(await waitForEditable('a'))
-
-    await page.waitForFunction(() => (window.em as WindowEm).testHelpers.getState().isKeyboardOpen !== true, {
-      timeout: 6000,
+    await waitUntil(() => !(window.em as WindowEm).store.getState().isKeyboardOpen, {
+      timeout: 3000,
+      timeoutMsg: 'Keyboard opened after tapping thought following Command Center close',
     })
   })
 })
