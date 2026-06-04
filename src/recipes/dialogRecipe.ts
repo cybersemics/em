@@ -31,10 +31,6 @@ const dialogRecipe = defineSlotRecipe({
     'headerSide',
     'headerButton',
     'headerSearchRow',
-    'sectionHeader',
-    'sectionHeaderText',
-    'sectionHeaderLineLeft',
-    'sectionHeaderLineRight',
   ],
   base: {
     /** Full-viewport backdrop — transparent fill plus the backdrop blur that softens whatever's behind the dialog. */
@@ -311,7 +307,9 @@ const dialogRecipe = defineSlotRecipe({
         'linear-gradient(191.32deg, {colors.dialogHeaderButtonBg} 5.64%, {colors.dialogHeaderButtonBgFade} 83.21%)',
       // Soft lavender outer glow.
       boxShadow: '0 0 8.7px {colors.dialogHeaderButtonShadow}',
-      // The gradient border (Figma 11:2314 stroke) is painted by the ::before overlay using the same padding-box/border-box mask trick as `glassStrokeBorder`. Done with a pseudo so the inner fill above stays a clean single-gradient `background` (mixing two gradients with different clip boxes via the `background` shorthand was rendering wrong in Panda).
+      
+      /* Gradient border stroke. This isn't natively supported in CSS, so use a trick:
+        ::before pseudoelement to paint a gradient background and mask out the center so only the 1px border slice shows. */
       position: 'relative',
       _before: {
         content: '""',
@@ -334,12 +332,12 @@ const dialogRecipe = defineSlotRecipe({
       cursor: 'pointer',
       padding: 0,
       color: 'fg',
-      // Press-only feedback (no hover state). The brighter active fill is painted as an
-      // ::after overlay with z-index: -1 (renders between the button's bg and its content
-      // — `isolation: isolate` keeps the negative z-index from escaping). Transitioning
-      // *opacity* on the overlay rather than the gradient itself gives a smooth eased fade
-      // both into and out of the active state — `background` shorthand transitions on
-      // gradients aren't reliably interpolated cross-browser and tend to snap.
+      /** On press, the button's fill brightens to provide feedback.
+       * It's not possible to directly animate a background gradient, so instead of trying
+       * to shift the gradient colors on hover/press, use another pseudoelement with the
+       * hover-state gradient stacked on top of the base button, and animate that
+       * from transparent to opaque on hover/press.
+       */
       isolation: 'isolate',
       _after: {
         content: '""',
@@ -359,7 +357,7 @@ const dialogRecipe = defineSlotRecipe({
         },
       },
     },
-    /** The title heading itself — slightly smaller than the original dialog title, centered between the button clusters. */
+    /** The title heading itself. Centered between the button clusters. */
     titleText: {
       fontWeight: '400',
       color: 'fg',
@@ -371,9 +369,8 @@ const dialogRecipe = defineSlotRecipe({
     },
     /**
      * Search row that lives between the header and the scrollable content. Sits outside
-     * the scroll container so the command list scrolls underneath the dialog header,
-     * and the search input itself stays put with no need for sticky positioning.
-     * Left padding matches contentInner so the search glyph aligns with the section
+     * the scroll container so that it stays put as the command list scrolls.
+     * Left padding matches contentInner so the search glyph perfectly aligns with the section
      * headers and command list down the left edge of the panel.
      */
     headerSearchRow: {
@@ -384,43 +381,6 @@ const dialogRecipe = defineSlotRecipe({
       gap: '0.5rem',
       paddingInline: '1rem',
       paddingBlock: '0.5rem',
-    },
-    /**
-     * Section header row inside the command list — centered title flanked by gradient lines
-     * that fade outward into the panel. Used to delimit each command group ("Creating
-     * Thoughts", "Navigation", etc.) within the scrollable content.
-     */
-    sectionHeader: {
-      display: 'flex',
-      alignItems: 'center',
-      // 1rem horizontal gap leaves a comfortable margin between the title text and
-      // the gradient hairlines that fade outward on either side.
-      gap: '1rem',
-      paddingBlock: '1.25rem',
-    },
-    /** Centered text of a section header — sits between the two gradient lines. */
-    sectionHeaderText: {
-      fontSize: '1rem',
-      fontWeight: 500,
-      color: 'fg',
-      borderBottom: 'none',
-      margin: 0,
-      whiteSpace: 'nowrap',
-    },
-    /**
-     * Left gradient hairline of the section header — fades from transparent (far left edge
-     * of the panel) to solid near the section title.
-     */
-    sectionHeaderLineLeft: {
-      flexGrow: 1,
-      height: '1px',
-      background: 'linear-gradient(to right, {colors.transparent} 0%, {colors.dialogHeaderDivider} 100%)',
-    },
-    /** Mirror on the right side: solid near the title, fading to transparent toward the panel edge. */
-    sectionHeaderLineRight: {
-      flexGrow: 1,
-      height: '1px',
-      background: 'linear-gradient(to right, {colors.dialogHeaderDivider} 0%, {colors.transparent} 100%)',
     },
   },
 })

@@ -56,14 +56,46 @@ const MobileCommandUniverseContent = () => {
                     contain: 'layout paint',
                   })}
                 >
+                  {/* Section header row — centered title flanked by gradient hairlines that fade outward to delimit each command group. */}
                   <div
-                    className={dialog.sectionHeader}
+                    className={css({
+                      display: 'flex',
+                      alignItems: 'center',
+                      // 1rem horizontal gap between the title text and the gradient hairlines.
+                      gap: '1rem',
+                      paddingBlock: '1.25rem',
+                    })}
                     // First group sits flush against the search row — skip its top padding so it doesn't double up.
                     style={index === 0 ? { paddingTop: 0 } : undefined}
                   >
-                    <div className={dialog.sectionHeaderLineLeft} />
-                    <h2 className={dialog.sectionHeaderText}>{group.title}</h2>
-                    <div className={dialog.sectionHeaderLineRight} />
+                    {/* Left hairline: transparent at the panel edge, solid near the title. */}
+                    <div
+                      className={css({
+                        flexGrow: 1,
+                        height: '1px',
+                        background: 'linear-gradient(to right, {colors.transparent} 0%, {colors.dialogHeaderDivider} 100%)',
+                      })}
+                    />
+                    <h2
+                      className={css({
+                        fontSize: '1rem',
+                        fontWeight: 500,
+                        color: 'fg',
+                        borderBottom: 'none',
+                        margin: 0,
+                        whiteSpace: 'nowrap',
+                      })}
+                    >
+                      {group.title}
+                    </h2>
+                    {/* Right hairline: solid near the title, fading to transparent at the panel edge. */}
+                    <div
+                      className={css({
+                        flexGrow: 1,
+                        height: '1px',
+                        background: 'linear-gradient(to right, {colors.dialogHeaderDivider} 0%, {colors.transparent} 100%)',
+                      })}
+                    />
                   </div>
                   <CommandUniverseGrid commands={group.commands} search={search} />
                 </div>
