@@ -2,6 +2,7 @@ import { ElementHandle, JSHandle, KnownDevices } from 'puppeteer'
 import categorizeCommand from '../../../commands/categorize'
 import newThoughtCommand from '../../../commands/newThought'
 import openCommandCenterCommand from '../../../commands/openCommandCenter'
+import { WindowEm } from '../../../initialize'
 import click from '../helpers/click'
 import clickBullet from '../helpers/clickBullet'
 import clickThought from '../helpers/clickThought'
@@ -377,10 +378,15 @@ describe('mobile only', () => {
     // Step 5: close the keyboard via the native Done button (blur the active element)
     await closeKeyboard()
 
+    await page.waitForFunction(() => (window.em as WindowEm).testHelpers.getState().isKeyboardOpen !== true, {
+      timeout: 6000,
+    })
+
     // Step 6: tap the first thought through the mobile touchscreen path.
     await tap(await waitForEditable('a'))
 
-    // keyboard should not open, so the active element should be the body or null
-    await waitUntil(() => !document.activeElement || document.activeElement === document.body)
+    await page.waitForFunction(() => (window.em as WindowEm).testHelpers.getState().isKeyboardOpen !== true, {
+      timeout: 6000,
+    })
   })
 })
