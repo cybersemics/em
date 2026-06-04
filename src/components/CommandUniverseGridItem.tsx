@@ -24,7 +24,7 @@ interface CommandUniverseGridItemProps {
   search?: string
 }
 
-/** Renders a single command as a cell in CommandUniverseGrid. Browse-only — no selection, drag, or animation, since the Command Universe is for discovering commands rather than executing them. */
+/** Renders a single command as a cell in CommandUniverseGrid. */
 const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, search = '' }) => {
   const isActive = command.isActive?.(store.getState())
   const disabled = useSelector(state => !isExecutable(state, command))
@@ -48,12 +48,11 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, se
         flexDirection: 'column',
         gap: '0.533rem',
         justifyContent: 'flex-start',
-        // Children are flush-left so the command icon + title sit at the cell's left edge.
         alignItems: 'flex-start',
         marginInline: '0.2rem',
       })}
     >
-      {/* Gesture trace (touch). Box removed per spec — the artwork itself stays as-is. */}
+      {/* Gesture diagram container. */}
       {isTouch ? (
         <td
           className={css({
@@ -98,11 +97,7 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, se
             gap: '0.75rem',
           })}
         >
-          {/* `flex: none` cancels iconRecipe's base `flex: 1`, which would otherwise let the
-              glyph grow or shrink to fill space — making it tiny when the title is long and
-              huge when it's short. The wrapping div has explicit width/height = size, so the
-              icon now always renders at exactly COMMAND_ICON_SIZE. Commands without a custom
-              icon fall back to SettingsIcon as a placeholder. */}
+          {/* `flex: none` overrides iconRecipe's `flex: 1` default so width/height set the size. */}
           <div
             className={css({ flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' })}
             style={{ width: COMMAND_ICON_SIZE, height: COMMAND_ICON_SIZE }}
