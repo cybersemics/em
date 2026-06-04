@@ -102,6 +102,7 @@ const colors = {
     dialogHeaderButtonBorder: 'rgba(255, 255, 255, 0.46)', // dialog circle button – border gradient stop – top (bright glass-edge highlight)
     dialogHeaderButtonBorderFade: 'rgba(255, 255, 255, 0.04)', // dialog circle button – border gradient stop – bottom (dim fade)
     dialogHeaderButtonIcon: '#CECAED', // dialog circle button – icon fill
+    dialogHeaderButtonShadow: 'rgba(179, 164, 255, 0.05)', // dialog circle button – soft lavender outer glow (box-shadow)
     dialogHeaderDivider: 'rgba(255, 255, 255, 0.12)', // dialog header – inner-edge color of the left/right fade-to-transparent dividers in the header row
   },
   light: {
@@ -207,6 +208,7 @@ const colors = {
     dialogHeaderButtonBorder: 'rgba(255, 255, 255, 0.46)',
     dialogHeaderButtonBorderFade: 'rgba(255, 255, 255, 0.04)',
     dialogHeaderButtonIcon: '#CECAED',
+    dialogHeaderButtonShadow: 'rgba(179, 164, 255, 0.05)',
     dialogHeaderDivider: 'rgba(255, 255, 255, 0.12)',
   },
 } as const

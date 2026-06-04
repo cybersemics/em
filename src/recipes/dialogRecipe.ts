@@ -261,15 +261,16 @@ const dialogRecipe = defineSlotRecipe({
     },
     /** Inner wrapper inside `content` that carries the horizontal text inset. Kept separate from `content` so the scrollbar gutter doesn't push text in further. */
     contentInner: {
-      // 1rem matches the rest of the dialog inset (titleContainer, headerSearchRow); the parent `content` slot also has 0.5rem paddingRight reserved for the scrollbar gutter.
+      // 1rem matches the rest of the dialog inset (titleContainer, headerSearchRow).
+      // 0.5rem right padding gives the scrollbar some breathing room from the panel's content and the edge of the panel.
       paddingLeft: '1rem',
       paddingRight: '0.5rem',
       // Add bottom padding to the inner content wrapper, so the mask doesn't fade out the last bit of content.
       paddingBottom: '2rem',
     },
     /**
-     * Header row — flex row laying out: left button cluster, centered title, right button
-     * cluster. The flex:1 cluster wrappers balance the row so the title stays centered.
+     * Header row — flex row laying out left button cluster, centered title, right button
+     * cluster. The `flex: 1` cluster wrappers ensure the title stays centered.
      */
     titleContainer: {
       display: 'flex',
@@ -281,7 +282,7 @@ const dialogRecipe = defineSlotRecipe({
       paddingBottom: '0.5rem',
     },
     /**
-     * Left/right cluster wrapper — flex row that holds the circular header buttons.
+     * Left/right header cluster wrapper. This flex container that holds the circular header buttons.
      * `flex: 1` lets each cluster claim half the row so the centered title sits in the
      * middle. `&:last-child` aligns the right cluster's buttons to the trailing edge.
      */
@@ -305,11 +306,11 @@ const dialogRecipe = defineSlotRecipe({
       minHeight: '36px',
       borderRadius: '50%',
       border: 'none',
-      // Subtle white sheen from upper-left to lower-right (Figma 11:2315) — softens the otherwise flat translucent fill into something glassy.
+      // Subtle white sheen from upper-left to lower-right — softens the otherwise flat translucent fill into something glassy.
       background:
         'linear-gradient(191.32deg, {colors.dialogHeaderButtonBg} 5.64%, {colors.dialogHeaderButtonBgFade} 83.21%)',
-      // Soft lavender outer glow — Figma 11:2314 drop-shadow.
-      boxShadow: '0 0 8.7px rgba(179, 164, 255, 0.05)',
+      // Soft lavender outer glow.
+      boxShadow: '0 0 8.7px {colors.dialogHeaderButtonShadow}',
       // The gradient border (Figma 11:2314 stroke) is painted by the ::before overlay using the same padding-box/border-box mask trick as `glassStrokeBorder`. Done with a pseudo so the inner fill above stays a clean single-gradient `background` (mixing two gradients with different clip boxes via the `background` shorthand was rendering wrong in Panda).
       position: 'relative',
       _before: {
