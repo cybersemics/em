@@ -6,7 +6,7 @@ import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import importText from '../actions/importText'
 import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN } from '../constants'
-import { DataProvider } from '../data-providers/DataProvider'
+import type { DataProvider } from '../data-providers/DataProvider'
 import fetchDescendants from '../data-providers/data-helpers/fetchDescendants'
 import getContext from '../data-providers/data-helpers/getContext'
 import getLexeme from '../data-providers/data-helpers/getLexeme'
@@ -38,7 +38,7 @@ const getThoughtIdsForContexts = async (provider: DataProvider, contexts: Contex
   (await Promise.all(contexts.map(cx => getContext(provider, cx)))).map(thought => thought!.id)
 
 /**
- * Returns many descandants fot the given contexts,.
+ * Returns many descendants for the given contexts.
  */
 const fetchDescendantsByContext = async (
   provider: DataProvider,
@@ -107,7 +107,7 @@ const importThoughts = (text: string) => {
   }
 }
 
-/** Runs tests for a module that conforms to the data-provider API. */
+/** Runs tests for a module that conforms to the data provider API. */
 const dataProviderTest = (provider: DataProvider) => {
   test('getLexemeById', async () => {
     const nothought = await provider.getLexemeById('12345')

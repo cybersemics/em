@@ -115,7 +115,7 @@ const setup = async ({
     await page.waitForFunction(() => !document.querySelector('[aria-label=modal]'))
     await page.waitForFunction(() => document.querySelector('[aria-label=empty-thoughtspace], [data-editable]'))
     await page.evaluate(async () => {
-      await (window.em as Partial<WindowEm> | undefined)?.testHelpers?.waitForTreecrdtIdle?.()
+      await (window.em as Partial<WindowEm> | undefined)?.testHelpers?.waitForThoughtspaceIdle?.()
     })
   }
 }
@@ -127,8 +127,8 @@ afterEach(async () => {
   if (page) {
     await page
       .evaluate(async () => {
-        await (window.em as Partial<WindowEm> | undefined)?.testHelpers?.waitForTreecrdtIdle?.()
-        await (window.em as Partial<WindowEm> | undefined)?.testHelpers?.dropTreecrdt?.()
+        await (window.em as Partial<WindowEm> | undefined)?.testHelpers?.waitForThoughtspaceIdle?.()
+        await (window.em as Partial<WindowEm> | undefined)?.testHelpers?.dropThoughtspace?.()
       })
       .catch(() => {
         // Ignore teardown errors when a failing test has already closed or navigated the page.
