@@ -194,6 +194,12 @@ const dialogRecipe = defineSlotRecipe({
       paddingRight: '0.5rem',
       scrollbarColor: '{colors.fg} {colors.bg}',
       scrollbarWidth: 'thin',
+      // iOS WebKit ignores `scrollbarColor` and the `::-webkit-scrollbar-*` pseudo-elements for its
+      // native overlay scrollbar, deriving the indicator color from `color-scheme` instead. Without
+      // this, iOS < 26 defaults to a light scheme and paints a dark/black scrollbar. The dialog glass
+      // is always dark (its fill tokens are identical across themes), so force a dark scheme to keep
+      // the scrollbar white and consistent with iOS 26 and Android.
+      colorScheme: 'dark',
       '&::-webkit-scrollbar': {
         width: '8px',
       },
