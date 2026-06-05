@@ -3,7 +3,7 @@ import { isTouch } from '../browser'
 
 /**
  * Dismisses the virtual keyboard by blurring the input when the user scrolls on touch devices.
- * @param inputRef - Reference to the input element to blur on scroll
+ * @param inputRef - Reference to the input element to blur on scroll.
  */
 const useDismissKeyboardOnScroll = (inputRef: RefObject<HTMLInputElement | null>) => {
   useEffect(() => {
