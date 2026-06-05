@@ -79,9 +79,9 @@ const freeThought = async (_id: ThoughtId): Promise<void> => {
   // no-op
 }
 
-/** Removes a lexeme row from the in-memory test tree. */
-const freeLexeme = async (key: string): Promise<void> => {
-  delete testLexemeIndex[key]
+/** No-op for freeing a lexeme; cache-only deallocation must not delete persisted data. */
+const freeLexeme = async (_key: string): Promise<void> => {
+  // no-op
 }
 
 /** Clears the in-memory test thoughtspace. */
