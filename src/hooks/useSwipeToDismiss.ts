@@ -132,7 +132,11 @@ const useSwipeToDismiss = (
     onTouchCancel: stop,
     ref,
     style: {
-      transform: `translate(${dx}, ${dy}px)`,
+      // Use translate3d (rather than 2D translate) to promote the popup to its own GPU compositing layer.
+      // On iOS Safari the popup switches from position: fixed to position: absolute when the virtual keyboard
+      // opens (see usePositionFixed); without a dedicated layer WebKit reuses a stale backing store and the
+      // opaque background fails to repaint, leaving the popup transparent. translate3d is visually identical.
+      transform: `translate3d(${dx}, ${dy}px, 0)`,
       transition: animate ? `transform ${snapbackDuration}s ${snapbackEasing}` : '',
       touchAction: 'none',
     },
