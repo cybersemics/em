@@ -128,13 +128,7 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
         style={{
           ...positionFixedStyles,
           ...fullScreenStyles,
-          backgroundColor: background,
-          // iOS Safari represents a flat background-color as a solid-color compositing-layer property rather
-          // than a painted tile. When usePositionFixed switches the popup to position: absolute as the virtual
-          // keyboard opens, WebKit fails to apply that solid color to the repositioned layer, leaving the panel
-          // transparent while its child text still paints (#4305). Painting the same color as a (visually flat)
-          // gradient forces WebKit to rasterize the background into a tile, which repaints reliably.
-          backgroundImage: `linear-gradient(${background}, ${background})`,
+          background,
           fontSize,
           padding,
           // disable swipe-to-dismiss when multicursor is active
