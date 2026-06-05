@@ -10,7 +10,7 @@ const waitForThoughtExistInDb = async (value: string) => {
       /** Polls for Lexeme in IndexedDB. */
       function pollForLexeme(value: string) {
         setTimeout(async () => {
-          const thoughtFromDB = await testHelpers.getLexemeFromIndexedDB(value)
+          const thoughtFromDB = await testHelpers.getLexeme(value)
           if (thoughtFromDB) {
             resolve(thoughtFromDB)
           } else {

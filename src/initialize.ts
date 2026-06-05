@@ -12,7 +12,7 @@ import { loadFromUrlActionCreator as loadFromUrl } from './actions/loadFromUrl'
 import { preloadSourcesActionCreator as preloadSources } from './actions/preloadSources'
 import { pullActionCreator as pull } from './actions/pull'
 import { setCursorActionCreator as setCursor } from './actions/setCursor'
-import { commandById, commandEmitter, executeCommand } from './commands'
+import { commandById, executeCommand } from './commands'
 import getLexemeHelper from './data-providers/data-helpers/getLexeme'
 import { initPermissionsStore } from './data-providers/permissionsStore'
 import { clientIdReady } from './data-providers/thoughtspaceSession'
@@ -148,15 +148,12 @@ const testHelpers = {
   executeCommandById: (id: CommandId) => {
     executeCommand(commandById(id))
   },
-  flushPendingEdits: () => {
-    commandEmitter.trigger('command')
-  },
   dropTreecrdt,
   waitForInitialized,
   waitForTreecrdtIdle: waitForTreecrdtWriteBarrier,
   setSelection: selection.set,
   importToContext: withDispatch(importToContext),
-  getLexemeFromIndexedDB: (value: string) => getLexemeHelper(db, value),
+  getLexeme: (value: string) => getLexemeHelper(db, value),
   getState: store.getState,
   _: _,
 }
