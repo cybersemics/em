@@ -259,10 +259,9 @@ const freeThought = async (_id: ThoughtId): Promise<void> => {
   // no-op
 }
 
-/** Removes a lexeme row from SQLite. */
-const freeLexeme = async (key: string): Promise<void> => {
-  const client = getTreecrdtClient()
-  await deleteLexemeRow(client, key)
+/** No-op for freeing a lexeme; TreeCRDT does not keep a per-lexeme provider cache. */
+const freeLexeme = async (_key: string): Promise<void> => {
+  // no-op
 }
 
 /** Clears all thoughts by dropping storage and closing the client. */
