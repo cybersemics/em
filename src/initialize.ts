@@ -148,15 +148,12 @@ const testHelpers = {
   executeCommandById: (id: CommandId) => {
     executeCommand(commandById(id))
   },
-  flushPendingEdits: () => {
-    commandEmitter.trigger('command')
-  },
   dropTreecrdt,
   waitForInitialized,
   waitForTreecrdtIdle: waitForTreecrdtWriteBarrier,
   setSelection: selection.set,
   importToContext: withDispatch(importToContext),
-  getLexemeFromIndexedDB: (value: string) => getLexemeHelper(db, value),
+  getLexeme: (value: string) => getLexemeHelper(db, value),
   getState: store.getState,
   _: _,
 }
