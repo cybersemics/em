@@ -14,6 +14,9 @@ const getNumMulticursors = () => page.evaluate(() => Object.keys(em.testHelpers.
 /** Returns the current longPress drag state. */
 const getLongPressState = () => page.evaluate(() => em.testHelpers.getState().longPress)
 
+/** Returns the current alert type, or null if there is no alert. */
+const getAlertType = () => page.evaluate(() => em.testHelpers.getState().alert?.alertType ?? null)
+
 vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
 
 describe('drag and drop multiple thoughts', () => {
@@ -85,6 +88,9 @@ describe('drag and drop multiple thoughts', () => {
 
     // the long press / drag state should be reset after the drop so the dragged thought's bullet selection indicator is dismissed (#4348)
     expect(await getLongPressState()).toBe('Inactive')
+
+    // the "Drag and drop to move thought" hint alert should be dismissed after the drop (#4348)
+    expect(await getAlertType()).not.toBe('DragAndDropHint')
   })
 
   it('should preserve document order of multiselected thoughts when dropping', async () => {

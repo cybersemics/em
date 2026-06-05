@@ -15,7 +15,7 @@ import { importFilesActionCreator as importFiles } from '../actions/importFiles'
 import { longPressActionCreator as longPress } from '../actions/longPress'
 import { moveThoughtActionCreator as moveThought } from '../actions/moveThought'
 import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from '../actions/setIsMulticursorExecuting'
-import { HOME_TOKEN, LongPressState } from '../constants'
+import { AlertType, HOME_TOKEN, LongPressState } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
 import getNextRank from '../selectors/getNextRank'
 import getPrevRank from '../selectors/getPrevRank'
@@ -236,6 +236,10 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
     // highlight (bullet selection indicator) on the dropped thought, which is driven by the lingering DragInProgress state. The cursor itself
     // is left untouched, so it remains where it was. (#4348)
     if (getState().longPress !== LongPressState.Inactive) {
+      // Dismiss the "Drag and drop to move thought" hint alert, since longPress(Inactive) resets the drag state but does not clear the alert.
+      if (getState().alert?.alertType === AlertType.DragAndDropHint) {
+        dispatch(alert(null))
+      }
       dispatch(longPress({ value: LongPressState.Inactive }))
     }
 
