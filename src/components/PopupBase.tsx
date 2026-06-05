@@ -101,12 +101,6 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
 
     return (
       <div
-        // On iOS Safari, the popup switches from position: fixed to position: absolute when the virtual
-        // keyboard opens (see usePositionFixed). WebKit fails to repaint the popup's opaque background after
-        // this in-place switch, leaving it transparent (#4305). Keying the element on the positioning mode
-        // remounts it whenever the mode changes, forcing WebKit to paint a fresh layer with the correct
-        // background. This is a no-op on platforms where the position never switches (e.g. desktop, Capacitor).
-        key={positionFixedStyles.position}
         className={css({
           boxSizing: 'border-box',
           textAlign,
@@ -134,7 +128,13 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
         style={{
           ...positionFixedStyles,
           ...fullScreenStyles,
-          background,
+          backgroundColor: background,
+          // iOS Safari represents a flat background-color as a solid-color compositing-layer property rather
+          // than a painted tile. When usePositionFixed switches the popup to position: absolute as the virtual
+          // keyboard opens, WebKit fails to apply that solid color to the repositioned layer, leaving the panel
+          // transparent while its child text still paints (#4305). Painting the same color as a (visually flat)
+          // gradient forces WebKit to rasterize the background into a tile, which repaints reliably.
+          backgroundImage: `linear-gradient(${background}, ${background})`,
           fontSize,
           padding,
           // disable swipe-to-dismiss when multicursor is active
