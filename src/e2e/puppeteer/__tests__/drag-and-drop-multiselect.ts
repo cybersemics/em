@@ -11,6 +11,9 @@ const em = window.em as WindowEm
 /** Returns the number of active multicursors. */
 const getNumMulticursors = () => page.evaluate(() => Object.keys(em.testHelpers.getState().multicursors).length)
 
+/** Returns the current longPress drag state. */
+const getLongPressState = () => page.evaluate(() => em.testHelpers.getState().longPress)
+
 vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
 
 describe('drag and drop multiple thoughts', () => {
@@ -79,6 +82,9 @@ describe('drag and drop multiple thoughts', () => {
 
     // the multicursor selection (and the Command Center on mobile) should be dismissed after the drop (#4348)
     expect(await getNumMulticursors()).toBe(0)
+
+    // the long press / drag state should be reset after the drop so the dragged thought's bullet selection indicator is dismissed (#4348)
+    expect(await getLongPressState()).toBe('Inactive')
   })
 
   it('should preserve document order of multiselected thoughts when dropping', async () => {
