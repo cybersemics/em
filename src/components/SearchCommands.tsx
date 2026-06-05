@@ -1,25 +1,14 @@
-import { FC, useEffect, useRef } from 'react'
+import { FC, useRef } from 'react'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
-import { isTouch } from '../browser'
+import useDismissKeyboardOnScroll from '../hooks/useDismissKeyboardOnScroll'
 import SearchIcon from './icons/SearchIcon'
 
 /** Search bar for filtering commands. */
 const SearchCommands: FC<{ onInput?: (value: string) => void }> = ({ onInput }) => {
   const inputRef = useRef<HTMLInputElement>(null)
 
-  // Dismiss the virtual keyboard when the user scrolls the search results on touch devices.
-  useEffect(() => {
-    if (!isTouch) return
-    /** Blurs the input to dismiss the virtual keyboard. */
-    const handleScroll = () => {
-      inputRef.current?.blur()
-    }
-    window.addEventListener('scroll', handleScroll, true)
-    return () => {
-      window.removeEventListener('scroll', handleScroll, true)
-    }
-  }, [])
+  useDismissKeyboardOnScroll(inputRef)
 
   return (
     <div id='search' className={css({ flexGrow: 1, border: 'solid 1px {colors.gray50}', borderRadius: '8px' })}>
