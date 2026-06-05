@@ -202,7 +202,7 @@ const dialogRecipe = defineSlotRecipe({
       // DialogContent). iOS WebKit cannot recolor its native overflow scrollbar via CSS — `scrollbarColor`,
       // the `::-webkit-scrollbar-*` pseudo-elements, and `color-scheme` are all ignored for the inner
       // overlay scrollbar — so on iOS < 26 it always painted dark. A JS-driven thumb is the only way to get
-      // a consistent white scrollbar across iOS 18, iOS 26, and Android.
+      // a consistent scrollbar across iOS 18, iOS 26, and Android.
       scrollbarWidth: 'none',
       '&::-webkit-scrollbar': {
         display: 'none',
@@ -239,14 +239,14 @@ const dialogRecipe = defineSlotRecipe({
         animationRange: '0 4rem, calc(100% - 1rem) 100%',
       },
     },
-    /** Custom scrollbar thumb overlaying the right edge of `content`. Its height, vertical position, and visibility are driven by JS in DialogContent (the native scrollbar is hidden on `content`). White and consistent on every platform, unlike iOS's uncontrollable native overlay scrollbar. */
+    /** Custom scrollbar thumb overlaying the right edge of `content`. Its height, vertical position, and visibility are driven by JS in DialogContent (the native scrollbar is hidden on `content`). Uses the same translucent grey (`fgOverlay20`) as the app's default scrollbars (e.g. Sidebar), and is consistent on every platform, unlike iOS's uncontrollable native overlay scrollbar. */
     scrollbarThumb: {
       position: 'absolute',
       top: 0,
       right: '2px',
       width: '4px',
       borderRadius: '2px',
-      background: 'fg',
+      background: 'fgOverlay20',
       opacity: 0,
       transition: 'opacity 0.3s ease',
       pointerEvents: 'none',

@@ -11,7 +11,7 @@ const THUMB_HIDE_DELAY = 800
  * Content for dialog box. Renders a custom scrollbar thumb over the scrollable region because iOS
  * WebKit cannot recolor its native overflow scrollbar via CSS (it renders dark on iOS < 26 regardless
  * of `scrollbar-color` / `::-webkit-scrollbar-*` / `color-scheme`). The native scrollbar is hidden in
- * dialogRecipe and this JS-driven thumb provides a white scrollbar consistent across all platforms.
+ * dialogRecipe and this JS-driven thumb provides a grey scrollbar consistent across all platforms.
  */
 const DialogContent: React.FC<PropsWithChildren> = ({ children }) => {
   const dialog = dialogRecipe()
