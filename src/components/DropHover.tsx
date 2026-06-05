@@ -108,6 +108,12 @@ const DropHoverIfVisible = ({
       return false
     }
 
+    // Don't show the drop hover directly before a dragged thought, since dropping a thought before itself is a noop.
+    // When multiple thoughts are dragged, this is an invalid drop point that aborts the entire drop (see validateDraggedItem in useDragAndDropThought), so the indicator should not be shown.
+    if (state.draggingThoughts.some(draggingPath => equalPath(draggingPath, simplePath))) {
+      return false
+    }
+
     // Typically we show the drop hover if the thought is being directly hovered over.
     // However, when moving into a different context that is sorted, we need to show the drop hover on the sorted drop destination if the thought is hovered over any of the thoughts in the sorted context.
     const sameContext = state.draggingThoughts.every(draggingPath =>
