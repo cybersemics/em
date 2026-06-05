@@ -101,6 +101,12 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
 
     return (
       <div
+        // On iOS Safari, the popup switches from position: fixed to position: absolute when the virtual
+        // keyboard opens (see usePositionFixed). WebKit fails to repaint the popup's opaque background after
+        // this in-place switch, leaving it transparent (#4305). Keying the element on the positioning mode
+        // remounts it whenever the mode changes, forcing WebKit to paint a fresh layer with the correct
+        // background. This is a no-op on platforms where the position never switches (e.g. desktop, Capacitor).
+        key={positionFixedStyles.position}
         className={css({
           boxSizing: 'border-box',
           textAlign,
