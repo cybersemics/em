@@ -360,7 +360,12 @@ describe('mobile only', () => {
 
     // Step 3: close the Command Center via the Done button
     await click('[data-testid="command-center-done"]')
-    await waitForSelector('[data-testid=command-center-panel]', { hidden: true, timeout: 5000 })
+    // The sheet stays in the DOM when closed (transformed off-screen), so { hidden: true }
+    // on the panel never resolves. Wait for the visible multiselect highlight to clear instead.
+    await waitUntil(() => !document.querySelector('[aria-label="bullet"][data-highlighted="true"]'), {
+      timeout: 5000,
+      timeoutMsg: 'Command Center did not close',
+    })
 
     // Step 4: create a second thought
     await gesture(newThoughtCommand)
