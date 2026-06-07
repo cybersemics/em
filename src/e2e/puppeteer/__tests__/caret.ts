@@ -2,7 +2,6 @@ import { KnownDevices } from 'puppeteer'
 import categorizeCommand from '../../../commands/categorize'
 import newThoughtCommand from '../../../commands/newThought'
 import openCommandCenterCommand from '../../../commands/openCommandCenter'
-import type { WindowEm } from '../../../initialize'
 import click from '../helpers/click'
 import clickBullet from '../helpers/clickBullet'
 import clickThought from '../helpers/clickThought'
@@ -361,10 +360,7 @@ describe('mobile only', () => {
 
     // Step 3: close the Command Center via the Done button
     await click('[data-testid="command-center-done"]')
-    await waitUntil(() => !(window.em as WindowEm).store.getState().showCommandCenter, {
-      timeout: 5000,
-      timeoutMsg: 'Command Center did not close',
-    })
+    await waitForSelector('[data-testid=command-center-panel]', { hidden: true, timeout: 5000 })
 
     // Step 4: create a second thought
     await gesture(newThoughtCommand)
@@ -375,7 +371,8 @@ describe('mobile only', () => {
     // Step 6: tap the first thought — keyboard should NOT open
     await clickThought('a')
 
-    await waitUntil(() => !(window.em as WindowEm).store.getState().isKeyboardOpen, {
+    // keyboard should not open, so focus should not move to an editable
+    await waitUntil(() => !document.activeElement?.hasAttribute('data-editable'), {
       timeout: 3000,
       timeoutMsg: 'Keyboard opened after tapping thought following Command Center close',
     })
