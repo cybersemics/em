@@ -575,14 +575,7 @@ export const handleGestureCancel = () => {
 
 /** In the specific case of the newThought and indent commands, prevent default in beforeinput event instead of keydown to preserve default iOS auto-capitalization behavior. The Enter and space characters needs to be prevented so that it doesn't get inserted into the thought (#3707). */
 export const beforeInput = (e: InputEvent) => {
-  const target = e.target
-  const targetElement = target instanceof Element ? target : null
-  const isThoughtEditable = !!targetElement?.closest('[data-editable]')
-  const isNewThoughtInput =
-    keyCommandId === 'newThought' ||
-    (isThoughtEditable && (e.inputType === 'insertParagraph' || e.inputType === 'insertLineBreak'))
-
-  if (isNewThoughtInput || (keyCommandId === 'indent' && editingValueStore.getState() === '')) {
+  if (keyCommandId === 'newThought' || (keyCommandId === 'indent' && editingValueStore.getState() === '')) {
     e.preventDefault()
   }
 }
