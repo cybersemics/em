@@ -31,7 +31,13 @@ const Notification: FC<
   return (
     <TransitionGroup
       data-testid='alert'
-      className={css({ position: 'relative', zIndex: 'popup' })}
+      // Do not give this wrapper a positioning context. PopupBase switches to `position: absolute` on iOS Safari
+      // when the keyboard opens (see usePositionFixed), and computes its `top` in document coordinates
+      // (scrollTop-based). A positioned wrapper would become the absolute toast's containing block, which both
+      // shifts the coordinate origin and — because the wrapper collapses to ~0 height around the out-of-flow
+      // toast — triggers a WebKit paint/compositing failure that renders the panel background transparent while
+      // the keyboard is open. Leaving the wrapper static lets the toast resolve against the initial containing
+      // block (the document), matching usePositionFixed's math. The toast keeps its own zIndex: 'popup'.
       childFactory={(child: React.ReactElement<{ timeout: number }>) =>
         !isDismissed ? child : React.cloneElement(child, { timeout: 0 })
       }
