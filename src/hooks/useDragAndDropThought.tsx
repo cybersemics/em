@@ -20,7 +20,7 @@ import { moveThoughtActionCreator as moveThought } from '../actions/moveThought'
 import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from '../actions/setIsMulticursorExecuting'
 import { isTouch } from '../browser'
 import { ThoughtContainerProps } from '../components/Thought'
-import { LongPressState } from '../constants'
+import { AlertType, LongPressState } from '../constants'
 import * as selection from '../device/selection'
 import documentSort from '../selectors/documentSort'
 import findDescendant from '../selectors/findDescendant'
@@ -261,6 +261,17 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   })
 }
 
+/** Handles drag end. Resets longPress to Inactive so that gestures, alerts, and the multicursor are restored once the drag concludes. This react-dnd callback is guaranteed to fire whenever a drag ends (dropped or not), which is more reliable than the touchend-based reset in useDragHold that may not fire (e.g. multicursor drop onto a subthought). */
+const endDrag = () =>
+  store.dispatch([
+    longPress({ value: LongPressState.Inactive }),
+    (dispatch, getState) => {
+      if (getState().alert?.alertType === AlertType.DragAndDropHint) {
+        dispatch(alert(null))
+      }
+    },
+  ])
+
 /** Collects props from the DragSource. */
 const dragCollect = (monitor: DragSourceMonitor) => ({
   isDragging: monitor.isDragging(),
@@ -282,6 +293,7 @@ const useDragAndDropThought = (props: Partial<ThoughtContainerProps> & { hoverZo
     type: DragAndDropType.Thought,
     item: () => beginDrag(propsTypes),
     canDrag: () => canDrag(propsTypes),
+    end: () => endDrag(),
     collect: dragCollect,
   })
 
@@ -289,6 +301,7 @@ const useDragAndDropThought = (props: Partial<ThoughtContainerProps> & { hoverZo
     type: DragAndDropType.Thought,
     item: () => beginDrag(propsTypes),
     canDrag: () => canDrag(propsTypes),
+    end: () => endDrag(),
     collect: dragCollect,
   })
 
