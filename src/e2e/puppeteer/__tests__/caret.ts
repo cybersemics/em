@@ -1,16 +1,19 @@
-import { KnownDevices } from 'puppeteer'
+import { type ElementHandle, type JSHandle, KnownDevices } from 'puppeteer'
 import categorizeCommand from '../../../commands/categorize'
 import newThoughtCommand from '../../../commands/newThought'
 import openCommandCenterCommand from '../../../commands/openCommandCenter'
+import type { WindowEm } from '../../../initialize'
 import click from '../helpers/click'
 import clickBullet from '../helpers/clickBullet'
 import clickThought from '../helpers/clickThought'
 import closeKeyboard from '../helpers/closeKeyboard'
+import command from '../helpers/command'
 import emulate from '../helpers/emulate'
 import gesture from '../helpers/gesture'
 import getEditingText from '../helpers/getEditingText'
 import getSelection from '../helpers/getSelection'
 import keyboard from '../helpers/keyboard'
+import newThought from '../helpers/newThought'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import refresh from '../helpers/refresh'
@@ -19,6 +22,7 @@ import waitForHiddenEditable from '../helpers/waitForHiddenEditable'
 import waitForSelector from '../helpers/waitForSelector'
 import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
 import waitUntil from '../helpers/waitUntil'
+import { page } from '../setup'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
@@ -262,6 +266,14 @@ describe('mobile only', () => {
     await emulate(KnownDevices['iPhone 15 Pro'])
   }, 5000)
 
+  /** Taps an element through Puppeteer's touchscreen API for mobile-only assertions. */
+  const tap = async (target: ElementHandle<Element> | JSHandle<Element | undefined> | null) => {
+    const box = await target?.asElement()?.boundingBox()
+    if (!box) throw new Error('Could not locate element for tapping.')
+    await page.touchscreen.touchStart(box.x + box.width / 2, box.y + box.height / 2)
+    await page.touchscreen.touchEnd()
+  }
+
   it('After categorize, the caret should be on the new thought', async () => {
     const importText = `
     - a
@@ -349,29 +361,34 @@ describe('mobile only', () => {
     expect(textContext).toBe('a')
   })
 
-  it.skip('tapping a thought after opening and closing Command Center via Done should not open the keyboard', async () => {
+  it('tapping a thought after opening and closing Command Center via Done should not open the keyboard', async () => {
     // Step 1: create a thought
     await gesture(newThoughtCommand)
     await keyboard.type('a')
+    await waitForEditable('a')
 
-    // Step 2: open the Command Center with the ↑ gesture
-    await gesture(openCommandCenterCommand)
+    // Step 2: open the Command Center
+    await command(openCommandCenterCommand.id)
     await waitForSelector('[data-testid=command-center-panel]')
 
     // Step 3: close the Command Center via the Done button
-    await click('[data-testid="command-center-done"]')
+    await page.tap('[data-testid="command-center-done"]')
     await waitForSelector('[data-testid=command-center-panel]', { hidden: true })
 
     // Step 4: create a second thought
-    await gesture(newThoughtCommand)
+    await newThought()
 
     // Step 5: close the keyboard via the native Done button (blur the active element)
     await closeKeyboard()
+    await page.waitForFunction(() => (window.em as WindowEm).testHelpers.getState().isKeyboardOpen !== true, {
+      timeout: 6000,
+    })
 
-    // Step 6: tap the first thought — keyboard should NOT open
-    await clickThought('a')
+    // Step 6: tap the first thought through the mobile touchscreen path.
+    await tap(await waitForEditable('a'))
 
-    // keyboard should not open, so the active element should be the body or null
-    await waitUntil(() => !document.activeElement || document.activeElement === document.body)
+    await page.waitForFunction(() => (window.em as WindowEm).testHelpers.getState().isKeyboardOpen !== true, {
+      timeout: 6000,
+    })
   })
 })
