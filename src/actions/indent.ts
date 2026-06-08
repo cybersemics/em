@@ -54,7 +54,8 @@ const indent = (state: State): State => {
   }
 
   // calculate offset value based upon selection node before moveThought is dispatched
-  const offset = (selection.isText() ? selection.offset() || 0 : state.cursorOffset) || 0
+  const offset =
+    (selection.isOnEditable(head(cursor)) && selection.isText() ? selection.offset() || 0 : state.cursorOffset) || 0
 
   const cursorNew = appendToPath(parentOf(cursor), prev.id, head(cursor))
 
