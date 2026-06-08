@@ -16,7 +16,6 @@ import newThought from '../helpers/newThought'
 import paste from '../helpers/paste'
 import tap from '../helpers/tap'
 import waitForEditable from '../helpers/waitForEditable'
-import waitForEmIdle from '../helpers/waitForEmIdle'
 import waitUntil from '../helpers/waitUntil'
 
 // tests succeeds individually, but fails when there are too many tests running in parallel
@@ -177,8 +176,6 @@ describe('Caret', () => {
     })
 
     await tap(editableNodeHandle, { y: 60, x: 20 })
-
-    await waitForEmIdle()
 
     const editingText = await getEditingText()
     expect(editingText).toBe('foo')

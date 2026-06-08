@@ -1,5 +1,4 @@
 import type { WindowEm } from '../../../initialize'
-import waitForEmIdle from './waitForEmIdle'
 
 /**
  * Hide iOS keyboard by tapping done button above the keyboard.
@@ -12,7 +11,6 @@ const hideKeyboardByTappingDone = async () => {
   await done.click()
   await done.waitForExist({ reverse: true })
   await browser.switchContext(oldContext)
-  await waitForEmIdle()
   await browser.waitUntil(
     () =>
       browser.execute(() => {

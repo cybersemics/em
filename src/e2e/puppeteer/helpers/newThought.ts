@@ -1,7 +1,6 @@
 import keyboard from './keyboard'
 import press from './press'
 import waitForEditable from './waitForEditable'
-import waitForEmIdle from './waitForEmIdle'
 
 /** Creates a new thought by hitting Enter and typing text. Waits for renders between each step. */
 const newThought = async (value?: string) => {
@@ -19,7 +18,6 @@ const newThought = async (value?: string) => {
       const editableNode = await waitForEditable('', { timeout: 1000 })
       // @ts-expect-error - https://github.com/puppeteer/puppeteer/issues/8852
       await editableNode.asElement()?.click()
-      await waitForEmIdle()
       await keyboard.type(value)
       await waitForEditable(value, { timeout: 1000 })
     }

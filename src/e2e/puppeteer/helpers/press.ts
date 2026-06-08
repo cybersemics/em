@@ -1,6 +1,5 @@
 import { KeyInput, Keyboard } from 'puppeteer'
 import { page } from '../setup'
-import waitForEmIdle from './waitForEmIdle'
 
 type Options = Parameters<Keyboard['press']>[1]
 
@@ -42,8 +41,6 @@ const press = async (
   if (meta) await page.keyboard.up('Meta')
   if (shift) await page.keyboard.up('Shift')
   if (alt) await page.keyboard.up('Alt')
-
-  await waitForEmIdle()
 }
 
 export default press
