@@ -1,6 +1,5 @@
 import { page } from '../setup'
 import getEditable from './getEditable'
-import waitForEmIdle from './waitForEmIdle'
 
 /**
  * Click the bullet for the given thought.
@@ -22,7 +21,6 @@ const clickBullet = async (value: string) => {
 
   // @ts-expect-error - https://github.com/puppeteer/puppeteer/issues/8852
   await bulletNode.asElement()?.click()
-  await waitForEmIdle()
 }
 
 export default clickBullet

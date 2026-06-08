@@ -1,7 +1,6 @@
 import { ElementHandle } from 'puppeteer'
 import { JSHandle } from 'puppeteer'
 import { page } from '../setup'
-import waitForEmIdle from './waitForEmIdle'
 
 interface Options {
   /** Click on the inside edge of the editable. Default: left. */
@@ -55,7 +54,6 @@ const longPressThought = async (
   )
 
   await page.touchscreen.touchEnd()
-  await waitForEmIdle()
 }
 
 export default longPressThought

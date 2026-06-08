@@ -2,7 +2,6 @@ import { page } from '../setup'
 import getEditable from './getEditable'
 import hide from './hide'
 import showMousePointer from './showMousePointer'
-import waitForEmIdle from './waitForEmIdle'
 import waitUntil from './waitUntil'
 
 /** Performs Drag and Drop functionality on a thought in Puppeteer browser. */
@@ -109,7 +108,6 @@ const dragAndDropThought = async (
       // Drag is complete when all drag-related states are cleared
       return !dragInProgress && !dragHold
     })
-    await waitForEmIdle()
   }
 
   // Hide Alert by default.

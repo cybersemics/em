@@ -1,5 +1,4 @@
 import { page } from '../setup'
-import waitForEmIdle from './waitForEmIdle'
 import waitUntil from './waitUntil'
 
 /**
@@ -70,7 +69,6 @@ const dragAndDropFavorite = async (
   if (mouseUp) {
     await page.mouse.up()
     await waitUntil(() => !document.querySelector('[data-drag-in-progress="true"]'))
-    await waitForEmIdle()
   }
 }
 

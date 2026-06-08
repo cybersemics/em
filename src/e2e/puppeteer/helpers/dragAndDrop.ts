@@ -1,5 +1,4 @@
 import { page } from '../setup'
-import waitForEmIdle from './waitForEmIdle'
 
 /** Performs Drag and Drop functionality in Puppeteer browser. */
 const dragAndDrop = async (selectorDrag: string, selectorDrop: string) => {
@@ -19,7 +18,6 @@ const dragAndDrop = async (selectorDrag: string, selectorDrop: string) => {
   await page.mouse.down()
   await page.mouse.move(dragEnd.x, dragEnd.y)
   await page.mouse.up()
-  await waitForEmIdle()
 }
 
 export default dragAndDrop

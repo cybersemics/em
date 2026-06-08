@@ -2,7 +2,6 @@ import Command from '../../../@types/Command'
 import Direction from '../../../@types/Direction'
 import Gesture from '../../../@types/Gesture'
 import { page } from '../setup'
-import waitForEmIdle from './waitForEmIdle'
 
 /**
  * Helper function to smoothly move touch from one point to another.
@@ -106,7 +105,6 @@ const gesture = async (
 
   if (!hold) {
     await page.touchscreen.touchEnd()
-    await waitForEmIdle()
   }
 }
 

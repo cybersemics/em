@@ -18,7 +18,6 @@ import paste from '../helpers/paste'
 import press from '../helpers/press'
 import refresh from '../helpers/refresh'
 import waitForEditable from '../helpers/waitForEditable'
-import waitForEmIdle from '../helpers/waitForEmIdle'
 import waitForHiddenEditable from '../helpers/waitForHiddenEditable'
 import waitForSelector from '../helpers/waitForSelector'
 import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
@@ -272,17 +271,11 @@ describe('mobile only', () => {
   }, 5000)
 
   /** Tap an element through the touchscreen API when testing mobile-only behavior. */
-  const tap = async (
-    target: ElementHandle<Element> | JSHandle<Element | undefined> | null,
-    { waitForIdle = true }: { waitForIdle?: boolean } = {},
-  ) => {
+  const tap = async (target: ElementHandle<Element> | JSHandle<Element | undefined> | null) => {
     const box = await target?.asElement()?.boundingBox()
     if (!box) throw new Error('Could not locate element for tapping.')
     await page.touchscreen.touchStart(box.x + box.width / 2, box.y + box.height / 2)
     await page.touchscreen.touchEnd()
-    if (waitForIdle) {
-      await waitForEmIdle()
-    }
   }
 
   it('After categorize, the caret should be on the new thought', async () => {
@@ -397,7 +390,7 @@ describe('mobile only', () => {
 
     // Step 6: tap the first thought — keyboard should NOT open.
     // Use the touchscreen path here since ElementHandle.click dispatches mouse input.
-    await tap(await waitForEditable('a'), { waitForIdle: false })
+    await tap(await waitForEditable('a'))
 
     await page.waitForFunction(() => (window.em as WindowEm).testHelpers.getState().isKeyboardOpen !== true, {
       timeout: 6000,

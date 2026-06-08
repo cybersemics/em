@@ -9,7 +9,6 @@ import paste from '../helpers/paste'
 import tap from '../helpers/tap'
 import tapReturnKey from '../helpers/tapReturnKey'
 import waitForEditable from '../helpers/waitForEditable'
-import waitForEmIdle from '../helpers/waitForEmIdle'
 
 describe('Split', () => {
   it('split a thought when the caret is in the middle', async () => {
@@ -30,8 +29,6 @@ describe('Split', () => {
     await tap(editableNodeHandle, { y: 60, x: 25 })
     await tap(editableNodeHandle, { y: 60, x: 25 })
     await tapReturnKey()
-
-    await waitForEmIdle()
 
     const offset = await getSelection()?.focusOffset
     expect(offset).toBe(0)
