@@ -1,21 +1,10 @@
-import { WindowEm } from '../../../initialize'
 import dragAndDropThought from '../helpers/dragAndDropThought'
 import exportThoughts from '../helpers/exportThoughts'
+import getEditingText from '../helpers/getEditingText'
 import hideHUD from '../helpers/hideHUD'
 import multiselectThoughts from '../helpers/multiselectThoughts'
 import paste from '../helpers/paste'
 import { page } from '../setup'
-
-const em = window.em as WindowEm
-
-/** Returns the number of active multicursors. */
-const getNumMulticursors = () => page.evaluate(() => Object.keys(em.testHelpers.getState().multicursors).length)
-
-/** Returns the current longPress drag state. */
-const getLongPressState = () => page.evaluate(() => em.testHelpers.getState().longPress)
-
-/** Returns the current alert type, or null if there is no alert. */
-const getAlertType = () => page.evaluate(() => em.testHelpers.getState().alert?.alertType ?? null)
 
 vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
 
@@ -83,14 +72,18 @@ describe('drag and drop multiple thoughts', () => {
   - z
 `)
 
-    // the multicursor selection (and the Command Center on mobile) should be dismissed after the drop (#4348)
-    expect(await getNumMulticursors()).toBe(0)
+    // After the drop, the transient drag UI should be dismissed and the cursor restored — asserted via user-observable DOM, not the Redux store (#4348).
 
-    // the long press / drag state should be reset after the drop so the dragged thought's bullet selection indicator is dismissed (#4348)
-    expect(await getLongPressState()).toBe('Inactive')
+    // 1. the multicursor selection (and, on mobile, the Command Center / bullet drag highlight) is dismissed: no bullets remain highlighted
+    const highlightedBullets = await page.$$('[aria-label="bullet"][data-highlighted="true"]')
+    expect(highlightedBullets.length).toBe(0)
 
-    // the "Drag and drop to move thought" hint alert should be dismissed after the drop (#4348)
-    expect(await getAlertType()).not.toBe('DragAndDropHint')
+    // 2. the "Drag and drop to move thought" hint alert is dismissed
+    const alertContent = await page.$eval('[data-testid=alert-content]', el => el.textContent).catch(() => null)
+    expect(alertContent).not.toContain('Drag and drop to move thought')
+
+    // 3. the cursor is placed on the drop target
+    expect(await getEditingText()).toBe('a')
   })
 
   it('should preserve document order of multiselected thoughts when dropping', async () => {
