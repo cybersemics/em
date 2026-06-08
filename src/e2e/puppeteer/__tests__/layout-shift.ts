@@ -11,12 +11,7 @@ vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 const em = window.em as WindowEm
 
 const Y_TOLERANCE = 0.5
-
-/** Wait until `measureYShift`'s observer is observing `document.body`. */
-const waitForLayoutShiftObserver = () =>
-  page.waitForFunction(() => em.testFlags.layoutShiftObserverReady === true, {
-    timeout: 8000,
-  })
+const OBSERVER_READY_TIMEOUT_MS = 8000
 
 type YShiftResult = {
   /** The value of the thought whose y position is being measured. */
@@ -31,9 +26,13 @@ type YShiftResult = {
  * Captures the first and final inline `top` assigned to the tree-node whose editable text is `thoughtValue`.
  *
  * Must be called BEFORE the action that renders the thought so the observer is live when the tree-node is inserted.
+ * Awaits until the observer is observing `document.body`, then returns `{ measurePromise }` to await after the action.
  */
-const measureYShift = (thoughtValue: string, { settleMs = 500 }: { settleMs?: number } = {}): Promise<YShiftResult> =>
-  page.evaluate(
+const measureYShift = async (
+  thoughtValue: string,
+  { settleMs = 500 }: { settleMs?: number } = {},
+): Promise<{ measurePromise: Promise<YShiftResult> }> => {
+  const measurePromise = page.evaluate(
     (thoughtValue: string, settleMs: number, overallTimeoutMs: number) =>
       new Promise<YShiftResult>((resolve, reject) => {
         em.testFlags.layoutShiftObserverReady = false
@@ -118,8 +117,15 @@ const measureYShift = (thoughtValue: string, { settleMs = 500 }: { settleMs?: nu
       }),
     thoughtValue,
     settleMs,
-    8000,
+    OBSERVER_READY_TIMEOUT_MS,
   )
+
+  await page.waitForFunction(() => em.testFlags.layoutShiftObserverReady === true, {
+    timeout: OBSERVER_READY_TIMEOUT_MS,
+  })
+
+  return { measurePromise }
+}
 
 /** Expect the y position of the thought to be stable within the tolerance. */
 const expectStableY = ({ thoughtValue, before, after }: YShiftResult) => {
@@ -137,8 +143,7 @@ describe('thought y position stability', { retry: 3 }, () => {
       `)
     await waitForEditable('a')
 
-    const measurePromise = measureYShift('')
-    await waitForLayoutShiftObserver()
+    const { measurePromise } = await measureYShift('')
     await press('Enter')
     expectStableY(await measurePromise)
   })
@@ -151,8 +156,7 @@ describe('thought y position stability', { retry: 3 }, () => {
     await waitForEditable('a')
     await clickThought('a')
 
-    const measurePromise = measureYShift('')
-    await waitForLayoutShiftObserver()
+    const { measurePromise } = await measureYShift('')
     await press('Enter')
     expectStableY(await measurePromise)
   })
@@ -167,8 +171,7 @@ describe('thought y position stability', { retry: 3 }, () => {
     await clickThought('b')
     await press('Escape')
 
-    const measurePromise = measureYShift('c')
-    await waitForLayoutShiftObserver()
+    const { measurePromise } = await measureYShift('c')
     await clickThought('b')
     expectStableY(await measurePromise)
   })
@@ -183,8 +186,7 @@ describe('thought y position stability', { retry: 3 }, () => {
     await clickThought('a')
     await clickBullet('a')
 
-    const measurePromise = measureYShift('b')
-    await waitForLayoutShiftObserver()
+    const { measurePromise } = await measureYShift('b')
     await clickBullet('a')
     expectStableY(await measurePromise)
   })
@@ -201,8 +203,7 @@ describe('thought y position stability', { retry: 3 }, () => {
       `)
     await press('Escape')
 
-    const measurePromise = measureYShift('E')
-    await waitForLayoutShiftObserver()
+    const { measurePromise } = await measureYShift('E')
     await clickThought('X')
     expectStableY(await measurePromise)
   })

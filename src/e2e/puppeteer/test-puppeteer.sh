@@ -1,5 +1,19 @@
 #!/bin/bash
 
+# Runs the puppeteer tests in a browserless docker container. If running in a GitHub Action, it assumes that
+# the container is already running and available at localhost:7566.
+#
+# Usage:
+#
+#   # run all tests
+#   yarn test:puppeteer
+#
+#   # test a specific test file
+#   yarn test:puppeteer caret
+#
+#   # test a specific test file with a specific test name
+#   yarn test:puppeteer caret -t "should move the caret to the correct position"
+
 set -eo pipefail
 
 # Function to stop the browserless docker container

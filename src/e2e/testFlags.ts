@@ -1,3 +1,5 @@
+import { DebouncedFunc } from 'lodash'
+
 /** Test flags that are injected into window.em.testFlags. */
 const testFlags: {
   logActions: boolean
@@ -12,6 +14,10 @@ const testFlags: {
   simulateDrop: boolean
   /** Puppeteer layout-shift tests: true after `measureYShift`'s MutationObserver has called `observe()`. */
   layoutShiftObserverReady: boolean
+  /** Puppeteer layout-shift tests: first `top` captured for the target tree-node. Set as soon as it is known. */
+  layoutShiftInitialTop: number | null
+  /** The throttled scrollCursorIntoView function. Exposed so that tests can cancel its pending trailing call before asserting on the scroll position. */
+  throttledScrollCursorIntoView: DebouncedFunc<(y: number, height: number) => void> | null
 } = {
   logActions: false,
   logMultigesture: false,
@@ -20,6 +26,8 @@ const testFlags: {
   simulateDrag: false,
   simulateDrop: false,
   layoutShiftObserverReady: false,
+  layoutShiftInitialTop: null,
+  throttledScrollCursorIntoView: null,
 }
 
 export default testFlags

@@ -51,6 +51,23 @@ jobs:
           disown
           echo "DISPLAY=:99" >> $GITHUB_ENV
 
+      # Expose BrowserStack credentials to the agent's shell environment.
+      # The wdio MCP gets these via its own MCP server config, but the
+      # heartbeat script (.github/skills/browser-control-ios/heartbeat.sh) runs
+      # in the agent's Bash tool — separate process scope — and needs the
+      # same creds to authenticate its keepalive pings to the BrowserStack
+      # hub. Without this, the heartbeat daemon launches but every ping
+      # fails with empty auth, and the iOS session dies on the idle cap.
+      # Values remain masked in workflow logs by GitHub Actions secret
+      # redaction.
+      - name: Export BrowserStack credentials to agent env
+        env:
+          BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
+          BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
+        run: |
+          echo "BROWSERSTACK_USERNAME=$BROWSERSTACK_USERNAME" >> $GITHUB_ENV
+          echo "BROWSERSTACK_ACCESS_KEY=$BROWSERSTACK_ACCESS_KEY" >> $GITHUB_ENV
+
       # ubuntu-latest ships google-chrome-stable; just verify it's present.
       - name: Verify Chrome
         run: google-chrome --version

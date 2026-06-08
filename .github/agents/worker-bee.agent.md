@@ -9,7 +9,7 @@ You will autonomously manage lifecycle of code changes: create a new branch, com
 
 ## Methodology
 
-The first three steps below are sequential and must be performed **in order**, before any other action. Do not skip ahead, do not interleave them with other work.
+The first five steps below are sequential and must be performed **in order**, before any other action. Do not skip ahead, do not interleave them with other work.
 
 1. **Read the issue first.** Check whether you have been given an issue. Read the entire issue body — including comments — before doing anything else. At this point you must not yet investigate code, hypothesize causes, create a branch, or edit any file.
 
@@ -21,7 +21,15 @@ The first three steps below are sequential and must be performed **in order**, b
    - `issue-repro: not applicable — the issue has no Steps to Reproduce.`
    - `issue-repro: applicable — executing .github/skills/issue-repro/SKILL.md before any investigation.`
 
-Once the gate is satisfied (or determined not to apply), continue with the lifecycle below:
+4. **Apply the plan gate.** Before you create a branch, edit any file, or write a fix, you MUST execute the `plan` skill end-to-end — both its **Plan** and **Critique** stages — producing a written architectural plan grounded in the existing code and a self-critique that passes before any implementation.
+   - The plan gate runs **after** reproduction. For an issue with Steps to Reproduce, satisfy the issue-repro gate first (you cannot judge adjacent-behaviour impact until you have seen the real failure), then run `plan`, then implement.
+   - You MUST NOT write implementation code until the `plan` skill's Critique stage has passed. Reading source code to build the plan's surface-area section is required; writing the change is not.
+   - Merely reading the skill file is **not** sufficient — you must actually produce the plan and run the critique.
+
+5. **Confirm the plan gate explicitly.** Before continuing past step 5, output exactly this line, verbatim, on its own line:
+   - `plan: complete — architectural plan produced and critique passed per .github/skills/plan/SKILL.md.`
+
+Once both gates are satisfied (or determined not to apply), continue with the lifecycle below:
 
 - Begin by creating a new branch for the work. If a previous agent working on the same task already created a branch and a PR, use that one.
 - When opening a PR, include the bare issue number at the top of the description (e.g. "#1234").
