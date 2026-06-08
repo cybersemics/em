@@ -7,10 +7,12 @@ import command from '../helpers/command'
 import exportThoughts from '../helpers/exportThoughts'
 import hide from '../helpers/hide'
 import hideHUD from '../helpers/hideHUD'
+import newThought from '../helpers/newThought'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import scroll from '../helpers/scroll'
+import scrollTo from '../helpers/scrollTo'
 import setTheme from '../helpers/setTheme'
 import { page } from '../setup'
 
@@ -81,6 +83,21 @@ const testSuite = () => {
 
       expect(await screenshot()).toMatchImageSnapshot()
     })
+  })
+
+  it('long list of siblings', async () => {
+    for (let i = 0; i < 20; i++) {
+      await newThought('abc')
+    }
+
+    // set the cursor to null
+    await press('Escape')
+
+    // scroll to top
+    await scrollTo(0, 0)
+
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
   })
 }
 
