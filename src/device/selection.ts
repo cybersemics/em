@@ -150,6 +150,15 @@ export const isOnLastLine = (): boolean => {
 /** Returns true if the browser selection is on a text node. */
 export const isText = (): boolean => window.getSelection()?.focusNode?.nodeType === Node.TEXT_NODE
 
+/** Returns true if the browser selection is inside the editable for a thought. */
+export const isOnEditable = (thoughtId: string): boolean => {
+  const focusNode = window.getSelection()?.focusNode
+  const focusElement =
+    focusNode instanceof Element ? focusNode : focusNode?.parentNode instanceof Element ? focusNode.parentNode : null
+
+  return focusElement?.closest('[data-editable]')?.getAttribute('aria-label') === `editable-${thoughtId}`
+}
+
 /** Returns true if the browser selection is on an element node and focus offset is 0.
  * This represents a case where the browser will render the caret at the start of the text node's content.
  */
