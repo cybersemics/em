@@ -2,7 +2,7 @@ import Index from '../../@types/IndexType'
 import Thought from '../../@types/Thought'
 import ThoughtId from '../../@types/ThoughtId'
 import taskQueue from '../../util/taskQueue'
-import db from '../treecrdt/thoughtspace'
+import db from '../thoughtspace'
 
 /** Replicates an entire subtree, starting at a given thought. Replicates in the background (not populating the Redux state). */
 const replicateTree = (

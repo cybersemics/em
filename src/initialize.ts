@@ -12,13 +12,8 @@ import { loadFromUrlActionCreator as loadFromUrl } from './actions/loadFromUrl'
 import { preloadSourcesActionCreator as preloadSources } from './actions/preloadSources'
 import { pullActionCreator as pull } from './actions/pull'
 import { setCursorActionCreator as setCursor } from './actions/setCursor'
-import { commandById, executeCommand } from './commands'
-import getLexemeHelper from './data-providers/data-helpers/getLexeme'
-import { initPermissionsStore } from './data-providers/permissionsStore'
-import { clientIdReady } from './data-providers/thoughtspaceSession'
-import db, { init as initTreecrdtThoughtspace } from './data-providers/treecrdt/thoughtspace'
-import { dropTreecrdt, initTreecrdt } from './data-providers/treecrdt/treecrdt'
-import { waitForTreecrdtWriteBarrier } from './data-providers/treecrdt/writeBarrier'
+import { commandById, commandEmitter, executeCommand } from './commands'
+import db, { thoughtspaceRuntime } from './data-providers/thoughtspace'
 import * as selection from './device/selection'
 import testFlags from './e2e/testFlags'
 import contextToThoughtId from './selectors/contextToThoughtId'
@@ -65,23 +60,7 @@ const initializeCursor = async () => {
 const initializeInternal = async () => {
   initOfflineStatusStore(/* websocket */)
 
-  // Initialize clientId before treecrdt thoughtspace (needs replicaId) and before any actions that create thoughts
-  const clientId = await clientIdReady
-
-  await initPermissionsStore()
-  await initTreecrdt()
-  // TODO: revisit the clientId to replicaId conversion
-  // TreeCRDT expects 32-byte replicaId; clientId is base64 of SHA-256 (44 chars) — decode to get 32 bytes
-  const replicaId =
-    clientId.length === 44
-      ? Uint8Array.from(atob(clientId), c => c.charCodeAt(0))
-      : (() => {
-          const bytes = new TextEncoder().encode(clientId)
-          const out = new Uint8Array(32)
-          out.set(bytes.subarray(0, 32))
-          return out
-        })()
-  await initTreecrdtThoughtspace(replicaId)
+  const { clientId } = await thoughtspaceRuntime.init()
 
   // load local state unless loading a public context or source url
   // await initDB()
@@ -148,12 +127,15 @@ const testHelpers = {
   executeCommandById: (id: CommandId) => {
     executeCommand(commandById(id))
   },
-  dropTreecrdt,
+  flushPendingEdits: () => {
+    commandEmitter.trigger('command')
+  },
+  dropThoughtspace: thoughtspaceRuntime.drop,
   waitForInitialized,
-  waitForTreecrdtIdle: waitForTreecrdtWriteBarrier,
+  waitForThoughtspaceIdle: thoughtspaceRuntime.waitForIdle,
   setSelection: selection.set,
   importToContext: withDispatch(importToContext),
-  getLexeme: (value: string) => getLexemeHelper(db, value),
+  getLexemeFromThoughtspace: (value: string) => db.getLexemeById(hashThought(value)),
   getState: store.getState,
   _: _,
 }

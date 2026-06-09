@@ -35,12 +35,17 @@ const thought = (
   updatedBy: '',
 })
 
-/** Creates the minimal DataProvider surface needed by refreshThoughtsFromMaterializationChanges. */
-const fakeProvider = (thoughts: Index<Thought>): DataProvider =>
-  ({
-    getThoughtById: async (id: ThoughtId) => thoughts[id],
-    getLexemeById: async () => undefined,
-  }) as unknown as DataProvider
+/** Creates the minimal thoughtspace provider surface needed by refreshThoughtsFromMaterializationChanges. */
+const fakeProvider = (thoughts: Index<Thought>): DataProvider => ({
+  clear: async () => undefined,
+  getLexemeById: async () => undefined,
+  getLexemesByIds: async keys => keys.map(() => undefined),
+  getThoughtById: async (id: ThoughtId) => thoughts[id],
+  getThoughtsByIds: async ids => ids.map(id => thoughts[id]),
+  updateThoughts: async () => undefined,
+  freeThought: async () => undefined,
+  freeLexeme: async () => undefined,
+})
 
 it('projects TreeCRDT sibling order into compatibility ranks', async () => {
   const oldParent = thought(HOME_TOKEN, HOME_TOKEN, 0, ROOT_PARENT_ID, [A_ID, B_ID, C_ID])

@@ -8,8 +8,8 @@ import store from '../stores/app'
 import storage from '../util/storage'
 import timestamp from '../util/timestamp'
 import { permissionsStore, persistPermissions } from './permissionsStore'
+import db from './thoughtspace'
 import { accessTokenLocal } from './thoughtspaceSession'
-import db from './treecrdt/thoughtspace'
 
 /** Snapshot of device permissions keyed by access token. */
 const entries = (): Index<Share> => permissionsStore.getState().entries

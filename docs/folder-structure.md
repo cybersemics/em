@@ -8,12 +8,12 @@ The main directory structure is organized as follows. Tests are located in a sub
 - [`/src/actions`](../src/actions) — Redux reducers and action-creators are co-located. Prefer reducers when possible, as they are pure functions that are more easily testable and composable. Only define an action creator if it requires a side effect. Use [`util/reducerFlow`](../src/util/reducerFlow.ts) to compose reducers.
 - [`/src/commands`](../src/commands) — Keyboard, gesture, and toolbar commands (formerly `shortcuts`). One file per command, plus an `index.ts` barrel. See [commands.md](commands.md) for the architecture.
 - [`/src/components`](../src/components) — React components.
-- [`/src/data-providers`](../src/data-providers) — Storage and sync backends implementing the [`DataProvider`](../src/data-providers/DataProvider.ts) interface. The live implementation is YJS in [`yjs/thoughtspace.ts`](../src/data-providers/yjs/thoughtspace.ts). See [persistence.md](persistence.md).
+- [`/src/data-providers`](../src/data-providers) — Storage and sync backends implementing the [`DataProvider`](../src/data-providers/DataProvider.ts) interface. The live implementation is TreeCRDT in [`treecrdt/thoughtspace.ts`](../src/data-providers/treecrdt/thoughtspace.ts). See [persistence.md](persistence.md).
 - [`/src/device`](../src/device) — Device/DOM-level helpers for selection, scrolling, clipboard, focus, and platform detection. The selection wrapper [`device/selection.ts`](../src/device/selection.ts) is the single point of access to `window.getSelection()` (enforced by lint). See [cursor-and-caret.md](cursor-and-caret.md).
 - [`/src/e2e`](../src/e2e) — End-to-end test setup, including Puppeteer and iOS environments. See [testing.md](testing.md).
 - [`/src/hooks`](../src/hooks) — React hooks.
 - [`/src/recipes`](../src/recipes) — Panda CSS recipes that define styled component variants. New components should use these or inline styles.
-- [`/src/redux-enhancers`](../src/redux-enhancers) — Redux enhancers (e.g. the [`pushQueue`](../src/redux-enhancers/pushQueue.ts) that flushes state mutations to YJS).
+- [`/src/redux-enhancers`](../src/redux-enhancers) — Redux enhancers (e.g. the [`pushQueue`](../src/redux-enhancers/pushQueue.ts) that flushes state mutations to thoughtspace persistence).
 - [`/src/redux-middleware`](../src/redux-middleware) — Redux middleware (e.g. the [`pullQueue`](../src/redux-middleware/pullQueue.ts) that loads thoughts on demand, or [`clearSelection`](../src/redux-middleware/clearSelection.ts) that clears the browser caret on cursor changes).
 - [`/src/selectors`](../src/selectors) — Pure functions that compute (and often memoize) slices from the Redux state. See [data-model.md](data-model.md) for the canonical traversal selectors.
 - [`/src/stores`](../src/stores) — Lightweight non-Redux ministores for ephemeral UI state. Examples: [`editingValue`](../src/stores/editingValue.ts) (the in-progress thought text), [`viewport`](../src/stores/viewport.ts), [`scrollTop`](../src/stores/scrollTop.ts), [`gesture`](../src/stores/gesture.ts), [`syncStatus`](../src/stores/syncStatus.ts), [`selectionRangeStore`](../src/stores/selectionRangeStore.ts).
@@ -42,7 +42,7 @@ The main directory structure is organized as follows. Tests are located in a sub
 | Non-Redux UI state | [`stores/`](../src/stores) |
 | Browser DOM / selection / scroll APIs | [`device/`](../src/device) |
 | User-triggered command | [`commands/`](../src/commands) |
-| Yjs persistence engine | [`data-providers/yjs/thoughtspace.ts`](../src/data-providers/yjs/thoughtspace.ts) |
+| TreeCRDT persistence engine | [`data-providers/treecrdt/thoughtspace.ts`](../src/data-providers/treecrdt/thoughtspace.ts) |
 | Layout positioning math | [`hooks/usePositionedThoughts.ts`](../src/hooks/usePositionedThoughts.ts) |
 | Visible-thoughts traversal | [`selectors/linearizeTree.ts`](../src/selectors/linearizeTree.ts) |
 | Pure helper (no React, no Redux) | [`util/`](../src/util) |
