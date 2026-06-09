@@ -2442,7 +2442,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@capacitor/share@npm:8.0.1":
+"@capacitor/share@npm:^8.0.1":
   version: 8.0.1
   resolution: "@capacitor/share@npm:8.0.1"
   peerDependencies:
@@ -11562,7 +11562,7 @@ __metadata:
     "@capacitor/haptics": "npm:^8.0.2"
     "@capacitor/ios": "npm:^8.3.4"
     "@capacitor/keyboard": "npm:^8.0.3"
-    "@capacitor/share": "npm:8.0.1"
+    "@capacitor/share": "npm:^8.0.1"
     "@capacitor/status-bar": "npm:^8.0.2"
     "@emotion/react": "npm:^11.14.0"
     "@emotion/styled": "npm:^11.14.1"
