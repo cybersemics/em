@@ -22,8 +22,10 @@ const dialogRecipe = defineSlotRecipe({
     'glassStrokeMask',
     'glassStrokeBorder',
     'contentLayer',
+    'contentWrapper',
     'content',
     'contentInner',
+    'scrollbarThumb',
     'titleContainer',
     'titleText',
   ],
@@ -182,7 +184,11 @@ const dialogRecipe = defineSlotRecipe({
     contentLayer: {
       position: 'relative',
     },
-    /** Scrollable content region — owns the scroll behavior, scrollbar styling, and the responsive font size. `dvh` (rather than `vh`) on the max-height matches the `glassSheet` parent's unit so the two heights track the same viewport when the iOS address bar shows/hides; otherwise `70vh` can resolve larger than `glassSheet`'s `80dvh` budget allows, and the bottom of `content` (where the mask fade lives) gets clipped off by `glassSheet`'s `overflow: hidden`. */
+    /** Positioning context for the scrollable `content` and its custom scrollbar thumb overlay. The thumb is an absolutely-positioned sibling of `content` (not a child) so it does not scroll with the content. */
+    contentWrapper: {
+      position: 'relative',
+    },
+    /** Scrollable content region — owns the scroll behavior and the responsive font size. `dvh` (rather than `vh`) on the max-height matches the `glassSheet` parent's unit so the two heights track the same viewport when the iOS address bar shows/hides; otherwise `70vh` can resolve larger than `glassSheet`'s `80dvh` budget allows, and the bottom of `content` (where the mask fade lives) gets clipped off by `glassSheet`'s `overflow: hidden`. */
     content: {
       fontSize: '1.125rem',
       color: 'fg',
@@ -192,13 +198,14 @@ const dialogRecipe = defineSlotRecipe({
       // Horizontal text padding lives on contentInner; this paddingRight gives the scrollbar breathing room from the modal edge.
       paddingTop: '0.5rem',
       paddingRight: '0.5rem',
-      scrollbarColor: '{colors.fg} {colors.bg}',
-      scrollbarWidth: 'thin',
+      // The native scrollbar is hidden and replaced by the custom `scrollbarThumb` overlay (rendered in
+      // DialogContent). iOS WebKit cannot recolor its native overflow scrollbar via CSS — `scrollbarColor`,
+      // the `::-webkit-scrollbar-*` pseudo-elements, and `color-scheme` are all ignored for the inner
+      // overlay scrollbar — so on iOS < 26 it always painted dark. A JS-driven thumb is the only way to get
+      // a consistent scrollbar across iOS 18, iOS 26, and Android.
+      scrollbarWidth: 'none',
       '&::-webkit-scrollbar': {
-        width: '8px',
-      },
-      '&::-webkit-scrollbar-track': {
-        background: 'transparent',
+        display: 'none',
       },
       position: 'relative',
       '@media (min-width: 1200px)': {
@@ -231,6 +238,20 @@ const dialogRecipe = defineSlotRecipe({
         // Top fade ramps over the first 4rem of scroll; bottom fade collapses over the last 1rem.
         animationRange: '0 4rem, calc(100% - 1rem) 100%',
       },
+    },
+    /** Custom scrollbar thumb overlaying the right edge of `content`. Its height, vertical position, and visibility are driven by JS in DialogContent (the native scrollbar is hidden on `content`). Uses the same translucent grey (`fgOverlay20`) as the app's default scrollbars (e.g. Sidebar), and is consistent on every platform, unlike iOS's uncontrollable native overlay scrollbar. */
+    scrollbarThumb: {
+      position: 'absolute',
+      top: 0,
+      right: '2px',
+      width: '4px',
+      borderRadius: '2px',
+      background: 'fgOverlay20',
+      opacity: 0,
+      transition: 'opacity 0.3s ease',
+      pointerEvents: 'none',
+      // Sits above the content and its decorative mask.
+      zIndex: 1,
     },
     /** Inner wrapper inside `content` that carries the horizontal text inset. Kept separate from `content` so the scrollbar gutter doesn't push text in further. */
     contentInner: {
