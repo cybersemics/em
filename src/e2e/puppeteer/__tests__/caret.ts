@@ -374,7 +374,7 @@ describe('mobile only', () => {
     // Step 6: tap the first thought — keyboard should NOT open
     await clickThought('a')
 
-    // keyboard should not open, so focus should not move to an editable
-    await waitUntil(() => !document.activeElement?.hasAttribute('data-editable'))
+    // keyboard should not open, so the active element should be the body or null
+    await waitUntil(() => !document.activeElement || document.activeElement === document.body)
   })
 })
