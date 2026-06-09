@@ -32,8 +32,7 @@ const args = [
     : []),
 ]
 
-// eslint-disable-next-line no-console
-console.log(`Launching shared Chrome on :${port}\n  ${executablePath} ${args.join(' ')}`)
+console.info(`Launching shared Chrome on :${port}\n  ${executablePath} ${args.join(' ')}`)
 
 const chrome = spawn(executablePath, args, { stdio: 'inherit' })
 chrome.on('exit', code => process.exit(code ?? 0))
