@@ -24,8 +24,8 @@ import { errorActionCreator as error } from '../../actions/error'
 import { isMac, isTouch } from '../../browser'
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import replicateTree from '../../data-providers/data-helpers/replicateTree'
-import download from '../../device/download'
 import * as selection from '../../device/selection'
+import share from '../../device/share'
 import globals from '../../globals'
 import documentSort from '../../selectors/documentSort'
 import exportContext, { exportFilter } from '../../selectors/exportContext'
@@ -470,23 +470,16 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
 
   /** Shares or downloads when the export button is clicked. */
   const onExportClick = () => {
-    // use mobile share if it is available
-    if (navigator.share) {
-      navigator.share({
-        text: exportContent!,
-        title: titleShort,
-      })
-    }
-    // otherwise download the data with createObjectURL
-    else {
-      try {
-        download(exportContent!, `em-${title}-${timestamp()}.${selected.extension}`, selected.type)
-      } catch (err) {
-        const e = err as Error
-        dispatch(error({ value: e.message }))
-        console.error('Download Error', e.message)
-      }
-    }
+    // open the native share dialog (Capacitor or Web Share API), falling back to a file download
+    share({
+      text: exportContent!,
+      title: titleShort,
+      filename: `em-${title}-${timestamp()}.${selected.extension}`,
+      mimeType: selected.type,
+    }).catch((err: Error) => {
+      dispatch(error({ value: err.message }))
+      console.error('Export Error', err.message)
+    })
 
     dispatch(closeModal())
   }

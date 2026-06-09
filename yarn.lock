@@ -2442,6 +2442,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@capacitor/share@npm:8.0.1":
+  version: 8.0.1
+  resolution: "@capacitor/share@npm:8.0.1"
+  peerDependencies:
+    "@capacitor/core": ">=8.0.0"
+  checksum: 10c0/a615b85c79bbd3bfeb5e2ee2ac119e7ba8b8184ebcaad3b019467103e4ffc24130e1c1af42910498342fb495e0e297edf72169fa801963e34883d8bd4a42e514
+  languageName: node
+  linkType: hard
+
 "@capacitor/status-bar@npm:^8.0.2":
   version: 8.0.2
   resolution: "@capacitor/status-bar@npm:8.0.2"
@@ -11553,6 +11562,7 @@ __metadata:
     "@capacitor/haptics": "npm:^8.0.2"
     "@capacitor/ios": "npm:^8.3.4"
     "@capacitor/keyboard": "npm:^8.0.3"
+    "@capacitor/share": "npm:8.0.1"
     "@capacitor/status-bar": "npm:^8.0.2"
     "@emotion/react": "npm:^11.14.0"
     "@emotion/styled": "npm:^11.14.1"
