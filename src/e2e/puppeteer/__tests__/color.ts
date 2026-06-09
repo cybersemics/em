@@ -125,6 +125,25 @@ it('Bullet remains the default color when a substring color is set', async () =>
   expect(bulletColor).toBe(null)
 })
 
+it('Selection remains active after applying a font color to part of the text', async () => {
+  const importText = `
+  - Labrador
+  - Golden Retriever`
+
+  await paste(importText)
+
+  await clickThought('Golden Retriever')
+
+  await setSelection(0, 6)
+  // Set text color for the selected substring
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="text color swatches"] [aria-label="blue"]')
+
+  // The active selection should be preserved (not dismissed) after applying the font color
+  const selectedText = await page.evaluate(() => window.getSelection()?.toString())
+  expect(selectedText).toBe('Golden')
+})
+
 it('Empty <font> element will be removed after setting color to default.', async () => {
   const importText = `
   - Labrador
@@ -209,7 +228,11 @@ it('Verify superscript colors in different views', async () => {
   expect(supColor1).toBe(null) // Superscript should remain uncolored for partial text coloring
 
   // Test 2: Verify superscript color when entire thought is colored
+  // Close the color picker before navigating so the click is not intercepted by the
+  // picker popover, which overlaps the top thoughts.
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await clickThought('k')
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="text color swatches"] [aria-label="blue"]')
 
   const supColor2 = await getSuperscriptColor()

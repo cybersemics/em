@@ -40,18 +40,24 @@ export const formatSelectionActionCreator =
     )
     if (!contentEditable) return
 
+    // Check the value of the note or thought for a custom background color (#3901)
+    const hasCustomBackgroundColor = BACKGROUND_COLOR_REGEX.test(
+      state.noteFocus ? (noteValue(state, state.cursor) ?? '') : thought.value,
+    )
+
+    // Skip resetting the background color to the default when there is no custom background color to clear.
+    // Applying the default background color adds a span that the post-processing below immediately strips,
+    // forcing a ContentEditable re-render that dismisses an active partial selection (#4275).
+    const skipDefaultBackgroundColor = command === 'backColor' && color === 'bg' && !hasCustomBackgroundColor
+
     if (
       (selection.text()?.length === 0 && strip(thought.value).length !== 0) ||
       selection.text()?.length === strip(thought.value).length
     ) {
-      // Check the value of the note or thought for a custom background color (#3901)
-      const hasCustomBackgroundColor = BACKGROUND_COLOR_REGEX.test(
-        state.noteFocus ? (noteValue(state, state.cursor) ?? '') : thought.value,
-      )
       const savedSelection = selection.save()
       // Note that we must suppress focus events in the Editable component, otherwise selecting text will set editing:true on mobile.
       selection.select(contentEditable)
-      if (!(command === 'backColor' && color === 'bg' && !hasCustomBackgroundColor)) {
+      if (!skipDefaultBackgroundColor) {
         document.execCommand(command, false, color ? colors[color] : '')
       }
 
@@ -63,7 +69,9 @@ export const formatSelectionActionCreator =
     }
     // format selected text only
     else {
-      document.execCommand(command, false, color ? colors[color] : '')
+      if (!skipDefaultBackgroundColor) {
+        document.execCommand(command, false, color ? colors[color] : '')
+      }
       updateCommandState()
     }
 
