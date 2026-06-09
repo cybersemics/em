@@ -26,6 +26,7 @@ import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import replicateTree from '../../data-providers/data-helpers/replicateTree'
 import download from '../../device/download'
 import * as selection from '../../device/selection'
+import share from '../../device/share'
 import globals from '../../globals'
 import documentSort from '../../selectors/documentSort'
 import exportContext, { exportFilter } from '../../selectors/exportContext'
@@ -469,16 +470,15 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
   // const [publishedCIDs, setPublishedCIDs] = useState([] as string[])
 
   /** Shares or downloads when the export button is clicked. */
-  const onExportClick = () => {
-    // use mobile share if it is available
-    if (navigator.share) {
-      navigator.share({
-        text: exportContent!,
-        title: titleShort,
-      })
-    }
+  const onExportClick = async () => {
+    // use the native or mobile share dialog if it is available
+    const shared = await share({
+      text: exportContent!,
+      title: titleShort,
+    })
+
     // otherwise download the data with createObjectURL
-    else {
+    if (!shared) {
       try {
         download(exportContent!, `em-${title}-${timestamp()}.${selected.extension}`, selected.type)
       } catch (err) {
