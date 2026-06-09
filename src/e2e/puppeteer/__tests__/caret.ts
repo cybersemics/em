@@ -360,12 +360,10 @@ describe('mobile only', () => {
 
     // Step 3: close the Command Center via the Done button
     await click('[data-testid="command-center-done"]')
-    // The sheet stays in the DOM when closed (transformed off-screen), so { hidden: true }
+
+    // The command center panel stays in the DOM when closed (transformed off-screen), so { hidden: true }
     // on the panel never resolves. Wait for the visible multiselect highlight to clear instead.
-    await waitUntil(() => !document.querySelector('[aria-label="bullet"][data-highlighted="true"]'), {
-      timeout: 5000,
-      timeoutMsg: 'Command Center did not close',
-    })
+    await waitForSelector('[aria-label="bullet"][data-highlighted="true"]', { hidden: true })
 
     // Step 4: create a second thought
     await gesture(newThoughtCommand)
@@ -377,9 +375,6 @@ describe('mobile only', () => {
     await clickThought('a')
 
     // keyboard should not open, so focus should not move to an editable
-    await waitUntil(() => !document.activeElement?.hasAttribute('data-editable'), {
-      timeout: 3000,
-      timeoutMsg: 'Keyboard opened after tapping thought following Command Center close',
-    })
+    await waitUntil(() => !document.activeElement?.hasAttribute('data-editable'))
   })
 })
