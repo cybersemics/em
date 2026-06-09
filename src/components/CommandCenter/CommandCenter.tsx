@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { motion, useTransform } from 'motion/react'
 import pluralize from 'pluralize'
-import { FC, useCallback, useRef } from 'react'
+import { FC, useCallback, useEffect, useRef, useState } from 'react'
 import { Sheet, SheetRef } from 'react-modal-sheet'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
@@ -113,6 +113,20 @@ const CommandCenter = () => {
   const isTutorialOn = useSelector(isTutorial)
   const sheetRef = useRef<SheetRef>(null)
   const { height, opacity, blurHeight } = useSheetTransforms(sheetRef)
+
+  /*
+   * Force a re-render once the Sheet ref is attached so that the motion transforms in
+   * useSheetTransforms re-run their compute functions while sheetRef.current is set, allowing them
+   * to subscribe to the sheet's motion values (e.g. yInverted). On the first render after the
+   * Command Center (re)mounts, sheetRef.current is still null, so the compute functions read no
+   * motion values and the overlay opacity stays stuck at 0 (transparent). This is most visible when
+   * the Command Center remounts after a modal (Export/Share, Devices, Settings) is closed while it
+   * is still open.
+   */
+  const [, setSheetReady] = useState(false)
+  useEffect(() => {
+    if (sheetRef.current) setSheetReady(true)
+  }, [])
 
   /** Prevent native page scroll when dragging the sheet. The page body is scrollable, and without this the browser scrolls the body on touchmove, stealing touch from the sheet's drag handler. React touch handlers are passive so we need a non-passive listener via addEventListener. */
   const preventTouchMoveRef = useCallback((el: HTMLDivElement | null) => {
