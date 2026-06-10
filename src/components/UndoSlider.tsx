@@ -33,6 +33,15 @@ const UndoSlider: FC = () => {
           step={1}
           reverse
           style={{ width: `${(maxSteps / 10) * 100}%` }}
+          // rc-slider defaults the handle to `touch-action: pan-x`. When the handle lands in the scroll zone (where the app
+          // intentionally does not preventDefault touchmove), the browser intermittently claims the drag as a horizontal pan,
+          // leaving the slider unresponsive until the touch is held long enough to disambiguate. Forcing `touch-action: none`
+          // on the slider elements makes the browser deliver every touch move to rc-slider instead (#4329).
+          styles={{
+            handle: { touchAction: 'none' },
+            rail: { touchAction: 'none' },
+            track: { touchAction: 'none' },
+          }}
           onChange={value => {
             // onChange is called with the same value multiple times on touchmove, so check if the value has changed to short circuit early
             if (value === valuePrevRef.current) {
