@@ -14,6 +14,7 @@ import { initialize } from '../../initialize'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import exportContext from '../../selectors/exportContext'
 import { getLexeme } from '../../selectors/getLexeme'
+import isUndoEnabled from '../../selectors/isUndoEnabled'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
@@ -238,7 +239,65 @@ describe('undo', () => {
     expect(exported).toEqual(expectedOutput)
   })
 
-  // Broken when space-to-indent was added.
+  it('undo should not crash after a multicursor command that produces no net change', () => {
+    // Reproduces https://github.com/cybersemics/em/issues/3155.
+    // Indenting B, C, D moves C and D under B (B cannot indent as the first child).
+    // Indenting again reduces to B via the prefer-ancestor filter, which cannot indent, producing no net change.
+    // The empty undo patch previously disabled undo and crashed on undo/redo with "... is not iterable".
+    store.dispatch([
+      importText({
+        text: `
+        - A
+          - B
+          - C
+          - D`,
+      }),
+      setCursor(['A', 'B']),
+      addMulticursor(['A', 'B']),
+      addMulticursor(['A', 'C']),
+      addMulticursor(['A', 'D']),
+    ])
+
+    // First indent moves C and D under B.
+    executeCommandWithMulticursor(indentCommand, { store, type: 'toolbar' })
+
+    let exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    let expectedOutput = `- ${HOME_TOKEN}
+  - A
+    - B
+      - C
+      - D`
+    expect(exported).toEqual(expectedOutput)
+
+    // Second indent produces no net change.
+    executeCommandWithMulticursor(indentCommand, { store, type: 'toolbar' })
+
+    // Undo must remain enabled (the no-op command must not pollute the undo history with an empty patch).
+    expect(isUndoEnabled(store.getState())).toBe(true)
+
+    // Undo must not throw and should restore the structure prior to the first indent.
+    store.dispatch(undo())
+
+    exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expectedOutput = `- ${HOME_TOKEN}
+  - A
+    - B
+    - C
+    - D`
+    expect(exported).toEqual(expectedOutput)
+
+    // Redo must not throw and should re-apply the first indent.
+    store.dispatch({ type: 'redo' })
+
+    exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expectedOutput = `- ${HOME_TOKEN}
+  - A
+    - B
+      - C
+      - D`
+    expect(exported).toEqual(expectedOutput)
+  })
+
   // This test relies on multicursor across levels which will be disallowed soon, so it will need to be updaded anyway.
   // indentCommand and moveCursorForwar should probably be combined as well.
   it.skip('undo should restore complex multicursor operations involving multiple command types', () => {

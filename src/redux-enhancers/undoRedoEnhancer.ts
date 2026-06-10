@@ -311,13 +311,17 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         return {
           ...newState,
           lastUndoableActionType: actionType,
-          undoPatches: [
-            ...newState.undoPatches.slice(0, -1),
-            addActionsToPatch(combinedUndoPatch, [
-              ...(lastUndoPatch && lastUndoPatch.length > 0 ? lastUndoPatch[0]?.actions : []),
-              actionType,
-            ]),
-          ],
+          // If the merged actions result in no net change (e.g. a multicursor command that produces no state change after filtering), drop the last undo patch rather than pushing an empty patch.
+          // An empty patch would have no actions, disabling undo (getLastActionType returns undefined) and crashing undo/redo when it spreads the missing actions (see undoOneReducer).
+          undoPatches: combinedUndoPatch.length
+            ? [
+                ...newState.undoPatches.slice(0, -1),
+                addActionsToPatch(combinedUndoPatch, [
+                  ...(lastUndoPatch && lastUndoPatch.length > 0 ? lastUndoPatch[0]?.actions : []),
+                  actionType,
+                ]),
+              ]
+            : newState.undoPatches.slice(0, -1),
         }
       }
 
