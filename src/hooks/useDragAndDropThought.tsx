@@ -25,6 +25,7 @@ import * as selection from '../device/selection'
 import documentSort from '../selectors/documentSort'
 import findDescendant from '../selectors/findDescendant'
 import getNextRank from '../selectors/getNextRank'
+import getRankAfter from '../selectors/getRankAfter'
 import getRankBefore from '../selectors/getRankBefore'
 import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursor from '../selectors/hasMulticursor'
@@ -182,20 +183,28 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
 
   const state = store.getState()
 
-  // If any drop is invalid, abort the drop early
-  if (
-    draggedItems.some(({ simplePath }) => {
-      const { isValid, errorMessage, errorType } = validateDraggedItem(state, simplePath, props.simplePath)
+  // Validate each dragged item once. A no-op drop (dropping a thought on or immediately before itself) is a valid
+  // drop target that simply does not move that thought; it returns isValid:false with no errorMessage. Only genuine
+  // errors (e.g. moving the root/em context) carry an errorMessage and abort the entire drop. This distinction is
+  // what allows a multiselect drop where one selected thought is a no-op (e.g. dropping b above b) to still move the
+  // remaining selected thoughts.
+  const validations = draggedItems.map(item => ({
+    item,
+    result: validateDraggedItem(state, item.simplePath, props.simplePath),
+  }))
 
-      if (!isValid && errorMessage) {
-        if (errorType === 'warning') {
-          console.warn(errorMessage)
-        } else if (errorType === 'error') {
-          store.dispatch(error({ value: errorMessage }))
-        }
+  // Abort the drop only if an item produced an actual error or warning (not a no-op).
+  if (
+    validations.some(({ result: { isValid, errorMessage, errorType } }) => {
+      if (isValid || !errorMessage) return false
+
+      if (errorType === 'warning') {
+        console.warn(errorMessage)
+      } else if (errorType === 'error') {
+        store.dispatch(error({ value: errorMessage }))
       }
 
-      return !isValid
+      return true
     })
   )
     return
@@ -206,27 +215,37 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
       dispatch(setIsMulticursorExecuting({ value: true, undoLabel: 'Dragging Thoughts' }))
     }
 
-    // move each dragged item to the destination path
-    draggedItems.forEach(item => {
+    const parent = parentOf(props.simplePath)
+
+    // Move each dragged item to the destination path, preserving document order. The first item is placed before the
+    // drop target; each subsequent item is placed after the previous one. No-op items (dropping a thought on or before
+    // itself) are not moved, but still anchor the position of the following items so the original order is preserved.
+    let prevPath: SimplePath | null = null
+    validations.forEach(({ item, result }) => {
       const state = getState()
-      const parent = parentOf(props.simplePath)
       const newPath = appendToPath(parent, head(item.simplePath))
       const toThought = pathToThought(state, props.simplePath)
       const thoughtFrom = item.simplePath
 
-      dispatch(
-        props.showContexts
-          ? createThought({
-              value: toThought?.value ?? '',
-              path: thoughtFrom,
-              rank: getNextRank(state, head(thoughtFrom)),
-            })
-          : moveThought({
-              oldPath: thoughtFrom,
-              newPath,
-              newRank: getRankBefore(state, props.simplePath),
-            }),
-      )
+      if (props.showContexts) {
+        dispatch(
+          createThought({
+            value: toThought?.value ?? '',
+            path: thoughtFrom,
+            rank: getNextRank(state, head(thoughtFrom)),
+          }),
+        )
+      } else if (result.isValid) {
+        dispatch(
+          moveThought({
+            oldPath: thoughtFrom,
+            newPath,
+            newRank: prevPath ? getRankAfter(state, prevPath) : getRankBefore(state, props.simplePath),
+          }),
+        )
+      }
+
+      prevPath = newPath
     })
 
     // Clear isMulticursorExecuting after all operations are complete and isMulticursorExecuting is true
