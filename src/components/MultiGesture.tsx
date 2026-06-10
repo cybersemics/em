@@ -306,6 +306,11 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     this.leftHanded = !!nextProps.leftHanded
   }
 
+  /** Re-enables native scrolling by clearing the disableScroll flag. The flag is set true when a touch begins in the gesture zone (where a drag is initiated) and is normally reset on touchend. After a drag-and-drop, the touchend may not fire and a subsequent touchstart may not be propagated (see initEvents onTouchMove note), leaving the flag stuck true and native scrolling frozen. This is called when a drag ends (longPress returns to Inactive) to reliably restore scrolling. */
+  enableScroll = () => {
+    this.disableScroll = false
+  }
+
   reset() {
     this.abandon = false
     this.currentStart = null

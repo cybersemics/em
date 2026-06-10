@@ -87,8 +87,23 @@ const shouldCancelGesture = (
  */
 const MultiGestureIfTouch: FC<PropsWithChildren> = ({ children }) => {
   const leftHanded = useSelector(getUserSetting(Settings.leftHanded))
+  const multiGestureRef = useRef<MultiGesture>(null)
+
+  // Re-enable native scrolling when a drag ends.
+  // MultiGesture disables scrolling when a touch begins in the gesture zone (where a drag is initiated). It normally
+  // re-enables it on touchend, but after a drag-and-drop the touchend may not fire and a subsequent touchstart may not
+  // be propagated, leaving scrolling frozen. The drag end is reliably signaled by longPress returning to Inactive (via
+  // react-dnd's end callback), so re-enable scrolling on that transition.
+  const dragInactive = useSelector(state => state.longPress === LongPressState.Inactive)
+  useEffect(() => {
+    if (dragInactive) {
+      multiGestureRef.current?.enableScroll()
+    }
+  }, [dragInactive])
+
   return isTouch ? (
     <MultiGesture
+      ref={multiGestureRef}
       leftHanded={leftHanded}
       onGesture={handleGestureSegment}
       onEnd={handleGestureEnd}
