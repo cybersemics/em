@@ -1,5 +1,7 @@
 import click from '../helpers/click'
+import clickThought from '../helpers/clickThought'
 import exportThoughts from '../helpers/exportThoughts'
+import getEditingText from '../helpers/getEditingText'
 import paste from '../helpers/paste'
 import waitForEditable from '../helpers/waitForEditable'
 import { page } from '../setup'
@@ -31,4 +33,25 @@ it('Apply formatting to a selected portion of a thought', async () => {
   expect(output).toBe(`
 - **Golden** Retriever
 `)
+})
+
+it('Apply text color to an uppercase formatting tag', async () => {
+  const importText = `
+  - Hello World`
+
+  await paste(importText)
+
+  await clickThought('Hello World')
+
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="background color swatches"] [aria-label="blue"]')
+
+  await click('[data-testid="toolbar-icon"][aria-label="Letter Case"]')
+  await click('[aria-label="letter case swatches"] [aria-label="UpperCase"]')
+
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="text color swatches"] [aria-label="blue"]')
+
+  const result = await getEditingText()
+  expect(result).toBe('<font color="#00c7e6">HELLO WORLD</font>')
 })

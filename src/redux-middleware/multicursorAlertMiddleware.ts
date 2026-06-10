@@ -28,7 +28,10 @@ const multicursorAlertMiddleware: ThunkMiddleware<State> = ({ getState, dispatch
     if (isTouch) {
       if (numMulticursors === 0 && state.showCommandCenter) {
         dispatch(toggleDropdown({ dropDownType: 'commandCenter', value: false }))
-      } else if (numMulticursors > 0 && !state.showCommandCenter) {
+      } else if (numMulticursors > 0 && !state.showCommandCenter && !state.showUndoSlider) {
+        // Do not open the Command Center while the Undo Slider session is active.
+        // Otherwise undoing/redoing a multicursor command (e.g. delete from the Command Center) restores the
+        // multicursor, which would re-open the Command Center and dismiss the Undo Slider being used.
         dispatch(toggleDropdown({ dropDownType: 'commandCenter', value: true }))
       }
     }
