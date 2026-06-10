@@ -13,25 +13,33 @@ const resetApp = async (): Promise<void> => {
   })
   await browser.refresh()
 
-  // After refresh, poll the DOM via execute() — robust against the WKWebView re-attaching on reload,
-  // where the WebDriver element protocol (waitForExist) can keep missing the element even once it exists.
-  // Clearing storage brings the welcome screen back; dismiss it with a DOM click (element.click() is
-  // silently ignored in the app webview), then confirm the empty thoughtspace.
+  // After refresh with cleared storage, the Welcome/tutorial modal reappears. Dismiss it deterministically:
+  // on every poll, click #skip-tutorial if present, and only report ready once the tutorial is GONE and the
+  // empty thoughtspace is shown.
+  //
+  // Poll the DOM via execute() rather than the WebDriver element protocol (waitForExist), which can keep
+  // missing the element after the WKWebView re-attaches on reload. Retrying the click each interval absorbs
+  // the race where #skip-tutorial exists before fastClick's handler is attached; element.click() via the
+  // WebDriver element protocol is silently ignored in the app webview, so dismiss via a DOM click.
+  //
+  // Do NOT treat the presence of [aria-label="empty-thoughtspace"] alone as "ready": EmptyThoughtspace
+  // renders that element during the tutorial too (see its isTutorial branch), so it is present behind the
+  // Welcome modal. Waiting on it directly lets beforeTest return with the tutorial still up — the source of
+  // the BrowserStack flakiness this replaced. Wait for #skip-tutorial to disappear instead.
   await browser.waitUntil(
     async () =>
-      browser.execute(
-        () =>
-          !!document.getElementById('skip-tutorial') || !!document.querySelector('[aria-label="empty-thoughtspace"]'),
-      ),
-    { timeout: 30000, interval: 500, timeoutMsg: 'app did not return to the welcome/empty screen after reset' },
-  )
-  await browser.execute(() => (document.getElementById('skip-tutorial') as HTMLElement | null)?.click())
-  await browser.waitUntil(
-    async () => browser.execute(() => !!document.querySelector('[aria-label="empty-thoughtspace"]')),
+      browser.execute(() => {
+        const skip = document.getElementById('skip-tutorial') as HTMLElement | null
+        if (skip) {
+          skip.click()
+          return false
+        }
+        return !!document.querySelector('[aria-label="empty-thoughtspace"]')
+      }),
     {
-      timeout: 30000,
+      timeout: 90000,
       interval: 500,
-      timeoutMsg: 'empty thoughtspace did not appear after reset',
+      timeoutMsg: 'tutorial was not dismissed / empty thoughtspace did not appear after reset',
     },
   )
 }
