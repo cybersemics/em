@@ -10,7 +10,6 @@ import simplifyPath from '../selectors/simplifyPath'
 import themeColors from '../selectors/themeColors'
 import { updateCommandState } from '../stores/commandStateStore'
 import suppressFocusStore from '../stores/suppressFocus'
-import getCommandState from '../util/getCommandState'
 import head from '../util/head'
 import rgbToHex from '../util/rgbToHex'
 import strip from '../util/strip'
@@ -50,11 +49,16 @@ export const formatSelectionActionCreator =
     // For a whole-thought (or empty) selection the thought/note value is the relevant scope (#3901).
     // For a partial selection only the selected text matters (#4275): a background color elsewhere in
     // the thought must not count, otherwise the redundant default-background write below would force a
-    // ContentEditable re-render that dismisses the active selection. getCommandState reports a background
-    // color only when it covers all of the selection (#3904), matching what the reset would actually clear.
-    const hasCustomBackgroundColor = isWholeThought
-      ? BACKGROUND_COLOR_REGEX.test(state.noteFocus ? (noteValue(state, state.cursor) ?? '') : thought.value)
-      : getCommandState(selection.html() ?? '').backColor != null
+    // ContentEditable re-render that dismisses the active selection. selection.html() returns only the
+    // selected fragment, so a background color on a different substring is excluded, while a background
+    // color overlapping any part of the selection is included and will be cleared by the reset (#4275).
+    const hasCustomBackgroundColor = BACKGROUND_COLOR_REGEX.test(
+      isWholeThought
+        ? state.noteFocus
+          ? (noteValue(state, state.cursor) ?? '')
+          : thought.value
+        : (selection.html() ?? ''),
+    )
 
     // Skip resetting the background color to the default when there is no custom background color to clear.
     // Applying the default background color adds a span that the post-processing below immediately strips,

@@ -187,6 +187,49 @@ it('Selection remains active after applying a font color to text that has a back
   expect(selectedText).toBe('Retriever')
 })
 
+it('Applying a font color clears a background color on the overlapping part of the selection', async () => {
+  const importText = `
+  - Labrador
+  - Golden Retriever`
+
+  await paste(importText)
+
+  await clickThought('Golden Retriever')
+
+  // Apply a background color to the first substring ("Golden")
+  await setSelection(0, 6)
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="background color swatches"] [aria-label="green"]')
+
+  // Select a range that overlaps the colored substring ("Golden Ret"), spanning the colored span and the following text node
+  await page.evaluate(() => {
+    const editable = document.querySelector('[data-editing=true] [data-editable]')!
+    const walker = document.createTreeWalker(editable, NodeFilter.SHOW_TEXT)
+    let goldenNode: Text | null = null
+    let retrieverNode: Text | null = null
+    while (walker.nextNode()) {
+      const node = walker.currentNode as Text
+      if (node.textContent === 'Golden') goldenNode = node
+      else if (node.textContent?.includes('Retriever')) retrieverNode = node
+    }
+    if (!goldenNode || !retrieverNode) throw new Error('Expected separate "Golden" and "Retriever" text nodes')
+    const range = document.createRange()
+    range.setStart(goldenNode, 0)
+    range.setEnd(retrieverNode, retrieverNode.textContent!.indexOf('Ret') + 'Ret'.length)
+    const selection = window.getSelection()
+    selection?.removeAllRanges()
+    selection?.addRange(range)
+  })
+
+  // Apply a font color over the overlapping selection
+  await click('[aria-label="text color swatches"] [aria-label="blue"]')
+
+  // The background color on the overlapping substring should be cleared, leaving only the font color (#4275)
+  const cursorText = await getEditingText()
+  expect(extractColor(cursorText!).backgroundColor).toBe(null)
+  expect(extractColor(cursorText!).color).toBe(rgbaToHex(colors.light.blue))
+})
+
 it('Empty <font> element will be removed after setting color to default.', async () => {
   const importText = `
   - Labrador
