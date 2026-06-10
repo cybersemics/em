@@ -1,5 +1,6 @@
-import { FC } from 'react'
+import { FC, useRef } from 'react'
 import { css } from '../../styled-system/css'
+import useDismissKeyboardOnScroll from '../hooks/useDismissKeyboardOnScroll'
 import CommandsSearchIcon from './icons/CommandsSearchIcon'
 
 /**
@@ -11,6 +12,10 @@ import CommandsSearchIcon from './icons/CommandsSearchIcon'
  * which keeps the legacy bordered look.
  */
 const CommandUniverseSearch: FC<{ onInput?: (value: string) => void }> = ({ onInput }) => {
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useDismissKeyboardOnScroll(inputRef)
+
   return (
     <div
       className={css({
@@ -49,6 +54,7 @@ const CommandUniverseSearch: FC<{ onInput?: (value: string) => void }> = ({ onIn
         />
       </div>
       <input
+        ref={inputRef}
         type='text'
         placeholder='Search for a command'
         onInput={(e: React.FormEvent<HTMLInputElement>) => {
