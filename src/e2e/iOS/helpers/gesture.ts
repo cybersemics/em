@@ -51,7 +51,7 @@ const gesture = async (path: Gesture, { xStart, yStart, segmentLength = 60, wait
     const webContainer = await browser.$('//XCUIElementTypeOther[@name="em"]').getElement()
     const { x: webOriginX, y: webOriginY } = await browser.getElementRect(webContainer.elementId)
 
-    /** Translate WebView viewport coordinates to device screen coordinates. **/
+    /** Translate WebView viewport coordinates to device screen coordinates. */
     const toScreen = (p: { x: number; y: number }) => ({
       x: Math.round(p.x + webOriginX),
       y: Math.round(p.y + webOriginY),
