@@ -396,6 +396,14 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
   )
 }
 
+/** Builds a CSS `filter` string of hue-rotate + saturate from the shared hue/sat motion values,
+ * as a MotionValue<string> for a motion.div's `filter` style. Deliberately scoped to just those
+ * two filters: callers that also need blur (or any other filter) compose it onto the result
+ * themselves, so this stays a reusable hue/sat helper rather than accreting every filter that
+ * happens to pair with it. */
+const useHueSatFilter = (hue: MotionValue<number>, sat: MotionValue<number>) =>
+  useTransform([hue, sat], ([h, s]) => `hue-rotate(${h}deg) saturate(${s})`)
+
 /**
  * Primary glow overlay behind the sidebar header. Renders a cropped region of a background
  * image and animates its size/position when the dropdown expands, giving a soft glow that
@@ -433,7 +441,7 @@ const SidebarOverlay1 = ({
   // Blurring the overlay image kills gradient banding in Safari (no perf cost, even on old
   // iPhones). Chromium still bands regardless, so the blur is gated to Safari only.
   const blur = BLUR_ENABLED ? 'blur(8px) ' : ''
-  const filter = useTransform([hue, sat], ([h, s]) => `${blur}hue-rotate(${h}deg) saturate(${s})`)
+  const filter = useTransform(useHueSatFilter(hue, sat), f => `${blur}${f}`)
 
   // Collapsed/expanded background styles. The background image is 1482×744; the multipliers
   // here scale it, and backgroundPositionY's negative offset crops the top so only the lower
@@ -501,7 +509,7 @@ const SidebarOverlay2 = ({
 }) => {
   // See SidebarOverlay1 for why blur is Safari-only.
   const blur = BLUR_ENABLED ? 'blur(8px) ' : ''
-  const filter = useTransform([hue, sat], ([h, s]) => `${blur}hue-rotate(${h}deg) saturate(${s})`)
+  const filter = useTransform(useHueSatFilter(hue, sat), f => `${blur}${f}`)
 
   return (
     <motion.div
@@ -554,7 +562,7 @@ const SidebarGradient = ({
   /** Shared motion value driving CSS saturate. */
   sat: MotionValue<number>
 }) => {
-  const filter = useTransform([hue, sat], ([h, s]) => `hue-rotate(${h}deg) saturate(${s})`)
+  const filter = useHueSatFilter(hue, sat)
 
   return (
     <motion.div
