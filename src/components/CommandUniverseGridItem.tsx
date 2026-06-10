@@ -100,11 +100,7 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, se
             className={css({ flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' })}
             style={{ width: 20, height: 20 }}
           >
-            <Icon
-              cssRaw={css.raw({ flex: 'none' })}
-              size={20}
-              fill={token(disabled ? 'colors.gray50' : 'colors.fg')}
-            />
+            <Icon cssRaw={css.raw({ flex: 'none' })} size={20} fill={token(disabled ? 'colors.gray50' : 'colors.fg')} />
           </div>
           <b
             className={css({

@@ -73,7 +73,8 @@ const MobileCommandUniverseContent = () => {
                       className={css({
                         flexGrow: 1,
                         height: '1px',
-                        background: 'linear-gradient(to right, {colors.transparent} 0%, {colors.dialogHeaderDivider} 100%)',
+                        background:
+                          'linear-gradient(to right, {colors.transparent} 0%, {colors.dialogHeaderDivider} 100%)',
                       })}
                     />
                     <h2
@@ -93,7 +94,8 @@ const MobileCommandUniverseContent = () => {
                       className={css({
                         flexGrow: 1,
                         height: '1px',
-                        background: 'linear-gradient(to right, {colors.dialogHeaderDivider} 0%, {colors.transparent} 100%)',
+                        background:
+                          'linear-gradient(to right, {colors.dialogHeaderDivider} 0%, {colors.transparent} 100%)',
                       })}
                     />
                   </div>

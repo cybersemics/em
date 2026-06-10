@@ -307,7 +307,7 @@ const dialogRecipe = defineSlotRecipe({
         'linear-gradient(191.32deg, {colors.dialogHeaderButtonBg} 5.64%, {colors.dialogHeaderButtonBgFade} 83.21%)',
       // Soft lavender outer glow.
       boxShadow: '0 0 8.7px {colors.dialogHeaderButtonShadow}',
-      
+
       /* Gradient border stroke. This isn't natively supported in CSS, so use a trick:
         ::before pseudoelement to paint a gradient background and mask out the center so only the 1px border slice shows. */
       position: 'relative',

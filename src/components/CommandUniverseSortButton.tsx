@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { css, cx } from '../../styled-system/css'
 import CommandSortType from '../@types/CommandSortType'
-import AToZIcon from './icons/AToZIcon'
-import CommandsListIcon from './icons/CommandsListIcon'
 import FadeTransition from './FadeTransition'
 import SortOption from './SortOption'
+import AToZIcon from './icons/AToZIcon'
+import CommandsListIcon from './icons/CommandsListIcon'
 
 interface CommandUniverseSortButtonProps {
   onSortChange: (sortOrder: CommandSortType) => void

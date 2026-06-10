@@ -12,12 +12,7 @@ interface CircleButtonProps {
  * (Back, Forward, Help, Close). Styling is owned by `dialogRecipe.headerButton`; the
  * caller supplies the icon as children.
  */
-const CircleButton: React.FC<PropsWithChildren<CircleButtonProps>> = ({
-  onClick,
-  ariaLabel,
-  disabled,
-  children,
-}) => {
+const CircleButton: React.FC<PropsWithChildren<CircleButtonProps>> = ({ onClick, ariaLabel, disabled, children }) => {
   const dialog = dialogRecipe()
   return (
     <button type='button' onClick={onClick} aria-label={ariaLabel} disabled={disabled} className={dialog.headerButton}>
