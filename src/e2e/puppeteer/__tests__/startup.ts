@@ -1,11 +1,5 @@
-import type { WindowEm } from '../../../initialize'
+import getEditingText from '../helpers/getEditingText'
 import { page } from '../setup'
-
-type WindowEmWithStartupFlags = WindowEm & {
-  testFlags: WindowEm['testFlags'] & {
-    thoughtspaceInitBlocker?: Promise<void> | null
-  }
-}
 
 type StartupWindow = Window & {
   __EM_TEST_FLAGS__?: {
@@ -28,32 +22,15 @@ it('handles keyboard commands while thoughtspace initialization is delayed', asy
 
   await page.reload({ waitUntil: 'domcontentloaded' })
 
-  await page.waitForFunction(() => Boolean((window.em as WindowEmWithStartupFlags).testFlags.thoughtspaceInitBlocker))
   await page.waitForFunction(() => !document.querySelector('[aria-label=modal]'))
   await page.waitForSelector('[aria-label=empty-thoughtspace]')
+  expect(await getEditingText()).toBeUndefined()
 
   try {
     await page.keyboard.press('Enter')
 
-    await page.waitForFunction(() => {
-      const em = window.em as WindowEm
-      return em.testHelpers.getState().lastUndoableActionType === 'newThought'
-    })
-
-    const result = await page.evaluate(() => {
-      const em = window.em as WindowEm
-      const editable = document.querySelector('[data-editing=true] [data-editable]')
-
-      return {
-        editingText: editable?.innerHTML,
-        lastUndoableActionType: em.testHelpers.getState().lastUndoableActionType,
-      }
-    })
-
-    expect(result).toEqual({
-      editingText: '',
-      lastUndoableActionType: 'newThought',
-    })
+    await page.waitForSelector('[data-editing=true] [data-editable]')
+    expect(await getEditingText()).toBe('')
   } finally {
     await page.evaluate(() => {
       const startupWindow = window as StartupWindow

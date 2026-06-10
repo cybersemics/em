@@ -89,10 +89,6 @@ export const initialize = async () => {
   initOfflineStatusStore(/* websocket */)
   const eventHandlers = initEvents(store)
 
-  if (testFlags.thoughtspaceInitBlocker) {
-    await testFlags.thoughtspaceInitBlocker
-  }
-
   await initThoughtspace({
     cursor: decodeThoughtsUrl(store.getState()).path,
     accessToken,

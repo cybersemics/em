@@ -231,6 +231,10 @@ let configCache: ThoughtspaceConfig
 
 /** Initialize the thoughtspace with event handlers and selectors to call back to the UI. */
 export const init = async (options: ThoughtspaceOptions) => {
+  if (testFlags.thoughtspaceInitBlocker) {
+    await testFlags.thoughtspaceInitBlocker
+  }
+
   const {
     isLexemeLoaded,
     isThoughtLoaded,
