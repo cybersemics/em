@@ -1,10 +1,11 @@
 import { defineSlotRecipe } from '@pandacss/dev'
 
 /**
- * Slot recipe for the liminal-glass Dialog. Owns every style for the dialog tree
- * (Dialog.tsx, DialogTitle.tsx, DialogContent.tsx) so coupled values — radii, paddings,
- * the scroll-fade mask — sit next to each other rather than being kept in sync across
- * files.
+ * Slot recipe for the liminal-glass Dialog shell. Owns the glass sheet, its decorative
+ * highlight/rainbow/stroke layers, and the scrollable content region (Dialog.tsx,
+ * DialogContent.tsx) so coupled values — radii, paddings, the scroll-fade mask — sit next
+ * to each other rather than being kept in sync across files. The header row and its buttons
+ * (DialogHeader.tsx, CircleButton.tsx) style themselves inline with `css()`.
  */
 const dialogRecipe = defineSlotRecipe({
   className: 'dialog',
@@ -26,11 +27,6 @@ const dialogRecipe = defineSlotRecipe({
     'content',
     'contentInner',
     'scrollbarThumb',
-    'titleContainer',
-    'titleText',
-    'headerSide',
-    'headerButton',
-    'headerSearchRow',
   ],
   base: {
     /** Full-viewport backdrop — transparent fill plus the backdrop blur that softens whatever's behind the dialog. */
@@ -257,130 +253,12 @@ const dialogRecipe = defineSlotRecipe({
     },
     /** Inner wrapper inside `content` that carries the horizontal text inset. Kept separate from `content` so the scrollbar gutter doesn't push text in further. */
     contentInner: {
-      // 1rem matches the rest of the dialog inset (titleContainer, headerSearchRow).
+      // 1rem matches the rest of the dialog inset (the header row in DialogHeader and the search row in MobileCommandUniverse).
       // 0.5rem right padding gives the scrollbar some breathing room from the panel's content and the edge of the panel.
       paddingLeft: '1rem',
       paddingRight: '0.5rem',
       // Add bottom padding to the inner content wrapper, so the mask doesn't fade out the last bit of content.
       paddingBottom: '2rem',
-    },
-    /**
-     * Header row — flex row laying out left button cluster, centered title, right button
-     * cluster. The `flex: 1` cluster wrappers ensure the title stays centered.
-     */
-    titleContainer: {
-      display: 'flex',
-      alignItems: 'center',
-      // 1rem inset on the sides and the top edge of the dialog; the bottom is tighter
-      // so the search row that follows sits closer to the header.
-      paddingInline: '1rem',
-      paddingTop: '1rem',
-      paddingBottom: '0.5rem',
-    },
-    /**
-     * Left/right header cluster wrapper. This flex container that holds the circular header buttons.
-     * `flex: 1` lets each cluster claim half the row so the centered title sits in the
-     * middle. `&:last-child` aligns the right cluster's buttons to the trailing edge.
-     */
-    headerSide: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '0.25rem',
-      flex: 1,
-      '&:last-child': {
-        justifyContent: 'flex-end',
-      },
-    },
-    /**
-     * Reusable circular modal button — used four times in the dialog header
-     * (Back, Forward, Help, Close). The icon is supplied by the consumer.
-     */
-    headerButton: {
-      width: '36px',
-      height: '36px',
-      minWidth: '36px',
-      minHeight: '36px',
-      borderRadius: '50%',
-      border: 'none',
-      // Subtle white sheen from upper-left to lower-right — softens the otherwise flat translucent fill into something glassy.
-      background:
-        'linear-gradient(191.32deg, {colors.dialogHeaderButtonBg} 5.64%, {colors.dialogHeaderButtonBgFade} 83.21%)',
-      // Soft lavender outer glow.
-      boxShadow: '0 0 8.7px {colors.dialogHeaderButtonShadow}',
-
-      /* Gradient border stroke. This isn't natively supported in CSS, so use a trick:
-        ::before pseudoelement to paint a gradient background and mask out the center so only the 1px border slice shows. */
-      position: 'relative',
-      _before: {
-        content: '""',
-        position: 'absolute',
-        inset: 0,
-        borderRadius: 'inherit',
-        padding: '1px',
-        background:
-          'linear-gradient(180deg, {colors.dialogHeaderButtonBorder} 0%, {colors.dialogHeaderButtonBorderFade} 100%)',
-        WebkitMask: 'linear-gradient(white 0 0) content-box, linear-gradient(white 0 0)',
-        WebkitMaskComposite: 'xor',
-        mask: 'linear-gradient(white 0 0) content-box, linear-gradient(white 0 0)',
-        maskComposite: 'exclude',
-        pointerEvents: 'none',
-        opacity: 0.35,
-      },
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      cursor: 'pointer',
-      padding: 0,
-      color: 'fg',
-      /** On press, the button's fill brightens to provide feedback.
-       * It's not possible to directly animate a background gradient, so instead of trying
-       * to shift the gradient colors on hover/press, use another pseudoelement with the
-       * hover-state gradient stacked on top of the base button, and animate that
-       * from transparent to opaque on hover/press.
-       */
-      isolation: 'isolate',
-      _after: {
-        content: '""',
-        position: 'absolute',
-        inset: 0,
-        borderRadius: 'inherit',
-        background:
-          'linear-gradient(191.32deg, {colors.dialogHeaderButtonBgHover} 5.64%, {colors.dialogHeaderButtonBgFade} 83.21%)',
-        opacity: 0,
-        transition: 'opacity {durations.fast} ease-out',
-        pointerEvents: 'none',
-        zIndex: -1,
-      },
-      _active: {
-        _after: {
-          opacity: 1,
-        },
-      },
-    },
-    /** The title heading itself. Centered between the button clusters. */
-    titleText: {
-      fontWeight: '400',
-      color: 'fg',
-      borderBottom: 'none',
-      fontSize: '1.25rem',
-      margin: 0,
-      textAlign: 'center',
-      whiteSpace: 'nowrap',
-    },
-    /**
-     * Search row that lives between the header and the scrollable content. Sits outside
-     * the scroll container so that it stays put as the command list scrolls.
-     * Left padding matches contentInner so the search glyph perfectly aligns with the section
-     * headers and command list down the left edge of the panel.
-     */
-    headerSearchRow: {
-      display: 'flex',
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      gap: '0.5rem',
-      paddingInline: '1rem',
-      paddingBlock: '0.5rem',
     },
   },
 })

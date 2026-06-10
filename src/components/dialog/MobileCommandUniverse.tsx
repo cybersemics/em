@@ -2,7 +2,6 @@ import React from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { SwitchTransition } from 'react-transition-group'
 import { css } from '../../../styled-system/css'
-import { dialogRecipe } from '../../../styled-system/recipes'
 import { toggleMobileCommandUniverseActionCreator } from '../../actions/toggleMobileCommandUniverse'
 import useCommandList from '../../hooks/useCommandList'
 import CommandUniverseGrid from '../CommandUniverseGrid'
@@ -11,7 +10,7 @@ import CommandUniverseSortButton from '../CommandUniverseSortButton'
 import FadeTransition from '../FadeTransition'
 import Dialog from './Dialog'
 import DialogContent from './DialogContent'
-import DialogTitle from './DialogTitle'
+import DialogHeader from './DialogHeader'
 
 /**
  * Pre-rendered hidden divs that force the browser to fetch the dialog's decorative AVIFs ahead of time, so they are cached when the dialog opens. Same workaround pattern used by CommandCenter's HiddenOverlay. Always mounted because the parent is rendered at the AppComponent level.
@@ -35,11 +34,23 @@ const HiddenDialogAssets = () => (
  */
 const MobileCommandUniverseContent = () => {
   const { search, setSearch, sortOrder, setSortOrder, groups } = useCommandList()
-  const dialog = dialogRecipe()
 
   return (
     <>
-      <div className={dialog.headerSearchRow}>
+      {/* Search row that lives between the header and the scrollable content. Sits outside the scroll
+          container so it stays put as the command list scrolls. Left padding matches contentInner so the
+          search glyph aligns with the section headers and command list down the left edge of the panel. */}
+      <div
+        className={css({
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '0.5rem',
+          paddingInline: '1rem',
+          paddingBlock: '0.5rem',
+        })}
+      >
         <CommandUniverseSearch onInput={setSearch} />
         <CommandUniverseSortButton onSortChange={setSortOrder} />
       </div>
@@ -130,7 +141,7 @@ const MobileCommandUniverse: React.FC = () => {
       <HiddenDialogAssets />
       <FadeTransition in={isOpen} unmountOnExit type='medium' nodeRef={nodeRef}>
         <Dialog onClose={handleClose} nodeRef={nodeRef}>
-          <DialogTitle onClose={handleClose}>Commands</DialogTitle>
+          <DialogHeader onClose={handleClose}>Commands</DialogHeader>
           <MobileCommandUniverseContent />
         </Dialog>
       </FadeTransition>
