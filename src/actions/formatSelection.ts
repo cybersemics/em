@@ -10,6 +10,7 @@ import simplifyPath from '../selectors/simplifyPath'
 import themeColors from '../selectors/themeColors'
 import { updateCommandState } from '../stores/commandStateStore'
 import suppressFocusStore from '../stores/suppressFocus'
+import getCommandState from '../util/getCommandState'
 import head from '../util/head'
 import rgbToHex from '../util/rgbToHex'
 import strip from '../util/strip'
@@ -40,20 +41,27 @@ export const formatSelectionActionCreator =
     )
     if (!contentEditable) return
 
-    // Check the value of the note or thought for a custom background color (#3901)
-    const hasCustomBackgroundColor = BACKGROUND_COLOR_REGEX.test(
-      state.noteFocus ? (noteValue(state, state.cursor) ?? '') : thought.value,
-    )
+    // A whole-thought (or empty) selection formats the entire thought/note; a partial selection formats only the selected text.
+    const isWholeThought =
+      (selection.text()?.length === 0 && strip(thought.value).length !== 0) ||
+      selection.text()?.length === strip(thought.value).length
+
+    // Check for a custom background color to clear, scoped to the region being formatted.
+    // For a whole-thought (or empty) selection the thought/note value is the relevant scope (#3901).
+    // For a partial selection only the selected text matters (#4275): a background color elsewhere in
+    // the thought must not count, otherwise the redundant default-background write below would force a
+    // ContentEditable re-render that dismisses the active selection. getCommandState reports a background
+    // color only when it covers all of the selection (#3904), matching what the reset would actually clear.
+    const hasCustomBackgroundColor = isWholeThought
+      ? BACKGROUND_COLOR_REGEX.test(state.noteFocus ? (noteValue(state, state.cursor) ?? '') : thought.value)
+      : getCommandState(selection.html() ?? '').backColor != null
 
     // Skip resetting the background color to the default when there is no custom background color to clear.
     // Applying the default background color adds a span that the post-processing below immediately strips,
     // forcing a ContentEditable re-render that dismisses an active partial selection (#4275).
     const skipDefaultBackgroundColor = command === 'backColor' && color === 'bg' && !hasCustomBackgroundColor
 
-    if (
-      (selection.text()?.length === 0 && strip(thought.value).length !== 0) ||
-      selection.text()?.length === strip(thought.value).length
-    ) {
+    if (isWholeThought) {
       const savedSelection = selection.save()
       // Note that we must suppress focus events in the Editable component, otherwise selecting text will set editing:true on mobile.
       selection.select(contentEditable)

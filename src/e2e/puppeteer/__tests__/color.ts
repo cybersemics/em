@@ -144,6 +144,49 @@ it('Selection remains active after applying a font color to part of the text', a
   expect(selectedText).toBe('Golden')
 })
 
+it('Selection remains active after applying a font color to text that has a background color elsewhere', async () => {
+  const importText = `
+  - Labrador
+  - Golden Retriever`
+
+  await paste(importText)
+
+  await clickThought('Golden Retriever')
+
+  // Apply a background color to the first substring ("Golden")
+  await setSelection(0, 6)
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="background color swatches"] [aria-label="green"]')
+
+  // Select a different substring ("Retriever"), which now lives in a separate text node after the colored span
+  await page.evaluate(() => {
+    const editable = document.querySelector('[data-editing=true] [data-editable]')!
+    const walker = document.createTreeWalker(editable, NodeFilter.SHOW_TEXT)
+    let textNode: Text | null = null
+    while (walker.nextNode()) {
+      if (walker.currentNode.textContent?.includes('Retriever')) {
+        textNode = walker.currentNode as Text
+        break
+      }
+    }
+    if (!textNode) throw new Error('No text node containing "Retriever" found')
+    const start = textNode.textContent!.indexOf('Retriever')
+    const range = document.createRange()
+    range.setStart(textNode, start)
+    range.setEnd(textNode, start + 'Retriever'.length)
+    const selection = window.getSelection()
+    selection?.removeAllRanges()
+    selection?.addRange(range)
+  })
+
+  // Apply a font color to the second substring
+  await click('[aria-label="text color swatches"] [aria-label="blue"]')
+
+  // The active selection should be preserved (not dismissed) even though the thought already has a background color (#4275)
+  const selectedText = await page.evaluate(() => window.getSelection()?.toString())
+  expect(selectedText).toBe('Retriever')
+})
+
 it('Empty <font> element will be removed after setting color to default.', async () => {
   const importText = `
   - Labrador
