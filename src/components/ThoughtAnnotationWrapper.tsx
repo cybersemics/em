@@ -76,12 +76,6 @@ const ThoughtAnnotationWrapper: FC<
               maxWidth: '100%',
               boxSizing: 'border-box',
               whiteSpace: ellipsizedUrl ? 'nowrap' : undefined,
-              /*
-                  Since .editable-annotation-text is display: inline the margin only gets applied to its first line, and not later lines.
-                  To make sure all lines are aligned need to apply the margin here, and remove margin from the .editable-annotation-text.
-                  This margin should match the margin set in editableRecipe (#3353).
-                */
-              margin: '0 calc(18px - 1em) 0 calc(1em - 18px)',
               paddingRight: ellipsizedUrl || isTableCol1 ? '0.333em' : '1em',
               textAlign: isTableCol1 ? 'right' : 'left',
             }),
