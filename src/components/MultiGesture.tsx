@@ -160,6 +160,11 @@ class MultiGesture extends React.Component<MultiGestureProps> {
           this.disableScroll = true
         } else {
           this.abandon = true
+          // Explicitly re-enable scrolling for touches that start in the scroll zone.
+          // disableScroll is normally reset on touchend, but if a previous interaction ended without a touchend
+          // (e.g. a multiselect drag-and-drop whose touchend does not fire), it can remain stuck true and block
+          // native scrolling. The scroll zone always abandons gesture detection, so disableScroll is never needed here.
+          this.disableScroll = false
         }
       }
     })
