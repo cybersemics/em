@@ -84,9 +84,14 @@ const updateThoughtsThrottled = throttleConcat<PushBatch, void>((batches: PushBa
   })
 }, UPDATE_THOUGHTS_THROTTLE)
 
-/** Initilaize local db and window events. */
+/** Initialize local db and window events. */
 export const initialize = async () => {
   initOfflineStatusStore(/* websocket */)
+  const eventHandlers = initEvents(store)
+
+  if (testFlags.thoughtspaceInitBlocker) {
+    await testFlags.thoughtspaceInitBlocker
+  }
 
   await initThoughtspace({
     cursor: decodeThoughtsUrl(store.getState()).path,
@@ -178,7 +183,7 @@ export const initialize = async () => {
 
   return {
     thoughtsLocalPromise,
-    ...initEvents(store),
+    ...eventHandlers,
   }
 }
 
