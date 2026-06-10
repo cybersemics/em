@@ -20,6 +20,7 @@ const editableRecipe = defineRecipe({
     userSelect: 'text',
     _iphone: {
       marginTop: '-0.5px',
+      marginBottom: '0.5px',
     },
   },
 })
