@@ -1,5 +1,6 @@
 import { FC, useRef } from 'react'
 import { css } from '../../styled-system/css'
+import { token } from '../../styled-system/tokens'
 import useDismissKeyboardOnScroll from '../hooks/useDismissKeyboardOnScroll'
 import CommandsSearchIcon from './icons/CommandsSearchIcon'
 
@@ -48,7 +49,7 @@ const CommandUniverseSearch: FC<{ onInput?: (value: string) => void }> = ({ onIn
       >
         <CommandsSearchIcon
           size={28}
-          fill='#E3BECD'
+          fill={token('colors.dialogSearchAccent')}
           strokeWidth={1.5}
           cssRaw={css.raw({ flex: 'none' })}
         />
@@ -78,11 +79,11 @@ const CommandUniverseSearch: FC<{ onInput?: (value: string) => void }> = ({ onIn
           // plus-lighter brightens the input text against the dialog's translucent glass — additive blend lifts the placeholder & typed text out of the background.
           mixBlendMode: 'plus-lighter',
           // Gradient-fill the text by clipping the background to the glyph shape. `color: transparent` reveals the gradient through the text. Applied to ::placeholder too so the empty-state text shows the same fill.
-          background: 'linear-gradient(90deg, #E3BECD 0%, rgba(217, 211, 213, 0.50) 100%)',
+          background: 'linear-gradient(90deg, {colors.dialogSearchAccent} 0%, {colors.dialogSearchAccentFade} 100%)',
           backgroundClip: 'text',
           color: 'transparent',
           // `color: transparent` hides the caret too — restore it explicitly so the focused state is visible.
-          caretColor: '#E3BECD',
+          caretColor: 'dialogSearchAccent',
           _placeholder: {
             color: 'transparent',
           },
