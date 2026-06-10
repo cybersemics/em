@@ -4,7 +4,7 @@ import { iconRecipe } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/IconType'
 
-/** Arrow-left icon used by the Commands dialog Back button. */
+/** Arrow-left icon used by the Command Universe Back button. */
 const ArrowLeftIcon: FC<IconType> = ({ size = 24, fill, cssRaw }) => {
   const strokeColor = fill || token('colors.fg')
 

@@ -4,7 +4,7 @@ import { iconRecipe } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/IconType'
 
-/** Info-genie (help/question) icon used by the Commands dialog Help button. */
+/** Info-genie (help/question) icon used by the Command Universe Help button. */
 const InfoGenieIcon: FC<IconType> = ({ size = 24, fill, cssRaw }) => {
   const strokeColor = fill || token('colors.fg')
 

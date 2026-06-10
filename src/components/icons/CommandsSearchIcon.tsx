@@ -9,7 +9,7 @@ interface CommandsSearchIconProps extends IconType {
   strokeWidth?: number
 }
 
-/** Search icon used by the Commands dialog search input (new style, 18×18 default). */
+/** Search icon used by the Command Universe search input (new style, 18×18 default). */
 const CommandsSearchIcon: FC<CommandsSearchIconProps> = ({ size = 18, fill, cssRaw, strokeWidth = 1.5 }) => {
   const strokeColor = fill || token('colors.fg')
 

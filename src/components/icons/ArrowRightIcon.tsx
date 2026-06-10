@@ -4,7 +4,7 @@ import { iconRecipe } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/IconType'
 
-/** Arrow-right icon used by the Commands dialog Forward button. */
+/** Arrow-right icon used by the Command Universe Forward button. */
 const ArrowRightIcon: FC<IconType> = ({ size = 24, fill, cssRaw }) => {
   const strokeColor = fill || token('colors.fg')
 

@@ -9,7 +9,7 @@ interface CommandsListIconProps extends IconType {
   strokeWidth?: number
 }
 
-/** List/group icon used by the Commands dialog group-by filter button (new style, 18×18 default). */
+/** List/group icon used by the Command Universe group-by filter button (new style, 18×18 default). */
 const CommandsListIcon: FC<CommandsListIconProps> = ({ size = 18, fill, cssRaw, strokeWidth = 0.5 }) => {
   const fillColor = fill || token('colors.fg')
 

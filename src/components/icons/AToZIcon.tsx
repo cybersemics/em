@@ -9,7 +9,7 @@ interface AToZIconProps extends IconType {
   strokeWidth?: number
 }
 
-/** A-to-Z icon — shown by the Commands dialog group/sort button when alphabetical sort is selected. */
+/** A-to-Z icon — shown by the Command Universe group/sort button when alphabetical sort is selected. */
 const AToZIcon: FC<AToZIconProps> = ({ size = 24, fill, cssRaw, strokeWidth = 0.25 }) => {
   const color = fill || token('colors.fg')
 

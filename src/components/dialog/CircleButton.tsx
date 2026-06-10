@@ -8,7 +8,7 @@ interface CircleButtonProps {
 }
 
 /**
- * Reusable circular modal-header button. Used four times in the Commands dialog header
+ * Reusable circular modal-header button. Used four times in the Command Universe header
  * (Back, Forward, Help, Close). The caller supplies the icon as children.
  */
 const CircleButton: React.FC<PropsWithChildren<CircleButtonProps>> = ({ onClick, ariaLabel, disabled, children }) => {

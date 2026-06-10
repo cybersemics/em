@@ -4,7 +4,7 @@ import { iconRecipe } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/IconType'
 
-/** Slim X icon used by the Commands dialog circular Close button. */
+/** Slim X icon used by the Command Universe circular Close button. */
 const XIcon: FC<IconType> = ({ size = 24, fill, cssRaw }) => {
   const fillColor = fill || token('colors.fg')
 
