@@ -293,7 +293,7 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
 
   /** This effect drives the chevron's opacity. When the dropdown opens, fade out over DROPDOWN_DURATION.
    * When it closes, snap to 0 immediately, then fade in. The immediate snap on close prevents an edge case
-   * where the chevrom would stay partially visible if the user closed the dropdown while it was still opening. */
+   * where the chevron would stay partially visible if the user closed the dropdown while it was still opening. */
   useLayoutEffect(() => {
     if (isOpen) {
       const controls = animate(chevronOpacity, 0, { duration: DROPDOWN_DURATION, ease: EASE_OUT })
