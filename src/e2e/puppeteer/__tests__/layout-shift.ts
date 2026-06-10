@@ -1,5 +1,4 @@
 import { describe, expect } from 'vitest'
-import { WindowEm } from '../../../initialize'
 import clickBullet from '../helpers/clickBullet'
 import clickThought from '../helpers/clickThought'
 import paste from '../helpers/paste'
@@ -8,7 +7,6 @@ import waitForEditable from '../helpers/waitForEditable'
 import { page } from '../setup'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
-const em = window.em as WindowEm
 
 const Y_TOLERANCE = 0.5
 const OBSERVER_READY_TIMEOUT_MS = 8000
@@ -18,7 +16,7 @@ type YShiftResult = {
   thoughtValue: string
   /** First inline `top` React ever assigned to the target tree-node. */
   before: number | null
-  /** Final inline `top` on the target tree-node after settling. */
+  /** Latest inline `top` on the target tree-node when the observer resolves. */
   after: number | null
 }
 
@@ -26,25 +24,20 @@ type YShiftResult = {
  * Captures the first and final inline `top` assigned to the tree-node whose editable text is `thoughtValue`.
  *
  * Must be called BEFORE the action that renders the thought so the observer is live when the tree-node is inserted.
- * Awaits until the observer is observing `document.body`, then returns `{ measurePromise }` to await after the action.
+ * Returns `{ measurePromise }` when ready; wait for it after doing the action.
  */
-const measureYShift = async (
-  thoughtValue: string,
-  { settleMs = 500 }: { settleMs?: number } = {},
-): Promise<{ measurePromise: Promise<YShiftResult> }> => {
+const measureYShift = async (thoughtValue: string): Promise<{ measurePromise: Promise<YShiftResult> }> => {
   const measurePromise = page.evaluate(
-    (thoughtValue: string, settleMs: number, overallTimeoutMs: number) =>
+    (thoughtValue: string, overallTimeoutMs: number) =>
       new Promise<YShiftResult>((resolve, reject) => {
-        em.testFlags.layoutShiftObserverReady = false
-
         /** The target tree-node whose y position is being measured. */
         let target: HTMLElement | null = null
         /** The first inline `top` React ever assigned to the target tree-node. */
         let before: number | null = null
-        /** The final inline `top` on the target tree-node after settling. */
+        /** The latest inline `top` on the target tree-node when the observer resolves. */
         let after: number | null = null
-        /** The timer to resolve the promise after `settleMs` milliseconds. */
-        let resolveDebounceTimer: ReturnType<typeof setTimeout> | null = null
+        /** Whether the observer has resolved. */
+        let settled = false
         /** The mutation observer to observe the target tree-node. */
         let observer: MutationObserver | null = null
 
@@ -52,16 +45,6 @@ const measureYShift = async (
         const parseTop = (styleStr: string | null): number | null => {
           const m = /top:\s*([-\d.]+)px/.exec(styleStr ?? '')
           return m ? parseFloat(m[1]) : null
-        }
-
-        /** Schedule to resolve and disconnect the observer after `settleMs` milliseconds. */
-        const resolveDebounced = () => {
-          if (resolveDebounceTimer) clearTimeout(resolveDebounceTimer)
-          resolveDebounceTimer = setTimeout(() => {
-            observer?.disconnect()
-            em.testFlags.layoutShiftObserverReady = false
-            resolve({ thoughtValue: thoughtValue, before, after })
-          }, settleMs)
         }
 
         observer = new MutationObserver(mutations => {
@@ -81,7 +64,6 @@ const measureYShift = async (
                 if (treeNode) {
                   target = treeNode
                   before = after = parseTop(target.getAttribute('style'))
-                  resolveDebounced()
                   break
                 }
               }
@@ -92,9 +74,13 @@ const measureYShift = async (
               // On first style change, use oldValue as the true initial `top`; later changes skip this, and if values match again, the update has no effect.
               if (after === before) before = oldTop
               after = newTop
-              resolveDebounced()
             }
           }
+          // Resolve the promise and disconnect the observer.
+          if (settled || !target) return
+          settled = true
+          observer?.disconnect()
+          resolve({ thoughtValue, before, after })
         })
 
         observer.observe(document.body, {
@@ -104,25 +90,23 @@ const measureYShift = async (
           attributeFilter: ['style'],
           attributeOldValue: true,
         })
-        em.testFlags.layoutShiftObserverReady = true
 
         setTimeout(() => {
           if (!target) {
+            settled = true
             observer?.disconnect()
-            if (resolveDebounceTimer) clearTimeout(resolveDebounceTimer)
-            em.testFlags.layoutShiftObserverReady = false
             reject(new Error(`Timed out waiting for thought "${thoughtValue}" within ${overallTimeoutMs}ms.`))
           }
         }, overallTimeoutMs)
       }),
     thoughtValue,
-    settleMs,
     OBSERVER_READY_TIMEOUT_MS,
   )
 
-  await page.waitForFunction(() => em.testFlags.layoutShiftObserverReady === true, {
-    timeout: OBSERVER_READY_TIMEOUT_MS,
-  })
+  // The measurement evaluate's Promise executor runs synchronously (including observe()),
+  // but page.evaluate is async across CDP. Yield one in-page microtask so that setup
+  // completes before the test dispatches the user action.
+  await page.evaluate(() => new Promise<void>(resolve => queueMicrotask(resolve)))
 
   return { measurePromise }
 }

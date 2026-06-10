@@ -12,10 +12,6 @@ const testFlags: {
   simulateDrag: boolean
   /** Render drop targets as blocks of color. */
   simulateDrop: boolean
-  /** Puppeteer layout-shift tests: true after `measureYShift`'s MutationObserver has called `observe()`. */
-  layoutShiftObserverReady: boolean
-  /** Puppeteer layout-shift tests: first `top` captured for the target tree-node. Set as soon as it is known. */
-  layoutShiftInitialTop: number | null
   /** The throttled scrollCursorIntoView function. Exposed so that tests can cancel its pending trailing call before asserting on the scroll position. */
   throttledScrollCursorIntoView: DebouncedFunc<(y: number, height: number) => void> | null
 } = {
@@ -25,8 +21,6 @@ const testFlags: {
   replicationDelay: 0,
   simulateDrag: false,
   simulateDrop: false,
-  layoutShiftObserverReady: false,
-  layoutShiftInitialTop: null,
   throttledScrollCursorIntoView: null,
 }
 
