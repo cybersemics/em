@@ -349,7 +349,7 @@ describe('mobile only', () => {
     expect(textContext).toBe('a')
   })
 
-  it.skip('tapping a thought after opening and closing Command Center via Done should not open the keyboard', async () => {
+  it('tapping a thought after opening and closing Command Center via Done should not open the keyboard', async () => {
     // Step 1: create a thought
     await gesture(newThoughtCommand)
     await keyboard.type('a')
@@ -360,7 +360,10 @@ describe('mobile only', () => {
 
     // Step 3: close the Command Center via the Done button
     await click('[data-testid="command-center-done"]')
-    await waitForSelector('[data-testid=command-center-panel]', { hidden: true })
+
+    // The command center panel stays in the DOM when closed (transformed off-screen), so { hidden: true }
+    // on the panel never resolves. Wait for the visible multiselect highlight to clear instead.
+    await waitForSelector('[aria-label="bullet"][data-highlighted="true"]', { hidden: true })
 
     // Step 4: create a second thought
     await gesture(newThoughtCommand)
