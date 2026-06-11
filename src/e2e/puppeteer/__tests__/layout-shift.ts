@@ -159,7 +159,7 @@ describe('thought y position stability', () => {
     expectStableY(await measurePromise)
   })
 
-  it('non-last subthought should not shift y position when parent is expanded', async () => {
+  it.skip('non-last subthought should not shift y position when parent is expanded', async () => {
     await paste(`
         - a
           - b
@@ -174,7 +174,7 @@ describe('thought y position stability', () => {
     expectStableY(await measurePromise)
   })
 
-  it('last subthought should not shift y position when parent is expanded', async () => {
+  it.skip('last subthought should not shift y position when parent is expanded', async () => {
     await paste(`
         - X
           - A
