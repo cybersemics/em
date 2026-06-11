@@ -4,7 +4,7 @@ import { useStore } from 'react-redux'
 import { useDispatch } from 'react-redux'
 import Path from '../../@types/Path'
 import { setCursorActionCreator as setCursor } from '../../actions/setCursor'
-import { isMac, isTouch } from '../../browser'
+import { isMac, isSafari, isTouch } from '../../browser'
 import { LongPressState } from '../../constants'
 import focusWithoutAutoscroll from '../../device/focusWithoutAutoscroll'
 import getCaretOffset from '../../device/getCaretOffset'
@@ -129,13 +129,21 @@ const useEditMode = ({
         //     so we cannot rely on the cursor-change useEffect for offset-only changes).
         // The cursor-change useEffect also calls focusWithoutAutoscroll for programmatic paths;
         // the function is idempotent so the second call is a no-op.
-        const { offset } = getCaretOffset(editable, {
+        const { inVoidArea, offset } = getCaretOffset(editable, {
           clientX: e.clientX,
           clientY: e.clientY,
         })
 
-        // Block the native focus + native caret-from-tap before they fire.
-        e.preventDefault()
+        // Block the native mousedown so it can't focus the element and place the caret itself.
+        //   - iOS Safari: always block, so the native focus/selection autoscroll never fires and
+        //     jolts position:fixed elements (#3765). focusWithoutAutoscroll re-takes focus cleanly.
+        //   - Other platforms: only block when the tap lands in a void area (outside any text node),
+        //     otherwise leave the native mousedown alone so browser selection — drag-select,
+        //     double-click-word, right-click context menu — still works. Preventing it
+        //     unconditionally would break those. See: #981, #2948
+        if ((isTouch && isSafari()) || inVoidArea) {
+          e.preventDefault()
+        }
 
         // getCaretOffset returns null for empty thoughts (no text nodes). We still need to take
         // focus on those — otherwise tapping an empty thought that is already the cursor leaves
