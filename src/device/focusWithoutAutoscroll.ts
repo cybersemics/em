@@ -12,7 +12,7 @@ import * as selection from './selection'
  * Idempotent — safe to call repeatedly with the same element + offset.
  *
  * We do this using two strategies:
- * 
+ *
  * (1) `focus({ preventScroll: true })` blocks the focus-driven autoscroll. This differs from prior strategies,
  * which compensated for iOS autoscroll or attempted to disarm it with CSS tricks, rather than preventing it from firing
  * in the first place.
