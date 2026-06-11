@@ -2,10 +2,10 @@ import store from '../stores/app'
 import viewportStore from '../stores/viewport'
 import virtualKeyboardStore from '../stores/virtualKeyboardStore'
 
-/** The trigger edges (in viewport coordinates) that scrollCursorIntoView uses to decide whether to scroll.
+/** The trigger edges (in viewport coordinates) that scrollCursorIntoView uses to decide whether to autoscroll.
  * Between topEdge and bottomEdge is the comfort zone: a cursor inside it never triggers a scroll; a cursor
- * crossing either edge does. Each edge may be inset from the visible area by a buffer so that scrolling
- * starts before the cursor reaches the toolbar or keyboard. */
+ * crossing either edge does. The bottom edge may be inset from the visible area by a buffer so that
+ * scrolling starts before the cursor reaches the navbar. */
 export interface AutoscrollEdges {
   /** Bottom of the toolbar — the top of the visible area, in viewport coords. */
   toolbarBottom: number
@@ -13,8 +13,6 @@ export interface AutoscrollEdges {
   navbarHeight: number
   /** Height of the virtual keyboard in px. 0 when closed. */
   keyboardInset: number
-  /** Inset of topEdge below the toolbar (~2 line-heights). */
-  topBuffer: number
   /** Inset of bottomEdge above the keyboard/navbar. 0 while the keyboard is open — see getAutoscrollEdges. */
   bottomBuffer: number
   /** Crossing above this edge triggers a scroll. */
@@ -30,22 +28,16 @@ export const getAutoscrollEdges = (): AutoscrollEdges => {
   const toolbarBottom = toolbarRect ? toolbarRect.bottom : 0
   const navbarHeight = navbarRect?.height ?? 0
 
-  // The keyboard height is reported differently per platform. On web Safari the keyboard shrinks
-  // `visualViewport.height`, so `innerHeight - visualViewport.height` is the keyboard height. On
-  // iOS Capacitor the keyboard overlays the page and `visualViewport.height` stays at the full
-  // innerHeight, so the height comes from `virtualKeyboardStore` instead (fed by
-  // @capacitor/keyboard). Take the max so whichever source sees the keyboard wins.
-  //
-  // The open flag likewise has two sources: `virtualKeyboardStore.open` (native keyboard events)
-  // and `state.isKeyboardOpen` (set by the app when it intends to open the keyboard, e.g.
-  // setCursor) — trust either, since one may lead the other during the open animation.
-  const visualViewportHeight = window.visualViewport?.height ?? window.innerHeight
-  const { height: keyboardAnimatedHeight, open: keyboardOpenStore } = virtualKeyboardStore.getState()
-  const keyboardOpen = keyboardOpenStore || store.getState().isKeyboardOpen === true
-  const keyboardInset = keyboardOpen ? Math.max(window.innerHeight - visualViewportHeight, keyboardAnimatedHeight) : 0
+  // virtualKeyboardStore is the single source of truth for the keyboard. It is fed by
+  // platform-specific handlers (see src/device/virtual-keyboard/): native keyboard events on iOS
+  // Capacitor, visualViewport measurements on iOS Safari. On platforms with no handler (e.g.
+  // desktop) the store stays closed with height 0, so no inset is applied — unlike
+  // `state.isKeyboardOpen`, which really means "is editing" and is set on desktop too.
+  // `open` stays true through the closing animation while `height` springs to 0, so the edges
+  // keep accounting for the keyboard until it has fully closed.
+  const { height: keyboardInset, open: keyboardOpen } = virtualKeyboardStore.getState()
 
   const fontSize = store.getState().fontSize
-  const topBuffer = fontSize * 2
 
   // No bottom buffer while the keyboard is open. The keyboard inset alone keeps the cursor above
   // the keyboard, and any extra inset here (stacked on scrollCursorIntoView's landing margin)
@@ -54,14 +46,18 @@ export const getAutoscrollEdges = (): AutoscrollEdges => {
   // is room to spare, so keep a comfortable buffer.
   const bottomBuffer = keyboardOpen ? 0 : fontSize * 2
 
-  const topEdge = toolbarBottom + topBuffer
+  // No top buffer at all: trigger only once the cursor actually passes under the toolbar, and let
+  // scrollCursorIntoView's landing margin (half the cursor height) provide the headroom. An inset
+  // trigger edge here scrolls while the cursor is still fully visible and lands it ~2.5 lines deep —
+  // each top scroll should instead reveal about one thought, mirroring the bottom edge's
+  // one-line-per-Enter rhythm.
+  const topEdge = toolbarBottom
   const bottomEdge = window.innerHeight - keyboardInset - navbarHeight - bottomBuffer
 
   return {
     toolbarBottom,
     navbarHeight,
     keyboardInset,
-    topBuffer,
     bottomBuffer,
     topEdge,
     bottomEdge,
