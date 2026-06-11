@@ -161,16 +161,16 @@ const useEditMode = ({
       // If editing or the cursor is on the thought, allow the default browser selection or perform manual caret positioning so the offset is correct.
       // See: #981
       if (editingOrOnCursor && !isMulticursor) {
+        const { inVoidArea, offset } = getCaretOffset(editable, {
+          clientX: e.clientX,
+          clientY: e.clientY,
+        })
+
         // Prevent the browser from autoscrolling to this editable element.
         // For some reason doesn't work on touchend.
         preventAutoscroll(editable, {
           // about the height of a single-line thought
           bottomMargin: fontSize * 2,
-        })
-
-        const { inVoidArea, offset } = getCaretOffset(editable, {
-          clientX: e.clientX,
-          clientY: e.clientY,
         })
 
         if (offset !== null) {
