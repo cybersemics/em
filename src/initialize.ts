@@ -127,9 +127,6 @@ const testHelpers = {
   executeCommandById: (id: CommandId) => {
     executeCommand(commandById(id))
   },
-  flushPendingEdits: () => {
-    commandEmitter.trigger('command')
-  },
   dropThoughtspace: thoughtspaceRuntime.drop,
   waitForInitialized,
   waitForThoughtspaceIdle: thoughtspaceRuntime.waitForIdle,

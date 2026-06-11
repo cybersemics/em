@@ -37,22 +37,6 @@ it('types', () => {
 })
 
 describe('get', () => {
-  it('does not throw when localStorage is unavailable', () => {
-    const localStorageOriginal = globalThis.localStorage
-
-    try {
-      vi.stubGlobal('localStorage', undefined)
-
-      expect(storage.getItem('x')).toBe(null)
-      expect(storage.getItem('x', 'default')).toBe('default')
-      expect(() => storage.setItem('x', 'test')).not.toThrow()
-      expect(() => storage.removeItem('x')).not.toThrow()
-      expect(() => storage.clear()).not.toThrow()
-    } finally {
-      vi.stubGlobal('localStorage', localStorageOriginal)
-    }
-  })
-
   it('get a value that has been set', () => {
     const storageModel = storage.model({
       x: {},

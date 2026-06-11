@@ -1,29 +1,20 @@
-/** Returns true when localStorage is available in the current runtime. */
-const hasLocalStorage = () => typeof localStorage !== 'undefined'
-
 /** Clear local storage. */
-const clear = () => {
-  if (hasLocalStorage()) localStorage.clear()
-}
+const clear = () => localStorage.clear()
 
 /** Removes an item from local storage. */
-const removeItem = (key: string) => {
-  if (hasLocalStorage()) localStorage.removeItem(key)
-}
+const removeItem = (key: string) => localStorage.removeItem(key)
 
 /** Sets an item on local storage. */
-const setItem = (key: string, value: string) => {
-  if (hasLocalStorage()) localStorage.setItem(key, value)
-}
+const setItem = (key: string, value: string) => localStorage.setItem(key, value)
 
 function getItem(key: string): string | null
 function getItem(key: string, defaultValue: string | (() => string)): string
 /** Gets the item from local storage. If it does not exist and defaultValue is provided, sets the value in local storage to defaultValue and returns it. */
 function getItem(key: string, defaultValue?: string | (() => string)) {
-  let value = hasLocalStorage() ? localStorage.getItem(key) : null
+  let value = localStorage.getItem(key)
   if (value === null && defaultValue !== undefined) {
     value = typeof defaultValue === 'function' ? defaultValue() : defaultValue
-    if (hasLocalStorage()) localStorage.setItem(key, value)
+    localStorage.setItem(key, value)
   }
   return value
 }
