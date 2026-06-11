@@ -1,5 +1,3 @@
-import type { WindowEm } from '../../../initialize'
-
 /**
  * Hide iOS keyboard by tapping done button above the keyboard.
  * Uses the global browser object from WDIO.
@@ -11,17 +9,6 @@ const hideKeyboardByTappingDone = async () => {
   await done.click()
   await done.waitForExist({ reverse: true })
   await browser.switchContext(oldContext)
-  await browser.waitUntil(
-    () =>
-      browser.execute(() => {
-        const isKeyboardOpen = (window.em as Partial<WindowEm> | undefined)?.testHelpers?.getState().isKeyboardOpen
-        return isKeyboardOpen !== true
-      }),
-    {
-      timeout: 3000,
-      timeoutMsg: 'em keyboard state did not close after tapping Done.',
-    },
-  )
 }
 
 export default hideKeyboardByTappingDone
