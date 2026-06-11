@@ -1,16 +1,22 @@
 import { isSafari, isTouch } from '../browser'
 import { getAutoscrollEdges, getLayoutTreeTop } from '../device/autoscrollEdges'
-import store from '../stores/app'
 
 /** Scrolls the minimum amount necessary to move the viewport so that it includes the cursor. */
 const scrollIntoViewIfNeeded = (y: number, height: number) => {
   const { topEdge, bottomEdge } = getAutoscrollEdges()
 
   // Landing margin — how far inside the trigger edge the cursor settles after a scroll fires.
-  // Independent from the trigger buffer above: the cursor begins scrolling once it enters the
-  // buffer band, but settles `scrollMargin` px inside the edge so it doesn't sit flush against
-  // the toolbar/keyboard. ~1 line-height feels right at default fontSize.
-  const scrollMargin = store.getState().fontSize * 2
+  // Independent from the trigger buffer in autoscrollEdges: the cursor begins scrolling once it
+  // crosses the edge, but settles `scrollMargin` px inside it so it doesn't sit flush against the
+  // toolbar/keyboard.
+  //
+  // Half the cursor height, not a fixed fontSize multiple. The per-keystroke autoscroll rhythm
+  // (each Enter at the bottom of the screen triggers a small scroll, like iOS native) holds iff
+  // the landing margin is smaller than one line step: land half a line inside the edge and the
+  // next Enter always crosses it again. A fixed fontSize-based margin can equal or exceed the
+  // line step, absorbing Enters and then scrolling too far. height/2 also scales the landing
+  // position with multi-line thoughts, matching the dynamic feel of iOS native autoscroll.
+  const scrollMargin = height / 2
 
   // Target viewport y of the cursor.
   //

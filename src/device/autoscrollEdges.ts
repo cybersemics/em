@@ -2,7 +2,7 @@ import store from '../stores/app'
 import viewportStore from '../stores/viewport'
 import virtualKeyboardStore from '../stores/virtualKeyboardStore'
 
-/** Computed top/bottom edges (in viewport coordinates) that scrollCursorIntoView uses to decide whether to scroll. The "comfort zone" is between topEdge and bottomEdge. The buffer is the same distance applied at both edges — a thought entering within `buffer` px of the visible area triggers scrolling. */
+/** Computed top/bottom edges (in viewport coordinates) that scrollCursorIntoView uses to decide whether to scroll. The "comfort zone" is between topEdge and bottomEdge. A thought entering within the buffer band of either edge triggers scrolling. */
 export interface AutoscrollEdges {
   /** Top of the visible area below the toolbar, in viewport coords. */
   toolbarBottom: number
@@ -10,8 +10,10 @@ export interface AutoscrollEdges {
   navbarHeight: number
   /** Effective keyboard inset in px. Accounts for both visualViewport shrink (web Safari) and `virtualKeyboardStore.height` (iOS Capacitor). 0 when keyboard is closed. */
   keyboardInset: number
-  /** Px of buffer applied at both top and bottom (~2 line-heights). */
-  buffer: number
+  /** Px of buffer applied at the top edge (~2 line-heights). */
+  topBuffer: number
+  /** Px of buffer applied at the bottom edge. 0 while the keyboard is open — the visible strip is small and an inset trigger edge makes typing-at-the-bottom scrolls feel like they fire early and overshoot (#3765). */
+  bottomBuffer: number
   /** Trigger threshold at the top, in viewport coords. */
   topEdge: number
   /** Trigger threshold at the bottom, in viewport coords. */
@@ -36,16 +38,24 @@ export const getAutoscrollEdges = (): AutoscrollEdges => {
   const keyboardInset = keyboardOpen ? Math.max(window.innerHeight - visualViewportHeight, keyboardAnimatedHeight) : 0
 
   const fontSize = store.getState().fontSize
-  const buffer = fontSize * 2
+  const topBuffer = fontSize * 2
 
-  const topEdge = toolbarBottom + buffer
-  const bottomEdge = window.innerHeight - keyboardInset - navbarHeight - buffer
+  // No bottom buffer while the keyboard is open: with the visible strip already small, insetting
+  // the trigger edge here (on top of scrollCursorIntoView's landing margin) makes typing at the
+  // bottom scroll before the cursor reaches the keyboard and overshoot when it does — which breaks
+  // the scroll-per-Enter rhythm that iOS native autoscroll (and main) has. The keyboard inset
+  // itself already keeps the cursor above the keyboard.
+  const bottomBuffer = keyboardOpen ? 0 : fontSize * 2
+
+  const topEdge = toolbarBottom + topBuffer
+  const bottomEdge = window.innerHeight - keyboardInset - navbarHeight - bottomBuffer
 
   return {
     toolbarBottom,
     navbarHeight,
     keyboardInset,
-    buffer,
+    topBuffer,
+    bottomBuffer,
     topEdge,
     bottomEdge,
   }
