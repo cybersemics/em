@@ -44,7 +44,7 @@ const focusWithoutAutoscroll = (el: HTMLElement | null | undefined, { offset }: 
   // it focuses a hidden input, putting the page into an active editing session that persists
   // after the activation window closes, so a later asynchronous selection.set (e.g. from a
   // post-render useEffect) is honored rather than dropped. If the selection is already on a
-  // thought, an editing session already exists and no priming is needed. See asyncFocus.ts.
+  // thought, an editing session already exists and no priming is needed.
   if (isTouch && isSafari() && !selection.isThought()) {
     asyncFocus()
   }
@@ -53,11 +53,17 @@ const focusWithoutAutoscroll = (el: HTMLElement | null | undefined, { offset }: 
     el.focus({ preventScroll: true })
   }
 
-  // Suppress selection-driven autoscroll: setting a Range inside a contentEditable makes the
-  // browser scroll the caret into view, independently of focus. Capture and revert any scrollY
-  // shift synchronously. `useScrollCursorIntoView` handles bringing the cursor into view once
-  // layout settles — we must not scroll here, otherwise the two sources interrupt each other on
-  // rapid cursor changes (spam-Enter) and the page jumps to a mid-screen position.
+  // Focus is handled above, but there is a second, independent source of autoscroll: when a
+  // Range is set inside a contentEditable, the browser scrolls the caret into view on its own.
+  // Unlike focus(), selection.set has no preventScroll option, so instead we snapshot
+  // window.scrollY before setting the selection and restore it immediately after if it moved.
+  // Both happen within the same synchronous frame, so the user never sees the jump.
+  //
+  // Why suppress this scroll instead of letting the browser bring the caret into view? Because
+  // scrolling must be owned by exactly one place — useScrollCursorIntoView, which runs once
+  // layout settles. If this function scrolled too, the two would compete: on rapid cursor
+  // changes (e.g. holding Enter) each native scroll interrupts the previous smooth scroll
+  // mid-flight, stranding the page at an arbitrary position.
   const yBefore = window.scrollY
   selection.set(el, { offset })
   if (window.scrollY !== yBefore) {
