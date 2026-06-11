@@ -61,8 +61,6 @@ const Note = React.memo(
     }, [dispatch, path])
 
     // Set the caret on the note when noteFocus opens it programmatically (toggleNote command).
-    // Routes through the focusWithoutAutoscroll chokepoint so the iOS native selection autoscroll
-    // doesn't jitter the toolbar (#3765).
     useEffect(() => {
       if (hasFocus && noteOffset !== null) {
         focusWithoutAutoscroll(noteRef.current, { offset: noteOffset })
@@ -156,8 +154,8 @@ const Note = React.memo(
       if (!note) return
 
       // Block native focus + native caret-from-tap, then route through focusWithoutAutoscroll
-      // (same chokepoint Editable uses) — focuses with preventScroll, places the caret at the
-      // tap offset, and suppresses the selection-driven autoscroll on iOS.
+      // (the same single entry point Editable uses) — focuses with preventScroll, places the
+      // caret at the tap offset, and suppresses the selection-driven autoscroll on iOS.
       const { offset } = getCaretOffset(note, { clientX: e.clientX, clientY: e.clientY })
       if (offset !== null) {
         e.preventDefault()

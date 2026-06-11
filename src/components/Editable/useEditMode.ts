@@ -75,8 +75,7 @@ const useEditMode = ({
         return
       }
 
-      // Chokepoint for all programmatic cursor changes — Return-new-thought, arrow keys (incl.
-      // bluetooth on iPad), gestures, sidebar restore. focusWithoutAutoscroll focuses, places the
+      // Whenever the cursor changes programmatically, focusWithoutAutoscroll focuses, places the
       // caret, and suppresses the native focus + selection autoscroll that would otherwise jolt
       // `position: fixed` elements on iOS (#3765).
       focusWithoutAutoscroll(contentRef.current, { offset: cursorOffset ?? 0 })
