@@ -199,6 +199,12 @@ const useEditMode = ({
       }
     }
 
+    /** Prevents the thought from autoscrolling to the bottom of the screen when the keyboard is open.
+     * Autoscroll must be prevented until focus handling is complete, so preventAutoscrollEnd is deferred
+     * using queueMicrotask without introducing any additional delay.
+     */
+    const onFocus = () => queueMicrotask(() => preventAutoscrollEnd(editable))
+
     /**
      * Handles the mouseup event for the editable element.
      * Preserve native drag selection behavior by deferring setCaretOffset until mouseup.
@@ -211,20 +217,20 @@ const useEditMode = ({
         disabledRef.current = false
         setCaretOffset(offsetRef.current)
       }
-
-      /** Prevents the thought from autoscrolling to the bottom of the screen when the keyboard is open.
-       * Autoscroll must be prevented until focus handling is complete, so preventAutoscrollEnd is deferred
-       * using queueMicrotask without introducing any additional delay.
-       */
-      queueMicrotask(() => preventAutoscrollEnd(editable))
     }
 
     editable.addEventListener('mousedown', onMouseDown)
-    if (isTouch && isSafari()) editable.addEventListener('mouseup', onMouseUp)
+    if (isTouch && isSafari()) {
+      editable.addEventListener('focus', onFocus)
+      editable.addEventListener('mouseup', onMouseUp)
+    }
 
     return () => {
       editable.removeEventListener('mousedown', onMouseDown)
-      if (isTouch && isSafari()) editable.removeEventListener('mouseup', onMouseUp)
+      if (isTouch && isSafari()) {
+        editable.removeEventListener('focus', onFocus)
+        editable.removeEventListener('mouseup', onMouseUp)
+      }
     }
   }, [contentRef, editingOrOnCursor, isCursor, isMulticursor, fontSize, allowDefaultSelection, path, dispatch])
 
