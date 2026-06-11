@@ -14,7 +14,6 @@ import { toggleNoteActionCreator as toggleNote } from '../actions/toggleNote'
 import { isTouch } from '../browser'
 import focusWithoutAutoscroll from '../device/focusWithoutAutoscroll'
 import getCaretOffset from '../device/getCaretOffset'
-import preventAutoscroll, { preventAutoscrollEnd } from '../device/preventAutoscroll'
 import * as selection from '../device/selection'
 import useFreshCallback from '../hooks/useFreshCallback'
 import getThoughtById from '../selectors/getThoughtById'
@@ -22,7 +21,6 @@ import noteValue from '../selectors/noteValue'
 import resolveNotePath from '../selectors/resolveNotePath'
 import store from '../stores/app'
 import batchEditingStore from '../stores/batchEditing'
-import { getAutoscrollTechnique } from '../util/autoscrollTechnique'
 import equalPathHead from '../util/equalPathHead'
 import head from '../util/head'
 import strip from '../util/strip'
@@ -51,7 +49,6 @@ const Note = React.memo(
 
     /** Focus Handling with useFreshCallback. */
     const onFocus = useFreshCallback(() => {
-      preventAutoscrollEnd(noteRef.current)
       dispatch(
         setCursor({
           path,
@@ -63,11 +60,12 @@ const Note = React.memo(
       )
     }, [dispatch, path])
 
-    // set the caret on the note if editing this thought and noteFocus is true
+    // Set the caret on the note when noteFocus opens it programmatically (toggleNote command).
+    // Routes through the focusWithoutAutoscroll chokepoint so the iOS native selection autoscroll
+    // doesn't jitter the toolbar (#3765).
     useEffect(() => {
-      // cursor must be true if note is focused
       if (hasFocus && noteOffset !== null) {
-        selection.set(noteRef.current!, { offset: noteOffset })
+        focusWithoutAutoscroll(noteRef.current, { offset: noteOffset })
       }
     }, [hasFocus, noteOffset])
 
@@ -157,20 +155,13 @@ const Note = React.memo(
       const note = noteRef.current
       if (!note) return
 
-      // A/B toggle for issue #3765 — see src/util/autoscrollTechnique.ts.
-      if (getAutoscrollTechnique() === 'v2') {
-        // v2: block native focus + native caret-from-tap, then route through focusWithoutAutoscroll
-        // (same chokepoint Editable uses) which focuses with preventScroll, places the caret at
-        // the tap offset, suppresses selection-driven autoscroll, and schedules the post-keyboard
-        // scroll into view.
-        const { offset } = getCaretOffset(note, { clientX: e.clientX, clientY: e.clientY })
-        if (offset !== null) {
-          e.preventDefault()
-          focusWithoutAutoscroll(note, { offset })
-        }
-      } else {
-        // v1: existing centering hack.
-        preventAutoscroll(note)
+      // Block native focus + native caret-from-tap, then route through focusWithoutAutoscroll
+      // (same chokepoint Editable uses) — focuses with preventScroll, places the caret at the
+      // tap offset, and suppresses the selection-driven autoscroll on iOS.
+      const { offset } = getCaretOffset(note, { clientX: e.clientX, clientY: e.clientY })
+      if (offset !== null) {
+        e.preventDefault()
+        focusWithoutAutoscroll(note, { offset })
       }
     }, [])
 

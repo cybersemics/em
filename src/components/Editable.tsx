@@ -45,8 +45,6 @@ import editingValueStore from '../stores/editingValue'
 import editingValueUntrimmedStore from '../stores/editingValueUntrimmed'
 import storageModel from '../stores/storageModel'
 import suppressFocusStore from '../stores/suppressFocus'
-import { getAutoscrollTechnique } from '../util/autoscrollTechnique'
-import { debugLog, editableLabel, selectionSnapshot } from '../util/debugAutoscrollLog'
 import addEmojiSpace from '../util/addEmojiSpace'
 import containsURL from '../util/containsURL'
 import ellipsize from '../util/ellipsize'
@@ -230,10 +228,6 @@ const Editable = ({
 
         // Prevent the cursor offset from being restored after the initial setCursorOnThought.
         cursorOffsetInitialized = true
-
-        if (getAutoscrollTechnique() === 'v2') {
-          debugLog('setCursorOnThought', `el=${editableLabel(contentRef.current)} offset=${offset}`)
-        }
 
         dispatch(
           setCursor({
@@ -507,12 +501,6 @@ const Editable = ({
   /** Flushes edits and updates certain state variables on blur. */
   const onBlur: FocusEventHandler<HTMLElement> = useCallback(
     e => {
-      if (getAutoscrollTechnique() === 'v2') {
-        debugLog(
-          'onBlur',
-          `el=${editableLabel(contentRef.current)} relatedTarget=${editableLabel(e.relatedTarget)}`,
-        )
-      }
       throttledChangeRef.current.flush()
 
       // update the ContentEditable if the new scrubbed value is different (i.e. stripped, space after emoji added, etc)
@@ -590,13 +578,7 @@ const Editable = ({
       }
 
       if (suppressFocusStore.getState()) {
-        if (getAutoscrollTechnique() === 'v2') {
-          debugLog('onFocus', `el=${editableLabel(contentRef.current)} suppressed=true`)
-        }
         return
-      }
-      if (getAutoscrollTechnique() === 'v2') {
-        debugLog('onFocus', `el=${editableLabel(contentRef.current)} suppressed=false`)
       }
       // Update editingValueUntrimmedStore with the current value
       editingValueUntrimmedStore.update(value)
@@ -618,9 +600,6 @@ const Editable = ({
    */
   const handleTapBehavior = useCallback(
     (e: MouseEvent | TouchEvent) => {
-      if (getAutoscrollTechnique() === 'v2') {
-        debugLog('handleTap', `type=${e.type} el=${editableLabel(contentRef.current)} ${selectionSnapshot()}`)
-      }
       // When MultiGesture is below the gesture threshold it is possible that onClick and onTouchEnd
       // both trigger. Prevent handleTapBehavior from running a second time via touchend in that case.
       // https://github.com/cybersemics/em/issues/1268
