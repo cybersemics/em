@@ -53,7 +53,10 @@
     "test:ios:browserstack": "wdio run src/e2e/iOS/config/wdio.browserstack.conf.ts",
     "test:puppeteer": "./src/e2e/puppeteer/test-puppeteer.sh",
     "test": "vitest --project unit",
-    "websocket-server": "cd server && yarn build && yarn start"
+    "websocket-server": "cd server && yarn build && yarn start",
+    "estimate:backfill": "tsx scripts/backfill-everhour-estimates.ts",
+    "estimate:issue": "tsx scripts/estimate-issue.ts",
+    "estimate:command": "tsx scripts/estimate-command.ts"
   },
   "lockfile-lint": {
     "allowed-schemes": [
@@ -237,6 +240,7 @@
     "react-dnd-test-utils": "^16.0.1",
     "redux-mock-store": "^1.5.5",
     "tcp-port-used": "^1.0.2",
+    "tsx": "^4.22.3",
     "typescript": "5.9.3",
     "vi-canvas-mock": "^1.0.0",
     "vite": "^7.3.1",
@@ -246,7 +250,8 @@
     "vitest": "^4.0.18",
     "vitest-browser-react": "^2.0.5",
     "vitest-localstorage-mock": "^0.1.2",
-    "webdriverio": "^9.19.2"
+    "webdriverio": "^9.19.2",
+    "zod": "^4.4.3"
   },
   "packageManager": "yarn@4.12.0"
 }
