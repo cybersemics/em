@@ -311,12 +311,19 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         return {
           ...newState,
           lastUndoableActionType: actionType,
+          // Guard against pushing an empty patch when the merged actions net to no change (e.g. a multicursor command that reduces to a no-op).
+          // An empty patch has no actions, which would disable undo (getLastActionType returns undefined) and crash undoOneReducer/redoOneReducer when spreading patch[0]?.actions.
+          // Instead, drop the now-superseded last patch, mirroring the non-merge branch's `undoPatch.length` guard below.
           undoPatches: [
             ...newState.undoPatches.slice(0, -1),
-            addActionsToPatch(combinedUndoPatch, [
-              ...(lastUndoPatch && lastUndoPatch.length > 0 ? lastUndoPatch[0]?.actions : []),
-              actionType,
-            ]),
+            ...(combinedUndoPatch.length
+              ? [
+                  addActionsToPatch(combinedUndoPatch, [
+                    ...(lastUndoPatch && lastUndoPatch.length > 0 ? lastUndoPatch[0]?.actions : []),
+                    actionType,
+                  ]),
+                ]
+              : []),
           ],
         }
       }
