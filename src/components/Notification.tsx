@@ -1,4 +1,4 @@
-import React, { ComponentProps, FC, ReactNode, useCallback, useState } from 'react'
+import React, { ComponentProps, FC, ReactNode, useCallback, useRef, useState } from 'react'
 import { TransitionGroup } from 'react-transition-group'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
@@ -19,6 +19,12 @@ const Notification: FC<
   } & Pick<ComponentProps<typeof PopupBase>, 'onClose' | 'textAlign' | 'onMouseOver' | 'onMouseLeave'>
 > = ({ icon, onClose, value, transitionKey, children, ...props }) => {
   const [isDismissed, setIsDismissed] = useState(false)
+  // Apply the fade transition directly to the PopupBase element (which has `zIndex: 'popup'`) by sharing its ref as
+  // the CSSTransition nodeRef. Otherwise FadeTransition wraps the popup in a static <span>, and while that span's
+  // opacity animates from 0 → 1 on enter it establishes a stacking context with `z-index: auto`. That traps the
+  // popup's high z-index, so during the fade-in the toast paints *behind* positioned content (e.g. a full-screen
+  // thought on mobile) and only jumps to the front once the animation completes and the span's opacity reaches 1.
+  const popupRef = useRef<HTMLDivElement>(null)
 
   /** Dismiss the alert on close. */
   const handleClose = useCallback(() => {
@@ -43,8 +49,9 @@ const Notification: FC<
       }
     >
       {value ? (
-        <FadeTransition type='slow' onEntering={() => setIsDismissed(false)}>
+        <FadeTransition type='slow' nodeRef={popupRef} onEntering={() => setIsDismissed(false)}>
           <PopupBase
+            ref={popupRef}
             anchorFromBottom
             anchorOffset={36}
             key={transitionKey}
