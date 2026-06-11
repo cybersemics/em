@@ -12,7 +12,7 @@ import { loadFromUrlActionCreator as loadFromUrl } from './actions/loadFromUrl'
 import { preloadSourcesActionCreator as preloadSources } from './actions/preloadSources'
 import { pullActionCreator as pull } from './actions/pull'
 import { setCursorActionCreator as setCursor } from './actions/setCursor'
-import { commandById, commandEmitter, executeCommand } from './commands'
+import { commandById, executeCommand } from './commands'
 import db, { thoughtspaceRuntime } from './data-providers/thoughtspace'
 import * as selection from './device/selection'
 import testFlags from './e2e/testFlags'
@@ -126,9 +126,6 @@ const withDispatch =
 const testHelpers = {
   executeCommandById: (id: CommandId) => {
     executeCommand(commandById(id))
-  },
-  flushPendingEdits: () => {
-    commandEmitter.trigger('command')
   },
   dropThoughtspace: thoughtspaceRuntime.drop,
   waitForInitialized,
