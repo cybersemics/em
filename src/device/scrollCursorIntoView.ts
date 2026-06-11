@@ -1,37 +1,34 @@
 import { isSafari, isTouch } from '../browser'
 import { getAutoscrollEdges, getLayoutTreeTop } from '../device/autoscrollEdges'
+import virtualKeyboardStore from '../stores/virtualKeyboardStore'
 
-/** Scrolls the minimum amount necessary to move the viewport so that it includes the cursor. */
+/**
+ * Scrolls the minimum amount necessary to bring the cursor back inside the comfort zone — the
+ * region between the autoscroll trigger edges defined by autoscrollEdges.
+ * A cursor inside the comfort zone never scrolls.
+ * A cursor that crosses the top edge (under the toolbar) or the bottom edge (at the keyboard/navbar)
+ * is scrolled back in, landing a small margin inside the edge it crossed.
+ */
 const scrollIntoViewIfNeeded = (y: number, height: number) => {
   const { topEdge, bottomEdge } = getAutoscrollEdges()
 
-  // Landing margin — how far inside the trigger edge the cursor settles after a scroll fires.
-  // Independent from the trigger buffer in autoscrollEdges: the cursor begins scrolling once it
-  // crosses the edge, but settles `scrollMargin` px inside it so it doesn't sit flush against the
-  // toolbar/keyboard.
-  //
-  // Half the cursor height, not a fixed fontSize multiple. The per-keystroke autoscroll rhythm
-  // (each Enter at the bottom of the screen triggers a small scroll, like iOS native) holds iff
-  // the landing margin is smaller than one line step: land half a line inside the edge and the
-  // next Enter always crosses it again. A fixed fontSize-based margin can equal or exceed the
-  // line step, absorbing Enters and then scrolling too far. height/2 also scales the landing
-  // position with multi-line thoughts, matching the dynamic feel of iOS native autoscroll.
-  const scrollMargin = height / 2
+  // Landing margin: how far inside the crossed edge the cursor settles after a scroll, so it
+  // doesn't sit flush against the toolbar or keyboard. Distinct from the trigger buffer in
+  // autoscrollEdges — the trigger buffer decides when a scroll starts; the landing margin decides
+  // where the cursor settles once one has fired.
+  const landingMargin = height / 2
 
-  // Target viewport y of the cursor.
+  // Find the cursor's *target* viewport y — where it will be once the layout animation settles,
+  // not where it is mid-flight. Two moving parts make this non-trivial:
+  //   - The cursor overlay glides into place: TreeNodePositioner gives it a CSS transition on
+  //     `top`, so right after a cursor change the node is still animating from its old position.
+  //   - Autocrop: navigating deeper crops away the space above the cursor by shifting the whole
+  //     layout tree up with a translateY transform (see useAutocrop in LayoutTree).
   //
-  // Sources we *don't* use, and why:
-  //   - `cursorEl.getBoundingClientRect().top` — the cursor-overlay-tree-node has a CSS transition
-  //     on `top`, so the rect returns the mid-flight animating value, not the target. Reading it
-  //     would make the trigger see "where the cursor used to be" right after every cursor change.
-  //   - `viewportStore.layoutTreeTop + y − scrollY` — `layoutTreeTop` is set in a useEffect and is
-  //     one frame behind autocrop changes, so this disagrees with the live layout-tree position
-  //     during cursor moves that change autocrop.
-  //
-  // What we *do* use: the cursor element's offsetParent (the inner layout-tree div with the
-  // translateX transform) has its position updated synchronously when autocrop changes — no CSS
-  // transition, no stale store value. Its live `rect.top` plus the `y` arg (the post-render target
-  // the cursor's inline `top` style is being transitioned toward) gives the target viewport y.
+  // The `y` arg is the destination of that `top` transition: the cursor's final position relative
+  // to the layout tree, computed by LayoutTree and passed down via BulletCursorOverlay. Adding it
+  // to the layout tree's live viewport position — the cursor overlay's offsetParent rect, which
+  // reflects autocrop synchronously on render — gives the cursor's final viewport position.
   const cursorEl = document.querySelector('[aria-label="cursor-overlay-tree-node"]')
   const offsetParent = cursorEl instanceof HTMLElement ? cursorEl.offsetParent : null
   const offsetParentTop = offsetParent ? offsetParent.getBoundingClientRect().top : null
@@ -42,26 +39,30 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
   /** The y position of the cursor relative to the document. */
   const yDocument = yViewport + window.scrollY
 
-  const isAboveViewport = yViewport < topEdge
-  const isBelowViewport = yViewport + height > bottomEdge
+  const isAboveTopEdge = yViewport < topEdge
+  const isBelowBottomEdge = yViewport + height > bottomEdge
 
-  if (!isAboveViewport && !isBelowViewport) return
+  if (!isAboveTopEdge && !isBelowBottomEdge) return
 
-  // The native el.scrollIntoView causes a bug where the top part of the content is cut off, even when a significant delay is added.
-  // Therefore, we need to calculate the scroll position ourselves.
-  // Land the cursor `scrollMargin` px inside the trigger edge so it sits in the comfort zone, not flush with the edge.
-  const scrollYNew = isAboveViewport
-    ? yDocument - topEdge - scrollMargin
-    : yDocument + height - bottomEdge + scrollMargin
+  // Calculate the scroll position ourselves rather than using the native el.scrollIntoView, which
+  // cuts off the top of the content even when a significant delay is added.
+  // Scroll just far enough that the cursor lands `landingMargin` px inside the edge it crossed.
+  const scrollYNew = isAboveTopEdge
+    ? yDocument - topEdge - landingMargin
+    : yDocument + height - bottomEdge + landingMargin
 
   // scroll to 1 instead of 0
   // otherwise Mobile Safari scrolls to the top after MultiGesture
   // See: touchmove in MultiGesture.tsx
   const top = Math.max(1, scrollYNew)
 
-  const visualViewportHeight = window.visualViewport?.height ?? window.innerHeight
+  // Smooth-scroll short distances, but jump instantly when the target is more than a screenful
+  // away, where a smooth scroll would be slow and disorienting. "A screenful" is the visible area
+  // above the virtual keyboard, from the same store autoscrollEdges uses. (visualViewport.height
+  // is not an option: with Capacitor's Keyboard resize: 'none', it never shrinks in the native app.)
+  const visibleHeight = window.innerHeight - virtualKeyboardStore.getState().height
   const scrollDistance = Math.abs(scrollYNew - window.scrollY)
-  const behavior: ScrollBehavior = scrollDistance < visualViewportHeight ? 'smooth' : 'auto'
+  const behavior: ScrollBehavior = scrollDistance < visibleHeight ? 'smooth' : 'auto'
 
   window.scrollTo({
     top,
