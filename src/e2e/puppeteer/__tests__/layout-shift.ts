@@ -36,8 +36,7 @@ const measureYShift = async (thoughtValue: string): Promise<{ measurePromise: Pr
         let before: number | null = null
         /** The latest inline `top` on the target tree-node when the observer resolves. */
         let after: number | null = null
-        /** Whether the observer has resolved. */
-        let settled = false
+
         /** The mutation observer to observe the target tree-node. */
         let observer: MutationObserver | null = null
 
@@ -47,7 +46,7 @@ const measureYShift = async (thoughtValue: string): Promise<{ measurePromise: Pr
           return m ? parseFloat(m[1]) : null
         }
 
-        observer = new MutationObserver(mutations => {
+        observer = new MutationObserver((mutations, observerInstance) => {
           for (const m of mutations) {
             // Determine the target from the first insertion containing the thought, using its text node and tree node; the initial position is read from the DOM but may be corrected using the first mutation’s oldValue.
             if (!target && m.type === 'childList') {
@@ -77,9 +76,8 @@ const measureYShift = async (thoughtValue: string): Promise<{ measurePromise: Pr
             }
           }
           // Resolve the promise and disconnect the observer.
-          if (settled || !target) return
-          settled = true
-          observer?.disconnect()
+          if (!target) return
+          observerInstance.disconnect()
           resolve({ thoughtValue, before, after })
         })
 
@@ -93,8 +91,7 @@ const measureYShift = async (thoughtValue: string): Promise<{ measurePromise: Pr
 
         setTimeout(() => {
           if (!target) {
-            settled = true
-            observer?.disconnect()
+            observer.disconnect()
             reject(new Error(`Timed out waiting for thought "${thoughtValue}" within ${overallTimeoutMs}ms.`))
           }
         }, overallTimeoutMs)
@@ -113,14 +110,16 @@ const measureYShift = async (thoughtValue: string): Promise<{ measurePromise: Pr
 
 /** Expect the y position of the thought to be stable within the tolerance. */
 const expectStableY = ({ thoughtValue, before, after }: YShiftResult) => {
-  const delta = (after ?? 0) - (before ?? 0)
+  expect(before, `Thought "${thoughtValue}" has no initial top`).not.toBeNull()
+  expect(after, `Thought "${thoughtValue}" has no final top.`).not.toBeNull()
+  const delta = after! - before!
   expect(
     Math.abs(delta),
     `Thought "${thoughtValue}" y shifted ${Math.abs(delta).toFixed(2)}px ${delta < 0 ? 'up' : 'down'} (before=${before}, after=${after}).`,
   ).toBeLessThanOrEqual(Y_TOLERANCE)
 }
 
-describe('thought y position stability', { retry: 3 }, () => {
+describe('thought y position stability', () => {
   it('new thought should not shift y position after first render', async () => {
     await paste(`
         - a
@@ -160,7 +159,7 @@ describe('thought y position stability', { retry: 3 }, () => {
     expectStableY(await measurePromise)
   })
 
-  it.skip('non-last subthought should not shift y position when parent is expanded', async () => {
+  it('non-last subthought should not shift y position when parent is expanded', async () => {
     await paste(`
         - a
           - b
@@ -175,7 +174,7 @@ describe('thought y position stability', { retry: 3 }, () => {
     expectStableY(await measurePromise)
   })
 
-  it.skip('last subthought should not shift y position when parent is expanded', async () => {
+  it('last subthought should not shift y position when parent is expanded', async () => {
     await paste(`
         - X
           - A
