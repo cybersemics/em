@@ -37,16 +37,14 @@ const measureYShift = async (thoughtValue: string): Promise<{ measurePromise: Pr
         /** The latest inline `top` on the target tree-node when the observer resolves. */
         let after: number | null = null
 
-        /** The mutation observer to observe the target tree-node. */
-        let observer: MutationObserver | null = null
-
         /** Parse the `top` CSS property from a style string. */
         const parseTop = (styleStr: string | null): number | null => {
           const m = /top:\s*([-\d.]+)px/.exec(styleStr ?? '')
           return m ? parseFloat(m[1]) : null
         }
 
-        observer = new MutationObserver((mutations, observerInstance) => {
+        /** The mutation observer to observe the target tree-node. */
+        const observer = new MutationObserver((mutations, observerInstance) => {
           for (const m of mutations) {
             // Determine the target from the first insertion containing the thought, using its text node and tree node; the initial position is read from the DOM but may be corrected using the first mutation’s oldValue.
             if (!target && m.type === 'childList') {
@@ -73,12 +71,10 @@ const measureYShift = async (thoughtValue: string): Promise<{ measurePromise: Pr
               // On first style change, use oldValue as the true initial `top`; later changes skip this, and if values match again, the update has no effect.
               if (after === before) before = oldTop
               after = newTop
+              observerInstance.disconnect()
+              resolve({ thoughtValue, before, after })
             }
           }
-          // Resolve the promise and disconnect the observer.
-          if (!target) return
-          observerInstance.disconnect()
-          resolve({ thoughtValue, before, after })
         })
 
         observer.observe(document.body, {
@@ -90,9 +86,11 @@ const measureYShift = async (thoughtValue: string): Promise<{ measurePromise: Pr
         })
 
         setTimeout(() => {
+          observer.disconnect()
           if (!target) {
-            observer.disconnect()
             reject(new Error(`Timed out waiting for thought "${thoughtValue}" within ${overallTimeoutMs}ms.`))
+          } else {
+            resolve({ thoughtValue, before, after })
           }
         }, overallTimeoutMs)
       }),
