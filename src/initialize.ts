@@ -84,27 +84,10 @@ const updateThoughtsThrottled = throttleConcat<PushBatch, void>((batches: PushBa
   })
 }, UPDATE_THOUGHTS_THROTTLE)
 
-let eventHandlers: ReturnType<typeof initEvents> | null = null
-
-/** Initialize app event handlers once. */
-export const initAppEvents = () => {
-  if (eventHandlers) return eventHandlers
-
-  const handlers = initEvents(store)
-  eventHandlers = {
-    ...handlers,
-    cleanup: () => {
-      handlers.cleanup()
-      eventHandlers = null
-    },
-  }
-  return eventHandlers
-}
-
 /** Initialize local db and window events. */
 export const initialize = async () => {
   initOfflineStatusStore(/* websocket */)
-  const eventHandlers = initAppEvents()
+  const eventHandlers = initEvents(store)
 
   await initThoughtspace({
     cursor: decodeThoughtsUrl(store.getState()).path,

@@ -4,10 +4,12 @@ import { createRoot } from 'react-dom/client'
 import App from './components/App'
 import testFlags from './e2e/testFlags'
 import './index.css'
-import { initAppEvents, initialize } from './initialize'
+import { initialize } from './initialize'
 import { register } from './serviceWorkerRegistration'
+import store from './stores/app'
+import initEvents from './util/initEvents'
 
-initAppEvents()
+initEvents(store)
 
 if (!testFlags.preventInitialize) {
   void initialize()
