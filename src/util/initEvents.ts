@@ -419,11 +419,10 @@ const initEvents = (store: Store<State, any>) => {
     eventHandlers = null
   }
 
-  const handlers = { keyDown, keyUp, cleanup }
-  eventHandlers = handlers
+  eventHandlers = { keyDown, keyUp, cleanup }
 
   // return input handlers as another way to remove them on cleanup
-  return handlers
+  return eventHandlers
 }
 
 /** Error event listener. This does not catch React errors. See the ErrorFallback component that is used in the error boundary of the App component. */
