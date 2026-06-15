@@ -376,6 +376,40 @@ export const set = (
   sel.addRange(range)
 }
 
+/** Returns the plain-text start and end character offsets of the current selection relative to the given root node, ignoring nested HTML. Returns null if there is no selection within the root. */
+export const offsetsInRoot = (root: Node): { start: number; end: number } | null => {
+  const sel = window.getSelection()
+  if (!sel || sel.rangeCount === 0) return null
+
+  const range = sel.getRangeAt(0)
+  if (!root.contains(range.startContainer) || !root.contains(range.endContainer)) return null
+
+  /** Measures the plain-text offset of a boundary relative to the start of the root. */
+  const measure = (node: Node, offset: number): number => {
+    const boundary = document.createRange()
+    boundary.setStart(root, 0)
+    boundary.setEnd(node, offset)
+    return boundary.toString().length
+  }
+
+  return { start: measure(range.startContainer, range.startOffset), end: measure(range.endContainer, range.endOffset) }
+}
+
+/** Sets the browser selection to a range spanning the given plain-text start and end offsets relative to the root node, ignoring nested HTML. NOOP if the offsets cannot be resolved to nodes. */
+export const setRange = (root: Node, start: number, end: number): void => {
+  const startPosition = offsetFromClosestParent(root, start)
+  const endPosition = offsetFromClosestParent(root, end)
+  if (!startPosition?.node || !endPosition?.node) return
+
+  const range = document.createRange()
+  range.setStart(startPosition.node, startPosition.offset)
+  range.setEnd(endPosition.node, endPosition.offset)
+
+  const sel = window.getSelection()
+  sel?.removeAllRanges()
+  sel?.addRange(range)
+}
+
 /**
  * Split given root node into two different ranges at the given selection.
  */

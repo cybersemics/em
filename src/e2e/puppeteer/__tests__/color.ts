@@ -230,6 +230,34 @@ it('Applying a font color clears a background color on the overlapping part of t
   expect(extractColor(cursorText!).color).toBe(rgbaToHex(colors.light.blue))
 })
 
+it('Selection remains active after applying a font color to text that already has a background color', async () => {
+  const importText = `
+  - Labrador
+  - Golden Retriever`
+
+  await paste(importText)
+
+  await clickThought('Golden Retriever')
+
+  // Apply a background color to the substring "Golden"
+  await setSelection(0, 6)
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="background color swatches"] [aria-label="green"]')
+
+  // Apply a font color to the same selection without clearing it
+  await click('[aria-label="text color swatches"] [aria-label="blue"]')
+
+  // The active selection should be preserved (not dismissed) even though the font color cleared the
+  // background color, which forces a re-render (#4275)
+  const selectedText = await page.evaluate(() => window.getSelection()?.toString())
+  expect(selectedText).toBe('Golden')
+
+  // The font color should override the background color, leaving only the font color
+  const cursorText = await getEditingText()
+  expect(extractColor(cursorText!).backgroundColor).toBe(null)
+  expect(extractColor(cursorText!).color).toBe(rgbaToHex(colors.light.blue))
+})
+
 it('Empty <font> element will be removed after setting color to default.', async () => {
   const importText = `
   - Labrador

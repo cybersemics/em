@@ -65,6 +65,12 @@ export const formatSelectionActionCreator =
     // forcing a ContentEditable re-render that dismisses an active partial selection (#4275).
     const skipDefaultBackgroundColor = command === 'backColor' && color === 'bg' && !hasCustomBackgroundColor
 
+    // Capture the partial selection boundaries (as plain-text offsets relative to the editable) before any
+    // DOM mutation. When clearing a background color forces a ContentEditable re-render below, the selection
+    // collapses to a caret; these offsets are used to restore the selection afterwards (#4275). Tags added by
+    // execCommand and removed by post-processing never change the plain text, so the offsets remain valid.
+    const savedSelectionOffsets = isWholeThought ? null : selection.offsetsInRoot(contentEditable)
+
     if (isWholeThought) {
       const savedSelection = selection.save()
       // Note that we must suppress focus events in the Editable component, otherwise selecting text will set editing:true on mobile.
@@ -129,7 +135,7 @@ export const formatSelectionActionCreator =
         const newValue = doc.body.innerHTML
 
         // Overwrite the value of the thought or note with the stripped value in order to remove background highlighting (#3901)
-        if (newValue !== value)
+        if (newValue !== value) {
           dispatch(
             state.noteFocus
               ? setDescendant({
@@ -147,6 +153,17 @@ export const formatSelectionActionCreator =
                   mergePrev: true,
                 }),
           )
+
+          // Restore a partial selection that the forced re-render above collapsed to a caret (#4275).
+          // The re-render resets the editable's innerHTML and sets a collapsed selection at the cursor
+          // offset, so the original selection range is re-applied on the next tick (after that reset)
+          // using the plain-text offsets captured before the edit. The plain text is unchanged by the
+          // edit, so the offsets still map to the correct nodes in the re-rendered DOM.
+          if (savedSelectionOffsets && savedSelectionOffsets.start !== savedSelectionOffsets.end) {
+            const { start, end } = savedSelectionOffsets
+            setTimeout(() => selection.setRange(contentEditable, start, end))
+          }
+        }
       })
     }
   }
