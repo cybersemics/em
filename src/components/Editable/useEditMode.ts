@@ -164,6 +164,10 @@ const useEditMode = ({
         return
       }
 
+      // If the press is ongoing (touchend has not been dispatched) then a long press is ongoing and setCaretOffset will interfere
+      // with default iOS Safari drag-and-drop text selection.
+      if (pressingRef.current) return
+
       // If editing or the cursor is on the thought, allow the default browser selection or perform manual caret positioning so the offset is correct.
       // See: #981
       if (editingOrOnCursor && !isMulticursor) {
@@ -171,10 +175,6 @@ const useEditMode = ({
           clientX: e.clientX,
           clientY: e.clientY,
         })
-
-        // If the press is ongoing (touchend has not been dispatched) then a long press is ongoing and setCaretOffset will interfere
-        // with default iOS Safari drag-and-drop text selection.
-        if (pressingRef.current) return
 
         if (offset !== null) {
           // Prevent the browser from autoscrolling to this editable element.
