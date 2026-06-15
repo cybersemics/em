@@ -59,6 +59,7 @@ const initializeCursor = async () => {
 /** Initialize local db and window events. */
 const initializeInternal = async () => {
   initOfflineStatusStore(/* websocket */)
+  const eventHandlers = initEvents(store)
 
   const { clientId } = await thoughtspaceRuntime.init()
 
@@ -86,10 +87,7 @@ const initializeInternal = async () => {
 
   await initializeCursor()
 
-  return {
-    thoughtsLocalPromise,
-    ...initEvents(store),
-  }
+  return eventHandlers
 }
 
 let initializePromise: ReturnType<typeof initializeInternal> | null = null
@@ -104,6 +102,8 @@ export const initialize = (): ReturnType<typeof initializeInternal> => {
 export const waitForInitialized = async (): Promise<void> => {
   await initializePromise
 }
+
+testFlags.initialize = initialize
 
 /** Partially apply state to a function. */
 const withState =
