@@ -395,6 +395,12 @@ export const offsetsInRoot = (root: Node): { start: number; end: number } | null
   return { start: measure(range.startContainer, range.startOffset), end: measure(range.endContainer, range.endOffset) }
 }
 
+/** Returns true if the current selection's anchor is contained within the given root node. */
+export const isWithin = (root: Node): boolean => {
+  const sel = window.getSelection()
+  return !!sel?.anchorNode && root.contains(sel.anchorNode)
+}
+
 /** Sets the browser selection to a range spanning the given plain-text start and end offsets relative to the root node, ignoring nested HTML. NOOP if the offsets cannot be resolved to nodes. */
 export const setRange = (root: Node, start: number, end: number): void => {
   const startPosition = offsetFromClosestParent(root, start)

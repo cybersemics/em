@@ -71,6 +71,20 @@ export const formatSelectionActionCreator =
     // execCommand and removed by post-processing never change the plain text, so the offsets remain valid.
     const savedSelectionOffsets = isWholeThought ? null : selection.offsetsInRoot(contentEditable)
 
+    // Whether the selection contains a real (non-neutral) background color to clear, captured before any DOM
+    // mutation. Only such a real background triggers the forced re-render whose selection collapse must be
+    // undone by the restore below (#4275). Neutral pure-black/pure-white background-color values are excluded
+    // because they are either the default background or artifacts that some browsers' execCommand adds to the
+    // selection fragment (and post-processing then strips), which must not trigger a spurious restore.
+    const backgroundColorMatch = isWholeThought
+      ? null
+      : (selection.html() ?? '').match(/background-color\s*:\s*([^;"']+)/i)
+    const hadRealBackgroundColor =
+      !!backgroundColorMatch &&
+      !/^\s*(?:#000000|#fff(?:fff)?|rgba?\(\s*0\s*,\s*0\s*,\s*0\s*[,)]|rgba?\(\s*255\s*,\s*255\s*,\s*255\s*[,)])/i.test(
+        backgroundColorMatch[1],
+      )
+
     if (isWholeThought) {
       const savedSelection = selection.save()
       // Note that we must suppress focus events in the Editable component, otherwise selecting text will set editing:true on mobile.
@@ -155,13 +169,26 @@ export const formatSelectionActionCreator =
           )
 
           // Restore a partial selection that the forced re-render above collapsed to a caret (#4275).
-          // The re-render resets the editable's innerHTML and sets a collapsed selection at the cursor
-          // offset, so the original selection range is re-applied on the next tick (after that reset)
-          // using the plain-text offsets captured before the edit. The plain text is unchanged by the
-          // edit, so the offsets still map to the correct nodes in the re-rendered DOM.
-          if (savedSelectionOffsets && savedSelectionOffsets.start !== savedSelectionOffsets.end) {
+          // The re-render resets the editable's innerHTML and sets a collapsed caret at the cursor offset,
+          // so the original selection range is re-applied on the next tick (after that reset) using the
+          // plain-text offsets captured before the edit. The plain text is unchanged by the edit, so the
+          // offsets still map to the correct nodes in the re-rendered DOM.
+          // Only restore when a real (non-neutral) background color was present in the selection before the
+          // edit (hadRealBackgroundColor): that is the Issue D case where clearing a real background forces a
+          // re-render that must be undone. A plain font-color application has no such background and keeps its
+          // selection via execCommand, so it needs no restore — and a neutral background artifact added then
+          // stripped by post-processing must not trigger a spurious restore. The restore is additionally
+          // skipped if the editable is no longer the active selection target, so focusing a different thought
+          // before the restore fires is not overridden.
+          if (
+            hadRealBackgroundColor &&
+            savedSelectionOffsets &&
+            savedSelectionOffsets.start !== savedSelectionOffsets.end
+          ) {
             const { start, end } = savedSelectionOffsets
-            setTimeout(() => selection.setRange(contentEditable, start, end))
+            setTimeout(() => {
+              if (selection.isWithin(contentEditable)) selection.setRange(contentEditable, start, end)
+            })
           }
         }
       })
