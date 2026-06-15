@@ -20,11 +20,13 @@ import { moveThoughtActionCreator as moveThought } from '../actions/moveThought'
 import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from '../actions/setIsMulticursorExecuting'
 import { isTouch } from '../browser'
 import { ThoughtContainerProps } from '../components/Thought'
-import { LongPressState } from '../constants'
+import { AlertType, LongPressState } from '../constants'
+import allowTouchToScroll from '../device/allowTouchToScroll'
 import * as selection from '../device/selection'
 import documentSort from '../selectors/documentSort'
 import findDescendant from '../selectors/findDescendant'
 import getNextRank from '../selectors/getNextRank'
+import getRankAfter from '../selectors/getRankAfter'
 import getRankBefore from '../selectors/getRankBefore'
 import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursor from '../selectors/hasMulticursor'
@@ -183,20 +185,28 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
 
   const state = store.getState()
 
-  // If any drop is invalid, abort the drop early
-  if (
-    draggedItems.some(({ simplePath }) => {
-      const { isValid, errorMessage, errorType } = validateDraggedItem(state, simplePath, props.simplePath)
+  // Validate each dragged item once. A no-op drop (dropping a thought on or immediately before itself) is a valid
+  // drop target that simply does not move that thought; it returns isValid:false with no errorMessage. Only genuine
+  // errors (e.g. moving the root/em context) carry an errorMessage and abort the entire drop. This distinction is
+  // what allows a multiselect drop where one selected thought is a no-op (e.g. dropping b above b) to still move the
+  // remaining selected thoughts.
+  const validations = draggedItems.map(item => ({
+    item,
+    result: validateDraggedItem(state, item.simplePath, props.simplePath),
+  }))
 
-      if (!isValid && errorMessage) {
-        if (errorType === 'warning') {
-          console.warn(errorMessage)
-        } else if (errorType === 'error') {
-          store.dispatch(error({ value: errorMessage }))
-        }
+  // Abort the drop only if an item produced an actual error or warning (not a no-op).
+  if (
+    validations.some(({ result: { isValid, errorMessage, errorType } }) => {
+      if (isValid || !errorMessage) return false
+
+      if (errorType === 'warning') {
+        console.warn(errorMessage)
+      } else if (errorType === 'error') {
+        store.dispatch(error({ value: errorMessage }))
       }
 
-      return !isValid
+      return true
     })
   )
     return
@@ -207,28 +217,38 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
       dispatch(setIsMulticursorExecuting({ value: true, undoLabel: 'Dragging Thoughts' }))
     }
 
-    // move each dragged item to the destination path
-    draggedItems.forEach(item => {
+    const parent = parentOf(props.simplePath)
+
+    // Move each dragged item to the destination path, preserving document order. The first item is placed before the
+    // drop target; each subsequent item is placed after the previous one. No-op items (dropping a thought on or before
+    // itself) are not moved, but still anchor the position of the following items so the original order is preserved.
+    let prevPath: SimplePath | null = null
+    validations.forEach(({ item, result }) => {
       const state = getState()
-      const parent = parentOf(props.simplePath)
       const newPath = appendToPath(parent, head(item.simplePath))
       const toThought = pathToThought(state, props.simplePath)
       const thoughtFrom = item.simplePath
 
-      dispatch(
-        props.showContexts
-          ? createThought({
-              value: toThought?.value ?? '',
-              path: thoughtFrom,
-              rank: getNextRank(state, head(thoughtFrom)),
-            })
-          : moveThought({
-              oldPath: thoughtFrom,
-              newPath,
-              newRank: getRankBefore(state, props.simplePath),
-              afterId: prevSibling(state, props.simplePath)?.id ?? null,
-            }),
-      )
+      if (props.showContexts) {
+        dispatch(
+          createThought({
+            value: toThought?.value ?? '',
+            path: thoughtFrom,
+            rank: getNextRank(state, head(thoughtFrom)),
+          }),
+        )
+      } else if (result.isValid) {
+        dispatch(
+          moveThought({
+            oldPath: thoughtFrom,
+            newPath,
+            newRank: prevPath ? getRankAfter(state, prevPath) : getRankBefore(state, props.simplePath),
+            afterId: prevPath ? head(prevPath) : (prevSibling(state, props.simplePath)?.id ?? null),
+          }),
+        )
+      }
+
+      prevPath = newPath
     })
 
     // Clear isMulticursorExecuting after all operations are complete and isMulticursorExecuting is true
@@ -263,6 +283,22 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   })
 }
 
+/** Handles drag end. Resets longPress to Inactive so that gestures, alerts, and the multicursor are restored once the drag concludes, and re-enables native scrolling. This react-dnd callback is guaranteed to fire whenever a drag ends (dropped or not), which is more reliable than the touchend-based reset in useDragHold that may not fire (e.g. multicursor drop onto a subthought). Scrolling is re-enabled here because useLongPress disables it via allowTouchToScroll(false) on long-press start and only restores it on touchend, which does not fire once a drag has begun (see useLongPress.stop). */
+const endDrag = () => {
+  // Re-enable native scrolling. allowTouchToScroll(false) attaches an unconditional preventDefault touchmove listener on
+  // long-press start that blocks all scrolling; it is only removed on touchend, which does not fire after a drag (e.g. a
+  // multiselect drop onto a subthought), leaving scrolling frozen until it is explicitly re-enabled here.
+  allowTouchToScroll(true)
+  store.dispatch([
+    longPress({ value: LongPressState.Inactive }),
+    (dispatch, getState) => {
+      if (getState().alert?.alertType === AlertType.DragAndDropHint) {
+        dispatch(alert(null))
+      }
+    },
+  ])
+}
+
 /** Collects props from the DragSource. */
 const dragCollect = (monitor: DragSourceMonitor) => ({
   isDragging: monitor.isDragging(),
@@ -284,6 +320,7 @@ const useDragAndDropThought = (props: Partial<ThoughtContainerProps> & { hoverZo
     type: DragAndDropType.Thought,
     item: () => beginDrag(propsTypes),
     canDrag: () => canDrag(propsTypes),
+    end: () => endDrag(),
     collect: dragCollect,
   })
 
@@ -291,6 +328,7 @@ const useDragAndDropThought = (props: Partial<ThoughtContainerProps> & { hoverZo
     type: DragAndDropType.Thought,
     item: () => beginDrag(propsTypes),
     canDrag: () => canDrag(propsTypes),
+    end: () => endDrag(),
     collect: dragCollect,
   })
 
