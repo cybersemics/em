@@ -52,7 +52,7 @@ Once both gates are satisfied (or determined not to apply), continue with the li
 - When opening a PR, include the bare issue number at the top of the description (e.g. "#1234").
 - Make all of your commits in this branch. Push after each meaningful change. Never commit directly to main or protected branches.
   - Run `yarn prettier --write .` before committing any changes to ensure proper code formatting.
-- After completing the initial implementation, open a draft pull request with a clear, descriptive title and summary to merge your feature branch into `main`.
+- After completing the initial implementation, open a draft pull request with a clear, descriptive title and summary to merge your feature branch into `main`. Create the PR with the `runtime-tools-create_pull_request` tool — do not shell out to `git` or `gh` to open it.
 - Use the `ci_monitor` skill to monitor CI status. Wait for all runs to complete before proceeding.
 - If any CI checks fail, use the `test-diagnosis` skill to review logs, identify the failing test, and fix the underlying code or test as appropriate.
 - If the user explicitly asks you to implement a failing test (e.g., for regression), follow their instructions. You must still use the `ci_monitor` skill to wait for CI to complete and verify that the only failures are the expected ones from the intentinally failing test. NEVER skip the CI verification loop.
