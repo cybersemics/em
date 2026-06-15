@@ -35,6 +35,7 @@ The first five steps below are sequential and must be performed **in order**, be
 3. **Confirm the gate explicitly.** Before continuing past step 3, output exactly one of the following two lines, verbatim, on its own line:
    - `issue-repro: not applicable — the issue has no Steps to Reproduce.`
    - `issue-repro: applicable — executing .github/skills/issue-repro/SKILL.md before any investigation.`
+   - Emitting this line is **not** a stopping point and does **not** end your turn — do not yield or wait for the user after it. In the **same turn**, immediately continue: if applicable, begin executing the `issue-repro` skill; if not applicable, proceed directly to step 4 (the plan gate).
 
 4. **Apply the plan gate.** Before you create a branch, edit any file, or write a fix, you MUST execute the `plan` skill end-to-end — both its **Plan** and **Critique** stages — producing a written architectural plan grounded in the existing code and a self-critique that passes before any implementation.
    - The plan gate runs **after** reproduction. For an issue with Steps to Reproduce, satisfy the issue-repro gate first (you cannot judge adjacent-behaviour impact until you have seen the real failure), then run `plan`, then implement.
@@ -43,6 +44,7 @@ The first five steps below are sequential and must be performed **in order**, be
 
 5. **Confirm the plan gate explicitly.** Before continuing past step 5, output exactly this line, verbatim, on its own line:
    - `plan: complete — architectural plan produced and critique passed per .github/skills/plan/SKILL.md.`
+   - Emitting this line is **not** a stopping point and does **not** end your turn — do not yield or wait for the user after it. In the **same turn**, immediately continue to the lifecycle below (create a branch and begin the work).
 
 Once both gates are satisfied (or determined not to apply), continue with the lifecycle below:
 
