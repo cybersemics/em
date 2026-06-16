@@ -258,6 +258,66 @@ it('Selection remains active after applying a font color to text that already ha
   expect(extractColor(cursorText!).color).toBe(rgbaToHex(colors.light.blue))
 })
 
+it('Applying a font color after a background color clears the background in place without re-rendering the editable', async () => {
+  // Clearing the background color when applying a font color must not force a ContentEditable re-render
+  // (innerHTML reset). On Android a re-render collapses the selection and the native selection handles and
+  // context menu cannot be re-shown programmatically, so the selection UI disappears even though the
+  // selection is still active (#4275, Issue F). The edit is instead applied in place, preserving the
+  // existing DOM nodes (and thus the native selection).
+  const importText = `
+  - Labrador
+  - Golden Retriever`
+
+  await paste(importText)
+
+  await clickThought('Golden Retriever')
+
+  // Apply a background color to the substring "Golden"
+  await setSelection(0, 6)
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="background color swatches"] [aria-label="green"]')
+
+  // Tag the text node outside the selection (" Retriever"). It is untouched by the font-color execCommand,
+  // so it survives an in-place edit but is recreated by an innerHTML reset (forced re-render).
+  const tagged = await page.evaluate(() => {
+    const editable = document.querySelector('[data-editing=true] [data-editable]')!
+    const walker = document.createTreeWalker(editable, NodeFilter.SHOW_TEXT)
+    let found = false
+    while (walker.nextNode()) {
+      const node = walker.currentNode as Text & { dataIssueF?: boolean }
+      if (node.textContent?.includes('Retriever')) {
+        node.dataIssueF = true
+        found = true
+      }
+    }
+    return found
+  })
+  expect(tagged).toBe(true)
+
+  // Apply a font color to the same selection without clearing it
+  await click('[aria-label="text color swatches"] [aria-label="blue"]')
+
+  // The tagged node must still be present, proving the editable was not re-rendered (#4275, Issue F)
+  const nodePreserved = await page.evaluate(() => {
+    const editable = document.querySelector('[data-editing=true] [data-editable]')!
+    const walker = document.createTreeWalker(editable, NodeFilter.SHOW_TEXT)
+    while (walker.nextNode()) {
+      if ((walker.currentNode as Text & { dataIssueF?: boolean }).dataIssueF) return true
+    }
+    return false
+  })
+  expect(nodePreserved).toBe(true)
+
+  // The active selection should be preserved
+  const selectedText = await page.evaluate(() => window.getSelection()?.toString())
+  expect(selectedText).toBe('Golden')
+
+  // The font color should override the background color, leaving only the font color
+  const cursorText = await getEditingText()
+  expect(extractColor(cursorText!).backgroundColor).toBe(null)
+  expect(extractColor(cursorText!).color).toBe(rgbaToHex(colors.light.blue))
+})
+
 it('Applying a font color overrides a background color on a selection that contains an existing font color', async () => {
   await paste('Hello world of beautiful world')
 

@@ -22,6 +22,34 @@ const BACKGROUND_COLOR_REGEX = /background-color\s*:\s*[^;]+;?/i
 const NEUTRAL_BACKGROUND_COLOR_REGEX =
   /^\s*(?:#000000|#fff(?:fff)?|rgba?\(\s*0\s*,\s*0\s*,\s*0\s*[,)]|rgba?\(\s*255\s*,\s*255\s*,\s*255\s*[,)])/i
 
+/**
+ * Removes a redundant default background-color and default text color from <font>/<span> descendants of root, then unwraps any
+ * element left without a meaningful style or color attribute. Mutates root in place (#3901). Used both on a detached document
+ * (to compute the cleaned thought/note value) and on the live ContentEditable (to clean a partial selection in place without an
+ * innerHTML reset that would collapse the active selection — see formatSelection below, #4275).
+ */
+const stripRedundantColors = (root: ParentNode, defaultBackgroundHex: string, defaultColorHex: string): void => {
+  for (const el of Array.from(root.querySelectorAll<HTMLElement>('font, span'))) {
+    // Remove background-color if it matches the default background color
+    if (el.style.backgroundColor && rgbToHex(el.style.backgroundColor) === defaultBackgroundHex) {
+      el.style.removeProperty('background-color')
+      if (!el.getAttribute('style')?.trim()) {
+        el.removeAttribute('style')
+      }
+    }
+
+    // Remove color if it matches the default text color
+    if (el.style.color && rgbToHex(el.style.color) === defaultColorHex) {
+      el.style.removeProperty('color')
+    }
+
+    // Unwrap tags that have no meaningful style or color attributes
+    if (!el.getAttribute('style')?.trim() && !el.getAttribute('color')?.trim()) {
+      el.replaceWith(...Array.from(el.childNodes))
+    }
+  }
+}
+
 /** Format the browser selection or cursor thought as bold, italic, strikethrough, underline. */
 export const formatSelectionActionCreator =
   (
@@ -73,17 +101,6 @@ export const formatSelectionActionCreator =
     // forcing a ContentEditable re-render that dismisses an active partial selection (#4275).
     const skipDefaultBackgroundColor = command === 'backColor' && color === 'bg' && !hasCustomBackgroundColor
 
-    // Capture the partial selection boundaries (as plain-text offsets relative to the editable) before any
-    // DOM mutation. When clearing a background color forces a ContentEditable re-render below, the selection
-    // collapses to a caret; these offsets are used to restore the selection afterwards (#4275). Tags added by
-    // execCommand and removed by post-processing never change the plain text, so the offsets remain valid.
-    const savedSelectionOffsets = isWholeThought ? null : selection.offsetsInRoot(contentEditable)
-
-    // Whether the selection contains a real (non-neutral) background color to clear, captured before any DOM
-    // mutation. Only such a real background triggers the forced re-render whose selection collapse must be
-    // undone by the restore below (#4275, Issue D/E).
-    const hadRealBackgroundColor = hasRealSelectionBackgroundColor
-
     if (isWholeThought) {
       const savedSelection = selection.save()
       // Note that we must suppress focus events in the Editable component, otherwise selecting text will set editing:true on mobile.
@@ -122,30 +139,26 @@ export const formatSelectionActionCreator =
         const path = state.noteFocus ? resolveNotePath(state, state.cursor) : state.cursor
         if (!path) return
 
-        // Use DOMParser to remove background-color and unwrap font/span tags that have no meaningful attributes
-        const doc = new DOMParser().parseFromString(value, 'text/html')
+        const defaultBackgroundHex = rgbToHex(colors.bg)
+        const defaultColorHex = rgbToHex(state.noteFocus ? colors.fg : colors.fgNote)
 
-        for (const el of Array.from(doc.body.querySelectorAll<HTMLElement>('font, span'))) {
-          // Remove background-color if it matches the default background color
-          if (el.style.backgroundColor && rgbToHex(el.style.backgroundColor) === rgbToHex(colors.bg)) {
-            el.style.removeProperty('background-color')
-            if (!el.getAttribute('style')?.trim()) {
-              el.removeAttribute('style')
-            }
+        // A partial thought selection is cleaned directly on the live ContentEditable DOM so the change is
+        // reflected WITHOUT a forced innerHTML reset below. A reset collapses the native selection to a caret,
+        // which cannot be restored with its native handles/context menu on Android — programmatic selection
+        // does not re-show the native selection UI there (#4275, Issue F). Mutating the existing nodes in place
+        // preserves the active selection. A whole-thought selection (or a note) is instead parsed into a
+        // detached document and the ContentEditable updated via force, as before (#3901).
+        const partialThought = !isWholeThought && !state.noteFocus
+
+        const newValue = (() => {
+          if (partialThought) {
+            stripRedundantColors(contentEditable, defaultBackgroundHex, defaultColorHex)
+            return contentEditable.innerHTML
           }
-
-          // Remove color if it matches the default text color
-          if (el.style.color && rgbToHex(el.style.color) === rgbToHex(state.noteFocus ? colors.fg : colors.fgNote)) {
-            el.style.removeProperty('color')
-          }
-
-          // Unwrap tags that have no meaningful style or color attributes
-          if (!el.getAttribute('style')?.trim() && !el.getAttribute('color')?.trim()) {
-            el.replaceWith(...Array.from(el.childNodes))
-          }
-        }
-
-        const newValue = doc.body.innerHTML
+          const doc = new DOMParser().parseFromString(value, 'text/html')
+          stripRedundantColors(doc.body, defaultBackgroundHex, defaultColorHex)
+          return doc.body.innerHTML
+        })()
 
         // Overwrite the value of the thought or note with the stripped value in order to remove background highlighting (#3901)
         if (newValue !== value) {
@@ -161,34 +174,13 @@ export const formatSelectionActionCreator =
                   oldValue: value,
                   newValue: newValue,
                   path: simplifyPath(state, path),
-                  // force the ContentEditable to update
-                  force: true,
+                  // Force the ContentEditable to re-render only for a whole-thought selection (whose selection is
+                  // saved and restored above). A partial selection is cleaned in place and must NOT force a
+                  // re-render, which would collapse the active selection (#4275).
+                  force: isWholeThought,
                   mergePrev: true,
                 }),
           )
-
-          // Restore a partial selection that the forced re-render above collapsed to a caret (#4275).
-          // The re-render resets the editable's innerHTML and sets a collapsed caret at the cursor offset,
-          // so the original selection range is re-applied on the next tick (after that reset) using the
-          // plain-text offsets captured before the edit. The plain text is unchanged by the edit, so the
-          // offsets still map to the correct nodes in the re-rendered DOM.
-          // Only restore when a real (non-neutral) background color was present in the selection before the
-          // edit (hadRealBackgroundColor): that is the Issue D case where clearing a real background forces a
-          // re-render that must be undone. A plain font-color application has no such background and keeps its
-          // selection via execCommand, so it needs no restore — and a neutral background artifact added then
-          // stripped by post-processing must not trigger a spurious restore. The restore is additionally
-          // skipped if the editable is no longer the active selection target, so focusing a different thought
-          // before the restore fires is not overridden.
-          if (
-            hadRealBackgroundColor &&
-            savedSelectionOffsets &&
-            savedSelectionOffsets.start !== savedSelectionOffsets.end
-          ) {
-            const { start, end } = savedSelectionOffsets
-            setTimeout(() => {
-              if (selection.isWithin(contentEditable)) selection.setRange(contentEditable, start, end)
-            })
-          }
         }
       })
     }
