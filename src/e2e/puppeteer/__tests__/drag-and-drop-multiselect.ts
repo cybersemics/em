@@ -1,3 +1,4 @@
+import clickThought from '../helpers/clickThought'
 import dragAndDropThought from '../helpers/dragAndDropThought'
 import exportThoughts from '../helpers/exportThoughts'
 import hideHUD from '../helpers/hideHUD'
@@ -89,6 +90,30 @@ describe('drag and drop multiple thoughts', () => {
   - x
   - y
   - a
+`)
+  })
+
+  it('should drop a multiselected thought and subthought as the first children, preserving document order', async () => {
+    await paste(`
+      - a
+        - b
+      - c
+      `)
+
+    // expand a so that its child b is visible
+    await clickThought('a')
+
+    // select the subthought b and the sibling c
+    await multiselectThoughts(['b', 'c'])
+
+    // drop c above b (the first child of a). b above itself is a no-op, but c should still move.
+    await dragAndDropThought('c', 'b', { position: 'before' })
+
+    const exported = await exportThoughts()
+    expect(exported).toBe(`
+- a
+  - b
+  - c
 `)
   })
 

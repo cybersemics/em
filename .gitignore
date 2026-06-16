@@ -21,6 +21,7 @@ local.log
 .firebaserc
 .history
 .idea
+.vercel
 
 /coverage
 /build
