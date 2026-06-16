@@ -37,8 +37,15 @@ const UndoSlider: FC = () => {
           // intentionally does not preventDefault touchmove), the browser intermittently claims the drag as a horizontal pan,
           // leaving the slider unresponsive until the touch is held long enough to disambiguate. Forcing `touch-action: none`
           // on the slider elements makes the browser deliver every touch move to rc-slider instead (#4329).
+          //
+          // The default handle is only 14px, so a touch that lands a few pixels off the dot starts on the bare page (which
+          // has no `touch-action: none`); in the scroll zone the browser then claims that first move as a pan and the drag
+          // fails until the touch is held long enough to disambiguate. This is worst when the dot sits on the scroll/trace
+          // zone border. Enlarging the handle to 2x doubles the `touch-action: none` grab target, giving more tolerance so
+          // the touch is reliably handed to rc-slider on the first attempt. marginTop keeps the dot centered on the rail
+          // (default 14px handle uses marginTop -5px, i.e. center +2px; for height H, marginTop = 2 - H/2).
           styles={{
-            handle: { touchAction: 'none' },
+            handle: { touchAction: 'none', width: 28, height: 28, marginTop: -12 },
             rail: { touchAction: 'none' },
             track: { touchAction: 'none' },
           }}
