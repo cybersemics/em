@@ -41,8 +41,11 @@ const baseConfig = {
   setupFiles: [path.resolve(process.cwd(), 'src/e2e/iOS/setup.ts')],
 
   // Capabilities
-  // Each spec file runs in its own parallel session
-  maxInstances: 3,
+  // Spec files run in parallel sessions, but cap at 2 (we have 3 specs) rather than opening all at once.
+  // Reasons: (1) bursting N simultaneous session-creations is what timed out the 3rd session on
+  // BrowserStack (#0-2 "aborted due to timeout" on POST .../session); staggering avoids the spike.
+  // (2) leave headroom in the shared BrowserStack parallel pool for agent-driven sessions and other CI runs.
+  maxInstances: 2,
 
   // Base iOS Safari capabilities shared between local and browserStack configs. Individual configs can override or extend these.
   baseCapabilities: {
