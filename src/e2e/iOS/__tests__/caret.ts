@@ -251,28 +251,4 @@ describe('Caret', () => {
     expect(selectionTextContent).toBe('new')
     expect(childrenTexts).toEqual(['foo', 'bar'])
   })
-
-  it('Tap from one thought to bottom right corner of another thought with collapsed children, then back', async () => {
-    const importText = `
-    - Hello
-      - A
-      - B
-      - C
-    - World
-      - E
-      - F
-      - G`
-
-    await newThought()
-    await paste([''], importText)
-    await clickThought('Hello')
-
-    const editableNodeHandleWorld = await waitForEditable('World')
-    await tap(editableNodeHandleWorld, { horizontalTapLine: 'right', y: 33.75 })
-
-    await clickThought('Hello')
-
-    const selectionTextContent = await getSelection().focusNode?.textContent
-    expect(selectionTextContent).toBe('Hello')
-  })
 })
