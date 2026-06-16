@@ -1,38 +1,21 @@
-/** Marker set on the document before reload so resetApp can tell the freshly reloaded page from the stale one. */
+/** Marker set pre-reload so we can detect the stale page after browser.refresh() returns early. */
 const RESET_SENTINEL = '__emResetSentinel'
 
-/**
- * Reset the app to a clean, empty thoughtspace: clear `localStorage` + `sessionStorage`, refresh, and
- * dismiss the tutorial. The single source of truth for a clean reset — the wdio suite's `beforeTest`
- * calls this, and the bridge/agent uses it mid-session (the agent reuses a session with `noReset`, so
- * thoughts, cursor, and multiselect persist between repros).
- *
- * Uses the global `browser` object from WDIO.
- */
+/** Reset to a clean, empty thoughtspace: clear storage, refresh, dismiss the tutorial. */
 const resetApp = async (): Promise<void> => {
   await browser.execute(sentinel => {
     localStorage.clear()
     sessionStorage.clear()
-    // Tag the current document. browser.refresh() can resolve before the WKWebView has navigated, so the
-    // pre-reload DOM stays briefly queryable; the reloaded document won't carry this tag (see the wait below).
+    // browser.refresh() can resolve before WKWebView navigates; tag the current document so the poll
+    // below can tell it apart from the reloaded one.
     ;(window as unknown as Record<string, boolean>)[sentinel] = true
   }, RESET_SENTINEL)
   await browser.refresh()
 
-  // Dismiss the tutorial deterministically in a single resilient poll. On every interval:
-  //   1. If the sentinel is still set, we're looking at the pre-reload page (refresh() returns before the
-  //      WKWebView navigates) — keep waiting. This is the load-bearing guard: without it the poll can act on
-  //      the prior test's DOM, which after most tests still shows [aria-label="empty-thoughtspace"], and
-  //      return immediately on a page that is about to be torn down — the BrowserStack flakiness this replaced.
-  //   2. Once on the reloaded page, click #skip-tutorial if present (retrying each interval absorbs the race
-  //      where the element exists before fastClick's handler is attached). element.click() via the WebDriver
-  //      element protocol is silently ignored in the app webview, so dismiss via a DOM click.
-  //   3. Report ready only once #skip-tutorial is GONE and the empty thoughtspace is shown. Do NOT treat the
-  //      presence of [aria-label="empty-thoughtspace"] alone as ready: EmptyThoughtspace renders that element
-  //      during the tutorial too (see its isTutorial branch), so it is present behind the Welcome modal.
-  //
-  // Poll the DOM via execute() (returning only primitives) rather than the WebDriver element protocol
-  // (waitForExist), which can keep missing the element after the WKWebView re-attaches on reload.
+  // Use execute() not the WebDriver element protocol — it can keep missing elements after WKWebView reloads.
+  // Each iteration: skip if the sentinel is still set (stale page), click #skip-tutorial if present,
+  // then resolve once it's gone and empty-thoughtspace is visible.
+  // Can't treat empty-thoughtspace alone as ready — it also renders during the tutorial.
   await browser.waitUntil(
     async () =>
       browser.execute(sentinel => {
