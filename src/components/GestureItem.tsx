@@ -52,7 +52,7 @@ const GestureItem: FC<{
         flexDirection: 'row',
         alignItems: selected ? 'stretch' : 'center',
         gap: '0.89rem',
-        paddingTop: selected ? '0.5rem' : 0,
+        paddingTop: selected ? '0.6rem' : 0,
         paddingBottom: selected ? '0.1rem' : 0,
       })}
     >
@@ -84,12 +84,12 @@ const GestureItem: FC<{
         className={css({
           display: 'flex',
           flexDirection: 'column',
-          gap: '0.7rem',
+          gap: '0.5rem',
         })}
       >
         <div
           className={css({
-            fontSize: '0.94rem',
+            fontSize: '0.95rem',
             lineHeight: '1em',
             whiteSpace: 'nowrap',
             color: disabled ? 'gray45' : selected ? '#ffffff' : 'rgba(255, 255, 255, 0.6)',

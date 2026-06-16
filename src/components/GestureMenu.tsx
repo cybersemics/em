@@ -63,7 +63,7 @@ const GestureMenu: FC<{
           <div
             className={css({
               padding: '2.25rem',
-              paddingTop: !isBrowser ? '0.6rem' : undefined,
+              paddingTop: !isBrowser ? '0.75rem' : undefined,
             })}
           >
             {/* Header */}
@@ -72,7 +72,7 @@ const GestureMenu: FC<{
                 style={{
                   color: 'rgb(255, 255, 255, 0.7)',
                   marginBottom: '0.444rem',
-                  fontSize: '0.889rem',
+                  fontSize: '0.9rem',
                   fontWeight: 500,
                 }}
               >

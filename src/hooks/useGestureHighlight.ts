@@ -2,6 +2,10 @@ import { useMemo } from 'react'
 import Command from '../@types/Command'
 import { gestureString } from '../commands'
 
+/**
+ * Hook that determines how many segments of a gesture diagram to highlight based on
+ * the gesture currently being traced by the user.
+ */
 const useGestureHighlight = (
   /** The command whose gesture diagram to highlight. */
   command: Command,
