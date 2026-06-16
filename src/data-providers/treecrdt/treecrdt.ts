@@ -44,7 +44,7 @@ const getRuntime = (): NonNullable<ClientOptions['runtime']> => {
 /** Initializes the TreeCRDT client. */
 export const initTreecrdt = async (): Promise<TreecrdtClient> => {
   if (import.meta.env.MODE === 'test') {
-    client = createTestTreecrdtClient()
+    client = await createTestTreecrdtClient()
     return client
   }
 
