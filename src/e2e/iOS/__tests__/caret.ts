@@ -268,7 +268,7 @@ describe('Caret', () => {
     await clickThought('Hello')
 
     const editableNodeHandleWorld = await waitForEditable('World')
-    await tap(editableNodeHandleWorld, { horizontalTapLine: 'right', y: 44 })
+    await tap(editableNodeHandleWorld, { horizontalTapLine: 'right', y: 200 })
 
     await clickThought('Hello')
 
