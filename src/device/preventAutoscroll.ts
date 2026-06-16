@@ -9,11 +9,14 @@ let transformOld = ''
 let paddingBottomOld = ''
 let paddingTopOld = ''
 
+// the element that preventAutoscroll was most recently called on and whose styles still need to be cleaned up
+let activeEl: HTMLElement | null | undefined
 let timeoutId: number | undefined
 /** Clean up styles from preventAutoscroll. This is called automatically 10 ms after preventAutoscroll, but it can and should be called as soon as focus has fired and the autoscroll window has safely passed. */
 export const preventAutoscrollEnd = (el: HTMLElement | null | undefined) => {
   clearTimeout(timeoutId)
   timeoutId = undefined
+  activeEl = undefined
 
   if (!el) return
 
@@ -34,6 +37,11 @@ const preventAutoscroll = (
 ) => {
   if (!isTouch || el === document.activeElement || !el) return
 
+  // If preventAutoscroll was already called without preventAutoscrollEnd being called, clean up the previous element first. Otherwise its styles would be stuck forever, since the module-level saved styles and timeoutId are about to be overwritten.
+  if (timeoutId) {
+    preventAutoscrollEnd(activeEl)
+  }
+
   // find the center of the viewport so that the browser does not think it needs to autoscroll
   const { height, y } = el.getBoundingClientRect()
   const { innerHeight, virtualKeyboardHeight } = viewportStore.getState()
@@ -47,6 +55,7 @@ const preventAutoscroll = (
   transformOld = el.style.transform
   paddingBottomOld = el.style.paddingBottom
   paddingTopOld = el.style.paddingTop
+  activeEl = el
   el.setAttribute('data-prevent-autoscroll', 'true')
 
   // below center
