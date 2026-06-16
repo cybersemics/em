@@ -62,6 +62,15 @@ const baseConfig = {
   connectionRetryTimeout: 120000,
   connectionRetryCount: 3,
 
+  // Retry a whole spec file on failure, including failures to acquire a BrowserStack session when the
+  // account's parallel pool is exhausted by concurrent runs (the "WebDriverError: ... aborted due to
+  // timeout" on POST .../session). specFileRetriesDeferred re-queues the failed spec at the END, so it
+  // retries only after the other specs finish and free up sessions — i.e. it waits for a slot rather
+  // than failing. Also auto-heals home.ts, which is known to flake under parallel load (#1475, #1523).
+  specFileRetries: 5,
+  specFileRetriesDelay: 30,
+  specFileRetriesDeferred: true,
+
   // Spec reporter gives per-it() pass/fail visibility in CI logs.
   reporters: ['spec'],
 
