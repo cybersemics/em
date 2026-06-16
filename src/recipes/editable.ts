@@ -11,17 +11,13 @@ const editableRecipe = defineRecipe({
     boxSizing: 'border-box',
     // Adjust the space between the bullet and the text with margin-left. When font size is greater than 18px, the space will be increased. When the font size is less than 18th, the space will be decreased.
     // The margin-right must offset margin-left to ensure that urls are not incorrectly ellipsized on smaller font sizes. This is because text-overflow: 'ellipsis' applied to the ThoughtAnnotation does not account for the negative margin of the child.
-    margin: '0 calc(18px - 1em) 0 calc(1em - 18px)',
+    margin: '-0.5px calc(18px - 1em) 0.5px calc(1em - 18px)',
     /* create stacking order to position above thought-annotation so that function background color does not mask thought */
     position: 'relative',
     wordBreak: 'break-word' /* breaks urls; backwards-compatible with regular text unlike break-all */,
     // Re-enable text selection that was disabled on the LayoutTree.
     // https://github.com/cybersemics/em/pull/2962
     userSelect: 'text',
-    _iphone: {
-      marginTop: '-0.5px',
-      marginBottom: '0.5px',
-    },
   },
 })
 
