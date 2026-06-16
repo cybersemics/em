@@ -18,6 +18,10 @@ import { setDescendantActionCreator as setDescendant } from './setDescendant'
 
 const BACKGROUND_COLOR_REGEX = /background-color\s*:\s*[^;]+;?/i
 
+// Matches a neutral pure-black or pure-white background color (default background or execCommand artifacts), which must not count as a custom background color to clear.
+const NEUTRAL_BACKGROUND_COLOR_REGEX =
+  /^\s*(?:#000000|#fff(?:fff)?|rgba?\(\s*0\s*,\s*0\s*,\s*0\s*[,)]|rgba?\(\s*255\s*,\s*255\s*,\s*255\s*[,)])/i
+
 /** Format the browser selection or cursor thought as bold, italic, strikethrough, underline. */
 export const formatSelectionActionCreator =
   (
@@ -49,16 +53,20 @@ export const formatSelectionActionCreator =
     // For a whole-thought (or empty) selection the thought/note value is the relevant scope (#3901).
     // For a partial selection only the selected text matters (#4275): a background color elsewhere in
     // the thought must not count, otherwise the redundant default-background write below would force a
-    // ContentEditable re-render that dismisses the active selection. selection.html() returns only the
-    // selected fragment, so a background color on a different substring is excluded, while a background
-    // color overlapping any part of the selection is included and will be cleared by the reset (#4275).
-    const hasCustomBackgroundColor = BACKGROUND_COLOR_REGEX.test(
-      isWholeThought
-        ? state.noteFocus
-          ? (noteValue(state, state.cursor) ?? '')
-          : thought.value
-        : (selection.html() ?? ''),
-    )
+    // ContentEditable re-render that dismisses the active selection.
+    //
+    // The partial-selection background color is read from the live DOM (selection.backgroundColor) rather than the
+    // serialized selection HTML. The serialization omits a wrapping element when the selection fills its entire
+    // text, so a background color on a single span/font wrapping the whole selection would be missed (#4275, #3904).
+    // Neutral pure-black/pure-white values are excluded because they are either the default background or artifacts
+    // that some browsers' execCommand adds to the selection fragment (and post-processing then strips).
+    const selectionBackgroundColor = isWholeThought ? null : selection.backgroundColor(contentEditable)
+    const hasRealSelectionBackgroundColor =
+      !!selectionBackgroundColor && !NEUTRAL_BACKGROUND_COLOR_REGEX.test(selectionBackgroundColor)
+
+    const hasCustomBackgroundColor = isWholeThought
+      ? BACKGROUND_COLOR_REGEX.test(state.noteFocus ? (noteValue(state, state.cursor) ?? '') : thought.value)
+      : hasRealSelectionBackgroundColor
 
     // Skip resetting the background color to the default when there is no custom background color to clear.
     // Applying the default background color adds a span that the post-processing below immediately strips,
@@ -73,17 +81,8 @@ export const formatSelectionActionCreator =
 
     // Whether the selection contains a real (non-neutral) background color to clear, captured before any DOM
     // mutation. Only such a real background triggers the forced re-render whose selection collapse must be
-    // undone by the restore below (#4275). Neutral pure-black/pure-white background-color values are excluded
-    // because they are either the default background or artifacts that some browsers' execCommand adds to the
-    // selection fragment (and post-processing then strips), which must not trigger a spurious restore.
-    const backgroundColorMatch = isWholeThought
-      ? null
-      : (selection.html() ?? '').match(/background-color\s*:\s*([^;"']+)/i)
-    const hadRealBackgroundColor =
-      !!backgroundColorMatch &&
-      !/^\s*(?:#000000|#fff(?:fff)?|rgba?\(\s*0\s*,\s*0\s*,\s*0\s*[,)]|rgba?\(\s*255\s*,\s*255\s*,\s*255\s*[,)])/i.test(
-        backgroundColorMatch[1],
-      )
+    // undone by the restore below (#4275, Issue D/E).
+    const hadRealBackgroundColor = hasRealSelectionBackgroundColor
 
     if (isWholeThought) {
       const savedSelection = selection.save()

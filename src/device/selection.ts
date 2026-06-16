@@ -401,6 +401,27 @@ export const isWithin = (root: Node): boolean => {
   return !!sel?.anchorNode && root.contains(sel.anchorNode)
 }
 
+/**
+ * Returns the inline background-color of any element overlapping the current selection within the given root, or null if none has one.
+ *
+ * The live DOM is inspected via Range.intersectsNode rather than the serialized selection HTML (selection.html), because the
+ * serialization omits a wrapping element when the selection fills its entire text — missing a background color on a single
+ * span/font that wraps the whole selection (#4275, #3904).
+ */
+export const backgroundColor = (root: Node): string | null => {
+  const sel = window.getSelection()
+  if (!sel || sel.rangeCount === 0 || !(root instanceof Element)) return null
+  const range = sel.getRangeAt(0)
+
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT)
+  let node = walker.nextNode() as HTMLElement | null
+  while (node) {
+    if (node.style?.backgroundColor && range.intersectsNode(node)) return node.style.backgroundColor
+    node = walker.nextNode() as HTMLElement | null
+  }
+  return null
+}
+
 /** Sets the browser selection to a range spanning the given plain-text start and end offsets relative to the root node, ignoring nested HTML. NOOP if the offsets cannot be resolved to nodes. */
 export const setRange = (root: Node, start: number, end: number): void => {
   const startPosition = offsetFromClosestParent(root, start)

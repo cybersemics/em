@@ -258,6 +258,71 @@ it('Selection remains active after applying a font color to text that already ha
   expect(extractColor(cursorText!).color).toBe(rgbaToHex(colors.light.blue))
 })
 
+it('Applying a font color overrides a background color on a selection that contains an existing font color', async () => {
+  await paste('Hello world of beautiful world')
+
+  await clickThought('Hello world of beautiful world')
+
+  /** Selects a plain-text offset range within the editable, spanning nested nodes (font/span). */
+  const selectRange = (start: number, end: number) =>
+    page.evaluate(
+      (start, end) => {
+        const editable = document.querySelector('[data-editing=true] [data-editable]')!
+        const walker = document.createTreeWalker(editable, NodeFilter.SHOW_TEXT)
+        let offset = 0
+        let startNode: Text | null = null
+        let startOffset = 0
+        let endNode: Text | null = null
+        let endOffset = 0
+        while (walker.nextNode()) {
+          const node = walker.currentNode as Text
+          const length = node.textContent!.length
+          if (!startNode && offset + length >= start) {
+            startNode = node
+            startOffset = start - offset
+          }
+          if (!endNode && offset + length >= end) {
+            endNode = node
+            endOffset = end - offset
+            break
+          }
+          offset += length
+        }
+        if (!startNode || !endNode) throw new Error('Could not resolve selection offsets')
+        const range = document.createRange()
+        range.setStart(startNode, startOffset)
+        range.setEnd(endNode, endOffset)
+        const selection = window.getSelection()
+        selection?.removeAllRanges()
+        selection?.addRange(range)
+      },
+      start,
+      end,
+    )
+
+  // Apply a font color to the first "world"
+  await selectRange(6, 11)
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="text color swatches"] [aria-label="green"]')
+
+  // Apply a background color to "world of beautiful", which contains the existing font color
+  await selectRange(6, 24)
+  await click('[aria-label="background color swatches"] [aria-label="green"]')
+
+  // Apply a font color to the same selection
+  await selectRange(6, 24)
+  await click('[aria-label="text color swatches"] [aria-label="green"]')
+
+  // The font color should override the background color, leaving only the font color (#4275)
+  const cursorText = await getEditingText()
+  expect(extractColor(cursorText!).backgroundColor).toBe(null)
+  expect(extractColor(cursorText!).color).toBe(rgbaToHex(colors.light.green))
+
+  // The active selection should be preserved (not dismissed)
+  const selectedText = await page.evaluate(() => window.getSelection()?.toString())
+  expect(selectedText).toBe('world of beautiful')
+})
+
 it('Empty <font> element will be removed after setting color to default.', async () => {
   const importText = `
   - Labrador
@@ -342,9 +407,11 @@ it('Verify superscript colors in different views', async () => {
   expect(supColor1).toBe(null) // Superscript should remain uncolored for partial text coloring
 
   // Test 2: Verify superscript color when entire thought is colored
-  // Close the color picker before navigating so the click is not intercepted by the
-  // picker popover, which overlaps the top thoughts.
-  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  // Press Escape to clear the active text selection and close the color picker before navigating.
+  // The picker popover overlaps the top thoughts, so it would otherwise intercept the click on 'k';
+  // and a preserved selection keeps the picker open (it no longer collapses to a caret), so toggling
+  // the toolbar button is not sufficient to close it (#4275).
+  await press('Escape')
   await clickThought('k')
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="text color swatches"] [aria-label="blue"]')
