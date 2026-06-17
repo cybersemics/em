@@ -1,6 +1,7 @@
 import { clearActionCreator as clear } from '../actions/clear'
 import { thoughtspaceRuntime } from '../data-providers/thoughtspace'
 import store from '../stores/app'
+import waitForThoughtspaceIdle from './waitForThoughtspaceIdle'
 
 interface Params {
   /**
@@ -24,7 +25,7 @@ const initStore = async ({ persist, allowTutorial }: Params = {}) => {
   vi.useFakeTimers()
 
   if (!persist) {
-    await thoughtspaceRuntime.waitForIdle()
+    await waitForThoughtspaceIdle()
     await thoughtspaceRuntime.drop()
     await thoughtspaceRuntime.init()
     store.dispatch(clear())
