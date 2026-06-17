@@ -23,6 +23,17 @@ import head from '../util/head'
 
 /** Delete the thought on drop. */
 const drop = (state: State, items: DragThoughtItem[]) => {
+  // TEMP [repro-4315]: instrumentation for the blinking single-character archive bug. Remove before merge.
+  console.info('[repro-4315] drop() called', {
+    itemCount: items?.length,
+    items: (items ?? []).map(item => ({
+      zone: item.zone,
+      path: item.path,
+      simplePath: item.simplePath,
+      value: getThoughtById(state, head(item.simplePath))?.value,
+    })),
+  })
+
   // Set multicursor executing to true if there are multiple thoughts being dropped
   if (items.length > 1) {
     const undoLabel = `Removed ${pluralize('thought', items.length, true)}${items[0].zone === DragThoughtZone.Favorites ? ' from favorites' : ''}`
@@ -43,6 +54,8 @@ const drop = (state: State, items: DragThoughtItem[]) => {
         alert(`Removed ${ellipsize(value)} from favorites`),
       ])
     } else if (zone === DragThoughtZone.Thoughts) {
+      // TEMP [repro-4315]: log each archive dispatch to detect double-dispatch. Remove before merge.
+      console.info('[repro-4315] dispatching archiveThought', { path, value })
       haptics.vibrate(DELETE_VIBRATE_DURATION)
       store.dispatch(archiveThought({ path }))
     } else {
@@ -98,6 +111,8 @@ const DropGutter: FC = () => {
     // item is undefined for some reason, so we need to get it from thn monitor
     drop: (_, monitor) => {
       const items = monitor.getItem() as DragThoughtItem[]
+      // TEMP [repro-4315]: log every gutter drop callback to detect duplicate invocations. Remove before merge.
+      console.info('[repro-4315] DropGutter useDrop.drop fired', { itemCount: items?.length })
       drop(store.getState(), items)
     },
     collect: dropCollect,
