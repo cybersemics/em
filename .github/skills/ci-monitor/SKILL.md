@@ -7,7 +7,18 @@ allowed-tools:
 
 ## Checking CI Status
 
-- Use the `list_workflow_runs` tool to check CI status for the current branch/PR.
+- List workflow runs with the GitHub MCP **actions** tool: call `github-mcp-server-actions_list` with `method: "list_workflow_runs"`. The standalone `list_workflow_runs` tool no longer exists.
+- Target the repository you are working in (`owner`/`repo` — derive them from `git remote get-url origin`; do not hardcode `cybersemics`) and filter by **your current branch**, which you get from `git rev-parse --abbrev-ref HEAD`. Do **not** restrict by `status` — you need in-progress runs to stay visible so you can wait for them, and you want every run on the branch, not just `main`.
+
+  ```json
+  {
+    "method": "list_workflow_runs",
+    "owner": "<repo owner>",
+    "repo": "<repo name>",
+    "workflow_runs_filter": { "branch": "<your current branch>" }
+  }
+  ```
+
 - Wait for ALL in-progress runs to complete before reporting status. Never claim tests pass without actually checking.
 - For each workflow, report: passed, failed, or still running.
 - For failed workflows, pull the relevant log section showing the error.
