@@ -219,6 +219,7 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
     // reset internal pullQueue when clear action is dispatched
     if (isAction(action) && action.type === 'clear') {
       pullQueue = initialPullQueue()
+      lastExpandedPullQueue = {}
     }
     // Update pullQueue and flush on authenticate to force a remote fetch and make remote-only updates.
     // Otherwise, because thoughts are previously loaded from local storage which turns off pending on the root context, a normal pull will short circuit and remote thoughts will not be loaded.

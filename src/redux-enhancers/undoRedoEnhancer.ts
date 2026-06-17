@@ -11,6 +11,7 @@ import ThoughtId from '../@types/ThoughtId'
 import { editThoughtPayload } from '../actions/editThought'
 import editableRender from '../actions/editableRender'
 import updateThoughts from '../actions/updateThoughts'
+import { getChildrenRanked } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import { isNavigation, isUndoable } from '../util/actionMetadata.registry'
 import headValue from '../util/headValue'
@@ -61,6 +62,36 @@ function getEditThoughtDirection(action: UnknownAction): EditThoughtDirection {
 /** Properties that are ignored when generating state patches. */
 const statePropertiesToOmit: (keyof State)[] = ['alert', 'cursorCleared', 'editableNonce', 'pushQueue']
 
+/** Reconstructs TreeCRDT move placement metadata from the final state produced by an undo/redo patch. */
+const restoreMovePlacementsFromThoughtUpdates = (
+  state: State,
+  oldState: State,
+  thoughtIndexUpdates: Index<ReturnType<typeof getThoughtById> | null>,
+): Index<ThoughtId | null> => {
+  return Object.entries(thoughtIndexUpdates).reduce<Index<ThoughtId | null>>((acc, [id, thought]) => {
+    const thoughtId = id as ThoughtId
+    if (!thought) return acc
+
+    const oldThought = getThoughtById(oldState, thoughtId)
+    const moved = oldThought && (oldThought.parentId !== thought.parentId || oldThought.rank !== thought.rank)
+    if (!moved) return acc
+
+    const after = getChildrenRanked(state, thought.parentId)
+      .filter(child => {
+        if (child.id === thoughtId || child.rank >= thought.rank) return false
+
+        const oldChild = getThoughtById(oldState, child.id)
+        return oldChild?.parentId === thought.parentId
+      })
+      .at(-1)
+
+    return {
+      ...acc,
+      [thoughtId]: after?.id ?? null,
+    }
+  }, {})
+}
+
 /**
  * Manually recreate the pushQueue for thought and thought index updates from patches.
  */
@@ -95,10 +126,15 @@ const restorePushQueueFromPatches = (state: State, oldState: State, patch: Patch
     cursor: state.cursor,
     editingValue: state.cursor ? headValue(state, state.cursor) : null,
   }
+  const movePlacements = restoreMovePlacementsFromThoughtUpdates(state, oldState, thoughtIndexUpdates)
 
   return {
     ...state,
-    pushQueue: updateThoughts({ lexemeIndexUpdates, thoughtIndexUpdates })(oldStateWithUpdatedCursor).pushQueue,
+    pushQueue: updateThoughts({
+      lexemeIndexUpdates,
+      thoughtIndexUpdates,
+      ...(Object.keys(movePlacements).length > 0 ? { movePlacements } : null),
+    })(oldStateWithUpdatedCursor).pushQueue,
   }
 }
 
