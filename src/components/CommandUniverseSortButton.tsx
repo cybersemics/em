@@ -54,6 +54,8 @@ const CommandUniverseSortButton = ({ onSortChange }: CommandUniverseSortButtonPr
         alignItems: 'center',
         justifyContent: 'center',
         position: 'relative',
+        // Keep the button (and the dropdown that fades in within it) above the gesture/text layer.
+        zIndex: 'dialog',
         color: 'fg',
         flex: 'none',
         width: '28px',
