@@ -1,79 +1,49 @@
 An HTTP server that provides AI services to em.
 
+It is an [Express](https://expressjs.com/) app that is deployed to [Vercel](https://vercel.com/) as a single [Vercel Function](https://vercel.com/docs/frameworks/backend/express). `src/index.ts` exports the Express app as its default export, which is all Vercel needs to run it — there is no `app.listen`, no `vercel.json`, and no process manager.
+
+## Routes
+
+- `GET /` - Health check. Returns `Server is running`.
+- `POST /ai` - Generates a thought. The request body is the plaintext prompt; the response is `{ content }` on success or `{ err }` on failure. Called by the client via `VITE_AI_URL`.
+
 # Local Development
 
 ## Setup
 
 1. `yarn`
-1. `yarn build`
+1. `yarn build` (optional — typechecks and compiles to `build/`)
 
 ## Running the server
 
-The server process is managed by pm2, which restarts the server if it crashes.
+Local development uses the [Vercel CLI](https://vercel.com/docs/cli), which runs the function exactly as it runs in production:
 
 ```sh
-yarn start
+yarn dev
 ```
 
-Usually you will want to monitor the server logs while it is running:
+This starts the app on a local port and serves `GET /` and `POST /ai`.
 
-```sh
-yarn logs
-```
+Other scripts:
 
-Other npm scripts:
+- `build` - Typecheck and compile with `tsc` (output in `build/`). Not required by Vercel, which builds the function from source.
 
-- `logs` - Stream the server logs.
-- `restart` - Restart the server.
-- `start` - Start the server using pm2.
-- `status` - Show the pm2 process status.
-- `stop` - Stop the server.
+# Deploying to Vercel
 
-# Deploying to a hosting platform
+The package is deployed by a dedicated Vercel project (`em-ai`) connected to this repository.
 
-The server can be deployed to a cloud hosting platform. The instructions below are for Digital Ocean.
+In the Vercel project settings, set:
 
-### Buildpacks:
+- **Root Directory** = `packages/ai` (under Settings → Build and Deployment). Keep "Include files outside of the Root Directory" enabled so the Yarn workspace install resolves from the repo root.
 
-- Custom Build Command v0.1.1
-- Node.js v0.3.4
-- Procfile v0.0.3
+Vercel auto-detects the Express app and deploys it as a Function — no Output Directory, build command, or `vercel.json` is needed.
 
-### App spec:
+## Metrics
 
-```yml
-name: em-dev
-region: nyc
-services:
-  - build_command: |-
-      cd packages/ai &&
-      yarn &&
-      yarn build
-    environment_slug: node-js
-    github:
-      branch: dev
-      deploy_on_push: true
-      repo: cybersemics/em
-    health_check: {}
-    http_port: 3001
-    instance_count: 1
-    instance_size_slug: basic-xxs
-    name: em
-    routes:
-      - path: /
-    run_command: cd packages/ai && HOST=0.0.0.0 PORT=3001 yarn start
-    source_dir: /
-```
+Function metrics (invocations, duration percentiles, error rate, cold starts, memory) are provided automatically by Vercel's built-in [Observability](https://vercel.com/docs/observability) dashboard. There is no `/metrics` endpoint or Prometheus/Graphite setup in this server.
 
 ## Environment Variables
 
-You can run the em server locally without setting any env variables. When deploying to a hosting platform, set the appropriate env variables in the platform's secure dashboard.
+You can run the server locally without setting any env variables. When deploying, set the appropriate env variables in the Vercel project's environment settings.
 
-- `process.env.HOST` - Default: `localhost`. DigitalOcean uses `0.0.0.0`.
-- `process.env.PORT` - Default: `3001`. Should be kept empty for DigitalOcean.
-- `process.env.GRAPHITE_URL` - Metrics endpoint.
-- `process.env.GRAPHITE_USERID` - Metrics user id.
-- `process.env.GRAPHITE_APIKEY` - Metrics cloud access policy token.
-- `process.env.METRICS_USERNAME` - Basic auth username for /metrics endpoint.
-- `process.env.METRICS_PASSWORD` - Basic auth password for /metrics endpoint.
 - `process.env.OPENAI_API_KEY` - OpenAI API Key.
