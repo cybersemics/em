@@ -7018,12 +7018,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@treecrdt/wa-sqlite@npm:0.3.0":
-  version: 0.3.0
-  resolution: "@treecrdt/wa-sqlite@npm:0.3.0"
+"@treecrdt/wa-sqlite@npm:0.3.1":
+  version: 0.3.1
+  resolution: "@treecrdt/wa-sqlite@npm:0.3.1"
   dependencies:
     "@treecrdt/interface": "npm:0.2.0"
-  checksum: 10c0/0faa95b78569ecd7d447a22657fb926a699c81662ad36fdad07b397a99642ab7ba186bfde379037044f76f70c3bfa134a65d5c4e92e7a90ae6409dcd28f5191c
+  checksum: 10c0/2a29c962143ce8db199badfa195b0e730ec42b363058457f19311bde5f88dc6e7832ed90fac71fe384b86909ab01b5b2ed8ce2e66f631d37228dca64a78df22d
   languageName: node
   linkType: hard
 
@@ -11886,7 +11886,7 @@ __metadata:
     "@treecrdt/sync-protocol": "npm:0.1.1"
     "@treecrdt/sync-server-core": "npm:0.1.1"
     "@treecrdt/sync-sqlite": "npm:0.1.1"
-    "@treecrdt/wa-sqlite": "npm:0.3.0"
+    "@treecrdt/wa-sqlite": "npm:0.3.1"
     "@trivago/prettier-plugin-sort-imports": "npm:^6.0.2"
     "@types/clipboard": "npm:^2.0.10"
     "@types/dompurify": "npm:^3.2.0"
