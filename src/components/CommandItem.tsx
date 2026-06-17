@@ -254,13 +254,14 @@ const CommandItem: FC<{
             whiteSpace: viewType === 'grid' ? 'normal' : 'nowrap',
             overflowWrap: viewType === 'grid' ? 'break-word' : undefined,
             fontSize: viewType === 'grid' ? '0.8rem' : '0.9em',
-            color: disabled
-              ? 'gray45'
-              : viewType === 'grid'
-                ? 'fg'
-                : isSelectedStyle || (isTouch && (gestureInProgress as string) === gestureString(command))
-                  ? 'vividHighlight'
-                  : 'gray75',
+            color:
+              disabled && !isTouch
+                ? 'gray45'
+                : viewType === 'grid'
+                  ? 'fg'
+                  : isSelectedStyle || (isTouch && (gestureInProgress as string) === gestureString(command))
+                    ? 'vividHighlight'
+                    : 'gray75',
             fontWeight: isSelectedStyle && viewType !== 'grid' ? 'bold' : 'normal',
           })}
         >
