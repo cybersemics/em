@@ -108,17 +108,6 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
           : // Case IV: delete very last thought; remove cursor
             [null, undefined]
 
-  // TEMP [repro-4315]: trace archive resolution for the blinking single-character bug. Remove before merge.
-  console.info('[repro-4315] archiveThought', {
-    value: thought.value,
-    isDeletable,
-    isEmpty,
-    hasDescendants,
-    prev: prev?.value,
-    next,
-    cursorNew,
-  })
-
   return reducerFlow([
     ...(isDeletable
       ? [
