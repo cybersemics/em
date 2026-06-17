@@ -7,6 +7,7 @@ import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
 import Patch from '../@types/Patch'
 import State from '../@types/State'
+import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import { editThoughtPayload } from '../actions/editThought'
 import editableRender from '../actions/editableRender'
@@ -14,6 +15,7 @@ import updateThoughts from '../actions/updateThoughts'
 import { getChildrenRanked } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import { isNavigation, isUndoable } from '../util/actionMetadata.registry'
+import equalArrays from '../util/equalArrays'
 import headValue from '../util/headValue'
 import reducerFlow from '../util/reducerFlow'
 
@@ -62,13 +64,16 @@ function getEditThoughtDirection(action: UnknownAction): EditThoughtDirection {
 /** Properties that are ignored when generating state patches. */
 const statePropertiesToOmit: (keyof State)[] = ['alert', 'cursorCleared', 'editableNonce', 'pushQueue']
 
-/** Reconstructs TreeCRDT move placement metadata from the final state produced by an undo/redo patch. */
-const restoreMovePlacementsFromThoughtUpdates = (
+/** Reconstructs TreeCRDT move updates and placement metadata from the final state produced by an undo/redo patch. */
+const restoreMoveUpdatesFromThoughtUpdates = (
   state: State,
   oldState: State,
-  thoughtIndexUpdates: Index<ReturnType<typeof getThoughtById> | null>,
-): Index<ThoughtId | null> => {
-  return Object.entries(thoughtIndexUpdates).reduce<Index<ThoughtId | null>>((acc, [id, thought]) => {
+  thoughtIndexUpdates: Index<Thought | null>,
+): {
+  thoughtIndexUpdates: Index<Thought | null>
+  movePlacements: Index<ThoughtId | null>
+} => {
+  const touchedParentIds = Object.entries(thoughtIndexUpdates).reduce<Set<ThoughtId>>((acc, [id, thought]) => {
     const thoughtId = id as ThoughtId
     if (!thought) return acc
 
@@ -76,20 +81,47 @@ const restoreMovePlacementsFromThoughtUpdates = (
     const moved = oldThought && (oldThought.parentId !== thought.parentId || oldThought.rank !== thought.rank)
     if (!moved) return acc
 
-    const after = getChildrenRanked(state, thought.parentId)
-      .filter(child => {
-        if (child.id === thoughtId || child.rank >= thought.rank) return false
+    acc.add(oldThought.parentId)
+    acc.add(thought.parentId)
+    return acc
+  }, new Set())
 
-        const oldChild = getThoughtById(oldState, child.id)
-        return oldChild?.parentId === thought.parentId
+  const { thoughtIndexUpdates: moveThoughtIndexUpdates, movePlacements } = [...touchedParentIds].reduce<{
+    thoughtIndexUpdates: Index<Thought | null>
+    movePlacements: Index<ThoughtId | null>
+  }>(
+    (acc, parentId) => {
+      const oldChildren = getChildrenRanked(oldState, parentId).map(child => child.id)
+      const children = getChildrenRanked(state, parentId)
+      const childIds = children.map(child => child.id)
+      if (equalArrays(oldChildren, childIds)) return acc
+
+      children.forEach((child, i) => {
+        const childThought = getThoughtById(state, child.id)
+        if (!childThought) return
+
+        acc.thoughtIndexUpdates[child.id] = childThought
+        acc.movePlacements[child.id] = i === 0 ? null : childIds[i - 1]
       })
-      .at(-1)
 
-    return {
-      ...acc,
-      [thoughtId]: after?.id ?? null,
-    }
-  }, {})
+      return acc
+    },
+    { thoughtIndexUpdates: {}, movePlacements: {} },
+  )
+
+  const moveThoughtIds = new Set(Object.keys(movePlacements))
+  const nonMoveThoughtIndexUpdates = Object.entries(thoughtIndexUpdates).reduce<Index<Thought | null>>(
+    (acc, [id, thought]) => (moveThoughtIds.has(id) ? acc : { ...acc, [id]: thought }),
+    {},
+  )
+
+  return {
+    thoughtIndexUpdates: {
+      ...nonMoveThoughtIndexUpdates,
+      ...moveThoughtIndexUpdates,
+    },
+    movePlacements,
+  }
 }
 
 /**
@@ -106,7 +138,7 @@ const restorePushQueueFromPatches = (state: State, oldState: State, patch: Patch
       [lexemeKey]: op.value || null,
     }
   }, {})
-  const thoughtIndexUpdates = thoughtIndexChanges.reduce((acc, { path }) => {
+  const thoughtIndexUpdates = thoughtIndexChanges.reduce<Index<Thought | null>>((acc, { path }) => {
     const id = path.slice('/thoughts/thoughtIndex/'.length).split('/')[0]
     return {
       ...acc,
@@ -126,14 +158,14 @@ const restorePushQueueFromPatches = (state: State, oldState: State, patch: Patch
     cursor: state.cursor,
     editingValue: state.cursor ? headValue(state, state.cursor) : null,
   }
-  const movePlacements = restoreMovePlacementsFromThoughtUpdates(state, oldState, thoughtIndexUpdates)
+  const moveUpdates = restoreMoveUpdatesFromThoughtUpdates(state, oldState, thoughtIndexUpdates)
 
   return {
     ...state,
     pushQueue: updateThoughts({
       lexemeIndexUpdates,
-      thoughtIndexUpdates,
-      ...(Object.keys(movePlacements).length > 0 ? { movePlacements } : null),
+      thoughtIndexUpdates: moveUpdates.thoughtIndexUpdates,
+      ...(Object.keys(moveUpdates.movePlacements).length > 0 ? { movePlacements: moveUpdates.movePlacements } : null),
     })(oldStateWithUpdatedCursor).pushQueue,
   }
 }
