@@ -1,4 +1,4 @@
-import React, { PropsWithChildren, useEffect, useRef } from 'react'
+import React, { PropsWithChildren, useEffect, useLayoutEffect, useRef } from 'react'
 import { dialogRecipe } from '../../../styled-system/recipes'
 
 /** Minimum thumb height in px so the thumb stays visible on very long content. */
@@ -12,8 +12,15 @@ const THUMB_HIDE_DELAY = 800
  * WebKit cannot recolor its native overflow scrollbar via CSS (it renders dark on iOS < 26 regardless
  * of `scrollbar-color` / `::-webkit-scrollbar-*` / `color-scheme`). The native scrollbar is hidden in
  * dialogRecipe and this JS-driven thumb provides a grey scrollbar consistent across all platforms.
+ *
+ * `scrollResetKey` scrolls the content back to the top whenever its value changes — e.g. when the
+ * command search query changes, so a new search starts at the first result rather than wherever the
+ * previous list was scrolled to.
  */
-const DialogContent: React.FC<PropsWithChildren> = ({ children }) => {
+const DialogContent: React.FC<PropsWithChildren<{ scrollResetKey?: string | number }>> = ({
+  children,
+  scrollResetKey,
+}) => {
   const dialog = dialogRecipe()
   const scrollRef = useRef<HTMLDivElement>(null)
   const thumbRef = useRef<HTMLDivElement>(null)
@@ -67,6 +74,15 @@ const DialogContent: React.FC<PropsWithChildren> = ({ children }) => {
       clearTimeout(hideTimerRef.current)
     }
   }, [])
+
+  // Reset the scroll position to the top whenever scrollResetKey changes (e.g. a new search query) so
+  // the fresh content isn't shown scrolled to wherever the previous content left off. useLayoutEffect
+  // (not useEffect) runs before the browser paints, so the new content and the top scroll position land
+  // in the same frame — otherwise the new list paints at the old scroll offset for a frame and then
+  // snaps to the top.
+  useLayoutEffect(() => {
+    scrollRef.current?.scrollTo({ top: 0 })
+  }, [scrollResetKey])
 
   return (
     <div className={dialog.contentWrapper}>

@@ -55,7 +55,7 @@ const MobileCommandUniverseContent = () => {
         <CommandUniverseSortButton onSortChange={setSortOrder} />
       </div>
 
-      <DialogContent>
+      <DialogContent scrollResetKey={search}>
         <SwitchTransition>
           <FadeTransition key={`${sortOrder}-${search}`} in={true} type='medium' unmountOnExit>
             <div>
