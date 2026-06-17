@@ -12,7 +12,7 @@ It is an [Express](https://expressjs.com/) app that is deployed to [Vercel](http
 ## Setup
 
 1. `yarn`
-1. `yarn build` (optional — typechecks and compiles to `build/`)
+1. `yarn typecheck` (optional — type-checks with `tsc`)
 
 ## Running the server
 
@@ -26,17 +26,20 @@ This starts the app on a local port and serves `GET /` and `POST /ai`.
 
 Other scripts:
 
-- `build` - Typecheck and compile with `tsc` (output in `build/`). Not required by Vercel, which builds the function from source.
+- `typecheck` - Type-check the source with `tsc` (no emit). Not used by Vercel, which builds the function from source.
+
+> **Note:** This package has no `build` script on purpose. A `build` script makes Vercel run a static build and then fail looking for an output directory; omitting it lets Vercel auto-detect the Express app and deploy it as a Function.
 
 # Deploying to Vercel
 
 The package is deployed by a dedicated Vercel project (`em-ai`) connected to this repository.
 
-In the Vercel project settings, set:
+In the Vercel project settings (Settings → Build and Deployment):
 
-- **Root Directory** = `packages/ai` (under Settings → Build and Deployment). Keep "Include files outside of the Root Directory" enabled so the Yarn workspace install resolves from the repo root.
+- **Root Directory** = `packages/ai`. Keep "Include files outside of the Root Directory" enabled so the Yarn workspace install resolves from the repo root.
+- **Framework Settings** — leave Build Command and Output Directory **overrides off** (use the defaults). If a Build Command or Output Directory override is enabled, Vercel runs a static build and fails with `No Output Directory named "public" found`.
 
-Vercel auto-detects the Express app and deploys it as a Function — no Output Directory, build command, or `vercel.json` is needed.
+With no `build` script and no overrides, Vercel auto-detects the Express app and deploys it as a Function — no Output Directory or `vercel.json` is needed.
 
 ## Metrics
 

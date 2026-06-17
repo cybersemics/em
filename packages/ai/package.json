@@ -1,10 +1,11 @@
 {
   "name": "ai",
   "private": true,
+  "type": "module",
   "version": "0.0.0",
   "description": "An HTTP server that provides AI services to em.",
   "scripts": {
-    "build": "rm -rf build ; tsc",
+    "typecheck": "tsc --noEmit",
     "dev": "vercel dev"
   },
   "dependencies": {
