@@ -1,6 +1,6 @@
 import { isMac } from '../../../browser'
 import sleep from '../../../util/sleep'
-import { page } from '../setup'
+import { page } from '../session'
 import clickThought from './clickThought'
 
 /** Multiselect thoughts by holding Cmd/Ctrl and clicking them.*/

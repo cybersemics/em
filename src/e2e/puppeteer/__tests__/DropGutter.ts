@@ -8,7 +8,7 @@ import getEditable from '../helpers/getEditable'
 import paste from '../helpers/paste'
 import waitForAlertContent from '../helpers/waitForAlertContent'
 import waitForEditable from '../helpers/waitForEditable'
-import { page } from '../setup'
+import { page } from '../session'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
