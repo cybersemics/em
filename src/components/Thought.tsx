@@ -1,5 +1,5 @@
 import { unescape } from 'html-escaper'
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import React, { type CSSProperties, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { childRecipe, invalidOptionRecipe } from '../../styled-system/recipes'
@@ -167,7 +167,7 @@ const useCol1Alignment = ({ path, value, isTableCol1 }: UseCol1AlignParams) => {
     return cursorParentId ? getChildren(state, cursorParentId).map(t => t.value) : []
   }, shallowEqual)
 
-  interface TransitionStyle {
+  interface TransitionStyle extends CSSProperties {
     transform: string
     transition: string
   }
