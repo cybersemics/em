@@ -6,12 +6,15 @@ let client: TreecrdtClient | null = null
 
 const beforeCloseHandlers = new Set<() => Promise<void>>()
 
+/** Creates an isolated in-memory document id for each Vitest TreeCRDT client. */
+const createTestDocId = (): string => `${tsid}-test-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`
+
 /** Creates the minimal test client needed by initialize without loading wa-sqlite assets in Vitest. */
 const createTestTreecrdtClient = async (): Promise<TreecrdtClient> => {
   return createTreecrdtClient({
     storage: { type: 'memory' },
     runtime: { type: 'direct' },
-    docId: tsid,
+    docId: createTestDocId(),
   })
 }
 

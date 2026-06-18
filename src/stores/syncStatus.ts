@@ -4,7 +4,7 @@ import reactMinistore from './react-ministore'
 const syncStatusStore = reactMinistore<{
   /** Tracks if the pullQueue is currently pulling. */
   isPulling: boolean
-  /** Tracks non-blocking background pulls that tests may still need to drain before teardown. */
+  /** Tracks non-blocking pullQueue work that runs outside the main pulling state. */
   isBackgroundPulling: boolean
   /**
    * Progress of replicating all thoughts for offline editing (between 0–1).

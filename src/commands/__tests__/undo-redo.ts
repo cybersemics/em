@@ -113,6 +113,59 @@ describe('undo persistence', () => {
   - d
   - e`)
   }, 10000 /* increase timeout to give time for two calls to initialize() */)
+
+  it('persists redo move placement after reload', async () => {
+    await initialize()
+
+    store.dispatch([
+      importText({
+        text: `
+        - a
+        - b
+        - c
+        - d
+        - e`,
+      }),
+      setCursor(['a']),
+      addMulticursor(['a']),
+      addMulticursor(['b']),
+      addMulticursor(['c']),
+    ])
+
+    executeCommandWithMulticursor(moveThoughtDownCommand, { store })
+    store.dispatch(undo())
+    await waitForThoughtspaceIdle()
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - a
+  - b
+  - c
+  - d
+  - e`)
+
+    store.dispatch(redo())
+    await waitForThoughtspaceIdle()
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - d
+  - a
+  - b
+  - c
+  - e`)
+
+    store.dispatch(clear())
+
+    await initialize()
+    await vi.runAllTimersAsync()
+    await waitForThoughtspaceIdle()
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - d
+  - a
+  - b
+  - c
+  - e`)
+  }, 10000 /* increase timeout to give time for two calls to initialize() */)
 })
 
 describe('undo', () => {
