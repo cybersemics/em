@@ -2433,12 +2433,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@capacitor/keyboard@npm:^8.0.3":
-  version: 8.0.3
-  resolution: "@capacitor/keyboard@npm:8.0.3"
+"@capacitor/keyboard@npm:^8.0.5":
+  version: 8.0.5
+  resolution: "@capacitor/keyboard@npm:8.0.5"
   peerDependencies:
     "@capacitor/core": ">=8.0.0"
-  checksum: 10c0/502c7ff5b88367df92ab4c0a51f04d70a6bd2b7ce03ead881035e63286282bc4abfb35d9fe55c8ebed538fe8b665e632050810e89ac6014a70fc98afaf8bbf23
+  checksum: 10c0/264731185eb7000d36df689b69d96c8f8b5f4d1314fcd2852d5ec727af4aedab8b78c192cd02775e3c1f84233a563d0600aad828da009067b5699e733029eb0e
   languageName: node
   linkType: hard
 
@@ -11503,7 +11503,7 @@ __metadata:
     "@capacitor/core": "npm:^8.4.0"
     "@capacitor/haptics": "npm:^8.0.2"
     "@capacitor/ios": "npm:^8.4.0"
-    "@capacitor/keyboard": "npm:^8.0.3"
+    "@capacitor/keyboard": "npm:^8.0.5"
     "@capacitor/status-bar": "npm:^8.0.2"
     "@emotion/react": "npm:^11.14.0"
     "@emotion/styled": "npm:^11.14.1"
