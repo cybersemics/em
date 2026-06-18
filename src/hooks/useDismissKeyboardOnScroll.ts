@@ -16,12 +16,11 @@ const useDismissKeyboardOnScroll = (inputRef: RefObject<HTMLInputElement | null>
       inputRef.current?.blur()
     }
 
-    // Listen for touchmove (the finger-drag scroll gesture) rather than the `scroll` event. A `scroll`
-    // listener can't distinguish a user scroll from a programmatic one, and the Command Universe scrolls
-    // the list back to the top on every keystroke (DialogContent's scrollResetKey) — that programmatic
-    // scrollTo would otherwise blur the input and dismiss the keyboard the instant the user types while
-    // scrolled down. touchmove only fires on a real finger drag, so the keyboard is dismissed exactly when
-    // the user starts scrolling and never when typing.
+    // Listen for touchmove (the finger-drag scroll gesture) rather than the `scroll` event.
+    // In the Command Universe, it's possible for the user to initiate an inertial scroll,
+    // and then focus the search input. Scroll events continue to fire, which cause the keyboard
+    // to immediately dismiss on open.
+    // Checking for touchmove ensures the keyboard only closes upon a real finger drag.
     window.addEventListener('touchmove', handleTouchMove, true)
 
     return () => {
