@@ -1,6 +1,6 @@
 import { HOME_TOKEN } from '../../../constants'
-import type { WindowEm } from '../../../initialize'
-import { page } from '../setup'
+import { WindowEm } from '../../../initialize'
+import { page } from '../session'
 
 async function paste(text: string): Promise<void>
 async function paste(pathUnranked: string[], text: string): Promise<void>

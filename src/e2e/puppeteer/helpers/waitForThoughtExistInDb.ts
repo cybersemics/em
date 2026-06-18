@@ -1,5 +1,5 @@
-import type { WindowEm } from '../../../initialize'
-import { page } from '../setup'
+import { WindowEm } from '../../../initialize'
+import { page } from '../session'
 
 /** Wait for the given thought value to exist in the database. */
 const waitForThoughtExistInDb = async (value: string) => {

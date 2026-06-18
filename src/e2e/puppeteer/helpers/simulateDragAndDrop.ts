@@ -1,5 +1,5 @@
-import type { WindowEm } from '../../../initialize'
-import { page } from '../setup'
+import { WindowEm } from '../../../initialize'
+import { page } from '../session'
 
 interface Options {
   /** Renders all DropHover components. */

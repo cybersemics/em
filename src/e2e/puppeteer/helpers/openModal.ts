@@ -1,6 +1,6 @@
 import ModalType from '../../../@types/Modal'
-import type { WindowEm } from '../../../initialize'
-import { page } from '../setup'
+import { WindowEm } from '../../../initialize'
+import { page } from '../session'
 import waitUntil from './waitUntil'
 
 /** Directly opens a Modal and waits for it to finish loading. */

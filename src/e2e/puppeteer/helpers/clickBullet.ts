@@ -1,4 +1,4 @@
-import { page } from '../setup'
+import { page } from '../session'
 import getEditable from './getEditable'
 
 /**

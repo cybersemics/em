@@ -1,4 +1,4 @@
-import { page } from '../setup'
+import { page } from '../session'
 import click from './click'
 
 /** Helper function to open sidebar and wait for it to slide all the way open. */

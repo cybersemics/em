@@ -1,6 +1,6 @@
 import type { WindowEm } from '../../../initialize'
 import sleep from '../../../util/sleep'
-import { page } from '../setup'
+import { page } from '../session'
 
 /** Set color theme to light or dark by directly dispatching settings action. */
 const setTheme = async (theme: 'Light' | 'Dark'): Promise<void> => {
