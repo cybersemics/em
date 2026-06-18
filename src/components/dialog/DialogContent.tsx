@@ -1,4 +1,4 @@
-import React, { PropsWithChildren, useEffect, useLayoutEffect, useRef } from 'react'
+import { PropsWithChildren, RefObject, useEffect, useRef } from 'react'
 import { dialogRecipe } from '../../../styled-system/recipes'
 
 /** Minimum thumb height in px so the thumb stays visible on very long content. */
@@ -13,16 +13,14 @@ const THUMB_HIDE_DELAY = 800
  * of `scrollbar-color` / `::-webkit-scrollbar-*` / `color-scheme`). The native scrollbar is hidden in
  * dialogRecipe and this JS-driven thumb provides a grey scrollbar consistent across all platforms.
  *
- * `scrollResetKey` scrolls the content back to the top whenever its value changes — e.g. when the
- * command search query changes, so a new search starts at the first result rather than wherever the
- * previous list was scrolled to.
+ * `scrollRef` is forwarded onto the scrollable region so the consumer can read/control the scroll
+ * position (e.g. the Command Universe resets it to the top when its search results crossfade).
  */
-const DialogContent: React.FC<PropsWithChildren<{ scrollResetKey?: string | number }>> = ({
+const DialogContent: React.FC<PropsWithChildren<{ scrollRef: RefObject<HTMLDivElement | null> }>> = ({
   children,
-  scrollResetKey,
+  scrollRef,
 }) => {
   const dialog = dialogRecipe()
-  const scrollRef = useRef<HTMLDivElement>(null)
   const thumbRef = useRef<HTMLDivElement>(null)
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
@@ -73,16 +71,7 @@ const DialogContent: React.FC<PropsWithChildren<{ scrollResetKey?: string | numb
       resizeObserver.disconnect()
       clearTimeout(hideTimerRef.current)
     }
-  }, [])
-
-  // Reset the scroll position to the top whenever scrollResetKey changes (e.g. a new search query) so
-  // the fresh content isn't shown scrolled to wherever the previous content left off. useLayoutEffect
-  // (not useEffect) runs before the browser paints, so the new content and the top scroll position land
-  // in the same frame — otherwise the new list paints at the old scroll offset for a frame and then
-  // snaps to the top.
-  useLayoutEffect(() => {
-    scrollRef.current?.scrollTo({ top: 0 })
-  }, [scrollResetKey])
+  }, [scrollRef])
 
   return (
     <div className={dialog.contentWrapper}>

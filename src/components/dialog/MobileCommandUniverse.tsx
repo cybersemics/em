@@ -35,6 +35,14 @@ const HiddenDialogAssets = () => (
 const MobileCommandUniverseContent = () => {
   const { search, setSearch, sortOrder, setSortOrder, groups } = useCommandList()
 
+  // Pass this ref to `DialogContent`, which owns the scrollable element, so that we can reset
+  // the scroll position to the top as results crossfade.
+  const scrollRef = React.useRef<HTMLDivElement>(null)
+
+  // This ref is used to animate a block <div>, rather than the default inline <span> used by FadeTransition.
+  // This fixes a bug where the crossfade between results when searching/sorting did not play on WebKit/Safari.
+  const fadeRef = React.useRef<HTMLDivElement>(null)
+
   return (
     <>
       {/* Search row that lives between the header and the scrollable content. Sits outside the scroll
@@ -55,10 +63,18 @@ const MobileCommandUniverseContent = () => {
         <CommandUniverseSortButton onSortChange={setSortOrder} />
       </div>
 
-      <DialogContent scrollResetKey={search}>
+      <DialogContent scrollRef={scrollRef}>
         <SwitchTransition>
-          <FadeTransition key={`${sortOrder}-${search}`} in={true} type='medium' unmountOnExit>
-            <div>
+          {/* Use a key here composed of the sort order and search query to crossfade when search results change. */}
+          <FadeTransition
+            key={`${sortOrder}-${search}`}
+            in={true}
+            type='medium'
+            unmountOnExit
+            nodeRef={fadeRef}
+            onEnter={() => scrollRef.current?.scrollTo({ top: 0 })}
+          >
+            <div ref={fadeRef}>
               {groups.map((group, index) => (
                 <div
                   key={group.title}
