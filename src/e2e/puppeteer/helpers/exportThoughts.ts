@@ -2,7 +2,7 @@ import MimeType from '../../../@types/MimeType'
 import { HOME_TOKEN } from '../../../constants'
 import type { WindowEm } from '../../../initialize'
 import removeHome from '../../../util/removeHome'
-import { page } from '../setup'
+import { page } from '../session'
 
 /**
  * Export the current state of thoughts as plain text.

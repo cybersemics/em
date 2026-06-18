@@ -6,7 +6,8 @@ import refresh from '../helpers/refresh'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
 import waitUntil from '../helpers/waitUntil'
-import { page, usePersistentTreecrdtStorage } from '../setup'
+import { page } from '../session'
+import { usePersistentTreecrdtStorage } from '../setup'
 
 const MOCK_REPLICATION_DELAY = 100
 

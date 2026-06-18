@@ -1,7 +1,7 @@
 import Command from '../../../@types/Command'
 import Direction from '../../../@types/Direction'
 import Gesture from '../../../@types/Gesture'
-import { page } from '../setup'
+import { page } from '../session'
 
 /**
  * Helper function to smoothly move touch from one point to another.

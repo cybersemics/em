@@ -1,4 +1,4 @@
-import { page } from '../setup'
+import { page } from '../session'
 import waitForEditable from './waitForEditable'
 
 /** Wait for an editable to become hidden by checking the color alpha. */

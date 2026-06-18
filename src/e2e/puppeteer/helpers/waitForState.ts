@@ -1,5 +1,5 @@
-import type { WindowEm } from '../../../initialize'
-import { page } from '../setup'
+import { WindowEm } from '../../../initialize'
+import { page } from '../session'
 
 /**
  * Wait until value of the state for the given property path equals the given value.

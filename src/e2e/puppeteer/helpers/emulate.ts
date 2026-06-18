@@ -1,5 +1,5 @@
 import { Device } from 'puppeteer'
-import { page } from '../setup'
+import { page } from '../session'
 import waitForBrowserSettled from './waitForBrowserSettled'
 
 /** Emulates a device after the app is already mounted. */
