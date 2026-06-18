@@ -266,10 +266,6 @@ const freeLexeme = async (_key: string): Promise<void> => {
 
 /** Clears all thoughts by dropping storage and closing the client. */
 const clear = async (): Promise<void> => {
-  if (!replicaId) {
-    throw new Error('TreeCRDT DataProvider: init not called')
-  }
-
   await dropTreecrdt()
   replicaId = null
   resetInitReady()

@@ -6,16 +6,17 @@ let client: TreecrdtClient | null = null
 
 const beforeCloseHandlers = new Set<() => Promise<void>>()
 
+/** Creates an isolated in-memory document id for each Vitest TreeCRDT client. */
+const createTestDocId = (): string => `${tsid}-test-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`
+
 /** Creates the minimal test client needed by initialize without loading wa-sqlite assets in Vitest. */
-const createTestTreecrdtClient = (): TreecrdtClient =>
-  ({
-    mode: 'direct',
-    runtime: 'direct',
-    storage: 'memory',
-    onMaterialized: () => () => undefined,
-    close: async () => undefined,
-    drop: async () => undefined,
-  }) as unknown as TreecrdtClient
+const createTestTreecrdtClient = async (): Promise<TreecrdtClient> => {
+  return createTreecrdtClient({
+    storage: { type: 'memory' },
+    runtime: { type: 'direct' },
+    docId: createTestDocId(),
+  })
+}
 
 /** Runs before `client.close()` / `client.drop()` (e.g. tear down WebSocket sync). Returns an unregister function. */
 export const registerBeforeTreecrdtClose = (handler: () => Promise<void>): (() => void) => {
@@ -45,8 +46,10 @@ const getRuntime = (): NonNullable<ClientOptions['runtime']> => {
 
 /** Initializes the TreeCRDT client. */
 export const initTreecrdt = async (): Promise<TreecrdtClient> => {
+  if (client) return client
+
   if (import.meta.env.MODE === 'test') {
-    client = createTestTreecrdtClient()
+    client = await createTestTreecrdtClient()
     return client
   }
 

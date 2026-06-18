@@ -9,6 +9,7 @@ import db from '../data-providers/thoughtspace'
 import { initialize } from '../initialize'
 import store from '../stores/app'
 import storage from '../util/storage'
+import waitForThoughtspaceIdle from './waitForThoughtspaceIdle'
 
 let cleanup: Await<ReturnType<typeof initialize>>['cleanup']
 
@@ -40,6 +41,7 @@ const createTestApp = async ({ tutorial }: { tutorial?: boolean } = {}) => {
     ])
 
     await vi.runOnlyPendingTimersAsync()
+    await waitForThoughtspaceIdle()
 
     // make DND ref available for drag and drop tests.
     document.DND = dndRef.current
@@ -61,6 +63,7 @@ export const cleanupTestApp = async () => {
 
     // run out timers before provider clear, otherwise pending persistence calls may resolve after thoughts have been deleted.
     await vi.runAllTimersAsync()
+    await waitForThoughtspaceIdle()
 
     await db.clear()
     await vi.runAllTimersAsync()
@@ -75,11 +78,14 @@ export const cleanupTestApp = async () => {
 /** Refresh the test app. */
 export const refreshTestApp = async () => {
   await act(async () => {
+    await waitForThoughtspaceIdle()
     await store.dispatch(clear())
     await initialize()
+    await waitForThoughtspaceIdle()
   })
 
   await act(vi.runOnlyPendingTimersAsync)
+  await waitForThoughtspaceIdle()
 }
 
 /** Clear existing event listeners(e.g. keyboard, gestures), but without clearing the app. */
