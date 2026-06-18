@@ -1,13 +1,12 @@
-/* eslint-disable import/prefer-default-export */
 import chalk from 'chalk'
-import { Browser, BrowserContext, ConsoleMessage, Device, Page } from 'puppeteer'
+import { Browser, BrowserContext, ConsoleMessage, Device } from 'puppeteer'
+import { page, setPage } from './session'
 
 // eslint-disable-next-line @typescript-eslint/no-namespace, @typescript-eslint/prefer-namespace-keyword
 declare module global {
   const browser: Browser
 }
 
-export let page: Page
 let context: BrowserContext
 
 /** Opens em in a new incognito window in Puppeteer. */
@@ -30,7 +29,7 @@ const setup = async ({
   // Grant permissions to read and write to the clipboard, only works with https.
   await context.overridePermissions(url.replace(/:\d+/, ''), ['clipboard-read', 'clipboard-write'])
 
-  page = await context.newPage()
+  setPage(await context.newPage())
 
   if (emulatedDevice) {
     await page.emulate(emulatedDevice)
