@@ -41,7 +41,8 @@ const baseConfig = {
 
   // Capabilities
   // Each spec file runs in its own parallel session
-  maxInstances: 3,
+  maxInstances: 4,
+  specFileRetries: 1,
 
   // Base iOS Safari capabilities shared between local and browserStack configs. Individual configs can override or extend these.
   baseCapabilities: {
