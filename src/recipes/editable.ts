@@ -4,7 +4,6 @@ const editableRecipe = defineRecipe({
   className: 'editable',
   description: 'editable styles',
   base: {
-    minHeight: '1.25em',
     /* Add some padding-right for increased click area. */
     /* Add some padding-left otherwise caret is invisible on empty elements. */
     padding: '0.375em 1em 0.25em 0.333em',
