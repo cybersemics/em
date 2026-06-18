@@ -4,7 +4,7 @@ import { isTouch } from '../browser'
 /**
  * Dismisses the virtual keyboard by blurring the input when the user scrolls with a finger drag on touch
  * devices. Triggers on the touchmove gesture (not the `scroll` event) so it ignores programmatic scrolling
- * such as the Command Universe resetting the list to the top on each keystroke.
+ * or continued scroll events fired by inertial scrolling after the user lifts their finger.
  * @param inputRef - Reference to the input element to blur when the user scrolls.
  */
 const useDismissKeyboardOnScroll = (inputRef: RefObject<HTMLInputElement | null>) => {
