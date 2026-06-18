@@ -328,9 +328,9 @@ const BulletPositioner = forwardRef<SVGSVGElement, PropsWithChildren<BulletPosit
         style={{
           top: -extendClickHeight,
           left: -extendClickWidth + marginLeft,
-          paddingTop: '0.708em',
+          paddingTop: `calc(0.375em + ${extendClickHeight}px)`,
           paddingLeft: extendClickWidth,
-          paddingBottom: 'calc(0.583em + 2px)',
+          paddingBottom: `calc(0.25em + ${extendClickHeight + 2}px)`,
           width,
           /* Ensuring the cursor overlay will always show behind the original bullet component.
           We want to avoid a situation where the active thought can’t be dragged and dropped */
