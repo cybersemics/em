@@ -40,7 +40,7 @@ const dialogRecipe = defineSlotRecipe({
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: 'transparent',
-      backdropFilter: 'blur(10px)',
+      backdropFilter: 'blur(10px) brightness(0.75) saturate(0.60) contrast(1.0)',
       zIndex: 'dialogContainer',
       overflow: 'hidden',
       touchAction: 'none',
