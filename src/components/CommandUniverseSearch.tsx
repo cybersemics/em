@@ -17,6 +17,16 @@ const CommandUniverseSearch: FC<{ onInput?: (value: string) => void }> = ({ onIn
 
   useDismissKeyboardOnScroll(inputRef)
 
+  /**
+   * When the input is clicked/tapped, focus it while preventing iOS' native autoscroll.
+   * This solves an issue where the scroll position of the viewport would jitter when the
+   * search input is focussed while the editor is scrolled. */
+  const handleMouseDown = (e: React.MouseEvent<HTMLInputElement>) => {
+    const input = e.currentTarget
+    e.preventDefault()
+    input.focus({ preventScroll: true })
+  }
+
   return (
     <div
       className={css({
@@ -58,6 +68,7 @@ const CommandUniverseSearch: FC<{ onInput?: (value: string) => void }> = ({ onIn
         ref={inputRef}
         type='text'
         placeholder='Search for a command'
+        onMouseDown={handleMouseDown}
         onInput={(e: React.FormEvent<HTMLInputElement>) => {
           onInput?.(e.currentTarget.value)
         }}
