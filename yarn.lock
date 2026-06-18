@@ -11649,7 +11649,7 @@ __metadata:
     redux-mock-store: "npm:^1.5.5"
     redux-thunk: "npm:^3.1.0"
     reselect: "npm:^5.2.0"
-    tcp-port-used: "npm:^1.0.2"
+    tcp-port-used: "npm:^1.0.3"
     text-block-parser: "npm:^1.1.1"
     title-case: "npm:^4.3.2"
     truncate-html: "npm:^1.2.2"
@@ -15062,7 +15062,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ip-regex@npm:^4.0.0, ip-regex@npm:^4.1.0":
+"ip-regex@npm:^2.1.0":
+  version: 2.1.0
+  resolution: "ip-regex@npm:2.1.0"
+  checksum: 10c0/3ce2d8307fa0373ca357eba7504e66e73b8121805fd9eba6a343aeb077c64c30659fa876b11ac7a75635b7529d2ce87723f208a5b9d51571513b5c68c0cc1541
+  languageName: node
+  linkType: hard
+
+"ip-regex@npm:^4.0.0":
   version: 4.3.0
   resolution: "ip-regex@npm:4.3.0"
   checksum: 10c0/f9ef1f5d0df05b9133a882974e572ae525ccd205260cb103dae337f1fc7451ed783391acc6ad688e56dd2598f769e8e72ecbb650ec34763396af822a91768562
@@ -15684,7 +15691,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"is-url@npm:^1.2.4":
+"is-url@npm:^1.2.2":
   version: 1.2.4
   resolution: "is-url@npm:1.2.4"
   checksum: 10c0/0157a79874f8f95fdd63540e3f38c8583c2ef572661cd0693cda80ae3e42dfe8e9a4a972ec1b827f861d9a9acf75b37f7d58a37f94a8a053259642912c252bc3
@@ -15735,14 +15742,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"is2@npm:^2.0.6":
-  version: 2.0.9
-  resolution: "is2@npm:2.0.9"
+"is2@npm:2.0.1":
+  version: 2.0.1
+  resolution: "is2@npm:2.0.1"
   dependencies:
     deep-is: "npm:^0.1.3"
-    ip-regex: "npm:^4.1.0"
-    is-url: "npm:^1.2.4"
-  checksum: 10c0/51090a2ad046651c1523e6aec98843c2be4b61fdafa5a68d89966b7d3b7116fdc68cfb218cfc3825eb20175fa741de2f89249546352dbc4ac1d86847fa4a084a
+    ip-regex: "npm:^2.1.0"
+    is-url: "npm:^1.2.2"
+  checksum: 10c0/f8f11258890c1b0c38d1dff02742b06218518ca94ef389022b32b43442149b23d5b17d3d264c22e0cd18447196b48d26b74190deb59ae219fb6506d53fc7f2d3
   languageName: node
   linkType: hard
 
@@ -22938,13 +22945,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tcp-port-used@npm:^1.0.2":
-  version: 1.0.2
-  resolution: "tcp-port-used@npm:1.0.2"
+"tcp-port-used@npm:^1.0.3":
+  version: 1.0.3
+  resolution: "tcp-port-used@npm:1.0.3"
   dependencies:
     debug: "npm:4.3.1"
-    is2: "npm:^2.0.6"
-  checksum: 10c0/a5fb29e35f1e452f1064e3671d02b6d65e7d9bffad98d8da688270b6ffdaa9a8351fe8321aedf131f3904af70b569d9c5f6d9fe75d57dda19c466abac2bc025a
+    is2: "npm:2.0.1"
+  checksum: 10c0/23a330e9f59fb6e2dffe67263d518ac31566632092a5b78394add56bd3706f63a80851dea4f519eb3689051b0bfa6d23b0ff52798f1b56f75b3b0dbf1b589885
   languageName: node
   linkType: hard
 
