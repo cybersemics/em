@@ -30,7 +30,7 @@ const dropEndRecipe = defineRecipe({
     type: {
       // Drop targets that are children of thoughts should sit a bit lower due to the reduced padding beneath the thought.
       dropChild: {
-        marginTop: '-0.375em',
+        marginTop: 'calc(-1 * {spacing.editablePaddingTop})',
       },
     },
   },
