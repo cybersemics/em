@@ -70,7 +70,7 @@ const GestureItem: FC<{
           path={command.id === 'cancel' ? null : gestureString(command)}
           highlight={gestureHighlight}
           arrowhead='none'
-          disableGlow
+          glow={false}
           useGradient={false}
           color={token('colors.dim')}
           highlightColor={token('colors.fg')}

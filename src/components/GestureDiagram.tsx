@@ -33,8 +33,8 @@ interface GestureDiagramProps {
   styleCancelAsRegularGesture?: boolean
   /** Which kind of arrowhead to draw. 'none' skips the marker entirely. */
   arrowhead?: 'filled' | 'outlined' | 'none'
-  /** When true, disables the drop-shadow glow filter on all path segments. Default: false. */
-  disableGlow?: boolean
+  /** When true, renders a drop-shadow glow filter on all path segments. Default: true. */
+  glow?: boolean
   /** When true (default), renders gradient strokes via <defs> + GradientStyleBlock. When false, uses solid strokes from highlightColor/color. */
   useGradient?: boolean
   /** Stroke color for highlighted segments when useGradient=false. Default: token('colors.vividHighlight'). */
@@ -363,7 +363,7 @@ const GestureDiagram = ({
   rounded,
   styleCancelAsRegularGesture,
   arrowhead = 'filled',
-  disableGlow = false,
+  glow = true,
   useGradient = true,
   highlightColor,
 }: GestureDiagramProps) => {
@@ -371,9 +371,9 @@ const GestureDiagram = ({
 
   // match signaturePad shadow in TraceGesture component
   // TODO: Why isn't this working?
-  const dropShadow = disableGlow
-    ? undefined
-    : `drop-shadow(0 0 ${(GESTURE_GLOW_BLUR * 2) / 3}px ${token(`colors.${GESTURE_GLOW_COLOR}` as const)})`
+  const dropShadow = glow
+    ? `drop-shadow(0 0 ${(GESTURE_GLOW_BLUR * 2) / 3}px ${token(`colors.${GESTURE_GLOW_COLOR}` as const)})`
+    : undefined
 
   arrowSize = arrowSize ? +arrowSize : strokeWidth * 5
   reversalOffset = reversalOffset ? +reversalOffset : size * 0.3
