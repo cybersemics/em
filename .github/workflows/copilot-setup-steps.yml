@@ -72,6 +72,35 @@ jobs:
       - name: Verify Chrome
         run: google-chrome --version
 
+      # Start Chrome with remote-debugging so the Chrome DevTools MCP can
+      # attach to it. Flags required for headless CI:
+      #   --no-sandbox            → no Linux user-namespace sandboxing (root in CI)
+      #   --disable-dev-shm-usage → /dev/shm is only 64 MB in most runners;
+      #                             use /tmp instead to avoid renderer crashes
+      #   --no-first-run / --no-default-browser-check → skip interactive wizards
+      #   --user-data-dir         → isolated profile so Chrome doesn't conflict
+      #                             with any other Chrome instance
+      - name: Start shared Chrome (remote debugging on :9222)
+        run: |
+          google-chrome \
+            --remote-debugging-port=9222 \
+            --no-sandbox \
+            --disable-dev-shm-usage \
+            --no-first-run \
+            --no-default-browser-check \
+            --user-data-dir=/tmp/chrome-profile \
+            about:blank &
+          # Wait until the DevTools endpoint responds before continuing.
+          for i in {1..15}; do
+            if curl -fsS http://localhost:9222/json/version >/dev/null 2>&1; then
+              echo "Chrome DevTools endpoint ready after ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Chrome did not expose DevTools endpoint within 15s" >&2
+          exit 1
+
       # Start the Vite dev server in the background so it's already running
       # when the agent session begins. Logs go to /tmp/dev-server.log.
       # Vite may serve HTTP or HTTPS depending on local config, so probe both.
