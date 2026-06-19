@@ -6,6 +6,7 @@ import toggleContextView from '../../actions/toggleContextView'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import getContexts from '../../selectors/getContexts'
+import contextToThought from '../../test-helpers/contextToThought'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 // TODO: Why does util have to be imported before selectors and reducers?
@@ -292,5 +293,22 @@ describe('context view', () => {
     const stateNew = reducerFlow(steps)(initialState())
 
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm'])
+  })
+})
+
+describe('drag-to-archive (archiving via explicit path)', () => {
+  it('cursor should move to prev sibling when cursor is on the archived thought (issue #4077 STR A)', () => {
+    const steps = [newThought('One'), newThought('Two'), newThought('Three'), setCursor(['Two'])]
+    const state = reducerFlow(steps)(initialState())
+    const stateAfter = archiveThought(state, { path: state.cursor! })
+    expectPathToEqual(stateAfter, stateAfter.cursor, ['One'])
+  })
+
+  it('cursor should move to prev sibling of archived thought when cursor is on a different thought (issue #4077 STR B)', () => {
+    const steps = [newThought('One'), newThought('Two'), newThought('Three'), setCursor(['Three'])]
+    const state = reducerFlow(steps)(initialState())
+    const twoThought = contextToThought(state, ['Two'])!
+    const stateAfter = archiveThought(state, { path: [twoThought.id] })
+    expectPathToEqual(stateAfter, stateAfter.cursor, ['One'])
   })
 })

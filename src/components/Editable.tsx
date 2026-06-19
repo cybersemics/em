@@ -22,6 +22,7 @@ import { commandEmitter } from '../commands'
 import {
   EDIT_THROTTLE,
   EM_TOKEN,
+  HOME_TOKEN,
   LongPressState,
   TUTORIAL2_STEP_CONTEXT1,
   TUTORIAL2_STEP_CONTEXT1_PARENT,
@@ -582,8 +583,16 @@ const Editable = ({
       editingValueUntrimmedStore.update(value)
 
       dispatch((dispatch, getState) => {
-        const { longPress } = getState()
-        if (longPress === LongPressState.Inactive) {
+        const state = getState()
+
+        // Do not set cursor if the thought has been moved away from its expected path (e.g., archived via drag-to-archive).
+        // On mobile, the browser may restore focus to the previously focused Editable after a drop, triggering onFocus
+        // on a stale Editable whose thought is no longer at the expected location in the tree.
+        const thoughtAtPath = getThoughtById(state, head(simplePath))
+        const expectedParentId = simplePath.length >= 2 ? simplePath[simplePath.length - 2] : HOME_TOKEN
+        if (!thoughtAtPath || thoughtAtPath.parentId !== expectedParentId) return
+
+        if (state.longPress === LongPressState.Inactive) {
           setCursorOnThought({ isKeyboardOpen: true })
         }
       })
