@@ -442,6 +442,8 @@ export default defineConfig({
         },
         spacing: {
           modalPadding: { value: '8%' },
+          editablePaddingTop: { value: '0.375em' },
+          editablePaddingBottom: { value: '0.25em' },
           safeAreaTop: { value: 'env(safe-area-inset-top)' },
           safeAreaRight: { value: 'env(safe-area-inset-right)' },
           safeAreaBottom: { value: 'env(safe-area-inset-bottom)' },

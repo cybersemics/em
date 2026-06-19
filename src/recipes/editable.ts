@@ -4,9 +4,12 @@ const editableRecipe = defineRecipe({
   className: 'editable',
   description: 'editable styles',
   base: {
+    paddingTop: 'editablePaddingTop',
     /* Add some padding-right for increased click area. */
+    paddingRight: '1em',
+    paddingBottom: 'editablePaddingBottom',
     /* Add some padding-left otherwise caret is invisible on empty elements. */
-    padding: '0.375em 1em 0.25em 0.333em',
+    paddingLeft: '0.333em',
     boxSizing: 'border-box',
     // Adjust the space between the bullet and the text with margin-left. When font size is greater than 18px, the space will be increased. When the font size is less than 18th, the space will be decreased.
     // The margin-right must offset margin-left to ensure that urls are not incorrectly ellipsized on smaller font sizes. This is because text-overflow: 'ellipsis' applied to the ThoughtAnnotation does not account for the negative margin of the child.
