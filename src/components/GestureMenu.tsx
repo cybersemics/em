@@ -32,7 +32,7 @@ const GestureMenu: FC<{
   const hasMatchingCommand = commands.some(cmd => (gestureInProgress as string) === gestureString(cmd))
 
   const mainCommands = commands.filter(cmd => cmd.id !== 'cancel' && cmd.id !== 'openMobileCommandUniverse')
-  const separatedCommands = commands.filter(cmd => cmd.id === 'cancel' || cmd.id === 'openMobileCommandUniverse')
+  const persistentCommands = commands.filter(cmd => cmd.id === 'cancel' || cmd.id === 'openMobileCommandUniverse')
 
   return (
     <div
@@ -119,7 +119,7 @@ const GestureMenu: FC<{
               })}
             </div>
             {/* Cancel / Cheatsheet block */}
-            {separatedCommands.length > 0 && (
+            {persistentCommands.length > 0 && (
               <div
                 style={{
                   display: 'flex',
@@ -128,7 +128,7 @@ const GestureMenu: FC<{
                   gap: '1.2rem',
                 }}
               >
-                {separatedCommands.map((command, index) => {
+                {persistentCommands.map((command, index) => {
                   const mobileCommandUniverseInProgress = gestureInProgress
                     ?.toString()
                     .endsWith(gestureString(openMobileCommandUniverseCommand))
@@ -146,7 +146,7 @@ const GestureMenu: FC<{
                       }
                       command={command}
                       isFirstCommand={index === 0}
-                      isLastCommand={index === separatedCommands.length - 1}
+                      isLastCommand={index === persistentCommands.length - 1}
                     />
                   )
                 })}
