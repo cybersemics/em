@@ -15,7 +15,7 @@ import gestureStore, {
 } from '../stores/gesture'
 import storageModel from '../stores/storageModel'
 import FadeTransition from './FadeTransition'
-import GestureItem from './GestureItem'
+import GestureMenuItem from './GestureMenuItem'
 import PopupBase from './PopupBase'
 
 /**********************************************************************
@@ -105,7 +105,7 @@ const GestureMenu: FC<{
                 const isCancelMatch = command.id === 'cancel' && !hasMatchingCommand && !mobileCommandUniverseInProgress
 
                 return (
-                  <GestureItem
+                  <GestureMenuItem
                     gestureInProgress={gestureInProgress as string}
                     key={command.id}
                     selected={
@@ -138,7 +138,7 @@ const GestureMenu: FC<{
                     command.id === 'cancel' && !hasMatchingCommand && !mobileCommandUniverseInProgress
 
                   return (
-                    <GestureItem
+                    <GestureMenuItem
                       gestureInProgress={gestureInProgress as string}
                       key={command.id}
                       selected={

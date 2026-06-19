@@ -15,7 +15,7 @@ const isExecutable = (state: State, command: Command) =>
   (command.allowExecuteFromModal || !state.showModal || !state.showMobileCommandUniverse)
 
 /** Renders a single command row inside the Gesture Menu. */
-const GestureItem: FC<{
+const GestureMenuItem: FC<{
   command: Command
   selected: boolean
   gestureInProgress: string
@@ -121,4 +121,4 @@ const GestureItem: FC<{
   )
 }
 
-export default GestureItem
+export default GestureMenuItem
