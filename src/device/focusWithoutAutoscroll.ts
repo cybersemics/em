@@ -5,12 +5,6 @@ import * as selection from './selection'
 /**
  * Focus an editable and place the caret without triggering iOS native autoscroll.
  *
- * This function is called from `useEditMode` (mousedown + cursor-change useEffect) and `Note` (mousedown +
- * note-focus useEffect). Mousedown calls it synchronously within the user gesture so iOS accepts
- * the focus and same-thought re-taps can reposition the caret. The useEffect call handles
- * programmatic cursor changes (Return, arrow keys, gestures, sidebar restore, toggleNote).
- * Idempotent — safe to call repeatedly with the same element + offset.
- *
  * We do this using two strategies:
  *
  * (1) `focus({ preventScroll: true })` blocks the focus-driven autoscroll. This differs from prior strategies,
@@ -20,8 +14,8 @@ import * as selection from './selection'
  * (2) Save and restore `window.scrollY` around `selection.set` to suppress the selection-driven autoscroll the
  * browser fires when adding a Range inside a contentEditable.
  *
- * Keeping the cursor visible after the keyboard opens is handled separately by
- * `useScrollCursorIntoView` in `BulletCursorOverlay` — this function intentionally does NOT scroll.
+ * This function just handles *disabling* autoscroll. Autoscroll is handled by `useScrollCursorIntoView`
+ * in `BulletCursorOverlay`, on all platforms.
  */
 
 /** Focus an editable and place the caret without triggering iOS native autoscroll. */

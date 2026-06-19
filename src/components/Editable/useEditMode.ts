@@ -120,26 +120,16 @@ const useEditMode = ({
       // If editing or the cursor is on the thought, perform manual caret positioning so the offset is correct.
       // See: #981
       if (editingOrOnCursor && !isMulticursor) {
-        // All cursor changes (taps, Return, arrow keys, gestures) converge on
-        // `focusWithoutAutoscroll`. Mousedown calls it inline here, synchronously within the
-        // user gesture, so:
-        //   - iOS Safari accepts the focus (no asyncFocus dance needed for the tap path).
-        //   - Same-thought re-taps reposition the caret (cursorOffset is not a useEffect dep,
-        //     so we cannot rely on the cursor-change useEffect for offset-only changes).
-        // The cursor-change useEffect also calls focusWithoutAutoscroll for programmatic paths;
-        // the function is idempotent so the second call is a no-op.
         const { inVoidArea, offset } = getCaretOffset(editable, {
           clientX: e.clientX,
           clientY: e.clientY,
         })
 
         // Block the native mousedown so it can't focus the element and place the caret itself.
-        //   - iOS Safari: always block, so the native focus/selection autoscroll never fires and
-        //     jolts position:fixed elements (#3765). focusWithoutAutoscroll re-takes focus cleanly.
-        //   - Other platforms: only block when the tap lands in a void area (outside any text node),
-        //     otherwise leave the native mousedown alone so browser selection — drag-select,
-        //     double-click-word, right-click context menu — still works. Preventing it
-        //     unconditionally would break those. See: #981, #2948
+        // There are two reasons we want to do this:
+        // 1. iOS Safari: always block; let focusWithoutAutoscroll re-takes focus cleanly.
+        // 2. Block when the tap lands in a void area (outside any text node) to stop the caret from being
+        // placed on the wrong thought.
         if ((isTouch && isSafari()) || inVoidArea) {
           e.preventDefault()
         }
@@ -150,7 +140,7 @@ const useEditMode = ({
         const targetOffset = offset ?? 0
 
         // Dispatch setCursor first so Editable.onFocus's setCursorOnThought sees
-        // state.cursor === path and early-returns instead of clobbering cursorOffset to 0.
+        // state.cursor === path and early-returns instead of setting cursorOffset to 0.
         dispatch(
           setCursor({
             path,

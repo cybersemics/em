@@ -60,7 +60,7 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
   // away, where a smooth scroll would be slow and disorienting. "A screenful" is the visible area
   // above the virtual keyboard, from the same store autoscrollEdges uses. (visualViewport.height
   // is not an option: with Capacitor's Keyboard resize: 'none', it never shrinks in the native app.)
-  const visibleHeight = window.innerHeight - virtualKeyboardStore.getState().height
+  const visibleHeight = window.innerHeight - virtualKeyboardStore.getState().targetHeight
   const scrollDistance = Math.abs(scrollYNew - window.scrollY)
   const behavior: ScrollBehavior = scrollDistance < visibleHeight ? 'smooth' : 'auto'
 

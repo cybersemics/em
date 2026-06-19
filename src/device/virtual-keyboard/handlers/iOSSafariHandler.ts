@@ -17,6 +17,12 @@ let controls: AnimationPlaybackControls | null = null
  * and orientation changes that resize the keyboard mid-edit. */
 let currentTargetHeight: number | null = null
 
+/** The keyboard's predicted final height — the settled height of the previous open. Published to
+ * virtualKeyboardStore.targetHeight at open detection so subscribers get the final height upfront
+ * (Capacitor-style one-shot semantics) instead of Safari's progressive measurements. Exact after
+ * the first open, since iOS keyboard height is stable per orientation. */
+let predictedFinalHeight: number | null = null
+
 /** Updates the virtualKeyboardStore state based on the selection. */
 const updateIOSSafariKeyboardState = () => {
   // A timeout is necessary to ensure the isKeyboardOpen state is updated after the selection change.
@@ -39,11 +45,34 @@ const updateIOSSafariKeyboardState = () => {
       // while already editing).
       if (targetHeight === currentTargetHeight) return
 
+      // Opening — rather than re-measuring mid-slide or resizing mid-edit — if the keyboard was
+      // fully closed (null) or still animating closed (0).
+      const isOpening = currentTargetHeight === null || currentTargetHeight === 0
+
       controls?.stop()
-      virtualKeyboardStore.update({ open: true })
+
+      // Publish the keyboard's *predicted* final height once, at open detection — emulating
+      // Capacitor's keyboardWillShow semantics (final height upfront, one targetHeight event per
+      // keyboard movement). Safari can only measure the keyboard progressively as it slides (see
+      // currentTargetHeight above); publishing every intermediate measurement would fire
+      // subscribers like useScrollCursorIntoView 5-10 times per open, restarting the autoscroll
+      // mid-flight each time. The prediction is the settled height of the previous open, seeded
+      // from viewportStore's estimate (via rawHeight) on the first open.
+      if (isOpening) {
+        predictedFinalHeight = Math.max(targetHeight, predictedFinalHeight ?? targetHeight)
+        virtualKeyboardStore.update({ open: true, targetHeight: predictedFinalHeight })
+      } else if (targetHeight > virtualKeyboardStore.getState().targetHeight) {
+        // The keyboard exceeded the prediction (stale prediction, or the prediction bar toggled
+        // on mid-edit): correct upward. Settling *lower* than predicted is left alone — the
+        // bottom trigger edge then sits slightly above the keyboard, which over-reveals
+        // harmlessly — and the prediction self-corrects when the keyboard closes.
+        virtualKeyboardStore.update({ targetHeight })
+      }
       currentTargetHeight = targetHeight
 
-      // Approximate iOS' keyboard spring animation (same curve as iOSCapacitorHandler)
+      // Approximate iOS' keyboard spring animation (same curve as iOSCapacitorHandler).
+      // The spring tracks the *measured* height so keyboard-riding UI (e.g. usePositionFixed)
+      // stays accurate even while the published targetHeight holds the prediction.
       controls = animate(virtualKeyboardStore.getState().height, targetHeight, {
         type: 'spring',
         stiffness: 3600,
@@ -58,8 +87,11 @@ const updateIOSSafariKeyboardState = () => {
 
       controls?.stop()
 
+      // Remember the settled height as the prediction for the next open.
+      if (currentTargetHeight) predictedFinalHeight = currentTargetHeight
+
       // Keep open: true during the closing animation so consumers still account for the keyboard
-      virtualKeyboardStore.update({ open: true })
+      virtualKeyboardStore.update({ open: true, targetHeight: 0 })
       currentTargetHeight = 0
 
       controls = animate(virtualKeyboardStore.getState().height, 0, {

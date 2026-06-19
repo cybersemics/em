@@ -24,6 +24,16 @@ const storageModel = storage.model({
   recentCommands: {
     default: [] as CommandId[],
   },
+  /** The settled height of the iOS Safari virtual keyboard in landscape orientation, learned when the keyboard closes. Lets iOSSafariHandler predict the keyboard's final height at open detection — before it can be measured — across page reloads. */
+  virtualKeyboardHeightLandscape: {
+    default: 0,
+    decode: (s: string | null) => (s ? +s : undefined),
+  },
+  /** The settled height of the iOS Safari virtual keyboard in portrait orientation. See virtualKeyboardHeightLandscape. */
+  virtualKeyboardHeightPortrait: {
+    default: 0,
+    decode: (s: string | null) => (s ? +s : undefined),
+  },
 })
 
 export default storageModel

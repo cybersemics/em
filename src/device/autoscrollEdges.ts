@@ -29,10 +29,12 @@ export const getAutoscrollEdges = (): AutoscrollEdges => {
   const toolbarBottom = toolbarRect ? toolbarRect.bottom : 0
   const navbarHeight = navbarRect?.height ?? 0
 
-  // Get the virtual keyboard's height and open state from the canonical store.
-  // On platforms that don't have a virtual keyboard, like desktop, the store stays closed
-  // with height 0, so no inset gets applied.
-  const { height: keyboardInset, open: keyboardOpen } = virtualKeyboardStore.getState()
+  // Use the keyboard's target height — where it will be once its animation settles — rather than
+  // the spring-animated `height`. The edges are end-state math: the scroll they trigger is itself
+  // animated, so what matters is where the cursor sits relative to the keyboard's final position,
+  // not its mid-slide position. On platforms without a virtual keyboard, like desktop, the store
+  // stays closed with targetHeight 0, so no inset gets applied.
+  const { targetHeight: keyboardInset, open: keyboardOpen } = virtualKeyboardStore.getState()
 
   const fontSize = store.getState().fontSize
 
