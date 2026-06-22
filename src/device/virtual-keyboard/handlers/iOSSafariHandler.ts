@@ -3,12 +3,33 @@ import _ from 'lodash'
 import VirtualKeyboardHandler from '../../../@types/VirtualKeyboardHandler'
 import { isSafari, isTouch } from '../../../browser'
 import store from '../../../stores/app'
-import viewportStore, { updateSize } from '../../../stores/viewport'
+import { updateSize } from '../../../stores/viewport'
 import virtualKeyboardStore from '../../../stores/virtualKeyboardStore'
 import getSafeAreaBottom from '../getSafeAreaBottom'
 
 /** Provides control over the spring animation. */
 let controls: AnimationPlaybackControls | null = null
+
+/** Per-orientation virtual keyboard height in raw px (before the safe-area-bottom inset is
+ * subtracted). The iOS keyboard height is stable per orientation, so the last measured value is a
+ * reliable estimate for the next open. Seeded with a geometric guess until the keyboard can first
+ * be measured. */
+let kbHeightPortrait = window.innerHeight / 2.275
+let kbHeightLandscape = window.innerWidth / 1.7
+
+/** Measures the keyboard's raw height from visualViewport, refreshing the per-orientation cache.
+ * Returns the live measurement while the keyboard is open, or the cached/estimated height when it
+ * cannot be measured directly (e.g. from a selectionchange before the keyboard has slid in). Safari
+ * has no API for the keyboard's final height, so we derive it from the viewport shrinkage. */
+const measureKeyboardHeight = (): number => {
+  const isPortrait = window.innerHeight > window.innerWidth
+  const measured = window.visualViewport ? window.innerHeight - window.visualViewport.height : 0
+  if (measured > 0) {
+    if (isPortrait) kbHeightPortrait = measured
+    else kbHeightLandscape = measured
+  }
+  return measured > 0 ? measured : isPortrait ? kbHeightPortrait : kbHeightLandscape
+}
 
 /** The spring's current target height. Unlike Capacitor — which delivers the keyboard's final height
  * upfront via `keyboardWillShow` — Safari only exposes the height progressively, via
@@ -28,9 +49,9 @@ const updateIOSSafariKeyboardState = () => {
   // A timeout is necessary to ensure the isKeyboardOpen state is updated after the selection change.
   // This places the function call in the next event loop, after the state has been updated.
   setTimeout(() => {
-    // Get the raw height of the keyboard from the viewport store...
-    const { virtualKeyboardHeight } = viewportStore.getState()
-    const rawHeight = virtualKeyboardHeight || 0
+    // Measure the raw height of the keyboard from visualViewport (falling back to the
+    // per-orientation estimate when it can't be measured directly)...
+    const rawHeight = measureKeyboardHeight()
 
     // ...then subtract the safe-area-bottom inset to get the height above the safe-area baseline.
     // Because we always add a safe-area-bottom inset whenever we position elements, this normalized height
@@ -57,7 +78,7 @@ const updateIOSSafariKeyboardState = () => {
       // currentTargetHeight above); publishing every intermediate measurement would fire
       // subscribers like useScrollCursorIntoView 5-10 times per open, restarting the autoscroll
       // mid-flight each time. The prediction is the settled height of the previous open, seeded
-      // from viewportStore's estimate (via rawHeight) on the first open.
+      // from measureKeyboardHeight's per-orientation estimate on the first open.
       if (isOpening) {
         predictedFinalHeight = Math.max(targetHeight, predictedFinalHeight ?? targetHeight)
         virtualKeyboardStore.update({ open: true, targetHeight: predictedFinalHeight })
