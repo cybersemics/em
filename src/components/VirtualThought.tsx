@@ -8,6 +8,7 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import { isTouch } from '../browser'
+import { PREVENT_AUTOSCROLL_TIMEOUT } from '../device/preventAutoscroll'
 import useDelayedAutofocus from '../hooks/useDelayedAutofocus'
 import useLayoutAnimationFrameEffect from '../hooks/useLayoutAnimationFrameEffect'
 import useSelectorEffect from '../hooks/useSelectorEffect'
@@ -162,7 +163,14 @@ const VirtualThought = ({
 
     // skip updating height when preventAutoscroll is enabled, as it modifies the element's height in order to trick Safari into not scrolling
     const editable = ref.current.querySelector(`[data-editable]`)
-    if (editable?.hasAttribute('data-prevent-autoscroll')) return
+    if (editable?.hasAttribute('data-prevent-autoscroll')) {
+      // preventAutoscroll temporarily inflates the editable's paddingBottom, so the height measured right now is invalid.
+      // Re-measure once the autoscroll window has passed. Otherwise a height change that occurs during the window —
+      // e.g. a note added to this thought by Swap Note — is never recorded, leaving a stale (pre-note) height so the
+      // next thought overlaps the note. This only manifests on touch devices, where preventAutoscroll is active. (#4279)
+      setTimeout(updateSize, PREVENT_AUTOSCROLL_TIMEOUT + 1)
+      return
+    }
 
     // Get the updated autofocus, otherwise isVisible will be stale.
     // Using the local autofocus and adding it as a dependency works when clicking on the cursor's parent but not when activating cursorBack from the keyboad for some reason.
