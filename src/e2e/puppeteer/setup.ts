@@ -14,6 +14,24 @@ let context: BrowserContext
 let sessionCounter = 0
 let treecrdtStorage: 'memory' | 'opfs' = 'memory'
 
+/** Seeds isolated browser storage before the app bundle starts. */
+const installTestSessionStorage = async (sessionId: string, storage: typeof treecrdtStorage): Promise<void> => {
+  await page.evaluateOnNewDocument(
+    ({ sessionId, storage }) => {
+      if (!sessionStorage.getItem('__em_puppeteer_storage_initialized')) {
+        localStorage.clear()
+        sessionStorage.setItem('__em_puppeteer_storage_initialized', '1')
+      }
+
+      localStorage.setItem('tsid', sessionId)
+      localStorage.setItem('accessToken', sessionId)
+      localStorage.setItem('treecrdtRuntime', 'direct')
+      localStorage.setItem('treecrdtStorage', storage)
+    },
+    { sessionId, storage },
+  )
+}
+
 /** Use persistent OPFS storage for tests that verify reload/materialization from storage. */
 export const usePersistentTreecrdtStorage = () => {
   beforeAll(() => {
@@ -53,20 +71,7 @@ const setup = async ({
 
   const sessionId = `puppeteer-${Date.now()}-${sessionCounter++}-${Math.random().toString(36).slice(2)}`
 
-  await page.evaluateOnNewDocument(
-    ({ sessionId, treecrdtStorage }) => {
-      if (!sessionStorage.getItem('__em_puppeteer_storage_initialized')) {
-        localStorage.clear()
-        sessionStorage.setItem('__em_puppeteer_storage_initialized', '1')
-      }
-
-      localStorage.setItem('tsid', sessionId)
-      localStorage.setItem('accessToken', sessionId)
-      localStorage.setItem('treecrdtRuntime', 'direct')
-      localStorage.setItem('treecrdtStorage', treecrdtStorage)
-    },
-    { sessionId, treecrdtStorage },
-  )
+  await installTestSessionStorage(sessionId, treecrdtStorage)
 
   page.on('dialog', async dialog => dialog.accept())
 
