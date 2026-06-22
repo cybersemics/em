@@ -106,6 +106,31 @@ it('Clear the text color when setting background color', async () => {
   expect(style?.color).toBe(rgbaToHex(colors.light.black))
 })
 
+it('Set the bullet color to the text color of a numeric thought with a background color', async () => {
+  // Regression test for #4265: applying a font color to a number that already has a background color
+  // turned the bullet black, because the default background color set while clearing the previous
+  // background was not stripped (the formatting change persisted through the edit throttle, so the
+  // strip thunk read a stale thought value). The bullet should match the applied font color.
+  const importText = `
+    - 12345`
+
+  await paste(importText)
+
+  await clickThought('12345')
+
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="background color swatches"] [aria-label="green"]')
+
+  await click('[aria-label="text color swatches"] [aria-label="blue"]')
+
+  const cursorText = await getEditingText()
+  const bulletColor = await getBulletColor()
+  const style = extractColor(cursorText!)
+  expect(rgbToHex(bulletColor!)).toBe(rgbaToHex(colors.light.blue))
+  expect(style?.color).toBe(rgbaToHex(colors.light.blue))
+  expect(style?.backgroundColor).toBe(null)
+})
+
 it('Bullet remains the default color when a substring color is set', async () => {
   const importText = `
   - Labrador

@@ -55,6 +55,7 @@ import isDivider from '../util/isDivider'
 import isDocumentEditable from '../util/isDocumentEditable'
 import strip from '../util/strip'
 import stripEmptyFormattingTags from '../util/stripEmptyFormattingTags'
+import stripTags from '../util/stripTags'
 import trimHtml from '../util/trimHtml'
 import ContentEditable, { ContentEditableEvent } from './ContentEditable'
 import useEditMode from './Editable/useEditMode'
@@ -456,6 +457,10 @@ const Editable = ({
           newNumContext > 0 || newNumContext !== getContexts(state, oldValueRef.current).length - 1
         const urlChange = isNewValueURL || isNewValueURL !== containsURL(oldValueRef.current)
 
+        // A formatting-only change leaves the plain text untouched but alters the HTML markup (e.g. applying a font or background color via the ColorPicker).
+        // These must persist immediately rather than through the edit throttle: formatSelection dispatches a follow-up thunk that reads the thought value from the Redux store to strip redundant colors (e.g. the default background set when clearing a color). If the formatting change is still queued in the throttle, that thunk reads a stale value and the redundant color is never stripped, leaving e.g. a black background that turns the bullet black (#4265).
+        const formattingChange = stripTags(newValue) === stripTags(oldValue)
+
         const isEmpty = newValue.length === 0
 
         // Safari adds <br> to empty contenteditables after editing, so strip them out.
@@ -472,6 +477,7 @@ const Editable = ({
           transient ||
           contextLengthChange ||
           urlChange ||
+          formattingChange ||
           isEmpty ||
           isDivider(newValue)
         ) {
