@@ -140,7 +140,7 @@ Thoughts whose `y > viewportBottom` are still in `treeThoughtsPositioned` but re
 
 Two details:
 
-- **Height clipping by `fontSize / 8`.** Each measured height is reduced by `fontSize / 8` before storage. Why: thoughts use a `clipPath` to avoid accidental caret-snap to the line above/below when a click lands on a 1px boundary. The clipPath leaves a gap; the small height reduction overlaps thoughts by exactly that gap, eliminating it visually.
+- **Height clipping by `fontSize / 8`.** Each measured height is reduced by `fontSize / 8` before storage. Why: thoughts use a `clipPath` to avoid accidental caret-snap to the line above/below when a click lands on a 1px boundary. The clipPath leaves a gap; the small height reduction overlaps thoughts by exactly that gap, eliminating it visually. The reduction is **skipped for thoughts with a note** (`hasNote`), since the note is rendered at the bottom of the measured height and has no clipPath gap; reducing it would pull the next thought up into the note ([#4279](https://github.com/cybersemics/em/issues/4279)).
 - **Unmount cleanup.** When a `VirtualThought` unmounts, it calls `onResize` with `height: null`, and `useSizeTracking.removeSize` deletes the entry. An `unmounted` ref prevents racing setState after the parent has already gone.
 
 `useSingleLineHeight` (in `LayoutTree.tsx`) finds the smallest measured height in `sizes` that's close to `fontSize * 2` and uses that as the canonical single-line height for unmeasured thoughts. Cached in a ref so it doesn't reset to the estimate when single-line thoughts scroll out of view.
