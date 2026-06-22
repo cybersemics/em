@@ -83,6 +83,34 @@ it('Clear the background color when selecting text color', async () => {
   expect(style?.backgroundColor).toBe(null)
 })
 
+it('Bullet tracks the font color on a numeric thought that has a background color', async () => {
+  const importText = `
+    - 123`
+
+  await paste(importText)
+
+  await clickThought('123')
+  let cursorText = await getEditingText()
+  expect(extractColor(cursorText!)?.backgroundColor).toBe(null)
+
+  // apply a background color first
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="background color swatches"] [aria-label="green"]')
+  cursorText = await getEditingText()
+  const backStyle = extractColor(cursorText!)
+  expect(backStyle?.backgroundColor && rgbToHex(backStyle.backgroundColor)).toBe(rgbaToHex(colors.light.green))
+
+  // then apply a font color, which should clear the background and tint the bullet to match the font color
+  await click('[aria-label="text color swatches"] [aria-label="blue"]')
+  cursorText = await getEditingText()
+  const style = extractColor(cursorText!)
+  expect(style?.color).toBe(rgbaToHex(colors.light.blue))
+  expect(style?.backgroundColor).toBe(null)
+
+  const bulletColor = await getBulletColor()
+  expect(rgbToHex(bulletColor!)).toBe(rgbaToHex(colors.light.blue))
+})
+
 it('Clear the text color when setting background color', async () => {
   const importText = `
     - Labrador
