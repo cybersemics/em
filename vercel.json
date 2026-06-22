@@ -1,5 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- . ':(exclude)packages/ai' ':(exclude)packages/eslint-plugin-em' ':(exclude)android' ':(exclude)ios' ':(exclude)server' ':(exclude)docs' ':(exclude,glob)**/*.md'",
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
   "headers": [
     {
