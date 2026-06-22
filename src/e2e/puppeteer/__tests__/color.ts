@@ -216,8 +216,28 @@ it('Verify superscript colors in different views', async () => {
   expect(supColor2).toBeTruthy()
   expect(rgbToHex(supColor2!)).toBe(rgbaToHex(colors.light.blue)) // Superscript should match thought color
 
-  // Context-view superscript color is intentionally not asserted here. In the TreeCRDT-backed fork the expected
-  // context row was not reliably materialized/visible in Browserless; track that as a separate context-view bridge issue.
+  // Test 3: Set up nested thought colors for context view testing
+  // Color parent thought 'v' red
+  await clickThought('v')
+  await click('[aria-label="text color swatches"] [aria-label="red"]')
+
+  // Color child thought 'b' green
+  await clickThought('b')
+  await click('[aria-label="text color swatches"] [aria-label="green"]')
+
+  // Switch to context view and verify superscript color
+  await clickThought('a')
+  await clickThought('m')
+  await click('[data-testid="toolbar-icon"][aria-label="Context View"]')
+
+  // ArrowDown to colored context 'b'.
+  // TODO: Why does clickThought('b') not work here?
+  await press('ArrowDown')
+  await press('ArrowDown')
+  await press('ArrowDown')
+  const supColor3 = await getSuperscriptColor()
+  expect(supColor3).toBeTruthy()
+  expect(rgbToHex(supColor3!)).toBe(rgbaToHex(colors.light.green)) // Superscript should match the green color in context view
 })
 
 it('Clicking on a formatting tag does not close color dropdown', async () => {
