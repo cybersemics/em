@@ -9,7 +9,7 @@ import paste from '../helpers/paste'
 import screenshot from '../helpers/screenshot'
 import simulateDragAndDrop from '../helpers/simulateDragAndDrop'
 import waitForEditable from '../helpers/waitForEditable'
-import { page } from '../setup'
+import { page } from '../session'
 
 // TODO: Why do the uncle tests fail with the default threshold of 0.18?
 // 'd' fails with slight rendering differences for some reason.

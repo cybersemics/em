@@ -1,4 +1,4 @@
-import { page } from '../setup'
+import { page } from '../session'
 
 /**
  * Get the color of the bullet that cursor is on.

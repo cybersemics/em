@@ -1,6 +1,6 @@
 import { WindowEm } from '../../../initialize'
 import sleep from '../../../util/sleep'
-import { page } from '../setup'
+import { page } from '../session'
 
 const em = window.em as WindowEm
 

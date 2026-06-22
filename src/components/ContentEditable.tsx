@@ -81,6 +81,8 @@ const ContentEditable = React.memo(
         }}
         ref={contentRef}
         contentEditable={!disabled}
+        // capitalize the first letter of each sentence to match the native on-screen keyboard behavior (e.g. iOS auto-capitalizes by default, but Android does not unless autocapitalize is set) (#3531)
+        autoCapitalize='sentences'
         // disable spellCheck when running in Puppeteer, otherwise red squiggly lines can break the snapshot tests
         spellCheck={!navigator.webdriver}
         style={style}
