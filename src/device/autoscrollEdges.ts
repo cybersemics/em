@@ -4,9 +4,10 @@ import virtualKeyboardStore from '../stores/virtualKeyboardStore'
 
 /** The trigger edges (in viewport coordinates) that scrollCursorIntoView uses to decide whether to autoscroll.
  * Between topEdge and bottomEdge is the comfort zone: a cursor inside it never triggers a scroll; a cursor
- * crossing either edge does. The bottom edge may be inset from the visible area by a trigger buffer so
- * that scrolling starts before the cursor reaches the navbar. The trigger buffer decides when a scroll
- * starts; where the cursor settles afterwards is the landing margin in scrollCursorIntoView. */
+ * crossing either edge does. Each edge is inset from its occluder (toolbar / keyboard+navbar) by a
+ * trigger buffer so that scrolling starts before the cursor reaches the occluder. The trigger buffer
+ * decides when a scroll starts; where the cursor settles afterwards is the landing margin in
+ * scrollCursorIntoView. */
 export interface AutoscrollEdges {
   /** Bottom of the toolbar — the top of the visible area, in viewport coords. */
   toolbarBottom: number
@@ -14,6 +15,8 @@ export interface AutoscrollEdges {
   navbarHeight: number
   /** Height of the virtual keyboard in px. 0 when closed. */
   keyboardInset: number
+  /** Trigger buffer that insets topEdge below the toolbar — see getAutoscrollEdges. */
+  topBuffer: number
   /** Trigger buffer that insets bottomEdge above the keyboard/navbar. 0 while the keyboard is open — see getAutoscrollEdges. */
   bottomBuffer: number
   /** Crossing above this edge triggers a scroll. */
@@ -42,18 +45,23 @@ export const getAutoscrollEdges = (): AutoscrollEdges => {
   // leaving just enough room for one line of text above it.
   const bottomBuffer = keyboardOpen ? 0 : fontSize * 2
 
-  // No top trigger buffer at all: trigger only once the cursor actually passes under the toolbar, and let
-  // scrollCursorIntoView's landing margin (half the cursor height) provide the headroom. An inset
-  // trigger edge here scrolls while the cursor is still fully visible and lands it ~2.5 lines deep —
-  // each top scroll should instead reveal about one thought, mirroring the bottom edge's
-  // one-line-per-Enter rhythm.
-  const topEdge = toolbarBottom
+  // Top trigger buffer, mirroring bottomBuffer: inset topEdge ~one thought below the toolbar so a
+  // scroll fires before the cursor slips fully under it. Without this buffer the cursor has to pass
+  // entirely under the toolbar before anything happens, which makes scrolling upward (cursorUp /
+  // arrow-up) feel sticky. Constant regardless of keyboard state, since the toolbar — unlike the
+  // keyboard — does not move.
+  // NOTE (#3765): newly symmetric with the bottom edge; tune fontSize * 2 or set to 0 (flush to the
+  // toolbar, headroom from the landing margin alone) if the upward scroll over-reveals.
+  const topBuffer = fontSize * 2
+
+  const topEdge = toolbarBottom + topBuffer
   const bottomEdge = window.innerHeight - keyboardInset - navbarHeight - bottomBuffer
 
   return {
     toolbarBottom,
     navbarHeight,
     keyboardInset,
+    topBuffer,
     bottomBuffer,
     topEdge,
     bottomEdge,
