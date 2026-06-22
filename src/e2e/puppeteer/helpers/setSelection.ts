@@ -1,4 +1,4 @@
-import { page } from '../setup'
+import { page } from '../session'
 
 /** Sets the selection of the text in the editable. */
 const setSelection = async (start: number, end: number) => {
