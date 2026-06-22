@@ -14,8 +14,7 @@ import * as selection from './selection'
  * (2) Save and restore `window.scrollY` around `selection.set` to suppress the selection-driven autoscroll the
  * browser fires when adding a Range inside a contentEditable.
  *
- * This function just handles *disabling* autoscroll. Autoscroll is handled by `useScrollCursorIntoView`
- * in `BulletCursorOverlay`, on all platforms.
+ * Autoscroll is handled solely in the `scrollCursorIntoView` module.
  */
 
 /** Focus an editable and place the caret without triggering iOS native autoscroll. */
