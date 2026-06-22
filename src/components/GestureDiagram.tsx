@@ -199,146 +199,6 @@ const RDLD_SEGMENTS = [
 const joinRdldSegments = (segments: string[]) =>
   segments.reduce((acc, segment, i) => (i === 0 ? segment : `${acc} ${segment.replace(/^M [\d.,]+ /, '')}`), '')
 
-interface GesturePathProps {
-  path: Gesture
-  extendedPath: Gesture
-  positions: { x: number; y: number }[]
-  pathSegments: { dx: number; dy: number }[]
-  scale: number
-  size: number
-  highlight?: number
-  color?: string
-  highlightColor?: string
-  useGradient: boolean
-  rounded?: boolean
-  arrowhead: 'filled' | 'outlined' | 'none'
-  strokeWidth: number
-  dropShadow: string | undefined
-  markerId: string
-}
-
-/** Renders the gesture stroke(s). Picks one of three rendering strategies based on path/gradient/rounded. */
-const GesturePath = ({
-  path,
-  extendedPath,
-  positions,
-  pathSegments,
-  scale,
-  size,
-  highlight,
-  color,
-  highlightColor,
-  useGradient,
-  rounded,
-  arrowhead,
-  strokeWidth,
-  dropShadow,
-  markerId,
-}: GesturePathProps) => {
-  const commonPathProps = {
-    strokeWidth: strokeWidth * 1.5,
-    strokeLinecap: 'round' as const,
-    strokeLinejoin: 'round' as const,
-    fill: 'none' as const,
-    style: dropShadow ? { filter: dropShadow } : undefined,
-  }
-  const allHighlighted = highlight != null && highlight >= path.length
-  const noneHighlighted = highlight == null || highlight === 0
-  const markerEnd = arrowhead !== 'none' ? `url(#${markerId})` : undefined
-  const activeColor = highlightColor ?? token('colors.vividHighlight')
-  const inactiveColor = color ?? token('colors.fg')
-
-  // Combined-path rendering for straight, solid-color paths. Using a single <path>
-  // with strokeLinejoin='round' avoids overlapping round caps at joints, which
-  // become visible as blobs/beads when strokeWidth is large relative to segment length.
-  if (!useGradient && !rounded && path !== 'rdld') {
-    /** Maps a position array to an SVG path data string. */
-    const makePath = (points: typeof positions) =>
-      points.map((pos, i) => `${i === 0 ? 'M' : 'L'} ${pos.x} ${pos.y}`).join(' ')
-
-    if (allHighlighted || noneHighlighted) {
-      return (
-        <path
-          d={makePath(positions)}
-          stroke={allHighlighted ? activeColor : inactiveColor}
-          markerEnd={markerEnd}
-          {...commonPathProps}
-        />
-      )
-    }
-
-    return (
-      <>
-        <path d={makePath(positions.slice(0, highlight! + 1))} stroke={activeColor} {...commonPathProps} />
-        <path
-          d={makePath(positions.slice(highlight))}
-          stroke={inactiveColor}
-          markerEnd={markerEnd}
-          {...commonPathProps}
-        />
-      </>
-    )
-  }
-
-  // Combined-path rendering for the rdld (Command Universe) solid-color special case.
-  if (!useGradient && path === 'rdld') {
-    if (allHighlighted || noneHighlighted) {
-      return (
-        <path
-          d={joinRdldSegments(RDLD_SEGMENTS)}
-          stroke={allHighlighted ? activeColor : inactiveColor}
-          {...commonPathProps}
-        />
-      )
-    }
-
-    return (
-      <>
-        {highlight! > 0 && (
-          <path d={joinRdldSegments(RDLD_SEGMENTS.slice(0, highlight))} stroke={activeColor} {...commonPathProps} />
-        )}
-        <path d={joinRdldSegments(RDLD_SEGMENTS.slice(highlight))} stroke={inactiveColor} {...commonPathProps} />
-      </>
-    )
-  }
-
-  // Per-segment rendering for gradient or rounded paths.
-  return (
-    <>
-      {pathSegments.map((segment, i) => {
-        const { x, y } = positions[i]
-        const d =
-          path === 'rdld'
-            ? RDLD_SEGMENTS[i]
-            : rounded
-              ? (() => {
-                  const { startX, startY, radius, sweepFlag, endX, endY } = generateArcCoordinates(
-                    i,
-                    Array.from(path) as Direction[],
-                    size,
-                  )
-                  return `M ${startX} ${startY} A ${radius} ${radius} 0 0 ${sweepFlag} ${endX} ${endY}`
-                })()
-              : `M ${x} ${y} l ${segment.dx * scale} ${segment.dy * scale}`
-        const stroke = useGradient
-          ? `url(#${extendedPath}-gradient-${i})`
-          : highlight != null && (i < highlight || highlight === path.length)
-            ? activeColor
-            : inactiveColor
-        return (
-          <path
-            d={d}
-            key={i}
-            stroke={stroke}
-            {...commonPathProps}
-            markerEnd={i === pathSegments.length - 1 && path !== 'rdld' && arrowhead !== 'none' ? markerEnd : undefined}
-          />
-        )
-      })}
-    </>
-  )
-}
-
 /** Renders an SVG representation of a gesture.
  *
  * @param path Any combination of l/r/u/d,or null for a cancel gesture (X).
@@ -522,6 +382,110 @@ const GestureDiagram = ({
     }
   }
 
+  const renderGesturePath = () => {
+    const commonPathProps = {
+      strokeWidth: strokeWidth * 1.5,
+      strokeLinecap: 'round' as const,
+      strokeLinejoin: 'round' as const,
+      fill: 'none' as const,
+      style: dropShadow ? { filter: dropShadow } : undefined,
+    }
+    const allHighlighted = highlight != null && highlight >= path.length
+    const noneHighlighted = highlight == null || highlight === 0
+    const markerEnd = arrowhead !== 'none' ? `url(#${id})` : undefined
+    const activeColor = highlightColor ?? token('colors.vividHighlight')
+    const inactiveColor = color ?? token('colors.fg')
+
+    // Combined-path rendering for straight, solid-color paths. Using a single <path>
+    // with strokeLinejoin='round' avoids overlapping round caps at joints, which
+    // become visible as blobs/beads when strokeWidth is large relative to segment length.
+    if (!useGradient && !rounded && path !== 'rdld') {
+      const makePath = (points: typeof positions) =>
+        points.map((pos, i) => `${i === 0 ? 'M' : 'L'} ${pos.x} ${pos.y}`).join(' ')
+
+      if (allHighlighted || noneHighlighted) {
+        return (
+          <path
+            d={makePath(positions)}
+            stroke={allHighlighted ? activeColor : inactiveColor}
+            markerEnd={markerEnd}
+            {...commonPathProps}
+          />
+        )
+      }
+
+      return (
+        <>
+          <path d={makePath(positions.slice(0, highlight! + 1))} stroke={activeColor} {...commonPathProps} />
+          <path
+            d={makePath(positions.slice(highlight))}
+            stroke={inactiveColor}
+            markerEnd={markerEnd}
+            {...commonPathProps}
+          />
+        </>
+      )
+    }
+
+    // Combined-path rendering for the rdld (Command Universe) solid-color special case.
+    if (!useGradient && path === 'rdld') {
+      if (allHighlighted || noneHighlighted) {
+        return (
+          <path
+            d={joinRdldSegments(RDLD_SEGMENTS)}
+            stroke={allHighlighted ? activeColor : inactiveColor}
+            {...commonPathProps}
+          />
+        )
+      }
+
+      return (
+        <>
+          {highlight! > 0 && (
+            <path d={joinRdldSegments(RDLD_SEGMENTS.slice(0, highlight))} stroke={activeColor} {...commonPathProps} />
+          )}
+          <path d={joinRdldSegments(RDLD_SEGMENTS.slice(highlight))} stroke={inactiveColor} {...commonPathProps} />
+        </>
+      )
+    }
+
+    // Per-segment rendering for gradient or rounded paths.
+    return (
+      <>
+        {pathSegments.map((segment, i) => {
+          const { x, y } = positions[i]
+          const d =
+            path === 'rdld'
+              ? RDLD_SEGMENTS[i]
+              : rounded
+                ? (() => {
+                    const { startX, startY, radius, sweepFlag, endX, endY } = generateArcCoordinates(
+                      i,
+                      Array.from(path) as Direction[],
+                      size,
+                    )
+                    return `M ${startX} ${startY} A ${radius} ${radius} 0 0 ${sweepFlag} ${endX} ${endY}`
+                  })()
+                : `M ${x} ${y} l ${segment.dx * scale} ${segment.dy * scale}`
+          const stroke = useGradient
+            ? `url(#${extendedPath}-gradient-${i})`
+            : highlight != null && (i < highlight || highlight === path.length)
+              ? activeColor
+              : inactiveColor
+          return (
+            <path
+              d={d}
+              key={i}
+              stroke={stroke}
+              {...commonPathProps}
+              markerEnd={i === pathSegments.length - 1 && path !== 'rdld' && arrowhead !== 'none' ? markerEnd : undefined}
+            />
+          )
+        })}
+      </>
+    )
+  }
+
   return (
     <span
       className={css({ display: 'inline-block' }, cssRaw)}
@@ -601,23 +565,7 @@ const GestureDiagram = ({
 
         {useGradient && <GradientStyleBlock color={color} highlight={highlight} path={extendedPath} />}
 
-        <GesturePath
-          path={path}
-          extendedPath={extendedPath}
-          positions={positions}
-          pathSegments={pathSegments}
-          scale={scale}
-          size={size}
-          highlight={highlight}
-          color={color}
-          highlightColor={highlightColor}
-          useGradient={useGradient}
-          rounded={rounded}
-          arrowhead={arrowhead}
-          strokeWidth={strokeWidth}
-          dropShadow={dropShadow}
-          markerId={id}
-        />
+        {renderGesturePath()}
       </svg>
     </span>
   )
