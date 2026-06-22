@@ -26,6 +26,7 @@ const useSizeTracking = () => {
       width,
       isVisible,
       key,
+      hasNote,
     }: {
       cliff: number
       height: number | null
@@ -33,9 +34,12 @@ const useSizeTracking = () => {
       id: ThoughtId
       isVisible: boolean
       key: string
+      hasNote?: boolean
     }) => {
       if (height !== null) {
-        const lineHeightOverlap = fontSize / 8
+        // The clipPath on the thought annotation leaves a gap at the bottom; reducing each height by fontSize / 8 overlaps thoughts by exactly that gap to eliminate it visually.
+        // Skip the reduction when the thought has a note, since the note (which has no clipPath gap) is rendered at the bottom of the measured height. Reducing it would pull the next thought up into the note, causing them to overlap. (#4279)
+        const lineHeightOverlap = hasNote ? 0 : fontSize / 8
         const heightClipped = height - lineHeightOverlap
 
         setSizes(sizesOld =>

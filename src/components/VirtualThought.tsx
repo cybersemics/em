@@ -35,6 +35,8 @@ export type OnResizeParams = {
   isVisible: boolean
   /** A key that uniquely identifies the thought across context views. */
   key: string
+  /** Whether the thought has a note rendered below it. The height clipping that cancels the editable's clipPath gap must be skipped for noted thoughts, otherwise the next thought overlaps the note. */
+  hasNote?: boolean
 }
 
 /** A resize handler that should be called whenever a thought's height has changed. */
@@ -173,8 +175,9 @@ const VirtualThought = ({
       id,
       isVisible: isVisibleNew,
       key: crossContextualKey,
+      hasNote: note !== null,
     })
-  }, [crossContextualKey, onResize, id, autofocus])
+  }, [crossContextualKey, onResize, id, autofocus, note])
 
   // Recalculate height when anything changes that could indirectly affect the height of the thought. (Height observers are slow.)
   // Autofocus changes when the cursor changes depth or moves between a leaf and non-leaf. This changes the left margin and can cause thoughts to wrap or unwrap.
