@@ -87,7 +87,10 @@ describe('scrollCursorIntoView', () => {
         bottom: window.innerHeight,
       }
 
-      return rect.top >= viewport.top && rect.bottom <= viewport.bottom
+      const isInViewport = rect.top >= viewport.top && rect.bottom <= viewport.bottom
+
+      // Ensure the cursor is scrolled into view
+      return isInViewport && window.scrollY > 0
     })
   })
 })
