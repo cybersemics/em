@@ -42,6 +42,7 @@ const urlLinkStyle = css({
   display: 'inline-block',
   overflow: 'hidden',
   position: 'relative',
+  top: '2px',
   zIndex: 'thoughtAnnotationLink',
   marginLeft: 3,
   textDecoration: 'none',
@@ -97,7 +98,6 @@ const ThoughtAnnotation = React.memo(
   ({
     email,
     isEditing,
-    multiline,
     ellipsizedUrl,
     numContexts,
     showSuperscript,
@@ -112,7 +112,6 @@ const ThoughtAnnotation = React.memo(
   }: {
     email?: string
     isEditing: boolean
-    multiline?: boolean
     ellipsizedUrl?: boolean
     numContexts: number
     showSuperscript?: boolean
@@ -151,7 +150,6 @@ const ThoughtAnnotation = React.memo(
       <ThoughtAnnotationWrapper
         isTableCol1={isTableCol1}
         ellipsizedUrl={ellipsizedUrl}
-        multiline={multiline}
         value={value}
         styleAnnotation={styleAnnotation}
         cssRaw={cssRaw}

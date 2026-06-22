@@ -1,6 +1,6 @@
 import { ElementHandle } from 'puppeteer'
 import { JSHandle } from 'puppeteer'
-import { page } from '../setup'
+import { page } from '../session'
 
 interface Options {
   /** Click on the inside edge of the editable. Default: left. */

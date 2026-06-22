@@ -158,9 +158,19 @@ const saveErrorReload = (savingProgress: number) => {
   }
 }
 
-/** Add window event handlers. */
+type EventHandlers = {
+  keyDown: typeof keyDown
+  keyUp: typeof keyUp
+  cleanup: () => void
+}
+
+let eventHandlers: EventHandlers | null = null
+
+/** Add window event handlers once. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const initEvents = (store: Store<State, any>) => {
+  if (eventHandlers) return eventHandlers
+
   let lastState: number
   let lastPath: Path | null
 
@@ -406,10 +416,13 @@ const initEvents = (store: Store<State, any>) => {
     lifecycle.removeEventListener('statechange', onStateChange)
     resizeHost.removeEventListener('resize', updateSize)
     virtualKeyboardHandler.destroy()
+    eventHandlers = null
   }
 
+  eventHandlers = { keyDown, keyUp, cleanup }
+
   // return input handlers as another way to remove them on cleanup
-  return { keyDown, keyUp, cleanup }
+  return eventHandlers
 }
 
 /** Error event listener. This does not catch React errors. See the ErrorFallback component that is used in the error boundary of the App component. */
