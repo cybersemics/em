@@ -1,6 +1,6 @@
 import type { WindowEm } from '../../../initialize'
 import getEditingText from '../helpers/getEditingText'
-import { page } from '../setup'
+import { page } from '../session'
 
 type StartupWindow = Window & {
   em?: {

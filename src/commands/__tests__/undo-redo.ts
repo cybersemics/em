@@ -21,6 +21,7 @@ import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../..
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import archiveCommand from '../archive'
 import deleteCommand from '../delete'
 import indentCommand from '../indent'
 import moveCursorForward from '../moveCursorForward'
@@ -677,5 +678,54 @@ describe('multicursor grouping', () => {
   - c
   - e`
     expect(exported).toEqual(expectedOutput)
+  })
+
+  it('should undo a multicursor command and a trailing navigation action together in a single undo', () => {
+    // Reproduces #4314: archiving multiple selected thoughts via the DropGutter while the Command Center is open
+    // leaves a trailing setCursor (navigation) patch on top of the multicursor command patch. The multicursor
+    // command patch stores its undoLabel (here the command id 'archive', which is not a registered action type) at
+    // actions[0], so the first undo must still restore the archived thoughts, not just the trailing cursor change.
+    store.dispatch([
+      importText({
+        text: `
+        - a
+        - b
+        - c
+        - d
+        - e`,
+      }),
+      setCursor(['a']),
+      addMulticursor(['a']),
+      addMulticursor(['b']),
+      addMulticursor(['c']),
+    ])
+
+    // Archive all selected thoughts as a single multicursor command. The cursor lands on the surviving sibling d.
+    executeCommandWithMulticursor(archiveCommand, { store })
+
+    // The archived thoughts (a, b, c) are moved to the hidden =archive context.
+    let exportedTrailingNav = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exportedTrailingNav).toEqual(`- ${HOME_TOKEN}
+  - =archive
+    - c
+    - b
+    - a
+  - d
+  - e`)
+
+    // Simulate the trailing navigation patch that lands on top of the command patch (e.g. cursor restore after the
+    // Command Center closes). Moving the cursor to a different surviving thought creates a separate navigation-only patch.
+    store.dispatch(setCursor(['e']))
+
+    // A single undo must undo both the trailing navigation and the multicursor command, restoring the archived thoughts.
+    store.dispatch(undo())
+
+    exportedTrailingNav = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exportedTrailingNav).toEqual(`- ${HOME_TOKEN}
+  - a
+  - b
+  - c
+  - d
+  - e`)
   })
 })

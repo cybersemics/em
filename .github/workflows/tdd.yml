@@ -32,17 +32,20 @@ jobs:
       has_ios: ${{ steps.classify.outputs.has_ios }}
       has_skipped_unit: ${{ steps.classify.outputs.has_skipped_unit }}
       has_skipped_puppeteer: ${{ steps.classify.outputs.has_skipped_puppeteer }}
+      has_skipped_ios: ${{ steps.classify.outputs.has_skipped_ios }}
       unit_files: ${{ steps.classify.outputs.unit_files }}
       puppeteer_files: ${{ steps.classify.outputs.puppeteer_files }}
       ios_files: ${{ steps.classify.outputs.ios_files }}
       skipped_unit_files: ${{ steps.classify.outputs.skipped_unit_files }}
       skipped_puppeteer_files: ${{ steps.classify.outputs.skipped_puppeteer_files }}
+      skipped_ios_files: ${{ steps.classify.outputs.skipped_ios_files }}
       merge_base: ${{ steps.classify.outputs.merge_base }}
       tdd_commit: ${{ steps.tdd_commit.outputs.tdd_commit }}
       skip: ${{ steps.skip.outputs.skip }}
       skip_reason: ${{ steps.skip.outputs.reason }}
       skip_unit: ${{ steps.skip.outputs.skip_unit }}
       skip_puppeteer: ${{ steps.skip.outputs.skip_puppeteer }}
+      skip_ios: ${{ steps.skip.outputs.skip_ios }}
 
     steps:
       - name: Clone repository
@@ -112,6 +115,7 @@ jobs:
 
           UNIT_SKIPPED_FILES=$(filter_added_skipped_tests "$UNIT_FILES" "$MERGE_BASE" "$HEAD_SHA")
           PUPPETEER_SKIPPED_FILES=$(filter_added_skipped_tests "$PUPPETEER_FILES" "$MERGE_BASE" "$HEAD_SHA")
+          IOS_SKIPPED_FILES=$(filter_added_skipped_tests "$IOS_FILES" "$MERGE_BASE" "$HEAD_SHA")
 
           UNIT_FILES=$(filter_new_tests "$UNIT_FILES" "$MERGE_BASE" "$HEAD_SHA")
           PUPPETEER_FILES=$(filter_new_tests "$PUPPETEER_FILES" "$MERGE_BASE" "$HEAD_SHA")
@@ -154,18 +158,21 @@ jobs:
           HAS_IOS="false"
           HAS_SKIPPED_UNIT="false"
           HAS_SKIPPED_PUPPETEER="false"
+          HAS_SKIPPED_IOS="false"
 
           if [ -n "$UNIT_FILES" ]; then HAS_UNIT="true"; fi
           if [ -n "$PUPPETEER_FILES" ]; then HAS_PUPPETEER="true"; fi
           if [ -n "$IOS_FILES" ]; then HAS_IOS="true"; fi
           if [ -n "$UNIT_SKIPPED_FILES" ]; then HAS_SKIPPED_UNIT="true"; fi
           if [ -n "$PUPPETEER_SKIPPED_FILES" ]; then HAS_SKIPPED_PUPPETEER="true"; fi
+          if [ -n "$IOS_SKIPPED_FILES" ]; then HAS_SKIPPED_IOS="true"; fi
 
           echo "has_unit=$HAS_UNIT" >> "$GITHUB_OUTPUT"
           echo "has_puppeteer=$HAS_PUPPETEER" >> "$GITHUB_OUTPUT"
           echo "has_ios=$HAS_IOS" >> "$GITHUB_OUTPUT"
           echo "has_skipped_unit=$HAS_SKIPPED_UNIT" >> "$GITHUB_OUTPUT"
           echo "has_skipped_puppeteer=$HAS_SKIPPED_PUPPETEER" >> "$GITHUB_OUTPUT"
+          echo "has_skipped_ios=$HAS_SKIPPED_IOS" >> "$GITHUB_OUTPUT"
 
           # Store file lists (newline-separated) for downstream jobs
           # Use base64 to safely pass through GITHUB_OUTPUT
@@ -174,6 +181,7 @@ jobs:
           echo "ios_files=$(echo "$IOS_FILES" | base64 -w 0)" >> "$GITHUB_OUTPUT"
           echo "skipped_unit_files=$(echo "$UNIT_SKIPPED_FILES" | base64 -w 0)" >> "$GITHUB_OUTPUT"
           echo "skipped_puppeteer_files=$(echo "$PUPPETEER_SKIPPED_FILES" | base64 -w 0)" >> "$GITHUB_OUTPUT"
+          echo "skipped_ios_files=$(echo "$IOS_SKIPPED_FILES" | base64 -w 0)" >> "$GITHUB_OUTPUT"
           echo "merge_base=$MERGE_BASE" >> "$GITHUB_OUTPUT"
 
           # Store whether any non-test app code changed
@@ -230,6 +238,7 @@ jobs:
           REASON=""
           SKIP_UNIT="false"
           SKIP_PUPPETEER="false"
+          SKIP_IOS="false"
 
           # 1. Check for skip-tdd label
           LABELS='${{ toJSON(github.event.pull_request.labels.*.name) }}'
@@ -246,6 +255,10 @@ jobs:
           if echo "$LABELS" | grep -q '"skip-tdd-puppeteer"'; then
             SKIP_PUPPETEER="true"
             REASON="${REASON:+$REASON; }PR has skip-tdd-puppeteer label"
+          fi
+          if echo "$LABELS" | grep -q '"skip-tdd-ios"'; then
+            SKIP_IOS="true"
+            REASON="${REASON:+$REASON; }PR has skip-tdd-ios label"
           fi
 
           # 2. No changed tests at all
@@ -269,12 +282,14 @@ jobs:
           echo "reason=$REASON" >> "$GITHUB_OUTPUT"
           echo "skip_unit=$SKIP_UNIT" >> "$GITHUB_OUTPUT"
           echo "skip_puppeteer=$SKIP_PUPPETEER" >> "$GITHUB_OUTPUT"
+          echo "skip_ios=$SKIP_IOS" >> "$GITHUB_OUTPUT"
 
           echo "=== Skip decision ==="
           echo "Skip: $SKIP"
           echo "Reason: $REASON"
           echo "Skip unit: $SKIP_UNIT"
           echo "Skip puppeteer: $SKIP_PUPPETEER"
+          echo "Skip ios: $SKIP_IOS"
 
   # ---------------------------------------------------------------------------
   # Unit: apply changed unit test diff to base, run them, expect failure.
@@ -493,31 +508,126 @@ jobs:
           fi
 
   # ---------------------------------------------------------------------------
-  # iOS BrowserStack: skipped in v1.
-  #
-  # BrowserStack iOS tests require BROWSERSTACK_USERNAME and
-  # BROWSERSTACK_ACCESS_KEY secrets, a running local server tunneled via
-  # BrowserStack Local, and real device time. Running these against the base
-  # branch just for TDD validation is expensive and complex.
-  #
-  # For now, if iOS tests change alongside app code, we note it but do not
-  # gate the PR. A future iteration can add this when cost/benefit is clearer.
+  # iOS BrowserStack: check out the changed iOS test diff onto base, run on
+  # BrowserStack, expect failure. Real device time — gate independently with the
+  # `skip-tdd-ios` label. Requires BROWSERSTACK_* secrets (available on same-repo
+  # PRs; fork PRs do not receive them and this job will be unable to authenticate).
   # ---------------------------------------------------------------------------
   ios:
-    name: TDD — iOS (skipped)
+    name: TDD — iOS tests
     needs: detect
-    if: needs.detect.outputs.skip != 'true' && needs.detect.outputs.has_ios == 'true'
+    if: needs.detect.outputs.skip != 'true' && needs.detect.outputs.skip_ios != 'true' && needs.detect.outputs.has_ios == 'true'
     runs-on: ubuntu-latest
+    env:
+      # Activates the console proxy (src/util/consoleProxy.ts) at build time; BrowserStack can't access
+      # iOS console logs, and the wdio config's beforeTest waits for the proxy. Mirrors ios.yml.
+      VITE_BROWSER_CONSOLE_CAPTURE: 1
+
     steps:
-      - name: iOS TDD check not yet implemented
+      - name: Clone repository
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.detect.outputs.tdd_commit }}
+          fetch-depth: 999
+
+      - name: Fetch PR head
+        run: git fetch origin ${{ github.event.pull_request.head.sha }}
+
+      - name: Restore GitHub Actions files from PR HEAD
+        if: github.event_name == 'pull_request'
+        run: git checkout FETCH_HEAD -- .github/actions/
+
+      - name: Checkout test files from PR head
+        id: patch
         run: |
-          echo "⚠️ Changed iOS test files detected, but BrowserStack TDD validation"
-          echo "is not yet implemented (requires secrets, device time, tunneling)."
-          echo ""
-          echo "Changed files:"
-          echo "${{ needs.detect.outputs.ios_files }}" | base64 -d
-          echo ""
-          echo "Skipping — this will be addressed in a future iteration."
+          IOS_FILES=$(echo "${{ needs.detect.outputs.ios_files }}" | base64 -d)
+
+          echo "=== Changed iOS test files ==="
+          echo "$IOS_FILES"
+
+          if [ -z "$IOS_FILES" ]; then
+            echo "No iOS test files to process"
+            echo "empty=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Check out each test file directly from the PR head. This reliably handles
+          # both modified files and brand-new test files (including new directories).
+          echo "=== Checking out iOS test files from PR head ==="
+          for f in $IOS_FILES; do
+            echo "Checking out: $f"
+            git checkout FETCH_HEAD -- "$f"
+          done
+
+          echo "empty=false" >> "$GITHUB_OUTPUT"
+
+      - name: Enable Corepack
+        if: steps.patch.outputs.empty != 'true'
+        run: corepack enable
+
+      - name: Unskip added iOS tests before running on base
+        if: steps.patch.outputs.empty != 'true' && needs.detect.outputs.has_skipped_ios == 'true'
+        uses: ./.github/actions/unskip-added-tests
+        with:
+          merge-base: ${{ needs.detect.outputs.merge_base }}
+          head-sha: ${{ github.event.pull_request.head.sha }}
+          skipped-files: ${{ needs.detect.outputs.skipped_ios_files }}
+          no-files-message: No iOS skipped test files to unskip.
+
+      - name: Set Node.js version
+        if: steps.patch.outputs.empty != 'true'
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Install npm dependencies
+        if: steps.patch.outputs.empty != 'true'
+        run: yarn
+
+      - name: Build
+        if: steps.patch.outputs.empty != 'true'
+        run: yarn build
+
+      - name: Serve
+        if: steps.patch.outputs.empty != 'true'
+        run: yarn servebuild &
+
+      - name: Run changed iOS tests on base (expect failure)
+        if: steps.patch.outputs.empty != 'true'
+        id: run_tests
+        env:
+          BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
+          BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
+          BROWSERSTACK_BUILD_NAME: 'TDD - ${{ github.run_id }}'
+          BROWSERSTACK_PROJECT_NAME: 'em'
+        run: |
+          IOS_FILES=$(echo "${{ needs.detect.outputs.ios_files }}" | base64 -d)
+
+          echo "=== Running changed iOS tests ==="
+          echo "$IOS_FILES"
+
+          # wdio --spec filters the config's specs to the changed file(s).
+          SPEC_ARGS=""
+          for f in $IOS_FILES; do SPEC_ARGS="$SPEC_ARGS --spec $f"; done
+
+          set +e
+          yarn test:ios $SPEC_ARGS 2>&1
+          TEST_EXIT=$?
+          set -e
+
+          echo "test_exit=$TEST_EXIT" >> "$GITHUB_OUTPUT"
+
+          if [ "$TEST_EXIT" -ne 0 ]; then
+            echo ""
+            echo "✅ TDD validated: changed iOS tests FAIL on the base branch (exit code $TEST_EXIT)."
+            echo "This means the tests are genuinely covering new behavior."
+          else
+            echo ""
+            echo "❌ TDD flagged: changed iOS tests PASS on the base branch."
+            echo "New tests that accompany bug fixes are expected to FAIL on the base branch and PASS on the PR, demonstrating that the issue has been fixed. Please review your tests and make sure they fail on the base branch."
+            echo "If you are extending the test coverage over previously working behavior, add the 'skip-tdd' or 'skip-tdd-ios' label to the PR to skip this workflow."
+            exit 1
+          fi
 
   # ---------------------------------------------------------------------------
   # Summary: single status check that downstream branch protection can require.
@@ -578,9 +688,9 @@ jobs:
             FAILED="true"
           fi
 
-          # iOS is informational only in v1
           if [ "$IOS_RESULT" = "failure" ]; then
-            echo "⚠️ iOS job had an issue (informational only)"
+            echo "❌ iOS tests passed on base branch — TDD flagged"
+            FAILED="true"
           fi
 
           if [ "$FAILED" = "true" ]; then

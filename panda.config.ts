@@ -17,7 +17,6 @@ import linkRecipe from './src/recipes/link'
 import modalRecipe from './src/recipes/modal'
 import modalActionLinkRecipe from './src/recipes/modalActionLink'
 import modalTextRecipe from './src/recipes/modalText'
-import multilineRecipe from './src/recipes/multiline'
 import panelCommandGroupRecipe from './src/recipes/panelCommandGroupRecipe'
 import panelCommandRecipe from './src/recipes/panelCommandRecipe'
 import slideTransitionRecipe from './src/recipes/slideTransition'
@@ -446,6 +445,8 @@ export default defineConfig({
         },
         spacing: {
           modalPadding: { value: '8%' },
+          editablePaddingTop: { value: '0.375em' },
+          editablePaddingBottom: { value: '0.25em' },
           safeAreaTop: { value: 'env(safe-area-inset-top)' },
           safeAreaRight: { value: 'env(safe-area-inset-right)' },
           safeAreaBottom: { value: 'env(safe-area-inset-bottom)' },
@@ -499,7 +500,6 @@ export default defineConfig({
         thoughtRecipe,
         editableRecipe,
         textNoteRecipe,
-        multilineRecipe,
         modalActionLinkRecipe,
         toolbarPointerEventsRecipe,
         tutorialBulletRecipe,

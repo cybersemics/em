@@ -10,7 +10,6 @@ import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import { isSafari, isTouch } from '../browser'
 import { MIN_CONTENT_WIDTH_EM } from '../constants'
-import useLayoutAnimationFrameEffect from '../hooks/useLayoutAnimationFrameEffect'
 import { LongPressProps } from '../hooks/useLongPress'
 import attributeEquals from '../selectors/attributeEquals'
 import getThoughtById from '../selectors/getThoughtById'
@@ -26,7 +25,6 @@ import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import Divider from './Divider'
 import Editable from './Editable'
-import useMultiline from './Editable/useMultiline'
 import usePlaceholder from './Editable/usePlaceholder'
 import ThoughtAnnotation from './ThoughtAnnotation'
 import HomeIcon from './icons/HomeIcon'
@@ -124,10 +122,7 @@ const StaticThought = ({
   const value = useSelector(state => getThoughtById(state, head(simplePath))?.value) ?? ''
   // store ContentEditable ref to update DOM without re-rendering the Editable during editing
   const editableRef = React.useRef<HTMLInputElement>(null)
-  const multiline = useMultiline(editableRef, simplePath, isEditing)
   const placeholder = usePlaceholder({ isEditing, simplePath })
-
-  useLayoutAnimationFrameEffect(updateSize, [multiline])
 
   // if this thought is in the context view, simplePath may be incomplete as ancestors are partially loaded
   // use thoughtToPath to re-calculate the SimplePath as ancestors load
@@ -164,7 +159,6 @@ const StaticThought = ({
       <ThoughtAnnotation
         env={env}
         minContexts={allowSingleContext ? 0 : 2}
-        multiline={multiline}
         ellipsizedUrl={ellipsizedUrl}
         placeholder={placeholder}
         path={path}
@@ -200,7 +194,6 @@ const StaticThought = ({
         ) : (
           <Editable
             editableRef={editableRef}
-            multiline={multiline}
             placeholder={placeholder}
             path={path}
             isEditing={isEditing}
