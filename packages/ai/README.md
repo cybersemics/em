@@ -1,6 +1,6 @@
 An HTTP server that provides AI services to em.
 
-It is an [Express](https://expressjs.com/) app that is deployed to [Vercel](https://vercel.com/) as a single [Vercel Function](https://vercel.com/docs/frameworks/backend/express). `src/index.ts` exports the Express app as its default export, which is all Vercel needs to run it — there is no `app.listen`, no `vercel.json`, and no process manager.
+It is an [Express](https://expressjs.com/) app that is deployed to [Vercel](https://vercel.com/) as a single [Vercel Function](https://vercel.com/docs/frameworks/backend/express). `src/index.ts` exports the Express app as its default export, which is all Vercel needs to run it — there is no `app.listen` and no process manager. The only `vercel.json` is an [Ignored Build Step](#skipping-unchanged-deployments) that skips deploys when nothing in `packages/ai` changed.
 
 ## Routes
 
@@ -39,7 +39,21 @@ In the Vercel project settings (Settings → Build and Deployment):
 - **Root Directory** = `packages/ai`. Keep "Include files outside of the Root Directory" enabled so the Yarn workspace install resolves from the repo root.
 - **Framework Settings** — leave Build Command and Output Directory **overrides off** (use the defaults). If a Build Command or Output Directory override is enabled, Vercel runs a static build and fails with `No Output Directory named "public" found`.
 
-With no `build` script and no overrides, Vercel auto-detects the Express app and deploys it as a Function — no Output Directory or `vercel.json` is needed.
+With no `build` script and no overrides, Vercel auto-detects the Express app and deploys it as a Function — no Output Directory is needed.
+
+## Skipping unchanged deployments
+
+The `em` and `em-ai` Vercel projects are both connected to this repository, so by default every push deploys both. Because `em-ai` only depends on `packages/ai`, redeploying it for changes elsewhere (e.g. the `em` app under `src/`) is wasteful.
+
+`vercel.json` sets an [Ignored Build Step](https://vercel.com/docs/monorepos#ignoring-the-build-step) so the `em-ai` deployment is canceled when the latest commit didn't touch `packages/ai`:
+
+```json
+{
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD ."
+}
+```
+
+The command runs from the **Root Directory** (`packages/ai`), so `.` resolves to this package. `git diff --quiet` exits `0` when there are no changes — which tells Vercel to skip the build — and exits `1` when `packages/ai` changed, which lets the deployment proceed.
 
 ## Metrics
 
