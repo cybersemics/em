@@ -1,8 +1,13 @@
 import { throttle } from 'lodash'
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
+import VirtualKeyboardState from '../@types/VirtualKeyboardState'
 import scrollCursorIntoView from '../device/scrollCursorIntoView'
 import testFlags from '../e2e/testFlags'
 import editingValueStore from '../stores/editingValue'
+import virtualKeyboardStore from '../stores/virtualKeyboardStore'
+
+/** Selects the keyboard's target height, which changes exactly once per keyboard event (open, close, resize). */
+const selectKeyboardTargetHeight = (state: VirtualKeyboardState) => state.targetHeight
 
 const throttledScrollCursorIntoView = throttle((y: number, height: number) => scrollCursorIntoView(y, height), 400)
 
@@ -29,6 +34,29 @@ const useScrollCursorIntoView = (y: number, height: number) => {
      */
     setTimeout(() => throttledScrollCursorIntoView(sizeRef.current.y, sizeRef.current.height))
   })
+
+  /** Re-checks the scroll position with the cursor's current size. */
+  const onKeyboardChange = useCallback(() => {
+    scrollCursorIntoView(sizeRef.current.y, sizeRef.current.height)
+  }, [])
+
+  // Re-check when the keyboard opens, closes, or resizes (e.g. the prediction bar toggling): the
+  // bottom trigger edge moves with the keyboard, so a cursor that was comfortably visible at tap
+  // time can end up underneath it. The keyboard height arrives *after* the [y, height] effect
+  // below has already run, so without this subscription a tap on a thought that the keyboard is
+  // about to cover never triggers a scroll (#3765).
+  //
+  // targetHeight changes once per keyboard movement — Capacitor delivers the final height
+  // upfront, and iOSSafariHandler emulates the same one-shot semantics by publishing a predicted
+  // final height — so this fires immediately when the keyboard starts moving and the scroll
+  // animates concurrently with the keyboard slide. Do not subscribe to the spring-animated
+  // `height`, which changes every animation frame and would restart the scroll repeatedly.
+  //
+  // Needed on all iOS platforms, not just the Capacitor WebView (which has no native keyboard
+  // reveal due to Keyboard resize: 'none'): in mobile Safari, focusWithoutAutoscroll suppresses
+  // WebKit's own reveal-on-keyboard-open along with the focus/selection autoscroll, so em owns
+  // the reveal everywhere.
+  virtualKeyboardStore.useSelectorEffect(onKeyboardChange, selectKeyboardTargetHeight)
 
   useEffect(() => scrollCursorIntoView(y, height), [height, y])
 }

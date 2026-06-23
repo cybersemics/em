@@ -12,7 +12,8 @@ import { setDescendantActionCreator as setDescendant } from '../actions/setDesce
 import { setNoteFocusActionCreator as setNoteFocus } from '../actions/setNoteFocus'
 import { toggleNoteActionCreator as toggleNote } from '../actions/toggleNote'
 import { isTouch } from '../browser'
-import preventAutoscroll, { preventAutoscrollEnd } from '../device/preventAutoscroll'
+import focusWithoutAutoscroll from '../device/focusWithoutAutoscroll'
+import getCaretOffset from '../device/getCaretOffset'
 import * as selection from '../device/selection'
 import useFreshCallback from '../hooks/useFreshCallback'
 import getThoughtById from '../selectors/getThoughtById'
@@ -48,7 +49,6 @@ const Note = React.memo(
 
     /** Focus Handling with useFreshCallback. */
     const onFocus = useFreshCallback(() => {
-      preventAutoscrollEnd(noteRef.current)
       dispatch(
         setCursor({
           path,
@@ -60,11 +60,10 @@ const Note = React.memo(
       )
     }, [dispatch, path])
 
-    // set the caret on the note if editing this thought and noteFocus is true
+    // Set the caret on the note when noteFocus opens it programmatically (toggleNote command).
     useEffect(() => {
-      // cursor must be true if note is focused
       if (hasFocus && noteOffset !== null) {
-        selection.set(noteRef.current!, { offset: noteOffset })
+        focusWithoutAutoscroll(noteRef.current, { offset: noteOffset })
       }
     }, [hasFocus, noteOffset])
 
@@ -150,7 +149,17 @@ const Note = React.memo(
       [dispatch],
     )
 
-    const onMouseDown = useCallback(() => preventAutoscroll(noteRef.current), [noteRef])
+    const onMouseDown = useCallback((e: React.MouseEvent) => {
+      const note = noteRef.current
+      if (!note) return
+
+      // Block native focus + native caret-from-tap, then route through focusWithoutAutoscroll
+      // (the same single entry point Editable uses) — focuses with preventScroll, places the
+      // caret at the tap offset, and suppresses the selection-driven autoscroll on iOS.
+      const { offset } = getCaretOffset(note, { clientX: e.clientX, clientY: e.clientY })
+      e.preventDefault()
+      focusWithoutAutoscroll(note, { offset: offset ?? 0 })
+    }, [])
 
     const onCopy = useCallback((e: React.ClipboardEvent) => {
       const html = selection.html()

@@ -151,10 +151,6 @@ const VirtualThought = ({
     )
     const widthNew = ref.current.querySelector(`[data-editable]`)?.getBoundingClientRect().width
 
-    // skip updating height when preventAutoscroll is enabled, as it modifies the element's height in order to trick Safari into not scrolling
-    const editable = ref.current.querySelector(`[data-editable]`)
-    if (editable?.hasAttribute('data-prevent-autoscroll')) return
-
     // Get the updated autofocus, otherwise isVisible will be stale.
     // Using the local autofocus and adding it as a dependency works when clicking on the cursor's parent but not when activating cursorBack from the keyboad for some reason.
     const isVisibleNew = autofocus === 'show' || autofocus === 'dim'

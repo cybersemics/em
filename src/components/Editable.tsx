@@ -577,7 +577,9 @@ const Editable = ({
         })
       }
 
-      if (suppressFocusStore.getState()) return
+      if (suppressFocusStore.getState()) {
+        return
+      }
       // Update editingValueUntrimmedStore with the current value
       editingValueUntrimmedStore.update(value)
 
