@@ -382,6 +382,7 @@ const GestureDiagram = ({
     }
   }
 
+  /** Renders the gesture path as SVG path element(s). */
   const renderGesturePath = () => {
     const commonPathProps = {
       strokeWidth: strokeWidth * 1.5,
@@ -400,6 +401,7 @@ const GestureDiagram = ({
     // with strokeLinejoin='round' avoids overlapping round caps at joints, which
     // become visible as blobs/beads when strokeWidth is large relative to segment length.
     if (!useGradient && !rounded && path !== 'rdld') {
+      /** Builds an SVG path `d` attribute string from a list of points. */
       const makePath = (points: typeof positions) =>
         points.map((pos, i) => `${i === 0 ? 'M' : 'L'} ${pos.x} ${pos.y}`).join(' ')
 
@@ -478,7 +480,9 @@ const GestureDiagram = ({
               key={i}
               stroke={stroke}
               {...commonPathProps}
-              markerEnd={i === pathSegments.length - 1 && path !== 'rdld' && arrowhead !== 'none' ? markerEnd : undefined}
+              markerEnd={
+                i === pathSegments.length - 1 && path !== 'rdld' && arrowhead !== 'none' ? markerEnd : undefined
+              }
             />
           )
         })}
