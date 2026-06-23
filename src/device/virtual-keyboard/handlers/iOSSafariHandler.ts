@@ -17,12 +17,18 @@ let controls: AnimationPlaybackControls | null = null
 let kbHeightPortrait = window.innerHeight / 2.275
 let kbHeightLandscape = window.innerWidth / 1.7
 
+/** Returns true when ScreenOrientation reports portrait; falls back to media query if unavailable. */
+const getIsPortrait = () =>
+  window.screen.orientation?.type
+    ? window.screen.orientation.type.startsWith('portrait')
+    : window.matchMedia('(orientation: portrait)').matches
+
 /** Measures the keyboard's raw height from visualViewport, refreshing the per-orientation cache.
  * Returns the live measurement while the keyboard is open, or the cached/estimated height when it
  * cannot be measured directly (e.g. from a selectionchange before the keyboard has slid in). Safari
  * has no API for the keyboard's final height, so we derive it from the viewport shrinkage. */
 const measureKeyboardHeight = (): number => {
-  const isPortrait = window.innerHeight > window.innerWidth
+  const isPortrait = getIsPortrait()
   const measured = window.visualViewport ? window.innerHeight - window.visualViewport.height : 0
   if (measured > 0) {
     if (isPortrait) kbHeightPortrait = measured
