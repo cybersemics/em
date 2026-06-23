@@ -1,7 +1,7 @@
 import Context from '../../../@types/Context'
 import Thought from '../../../@types/Thought'
 import { WindowEm } from '../../../initialize'
-import { page } from '../setup'
+import { page } from '../session'
 
 /**
  * Wait until given context has a child with given value.

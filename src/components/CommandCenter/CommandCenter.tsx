@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { motion, useTransform } from 'motion/react'
 import pluralize from 'pluralize'
-import { FC, useCallback, useRef } from 'react'
+import { FC, useCallback, useEffect, useRef, useState } from 'react'
 import { Sheet, SheetRef } from 'react-modal-sheet'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
@@ -85,6 +85,19 @@ const HiddenOverlay = () => {
  * Custom hook that returns reactive transforms for a draggable sheet.
  */
 const useSheetTransforms = (ref: React.RefObject<SheetRef | null>) => {
+  /*
+   * Force a re-render once the Sheet ref is attached so that the motion transforms below re-run
+   * their compute functions while ref.current is set, allowing them to subscribe to the sheet's
+   * motion values (e.g. yInverted). On the first render after the Command Center (re)mounts,
+   * ref.current is still null, so the compute functions read no motion values and the overlay
+   * opacity stays stuck at 0 (transparent). This is most visible when the Command Center remounts
+   * after a modal (Export/Share, Devices, Settings) is closed while it is still open.
+   */
+  const [, setSheetReady] = useState(false)
+  useEffect(() => {
+    if (ref.current) setSheetReady(true)
+  }, [ref])
+
   const height = useTransform(() => {
     return ref.current?.yInverted.get() ?? 0
   })

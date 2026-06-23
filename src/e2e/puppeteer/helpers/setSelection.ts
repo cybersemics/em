@@ -1,4 +1,4 @@
-import { page } from '../setup'
+import { page } from '../session'
 
 /** Sets the selection in the editable to a plain-text offset range, or to the first occurrence of a substring. The range may span nested nodes (e.g. a colored font/span element and an adjacent text node). */
 async function setSelection(start: number, end: number): Promise<void>

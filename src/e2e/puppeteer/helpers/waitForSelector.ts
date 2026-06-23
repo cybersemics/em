@@ -1,5 +1,5 @@
 import { WaitForSelectorOptions } from 'puppeteer'
-import { page } from '../setup'
+import { page } from '../session'
 
 /** Waits until a specific selector is visible in the page context. */
 const waitForSelector = (selector: string, options: WaitForSelectorOptions = { visible: true }) => {

@@ -11,7 +11,7 @@ import getSuperscriptColor from '../helpers/getSuperScriptColor'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import setSelection from '../helpers/setSelection'
-import { page } from '../setup'
+import { page } from '../session'
 
 /** Click the first note. Assumes that there will be only a single note. */
 const clickFirstNote = () => click('[aria-label="note-editable"]')

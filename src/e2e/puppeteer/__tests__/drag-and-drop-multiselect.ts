@@ -1,8 +1,11 @@
+import clickThought from '../helpers/clickThought'
 import dragAndDropThought from '../helpers/dragAndDropThought'
 import exportThoughts from '../helpers/exportThoughts'
+import getEditingText from '../helpers/getEditingText'
 import hideHUD from '../helpers/hideHUD'
 import multiselectThoughts from '../helpers/multiselectThoughts'
 import paste from '../helpers/paste'
+import { page } from '../session'
 
 vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
 
@@ -69,6 +72,19 @@ describe('drag and drop multiple thoughts', () => {
   - y
   - z
 `)
+
+    // After the drop, the transient drag UI should be dismissed and the cursor restored — asserted via user-observable DOM, not the Redux store (#4348).
+
+    // 1. the multicursor selection (and, on mobile, the Command Center / bullet drag highlight) is dismissed: no bullets remain highlighted
+    const highlightedBullets = await page.$$('[aria-label="bullet"][data-highlighted="true"]')
+    expect(highlightedBullets.length).toBe(0)
+
+    // 2. the "Drag and drop to move thought" hint alert is dismissed
+    const alertContent = await page.$eval('[data-testid=alert-content]', el => el.textContent).catch(() => null)
+    expect(alertContent).not.toContain('Drag and drop to move thought')
+
+    // 3. the cursor is placed on the drop target
+    expect(await getEditingText()).toBe('a')
   })
 
   it('should preserve document order of multiselected thoughts when dropping', async () => {
@@ -89,6 +105,30 @@ describe('drag and drop multiple thoughts', () => {
   - x
   - y
   - a
+`)
+  })
+
+  it('should drop a multiselected thought and subthought as the first children, preserving document order', async () => {
+    await paste(`
+      - a
+        - b
+      - c
+      `)
+
+    // expand a so that its child b is visible
+    await clickThought('a')
+
+    // select the subthought b and the sibling c
+    await multiselectThoughts(['b', 'c'])
+
+    // drop c above b (the first child of a). b above itself is a no-op, but c should still move.
+    await dragAndDropThought('c', 'b', { position: 'before' })
+
+    const exported = await exportThoughts()
+    expect(exported).toBe(`
+- a
+  - b
+  - c
 `)
   })
 
