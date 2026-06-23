@@ -60,12 +60,15 @@ const preventAutoscroll = (
 
   // below center
   if (yCenter < 0) {
+    // Read the rendered paddingTop in pixels. getComputedStyle resolves the value even when it is applied via a CSS class rather than the inline style property (el.style.paddingTop), and always returns a px value.
+    const paddingTopComputed = parseFloat(getComputedStyle(el).paddingTop) || 0
+
     // paddingTop keeps the actual text in the same place, despite the element being translated up to prevent autoscroll.
     // Otherwise we are stuck with two bad options:
     // - Only use transform (previous implementation): The browser selection becomes invisible on iOS 17. getSelection still returns the correct node and offset, so it is programmatically undetectable.
     // - Add a setTimeout to the preventAutoscrollEnd that is called in Editable.onFocus: The browser selection is visible, but the timeout introduces enough delay that the thought is re-rendered before its style is restored. This causes the thought to blink out of existence for a split second.
     el.style.transform = `translate(0, ${yCenter * 2}px)`
-    el.style.paddingTop = `${-yCenter * 2}px`
+    el.style.paddingTop = `${-yCenter * 2 + paddingTopComputed}px`
   }
   // above center
   else {
