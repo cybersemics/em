@@ -5,7 +5,7 @@ import getEditingText from '../helpers/getEditingText'
 import hideHUD from '../helpers/hideHUD'
 import multiselectThoughts from '../helpers/multiselectThoughts'
 import paste from '../helpers/paste'
-import { page } from '../setup'
+import { page } from '../session'
 
 vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
 
