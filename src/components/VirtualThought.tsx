@@ -7,8 +7,6 @@ import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
-import { isTouch } from '../browser'
-import { PREVENT_AUTOSCROLL_TIMEOUT } from '../device/preventAutoscroll'
 import useDelayedAutofocus from '../hooks/useDelayedAutofocus'
 import useLayoutAnimationFrameEffect from '../hooks/useLayoutAnimationFrameEffect'
 import useSelectorEffect from '../hooks/useSelectorEffect'
@@ -36,8 +34,6 @@ export type OnResizeParams = {
   isVisible: boolean
   /** A key that uniquely identifies the thought across context views. */
   key: string
-  /** Whether the thought has a note rendered below it. The height clipping that cancels the editable's clipPath gap must be skipped for noted thoughts, otherwise the next thought overlaps the note. */
-  hasNote?: boolean
 }
 
 /** A resize handler that should be called whenever a thought's height has changed. */
@@ -149,28 +145,15 @@ const VirtualThought = ({
     if (!ref.current) return
 
     // Need to grab max height between .thought and .thought-annotation since the annotation height might be bigger (due to wrapping link icon).
-    // On touch devices, use offsetHeight to avoid transform-induced fractional measurements and ensure layout height is used.
-    const heightNew = isTouch
-      ? Math.max(
-          ref.current.offsetHeight,
-          (ref.current.querySelector('[aria-label="thought-annotation"]') as HTMLElement | null)?.offsetHeight || 0,
-        )
-      : Math.max(
-          ref.current.getBoundingClientRect().height,
-          ref.current.querySelector('[aria-label="thought-annotation"]')?.getBoundingClientRect().height || 0,
-        )
+    const heightNew = Math.max(
+      ref.current.getBoundingClientRect().height,
+      ref.current.querySelector('[aria-label="thought-annotation"]')?.getBoundingClientRect().height || 0,
+    )
     const widthNew = ref.current.querySelector(`[data-editable]`)?.getBoundingClientRect().width
 
     // skip updating height when preventAutoscroll is enabled, as it modifies the element's height in order to trick Safari into not scrolling
     const editable = ref.current.querySelector(`[data-editable]`)
-    if (editable?.hasAttribute('data-prevent-autoscroll')) {
-      // preventAutoscroll temporarily inflates the editable's paddingBottom, so the height measured right now is invalid.
-      // Re-measure once the autoscroll window has passed. Otherwise a height change that occurs during the window —
-      // e.g. a note added to this thought by Swap Note — is never recorded, leaving a stale (pre-note) height so the
-      // next thought overlaps the note. This only manifests on touch devices, where preventAutoscroll is active. (#4279)
-      setTimeout(updateSize, PREVENT_AUTOSCROLL_TIMEOUT + 1)
-      return
-    }
+    if (editable?.hasAttribute('data-prevent-autoscroll')) return
 
     // Get the updated autofocus, otherwise isVisible will be stale.
     // Using the local autofocus and adding it as a dependency works when clicking on the cursor's parent but not when activating cursorBack from the keyboad for some reason.
@@ -183,9 +166,8 @@ const VirtualThought = ({
       id,
       isVisible: isVisibleNew,
       key: crossContextualKey,
-      hasNote: note !== null,
     })
-  }, [crossContextualKey, onResize, id, autofocus, note])
+  }, [crossContextualKey, onResize, id, autofocus])
 
   // Recalculate height when anything changes that could indirectly affect the height of the thought. (Height observers are slow.)
   // Autofocus changes when the cursor changes depth or moves between a leaf and non-leaf. This changes the left margin and can cause thoughts to wrap or unwrap.

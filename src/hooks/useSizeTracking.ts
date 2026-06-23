@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useSelector } from 'react-redux'
 import Index from '../@types/IndexType'
 import ThoughtId from '../@types/ThoughtId'
 
@@ -7,7 +6,6 @@ import ThoughtId from '../@types/ThoughtId'
 const useSizeTracking = () => {
   // Track dynamic thought sizes from inner refs via VirtualThought. These are used to set the absolute y position which enables animation between any two states. isVisible is used to crop hidden thoughts.
   const [sizes, setSizes] = useState<Index<{ height: number; width?: number; isVisible: boolean }>>({})
-  const fontSize = useSelector(state => state.fontSize)
   const unmounted = useRef(false)
 
   const removeSize = useCallback((key: string) => {
@@ -26,7 +24,6 @@ const useSizeTracking = () => {
       width,
       isVisible,
       key,
-      hasNote,
     }: {
       cliff: number
       height: number | null
@@ -34,23 +31,15 @@ const useSizeTracking = () => {
       id: ThoughtId
       isVisible: boolean
       key: string
-      hasNote?: boolean
     }) => {
       if (height !== null) {
-        // The clipPath on the thought annotation leaves a gap at the bottom; reducing each height by fontSize / 8 overlaps thoughts by exactly that gap to eliminate it visually.
-        // Skip the reduction when the thought has a note, since the note (which has no clipPath gap) is rendered at the bottom of the measured height. Reducing it would pull the next thought up into the note, causing them to overlap. (#4279)
-        const lineHeightOverlap = hasNote ? 0 : fontSize / 8
-        const heightClipped = height - lineHeightOverlap
-
         setSizes(sizesOld =>
-          heightClipped === sizesOld[key]?.height &&
-          width === sizesOld[key]?.width &&
-          isVisible === sizesOld[key]?.isVisible
+          height === sizesOld[key]?.height && width === sizesOld[key]?.width && isVisible === sizesOld[key]?.isVisible
             ? sizesOld
             : {
                 ...sizesOld,
                 [key]: {
-                  height: heightClipped,
+                  height,
                   width: width || undefined,
                   cliff,
                   isVisible,
@@ -61,7 +50,7 @@ const useSizeTracking = () => {
         removeSize(key)
       }
     },
-    [fontSize, removeSize],
+    [removeSize],
   )
 
   useEffect(() => {
