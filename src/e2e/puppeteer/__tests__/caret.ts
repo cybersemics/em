@@ -19,6 +19,7 @@ import waitForHiddenEditable from '../helpers/waitForHiddenEditable'
 import waitForSelector from '../helpers/waitForSelector'
 import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
 import waitUntil from '../helpers/waitUntil'
+import { page } from '../session'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
@@ -376,5 +377,30 @@ describe('mobile only', () => {
 
     // keyboard should not open, so the active element should be the body or null
     await waitUntil(() => !document.activeElement || document.activeElement === document.body)
+  })
+
+  // Regression test for https://github.com/cybersemics/em/issues/3996
+  // .skip keeps normal CI green while the test is red; remove the .skip when the fix lands.
+  it.skip('tapping a text formatting button after the keyboard is manually dismissed should not open the keyboard', async () => {
+    // Step 1: create a thought
+    await gesture(newThoughtCommand)
+    await keyboard.type('One')
+    await waitForEditable('One')
+
+    // Step 2: manually dismiss the keyboard (blur the active element, as the native Done button does)
+    await closeKeyboard()
+    await waitUntil(() => !document.activeElement || document.activeElement === document.body)
+
+    // Step 3: tap the Bold button on the toolbar
+    await click('[data-testid="toolbar-icon"][aria-label="Bold"]')
+
+    // the formatting should still be applied to the whole thought
+    await waitUntil(() => !!document.querySelector('[data-editable] b'))
+
+    // the keyboard should NOT open, so the editable should not be re-focused (the active element should remain the body or null)
+    const activeLabel = await page.evaluate(
+      () => document.activeElement?.getAttribute('aria-label') ?? document.activeElement?.tagName ?? null,
+    )
+    expect(activeLabel).not.toMatch(/^editable-/)
   })
 })
