@@ -91,12 +91,10 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
   const scrollDistance = Math.abs(scrollYNew - window.scrollY)
   const behavior: ScrollBehavior = scrollDistance < visualViewportHeight ? 'smooth' : 'auto'
 
-  // On iOS Capacitor with the keyboard open, a multi-frame smooth scroll causes the position: fixed toolbar to
-  // jitter as WebKit repaints fixed elements on each scroll frame. Use an instant (single-step) scroll so the
-  // toolbar stays visually stable while the cursor is still brought above the keyboard. (#4326)
-  const instant = navigator.webdriver || (isIOSCapacitor && keyboardOpen)
-
-  window.scrollTo({ top, behavior: instant ? 'instant' : behavior })
+  window.scrollTo({
+    top,
+    behavior: navigator.webdriver ? 'instant' : behavior,
+  })
 }
 
 /** Scrolls the cursor into view if needed. */
