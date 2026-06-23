@@ -5,6 +5,7 @@ import type Thought from '../../@types/Thought'
 import type ThoughtId from '../../@types/ThoughtId'
 import type Timestamp from '../../@types/Timestamp'
 import { EM_TOKEN, GLOBAL_ROOT_TOKEN, ROOT_PARENT_ID, SETTINGS_TOKEN, SETTINGS_VALUE } from '../../constants'
+import { childrenMapKey } from '../../util/createChildrenMap'
 import hashThought from '../../util/hashThought'
 import type { DataProvider } from '../DataProvider'
 import {
@@ -32,6 +33,16 @@ let initReadyResolve: (() => void) | null = null
 let initReady = new Promise<void>(resolve => {
   initReadyResolve = resolve
 })
+
+/** Creates em's childrenMap key while preserving TreeCRDT's strict child ids as values. */
+const materializedChildrenMapKey = async (childrenMap: Index<ThoughtId>, childId: ThoughtId): Promise<string> => {
+  const client = getTreecrdtClient()
+  const payloadBytes = await client.tree.getPayload(childId)
+  if (!payloadBytes) return childId
+
+  const { value } = decodeThoughtPayload(payloadBytes)
+  return childrenMapKey(childrenMap, { id: childId, value })
+}
 
 /** Resets the provider readiness barrier used by writes that race startup. */
 const resetInitReady = (): void => {
@@ -80,7 +91,8 @@ const getThoughtById = async (id: ThoughtId): Promise<Thought | undefined> => {
   const childIds = await client.tree.children(id)
   const childrenMap: Index<ThoughtId> = {}
   for (const cid of childIds) {
-    childrenMap[cid] = cid as ThoughtId
+    const childId = cid as ThoughtId
+    childrenMap[await materializedChildrenMapKey(childrenMap, childId)] = childId
   }
 
   const thought: Thought = {
