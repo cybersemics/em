@@ -11656,7 +11656,7 @@ __metadata:
     redux-thunk: "npm:^3.1.0"
     reselect: "npm:^5.2.0"
     tcp-port-used: "npm:^1.0.3"
-    text-block-parser: "npm:^1.1.1"
+    text-block-parser: "npm:^1.1.2"
     title-case: "npm:^4.3.2"
     truncate-html: "npm:^1.2.2"
     ts-key-enum: "npm:^2.0.12"
@@ -23047,10 +23047,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"text-block-parser@npm:^1.1.1":
-  version: 1.1.1
-  resolution: "text-block-parser@npm:1.1.1"
-  checksum: 10c0/a92b4ccbf49307f0c250f6300f7b29a374580bff26dc8a3d88c308e8a96b9f4e458158a18c5df60e5028f853918eddc72ed5612420f3ad279676ad422a9c7388
+"text-block-parser@npm:^1.1.2":
+  version: 1.1.2
+  resolution: "text-block-parser@npm:1.1.2"
+  checksum: 10c0/7a0db2433f82112b9e97a87fb6d16c8b2633d66f3feae40f953aa79da05479894e1f28836454bf2ebec5fb4d6f852d035ccd080cc210a312b8f9928c430bd8b0
   languageName: node
   linkType: hard
 
