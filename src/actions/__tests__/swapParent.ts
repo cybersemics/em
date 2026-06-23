@@ -1,4 +1,7 @@
+import State from '../../@types/State'
+import Timestamp from '../../@types/Timestamp'
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
+import contextToThoughtId from '../../selectors/contextToThoughtId'
 import exportContext from '../../selectors/exportContext'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
@@ -9,6 +12,26 @@ import newThought from '../newThought'
 import setSortPreference from '../setSortPreference'
 import swapParent from '../swapParent'
 import toggleContextView from '../toggleContextView'
+
+/** Sets the created timestamp for a fixture thought. */
+const setCreated = (state: State, context: string[], created: Timestamp): State => {
+  const thoughtId = contextToThoughtId(state, context)!
+  const thought = state.thoughts.thoughtIndex[thoughtId]
+
+  return {
+    ...state,
+    thoughts: {
+      ...state.thoughts,
+      thoughtIndex: {
+        ...state.thoughts.thoughtIndex,
+        [thoughtId]: {
+          ...thought,
+          created,
+        },
+      },
+    },
+  }
+}
 
 it('no-op if cursor is not set', () => {
   const text = `
@@ -257,8 +280,7 @@ describe('sort', () => {
 
   it('root children are re-sorted after swapParent with active sort', () => {
     // Reproduce the issue: cursor on A, set Created sort, create subthought B, swap B with A.
-    // B must be created as a separate step so its creation order is after A, C, D.
-    const steps = [
+    let stateNew = reducerFlow([
       importText({
         text: `
         - a
@@ -269,11 +291,15 @@ describe('sort', () => {
       setCursor(['a']),
       setSortPreference({ simplePath: HOME_PATH, sortPreference: { type: 'Created', direction: 'Asc' } }),
       newThought({ value: 'b', insertNewSubthought: true }),
-      setCursor(['a', 'b']),
-      swapParent,
-    ]
+    ])(initialState())
 
-    const stateNew = reducerFlow(steps)(initialState())
+    // Use explicit created values so Created sort is deterministic without depending on wall-clock time.
+    stateNew = setCreated(stateNew, ['a'], 0 as Timestamp)
+    stateNew = setCreated(stateNew, ['c'], 1 as Timestamp)
+    stateNew = setCreated(stateNew, ['d'], 2 as Timestamp)
+    stateNew = setCreated(stateNew, ['a', 'b'], 1000 as Timestamp)
+
+    stateNew = reducerFlow([setCursor(['a', 'b']), swapParent])(stateNew)
 
     // Use excludeMeta to focus on regular thoughts only.
     // b was created last (separate newThought step), so it always sorts after c and d in Created Asc order.
