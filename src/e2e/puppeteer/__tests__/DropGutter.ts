@@ -1,6 +1,7 @@
 import { KnownDevices } from 'puppeteer'
 import { ElementHandle } from 'puppeteer'
 import { JSHandle } from 'puppeteer'
+import type { WindowEm } from '../../../initialize'
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
 import emulate from '../helpers/emulate'
@@ -132,5 +133,34 @@ describe('DropGutter: mobile only', () => {
     // Assert that other thoughts still exist
     expect(await isThoughtInDOM('b')).toBe(true)
     expect(await isThoughtInDOM('c')).toBe(true)
+  })
+
+  it('should move the cursor to the previous sibling when a thought is archived via DropGutter (#4077)', async () => {
+    await paste(`
+        - One
+        - Two
+        - Three
+        `)
+
+    await clickThought('Two')
+
+    await dragToDropGutter(await waitForEditable('Two'))
+
+    await waitForAlertContent('Removed 1 thought')
+
+    // Wait for the browser's asynchronous focus restoration to settle. This is what could override
+    // the cursor that archiveThought correctly placed on the previous sibling (#4077).
+    await new Promise(resolve => setTimeout(resolve, 1000))
+
+    // The cursor should be placed on the previous sibling ("One"), not remain on the archived thought.
+    const cursorValue = await page.evaluate(() => {
+      const em = window.em as WindowEm
+      const cursor = em.testHelpers.getState().cursor
+      if (!cursor) return null
+      const id = cursor[cursor.length - 1]
+      return em.getThoughtById(id)?.value ?? null
+    })
+
+    expect(cursorValue).toBe('One')
   })
 })
