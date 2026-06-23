@@ -74,6 +74,14 @@ const isMetaDescendant = (state: State, thought: Thought) =>
 const isThoughtExpanded = (state: State, thoughtId: ThoughtId) =>
   !!state.expanded[hashPath(thoughtToPath(state, thoughtId))]
 
+/** Finds a loaded child by its value. */
+const findLoadedChildByValue = (state: State, thought: Thought | undefined | null, value: string): Thought | undefined =>
+  thought
+    ? Object.values(thought.childrenMap)
+        .map(childId => getThoughtById(state, childId))
+        .find(child => child?.value === value)
+    : undefined
+
 /**
  * Returns buffered lexemeIndex and thoughtIndex for all descendants using async iterables.
  *
@@ -171,12 +179,12 @@ async function* fetchDescendants(
         }
 
         const isExpandedOrPinned =
-          // we need to check directly for =pin, since it is a sibling and thus not part of accumulatedThoughts yet
+          // Check loaded siblings for =pin by value. Do not infer attributes from childrenMap keys.
           // technically =pin/false is a false positive here, and will cause some thoughts not to be buffered that should, but it is rare
-          // we need to determine if this thought should be buffered now, and cannot wait for the =pin child to load
+          // we need to determine if this thought should be buffered now using currently loaded values
           isExpanded ||
           !!isThoughtExpanded(updatedState, thought.parentId) ||
-          !!parent?.childrenMap?.['=pin'] ||
+          !!findLoadedChildByValue(updatedState, parent, '=pin') ||
           parent?.value.endsWith(EXPAND_THOUGHT_CHAR)
 
         // if either the max depth or the max number of thoughts are reached, mark the thought as pending and do not add enqueue children (i.e. buffering)
@@ -196,11 +204,15 @@ async function* fetchDescendants(
         // do not buffer descendants of EM
         // do not buffer descendants of functions (except =archive)
         if (isPending) {
-          // enqueue =pin even if the thought is buffered
+          // Enqueue a loaded =pin even if the thought is buffered.
+          // If child values are not loaded, enqueue missing child ids so they can be recognized by value later.
           // when =pin/true is loaded, then this thought will be marked as expanded and its children can be loaded
-          const pinId = thought.childrenMap?.['=pin']
+          const pinId = findLoadedChildByValue(updatedState, thought, '=pin')?.id
           if (pinId) {
             thoughtIdQueue.add([pinId])
+          } else {
+            const missingChildIds = childrenIds.filter(childId => !getThoughtById(updatedState, childId))
+            thoughtIdQueue.add(missingChildIds)
           }
           return {
             ...thought,
@@ -231,7 +243,7 @@ async function* fetchDescendants(
     // If =pin is encountered, we need to load its children before yielding.
     // Otherwise thoughts with =pin/false will flash expanded while it waits for "false" to load.
     // See: https://github.com/cybersemics/em/issues/3268
-    const pinIds = thoughts.map(thought => thought.childrenMap['=pin']).filter(nonNull)
+    const pinIds = thoughts.map(thought => findLoadedChildByValue(updatedState, thought, '=pin')?.id).filter(nonNull)
     let pinIdsValidated: ThoughtId[] = []
     let pinChildrenIdsValidated: ThoughtId[] = []
     const pinnedThoughtsRaw = await provider.getThoughtsByIds(pinIds)
