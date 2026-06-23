@@ -75,7 +75,11 @@ const isThoughtExpanded = (state: State, thoughtId: ThoughtId) =>
   !!state.expanded[hashPath(thoughtToPath(state, thoughtId))]
 
 /** Finds a loaded child by its value. */
-const findLoadedChildByValue = (state: State, thought: Thought | undefined | null, value: string): Thought | undefined =>
+const findLoadedChildByValue = (
+  state: State,
+  thought: Thought | undefined | null,
+  value: string,
+): Thought | undefined =>
   thought
     ? Object.values(thought.childrenMap)
         .map(childId => getThoughtById(state, childId))
