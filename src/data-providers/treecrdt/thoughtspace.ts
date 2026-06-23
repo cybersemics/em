@@ -34,14 +34,19 @@ let initReady = new Promise<void>(resolve => {
   initReadyResolve = resolve
 })
 
-/** Creates em's childrenMap key while preserving TreeCRDT's strict child ids as values. */
-const materializedChildrenMapKey = async (childrenMap: Index<ThoughtId>, childId: ThoughtId): Promise<string> => {
-  const client = getTreecrdtClient()
-  const payloadBytes = await client.tree.getPayload(childId)
-  if (!payloadBytes) return childId
-
-  const { value } = decodeThoughtPayload(payloadBytes)
-  return childrenMapKey(childrenMap, { id: childId, value })
+/** Creates em's childrenMap read-model index while preserving TreeCRDT's strict child ids as values. */
+export const createMaterializedChildrenMap = async (
+  childIds: ThoughtId[],
+  getChildValue: (childId: ThoughtId) => Promise<string | undefined>,
+): Promise<Index<ThoughtId>> => {
+  const childrenMap: Index<ThoughtId> = {}
+  for (const childId of childIds) {
+    const value = await getChildValue(childId)
+    // childrenMap is em's read-model index: attribute value -> ThoughtId, otherwise ThoughtId -> ThoughtId.
+    // TreeCRDT node ids remain strict ids; attribute values are only lookup keys.
+    childrenMap[value ? childrenMapKey(childrenMap, { id: childId, value }) : childId] = childId
+  }
+  return childrenMap
 }
 
 /** Resets the provider readiness barrier used by writes that race startup. */
@@ -88,14 +93,11 @@ const getThoughtById = async (id: ThoughtId): Promise<Thought | undefined> => {
   const siblingIds = parentIdRaw === null ? [] : await client.tree.children(parentIdRaw)
   const rank = parentIdRaw === null ? 0 : Math.max(0, siblingIds.indexOf(id))
 
-  const childIds = await client.tree.children(id)
-  const childrenMap: Index<ThoughtId> = {}
-  for (const cid of childIds) {
-    const childId = cid as ThoughtId
-    // childrenMap is em's read-model index: attribute value -> ThoughtId, otherwise ThoughtId -> ThoughtId.
-    // TreeCRDT node ids remain strict ids; attribute values are only lookup keys.
-    childrenMap[await materializedChildrenMapKey(childrenMap, childId)] = childId
-  }
+  const childIds = (await client.tree.children(id)) as ThoughtId[]
+  const childrenMap = await createMaterializedChildrenMap(childIds, async childId => {
+    const payloadBytes = await client.tree.getPayload(childId)
+    return payloadBytes ? decodeThoughtPayload(payloadBytes).value : undefined
+  })
 
   const thought: Thought = {
     id,
