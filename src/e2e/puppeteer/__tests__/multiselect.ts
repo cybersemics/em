@@ -43,7 +43,7 @@ describe('multiselect', () => {
     // The native copy event fires on the focused editable (permitDefault on copyCursor). Capture the
     // clipboard data it writes. With a multicursor active it must export all selected thoughts.
     const copiedText = await page.evaluate(() => {
-      const editable = [...document.querySelectorAll('[data-editable]')].find(
+      const editable = Array.from(document.querySelectorAll('[data-editable]')).find(
         el => el.textContent === 'b',
       ) as HTMLElement
       editable.focus()
