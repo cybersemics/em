@@ -17,8 +17,6 @@ local.log
 .DS_Store
 .env*.local
 .eslintcache
-.firebase
-.firebaserc
 .history
 .idea
 .vercel
