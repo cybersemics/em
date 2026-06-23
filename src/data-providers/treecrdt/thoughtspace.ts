@@ -92,6 +92,8 @@ const getThoughtById = async (id: ThoughtId): Promise<Thought | undefined> => {
   const childrenMap: Index<ThoughtId> = {}
   for (const cid of childIds) {
     const childId = cid as ThoughtId
+    // childrenMap is em's read-model index: attribute value -> ThoughtId, otherwise ThoughtId -> ThoughtId.
+    // TreeCRDT node ids remain strict ids; attribute values are only lookup keys.
     childrenMap[await materializedChildrenMapKey(childrenMap, childId)] = childId
   }
 

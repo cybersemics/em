@@ -65,7 +65,7 @@ it('does not require an initialized TreeCRDT client when freeing lexeme cache', 
   await expect(treecrdtThoughtspace.freeLexeme(hashThought('missing'))).resolves.toBeUndefined()
 })
 
-it('materializes meta attributes with value keys and ThoughtId values', async () => {
+it('uses attribute values as childrenMap keys without changing TreeCRDT node ids', async () => {
   await initTreecrdt()
   await initTreecrdtThoughtspace(new Uint8Array(32).fill(1))
 
