@@ -157,10 +157,8 @@ const Note = React.memo(
       // (the same single entry point Editable uses) — focuses with preventScroll, places the
       // caret at the tap offset, and suppresses the selection-driven autoscroll on iOS.
       const { offset } = getCaretOffset(note, { clientX: e.clientX, clientY: e.clientY })
-      if (offset !== null) {
-        e.preventDefault()
-        focusWithoutAutoscroll(note, { offset })
-      }
+      e.preventDefault()
+      focusWithoutAutoscroll(note, { offset: offset ?? 0 })
     }, [])
 
     const onCopy = useCallback((e: React.ClipboardEvent) => {
