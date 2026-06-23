@@ -29,7 +29,7 @@ describe('multiselect', () => {
   // Regression test for https://github.com/cybersemics/em/issues/3993
   // When Select All is active, the native copy handler must copy all selected thoughts, not just the focused cursor.
   // .skip keeps normal CI green while the test is red; remove the .skip when the fix lands.
-  it.skip('copies all selected thoughts when Select All is active', async () => {
+  it('copies all selected thoughts when Select All is active', async () => {
     await paste(`
         - a
         - b
