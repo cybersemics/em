@@ -1,4 +1,6 @@
 import { KnownDevices } from 'puppeteer'
+import clickThought from '../helpers/clickThought'
+import command from '../helpers/command'
 import emulate from '../helpers/emulate'
 import longPressThought from '../helpers/longPressThought'
 import multiselectThoughts from '../helpers/multiselectThoughts'
@@ -22,6 +24,44 @@ describe('multiselect', () => {
 
     expect(highlightedBullets.length).toBe(2)
     expect(alertContent).toContain('2 thoughts selected')
+  })
+
+  // Regression test for https://github.com/cybersemics/em/issues/3993
+  // When Select All is active, the native copy handler must copy all selected thoughts, not just the focused cursor.
+  // .skip keeps normal CI green while the test is red; remove the .skip when the fix lands.
+  it.skip('copies all selected thoughts when Select All is active', async () => {
+    await paste(`
+        - a
+        - b
+        - c
+        `)
+
+    // place the cursor on b, then select all thoughts at the current level
+    await clickThought('b')
+    await command('selectAll')
+
+    // The native copy event fires on the focused editable (permitDefault on copyCursor). Capture the
+    // clipboard data it writes. With a multicursor active it must export all selected thoughts.
+    const copiedText = await page.evaluate(() => {
+      const editable = [...document.querySelectorAll('[data-editable]')].find(
+        el => el.textContent === 'b',
+      ) as HTMLElement
+      editable.focus()
+      // collapse the caret inside b, mirroring the real desktop copy where the edited thought keeps focus
+      const range = document.createRange()
+      range.selectNodeContents(editable)
+      range.collapse(true)
+      const sel = window.getSelection()!
+      sel.removeAllRanges()
+      sel.addRange(range)
+      const clipboardData = new DataTransfer()
+      editable.dispatchEvent(new ClipboardEvent('copy', { clipboardData, bubbles: true, cancelable: true }))
+      return clipboardData.getData('text/plain')
+    })
+
+    expect(copiedText).toContain('a')
+    expect(copiedText).toContain('b')
+    expect(copiedText).toContain('c')
   })
 })
 
