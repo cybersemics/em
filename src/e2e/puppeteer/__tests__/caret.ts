@@ -381,7 +381,7 @@ describe('mobile only', () => {
 
   // Regression test for https://github.com/cybersemics/em/issues/3996
   // .skip keeps normal CI green while the test is red; remove the .skip when the fix lands.
-  it.skip('tapping a text formatting button after the keyboard is manually dismissed should not open the keyboard', async () => {
+  it('tapping a text formatting button after the keyboard is manually dismissed should not open the keyboard', async () => {
     // Step 1: create a thought
     await gesture(newThoughtCommand)
     await keyboard.type('One')
