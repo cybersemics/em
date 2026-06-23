@@ -33,11 +33,11 @@
     "lint": "yarn swiftlint lint",
     "swiftlint": "node-swiftlint",
     "docgen": "docgen --api WebviewBackgroundPlugin --output-readme README.md --output-json dist/docs.json",
-    "build": "yarn clean && yarn docgen && tsc && rollup -c rollup.config.mjs",
+    "build": "node ./scripts/build.mjs",
     "clean": "rimraf ./dist",
     "watch": "tsc --watch",
     "whattsc": "tsc --version",
-    "prepublishOnly": "yarn build"
+    "prepublishOnly": "yarn build --force"
   },
   "devDependencies": {
     "@capacitor/android": "^8.4.0",
