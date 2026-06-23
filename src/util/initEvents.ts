@@ -289,8 +289,12 @@ const initEvents = (store: Store<State, any>) => {
     }
   }
 
+  /** Profile touchstart event for debugging the Browserstack test. */
+  const onTouchStart = (e: TouchEvent) => console.info('touchstart', e.touches[0].clientX, e.touches[0].clientY)
+
   /** Stops the scroll-at-edge when dragging stops. */
-  const onTouchEnd = () => {
+  const onTouchEnd = (e: TouchEvent) => {
+    console.info('touchend', e.changedTouches[0].clientX, e.changedTouches[0].clientY)
     scrollAtEdge.stop()
   }
 
@@ -377,8 +381,11 @@ const initEvents = (store: Store<State, any>) => {
   window.addEventListener('popstate', onPopstate)
   window.addEventListener('mousemove', onMouseMove)
   // Note: touchstart may not be propagated after dragHold
+  window.addEventListener('touchstart', onTouchStart)
   window.addEventListener('touchmove', onTouchMove)
   window.addEventListener('touchend', onTouchEnd)
+  window.addEventListener('mousedown', (e: MouseEvent) => console.info('mousedown', e.clientX, e.clientY))
+  window.addEventListener('mouseup', (e: MouseEvent) => console.info('mouseup', e.clientX, e.clientY))
   window.addEventListener('beforeunload', onBeforeUnload)
   window.addEventListener('scroll', updateScrollTop)
   window.addEventListener('dragenter', dragEnter)
@@ -406,6 +413,7 @@ const initEvents = (store: Store<State, any>) => {
     window.removeEventListener('keyup', keyUp)
     window.removeEventListener('popstate', onPopstate)
     window.removeEventListener('mousemove', onMouseMove)
+    window.removeEventListener('touchstart', onTouchStart)
     window.removeEventListener('touchmove', onTouchMove)
     window.removeEventListener('touchend', onTouchEnd)
     window.removeEventListener('beforeunload', onBeforeUnload)
