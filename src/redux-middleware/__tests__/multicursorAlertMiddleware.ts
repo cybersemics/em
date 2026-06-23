@@ -2,6 +2,7 @@ import { importTextActionCreator as importText } from '../../actions/importText'
 import { toggleDropdownActionCreator as toggleDropdown } from '../../actions/toggleDropdown'
 import { undoActionCreator as undo } from '../../actions/undo'
 import { executeCommandWithMulticursor } from '../../commands'
+import bold from '../../commands/bold'
 import deleteCommand from '../../commands/delete'
 import { initialize } from '../../initialize'
 import store from '../../stores/app'
@@ -32,6 +33,43 @@ it('shows the Command Center on mobile when a multicursor is active', async () =
     addMulticursor(['C']),
   ])
 
+  expect(store.getState().showCommandCenter).toBe(true)
+})
+
+it('keeps the Command Center open while a multicursor command executes, without flickering closed', async () => {
+  await initialize()
+
+  store.dispatch([
+    importText({
+      text: `
+        - A
+        - B
+        - C`,
+    }),
+    setCursor(['A']),
+    // open the Command Center by activating multicursors (swipe up)
+    addMulticursor(['A']),
+    addMulticursor(['B']),
+  ])
+
+  expect(store.getState().showCommandCenter).toBe(true)
+
+  // Track whether the Command Center is ever closed during execution.
+  // executeCommandWithMulticursor transiently clears and restores the multicursors, which
+  // previously caused the Command Center to close and reopen, abruptly re-animating the
+  // sheet on iOS (#3995).
+  let closedDuringExecution = false
+  const unsubscribe = store.subscribe(() => {
+    if (!store.getState().showCommandCenter) closedDuringExecution = true
+  })
+
+  // Execute a formatting command that preserves the multicursors across all selected thoughts.
+  executeCommandWithMulticursor(bold, { store })
+
+  unsubscribe()
+
+  // The Command Center should remain open throughout, and stay open afterward.
+  expect(closedDuringExecution).toBe(false)
   expect(store.getState().showCommandCenter).toBe(true)
 })
 

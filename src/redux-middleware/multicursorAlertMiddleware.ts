@@ -25,7 +25,12 @@ const multicursorAlertMiddleware: ThunkMiddleware<State> = ({ getState, dispatch
     const numMulticursors = Object.keys(state.multicursors).length
 
     // On mobile, show the Command Center when multicursor is active, and hide it when inactive.
-    if (isTouch) {
+    // Skip while a multicursor command is executing: executeCommandWithMulticursor transiently
+    // clears and restores the multicursors, which would otherwise close and reopen the Command
+    // Center, abruptly re-animating the sheet on iOS (#3995). The terminal setIsMulticursorExecuting
+    // (value: false) dispatch passes through this middleware with the settled multicursor count and
+    // reconciles the Command Center state (e.g. closing it after a command that clears multicursors).
+    if (isTouch && !state.isMulticursorExecuting) {
       if (numMulticursors === 0 && state.showCommandCenter) {
         dispatch(toggleDropdown({ dropDownType: 'commandCenter', value: false }))
       } else if (numMulticursors > 0 && !state.showCommandCenter && !state.showUndoSlider) {
