@@ -261,7 +261,7 @@ describe('Caret', () => {
     await tap(homeNodeHandle)
     console.info('Tapping Hello')
     const editableNodeHandle = await getEditable('Hello')
-    await tap(editableNodeHandle, { horizontalTapLine: 'right', y: 14 })
+    await tap(editableNodeHandle, { horizontalTapLine: 'right', x: 12 })
 
     const activeElementIsBody = await browser.execute(() => document.activeElement === document.body)
     expect(activeElementIsBody).toBe(true)
