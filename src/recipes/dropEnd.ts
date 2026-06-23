@@ -26,14 +26,7 @@ const dropEndRecipe = defineRecipe({
     zIndex: 0,
     width: 'calc(100% - 2em)',
   },
-  variants: {
-    type: {
-      // Drop targets that are children of thoughts should sit a bit lower due to the reduced padding beneath the thought.
-      dropChild: {
-        marginTop: 'calc(-1 * {spacing.editablePaddingTop})',
-      },
-    },
-  },
+  variants: {},
 })
 
 export default dropEndRecipe

@@ -3,7 +3,6 @@ import { ConnectDragSource } from 'react-dnd'
 import { useDispatch, useSelector } from 'react-redux'
 import { css, cva, cx } from '../../styled-system/css'
 import { bulletRecipe } from '../../styled-system/recipes'
-import { token } from '../../styled-system/tokens'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import { deleteAttributeActionCreator as deleteAttribute } from '../actions/deleteAttribute'
@@ -329,9 +328,9 @@ const BulletPositioner = forwardRef<SVGSVGElement, PropsWithChildren<BulletPosit
         style={{
           top: -extendClickHeight,
           left: -extendClickWidth + marginLeft,
-          paddingTop: `calc(${token('spacing.editablePaddingTop')} + ${extendClickHeight}px)`,
+          paddingTop: extendClickHeight,
           paddingLeft: extendClickWidth,
-          paddingBottom: `calc(${token('spacing.editablePaddingBottom')} + ${extendClickHeight + 2}px)`,
+          paddingBottom: extendClickHeight + 2,
           width,
           /* Ensuring the cursor overlay will always show behind the original bullet component.
           We want to avoid a situation where the active thought can’t be dragged and dropped */
