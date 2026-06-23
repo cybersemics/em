@@ -30,6 +30,7 @@ __diff_output__
 ## PandaCSS
 styled-system
 styled-system-studio
+*.cpuprofile
 
 # WDIO
 wdio.*
@@ -37,3 +38,4 @@ browserstack.*
 local.*
 /log
 /logs
+
