@@ -24,7 +24,7 @@
     "browserless": "docker run -p 7566:3000 -e \"CONNECTION_TIMEOUT=-1\" browserless/chrome",
     "build": "yarn build:packages && yarn build:styles && vite build",
     "build:packages": "yarn --cwd packages/webview build",
-    "build:styles": "echo \"Building styles...\" && panda codegen",
+    "build:styles": "node ./scripts/build-styles.mjs",
     "cap:android": "BUILD_MODE=server yarn cap:sync && cap open android",
     "cap:android:static": "yarn build && BUILD_MODE=static yarn cap:sync && cap open android",
     "cap:ios": "BUILD_MODE=server yarn cap:sync && cap open ios",
