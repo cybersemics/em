@@ -163,4 +163,66 @@ describe('DropGutter: mobile only', () => {
 
     expect(cursorValue).toBe('One')
   })
+
+  it('should keep the cursor on the last known position when a different thought is archived via DropGutter (#4077)', async () => {
+    await paste(`
+        - One
+        - Two
+        - Three
+        - Four
+        - Five
+        `)
+
+    // Put the cursor on "Five", then archive a different thought ("Two") by dragging it to the DropGutter.
+    await clickThought('Five')
+
+    await dragToDropGutter(await waitForEditable('Two'))
+
+    await waitForAlertContent('Removed 1 thought')
+
+    // Wait for any asynchronous focus restoration to settle.
+    await new Promise(resolve => setTimeout(resolve, 1000))
+
+    // The cursor should remain on "Five" (its last known position), not move to a sibling of the archived thought.
+    const cursorValue = await page.evaluate(() => {
+      const em = window.em as WindowEm
+      const cursor = em.testHelpers.getState().cursor
+      if (!cursor) return null
+      const id = cursor[cursor.length - 1]
+      return em.getThoughtById(id)?.value ?? null
+    })
+
+    expect(cursorValue).toBe('Five')
+  })
+
+  it('should keep the cursor on the last known position when the first thought is archived via DropGutter (#4077)', async () => {
+    await paste(`
+        - One
+        - Two
+        - Three
+        - Four
+        - Five
+        `)
+
+    // Put the cursor on "Five", then archive the first thought ("One", which has no previous sibling) via the DropGutter.
+    await clickThought('Five')
+
+    await dragToDropGutter(await waitForEditable('One'))
+
+    await waitForAlertContent('Removed 1 thought')
+
+    // Wait for any asynchronous focus restoration to settle.
+    await new Promise(resolve => setTimeout(resolve, 1000))
+
+    // The cursor should remain on "Five" (its last known position), not move to the next sibling of the archived thought.
+    const cursorValue = await page.evaluate(() => {
+      const em = window.em as WindowEm
+      const cursor = em.testHelpers.getState().cursor
+      if (!cursor) return null
+      const id = cursor[cursor.length - 1]
+      return em.getThoughtById(id)?.value ?? null
+    })
+
+    expect(cursorValue).toBe('Five')
+  })
 })
