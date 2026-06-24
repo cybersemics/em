@@ -2,7 +2,7 @@ import type ThoughtId from '../../../@types/ThoughtId'
 import { EM_TOKEN, SETTINGS_TOKEN, SETTINGS_VALUE } from '../../../constants'
 import testThoughtspace, { init, resetTestThoughtspace } from '../../../test-helpers/treecrdt/testThoughtspace'
 import hashThought from '../../../util/hashThought'
-import treecrdtThoughtspace, { createMaterializedChildrenMap } from '../thoughtspace'
+import treecrdtThoughtspace, { createIndexedChildrenMap } from '../thoughtspace'
 
 const PIN_ID = '00000000000000000000000000000101' as ThoughtId
 const FALSE_ID = '00000000000000000000000000000102' as ThoughtId
@@ -43,16 +43,13 @@ it('does not require an initialized TreeCRDT client when freeing lexeme cache', 
   await expect(treecrdtThoughtspace.freeLexeme(hashThought('missing'))).resolves.toBeUndefined()
 })
 
-it('uses attribute values as childrenMap keys without changing TreeCRDT node ids', async () => {
+it('uses indexed attribute values as childrenMap keys without changing TreeCRDT node ids', async () => {
   const valueById = {
     [PIN_ID]: '=pin',
     [PIN_DUPLICATE_ID]: '=pin',
-    [FALSE_ID]: 'false',
   }
 
-  const childrenMap = await createMaterializedChildrenMap([PIN_ID, PIN_DUPLICATE_ID, FALSE_ID], async childId => {
-    return valueById[childId]
-  })
+  const childrenMap = createIndexedChildrenMap([PIN_ID, PIN_DUPLICATE_ID, FALSE_ID], valueById)
 
   expect(childrenMap['=pin']).toBe(PIN_ID)
   expect(childrenMap[PIN_DUPLICATE_ID]).toBe(PIN_DUPLICATE_ID)

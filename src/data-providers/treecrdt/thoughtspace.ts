@@ -9,6 +9,12 @@ import { childrenMapKey } from '../../util/createChildrenMap'
 import hashThought from '../../util/hashThought'
 import type { DataProvider } from '../DataProvider'
 import {
+  deleteAttributeChild,
+  ensureAttributeChildrenIndexReady,
+  getAttributeChildrenByParent,
+  reindexAttributeChild,
+} from './attributeChildren'
+import {
   deleteAllLexemes,
   deleteLexeme as deleteLexemeRow,
   ensureLexemesSchema,
@@ -35,15 +41,13 @@ let initReady = new Promise<void>(resolve => {
 })
 
 /** Creates em's childrenMap read-model index while preserving TreeCRDT's strict child ids as values. */
-export const createMaterializedChildrenMap = async (
+export const createIndexedChildrenMap = (
   childIds: ThoughtId[],
-  getChildValue: (childId: ThoughtId) => Promise<string | undefined>,
-): Promise<Index<ThoughtId>> => {
+  attributeValueByChildId: Index<string>,
+): Index<ThoughtId> => {
   const childrenMap: Index<ThoughtId> = {}
   for (const childId of childIds) {
-    const value = await getChildValue(childId)
-    // childrenMap is em's read-model index: attribute value -> ThoughtId, otherwise ThoughtId -> ThoughtId.
-    // TreeCRDT node ids remain strict ids; attribute values are only lookup keys.
+    const value = attributeValueByChildId[childId]
     childrenMap[value ? childrenMapKey(childrenMap, { id: childId, value }) : childId] = childId
   }
   return childrenMap
@@ -94,10 +98,7 @@ const getThoughtById = async (id: ThoughtId): Promise<Thought | undefined> => {
   const rank = parentIdRaw === null ? 0 : Math.max(0, siblingIds.indexOf(id))
 
   const childIds = (await client.tree.children(id)) as ThoughtId[]
-  const childrenMap = await createMaterializedChildrenMap(childIds, async childId => {
-    const payloadBytes = await client.tree.getPayload(childId)
-    return payloadBytes ? decodeThoughtPayload(payloadBytes).value : undefined
-  })
+  const childrenMap = createIndexedChildrenMap(childIds, await getAttributeChildrenByParent(client, id))
 
   const thought: Thought = {
     id,
@@ -212,6 +213,7 @@ const updateThoughts = async ({
 
   for (const id of deletes) {
     ops.push(await client.local.delete(activeReplicaId, id, createTreecrdtLocalWriteOptions()))
+    await deleteAttributeChild(client, id)
   }
 
   for (const [id, thought] of Object.entries(updates)) {
@@ -239,6 +241,7 @@ const updateThoughts = async ({
           createTreecrdtLocalWriteOptions(),
         ),
       )
+      await reindexAttributeChild(client, thoughtId)
     } else {
       const existing = await getThoughtById(thoughtId)
       if (!existing) continue
@@ -263,6 +266,10 @@ const updateThoughts = async ({
         ops.push(
           await client.local.payload(activeReplicaId, thoughtId, payloadBytes, createTreecrdtLocalWriteOptions()),
         )
+      }
+
+      if (parentChanged || payloadChanged) {
+        await reindexAttributeChild(client, thoughtId)
       }
     }
   }
@@ -388,6 +395,8 @@ export const init = async (replicaIdArg: Uint8Array): Promise<void> => {
       updatedBy: '',
     })
   }
+
+  await ensureAttributeChildrenIndexReady(client)
 
   resolveInitReady()
 
