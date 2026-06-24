@@ -5,6 +5,7 @@ import emulate from '../helpers/emulate'
 import longPressThought from '../helpers/longPressThought'
 import multiselectThoughts from '../helpers/multiselectThoughts'
 import paste from '../helpers/paste'
+import press from '../helpers/press'
 import waitForEditable from '../helpers/waitForEditable'
 import { page } from '../session'
 
@@ -62,6 +63,45 @@ describe('multiselect', () => {
     expect(copiedText).toContain('a')
     expect(copiedText).toContain('b')
     expect(copiedText).toContain('c')
+  })
+
+  // Regression test for https://github.com/cybersemics/em/issues/3993 (Desktop Safari)
+  // The copy command must write text/html and the text/em marker to the clipboard itself, rather than
+  // relying on the native copy event of the focused editable. Safari (like headless Chrome) does not fire
+  // a copy event for a collapsed contenteditable selection, so without an explicit text/html the browser
+  // synthesizes its own html on paste, which shadows the plain text and breaks structured paste.
+  it('writes html and the em marker to the clipboard when Select All is active', async () => {
+    await paste(`
+        - a
+        - b
+        - c
+        `)
+
+    // intercept clipboardData.setData so we can observe what the copy command writes, regardless of
+    // whether a native copy event fires (it does not for a collapsed selection in headless Chrome)
+    await page.evaluate(() => {
+      const win = window as typeof window & { __copied: Record<string, string> }
+      win.__copied = {}
+      const original = DataTransfer.prototype.setData
+      DataTransfer.prototype.setData = function (type: string, data: string) {
+        win.__copied[type] = data
+        return original.call(this, type, data)
+      }
+    })
+
+    // place the cursor on b, then select all thoughts at the current level and copy
+    await clickThought('b')
+    await command('selectAll')
+    await press('c', { meta: true })
+
+    const copied = await page.evaluate(() => (window as typeof window & { __copied: Record<string, string> }).__copied)
+
+    // the em marker must be present so importData treats the html as em-structured content
+    expect(copied['text/em']).toBeDefined()
+    // the html must contain all selected thoughts so structured paste reconstructs the full selection
+    expect(copied['text/html']).toContain('a')
+    expect(copied['text/html']).toContain('b')
+    expect(copied['text/html']).toContain('c')
   })
 })
 

@@ -36,11 +36,14 @@ const copyThoughts = async (ids: ThoughtId[], dispatch: Dispatch, getState: () =
   const stateAfterPull = getState()
 
   const exported = ids.map(id => strip(exportContext(stateAfterPull, id, 'text/plain'))).join('\n')
+  const exportedHtml = ids.map(id => exportContext(stateAfterPull, id, 'text/html')).join('\n')
   const exportedVisible = ids
     .map(id => exportContext(stateAfterPull, id, 'text/plain', { excludeMeta: true }))
     .join('\n')
 
-  copy(trimBullet(exported))
+  // Write text/html and the text/em marker alongside the plain text so structured paste works even when
+  // the browser does not fire a native copy event for the collapsed selection (e.g. Safari) (#3993).
+  copy(trimBullet(exported), { html: exportedHtml })
 
   return exportedVisible
 }
