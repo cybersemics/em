@@ -75,8 +75,8 @@ export async function deleteAttributeChild(client: TreecrdtClient, childId: Thou
   await client.runner.exec(bindParams(`DELETE FROM ${TABLE} WHERE child_id = ?1`, [childId]))
 }
 
-/** Upserts or removes a child from the derived attribute-child index based on its current value. */
-async function setAttributeChild(
+/** Upserts an attribute child into the derived index. */
+export async function upsertAttributeChild(
   client: TreecrdtClient,
   parentId: ThoughtId,
   childId: ThoughtId,
@@ -84,14 +84,33 @@ async function setAttributeChild(
 ): Promise<void> {
   await ensureAttributeChildrenSchema(client)
 
-  if (!isAttribute(value)) {
-    await deleteAttributeChild(client, childId)
-    return
-  }
-
   const sql = `INSERT INTO ${TABLE} (child_id, parent_id, value) VALUES (?1, ?2, ?3)
     ON CONFLICT(child_id) DO UPDATE SET parent_id = excluded.parent_id, value = excluded.value`
   await client.runner.exec(bindParams(sql, [childId, parentId, value]))
+}
+
+/** Upserts or removes a child from the derived attribute-child index based on a known current value. */
+export async function syncAttributeChild(
+  client: TreecrdtClient,
+  parentId: ThoughtId,
+  childId: ThoughtId,
+  value: string,
+): Promise<void> {
+  if (isAttribute(value)) {
+    await upsertAttributeChild(client, parentId, childId, value)
+  } else {
+    await deleteAttributeChild(client, childId)
+  }
+}
+
+/** Updates the indexed parent for a moved child, if the child is indexed. */
+export async function moveAttributeChild(
+  client: TreecrdtClient,
+  parentId: ThoughtId,
+  childId: ThoughtId,
+): Promise<void> {
+  await ensureAttributeChildrenSchema(client)
+  await client.runner.exec(bindParams(`UPDATE ${TABLE} SET parent_id = ?1 WHERE child_id = ?2`, [parentId, childId]))
 }
 
 /** Reindexes a single child from TreeCRDT's current materialized state. */
@@ -105,7 +124,7 @@ export async function reindexAttributeChild(client: TreecrdtClient, childId: Tho
   }
 
   const payload = decodeThoughtPayload(payloadBytes)
-  await setAttributeChild(client, parentIdRaw as ThoughtId, childId, payload.value)
+  await syncAttributeChild(client, parentIdRaw as ThoughtId, childId, payload.value)
 }
 
 /** Deletes all derived attribute-child rows. */
@@ -164,15 +183,39 @@ export async function refreshAttributeChildrenFromChanges(
   await ensureAttributeChildrenSchema(client)
 
   for (const ch of changes) {
+    const childId = ch.node as ThoughtId
     switch (ch.kind) {
       case 'insert':
-      case 'move':
       case 'restore':
-      case 'payload':
-        await reindexAttributeChild(client, ch.node as ThoughtId)
+        if (ch.payload && ch.parentAfter) {
+          await syncAttributeChild(client, ch.parentAfter as ThoughtId, childId, decodeThoughtPayload(ch.payload).value)
+        } else {
+          await deleteAttributeChild(client, childId)
+        }
         break
+      case 'move':
+        await moveAttributeChild(client, ch.parentAfter as ThoughtId, childId)
+        break
+      case 'payload': {
+        if (!ch.payload) {
+          await deleteAttributeChild(client, childId)
+          break
+        }
+        const payload = decodeThoughtPayload(ch.payload)
+        if (!isAttribute(payload.value)) {
+          await deleteAttributeChild(client, childId)
+          break
+        }
+        const parentIdRaw = await client.tree.parent(childId)
+        if (parentIdRaw === null) {
+          await deleteAttributeChild(client, childId)
+        } else {
+          await upsertAttributeChild(client, parentIdRaw as ThoughtId, childId, payload.value)
+        }
+        break
+      }
       case 'delete':
-        await deleteAttributeChild(client, ch.node as ThoughtId)
+        await deleteAttributeChild(client, childId)
         break
     }
   }

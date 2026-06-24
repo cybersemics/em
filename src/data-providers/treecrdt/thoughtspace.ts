@@ -7,12 +7,13 @@ import type Timestamp from '../../@types/Timestamp'
 import { EM_TOKEN, GLOBAL_ROOT_TOKEN, ROOT_PARENT_ID, SETTINGS_TOKEN, SETTINGS_VALUE } from '../../constants'
 import { childrenMapKey } from '../../util/createChildrenMap'
 import hashThought from '../../util/hashThought'
+import isAttribute from '../../util/isAttribute'
 import type { DataProvider } from '../DataProvider'
 import {
   deleteAttributeChild,
   ensureAttributeChildrenIndexReady,
   getAttributeChildrenByParent,
-  reindexAttributeChild,
+  upsertAttributeChild,
 } from './attributeChildren'
 import {
   deleteAllLexemes,
@@ -241,12 +242,15 @@ const updateThoughts = async ({
           createTreecrdtLocalWriteOptions(),
         ),
       )
-      await reindexAttributeChild(client, thoughtId)
+      if (isAttribute(thought.value)) {
+        await upsertAttributeChild(client, parentId, thoughtId, thought.value)
+      }
     } else {
       const existing = await getThoughtById(thoughtId)
       if (!existing) continue
 
       const parentChanged = existing.parentId !== thought.parentId
+      const valueChanged = existing.value !== thought.value
       const orderChanged = thoughtId in (movePlacements || {})
       if (parentChanged || orderChanged) {
         const placement = await getTreecrdtPlacement(thoughtId, thought, movePlacements, { requireExplicit: true })
@@ -268,8 +272,12 @@ const updateThoughts = async ({
         )
       }
 
-      if (parentChanged || payloadChanged) {
-        await reindexAttributeChild(client, thoughtId)
+      if (parentChanged || valueChanged) {
+        if (isAttribute(thought.value)) {
+          await upsertAttributeChild(client, parentId, thoughtId, thought.value)
+        } else if (isAttribute(existing.value)) {
+          await deleteAttributeChild(client, thoughtId)
+        }
       }
     }
   }
