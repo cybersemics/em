@@ -167,7 +167,7 @@ const useCol1Alignment = ({ path, value, isTableCol1 }: UseCol1AlignParams) => {
     return cursorParentId ? getChildren(state, cursorParentId).map(t => t.value) : []
   }, shallowEqual)
 
-  interface TransitionStyle {
+  type TransitionStyle = {
     transform: string
     transition: string
   }

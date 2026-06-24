@@ -1,4 +1,4 @@
-import { page } from '../setup'
+import { page } from '../session'
 
 /** Type text on the keyboard. To press a key (optionally with modifiers), see the press helper. */
 const keyboard = {

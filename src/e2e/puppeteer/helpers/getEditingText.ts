@@ -1,4 +1,4 @@
-import { page } from '../setup'
+import { page } from '../session'
 
 /**
  * Get the thought value that cursor on.
