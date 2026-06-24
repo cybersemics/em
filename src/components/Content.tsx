@@ -4,8 +4,8 @@ import { css } from '../../styled-system/css'
 import Dispatch from '../@types/Dispatch'
 import SimplePath from '../@types/SimplePath'
 import { Thunk } from '../@types/Thunk'
+import { closeDropdownsActionCreator as closeDropdowns } from '../actions/closeDropdowns'
 import { closeModalActionCreator as closeModal } from '../actions/closeModal'
-import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import { isTouch } from '../browser'
 import {
   ABSOLUTE_PATH,
@@ -59,7 +59,7 @@ const Content: FC = () => {
     if (state.longPress !== LongPressState.Inactive) return
 
     // if disableOnFocus is true, the click came from an Editable onFocus event and we should not reset the cursor
-    dispatch([state.showModal ? closeModal() : null, toggleDropdown()])
+    dispatch([state.showModal ? closeModal() : null, closeDropdowns()])
   }
 
   return (
