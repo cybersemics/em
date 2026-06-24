@@ -194,7 +194,9 @@ export async function refreshAttributeChildrenFromChanges(
         }
         break
       case 'move':
-        await moveAttributeChild(client, ch.parentAfter as ThoughtId, childId)
+        if (ch.parentBefore !== ch.parentAfter) {
+          await moveAttributeChild(client, ch.parentAfter as ThoughtId, childId)
+        }
         break
       case 'payload': {
         if (!ch.payload) {
