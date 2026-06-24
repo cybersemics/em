@@ -51,6 +51,16 @@ export const clear = (): void => {
   }
 }
 
+/** Selects the entire contents of the given node. Used to stage rich content for a programmatic copy. */
+export const selectNode = (node: Node): void => {
+  const sel = window.getSelection()
+  if (!sel) return
+  const range = document.createRange()
+  range.selectNodeContents(node)
+  sel.removeAllRanges()
+  sel.addRange(range)
+}
+
 /** Returns true if the selection is a collapsed caret, i.e. the beginning and end of the selection are the same. Returns undefined if there is no selection. */
 export const isCollapsed = (): boolean => !!window.getSelection()?.isCollapsed
 
