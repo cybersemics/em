@@ -380,8 +380,7 @@ describe('mobile only', () => {
   })
 
   // Regression test for https://github.com/cybersemics/em/issues/3958
-  // .skip keeps normal CI green while the test is red; remove the .skip when the fix lands.
-  it.skip('caret should be dismissed when the virtual keyboard is closed without blurring (e.g. Android Down Arrow)', async () => {
+  it('caret should be dismissed when the virtual keyboard is closed without blurring (e.g. Android Down Arrow)', async () => {
     await paste(`
     - One
     - Two
