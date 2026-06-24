@@ -402,9 +402,12 @@ describe('mobile only', () => {
     await page.evaluate(async () => {
       const visualViewport = window.visualViewport!
       const fullHeight = visualViewport.height
+      /** Overrides the reported visualViewport height to simulate the keyboard opening/closing. */
       const overrideHeight = (height: number) =>
         Object.defineProperty(visualViewport, 'height', { configurable: true, get: () => height })
+      /** Fires a visualViewport resize event, as the OS does when the virtual keyboard shows/hides. */
       const fireResize = () => visualViewport.dispatchEvent(new Event('resize'))
+      /** Waits for the given number of milliseconds. */
       const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
       // keyboard open: viewport shrinks
