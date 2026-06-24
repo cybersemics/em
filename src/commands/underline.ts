@@ -16,7 +16,7 @@ const underline: Command = {
     preventSetCursor: true,
   },
   canExecute: state => {
-    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
+    return isDocumentEditable() && !state.noteFocus && (!!state.cursor || hasMulticursor(state))
   },
   exec: dispatch => {
     dispatch(formatSelection('underline'))
