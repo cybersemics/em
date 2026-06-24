@@ -261,7 +261,7 @@ describe('Caret', () => {
     await tap(homeNodeHandle)
     console.info('Tapping Hello')
 
-    await gesture('', { xStart: 145, yStart: 90, segmentLength: 0, waitMs: 100 })
+    await gesture('', { xStart: 145, yStart: 78, segmentLength: 0, waitMs: 100 })
 
     const activeElementIsBody = await browser.execute(() => document.activeElement === document.body)
     expect(activeElementIsBody).toBe(true)
