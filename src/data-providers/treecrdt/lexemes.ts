@@ -4,6 +4,7 @@ import type Lexeme from '../../@types/Lexeme'
 
 /** Application-owned lexeme rows in the same SQLite DB as TreeCRDT (not part of the CRDT tree). */
 const TABLE = 'em_lexemes'
+const schemaReady = new WeakSet<TreecrdtClient>()
 
 const DDL = `
 CREATE TABLE IF NOT EXISTS ${TABLE} (
@@ -38,7 +39,9 @@ function parseLexemeJson(text: string): Lexeme {
 
 /** Ensures the lexeme table exists. Safe to call on every init. */
 export async function ensureLexemesSchema(client: TreecrdtClient): Promise<void> {
+  if (schemaReady.has(client)) return
   await client.runner.exec(DDL)
+  schemaReady.add(client)
 }
 
 /** Loads one lexeme by id (lexeme key / hash). */
