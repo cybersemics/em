@@ -5,7 +5,9 @@ import type Lexeme from '../../../@types/Lexeme'
 import type Thought from '../../../@types/Thought'
 import { updateThoughtsActionCreator } from '../../../actions/updateThoughts'
 import store from '../../../stores/app'
+import { refreshAttributeChildrenFromChanges } from '../attributeChildren'
 import thoughtspaceDb from '../thoughtspace'
+import { getTreecrdtClient } from '../treecrdt'
 import { waitForTreecrdtWriteBarrier } from '../writeBarrier'
 import { refreshThoughtsFromMaterializationChanges } from './materializationThoughtUpdates'
 
@@ -34,6 +36,8 @@ export async function applyMaterializedThoughtsToStore(event: MaterializationEve
   // Local writes and materialization callbacks can race. Wait for queued em -> TreeCRDT writes before reading
   // SQLite back into Redux, otherwise a remote refresh can reapply stale rows over newer optimistic state.
   await waitForTreecrdtWriteBarrier()
+
+  await refreshAttributeChildrenFromChanges(getTreecrdtClient(), event.changes)
 
   const stateBefore = store.getState()
   const { deletedIds, thoughts, lexemeIndexUpdates } = await refreshThoughtsFromMaterializationChanges(

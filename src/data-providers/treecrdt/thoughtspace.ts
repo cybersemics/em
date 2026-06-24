@@ -5,8 +5,16 @@ import type Thought from '../../@types/Thought'
 import type ThoughtId from '../../@types/ThoughtId'
 import type Timestamp from '../../@types/Timestamp'
 import { EM_TOKEN, GLOBAL_ROOT_TOKEN, ROOT_PARENT_ID, SETTINGS_TOKEN, SETTINGS_VALUE } from '../../constants'
+import { childrenMapKey } from '../../util/createChildrenMap'
 import hashThought from '../../util/hashThought'
+import isAttribute from '../../util/isAttribute'
 import type { DataProvider } from '../DataProvider'
+import {
+  deleteAttributeChild,
+  ensureAttributeChildrenIndexReady,
+  getAttributeChildrenByParent,
+  upsertAttributeChild,
+} from './attributeChildren'
 import {
   deleteAllLexemes,
   deleteLexeme as deleteLexemeRow,
@@ -32,6 +40,19 @@ let initReadyResolve: (() => void) | null = null
 let initReady = new Promise<void>(resolve => {
   initReadyResolve = resolve
 })
+
+/** Creates em's childrenMap read-model index while preserving TreeCRDT's strict child ids as values. */
+export const createIndexedChildrenMap = (
+  childIds: ThoughtId[],
+  attributeValueByChildId: Index<string>,
+): Index<ThoughtId> => {
+  const childrenMap: Index<ThoughtId> = {}
+  for (const childId of childIds) {
+    const value = attributeValueByChildId[childId]
+    childrenMap[value ? childrenMapKey(childrenMap, { id: childId, value }) : childId] = childId
+  }
+  return childrenMap
+}
 
 /** Resets the provider readiness barrier used by writes that race startup. */
 const resetInitReady = (): void => {
@@ -77,11 +98,8 @@ const getThoughtById = async (id: ThoughtId): Promise<Thought | undefined> => {
   const siblingIds = parentIdRaw === null ? [] : await client.tree.children(parentIdRaw)
   const rank = parentIdRaw === null ? 0 : Math.max(0, siblingIds.indexOf(id))
 
-  const childIds = await client.tree.children(id)
-  const childrenMap: Index<ThoughtId> = {}
-  for (const cid of childIds) {
-    childrenMap[cid] = cid as ThoughtId
-  }
+  const childIds = (await client.tree.children(id)) as ThoughtId[]
+  const childrenMap = createIndexedChildrenMap(childIds, await getAttributeChildrenByParent(client, id))
 
   const thought: Thought = {
     id,
@@ -196,6 +214,7 @@ const updateThoughts = async ({
 
   for (const id of deletes) {
     ops.push(await client.local.delete(activeReplicaId, id, createTreecrdtLocalWriteOptions()))
+    await deleteAttributeChild(client, id)
   }
 
   for (const [id, thought] of Object.entries(updates)) {
@@ -223,11 +242,15 @@ const updateThoughts = async ({
           createTreecrdtLocalWriteOptions(),
         ),
       )
+      if (isAttribute(thought.value)) {
+        await upsertAttributeChild(client, parentId, thoughtId, thought.value)
+      }
     } else {
       const existing = await getThoughtById(thoughtId)
       if (!existing) continue
 
       const parentChanged = existing.parentId !== thought.parentId
+      const valueChanged = existing.value !== thought.value
       const orderChanged = thoughtId in (movePlacements || {})
       if (parentChanged || orderChanged) {
         const placement = await getTreecrdtPlacement(thoughtId, thought, movePlacements, { requireExplicit: true })
@@ -247,6 +270,14 @@ const updateThoughts = async ({
         ops.push(
           await client.local.payload(activeReplicaId, thoughtId, payloadBytes, createTreecrdtLocalWriteOptions()),
         )
+      }
+
+      if (parentChanged || valueChanged) {
+        if (isAttribute(thought.value)) {
+          await upsertAttributeChild(client, parentId, thoughtId, thought.value)
+        } else if (isAttribute(existing.value)) {
+          await deleteAttributeChild(client, thoughtId)
+        }
       }
     }
   }
@@ -372,6 +403,8 @@ export const init = async (replicaIdArg: Uint8Array): Promise<void> => {
       updatedBy: '',
     })
   }
+
+  await ensureAttributeChildrenIndexReady(client)
 
   resolveInitReady()
 
