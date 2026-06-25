@@ -11626,7 +11626,7 @@ __metadata:
     moize: "npm:^6.1.7"
     motion: "npm:^12.40.0"
     murmurhash3js: "npm:^3.0.1"
-    nanoid: "npm:^5.1.11"
+    nanoid: "npm:^5.1.16"
     npm-run-all2: "npm:^9.0.0"
     openai: "npm:^5.20.3"
     page-lifecycle: "⚠️ OVERRIDDEN BY 'resolutions' - Source: https://github.com/magic-akari/page-lifecycle#feat/add-types | Tarball: https://codeload.github.com/magic-akari/page-lifecycle/tar.gz/50b50421bdeab3d211a57e81a277f699638373b0 | Configured in: package.json#resolutions"
@@ -18607,12 +18607,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nanoid@npm:^5.1.11":
-  version: 5.1.11
-  resolution: "nanoid@npm:5.1.11"
+"nanoid@npm:^5.1.16":
+  version: 5.1.16
+  resolution: "nanoid@npm:5.1.16"
   bin:
     nanoid: bin/nanoid.js
-  checksum: 10c0/91580d18c29263ac0e871734f0d86e7f906f523f974d3c30fc65354ccf387ccffd606c2a6c28acc2977a3950146347e790ce9e3f514133a48995af5ccdb308ce
+  checksum: 10c0/04b4f96237f5639716da0e98f453361b313bebaf458bb67dea2d384724fc8b3340a28f032a4373052150bcf3b801d122e291d81ae4fc522969f55c134f4401a3
   languageName: node
   linkType: hard
 
