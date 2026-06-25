@@ -303,7 +303,7 @@ describe('reconcile', () => {
   // provider and dispatches a non-local updateThoughts. If that stale snapshot (read before
   // the swap) lands after swapParent, it must not overwrite the newer post-swap thoughts.
   // .skip keeps normal CI green while the test is red; remove the .skip when the fix lands.
-  it.skip('stale forced pull must not overwrite newer post-swap thoughts', () => {
+  it('stale forced pull must not overwrite newer post-swap thoughts', () => {
     const text = `
     - AAA
       - BBB
