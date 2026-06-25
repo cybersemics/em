@@ -50,7 +50,6 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, se
         marginInline: '0.2rem',
       })}
     >
-      {/* Gesture diagram container. Gated on touch devices, like the rest of the Mobile Command Universe. */}
       {isTouch ? (
         <div
           className={css({
