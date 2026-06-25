@@ -39,4 +39,14 @@ describe('HTML-tagged values (e.g. from background color formatting)', () => {
     const value = '<font style="background-color: rgb(0, 128, 255);">Hello world. Second sentence.</font>'
     expect(applyLetterCase('SentenceCase', value)).toBe(value)
   })
+
+  it('applies UpperCase to text wrapped in a font color tag without corrupting the markup', () => {
+    const value = '<font color="#ff0000">hello world</font>'
+    expect(applyLetterCase('UpperCase', value)).toBe('<font color="#ff0000">HELLO WORLD</font>')
+  })
+
+  it('applies LowerCase to text wrapped in a font color tag without corrupting the markup', () => {
+    const value = '<font color="#FF0000">HELLO WORLD</font>'
+    expect(applyLetterCase('LowerCase', value)).toBe('<font color="#FF0000">hello world</font>')
+  })
 })
