@@ -1,7 +1,7 @@
 import { Clipboard } from '@capacitor/clipboard'
 import { Capacitor } from '@capacitor/core'
 import ClipboardJS from 'clipboard'
-import { isSafari } from '../browser'
+import { isSafari, isTouch } from '../browser'
 import * as selection from './selection'
 
 interface CopyOptions {
@@ -121,10 +121,17 @@ const copy = (text: string, { html }: CopyOptions = {}): void => {
     })
     // restore selection
     selection.restore(selectionState)
-  } else if (html != null) {
+  } else if (html != null && !(isSafari() && isTouch)) {
     // copyRich manages its own selection lifecycle, so it must not be wrapped in save/restore here.
     copyRich(text, html)
   } else {
+    // Plain-text copy via a programmatic ClipboardJS execCommand('copy').
+    //
+    // This is also the path for mobile Safari (isSafari() && isTouch). There, the rich copy cannot run: the
+    // copy is triggered by a Command Center tap rather than Cmd+C, so no native copy event fires, and Safari
+    // does not honor setData() during a programmatic copy. The full multicursor selection is still copied as
+    // indented plain text, which em reconstructs into the thought tree on paste (the pre-#3993 mobile behavior).
+    //
     // save selection
     const selectionState = selection.save()
     // copy from dummy element using ClipboardJS
