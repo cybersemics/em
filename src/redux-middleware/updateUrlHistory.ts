@@ -136,8 +136,11 @@ const updateUrlHistoryMiddleware: ThunkMiddleware<State> = ({ getState }) => {
 
     // Update the command state whenever the cursor changes.
     // Otherwise the command state will not update when the cursor is moved with no selection (mobile only, when the keyboard is down), since updateCommandState is otherwise only called on selection change.
+    // Skip while a multicursor command is executing: executeCommandWithMulticursor moves the cursor to each selected
+    // thought in turn and then restores the original cursor, which may be an unselected thought. Updating the command
+    // state from those transient/restored cursors would clobber the state that the command set for the selection (#3995).
     const cursor = getState().cursor
-    if (!equalPath(cursor, cursorPrev)) {
+    if (!equalPath(cursor, cursorPrev) && !getState().isMulticursorExecuting) {
       updateCommandState()
     }
     cursorPrev = cursor
