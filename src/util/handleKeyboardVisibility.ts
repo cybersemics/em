@@ -9,6 +9,25 @@ let lastViewportHeight: number | null = window.visualViewport?.height || null
 let lastViewportWidth: number | null = window.visualViewport?.width || null
 
 /**
+ * Dismisses the caret and exits edit mode when the virtual keyboard is closed without a preceding blur event.
+ *
+ * On Android the keyboard can be dismissed (e.g. via the Down Arrow virtual button) without blurring the
+ * editable, so no blur event fires to clear the caret. This leaves the caret blinking on the thought even
+ * though the keyboard is gone. Clearing the selection blurs the active editable and removes the caret.
+ *
+ * See: https://github.com/cybersemics/em/issues/3958.
+ */
+export const dismissCaretOnKeyboardClose = (): void => {
+  store.dispatch((dispatch, getState) => {
+    const state = getState()
+    if (state.isKeyboardOpen && state.cursor) {
+      selection.clear()
+      dispatch(keyboardOpen({ value: false }))
+    }
+  })
+}
+
+/**
  * Monitors viewport resize events to detect virtual keyboard visibility changes.
  *
  * This is primarily needed for Android devices when a user navigates away using
@@ -45,13 +64,7 @@ const handleKeyboardVisibility = _.throttle(() => {
   // AND width didn't change (not a rotation)
   if (heightChangeRatio > KEYBOARD_VISIBILITY_THRESHOLD && currentWidth === lastViewportWidth) {
     // Exit editing mode when keyboard is closed
-    store.dispatch((dispatch, getState) => {
-      const state = getState()
-      if (state.isKeyboardOpen && state.cursor) {
-        selection.clear()
-        dispatch(keyboardOpen({ value: false }))
-      }
-    })
+    dismissCaretOnKeyboardClose()
   }
   // Height decrease, insignificant change, or device rotation - no action needed
 
