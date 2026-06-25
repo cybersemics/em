@@ -483,7 +483,10 @@ it('move with nested duplicate thoughts', () => {
   expect(getContexts(stateNew, 'b')).toMatchObject([thoughtB.id])
 })
 
-it('merge thought with duplicate parent', () => {
+// A thought moved to a context where its own parent is a same-valued sibling must not be merged into (and deleted
+// from) its parent — that would make the moved thought disappear (see issue #3621). Duplicate siblings are allowed,
+// so the thought is moved beside its parent instead.
+it('does not merge a thought into its own duplicate parent', () => {
   const text = `
   - a
     - b
@@ -506,16 +509,26 @@ it('merge thought with duplicate parent', () => {
   expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - b
+    - b
       - c`)
 
   const thoughtA = contextToThought(stateNew, ['a'])!
-  const thoughtB = contextToThought(stateNew, ['a', 'b'])!
-  const thoughtC = contextToThought(stateNew, ['a', 'b', 'c'])!
 
-  expect(thoughtB.parentId).toBe(thoughtA.id)
-  expect(thoughtC.parentId).toBe(thoughtB.id)
-  expect(getContexts(stateNew, 'b')).toMatchObject([thoughtB.id])
-  expect(getContexts(stateNew, 'c')).toMatchObject([thoughtC.id])
+  // both b's are preserved as children of a (the moved b is not merged away)
+  const childrenOfA = getChildrenRankedByContext(stateNew, ['a'])
+  expect(childrenOfA).toHaveLength(2)
+  childrenOfA.forEach(child => {
+    expect(child.value).toBe('b')
+    expect(child.parentId).toBe(thoughtA.id)
+  })
+  expect(getContexts(stateNew, 'b')).toHaveLength(2)
+
+  // c is preserved under the moved b
+  expect(getContexts(stateNew, 'c')).toHaveLength(1)
+
+  const { missingLexemeValues, missingParentIds } = checkDataIntegrity(stateNew)
+  expect(missingLexemeValues).toHaveLength(0)
+  expect(missingParentIds).toHaveLength(0)
 })
 
 it('move with nested duplicate thoughts and merge their children', () => {
