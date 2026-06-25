@@ -1,3 +1,6 @@
+import Index from '../../@types/IndexType'
+import Thought from '../../@types/Thought'
+import Timestamp from '../../@types/Timestamp'
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import contextToThoughtId from '../../selectors/contextToThoughtId'
 import exportContext from '../../selectors/exportContext'
@@ -311,8 +314,8 @@ describe('reconcile', () => {
     // Snapshot the pre-swap thoughts, simulating data a forced pull read from the data provider
     // before the swap. lastUpdated is older than the swap's updates.
     const ids = ['AAA', 'BBB', 'CCC'].map(value => contextToThoughtId(state1, [value])!)
-    const stalePull = keyValueBy(ids, id => ({
-      [id]: { ...getThoughtById(state1, id), lastUpdated: 1 },
+    const stalePull: Index<Thought> = keyValueBy(ids, id => ({
+      [id]: { ...getThoughtById(state1, id)!, lastUpdated: 1 as Timestamp },
     }))
 
     const stateNew = reducerFlow([
