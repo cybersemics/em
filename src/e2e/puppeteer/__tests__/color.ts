@@ -40,6 +40,32 @@ it('Set the text color of the text and bullet', async () => {
   expect(result?.backgroundColor).toBe(null)
 })
 
+it('Bullet keeps the font color after applying Upper Case', async () => {
+  const importText = `
+    - hello`
+
+  await paste(importText)
+
+  await clickThought('hello')
+
+  // apply a font color
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="text color swatches"] [aria-label="blue"]')
+
+  let bulletColor = await getBulletColor()
+  expect(rgbToHex(bulletColor!)).toBe(rgbaToHex(colors.light.blue))
+
+  // apply Upper Case; the bullet should still match the font color (markup must not be corrupted)
+  await click('[data-testid="toolbar-icon"][aria-label="Letter Case"]')
+  await click('[aria-label="letter case swatches"] [aria-label="UpperCase"]')
+
+  const cursorText = await getEditingText()
+  expect(cursorText).toContain('HELLO')
+
+  bulletColor = await getBulletColor()
+  expect(rgbToHex(bulletColor!)).toBe(rgbaToHex(colors.light.blue))
+})
+
 it('Set the background color of the text', async () => {
   const importText = `
     - Labrador
