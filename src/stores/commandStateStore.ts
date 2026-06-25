@@ -29,12 +29,12 @@ export const resetCommandState = () => {
   })
 }
 
-/** Updates the command state to the current selection/thought. If there is a non-collapsed selection within a thought, this parses the selected HTML to detect a formatting style that applies to the selection. Otherwise (no selection or a collapsed caret) it parses the cursor thought's value and sets a formatting state only if it applies to the entire thought. A collapsed caret deliberately uses the cursor thought's value (from state) rather than the DOM, since the DOM may be stale immediately after a programmatic edit (e.g. formatWithTag) until React re-renders. */
+/** Updates the command state to the current selection/thought. If there is a non-collapsed selection within a thought, this parses the selected HTML to detect a formatting style that applies to the selection. Otherwise (no selection or a collapsed caret) it parses the cursor thought's value and sets a formatting state only if it applies to the entire thought. A collapsed caret deliberately uses the cursor thought's value (from state) rather than the DOM, since the DOM may be stale immediately after a programmatic edit (e.g. formatWithTag) until React re-renders. The exception is when a note is focused: the note is a separate thought from the cursor thought, so its formatting can only be read from the DOM (selection.html()), not from the cursor thought's value. */
 export const updateCommandState = () => {
   const state = store.getState()
   if (!state.cursor) return
   const action =
-    selection.isActive() && selection.isThought() && !selection.isCollapsed()
+    selection.isActive() && selection.isThought() && (!selection.isCollapsed() || state.noteFocus)
       ? getCommandState(selection.html() ?? '')
       : getCommandState(pathToThought(state, state.cursor)?.value ?? '')
   commandStateStore.update(action)
