@@ -52,7 +52,7 @@ export const config: WebdriverIO.Config = {
         debug: false,
         networkLogs: false,
         consoleLogs: 'errors',
-        idleTimeout: 60,
+        idleTimeout: 300,
       },
     },
   ],
