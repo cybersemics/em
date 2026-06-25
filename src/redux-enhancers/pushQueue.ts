@@ -99,9 +99,13 @@ const pushQueue: StoreEnhancer<any> =
           )
         }
 
-        applyDbQueue().then(() => {
-          dbQueue?.forEach(batch => batch.idbSynced?.())
-        })
+        void applyDbQueue()
+          .then(() => {
+            dbQueue?.forEach(batch => batch.idbSynced?.())
+          })
+          .catch(err => {
+            console.error('Thoughtspace persistence failed', err)
+          })
       }
 
       const freeBatch = (freeQueue || []).reduce<PushBatch>(mergeBatch, {

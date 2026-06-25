@@ -1,6 +1,8 @@
 import type { LocalWriteOptions, MaterializationEvent } from '@treecrdt/interface/engine'
 
 let pendingTreecrdtWrite = Promise.resolve()
+let pendingTreecrdtWriteError: unknown = null
+let pendingTreecrdtWriteVersion = 0
 let localWriteCounter = 0
 
 const localWriteSourceId =
@@ -15,13 +17,19 @@ const localWriteIdPrefix = `em-local:${localWriteSourceId}:`
  * This is a local ordering guard, not a CRDT requirement; it keeps Redux refreshes from racing local persistence.
  */
 export function withTreecrdtWriteBarrier<T>(work: () => Promise<T>): Promise<T> {
+  pendingTreecrdtWriteVersion += 1
   const run = pendingTreecrdtWrite.then(work, work)
   pendingTreecrdtWrite = run.then(
     () => undefined,
-    () => undefined,
+    err => {
+      pendingTreecrdtWriteError = err
+    },
   )
   return run
 }
+
+/** Monotonically increases whenever TreeCRDT persistence work is queued. */
+export const getTreecrdtWriteBarrierVersion = (): number => pendingTreecrdtWriteVersion
 
 /** Waits until TreeCRDT persistence is idle, including work queued while waiting. */
 export async function waitForTreecrdtWriteBarrier(): Promise<void> {
@@ -30,6 +38,12 @@ export async function waitForTreecrdtWriteBarrier(): Promise<void> {
     pending = pendingTreecrdtWrite
     await pending
   } while (pending !== pendingTreecrdtWrite)
+
+  if (pendingTreecrdtWriteError) {
+    const err = pendingTreecrdtWriteError
+    pendingTreecrdtWriteError = null
+    throw err
+  }
 }
 
 /** Creates local write metadata used to identify materialization events already applied optimistically in Redux. */
@@ -51,6 +65,7 @@ export const isTreecrdtLocalMaterialization = (event: MaterializationEvent): boo
 
 export default {
   createTreecrdtLocalWriteOptions,
+  getTreecrdtWriteBarrierVersion,
   isTreecrdtLocalMaterialization,
   waitForTreecrdtWriteBarrier,
   withTreecrdtWriteBarrier,
