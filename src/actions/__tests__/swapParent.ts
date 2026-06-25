@@ -1,14 +1,18 @@
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
+import contextToThoughtId from '../../selectors/contextToThoughtId'
 import exportContext from '../../selectors/exportContext'
+import getThoughtById from '../../selectors/getThoughtById'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
+import keyValueBy from '../../util/keyValueBy'
 import reducerFlow from '../../util/reducerFlow'
 import importText from '../importText'
 import newThought from '../newThought'
 import setSortPreference from '../setSortPreference'
 import swapParent from '../swapParent'
 import toggleContextView from '../toggleContextView'
+import updateThoughts from '../updateThoughts'
 
 it('no-op if cursor is not set', () => {
   const text = `
@@ -287,5 +291,39 @@ describe('sort', () => {
   - d
   - b
     - a`)
+  })
+})
+
+describe('reconcile', () => {
+  // Regression test for https://github.com/cybersemics/em/issues/3948
+  // A forced pull (e.g. RecentlyEdited's pullJumpHistory) re-reads thoughts from the data
+  // provider and dispatches a non-local updateThoughts. If that stale snapshot (read before
+  // the swap) lands after swapParent, it must not overwrite the newer post-swap thoughts.
+  // .skip keeps normal CI green while the test is red; remove the .skip when the fix lands.
+  it.skip('stale forced pull must not overwrite newer post-swap thoughts', () => {
+    const text = `
+    - AAA
+      - BBB
+        - CCC`
+
+    const state1 = reducerFlow([importText({ text }), setCursor(['AAA', 'BBB', 'CCC'])])(initialState())
+
+    // Snapshot the pre-swap thoughts, simulating data a forced pull read from the data provider
+    // before the swap. lastUpdated is older than the swap's updates.
+    const ids = ['AAA', 'BBB', 'CCC'].map(value => contextToThoughtId(state1, [value])!)
+    const stalePull = keyValueBy(ids, id => ({
+      [id]: { ...getThoughtById(state1, id), lastUpdated: 1 },
+    }))
+
+    const stateNew = reducerFlow([
+      swapParent,
+      updateThoughts({ thoughtIndexUpdates: stalePull, lexemeIndexUpdates: {}, local: false, remote: false }),
+    ])(state1)
+
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - AAA
+    - CCC
+      - BBB`)
   })
 })
