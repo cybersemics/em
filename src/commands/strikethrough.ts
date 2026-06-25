@@ -3,6 +3,7 @@ import FormattingCommand from '../@types/FormattingCommand'
 import { formatWithTagActionCreator as formatWithTag } from '../actions/formatWithTag'
 import Icon from '../components/icons/StrikethroughIcon'
 import hasMulticursor from '../selectors/hasMulticursor'
+import { scrollMulticursorIntoViewOnComplete } from '../stores/scrollMulticursorIntoView'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 /** Toggles formatting of the current browser selection as strikethrough. If there is no selection, formats the entire thought. */
@@ -13,7 +14,7 @@ const strikethrough: Command = {
   descriptionInverse: 'Removes strikethrough from the current thought or selected text.',
   svg: Icon,
   keyboard: { key: 's', meta: true },
-  multicursor: true,
+  multicursor: { onComplete: scrollMulticursorIntoViewOnComplete },
   canExecute: state => {
     return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
   },

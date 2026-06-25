@@ -3,6 +3,7 @@ import FormattingCommand from '../@types/FormattingCommand'
 import { formatWithTagActionCreator as formatWithTag } from '../actions/formatWithTag'
 import Icon from '../components/icons/ItalicTextIcon'
 import hasMulticursor from '../selectors/hasMulticursor'
+import { scrollMulticursorIntoViewOnComplete } from '../stores/scrollMulticursorIntoView'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 /** Toggles formatting of the current browser selection as italic. If there is no selection, formats the entire thought. */
@@ -13,7 +14,7 @@ const italic: Command = {
   descriptionInverse: 'Removes italics from the current thought or selected text. So much for being special.',
   svg: Icon,
   keyboard: { key: 'i', meta: true },
-  multicursor: true,
+  multicursor: { onComplete: scrollMulticursorIntoViewOnComplete },
   canExecute: state => {
     return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
   },

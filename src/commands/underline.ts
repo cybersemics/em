@@ -3,6 +3,7 @@ import FormattingCommand from '../@types/FormattingCommand'
 import { formatWithTagActionCreator as formatWithTag } from '../actions/formatWithTag'
 import Icon from '../components/icons/UnderlineIcon'
 import hasMulticursor from '../selectors/hasMulticursor'
+import { scrollMulticursorIntoViewOnComplete } from '../stores/scrollMulticursorIntoView'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 /** Toggles formatting of the current browser selection as underline. If there is no selection, formats the entire thought. */
@@ -15,6 +16,7 @@ const underline: Command = {
   keyboard: { key: 'u', meta: true },
   multicursor: {
     preventSetCursor: true,
+    onComplete: scrollMulticursorIntoViewOnComplete,
   },
   canExecute: state => {
     return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
