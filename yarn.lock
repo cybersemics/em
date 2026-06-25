@@ -2324,18 +2324,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@capacitor/android@npm:^8.4.0":
-  version: 8.4.0
-  resolution: "@capacitor/android@npm:8.4.0"
+"@capacitor/android@npm:^8.4.1":
+  version: 8.4.1
+  resolution: "@capacitor/android@npm:8.4.1"
   peerDependencies:
     "@capacitor/core": ^8.4.0
-  checksum: 10c0/90a1856f8c0a9234b9d8cef03fdb0c6274f33f9c04bb3a3274cc2f2c6b4f30979afba02bf3d1b71f87b8578c871be4c243b71ea25cc15c562b50add39725d709
+  checksum: 10c0/84df2b3e50e6735ad8a1f8899593df7e420d3e7894c02fd57416dba8da928d67fcee650ae365275548e261ff125e89418153d7baa0a73981116227420aa26444
   languageName: node
   linkType: hard
 
-"@capacitor/cli@npm:^8.4.0":
-  version: 8.4.0
-  resolution: "@capacitor/cli@npm:8.4.0"
+"@capacitor/cli@npm:^8.4.1":
+  version: 8.4.1
+  resolution: "@capacitor/cli@npm:8.4.1"
   dependencies:
     "@ionic/cli-framework-output": "npm:^2.2.8"
     "@ionic/utils-subprocess": "npm:^3.0.1"
@@ -2357,7 +2357,7 @@ __metadata:
   bin:
     cap: bin/capacitor
     capacitor: bin/capacitor
-  checksum: 10c0/8ee7dffde315a38de71cb95a4e0cac22c3e14424aedc8207a8ef3fcb2862c248852ff16759dd8ccfc617af6fc7d37d9d875e1fe2280b6bc377e279d0351881e4
+  checksum: 10c0/a60b7a25f6f457e92b4c52b6e2ed4bb3160b1b4966987b7b4a5c2dbbe269677ba5832138c32947dc3e6f1fb7237cc7081c2969560ea5b0b4f00428c2a4adaf55
   languageName: node
   linkType: hard
 
@@ -2370,12 +2370,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@capacitor/core@npm:^8.4.0":
-  version: 8.4.0
-  resolution: "@capacitor/core@npm:8.4.0"
+"@capacitor/core@npm:^8.4.1":
+  version: 8.4.1
+  resolution: "@capacitor/core@npm:8.4.1"
   dependencies:
     tslib: "npm:^2.1.0"
-  checksum: 10c0/51f0fc640851ddd322c532559edcc0d6c61a98e747939ee41d855b5c6b22139a0fe7b7fef32140daf9784956b110a6b5f1aa6e6a203848eb4854bc2fdf571290
+  checksum: 10c0/c5c733865544d20c884d577120d5429a3dd19696387b515d916b6b8c3456eac543f60a8bfa01e8fc3bd4df4e3d387c4b079e9f247ecc5942aa52f4030a5e3817
   languageName: node
   linkType: hard
 
@@ -2402,12 +2402,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@capacitor/ios@npm:^8.4.0":
-  version: 8.4.0
-  resolution: "@capacitor/ios@npm:8.4.0"
+"@capacitor/ios@npm:^8.4.1":
+  version: 8.4.1
+  resolution: "@capacitor/ios@npm:8.4.1"
   peerDependencies:
     "@capacitor/core": ^8.4.0
-  checksum: 10c0/e3d6ca1938e701af14cd38a478b79d05efa6089f2d01ce2d739e4e34250331e5413b954597378efb2ef0fec1cbff2fd351ac2c51a1fad0cfc6b2db8454777c95
+  checksum: 10c0/b0eaa3230875388c9e8d6e8f6836ad5c50b2f9792349338be40d5810466e5e9c369cf9f3408daaf24a44d9df2ab6498756940fe637f86e88845f2f90cc63ee13
   languageName: node
   linkType: hard
 
@@ -11526,12 +11526,12 @@ __metadata:
   dependencies:
     "@babel/core": "npm:^8.0.1"
     "@babel/plugin-proposal-private-property-in-object": "npm:^7.21.11"
-    "@capacitor/android": "npm:^8.4.0"
-    "@capacitor/cli": "npm:^8.4.0"
+    "@capacitor/android": "npm:^8.4.1"
+    "@capacitor/cli": "npm:^8.4.1"
     "@capacitor/clipboard": "npm:^8.0.1"
-    "@capacitor/core": "npm:^8.4.0"
+    "@capacitor/core": "npm:^8.4.1"
     "@capacitor/haptics": "npm:^8.0.2"
-    "@capacitor/ios": "npm:^8.4.0"
+    "@capacitor/ios": "npm:^8.4.1"
     "@capacitor/keyboard": "npm:^8.0.5"
     "@capacitor/status-bar": "npm:^8.0.2"
     "@emotion/react": "npm:^11.14.0"
@@ -24640,17 +24640,17 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "webview-background@workspace:packages/webview"
   dependencies:
-    "@capacitor/android": "npm:^8.4.0"
-    "@capacitor/core": "npm:^8.4.0"
+    "@capacitor/android": "npm:^8.4.1"
+    "@capacitor/core": "npm:^8.4.1"
     "@capacitor/docgen": "npm:^0.3.1"
-    "@capacitor/ios": "npm:^8.4.0"
+    "@capacitor/ios": "npm:^8.4.1"
     "@ionic/swiftlint-config": "npm:^2.0.0"
     rimraf: "npm:^6.1.3"
     rollup: "npm:^4.60.4"
     swiftlint: "npm:^2.0.0"
     typescript: "npm:5.9.3"
   peerDependencies:
-    "@capacitor/core": ^8.4.0
+    "@capacitor/core": ^8.4.1
   languageName: unknown
   linkType: soft
 
