@@ -35,18 +35,18 @@ interface GestureDiagramProps {
    * 'outlined-wide' renders a continuous chevron whose apex sits at the path's natural tip and
    * whose legs splay backward, matching the spec mockup for the Mobile Command Universe. */
   arrowhead?: 'filled' | 'outlined' | 'outlined-wide'
-  /** Apex interior angle in degrees for the 'outlined-wide' chevron. Smaller = sharper. Default 80. */
+  /** Apex interior angle in degrees for the chevron. Smaller = sharper. Default 80.
+   * Only affects `arrowhead='outlined-wide'` (ignored by other arrowheads). */
   chevronApexAngle?: number
-  /** Half-span of the 'outlined-wide' chevron in multiples of the path stroke. Larger = longer chevron legs at a fixed apex angle. Default 2. */
+  /** Half-span of the chevron in multiples of the path stroke. Larger = longer chevron legs at a fixed apex angle. Default 2.
+   * Only affects `arrowhead='outlined-wide'` (ignored by other arrowheads). */
   chevronSize?: number
-  /** Radius (user-space units) of the rounded bend at each interior vertex when rendering a single-gradient straight gesture. 0 = sharp. Only applied to the single-gradient code path. */
+  /** Radius (user-space units) of the rounded bend at each interior vertex when rendering a single-gradient straight gesture. 0 = sharp. Only applied to the single-gradient code path (i.e. when `gradient` is supplied). */
   cornerRadius?: number
   /** Extra length (user-space units) added to just the last segment so there is more breathing room between the final bend and the arrowhead tip. Default 0. */
   tipExtension?: number
   /** When true, the wrapping span sizes itself to its parent (`width: 100%; height: 100%`) instead of using a fixed pixel size derived from `size`/`maxWidth`/`maxHeight`. Pair with a parent that constrains the aspect ratio. */
   fillContainer?: boolean
-  /** Show a 1px blue debug outline around the diagram's bounding box. Off by default. */
-  debugBorder?: boolean
   /** When supplied, the per-segment fade interpolates between these two colors instead of the default single-color → bg fade. The path starts near `from` and ends near `to` (the arrowhead). */
   gradient?: { from: string; to: string }
   /** Whether to apply the soft drop-shadow glow around the gesture. Defaults to true to preserve existing rendering. */
@@ -248,7 +248,6 @@ const GestureDiagram = ({
   cornerRadius = 0,
   tipExtension = 0,
   fillContainer = false,
-  debugBorder = false,
   gradient,
   glow = true,
 }: GestureDiagramProps) => {
@@ -269,11 +268,7 @@ const GestureDiagram = ({
       <svg
         width={styleCancelAsRegularGesture ? size / 2 : 20}
         height={styleCancelAsRegularGesture ? size / 2 : 24}
-        className={css(
-          debugBorder && { border: '1px solid blue' },
-          inGestureContainer && { position: 'relative', top: '10px' },
-          cssRaw,
-        )}
+        className={css(inGestureContainer && { position: 'relative', top: '10px' }, cssRaw)}
         style={{
           ...style,
           ...(styleCancelAsRegularGesture
@@ -533,11 +528,7 @@ const GestureDiagram = ({
 
   return (
     <span
-      className={css(
-        { display: fillContainer ? 'block' : 'inline-block' },
-        debugBorder && { border: '1px solid blue' },
-        cssRaw,
-      )}
+      className={css({ display: fillContainer ? 'block' : 'inline-block' }, cssRaw)}
       style={
         fillContainer
           ? // Width-only on the span; height comes from the SVG's intrinsic aspect ratio (its
