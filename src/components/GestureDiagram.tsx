@@ -377,9 +377,9 @@ const GestureDiagram = ({
     }
   }
 
-  // Extend the last segment outward by `tipExtension` user-space units so the final bend has
-  // more breathing room before the arrowhead. The chevron, gradient chord, and bbox all derive
-  // from `positions`, so they stay in sync automatically.
+  // Active only when the `tipExtension` prop is > 0. Extend the last segment outward by that many
+  // user-space units so the final bend has more breathing room before the arrowhead. The chevron,
+  // gradient chord, and bbox all derive from `positions`, so they stay in sync automatically.
   if (tipExtension > 0 && positions.length >= 2) {
     const tip = positions[positions.length - 1]
     const prev = positions[positions.length - 2]
@@ -423,14 +423,16 @@ const GestureDiagram = ({
     return `M ${startX} ${startY} A ${radius} ${radius} 0 0 ${sweepFlag} ${endX} ${endY}`
   }
 
-  // When a two-color gradient is supplied, render the whole gesture as a single <path> with one
-  // chord-aligned linear gradient. This avoids the visible seams that per-segment paths produce
-  // at their overlapping rounded joins, and applies to straight, `rounded`, and the special-case
-  // 'rdld' help glyph.
+  // Driven by the `gradient` prop. When a two-color gradient is supplied, render the whole gesture
+  // as a single <path> with one chord-aligned linear gradient. This avoids the visible seams that
+  // per-segment paths produce at their overlapping rounded joins, and applies to straight,
+  // `rounded`, and the special-case 'rdld' help glyph. When unset, the per-segment <style> path runs
+  // instead (see GradientStyleBlock).
   const useSingleGradient = !!gradient
 
-  // In fillContainer mode, scale up the geometry of rounded and rdld gestures so their natural
-  // bboxes match the straight-gesture extent (`size + tipExtension`). This keeps the viewBox
+  // Gated on the `fillContainer` prop (no-op otherwise: arcSize=size, rdldScale=1). In fillContainer
+  // mode, scale up the geometry of rounded and rdld gestures so their natural bboxes match the
+  // straight-gesture extent (`size + tipExtension`). This keeps the viewBox
   // (and thus the rendered stroke thickness) uniform across gestures while letting each one
   // fill its cell at a similar visual size.
   // - rounded: radius = arcSize * 0.4. We want 2*radius = size + tipExtension (the extent of a
@@ -441,6 +443,7 @@ const GestureDiagram = ({
   const arcSize = fillContainer ? (size + tipExtension) / 0.8 : size
   const rdldScale = fillContainer ? (size + tipExtension) / RDLD_NATURAL_MAX : 1
 
+  // Only computed when `useSingleGradient` is set (i.e. the `gradient` prop); null otherwise.
   // Endpoints of the gradient chord. For straight gestures, run from first vertex to tip. For
   // rounded gestures, run from the start of the first arc to the end of the last arc. For rdld,
   // run from the top of the question mark to the bottom of its stem (matching the hardcoded
@@ -464,9 +467,10 @@ const GestureDiagram = ({
         : { start: positions[0], end: positions[positions.length - 1] }
     : null
 
-  // 'outlined-wide' renders the chevron as a separate <path> whose apex sits at the gesture's
-  // natural tip, with two legs splaying BACKWARD (≈65° apex by default). Independent of
-  // `gradient`: the chevron can use the gesture's gradient or fall back to a solid color.
+  // Gated on `arrowhead === 'outlined-wide'` (and only for straight gestures — not rdld/rounded).
+  // Renders the chevron as a separate <path> whose apex sits at the gesture's natural tip, with two
+  // legs splaying BACKWARD (≈65° apex by default). Independent of `gradient`: the chevron can use
+  // the gesture's gradient or fall back to a solid color.
   const useChevronArrowhead = arrowhead === 'outlined-wide' && path !== 'rdld' && !rounded && positions.length >= 2
 
   const chevronPoints = useChevronArrowhead
@@ -520,6 +524,8 @@ const GestureDiagram = ({
     const maxY = Math.max(...ys)
     const padX = arrowSize! + strokeWidth * 4
     const padY = arrowSize! + strokeWidth * 2
+    // `fillContainer`: emit a centered square viewBox (clamped to `size + tipExtension`) so every
+    // gesture fills its cell at a uniform scale. Otherwise: a tight, padded bbox around the path.
     if (fillContainer) {
       const pad = Math.max(padX, padY)
       const side = Math.max(maxX - minX, maxY - minY, size + tipExtension) + pad * 2
