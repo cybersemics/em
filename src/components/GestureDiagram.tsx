@@ -7,6 +7,14 @@ import Gesture from '../@types/Gesture'
 import { GESTURE_GLOW_BLUR, GESTURE_GLOW_COLOR } from '../constants'
 import createId from '../util/createId'
 
+/** Baked-in geometry for the 'outlined-wide' chevron arrowhead. These were dialed in for the
+ * Mobile Command Universe and are the only configuration the chevron is ever rendered with, so
+ * they live here as constants rather than props. */
+// Apex interior angle in degrees. Smaller = sharper.
+const CHEVRON_APEX_ANGLE = 80
+// Half-span of the chevron in multiples of the path stroke. Larger = longer legs at a fixed apex angle.
+const CHEVRON_SIZE = 2.2
+
 interface GestureDiagramProps {
   arrowSize?: number
   color?: string
@@ -35,13 +43,11 @@ interface GestureDiagramProps {
    * 'outlined-wide' renders a continuous chevron whose apex sits at the path's natural tip and
    * whose legs splay backward, matching the spec mockup for the Mobile Command Universe. */
   arrowhead?: 'filled' | 'outlined' | 'outlined-wide'
-  /** Apex interior angle in degrees for the chevron. Smaller = sharper. Default 80.
-   * Only affects `arrowhead='outlined-wide'` (ignored by other arrowheads). */
-  chevronApexAngle?: number
-  /** Half-span of the chevron in multiples of the path stroke. Larger = longer chevron legs at a fixed apex angle. Default 2.
-   * Only affects `arrowhead='outlined-wide'` (ignored by other arrowheads). */
-  chevronSize?: number
-  /** Radius (user-space units) of the rounded bend at each interior vertex when rendering a single-gradient straight gesture. 0 = sharp. Only applied to the single-gradient code path (i.e. when `gradient` is supplied). */
+  /** Radius (user-space units) of the rounded bend at each interior vertex when rendering a single-gradient straight gesture. 0 = sharp.
+   * This only works when `gradient` is supplied, because corner-rounding edits the geometry of a
+   * single continuous `<path>`, and the gesture is only drawn as one path in the gradient code
+   * path. Without a gradient each segment is a separate `<path>`, so there is no shared joint to round.
+   */
   cornerRadius?: number
   /** Extra length (user-space units) added to just the last segment so there is more breathing room between the final bend and the arrowhead tip. Default 0. */
   tipExtension?: number
@@ -243,8 +249,6 @@ const GestureDiagram = ({
   rounded,
   styleCancelAsRegularGesture,
   arrowhead = 'filled',
-  chevronApexAngle = 80,
-  chevronSize = 2.2,
   cornerRadius = 0,
   tipExtension = 0,
   fillContainer = false,
@@ -478,12 +482,12 @@ const GestureDiagram = ({
         // Perpendicular (clockwise from forward): r→down, l→up, u→right, d→left.
         const px = -uy
         const py = ux
-        // Chevron span scales with `chevronSize` (multiples of path stroke); leg projection is
-        // derived from the apex angle so the legs always meet at exactly `chevronApexAngle`
+        // Chevron span scales with `CHEVRON_SIZE` (multiples of path stroke); leg projection is
+        // derived from the apex angle so the legs always meet at exactly `CHEVRON_APEX_ANGLE`
         // regardless of stroke width or chosen size.
         const pathStroke = strokeWidth * 1.5
-        const halfSpan = pathStroke * chevronSize
-        const halfAngleRad = (chevronApexAngle / 2) * (Math.PI / 180)
+        const halfSpan = pathStroke * CHEVRON_SIZE
+        const halfAngleRad = (CHEVRON_APEX_ANGLE / 2) * (Math.PI / 180)
         // legBack / halfSpan = cot(halfAngle); guard against very wide angles where cot → 0.
         const legBack = halfSpan / Math.max(Math.tan(halfAngleRad), 0.01)
         const leg1Open = {
