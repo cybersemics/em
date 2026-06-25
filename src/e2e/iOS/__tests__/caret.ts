@@ -16,6 +16,7 @@ import newThought from '../helpers/newThought'
 import paste from '../helpers/paste'
 import tap from '../helpers/tap'
 import waitForEditable from '../helpers/waitForEditable'
+import waitForElement from '../helpers/waitForElement'
 import waitUntil from '../helpers/waitUntil'
 
 // tests succeeds individually, but fails when there are too many tests running in parallel
@@ -250,5 +251,19 @@ describe('Caret', () => {
 
     expect(selectionTextContent).toBe('new')
     expect(childrenTexts).toEqual(['foo', 'bar'])
+  })
+
+  it('Focus is prevented after clearing the cursor', async () => {
+    await newThought('Hello')
+    await hideKeyboardByTappingDone()
+    console.info('Tapping home')
+    const homeNodeHandle = await waitForElement('[data-testid="home"]')
+    await tap(homeNodeHandle)
+    console.info('Tapping Hello')
+
+    await gesture('', { xStart: 145, yStart: 78, segmentLength: 0, waitMs: 100 })
+
+    const activeElementIsBody = await browser.execute(() => document.activeElement === document.body)
+    expect(activeElementIsBody).toBe(true)
   })
 })
