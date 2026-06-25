@@ -95,28 +95,16 @@ const GestureMenu: FC<{
                 gap: '1.2rem',
               })}
             >
-              {mainCommands.map((command, index) => {
-                // Check if the current gesture sequence ends with help gesture
-                const mobileCommandUniverseInProgress = gestureInProgress
-                  ?.toString()
-                  .endsWith(gestureString(openMobileCommandUniverseCommand))
-                const isMobileCommandUniverseMatch =
-                  command.id === 'openMobileCommandUniverse' && mobileCommandUniverseInProgress
-                const isCancelMatch = command.id === 'cancel' && !hasMatchingCommand && !mobileCommandUniverseInProgress
-
-                return (
-                  <GestureMenuItem
-                    gestureInProgress={gestureInProgress as string}
-                    key={command.id}
-                    selected={
-                      isMobileCommandUniverseMatch || gestureInProgress === gestureString(command) || isCancelMatch
-                    }
-                    command={command}
-                    isFirstCommand={index === 0}
-                    isLastCommand={index === mainCommands.length - 1}
-                  />
-                )
-              })}
+              {mainCommands.map((command, index) => (
+                <GestureMenuItem
+                  gestureInProgress={gestureInProgress as string}
+                  key={command.id}
+                  selected={gestureInProgress === gestureString(command)}
+                  command={command}
+                  isFirstCommand={index === 0}
+                  isLastCommand={index === mainCommands.length - 1}
+                />
+              ))}
             </div>
             {/* Cancel / Cheatsheet block */}
             {persistentCommands.length > 0 && (

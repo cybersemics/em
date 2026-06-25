@@ -100,7 +100,7 @@ const GestureMenuItem: FC<{
                 : undefined,
           })}
         >
-          {command.label}
+          {(isActive && command.labelInverse) || command.label}
         </div>
 
         {selected && (

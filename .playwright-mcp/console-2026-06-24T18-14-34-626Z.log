@@ -1,0 +1,108 @@
+[ 2073447ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/components/Footer.tsx?t=1782326916654:0
+[ 2073452ms] [ERROR] [vite] Failed to reload /src/components/Footer.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073457ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/index.css?t=1782326916741:0
+[ 2073457ms] [ERROR] [vite] Failed to reload /src/index.css. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073461ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/index.css?t=1782326916759:0
+[ 2073461ms] [ERROR] [vite] Failed to reload /src/index.css. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073462ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/index.css?t=1782326916767:0
+[ 2073462ms] [ERROR] [vite] Failed to reload /src/index.css. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073466ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/components/AppComponent.tsx?t=1782326916770:0
+[ 2073466ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/index.css?t=1782326916770:0
+[ 2073466ms] [ERROR] [vite] Failed to reload /src/components/AppComponent.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073466ms] [ERROR] [vite] Failed to reload /src/index.css. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073474ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/index.css?t=1782326916773:0
+[ 2073474ms] [ERROR] [vite] Failed to reload /src/index.css. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073474ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/components/BulletPositioner.tsx?t=1782326916773:0
+[ 2073474ms] [ERROR] [vite] Failed to reload /src/components/BulletPositioner.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073477ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/components/CommandCenter/CommandCenter.tsx?t=1782326916776:0
+[ 2073477ms] [ERROR] [vite] Failed to reload /src/components/CommandCenter/CommandCenter.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073477ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/index.css?t=1782326916776:0
+[ 2073477ms] [ERROR] [vite] Failed to reload /src/index.css. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073480ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/index.css?t=1782326916779:0
+[ 2073480ms] [ERROR] [vite] Failed to reload /src/index.css. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073480ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/components/CommandItem.tsx?t=1782326916779:0
+[ 2073480ms] [ERROR] [vite] Failed to reload /src/components/CommandItem.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073482ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/index.css?t=1782326916782:0
+[ 2073482ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/components/ContentEditable.tsx?t=1782326916782:0
+[ 2073489ms] [ERROR] [vite] Failed to reload /src/index.css. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073489ms] [ERROR] [vite] Failed to reload /src/components/ContentEditable.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073493ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/index.css?t=1782326916785:0
+[ 2073493ms] [ERROR] [vite] Failed to reload /src/index.css. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073493ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/components/Divider.tsx?t=1782326916785:0
+[ 2073493ms] [ERROR] [vite] Failed to reload /src/components/Divider.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073496ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/index.css?t=1782326916788:0
+[ 2073496ms] [ERROR] [vite] Failed to reload /src/index.css. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073496ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/components/DropChild.tsx?t=1782326916788:0
+[ 2073496ms] [ERROR] [vite] Failed to reload /src/components/DropChild.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073500ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/index.css?t=1782326916791:0
+[ 2073500ms] [ERROR] [vite] Failed to reload /src/index.css. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073500ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/components/DropEnd.tsx?t=1782326916791:0
+[ 2073500ms] [ERROR] [vite] Failed to reload /src/components/DropEnd.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073502ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/index.css?t=1782326916794:0
+[ 2073502ms] [ERROR] [vite] Failed to reload /src/index.css. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073502ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/components/Editable.tsx?t=1782326916794:0
+[ 2073503ms] [ERROR] [vite] Failed to reload /src/components/Editable.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073505ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/index.css?t=1782326916797:0
+[ 2073505ms] [ERROR] [vite] Failed to reload /src/index.css. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073505ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/components/GestureDiagram.tsx?t=1782326916797:0
+[ 2073505ms] [ERROR] [vite] Failed to reload /src/components/GestureDiagram.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073506ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/components/GestureMenu.tsx?t=1782326916800:0
+[ 2073506ms] [ERROR] [vite] Failed to reload /src/components/GestureMenu.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073506ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/index.css?t=1782326916800:0
+[ 2073506ms] [ERROR] [vite] Failed to reload /src/index.css. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073507ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/index.css?t=1782326916804:0
+[ 2073507ms] [ERROR] [vite] Failed to reload /src/index.css. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073507ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/components/Notification.tsx?t=1782326916804:0
+[ 2073507ms] [ERROR] [vite] Failed to reload /src/components/Notification.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073508ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/index.css?t=1782326916807:0
+[ 2073508ms] [ERROR] [vite] Failed to reload /src/index.css. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073508ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/components/StaticSuperscript.tsx?t=1782326916807:0
+[ 2073508ms] [ERROR] [vite] Failed to reload /src/components/StaticSuperscript.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073509ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/index.css?t=1782326916810:0
+[ 2073509ms] [ERROR] [vite] Failed to reload /src/index.css. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073509ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/components/StaticThought.tsx?t=1782326916810:0
+[ 2073509ms] [ERROR] [vite] Failed to reload /src/components/StaticThought.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073512ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/index.css?t=1782326916813:0
+[ 2073512ms] [ERROR] [vite] Failed to reload /src/index.css. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073512ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/components/Thought.tsx?t=1782326916813:0
+[ 2073512ms] [ERROR] [vite] Failed to reload /src/components/Thought.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073513ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/index.css?t=1782326916816:0
+[ 2073513ms] [ERROR] [vite] Failed to reload /src/index.css. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073513ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/components/ThoughtAnnotation.tsx?t=1782326916816:0
+[ 2073514ms] [ERROR] [vite] Failed to reload /src/components/ThoughtAnnotation.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073515ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/index.css?t=1782326916819:0
+[ 2073515ms] [ERROR] [vite] Failed to reload /src/index.css. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073515ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/components/ThoughtAnnotationWrapper.tsx?t=1782326916819:0
+[ 2073515ms] [ERROR] [vite] Failed to reload /src/components/ThoughtAnnotationWrapper.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073519ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/index.css?t=1782326916822:0
+[ 2073519ms] [ERROR] [vite] Failed to reload /src/index.css. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073519ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/components/ThoughtPositioner.tsx?t=1782326916822:0
+[ 2073519ms] [ERROR] [vite] Failed to reload /src/components/ThoughtPositioner.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073522ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/index.css?t=1782326916825:0
+[ 2073522ms] [ERROR] [vite] Failed to reload /src/index.css. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073523ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/components/VirtualThought.tsx?t=1782326916825:0
+[ 2073523ms] [ERROR] [vite] Failed to reload /src/components/VirtualThought.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073524ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/index.css?t=1782326916828:0
+[ 2073524ms] [ERROR] [vite] Failed to reload /src/index.css. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073526ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/index.css?t=1782326916833:0
+[ 2073526ms] [ERROR] [vite] Failed to reload /src/index.css. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073527ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/index.css?t=1782326916887:0
+[ 2073527ms] [ERROR] [vite] Failed to reload /src/index.css. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073528ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/index.css?t=1782326916889:0
+[ 2073528ms] [ERROR] [vite] Failed to reload /src/index.css. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073528ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/index.css?t=1782326916891:0
+[ 2073529ms] [ERROR] [vite] Failed to reload /src/index.css. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073530ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/index.css?t=1782326916893:0
+[ 2073530ms] [ERROR] [vite] Failed to reload /src/index.css. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073531ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/index.css?t=1782326916895:0
+[ 2073531ms] [ERROR] [vite] Failed to reload /src/index.css. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073532ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/index.css?t=1782326916897:0
+[ 2073532ms] [ERROR] [vite] Failed to reload /src/index.css. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073533ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/index.css?t=1782326916899:0
+[ 2073533ms] [ERROR] [vite] Failed to reload /src/index.css. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073533ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/index.css?t=1782326916901:0
+[ 2073534ms] [ERROR] [vite] Failed to reload /src/index.css. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073534ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/index.css?t=1782326916903:0
+[ 2073534ms] [ERROR] [vite] Failed to reload /src/index.css. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 2073559ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/src/index.css?t=1782326916905:0
+[ 2073559ms] [ERROR] [vite] Failed to reload /src/index.css. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
