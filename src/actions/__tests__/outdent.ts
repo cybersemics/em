@@ -22,6 +22,20 @@ describe('normal view', () => {
   - a1`)
   })
 
+  // Regression test for https://github.com/cybersemics/em/issues/3621
+  // Outdenting a thought whose value duplicates its parent must not merge it into (and thus delete) its own parent.
+  // .skip keeps normal CI green while the test is red; remove the .skip when the fix lands.
+  it('outdent a thought with the same value as its parent should not make it disappear', () => {
+    const steps = [newThought('a'), newSubthought('a'), outdent]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+  - a`)
+  })
+
   it('outdent with no cursor should do nothing ', () => {
     const steps = [newThought('a'), newSubthought('a1'), setCursor(null), outdent]
 

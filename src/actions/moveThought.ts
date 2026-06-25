@@ -86,9 +86,15 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
 
   /**
    * Find first normalized duplicate thought.
+   * Exclude the source thought's own parent: outdenting (or dragging) a thought to its grandparent lands it next to
+   * its same-valued parent, but merging a thought into its own parent would delete it (mergeThoughts nulls the source),
+   * making the moved thought disappear. Duplicate siblings are a supported state, so move it normally instead.
    */
   const duplicateSubthought = () =>
-    childrenOfDestination.find(child => normalizeThought(child.value) === normalizeThought(sourceThought.value))
+    childrenOfDestination.find(
+      child =>
+        child.id !== sourceThought.parentId && normalizeThought(child.value) === normalizeThought(sourceThought.value),
+    )
 
   // if thought is being moved to the same context that is not a duplicate case
   const duplicateThought = !sameContext ? duplicateSubthought() : null
