@@ -468,8 +468,7 @@ const GestureDiagram = ({
   // 'outlined-wide' renders the chevron as a separate <path> whose apex sits at the gesture's
   // natural tip, with two legs splaying BACKWARD (≈65° apex by default). Independent of
   // `gradient`: the chevron can use the gesture's gradient or fall back to a solid color.
-  const useChevronArrowhead =
-    arrowhead === 'outlined-wide' && path !== 'rdld' && !rounded && positions.length >= 2
+  const useChevronArrowhead = arrowhead === 'outlined-wide' && path !== 'rdld' && !rounded && positions.length >= 2
 
   const chevronPoints = useChevronArrowhead
     ? (() => {
@@ -513,9 +512,7 @@ const GestureDiagram = ({
   const computedViewBox: string | undefined = (() => {
     if (viewBox) return viewBox
     if (path === 'rdld' || rounded) return undefined
-    const allPts = chevronPoints
-      ? [...positions, chevronPoints.leg1Open, chevronPoints.leg2Open]
-      : positions
+    const allPts = chevronPoints ? [...positions, chevronPoints.leg1Open, chevronPoints.leg2Open] : positions
     const xs = allPts.map(p => p.x)
     const ys = allPts.map(p => p.y)
     const minX = Math.min(...xs)
@@ -597,9 +594,7 @@ const GestureDiagram = ({
                     ? token('colors.vividHighlight')
                     : color || token('colors.fg')
               }
-              stroke={
-                arrowhead === 'outlined' ? gradient?.to ?? color ?? token('colors.fg') : 'none'
-              }
+              stroke={arrowhead === 'outlined' ? (gradient?.to ?? color ?? token('colors.fg')) : 'none'}
               // 1:1 thickness with the path stroke in user space (per spec). With
               // markerUnits='userSpaceOnUse' the marker's strokeWidth is in viewBox units;
               // path stroke (user) = strokeWidth * 1.5, viewBox-to-user scale = markerWidth/10
@@ -684,9 +679,7 @@ const GestureDiagram = ({
                 return cmds.join(' ')
               }
               if (cornerRadius <= 0 || positions.length < 3) {
-                return positions
-                  .map((p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`))
-                  .join(' ')
+                return positions.map((p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`)).join(' ')
               }
               const cmds: string[] = [`M ${positions[0].x} ${positions[0].y}`]
               for (let i = 1; i < positions.length - 1; i++) {
@@ -753,9 +746,7 @@ const GestureDiagram = ({
                 fill='none'
                 markerEnd={
                   // skip markerEnd when the 'outlined-wide' chevron is drawn separately below
-                  i === pathSegments.length - 1 && path !== 'rdld' && !useChevronArrowhead
-                    ? `url(#${id})`
-                    : undefined
+                  i === pathSegments.length - 1 && path !== 'rdld' && !useChevronArrowhead ? `url(#${id})` : undefined
                 }
                 style={{ filter: dropShadow }}
               />
@@ -774,11 +765,7 @@ const GestureDiagram = ({
               ` L ${chevronPoints.tip.x} ${chevronPoints.tip.y}` +
               ` L ${chevronPoints.leg2Open.x} ${chevronPoints.leg2Open.y}`
             }
-            stroke={
-              useSingleGradient
-                ? `url(#${extendedPath}-gradient-single)`
-                : color ?? token('colors.fg')
-            }
+            stroke={useSingleGradient ? `url(#${extendedPath}-gradient-single)` : (color ?? token('colors.fg'))}
             strokeWidth={strokeWidth * 1.5}
             strokeLinecap='round'
             strokeLinejoin='round'
