@@ -122,19 +122,23 @@ const joinChildren = (nodes: (Block | Block[])[]) => {
 /** Converts an <li> element to a Block. */
 const liToBlock = (node: Element): Block | Block[] => {
   const [firstChild] = node.children
-  return firstChild.type === 'text'
-    ? {
-        scope: firstChild.content.trim(),
-        children: [],
-      }
-    : // only add empty parent if the li node is empty and has nested list
-      firstChild.type === 'element' && firstChild.tagName === 'ul'
+  // An empty <li></li> represents an empty thought (e.g. exported when copying an empty thought). Preserve it rather than dropping it.
+  // See: https://github.com/cybersemics/em/issues/4448
+  return !firstChild
+    ? { scope: '', children: [] }
+    : firstChild.type === 'text'
       ? {
-          scope: '',
-          // eslint-disable-next-line @typescript-eslint/no-use-before-define
-          children: himalayaToBlock((firstChild as Element).children) as Block[],
+          scope: firstChild.content.trim(),
+          children: [],
         }
-      : (himalayaToBlock(node.children) as Block[]) // eslint-disable-line @typescript-eslint/no-use-before-define
+      : // only add empty parent if the li node is empty and has nested list
+        firstChild.type === 'element' && firstChild.tagName === 'ul'
+        ? {
+            scope: '',
+            // eslint-disable-next-line @typescript-eslint/no-use-before-define
+            children: himalayaToBlock((firstChild as Element).children) as Block[],
+          }
+        : (himalayaToBlock(node.children) as Block[]) // eslint-disable-line @typescript-eslint/no-use-before-define
 }
 
 /** Converts a <ul> element to a Block. */
@@ -220,7 +224,7 @@ const himalayaToBlock = (nodes: HimalayaNode[]): Block | Block[] => {
           ? workflowyNoteToBlock(node)
           : node.tagName === 'ul'
             ? ulToBlock(node, nodes[index - 1] as Element)
-            : node.tagName === 'li' && node.children.length === 1
+            : node.tagName === 'li' && node.children.length <= 1
               ? liToBlock(node)
               : himalayaToBlock(node.children),
   )

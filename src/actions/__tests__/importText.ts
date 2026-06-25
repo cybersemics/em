@@ -765,6 +765,8 @@ it(`remove nested HOME token but keep descendants`, () => {
     - d`)
 })
 
+// Empty thoughts in copied/pasted html (exported as <li></li>) must be preserved.
+// See: https://github.com/cybersemics/em/issues/4448
 it(`import sibling empty thoughts`, () => {
   const text = `
     <ul>
@@ -780,7 +782,32 @@ it(`import sibling empty thoughts`, () => {
 
   expect(exported).toBe(`- ${HOME_TOKEN}
   - a
+  - 
+  - 
   - b`)
+})
+
+// An empty thought within a series of copied thoughts should be pasted at the destination, not dropped.
+// See: https://github.com/cybersemics/em/issues/4448
+it(`paste a series of thoughts containing an empty thought`, () => {
+  // html as exported by copying the thoughts A, B, <empty>, D (see exportContext)
+  const text = `
+    <ul>
+      <li>A</li>
+      <li>B</li>
+      <li></li>
+      <li>D</li>
+    </ul>
+  `
+
+  const stateNew = importText(initialState(), { text })
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - A
+  - B
+  - 
+  - D`)
 })
 
 it('set cursor correctly after duplicate merge', () => {
