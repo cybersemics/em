@@ -4,6 +4,7 @@ import { undoActionCreator as undo } from '../../actions/undo'
 import { executeCommandWithMulticursor } from '../../commands'
 import boldCommand from '../../commands/bold'
 import deleteCommand from '../../commands/delete'
+import { AlertType } from '../../constants'
 import { initialize } from '../../initialize'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
@@ -66,6 +67,35 @@ it('keeps the Command Center open while a multicursor formatting command execute
   unsubscribe()
 
   expect(closedDuringExecution).toBe(false)
+  expect(store.getState().showCommandCenter).toBe(true)
+})
+
+it('does not show the multicursor alert on mobile while a multicursor command executes', async () => {
+  await initialize()
+
+  store.dispatch([
+    importText({
+      text: `
+        - A
+        - B
+        - C`,
+    }),
+    setCursor(['C']),
+    // open the Command Center by activating a multicursor on the cursor thought (swipe up)
+    addMulticursor(['C']),
+  ])
+  expect(store.getState().showCommandCenter).toBe(true)
+
+  // apply a formatting command (Bold) across the multicursor
+  executeCommandWithMulticursor(boldCommand, { store })
+
+  // Flush the throttled alert dispatch in the middleware.
+  vi.advanceTimersByTime(1000)
+
+  // On mobile the Command Center—not the alert—reflects the multicursor selection. The "n thoughts selected" alert
+  // must never be shown on touch, otherwise its auto-dismiss (Alert.tsx clearDelay) clears the multicursors and
+  // closes the Command Center a few seconds after a formatting command (#3995 Issue B).
+  expect(store.getState().alert?.alertType).not.toBe(AlertType.MulticursorActive)
   expect(store.getState().showCommandCenter).toBe(true)
 })
 
