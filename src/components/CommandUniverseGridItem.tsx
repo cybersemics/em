@@ -37,7 +37,7 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, se
   const Icon = command.svg ?? SettingsIcon
 
   return (
-    <tr
+    <div
       className={css({
         position: 'relative',
         textAlign: 'left',
@@ -52,11 +52,8 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, se
     >
       {/* Gesture diagram container. Gated on touch devices, like the rest of the Mobile Command Universe. */}
       {isTouch ? (
-        <td
+        <div
           className={css({
-            // `display: block` so the cell doesn't fall back to table-cell layout once the
-            // <tbody>/<tr> ancestors are overridden to grid/flex (iOS Safari otherwise mislays it).
-            display: 'block',
             boxSizing: 'border-box',
             minWidth: 0,
             width: '100%',
@@ -88,10 +85,10 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, se
               glow={false}
             />
           </div>
-        </td>
+        </div>
       ) : null}
 
-      <td
+      <div
         className={css({
           display: 'flex',
           flexDirection: 'column',
@@ -147,8 +144,8 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, se
         >
           {description}
         </p>
-      </td>
-    </tr>
+      </div>
+    </div>
   )
 }
 
