@@ -1,5 +1,6 @@
 import { WindowEm } from '../../../initialize'
 import clickThought from '../helpers/clickThought'
+import command from '../helpers/command'
 import getEditingText from '../helpers/getEditingText'
 import paste from '../helpers/paste'
 import refresh from '../helpers/refresh'
@@ -204,5 +205,60 @@ describe('autocrop', () => {
 
     // TODO: We should expect 0 scroll. WHy does it scroll by 0.25px?
     expect(yDiff).toBeLessThan(1)
+  })
+})
+
+describe('scrollMulticursorIntoView', () => {
+  it('does not autoscroll when applying formatting to a Select All multiselection', async () => {
+    // A short viewport guarantees the thoughts overflow so there is room to (incorrectly) scroll. See #3995 Issue H.
+    await page.setViewport({ width: 800, height: 500 })
+
+    const importText = `
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+      - 8
+      - 9
+      - 10
+      - 11
+      - 12
+      - 13
+      - 14
+      - 15
+      - 16
+      - 17
+      - 18
+      - 19
+      - 20
+    `
+    await paste(importText)
+    await clickThought('20')
+    await waitForEditable('20')
+
+    // Scroll to the bottom so the topmost selected thought is far above the viewport, maximizing any (incorrect) scroll.
+    await page.evaluate(() => {
+      const _em = window.em as WindowEm
+      _em.testFlags.throttledScrollCursorIntoView?.cancel()
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'instant' })
+    })
+    await new Promise(resolve => setTimeout(resolve, 100))
+
+    const scrollYBefore = await page.evaluate(() => Math.round(window.scrollY))
+    // Sanity check: the page must actually be scrolled, otherwise there would be nothing to assert.
+    expect(scrollYBefore).toBeGreaterThan(0)
+
+    // Select All, then apply a formatting command. Neither should scroll the page. See #3995 Issue H.
+    await command('selectAll')
+    await command('bold')
+
+    // Wait for any (incorrect) scroll animation to settle.
+    await new Promise(resolve => setTimeout(resolve, 1000))
+
+    const scrollYAfter = await page.evaluate(() => Math.round(window.scrollY))
+    expect(scrollYAfter).toBe(scrollYBefore)
   })
 })

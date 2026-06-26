@@ -13,6 +13,7 @@ import usePositionedThoughts from '../hooks/usePositionedThoughts'
 import useSizeTracking from '../hooks/useSizeTracking'
 import fauxCaretTreeProvider from '../recipes/fauxCaretTreeProvider'
 import { hasChildren } from '../selectors/getChildren'
+import isAllSelected from '../selectors/isAllSelected'
 import isMulticursorPath from '../selectors/isMulticursorPath'
 import linearizeTree from '../selectors/linearizeTree'
 import nextSibling from '../selectors/nextSibling'
@@ -257,6 +258,10 @@ const LayoutTree = () => {
   // in view, so this does not snap when the selection is already in focus. See #3995.
   scrollMulticursorIntoViewStore.useEffect(() => {
     const stateNow = store.getState()
+    // When all thoughts are selected (Select All), every thought is already "in focus", so snapping to the topmost
+    // selected thought serves no purpose and instead causes a disruptive autoscroll (up, and on mobile up-and-down as
+    // the Command Center slides in). Skip the scroll entirely in that case. See #3995 Issue H.
+    if (isAllSelected(stateNow)) return
     // treeThoughtsPositioned is in document order, so the first selected thought is the topmost one.
     const topmost = treeThoughtsPositioned.find(thought => isMulticursorPath(stateNow, thought.path))
     if (!topmost) return
