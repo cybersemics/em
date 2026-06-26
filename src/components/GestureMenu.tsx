@@ -19,28 +19,6 @@ import GestureMenuItem from './GestureMenuItem'
 import PopupBase from './PopupBase'
 
 /**********************************************************************
- * Blur height metrics
- *
- * The ProgressiveBlur is decoupled from the gesture menu popup so the gesture trace can sit above it (see
- * docs/superpowers/specs/2026-06-26-gesture-trace-above-blur-zindex.md). Because it no longer inherits its height from
- * the menu container, the height is derived from the command count. These constants reproduce the height the blur used
- * to inherit: the menu content plus the FadeTransition wrapper's paddingBottom tail (where the mask feathers out).
- * They are approximate — a selected row is taller (it adds a description) — but the mask gradient feathers the bottom
- * edge so exact pixels are not required. Tune by eye if the blur visibly under- or over-shoots the menu.
- **********************************************************************/
-
-/** Command label line height (fontSize 0.95rem × lineHeight 1em). Keep in sync with the GestureMenuItem label styling. */
-const GESTURE_MENU_ROW_LABEL_REM = 0.95
-/** Gap between command rows. Keep in sync with the main-commands `gap` in GestureMenu. */
-const GESTURE_MENU_ROW_GAP_REM = 1.2
-/** Header ("Gestures" label + divider + margin) above the command list, in rem. */
-const GESTURE_MENU_HEADER_REM = 4.0
-/** Top + bottom padding of the menu content block (2.25rem each; top is reduced to 0.75rem in the native app), in rem. */
-const GESTURE_MENU_VERTICAL_PADDING_REM = 4.5
-/** Bottom tail below the last command. Shared with the FadeTransition wrapper's paddingBottom (see GestureMenuWithTransition) so the two stay in sync (~200px). The mask gradient feathers the blur out across this tail. */
-const GESTURE_MENU_BOTTOM_TAIL_REM = 11.111
-
-/**********************************************************************
  * Components
  **********************************************************************/
 
@@ -169,37 +147,6 @@ const GestureMenu: FC<{
   )
 }
 
-/**
- * Renders the blur effect overlay for the gesture menu. Rendered as a sibling of (not a child of) the menu's PopupBase
- * and placed on the `gestureMenuBlur` z-index — just below `gestureTrace` — so the gesture trace sits above the blur
- * (darkened by the menu overlay, but not blurred). Uses `position: fixed` since it no longer has the menu container as a
- * positioned ancestor; height is derived from the command count.
- */
-function ProgressiveBlur({ height }: { height: string }) {
-  const animationState = gestureStore.useSelector(state => state.gestureMenuAnimationState)
-
-  return (
-    <div
-      className={css({
-        pointerEvents: 'none',
-        position: 'fixed',
-        zIndex: 'gestureMenuBlur',
-        backdropFilter: 'blur(5px)',
-        mask: 'linear-gradient(180deg, {colors.black} 0%, {colors.bgOverlay80} 80%, {colors.bgTransparent} 100%)',
-        width: '100%',
-        top: 0,
-        left: 0,
-      })}
-      style={{
-        height,
-        // Use ease-out on enter so the blur appears immediately, and easeInSlow on exit so it lingers before fading.
-        transition: `opacity ${token('durations.fast')} ${animationState === 'exiting' ? token('easings.easeInSlow') : 'ease-out'}`,
-        opacity: animationState === 'visible' ? 1 : 0,
-      }}
-    />
-  )
-}
-
 /** Renders the glow effect for the gesture menu. */
 function Glow() {
   return (
@@ -302,63 +249,47 @@ const GestureMenuWithTransition: FC = () => {
   // fadeIn is true only when 'visible' - this gives CSSTransition a frame with in={false} when mounting
   const fadeIn = animationState === 'visible'
 
-  // Derive the blur height from the command count so it covers the menu region without inheriting height from the
-  // popup (the blur is now a sibling of PopupBase rather than a child). See the blur height metrics above.
-  const blurHeight = `${
-    GESTURE_MENU_VERTICAL_PADDING_REM +
-    GESTURE_MENU_HEADER_REM +
-    commands.length * (GESTURE_MENU_ROW_LABEL_REM + GESTURE_MENU_ROW_GAP_REM) +
-    GESTURE_MENU_BOTTOM_TAIL_REM
-  }rem`
-
   // Don't render if hidden
   if (animationState === 'hidden') return null
 
   return (
-    <>
-      {/* Rendered as a sibling of PopupBase (not a child) and on the `gestureMenuBlur` z-index so the gesture trace
-      sits above the blur. */}
-      <ProgressiveBlur height={blurHeight} />
-      <PopupBase background='transparent' ref={popupRef} fullScreen>
-        <div
-          data-testid='popup-value'
-          className={css({
-            boxSizing: 'border-box',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'start',
-            alignItems: 'center',
-            width: '100%',
-            position: 'absolute',
-            top: 0,
-          })}
-        >
-          {/* Apply the fade transition only to the glow, overlay, and gesture menu contents
+    <PopupBase background='transparent' ref={popupRef} fullScreen>
+      <div
+        data-testid='popup-value'
+        className={css({
+          boxSizing: 'border-box',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'start',
+          alignItems: 'center',
+          width: '100%',
+          position: 'absolute',
+          top: 0,
+        })}
+      >
+        {/* Apply the fade transition only to the glow, overlay, and gesture menu contents
           to prevent them from appearing only after the animation ends. */}
-          <FadeTransition nodeRef={overlayRef} in={fadeIn} type='fast' unmountOnExit onExited={onGestureMenuExited}>
-            <div
-              ref={overlayRef}
-              className={css({
-                position: 'relative',
-                // prevent mix-blend-mode and backdrop-filter from affecting each other
-                isolation: 'isolate',
-                width: '100%',
-                maxHeight: '100dvh',
-              })}
-              // paddingBottom is set inline (not via css()) so it can share GESTURE_MENU_BOTTOM_TAIL_REM with the blur
-              // height formula. Panda only extracts static values at build time, so a variable inside css() would emit no rule.
-              style={{ paddingBottom: `${GESTURE_MENU_BOTTOM_TAIL_REM}rem` }}
-            >
-              <Overlay />
-              {isGlowBackgroundLoaded && <Glow />}
-              <div style={{ position: 'relative', zIndex: 1 }}>
-                <GestureMenu commands={commands} />
-              </div>
+        <FadeTransition nodeRef={overlayRef} in={fadeIn} type='fast' unmountOnExit onExited={onGestureMenuExited}>
+          <div
+            ref={overlayRef}
+            className={css({
+              position: 'relative',
+              // prevent mix-blend-mode and backdrop-filter from affecting each other
+              isolation: 'isolate',
+              width: '100%',
+              paddingBottom: '11.111rem',
+              maxHeight: '100dvh',
+            })}
+          >
+            <Overlay />
+            {isGlowBackgroundLoaded && <Glow />}
+            <div style={{ position: 'relative', zIndex: 1 }}>
+              <GestureMenu commands={commands} />
             </div>
-          </FadeTransition>
-        </div>
-      </PopupBase>
-    </>
+          </div>
+        </FadeTransition>
+      </div>
+    </PopupBase>
   )
 }
 
