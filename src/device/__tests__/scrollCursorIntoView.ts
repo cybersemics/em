@@ -49,17 +49,32 @@ it('does not scroll a thought that is already within the visible viewport', () =
   expect(scrollToSpy).not.toHaveBeenCalled()
 })
 
-it('scrolls a selected thought out from behind the Command Center', () => {
+it('scrolls a selected thought above the Command Center blur band so its text is readable', () => {
   // The Command Center sheet covers the bottom 70% of the screen during a multiselection.
-  appendElement({ 'data-testid': 'command-menu-panel' }, { top: VIEWPORT_HEIGHT * 0.3, height: VIEWPORT_HEIGHT * 0.7 })
+  const commandCenterTop = VIEWPORT_HEIGHT * 0.3
+  appendElement({ 'data-testid': 'command-menu-panel' }, { top: commandCenterTop, height: VIEWPORT_HEIGHT * 0.7 })
 
-  // A thought at y=400 is "in view" by the navbar-only measurement, but is hidden behind the Command Center.
-  // It should be scrolled up so that it lands above the Command Center. See #3995 Issue G.
+  // The blur element fades in over a 110px band above the solid panel top; a thought left within that band
+  // would be blurred and unreadable. The thought should be scrolled fully above the blur band. See #3995 Issue G.
+  const BLUR_FALLOFF = 110
   scrollCursorIntoView(400, 40)
 
   expect(scrollToSpy).toHaveBeenCalledTimes(1)
   const top = scrollToSpy.mock.calls[0][0].top as number
-  // after scrolling, the thought's bottom should be above the top of the Command Center
+  // after scrolling, the thought's bottom should be above the top of the blur band (panel top - blur falloff)
   const thoughtBottomAfterScroll = 400 - top + 40
-  expect(thoughtBottomAfterScroll).toBeLessThanOrEqual(VIEWPORT_HEIGHT * 0.3)
+  expect(thoughtBottomAfterScroll).toBeLessThanOrEqual(commandCenterTop - BLUR_FALLOFF)
+})
+
+it('does not re-scroll a thought already visible above the Command Center panel (no jump)', () => {
+  // The Command Center sheet covers the bottom 70% of the screen during a multiselection.
+  const commandCenterTop = VIEWPORT_HEIGHT * 0.3
+  appendElement({ 'data-testid': 'command-menu-panel' }, { top: commandCenterTop, height: VIEWPORT_HEIGHT * 0.7 })
+
+  // A thought whose bottom sits just above the solid panel top is visible and must not be scrolled, otherwise
+  // snapping the topmost selected thought into view jumps the page. The blur falloff is only applied to the
+  // scroll *target*, not to the "needs scrolling" detection, so this thought stays put. See #3995 Issue F.
+  scrollCursorIntoView(commandCenterTop - 60, 40)
+
+  expect(scrollToSpy).not.toHaveBeenCalled()
 })
