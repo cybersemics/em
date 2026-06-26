@@ -47,9 +47,6 @@ const GestureMenuItem: FC<{
   return (
     <div
       ref={ref}
-      // NOTE: Changes to this row's height (gap/padding/line-height) should be reflected in
-      // GESTURE_MENU_ROW_LABEL_REM / GESTURE_MENU_ROW_GAP_REM in GestureMenu.tsx, which the decoupled ProgressiveBlur
-      // uses to size itself.
       className={css({
         display: 'flex',
         flexDirection: 'row',
