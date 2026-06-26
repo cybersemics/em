@@ -1,9 +1,10 @@
 import { initPermissionsStore } from '../permissionsStore'
 import { clientIdReady } from '../thoughtspaceSession'
 import { persistTreecrdtBatches } from './persistBatches'
+import { getMaterializedThoughtsToStoreVersion, waitForMaterializedThoughtsToStore } from './sync/materializationQueue'
 import treecrdtDb, { init as initTreecrdtThoughtspace } from './thoughtspace'
 import { initTreecrdt } from './treecrdt'
-import { waitForTreecrdtWriteBarrier } from './writeBarrier'
+import { getTreecrdtWriteBarrierVersion, waitForTreecrdtWriteBarrier } from './writeBarrier'
 
 /** Converts the app client id to TreeCRDT's 32-byte replica id. */
 const clientIdToReplicaId = (clientId: string): Uint8Array =>
@@ -26,7 +27,19 @@ export const treecrdtRuntime = {
     return { clientId }
   },
   drop: () => treecrdtDb.clear(),
-  waitForIdle: () => waitForTreecrdtWriteBarrier(),
+  waitForIdle: async (): Promise<void> => {
+    let writeVersion: number
+    let materializationVersion: number
+    do {
+      writeVersion = getTreecrdtWriteBarrierVersion()
+      materializationVersion = getMaterializedThoughtsToStoreVersion()
+      await waitForTreecrdtWriteBarrier()
+      await waitForMaterializedThoughtsToStore()
+    } while (
+      writeVersion !== getTreecrdtWriteBarrierVersion() ||
+      materializationVersion !== getMaterializedThoughtsToStoreVersion()
+    )
+  },
   persistPushQueueBatches: persistTreecrdtBatches,
 }
 

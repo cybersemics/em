@@ -9,6 +9,7 @@ import { refreshAttributeChildrenFromChanges } from '../attributeChildren'
 import thoughtspaceDb from '../thoughtspace'
 import { getTreecrdtClient } from '../treecrdt'
 import { waitForTreecrdtWriteBarrier } from '../writeBarrier'
+import { enqueueMaterializedThoughtsToStoreWork } from './materializationQueue'
 import { refreshThoughtsFromMaterializationChanges } from './materializationThoughtUpdates'
 
 /** Persists lexemes that em derives locally from materialized TreeCRDT thoughts. */
@@ -80,11 +81,7 @@ export async function applyMaterializedThoughtsToStore(event: MaterializationEve
   }
 }
 
-let materializedThoughtsToStoreQueue = Promise.resolve()
-
 /** Serializes materialization refreshes so overlapping async events cannot apply out of order. */
 export function enqueueMaterializedThoughtsToStore(event: MaterializationEvent): Promise<void> {
-  const apply = materializedThoughtsToStoreQueue.then(() => applyMaterializedThoughtsToStore(event))
-  materializedThoughtsToStoreQueue = apply.catch(() => undefined)
-  return apply
+  return enqueueMaterializedThoughtsToStoreWork(() => applyMaterializedThoughtsToStore(event))
 }
