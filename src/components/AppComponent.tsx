@@ -128,6 +128,7 @@ const MultiGestureIfTouch: FC<PropsWithChildren> = ({ children }) => {
  */
 const GestureContentBlur: FC = () => {
   const animationState = gestureStore.useSelector(state => state.gestureMenuAnimationState)
+  const blurHeight = gestureStore.useSelector(state => state.gestureMenuBlurHeight)
 
   // A MotionValue drives the opacity of each backdrop-filter layer individually. Animating opacity on a
   // shared parent of backdrop-filter elements breaks the blur in WebKit, so ProgressiveBlur applies the
@@ -146,10 +147,15 @@ const GestureContentBlur: FC = () => {
     <div
       className={css({
         position: 'absolute',
-        inset: 0,
+        top: 0,
+        left: 0,
+        right: 0,
         zIndex: 'gestureContentBlur',
         pointerEvents: 'none',
       })}
+      // Cap the wrapper to the menu footprint (rem string from gestureStore); since ProgressiveBlur is
+      // position:absolute; inset:0 it fills the wrapper, so this caps the blur + feather to the menu height.
+      style={{ height: blurHeight }}
     >
       <ProgressiveBlur
         // Max blur at the top, fading to 0 downward — matches the menu's top-weighted falloff.
