@@ -31,6 +31,7 @@ import {
   TUTORIAL_CONTEXT1_PARENT,
   TUTORIAL_CONTEXT2_PARENT,
 } from '../constants'
+import asyncFocus from '../device/asyncFocus'
 import * as selection from '../device/selection'
 import globals from '../globals'
 import findDescendant from '../selectors/findDescendant'
@@ -336,6 +337,37 @@ const Editable = ({
       commandEmitter.off('command', flush)
     }
   }, [])
+
+  useEffect(() => {
+    if (!isTouch || !isSafari()) return
+
+    /** After iOS autocomplete (insertReplacementText) accepts a word, no touch events reach the DOM
+     * in a "dead zone" beneath the word until focus is retargeted. Moving focus to the asyncFocus dummy input
+     * and back to the previous active element allows touch events to reach the DOM again.
+     */
+    const onAutocompleteInput = (e: Event) => {
+      if (!contentRef.current || !(e instanceof InputEvent) || e.inputType !== 'insertReplacementText') return
+
+      const savedCharOffset = selection.offsetThought() ?? selection.offset() ?? 0
+
+      // Under normal circumstances, iOS autocomplete triggers an insertReplacementText event followed by an insertText event with a space.
+      // It is possible to track both events and apply the fix only when the space is inserted, but it is simpler to add the space directly.
+      oldValueRef.current = contentRef.current.textContent + ' '
+
+      // Queue and flush the change with the space-inclusive value to ensure it's captured before the editable blurs.
+      throttledChangeRef.current(oldValueRef.current, { rank, simplePath })
+      throttledChangeRef.current.flush()
+
+      asyncFocus({ force: true })
+      contentRef.current.focus({ preventScroll: true })
+
+      // Restore the selection offset to the character after the inserted word, and accounting for the space added above
+      queueMicrotask(() => selection.set(contentRef.current, { offset: savedCharOffset + 1 }))
+    }
+
+    contentRef.current?.addEventListener('input', onAutocompleteInput)
+    return () => contentRef.current?.removeEventListener('input', onAutocompleteInput)
+  }, [contentRef])
 
   useEffect(() => {
     // if there is a multicursor, blur the contentRef
