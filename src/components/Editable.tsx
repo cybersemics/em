@@ -342,29 +342,48 @@ const Editable = ({
     if (!isTouch || !isSafari() || !contentRef.current) return
 
     const editable = contentRef.current
+    const AUTOCOMPLETE_SPACE_WINDOW_MS = 250
+    let pendingAutocompleteAt: number | null = null
 
     /** After iOS autocomplete (insertReplacementText) accepts a word, no touch events reach the DOM
      * in a "dead zone" beneath the word until focus is retargeted. Moving focus to the asyncFocus dummy input
      * and back to the previous active element allows touch events to reach the DOM again.
+     *
+     * It is possible to intercept insertReplacementText and perform the focus retargeting there
+     * instead of waiting for the next insertText event, but that breaks native undo via shake or three-finger swipe.
      */
     const onAutocompleteInput = (e: Event) => {
-      if (!editable || !(e instanceof InputEvent) || e.inputType !== 'insertReplacementText') return
+      if (!editable || !(e instanceof InputEvent)) return
+
+      if (e.inputType === 'insertReplacementText') {
+        pendingAutocompleteAt = performance.now()
+        return
+      }
+
+      if (e.inputType !== 'insertText' || e.data !== ' ' || pendingAutocompleteAt == null) {
+        pendingAutocompleteAt = null
+        return
+      }
+
+      if (performance.now() - pendingAutocompleteAt > AUTOCOMPLETE_SPACE_WINDOW_MS) {
+        pendingAutocompleteAt = null
+        return
+      }
 
       const savedCharOffset = selection.offsetThought() ?? selection.offset() ?? 0
 
-      // Under normal circumstances, iOS autocomplete triggers an insertReplacementText event followed by an insertText event with a space.
-      // It is possible to track both events and apply the fix only when the space is inserted, but it is simpler to add the space directly.
-      oldValueRef.current = editable.textContent + ' '
-
-      // Queue and flush the change with the space-inclusive value to ensure it's captured before the editable blurs.
+      // Queue and flush the change with the browser-applied value to ensure it's captured before the editable blurs.
+      oldValueRef.current = editable.textContent || ''
       throttledChangeRef.current(oldValueRef.current, { rank, simplePath })
       throttledChangeRef.current.flush()
 
       asyncFocus({ force: true })
       editable.focus({ preventScroll: true })
 
-      // Restore the selection offset to the character after the inserted word, and accounting for the space added above
-      queueMicrotask(() => selection.set(editable, { offset: savedCharOffset + 1 }))
+      // Restore the selection offset captured when insertText(' ') arrived.
+      queueMicrotask(() => selection.set(editable, { offset: savedCharOffset }))
+
+      pendingAutocompleteAt = null
     }
 
     editable?.addEventListener('input', onAutocompleteInput)
