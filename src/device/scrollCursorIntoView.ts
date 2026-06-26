@@ -32,8 +32,17 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
   const toolbarRect = document.getElementById('toolbar')?.getBoundingClientRect()
   const toolbarBottom = toolbarRect ? toolbarRect.bottom : 0
   const navbarRect = document.querySelector('[aria-label="nav"]')?.getBoundingClientRect()
+
+  // The Command Center sheet covers the bottom portion of the screen during a multiselection.
+  // Treat the area it covers as a bottom obstruction (alongside the navbar) so that selected thoughts
+  // are scrolled above it rather than left hidden behind it. Without this, a selected thought in the
+  // covered area is considered "in view" and never scrolled out from behind the Command Center. See #3995 Issue G.
+  const commandCenterRect = document.querySelector('[data-testid="command-menu-panel"]')?.getBoundingClientRect()
+  const commandCenterHeight = commandCenterRect ? Math.max(0, visualViewportHeight - commandCenterRect.top) : 0
+  const bottomObstruction = Math.max(navbarRect?.height ?? 0, commandCenterHeight)
+
   const isAboveViewport = yViewport < toolbarBottom
-  const isBelowViewport = yViewport + height > visualViewportHeight - (navbarRect?.height ?? 0)
+  const isBelowViewport = yViewport + height > visualViewportHeight - bottomObstruction
 
   if (!isAboveViewport && !isBelowViewport) return
 
@@ -41,10 +50,10 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
   // Therefore, we need to calculate the scroll position ourselves
 
   // leave a margin between the element and the viewport edge equal to half the element's height
-  // add offset to account for the navbar height and prevent scrolled to elements from being hidden below
+  // add offset to account for the bottom obstruction (navbar or Command Center) and prevent scrolled to elements from being hidden below
   const scrollYNew = isAboveViewport
     ? yDocument - (toolbarRect?.height ?? 0) - height / 2
-    : yDocument - visualViewportHeight + height * 1.5 + (navbarRect?.height ?? 0)
+    : yDocument - visualViewportHeight + height * 1.5 + bottomObstruction
 
   // scroll to 1 instead of 0
   // otherwise Mobile Safari scrolls to the top after MultiGesture
