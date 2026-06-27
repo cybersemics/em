@@ -17,8 +17,6 @@ local.log
 .DS_Store
 .env*.local
 .eslintcache
-.firebase
-.firebaserc
 .history
 .idea
 .vercel
@@ -35,6 +33,7 @@ public/wa-sqlite
 ## PandaCSS
 styled-system
 styled-system-studio
+*.cpuprofile
 
 # WDIO
 wdio.*
@@ -42,3 +41,4 @@ browserstack.*
 local.*
 /log
 /logs
+

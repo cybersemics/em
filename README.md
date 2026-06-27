@@ -125,12 +125,12 @@ yarn build
 yarn servebuild
 ```
 
-Deploy with firebase:
+Deploy with Vercel:
 
 ```sh
-npm install -g firebase-tools
+npm install -g vercel
 
-yarn deploy:staging2
+yarn deploy:dev
 ```
 
 ## Component Hierarchy
