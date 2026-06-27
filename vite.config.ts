@@ -1,3 +1,4 @@
+import { treecrdt } from '@treecrdt/wa-sqlite/vite-plugin'
 import react from '@vitejs/plugin-react'
 import fs from 'fs'
 import path from 'path'
@@ -5,6 +6,11 @@ import { defineConfig } from 'vite'
 import checker from 'vite-plugin-checker'
 import { createHtmlPlugin } from 'vite-plugin-html'
 import { VitePWA } from 'vite-plugin-pwa'
+
+const crossOriginIsolationHeaders = {
+  'Cross-Origin-Opener-Policy': 'same-origin',
+  'Cross-Origin-Embedder-Policy': 'require-corp',
+}
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -17,7 +23,16 @@ export default defineConfig({
   build: {
     outDir: 'build',
   },
+  worker: {
+    format: 'es',
+  },
+  optimizeDeps: {
+    // Avoid crawling stale local checkout directories left behind after removing the TreeCRDT submodule.
+    entries: ['index.html'],
+  },
   plugins: [
+    // Vitest uses the lightweight in-memory TreeCRDT provider, so skip copying wa-sqlite assets in unit tests.
+    ...[!process.env.VITEST ? treecrdt({ outDir: 'public/wa-sqlite' }) : undefined],
     react(),
     // Do not run vite-plugin-checker during tests, as it will clear the test output.
     // The dev server is usually running anyway, and tsc is run in lint:tsc which is triggered prepush.
@@ -67,5 +82,9 @@ export default defineConfig({
           },
         }
       : {}),
+    headers: crossOriginIsolationHeaders,
+  },
+  preview: {
+    headers: crossOriginIsolationHeaders,
   },
 })

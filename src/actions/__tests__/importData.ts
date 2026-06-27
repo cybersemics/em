@@ -64,7 +64,7 @@ it.skip('multi-line nested html tags', async () => {
   const actual = await importExport(paste, 'text/html')
 
   const expectedOutput = `<ul>
-  <li>__ROOT__${'  '}
+  <li>${HOME_TOKEN}${'  '}
     <ul>
       <li><i><b>A</b></i></li>
       <li><i><b>B</b></i></li>
@@ -105,7 +105,7 @@ it.skip('text that contains em tag', async () => {
   const exported = await importExport(text, 'text/html')
   expect(exported.trim()).toBe(
     `<ul>
-  <li>__ROOT__${EMPTY_SPACE}
+  <li>${HOME_TOKEN}${EMPTY_SPACE}
     <ul>
       <li>a${EMPTY_SPACE}${EMPTY_SPACE}${EMPTY_SPACE}
         <ul>
@@ -177,7 +177,7 @@ it.skip('should paste plain text that contains formatting', async () => {
   const actual = await importExport(paste, 'text/html')
   expect(actual).toBe(
     `<ul>
-  <li>__ROOT__${EMPTY_SPACE}
+  <li>${HOME_TOKEN}${EMPTY_SPACE}
     <ul>
       <li><b>a</b></li>
       <li><b>b</b></li>
@@ -193,7 +193,7 @@ it.skip('should paste plain text that contains formatting and bullet indicator i
 <b> -b</b>`
   const actual = await importExport(paste, 'text/html')
   const expectedHTML = `<ul>
-  <li>__ROOT__${EMPTY_SPACE}
+  <li>${HOME_TOKEN}${EMPTY_SPACE}
     <ul>
       <li><b>a</b>${EMPTY_SPACE}${EMPTY_SPACE}${EMPTY_SPACE}
         <ul>
@@ -232,7 +232,7 @@ p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px 'Helvetica Neue'}
 
   const actual = await importExport(paste, 'text/html')
   const expectedOutput = `<ul>
-  <li>__ROOT__${EMPTY_SPACE}
+  <li>${HOME_TOKEN}${EMPTY_SPACE}
     <ul>
       <li>A${EMPTY_SPACE}${EMPTY_SPACE}${EMPTY_SPACE}
         <ul>
@@ -259,7 +259,7 @@ it.skip('should paste text properly that is copied from WebStorm', async () => {
 
   const actual = await importExport(paste, 'text/html')
   const expectedOutput = `<ul>
-  <li>__ROOT__${EMPTY_SPACE}
+  <li>${HOME_TOKEN}${EMPTY_SPACE}
     <ul>
       <li>A${EMPTY_SPACE}${EMPTY_SPACE}${EMPTY_SPACE}
         <ul>
@@ -280,7 +280,7 @@ it.skip('should paste text properly that is copied from iOS notes.app', async ()
 
   const actual = await importExport(paste, 'text/html')
   const expectedOutput = `<ul>
-  <li>__ROOT__${EMPTY_SPACE}
+  <li>${HOME_TOKEN}${EMPTY_SPACE}
     <ul>
       <li>A${EMPTY_SPACE}${EMPTY_SPACE}${EMPTY_SPACE}
         <ul>
@@ -320,7 +320,7 @@ p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px 'Helvetica Neue'}
 
   const actual = await importExport(paste, 'text/html')
   const expectedOutput = `<ul>
-  <li>__ROOT__${EMPTY_SPACE}
+  <li>${HOME_TOKEN}${EMPTY_SPACE}
     <ul>
       <li><b><i>A</i></b>${EMPTY_SPACE}${EMPTY_SPACE}${EMPTY_SPACE}
         <ul>
@@ -361,7 +361,7 @@ p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px 'Helvetica Neue'}
 
   const actual = await importExport(paste, 'text/html')
   const expectedOutput = `<ul>
-  <li>__ROOT__${EMPTY_SPACE}
+  <li>${HOME_TOKEN}${EMPTY_SPACE}
     <ul>
       <li><b>A</b>${EMPTY_SPACE}${EMPTY_SPACE}${EMPTY_SPACE}
         <ul>
@@ -385,7 +385,7 @@ it.skip('should paste text that contains formatting that is copied from iOS note
 
   const actual = await importExport(paste, 'text/html')
   const expectedOutput = `<ul>
-  <li>__ROOT__${EMPTY_SPACE}
+  <li>${HOME_TOKEN}${EMPTY_SPACE}
     <ul>
       <li><span style="font-weight: bold;">A</span>${EMPTY_SPACE}${EMPTY_SPACE}${EMPTY_SPACE}
         <ul>

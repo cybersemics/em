@@ -1,6 +1,7 @@
 import { type ConsoleMessage, KnownDevices } from 'puppeteer'
 import newSubthoughtCommand from '../../../commands/newSubthought'
 import newThoughtCommand from '../../../commands/newThought'
+import emulate from '../helpers/emulate'
 import exportThoughts from '../helpers/exportThoughts'
 import gesture from '../helpers/gesture'
 import keyboard from '../helpers/keyboard'
@@ -20,7 +21,7 @@ vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
  */
 describe('alerts', () => {
   beforeEach(async () => {
-    await page.emulate(KnownDevices['iPhone 15 Pro'])
+    await emulate(KnownDevices['iPhone 15 Pro'])
   })
 
   /**
@@ -62,7 +63,7 @@ describe('alerts', () => {
 
 describe('chaining commands', () => {
   beforeEach(async () => {
-    await page.emulate(KnownDevices['iPhone 15 Pro'])
+    await emulate(KnownDevices['iPhone 15 Pro'])
   })
 
   it('chained command', async () => {

@@ -2317,6 +2317,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@bufbuild/protobuf@npm:^2.10.2":
+  version: 2.12.0
+  resolution: "@bufbuild/protobuf@npm:2.12.0"
+  checksum: 10c0/28959e371fd2e7c8d67d52af9e3c8f8e6770e2e116dcc5508f469ca736afa6905e216bc76183835898a5f3deb8aa2e7db47d4a0e706fba76115e9a1996893191
+  languageName: node
+  linkType: hard
+
 "@bufbuild/protobuf@npm:^2.5.2":
   version: 2.10.2
   resolution: "@bufbuild/protobuf@npm:2.10.2"
@@ -4633,6 +4640,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@noble/ed25519@npm:^3.0.0":
+  version: 3.1.0
+  resolution: "@noble/ed25519@npm:3.1.0"
+  checksum: 10c0/6317722130649cf5884eff57d540b36ec1006cf68145b09ff427d88df359a3b12baaaf420aad87b747f49d30c5ae56065bf31e5ebde1a6d59c3ce9d0b6a68fdb
+  languageName: node
+  linkType: hard
+
+"@noble/hashes@npm:^1.8.0":
+  version: 1.8.0
+  resolution: "@noble/hashes@npm:1.8.0"
+  checksum: 10c0/06a0b52c81a6fa7f04d67762e08b2c476a00285858150caeaaff4037356dd5e119f45b2a530f638b77a5eeca013168ec1b655db41bae3236cb2e9d511484fc77
+  languageName: node
+  linkType: hard
+
 "@nodelib/fs.scandir@npm:2.1.5":
   version: 2.1.5
   resolution: "@nodelib/fs.scandir@npm:2.1.5"
@@ -6799,6 +6820,94 @@ __metadata:
   version: 0.6.1
   resolution: "@total-typescript/ts-reset@npm:0.6.1"
   checksum: 10c0/c42c592054d33e86ac870065820888f89f05e47b2cfbc6bed95f3084b1f6d13b0231b5b8577eabf461aeb3f37c63ae3216f343b573f7136766eb750aac0dd1ab
+  languageName: node
+  linkType: hard
+
+"@treecrdt/auth@npm:0.1.1":
+  version: 0.1.1
+  resolution: "@treecrdt/auth@npm:0.1.1"
+  dependencies:
+    "@noble/ed25519": "npm:^3.0.0"
+    "@noble/hashes": "npm:^1.8.0"
+    "@treecrdt/interface": "npm:0.2.0"
+    "@treecrdt/sync-protocol": "npm:0.1.1"
+    cborg: "npm:^4.3.2"
+  checksum: 10c0/5c485ef3448e58e2f515b1cabfc654f24661cd7fa9009cb222b9b8e0d3a43081ac1550280b75903f548eb989a6f97753da2a7d16289804a733312d61b3d85526
+  languageName: node
+  linkType: hard
+
+"@treecrdt/discovery@npm:0.1.0":
+  version: 0.1.0
+  resolution: "@treecrdt/discovery@npm:0.1.0"
+  checksum: 10c0/3190e765222fa0e72a1427fa445311c8e4051208065fde410c4118f0ad2b37c50f91b475f6eec8c4d527b3fcf7b28b4dfa9174983b9b7f1809fcb98735862ffc
+  languageName: node
+  linkType: hard
+
+"@treecrdt/interface@npm:0.2.0":
+  version: 0.2.0
+  resolution: "@treecrdt/interface@npm:0.2.0"
+  checksum: 10c0/50ff3dd6e32be057288150fbf4bf1906fb9aa97bb19aab04607187731dd8cf8517f2ba7265d604466acdab3ead2bd38cc3c5e2c5aef4240eb21d5102aa2f67b8
+  languageName: node
+  linkType: hard
+
+"@treecrdt/riblt-wasm@npm:0.1.0":
+  version: 0.1.0
+  resolution: "@treecrdt/riblt-wasm@npm:0.1.0"
+  checksum: 10c0/278908546bcc6a0fb020541e4718662baab59f9fd2999a6ee5725e0a3cfc4dad9bd4d27bed11b57def4b21b08e5715171aff0846d499102a9fedafe6786c1079
+  languageName: node
+  linkType: hard
+
+"@treecrdt/sync-protocol@npm:0.1.1":
+  version: 0.1.1
+  resolution: "@treecrdt/sync-protocol@npm:0.1.1"
+  dependencies:
+    "@bufbuild/protobuf": "npm:^2.10.2"
+    "@noble/hashes": "npm:^1.8.0"
+    "@treecrdt/interface": "npm:0.2.0"
+    "@treecrdt/riblt-wasm": "npm:0.1.0"
+  checksum: 10c0/deeddee38856618f8ca83d924b1a2cc21989791f30e34624f5ee64fd3bb5cbd9327e8c13ade29c43458da58c76549589915087e9a258d26f553d5ea958be2fed
+  languageName: node
+  linkType: hard
+
+"@treecrdt/sync-server-core@npm:0.1.1":
+  version: 0.1.1
+  resolution: "@treecrdt/sync-server-core@npm:0.1.1"
+  dependencies:
+    "@treecrdt/sync-protocol": "npm:0.1.1"
+    ws: "npm:^8.18.3"
+  checksum: 10c0/dfb2fd40b8961fdfe13c29c84a70dcbb83b0b73e6d336a0cea643e4ff12c91e8ad392749e5f0e40048c07881bb2aea026399b6225f2f7c71c018909ae9e71a33
+  languageName: node
+  linkType: hard
+
+"@treecrdt/sync-sqlite@npm:0.1.1":
+  version: 0.1.1
+  resolution: "@treecrdt/sync-sqlite@npm:0.1.1"
+  dependencies:
+    "@treecrdt/auth": "npm:0.1.1"
+    "@treecrdt/interface": "npm:0.2.0"
+    "@treecrdt/sync-protocol": "npm:0.1.1"
+  checksum: 10c0/9eaac4f36b3d3aa67ad33b1c66fdf6d1cc1cd92a2407040239617bb3192e42edc27ba2f7e1d50b4ba8d97cd248629598ef4cf9ca24abde8b608fffb2f3f3006a
+  languageName: node
+  linkType: hard
+
+"@treecrdt/sync@npm:0.1.1":
+  version: 0.1.1
+  resolution: "@treecrdt/sync@npm:0.1.1"
+  dependencies:
+    "@treecrdt/discovery": "npm:0.1.0"
+    "@treecrdt/interface": "npm:0.2.0"
+    "@treecrdt/sync-protocol": "npm:0.1.1"
+    "@treecrdt/sync-sqlite": "npm:0.1.1"
+  checksum: 10c0/53121ebffee10366ec1c602562585c3b2d789ac12c9bce9862b9f5ddf211055b82226ff5ccca74ec88ad66bb46b5644c77688a7ba2cc2cbe2684195d344139b1
+  languageName: node
+  linkType: hard
+
+"@treecrdt/wa-sqlite@npm:0.3.1":
+  version: 0.3.1
+  resolution: "@treecrdt/wa-sqlite@npm:0.3.1"
+  dependencies:
+    "@treecrdt/interface": "npm:0.2.0"
+  checksum: 10c0/2a29c962143ce8db199badfa195b0e730ec42b363058457f19311bde5f88dc6e7832ed90fac71fe384b86909ab01b5b2ed8ce2e66f631d37228dca64a78df22d
   languageName: node
   linkType: hard
 
@@ -9989,6 +10098,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"cborg@npm:^4.3.2":
+  version: 4.5.8
+  resolution: "cborg@npm:4.5.8"
+  bin:
+    cborg: lib/bin.js
+  checksum: 10c0/9703fc3201aeb9814c6f27358f079f63bd2361bb946aae4fc82db3ea389418516251a2ea85a728839af887ff43fd67f9900353aae6daa0c0d8b1bc6f20addeb4
+  languageName: node
+  linkType: hard
+
 "chai@npm:^6.2.1":
   version: 6.2.1
   resolution: "chai@npm:6.2.1"
@@ -11551,6 +11669,15 @@ __metadata:
     "@testing-library/react": "npm:^16.3.2"
     "@testing-library/user-event": "npm:^14.6.1"
     "@total-typescript/ts-reset": "npm:^0.6.1"
+    "@treecrdt/auth": "npm:0.1.1"
+    "@treecrdt/discovery": "npm:0.1.0"
+    "@treecrdt/interface": "npm:0.2.0"
+    "@treecrdt/riblt-wasm": "npm:0.1.0"
+    "@treecrdt/sync": "npm:0.1.1"
+    "@treecrdt/sync-protocol": "npm:0.1.1"
+    "@treecrdt/sync-server-core": "npm:0.1.1"
+    "@treecrdt/sync-sqlite": "npm:0.1.1"
+    "@treecrdt/wa-sqlite": "npm:0.3.1"
     "@trivago/prettier-plugin-sort-imports": "npm:^6.0.2"
     "@types/clipboard": "npm:^2.0.10"
     "@types/dompurify": "npm:^3.2.0"
@@ -11680,10 +11807,7 @@ __metadata:
     workbox-strategies: "npm:^7.4.1"
     workbox-window: "npm:^7.4.1"
     xhtml-purifier: "npm:^0.4.1"
-    y-indexeddb: "⚠️ OVERRIDDEN BY 'resolutions' - Source: https://github.com/raineorshine/y-indexeddb#y-indexeddb-multiplex | Tarball: https://codeload.github.com/raineorshine/y-indexeddb/tar.gz/60b960009085b1a988b5064ee35703229231531f | Configured in: package.json#resolutions"
-    y-protocols: "npm:^1.0.7"
     yallist: "npm:^5.0.0"
-    yjs: "npm:^13.6.31"
   languageName: unknown
   linkType: soft
 
@@ -15839,13 +15963,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"isomorphic.js@npm:^0.2.4":
-  version: 0.2.5
-  resolution: "isomorphic.js@npm:0.2.5"
-  checksum: 10c0/7cd268c8e58146a8160c8cd16596291fd1fbf3e8799a325f269accda9dc1238806e371ccef0b66fe2ad957209230c55997248d8b6d02cf2d7c575ffeb759c789
-  languageName: node
-  linkType: hard
-
 "istanbul-lib-coverage@npm:^3.0.0, istanbul-lib-coverage@npm:^3.2.0":
   version: 3.2.2
   resolution: "istanbul-lib-coverage@npm:3.2.2"
@@ -17131,32 +17248,6 @@ __metadata:
     prelude-ls: "npm:^1.2.1"
     type-check: "npm:~0.4.0"
   checksum: 10c0/effb03cad7c89dfa5bd4f6989364bfc79994c2042ec5966cb9b95990e2edee5cd8969ddf42616a0373ac49fac1403437deaf6e9050fbbaa3546093a59b9ac94e
-  languageName: node
-  linkType: hard
-
-"lib0@npm:^0.2.74, lib0@npm:^0.2.85":
-  version: 0.2.98
-  resolution: "lib0@npm:0.2.98"
-  dependencies:
-    isomorphic.js: "npm:^0.2.4"
-  bin:
-    0ecdsa-generate-keypair: bin/0ecdsa-generate-keypair.js
-    0gentesthtml: bin/gentesthtml.js
-    0serve: bin/0serve.js
-  checksum: 10c0/074097bcb90a002449cfddaa11552f11d088e38233f0a20a3358b08d7d1952b2f5a491fb63e63ccf66a8ec037e16d82d40a27601bbacf5ded0d2ec810bdf550e
-  languageName: node
-  linkType: hard
-
-"lib0@npm:^0.2.99":
-  version: 0.2.114
-  resolution: "lib0@npm:0.2.114"
-  dependencies:
-    isomorphic.js: "npm:^0.2.4"
-  bin:
-    0ecdsa-generate-keypair: bin/0ecdsa-generate-keypair.js
-    0gentesthtml: bin/gentesthtml.js
-    0serve: bin/0serve.js
-  checksum: 10c0/3edaebb4ac80da164dfc097720a610bba4d08f44dc60ecb186aa42924d8e67679c12a6b7415eaffc07c47f1fbddccb15fd925bee7745c7aef16ab1a1e0a3cdc0
   languageName: node
   linkType: hard
 
@@ -25398,6 +25489,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"ws@npm:^8.18.3":
+  version: 8.18.3
+  resolution: "ws@npm:8.18.3"
+  peerDependencies:
+    bufferutil: ^4.0.1
+    utf-8-validate: ">=5.0.2"
+  peerDependenciesMeta:
+    bufferutil:
+      optional: true
+    utf-8-validate:
+      optional: true
+  checksum: 10c0/eac918213de265ef7cb3d4ca348b891a51a520d839aa51cdb8ca93d4fa7ff9f6ccb339ccee89e4075324097f0a55157c89fa3f7147bde9d8d7e90335dc087b53
+  languageName: node
+  linkType: hard
+
 "ws@npm:^8.19.0":
   version: 8.19.0
   resolution: "ws@npm:8.19.0"
@@ -25492,28 +25598,6 @@ __metadata:
   version: 4.0.2
   resolution: "xtend@npm:4.0.2"
   checksum: 10c0/366ae4783eec6100f8a02dff02ac907bf29f9a00b82ac0264b4d8b832ead18306797e283cf19de776538babfdcb2101375ec5646b59f08c52128ac4ab812ed0e
-  languageName: node
-  linkType: hard
-
-"y-indexeddb@https://codeload.github.com/raineorshine/y-indexeddb/tar.gz/60b960009085b1a988b5064ee35703229231531f":
-  version: 9.0.11-multiplex.0
-  resolution: "y-indexeddb@https://codeload.github.com/raineorshine/y-indexeddb/tar.gz/60b960009085b1a988b5064ee35703229231531f"
-  dependencies:
-    lib0: "npm:^0.2.74"
-  peerDependencies:
-    yjs: ^13.0.0
-  checksum: 10c0/fa4ba1b81f2c5e1fcee7445a1ff7a108947f83b1fea75a6bbf2efba925279726f0acc6b9c9c9f1e7f40642a1e34c9712e71ff3a528ca2890d42297ac82d92e43
-  languageName: node
-  linkType: hard
-
-"y-protocols@npm:^1.0.7":
-  version: 1.0.7
-  resolution: "y-protocols@npm:1.0.7"
-  dependencies:
-    lib0: "npm:^0.2.85"
-  peerDependencies:
-    yjs: ^13.0.0
-  checksum: 10c0/70e14ab50b9200e97602c5effc3e14ae4ea0f51479a1628569af7cc12a6739fbc02484335828f5c508a4bf6fa0c3ef5ae1c17e13346b7a6093abeb9627f59021
   languageName: node
   linkType: hard
 
@@ -25625,15 +25709,6 @@ __metadata:
     buffer-crc32: "npm:~0.2.3"
     pend: "npm:~1.2.0"
   checksum: 10c0/7b40b3dc46b95761a2a764391d257a11f494d365875af73a1b48fe16d4bd103dd178612e60168d12a0e59a8ba4f6411a15a5e8871d5a5f78255d6cc1ce39ee62
-  languageName: node
-  linkType: hard
-
-"yjs@npm:^13.6.31":
-  version: 13.6.31
-  resolution: "yjs@npm:13.6.31"
-  dependencies:
-    lib0: "npm:^0.2.99"
-  checksum: 10c0/201a523c0360b349719410475f179105dce7b9d926d6087bea86dba2ceb39ba6450c5d5fba4ab6de97d2750ddade12d2d36e4500f01585976f930d5eb8d8d1de
   languageName: node
   linkType: hard
 

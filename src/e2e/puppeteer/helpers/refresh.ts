@@ -1,6 +1,14 @@
+import { WindowEm } from '../../../initialize'
 import { page } from '../session'
+import waitForAppReady from './waitForAppReady'
 
 /** Refreshes the page. */
-const refresh = () => page.evaluate(() => window.location.reload())
+const refresh = async (): Promise<void> => {
+  await page.evaluate(async () => {
+    await (window.em as Partial<WindowEm> | undefined)?.testHelpers?.waitForThoughtspaceIdle?.()
+  })
+  await page.reload({ waitUntil: 'load' })
+  await waitForAppReady(page)
+}
 
 export default refresh
