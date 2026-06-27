@@ -45,7 +45,7 @@ const useEditMode = ({
   const hadSidebar = usePrevious(showSidebar)
   const store = useStore()
   const dispatch = useDispatch()
-  const offsetRef = useRef<number | null>(null)
+  const pressingRef = useRef(false)
 
   // focus on the ContentEditable element if editing or on desktop
   const editMode = !isTouch || editing
@@ -144,6 +144,12 @@ const useEditMode = ({
       dispatch(setCursor({ path, offset }))
     }
 
+    /** Marks the beginning of a touch so that onMouseDown can determine whether a long press is occurring. */
+    const onTouchStart = () => (pressingRef.current = true)
+
+    /** Marks the end of a touch, indicating to onMouseDown that a long press is not occurring. */
+    const onTouchEnd = () => (pressingRef.current = false)
+
     /**
      * Handles the mousedown event for the editable element.
      * Prevents focus on non-cursor thoughts or during multiselect clicks.
@@ -158,28 +164,30 @@ const useEditMode = ({
         return
       }
 
+      // If the press is ongoing (touchend has not been dispatched) then a long press is ongoing and setCaretOffset will interfere
+      // with default iOS Safari drag-and-drop text selection.
+      if (pressingRef.current) return
+
       // If editing or the cursor is on the thought, allow the default browser selection or perform manual caret positioning so the offset is correct.
       // See: #981
       if (editingOrOnCursor && !isMulticursor) {
-        // Prevent the browser from autoscrolling to this editable element.
-        // For some reason doesn't work on touchend.
-        preventAutoscroll(editable, {
-          // about the height of a single-line thought
-          bottomMargin: fontSize * 2,
-        })
-
         const { inVoidArea, offset } = getCaretOffset(editable, {
           clientX: e.clientX,
           clientY: e.clientY,
         })
 
         if (offset !== null) {
-          if (isTouch && isSafari()) {
-            offsetRef.current = offset
-            allowDefaultSelection()
-          } else {
-            setCaretOffset(offset)
-          }
+          // Prevent the browser from autoscrolling to this editable element.
+          // For some reason doesn't work on touchend.
+          preventAutoscroll(editable, {
+            // about the height of a single-line thought
+            bottomMargin: fontSize * 2,
+          })
+
+          // Setting the caret offset will activate the declarative shouldSetSelection effect, which will call preventAutoscroll and selection.set
+          // all over again. Since the selection is managed imperatively in this handler, this duplicate behavior is undesirable.
+          allowDefaultSelection()
+          setCaretOffset(offset)
 
           // It's important to avoid preventDefault when the tap is somewhere that can be handled by native browser selection behavior.
           // If the tap is prevented, it will interfere with functionality like double tap or the context menu. If the selection is
@@ -187,8 +195,6 @@ const useEditMode = ({
           if (inVoidArea) {
             e.preventDefault()
           }
-        } else {
-          allowDefaultSelection()
         }
       } else {
         // There are areas on the outside edge of the thought that will fail to trigger onTouchEnd.
@@ -199,32 +205,26 @@ const useEditMode = ({
       }
     }
 
-    /**
-     * Handles the mouseup event for the editable element.
-     * Preserve native drag selection behavior by deferring setCaretOffset until mouseup.
+    /** Prevents the thought from autoscrolling to the bottom of the screen when the keyboard is open.
+     * Autoscroll must be prevented until focus handling is complete, so preventAutoscrollEnd is deferred
+     * using queueMicrotask without introducing any additional delay.
      */
-    const onMouseUp = (e: MouseEvent) => {
-      if (offsetRef.current !== null) {
-        // Certain taps that are outside of the regular bounds of the editable element will fail to trigger onMouseUp.
-        // In those cases, allowDefaultSelection will be activated in onMouseDown, which will allow the native browser
-        // selection behavior to take over instead of responding to setCursor with a null offset.
-        disabledRef.current = false
-        setCaretOffset(offsetRef.current)
-      }
-
-      /** Prevents the thought from autoscrolling to the bottom of the screen when the keyboard is open.
-       * Autoscroll must be prevented until focus handling is complete, so preventAutoscrollEnd is deferred
-       * using queueMicrotask without introducing any additional delay.
-       */
-      queueMicrotask(() => preventAutoscrollEnd(editable))
-    }
+    const onFocus = () => queueMicrotask(() => preventAutoscrollEnd(editable))
 
     editable.addEventListener('mousedown', onMouseDown)
-    if (isTouch && isSafari()) editable.addEventListener('mouseup', onMouseUp)
+    if (isTouch && isSafari()) {
+      editable.addEventListener('touchstart', onTouchStart)
+      editable.addEventListener('touchend', onTouchEnd)
+      editable.addEventListener('focus', onFocus)
+    }
 
     return () => {
       editable.removeEventListener('mousedown', onMouseDown)
-      if (isTouch && isSafari()) editable.removeEventListener('mouseup', onMouseUp)
+      if (isTouch && isSafari()) {
+        editable.removeEventListener('touchstart', onTouchStart)
+        editable.removeEventListener('touchend', onTouchEnd)
+        editable.removeEventListener('focus', onFocus)
+      }
     }
   }, [contentRef, editingOrOnCursor, isCursor, isMulticursor, fontSize, allowDefaultSelection, path, dispatch])
 
