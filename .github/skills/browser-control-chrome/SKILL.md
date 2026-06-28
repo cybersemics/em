@@ -33,15 +33,15 @@ If you have already navigated by mistake, re-apply emulation and re-navigate so 
 
 ## Step 2: Navigate
 
-The hub already probed the dev server, but confirm it is responsive before navigating (Vite may serve HTTP or HTTPS; `-k` accepts the self-signed dev cert):
+The hub already probed the dev server, but confirm it is responsive before navigating. Vite now serves **HTTPS by default** (`@vitejs/plugin-basic-ssl`, self-signed); it only serves HTTP when started with `HTTP=1`. `-k` accepts the self-signed dev cert:
 
 ```bash
-curl -fsS -o /dev/null http://localhost:3000 || curl -fsSk -o /dev/null https://localhost:3000
+curl -fsSk -o /dev/null https://localhost:3000 || curl -fsS -o /dev/null http://localhost:3000
 ```
 
 If neither responds, check `/tmp/dev-server.log` and report — do not start a second instance.
 
-Navigate via `chrome-devtools` `navigate` to `http://localhost:3000` (or `https://` if that is what responded). If you hit an HTTPS self-signed certificate error, use the `thisisunsafe` bypass to proceed.
+Navigate via `chrome-devtools` `navigate` to `https://localhost:3000` (or `http://` if the server was started with `HTTP=1`). The shared Chrome is launched with `--ignore-certificate-errors` (see `scripts/shared-chrome.mjs`), so the self-signed dev cert is **auto-accepted** — you should not see a certificate interstitial. If one ever appears (e.g. Chrome launched without the flag), type `thisisunsafe` while focused on the warning page to bypass it.
 
 The React bundle hydrates a few seconds after `navigate` returns; reaching for interactions immediately hits an empty `<div id="root">`. Wait for a known landmark before any interaction — `#skip-tutorial` (welcome screen) or `[aria-label="empty-thoughtspace"]` (tutorial dismissed). Poll with `evaluate_script` between short `sleep`s until one is present.
 
