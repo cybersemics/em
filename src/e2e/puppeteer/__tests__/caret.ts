@@ -19,6 +19,7 @@ import waitForHiddenEditable from '../helpers/waitForHiddenEditable'
 import waitForSelector from '../helpers/waitForSelector'
 import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
 import waitUntil from '../helpers/waitUntil'
+import { page } from '../session'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
@@ -376,5 +377,51 @@ describe('mobile only', () => {
 
     // keyboard should not open, so the active element should be the body or null
     await waitUntil(() => !document.activeElement || document.activeElement === document.body)
+  })
+
+  // Regression test for https://github.com/cybersemics/em/issues/3958
+  it('caret should be dismissed when the virtual keyboard is closed without blurring (e.g. Android Down Arrow)', async () => {
+    await paste(`
+    - One
+    - Two
+    - Three`)
+
+    // tap thought One to put the caret on it (keyboard open)
+    await clickThought('One')
+    await clickThought('One')
+
+    // precondition: the caret is on a thought with the keyboard open
+    expect(await getSelection().focusNode).toBeTruthy()
+
+    // Simulate dismissing the virtual keyboard with the Android Down Arrow button.
+    // Unlike the Done button (which blurs the editable, see closeKeyboard), the Down Arrow only
+    // hides the keyboard: the visualViewport grows back to full height with no blur event. Emulate
+    // that by faking the viewport shrink (keyboard open) then grow (keyboard dismissed) and firing
+    // the resize events the app listens to, without re-rendering the thought.
+    await page.evaluate(async () => {
+      const visualViewport = window.visualViewport!
+      const fullHeight = visualViewport.height
+      /** Overrides the reported visualViewport height to simulate the keyboard opening/closing. */
+      const overrideHeight = (height: number) =>
+        Object.defineProperty(visualViewport, 'height', { configurable: true, get: () => height })
+      /** Fires a visualViewport resize event, as the OS does when the virtual keyboard shows/hides. */
+      const fireResize = () => visualViewport.dispatchEvent(new Event('resize'))
+      /** Waits for the given number of milliseconds. */
+      const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+
+      // keyboard open: viewport shrinks
+      overrideHeight(Math.round(fullHeight * 0.6))
+      fireResize()
+      await delay(150)
+
+      // Down Arrow pressed: keyboard hides, viewport grows back to full height (no blur)
+      overrideHeight(fullHeight)
+      fireResize()
+      await delay(150)
+    })
+
+    // the caret should be dismissed along with the keyboard
+    const focusNode = await getSelection().focusNode
+    expect(focusNode).toBeFalsy()
   })
 })
