@@ -1,4 +1,4 @@
-import { isTouch } from '../browser'
+import { isCapacitor, isIOS, isTouch } from '../browser'
 import viewportStore from '../stores/viewport'
 
 /** Duration after preventAutoscroll is called before the temporary styles are reset. */
@@ -58,8 +58,17 @@ const preventAutoscroll = (
   activeEl = el
   el.setAttribute('data-prevent-autoscroll', 'true')
 
+  // On iOS Capacitor the WebView is configured with Keyboard resize: 'none', so the WebView stays full-screen and
+  // WKWebView's native keyboard-avoidance scroll is unreliable: it fires even for thoughts well above the keyboard
+  // (e.g. when a new thought lands just past the vertical center), dropping the viewport unexpectedly, and it fights
+  // em's own scrollCursorIntoView, causing the view to jitter. Since scrollCursorIntoView already keeps the cursor in
+  // the visible area above the keyboard, we fully disable native autoscroll in ALL cases on iOS Capacitor by padding
+  // the element's bottom past the true WebView bottom (innerHeight). The below-center transform branch below is only
+  // needed on iOS Safari (to work around a selection-visibility bug), so it is skipped on Capacitor. (#4326)
+  const isIOSCapacitor = isIOS && isCapacitor()
+
   // below center
-  if (yCenter < 0) {
+  if (yCenter < 0 && !isIOSCapacitor) {
     // paddingTop keeps the actual text in the same place, despite the element being translated up to prevent autoscroll.
     // Otherwise we are stuck with two bad options:
     // - Only use transform (previous implementation): The browser selection becomes invisible on iOS 17. getSelection still returns the correct node and offset, so it is programmatically undetectable.
@@ -67,11 +76,17 @@ const preventAutoscroll = (
     el.style.transform = `translate(0, ${yCenter * 2}px)`
     el.style.paddingTop = `${-yCenter * 2}px`
   }
-  // above center
+  // above center, or any position on iOS Capacitor
   else {
     // When the bottom edge of element is below the bottom edge of the screen, autoscroll is disabled completely.
+    // On iOS Capacitor the WebView is configured with Keyboard resize: 'none', so the WebView stays full-screen
+    // (innerHeight) and the keyboard overlays it. Padding only to viewportHeight would leave the element's bottom
+    // inside the keyboard-overlay zone, which triggers WKWebView's native keyboard-avoidance scroll-up (#4326).
+    // Padding to the full innerHeight pushes the element's bottom below the true WebView bottom, disabling native
+    // autoscroll completely — matching the behavior that already works on iOS Safari and Android Capacitor.
     // TODO: Allow autoscroll if thought is above the top edge of the screen (can that happen?)
-    el.style.paddingBottom = `${viewportHeight}px`
+    const paddingBottom = isIOSCapacitor ? innerHeight : viewportHeight
+    el.style.paddingBottom = `${paddingBottom}px`
   }
 
   // 10ms should be plenty of time for Editable.onFocus to fire after preventAutoscroll is first called, and thus call preventAutoscrollEnd, but if for some reason that does not happen we should go ahead and call it to clean up. This will result in a noticeable blink, but it is better than the thought getting stuck.
