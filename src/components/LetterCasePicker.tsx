@@ -27,10 +27,15 @@ const LetterCasePicker: FC<{ size?: number }> = memo(({ size }) => {
   }
   const selected = useSelector(state => {
     const value = (!!state.cursor && getThoughtById(state, head(state.cursor))?.value) || ''
-    if (value === applyLetterCase('LowerCase', value)) return 'LowerCase'
-    if (value === applyLetterCase('UpperCase', value)) return 'UpperCase'
-    if (value === applyLetterCase('SentenceCase', value)) return 'SentenceCase'
-    if (value === applyLetterCase('TitleCase', value)) return 'TitleCase'
+
+    // The letter case of the thought should be independent of its formatting.
+    const doc = new DOMParser().parseFromString(value, 'text/html')
+    const { textContent } = doc.body
+
+    if (textContent === applyLetterCase('LowerCase', textContent)) return 'LowerCase'
+    if (textContent === applyLetterCase('UpperCase', textContent)) return 'UpperCase'
+    if (textContent === applyLetterCase('SentenceCase', textContent)) return 'SentenceCase'
+    if (textContent === applyLetterCase('TitleCase', textContent)) return 'TitleCase'
     return ''
   })
   const casingTypes: LetterCaseType[] = ['LowerCase', 'UpperCase', 'SentenceCase', 'TitleCase']
@@ -48,6 +53,7 @@ const LetterCasePicker: FC<{ size?: number }> = memo(({ size }) => {
               border: selected === type ? `solid 1px {colors.fg}` : `solid 1px {colors.transparent}`,
             })}
             aria-label={type}
+            data-selected={selected === type ? 'true' : 'false'}
             {...fastClick(e => e.stopPropagation())}
             onTouchStart={e => toggleLetterCase(type, e)}
             onMouseDown={e => !isTouch && toggleLetterCase(type, e)}

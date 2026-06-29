@@ -3,7 +3,7 @@ import click from './click'
 
 /** Helper function to open sidebar and wait for it to slide all the way open. */
 const openSidebar = async () => {
-  // Distraction-free typing hides the menu; pointer movement reveals it before clicking.
+  // Typing can hide the menu in distraction-free mode. Moving the pointer reveals it before clicking.
   await page.mouse.move(1, 1)
   await click('[aria-label=menu]')
 
