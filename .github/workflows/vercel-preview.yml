@@ -58,7 +58,7 @@ jobs:
           script: |
             const url = '${{ steps.deploy.outputs.url }}'
             const marker = '<!-- vercel-preview -->'
-            const body = `${marker}\n<img src="https://avatars.githubusercontent.com/in/8329?s=20&v=4" width="14" /> Vercel preview: ${url}`
+            const body = `${marker}\n<sub><img src="https://avatars.githubusercontent.com/in/8329?s=20&v=4" width="14" /></sub> Vercel preview: ${url}`
             const { owner, repo } = context.repo
             const issue_number = context.payload.pull_request.number
             const { data: comments } = await github.rest.issues.listComments({ owner, repo, issue_number })
