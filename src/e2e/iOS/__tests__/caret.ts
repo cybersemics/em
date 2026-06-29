@@ -256,12 +256,11 @@ describe('Caret', () => {
   it('Focus is prevented after clearing the cursor', async () => {
     await newThought('Hello')
     await hideKeyboardByTappingDone()
-    console.info('Tapping home')
+
     const homeNodeHandle = await waitForElement('[data-testid="home"]')
     await tap(homeNodeHandle)
-    console.info('Tapping Hello')
 
-    await gesture('', { xStart: 145, yStart: 104, segmentLength: 0, waitMs: 100 })
+    await tap(await waitForEditable('Hello'), { horizontalTapLine: 'right', x: 5, pointerType: 'touch' })
 
     const activeElementIsBody = await browser.execute(() => document.activeElement === document.body)
     expect(activeElementIsBody).toBe(true)
