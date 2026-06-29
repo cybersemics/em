@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import Command from '../@types/Command'
+import { isBrowser } from '../browser'
 import { gestureString } from '../commands'
 import openMobileCommandUniverseCommand from '../commands/openMobileCommandUniverse'
 import useFilteredCommands from '../hooks/useFilteredCommands'
@@ -13,8 +14,8 @@ import gestureStore, {
   startGestureMenuExit,
 } from '../stores/gesture'
 import storageModel from '../stores/storageModel'
-import CommandItem from './CommandItem'
 import FadeTransition from './FadeTransition'
+import GestureMenuItem from './GestureMenuItem'
 import PopupBase from './PopupBase'
 
 /**********************************************************************
@@ -30,6 +31,9 @@ const GestureMenu: FC<{
 
   const hasMatchingCommand = commands.some(cmd => (gestureInProgress as string) === gestureString(cmd))
 
+  const mainCommands = commands.filter(cmd => cmd.id !== 'cancel' && cmd.id !== 'openMobileCommandUniverse')
+  const persistentCommands = commands.filter(cmd => cmd.id === 'cancel' || cmd.id === 'openMobileCommandUniverse')
+
   return (
     <div
       className={css({
@@ -39,6 +43,7 @@ const GestureMenu: FC<{
         overflow: 'hidden',
         maxHeight: `calc(100dvh - ${token('spacing.safeAreaBottom')} - ${token('spacing.safeAreaTop')})`,
         paddingTop: 'safeAreaTop',
+        fontFamily: 'radioCanada',
       })}
     >
       <div
@@ -47,7 +52,7 @@ const GestureMenu: FC<{
           textAlign: 'left',
           maxWidth: '100%',
           maxHeight: '100%',
-          width: 826,
+          width: '45.889rem',
           cursor: 'default',
           display: 'flex',
           flexDirection: 'column',
@@ -57,59 +62,100 @@ const GestureMenu: FC<{
         {gestureInProgress && (
           <div
             className={css({
-              padding: '0.85em 0.66em',
+              padding: '2.25rem',
+              paddingTop: !isBrowser ? '0.75rem' : undefined,
             })}
           >
-            {commands.map((command, index) => {
-              // Check if the current gesture sequence ends with help gesture
-              const mobileCommandUniverseInProgress = gestureInProgress
-                ?.toString()
-                .endsWith(gestureString(openMobileCommandUniverseCommand))
-              const isMobileCommandUniverseMatch =
-                command.id === 'openMobileCommandUniverse' && mobileCommandUniverseInProgress
-              const isCancelMatch = command.id === 'cancel' && !hasMatchingCommand && !mobileCommandUniverseInProgress
+            {/* Header */}
+            <div className={css({ marginBottom: '1.389rem' })}>
+              <div
+                style={{
+                  color: 'rgb(255, 255, 255, 0.7)',
+                  marginBottom: '0.444rem',
+                  fontSize: '0.9rem',
+                  fontWeight: 500,
+                }}
+              >
+                Gestures
+              </div>
+              <div
+                style={{
+                  height: '1px',
+                  width: '100%',
+                  background: 'linear-gradient(90deg, rgba(174, 168, 214, 0.59) 0%, rgba(28, 27, 36, 0) 100%)',
+                }}
+              />
+            </div>
 
-              return (
-                <CommandItem
-                  gestureInProgress={gestureInProgress as string}
-                  key={command.id}
-                  selected={
-                    isMobileCommandUniverseMatch || gestureInProgress === gestureString(command) || isCancelMatch
-                  }
-                  command={command}
-                  isFirstCommand={index === 0}
-                  isLastCommand={index === commands.length - 1}
-                />
-              )
-            })}
+            {/* Main commands */}
+            <div
+              className={css({
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1.2rem',
+              })}
+            >
+              {mainCommands.map((command, index) => {
+                // Check if the current gesture sequence ends with help gesture
+                const mobileCommandUniverseInProgress = gestureInProgress
+                  ?.toString()
+                  .endsWith(gestureString(openMobileCommandUniverseCommand))
+                const isMobileCommandUniverseMatch =
+                  command.id === 'openMobileCommandUniverse' && mobileCommandUniverseInProgress
+                const isCancelMatch = command.id === 'cancel' && !hasMatchingCommand && !mobileCommandUniverseInProgress
+
+                return (
+                  <GestureMenuItem
+                    gestureInProgress={gestureInProgress as string}
+                    key={command.id}
+                    selected={
+                      isMobileCommandUniverseMatch || gestureInProgress === gestureString(command) || isCancelMatch
+                    }
+                    command={command}
+                    isFirstCommand={index === 0}
+                    isLastCommand={index === mainCommands.length - 1}
+                  />
+                )
+              })}
+            </div>
+            {/* Cancel / Cheatsheet block */}
+            {persistentCommands.length > 0 && (
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  marginTop: !mainCommands.length ? 0 : '2.15rem',
+                  gap: '1.2rem',
+                }}
+              >
+                {persistentCommands.map((command, index) => {
+                  const mobileCommandUniverseInProgress = gestureInProgress
+                    ?.toString()
+                    .endsWith(gestureString(openMobileCommandUniverseCommand))
+                  const isMobileCommandUniverseMatch =
+                    command.id === 'openMobileCommandUniverse' && mobileCommandUniverseInProgress
+                  const isCancelMatch =
+                    command.id === 'cancel' && !hasMatchingCommand && !mobileCommandUniverseInProgress
+
+                  return (
+                    <GestureMenuItem
+                      gestureInProgress={gestureInProgress as string}
+                      key={command.id}
+                      selected={
+                        isMobileCommandUniverseMatch || gestureInProgress === gestureString(command) || isCancelMatch
+                      }
+                      command={command}
+                      isFirstCommand={index === 0}
+                      isLastCommand={index === persistentCommands.length - 1}
+                    />
+                  )
+                })}
+              </div>
+            )}
           </div>
         )}
       </div>
     </div>
-  )
-}
-
-/** Renders a blur effect overlay for the gesture menu. */
-function ProgressiveBlur() {
-  const animationState = gestureStore.useSelector(state => state.gestureMenuAnimationState)
-
-  return (
-    <div
-      className={css({
-        pointerEvents: 'none',
-        position: 'absolute',
-        backdropFilter: 'blur(5px)',
-        mask: 'linear-gradient(180deg, {colors.black} 0%, {colors.bgOverlay80} 80%, {colors.bgTransparent} 100%)',
-        width: '100%',
-        top: 0,
-        height: '100%',
-      })}
-      style={{
-        // Use ease-out on enter so the blur appears immediately, and easeInSlow on exit so it lingers before fading.
-        transition: `opacity ${token('durations.fast')} ${animationState === 'exiting' ? token('easings.easeInSlow') : 'ease-out'}`,
-        opacity: animationState === 'visible' ? 1 : 0,
-      }}
-    />
   )
 }
 
@@ -233,9 +279,8 @@ const GestureMenuWithTransition: FC = () => {
           top: 0,
         })}
       >
-        <ProgressiveBlur />
-        {/* Apply the fade transition only to the glow, overlay, and gesture menu contents 
-        to prevent the progressive blur from appearing only after the animation ends. */}
+        {/* Apply the fade transition only to the glow, overlay, and gesture menu contents
+          to prevent them from appearing only after the animation ends. */}
         <FadeTransition nodeRef={overlayRef} in={fadeIn} type='fast' unmountOnExit onExited={onGestureMenuExited}>
           <div
             ref={overlayRef}
@@ -244,13 +289,15 @@ const GestureMenuWithTransition: FC = () => {
               // prevent mix-blend-mode and backdrop-filter from affecting each other
               isolation: 'isolate',
               width: '100%',
-              paddingBottom: '200px',
+              paddingBottom: '11.111rem',
               maxHeight: '100dvh',
             })}
           >
             <Overlay />
             {isGlowBackgroundLoaded && <Glow />}
-            <GestureMenu commands={commands} />
+            <div style={{ position: 'relative', zIndex: 1 }}>
+              <GestureMenu commands={commands} />
+            </div>
           </div>
         </FadeTransition>
       </div>

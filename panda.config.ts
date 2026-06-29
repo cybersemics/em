@@ -432,6 +432,9 @@ export default defineConfig({
             value: 'cubic-bezier(0.8,0.2,0.8,1)',
           },
         },
+        fonts: {
+          radioCanada: { value: "'Radio Canada Big', sans-serif" },
+        },
         fontSizes: {
           sm: { value: '80%' },
           md: { value: '90%' },
@@ -460,6 +463,7 @@ export default defineConfig({
             'cloneDroppedThought',
             'hoverArrow',
             'gestureTrace',
+            'gestureContentBlur',
             'hamburgerMenu',
             'sidebar',
             'modal',
