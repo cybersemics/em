@@ -86,3 +86,11 @@ it('Set Upper Case with multicursor selection', async () => {
   - HELLO EVERYONE, THIS IS ROSE. THANKS FOR YOUR HELP.
   - GOODBYE EVERYONE, THIS IS MAX. THANKS FOR YOUR HELP.`)
 })
+
+it('Recognizes a styled thought with uppercase text as UpperCase', async () => {
+  await dispatch([newThought({ value: '<b>HELLO <font style="background-color: rgb(0, 128, 255);">WORLD</font></b>' })])
+  await click('[data-testid="toolbar-icon"][aria-label="Letter Case"]')
+
+  const upperCase = document.querySelector('[aria-label="UpperCase"][data-selected="true"]')
+  expect(upperCase).toBeInTheDocument()
+})
