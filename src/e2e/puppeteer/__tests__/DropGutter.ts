@@ -5,6 +5,7 @@ import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
 import emulate from '../helpers/emulate'
 import getEditable from '../helpers/getEditable'
+import getEditingText from '../helpers/getEditingText'
 import paste from '../helpers/paste'
 import waitForAlertContent from '../helpers/waitForAlertContent'
 import waitForEditable from '../helpers/waitForEditable'
@@ -132,5 +133,78 @@ describe('DropGutter: mobile only', () => {
     // Assert that other thoughts still exist
     expect(await isThoughtInDOM('b')).toBe(true)
     expect(await isThoughtInDOM('c')).toBe(true)
+  })
+
+  it('should move the cursor to the previous sibling when a thought is archived via DropGutter (#4077)', async () => {
+    await paste(`
+        - One
+        - Two
+        - Three
+        `)
+
+    await clickThought('Two')
+
+    await dragToDropGutter(await waitForEditable('Two'))
+
+    await waitForAlertContent('Removed 1 thought')
+
+    // Wait for the browser's asynchronous focus restoration to settle. This is what could override
+    // the cursor that archiveThought correctly placed on the previous sibling (#4077).
+    await new Promise(resolve => setTimeout(resolve, 1000))
+
+    // The cursor should be placed on the previous sibling ("One"), not remain on the archived thought.
+    const cursorValue = await getEditingText()
+
+    expect(cursorValue).toBe('One')
+  })
+
+  it('should keep the cursor on the last known position when a different thought is archived via DropGutter (#4077)', async () => {
+    await paste(`
+        - One
+        - Two
+        - Three
+        - Four
+        - Five
+        `)
+
+    // Put the cursor on "Five", then archive a different thought ("Two") by dragging it to the DropGutter.
+    await clickThought('Five')
+
+    await dragToDropGutter(await waitForEditable('Two'))
+
+    await waitForAlertContent('Removed 1 thought')
+
+    // Wait for any asynchronous focus restoration to settle.
+    await new Promise(resolve => setTimeout(resolve, 1000))
+
+    // The cursor should remain on "Five" (its last known position), not move to a sibling of the archived thought.
+    const cursorValue = await getEditingText()
+
+    expect(cursorValue).toBe('Five')
+  })
+
+  it('should keep the cursor on the last known position when the first thought is archived via DropGutter (#4077)', async () => {
+    await paste(`
+        - One
+        - Two
+        - Three
+        - Four
+        - Five
+        `)
+
+    // Put the cursor on "Five", then archive the first thought ("One", which has no previous sibling) via the DropGutter.
+    await clickThought('Five')
+
+    await dragToDropGutter(await waitForEditable('One'))
+
+    await waitForAlertContent('Removed 1 thought')
+
+    // Wait for any asynchronous focus restoration to settle.
+    await new Promise(resolve => setTimeout(resolve, 1000))
+
+    // The cursor should remain on "Five" (its last known position), not move to the next sibling of the archived thought.
+    const cursorValue = await getEditingText()
+
+    expect(cursorValue).toBe('Five')
   })
 })

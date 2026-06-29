@@ -25,6 +25,7 @@ import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import equalThoughtValue from '../util/equalThoughtValue'
 import head from '../util/head'
+import isDescendantPath from '../util/isDescendantPath'
 import isDivider from '../util/isDivider'
 import isThoughtArchived from '../util/isThoughtArchived'
 import parentOf from '../util/parentOf'
@@ -108,6 +109,12 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
           : // Case IV: delete very last thought; remove cursor
             [null, undefined]
 
+  // Only relocate the cursor when it is on (or within) the thought being archived. When a
+  // different thought is archived (e.g. dragged to the DropGutter while the cursor is elsewhere),
+  // preserve the cursor's last known position rather than moving it to a sibling of the archived
+  // thought. (#4077)
+  const cursorOnArchived = isDescendantPath(state.cursor, path)
+
   return reducerFlow([
     ...(isDeletable
       ? [
@@ -147,11 +154,13 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
           },
         ]),
 
-    setCursor({
-      path: cursorNew,
-      isKeyboardOpen: state.isKeyboardOpen,
-      offset,
-    }),
+    cursorOnArchived
+      ? setCursor({
+          path: cursorNew,
+          isKeyboardOpen: state.isKeyboardOpen,
+          offset,
+        })
+      : null,
   ])(state)
 }
 
