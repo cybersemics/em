@@ -1,11 +1,11 @@
 import { KnownDevices } from 'puppeteer'
 import { ElementHandle } from 'puppeteer'
 import { JSHandle } from 'puppeteer'
-import type { WindowEm } from '../../../initialize'
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
 import emulate from '../helpers/emulate'
 import getEditable from '../helpers/getEditable'
+import getEditingText from '../helpers/getEditingText'
 import paste from '../helpers/paste'
 import waitForAlertContent from '../helpers/waitForAlertContent'
 import waitForEditable from '../helpers/waitForEditable'
@@ -153,13 +153,7 @@ describe('DropGutter: mobile only', () => {
     await new Promise(resolve => setTimeout(resolve, 1000))
 
     // The cursor should be placed on the previous sibling ("One"), not remain on the archived thought.
-    const cursorValue = await page.evaluate(() => {
-      const em = window.em as WindowEm
-      const cursor = em.testHelpers.getState().cursor
-      if (!cursor) return null
-      const id = cursor[cursor.length - 1]
-      return em.getThoughtById(id)?.value ?? null
-    })
+    const cursorValue = await getEditingText()
 
     expect(cursorValue).toBe('One')
   })
@@ -184,13 +178,7 @@ describe('DropGutter: mobile only', () => {
     await new Promise(resolve => setTimeout(resolve, 1000))
 
     // The cursor should remain on "Five" (its last known position), not move to a sibling of the archived thought.
-    const cursorValue = await page.evaluate(() => {
-      const em = window.em as WindowEm
-      const cursor = em.testHelpers.getState().cursor
-      if (!cursor) return null
-      const id = cursor[cursor.length - 1]
-      return em.getThoughtById(id)?.value ?? null
-    })
+    const cursorValue = await getEditingText()
 
     expect(cursorValue).toBe('Five')
   })
@@ -215,13 +203,7 @@ describe('DropGutter: mobile only', () => {
     await new Promise(resolve => setTimeout(resolve, 1000))
 
     // The cursor should remain on "Five" (its last known position), not move to the next sibling of the archived thought.
-    const cursorValue = await page.evaluate(() => {
-      const em = window.em as WindowEm
-      const cursor = em.testHelpers.getState().cursor
-      if (!cursor) return null
-      const id = cursor[cursor.length - 1]
-      return em.getThoughtById(id)?.value ?? null
-    })
+    const cursorValue = await getEditingText()
 
     expect(cursorValue).toBe('Five')
   })

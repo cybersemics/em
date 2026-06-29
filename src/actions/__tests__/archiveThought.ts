@@ -1,4 +1,3 @@
-import State from '../../@types/State'
 import archiveThought from '../../actions/archiveThought'
 import cursorUp from '../../actions/cursorUp'
 import newSubthought from '../../actions/newSubthought'
@@ -182,10 +181,10 @@ describe('normal view', () => {
         `,
       }),
       setCursor(['Five']),
-      (state: State) => archiveThought({ path: contextToPath(state, ['Two'])! })(state),
     ]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateBefore = reducerFlow(steps)(initialState())
+    const stateNew = archiveThought({ path: contextToPath(stateBefore, ['Two'])! })(stateBefore)
 
     expectPathToEqual(stateNew, stateNew.cursor, ['Five'])
   })
@@ -202,10 +201,10 @@ describe('normal view', () => {
         `,
       }),
       setCursor(['Five']),
-      (state: State) => archiveThought({ path: contextToPath(state, ['One'])! })(state),
     ]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateBefore = reducerFlow(steps)(initialState())
+    const stateNew = archiveThought({ path: contextToPath(stateBefore, ['One'])! })(stateBefore)
 
     expectPathToEqual(stateNew, stateNew.cursor, ['Five'])
   })

@@ -40,7 +40,6 @@ import getSetting from '../selectors/getSetting'
 import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursorSelector from '../selectors/hasMulticursor'
 import rootedParentOf from '../selectors/rootedParentOf'
-import thoughtToPath from '../selectors/thoughtToPath'
 import batchEditingStore from '../stores/batchEditing'
 import editingValueStore from '../stores/editingValue'
 import editingValueUntrimmedStore from '../stores/editingValueUntrimmed'
@@ -54,7 +53,6 @@ import haptics from '../util/haptics'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
 import isDocumentEditable from '../util/isDocumentEditable'
-import isThoughtArchived from '../util/isThoughtArchived'
 import strip from '../util/strip'
 import stripEmptyFormattingTags from '../util/stripEmptyFormattingTags'
 import trimHtml from '../util/trimHtml'
@@ -213,13 +211,6 @@ const Editable = ({
     ({ isKeyboardOpen }: { isKeyboardOpen?: boolean } = {}) => {
       dispatch((dispatch, getState) => {
         const state = getState()
-
-        // Do not set the cursor on an archived thought. After a focused thought is archived by
-        // dragging it to the DropGutter, a spurious tap/focus event can fire on its (now hidden)
-        // Editable, which would otherwise override the cursor that archiveThought placed on the
-        // previous sibling. The Editable's path may no longer include the =archive ancestor, so the
-        // thought's real path is resolved to determine whether it is archived. (#4077)
-        if (isThoughtArchived(state, thoughtToPath(state, head(path)))) return
 
         // do not set cursor if it is unchanged and we are not entering when keyboard is open
         if ((!isKeyboardOpen || state.isKeyboardOpen) && equalPath(state.cursor, path)) return
@@ -592,13 +583,17 @@ const Editable = ({
 
       dispatch((dispatch, getState) => {
         const { longPress } = getState()
-        if (longPress === LongPressState.Inactive) {
+        // Do not set the cursor on a hidden thought. After a focused thought is archived by dragging
+        // it to the DropGutter, a spurious focus event can fire on its (now hidden) Editable, which
+        // would otherwise override the cursor that archiveThought placed on the previous sibling.
+        // When hidden thoughts are shown, isVisible is true and the cursor can still be set. (#4077)
+        if (longPress === LongPressState.Inactive && isVisible) {
           setCursorOnThought({ isKeyboardOpen: true })
         }
       })
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [value, setCursorOnThought],
+    [value, isVisible, setCursorOnThought],
   )
 
   /**
