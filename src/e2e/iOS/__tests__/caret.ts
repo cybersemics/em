@@ -260,7 +260,7 @@ describe('Caret', () => {
     const homeNodeHandle = await waitForElement('[data-testid="home"]')
     await tap(homeNodeHandle)
 
-    await tap(await waitForEditable('Hello'), { horizontalTapLine: 'right', x: 6, pointerType: 'touch' })
+    await tap(await waitForEditable('Hello'), { horizontalTapLine: 'right', x: 6, y: 60, pointerType: 'touch' })
 
     const activeElementIsBody = await browser.execute(() => document.activeElement === document.body)
     expect(activeElementIsBody).toBe(true)
