@@ -57,9 +57,14 @@ const preventAutoscroll = (
   const yBelowKeyboard = Math.max(0, y + height + bottomMargin - viewportHeight)
   const yCenter = yOffsetCenter + yBelowKeyboard
 
+  // Batch all style reads before any style writes. Interleaving reads and writes forces the browser to recalculate layout multiple times, which is a common performance problem.
+  // Read the rendered paddingTop in pixels. getComputedStyle resolves the value even when it is applied via a CSS class rather than the inline style property (el.style.paddingTop), and always returns a px value. The data-prevent-autoscroll attribute set below does not affect paddingTop, so reading it here yields the same value as reading it after the write.
+  const paddingTopComputed = parseFloat(getComputedStyle(el).paddingTop) || 0
   transformOld = el.style.transform
   paddingBottomOld = el.style.paddingBottom
   paddingTopOld = el.style.paddingTop
+
+  // All style writes happen below, after the reads above.
   activeEl = el
   el.setAttribute('data-prevent-autoscroll', 'true')
 
@@ -70,7 +75,7 @@ const preventAutoscroll = (
     // - Only use transform (previous implementation): The browser selection becomes invisible on iOS 17. getSelection still returns the correct node and offset, so it is programmatically undetectable.
     // - Add a setTimeout to the preventAutoscrollEnd that is called in Editable.onFocus: The browser selection is visible, but the timeout introduces enough delay that the thought is re-rendered before its style is restored. This causes the thought to blink out of existence for a split second.
     el.style.transform = `translate(0, ${yCenter * 2}px)`
-    el.style.paddingTop = `${-yCenter * 2}px`
+    el.style.paddingTop = `${-yCenter * 2 + paddingTopComputed}px`
     autoscrollPadding = -yCenter * 2
   }
   // above center
