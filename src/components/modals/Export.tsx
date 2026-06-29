@@ -1,3 +1,4 @@
+import { Keyboard } from '@capacitor/keyboard'
 import ClipboardJS from 'clipboard'
 import React, {
   FC,
@@ -21,7 +22,7 @@ import ThoughtId from '../../@types/ThoughtId'
 import { alertActionCreator as alert } from '../../actions/alert'
 import { closeModalActionCreator as closeModal } from '../../actions/closeModal'
 import { errorActionCreator as error } from '../../actions/error'
-import { isMac, isTouch } from '../../browser'
+import { isIOS, isMac, isTouch } from '../../browser'
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import replicateTree from '../../data-providers/data-helpers/replicateTree'
 import { thoughtspaceRuntime } from '../../data-providers/thoughtspace'
@@ -479,6 +480,15 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
 
   /** Shares or downloads when the export button is clicked. */
   const onExportClick = () => {
+    // On the iOS Capacitor app, the native share sheet can open while the software keyboard is
+    // still visible, causing the two to overlap (#4294). Blur the focused editable and dismiss
+    // the keyboard before presenting the share sheet. This is done synchronously (no await) so
+    // that the user-activation context required by navigator.share() is preserved.
+    if (isIOS) {
+      selection.clear()
+      Keyboard.hide()
+    }
+
     // use mobile share if it is available
     if (navigator.share) {
       navigator.share({

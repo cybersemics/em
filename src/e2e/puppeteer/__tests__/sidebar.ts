@@ -7,6 +7,7 @@ import openSidebar from '../helpers/openSidebar'
 import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import setTheme from '../helpers/setTheme'
+import waitForSelector from '../helpers/waitForSelector'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
@@ -38,6 +39,7 @@ describe('sidebar', () => {
   it('recently edited thoughts', async () => {
     await press('Enter')
     await keyboard.type('a')
+    await waitForSelector('[aria-label=menu]', { hidden: true })
 
     await openSidebar()
     await click('[data-testid=sidebar-recentlyEdited]')
