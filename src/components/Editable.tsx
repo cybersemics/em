@@ -32,6 +32,7 @@ import {
   TUTORIAL_CONTEXT2_PARENT,
 } from '../constants'
 import asyncFocus from '../device/asyncFocus'
+import preventAutoscroll, { preventAutoscrollEnd } from '../device/preventAutoscroll'
 import * as selection from '../device/selection'
 import globals from '../globals'
 import findDescendant from '../selectors/findDescendant'
@@ -378,10 +379,11 @@ const Editable = ({
       throttledChangeRef.current.flush()
 
       asyncFocus({ force: true })
-      editable.focus({ preventScroll: true })
 
+      preventAutoscroll(editable)
       // Restore the selection offset captured when insertText(' ') arrived.
-      queueMicrotask(() => selection.set(editable, { offset: savedCharOffset }))
+      selection.set(editable, { offset: savedCharOffset })
+      preventAutoscrollEnd(editable)
 
       pendingAutocompleteAt = null
     }
