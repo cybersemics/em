@@ -1,4 +1,4 @@
-import type { Element } from 'webdriverio'
+import waitForElement from './waitForElement'
 
 interface Options {
   // Where on the horizontal axis of the target node's bounding box to tap.
@@ -16,6 +16,10 @@ interface Options {
 /**
  * Tap a node with an optional text offset or x,y offset.
  *
+ * Accepts either an Element handle or a CSS selector string. When a selector is
+ * given, waits for the element to exist and scrolls it into view if needed before
+ * tapping.
+ *
  * Coordinates are first calculated in WebView/viewport space (via
  * `getElementRect` / DOM `Range`) and then translated to device screen
  * coordinates by adding the WebView container's screen origin. The tap is
@@ -23,9 +27,20 @@ interface Options {
  * goes through iOS's real touch input pipeline.
  */
 const tap = async (
-  nodeHandle: Element,
+  nodeHandleOrSelector: WebdriverIO.Element | string,
   { horizontalTapLine = 'left', offset, x = 0, y = 0, releaseDelayMs = 100 }: Options = {},
 ) => {
+  let nodeHandle: WebdriverIO.Element
+  if (typeof nodeHandleOrSelector === 'string') {
+    nodeHandle = await waitForElement(nodeHandleOrSelector, { timeout: 10000 })
+    const isClickable = await nodeHandle.isClickable()
+    if (!isClickable) {
+      await nodeHandle.scrollIntoView({ block: 'center' })
+      await nodeHandle.waitForClickable({ timeout: 10000 })
+    }
+  } else {
+    nodeHandle = nodeHandleOrSelector
+  }
   // Get scroll position before tap
   const scrollBefore = await browser.execute(() => ({
     x: window.scrollX,

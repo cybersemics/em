@@ -19,20 +19,14 @@ interface PointerAction {
 
 /** Performs a touch swipe along a viewport-relative path, translated to screen coordinates via the WebView origin. */
 const gesture = async (path: Gesture, { xStart, yStart, segmentLength = 60, waitMs = 200 }: GestureOptions = {}) => {
-  // Get scroll position before gesture
-  const scrollBefore = await browser.execute(() => ({
-    x: window.scrollX,
-    y: window.scrollY,
+  const { scrollBefore, defaultX, defaultY } = await browser.execute(() => ({
+    scrollBefore: { x: window.scrollX, y: window.scrollY },
+    defaultX: window.innerWidth / 3,
+    defaultY: window.innerHeight / 2,
   }))
 
-  if (xStart === undefined || yStart === undefined) {
-    const viewport = await browser.execute(() => ({
-      x: window.innerWidth / 3,
-      y: window.innerHeight / 2,
-    }))
-    xStart = xStart ?? viewport.x
-    yStart = yStart ?? viewport.y
-  }
+  xStart = xStart ?? defaultX
+  yStart = yStart ?? defaultY
 
   const viewportPoints: { x: number; y: number }[] = [{ x: xStart, y: yStart }]
   let currentX = xStart
