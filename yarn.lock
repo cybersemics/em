@@ -11630,7 +11630,7 @@ __metadata:
     happy-dom: "npm:^20.10.6"
     himalaya: "npm:^1.1.1"
     html-escaper: "npm:^3.0.3"
-    idb-keyval: "npm:^6.2.4"
+    idb-keyval: "npm:^6.2.5"
     immer: "npm:^11.1.8"
     ipfs-http-client: "npm:^43.0.1"
     it-all: "npm:^3.0.11"
@@ -14884,10 +14884,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"idb-keyval@npm:^6.2.4":
-  version: 6.2.4
-  resolution: "idb-keyval@npm:6.2.4"
-  checksum: 10c0/ba4de402d7856d333015c021fe5ad7196a091127489368e522b9d9d0c29f563e4f51e2ffc1af08212ca7949d24e90c1fa040ce0313ce5a7ef2ba9f471ae1f66b
+"idb-keyval@npm:^6.2.5":
+  version: 6.2.5
+  resolution: "idb-keyval@npm:6.2.5"
+  checksum: 10c0/58055106e2447cd4a91c62f1c6d4122d8e6d141c86c6e79860dbb6af0c6462bc9520e84c1d56dc9e5fb66c817dffd04b2a2432efada1273b89db955fc49d374b
   languageName: node
   linkType: hard
 
