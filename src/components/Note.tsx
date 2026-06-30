@@ -11,7 +11,7 @@ import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { setDescendantActionCreator as setDescendant } from '../actions/setDescendant'
 import { setNoteFocusActionCreator as setNoteFocus } from '../actions/setNoteFocus'
 import { toggleNoteActionCreator as toggleNote } from '../actions/toggleNote'
-import { isTouch } from '../browser'
+import { isSafari, isTouch } from '../browser'
 import focusWithoutAutoscroll from '../device/focusWithoutAutoscroll'
 import getCaretOffset from '../device/getCaretOffset'
 import * as selection from '../device/selection'
@@ -153,11 +153,18 @@ const Note = React.memo(
       const note = noteRef.current
       if (!note) return
 
-      // Block native focus + native caret-from-tap, then route through focusWithoutAutoscroll
-      // (the same single entry point Editable uses) — focuses with preventScroll, places the
-      // caret at the tap offset, and suppresses the selection-driven autoscroll on iOS.
-      const { offset } = getCaretOffset(note, { clientX: e.clientX, clientY: e.clientY })
-      e.preventDefault()
+      // Route through focusWithoutAutoscroll (the same single entry point Editable uses) — focuses
+      // with preventScroll, places the caret at the tap offset, and suppresses the selection-driven
+      // autoscroll on iOS.
+      const { inVoidArea, offset } = getCaretOffset(note, { clientX: e.clientX, clientY: e.clientY })
+
+      // Only block the native mousedown on iOS Safari (so focusWithoutAutoscroll can re-take focus
+      // cleanly) or when the tap lands in a void area. On desktop, leaving the default intact
+      // preserves native behavior — notably double-click word selection, which preventDefault
+      // would otherwise suppress.
+      if ((isTouch && isSafari()) || inVoidArea) {
+        e.preventDefault()
+      }
       focusWithoutAutoscroll(note, { offset: offset ?? 0 })
     }, [])
 
