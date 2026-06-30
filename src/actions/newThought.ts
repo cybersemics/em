@@ -144,7 +144,7 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
   const newRank = insertContext
     ? getNextRank(state, ABSOLUTE_TOKEN)
     : sortPreference.type === 'Created' || (value !== '' && sortPreference.type === 'Alphabetical')
-      ? getSortedRank(state, insertId, value, created)
+      ? getSortedRank(state, insertId, value, { created })
       : insertBefore
         ? insertNewSubthought || !simplePath || isRoot(simplePath)
           ? getPrevRank(state, insertId, { aboveMeta })
