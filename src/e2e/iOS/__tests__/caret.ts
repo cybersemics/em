@@ -260,42 +260,14 @@ describe('Caret', () => {
     const homeNodeHandle = await waitForElement('[data-testid="home"]')
     await tap(homeNodeHandle)
 
-    await tap(await waitForEditable('Hello'), { horizontalTapLine: 'right', x: 6, y: 60, pointerType: 'touch' })
+    await tap(await waitForEditable('Hello'), { horizontalTapLine: 'right', x: 7, y: 60, pointerType: 'touch' })
 
     // Wait for focus to be cleared and activeElement to be body
     await waitUntil(async () => {
-      const result = await browser.execute(() => {
-        const activeEl = document.activeElement
-        const isBody = activeEl === document.body
-        const tagName = activeEl?.tagName
-        const className = activeEl?.className
-        const id = activeEl?.id
-        const nodeType = activeEl?.nodeType
-        const textContent = activeEl?.textContent?.substring(0, 50)
-
-        console.info('=== activeElement Debug Info ===')
-        console.info('isBody:', isBody)
-        console.info('tagName:', tagName)
-        console.info('className:', className)
-        console.info('id:', id)
-        console.info('nodeType:', nodeType)
-        console.info('textContent (first 50 chars):', textContent)
-        console.info('activeElement:', activeEl)
-        console.info('document.body === document.body:', document.body === document.body)
-        console.info('activeElement === document.body strict check:', activeEl === document.body)
-
-        return {
-          isBody,
-          tagName,
-          className,
-          id,
-          nodeType,
-          textContent,
-        }
-      })
-
-      console.info('Poll result:', result)
-      return result.isBody
+      const isBody = await browser.execute(() => document.activeElement === document.body)
+      const nodeType = await browser.execute(() => document.activeElement?.nodeType)
+      console.info('activeElement check - isBody:', isBody, 'nodeType:', nodeType)
+      return isBody
     })
 
     const activeElementIsBody = await browser.execute(() => document.activeElement === document.body)
