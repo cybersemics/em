@@ -1,4 +1,4 @@
-import { page } from '../setup'
+import { page } from '../session'
 
 /** Scroll to the top of the page. */
 const scroll = async (x: number, y: number) => {

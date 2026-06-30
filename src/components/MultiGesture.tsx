@@ -3,7 +3,8 @@ import { GestureResponderEvent, PanResponder, PanResponderInstance, View } from 
 import Direction from '../@types/Direction'
 import Gesture from '../@types/Gesture'
 import { noop } from '../constants'
-import gestureStore from '../stores/gesture'
+import testFlags from '../e2e/testFlags'
+import { clearGesture, updateGesture } from '../stores/gesture'
 import isInGestureZone from '../util/isInGestureZone'
 import ScrollZone from './ScrollZone'
 import TraceGesture from './TraceGesture'
@@ -125,6 +126,11 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     document.body.addEventListener(
       'touchmove',
       e => {
+        if (testFlags.logMultigesture) {
+          console.info('touchmove', {
+            disableScroll: this.disableScroll,
+          })
+        }
         if (this.disableScroll) {
           e.preventDefault()
         }
@@ -140,6 +146,16 @@ class MultiGesture extends React.Component<MultiGestureProps> {
       // would set this.abandon = true, which causes onPanResponderRelease to skip props.onEnd —
       // leaving the gesture menu and transparent overlay stuck on screen. See #3887.
       if (this.currentStart) return
+
+      if (testFlags.logMultigesture) {
+        const x = e.touches[0].clientX
+        const y = e.touches[0].clientY
+        console.info('touchstart', {
+          isInGestureZone: isInGestureZone(x, y, this.leftHanded),
+          shouldCancelGesture: this.props.shouldCancelGesture?.(x, y),
+        })
+      }
+
       if (e?.touches.length > 0) {
         const x = e.touches[0].clientX
         const y = e.touches[0].clientY
@@ -157,11 +173,17 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     // Since we set this.disableScroll or this.abandon on touchstart, we need to reset them on touchend.
     // This occurs, for eample, on tap.
     window.addEventListener('touchend', () => {
+      if (testFlags.logMultigesture) {
+        console.info('touchend')
+      }
       this.reset()
     })
 
     // touchcancel is fired when the user switches apps by swiping from the bottom of the screen
     window.addEventListener('touchcancel', e => {
+      if (testFlags.logMultigesture) {
+        console.info('touchcancel')
+      }
       this.props.onCancel?.({ clientStart: this.clientStart, e })
       this.reset()
     })
@@ -187,7 +209,14 @@ class MultiGesture extends React.Component<MultiGestureProps> {
       // Prevent gesture when any text is selected.
       // See https://github.com/cybersemics/em/issues/676.
       // NOTE: though it works simulating mobile on desktop, selectionchange is too late to prevent actual gesture on mobile, so we can't detect only when the text selection is being dragged
-      onMoveShouldSetPanResponder: () => !this.props.shouldCancelGesture?.(),
+      onMoveShouldSetPanResponder: () => {
+        if (testFlags.logMultigesture) {
+          console.info('onMoveShouldSetPanResponder', {
+            shouldCancelGesture: this.props.shouldCancelGesture?.(),
+          })
+        }
+        return !this.props.shouldCancelGesture?.()
+      },
 
       // Called when the responder system terminates the gesture without firing onPanResponderRelease,
       // e.g. when a competing responder takes over. Without this, props.onEnd / props.onCancel never
@@ -199,13 +228,22 @@ class MultiGesture extends React.Component<MultiGestureProps> {
       },
 
       onPanResponderMove: (e: GestureResponderEvent, gestureState: GestureState) => {
+        if (testFlags.logMultigesture) {
+          console.info('onPanResponderMove', {
+            shouldCancelGesture: this.props.shouldCancelGesture?.(),
+            gestureState,
+            abandon: this.abandon,
+            disableScroll: this.disableScroll,
+          })
+        }
+
         if (this.abandon) {
           return
         }
 
         if (this.props.shouldCancelGesture?.()) {
           this.props.onCancel?.({ clientStart: this.clientStart, e })
-          gestureStore.update({ gesture: '' })
+          clearGesture()
           this.abandon = true
           return
         }
@@ -262,13 +300,19 @@ class MultiGesture extends React.Component<MultiGestureProps> {
             // append the gesture to the sequence and call the onGesture handler
             this.sequence += g
             this.props.onGesture?.({ gesture: g, sequence: this.sequence, clientStart: this.clientStart!, e })
-            gestureStore.update({ gesture: this.sequence })
+            updateGesture(this.sequence)
           }
         }
       },
 
       // not called on touchcancel
       onPanResponderRelease: (e: GestureResponderEvent, gestureState: GestureState) => {
+        if (testFlags.logMultigesture) {
+          console.info('onPanResponderRelease', {
+            gestureState,
+            abandon: this.abandon,
+          })
+        }
         if (!this.abandon) {
           const clientEnd = {
             x: gestureState.moveX,
@@ -295,7 +339,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     this.scrollYStart = null
     this.disableScroll = false
     this.sequence = ''
-    gestureStore.update({ gesture: '' })
+    clearGesture()
   }
 
   render() {

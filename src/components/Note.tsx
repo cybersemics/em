@@ -16,11 +16,12 @@ import preventAutoscroll, { preventAutoscrollEnd } from '../device/preventAutosc
 import * as selection from '../device/selection'
 import useFreshCallback from '../hooks/useFreshCallback'
 import getThoughtById from '../selectors/getThoughtById'
+import noteValue from '../selectors/noteValue'
 import resolveNotePath from '../selectors/resolveNotePath'
 import store from '../stores/app'
+import batchEditingStore from '../stores/batchEditing'
 import equalPathHead from '../util/equalPathHead'
 import head from '../util/head'
-import noteValue from '../util/noteValue'
 import strip from '../util/strip'
 import useOnCut from './Editable/useOnCut'
 import FauxCaret from './FauxCaret'
@@ -124,7 +125,13 @@ const Note = React.memo(
 
           const targetPath = resolveNotePath(state, path) ?? path
 
-          dispatch(setDescendant({ path: targetPath, values: [value] }))
+          dispatch(
+            setDescendant({
+              path: targetPath,
+              values: [value],
+              mergePrev: batchEditingStore.getState(), // If batch editing is in progress, merge this edit with the previous one in the undo stack.
+            }),
+          )
         })
       },
       [dispatch, path, justPasted],

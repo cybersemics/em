@@ -1,9 +1,10 @@
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
 import dragAndDropFavorite from '../helpers/dragAndDropFavorite'
+import openSidebar from '../helpers/openSidebar'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
-import { page } from '../setup'
+import { page } from '../session'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
@@ -50,8 +51,7 @@ describe('favorites drag and drop', () => {
     await click('[aria-label="Add to Favorites"]')
 
     // Open favorites in sidebar
-    await click('[aria-label="menu"]')
-    await page.locator('[data-testid="sidebar"]').wait()
+    await openSidebar()
 
     // Verify initial order
     expect(await selectFavoritesText()).toEqual(['a', 'b', 'c', 'd'])
@@ -85,9 +85,7 @@ describe('favorites drag and drop', () => {
     await clickThought('e')
     await click('[aria-label="Add to Favorites"]')
 
-    // Open favorites in sidebar
-    await click('[aria-label="menu"]')
-    await page.locator('[data-testid="sidebar"]').wait()
+    await openSidebar()
 
     // Verify initial order
     expect(await selectFavoritesText()).toEqual(['a', 'b', 'c', 'e'])

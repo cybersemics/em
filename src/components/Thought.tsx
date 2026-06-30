@@ -167,7 +167,7 @@ const useCol1Alignment = ({ path, value, isTableCol1 }: UseCol1AlignParams) => {
     return cursorParentId ? getChildren(state, cursorParentId).map(t => t.value) : []
   }, shallowEqual)
 
-  interface TransitionStyle {
+  type TransitionStyle = {
     transform: string
     transition: string
   }
@@ -335,7 +335,6 @@ const ThoughtContainer = ({
   // must use isContextViewActive to read from live state rather than showContexts which is a static propr from the Subthoughts component. showContext is not updated when the context view is toggled, since the Thought should not be re-rendered.
 
   const dragHoldResult = useDragHold({
-    isDragging,
     simplePath,
     sourceZone: DragThoughtZone.Thoughts,
     toggleMulticursorOnLongPress: true,

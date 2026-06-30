@@ -20,7 +20,7 @@ const storageModel = storage.model({
     decode: (s: string | null): Path[] => (s ? (JSON.parse(s) as Path[]) : []),
     encode: value => JSON.stringify(value),
   },
-  // recent commands executed from the command palette
+  // recent commands executed from the desktop command universe
   recentCommands: {
     default: [] as CommandId[],
   },

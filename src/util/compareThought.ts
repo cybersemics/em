@@ -5,11 +5,11 @@ import ComparatorValue from '../@types/ComparatorValue'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import { ALLOWED_FORMATTING_TAGS, EMOJI_REGEX, REGEX_EMOJI_GLOBAL } from '../constants'
+import noteValue from '../selectors/noteValue'
 import thoughtToPath from '../selectors/thoughtToPath'
 import compareByRank from './compareByRank'
 import isAttribute from './isAttribute'
 import lower from './lower'
-import noteValue from './noteValue'
 
 const STARTS_WITH_EMOJI_REGEX = new RegExp(`^${EMOJI_REGEX.source}`)
 const IGNORED_PREFIXES = ['the ']

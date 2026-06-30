@@ -1,3 +1,4 @@
+import { Keyboard } from '@capacitor/keyboard'
 import ClipboardJS from 'clipboard'
 import React, {
   FC,
@@ -11,7 +12,6 @@ import React, {
   useState,
 } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import useOnClickOutside from 'use-onclickoutside'
 import { css, cx } from '../../../styled-system/css'
 import { extendTapRecipe } from '../../../styled-system/recipes'
 import ExportOption from '../../@types/ExportOption'
@@ -22,7 +22,7 @@ import ThoughtId from '../../@types/ThoughtId'
 import { alertActionCreator as alert } from '../../actions/alert'
 import { closeModalActionCreator as closeModal } from '../../actions/closeModal'
 import { errorActionCreator as error } from '../../actions/error'
-import { isMac, isTouch } from '../../browser'
+import { isIOS, isMac, isTouch } from '../../browser'
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import replicateTree from '../../data-providers/data-helpers/replicateTree'
 import download from '../../device/download'
@@ -243,7 +243,21 @@ const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
   }, [])
 
   const dropDownRef = React.useRef<HTMLDivElement>(null)
-  useOnClickOutside(dropDownRef as React.RefObject<HTMLDivElement>, closeDropdown)
+
+  // Close the dropdown when clicking outside of it. Inlined from the unmaintained use-onclickoutside package.
+  useEffect(() => {
+    /** Closes the dropdown on mousedown/touchstart outside the dropdown element. */
+    const listener = (e: MouseEvent | TouchEvent) => {
+      if (!dropDownRef.current || dropDownRef.current.contains(e.target as Node)) return
+      closeDropdown()
+    }
+    document.addEventListener('mousedown', listener)
+    document.addEventListener('touchstart', listener, { passive: true })
+    return () => {
+      document.removeEventListener('mousedown', listener)
+      document.removeEventListener('touchstart', listener)
+    }
+  }, [closeDropdown])
 
   return (
     <span ref={dropDownRef} className={css({ position: 'relative', whiteSpace: 'nowrap', userSelect: 'none' })}>
@@ -457,6 +471,15 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
 
   /** Shares or downloads when the export button is clicked. */
   const onExportClick = () => {
+    // On the iOS Capacitor app, the native share sheet can open while the software keyboard is
+    // still visible, causing the two to overlap (#4294). Blur the focused editable and dismiss
+    // the keyboard before presenting the share sheet. This is done synchronously (no await) so
+    // that the user-activation context required by navigator.share() is preserved.
+    if (isIOS) {
+      selection.clear()
+      Keyboard.hide()
+    }
+
     // use mobile share if it is available
     if (navigator.share) {
       navigator.share({
@@ -555,7 +578,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
         checked: shouldIncludeMarkdownFormatting,
         title: 'Formatting Characters',
         description:
-          'Include **double asteriskss** for bold and *single asterisks* for italics. If unchecked, formatting will be lost.',
+          'Include **double asterisks** for bold and *single asterisk* for italics. If unchecked, formatting will be lost.',
       },
     ],
 
