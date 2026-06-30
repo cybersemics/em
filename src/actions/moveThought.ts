@@ -84,17 +84,20 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
   const sameContext = sourceParentThought.id === destinationThoughtId
   const childrenOfDestination = getChildrenRanked(state, destinationThoughtId)
 
-  /**
-   * Find first normalized duplicate thought.
-   * Exclude the source thought's own parent: outdenting (or dragging) a thought to its grandparent lands it next to
-   * its same-valued parent, but merging a thought into its own parent would delete it (mergeThoughts nulls the source),
-   * making the moved thought disappear. Duplicate siblings are a supported state, so move it normally instead.
-   */
+  // When the source thought's own parent is a same-valued child of the destination (i.e. outdenting or dragging a
+  // thought next to a same-valued parent), do not merge at all. Merging would null the source (mergeThoughts deletes
+  // it), making the moved thought disappear — whether it merges into its own parent (#3621) or into another duplicate
+  // sibling that is also present at the destination (#3621 Issue B). Duplicate siblings are a supported state, so the
+  // thought is moved beside its parent instead.
+  const sourceParentIsDuplicateSibling =
+    sourceParentThought.parentId === destinationThoughtId &&
+    normalizeThought(sourceParentThought.value) === normalizeThought(sourceThought.value)
+
+  /** Find first normalized duplicate thought, unless the source's parent is itself a same-valued sibling (see above). */
   const duplicateSubthought = () =>
-    childrenOfDestination.find(
-      child =>
-        child.id !== sourceThought.parentId && normalizeThought(child.value) === normalizeThought(sourceThought.value),
-    )
+    sourceParentIsDuplicateSibling
+      ? undefined
+      : childrenOfDestination.find(child => normalizeThought(child.value) === normalizeThought(sourceThought.value))
 
   // if thought is being moved to the same context that is not a duplicate case
   const duplicateThought = !sameContext ? duplicateSubthought() : null

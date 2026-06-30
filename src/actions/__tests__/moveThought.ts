@@ -531,6 +531,56 @@ it('does not merge a thought into its own duplicate parent', () => {
   expect(missingParentIds).toHaveLength(0)
 })
 
+// Regression test for https://github.com/cybersemics/em/issues/3621 (Issue B)
+// When the moved thought has more than one same-valued sibling at the destination (its own parent plus another
+// duplicate), outdenting must not merge it into the other duplicate either. All duplicates are preserved.
+it('does not merge a thought into a duplicate sibling when its parent is also a duplicate', () => {
+  const text = `
+  - a
+    - b
+      - b
+        - c
+    - b
+  `
+
+  const steps = [
+    importText({ text }),
+    moveThoughtAtFirstMatch({
+      from: ['a', 'b', 'b'],
+      to: ['a', 'b'],
+      newRank: 2,
+    }),
+  ]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - b
+    - b
+    - b
+      - c`)
+
+  const thoughtA = contextToThought(stateNew, ['a'])!
+
+  // all three b's are preserved as children of a (the moved b is not merged away)
+  const childrenOfA = getChildrenRankedByContext(stateNew, ['a'])
+  expect(childrenOfA).toHaveLength(3)
+  childrenOfA.forEach(child => {
+    expect(child.value).toBe('b')
+    expect(child.parentId).toBe(thoughtA.id)
+  })
+  expect(getContexts(stateNew, 'b')).toHaveLength(3)
+
+  // c is preserved under the moved b
+  expect(getContexts(stateNew, 'c')).toHaveLength(1)
+
+  const { missingLexemeValues, missingParentIds } = checkDataIntegrity(stateNew)
+  expect(missingLexemeValues).toHaveLength(0)
+  expect(missingParentIds).toHaveLength(0)
+})
+
 it('move with nested duplicate thoughts and merge their children', () => {
   const text = `
   - a
