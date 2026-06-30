@@ -262,8 +262,15 @@ describe('Caret', () => {
 
     await tap(await waitForEditable('Hello'), { horizontalTapLine: 'right', x: 6, y: 60, pointerType: 'touch' })
 
+    // Wait for focus to be cleared and activeElement to be body
+    await waitUntil(async () => {
+      const isBody = await browser.execute(() => document.activeElement === document.body)
+      const nodeType = await browser.execute(() => document.activeElement?.nodeType)
+      console.info('activeElement check - isBody:', isBody, 'nodeType:', nodeType)
+      return isBody
+    })
+
     const activeElementIsBody = await browser.execute(() => document.activeElement === document.body)
-    console.info(await browser.execute(() => document.activeElement?.nodeType))
     expect(activeElementIsBody).toBe(true)
   })
 })
