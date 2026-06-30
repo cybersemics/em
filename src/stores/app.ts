@@ -12,6 +12,7 @@ import undoRedoEnhancer from '../redux-enhancers/undoRedoEnhancer'
 import updateJumpHistory from '../redux-enhancers/updateJumpHistoryEnhancer'
 import validateStateEnhancer from '../redux-enhancers/validateStateEnhancer'
 import clearSelection from '../redux-middleware/clearSelection'
+import closeDropdownsWhenCursorNull from '../redux-middleware/closeDropdownsWhenCursorNull'
 import doNotDispatchReducer from '../redux-middleware/doNotDispatchReducer'
 import freeThoughts from '../redux-middleware/freeThoughts'
 import loggerMiddleware from '../redux-middleware/loggerMiddleware'
@@ -43,6 +44,7 @@ const middlewareEnhancer = applyMiddleware(
   freeThoughts,
   loggerMiddleware,
   multicursorAlertMiddleware,
+  closeDropdownsWhenCursorNull,
 )
 
 // only validate Redux state in dev and test environments
