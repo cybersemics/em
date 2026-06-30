@@ -1,5 +1,6 @@
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
+import getThoughtById from '../../selectors/getThoughtById'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
@@ -44,6 +45,25 @@ it('no-op if cursor is a root thought', () => {
   - a
     - b
       - c`)
+})
+
+it('swaps two empty thoughts without error', () => {
+  // Create an empty parent with an empty child and swap them.
+  // Both thoughts have value '' (empty string), which previously triggered an unwanted merge.
+  const steps = [newThought({ value: '' }), newThought({ value: '', insertNewSubthought: true }), swapParent]
+
+  // Should not throw
+  const stateNew = reducerFlow(steps)(initialState())
+
+  // No error alert should appear
+  expect(stateNew.alert?.value).toBeFalsy()
+
+  // Cursor should be on the child thought (which is now at root level after the swap)
+  const cursorId = stateNew.cursor?.[stateNew.cursor.length - 1]
+  expect(cursorId).toBeTruthy()
+  const cursorThought = getThoughtById(stateNew, cursorId!)
+  expect(cursorThought).toBeTruthy()
+  expect(cursorThought!.value).toBe('')
 })
 
 it('swaps child thought with parent', () => {

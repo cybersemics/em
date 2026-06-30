@@ -35,6 +35,8 @@ export interface MoveThoughtPayload {
   offset?: number
   // skip the auto rerank to prevent infinite loop
   skipRerank?: boolean
+  /** When true, skips merging with a duplicate thought in the destination context. Use when the caller manages duplicate handling itself (e.g. swapParent). */
+  skipMerge?: boolean
   /** The new rank of the destination thought. This will be ignored if the thought is moved into a sorted context. */
   newRank: number
   /**
@@ -62,7 +64,7 @@ export const getMoveThoughtAfterIdByRank = (
 // @MIGRATION_TODO: use (sourceId and destinationId) or simplePath instead of passing paths. Should low level handle context view logic ??
 /** Moves a thought from one context to another, or within the same context. */
 const moveThought = (state: State, payload: MoveThoughtPayload) => {
-  const { oldPath, newPath, offset, skipRerank, newRank, afterId } = payload
+  const { oldPath, newPath, offset, skipRerank, skipMerge, newRank, afterId } = payload
   // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
   const recentlyEdited = state.recentlyEdited
   // try {
@@ -124,7 +126,9 @@ const moveThought = (state: State, payload: MoveThoughtPayload) => {
     childrenOfDestination.find(child => normalizeThought(child.value) === normalizeThought(sourceThought.value))
 
   // if thought is being moved to the same context that is not a duplicate case
-  const duplicateThought = !sameContext ? duplicateSubthought() : null
+  // skipMerge bypasses the auto-merge when the caller intentionally moves a thought to a context
+  // that already contains a thought with the same value (e.g. swapParent with two empty thoughts)
+  const duplicateThought = !sameContext && !skipMerge ? duplicateSubthought() : null
 
   const isPendingMerge = duplicateThought && (sourceThought.pending || duplicateThought.pending)
 
