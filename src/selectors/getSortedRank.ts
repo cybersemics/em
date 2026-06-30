@@ -72,14 +72,13 @@ const getSortedRank = (
   const { staleId } = options
 
   // For alphabetical sorting
-  const index = children
-    .filter(child => child.id !== staleId)
-    .findIndex(child =>
-      isDescending
-        ? compareReasonableDescending(child.value, value) !== -1
-        : compareReasonable(child.value, value) !== -1,
-    )
-  return calculateRank(children, index)
+  const childrenFiltered = staleId ? children.filter(child => child.id !== staleId) : children
+  const index = childrenFiltered.findIndex(child =>
+    isDescending
+      ? compareReasonableDescending(child.value, value) !== -1
+      : compareReasonable(child.value, value) !== -1,
+  )
+  return calculateRank(childrenFiltered, index)
 }
 
 export default getSortedRank
