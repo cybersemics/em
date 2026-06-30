@@ -1,5 +1,6 @@
 /* eslint-disable import/prefer-default-export */
 import Thunk from '../@types/Thunk'
+import { isSafari, isTouch } from '../browser'
 import { ColorToken } from '../colors.config'
 import * as selection from '../device/selection'
 import getThoughtById from '../selectors/getThoughtById'
@@ -49,6 +50,11 @@ export const formatSelectionActionCreator =
         state.noteFocus ? (noteValue(state, state.cursor) ?? '') : thought.value,
       )
       const savedSelection = selection.save()
+      const inputMode = contentEditable.getAttribute('inputmode')
+
+      // Prevent the virtual keyboard from opening when the editable is focused
+      if (isTouch && isSafari()) contentEditable.setAttribute('inputmode', 'none')
+
       // Note that we must suppress focus events in the Editable component, otherwise selecting text will set editing:true on mobile.
       selection.select(contentEditable)
       if (!(command === 'backColor' && color === 'bg' && !hasCustomBackgroundColor)) {
@@ -60,6 +66,8 @@ export const formatSelectionActionCreator =
       } else {
         selection.clear()
       }
+
+      if (isTouch && isSafari()) contentEditable.setAttribute('inputmode', inputMode ?? '')
     }
     // format selected text only
     else {
