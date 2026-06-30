@@ -241,6 +241,8 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
           moveThought({
             oldPath: thoughtFrom,
             newPath,
+            // dropping beside a same-valued sibling is a positional move, not a merge; preserve duplicate siblings (#3621)
+            preventMerge: true,
             newRank: prevPath ? getRankAfter(state, prevPath) : getRankBefore(state, props.simplePath),
           }),
         )

@@ -36,6 +36,29 @@ describe('normal view', () => {
   - a`)
   })
 
+  // Regression test for https://github.com/cybersemics/em/issues/3621 (Issue C)
+  // Outdenting a thought into a context that already contains a same-valued "uncle" (a sibling of its parent) must not
+  // merge it into (and thus delete) that uncle. The parent itself need not be a duplicate. All same-valued thoughts are
+  // preserved as duplicate siblings.
+  it('outdent a thought next to a duplicate uncle should not make it disappear', () => {
+    const text = `
+    - AAA
+    - BBB
+      - AAA
+    - AAA`
+
+    const steps = [importText({ text }), setCursor(['BBB', 'AAA']), outdent]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - AAA
+  - BBB
+  - AAA
+  - AAA`)
+  })
+
   it('outdent with no cursor should do nothing ', () => {
     const steps = [newThought('a'), newSubthought('a1'), setCursor(null), outdent]
 

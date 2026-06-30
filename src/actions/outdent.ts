@@ -63,6 +63,8 @@ const outdent = (state: State): State => {
     oldPath: cursor,
     newPath: cursorNew,
     ...(offset != null ? { offset } : null),
+    // outdenting beside a same-valued sibling is a supported duplicate state, not a merge (#3621)
+    preventMerge: true,
     newRank: getRankAfter(state, parentOf(simplifyPath(state, cursor))),
   })
 }

@@ -581,6 +581,74 @@ it('does not merge a thought into a duplicate sibling when its parent is also a 
   expect(missingParentIds).toHaveLength(0)
 })
 
+// Regression test for https://github.com/cybersemics/em/issues/3621 (Issue C)
+// With preventMerge (set by structural moves such as outdent and drag-and-drop), moving a thought next to a same-valued
+// "uncle" (a sibling of its parent) must not merge it into that uncle even though the parent itself is not a duplicate.
+// All same-valued thoughts are preserved as duplicate siblings.
+it('does not merge a thought into a duplicate uncle when preventMerge is set', () => {
+  const text = `
+  - AAA
+  - BBB
+    - AAA
+  - AAA
+  `
+
+  const steps = [
+    importText({ text }),
+    moveThoughtAtFirstMatch({
+      from: ['BBB', 'AAA'],
+      to: ['AAA'],
+      preventMerge: true,
+      newRank: 1,
+    }),
+  ]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  // all three AAA are preserved (the moved AAA is not merged into the duplicate uncle); BBB is emptied of its child
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - AAA
+  - BBB
+  - AAA
+  - AAA`)
+  expect(getContexts(stateNew, 'AAA')).toHaveLength(3)
+
+  const { missingLexemeValues, missingParentIds } = checkDataIntegrity(stateNew)
+  expect(missingLexemeValues).toHaveLength(0)
+  expect(missingParentIds).toHaveLength(0)
+})
+
+// Without preventMerge, moveThought still collapses a thought into a same-valued sibling at the destination — the merge
+// feature relied upon by uncategorize, swapNote, and importText must remain intact.
+it('still merges into a duplicate sibling when preventMerge is not set', () => {
+  const text = `
+  - a
+    - b
+  - c
+    - a
+      - b`
+
+  const steps = [
+    importText({ text }),
+    moveThoughtAtFirstMatch({
+      from: ['c', 'a'],
+      to: ['a'],
+      newRank: 0,
+    }),
+  ]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - b
+  - c`)
+
+  expect(getContexts(stateNew, 'a')).toHaveLength(1)
+})
+
 it('move with nested duplicate thoughts and merge their children', () => {
   const text = `
   - a

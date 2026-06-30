@@ -34,13 +34,23 @@ export interface MoveThoughtPayload {
   offset?: number
   // skip the auto rerank to prevent infinite loop
   skipRerank?: boolean
+  /**
+   * Prevent merging the moved thought into a same-valued sibling already present at the destination. Used by structural
+   * moves (outdent, drag-and-drop) where duplicate siblings are a supported state and an incidental merge would delete
+   * the moved thought (#3621). Programmatic callers that intentionally collapse duplicates (e.g. uncategorize, swapNote,
+   * importText) leave this unset so the merge still happens.
+   */
+  preventMerge?: boolean
   /** The new rank of the destination thought. This will be ignored if the thought is moved into a sorted context. */
   newRank: number
 }
 
 // @MIGRATION_TODO: use (sourceId and destinationId) or simplePath instead of passing paths. Should low level handle context view logic ??
 /** Moves a thought from one context to another, or within the same context. */
-const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRank }: MoveThoughtPayload) => {
+const moveThought = (
+  state: State,
+  { oldPath, newPath, offset, skipRerank, preventMerge, newRank }: MoveThoughtPayload,
+) => {
   // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
   const recentlyEdited = state.recentlyEdited
   // try {
@@ -93,9 +103,13 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
     sourceParentThought.parentId === destinationThoughtId &&
     normalizeThought(sourceParentThought.value) === normalizeThought(sourceThought.value)
 
-  /** Find first normalized duplicate thought, unless the source's parent is itself a same-valued sibling (see above). */
+  /**
+   * Find first normalized duplicate thought, unless merging is suppressed: either the source's parent is itself a
+   * same-valued sibling (always — see above), or the caller explicitly prevents merging for a structural move such as
+   * outdent or drag-and-drop (#3621), where duplicate siblings are preserved instead of collapsed.
+   */
   const duplicateSubthought = () =>
-    sourceParentIsDuplicateSibling
+    preventMerge || sourceParentIsDuplicateSibling
       ? undefined
       : childrenOfDestination.find(child => normalizeThought(child.value) === normalizeThought(sourceThought.value))
 
