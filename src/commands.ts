@@ -82,12 +82,19 @@ const digits = keyValueBy(Array(58 - 48).fill(0), (n, i) => ({
 export const hashCommand = (keyboard: string | Key): string => {
   const key = typeof keyboard === 'string' ? { key: keyboard } : keyboard
 
-  return (key.meta ? 'META_' : '') + (key.alt ? 'ALT_' : '') + (key.shift ? 'SHIFT_' : '') + key.key?.toUpperCase()
+  return (
+    (key.meta ? 'META_' : '') +
+    (key.control ? 'CTRL_' : '') +
+    (key.alt ? 'ALT_' : '') +
+    (key.shift ? 'SHIFT_' : '') +
+    key.key?.toUpperCase()
+  )
 }
 
 /** Hash all the properties of a keydown event into a string that can be compared with the result of hashCommand. */
 export const hashKeyDown = (e: KeyboardEvent): string =>
   (e.metaKey || e.ctrlKey ? 'META_' : '') +
+  (isMac && e.ctrlKey && e.metaKey ? 'CTRL_' : '') +
   (e.altKey ? 'ALT_' : '') +
   (e.shiftKey ? 'SHIFT_' : '') +
   // for some reason, e.key returns 'Dead' in some cases, perhaps because of alternate keyboard settings
