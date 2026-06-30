@@ -34,13 +34,23 @@ export interface MoveThoughtPayload {
   offset?: number
   // skip the auto rerank to prevent infinite loop
   skipRerank?: boolean
+  /**
+   * Prevent merging the moved thought into a same-valued sibling already present at the destination. Used by structural
+   * moves (outdent, drag-and-drop) where duplicate siblings are a supported state and an incidental merge would delete
+   * the moved thought (#3621). Programmatic callers that intentionally collapse duplicates (e.g. uncategorize, swapNote,
+   * importText) leave this unset so the merge still happens.
+   */
+  preventMerge?: boolean
   /** The new rank of the destination thought. This will be ignored if the thought is moved into a sorted context. */
   newRank: number
 }
 
 // @MIGRATION_TODO: use (sourceId and destinationId) or simplePath instead of passing paths. Should low level handle context view logic ??
 /** Moves a thought from one context to another, or within the same context. */
-const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRank }: MoveThoughtPayload) => {
+const moveThought = (
+  state: State,
+  { oldPath, newPath, offset, skipRerank, preventMerge, newRank }: MoveThoughtPayload,
+) => {
   // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
   const recentlyEdited = state.recentlyEdited
   // try {
@@ -84,11 +94,24 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
   const sameContext = sourceParentThought.id === destinationThoughtId
   const childrenOfDestination = getChildrenRanked(state, destinationThoughtId)
 
+  // When the source thought's own parent is a same-valued child of the destination (i.e. outdenting or dragging a
+  // thought next to a same-valued parent), do not merge at all. Merging would null the source (mergeThoughts deletes
+  // it), making the moved thought disappear — whether it merges into its own parent (#3621) or into another duplicate
+  // sibling that is also present at the destination (#3621 Issue B). Duplicate siblings are a supported state, so the
+  // thought is moved beside its parent instead.
+  const sourceParentIsDuplicateSibling =
+    sourceParentThought.parentId === destinationThoughtId &&
+    normalizeThought(sourceParentThought.value) === normalizeThought(sourceThought.value)
+
   /**
-   * Find first normalized duplicate thought.
+   * Find first normalized duplicate thought, unless merging is suppressed: either the source's parent is itself a
+   * same-valued sibling (always — see above), or the caller explicitly prevents merging for a structural move such as
+   * outdent or drag-and-drop (#3621), where duplicate siblings are preserved instead of collapsed.
    */
   const duplicateSubthought = () =>
-    childrenOfDestination.find(child => normalizeThought(child.value) === normalizeThought(sourceThought.value))
+    preventMerge || sourceParentIsDuplicateSibling
+      ? undefined
+      : childrenOfDestination.find(child => normalizeThought(child.value) === normalizeThought(sourceThought.value))
 
   // if thought is being moved to the same context that is not a duplicate case
   const duplicateThought = !sameContext ? duplicateSubthought() : null
