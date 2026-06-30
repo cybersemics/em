@@ -17,8 +17,6 @@ local.log
 .DS_Store
 .env*.local
 .eslintcache
-.firebase
-.firebaserc
 .history
 .idea
 .vercel
@@ -32,6 +30,7 @@ __diff_output__
 ## PandaCSS
 styled-system
 styled-system-studio
+*.cpuprofile
 
 # WDIO
 wdio.*
@@ -39,3 +38,4 @@ browserstack.*
 local.*
 /log
 /logs
+

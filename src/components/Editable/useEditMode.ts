@@ -43,6 +43,7 @@ const useEditMode = ({
   const hadSidebar = usePrevious(showSidebar)
   const store = useStore()
   const dispatch = useDispatch()
+  const pressingRef = useRef(false)
 
   // focus on the ContentEditable element if editing or on desktop
   const editMode = !isTouch || editing
@@ -104,6 +105,12 @@ const useEditMode = ({
     const editable = contentRef.current
     if (!editable) return
 
+    /** Marks the beginning of a touch so that onMouseDown can determine whether a long press is occurring. */
+    const onTouchStart = () => (pressingRef.current = true)
+
+    /** Marks the end of a touch, indicating to onMouseDown that a long press is not occurring. */
+    const onTouchEnd = () => (pressingRef.current = false)
+
     /**
      * Handles the mousedown event for the editable element.
      * Prevents focus on non-cursor thoughts or during multiselect clicks.
@@ -116,6 +123,10 @@ const useEditMode = ({
         e.preventDefault()
         return
       }
+
+      // If the press is ongoing (touchend has not been dispatched) then a long press is ongoing and manual caret
+      // positioning will interfere with default iOS Safari drag-and-drop text selection.
+      if (pressingRef.current) return
 
       // If editing or the cursor is on the thought, perform manual caret positioning so the offset is correct.
       // See: #981
@@ -162,8 +173,17 @@ const useEditMode = ({
     }
 
     editable.addEventListener('mousedown', onMouseDown)
+    if (isTouch && isSafari()) {
+      editable.addEventListener('touchstart', onTouchStart)
+      editable.addEventListener('touchend', onTouchEnd)
+    }
+
     return () => {
       editable.removeEventListener('mousedown', onMouseDown)
+      if (isTouch && isSafari()) {
+        editable.removeEventListener('touchstart', onTouchStart)
+        editable.removeEventListener('touchend', onTouchEnd)
+      }
     }
   }, [contentRef, editingOrOnCursor, isMulticursor, path, dispatch])
 

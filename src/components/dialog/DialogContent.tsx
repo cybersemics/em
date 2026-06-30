@@ -1,4 +1,4 @@
-import React, { PropsWithChildren, useEffect, useRef } from 'react'
+import { PropsWithChildren, RefObject, useEffect, useRef } from 'react'
 import { dialogRecipe } from '../../../styled-system/recipes'
 
 /** Minimum thumb height in px so the thumb stays visible on very long content. */
@@ -12,10 +12,15 @@ const THUMB_HIDE_DELAY = 800
  * WebKit cannot recolor its native overflow scrollbar via CSS (it renders dark on iOS < 26 regardless
  * of `scrollbar-color` / `::-webkit-scrollbar-*` / `color-scheme`). The native scrollbar is hidden in
  * dialogRecipe and this JS-driven thumb provides a grey scrollbar consistent across all platforms.
+ *
+ * `scrollRef` is forwarded onto the scrollable region so the consumer can read/control the scroll
+ * position (e.g. the Command Universe resets it to the top when its search results crossfade).
  */
-const DialogContent: React.FC<PropsWithChildren> = ({ children }) => {
+const DialogContent: React.FC<PropsWithChildren<{ scrollRef: RefObject<HTMLDivElement | null> }>> = ({
+  children,
+  scrollRef,
+}) => {
   const dialog = dialogRecipe()
-  const scrollRef = useRef<HTMLDivElement>(null)
   const thumbRef = useRef<HTMLDivElement>(null)
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
@@ -66,7 +71,7 @@ const DialogContent: React.FC<PropsWithChildren> = ({ children }) => {
       resizeObserver.disconnect()
       clearTimeout(hideTimerRef.current)
     }
-  }, [])
+  }, [scrollRef])
 
   return (
     <div className={dialog.contentWrapper}>

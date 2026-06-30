@@ -101,7 +101,7 @@ const DropEnd = ({
   return (
     <li
       className={cx(
-        dropEndRecipe({ type: 'dropChild' }),
+        dropEndRecipe(),
         css({
           display: 'list-item',
           // If dropping target is table column 1, do not set width (but use width property of dropEndRecipe)
