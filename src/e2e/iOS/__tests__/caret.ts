@@ -16,6 +16,7 @@ import newThought from '../helpers/newThought'
 import paste from '../helpers/paste'
 import tap from '../helpers/tap'
 import waitForEditable from '../helpers/waitForEditable'
+import waitForElement from '../helpers/waitForElement'
 import waitUntil from '../helpers/waitUntil'
 
 // tests succeeds individually, but fails when there are too many tests running in parallel
@@ -250,5 +251,27 @@ describe('Caret', () => {
 
     expect(selectionTextContent).toBe('new')
     expect(childrenTexts).toEqual(['foo', 'bar'])
+  })
+
+  it('Focus is prevented after clearing the cursor', async () => {
+    await newThought('Hello')
+    await hideKeyboardByTappingDone()
+
+    const homeNodeHandle = await waitForElement('[data-testid="home"]')
+    await tap(homeNodeHandle)
+
+    await tap(await waitForEditable('Hello'), { horizontalTapLine: 'right', x: 20 + 6, y: 60, pointerType: 'touch' })
+
+    // Wait for focus to be cleared and activeElement to be body
+    await waitUntil(async () => {
+      const isBody = await browser.execute(() => document.activeElement === document.body)
+      const nodeType = await browser.execute(() => document.activeElement?.nodeType)
+      console.info('activeElement check - isBody:', isBody, 'nodeType:', nodeType)
+      return isBody
+    })
+
+    const activeElementIsBody = await browser.execute(() => document.activeElement === document.body)
+    console.info('Final check - activeElementIsBody:', activeElementIsBody)
+    expect(activeElementIsBody).toBe(true)
   })
 })
