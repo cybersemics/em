@@ -417,6 +417,7 @@ it('should paste text with an improperly nested meta tag', async () => {
   - b
     - c
       - d
+    - ${''}
     - x
       - e
 `)
