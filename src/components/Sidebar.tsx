@@ -450,39 +450,32 @@ const SidebarOverlay1 = ({
   const blur = BLUR_ENABLED ? 'blur(8px) ' : ''
   const filter = useTransform(useHueSatFilter(hue, sat), f => `${blur}${f}`)
 
-  // Collapsed/expanded background styles. The background image is 1482×744; the multipliers
-  // here scale it, and backgroundPositionY's negative offset crops the top so only the lower
-  // glow region shows. Two expanded strategies because the sidebar's geometry differs by
-  // breakpoint:
-  //   - Large devices: fixed-width sidebar, so we keep the width narrow and only stretch height.
-  //   - Small screens: full-width sidebar, so we scale both dimensions and offset x to fill it.
-  const collapsed = { backgroundSize: 'calc(1482px * 0.425) calc(744px * 0.475)', backgroundPositionY: safeY(-84) }
+  // The dropdown resize is a transform (scale + translate) on an inner layer, not an animated
+  // background-size/position on the outer one: transform is GPU-composited, whereas background-size
+  // and background-position repaint the whole 100vw×100vh layer every frame. The inner layer is
+  // sized and positioned to the COLLAPSED crop, so collapsed = the identity transform, and the open
+  // state is reached by scaling from the top-left origin (equivalent to growing background-size from
+  // the background-position corner) plus a translate for the position shift. This is faithful to the
+  // old animation — size = base × scale, so a linear scale tween equals the old linear
+  // background-size tween, and the safe-area term cancels in the translate deltas (safeY is linear).
+  // The multipliers below mirror the original background-size fractions of the 1482×744 image:
+  //   - Large devices: width fixed (scaleX 1), height 0.475→0.825; positionY -84→-164.
+  //   - Small screens: both dims 0.425/0.475→0.85; positionX -150→-320, positionY -84→-158.
+  const collapsed = { x: 0, y: 0, scaleX: 1, scaleY: 1 }
   const open = isLargeDevice
-    ? { backgroundSize: 'calc(1482px * 0.425) calc(744px * 0.825)', backgroundPositionY: safeY(-164) }
-    : {
-        backgroundSize: 'calc(1482px * 0.85) calc(744px * 0.85)',
-        backgroundPositionY: safeY(-158),
-        backgroundPositionX: '-320px',
-      }
+    ? { x: 0, y: -164 - -84, scaleX: 1, scaleY: 0.825 / 0.475 }
+    : { x: -320 - -150, y: -158 - -84, scaleX: 0.85 / 0.425, scaleY: 0.85 / 0.475 }
 
   return (
     <motion.div
       style={{ opacity: combinedOpacity, filter }}
-      initial={collapsed}
-      animate={expanded ? open : collapsed}
-      transition={{
-        duration: SLOW_DURATION,
-        ease: EASE_OUT,
-      }}
       className={css({
         position: 'absolute',
         top: 0,
         left: 0,
         height: '100vh',
         width: '100vw',
-        backgroundImage: 'url(/img/sidebar/overlay-layer-1.avif)',
-        backgroundPositionX: '-150px', // negative offset to crop the left edge of the image
-        backgroundRepeat: 'no-repeat',
+        overflow: 'hidden', // crop the scaled inner layer (the background bounds did this before)
         pointerEvents: 'none',
         zIndex: 'sidebar',
         // fade out the bottom edge of the overlay on portrait mobile for a smoother transition to the background
@@ -490,7 +483,25 @@ const SidebarOverlay1 = ({
           maskImage: 'linear-gradient(to top, transparent 200px, black 80%)',
         },
       })}
-    />
+    >
+      {/* Inner glow layer, sized/positioned to the collapsed crop; only its transform animates. */}
+      <motion.div
+        initial={collapsed}
+        animate={expanded ? open : collapsed}
+        transition={{ duration: SLOW_DURATION, ease: EASE_OUT }}
+        className={css({
+          position: 'absolute',
+          top: safeY(-84), // collapsed backgroundPositionY
+          left: '-150px', // collapsed backgroundPositionX (crops the image's left edge)
+          width: 'calc(1482px * 0.425)', // collapsed backgroundSize width
+          height: 'calc(744px * 0.475)', // collapsed backgroundSize height
+          transformOrigin: 'top left', // scale grows from the crop's top-left, like background-size
+          backgroundImage: 'url(/img/sidebar/overlay-layer-1.avif)',
+          backgroundSize: '100% 100%',
+          backgroundRepeat: 'no-repeat',
+        })}
+      />
+    </motion.div>
   )
 }
 
