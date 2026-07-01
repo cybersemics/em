@@ -3,7 +3,7 @@ import type Timestamp from '../../../@types/Timestamp'
 import { EM_TOKEN, SETTINGS_TOKEN, SETTINGS_VALUE } from '../../../constants'
 import testThoughtspace, { init, resetTestThoughtspace } from '../../../test-helpers/treecrdt/testThoughtspace'
 import hashThought from '../../../util/hashThought'
-import treecrdtThoughtspace, { createIndexedChildrenMap } from '../thoughtspace'
+import treecrdtThoughtspace, { createIndexedChildrenMap, init as initTreecrdtThoughtspace } from '../thoughtspace'
 import { getTreecrdtClient, initTreecrdt } from '../treecrdt'
 
 const PIN_ID = '00000000000000000000000000000101' as ThoughtId
@@ -97,8 +97,7 @@ it('uses indexed attribute values as childrenMap keys without changing TreeCRDT 
 
 it('falls back to rank placement when explicit afterId is stale', async () => {
   await initTreecrdt()
-  if (!treecrdtThoughtspace.init) throw new Error('TreeCRDT thoughtspace init is not available.')
-  await treecrdtThoughtspace.init(new Uint8Array(32).fill(1))
+  await initTreecrdtThoughtspace(new Uint8Array(32).fill(1))
 
   await persistThoughts([thought(PARENT_ID, EM_TOKEN, 'parent', 0), thought(OTHER_PARENT_ID, EM_TOKEN, 'other', 1)])
   await persistThoughts([thought(THOUGHT_A_ID, PARENT_ID, 'a', 0)])
