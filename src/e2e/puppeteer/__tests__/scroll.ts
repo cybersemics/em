@@ -50,6 +50,22 @@ describe('scrollCursorIntoView', () => {
 
     await waitForThoughtExistInDb('t')
 
+    // Simulate slow TreeCRDT reads during app startup after refresh.
+    await page.evaluateOnNewDocument(value => {
+      type PreloadedWindowEm = Omit<Partial<WindowEm>, 'testFlags'> & {
+        testFlags?: Partial<WindowEm['testFlags']>
+      }
+
+      const emWindow = window as Window & { em?: PreloadedWindowEm }
+      emWindow.em = {
+        ...emWindow.em,
+        testFlags: {
+          ...emWindow.em?.testFlags,
+          replicationDelay: value,
+        },
+      }
+    }, MOCK_REPLICATION_DELAY)
+
     await refresh()
 
     // Wait for page to be ready after refresh
@@ -58,13 +74,6 @@ describe('scrollCursorIntoView', () => {
     // Verify the initial scroll position is 0
     const initialScrollY = await page.evaluate(() => window.scrollY)
     expect(initialScrollY).toBe(0)
-
-    // Set test delay for data replication after refresh
-    // This simulates the regression case where thoughts are loaded slowly from the database
-    await page.evaluate(value => {
-      const em = window.em as WindowEm
-      em.testFlags.replicationDelay = value
-    }, MOCK_REPLICATION_DELAY)
 
     // Wait for the cursor to be restored to thought 't'
     await waitForEditable('t')
