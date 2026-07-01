@@ -777,17 +777,16 @@ it(`import sibling empty thoughts`, () => {
   `
 
   const stateNew = importText(initialState(), { text })
-  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+  const values = getAllChildrenByContext(stateNew, [HOME_TOKEN]).map(id => getThoughtById(stateNew, id)?.value)
 
-  expect(exported).toBe(`- ${HOME_TOKEN}
-  - a
-  - b`)
+  // empty thoughts are preserved on import. See https://github.com/cybersemics/em/issues/4448.
+  expect(values).toEqual(['a', '', '', 'b'])
 })
 
 // Regression test for https://github.com/cybersemics/em/issues/4448
 // An empty thought within a series of copied plaintext thoughts (e.g. Select All + Copy of "- A\n- B\n- \n- D")
 // should be preserved on paste, not silently dropped.
-it.skip('import a series of plaintext thoughts with an empty thought in the middle', () => {
+it('import a series of plaintext thoughts with an empty thought in the middle', () => {
   const text = `- A\n- B\n- \n- D`
 
   const stateNew = importText(initialState(), { text })
