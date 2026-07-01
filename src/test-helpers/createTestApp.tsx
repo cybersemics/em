@@ -5,10 +5,11 @@ import { TestBackend } from 'react-dnd-test-backend'
 import Await from '../@types/Await'
 import { clearActionCreator as clear } from '../actions/clear'
 import App from '../components/App'
-import * as db from '../data-providers/yjs/thoughtspace'
+import db from '../data-providers/thoughtspace'
 import { initialize } from '../initialize'
 import store from '../stores/app'
 import storage from '../util/storage'
+import waitForThoughtspaceIdle from './waitForThoughtspaceIdle'
 
 let cleanup: Await<ReturnType<typeof initialize>>['cleanup']
 
@@ -40,6 +41,7 @@ const createTestApp = async ({ tutorial }: { tutorial?: boolean } = {}) => {
     ])
 
     await vi.runOnlyPendingTimersAsync()
+    await waitForThoughtspaceIdle()
 
     // make DND ref available for drag and drop tests.
     document.DND = dndRef.current
@@ -59,10 +61,11 @@ export const cleanupTestApp = async () => {
 
     store.dispatch(clear({ full: true }))
 
-    // run out timers before db.clear, otherwise pending calls to replicateThought may resolve after thoughts have been deleted, triggering the "Missing docKey for thought" error
+    // run out timers before provider clear, otherwise pending persistence calls may resolve after thoughts have been deleted.
     await vi.runAllTimersAsync()
+    await waitForThoughtspaceIdle()
 
-    db.clear()
+    await db.clear()
     await vi.runAllTimersAsync()
 
     // set url back to home
@@ -75,11 +78,14 @@ export const cleanupTestApp = async () => {
 /** Refresh the test app. */
 export const refreshTestApp = async () => {
   await act(async () => {
+    await waitForThoughtspaceIdle()
     await store.dispatch(clear())
     await initialize()
+    await waitForThoughtspaceIdle()
   })
 
   await act(vi.runOnlyPendingTimersAsync)
+  await waitForThoughtspaceIdle()
 }
 
 /** Clear existing event listeners(e.g. keyboard, gestures), but without clearing the app. */

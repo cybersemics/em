@@ -2,8 +2,6 @@ import { HOME_TOKEN } from '../../../constants'
 import { WindowEm } from '../../../initialize'
 import { page } from '../session'
 
-const em = window.em as WindowEm
-
 async function paste(text: string): Promise<void>
 async function paste(pathUnranked: string[], text: string): Promise<void>
 
@@ -21,7 +19,7 @@ async function paste(pathUnranked: string | string[], text?: string): Promise<vo
   // Note: This helper is exposed because copy paste doesn't seem to work in headless mode. With headless false copy paste with ctrl + v seems to work.
   await page.evaluate(
     (_pathUnranked, _text) => {
-      const testHelpers = em.testHelpers
+      const testHelpers = (window.em as WindowEm).testHelpers
       testHelpers.importToContext(_pathUnranked, _text)
     },
     _pathUnranked,

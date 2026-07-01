@@ -3,11 +3,10 @@ import { WindowEm } from '../../../initialize'
 import { page } from '../session'
 import waitUntil from './waitUntil'
 
-const em = window.em as WindowEm
-
 /** Directly opens a Modal and waits for it to finish loading. */
 const openModal = async (id: ModalType): Promise<void> => {
   await page.evaluate(id => {
+    const em = window.em as WindowEm
     em.store.dispatch({ type: 'showModal', id })
   }, id)
 

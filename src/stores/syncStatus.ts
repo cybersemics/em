@@ -1,9 +1,11 @@
 import reactMinistore from './react-ministore'
 
-/** A store that tracks state related to syncing. Updated by yjs/thouguhtspace. */
+/** A store that tracks state related to syncing. Updated by the treecrdt thoughtspace data provider. */
 const syncStatusStore = reactMinistore<{
   /** Tracks if the pullQueue is currently pulling. */
   isPulling: boolean
+  /** Tracks non-blocking pullQueue work that runs outside the main pulling state. */
+  isBackgroundPulling: boolean
   /**
    * Progress of replicating all thoughts for offline editing (between 0–1).
    * Value of null means replication has not started yet.
@@ -20,6 +22,7 @@ const syncStatusStore = reactMinistore<{
   importProgress: number
 }>({
   isPulling: false,
+  isBackgroundPulling: false,
   replicationProgress: null,
   savingProgress: 1,
   importProgress: 1,

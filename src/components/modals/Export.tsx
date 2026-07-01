@@ -25,6 +25,7 @@ import { errorActionCreator as error } from '../../actions/error'
 import { isIOS, isMac, isTouch } from '../../browser'
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import replicateTree from '../../data-providers/data-helpers/replicateTree'
+import { thoughtspaceRuntime } from '../../data-providers/thoughtspace'
 import download from '../../device/download'
 import * as selection from '../../device/selection'
 import globals from '../../globals'
@@ -142,21 +143,27 @@ const PullProvider: FC<PropsWithChildren<{ simplePaths: SimplePath[] }>> = ({ ch
   useEffect(
     () => {
       isMounted.current = true
+      let replications: ReturnType<typeof replicateTree>[] = []
 
-      const replications = simplePaths.map(simplePath => {
-        const id = head(simplePath)
+      /** Waits for pending local persistence before reading the provider for export. */
+      const exportAfterLocalWrites = async () => {
+        await thoughtspaceRuntime.waitForIdle()
+        if (!isMounted.current) return
 
-        return replicateTree(id, {
-          // TODO: Warn the user if offline or not fully replicated
-          remote: false,
-          onThought: thought => {
-            if (!isMounted.current) return
-            setExportingThoughtsThrottled(thought)
-          },
+        replications = simplePaths.map(simplePath => {
+          const id = head(simplePath)
+
+          return replicateTree(id, {
+            // TODO: Warn the user if offline or not fully replicated
+            remote: false,
+            onThought: thought => {
+              if (!isMounted.current) return
+              setExportingThoughtsThrottled(thought)
+            },
+          })
         })
-      })
 
-      Promise.all(replications.map(replication => replication.promise)).then(thoughtIndices => {
+        const thoughtIndices = await Promise.all(replications.map(replication => replication.promise))
         if (!isMounted.current) return
 
         setExportingThoughtsThrottled.flush()
@@ -172,7 +179,9 @@ const PullProvider: FC<PropsWithChildren<{ simplePaths: SimplePath[] }>> = ({ ch
 
         setExportedState(exportedState)
         setIsPulling(false)
-      })
+      }
+
+      void exportAfterLocalWrites()
 
       return () => {
         isMounted.current = false

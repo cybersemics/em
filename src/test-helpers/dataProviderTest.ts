@@ -6,12 +6,12 @@ import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import importText from '../actions/importText'
 import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN } from '../constants'
-import { DataProvider } from '../data-providers/DataProvider'
+import type { DataProvider } from '../data-providers/DataProvider'
 import fetchDescendants from '../data-providers/data-helpers/fetchDescendants'
 import getContext from '../data-providers/data-helpers/getContext'
 import getLexeme from '../data-providers/data-helpers/getLexeme'
 import getThoughtById from '../data-providers/data-helpers/getThoughtById'
-import { clientId } from '../data-providers/yjs'
+import { clientId } from '../data-providers/thoughtspaceSession'
 import hashThought from '../util/hashThought'
 import initialState from '../util/initialState'
 import keyValueBy from '../util/keyValueBy'
@@ -38,7 +38,7 @@ const getThoughtIdsForContexts = async (provider: DataProvider, contexts: Contex
   (await Promise.all(contexts.map(cx => getContext(provider, cx)))).map(thought => thought!.id)
 
 /**
- * Returns many descandants fot the given contexts,.
+ * Returns many descendants for the given contexts.
  */
 const fetchDescendantsByContext = async (
   provider: DataProvider,
@@ -107,7 +107,7 @@ const importThoughts = (text: string) => {
   }
 }
 
-/** Runs tests for a module that conforms to the data-provider API. */
+/** Runs tests for a module that conforms to the data provider API. */
 const dataProviderTest = (provider: DataProvider) => {
   test('getLexemeById', async () => {
     const nothought = await provider.getLexemeById('12345')
@@ -163,58 +163,71 @@ const dataProviderTest = (provider: DataProvider) => {
   })
 
   test('getThoughtById', async () => {
-    const nocontext = await getThoughtById(provider, 'test' as ThoughtId)
+    const testId = '00000000000000000000000000de5700' as ThoughtId
+    const childId1 = '000000000000000000000000000c0001' as ThoughtId
+    const childId2 = '000000000000000000000000000c0002' as ThoughtId
+    const childId3 = '000000000000000000000000000c0003' as ThoughtId
+    const parentId = '0000000000000000000000000000a001' as ThoughtId
+
+    const nocontext = await getThoughtById(provider, testId)
     expect(nocontext).toBeUndefined()
 
     const thought: Thought = {
-      id: 'test' as ThoughtId,
+      id: testId,
       childrenMap: {
-        child1: 'child1' as ThoughtId,
-        child2: 'child2' as ThoughtId,
-        child3: 'child3' as ThoughtId,
+        [childId1]: childId1,
+        [childId2]: childId2,
+        [childId3]: childId3,
       },
       created: timestamp(),
       lastUpdated: timestamp(),
-      parentId: 'parentId' as ThoughtId,
+      parentId,
       rank: 0,
       updatedBy: clientId,
       value: 'test',
     }
 
-    await provider.updateThought?.('test' as ThoughtId, undefined, thought)
+    await provider.updateThought?.(testId, undefined, thought)
 
-    const dbThought = await getThoughtById(provider, 'test' as ThoughtId)
+    const dbThought = await getThoughtById(provider, testId)
     expect(dbThought).toEqual(thought)
   })
 
   test('getThoughtsByIds', async () => {
+    const idX = '0000000000000000000000000000000a' as ThoughtId
+    const idA = '0000000000000000000000000000000b' as ThoughtId
+    const childId1 = '000000000000000000000000000c0011' as ThoughtId
+    const childId2 = '000000000000000000000000000c0012' as ThoughtId
+    const parentId1 = '0000000000000000000000000000a011' as ThoughtId
+    const parentId2 = '0000000000000000000000000000a012' as ThoughtId
+
     const thoughtX: Thought = {
-      id: 'testIdX' as ThoughtId,
+      id: idX,
       childrenMap: {
-        child1: 'child1' as ThoughtId,
-        child2: 'child2' as ThoughtId,
+        [childId1]: childId1,
+        [childId2]: childId2,
       },
       created: timestamp(),
       lastUpdated: timestamp(),
       updatedBy: clientId,
       value: 'x',
       rank: 0,
-      parentId: 'parent1' as ThoughtId,
+      parentId: parentId1,
     }
 
     const thoughtA: Thought = {
-      id: 'testIdA' as ThoughtId,
+      id: idA,
       childrenMap: {},
       created: timestamp(),
       lastUpdated: timestamp(),
       updatedBy: clientId,
       value: 'a',
       rank: 1,
-      parentId: 'parent2' as ThoughtId,
+      parentId: parentId2,
     }
 
-    await provider.updateThought?.('testIdX' as ThoughtId, undefined, thoughtX)
-    await provider.updateThought?.('testIdA' as ThoughtId, undefined, thoughtA)
+    await provider.updateThought?.(idX, undefined, thoughtX)
+    await provider.updateThought?.(idA, undefined, thoughtA)
 
     const dbThoughts = await provider.getThoughtsByIds([thoughtX.id, thoughtA.id])
     expect(dbThoughts).toEqual([thoughtX, thoughtA])
@@ -248,45 +261,56 @@ const dataProviderTest = (provider: DataProvider) => {
   })
 
   test('updateThoughtIndex', async () => {
+    const idX = '0000000000000000000000000000d00a' as ThoughtId
+    const idY = '0000000000000000000000000000d00b' as ThoughtId
+    const childId1 = '000000000000000000000000000c0021' as ThoughtId
+    const childId2 = '000000000000000000000000000c0022' as ThoughtId
+    const childId3 = '000000000000000000000000000c0023' as ThoughtId
+    const childId4 = '000000000000000000000000000c0024' as ThoughtId
+    const childId5 = '000000000000000000000000000c0025' as ThoughtId
+    const childId6 = '000000000000000000000000000c0026' as ThoughtId
+    const parentId1 = '0000000000000000000000000000a021' as ThoughtId
+    const parentId2 = '0000000000000000000000000000a022' as ThoughtId
+
     const thoughtX: Thought = {
-      id: 'idX' as ThoughtId,
+      id: idX,
       childrenMap: {
-        child1: 'child1' as ThoughtId,
-        child2: 'child2' as ThoughtId,
-        child3: 'child3' as ThoughtId,
+        [childId1]: childId1,
+        [childId2]: childId2,
+        [childId3]: childId3,
       },
       created: timestamp(),
       value: 'x',
-      parentId: 'parent1' as ThoughtId,
+      parentId: parentId1,
       rank: 0,
       lastUpdated: timestamp(),
       updatedBy: clientId,
     }
 
     const thoughtY: Thought = {
-      id: 'idY' as ThoughtId,
+      id: idY,
       childrenMap: {
-        child4: 'child4' as ThoughtId,
-        child5: 'child5' as ThoughtId,
-        child6: 'child6' as ThoughtId,
+        [childId4]: childId4,
+        [childId5]: childId5,
+        [childId6]: childId6,
       },
       created: timestamp(),
       value: 'y',
       rank: 1,
-      parentId: 'parent2' as ThoughtId,
+      parentId: parentId2,
       lastUpdated: timestamp(),
       updatedBy: clientId,
     }
 
     await provider.updateThoughtIndex?.({
-      idX: thoughtX,
-      idY: thoughtY,
+      [idX]: thoughtX,
+      [idY]: thoughtY,
     })
 
-    const contextX = await getThoughtById(provider, 'idX' as ThoughtId)
+    const contextX = await getThoughtById(provider, idX)
     expect(contextX).toEqual(thoughtX)
 
-    const contextY = await getThoughtById(provider, 'idY' as ThoughtId)
+    const contextY = await getThoughtById(provider, idY)
     expect(contextY).toEqual(thoughtY)
   })
 

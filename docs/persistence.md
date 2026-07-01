@@ -11,7 +11,7 @@ Two queues bridge Redux and the local Yjs store:
 - **Push queue** ([`redux-enhancers/pushQueue.ts`](../src/redux-enhancers/pushQueue.ts)) drains `state.pushQueue` after every action and writes to Yjs.
 - **Pull queue** ([`redux-middleware/pullQueue.ts`](../src/redux-middleware/pullQueue.ts)) tracks visible thoughts and pulls any pending ones from Yjs.
 
-The single point of integration with Yjs is the [`DataProvider`](../src/data-providers/DataProvider.ts) interface, implemented as `db` in [`data-providers/yjs/thoughtspace.ts`](../src/data-providers/yjs/thoughtspace.ts).
+The single point of integration with persistence is the [`DataProvider`](../src/data-providers/DataProvider.ts) interface, implemented by the active thoughtspace backend.
 
 ## In-memory state (Redux)
 
@@ -89,7 +89,7 @@ If IDB returns `AbortError` (the app was closed mid-sync), replication retries a
 
 - [`updateThought`](../src/data-providers/yjs/thoughtspace.ts) writes a single thought into its parent Y.Doc. If the thought has changed parents, it deletes the entry from the old parent Doc, updates the docKey in `docKeys` and in the Lexeme's `cx-${id}` map, and writes to the new parent. (These three writes span three Docs and are not atomic — there's a known risk of partial-failure inconsistency, called out in a code comment.) `childrenMap` is merged key-by-key as a nested `Y.Map<ThoughtId>`; other fields are written only if the value changed, to avoid emitting redundant CRDT updates.
 - [`updateLexeme`](../src/data-providers/yjs/thoughtspace.ts) adds and removes contexts via `cx-${id}` keys.
-- [`updateThoughts`](../src/data-providers/yjs/thoughtspace.ts) is the public `DataProvider` entry point. It groups updates and deletes, then submits both groups to a `TaskQueue` with **concurrency 16** ([`util/taskQueue.ts`](../src/util/taskQueue.ts)). Updates run before deletes within a single batch.
+- `DataProvider.updateThoughts` is the public persistence entry point for push-queue thought and lexeme batches.
 
 All update paths await `IndexeddbPersistence.whenSynced` (i.e. they resolve when the write hits IDB), but do not wait on the websocket.
 
@@ -126,7 +126,7 @@ In effect, on `main` Yjs is used as a local-only document store. Local IndexedDB
 
 [`redux-enhancers/pushQueue.ts`](../src/redux-enhancers/pushQueue.ts) is a Redux store enhancer that runs after every reducer. It drains `state.pushQueue` (a list of `PushBatch` objects pushed there by [`updateThoughts`](../src/actions/updateThoughts.ts) and friends) and partitions it into:
 
-- **`dbQueue`** — batches with `local || remote` set. Applied sequentially via `db.updateThoughts({ thoughtIndexUpdates, lexemeIndexUpdates, lexemeIndexUpdatesOld, schemaVersion })`. After each batch resolves, any `idbSynced` callback on the batch is invoked.
+- **`dbQueue`** — batches with `local || remote` set. Applied sequentially through `thoughtspaceRuntime.persistPushQueueBatches`, which calls the active data provider's `updateThoughts`. After provider persistence finishes, any `idbSynced` callback on the original batch is invoked.
 - **`freeQueue`** — state-only batches whose `null` thought/lexeme entries indicate they should be released from the in-memory cache. Triggers `db.freeThought` / `db.freeLexeme`.
 
 The enhancer also caches a small set of critical settings (`CACHED_SETTINGS` in [`constants.ts`](../src/constants.ts)) into `localStorage` so that things like the Tutorial setting are available during the first paint before Yjs hydrates. The corresponding read path is [`selectors/getSetting.ts`](../src/selectors/getSetting.ts).
@@ -135,10 +135,10 @@ Once Redux dispatches a thought update, the data flow is therefore:
 
 ```
 reducer → state.pushQueue → pushQueue enhancer
-       → db.updateThoughts (thoughtspace.ts)
-       → updateQueue (TaskQueue, concurrency 16)
-       → Y.Doc.transact + IndexeddbPersistence
-       → idbSynced callback resolves
+      → thoughtspaceRuntime.persistPushQueueBatches
+      → DataProvider.updateThoughts
+      → active provider persistence
+      → idbSynced callback is invoked
 ```
 
 ## Pull queue (Yjs → Redux)

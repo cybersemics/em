@@ -2,27 +2,18 @@ import _ from 'lodash'
 import moize from 'moize'
 import CommandId from './@types/CommandId'
 import Context from './@types/Context'
-import Lexeme from './@types/Lexeme'
 import MimeType from './@types/MimeType'
-import PushBatch from './@types/PushBatch'
 import State from './@types/State'
-import Thought from './@types/Thought'
 import ThoughtId from './@types/ThoughtId'
 import Thunk from './@types/Thunk'
-import { errorActionCreator as error } from './actions/error'
 import { importFilesActionCreator as importFiles } from './actions/importFiles'
 import { initThoughtsActionCreator as initThoughts } from './actions/initThoughts'
 import { loadFromUrlActionCreator as loadFromUrl } from './actions/loadFromUrl'
 import { preloadSourcesActionCreator as preloadSources } from './actions/preloadSources'
 import { pullActionCreator as pull } from './actions/pull'
-import { repairThoughtActionCreator as repairThought } from './actions/repairThought'
 import { setCursorActionCreator as setCursor } from './actions/setCursor'
-import { updateThoughtsActionCreator } from './actions/updateThoughts'
 import { commandById, executeCommand } from './commands'
-import { HOME_TOKEN } from './constants'
-import getLexemeHelper from './data-providers/data-helpers/getLexeme'
-import { accessToken, clientIdReady, tsid, tsidShared } from './data-providers/yjs'
-import db, { init as initThoughtspace, replicateLexeme, replicateThought } from './data-providers/yjs/thoughtspace'
+import db, { thoughtspaceRuntime } from './data-providers/thoughtspace'
 import * as selection from './device/selection'
 import testFlags from './e2e/testFlags'
 import contextToThoughtId from './selectors/contextToThoughtId'
@@ -41,13 +32,8 @@ import prettyPath from './test-helpers/prettyPath'
 import hashThought from './util/hashThought'
 import initEvents from './util/initEvents'
 import isRoot from './util/isRoot'
-import mergeBatch from './util/mergeBatch'
 import owner from './util/owner'
-import throttleConcat from './util/throttleConcat'
 import urlDataSource from './util/urlDataSource'
-
-/** Number of milliseconds to throttle dispatching updateThoughts on thought/lexeme change. */
-const UPDATE_THOUGHTS_THROTTLE = 100
 
 /**
  * Decode cursor from url, pull and initialize the cursor.
@@ -70,91 +56,15 @@ const initializeCursor = async () => {
   }
 }
 
-/** Dispatches updateThoughts with all updates in the throttle period. */
-const updateThoughtsThrottled = throttleConcat<PushBatch, void>((batches: PushBatch[]) => {
-  const merged = batches.reduce(mergeBatch, {
-    thoughtIndexUpdates: {},
-    lexemeIndexUpdates: {},
-    lexemeIndexUpdatesOld: {},
-  })
-
-  // dispatch on next tick, since the leading edge is synchronous and can be triggered during a reducer
-  setTimeout(() => {
-    store.dispatch(updateThoughtsActionCreator({ ...merged, local: false, remote: false, repairCursor: true }))
-  })
-}, UPDATE_THOUGHTS_THROTTLE)
-
 /** Initialize local db and window events. */
-export const initialize = async () => {
+const initializeInternal = async () => {
   initOfflineStatusStore(/* websocket */)
   const eventHandlers = initEvents(store)
 
-  await initThoughtspace({
-    cursor: decodeThoughtsUrl(store.getState()).path,
-    accessToken,
-    /** Returns true if the Thought or its parent is in State. */
-    isThoughtLoaded: async (thought: Thought | undefined): Promise<boolean> => {
-      const state = store.getState()
-      return !!(thought && (getThoughtById(state, thought.parentId) || getThoughtById(state, thought.id)))
-    },
-    /** Returns true if the Lexeme or one of its contexts are in State. */
-    isLexemeLoaded: async (key: string, lexeme: Lexeme | undefined): Promise<boolean> => {
-      const state = store.getState()
-      return !!((lexeme && getLexeme(state, key)) || lexeme?.contexts.some(cxid => getThoughtById(state, cxid)))
-    },
-    onError: (message, object) => {
-      store.dispatch(error({ value: message }))
-    },
-    onProgress: syncStatusStore.update,
-    onThoughtChange: (thought: Thought) => {
-      store.dispatch((dispatch, getState) => {
-        // if parent is pending, the thought must be marked pending.
-        // Note: Do not clear pending from the parent, because other children may not be loaded.
-        // The next pull should handle that automatically.
-        // TODO: Do we need to use fresh State when updateThoughtsThrottled resolves?
-        const state = getState()
-        const thoughtInState = getThoughtById(state, thought.id)
-        const parentInState = getThoughtById(state, thought.parentId)
-        const pending = thoughtInState?.pending || parentInState?.pending
-
-        updateThoughtsThrottled({
-          thoughtIndexUpdates: {
-            [thought.id]: {
-              ...thought,
-              ...(pending ? { pending } : null),
-            },
-          },
-          lexemeIndexUpdates: {},
-          lexemeIndexUpdatesOld: {},
-        })
-      })
-    },
-    onThoughtIDBSynced: (thought, { background }) => {
-      // If the websocket is still connecting for the first time when IDB is synced and non-empty, change the status to reconnecting to dismiss "Connecting..." and render the available thoughts. See: EmptyThoughtspace.tsx.
-      if (!background && thought?.id === HOME_TOKEN) {
-        const hasRootChildren = Object.keys(thought?.childrenMap || {}).length > 0
-        if (hasRootChildren) {
-          offlineStatusStore.update(statusOld =>
-            statusOld === 'preconnecting' || statusOld === 'connecting' ? 'reconnecting' : statusOld,
-          )
-        }
-      }
-    },
-    onThoughtReplicated: (id, thought) => {
-      store.dispatch(repairThought(id, thought))
-    },
-    onUpdateThoughts: options => {
-      store.dispatch(updateThoughtsActionCreator(options))
-    },
-    tsid,
-    tsidShared,
-  })
+  const { clientId } = await thoughtspaceRuntime.init()
 
   // load local state unless loading a public context or source url
   // await initDB()
-
-  // initialize clientId before dispatching any actions that create new thoughts
-  const clientId = await clientIdReady
 
   const src = urlDataSource()
   const thoughtsLocalPromise =
@@ -178,6 +88,19 @@ export const initialize = async () => {
   await initializeCursor()
 
   return eventHandlers
+}
+
+let initializePromise: ReturnType<typeof initializeInternal> | null = null
+
+/** Initialize local db and window events. */
+export const initialize = (): ReturnType<typeof initializeInternal> => {
+  initializePromise = initializeInternal()
+  return initializePromise
+}
+
+/** Waits for app initialization to finish. Used by e2e tests before interacting with exposed helpers. */
+export const waitForInitialized = async (): Promise<void> => {
+  await initializePromise
 }
 
 testFlags.initialize = initialize
@@ -204,9 +127,12 @@ const testHelpers = {
   executeCommandById: (id: CommandId) => {
     executeCommand(commandById(id))
   },
+  dropThoughtspace: thoughtspaceRuntime.drop,
+  waitForInitialized,
+  waitForThoughtspaceIdle: thoughtspaceRuntime.waitForIdle,
   setSelection: selection.set,
   importToContext: withDispatch(importToContext),
-  getLexemeFromIndexedDB: (value: string) => getLexemeHelper(db, value),
+  getLexemeFromThoughtspace: (value: string) => db.getLexemeById(hashThought(value)),
   getState: store.getState,
   _: _,
 }
@@ -263,8 +189,6 @@ const windowEm = {
     return store.subscribe(onState)
   },
   prettyPath,
-  replicateThought,
-  replicateLexeme: (value: string) => replicateLexeme(hashThought(value)),
   store,
   offlineStatusStore,
   syncStatusStore,

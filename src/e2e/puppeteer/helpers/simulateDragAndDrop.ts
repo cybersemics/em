@@ -7,14 +7,13 @@ interface Options {
   /** Renders all drop targets with color blocks. */
   drop?: boolean
 }
-const em = window.em as WindowEm
-
 /** Sets testFlags for simulating drag and drop process. */
 const simulateDragAndDrop = async ({ drag, drop }: Options): Promise<void> => {
   await new Promise(resolve => setTimeout(resolve, 100))
 
   await page.evaluate(
     (drag, drop) => {
+      const em = window.em as WindowEm
       em.testFlags.simulateDrag = !!drag
       em.testFlags.simulateDrop = !!drop
     },

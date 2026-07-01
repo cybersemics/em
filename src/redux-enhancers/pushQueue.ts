@@ -5,7 +5,7 @@ import PushBatch from '../@types/PushBatch'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import { CACHED_SETTINGS, EM_TOKEN } from '../constants'
-import db from '../data-providers/yjs/thoughtspace'
+import db, { thoughtspaceRuntime } from '../data-providers/thoughtspace'
 import contextToThoughtId from '../selectors/contextToThoughtId'
 import { getChildrenRanked } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
@@ -48,7 +48,7 @@ const cacheSetting = (name: keyof typeof cachedSettingsIds, value: string | null
   }
 }
 
-/** Merges state.pushQueue batches and pushes them to Yjs, frees memory from state-only batches, and caches settings. */
+/** Pushes database batches, frees provider cache for state-only batches, and caches settings. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const pushQueue: StoreEnhancer<any> =
   (createStore: StoreEnhancerStoreCreator) =>
@@ -85,32 +85,35 @@ const pushQueue: StoreEnhancer<any> =
           }
         })
 
-        /**
-         * Push updates to database sequentially.
-         */
+        /** Pushes queued updates to the active thoughtspace provider sequentially. */
         const applyDbQueue = async () => {
-          for (const batch of dbQueue ?? []) {
-            await db.updateThoughts({
+          await thoughtspaceRuntime.persistPushQueueBatches(
+            (dbQueue ?? []).map(batch => ({
               thoughtIndexUpdates: batch.thoughtIndexUpdates,
               lexemeIndexUpdates: batch.lexemeIndexUpdates,
               lexemeIndexUpdatesOld: batch.lexemeIndexUpdatesOld,
-              schemaVersion: batch.updates?.schemaVersion,
-            })
-          }
+              schemaVersion: batch.updates?.schemaVersion ?? 0,
+              movePlacements: batch.movePlacements,
+              local: batch.local,
+            })),
+          )
         }
 
-        applyDbQueue().then(() => {
-          dbQueue?.forEach(batch => batch.idbSynced?.())
-        })
+        void applyDbQueue()
+          .then(() => {
+            dbQueue?.forEach(batch => batch.idbSynced?.())
+          })
+          .catch(err => {
+            console.error('Thoughtspace persistence failed', err)
+          })
       }
 
-      const freeBatch = (freeQueue || []).reduce(mergeBatch, {
+      const freeBatch = (freeQueue || []).reduce<PushBatch>(mergeBatch, {
         thoughtIndexUpdates: {},
         lexemeIndexUpdates: {},
         lexemeIndexUpdatesOld: {},
       })
 
-      // free up memory of thoughts that have been deleted
       Object.entries(freeBatch.thoughtIndexUpdates).forEach(([id, thoughtUpdate]) => {
         if (!thoughtUpdate) {
           db.freeThought?.(id as ThoughtId)
