@@ -10,6 +10,7 @@ import contextToThoughtId from '../../selectors/contextToThoughtId'
 import exportContext from '../../selectors/exportContext'
 import { getAllChildren } from '../../selectors/getChildren'
 import getLexeme from '../../selectors/getLexeme'
+import getThoughtById from '../../selectors/getThoughtById'
 import contextToThought from '../../test-helpers/contextToThought'
 import editThought from '../../test-helpers/editThoughtByContext'
 import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
@@ -781,6 +782,18 @@ it(`import sibling empty thoughts`, () => {
   expect(exported).toBe(`- ${HOME_TOKEN}
   - a
   - b`)
+})
+
+// Regression test for https://github.com/cybersemics/em/issues/4448
+// An empty thought within a series of copied plaintext thoughts (e.g. Select All + Copy of "- A\n- B\n- \n- D")
+// should be preserved on paste, not silently dropped.
+it.skip('import a series of plaintext thoughts with an empty thought in the middle', () => {
+  const text = `- A\n- B\n- \n- D`
+
+  const stateNew = importText(initialState(), { text })
+  const values = getAllChildrenByContext(stateNew, [HOME_TOKEN]).map(id => getThoughtById(stateNew, id)?.value)
+
+  expect(values).toEqual(['A', 'B', '', 'D'])
 })
 
 it('set cursor correctly after duplicate merge', () => {
