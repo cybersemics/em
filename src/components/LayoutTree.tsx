@@ -7,14 +7,19 @@ import Index from '../@types/IndexType'
 import ThoughtId from '../@types/ThoughtId'
 import { isTouch } from '../browser'
 import { CONTENT_BOX_PADDING_LEFT, LongPressState } from '../constants'
+import scrollCursorIntoView from '../device/scrollCursorIntoView'
 import testFlags from '../e2e/testFlags'
 import usePositionedThoughts from '../hooks/usePositionedThoughts'
 import useSizeTracking from '../hooks/useSizeTracking'
 import fauxCaretTreeProvider from '../recipes/fauxCaretTreeProvider'
 import { hasChildren } from '../selectors/getChildren'
+import isAllSelected from '../selectors/isAllSelected'
+import isMulticursorPath from '../selectors/isMulticursorPath'
 import linearizeTree from '../selectors/linearizeTree'
 import nextSibling from '../selectors/nextSibling'
+import store from '../stores/app'
 import reactMinistore from '../stores/react-ministore'
+import scrollMulticursorIntoViewStore from '../stores/scrollMulticursorIntoView'
 import scrollTopStore from '../stores/scrollTop'
 import viewportStore from '../stores/viewport'
 import head from '../util/head'
@@ -246,6 +251,23 @@ const LayoutTree = () => {
   // compare between state.cursor and the position of the thought
   const cursorThoughtPositionedIndex = treeThoughtsPositioned.findIndex(thought => thought.isCursor)
   const cursorThoughtPositioned = treeThoughtsPositioned[cursorThoughtPositionedIndex]
+
+  // After a multicursor formatting command completes, scroll the topmost selected thought into view if it is offscreen.
+  // The selected thoughts may be scrolled out of view (e.g. when the command center is onscreen), so snap to the topmost
+  // selected thought to keep the formatted thoughts visible. scrollCursorIntoView is a no-op when the thought is already
+  // in view, so this does not snap when the selection is already in focus. See #3995.
+  scrollMulticursorIntoViewStore.useEffect(() => {
+    const stateNow = store.getState()
+    // When all thoughts are selected (Select All), every thought is already "in focus", so snapping to the topmost
+    // selected thought serves no purpose and instead causes a disruptive autoscroll (up, and on mobile up-and-down as
+    // the Command Center slides in). Skip the scroll entirely in that case. See #3995 Issue H.
+    if (isAllSelected(stateNow)) return
+    // treeThoughtsPositioned is in document order, so the first selected thought is the topmost one.
+    const topmost = treeThoughtsPositioned.find(thought => isMulticursorPath(stateNow, thought.path))
+    if (!topmost) return
+    // Defer to the next tick so any layout changes from the formatting command have been committed.
+    setTimeout(() => scrollCursorIntoView(topmost.y, topmost.height))
+  })
 
   // The indentDepth multipicand (0.9) causes the horizontal counter-indentation to fall short of the actual indentation, causing a progressive shifting right as the user navigates deeper. This provides an additional cue for the user's depth, which is helpful when autofocus obscures the actual depth, but it must stay small otherwise the thought width becomes too small.
   // The indentCursorAncestorTables multipicand (0.5) is smaller, since animating over by the entire width of column 1 is too abrupt.

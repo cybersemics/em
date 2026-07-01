@@ -2,6 +2,17 @@ import { isSafari, isTouch } from '../browser'
 import { PREVENT_AUTOSCROLL_TIMEOUT, isPreventAutoscrollInProgress } from '../device/preventAutoscroll'
 import viewportStore from '../stores/viewport'
 
+/**
+ * The height (in px) of the Command Center's progressive blur falloff that extends above the solid panel.
+ * The blur element is taller than the panel by this amount (`blurHeight = sheetHeight + 110`) and fades in
+ * over this band via a mask gradient, so a thought scrolled to just above the panel top would still be
+ * blurred. It is added to the *scroll target* obstruction (not the "needs scrolling" detection) so that a
+ * thought scrolled out from behind the panel lands clear of the blur band, while thoughts already visible
+ * above the panel are not needlessly re-scrolled.
+ * Keep in sync with the `110` used in CommandCenter.tsx (blurHeight and the blur mask gradient).
+ */
+const COMMAND_CENTER_BLUR_FALLOFF = 110
+
 /** Scrolls the minimum amount necessary to move the viewport so that it includes the element. */
 const scrollIntoViewIfNeeded = (y: number, height: number) => {
   // preventAutoscroll works by briefly increasing the element's height, which breaks isElementInViewport.
@@ -32,8 +43,25 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
   const toolbarRect = document.getElementById('toolbar')?.getBoundingClientRect()
   const toolbarBottom = toolbarRect ? toolbarRect.bottom : 0
   const navbarRect = document.querySelector('[aria-label="nav"]')?.getBoundingClientRect()
+
+  // The Command Center sheet covers the bottom portion of the screen during a multiselection.
+  // Treat the area it covers as a bottom obstruction (alongside the navbar) so that selected thoughts
+  // are scrolled above it rather than left hidden behind it. Without this, a selected thought in the
+  // covered area is considered "in view" and never scrolled out from behind the Command Center. See #3995 Issue G.
+  const commandCenterRect = document.querySelector('[data-testid="command-menu-panel"]')?.getBoundingClientRect()
+  const commandCenterHeight = commandCenterRect ? Math.max(0, visualViewportHeight - commandCenterRect.top) : 0
+  // The obstruction used to decide *whether* a thought needs scrolling is the actual covered area (panel + navbar).
+  // Using only the panel here (not the blur falloff) keeps thoughts that are already visible above the panel from
+  // being needlessly re-scrolled, which would cause a jump (e.g. when snapping the topmost selected thought into
+  // view above the viewport). See #3995 Issue F.
+  const bottomObstruction = Math.max(navbarRect?.height ?? 0, commandCenterHeight)
+  // The obstruction used to decide *where* to scroll extends the Command Center by its blur falloff, so a thought
+  // scrolled out from behind the panel lands above the blur band (its text is clear) rather than within it. See #3995 Issue G.
+  const commandCenterTargetHeight = commandCenterHeight > 0 ? commandCenterHeight + COMMAND_CENTER_BLUR_FALLOFF : 0
+  const bottomObstructionTarget = Math.max(navbarRect?.height ?? 0, commandCenterTargetHeight)
+
   const isAboveViewport = yViewport < toolbarBottom
-  const isBelowViewport = yViewport + height > visualViewportHeight - (navbarRect?.height ?? 0)
+  const isBelowViewport = yViewport + height > visualViewportHeight - bottomObstruction
 
   if (!isAboveViewport && !isBelowViewport) return
 
@@ -41,10 +69,10 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
   // Therefore, we need to calculate the scroll position ourselves
 
   // leave a margin between the element and the viewport edge equal to half the element's height
-  // add offset to account for the navbar height and prevent scrolled to elements from being hidden below
+  // add offset to account for the bottom obstruction (navbar or Command Center) and prevent scrolled to elements from being hidden below
   const scrollYNew = isAboveViewport
     ? yDocument - (toolbarRect?.height ?? 0) - height / 2
-    : yDocument - visualViewportHeight + height * 1.5 + (navbarRect?.height ?? 0)
+    : yDocument - visualViewportHeight + height * 1.5 + bottomObstructionTarget
 
   // scroll to 1 instead of 0
   // otherwise Mobile Safari scrolls to the top after MultiGesture
