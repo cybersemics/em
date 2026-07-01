@@ -649,6 +649,41 @@ it('still merges into a duplicate sibling when preventMerge is not set', () => {
   expect(getContexts(stateNew, 'a')).toHaveLength(1)
 })
 
+// Regression test for https://github.com/cybersemics/em/issues/3621 (Issue D)
+// With preventMerge (set by the subthought drag-and-drop drop handler), dropping a thought into a context that already
+// contains a same-valued child must not merge them; both duplicate children are preserved.
+it('does not merge into a duplicate child when preventMerge is set (drop as subthought)', () => {
+  const text = `
+  - AAA
+  - BBB
+    - AAA
+  `
+
+  const steps = [
+    importText({ text }),
+    moveThoughtAtFirstMatch({
+      from: ['AAA'],
+      to: ['BBB', 'AAA'],
+      preventMerge: true,
+      newRank: 1,
+    }),
+  ]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  // BBB retains both AAA children (the dropped AAA is not merged into the existing duplicate child)
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - BBB
+    - AAA
+    - AAA`)
+  expect(getContexts(stateNew, 'AAA')).toHaveLength(2)
+
+  const { missingLexemeValues, missingParentIds } = checkDataIntegrity(stateNew)
+  expect(missingLexemeValues).toHaveLength(0)
+  expect(missingParentIds).toHaveLength(0)
+})
+
 it('move with nested duplicate thoughts and merge their children', () => {
   const text = `
   - a

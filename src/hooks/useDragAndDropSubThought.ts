@@ -220,6 +220,9 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
         moveThought({
           oldPath: item.path,
           newPath: pathTo,
+          // dropping a thought into a context that already contains a same-valued child is a positional move, not a
+          // merge; preserve duplicate siblings instead of collapsing them (#3621 Issue D)
+          preventMerge: true,
           newRank: (dropTop ? getPrevRank : getNextRank)(state, thoughtTo.id),
         }),
       )
