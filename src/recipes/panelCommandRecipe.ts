@@ -13,6 +13,17 @@ export default defineRecipe({
     '--panel-command-radius-inner': '24px',
     borderRadius: 'var(--panel-command-radius)',
     overflow: 'hidden',
+    mixBlendMode: 'color-dodge',
+    // Faint inner glow. Painted as the element's own background so it blends through the base
+    // color-dodge above rather than needing a separate blended ::before layer — one fewer
+    // backdrop-reading blend composite per button (these stack across every Command Center
+    // button and mobile GPUs corrupt on too many). Formerly a `_before` pseudo-element.
+    backgroundImage: `radial-gradient(
+        121.9% 149.44% at 57.5% 55.06%,
+        rgba(130, 108, 203, 0) 0%,
+        rgba(127, 172, 255, 0.08) 100%
+      )`,
+
     cursor: 'pointer',
     transition: 'opacity {durations.medium} ease, background-color {durations.medium} ease',
     opacity: 1,
@@ -23,19 +34,6 @@ export default defineRecipe({
     justifyContent: 'center',
     gap: '8px',
 
-    _before: {
-      content: '""',
-      position: 'absolute',
-      top: '0%',
-      left: '0%',
-      right: '0%',
-      bottom: '0%',
-      background: `radial-gradient(
-        121.9% 149.44% at 57.5% 55.06%,
-        rgba(130, 108, 203, 0) 0%,
-        rgba(127, 172, 255, 0.08) 100%
-      )`,
-    },
     _after: {
       content: '""',
       position: 'absolute',
@@ -43,6 +41,7 @@ export default defineRecipe({
       left: '0%',
       right: '0%',
       bottom: '0%',
+      mixBlendMode: 'color-dodge',
       background: `radial-gradient(
             121.9% 149.44% at 57.5% 55.06%,
             {colors.panelCommandBorderGradientPurple} 0%,

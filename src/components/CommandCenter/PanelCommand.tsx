@@ -17,13 +17,25 @@ interface PanelCommandProps {
   size?: 'small' | 'medium'
 }
 
-interface ActiveButtonGlowGradientProps {
-  size?: 'small' | 'medium'
+interface ActiveButtonGlowImageProps {
   isActive: boolean | undefined
 }
 
-/** Glow gradient for active button state. */
-const ActiveButtonGlowGradient: FC<ActiveButtonGlowGradientProps> = ({ isActive }) => {
+/**
+ * Soft glow shown behind a button in its active state.
+ *
+ * A single `plus-lighter`-blended, pre-blurred glow asset. This was formerly two stacked layers —
+ * a `luminosity` and a `saturation` blend of a blue→purple gradient, softened by a runtime
+ * `filter: blur(23px)` — but that stack was the source of GPU corruption on Android's WebView:
+ * the HSL blend modes composite to a solid black box over the dark canvas, and the runtime
+ * filter+blend combo smeared during the fade. `plus-lighter` is a separable, additive lightening
+ * blend (the result is always ≥ the backdrop, so it can never darken), the blur is baked into the
+ * asset (no runtime filter), and one layer approximates the old look — a single, filter-free,
+ * cross-platform-safe effect with no platform branching. Regenerate the asset via
+ * scripts/gen-active-glow.sh; tune glow intensity via the activeButtonGlow enter opacity in
+ * recipes/fadeTransition.ts. A negative margin lets the soft edge bloom past the button.
+ */
+const ActiveButtonGlowImage: FC<ActiveButtonGlowImageProps> = ({ isActive }) => {
   const nodeRef = useRef<HTMLDivElement>(null)
   return (
     <FadeTransition
@@ -41,15 +53,12 @@ const ActiveButtonGlowGradient: FC<ActiveButtonGlowGradientProps> = ({ isActive 
         ref={nodeRef}
         className={css({
           gridArea: 'command',
-          objectFit: 'contain',
-          objectPosition: 'center',
-          backgroundGradient: 'activeGlow',
-          borderRadius: '0px',
+          margin: -40,
           pointerEvents: 'none',
-          filter: 'blur(23px)',
-          padding: 40 /* Expands the Paint Rect so it includes all of the blur. */,
-          margin: -40 /* Pulls it back so layout doesn't break. */,
-          backgroundClip: 'content-box' /* Ensures background doesn't fill the padding. */,
+          backgroundImage: 'url(/img/command-center/active-glow.png)',
+          backgroundSize: '100% 100%',
+          backgroundRepeat: 'no-repeat',
+          mixBlendMode: 'plus-lighter',
         })}
       />
     </FadeTransition>
@@ -93,8 +102,7 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
           : { gridColumn: 'span 1', gridTemplateColumns: 'auto', gridTemplateAreas: `"command"` }),
       })}
     >
-      {/* For the first fade in to work properly, ActiveButtonGlowGradient must be already mounted with opacity 0. */}
-      <ActiveButtonGlowGradient isActive={isButtonActive} />
+      <ActiveButtonGlowImage isActive={isButtonActive} />
       <div
         className={cx(
           panelCommandRecipe({
