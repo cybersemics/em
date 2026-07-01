@@ -1,10 +1,16 @@
+import type { Operation } from '@treecrdt/interface'
+import type { DataProvider } from '../DataProvider'
 import { initPermissionsStore } from '../permissionsStore'
 import { clientIdReady } from '../thoughtspaceSession'
-import { persistTreecrdtBatches } from './persistBatches'
+import { pushTreecrdtLocalOpsToRemote } from './sync'
 import { getMaterializedThoughtsToStoreVersion, waitForMaterializedThoughtsToStore } from './sync/materializationQueue'
 import treecrdtDb, { init as initTreecrdtThoughtspace } from './thoughtspace'
 import { initTreecrdt } from './treecrdt'
-import { getTreecrdtWriteBarrierVersion, waitForTreecrdtWriteBarrier } from './writeBarrier'
+import { getTreecrdtWriteBarrierVersion, waitForTreecrdtWriteBarrier, withTreecrdtWriteBarrier } from './writeBarrier'
+
+type PersistTreecrdtBatch = Parameters<DataProvider['updateThoughts']>[0] & {
+  local?: boolean
+}
 
 /** Converts the app client id to TreeCRDT's 32-byte replica id. */
 const clientIdToReplicaId = (clientId: string): Uint8Array =>
@@ -16,6 +22,18 @@ const clientIdToReplicaId = (clientId: string): Uint8Array =>
         replicaId.set(bytes.subarray(0, 32))
         return replicaId
       })()
+
+/** Persists push queue batches through TreeCRDT and forwards local ops to remote sync. */
+const persistTreecrdtBatches = (batches: readonly PersistTreecrdtBatch[]): Promise<void> =>
+  withTreecrdtWriteBarrier(async () => {
+    for (const batch of batches) {
+      const { local: isLocal, ...updates } = batch
+      const maybeOps = await treecrdtDb.updateThoughts(updates)
+      if (isLocal && Array.isArray(maybeOps) && maybeOps.length > 0) {
+        void pushTreecrdtLocalOpsToRemote(maybeOps as readonly Operation[])
+      }
+    }
+  })
 
 /** TreeCRDT lifecycle implementation for the app thoughtspace runtime. */
 export const treecrdtRuntime = {
