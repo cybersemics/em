@@ -91,7 +91,10 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
     childrenOfDestination.find(child => normalizeThought(child.value) === normalizeThought(sourceThought.value))
 
   // if thought is being moved to the same context that is not a duplicate case
-  const duplicateThought = !sameContext ? duplicateSubthought() : null
+  // Do not treat empty thoughts as duplicates: an empty thought is a placeholder with no identity, so merging
+  // it into an existing empty sibling would silently drop it (e.g. pasting a series with multiple empty thoughts).
+  // See https://github.com/cybersemics/em/issues/4448.
+  const duplicateThought = !sameContext && sourceThought.value !== '' ? duplicateSubthought() : null
 
   const isPendingMerge = duplicateThought && (sourceThought.pending || duplicateThought.pending)
 

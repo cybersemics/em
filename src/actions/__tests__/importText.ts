@@ -795,6 +795,23 @@ it('import a series of plaintext thoughts with an empty thought in the middle', 
   expect(values).toEqual(['A', 'B', '', 'D'])
 })
 
+// Regression test for https://github.com/cybersemics/em/issues/4448 (Issue B)
+// Pasting a series that contains multiple empty thoughts into a non-leaf destination routes through the
+// dummy/collapse (uncategorize) path, where the empty thoughts were previously merged into a single empty
+// thought. Each empty thought should be preserved as a distinct sibling.
+it('import multiple empty thoughts within a series into a non-leaf destination', () => {
+  const initialHtml = `<li>x<ul><li>y</li></ul></li>`
+  const importedHtml = `<ul><li>A</li><li></li><li>B</li><li></li><li>C</li></ul>`
+
+  const state1 = importText(initialState(), { path: HOME_PATH, text: initialHtml })
+  const simplePath = contextToPath(state1, ['x'])!
+  const state2 = importText(state1, { path: simplePath, text: importedHtml })
+
+  const values = getAllChildrenByContext(state2, ['x']).map(id => getThoughtById(state2, id)?.value)
+
+  expect(values).toEqual(['y', 'A', '', 'B', '', 'C'])
+})
+
 it('set cursor correctly after duplicate merge', () => {
   const text = '- a\n  - b'
 
