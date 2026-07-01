@@ -2,7 +2,6 @@ import { throttle } from 'lodash'
 import { useEffect, useRef } from 'react'
 import scrollCursorIntoView from '../device/scrollCursorIntoView'
 import testFlags from '../e2e/testFlags'
-import isAllSelected from '../selectors/isAllSelected'
 import store from '../stores/app'
 import editingValueStore from '../stores/editingValue'
 
@@ -11,13 +10,13 @@ const throttledScrollCursorIntoView = throttle((y: number, height: number) => sc
 // Expose the throttled function so that tests can cancel its pending trailing call before asserting on the scroll position.
 testFlags.throttledScrollCursorIntoView = throttledScrollCursorIntoView
 
-/** Returns true if every thought at the cursor's level is selected (Select All). In that case the whole level is
- * already "in focus", so autoscrolling the cursor when a multicursor formatting command rewrites its value would be a
- * disruptive, pointless jump. See #3995 Issue H. */
-const isSelectAllActive = () => {
-  const state = store.getState()
-  return Object.keys(state.multicursors).length > 0 && isAllSelected(state)
-}
+/** Returns true if a multiselection is active. While thoughts are multiselected, the single cursor is a transient
+ * artifact of executeCommandWithMulticursor iterating over (and then restoring) the cursor across each selected
+ * thought. Following it with a cursor autoscroll causes a disruptive up-and-down jump, and on mobile Safari the
+ * restored cursor can be scrolled behind the virtual keyboard. The single intended scroll is performed by the
+ * multicursor formatting command's onComplete handler (see LayoutTree), so cursor-follow autoscroll must stand down.
+ * See #3995 Issue F/H. */
+const isMulticursorActive = () => Object.keys(store.getState().multicursors).length > 0
 
 /** Call scrollCursorIntoView when the y position of its container changes, or when the editing value changes. */
 const useScrollCursorIntoView = (y: number, height: number) => {
@@ -38,15 +37,17 @@ const useScrollCursorIntoView = (y: number, height: number) => {
      * React's render cycle runs and processes the effect above. That's why setTimeout is necessary here (#3083).
      */
     setTimeout(() => {
-      // Do not autoscroll while a Select All multicursor format rewrites the cursor's value. See #3995 Issue H.
-      if (isSelectAllActive()) return
+      // Do not autoscroll to the transient cursor while a multicursor format rewrites the selected thoughts' values.
+      // The topmost selected thought is snapped into view once via the command's onComplete handler. See #3995 Issue F/H.
+      if (isMulticursorActive()) return
       throttledScrollCursorIntoView(sizeRef.current.y, sizeRef.current.height)
     })
   })
 
   useEffect(() => {
-    // Do not autoscroll while a Select All multicursor format reflows the cursor's position. See #3995 Issue H.
-    if (isSelectAllActive()) return
+    // Do not autoscroll to the transient cursor while a multicursor format reflows the selected thoughts' positions.
+    // The topmost selected thought is snapped into view once via the command's onComplete handler. See #3995 Issue F/H.
+    if (isMulticursorActive()) return
     scrollCursorIntoView(y, height)
   }, [height, y])
 }
