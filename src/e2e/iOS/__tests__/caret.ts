@@ -28,7 +28,7 @@ describe('Caret', () => {
     await hideKeyboardByTappingDone()
 
     const editableNodeHandle = await waitForEditable('foo')
-    await tap(editableNodeHandle, { y: 60, x: 20 })
+    await tap(editableNodeHandle, { x: 20 })
 
     await waitUntil(isKeyboardShown)
     const selectionTextContent = await getSelection().focusNode?.textContent
@@ -40,7 +40,7 @@ describe('Caret', () => {
     await newThought('bar', { insertNewSubthought: true })
 
     const editableNodeHandle = await waitForEditable('foo')
-    await tap(editableNodeHandle, { y: 60, x: 20 })
+    await tap(editableNodeHandle, { x: 20 })
 
     await waitUntil(async () => (await getEditingText()) === 'foo')
     const selectionTextContent = await getSelection().focusNode?.textContent
@@ -53,7 +53,7 @@ describe('Caret', () => {
     await hideKeyboardByTappingDone()
 
     const editableNodeHandle = await waitForEditable('foo')
-    await tap(editableNodeHandle)
+    await tap(editableNodeHandle, { x: 20 })
 
     const selectionTextContent = await getSelection().focusNode?.textContent
     expect(selectionTextContent).toBe(null)
@@ -71,7 +71,7 @@ describe('Caret', () => {
     await newThought('d', { insertNewSubthought: true })
 
     const editableNodeHandle = await waitForEditable('c')
-    await tap(editableNodeHandle, { y: 60, x: 20 })
+    await tap(editableNodeHandle, { x: 20 })
     await waitUntil(async () => (await getEditingText()) === 'c')
 
     const selectionTextContent = await getSelection().focusNode?.textContent
@@ -91,7 +91,7 @@ describe('Caret', () => {
     await clickThought('c')
 
     const editableNodeHandle = await waitForEditable('d')
-    await tap(editableNodeHandle, { y: 60, x: 20 })
+    await tap(editableNodeHandle, { x: 20 })
     await waitUntil(async () => (await getEditingText()) !== 'c')
 
     const editingText = await getEditingText()
@@ -111,7 +111,7 @@ describe('Caret', () => {
     await clickThought('c')
 
     const editableNodeHandle = await waitForEditable('d')
-    await tap(editableNodeHandle, { y: 60, x: 20 })
+    await tap(editableNodeHandle, { x: 20 })
 
     await waitUntil(async () => (await getEditingText()) === 'd')
     const selectionTextContent = await getSelection().focusNode?.textContent
@@ -175,7 +175,7 @@ describe('Caret', () => {
       segmentLength: elementRect.width,
     })
 
-    await tap(editableNodeHandle, { y: 60, x: 20 })
+    await tap(editableNodeHandle, { x: 20 })
 
     const editingText = await getEditingText()
     expect(editingText).toBe('foo')
