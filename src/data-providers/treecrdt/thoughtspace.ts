@@ -170,7 +170,7 @@ const getTreecrdtPlacement = async (
 
   const childIds = await client.tree.children(parentId)
   if (!childIds.includes(afterId)) {
-    throw new Error(`TreeCRDT move for ${thoughtId} references missing sibling ${afterId}.`)
+    return getRankPlacement(parentId, thoughtId, thought.rank)
   }
 
   return { type: 'after', after: afterId }
