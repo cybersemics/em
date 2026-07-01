@@ -4,7 +4,7 @@
  *
  * Overview:
  * - Uses Radix UI Dialog for accessibility (focus trapping, screen reader support)
- * - Uses Framer Motion for physics-based animations and gesture handling
+ * - Uses Framer Motion for animations and gesture handling (see Animation model)
  * - Implements custom touch/swipe handling adapted from MUI's SwipeableDrawer pattern
  * - Multiple visual overlay layers (SidebarOverlay1, SidebarOverlay2) create
  * a liminal glow/lighting effects behind the sidebar content
@@ -22,18 +22,36 @@
  * ├── Favorites
  * ├── RecentlyEdited
  * └── RecentlyDeleted.
+ *
+ * Animation model:
+ * Motion is driven by Framer Motion `MotionValue`s — numbers that update outside React's render
+ * cycle, not React state.
+ *
+ * There are four independent animation systems:
+ * 1. Drawer slide. Triggered by `showSidebar`. This animates `MotionValue` `x`. Manual swipes drive
+ * the `x` value directly. The position and opacity of sidebar layers derive from `x`.
+ * 2. Section color tint. Triggered by changes in `sectionId`. Animates `hue` and `sat` values over
+ * SLOW_DURATION via the useSectionHue hook. Every glow or gradient layer derives its CSS filter
+ * from them (useHueSatFilter).
+ * 3. Sidebar dropdown. Triggered by `dropdownOpen`. Animates four values over STAGE_DURATION:
+ * the opacity of dropdown item rows, the opacity of the chevron, the intensity of the sidebar headers' glow
+ * (intensified when the dropdown is open), and a mask that dims the content of the sidebar underneath.
+ * 4. Scroll-hint mask. Trigger: `isScrolled`. Animates `scrollHintMaskY` to add a top-edge fade
+ * when the list is scrolled.
+ *
  */
 import * as Dialog from '@radix-ui/react-dialog'
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden'
+import { MotionValue, animate, motion, motionValue, useMotionValue, useTransform } from 'framer-motion'
 import _ from 'lodash'
-import { MotionValue, animate, motion, useMotionValue, useTransform } from 'motion/react'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { css } from '../../styled-system/css'
+import { css, cx } from '../../styled-system/css'
+import { sidebarContentMaskRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
 import { longPressActionCreator as longPress } from '../actions/longPress'
 import { toggleSidebarActionCreator } from '../actions/toggleSidebar'
-import { isSafari } from '../browser'
+import { isAndroid, isSafari } from '../browser'
 import { LongPressState } from '../constants'
 import useBreakpoint from '../hooks/useBreakpoint'
 import viewportStore from '../stores/viewport'
@@ -50,7 +68,7 @@ import DeleteIcon from './icons/DeleteIcon'
 import FavoritesIcon from './icons/FavoritesIcon'
 import PencilIcon from './icons/PencilIcon'
 
-/** Default ease-out used for most sidebar animations. */
+/** Default ease-out curve used for most sidebar animations. */
 const EASE_OUT = [0.16, 0.6, 0.2, 1] as const
 
 /** Softer ease-out used when *closing* the sidebar. The less aggressive start prevents the
@@ -60,8 +78,21 @@ const EASE_OUT_GENTLE = [0.25, 0.1, 0.25, 1] as const
 /** Backdrop-filter blur is too slow in Chromium to use freely, so we gate it to Safari. */
 const BLUR_ENABLED = isSafari()
 
+/** Number of stacked backdrop-filter layers in the sidebar's ProgressiveBlur. Each layer re-samples
+ * the full backdrop every frame; Android's WebView flickers under the load (especially with the
+ * Command Center also open), so it gets fewer. TEST VALUE — confirm on-device before finalizing. */
+const PROGRESSIVE_BLUR_LAYERS = isAndroid ? 1 : 4
+
+/** Minimum blur radius applied to every ProgressiveBlur layer. With fewer layers on Android the
+ * trailing edge would otherwise drop to a hard 0px band; a small floor keeps the falloff smooth. */
+const PROGRESSIVE_BLUR_MIN = isAndroid ? 4 : 0
+
 /** Duration (seconds) of the dropdown open/close animation. */
-const DROPDOWN_DURATION = durations.get('medium') / 1000
+const STAGE_DURATION = durations.get('medium') / 1000
+
+/** Duration (seconds) of the slower sidebar animations: the section hue/sat shift and the
+ * glow overlay's resize on dropdown expand. */
+const SLOW_DURATION = durations.get('slow') / 1000
 
 /** Y offsets that slide the scrollable content's mask in and out. The mask gradient is a
  * 128px transparent band followed by a 48px fade to black; these constants position that
@@ -134,112 +165,6 @@ const SidebarSectionRow = ({
   </div>
 )
 
-/** Props for the SidebarDropdownItem component. */
-interface SidebarDropdownItemProps {
-  /** The section this row represents. */
-  section: SidebarSection
-  /** Whether this section is the currently selected one. */
-  isSelected: boolean
-  /** Whether the dropdown is expanded. */
-  isOpen: boolean
-  /** True when this is the first item in the list. Drops its top padding. */
-  isFirst: boolean
-  /** Tap handler — invoked when the user picks this row. */
-  onTap: () => void
-  /** Motion value controlling the opacity swap between the selected row and the static header.
-   * This value snaps from 0 (dropdown closed, static header visible) to 1 (dropdown open, selected row visible)
-   * after the dropdown open animation in either direction completes. This creates the impression of the
-   * static header and dropdown item row being the same element.
-   */
-  headerDropdownSwap: MotionValue<number>
-}
-
-/**
- * A single row in the sidebar's section-picker dropdown.
- *
- * In the dropdown's closed state, the selected row is hidden via opacity: 0 and stacked directly
- * on top of the static header using a y transform. This way, when the dropdown opens, we can swap
- * the header and the dropdown in a single frame using `headerDropdownSwap` and begin animating the
- * dropdown open – creating the impression of the header itself moving into the dropdown list.
- *
- * Non-selected rows (`isSelected === false`) simply fade in/out on open/close.
- *
- * The sliding animation distance is determined by performing a DOM measurement:
- * we read the outer wrapper of the dropdown item's `offsetTop` (distance from the top of the dropdown list)
- * and add the inner div's `paddingTop` (0.5rem) to calculate the total distance from the header to the
- * dropdown item row.
- */
-const SidebarDropdownItem = ({
-  section,
-  isSelected,
-  isOpen,
-  isFirst,
-  onTap,
-  headerDropdownSwap,
-}: SidebarDropdownItemProps) => {
-  /** Dropdown item's outer wrapper. Used to calculate the slide distance. */
-  const outerRef = useRef<HTMLDivElement>(null)
-
-  /** Dropdown item's inner padded div. Used to calculate the slide distance. */
-  const innerRef = useRef<HTMLDivElement>(null)
-
-  /** The dropdown item's opacity, represented as a MotionValue so we can animate it when the dropdown opens/closes. */
-  const opacity = useMotionValue(0)
-
-  /** The dropdown item's vertical position, represented as a MotionValue so we can animate it when the dropdown opens/closes. */
-  const y = useMotionValue(0)
-
-  /** Animation effect for the dropdown item's opacity. */
-  useLayoutEffect(() => {
-    /* When animating the selected item, co-ordinate with the header to create the swapping effect. */
-    if (isSelected) {
-      opacity.set(headerDropdownSwap.get())
-      return headerDropdownSwap.on('change', v => opacity.set(v))
-    }
-
-    /* For other items, simply fade in/out on open/close. */
-    const controls = animate(opacity, isOpen ? 1 : 0, { duration: DROPDOWN_DURATION, ease: EASE_OUT })
-    return () => controls.stop()
-  }, [isSelected, isOpen, opacity, headerDropdownSwap])
-
-  /** Animation effect for the dropdown item's vertical position. */
-  useLayoutEffect(() => {
-    let target = 0
-
-    /** Calculate the vertical slide distance for the selected item when the dropdown is closed. */
-    if (isSelected && !isOpen && outerRef.current && innerRef.current) {
-      const motionTop = outerRef.current.offsetTop
-      const paddingTopPx = parseFloat(getComputedStyle(innerRef.current).paddingTop)
-      target = -(motionTop + paddingTopPx)
-    }
-
-    const controls = animate(y, target, { duration: DROPDOWN_DURATION, ease: EASE_OUT })
-    return () => controls.stop()
-  }, [isSelected, isOpen, y])
-
-  return (
-    <motion.div ref={outerRef} initial={false} style={{ opacity, y }}>
-      <div
-        ref={innerRef}
-        data-testid={`sidebar-${section.id}`}
-        {...fastClick(onTap)}
-        className={css({
-          cursor: 'pointer',
-          paddingTop: isFirst ? 0 : '0.5rem',
-          paddingBottom: '0.5rem',
-          display: 'flex',
-          opacity: isSelected ? 1 : 0.6,
-          '@media (hover: hover)': { _hover: { opacity: 1 } },
-          '@media (hover: none)': { _active: { opacity: 1 } },
-          transition: 'opacity {durations.fast} ease-out',
-        })}
-      >
-        <SidebarSectionRow icon={section.icon} label={section.label} iconSize={32} />
-      </div>
-    </motion.div>
-  )
-}
-
 /** Props for the SidebarHeader component. */
 interface SidebarHeaderProps {
   /** All available sidebar sections. */
@@ -263,50 +188,94 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
   /** The currently active section. */
   const section = sections.find(s => s.id === sectionId)!
 
-  /** This MotionValue co-ordinates the swap between the static SidebarHeader and the animating
-   * SidebarDropdownItem. It is 0 when the dropdown is closed and 1 when open. Crucially, it is
-   * different to `isOpen` in that the close edge is delayed by the duration of the slide animation –
-   * so the slide can complete before the visible layers swap. */
-  const headerDropdownSwap = useMotionValue(isOpen ? 1 : 0)
+  // Transition presets for the dropdown's sliding open/close animations.
+  const slide = { duration: STAGE_DURATION, ease: EASE_OUT, delay: 0 }
 
-  /** The opacity of the static header. Derived from `headerDropdownSwap`, so it is 1 when the dropdown
-   * is settled and snaps to 0 when the dropdown is animating.
-   */
-  const staticHeaderOpacity = useTransform(headerDropdownSwap, v => 1 - v)
+  /** Refs to each dropdown item's inner div, keyed by section id. Used by getSelectedOffset
+   * below to measure where the selected row currently sits, which determines how far the
+   * selected item must translate up to land on the header row. */
+  const itemEls = useRef<Record<string, HTMLDivElement | null>>({})
 
-  /** The opacity of the header's chevron. Animates between 0 and 1 based on the dropdown state.
-   * Snaps to 0 if the dropdown is closed while it was opening.
-   */
-  const chevronOpacity = useMotionValue(isOpen ? 0 : 1)
-
-  /** This effect drives `headerDropdownSwap` based on `isOpen`. When `isOpen` changes to 1,
-   * snap `headerDropdownSwap` to 1 immediately. When `isOpen` changes to 0, snap `headerDropdownSwap` to 0
-   * after a delay of DROPDOWN_DURATION.
-   */
-  useLayoutEffect(() => {
-    const controls = animate(headerDropdownSwap, isOpen ? 1 : 0, {
-      duration: 0,
-      delay: isOpen ? 0 : DROPDOWN_DURATION,
-    })
-    return () => controls.stop()
-  }, [isOpen, headerDropdownSwap])
-
-  /** This effect drives the chevron's opacity. When the dropdown opens, fade out over DROPDOWN_DURATION.
-   * When it closes, snap to 0 immediately, then fade in. The immediate snap on close prevents an edge case
-   * where the chevron would stay partially visible if the user closed the dropdown while it was still opening. */
-  useLayoutEffect(() => {
-    if (isOpen) {
-      const controls = animate(chevronOpacity, 0, { duration: DROPDOWN_DURATION, ease: EASE_OUT })
-      return () => controls.stop()
+  /** One motion value per section driving its dropdown-item opacity, driven imperatively. */
+  const itemOpacities = useRef<Record<string, MotionValue<number>>>({})
+  sections.forEach(s => {
+    if (!itemOpacities.current[s.id]) {
+      itemOpacities.current[s.id] = motionValue(0)
     }
-    chevronOpacity.set(0)
-    const controls = animate(chevronOpacity, 1, {
-      duration: DROPDOWN_DURATION,
-      delay: DROPDOWN_DURATION,
-      ease: EASE_OUT,
-    })
-    return () => controls.stop()
-  }, [isOpen, chevronOpacity])
+  })
+
+  /** Drives the static (closed-state) header row's opacity. It's the other half of the selected
+   * dropdown item's swap, so it's kept as a motion value (rather than a declarative `animate`
+   * prop) and snapped imperatively in the same layout effect as the item — see the swap handling
+   * there for why same-tick scheduling matters. */
+  const headerOpacity = useMotionValue(isOpen ? 0 : 1)
+
+  // Drive each item's opacity based on the open state and which section is selected. Re-runs
+  // when sectionId changes, which ensures section switches while the dropdown is mid-open
+  // animate correctly.
+  useLayoutEffect(() => {
+    /* Animation cleanup functions – call all of these on unmount */
+    const cancellers: (() => void)[] = []
+
+    // Two kinds of rows. The selected section is drawn twice — as the header (when closed) and as
+    // its row in the open list — so its row snaps in and out to hand off with the header. Every
+    // other row just fades.
+    for (const s of sections) {
+      const opacity = itemOpacities.current[s.id]
+      if (s.id === sectionId) {
+        // Selected: snap visible now; on close, snap hidden again once the slide home finishes.
+        opacity.set(1)
+        if (!isOpen) {
+          const controls = animate(opacity, 0, { duration: 0, delay: STAGE_DURATION })
+          cancellers.push(() => controls.stop())
+        }
+      } else {
+        // Others: fade toward open (1) or closed (0).
+        const controls = animate(opacity, isOpen ? 1 : 0, { duration: STAGE_DURATION, ease: EASE_OUT })
+        cancellers.push(() => controls.stop())
+      }
+    }
+
+    // The static header is the other half of the selected item's swap, and both halves must flip
+    // opacity on the SAME frame or the swap flickers: on open the header snaps to 0 the instant
+    // the item takes over (delay 0); on close it snaps back to 1 exactly when the item snaps to 0
+    // (delay STAGE_DURATION — identical to the item's snap above). Snapping it here, imperatively
+    // in the same synchronous effect as the item, guarantees both land on one frame. A declarative
+    // `animate` prop on the header is scheduled by a different mechanism and drifts a frame,
+    // opening a one-frame gap where neither copy is visible — the flicker.
+    const headerControls = animate(headerOpacity, isOpen ? 0 : 1, { duration: 0, delay: isOpen ? 0 : STAGE_DURATION })
+    cancellers.push(() => headerControls.stop())
+
+    return () => cancellers.forEach(c => c())
+  }, [isOpen, sectionId, sections, headerOpacity])
+
+  /** Returns the y-offset of the selected item's SidebarSectionRow within the dropdown
+   * container — i.e. the distance the selected item must translate UP to overlay the
+   * header row at y=0.
+   *
+   * Why the offsetParent branch: framer-motion applies a CSS transform to each item's
+   * motion.div wrapper (via style.y). A transformed element becomes the offsetParent of
+   * its descendants in both Chromium and WebKit, so sectionRow.offsetTop returns different
+   * values depending on whether the motion.div currently has a transform applied. With a
+   * transform (closed state) offsetParent is the motion.div, so offsetTop covers only the
+   * inner div's padding (~9px) and we have to add the motion.div's own offsetTop. Without
+   * a transform (open state) offsetParent skips up to the dropdown container, so offsetTop
+   * already includes the motion.div's static y. Without this branch, non-Favorites sections
+   * end up either under- or over-translated and the slide lands far from the header row. */
+  const getSelectedOffset = useCallback(() => {
+    const inner = itemEls.current[sectionId]
+    const sectionRow = inner?.firstElementChild as HTMLElement | null
+    const motionDiv = inner?.parentElement as HTMLElement | null
+    if (sectionRow && motionDiv) {
+      const includesMotionDivOffset = sectionRow.offsetParent !== motionDiv
+      return sectionRow.offsetTop + (includesMotionDivOffset ? 0 : motionDiv.offsetTop)
+    }
+    // If the elements aren't mounted yet, estimate based on index * row height
+    const idx = sections.findIndex(s => s.id === sectionId)
+    return Math.max(0, idx) * 54
+  }, [sectionId, sections])
+
+  const selectedOffset = getSelectedOffset()
 
   return (
     // position:relative creates a stacking context for the absolutely-positioned dropdown.
@@ -324,18 +293,31 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
         })}
       >
         {/*
-         * Sidebar header. Displayed when the dropdown is closed.
+         * Selected section row: instantly hidden when opening (the selected dropdown item takes
+         * over), instantly shown after the close slide completes. Opacity is driven by the
+         * headerOpacity motion value from the layout effect so its swap with the dropdown item is
+         * frame-exact (see there).
          */}
-        <motion.div initial={false} style={{ opacity: staticHeaderOpacity }}>
+        <motion.div style={{ opacity: headerOpacity }}>
           <SidebarSectionRow icon={section.icon} label={section.label} />
         </motion.div>
         {/*
-         * Chevron. Opacity driven by `chevronOpacity` above so any close snaps it to 0 first
-         * (rather than resuming a stale mid-fade), then fades in once the close completes.
+         * Chevron timing (declarative; initial={false} skips the mount animation):
+         *   - Open: fades out (1 → 0) concurrent with the rest of the dropdown.
+         *   - Close: the [0, 0, 1] keyframes snap it to 0, hold through the close window, then fade
+         *     it back in over the next STAGE_DURATION on the now-static header row. Keyframes always
+         *     start from their first value (0), so an interrupted close (chevron still mid-fade-out)
+         *     snaps cleanly to 0 rather than freezing mid-fade. Linear ease so the faint chevron
+         *     reads as a fade, not a pop.
          */}
         <motion.div
           initial={false}
-          style={{ opacity: chevronOpacity }}
+          animate={{ opacity: isOpen ? 0 : [0, 0, 1] }}
+          transition={
+            isOpen
+              ? { duration: STAGE_DURATION, ease: EASE_OUT }
+              : { duration: STAGE_DURATION * 2, times: [0, 0.5, 1], ease: 'linear' }
+          }
           className={css({ display: 'inline-flex', paddingTop: '0.375rem' })}
         >
           <ChevronImg
@@ -347,9 +329,11 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
         </motion.div>
       </div>
 
-      {/* Full-screen invisible click-catcher below the dropdown. Tapping anywhere outside the
-       * dropdown closes it. Gated by pointerEvents so it only intercepts clicks when the dropdown is open. */}
-      <div
+      {/* Full-screen backdrop behind the dropdown. When clicked, it dismisses the dropdown. Fades concurrent with the open/close. */}
+      <motion.div
+        initial={false}
+        animate={{ opacity: isOpen ? 1 : 0 }}
+        transition={slide}
         {...fastClick(() => setIsOpen(false))}
         className={css({
           position: 'absolute',
@@ -363,7 +347,7 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
         })}
       />
 
-      {/* Dropdown menu containing all sections in their original order. */}
+      {/* Dropdown menu containing all sections in their original order. See the dropdown stage in the Animation model for per-element timing. */}
       <div
         className={css({
           position: 'absolute',
@@ -377,20 +361,43 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
           pointerEvents: isOpen ? 'auto' : 'none',
         })}
       >
-        {sections.map((s, i) => (
-          <SidebarDropdownItem
-            key={s.id}
-            section={s}
-            isSelected={s.id === sectionId}
-            isOpen={isOpen}
-            isFirst={i === 0}
-            onTap={() => {
-              onSectionChange(s.id)
-              setIsOpen(false)
-            }}
-            headerDropdownSwap={headerDropdownSwap}
-          />
-        ))}
+        {sections.map((s, i) => {
+          const isSelected = s.id === sectionId
+          return (
+            <motion.div
+              key={s.id}
+              initial={false}
+              style={{ opacity: itemOpacities.current[s.id] }}
+              animate={{
+                y: isSelected ? (isOpen ? 0 : -selectedOffset) : 0,
+              }}
+              transition={slide}
+            >
+              <div
+                ref={(el: HTMLDivElement | null) => {
+                  itemEls.current[s.id] = el
+                }}
+                data-testid={`sidebar-${s.id}`}
+                {...fastClick(() => {
+                  onSectionChange(s.id)
+                  setIsOpen(false)
+                })}
+                className={css({
+                  cursor: 'pointer',
+                  paddingTop: i === 0 ? 0 : '0.5rem',
+                  paddingBottom: '0.5rem',
+                  display: 'flex',
+                  opacity: isSelected ? 1 : 0.6,
+                  '@media (hover: hover)': { _hover: { opacity: 1 } },
+                  '@media (hover: none)': { _active: { opacity: 1 } },
+                  transition: 'opacity {durations.fast} ease-out',
+                })}
+              >
+                <SidebarSectionRow icon={s.icon} label={s.label} iconSize={32} />
+              </div>
+            </motion.div>
+          )
+        })}
       </div>
     </div>
   )
@@ -433,7 +440,7 @@ const SidebarOverlay1 = ({
    * opens. Multiplied with the parent-supplied `opacity` for the final overlay opacity. */
   const dropdownOpacity = useMotionValue(0.8)
   useEffect(() => {
-    animate(dropdownOpacity, expanded ? 1 : 0.8, { duration: durations.get('medium') / 1000, ease: EASE_OUT })
+    animate(dropdownOpacity, expanded ? 1 : 0.8, { duration: STAGE_DURATION, ease: EASE_OUT })
   }, [expanded, dropdownOpacity])
 
   const combinedOpacity = useTransform([opacity, dropdownOpacity], ([o, d]: number[]) => o * d)
@@ -464,7 +471,7 @@ const SidebarOverlay1 = ({
       initial={collapsed}
       animate={expanded ? open : collapsed}
       transition={{
-        duration: durations.get('slow') / 1000,
+        duration: SLOW_DURATION,
         ease: EASE_OUT,
       }}
       className={css({
@@ -568,7 +575,12 @@ const SidebarGradient = ({
     <motion.div
       aria-label='sidebar-gradient'
       aria-hidden='true'
-      style={{ opacity, filter }}
+      // willChange:'filter' promotes this to its own compositing layer so Safari repaints
+      // filter (hue-rotate) changes — but only while the sidebar is open. Left on permanently
+      // it pins a full-screen filter buffer in GPU memory even when closed, which (combined
+      // with the rest of the always-mounted layer stack) contributes to compositor memory
+      // exhaustion. The hue filter only animates while open, so promotion isn't needed closed.
+      style={{ opacity, filter, willChange: showSidebar ? 'filter' : 'auto' }}
       onClick={() => toggleSidebar(false)}
       className={css({
         position: 'absolute',
@@ -578,9 +590,6 @@ const SidebarGradient = ({
         pointerEvents: showSidebar ? 'auto' : 'none',
         cursor: 'pointer',
         userSelect: 'none',
-        // Safari doesn't repaint filter changes on this element unless the
-        // element is promoted to its own compositing layer.
-        willChange: 'filter',
       })}
     />
   )
@@ -649,8 +658,11 @@ const SidebarBackground = ({
       />
 
       {/*
-       * On WebKit (Safari/iOS), it looks better if the blur is applied -above- the gradient. The other way around, there's patchy artifacts.
-       * On Chromium, it looks better if the blur is applied -below- the gradient. The other way around, there's visible banding artifacts.
+       * Blur/gradient stacking order is engine-specific:
+       *   - WebKit (Safari/iOS): blur -above- the gradient; the reverse produces patchy artifacts.
+       *   - Chromium: blur -below- the gradient; the reverse produces visible banding.
+       * backdrop-filter is expensive on Chromium (each layer recomposites the full backdrop every
+       * frame during the slide), so Android uses fewer layers — see PROGRESSIVE_BLUR_LAYERS.
        */}
       {isSafari() ? (
         <>
@@ -662,11 +674,25 @@ const SidebarBackground = ({
             hue={hue}
             sat={sat}
           />
-          <ProgressiveBlur direction='to right' minBlur={0} maxBlur={32} layers={4} width={width} opacity={opacity} />
+          <ProgressiveBlur
+            direction='to right'
+            minBlur={PROGRESSIVE_BLUR_MIN}
+            maxBlur={32}
+            layers={PROGRESSIVE_BLUR_LAYERS}
+            width={width}
+            opacity={opacity}
+          />
         </>
       ) : (
         <>
-          <ProgressiveBlur direction='to right' minBlur={0} maxBlur={32} layers={4} width={width} opacity={opacity} />
+          <ProgressiveBlur
+            direction='to right'
+            minBlur={PROGRESSIVE_BLUR_MIN}
+            maxBlur={32}
+            layers={PROGRESSIVE_BLUR_LAYERS}
+            width={width}
+            opacity={opacity}
+          />
           <SidebarGradient
             opacity={opacity}
             width={width}
@@ -703,7 +729,7 @@ const useSectionHue = (/** The currently active sidebar section. */ sectionId: S
     let diff = section.hue - (((currentHue % 360) + 360) % 360)
     if (diff > 180) diff -= 360
     if (diff < -180) diff += 360
-    const t = { duration: durations.get('slow') / 1000, ease: 'linear' as const }
+    const t = { duration: SLOW_DURATION, ease: 'linear' as const }
     animate(hue, currentHue + diff, t)
     animate(sat, section.saturate, t)
   }, [sectionId, hue, sat])
@@ -716,7 +742,7 @@ const useSectionHue = (/** The currently active sidebar section. */ sectionId: S
  * and section content. Handles open/close (Redux), swipe-to-close gestures, section
  * switching, Escape key, and body scroll lock.
  *
- * The drawer is always mounted (Radix forceMount, inherited from the previous MUI drawer)
+ * The drawer subtree mounts only while open (and during the close slide-out; see drawerMounted)
  * and slides via a framer-motion x transform; swipe gestures are handled manually because
  * framer-motion's drag has no "wait and see" phase for direction detection.
  */
@@ -758,12 +784,21 @@ const Sidebar = () => {
     }
   }, [showSidebar])
 
+  /** Self-managed mount for the sidebar subtree, replacing Radix's forceMount. It mounts on open
+   * and stays mounted through the close slide-out (torn down in the drawer's onAnimationComplete),
+   * so the enter/exit animations still play while a fully-closed sidebar costs zero compositing.
+   * The parent Sidebar component and its motion values persist across this; only the subtree's own
+   * state (list scroll position, Favorites UI state) resets on close, which is acceptable here. */
+  const [drawerMounted, setDrawerMounted] = useState(showSidebar)
+  useEffect(() => {
+    if (showSidebar) setDrawerMounted(true)
+  }, [showSidebar])
+
   const { hue, sat } = useSectionHue(sectionId)
 
-  // The scroll area's CSS mask is composed from two independent motion values: dropdownMaskY
-  // (the dim-out triggered by the dropdown) and scrollHintMaskY (the top-edge fade when the
-  // user has scrolled). They get summed into a single mask-position-y. Splitting them in two
-  // lets each one have its own animation timing without fighting for the same CSS slot.
+  // Two motion values feed the scroll area's CSS mask (see the scroll mask in the Animation
+  // model): dropdownMaskY dims the list when the dropdown opens; scrollHintMaskY fades the top
+  // edge when scrolled. Kept separate so each can animate on its own timing.
   const dropdownMaskY = useMotionValue(dropdownOpen ? 0 : DROPDOWN_MASK_OFFSET)
   const scrollHintMaskY = useMotionValue(isScrolled ? 0 : SCROLL_HINT_MASK_OFFSET)
   // The scroll-hint contribution is weighted by how closed the dropdown is (0 when fully
@@ -784,29 +819,28 @@ const Sidebar = () => {
 
   useEffect(() => {
     if (dropdownOpen) {
-      animate(dropdownMaskY, 0, { duration: DROPDOWN_DURATION, ease: EASE_OUT })
+      animate(dropdownMaskY, 0, { duration: STAGE_DURATION, ease: EASE_OUT })
       return
     }
     // Single-stage close: animate immediately. Framer interpolates smoothly from whatever
     // partial value dropdownMaskY currently holds, so an interrupted open unwinds in place.
     dropdownCloseInProgress.current = true
-    animate(dropdownMaskY, DROPDOWN_MASK_OFFSET, { duration: DROPDOWN_DURATION, ease: EASE_OUT })
+    animate(dropdownMaskY, DROPDOWN_MASK_OFFSET, { duration: STAGE_DURATION, ease: EASE_OUT })
     const clearId = setTimeout(() => {
       dropdownCloseInProgress.current = false
-    }, DROPDOWN_DURATION * 1000)
+    }, STAGE_DURATION * 1000)
     return () => clearTimeout(clearId)
   }, [dropdownOpen, dropdownMaskY])
 
   useEffect(() => {
-    // Never interrupt the dropdown animation: while the dropdown is open or mid-close, the
-    // dropdown effect owns mask timing. The effect re-runs on dropdownOpen changes too so the
-    // lint rule is satisfied; in the guarded cases it simply no-ops.
+    // Yield while the dropdown owns the mask — open or mid-close (see the scroll mask coupling).
     if (dropdownOpen || dropdownCloseInProgress.current) return
     animate(scrollHintMaskY, isScrolled ? 0 : SCROLL_HINT_MASK_OFFSET, {
-      duration: DROPDOWN_DURATION,
+      duration: STAGE_DURATION,
       ease: EASE_OUT,
     })
-  }, [isScrolled, dropdownOpen, scrollHintMaskY])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isScrolled])
 
   // ============================
   // Refs
@@ -874,7 +908,7 @@ const Sidebar = () => {
    * drawer doesn't appear to "jump" if the close kicks off from a swipe-release. */
   const transition = useMemo(
     () => ({
-      duration: durations.get('medium') / 1000,
+      duration: STAGE_DURATION,
       ease: showSidebar ? EASE_OUT : EASE_OUT_GENTLE,
     }),
     [showSidebar],
@@ -1118,14 +1152,14 @@ const Sidebar = () => {
        * modal={false} is used because we handle backdrop clicks and escape
        * key ourselves, and we don't want Radix to add its own overlay.
        */}
-      <Dialog.Root open={showSidebar} onOpenChange={toggleSidebar} modal={false}>
+      <Dialog.Root open={showSidebar || drawerMounted} onOpenChange={toggleSidebar} modal={false}>
         {/*
-         * forceMount keeps the sidebar mounted in the DOM even when closed.
-         * This is temporarily added to match the behavior of the outgoing MUI drawer.
-         * It can be removed in a later PR to optimize performance, but would require
-         * ensuring that any state within the sidebar subtree is properly preserved.
+         * No forceMount: the sidebar subtree mounts on open and unmounts once the close slide-out
+         * finishes (see drawerMounted + the drawer's onAnimationComplete), so a fully-closed sidebar
+         * costs zero compositing. Keeping Dialog `open` true while drawerMounted is still set lets
+         * the exit animation play before Radix tears the portal down.
          */}
-        <Dialog.Portal forceMount>
+        <Dialog.Portal>
           {/*
            * Root container for all sidebar layers. Fixed-positioned to cover
            * the entire viewport. pointerEvents:none allows clicks to pass through
@@ -1161,7 +1195,6 @@ const Sidebar = () => {
             {/*
              * Dialog.Content is the actual sidebar drawer panel.
              * - asChild: renders as its child (motion.div) instead of adding an extra DOM node
-             * - forceMount: keeps content mounted even when dialog is closed
              * - onOpenAutoFocus: prevented to stop focus from jumping into the sidebar on page load
              * - onInteractOutside: prevented to avoid double-toggle when tapping the hamburger icon
              *   (our own backdrop click handler manages closing)
@@ -1170,21 +1203,25 @@ const Sidebar = () => {
              */}
             <Dialog.Content
               asChild
-              forceMount
               onOpenAutoFocus={e => e.preventDefault()}
               onInteractOutside={e => e.preventDefault()}
               onEscapeKeyDown={e => e.preventDefault()}
               aria-describedby={undefined} // Suppress Radix console warning – not applicable here
             >
-              {/* The drawer panel. Slides horizontally via the x motion value; initial={false}
-                  skips the enter animation on first mount so the sidebar doesn't animate in on
-                  page load. style.x lets a manual swipe override the animated value mid-flight. */}
+              {/* The drawer panel. Slides horizontally via the x motion value. It now mounts
+                  off-screen (initial x = -widthPx) and animates in, since the subtree is no longer
+                  force-mounted; on close it animates back off-screen, then onAnimationComplete
+                  unmounts the subtree (see drawerMounted). style.x lets a manual swipe override the
+                  animated value mid-flight. */}
               <motion.div
                 ref={drawerRef}
                 style={{ x, opacity: contentOpacity }}
-                initial={false}
+                initial={{ x: -widthPx }}
                 animate={{ x: showSidebar ? 0 : -widthPx }}
                 transition={transition}
+                onAnimationComplete={() => {
+                  if (!showSidebar) setDrawerMounted(false)
+                }}
                 className={css({
                   position: 'fixed',
                   top: 'safeAreaTop',
@@ -1296,27 +1333,24 @@ const Sidebar = () => {
                           opacity: maskOpacity,
                         } as unknown as React.CSSProperties
                       }
-                      className={css({
-                        flex: 1,
-                        overflowY: 'scroll',
-                        overflowX: 'hidden',
-                        overscrollBehavior: 'contain',
-                        scrollbarWidth: 'thin',
-                        scrollbarColor: '{colors.fgOverlay30} transparent',
-                        '&::-webkit-scrollbar': {
-                          width: '0px',
-                          background: 'transparent',
-                          display: 'none',
-                        },
-                        position: 'relative',
-                        padding: '0 1em',
-                        // Mask gradient (128px transparent band followed by a 48px fade to black) that
-                        // drives the dim-on-dropdown-open and scroll-fade effects. mask-position-y and
-                        // opacity are animated imperatively via framer-motion (above).
-                        maskRepeat: 'no-repeat',
-                        maskImage: 'linear-gradient(to bottom, transparent 0, transparent 128px, black 176px)',
-                        maskSize: '100% calc(100% + 176px)',
-                      })}
+                      className={cx(
+                        css({
+                          flex: 1,
+                          overflowY: 'scroll',
+                          overflowX: 'hidden',
+                          overscrollBehavior: 'contain',
+                          scrollbarWidth: 'thin',
+                          scrollbarColor: '{colors.fgOverlay30} transparent',
+                          '&::-webkit-scrollbar': {
+                            width: '0px',
+                            background: 'transparent',
+                            display: 'none',
+                          },
+                          position: 'relative',
+                          padding: '0 1em',
+                        }),
+                        sidebarContentMaskRecipe(),
+                      )}
                     >
                       {/* Render the active section's content component */}
                       {sectionId === 'favorites' ? (
