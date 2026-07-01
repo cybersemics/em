@@ -275,7 +275,12 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
             className={css({
               maxWidth: '100%',
               position: 'relative',
-              touchAction: 'inherit',
+              // Constrain the horizontally-scrolling toolbar to horizontal panning only. Without this, a diagonal
+              // (~45°) or vertical drag beginning on the toolbar is treated as a vertical pan and scrolls/overscrolls
+              // the page; because the toolbar is position: fixed (usePositionFixed), that overscroll visually drags
+              // the toolbar downward on iOS. pan-x preserves horizontal scrolling while blocking the vertical drag.
+              // Keep inherit in customize mode so react-dnd TouchBackend button reordering is unaffected.
+              touchAction: customize ? 'inherit' : 'pan-x',
               display: 'inline-flex',
               overflowX: 'scroll',
               zIndex: 'toolbar',
