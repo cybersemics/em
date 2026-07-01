@@ -10,9 +10,8 @@ import waitForEditable from '../helpers/waitForEditable'
 describe('Toolbar', () => {
   // Regression test for https://github.com/cybersemics/em/issues/3770
   // A diagonal/vertical swipe beginning on the fixed toolbar must not pan the page (which visually drags
-  // the toolbar downward on iOS). .skip keeps the normal suite green while the test is red before the fix;
-  // the .skip is removed when the fix lands.
-  it.skip('is not draggable vertically by a swipe on the toolbar', async () => {
+  // the toolbar downward on iOS).
+  it('is not draggable vertically by a swipe on the toolbar', async () => {
     // Create enough thoughts to make the page vertically scrollable.
     const thoughts = Array.from({ length: 40 }, (_, i) => `  - thought ${i + 1}`).join('\n')
     await paste(thoughts)
