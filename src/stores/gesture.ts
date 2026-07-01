@@ -14,12 +14,6 @@ const gestureStore = reactMinistore({
   gestureMenuAnimationState: 'hidden' as GestureMenuAnimationState,
   /** The possible commands that can be executed from the current gesture as a starting sequence. Always includes cancel and help. */
   possibleCommands: [cancelShortcut, openHelpCommand] as Command[],
-  /**
-   * Height of the content blur behind the gesture menu, as a rem string (e.g. '0rem').
-   * Stored as a rem string because GestureMenu derives it arithmetically from the command
-   * count using rem constants; AppComponent consumes it directly as a CSS height.
-   */
-  gestureMenuBlurHeight: '0rem',
 })
 
 /** Called when Redux showGestureMenu becomes true. Starts the enter animation. */
@@ -43,12 +37,6 @@ export const onGestureMenuExited = () => {
     gestureMenuAnimationState: 'hidden',
     gesture: '',
   })
-}
-
-/** Sets the content-blur height (rem string) behind the gesture menu. No-op if unchanged. */
-export const setGestureMenuBlurHeight = (height: string) => {
-  if (gestureStore.getState().gestureMenuBlurHeight === height) return
-  gestureStore.update({ gestureMenuBlurHeight: height })
 }
 
 /** Updates the gesture during tracking. */

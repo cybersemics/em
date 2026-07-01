@@ -1,43 +1,23 @@
 import { FC, useEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
-import { css } from '../../styled-system/css'
-import { token } from '../../styled-system/tokens'
-import Command from '../@types/Command'
-import { isBrowser } from '../browser'
-import { gestureString } from '../commands'
-import openMobileCommandUniverseCommand from '../commands/openMobileCommandUniverse'
-import useFilteredCommands from '../hooks/useFilteredCommands'
+import { css } from '../../../styled-system/css'
+import { token } from '../../../styled-system/tokens'
+import Command from '../../@types/Command'
+import { isBrowser } from '../../browser'
+import { gestureString } from '../../commands'
+import openMobileCommandUniverseCommand from '../../commands/openMobileCommandUniverse'
+import useFilteredCommands from '../../hooks/useFilteredCommands'
 import gestureStore, {
   onGestureMenuEntered,
   onGestureMenuExited,
-  setGestureMenuBlurHeight,
   startGestureMenuEnter,
   startGestureMenuExit,
-} from '../stores/gesture'
-import storageModel from '../stores/storageModel'
-import FadeTransition from './FadeTransition'
+} from '../../stores/gesture'
+import storageModel from '../../stores/storageModel'
+import FadeTransition from '../FadeTransition'
+import PopupBase from '../PopupBase'
 import GestureMenuItem from './GestureMenuItem'
-import PopupBase from './PopupBase'
-
-/**********************************************************************
- * Gesture-menu blur height constants
- *
- * These derive the menu's content-blur height arithmetically from the command count (no
- * ResizeObserver). They are APPROXIMATE by design: a *selected* command row is taller than a
- * normal row because it adds a wrapping description (see GestureMenuItem.tsx ~106-118), which this
- * formula does not account for. Keep these values in sync with GestureMenuItem row styling.
- **********************************************************************/
-
-/** Command label line height (fontSize 0.95rem × lineHeight 1em). Keep in sync with GestureMenuItem label styling. */
-const GESTURE_MENU_ROW_LABEL_REM = 0.95
-/** Vertical gap between command rows, in rem. */
-const GESTURE_MENU_ROW_GAP_REM = 1.2
-/** Header ("Gestures" label + divider + margin) above the command list, in rem. */
-const GESTURE_MENU_HEADER_REM = 4.0
-/** Top + bottom padding of the menu content block, in rem. */
-const GESTURE_MENU_VERTICAL_PADDING_REM = 4.5
-/** Bottom tail below the last row (shared with the overlay's paddingBottom), in rem. */
-const GESTURE_MENU_BOTTOM_TAIL_REM = 11.111
+import { GESTURE_MENU_BOTTOM_TAIL_REM, GESTURE_MENU_PADDING_REM, GESTURE_MENU_ROW_GAP_REM } from './constants'
 
 /**********************************************************************
  * Components
@@ -82,10 +62,10 @@ const GestureMenu: FC<{
       >
         {gestureInProgress && (
           <div
-            className={css({
-              padding: '2.25rem',
-              paddingTop: !isBrowser ? '0.75rem' : undefined,
-            })}
+            style={{
+              padding: `${GESTURE_MENU_PADDING_REM}rem`,
+              ...(!isBrowser ? { paddingTop: '0.75rem' } : null),
+            }}
           >
             {/* Header */}
             <div className={css({ marginBottom: '1.389rem' })}>
@@ -113,8 +93,8 @@ const GestureMenu: FC<{
               className={css({
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '1.2rem',
               })}
+              style={{ gap: `${GESTURE_MENU_ROW_GAP_REM}rem` }}
             >
               {mainCommands.map((command, index) => (
                 <GestureMenuItem
@@ -134,7 +114,7 @@ const GestureMenu: FC<{
                   display: 'flex',
                   flexDirection: 'column',
                   marginTop: !mainCommands.length ? 0 : '2.15rem',
-                  gap: '1.2rem',
+                  gap: `${GESTURE_MENU_ROW_GAP_REM}rem`,
                 }}
               >
                 {persistentCommands.map((command, index) => {
@@ -270,24 +250,6 @@ const GestureMenuWithTransition: FC = () => {
   // fadeIn is true only when 'visible' - this gives CSSTransition a frame with in={false} when mounting
   const fadeIn = animationState === 'visible'
 
-  // Publish the content-blur height (rem string) so AppComponent's GestureContentBlur can cap its
-  // wrapper to the menu footprint. Derived arithmetically from the command count using the shared
-  // GESTURE_MENU_* rem constants. MUST stay above the `if (animationState === 'hidden') return null`
-  // early return so the hook count is stable. Reset to '0rem' when hidden / on cleanup.
-  useEffect(() => {
-    if (animationState === 'hidden') {
-      setGestureMenuBlurHeight('0rem')
-      return
-    }
-    const blurHeightRem =
-      GESTURE_MENU_VERTICAL_PADDING_REM +
-      GESTURE_MENU_HEADER_REM +
-      commands.length * (GESTURE_MENU_ROW_LABEL_REM + GESTURE_MENU_ROW_GAP_REM) +
-      GESTURE_MENU_BOTTOM_TAIL_REM
-    setGestureMenuBlurHeight(`${blurHeightRem}rem`)
-    return () => setGestureMenuBlurHeight('0rem')
-  }, [commands.length, animationState])
-
   // Don't render if hidden
   if (animationState === 'hidden') return null
 
@@ -316,9 +278,10 @@ const GestureMenuWithTransition: FC = () => {
               // prevent mix-blend-mode and backdrop-filter from affecting each other
               isolation: 'isolate',
               width: '100%',
-              paddingBottom: '11.111rem',
               maxHeight: '100dvh',
             })}
+            // paddingBottom sourced from GestureMenu/constants (shared with the content-blur tail).
+            style={{ paddingBottom: `${GESTURE_MENU_BOTTOM_TAIL_REM}rem` }}
           >
             <Overlay />
             {isGlowBackgroundLoaded && <Glow />}

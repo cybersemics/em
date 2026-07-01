@@ -1,13 +1,14 @@
 import { FC, useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
-import { css } from '../../styled-system/css'
-import { token } from '../../styled-system/tokens'
-import Command from '../@types/Command'
-import State from '../@types/State'
-import { gestureString } from '../commands'
-import useGestureHighlight from '../hooks/useGestureHighlight'
-import store from '../stores/app'
-import GestureDiagram from './GestureDiagram'
+import { css } from '../../../styled-system/css'
+import { token } from '../../../styled-system/tokens'
+import Command from '../../@types/Command'
+import State from '../../@types/State'
+import { gestureString } from '../../commands'
+import useGestureHighlight from '../../hooks/useGestureHighlight'
+import store from '../../stores/app'
+import GestureDiagram from '../GestureDiagram'
+import { GESTURE_MENU_ROW_LABEL_REM } from './constants'
 
 /** Returns true if the command can be executed in the current state. */
 const isExecutable = (state: State, command: Command) =>
@@ -89,7 +90,6 @@ const GestureMenuItem: FC<{
       >
         <div
           className={css({
-            fontSize: '0.95rem',
             lineHeight: '1em',
             whiteSpace: 'nowrap',
             color: disabled ? 'gray45' : selected ? '#ffffff' : 'rgba(255, 255, 255, 0.6)',
@@ -99,6 +99,8 @@ const GestureMenuItem: FC<{
                 ? '0px 0px 24px rgba(255, 255, 255, 0.8), 0px 0px 12px rgba(255, 255, 255, 0.6)'
                 : undefined,
           })}
+          // Sourced from GestureMenu/constants so the content-blur height formula stays in sync.
+          style={{ fontSize: `${GESTURE_MENU_ROW_LABEL_REM}rem` }}
         >
           {(isActive && command.labelInverse) || command.label}
         </div>
