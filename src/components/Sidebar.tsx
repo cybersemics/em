@@ -818,14 +818,12 @@ const Sidebar = () => {
   }, [showSidebar])
 
   /** Self-managed mount for the sidebar subtree, replacing Radix's forceMount. It mounts on open
-   * and stays mounted through the close slide-out (torn down in the drawer's onAnimationComplete),
-   * so the enter/exit animations still play while a fully-closed sidebar costs zero compositing.
-   * The parent Sidebar component and its motion values persist across this; only the subtree's own
-   * state (list scroll position, Favorites UI state) resets on close, which is acceptable here. */
+   * and stays mounted through the close slide-out (torn down in the drawer's onAnimationComplete,
+   * with a fallback in an effect below for closes where no slide-out runs), so the enter/exit
+   * animations still play while a fully-closed sidebar costs zero compositing. The parent Sidebar
+   * component and its motion values persist across this; only the subtree's own state (list scroll
+   * position, Favorites UI state) resets on close, which is acceptable here. */
   const [drawerMounted, setDrawerMounted] = useState(showSidebar)
-  useEffect(() => {
-    if (showSidebar) setDrawerMounted(true)
-  }, [showSidebar])
 
   const { hue, sat } = useSectionHue(sectionId)
 
@@ -936,6 +934,20 @@ const Sidebar = () => {
    * to the left). Driven by both framer-motion (during open/close animations) and direct
    * `x.set()` calls (during a swipe). */
   const x = useMotionValue(showSidebar ? 0 : -widthPx)
+
+  // Sync drawerMounted with showSidebar. Mounting is immediate; unmounting normally happens in
+  // the drawer's onAnimationComplete so the close slide-out can play first. But if the drawer is
+  // already fully off-screen when the close arrives — a swipe carried it exactly to the edge, or
+  // the sidebar was toggled closed before the open animation began — framer has nothing to
+  // animate and never fires onAnimationComplete, which would leave a zombie sidebar mounted
+  // forever. Unmount directly in that case.
+  useEffect(() => {
+    if (showSidebar) {
+      setDrawerMounted(true)
+    } else if (x.get() === -widthPx) {
+      setDrawerMounted(false)
+    }
+  }, [showSidebar, x, widthPx])
 
   /** Content opacity derived from x. Linear-maps x to [0,1] then squares it, so the content
    * stays readable while the sidebar is mostly open and fades rapidly as it approaches the
