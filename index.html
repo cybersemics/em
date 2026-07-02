@@ -17,6 +17,34 @@
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
     <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#333333" />
     <link href="/fonts/lora.css" rel="stylesheet" />
+    <link
+      rel="preload"
+      href="/fonts/RadioCanadaBig/RadioCanadaBig-Regular.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="/fonts/RadioCanadaBig/RadioCanadaBig-Medium.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="/fonts/RadioCanadaBig/RadioCanadaBig-SemiBold.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="/fonts/RadioCanadaBig/RadioCanadaBig-Bold.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
     <link href="/fonts/RadioCanadaBig/radio-canada-big.css" rel="stylesheet" />
     <!-- Web manifest is injected via vite-plugin-pwa. See: vite.config.ts-->
     <meta name="msapplication-TileColor" content="#000000" />
@@ -43,6 +71,17 @@
       document.body.setAttribute('data-color-mode', theme)
       document.querySelector('meta[name="theme-color"]').setAttribute('content', theme === 'dark' ? '#000' : '#fff')
       document.body.setAttribute('data-env', navigator.webdriver ? 'test' : '%MODE%')
+
+      // Proactively load Radio Canada Big at startup so it is ready before the gesture menu opens.
+      // Preload only warms the HTTP cache; it does not load the @font-face. Without this the font
+      // loads lazily on first menu render, triggering font-display's block/swap window (font blip).
+      // Run on window load so the @font-face rules are registered; calling load() earlier matches
+      // zero faces (the stylesheet has not been parsed yet) and silently does nothing.
+      if (document.fonts && document.fonts.load) {
+        window.addEventListener('load', () =>
+          ['400', '500', '600', '700'].forEach(weight => document.fonts.load(weight + ' 1em "Radio Canada Big"')),
+        )
+      }
     </script>
     <script type="module" src="/src/index.tsx"></script>
   </body>
