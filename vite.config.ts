@@ -73,9 +73,8 @@ export default defineConfig({
     entries: ['index.html'],
   },
   plugins: [
-    // Vitest uses the lightweight in-memory TreeCRDT provider, so skip copying wa-sqlite assets in unit tests.
-    ...[!process.env.VITEST ? treecrdt({ outDir: 'public/wa-sqlite' }) : undefined],
     react(),
+    treecrdt({ outDir: 'public/wa-sqlite' }),
     // Do not run vite-plugin-checker during tests, as it will clear the test output.
     // The dev server is usually running anyway, and tsc is run in lint:tsc which is triggered prepush.
     ...[!process.env.VITEST && !process.env.PUPPETEER ? checker({ typescript: true }) : undefined],
