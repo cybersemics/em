@@ -5,7 +5,7 @@ import click from './click'
 const openSidebar = async () => {
   await click('[aria-label=menu]')
 
-  // Wait for the inert attribute to be removed and the first link to be on-screen (rect.left >= 0), since the outer sidebar is always mounted and doesn’t reflect the drawer’s slide-in animation.
+  // Wait for the sidebar to mount without the inert attribute and for the first link to be on-screen (rect.left >= 0), since the outer sidebar container doesn't reflect the drawer's slide-in animation. (The sidebar subtree only mounts while open; it unmounts after the close animation completes.)
   await page.waitForFunction(() => {
     const sidebar = document.querySelector('[data-testid="sidebar"]')
     if (!sidebar || sidebar.hasAttribute('inert')) return false
