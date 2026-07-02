@@ -495,10 +495,12 @@ const SidebarOverlay1 = ({
         initial={collapsed}
         animate={expanded ? open : collapsed}
         transition={{ duration: SLOW_DURATION, ease: EASE_OUT }}
-        style={{ filter }}
+        // top must be an inline style, NOT css(): safeY() is a runtime function call, and Panda
+        // extracts css() statically at build time — it can't evaluate the call, silently drops the
+        // property, and the glow renders 84px too low (top: 0).
+        style={{ filter, top: safeY(-84) /* collapsed backgroundPositionY */ }}
         className={css({
           position: 'absolute',
-          top: safeY(-84), // collapsed backgroundPositionY
           left: '-150px', // collapsed backgroundPositionX (crops the image's left edge)
           width: 'calc(1482px * 0.425)', // collapsed backgroundSize width
           height: 'calc(744px * 0.475)', // collapsed backgroundSize height
