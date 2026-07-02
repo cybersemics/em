@@ -10,6 +10,7 @@ import thoughtToPath from '../selectors/thoughtToPath'
 import compareByRank from './compareByRank'
 import isAttribute from './isAttribute'
 import lower from './lower'
+import stripTags from './stripTags'
 
 const STARTS_WITH_EMOJI_REGEX = new RegExp(`^${EMOJI_REGEX.source}`)
 const IGNORED_PREFIXES = ['the ']
@@ -35,10 +36,8 @@ const FORMATTING_TAG_PRIORITY: Record<string, number> = {
 
 const FORMATTING_PRIORITY_TAG_NAMES = Object.keys(FORMATTING_TAG_PRIORITY)
 
-/** Matches the outermost formatting tag of a string for priority ordering. Includes all tags in FORMATTING_TAG_PRIORITY (e.g. s as an alias for strike). */
-const REGEX_FORMATTING_PRIORITY = new RegExp(
-  `^<(${FORMATTING_PRIORITY_TAG_NAMES.join('|')})[^>]*>(.*?)<\\s*/\\s*(${FORMATTING_PRIORITY_TAG_NAMES.join('|')})>`,
-)
+/** Matches any formatting opening tag in a string for priority ordering. Includes all tags in FORMATTING_TAG_PRIORITY (e.g. s as an alias for strike). Global so all applied tags can be scanned, not just the outermost one (#3977). */
+const REGEX_FORMATTING_PRIORITY = new RegExp(`<(${FORMATTING_PRIORITY_TAG_NAMES.join('|')})[^>]*>`, 'g')
 
 // Date pattern regex constants for performance optimization
 // Month names for reuse across date patterns (pipe-separated for regex)
@@ -89,8 +88,10 @@ const removeEmojisAndSpaces = (s: string) => s.replace(REGEX_EMOJI_GLOBAL, '').t
 /** Remove ignored prefixes from comparator inputs. */
 const removeIgnoredPrefixes = (s: string) => s.replace(REGEX_IGNORED_PREFIXES, '$2')
 
-/** Removes emojis, spaces, and prefix 'the' to make a string comparable.  */
-const normalizeCharacters = _.flow(removeEmojisAndSpaces, removeIgnoredPrefixes, removeDiacritics)
+/** Strips HTML formatting tags, emojis, spaces, and prefix 'the' to make a string comparable.
+ * Tags are stripped so that the lexicographic comparison sorts by the visible text rather than the markup (e.g. so that <i><b>D</b></i> compares as "D", not "<i><b>D...").
+ * Formatting priority is handled separately by compareFormattingTagPriority, so removing tags here does not affect formatting-based ordering (#3977). */
+const normalizeCharacters = _.flow(stripTags, removeEmojisAndSpaces, removeIgnoredPrefixes, removeDiacritics)
 
 /** Parse a date string and handle M/d (e.g. "2/1") and written formats (e.g. "March 3") for Safari. */
 const parseDate = (s: string): number => {
@@ -180,10 +181,21 @@ export const compareFormatting = <T, U>(a: T, b: U): ComparatorValue => {
   return aStartsWithHtml && !bStartsWithHtml ? -1 : bStartsWithHtml && !aStartsWithHtml ? 1 : 0
 }
 
-/** Extracts the priority of the outermost formatting tag from an HTML string, or undefined if the string is not a recognized formatting tag. */
+/** Extracts the highest priority (lowest number) among all formatting tags present in an HTML string,
+ * or undefined if the string contains no recognized formatting tags. Scanning all tags (rather than just the outermost)
+ * ensures sorting is not affected by the order in which multiple formats were applied (#3977). */
 const getFormattingTagPriority = (html: string): number | undefined => {
-  const match = REGEX_FORMATTING_PRIORITY.exec(html)
-  return match ? FORMATTING_TAG_PRIORITY[match[1]] : undefined
+  let highestPriority: number | undefined
+  // reset lastIndex since REGEX_FORMATTING_PRIORITY is global and stateful across exec calls
+  REGEX_FORMATTING_PRIORITY.lastIndex = 0
+  let match: RegExpExecArray | null
+  while ((match = REGEX_FORMATTING_PRIORITY.exec(html)) !== null) {
+    const priority = FORMATTING_TAG_PRIORITY[match[1]]
+    if (highestPriority === undefined || priority < highestPriority) {
+      highestPriority = priority
+    }
+  }
+  return highestPriority
 }
 
 /** A comparator that sorts formatted strings by their formatting tag priority (bold < italic < underline < strikethrough). Returns 0 if either string is not a recognized formatting tag. */
