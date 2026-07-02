@@ -48,7 +48,7 @@ export interface MoveThoughtPayload {
 }
 
 /** Derives an explicit TreeCRDT afterId from em's temporary rank ordering. */
-export const getMoveThoughtAfterIdByRank = (
+const getMoveThoughtAfterIdByRank = (
   state: State,
   destinationThoughtId: ThoughtId,
   sourceThoughtId: ThoughtId,
