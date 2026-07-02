@@ -1,5 +1,5 @@
-/** Scrolls the content to the top or bottom. */
-const scrollTo = (target: 'top' | 'bottom', behavior?: 'smooth') => {
+/** Scrolls the content to the top or bottom. Always scrolls instantly in integration tests, ignoring the passed behavior. */
+const scrollTo = (target: 'top' | 'bottom', behavior?: ScrollBehavior) => {
   const top = target === 'top' ? 0 : target === 'bottom' ? document.body.scrollHeight : null
 
   if (top === null) {
@@ -9,7 +9,7 @@ const scrollTo = (target: 'top' | 'bottom', behavior?: 'smooth') => {
   window.scrollTo({
     top,
     left: 0,
-    behavior,
+    behavior: navigator.webdriver ? 'instant' : behavior,
   })
 }
 

@@ -187,6 +187,8 @@ When a user has multiple thoughts selected via the multicursor (`state.multicurs
 
 The drop handler iterates the array and dispatches `moveThought` per item. To make undo coalesce the whole multi-move into one entry, it wraps the dispatch in `setIsMulticursorExecuting({ value: true, undoLabel: 'Dragging Thoughts' })` and clears it after.
 
+A selected thought that would be a no-op at the drop position (dropping a thought on or immediately before itself — e.g. dropping the first child `b` above itself) is a valid drop target, so the drop indicator still shows and the drop is *not* aborted; that item is simply skipped while the remaining selected thoughts still move. To keep the selection in document order, the first dragged item is placed before the drop target and each subsequent item is placed after the previous one (via `getRankAfter`), so the skipped no-op still anchors the position of the items that follow it.
+
 ## Performance considerations
 
 Drag-and-drop runs hot — `canDrop` and `hover` fire many times per second during a drag. The codebase uses several techniques to keep this cheap:

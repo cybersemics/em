@@ -11,7 +11,7 @@ import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import setTheme from '../helpers/setTheme'
 import waitForSelector from '../helpers/waitForSelector'
-import { page } from '../setup'
+import { page } from '../session'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
