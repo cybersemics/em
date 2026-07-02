@@ -18,6 +18,9 @@ import dndRef from '../util/dndRef'
 import getCursorSortDirection from '../util/getCursorSortDirection'
 import haptics from '../util/haptics'
 
+/** The minimum horizontal finger movement (in px) that distinguishes a toolbar swipe from a tap. */
+const TOOLBAR_SWIPE_THRESHOLD = 10
+
 export interface ToolbarButtonProps {
   // see ToolbarProps.customize
   customize?: boolean
@@ -53,6 +56,9 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
 
   /** Tracks if mousedown occurred on this button, independent of React's render cycle. This prevents a race condition where the React-prop isPressing (derived from the parent Toolbar's pressingToolbarId state) hasn't updated between mousedown and click events dispatched in rapid succession (e.g. by Puppeteer under CI load). */
   const isMouseDownRef = useRef(false)
+
+  /** Tracks the touch's starting x position so a swipe can be distinguished from a tap by finger movement. This is necessary because comparing toolbar.scrollLeft alone fails to detect a swipe at a scroll boundary (e.g. swiping right when the toolbar is already at its left edge), where scrollLeft cannot change and the swipe would otherwise be misread as a tap. */
+  const touchStartXRef = useRef<number | null>(null)
 
   const command = commandById(commandId)
   if (!command) {
@@ -116,7 +122,16 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
       isMouseDownRef.current = false
       const iconEl = e.target as HTMLElement
       const toolbarEl = iconEl.closest('#toolbar')!
-      const scrolled = isTouch && Math.abs(lastScrollLeft.current - toolbarEl.scrollLeft) >= 5
+      // Detect a swipe either by a change in the toolbar's scroll position or by the finger moving horizontally.
+      // The finger-movement check is necessary at a scroll boundary, where a swipe cannot change scrollLeft and
+      // would otherwise be misclassified as a tap, activating the button under the finger (see issue #4487).
+      const touchEndX = 'changedTouches' in e ? (e.changedTouches[0]?.clientX ?? null) : null
+      const fingerMoved =
+        touchStartXRef.current !== null &&
+        touchEndX !== null &&
+        Math.abs(touchEndX - touchStartXRef.current) >= TOOLBAR_SWIPE_THRESHOLD
+      touchStartXRef.current = null
+      const scrolled = isTouch && (Math.abs(lastScrollLeft.current - toolbarEl.scrollLeft) >= 5 || fingerMoved)
 
       if (!customize && isButtonExecutable && !disabled && !scrolled && (isPressing || wasMouseDown)) {
         haptics.light()
@@ -168,6 +183,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
   const tapDown = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
       isMouseDownRef.current = true
+      touchStartXRef.current = 'touches' in e ? (e.touches[0]?.clientX ?? null) : null
       const iconEl = e.target as HTMLElement
       const toolbarEl = iconEl.closest('#toolbar')!
       longPressTapDown?.(e)
