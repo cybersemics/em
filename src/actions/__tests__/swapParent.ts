@@ -302,7 +302,6 @@ describe('reconcile', () => {
   // A forced pull (e.g. RecentlyEdited's pullJumpHistory) re-reads thoughts from the data
   // provider and dispatches a non-local updateThoughts. If that stale snapshot (read before
   // the swap) lands after swapParent, it must not overwrite the newer post-swap thoughts.
-  // .skip keeps normal CI green while the test is red; remove the .skip when the fix lands.
   it('stale forced pull must not overwrite newer post-swap thoughts', () => {
     const text = `
     - AAA
@@ -323,6 +322,37 @@ describe('reconcile', () => {
       updateThoughts({ thoughtIndexUpdates: stalePull, lexemeIndexUpdates: {}, local: false, remote: false }),
     ])(state1)
 
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - AAA
+    - CCC
+      - BBB`)
+  })
+
+  // A partial stale reconcile is the more dangerous case: when only a subset of the swapped
+  // thoughts arrives stale (e.g. only the middle thought), the in-memory tree ends up with an
+  // inconsistent parent/child link, forming a cycle (BBB claims CCC as a child while CCC still
+  // claims BBB) that sends parent-chain traversal into an infinite loop and hangs the app.
+  it('partial stale forced pull must not create a parent-chain cycle', () => {
+    const text = `
+    - AAA
+      - BBB
+        - CCC`
+
+    const state1 = reducerFlow([importText({ text }), setCursor(['AAA', 'BBB', 'CCC'])])(initialState())
+
+    // Snapshot only the middle thought (BBB) as read by a forced pull before the swap.
+    const idBBB = contextToThoughtId(state1, ['AAA', 'BBB'])!
+    const stalePull: Index<Thought> = {
+      [idBBB]: { ...getThoughtById(state1, idBBB)!, lastUpdated: 1 as Timestamp },
+    }
+
+    const stateNew = reducerFlow([
+      swapParent,
+      updateThoughts({ thoughtIndexUpdates: stalePull, lexemeIndexUpdates: {}, local: false, remote: false }),
+    ])(state1)
+
+    // Without the last-write-wins guard, exportContext would recurse infinitely on the cycle.
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- ${HOME_TOKEN}
   - AAA
