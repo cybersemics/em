@@ -40,6 +40,7 @@ describe('sidebar', () => {
     await waitForSelector('[aria-label=menu]', { hidden: true })
 
     await openSidebar()
+    await click('[data-testid=sidebar-section-picker]')
     await click('[data-testid=sidebar-recentlyEdited]')
 
     expect(await screenshotWithoutToolbarIcons()).toMatchImageSnapshot({
