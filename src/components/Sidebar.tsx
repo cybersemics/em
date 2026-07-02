@@ -80,7 +80,7 @@ const BLUR_ENABLED = isSafari()
 
 /** Number of stacked backdrop-filter layers in the sidebar's ProgressiveBlur. Each layer re-samples
  * the full backdrop every frame; Android's WebView flickers under the load (especially with the
- * Command Center also open), so it gets fewer. TEST VALUE — confirm on-device before finalizing. */
+ * Command Center also open), so it gets fewer. */
 const PROGRESSIVE_BLUR_LAYERS = isAndroid ? 1 : 4
 
 /** Minimum blur radius applied to every ProgressiveBlur layer. With fewer layers on Android the
@@ -467,8 +467,11 @@ const SidebarOverlay1 = ({
     : { x: -320 - -150, y: -158 - -84, scaleX: 0.85 / 0.425, scaleY: 0.85 / 0.475 }
 
   return (
+    // Outer: animates opacity only — a plain compositing layer, so the fade composites instead of
+    // repainting. The filter lives on the inner (static value), so animating opacity here never
+    // forces the filter to re-run.
     <motion.div
-      style={{ opacity: combinedOpacity, filter }}
+      style={{ opacity: combinedOpacity }}
       className={css({
         position: 'absolute',
         top: 0,
@@ -484,11 +487,15 @@ const SidebarOverlay1 = ({
         },
       })}
     >
-      {/* Inner glow layer, sized/positioned to the collapsed crop; only its transform animates. */}
+      {/* Inner glow layer, sized/positioned to the collapsed crop. Carries the hue/sat filter and
+          the transform TOGETHER: the filter value is static during the slide/dropdown, so its
+          buffer is cached and the transform just composites (scales) it — no per-frame repaint.
+          (The filter only re-renders on a section change, when hue/sat actually animate.) */}
       <motion.div
         initial={collapsed}
         animate={expanded ? open : collapsed}
         transition={{ duration: SLOW_DURATION, ease: EASE_OUT }}
+        style={{ filter }}
         className={css({
           position: 'absolute',
           top: safeY(-84), // collapsed backgroundPositionY
@@ -530,26 +537,35 @@ const SidebarOverlay2 = ({
   const filter = useTransform(useHueSatFilter(hue, sat), f => `${blur}${f}`)
 
   return (
+    // Outer: animates opacity only (plain compositing layer). Inner holds the static filter + image
+    // + mask, so the fade composites a cached buffer instead of re-running the filter every frame.
     <motion.div
-      style={{ opacity, filter, width }}
+      style={{ opacity, width }}
       className={css({
         position: 'absolute',
         top: 0,
         left: 0,
         bottom: 0,
-        backgroundImage: 'url(/img/sidebar/overlay-layer-2.avif)',
-        backgroundSize: '100% 800px',
-        backgroundPosition: 'top left',
-        backgroundRepeat: 'no-repeat',
         pointerEvents: 'none',
         zIndex: 'sidebar',
-
-        // on lg+ (landscape mobile and larger) screens, fade off the last 10% vertically to prevent a hard line at the bottom edge
-        lg: {
-          maskImage: 'linear-gradient(to right, black 95%, transparent 100%)',
-        },
       })}
-    />
+    >
+      <motion.div
+        style={{ filter }}
+        className={css({
+          position: 'absolute',
+          inset: 0,
+          backgroundImage: 'url(/img/sidebar/overlay-layer-2.avif)',
+          backgroundSize: '100% 800px',
+          backgroundPosition: 'top left',
+          backgroundRepeat: 'no-repeat',
+          // on lg+ (landscape mobile and larger) screens, fade off the last 10% vertically to prevent a hard line at the bottom edge
+          lg: {
+            maskImage: 'linear-gradient(to right, black 95%, transparent 100%)',
+          },
+        })}
+      />
+    </motion.div>
   )
 }
 
@@ -583,26 +599,32 @@ const SidebarGradient = ({
   const filter = useHueSatFilter(hue, sat)
 
   return (
+    // Outer: animates opacity only (plain compositing layer) and owns the click-to-dismiss target.
+    // Inner holds the static gradient + hue/sat filter, so the fade composites a cached buffer
+    // rather than re-running the filter every frame (which repaints this full-height layer).
     <motion.div
       aria-label='sidebar-gradient'
       aria-hidden='true'
-      // willChange:'filter' promotes this to its own compositing layer so Safari repaints
-      // filter (hue-rotate) changes — but only while the sidebar is open. Left on permanently
-      // it pins a full-screen filter buffer in GPU memory even when closed, which (combined
-      // with the rest of the always-mounted layer stack) contributes to compositor memory
-      // exhaustion. The hue filter only animates while open, so promotion isn't needed closed.
-      style={{ opacity, filter, willChange: showSidebar ? 'filter' : 'auto' }}
+      style={{ opacity }}
       onClick={() => toggleSidebar(false)}
       className={css({
         position: 'absolute',
         inset: 0,
-        background: 'linear-gradient(to right, {colors.sidebarBg} 0%, {colors.bgTransparent} 100%)',
         width,
         pointerEvents: showSidebar ? 'auto' : 'none',
         cursor: 'pointer',
         userSelect: 'none',
       })}
-    />
+    >
+      <motion.div
+        style={{ filter }}
+        className={css({
+          position: 'absolute',
+          inset: 0,
+          background: 'linear-gradient(to right, {colors.sidebarBg} 0%, {colors.bgTransparent} 100%)',
+        })}
+      />
+    </motion.div>
   )
 }
 
@@ -810,6 +832,14 @@ const Sidebar = () => {
   // Two motion values feed the scroll area's CSS mask (see the scroll mask in the Animation
   // model): dropdownMaskY dims the list when the dropdown opens; scrollHintMaskY fades the top
   // edge when scrolled. Kept separate so each can animate on its own timing.
+  //
+  // NOTE: animating mask-position is paint-bound (not compositor-accelerated), so the list
+  // repaints during the ~300ms dropdown animation. A composited alternative was tried — static
+  // mask on an oversized carrier translated by y, with the scroll container counter-translated —
+  // but it is structurally broken on Chromium: transforming an actively-scrolled element cancels
+  // the in-progress touch-scroll gesture, and the paired carrier/scroller transforms desync under
+  // load (the scroller is independently compositor-promoted), flashing the list by the full mask
+  // offset. Keep the mask-position animation.
   const dropdownMaskY = useMotionValue(dropdownOpen ? 0 : DROPDOWN_MASK_OFFSET)
   const scrollHintMaskY = useMotionValue(isScrolled ? 0 : SCROLL_HINT_MASK_OFFSET)
   // The scroll-hint contribution is weighted by how closed the dropdown is (0 when fully
