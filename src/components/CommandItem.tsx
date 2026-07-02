@@ -125,7 +125,7 @@ const CommandItem: FC<{
     }
   })
 
-  const gestureHighlight = useGestureHighlight(command, gestureInProgress, selected, disabled)
+  const gestureHighlight = useGestureHighlight({ command, gestureInProgress, selected, disabled })
 
   const Container = tableMode ? 'tr' : 'div'
   const Cell = tableMode ? 'td' : 'div'

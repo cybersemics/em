@@ -6,16 +6,21 @@ import { gestureString } from '../commands'
  * Hook that determines how many segments of a gesture diagram to highlight based on
  * the gesture currently being traced by the user.
  */
-const useGestureHighlight = (
+const useGestureHighlight = ({
+  command,
+  gestureInProgress,
+  selected,
+  disabled,
+}: {
   /** The command whose gesture diagram to highlight. */
-  command: Command,
+  command: Command
   /** The raw gesture string traced so far, or undefined if none active. */
-  gestureInProgress: string | undefined,
+  gestureInProgress: string | undefined
   /** Whether this row is the currently selected item in the menu. */
-  selected: boolean | undefined,
+  selected: boolean | undefined
   /** When true, the command is unavailable and no highlight is shown. */
-  disabled: boolean,
-): number | undefined =>
+  disabled: boolean
+}): number | undefined =>
   useMemo(() => {
     if (disabled || gestureInProgress === undefined) return undefined
 

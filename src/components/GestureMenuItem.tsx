@@ -30,7 +30,7 @@ const GestureMenuItem: FC<{
     return typeof descFn === 'function' ? descFn(state) : descFn
   })
 
-  const gestureHighlight = useGestureHighlight(command, gestureInProgress, selected, disabled)
+  const gestureHighlight = useGestureHighlight({ command, gestureInProgress, selected, disabled })
 
   useEffect(() => {
     if (!selected) return

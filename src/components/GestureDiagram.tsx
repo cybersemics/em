@@ -265,7 +265,7 @@ const GestureDiagram = ({
           strokeWidth={1.25}
           strokeLinecap='round'
           fill='none'
-          style={styleCancelAsRegularGesture ? undefined : dropShadow ? { filter: dropShadow } : undefined}
+          style={styleCancelAsRegularGesture || !dropShadow ? undefined : { filter: dropShadow }}
         />
       </svg>
     )
