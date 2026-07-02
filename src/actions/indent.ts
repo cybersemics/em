@@ -61,6 +61,8 @@ const indent = (state: State): State => {
     oldPath: cursor,
     newPath: cursorNew,
     ...(offset != null ? { offset } : null),
+    // indenting beside a same-valued subthought is a supported duplicate state, not a merge (#3621)
+    preventMerge: true,
     newRank: getNextRank(state, prev.id),
   })
 }

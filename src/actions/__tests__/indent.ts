@@ -85,3 +85,23 @@ it('indent context should do nothing', () => {
     - m
       - y`)
 })
+
+// Regression test for https://github.com/cybersemics/em/issues/3621 (Issue E)
+// Indenting a thought into a previous sibling that already contains a same-valued child must not merge it into (and
+// thus delete) that duplicate child. All same-valued thoughts are preserved as duplicate siblings.
+it('indent a thought next to a duplicate subthought should not make it disappear', () => {
+  const text = `
+    - BBB
+      - AAA
+    - AAA`
+
+  const steps = [importText({ text }), setCursor(['AAA']), indent]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - BBB
+    - AAA
+    - AAA`)
+})
