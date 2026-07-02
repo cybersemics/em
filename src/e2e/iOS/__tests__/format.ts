@@ -2,9 +2,9 @@
  * IOS Safari text formatting tests.
  * Uses WDIO test runner with Mocha framework.
  */
-import { WindowEm } from '../../../initialize.js'
 import hideKeyboardByTappingDone from '../helpers/hideKeyboardByTappingDone'
 import newThought from '../helpers/newThought'
+import tap from '../helpers/tap.js'
 
 describe('Format', () => {
   it('applying bold to an unfocused cursor thought does not open the keyboard', async () => {
@@ -18,14 +18,9 @@ describe('Format', () => {
     // 3. Measure the scroll position of the viewport before formatting.
     const scrollBefore = await browser.execute(() => window.scrollY)
 
-    // 4. Apply bold. Dispatch the Bold command the same way the toolbar button does; the
-    // toolbar button relies on touch/pointer gestures that a WebDriver element click cannot
-    // reliably trigger on iOS Safari, whereas the keyboard/scroll behavior under test lives in
-    // the formatSelection action itself.
-    await browser.execute(() => {
-      const em = window.em as WindowEm
-      em.testHelpers.executeCommandById('bold')
-    })
+    // 4. Apply bold by tapping the Bold toolbar icon.
+    const boldButton = await browser.$('[data-testid="toolbar-icon"][aria-label="Bold"]').getElement()
+    await tap(boldButton, { y: 60 })
 
     // Allow any focus-induced scroll to settle before measuring.
     await browser.pause(1000)
