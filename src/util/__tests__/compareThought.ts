@@ -140,10 +140,10 @@ it('compareFormattingTagPriority', () => {
   expect(compareFormattingTagPriority('<u>A</u>', '<u>A</u>')).toBe(0)
   expect(compareFormattingTagPriority('<strike>A</strike>', '<strike>A</strike>')).toBe(0)
 
-  // non-formatted = 0
+  // a formatted first character sorts above an unformatted one; both unformatted = 0
   expect(compareFormattingTagPriority('a', 'b')).toBe(0)
-  expect(compareFormattingTagPriority('<b>A</b>', 'b')).toBe(0)
-  expect(compareFormattingTagPriority('a', '<b>B</b>')).toBe(0)
+  expect(compareFormattingTagPriority('<b>A</b>', 'b')).toBe(-1)
+  expect(compareFormattingTagPriority('a', '<b>B</b>')).toBe(1)
 
   // strong/b aliases = 0
   expect(compareFormattingTagPriority('<strong>A</strong>', '<b>A</b>')).toBe(0)
@@ -179,6 +179,23 @@ it('compareFormattingTagPriority', () => {
   // italic+underline+strikethrough (three types, no bold) outranks bold+italic (two types, includes bold)
   expect(compareFormattingTagPriority('<i><u><s>A</s></u></i>', '<b><i>A</i></b>')).toBe(-1)
   expect(compareFormattingTagPriority('<b><i>A</i></b>', '<i><u><s>A</s></u></i>')).toBe(1)
+
+  // only the formatting of the first character counts; formatting of later characters is ignored (#3977)
+  // first character is bold only, so it sorts equal to a plain bold thought despite the trailing italic
+  expect(compareFormattingTagPriority('<b>A</b><i>bc</i>', '<b>A</b>')).toBe(0)
+  // a thought whose first character has two formats outranks one whose second format is on a later character
+  expect(compareFormattingTagPriority('<b><i>A</i></b>', '<b>A</b><i>bc</i>')).toBe(-1)
+  expect(compareFormattingTagPriority('<b>A</b><i>bc</i>', '<b><i>A</i></b>')).toBe(1)
+  // a thought whose first character is unformatted sorts below one whose first character is formatted, ignoring later formatting
+  expect(compareFormattingTagPriority('A<i>bc</i>', '<u>A</u>')).toBe(1)
+
+  // formatting on later characters is ignored; only the first character's formatting is considered (#3977)
+  // both first characters are unformatted, so they sort equally
+  expect(compareFormattingTagPriority('A<b>bc</b>', 'A<i>bc</i>')).toBe(0)
+  // a's first character is unformatted while b's is formatted, so b sorts above a
+  expect(compareFormattingTagPriority('A<b>bc</b>', '<b>A</b>')).toBe(1)
+  // multiple formats on later characters are still ignored when the first character is plain, so b (formatted first character) sorts above a
+  expect(compareFormattingTagPriority('A<b><i>bc</i></b>', '<u>A</u>')).toBe(1)
 })
 
 it('compareDateStrings', () => {

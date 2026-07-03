@@ -34,10 +34,8 @@ const FORMATTING_TAG_PRIORITY: Record<string, number> = {
   span: 7,
 }
 
-const FORMATTING_PRIORITY_TAG_NAMES = Object.keys(FORMATTING_TAG_PRIORITY)
-
-/** Matches any formatting opening tag in a string for priority ordering. Includes all tags in FORMATTING_TAG_PRIORITY (e.g. s as an alias for strike). Global so all applied tags can be scanned, not just the outermost one (#3977). */
-const REGEX_FORMATTING_PRIORITY = new RegExp(`<(${FORMATTING_PRIORITY_TAG_NAMES.join('|')})[^>]*>`, 'g')
+/** Matches a single opening HTML tag anchored at the start of a string, capturing its tag name. Used to collect the formatting tags that enclose a thought's first character (#3977). */
+const REGEX_LEADING_TAG = /^<([a-zA-Z0-9]+)[^>]*>/
 
 // Date pattern regex constants for performance optimization
 // Month names for reuse across date patterns (pipe-separated for regex)
@@ -181,46 +179,38 @@ export const compareFormatting = <T, U>(a: T, b: U): ComparatorValue => {
   return aStartsWithHtml && !bStartsWithHtml ? -1 : bStartsWithHtml && !aStartsWithHtml ? 1 : 0
 }
 
-/** Extracts the highest priority (lowest number) among all formatting tags present in an HTML string,
- * or undefined if the string contains no recognized formatting tags. Scanning all tags (rather than just the outermost)
- * ensures sorting is not affected by the order in which multiple formats were applied (#3977). */
-const getFormattingTagPriority = (html: string): number | undefined => {
-  let highestPriority: number | undefined
-  // reset lastIndex since REGEX_FORMATTING_PRIORITY is global and stateful across exec calls
-  REGEX_FORMATTING_PRIORITY.lastIndex = 0
-  let match: RegExpExecArray | null
-  while ((match = REGEX_FORMATTING_PRIORITY.exec(html)) !== null) {
-    const priority = FORMATTING_TAG_PRIORITY[match[1]]
-    if (highestPriority === undefined || priority < highestPriority) {
-      highestPriority = priority
-    }
-  }
-  return highestPriority
-}
-
-/** Counts the number of distinct formatting types present in an HTML string. Aliased tags (e.g. b/strong, i/em, strike/s)
- * are counted as a single type since they share a priority. Returns 0 if the string contains no recognized formatting tags. */
-const getFormattingTypeCount = (html: string): number => {
+/** Returns the set of formatting tag priorities that enclose the first character of an HTML string (#3977).
+ * Empty formatting tags are filtered out before sorting, no formatting tag closes before the first character.
+ * Returns an empty set if the first character is unformatted.
+ * Aliased tags (e.g. b/strong, i/em, strike/s) share a priority, so applying more than one of them counts as a single type. */
+const getFirstCharacterFormattingPriorities = (html: string): Set<number> => {
   const priorities = new Set<number>()
-  // reset lastIndex since REGEX_FORMATTING_PRIORITY is global and stateful across exec calls
-  REGEX_FORMATTING_PRIORITY.lastIndex = 0
+  let rest = html
   let match: RegExpExecArray | null
-  while ((match = REGEX_FORMATTING_PRIORITY.exec(html)) !== null) {
-    priorities.add(FORMATTING_TAG_PRIORITY[match[1]])
+  // collect the leading run of opening tags; a non-tag character marks the thought's first character
+  while ((match = REGEX_LEADING_TAG.exec(rest)) !== null) {
+    const tagName = match[1].toLowerCase()
+    if (tagName in FORMATTING_TAG_PRIORITY) priorities.add(FORMATTING_TAG_PRIORITY[tagName])
+    rest = rest.slice(match[0].length)
   }
-  return priorities.size
+  return priorities
 }
 
-/** A comparator that sorts formatted strings by their formatting tag priority. Thoughts with more distinct types of
- * formatting are given greater priority (sorted first); ties are broken by the highest-priority tag
- * (bold < italic < underline < strikethrough). Returns 0 if either string is not a recognized formatting tag. */
+/** A comparator that sorts formatted strings by the formatting tag priority of their first character. A thought whose
+ * first character is formatted sorts above one whose first character is not. Among thoughts whose first character is
+ * formatted, those with more distinct types of formatting are given greater priority (sorted first); ties are broken by
+ * the highest-priority tag (bold < italic < underline < strikethrough). Formatting of characters other than the first is
+ * ignored (#3977). Returns 0 only when neither string's first character is formatted. */
 export const compareFormattingTagPriority: ComparatorFunction<string> = (a: string, b: string): ComparatorValue => {
-  const aPriority = getFormattingTagPriority(a)
-  const bPriority = getFormattingTagPriority(b)
-  if (aPriority === undefined || bPriority === undefined) return 0
-  // more distinct formatting types = greater priority = sorted first
-  const typeCountComparison = compare(getFormattingTypeCount(b), getFormattingTypeCount(a))
-  return typeCountComparison || compare(aPriority, bPriority)
+  const aPriorities = getFirstCharacterFormattingPriorities(a)
+  const bPriorities = getFirstCharacterFormattingPriorities(b)
+  // a formatted first character sorts above an unformatted one; two unformatted first characters sort equally
+  if (aPriorities.size === 0 || bPriorities.size === 0) {
+    return aPriorities.size === bPriorities.size ? 0 : aPriorities.size === 0 ? 1 : -1
+  }
+  // more distinct formatting types on the first character = greater priority = sorted first
+  const typeCountComparison = compare(bPriorities.size, aPriorities.size)
+  return typeCountComparison || compare(Math.min(...aPriorities), Math.min(...bPriorities))
 }
 
 /** A comparison function that sorts date strings. Only handles date vs date comparisons. */
