@@ -10,9 +10,9 @@ it('Can change the background color of a thought that already has the same backg
   const content = '- some <font color="#000000" style="background-color: rgb(255, 87, 61);">formatted</font> text'
   await paste(content)
 
-  await tap('[data-testid="toolbar-icon"][aria-label="Text Color"]', { horizontalTapLine: 'center' })
-  await tap('[aria-label="background color swatches"] [aria-label="red"]', { horizontalTapLine: 'center' })
-  await tap('[aria-label="text color swatches"] [aria-label="red"]', { horizontalTapLine: 'center' })
+  await tap('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await tap('[aria-label="background color swatches"] [aria-label="red"]')
+  await tap('[aria-label="text color swatches"] [aria-label="red"]')
 
   const thought = await getEditingText()
   expect(thought).toBe('<font color="#ff573d">some formatted text</font>')
@@ -27,11 +27,11 @@ it('Can change the background color of a note that already has the same backgrou
   `,
   )
 
-  await tap('[data-testid="toolbar-icon"][aria-label="Note"]', { horizontalTapLine: 'center' })
+  await tap('[data-testid="toolbar-icon"][aria-label="Note"]')
 
-  await tap('[data-testid="toolbar-icon"][aria-label="Text Color"]', { horizontalTapLine: 'center' })
-  await tap('[aria-label="background color swatches"] [aria-label="red"]', { horizontalTapLine: 'center' })
-  await tap('[aria-label="text color swatches"] [aria-label="red"]', { horizontalTapLine: 'center' })
+  await tap('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await tap('[aria-label="background color swatches"] [aria-label="red"]')
+  await tap('[aria-label="text color swatches"] [aria-label="red"]')
 
   const result = await getFirstNoteText()
   expect(result).toBe('<font color="#ff573d">Multi-word note</font>')

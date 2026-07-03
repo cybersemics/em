@@ -2,6 +2,9 @@ import waitForElement from './waitForElement'
 
 interface Options {
   // Where on the horizontal axis of the target node's bounding box to tap.
+  // Defaults to 'center' when a selector string is given (tapping a named control such as a toolbar
+  // icon or color swatch, whose center is the reliable hit target) and 'left' when an Element handle
+  // is given (caret positioning tests anchor to the left edge, optionally with offset/x).
   horizontalTapLine?: 'left' | 'center' | 'right'
   // Specify the offset on a text child of the target node. Overrides horizontalTapLine.
   offset?: number
@@ -18,7 +21,9 @@ interface Options {
  *
  * Accepts either an Element handle or a CSS selector string. When a selector is
  * given, waits for the element to exist and scrolls it into view if needed before
- * tapping.
+ * tapping, and taps its horizontal center by default (named controls like toolbar
+ * icons and color swatches are small targets whose edges are easy to miss). Element
+ * handles default to the left edge for caret positioning.
  *
  * Coordinates are first calculated in WebView/viewport space (via
  * `getElementRect` / DOM `Range`) and then translated to device screen
@@ -28,7 +33,13 @@ interface Options {
  */
 const tap = async (
   nodeHandleOrSelector: WebdriverIO.Element | string,
-  { horizontalTapLine = 'left', offset, x = 0, y = 0, releaseDelayMs = 100 }: Options = {},
+  {
+    horizontalTapLine = typeof nodeHandleOrSelector === 'string' ? 'center' : 'left',
+    offset,
+    x = 0,
+    y = 0,
+    releaseDelayMs = 100,
+  }: Options = {},
 ) => {
   let nodeHandle: WebdriverIO.Element
   if (typeof nodeHandleOrSelector === 'string') {

@@ -1,4 +1,4 @@
-/** Dismisses the iOS keyboard via Safari's native "Done" button and blurs the active element to ensure subsequent taps trigger a fresh focus event. */
+/** Dismisses the iOS keyboard by tapping the native "Done" button. */
 const hideKeyboardByTappingDone = async () => {
   const oldContext = ((await browser.getContext()) as string) || 'NATIVE_APP'
   await browser.switchContext('NATIVE_APP')
@@ -6,15 +6,6 @@ const hideKeyboardByTappingDone = async () => {
   await done.click()
   await done.waitForExist({ reverse: true })
   await browser.switchContext(oldContext)
-
-  await browser.execute(() => {
-    const active = document.activeElement
-    if (active instanceof HTMLElement) active.blur()
-
-    return new Promise<void>(resolve => {
-      requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
-    })
-  })
 }
 
 export default hideKeyboardByTappingDone
