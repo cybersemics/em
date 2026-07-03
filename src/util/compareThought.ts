@@ -198,11 +198,29 @@ const getFormattingTagPriority = (html: string): number | undefined => {
   return highestPriority
 }
 
-/** A comparator that sorts formatted strings by their formatting tag priority (bold < italic < underline < strikethrough). Returns 0 if either string is not a recognized formatting tag. */
+/** Counts the number of distinct formatting types present in an HTML string. Aliased tags (e.g. b/strong, i/em, strike/s)
+ * are counted as a single type since they share a priority. Returns 0 if the string contains no recognized formatting tags. */
+const getFormattingTypeCount = (html: string): number => {
+  const priorities = new Set<number>()
+  // reset lastIndex since REGEX_FORMATTING_PRIORITY is global and stateful across exec calls
+  REGEX_FORMATTING_PRIORITY.lastIndex = 0
+  let match: RegExpExecArray | null
+  while ((match = REGEX_FORMATTING_PRIORITY.exec(html)) !== null) {
+    priorities.add(FORMATTING_TAG_PRIORITY[match[1]])
+  }
+  return priorities.size
+}
+
+/** A comparator that sorts formatted strings by their formatting tag priority. Thoughts with more distinct types of
+ * formatting are given greater priority (sorted first); ties are broken by the highest-priority tag
+ * (bold < italic < underline < strikethrough). Returns 0 if either string is not a recognized formatting tag. */
 export const compareFormattingTagPriority: ComparatorFunction<string> = (a: string, b: string): ComparatorValue => {
   const aPriority = getFormattingTagPriority(a)
   const bPriority = getFormattingTagPriority(b)
-  return aPriority !== undefined && bPriority !== undefined ? compare(aPriority, bPriority) : 0
+  if (aPriority === undefined || bPriority === undefined) return 0
+  // more distinct formatting types = greater priority = sorted first
+  const typeCountComparison = compare(getFormattingTypeCount(b), getFormattingTypeCount(a))
+  return typeCountComparison || compare(aPriority, bPriority)
 }
 
 /** A comparison function that sorts date strings. Only handles date vs date comparisons. */
