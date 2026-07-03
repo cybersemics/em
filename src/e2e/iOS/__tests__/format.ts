@@ -20,6 +20,8 @@ describe('Format', () => {
 
     // 4. Apply bold by tapping the Bold toolbar icon.
     const boldButton = await browser.$('[data-testid="toolbar-icon"][aria-label="Bold"]').getElement()
+    // Scroll the button into view in case it is outside the visible toolbar area.
+    await browser.execute(el => (el as unknown as Element).scrollIntoView(), boldButton)
     await tap(boldButton, { y: 60 })
 
     // Allow any focus-induced scroll to settle before measuring.
