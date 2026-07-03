@@ -5,9 +5,11 @@ import type Thought from '../../@types/Thought'
 import type ThoughtId from '../../@types/ThoughtId'
 import type Timestamp from '../../@types/Timestamp'
 import { EM_TOKEN, GLOBAL_ROOT_TOKEN, ROOT_PARENT_ID, SETTINGS_TOKEN, SETTINGS_VALUE } from '../../constants'
+import testFlags from '../../e2e/testFlags'
 import { childrenMapKey } from '../../util/createChildrenMap'
 import hashThought from '../../util/hashThought'
 import isAttribute from '../../util/isAttribute'
+import sleep from '../../util/sleep'
 import type { DataProvider } from '../DataProvider'
 import {
   deleteAttributeChild,
@@ -84,6 +86,13 @@ export function getThoughtspaceReplicaId(): Uint8Array {
   return replicaId
 }
 
+/** Injects delayed TreeCRDT reads for e2e tests that exercise slow local materialization after refresh. */
+const waitForTestReplicationDelay = async (): Promise<void> => {
+  if (testFlags.replicationDelay > 0) {
+    await sleep(testFlags.replicationDelay)
+  }
+}
+
 /** Fetches a thought by ID from the tree. */
 const getThoughtById = async (id: ThoughtId): Promise<Thought | undefined> => {
   const client = getTreecrdtClient()
@@ -117,7 +126,10 @@ const getThoughtById = async (id: ThoughtId): Promise<Thought | undefined> => {
 }
 
 /** Fetches multiple thoughts by IDs. */
-const getThoughtsByIds = (ids: ThoughtId[]): Promise<(Thought | undefined)[]> => Promise.all(ids.map(getThoughtById))
+const getThoughtsByIds = async (ids: ThoughtId[]): Promise<(Thought | undefined)[]> => {
+  await waitForTestReplicationDelay()
+  return Promise.all(ids.map(getThoughtById))
+}
 
 /** Converts em's root parent id to TreeCRDT's global root id. */
 const treeParentId = (id: ThoughtId): ThoughtId => (id === ROOT_PARENT_ID ? GLOBAL_ROOT_TOKEN : id)

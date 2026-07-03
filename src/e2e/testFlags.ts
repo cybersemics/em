@@ -29,7 +29,7 @@ const testFlags: TestFlags = {
   logActions: false,
   logMultigesture: false,
   expandHoverDelay: null,
-  replicationDelay: 0,
+  replicationDelay: preloadedTestFlags?.replicationDelay ?? 0,
   preventInitialize: preloadedTestFlags?.preventInitialize ?? false,
   initialize: null,
   simulateDrag: false,
