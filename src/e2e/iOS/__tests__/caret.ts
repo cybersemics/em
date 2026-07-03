@@ -16,7 +16,6 @@ import newThought from '../helpers/newThought'
 import paste from '../helpers/paste'
 import tap from '../helpers/tap'
 import waitForEditable from '../helpers/waitForEditable'
-import waitForElement from '../helpers/waitForElement'
 import waitUntil from '../helpers/waitUntil'
 
 // tests succeeds individually, but fails when there are too many tests running in parallel
@@ -257,21 +256,18 @@ describe('Caret', () => {
     await newThought('Hello')
     await hideKeyboardByTappingDone()
 
-    const homeNodeHandle = await waitForElement('[data-testid="home"]')
-    await tap(homeNodeHandle)
+    // Use a native WebDriver click on the inner anchor to clear the cursor.
+    // A synthetic tap() (performActions pointer events) does not fire the real
+    // click event that HomeLink's fastClick onClick handler relies on, so the
+    // cursor would never be cleared.
+    await browser.$('[data-testid="home"] a').click()
 
-    await tap(await waitForEditable('Hello'), { horizontalTapLine: 'right', x: 20 + 6, y: 60, pointerType: 'touch' })
+    await tap(await waitForEditable('Hello'), { horizontalTapLine: 'right', x: 6, y: 60, pointerType: 'touch' })
 
     // Wait for focus to be cleared and activeElement to be body
-    await waitUntil(async () => {
-      const isBody = await browser.execute(() => document.activeElement === document.body)
-      const nodeType = await browser.execute(() => document.activeElement?.nodeType)
-      console.info('activeElement check - isBody:', isBody, 'nodeType:', nodeType)
-      return isBody
-    })
+    await waitUntil(() => browser.execute(() => document.activeElement === document.body))
 
     const activeElementIsBody = await browser.execute(() => document.activeElement === document.body)
-    console.info('Final check - activeElementIsBody:', activeElementIsBody)
     expect(activeElementIsBody).toBe(true)
   })
 })
