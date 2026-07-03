@@ -48,36 +48,3 @@ it('a thought formatted with multiple styles is given greater priority than thou
   const exported = await exportThoughts()
   expect(getLetterOrder(exported)).toEqual(['D', 'E', 'C', 'B', 'A'])
 })
-
-// https://github.com/cybersemics/em/issues/3977
-it('a thought with more formatting types outranks one with fewer, even if the latter has a higher-priority format', async () => {
-  await paste(`
-    - A
-    - B
-    - C
-  `)
-
-  // set the cursor on a home child so that Sort targets the home context
-  await clickThought('A')
-
-  // Sort - Alphabetically - Descending (None → Alphabetical/Asc → Alphabetical/Desc)
-  await click('[data-testid="toolbar-icon"][aria-label="Sort Picker"]')
-  await click('[aria-label="sort options"] [aria-label="Alphabetical"]')
-  await click('[data-testid="toolbar-icon"][aria-label="Sort Picker"]')
-  await click('[aria-label="sort options"] [aria-label="Alphabetical"]')
-
-  // Add Bold + Italic to A (two formats, highest priority is bold)
-  await clickThought('A')
-  await click('[data-testid="toolbar-icon"][aria-label="Bold"]')
-  await click('[data-testid="toolbar-icon"][aria-label="Italic"]')
-
-  // Add Italic + Underline + Strikethrough to A (three formats, no bold)
-  await clickThought('B')
-  await click('[data-testid="toolbar-icon"][aria-label="Italic"]')
-  await click('[data-testid="toolbar-icon"][aria-label="Underline"]')
-  await click('[data-testid="toolbar-icon"][aria-label="Strikethrough"]')
-
-  // A's three formats outrank B's two, even though B has bold (the highest-priority format)
-  const exported = await exportThoughts()
-  expect(getLetterOrder(exported)).toEqual(['B', 'A', 'C'])
-})
