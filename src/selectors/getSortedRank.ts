@@ -6,6 +6,13 @@ import getSortPreference from './getSortPreference'
 import noteValue from './noteValue'
 import thoughtToPath from './thoughtToPath'
 
+interface GetSortedRankOptions {
+  /** The created timestamp to use for Created sort. */
+  created?: number
+  /** Existing thought to ignore when recalculating its rank after an edit. */
+  excludeThoughtId?: ThoughtId | null
+}
+
 /** Calculates the rank for a given index in a sorted array of thoughts. */
 const calculateRank = (thoughts: { rank: number }[], index: number): number => {
   // if there is no such child, return the rank of the last child + 1
@@ -25,18 +32,23 @@ const calculateRank = (thoughts: { rank: number }[], index: number): number => {
  * This is currently optional to reflect the fact that most call sites do not need to call this function for newly-created thoughts.
  * Instead, they can assume that a newly-created thought goes at the end of the list if sort preference is Created (#3782).
  */
-const getSortedRank = (state: State, id: ThoughtId, value: string, created?: number) => {
-  const children = id ? getAllChildrenSorted(state, id) : []
+const getSortedRank = (state: State, id: ThoughtId, value: string, options?: number | GetSortedRankOptions) => {
+  const childrenAll = id ? getAllChildrenSorted(state, id) : []
+
+  if (childrenAll.length === 0) return 0
+
+  const sortPreference = getSortPreference(state, id)
+  const { created, excludeThoughtId } = typeof options === 'number' ? { created: options } : options || {}
+  const isDescending = sortPreference.direction === 'Desc'
+  const excludedThoughtId =
+    excludeThoughtId || (sortPreference.type === 'Updated' ? state.cursor?.[state.cursor.length - 1] : null)
+  const children = excludedThoughtId ? childrenAll.filter(thought => thought.id !== excludedThoughtId) : childrenAll
 
   if (children.length === 0) return 0
 
-  const sortPreference = getSortPreference(state, id)
-  const isDescending = sortPreference.direction === 'Desc'
-  const thoughts = children.filter(thought => !state.cursor || thought.id !== state.cursor[state.cursor.length - 1])
-
   // Handle Updated sorting
   if (sortPreference.type === 'Updated') {
-    return isDescending ? thoughts[0].rank - 1 : (thoughts[thoughts.length - 1]?.rank || 0) + 1
+    return isDescending ? children[0].rank - 1 : (children[children.length - 1]?.rank || 0) + 1
   }
 
   // Handle Created sorting (#3782)

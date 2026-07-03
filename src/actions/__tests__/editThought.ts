@@ -1,6 +1,7 @@
 import importText from '../../actions/importText'
 import newSubthought from '../../actions/newSubthought'
 import newThought from '../../actions/newThought'
+import toggleSort from '../../actions/toggleSort'
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import contextToThoughtId from '../../selectors/contextToThoughtId'
 import exportContext from '../../selectors/exportContext'
@@ -374,6 +375,39 @@ describe('sort', () => {
   - b
   - C
   - D`)
+  })
+
+  it('empty thought in descending sorted context should sort above an earlier sibling on edit', () => {
+    const steps = [
+      newThought({ value: 'A' }),
+      toggleSort({ simplePath: HOME_PATH }),
+      toggleSort({ simplePath: HOME_PATH }),
+      newThought({ value: '' }),
+      editThought([''], 'B'),
+    ]
+
+    const state = reducerFlow(steps)(initialState())
+    const thoughtA = contextToThought(state, ['A'])!
+    const thoughtB = contextToThought(state, ['B'])!
+
+    expect(thoughtB.rank).toBeLessThan(thoughtA.rank)
+  })
+
+  it('empty thought in descending sorted context should sort above all lower siblings on edit', () => {
+    const steps = [
+      newThought({ value: 'A' }),
+      newThought({ value: 'B' }),
+      toggleSort({ simplePath: HOME_PATH }),
+      toggleSort({ simplePath: HOME_PATH }),
+      newThought({ value: '' }),
+      editThought([''], 'C'),
+    ]
+
+    const state = reducerFlow(steps)(initialState())
+    const thoughtB = contextToThought(state, ['B'])!
+    const thoughtC = contextToThought(state, ['C'])!
+
+    expect(thoughtC.rank).toBeLessThan(thoughtB.rank)
   })
 
   it('rank should not change when editing a thought to empty', () => {

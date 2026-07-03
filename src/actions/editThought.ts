@@ -144,7 +144,10 @@ const editThought = (state: State, { cursorOffset, force, oldValue, newValue, pa
     ...(editedThought.generating ? { generating: false } : null),
     rank:
       newValue !== '' && (sortType === 'Alphabetical' || sortType === 'Created' || sortType === 'Updated')
-        ? getSortedRank(state, editedThought.parentId, newValue, editedThought.created)
+        ? getSortedRank(state, editedThought.parentId, newValue, {
+            created: editedThought.created,
+            excludeThoughtId: editedThought.id,
+          })
         : editedThought.rank,
     value: newValue,
     lastUpdated: timestamp(),
@@ -177,7 +180,9 @@ const editThought = (state: State, { cursorOffset, force, oldValue, newValue, pa
       const sortPreference = getSortPreference(state, parentThought.parentId)
       const sortType = sortPreference.type
       if (sortType === 'Note') {
-        const newParentRank = getSortedRank(state, parentThought.parentId, newValue)
+        const newParentRank = getSortedRank(state, parentThought.parentId, newValue, {
+          excludeThoughtId: parentThought.id,
+        })
         thoughtIndexUpdates[parentThought.id] = {
           ...parentThought,
           rank: newParentRank,
