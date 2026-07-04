@@ -37,11 +37,24 @@ interface GitHubIssue {
   body: string | null
   state: string
   labels: Array<{ name: string }>
+  /** Present (non-null) only when the number actually refers to a pull request. */
+  pull_request?: unknown
 }
+
+/**
+ * Determines whether a GitHub issues-API object (or search result) actually refers to a pull request.
+ * PRs and issues share GitHub's number space; the `pull_request` field is the only reliable signal
+ * that a given number is a PR rather than an issue.
+ */
+export const isPullRequest = (item: { pull_request?: unknown }): boolean => item.pull_request != null
 
 /**
  * Searches GitHub for an issue matching the given title exactly.
  * Used as a fallback when the Everhour task ID does not encode the issue number.
+ *
+ * The `search/issues` endpoint matches pull requests as well as issues, so an exact issue match is
+ * preferred over a PR. A PR-only match is still returned so the caller can skip it with an accurate
+ * "it is a pull request" reason rather than a misleading "no issue number found".
  */
 const findIssueByTitle = async (
   title: string,
@@ -54,9 +67,12 @@ const findIssueByTitle = async (
     headers: { Authorization: `Bearer ${githubToken}` },
   })
   if (!resp.ok) return null
-  const data = (await resp.json()) as { items: Array<{ number: number; title: string }> }
-  const exact = data.items.find(item => item.title === title)
-  return exact?.number ?? null
+  const data = (await resp.json()) as {
+    items: Array<{ number: number; title: string; pull_request?: unknown }>
+  }
+  const exactMatches = data.items.filter(item => item.title === title)
+  const issueMatch = exactMatches.find(item => !isPullRequest(item))
+  return (issueMatch ?? exactMatches[0])?.number ?? null
 }
 
 /**
@@ -198,6 +214,14 @@ const main = async () => {
     }
 
     const issue: GitHubIssue = (await issueResp.json()) as GitHubIssue
+
+    // Some Everhour tasks are linked to pull requests, not issues. GitHub's issues API returns PRs
+    // too (they share the number space), so detect and skip them before the closed-state check —
+    // otherwise a merged PR would be reported with the misleading "closed" reason.
+    if (isPullRequest(issue)) {
+      console.info(`  Skipping #${issueNumber} "${issue.title}" - it is a pull request, not an issue`)
+      continue
+    }
 
     // Do not estimate closed issues.
     if (issue.state === 'closed') {
