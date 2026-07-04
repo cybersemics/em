@@ -1,15 +1,17 @@
-const MODEL = 'gpt-4o-mini'
+const MODEL = 'claude-opus-4-8'
 const TEMPERATURE = 0
 const MAX_VALIDATION_ATTEMPTS = 3
 
-/** Options for the GitHub Models call. */
+/** Options for the AI inference call. */
 interface CallOptions {
   token: string
   prompt: string
+  /** Estimation instructions used as the system message. */
+  instructions: string
 }
 
 /** Calls GitHub Models inference API. Returns raw string outputs for validation. */
-const callGitHubModel = async ({ token, prompt }: CallOptions): Promise<string[]> => {
+const inference = async ({ token, prompt, instructions }: CallOptions): Promise<string[]> => {
   const outputs: string[] = []
 
   for (let attempt = 0; attempt < MAX_VALIDATION_ATTEMPTS; attempt++) {
@@ -23,11 +25,7 @@ const callGitHubModel = async ({ token, prompt }: CallOptions): Promise<string[]
         model: MODEL,
         temperature: TEMPERATURE,
         messages: [
-          {
-            role: 'system',
-            content:
-              'You are an issue estimation assistant. Output only valid JSON with an estimate category. Do not include any other text.',
-          },
+          { role: 'system', content: instructions },
           { role: 'user', content: prompt },
         ],
         response_format: { type: 'json_object' },
@@ -57,4 +55,4 @@ const callGitHubModel = async ({ token, prompt }: CallOptions): Promise<string[]
   return outputs
 }
 
-export default callGitHubModel
+export default inference

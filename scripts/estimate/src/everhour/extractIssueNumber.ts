@@ -1,4 +1,4 @@
-import { EverhourTask } from './types'
+import { EverhourTask } from './types.js'
 
 /**
  * Extracts a GitHub issue number from an Everhour task.

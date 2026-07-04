@@ -30,13 +30,13 @@ Similarly, a fix is **not complete** until both Step 4 and Step 5 pass.
 
 ## Step 1: Parse the Issue
 
-Use the GitHub MCP `get_issue` tool to read the full issue body.  Extract these three sections — headings vary slightly across issues so match loosely:
+Use the GitHub MCP `get_issue` tool to read the full issue body. Extract these three sections — headings vary slightly across issues so match loosely:
 
-| Section | Common headings |
-|---|---|
+| Section            | Common headings                                               |
+| ------------------ | ------------------------------------------------------------- |
 | Steps to reproduce | "Steps to Reproduce", "Step to Reproduce", "How to reproduce" |
-| Failure | "Current Behavior", "Current behavior", "Actual Behavior" |
-| Goal | "Expected Behavior", "Expected behavior" |
+| Failure            | "Current Behavior", "Current behavior", "Actual Behavior"     |
+| Goal               | "Expected Behavior", "Expected behavior"                      |
 
 If the issue body is ambiguous, read any attached comments before asking the
 user for clarification. If a section is genuinely absent, stop and ask.
@@ -106,8 +106,10 @@ If Step 2 determined that mobile emulation is required, confirm `emulate` has al
 1. Open a fresh browser tab at `http://localhost:3000`.
 
 2. **Clear app state** so you start from a clean slate. In the browser console run:
+
    ```js
-   localStorage.clear(); location.reload();
+   localStorage.clear()
+   location.reload()
    ```
 
 3. Follow the **Steps to Reproduce** from the issue **exactly as written** —
@@ -133,10 +135,10 @@ If Step 2 determined that mobile emulation is required, confirm `emulate` has al
 
 Some steps to reproduce will describe **swipe gestures** in the gesture zone (the left side of the screen in right-handed mode, below the 50px toolbar). Issues describe these in two interchangeable notations — both refer to the same thing:
 
-| Notation | Example | Meaning |
-|---|---|---|
-| Letters | `rdr` | `r`=right, `l`=left, `u`=up, `d`=down |
-| Arrows  | `→↓→` | `→`=r, `←`=l, `↑`=u, `↓`=d |
+| Notation | Example | Meaning                               |
+| -------- | ------- | ------------------------------------- |
+| Letters  | `rdr`   | `r`=right, `l`=left, `u`=up, `d`=down |
+| Arrows   | `→↓→`   | `→`=r, `←`=l, `↑`=u, `↓`=d            |
 
 **Mobile emulation must be active** (Step 2) — the gesture detector listens for touch events, which require `hasTouch: true`.
 
@@ -149,45 +151,64 @@ To execute gestures, dispatch synthetic touch events via `evaluate_script`. The 
 Working snippet — change `directions` to your gesture:
 
 ```js
-async () => {
-  const directions = ['r', 'd']; // e.g. ['l','d','r','l','d','l'] for ldrldl
-  const startX = 150, startY = 350, stepSize = 80, substep = 10;
-  const target = document.elementFromPoint(startX, startY) || document.body;
-  const mkTouch = (x, y) => new Touch({
-    identifier: 1, target,
-    clientX: x, clientY: y, pageX: x, pageY: y,
-    screenX: x, screenY: y,
-    radiusX: 1, radiusY: 1, rotationAngle: 0, force: 1,
-  });
+;async () => {
+  const directions = ['r', 'd'] // e.g. ['l','d','r','l','d','l'] for ldrldl
+  const startX = 150,
+    startY = 350,
+    stepSize = 80,
+    substep = 10
+  const target = document.elementFromPoint(startX, startY) || document.body
+  const mkTouch = (x, y) =>
+    new Touch({
+      identifier: 1,
+      target,
+      clientX: x,
+      clientY: y,
+      pageX: x,
+      pageY: y,
+      screenX: x,
+      screenY: y,
+      radiusX: 1,
+      radiusY: 1,
+      rotationAngle: 0,
+      force: 1,
+    })
   const fire = (type, x, y) => {
-    const t = mkTouch(x, y);
-    target.dispatchEvent(new TouchEvent(type, {
-      cancelable: true, bubbles: true, composed: true,
-      touches: type === 'touchend' ? [] : [t],
-      targetTouches: type === 'touchend' ? [] : [t],
-      changedTouches: [t],
-    }));
-  };
-  const sleep = ms => new Promise(r => setTimeout(r, ms));
-  let x = startX, y = startY;
-  fire('touchstart', x, y);
-  await sleep(50);
-  for (const dir of directions) {
-    let dx = 0, dy = 0;
-    if (dir === 'r') dx = stepSize;
-    else if (dir === 'l') dx = -stepSize;
-    else if (dir === 'd') dy = stepSize;
-    else if (dir === 'u') dy = -stepSize;
-    const steps = Math.max(1, Math.ceil(Math.hypot(dx, dy) / substep));
-    for (let i = 1; i <= steps; i++) {
-      x += dx / steps; y += dy / steps;
-      fire('touchmove', Math.round(x), Math.round(y));
-      await sleep(16);
-    }
-    await sleep(40);
+    const t = mkTouch(x, y)
+    target.dispatchEvent(
+      new TouchEvent(type, {
+        cancelable: true,
+        bubbles: true,
+        composed: true,
+        touches: type === 'touchend' ? [] : [t],
+        targetTouches: type === 'touchend' ? [] : [t],
+        changedTouches: [t],
+      }),
+    )
   }
-  await sleep(80);
-  fire('touchend', Math.round(x), Math.round(y));
+  const sleep = ms => new Promise(r => setTimeout(r, ms))
+  let x = startX,
+    y = startY
+  fire('touchstart', x, y)
+  await sleep(50)
+  for (const dir of directions) {
+    let dx = 0,
+      dy = 0
+    if (dir === 'r') dx = stepSize
+    else if (dir === 'l') dx = -stepSize
+    else if (dir === 'd') dy = stepSize
+    else if (dir === 'u') dy = -stepSize
+    const steps = Math.max(1, Math.ceil(Math.hypot(dx, dy) / substep))
+    for (let i = 1; i <= steps; i++) {
+      x += dx / steps
+      y += dy / steps
+      fire('touchmove', Math.round(x), Math.round(y))
+      await sleep(16)
+    }
+    await sleep(40)
+  }
+  await sleep(80)
+  fire('touchend', Math.round(x), Math.round(y))
 }
 ```
 

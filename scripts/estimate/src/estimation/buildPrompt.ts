@@ -1,4 +1,4 @@
-import { EstimateSample } from './loadSamples'
+import { EstimateSample } from './loadSamples.js'
 
 /** Issue data for estimation. */
 export interface IssueInput {
@@ -7,9 +7,9 @@ export interface IssueInput {
   labels: string[]
 }
 
-/** Builds the full estimation prompt from instructions, sample data, and the target issue. */
-const buildPrompt = (instructions: string, samples: EstimateSample[], issue: IssueInput): string => {
-  let prompt = `${instructions}\n\n`
+/** Builds the estimation prompt from sample data and the target issue. Instructions are passed separately as the system message. */
+const buildPrompt = (samples: EstimateSample[], issue: IssueInput): string => {
+  let prompt = ''
 
   if (samples.length > 0) {
     prompt += '## Examples\n\n'

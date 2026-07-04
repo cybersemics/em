@@ -1,12 +1,18 @@
+/**
+ * Estimates a newly opened GitHub issue and writes the result to Everhour.
+ * Triggered by: .github/workflows/estimate-issue-opened.yml
+ */
 import { execSync } from 'child_process'
-import * as path from 'path'
-import buildPrompt from '../src/estimation/buildPrompt'
-import callGitHubModel from '../src/estimation/callGitHubModel'
-import loadInstructions from '../src/estimation/loadInstructions'
-import loadSamples from '../src/estimation/loadSamples'
-import validateEstimate from '../src/estimation/validateEstimate'
-import EverhourClient from '../src/everhour/client'
-import { CATEGORY_TO_HOURS, EstimateCategory, categoryToSeconds } from '../src/everhour/estimates'
+import 'dotenv/config'
+import * as fs from 'fs'
+import { fileURLToPath } from 'url'
+import buildPrompt from './estimation/buildPrompt.js'
+import inference from './estimation/inference.js'
+import loadInstructions from './estimation/loadInstructions.js'
+import loadSamples from './estimation/loadSamples.js'
+import validateEstimate from './estimation/validateEstimate.js'
+import EverhourClient from './everhour/client.js'
+import { CATEGORY_TO_HOURS, EstimateCategory, categoryToSeconds } from './everhour/estimates.js'
 
 interface IssuePayload {
   number: number
@@ -39,7 +45,7 @@ const main = async () => {
   if (!eventPath) throw new Error('GITHUB_EVENT_PATH is required')
 
   const repoRoot = process.env.GITHUB_WORKSPACE ?? process.cwd()
-  const eventPayload = JSON.parse(require('fs').readFileSync(eventPath, 'utf-8'))
+  const eventPayload = JSON.parse(fs.readFileSync(eventPath, 'utf-8'))
   const issue: IssuePayload = eventPayload.issue
 
   if (!issue.body) {
@@ -60,8 +66,8 @@ const main = async () => {
     body: issue.body,
     labels: issue.labels.map(l => l.name),
   }
-  const prompt = buildPrompt(instructions, samples, issueInput)
-  const outputs = await callGitHubModel({ token: githubToken, prompt })
+  const prompt = buildPrompt(samples, issueInput)
+  const outputs = await inference({ token: githubToken, prompt, instructions })
 
   // Validate
   const result = validateEstimate(outputs)
@@ -92,7 +98,9 @@ const main = async () => {
   console.info(`Estimated issue #${issue.number}: ${category} / ${hours}h`)
 }
 
-main().catch(err => {
-  console.error(err)
-  process.exit(1)
-})
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  main().catch(err => {
+    console.error(err)
+    process.exit(1)
+  })
+}

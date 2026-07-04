@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import extractIssueNumber from '../extractIssueNumber'
+import extractIssueNumber from '../extractIssueNumber.js'
 
 describe('extractIssueNumber', () => {
   it('extracts from standard Everhour GitHub task ID (gh:REPO:ISSUE)', () => {

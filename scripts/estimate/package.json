@@ -1,0 +1,16 @@
+{
+  "name": "em-estimate",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "backfill": "node --experimental-strip-types src/backfill.ts",
+    "command": "node --experimental-strip-types src/command.ts",
+    "issue": "node --experimental-strip-types src/issue.ts"
+  },
+  "dependencies": {
+    "dotenv": "^16.0.0",
+    "openai": "^4.0.0",
+    "zod": "^4.4.3"
+  }
+}

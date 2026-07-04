@@ -1,13 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import buildPrompt from '../buildPrompt'
+import buildPrompt from '../buildPrompt.js'
 
 describe('buildPrompt', () => {
-  it('builds prompt with instructions and issue', () => {
-    const instructions = '# Test Instructions\nEstimate issues.'
+  it('builds prompt with issue', () => {
     const issue = { title: 'Fix bug', body: 'Something is broken', labels: ['bug'] }
-    const result = buildPrompt(instructions, [], issue)
+    const result = buildPrompt([], issue)
 
-    expect(result).toContain('# Test Instructions')
     expect(result).toContain('Fix bug')
     expect(result).toContain('Something is broken')
     expect(result).toContain('bug')
@@ -15,7 +13,6 @@ describe('buildPrompt', () => {
   })
 
   it('includes samples when provided', () => {
-    const instructions = 'Instructions'
     const samples = [
       {
         input: { title: 'Sample issue', body: 'Sample body', labels: ['feature'] },
@@ -23,7 +20,7 @@ describe('buildPrompt', () => {
       },
     ]
     const issue = { title: 'New issue', body: 'New body', labels: [] }
-    const result = buildPrompt(instructions, samples, issue)
+    const result = buildPrompt(samples, issue)
 
     expect(result).toContain('## Examples')
     expect(result).toContain('Sample issue')
@@ -31,7 +28,7 @@ describe('buildPrompt', () => {
   })
 
   it('omits examples section when no samples', () => {
-    const result = buildPrompt('Instructions', [], { title: 'T', body: 'B', labels: [] })
+    const result = buildPrompt([], { title: 'T', body: 'B', labels: [] })
     expect(result).not.toContain('## Examples')
   })
 })

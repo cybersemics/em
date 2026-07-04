@@ -1,7 +1,15 @@
+/**
+ * Handles /estimate Nh comments on GitHub issues.
+ * Triggered by: .github/workflows/estimate-command.yml
+ *
+ * On a trusted /estimate command, immediately updates the Everhour estimate for the linked
+ * GitHub issue and opens a PR to commit the corrected sample to the training corpus.
+ */
+import 'dotenv/config'
 import * as fs from 'fs'
-import * as path from 'path'
-import EverhourClient from '../src/everhour/client'
-import { EstimateCategory, HOURS_TO_CATEGORY, VALID_HOURS, categoryToSeconds } from '../src/everhour/estimates'
+import { fileURLToPath } from 'url'
+import EverhourClient from './everhour/client.js'
+import { EstimateCategory, HOURS_TO_CATEGORY, VALID_HOURS, categoryToSeconds } from './everhour/estimates.js'
 
 const TRUSTED_ASSOCIATIONS = ['OWNER', 'MEMBER', 'COLLABORATOR']
 
@@ -21,11 +29,18 @@ interface CommentEvent {
   }
 }
 
-/** Parses /estimate command from comment body. Returns hours or null. */
+/** Parses /estimate command from comment body. Returns hours or null. The suffix "h" is optional. */
 const parseEstimateCommand = (body: string): number | null => {
-  const match = body.trim().match(/^\/estimate\s+(\d+)h\s*$/)
+  const match = body.trim().match(/^\/estimate\s+(\d+)h?\s*$/)
   if (!match) return null
   return parseInt(match[1], 10)
+}
+
+/** Rounds an arbitrary hour value to the nearest valid estimate category. */
+const roundToNearestCategory = (hours: number): (typeof VALID_HOURS)[number] => {
+  return VALID_HOURS.reduce((nearest, candidate) =>
+    Math.abs(candidate - hours) < Math.abs(nearest - hours) ? candidate : nearest,
+  )
 }
 
 /** Generates a deterministic sample filename for an issue. */
@@ -43,7 +58,6 @@ const main = async () => {
 
   const repo = process.env.GITHUB_REPOSITORY ?? ''
   const [owner, repoName] = repo.split('/')
-  const repoRoot = process.env.GITHUB_WORKSPACE ?? process.cwd()
 
   const eventPayload: CommentEvent = JSON.parse(fs.readFileSync(eventPath, 'utf-8'))
   const { comment, issue } = eventPayload
@@ -52,19 +66,6 @@ const main = async () => {
   const hours = parseEstimateCommand(comment.body)
   if (hours === null) return // Not an estimate command
 
-  // Validate hours
-  if (!VALID_HOURS.includes(hours as (typeof VALID_HOURS)[number])) {
-    const validValues = VALID_HOURS.map(h => `${h}h`).join(', ')
-    await postComment(
-      githubToken,
-      owner,
-      repoName,
-      issue.number,
-      `Invalid estimate value. Valid values are: ${validValues}`,
-    )
-    return
-  }
-
   // Check trusted commenter
   if (!TRUSTED_ASSOCIATIONS.includes(comment.author_association)) {
     await postComment(
@@ -72,12 +73,14 @@ const main = async () => {
       owner,
       repoName,
       issue.number,
-      `Only repository owners, members, and collaborators can submit estimate corrections.`,
+      'Only repository owners, members, and collaborators can submit estimate corrections.',
     )
     return
   }
 
-  const category = HOURS_TO_CATEGORY[hours] as EstimateCategory
+  // Round to nearest valid category (e.g. 10h → 8h/M, 3h → 4h/S)
+  const roundedHours = roundToNearestCategory(hours)
+  const category = HOURS_TO_CATEGORY[roundedHours] as EstimateCategory
   const seconds = categoryToSeconds(category)
 
   // Update Everhour immediately
@@ -97,7 +100,7 @@ const main = async () => {
       type: 'manual-estimate-comment',
       issue: issue.number,
       comment: comment.id,
-      hours,
+      hours: roundedHours,
     },
   }
 
@@ -106,7 +109,6 @@ const main = async () => {
   const branchName = `estimate-sample/issue-${issue.number}`
 
   // Create branch and PR via GitHub API
-  // Get default branch SHA
   const repoResp = await fetch(`https://api.github.com/repos/${owner}/${repoName}`, {
     headers: { Authorization: `Bearer ${githubToken}` },
   })
@@ -149,7 +151,7 @@ const main = async () => {
   })
 
   // Open PR
-  const prBody = `Adds a corrected estimate sample from \`/estimate ${hours}h\`.\n\nIssue: ${owner}/${repoName}#${issue.number}\nExpected estimate: ${category} / ${hours}h`
+  const prBody = `Adds a corrected estimate sample from \`/estimate ${roundedHours}h\`.\n\nIssue: ${owner}/${repoName}#${issue.number}\nExpected estimate: ${category} / ${roundedHours}h`
   await fetch(`https://api.github.com/repos/${owner}/${repoName}/pulls`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${githubToken}`, 'Content-Type': 'application/json' },
@@ -167,10 +169,10 @@ const main = async () => {
     owner,
     repoName,
     issue.number,
-    `Everhour estimate updated: ${category} / ${hours}h\nA PR has been opened to add the corrected sample.`,
+    `Everhour estimate updated: ${category} / ${roundedHours}h\nA PR has been opened to add the corrected sample.`,
   )
 
-  console.info(`Manual correction applied for issue #${issue.number}: ${category} / ${hours}h`)
+  console.info(`Manual correction applied for issue #${issue.number}: ${category} / ${roundedHours}h`)
 }
 
 /** Posts a comment on a GitHub issue. */
@@ -182,9 +184,11 @@ const postComment = async (token: string, owner: string, repo: string, issueNumb
   })
 }
 
-main().catch(err => {
-  console.error(err)
-  process.exit(1)
-})
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  main().catch(err => {
+    console.error(err)
+    process.exit(1)
+  })
+}
 
-export { parseEstimateCommand, sampleFilename, TRUSTED_ASSOCIATIONS }
+export { parseEstimateCommand, roundToNearestCategory, sampleFilename, TRUSTED_ASSOCIATIONS }

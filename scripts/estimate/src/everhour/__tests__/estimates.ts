@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { CATEGORY_TO_HOURS, ESTIMATE_CATEGORIES, HOURS_TO_CATEGORY, VALID_HOURS, categoryToSeconds } from '../estimates'
+import {
+  CATEGORY_TO_HOURS,
+  ESTIMATE_CATEGORIES,
+  HOURS_TO_CATEGORY,
+  VALID_HOURS,
+  categoryToSeconds,
+} from '../estimates.js'
 
 describe('estimates', () => {
   it('maps all categories to hours', () => {
