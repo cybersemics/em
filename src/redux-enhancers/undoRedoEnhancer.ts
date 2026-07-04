@@ -121,6 +121,11 @@ const addActionsToPatch = (patch: Operation[], actions: ActionType[]): Patch =>
 const getPatchAction = (patch: Patch): ActionType => patch[0]?.actions[0]
 
 /**
+ * Returns true if a patch represents an undoable action. A patch's first action may be a non-action label (e.g. a multicursor command's undoLabel), so check all actions in the patch rather than only the first.
+ */
+const isPatchUndoable = (patch: Patch | undefined): boolean => !!patch?.[0]?.actions.some(isUndoable)
+
+/**
  * Gets the nth item from the end of an array.
  */
 const nthLast = <T>(arr: T[], n: number) => arr[arr.length - n]
@@ -172,7 +177,9 @@ const undoReducer = (state: State, undoPatches: Patch[]): State => {
 
   if (!undoPatches.length) return state
 
-  const undoTwice = isNavigation(lastAction) ? isUndoable(penultimateAction) : penultimateAction === 'newThought'
+  const undoTwice = isNavigation(lastAction)
+    ? isPatchUndoable(penultimateUndoPatch)
+    : penultimateAction === 'newThought'
 
   const poppedUndoPatches = undoTwice ? [penultimateUndoPatch, lastUndoPatch] : [lastUndoPatch]
 
@@ -311,12 +318,19 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         return {
           ...newState,
           lastUndoableActionType: actionType,
+          // Guard against pushing an empty patch when the merged actions net to no change (e.g. a multicursor command that reduces to a no-op).
+          // An empty patch has no actions, which would disable undo (getLastActionType returns undefined) and crash undoOneReducer/redoOneReducer when spreading patch[0]?.actions.
+          // Instead, drop the now-superseded last patch, mirroring the non-merge branch's `undoPatch.length` guard below.
           undoPatches: [
             ...newState.undoPatches.slice(0, -1),
-            addActionsToPatch(combinedUndoPatch, [
-              ...(lastUndoPatch && lastUndoPatch.length > 0 ? lastUndoPatch[0]?.actions : []),
-              actionType,
-            ]),
+            ...(combinedUndoPatch.length
+              ? [
+                  addActionsToPatch(combinedUndoPatch, [
+                    ...(lastUndoPatch && lastUndoPatch.length > 0 ? lastUndoPatch[0]?.actions : []),
+                    actionType,
+                  ]),
+                ]
+              : []),
           ],
         }
       }

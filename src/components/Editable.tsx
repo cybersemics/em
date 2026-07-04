@@ -2,7 +2,7 @@ import _ from 'lodash'
 import React, { FocusEventHandler, useCallback, useEffect, useRef } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import { cx } from '../../styled-system/css'
-import { editableRecipe, invalidOptionRecipe, multilineRecipe } from '../../styled-system/recipes'
+import { editableRecipe, invalidOptionRecipe } from '../../styled-system/recipes'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import TutorialChoice from '../@types/TutorialChoice'
@@ -31,6 +31,8 @@ import {
   TUTORIAL_CONTEXT1_PARENT,
   TUTORIAL_CONTEXT2_PARENT,
 } from '../constants'
+import asyncFocus from '../device/asyncFocus'
+import preventAutoscroll, { preventAutoscrollEnd } from '../device/preventAutoscroll'
 import * as selection from '../device/selection'
 import globals from '../globals'
 import findDescendant from '../selectors/findDescendant'
@@ -336,6 +338,59 @@ const Editable = ({
       commandEmitter.off('command', flush)
     }
   }, [])
+
+  useEffect(() => {
+    if (!isTouch || !isSafari() || !contentRef.current) return
+
+    const editable = contentRef.current
+    const AUTOCOMPLETE_SPACE_WINDOW_MS = 250
+    let pendingAutocompleteAt: number | null = null
+
+    /** After iOS autocomplete (insertReplacementText) accepts a word, no touch events reach the DOM
+     * in a "dead zone" beneath the word until focus is retargeted. Moving focus to the asyncFocus dummy input
+     * and back to the previous active element allows touch events to reach the DOM again.
+     *
+     * It is possible to intercept insertReplacementText and perform the focus retargeting there
+     * instead of waiting for the next insertText event, but that breaks native undo via shake or three-finger swipe.
+     */
+    const onAutocompleteInput = (e: Event) => {
+      if (!editable || !(e instanceof InputEvent)) return
+
+      if (e.inputType === 'insertReplacementText') {
+        pendingAutocompleteAt = performance.now()
+        return
+      }
+
+      if (e.inputType !== 'insertText' || e.data !== ' ' || pendingAutocompleteAt == null) {
+        pendingAutocompleteAt = null
+        return
+      }
+
+      if (performance.now() - pendingAutocompleteAt > AUTOCOMPLETE_SPACE_WINDOW_MS) {
+        pendingAutocompleteAt = null
+        return
+      }
+
+      const savedCharOffset = selection.offsetThought() ?? selection.offset() ?? 0
+
+      // Queue and flush the change with the browser-applied value to ensure it's captured before the editable blurs.
+      oldValueRef.current = editable.textContent || ''
+      throttledChangeRef.current(oldValueRef.current, { rank, simplePath })
+      throttledChangeRef.current.flush()
+
+      asyncFocus({ force: true })
+
+      preventAutoscroll(editable)
+      // Restore the selection offset captured when insertText(' ') arrived.
+      selection.set(editable, { offset: savedCharOffset })
+      preventAutoscrollEnd(editable)
+
+      pendingAutocompleteAt = null
+    }
+
+    editable?.addEventListener('input', onAutocompleteInput)
+    return () => editable?.removeEventListener('input', onAutocompleteInput)
+  }, [contentRef, rank, simplePath])
 
   useEffect(() => {
     // if there is a multicursor, blur the contentRef
@@ -677,7 +732,7 @@ const Editable = ({
       innerRef={contentRef}
       aria-label={'editable-' + head(path)}
       data-editable
-      className={cx(multiline ? multilineRecipe() : null, editableRecipe(), className)}
+      className={cx(editableRecipe(), className)}
       html={
         value === EM_TOKEN
           ? '<b>em</b>'

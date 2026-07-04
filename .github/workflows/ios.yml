@@ -12,6 +12,14 @@ on:
         description: 'Optional ID for tracking repeated runs'
         required: false
 
+# Serialize BrowserStack runs repo-wide. Every run draws from the same shared parallel-session pool, so
+# overlapping runs (a main push + PR syncs + reruns) can over-subscribe it and fail with session-creation
+# timeouts. Allowing one active run at a time keeps total live sessions within maxInstances.
+# cancel-in-progress: false queues runs instead of cancelling them, so no run is dropped.
+concurrency:
+  group: browserstack
+  cancel-in-progress: false
+
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   CI: true
@@ -33,6 +41,22 @@ jobs:
           ref: ${{github.event.pull_request.head.ref}}
           repository: ${{github.event.pull_request.head.repo.full_name}}
 
+      # `pull_request_target` runs the workflow file from the default branch but checks out the PR's
+      # head code. PRs that branched before the HTTPS dev server migration use an HTTP-only dev
+      # server with no token gate; PRs at or after it use HTTPS + a tunnel-token gate. Detect which
+      # mode the checked-out code is in so the health check probes the right protocol and we only
+      # generate a tunnel token when one is needed.
+      - name: Detect dev server mode
+        id: server_mode
+        run: |
+          if grep -q "@vitejs/plugin-basic-ssl" vite.config.ts; then
+            echo "https=true" >> "$GITHUB_OUTPUT"
+            echo "Mode: HTTPS"
+          else
+            echo "https=false" >> "$GITHUB_OUTPUT"
+            echo "Mode: HTTP (PR predates HTTPS dev server migration)"
+          fi
+
       - name: Enable Corepack
         run: corepack enable
 
@@ -47,14 +71,43 @@ jobs:
       - name: Build
         run: yarn build
 
+      - name: Generate tunnel token
+        if: steps.server_mode.outputs.https == 'true'
+        run: |
+          TOKEN=$(openssl rand -hex 16)
+          echo "::add-mask::$TOKEN"
+          echo "TUNNEL_TOKEN=$TOKEN" >> "$GITHUB_ENV"
+
       - name: Serve
-        run: yarn servebuild &
+        env:
+          USE_HTTPS: ${{ steps.server_mode.outputs.https }}
+        run: |
+          yarn servebuild &
+
+          echo "Waiting for server to be ready..."
+          for i in {1..30}; do
+            if [ "$USE_HTTPS" = "true" ]; then
+              HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -k "https://localhost:3000?__token=$TUNNEL_TOKEN" 2>/dev/null || echo "000")
+            else
+              HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:3000" 2>/dev/null || echo "000")
+            fi
+            if [ "$HTTP_STATUS" = "200" ]; then
+              echo "Server is ready!"
+              break
+            fi
+            echo "Attempt $i/30: status $HTTP_STATUS"
+            if [ $i -eq 30 ]; then
+              echo "Server failed to respond after 30 attempts"
+              exit 1
+            fi
+            sleep 1
+          done
 
       - name: Test iOS on BrowserStack
         run: yarn test:ios
         env:
-          # BrowserStack credentials - WDIO's browserstack-service handles the tunnel
           BROWSERSTACK_USERNAME: ${{secrets.BROWSERSTACK_USERNAME}}
           BROWSERSTACK_ACCESS_KEY: ${{secrets.BROWSERSTACK_ACCESS_KEY}}
           BROWSERSTACK_BUILD_NAME: 'CI - ${{github.run_id}}'
           BROWSERSTACK_PROJECT_NAME: 'em'
+          TUNNEL_TOKEN: ${{env.TUNNEL_TOKEN}}

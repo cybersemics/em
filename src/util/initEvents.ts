@@ -158,9 +158,19 @@ const saveErrorReload = (savingProgress: number) => {
   }
 }
 
-/** Add window event handlers. */
+type EventHandlers = {
+  keyDown: typeof keyDown
+  keyUp: typeof keyUp
+  cleanup: () => void
+}
+
+let eventHandlers: EventHandlers | null = null
+
+/** Add window event handlers once. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const initEvents = (store: Store<State, any>) => {
+  if (eventHandlers) return eventHandlers
+
   let lastState: number
   let lastPath: Path | null
 
@@ -346,18 +356,9 @@ const initEvents = (store: Store<State, any>) => {
     }
   }
 
-  /** Drag over handler for file drag-and-drop. Prevents the browser from showing the "open file" cursor and ensures drop events fire outside of react-dnd drop targets. */
-  const dragOver = (e: DragEvent) => {
-    if (e.dataTransfer?.types.includes('Files')) {
-      e.preventDefault()
-    }
-  }
-
   /** Drop handler for file drag-and-drop. */
   const drop = (e: DragEvent) => {
     if (e.dataTransfer?.types.includes('Files')) {
-      // Prevent the browser from opening the dropped file in a new tab.
-      e.preventDefault()
       // wait until the next tick so that the thought/subthought drop handler has a chance to be called before draggingFile is reset
       // See: DragAndDropThought and DragAndDropSubthoughts
       setTimeout(() => {
@@ -382,7 +383,6 @@ const initEvents = (store: Store<State, any>) => {
   window.addEventListener('scroll', updateScrollTop)
   window.addEventListener('dragenter', dragEnter)
   window.addEventListener('dragleave', dragLeave)
-  window.addEventListener('dragover', dragOver)
   window.addEventListener('drop', drop)
 
   const resizeHost = window.visualViewport || window
@@ -412,21 +412,30 @@ const initEvents = (store: Store<State, any>) => {
     window.removeEventListener('scroll', updateScrollTop)
     window.removeEventListener('dragenter', dragEnter)
     window.removeEventListener('dragleave', dragLeave)
-    window.removeEventListener('dragover', dragOver)
     window.removeEventListener('drop', drop)
     lifecycle.removeEventListener('statechange', onStateChange)
     resizeHost.removeEventListener('resize', updateSize)
     virtualKeyboardHandler.destroy()
+    eventHandlers = null
   }
 
+  eventHandlers = { keyDown, keyUp, cleanup }
+
   // return input handlers as another way to remove them on cleanup
-  return { keyDown, keyUp, cleanup }
+  return eventHandlers
 }
 
 /** Error event listener. This does not catch React errors. See the ErrorFallback component that is used in the error boundary of the App component. */
 // const onError = (e: { message: string; error?: Error }) => {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const onError = (e: any) => {
+  // Ignore opaque cross-origin "Script error." events. The browser emits these when an error occurs in a
+  // script served from a different origin without CORS headers. They carry no actionable information (no
+  // stack, filename, or line number), so showing them as an error banner only confuses the user. On iOS
+  // Safari, interacting with the browser's native share menu triggers such an error.
+  // See https://github.com/cybersemics/em/issues/4402.
+  if (!e.error && (e.message === 'Script error.' || e.message === 'Script error')) return
+
   console.error({ message: e.message, code: e.code, errors: e.errors })
   if (e.error && 'stack' in e.error) {
     console.error(e.error.stack)

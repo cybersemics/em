@@ -208,7 +208,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
       data-testid='toolbar-icon'
       ref={dndRef(node => dragSource(dropTarget(node)))}
       key={commandId}
-      title={`${command.label}${(command.keyboard ?? command.overlay?.keyboard) ? ` (${formatKeyboardShortcut((command.keyboard ?? command.overlay?.keyboard)!)})` : ''}${buttonError ? '\nError: ' + buttonError : ''}`}
+      title={`${command.label}${(command.overlay?.keyboard ?? command.keyboard) ? ` (${formatKeyboardShortcut((command.overlay?.keyboard ?? command.keyboard)!)})` : ''}${buttonError ? '\nError: ' + buttonError : ''}`}
       className={cx(
         // Override the Toolbar's pointer-events: none to restore pointer behavior.
         toolbarPointerEventsRecipe({ override: true }),

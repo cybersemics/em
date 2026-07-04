@@ -1,15 +1,17 @@
-import http from 'http'
+import https from 'https'
 import path from 'path'
 import { drainConsoleProxy, waitForConsoleProxy } from '../../../util/consoleProxy'
+import resetApp from '../helpers/resetApp'
 
 /**
  * Checks if the app is running on locally.
  * @throws Error if the app is not running.
  */
 export const checkAppRunning = (): Promise<void> => {
-  const errorMessage = 'App is not running on http://localhost:3000. Please start the app locally before running tests.'
+  const errorMessage =
+    'App is not running on https://localhost:3000. Please start the app locally before running tests.'
   return new Promise((resolve, reject) => {
-    const req = http.get('http://localhost:3000', { timeout: 2000 }, res => {
+    const req = https.get('https://localhost:3000', { timeout: 2000, rejectUnauthorized: false }, res => {
       res.on('data', () => {})
       res.on('end', () => resolve())
     })
@@ -40,8 +42,11 @@ const baseConfig = {
   setupFiles: [path.resolve(process.cwd(), 'src/e2e/iOS/setup.ts')],
 
   // Capabilities
-  // Each spec file runs in its own parallel session
-  maxInstances: 3,
+  // Spec files run in parallel sessions, but cap at 2 (we have 3 specs) rather than opening all at once.
+  // Reasons: (1) bursting N simultaneous session-creations is what timed out the 3rd session on
+  // BrowserStack (#0-2 "aborted due to timeout" on POST .../session); staggering avoids the spike.
+  // (2) leave headroom in the shared BrowserStack parallel pool for agent-driven sessions and other CI runs.
+  maxInstances: 2,
 
   // Base iOS Safari capabilities shared between local and browserStack configs. Individual configs can override or extend these.
   baseCapabilities: {
@@ -60,6 +65,15 @@ const baseConfig = {
   waitforTimeout: 20000,
   connectionRetryTimeout: 120000,
   connectionRetryCount: 3,
+
+  // Retry a whole spec file on failure, including failures to acquire a BrowserStack session when the
+  // account's parallel pool is exhausted by concurrent runs (the "WebDriverError: ... aborted due to
+  // timeout" on POST .../session). specFileRetriesDeferred re-queues the failed spec at the END, so it
+  // retries only after the other specs finish and free up sessions — i.e. it waits for a slot rather
+  // than failing. Also auto-heals home.ts, which is known to flake under parallel load (#1475, #1523).
+  specFileRetries: 5,
+  specFileRetriesDelay: 30,
+  specFileRetriesDeferred: true,
 
   // Spec reporter gives per-it() pass/fail visibility in CI logs.
   reporters: ['spec'],
@@ -81,15 +95,19 @@ const baseConfig = {
       try {
         await checkAppRunning()
       } catch (error) {
-        console.error(error instanceof Error ? error.message : 'App is not running on http://localhost:3000')
+        console.error(error instanceof Error ? error.message : 'App is not running on https://localhost:3000')
         process.exit(1)
       }
     }
   },
 
   // Navigate once at the start of the session.
+  // CLOUDFLARED_URL: set by BrowserStack config (or CI) — a public HTTPS URL with a trusted cert.
+  // localhost: used for local Appium testing.
   before: async function () {
-    await browser.url('http://bs-local.com:3000')
+    const baseUrl = process.env.CLOUDFLARED_URL || 'https://localhost:3000'
+    await browser.url(baseUrl)
+
     await browser.waitUntil(
       async () => {
         const body = await browser.$('body')
@@ -99,33 +117,14 @@ const baseConfig = {
     )
   },
 
-  // Before each test: clear storage and refresh (faster than full navigation)
+  // Before each test: reset to a clean, empty thoughtspace (clear storage, refresh, dismiss the tutorial).
   beforeTest: async function () {
-    // Clear localStorage and sessionStorage to ensure fresh state
-    await browser.execute(() => {
-      localStorage.clear()
-      sessionStorage.clear()
-    })
+    await resetApp()
 
-    // Refresh to apply the cleared storage (much faster than full navigation)
-    await browser.refresh()
-
-    // Due to limitations in BrowserStack, we need to proxy console.log
-    // calls and store output in a buffer to access them.
-    // We do this with a "console proxy" (see src/util/consoleProxy.ts).
-    // The proxy can be selectively enabled using VITE_BROWSER_CONSOLE_CAPTURE=1,
-    // which we set in .github/workflows/ios.yml.
+    // Due to limitations in BrowserStack, we proxy console.log calls into a buffer to access them
+    // (the "console proxy", src/util/consoleProxy.ts, enabled via VITE_BROWSER_CONSOLE_CAPTURE=1 — see
+    // .github/workflows/ios.yml). Wait for it to install after the reload resetApp performed.
     await waitForConsoleProxy()
-
-    // Wait for the tutorial skip button and click it
-    const skipElement = await $('#skip-tutorial')
-    await skipElement.waitForExist({ timeout: 90000 })
-    await skipElement.waitForClickable({ timeout: 10000 })
-    await skipElement.click()
-
-    // Wait for the empty thoughtspace to be ready
-    const emptyThoughtspace = await $('[aria-label="empty-thoughtspace"]')
-    await emptyThoughtspace.waitForExist({ timeout: 90000 })
   },
 
   // After each test: drain the console proxy buffer and print it under the test title so browser-side console output is grouped per-it() in CI logs.

@@ -33,4 +33,6 @@ function init() {
 
 const durations = init()
 
+export type Duration = keyof typeof durationsConfig
+
 export default durations

@@ -1,10 +1,10 @@
-import { KnownDevices } from 'puppeteer'
+import { type ConsoleMessage, KnownDevices } from 'puppeteer'
 import newSubthoughtCommand from '../../../commands/newSubthought'
 import newThoughtCommand from '../../../commands/newThought'
 import exportThoughts from '../helpers/exportThoughts'
 import gesture from '../helpers/gesture'
 import keyboard from '../helpers/keyboard'
-import { page } from '../setup'
+import { page } from '../session'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
@@ -66,20 +66,35 @@ describe('chaining commands', () => {
   })
 
   it('chained command', async () => {
-    await gesture(newThoughtCommand)
-    await keyboard.type('a')
-    await gesture(newSubthoughtCommand)
-    await keyboard.type('b')
+    const warnings: string[] = []
+    /** Collect browser warnings emitted during the chained gesture. */
+    const onConsole = (message: ConsoleMessage) => {
+      if (message.type() === 'warn') {
+        warnings.push(message.text())
+      }
+    }
 
-    // New Thought + Outdent
-    await gesture('rd' + 'lrl')
+    page.on('console', onConsole)
 
-    const exported1 = await exportThoughts()
-    expect(exported1).toBe(`
+    try {
+      await gesture(newThoughtCommand)
+      await keyboard.type('a')
+      await gesture(newSubthoughtCommand)
+      await keyboard.type('b')
+
+      // New Thought + Outdent
+      await gesture('rd' + 'lrl')
+
+      const exported1 = await exportThoughts()
+      expect(exported1).toBe(`
 - a
   - b
 - 
 `)
+      expect(warnings.some(message => message.includes('IndexSizeError'))).toBe(false)
+    } finally {
+      page.off('console', onConsole)
+    }
   })
 
   it('prioritize exact match over chained command', async () => {

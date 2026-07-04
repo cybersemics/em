@@ -11,7 +11,7 @@ import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import setTheme from '../helpers/setTheme'
 import waitForSelector from '../helpers/waitForSelector'
-import { page } from '../setup'
+import { page } from '../session'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
@@ -49,6 +49,9 @@ it('GestureMenu', async () => {
 
   // wait for the gesture menu to appear
   await waitForSelector('[data-testid=popup-value]')
+
+  // wait for the glow background image to load before taking snapshot
+  await waitForSelector('[data-testid=glow-background]')
 
   expect(await screenshot()).toMatchImageSnapshot()
 })
