@@ -2,27 +2,14 @@ import React, { FC } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
-import { formatSelectionActionCreator as formatSelection } from '../actions/formatSelection'
+import { formatSelectionColorActionCreator as formatSelectionColor } from '../actions/formatSelectionColor'
 import { isTouch } from '../browser'
 import { ColorToken } from '../colors.config'
 import themeColors from '../selectors/themeColors'
-import batchEditingStore from '../stores/batchEditing'
 import commandStateStore from '../stores/commandStateStore'
-import rgbToHex from '../util/rgbToHex'
+import isColorSelected from '../util/isColorSelected'
 import Popover from './Popover'
 import TextColorIcon from './icons/TextColor'
-
-/** A function that adds an alpha channel to a hex color. */
-const addAlphaToHex = (hex: string) => (hex.length === 7 ? hex + 'ff' : hex)
-
-/** Extracts and cleans a color value from a potential HTML-like string. */
-const getCleanColor = (color: string | null) => {
-  if (!color) return null
-  // Extract clean color value from potential HTML-like string.
-  const colorMatch = typeof color === 'string' ? color.match(/#[0-9a-fA-F]{6}/) : null
-  const cleanColor = colorMatch ? colorMatch[0] : color
-  return cleanColor && typeof cleanColor === 'string' ? addAlphaToHex(rgbToHex(cleanColor)) : null
-}
 
 /** A small, square color swatch that can be picked in the color picker. */
 const ColorSwatch: FC<{
@@ -35,47 +22,22 @@ const ColorSwatch: FC<{
 }> = ({ backgroundColor, color, label, shape, size }) => {
   const dispatch = useDispatch()
   const fontSize = useSelector(state => state.fontSize)
-  const commandStateBackgroundColor = commandStateStore.useSelector(state => {
-    return getCleanColor(typeof state.backColor === 'string' ? state.backColor : null)
-  })
-  const commandStateColor = commandStateStore.useSelector(state => {
-    return getCleanColor(typeof state.foreColor === 'string' ? state.foreColor : null)
-  })
+  const commandStateForeColor = commandStateStore.useSelector(state => state.foreColor)
+  const commandStateBackColor = commandStateStore.useSelector(state => state.backColor)
 
   size = size || fontSize * 1.2
 
-  const selected = useSelector(state => {
-    const themeColor = themeColors(state)
-    /* Compare the swatch color to the command state color.
-       document.execCommand('foreColor') adds the color attribute with hex and document.execCommand('backColor') adds the background-color attribute with the rgb
-       document.execCommand('foreColor') always sets the color as hex whether the value is rgb or hex. And document.execCommand('backColor') always sets the background with the rgb
-    */
-    const textHexColor = color ? addAlphaToHex(rgbToHex(themeColor[color])) : undefined
-    const backHexColor = backgroundColor ? addAlphaToHex(rgbToHex(themeColor[backgroundColor])) : undefined
-
-    return !!(
-      (textHexColor && textHexColor === commandStateColor) ||
-      (backHexColor && backHexColor === commandStateBackgroundColor)
-    )
-  })
+  const selected = useSelector(state =>
+    isColorSelected(
+      themeColors(state),
+      { foreColor: commandStateForeColor, backColor: commandStateBackColor },
+      { color, backgroundColor },
+    ),
+  )
 
   /** Toggles the text color to the clicked swatch. If the swatch is already selected, sets text color and background color back to default. */
   const toggleTextColor = () => {
-    dispatch((dispatch, getState) => {
-      // Note is semi-transparent by default and its color must be reset to that rather than white, which is the fg color for thoughts. (#3902)
-      const fgColor = getState().noteFocus ? 'fgNote' : 'fg'
-      dispatch(
-        formatSelection(
-          'foreColor',
-          selected ? fgColor : color || (backgroundColor && backgroundColor !== 'fg' ? 'black' : 'bg'),
-        ),
-      )
-    })
-
-    batchEditingStore.update(true)
-    // Apply background color to the selection
-    dispatch(formatSelection('backColor', selected ? 'bg' : (backgroundColor ?? 'bg')))
-    batchEditingStore.update(false)
+    dispatch(formatSelectionColor({ color, backgroundColor }))
   }
 
   /** Toggles the text color onTouchEnd or onClick on desktop. */

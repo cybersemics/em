@@ -1,5 +1,6 @@
 /* eslint-disable import/prefer-default-export */
 
+export { default as applyColor } from './applyColor'
 export { default as archive } from './archive'
 export { default as bindContext } from './bindContext'
 export { default as bold } from './bold'

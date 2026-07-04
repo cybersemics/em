@@ -386,3 +386,59 @@ it('Can change the color of a note that already has the same color applied to pa
   const note = await getFirstNoteText()
   expect(note).toBe('<font color="#ff573d">some formatted text</font>')
 })
+
+it('Set the text color via keyboard shortcut (Cmd + Shift + 3 = orange)', async () => {
+  const importText = `
+  - Labrador
+  - Golden Retriever`
+
+  await paste(importText)
+
+  await clickThought('Golden Retriever')
+
+  // Cmd + Shift + 3 applies the third text swatch (orange)
+  await press('3', { meta: true, shift: true })
+
+  const cursorText = await getEditingText()
+  const bulletColor = await getBulletColor()
+  const result = extractColor(cursorText!)
+  expect(rgbToHex(bulletColor!)).toBe(rgbaToHex(colors.light.orange))
+  expect(result?.color).toBe(rgbaToHex(colors.light.orange))
+  expect(result?.backgroundColor).toBe(null)
+})
+
+it('Set the background color via keyboard shortcut (Alt + 4 = yellow)', async () => {
+  const importText = `
+    - Labrador
+    - Golden Retriever`
+
+  await paste(importText)
+
+  await clickThought('Golden Retriever')
+
+  // Alt + 4 applies the fourth background swatch (yellow)
+  await press('4', { alt: true })
+
+  const cursorText = await getEditingText()
+  const bulletColor = await getBulletColor()
+  const result = extractColor(cursorText!)
+  expect(rgbToHex(bulletColor!)).toBe(rgbaToHex(colors.light.yellow))
+  expect(result?.backgroundColor && rgbToHex(result.backgroundColor)).toBe(rgbaToHex(colors.light.yellow))
+})
+
+it('Clear the text color via the default keyboard shortcut (Cmd + Shift + 1)', async () => {
+  const importText = `
+  - Labrador
+  - Golden Retriever`
+
+  await paste(importText)
+
+  await clickThought('Golden Retriever')
+
+  // apply orange, then reset to the default text color with Cmd + Shift + 1
+  await press('3', { meta: true, shift: true })
+  await press('1', { meta: true, shift: true })
+
+  const result = await getEditingText()
+  expect(result).toBe('Golden Retriever')
+})
