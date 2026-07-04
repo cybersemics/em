@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "backfill": "node src/backfill.ts",
+    "build": "tsc --noEmit",
     "command": "node src/command.ts",
     "format": "prettier --write .",
     "issue": "node src/issue.ts",

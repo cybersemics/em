@@ -23,6 +23,8 @@ jobs:
         with:
           node-version: 24
       - run: yarn install --frozen-lockfile
+      - name: Build estimate workspace
+        run: yarn workspace em-estimate build
       - name: Handle estimate command
         run: node scripts/estimate/src/command.ts
         env:
