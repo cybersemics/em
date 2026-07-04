@@ -6,13 +6,10 @@ import { execSync } from 'child_process'
 import 'dotenv/config'
 import * as fs from 'fs'
 import { fileURLToPath } from 'url'
-import buildPrompt from './estimation/buildPrompt.js'
-import inference from './estimation/inference.js'
+import estimateIssue from './estimation/estimateIssue.js'
 import loadInstructions from './estimation/loadInstructions.js'
 import loadSamples from './estimation/loadSamples.js'
-import validateEstimate from './estimation/validateEstimate.js'
 import EverhourClient from './everhour/client.js'
-import { CATEGORY_TO_HOURS, EstimateCategory, categoryToSeconds } from './everhour/estimates.js'
 
 interface IssuePayload {
   number: number
@@ -60,20 +57,18 @@ const main = async () => {
   const instructions = loadInstructions(repoRoot)
   const samples = loadSamples(repoRoot)
 
-  // Build prompt and call model
+  // Build prompt and run inference
   const issueInput = {
     title: issue.title,
     body: issue.body,
     labels: issue.labels.map(l => l.name),
   }
-  const prompt = buildPrompt(samples, issueInput)
-  const outputs = await inference({ token: githubToken, prompt, instructions })
-
-  // Validate
-  const result = validateEstimate(outputs)
-  const category = result.estimate as EstimateCategory
-  const hours = CATEGORY_TO_HOURS[category]
-  const seconds = categoryToSeconds(category)
+  const { category, hours, seconds } = await estimateIssue({
+    issue: issueInput,
+    instructions,
+    samples,
+    token: githubToken,
+  })
 
   // Update Everhour
   const everhour = new EverhourClient({ apiKey: everhourApiKey })

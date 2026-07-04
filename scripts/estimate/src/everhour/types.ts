@@ -15,6 +15,12 @@ export interface EverhourTask {
   projects?: string[]
 }
 
+/** Everhour project object (subset of fields we use). */
+export interface EverhourProject {
+  id: string
+  name: string
+}
+
 /** Options for the Everhour client. */
 export interface EverhourClientOptions {
   apiKey: string

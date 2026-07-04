@@ -9,13 +9,10 @@
 import { execSync } from 'child_process'
 import 'dotenv/config'
 import { fileURLToPath } from 'url'
-import buildPrompt from './estimation/buildPrompt.js'
-import inference from './estimation/inference.js'
+import estimateIssue from './estimation/estimateIssue.js'
 import loadInstructions from './estimation/loadInstructions.js'
 import loadSamples from './estimation/loadSamples.js'
-import validateEstimate from './estimation/validateEstimate.js'
 import EverhourClient from './everhour/client.js'
-import { CATEGORY_TO_HOURS, EstimateCategory, categoryToSeconds } from './everhour/estimates.js'
 import extractIssueNumber from './everhour/extractIssueNumber.js'
 
 /**
@@ -64,7 +61,7 @@ const findIssueByTitle = async (
  * Runs AI inference on a GitHub issue and writes the resulting estimate to Everhour.
  * Skips if dryRunAI is true (logs what would happen) or dryRunEverhour is true (skips Everhour write).
  */
-const estimateIssue = async ({
+const processTask = async ({
   issue,
   taskId,
   everhour,
@@ -94,17 +91,16 @@ const estimateIssue = async ({
     return
   }
 
-  const issueInput = {
-    title: issue.title,
-    body: issue.body!,
-    labels: issue.labels.map(l => l.name),
-  }
-  const prompt = buildPrompt(samples, issueInput)
-  const outputs = await inference({ token: githubToken, prompt, instructions })
-  const result = validateEstimate(outputs)
-  const category = result.estimate as EstimateCategory
-  const hours = CATEGORY_TO_HOURS[category]
-  const seconds = categoryToSeconds(category)
+  const { category, hours, seconds } = await estimateIssue({
+    issue: {
+      title: issue.title,
+      body: issue.body!,
+      labels: issue.labels.map(l => l.name),
+    },
+    instructions,
+    samples,
+    token: githubToken,
+  })
 
   if (!dryRunEverhour) {
     await everhour.setEstimate(taskId, seconds)
@@ -145,16 +141,24 @@ const main = async () => {
     `Backfill config: limit=${limit}, dryRunAI=${dryRunAI}, dryRunEverhour=${dryRunEverhour}, project=${everhourProjectId}`,
   )
 
-  // 1. Fetch tasks from Everhour project
+  // 1. Confirm the project exists on Everhour before doing any work, so a bad
+  //    EVERHOUR_PROJECT_ID fails fast with a clear message instead of a bare 404.
   const everhour = new EverhourClient({ apiKey: everhourApiKey })
+  const project = await everhour.getProject(everhourProjectId).catch(() => null)
+  if (!project) {
+    throw new Error(`Everhour project "${everhourProjectId}" not found. Check EVERHOUR_PROJECT_ID.`)
+  }
+  console.info(`Found Everhour project: "${project.name}" (${project.id})`)
+
+  // 2. Fetch tasks from the Everhour project
   const tasks = await everhour.getProjectTasks(everhourProjectId)
   console.info(`Found ${tasks.length} tasks in Everhour project`)
 
-  // 2. Filter to tasks without estimates
+  // 3. Filter to tasks without estimates
   const tasksWithoutEstimates = tasks.filter(task => !task.estimate || !task.estimate.total)
   console.info(`Found ${tasksWithoutEstimates.length} tasks without estimates`)
 
-  // 3. Extract issue numbers and fetch GitHub issues
+  // 4. Extract issue numbers and fetch GitHub issues
   const instructions = loadInstructions(repoRoot)
   const samples = loadSamples(repoRoot)
   const promptVersion = getPromptVersion(repoRoot)
@@ -191,7 +195,7 @@ const main = async () => {
       continue
     }
 
-    await estimateIssue({
+    await processTask({
       issue,
       taskId: task.id,
       everhour,

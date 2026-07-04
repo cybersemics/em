@@ -1,4 +1,4 @@
-import { EverhourClientOptions, EverhourTask } from './types.js'
+import { EverhourClientOptions, EverhourProject, EverhourTask } from './types.js'
 
 const DEFAULT_BASE_URL = 'https://api.everhour.com'
 const MAX_RETRIES = 2
@@ -40,6 +40,11 @@ class EverhourClient {
       }
     }
     throw lastError!
+  }
+
+  /** Fetches a single project by ID. Throws if the project does not exist. */
+  async getProject(projectId: string): Promise<EverhourProject> {
+    return this.request<EverhourProject>(`/projects/${projectId}`)
   }
 
   /** Fetches all tasks for a project. */
