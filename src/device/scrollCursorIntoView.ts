@@ -51,6 +51,14 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
     ? yDocument - topEdge - landingMargin
     : yDocument + height - bottomEdge + landingMargin
 
+  // The top trigger buffer fires as soon as the cursor enters the buffer band below the toolbar,
+  // even when the document is already scrolled all the way up and there is nothing above to
+  // reveal. In that case scrollYNew computes to an unreachable negative position — scrolling
+  // "further up" than 0 is impossible — and flooring it to 1 below would manufacture a 1px scroll
+  // out of nothing, shifting the whole page for no visible benefit. Skip the correction rather
+  // than let the floor turn a no-op into a scroll.
+  if (isAboveTopEdge && scrollYNew <= 0 && window.scrollY === 0) return
+
   // scroll to 1 instead of 0
   // otherwise Mobile Safari scrolls to the top after MultiGesture
   // See: touchmove in MultiGesture.tsx
