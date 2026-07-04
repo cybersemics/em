@@ -6,10 +6,10 @@ import { execSync } from 'child_process'
 import 'dotenv/config'
 import * as fs from 'fs'
 import { fileURLToPath } from 'url'
-import estimateIssue from './estimation/estimateIssue.js'
-import loadInstructions from './estimation/loadInstructions.js'
-import loadSamples from './estimation/loadSamples.js'
-import EverhourClient from './everhour/client.js'
+import estimateIssue from './estimation/estimateIssue.ts'
+import loadInstructions from './estimation/loadInstructions.ts'
+import loadSamples from './estimation/loadSamples.ts'
+import EverhourClient from './everhour/client.ts'
 
 interface IssuePayload {
   number: number

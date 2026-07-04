@@ -5,7 +5,7 @@ import {
   HOURS_TO_CATEGORY,
   VALID_HOURS,
   categoryToSeconds,
-} from '../estimates.js'
+} from '../estimates.ts'
 
 describe('estimates', () => {
   it('maps all categories to hours', () => {

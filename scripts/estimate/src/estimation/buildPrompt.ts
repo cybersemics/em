@@ -1,4 +1,4 @@
-import { EstimateSample } from './loadSamples.js'
+import type { EstimateSample } from './loadSamples.ts'
 
 /** Issue data for estimation. */
 export interface IssueInput {

@@ -1,6 +1,6 @@
 /**
  * Backfills Everhour estimates for GitHub issues that have no estimate yet.
- * Run manually: node --experimental-strip-types scripts/estimate/src/backfill.ts
+ * Run manually: node scripts/estimate/src/backfill.ts
  *
  * Traverses all Everhour project tasks → filters to those missing estimates →
  * fetches the corresponding GitHub issue → runs AI inference → writes the
@@ -8,12 +8,13 @@
  */
 import { execSync } from 'child_process'
 import 'dotenv/config'
+import * as path from 'path'
 import { fileURLToPath } from 'url'
-import estimateIssue from './estimation/estimateIssue.js'
-import loadInstructions from './estimation/loadInstructions.js'
-import loadSamples from './estimation/loadSamples.js'
-import EverhourClient from './everhour/client.js'
-import extractIssueNumber from './everhour/extractIssueNumber.js'
+import estimateIssue from './estimation/estimateIssue.ts'
+import loadInstructions from './estimation/loadInstructions.ts'
+import loadSamples from './estimation/loadSamples.ts'
+import EverhourClient from './everhour/client.ts'
+import extractIssueNumber from './everhour/extractIssueNumber.ts'
 
 /**
  * Gets the short git commit hash of the most recent change to the instructions directory.
@@ -135,7 +136,9 @@ const main = async () => {
 
   const repo = process.env.GITHUB_REPOSITORY ?? 'cybersemics/em'
   const [owner, repoName] = repo.split('/')
-  const repoRoot = process.env.GITHUB_WORKSPACE ?? process.cwd()
+  // Resolve the repo root from this file's location (scripts/estimate/src/backfill.ts → repo root)
+  // so instructions/samples load correctly regardless of the current working directory.
+  const repoRoot = process.env.GITHUB_WORKSPACE ?? path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..')
 
   console.info(
     `Backfill config: limit=${limit}, dryRunAI=${dryRunAI}, dryRunEverhour=${dryRunEverhour}, project=${everhourProjectId}`,

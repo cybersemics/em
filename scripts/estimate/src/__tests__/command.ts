@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { TRUSTED_ASSOCIATIONS, parseEstimateCommand, roundToNearestCategory, sampleFilename } from '../command.js'
+import { TRUSTED_ASSOCIATIONS, parseEstimateCommand, roundToNearestCategory, sampleFilename } from '../command.ts'
 
 describe('parseEstimateCommand', () => {
   it('parses commands with h suffix', () => {

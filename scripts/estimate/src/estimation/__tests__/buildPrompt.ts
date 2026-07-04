@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import buildPrompt from '../buildPrompt.js'
+import buildPrompt from '../buildPrompt.ts'
 
 describe('buildPrompt', () => {
   it('builds prompt with issue', () => {

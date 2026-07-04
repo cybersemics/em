@@ -8,8 +8,8 @@
 import 'dotenv/config'
 import * as fs from 'fs'
 import { fileURLToPath } from 'url'
-import EverhourClient from './everhour/client.js'
-import { EstimateCategory, HOURS_TO_CATEGORY, VALID_HOURS, categoryToSeconds } from './everhour/estimates.js'
+import EverhourClient from './everhour/client.ts'
+import { type EstimateCategory, HOURS_TO_CATEGORY, VALID_HOURS, categoryToSeconds } from './everhour/estimates.ts'
 
 const TRUSTED_ASSOCIATIONS = ['OWNER', 'MEMBER', 'COLLABORATOR']
 

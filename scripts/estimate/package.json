@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "backfill": "node --experimental-strip-types src/backfill.ts",
-    "command": "node --experimental-strip-types src/command.ts",
-    "issue": "node --experimental-strip-types src/issue.ts"
+    "backfill": "node src/backfill.ts",
+    "command": "node src/command.ts",
+    "issue": "node src/issue.ts"
   },
   "dependencies": {
     "dotenv": "^16.0.0",

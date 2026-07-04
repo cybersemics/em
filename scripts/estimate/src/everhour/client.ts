@@ -1,4 +1,4 @@
-import { EverhourClientOptions, EverhourProject, EverhourTask } from './types.js'
+import type { EverhourClientOptions, EverhourProject, EverhourTask } from './types.ts'
 
 const DEFAULT_BASE_URL = 'https://api.everhour.com'
 const MAX_RETRIES = 2

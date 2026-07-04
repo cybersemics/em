@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import validateEstimate from '../validateEstimate.js'
-import { EstimateCategorySchema, EstimateResponseSchema } from '../validateEstimate.js'
+import validateEstimate from '../validateEstimate.ts'
+import { EstimateCategorySchema, EstimateResponseSchema } from '../validateEstimate.ts'
 
 describe('validateEstimate', () => {
   it('parses valid model output', () => {

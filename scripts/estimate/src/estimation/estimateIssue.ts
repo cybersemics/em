@@ -1,8 +1,8 @@
-import { CATEGORY_TO_HOURS, EstimateCategory, categoryToSeconds } from '../everhour/estimates.js'
-import buildPrompt, { IssueInput } from './buildPrompt.js'
-import inference from './inference.js'
-import { EstimateSample } from './loadSamples.js'
-import validateEstimate from './validateEstimate.js'
+import { CATEGORY_TO_HOURS, type EstimateCategory, categoryToSeconds } from '../everhour/estimates.ts'
+import buildPrompt, { type IssueInput } from './buildPrompt.ts'
+import inference from './inference.ts'
+import type { EstimateSample } from './loadSamples.ts'
+import validateEstimate from './validateEstimate.ts'
 
 /** An issue estimate expressed as a category and its equivalent hours and seconds. */
 export interface Estimate {
