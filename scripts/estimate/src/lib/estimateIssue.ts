@@ -22,6 +22,7 @@ export interface Estimate {
  */
 const estimateIssue = async ({
   issue,
+  issueRef,
   instructions,
   samples,
   token,
@@ -31,6 +32,8 @@ const estimateIssue = async ({
   dryRunEverhour = false,
 }: {
   issue: IssueInput
+  /** Clickable issue reference (`#N` as an OSC 8 terminal hyperlink) for log output; see issueLink. */
+  issueRef: string
   instructions: string
   samples: EstimateSample[]
   token: string
@@ -41,7 +44,7 @@ const estimateIssue = async ({
 }): Promise<Estimate | null> => {
   // Skip AI inference entirely in AI dry-run mode.
   if (dryRunAI) {
-    console.info(`[DRY_RUN_AI] Would estimate ${taskId}`)
+    console.info(`[DRY_RUN_AI] Would estimate ${issueRef} "${issue.title}"`)
     return null
   }
 
@@ -57,7 +60,7 @@ const estimateIssue = async ({
   // Write the estimate to Everhour unless the Everhour write is being dry-run.
   if (dryRunEverhour) {
     console.info(
-      `[DRY_RUN_EVERHOUR] Would set Everhour estimate for ${taskId}: ${estimate.category} / ${estimate.hours}h`,
+      `[DRY_RUN_EVERHOUR] Would set Everhour estimate for ${issueRef} "${issue.title}": ${estimate.category} / ${estimate.hours}h`,
     )
   } else {
     await everhour.setEstimate(taskId, estimate.seconds)

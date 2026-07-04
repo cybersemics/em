@@ -10,6 +10,7 @@ import * as fs from 'fs'
 import { fileURLToPath } from 'url'
 import EverhourClient from './everhour/client.ts'
 import { type EstimateCategory, HOURS_TO_CATEGORY, VALID_HOURS, categoryToSeconds } from './everhour/estimates.ts'
+import issueLink from './lib/issueLink.ts'
 
 const TRUSTED_ASSOCIATIONS = ['OWNER', 'MEMBER', 'COLLABORATOR']
 
@@ -172,7 +173,9 @@ const main = async () => {
     `Everhour estimate updated: ${category} / ${roundedHours}h\nA PR has been opened to add the corrected sample.`,
   )
 
-  console.info(`Manual correction applied for issue #${issue.number}: ${category} / ${roundedHours}h`)
+  console.info(
+    `Manual correction applied for issue ${issueLink(owner, repoName, issue.number)}: ${category} / ${roundedHours}h`,
+  )
 }
 
 /** Posts a comment on a GitHub issue. */
