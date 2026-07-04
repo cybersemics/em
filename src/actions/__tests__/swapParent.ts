@@ -359,4 +359,50 @@ describe('reconcile', () => {
     - CCC
       - BBB`)
   })
+
+  // The failure mode observed on-device (#3948): the reconcile that corrupts the tree does not carry an
+  // *older* timestamp — it carries the *same* one. swapParent runs several moveThought reducers
+  // synchronously in a single reducerFlow, so every thought it touches is stamped with the same
+  // lastUpdated millisecond, and each moveThought queues its own push batch, including the transient
+  // intermediate state where the moved-in child (CCC) has been added under AAA but the moved-out child
+  // (BBB) has not yet been removed from AAA's childrenMap. A forced pull that reads that intermediate
+  // snapshot re-delivers AAA with BBB still listed as a child, stamped with the swap's lastUpdated. If a
+  // strict `<` guard let it through it would clobber the correct result, leaving BBB in two contexts
+  // (AAA and CCC) → parent-chain cycle → hang.
+  it('stale reconcile of the swap intermediate state (equal lastUpdated) must not create a cycle', () => {
+    const text = `
+    - AAA
+      - BBB
+        - CCC`
+
+    const state1 = reducerFlow([importText({ text }), setCursor(['AAA', 'BBB', 'CCC'])])(initialState())
+    const stateSwapped = swapParent(state1)
+
+    // Reconstruct swapParent's intermediate AAA: the post-swap AAA with BBB added back to its childrenMap,
+    // carrying the same lastUpdated as the swap result (as a forced pull reading the intermediate would).
+    const idAAA = contextToThoughtId(stateSwapped, ['AAA'])!
+    const idBBB = contextToThoughtId(stateSwapped, ['AAA', 'CCC', 'BBB'])!
+    const aaa = getThoughtById(stateSwapped, idAAA)!
+    const staleIntermediateAAA: Thought = {
+      ...aaa,
+      childrenMap: { ...aaa.childrenMap, [idBBB]: idBBB },
+      lastUpdated: aaa.lastUpdated,
+    }
+
+    const stateNew = reducerFlow([
+      updateThoughts({
+        thoughtIndexUpdates: { [idAAA]: staleIntermediateAAA },
+        lexemeIndexUpdates: {},
+        local: false,
+        remote: false,
+      }),
+    ])(stateSwapped)
+
+    // With a strict `<` guard the stale intermediate slips through and exportContext recurses infinitely.
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - AAA
+    - CCC
+      - BBB`)
+  })
 })
