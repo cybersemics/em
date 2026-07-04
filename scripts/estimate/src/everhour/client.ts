@@ -47,9 +47,14 @@ class EverhourClient {
     return this.request<EverhourProject>(`/projects/${projectId}`)
   }
 
-  /** Fetches all tasks for a project. */
-  async getProjectTasks(projectId: string): Promise<EverhourTask[]> {
-    return this.request<EverhourTask[]>(`/projects/${projectId}/tasks`)
+  /**
+   * Fetches a single page of tasks for a project. The Everhour tasks endpoint is paginated
+   * via `limit` (page size, max 250) and `page` (1-based); a page shorter than `limit`
+   * indicates the last page. Callers should page through results rather than assuming the
+   * first response contains every task.
+   */
+  async getProjectTasks(projectId: string, page = 1, limit = 250): Promise<EverhourTask[]> {
+    return this.request<EverhourTask[]>(`/projects/${projectId}/tasks?limit=${limit}&page=${page}`)
   }
 
   /** Sets the estimate for a task in seconds. */

@@ -159,71 +159,81 @@ const main = async () => {
   }
   console.info(`Found Everhour project: "${project.name}" (${project.id})`)
 
-  // 2. Fetch tasks from the Everhour project
-  const tasks = await everhour.getProjectTasks(everhourProjectId)
-  console.info(`Found ${tasks.length} tasks in Everhour project`)
-
-  // 3. Filter to tasks without estimates
-  const tasksWithoutEstimates = tasks.filter(task => !task.estimate || !task.estimate.total)
-  console.info(`Found ${tasksWithoutEstimates.length} tasks without estimates`)
-
-  // 4. Extract issue numbers and fetch GitHub issues
+  // 2. Extract issue numbers and fetch GitHub issues
   const instructions = loadInstructions(repoRoot)
   const samples = loadSamples(repoRoot)
   const promptVersion = getPromptVersion(repoRoot)
 
+  // 3. Page through the project's tasks, processing one page at a time rather than loading
+  //    every task up front. Everhour caps a page at PAGE_SIZE tasks; a shorter page is the
+  //    last one. We stop early once `limit` tasks have been processed.
+  const PAGE_SIZE = 250
   let processed = 0
+  let page = 1
 
-  for (const task of tasksWithoutEstimates) {
-    if (processed >= limit) break
+  while (processed < limit) {
+    const tasks = await everhour.getProjectTasks(everhourProjectId, page, PAGE_SIZE)
+    console.info(`Fetched ${tasks.length} tasks from Everhour project (page ${page})`)
 
-    // Try to extract the issue number from the task ID or name; fall back to GitHub title search
-    let issueNumber = extractIssueNumber(task)
-    if (issueNumber === null) {
-      issueNumber = await findIssueByTitle(task.name, owner, repoName, githubToken)
+    // Filter to tasks without estimates within this page.
+    const tasksWithoutEstimates = tasks.filter(task => !task.estimate || !task.estimate.total)
+    console.info(`  ${tasksWithoutEstimates.length} tasks without estimates on page ${page}`)
+
+    for (const task of tasksWithoutEstimates) {
+      if (processed >= limit) break
+
+      // Try to extract the issue number from the task ID or name; fall back to GitHub title search
+      let issueNumber = extractIssueNumber(task)
+      if (issueNumber === null) {
+        issueNumber = await findIssueByTitle(task.name, owner, repoName, githubToken)
+      }
+      if (issueNumber === null) {
+        console.info(`  Skipping task "${task.name}" (${task.id}) - no GitHub issue number found`)
+        continue
+      }
+
+      // Fetch the GitHub issue
+      const issueResp = await fetch(`https://api.github.com/repos/${owner}/${repoName}/issues/${issueNumber}`, {
+        headers: { Authorization: `Bearer ${githubToken}` },
+      })
+
+      if (!issueResp.ok) {
+        console.info(`  Skipping issue #${issueNumber} - GitHub API error ${issueResp.status}`)
+        continue
+      }
+
+      const issue: GitHubIssue = (await issueResp.json()) as GitHubIssue
+
+      // Do not estimate closed issues.
+      if (issue.state === 'closed') {
+        console.info(`  Skipping issue #${issueNumber} - closed`)
+        continue
+      }
+
+      if (!issue.body) {
+        console.info(`  Skipping issue #${issueNumber} - empty body`)
+        continue
+      }
+
+      await processTask({
+        issue,
+        taskId: task.id,
+        everhour,
+        githubToken,
+        owner,
+        repoName,
+        instructions,
+        samples,
+        promptVersion,
+        dryRunAI,
+        dryRunEverhour,
+      })
+      processed++
     }
-    if (issueNumber === null) {
-      console.info(`  Skipping task "${task.name}" (${task.id}) - no GitHub issue number found`)
-      continue
-    }
 
-    // Fetch the GitHub issue
-    const issueResp = await fetch(`https://api.github.com/repos/${owner}/${repoName}/issues/${issueNumber}`, {
-      headers: { Authorization: `Bearer ${githubToken}` },
-    })
-
-    if (!issueResp.ok) {
-      console.info(`  Skipping issue #${issueNumber} - GitHub API error ${issueResp.status}`)
-      continue
-    }
-
-    const issue: GitHubIssue = (await issueResp.json()) as GitHubIssue
-
-    // Do not estimate closed issues.
-    if (issue.state === 'closed') {
-      console.info(`  Skipping issue #${issueNumber} - closed`)
-      continue
-    }
-
-    if (!issue.body) {
-      console.info(`  Skipping issue #${issueNumber} - empty body`)
-      continue
-    }
-
-    await processTask({
-      issue,
-      taskId: task.id,
-      everhour,
-      githubToken,
-      owner,
-      repoName,
-      instructions,
-      samples,
-      promptVersion,
-      dryRunAI,
-      dryRunEverhour,
-    })
-    processed++
+    // A page shorter than PAGE_SIZE means there are no further pages to fetch.
+    if (tasks.length < PAGE_SIZE) break
+    page++
   }
 
   console.info(`\nBackfill complete. Processed ${processed} tasks.`)
