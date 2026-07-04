@@ -40,6 +40,9 @@
     "deploy:patch": "yarn lint && npm version patch && yarn build && firebase deploy --only hosting",
     "deploy:staging": "yarn lint && yarn build && firebase hosting:channel:deploy staging --expires 30d",
     "deploy:staging2": "yarn lint && yarn build && firebase hosting:channel:deploy staging2 --expires 30d",
+    "estimate:backfill": "tsx scripts/backfill-everhour-estimates.ts",
+    "estimate:issue": "tsx scripts/estimate-issue.ts",
+    "estimate:command": "tsx scripts/estimate-command.ts",
     "lint:lockfile": "npx lockfile-lint",
     "lint:no-npm": "node ./scripts/no-files.js package-lock.json",
     "lint:src": "FORCE_COLOR=1 eslint . --cache --rule 'no-console: [2, { allow: [error, info, warn] }]'",
@@ -53,10 +56,7 @@
     "test:ios:browserstack": "wdio run src/e2e/iOS/config/wdio.browserstack.conf.ts",
     "test:puppeteer": "./src/e2e/puppeteer/test-puppeteer.sh",
     "test": "vitest --project unit",
-    "websocket-server": "cd server && yarn build && yarn start",
-    "estimate:backfill": "tsx scripts/backfill-everhour-estimates.ts",
-    "estimate:issue": "tsx scripts/estimate-issue.ts",
-    "estimate:command": "tsx scripts/estimate-command.ts"
+    "websocket-server": "cd server && yarn build && yarn start"
   },
   "lockfile-lint": {
     "allowed-schemes": [
