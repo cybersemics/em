@@ -131,6 +131,11 @@ const main = async () => {
   if (!everhourProjectId) throw new Error('EVERHOUR_PROJECT_ID is required')
 
   const limit = parseInt(process.env.LIMIT ?? '10', 10)
+  // 1-based page to begin Everhour task pagination from. Floor invalid or <1 values to 1 so a
+  // bad PAGE never sends NaN/0 to the API. Combined with LIMIT this processes up to LIMIT tasks
+  // starting from page PAGE.
+  const startPageRaw = parseInt(process.env.PAGE ?? '1', 10)
+  const startPage = Number.isFinite(startPageRaw) && startPageRaw >= 1 ? startPageRaw : 1
   // Dry-run is the safe default: the backfill only calls the model / writes to Everhour when
   // explicitly disabled with DRY_RUN[_AI|_EVERHOUR]=false. DRY_RUN sets the default for both
   // stages; the per-stage vars override it.
@@ -147,7 +152,7 @@ const main = async () => {
     process.env.GITHUB_WORKSPACE ?? path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..')
 
   console.info(
-    `Backfill config: limit=${limit}, dryRunAI=${dryRunAI}, dryRunEverhour=${dryRunEverhour}, project=${everhourProjectId}`,
+    `Backfill config: limit=${limit}, startPage=${startPage}, dryRunAI=${dryRunAI}, dryRunEverhour=${dryRunEverhour}, project=${everhourProjectId}`,
   )
 
   // 1. Confirm the project exists on Everhour before doing any work, so a bad
@@ -169,7 +174,7 @@ const main = async () => {
   //    last one. We stop early once `limit` tasks have been processed.
   const PAGE_SIZE = 250
   let processed = 0
-  let page = 1
+  let page = startPage
 
   while (processed < limit) {
     const tasks = await everhour.getProjectTasks(everhourProjectId, page, PAGE_SIZE)
