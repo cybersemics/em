@@ -181,13 +181,6 @@ const Note = React.memo(
             position: 'relative',
             marginBottom: '2px',
             padding: '0 0 4px 0',
-            '@media (max-width: 1024px)': {
-              _android: {
-                position: 'relative',
-                marginBottom: '2px',
-                paddingBottom: '4px',
-              },
-            },
           }),
         )}
         style={{

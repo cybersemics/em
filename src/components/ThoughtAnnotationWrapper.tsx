@@ -52,14 +52,6 @@ const ThoughtAnnotationWrapper: FC<
         whiteSpace: 'pre-wrap',
         /* override editable-annotation's single line to have same width with .editable. 100% - 1em since .editable has padding-right 1em */
         maxWidth: ellipsizedUrl ? 'calc(100% - 2em)' : '100%',
-        '@media (max-width: 500px)': {
-          marginTop: { _android: '-2.1px' },
-          marginLeft: { _android: '0.5em' },
-        },
-        '@media (min-width: 560px) and (max-width: 1024px)': {
-          marginTop: { _android: '-0.1px' },
-          marginLeft: { _android: '0.5em' },
-        },
       })}
     >
       <div
