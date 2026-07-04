@@ -141,6 +141,9 @@ export const AUTO_PROSE_VIEW_MIN_CHARS = 200
 /** The left and right padding of each toolbar button (px). */
 export const TOOLBAR_BUTTON_PADDING = 8
 
+/** The minimum horizontal finger travel (px) that distinguishes a toolbar swipe from a button tap. Used to suppress the button command when the user swipes even at a scroll boundary, where the toolbar cannot scroll and scrollLeft therefore cannot change. */
+export const TOOLBAR_SWIPE_THRESHOLD = 10
+
 // Used for scaling the size of icons according to the font size
 export const ICON_SCALING_FACTOR = 1.37
 
