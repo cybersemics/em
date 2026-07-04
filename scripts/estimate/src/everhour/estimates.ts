@@ -25,8 +25,8 @@ export const HOURS_TO_CATEGORY: Record<number, EstimateCategory> = {
   48: 'XXL',
 }
 
-/** Valid hour values for manual corrections. */
-export const VALID_HOURS = [1, 2, 4, 8, 16, 24, 48] as const
+/** Valid hour values for manual corrections, derived from the category → hours mapping. */
+export const VALID_HOURS = ESTIMATE_CATEGORIES.map(category => CATEGORY_TO_HOURS[category])
 
 /** Converts hours to seconds. */
 const hoursToSeconds = (hours: number): number => hours * 3600

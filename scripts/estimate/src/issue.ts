@@ -6,10 +6,10 @@ import { execSync } from 'child_process'
 import 'dotenv/config'
 import * as fs from 'fs'
 import { fileURLToPath } from 'url'
-import estimateIssue from './estimation/estimateIssue.ts'
-import loadInstructions from './estimation/loadInstructions.ts'
-import loadSamples from './estimation/loadSamples.ts'
 import EverhourClient from './everhour/client.ts'
+import estimateIssue from './lib/estimateIssue.ts'
+import loadInstructions from './lib/loadInstructions.ts'
+import loadSamples from './lib/loadSamples.ts'
 
 interface IssuePayload {
   number: number
@@ -57,29 +57,30 @@ const main = async () => {
   const instructions = loadInstructions(repoRoot)
   const samples = loadSamples(repoRoot)
 
-  // Build prompt and run inference
+  // Build prompt, run inference, and write the estimate to Everhour
   const issueInput = {
     title: issue.title,
     body: issue.body,
     labels: issue.labels.map(l => l.name),
   }
-  const { category, hours, seconds } = await estimateIssue({
+  const everhour = new EverhourClient({ apiKey: everhourApiKey })
+  const taskId = `gh:${issue.number}`
+  const estimate = await estimateIssue({
     issue: issueInput,
     instructions,
     samples,
     token: githubToken,
+    everhour,
+    taskId,
   })
-
-  // Update Everhour
-  const everhour = new EverhourClient({ apiKey: everhourApiKey })
-  const taskId = `gh:${issue.number}`
-  await everhour.setEstimate(taskId, seconds)
+  if (!estimate) return
+  const { category, hours } = estimate
 
   // Get prompt version
   const promptVersion = getPromptVersion(repoRoot)
 
   // Leave audit comment
-  const commentBody = `Everhour estimate: ${category} / ${hours}h\nPrompt version: \`${promptVersion}\`\nConfidence: 80%`
+  const commentBody = `Everhour estimate: ${category} / ${hours}h\nPrompt version: \`${promptVersion}\``
 
   await fetch(`https://api.github.com/repos/${owner}/${repoName}/issues/${issue.number}/comments`, {
     method: 'POST',

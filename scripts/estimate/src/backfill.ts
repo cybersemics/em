@@ -10,11 +10,11 @@ import { execSync } from 'child_process'
 import 'dotenv/config'
 import * as path from 'path'
 import { fileURLToPath } from 'url'
-import estimateIssue from './estimation/estimateIssue.ts'
-import loadInstructions from './estimation/loadInstructions.ts'
-import loadSamples from './estimation/loadSamples.ts'
 import EverhourClient from './everhour/client.ts'
 import extractIssueNumber from './everhour/extractIssueNumber.ts'
+import estimateIssue from './lib/estimateIssue.ts'
+import loadInstructions from './lib/loadInstructions.ts'
+import loadSamples from './lib/loadSamples.ts'
 
 /**
  * Gets the short git commit hash of the most recent change to the instructions directory.
@@ -35,6 +35,7 @@ interface GitHubIssue {
   number: number
   title: string
   body: string | null
+  state: string
   labels: Array<{ name: string }>
 }
 
@@ -60,7 +61,8 @@ const findIssueByTitle = async (
 
 /**
  * Runs AI inference on a GitHub issue and writes the resulting estimate to Everhour.
- * Skips if dryRunAI is true (logs what would happen) or dryRunEverhour is true (skips Everhour write).
+ * Delegates the dry-run guards and the Everhour write to estimateIssue; when dryRunAI is
+ * set no inference runs (estimateIssue returns null) and the audit comment is skipped.
  */
 const processTask = async ({
   issue,
@@ -87,12 +89,7 @@ const processTask = async ({
   dryRunAI: boolean
   dryRunEverhour: boolean
 }): Promise<void> => {
-  if (dryRunAI) {
-    console.info(`  [DRY_RUN_AI] Would estimate issue #${issue.number}: "${issue.title}"`)
-    return
-  }
-
-  const { category, hours, seconds } = await estimateIssue({
+  const estimate = await estimateIssue({
     issue: {
       title: issue.title,
       body: issue.body!,
@@ -101,13 +98,16 @@ const processTask = async ({
     instructions,
     samples,
     token: githubToken,
+    everhour,
+    taskId,
+    dryRunAI,
+    dryRunEverhour,
   })
 
-  if (!dryRunEverhour) {
-    await everhour.setEstimate(taskId, seconds)
-  } else {
-    console.info(`  [DRY_RUN_EVERHOUR] Would set Everhour estimate for ${taskId}: ${category} / ${hours}h`)
-  }
+  // Skip the audit comment when inference was dry-run (no estimate produced).
+  if (!estimate) return
+
+  const { category, hours } = estimate
 
   // Leave audit comment on GitHub issue
   const commentBody = `Everhour estimate: ${category} / ${hours}h\nPrompt version: \`${promptVersion}\`\nSource: backfill`
@@ -131,14 +131,20 @@ const main = async () => {
   if (!everhourProjectId) throw new Error('EVERHOUR_PROJECT_ID is required')
 
   const limit = parseInt(process.env.LIMIT ?? '10', 10)
-  const dryRunAI = process.env.DRY_RUN_AI === 'true' || process.env.DRY_RUN === 'true'
-  const dryRunEverhour = process.env.DRY_RUN_EVERHOUR === 'true' || process.env.DRY_RUN === 'true'
+  // Dry-run is the safe default: the backfill only calls the model / writes to Everhour when
+  // explicitly disabled with DRY_RUN[_AI|_EVERHOUR]=false. DRY_RUN sets the default for both
+  // stages; the per-stage vars override it.
+  const dryRunDefault = process.env.DRY_RUN !== 'false'
+  const dryRunAI = process.env.DRY_RUN_AI !== undefined ? process.env.DRY_RUN_AI !== 'false' : dryRunDefault
+  const dryRunEverhour =
+    process.env.DRY_RUN_EVERHOUR !== undefined ? process.env.DRY_RUN_EVERHOUR !== 'false' : dryRunDefault
 
   const repo = process.env.GITHUB_REPOSITORY ?? 'cybersemics/em'
   const [owner, repoName] = repo.split('/')
   // Resolve the repo root from this file's location (scripts/estimate/src/backfill.ts → repo root)
   // so instructions/samples load correctly regardless of the current working directory.
-  const repoRoot = process.env.GITHUB_WORKSPACE ?? path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..')
+  const repoRoot =
+    process.env.GITHUB_WORKSPACE ?? path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..')
 
   console.info(
     `Backfill config: limit=${limit}, dryRunAI=${dryRunAI}, dryRunEverhour=${dryRunEverhour}, project=${everhourProjectId}`,
@@ -192,6 +198,12 @@ const main = async () => {
     }
 
     const issue: GitHubIssue = (await issueResp.json()) as GitHubIssue
+
+    // Do not estimate closed issues.
+    if (issue.state === 'closed') {
+      console.info(`  Skipping issue #${issueNumber} - closed`)
+      continue
+    }
 
     if (!issue.body) {
       console.info(`  Skipping issue #${issueNumber} - empty body`)

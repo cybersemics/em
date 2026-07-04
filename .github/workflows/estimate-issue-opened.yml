@@ -4,8 +4,10 @@ on:
     types: [opened]
 
 permissions:
-  issues: write # To post the estimate audit comment on the newly opened issue
-  contents: read # To read the estimation instructions and samples from .github/instructions/estimate/
+  # To post the estimate audit comment on the newly opened issue.
+  issues: write
+  # To read the estimation instructions and samples from .github/instructions/estimate/.
+  contents: read
 
 jobs:
   estimate:
@@ -17,7 +19,7 @@ jobs:
           node-version: 24
       - run: yarn install --frozen-lockfile
       - name: Estimate issue
-        run: node --experimental-strip-types scripts/estimate/src/issue.ts
+        run: node scripts/estimate/src/issue.ts
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           EVERHOUR_API_KEY: ${{ secrets.EVERHOUR_API_KEY }}

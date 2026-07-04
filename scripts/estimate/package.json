@@ -6,11 +6,17 @@
   "scripts": {
     "backfill": "node src/backfill.ts",
     "command": "node src/command.ts",
-    "issue": "node src/issue.ts"
+    "format": "prettier --write .",
+    "issue": "node src/issue.ts",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "dotenv": "^16.0.0",
     "openai": "^4.0.0",
     "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "prettier": "^3.8.4",
+    "typescript": "5.9.3"
   }
 }

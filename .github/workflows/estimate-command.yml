@@ -4,9 +4,14 @@ on:
     types: [created]
 
 permissions:
-  contents: write # To create a branch and commit the new estimation sample file into .github/instructions/estimate/
-  pull-requests: write # To open the pull request that adds the sample
-  issues: write # To post back on the issue/comment thread — e.g., react to or reply to the /estimate Nh comment
+  # To create a branch and commit the new estimation sample file into .github/instructions/estimate/.
+  # Writing files/branches requires write access to repository contents.
+  contents: write
+  # To open the pull request that adds the sample. Creating a PR requires the pull-requests write scope.
+  pull-requests: write
+  # To post back on the issue/comment thread — e.g. react to or reply to the /estimate Nh comment to
+  # acknowledge the correction. Since PR comments share the issues API, commenting also relies on this scope.
+  issues: write
 
 jobs:
   estimate-command:
@@ -19,7 +24,7 @@ jobs:
           node-version: 24
       - run: yarn install --frozen-lockfile
       - name: Handle estimate command
-        run: node --experimental-strip-types scripts/estimate/src/command.ts
+        run: node scripts/estimate/src/command.ts
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           EVERHOUR_API_KEY: ${{ secrets.EVERHOUR_API_KEY }}
