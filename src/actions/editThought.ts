@@ -144,7 +144,10 @@ const editThought = (state: State, { cursorOffset, force, oldValue, newValue, pa
     ...(editedThought.generating ? { generating: false } : null),
     rank:
       newValue !== '' && (sortType === 'Alphabetical' || sortType === 'Created' || sortType === 'Updated')
-        ? getSortedRank(state, editedThought.parentId, newValue, editedThought.created)
+        ? getSortedRank(state, editedThought.parentId, newValue, {
+            created: editedThought.created,
+            staleId: editedThought.id,
+          })
         : editedThought.rank,
     value: newValue,
     lastUpdated: timestamp(),
