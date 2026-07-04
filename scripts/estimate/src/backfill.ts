@@ -147,6 +147,11 @@ const main = async () => {
   if (!everhourProjectId) throw new Error('EVERHOUR_PROJECT_ID is required')
 
   const limit = parseInt(process.env.LIMIT ?? '10', 10)
+  // 1-based page to begin Everhour task pagination from. Floor invalid or <1 values to 1 so a
+  // bad PAGE never sends NaN/0 to the API. Combined with LIMIT this processes up to LIMIT tasks
+  // starting from page PAGE.
+  const startPageRaw = parseInt(process.env.PAGE ?? '1', 10)
+  const startPage = Number.isFinite(startPageRaw) && startPageRaw >= 1 ? startPageRaw : 1
   // Dry-run is the safe default: the backfill only calls the model / writes to Everhour when
   // explicitly disabled with DRY_RUN[_AI|_EVERHOUR]=false. DRY_RUN sets the default for both
   // stages; the per-stage vars override it.
@@ -163,7 +168,7 @@ const main = async () => {
     process.env.GITHUB_WORKSPACE ?? path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..')
 
   console.info(
-    `Backfill config: limit=${limit}, dryRunAI=${dryRunAI}, dryRunEverhour=${dryRunEverhour}, project=${everhourProjectId}`,
+    `Backfill config: limit=${limit}, startPage=${startPage}, dryRunAI=${dryRunAI}, dryRunEverhour=${dryRunEverhour}, project=${everhourProjectId}`,
   )
 
   // 1. Confirm the project exists on Everhour before doing any work, so a bad
@@ -175,79 +180,89 @@ const main = async () => {
   }
   console.info(`Found Everhour project: "${project.name}" (${project.id})`)
 
-  // 2. Fetch tasks from the Everhour project
-  const tasks = await everhour.getProjectTasks(everhourProjectId)
-  console.info(`Found ${tasks.length} tasks in Everhour project`)
-
-  // 3. Filter to tasks without estimates
-  const tasksWithoutEstimates = tasks.filter(task => !task.estimate || !task.estimate.total)
-  console.info(`Found ${tasksWithoutEstimates.length} tasks without estimates`)
-
-  // 4. Extract issue numbers and fetch GitHub issues
+  // 2. Extract issue numbers and fetch GitHub issues
   const instructions = loadInstructions(repoRoot)
   const samples = loadSamples(repoRoot)
   const promptVersion = getPromptVersion(repoRoot)
 
+  // 3. Page through the project's tasks, processing one page at a time rather than loading
+  //    every task up front. Everhour caps a page at PAGE_SIZE tasks; a shorter page is the
+  //    last one. We stop early once `limit` tasks have been processed.
+  const PAGE_SIZE = 250
   let processed = 0
+  let page = startPage
 
-  for (const task of tasksWithoutEstimates) {
-    if (processed >= limit) break
+  while (processed < limit) {
+    const tasks = await everhour.getProjectTasks(everhourProjectId, page, PAGE_SIZE)
+    console.info(`Fetched ${tasks.length} tasks from Everhour project (page ${page})`)
 
-    // Try to extract the issue number from the task ID or name; fall back to GitHub title search
-    let issueNumber = extractIssueNumber(task)
-    if (issueNumber === null) {
-      issueNumber = await findIssueByTitle(task.name, owner, repoName, githubToken)
+    // Filter to tasks without estimates within this page.
+    const tasksWithoutEstimates = tasks.filter(task => !task.estimate || !task.estimate.total)
+    console.info(`  ${tasksWithoutEstimates.length} tasks without estimates on page ${page}`)
+
+    for (const task of tasksWithoutEstimates) {
+      if (processed >= limit) break
+
+      // Try to extract the issue number from the task ID or name; fall back to GitHub title search
+      let issueNumber = extractIssueNumber(task)
+      if (issueNumber === null) {
+        issueNumber = await findIssueByTitle(task.name, owner, repoName, githubToken)
+      }
+      if (issueNumber === null) {
+        console.info(`  Skipping task "${task.name}" (${task.id}) - no GitHub issue number found`)
+        continue
+      }
+
+      // Fetch the GitHub issue
+      const issueResp = await fetch(`https://api.github.com/repos/${owner}/${repoName}/issues/${issueNumber}`, {
+        headers: { Authorization: `Bearer ${githubToken}` },
+      })
+
+      if (!issueResp.ok) {
+        console.info(`  Skipping issue #${issueNumber} - GitHub API error ${issueResp.status}`)
+        continue
+      }
+
+      const issue: GitHubIssue = (await issueResp.json()) as GitHubIssue
+
+      // Some Everhour tasks are linked to pull requests, not issues. GitHub's issues API returns PRs
+      // too (they share the number space), so detect and skip them before the closed-state check —
+      // otherwise a merged PR would be reported with the misleading "closed" reason.
+      if (isPullRequest(issue)) {
+        console.info(`  Skipping #${issueNumber} "${issue.title}" - it is a pull request, not an issue`)
+        continue
+      }
+
+      // Do not estimate closed issues.
+      if (issue.state === 'closed') {
+        console.info(`  Skipping issue #${issueNumber} - closed`)
+        continue
+      }
+
+      if (!issue.body) {
+        console.info(`  Skipping issue #${issueNumber} - empty body`)
+        continue
+      }
+
+      await processTask({
+        issue,
+        taskId: task.id,
+        everhour,
+        githubToken,
+        owner,
+        repoName,
+        instructions,
+        samples,
+        promptVersion,
+        dryRunAI,
+        dryRunEverhour,
+      })
+      processed++
     }
-    if (issueNumber === null) {
-      console.info(`  Skipping task "${task.name}" (${task.id}) - no GitHub issue number found`)
-      continue
-    }
 
-    // Fetch the GitHub issue
-    const issueResp = await fetch(`https://api.github.com/repos/${owner}/${repoName}/issues/${issueNumber}`, {
-      headers: { Authorization: `Bearer ${githubToken}` },
-    })
-
-    if (!issueResp.ok) {
-      console.info(`  Skipping issue #${issueNumber} - GitHub API error ${issueResp.status}`)
-      continue
-    }
-
-    const issue: GitHubIssue = (await issueResp.json()) as GitHubIssue
-
-    // Some Everhour tasks are linked to pull requests, not issues. GitHub's issues API returns PRs
-    // too (they share the number space), so detect and skip them before the closed-state check —
-    // otherwise a merged PR would be reported with the misleading "closed" reason.
-    if (isPullRequest(issue)) {
-      console.info(`  Skipping #${issueNumber} "${issue.title}" - it is a pull request, not an issue`)
-      continue
-    }
-
-    // Do not estimate closed issues.
-    if (issue.state === 'closed') {
-      console.info(`  Skipping issue #${issueNumber} - closed`)
-      continue
-    }
-
-    if (!issue.body) {
-      console.info(`  Skipping issue #${issueNumber} - empty body`)
-      continue
-    }
-
-    await processTask({
-      issue,
-      taskId: task.id,
-      everhour,
-      githubToken,
-      owner,
-      repoName,
-      instructions,
-      samples,
-      promptVersion,
-      dryRunAI,
-      dryRunEverhour,
-    })
-    processed++
+    // A page shorter than PAGE_SIZE means there are no further pages to fetch.
+    if (tasks.length < PAGE_SIZE) break
+    page++
   }
 
   console.info(`\nBackfill complete. Processed ${processed} tasks.`)
