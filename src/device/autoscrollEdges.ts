@@ -2,12 +2,17 @@ import store from '../stores/app'
 import viewportStore from '../stores/viewport'
 import virtualKeyboardStore from '../stores/virtualKeyboardStore'
 
-/** The trigger edges (in viewport coordinates) that scrollCursorIntoView uses to decide whether to autoscroll.
- * Between topEdge and bottomEdge is the comfort zone: a cursor inside it never triggers a scroll; a cursor
- * crossing either edge does. Each edge is inset from its occluder (toolbar / keyboard+navbar) by a
- * trigger buffer so that scrolling starts before the cursor reaches the occluder. The trigger buffer
- * decides when a scroll starts; where the cursor settles afterwards is the landing margin in
- * scrollCursorIntoView. */
+/** The comfort-zone edges (in viewport coordinates) that scrollCursorIntoView uses to decide whether to
+ * autoscroll. Between topEdge and bottomEdge is the comfort zone: a cursor inside it never triggers a
+ * scroll; a cursor crossing either edge does. Each edge is inset from its occluder (toolbar /
+ * keyboard+navbar) by a trigger buffer, so a scroll starts a buffer's width *before* the cursor would
+ * actually be hidden.
+ *
+ * The edge is the single reference line for both halves of the behaviour: scrollCursorIntoView triggers
+ * when the cursor crosses an edge, and lands it a landingMargin back inside that same edge. So the buffer
+ * governs both — when a scroll fires *and*, because the landing is measured from the edge, how deep the
+ * cursor settles (it comes to rest buffer + landingMargin inside the visible area). Moving the buffer
+ * moves both together; that coupling is deliberate. */
 export interface AutoscrollEdges {
   /** Bottom of the toolbar — the top of the visible area, in viewport coords. */
   toolbarBottom: number
@@ -50,8 +55,9 @@ export const getAutoscrollEdges = (): AutoscrollEdges => {
   // entirely under the toolbar before anything happens, which makes scrolling upward (cursorUp /
   // arrow-up) feel sticky. Constant regardless of keyboard state, since the toolbar — unlike the
   // keyboard — does not move.
-  // NOTE (#3765): newly symmetric with the bottom edge; tune fontSize * 2 or set to 0 (flush to the
-  // toolbar, headroom from the landing margin alone) if the upward scroll over-reveals.
+  // Because the landing is measured from the edge (see scrollCursorIntoView), this buffer also sets
+  // how deep the cursor parks: a bigger buffer fires the scroll earlier *and* lands the cursor lower.
+  // Tune fontSize * 2, or set to 0 to trigger flush with the toolbar and land on the landing margin alone.
   const topBuffer = fontSize * 2
 
   const topEdge = toolbarBottom + topBuffer

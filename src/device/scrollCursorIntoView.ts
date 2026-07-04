@@ -39,37 +39,50 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
   /** The y position of the cursor relative to the document. */
   const yDocument = yViewport + window.scrollY
 
-  const isAboveTopEdge = yViewport < topEdge
-  const isBelowBottomEdge = yViewport + height > bottomEdge
+  // Did the cursor cross a comfort-zone edge? "Crossed the top edge" means it moved above the top
+  // trigger line — which sits a buffer *below* the toolbar — so it may be a fully-visible cursor
+  // that merely entered the buffer band, not one that is actually under the toolbar.
+  const crossedTopEdge = yViewport < topEdge
+  const crossedBottomEdge = yViewport + height > bottomEdge
 
-  if (!isAboveTopEdge && !isBelowBottomEdge) return
+  if (!crossedTopEdge && !crossedBottomEdge) return
 
   // Calculate the scroll position ourselves rather than using the native el.scrollIntoView, which
   // cuts off the top of the content even when a significant delay is added.
-  // Scroll just far enough that the cursor lands `landingMargin` px inside the edge it crossed.
-  const scrollYNew = isAboveTopEdge
+  //
+  // Both the trigger (above) and the landing (here) are measured from the comfort-zone *edge*, not
+  // from the raw toolbar/keyboard. The edge is the single reference line: you trigger a scroll when
+  // the cursor crosses it, and you land the cursor `landingMargin` back inside it. So the trigger
+  // buffer that positions the edge (see autoscrollEdges) deliberately governs both *when* a scroll
+  // fires and *how deep* the cursor settles — the cursor comes to rest `buffer + landingMargin`
+  // inside the visible area. That coupling is intentional: the buffer sets where the comfort zone
+  // begins; landingMargin sets how far past that line the cursor parks.
+  const scrollYNew = crossedTopEdge
     ? yDocument - topEdge - landingMargin
     : yDocument + height - bottomEdge + landingMargin
 
-  // The top trigger buffer fires as soon as the cursor enters the buffer band below the toolbar,
-  // even when the document is already scrolled all the way up and there is nothing above to
-  // reveal. In that case scrollYNew computes to an unreachable negative position — scrolling
-  // "further up" than 0 is impossible — and flooring it to 1 below would manufacture a 1px scroll
-  // out of nothing, shifting the whole page for no visible benefit. Skip the correction rather
-  // than let the floor turn a no-op into a scroll.
-  if (isAboveTopEdge && scrollYNew <= 0 && window.scrollY === 0) return
+  // Reachability. A trigger buffer can fire while the page has nowhere to actually scroll — a cursor
+  // near the top of a short document crosses the top edge, but with nothing above to reveal the
+  // ideal target is a negative (unreachable) scroll position. Clamp the target to the range the page
+  // can really reach — never above 0, never past the end — and if that clamp lands on where we
+  // already are, there is nothing to do, so bail before the Safari floor below turns a no-op into a
+  // phantom 1px scroll. The same clamp covers the bottom edge's version (short document, cursor near
+  // the end) for free.
+  const maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight)
+  const target = Math.min(Math.max(scrollYNew, 0), maxScroll)
+  if (target === window.scrollY) return
 
   // scroll to 1 instead of 0
   // otherwise Mobile Safari scrolls to the top after MultiGesture
   // See: touchmove in MultiGesture.tsx
-  const top = Math.max(1, scrollYNew)
+  const top = Math.max(1, target)
 
   // Smooth-scroll short distances, but jump instantly when the target is more than a screenful
   // away, where a smooth scroll would be slow and disorienting. "A screenful" is the visible area
   // above the virtual keyboard, from the same store autoscrollEdges uses. (visualViewport.height
   // is not an option: with Capacitor's Keyboard resize: 'none', it never shrinks in the native app.)
   const visibleHeight = window.innerHeight - virtualKeyboardStore.getState().targetHeight
-  const scrollDistance = Math.abs(scrollYNew - window.scrollY)
+  const scrollDistance = Math.abs(target - window.scrollY)
   const behavior: ScrollBehavior = scrollDistance < visibleHeight ? 'smooth' : 'auto'
 
   window.scrollTo({
