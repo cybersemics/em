@@ -2,7 +2,7 @@ name: Tauri Release (main)
 
 # Publishes a rolling development build of the em desktop app on every push to main.
 # All artifacts are attached to a single, continuously-updated prerelease (tag
-# `main-latest`), so releases do not accumulate — each push overwrites the assets.
+# `pre`), so releases do not accumulate — each push overwrites the assets.
 
 on:
   push:
@@ -79,10 +79,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: main-latest
-          releaseName: em (latest main build)
+          tagName: pre
+          releaseName: em (prerelease)
           releaseBody: |
-            Automated development build from the latest commit on `main`.
+            Automated prerelease build from the latest commit on `main`.
 
             Commit: ${{ github.sha }}
             Run: ${{ github.run_number }}
