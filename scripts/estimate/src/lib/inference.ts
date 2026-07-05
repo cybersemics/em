@@ -1,5 +1,5 @@
 // Inference tuning constants, overridable via ESTIMATE_* env vars for experimentation.
-const MODEL = process.env.ESTIMATE_MODEL ?? 'claude-opus-4-8'
+const MODEL = process.env.ESTIMATE_MODEL ?? 'openai/gpt-4.1'
 const TEMPERATURE = process.env.ESTIMATE_TEMPERATURE != null ? Number(process.env.ESTIMATE_TEMPERATURE) : 0
 const MAX_VALIDATION_ATTEMPTS =
   process.env.ESTIMATE_MAX_VALIDATION_ATTEMPTS != null ? Number(process.env.ESTIMATE_MAX_VALIDATION_ATTEMPTS) : 3
