@@ -119,7 +119,7 @@
     "lottie-react": "^2.4.1",
     "marked": "^18.0.5",
     "moize": "^6.1.7",
-    "motion": "^12.40.0",
+    "motion": "^12.42.2",
     "murmurhash3js": "^3.0.1",
     "nanoid": "^5.1.16",
     "openai": "^5.20.3",
