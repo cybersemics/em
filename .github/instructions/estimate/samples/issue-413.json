@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "Fix url icon positioning",
+    "body": "Fix the positioning of the link icon that appears after urls. There is a hidden ThoughtAnnotation component of the same size as the Thought, which is supposed to place the icon in the correct place while remaining independent from the Thought itself (which needs to span the full width for ease of selecting). Something seems to be causing the ThoughtAnnotation and Thought to be breaking differently. \r\n\r\n![59C671FC-6982-47E0-A586-207E83C06504](https://user-images.githubusercontent.com/750276/76165468-e9571b80-611c-11ea-9472-c823974b957e.jpeg)",
+    "labels": ["bug"]
+  },
+  "expected": "XXS",
+  "source": {
+    "type": "everhour",
+    "issue": 413,
+    "hours": 1
+  }
+}

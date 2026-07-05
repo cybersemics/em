@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "Divider: Should set cursor after creation",
+    "body": "When the user types `---` (three dashes), the thought is converted into a horizontal [`Divider`](https://github.com/cybersemics/em/blob/dev/src/components/Divider.js). Doing a [search for \"isDivider\"](https://github.com/cybersemics/em/search?q=isDivider&unscoped_q=isDivider) provides a good survey of all of the divider business logic.\r\n\r\n## Steps to Reproduce\r\n1. Hit Enter and type \"A\" to create a new thought\r\n2. Hit Enter to create a new empty thought\r\n3. Type `---` to create a divider\r\n\r\n## Current Behavior\r\n\r\nDivider is not highlighted (cursor).\r\n\r\n## Expected Behavior\r\n\r\nThe cursor should be on the divider thought and the divider should be highlighted.",
+    "labels": ["bug"]
+  },
+  "expected": "XS",
+  "source": {
+    "type": "everhour",
+    "issue": 342,
+    "hours": 2
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "Tutorial: Add link to scroll up when tutorial instructions are hidden",
+    "body": "On small screens, new users can get lost when they have scrolled down to where the tutorial instructions are out of view.\r\n\r\nTo make this easier, when the tutorial buttons are hidden from view due to scrolling, display a link centered at the top of the screen with the text \"Scroll up for tutorial\". Clicking/tapping the link should smoothly scroll to the top. \r\n\r\nThe link should only be displayed when the user is scrolled past the tutorial buttons. When the tutorial buttons are visible, the link should not appear.\n\nHere's a good example of the desired behavior (including fade and translate animations):\n\nhttps://github.com/user-attachments/assets/29feef79-b64a-44ed-b34a-4b5e4a25b571\n\nAnd another, with just fade:\n\nhttps://github.com/user-attachments/assets/835ccd5d-3618-4923-9cfc-22bc40df10bb",
+    "labels": ["feature"]
+  },
+  "expected": "M",
+  "source": {
+    "type": "everhour",
+    "issue": 172,
+    "hours": 8
+  }
+}

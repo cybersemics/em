@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "Command: Swap with parent",
+    "body": "Add a `swapParent` command (title: `Swap with parent`) and a corresponding toolbar button that swaps the cursor thought’s text with its parent’s text.\r\n\r\nFind an appropriate icon from https://thenounproject.com/.\r\n\r\n## Steps to Reproduce\r\n\r\n```\r\n- a\r\n  - b\r\n  - c\r\n```\r\n\r\n1. Set the cursor on `b`\r\n2. Activate `swapParent`.\r\n\r\n## Expected Behavior\r\n\r\n```\r\n- b\r\n  - a\r\n  - c\r\n```",
+    "labels": ["feature"]
+  },
+  "expected": "M",
+  "source": {
+    "type": "everhour",
+    "issue": 388,
+    "hours": 8
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "[iOS] Caret drifts during navigation",
+    "body": "When navigating, the content is smoothly translated, but the caret drifts.\r\n\r\n## Current Behavior\r\n\r\nOn iOS, the caret drifts out of place during the animation. \r\n\r\nVideo 1:\r\nhttps://github.com/cybersemics/em/assets/750276/931e766d-291c-495b-83b7-bebde4625dcb\r\n\r\nVideo 2:\r\nhttps://youtu.be/Poo61duk41w\r\n\r\n## Expected Behavior\r\n\r\nThe browser cursor should stay in place (not move relative to its contenteditable).\r\n\r\nIf this is a bug in Safari and there is no fix, see if you can hide the caret during the transition (without removing the selection, closing the keyboard, or preventing the user from typing).",
+    "labels": ["dependency-bug"]
+  },
+  "expected": "L",
+  "source": {
+    "type": "everhour",
+    "issue": 4,
+    "hours": 16
+  }
+}

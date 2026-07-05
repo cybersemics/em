@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "Fix toolbar highlights",
+    "body": "Dim the following toolbar icons when not activated on the cursor context:\r\n\r\n- Table view (reverse)\r\n- Prose view (reverse)\r\n- Sort (reverse)\r\n- Note (add)\r\n\r\nThe first time the sort button is clicked, it doesn’t change color. It should change color immediately to match its state. This should be true for all of the above icons.",
+    "labels": ["bug"]
+  },
+  "expected": "XXS",
+  "source": {
+    "type": "everhour",
+    "issue": 442,
+    "hours": 1
+  }
+}

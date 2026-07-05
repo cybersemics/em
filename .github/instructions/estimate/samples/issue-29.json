@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "Swipe forward does not work in context view",
+    "body": "`cursorForward` does not work in Context View. It should work the same as in Normal View.\r\n\r\nTests: 0e5105a3\r\nBranch: `29`",
+    "labels": ["bug"]
+  },
+  "expected": "S",
+  "source": {
+    "type": "everhour",
+    "issue": 29,
+    "hours": 4
+  }
+}

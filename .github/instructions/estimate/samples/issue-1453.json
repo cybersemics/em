@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "[iOS PWA] clearThought on top of thought does not set browser selection",
+    "body": "## Steps to Reproduce\r\n\r\n1. Create a thought \n2. Swipe right-left on top of the thought to activate `clearThought`\n\r\n## Current Behavior\r\n\r\nKeyboard opens, but browser selection is not set. Typing will do nothing. \n\r\n## Expected Behavior\r\n\r\n`clearThought` should work regardless of where the swipe occurs.",
+    "labels": ["bug"]
+  },
+  "expected": "L",
+  "source": {
+    "type": "everhour",
+    "issue": 1453,
+    "hours": 16
+  }
+}
