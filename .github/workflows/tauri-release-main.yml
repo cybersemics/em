@@ -74,6 +74,9 @@ jobs:
       - name: Install npm dependencies
         run: yarn
 
+      - name: Set desktop version (MSI-compatible)
+        run: yarn tauri:version
+
       - name: Build and publish desktop app
         uses: tauri-apps/tauri-action@v1
         env:
