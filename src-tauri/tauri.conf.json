@@ -4,7 +4,7 @@
   "version": "../package.json",
   "identifier": "com.thinkwithem.em",
   "build": {
-    "beforeDevCommand": "yarn start",
+    "beforeDevCommand": "yarn start:http",
     "devUrl": "http://localhost:3000",
     "beforeBuildCommand": "yarn build",
     "frontendDist": "../build"
