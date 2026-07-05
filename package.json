@@ -167,7 +167,7 @@
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@capacitor/cli": "^8.4.1",
     "@eslint-community/eslint-plugin-eslint-comments": "^4.7.2",
-    "@pandacss/dev": "^1.11.3",
+    "@pandacss/dev": "^1.11.4",
     "@pandacss/eslint-plugin": "^0.3.2",
     "@sinonjs/fake-timers": "^15.4.0",
     "@stylistic/eslint-plugin": "^5.10.0",
