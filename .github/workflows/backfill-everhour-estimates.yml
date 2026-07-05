@@ -1,0 +1,44 @@
+name: Backfill Everhour estimates
+on:
+  # Manual trigger only. Leave `limit` blank to use the script's built-in default (10).
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: Maximum number of tasks to process (blank = script default of 10)
+        required: false
+        type: number
+
+permissions:
+  # To post the estimate audit comment on each backfilled issue.
+  issues: write
+  # To read the estimation instructions/samples from .github/instructions/estimate/
+  # and to run `git log` for the prompt version.
+  contents: read
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # backfill.ts runs `git log` to compute the prompt version; a shallow
+          # clone would make it resolve to "unknown", so fetch full history.
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: yarn install --frozen-lockfile
+      - name: Build estimate workspace
+        run: yarn workspace em-estimate build
+      - name: Backfill Everhour estimates
+        run: node scripts/estimate/src/backfill.ts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EVERHOUR_API_KEY: ${{ secrets.EVERHOUR_API_KEY }}
+          # An EVERHOUR_PROJECT_ID secret must be configured in repo settings.
+          EVERHOUR_PROJECT_ID: ${{ secrets.EVERHOUR_PROJECT_ID }}
+          # Blank input falls through to the script's default (parseInt(LIMIT ?? '10')).
+          LIMIT: ${{ inputs.limit }}
+          # Disable dry-run so a manual trigger actually writes to Everhour and posts
+          # comments. The script also supports DRY_RUN_AI / DRY_RUN_EVERHOUR overrides.
+          DRY_RUN: 'false'
