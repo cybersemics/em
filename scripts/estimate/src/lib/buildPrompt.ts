@@ -1,0 +1,33 @@
+import type { EstimateSample } from './loadSamples.ts'
+
+/** Issue data for estimation. */
+export interface IssueInput {
+  title: string
+  body: string
+  labels: string[]
+}
+
+/** Builds the estimation prompt from sample data and the target issue. Instructions are passed separately as the system message. */
+const buildPrompt = (samples: EstimateSample[], issue: IssueInput): string => {
+  let prompt = ''
+
+  if (samples.length > 0) {
+    prompt += '## Examples\n\n'
+    for (const sample of samples) {
+      prompt += `### Issue: ${sample.input.title}\n`
+      prompt += `Labels: ${sample.input.labels.join(', ')}\n`
+      prompt += `Body:\n${sample.input.body}\n`
+      prompt += `Expected estimate: ${sample.expected}\n\n`
+    }
+  }
+
+  prompt += '## Issue to Estimate\n\n'
+  prompt += `Title: ${issue.title}\n`
+  prompt += `Labels: ${issue.labels.join(', ')}\n`
+  prompt += `Body:\n${issue.body}\n\n`
+  prompt += 'Respond with only a JSON object: {"estimate": "<CATEGORY>"}\n'
+
+  return prompt
+}
+
+export default buildPrompt

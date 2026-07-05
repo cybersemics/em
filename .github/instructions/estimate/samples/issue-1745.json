@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "URL false positives: v1.10 and one:two",
+    "body": "## Steps to Reproduce\r\n\r\n```\r\n- v1.10\r\n- one:two\r\n```\r\n\r\n## Current Behavior\r\n\r\nThoughts are incorrectly marked as urls.  \r\n\r\n## Expected Behavior\r\n\r\nThoughts should not be marked as urls. \r\n\r\n## Testing\r\n\r\nAdd unit tests.",
+    "labels": ["bug"]
+  },
+  "expected": "XS",
+  "source": {
+    "type": "everhour",
+    "issue": 1745,
+    "hours": 2
+  }
+}

@@ -1,0 +1,27 @@
+name: Estimate issue on open
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  # To post the estimate audit comment on the newly opened issue.
+  issues: write
+  # To read the estimation instructions and samples from .github/instructions/estimate/.
+  contents: read
+
+jobs:
+  estimate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: yarn install --frozen-lockfile
+      - name: Build estimate workspace
+        run: yarn workspace em-estimate build
+      - name: Estimate issue
+        run: node scripts/estimate/src/issue.ts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EVERHOUR_API_KEY: ${{ secrets.EVERHOUR_API_KEY }}

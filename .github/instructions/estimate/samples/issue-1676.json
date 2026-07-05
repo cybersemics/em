@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "useMultiline: Not updated when context subthought is edited",
+    "body": "## Steps to Reproduce\r\n\r\n```\r\n- a\n  - m\n    - Edit this between one and two lines\n- b\n  - m\n    - y\r\n```\n\n1. Activate context view on a/m\n2. Edit the long thought (\"Edit this between...\") so that it changes from one to two lines (or two to one). \r\n\r\n## Current Behavior\r\n\r\nLine height (determined by `useMultine`) is updated after a short delay. \r\n\r\n## Expected Behavior\r\n\r\nLine height should update immediately when the thought height is measured.",
+    "labels": ["bug", "unable-to-reproduce"]
+  },
+  "expected": "M",
+  "source": {
+    "type": "everhour",
+    "issue": 1676,
+    "hours": 8
+  }
+}

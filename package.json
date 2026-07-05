@@ -84,7 +84,8 @@
     "use-isomorphic-layout-effect": "^1.2.1"
   },
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "scripts/estimate"
   ],
   "dependencies": {
     "@capacitor/android": "^8.4.1",

@@ -1,0 +1,32 @@
+name: Handle estimate command
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  # To create a branch and commit the new estimation sample file into .github/instructions/estimate/.
+  # Writing files/branches requires write access to repository contents.
+  contents: write
+  # To open the pull request that adds the sample. Creating a PR requires the pull-requests write scope.
+  pull-requests: write
+  # To post back on the issue/comment thread — e.g. react to or reply to the /estimate Nh comment to
+  # acknowledge the correction. Since PR comments share the issues API, commenting also relies on this scope.
+  issues: write
+
+jobs:
+  estimate-command:
+    if: startsWith(github.event.comment.body, '/estimate ')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: yarn install --frozen-lockfile
+      - name: Build estimate workspace
+        run: yarn workspace em-estimate build
+      - name: Handle estimate command
+        run: node scripts/estimate/src/command.ts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EVERHOUR_API_KEY: ${{ secrets.EVERHOUR_API_KEY }}
