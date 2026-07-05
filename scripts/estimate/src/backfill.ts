@@ -154,13 +154,13 @@ const main = async () => {
   // starting from page PAGE.
   const startPageRaw = parseInt(process.env.PAGE ?? '1', 10)
   const startPage = Number.isFinite(startPageRaw) && startPageRaw >= 1 ? startPageRaw : 1
-  // Dry-run is the safe default: the backfill only calls the model / writes to Everhour when
-  // explicitly disabled with DRY_RUN[_AI|_EVERHOUR]=false. DRY_RUN sets the default for both
+  // Dry-run is off by default: the backfill calls the model / writes to Everhour unless
+  // explicitly enabled with DRY_RUN[_AI|_EVERHOUR]=true. DRY_RUN sets the default for both
   // stages; the per-stage vars override it.
-  const dryRunDefault = process.env.DRY_RUN !== 'false'
-  const dryRunAI = process.env.DRY_RUN_AI !== undefined ? process.env.DRY_RUN_AI !== 'false' : dryRunDefault
+  const dryRunDefault = process.env.DRY_RUN === 'true'
+  const dryRunAI = process.env.DRY_RUN_AI !== undefined ? process.env.DRY_RUN_AI === 'true' : dryRunDefault
   const dryRunEverhour =
-    process.env.DRY_RUN_EVERHOUR !== undefined ? process.env.DRY_RUN_EVERHOUR !== 'false' : dryRunDefault
+    process.env.DRY_RUN_EVERHOUR !== undefined ? process.env.DRY_RUN_EVERHOUR === 'true' : dryRunDefault
 
   const repo = process.env.GITHUB_REPOSITORY ?? 'cybersemics/em'
   const [owner, repoName] = repo.split('/')

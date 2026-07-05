@@ -39,6 +39,3 @@ jobs:
           EVERHOUR_PROJECT_ID: ${{ secrets.EVERHOUR_PROJECT_ID }}
           # Blank input falls through to the script's default (parseInt(LIMIT ?? '10')).
           LIMIT: ${{ inputs.limit }}
-          # Disable dry-run so a manual trigger actually writes to Everhour and posts
-          # comments. The script also supports DRY_RUN_AI / DRY_RUN_EVERHOUR overrides.
-          DRY_RUN: 'false'
