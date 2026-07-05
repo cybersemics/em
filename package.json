@@ -47,6 +47,10 @@
     "servebuild": "vite preview --port 3000",
     "start": "vite --host --port 3000",
     "start:http": "HTTP=1 vite --host --port 3000",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build",
+    "tauri:version": "node scripts/set-tauri-version.mjs",
     "test:ios": "wdio run src/e2e/iOS/config/wdio.browserstack.conf.ts",
     "test:ios:local": "wdio run src/e2e/iOS/config/wdio.local.conf.ts",
     "test:ios:browserstack": "wdio run src/e2e/iOS/config/wdio.browserstack.conf.ts",
@@ -81,7 +85,8 @@
     "use-isomorphic-layout-effect": "^1.2.1"
   },
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "scripts/estimate"
   ],
   "dependencies": {
     "@capacitor/android": "^8.4.1",
@@ -95,9 +100,10 @@
     "@emotion/styled": "^11.14.1",
     "@mui/material": "^9.1.2",
     "@radix-ui/react-dialog": "^1.1.17",
-    "@radix-ui/react-visually-hidden": "^1.2.6",
+    "@radix-ui/react-visually-hidden": "^1.2.7",
     "@redux-devtools/extension": "^4.0.0",
     "@stylistic/eslint-plugin-ts": "^4.4.1",
+    "@tauri-apps/api": "^2.11.1",
     "axios": "^1.18.1",
     "clipboard": "^2.0.11",
     "dnd-core": "^16.0.1",
@@ -163,10 +169,11 @@
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@capacitor/cli": "^8.4.1",
     "@eslint-community/eslint-plugin-eslint-comments": "^4.7.2",
-    "@pandacss/dev": "^1.11.3",
+    "@pandacss/dev": "^1.11.4",
     "@pandacss/eslint-plugin": "^0.3.2",
     "@sinonjs/fake-timers": "^15.4.0",
     "@stylistic/eslint-plugin": "^5.10.0",
+    "@tauri-apps/cli": "^2.11.4",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",

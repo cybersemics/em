@@ -3,3 +3,5 @@ docs
 LICENSE.md
 packages
 src/components/icons/animations
+src-tauri/target
+src-tauri/gen
