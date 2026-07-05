@@ -98,7 +98,7 @@
     "@emotion/styled": "^11.14.1",
     "@mui/material": "^9.1.2",
     "@radix-ui/react-dialog": "^1.1.17",
-    "@radix-ui/react-visually-hidden": "^1.2.6",
+    "@radix-ui/react-visually-hidden": "^1.2.7",
     "@redux-devtools/extension": "^4.0.0",
     "@stylistic/eslint-plugin-ts": "^4.4.1",
     "@tauri-apps/api": "^2.11.1",
