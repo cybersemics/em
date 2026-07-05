@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import React, { FocusEventHandler, useCallback, useEffect, useRef } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
-import { cx } from '../../styled-system/css'
+import { css, cx } from '../../styled-system/css'
 import { editableRecipe, invalidOptionRecipe } from '../../styled-system/recipes'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -41,7 +41,9 @@ import getContexts from '../selectors/getContexts'
 import getSetting from '../selectors/getSetting'
 import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursorSelector from '../selectors/hasMulticursor'
+import isMulticursorPath from '../selectors/isMulticursorPath'
 import rootedParentOf from '../selectors/rootedParentOf'
+import simplifyPath from '../selectors/simplifyPath'
 import batchEditingStore from '../stores/batchEditing'
 import editingValueStore from '../stores/editingValue'
 import editingValueUntrimmedStore from '../stores/editingValueUntrimmed'
@@ -63,6 +65,7 @@ import useEditMode from './Editable/useEditMode'
 import useOnCopy from './Editable/useOnCopy'
 import useOnCut from './Editable/useOnCut'
 import useOnPaste from './Editable/useOnPaste'
+import FauxCaret from './FauxCaret'
 
 interface EditableProps {
   editableRef?: React.RefObject<HTMLInputElement | null>
@@ -133,7 +136,17 @@ const Editable = ({
   // it is possible that the thought is deleted and the Editable is re-rendered before it unmounts, so guard against undefined thought
   const value = useSelector(state => getThoughtById(state, head(simplePath))?.value || '')
   const rank = useSelector(state => getThoughtById(state, head(simplePath))?.rank || 0)
-  const isCursorCleared = useSelector(state => !!isEditing && state.cursorCleared)
+  const isCursorCleared = useSelector(
+    // A thought is displayed as cleared when clearThought is active and it is either the cursor thought (single clear)
+    // or a member of a multiselection (multiselect clear).
+    state => state.cursorCleared && (!!isEditing || isMulticursorPath(state, path)),
+  )
+
+  // Render a faux caret on the cleared thoughts of a multiselection that do not hold the real caret (i.e. all but the
+  // first/cursor thought). The cursor thought shows the real caret via useEditMode.
+  const showMulticursorFauxCaret = useSelector(
+    state => state.cursorCleared && isMulticursorPath(state, path) && !equalPath(state.cursor, path),
+  )
 
   const hasMulticursor = useSelector(hasMulticursorSelector)
   // store the old value so that we have a transcendental head when it is changed
@@ -298,6 +311,27 @@ const Editable = ({
 
     // store the value so that we have a transcendental head when it is changed
     oldValueRef.current = newValue
+
+    // When multiple thoughts are cleared together (clearThought on a multiselection), mirror the edit across all other
+    // selected thoughts in real-time. The edited thought is a member of the multiselection (its path is preserved as a
+    // multicursor by clearThought), so mirror to every other multicursor path. Reads each thought's current value fresh
+    // from state to use as the correct oldValue. Does not depend on cursorCleared, which is reset after the first edit.
+    dispatch((dispatch, getState) => {
+      const state = getState()
+      if (!isMulticursorPath(state, path)) return
+      Object.values(state.multicursors).forEach(multicursorPath => {
+        if (equalPath(multicursorPath, path)) return
+        const multicursorThought = getThoughtById(state, head(multicursorPath))
+        if (!multicursorThought || multicursorThought.value === newValue) return
+        dispatch(
+          editThought({
+            oldValue: multicursorThought.value,
+            newValue,
+            path: simplifyPath(state, multicursorPath),
+          }),
+        )
+      })
+    })
 
     dispatch((dispatch, getState) => {
       const state = getState()
@@ -725,7 +759,7 @@ const Editable = ({
     }
   }, [contentRef, editingOrOnCursor, hasMulticursor, handleTapBehavior])
 
-  return (
+  const contentEditable = (
     <ContentEditable
       disabled={disabled}
       stopDragOver={stopDragOver}
@@ -766,6 +800,22 @@ const Editable = ({
       role='button'
       style={style}
     />
+  )
+
+  // When this thought is a cleared, non-cursor member of a multiselection, overlay a faux caret at the start of the
+  // (empty) editable to indicate that it too is being edited. The real caret lives on the first/cursor thought.
+  return showMulticursorFauxCaret ? (
+    <span className={css({ position: 'relative' })}>
+      <span
+        data-testid='faux-caret-multicursor'
+        className={css({ position: 'absolute', top: 0, left: 0, pointerEvents: 'none' })}
+      >
+        <FauxCaret caretType='multicursorStart' />
+      </span>
+      {contentEditable}
+    </span>
+  ) : (
+    contentEditable
   )
 }
 

@@ -12,7 +12,7 @@ const editableValues = () => page.$$eval('[data-editable]', els => els.map(el =>
 describe('clearThought', () => {
   // Regression test for https://github.com/cybersemics/em/issues/4519
   // .skip keeps normal CI green while the test is red; remove the .skip when the fix lands.
-  it.skip('clears all multiselected thoughts and mirrors typing across them', async () => {
+  it('clears all multiselected thoughts and mirrors typing across them', async () => {
     await paste(`
       - a
       - b
@@ -41,6 +41,10 @@ describe('clearThought', () => {
       .then(handle => handle.jsonValue() as Promise<string[]>)
       .catch(() => editableValues())
     expect(clearedValues).toEqual(['', '', ''])
+
+    // A faux caret should be rendered on the two non-cursor thoughts (the first thought holds the real caret).
+    const fauxCaretCount = await page.$$eval('[data-testid="faux-caret-multicursor"]', els => els.length)
+    expect(fauxCaretCount).toBe(2)
 
     // Typing should mirror the new value across all cleared thoughts in real-time.
     await page.keyboard.type('hello')
