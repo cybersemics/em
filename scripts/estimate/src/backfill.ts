@@ -13,6 +13,7 @@ import { fileURLToPath } from 'url'
 import EverhourClient from './everhour/client.ts'
 import extractIssueNumber from './everhour/extractIssueNumber.ts'
 import estimateIssue from './lib/estimateIssue.ts'
+import issueLink from './lib/issueLink.ts'
 import loadInstructions from './lib/loadInstructions.ts'
 import loadSamples from './lib/loadSamples.ts'
 
@@ -111,6 +112,7 @@ const processTask = async ({
       body: issue.body!,
       labels: issue.labels.map(l => l.name),
     },
+    issueRef: issueLink(owner, repoName, issue.number),
     instructions,
     samples,
     token: githubToken,
@@ -133,7 +135,7 @@ const processTask = async ({
     body: JSON.stringify({ body: commentBody }),
   })
 
-  console.info(`  Estimated issue #${issue.number}: ${category} / ${hours}h`)
+  console.info(`  Estimated issue ${issueLink(owner, repoName, issue.number)}: ${category} / ${hours}h`)
 }
 
 const main = async () => {
@@ -219,7 +221,9 @@ const main = async () => {
       })
 
       if (!issueResp.ok) {
-        console.info(`  Skipping issue #${issueNumber} - GitHub API error ${issueResp.status}`)
+        console.info(
+          `  Skipping issue ${issueLink(owner, repoName, issueNumber)} - GitHub API error ${issueResp.status}`,
+        )
         continue
       }
 
@@ -229,18 +233,20 @@ const main = async () => {
       // too (they share the number space), so detect and skip them before the closed-state check —
       // otherwise a merged PR would be reported with the misleading "closed" reason.
       if (isPullRequest(issue)) {
-        console.info(`  Skipping #${issueNumber} "${issue.title}" - it is a pull request, not an issue`)
+        console.info(
+          `  Skipping ${issueLink(owner, repoName, issueNumber)} "${issue.title}" - it is a pull request, not an issue`,
+        )
         continue
       }
 
       // Do not estimate closed issues.
       if (issue.state === 'closed') {
-        console.info(`  Skipping issue #${issueNumber} - closed`)
+        console.info(`  Skipping issue ${issueLink(owner, repoName, issueNumber)} - closed`)
         continue
       }
 
       if (!issue.body) {
-        console.info(`  Skipping issue #${issueNumber} - empty body`)
+        console.info(`  Skipping issue ${issueLink(owner, repoName, issueNumber)} - empty body`)
         continue
       }
 
