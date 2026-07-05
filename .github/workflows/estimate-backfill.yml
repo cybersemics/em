@@ -1,4 +1,5 @@
-name: Backfill Everhour estimates
+# This workflow backfills estimates for existing issues in the configured Everhour project.
+name: Estimate - Backfill
 on:
   # Manual trigger only. Leave `limit` blank to use the script's built-in default (10).
   workflow_dispatch:

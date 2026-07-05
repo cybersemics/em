@@ -1,4 +1,5 @@
-name: Estimate issue on open
+# This workflow runs when a new issue is opened. It estimates the issue and posts an audit comment with the estimated hours.
+name: Estimate - Issue Opened
 on:
   issues:
     types: [opened]

@@ -1,4 +1,5 @@
-name: Handle estimate command
+# This workflow runs when a comment is made on an issue. If the comment starts with `/estimate `, it estimates the issue and posts an audit comment with the estimated hours.
+name: Estimate - /estimate command
 on:
   issue_comment:
     types: [created]
