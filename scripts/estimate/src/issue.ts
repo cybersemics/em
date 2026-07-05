@@ -19,10 +19,10 @@ interface IssuePayload {
   labels: Array<{ name: string }>
 }
 
-/** Gets the prompt version (latest commit hash touching the instructions directory). */
+/** Gets the prompt version (latest commit hash touching the estimate instructions file). */
 const getPromptVersion = (repoRoot: string): string => {
   try {
-    return execSync('git log -1 --format=%h -- .github/instructions/estimate', {
+    return execSync('git log -1 --format=%h -- .github/instructions/estimate/estimate.instructions.md', {
       cwd: repoRoot,
       encoding: 'utf-8',
     }).trim()
@@ -82,7 +82,7 @@ const main = async () => {
   const promptVersion = getPromptVersion(repoRoot)
 
   // Leave audit comment
-  const commentBody = `Everhour estimate: ${category} / ${hours}h\nPrompt version: \`${promptVersion}\``
+  const commentBody = `Everhour estimate: ${category} / ${hours}h\nPrompt version: ${promptVersion}`
 
   await fetch(`https://api.github.com/repos/${owner}/${repoName}/issues/${issue.number}/comments`, {
     method: 'POST',
