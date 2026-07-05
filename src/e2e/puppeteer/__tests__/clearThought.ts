@@ -46,6 +46,14 @@ describe('clearThought', () => {
     const fauxCaretCount = await page.$$eval('[data-testid="faux-caret-multicursor"]', els => els.length)
     expect(fauxCaretCount).toBe(2)
 
+    // The real caret (editing cursor) should be on the first thought.
+    const editingIndex = await page.evaluate(() => {
+      const editables = Array.from(document.querySelectorAll('[data-editable]'))
+      const editing = document.querySelector('[data-editing=true] [data-editable]')
+      return editing ? editables.indexOf(editing) : -1
+    })
+    expect(editingIndex).toBe(0)
+
     // Typing should mirror the new value across all cleared thoughts in real-time.
     await page.keyboard.type('hello')
 
