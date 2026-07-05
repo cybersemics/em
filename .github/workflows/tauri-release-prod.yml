@@ -76,7 +76,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tagName: ${{ github.ref_name }}
-          releaseName: em ${{ github.ref_name }}
+          releaseName: em desktop ${{ github.ref_name }}
           releaseBody: |
             em desktop release ${{ github.ref_name }}.
 

@@ -80,9 +80,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tagName: pre
-          releaseName: em (prerelease)
+          releaseName: em desktop (main)
           releaseBody: |
-            Automated prerelease build from the latest commit on `main`.
+            em desktop prerelease build from the latest commit on `main`.
 
             Commit: ${{ github.sha }}
             Run: ${{ github.run_number }}
