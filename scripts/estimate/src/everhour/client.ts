@@ -61,7 +61,7 @@ class EverhourClient {
   async setEstimate(taskId: string, seconds: number): Promise<void> {
     await this.request(`/tasks/${taskId}/estimate`, {
       method: 'PUT',
-      body: JSON.stringify({ total: seconds }),
+      body: JSON.stringify({ type: 'overall', total: seconds }),
     })
   }
 
