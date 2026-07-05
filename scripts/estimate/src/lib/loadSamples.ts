@@ -2,7 +2,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 
 const SAMPLES_DIR = '.github/instructions/estimate/samples'
-const MAX_SAMPLES = 50
+const MAX_SAMPLES = 100
 
 /** A sample for estimation training. */
 export interface EstimateSample {

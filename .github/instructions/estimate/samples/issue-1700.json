@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "[Capacitor] Set overscroll background color from theme",
+    "body": "There was a default white background in the capacitor WebView. It has been temporarily fixed for Dark theme by using ios configuration inside of `capacitor.config.ts` as:\r\n\r\n```\r\nios: {\r\n  backgroundColor: '000000',\r\n},\r\n```\r\n\r\nBut we want the `backgroundColor` to be able to configurable based on the app's theme Light or Dark.\r\n\r\n## Steps to Reproduce\r\n- Sync capacitor\r\n- Run iOS build\r\n- Change to Light theme\r\n- Try to scroll past the top or bottom of the screen.\r\n\r\n## Current Behavior\r\n- A white background appears. \r\n\r\n## Expected Behavior\r\n- The background should be white or black depending upon the app's theme.",
+    "labels": ["bug"]
+  },
+  "expected": "M",
+  "source": {
+    "type": "everhour",
+    "issue": 1700,
+    "hours": 8
+  }
+}
