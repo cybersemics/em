@@ -30,6 +30,7 @@ import * as selection from '../../device/selection'
 import globals from '../../globals'
 import documentSort from '../../selectors/documentSort'
 import exportContext, { exportFilter } from '../../selectors/exportContext'
+import { getChildrenRanked } from '../../selectors/getChildren'
 import getDescendantThoughtIds from '../../selectors/getDescendantThoughtIds'
 import hasMulticursor from '../../selectors/hasMulticursor'
 import simplifyPath from '../../selectors/simplifyPath'
@@ -296,6 +297,8 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
   const [shouldIncludeMetaAttributes, setShouldIncludeMetaAttributes] = useState(false)
   const [shouldIncludeArchived, setShouldIncludeArchived] = useState(false)
   const [shouldIncludeMarkdownFormatting, setShouldIncludeMarkdownFormatting] = useState(true)
+  const [shouldExportFirstThought, setShouldExportFirstThought] = useState(true)
+  const [shouldExportSubthoughts, setShouldExportSubthoughts] = useState(true)
   const [selected, setSelected] = useState(exportOptions[0])
   const [numDescendantsInState, setNumDescendantsInState] = useState<number | null>(null)
 
@@ -348,12 +351,20 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
       // Sort in document order. At this point, all thoughts are pulled and in state.
       const sortedPaths = documentSort(exportedState, simplePaths)
 
-      const exported = sortedPaths
-        .map(simplePath =>
-          exportContext(exportedState, head(simplePath), selected.type, {
+      // When shouldExportFirstThought is false, expand each selected path to its children's IDs.
+      // For single selection this skips the root thought; for multiple selection it skips the entire first level.
+      const exportIds = !shouldExportFirstThought
+        ? sortedPaths.flatMap(simplePath => getChildrenRanked(exportedState, head(simplePath)).map(child => child.id))
+        : sortedPaths.map(simplePath => head(simplePath))
+
+      const exported = exportIds
+        .map(thoughtId =>
+          exportContext(exportedState, thoughtId, selected.type, {
             excludeArchived: !shouldIncludeArchived,
             excludeMarkdownFormatting: !shouldIncludeMarkdownFormatting,
             excludeMeta: !shouldIncludeMetaAttributes,
+            // maxDepth 0 means only the thought itself with no children
+            maxDepth: !shouldExportSubthoughts ? 0 : undefined,
           }),
         )
         .join('\n')
@@ -396,15 +407,17 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
 
       // when exporting HTML, we have to do a full traversal since the numDescendants heuristic of counting the number of lines in the exported content does not work
       if (selected.type === 'text/html' && exportedState) {
-        setNumDescendantsInState(
-          getDescendantThoughtIds(exportedState, id, {
-            filterAndTraverse: thought => shouldIncludeMetaAttributes || thought.value !== '=note',
-            filterFunction: exportFilter({
-              excludeArchived: !shouldIncludeArchived,
-              excludeMeta: !shouldIncludeMetaAttributes,
-            }),
-          }).length,
-        )
+        // When subthoughts are excluded, there are no descendants by definition.
+        const numDescendants = !shouldExportSubthoughts
+          ? 0
+          : getDescendantThoughtIds(exportedState, id, {
+              filterAndTraverse: thought => shouldIncludeMetaAttributes || thought.value !== '=note',
+              filterFunction: exportFilter({
+                excludeArchived: !shouldIncludeArchived,
+                excludeMeta: !shouldIncludeMetaAttributes,
+              }),
+            }).length
+        setNumDescendantsInState(numDescendants)
       }
 
       if (!isPulling) {
@@ -412,7 +425,14 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [selected, shouldIncludeMetaAttributes, shouldIncludeArchived, shouldIncludeMarkdownFormatting],
+    [
+      selected,
+      shouldIncludeMetaAttributes,
+      shouldIncludeArchived,
+      shouldIncludeMarkdownFormatting,
+      shouldExportFirstThought,
+      shouldExportSubthoughts,
+    ],
   )
 
   useEffect(
@@ -551,9 +571,31 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
   /** Updates archived checkbox value when clicked and set the appropriate value in the selected option. */
   const onChangeFormattingCheckbox = () => setShouldIncludeMarkdownFormatting(!shouldIncludeMarkdownFormatting)
 
+  /** Toggles whether the first (top-level) thought is included in the export. */
+  const onChangeExportFirstThoughtCheckbox = () => setShouldExportFirstThought(!shouldExportFirstThought)
+
+  /** Toggles whether subthoughts (descendants) are included in the export. */
+  const onChangeExportSubthoughtsCheckbox = () => setShouldExportSubthoughts(!shouldExportSubthoughts)
+
   /** Created an array of objects so that we can just add object here to get multiple checkbox options created. */
   const advancedSettingsArray: AdvancedSetting[] = useMemo(
     () => [
+      {
+        id: 'exportFirstThought',
+        onChange: onChangeExportFirstThoughtCheckbox,
+        checked: shouldExportFirstThought,
+        title: 'Export first thought',
+        description:
+          'When checked, the top-level thought is included in the export. When unchecked, the first thought is skipped and only its descendants are exported. When multiple thoughts are selected, the entire first level is skipped.',
+      },
+      {
+        id: 'exportSubthoughts',
+        onChange: onChangeExportSubthoughtsCheckbox,
+        checked: shouldExportSubthoughts,
+        title: 'Export subthoughts',
+        description:
+          'When checked, all subthoughts are included in the export. When unchecked, only the top-level thoughts are exported without any descendants.',
+      },
       {
         id: 'meta',
         onChange: onChangeMetaCheckbox,
@@ -583,7 +625,13 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
     ],
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [shouldIncludeArchived, shouldIncludeMetaAttributes, shouldIncludeMarkdownFormatting],
+    [
+      shouldIncludeArchived,
+      shouldIncludeMetaAttributes,
+      shouldIncludeMarkdownFormatting,
+      shouldExportFirstThought,
+      shouldExportSubthoughts,
+    ],
   )
 
   return (
