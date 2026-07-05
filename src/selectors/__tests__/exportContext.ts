@@ -225,6 +225,57 @@ it('decode character entities when exporting as plain text', () => {
   - one & two`)
 })
 
+it('exports children instead of the selected thought when includeRoot is false', () => {
+  const text = `
+    - a
+      - b
+        - c
+      - d
+  `
+
+  const steps = [importText({ text }), setCursor(['a'])]
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, ['a'], 'text/plain', { includeRoot: false })
+
+  expect(exported).toBe(`- b
+  - c
+- d`)
+})
+
+it('exports only the selected thought when includeDescendants is false', () => {
+  const text = `
+    - a
+      - b
+        - c
+      - d
+  `
+
+  const steps = [importText({ text }), setCursor(['a'])]
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, ['a'], 'text/plain', { includeDescendants: false })
+
+  expect(exported).toBe(`- a`)
+})
+
+it('exports only the children when includeRoot and includeDescendants are false', () => {
+  const text = `
+    - a
+      - b
+        - c
+      - d
+  `
+
+  const steps = [importText({ text }), setCursor(['a'])]
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, ['a'], 'text/plain', {
+    includeRoot: false,
+    includeDescendants: false,
+  })
+
+  expect(exported).toBe(`- b
+- d`)
+})
+
 it('export note as a normal thought if lossless not selected', () => {
   const text = `- ${HOME_TOKEN}
   - a

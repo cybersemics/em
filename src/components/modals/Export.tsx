@@ -1,5 +1,6 @@
 import { Keyboard } from '@capacitor/keyboard'
 import ClipboardJS from 'clipboard'
+import pluralize from 'pluralize'
 import React, {
   FC,
   PropsWithChildren,
@@ -23,14 +24,15 @@ import { alertActionCreator as alert } from '../../actions/alert'
 import { closeModalActionCreator as closeModal } from '../../actions/closeModal'
 import { errorActionCreator as error } from '../../actions/error'
 import { isIOS, isMac, isTouch } from '../../browser'
-import { HOME_PATH, HOME_TOKEN } from '../../constants'
+import { HOME_PATH } from '../../constants'
 import replicateTree from '../../data-providers/data-helpers/replicateTree'
 import download from '../../device/download'
 import * as selection from '../../device/selection'
 import globals from '../../globals'
 import documentSort from '../../selectors/documentSort'
 import exportContext, { exportFilter } from '../../selectors/exportContext'
-import getDescendantThoughtIds from '../../selectors/getDescendantThoughtIds'
+import { getChildrenRanked } from '../../selectors/getChildren'
+import getThoughtById from '../../selectors/getThoughtById'
 import hasMulticursor from '../../selectors/hasMulticursor'
 import simplifyPath from '../../selectors/simplifyPath'
 import theme from '../../selectors/theme'
@@ -73,8 +75,11 @@ interface ExportThoughtsPhraseOptions {
   ids: ThoughtId | ThoughtId[]
   excludeArchived: boolean
   excludeMeta: boolean
+  includeRoot: boolean
+  includeDescendants: boolean
   /** The final number of descendants. */
   numDescendantsFinal: number | null
+  topLevelCountFinal: number | null
   title: string
 }
 
@@ -92,6 +97,141 @@ const exportOptions: ExportOption[] = [
   { type: 'text/html', label: 'HTML', extension: 'html' },
   { type: 'application/json', label: 'JSON Snapshot', extension: 'json' },
 ]
+
+interface ExportDepthOptions {
+  includeRoot: boolean
+  includeDescendants: boolean
+}
+
+interface ExportThoughtCounts {
+  topLevelCount: number
+  descendantCount: number
+}
+
+/** Returns the replicateTree max depth for the selected export depth options. */
+const getPreloadMaxDepth = ({ includeRoot, includeDescendants }: ExportDepthOptions) =>
+  includeDescendants ? Infinity : includeRoot ? 0 : 1
+
+/** Counts the number of exported thoughts for a subtree using the same rules as exportContext. */
+const countExportedThoughts = (
+  state: State,
+  thoughtId: ThoughtId,
+  {
+    excludeArchived,
+    excludeMeta,
+    includeRoot,
+    includeDescendants,
+  }: ExportDepthOptions & Pick<ExportThoughtsPhraseOptions, 'excludeArchived' | 'excludeMeta'>,
+): number => {
+  const thought = getThoughtById(state, thoughtId)
+  if (!thought) return 0
+
+  const childrenFiltered = getChildrenRanked(state, thoughtId).filter(exportFilter({ excludeArchived, excludeMeta }))
+  const isNoteAndMetaExcluded = excludeMeta && thought.value === '=note'
+
+  if (!includeRoot) {
+    return childrenFiltered.reduce(
+      (total, child) =>
+        total +
+        countExportedThoughts(state, child.id, {
+          excludeArchived,
+          excludeMeta,
+          includeRoot: true,
+          includeDescendants,
+        }),
+      0,
+    )
+  }
+
+  if (isNoteAndMetaExcluded) {
+    return includeDescendants
+      ? childrenFiltered.reduce(
+          (total, child) =>
+            total +
+            countExportedThoughts(state, child.id, {
+              excludeArchived,
+              excludeMeta,
+              includeRoot: true,
+              includeDescendants,
+            }),
+          0,
+        )
+      : 0
+  }
+
+  return (
+    1 +
+    (includeDescendants
+      ? childrenFiltered.reduce(
+          (total, child) =>
+            total +
+            countExportedThoughts(state, child.id, {
+              excludeArchived,
+              excludeMeta,
+              includeRoot: true,
+              includeDescendants,
+            }),
+          0,
+        )
+      : 0)
+  )
+}
+
+/** Counts the number of top-level exported thoughts for a subtree using the same rules as exportContext. */
+const countTopLevelExportedThoughts = (
+  state: State,
+  thoughtId: ThoughtId,
+  {
+    excludeArchived,
+    excludeMeta,
+    includeRoot,
+    includeDescendants,
+  }: ExportDepthOptions & Pick<ExportThoughtsPhraseOptions, 'excludeArchived' | 'excludeMeta'>,
+): number => {
+  const thought = getThoughtById(state, thoughtId)
+  if (!thought) return 0
+
+  const childrenFiltered = getChildrenRanked(state, thoughtId).filter(exportFilter({ excludeArchived, excludeMeta }))
+  const isNoteAndMetaExcluded = excludeMeta && thought.value === '=note'
+
+  if (!includeRoot || isNoteAndMetaExcluded) {
+    return includeDescendants || !includeRoot
+      ? childrenFiltered.reduce(
+          (total, child) =>
+            total +
+            countExportedThoughts(state, child.id, {
+              excludeArchived,
+              excludeMeta,
+              includeRoot: true,
+              includeDescendants: false,
+            }),
+          0,
+        )
+      : 0
+  }
+
+  return 1
+}
+
+/** Formats the export phrase for the modal and copy alert. */
+const formatExportThoughtsPhrase = ({
+  ids,
+  numDescendants,
+  includeRoot,
+  topLevelCount,
+  title,
+}: {
+  ids: ThoughtId[]
+  numDescendants: number | null
+  includeRoot: boolean
+  topLevelCount: number | null
+  title: string
+}) =>
+  includeRoot
+    ? exportPhrase(ids, numDescendants, { value: title })
+    : `${pluralize('thought', topLevelCount ?? 0, true)}${
+        numDescendants ? ` and ${pluralize('subthought', numDescendants, true)}` : ''
+      }`
 
 /******************************************************************************
  * Contexts
@@ -122,7 +262,13 @@ const useExportedState = () => useContext(ExportedStateContext)
 /**
  * Context to handle pull status and number of descendants.
  */
-const PullProvider: FC<PropsWithChildren<{ simplePaths: SimplePath[] }>> = ({ children, simplePaths }) => {
+const PullProvider: FC<
+  PropsWithChildren<{
+    simplePaths: SimplePath[]
+    includeRoot: boolean
+    includeDescendants: boolean
+  }>
+> = ({ children, includeDescendants, includeRoot, simplePaths }) => {
   const isMounted = useRef(false)
   const [isPulling, setIsPulling] = useState<boolean>(true)
   const [exportedState, setExportedState] = useState<State | null>(null)
@@ -142,11 +288,17 @@ const PullProvider: FC<PropsWithChildren<{ simplePaths: SimplePath[] }>> = ({ ch
   useEffect(
     () => {
       isMounted.current = true
+      setIsPulling(true)
+      setExportedState(null)
+      setExportingThoughts([])
+
+      const maxDepth = getPreloadMaxDepth({ includeRoot, includeDescendants })
 
       const replications = simplePaths.map(simplePath => {
         const id = head(simplePath)
 
         return replicateTree(id, {
+          maxDepth,
           // TODO: Warn the user if offline or not fully replicated
           remote: false,
           onThought: thought => {
@@ -180,7 +332,7 @@ const PullProvider: FC<PropsWithChildren<{ simplePaths: SimplePath[] }>> = ({ ch
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    [includeDescendants, includeRoot, simplePaths],
   )
 
   return (
@@ -207,27 +359,42 @@ const ExportThoughtsPhrase = ({
   ids,
   excludeArchived,
   excludeMeta,
+  includeRoot,
+  includeDescendants,
   numDescendantsFinal,
+  topLevelCountFinal,
   title,
 }: ExportThoughtsPhraseOptions) => {
   const thoughts = useExportingThoughts()
+  const idsArray = Array.isArray(ids) ? ids : [ids]
   const thoughtsFiltered = thoughts.filter(
     exportFilter({
       excludeMeta,
       excludeArchived,
     }),
   )
-  const numDescendants = thoughtsFiltered.length + (thoughtsFiltered[0]?.id === HOME_TOKEN ? -1 : 0)
-
-  // updates with latest number of descendants
-  const n = numDescendantsFinal ?? numDescendants
+  const topLevelCount =
+    topLevelCountFinal ??
+    (includeRoot
+      ? Array.isArray(ids) && ids.length === 1 && numDescendantsFinal == null && thoughtsFiltered.length <= 1
+        ? 1
+        : idsArray.length
+      : thoughtsFiltered.filter(thought => !idsArray.includes(thought.id) && !idsArray.includes(thought.parentId))
+          .length)
+  const numDescendants = numDescendantsFinal ?? Math.max(0, thoughtsFiltered.length - topLevelCount)
 
   const phrase =
-    numDescendantsFinal || numDescendants || ids.length > 1
-      ? exportPhrase(ids, n, { value: title })
-      : n === 0 || n === 1
-        ? '1 thought'
-        : 'thoughts'
+    numDescendants || topLevelCount !== 1
+      ? formatExportThoughtsPhrase({
+          ids: idsArray,
+          includeRoot,
+          numDescendants,
+          topLevelCount,
+          title,
+        })
+      : includeRoot && idsArray.length === 1
+        ? exportPhrase(idsArray, null, { value: title })
+        : '1 thought'
 
   return <span dangerouslySetInnerHTML={{ __html: phrase }} />
 }
@@ -284,10 +451,21 @@ const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
 }
 
 /** A modal that allows the user to export, download, share, or publish their thoughts. */
-const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
+const ModalExport: FC<{
+  simplePaths: SimplePath[]
+  shouldExportFirstThought: boolean
+  setShouldExportFirstThought: (value: boolean) => void
+  shouldExportSubthoughts: boolean
+  setShouldExportSubthoughts: (value: boolean) => void
+}> = ({
+  simplePaths,
+  shouldExportFirstThought,
+  setShouldExportFirstThought,
+  shouldExportSubthoughts,
+  setShouldExportSubthoughts,
+}) => {
   const dispatch = useDispatch()
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const id = head(simplePaths[0])
   const title = useSelector(state => (isRoot(simplePaths[0]) ? 'home' : headValue(state, simplePaths[0]))) ?? ''
   const titleShort = ellipsize(title)
   // const titleMedium = ellipsize(title, 25)
@@ -297,28 +475,65 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
   const [shouldIncludeArchived, setShouldIncludeArchived] = useState(false)
   const [shouldIncludeMarkdownFormatting, setShouldIncludeMarkdownFormatting] = useState(true)
   const [selected, setSelected] = useState(exportOptions[0])
-  const [numDescendantsInState, setNumDescendantsInState] = useState<number | null>(null)
 
   const exportWord = isTouch ? 'Share' : 'Download'
 
   const isPulling = usePullStatus()
   const exportedState = useExportedState()
+  const includeRoot = shouldExportFirstThought
+  const includeDescendants = shouldExportSubthoughts
+  const sortedPaths = useMemo(
+    () => (exportedState ? documentSort(exportedState, simplePaths) : []),
+    [exportedState, simplePaths],
+  )
+  const exportThoughtCountsFinal = useMemo<ExportThoughtCounts | null>(
+    () =>
+      exportedState && selected.type !== 'application/json'
+        ? sortedPaths.reduce(
+            (counts, simplePath) => {
+              const thoughtId = head(simplePath)
+              const topLevelCount = countTopLevelExportedThoughts(exportedState, thoughtId, {
+                excludeArchived: !shouldIncludeArchived,
+                excludeMeta: !shouldIncludeMetaAttributes,
+                includeRoot,
+                includeDescendants,
+              })
+              const totalCount = countExportedThoughts(exportedState, thoughtId, {
+                excludeArchived: !shouldIncludeArchived,
+                excludeMeta: !shouldIncludeMetaAttributes,
+                includeRoot,
+                includeDescendants,
+              })
 
-  // calculate the final number of descendants
-  // uses a different method for text/plain and text/html
-  // does not update in real-time (See: ExportThoughtsPhrase component)
-  const numDescendantsFinal = exportContent
-    ? selected.type === 'text/plain'
-      ? exportContent.split('\n').length - simplePaths.length
-      : (numDescendantsInState ?? 0)
-    : null
+              return {
+                topLevelCount: counts.topLevelCount + topLevelCount,
+                descendantCount: counts.descendantCount + Math.max(0, totalCount - topLevelCount),
+              }
+            },
+            { topLevelCount: 0, descendantCount: 0 },
+          )
+        : null,
+    [
+      exportedState,
+      includeDescendants,
+      includeRoot,
+      selected.type,
+      shouldIncludeArchived,
+      shouldIncludeMetaAttributes,
+      sortedPaths,
+    ],
+  )
+
+  const numDescendantsFinal = exportContent ? (exportThoughtCountsFinal?.descendantCount ?? 0) : null
 
   const exportThoughtsPhraseFinal = useSelector(() =>
-    exportPhrase(
-      simplePaths.map(simplePath => head(simplePath)),
-      numDescendantsFinal,
-      { value: title },
-    ),
+    formatExportThoughtsPhrase({
+      ids: simplePaths.map(simplePath => head(simplePath)),
+      includeRoot,
+      numDescendants: numDescendantsFinal,
+      topLevelCount: exportThoughtCountsFinal?.topLevelCount ?? null,
+      title,
+    }),
   )
 
   /** Sets the exported context from the cursor using the selected type and making the appropriate substitutions. */
@@ -345,15 +560,14 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
 
       setExportContent(JSON.stringify(thoughtIndexCompact))
     } else {
-      // Sort in document order. At this point, all thoughts are pulled and in state.
-      const sortedPaths = documentSort(exportedState, simplePaths)
-
       const exported = sortedPaths
         .map(simplePath =>
           exportContext(exportedState, head(simplePath), selected.type, {
             excludeArchived: !shouldIncludeArchived,
             excludeMarkdownFormatting: !shouldIncludeMarkdownFormatting,
             excludeMeta: !shouldIncludeMetaAttributes,
+            includeDescendants,
+            includeRoot,
           }),
         )
         .join('\n')
@@ -394,25 +608,19 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
     () => {
       if (!shouldIncludeMetaAttributes) setShouldIncludeArchived(false)
 
-      // when exporting HTML, we have to do a full traversal since the numDescendants heuristic of counting the number of lines in the exported content does not work
-      if (selected.type === 'text/html' && exportedState) {
-        setNumDescendantsInState(
-          getDescendantThoughtIds(exportedState, id, {
-            filterAndTraverse: thought => shouldIncludeMetaAttributes || thought.value !== '=note',
-            filterFunction: exportFilter({
-              excludeArchived: !shouldIncludeArchived,
-              excludeMeta: !shouldIncludeMetaAttributes,
-            }),
-          }).length,
-        )
-      }
-
       if (!isPulling) {
         setExportContentFromCursor()
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [selected, shouldIncludeMetaAttributes, shouldIncludeArchived, shouldIncludeMarkdownFormatting],
+    [
+      includeDescendants,
+      includeRoot,
+      selected,
+      shouldIncludeMetaAttributes,
+      shouldIncludeArchived,
+      shouldIncludeMarkdownFormatting,
+    ],
   )
 
   useEffect(
@@ -551,9 +759,30 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
   /** Updates archived checkbox value when clicked and set the appropriate value in the selected option. */
   const onChangeFormattingCheckbox = () => setShouldIncludeMarkdownFormatting(!shouldIncludeMarkdownFormatting)
 
+  /** Updates whether the selected thought itself should be exported. */
+  const onChangeExportFirstThoughtCheckbox = () => setShouldExportFirstThought(!shouldExportFirstThought)
+
+  /** Updates whether descendants of exported thoughts should be exported. */
+  const onChangeExportSubthoughtsCheckbox = () => setShouldExportSubthoughts(!shouldExportSubthoughts)
+
   /** Created an array of objects so that we can just add object here to get multiple checkbox options created. */
   const advancedSettingsArray: AdvancedSetting[] = useMemo(
     () => [
+      {
+        id: 'exportFirstThought',
+        onChange: onChangeExportFirstThoughtCheckbox,
+        checked: shouldExportFirstThought,
+        title: 'Export first thought',
+        description:
+          'When unchecked, skip the selected thoughts and export their children instead. When multiple thoughts are selected, each selected thought is skipped.',
+      },
+      {
+        id: 'exportSubthoughts',
+        onChange: onChangeExportSubthoughtsCheckbox,
+        checked: shouldExportSubthoughts,
+        title: 'Export subthoughts',
+        description: 'When unchecked, only export the top-level exported thoughts and skip all of their descendants.',
+      },
       {
         id: 'meta',
         onChange: onChangeMetaCheckbox,
@@ -583,7 +812,13 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
     ],
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [shouldIncludeArchived, shouldIncludeMetaAttributes, shouldIncludeMarkdownFormatting],
+    [
+      shouldExportFirstThought,
+      shouldExportSubthoughts,
+      shouldIncludeArchived,
+      shouldIncludeMetaAttributes,
+      shouldIncludeMarkdownFormatting,
+    ],
   )
 
   return (
@@ -607,8 +842,11 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
                 <ExportThoughtsPhrase
                   ids={simplePaths.map(simplePath => head(simplePath))}
                   excludeArchived={!shouldIncludeArchived}
+                  includeDescendants={includeDescendants}
+                  includeRoot={includeRoot}
                   excludeMeta={!shouldIncludeMetaAttributes}
                   numDescendantsFinal={numDescendantsFinal}
+                  topLevelCountFinal={exportThoughtCountsFinal?.topLevelCount ?? null}
                   title={title}
                 />
               )
@@ -839,6 +1077,8 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
  * Export component wrapped with pull provider.
  */
 const ModalExportWrapper = () => {
+  const [shouldExportFirstThought, setShouldExportFirstThought] = useState(true)
+  const [shouldExportSubthoughts, setShouldExportSubthoughts] = useState(true)
   const simplePaths = useSelector(
     state =>
       hasMulticursor(state)
@@ -859,8 +1099,18 @@ const ModalExportWrapper = () => {
   }, [simplePaths])
 
   return (
-    <PullProvider simplePaths={filteredPaths}>
-      <ModalExport simplePaths={filteredPaths} />
+    <PullProvider
+      includeDescendants={shouldExportSubthoughts}
+      includeRoot={shouldExportFirstThought}
+      simplePaths={filteredPaths}
+    >
+      <ModalExport
+        setShouldExportFirstThought={setShouldExportFirstThought}
+        setShouldExportSubthoughts={setShouldExportSubthoughts}
+        shouldExportFirstThought={shouldExportFirstThought}
+        shouldExportSubthoughts={shouldExportSubthoughts}
+        simplePaths={filteredPaths}
+      />
     </PullProvider>
   )
 }

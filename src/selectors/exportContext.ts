@@ -34,6 +34,10 @@ interface Options {
   indent?: number
   /** Replaces the value of the root thought with a new title. */
   title?: string
+  /** Includes the selected thought itself in the export. */
+  includeRoot?: boolean
+  /** Includes descendants of exported thoughts. */
+  includeDescendants?: boolean
   excludeMarkdownFormatting?: boolean
   excludeSrc?: boolean
   /** Exclude meta attributes, except archived thoughts unless excludeArchived is true. */
@@ -47,7 +51,16 @@ export const exportContext = (
   state: State,
   contextOrThoughtId: Context | ThoughtId,
   format: MimeType = 'text/html',
-  { indent = 0, title, excludeMarkdownFormatting, excludeMeta, excludeSrc, excludeArchived }: Options = {},
+  {
+    indent = 0,
+    title,
+    includeRoot = true,
+    includeDescendants = true,
+    excludeMarkdownFormatting,
+    excludeMeta,
+    excludeSrc,
+    excludeArchived,
+  }: Options = {},
 ): string => {
   const linePostfix = format === 'text/html' ? (indent === 0 ? '  ' : '') + '</li>' : ''
   const tab0 = Array(indent).fill('').join('  ')
@@ -63,6 +76,21 @@ export const exportContext = (
 
   const childrenFiltered = children.filter(exportFilter({ excludeArchived, excludeMeta }))
 
+  if (!includeRoot) {
+    return childrenFiltered
+      .map(child =>
+        exportContext(state, child.id, format, {
+          excludeSrc,
+          excludeMeta,
+          excludeArchived,
+          excludeMarkdownFormatting,
+          includeDescendants,
+          indent,
+        }),
+      )
+      .join('\n')
+  }
+
   // Note: export single thought without bullet
   const linePrefix = format === 'text/html' ? '<li>' : '- '
 
@@ -74,16 +102,17 @@ export const exportContext = (
       excludeMeta,
       excludeArchived,
       excludeMarkdownFormatting,
+      includeDescendants,
       indent: indent + (isNoteAndMetaExcluded ? 0 : format === 'text/html' ? (indent === 0 ? 3 : 2) : 1),
     })
 
   // Export children of note as a thought when not lossless selected
   if (isNoteAndMetaExcluded) {
-    return childrenFiltered.map(exportChild).join('\n')
+    return includeDescendants ? childrenFiltered.map(exportChild).join('\n') : ''
   }
 
   const exportedChildren =
-    childrenFiltered.length > 0
+    includeDescendants && childrenFiltered.length > 0
       ? `${childrenPrefix}\n${childrenFiltered.map(exportChild).join('\n')}${childrenPostfix}${
           format === 'text/html' ? (indent === 0 ? tab0 : tab1) : ''
         }`

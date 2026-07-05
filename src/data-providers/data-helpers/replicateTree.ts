@@ -8,9 +8,12 @@ import { replicateChildren, replicateThought } from '../yjs/thoughtspace'
 const replicateTree = (
   id: ThoughtId,
   {
+    maxDepth = Infinity,
     remote,
     onThought,
   }: {
+    /** The maximum number of child levels to traverse. */
+    maxDepth?: number
     /** Sync with Websocket. Default: true. */
     remote?: boolean
     onThought?: (thought: Thought, thoughtIndex: Index<Thought>) => void
@@ -29,8 +32,8 @@ const replicateTree = (
   let abort = false
 
   /** Creates a task to replicate all children of the given id and add them to the thoughtIndex. Queues up grandchildren replication. */
-  const replicateDescendantsRecursive = async (id: ThoughtId) => {
-    if (abort) return
+  const replicateDescendantsRecursive = async (id: ThoughtId, depth: number) => {
+    if (abort || depth >= maxDepth) return
     const children = await replicateChildren(id, { background: true, remote })
     if (abort) return
 
@@ -39,7 +42,7 @@ const replicateTree = (
       onThought?.(child, thoughtIndexAccum)
 
       queue.add({
-        function: () => replicateDescendantsRecursive(child.id),
+        function: () => replicateDescendantsRecursive(child.id, depth + 1),
         description: `replicateTree: ${child.id}`,
       })
     })
@@ -65,7 +68,7 @@ const replicateTree = (
       },
       // replicate the starting thought's children
       {
-        function: () => replicateDescendantsRecursive(id),
+        function: () => replicateDescendantsRecursive(id, 0),
         description: `replicateTree: ${id}`,
       },
     ])
