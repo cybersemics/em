@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "Superscript not positioned correctly on meta attribute",
+    "body": "## Steps to Reproduce\r\n\r\n```\r\n- A\n  - =test\n- B\n  - =test\r\n```\n\n1. Set the cursor on `A`\n2. Activate `toggleHiddenThoughts`\r\n\r\n## Current Behavior\r\n\r\nSuperscript is not positioned correctly. \n\nProbably caused by the monospace font that is used for meta attributes. \n\n![image](https://github.com/cybersemics/em/assets/750276/bef66ad3-5e97-41c8-8a3f-3b5592141e0f)\r\n\r\n## Expected Behavior\r\n\r\nSuperscript should be positioned correctly regardless of the thought font.",
+    "labels": ["bug"]
+  },
+  "expected": "XS",
+  "source": {
+    "type": "everhour",
+    "issue": 1917,
+    "hours": 2
+  }
+}
