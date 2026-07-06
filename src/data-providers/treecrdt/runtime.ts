@@ -58,7 +58,7 @@ export const treecrdtRuntime = {
       materializationVersion !== getMaterializedThoughtsToStoreVersion()
     )
   },
-  persistPushQueueBatches: persistTreecrdtBatches,
+  persistTreecrdtBatches,
 }
 
 export default treecrdtRuntime

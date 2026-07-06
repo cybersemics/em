@@ -87,7 +87,7 @@ const pushQueue: StoreEnhancer<any> =
 
         /** Pushes queued updates to the active thoughtspace provider sequentially. */
         const applyDbQueue = async () => {
-          await thoughtspaceRuntime.persistPushQueueBatches(
+          await thoughtspaceRuntime.persistTreecrdtBatches(
             (dbQueue ?? []).map(batch => ({
               thoughtIndexUpdates: batch.thoughtIndexUpdates,
               lexemeIndexUpdates: batch.lexemeIndexUpdates,
