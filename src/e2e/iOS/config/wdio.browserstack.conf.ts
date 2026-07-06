@@ -38,11 +38,11 @@ export const config: WebdriverIO.Config = {
   capabilities: [
     {
       ...baseConfig.baseCapabilities,
-      'appium:deviceName': 'iPhone 15 Plus',
-      'appium:platformVersion': '17',
+      'appium:deviceName': 'iPhone 16 Pro Max',
+      'appium:platformVersion': '18',
       'bstack:options': {
-        deviceName: 'iPhone 15 Plus',
-        osVersion: '17',
+        deviceName: 'iPhone 16 Pro Max',
+        osVersion: '18',
         projectName: process.env.BROWSERSTACK_PROJECT_NAME || 'em',
         buildName: process.env.BROWSERSTACK_BUILD_NAME || `Local - ${user} - ${date}`,
         sessionName: 'iOS Safari Tests',

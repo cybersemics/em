@@ -257,6 +257,12 @@ describe('Caret', () => {
 
     const editable = await waitForEditable('Hello')
     await hideKeyboardByTappingDone()
+
+    // Prime with a real tap + keyboard dismissal. This is required for the synthetic touch below to
+    // reliably win the timing race that a real finger triggers on its own (see comment on the tap).
+    await clickThought('Hello')
+    await browser.pause(600)
+    await hideKeyboardByTappingDone()
     await browser.pause(800)
     await browser.execute(() => window.scrollTo(0, 0))
     await browser.pause(400)
