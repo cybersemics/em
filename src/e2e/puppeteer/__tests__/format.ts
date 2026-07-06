@@ -82,7 +82,11 @@ it('Bold button stays active when the cursor is moved to a fully-bold thought vi
   await clickThought('Two')
   expect(await isBoldButtonActive()).toBe(false)
 
-  // move the cursor back to the bold thought by tapping its bullet
+  // move the cursor back to the bold thought by tapping its bullet.
+  // NOTE: the clickBullet helper is not reused here because it locates the thought via getEditable, whose XPath
+  // matches on direct text nodes (contains(text(), …)). A fully-bold thought's text is wrapped in <b>, so the
+  // editable div has no direct text node and getEditable finds nothing. waitForEditable matches on innerHTML, so
+  // the bullet is looked up from the <b>One</b> editable handle instead.
   const editableOne = await waitForEditable('<b>One</b>')
   const bulletNode = await page.evaluateHandle(editableNode => {
     if (!editableNode) throw new Error('Node handle does not contain a valid Element')
