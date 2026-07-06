@@ -254,20 +254,65 @@ describe('Caret', () => {
 
   it('Focus is prevented after clearing the cursor', async () => {
     await newThought('Hello')
+
+    const editable = await waitForEditable('Hello')
     await hideKeyboardByTappingDone()
 
-    // Use a native WebDriver click on the inner anchor to clear the cursor.
-    // A synthetic tap() (performActions pointer events) does not fire the real
-    // click event that HomeLink's fastClick onClick handler relies on, so the
-    // cursor would never be cleared.
-    await browser.$('[data-testid="home"] a').click()
+    // Prime with a real tap + keyboard dismissal. This is required for the synthetic touch below to
+    // reliably win the timing race that a real finger triggers on its own (see comment on the tap).
+    await clickThought('Hello')
+    await browser.pause(600)
+    await hideKeyboardByTappingDone()
+    await browser.pause(800)
+    await browser.execute(() => window.scrollTo(0, 0))
+    await browser.pause(400)
 
-    await tap(await waitForEditable('Hello'), { horizontalTapLine: 'right', x: 6, y: 60, pointerType: 'touch' })
+    const rect = await getElementRectByScreen(editable)
 
-    // Wait for focus to be cleared and activeElement to be body
-    await waitUntil(() => browser.execute(() => document.activeElement === document.body))
+    // Cursor Back (swipe right) to set the cursor to null, so that "Hello" becomes a non-cursor thought.
+    await gesture('r', {
+      xStart: rect.x + 5,
+      yStart: rect.y + rect.height / 2,
+      segmentLength: rect.width,
+    })
+    await waitUntil(async () => !(await getEditingText()))
 
-    const activeElementIsBody = await browser.execute(() => document.activeElement === document.body)
-    expect(activeElementIsBody).toBe(true)
+    // Tap just past the right edge of the thought text, vertically centered, using a finger-sized
+    // contact area (width/height/pressure). On iOS Safari the touch-adjustment heuristic uses the
+    // contact radius to retarget the synthesized mouse events onto the nearby editable, but the
+    // touchstart/touchend land on the thought-annotation overlay - so the editable's onTouchEnd
+    // never runs to preventDefault. Focus then proceeds on the redirected mousedown and the virtual
+    // keyboard incorrectly opens. Regression test for #4394.
+    const tapX = Math.round(rect.x + rect.width + 4)
+    const tapY = Math.round(rect.y + rect.height / 2)
+    await browser.switchContext('NATIVE_APP')
+    await browser.performActions([
+      {
+        type: 'pointer',
+        id: 'finger1',
+        parameters: { pointerType: 'touch' },
+        actions: [
+          {
+            type: 'pointerMove',
+            duration: 0,
+            x: tapX,
+            y: tapY,
+            origin: 'viewport',
+            width: 40,
+            height: 40,
+            pressure: 0.9,
+          },
+          { type: 'pointerDown', button: 0, width: 40, height: 40, pressure: 0.9 },
+          { type: 'pause', duration: 90 },
+          { type: 'pointerUp', button: 0 },
+        ],
+      },
+    ])
+    const webviewContext = (await browser.getContexts()).find(c => String(c).startsWith('WEBVIEW')) as string
+    await browser.switchContext(webviewContext)
+    await browser.pause(600)
+
+    // A non-cursor thought must not open the virtual keyboard.
+    expect(await isKeyboardShown()).toBe(false)
   })
 })
