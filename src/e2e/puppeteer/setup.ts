@@ -119,7 +119,7 @@ const setup = async ({
     await page.waitForFunction(() => !document.querySelector('[aria-label=modal]'))
     await page.waitForFunction(() => document.querySelector('[aria-label=empty-thoughtspace], [data-editable]'))
     await page.evaluate(async () => {
-      await (window.em as Partial<WindowEm> | undefined)?.testHelpers?.waitForThoughtspaceIdle?.()
+      await (window.em as Partial<WindowEm> | undefined)?.testHelpers?.waitForThoughtspaceRuntimeIdle?.()
     })
   }
 }
@@ -131,7 +131,7 @@ afterEach(async () => {
   if (page) {
     await page
       .evaluate(async () => {
-        await (window.em as Partial<WindowEm> | undefined)?.testHelpers?.waitForThoughtspaceIdle?.()
+        await (window.em as Partial<WindowEm> | undefined)?.testHelpers?.waitForThoughtspaceRuntimeIdle?.()
         await (window.em as Partial<WindowEm> | undefined)?.testHelpers?.dropThoughtspace?.()
       })
       .catch(() => {
