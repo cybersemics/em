@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "Ellipsize url to single line",
+    "body": "## Steps to Reproduce\r\n\r\n1. Create a thought that is a url. \n2. Set the cursor to null. \r\n\r\n## Current Behavior\r\n\r\nThe url ellipsizes after a fixed number of characters, regardless of screen width. \r\n\r\n## Expected Behavior\r\n\r\nA non-cursor url thought should ellipsize at the right edge of the screen, regardless of the screen size or the number of characters in the thought. \n\nYou should be able to use the [text-overflow](https://developer.mozilla.org/en-US/docs/Web/CSS/text-overflow) CSS property to avoid having to measure the width. Make the container slightly smaller to leave room for the url icon.",
+    "labels": ["bug"]
+  },
+  "expected": "S",
+  "source": {
+    "type": "everhour",
+    "issue": 1712,
+    "hours": 4
+  }
+}

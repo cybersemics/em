@@ -8,6 +8,7 @@ const textColor: Command = {
   id: 'textColor',
   label: 'Text Color',
   description: 'Change the text color or highlight color to your liking.',
+  keyboard: { key: 'h', meta: true, shift: true },
   svg: TextColorWithColorPicker,
   canExecute: state => isDocumentEditable() && !!state.cursor,
   multicursor: {
