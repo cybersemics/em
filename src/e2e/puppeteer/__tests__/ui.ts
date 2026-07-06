@@ -5,6 +5,7 @@ import openCommandCenterCommand from '../../../commands/openCommandCenter'
 import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
 import gesture from '../helpers/gesture'
+import hide from '../helpers/hide'
 import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
@@ -52,6 +53,11 @@ it('GestureMenu', async () => {
 
   // wait for the glow background image to load before taking snapshot
   await waitForSelector('[data-testid=glow-background]')
+
+  // Hide the gesture trace before taking the snapshot. Its glow is drawn on a canvas and can render slightly
+  // differently across environments, causing flaky snapshot diffs. The trace is not relevant to this snapshot,
+  // so we hide it to keep the result consistent.
+  await hide('[data-testid=gesture-trace]')
 
   expect(await screenshot()).toMatchImageSnapshot()
 })
