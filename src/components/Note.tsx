@@ -4,8 +4,10 @@ import { useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { textNoteRecipe } from '../../styled-system/recipes'
 import Path from '../@types/Path'
+import SimplePath from '../@types/SimplePath'
 import { cursorDownActionCreator as cursorDown } from '../actions/cursorDown'
 import { deleteThoughtActionCreator as deleteThought } from '../actions/deleteThought'
+import { editThoughtActionCreator as editThought } from '../actions/editThought'
 import { keyboardOpenActionCreator as keyboardOpen } from '../actions/keyboardOpen'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { setDescendantActionCreator as setDescendant } from '../actions/setDescendant'
@@ -15,11 +17,13 @@ import { isTouch } from '../browser'
 import preventAutoscroll, { preventAutoscrollEnd } from '../device/preventAutoscroll'
 import * as selection from '../device/selection'
 import useFreshCallback from '../hooks/useFreshCallback'
+import { firstVisibleChild } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import noteValue from '../selectors/noteValue'
 import resolveNotePath from '../selectors/resolveNotePath'
 import store from '../stores/app'
 import batchEditingStore from '../stores/batchEditing'
+import appendToPath from '../util/appendToPath'
 import equalPathHead from '../util/equalPathHead'
 import head from '../util/head'
 import strip from '../util/strip'
@@ -124,14 +128,26 @@ const Note = React.memo(
           const state = getState()
 
           const targetPath = resolveNotePath(state, path) ?? path
+          const noteThought = firstVisibleChild(state, head(targetPath))
 
-          dispatch(
-            setDescendant({
-              path: targetPath,
-              values: [value],
-              mergePrev: batchEditingStore.getState(), // If batch editing is in progress, merge this edit with the previous one in the undo stack.
-            }),
-          )
+          if (noteThought) {
+            dispatch(
+              editThought({
+                path: appendToPath(targetPath, noteThought.id) as SimplePath,
+                oldValue: noteThought.value,
+                newValue: value,
+                mergePrev: batchEditingStore.getState(), // If batch editing is in progress, merge this edit with the previous one in the undo stack.
+              }),
+            )
+          } else {
+            dispatch(
+              setDescendant({
+                path: targetPath,
+                values: [value],
+                mergePrev: batchEditingStore.getState(), // If batch editing is in progress, merge this edit with the previous one in the undo stack.
+              }),
+            )
+          }
         })
       },
       [dispatch, path, justPasted],

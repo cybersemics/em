@@ -42,6 +42,6 @@ export default toggleNote
 
 // Register this action's metadata
 registerActionMetadata('toggleNote', {
-  undoable: true,
+  undoable: false,
   isNavigation: true,
 })

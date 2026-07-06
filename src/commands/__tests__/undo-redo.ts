@@ -7,6 +7,7 @@ import { indentActionCreator as indent } from '../../actions/indent'
 import { moveThoughtDownActionCreator as moveThoughtDown } from '../../actions/moveThoughtDown'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import { redoActionCreator as redo } from '../../actions/redo'
+import { toggleNoteActionCreator as toggleNote } from '../../actions/toggleNote'
 import { undoActionCreator as undo } from '../../actions/undo'
 import { executeCommandWithMulticursor } from '../../commands'
 import moveThoughtDownCommand from '../../commands/moveThoughtDown'
@@ -560,6 +561,91 @@ describe('grouping', () => {
   - B`
 
     expect(exported).toEqual(expectedOutput)
+  })
+
+  it('contiguous note additions should undo and redo in one step', () => {
+    store.dispatch([
+      importText({
+        text: `
+        - note-add
+          - =note
+            - x`,
+      }),
+      editThought(['note-add', '=note', 'x'], 'xy'),
+      editThought(['note-add', '=note', 'xy'], 'xyz'),
+      undo(),
+    ])
+
+    expect(exportContext(store.getState(), ['note-add'], 'text/plain')).toEqual(`- note-add
+  - =note
+    - x`)
+
+    store.dispatch(redo())
+
+    expect(exportContext(store.getState(), ['note-add'], 'text/plain')).toEqual(`- note-add
+  - =note
+    - xyz`)
+  })
+
+  it('contiguous note deletes should undo in one step', () => {
+    store.dispatch([
+      importText({
+        text: `
+        - note-delete
+          - =note
+            - xyz`,
+      }),
+      editThought(['note-delete', '=note', 'xyz'], 'xy'),
+      editThought(['note-delete', '=note', 'xy'], 'x'),
+      undo(),
+    ])
+
+    expect(exportContext(store.getState(), ['note-delete'], 'text/plain')).toEqual(`- note-delete
+  - =note
+    - xyz`)
+  })
+
+  it('note replacements should stay as separate undo steps', () => {
+    store.dispatch([
+      importText({
+        text: `
+        - note-replace
+          - =note
+            - cat`,
+      }),
+      editThought(['note-replace', '=note', 'cat'], 'bat'),
+      editThought(['note-replace', '=note', 'bat'], 'bit'),
+      undo(),
+    ])
+
+    expect(exportContext(store.getState(), ['note-replace'], 'text/plain')).toEqual(`- note-replace
+  - =note
+    - bat`)
+
+    store.dispatch(undo())
+
+    expect(exportContext(store.getState(), ['note-replace'], 'text/plain')).toEqual(`- note-replace
+  - =note
+    - cat`)
+  })
+
+  it('creating an empty note should not add an undo patch', () => {
+    store.dispatch([
+      importText({
+        text: `
+        - note-new`,
+      }),
+      setCursor(['note-new']),
+    ])
+
+    const undoPatchesBefore = store.getState().undoPatches.length
+
+    store.dispatch(toggleNote())
+
+    expect(store.getState().undoPatches.length).toBe(undoPatchesBefore)
+    expect(exportContext(store.getState(), ['note-new'], 'text/plain')).toEqual(`- note-new
+  - =note
+    - `)
   })
 
   it('contiguous edit additions should should not be grouped with deletions', () => {
