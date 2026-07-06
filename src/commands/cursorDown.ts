@@ -13,7 +13,9 @@ import attributeEquals from '../selectors/attributeEquals'
 import { getChildrenSorted } from '../selectors/getChildren'
 import hasMulticursor from '../selectors/hasMulticursor'
 import isMulticursorPath from '../selectors/isMulticursorPath'
+import isTableCol2 from '../selectors/isTableCol2'
 import nextSibling from '../selectors/nextSibling'
+import nextTableCousin from '../selectors/nextTableCousin'
 import nextThought from '../selectors/nextThought'
 import rootedParentOf from '../selectors/rootedParentOf'
 import appendToPath from '../util/appendToPath'
@@ -59,10 +61,14 @@ const cursorDownCommand: Command = {
         : // otherwise, get the first thought in the home context
           getChildrenSorted(state, HOME_TOKEN)[0]
 
-      const nextPath = nextSiblingThought
-        ? // non-first child path
-          appendToPath(parentOf(path), nextSiblingThought.id)
-        : nextThought(state)
+      const nextPath =
+        // in the second column of a table view, extend to the next thought at the same depth (the next cousin), crossing col1 row boundaries instead of falling through to the next col1 row (uncle)
+        cursor && isTableCol2(state, cursor)
+          ? nextTableCousin(state, cursor)
+          : nextSiblingThought
+            ? // non-first child path
+              appendToPath(parentOf(path), nextSiblingThought.id)
+            : nextThought(state)
 
       // if there is no next path, do nothing
       if (!nextPath) return

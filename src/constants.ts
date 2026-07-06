@@ -570,6 +570,7 @@ export const COMMAND_GROUPS: {
       'closeCommandCenter',
       'openCommandCenter',
       'removeFormat',
+      'textColor',
     ],
   },
   {

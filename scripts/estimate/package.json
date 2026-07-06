@@ -1,0 +1,23 @@
+{
+  "name": "em-estimate",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "backfill": "node src/backfill.ts",
+    "build": "tsc --noEmit",
+    "command": "node src/command.ts",
+    "format": "prettier --write .",
+    "issue": "node src/issue.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "dotenv": "^16.0.0",
+    "openai": "^4.0.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "prettier": "^3.8.4",
+    "typescript": "5.9.3"
+  }
+}
