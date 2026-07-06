@@ -257,17 +257,42 @@ describe('Caret', () => {
 
     const editable = await waitForEditable('Hello')
     await hideKeyboardByTappingDone()
-
-    // Prime with a real tap + keyboard dismissal. This is required for the synthetic touch below to
-    // reliably win the timing race that a real finger triggers on its own (see comment on the tap).
-    await clickThought('Hello')
-    await browser.pause(600)
-    await hideKeyboardByTappingDone()
     await browser.pause(800)
     await browser.execute(() => window.scrollTo(0, 0))
     await browser.pause(400)
 
     const rect = await getElementRectByScreen(editable)
+
+    // Prime with a real native tap on the thought's center + keyboard dismissal. This is required for
+    // the synthetic edge-touch below to reliably win the timing race that a real finger triggers on
+    // its own (see comment on the tap). A native tap (not a webview element.click()) is used because
+    // on real devices only a native touch focuses the editable and opens the keyboard.
+    const webviewContext = (await browser.getContext()) as string
+    await browser.switchContext('NATIVE_APP')
+    await browser.performActions([
+      {
+        type: 'pointer',
+        id: 'finger1',
+        parameters: { pointerType: 'touch' },
+        actions: [
+          {
+            type: 'pointerMove',
+            duration: 0,
+            x: Math.round(rect.x + rect.width / 2),
+            y: Math.round(rect.y + rect.height / 2),
+            origin: 'viewport',
+          },
+          { type: 'pointerDown', button: 0 },
+          { type: 'pause', duration: 60 },
+          { type: 'pointerUp', button: 0 },
+        ],
+      },
+    ])
+    await browser.releaseActions()
+    await browser.switchContext(webviewContext)
+    await browser.pause(600)
+    await hideKeyboardByTappingDone()
+    await browser.pause(400)
 
     // Cursor Back (swipe right) to set the cursor to null, so that "Hello" becomes a non-cursor thought.
     await gesture('r', {
@@ -308,7 +333,6 @@ describe('Caret', () => {
         ],
       },
     ])
-    const webviewContext = (await browser.getContexts()).find(c => String(c).startsWith('WEBVIEW')) as string
     await browser.switchContext(webviewContext)
     await browser.pause(600)
 
