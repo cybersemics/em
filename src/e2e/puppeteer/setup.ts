@@ -2,7 +2,6 @@
 import chalk from 'chalk'
 import { Browser, BrowserContext, ConsoleMessage, Device } from 'puppeteer'
 import { WindowEm } from '../../initialize'
-import waitForAppReady from './helpers/waitForAppReady'
 import { page, setPage } from './session'
 
 // eslint-disable-next-line @typescript-eslint/no-namespace, @typescript-eslint/prefer-namespace-keyword
@@ -100,7 +99,14 @@ const setup = async ({
   })
 
   await page.goto(url)
-  await waitForAppReady(page)
+  await page.waitForFunction(() => {
+    return typeof (window.em as Partial<WindowEm> | undefined)?.testHelpers?.waitForInitialized === 'function'
+  })
+  await page.evaluate(async () => {
+    const waitForInitialized = (window.em as Partial<WindowEm> | undefined)?.testHelpers?.waitForInitialized
+    if (typeof waitForInitialized !== 'function') throw new Error('waitForInitialized is not available')
+    await waitForInitialized()
+  })
 
   if (skipTutorial) {
     // wait for welcome modal to appear
