@@ -288,7 +288,6 @@ describe('Caret', () => {
         ],
       },
     ])
-    await browser.releaseActions()
     await browser.switchContext(webviewContext)
     await browser.pause(600)
     await hideKeyboardByTappingDone()
