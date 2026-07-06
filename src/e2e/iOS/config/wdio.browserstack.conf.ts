@@ -39,6 +39,34 @@ const bstackOptions = {
   idleTimeout: 60,
 }
 
+// Runs the whole suite except the iOS 18-only #4394 regression test on iOS 17.
+// Built as a standalone const (rather than inline in the capabilities array) so the extra
+// `exclude`/`specs` keys don't trip the excess-property check when the array is cast below.
+const suiteCapability = {
+  ...baseConfig.baseCapabilities,
+  exclude: [caretFocusSpec],
+  'appium:deviceName': 'iPhone 15 Plus',
+  'appium:platformVersion': '17',
+  'bstack:options': {
+    ...bstackOptions,
+    deviceName: 'iPhone 15 Plus',
+    osVersion: '17',
+  },
+}
+
+// Runs only the #4394 regression test, which requires iOS 18 to reproduce.
+const caretFocusCapability = {
+  ...baseConfig.baseCapabilities,
+  specs: [caretFocusSpec],
+  'appium:deviceName': 'iPhone 16 Pro Max',
+  'appium:platformVersion': '18',
+  'bstack:options': {
+    ...bstackOptions,
+    deviceName: 'iPhone 16 Pro Max',
+    osVersion: '18',
+  },
+}
+
 let tunnelProcess: ChildProcess | null = null
 
 /**
@@ -143,32 +171,7 @@ export const config: WebdriverIO.Config = {
   key: process.env.BROWSERSTACK_ACCESS_KEY,
 
   // Capabilities
-  capabilities: [
-    {
-      ...baseConfig.baseCapabilities,
-      // Run the whole suite except the iOS 18-only #4394 regression test.
-      exclude: [caretFocusSpec],
-      'appium:deviceName': 'iPhone 15 Plus',
-      'appium:platformVersion': '17',
-      'bstack:options': {
-        ...bstackOptions,
-        deviceName: 'iPhone 15 Plus',
-        osVersion: '17',
-      },
-    },
-    {
-      ...baseConfig.baseCapabilities,
-      // Run only the #4394 regression test, which requires iOS 18 to reproduce.
-      specs: [caretFocusSpec],
-      'appium:deviceName': 'iPhone 16 Pro Max',
-      'appium:platformVersion': '18',
-      'bstack:options': {
-        ...bstackOptions,
-        deviceName: 'iPhone 16 Pro Max',
-        osVersion: '18',
-      },
-    },
-  ] as WebdriverIO.Config['capabilities'],
+  capabilities: [suiteCapability, caretFocusCapability] as WebdriverIO.Config['capabilities'],
 
   // Services
   services: [
