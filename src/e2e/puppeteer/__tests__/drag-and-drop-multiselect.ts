@@ -80,7 +80,9 @@ describe('drag and drop multiple thoughts', () => {
     expect(highlightedBullets.length).toBe(0)
 
     // 2. the "Drag and drop to move thought" hint alert is dismissed
-    const alertContent = await page.$eval('[data-testid=alert-content]', el => el.textContent).catch(() => null)
+    // When the alert is dismissed the element is absent, so $eval rejects; fall back to '' (not null)
+    // so that .not.toContain has a valid string to operate on in the success case.
+    const alertContent = await page.$eval('[data-testid=alert-content]', el => el.textContent).catch(() => '')
     expect(alertContent).not.toContain('Drag and drop to move thought')
 
     // 3. the cursor is placed on the drop target
