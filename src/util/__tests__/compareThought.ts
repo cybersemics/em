@@ -140,10 +140,10 @@ it('compareFormattingTagPriority', () => {
   expect(compareFormattingTagPriority('<u>A</u>', '<u>A</u>')).toBe(0)
   expect(compareFormattingTagPriority('<strike>A</strike>', '<strike>A</strike>')).toBe(0)
 
-  // non-formatted = 0
+  // a formatted first character sorts above an unformatted one; both unformatted = 0
   expect(compareFormattingTagPriority('a', 'b')).toBe(0)
-  expect(compareFormattingTagPriority('<b>A</b>', 'b')).toBe(0)
-  expect(compareFormattingTagPriority('a', '<b>B</b>')).toBe(0)
+  expect(compareFormattingTagPriority('<b>A</b>', 'b')).toBe(-1)
+  expect(compareFormattingTagPriority('a', '<b>B</b>')).toBe(1)
 
   // strong/b aliases = 0
   expect(compareFormattingTagPriority('<strong>A</strong>', '<b>A</b>')).toBe(0)
@@ -160,6 +160,42 @@ it('compareFormattingTagPriority', () => {
   // strong/em ordering (strong = bold priority, em = italic priority)
   expect(compareFormattingTagPriority('<strong>A</strong>', '<i>A</i>')).toBe(-1)
   expect(compareFormattingTagPriority('<em>A</em>', '<b>A</b>')).toBe(1)
+
+  // more distinct formatting types are given greater priority, regardless of nesting order (#3977)
+  expect(compareFormattingTagPriority('<i><b>A</b></i>', '<i>A</i>')).toBe(-1)
+  expect(compareFormattingTagPriority('<b><i>A</i></b>', '<i>A</i>')).toBe(-1)
+  expect(compareFormattingTagPriority('<i>A</i>', '<i><b>A</b></i>')).toBe(1)
+  // a bold+italic thought (two types) outranks a plain bold thought (one type)
+  expect(compareFormattingTagPriority('<i><b>A</b></i>', '<b>A</b>')).toBe(-1)
+  expect(compareFormattingTagPriority('<b>A</b>', '<i><b>A</b></i>')).toBe(1)
+  // thoughts with the same number of types are tie-broken by their highest-priority tag
+  expect(compareFormattingTagPriority('<i><b>A</b></i>', '<b><i>A</i></b>')).toBe(0)
+
+  // underline+italic (two types) outranks a plain underline or a plain italic (one type)
+  expect(compareFormattingTagPriority('<u><i>A</i></u>', '<u>A</u>')).toBe(-1)
+  expect(compareFormattingTagPriority('<u><i>A</i></u>', '<i>A</i>')).toBe(-1)
+
+  // more formatting types outranks fewer, even if the thought with fewer has a higher-priority tag (#3977)
+  // italic+underline+strikethrough (three types, no bold) outranks bold+italic (two types, includes bold)
+  expect(compareFormattingTagPriority('<i><u><s>A</s></u></i>', '<b><i>A</i></b>')).toBe(-1)
+  expect(compareFormattingTagPriority('<b><i>A</i></b>', '<i><u><s>A</s></u></i>')).toBe(1)
+
+  // only the formatting of the first character counts; formatting of later characters is ignored (#3977)
+  // first character is bold only, so it sorts equal to a plain bold thought despite the trailing italic
+  expect(compareFormattingTagPriority('<b>A</b><i>bc</i>', '<b>A</b>')).toBe(0)
+  // a thought whose first character has two formats outranks one whose second format is on a later character
+  expect(compareFormattingTagPriority('<b><i>A</i></b>', '<b>A</b><i>bc</i>')).toBe(-1)
+  expect(compareFormattingTagPriority('<b>A</b><i>bc</i>', '<b><i>A</i></b>')).toBe(1)
+  // a thought whose first character is unformatted sorts below one whose first character is formatted, ignoring later formatting
+  expect(compareFormattingTagPriority('A<i>bc</i>', '<u>A</u>')).toBe(1)
+
+  // formatting on later characters is ignored; only the first character's formatting is considered (#3977)
+  // both first characters are unformatted, so they sort equally
+  expect(compareFormattingTagPriority('A<b>bc</b>', 'A<i>bc</i>')).toBe(0)
+  // a's first character is unformatted while b's is formatted, so b sorts above a
+  expect(compareFormattingTagPriority('A<b>bc</b>', '<b>A</b>')).toBe(1)
+  // multiple formats on later characters are still ignored when the first character is plain, so b (formatted first character) sorts above a
+  expect(compareFormattingTagPriority('A<b><i>bc</i></b>', '<u>A</u>')).toBe(1)
 })
 
 it('compareDateStrings', () => {
@@ -275,6 +311,11 @@ describe('compareThought', () => {
       expect(compareThoughtDescending(thought('<i>A</i>'), thought('<u>A</u>'))).toBe(-1)
       expect(compareThoughtDescending(thought('<u>A</u>'), thought('<strike>A</strike>'))).toBe(-1)
       expect(compareThoughtDescending(thought('<strike>A</strike>'), thought('<u>A</u>'))).toBe(1)
+    })
+
+    it('sort equally-formatted thoughts by their visible text, ignoring formatting markup (#3977)', () => {
+      expect(compareThoughtDescending(thought('<b><i>E</b>'), thought('<i><b>D</b></i>'))).toBe(-1)
+      expect(compareThoughtDescending(thought('<b><i>C</b>'), thought('<i><b>D</b></i>'))).toBe(1)
     })
 
     it('sort empty thought above formatted thoughts in descending order', () => {
