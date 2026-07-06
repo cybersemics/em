@@ -212,3 +212,60 @@ it('nested background colors should use the inner one', () => {
     backColor: 'rgb(0, 0, 255)',
   })
 })
+
+// selection.html() returns the outer editable <div> wrapper when the caret is collapsed on the editable element
+// itself (e.g. when the cursor is moved to a thought by tapping its bullet). The wrapper must not clear the command
+// state (#3912).
+it('bold thought wrapped in the editable div', () => {
+  expect(getCommandState('<div aria-label="editable-123"><b>text</b></div>')).toStrictEqual({
+    bold: true,
+    italic: false,
+    underline: false,
+    strikethrough: false,
+    code: false,
+    foreColor: undefined,
+    backColor: undefined,
+  })
+})
+
+it('bold thought wrapped in the editable div with empty text', () => {
+  expect(getCommandState('<div aria-label="editable-123"><b></b></div>')).toStrictEqual({
+    bold: true,
+    italic: false,
+    underline: false,
+    strikethrough: false,
+    code: false,
+    foreColor: undefined,
+    backColor: undefined,
+  })
+})
+
+it('partially bold thought wrapped in the editable div', () => {
+  expect(getCommandState('<div aria-label="editable-123"><b>one</b> two</div>')).toStrictEqual({
+    bold: false,
+    italic: false,
+    underline: false,
+    strikethrough: false,
+    code: false,
+    foreColor: undefined,
+    backColor: undefined,
+  })
+})
+
+// The editable div carries a placeholder attribute whose value contains raw HTML with '>' characters. Skipping
+// the wrapper tag must respect quoted attribute values so the inner formatting is still parsed (#3912).
+it('bold thought wrapped in the editable div with an html placeholder attribute', () => {
+  expect(
+    getCommandState(
+      '<div aria-label="editable-1" data-editable="true" class="editable" placeholder="<b>One</b>" role="button" contenteditable="true"><b>One</b></div>',
+    ),
+  ).toStrictEqual({
+    bold: true,
+    italic: false,
+    underline: false,
+    strikethrough: false,
+    code: false,
+    foreColor: undefined,
+    backColor: undefined,
+  })
+})
