@@ -11,7 +11,7 @@ export interface ThoughtspaceRuntime {
   init: () => Promise<{ clientId: string }>
   drop: () => Promise<unknown>
   waitForIdle: () => Promise<void>
-  persistTreecrdtBatches: (batches: readonly PersistThoughtspaceBatch[]) => Promise<void>
+  persistPushQueueBatches: (batches: readonly PersistThoughtspaceBatch[]) => Promise<void>
 }
 
 /** The active data provider backing the current app thoughtspace. */

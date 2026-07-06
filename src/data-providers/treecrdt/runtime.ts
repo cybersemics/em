@@ -24,7 +24,7 @@ const clientIdToReplicaId = (clientId: string): Uint8Array =>
       })()
 
 /** Persists push queue batches through TreeCRDT and forwards local ops to remote sync. */
-const persistTreecrdtBatches = (batches: readonly PersistTreecrdtBatch[]): Promise<void> =>
+const persistPushQueueBatches = (batches: readonly PersistTreecrdtBatch[]): Promise<void> =>
   withTreecrdtWriteBarrier(async () => {
     for (const batch of batches) {
       const { local: isLocal, ...updates } = batch
@@ -58,7 +58,7 @@ export const treecrdtRuntime = {
       materializationVersion !== getMaterializedThoughtsToStoreVersion()
     )
   },
-  persistTreecrdtBatches,
+  persistPushQueueBatches,
 }
 
 export default treecrdtRuntime
