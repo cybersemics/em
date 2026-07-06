@@ -68,11 +68,12 @@ const restorePushQueueFromPatches = (state: State, oldState: State, patch: Patch
   const lexemeIndexChanges = patch.filter(p => p?.path.startsWith('/thoughts/lexemeIndex/'))
   const thoughtIndexChanges = patch.filter(p => p?.path.startsWith('/thoughts/thoughtIndex/'))
 
-  const lexemeIndexUpdates = lexemeIndexChanges.reduce<Index<Lexeme | null>>((acc, op) => {
-    const lexemeKey = op.path.slice('/thoughts/lexemeIndex/'.length).split('/')[0]
+  const lexemeIndexUpdates = lexemeIndexChanges.reduce<Index<Lexeme | null>>((acc, { path }) => {
+    const lexemeKey = path.slice('/thoughts/lexemeIndex/'.length).split('/')[0]
     return {
       ...acc,
-      [lexemeKey]: op.value || null,
+      // Patch paths may target nested lexeme properties such as contexts. Persist the full lexeme.
+      [lexemeKey]: state.thoughts.lexemeIndex[lexemeKey] || null,
     }
   }, {})
   const thoughtIndexUpdates = thoughtIndexChanges.reduce((acc, { path }) => {
