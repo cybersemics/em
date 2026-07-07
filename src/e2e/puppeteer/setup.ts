@@ -2,6 +2,7 @@
 import chalk from 'chalk'
 import { Browser, BrowserContext, ConsoleMessage, Device } from 'puppeteer'
 import { WindowEm } from '../../initialize'
+import createId from '../../util/createId'
 import { page, setPage } from './session'
 
 // eslint-disable-next-line @typescript-eslint/no-namespace, @typescript-eslint/prefer-namespace-keyword
@@ -10,7 +11,6 @@ declare module global {
 }
 
 let context: BrowserContext
-let sessionCounter = 0
 let treecrdtStorage: 'memory' | 'opfs' = 'memory'
 
 /** Seeds isolated browser storage before the app bundle starts. */
@@ -67,7 +67,7 @@ const setup = async ({
     await page.emulate(emulatedDevice)
   }
 
-  const sessionId = `puppeteer-${Date.now()}-${sessionCounter++}-${Math.random().toString(36).slice(2)}`
+  const sessionId = createId()
 
   await installTestSessionStorage(sessionId, treecrdtStorage)
 
