@@ -400,7 +400,9 @@ describe('mobile only', () => {
     // Arrow only hides the keyboard: its occluded height collapses to 0 with no blur event. Emulate that by
     // faking the keyboard geometry (open then dismissed) and firing the geometrychange event the app listens to.
     await page.evaluate(() => {
-      const virtualKeyboard = navigator.virtualKeyboard
+      // The VirtualKeyboard API is not in TypeScript's lib.dom; cast locally so this test compiles
+      // independently of the ambient declaration in src/@types/VirtualKeyboard.d.ts.
+      const virtualKeyboard = (navigator as unknown as { virtualKeyboard: EventTarget }).virtualKeyboard
       /** Overrides the reported keyboard occluded height to simulate the keyboard opening/closing. */
       const overrideHeight = (height: number) =>
         Object.defineProperty(virtualKeyboard, 'boundingRect', { configurable: true, get: () => ({ height }) })
