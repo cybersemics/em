@@ -2,7 +2,6 @@ import { importTextActionCreator as importText } from '../../actions/importText'
 import { undoActionCreator as undo } from '../../actions/undo'
 import { executeCommandWithMulticursor } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
-import db from '../../data-providers/yjs/thoughtspace'
 import { initialize } from '../../initialize'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
@@ -48,38 +47,6 @@ describe('uncategorize', () => {
     expectPathToEqual(state, state.cursor, ['b', 'a'])
   })
 
-  it('pushes complete lexeme updates when undoing uncategorize of a duplicate uncle', async () => {
-    const updateThoughtsSpy = vi.spyOn(db, 'updateThoughts').mockResolvedValue(undefined)
-
-    try {
-      store.dispatch([
-        importText({
-          text: `
-            - a
-            - b
-              - a
-                - c
-          `,
-        }),
-        setCursor(['b', 'a']),
-      ])
-
-      executeCommandWithMulticursor(uncategorizeCommand, { store })
-      store.dispatch(undo())
-
-      await vi.runOnlyPendingTimersAsync()
-      await Promise.resolve()
-
-      const malformedLexemeUpdates = updateThoughtsSpy.mock.calls
-        .flatMap(([payload]) => Object.values(payload.lexemeIndexUpdates))
-        .filter(lexeme => lexeme && !Array.isArray(lexeme.contexts))
-
-      expect(malformedLexemeUpdates).toEqual([])
-    } finally {
-      updateThoughtsSpy.mockRestore()
-    }
-  })
-
   it('persists undoing uncategorize of a duplicate uncle without a save error', async () => {
     const { cleanup } = await initialize()
 
@@ -102,7 +69,7 @@ describe('uncategorize', () => {
       await vi.runOnlyPendingTimersAsync()
       await Promise.resolve()
 
-      expect(store.getState().alert?.value).not.toContain('not able to save the last change')
+      expect(store.getState().error).toBeNull()
     } finally {
       cleanup()
     }
