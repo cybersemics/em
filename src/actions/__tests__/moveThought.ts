@@ -310,19 +310,20 @@ it('move descendants with siblings', () => {
   expect(getContexts(stateNew, 'd')).toMatchObject([thoughtD.id])
 })
 
-it('merge duplicate with new rank', () => {
+// Auto-merge only applies to metaprogramming attributes (=m), which are hierarchically merged on move.
+it('merge duplicate attribute with new rank', () => {
   const text = `
   - a
-    - m
+    - =m
       - x
-  - m
+  - =m
    - y`
 
   const steps = [
     importText({ text }),
     moveThoughtAtFirstMatch({
-      from: ['m'],
-      to: ['a', 'm'],
+      from: ['=m'],
+      to: ['a', '=m'],
       newRank: 0,
     }),
   ]
@@ -333,11 +334,11 @@ it('merge duplicate with new rank', () => {
 
   expect(exported).toBe(`- ${HOME_TOKEN}
   - a
-    - m
+    - =m
       - x
       - y`)
 
-  const thoughtM = contextToThought(stateNew, ['a', 'm'])!
+  const thoughtM = contextToThought(stateNew, ['a', '=m'])!
   const thoughtA = contextToThought(stateNew, ['a'])!
 
   // use destinate rank of duplicate thoughts
@@ -346,22 +347,22 @@ it('merge duplicate with new rank', () => {
   expect(thoughtM.parentId).toBe(thoughtA.id)
 
   // merged thought should only exist in destination context
-  expect(getContexts(stateNew, 'm')).toMatchObject([thoughtM.id])
+  expect(getContexts(stateNew, '=m')).toMatchObject([thoughtM.id])
 })
 
-it('merge with duplicate with duplicate rank', () => {
+it('merge duplicate attribute with duplicate rank', () => {
   const text = `
   - a
-    - m
+    - =m
       - x
-  - m
+  - =m
     - y`
 
   const steps = [
     importText({ text }),
     moveThoughtAtFirstMatch({
-      from: ['m'],
-      to: ['a', 'm'],
+      from: ['=m'],
+      to: ['a', '=m'],
       newRank: 0,
     }),
   ]
@@ -371,17 +372,17 @@ it('merge with duplicate with duplicate rank', () => {
 
   expect(exported).toBe(`- ${HOME_TOKEN}
   - a
-    - m
+    - =m
       - x
       - y`)
 
-  const thoughtM = contextToThought(stateNew, ['a', 'm'])
+  const thoughtM = contextToThought(stateNew, ['a', '=m'])
 
   // use destinate rank of duplicate thoughts
   expect(getAllChildrenByContext(stateNew, ['a'])).toMatchObject([thoughtM?.id])
 
   // merged thought should only exist in destination context
-  expect(getContexts(stateNew, 'm')).toMatchObject([thoughtM?.id])
+  expect(getContexts(stateNew, '=m')).toMatchObject([thoughtM?.id])
 })
 
 it('move with duplicate descendant', () => {
@@ -451,19 +452,19 @@ it('move with hash matched descendant', () => {
   expect(getContexts(stateNew, 'notes')).toMatchObject([thoughtNoteFirst.id, thoughtNoteSecond.id])
 })
 
-it('move with nested duplicate thoughts', () => {
+it('move with nested duplicate attributes', () => {
   const text = `
-  - a
+  - =a
     - b
   - c
-    - a
+    - =a
       - b`
 
   const steps = [
     importText({ text }),
     moveThoughtAtFirstMatch({
-      from: ['c', 'a'],
-      to: ['a'],
+      from: ['c', '=a'],
+      to: ['=a'],
       newRank: 0,
     }),
   ]
@@ -472,30 +473,30 @@ it('move with nested duplicate thoughts', () => {
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
-  - a
+  - =a
     - b
   - c`)
 
-  const thoughtA = contextToThought(stateNew, ['a'])!
-  const thoughtB = contextToThought(stateNew, ['a', 'b'])!
+  const thoughtA = contextToThought(stateNew, ['=a'])!
+  const thoughtB = contextToThought(stateNew, ['=a', 'b'])!
 
   expect(thoughtB.parentId).toBe(thoughtA.id)
   expect(getContexts(stateNew, 'b')).toMatchObject([thoughtB.id])
 })
 
-it('merge thought with duplicate parent', () => {
+it('merge attribute with duplicate parent', () => {
   const text = `
   - a
-    - b
-      - b
+    - =b
+      - =b
         - c
   `
 
   const steps = [
     importText({ text }),
     moveThoughtAtFirstMatch({
-      from: ['a', 'b', 'b'],
-      to: ['a', 'b'],
+      from: ['a', '=b', '=b'],
+      to: ['a', '=b'],
       newRank: 1,
     }),
   ]
@@ -505,27 +506,27 @@ it('merge thought with duplicate parent', () => {
 
   expect(exported).toBe(`- ${HOME_TOKEN}
   - a
-    - b
+    - =b
       - c`)
 
   const thoughtA = contextToThought(stateNew, ['a'])!
-  const thoughtB = contextToThought(stateNew, ['a', 'b'])!
-  const thoughtC = contextToThought(stateNew, ['a', 'b', 'c'])!
+  const thoughtB = contextToThought(stateNew, ['a', '=b'])!
+  const thoughtC = contextToThought(stateNew, ['a', '=b', 'c'])!
 
   expect(thoughtB.parentId).toBe(thoughtA.id)
   expect(thoughtC.parentId).toBe(thoughtB.id)
-  expect(getContexts(stateNew, 'b')).toMatchObject([thoughtB.id])
+  expect(getContexts(stateNew, '=b')).toMatchObject([thoughtB.id])
   expect(getContexts(stateNew, 'c')).toMatchObject([thoughtC.id])
 })
 
-it('move with nested duplicate thoughts and merge their children', () => {
+it('move with nested duplicate attributes and merge their children', () => {
   const text = `
-  - a
+  - =a
     - b
      - c
       - x
   - p
-    - a
+    - =a
       - b
         - c
           - y
@@ -534,8 +535,8 @@ it('move with nested duplicate thoughts and merge their children', () => {
   const steps = [
     importText({ text }),
     moveThoughtAtFirstMatch({
-      from: ['p', 'a'],
-      to: ['a'],
+      from: ['p', '=a'],
+      to: ['=a'],
       newRank: 0,
     }),
   ]
@@ -544,7 +545,7 @@ it('move with nested duplicate thoughts and merge their children', () => {
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
-  - a
+  - =a
     - b
       - c
         - x
@@ -552,24 +553,24 @@ it('move with nested duplicate thoughts and merge their children', () => {
       - d
   - p`)
 
-  const thoughtA = contextToThought(stateNew, ['a'])!
-  const thoughtB = contextToThought(stateNew, ['a', 'b'])!
+  const thoughtA = contextToThought(stateNew, ['=a'])!
+  const thoughtB = contextToThought(stateNew, ['=a', 'b'])!
 
   expect(thoughtB.parentId).toBe(thoughtA.id)
-  // b should only be in context ['a']
+  // b should only be in context ['=a']
   expect(getContexts(stateNew, 'b')).toMatchObject([thoughtB.id])
 
-  // context ['p', 'a'] should not have any garbage children
-  expect(getChildrenRankedByContext(stateNew, ['p', 'a'])).toHaveLength(0)
+  // context ['p', '=a'] should not have any garbage children
+  expect(getChildrenRankedByContext(stateNew, ['p', '=a'])).toHaveLength(0)
 
-  const thoughtC = contextToThought(stateNew, ['a', 'b', 'c'])!
+  const thoughtC = contextToThought(stateNew, ['=a', 'b', 'c'])!
 
   expect(thoughtC.parentId).toBe(thoughtB.id)
-  // c should only be in context ['a', 'b']
+  // c should only be in context ['=a', 'b']
   expect(getContexts(stateNew, 'c')).toMatchObject([thoughtC.id])
 
-  // context ['p', 'a', 'b'] should not have any garbage children
-  expect(getChildrenRankedByContext(stateNew, ['p', 'a', 'b'])).toHaveLength(0)
+  // context ['p', '=a', 'b'] should not have any garbage children
+  expect(getChildrenRankedByContext(stateNew, ['p', '=a', 'b'])).toHaveLength(0)
 })
 
 it('data integrity test', () => {
@@ -594,41 +595,41 @@ it('data integrity test', () => {
   expect(missingParentIds).toHaveLength(0)
 })
 
-it('consistent rank between lexemeIndex and thoughtIndex on duplicate merge', () => {
+it('consistent rank between lexemeIndex and thoughtIndex on duplicate attribute merge', () => {
   const text = `
   - a
-    - b
-  - b`
+    - =b
+  - =b`
 
   const steps = [
     importText({ text }),
     (newState: State) =>
       moveThoughtAtFirstMatch(newState, {
-        from: ['a', 'b'],
-        to: ['b'],
-        // Note: Here new rank will be 0.5 because it's calculated between a (0) and b (1)
+        from: ['a', '=b'],
+        to: ['=b'],
+        // Note: Here new rank will be 0.5 because it's calculated between a (0) and =b (1)
         newRank: getRankAfter(newState, contextToPath(newState, ['a'])!) as number,
       }),
   ]
 
   const stateNew = reducerFlow(steps)(initialState())
-  const contextsOfB = getContexts(stateNew, 'b')
+  const contextsOfB = getContexts(stateNew, '=b')
 
   expect(contextsOfB).toHaveLength(1)
 })
 
-it('update cursor if duplicate thought with cursor is deleted', () => {
+it('update cursor if duplicate attribute with cursor is deleted', () => {
   const text = `
   - a
-    - b
-  - b`
+    - =b
+  - =b`
 
   const steps = [
     importText({ text }),
-    setCursor(['b']),
+    setCursor(['=b']),
     moveThoughtAtFirstMatch({
-      from: ['b'],
-      to: ['a', 'b'],
+      from: ['=b'],
+      to: ['a', '=b'],
       newRank: 0,
     }),
   ]
@@ -638,11 +639,72 @@ it('update cursor if duplicate thought with cursor is deleted', () => {
 
   expect(exported).toBe(`- ${HOME_TOKEN}
   - a
-    - b`)
+    - =b`)
 
   expect(stateNew.cursor).toBeTruthy()
   const cursorThought = pathToThought(stateNew, stateNew.cursor!)
   expect(cursorThought).toBeTruthy()
+})
+
+describe('duplicate normal siblings are not merged', () => {
+  // Auto-merge is limited to metaprogramming attributes. Moving a normal thought next to a
+  // same-value sibling must keep both rather than silently merging (and losing) one.
+  // Regression test for https://github.com/cybersemics/em/issues/3621.
+  it('outdenting a duplicate normal thought onto its parent context keeps both (#3621)', () => {
+    const text = `
+    - AAA
+      - AAA`
+
+    const steps = [
+      importText({ text }),
+      // outdent the inner AAA to the root, where a duplicate AAA already exists
+      moveThoughtAtFirstMatch({
+        from: ['AAA', 'AAA'],
+        to: ['AAA'],
+        newRank: 1,
+      }),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - AAA
+  - AAA`)
+
+    // both AAA thoughts should coexist as separate contexts
+    expect(getContexts(stateNew, 'AAA')).toHaveLength(2)
+  })
+
+  it('moving a normal thought into a context that already has a same-value sibling keeps both', () => {
+    const text = `
+    - a
+      - m
+    - b
+      - m`
+
+    const steps = [
+      importText({ text }),
+      // move b/m into a, which already contains m
+      moveThoughtAtFirstMatch({
+        from: ['b', 'm'],
+        to: ['a', 'm'],
+        newRank: 1,
+      }),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - m
+    - m
+  - b`)
+
+    // both m thoughts should coexist as separate contexts
+    expect(getContexts(stateNew, 'm')).toHaveLength(2)
+  })
 })
 
 it('re-expand after moving across contexts', () => {
