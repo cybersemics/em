@@ -41,13 +41,12 @@ const GestureMenu: FC<{
   const mainCommands = commands.filter(cmd => cmd.id !== 'cancel' && cmd.id !== 'openMobileCommandUniverse')
   const persistentCommands = commands.filter(cmd => cmd.id === 'cancel' || cmd.id === 'openMobileCommandUniverse')
 
-  const { columnCount, rowsPerColumn, visibleRegularCount, lastColumnEmpty, isMobilePortrait } = useGestureMenuLayout(
-    mainCommands.length,
-  )
+  const { columnCount, rowsPerColumn, visibleRegularCount } = useGestureMenuLayout(mainCommands.length)
   const isMultiColumn = columnCount > 1
 
-  // 5rem panel padding above md (per the Figma mockups), 2.25rem below md.
-  const horizontalPadding = `${isMobilePortrait ? GESTURE_MENU_PANEL_PADDING_REM : GESTURE_MENU_PANEL_PADDING_MD_REM}rem`
+  // 5rem panel padding for the multi-column layout (per the Figma mockups), 2.25rem for single column
+  // (mobile portrait, or narrow landscape above md that only fits one column).
+  const horizontalPadding = `${isMultiColumn ? GESTURE_MENU_PANEL_PADDING_MD_REM : GESTURE_MENU_PANEL_PADDING_REM}rem`
 
   // In a multi-column layout the divider spans only the first column; single column spans the full width.
   const dividerWidth = isMultiColumn
@@ -147,41 +146,44 @@ const GestureMenu: FC<{
             </div>
 
             {isMultiColumn ? (
-              /* Multi-column grid: regular commands flow top-to-bottom then left-to-right; the persistent
-                 block is placed explicitly in the last column. */
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))`,
-                  gridTemplateRows: `repeat(${rowsPerColumn}, min-content)`,
-                  gridAutoFlow: 'column',
-                  columnGap: `${GESTURE_MENU_COLUMN_GAP_REM}rem`,
-                  rowGap: `${GESTURE_MENU_ROW_GAP_REM}rem`,
-                }}
-              >
-                {renderMainCommands(visibleMainCommands)}
+              /* Multi-column grid: main commands flow top-to-bottom then left-to-right and own every
+                 column; the persistent block sits in a full-width row below the grid. */
+              <>
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))`,
+                    gridTemplateRows: `repeat(${rowsPerColumn}, min-content)`,
+                    gridAutoFlow: 'column',
+                    columnGap: `${GESTURE_MENU_COLUMN_GAP_REM}rem`,
+                    rowGap: `${GESTURE_MENU_ROW_GAP_REM}rem`,
+                  }}
+                >
+                  {renderMainCommands(visibleMainCommands)}
+                </div>
                 {persistentCommands.length > 0 && (
-                  <div
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: `${GESTURE_MENU_ROW_GAP_REM}rem`,
-                      gridColumnStart: columnCount,
-                      ...(lastColumnEmpty
-                        ? // alone at the top of an empty trailing column
-                          { gridRowStart: 1 }
-                        : // in-flow below the last regular command, separated by the group gap
-                          {
-                            gridRowStart: visibleRegularCount - (columnCount - 1) * rowsPerColumn + 1,
-                            gridRowEnd: -1,
-                            marginTop: `${GESTURE_MENU_GROUP_GAP_REM}rem`,
-                          }),
-                    }}
-                  >
-                    {persistentItems}
+                  <div style={{ marginTop: `${GESTURE_MENU_GROUP_GAP_REM}rem` }}>
+                    <div
+                      style={{
+                        height: '1px',
+                        width: '100%',
+                        marginBottom: `${GESTURE_MENU_GROUP_GAP_REM}rem`,
+                        background:
+                          'linear-gradient(90deg, rgba(174, 168, 214, 0.59) 0%, rgba(28, 27, 36, 0) 100%)',
+                      }}
+                    />
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        columnGap: `${GESTURE_MENU_COLUMN_GAP_REM}rem`,
+                      }}
+                    >
+                      {persistentItems}
+                    </div>
                   </div>
                 )}
-              </div>
+              </>
             ) : (
               /* Single column (mobile portrait or narrow landscape): unchanged flex layout. */
               <>

@@ -41,22 +41,16 @@ export const GESTURE_MENU_HEADER_HEIGHT_REM = 2.8
 /** Approximate row pitch: command label height (~0.95rem) plus the row gap. */
 export const GESTURE_MENU_ROW_PITCH_REM = 0.95 + GESTURE_MENU_ROW_GAP_REM
 
-/** Number of grid rows the persistent block (Cancel + Command Universe) occupies. */
-export const GESTURE_MENU_PERSISTENT_ROWS = 2
-
-/** Approximate height of the persistent block: two rows plus the group gap above it. */
-export const GESTURE_MENU_PERSISTENT_BLOCK_HEIGHT_REM =
-  GESTURE_MENU_GROUP_GAP_REM + GESTURE_MENU_PERSISTENT_ROWS * GESTURE_MENU_ROW_PITCH_REM
+/** Approximate height of the persistent block: a single full-width bottom row plus the group gap above it. */
+export const GESTURE_MENU_PERSISTENT_BLOCK_HEIGHT_REM = GESTURE_MENU_GROUP_GAP_REM + GESTURE_MENU_ROW_PITCH_REM
 
 interface GestureMenuLayout {
   /** Number of columns to render. */
   columnCount: number
   /** Rows per column (capped by available height so trimming has a defined capacity). */
   rowsPerColumn: number
-  /** Number of regular commands actually rendered (may be trimmed to keep the persistent block visible). */
+  /** Number of regular commands actually rendered (may be trimmed when they overflow the grid). */
   visibleRegularCount: number
-  /** True when the last column contains no regular commands (Cancel/Cheatsheet get it to themselves, top-aligned). */
-  lastColumnEmpty: boolean
   /** True below the `md` breakpoint — the menu stays single-column and keeps its mobile-portrait behavior. */
   isMobilePortrait: boolean
 }
@@ -104,14 +98,12 @@ const useGestureMenuLayout = (regularCount: number): GestureMenuLayout => {
   const capacity = columnCount * rowsPerColumn
   const fits = regularCount <= capacity && idealRows <= maxRows
 
-  // When everything fits, render every regular command. Otherwise the grid is
-  // full: reserve the last column's trailing cells for the persistent block and
-  // trim the regular commands that would collide with it (never below 0).
-  const visibleRegularCount = fits ? regularCount : Math.max(0, capacity - GESTURE_MENU_PERSISTENT_ROWS)
+  // Main commands are prioritized: fill every column. When they overflow the grid
+  // (the menu doesn't scroll in multi-column) trim from the end. The persistent
+  // block renders in its own full-width row below the grid, so it never steals cells.
+  const visibleRegularCount = fits ? regularCount : capacity
 
-  const lastColumnEmpty = regularCount <= (columnCount - 1) * rowsPerColumn
-
-  return { columnCount, rowsPerColumn, visibleRegularCount, lastColumnEmpty, isMobilePortrait }
+  return { columnCount, rowsPerColumn, visibleRegularCount, isMobilePortrait }
 }
 
 export default useGestureMenuLayout

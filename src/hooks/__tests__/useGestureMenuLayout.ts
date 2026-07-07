@@ -69,43 +69,27 @@ describe('useGestureMenuLayout', () => {
     expect(isMobilePortrait).toBe(true)
   })
 
-  it('reports lastColumnEmpty when regular commands do not reach the last column', () => {
-    // 3 columns, 4 commands → 2 rows/col, filling col1 and col2, leaving col3 empty.
-    setViewport(1177, TALL)
-    const { columnCount, rowsPerColumn, lastColumnEmpty } = layout(4)
-    expect(columnCount).toBe(3)
-    expect(rowsPerColumn).toBe(2)
-    expect(lastColumnEmpty).toBe(true)
-  })
-
-  it('reports lastColumnEmpty false when a command spills into the last column', () => {
-    // 3 columns, 5 commands → 2 rows/col, col3 gets 1 command.
-    setViewport(1177, TALL)
-    expect(layout(5).lastColumnEmpty).toBe(false)
-  })
-
   it('caps rowsPerColumn and trims regular commands on a short viewport', () => {
-    // Height chosen so maxRows caps to 2 rows per column.
+    // Height chosen so maxRows caps rows per column below what the commands need.
     setViewport(854, 340)
     const { columnCount, rowsPerColumn, visibleRegularCount } = layout(10)
     expect(columnCount).toBe(2)
-    expect(rowsPerColumn).toBe(2)
-    // Grid capacity 4 cells minus 2 reserved for the persistent block → 2 visible.
-    expect(visibleRegularCount).toBe(2)
+    expect(rowsPerColumn).toBe(3)
+    // Main commands fill the whole grid (no reserved persistent cells): 2 × 3 = 6 visible.
+    expect(visibleRegularCount).toBe(6)
     expect(visibleRegularCount).toBeLessThan(10)
   })
 
-  it('never trims below zero and keeps room for the persistent block', () => {
+  it('never trims below zero', () => {
     setViewport(390, 300)
     expect(layout(30).visibleRegularCount).toBeGreaterThanOrEqual(0)
   })
 
   it('handles zero regular commands', () => {
     setViewport(1177, TALL)
-    const { rowsPerColumn, visibleRegularCount, lastColumnEmpty } = layout(0)
+    const { rowsPerColumn, visibleRegularCount } = layout(0)
     expect(rowsPerColumn).toBe(0)
     expect(visibleRegularCount).toBe(0)
-    expect(lastColumnEmpty).toBe(true)
   })
 
   it('scales the column count with the runtime font size', () => {
