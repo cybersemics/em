@@ -230,10 +230,8 @@ it('Verify superscript colors in different views', async () => {
   await clickThought('m')
   await click('[data-testid="toolbar-icon"][aria-label="Context View"]')
 
-  // ArrowDown to the green 'b' context. Keyboard traversal visits the first context and its child before reaching it.
+  // ArrowDown to first context 'b'
   // TODO: Why does clickThought('b') not work here?
-  await press('ArrowDown')
-  await press('ArrowDown')
   await press('ArrowDown')
   const supColor3 = await getSuperscriptColor()
   expect(supColor3).toBeTruthy()
