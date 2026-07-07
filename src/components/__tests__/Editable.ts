@@ -84,7 +84,7 @@ it('inserts emoji spacing immediately and allows Backspace at the emoji boundary
   expect(editable.textContent).toBe('🧠Hello')
 })
 
-// Regression test for https://github.com/cybersemics/em/issues/4173
+// Regression / characterization test for https://github.com/cybersemics/em/issues/4173
 //
 // On iOS Safari, when the keyboard is already open (i.e. immediately after tapping one thought),
 // a rapid tap on an adjacent thought fires `touchend` on the second thought but does NOT fire a
@@ -94,16 +94,18 @@ it('inserts emoji spacing immediately and allows Backspace at the emoji boundary
 // "no-op (cursor set via onFocus)" branch and the cursor is never moved — it stays stuck on the
 // first thought. This is the exact mechanism behind #4173.
 //
-// This test reproduces the bug at the handler level (a pure synthetic-touch e2e cannot: WebDriver
-// taps force focus onto the target, which bypasses the real-finger rapid-tap focus suppression).
-// It marks the first thought as the cursor with the keyboard open (the state left by the first
-// tap), then fires `touchend` on the adjacent thought and asserts the cursor moves to it.
+// This reproduces the bug at the handler level. A pure synthetic-touch e2e cannot: WebDriver taps
+// force focus onto the target, which bypasses the real-finger rapid-tap focus suppression.
 //
-// It is currently expected to FAIL (hence `it.fails`), documenting the unfixed bug. When #4173 is
-// fixed — by setting the cursor directly on `touchend` for a visible non-cursor thought instead of
-// relying solely on `onFocus` — this test will start passing; remove `.fails` at that point so it
-// becomes a live regression guard.
-it.fails('tapping an adjacent thought while the keyboard is open moves the cursor (#4173)', async () => {
+// The test marks the first thought as the cursor with the keyboard open (the state left by the
+// first tap), then fires `touchend` on the adjacent thought. It asserts the CURRENT (buggy)
+// outcome: the cursor stays on 'a'. The correct, post-fix behavior is that the cursor moves to 'b'.
+//
+// WHEN #4173 IS FIXED — by setting the cursor directly on `touchend` for a visible non-cursor
+// thought instead of relying solely on `onFocus` — this test will start failing. At that point,
+// change the expected value below from 'a' to 'b' (and update this comment) so it becomes a live
+// regression guard for the fixed behavior.
+it('tapping an adjacent thought while the keyboard is open does not move the cursor (#4173)', async () => {
   await dispatch([
     importText({
       text: `
@@ -128,5 +130,7 @@ it.fails('tapping an adjacent thought while the keyboard is open moves the curso
   await act(vi.runOnlyPendingTimersAsync)
 
   const state = store.getState()
-  expect(state.cursor && headValue(state, state.cursor)).toBe('b')
+  const cursorValue = state.cursor ? headValue(state, state.cursor) : undefined
+  // BUG #4173: this should be 'b' once fixed; today the cursor stays stuck on 'a'.
+  expect(cursorValue).toBe('a')
 })
