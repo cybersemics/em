@@ -379,6 +379,50 @@ describe('mobile only', () => {
     await waitUntil(() => !document.activeElement || document.activeElement === document.body)
   })
 
+  // Regression test for https://github.com/cybersemics/em/issues/3958
+  it('caret should be dismissed when the virtual keyboard is closed without blurring (e.g. Android Down Arrow)', async () => {
+    await paste(`
+    - One
+    - Two
+    - Three`)
+
+    // tap thought One to put the caret on it (keyboard open)
+    await clickThought('One')
+    await clickThought('One')
+
+    // precondition: the caret is on a thought with the keyboard open
+    expect(await getSelection().focusNode).toBeTruthy()
+
+    // Simulate dismissing the virtual keyboard with the Android Down Arrow button.
+    // Because the app declares interactive-widget=overlays-content (index.html), the keyboard overlays
+    // content and does not fire a visualViewport resize; instead the Chromium VirtualKeyboard API reports
+    // the keyboard geometry. Unlike the Done button (which blurs the editable, see closeKeyboard), the Down
+    // Arrow only hides the keyboard: its occluded height collapses to 0 with no blur event. Emulate that by
+    // faking the keyboard geometry (open then dismissed) and firing the geometrychange event the app listens to.
+    await page.evaluate(() => {
+      // The VirtualKeyboard API is not in TypeScript's lib.dom; cast locally so this test compiles
+      // independently of the ambient declaration in src/@types/VirtualKeyboard.d.ts.
+      const virtualKeyboard = (navigator as unknown as { virtualKeyboard: EventTarget }).virtualKeyboard
+      /** Overrides the reported keyboard occluded height to simulate the keyboard opening/closing. */
+      const overrideHeight = (height: number) =>
+        Object.defineProperty(virtualKeyboard, 'boundingRect', { configurable: true, get: () => ({ height }) })
+      /** Fires a geometrychange event, as the browser does when the virtual keyboard shows/hides. */
+      const fireGeometryChange = () => virtualKeyboard.dispatchEvent(new Event('geometrychange'))
+
+      // keyboard open: it occludes part of the screen
+      overrideHeight(300)
+      fireGeometryChange()
+
+      // Down Arrow pressed: keyboard hides, occluded height collapses to 0 (no blur)
+      overrideHeight(0)
+      fireGeometryChange()
+    })
+
+    // the caret should be dismissed along with the keyboard
+    await waitUntil(() => !window.getSelection()?.focusNode)
+    expect(await getSelection().focusNode).toBeFalsy()
+  })
+
   // Regression test for https://github.com/cybersemics/em/issues/3996
   // .skip keeps normal CI green while the test is red; remove the .skip when the fix lands.
   it('tapping a text formatting button after the keyboard is manually dismissed should not open the keyboard', async () => {

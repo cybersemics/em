@@ -15,9 +15,6 @@ export const MAX_DEPTH = 20
 // Number of ms to wait after hovering over a thought before expanding, during drag-and-drop. Overriden by testFlags.expandHoverDelay during drag-and-drop tests.
 export const EXPAND_HOVER_DELAY = 1000
 
-// threshold for keyboard visibility detection (percentage of height change)
-export const KEYBOARD_VISIBILITY_THRESHOLD = 0.15
-
 // ms on startup before offline mode is enabled
 // sufficient to avoid flash on login
 export const OFFLINE_TIMEOUT = 8 * 1000
