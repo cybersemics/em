@@ -1,9 +1,17 @@
 /**
- * IOS Safari caret regression test for #4173.
+ * IOS Safari caret spec for #4173 (documentation / synthetic-touch boundary).
+ *
+ * NOTE: A synthetic WebDriver touch CANNOT faithfully reproduce #4173. WDA / `performActions` /
+ * `mobile: tap` all FORCE focus onto the tapped element, which bypasses the real-finger rapid-tap
+ * FOCUS-suppression that causes the bug (on a real device the second rapid tap fires `touchend` but
+ * no `focus`, so the cursor is never moved). The faithful, handler-level regression test lives in
+ * src/components/__tests__/Editable.ts. This spec is retained to document the investigation: it
+ * proves native-gesture taps at genuine sub-second gaps DO move the cursor, and it isolates the one
+ * synthetic-input artifact (0ms coalescing) that superficially resembled — but was not — #4173.
  *
  * Isolated into its own spec file so it can be pinned to an iOS version whose Safari touch-adjustment
- * / rapid-tap focus handling reproduces the bug (see wdio.browserstack.conf.ts). The rest of the iOS
- * suite runs on the default device/version.
+ * / rapid-tap focus handling was under investigation (see wdio.browserstack.conf.ts). The rest of the
+ * iOS suite runs on the default device/version.
  */
 import type { Element } from 'webdriverio'
 import getEditingText from '../helpers/getEditingText'
@@ -103,23 +111,28 @@ const twoTap = async (targetValue: string, gapMs: number): Promise<string | unde
 }
 
 describe('Caret', () => {
-  // Map the trigger boundary for the ADJACENT case (a->b). #4173's symptom is the cursor staying on
-  // the first thought (a) instead of moving to the second (b). The gap is the exact in-chain pause
-  // between the two taps. A faithful repro of the user-reported "within a second" behavior would fail
-  // across a sub-second range; if only ~0ms fails, the failure is more likely a synthetic-input
-  // artifact (two ultra-fast touches coalesced) than the real rapid-tap focus bug.
-  const ADJACENT_GAPS_MS = [0, 25, 50, 75, 100]
+  // Native-gesture taps at a genuine sub-second gap (>=25ms) DO move the cursor to the adjacent
+  // thought. These pass on BrowserStack, confirming that synthetic native taps at these intervals
+  // cannot reproduce #4173. The gap is the exact in-chain pause between the two taps.
+  const ADJACENT_GAPS_MS = [25, 50, 75, 100]
   ADJACENT_GAPS_MS.forEach(gapMs => {
     it(`Set caret on adjacent thought ${gapMs}ms after tap (#4173)`, async () => {
       expect(await twoTap('b', gapMs)).toBe('b')
     })
   })
 
-  // Non-adjacent control: at the SAME 0ms timing, tapping a distant thought (a->c) must still move the
-  // cursor, per the issue ("A non-adjacent thought works"). This discriminates a genuine #4173 repro
-  // from an artifact: if a->b fails at 0ms but a->c passes at 0ms, the bug is adjacency-specific (real
-  // #4173). If a->c ALSO fails at 0ms, the second tap is simply being dropped (artifact, not #4173).
-  it('Set caret on non-adjacent thought 0ms after tap (#4173 control)', async () => {
+  // SKIPPED — synthetic-input artifact, not a faithful #4173 repro (kept for documentation).
+  // At a literal 0ms in-chain gap, WDA/WebKit spatially COALESCES the two synthetic touches into a
+  // single averaged tap: a->b lands back on "a", and the non-adjacent control a->c lands on the
+  // geometric MIDPOINT "b" (not "c"). Genuine #4173 is a rapid-tap FOCUS-suppression bug that WDA
+  // taps bypass entirely (they force focus onto the target). The faithful, handler-level regression
+  // test is `#4173` in src/components/__tests__/Editable.ts. These two cases are skipped so CI stays
+  // green while still recording the exact artifact boundary.
+  it.skip('Set caret on adjacent thought 0ms after tap (#4173 — synthetic artifact, see Editable.ts)', async () => {
+    expect(await twoTap('b', 0)).toBe('b')
+  })
+
+  it.skip('Set caret on non-adjacent thought 0ms after tap (#4173 control — synthetic artifact)', async () => {
     expect(await twoTap('c', 0)).toBe('c')
   })
 })
