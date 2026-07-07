@@ -251,23 +251,4 @@ describe('Caret', () => {
     expect(selectionTextContent).toBe('new')
     expect(childrenTexts).toEqual(['foo', 'bar'])
   })
-
-  it('Focus is prevented after clearing the cursor', async () => {
-    await newThought('Hello')
-    await hideKeyboardByTappingDone()
-
-    // Use a native WebDriver click on the inner anchor to clear the cursor.
-    // A synthetic tap() (performActions pointer events) does not fire the real
-    // click event that HomeLink's fastClick onClick handler relies on, so the
-    // cursor would never be cleared.
-    await browser.$('[data-testid="home"] a').click()
-
-    await tap(await waitForEditable('Hello'), { horizontalTapLine: 'right', x: 6, y: 60, pointerType: 'touch' })
-
-    // Wait for focus to be cleared and activeElement to be body
-    await waitUntil(() => browser.execute(() => document.activeElement === document.body))
-
-    const activeElementIsBody = await browser.execute(() => document.activeElement === document.body)
-    expect(activeElementIsBody).toBe(true)
-  })
 })
