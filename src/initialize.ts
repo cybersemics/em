@@ -129,7 +129,7 @@ const testHelpers = {
   },
   dropThoughtspace: thoughtspaceRuntime.drop,
   waitForInitialized,
-  waitForThoughtspaceIdle: thoughtspaceRuntime.waitForIdle,
+  waitForThoughtspaceRuntimeIdle: thoughtspaceRuntime.waitForIdle,
   setSelection: selection.set,
   importToContext: withDispatch(importToContext),
   getLexemeFromThoughtspace: (value: string) => db.getLexemeById(hashThought(value)),

@@ -12,6 +12,24 @@ type PersistTreecrdtBatch = Parameters<DataProvider['updateThoughts']>[0] & {
   local?: boolean
 }
 
+const TREECRDT_IDLE_TIMEOUT = 30000
+
+/** Rejects if provider idle work never settles. */
+const withIdleTimeout = (promise: Promise<void>): Promise<void> => {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined
+
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) => {
+      timeoutId = setTimeout(() => {
+        reject(new Error(`TreeCRDT idle wait timed out after ${TREECRDT_IDLE_TIMEOUT}ms`))
+      }, TREECRDT_IDLE_TIMEOUT)
+    }),
+  ]).finally(() => {
+    if (timeoutId) clearTimeout(timeoutId)
+  })
+}
+
 /** Converts the app client id to TreeCRDT's 32-byte replica id. */
 const clientIdToReplicaId = (clientId: string): Uint8Array =>
   clientId.length === 44
@@ -35,6 +53,21 @@ const persistPushQueueBatches = (batches: readonly PersistTreecrdtBatch[]): Prom
     }
   })
 
+/** Waits until both local writes and materialization refreshes are stable. */
+const waitForStableIdle = async (): Promise<void> => {
+  let writeVersion: number
+  let materializationVersion: number
+  do {
+    writeVersion = getTreecrdtWriteBarrierVersion()
+    materializationVersion = getMaterializedThoughtsToStoreVersion()
+    await waitForTreecrdtWriteBarrier()
+    await waitForMaterializedThoughtsToStore()
+  } while (
+    writeVersion !== getTreecrdtWriteBarrierVersion() ||
+    materializationVersion !== getMaterializedThoughtsToStoreVersion()
+  )
+}
+
 /** TreeCRDT lifecycle implementation for the app thoughtspace runtime. */
 export const treecrdtRuntime = {
   init: async (): Promise<{ clientId: string }> => {
@@ -45,19 +78,7 @@ export const treecrdtRuntime = {
     return { clientId }
   },
   drop: () => treecrdtDb.clear(),
-  waitForIdle: async (): Promise<void> => {
-    let writeVersion: number
-    let materializationVersion: number
-    do {
-      writeVersion = getTreecrdtWriteBarrierVersion()
-      materializationVersion = getMaterializedThoughtsToStoreVersion()
-      await waitForTreecrdtWriteBarrier()
-      await waitForMaterializedThoughtsToStore()
-    } while (
-      writeVersion !== getTreecrdtWriteBarrierVersion() ||
-      materializationVersion !== getMaterializedThoughtsToStoreVersion()
-    )
-  },
+  waitForIdle: (): Promise<void> => withIdleTimeout(waitForStableIdle()),
   persistPushQueueBatches,
 }
 
