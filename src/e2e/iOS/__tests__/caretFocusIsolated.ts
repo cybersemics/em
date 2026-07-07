@@ -1,5 +1,5 @@
 /**
- * iOS Safari isolated-primitive diagnostics for #4394.
+ * Add iOS Safari isolated-primitive diagnostics for #4394.
  *
  * These specs strip away all em code and reproduce the bug against DOM primitives: a bare
  * contentEditable plus an adjacent non-focusable overlay (mimicking the thought-annotation), driven by
@@ -10,17 +10,17 @@
  * Two hypotheses are probed:
  *
  * - H2 (first spec): `preventDefault()` on the touch-adjustment-redirected `mousedown` does NOT block
- *   focus, because focus is a default action of the *touch* sequence, not the mouse event. Passing this
- *   spec (focus + keyboard despite a successfully-prevented mousedown, with zero em code) confirms H2 is
- *   a pure iOS Safari platform property.
+ * focus, because focus is a default action of the *touch* sequence, not the mouse event. Passing this
+ * spec (focus + keyboard despite a successfully-prevented mousedown, with zero em code) confirms H2 is
+ * a pure iOS Safari platform property.
  *
  * - Touch-layer fix viability (second spec): since the touchstart/touchend land on the overlay and never
- *   reach the editable, the only touch we can intercept is the overlay's. This spec preventDefaults on
- *   the overlay's touch events and asks whether that suppresses the retargeted focus. If it does, a
- *   touch-layer fix on the annotation/overlay is viable. If focus still proceeds, iOS's focus retarget is
- *   decoupled from the overlay's touch default and no `preventDefault` can stop it — the fix must prevent
- *   focus another way (e.g. blur-on-focus, or making the editable unfocusable while it is a non-cursor
- *   thought).
+ * reach the editable, the only touch we can intercept is the overlay's. This spec preventDefaults on
+ * the overlay's touch events and asks whether that suppresses the retargeted focus. If it does, a
+ * touch-layer fix on the annotation/overlay is viable. If focus still proceeds, iOS's focus retarget is
+ * decoupled from the overlay's touch default and no `preventDefault` can stop it — the fix must prevent
+ * focus another way (e.g. blur-on-focus, or making the editable unfocusable while it is a non-cursor
+ * thought).
  */
 import getElementRectByScreen from '../helpers/getElementRectByScreen'
 import hideKeyboardByTappingDone from '../helpers/hideKeyboardByTappingDone'
@@ -77,7 +77,7 @@ describe('Caret (isolated)', () => {
       })
 
       if (guard) {
-        // passive:false is required for preventDefault on touchstart to be honored by Safari.
+        /** Setting passive:false is required for preventDefault on touchstart to be honored by Safari. */
         const onTouch = (e: Event) => {
           e.preventDefault()
           w.__fixOverlayTouchFired = true
