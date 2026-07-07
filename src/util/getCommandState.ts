@@ -115,17 +115,6 @@ const getCommandState = (value: string): CommandState => {
     if (foundTag) {
       continue
     }
-    // Skip any non-formatting tag (e.g. the outer editable <div> wrapper or a <font> tag) rather than treating it
-    // as text. Absorbing the tag's characters as text would incorrectly clear the command matches, so that a
-    // fully-bold thought wrapped in its editable div (as returned by selection.html() for a collapsed caret) would
-    // report no formatting (#3912). Formatting tags are already handled above, so anything reaching here is a
-    // non-formatting tag that should not affect the command state. Quoted attribute values are consumed wholesale
-    // because they may themselves contain '>' (e.g. the editable div's placeholder="<b>One</b>" attribute).
-    const nonFormattingTag = value.match(/^<\/?[a-z](?:[^>"']|"[^"]*"|'[^']*')*>/i)
-    if (nonFormattingTag) {
-      value = value.substring(nonFormattingTag[0].length)
-      continue
-    }
     // Handle all of the subsequent non-tag characters
     const nonTagCharacters = value.match(/^[^<]+/)
     // Default to parsing a single `<` character if it has been determined to be a non-tag character
