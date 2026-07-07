@@ -63,7 +63,7 @@ it('toggle on when there is an unrelated =children attribute', () => {
   executeCommand(pinAllCommand, { store })
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-  expect(exported).toEqual(`- __ROOT__
+  expect(exported).toEqual(`- ${HOME_TOKEN}
   - A
     - B
       - =children
@@ -242,7 +242,7 @@ it('preserve unrelated =children attributes when toggling off', () => {
   executeCommand(pinAllCommand, { store })
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-  expect(exported).toEqual(`- __ROOT__
+  expect(exported).toEqual(`- ${HOME_TOKEN}
   - a
     - =children
       - =bullet
