@@ -1,6 +1,7 @@
 import type { Operation } from '@treecrdt/interface'
 import type { DataProvider } from '../DataProvider'
 import { initPermissionsStore } from '../permissionsStore'
+import type { ThoughtspaceRuntimeInitOptions } from '../thoughtspace'
 import { clientIdReady } from '../thoughtspaceSession'
 import { pushTreecrdtLocalOpsToRemote } from './sync'
 import { getMaterializedThoughtsToStoreVersion, waitForMaterializedThoughtsToStore } from './sync/materializationQueue'
@@ -70,11 +71,11 @@ const waitForStableIdle = async (): Promise<void> => {
 
 /** TreeCRDT lifecycle implementation for the app thoughtspace runtime. */
 export const treecrdtRuntime = {
-  init: async (): Promise<{ clientId: string }> => {
+  init: async (options?: ThoughtspaceRuntimeInitOptions): Promise<{ clientId: string }> => {
     const clientId = await clientIdReady
     await initPermissionsStore()
     await initTreecrdt()
-    await initTreecrdtThoughtspace(clientIdToReplicaId(clientId))
+    await initTreecrdtThoughtspace(clientIdToReplicaId(clientId), options?.materialization)
     return { clientId }
   },
   drop: () => treecrdtDb.clear(),

@@ -47,6 +47,13 @@ const fakeProvider = (thoughts: Index<Thought>): DataProvider => ({
   freeLexeme: async () => undefined,
 })
 
+/** Converts test state to the provider-facing materialization snapshot. */
+const materializationSnapshot = (state: ReturnType<typeof initialState>) => ({
+  schemaVersion: state.schemaVersion,
+  thoughtIndex: state.thoughts.thoughtIndex,
+  lexemeIndex: state.thoughts.lexemeIndex,
+})
+
 it('projects TreeCRDT sibling order into compatibility ranks', async () => {
   const oldParent = thought(HOME_TOKEN, HOME_TOKEN, 0, ROOT_PARENT_ID, [A_ID, B_ID, C_ID])
   const newParent = thought(HOME_TOKEN, HOME_TOKEN, 0, ROOT_PARENT_ID, [C_ID, A_ID, B_ID])
@@ -74,7 +81,7 @@ it('projects TreeCRDT sibling order into compatibility ranks', async () => {
       [B_ID]: thoughtB,
       [C_ID]: thoughtC,
     }),
-    state,
+    materializationSnapshot(state),
   )
 
   const updates = Object.fromEntries(result.thoughts.map(nextThought => [nextThought.id, nextThought]))
@@ -117,7 +124,7 @@ it('projects TreeCRDT sibling order for both parents after a cross-parent move',
       [B_ID]: thoughtB,
       [C_ID]: thoughtC,
     }),
-    state,
+    materializationSnapshot(state),
   )
 
   const updates = Object.fromEntries(result.thoughts.map(nextThought => [nextThought.id, nextThought]))

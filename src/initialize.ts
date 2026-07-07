@@ -12,6 +12,7 @@ import { loadFromUrlActionCreator as loadFromUrl } from './actions/loadFromUrl'
 import { preloadSourcesActionCreator as preloadSources } from './actions/preloadSources'
 import { pullActionCreator as pull } from './actions/pull'
 import { setCursorActionCreator as setCursor } from './actions/setCursor'
+import { updateThoughtsActionCreator } from './actions/updateThoughts'
 import { commandById, executeCommand } from './commands'
 import db, { thoughtspaceRuntime } from './data-providers/thoughtspace'
 import * as selection from './device/selection'
@@ -61,7 +62,28 @@ const initializeInternal = async () => {
   initOfflineStatusStore(/* websocket */)
   const eventHandlers = initEvents(store)
 
-  const { clientId } = await thoughtspaceRuntime.init()
+  const { clientId } = await thoughtspaceRuntime.init({
+    materialization: {
+      getSnapshot: () => {
+        const state = store.getState()
+        return {
+          schemaVersion: state.schemaVersion,
+          thoughtIndex: state.thoughts.thoughtIndex,
+          lexemeIndex: state.thoughts.lexemeIndex,
+        }
+      },
+      apply: updates => {
+        store.dispatch(
+          updateThoughtsActionCreator({
+            ...updates,
+            local: false,
+            remote: false,
+            repairCursor: true,
+          }),
+        )
+      },
+    },
+  })
 
   // load local state unless loading a public context or source url
   // await initDB()

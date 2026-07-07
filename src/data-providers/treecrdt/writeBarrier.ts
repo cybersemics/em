@@ -14,7 +14,7 @@ const localWriteIdPrefix = `em-local:${localWriteSourceId}:`
 
 /**
  * Queues em -> TreeCRDT persistence work and exposes an idle barrier for materialization refreshes.
- * This is a local ordering guard, not a CRDT requirement; it keeps Redux refreshes from racing local persistence.
+ * This is a local ordering guard, not a CRDT requirement; it keeps app-state refreshes from racing local persistence.
  */
 export function withTreecrdtWriteBarrier<T>(work: () => Promise<T>): Promise<T> {
   pendingTreecrdtWriteVersion += 1
@@ -46,7 +46,7 @@ export async function waitForTreecrdtWriteBarrier(): Promise<void> {
   }
 }
 
-/** Creates local write metadata used to identify materialization events already applied optimistically in Redux. */
+/** Creates local write metadata used to identify materialization events already applied optimistically by the app. */
 export function createTreecrdtLocalWriteOptions(): LocalWriteOptions {
   localWriteCounter += 1
   return { writeId: `${localWriteIdPrefix}${localWriteCounter}` }
