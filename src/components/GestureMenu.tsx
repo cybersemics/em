@@ -153,13 +153,28 @@ const GestureMenu: FC<{
                   style={{
                     display: 'grid',
                     gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))`,
-                    gridTemplateRows: `repeat(${rowsPerColumn}, min-content)`,
-                    gridAutoFlow: 'column',
                     columnGap: `${GESTURE_MENU_COLUMN_GAP_REM}rem`,
-                    rowGap: `${GESTURE_MENU_ROW_GAP_REM}rem`,
                   }}
                 >
-                  {renderMainCommands(visibleMainCommands)}
+                  {/* Split the commands into column-major chunks (top-to-bottom then left-to-right)
+                     and render each column as its own nested grid. Per-column row tracks — rather
+                     than one shared set of tracks — keep a selected command's description from
+                     inflating the matching row in sibling columns. */}
+                  {Array.from({ length: columnCount }, (_, columnIndex) =>
+                    visibleMainCommands.slice(columnIndex * rowsPerColumn, (columnIndex + 1) * rowsPerColumn),
+                  ).map((columnCommands, columnIndex) => (
+                    <div
+                      key={columnIndex}
+                      style={{
+                        display: 'grid',
+                        gridTemplateRows: `repeat(${rowsPerColumn}, min-content)`,
+                        rowGap: `${GESTURE_MENU_ROW_GAP_REM}rem`,
+                        minWidth: 0,
+                      }}
+                    >
+                      {renderMainCommands(columnCommands)}
+                    </div>
+                  ))}
                 </div>
                 {persistentCommands.length > 0 && (
                   <div style={{ marginTop: `${GESTURE_MENU_GROUP_GAP_REM}rem` }}>
