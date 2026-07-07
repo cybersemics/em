@@ -8,6 +8,7 @@ import { ColorToken } from '../colors.config'
 import * as selection from '../device/selection'
 import getThoughtById from '../selectors/getThoughtById'
 import themeColors from '../selectors/themeColors'
+import batchEditingStore from '../stores/batchEditing'
 import commandStateStore from '../stores/commandStateStore'
 import head from '../util/head'
 import rgbToHex from '../util/rgbToHex'
@@ -100,8 +101,10 @@ const ColorSwatch: FC<{
       ),
     )
 
+    batchEditingStore.update(true)
     // Apply background color to the selection
     dispatch(formatSelection('backColor', selected ? 'bg' : (backgroundColor ?? 'bg')))
+    batchEditingStore.update(false)
   }
 
   /** Toggles the text color onTouchEnd or onClick on desktop. */

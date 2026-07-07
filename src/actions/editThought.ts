@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
+import MergePrevActionPayload from '../@types/MergePrevActionPayload'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
@@ -29,7 +30,7 @@ import deleteThought from './deleteThought'
 import setCursor from './setCursor'
 import updateThoughts from './updateThoughts'
 
-export interface editThoughtPayload {
+export interface editThoughtPayload extends MergePrevActionPayload {
   cursorOffset?: number
   /** Force the Editable to re-render. */
   // TODO: This is used to force the Editable to re-render on generateThought, which co-opts clearThought during its pending state. Is there a better way to do this?

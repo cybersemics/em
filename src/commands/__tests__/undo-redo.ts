@@ -2,6 +2,7 @@ import { archiveThoughtActionCreator as archiveThought } from '../../actions/arc
 import { clearActionCreator as clear } from '../../actions/clear'
 import { cursorBackActionCreator as cursorBack } from '../../actions/cursorBack'
 import { cursorDownActionCreator as cursorDown } from '../../actions/cursorDown'
+import { editThoughtActionCreator as editThoughtRaw } from '../../actions/editThought'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { indentActionCreator as indent } from '../../actions/indent'
 import { moveThoughtDownActionCreator as moveThoughtDown } from '../../actions/moveThoughtDown'
@@ -12,6 +13,7 @@ import moveThoughtDownCommand from '../../commands/moveThoughtDown'
 import { HOME_TOKEN } from '../../constants'
 import { initialize } from '../../initialize'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
+import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
 import { getLexeme } from '../../selectors/getLexeme'
 import store from '../../stores/app'
@@ -19,6 +21,7 @@ import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../..
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import head from '../../util/head'
 import deleteCommand from '../delete'
 import indentCommand from '../indent'
 
@@ -586,6 +589,40 @@ describe('grouping', () => {
     const exportedAfterSecondUndo = exportContext(store.getState(), [HOME_TOKEN], 'text/html')
     expect(exportedAfterSecondUndo).toContain('<li>hello</li>')
     expect(exportedAfterSecondUndo).not.toContain('<i>')
+  })
+
+  it('background highlight (foreColor+backColor) should be a single undo step', () => {
+    // Simulates the ColorPicker background highlight flow: foreColor (black text) + backColor (orange bg).
+    // These are two separate editThought dispatches but should merge into one undo step via mergePrev.
+    // Without mergePrev, undoing only reverts the backColor, leaving black text on dark background (invisible).
+    store.dispatch([
+      importText({
+        text: `
+          - hello`,
+      }),
+      // foreColor: set text to black (first formatting dispatch)
+      editThought(['hello'], '<font color="#000000">hello</font>'),
+    ])
+
+    // backColor: set background to orange (second formatting dispatch, with mergePrev: true)
+    // Computed synchronously using the current store state to avoid a thunk dispatch
+    const pathAfterForeColor = contextToPath(store.getState(), ['<font color="#000000">hello</font>'])
+    store.dispatch(
+      editThoughtRaw({
+        path: pathAfterForeColor!,
+        oldValue: head(pathAfterForeColor! as string[]),
+        newValue: '<font color="#000000" style="background-color: rgb(255, 165, 0);">hello</font>',
+        mergePrev: true,
+      }),
+    )
+
+    // undo should revert both foreColor and backColor in a single step, restoring the plain value
+    store.dispatch(undo())
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/html')
+    // Both formatting changes are undone — plain text is restored (not stuck with black text on dark bg)
+    expect(exported).toContain('<li>hello</li>')
+    expect(exported).not.toContain('<font')
   })
 
   it('contiguous edits should be grouped', () => {
