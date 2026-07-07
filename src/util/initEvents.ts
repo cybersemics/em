@@ -29,7 +29,6 @@ import isRoot from '../util/isRoot'
 import pathToContext from '../util/pathToContext'
 import durations from './durations'
 import equalPath from './equalPath'
-import handleKeyboardVisibility from './handleKeyboardVisibility'
 
 // the width of the scroll-at-edge zone at the top/bottom of the screen (for vertical scrolling) or left/right of the screen (for horizontal scrolling)
 const TOOLBAR_SCROLLATEDGE_SIZE = 50
@@ -388,10 +387,6 @@ const initEvents = (store: Store<State, any>) => {
 
   const resizeHost = window.visualViewport || window
   resizeHost.addEventListener('resize', updateSize)
-  // On Android, dismissing the virtual keyboard (e.g. via the Down Arrow button) hides the keyboard
-  // without blurring the editable, so no blur event fires to dismiss the caret. Detect the keyboard
-  // closing from the viewport resize and exit edit mode. See: https://github.com/cybersemics/em/issues/3958
-  resizeHost.addEventListener('resize', handleKeyboardVisibility)
 
   // Initialize virtual keyboard handlers
   virtualKeyboardHandler.init()
@@ -420,7 +415,6 @@ const initEvents = (store: Store<State, any>) => {
     window.removeEventListener('drop', drop)
     lifecycle.removeEventListener('statechange', onStateChange)
     resizeHost.removeEventListener('resize', updateSize)
-    resizeHost.removeEventListener('resize', handleKeyboardVisibility)
     virtualKeyboardHandler.destroy()
     eventHandlers = null
   }

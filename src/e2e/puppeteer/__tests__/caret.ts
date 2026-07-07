@@ -394,30 +394,29 @@ describe('mobile only', () => {
     expect(await getSelection().focusNode).toBeTruthy()
 
     // Simulate dismissing the virtual keyboard with the Android Down Arrow button.
-    // Unlike the Done button (which blurs the editable, see closeKeyboard), the Down Arrow only
-    // hides the keyboard: the visualViewport grows back to full height with no blur event. Emulate
-    // that by faking the viewport shrink (keyboard open) then grow (keyboard dismissed) and firing
-    // the resize events the app listens to, without re-rendering the thought.
+    // Because the app declares interactive-widget=overlays-content (index.html), the keyboard overlays
+    // content and does not fire a visualViewport resize; instead the Chromium VirtualKeyboard API reports
+    // the keyboard geometry. Unlike the Done button (which blurs the editable, see closeKeyboard), the Down
+    // Arrow only hides the keyboard: its occluded height collapses to 0 with no blur event. Emulate that by
+    // faking the keyboard geometry (open then dismissed) and firing the geometrychange event the app listens to.
     await page.evaluate(() => {
-      const visualViewport = window.visualViewport!
-      const fullHeight = visualViewport.height
-      /** Overrides the reported visualViewport height to simulate the keyboard opening/closing. */
+      const virtualKeyboard = navigator.virtualKeyboard
+      /** Overrides the reported keyboard occluded height to simulate the keyboard opening/closing. */
       const overrideHeight = (height: number) =>
-        Object.defineProperty(visualViewport, 'height', { configurable: true, get: () => height })
-      /** Fires a visualViewport resize event, as the OS does when the virtual keyboard shows/hides. */
-      const fireResize = () => visualViewport.dispatchEvent(new Event('resize'))
+        Object.defineProperty(virtualKeyboard, 'boundingRect', { configurable: true, get: () => ({ height }) })
+      /** Fires a geometrychange event, as the browser does when the virtual keyboard shows/hides. */
+      const fireGeometryChange = () => virtualKeyboard.dispatchEvent(new Event('geometrychange'))
 
-      // keyboard open: viewport shrinks
-      overrideHeight(Math.round(fullHeight * 0.6))
-      fireResize()
+      // keyboard open: it occludes part of the screen
+      overrideHeight(300)
+      fireGeometryChange()
 
-      // Down Arrow pressed: keyboard hides, viewport grows back to full height (no blur)
-      overrideHeight(fullHeight)
-      fireResize()
+      // Down Arrow pressed: keyboard hides, occluded height collapses to 0 (no blur)
+      overrideHeight(0)
+      fireGeometryChange()
     })
 
     // the caret should be dismissed along with the keyboard
-    // (handleKeyboardVisibility is throttled, so poll for the dismissal rather than waiting a fixed delay)
     await waitUntil(() => !window.getSelection()?.focusNode)
     expect(await getSelection().focusNode).toBeFalsy()
   })
