@@ -24,9 +24,6 @@ describe('Format', () => {
     await browser.execute(el => (el as unknown as Element).scrollIntoView(), boldButton)
     await tap(boldButton, { y: 60 })
 
-    // Allow any focus-induced scroll to settle before measuring.
-    await browser.pause(1000)
-
     // 5. Measure the scroll position again and ensure it did not change (#3999).
     const scrollAfter = await browser.execute(() => window.scrollY)
     expect(scrollAfter).toBe(scrollBefore)
