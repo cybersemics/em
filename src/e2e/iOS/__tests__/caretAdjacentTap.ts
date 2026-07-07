@@ -7,6 +7,7 @@
  */
 import type { Element } from 'webdriverio'
 import getEditingText from '../helpers/getEditingText'
+import getElementRectByScreen from '../helpers/getElementRectByScreen'
 import paste from '../helpers/paste'
 import waitForEditable from '../helpers/waitForEditable'
 
@@ -19,16 +20,14 @@ const INTERVALS_MS = [0, 150, 300, 500]
  * Taps the center of an editable with a native WebKit touch via Appium's `mobile: tap`. Unlike
  * `performActions` (which synthesizes low-level HID events at the WebDriver layer), `mobile: tap` is
  * processed through WebKit's touch/gesture recognizers - the same path a physical finger drives, and
- * the path #4173 depends on. Coordinates are webview CSS pixels, resolved fresh from
- * getBoundingClientRect right before the tap so any keyboard-induced layout shift is accounted for.
- * This mirrors the established helper src/e2e/iOS/helpers/showEditMenu.ts.
+ * the path #4173 depends on. `mobile: tap` with no element uses absolute *screen* coordinates, so the
+ * center is taken from getElementRectByScreen (which adds the native Safari content offset), not from
+ * getBoundingClientRect (webview CSS coordinates, which would land in the browser chrome above).
  */
 const nativeTapCenter = async (editable: Element): Promise<void> => {
-  const raw = await browser.execute(el => {
-    const rect = (el as unknown as HTMLElement).getBoundingClientRect()
-    return JSON.stringify({ x: Math.round(rect.x + rect.width / 2), y: Math.round(rect.y + rect.height / 2) })
-  }, editable)
-  const { x, y } = JSON.parse(raw) as { x: number; y: number }
+  const rect = await getElementRectByScreen(editable)
+  const x = Math.round(rect.x + rect.width / 2)
+  const y = Math.round(rect.y + rect.height / 2)
   await browser.execute('mobile: tap', { x, y })
 }
 
