@@ -43,7 +43,7 @@ type MultiGestureProps = PropsWithChildren<{
   // includes false starts
   onStart?: (args: { clientStart: Point; e: GestureResponderEvent }) => void
   // fired when a gesture has been cancelled
-  onCancel?: (args: { clientStart: Point | null; e: GestureResponderEvent | TouchEvent }) => void
+  onCancel?: (args: { clientStart: Point | null; e: GestureResponderEvent | TouchEvent | PointerEvent }) => void
   // When a swipe is less than this number of pixels, then it won't count as a gesture.
   // if this is too high, there is an awkward distance between a click and a gesture where nothing happens
   // related: https://github.com/cybersemics/em/issues/1268
@@ -141,6 +141,12 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     // enable/disable scrolling based on where the user clicks
     // TODO: Could this be moved to onMoveShouldSetResponder?
     document.body.addEventListener('touchstart', e => {
+      // If a gesture is already in progress (this.currentStart is set in onPanResponderMove),
+      // ignore additional touchstarts. Otherwise a stray finger landing outside the gesture zone
+      // would set this.abandon = true, which causes onPanResponderRelease to skip props.onEnd —
+      // leaving the gesture menu and transparent overlay stuck on screen. See #3887.
+      if (this.currentStart) return
+
       if (testFlags.logMultigesture) {
         const x = e.touches[0].clientX
         const y = e.touches[0].clientY
@@ -182,6 +188,23 @@ class MultiGesture extends React.Component<MultiGestureProps> {
       this.reset()
     })
 
+    // Fallback release signal for the #3887 case where the touched DOM element unmounts mid-gesture
+    // (e.g. the EmptyThoughtspace → LayoutTree swap that fires once initial content loads). When the
+    // touch's original target is removed, the browser is free per the touch-events spec to silently
+    // drop the touchend, leaving PanResponder stuck and the gesture menu visible until the next
+    // touch. pointercancel goes through a separate event pipeline and does fire in this case.
+    // Capture phase so nothing downstream can stopPropagation before us; guarded on currentStart so
+    // it no-ops on normal gestures (where onPanResponderRelease's reset() has already cleared it).
+    document.addEventListener(
+      'pointercancel',
+      (e: PointerEvent) => {
+        if (!this.currentStart) return
+        this.props.onCancel?.({ clientStart: this.clientStart, e })
+        this.reset()
+      },
+      true,
+    )
+
     this.panResponder = PanResponder.create({
       // Prevent gesture when any text is selected.
       // See https://github.com/cybersemics/em/issues/676.
@@ -193,6 +216,15 @@ class MultiGesture extends React.Component<MultiGestureProps> {
           })
         }
         return !this.props.shouldCancelGesture?.()
+      },
+
+      // Called when the responder system terminates the gesture without firing onPanResponderRelease,
+      // e.g. when a competing responder takes over. Without this, props.onEnd / props.onCancel never
+      // run and the gesture menu stays stuck on screen. Treated as a cancel since the sequence may
+      // have been disrupted by whatever stole the responder. See #3887.
+      onPanResponderTerminate: (e: GestureResponderEvent) => {
+        this.props.onCancel?.({ clientStart: this.clientStart, e })
+        this.reset()
       },
 
       onPanResponderMove: (e: GestureResponderEvent, gestureState: GestureState) => {
@@ -291,7 +323,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         this.reset()
       },
 
-      onPanResponderTerminationRequest: () => true,
+      onPanResponderTerminationRequest: () => !this.disableScroll,
     })
   }
 

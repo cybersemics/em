@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "[Desktop Chrome] Can't expand children on hover during drag-and-drop",
+    "body": "## Steps to Reproduce\n\n```\n- a\n- b\n  - c\n```\n\nDrag `a` over `b`.\n\n## Current Behavior\n\nIt is not possible to activate the `DropChild` of `b`.\n\nhttps://github.com/user-attachments/assets/84e4fe68-a879-473e-a510-10e2a79859ad\n\n## Expected Behavior\n\n`b` should expand when hovering in the correct place, as can be seen on mobile.\n\nhttps://github.com/user-attachments/assets/68beab14-154a-4c28-803b-fd57afe741d5",
+    "labels": ["bug"]
+  },
+  "expected": "XXS",
+  "source": {
+    "type": "everhour",
+    "issue": 3271,
+    "hours": 1
+  }
+}
