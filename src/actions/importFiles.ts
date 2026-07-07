@@ -298,7 +298,11 @@ export const importFilesActionCreator =
           const importThoughtPath = ancestors.length === 0 && insertBeforeNew ? pathNew : parentPath
 
           const id = head(parentPath)
-          const duplicate = findAnyChild(stateAfterPull, id, child => child.value === block.scope)
+          // Do not treat empty thoughts as duplicates: an empty thought is a placeholder with no identity, so merging
+          // it into an existing empty sibling would silently drop it (e.g. pasting a series with multiple empty thoughts).
+          // See https://github.com/cybersemics/em/issues/4448.
+          const duplicate =
+            block.scope !== '' ? findAnyChild(stateAfterPull, id, child => child.value === block.scope) : undefined
           const lexeme = getLexeme(stateAfterPull, block.scope)
           const hasContext = !!lexeme?.contexts.includes(id)
 
