@@ -1,6 +1,8 @@
 import Terminal from 'vite-plugin-terminal'
 import { defineConfig } from 'vitest/config'
 
+const puppeteerMaxWorkers = Number(process.env.PUPPETEER_MAX_WORKERS || 2)
+
 export default defineConfig({
   test: {
     projects: [
@@ -30,7 +32,7 @@ export default defineConfig({
           setupFiles: ['./src/e2e/puppeteer/setup.ts'],
           // Browserless runs all Puppeteer files in one Chrome service. Unbounded file parallelism overloads
           // touch/focus handling and OPFS cleanup, so keep bounded parallelism instead of serializing the suite.
-          maxWorkers: process.env.CI ? 2 : undefined,
+          maxWorkers: puppeteerMaxWorkers,
         },
         plugins: [
           Terminal({
