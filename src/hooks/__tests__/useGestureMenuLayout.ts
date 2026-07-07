@@ -17,8 +17,8 @@ const setViewport = (innerWidth: number, innerHeight: number) => {
 }
 
 /** Renders the hook with the current store/viewport and returns the layout result. */
-const layout = (regularCount: number) =>
-  renderHook(() => useGestureMenuLayout(regularCount), { wrapper }).result.current
+const layout = (regularCount: number, persistentCount = 0) =>
+  renderHook(() => useGestureMenuLayout(regularCount, persistentCount), { wrapper }).result.current
 
 // A viewport tall enough that maxRows never caps rowsPerColumn.
 const TALL = 5000
@@ -70,12 +70,13 @@ describe('useGestureMenuLayout', () => {
   })
 
   it('caps rowsPerColumn and trims regular commands on a short viewport', () => {
-    // Height chosen so maxRows caps rows per column below what the commands need.
+    // 854×340 → 2 columns, maxRowsBottom 3. 12 total items (10 main + 2 persistent) need 6
+    // balanced rows > maxRowsInline 5, so it falls back to the bottom row and trims main to the grid.
     setViewport(854, 340)
-    const { columnCount, rowsPerColumn, visibleRegularCount } = layout(10)
+    const { columnCount, rowsPerColumn, visibleRegularCount } = layout(10, 2)
     expect(columnCount).toBe(2)
     expect(rowsPerColumn).toBe(3)
-    // Main commands fill the whole grid (no reserved persistent cells): 2 × 3 = 6 visible.
+    // Main commands fill the reserved-height grid: 2 × 3 = 6 visible.
     expect(visibleRegularCount).toBe(6)
     expect(visibleRegularCount).toBeLessThan(10)
   })
@@ -83,6 +84,39 @@ describe('useGestureMenuLayout', () => {
   it('never trims below zero', () => {
     setViewport(390, 300)
     expect(layout(30).visibleRegularCount).toBeGreaterThanOrEqual(0)
+  })
+
+  it('flows persistent commands inline and balances them across the columns', () => {
+    // Tall viewport, 5 main + 2 persistent = 7 items over 2 columns → 4 balanced rows.
+    setViewport(854, TALL)
+    const { persistentInline, rowsPerColumn, visibleRegularCount } = layout(5, 2)
+    expect(persistentInline).toBe(true)
+    expect(rowsPerColumn).toBe(4)
+    expect(visibleRegularCount).toBe(5)
+  })
+
+  it('keeps all commands inline when they fit the inline height budget', () => {
+    // H=420 → maxRowsInline 7. 8 main + 2 persistent = 10 items over 2 columns → 5 balanced rows ≤ 7.
+    setViewport(854, 420)
+    const { persistentInline, rowsPerColumn, visibleRegularCount } = layout(8, 2)
+    expect(persistentInline).toBe(true)
+    expect(rowsPerColumn).toBe(5)
+    // Main commands are NOT trimmed — they balance with the persistent commands.
+    expect(visibleRegularCount).toBe(8)
+  })
+
+  it('falls back to the bottom row when the balanced grid overflows the inline height', () => {
+    // H=420 → maxRowsInline 7. 13 main + 2 persistent = 15 items over 2 columns → 8 balanced rows > 7.
+    setViewport(854, 420)
+    const { persistentInline, visibleRegularCount } = layout(13, 2)
+    expect(persistentInline).toBe(false)
+    // Bottom-row path trims main to the reserved-height grid capacity (2 × maxRowsBottom 5 = 10).
+    expect(visibleRegularCount).toBe(10)
+  })
+
+  it('never flows persistent inline in single column', () => {
+    setViewport(390, TALL)
+    expect(layout(4, 2).persistentInline).toBe(false)
   })
 
   it('handles zero regular commands', () => {

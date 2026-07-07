@@ -41,7 +41,10 @@ const GestureMenu: FC<{
   const mainCommands = commands.filter(cmd => cmd.id !== 'cancel' && cmd.id !== 'openMobileCommandUniverse')
   const persistentCommands = commands.filter(cmd => cmd.id === 'cancel' || cmd.id === 'openMobileCommandUniverse')
 
-  const { columnCount, rowsPerColumn, visibleRegularCount } = useGestureMenuLayout(mainCommands.length)
+  const { columnCount, rowsPerColumn, visibleRegularCount, persistentInline } = useGestureMenuLayout(
+    mainCommands.length,
+    persistentCommands.length,
+  )
   const isMultiColumn = columnCount > 1
 
   // 5rem panel padding for the multi-column layout (per the Figma mockups), 2.25rem for single column
@@ -147,7 +150,8 @@ const GestureMenu: FC<{
 
             {isMultiColumn ? (
               /* Multi-column grid: main commands flow top-to-bottom then left-to-right and own every
-                 column; the persistent block sits in a full-width row below the grid. */
+                 column. When there's slack (persistentInline) the persistent commands sit inline at
+                 the bottom of the last column; otherwise they fall back to a full-width row below. */
               <>
                 <div
                   style={{
@@ -162,23 +166,43 @@ const GestureMenu: FC<{
                      inflating the matching row in sibling columns. */}
                   {Array.from({ length: columnCount }, (_, columnIndex) =>
                     visibleMainCommands.slice(columnIndex * rowsPerColumn, (columnIndex + 1) * rowsPerColumn),
-                  ).map((columnCommands, columnIndex) => (
-                    <div
-                      key={columnIndex}
-                      style={{
-                        display: 'grid',
-                        gridTemplateRows: `repeat(${rowsPerColumn}, min-content)`,
-                        rowGap: `${GESTURE_MENU_ROW_GAP_REM}rem`,
-                        minWidth: 0,
-                      }}
-                    >
-                      {renderMainCommands(columnCommands)}
-                    </div>
-                  ))}
+                  ).map((columnCommands, columnIndex) => {
+                    // The inline persistent block is appended below the last column's main commands.
+                    const showInlinePersistent =
+                      persistentInline && persistentCommands.length > 0 && columnIndex === columnCount - 1
+                    return (
+                      <div key={columnIndex} style={{ minWidth: 0 }}>
+                        <div
+                          style={{
+                            display: 'grid',
+                            // Auto rows (rather than a fixed repeat(rowsPerColumn)) so a column with
+                            // fewer commands than its siblings — e.g. the last column when persistent
+                            // commands flow inline — is only as tall as its own items, with no trailing
+                            // empty tracks pushing the inline persistent block down.
+                            gridAutoRows: 'min-content',
+                            rowGap: `${GESTURE_MENU_ROW_GAP_REM}rem`,
+                          }}
+                        >
+                          {renderMainCommands(columnCommands)}
+                        </div>
+                        {showInlinePersistent && (
+                          <div
+                            style={{
+                              display: 'flex',
+                              flexDirection: 'column',
+                              marginTop: `${GESTURE_MENU_GROUP_GAP_REM}rem`,
+                              gap: `${GESTURE_MENU_ROW_GAP_REM}rem`,
+                            }}
+                          >
+                            {persistentItems}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
                 </div>
-                {persistentCommands.length > 0 && (
+                {!persistentInline && persistentCommands.length > 0 && (
                   <div style={{ marginTop: `${GESTURE_MENU_GROUP_GAP_REM}rem` }}>
-                    
                     <div
                       style={{
                         display: 'flex',

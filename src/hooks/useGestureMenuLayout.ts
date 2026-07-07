@@ -53,6 +53,13 @@ interface GestureMenuLayout {
   visibleRegularCount: number
   /** True below the `md` breakpoint — the menu stays single-column and keeps its mobile-portrait behavior. */
   isMobilePortrait: boolean
+  /**
+   * True when the persistent commands (Cancel/Command Universe) flow inline at the bottom of the
+   * last column instead of a full-width row below the grid. Only when the regular commands aren't
+   * trimmed AND both persistent commands fit together under the last column; otherwise they fall
+   * back to the bottom row.
+   */
+  persistentInline: boolean
 }
 
 /**
@@ -62,8 +69,9 @@ interface GestureMenuLayout {
  * (`viewportStore`) and the runtime rem basis (`state.fontSize`).
  *
  * @param regularCount Number of regular (non-persistent) commands.
+ * @param persistentCount Number of persistent commands (Cancel/Command Universe).
  */
-const useGestureMenuLayout = (regularCount: number): GestureMenuLayout => {
+const useGestureMenuLayout = (regularCount: number, persistentCount = 0): GestureMenuLayout => {
   const remPx = useSelector(state => state.fontSize)
   const innerWidth = viewportStore.useSelector(state => state.innerWidth)
   const innerHeight = viewportStore.useSelector(state => state.innerHeight)
@@ -82,28 +90,40 @@ const useGestureMenuLayout = (regularCount: number): GestureMenuLayout => {
   // so no column renders below the minimum width. Clamped to at least 1.
   const columnCount = isMobilePortrait ? 1 : Math.max(1, Math.floor((availableWidthPx + gapPx) / (minColumnPx + gapPx)))
 
-  // Height budget for regular rows, after the header, vertical padding, and the persistent block.
+  // Row/header/padding geometry shared by both height budgets.
   const rowPitchPx = GESTURE_MENU_ROW_PITCH_REM * remPx
   const headerPx = GESTURE_MENU_HEADER_HEIGHT_REM * remPx
   const verticalPaddingPx = 2 * GESTURE_MENU_PANEL_PADDING_REM * remPx
   const persistentBlockPx = GESTURE_MENU_PERSISTENT_BLOCK_HEIGHT_REM * remPx
-  const maxRows = Math.max(
-    1,
-    Math.floor((availableHeightPx - headerPx - verticalPaddingPx - persistentBlockPx) / rowPitchPx),
-  )
+  const gridHeightPx = availableHeightPx - headerPx - verticalPaddingPx
 
+  // Two height budgets. When persistent commands flow inline there is no separate bottom row, so
+  // the full grid height is available (maxRowsInline). When they fall back to the full-width bottom
+  // row, that row's height is reserved (maxRowsBottom).
+  const maxRowsInline = Math.max(1, Math.floor(gridHeightPx / rowPitchPx))
+  const maxRowsBottom = Math.max(1, Math.floor((gridHeightPx - persistentBlockPx) / rowPitchPx))
+
+  // Inline layout: balance main + persistent commands across the columns so every column has a
+  // similar height (rather than filling main to ceil(main/cols) and leaving the last column short).
+  // The persistent commands are the final items in the flow, so they land at the bottom of the last
+  // column. Inline is used only when the tallest column still fits the inline height budget.
+  const balancedRows = Math.ceil((regularCount + persistentCount) / columnCount) || 0
+  const lastColMain = regularCount - (columnCount - 1) * balancedRows
+  const lastColRows = Math.max(lastColMain, 0) + persistentCount
+  const persistentInline =
+    columnCount > 1 && balancedRows <= maxRowsInline && lastColRows <= maxRowsInline
+
+  // Bottom-row layout: main commands fill the grid (reserved-height budget) and trim from the end
+  // when they overflow, since the multi-column menu doesn't scroll.
   const idealRows = Math.ceil(regularCount / columnCount) || 0
-  const rowsPerColumn = Math.min(idealRows, maxRows)
+  const bottomRows = Math.min(idealRows, maxRowsBottom)
+  const bottomCapacity = columnCount * bottomRows
+  const bottomFits = regularCount <= bottomCapacity && idealRows <= maxRowsBottom
 
-  const capacity = columnCount * rowsPerColumn
-  const fits = regularCount <= capacity && idealRows <= maxRows
+  const rowsPerColumn = persistentInline ? balancedRows : bottomRows
+  const visibleRegularCount = persistentInline ? regularCount : bottomFits ? regularCount : bottomCapacity
 
-  // Main commands are prioritized: fill every column. When they overflow the grid
-  // (the menu doesn't scroll in multi-column) trim from the end. The persistent
-  // block renders in its own full-width row below the grid, so it never steals cells.
-  const visibleRegularCount = fits ? regularCount : capacity
-
-  return { columnCount, rowsPerColumn, visibleRegularCount, isMobilePortrait }
+  return { columnCount, rowsPerColumn, visibleRegularCount, isMobilePortrait, persistentInline }
 }
 
 export default useGestureMenuLayout
