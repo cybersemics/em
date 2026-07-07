@@ -11,7 +11,6 @@ import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helper
 import moveThoughtUpCommand from '../moveThoughtUp'
 
 beforeEach(initStore)
-afterEach(() => store.dispatch(setCursor(null)))
 
 describe('moveThoughtUp', () => {
   it('moves a single thought up', () => {
