@@ -7,6 +7,7 @@ import getThoughtById from '../selectors/getThoughtById'
 import pathToThought from '../selectors/pathToThought'
 import simplifyPath from '../selectors/simplifyPath'
 import themeColors from '../selectors/themeColors'
+import batchEditingStore from '../stores/batchEditing'
 import { updateCommandState } from '../stores/commandStateStore'
 import suppressFocusStore from '../stores/suppressFocus'
 import head from '../util/head'
@@ -122,6 +123,9 @@ export const formatSelectionActionCreator =
                 path: simplePath,
                 // force the ContentEditable to update
                 force: true,
+                // merge with the preceding foreColor+backColor patch so that the entire color change
+                // (foreColor + backColor + cleanup) is a single undo step
+                mergePrev: batchEditingStore.getState(),
               }),
             )
         })

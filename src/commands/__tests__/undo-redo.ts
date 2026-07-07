@@ -625,6 +625,69 @@ describe('grouping', () => {
     expect(exported).not.toContain('<font')
   })
 
+  it('applying font color over background color should be a single undo step', () => {
+    // Simulates ColorPicker.toggleTextColor when applying a text color over a thought with a background color.
+    // Three separate editThought dispatches occur:
+    //   1. foreColor('green') → via Editable: editThought (no mergePrev)
+    //   2. backColor('bg') → via Editable: editThought (mergePrev=true via batchEditing)
+    //   3. cleanup dispatch in formatSelection → editThought (mergePrev=true via batchEditing, fixed by this PR)
+    // All three should merge into a single undo step so that undo reverts to the original red background.
+    const redBg = '<span style="background-color: rgb(255,0,0)">hello</span>'
+    const withGreenAndRedBg = '<span style="background-color: rgb(255,0,0)"><font color="#008000">hello</font></span>'
+    const withGreenAndDefaultBg =
+      '<span style="background-color: rgb(51,51,51)"><font color="#008000">hello</font></span>'
+    const withGreenOnly = '<font color="#008000">hello</font>'
+
+    store.dispatch([
+      importText({
+        text: `
+          - hello`,
+      }),
+      // simulate existing red background applied to the thought
+      editThought(['hello'], redBg),
+    ])
+
+    // Step 1: foreColor('green') via Editable (no mergePrev)
+    const pathAfterRedBg = contextToPath(store.getState(), [redBg])
+    store.dispatch(
+      editThoughtRaw({
+        path: pathAfterRedBg!,
+        oldValue: redBg,
+        newValue: withGreenAndRedBg,
+      }),
+    )
+
+    // Step 2: backColor('bg') via Editable flush (mergePrev=true from batchEditing)
+    const pathAfterGreenFore = contextToPath(store.getState(), [withGreenAndRedBg])
+    store.dispatch(
+      editThoughtRaw({
+        path: pathAfterGreenFore!,
+        oldValue: withGreenAndRedBg,
+        newValue: withGreenAndDefaultBg,
+        mergePrev: true,
+      }),
+    )
+
+    // Step 3: cleanup dispatch in formatSelection (mergePrev=batchEditing=true after fix)
+    const pathAfterBackColor = contextToPath(store.getState(), [withGreenAndDefaultBg])
+    store.dispatch(
+      editThoughtRaw({
+        path: pathAfterBackColor!,
+        oldValue: withGreenAndDefaultBg,
+        newValue: withGreenOnly,
+        mergePrev: true,
+      }),
+    )
+
+    // undo should revert all three steps in one go, restoring the red-background-only state
+    store.dispatch(undo())
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/html')
+    // font color is reverted; red background is restored
+    expect(exported).toContain('<li>' + redBg + '</li>')
+    expect(exported).not.toContain('#008000')
+  })
+
   it('contiguous edits should be grouped', () => {
     store.dispatch([
       importText({
