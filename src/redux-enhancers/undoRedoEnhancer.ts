@@ -96,9 +96,9 @@ const diffState = <T>(newValue: Index<T>, value: Index<T>): Operation[] =>
 /**
  * Append action names to all operations of a Patch.
  */
-const addActionsToPatch = (patch: Operation[], actions: ActionType[], isFormatting?: boolean): Patch =>
+const addActionsToPatch = (patch: Operation[], actions: ActionType[]): Patch =>
   // TODO: Fix Patch type to support any Operation, not just GetOperation. See Patch.ts.
-  patch.map(operation => ({ ...operation, actions, isFormatting })) as Patch
+  patch.map(operation => ({ ...operation, actions })) as Patch
 
 /**
  * Gets the first action from a patch.
@@ -118,11 +118,7 @@ const undoOneReducer = (state: State): State => {
   const lastUndoPatch = nthLast(undoPatches, 1)
   if (!lastUndoPatch) return state
   const newState = produce(state, (state: State) => applyPatch(state, lastUndoPatch).newDocument)
-  const correspondingRedoPatch = addActionsToPatch(
-    diffState(newState as Index, state),
-    [...lastUndoPatch[0]?.actions],
-    lastUndoPatch[0]?.isFormatting,
-  )
+  const correspondingRedoPatch = addActionsToPatch(diffState(newState as Index, state), [...lastUndoPatch[0]?.actions])
   return {
     ...newState,
     redoPatches: [...redoPatches, correspondingRedoPatch],
@@ -140,11 +136,7 @@ const redoOneReducer = (state: State): State => {
   const lastRedoPatch = nthLast(redoPatches, 1)
   if (!lastRedoPatch) return state
   const newState = produce(state, (state: State) => applyPatch(state, lastRedoPatch).newDocument)
-  const correspondingUndoPatch = addActionsToPatch(
-    diffState(newState as Index, state),
-    [...lastRedoPatch[0]?.actions],
-    lastRedoPatch[0]?.isFormatting,
-  )
+  const correspondingUndoPatch = addActionsToPatch(diffState(newState as Index, state), [...lastRedoPatch[0]?.actions])
   return {
     ...newState,
     redoPatches: redoPatches.slice(0, -1),
@@ -165,10 +157,19 @@ const undoReducer = (state: State, undoPatches: Patch[]): State => {
 
   if (!undoPatches.length) return state
 
-  // Do not fire undoTwice if the last patch is a formatting-only edit.
-  // Formatting edits should always be their own undo step — even when the preceding action was newThought.
-  // (Without this guard, formatting a brand-new thought would also delete the thought on undo.)
-  const lastPatchIsFormatting = lastUndoPatch?.[0]?.isFormatting === true
+  // Infer whether the last patch is a formatting-only edit by examining the diff operations.
+  // A formatting patch changes a thought's value without changing its plain text content.
+  // This is detected by finding an operation that restores a thoughtIndex value where
+  // stripTags(restored_value) === stripTags(current_value) — same plain text, different HTML.
+  const lastPatchIsFormatting = !!lastUndoPatch?.some(op => {
+    const match = op.path.match(/^\/thoughts\/thoughtIndex\/([^/]+)\/value$/)
+    if (!match) return false
+    const id = match[1]
+    const currentValue = state.thoughts.thoughtIndex[id]?.value
+    return (
+      currentValue !== undefined && op.value !== undefined && stripTags(op.value as string) === stripTags(currentValue)
+    )
+  })
 
   const undoTwice = isNavigation(lastAction)
     ? isUndoable(penultimateAction)
@@ -336,15 +337,11 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
             redoPatches: [],
             undoPatches: [
               ...newState.undoPatches,
-              addActionsToPatch(
-                undoPatch,
-                [
-                  // Override the action label with undoLabel so that the command label is used in the alert on undo/redo of a multicursor command.
-                  // TODO: A better solution would add a label to the Patch itself.
-                  isSetIsMulticursorExecutingAction(action) ? (action.undoLabel as ActionType) : lastAction.type,
-                ],
-                editThoughtDirection === EditThoughtDirection.Formatting,
-              ),
+              addActionsToPatch(undoPatch, [
+                // Override the action label with undoLabel so that the command label is used in the alert on undo/redo of a multicursor command.
+                // TODO: A better solution would add a label to the Patch itself.
+                isSetIsMulticursorExecutingAction(action) ? (action.undoLabel as ActionType) : lastAction.type,
+              ]),
             ],
           }
         : newState
