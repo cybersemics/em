@@ -23,7 +23,6 @@
  * thought).
  */
 import getElementRectByScreen from '../helpers/getElementRectByScreen'
-import hideKeyboardByTappingDone from '../helpers/hideKeyboardByTappingDone'
 import isKeyboardShown from '../helpers/isKeyboardShown'
 
 /** Probe flags recorded on the window by the injected fixture. */
@@ -96,20 +95,25 @@ describe('Caret (isolated)', () => {
   const nativeTap = async (webviewContext: string, x: number, y: number, finger = false) => {
     const contact = finger ? { width: 40, height: 40, pressure: 0.9 } : {}
     await browser.switchContext('NATIVE_APP')
-    await browser.performActions([
-      {
-        type: 'pointer',
-        id: 'finger1',
-        parameters: { pointerType: 'touch' },
-        actions: [
-          { type: 'pointerMove', duration: 0, x, y, origin: 'viewport', ...contact },
-          { type: 'pointerDown', button: 0, ...contact },
-          { type: 'pause', duration: finger ? 90 : 60 },
-          { type: 'pointerUp', button: 0 },
-        ],
-      },
-    ])
-    await browser.switchContext(webviewContext)
+    try {
+      await browser.performActions([
+        {
+          type: 'pointer',
+          id: 'finger1',
+          parameters: { pointerType: 'touch' },
+          actions: [
+            { type: 'pointerMove', duration: 0, x, y, origin: 'viewport', ...contact },
+            { type: 'pointerDown', button: 0, ...contact },
+            { type: 'pause', duration: finger ? 90 : 60 },
+            { type: 'pointerUp', button: 0 },
+          ],
+        },
+      ])
+    } finally {
+      // Always return to the webview context so a failure here can't strand the session in NATIVE_APP
+      // (where execute/sync is unavailable and would break subsequent tests).
+      await browser.switchContext(webviewContext)
+    }
   }
 
   /**
@@ -123,7 +127,10 @@ describe('Caret (isolated)', () => {
   ) => {
     await nativeTap(webviewContext, Math.round(rect.x + rect.width / 2), Math.round(rect.y + rect.height / 2))
     await browser.pause(600)
-    await hideKeyboardByTappingDone()
+    // Dismiss the keyboard by blurring the focused editable rather than tapping the native "Done"
+    // accessory. A bare contentEditable does not reliably produce em's keyboard toolbar, and blur runs
+    // entirely in the webview context (no native switch, no dependency on a Done button).
+    await browser.execute(() => (document.activeElement as HTMLElement | null)?.blur())
     await browser.pause(400)
     await browser.execute(() => {
       const w = window as unknown as FixWindow
