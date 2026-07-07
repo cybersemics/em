@@ -4,6 +4,7 @@
  */
 import gestures from '../../../test-helpers/gestures'
 import clickThought from '../helpers/clickThought'
+import doubleTap from '../helpers/doubleTap'
 import editThought from '../helpers/editThought'
 import gesture from '../helpers/gesture'
 import getEditable from '../helpers/getEditable'
@@ -250,5 +251,30 @@ describe('Caret', () => {
 
     expect(selectionTextContent).toBe('new')
     expect(childrenTexts).toEqual(['foo', 'bar'])
+  })
+
+  it('Set caret on adjacent thought within 1 second (#4173)', async () => {
+    // Reproduces https://github.com/cybersemics/em/issues/4173: tapping an adjacent thought within
+    // ~1 second of a previous tap fails to move the cursor. doubleTap fires two real touch taps with
+    // a deterministic sub-second interval, which a hand-driven repro cannot reliably achieve. The
+    // interval is overridable via TAP_INTERVAL_MS to probe the threshold.
+    const intervalMs = process.env.TAP_INTERVAL_MS ? parseInt(process.env.TAP_INTERVAL_MS, 10) : 300
+
+    const importText = `
+    - a
+    - b
+    - c`
+    await paste(importText)
+    await waitForEditable('c')
+
+    const a = await waitForEditable('a')
+    const b = await waitForEditable('b')
+
+    // Tap a to set the caret, then within intervalMs tap the adjacent thought b.
+    await doubleTap(a, b, { intervalMs })
+
+    // Give the app a moment to dispatch setCursor and re-render, then assert the cursor moved to b.
+    await browser.pause(1000)
+    expect(await getEditingText()).toBe('b')
   })
 })
