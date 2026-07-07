@@ -3,7 +3,6 @@
  * Uses WDIO test runner with Mocha framework.
  */
 import gesture from '../helpers/gesture'
-import hideKeyboardByTappingDone from '../helpers/hideKeyboardByTappingDone'
 import paste from '../helpers/paste'
 import waitForEditable from '../helpers/waitForEditable'
 
@@ -16,7 +15,6 @@ describe('Toolbar', () => {
     const thoughts = Array.from({ length: 40 }, (_, i) => `  - thought ${i + 1}`).join('\n')
     await paste(thoughts)
     await waitForEditable('thought 1')
-    await hideKeyboardByTappingDone()
 
     // Scroll the page down so a downward drag has room to scroll it further. Assert the page is actually
     // scrollable so the test cannot silently pass on a non-scrollable page.
