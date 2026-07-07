@@ -1,7 +1,8 @@
 import { Capacitor } from '@capacitor/core'
 import { Keyboard } from '@capacitor/keyboard'
 import VirtualKeyboardHandler from '../../../@types/VirtualKeyboardHandler'
-import { dismissCaretOnKeyboardClose } from '../../../util/handleKeyboardVisibility'
+import { dismissKeyboardActionCreator as dismissKeyboard } from '../../../actions/dismissKeyboard'
+import store from '../../../stores/app'
 
 /**
  * A virtual keyboard handler for the Android Capacitor app.
@@ -10,7 +11,7 @@ import { dismissCaretOnKeyboardClose } from '../../../util/handleKeyboardVisibil
  * plus IME inset stripping in MainActivity, mirroring iOS Keyboard resize:'none'), so visualViewport never
  * fires a resize event for the keyboard. Additionally, dismissing the keyboard via the Down Arrow virtual
  * button does not blur the editable, so no blur event fires to dismiss the caret. We listen to the native
- * keyboardDidHide event to exit edit mode and clear the caret.
+ * keyboardDidHide event to exit edit mode and clear the browser selection.
  *
  * See: https://github.com/cybersemics/em/issues/3958.
  */
@@ -19,7 +20,7 @@ const androidCapacitorHandler: VirtualKeyboardHandler = {
     if (!Capacitor.isNativePlatform() || !Capacitor.isPluginAvailable('Keyboard')) return
 
     Keyboard.addListener('keyboardDidHide', () => {
-      dismissCaretOnKeyboardClose()
+      store.dispatch(dismissKeyboard())
     })
   },
   destroy: () => {

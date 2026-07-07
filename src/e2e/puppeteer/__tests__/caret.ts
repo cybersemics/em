@@ -398,7 +398,7 @@ describe('mobile only', () => {
     // hides the keyboard: the visualViewport grows back to full height with no blur event. Emulate
     // that by faking the viewport shrink (keyboard open) then grow (keyboard dismissed) and firing
     // the resize events the app listens to, without re-rendering the thought.
-    await page.evaluate(async () => {
+    await page.evaluate(() => {
       const visualViewport = window.visualViewport!
       const fullHeight = visualViewport.height
       /** Overrides the reported visualViewport height to simulate the keyboard opening/closing. */
@@ -406,22 +406,19 @@ describe('mobile only', () => {
         Object.defineProperty(visualViewport, 'height', { configurable: true, get: () => height })
       /** Fires a visualViewport resize event, as the OS does when the virtual keyboard shows/hides. */
       const fireResize = () => visualViewport.dispatchEvent(new Event('resize'))
-      /** Waits for the given number of milliseconds. */
-      const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
       // keyboard open: viewport shrinks
       overrideHeight(Math.round(fullHeight * 0.6))
       fireResize()
-      await delay(150)
 
       // Down Arrow pressed: keyboard hides, viewport grows back to full height (no blur)
       overrideHeight(fullHeight)
       fireResize()
-      await delay(150)
     })
 
     // the caret should be dismissed along with the keyboard
-    const focusNode = await getSelection().focusNode
-    expect(focusNode).toBeFalsy()
+    // (handleKeyboardVisibility is throttled, so poll for the dismissal rather than waiting a fixed delay)
+    await waitUntil(() => !window.getSelection()?.focusNode)
+    expect(await getSelection().focusNode).toBeFalsy()
   })
 })
