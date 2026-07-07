@@ -104,6 +104,16 @@ const applyOuterTag = (newValue: string, oldValue: string): string => {
 let cursorOffsetInitialized = false
 
 /**
+ * TEMPORARY instrumentation for #4173 (tap adjacent thought within ~1s fails to move the caret).
+ * Logs the full tap -> focus -> setCursor flow with high-resolution timestamps so the sequence and
+ * inter-tap interval can be inspected via Safari Web Inspector while reproducing the bug by hand on a
+ * real iOS device. Each line is tagged [#4173] for easy filtering. Remove before merging.
+ */
+const log4173 = (msg: string): void => {
+  console.info(`[#4173] ${performance.now().toFixed(1)}ms ${msg}`)
+}
+
+/**
  * An editable thought with throttled editing.
  * Use rank instead of headRank(simplePath) as it will be different for context view.
  */
@@ -214,8 +224,16 @@ const Editable = ({
       dispatch((dispatch, getState) => {
         const state = getState()
 
+        const alreadyCursor = equalPath(state.cursor, path)
+        log4173(
+          `setCursorOnThought value="${value}" isKeyboardOpen=${isKeyboardOpen} stateKeyboardOpen=${state.isKeyboardOpen} alreadyCursor=${alreadyCursor}`,
+        )
+
         // do not set cursor if it is unchanged and we are not entering when keyboard is open
-        if ((!isKeyboardOpen || state.isKeyboardOpen) && equalPath(state.cursor, path)) return
+        if ((!isKeyboardOpen || state.isKeyboardOpen) && equalPath(state.cursor, path)) {
+          log4173(`setCursorOnThought RETURN (guard: unchanged cursor) value="${value}"`)
+          return
+        }
 
         // set offset to null to allow the browser to set the position of the selection
         let offset = null
@@ -231,6 +249,7 @@ const Editable = ({
         // Prevent the cursor offset from being restored after the initial setCursorOnThought.
         cursorOffsetInitialized = true
 
+        log4173(`setCursorOnThought DISPATCH setCursor value="${value}"`)
         dispatch(
           setCursor({
             cursorHistoryClear: true,
@@ -609,6 +628,7 @@ const Editable = ({
    */
   const onFocus = useCallback(
     () => {
+      log4173(`onFocus value="${value}" suppressFocus=${suppressFocusStore.getState()}`)
       /**
        * On iOS, a long press between 415–650ms will trigger onFocus even when preventDefault is called in touchend, thus opening the virtual keyboard on top of the Command Center. There appears to be no way to prevent focus in this case. Therefore, we clear the selection and disable edit mode manually as soon as the focus triggers.
        *
@@ -632,14 +652,20 @@ const Editable = ({
         })
       }
 
-      if (suppressFocusStore.getState()) return
+      if (suppressFocusStore.getState()) {
+        log4173(`onFocus RETURN (suppressFocus) value="${value}"`)
+        return
+      }
       // Update editingValueUntrimmedStore with the current value
       editingValueUntrimmedStore.update(value)
 
       dispatch((dispatch, getState) => {
         const { longPress } = getState()
         if (longPress === LongPressState.Inactive) {
+          log4173(`onFocus -> setCursorOnThought value="${value}"`)
           setCursorOnThought({ isKeyboardOpen: true })
+        } else {
+          log4173(`onFocus SKIP setCursorOnThought (longPress=${longPress}) value="${value}"`)
         }
       })
     },
@@ -653,6 +679,7 @@ const Editable = ({
    */
   const handleTapBehavior = useCallback(
     (e: MouseEvent | TouchEvent) => {
+      log4173(`handleTapBehavior type=${e.type} value="${value}" touching=${globals.touching}`)
       // When MultiGesture is below the gesture threshold it is possible that onClick and onTouchEnd
       // both trigger. Prevent handleTapBehavior from running a second time via touchend in that case.
       // https://github.com/cybersemics/em/issues/1268
@@ -665,6 +692,7 @@ const Editable = ({
 
         // If long press is in progress, don't allow the editable to receive focus or iOS Safari will scroll it.
         if (state.longPress !== LongPressState.Inactive) {
+          log4173(`handleTapBehavior BAIL (longPress=${state.longPress}) value="${value}"`)
           e.preventDefault()
           return
         }
@@ -680,17 +708,21 @@ const Editable = ({
           e.preventDefault()
 
           if (!isVisible) {
+            log4173(`handleTapBehavior hidden -> clear/toggleDropdown value="${value}"`)
             selection.clear()
 
             // close all popups when clicking on a thought
             dispatch(toggleDropdown())
           } else {
+            log4173(`handleTapBehavior -> setCursorOnThought value="${value}"`)
             setCursorOnThought()
           }
+        } else {
+          log4173(`handleTapBehavior no-op (cursor set via onFocus) value="${value}"`)
         }
       })
     },
-    [disabled, dispatch, editingOrOnCursor, isVisible, setCursorOnThought],
+    [disabled, dispatch, editingOrOnCursor, isVisible, setCursorOnThought, value],
   )
 
   /** Registers native event listeners for tap behavior (click and touchend). */
@@ -700,6 +732,7 @@ const Editable = ({
 
     /** Sets the cursor on the thought on click. Handles hidden elements, drags, and editing mode. */
     const onClick = (e: MouseEvent) => {
+      log4173(`native click value="${editable.textContent ?? ''}"`)
       // If CMD/CTRL is pressed, don't focus the editable.
       const isMultiselectClick = isMac ? e.metaKey : e.ctrlKey
       if (isMultiselectClick) {
@@ -712,6 +745,7 @@ const Editable = ({
 
     /** Handles touchend for haptics and tap behavior. */
     const onTouchEnd = (e: TouchEvent) => {
+      log4173(`native touchend value="${editable.textContent ?? ''}"`)
       haptics.light()
       handleTapBehavior(e)
     }
