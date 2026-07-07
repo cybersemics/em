@@ -143,14 +143,13 @@ const PullProvider: FC<PropsWithChildren<{ simplePaths: SimplePath[] }>> = ({ ch
   useEffect(
     () => {
       isMounted.current = true
-      let replications: ReturnType<typeof replicateTree>[] = []
 
-      /** Waits for pending local persistence before reading the provider for export. */
-      const exportAfterLocalWrites = async () => {
+      /** Waits for pending local persistence before reading the selected subtrees for export. */
+      const startReplicationsAfterLocalWrites = async () => {
         await thoughtspaceRuntime.waitForIdle()
-        if (!isMounted.current) return
+        if (!isMounted.current) return null
 
-        replications = simplePaths.map(simplePath => {
+        const replications = simplePaths.map(simplePath => {
           const id = head(simplePath)
 
           return replicateTree(id, {
@@ -163,7 +162,19 @@ const PullProvider: FC<PropsWithChildren<{ simplePaths: SimplePath[] }>> = ({ ch
           })
         })
 
-        const thoughtIndices = await Promise.all(replications.map(replication => replication.promise))
+        return {
+          replications,
+          thoughtIndicesPromise: Promise.all(replications.map(replication => replication.promise)),
+        }
+      }
+
+      const replicationsStartedPromise = startReplicationsAfterLocalWrites()
+
+      void (async () => {
+        const startedReplications = await replicationsStartedPromise
+        if (!startedReplications) return
+
+        const thoughtIndices = await startedReplications.thoughtIndicesPromise
         if (!isMounted.current) return
 
         setExportingThoughtsThrottled.flush()
@@ -179,13 +190,13 @@ const PullProvider: FC<PropsWithChildren<{ simplePaths: SimplePath[] }>> = ({ ch
 
         setExportedState(exportedState)
         setIsPulling(false)
-      }
-
-      void exportAfterLocalWrites()
+      })()
 
       return () => {
         isMounted.current = false
-        replications.forEach(replication => replication.cancel())
+        void replicationsStartedPromise.then(startedReplications => {
+          startedReplications?.replications.forEach(replication => replication.cancel())
+        })
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
