@@ -84,28 +84,34 @@ it('inserts emoji spacing immediately and allows Backspace at the emoji boundary
   expect(editable.textContent).toBe('🧠Hello')
 })
 
-// Regression / characterization test for https://github.com/cybersemics/em/issues/4173
+// Tests for https://github.com/cybersemics/em/issues/4173.
 //
-// On iOS Safari, when the keyboard is already open (i.e. immediately after tapping one thought),
-// a rapid tap on an adjacent thought fires `touchend` on the second thought but does NOT fire a
-// `focus` event on it (and the synthesized `click` retargets to the first thought). Because
-// `handleTapBehavior` defers cursor-setting to `onFocus` whenever `editingOrOnCursor` is true
-// (and `editingOrOnCursor` is true whenever the keyboard is open), the second tap hits the
-// "no-op (cursor set via onFocus)" branch and the cursor is never moved — it stays stuck on the
-// first thought. This is the exact mechanism behind #4173.
+// #4173: on iOS Safari, tapping an adjacent thought immediately after tapping another one fails to
+// move the caret — it stays stuck on the first thought.
 //
-// This reproduces the bug at the handler level. A pure synthetic-touch e2e cannot: WebDriver taps
-// force focus onto the target, which bypasses the real-finger rapid-tap focus suppression.
+// Mechanism (confirmed by on-device logging). `handleTapBehavior` fires on `touchend`. For a visible
+// thought it either sets the cursor directly, OR — when `editingOrOnCursor` is true — takes a
+// "no-op (cursor set via onFocus)" branch that defers all cursor-setting to the thought's `onFocus`
+// handler. `editingOrOnCursor` is true whenever the keyboard is open. After the first tap the
+// keyboard is open, so a second, rapid tap on an adjacent thought hits that no-op branch. On a real
+// device the rapid re-tap fires `touchend` on the second thought but NOT `focus` (the synthesized
+// click retargets to the first thought), so `onFocus` never runs and nothing moves the cursor.
 //
-// The test marks the first thought as the cursor with the keyboard open (the state left by the
-// first tap), then fires `touchend` on the adjacent thought. It asserts the CURRENT (buggy)
-// outcome: the cursor stays on 'a'. The correct, post-fix behavior is that the cursor moves to 'b'.
-//
-// WHEN #4173 IS FIXED — by setting the cursor directly on `touchend` for a visible non-cursor
-// thought instead of relying solely on `onFocus` — this test will start failing. At that point,
-// change the expected value below from 'a' to 'b' (and update this comment) so it becomes a live
-// regression guard for the fixed behavior.
-it('tapping an adjacent thought while the keyboard is open does not move the cursor (#4173)', async () => {
+// This is reproduced at the handler level (a pure synthetic-touch e2e cannot: WebDriver taps force
+// focus onto the target, bypassing the real-finger rapid-tap focus suppression). The two tests below
+// differ ONLY in keyboard state, which isolates the bug:
+//   - keyboard CLOSED (control): `touchend` moves the cursor — proving `touchend` is wired and is
+//     supposed to drive the cursor-setting chain.
+//   - keyboard OPEN (#4173): the same `touchend` does NOT move the cursor, because the handler defers
+//     to an `onFocus` that never fires.
+
+/**
+ * Seeds three sibling thoughts a/b/c, puts the cursor on `a` with the keyboard open or closed (the
+ * state left by a first tap on `a`), then fires `touchend` on the adjacent thought `b` — the DOM
+ * events a rapid iOS re-tap delivers, notably WITHOUT a `focus` event. Returns the value of the
+ * thought the cursor ends on.
+ */
+const tapAdjacentThoughtOnTouchEnd = async (isKeyboardOpen: boolean): Promise<string | undefined> => {
   await dispatch([
     importText({
       text: `
@@ -117,8 +123,8 @@ it('tapping an adjacent thought while the keyboard is open does not move the cur
   ])
   await act(vi.runOnlyPendingTimersAsync)
 
-  // Simulate the state left by the first tap: cursor on `a`, keyboard open.
-  await dispatch([setCursor(['a']), keyboardOpen({ value: true })])
+  // Set up the state left by the first tap on `a`: cursor on `a`, keyboard open or closed.
+  await dispatch([setCursor(['a']), keyboardOpen({ value: isKeyboardOpen })])
   await act(vi.runOnlyPendingTimersAsync)
 
   // The second tap lands on the adjacent thought `b`. On iOS this fires `touchend` but not `focus`.
@@ -130,7 +136,26 @@ it('tapping an adjacent thought while the keyboard is open does not move the cur
   await act(vi.runOnlyPendingTimersAsync)
 
   const state = store.getState()
-  const cursorValue = state.cursor ? headValue(state, state.cursor) : undefined
-  // BUG #4173: this should be 'b' once fixed; today the cursor stays stuck on 'a'.
-  expect(cursorValue).toBe('a')
+  return state.cursor ? headValue(state, state.cursor) : undefined
+}
+
+describe('#4173: tapping an adjacent thought', () => {
+  // Control: with the keyboard closed, `handleTapBehavior` sets the cursor directly on `touchend`.
+  // This proves the touchend handler is wired and IS meant to drive the cursor-setting chain, so the
+  // bug test below cannot pass merely because the handler is detached or the tap is a no-op.
+  it('moves the cursor on touchend while the keyboard is closed (control)', async () => {
+    expect(await tapAdjacentThoughtOnTouchEnd(false)).toBe('b')
+  })
+
+  // #4173: with the keyboard open (the state after a first tap), the SAME `touchend` on the adjacent
+  // thought does NOT move the cursor — the handler defers to an `onFocus` that never fires on a rapid
+  // iOS re-tap. Asserts the CURRENT (buggy) outcome: the cursor stays on 'a'.
+  //
+  // WHEN #4173 IS FIXED — by having `handleTapBehavior` set the cursor directly on `touchend` for a
+  // visible non-cursor thought instead of relying solely on `onFocus` — this test will start failing.
+  // At that point change the expected value from 'a' to 'b' (matching the control) so it becomes a
+  // live regression guard for the fixed behavior.
+  it('does NOT move the cursor on touchend while the keyboard is open (#4173)', async () => {
+    expect(await tapAdjacentThoughtOnTouchEnd(true)).toBe('a')
+  })
 })
