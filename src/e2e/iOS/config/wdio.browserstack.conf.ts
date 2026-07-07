@@ -21,6 +21,9 @@ const date = new Date().toISOString().slice(0, 10)
 // that single spec runs on an iOS 18 device while the rest of the suite stays on the default iOS 17.
 const caretFocusSpec = path.resolve(process.cwd(), 'src/e2e/iOS/__tests__/caretFocus.ts')
 
+// Isolated-primitive diagnostic for the same #4394 heuristic (hypothesis H2); also requires iOS 18.
+const caretFocusIsolatedSpec = path.resolve(process.cwd(), 'src/e2e/iOS/__tests__/caretFocusIsolated.ts')
+
 const bstackOptions = {
   projectName: process.env.BROWSERSTACK_PROJECT_NAME || 'em',
   buildName: process.env.BROWSERSTACK_BUILD_NAME || `Local - ${user} - ${date}`,
@@ -34,7 +37,7 @@ const bstackOptions = {
 // Run the whole suite except the #4394 regression on the default device.
 const suiteCapability = {
   ...baseConfig.baseCapabilities,
-  exclude: [caretFocusSpec],
+  exclude: [caretFocusSpec, caretFocusIsolatedSpec],
   'appium:deviceName': 'iPhone 15 Plus',
   'appium:platformVersion': '17',
   'bstack:options': {
@@ -48,7 +51,7 @@ const suiteCapability = {
 // Run only the #4394 regression, which requires iOS 18 to reproduce.
 const caretFocusCapability = {
   ...baseConfig.baseCapabilities,
-  specs: [caretFocusSpec],
+  specs: [caretFocusSpec, caretFocusIsolatedSpec],
   'appium:deviceName': 'iPhone 16 Pro Max',
   'appium:platformVersion': '18',
   'bstack:options': {
