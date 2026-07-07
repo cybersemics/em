@@ -178,15 +178,7 @@ const GestureMenu: FC<{
                 </div>
                 {persistentCommands.length > 0 && (
                   <div style={{ marginTop: `${GESTURE_MENU_GROUP_GAP_REM}rem` }}>
-                    <div
-                      style={{
-                        height: '1px',
-                        width: '100%',
-                        marginBottom: `${GESTURE_MENU_GROUP_GAP_REM}rem`,
-                        background:
-                          'linear-gradient(90deg, rgba(174, 168, 214, 0.59) 0%, rgba(28, 27, 36, 0) 100%)',
-                      }}
-                    />
+                    
                     <div
                       style={{
                         display: 'flex',
