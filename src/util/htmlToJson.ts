@@ -220,9 +220,14 @@ const himalayaToBlock = (nodes: HimalayaNode[]): Block | Block[] => {
           ? workflowyNoteToBlock(node)
           : node.tagName === 'ul'
             ? ulToBlock(node, nodes[index - 1] as Element)
-            : node.tagName === 'li' && node.children.length === 1
-              ? liToBlock(node)
-              : himalayaToBlock(node.children),
+            : // Preserve an empty <li> (e.g. an empty thought in a copied series) as an empty Block rather than
+              // dropping it. Also avoids a crash when a bare empty array breaks the sibling join below.
+              // See https://github.com/cybersemics/em/issues/4448.
+              node.tagName === 'li' && node.children.length === 0
+              ? { scope: '', children: [] }
+              : node.tagName === 'li' && node.children.length === 1
+                ? liToBlock(node)
+                : himalayaToBlock(node.children),
   )
 
   if (Array.isArray(blocks[0])) return blocks.flat()

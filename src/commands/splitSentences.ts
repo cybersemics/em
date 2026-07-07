@@ -12,6 +12,7 @@ const splitSentencesCommand: Command = {
   label: 'Split Sentences',
   description: 'Splits multiple sentences in a single thought into separate thoughts.',
   keyboard: { key: 's', meta: true, shift: true },
+  gesture: 'dlr',
   multicursor: true,
   svg: SplitSentencesIcon,
   canExecute: state => {

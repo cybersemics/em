@@ -57,6 +57,7 @@ import isDivider from '../util/isDivider'
 import isDocumentEditable from '../util/isDocumentEditable'
 import strip from '../util/strip'
 import stripEmptyFormattingTags from '../util/stripEmptyFormattingTags'
+import stripTags from '../util/stripTags'
 import trimHtml from '../util/trimHtml'
 import ContentEditable, { ContentEditableEvent } from './ContentEditable'
 import useEditMode from './Editable/useEditMode'
@@ -516,6 +517,12 @@ const Editable = ({
           newNumContext > 0 || newNumContext !== getContexts(state, oldValueRef.current).length - 1
         const urlChange = isNewValueURL || isNewValueURL !== containsURL(oldValueRef.current)
 
+        // A formatting-only edit changes the markup but not the plain text (e.g. applying a font or background color).
+        // Persist it immediately rather than through the edit throttle so that formatSelection's follow-up strip thunk
+        // reads a fresh value from Redux. Otherwise a stale read can leave a redundant default background in place (#4265).
+        const formattingChange =
+          newValue !== oldValueRef.current && stripTags(newValue) === stripTags(oldValueRef.current)
+
         const isEmpty = newValue.length === 0
 
         // Safari adds <br> to empty contenteditables after editing, so strip them out.
@@ -532,6 +539,7 @@ const Editable = ({
           transient ||
           contextLengthChange ||
           urlChange ||
+          formattingChange ||
           isEmpty ||
           isDivider(newValue)
         ) {
