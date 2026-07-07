@@ -31,6 +31,21 @@ it('nested lists without whitespace', async () => {
 `)
 })
 
+// Regression test for https://github.com/cybersemics/em/issues/4448 (Issue B)
+// Pasting a series of thoughts that contains multiple empty thoughts routes through the multiline importFiles path,
+// where each empty thought was previously merged into the first imported empty sibling and silently dropped.
+// Each empty thought should be preserved as a distinct sibling.
+it('preserve multiple empty thoughts within a series', async () => {
+  const actual = await importExport(`<ul><li>A</li><li></li><li>B</li><li></li><li>C</li></ul>`)
+  expect(actual).toBe(`
+- A
+- ${''}
+- B
+- ${''}
+- C
+`)
+})
+
 it('alternating nested lists', async () => {
   const actual = await importExport(`
 <li>a
@@ -417,6 +432,7 @@ it('should paste text with an improperly nested meta tag', async () => {
   - b
     - c
       - d
+    - ${''}
     - x
       - e
 `)
