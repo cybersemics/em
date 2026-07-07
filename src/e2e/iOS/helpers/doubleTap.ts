@@ -9,9 +9,12 @@ interface Options {
 }
 
 // Finger-sized contact area for the touch. A zero-radius synthetic tap does not trigger Safari's
-// touch-adjustment heuristic; only a real contact area (with pressure) is processed like a physical
-// finger. See https://github.com/cybersemics/em/pull/4407.
-const CONTACT = { width: 40, height: 40, pressure: 0.9 }
+// touch-adjustment heuristic; only a real contact radius is processed like a physical finger (see
+// https://github.com/cybersemics/em/pull/4407). Pressure is intentionally omitted: the iPhone 16
+// hardware has no Force Touch, and a pressure field makes WDA attempt a force-press, which fails with
+// "This device does not support force press interactions". The contact radius alone drives the
+// touch-adjustment retargeting.
+const CONTACT = { width: 40, height: 40 }
 
 /**
  * Computes the center point of an element in native screen coordinates.
