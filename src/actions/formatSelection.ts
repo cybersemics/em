@@ -63,7 +63,12 @@ export const formatSelectionActionCreator =
         document.execCommand(command, false, color ? colors[color] : '')
       }
 
-      if (savedSelection) {
+      // Only restore the selection (which keeps the editable focused) when in edit mode.
+      // On mobile, selecting the contentEditable to apply formatting re-focuses it; restoring the selection would
+      // re-open the virtual keyboard even though the user had manually dismissed it. Clearing the selection blurs
+      // the editable so the keyboard stays closed, matching the edit mode invariant (#3996).
+      const editMode = !isTouch || state.isKeyboardOpen
+      if (savedSelection && editMode) {
         selection.restore(savedSelection)
       } else {
         selection.clear()

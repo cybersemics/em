@@ -97,8 +97,11 @@ const moveThought = (
 
   // if thought is being moved to the same context that is not a duplicate case
   // skipMerge bypasses the auto-merge when the caller intentionally moves a thought to a context
-  // that already contains a thought with the same value (e.g. swapParent with two empty thoughts)
-  const duplicateThought = !sameContext && !skipMerge ? duplicateSubthought() : null
+  // that already contains a thought with the same value (e.g. swapParent with two empty thoughts).
+  // Do not treat empty thoughts as duplicates: an empty thought is a placeholder with no identity, so merging
+  // it into an existing empty sibling would silently drop it (e.g. pasting a series with multiple empty thoughts).
+  // See https://github.com/cybersemics/em/issues/4448.
+  const duplicateThought = !sameContext && !skipMerge && sourceThought.value !== '' ? duplicateSubthought() : null
 
   const isPendingMerge = duplicateThought && (sourceThought.pending || duplicateThought.pending)
 
