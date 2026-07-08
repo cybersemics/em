@@ -41,10 +41,8 @@ const GestureMenu: FC<{
   const mainCommands = commands.filter(cmd => cmd.id !== 'cancel' && cmd.id !== 'openMobileCommandUniverse')
   const persistentCommands = commands.filter(cmd => cmd.id === 'cancel' || cmd.id === 'openMobileCommandUniverse')
 
-  const { columnCount, rowsPerColumn, visibleRegularCount, persistentInline } = useGestureMenuLayout(
-    mainCommands.length,
-    persistentCommands.length,
-  )
+  const { columnCount, rowsPerColumn, visibleRegularCount, persistentColumnIndex, persistentInline } =
+    useGestureMenuLayout(mainCommands.length, persistentCommands.length)
   const isMultiColumn = columnCount > 1
 
   // 5rem panel padding for the multi-column layout (per the Figma mockups), 2.25rem for single column
@@ -167,9 +165,10 @@ const GestureMenu: FC<{
                   {Array.from({ length: columnCount }, (_, columnIndex) =>
                     visibleMainCommands.slice(columnIndex * rowsPerColumn, (columnIndex + 1) * rowsPerColumn),
                   ).map((columnCommands, columnIndex) => {
-                    // The inline persistent block is appended below the last column's main commands.
+                    // The inline persistent block is appended below the last column that holds main
+                    // commands (persistentColumnIndex), so it never sits in its own empty column.
                     const showInlinePersistent =
-                      persistentInline && persistentCommands.length > 0 && columnIndex === columnCount - 1
+                      persistentInline && persistentCommands.length > 0 && columnIndex === persistentColumnIndex
                     return (
                       <div key={columnIndex} style={{ minWidth: 0 }}>
                         <div
@@ -190,7 +189,8 @@ const GestureMenu: FC<{
                             style={{
                               display: 'flex',
                               flexDirection: 'column',
-                              marginTop: `${GESTURE_MENU_GROUP_GAP_REM}rem`,
+                              // Drop the group gap when this column has no main commands to separate from.
+                              marginTop: columnCommands.length === 0 ? 0 : `${GESTURE_MENU_GROUP_GAP_REM}rem`,
                               gap: `${GESTURE_MENU_ROW_GAP_REM}rem`,
                             }}
                           >
@@ -202,7 +202,11 @@ const GestureMenu: FC<{
                   })}
                 </div>
                 {!persistentInline && persistentCommands.length > 0 && (
-                  <div style={{ marginTop: `${GESTURE_MENU_GROUP_GAP_REM}rem` }}>
+                  <div
+                    style={{
+                      marginTop: visibleMainCommands.length === 0 ? 0 : `${GESTURE_MENU_GROUP_GAP_REM}rem`,
+                    }}
+                  >
                     <div
                       style={{
                         display: 'flex',

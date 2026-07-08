@@ -51,6 +51,11 @@ interface GestureMenuLayout {
   rowsPerColumn: number
   /** Number of regular commands actually rendered (may be trimmed when they overflow the grid). */
   visibleRegularCount: number
+  /**
+   * Index of the column the inline persistent block attaches to: the last column that actually
+   * holds main commands (0 when there are no main commands). Only meaningful when `persistentInline`.
+   */
+  persistentColumnIndex: number
   /** True below the `md` breakpoint — the menu stays single-column and keeps its mobile-portrait behavior. */
   isMobilePortrait: boolean
   /**
@@ -105,13 +110,16 @@ const useGestureMenuLayout = (regularCount: number, persistentCount = 0): Gestur
 
   // Inline layout: balance main + persistent commands across the columns so every column has a
   // similar height (rather than filling main to ceil(main/cols) and leaving the last column short).
-  // The persistent commands are the final items in the flow, so they land at the bottom of the last
-  // column. Inline is used only when the tallest column still fits the inline height budget.
+  // The persistent block attaches to the last column that actually holds main commands — not the
+  // last physical column — so it never lands in its own empty column when the main commands don't
+  // reach the far right. Inline is used only when that attach column still fits the inline budget.
   const balancedRows = Math.ceil((regularCount + persistentCount) / columnCount) || 0
-  const lastColMain = regularCount - (columnCount - 1) * balancedRows
-  const lastColRows = Math.max(lastColMain, 0) + persistentCount
+  const mainColumnsUsed = regularCount === 0 ? 0 : Math.ceil(regularCount / balancedRows)
+  const persistentColumnIndex = Math.max(mainColumnsUsed - 1, 0)
+  const mainInLastMainCol = regularCount === 0 ? 0 : regularCount - (mainColumnsUsed - 1) * balancedRows
+  const attachColRows = mainInLastMainCol + persistentCount
   const persistentInline =
-    columnCount > 1 && balancedRows <= maxRowsInline && lastColRows <= maxRowsInline
+    columnCount > 1 && balancedRows <= maxRowsInline && attachColRows <= maxRowsInline
 
   // Bottom-row layout: main commands fill the grid (reserved-height budget) and trim from the end
   // when they overflow, since the multi-column menu doesn't scroll.
@@ -123,7 +131,7 @@ const useGestureMenuLayout = (regularCount: number, persistentCount = 0): Gestur
   const rowsPerColumn = persistentInline ? balancedRows : bottomRows
   const visibleRegularCount = persistentInline ? regularCount : bottomFits ? regularCount : bottomCapacity
 
-  return { columnCount, rowsPerColumn, visibleRegularCount, isMobilePortrait, persistentInline }
+  return { columnCount, rowsPerColumn, visibleRegularCount, persistentColumnIndex, isMobilePortrait, persistentInline }
 }
 
 export default useGestureMenuLayout

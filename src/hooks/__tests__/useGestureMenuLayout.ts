@@ -89,10 +89,29 @@ describe('useGestureMenuLayout', () => {
   it('flows persistent commands inline and balances them across the columns', () => {
     // Tall viewport, 5 main + 2 persistent = 7 items over 2 columns → 4 balanced rows.
     setViewport(854, TALL)
-    const { persistentInline, rowsPerColumn, visibleRegularCount } = layout(5, 2)
+    const { persistentInline, rowsPerColumn, visibleRegularCount, persistentColumnIndex } = layout(5, 2)
     expect(persistentInline).toBe(true)
     expect(rowsPerColumn).toBe(4)
     expect(visibleRegularCount).toBe(5)
+    // Main fills both columns (4 + 1), so persistent attaches to the last column.
+    expect(persistentColumnIndex).toBe(1)
+  })
+
+  it('attaches persistent to the first column when a single main command leaves later columns empty', () => {
+    // Tall viewport, 1 main + 2 persistent over 2 columns: main reaches only the first column,
+    // so the persistent block joins it rather than sitting alone in the empty second column.
+    setViewport(854, TALL)
+    const { persistentInline, persistentColumnIndex } = layout(1, 2)
+    expect(persistentInline).toBe(true)
+    expect(persistentColumnIndex).toBe(0)
+  })
+
+  it('attaches persistent to the first column when there are no main commands', () => {
+    // Tall viewport, 0 main + 2 persistent over 2 columns: persistent sits at the top of column 0.
+    setViewport(854, TALL)
+    const { persistentInline, persistentColumnIndex } = layout(0, 2)
+    expect(persistentInline).toBe(true)
+    expect(persistentColumnIndex).toBe(0)
   })
 
   it('keeps all commands inline when they fit the inline height budget', () => {
