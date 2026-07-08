@@ -20,53 +20,6 @@ if (!process.env.BROWSERSTACK_ACCESS_KEY) {
 const user = process.env.BROWSERSTACK_USERNAME
 const date = new Date().toISOString().slice(0, 10)
 
-// The #4394 regression test only reproduces on iOS 18 (Safari touch-adjustment retargets the
-// synthesized mousedown into the editable), so it runs on a dedicated iOS 18 capability while the
-// rest of the suite stays on iOS 17.
-const caretFocusSpec = path.resolve(process.cwd(), 'src/e2e/iOS/__tests__/caretFocus.ts')
-
-// Shared bstack:options across both capabilities. deviceName/osVersion are set per-capability.
-const bstackOptions = {
-  projectName: process.env.BROWSERSTACK_PROJECT_NAME || 'em',
-  buildName: process.env.BROWSERSTACK_BUILD_NAME || `Local - ${user} - ${date}`,
-  sessionName: 'iOS Safari Tests',
-  // The device reaches the dev server over the public cloudflared HTTPS URL (onPrepare), so
-  // BrowserStack Local (`local: true`) is not used on this path. These flags collect diagnostic
-  // data on BrowserStack's web dashboard, which we don't need/use.
-  debug: false,
-  networkLogs: false,
-  consoleLogs: 'errors',
-  idleTimeout: 60,
-}
-
-// Runs the whole suite except the iOS 18-only #4394 regression test on iOS 17.
-// Built as a standalone const (rather than inline in the capabilities array) so the extra
-// `exclude`/`specs` keys don't trip the excess-property check when the array is cast below.
-const suiteCapability = {
-  ...baseConfig.baseCapabilities,
-  exclude: [caretFocusSpec],
-  'appium:deviceName': 'iPhone 15 Plus',
-  'appium:platformVersion': '17',
-  'bstack:options': {
-    ...bstackOptions,
-    deviceName: 'iPhone 15 Plus',
-    osVersion: '17',
-  },
-}
-
-// Runs only the #4394 regression test, which requires iOS 18 to reproduce.
-const caretFocusCapability = {
-  ...baseConfig.baseCapabilities,
-  specs: [caretFocusSpec],
-  'appium:deviceName': 'iPhone 16 Pro Max',
-  'appium:platformVersion': '18',
-  'bstack:options': {
-    ...bstackOptions,
-    deviceName: 'iPhone 16 Pro Max',
-    osVersion: '18',
-  },
-}
-
 let tunnelProcess: ChildProcess | null = null
 
 /**
@@ -171,7 +124,27 @@ export const config: WebdriverIO.Config = {
   key: process.env.BROWSERSTACK_ACCESS_KEY,
 
   // Capabilities
-  capabilities: [suiteCapability, caretFocusCapability] as WebdriverIO.Config['capabilities'],
+  capabilities: [
+    {
+      ...baseConfig.baseCapabilities,
+      'appium:deviceName': 'iPhone 15 Plus',
+      'appium:platformVersion': '17',
+      'bstack:options': {
+        deviceName: 'iPhone 15 Plus',
+        osVersion: '17',
+        projectName: process.env.BROWSERSTACK_PROJECT_NAME || 'em',
+        buildName: process.env.BROWSERSTACK_BUILD_NAME || `Local - ${user} - ${date}`,
+        sessionName: 'iOS Safari Tests',
+        // The device reaches the dev server over the public cloudflared HTTPS URL (onPrepare), so
+        // BrowserStack Local (`local: true`) is not used on this path. These flags collect diagnostic
+        // data on BrowserStack's web dashboard, which we don't need/use.
+        debug: false,
+        networkLogs: false,
+        consoleLogs: 'errors',
+        idleTimeout: 60,
+      },
+    },
+  ],
 
   // Services
   services: [

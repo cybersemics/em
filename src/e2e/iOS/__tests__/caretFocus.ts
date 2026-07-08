@@ -8,9 +8,8 @@
  * even though `onMouseDown` had preventDefaulted the native focus. This branch prevents focus on non-cursor
  * thoughts, so the keyboard stays down.
  *
- * Isolated into its own spec file so it can be pinned to an iOS version whose Safari touch-adjustment
- * heuristic reproduces the bug when unfixed (see `wdio.browserstack.conf.ts`). The rest of the iOS suite
- * runs on the default device/version.
+ * The stale-offset focus path is device- and version-independent, so #4394 reproduces on both iOS 17 and
+ * iOS 18 when unfixed. This spec therefore runs as part of the default iOS suite.
  */
 import gesture from '../helpers/gesture'
 import getEditingText from '../helpers/getEditingText'
