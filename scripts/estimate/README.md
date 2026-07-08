@@ -1,5 +1,7 @@
 # Estimate
 
+AI-powered issue estimation for the `em` project. Analyzes GitHub issues, assigns a t-shirt-size effort estimate, and syncs the estimated hours to Everhour.
+
 ## Setup
 
 Define env variables in `scripts/estimate/.env`:
