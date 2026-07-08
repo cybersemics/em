@@ -5,10 +5,10 @@ import type { EverhourTask } from './types.ts'
  *
  * Tries several strategies in order:
  * 1. **Task ID** — standard Everhour GitHub format `gh:REPO_ID:ISSUE_NUMBER`
- * 2. **URL** — GitHub issue/PR URL, e.g. `https://github.com/owner/repo/issues/76`. Covers the
- *    `gh:ISSUE_ID` task-ID form (2 segments) where the ID is GitHub's internal issue database ID
+ * 2. **number** — explicit issue-number field returned by Everhour for GitHub-linked tasks. Covers
+ *    the `gh:ISSUE_ID` task-ID form (2 segments) where the ID is GitHub's internal issue database ID
  *    rather than the issue number, so strategy 1 cannot apply.
- * 3. **number** — explicit issue-number field returned by Everhour for GitHub-linked tasks
+ * 3. **URL** — GitHub issue/PR URL, e.g. `https://github.com/owner/repo/issues/76`
  * 4. **foreignId** — numeric string returned by some Everhour API versions for GitHub-linked tasks
  * 5. **Task name** — `#NUMBER` appearing anywhere in the name (e.g. `"Fix bug (#123)"` or `"#123 Title"`).
  *
@@ -23,18 +23,19 @@ const extractIssueNumber = (task: EverhourTask): number | null => {
     if (!isNaN(num)) return num
   }
 
-  // Strategy 2: GitHub issue/PR URL, e.g. "https://github.com/owner/repo/issues/76". Matches pull
+  // Strategy 2: explicit "number" field returned by Everhour for GitHub-linked tasks. Preferred over
+  // URL scraping since it is a structured field rather than a value parsed out of a string.
+  if (task.number) {
+    const num = parseInt(task.number, 10)
+    if (!isNaN(num)) return num
+  }
+
+  // Strategy 3: GitHub issue/PR URL, e.g. "https://github.com/owner/repo/issues/76". Matches pull
   // request URLs too — issues and PRs share GitHub's number space, and the caller detects and skips
   // PRs with an accurate reason.
   if (task.url) {
     const match = task.url.match(/\/(?:issues|pull)\/(\d+)/)
     if (match) return parseInt(match[1], 10)
-  }
-
-  // Strategy 3: explicit "number" field returned by Everhour for GitHub-linked tasks.
-  if (task.number) {
-    const num = parseInt(task.number, 10)
-    if (!isNaN(num)) return num
   }
 
   // Strategy 4: foreignId field returned by some Everhour API versions

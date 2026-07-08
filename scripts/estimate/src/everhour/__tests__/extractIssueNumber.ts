@@ -45,6 +45,17 @@ describe('extractIssueNumber', () => {
     expect(extractIssueNumber({ id: 'gh:498948741', name: 'Some issue', number: '76' })).toBe(76)
   })
 
+  it('prefers the number field over URL scraping', () => {
+    expect(
+      extractIssueNumber({
+        id: 'gh:498948741',
+        name: 'Some issue',
+        number: '76',
+        url: 'https://github.com/cybersemics/em/issues/999',
+      }),
+    ).toBe(76)
+  })
+
   it('prefers task ID extraction over foreignId', () => {
     expect(extractIssueNumber({ id: 'gh:143808059:100', name: 'Issue', foreignId: '999' })).toBe(100)
   })
