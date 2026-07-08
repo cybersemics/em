@@ -1,26 +1,30 @@
 /**
- * Add iOS Safari isolated-primitive diagnostics for #4394.
+ * IOS Safari isolated-primitive diagnostics for #4394.
  *
- * These specs strip away all em code and reproduce the bug against DOM primitives: a bare
- * contentEditable plus an adjacent non-focusable overlay (mimicking the thought-annotation), driven by
- * the exact finger-sized right-edge tap from caretFocus.ts. Pinned to iOS 18 (see
- * wdio.browserstack.conf.ts) because the touch-adjustment heuristic that redirects the synthesized
- * mouse events onto the editable only reproduces there.
+ * These specs strip away all em code and reproduce the bug against DOM primitives using a bare
+ * contentEditable plus an adjacent non-focusable overlay that mimics the thought-annotation, driven by the
+ * exact finger-sized right-edge tap from the caretFocus spec. Pinned to iOS 18 (see
+ * `wdio.browserstack.conf.ts`) because the touch-adjustment heuristic that redirects the synthesized mouse
+ * events onto the editable only reproduces there.
  *
- * Two hypotheses are probed:
+ * The root cause of #4394 on the pre-#4371 code is not a platform property of `mousedown`. In
+ * `useEditMode.ts`, `offsetRef.current` is assigned when a thought that has the cursor is tapped, but it is
+ * never reset back to null. `onMouseUp` then reads that stale offset and calls `setCaretOffset` ->
+ * `selection.set`, which focuses the editable and opens the keyboard. So the focus that #4394 complains
+ * about is driven programmatically from `onMouseUp` using a stale offset, not by the native focus default
+ * of the tap. On the #4394 edge tap the editable's `onMouseDown` runs its else branch and calls
+ * `e.preventDefault()`, which does block the native focus default. The keyboard still opens only because
+ * the retargeted `mouseup` fires on the editable and the stale-offset `selection.set` focuses it. This is
+ * exactly what PR #4371 fixed by deleting `onMouseUp`/`offsetRef` and moving `setCaretOffset` into a
+ * guarded `onMouseDown`.
  *
- * - H2 (first spec): `preventDefault()` on the touch-adjustment-redirected `mousedown` does NOT block
- * focus, because focus is a default action of the *touch* sequence, not the mouse event. Passing this
- * spec (focus + keyboard despite a successfully-prevented mousedown, with zero em code) confirms H2 is
- * a pure iOS Safari platform property.
- *
- * - Touch-layer fix viability (second spec): since the touchstart/touchend land on the overlay and never
- * reach the editable, the only touch we can intercept is the overlay's. This spec preventDefaults on
- * the overlay's touch events and asks whether that suppresses the retargeted focus. If it does, a
- * touch-layer fix on the annotation/overlay is viable. If focus still proceeds, iOS's focus retarget is
- * decoupled from the overlay's touch default and no `preventDefault` can stop it — the fix must prevent
- * focus another way (e.g. blur-on-focus, or making the editable unfocusable while it is a non-cursor
- * thought).
+ * Two configurations are probed, both under the identical iOS 18 edge tap. The reproduce spec models
+ * pre-#4371: the editable's `mousedown` preventDefaults (blocking native focus) and a `mouseup` handler
+ * calls `selection.set` using a stale, never-reset offset. Focus and the keyboard proceed anyway, pinning
+ * the cause to the stale-offset `onMouseUp` with zero em code. The control spec models post-#4371: the
+ * editable's `mousedown` preventDefaults and there is no `mouseup` selection at all. Focus is blocked and
+ * the keyboard stays down, confirming that removing the stale-offset `onMouseUp` (what #4371 did) fixes the
+ * bug.
  */
 import getElementRectByScreen from '../helpers/getElementRectByScreen'
 import isKeyboardShown from '../helpers/isKeyboardShown'
@@ -30,8 +34,8 @@ type FixWindow = {
   __fixFocused?: boolean
   __fixMousedownFired?: boolean
   __fixMousedownPrevented?: boolean | null
-  __fixOverlayTouchFired?: boolean
-  __fixTouchPrevented?: boolean | null
+  __fixMouseupFired?: boolean
+  __fixSelectionSet?: boolean
 }
 
 describe('Caret (isolated)', () => {
@@ -39,19 +43,23 @@ describe('Caret (isolated)', () => {
    * Replaces the em app with a minimal fixture: a bare contentEditable and an adjacent non-focusable
    * overlay positioned just past its right edge (the role the thought-annotation plays in the app). The
    * editable's mousedown handler unconditionally preventDefaults - exactly the condition of useEditMode's
-   * `else` branch - and records whether it fired and whether the default was prevented. A focus probe
-   * records whether the editable received focus. When guardOverlayTouch is set, the overlay also
-   * preventDefaults its touchstart/touchend (the only touch that actually lands during the edge tap).
+   * `else` branch - blocking the native focus default and recording whether it fired and was prevented.
+   *
+   * When staleOffsetMouseup is set, the editable additionally gets a mouseup handler that models the
+   * pre-#4371 `onMouseUp`: it reads a stale, never-reset offset and sets the DOM selection inside the
+   * editable exactly as `device/selection.set` does (removeAllRanges + addRange, no explicit focus()),
+   * which focuses the contentEditable. When it is not set, there is no mouseup selection, modeling the
+   * post-#4371 code where `onMouseUp` was removed entirely.
    */
-  const injectFixture = (guardOverlayTouch: boolean) =>
-    browser.execute(guard => {
+  const injectFixture = (staleOffsetMouseup: boolean) =>
+    browser.execute(withMouseup => {
       const w = window as unknown as FixWindow
       document.body.innerHTML = ''
       w.__fixFocused = false
       w.__fixMousedownFired = false
       w.__fixMousedownPrevented = null
-      w.__fixOverlayTouchFired = false
-      w.__fixTouchPrevented = null
+      w.__fixMouseupFired = false
+      w.__fixSelectionSet = false
 
       const wrap = document.createElement('div')
       wrap.style.cssText = 'position:absolute; top:250px; left:40px;'
@@ -66,6 +74,7 @@ describe('Caret (isolated)', () => {
       overlay.id = 'fixOverlay'
       overlay.style.cssText = 'position:absolute; top:0; left:100%; width:44px; height:100%; z-index:5;'
 
+      // Models useEditMode's `else` branch: preventDefault blocks the native focus default of the tap.
       editable.addEventListener('mousedown', e => {
         e.preventDefault()
         w.__fixMousedownFired = true
@@ -75,21 +84,34 @@ describe('Caret (isolated)', () => {
         w.__fixFocused = true
       })
 
-      if (guard) {
-        /** Setting passive:false is required for preventDefault on touchstart to be honored by Safari. */
-        const onTouch = (e: Event) => {
-          e.preventDefault()
-          w.__fixOverlayTouchFired = true
-          w.__fixTouchPrevented = e.defaultPrevented
-        }
-        overlay.addEventListener('touchstart', onTouch, { passive: false })
-        overlay.addEventListener('touchend', onTouch, { passive: false })
+      if (withMouseup) {
+        // A stale, never-reset offset, standing in for `offsetRef.current` which useEditMode assigns when a
+        // cursor thought is tapped and never resets to null.
+        const staleOffset = 2
+
+        // Models pre-#4371 `onMouseUp` -> `setCaretOffset` -> `selection.set`: set the DOM selection inside
+        // the editable using the stale offset. This focuses the contentEditable even though the mousedown
+        // default was prevented, which is the #4394 focus leak.
+        editable.addEventListener('mouseup', () => {
+          w.__fixMouseupFired = true
+          const textNode = editable.firstChild
+          if (!textNode) return
+          const clamped = Math.min(staleOffset, textNode.textContent?.length ?? 0)
+          const range = document.createRange()
+          range.setStart(textNode, clamped)
+          range.collapse(true)
+          const sel = window.getSelection()
+          if (!sel) return
+          sel.removeAllRanges()
+          sel.addRange(range)
+          w.__fixSelectionSet = true
+        })
       }
 
       wrap.appendChild(editable)
       wrap.appendChild(overlay)
       document.body.appendChild(wrap)
-    }, guardOverlayTouch)
+    }, staleOffsetMouseup)
 
   /** Performs a native touch tap at the given screen coordinates, optionally with a finger-sized contact area. */
   const nativeTap = async (webviewContext: string, x: number, y: number, finger = false) => {
@@ -132,11 +154,14 @@ describe('Caret (isolated)', () => {
     // entirely in the webview context (no native switch, no dependency on a Done button).
     await browser.execute(() => (document.activeElement as HTMLElement | null)?.blur())
     await browser.pause(400)
+    // Reset only the transient probe flags. The stale offset intentionally persists, mirroring
+    // offsetRef.current never being reset in useEditMode.
     await browser.execute(() => {
       const w = window as unknown as FixWindow
       w.__fixFocused = false
       w.__fixMousedownFired = false
-      w.__fixOverlayTouchFired = false
+      w.__fixMouseupFired = false
+      w.__fixSelectionSet = false
     })
   }
 
@@ -148,39 +173,18 @@ describe('Caret (isolated)', () => {
         focused: w.__fixFocused === true,
         mousedownFired: w.__fixMousedownFired === true,
         mousedownPrevented: w.__fixMousedownPrevented === true,
-        overlayTouchFired: w.__fixOverlayTouchFired === true,
-        touchPrevented: w.__fixTouchPrevented === true,
+        mouseupFired: w.__fixMouseupFired === true,
+        selectionSet: w.__fixSelectionSet === true,
       }
     })
 
-  it('H2: mousedown preventDefault does not block focus on a touch-redirected edge tap', async () => {
-    await injectFixture(false)
-
-    const editableEl = await browser.$('#fixEditable').getElement()
-    const rect = await getElementRectByScreen(editableEl)
-    const webviewContext = (await browser.getContext()) as string
-
-    await primeAndDismiss(webviewContext, rect)
-
-    // Tap just past the right edge with a finger-sized contact area. Safari's touch adjustment retargets
-    // the synthesized mouse events onto the editable while the touchstart/touchend land on the overlay -
-    // so the editable's mousedown fires and preventDefaults, but focus proceeds anyway. Isolated #4394.
+  /** Performs the finger-sized tap ~4px past the editable's right edge that triggers the #4394 retargeting. */
+  const edgeTap = async (webviewContext: string, rect: { x: number; y: number; width: number; height: number }) => {
     await nativeTap(webviewContext, Math.round(rect.x + rect.width + 4), Math.round(rect.y + rect.height / 2), true)
     await browser.pause(600)
+  }
 
-    const probes = await readProbes()
-    const keyboard = await isKeyboardShown()
-
-    // The mousedown fired and its default was successfully prevented...
-    expect(probes.mousedownFired).toBe(true)
-    expect(probes.mousedownPrevented).toBe(true)
-    // ...yet the editable focused and the keyboard opened anyway, with zero em code involved.
-    // If both are true, H2 is confirmed: mousedown preventDefault cannot block iOS Safari touch focus.
-    expect(probes.focused).toBe(true)
-    expect(keyboard).toBe(true)
-  })
-
-  it('control: preventDefault on the overlay touch (the element the touch actually hits) suppresses focus', async () => {
+  it('reproduce: stale-offset onMouseUp selection focuses the editable despite a prevented mousedown', async () => {
     await injectFixture(true)
 
     const editableEl = await browser.$('#fixEditable').getElement()
@@ -188,21 +192,42 @@ describe('Caret (isolated)', () => {
     const webviewContext = (await browser.getContext()) as string
 
     await primeAndDismiss(webviewContext, rect)
-
-    // Same edge tap, but now the overlay preventDefaults its own touch events.
-    await nativeTap(webviewContext, Math.round(rect.x + rect.width + 4), Math.round(rect.y + rect.height / 2), true)
-    await browser.pause(600)
+    await edgeTap(webviewContext, rect)
 
     const probes = await readProbes()
     const keyboard = await isKeyboardShown()
 
-    // The touch landed on the overlay and its default was cancelable and prevented.
-    expect(probes.overlayTouchFired).toBe(true)
-    expect(probes.touchPrevented).toBe(true)
-    // Hypothesis under test: preventing the overlay's touch default suppresses the retargeted focus and
-    // the synthesized mouse cascade. If these pass, a touch-layer fix on the annotation/overlay is
-    // viable. If focus/keyboard still occur, the fix must prevent focus another way.
-    expect(probes.mousedownFired).toBe(false)
+    // The mousedown fired on the retargeted editable and its native focus default was successfully prevented.
+    expect(probes.mousedownFired).toBe(true)
+    expect(probes.mousedownPrevented).toBe(true)
+    // The retargeted mouseup also fired on the editable and ran the stale-offset selection.set.
+    expect(probes.mouseupFired).toBe(true)
+    expect(probes.selectionSet).toBe(true)
+    // ...yet the editable focused and the keyboard opened anyway - driven by the programmatic selection,
+    // not the native tap default. This isolates #4394 to the stale-offset onMouseUp with zero em code.
+    expect(probes.focused).toBe(true)
+    expect(keyboard).toBe(true)
+  })
+
+  it('control: with no onMouseUp selection (post-#4371), the prevented mousedown keeps focus down', async () => {
+    await injectFixture(false)
+
+    const editableEl = await browser.$('#fixEditable').getElement()
+    const rect = await getElementRectByScreen(editableEl)
+    const webviewContext = (await browser.getContext()) as string
+
+    await primeAndDismiss(webviewContext, rect)
+    await edgeTap(webviewContext, rect)
+
+    const probes = await readProbes()
+    const keyboard = await isKeyboardShown()
+
+    // The same retargeting occurs: the mousedown fires on the editable and is prevented.
+    expect(probes.mousedownFired).toBe(true)
+    expect(probes.mousedownPrevented).toBe(true)
+    // With the stale-offset onMouseUp removed (what #4371 did), nothing focuses the editable...
+    expect(probes.selectionSet).toBe(false)
+    // ...so focus is blocked and the keyboard stays down.
     expect(probes.focused).toBe(false)
     expect(keyboard).toBe(false)
   })

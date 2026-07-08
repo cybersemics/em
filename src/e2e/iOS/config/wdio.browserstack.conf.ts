@@ -62,6 +62,22 @@ const caretFocusCapability = {
   },
 }
 
+// Run the #4394 caret focus spec on iOS 17 as well, to positively verify the bug is iOS-18-specific:
+// the same edge tap that opens the keyboard on iOS 18 must leave it down on iOS 17. The isolated
+// diagnostic depends on the iOS 18 retargeting, so it is not run here.
+const caretFocusIOS17Capability = {
+  ...baseConfig.baseCapabilities,
+  specs: [caretFocusSpec],
+  'appium:deviceName': 'iPhone 15 Plus',
+  'appium:platformVersion': '17',
+  'bstack:options': {
+    ...bstackOptions,
+    deviceName: 'iPhone 15 Plus',
+    osVersion: '17',
+    sessionName: 'iOS Safari Tests (caret focus, iOS 17)',
+  },
+}
+
 /**
  * WDIO configuration for BrowserStack iOS testing.
  * Uses @wdio/browserstack-service for automatic tunnel management.
@@ -80,7 +96,11 @@ export const config: WebdriverIO.Config = {
   key: process.env.BROWSERSTACK_ACCESS_KEY,
 
   // Capabilities (per-capability specs/exclude is a WDIO runtime feature not covered by the strict type)
-  capabilities: [suiteCapability, caretFocusCapability] as WebdriverIO.Config['capabilities'],
+  capabilities: [
+    suiteCapability,
+    caretFocusCapability,
+    caretFocusIOS17Capability,
+  ] as WebdriverIO.Config['capabilities'],
 
   // Services
   services: [
