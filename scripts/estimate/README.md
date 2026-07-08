@@ -17,8 +17,11 @@ EVERHOUR_PROJECT_ID=
 # Backfill (dry run)
 cd scripts/estimate
 yarn backfill --dry 10
+```
 
-# Manual correction (via issue comment)
+Manual correction (via issue comment)
+
+```md
 /estimate 4h
 ```
 
@@ -28,6 +31,8 @@ Valid estimate values: `1h` (XXS), `2h` (XS), `4h` (S), `8h` (M), `16h` (L), `24
 
 Three GitHub Action workflows in `.github/workflows/` drive the estimation scripts. All require the `EVERHOUR_API_KEY` and `EVERHOUR_PROJECT_ID` secrets to be configured in the repository settings.
 
-- **[Estimate - Issue Opened](../../.github/workflows/estimate-issue-opened.yml)** — Runs when a new issue is opened. Estimates the issue and posts an audit comment with the estimated hours (`src/issue.ts`).
-- **[Estimate - /estimate command](../../.github/workflows/estimate-command.yml)** — Runs when an issue comment starting with `/estimate ` is created. Applies the manual correction and opens a pull request adding the correction as a new estimation sample under `.github/instructions/estimate/` (`src/command.ts`).
-- **[Estimate - Backfill](../../.github/workflows/estimate-backfill.yml)** — Manually triggered via `workflow_dispatch`. Backfills estimates for existing issues in the configured Everhour project, up to the optional `limit` input (defaults to 10) (`src/backfill.ts`).
+| Workflow                                                                     | Script            | Trigger                                  | Description                                                                                                                                     |
+| ---------------------------------------------------------------------------- | ----------------- | ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Estimate - Issue Opened](../../.github/workflows/estimate-issue-opened.yml) | `src/issue.ts`    | Issue opened                             | Estimates the issue and posts an audit comment with the estimated hours.                                                                        |
+| [Estimate - /estimate command](../../.github/workflows/estimate-command.yml) | `src/command.ts`  | Issue comment starting with `/estimate ` | Applies the manual correction and opens a pull request adding the correction as a new estimation sample under `.github/instructions/estimate/`. |
+| [Estimate - Backfill](../../.github/workflows/estimate-backfill.yml)         | `src/backfill.ts` | Manual (`workflow_dispatch`)             | Backfills estimates for existing issues in the configured Everhour project, up to the optional `limit` input (defaults to 10).                  |
