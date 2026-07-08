@@ -30,6 +30,21 @@ describe('extractIssueNumber', () => {
     expect(extractIssueNumber({ id: 'manual', name: 'Doubly-linked Items' })).toBeNull()
   })
 
+  it('extracts from the GitHub URL when the task ID is gh:ISSUE_ID (2 segments)', () => {
+    expect(
+      extractIssueNumber({
+        id: 'gh:498948741',
+        name: 'Cmd + Shift + H → Home',
+        url: 'https://github.com/cybersemics/em/issues/76',
+        number: '76',
+      }),
+    ).toBe(76)
+  })
+
+  it('extracts from the number field when the task ID and URL are absent', () => {
+    expect(extractIssueNumber({ id: 'gh:498948741', name: 'Some issue', number: '76' })).toBe(76)
+  })
+
   it('prefers task ID extraction over foreignId', () => {
     expect(extractIssueNumber({ id: 'gh:143808059:100', name: 'Issue', foreignId: '999' })).toBe(100)
   })
