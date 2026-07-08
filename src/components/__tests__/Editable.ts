@@ -93,34 +93,33 @@ it('inserts emoji spacing immediately and allows Backspace at the emoji boundary
 // thought it either sets the cursor directly, OR — when `editingOrOnCursor` is true — takes a
 // "no-op (cursor set via onFocus)" branch that defers all cursor-setting to the thought's `onFocus`
 // handler. `editingOrOnCursor` is true whenever the keyboard is open. After the first tap the
-// keyboard is open, so the handler defers to `onFocus` for the second tap regardless of which thought
-// is tapped. The adjacency difference is NOT in the handler — it is in whether iOS delivers a `focus`
-// event on the second tap:
-//   - Adjacent re-tap: iOS fires `touchend` on the second thought but NOT `focus` (the synthesized
-//     click retargets to the first thought). `onFocus` never runs, so the deferral is never honored
-//     and the cursor stays put. THIS IS THE BUG.
-//   - Non-adjacent tap: iOS DOES fire `focus`, so the deferred `onFocus` runs and the cursor moves.
-//     This is why a non-adjacent tap works even with the keyboard open.
+// keyboard is open, so `touchend` on the second thought defers to `onFocus` and does nothing on its
+// own. On a real device the rapid ADJACENT re-tap fires `touchend` but iOS suppresses `focus` (the
+// synthesized click retargets to the first thought), so `onFocus` never runs and the cursor stays put.
 //
-// This is reproduced at the handler level (a pure synthetic-touch e2e cannot: WebDriver taps force
-// focus onto the target, bypassing the real-finger rapid-tap focus suppression). The tests below
-// faithfully model each case by firing exactly the DOM events iOS delivers in that scenario.
+// The tests below reproduce this at the handler level by firing the DOM events iOS delivers —
+// crucially, `touchend` WITHOUT a `focus` event. A pure synthetic-touch e2e cannot reproduce it:
+// WebDriver taps force focus onto the target, bypassing the real-finger rapid-tap focus suppression.
+//
+// Note on the non-adjacent case: it is NOT reproducible at the handler level. The only reason a
+// non-adjacent tap works is that iOS delivers a `focus` event, and at this level the handler cannot
+// distinguish adjacency at all — `touchend` alone on ANY thought stays on 'a' while the keyboard is
+// open. A "control" that fired a synthetic `focus` would just be invoking `onFocus` directly (the
+// very event whose absence IS the bug), so it would prove nothing about the tap behavior. The
+// adjacency difference lives in WebKit's focus delivery, which jsdom does not model.
 
 /**
  * Seeds three sibling thoughts a/b/c, puts the cursor on `a` (the state left by a first tap on `a`)
- * with the keyboard open or closed, then simulates a tap on `target` by firing the exact DOM events
- * iOS delivers: always `touchend`, plus `focus` only when `deliversFocus` is true (iOS suppresses
- * `focus` on a rapid ADJACENT re-tap but delivers it on a non-adjacent tap). Returns the value of the
- * thought the cursor ends on.
+ * with the keyboard open or closed, then fires `touchend` on `target` — the DOM event iOS delivers on
+ * a tap, notably WITHOUT a `focus` event (which iOS suppresses on a rapid adjacent re-tap). Returns
+ * the value of the thought the cursor ends on.
  */
 const tapThoughtOnTouchEnd = async ({
   target,
   isKeyboardOpen,
-  deliversFocus,
 }: {
   target: string
   isKeyboardOpen: boolean
-  deliversFocus: boolean
 }): Promise<string | undefined> => {
   await dispatch([
     importText({
@@ -140,17 +139,10 @@ const tapThoughtOnTouchEnd = async ({
   const editable = (await findThoughtByText(target))!
   expect(editable).toBeTruthy()
 
-  // touchend always fires on the tapped thought.
+  // Fire touchend only — iOS suppresses the focus event on a rapid adjacent re-tap.
   await act(async () => {
     fireEvent.touchEnd(editable)
   })
-  // focus fires only when iOS delivers it (non-adjacent tap); it is suppressed on a rapid adjacent re-tap.
-  if (deliversFocus) {
-    await act(async () => {
-      editable.focus()
-      fireEvent.focus(editable)
-    })
-  }
   await act(vi.runOnlyPendingTimersAsync)
 
   const state = store.getState()
@@ -158,31 +150,23 @@ const tapThoughtOnTouchEnd = async ({
 }
 
 describe('#4173: tapping a thought after another', () => {
-  // Control 1: with the keyboard CLOSED, `handleTapBehavior` sets the cursor directly on `touchend`
+  // Control: with the keyboard CLOSED, `handleTapBehavior` sets the cursor directly on `touchend`
   // (no deferral to onFocus). This proves the touchend handler is wired and IS meant to drive the
-  // cursor-setting chain, so the bug test below cannot pass merely because the handler is detached.
+  // cursor-setting chain, so the bug test below cannot pass merely because the handler is detached or
+  // touchend is a no-op — the ONLY difference between the two tests is keyboard state.
   it('moves the cursor on touchend while the keyboard is closed (control)', async () => {
-    expect(await tapThoughtOnTouchEnd({ target: 'b', isKeyboardOpen: false, deliversFocus: false })).toBe('b')
+    expect(await tapThoughtOnTouchEnd({ target: 'b', isKeyboardOpen: false })).toBe('b')
   })
 
-  // Control 2: NON-ADJACENT tap with the keyboard OPEN. iOS delivers `focus`, so the deferred
-  // `onFocus` runs and the cursor moves. This proves the keyboard-open state is NOT itself the
-  // problem — a tap works fine with the keyboard open as long as `focus` is delivered. It isolates the
-  // bug to the missing `focus` on the adjacent re-tap, matching the issue report that a non-adjacent
-  // thought works.
-  it('moves the cursor on a non-adjacent tap while the keyboard is open (control)', async () => {
-    expect(await tapThoughtOnTouchEnd({ target: 'c', isKeyboardOpen: true, deliversFocus: true })).toBe('c')
-  })
-
-  // #4173: ADJACENT re-tap with the keyboard OPEN. iOS fires `touchend` but suppresses `focus`, so the
-  // handler's deferral to `onFocus` is never honored and the cursor does not move. Asserts the CURRENT
-  // (buggy) outcome: the cursor stays on 'a'.
+  // #4173: with the keyboard OPEN (the state after a first tap), the SAME `touchend` — without a focus
+  // event, as on a rapid adjacent re-tap — does NOT move the cursor, because the handler defers to an
+  // `onFocus` that never fires. Asserts the CURRENT (buggy) outcome: the cursor stays on 'a'.
   //
   // WHEN #4173 IS FIXED — by having `handleTapBehavior` set the cursor directly on `touchend` for a
   // visible non-cursor thought instead of relying solely on `onFocus` — this test will start failing.
-  // At that point change the expected value from 'a' to 'b' (matching control 1) so it becomes a live
-  // regression guard for the fixed behavior.
-  it('does NOT move the cursor on an adjacent re-tap while the keyboard is open (#4173)', async () => {
-    expect(await tapThoughtOnTouchEnd({ target: 'b', isKeyboardOpen: true, deliversFocus: false })).toBe('a')
+  // At that point change the expected value from 'a' to 'b' (matching the control) so it becomes a
+  // live regression guard for the fixed behavior.
+  it('does NOT move the cursor on touchend (no focus) while the keyboard is open (#4173)', async () => {
+    expect(await tapThoughtOnTouchEnd({ target: 'b', isKeyboardOpen: true })).toBe('a')
   })
 })
