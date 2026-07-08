@@ -8,6 +8,14 @@ export interface EverhourEstimate {
 export interface EverhourTask {
   id: string
   name: string
+  /** Task status returned by Everhour, e.g. "open" or "closed". */
+  status?: string
+  /** Whether the task is completed (e.g. the linked GitHub issue is closed). */
+  completed?: boolean
+  /** GitHub issue number string returned by Everhour for GitHub-linked tasks. */
+  number?: string
+  /** GitHub issue/PR URL returned by Everhour for GitHub-linked tasks, e.g. ".../issues/76". */
+  url?: string
   /** GitHub issue number string returned by some Everhour API versions for GitHub-linked tasks. */
   foreignId?: string
   time?: { total?: number }
