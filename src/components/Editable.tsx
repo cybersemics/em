@@ -104,6 +104,25 @@ const applyOuterTag = (newValue: string, oldValue: string): string => {
 // this flag is used to ensure that the browser selection is not restored after the initial setCursorOnThought
 let cursorOffsetInitialized = false
 
+/** Returns a guard function that throws with the given message if it is called more than `limit` times within a
+ * rolling `windowMs` window. Used to convert a runaway re-entrant loop into a loud, stack-unwinding error instead of
+ * a frozen main thread. The default limit is far above any human typing/IME/autocomplete burst. */
+const useInfiniteLoopGuard = (message: string, limit = 100, windowMs = 1000) => {
+  const stateRef = useRef({ count: 0, windowStart: 0 })
+  return useCallback(() => {
+    const now = performance.now()
+    const guard = stateRef.current
+    if (now - guard.windowStart > windowMs) {
+      guard.windowStart = now
+      guard.count = 0
+    }
+    guard.count++
+    if (guard.count > limit) {
+      throw new Error(message)
+    }
+  }, [message, limit, windowMs])
+}
+
 /**
  * An editable thought with throttled editing.
  * Use rank instead of headRank(simplePath) as it will be different for context view.
@@ -139,6 +158,13 @@ const Editable = ({
   const hasMulticursor = useSelector(hasMulticursorSelector)
   // store the old value so that we have a transcendental head when it is changed
   const oldValueRef = useRef(value)
+  // Guards against a runaway re-entrant loop in the change/autocomplete handlers freezing the app (#4467).
+  const guardChangeHandler = useInfiniteLoopGuard(
+    'Infinite loop detected in Editable.onChangeHandler: over 100 change events within 1s',
+  )
+  const guardAutocompleteInput = useInfiniteLoopGuard(
+    'Infinite loop detected in Editable.onAutocompleteInput: over 100 input events within 1s',
+  )
   const nullRef = useRef<HTMLInputElement>(null)
   const contentRef = editableRef || nullRef
   const isCursor = useSelector(state => equalPath(path, state.cursor))
@@ -357,6 +383,8 @@ const Editable = ({
     const onAutocompleteInput = (e: Event) => {
       if (!editable || !(e instanceof InputEvent)) return
 
+      guardAutocompleteInput()
+
       if (e.inputType === 'insertReplacementText') {
         pendingAutocompleteAt = performance.now()
         return
@@ -391,7 +419,7 @@ const Editable = ({
 
     editable?.addEventListener('input', onAutocompleteInput)
     return () => editable?.removeEventListener('input', onAutocompleteInput)
-  }, [contentRef, rank, simplePath])
+  }, [contentRef, rank, simplePath, guardAutocompleteInput])
 
   useEffect(() => {
     // if there is a multicursor, blur the contentRef
@@ -403,6 +431,11 @@ const Editable = ({
   /** Performs meta validation and calls thoughtChangeHandler immediately or using throttled reference. */
   const onChangeHandler = useCallback(
     (e: ContentEditableEvent) => {
+      // Infinite loop guard. onChangeHandler is re-entrant (edit → dispatch editThought → re-render →
+      // input → onChange). The newValue === oldValue short-circuit below normally breaks the cycle, but a
+      // corrupted Thought/Lexeme pair can defeat it and spin the main thread, freezing the app (#4467).
+      guardChangeHandler()
+
       // make sure to get updated state
 
       // NOTE: When Subthought components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
