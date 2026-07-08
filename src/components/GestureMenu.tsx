@@ -70,25 +70,32 @@ const GestureMenu: FC<{
       />
     ))
 
-  const persistentItems = persistentCommands.map((command, index) => {
-    const mobileCommandUniverseInProgress = gestureInProgress
-      ?.toString()
-      .endsWith(gestureString(openMobileCommandUniverseCommand))
-    const isMobileCommandUniverseMatch = command.id === 'openMobileCommandUniverse' && mobileCommandUniverseInProgress
-    const isCancelMatch = command.id === 'cancel' && !hasMatchingCommand && !mobileCommandUniverseInProgress
+  /**
+   * Render the persistent commands (Cancel / Command Universe). `horizontal` is true for the
+   * full-width bottom row, where the items sit side by side: there every item must reserve the same
+   * top padding as a first row, otherwise only the first item gets `isFirstCommand` padding and the
+   * rest ride higher, misaligning the row. In the vertical inline block only the top item is first.
+   */
+  const renderPersistentItems = (horizontal: boolean) =>
+    persistentCommands.map((command, index) => {
+      const mobileCommandUniverseInProgress = gestureInProgress
+        ?.toString()
+        .endsWith(gestureString(openMobileCommandUniverseCommand))
+      const isMobileCommandUniverseMatch = command.id === 'openMobileCommandUniverse' && mobileCommandUniverseInProgress
+      const isCancelMatch = command.id === 'cancel' && !hasMatchingCommand && !mobileCommandUniverseInProgress
 
-    return (
-      <GestureMenuItem
-        gestureInProgress={gestureInProgress as string}
-        key={command.id}
-        selected={isMobileCommandUniverseMatch || gestureInProgress === gestureString(command) || isCancelMatch}
-        command={command}
-        isFirstCommand={index === 0}
-        isLastCommand={index === persistentCommands.length - 1}
-        autoScroll={!isMultiColumn}
-      />
-    )
-  })
+      return (
+        <GestureMenuItem
+          gestureInProgress={gestureInProgress as string}
+          key={command.id}
+          selected={isMobileCommandUniverseMatch || gestureInProgress === gestureString(command) || isCancelMatch}
+          command={command}
+          isFirstCommand={horizontal || index === 0}
+          isLastCommand={index === persistentCommands.length - 1}
+          autoScroll={!isMultiColumn}
+        />
+      )
+    })
 
   return (
     <div
@@ -194,7 +201,7 @@ const GestureMenu: FC<{
                               gap: `${GESTURE_MENU_ROW_GAP_REM}rem`,
                             }}
                           >
-                            {persistentItems}
+                            {renderPersistentItems(false)}
                           </div>
                         )}
                       </div>
@@ -214,7 +221,7 @@ const GestureMenu: FC<{
                         columnGap: `${GESTURE_MENU_COLUMN_GAP_REM}rem`,
                       }}
                     >
-                      {persistentItems}
+                      {renderPersistentItems(true)}
                     </div>
                   </div>
                 )}
@@ -240,7 +247,7 @@ const GestureMenu: FC<{
                       gap: '1.2rem',
                     }}
                   >
-                    {persistentItems}
+                    {renderPersistentItems(false)}
                   </div>
                 )}
               </>
