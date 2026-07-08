@@ -148,7 +148,9 @@ const main = async () => {
   const everhourProjectId = process.env.EVERHOUR_PROJECT_ID
   if (!everhourProjectId) throw new Error('EVERHOUR_PROJECT_ID is required')
 
-  const limit = parseInt(process.env.LIMIT ?? '10', 10)
+  // Limit resolves from the first CLI argument (`yarn backfill 10`), falling back to the LIMIT
+  // env var, then a default of 10.
+  const limit = parseInt(process.argv[2] ?? process.env.LIMIT ?? '10', 10)
   // 1-based page to begin Everhour task pagination from. Floor invalid or <1 values to 1 so a
   // bad PAGE never sends NaN/0 to the API. Combined with LIMIT this processes up to LIMIT tasks
   // starting from page PAGE.
