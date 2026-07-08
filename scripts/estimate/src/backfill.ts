@@ -122,8 +122,9 @@ const processTask = async ({
     dryRunEverhour,
   })
 
-  // Skip the audit comment when inference was dry-run (no estimate produced).
-  if (!estimate) return
+  // Skip the audit comment when inference was dry-run (no estimate produced) or when the Everhour
+  // write was dry-run — a dry Everhour run must not post a comment claiming an estimate was recorded.
+  if (!estimate || dryRunEverhour) return
 
   const { category, hours } = estimate
 
@@ -148,19 +149,30 @@ const main = async () => {
   const everhourProjectId = process.env.EVERHOUR_PROJECT_ID
   if (!everhourProjectId) throw new Error('EVERHOUR_PROJECT_ID is required')
 
-  const limit = parseInt(process.env.LIMIT ?? '10', 10)
+  // Parse CLI args into flags and positionals. `--dry` enables dry-run; the first positional is
+  // the limit (`yarn backfill 10`, `yarn backfill --dry 10`, etc.).
+  const args = process.argv.slice(2)
+  const dryFlag = args.includes('--dry')
+  const dryAiFlag = args.includes('--dry-ai')
+  const dryEverhourFlag = args.includes('--dry-everhour')
+  const positionals = args.filter(arg => !arg.startsWith('-'))
+  // Limit resolves from the first positional CLI argument, falling back to the LIMIT env var, then
+  // a default of 10.
+  const limit = parseInt(positionals[0] ?? process.env.LIMIT ?? '10', 10)
   // 1-based page to begin Everhour task pagination from. Floor invalid or <1 values to 1 so a
   // bad PAGE never sends NaN/0 to the API. Combined with LIMIT this processes up to LIMIT tasks
   // starting from page PAGE.
   const startPageRaw = parseInt(process.env.PAGE ?? '1', 10)
   const startPage = Number.isFinite(startPageRaw) && startPageRaw >= 1 ? startPageRaw : 1
-  // Dry-run is off by default: the backfill calls the model / writes to Everhour unless
-  // explicitly enabled with DRY_RUN[_AI|_EVERHOUR]=true. DRY_RUN sets the default for both
-  // stages; the per-stage vars override it.
-  const dryRunDefault = process.env.DRY_RUN === 'true'
-  const dryRunAI = process.env.DRY_RUN_AI !== undefined ? process.env.DRY_RUN_AI === 'true' : dryRunDefault
+  // Dry-run is off by default: the backfill calls the model / writes to Everhour unless explicitly
+  // enabled. `--dry` (or DRY_RUN=true) sets the default for both stages; the per-stage `--dry-ai` /
+  // `--dry-everhour` flags and DRY_RUN_AI / DRY_RUN_EVERHOUR vars enable dry-run for a single stage.
+  const dryRunDefault = dryFlag || process.env.DRY_RUN === 'true'
+  const dryRunAI =
+    dryAiFlag || (process.env.DRY_RUN_AI !== undefined ? process.env.DRY_RUN_AI === 'true' : dryRunDefault)
   const dryRunEverhour =
-    process.env.DRY_RUN_EVERHOUR !== undefined ? process.env.DRY_RUN_EVERHOUR === 'true' : dryRunDefault
+    dryEverhourFlag ||
+    (process.env.DRY_RUN_EVERHOUR !== undefined ? process.env.DRY_RUN_EVERHOUR === 'true' : dryRunDefault)
 
   const repo = process.env.GITHUB_REPOSITORY ?? 'cybersemics/em'
   const [owner, repoName] = repo.split('/')
@@ -198,11 +210,14 @@ const main = async () => {
     const tasks = await everhour.getProjectTasks(everhourProjectId, page, PAGE_SIZE)
     console.info(`Fetched ${tasks.length} tasks from Everhour project (page ${page})`)
 
-    // Filter to tasks without estimates within this page.
-    const tasksWithoutEstimates = tasks.filter(task => !task.estimate || !task.estimate.total)
-    console.info(`  ${tasksWithoutEstimates.length} tasks without estimates on page ${page}`)
+    // Filter to open, incomplete tasks without estimates. Closed or completed tasks are skipped
+    // here so we never query GitHub for issues that would be rejected as closed anyway.
+    const tasksToEstimate = tasks.filter(
+      task => (!task.estimate || !task.estimate.total) && task.status !== 'closed' && !task.completed,
+    )
+    console.info(`  ${tasksToEstimate.length} open tasks without estimates on page ${page}`)
 
-    for (const task of tasksWithoutEstimates) {
+    for (const task of tasksToEstimate) {
       if (processed >= limit) break
 
       // Try to extract the issue number from the task ID or name; fall back to GitHub title search
@@ -233,9 +248,7 @@ const main = async () => {
       // too (they share the number space), so detect and skip them before the closed-state check —
       // otherwise a merged PR would be reported with the misleading "closed" reason.
       if (isPullRequest(issue)) {
-        console.info(
-          `  Skipping ${issueLink(owner, repoName, issueNumber)} "${issue.title}" - it is a pull request, not an issue`,
-        )
+        console.info(`  Skipping ${issueLink(owner, repoName, issueNumber)} "${issue.title}" - PR`)
         continue
       }
 
