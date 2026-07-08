@@ -205,11 +205,14 @@ const main = async () => {
     const tasks = await everhour.getProjectTasks(everhourProjectId, page, PAGE_SIZE)
     console.info(`Fetched ${tasks.length} tasks from Everhour project (page ${page})`)
 
-    // Filter to tasks without estimates within this page.
-    const tasksWithoutEstimates = tasks.filter(task => !task.estimate || !task.estimate.total)
-    console.info(`  ${tasksWithoutEstimates.length} tasks without estimates on page ${page}`)
+    // Filter to open, incomplete tasks without estimates. Closed or completed tasks are skipped
+    // here so we never query GitHub for issues that would be rejected as closed anyway.
+    const tasksToEstimate = tasks.filter(
+      task => (!task.estimate || !task.estimate.total) && task.status !== 'closed' && !task.completed,
+    )
+    console.info(`  ${tasksToEstimate.length} open tasks without estimates on page ${page}`)
 
-    for (const task of tasksWithoutEstimates) {
+    for (const task of tasksToEstimate) {
       if (processed >= limit) break
 
       // Try to extract the issue number from the task ID or name; fall back to GitHub title search
