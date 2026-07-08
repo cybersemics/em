@@ -54,7 +54,9 @@ const GestureMenuItem: FC<{
         flexDirection: 'row',
         alignItems: selected ? 'stretch' : 'center',
         gap: '0.89rem',
-        paddingTop: selected ? '0.6rem' : 0,
+        // Always reserve the top padding on a column's first row so selecting it doesn't shift the
+        // column down and misalign its top from sibling columns.
+        paddingTop: selected || isFirstCommand ? '0.6rem' : 0,
         paddingBottom: selected ? '0.1rem' : 0,
         // Allow the row to shrink within a grid cell so the label's nowrap text does not overflow the column.
         minWidth: 0,
