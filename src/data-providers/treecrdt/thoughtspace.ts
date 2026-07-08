@@ -11,6 +11,7 @@ import hashThought from '../../util/hashThought'
 import isAttribute from '../../util/isAttribute'
 import sleep from '../../util/sleep'
 import type { DataProvider } from '../DataProvider'
+import type { ThoughtspaceMaterializationBridge } from '../thoughtspace'
 import {
   deleteAttributeChild,
   ensureAttributeChildrenIndexReady,
@@ -37,6 +38,7 @@ import { createTreecrdtLocalWriteOptions, isTreecrdtLocalMaterialization } from 
 type TreecrdtPlacement = { type: 'first' } | { type: 'last' } | { type: 'after'; after: ThoughtId }
 
 let replicaId: Uint8Array | null = null
+let materializationBridge: ThoughtspaceMaterializationBridge | null = null
 let initialized = false
 let initReadyResolve: (() => void) | null = null
 let initReady = new Promise<void>(resolve => {
@@ -311,6 +313,7 @@ const freeLexeme = async (_key: string): Promise<void> => {
 const clear = async (): Promise<void> => {
   await dropTreecrdt()
   replicaId = null
+  materializationBridge = null
   resetInitReady()
 }
 
@@ -343,8 +346,12 @@ const ROOT_PAYLOAD = encodeThoughtPayload({
 })
 
 /** Initializes the thoughtspace with the given replica ID. */
-export const init = async (replicaIdArg: Uint8Array): Promise<void> => {
+export const init = async (
+  replicaIdArg: Uint8Array,
+  materializationBridgeArg?: ThoughtspaceMaterializationBridge,
+): Promise<void> => {
   replicaId = replicaIdArg
+  materializationBridge = materializationBridgeArg ?? null
 
   const client = getTreecrdtClient()
   await ensureLexemesSchema(client)
@@ -421,11 +428,12 @@ export const init = async (replicaIdArg: Uint8Array): Promise<void> => {
   resolveInitReady()
 
   const unsubscribeMaterialized = client.onMaterialized(event => {
-    // Local TreeCRDT writes are already reflected optimistically in Redux. Peer-tab and server-sync writes arrive
-    // without this tab's write id, so those materialization events must be read back into Redux.
+    // Local TreeCRDT writes are already reflected optimistically by the app. Peer-tab and server-sync writes arrive
+    // without this tab's write id, so those materialization events must be read back through the app bridge.
     if (isTreecrdtLocalMaterialization(event)) return
+    if (!materializationBridge) return
 
-    void enqueueMaterializedThoughtsToStore(event).catch(err =>
+    void enqueueMaterializedThoughtsToStore(event, materializationBridge).catch(err =>
       console.error('TreeCRDT materialized UI sync failed', err),
     )
   })
