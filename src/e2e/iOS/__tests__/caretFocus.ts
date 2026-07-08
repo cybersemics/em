@@ -5,10 +5,9 @@
  * overlay, so the editable's `onTouchEnd` never runs to `preventDefault`. On the pre-#4371 code the
  * retargeted `mouseup` then runs `onMouseUp` with a stale, never-reset `offsetRef.current`, calling
  * `setCaretOffset` -> `selection.set`, which focuses the editable and opens the keyboard even though
- * `onMouseDown` preventDefaulted the native focus. See `caretFocusIsolated.ts` for the isolated-primitive
- * proof. The stale-offset focus path is device- and version-independent, so the bug reproduces on both iOS
- * 17 and iOS 18. The spec runs as part of the default iOS 17 suite (see `wdio.browserstack.conf.ts`) and
- * asserts the keyboard opens.
+ * `onMouseDown` preventDefaulted the native focus. The stale-offset focus path is device- and
+ * version-independent, so the bug reproduces on both iOS 17 and iOS 18. This spec runs as part of the
+ * default iOS suite and asserts the keyboard opens.
  */
 import gesture from '../helpers/gesture'
 import getEditingText from '../helpers/getEditingText'
