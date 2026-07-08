@@ -374,10 +374,16 @@ const Editable = ({
 
       const savedCharOffset = selection.offsetThought() ?? selection.offset() ?? 0
 
-      // Queue and flush the change with the browser-applied value to ensure it's captured before the editable blurs.
-      oldValueRef.current = editable.textContent || ''
-      throttledChangeRef.current(oldValueRef.current, { rank, simplePath })
+      // Flush the edit that onChangeHandler already queued for the autocompleted word, while oldValueRef.current
+      // still holds the previous value. This persists a real oldValue → newValue diff before the editable blurs.
+      // Do NOT overwrite oldValueRef.current with the new value first: that would make editThought a no-op (it early
+      // returns when oldValue === newValue), so the autocomplete edit would never persist and the original Lexeme
+      // would be orphaned, corrupting the thoughtspace (freeze + blank screen on reload).
       throttledChangeRef.current.flush()
+
+      // Sync oldValueRef.current with the DOM (including the trailing space) only after the edit has been persisted,
+      // so that onBlur — triggered synchronously by asyncFocus below — does not revert the visible autocomplete text.
+      oldValueRef.current = editable.textContent || ''
 
       asyncFocus({ force: true })
 
@@ -391,7 +397,7 @@ const Editable = ({
 
     editable?.addEventListener('input', onAutocompleteInput)
     return () => editable?.removeEventListener('input', onAutocompleteInput)
-  }, [contentRef, rank, simplePath])
+  }, [contentRef])
 
   useEffect(() => {
     // if there is a multicursor, blur the contentRef
