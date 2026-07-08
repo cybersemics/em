@@ -152,6 +152,8 @@ const main = async () => {
   // the limit (`yarn backfill 10`, `yarn backfill --dry 10`, etc.).
   const args = process.argv.slice(2)
   const dryFlag = args.includes('--dry')
+  const dryAiFlag = args.includes('--dry-ai')
+  const dryEverhourFlag = args.includes('--dry-everhour')
   const positionals = args.filter(arg => !arg.startsWith('-'))
   // Limit resolves from the first positional CLI argument, falling back to the LIMIT env var, then
   // a default of 10.
@@ -162,12 +164,14 @@ const main = async () => {
   const startPageRaw = parseInt(process.env.PAGE ?? '1', 10)
   const startPage = Number.isFinite(startPageRaw) && startPageRaw >= 1 ? startPageRaw : 1
   // Dry-run is off by default: the backfill calls the model / writes to Everhour unless explicitly
-  // enabled with the `--dry` flag or DRY_RUN[_AI|_EVERHOUR]=true. DRY_RUN sets the default for both
-  // stages; the per-stage vars override it.
+  // enabled. `--dry` (or DRY_RUN=true) sets the default for both stages; the per-stage `--dry-ai` /
+  // `--dry-everhour` flags and DRY_RUN_AI / DRY_RUN_EVERHOUR vars enable dry-run for a single stage.
   const dryRunDefault = dryFlag || process.env.DRY_RUN === 'true'
-  const dryRunAI = process.env.DRY_RUN_AI !== undefined ? process.env.DRY_RUN_AI === 'true' : dryRunDefault
+  const dryRunAI =
+    dryAiFlag || (process.env.DRY_RUN_AI !== undefined ? process.env.DRY_RUN_AI === 'true' : dryRunDefault)
   const dryRunEverhour =
-    process.env.DRY_RUN_EVERHOUR !== undefined ? process.env.DRY_RUN_EVERHOUR === 'true' : dryRunDefault
+    dryEverhourFlag ||
+    (process.env.DRY_RUN_EVERHOUR !== undefined ? process.env.DRY_RUN_EVERHOUR === 'true' : dryRunDefault)
 
   const repo = process.env.GITHUB_REPOSITORY ?? 'cybersemics/em'
   const [owner, repoName] = repo.split('/')
