@@ -122,8 +122,9 @@ const processTask = async ({
     dryRunEverhour,
   })
 
-  // Skip the audit comment when inference was dry-run (no estimate produced).
-  if (!estimate) return
+  // Skip the audit comment when inference was dry-run (no estimate produced) or when the Everhour
+  // write was dry-run — a dry Everhour run must not post a comment claiming an estimate was recorded.
+  if (!estimate || dryRunEverhour) return
 
   const { category, hours } = estimate
 

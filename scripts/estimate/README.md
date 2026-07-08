@@ -19,7 +19,7 @@ cd scripts/estimate
 yarn backfill --dry 10
 ```
 
-Dry-run flags: `--dry` skips both the model call and the Everhour write; `--dry-ai` skips only the model call; `--dry-everhour` skips only the Everhour write.
+Dry-run flags: `--dry` skips both the model call and the Everhour write; `--dry-ai` skips only the model call; `--dry-everhour` skips only the Everhour write (and the issue audit comment).
 
 Manual correction (via issue comment)
 
