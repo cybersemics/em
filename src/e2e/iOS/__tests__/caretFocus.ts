@@ -7,8 +7,8 @@
  * `setCaretOffset` -> `selection.set`, which focuses the editable and opens the keyboard even though
  * `onMouseDown` preventDefaulted the native focus. See `caretFocusIsolated.ts` for the isolated-primitive
  * proof. The stale-offset focus path is device- and version-independent, so the bug reproduces on both iOS
- * 17 and iOS 18. The spec runs on both devices (see `wdio.browserstack.conf.ts`) and asserts the keyboard
- * opens on each.
+ * 17 and iOS 18. The spec runs as part of the default iOS 17 suite (see `wdio.browserstack.conf.ts`) and
+ * asserts the keyboard opens.
  */
 import gesture from '../helpers/gesture'
 import getEditingText from '../helpers/getEditingText'

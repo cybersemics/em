@@ -17,68 +17,6 @@ if (!process.env.BROWSERSTACK_ACCESS_KEY) {
 const user = process.env.BROWSERSTACK_USERNAME
 const date = new Date().toISOString().slice(0, 10)
 
-// The #4394 caret focus regression reproduces on both iOS 17 and iOS 18 (the stale-offset focus path is
-// version-independent), so this spec runs on a dedicated iOS 18 device and a dedicated iOS 17 device while
-// the rest of the suite stays on the default iOS 17 device.
-const caretFocusSpec = path.resolve(process.cwd(), 'src/e2e/iOS/__tests__/caretFocus.ts')
-
-// Isolated-primitive diagnostic that reproduces the same #4394 focus path against bare DOM primitives.
-const caretFocusIsolatedSpec = path.resolve(process.cwd(), 'src/e2e/iOS/__tests__/caretFocusIsolated.ts')
-
-const bstackOptions = {
-  projectName: process.env.BROWSERSTACK_PROJECT_NAME || 'em',
-  buildName: process.env.BROWSERSTACK_BUILD_NAME || `Local - ${user} - ${date}`,
-  local: true,
-  debug: true,
-  networkLogs: true,
-  consoleLogs: 'verbose',
-  idleTimeout: 60,
-}
-
-// Run the whole suite except the #4394 regression on the default device.
-const suiteCapability = {
-  ...baseConfig.baseCapabilities,
-  exclude: [caretFocusSpec, caretFocusIsolatedSpec],
-  'appium:deviceName': 'iPhone 15 Plus',
-  'appium:platformVersion': '17',
-  'bstack:options': {
-    ...bstackOptions,
-    deviceName: 'iPhone 15 Plus',
-    osVersion: '17',
-    sessionName: 'iOS Safari Tests',
-  },
-}
-
-// Run the #4394 regression (plus the isolated-primitive diagnostic) on an iOS 18 device.
-const caretFocusCapability = {
-  ...baseConfig.baseCapabilities,
-  specs: [caretFocusSpec, caretFocusIsolatedSpec],
-  'appium:deviceName': 'iPhone 16 Pro Max',
-  'appium:platformVersion': '18',
-  'bstack:options': {
-    ...bstackOptions,
-    deviceName: 'iPhone 16 Pro Max',
-    osVersion: '18',
-    sessionName: 'iOS Safari Tests (iOS 18)',
-  },
-}
-
-// Run the #4394 caret focus spec on iOS 17 as well, to positively verify the bug is not iOS-18-specific:
-// the same edge tap that opens the keyboard on iOS 18 also opens it on iOS 17. The isolated diagnostic is
-// covered by the iOS 18 device, so it is not duplicated here.
-const caretFocusIOS17Capability = {
-  ...baseConfig.baseCapabilities,
-  specs: [caretFocusSpec],
-  'appium:deviceName': 'iPhone 15 Plus',
-  'appium:platformVersion': '17',
-  'bstack:options': {
-    ...bstackOptions,
-    deviceName: 'iPhone 15 Plus',
-    osVersion: '17',
-    sessionName: 'iOS Safari Tests (caret focus, iOS 17)',
-  },
-}
-
 /**
  * WDIO configuration for BrowserStack iOS testing.
  * Uses @wdio/browserstack-service for automatic tunnel management.
@@ -96,12 +34,26 @@ export const config: WebdriverIO.Config = {
   user,
   key: process.env.BROWSERSTACK_ACCESS_KEY,
 
-  // Capabilities (per-capability specs/exclude is a WDIO runtime feature not covered by the strict type)
+  // Capabilities
   capabilities: [
-    suiteCapability,
-    caretFocusCapability,
-    caretFocusIOS17Capability,
-  ] as WebdriverIO.Config['capabilities'],
+    {
+      ...baseConfig.baseCapabilities,
+      'appium:deviceName': 'iPhone 15 Plus',
+      'appium:platformVersion': '17',
+      'bstack:options': {
+        deviceName: 'iPhone 15 Plus',
+        osVersion: '17',
+        projectName: process.env.BROWSERSTACK_PROJECT_NAME || 'em',
+        buildName: process.env.BROWSERSTACK_BUILD_NAME || `Local - ${user} - ${date}`,
+        sessionName: 'iOS Safari Tests',
+        local: true,
+        debug: true,
+        networkLogs: true,
+        consoleLogs: 'verbose',
+        idleTimeout: 60,
+      },
+    },
+  ],
 
   // Services
   services: [

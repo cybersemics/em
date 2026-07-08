@@ -4,8 +4,8 @@
  * These specs strip away all em code and reproduce the bug against DOM primitives using a bare
  * contentEditable plus an adjacent non-focusable overlay that mimics the thought-annotation, driven by the
  * exact finger-sized right-edge tap from the caretFocus spec. The touch-adjustment heuristic that redirects
- * the synthesized mouse events onto the editable reproduces on both iOS 17 and iOS 18; this diagnostic runs
- * on a single iOS 18 device (see `wdio.browserstack.conf.ts`) to avoid a redundant duplicate run.
+ * the synthesized mouse events onto the editable reproduces on both iOS 17 and iOS 18, so these run as part
+ * of the default iOS 17 suite (see `wdio.browserstack.conf.ts`).
  *
  * The root cause of #4394 on the pre-#4371 code is not a platform property of `mousedown`. In
  * `useEditMode.ts`, `offsetRef.current` is assigned when a thought that has the cursor is tapped, but it is
