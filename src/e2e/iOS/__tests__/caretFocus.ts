@@ -1,9 +1,16 @@
 /**
- * IOS Safari caret focus regression test for #4394.
+ * IOS Safari caret focus regression test for #4394. Tapping ~4px past the right edge of a non-cursor
+ * thought must not open the virtual keyboard. Safari's touch-adjustment heuristic retargets the
+ * synthesized mouse cascade onto the nearby editable while the `touchstart`/`touchend` land on the
+ * thought-annotation overlay, so the editable's `onTouchEnd` never runs to `preventDefault`. Before the
+ * fix, the retargeted `mouseup` ran `onMouseUp` with a stale, never-reset `offsetRef.current`, calling
+ * `setCaretOffset` -> `selection.set`, which programmatically focused the editable and opened the keyboard
+ * even though `onMouseDown` had preventDefaulted the native focus. This branch prevents focus on non-cursor
+ * thoughts, so the keyboard stays down.
  *
  * Isolated into its own spec file so it can be pinned to an iOS version whose Safari touch-adjustment
- * heuristic reproduces the bug (see wdio.browserstack.conf.ts). The rest of the iOS suite runs on the
- * default device/version.
+ * heuristic reproduces the bug when unfixed (see `wdio.browserstack.conf.ts`). The rest of the iOS suite
+ * runs on the default device/version.
  */
 import gesture from '../helpers/gesture'
 import getEditingText from '../helpers/getEditingText'
@@ -65,11 +72,11 @@ describe('Caret', () => {
     await waitUntil(async () => !(await getEditingText()))
 
     // Tap just past the right edge of the thought text, vertically centered, using a finger-sized
-    // contact area (width/height/pressure). On iOS Safari the touch-adjustment heuristic uses the
-    // contact radius to retarget the synthesized mouse events onto the nearby editable, but the
-    // touchstart/touchend land on the thought-annotation overlay - so the editable's onTouchEnd
-    // never runs to preventDefault. Focus then proceeds on the redirected mousedown and the virtual
-    // keyboard incorrectly opens. Regression test for #4394.
+    // contact area (width/height/pressure). Safari's touch-adjustment heuristic uses the contact radius
+    // to retarget the synthesized mouse events onto the nearby editable, but the `touchstart`/`touchend`
+    // land on the thought-annotation overlay - so the editable's `onTouchEnd` never runs to
+    // `preventDefault`. Without the fix the retargeted `mouseup` would focus the editable via a stale
+    // offset and open the keyboard; this branch prevents focus on non-cursor thoughts. #4394.
     const tapX = Math.round(rect.x + rect.width + 4)
     const tapY = Math.round(rect.y + rect.height / 2)
     await browser.switchContext('NATIVE_APP')
@@ -98,7 +105,10 @@ describe('Caret', () => {
     await browser.switchContext(webviewContext)
     await browser.pause(600)
 
-    // A non-cursor thought must not open the virtual keyboard.
-    expect(await isKeyboardShown()).toBe(false)
+    const keyboard = await isKeyboardShown()
+
+    // A non-cursor thought must not open the virtual keyboard. The stale-offset focus path that opened it
+    // before is gone, so focus is correctly prevented and the keyboard stays down.
+    expect(keyboard).toBe(false)
   })
 })
