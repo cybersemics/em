@@ -1,14 +1,14 @@
 /**
- * IOS Safari caret focus diagnostic for #4394. Tapping ~4px past the right edge of a non-cursor thought
- * incorrectly opens the virtual keyboard. The cause is iOS 18 Safari's touch-adjustment heuristic, which
- * retargets the synthesized mouse cascade onto the nearby editable. On the pre-#4371 code the retargeted
- * mouseup then runs onMouseUp with a stale, never-reset offsetRef.current, calling setCaretOffset ->
- * selection.set, which focuses the editable and opens the keyboard even though onMouseDown preventDefaulted
- * the native focus. See caretFocusIsolated.ts for the isolated-primitive proof. This spec verifies that the
- * bug is iOS-18-specific by running the identical edge tap on two devices (see wdio.browserstack.conf.ts)
- * and asserting the outcome per platform version. On iOS 18 the retargeting fires, so on this pre-#4371
- * branch the keyboard opens (the #4394 reproduction). On iOS 17 the retargeting does not fire, so the
- * keyboard stays down (no reproduction).
+ * IOS Safari caret focus reproduction for #4394. Tapping ~4px past the right edge of a non-cursor thought
+ * incorrectly opens the virtual keyboard. Safari's touch-adjustment heuristic retargets the synthesized
+ * mouse cascade onto the nearby editable while the `touchstart`/`touchend` land on the thought-annotation
+ * overlay, so the editable's `onTouchEnd` never runs to `preventDefault`. On the pre-#4371 code the
+ * retargeted `mouseup` then runs `onMouseUp` with a stale, never-reset `offsetRef.current`, calling
+ * `setCaretOffset` -> `selection.set`, which focuses the editable and opens the keyboard even though
+ * `onMouseDown` preventDefaulted the native focus. See `caretFocusIsolated.ts` for the isolated-primitive
+ * proof. The stale-offset focus path is device- and version-independent, so the bug reproduces on both iOS
+ * 17 and iOS 18. The spec runs on both devices (see `wdio.browserstack.conf.ts`) and asserts the keyboard
+ * opens on each.
  */
 import gesture from '../helpers/gesture'
 import getEditingText from '../helpers/getEditingText'
@@ -19,27 +19,8 @@ import newThought from '../helpers/newThought'
 import waitForEditable from '../helpers/waitForEditable'
 import waitUntil from '../helpers/waitUntil'
 
-/** Reads the iOS major version from the active session capabilities. */
-const getIOSMajorVersion = (): number => {
-  const caps = browser.capabilities as Record<string, unknown>
-  const requested = (browser.requestedCapabilities ?? {}) as Record<string, unknown>
-  const bstackOptions =
-    ((caps['bstack:options'] ?? requested['bstack:options']) as Record<string, unknown> | undefined) ?? {}
-  const rawVersion = (caps['appium:platformVersion'] ??
-    caps['platformVersion'] ??
-    requested['appium:platformVersion'] ??
-    requested['platformVersion'] ??
-    bstackOptions['osVersion'] ??
-    '') as string | number
-  return parseInt(String(rawVersion), 10)
-}
-
 describe('Caret', () => {
-  it('Keyboard opens on the edge tap only on iOS 18, not iOS 17', async () => {
-    const iosMajorVersion = getIOSMajorVersion()
-    // The touch-adjustment retargeting that #4394 depends on only fires on iOS 18's Safari.
-    const shouldReproduce = iosMajorVersion >= 18
-
+  it('Keyboard incorrectly opens on the right-edge tap of a non-cursor thought (#4394)', async () => {
     await newThought('Hello')
 
     const editable = await waitForEditable('Hello')
@@ -90,11 +71,11 @@ describe('Caret', () => {
     await waitUntil(async () => !(await getEditingText()))
 
     // Tap just past the right edge of the thought text, vertically centered, using a finger-sized
-    // contact area (width/height/pressure). On iOS 18 Safari the touch-adjustment heuristic uses the
-    // contact radius to retarget the synthesized mouse events onto the nearby editable, but the
-    // touchstart/touchend land on the thought-annotation overlay - so the editable's onTouchEnd
-    // never runs to preventDefault. The retargeted mouseup then focuses the editable via the stale
-    // offset and the virtual keyboard opens. #4394.
+    // contact area (width/height/pressure). Safari's touch-adjustment heuristic uses the contact radius
+    // to retarget the synthesized mouse events onto the nearby editable, but the `touchstart`/`touchend`
+    // land on the thought-annotation overlay - so the editable's `onTouchEnd` never runs to
+    // `preventDefault`. The retargeted `mouseup` then focuses the editable via the stale offset and the
+    // virtual keyboard opens. #4394.
     const tapX = Math.round(rect.x + rect.width + 4)
     const tapY = Math.round(rect.y + rect.height / 2)
     await browser.switchContext('NATIVE_APP')
@@ -125,8 +106,9 @@ describe('Caret', () => {
 
     const keyboard = await isKeyboardShown()
 
-    // Positively assert the version-specific behavior: the edge tap opens the keyboard on iOS 18 (the
-    // #4394 reproduction, present on this pre-#4371 branch) but leaves it down on iOS 17.
-    expect(keyboard).toBe(shouldReproduce)
+    // The edge tap opens the keyboard on this pre-#4371 branch (the #4394 reproduction). The stale-offset
+    // focus path is version-independent, so this holds on both iOS 17 and iOS 18. It will flip to false
+    // once focus is correctly prevented for non-cursor thoughts.
+    expect(keyboard).toBe(true)
   })
 })

@@ -17,11 +17,12 @@ if (!process.env.BROWSERSTACK_ACCESS_KEY) {
 const user = process.env.BROWSERSTACK_USERNAME
 const date = new Date().toISOString().slice(0, 10)
 
-// The #4394 caret focus regression only reproduces on iOS 18's Safari touch-adjustment heuristic, so
-// that single spec runs on an iOS 18 device while the rest of the suite stays on the default iOS 17.
+// The #4394 caret focus regression reproduces on both iOS 17 and iOS 18 (the stale-offset focus path is
+// version-independent), so this spec runs on a dedicated iOS 18 device and a dedicated iOS 17 device while
+// the rest of the suite stays on the default iOS 17 device.
 const caretFocusSpec = path.resolve(process.cwd(), 'src/e2e/iOS/__tests__/caretFocus.ts')
 
-// Isolated-primitive diagnostic for the same #4394 heuristic (hypothesis H2); also requires iOS 18.
+// Isolated-primitive diagnostic that reproduces the same #4394 focus path against bare DOM primitives.
 const caretFocusIsolatedSpec = path.resolve(process.cwd(), 'src/e2e/iOS/__tests__/caretFocusIsolated.ts')
 
 const bstackOptions = {
@@ -48,7 +49,7 @@ const suiteCapability = {
   },
 }
 
-// Run only the #4394 regression, which requires iOS 18 to reproduce.
+// Run the #4394 regression (plus the isolated-primitive diagnostic) on an iOS 18 device.
 const caretFocusCapability = {
   ...baseConfig.baseCapabilities,
   specs: [caretFocusSpec, caretFocusIsolatedSpec],
@@ -62,9 +63,9 @@ const caretFocusCapability = {
   },
 }
 
-// Run the #4394 caret focus spec on iOS 17 as well, to positively verify the bug is iOS-18-specific:
-// the same edge tap that opens the keyboard on iOS 18 must leave it down on iOS 17. The isolated
-// diagnostic depends on the iOS 18 retargeting, so it is not run here.
+// Run the #4394 caret focus spec on iOS 17 as well, to positively verify the bug is not iOS-18-specific:
+// the same edge tap that opens the keyboard on iOS 18 also opens it on iOS 17. The isolated diagnostic is
+// covered by the iOS 18 device, so it is not duplicated here.
 const caretFocusIOS17Capability = {
   ...baseConfig.baseCapabilities,
   specs: [caretFocusSpec],
