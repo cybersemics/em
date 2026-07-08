@@ -139,6 +139,8 @@ const Editable = ({
   const hasMulticursor = useSelector(hasMulticursorSelector)
   // store the old value so that we have a transcendental head when it is changed
   const oldValueRef = useRef(value)
+  // Tracks onChangeHandler invocation frequency to detect a runaway re-entrant loop (see onChangeHandler).
+  const changeGuardRef = useRef({ count: 0, windowStart: 0 })
   const nullRef = useRef<HTMLInputElement>(null)
   const contentRef = editableRef || nullRef
   const isCursor = useSelector(state => equalPath(path, state.cursor))
@@ -409,6 +411,22 @@ const Editable = ({
   /** Performs meta validation and calls thoughtChangeHandler immediately or using throttled reference. */
   const onChangeHandler = useCallback(
     (e: ContentEditableEvent) => {
+      // Infinite loop guard. onChangeHandler is re-entrant (edit → dispatch editThought → re-render →
+      // input → onChange). The newValue === oldValue short-circuit below normally breaks the cycle, but a
+      // corrupted Thought/Lexeme pair can defeat it and spin the main thread, freezing the app (#4467).
+      // Convert a runaway loop into a throw so it unwinds the stack loudly instead of hanging. The threshold
+      // (100 changes within a rolling 1s window) is far above any human typing/IME/paste burst.
+      const now = performance.now()
+      const guard = changeGuardRef.current
+      if (now - guard.windowStart > 1000) {
+        guard.windowStart = now
+        guard.count = 0
+      }
+      guard.count++
+      if (guard.count > 100) {
+        throw new Error('Infinite loop detected in Editable.onChangeHandler: over 100 change events within 1s')
+      }
+
       // make sure to get updated state
 
       // NOTE: When Subthought components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
