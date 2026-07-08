@@ -64,7 +64,16 @@ const useBodyAttributeSelector = <T,>(name: string, selector: (state: State) => 
 //   )
 // }
 
-/** Cancel gesture if there is an active text selection, drag, modal, or sidebar. */
+/** Returns true if the given touch point is within the toolbar's bounds. Used to prevent a swipe on the toolbar from being captured as a thoughtspace gesture (which disables scroll), so the toolbar can scroll horizontally. The toolbar can render below the static TOOLBAR_HEIGHT that isInGestureZone excludes (e.g. pushed down by the iOS safe-area inset), so its actual bounds are checked here. */
+const isOnToolbar = (x?: number, y?: number): boolean => {
+  if (x == null || y == null || typeof document === 'undefined') return false
+  const toolbar = document.getElementById('toolbar')
+  if (!toolbar) return false
+  const rect = toolbar.getBoundingClientRect()
+  return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom
+}
+
+/** Cancel gesture if the touch is on the toolbar, or if there is an active text selection, drag, modal, or sidebar. */
 const shouldCancelGesture = (
   /** The x coordinate of the touch event. If x and y are provided, cancels the gesture if the touch point is too close to the selection. See selection.isNear. */
   x?: number,
@@ -74,6 +83,7 @@ const shouldCancelGesture = (
   const state = store.getState()
   const distance = state.fontSize * 2
   return (
+    isOnToolbar(x, y) ||
     (x && y && selection.isNear(x, y, distance)) ||
     state.longPress !== LongPressState.Inactive ||
     !!state.showModal ||
