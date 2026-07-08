@@ -16,7 +16,7 @@ EVERHOUR_PROJECT_ID=
 ```bash
 # Backfill (dry run)
 cd scripts/estimate
-DRY_RUN=true yarn backfill 10
+yarn backfill --dry 10
 
 # Manual correction (via issue comment)
 /estimate 4h

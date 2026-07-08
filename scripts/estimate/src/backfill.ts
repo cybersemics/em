@@ -148,18 +148,23 @@ const main = async () => {
   const everhourProjectId = process.env.EVERHOUR_PROJECT_ID
   if (!everhourProjectId) throw new Error('EVERHOUR_PROJECT_ID is required')
 
-  // Limit resolves from the first CLI argument (`yarn backfill 10`), falling back to the LIMIT
-  // env var, then a default of 10.
-  const limit = parseInt(process.argv[2] ?? process.env.LIMIT ?? '10', 10)
+  // Parse CLI args into flags and positionals. `--dry` enables dry-run; the first positional is
+  // the limit (`yarn backfill 10`, `yarn backfill --dry 10`, etc.).
+  const args = process.argv.slice(2)
+  const dryFlag = args.includes('--dry')
+  const positionals = args.filter(arg => !arg.startsWith('-'))
+  // Limit resolves from the first positional CLI argument, falling back to the LIMIT env var, then
+  // a default of 10.
+  const limit = parseInt(positionals[0] ?? process.env.LIMIT ?? '10', 10)
   // 1-based page to begin Everhour task pagination from. Floor invalid or <1 values to 1 so a
   // bad PAGE never sends NaN/0 to the API. Combined with LIMIT this processes up to LIMIT tasks
   // starting from page PAGE.
   const startPageRaw = parseInt(process.env.PAGE ?? '1', 10)
   const startPage = Number.isFinite(startPageRaw) && startPageRaw >= 1 ? startPageRaw : 1
-  // Dry-run is off by default: the backfill calls the model / writes to Everhour unless
-  // explicitly enabled with DRY_RUN[_AI|_EVERHOUR]=true. DRY_RUN sets the default for both
+  // Dry-run is off by default: the backfill calls the model / writes to Everhour unless explicitly
+  // enabled with the `--dry` flag or DRY_RUN[_AI|_EVERHOUR]=true. DRY_RUN sets the default for both
   // stages; the per-stage vars override it.
-  const dryRunDefault = process.env.DRY_RUN === 'true'
+  const dryRunDefault = dryFlag || process.env.DRY_RUN === 'true'
   const dryRunAI = process.env.DRY_RUN_AI !== undefined ? process.env.DRY_RUN_AI === 'true' : dryRunDefault
   const dryRunEverhour =
     process.env.DRY_RUN_EVERHOUR !== undefined ? process.env.DRY_RUN_EVERHOUR === 'true' : dryRunDefault
