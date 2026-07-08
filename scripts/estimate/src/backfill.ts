@@ -240,9 +240,7 @@ const main = async () => {
       // too (they share the number space), so detect and skip them before the closed-state check —
       // otherwise a merged PR would be reported with the misleading "closed" reason.
       if (isPullRequest(issue)) {
-        console.info(
-          `  Skipping ${issueLink(owner, repoName, issueNumber)} "${issue.title}" - it is a pull request, not an issue`,
-        )
+        console.info(`  Skipping ${issueLink(owner, repoName, issueNumber)} "${issue.title}" - PR`)
         continue
       }
 
