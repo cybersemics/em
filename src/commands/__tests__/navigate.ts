@@ -9,14 +9,30 @@ const stubNavigation = ({ canGoBack, canGoForward }: { canGoBack: boolean; canGo
   return { back, forward }
 }
 
+/** Overrides window.history.length for the duration of a test and returns a restore function. */
+const stubHistoryLength = (length: number) => {
+  const descriptor = Object.getOwnPropertyDescriptor(window.history, 'length')
+  Object.defineProperty(window.history, 'length', { configurable: true, get: () => length })
+  return () => {
+    if (descriptor) Object.defineProperty(window.history, 'length', descriptor)
+  }
+}
+
 afterEach(() => {
   delete window.navigation
 })
 
 describe('navigateBack', () => {
-  it('canExecute is false when the Navigation API is unavailable', () => {
+  it('canExecute falls back to window.history.length when the Navigation API is unavailable', () => {
     delete window.navigation
+
+    const restoreEmpty = stubHistoryLength(1)
     expect(navigateBack.canExecute!({} as never)).toBe(false)
+    restoreEmpty()
+
+    const restoreNonEmpty = stubHistoryLength(2)
+    expect(navigateBack.canExecute!({} as never)).toBe(true)
+    restoreNonEmpty()
   })
 
   it('canExecute mirrors window.navigation.canGoBack', () => {
@@ -32,12 +48,27 @@ describe('navigateBack', () => {
     navigateBack.exec(vi.fn(), () => ({}) as never, {} as never, { type: 'keyboard' })
     expect(back).toHaveBeenCalledTimes(1)
   })
+
+  it('exec falls back to window.history.back when the Navigation API is unavailable', () => {
+    delete window.navigation
+    const back = vi.spyOn(window.history, 'back').mockImplementation(() => {})
+    navigateBack.exec(vi.fn(), () => ({}) as never, {} as never, { type: 'keyboard' })
+    expect(back).toHaveBeenCalledTimes(1)
+    back.mockRestore()
+  })
 })
 
 describe('navigateForward', () => {
-  it('canExecute is false when the Navigation API is unavailable', () => {
+  it('canExecute falls back to window.history.length when the Navigation API is unavailable', () => {
     delete window.navigation
+
+    const restoreEmpty = stubHistoryLength(1)
     expect(navigateForward.canExecute!({} as never)).toBe(false)
+    restoreEmpty()
+
+    const restoreNonEmpty = stubHistoryLength(2)
+    expect(navigateForward.canExecute!({} as never)).toBe(true)
+    restoreNonEmpty()
   })
 
   it('canExecute mirrors window.navigation.canGoForward', () => {
@@ -52,5 +83,13 @@ describe('navigateForward', () => {
     const { forward } = stubNavigation({ canGoBack: false, canGoForward: true })
     navigateForward.exec(vi.fn(), () => ({}) as never, {} as never, { type: 'keyboard' })
     expect(forward).toHaveBeenCalledTimes(1)
+  })
+
+  it('exec falls back to window.history.forward when the Navigation API is unavailable', () => {
+    delete window.navigation
+    const forward = vi.spyOn(window.history, 'forward').mockImplementation(() => {})
+    navigateForward.exec(vi.fn(), () => ({}) as never, {} as never, { type: 'keyboard' })
+    expect(forward).toHaveBeenCalledTimes(1)
+    forward.mockRestore()
   })
 })
