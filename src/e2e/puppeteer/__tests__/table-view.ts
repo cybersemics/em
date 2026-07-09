@@ -76,8 +76,7 @@ describe('Table View', () => {
   })
 
   // Regression test for https://github.com/cybersemics/em/issues/3568
-  // .skip keeps normal CI green while the test is red; remove the .skip when the fix lands.
-  it.skip('first subthought should not overlap the parent when Table View is applied to the root context', async () => {
+  it('first subthought should not overlap the parent when Table View is applied to the root context', async () => {
     // Applying Table View to the root context (i.e. toggling it while the cursor is on a top-level thought)
     // makes the top-level thought column 1 and its subthoughts column 2.
     await paste(`
