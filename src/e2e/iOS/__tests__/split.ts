@@ -25,8 +25,8 @@ describe('Split', () => {
 
     const editableNodeHandle = await waitForEditable('web scraping')
 
-    await tap(editableNodeHandle, { x: 25 })
-    await tap(editableNodeHandle, { x: 25 })
+    await tap(editableNodeHandle, { horizontalTapLine: 'left', x: 25 })
+    await tap(editableNodeHandle, { horizontalTapLine: 'left', x: 25 })
     await tapReturnKey()
 
     const offset = await getSelection()?.focusOffset
