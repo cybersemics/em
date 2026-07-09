@@ -253,14 +253,10 @@ describe('Caret', () => {
   })
 
   /**
-   * Reproduction of #4394. Tapping ~4px past the right edge of a non-cursor thought incorrectly opens the
+   * Reproduction of #4394. Tapping ~4px past the right edge of a non-cursor thought incorrectly opened the
    * virtual keyboard. Safari's touch-adjustment heuristic retargets the synthesized mouse cascade onto the
    * nearby editable while the `touchstart`/`touchend` land on the thought-annotation overlay, so the
-   * editable's `onTouchEnd` never runs to `preventDefault`. On the pre-#4371 code the retargeted `mouseup`
-   * then runs `onMouseUp` with a stale, never-reset `offsetRef.current`, calling `setCaretOffset` ->
-   * `selection.set`, which focuses the editable and opens the keyboard even though `onMouseDown`
-   * preventDefaulted the native focus. The stale-offset focus path is device- and version-independent, so
-   * the bug reproduces on both iOS 17 and iOS 18.
+   * editable's `onTouchEnd` never runs to `preventDefault`.
    */
   it('Keyboard incorrectly opens on the right-edge tap of a non-cursor thought (#4394)', async () => {
     await newThought('Hello')
@@ -312,12 +308,7 @@ describe('Caret', () => {
     })
     await waitUntil(async () => !(await getEditingText()))
 
-    // Tap just past the right edge of the thought text, vertically centered, using a finger-sized
-    // contact area (width/height/pressure). Safari's touch-adjustment heuristic uses the contact radius
-    // to retarget the synthesized mouse events onto the nearby editable, but the `touchstart`/`touchend`
-    // land on the thought-annotation overlay - so the editable's `onTouchEnd` never runs to
-    // `preventDefault`. The retargeted `mouseup` then focuses the editable via the stale offset and the
-    // virtual keyboard opens. #4394.
+    // Tap just past the right edge of the thought text, vertically centered, using a finger-sized contact area (width/height/pressure).
     const tapX = Math.round(rect.x + rect.width + 4)
     const tapY = Math.round(rect.y + rect.height / 2)
     await browser.switchContext('NATIVE_APP')
@@ -348,9 +339,7 @@ describe('Caret', () => {
 
     const keyboard = await isKeyboardShown()
 
-    // The edge tap opens the keyboard on this pre-#4371 branch (the #4394 reproduction). The stale-offset
-    // focus path is version-independent, so this holds on both iOS 17 and iOS 18. It will flip to false
-    // once focus is correctly prevented for non-cursor thoughts.
-    expect(keyboard).toBe(true)
+    // A non-cursor thought must not open the virtual keyboard.
+    expect(keyboard).toBe(false)
   })
 })
