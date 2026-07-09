@@ -1,7 +1,9 @@
 import Command from '../@types/Command'
-import { formatSelectionActionCreator as formatSelection } from '../actions/formatSelection'
+import FormattingCommand from '../@types/FormattingCommand'
+import { formatWithTagActionCreator as formatWithTag } from '../actions/formatWithTag'
 import Icon from '../components/icons/StrikethroughIcon'
 import hasMulticursor from '../selectors/hasMulticursor'
+import { scrollMulticursorIntoViewOnComplete } from '../stores/scrollMulticursorIntoView'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 /** Toggles formatting of the current browser selection as strikethrough. If there is no selection, formats the entire thought. */
@@ -12,13 +14,13 @@ const strikethrough: Command = {
   descriptionInverse: 'Removes strikethrough from the current thought or selected text.',
   svg: Icon,
   keyboard: { key: 's', meta: true },
-  multicursor: true,
+  multicursor: { onComplete: scrollMulticursorIntoViewOnComplete },
   canExecute: state => {
     return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
   },
   exec: (dispatch, getState, e) => {
     e.preventDefault()
-    dispatch(formatSelection('strikethrough'))
+    dispatch(formatWithTag(FormattingCommand.strikethrough))
   },
   // The isActive logic for formatting commands is handled differently than other commands because it references the CommandStateStore. This can be found in ToolbarButton (isButtonActive)
 }

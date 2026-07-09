@@ -3,6 +3,7 @@ import FormattingCommand from '../@types/FormattingCommand'
 import { formatWithTagActionCreator as formatWithTag } from '../actions/formatWithTag'
 import Icon from '../components/icons/CodeIcon'
 import hasMulticursor from '../selectors/hasMulticursor'
+import { scrollMulticursorIntoViewOnComplete } from '../stores/scrollMulticursorIntoView'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 /** Toggles formatting of the current browser selection as code. If there is no selection, formats the entire thought. */
@@ -11,7 +12,7 @@ const codeCommand: Command = {
   label: 'Code',
   description: 'Formats the current thought or selected text as code.',
   descriptionInverse: 'Removes code formatting from the current thought or selected text.',
-  multicursor: true,
+  multicursor: { onComplete: scrollMulticursorIntoViewOnComplete },
   svg: Icon,
   keyboard: { key: 'k', meta: true },
   canExecute: state => {
