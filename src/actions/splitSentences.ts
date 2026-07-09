@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
+import cursorHistory from '../actions/cursorHistory'
 import editThought from '../actions/editThought'
 import editableRender from '../actions/editableRender'
 import newThought from '../actions/newThought'
@@ -28,6 +29,7 @@ const splitSentences = (state: State): State => {
   }
 
   const [firstSentence, ...otherSentences] = sentences
+  let cursorForwardPath: State['cursor'] = null
 
   const reducers = [
     editThought({
@@ -35,10 +37,15 @@ const splitSentences = (state: State): State => {
       newValue: firstSentence.value,
       path: simplifyPath(state, cursor),
     }),
-    ...otherSentences.map(sentence =>
-      newThought({ value: sentence.value, insertNewSubthought: sentence.insertNewSubThought }),
-    ),
+    ...otherSentences.map(sentence => (state: State) => {
+      const stateNew = newThought({ value: sentence.value, insertNewSubthought: sentence.insertNewSubThought })(state)
+      if (sentence.insertNewSubThought) {
+        cursorForwardPath = stateNew.cursor
+      }
+      return stateNew
+    }),
     setCursor({ path: cursor, offset: getTextContentFromHTML(firstSentence.value).length }),
+    (state: State) => (cursorForwardPath ? cursorHistory({ cursor: cursorForwardPath })(state) : state),
     editableRender,
   ]
 
