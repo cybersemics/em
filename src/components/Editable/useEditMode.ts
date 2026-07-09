@@ -139,16 +139,51 @@ const useEditMode = ({
     if (!editable) return
 
     /** Sets the DOM selection and updates the Redux cursor state. */
-    const setCaretOffset = (offset: number) => {
+    const setCaretOffset = (offset: number, { cursorHistoryClear }: { cursorHistoryClear?: boolean } = {}) => {
       selection.set(editable, { offset })
-      dispatch(setCursor({ path, offset }))
+      dispatch(setCursor({ path, offset, cursorHistoryClear }))
     }
 
     /** Marks the beginning of a touch so that onMouseDown can determine whether a long press is occurring. */
     const onTouchStart = () => (pressingRef.current = true)
 
     /** Marks the end of a touch, indicating to onMouseDown that a long press is not occurring. */
-    const onTouchEnd = () => (pressingRef.current = false)
+    const onTouchEnd = (e: TouchEvent) => {
+      pressingRef.current = false
+      console.log('onTouchEnd', Date.now(), e)
+      /**
+       * Backstops #4173: on iOS Safari a rapid tap on an adjacent thought is absorbed by WebKit's
+       * touch-adjustment, which retargets the synthesized mousedown/focus to the already-focused thought — so
+       * onMouseDown never fires on the tapped thought and the caret stays put (tapping a distant thought works
+       * because it falls outside the adjustment radius). touchend is the only event that reliably fires on the
+       * tapped thought, so mirror onMouseDown here: place the caret at the tap point on the newly tapped
+       * (non-cursor) thought while the keyboard is open. Repositioning within the cursor thought is left to
+       * onMouseDown, which fires reliably because that thought is already focused.
+       */
+      if (
+        !editing ||
+        isCursor ||
+        isMulticursor ||
+        // globals.touching ||
+        style?.visibility === 'hidden' ||
+        store.getState().longPress !== LongPressState.Inactive
+      )
+        return
+
+      // Suppress the synthesized mouse/focus events, which iOS retargets to the previously-focused thought
+      // and which would otherwise move the cursor back to it.
+      if (e.cancelable) e.preventDefault()
+
+      // Place the caret where the user tapped. getCaretOffset is coordinate-based, so it resolves the offset
+      // even though focus has not (and will not) move via the retargeted events. Fall back to the end of the
+      // thought if the tap is in a void area or the coordinates are unavailable.
+      const { offset } = getCaretOffset(editable, {
+        clientX: e.changedTouches[0].clientX,
+        clientY: e.changedTouches[0].clientY,
+      })
+
+      setCaretOffset(offset ?? editable.textContent?.length ?? 0, { cursorHistoryClear: true })
+    }
 
     /**
      * Handles the mousedown event for the editable element.
@@ -226,7 +261,18 @@ const useEditMode = ({
         editable.removeEventListener('focus', onFocus)
       }
     }
-  }, [contentRef, editingOrOnCursor, isCursor, isMulticursor, fontSize, allowDefaultSelection, path, dispatch])
+  }, [
+    contentRef,
+    editing,
+    editingOrOnCursor,
+    isCursor,
+    isMulticursor,
+    fontSize,
+    allowDefaultSelection,
+    path,
+    dispatch,
+    store,
+  ])
 
   // Resume focus if sidebar was just closed and isEditing is true.
   // Disable focus restoration on mobile until the hamburger menu & sidebar backdrop can be made to
