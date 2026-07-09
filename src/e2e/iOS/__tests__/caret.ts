@@ -262,12 +262,9 @@ describe('Caret', () => {
     await newThought('Hello')
 
     const editable = await waitForEditable('Hello')
-    await hideKeyboardByTappingDone()
-    await browser.execute(() => window.scrollTo(0, 0))
-
     const rect = await getElementRectByScreen(editable)
 
-    // Prime with a real native tap on the thought's center + keyboard dismissal. This is required for
+    // Prime with a tap on the thought's center + keyboard dismissal. This is required for
     // the synthetic edge-touch below to reliably win the timing race that a real finger triggers on
     // its own (see comment on the tap). A native tap (not a webview element.click()) is used because
     // on real devices only a native touch focuses the editable and opens the keyboard. Priming while
@@ -299,9 +296,8 @@ describe('Caret', () => {
       yStart: rect.y + rect.height / 2,
       segmentLength: rect.width,
     })
-    await waitUntil(async () => !(await getEditingText()))
 
-    // Tap just past the right edge of the thought text, vertically centered, using a finger-sized contact area (width/height/pressure).
+    // Tap just past the right edge of the thought text, vertically centered.
     const tapX = Math.round(rect.x + rect.width + 4)
     const tapY = Math.round(rect.y + rect.height / 2)
     await browser.performActions([
@@ -320,7 +316,7 @@ describe('Caret', () => {
             height: 40,
             pressure: 0.9,
           },
-          { type: 'pointerDown', button: 0, width: 40, height: 40, pressure: 0.9 },
+          { type: 'pointerDown', button: 0 },
           { type: 'pause', duration: 90 },
           { type: 'pointerUp', button: 0 },
         ],
