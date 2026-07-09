@@ -11,8 +11,6 @@ import waitForAlertContent from '../helpers/waitForAlertContent'
 import waitForEditable from '../helpers/waitForEditable'
 import { page } from '../session'
 
-const em = window.em as WindowEm
-
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
 describe('multiselect', () => {
@@ -32,13 +30,8 @@ describe('multiselect', () => {
   })
 
   // Regression test for https://github.com/cybersemics/em/issues/3612
+  // The multiselect indicator must never auto-dismiss, otherwise closing it would clear the selection.
   it('should not auto-dismiss the multiselect alert while a selection is active', async () => {
-    // Shorten the default alert auto-dismiss timeout so that a regression (an auto-dismissing
-    // multiselect alert) would clear the selection immediately, avoiding a long sleep in the test.
-    await page.evaluate(() => {
-      em.testFlags.alertClearDelay = 1
-    })
-
     await paste(`
         - a
         - b
@@ -48,15 +41,15 @@ describe('multiselect', () => {
 
     await waitForAlertContent('1 thought selected')
 
-    // Give the (shortened) auto-dismiss timer ample time to fire. The alert must persist because
-    // the multiselect indicator is dispatched with clearDelay: null.
-    await page.evaluate(() => new Promise<void>(resolve => setTimeout(resolve, 100)))
+    // The multiselect indicator is dispatched with clearDelay: null so it never auto-dismisses.
+    // Auto-dismiss is globally disabled in tests (testFlags.preventAutoDismiss), which mocks any finite
+    // delay to Infinity. A regression that dropped the intentional clearDelay: null would therefore
+    // resolve to Infinity instead of null, so asserting null catches it.
+    const clearDelay = await page.evaluate(() => (window.em as WindowEm).store.getState().alert?.clearDelay)
+    expect(clearDelay).toBeNull()
 
     const highlightedBullets = await page.$$('[aria-label="bullet"][data-highlighted="true"]')
-    const alertContent = await page.evaluate(() => {
-      const el = document.querySelector('[data-testid=alert-content]')
-      return el ? el.textContent : null
-    })
+    const alertContent = await page.$eval('[data-testid=alert-content]', el => el.textContent)
 
     expect(alertContent).toContain('1 thought selected')
     expect(highlightedBullets.length).toBe(1)

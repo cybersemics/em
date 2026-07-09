@@ -1,5 +1,6 @@
 import chalk from 'chalk'
 import { Browser, BrowserContext, ConsoleMessage, Device } from 'puppeteer'
+import { WindowEm } from '../../initialize'
 import { page, setPage } from './session'
 
 // eslint-disable-next-line @typescript-eslint/no-namespace, @typescript-eslint/prefer-namespace-keyword
@@ -73,6 +74,14 @@ const setup = async ({
     // wait for welcome modal to disappear
     await page.waitForFunction(() => !document.getElementById('skip-tutorial'))
   }
+
+  // Globally disable alert auto-dismiss in tests so alerts persist until manually cleared. This keeps
+  // tests deterministic without sleeping on the auto-dismiss timeout. See testFlags.preventAutoDismiss.
+  await page.waitForFunction(() => !!(window.em as WindowEm | undefined)?.testFlags)
+  await page.evaluate(() => {
+    const em = window.em as WindowEm
+    em.testFlags.preventAutoDismiss = true
+  })
 }
 
 beforeEach(setup, 60000)

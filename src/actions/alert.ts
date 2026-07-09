@@ -23,6 +23,8 @@ const ALERT_WITH_MINITORE = '__ALERT_WITH_MINITORE__'
 /** Set an alert with an optional close link. */
 const alertReducer = (state: State, { alertType, value, importFileId, clearDelay }: Options) => {
   if (value === state.alert?.value) return state
+  // Default clearDelay to 5000ms when undefined. Use null to prevent auto-dismiss.
+  const resolvedClearDelay = clearDelay === undefined ? 5000 : clearDelay
   return {
     ...state,
     // Deselect All when closing the MulticursorActive alert
@@ -32,9 +34,12 @@ const alertReducer = (state: State, { alertType, value, importFileId, clearDelay
           alertType,
           value,
           importFileId,
-          // Default clearDelay to 5000ms when undefined. Use null to prevent auto-dismiss.
-          // testFlags.alertClearDelay overrides the default in tests to shorten the timeout.
-          clearDelay: clearDelay === undefined ? (testFlags.alertClearDelay ?? 5000) : clearDelay,
+          // In tests, testFlags.preventAutoDismiss mocks any finite delay to Infinity so alerts never
+          // auto-dismiss. This keeps tests deterministic without sleeping or per-alert flags: an alert
+          // is assumed present until manually cleared. Infinity is distinguishable from an explicit
+          // null, so a regression that dropped an intentional clearDelay: null is still detectable.
+          clearDelay:
+            testFlags.preventAutoDismiss && Number.isFinite(resolvedClearDelay) ? Infinity : resolvedClearDelay,
         }
       : null,
   }
