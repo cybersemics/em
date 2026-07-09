@@ -1,5 +1,5 @@
 import { KnownDevices } from 'puppeteer'
-import sleep from '../../../util/sleep'
+import { WindowEm } from '../../../initialize'
 import emulate from '../helpers/emulate'
 import longPressThought from '../helpers/longPressThought'
 import multiselectThoughts from '../helpers/multiselectThoughts'
@@ -7,6 +7,8 @@ import paste from '../helpers/paste'
 import waitForAlertContent from '../helpers/waitForAlertContent'
 import waitForEditable from '../helpers/waitForEditable'
 import { page } from '../session'
+
+const em = window.em as WindowEm
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
@@ -27,9 +29,13 @@ describe('multiselect', () => {
   })
 
   // Regression test for https://github.com/cybersemics/em/issues/3612
-  // The multiselect indicator alert must not auto-dismiss after 5s while the selection is active.
-  // .skip keeps normal CI green while the test is red; remove the .skip when the fix lands.
   it('should not auto-dismiss the multiselect alert while a selection is active', async () => {
+    // Shorten the default alert auto-dismiss timeout so that a regression (an auto-dismissing
+    // multiselect alert) would clear the selection immediately, avoiding a long sleep in the test.
+    await page.evaluate(() => {
+      em.testFlags.alertClearDelay = 1
+    })
+
     await paste(`
         - a
         - b
@@ -39,8 +45,9 @@ describe('multiselect', () => {
 
     await waitForAlertContent('1 thought selected')
 
-    // wait past the default 5000ms alert auto-dismiss timeout
-    await sleep(6000)
+    // Give the (shortened) auto-dismiss timer ample time to fire. The alert must persist because
+    // the multiselect indicator is dispatched with clearDelay: null.
+    await page.evaluate(() => new Promise<void>(resolve => setTimeout(resolve, 100)))
 
     const highlightedBullets = await page.$$('[aria-label="bullet"][data-highlighted="true"]')
     const alertContent = await page.evaluate(() => {

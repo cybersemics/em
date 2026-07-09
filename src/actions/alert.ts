@@ -4,6 +4,7 @@ import Alert from '../@types/Alert'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import { AlertType } from '../constants'
+import testFlags from '../e2e/testFlags'
 import alertStore from '../stores/alert'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import clearMulticursors from './clearMulticursors'
@@ -32,7 +33,8 @@ const alertReducer = (state: State, { alertType, value, importFileId, clearDelay
           value,
           importFileId,
           // Default clearDelay to 5000ms when undefined. Use null to prevent auto-dismiss.
-          clearDelay: clearDelay === undefined ? 5000 : clearDelay,
+          // testFlags.alertClearDelay overrides the default in tests to shorten the timeout.
+          clearDelay: clearDelay === undefined ? (testFlags.alertClearDelay ?? 5000) : clearDelay,
         }
       : null,
   }

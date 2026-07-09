@@ -5,6 +5,8 @@ type TestFlags = {
   logMultigesture: boolean
   /** Delay in ms before expanding the hovering thought. */
   expandHoverDelay: number | null
+  /** Overrides the default alert auto-dismiss delay (in ms). Used to shorten the timeout in tests so that auto-dismiss regressions can be detected quickly without a long sleep. */
+  alertClearDelay: number | null
   /** Delay in ms to mock data replication, for simulating network latency in tests. */
   replicationDelay: number
   /** Prevent automatic app initialization on page load. */
@@ -29,6 +31,7 @@ const testFlags: TestFlags = {
   logActions: false,
   logMultigesture: false,
   expandHoverDelay: null,
+  alertClearDelay: null,
   replicationDelay: 0,
   preventInitialize: preloadedTestFlags?.preventInitialize ?? false,
   initialize: null,
