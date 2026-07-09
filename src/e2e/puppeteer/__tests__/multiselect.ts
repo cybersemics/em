@@ -1,8 +1,10 @@
 import { KnownDevices } from 'puppeteer'
+import sleep from '../../../util/sleep'
 import emulate from '../helpers/emulate'
 import longPressThought from '../helpers/longPressThought'
 import multiselectThoughts from '../helpers/multiselectThoughts'
 import paste from '../helpers/paste'
+import waitForAlertContent from '../helpers/waitForAlertContent'
 import waitForEditable from '../helpers/waitForEditable'
 import { page } from '../session'
 
@@ -22,6 +24,32 @@ describe('multiselect', () => {
 
     expect(highlightedBullets.length).toBe(2)
     expect(alertContent).toContain('2 thoughts selected')
+  })
+
+  // Regression test for https://github.com/cybersemics/em/issues/3612
+  // The multiselect indicator alert must not auto-dismiss after 5s while the selection is active.
+  // .skip keeps normal CI green while the test is red; remove the .skip when the fix lands.
+  it.skip('should not auto-dismiss the multiselect alert while a selection is active', async () => {
+    await paste(`
+        - a
+        - b
+        `)
+
+    await multiselectThoughts(['a'])
+
+    await waitForAlertContent('1 thought selected')
+
+    // wait past the default 5000ms alert auto-dismiss timeout
+    await sleep(6000)
+
+    const highlightedBullets = await page.$$('[aria-label="bullet"][data-highlighted="true"]')
+    const alertContent = await page.evaluate(() => {
+      const el = document.querySelector('[data-testid=alert-content]')
+      return el ? el.textContent : null
+    })
+
+    expect(alertContent).toContain('1 thought selected')
+    expect(highlightedBullets.length).toBe(1)
   })
 })
 
