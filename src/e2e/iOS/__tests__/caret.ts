@@ -262,6 +262,7 @@ describe('Caret', () => {
     await newThought('Hello')
 
     const editable = await waitForEditable('Hello')
+    await browser.execute(() => window.scrollTo(0, 0))
     const rect = await getElementRectByScreen(editable)
 
     // Prime with a tap on the thought's center + keyboard dismissal. This is required for
