@@ -22,11 +22,11 @@ env:
   # Exposed at workflow level so the macOS keychain-import step can gate on its
   # presence. Empty when the signing secret is unset, in which case macOS builds
   # fall back to ad-hoc signing (see the tauri-action step below).
+  # Only APPLE_CERTIFICATE is set here; other notarization credentials are set
+  # only in the notarization step to avoid Tauri CLI attempting notarization
+  # when credentials are absent (Tauri treats an empty APPLE_TEAM_ID as "set"
+  # and attempts notarization, which fails with "Team ID must be at least 3 chars").
   APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-  APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-  APPLE_ID: ${{ secrets.APPLE_ID }}
-  APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-  APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
 jobs:
   build:
@@ -81,6 +81,29 @@ jobs:
       - name: Set desktop version (MSI-compatible)
         run: yarn tauri:version
 
+      # Compute whether all Apple Developer ID + notarization credentials are
+      # present. This step runs before the two mutually-exclusive build steps so
+      # that their `if` conditions can use a step output instead of env vars.
+      # We cannot rely on workflow-level env vars for the notarization guard
+      # because secrets that are absent resolve to empty strings (""), and Tauri
+      # CLI treats any non-absent APPLE_TEAM_ID — including "" — as "notarize
+      # requested", then fails validation with "Team ID must be at least 3 chars".
+      - name: Check Apple signing credentials
+        id: apple-signing
+        if: matrix.platform == 'macos-latest'
+        run: |
+          if [[ -n "$AC" && -n "$ASI" && -n "$AID" && -n "$APW" && -n "$ATI" ]]; then
+            echo "full_credentials=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "full_credentials=false" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          AC: ${{ secrets.APPLE_CERTIFICATE }}
+          ASI: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          AID: ${{ secrets.APPLE_ID }}
+          APW: ${{ secrets.APPLE_PASSWORD }}
+          ATI: ${{ secrets.APPLE_TEAM_ID }}
+
       # Import the Developer ID certificate into a temporary keychain so codesign
       # can find the identity. Runs only on macOS when the certificate secret is
       # configured; otherwise the build proceeds with ad-hoc signing.
@@ -98,8 +121,12 @@ jobs:
           security import "$RUNNER_TEMP/certificate.p12" -k build.keychain -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
 
+      # Runs when Apple credentials are absent or incomplete (all non-macOS
+      # platforms always use this path). Notarization env vars are intentionally
+      # not set here — Tauri CLI treats any value (including "") as "present" and
+      # would attempt notarization, failing validation for short or empty values.
       - name: Build and publish desktop app (ad-hoc signing)
-        if: env.APPLE_CERTIFICATE == '' || env.APPLE_SIGNING_IDENTITY == '' || env.APPLE_ID == '' || env.APPLE_PASSWORD == '' || env.APPLE_TEAM_ID == ''
+        if: steps.apple-signing.outputs.full_credentials != 'true'
         uses: tauri-apps/tauri-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -119,15 +146,17 @@ jobs:
           args: ${{ matrix.args }}
 
       - name: Build and publish desktop app (Developer ID + notarization)
-        if: env.APPLE_CERTIFICATE != '' && env.APPLE_SIGNING_IDENTITY != '' && env.APPLE_ID != '' && env.APPLE_PASSWORD != '' && env.APPLE_TEAM_ID != ''
+        if: steps.apple-signing.outputs.full_credentials == 'true'
         uses: tauri-apps/tauri-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Use notarization only when all Apple signing credentials are configured.
-          APPLE_SIGNING_IDENTITY: ${{ env.APPLE_SIGNING_IDENTITY }}
-          APPLE_ID: ${{ env.APPLE_ID }}
-          APPLE_PASSWORD: ${{ env.APPLE_PASSWORD }}
-          APPLE_TEAM_ID: ${{ env.APPLE_TEAM_ID }}
+          # Set directly from secrets (not workflow-level env) to ensure Tauri CLI
+          # only sees these credentials in the notarization path.
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: em desktop ${{ github.ref_name }}
