@@ -688,6 +688,31 @@ describe('grouping', () => {
     expect(exported).not.toContain('#008000')
   })
 
+  it('undoing a formatting edit should preserve trailing space in thought value', () => {
+    // Issue F: applying formatting to a thought with a trailing space was stripping the space on undo
+    // because trimHtml previously stripped whitespace inside closing tags (e.g. "<b>hello </b>" → "<b>hello</b>").
+    store.dispatch([
+      importText({
+        text: `
+          - a`,
+      }),
+      // content edit: 'a' → 'hello ' (with trailing space)
+      editThought(['a'], 'hello '),
+      // formatting-only edit: preserve the trailing space inside the bold tag
+      editThought(['hello '], '<b>hello </b>'),
+    ])
+
+    // verify the bold with trailing space was applied
+    const exportedBeforeUndo = exportContext(store.getState(), [HOME_TOKEN], 'text/html')
+    expect(exportedBeforeUndo).toContain('<li><b>hello </b></li>')
+
+    // undo should revert the formatting and restore "hello " (with trailing space)
+    store.dispatch(undo())
+    const exportedAfterUndo = exportContext(store.getState(), [HOME_TOKEN], 'text/html')
+    expect(exportedAfterUndo).not.toContain('<b>')
+    expect(exportedAfterUndo).toContain('<li>hello </li>')
+  })
+
   it('contiguous edits should be grouped', () => {
     store.dispatch([
       importText({
