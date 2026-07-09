@@ -69,16 +69,29 @@ const copyRichExecCommand = (text: string, html: string): void => {
  * Crucially, Safari dispatches the Cmd+C copy event on a later task than setTimeout(0), so the listener must
  * stay registered well beyond the current tick. It removes itself as soon as the copy event fires, and a
  * generous timeout removes it otherwise (e.g. the command was triggered from the command palette, which fires
- * no copy event) so it cannot affect an unrelated later copy.
+ * no copy event) so it cannot affect an unrelated later copy. If copyRichSafari is called again before the
+ * previous listener has fired or timed out, the previous listener and its timeout are cancelled first so that
+ * only the latest text is written.
  */
+// Tracks the pending Safari copy listener/timeout so a later copyRichSafari call can cancel it before registering a new one.
+let pendingSafariCopy: { onCopy: (e: ClipboardEvent) => void; timeoutId: ReturnType<typeof setTimeout> } | null = null
+
+/** Removes the pending Safari copy listener and clears its fallback timeout. Idempotent. */
+const clearPendingSafariCopy = (): void => {
+  if (!pendingSafariCopy) return
+  clearTimeout(pendingSafariCopy.timeoutId)
+  document.removeEventListener('copy', pendingSafariCopy.onCopy, true)
+  pendingSafariCopy = null
+}
+
+/** Copies text and html to the clipboard on Safari/WebKit via a capture-phase document copy listener (see comment above). */
 const copyRichSafari = (text: string, html: string): void => {
-  let done = false
+  // Cancel any pending listener/timeout from a previous invocation so only the latest copy is written.
+  clearPendingSafariCopy()
 
   /** Writes the plain text, html, and text/em marker onto the user-initiated copy event. */
   const onCopy = (e: ClipboardEvent) => {
-    if (done) return
-    done = true
-    document.removeEventListener('copy', onCopy, true)
+    clearPendingSafariCopy()
     e.preventDefault()
     e.clipboardData?.setData('text/plain', text)
     e.clipboardData?.setData('text/html', html)
@@ -90,14 +103,10 @@ const copyRichSafari = (text: string, html: string): void => {
   document.addEventListener('copy', onCopy, true)
 
   // Safari dispatches the Cmd+C copy event on a later task, so keep the listener alive for a generous window.
-  // onCopy self-removes on the first copy event (setting done); this timeout only removes the listener if no
-  // copy event ever arrives (e.g. the command was triggered from the command palette) so it cannot affect an
-  // unrelated later copy.
-  setTimeout(() => {
-    if (done) return
-    done = true
-    document.removeEventListener('copy', onCopy, true)
-  }, 1000)
+  // onCopy self-cancels on the first copy event; this timeout only clears the listener if no copy event ever
+  // arrives (e.g. the command was triggered from the command palette) so it cannot affect an unrelated later copy.
+  const timeoutId = setTimeout(clearPendingSafariCopy, 1000)
+  pendingSafariCopy = { onCopy, timeoutId }
 }
 
 /** Copies text and html (plus the text/em source marker) to the clipboard for a rich (structured) copy.

@@ -21,27 +21,21 @@ const useOnCopy = ({ thoughtId }: { thoughtId: ThoughtId }) => {
       // The Copy Cursor command also writes the full selection to the clipboard, but copyCursor uses
       // permitDefault, so this native copy event fires afterward and would otherwise clobber it with
       // only the focused thought (#3993).
-      if (hasMulticursor(state)) {
-        const ids = getMulticursorThoughtIds(state)
-        const plainText = trimBullet(ids.map(id => strip(exportContext(state, id, 'text/plain'))).join('\n'))
-        const htmlText = ids.map(id => exportContext(state, id, 'text/html')).join('\n')
-        clipboardData.setData('text/plain', plainText)
-        clipboardData.setData('text/html', htmlText)
-        clipboardData.setData('text/em', 'true')
-        return
-      }
-
+      const ids = hasMulticursor(state) ? getMulticursorThoughtIds(state) : null
       const currentText = selection.text()
-      const currentHtml = selection.html()
-      clipboardData.setData('text/plain', currentText!)
-      clipboardData.setData('text/html', currentHtml!)
 
-      if (!currentText) {
-        const thoughtHtml = exportContext(state, thoughtId, 'text/html')
-        const thoughtText = exportContext(state, thoughtId, 'text/plain')
-        clipboardData.setData('text/plain', trimBullet(thoughtText))
-        clipboardData.setData('text/html', thoughtHtml)
-      }
+      // multicursor: all selected thoughts; else the current selection, falling back to the focused thought when the selection is empty.
+      const plainText = ids
+        ? trimBullet(ids.map(id => strip(exportContext(state, id, 'text/plain'))).join('\n'))
+        : currentText || trimBullet(exportContext(state, thoughtId, 'text/plain'))
+      const htmlText = ids
+        ? ids.map(id => exportContext(state, id, 'text/html')).join('\n')
+        : currentText
+          ? selection.html()!
+          : exportContext(state, thoughtId, 'text/html')
+
+      clipboardData.setData('text/plain', plainText)
+      clipboardData.setData('text/html', htmlText)
       clipboardData.setData('text/em', 'true')
     },
     [thoughtId],
