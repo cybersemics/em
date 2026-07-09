@@ -1,10 +1,17 @@
 import type ThoughtId from '../../../@types/ThoughtId'
 import type Timestamp from '../../../@types/Timestamp'
 import { EM_TOKEN, SETTINGS_TOKEN, SETTINGS_VALUE } from '../../../constants'
-import testThoughtspace, { init, resetTestThoughtspace } from '../../../test-helpers/treecrdt/testThoughtspace'
 import hashThought from '../../../util/hashThought'
 import treecrdtThoughtspace, { createIndexedChildrenMap, init as initTreecrdtThoughtspace } from '../thoughtspace'
 import { getTreecrdtClient, initTreecrdt } from '../treecrdt'
+
+const TEST_REPLICA_ID = new Uint8Array(32).fill(1)
+
+/** Initializes an isolated in-memory TreeCRDT client and thoughtspace for unit tests. */
+const initTestThoughtspace = async (replicaId: Uint8Array = TEST_REPLICA_ID): Promise<void> => {
+  await initTreecrdt()
+  await initTreecrdtThoughtspace(replicaId)
+}
 
 const PIN_ID = '00000000000000000000000000000101' as ThoughtId
 const FALSE_ID = '00000000000000000000000000000102' as ThoughtId
@@ -41,38 +48,38 @@ const persistThoughts = (
     movePlacements,
   })
 
-beforeEach(() => {
-  resetTestThoughtspace()
+beforeEach(async () => {
+  await treecrdtThoughtspace.clear()
 })
 
 afterEach(async () => {
   await treecrdtThoughtspace.clear()
 })
 
-it('seeds fixed system thoughts in the unit-test provider', async () => {
-  await init(new Uint8Array([1]))
+it('seeds fixed system thoughts in the TreeCRDT provider', async () => {
+  await initTestThoughtspace()
 
-  const em = await testThoughtspace.getThoughtById(EM_TOKEN)
+  const em = await treecrdtThoughtspace.getThoughtById(EM_TOKEN)
   expect(em?.childrenMap[SETTINGS_TOKEN]).toBe(SETTINGS_TOKEN)
 
-  const settings = await testThoughtspace.getThoughtById(SETTINGS_TOKEN)
+  const settings = await treecrdtThoughtspace.getThoughtById(SETTINGS_TOKEN)
   expect(settings).toMatchObject({
     id: SETTINGS_TOKEN,
     parentId: EM_TOKEN,
     value: SETTINGS_VALUE,
   })
 
-  const settingsLexeme = await testThoughtspace.getLexemeById(hashThought(SETTINGS_VALUE))
+  const settingsLexeme = await treecrdtThoughtspace.getLexemeById(hashThought(SETTINGS_VALUE))
   expect(settingsLexeme?.contexts).toEqual([SETTINGS_TOKEN])
 })
 
-it('does not delete test-provider lexemes when freeing cache', async () => {
-  await init(new Uint8Array([1]))
+it('does not delete persisted lexemes when freeing cache', async () => {
+  await initTestThoughtspace()
 
   const settingsKey = hashThought(SETTINGS_VALUE)
-  await testThoughtspace.freeLexeme(settingsKey)
+  await treecrdtThoughtspace.freeLexeme(settingsKey)
 
-  const settingsLexeme = await testThoughtspace.getLexemeById(settingsKey)
+  const settingsLexeme = await treecrdtThoughtspace.getLexemeById(settingsKey)
   expect(settingsLexeme?.contexts).toEqual([SETTINGS_TOKEN])
 })
 
@@ -96,8 +103,7 @@ it('uses indexed attribute values as childrenMap keys without changing TreeCRDT 
 })
 
 it('falls back to rank placement when explicit afterId is stale', async () => {
-  await initTreecrdt()
-  await initTreecrdtThoughtspace(new Uint8Array(32).fill(1))
+  await initTestThoughtspace(new Uint8Array(32).fill(1))
 
   await persistThoughts([thought(PARENT_ID, EM_TOKEN, 'parent', 0), thought(OTHER_PARENT_ID, EM_TOKEN, 'other', 1)])
   await persistThoughts([thought(THOUGHT_A_ID, PARENT_ID, 'a', 0)])
