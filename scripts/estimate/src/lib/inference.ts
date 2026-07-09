@@ -1,26 +1,27 @@
 // Inference tuning constants, overridable via ESTIMATE_* env vars for experimentation.
-const MODEL = process.env.ESTIMATE_MODEL ?? 'openai/gpt-4.1'
+const MODEL = process.env.ESTIMATE_MODEL ?? 'gpt-4.1'
 const TEMPERATURE = process.env.ESTIMATE_TEMPERATURE != null ? Number(process.env.ESTIMATE_TEMPERATURE) : 0
 const MAX_VALIDATION_ATTEMPTS =
   process.env.ESTIMATE_MAX_VALIDATION_ATTEMPTS != null ? Number(process.env.ESTIMATE_MAX_VALIDATION_ATTEMPTS) : 3
 
 /** Options for the AI inference call. */
 interface CallOptions {
-  token: string
+  /** OpenAI API key used to authenticate the inference request. */
+  apiKey: string
   prompt: string
   /** Estimation instructions used as the system message. */
   instructions: string
 }
 
-/** Calls GitHub Models inference API. Returns raw string outputs for validation. */
-const inference = async ({ token, prompt, instructions }: CallOptions): Promise<string[]> => {
+/** Calls the OpenAI chat completions API. Returns raw string outputs for validation. */
+const inference = async ({ apiKey, prompt, instructions }: CallOptions): Promise<string[]> => {
   const outputs: string[] = []
 
   for (let attempt = 0; attempt < MAX_VALIDATION_ATTEMPTS; attempt++) {
-    const response = await fetch('https://models.github.ai/inference/chat/completions', {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -36,7 +37,7 @@ const inference = async ({ token, prompt, instructions }: CallOptions): Promise<
 
     if (!response.ok) {
       const body = await response.text().catch(() => '')
-      throw new Error(`GitHub Models API error ${response.status}: ${body}`)
+      throw new Error(`OpenAI API error ${response.status}: ${body}`)
     }
 
     const data = (await response.json()) as { choices: { message: { content: string } }[] }
