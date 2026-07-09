@@ -713,6 +713,27 @@ describe('grouping', () => {
     expect(exportedAfterUndo).toContain('<li>hello </li>')
   })
 
+  it('letter case edit directly after newThought should not delete the thought on undo', () => {
+    // Issue J: applying letter case (e.g. UpperCase) directly after creating a thought caused undoTwice
+    // to fire because the case change was not recognized as a formatting edit.
+    store.dispatch([
+      importText({
+        text: `
+          - a`,
+      }),
+      newThought({ value: 'hello' }),
+    ])
+    // letter case edit: no content edit between newThought and letter case
+    store.dispatch(editThought(['hello'], 'HELLO'))
+
+    // first undo should only revert the case change, not delete the thought
+    store.dispatch(undo())
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toContain('hello')
+    expect(exported).not.toContain('HELLO')
+  })
+
   it('contiguous edits should be grouped', () => {
     store.dispatch([
       importText({

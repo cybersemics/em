@@ -161,14 +161,17 @@ const undoReducer = (state: State, undoPatches: Patch[]): State => {
   // A formatting patch changes a thought's value without changing its plain text content.
   // This is detected by finding an operation that restores a thoughtIndex value where
   // stripTags(restored_value) === stripTags(current_value) — same plain text, different HTML.
+  // Letter case changes (e.g. "hello" → "HELLO") are also treated as formatting since they do not
+  // add or remove content, only change its presentation.
   const lastPatchIsFormatting = !!lastUndoPatch?.some(op => {
     const match = op.path.match(/^\/thoughts\/thoughtIndex\/([^/]+)\/value$/)
     if (!match) return false
     const id = match[1]
     const currentValue = state.thoughts.thoughtIndex[id]?.value
-    return (
-      currentValue !== undefined && op.value !== undefined && stripTags(op.value as string) === stripTags(currentValue)
-    )
+    if (currentValue === undefined || op.value === undefined) return false
+    const restoredPlain = stripTags(op.value as string)
+    const currentPlain = stripTags(currentValue)
+    return restoredPlain === currentPlain || restoredPlain.toLowerCase() === currentPlain.toLowerCase()
   })
 
   const undoTwice = isNavigation(lastAction)
@@ -270,9 +273,11 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
 
       // Determine if an edit is an addition, deletion, or formatting-only change.
       // Formatting edits change the HTML markup but not the plain text content (e.g. bold, italic, text color).
+      // Letter case changes (e.g. "hello" → "HELLO") are also treated as formatting since the content is unchanged.
       // They are kept separate from content edits so they do not merge with them and do not trigger the newThought+edit double-undo.
       const editThoughtDirection = isEditThoughtAction(action)
-        ? stripTags(action.newValue) === stripTags(action.oldValue)
+        ? stripTags(action.newValue) === stripTags(action.oldValue) ||
+          stripTags(action.newValue).toLowerCase() === stripTags(action.oldValue).toLowerCase()
           ? EditThoughtDirection.Formatting
           : action.newValue.length > action.oldValue.length
             ? EditThoughtDirection.Longer
