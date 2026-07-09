@@ -27,7 +27,7 @@ jobs:
           # backfill.ts runs `git log` to compute the prompt version; a shallow
           # clone would make it resolve to "unknown", so fetch full history.
           fetch-depth: 0
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 24
       - run: yarn install --frozen-lockfile
