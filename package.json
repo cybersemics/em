@@ -98,7 +98,7 @@
     "@capacitor/status-bar": "^8.0.2",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
-    "@mui/material": "^9.1.2",
+    "@mui/material": "^9.2.0",
     "@radix-ui/react-dialog": "^1.1.17",
     "@radix-ui/react-visually-hidden": "^1.2.7",
     "@redux-devtools/extension": "^4.0.0",
