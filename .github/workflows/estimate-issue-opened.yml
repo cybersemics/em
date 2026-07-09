@@ -9,6 +9,8 @@ permissions:
   issues: write
   # To read the estimation instructions and samples from .github/instructions/estimate/.
   contents: read
+  # To call the GitHub Models inference API with GITHUB_TOKEN (issue.ts runs AI inference).
+  models: read
 
 jobs:
   estimate:
