@@ -57,6 +57,7 @@ export interface NewThoughtPayload {
   at?: Path
   /** Callback for when the updates have been synced with IDB. */
   idbSynced?: () => void
+  id?: ThoughtId
   insertNewSubthought?: boolean
   insertBefore?: boolean
   value?: string
@@ -79,6 +80,7 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
   const {
     at,
     idbSynced,
+    id,
     insertNewSubthought,
     insertBefore,
     value = '',
@@ -158,7 +160,7 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
           : getRankAfter(state, simplePath)
 
   // when creating a new context in a context view, newThoughtId is the new empty thought (a/~m/_), and newContextId is the newly added Lexeme context (/ABS/_/m)
-  const newThoughtId = createId()
+  const newThoughtId = id || createId()
   const newContextId = insertContext ? createId() : null
 
   const reducers = [

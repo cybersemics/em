@@ -10,6 +10,8 @@ import getTextContentFromHTML from '../device/getTextContentFromHTML'
 import getThoughtById from '../selectors/getThoughtById'
 import simplifyPath from '../selectors/simplifyPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
+import appendToPath from '../util/appendToPath'
+import createId from '../util/createId'
 import head from '../util/head'
 import reducerFlow from '../util/reducerFlow'
 import splitSentence from '../util/splitSentence'
@@ -37,15 +39,16 @@ const splitSentences = (state: State): State => {
       newValue: firstSentence.value,
       path: simplifyPath(state, cursor),
     }),
-    ...otherSentences.map(sentence => (state: State) => {
-      const stateNew = newThought({ value: sentence.value, insertNewSubthought: sentence.insertNewSubThought })(state)
+    ...otherSentences.map(sentence => {
       if (sentence.insertNewSubThought) {
-        cursorForwardPath = stateNew.cursor
+        const id = createId()
+        cursorForwardPath = appendToPath(cursor, id)
+        return newThought({ value: sentence.value, insertNewSubthought: true, id })
       }
-      return stateNew
+      return newThought({ value: sentence.value })
     }),
     setCursor({ path: cursor, offset: getTextContentFromHTML(firstSentence.value).length }),
-    (state: State) => (cursorForwardPath ? cursorHistory({ cursor: cursorForwardPath })(state) : state),
+    cursorForwardPath ? cursorHistory({ cursor: cursorForwardPath }) : null,
     editableRender,
   ]
 
