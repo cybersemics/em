@@ -28,7 +28,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      - run: yarn install --frozen-lockfile
+      - run: yarn install --immutable
       - name: Build estimate workspace
         run: yarn workspace em-estimate build
       - name: Backfill Everhour estimates
