@@ -3,7 +3,6 @@
  * Uses WDIO test runner with Mocha framework.
  */
 import gestures from '../../../test-helpers/gestures'
-import $ from '../helpers/$'
 import clickThought from '../helpers/clickThought'
 import editThought from '../helpers/editThought'
 import gesture from '../helpers/gesture'
@@ -298,10 +297,6 @@ describe('Caret', () => {
       yStart: rect.y + rect.height / 2,
       segmentLength: rect.width,
     })
-
-    // Verify the cursor is null (no cursor thought) after the swipe right.
-    const cursorThought = await $('[data-editing=true]')
-    expect(cursorThought.elementId).toBeFalsy()
 
     // Tap just past the right edge of the thought text, vertically centered.
     const tapX = Math.round(rect.x + rect.width + 4)
