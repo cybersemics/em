@@ -12,6 +12,7 @@ import { keyboardOpenActionCreator as keyboardOpen } from '../actions/keyboardOp
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { setDescendantActionCreator as setDescendant } from '../actions/setDescendant'
 import { setNoteFocusActionCreator as setNoteFocus } from '../actions/setNoteFocus'
+import { setNoteOffsetActionCreator as setNoteOffset } from '../actions/setNoteOffset'
 import { toggleNoteActionCreator as toggleNote } from '../actions/toggleNote'
 import { isTouch } from '../browser'
 import preventAutoscroll, { preventAutoscrollEnd } from '../device/preventAutoscroll'
@@ -49,6 +50,7 @@ const Note = React.memo(
     /** Gets the value of the note. Returns null if no note exists or if the context view is active. */
     const note = useSelector(state => noteValue(state, path))
     const noteOffset = useSelector(state => state.noteOffset)
+    const editableNonce = useSelector(state => state.editableNonce)
 
     /** Focus Handling with useFreshCallback. */
     const onFocus = useFreshCallback(() => {
@@ -70,7 +72,12 @@ const Note = React.memo(
       if (hasFocus && noteOffset !== null) {
         selection.set(noteRef.current!, { offset: noteOffset })
       }
-    }, [hasFocus, noteOffset])
+    }, [hasFocus, noteOffset, editableNonce])
+
+    /** Saves the note caret offset without creating an undo patch. */
+    const saveNoteOffset = useCallback(() => {
+      dispatch(setNoteOffset({ value: selection.offsetThought() ?? selection.offset() }))
+    }, [dispatch])
 
     /** Handles note keyboard shortcuts. */
     const onKeyDown = useCallback(
@@ -123,6 +130,8 @@ const Note = React.memo(
             // Strip <br> from beginning and end of text
             e.target.value.replace(/^<br>|<br>$/gi, '')
 
+        saveNoteOffset()
+
         // update the referenced thought directly if it exists
         dispatch((dispatch, getState) => {
           const state = getState()
@@ -150,7 +159,7 @@ const Note = React.memo(
           }
         })
       },
-      [dispatch, path, justPasted],
+      [dispatch, path, justPasted, saveNoteOffset],
     )
 
     /** Set state.noteFocus if Note lost focus and did not move to another Note. Set state.keyboardOpen if keyboard is closed. */
@@ -233,6 +242,7 @@ const Note = React.memo(
           onDrop={isTouch ? (e: React.DragEvent) => e.preventDefault() : undefined}
           onKeyDown={onKeyDown}
           onChange={onChange}
+          onSelect={saveNoteOffset}
           // Text copied from a note and pasted on a thought should not bring along the note's default color and italicization. (#3779)
           onCopy={onCopy}
           onCut={onCut}

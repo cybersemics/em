@@ -7,6 +7,7 @@ import { indentActionCreator as indent } from '../../actions/indent'
 import { moveThoughtDownActionCreator as moveThoughtDown } from '../../actions/moveThoughtDown'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import { redoActionCreator as redo } from '../../actions/redo'
+import { setNoteOffsetActionCreator as setNoteOffset } from '../../actions/setNoteOffset'
 import { toggleNoteActionCreator as toggleNote } from '../../actions/toggleNote'
 import { undoActionCreator as undo } from '../../actions/undo'
 import { executeCommandWithMulticursor } from '../../commands'
@@ -629,23 +630,87 @@ describe('grouping', () => {
     - cat`)
   })
 
-  it('creating an empty note should not add an undo patch', () => {
+  it('typed replacements should undo in one step for thoughts and notes', () => {
+    const original = 'The world of beautiful birds'
+
     store.dispatch([
       importText({
         text: `
-        - note-new`,
+        - ${original}`,
       }),
-      setCursor(['note-new']),
+      editThought([original], 'The world of beautiful p'),
+      editThought(['The world of beautiful p'], 'The world of beautiful pe'),
+      editThought(['The world of beautiful pe'], 'The world of beautiful peo'),
+      editThought(['The world of beautiful peo'], 'The world of beautiful peop'),
+      editThought(['The world of beautiful peop'], 'The world of beautiful peopl'),
+      editThought(['The world of beautiful peopl'], 'The world of beautiful people'),
+      undo(),
     ])
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - ${original}`)
+
+    store.dispatch([
+      importText({
+        text: `
+        - note-replace-word
+          - =note
+            - ${original}`,
+      }),
+      editThought(['note-replace-word', '=note', original], 'The world of beautiful p'),
+      editThought(['note-replace-word', '=note', 'The world of beautiful p'], 'The world of beautiful pe'),
+      editThought(['note-replace-word', '=note', 'The world of beautiful pe'], 'The world of beautiful peo'),
+      editThought(['note-replace-word', '=note', 'The world of beautiful peo'], 'The world of beautiful peop'),
+      editThought(['note-replace-word', '=note', 'The world of beautiful peop'], 'The world of beautiful peopl'),
+      editThought(['note-replace-word', '=note', 'The world of beautiful peopl'], 'The world of beautiful people'),
+      undo(),
+    ])
+
+    expect(exportContext(store.getState(), ['note-replace-word'], 'text/plain')).toEqual(`- note-replace-word
+  - =note
+    - ${original}`)
+  })
+
+  it('creating an empty note should undo without reverting the previous edit', () => {
+    store.dispatch([newThought({ value: 'note-new' }), setCursor(['note-new'])])
 
     const undoPatchesBefore = store.getState().undoPatches.length
 
     store.dispatch(toggleNote())
 
-    expect(store.getState().undoPatches.length).toBe(undoPatchesBefore)
+    expect(store.getState().undoPatches.length).toBe(undoPatchesBefore + 1)
     expect(exportContext(store.getState(), ['note-new'], 'text/plain')).toEqual(`- note-new
   - =note
     - `)
+
+    store.dispatch(undo())
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - note-new`)
+  })
+
+  it('note offset should survive undoing a note edit', () => {
+    const original = 'The world of birds'
+
+    store.dispatch([
+      importText({
+        text: `
+        - note-offset
+          - =note
+            - ${original}`,
+      }),
+      setCursor(['note-offset']),
+      toggleNote(),
+      setNoteOffset({ value: 10 }),
+      editThought(['note-offset', '=note', original], 'The cage of birds'),
+      undo(),
+    ])
+
+    expect(store.getState().noteFocus).toBe(true)
+    expect(store.getState().noteOffset).toBe(10)
+    expect(exportContext(store.getState(), ['note-offset'], 'text/plain')).toEqual(`- note-offset
+  - =note
+    - ${original}`)
   })
 
   it('contiguous edit additions should should not be grouped with deletions', () => {

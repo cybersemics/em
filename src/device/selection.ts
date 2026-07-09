@@ -78,6 +78,10 @@ const isContentEditable = (node: Element | null): boolean => node?.hasAttribute(
 /** Check the node, if it exists, for an ariaLabel set to note-editable. */
 const isNoteEditable = (node: Element | null): boolean => node?.ariaLabel === 'note-editable'
 
+/** Returns true if the node is an editable thought or note root. */
+const isEditableRoot = (node: Node | null): boolean =>
+  node instanceof Element && (isContentEditable(node) || isNoteEditable(node))
+
 /** Returns true if the node is part of a note. Defaults to using the active selection. */
 export const isNote = (node?: EventTarget | null): boolean => {
   const editable = node === undefined ? document.activeElement : getEditableCandidate(node)
@@ -194,7 +198,7 @@ export const offsetThought = (): number | null => {
         : 0
       : selection.focusOffset
   let curNode: Node | null = selection.focusNode.nodeType === Node.TEXT_NODE ? selection.focusNode : selection.focusNode
-  while (curNode && !(curNode as HTMLElement)?.hasAttribute?.('data-editable')) {
+  while (curNode && !isEditableRoot(curNode)) {
     if (curNode?.previousSibling) {
       total += curNode.previousSibling.textContent?.length || 0
       curNode = curNode.previousSibling

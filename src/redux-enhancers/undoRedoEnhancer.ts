@@ -24,6 +24,13 @@ enum EditThoughtDirection {
   Shorter = 'Shorter',
 }
 
+interface TextDiff {
+  newMiddle: string
+  oldMiddle: string
+  prefix: string
+  suffix: string
+}
+
 /** Interface for the setIsMulticursorExecuting action. */
 interface SetIsMulticursorExecutingAction extends Action<'setIsMulticursorExecuting'> {
   value: boolean
@@ -40,22 +47,84 @@ function isEditThoughtAction(action: UnknownAction): action is UnknownAction & e
   return action.type === 'editThought'
 }
 
+/** Gets plain text from html. */
+function getTextContent(value: string): string {
+  const element = document.createElement('div')
+  element.innerHTML = value
+  return element.textContent || ''
+}
+
+/** Gets the changed text range between two values. */
+function getTextDiff(oldValue: string, newValue: string): TextDiff {
+  let start = 0
+
+  while (start < oldValue.length && start < newValue.length && oldValue[start] === newValue[start]) {
+    start += 1
+  }
+
+  let oldEnd = oldValue.length - 1
+  let newEnd = newValue.length - 1
+
+  while (oldEnd >= start && newEnd >= start && oldValue[oldEnd] === newValue[newEnd]) {
+    oldEnd -= 1
+    newEnd -= 1
+  }
+
+  return {
+    oldMiddle: oldValue.slice(start, oldEnd + 1),
+    newMiddle: newValue.slice(start, newEnd + 1),
+    prefix: oldValue.slice(0, start),
+    suffix: oldValue.slice(oldEnd + 1),
+  }
+}
+
 /** Compare the text contents of the old and new values to determine the direction of the edit.
  * Returns None if the action is not an editThought action or if the text content length is the same.
  */
 function getEditThoughtDirection(action: UnknownAction): EditThoughtDirection {
   if (!isEditThoughtAction(action)) return EditThoughtDirection.None
 
-  const oldElement = document.createElement('div')
-  const newElement = document.createElement('div')
-  oldElement.innerHTML = action.oldValue
-  newElement.innerHTML = action.newValue
+  const oldText = getTextContent(action.oldValue)
+  const newText = getTextContent(action.newValue)
 
-  return newElement.textContent.length === oldElement.textContent.length
+  return newText.length === oldText.length
     ? EditThoughtDirection.None
-    : newElement.textContent.length > oldElement.textContent.length
+    : newText.length > oldText.length
       ? EditThoughtDirection.Longer
       : EditThoughtDirection.Shorter
+}
+
+/** Returns true if the current edit extends a selected-text replacement that started with the previous edit. */
+function isReplacementContinuation(previousAction: UnknownAction | undefined, currentAction: UnknownAction): boolean {
+  if (!previousAction || !isEditThoughtAction(previousAction) || !isEditThoughtAction(currentAction)) return false
+  if (!_.isEqual(previousAction.path, currentAction.path)) return false
+
+  const previousOldText = getTextContent(previousAction.oldValue)
+  const previousNewText = getTextContent(previousAction.newValue)
+  const currentOldText = getTextContent(currentAction.oldValue)
+  const currentNewText = getTextContent(currentAction.newValue)
+
+  if (currentOldText !== previousNewText || currentNewText.length <= currentOldText.length) return false
+
+  const previousDiff = getTextDiff(previousOldText, previousNewText)
+  const isReplacement = previousDiff.oldMiddle.length > 0 && previousDiff.newMiddle.length > 0
+
+  if (
+    !isReplacement ||
+    !currentNewText.startsWith(previousDiff.prefix) ||
+    !currentNewText.endsWith(previousDiff.suffix)
+  ) {
+    return false
+  }
+
+  const currentReplacement = currentNewText.slice(
+    previousDiff.prefix.length,
+    previousDiff.suffix.length ? -previousDiff.suffix.length : undefined,
+  )
+
+  return (
+    currentReplacement.startsWith(previousDiff.newMiddle) && currentReplacement.length > previousDiff.newMiddle.length
+  )
 }
 
 /** Properties that are ignored when generating state patches. */
@@ -126,6 +195,13 @@ const getPatchAction = (patch: Patch): ActionType => patch[0]?.actions[0]
 const isPatchUndoable = (patch: Patch | undefined): boolean => !!patch?.[0]?.actions.some(isUndoable)
 
 /**
+ * Returns true if a patch changes thoughts. Some navigation actions, such as toggleNote, can create or delete hidden
+ * note thoughts. Those should be undone independently instead of being grouped with the previous edit.
+ */
+const patchChangesThoughts = (patch: Pick<Operation, 'path'>[] | undefined): boolean =>
+  !!patch?.some(operation => operation.path.startsWith('/thoughts/'))
+
+/**
  * Gets the nth item from the end of an array.
  */
 const nthLast = <T>(arr: T[], n: number) => arr[arr.length - n]
@@ -178,7 +254,7 @@ const undoReducer = (state: State, undoPatches: Patch[]): State => {
   if (!undoPatches.length) return state
 
   const undoTwice = isNavigation(lastAction)
-    ? isPatchUndoable(penultimateUndoPatch)
+    ? !patchChangesThoughts(lastUndoPatch) && isPatchUndoable(penultimateUndoPatch)
     : penultimateAction === 'newThought'
 
   const poppedUndoPatches = undoTwice ? [penultimateUndoPatch, lastUndoPatch] : [lastUndoPatch]
@@ -200,7 +276,8 @@ const redoReducer = (state: State, redoPatches: Patch[]): State => {
 
   if (!redoPatches.length) return state
 
-  const redoTwice = lastAction && (isNavigation(lastAction) || lastAction === 'newThought')
+  const redoTwice =
+    lastAction && ((isNavigation(lastAction) && !patchChangesThoughts(lastRedoPatch)) || lastAction === 'newThought')
 
   const poppedRedoPatches = redoTwice ? [nthLast(redoPatches, 2), lastRedoPatch] : [lastRedoPatch]
 
@@ -282,6 +359,9 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
 
       const shouldMergeWithLastEditThought =
         editThoughtDirection !== EditThoughtDirection.None && editThoughtDirection === lastEditThoughtDirection
+      const shouldMergeWithReplacementContinuation = isReplacementContinuation(lastAction, action)
+      const undoPatch = diffState(newState as Index, state)
+      const actionChangesThoughts = patchChangesThoughts(undoPatch)
 
       // Some actions are merged together into a single undo/redo patch.
       // - Navigation actions are merged with the previous non-navigation action. This matches the behavior of most word processors where undo will revert the last destructive action, and the cursor will be restored to where it was before. For example, if the user edits 'a' to 'aa', moves the cursor to 'b', and then undoes, the cursor will be restored to 'aa' then the edit will be undone.
@@ -290,14 +370,18 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       // - All actions during the execution of a multicursor command will be merged together. The prevous action will always be setIsMulticursorExecuting.
       // - Chained commands will be merged into the previous command, e.g. Select All + Categorize
       if (
-        (isNavigation(actionType) && isNavigation(lastAction?.type)) ||
+        (isNavigation(actionType) && isNavigation(lastAction?.type) && !actionChangesThoughts) ||
         shouldMergeWithLastEditThought ||
+        shouldMergeWithReplacementContinuation ||
         actionType === 'closeAlert' ||
         state.isMulticursorExecuting ||
         (lastAction as UnknownAction)?.mergeNext ||
         (action as UnknownAction)?.mergePrev
       ) {
         lastAction = action
+        if (isEditThoughtAction(action)) {
+          lastEditThoughtDirection = editThoughtDirection
+        }
         const lastUndoPatch = nthLast(state.undoPatches, 1)
         let lastState = state
         if (lastUndoPatch && lastUndoPatch.length > 0) {
@@ -339,7 +423,6 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       lastEditThoughtDirection = editThoughtDirection
 
       // add a new undo patch
-      const undoPatch = diffState(newState as Index, state)
       return undoPatch.length
         ? {
             ...newState,
