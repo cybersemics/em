@@ -37,6 +37,7 @@ describe('copyCursor', () => {
       `- a
   - a1
   - a2`,
+      expect.objectContaining({ html: expect.any(String) }),
     )
   })
 
@@ -52,7 +53,7 @@ describe('copyCursor', () => {
 
     executeCommandWithMulticursor(copyCursorCommand, { store })
 
-    expect(copyModule.default).toHaveBeenCalledWith('a')
+    expect(copyModule.default).toHaveBeenCalledWith('a', expect.objectContaining({ html: expect.any(String) }))
   })
 
   describe('multicursor', () => {
@@ -85,6 +86,7 @@ describe('copyCursor', () => {
 - c
   - c1
   - c2`,
+        expect.objectContaining({ html: expect.any(String) }),
       )
     })
 
@@ -103,7 +105,7 @@ describe('copyCursor', () => {
 
       executeCommandWithMulticursor(copyCursorCommand, { store })
 
-      expect(copyModule.default).toHaveBeenCalledWith('a')
+      expect(copyModule.default).toHaveBeenCalledWith('a', expect.objectContaining({ html: expect.any(String) }))
     })
 
     it('only copies ancestors when both ancestor and descendant are selected', async () => {
@@ -131,6 +133,7 @@ describe('copyCursor', () => {
   - a1
     - a1a
   - a2`,
+        expect.objectContaining({ html: expect.any(String) }),
       )
     })
 
@@ -168,6 +171,7 @@ describe('copyCursor', () => {
 - c
   - c1
   - c2`,
+        expect.objectContaining({ html: expect.any(String) }),
       )
     })
   })
