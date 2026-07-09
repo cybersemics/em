@@ -86,6 +86,7 @@ const processTask = async ({
   taskId,
   everhour,
   githubToken,
+  openaiApiKey,
   owner,
   repoName,
   instructions,
@@ -98,6 +99,7 @@ const processTask = async ({
   taskId: string
   everhour: EverhourClient
   githubToken: string
+  openaiApiKey: string
   owner: string
   repoName: string
   instructions: string
@@ -115,7 +117,7 @@ const processTask = async ({
     issueRef: issueLink(owner, repoName, issue.number),
     instructions,
     samples,
-    token: githubToken,
+    openaiApiKey,
     everhour,
     taskId,
     dryRunAI,
@@ -142,6 +144,9 @@ const processTask = async ({
 const main = async () => {
   const githubToken = process.env.GITHUB_TOKEN
   if (!githubToken) throw new Error('GITHUB_TOKEN is required')
+
+  const openaiApiKey = process.env.OPENAI_API_KEY
+  if (!openaiApiKey) throw new Error('OPENAI_API_KEY is required')
 
   const everhourApiKey = process.env.EVERHOUR_API_KEY
   if (!everhourApiKey) throw new Error('EVERHOUR_API_KEY is required')
@@ -268,6 +273,7 @@ const main = async () => {
         taskId: task.id,
         everhour,
         githubToken,
+        openaiApiKey,
         owner,
         repoName,
         instructions,

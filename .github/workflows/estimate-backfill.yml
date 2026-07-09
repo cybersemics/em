@@ -8,6 +8,16 @@ on:
         description: Maximum number of tasks to process (blank = script default of 10)
         required: false
         type: number
+      dryRunEverhour:
+        description: Run inference but skip writing estimates to Everhour
+        required: false
+        default: false
+        type: boolean
+      dryRunAI:
+        description: Skip AI inference entirely (no estimates produced)
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   # To post the estimate audit comment on each backfilled issue.
@@ -15,8 +25,6 @@ permissions:
   # To read the estimation instructions/samples from .github/instructions/estimate/
   # and to run `git log` for the prompt version.
   contents: read
-  # To call the GitHub Models inference API with GITHUB_TOKEN (backfill.ts runs AI inference).
-  models: read
 
 jobs:
   backfill:
@@ -37,8 +45,13 @@ jobs:
         run: node scripts/estimate/src/backfill.ts
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # OpenAI API key used for issue estimation inference (backfill.ts).
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           EVERHOUR_API_KEY: ${{ secrets.EVERHOUR_API_KEY }}
           # An EVERHOUR_PROJECT_ID secret must be configured in repo settings.
           EVERHOUR_PROJECT_ID: ${{ secrets.EVERHOUR_PROJECT_ID }}
           # Blank input falls through to the script's default (parseInt(LIMIT ?? '10')).
           LIMIT: ${{ inputs.limit }}
+          # Optional per-stage dry-run toggles for manual runs; default false in production.
+          DRY_RUN_EVERHOUR: ${{ inputs.dryRunEverhour }}
+          DRY_RUN_AI: ${{ inputs.dryRunAI }}

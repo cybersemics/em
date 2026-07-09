@@ -25,7 +25,7 @@ const estimateIssue = async ({
   issueRef,
   instructions,
   samples,
-  token,
+  openaiApiKey,
   everhour,
   taskId,
   dryRunAI = false,
@@ -36,7 +36,8 @@ const estimateIssue = async ({
   issueRef: string
   instructions: string
   samples: EstimateSample[]
-  token: string
+  /** OpenAI API key passed through to the inference call. */
+  openaiApiKey: string
   everhour: EverhourClient
   taskId: string
   dryRunAI?: boolean
@@ -49,7 +50,7 @@ const estimateIssue = async ({
   }
 
   const prompt = buildPrompt(samples, issue)
-  const outputs = await inference({ token, prompt, instructions })
+  const outputs = await inference({ apiKey: openaiApiKey, prompt, instructions })
   const { estimate: category } = validateEstimate(outputs)
   const estimate: Estimate = {
     category,

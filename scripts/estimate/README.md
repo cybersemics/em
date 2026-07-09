@@ -9,6 +9,7 @@ Define env variables in `scripts/estimate/.env`:
 ```
 EVERHOUR_API_KEY=
 EVERHOUR_PROJECT_ID=
+OPENAI_API_KEY=
 ```
 
 ## Usage
@@ -31,7 +32,7 @@ Valid estimate values: `1h` (XXS), `2h` (XS), `4h` (S), `8h` (M), `16h` (L), `24
 
 ## Workflows
 
-Three GitHub Action workflows in `.github/workflows/` drive the estimation scripts. All require the `EVERHOUR_API_KEY` and `EVERHOUR_PROJECT_ID` secrets to be configured in the repository settings.
+Three GitHub Action workflows in `.github/workflows/` drive the estimation scripts. All require the `EVERHOUR_API_KEY` and `EVERHOUR_PROJECT_ID` secrets to be configured in the repository settings. The Issue Opened and Backfill workflows additionally require an `OPENAI_API_KEY` secret for the estimation inference call.
 
 | Workflow                                                                     | Script            | Trigger                                  | Description                                                                                                                                     |
 | ---------------------------------------------------------------------------- | ----------------- | ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
