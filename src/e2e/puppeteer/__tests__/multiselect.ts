@@ -29,7 +29,7 @@ describe('multiselect', () => {
   // Regression test for https://github.com/cybersemics/em/issues/3612
   // The multiselect indicator alert must not auto-dismiss after 5s while the selection is active.
   // .skip keeps normal CI green while the test is red; remove the .skip when the fix lands.
-  it.skip('should not auto-dismiss the multiselect alert while a selection is active', async () => {
+  it('should not auto-dismiss the multiselect alert while a selection is active', async () => {
     await paste(`
         - a
         - b

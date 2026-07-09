@@ -49,6 +49,9 @@ const multicursorAlertMiddleware: ThunkMiddleware<State> = ({ getState, dispatch
           numMulticursors === 1 ? '1 thought selected' : `${numMulticursors} thoughts selected`,
           {
             alertType: AlertType.MulticursorActive,
+            // Prevent auto-dismiss: the multiselect indicator must remain visible while a selection is active.
+            // It is cleared explicitly when the selection reaches zero (see above) or via the Cancel button.
+            clearDelay: null,
           },
         )
       }
