@@ -27,6 +27,10 @@ env:
   # presence. Empty when the signing secret is unset, in which case macOS builds
   # fall back to ad-hoc signing (see the tauri-action step below).
   APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+  APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+  APPLE_ID: ${{ secrets.APPLE_ID }}
+  APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+  APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
 jobs:
   build:
@@ -98,18 +102,39 @@ jobs:
           security import "$RUNNER_TEMP/certificate.p12" -k build.keychain -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
 
-      - name: Build and publish desktop app
+      - name: Build and publish desktop app (ad-hoc signing)
+        if: env.APPLE_CERTIFICATE == '' || env.APPLE_SIGNING_IDENTITY == '' || env.APPLE_ID == '' || env.APPLE_PASSWORD == '' || env.APPLE_TEAM_ID == ''
         uses: tauri-apps/tauri-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Falls back to ad-hoc signing ("-") when no Developer ID identity is
-          # configured. Ad-hoc signing is required on Apple Silicon so downloaded
-          # builds are not rejected as "damaged". When the signing secrets are
-          # present the real identity is used and notarization is performed.
-          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY || '-' }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          # Ad-hoc signing is required on Apple Silicon so downloaded builds are not
+          # rejected as "damaged". Keep notarization credentials unset in this path.
+          APPLE_SIGNING_IDENTITY: '-'
+        with:
+          tagName: pre
+          releaseName: em desktop (main)
+          releaseBody: |
+            em desktop prerelease build from the latest commit on `main`.
+
+            Commit: ${{ github.sha }}
+            Run: ${{ github.run_number }}
+
+            > ⚠️ These builds are **unsigned** and may trigger Gatekeeper (macOS) or SmartScreen (Windows) warnings.
+            > On macOS, right-click the app and choose **Open** to bypass Gatekeeper (or run `xattr -cr /Applications/em.app`).
+          prerelease: true
+          releaseDraft: false
+          args: ${{ matrix.args }}
+
+      - name: Build and publish desktop app (Developer ID + notarization)
+        if: env.APPLE_CERTIFICATE != '' && env.APPLE_SIGNING_IDENTITY != '' && env.APPLE_ID != '' && env.APPLE_PASSWORD != '' && env.APPLE_TEAM_ID != ''
+        uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Use notarization only when all Apple signing credentials are configured.
+          APPLE_SIGNING_IDENTITY: ${{ env.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ env.APPLE_ID }}
+          APPLE_PASSWORD: ${{ env.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ env.APPLE_TEAM_ID }}
         with:
           tagName: pre
           releaseName: em desktop (main)
