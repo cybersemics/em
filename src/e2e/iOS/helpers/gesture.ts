@@ -1,5 +1,6 @@
 import Direction from '../../../@types/Direction'
 import Gesture from '../../../@types/Gesture'
+import restoreScroll from './restoreScroll'
 
 export interface GestureOptions {
   xStart?: number
@@ -82,14 +83,7 @@ const gesture = async (path: Gesture, { xStart, yStart, segmentLength = 60, wait
     ])
   } finally {
     await browser.switchContext(oldContext)
-    await browser.execute(({ x, y }) => window.scrollTo(x, y), scrollBefore)
-    await browser.waitUntil(
-      async () => {
-        const current = await browser.execute(() => ({ x: window.scrollX, y: window.scrollY }))
-        return current.x === scrollBefore.x && current.y === scrollBefore.y
-      },
-      { timeout: 3000, timeoutMsg: 'Failed to restore scroll position after gesture' },
-    )
+    await restoreScroll(scrollBefore)
   }
 }
 
