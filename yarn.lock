@@ -11797,7 +11797,7 @@ __metadata:
     eslint-plugin-react: "npm:^7.37.5"
     eslint-plugin-react-hooks: "npm:^7.1.1"
     eslint-plugin-react-refresh: "npm:^0.5.3"
-    expect-webdriverio: "npm:^5.6.9"
+    expect-webdriverio: "npm:^5.7.0"
     fake-indexeddb: "npm:^6.2.5"
     fast-json-patch: "npm:^3.1.1"
     fp-and-or: "npm:^1.0.2"
@@ -13300,9 +13300,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expect-webdriverio@npm:^5.6.9":
-  version: 5.6.9
-  resolution: "expect-webdriverio@npm:5.6.9"
+"expect-webdriverio@npm:^5.7.0":
+  version: 5.7.0
+  resolution: "expect-webdriverio@npm:5.7.0"
   dependencies:
     "@vitest/snapshot": "npm:^4.1.7"
     deep-eql: "npm:^5.0.2"
@@ -13319,7 +13319,7 @@ __metadata:
       optional: false
     webdriverio:
       optional: false
-  checksum: 10c0/df57257709b638a28964a920916594f67eb25e73f188ae521552f1f67c36ad54e3e9023b49f684c2d7b0667d60c71fb5b5f384f4ada2d01699a5f7481071160b
+  checksum: 10c0/c895f2c451a1bf5a75a1e57ec07d0993203a7834abe85e45aeba8c91f0e779d736219a54702048582c647624cd6452625184810e51e75daa43276a4412cfb680
   languageName: node
   linkType: hard
 
