@@ -190,7 +190,7 @@ const applyCorrection = async (
 
   // Open PR
   const prBody = `Adds a corrected estimate sample from \`/estimate ${roundedHours}h\`.\n\nIssue: ${owner}/${repoName}#${issue.number}\nExpected estimate: ${category} / ${roundedHours}h`
-  await fetch(`https://api.github.com/repos/${owner}/${repoName}/pulls`, {
+  const prResp = await fetch(`https://api.github.com/repos/${owner}/${repoName}/pulls`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${githubToken}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -200,6 +200,7 @@ const applyCorrection = async (
       base: defaultBranch,
     }),
   })
+  const pr = (await prResp.json()) as { html_url?: string }
 
   // Confirm via comment
   await postComment(
@@ -212,6 +213,15 @@ const applyCorrection = async (
 
   console.info(
     `Manual correction applied for issue ${issueLink(owner, repoName, issue.number)} @ ${category} / ${roundedHours}h${issueUrlSuffix(owner, repoName, issue.number)}`,
+  )
+
+  // Surface the opened PR at the end of the run. The GitHub Pulls API returns html_url only on
+  // success; if it is absent (e.g. a PR already exists for the branch, or creation failed), fall
+  // back to a clear message rather than printing "undefined".
+  console.info(
+    pr.html_url
+      ? `Opened PR to add the corrected sample: ${pr.html_url}`
+      : 'No PR URL was returned; the PR may already exist or creation failed.',
   )
 }
 
