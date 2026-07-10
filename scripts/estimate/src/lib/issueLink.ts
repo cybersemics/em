@@ -1,4 +1,5 @@
 /**
+/**
  * Formats the `#N` label of a GitHub issue reference for log output, adapting to the environment.
  *
  * In CI (`process.env.CI` set to anything other than `false`), where terminals such as the GitHub
