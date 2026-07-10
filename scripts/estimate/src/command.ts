@@ -86,7 +86,9 @@ const main = async () => {
 
   try {
     await applyCorrection(githubToken, everhourApiKey, everhourProjectId, owner, repoName, comment, issue, hours)
-    await postReaction(githubToken, owner, repoName, comment.id, 'rocket')
+    // Mirror Copilot's status signal: swap the 👀 acknowledgment (added by the workflow) for 👍 on success.
+    await removeEyesReaction(githubToken, owner, repoName, comment.id)
+    await postReaction(githubToken, owner, repoName, comment.id, '+1')
   } catch (err) {
     await postReaction(githubToken, owner, repoName, comment.id, '-1')
     throw err
@@ -202,15 +204,6 @@ const applyCorrection = async (
   })
   const pr = (await prResp.json()) as { html_url?: string }
 
-  // Confirm via comment
-  await postComment(
-    githubToken,
-    owner,
-    repoName,
-    issue.number,
-    `Estimate updated: ${category} / ${roundedHours}h\nA PR has been opened to add the corrected sample.`,
-  )
-
   console.info(
     `Manual correction applied for issue ${issueLink(owner, repoName, issue.number)} @ ${category} / ${roundedHours}h${issueUrlSuffix(owner, repoName, issue.number)}`,
   )
@@ -234,14 +227,8 @@ const postComment = async (token: string, owner: string, repo: string, issueNumb
   })
 }
 
-/** Adds an emoji reaction to an issue comment to signal command status (e.g. 'rocket' on success, '-1' on failure). */
-const postReaction = async (
-  token: string,
-  owner: string,
-  repo: string,
-  commentId: number,
-  content: 'rocket' | '+1' | '-1' | 'eyes',
-) => {
+/** Adds an emoji reaction to an issue comment to signal command status (e.g. '+1' on success, '-1' on failure). */
+const postReaction = async (token: string, owner: string, repo: string, commentId: number, content: '+1' | '-1') => {
   await fetch(`https://api.github.com/repos/${owner}/${repo}/issues/comments/${commentId}/reactions`, {
     method: 'POST',
     headers: {
@@ -250,6 +237,36 @@ const postReaction = async (
       Accept: 'application/vnd.github+json',
     },
     body: JSON.stringify({ content }),
+  })
+}
+
+/**
+ * Removes the 👀 acknowledgment reaction added by the workflow's github-actions[bot] on success, so the
+ * comment ends up with only 👍. Best-effort: the Everhour update is already applied, so a failure here
+ * must not throw. Filtered to github-actions[bot] to avoid removing a human's 👀 reaction.
+ */
+const removeEyesReaction = async (token: string, owner: string, repo: string, commentId: number) => {
+  const listResp = await fetch(
+    `https://api.github.com/repos/${owner}/${repo}/issues/comments/${commentId}/reactions?content=eyes`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/vnd.github+json',
+      },
+    },
+  )
+  if (!listResp.ok) return
+
+  const reactions = (await listResp.json()) as Array<{ id: number; user: { login: string } | null }>
+  const eyes = reactions.find(reaction => reaction.user?.login === 'github-actions[bot]')
+  if (!eyes) return
+
+  await fetch(`https://api.github.com/repos/${owner}/${repo}/issues/comments/${commentId}/reactions/${eyes.id}`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/vnd.github+json',
+    },
   })
 }
 
