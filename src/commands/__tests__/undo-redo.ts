@@ -734,6 +734,40 @@ describe('grouping', () => {
     expect(exported).not.toContain('HELLO')
   })
 
+  it('undo letter case should not move caret to the beginning of the thought', () => {
+    // Issue K: after undoing a letter case change, the caret was moving to position 0.
+    // Root cause: formatLetterCase dispatched a separate setCursor action, creating a navigation
+    // patch that triggered undoTwice, restoring cursorOffset to the pre-setCursor value (0 on
+    // desktop when editingValueStore is non-null from a prior edit).
+    // Fix: formatLetterCase now passes cursorOffset directly to editThought (matching formatWithTag),
+    // and undoReducer preserves the current cursorOffset when undoing a formatting-only edit.
+    store.dispatch([importText({ text: `- hello` }), setCursor(['hello'])])
+
+    const path = contextToPath(store.getState(), ['hello'])!
+
+    // Simulate formatLetterCase (after fix): editThought with cursorOffset set to actual position (5).
+    store.dispatch(
+      editThoughtRaw({
+        oldValue: 'hello',
+        newValue: 'HELLO',
+        path: path!,
+        cursorOffset: 5,
+        force: true,
+      }),
+    )
+
+    expect(store.getState().cursorOffset).toBe(5)
+
+    // Undo should revert the value but preserve cursorOffset at 5 (not revert it to the pre-edit value).
+    store.dispatch(undo())
+
+    expect(store.getState().cursorOffset).toBe(5)
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toContain('hello')
+    expect(exported).not.toContain('HELLO')
+  })
+
   it('contiguous edits should be grouped', () => {
     store.dispatch([
       importText({

@@ -180,10 +180,17 @@ const undoReducer = (state: State, undoPatches: Patch[]): State => {
 
   const poppedUndoPatches = undoTwice ? [penultimateUndoPatch, lastUndoPatch] : [lastUndoPatch]
 
+  // Capture the current cursor offset before applying the undo patch.
+  // When undoing a formatting-only edit (no undoTwice), we preserve this offset
+  // so the caret stays where it was at the time of undo, instead of jumping to
+  // the pre-formatting position that was stored in the patch.
+  const priorCursorOffset = state.cursorOffset
+
   return reducerFlow([
     undoOneReducer,
     undoTwice ? undoOneReducer : null,
     newState => restorePushQueueFromPatches(newState, state, poppedUndoPatches.flat()),
+    !undoTwice && lastPatchIsFormatting ? (s: State) => ({ ...s, cursorOffset: priorCursorOffset }) : null,
     editableRender,
   ])(state)
 }

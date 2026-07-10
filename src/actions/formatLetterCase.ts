@@ -6,7 +6,6 @@ import pathToThought from '../selectors/pathToThought'
 import simplifyPath from '../selectors/simplifyPath'
 import applyLetterCase from '../util/applyLetterCase'
 import { editThoughtActionCreator as editThought } from './editThought'
-import { setCursorActionCreator as setCursor } from './setCursor'
 
 /** Format the browser selection or cursor thought based on the specified letter case change. */
 export const formatLetterCaseActionCreator =
@@ -29,9 +28,8 @@ export const formatLetterCaseActionCreator =
         oldValue,
         newValue,
         path: simplePath,
+        cursorOffset: offset ?? undefined,
         force: true,
       }),
     )
-
-    dispatch(setCursor({ path: simplePath, offset: offset }))
   }
