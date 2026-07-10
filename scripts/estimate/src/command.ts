@@ -70,6 +70,7 @@ const main = async () => {
 
   // Check trusted commenter
   if (!TRUSTED_ASSOCIATIONS.includes(comment.author_association)) {
+    await postReaction(githubToken, owner, repoName, comment.id, '-1')
     await postComment(
       githubToken,
       owner,
@@ -80,6 +81,25 @@ const main = async () => {
     return
   }
 
+  try {
+    await applyCorrection(githubToken, everhourApiKey, owner, repoName, comment, issue, hours)
+    await postReaction(githubToken, owner, repoName, comment.id, 'rocket')
+  } catch (err) {
+    await postReaction(githubToken, owner, repoName, comment.id, '-1')
+    throw err
+  }
+}
+
+/** Applies a manual estimate correction: updates Everhour and opens a PR with the corrected sample. */
+const applyCorrection = async (
+  githubToken: string,
+  everhourApiKey: string,
+  owner: string,
+  repoName: string,
+  comment: CommentEvent['comment'],
+  issue: CommentEvent['issue'],
+  hours: number,
+) => {
   // Round to nearest valid category (e.g. 10h → 8h/M, 3h → 4h/S)
   const roundedHours = roundToNearestCategory(hours)
   const category = HOURS_TO_CATEGORY[roundedHours] as EstimateCategory
@@ -185,6 +205,25 @@ const postComment = async (token: string, owner: string, repo: string, issueNumb
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ body }),
+  })
+}
+
+/** Adds an emoji reaction to an issue comment to signal command status (e.g. 'rocket' on success, '-1' on failure). */
+const postReaction = async (
+  token: string,
+  owner: string,
+  repo: string,
+  commentId: number,
+  content: 'rocket' | '+1' | '-1' | 'eyes',
+) => {
+  await fetch(`https://api.github.com/repos/${owner}/${repo}/issues/comments/${commentId}/reactions`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      Accept: 'application/vnd.github+json',
+    },
+    body: JSON.stringify({ content }),
   })
 }
 
