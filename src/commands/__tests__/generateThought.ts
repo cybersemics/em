@@ -195,6 +195,99 @@ test('not fetch title when thought is not empty', async () => {
   vi.unstubAllEnvs()
 })
 
+test('trim whitespace from the AI server response and append it to the existing thought', async () => {
+  const text = `
+      - Favorite color
+    `
+
+  vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+
+  // AI server response with surrounding whitespace that must be trimmed
+  mockFetch.mockResolvedValueOnce({
+    json: () => Promise.resolve({ content: '  \n blue \n ', err: null }),
+  })
+
+  await dispatch([importText({ text }), setCursor(['Favorite color'])])
+
+  // use act, otherwise pending value (...) will still be rendered
+  await act(async () => {
+    executeCommand(generateThought)
+  })
+
+  const state = store.getState()
+  const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - Favorite color blue`)
+
+  vi.unstubAllEnvs()
+})
+
+test('alert the user when the AI server responds with a 429 rate limit error', async () => {
+  const text = `
+      - Favorite color
+    `
+
+  vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+
+  // AI server rate limit error response
+  mockFetch.mockResolvedValueOnce({
+    json: () => Promise.resolve({ content: null, err: { status: 429, message: 'Too Many Requests' } }),
+  })
+
+  await dispatch([importText({ text }), setCursor(['Favorite color'])])
+
+  // use act, otherwise pending value (...) will still be rendered
+  await act(async () => {
+    executeCommand(generateThought)
+  })
+
+  const state = store.getState()
+
+  // a rate limit alert is shown rather than a generic error
+  expect(state.alert?.value).toBe('Rate limit reached. Please try again later.')
+  expect(state.error).toBeFalsy()
+
+  // the thought is left unchanged when generation fails
+  const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - Favorite color`)
+
+  vi.unstubAllEnvs()
+})
+
+test('surface the error message when the AI server responds with a non-rate-limit error', async () => {
+  const text = `
+      - Favorite color
+    `
+
+  vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+
+  // AI server error response (non-429)
+  mockFetch.mockResolvedValueOnce({
+    json: () => Promise.resolve({ content: null, err: { status: 500, message: 'Internal Server Error' } }),
+  })
+
+  await dispatch([importText({ text }), setCursor(['Favorite color'])])
+
+  // use act, otherwise pending value (...) will still be rendered
+  await act(async () => {
+    executeCommand(generateThought)
+  })
+
+  const state = store.getState()
+
+  // the server's error message is surfaced to the user
+  expect(state.error).toBe('Internal Server Error')
+
+  // the thought is left unchanged when generation fails
+  const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - Favorite color`)
+
+  vi.unstubAllEnvs()
+})
+
 test('not fetch title when first child is not a URL', async () => {
   const text = `
       - 
