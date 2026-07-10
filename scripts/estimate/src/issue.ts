@@ -9,6 +9,7 @@ import { fileURLToPath } from 'url'
 import EverhourClient from './everhour/client.ts'
 import estimateIssue from './lib/estimateIssue.ts'
 import issueLink from './lib/issueLink.ts'
+import issueUrlSuffix from './lib/issueUrlSuffix.ts'
 import loadInstructions from './lib/loadInstructions.ts'
 import loadSamples from './lib/loadSamples.ts'
 
@@ -72,6 +73,7 @@ const main = async () => {
   const estimate = await estimateIssue({
     issue: issueInput,
     issueRef: issueLink(owner, repoName, issue.number),
+    issueUrl: issueUrlSuffix(owner, repoName, issue.number),
     instructions,
     samples,
     openaiApiKey,
@@ -96,7 +98,9 @@ const main = async () => {
     body: JSON.stringify({ body: commentBody }),
   })
 
-  console.info(`Estimated issue ${issueLink(owner, repoName, issue.number)}: ${category} / ${hours}h`)
+  console.info(
+    `Estimated issue ${issueLink(owner, repoName, issue.number)} @ ${category} / ${hours}h${issueUrlSuffix(owner, repoName, issue.number)}`,
+  )
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
