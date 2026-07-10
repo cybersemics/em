@@ -8,6 +8,10 @@ on:
         description: Maximum number of tasks to process (blank = script default of 10)
         required: false
         type: number
+      startPage:
+        description: 1-based Everhour task page to begin pagination from (blank = page 1)
+        required: false
+        type: number
       dryRunEverhour:
         description: Run inference but skip writing estimates to Everhour
         required: false
@@ -52,6 +56,8 @@ jobs:
           EVERHOUR_PROJECT_ID: ${{ secrets.EVERHOUR_PROJECT_ID }}
           # Blank input falls through to the script's default (parseInt(LIMIT ?? '10')).
           LIMIT: ${{ inputs.limit }}
+          # Blank input falls through to the script's default (parseInt(PAGE ?? '1')).
+          PAGE: ${{ inputs.startPage }}
           # Optional per-stage dry-run toggles for manual runs; default false in production.
           DRY_RUN_EVERHOUR: ${{ inputs.dryRunEverhour }}
           DRY_RUN_AI: ${{ inputs.dryRunAI }}
