@@ -2,6 +2,7 @@
  * IOS Safari caret positioning tests.
  * Uses WDIO test runner with Mocha framework.
  */
+import type { WindowEm } from '../../../initialize'
 import gestures from '../../../test-helpers/gestures'
 import clickThought from '../helpers/clickThought'
 import editThought from '../helpers/editThought'
@@ -15,6 +16,7 @@ import isKeyboardShown from '../helpers/isKeyboardShown'
 import newThought from '../helpers/newThought'
 import paste from '../helpers/paste'
 import tap from '../helpers/tap'
+import waitForBrowserSettled from '../helpers/waitForBrowserSettled'
 import waitForEditable from '../helpers/waitForEditable'
 import waitUntil from '../helpers/waitUntil'
 
@@ -176,9 +178,13 @@ describe('Caret', () => {
     })
 
     await tap(editableNodeHandle, { y: 60, x: 20 })
+    await waitForBrowserSettled()
 
     const editingText = await getEditingText()
     expect(editingText).toBe('foo')
+
+    const keyboardOpen = await browser.execute(() => (window.em as WindowEm).testHelpers.getState().isKeyboardOpen)
+    expect(keyboardOpen).not.toBe(true)
 
     const selectionTextContent = await getSelection().focusNode?.textContent
     expect(selectionTextContent).toBe(null)
