@@ -1,6 +1,9 @@
 // Inference tuning constants, overridable via ESTIMATE_* env vars for experimentation.
-const MODEL = process.env.ESTIMATE_MODEL ?? 'gpt-4.1'
-const TEMPERATURE = process.env.ESTIMATE_TEMPERATURE != null ? Number(process.env.ESTIMATE_TEMPERATURE) : 0
+const MODEL = process.env.ESTIMATE_MODEL ?? 'gpt-5-mini'
+// Only sent when explicitly set. GPT-5 reasoning models reject a non-default temperature
+// (e.g. 0), so it is omitted by default; determinism is instead handled by the validation
+// retry loop below. Set ESTIMATE_TEMPERATURE to override for models that support it.
+const TEMPERATURE = process.env.ESTIMATE_TEMPERATURE != null ? Number(process.env.ESTIMATE_TEMPERATURE) : undefined
 const MAX_VALIDATION_ATTEMPTS =
   process.env.ESTIMATE_MAX_VALIDATION_ATTEMPTS != null ? Number(process.env.ESTIMATE_MAX_VALIDATION_ATTEMPTS) : 3
 
@@ -26,7 +29,7 @@ const inference = async ({ apiKey, prompt, instructions }: CallOptions): Promise
       },
       body: JSON.stringify({
         model: MODEL,
-        temperature: TEMPERATURE,
+        ...(TEMPERATURE != null ? { temperature: TEMPERATURE } : {}),
         messages: [
           { role: 'system', content: instructions },
           { role: 'user', content: prompt },
