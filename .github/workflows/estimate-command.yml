@@ -43,3 +43,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           EVERHOUR_API_KEY: ${{ secrets.EVERHOUR_API_KEY }}
+          EVERHOUR_PROJECT_ID: ${{ secrets.EVERHOUR_PROJECT_ID }}

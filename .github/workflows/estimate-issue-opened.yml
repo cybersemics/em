@@ -28,3 +28,4 @@ jobs:
           # OpenAI API key used for issue estimation inference (issue.ts).
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           EVERHOUR_API_KEY: ${{ secrets.EVERHOUR_API_KEY }}
+          EVERHOUR_PROJECT_ID: ${{ secrets.EVERHOUR_PROJECT_ID }}

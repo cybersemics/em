@@ -55,6 +55,9 @@ const main = async () => {
   const everhourApiKey = process.env.EVERHOUR_API_KEY
   if (!everhourApiKey) throw new Error('EVERHOUR_API_KEY is required')
 
+  const everhourProjectId = process.env.EVERHOUR_PROJECT_ID
+  if (!everhourProjectId) throw new Error('EVERHOUR_PROJECT_ID is required')
+
   const eventPath = process.env.GITHUB_EVENT_PATH
   if (!eventPath) throw new Error('GITHUB_EVENT_PATH is required')
 
@@ -105,10 +108,22 @@ const applyCorrection = async (
   const category = HOURS_TO_CATEGORY[roundedHours] as EstimateCategory
   const seconds = categoryToSeconds(category)
 
-  // Update Everhour immediately
+  // Update Everhour immediately. Everhour task IDs for GitHub-linked tasks embed the issue's internal
+  // database ID (gh:<issue_database_id>), not the issue number, so the task must be looked up rather
+  // than synthesized.
   const everhour = new EverhourClient({ apiKey: everhourApiKey })
-  const taskId = `gh:${issue.number}`
-  await everhour.setEstimate(taskId, seconds)
+  const task = await everhour.findTaskByIssueNumber(everhourProjectId, issue.number)
+  if (!task) {
+    await postComment(
+      githubToken,
+      owner,
+      repoName,
+      issue.number,
+      'Could not find a matching Everhour task for this issue, so the estimate was not updated.',
+    )
+    return
+  }
+  await everhour.setEstimate(task.id, seconds)
 
   // Create sample file content
   const sample = {
