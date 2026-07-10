@@ -74,7 +74,7 @@ const main = async () => {
   const promptVersion = getPromptVersion(repoRoot)
 
   // Leave audit comment
-  const commentBody = `Everhour estimate: ${category} / ${hours}h\nPrompt version: ${promptVersionLink(owner, repoName, promptVersion)}`
+  const commentBody = `Estimate: ${category} / ${hours}h\nPrompt version: ${promptVersionLink(owner, repoName, promptVersion)}`
 
   await fetch(`https://api.github.com/repos/${owner}/${repoName}/issues/${issue.number}/comments`, {
     method: 'POST',

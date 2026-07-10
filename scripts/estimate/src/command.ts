@@ -170,7 +170,7 @@ const main = async () => {
     owner,
     repoName,
     issue.number,
-    `Everhour estimate updated: ${category} / ${roundedHours}h\nA PR has been opened to add the corrected sample.`,
+    `Estimate updated: ${category} / ${roundedHours}h\nA PR has been opened to add the corrected sample.`,
   )
 
   console.info(
