@@ -176,8 +176,7 @@ const useEditMode = ({
         style?.visibility !== 'hidden'
       if (!move) return
 
-      // Place the caret where the user tapped (fall back to the end of the thought if the tap is in a void
-      // area or coordinates are unavailable). getCaretOffset is coordinate-based, so it resolves the offset
+      // Place the caret where the user tapped. getCaretOffset is coordinate-based, so it resolves the offset
       // even though the synthesized mousedown/focus retargeted away.
       const { offset } = getCaretOffset(editable, {
         clientX: e.changedTouches[0].clientX,
