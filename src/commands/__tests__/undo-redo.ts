@@ -768,6 +768,38 @@ describe('grouping', () => {
     expect(exported).not.toContain('HELLO')
   })
 
+  it('undo of a force formatting edit should increment editableNonce so the ContentEditable re-renders', () => {
+    // Issue K ("nothing happens after undo"): editThought with force:true bumps editableNonce, and that bump
+    // was captured in the undo patch. Undoing reverted the nonce and editableRender then re-incremented it to
+    // the same value, resulting in no net change. Since the ContentEditable only updates its innerHTML on a
+    // nonce change while editing (allowInnerHTMLChange is false after typing), the reverted value was never
+    // rendered and the formatted text appeared unchanged after undo.
+    // Fix: editableNonce is excluded from undo/redo patches, so undoing a force edit yields a true net increment.
+    store.dispatch([importText({ text: `- hello` }), setCursor(['hello'])])
+
+    const path = contextToPath(store.getState(), ['hello'])!
+
+    store.dispatch(
+      editThoughtRaw({
+        oldValue: 'hello',
+        newValue: 'HELLO',
+        path: path!,
+        force: true,
+      }),
+    )
+
+    const nonceBeforeUndo = store.getState().editableNonce
+
+    store.dispatch(undo())
+
+    // the nonce must strictly increase so the ContentEditable re-renders the reverted value
+    expect(store.getState().editableNonce).toBeGreaterThan(nonceBeforeUndo)
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toContain('hello')
+    expect(exported).not.toContain('HELLO')
+  })
+
   it('contiguous edits should be grouped', () => {
     store.dispatch([
       importText({
