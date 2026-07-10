@@ -32,10 +32,44 @@ env:
   VITE_BROWSER_CONSOLE_CAPTURE: 1
 
 jobs:
+  # Cheap gate that decides whether the expensive BrowserStack job should run.
+  # It outputs run=true unless a PR touches nothing but .github/instructions/**.
+  # Keeping the trigger unchanged (rather than using paths-ignore) is required because
+  # BrowserStack is a required status check: a workflow that never runs would leave the check
+  # unreported and block the PR. A job skipped via `if` still reports its required check as
+  # passing, so instructions-only PRs stay mergeable.
+  #
+  # The plain checkout (used only so paths-filter can diff push events) resolves to the base
+  # repo commit under pull_request_target, not the PR's fork head, so no untrusted code runs in
+  # this privileged context. The token is scoped to pull-requests: read.
+  changes:
+    name: Changes
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      run: ${{ steps.filter.outputs.run }}
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v6
+
+      - name: Filter paths
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          # run is true when at least one changed file is outside .github/instructions/.
+          filters: |
+            run:
+              - '!.github/instructions/**'
+
   run:
     name: BrowserStack
     runs-on: ubuntu-latest
-    if: github.event_name != 'pull_request_target' || github.event.pull_request.changed_files > 0
+    needs: changes
+    # Only pull requests are gated on the changed-file filter; pushes to main and manual
+    # workflow_dispatch runs always execute.
+    if: github.event_name != 'pull_request_target' || needs.changes.outputs.run == 'true'
 
     steps:
       - name: Clone repository
