@@ -49,7 +49,6 @@ const Note = React.memo(
 
     /** Gets the value of the note. Returns null if no note exists or if the context view is active. */
     const note = useSelector(state => noteValue(state, path))
-    const noteOffset = useSelector(state => state.noteOffset)
     const editableNonce = useSelector(state => state.editableNonce)
 
     /** Focus Handling with useFreshCallback. */
@@ -68,11 +67,13 @@ const Note = React.memo(
 
     // set the caret on the note if editing this thought and noteFocus is true
     useEffect(() => {
+      const noteOffset = store.getState().noteOffset
+
       // cursor must be true if note is focused
       if (hasFocus && noteOffset !== null) {
         selection.set(noteRef.current!, { offset: noteOffset })
       }
-    }, [hasFocus, noteOffset, editableNonce])
+    }, [hasFocus, editableNonce])
 
     /** Saves the note caret offset without creating an undo patch. */
     const saveNoteOffset = useCallback(() => {
@@ -90,6 +91,16 @@ const Note = React.memo(
           e.stopPropagation()
           e.preventDefault()
           dispatch(toggleNote())
+        }
+        // prevent Backspace at the beginning of a non-empty note from bubbling up to the thought deletion command
+        else if (
+          e.key === 'Backspace' &&
+          note &&
+          selection.isCollapsed() &&
+          (selection.offsetThought() ?? selection.offset()) === 0
+        ) {
+          e.stopPropagation()
+          e.preventDefault()
         }
         // delete empty note
         // (delete non-empty note is handled by delete command, which allows mobile gesture to work)
