@@ -18,9 +18,9 @@ describe('issueLink', () => {
       process.env.CI = 'true'
     })
 
-    it('renders the plain #N followed by the full issue URL', () => {
+    it('renders the plain #N label with no URL (the URL is appended separately at line end)', () => {
       const result = issueLink('cybersemics', 'em', 33)
-      expect(result).toBe('#33 - https://github.com/cybersemics/em/issues/33')
+      expect(result).toBe('#33')
     })
 
     it('does not emit any OSC 8 escape sequence', () => {
