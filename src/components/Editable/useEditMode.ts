@@ -158,7 +158,7 @@ const useEditMode = ({
     const onTouchStart = () => (pressingRef.current = true)
 
     /** Ends the touch, records it for ghost-click detection, and sets the cursor on the tapped thought. */
-    const onTouchEnd = () => {
+    const onTouchEnd = (e: TouchEvent) => {
       pressingRef.current = false
       lastTouchEndTime = performance.now()
       lastTouchEndTarget = editable
@@ -176,14 +176,21 @@ const useEditMode = ({
         style?.visibility !== 'hidden'
       if (!move) return
 
+      // Place the caret where the user tapped (fall back to the end of the thought if the tap is in a void
+      // area or coordinates are unavailable). getCaretOffset is coordinate-based, so it resolves the offset
+      // even though the synthesized mousedown/focus retargeted away.
+      const { offset } = getCaretOffset(editable, {
+        clientX: e.changedTouches[0].clientX,
+        clientY: e.changedTouches[0].clientY,
+      })
+
       // Dispatch only the Redux cursor; the declarative selection effect places the caret on the next render.
       // Calling selection.set() synchronously during touchend triggers iOS's text-selection machinery, which
-      // swallows the immediately-following rapid tap. Placing the caret at the end of the thought gives the
-      // effect a non-null cursorOffset so it sets the selection.
+      // swallows the immediately-following rapid tap.
       dispatch(
         setCursor({
           path,
-          offset: editable.textContent?.length ?? 0,
+          offset,
           cursorHistoryClear: true,
           isKeyboardOpen: true,
           preserveMulticursor: true,
