@@ -85,7 +85,7 @@ const main = async () => {
   }
 
   try {
-    await applyCorrection(githubToken, everhourApiKey, owner, repoName, comment, issue, hours)
+    await applyCorrection(githubToken, everhourApiKey, everhourProjectId, owner, repoName, comment, issue, hours)
     await postReaction(githubToken, owner, repoName, comment.id, 'rocket')
   } catch (err) {
     await postReaction(githubToken, owner, repoName, comment.id, '-1')
@@ -97,6 +97,7 @@ const main = async () => {
 const applyCorrection = async (
   githubToken: string,
   everhourApiKey: string,
+  everhourProjectId: string,
   owner: string,
   repoName: string,
   comment: CommentEvent['comment'],
