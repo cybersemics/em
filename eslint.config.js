@@ -100,7 +100,7 @@ export default [
       '**/styled-system/*',
       '**/ios/*',
       '**/android/**',
-      '**/src-tauri/**',
+      '**/desktop/**',
       '**/build/*',
       '**/docs/*',
       '**/functions/*',

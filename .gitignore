@@ -25,8 +25,8 @@ local.log
 /build
 
 # Tauri
-src-tauri/target
-src-tauri/gen/schemas
+desktop/target
+desktop/gen/schemas
 
 # diff images output from failed Puppeteer snapshot tests
 __diff_output__
