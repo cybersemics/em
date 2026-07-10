@@ -130,15 +130,31 @@ const processTask = async ({
 
   const { category, hours } = estimate
 
-  // Leave audit comment on GitHub issue
-  const commentBody = `Everhour estimate: ${category} / ${hours}h\nPrompt version: ${promptVersion}\nSource: backfill`
-  await fetch(`https://api.github.com/repos/${owner}/${repoName}/issues/${issue.number}/comments`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${githubToken}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ body: commentBody }),
-  })
-
+  // Log the estimate first: it has already been written to Everhour by estimateIssue, so it must be
+  // reported even if the best-effort audit comment below fails. Logging after the POST risked losing
+  // this line entirely when the comment request threw.
   console.info(`  Estimated issue ${issueLink(owner, repoName, issue.number)}: ${category} / ${hours}h`)
+
+  // Leave an audit comment on the GitHub issue. Best-effort: a comment failure must not abort the
+  // backfill run or discard the estimate already recorded, so failures are warned, not thrown.
+  const commentBody = `Everhour estimate: ${category} / ${hours}h\nPrompt version: ${promptVersion}\nSource: backfill`
+  try {
+    const commentResp = await fetch(
+      `https://api.github.com/repos/${owner}/${repoName}/issues/${issue.number}/comments`,
+      {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${githubToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ body: commentBody }),
+      },
+    )
+    if (!commentResp.ok) {
+      console.warn(
+        `  Failed to post audit comment on ${issueLink(owner, repoName, issue.number)} - GitHub API error ${commentResp.status}`,
+      )
+    }
+  } catch (err) {
+    console.warn(`  Failed to post audit comment on ${issueLink(owner, repoName, issue.number)}:`, err)
+  }
 }
 
 const main = async () => {
@@ -295,6 +311,10 @@ const main = async () => {
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   main().catch(err => {
     console.error(err)
-    process.exit(1)
+    // Set exitCode instead of calling process.exit(1): process.exit() terminates before Node drains
+    // its async stdout/stderr writes, which silently truncates buffered log output (including this
+    // error) when the streams are pipes, as in CI. Setting exitCode lets the process exit naturally
+    // with a non-zero status once the event loop is empty, flushing all pending output first.
+    process.exitCode = 1
   })
 }

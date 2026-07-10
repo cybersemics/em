@@ -84,24 +84,41 @@ const main = async () => {
   // Get prompt version
   const promptVersion = getPromptVersion(repoRoot)
 
-  // Leave audit comment
+  // Log the estimate first: it has already been written to Everhour by estimateIssue, so it must be
+  // reported even if the best-effort audit comment below fails.
+  console.info(`Estimated issue ${issueLink(owner, repoName, issue.number)}: ${category} / ${hours}h`)
+
+  // Leave an audit comment. Best-effort: a comment failure must not discard the estimate already recorded.
   const commentBody = `Everhour estimate: ${category} / ${hours}h\nPrompt version: ${promptVersion}`
 
-  await fetch(`https://api.github.com/repos/${owner}/${repoName}/issues/${issue.number}/comments`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${githubToken}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ body: commentBody }),
-  })
-
-  console.info(`Estimated issue ${issueLink(owner, repoName, issue.number)}: ${category} / ${hours}h`)
+  try {
+    const commentResp = await fetch(
+      `https://api.github.com/repos/${owner}/${repoName}/issues/${issue.number}/comments`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${githubToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ body: commentBody }),
+      },
+    )
+    if (!commentResp.ok) {
+      console.warn(
+        `Failed to post audit comment on ${issueLink(owner, repoName, issue.number)} - GitHub API error ${commentResp.status}`,
+      )
+    }
+  } catch (err) {
+    console.warn(`Failed to post audit comment on ${issueLink(owner, repoName, issue.number)}:`, err)
+  }
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   main().catch(err => {
     console.error(err)
-    process.exit(1)
+    // Set exitCode instead of calling process.exit(1): process.exit() terminates before Node drains
+    // its async stdout/stderr writes, which silently truncates buffered log output (including this
+    // error) when the streams are pipes, as in CI. Setting exitCode lets the process exit naturally.
+    process.exitCode = 1
   })
 }

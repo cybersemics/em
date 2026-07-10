@@ -190,7 +190,10 @@ const postComment = async (token: string, owner: string, repo: string, issueNumb
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   main().catch(err => {
     console.error(err)
-    process.exit(1)
+    // Set exitCode instead of calling process.exit(1): process.exit() terminates before Node drains
+    // its async stdout/stderr writes, which silently truncates buffered log output (including this
+    // error) when the streams are pipes, as in CI. Setting exitCode lets the process exit naturally.
+    process.exitCode = 1
   })
 }
 
