@@ -11,6 +11,7 @@ import { fileURLToPath } from 'url'
 import EverhourClient from './everhour/client.ts'
 import { type EstimateCategory, HOURS_TO_CATEGORY, VALID_HOURS, categoryToSeconds } from './everhour/estimates.ts'
 import issueLink from './lib/issueLink.ts'
+import issueUrlSuffix from './lib/issueUrlSuffix.ts'
 
 const TRUSTED_ASSOCIATIONS = ['OWNER', 'MEMBER', 'COLLABORATOR']
 
@@ -174,7 +175,7 @@ const main = async () => {
   )
 
   console.info(
-    `Manual correction applied for issue ${issueLink(owner, repoName, issue.number)}: ${category} / ${roundedHours}h`,
+    `Manual correction applied for issue ${issueLink(owner, repoName, issue.number)} @ ${category} / ${roundedHours}h${issueUrlSuffix(owner, repoName, issue.number)}`,
   )
 }
 

@@ -14,6 +14,7 @@ import extractIssueNumber from './everhour/extractIssueNumber.ts'
 import estimateIssue from './lib/estimateIssue.ts'
 import getPromptVersion from './lib/getPromptVersion.ts'
 import issueLink from './lib/issueLink.ts'
+import issueUrlSuffix from './lib/issueUrlSuffix.ts'
 import loadInstructions from './lib/loadInstructions.ts'
 import loadSamples from './lib/loadSamples.ts'
 import promptVersionLink from './lib/promptVersionLink.ts'
@@ -101,6 +102,7 @@ const processTask = async ({
       labels: issue.labels.map(l => l.name),
     },
     issueRef: issueLink(owner, repoName, issue.number),
+    issueUrl: issueUrlSuffix(owner, repoName, issue.number),
     instructions,
     samples,
     openaiApiKey,
@@ -124,7 +126,9 @@ const processTask = async ({
     body: JSON.stringify({ body: commentBody }),
   })
 
-  console.info(`  Estimated issue ${issueLink(owner, repoName, issue.number)}: ${category} / ${hours}h`)
+  console.info(
+    `  Estimated issue ${issueLink(owner, repoName, issue.number)} @ ${category} / ${hours}h${issueUrlSuffix(owner, repoName, issue.number)}`,
+  )
 }
 
 const main = async () => {
@@ -228,7 +232,7 @@ const main = async () => {
 
       if (!issueResp.ok) {
         console.info(
-          `  Skipping issue ${issueLink(owner, repoName, issueNumber)} - GitHub API error ${issueResp.status}`,
+          `  Skipping issue ${issueLink(owner, repoName, issueNumber)} - GitHub API error ${issueResp.status}${issueUrlSuffix(owner, repoName, issueNumber)}`,
         )
         continue
       }
@@ -239,18 +243,24 @@ const main = async () => {
       // too (they share the number space), so detect and skip them before the closed-state check —
       // otherwise a merged PR would be reported with the misleading "closed" reason.
       if (isPullRequest(issue)) {
-        console.info(`  Skipping ${issueLink(owner, repoName, issueNumber)} "${issue.title}" - PR`)
+        console.info(
+          `  Skipping ${issueLink(owner, repoName, issueNumber)} "${issue.title}" - PR${issueUrlSuffix(owner, repoName, issueNumber)}`,
+        )
         continue
       }
 
       // Do not estimate closed issues.
       if (issue.state === 'closed') {
-        console.info(`  Skipping issue ${issueLink(owner, repoName, issueNumber)} - closed`)
+        console.info(
+          `  Skipping issue ${issueLink(owner, repoName, issueNumber)} - closed${issueUrlSuffix(owner, repoName, issueNumber)}`,
+        )
         continue
       }
 
       if (!issue.body) {
-        console.info(`  Skipping issue ${issueLink(owner, repoName, issueNumber)} - empty body`)
+        console.info(
+          `  Skipping issue ${issueLink(owner, repoName, issueNumber)} - empty body${issueUrlSuffix(owner, repoName, issueNumber)}`,
+        )
         continue
       }
 
