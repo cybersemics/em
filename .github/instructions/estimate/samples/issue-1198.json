@@ -1,0 +1,17 @@
+{
+  "input": {
+    "title": "[iOS PWA] Show =label with cursor but not caret",
+    "body": "The `=label` feature allows the user to override the displayed value of a thought. It should be based on the caret rather than the cursor. \r\n\r\nI suggest using the mobile emulator in Chrome to reproduce edit mode. \r\n\r\n## Steps to Reproduce\r\n\r\n- Apple\r\n  - =label\r\n    - The Apple\r\n\r\nSet the cursor on `Apple` (the first thought in the root) and close the keyboard. \r\n\r\n## Current Behavior\r\n\r\n“The Apple”\r\n\r\n## Expected Behavior\r\n\r\nIt should show “The Apple” because edit mode is off. If edit mode is on, show “Apple”. ",
+    "labels": [
+      "feature",
+      "low-priority"
+    ]
+  },
+  "expected": "L",
+  "source": {
+    "type": "manual-estimate-comment",
+    "issue": 1198,
+    "comment": 4938554674,
+    "hours": 16
+  }
+}
