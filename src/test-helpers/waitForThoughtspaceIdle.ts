@@ -3,8 +3,8 @@ import syncStatusStore from '../stores/syncStatus'
 
 /** True when all thoughtspace pulls visible to app tests have drained. */
 const isThoughtspacePullingSettled = (): boolean => {
-  const { isPulling, isBackgroundPulling } = syncStatusStore.getState()
-  return !isPulling && !isBackgroundPulling
+  const { isPulling } = syncStatusStore.getState()
+  return !isPulling
 }
 
 /** Waits for real TreeCRDT persistence and pull queue work used by unit tests. */

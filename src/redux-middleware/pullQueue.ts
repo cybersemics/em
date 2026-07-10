@@ -130,60 +130,43 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
   /** Flush the pull queue, pulling them from local and remote and merge them into state. Triggers updatePullQueue if there are any pending thoughts. */
   const flushPullQueue = async ({ force }: { force?: boolean } = {}) => {
     syncStatusStore.update({ isPulling: true })
-    let expandedPullQueueFiltered: Record<ThoughtId, true> | null = null
 
-    try {
-      // Cancel the previous pull for efficiency.
-      // See prevCursor above for why we should only do this when the cursor has changed.
-      const cursor = getState().cursor
-      if (cursor !== prevCursor) {
-        prevCursor = cursor
+    // Cancel the previous pull for efficiency.
+    // See prevCursor above for why we should only do this when the cursor has changed.
+    const cursor = getState().cursor
+    if (cursor !== prevCursor) {
+      prevCursor = cursor
 
-        // Cancel the ref that is retained by the previous pull.
-        // Assigning a new ref does not affect the previous pull.
-        cancelRef.canceled = true
-        cancelRef = { canceled: false }
-      }
+      // Cancel the ref that is retained by the previous pull.
+      // Assigning a new ref does not affect the previous pull.
+      cancelRef.canceled = true
+      cancelRef = { canceled: false }
+    }
 
-      // filter out thoughts that are currently being pulled, except when forcing the initial remote pull
-      expandedPullQueueFiltered = force
-        ? lastExpandedPullQueue
-        : keyValueBy(lastExpandedPullQueue, id => {
-            // use a for loop for short circuiting
-            for (const pullQueueRecord of pulling.values()) {
-              if (id in pullQueueRecord) return null
-            }
-            return { [id]: true as const }
-          })
-
-      pullQueue = {}
-
-      // if there are any visible pending descendants from the pull, we need to add them to the pullQueue and immediately flush
-      pulling.add(expandedPullQueueFiltered)
-      await dispatch(pull(Object.keys(expandedPullQueueFiltered) as ThoughtId[], { cancelRef, force }))
-
-      // pull favorites in the background on the first pull
-      // note that syncStatusStore.isPulling does not include favorites because we want them to load in the background and not block push
-      if (!pulled) {
-        void (async () => {
-          syncStatusStore.update({ isBackgroundPulling: true })
-          try {
-            await dispatch(pullFavorites())
-          } catch (err) {
-            console.error('pullFavorites failed', err)
-          } finally {
-            syncStatusStore.update({ isBackgroundPulling: false })
+    // filter out thoughts that are currently being pulled, except when forcing the initial remote pull
+    const expandedPullQueueFiltered = force
+      ? lastExpandedPullQueue
+      : keyValueBy(lastExpandedPullQueue, id => {
+          // use a for loop for short circuiting
+          for (const pullQueueRecord of pulling.values()) {
+            if (id in pullQueueRecord) return null
           }
-        })()
-        pulled = true
-      }
-    } catch (err) {
-      console.error('pullQueue failed', err)
-    } finally {
-      if (expandedPullQueueFiltered) {
-        pulling.delete(expandedPullQueueFiltered)
-      }
-      syncStatusStore.update({ isPulling: pulling.size > 0 })
+          return { [id]: true as const }
+        })
+
+    pullQueue = {}
+
+    // if there are any visible pending descendants from the pull, we need to add them to the pullQueue and immediately flush
+    pulling.add(expandedPullQueueFiltered)
+    await dispatch(pull(Object.keys(expandedPullQueueFiltered) as ThoughtId[], { cancelRef, force }))
+    syncStatusStore.update({ isPulling: false })
+    pulling.delete(expandedPullQueueFiltered)
+
+    // pull favorites in the background on the first pull
+    // note that syncStatusStore.isPulling does not include favorites because we want them to load in the background and not block push
+    if (!pulled) {
+      dispatch(pullFavorites())
+      pulled = true
     }
   }
 
