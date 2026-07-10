@@ -234,6 +234,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
       {...longPress.props}
       aria-label={command.label}
       data-testid='toolbar-icon'
+      data-active={isButtonActive}
       ref={dndRef(node => dragSource(dropTarget(node)))}
       key={commandId}
       title={`${command.label}${(command.overlay?.keyboard ?? command.keyboard) ? ` (${formatKeyboardShortcut((command.overlay?.keyboard ?? command.keyboard)!)})` : ''}${buttonError ? '\nError: ' + buttonError : ''}`}

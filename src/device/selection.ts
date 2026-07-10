@@ -478,7 +478,11 @@ export const html = () => {
 
       // Check if the node is an Element using the instanceof operator
       if (node instanceof Element) {
-        containerHtml = node.outerHTML
+        // When the caret is collapsed on the editable element itself (e.g. when the cursor is moved to a thought
+        // by tapping its bullet), return the editable's inner HTML rather than its outerHTML, so that the wrapper
+        // element and its attributes (such as placeholder="<b>…</b>", whose value contains raw HTML) are excluded
+        // from the selection html (#3912).
+        containerHtml = node.getAttribute('contenteditable') === 'true' ? node.innerHTML : node.outerHTML
       } else if (node instanceof CharacterData) {
         while (node.parentElement?.tagName !== 'DIV') {
           node = node.parentElement!
