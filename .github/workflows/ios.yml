@@ -16,9 +16,12 @@ on:
 # overlapping runs (a main push + PR syncs + reruns) can over-subscribe it and fail with session-creation
 # timeouts. Allowing one active run at a time keeps total live sessions within maxInstances.
 # cancel-in-progress: false queues runs instead of cancelling them, so no run is dropped.
+# queue: max extends the queue from the default 1 to the maximum of 100, ensuring runs don't get silently
+# dropped if lots of jobs queue up.
 concurrency:
   group: browserstack
   cancel-in-progress: false
+  queue: max
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
