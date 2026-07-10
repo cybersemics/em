@@ -6,31 +6,17 @@
  * fetches the corresponding GitHub issue → runs AI inference → writes the
  * estimate back to Everhour and leaves an audit comment on the GitHub issue.
  */
-import { execSync } from 'child_process'
 import 'dotenv/config'
 import * as path from 'path'
 import { fileURLToPath } from 'url'
 import EverhourClient from './everhour/client.ts'
 import extractIssueNumber from './everhour/extractIssueNumber.ts'
 import estimateIssue from './lib/estimateIssue.ts'
+import getPromptVersion from './lib/getPromptVersion.ts'
 import issueLink from './lib/issueLink.ts'
 import loadInstructions from './lib/loadInstructions.ts'
 import loadSamples from './lib/loadSamples.ts'
-
-/**
- * Gets the short git commit hash of the most recent change to the estimate instructions file.
- * Used to tag AI-generated estimates with the prompt version for auditability.
- */
-const getPromptVersion = (repoRoot: string): string => {
-  try {
-    return execSync('git log -1 --format=%h -- .github/instructions/estimate/estimate.instructions.md', {
-      cwd: repoRoot,
-      encoding: 'utf-8',
-    }).trim()
-  } catch {
-    return 'unknown'
-  }
-}
+import promptVersionLink from './lib/promptVersionLink.ts'
 
 interface GitHubIssue {
   number: number
@@ -131,7 +117,7 @@ const processTask = async ({
   const { category, hours } = estimate
 
   // Leave audit comment on GitHub issue
-  const commentBody = `Everhour estimate: ${category} / ${hours}h\nPrompt version: ${promptVersion}\nSource: backfill`
+  const commentBody = `Everhour estimate: ${category} / ${hours}h\nPrompt version: ${promptVersionLink(owner, repoName, promptVersion)}\nSource: backfill`
   await fetch(`https://api.github.com/repos/${owner}/${repoName}/issues/${issue.number}/comments`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${githubToken}`, 'Content-Type': 'application/json' },

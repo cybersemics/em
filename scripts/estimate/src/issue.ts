@@ -2,33 +2,22 @@
  * Estimates a newly opened GitHub issue and writes the result to Everhour.
  * Triggered by: .github/workflows/estimate-issue-opened.yml
  */
-import { execSync } from 'child_process'
 import 'dotenv/config'
 import * as fs from 'fs'
 import { fileURLToPath } from 'url'
 import EverhourClient from './everhour/client.ts'
 import estimateIssue from './lib/estimateIssue.ts'
+import getPromptVersion from './lib/getPromptVersion.ts'
 import issueLink from './lib/issueLink.ts'
 import loadInstructions from './lib/loadInstructions.ts'
 import loadSamples from './lib/loadSamples.ts'
+import promptVersionLink from './lib/promptVersionLink.ts'
 
 interface IssuePayload {
   number: number
   title: string
   body: string | null
   labels: Array<{ name: string }>
-}
-
-/** Gets the prompt version (latest commit hash touching the estimate instructions file). */
-const getPromptVersion = (repoRoot: string): string => {
-  try {
-    return execSync('git log -1 --format=%h -- .github/instructions/estimate/estimate.instructions.md', {
-      cwd: repoRoot,
-      encoding: 'utf-8',
-    }).trim()
-  } catch {
-    return 'unknown'
-  }
 }
 
 /** Main entry point for the issue-opened estimation workflow. */
@@ -85,7 +74,7 @@ const main = async () => {
   const promptVersion = getPromptVersion(repoRoot)
 
   // Leave audit comment
-  const commentBody = `Everhour estimate: ${category} / ${hours}h\nPrompt version: ${promptVersion}`
+  const commentBody = `Everhour estimate: ${category} / ${hours}h\nPrompt version: ${promptVersionLink(owner, repoName, promptVersion)}`
 
   await fetch(`https://api.github.com/repos/${owner}/${repoName}/issues/${issue.number}/comments`, {
     method: 'POST',
