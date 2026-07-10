@@ -32,7 +32,7 @@ const estimateIssue = async ({
   dryRunEverhour = false,
 }: {
   issue: IssueInput
-  /** Clickable issue reference (`#N` as an OSC 8 terminal hyperlink) for log output; see issueLink. */
+  /** Issue reference (`#N` with the full URL in CI, or an OSC 8 terminal hyperlink locally) for log output; see issueLink. */
   issueRef: string
   instructions: string
   samples: EstimateSample[]
