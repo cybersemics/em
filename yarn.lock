@@ -9884,6 +9884,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"browserstack-local@npm:^1.5.8":
+  version: 1.5.13
+  resolution: "browserstack-local@npm:1.5.13"
+  dependencies:
+    agent-base: "npm:^6.0.2"
+    https-proxy-agent: "npm:^5.0.1"
+    is-running: "npm:^2.1.0"
+    tree-kill: "npm:^1.2.2"
+  checksum: 10c0/41493365cfa6c89625caef732d444827818c8b4f1664d0bc2c76a56151332cfd85bced15f57bf6fcec8d85671c62eeeeb864a147d06b32fe8cfcc0279d7dba4e
+  languageName: node
+  linkType: hard
+
 "bs58@npm:^4.0.1":
   version: 4.0.1
   resolution: "bs58@npm:4.0.1"
@@ -11742,6 +11754,7 @@ __metadata:
     "@wdio/spec-reporter": "npm:^9.29.1"
     "@wdio/types": "npm:^9.29.1"
     axios: "npm:^1.18.1"
+    browserstack-local: "npm:^1.5.8"
     chalk: "npm:^5.6.2"
     clipboard: "npm:^2.0.11"
     cloudflared: "npm:^0.7.1"
@@ -11821,6 +11834,7 @@ __metadata:
     truncate-html: "npm:^1.2.2"
     ts-key-enum: "npm:^2.0.12"
     typescript: "npm:5.9.3"
+    undici: "npm:^6.21.3"
     vi-canvas-mock: "npm:^1.0.0"
     vite: "npm:^7.3.1"
     vite-plugin-checker: "npm:^0.12.0"
