@@ -32,7 +32,7 @@ import {
   TUTORIAL_CONTEXT2_PARENT,
 } from '../constants'
 import asyncFocus from '../device/asyncFocus'
-import preventAutoscroll, { preventAutoscrollEnd } from '../device/preventAutoscroll'
+import focusWithoutAutoscroll from '../device/focusWithoutAutoscroll'
 import * as selection from '../device/selection'
 import globals from '../globals'
 import findDescendant from '../selectors/findDescendant'
@@ -244,8 +244,13 @@ const Editable = ({
         // do not set cursor if it is unchanged and we are not entering when keyboard is open
         if ((!isKeyboardOpen || state.isKeyboardOpen) && equalPath(state.cursor, path)) return
 
-        // set offset to null to allow the browser to set the position of the selection
-        let offset = null
+        // When refocusing the thought that already holds the cursor — e.g. after merging siblings, or
+        // any programmatic focus from focusWithoutAutoscroll — preserve the existing cursorOffset.
+        // Nulling it here gets coerced to 0 by setCursor while editing, clobbering a caret that was
+        // intentionally placed (the merge put it mid-thought, then focus nulled it back to 0). Only
+        // default to null — letting the browser choose the position — when focusing a different
+        // thought, which is the genuine click/tap case this handler was written for. (#3765)
+        let offset: number | null = equalPath(state.cursor, path) ? state.cursorOffset : null
 
         // if running for the first time, restore the offset if the path matches the restored cursor
         if (!cursorOffsetInitialized) {
@@ -409,10 +414,10 @@ const Editable = ({
 
       asyncFocus({ force: true })
 
-      preventAutoscroll(editable)
-      // Restore the selection offset captured when insertText(' ') arrived.
-      selection.set(editable, { offset: savedCharOffset })
-      preventAutoscrollEnd(editable)
+      // Restore the selection offset captured when insertText(' ') arrived, routing through
+      // focusWithoutAutoscroll so the caret is retargeted to the editable without triggering
+      // iOS native autoscroll (#3765).
+      focusWithoutAutoscroll(editable, { offset: savedCharOffset })
 
       pendingAutocompleteAt = null
     }
@@ -673,7 +678,9 @@ const Editable = ({
         })
       }
 
-      if (suppressFocusStore.getState()) return
+      if (suppressFocusStore.getState()) {
+        return
+      }
       // Update editingValueUntrimmedStore with the current value
       editingValueUntrimmedStore.update(value)
 

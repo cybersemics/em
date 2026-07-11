@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { useStore } from 'react-redux'
 import { useDispatch } from 'react-redux'
@@ -6,9 +6,8 @@ import Path from '../../@types/Path'
 import { setCursorActionCreator as setCursor } from '../../actions/setCursor'
 import { isMac, isSafari, isTouch } from '../../browser'
 import { LongPressState } from '../../constants'
-import asyncFocus from '../../device/asyncFocus'
+import focusWithoutAutoscroll from '../../device/focusWithoutAutoscroll'
 import getCaretOffset from '../../device/getCaretOffset'
-import preventAutoscroll, { preventAutoscrollEnd } from '../../device/preventAutoscroll'
 import * as selection from '../../device/selection'
 import usePrevious from '../../hooks/usePrevious'
 import hasMulticursor from '../../selectors/hasMulticursor'
@@ -40,7 +39,6 @@ const useEditMode = ({
   const disabledRef = useRef(false)
   const editableNonce = useSelector(state => state.editableNonce)
   const showSidebar = useSelector(state => state.showSidebar)
-  const fontSize = useSelector(state => state.fontSize)
   const isCursor = useSelector(state => equalPath(path, state.cursor))
   const hadSidebar = usePrevious(showSidebar)
   const store = useStore()
@@ -55,18 +53,7 @@ const useEditMode = ({
     () => {
       // Get the cursorOffset directly from the store rather than subscribing to it reactively with useSelector.
       // Otherwise, it will try to set the selection while typing.
-      const { cursorOffset, lastUndoableActionType } = store.getState()
-
-      /** Set the selection to the current Editable at the cursor offset. */
-      const setSelectionToCursorOffset = () => {
-        // do not set the selection on hidden thoughts, otherwise it will cause a faulty focus event when switching windows
-        // https://github.com/cybersemics/em/issues/1596
-        if (style?.visibility === 'hidden') {
-          selection.clear()
-        } else {
-          selection.set(contentRef.current, { offset: cursorOffset ?? 0 })
-        }
-      }
+      const { cursorOffset } = store.getState()
 
       // allow transient editable to have focus on render
       const shouldSetSelection =
@@ -80,28 +67,19 @@ const useEditMode = ({
           !dragHold &&
           !disabledRef.current)
 
-      if (shouldSetSelection) {
-        preventAutoscroll(contentRef.current)
+      if (!shouldSetSelection) return
 
-        /*
-        When a new thought is created, the Shift key should be on when Auto-Capitalization is enabled.
-        On Mobile Safari, Auto-Capitalization is broken if the selection is set synchronously (#999).
-        Only breaks on Enter or Backspace, not gesture.
-
-        setTimeout fixes it, however it introduces an infinite loop when a nested empty thought is created.
-        Not calling asyncFocus when the selection is already on a thought prevents the infinite loop.
-        Also, setTimeout is frequently pushed into the next frame and the keyboard will intermittently close on iOS Safari.
-        Replacing setTimeout with requestAnimationFrame guarantees (hopefully?) that it will be processed before the next repaint,
-        keeping the keyboard open while rapidly deleting thoughts. (#3129)
-
-        If the last action is swapParent, set the selection synchronously to keep the focus stable after the swap.
-      */
-        if (isTouch && isSafari() && lastUndoableActionType !== 'swapParent' && !selection.isThought()) {
-          asyncFocus()
-        }
-
-        setSelectionToCursorOffset()
+      // do not set the selection on hidden thoughts, otherwise it will cause a faulty focus event when switching windows
+      // https://github.com/cybersemics/em/issues/1596
+      if (style?.visibility === 'hidden') {
+        selection.clear()
+        return
       }
+
+      // Whenever the cursor changes programmatically, focusWithoutAutoscroll focuses, places the
+      // caret, and suppresses the native focus + selection autoscroll that would otherwise jolt
+      // `position: fixed` elements on iOS (#3765).
+      focusWithoutAutoscroll(contentRef.current, { offset: cursorOffset ?? 0 })
     },
     // React Hook useEffect has missing dependencies: 'contentRef', 'editMode', and 'style?.visibility'.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -122,27 +100,10 @@ const useEditMode = ({
     ],
   )
 
-  // Provide an escape hatch to allow the next default selection rather than setting it.
-  // This allows the user to set the selection in the middle of a non-cursor thought when keyboard is open.
-  // Otherwise the caret is moved to the beginning of the thought.
-  const allowDefaultSelection = useCallback(() => {
-    disabledRef.current = true
-    // enable on next tick, which is long enough to skip the next setSelectionToCursorOffset
-    setTimeout(() => {
-      disabledRef.current = false
-    })
-  }, [])
-
   // Handles the caret positioning logic for the editable element.
   useEffect(() => {
     const editable = contentRef.current
     if (!editable) return
-
-    /** Sets the DOM selection and updates the Redux cursor state. */
-    const setCaretOffset = (offset: number) => {
-      selection.set(editable, { offset })
-      dispatch(setCursor({ path, offset }))
-    }
 
     /** Marks the beginning of a touch so that onMouseDown can determine whether a long press is occurring. */
     const onTouchStart = () => (pressingRef.current = true)
@@ -153,8 +114,7 @@ const useEditMode = ({
     /**
      * Handles the mousedown event for the editable element.
      * Prevents focus on non-cursor thoughts or during multiselect clicks.
-     * When editing or cursor is present (and multicursor is not active), computes the caret position manually so that it can be set on mouseup.
-     * Prevents default behavior and manages autoscroll for certain edge cases where browser selection would be incorrect.
+     * When editing or cursor is present (and multicursor is not active), computes the caret position manually and routes through focusWithoutAutoscroll so the iOS native autoscroll never fires.
      */
     const onMouseDown = (e: MouseEvent) => {
       // If CMD/CTRL is pressed, don't focus the editable.
@@ -164,11 +124,11 @@ const useEditMode = ({
         return
       }
 
-      // If the press is ongoing (touchend has not been dispatched) then a long press is ongoing and setCaretOffset will interfere
-      // with default iOS Safari drag-and-drop text selection.
+      // If the press is ongoing (touchend has not been dispatched) then a long press is ongoing and manual caret
+      // positioning will interfere with default iOS Safari drag-and-drop text selection.
       if (pressingRef.current) return
 
-      // If editing or the cursor is on the thought, allow the default browser selection or perform manual caret positioning so the offset is correct.
+      // If editing or the cursor is on the thought, perform manual caret positioning so the offset is correct.
       // See: #981
       if (editingOrOnCursor && !isMulticursor) {
         const { inVoidArea, offset } = getCaretOffset(editable, {
@@ -176,26 +136,33 @@ const useEditMode = ({
           clientY: e.clientY,
         })
 
-        if (offset !== null) {
-          // Prevent the browser from autoscrolling to this editable element.
-          // For some reason doesn't work on touchend.
-          preventAutoscroll(editable, {
-            // about the height of a single-line thought
-            bottomMargin: fontSize * 2,
-          })
-
-          // Setting the caret offset will activate the declarative shouldSetSelection effect, which will call preventAutoscroll and selection.set
-          // all over again. Since the selection is managed imperatively in this handler, this duplicate behavior is undesirable.
-          allowDefaultSelection()
-          setCaretOffset(offset)
-
-          // It's important to avoid preventDefault when the tap is somewhere that can be handled by native browser selection behavior.
-          // If the tap is prevented, it will interfere with functionality like double tap or the context menu. If the selection is
-          // truly in a void area, then preventDefault will stop the caret from being placed on the wrong thought.
-          if (inVoidArea) {
-            e.preventDefault()
-          }
+        // Block the native mousedown so it can't focus the element and place the caret itself.
+        // There are two reasons we want to do this:
+        // 1. iOS Safari: always block; let focusWithoutAutoscroll re-takes focus cleanly.
+        // 2. Block when the tap lands in a void area (outside any text node) to stop the caret from being
+        // placed on the wrong thought.
+        if ((isTouch && isSafari()) || inVoidArea) {
+          e.preventDefault()
         }
+
+        // getCaretOffset returns null for empty thoughts (no text nodes). We still need to take
+        // focus on those — otherwise tapping an empty thought that is already the cursor leaves
+        // it unfocused and the keyboard never opens.
+        const targetOffset = offset ?? 0
+
+        // Dispatch setCursor first so Editable.onFocus's setCursorOnThought sees
+        // state.cursor === path and early-returns instead of setting cursorOffset to 0.
+        dispatch(
+          setCursor({
+            path,
+            offset: targetOffset,
+            isKeyboardOpen: true,
+            cursorHistoryClear: true,
+            preserveMulticursor: true,
+          }),
+        )
+
+        focusWithoutAutoscroll(editable, { offset: targetOffset })
       } else {
         // There are areas on the outside edge of the thought that will fail to trigger onTouchEnd.
         // In those cases, it is best to prevent onFocus or onClick, otherwise keyboard is open will be incorrectly activated.
@@ -205,17 +172,10 @@ const useEditMode = ({
       }
     }
 
-    /** Prevents the thought from autoscrolling to the bottom of the screen when the keyboard is open.
-     * Autoscroll must be prevented until focus handling is complete, so preventAutoscrollEnd is deferred
-     * using queueMicrotask without introducing any additional delay.
-     */
-    const onFocus = () => queueMicrotask(() => preventAutoscrollEnd(editable))
-
     editable.addEventListener('mousedown', onMouseDown)
     if (isTouch && isSafari()) {
       editable.addEventListener('touchstart', onTouchStart)
       editable.addEventListener('touchend', onTouchEnd)
-      editable.addEventListener('focus', onFocus)
     }
 
     return () => {
@@ -223,10 +183,9 @@ const useEditMode = ({
       if (isTouch && isSafari()) {
         editable.removeEventListener('touchstart', onTouchStart)
         editable.removeEventListener('touchend', onTouchEnd)
-        editable.removeEventListener('focus', onFocus)
       }
     }
-  }, [contentRef, editingOrOnCursor, isCursor, isMulticursor, fontSize, allowDefaultSelection, path, dispatch])
+  }, [contentRef, editingOrOnCursor, isMulticursor, path, dispatch])
 
   // Resume focus if sidebar was just closed and isEditing is true.
   // Disable focus restoration on mobile until the hamburger menu & sidebar backdrop can be made to

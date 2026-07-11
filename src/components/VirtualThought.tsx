@@ -7,7 +7,6 @@ import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
-import { getAutoscrollPadding } from '../device/preventAutoscroll'
 import useDelayedAutofocus from '../hooks/useDelayedAutofocus'
 import useLayoutAnimationFrameEffect from '../hooks/useLayoutAnimationFrameEffect'
 import useSelectorEffect from '../hooks/useSelectorEffect'
@@ -145,20 +144,12 @@ const VirtualThought = ({
   const updateSize = useCallback(() => {
     if (!ref.current) return
 
-    // preventAutoscroll temporarily inflates the editable's padding to trick the browser out of autoscrolling.
-    // Subtract that padding so the measured height reflects the thought's true height even while the autoscroll
-    // window is open. Otherwise a height change that occurs during the window — e.g. a note added to this thought
-    // by Swap Note on touch devices — would be recorded with an inflated height or skipped entirely, leaving the
-    // next thought overlapping the note. (#4279)
-    const editable = ref.current.querySelector(`[data-editable]`)
-    const autoscrollPadding = getAutoscrollPadding(editable as HTMLElement | null)
-
     // Need to grab max height between .thought and .thought-annotation since the annotation height might be bigger (due to wrapping link icon).
     const heightNew = Math.max(
-      ref.current.getBoundingClientRect().height - autoscrollPadding,
+      ref.current.getBoundingClientRect().height,
       ref.current.querySelector('[aria-label="thought-annotation"]')?.getBoundingClientRect().height || 0,
     )
-    const widthNew = editable?.getBoundingClientRect().width
+    const widthNew = ref.current.querySelector(`[data-editable]`)?.getBoundingClientRect().width
 
     // Get the updated autofocus, otherwise isVisible will be stale.
     // Using the local autofocus and adding it as a dependency works when clicking on the cursor's parent but not when activating cursorBack from the keyboad for some reason.

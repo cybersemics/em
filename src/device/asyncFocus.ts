@@ -36,7 +36,12 @@ export const AsyncFocus: () => (options?: { force?: boolean }) => void = () => {
     // provide the option to force the focus in order to retarget focus and prevent an iOS Safari bug (#4222)
     if (options.force || !selection.isThought()) {
       hiddenInput.disabled = false
-      hiddenInput.focus()
+      // preventScroll: true — the hidden input is pinned at the top of the document, so without
+      // this iOS would briefly scroll the page back to top before our real focusWithoutAutoscroll
+      // call takes over. preventScroll does not affect the focus itself, which is the whole point
+      // of asyncFocus (priming the active editing session that makes iOS honor programmatic
+      // selection — see focusWithoutAutoscroll).
+      hiddenInput.focus({ preventScroll: true })
       // the hidden input should not be a valid focus target unless this function was invoked
       hiddenInput.disabled = true
     }
