@@ -14,6 +14,11 @@ on:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  # BrowserStack hub (attachExistingSession.ts) and the heartbeat keepalive
+  # (.github/skills/browser-control-ios/heartbeat.sh) both need outbound access,
+  # as does the cloudflared tunnel (wdio.browserstack.conf.ts) that exposes the
+  # dev server to the BrowserStack device.
+  COPILOT_AGENT_FIREWALL_ALLOW_LIST_ADDITIONS: hub-cloud.browserstack.com,hub.browserstack.com,api.browserstack.com,trycloudflare.com
 
 jobs:
   # The job MUST be called `copilot-setup-steps` or it will not be picked up by Copilot.
