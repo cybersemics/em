@@ -3,7 +3,6 @@ import chalk from 'chalk'
 import { Browser, BrowserContext, ConsoleMessage, Device } from 'puppeteer'
 import { WindowEm } from '../../initialize'
 import createId from '../../util/createId'
-import waitForAppReady from './helpers/waitForAppReady'
 import { page, setPage } from './session'
 
 // eslint-disable-next-line @typescript-eslint/no-namespace, @typescript-eslint/prefer-namespace-keyword
@@ -100,7 +99,7 @@ const setup = async ({
   })
 
   await page.goto(url)
-  await waitForAppReady(page)
+  await page.evaluate(() => (window.em as WindowEm).testHelpers.waitForInitialized())
 
   if (skipTutorial) {
     // wait for welcome modal to appear
