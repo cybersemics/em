@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import React, { FocusEventHandler, useCallback, useEffect, useRef } from 'react'
+import React, { FocusEventHandler, useCallback, useEffect, useMemo, useRef } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import { cx } from '../../styled-system/css'
 import { editableRecipe, invalidOptionRecipe } from '../../styled-system/recipes'
@@ -48,6 +48,7 @@ import editingValueUntrimmedStore from '../stores/editingValueUntrimmed'
 import storageModel from '../stores/storageModel'
 import suppressFocusStore from '../stores/suppressFocus'
 import addEmojiSpace from '../util/addEmojiSpace'
+import clearThoughtPlaceholderFormat from '../util/clearThoughtPlaceholderFormat'
 import containsURL from '../util/containsURL'
 import ellipsize from '../util/ellipsize'
 import equalPath from '../util/equalPath'
@@ -154,6 +155,14 @@ const Editable = ({
   const value = useSelector(state => getThoughtById(state, head(simplePath))?.value || '')
   const rank = useSelector(state => getThoughtById(state, head(simplePath))?.rank || 0)
   const isCursorCleared = useSelector(state => !!isEditing && state.cursorCleared)
+  const placeholderFormat = useMemo(
+    () => (isCursorCleared ? clearThoughtPlaceholderFormat(value) : null),
+    [isCursorCleared, value],
+  )
+  const contentEditableStyle = useMemo(
+    () => (placeholderFormat ? { ...(style || {}), ...placeholderFormat.style } : style),
+    [placeholderFormat, style],
+  )
 
   const hasMulticursor = useSelector(hasMulticursorSelector)
   // store the old value so that we have a transcendental head when it is changed
@@ -773,6 +782,13 @@ const Editable = ({
       innerRef={contentRef}
       aria-label={'editable-' + head(path)}
       data-editable
+      data-placeholder-background-color={placeholderFormat?.backgroundColor}
+      data-placeholder-code={placeholderFormat?.code}
+      data-placeholder-color={placeholderFormat?.color}
+      data-placeholder-font-family={placeholderFormat?.fontFamily}
+      data-placeholder-font-style={placeholderFormat?.fontStyle}
+      data-placeholder-font-weight={placeholderFormat?.fontWeight}
+      data-placeholder-text-decoration={placeholderFormat?.textDecoration}
       className={cx(editableRecipe(), className)}
       html={
         value === EM_TOKEN
@@ -805,7 +821,7 @@ const Editable = ({
       // iOS Safari delays event handling in case the DOM is modified during setTimeout inside an event handler,
       // unless it is given a hint that the element is some sort of form control
       role='button'
-      style={style}
+      style={contentEditableStyle}
     />
   )
 }

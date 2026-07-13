@@ -369,6 +369,28 @@ const globalCss = defineGlobalStyles({
     content: 'attr(placeholder)',
     cursor: 'text',
   },
+  '[placeholder][data-placeholder-font-weight]:empty::before': {
+    fontWeight: 'var(--placeholder-font-weight)',
+  },
+  '[placeholder][data-placeholder-font-style]:empty::before': {
+    fontStyle: 'var(--placeholder-font-style)',
+  },
+  '[placeholder][data-placeholder-text-decoration]:empty::before': {
+    textDecoration: 'var(--placeholder-text-decoration)',
+  },
+  '[placeholder][data-placeholder-font-family]:empty::before': {
+    fontFamily: 'var(--placeholder-font-family)',
+  },
+  '[placeholder][data-placeholder-code]:empty::before': {
+    backgroundColor: 'codeBg',
+    fontFamily: 'monospace',
+  },
+  '[placeholder][data-placeholder-color]:empty::before': {
+    color: 'var(--placeholder-color)',
+  },
+  '[placeholder][data-placeholder-background-color]:empty::before': {
+    backgroundColor: 'var(--placeholder-background-color)',
+  },
   // PandaCSS does not directly support fallbacks: https://github.com/chakra-ui/panda/discussions/846
   ':root': {
     '--active-glow-gradient':
