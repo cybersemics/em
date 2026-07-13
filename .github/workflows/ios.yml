@@ -15,6 +15,8 @@ on:
 # Serialize BrowserStack runs repo-wide. Every run draws from the same shared parallel-session pool, so
 # overlapping runs (a main push + PR syncs + reruns) can over-subscribe it and fail with session-creation
 # timeouts. Allowing one active run at a time keeps total live sessions within maxInstances.
+# This also guarantees the named `copilot-browserstack` Cloudflare tunnel never has two workflow
+# connectors online simultaneously (a named tunnel must have a single active connector per run).
 # cancel-in-progress: false queues runs instead of cancelling them, so no run is dropped.
 # queue: max extends the queue from the default 1 to the maximum of 100, ensuring runs don't get silently
 # dropped if lots of jobs queue up.
@@ -86,7 +88,11 @@ jobs:
         env:
           USE_HTTPS: ${{ steps.server_mode.outputs.https }}
         run: |
-          yarn servebuild &
+          # Bind 0.0.0.0 (--host) so the app is reachable via the runner's localhost by the
+          # cloudflared connector (which the wdio config starts). Capture the PID and tee output
+          # to serve.log so the readiness loop and the cleanup step can use them.
+          yarn servebuild --host > serve.log 2>&1 &
+          echo "APP_PID=$!" >> "$GITHUB_ENV"
 
           echo "Waiting for server to be ready..."
           for i in {1..30}; do
@@ -101,7 +107,8 @@ jobs:
             fi
             echo "Attempt $i/30: status $HTTP_STATUS"
             if [ $i -eq 30 ]; then
-              echo "Server failed to respond after 30 attempts"
+              echo "Server failed to respond after 30 attempts. Server log:"
+              cat serve.log || true
               exit 1
             fi
             sleep 1
@@ -115,3 +122,27 @@ jobs:
           BROWSERSTACK_BUILD_NAME: 'CI - ${{github.run_id}}'
           BROWSERSTACK_PROJECT_NAME: 'em'
           TUNNEL_TOKEN: ${{env.TUNNEL_TOKEN}}
+          # Presence of this connector token switches the wdio config from the ephemeral quick
+          # tunnel to the named `copilot-browserstack` tunnel (public host browserstack.emthought.cc).
+          # The token is only ever read from this secret and passed to the connector's child env.
+          # Workflow concurrency (group: browserstack) serializes runs, so the named tunnel never
+          # has two connectors online at once.
+          CLOUDFLARE_TUNNEL_TOKEN: ${{secrets.CLOUDFLARE_TUNNEL_TOKEN}}
+
+      # Best-effort cleanup on the ephemeral runner: stop the manually-started app and preserve
+      # the named connector's log for diagnosis. The connector process itself is killed by the
+      # wdio config's onComplete hook.
+      - name: Stop app
+        if: always()
+        run: |
+          if [ -n "$APP_PID" ]; then
+            kill "$APP_PID" 2>/dev/null || true
+          fi
+
+      - name: Upload cloudflared connector log
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: cloudflared-browserstack-log
+          path: cloudflared-browserstack.log
+          if-no-files-found: ignore
