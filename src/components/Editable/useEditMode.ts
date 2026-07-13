@@ -34,6 +34,7 @@ const useEditMode = ({
   const hasNoteFocus = useSelector(state => state.noteFocus && equalPath(state.cursor, path))
   const editing = useSelector(state => state.isKeyboardOpen)
   const isMulticursor = useSelector(hasMulticursor)
+  const isCursorCleared = useSelector(state => state.cursorCleared)
   const noteFocus = useSelector(state => state.noteFocus)
   const dragHold = useSelector(state => state.longPress === LongPressState.DragHold)
   const dragInProgress = useSelector(state => state.longPress === LongPressState.DragInProgress)
@@ -76,7 +77,10 @@ const useEditMode = ({
           !noteFocus &&
           contentRef.current &&
           (cursorOffset !== null || !selection.isThought()) &&
-          !isMulticursor &&
+          // Normally the selection is not set while a multiselection is active. However, when clearing multiple
+          // thoughts, the caret must be placed on the first (cursor) thought so the user can type. Only the cursor
+          // thought reaches this point (guarded by isEditing above); the other cleared thoughts show a faux caret.
+          (!isMulticursor || isCursorCleared) &&
           !dragHold &&
           !disabledRef.current)
 
@@ -110,6 +114,8 @@ const useEditMode = ({
       isEditing,
       // update selection when multicursor changes, otherwise the selection will not be set when multicursor is cleared
       isMulticursor,
+      // update selection when entering the cleared state so the caret is placed on the first thought of a multiselection
+      isCursorCleared,
       hasNoteFocus,
       dragInProgress,
       noteFocus,
