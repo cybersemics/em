@@ -442,3 +442,36 @@ it('Can change the color of a note that already has the same color applied to pa
   const note = await getFirstNoteText()
   expect(note).toBe('<font color="#ff573d">some formatted text</font>')
 })
+
+// Regression test for https://github.com/cybersemics/em/issues/3954
+// On a fresh install, undoing a whole-thought background highlight left stale inline color/background
+// markup in the DOM, rendering the thought invisible (black-on-black in the default dark theme). The STR
+// uses the native iOS shake-to-undo, which fires a `historyUndo` input event on the focused contenteditable;
+// document.execCommand('undo') replicates that same native undo path in Chrome. After the undo the thought
+// should return to plain, visible text with no leftover color or background markup.
+it('Undoing a whole-thought background highlight restores visible text (#3954)', async () => {
+  await paste(`
+    - One`)
+
+  await clickThought('One')
+
+  // apply a blue background highlight to the whole thought
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="background color swatches"] [aria-label="blue"]')
+
+  // sanity check: the background highlight was applied
+  const highlighted = await getEditingText()
+  const highlightedStyle = extractColor(highlighted!)
+  expect(highlightedStyle?.backgroundColor && rgbToHex(highlightedStyle.backgroundColor)).toBe(
+    rgbaToHex(colors.light.blue),
+  )
+
+  // undo via the native undo path (iOS shake-to-undo → historyUndo input event)
+  await page.evaluate(() => document.execCommand('undo'))
+
+  // after undo the thought should be plain, visible text with no leftover color/background markup
+  const restored = await getEditingText()
+  const restoredStyle = extractColor(restored!)
+  expect(restoredStyle?.backgroundColor).toBe(null)
+  expect(restoredStyle?.color).toBe(null)
+})
