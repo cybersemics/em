@@ -9,7 +9,6 @@ import pathToThought from '../selectors/pathToThought'
 import resolveNotePath from '../selectors/resolveNotePath'
 import simplifyPath from '../selectors/simplifyPath'
 import themeColors from '../selectors/themeColors'
-import batchEditingStore from '../stores/batchEditing'
 import { updateCommandState } from '../stores/commandStateStore'
 import suppressFocusStore from '../stores/suppressFocus'
 import head from '../util/head'
@@ -124,51 +123,6 @@ export const formatSelectionActionCreator =
 
         const newValue = doc.body.innerHTML
 
-<<<<<<< HEAD
-        /** Function to create a new text string with specified tags and their content removed. */
-        const removeTags = (text: string, tags: string[]): string =>
-          // Use reduce to accumulate a new string without the unwanted tags
-          tags.reduce((acc, tagName) => {
-            const openingTagPattern = new RegExp(`<${tagName}(\\s[^>]*)?>`, 'gi')
-            const closingTagPattern = new RegExp(`</${tagName}>`, 'gi')
-            // Replace both opening and closing tags with an empty string
-            return acc.replace(openingTagPattern, '').replace(closingTagPattern, '')
-          }, text)
-
-        dispatch((dispatch, getState) => {
-          const state = getState()
-          if (!state.cursor) return
-
-          const thought = getThoughtById(state, head(state.cursor))
-          if (!thought) return
-          const simplePath = simplifyPath(state, state.cursor)
-          const styleAttrPattern = /style\s*=\s*["'][^"']*["']/gi
-          const tagWithoutStylePattern = /<(span|font)(\s[^>]*)?>/gi
-
-          //Replace style attributes based on the conditions
-          const styleRemovedThought = thought.value.replace(styleAttrPattern, match => {
-            if (shouldRemoveStyle(match)) return ''
-            return match
-          })
-          const tagsToRemove = collectTagsWithoutAttributes(styleRemovedThought, tagWithoutStylePattern)
-          const newValue = removeTags(styleRemovedThought, tagsToRemove)
-          if (newValue !== thought.value)
-            dispatch(
-              editThought({
-                cursorOffset: selection.offsetThought() ?? undefined,
-                oldValue: thought.value,
-                newValue: newValue,
-                path: simplePath,
-                // force the ContentEditable to update
-                force: true,
-                // merge with the preceding foreColor+backColor patch so that the entire color change
-                // (foreColor + backColor + cleanup) is a single undo step
-                mergePrev: batchEditingStore.getState(),
-              }),
-            )
-        })
-      }
-=======
         // Overwrite the value of the thought or note with the stripped value in order to remove background highlighting (#3901)
         if (newValue !== value)
           dispatch(
@@ -189,6 +143,5 @@ export const formatSelectionActionCreator =
                 }),
           )
       })
->>>>>>> origin/main
     }
   }

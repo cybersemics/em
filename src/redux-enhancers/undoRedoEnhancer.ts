@@ -18,14 +18,11 @@ import reducerFlow from '../util/reducerFlow'
 import stripTags from '../util/stripTags'
 
 /** Track a stream of editThought actions so that they can be merged,
- * allowing edits to be treated as a single undo/redo step when they involve adding new characters or else removing old characters.
- * Formatting edits (where only HTML markup changes, not the plain text content) are tracked separately so they are not merged with content edits and do not trigger the newThought+edit double-undo behavior. */
+ * allowing edits to be treated as a single undo/redo step when they involve adding new characters or else removing old characters. */
 enum EditThoughtDirection {
   None = 'None',
   Longer = 'Longer',
   Shorter = 'Shorter',
-  /** A formatting-only edit: the plain text content is unchanged but the HTML markup differs (e.g. bold, italic, text color). */
-  Formatting = 'Formatting',
 }
 
 /** Interface for the setIsMulticursorExecuting action. */
@@ -43,16 +40,10 @@ function isSetIsMulticursorExecutingAction(action: Action<string>): action is Se
 function isEditThoughtAction(action: UnknownAction): action is UnknownAction & editThoughtPayload {
   return action.type === 'editThought'
 }
-<<<<<<< HEAD
-/** Properties that are ignored when generating state patches.
- * The editableNonce is a transient re-render trigger (incremented by editableRender and by force edits), not real state.
- * It must be excluded from patches, otherwise undoing a force edit reverts the nonce and editableRender re-increments
- * it to the same value, resulting in no net change. The ContentEditable then fails to update its innerHTML while
- * editing (allowInnerHTMLChange is false), so undoing a formatting/letter-case edit appears to do nothing. */
-=======
 
 /** Compare the text contents of the old and new values to determine the direction of the edit.
  * Returns None if the action is not an editThought action or if the text content length is the same.
+ * Formatting edits (bold, italic, color) and case changes (HELLO → hello) preserve text length and return None.
  */
 function getEditThoughtDirection(action: UnknownAction): EditThoughtDirection {
   if (!isEditThoughtAction(action)) return EditThoughtDirection.None
@@ -69,8 +60,11 @@ function getEditThoughtDirection(action: UnknownAction): EditThoughtDirection {
       : EditThoughtDirection.Shorter
 }
 
-/** Properties that are ignored when generating state patches. */
->>>>>>> origin/main
+/** Properties that are ignored when generating state patches.
+ * The editableNonce is a transient re-render trigger (incremented by editableRender and by force edits), not real state.
+ * It must be excluded from patches, otherwise undoing a force edit reverts the nonce and editableRender re-increments
+ * it to the same value, resulting in no net change. The ContentEditable then fails to update its innerHTML while
+ * editing (allowInnerHTMLChange is false), so undoing a formatting/letter-case edit appears to do nothing. */
 const statePropertiesToOmit: (keyof State)[] = ['alert', 'cursorCleared', 'editableNonce', 'pushQueue']
 
 /**
@@ -190,7 +184,6 @@ const undoReducer = (state: State, undoPatches: Patch[]): State => {
 
   if (!undoPatches.length) return state
 
-<<<<<<< HEAD
   // Infer whether the last patch is a formatting-only edit by examining the diff operations.
   // A formatting patch changes a thought's value without changing its plain text content.
   // This is detected by finding an operation that restores a thoughtIndex value where
@@ -209,13 +202,8 @@ const undoReducer = (state: State, undoPatches: Patch[]): State => {
   })
 
   const undoTwice = isNavigation(lastAction)
-    ? isUndoable(penultimateAction)
-    : penultimateAction === 'newThought' && !lastPatchIsFormatting
-=======
-  const undoTwice = isNavigation(lastAction)
     ? isPatchUndoable(penultimateUndoPatch)
-    : penultimateAction === 'newThought'
->>>>>>> origin/main
+    : penultimateAction === 'newThought' && !lastPatchIsFormatting
 
   const poppedUndoPatches = undoTwice ? [penultimateUndoPatch, lastUndoPatch] : [lastUndoPatch]
 
@@ -300,11 +288,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
               : null
 
         // do not omit pushQueue because that includes updates added by updateThoughts
-<<<<<<< HEAD
-        // do not omit editableNonce because editableRender increments it during undo/redo to force the ContentEditable to re-render
-=======
         // do not omit editableNonce because editableRender bumps it to force ContentEditable to re-render after undo/redo
->>>>>>> origin/main
         const omitted = _.pick(
           state,
           statePropertiesToOmit.filter(k => k !== 'pushQueue' && k !== 'editableNonce'),
@@ -329,49 +313,26 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         return newState
       }
 
-<<<<<<< HEAD
-      // Determine if an edit is an addition, deletion, or formatting-only change.
-      // Formatting edits change the HTML markup but not the plain text content (e.g. bold, italic, text color).
-      // Letter case changes (e.g. "hello" → "HELLO") are also treated as formatting since the content is unchanged.
-      // They are kept separate from content edits so they do not merge with them and do not trigger the newThought+edit double-undo.
-      const editThoughtDirection = isEditThoughtAction(action)
-        ? stripTags(action.newValue) === stripTags(action.oldValue) ||
-          stripTags(action.newValue).toLowerCase() === stripTags(action.oldValue).toLowerCase()
-          ? EditThoughtDirection.Formatting
-          : action.newValue.length > action.oldValue.length
-            ? EditThoughtDirection.Longer
-            : EditThoughtDirection.Shorter
-        : EditThoughtDirection.None
-=======
-      // Determine if an edit is an addition or a deletion
+      // Determine if an edit is an addition or a deletion.
+      // Formatting edits (bold, italic, color) and case changes preserve text length and return None, so they never merge with content edits.
       const editThoughtDirection = getEditThoughtDirection(action)
 
       const shouldMergeWithLastEditThought =
         editThoughtDirection !== EditThoughtDirection.None && editThoughtDirection === lastEditThoughtDirection
->>>>>>> origin/main
 
       // Some actions are merged together into a single undo/redo patch.
       // - Navigation actions are merged with the previous non-navigation action. This matches the behavior of most word processors where undo will revert the last destructive action, and the cursor will be restored to where it was before. For example, if the user edits 'a' to 'aa', moves the cursor to 'b', and then undoes, the cursor will be restored to 'aa' then the edit will be undone.
-      // - Contiguous edits in the same direction are merged into a single edit action. For example, if the user edits 'a' to 'ab' and then 'ab' to 'abc', the undo will revert to 'a' in one step. Formatting edits (Formatting direction) are never merged with any other edits — each formatting change (bold, italic, color) gets its own separate undo step.
+      // - Contiguous edits in the same direction are merged into a single edit action. For example, if the user edits 'a' to 'ab' and then 'ab' to 'abc', the undo will revert to 'a' in one step. Formatting edits (None direction) are never merged with any other edits — each formatting change (bold, italic, color) gets its own separate undo step.
       // - The closeAlert action is merged with the previous action so that the alert can be undone.
       // - All actions during the execution of a multicursor command will be merged together. The prevous action will always be setIsMulticursorExecuting.
       // - Chained commands will be merged into the previous command, e.g. Select All + Categorize
-      // - mergePrev: true forces the current action to merge with the previous patch, even for formatting edits. Used to group foreColor+backColor changes (background highlight) into a single undo step.
+      // - mergePrev: true forces the current action to merge with the previous patch. Used to group foreColor+backColor changes (background highlight) into a single undo step.
       if (
         (isNavigation(actionType) && isNavigation(lastAction?.type)) ||
-<<<<<<< HEAD
-        (actionType === 'editThought' &&
-          editThoughtDirection === lastEditThoughtDirection &&
-          editThoughtDirection !== EditThoughtDirection.Formatting) ||
-        actionType === 'closeAlert' ||
-        state.isMulticursorExecuting ||
-        (lastAction as UnknownAction)?.mergeUndo ||
-=======
         shouldMergeWithLastEditThought ||
         actionType === 'closeAlert' ||
         state.isMulticursorExecuting ||
         (lastAction as UnknownAction)?.mergeNext ||
->>>>>>> origin/main
         (action as UnknownAction)?.mergePrev
       ) {
         lastAction = action

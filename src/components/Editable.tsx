@@ -312,12 +312,8 @@ const Editable = ({
         // Set cursorOffset so that it is included in the undo patch.
         // Otherwise, the selection offset will not be restored correctly on undo/redo.
         // This will have no effect on useEditMode, which does not subscribe to state.cursorOffset reactively.
-<<<<<<< HEAD
-        cursorOffset: selection.offsetThought() ?? undefined,
-=======
         cursorOffset: cursorOffset ?? selection.offsetThought() ?? undefined,
         force,
->>>>>>> origin/main
         mergePrev: batchEditingStore.getState(), // If batch editing is in progress, merge this edit with the previous one in the undo stack.
       }),
     )

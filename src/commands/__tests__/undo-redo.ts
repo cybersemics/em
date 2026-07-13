@@ -23,11 +23,8 @@ import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../..
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
-<<<<<<< HEAD
 import head from '../../util/head'
-=======
 import archiveCommand from '../archive'
->>>>>>> origin/main
 import deleteCommand from '../delete'
 import indentCommand from '../indent'
 import moveCursorForward from '../moveCursorForward'
