@@ -73,9 +73,7 @@ const newThoughtCommand: Command = {
   // Support multiple keyboard shortcuts
   // on mobile, the shift key should cause a normal newThought, not newThoughtAbove
   keyboard: [{ key: Key.Enter }, ...(isTouch ? [{ key: Key.Enter, shift: true }] : [])],
-  // Support multiple gesture patterns
-  // Main gesture and alternative patterns to help with mis-swipes since MultiGesture does not support diagonal swipes
-  gesture: ['rd', 'rdldl', 'rdldld', 'rldl', 'rldld', 'rldldl'],
+  gesture: 'rd',
   multicursor,
   // Preventing default on keydown is undesirable because it disables auto-capitalization on iOS Safari. (#3707)
   permitDefault: true,

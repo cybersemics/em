@@ -1,6 +1,8 @@
 /* eslint-disable no-restricted-properties */
 /** Wraps the browser Selection API in a device-agnostic interface. */
+import { isHTMLElement } from 'motion/react'
 import SplitResult from '../@types/SplitResult'
+import { ALLOWED_FORMATTING_TAGS } from '../constants'
 
 export type SelectionOptionsType = {
   offset?: number
@@ -49,47 +51,53 @@ export const clear = (): void => {
   }
 }
 
+/** Selects the entire contents of the given node. Used to stage rich content for a programmatic copy. */
+export const selectNode = (node: Node): void => {
+  const sel = window.getSelection()
+  if (!sel) return
+  const range = document.createRange()
+  range.selectNodeContents(node)
+  sel.removeAllRanges()
+  sel.addRange(range)
+}
+
 /** Returns true if the selection is a collapsed caret, i.e. the beginning and end of the selection are the same. Returns undefined if there is no selection. */
 export const isCollapsed = (): boolean => !!window.getSelection()?.isCollapsed
 
 /** Returns true if there is an active selection. */
 export const isActive = (): boolean => !!window.getSelection()?.focusNode
 
-/** Returns true if the Node is an editable. */
-export const isEditable = (node?: Node | EventTarget | null) => {
-  const element = node as HTMLElement
-  return (
-    !!element &&
-    element.nodeType === Node.ELEMENT_NODE &&
-    (element.hasAttribute('data-editable') || element.ariaLabel === 'note-editable')
+/** Traverses a node's parents until it finds an element node that is not a formatting tag. Returns null if a suitable parent cannot be found. */
+const getEditableCandidate = (node?: EventTarget | null) => {
+  if (!isHTMLElement(node)) return null
+  let element = node
+
+  // If the selected element is a formatting tag, then one of its parents may be the editable (#3805)
+  while (
+    element.parentElement &&
+    (element.nodeType === Node.TEXT_NODE || ALLOWED_FORMATTING_TAGS.includes(element.tagName.toLocaleLowerCase()))
   )
+    element = element.parentElement
+
+  return element.nodeType === Node.ELEMENT_NODE ? element : null
 }
 
-/** Returns true if the focusNode is a note. */
-export const isNote = () => {
-  const element = window.getSelection()?.focusNode as HTMLElement
-  return !!element && element.nodeType === Node.ELEMENT_NODE && element.ariaLabel === 'note-editable'
-}
+/** Check the node, if it exists, for a data-editable attribute. */
+const isContentEditable = (node: Element | null): boolean => node?.hasAttribute('data-editable') ?? false
 
-/** Returns true if the selection is on a thought. */
+/** Check the node, if it exists, for an ariaLabel set to note-editable. */
+const isNoteEditable = (node: Element | null): boolean => node?.ariaLabel === 'note-editable'
+
+/** Returns true if the node is part of a note. Defaults to using the active selection. */
+export const isNote = (node?: EventTarget | null): boolean => {
+  const editable = node === undefined ? document.activeElement : getEditableCandidate(node)
+  return isNoteEditable(editable)
+}
+/** Returns true if the node is part of a thought. Defaults to using the active selection. */
 // We should see if it is possible to just use state.isKeyboardOpen and selection.isActive()
-export const isThought = (): boolean => {
-  // type classList as optional
-  const focusNode = window.getSelection()?.focusNode
-  if (!focusNode) return false
-  // check focusNode and focusNode.parentNode, since it could be on the TEXT_NODE or the ELEMENT_NODE
-  return isEditable(focusNode) || isEditable(focusNode.parentNode)
-}
-
-/** Returns true if the selection is on a thought. */
-export const isOnThought = (): boolean => {
-  let focusNode = window.getSelection()?.focusNode
-  while (focusNode && (focusNode as HTMLElement)?.tagName !== 'DIV') {
-    if (isEditable(focusNode)) return true
-    focusNode = focusNode?.parentNode
-  }
-  // check focusNode if it is on the TEXT_NODE or the ELEMENT_NODE
-  return isEditable(focusNode)
+export const isThought = (node?: EventTarget | null): boolean => {
+  const editable = node === undefined ? document.activeElement : getEditableCandidate(node)
+  return isContentEditable(editable) || isNoteEditable(editable)
 }
 
 /** Returns true if the selection is  on the first line of a multi-line text node. Returns true if there is no selection or if the text node is only a single line. */
@@ -151,6 +159,15 @@ export const isOnLastLine = (): boolean => {
 
 /** Returns true if the browser selection is on a text node. */
 export const isText = (): boolean => window.getSelection()?.focusNode?.nodeType === Node.TEXT_NODE
+
+/** Returns true if the browser selection is inside the editable for a thought. */
+export const isOnEditable = (thoughtId: string): boolean => {
+  const focusNode = window.getSelection()?.focusNode
+  const focusElement =
+    focusNode instanceof Element ? focusNode : focusNode?.parentNode instanceof Element ? focusNode.parentNode : null
+
+  return focusElement?.closest('[data-editable]')?.getAttribute('aria-label') === `editable-${thoughtId}`
+}
 
 /** Returns true if the browser selection is on an element node and focus offset is 0.
  * This represents a case where the browser will render the caret at the start of the text node's content.
@@ -461,7 +478,11 @@ export const html = () => {
 
       // Check if the node is an Element using the instanceof operator
       if (node instanceof Element) {
-        containerHtml = node.outerHTML
+        // When the caret is collapsed on the editable element itself (e.g. when the cursor is moved to a thought
+        // by tapping its bullet), return the editable's inner HTML rather than its outerHTML, so that the wrapper
+        // element and its attributes (such as placeholder="<b>…</b>", whose value contains raw HTML) are excluded
+        // from the selection html (#3912).
+        containerHtml = node.getAttribute('contenteditable') === 'true' ? node.innerHTML : node.outerHTML
       } else if (node instanceof CharacterData) {
         while (node.parentElement?.tagName !== 'DIV') {
           node = node.parentElement!

@@ -5,12 +5,9 @@ import { token } from '../../styled-system/tokens'
 import { formatSelectionActionCreator as formatSelection } from '../actions/formatSelection'
 import { isTouch } from '../browser'
 import { ColorToken } from '../colors.config'
-import * as selection from '../device/selection'
-import getThoughtById from '../selectors/getThoughtById'
 import themeColors from '../selectors/themeColors'
 import batchEditingStore from '../stores/batchEditing'
 import commandStateStore from '../stores/commandStateStore'
-import head from '../util/head'
 import rgbToHex from '../util/rgbToHex'
 import Popover from './Popover'
 import TextColorIcon from './icons/TextColor'
@@ -48,44 +45,14 @@ const ColorSwatch: FC<{
   size = size || fontSize * 1.2
 
   const selected = useSelector(state => {
-    const currentThoughtValue = (!!state.cursor && getThoughtById(state, head(state.cursor))?.value) || ''
     const themeColor = themeColors(state)
-    /* Define the color and background color regex to get the current color of current thought
+    /* Compare the swatch color to the command state color.
        document.execCommand('foreColor') adds the color attribute with hex and document.execCommand('backColor') adds the background-color attribute with the rgb
        document.execCommand('foreColor') always sets the color as hex whether the value is rgb or hex. And document.execCommand('backColor') always sets the background with the rgb
     */
-    const colorRegex = /color="#([0-9a-fA-F]{6})"/g
-    const bgColorRegex = /background-color:\s*(rgb\(\d{1,3},\s?\d{1,3},\s?\d{1,3}\))/g
     const textHexColor = color ? addAlphaToHex(rgbToHex(themeColor[color])) : undefined
     const backHexColor = backgroundColor ? addAlphaToHex(rgbToHex(themeColor[backgroundColor])) : undefined
-    if (
-      (!commandStateColor && !commandStateBackgroundColor) ||
-      (commandStateColor === '#ccccccff' && commandStateBackgroundColor === '#333333ff') ||
-      (commandStateColor === addAlphaToHex(rgbToHex(themeColor.fg)) &&
-        commandStateBackgroundColor === addAlphaToHex(rgbToHex(themeColor.bg)) &&
-        !selection.isOnThought())
-    ) {
-      const colorMatches = currentThoughtValue.match(colorRegex) || []
 
-      let matchColor, match
-      // Get the colors and background colors used in current thought's value
-      const fgColors: Set<string> = new Set()
-      if (colorMatches) {
-        // colorMatches will be like this : [color="#ee82ee", color="#ff823e"] and match.slice(7, -1) will be #ee82ee
-        // If the thought is colored with many colors, matchColor will be null and if the thought is colored with one color, matchColor will be that color
-        colorMatches.forEach(match => fgColors.add(match.slice(7, -1)))
-        matchColor = fgColors.size > 1 ? null : fgColors.values().next().value
-      }
-
-      const bgColors: Set<string> = new Set()
-      while ((match = bgColorRegex.exec(currentThoughtValue)) !== null) if (match[1]) bgColors.add(match[1])
-      const matchBgColor = bgColors.size > 1 ? null : bgColors.values().next().value
-
-      return !!(
-        (textHexColor && textHexColor === (matchColor && addAlphaToHex(rgbToHex(matchColor)))) ||
-        (backHexColor && backHexColor === (matchBgColor && addAlphaToHex(rgbToHex(matchBgColor))))
-      )
-    }
     return !!(
       (textHexColor && textHexColor === commandStateColor) ||
       (backHexColor && backHexColor === commandStateBackgroundColor)
@@ -94,12 +61,16 @@ const ColorSwatch: FC<{
 
   /** Toggles the text color to the clicked swatch. If the swatch is already selected, sets text color and background color back to default. */
   const toggleTextColor = () => {
-    dispatch(
-      formatSelection(
-        'foreColor',
-        selected ? 'fg' : color || (backgroundColor && backgroundColor !== 'fg' ? 'black' : 'bg'),
-      ),
-    )
+    dispatch((dispatch, getState) => {
+      // Note is semi-transparent by default and its color must be reset to that rather than white, which is the fg color for thoughts. (#3902)
+      const fgColor = getState().noteFocus ? 'fgNote' : 'fg'
+      dispatch(
+        formatSelection(
+          'foreColor',
+          selected ? fgColor : color || (backgroundColor && backgroundColor !== 'fg' ? 'black' : 'bg'),
+        ),
+      )
+    })
 
     batchEditingStore.update(true)
     // Apply background color to the selection

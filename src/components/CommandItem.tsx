@@ -26,11 +26,11 @@ import HighlightedText from './HighlightedText'
 /** Returns true if the command can be executed. */
 const isExecutable = (state: State, command: Command) =>
   (!command.canExecute || command.canExecute(state)) &&
-  (command.allowExecuteFromModal || !state.showModal || !state.showGestureCheatsheet)
+  (command.allowExecuteFromModal || !state.showModal || !state.showMobileCommandUniverse)
 
 const strokeWidth = 4
 
-/** Renders a command in a variety of contexts, including the Command Palette, Gesture Menu, Gesture Cheatsheet, and Help modal. */
+/** Renders a command in a variety of contexts, including the Desktop Command Universe, Gesture Menu, Mobile Command Universe, and Help modal. */
 const CommandItem: FC<{
   viewType?: CommandViewType
   search?: string
@@ -127,14 +127,14 @@ const CommandItem: FC<{
   /** The first n segments of the gesture diagram to highlight. */
   const gestureHighlight = useMemo(() => {
     if (disabled || gestureInProgress === undefined) return undefined
-    if (command.id === 'openGestureCheatsheet') {
-      // For gesture cheatsheet command, find the longest matching end portion
+    if (command.id === 'openMobileCommandUniverse') {
+      // For mobile command universe command, find the longest matching end portion
 
-      const gestureCheatsheetGesture = gestureString(command)
+      const mobileCommandUniverseGesture = gestureString(command)
       return (
-        [...gestureCheatsheetGesture]
-          .map((_, i) => gestureCheatsheetGesture.length - i)
-          .find(len => gestureInProgress.endsWith(gestureCheatsheetGesture.slice(0, len))) ?? 0
+        [...mobileCommandUniverseGesture]
+          .map((_, i) => mobileCommandUniverseGesture.length - i)
+          .find(len => gestureInProgress.endsWith(mobileCommandUniverseGesture.slice(0, len))) ?? 0
       )
     }
     // For other commands, use normal highlighting
@@ -188,7 +188,7 @@ const CommandItem: FC<{
         className={css(
           { boxSizing: 'border-box' },
           viewType === 'grid'
-            ? { minWidth: { base: '8.889rem', _mobile: 'auto' }, width: '100%' }
+            ? { minWidth: 0, width: '100%' }
             : {
                 display: 'flex',
                 justifyContent: 'center',
@@ -251,7 +251,8 @@ const CommandItem: FC<{
           className={css({
             minWidth: '4em',
             lineHeight: '1em',
-            whiteSpace: 'nowrap',
+            whiteSpace: viewType === 'grid' ? 'normal' : 'nowrap',
+            overflowWrap: viewType === 'grid' ? 'break-word' : undefined,
             fontSize: viewType === 'grid' ? '0.8rem' : '0.9em',
             color: disabled
               ? 'gray45'

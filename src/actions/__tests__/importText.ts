@@ -10,6 +10,7 @@ import contextToThoughtId from '../../selectors/contextToThoughtId'
 import exportContext from '../../selectors/exportContext'
 import { getAllChildren } from '../../selectors/getChildren'
 import getLexeme from '../../selectors/getLexeme'
+import getThoughtById from '../../selectors/getThoughtById'
 import contextToThought from '../../test-helpers/contextToThought'
 import editThought from '../../test-helpers/editThoughtByContext'
 import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
@@ -64,7 +65,6 @@ it('basic import with proper thought structure', () => {
       lastUpdated: never(),
       // TODO: Is this expected?
       pending: true,
-      rank: 0,
     },
     [contextToThoughtId(stateNew, [HOME_TOKEN])!]: {
       childrenMap: { [childAId]: childAId },
@@ -78,13 +78,11 @@ it('basic import with proper thought structure', () => {
     [contextToThoughtId(stateNew, ['a'])!]: {
       id: childAId,
       value: 'a',
-      rank: 0,
       childrenMap: { [childBId]: childBId },
     },
     [contextToThoughtId(stateNew, ['a', 'b'])!]: {
       id: childBId,
       value: 'b',
-      rank: 0,
       childrenMap: {},
     },
   })
@@ -779,11 +777,39 @@ it(`import sibling empty thoughts`, () => {
   `
 
   const stateNew = importText(initialState(), { text })
-  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+  const values = getAllChildrenByContext(stateNew, [HOME_TOKEN]).map(id => getThoughtById(stateNew, id)?.value)
 
-  expect(exported).toBe(`- ${HOME_TOKEN}
-  - a
-  - b`)
+  // empty thoughts are preserved on import. See https://github.com/cybersemics/em/issues/4448.
+  expect(values).toEqual(['a', '', '', 'b'])
+})
+
+// Regression test for https://github.com/cybersemics/em/issues/4448
+// An empty thought within a series of copied plaintext thoughts (e.g. Select All + Copy of "- A\n- B\n- \n- D")
+// should be preserved on paste, not silently dropped.
+it('import a series of plaintext thoughts with an empty thought in the middle', () => {
+  const text = `- A\n- B\n- \n- D`
+
+  const stateNew = importText(initialState(), { text })
+  const values = getAllChildrenByContext(stateNew, [HOME_TOKEN]).map(id => getThoughtById(stateNew, id)?.value)
+
+  expect(values).toEqual(['A', 'B', '', 'D'])
+})
+
+// Regression test for https://github.com/cybersemics/em/issues/4448 (Issue B)
+// Pasting a series that contains multiple empty thoughts into a non-leaf destination routes through the
+// dummy/collapse (uncategorize) path, where the empty thoughts were previously merged into a single empty
+// thought. Each empty thought should be preserved as a distinct sibling.
+it('import multiple empty thoughts within a series into a non-leaf destination', () => {
+  const initialHtml = `<li>x<ul><li>y</li></ul></li>`
+  const importedHtml = `<ul><li>A</li><li></li><li>B</li><li></li><li>C</li></ul>`
+
+  const state1 = importText(initialState(), { path: HOME_PATH, text: initialHtml })
+  const simplePath = contextToPath(state1, ['x'])!
+  const state2 = importText(state1, { path: simplePath, text: importedHtml })
+
+  const values = getAllChildrenByContext(state2, ['x']).map(id => getThoughtById(state2, id)?.value)
+
+  expect(values).toEqual(['y', 'A', '', 'B', '', 'C'])
 })
 
 it('set cursor correctly after duplicate merge', () => {

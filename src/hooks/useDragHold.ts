@@ -9,15 +9,13 @@ import { AlertType, LongPressState } from '../constants'
 import hasMulticursor from '../selectors/hasMulticursor'
 import useLongPress from './useLongPress'
 
-/** Adds event handlers to detect long press and set state.dragHold while the user is long pressing a thought in preparation for a drag. */
+/** Adds event handlers to detect long press and set state.longPress while the user is long pressing a thought in preparation for a drag. */
 const useDragHold = ({
-  isDragging,
   disabled,
   simplePath,
   sourceZone,
   toggleMulticursorOnLongPress,
 }: {
-  isDragging: boolean
   disabled?: boolean
   toggleMulticursorOnLongPress?: boolean
   simplePath: SimplePath

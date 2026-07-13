@@ -5,7 +5,7 @@ import anchorButtonRecipe from './src/recipes/anchorButton'
 import bulletRecipe from './src/recipes/bullet'
 import buttonRecipe from './src/recipes/button'
 import childRecipe from './src/recipes/child'
-import dialogRecipe from './src/recipes/dialog'
+import dialogRecipe from './src/recipes/dialogRecipe'
 import dropEndRecipe from './src/recipes/dropEnd'
 import dropHoverRecipe from './src/recipes/dropHover'
 import editableRecipe from './src/recipes/editable'
@@ -17,7 +17,6 @@ import linkRecipe from './src/recipes/link'
 import modalRecipe from './src/recipes/modal'
 import modalActionLinkRecipe from './src/recipes/modalActionLink'
 import modalTextRecipe from './src/recipes/modalText'
-import multilineRecipe from './src/recipes/multiline'
 import panelCommandGroupRecipe from './src/recipes/panelCommandGroupRecipe'
 import panelCommandRecipe from './src/recipes/panelCommandRecipe'
 import slideTransitionRecipe from './src/recipes/slideTransition'
@@ -192,6 +191,33 @@ const keyframes = defineKeyframes({
     '70%': { transform: 'scale3d(1.2, 1.2, 1)' },
     '100%': { transform: 'scale3d(1, 1, 1)' },
   },
+  /**
+   * These keyframes define a scroll hint fade at the top and bottom of the
+   * Dialog's scrollable `content`. The scroll hint fades in when there's scrollable
+   * content, and fades out when the user is at either extreme.
+   *
+   * `mask-image` can't be animated directly, so instead we animate a custom
+   * property that `mask-image`'s gradient references. The browser can then
+   * interpolate that value smoothly, updating the gradient without the need
+   * for JavaScript.
+   *
+   * This value defines how far the user needs to scroll from the top edge to reveal the fade.
+   */
+  dialogContentScrollFade: {
+    to: {
+      '--dialog-content-mask-fade-top': '2.2rem',
+    },
+  },
+  /**
+   * Bottom-edge counterpart. The bottom fade is on by default as a scrollability cue.
+   * As the user reaches the bottom, we want to fade that out to indicate that there's no more content below.
+   * This value defines the distance from the bottom edge at which the fade is completely gone, revealing the full content.
+   */
+  dialogContentScrollFadeBottom: {
+    to: {
+      '--dialog-content-mask-fade-bottom': '0.25rem',
+    },
+  },
   // the hideCaret animation must run every time the indent changes on iOS Safari, which necessitates replacing the animation with an identical substitute with a different name
   // See: recipes/hideCaret.ts
   // TODO: FauxCaret will break if hideCaretAnimationNames is imported from hideCaret.config.ts into hideCaret.ts, and vice versa into panda.config.ts, so we are stuck with duplicate definitions in two files.
@@ -347,6 +373,7 @@ const globalCss = defineGlobalStyles({
   ':root': {
     '--active-glow-gradient':
       'linear-gradient(180deg, {colors.commandCenterBlue} 0%, {colors.commandCenterPurple} 100%)',
+    '--safe-area-inset-bottom': 'env(safe-area-inset-bottom)',
   },
   '@supports (background-image: linear-gradient(180deg in oklch, #000))': {
     ':root': {
@@ -415,9 +442,12 @@ export default defineConfig({
         },
         spacing: {
           modalPadding: { value: '8%' },
+          editablePaddingTop: { value: '0.375em' },
+          editablePaddingBottom: { value: '0.25em' },
           safeAreaTop: { value: 'env(safe-area-inset-top)' },
+          safeAreaRight: { value: 'env(safe-area-inset-right)' },
           safeAreaBottom: { value: 'env(safe-area-inset-bottom)' },
-          editableClipBottom: { value: '0.1em' },
+          safeAreaLeft: { value: 'env(safe-area-inset-left)' },
         },
         /* z-index schedule
         Keep these in one place to make it easier to determine interactions and prevent conflicts. */
@@ -426,12 +456,15 @@ export default defineConfig({
             'dialog',
             'dialogContainer',
             'popup',
+            'tip',
             'cloneDroppedThought',
             'hoverArrow',
             'gestureTrace',
             'hamburgerMenu',
             'sidebar',
             'modal',
+            'commandCenter',
+            'commandCenterBlur',
             'footer',
             'toolbarContainer',
             'toolbarOverlay',
@@ -464,7 +497,6 @@ export default defineConfig({
         thoughtRecipe,
         editableRecipe,
         textNoteRecipe,
-        multilineRecipe,
         modalActionLinkRecipe,
         toolbarPointerEventsRecipe,
         tutorialBulletRecipe,
@@ -499,6 +531,27 @@ export default defineConfig({
   },
 
   globalCss,
+
+  /* Registering `--dialog-content-mask-fade-top` as a `<length>`
+  is what makes the scroll-driven mask animation in dialogRecipe.ts
+  interpolate smoothly.
+  An unregistered custom property would animate as a discrete string
+  swap and would flash in abruptly rather than smoothly animating. */
+  globalVars: {
+    '--dialog-content-mask-fade-top': {
+      syntax: '<length>',
+      inherits: false,
+      initialValue: '0px',
+    },
+    // initialValue must be computationally independent per the CSS Properties & Values API spec —
+    // rem isn't allowed (depends on root font-size), so we hardcode 60px (= 3.75rem at the 16px root
+    // we set on html/body in index.css) to match the static plateau distance from the bottom edge.
+    '--dialog-content-mask-fade-bottom': {
+      syntax: '<length>',
+      inherits: false,
+      initialValue: '60px',
+    },
+  },
 
   conditions: {
     light: '[data-color-mode=light] &',

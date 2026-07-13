@@ -1,4 +1,4 @@
-import { page } from '../setup'
+import { page } from '../session'
 
 /** Renders a simulated mouse pointer that tracks the actual mouse movements. */
 async function showMousePointer() {

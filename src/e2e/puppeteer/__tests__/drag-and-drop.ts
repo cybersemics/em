@@ -9,7 +9,7 @@ import paste from '../helpers/paste'
 import screenshot from '../helpers/screenshot'
 import simulateDragAndDrop from '../helpers/simulateDragAndDrop'
 import waitForEditable from '../helpers/waitForEditable'
-import { page } from '../setup'
+import { page } from '../session'
 
 // TODO: Why do the uncle tests fail with the default threshold of 0.18?
 // 'd' fails with slight rendering differences for some reason.
@@ -39,7 +39,7 @@ vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
  * @returns Promise<boolean> True if the element is visible, false otherwise.
  */
 const isElementVisible = async (text: string, selector = '[data-editable]'): Promise<boolean> => {
-  return await page.evaluate(
+  return page.evaluate(
     (text, selector) => {
       const elements = Array.from(document.querySelectorAll(selector))
       const element = elements.find(el => el.innerHTML === text)

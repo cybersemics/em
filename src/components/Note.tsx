@@ -16,11 +16,12 @@ import preventAutoscroll, { preventAutoscrollEnd } from '../device/preventAutosc
 import * as selection from '../device/selection'
 import useFreshCallback from '../hooks/useFreshCallback'
 import getThoughtById from '../selectors/getThoughtById'
+import noteValue from '../selectors/noteValue'
 import resolveNotePath from '../selectors/resolveNotePath'
 import store from '../stores/app'
+import batchEditingStore from '../stores/batchEditing'
 import equalPathHead from '../util/equalPathHead'
 import head from '../util/head'
-import noteValue from '../util/noteValue'
 import strip from '../util/strip'
 import useOnCut from './Editable/useOnCut'
 import FauxCaret from './FauxCaret'
@@ -124,28 +125,26 @@ const Note = React.memo(
 
           const targetPath = resolveNotePath(state, path) ?? path
 
-          dispatch(setDescendant({ path: targetPath, values: [value] }))
+          dispatch(
+            setDescendant({
+              path: targetPath,
+              values: [value],
+              mergePrev: batchEditingStore.getState(), // If batch editing is in progress, merge this edit with the previous one in the undo stack.
+            }),
+          )
         })
       },
       [dispatch, path, justPasted],
     )
 
-    /** Set editing to false onBlur, if keyboard is closed. */
+    /** Set state.noteFocus if Note lost focus and did not move to another Note. Set state.keyboardOpen if keyboard is closed. */
     const onBlur = useCallback(
       (e: React.FocusEvent) => {
-        if (!(e.relatedTarget instanceof Element)) return
-
-        const isRelatedTargetNote = !!e.relatedTarget.matches('[aria-label="note-editable"]')
-
-        if (!isRelatedTargetNote) dispatch(setNoteFocus({ value: false }))
-
-        if (isTouch && !selection.isActive()) {
-          // if we know that the focus is changing to another editable or note then do not set editing to false
-          // (does not work when clicking a bullet as it is set to null)
-          const isRelatedTargetEditableOrNote =
-            e.relatedTarget && (e.relatedTarget.hasAttribute?.('data-editable') || isRelatedTargetNote)
-
-          if (!isRelatedTargetEditableOrNote) setTimeout(() => dispatch(keyboardOpen({ value: false })))
+        if (!selection.isNote(e.relatedTarget)) {
+          dispatch(setNoteFocus({ value: false }))
+        }
+        if (isTouch && !selection.isThought()) {
+          dispatch(keyboardOpen({ value: false }))
         }
       },
       [dispatch],

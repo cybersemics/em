@@ -1,9 +1,9 @@
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
-import { compareReasonable, compareReasonableDescending } from '../util/compareThought'
-import noteValue from '../util/noteValue'
+import { compare, compareReasonable, compareReasonableDescending } from '../util/compareThought'
 import { getAllChildrenSorted, isVisible } from './getChildren'
 import getSortPreference from './getSortPreference'
+import noteValue from './noteValue'
 import thoughtToPath from './thoughtToPath'
 
 /** Calculates the rank for a given index in a sorted array of thoughts. */
@@ -20,8 +20,20 @@ const calculateRank = (thoughts: { rank: number }[], index: number): number => {
   return (thoughts[index - 1].rank + thoughts[index].rank) / 2
 }
 
-/** Gets the new rank of a value to be inserted into a sorted context. */
-const getSortedRank = (state: State, id: ThoughtId, value: string) => {
+/** Gets the new rank of a value to be inserted into a sorted context.
+ * If the sort preference is Created, then the created timestamp is the sort criteria instead.
+ * This is currently optional to reflect the fact that most call sites do not need to call this function for newly-created thoughts.
+ * Instead, they can assume that a newly-created thought goes at the end of the list if sort preference is Created (#3782).
+ *
+ * If the sort preference is Alphabetical, the old value will be represented in the list of children.
+ * The staleId option can filter out that child so that the new value is not compared against the old value (#3983).
+ */
+const getSortedRank = (
+  state: State,
+  id: ThoughtId,
+  value: string,
+  options: { created?: number; staleId?: ThoughtId } = {},
+) => {
   const children = id ? getAllChildrenSorted(state, id) : []
 
   if (children.length === 0) return 0
@@ -30,9 +42,19 @@ const getSortedRank = (state: State, id: ThoughtId, value: string) => {
   const isDescending = sortPreference.direction === 'Desc'
   const thoughts = children.filter(thought => !state.cursor || thought.id !== state.cursor[state.cursor.length - 1])
 
-  // Handle Created/Updated sorting
-  if (sortPreference.type === 'Created' || sortPreference.type === 'Updated') {
+  // Handle Updated sorting
+  if (sortPreference.type === 'Updated') {
     return isDescending ? thoughts[0].rank - 1 : (thoughts[thoughts.length - 1]?.rank || 0) + 1
+  }
+
+  const { created } = options
+
+  // Handle Created sorting (#3782)
+  if (created && sortPreference.type === 'Created') {
+    const index = children.findIndex(child =>
+      isDescending ? compare(created, child.created) !== -1 : compare(child.created, created) !== -1,
+    )
+    return calculateRank(children, index)
   }
 
   // Handle Note sorting
@@ -47,13 +69,16 @@ const getSortedRank = (state: State, id: ThoughtId, value: string) => {
     return calculateRank(thoughtsVisible, index)
   }
 
+  const { staleId } = options
+
   // For alphabetical sorting
-  const index = children.findIndex(child =>
+  const childrenFiltered = staleId ? children.filter(child => child.id !== staleId) : children
+  const index = childrenFiltered.findIndex(child =>
     isDescending
       ? compareReasonableDescending(child.value, value) !== -1
       : compareReasonable(child.value, value) !== -1,
   )
-  return calculateRank(children, index)
+  return calculateRank(childrenFiltered, index)
 }
 
 export default getSortedRank

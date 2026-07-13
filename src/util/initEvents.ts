@@ -5,21 +5,21 @@ import LifecycleState from '../@types/LifecycleState'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import { alertActionCreator as alert } from '../actions/alert'
-import { commandPaletteActionCreator as commandPalette } from '../actions/commandPalette'
+import { desktopCommandUniverseActionCreator as desktopCommandUniverse } from '../actions/desktopCommandUniverse'
 import { errorActionCreator as error } from '../actions/error'
 import { gestureMenuActionCreator as gestureMenu } from '../actions/gestureMenu'
 import { longPressActionCreator as longPress } from '../actions/longPress'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
-import { isAndroidWebView, isIOS, isSafari, isTouch } from '../browser'
+import { isSafari, isTouch } from '../browser'
 import { beforeInput, keyDown, keyUp } from '../commands'
 import { AlertType, LongPressState } from '../constants'
 import * as selection from '../device/selection'
+import virtualKeyboardHandler from '../device/virtual-keyboard'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import pathExists from '../selectors/pathExists'
 import store from '../stores/app'
 import { updateCommandState } from '../stores/commandStateStore'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
-import { updateSafariKeyboardState } from '../stores/safariKeyboardStore'
 import { updateScrollTop } from '../stores/scrollTop'
 import selectionRangeStore from '../stores/selectionRangeStore'
 import storageModel from '../stores/storageModel'
@@ -29,7 +29,6 @@ import isRoot from '../util/isRoot'
 import pathToContext from '../util/pathToContext'
 import durations from './durations'
 import equalPath from './equalPath'
-import handleKeyboardVisibility from './handleKeyboardVisibility'
 
 // the width of the scroll-at-edge zone at the top/bottom of the screen (for vertical scrolling) or left/right of the screen (for horizontal scrolling)
 const TOOLBAR_SCROLLATEDGE_SIZE = 50
@@ -159,9 +158,19 @@ const saveErrorReload = (savingProgress: number) => {
   }
 }
 
-/** Add window event handlers. */
+type EventHandlers = {
+  keyDown: typeof keyDown
+  keyUp: typeof keyUp
+  cleanup: () => void
+}
+
+let eventHandlers: EventHandlers | null = null
+
+/** Add window event handlers once. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const initEvents = (store: Store<State, any>) => {
+  if (eventHandlers) return eventHandlers
+
   let lastState: number
   let lastPath: Path | null
 
@@ -217,10 +226,6 @@ const initEvents = (store: Store<State, any>) => {
 
     // update command state store
     updateCommandState()
-
-    if (isTouch && isSafari() && !isIOS) {
-      updateSafariKeyboardState()
-    }
   }
 
   /** MouseMove event listener. */
@@ -299,8 +304,8 @@ const initEvents = (store: Store<State, any>) => {
       if (state.alert?.alertType === AlertType.GestureHint) {
         store.dispatch(alert(null))
       }
-      if (state.showCommandPalette) {
-        store.dispatch(commandPalette())
+      if (state.showDesktopCommandUniverse) {
+        store.dispatch(desktopCommandUniverse())
       }
       if (state.showGestureMenu) {
         store.dispatch(gestureMenu())
@@ -383,13 +388,8 @@ const initEvents = (store: Store<State, any>) => {
   const resizeHost = window.visualViewport || window
   resizeHost.addEventListener('resize', updateSize)
 
-  // Add Visual Viewport resize listener for keyboard detection
-  if (isTouch && isAndroidWebView() && window.visualViewport) {
-    window.visualViewport.addEventListener('resize', handleKeyboardVisibility)
-
-    // Force an immediate check in case keyboard is already visible
-    handleKeyboardVisibility()
-  }
+  // Initialize virtual keyboard handlers
+  virtualKeyboardHandler.init()
 
   // clean up on app switch in PWA
   // https://github.com/cybersemics/em/issues/1030
@@ -415,21 +415,27 @@ const initEvents = (store: Store<State, any>) => {
     window.removeEventListener('drop', drop)
     lifecycle.removeEventListener('statechange', onStateChange)
     resizeHost.removeEventListener('resize', updateSize)
-
-    // Remove Visual Viewport event listener
-    if (isTouch && isAndroidWebView() && window.visualViewport) {
-      window.visualViewport.removeEventListener('resize', handleKeyboardVisibility)
-    }
+    virtualKeyboardHandler.destroy()
+    eventHandlers = null
   }
 
+  eventHandlers = { keyDown, keyUp, cleanup }
+
   // return input handlers as another way to remove them on cleanup
-  return { keyDown, keyUp, cleanup }
+  return eventHandlers
 }
 
 /** Error event listener. This does not catch React errors. See the ErrorFallback component that is used in the error boundary of the App component. */
 // const onError = (e: { message: string; error?: Error }) => {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const onError = (e: any) => {
+  // Ignore opaque cross-origin "Script error." events. The browser emits these when an error occurs in a
+  // script served from a different origin without CORS headers. They carry no actionable information (no
+  // stack, filename, or line number), so showing them as an error banner only confuses the user. On iOS
+  // Safari, interacting with the browser's native share menu triggers such an error.
+  // See https://github.com/cybersemics/em/issues/4402.
+  if (!e.error && (e.message === 'Script error.' || e.message === 'Script error')) return
+
   console.error({ message: e.message, code: e.code, errors: e.errors })
   if (e.error && 'stack' in e.error) {
     console.error(e.error.stack)

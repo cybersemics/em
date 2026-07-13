@@ -1,10 +1,15 @@
-import { FC } from 'react'
+import { FC, useRef } from 'react'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
+import useDismissKeyboardOnScroll from '../hooks/useDismissKeyboardOnScroll'
 import SearchIcon from './icons/SearchIcon'
 
 /** Search bar for filtering commands. */
 const SearchCommands: FC<{ onInput?: (value: string) => void }> = ({ onInput }) => {
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useDismissKeyboardOnScroll(inputRef)
+
   return (
     <div id='search' className={css({ flexGrow: 1, border: 'solid 1px {colors.gray50}', borderRadius: '8px' })}>
       <div className={css({ position: 'relative' })}>
@@ -22,10 +27,11 @@ const SearchCommands: FC<{ onInput?: (value: string) => void }> = ({ onInput }) 
           <SearchIcon size={16} fill={token('colors.lightgray')} />
         </div>
         <input
+          ref={inputRef}
           type='text'
           placeholder='Search commands...'
-          onInput={(e: React.ChangeEvent<HTMLInputElement>) => {
-            onInput?.(e.target.value)
+          onInput={(e: React.FormEvent<HTMLInputElement>) => {
+            onInput?.(e.currentTarget.value)
           }}
           className={css({
             marginLeft: 0,

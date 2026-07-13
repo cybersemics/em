@@ -15,7 +15,7 @@ import { importFilesActionCreator as importFiles } from '../actions/importFiles'
 import { longPressActionCreator as longPress } from '../actions/longPress'
 import { moveThoughtActionCreator as moveThought } from '../actions/moveThought'
 import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from '../actions/setIsMulticursorExecuting'
-import { HOME_TOKEN, LongPressState } from '../constants'
+import { AlertType, HOME_TOKEN, LongPressState } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
 import getNextRank from '../selectors/getNextRank'
 import getPrevRank from '../selectors/getPrevRank'
@@ -57,7 +57,7 @@ const canDrop = ({ path: thoughtsTo }: DroppableSubthoughts, monitor: DropTarget
   const state = store.getState()
 
   const item = monitor.getItem() as DragThoughtOrFiles
-  const draggedItems = item as DragThoughtItem[]
+  const draggedItems = isDraggedFile(item) ? [] : item
 
   /** If the epxand hover top is active then all the descenendants of the current active expand hover top path should be droppable. */
   const isExpandedTop = () =>
@@ -106,11 +106,7 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
   }
 
   // Handle multiselect drag operations
-  const draggedItems = item as DragThoughtItem[]
-  if (!props.path) {
-    console.warn('props.path not defined', { item: draggedItems })
-    return
-  }
+  const draggedItems = isDraggedFile(item) ? [] : item
 
   /** Get the path to drop the item to. */
   const getPathTo = (state: State, itemPath: Path) =>
@@ -232,6 +228,19 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
     // Clear isMulticursorExecuting after all operations are complete and isMulticursorExecuting is true
     if (getState().isMulticursorExecuting) {
       dispatch(setIsMulticursorExecuting({ value: false }))
+    }
+
+    // Reset the long press state now that the drop is complete. The drop handler is the deterministic completion point on all platforms,
+    // whereas the touchend → longPress(Inactive) cleanup that normally ends the drag is not reliably reached on iOS after a subthought drop.
+    // This dismisses the multicursor selection (and, on mobile, the Command Center via multicursorAlertMiddleware) and clears the drag
+    // highlight (bullet selection indicator) on the dropped thought, which is driven by the lingering DragInProgress state. The cursor itself
+    // is left untouched, so it remains where it was. (#4348)
+    if (getState().longPress !== LongPressState.Inactive) {
+      // Dismiss the "Drag and drop to move thought" hint alert, since longPress(Inactive) resets the drag state but does not clear the alert.
+      if (getState().alert?.alertType === AlertType.DragAndDropHint) {
+        dispatch(alert(null))
+      }
+      dispatch(longPress({ value: LongPressState.Inactive }))
     }
 
     // Alert user if context changed

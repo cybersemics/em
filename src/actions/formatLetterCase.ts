@@ -2,6 +2,7 @@
 import LetterCaseType from '../@types/LetterCaseType'
 import Thunk from '../@types/Thunk'
 import * as selection from '../device/selection'
+import hasMulticursor from '../selectors/hasMulticursor'
 import pathToThought from '../selectors/pathToThought'
 import simplifyPath from '../selectors/simplifyPath'
 import applyLetterCase from '../util/applyLetterCase'
@@ -15,14 +16,24 @@ export const formatLetterCaseActionCreator =
     const cursor = state.cursor
     if (!cursor) return
 
-    const thought = pathToThought(state, cursor)
-    if (!thought) return state
-
-    const oldValue = thought.value
-    const newValue = applyLetterCase(command, oldValue)
-    const simplePath = simplifyPath(state, cursor)
+    const paths = hasMulticursor(state) ? Object.values(state.multicursors) : [cursor]
     const offset = selection.offsetThought()
+    const cursorSimplePath = simplifyPath(state, cursor)
+    const editActions = paths.flatMap(path => {
+      const thought = pathToThought(state, path)
+      return thought
+        ? [
+            editThought({
+              oldValue: thought.value,
+              newValue: applyLetterCase(command, thought.value),
+              path: simplifyPath(state, path),
+              force: true,
+            }),
+          ]
+        : []
+    })
 
+<<<<<<< HEAD
     dispatch(
       editThought({
         oldValue,
@@ -32,4 +43,9 @@ export const formatLetterCaseActionCreator =
         force: true,
       }),
     )
+=======
+    dispatch(editActions)
+
+    dispatch(setCursor({ path: cursorSimplePath, offset }))
+>>>>>>> origin/main
   }

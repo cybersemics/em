@@ -4,7 +4,7 @@ import getEditable from './getEditable'
 const waitForEditable = async (value: string) => {
   await browser.waitUntil(
     async () =>
-      await browser.execute(value => {
+      browser.execute(value => {
         return (
           Array.from(document.querySelectorAll('[data-editable]')).filter(element => element.innerHTML === value)
             .length > 0
@@ -12,7 +12,7 @@ const waitForEditable = async (value: string) => {
       }, value),
     { timeout: 15000 },
   )
-  return await getEditable(value)
+  return getEditable(value)
 }
 
 export default waitForEditable

@@ -1,26 +1,129 @@
 name: 'Copilot Setup Steps'
 
 # Allow testing of the setup steps from your repository's "Actions" tab.
-on: workflow_dispatch
+# Run automatically when this file changes (for easy validation), and allow
+# manual runs from the Actions tab.
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+  pull_request:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   # The job MUST be called `copilot-setup-steps` or it will not be picked up by Copilot.
   copilot-setup-steps:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
-    # You can define any steps you want, and they will run before the agent starts.
-    # If you do not check out your code, Copilot will do this for you.
     steps:
       - name: Clone repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Enable Corepack
         run: corepack enable
 
       - name: Set Node.js version
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 22
+          cache: 'yarn'
 
       - name: Install npm dependencies
         run: yarn
+
+      # Install Xvfb to provide a virtual X display so Chrome can run in the
+      # Cloud Agent environment (which has no physical display).
+      - name: Install Xvfb
+        run: sudo apt-get install -y xvfb
+
+      # Start Xvfb in the background and export DISPLAY so Chrome DevTools MCP
+      # (and any other tools that need a display) can find it automatically.
+      - name: Start virtual display
+        run: |
+          nohup Xvfb :99 -screen 0 1280x1024x24 >/dev/null 2>&1 &
+          disown
+          echo "DISPLAY=:99" >> $GITHUB_ENV
+
+      # Expose BrowserStack credentials to the agent's shell environment.
+      # The wdio MCP gets these via its own MCP server config, but the
+      # heartbeat script (.github/skills/browser-control-ios/heartbeat.sh) runs
+      # in the agent's Bash tool — separate process scope — and needs the
+      # same creds to authenticate its keepalive pings to the BrowserStack
+      # hub. Without this, the heartbeat daemon launches but every ping
+      # fails with empty auth, and the iOS session dies on the idle cap.
+      # Values remain masked in workflow logs by GitHub Actions secret
+      # redaction.
+      - name: Export BrowserStack credentials to agent env
+        env:
+          BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
+          BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
+        run: |
+          echo "BROWSERSTACK_USERNAME=$BROWSERSTACK_USERNAME" >> $GITHUB_ENV
+          echo "BROWSERSTACK_ACCESS_KEY=$BROWSERSTACK_ACCESS_KEY" >> $GITHUB_ENV
+
+      # The line above puts the creds on later workflow *steps*, but does NOT reach the agent's Bash
+      # shell, so `yarn test:ios:browserstack` sees BROWSERSTACK_USERNAME undefined. The wdio configs
+      # load .env.test.local via dotenv, and the workspace persists into the agent session — so write
+      # the creds there too. .env.test.local is gitignored (.env*.local), so the secrets can't be committed.
+      - name: Write BrowserStack creds for the test runner
+        env:
+          BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
+          BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
+        run: |
+          printf 'BROWSERSTACK_USERNAME=%s\nBROWSERSTACK_ACCESS_KEY=%s\n' \
+            "$BROWSERSTACK_USERNAME" "$BROWSERSTACK_ACCESS_KEY" >> .env.test.local
+
+      # ubuntu-latest ships google-chrome-stable; just verify it's present.
+      - name: Verify Chrome
+        run: google-chrome --version
+
+      # Pre-pull the browserless image so the puppeteer test harness (src/e2e/puppeteer/test-puppeteer.sh,
+      # invoked by the run-test skill) finds it cached and skips the multi-layer pull. Paying it here, at
+      # setup time, keeps it out of the agent's run. Matches the untagged image the script's `docker run` uses.
+      - name: Pre-pull browserless image
+        run: docker pull browserless/chrome
+
+      # Launch a single shared Chrome exposing a CDP endpoint on :9222 that BOTH the chrome-devtools MCP
+      # (configured with --browser-url=http://127.0.0.1:9222) and the web executor bridge
+      # (src/e2e/puppeteer/attachExistingBrowserInstance.ts, via puppeteer.connect) attach to — so the agent and the bridge drive one
+      # browser. The MCP with --browser-url does NOT launch Chrome itself, so it must already be running.
+      - name: Start shared Chrome (remote debugging on :9222)
+        run: |
+          nohup node scripts/shared-chrome.mjs >/tmp/shared-chrome.log 2>&1 &
+          disown
+          for i in {1..30}; do
+            if curl -fsS -o /dev/null http://127.0.0.1:9222/json/version 2>/dev/null; then
+              echo "Shared Chrome ready after ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Shared Chrome did not come up within 30s — log:" >&2
+          cat /tmp/shared-chrome.log >&2
+          exit 1
+
+      # Start the Vite dev server in the background so it's already running
+      # when the agent session begins. Logs go to /tmp/dev-server.log.
+      # Vite may serve HTTP or HTTPS depending on local config, so probe both.
+      - name: Start dev server
+        run: |
+          nohup yarn start >/tmp/dev-server.log 2>&1 &
+          disown
+          for i in {1..30}; do
+            if curl -fsS -o /dev/null http://localhost:3000 2>/dev/null \
+              || curl -fsSk -o /dev/null https://localhost:3000 2>/dev/null; then
+              echo "Dev server ready after ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Dev server did not come up within 30s — log:" >&2
+          cat /tmp/dev-server.log >&2
+          exit 1

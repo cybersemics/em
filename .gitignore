@@ -17,14 +17,16 @@ local.log
 .DS_Store
 .env*.local
 .eslintcache
-.firebase
-.firebaserc
 .history
 .idea
+.vercel
 
 /coverage
 /build
-/docs
+
+# Tauri
+src-tauri/target
+src-tauri/gen/schemas
 
 # diff images output from failed Puppeteer snapshot tests
 __diff_output__
@@ -32,10 +34,12 @@ __diff_output__
 ## PandaCSS
 styled-system
 styled-system-studio
+*.cpuprofile
 
 # WDIO
-wdio.log
-browserstack.log
-local.log
+wdio.*
+browserstack.*
+local.*
 /log
 /logs
+

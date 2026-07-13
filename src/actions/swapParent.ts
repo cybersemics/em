@@ -2,6 +2,7 @@ import _ from 'lodash'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import moveThought from '../actions/moveThought'
+import sort from '../actions/sort'
 import { getChildrenRanked } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
@@ -50,8 +51,8 @@ const swapParent = (state: State): State => {
   const parentChildren = getChildrenRanked(state, parentId)
   const siblings = parentChildren.filter(sibling => sibling.id !== childId)
 
-  // Get the grandparent path
   const grandparent = parentOf(parent)
+  const grandparentId = head(rootedParentOf(state, parent))
 
   return reducerFlow([
     // First move the child to replace its parent's position
@@ -59,6 +60,7 @@ const swapParent = (state: State): State => {
       oldPath: simplifyPath(state, cursor),
       newPath: simplifyPath(state, parent),
       newRank: parentThought.rank,
+      skipMerge: true,
     }),
 
     // Then move the parent under the child
@@ -66,6 +68,7 @@ const swapParent = (state: State): State => {
       oldPath: simplifyPath(state, parent),
       newPath: simplifyPath(state, [...grandparent, childId, parentId]),
       newRank: childThought.rank,
+      skipMerge: true,
     }),
 
     // Move siblings under the child
@@ -74,6 +77,7 @@ const swapParent = (state: State): State => {
         oldPath: simplifyPath(state, [...parent, sibling.id]),
         newPath: simplifyPath(state, [...grandparent, childId, sibling.id]),
         newRank: sibling.rank,
+        skipMerge: true,
       }),
     ),
 
@@ -83,13 +87,25 @@ const swapParent = (state: State): State => {
         oldPath: simplifyPath(state, [...cursor, grandchild.id]),
         newPath: simplifyPath(state, [...grandparent, childId, parentId, grandchild.id]),
         newRank: grandchild.rank,
+        skipMerge: true,
       }),
     ),
 
+    // If an active sort preference exists on the grandparent context (e.g. the root), re-rank its
+    // children so that the child thought that just moved in gets the correct rank.
+    // No-op when no sort preference is active (sort returns early for type === 'None').
+    sort(grandparentId),
+
+    // If an active sort preference migrated to the child (e.g. =sort was a sibling of the child
+    // under the original parent and is now a sibling of the moved parent under the child), re-rank
+    // the child's new children to match the sort order.
+    // No-op when no sort preference is active (sort returns early for type === 'None').
+    sort(childId),
+
     // Keep cursor on the child at its new position
     setCursor({
-      path: [...grandparent, childId, parentId],
-      offset: parentThought.value.length,
+      path: [...grandparent, childId],
+      offset: childThought.value.length,
     }),
   ])(state)
 }

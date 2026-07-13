@@ -7,6 +7,7 @@ import { importTextActionCreator as importText } from '../../actions/importText'
 import { indentActionCreator as indent } from '../../actions/indent'
 import { moveThoughtDownActionCreator as moveThoughtDown } from '../../actions/moveThoughtDown'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
+import { redoActionCreator as redo } from '../../actions/redo'
 import { undoActionCreator as undo } from '../../actions/undo'
 import { executeCommandWithMulticursor } from '../../commands'
 import moveThoughtDownCommand from '../../commands/moveThoughtDown'
@@ -16,14 +17,20 @@ import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
 import { getLexeme } from '../../selectors/getLexeme'
+import isUndoEnabled from '../../selectors/isUndoEnabled'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+<<<<<<< HEAD
 import head from '../../util/head'
+=======
+import archiveCommand from '../archive'
+>>>>>>> origin/main
 import deleteCommand from '../delete'
 import indentCommand from '../indent'
+import moveCursorForward from '../moveCursorForward'
 
 beforeEach(initStore)
 
@@ -239,6 +246,70 @@ describe('undo', () => {
   - d
   - e`
     expect(exported).toEqual(expectedOutput)
+  })
+
+  it('undo should stay enabled and not throw after a multicursor command that nets to no change', () => {
+    store.dispatch([
+      importText({
+        text: `
+        - a
+        - b
+        - c
+        - d`,
+      }),
+      // Select b, c, and d.
+      setCursor(['b']),
+      addMulticursor(['b']),
+      addMulticursor(['c']),
+      addMulticursor(['d']),
+    ])
+
+    // Indent the selected thoughts under a. This is the undoable change that must remain undoable after the subsequent no-op command.
+    executeCommandWithMulticursor(moveCursorForward, { store })
+
+    let exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toEqual(`- ${HOME_TOKEN}
+  - a
+    - b
+    - c
+    - d`)
+
+    expect(isUndoEnabled(store.getState())).toBe(true)
+
+    // Execute a multicursor command that nets to no change. The space-to-indent guard bails on the non-empty thoughts, so indent dispatches nothing, but the surrounding setIsMulticursorExecuting actions still run.
+    // Previously this appended an empty patch to undoPatches, which disabled Undo and threw on the next undo/redo.
+    executeCommandWithMulticursor(indentCommand, { store, type: 'keyboard' })
+
+    // Structure is unchanged by the no-op command.
+    exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toEqual(`- ${HOME_TOKEN}
+  - a
+    - b
+    - c
+    - d`)
+
+    // Undo must remain enabled (the no-op command must not push an empty patch that disables undo).
+    expect(isUndoEnabled(store.getState())).toBe(true)
+
+    // Undo must not throw and should restore the pre-indent structure.
+    expect(() => store.dispatch(undo())).not.toThrow()
+
+    exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toEqual(`- ${HOME_TOKEN}
+  - a
+  - b
+  - c
+  - d`)
+
+    // Redo must not throw and should restore the indented structure.
+    expect(() => store.dispatch(redo())).not.toThrow()
+
+    exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toEqual(`- ${HOME_TOKEN}
+  - a
+    - b
+    - c
+    - d`)
   })
 
   // Broken when space-to-indent was added.
@@ -937,5 +1008,54 @@ describe('multicursor grouping', () => {
   - c
   - e`
     expect(exported).toEqual(expectedOutput)
+  })
+
+  it('should undo a multicursor command and a trailing navigation action together in a single undo', () => {
+    // Reproduces #4314: archiving multiple selected thoughts via the DropGutter while the Command Center is open
+    // leaves a trailing setCursor (navigation) patch on top of the multicursor command patch. The multicursor
+    // command patch stores its undoLabel (here the command id 'archive', which is not a registered action type) at
+    // actions[0], so the first undo must still restore the archived thoughts, not just the trailing cursor change.
+    store.dispatch([
+      importText({
+        text: `
+        - a
+        - b
+        - c
+        - d
+        - e`,
+      }),
+      setCursor(['a']),
+      addMulticursor(['a']),
+      addMulticursor(['b']),
+      addMulticursor(['c']),
+    ])
+
+    // Archive all selected thoughts as a single multicursor command. The cursor lands on the surviving sibling d.
+    executeCommandWithMulticursor(archiveCommand, { store })
+
+    // The archived thoughts (a, b, c) are moved to the hidden =archive context.
+    let exportedTrailingNav = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exportedTrailingNav).toEqual(`- ${HOME_TOKEN}
+  - =archive
+    - c
+    - b
+    - a
+  - d
+  - e`)
+
+    // Simulate the trailing navigation patch that lands on top of the command patch (e.g. cursor restore after the
+    // Command Center closes). Moving the cursor to a different surviving thought creates a separate navigation-only patch.
+    store.dispatch(setCursor(['e']))
+
+    // A single undo must undo both the trailing navigation and the multicursor command, restoring the archived thoughts.
+    store.dispatch(undo())
+
+    exportedTrailingNav = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exportedTrailingNav).toEqual(`- ${HOME_TOKEN}
+  - a
+  - b
+  - c
+  - d
+  - e`)
   })
 })

@@ -1,0 +1,17 @@
+import Command from '../@types/Command'
+import { desktopCommandUniverseActionCreator as desktopCommandUniverse } from '../actions/desktopCommandUniverse'
+import CommandUniverseIcon from '../components/icons/CommandUniverseIcon'
+
+const openDesktopCommandUniverseCommand: Command = {
+  id: 'openDesktopCommandUniverse',
+  label: 'Command Universe',
+  description: 'Opens the Command Universe.',
+  hideFromDesktopCommandUniverse: true,
+  multicursor: false,
+  svg: CommandUniverseIcon,
+  keyboard: { key: 'p', meta: true },
+  exec: dispatch => dispatch(desktopCommandUniverse()),
+  allowExecuteFromModal: true,
+}
+
+export default openDesktopCommandUniverseCommand

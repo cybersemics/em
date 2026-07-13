@@ -1,7 +1,7 @@
 import { Capacitor } from '@capacitor/core'
 import { StatusBar, Style } from '@capacitor/status-bar'
 import _ from 'lodash'
-import React, { FC, PropsWithChildren, useEffect, useLayoutEffect } from 'react'
+import React, { FC, PropsWithChildren, useEffect, useLayoutEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { WebviewBackground } from 'webview-background'
 import { css } from '../../styled-system/css'
@@ -19,8 +19,8 @@ import store from '../stores/app'
 import isDocumentEditable from '../util/isDocumentEditable'
 import Alert from './Alert'
 import CommandCenter from './CommandCenter/CommandCenter'
-import CommandPalette from './CommandPalette'
 import Content from './Content'
+import DesktopCommandUniverse from './DesktopCommandUniverse'
 import DropGutter from './DropGutter'
 import ErrorMessage from './ErrorMessage'
 import Footer from './Footer'
@@ -34,7 +34,7 @@ import Tips from './Tips/Tips'
 import Toolbar from './Toolbar'
 import Tutorial from './Tutorial'
 import UndoSlider from './UndoSlider'
-import GestureCheatsheet from './dialog/GestureCheatsheet'
+import MobileCommandUniverse from './dialog/MobileCommandUniverse'
 import * as modals from './modals'
 
 /** A hook that sets an attribute on the document.body element. */
@@ -64,7 +64,16 @@ const useBodyAttributeSelector = <T,>(name: string, selector: (state: State) => 
 //   )
 // }
 
-/** Cancel gesture if there is an active text selection, drag, modal, or sidebar. */
+/** Returns true if the given touch point is within the toolbar's bounds. Used to prevent a swipe on the toolbar from being captured as a thoughtspace gesture (which disables scroll), so the toolbar can scroll horizontally. The toolbar can render below the static TOOLBAR_HEIGHT that isInGestureZone excludes (e.g. pushed down by the iOS safe-area inset), so its actual bounds are checked here. */
+const isOnToolbar = (x?: number, y?: number): boolean => {
+  if (x == null || y == null || typeof document === 'undefined') return false
+  const toolbar = document.getElementById('toolbar')
+  if (!toolbar) return false
+  const rect = toolbar.getBoundingClientRect()
+  return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom
+}
+
+/** Cancel gesture if the touch is on the toolbar, or if there is an active text selection, drag, modal, or sidebar. */
 const shouldCancelGesture = (
   /** The x coordinate of the touch event. If x and y are provided, cancels the gesture if the touch point is too close to the selection. See selection.isNear. */
   x?: number,
@@ -74,11 +83,12 @@ const shouldCancelGesture = (
   const state = store.getState()
   const distance = state.fontSize * 2
   return (
+    isOnToolbar(x, y) ||
     (x && y && selection.isNear(x, y, distance)) ||
     state.longPress !== LongPressState.Inactive ||
     !!state.showModal ||
     state.showSidebar ||
-    !!state.showGestureCheatsheet
+    !!state.showMobileCommandUniverse
   )
 }
 
@@ -113,6 +123,7 @@ const AppComponent: FC = () => {
   const fontSize = useSelector(state => state.fontSize)
   const showModal = useSelector(state => state.showModal)
   const tutorial = useSelector(isTutorial)
+  const rootRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     WebviewBackground.changeBackgroundColor({ color: colors.bg })
@@ -148,11 +159,11 @@ const AppComponent: FC = () => {
 
     if (Capacitor.isNativePlatform()) {
       StatusBar.setStyle({ style: dark ? Style.Dark : Style.Light })
-      // Android only, set statusbar color to black.
       if (Capacitor.getPlatform() === 'android') {
-        StatusBar.setBackgroundColor({
-          color: colors.bg,
-        })
+        // Make the WebView extend behind the status bar (edge-to-edge), matching iOS behavior.
+        // safeAreaTop (env(safe-area-inset-top)) will equal the status bar height, and the
+        // AppComponent wrapper's paddingTop: safeAreaTop keeps normal content below the status bar.
+        StatusBar.setOverlaysWebView({ overlay: true })
       }
     }
   }, [colors, dark])
@@ -169,14 +180,15 @@ const AppComponent: FC = () => {
         /* safeAreaTop applies for rounded screens */
         paddingTop: 'safeAreaTop',
       })}
+      ref={rootRef}
     >
       <Alert />
       <Tips />
-      {!isTouch && <CommandPalette />}
+      {!isTouch && <DesktopCommandUniverse />}
       {isTouch && <GestureMenu />}
       <ErrorMessage />
       {enableLatestCommandsDiagram && <LatestCommandsDiagram position='bottom' />}
-      <GestureCheatsheet />
+      <MobileCommandUniverse />
 
       {isDocumentEditable() && !tutorial && !showModal && (
         <>

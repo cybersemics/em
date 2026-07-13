@@ -2,7 +2,7 @@ import _ from 'lodash'
 import React, { FocusEventHandler, useCallback, useEffect, useRef } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import { cx } from '../../styled-system/css'
-import { editableRecipe, invalidOptionRecipe, multilineRecipe } from '../../styled-system/recipes'
+import { editableRecipe, invalidOptionRecipe } from '../../styled-system/recipes'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import TutorialChoice from '../@types/TutorialChoice'
@@ -17,7 +17,7 @@ import { newThoughtActionCreator as newThought } from '../actions/newThought'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import { tutorialNextActionCreator as tutorialNext } from '../actions/tutorialNext'
-import { isMac, isTouch } from '../browser'
+import { isMac, isSafari, isTouch } from '../browser'
 import { commandEmitter } from '../commands'
 import {
   EDIT_THROTTLE,
@@ -31,6 +31,7 @@ import {
   TUTORIAL_CONTEXT1_PARENT,
   TUTORIAL_CONTEXT2_PARENT,
 } from '../constants'
+import asyncFocus from '../device/asyncFocus'
 import preventAutoscroll, { preventAutoscrollEnd } from '../device/preventAutoscroll'
 import * as selection from '../device/selection'
 import globals from '../globals'
@@ -56,6 +57,7 @@ import isDivider from '../util/isDivider'
 import isDocumentEditable from '../util/isDocumentEditable'
 import strip from '../util/strip'
 import stripEmptyFormattingTags from '../util/stripEmptyFormattingTags'
+import stripTags from '../util/stripTags'
 import trimHtml from '../util/trimHtml'
 import ContentEditable, { ContentEditableEvent } from './ContentEditable'
 import useEditMode from './Editable/useEditMode'
@@ -82,13 +84,44 @@ interface EditableProps {
   onEdit?: (args: { path: Path; oldValue: string; newValue: string }) => void
 }
 
-// track if a thought is blurring so that we can avoid an extra dispatch of setEditingValue in onFocus
-// otherwise it can trigger unnecessary re-renders
-// intended to be global, not local state
-let blurring = false
+/** If oldValue is wrapped in a formatting node, transfer that wrapper to the new value. */
+const applyOuterTag = (newValue: string, oldValue: string): string => {
+  const div = document.createElement('div')
+  div.innerHTML = oldValue
+
+  if (
+    div.childNodes.length > 1 ||
+    div.firstChild?.nodeType === Node.TEXT_NODE ||
+    !(div.firstChild instanceof HTMLElement)
+  )
+    return newValue
+
+  div.firstChild.innerHTML = newValue
+
+  return div.firstChild.outerHTML
+}
 
 // this flag is used to ensure that the browser selection is not restored after the initial setCursorOnThought
 let cursorOffsetInitialized = false
+
+/** Returns a guard function that throws with the given message if it is called more than `limit` times within a
+ * rolling `windowMs` window. Used to convert a runaway re-entrant loop into a loud, stack-unwinding error instead of
+ * a frozen main thread. The default limit is far above any human typing/IME/autocomplete burst. */
+const useInfiniteLoopGuard = (message: string, limit = 100, windowMs = 1000) => {
+  const stateRef = useRef({ count: 0, windowStart: 0 })
+  return useCallback(() => {
+    const now = performance.now()
+    const guard = stateRef.current
+    if (now - guard.windowStart > windowMs) {
+      guard.windowStart = now
+      guard.count = 0
+    }
+    guard.count++
+    if (guard.count > limit) {
+      throw new Error(message)
+    }
+  }, [message, limit, windowMs])
+}
 
 /**
  * An editable thought with throttled editing.
@@ -120,11 +153,18 @@ const Editable = ({
   // it is possible that the thought is deleted and the Editable is re-rendered before it unmounts, so guard against undefined thought
   const value = useSelector(state => getThoughtById(state, head(simplePath))?.value || '')
   const rank = useSelector(state => getThoughtById(state, head(simplePath))?.rank || 0)
-  const fontSize = useSelector(state => state.fontSize)
   const isCursorCleared = useSelector(state => !!isEditing && state.cursorCleared)
+
   const hasMulticursor = useSelector(hasMulticursorSelector)
   // store the old value so that we have a transcendental head when it is changed
   const oldValueRef = useRef(value)
+  // Guards against a runaway re-entrant loop in the change/autocomplete handlers freezing the app (#4467).
+  const guardChangeHandler = useInfiniteLoopGuard(
+    'Infinite loop detected in Editable.onChangeHandler: over 100 change events within 1s',
+  )
+  const guardAutocompleteInput = useInfiniteLoopGuard(
+    'Infinite loop detected in Editable.onAutocompleteInput: over 100 input events within 1s',
+  )
   const nullRef = useRef<HTMLInputElement>(null)
   const contentRef = editableRef || nullRef
   const isCursor = useSelector(state => equalPath(path, state.cursor))
@@ -239,7 +279,15 @@ const Editable = ({
    * Debounced from onChangeHandler.
    * Since variables inside this function won't get updated between re-render so passing latest context, rank etc as params.
    */
-  const thoughtChangeHandler = (newValue: string, { rank, simplePath }: { rank: number; simplePath: SimplePath }) => {
+  const thoughtChangeHandler = (
+    newValue: string,
+    {
+      force,
+      rank,
+      simplePath,
+      cursorOffset,
+    }: { force?: boolean; rank: number; simplePath: SimplePath; cursorOffset?: number },
+  ) => {
     // Note: Don't update innerHTML of contentEditable here. Since thoughtChangeHandler may be debounced, it may cause contentEditable to be out of sync.
     invalidStateError(null)
 
@@ -264,7 +312,12 @@ const Editable = ({
         // Set cursorOffset so that it is included in the undo patch.
         // Otherwise, the selection offset will not be restored correctly on undo/redo.
         // This will have no effect on useEditMode, which does not subscribe to state.cursorOffset reactively.
+<<<<<<< HEAD
         cursorOffset: selection.offsetThought() ?? undefined,
+=======
+        cursorOffset: cursorOffset ?? selection.offsetThought() ?? undefined,
+        force,
+>>>>>>> origin/main
         mergePrev: batchEditingStore.getState(), // If batch editing is in progress, merge this edit with the previous one in the undo stack.
       }),
     )
@@ -302,7 +355,7 @@ const Editable = ({
   // using useRef hook to store throttled function so that it can persist even between component re-renders, so that throttle.flush method can be used properly
   const throttledChangeRef = useRef(_.throttle(thoughtChangeHandler, EDIT_THROTTLE, { leading: false }))
 
-  const allowDefaultSelection = useEditMode({ contentRef, isEditing, path, style, transient })
+  useEditMode({ contentRef, isEditing, path, style, transient })
 
   useEffect(() => {
     /** Flushes pending edits. */
@@ -318,6 +371,61 @@ const Editable = ({
   }, [])
 
   useEffect(() => {
+    if (!isTouch || !isSafari() || !contentRef.current) return
+
+    const editable = contentRef.current
+    const AUTOCOMPLETE_SPACE_WINDOW_MS = 250
+    let pendingAutocompleteAt: number | null = null
+
+    /** After iOS autocomplete (insertReplacementText) accepts a word, no touch events reach the DOM
+     * in a "dead zone" beneath the word until focus is retargeted. Moving focus to the asyncFocus dummy input
+     * and back to the previous active element allows touch events to reach the DOM again.
+     *
+     * It is possible to intercept insertReplacementText and perform the focus retargeting there
+     * instead of waiting for the next insertText event, but that breaks native undo via shake or three-finger swipe.
+     */
+    const onAutocompleteInput = (e: Event) => {
+      if (!editable || !(e instanceof InputEvent)) return
+
+      guardAutocompleteInput()
+
+      if (e.inputType === 'insertReplacementText') {
+        pendingAutocompleteAt = performance.now()
+        return
+      }
+
+      if (e.inputType !== 'insertText' || e.data !== ' ' || pendingAutocompleteAt == null) {
+        pendingAutocompleteAt = null
+        return
+      }
+
+      if (performance.now() - pendingAutocompleteAt > AUTOCOMPLETE_SPACE_WINDOW_MS) {
+        pendingAutocompleteAt = null
+        return
+      }
+
+      const savedCharOffset = selection.offsetThought() ?? selection.offset() ?? 0
+
+      // Queue and flush the change with the browser-applied value to ensure it's captured before the editable blurs.
+      oldValueRef.current = editable.textContent || ''
+      throttledChangeRef.current(oldValueRef.current, { rank, simplePath })
+      throttledChangeRef.current.flush()
+
+      asyncFocus({ force: true })
+
+      preventAutoscroll(editable)
+      // Restore the selection offset captured when insertText(' ') arrived.
+      selection.set(editable, { offset: savedCharOffset })
+      preventAutoscrollEnd(editable)
+
+      pendingAutocompleteAt = null
+    }
+
+    editable?.addEventListener('input', onAutocompleteInput)
+    return () => editable?.removeEventListener('input', onAutocompleteInput)
+  }, [contentRef, rank, simplePath, guardAutocompleteInput])
+
+  useEffect(() => {
     // if there is a multicursor, blur the contentRef
     if (hasMulticursor && contentRef.current && contentRef.current === document.activeElement) {
       contentRef.current.blur()
@@ -327,6 +435,11 @@ const Editable = ({
   /** Performs meta validation and calls thoughtChangeHandler immediately or using throttled reference. */
   const onChangeHandler = useCallback(
     (e: ContentEditableEvent) => {
+      // Infinite loop guard. onChangeHandler is re-entrant (edit → dispatch editThought → re-render →
+      // input → onChange). The newValue === oldValue short-circuit below normally breaks the cycle, but a
+      // corrupted Thought/Lexeme pair can defeat it and spin the main thread, freezing the app (#4467).
+      guardChangeHandler()
+
       // make sure to get updated state
 
       // NOTE: When Subthought components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
@@ -353,9 +466,20 @@ const Editable = ({
 
       editingValueUntrimmedStore.update(e.target.value)
 
-      const newValue = stripEmptyFormattingTags(addEmojiSpace(trimHtml(e.target.value)))
+      dispatch((dispatch, getState) => {
+        const state = getState()
 
-      /* The realtime editingValue must always be updated (and not short-circuited) since oldValueRef is throttled. Otherwise, editingValueStore becomes stale and heights are not recalculated in VirtualThought.
+        // When the cursor is cleared, there may be an existing style that wraps the entire thought.
+        // That style should be re-applied once they type something. (#3673)
+
+        const wrappedValue = state.cursorCleared ? applyOuterTag(e.target.value, oldValue) : e.target.value
+        const trimmedWrappedValue = trimHtml(wrappedValue)
+        const valueWithEmojiSpace = addEmojiSpace(trimmedWrappedValue)
+        const newValue = stripEmptyFormattingTags(valueWithEmojiSpace)
+        const emojiSpaceAdded = valueWithEmojiSpace !== trimmedWrappedValue
+        const emojiSpaceInsertionIndex = emojiSpaceAdded ? valueWithEmojiSpace.indexOf(' ') : null
+
+        /* The realtime editingValue must always be updated (and not short-circuited) since oldValueRef is throttled. Otherwise, editingValueStore becomes stale and heights are not recalculated in VirtualThought.
 
         e.g.
 
@@ -366,54 +490,70 @@ const Editable = ({
           5. onChangeHandler short circuits since throttledChangeRef has not resolved and newValue === oldValue
           6. editingValueStore must be updated, otherwise it will retain the stale value aa
       */
-      editingValueStore.update(newValue)
+        editingValueStore.update(newValue)
 
-      // TODO: Disable keypress
-      // e.preventDefault() does not work
-      // disabled={readonly} removes contenteditable property
+        const cursorOffset = selection.offsetThought()
+        // If addEmojiSpace inserts a space, keep the caret in the same visual position after re-render.
+        let cursorOffsetWithEmojiSpace = cursorOffset === null ? undefined : cursorOffset
+        if (
+          emojiSpaceInsertionIndex != null &&
+          emojiSpaceInsertionIndex >= 0 &&
+          cursorOffset != null &&
+          cursorOffset >= emojiSpaceInsertionIndex
+        ) {
+          cursorOffsetWithEmojiSpace = cursorOffset + 1
+        }
 
-      if (newValue === oldValue) {
+        // TODO: Disable keypress
+        // e.preventDefault() does not work
+        // disabled={readonly} removes contenteditable property
+
+        if (newValue === oldValue) {
+          if (contentRef.current) {
+            contentRef.current.style.opacity = '1.0'
+          }
+
+          if (readonly || uneditable || options) invalidStateError(null)
+
+          // if we cancel the edit, we have to cancel pending its
+          // this can occur for example by editing a value away from and back to its
+          throttledChangeRef.current.cancel()
+
+          return
+        }
+
+        const oldValueClean = oldValue === EM_TOKEN ? 'em' : ellipsize(oldValue)
+
         if (contentRef.current) {
           contentRef.current.style.opacity = '1.0'
         }
 
-        if (readonly || uneditable || options) invalidStateError(null)
+        if (readonly) {
+          dispatch(error({ value: `"${ellipsize(oldValueClean)}" is read-only and cannot be edited.` }))
+          throttledChangeRef.current.cancel() // see above
+          return
+        } else if (uneditable) {
+          dispatch(error({ value: `"${ellipsize(oldValueClean)}" is uneditable.` }))
+          throttledChangeRef.current.cancel() // see above
+          return
+        } else if (options && !options.includes(newValue.toLowerCase())) {
+          invalidStateError(newValue)
+          throttledChangeRef.current.cancel() // see above
+          return
+        }
 
-        // if we cancel the edit, we have to cancel pending its
-        // this can occur for example by editing a value away from and back to its
-        throttledChangeRef.current.cancel()
-
-        return
-      }
-
-      const oldValueClean = oldValue === EM_TOKEN ? 'em' : ellipsize(oldValue)
-
-      if (contentRef.current) {
-        contentRef.current.style.opacity = '1.0'
-      }
-
-      if (readonly) {
-        dispatch(error({ value: `"${ellipsize(oldValueClean)}" is read-only and cannot be edited.` }))
-        throttledChangeRef.current.cancel() // see above
-        return
-      } else if (uneditable) {
-        dispatch(error({ value: `"${ellipsize(oldValueClean)}" is uneditable.` }))
-        throttledChangeRef.current.cancel() // see above
-        return
-      } else if (options && !options.includes(newValue.toLowerCase())) {
-        invalidStateError(newValue)
-        throttledChangeRef.current.cancel() // see above
-        return
-      }
-
-      dispatch((dispatch, getState) => {
-        const state = getState()
         const newNumContext = getContexts(state, newValue).length
         const isNewValueURL = containsURL(newValue)
 
         const contextLengthChange =
           newNumContext > 0 || newNumContext !== getContexts(state, oldValueRef.current).length - 1
         const urlChange = isNewValueURL || isNewValueURL !== containsURL(oldValueRef.current)
+
+        // A formatting-only edit changes the markup but not the plain text (e.g. applying a font or background color).
+        // Persist it immediately rather than through the edit throttle so that formatSelection's follow-up strip thunk
+        // reads a fresh value from Redux. Otherwise a stale read can leave a redundant default background in place (#4265).
+        const formattingChange =
+          newValue !== oldValueRef.current && stripTags(newValue) === stripTags(oldValueRef.current)
 
         const isEmpty = newValue.length === 0
 
@@ -424,10 +564,27 @@ const Editable = ({
         }
 
         // run the thoughtChangeHandler immediately if superscript changes or it's a url (also when it changes true to false)
-        if (transient || contextLengthChange || urlChange || isEmpty || isDivider(newValue)) {
+        // run it immediately is there is a style wrapper that needs to be applied to the editable after a clearThought action (#3673)
+        if (
+          wrappedValue !== e.target.value ||
+          emojiSpaceAdded ||
+          transient ||
+          contextLengthChange ||
+          urlChange ||
+          formattingChange ||
+          isEmpty ||
+          isDivider(newValue)
+        ) {
           // update new supercript value and url boolean
           throttledChangeRef.current.flush()
-          thoughtChangeHandler(newValue, { rank, simplePath })
+          // if a style needs to be re-applied with cursorClearedWrapper, the editable needs to re-render immediately to prevent
+          // a flash of unstyled content
+          thoughtChangeHandler(newValue, {
+            force: wrappedValue !== e.target.value || emojiSpaceAdded,
+            rank,
+            simplePath,
+            cursorOffset: cursorOffsetWithEmojiSpace,
+          })
         } else {
           throttledChangeRef.current(newValue, { rank, simplePath })
         }
@@ -444,8 +601,6 @@ const Editable = ({
   /** Flushes edits and updates certain state variables on blur. */
   const onBlur: FocusEventHandler<HTMLElement> = useCallback(
     e => {
-      blurring = true
-
       throttledChangeRef.current.flush()
 
       // update the ContentEditable if the new scrubbed value is different (i.e. stripped, space after emoji added, etc)
@@ -471,33 +626,23 @@ const Editable = ({
 
       if (isRelatedTargetEditableOrNote) return
 
-      // if related target is not editable wait until the next render to determine if we have really blurred
-      // otherwise isKeyboardOpen may be incorrectly set to false when clicking on another thought when keyboard is open (which results in a blur and focus in quick succession)
-      setTimeout(() => {
-        // detect speech-to-text
-        // needs to be deferred to the next tick, otherwise causes store.getState() to be invoked in a reducer (???)
-        if (value.split(/<div>/g).length > 1) {
-          dispatch(importSpeechToText({ simplePath, value: (e.target as HTMLInputElement).value }))
-        }
+      // detect speech-to-text
+      // needs to be deferred to the next tick, otherwise causes store.getState() to be invoked in a reducer (???)
+      if (value.split(/<div>/g).length > 1) {
+        setTimeout(() => dispatch(importSpeechToText({ simplePath, value: (e.target as HTMLInputElement).value })))
+      }
 
-        if (blurring) {
-          blurring = false
-          // reset editingValue on mobile if we have really blurred to avoid a spurious duplicate thought error (#895)
-          // if enabled on desktop, it will break "clicking a bullet, the caret should move to the beginning of the thought" test)
-          if (isTouch) {
-            editingValueStore.update(null)
-          }
-          // temporary states such as duplicate error states and cursorCleared are reset on blur
-          dispatch(cursorCleared({ value: false }))
-        }
+      // reset editingValue on mobile if we have really blurred to avoid a spurious duplicate thought error (#895)
+      // if enabled on desktop, it will break "clicking a bullet, the caret should move to the beginning of the thought" test)
+      if (isTouch) {
+        editingValueStore.update(null)
+      }
+      // temporary states such as duplicate error states and cursorCleared are reset on blur
+      dispatch(cursorCleared({ value: false }))
 
-        if (isTouch) {
-          // Set editing to false if user exits editing mode by tapping on a non-editable element.
-          if (!selection.isThought()) {
-            dispatch(keyboardOpenActionCreator({ value: false }))
-          }
-        }
-      })
+      if (isTouch) {
+        dispatch(keyboardOpenActionCreator({ value: false }))
+      }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [simplePath],
@@ -509,11 +654,30 @@ const Editable = ({
    */
   const onFocus = useCallback(
     () => {
-      preventAutoscrollEnd(contentRef.current)
-      if (suppressFocusStore.getState()) return
-      // do not allow blur to setEditingValue when it is followed immediately by a focus
-      blurring = false
+      /**
+       * On iOS, a long press between 415–650ms will trigger onFocus even when preventDefault is called in touchend, thus opening the virtual keyboard on top of the Command Center. There appears to be no way to prevent focus in this case. Therefore, we clear the selection and disable edit mode manually as soon as the focus triggers.
+       *
+       * Unfortunatly, doing this synchronously results in 1) iOS Writing Tools getting stuck open, and 2) the selection gets restored after the Command Center is closed (presumably because state.isKeyboardOpen is incorrectly set to true at some point). Clearing the selection after two animation frames fixes the issue.
+       *
+       * See: https://github.com/cybersemics/em/issues/3387.
+       * */
+      if (isTouch && isSafari()) {
+        dispatch((dispatch, getState) => {
+          const state = getState()
+          if (state.showCommandCenter) {
+            selection.clear()
+            dispatch(keyboardOpenActionCreator({ value: false }))
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                selection.clear()
+                dispatch(keyboardOpenActionCreator({ value: false }))
+              })
+            })
+          }
+        })
+      }
 
+      if (suppressFocusStore.getState()) return
       // Update editingValueUntrimmedStore with the current value
       editingValueUntrimmedStore.update(value)
 
@@ -528,58 +692,16 @@ const Editable = ({
     [value, setCursorOnThought],
   )
 
-  const onMouseDown = useCallback(
-    (e: React.MouseEvent) => {
-      // If CMD/CTRL is pressed, don't focus the editable.
-      const isMultiselectClick = isMac ? e.metaKey : e.ctrlKey
-      if (isMultiselectClick) {
-        e.preventDefault()
-        return
-      }
-
-      // If editing or the cursor is on the thought, allow the default browser selection so the offset is correct.
-      // Otherwise useEditMode will programmatically set the selection to the beginning of the thought.
-      // See: #981
-      if (editingOrOnCursor && !hasMulticursor) {
-        // Prevent the browser from autoscrolling to this editable element.
-        // For some reason doesn't work on touchend.
-        preventAutoscroll(contentRef.current, {
-          // about the height of a single-line thought
-          bottomMargin: fontSize * 2,
-        })
-
-        allowDefaultSelection()
-      }
-      // There are areas on the outside edge of the thought that will fail to trigger onTouchEnd.
-      // In those cases, it is best to prevent onFocus or onClick, otherwise keyboard is open will be incorrectly activated.
-      // Steps to Reproduce: https://github.com/cybersemics/em/pull/2948#issuecomment-2887186117
-      // Explanation and demo: https://github.com/cybersemics/em/pull/2948#issuecomment-2887803425
-      else {
-        e.preventDefault()
-      }
-    },
-    [contentRef, editingOrOnCursor, fontSize, allowDefaultSelection, hasMulticursor],
-  )
-
-  /** Sets the cursor on the thought on touchend or click. Handles hidden elements, drags, and editing mode. */
-  const onTap = useCallback(
-    (e: React.MouseEvent | React.TouchEvent) => {
-      // Avoid triggering haptics twice since this handler is used for both onClick and onTouchEnd.
-      if (e.type !== 'touchend') {
-        haptics.light()
-      }
-
-      // If CMD/CTRL is pressed, don't focus the editable.
-      const isMultiselectClick = isMac ? e.metaKey : e.ctrlKey
-      if (isMultiselectClick) {
-        e.preventDefault()
-        return
-      }
-
-      // when the MultiGesture is below the gesture threshold it is possible that onTap and onTouchEnd are both triggered
-      // in this case, we need to prevent onTap from being called a second time via onTouchEnd
+  /**
+   * Shared on tap logic dispatched after both click and touchend.
+   * Checks long-press, multicursor, disabled, and visibility to decide whether to set the cursor.
+   */
+  const handleTapBehavior = useCallback(
+    (e: MouseEvent | TouchEvent) => {
+      // When MultiGesture is below the gesture threshold it is possible that onClick and onTouchEnd
+      // both trigger. Prevent handleTapBehavior from running a second time via touchend in that case.
       // https://github.com/cybersemics/em/issues/1268
-      else if (globals.touching && e.cancelable) {
+      if (e.type === 'touchend' && globals.touching && e.cancelable) {
         e.preventDefault()
       }
 
@@ -616,6 +738,38 @@ const Editable = ({
     [disabled, dispatch, editingOrOnCursor, isVisible, setCursorOnThought],
   )
 
+  /** Registers native event listeners for tap behavior (click and touchend). */
+  useEffect(() => {
+    const editable = contentRef.current
+    if (!editable) return
+
+    /** Sets the cursor on the thought on click. Handles hidden elements, drags, and editing mode. */
+    const onClick = (e: MouseEvent) => {
+      // If CMD/CTRL is pressed, don't focus the editable.
+      const isMultiselectClick = isMac ? e.metaKey : e.ctrlKey
+      if (isMultiselectClick) {
+        e.preventDefault()
+        return
+      }
+
+      handleTapBehavior(e)
+    }
+
+    /** Handles touchend for haptics and tap behavior. */
+    const onTouchEnd = (e: TouchEvent) => {
+      haptics.light()
+      handleTapBehavior(e)
+    }
+
+    editable.addEventListener('click', onClick)
+    editable.addEventListener('touchend', onTouchEnd, { passive: false })
+
+    return () => {
+      editable.removeEventListener('click', onClick)
+      editable.removeEventListener('touchend', onTouchEnd)
+    }
+  }, [contentRef, editingOrOnCursor, hasMulticursor, handleTapBehavior])
+
   return (
     <ContentEditable
       disabled={disabled}
@@ -623,7 +777,7 @@ const Editable = ({
       innerRef={contentRef}
       aria-label={'editable-' + head(path)}
       data-editable
-      className={cx(multiline ? multilineRecipe() : null, editableRecipe(), className)}
+      className={cx(editableRecipe(), className)}
       html={
         value === EM_TOKEN
           ? '<b>em</b>'
@@ -636,9 +790,6 @@ const Editable = ({
               : (childrenLabel ?? value)
       }
       placeholder={placeholder}
-      onMouseDown={onMouseDown}
-      onClick={onTap}
-      onTouchEnd={onTap}
       onFocus={onFocus}
       onBlur={onBlur}
       onChange={onChangeHandler}

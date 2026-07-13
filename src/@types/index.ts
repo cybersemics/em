@@ -12,10 +12,43 @@ declare global {
     debug: (message: string) => void
     // FIX: Used only in puppeteer test environment. So need way to switch global context based on environment.
     delay: (ms: number) => Promise<boolean>
+    /**
+     * The Navigation API, used by the Navigate Back/Forward commands. Not yet included in the TypeScript DOM lib, so a minimal subset is declared here. Optional because it is unsupported in some browsers (e.g. older Safari).
+     *
+     * @see https://developer.mozilla.org/en-US/docs/Web/API/Navigation
+     */
+    navigation?: {
+      /** True if there is a previous entry in the history that can be navigated to. */
+      readonly canGoBack: boolean
+      /** True if there is a next entry in the history that can be navigated to. */
+      readonly canGoForward: boolean
+      /** Navigates to the previous entry in the history. */
+      back: () => void
+      /** Navigates to the next entry in the history. */
+      forward: () => void
+    }
   }
 
   interface Navigator {
     standalone: boolean
+  }
+
+  /** Options for constructing a ScrollTimeline. */
+  interface ScrollTimelineOptions {
+    /** The scrollable element whose scroll position drives the timeline. */
+    source?: Element | null
+    /** The scroll axis to use. */
+    axis?: 'block' | 'inline' | 'x' | 'y'
+  }
+
+  /**
+   * A scroll-driven AnimationTimeline for use with the Web Animations API.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/ScrollTimeline
+   */
+  class ScrollTimeline implements AnimationTimeline {
+    constructor(options?: ScrollTimelineOptions)
+    readonly currentTime: CSSNumberish | null
   }
 }
 
