@@ -175,6 +175,7 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
 
   return (
     <div
+      data-testid='gesture-trace'
       className={css({
         zIndex: 'gestureTrace',
         position: 'fixed',

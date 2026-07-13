@@ -1,9 +1,11 @@
 import clickThought from '../helpers/clickThought'
 import dragAndDropThought from '../helpers/dragAndDropThought'
 import exportThoughts from '../helpers/exportThoughts'
+import getEditingText from '../helpers/getEditingText'
 import hideHUD from '../helpers/hideHUD'
 import multiselectThoughts from '../helpers/multiselectThoughts'
 import paste from '../helpers/paste'
+import { page } from '../session'
 
 vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
 
@@ -70,6 +72,21 @@ describe('drag and drop multiple thoughts', () => {
   - y
   - z
 `)
+
+    // After the drop, the transient drag UI should be dismissed and the cursor restored — asserted via user-observable DOM, not the Redux store (#4348).
+
+    // 1. the multicursor selection (and, on mobile, the Command Center / bullet drag highlight) is dismissed: no bullets remain highlighted
+    const highlightedBullets = await page.$$('[aria-label="bullet"][data-highlighted="true"]')
+    expect(highlightedBullets.length).toBe(0)
+
+    // 2. the "Drag and drop to move thought" hint alert is dismissed
+    // When the alert is dismissed, the element is absent and $eval rejects, so default to an empty string
+    // (passing null to .not.toContain throws an invalid-argument assertion error).
+    const alertContent = await page.$eval('[data-testid=alert-content]', el => el.textContent).catch(() => '')
+    expect(alertContent).not.toContain('Drag and drop to move thought')
+
+    // 3. the cursor is placed on the drop target
+    expect(await getEditingText()).toBe('a')
   })
 
   it('should preserve document order of multiselected thoughts when dropping', async () => {

@@ -31,6 +31,8 @@ import {
   TUTORIAL_CONTEXT1_PARENT,
   TUTORIAL_CONTEXT2_PARENT,
 } from '../constants'
+import asyncFocus from '../device/asyncFocus'
+import preventAutoscroll, { preventAutoscrollEnd } from '../device/preventAutoscroll'
 import * as selection from '../device/selection'
 import globals from '../globals'
 import findDescendant from '../selectors/findDescendant'
@@ -55,6 +57,7 @@ import isDivider from '../util/isDivider'
 import isDocumentEditable from '../util/isDocumentEditable'
 import strip from '../util/strip'
 import stripEmptyFormattingTags from '../util/stripEmptyFormattingTags'
+import stripTags from '../util/stripTags'
 import trimHtml from '../util/trimHtml'
 import ContentEditable, { ContentEditableEvent } from './ContentEditable'
 import useEditMode from './Editable/useEditMode'
@@ -101,6 +104,25 @@ const applyOuterTag = (newValue: string, oldValue: string): string => {
 // this flag is used to ensure that the browser selection is not restored after the initial setCursorOnThought
 let cursorOffsetInitialized = false
 
+/** Returns a guard function that throws with the given message if it is called more than `limit` times within a
+ * rolling `windowMs` window. Used to convert a runaway re-entrant loop into a loud, stack-unwinding error instead of
+ * a frozen main thread. The default limit is far above any human typing/IME/autocomplete burst. */
+const useInfiniteLoopGuard = (message: string, limit = 100, windowMs = 1000) => {
+  const stateRef = useRef({ count: 0, windowStart: 0 })
+  return useCallback(() => {
+    const now = performance.now()
+    const guard = stateRef.current
+    if (now - guard.windowStart > windowMs) {
+      guard.windowStart = now
+      guard.count = 0
+    }
+    guard.count++
+    if (guard.count > limit) {
+      throw new Error(message)
+    }
+  }, [message, limit, windowMs])
+}
+
 /**
  * An editable thought with throttled editing.
  * Use rank instead of headRank(simplePath) as it will be different for context view.
@@ -136,6 +158,13 @@ const Editable = ({
   const hasMulticursor = useSelector(hasMulticursorSelector)
   // store the old value so that we have a transcendental head when it is changed
   const oldValueRef = useRef(value)
+  // Guards against a runaway re-entrant loop in the change/autocomplete handlers freezing the app (#4467).
+  const guardChangeHandler = useInfiniteLoopGuard(
+    'Infinite loop detected in Editable.onChangeHandler: over 100 change events within 1s',
+  )
+  const guardAutocompleteInput = useInfiniteLoopGuard(
+    'Infinite loop detected in Editable.onAutocompleteInput: over 100 input events within 1s',
+  )
   const nullRef = useRef<HTMLInputElement>(null)
   const contentRef = editableRef || nullRef
   const isCursor = useSelector(state => equalPath(path, state.cursor))
@@ -338,6 +367,61 @@ const Editable = ({
   }, [])
 
   useEffect(() => {
+    if (!isTouch || !isSafari() || !contentRef.current) return
+
+    const editable = contentRef.current
+    const AUTOCOMPLETE_SPACE_WINDOW_MS = 250
+    let pendingAutocompleteAt: number | null = null
+
+    /** After iOS autocomplete (insertReplacementText) accepts a word, no touch events reach the DOM
+     * in a "dead zone" beneath the word until focus is retargeted. Moving focus to the asyncFocus dummy input
+     * and back to the previous active element allows touch events to reach the DOM again.
+     *
+     * It is possible to intercept insertReplacementText and perform the focus retargeting there
+     * instead of waiting for the next insertText event, but that breaks native undo via shake or three-finger swipe.
+     */
+    const onAutocompleteInput = (e: Event) => {
+      if (!editable || !(e instanceof InputEvent)) return
+
+      guardAutocompleteInput()
+
+      if (e.inputType === 'insertReplacementText') {
+        pendingAutocompleteAt = performance.now()
+        return
+      }
+
+      if (e.inputType !== 'insertText' || e.data !== ' ' || pendingAutocompleteAt == null) {
+        pendingAutocompleteAt = null
+        return
+      }
+
+      if (performance.now() - pendingAutocompleteAt > AUTOCOMPLETE_SPACE_WINDOW_MS) {
+        pendingAutocompleteAt = null
+        return
+      }
+
+      const savedCharOffset = selection.offsetThought() ?? selection.offset() ?? 0
+
+      // Queue and flush the change with the browser-applied value to ensure it's captured before the editable blurs.
+      oldValueRef.current = editable.textContent || ''
+      throttledChangeRef.current(oldValueRef.current, { rank, simplePath })
+      throttledChangeRef.current.flush()
+
+      asyncFocus({ force: true })
+
+      preventAutoscroll(editable)
+      // Restore the selection offset captured when insertText(' ') arrived.
+      selection.set(editable, { offset: savedCharOffset })
+      preventAutoscrollEnd(editable)
+
+      pendingAutocompleteAt = null
+    }
+
+    editable?.addEventListener('input', onAutocompleteInput)
+    return () => editable?.removeEventListener('input', onAutocompleteInput)
+  }, [contentRef, rank, simplePath, guardAutocompleteInput])
+
+  useEffect(() => {
     // if there is a multicursor, blur the contentRef
     if (hasMulticursor && contentRef.current && contentRef.current === document.activeElement) {
       contentRef.current.blur()
@@ -347,6 +431,11 @@ const Editable = ({
   /** Performs meta validation and calls thoughtChangeHandler immediately or using throttled reference. */
   const onChangeHandler = useCallback(
     (e: ContentEditableEvent) => {
+      // Infinite loop guard. onChangeHandler is re-entrant (edit → dispatch editThought → re-render →
+      // input → onChange). The newValue === oldValue short-circuit below normally breaks the cycle, but a
+      // corrupted Thought/Lexeme pair can defeat it and spin the main thread, freezing the app (#4467).
+      guardChangeHandler()
+
       // make sure to get updated state
 
       // NOTE: When Subthought components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
@@ -456,6 +545,12 @@ const Editable = ({
           newNumContext > 0 || newNumContext !== getContexts(state, oldValueRef.current).length - 1
         const urlChange = isNewValueURL || isNewValueURL !== containsURL(oldValueRef.current)
 
+        // A formatting-only edit changes the markup but not the plain text (e.g. applying a font or background color).
+        // Persist it immediately rather than through the edit throttle so that formatSelection's follow-up strip thunk
+        // reads a fresh value from Redux. Otherwise a stale read can leave a redundant default background in place (#4265).
+        const formattingChange =
+          newValue !== oldValueRef.current && stripTags(newValue) === stripTags(oldValueRef.current)
+
         const isEmpty = newValue.length === 0
 
         // Safari adds <br> to empty contenteditables after editing, so strip them out.
@@ -472,6 +567,7 @@ const Editable = ({
           transient ||
           contextLengthChange ||
           urlChange ||
+          formattingChange ||
           isEmpty ||
           isDivider(newValue)
         ) {

@@ -1,7 +1,6 @@
 import pluralize from 'pluralize'
 import Command from '../@types/Command'
 import Dispatch from '../@types/Dispatch'
-import Path from '../@types/Path'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import { alertActionCreator as alert } from '../actions/alert'
@@ -10,6 +9,7 @@ import SettingsIcon from '../components/icons/SettingsIcon'
 import copy from '../device/copy'
 import * as selection from '../device/selection'
 import exportContext from '../selectors/exportContext'
+import getMulticursorThoughtIds from '../selectors/getMulticursorThoughtIds'
 import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursor from '../selectors/hasMulticursor'
 import isPending from '../selectors/isPending'
@@ -36,11 +36,14 @@ const copyThoughts = async (ids: ThoughtId[], dispatch: Dispatch, getState: () =
   const stateAfterPull = getState()
 
   const exported = ids.map(id => strip(exportContext(stateAfterPull, id, 'text/plain'))).join('\n')
+  const exportedHtml = ids.map(id => exportContext(stateAfterPull, id, 'text/html')).join('\n')
   const exportedVisible = ids
     .map(id => exportContext(stateAfterPull, id, 'text/plain', { excludeMeta: true }))
     .join('\n')
 
-  copy(trimBullet(exported))
+  // Write text/html and the text/em marker alongside the plain text so structured paste works even when
+  // the browser does not fire a native copy event for the collapsed selection (e.g. Safari) (#3993).
+  copy(trimBullet(exported), { html: exportedHtml })
 
   return exportedVisible
 }
@@ -52,19 +55,11 @@ const copyCursorCommand: Command = {
   keyboard: { key: 'c', meta: true },
   multicursor: {
     execMulticursor: async (cursors, dispatch, getState) => {
-      const filteredCursors = cursors.reduce<Path[]>((acc, cur) => {
-        const hasAncestor = acc.some(p => cur.includes(head(p)))
-        if (hasAncestor) return acc
-        return [...acc.filter(p => !p.includes(head(cur))), cur]
-      }, [])
+      const ids = getMulticursorThoughtIds(getState())
 
-      const exportedVisible = await copyThoughts(
-        filteredCursors.map(cursor => head(cursor)),
-        dispatch,
-        getState,
-      )
+      const exportedVisible = await copyThoughts(ids, dispatch, getState)
 
-      const numThoughts = filteredCursors.length
+      const numThoughts = ids.length
       const numDescendants = exportedVisible.split('\n').length - numThoughts
 
       dispatch(

@@ -429,6 +429,13 @@ const initEvents = (store: Store<State, any>) => {
 // const onError = (e: { message: string; error?: Error }) => {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const onError = (e: any) => {
+  // Ignore opaque cross-origin "Script error." events. The browser emits these when an error occurs in a
+  // script served from a different origin without CORS headers. They carry no actionable information (no
+  // stack, filename, or line number), so showing them as an error banner only confuses the user. On iOS
+  // Safari, interacting with the browser's native share menu triggers such an error.
+  // See https://github.com/cybersemics/em/issues/4402.
+  if (!e.error && (e.message === 'Script error.' || e.message === 'Script error')) return
+
   console.error({ message: e.message, code: e.code, errors: e.errors })
   if (e.error && 'stack' in e.error) {
     console.error(e.error.stack)

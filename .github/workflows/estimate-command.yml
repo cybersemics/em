@@ -1,0 +1,46 @@
+# This workflow runs when a comment is made on an issue. If the comment starts with `/estimate `, it estimates the issue and posts an audit comment with the estimated hours.
+name: Estimate - /estimate command
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  # To create a branch and commit the new estimation sample file into .github/instructions/estimate/.
+  # Writing files/branches requires write access to repository contents.
+  contents: write
+  # To open the pull request that adds the sample. Creating a PR requires the pull-requests write scope.
+  pull-requests: write
+  # To post back on the issue/comment thread — e.g. react to or reply to the /estimate Nh comment to
+  # acknowledge the correction. Since PR comments share the issues API, commenting also relies on this scope.
+  issues: write
+
+jobs:
+  estimate-command:
+    if: startsWith(github.event.comment.body, '/estimate ')
+    runs-on: ubuntu-latest
+    steps:
+      # React immediately so the commenter sees the command was picked up, before the
+      # slow checkout/install/build steps below (which take several minutes) even start.
+      - name: Acknowledge command
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.reactions.createForIssueComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: context.payload.comment.id,
+              content: 'eyes',
+            })
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - run: yarn install --immutable
+      - name: Build estimate workspace
+        run: yarn workspace em-estimate build
+      - name: Handle estimate command
+        run: node scripts/estimate/src/command.ts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EVERHOUR_API_KEY: ${{ secrets.EVERHOUR_API_KEY }}
+          EVERHOUR_PROJECT_ID: ${{ secrets.EVERHOUR_PROJECT_ID }}

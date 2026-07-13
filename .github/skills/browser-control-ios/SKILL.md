@@ -60,6 +60,8 @@ If a specific iOS version is requested in the issue body or the user's query, re
 
 The session drives a pre-built **server-mode** build of **em**'s Capacitor app. The IPA file for this build is already uploaded to BrowserStack under the `custom_id` **`em-server-mode`**, so day-to-day web changes need no rebuild. Reference it by `custom_id`; do **not** rebuild the native app per run. If `start_session` fails with an app-not-found error, the pre-warmed app has lapsed (BrowserStack deletes apps 30 days after last use) — **escalate to the user** to re-upload it (they need to do it manually; there is no tooling to automatically build IPAs yet).
 
+> **The pre-warmed IPA must be an HTTPS-aware build.** The dev server now serves HTTPS (self-signed). The server-mode build handles this with `DevServerViewController` (`ios/App/App/DevServerViewController.swift`), which accepts the self-signed cert at the WKWebView auth challenge, and a baked `server.url` of `https://bs-local.com:3000`. An IPA built **before** the HTTPS migration has an `http://…` `server.url` and will load nothing against the HTTPS-only dev server — the webview stays blank and wait-for-mount (Step 2) times out. If that happens, **escalate to the user to rebuild and re-upload `em-server-mode`** from an HTTPS branch (same manual rebuild path as above).
+
 ### Heartbeat
 
 Immediately after `start_session` returns, capture the session ID. Save it to `/tmp/em-bs-session.txt` (the e2e bridge reads it from there — see **Driving em via the e2e bridge**) and start the heartbeat (it self-daemonizes — **no** trailing `&`):
@@ -73,7 +75,7 @@ This heartbeat keeps the BrowserStack session alive, even during very long agent
 
 ## Step 2: Land in the webview context (the default lens)
 
-The app launches and its WKWebView **auto-loads the dev server on launch** (its baked `server.url` points at the tunnel) — there is **no `navigate` step**.
+The app launches and its WKWebView **auto-loads the dev server on launch** (its baked `server.url`, `https://bs-local.com:3000`, reaches the runner's HTTPS dev server through the BrowserStack Local tunnel) — there is **no `navigate` step**. The self-signed dev cert is accepted by `DevServerViewController` inside the app, so — unlike the Safari E2E tests, which need a cloudflared CA-signed cert — no public tunnel is required here. (Agent-driven sessions don't set `TUNNEL_TOKEN`, so the dev server's token gate is inert and the app loads without a `?__token` param.) If the webview never mounts (blank page, Step 2 wait times out), suspect a pre-HTTPS IPA — see **App binary** above.
 
 1. **Warm + enter the webview context.** `get_contexts` returns `["NATIVE_APP", "WEBVIEW_<id>"]` once the webview registers (a few seconds after launch). `switch_context` into the `WEBVIEW_*` entry. Doing this early also pays the **one-time cold webview-connect cost** up front (it can take tens of seconds); warm context swaps afterward are cheap (~one round trip).
 2. **Wait for mount** — poll for `#skip-tutorial` or `[aria-label="empty-thoughtspace"]` before interacting (the React bundle hydrates after load). Poll agent-side with `execute_script` + a short `sleep` between calls.

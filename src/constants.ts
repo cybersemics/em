@@ -15,9 +15,6 @@ export const MAX_DEPTH = 20
 // Number of ms to wait after hovering over a thought before expanding, during drag-and-drop. Overriden by testFlags.expandHoverDelay during drag-and-drop tests.
 export const EXPAND_HOVER_DELAY = 1000
 
-// threshold for keyboard visibility detection (percentage of height change)
-export const KEYBOARD_VISIBILITY_THRESHOLD = 0.15
-
 // ms on startup before offline mode is enabled
 // sufficient to avoid flash on login
 export const OFFLINE_TIMEOUT = 8 * 1000
@@ -140,6 +137,9 @@ export const AUTO_PROSE_VIEW_MIN_CHARS = 200
 
 /** The left and right padding of each toolbar button (px). */
 export const TOOLBAR_BUTTON_PADDING = 8
+
+/** The minimum horizontal finger travel (px) that distinguishes a toolbar swipe from a button tap. Used to suppress the button command when the user swipes even at a scroll boundary, where the toolbar cannot scroll and scrollLeft therefore cannot change. */
+export const TOOLBAR_SWIPE_THRESHOLD = 10
 
 // Used for scaling the size of icons according to the font size
 export const ICON_SCALING_FACTOR = 1.37
@@ -527,6 +527,8 @@ export const COMMAND_GROUPS: {
       'jumpForward',
       'moveCursorBackward',
       'moveCursorForward',
+      'navigateBack',
+      'navigateForward',
       'openDesktopCommandUniverse',
       'home',
       'search',
@@ -570,6 +572,7 @@ export const COMMAND_GROUPS: {
       'closeCommandCenter',
       'openCommandCenter',
       'removeFormat',
+      'textColor',
     ],
   },
   {

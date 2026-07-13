@@ -20,7 +20,6 @@ const TreeNode = ({
   cliff,
   depth,
   env,
-  height,
   indexChild,
   indexDescendant,
   isCursor,
@@ -123,7 +122,8 @@ const TreeNode = ({
   // Exception: The cursor thought and its previous siblings may temporarily be out of the viewport, such as if when New Subthought is activated on a long context. In this case, the new thought will be created below the viewport and needs to be rendered in order for scrollCursorIntoView to be activated.
   // Render virtualized thoughts with their estimated height so that document height is relatively stable.
   // Perform this check here instead of in virtualThoughtsPositioned since it changes with the scroll position (though currently `sizes` will change as new thoughts are rendered, causing virtualThoughtsPositioned to re-render anyway).
-  if (belowCursor && !isCursor && y > viewportBottom + height) {
+  // Use the stable estimated height (singleLineHeightWithCliff) rather than the measured height. Otherwise the cutoff depends on whether the thought is currently mounted: a thought at the fold mounts with the estimate, measures a (smaller) height, flips the cutoff to unmount, which removes its measured size and restores the estimate, re-mounting it. That feedback loop runs entirely within passive effects and triggers "Maximum update depth exceeded" (React error #185). See: https://github.com/cybersemics/em/issues/4270.
+  if (belowCursor && !isCursor && y > viewportBottom + singleLineHeightWithCliff) {
     return null
   }
 
