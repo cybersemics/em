@@ -24,6 +24,16 @@ let lastTouchEndTime = 0
 let lastTouchEndTarget: EventTarget | null = null
 const GHOST_MOUSE_WINDOW_MS = 700
 
+/**
+ * Returns true if the last real touchend recently (within GHOST_MOUSE_WINDOW_MS) landed on a DIFFERENT
+ * editable than `editable` — the shared signature of iOS's rapid-tap retargeting (#4173). Reads the last
+ * recorded touchend from module state.
+ */
+const isRetargetedTap = (editable: EventTarget): boolean =>
+  !!lastTouchEndTarget &&
+  lastTouchEndTarget !== editable &&
+  performance.now() - lastTouchEndTime < GHOST_MOUSE_WINDOW_MS
+
 /** Automatically sets the selection on the given contentRef element when the thought should be selected. Handles a variety of conditions that determine whether this should occur. */
 const useEditMode = ({
   contentRef,
@@ -160,6 +170,8 @@ const useEditMode = ({
     /** Ends the touch, records it for ghost-click detection, and sets the cursor on the tapped thought. */
     const onTouchEnd = (e: TouchEvent) => {
       pressingRef.current = false
+      // Evaluate against the PREVIOUS touchend before overwriting it below.
+      const willRetarget = isRetargetedTap(editable)
       lastTouchEndTime = performance.now()
       lastTouchEndTarget = editable
 
@@ -167,12 +179,13 @@ const useEditMode = ({
       // retargets the synthesized mousedown/focus to the previously-focused thought (onMouseDown suppresses
       // that ghost), so onFocus cannot be relied on to move the cursor. Set the cursor here, reading fresh
       // store state (not the render closure) to avoid staleness across rapid taps.
-      const s = store.getState()
+      const state = store.getState()
       const move =
-        s.isKeyboardOpen &&
-        !equalPath(s.cursor, path) &&
-        !hasMulticursor(s) &&
-        s.longPress === LongPressState.Inactive &&
+        willRetarget &&
+        state.isKeyboardOpen &&
+        !equalPath(state.cursor, path) &&
+        !hasMulticursor(state) &&
+        state.longPress === LongPressState.Inactive &&
         style?.visibility !== 'hidden'
       if (!move) return
 
@@ -220,12 +233,7 @@ const useEditMode = ({
       // second tap already moved focus. A genuine mousedown follows its own touchend within a few ms on the
       // same element; a ghost arrives later on a different thought. Dropping it (preventDefault also blocks
       // the focus change) keeps the cursor on the thought the user actually tapped.
-      if (
-        isTouch &&
-        isSafari() &&
-        editable !== lastTouchEndTarget &&
-        performance.now() - lastTouchEndTime < GHOST_MOUSE_WINDOW_MS
-      ) {
+      if (isTouch && isSafari() && isRetargetedTap(editable)) {
         e.preventDefault()
         return
       }
