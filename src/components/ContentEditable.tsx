@@ -64,8 +64,6 @@ const ContentEditable = React.memo(
       allowInnerHTMLChange.current = false
 
       const event = Object.assign({}, originalEvent, {
-        // Preserve nativeEvent so consumers can read InputEvent.inputType (e.g. to detect native historyUndo/historyRedo).
-        nativeEvent: originalEvent.nativeEvent,
         target: {
           value: innerHTML,
         },

@@ -14,13 +14,11 @@ import { importSpeechToTextActionCreator as importSpeechToText } from '../action
 import { setInvalidStateActionCreator as setInvalidState } from '../actions/invalidState'
 import { keyboardOpenActionCreator } from '../actions/keyboardOpen'
 import { newThoughtActionCreator as newThought } from '../actions/newThought'
-import { redoActionCreator as redo } from '../actions/redo'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import { tutorialNextActionCreator as tutorialNext } from '../actions/tutorialNext'
-import { undoActionCreator as undo } from '../actions/undo'
 import { isMac, isSafari, isTouch } from '../browser'
-import { commandEmitter, wasNativeHistoryRecentlyHandled } from '../commands'
+import { commandEmitter } from '../commands'
 import {
   EDIT_THROTTLE,
   EM_TOKEN,
@@ -43,7 +41,6 @@ import getContexts from '../selectors/getContexts'
 import getSetting from '../selectors/getSetting'
 import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursorSelector from '../selectors/hasMulticursor'
-import isUndoEnabled from '../selectors/isUndoEnabled'
 import rootedParentOf from '../selectors/rootedParentOf'
 import batchEditingStore from '../stores/batchEditing'
 import editingValueStore from '../stores/editingValue'
@@ -438,30 +435,6 @@ const Editable = ({
       // input → onChange). The newValue === oldValue short-circuit below normally breaks the cycle, but a
       // corrupted Thought/Lexeme pair can defeat it and spin the main thread, freezing the app (#4467).
       guardChangeHandler()
-
-      // Native undo/redo (iOS shake-to-undo or three-finger swipe) fires an input event with inputType
-      // historyUndo/historyRedo that mutates the contenteditable DOM directly, bypassing em's undo. This leaves
-      // the DOM out of sync with Redux — e.g. undoing a background highlight reverts only one execCommand step,
-      // leaving a black font color with no background that renders the thought invisible (#3954). Rather than
-      // persist the partially-reverted DOM, route it through em's undo/redo, which reverts to the correct Redux
-      // state and re-renders the editable. Native browser undo is intentionally superseded by em's undo (#3879).
-      // On iOS the preceding beforeinput is cancelable and already handled this (blocking the DOM mutation); skip
-      // here to avoid double-dispatching. This input-layer path still covers platforms where beforeinput is not
-      // cancelable (e.g. it is the only event Chromium fires for a programmatic execCommand('undo'), which the
-      // regression test relies on).
-      const inputType = (e.nativeEvent as InputEvent | undefined)?.inputType
-      if (inputType === 'historyUndo' || inputType === 'historyRedo') {
-        if (wasNativeHistoryRecentlyHandled()) return
-        dispatch((dispatch, getState) => {
-          const state = getState()
-          if (inputType === 'historyUndo') {
-            if (isUndoEnabled(state)) dispatch(undo())
-          } else if (state.redoPatches.length > 0) {
-            dispatch(redo())
-          }
-        })
-        return
-      }
 
       // make sure to get updated state
 
