@@ -290,8 +290,19 @@ export const executeCommand = (
   // Exit early if the command cannot execute
   if (!canExecute) return
 
+  // When activated by a keyboard shortcut, determine which of the command's keyboard shortcuts was pressed so it can be read in exec (e.g. to select a color based on the pressed shortcut).
+  const keyboardShortcuts = command.keyboard
+    ? Array.isArray(command.keyboard)
+      ? command.keyboard
+      : [command.keyboard]
+    : []
+  const keyboardIndex =
+    type === 'keyboard' && event instanceof KeyboardEvent && keyboardShortcuts.length > 0
+      ? keyboardShortcuts.findIndex(keyboard => hashCommand(keyboard) === hashKeyDown(event))
+      : undefined
+
   // execute single command
-  command.exec(commandStore.dispatch, commandStore.getState, event, { type })
+  command.exec(commandStore.dispatch, commandStore.getState, event, { type, keyboardIndex })
 }
 
 /** Execute command. Defaults to global store and keyboard shortcuts. */

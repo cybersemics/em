@@ -19,12 +19,12 @@ interface Command {
   /** A readable, internal unique id. */
   id: CommandId
 
-  /** Executes the command. */
+  /** Executes the command. When activated by a keyboard shortcut and the command defines an array of keyboard shortcuts, `keyboardIndex` is the index of the shortcut that was pressed within that array. */
   exec: (
     dispatch: Dispatch,
     getState: () => State,
     e: Event | GestureResponderEvent | KeyboardEvent | React.MouseEvent | React.TouchEvent | React.ClipboardEvent,
-    { type }: { type: CommandType },
+    { type, keyboardIndex }: { type: CommandType; keyboardIndex?: number },
   ) => void | Promise<void>
 
   /** Short label. */
