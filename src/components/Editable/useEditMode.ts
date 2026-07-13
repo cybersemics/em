@@ -177,37 +177,38 @@ const useEditMode = ({
 
       // #4173: touchend is the only event iOS reliably delivers to the tapped thought — on a rapid tap it
       // retargets the synthesized mousedown/focus to the previously-focused thought (onMouseDown suppresses
-      // that ghost), so onFocus cannot be relied on to move the cursor. Set the cursor here, reading fresh
-      // store state (not the render closure) to avoid staleness across rapid taps.
-      const state = store.getState()
-      const move =
-        willRetarget &&
-        state.isKeyboardOpen &&
-        !equalPath(state.cursor, path) &&
-        !hasMulticursor(state) &&
-        state.longPress === LongPressState.Inactive &&
-        style?.visibility !== 'hidden'
-      if (!move) return
+      // that ghost), so onFocus cannot be relied on to move the cursor. Set the cursor here.
+      dispatch((dispatch, getState) => {
+        const state = getState()
+        const move =
+          willRetarget &&
+          state.isKeyboardOpen &&
+          !equalPath(state.cursor, path) &&
+          !hasMulticursor(state) &&
+          state.longPress === LongPressState.Inactive &&
+          style?.visibility !== 'hidden'
+        if (!move) return
 
-      // Place the caret where the user tapped. getCaretOffset is coordinate-based, so it resolves the offset
-      // even though the synthesized mousedown/focus retargeted away.
-      const { offset } = getCaretOffset(editable, {
-        clientX: e.changedTouches[0].clientX,
-        clientY: e.changedTouches[0].clientY,
+        // Place the caret where the user tapped. getCaretOffset is coordinate-based, so it resolves the offset
+        // even though the synthesized mousedown/focus retargeted away.
+        const { offset } = getCaretOffset(editable, {
+          clientX: e.changedTouches[0].clientX,
+          clientY: e.changedTouches[0].clientY,
+        })
+
+        // Dispatch only the Redux cursor; the declarative selection effect places the caret on the next render.
+        // Calling selection.set() synchronously during touchend triggers iOS's text-selection machinery, which
+        // swallows the immediately-following rapid tap.
+        dispatch(
+          setCursor({
+            path,
+            offset,
+            cursorHistoryClear: true,
+            isKeyboardOpen: true,
+            preserveMulticursor: true,
+          }),
+        )
       })
-
-      // Dispatch only the Redux cursor; the declarative selection effect places the caret on the next render.
-      // Calling selection.set() synchronously during touchend triggers iOS's text-selection machinery, which
-      // swallows the immediately-following rapid tap.
-      dispatch(
-        setCursor({
-          path,
-          offset,
-          cursorHistoryClear: true,
-          isKeyboardOpen: true,
-          preserveMulticursor: true,
-        }),
-      )
     }
 
     /**
@@ -306,7 +307,6 @@ const useEditMode = ({
     allowDefaultSelection,
     path,
     dispatch,
-    store,
     style?.visibility,
   ])
 
