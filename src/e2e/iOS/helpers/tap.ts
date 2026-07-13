@@ -5,6 +5,8 @@ import type { Element } from 'webdriverio'
 interface Options {
   // Where in the horizontal line (inside) of the target node should be tapped
   horizontalTapLine?: 'left' | 'right'
+  // Pointer type to use for the tap action. Defaults to 'mouse'.
+  pointerType?: 'mouse' | 'touch'
   // Specify specific node on editable to tap. Overrides horizontalClickLine
   offset?: number
   // Number of pixels of x offset to add to the tap coordinates
@@ -21,7 +23,7 @@ interface Options {
  */
 const tap = async (
   nodeHandle: Element,
-  { horizontalTapLine = 'left', offset, x = 0, y = 0, releaseDelayMs = 100 }: Options = {},
+  { horizontalTapLine = 'left', offset, x = 0, y = 0, pointerType = 'mouse', releaseDelayMs = 100 }: Options = {},
 ) => {
   // Ensure element exists and has an elementId
   const exists = await nodeHandle.isExisting()
@@ -93,13 +95,11 @@ const tap = async (
   // Use performActions directly to avoid the automatic releaseActions call
   // Safari/XCUITest doesn't support the DELETE /actions endpoint (releaseActions)
   // which WebDriverIO's action().perform() calls automatically after performing
-  // Note: use pointerType 'touch' so that touch-only handlers fire (e.g. ColorPicker swatches bind onTouchEnd when
-  // isTouch, with no onClick fallback).
   await browser.performActions([
     {
       type: 'pointer',
       id: 'pointer1',
-      parameters: { pointerType: 'touch' },
+      parameters: { pointerType },
       actions: [
         {
           type: 'pointerMove',

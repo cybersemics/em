@@ -50,10 +50,10 @@ describe('Format', () => {
 
     // Apply a blue background highlight via the toolbar.
     const textColor = await browser.$('[data-testid="toolbar-icon"][aria-label="Text Color"]').getElement()
-    await tap(textColor, { y: 60 })
+    await tap(textColor, { y: 60, pointerType: 'touch' })
     const blueBg = await browser.$('[aria-label="background color swatches"] [aria-label="blue"]').getElement()
     await blueBg.waitForDisplayed({ timeout: 5000 })
-    await tap(blueBg, { y: 60 })
+    await tap(blueBg, { y: 60, pointerType: 'touch' })
 
     /** Reads the innerHTML of the (single) thought, independent of edit/keyboard state. */
     const thoughtHtml = () => browser.execute(() => document.querySelector('[data-editable]')?.innerHTML)
