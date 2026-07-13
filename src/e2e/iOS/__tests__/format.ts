@@ -41,24 +41,25 @@ describe('Format', () => {
   //
   // This exercises the real iOS path that the puppeteer suite cannot: preventing the cancelable `beforeinput`
   // suppresses the follow-up `input`, so Chromium's execCommand('undo') (input-only, non-cancelable) never reaches it.
-  // Bold stands in for the background highlight as a representative formatting edit — the toolbar tap is reliable on
-  // iOS (unlike the tiny color-picker swatches), and the undo path under test is identical.
-  it('undoing formatting via native undo (shake) reverts it rather than corrupting the DOM (#3954)', async () => {
+  it('undoing a background highlight via native undo restores visible text (#3954)', async () => {
     // Use a pre-existing thought so the format edit is its own undo step (not coalesced with newThought).
     await paste(`
     - One`)
     await waitForEditable('One')
     await clickThought('One') // set the cursor on the thought
 
-    // Apply Bold via the toolbar (a formatting edit that goes through em's undo history).
-    const boldButton = await browser.$('[data-testid="toolbar-icon"][aria-label="Bold"]').getElement()
-    await tap(boldButton, { y: 60 })
+    // Apply a blue background highlight via the toolbar.
+    const textColor = await browser.$('[data-testid="toolbar-icon"][aria-label="Text Color"]').getElement()
+    await tap(textColor, { y: 60 })
+    const blueBg = await browser.$('[aria-label="background color swatches"] [aria-label="blue"]').getElement()
+    await blueBg.waitForDisplayed({ timeout: 5000 })
+    await tap(blueBg, { y: 60 })
 
     /** Reads the innerHTML of the (single) thought, independent of edit/keyboard state. */
     const thoughtHtml = () => browser.execute(() => document.querySelector('[data-editable]')?.innerHTML)
 
-    // sanity: the formatting was applied
-    await waitUntil(async () => /<b>/.test((await thoughtHtml()) ?? ''))
+    // sanity: the background highlight was applied
+    await waitUntil(async () => /background-color/.test((await thoughtHtml()) ?? ''))
 
     // Dispatch the exact cancelable beforeinput that iOS native undo produces, in the real WebKit engine.
     await browser.execute(() => {
@@ -66,7 +67,7 @@ describe('Format', () => {
       target.dispatchEvent(new InputEvent('beforeinput', { inputType: 'historyUndo', cancelable: true, bubbles: true }))
     })
 
-    // after native undo the thought returns to plain, un-formatted text (em reverted the edit; the DOM was not corrupted)
+    // after native undo the thought returns to plain, visible text with no leftover color/background markup
     await waitUntil(async () => (await thoughtHtml()) === 'One')
     expect(await thoughtHtml()).toBe('One')
   })

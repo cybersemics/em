@@ -93,12 +93,13 @@ const tap = async (
   // Use performActions directly to avoid the automatic releaseActions call
   // Safari/XCUITest doesn't support the DELETE /actions endpoint (releaseActions)
   // which WebDriverIO's action().perform() calls automatically after performing
-  // Note: pointerType defaults to 'mouse' in WebDriverIO's action API
+  // Note: use pointerType 'touch' so that touch-only handlers fire (e.g. ColorPicker swatches bind onTouchEnd when
+  // isTouch, with no onClick fallback).
   await browser.performActions([
     {
       type: 'pointer',
       id: 'pointer1',
-      parameters: { pointerType: 'mouse' },
+      parameters: { pointerType: 'touch' },
       actions: [
         {
           type: 'pointerMove',
