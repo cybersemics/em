@@ -20,7 +20,7 @@ import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggle
 import { tutorialNextActionCreator as tutorialNext } from '../actions/tutorialNext'
 import { undoActionCreator as undo } from '../actions/undo'
 import { isMac, isSafari, isTouch } from '../browser'
-import { commandEmitter } from '../commands'
+import { commandEmitter, wasNativeHistoryRecentlyHandled } from '../commands'
 import {
   EDIT_THROTTLE,
   EM_TOKEN,
@@ -445,8 +445,13 @@ const Editable = ({
       // leaving a black font color with no background that renders the thought invisible (#3954). Rather than
       // persist the partially-reverted DOM, route it through em's undo/redo, which reverts to the correct Redux
       // state and re-renders the editable. Native browser undo is intentionally superseded by em's undo (#3879).
+      // On iOS the preceding beforeinput is cancelable and already handled this (blocking the DOM mutation); skip
+      // here to avoid double-dispatching. This input-layer path still covers platforms where beforeinput is not
+      // cancelable (e.g. it is the only event Chromium fires for a programmatic execCommand('undo'), which the
+      // regression test relies on).
       const inputType = (e.nativeEvent as InputEvent | undefined)?.inputType
       if (inputType === 'historyUndo' || inputType === 'historyRedo') {
+        if (wasNativeHistoryRecentlyHandled()) return
         dispatch((dispatch, getState) => {
           const state = getState()
           if (inputType === 'historyUndo') {
