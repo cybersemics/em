@@ -30,6 +30,41 @@ it('Superscript should count all the contexts in which it is defined.', async ()
   expect(element.nodeName).toBe('SUP')
 })
 
+it('Superscript should use bold formatting from the thought.', async () => {
+  await dispatch([
+    importText({
+      text: `
+        - **a**
+          - a
+      `,
+    }),
+  ])
+
+  await act(vi.runOnlyPendingTimersAsync)
+
+  const superscripts = screen.getAllByRole('superscript') as HTMLElement[]
+  expect(superscripts[0].style.fontWeight).toBe('600')
+  expect(superscripts[1].style.fontWeight).toBe('')
+})
+
+it('Superscript should use whole-thought inline formatting.', async () => {
+  await dispatch([
+    importText({
+      text: `
+        - <i><u><strike><code>a</code></strike></u></i>
+          - a
+      `,
+    }),
+  ])
+
+  await act(vi.runOnlyPendingTimersAsync)
+
+  const superscript = screen.getAllByRole('superscript')[0] as HTMLElement
+  expect(superscript.style.fontStyle).toBe('italic')
+  expect(superscript.style.fontFamily).toBe('monospace')
+  expect(superscript.style.textDecoration).toBe('underline line-through')
+})
+
 it('Superscript should not render on thoughts in a single context', async () => {
   await dispatch([
     importText({
