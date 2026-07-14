@@ -2,6 +2,13 @@
 
 - Before writing new code, search the codebase for related mechanisms and existing architecture.
 - Prefer extending or reusing existing infrastructure over creating new solutions.
+- Do not access the app `store` directly. To read fresh state, dispatch a thunk and use `getState()` — this avoids importing the app `store` or adding it to a hook's dependency list:
+  ```ts
+  dispatch((dispatch, getState) => {
+    const state = getState()
+    // ...
+  })
+  ```
 
 ### Files, modules, and exports
 
