@@ -140,7 +140,7 @@ it('Should revert background color changes back to previous values', async () =>
 // Regression test for https://github.com/cybersemics/em/issues/4620
 // Each background color application should be its own undo step (like font color), so undoing after
 // applying two background colors reverts only the most recent one instead of clearing all of them at once.
-it.skip('applying multiple background colors should each be a separate undo step', async () => {
+it('applying multiple background colors should each be a separate undo step', async () => {
   await paste(`
     - One`)
 

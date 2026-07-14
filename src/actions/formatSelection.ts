@@ -9,6 +9,7 @@ import pathToThought from '../selectors/pathToThought'
 import resolveNotePath from '../selectors/resolveNotePath'
 import simplifyPath from '../selectors/simplifyPath'
 import themeColors from '../selectors/themeColors'
+import { mergeBatchEditing } from '../stores/batchEditing'
 import { updateCommandState } from '../stores/commandStateStore'
 import suppressFocusStore from '../stores/suppressFocus'
 import head from '../util/head'
@@ -121,7 +122,7 @@ export const formatSelectionActionCreator =
               ? setDescendant({
                   path,
                   values: [newValue],
-                  mergePrev: true,
+                  mergePrev: mergeBatchEditing(),
                 })
               : editThought({
                   cursorOffset: selection.offsetThought() ?? undefined,
@@ -130,7 +131,7 @@ export const formatSelectionActionCreator =
                   path: simplifyPath(state, path),
                   // force the ContentEditable to update
                   force: true,
-                  mergePrev: true,
+                  mergePrev: mergeBatchEditing(),
                 }),
           )
       })
