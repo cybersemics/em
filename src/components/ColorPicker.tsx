@@ -6,7 +6,7 @@ import { formatSelectionActionCreator as formatSelection } from '../actions/form
 import { isTouch } from '../browser'
 import { ColorToken } from '../colors.config'
 import themeColors from '../selectors/themeColors'
-import batchEditingStore from '../stores/batchEditing'
+import { endBatchEditing, startBatchEditing } from '../stores/batchEditing'
 import commandStateStore from '../stores/commandStateStore'
 import rgbToHex from '../util/rgbToHex'
 import Popover from './Popover'
@@ -61,6 +61,10 @@ const ColorSwatch: FC<{
 
   /** Toggles the text color to the clicked swatch. If the swatch is already selected, sets text color and background color back to default. */
   const toggleTextColor = () => {
+    // Batch the foreColor and backColor edits into a single undo step. Starting the batch before the foreColor dispatch
+    // ensures that whichever edit lands first anchors the undo step, so re-applying a background color (whose forced black
+    // text is a no-op) still forms its own undo step instead of merging into the previous color application (#4620).
+    startBatchEditing()
     dispatch((dispatch, getState) => {
       // Note is semi-transparent by default and its color must be reset to that rather than white, which is the fg color for thoughts. (#3902)
       const fgColor = getState().noteFocus ? 'fgNote' : 'fg'
@@ -72,10 +76,9 @@ const ColorSwatch: FC<{
       )
     })
 
-    batchEditingStore.update(true)
     // Apply background color to the selection
     dispatch(formatSelection('backColor', selected ? 'bg' : (backgroundColor ?? 'bg')))
-    batchEditingStore.update(false)
+    endBatchEditing()
   }
 
   /** Toggles the text color onTouchEnd or onClick on desktop. */
