@@ -15,6 +15,9 @@ env:
   VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
   VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+  # Skip Puppeteer's Chrome download on install — the Vercel build never uses the bundled
+  # browser, saving ~20s per install.
+  PUPPETEER_SKIP_DOWNLOAD: true
 
 jobs:
   preview:
