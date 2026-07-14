@@ -536,6 +536,8 @@ export const COMMAND_GROUPS: {
       'jumpForward',
       'moveCursorBackward',
       'moveCursorForward',
+      'navigateBack',
+      'navigateForward',
       'openDesktopCommandUniverse',
       'home',
       'search',

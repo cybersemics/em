@@ -1,9 +1,12 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { undoActionCreator as undo } from '../../actions/undo'
 import { executeCommandWithMulticursor } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
+import { initialize } from '../../initialize'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
+import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import uncategorizeCommand from '../uncategorize'
@@ -11,6 +14,67 @@ import uncategorizeCommand from '../uncategorize'
 beforeEach(initStore)
 
 describe('uncategorize', () => {
+  it('undoes uncategorize of a duplicate uncle', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+          - b
+            - a
+              - c
+        `,
+      }),
+      setCursor(['b', 'a']),
+    ])
+
+    executeCommandWithMulticursor(uncategorizeCommand, { store })
+
+    let state = store.getState()
+    expect(exportContext(state, [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - a
+  - b
+    - c`)
+    expectPathToEqual(state, state.cursor, ['b', 'c'])
+
+    expect(() => store.dispatch(undo())).not.toThrow()
+
+    state = store.getState()
+    expect(exportContext(state, [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - a
+  - b
+    - a
+      - c`)
+    expectPathToEqual(state, state.cursor, ['b', 'a'])
+  })
+
+  it('persists undoing uncategorize of a duplicate uncle without a save error', async () => {
+    const { cleanup } = await initialize()
+
+    try {
+      store.dispatch([
+        importText({
+          text: `
+            - a
+            - b
+              - a
+                - c
+          `,
+        }),
+        setCursor(['b', 'a']),
+      ])
+
+      executeCommandWithMulticursor(uncategorizeCommand, { store })
+      store.dispatch(undo())
+
+      await vi.runOnlyPendingTimersAsync()
+      await Promise.resolve()
+
+      expect(store.getState().error).toBeNull()
+    } finally {
+      cleanup()
+    }
+  }, 10000)
+
   describe('multicursor', () => {
     it('collapses multiple thoughts', async () => {
       store.dispatch([

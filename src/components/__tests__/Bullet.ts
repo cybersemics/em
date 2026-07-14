@@ -54,6 +54,52 @@ describe('render', () => {
     expect(bullets.length).toBe(0)
   })
 
+  it('do not render a bullet on a thought with value "..."', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - ...
+      `,
+      }),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const bullets = document.querySelectorAll('[aria-label="bullet"]')
+    expect(bullets.length).toBe(0)
+  })
+
+  it('do not render a bullet on a formatted thought with value "..."', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - **...**
+      `,
+      }),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const bullets = document.querySelectorAll('[aria-label="bullet"]')
+    expect(bullets.length).toBe(0)
+  })
+
+  it('render a bullet on an ellipsis thought with =bullet', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - ...
+          - =bullet
+      `,
+      }),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const bullets = document.querySelectorAll('[aria-label="bullet"]')
+    expect(bullets.length).toBe(1)
+  })
+
   it('do not render bullets on a child of a thought with =children/=bullet/None', async () => {
     await dispatch([
       importText({

@@ -2,9 +2,12 @@ import newThought from '../../actions/newThought'
 import splitSentences from '../../actions/splitSentences'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
+import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
+import cursorForward from '../cursorForward'
+import importText from '../importText'
 
 /**
  * Function: splitThought.
@@ -673,6 +676,20 @@ describe('parenthetical content', () => {
 
     expect(exported).toBe(`- ${HOME_TOKEN}
   - This (has parentheses) in the middle`)
+  })
+
+  it('cursorForward moves to the extracted subthought after splitting a thought with existing children', () => {
+    const text = `
+      - One two (three four)
+        - A
+        - B
+        - C
+    `
+    const steps = [importText({ text }), setCursor(['One two (three four)']), splitSentences(), cursorForward]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expectPathToEqual(stateNew, stateNew.cursor, ['One two', 'three four'])
   })
 })
 

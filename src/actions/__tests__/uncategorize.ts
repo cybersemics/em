@@ -109,6 +109,31 @@ describe('normal view', () => {
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'c'])
   })
 
+  it('does not merge a child into the category being uncategorized', () => {
+    const steps = [
+      importText({
+        text: `
+          - a
+            - b
+              - b
+                - c
+        `,
+      }),
+      setCursor(['a', 'b']),
+      uncategorize({}),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - b
+      - c`)
+
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'b'])
+  })
+
   it('after uncategorize context set cursor to the first visible children.', () => {
     const steps = [
       newThought('a'),

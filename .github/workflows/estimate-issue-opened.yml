@@ -10,19 +10,27 @@ permissions:
   # To read the estimation instructions and samples from .github/instructions/estimate/.
   contents: read
 
+env:
+  # Skip Puppeteer's Chrome download on install — the estimate workspace never uses a browser,
+  # saving ~20s per install.
+  PUPPETEER_SKIP_DOWNLOAD: true
+
 jobs:
   estimate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: 24
-      - run: yarn install --frozen-lockfile
+      - run: yarn install --immutable
       - name: Build estimate workspace
         run: yarn workspace em-estimate build
       - name: Estimate issue
         run: node scripts/estimate/src/issue.ts
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # OpenAI API key used for issue estimation inference (issue.ts).
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           EVERHOUR_API_KEY: ${{ secrets.EVERHOUR_API_KEY }}
+          EVERHOUR_PROJECT_ID: ${{ secrets.EVERHOUR_PROJECT_ID }}

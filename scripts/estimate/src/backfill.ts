@@ -6,31 +6,18 @@
  * fetches the corresponding GitHub issue → runs AI inference → writes the
  * estimate back to Everhour and leaves an audit comment on the GitHub issue.
  */
-import { execSync } from 'child_process'
 import 'dotenv/config'
 import * as path from 'path'
 import { fileURLToPath } from 'url'
 import EverhourClient from './everhour/client.ts'
 import extractIssueNumber from './everhour/extractIssueNumber.ts'
 import estimateIssue from './lib/estimateIssue.ts'
+import getPromptVersion from './lib/getPromptVersion.ts'
 import issueLink from './lib/issueLink.ts'
+import issueUrlSuffix from './lib/issueUrlSuffix.ts'
 import loadInstructions from './lib/loadInstructions.ts'
 import loadSamples from './lib/loadSamples.ts'
-
-/**
- * Gets the short git commit hash of the most recent change to the estimate instructions file.
- * Used to tag AI-generated estimates with the prompt version for auditability.
- */
-const getPromptVersion = (repoRoot: string): string => {
-  try {
-    return execSync('git log -1 --format=%h -- .github/instructions/estimate/estimate.instructions.md', {
-      cwd: repoRoot,
-      encoding: 'utf-8',
-    }).trim()
-  } catch {
-    return 'unknown'
-  }
-}
+import promptVersionLink from './lib/promptVersionLink.ts'
 
 interface GitHubIssue {
   number: number
@@ -86,6 +73,7 @@ const processTask = async ({
   taskId,
   everhour,
   githubToken,
+  openaiApiKey,
   owner,
   repoName,
   instructions,
@@ -98,6 +86,7 @@ const processTask = async ({
   taskId: string
   everhour: EverhourClient
   githubToken: string
+  openaiApiKey: string
   owner: string
   repoName: string
   instructions: string
@@ -113,9 +102,10 @@ const processTask = async ({
       labels: issue.labels.map(l => l.name),
     },
     issueRef: issueLink(owner, repoName, issue.number),
+    issueUrl: issueUrlSuffix(owner, repoName, issue.number),
     instructions,
     samples,
-    token: githubToken,
+    openaiApiKey,
     everhour,
     taskId,
     dryRunAI,
@@ -128,20 +118,41 @@ const processTask = async ({
 
   const { category, hours } = estimate
 
-  // Leave audit comment on GitHub issue
-  const commentBody = `Everhour estimate: ${category} / ${hours}h\nPrompt version: ${promptVersion}\nSource: backfill`
-  await fetch(`https://api.github.com/repos/${owner}/${repoName}/issues/${issue.number}/comments`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${githubToken}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ body: commentBody }),
-  })
+  // Log the estimate first: it has already been written to Everhour by estimateIssue, so it must be
+  // reported even if the best-effort audit comment below fails. Logging after the POST risked losing
+  // this line entirely when the comment request threw.
+  console.info(
+    `  Estimated issue ${issueLink(owner, repoName, issue.number)} @ ${category} / ${hours}h${issueUrlSuffix(owner, repoName, issue.number)}`,
+  )
 
-  console.info(`  Estimated issue ${issueLink(owner, repoName, issue.number)}: ${category} / ${hours}h`)
+  // Leave an audit comment on the GitHub issue. Best-effort: a comment failure must not abort the
+  // backfill run or discard the estimate already recorded, so failures are warned, not thrown.
+  const commentBody = `Everhour estimate: ${category} / ${hours}h\nPrompt version: ${promptVersionLink(owner, repoName, promptVersion)}\nSource: backfill`
+  try {
+    const commentResp = await fetch(
+      `https://api.github.com/repos/${owner}/${repoName}/issues/${issue.number}/comments`,
+      {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${githubToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ body: commentBody }),
+      },
+    )
+    if (!commentResp.ok) {
+      console.warn(
+        `  Failed to post audit comment on ${issueLink(owner, repoName, issue.number)} - GitHub API error ${commentResp.status}`,
+      )
+    }
+  } catch (err) {
+    console.warn(`  Failed to post audit comment on ${issueLink(owner, repoName, issue.number)}:`, err)
+  }
 }
 
 const main = async () => {
   const githubToken = process.env.GITHUB_TOKEN
   if (!githubToken) throw new Error('GITHUB_TOKEN is required')
+
+  const openaiApiKey = process.env.OPENAI_API_KEY
+  if (!openaiApiKey) throw new Error('OPENAI_API_KEY is required')
 
   const everhourApiKey = process.env.EVERHOUR_API_KEY
   if (!everhourApiKey) throw new Error('EVERHOUR_API_KEY is required')
@@ -237,7 +248,7 @@ const main = async () => {
 
       if (!issueResp.ok) {
         console.info(
-          `  Skipping issue ${issueLink(owner, repoName, issueNumber)} - GitHub API error ${issueResp.status}`,
+          `  Skipping issue ${issueLink(owner, repoName, issueNumber)} - GitHub API error ${issueResp.status}${issueUrlSuffix(owner, repoName, issueNumber)}`,
         )
         continue
       }
@@ -248,18 +259,24 @@ const main = async () => {
       // too (they share the number space), so detect and skip them before the closed-state check —
       // otherwise a merged PR would be reported with the misleading "closed" reason.
       if (isPullRequest(issue)) {
-        console.info(`  Skipping ${issueLink(owner, repoName, issueNumber)} "${issue.title}" - PR`)
+        console.info(
+          `  Skipping ${issueLink(owner, repoName, issueNumber)} "${issue.title}" - PR${issueUrlSuffix(owner, repoName, issueNumber)}`,
+        )
         continue
       }
 
       // Do not estimate closed issues.
       if (issue.state === 'closed') {
-        console.info(`  Skipping issue ${issueLink(owner, repoName, issueNumber)} - closed`)
+        console.info(
+          `  Skipping issue ${issueLink(owner, repoName, issueNumber)} - closed${issueUrlSuffix(owner, repoName, issueNumber)}`,
+        )
         continue
       }
 
       if (!issue.body) {
-        console.info(`  Skipping issue ${issueLink(owner, repoName, issueNumber)} - empty body`)
+        console.info(
+          `  Skipping issue ${issueLink(owner, repoName, issueNumber)} - empty body${issueUrlSuffix(owner, repoName, issueNumber)}`,
+        )
         continue
       }
 
@@ -268,6 +285,7 @@ const main = async () => {
         taskId: task.id,
         everhour,
         githubToken,
+        openaiApiKey,
         owner,
         repoName,
         instructions,
@@ -289,6 +307,10 @@ const main = async () => {
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   main().catch(err => {
     console.error(err)
-    process.exit(1)
+    // Set exitCode instead of calling process.exit(1): process.exit() terminates before Node drains
+    // its async stdout/stderr writes, which silently truncates buffered log output (including this
+    // error) when the streams are pipes, as in CI. Setting exitCode lets the process exit naturally
+    // with a non-zero status once the event loop is empty, flushing all pending output first.
+    process.exitCode = 1
   })
 }
