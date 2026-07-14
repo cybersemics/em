@@ -5,9 +5,11 @@ import clickThought from '../helpers/clickThought'
 import exportThoughts from '../helpers/exportThoughts'
 import gesture from '../helpers/gesture'
 import getEditingText from '../helpers/getEditingText'
+import getSelection from '../helpers/getSelection'
 import keyboard from '../helpers/keyboard'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
+import setSelection from '../helpers/setSelection'
 import { page } from '../session'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
@@ -163,4 +165,35 @@ it('applying multiple background colors should each be a separate undo step', as
   const exported = await exportThoughts({ mimeType: 'text/html' })
   expect(exported).toContain('background-color: rgb(255, 87, 61)')
   expect(exported).not.toContain('rgb(0, 214, 136)')
+})
+
+// Regression test for https://github.com/cybersemics/em/pull/4628#issuecomment-4970759373 (Issue C)
+// Undoing a whole-thought color format should leave the caret where the user placed it, not move it to the end of
+// the thought. execCommand fires an input event while the whole thought is selected, so the end-of-thought offset
+// was being persisted as the cursor offset and restored on undo.
+it('undo of a whole-thought background color should keep the caret in place, not move it to the end', async () => {
+  await paste(`
+    - Welcome to the Jungle`)
+
+  // focus the thought and place a collapsed caret in the middle (after "Welcome to", offset 10)
+  await clickThought('Welcome to the Jungle')
+  await setSelection(10, 10)
+
+  // open the ColorPicker
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+
+  // apply a red background to the whole thought (no selection → whole-thought formatting)
+  await click('[aria-label="background color swatches"] [aria-label="red"]')
+
+  // undo the color application
+  await press('z', { meta: true })
+
+  // wait for the value to revert to the plain thought before checking the caret
+  await page.waitForFunction(
+    () => document.querySelector('[data-editing=true] [data-editable]')?.innerHTML === 'Welcome to the Jungle',
+  )
+
+  // the caret should remain at offset 10, not jump to the end of the 21-character text
+  const focusOffset = await getSelection().focusOffset
+  expect(focusOffset).toBe(10)
 })

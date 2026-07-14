@@ -45,6 +45,7 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import { mergeBatchEditing } from '../stores/batchEditing'
 import editingValueStore from '../stores/editingValue'
 import editingValueUntrimmedStore from '../stores/editingValueUntrimmed'
+import formatCursorOffset from '../stores/formatCursorOffset'
 import storageModel from '../stores/storageModel'
 import suppressFocusStore from '../stores/suppressFocus'
 import addEmojiSpace from '../util/addEmojiSpace'
@@ -488,7 +489,7 @@ const Editable = ({
       */
         editingValueStore.update(newValue)
 
-        const cursorOffset = selection.offsetThought()
+        const cursorOffset = formatCursorOffset.getState() ?? selection.offsetThought()
         // If addEmojiSpace inserts a space, keep the caret in the same visual position after re-render.
         let cursorOffsetWithEmojiSpace = cursorOffset === null ? undefined : cursorOffset
         if (
