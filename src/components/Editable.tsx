@@ -160,8 +160,15 @@ const Editable = ({
     [isCursorCleared, value],
   )
   const contentEditableStyle = useMemo(
-    () => (placeholderFormat ? { ...(style || {}), ...placeholderFormat.style } : style),
-    [placeholderFormat, style],
+    (): React.CSSProperties | undefined =>
+      placeholderFormat?.foreColor || placeholderFormat?.backColor
+        ? {
+            ...(style || {}),
+            ...(placeholderFormat.foreColor ? { '--placeholder-color': placeholderFormat.foreColor } : null),
+            ...(placeholderFormat.backColor ? { '--placeholder-background-color': placeholderFormat.backColor } : null),
+          }
+        : style,
+    [placeholderFormat?.backColor, placeholderFormat?.foreColor, style],
   )
 
   const hasMulticursor = useSelector(hasMulticursorSelector)
@@ -782,13 +789,11 @@ const Editable = ({
       innerRef={contentRef}
       aria-label={'editable-' + head(path)}
       data-editable
-      data-placeholder-background-color={placeholderFormat?.backgroundColor}
+      data-placeholder-bold={placeholderFormat?.bold}
       data-placeholder-code={placeholderFormat?.code}
-      data-placeholder-color={placeholderFormat?.color}
-      data-placeholder-font-family={placeholderFormat?.fontFamily}
-      data-placeholder-font-style={placeholderFormat?.fontStyle}
-      data-placeholder-font-weight={placeholderFormat?.fontWeight}
-      data-placeholder-text-decoration={placeholderFormat?.textDecoration}
+      data-placeholder-italic={placeholderFormat?.italic}
+      data-placeholder-strikethrough={placeholderFormat?.strikethrough}
+      data-placeholder-underline={placeholderFormat?.underline}
       className={cx(editableRecipe(), className)}
       html={
         value === EM_TOKEN

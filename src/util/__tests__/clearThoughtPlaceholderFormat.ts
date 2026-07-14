@@ -1,26 +1,18 @@
 import clearThoughtPlaceholderFormat from '../clearThoughtPlaceholderFormat'
 
-it('maps whole-thought formatting to placeholder CSS variables', () => {
+it('extracts whole-thought formatting for the placeholder', () => {
   const format = clearThoughtPlaceholderFormat(
     '<b><i><u><strike><code><font color="rgb(255, 0, 0)"><span style="background-color: rgb(0, 0, 255)">text</span></font></code></strike></u></i></b>',
   )
 
   expect(format).toStrictEqual({
-    style: {
-      '--placeholder-background-color': 'rgb(0, 0, 255)',
-      '--placeholder-color': 'rgb(255, 0, 0)',
-      '--placeholder-font-family': 'monospace',
-      '--placeholder-font-style': 'italic',
-      '--placeholder-font-weight': '700',
-      '--placeholder-text-decoration': 'underline line-through',
-    },
-    backgroundColor: true,
+    backColor: 'rgb(0, 0, 255)',
+    bold: true,
     code: true,
-    color: true,
-    fontFamily: true,
-    fontStyle: true,
-    fontWeight: true,
-    textDecoration: true,
+    foreColor: 'rgb(255, 0, 0)',
+    italic: true,
+    strikethrough: true,
+    underline: true,
   })
 })
 
