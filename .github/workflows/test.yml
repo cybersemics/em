@@ -41,7 +41,7 @@ jobs:
           cache: 'yarn'
 
       - name: Install npm dependencies
-        run: yarn
+        uses: ./.github/actions/install
 
       - name: Test
         run: yarn test

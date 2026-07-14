@@ -36,7 +36,7 @@ jobs:
           cache: 'yarn'
 
       - name: Install npm dependencies
-        run: yarn
+        uses: ./.github/actions/install
 
       - name: Lint
         run: yarn lint
