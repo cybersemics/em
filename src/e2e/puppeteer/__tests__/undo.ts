@@ -136,3 +136,31 @@ it('Should revert background color changes back to previous values', async () =>
     '<font color="#000000" style="background-color: rgb(0, 214, 136);">Lorem</font> Ipsum Dolor Sit <font color="#000000" style="background-color: rgb(0, 214, 136);">Amet</font>',
   )
 })
+
+// Regression test for https://github.com/cybersemics/em/issues/4620
+// Each background color application should be its own undo step (like font color), so undoing after
+// applying two background colors reverts only the most recent one instead of clearing all of them at once.
+it.skip('applying multiple background colors should each be a separate undo step', async () => {
+  await paste(`
+    - One`)
+
+  // focus the thought and place the caret inside it (no selection → whole-thought formatting)
+  await clickThought('One')
+
+  // open the ColorPicker
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+
+  // apply a red background to the whole thought
+  await click('[aria-label="background color swatches"] [aria-label="red"]')
+
+  // apply a green background to the whole thought
+  await click('[aria-label="background color swatches"] [aria-label="green"]')
+
+  // a single undo should revert only the most recent (green) application, restoring the red background —
+  // not revert every background color application at once
+  await press('z', { meta: true })
+
+  const exported = await exportThoughts({ mimeType: 'text/html' })
+  expect(exported).toContain('background-color: rgb(255, 87, 61)')
+  expect(exported).not.toContain('rgb(0, 214, 136)')
+})
