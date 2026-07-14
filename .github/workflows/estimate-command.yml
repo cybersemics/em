@@ -14,6 +14,11 @@ permissions:
   # acknowledge the correction. Since PR comments share the issues API, commenting also relies on this scope.
   issues: write
 
+env:
+  # Skip Puppeteer's Chrome download on install — the estimate workspace never uses a browser,
+  # saving ~20s per install.
+  PUPPETEER_SKIP_DOWNLOAD: true
+
 jobs:
   estimate-command:
     if: startsWith(github.event.comment.body, '/estimate ')

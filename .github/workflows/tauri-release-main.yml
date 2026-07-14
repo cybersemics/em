@@ -23,6 +23,9 @@ permissions:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   CI: true
+  # Skip Puppeteer's Chrome download on install — the desktop build never uses the bundled
+  # browser, saving ~20s per install across the build matrix.
+  PUPPETEER_SKIP_DOWNLOAD: true
   # Exposed at workflow level so the macOS keychain-import step can gate on its
   # presence. Empty when the signing secret is unset, in which case macOS builds
   # fall back to ad-hoc signing (see the tauri-action step below).
