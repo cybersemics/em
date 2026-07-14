@@ -54,7 +54,7 @@ export const formatSelectionActionCreator =
       const editable = contentEditable as HTMLElement
 
       // Prevent the virtual keyboard from opening when the editable is focused
-      if (isTouch && isSafari()) editable.setAttribute('inputmode', 'none')
+      if (isTouch && isSafari() && !state.isKeyboardOpen) editable.setAttribute('inputmode', 'none')
 
       // Note that we must suppress focus events in the Editable component, otherwise selecting text will set editing:true on mobile.
       editable.focus({ preventScroll: true })
@@ -74,7 +74,7 @@ export const formatSelectionActionCreator =
         selection.clear()
       }
 
-      if (isTouch && isSafari()) contentEditable.setAttribute('inputmode', inputMode ?? '')
+      if (isTouch && isSafari() && !state.isKeyboardOpen) contentEditable.setAttribute('inputmode', inputMode ?? '')
     }
     // format selected text only
     else {
