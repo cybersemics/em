@@ -48,10 +48,10 @@ import editingValueUntrimmedStore from '../stores/editingValueUntrimmed'
 import storageModel from '../stores/storageModel'
 import suppressFocusStore from '../stores/suppressFocus'
 import addEmojiSpace from '../util/addEmojiSpace'
-import clearThoughtPlaceholderFormat from '../util/clearThoughtPlaceholderFormat'
 import containsURL from '../util/containsURL'
 import ellipsize from '../util/ellipsize'
 import equalPath from '../util/equalPath'
+import getCommandState from '../util/getCommandState'
 import haptics from '../util/haptics'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
@@ -155,20 +155,24 @@ const Editable = ({
   const value = useSelector(state => getThoughtById(state, head(simplePath))?.value || '')
   const rank = useSelector(state => getThoughtById(state, head(simplePath))?.rank || 0)
   const isCursorCleared = useSelector(state => !!isEditing && state.cursorCleared)
-  const placeholderFormat = useMemo(
-    () => (isCursorCleared ? clearThoughtPlaceholderFormat(value) : null),
+  const placeholderCommandState = useMemo(
+    () => (isCursorCleared ? getCommandState(value) : null),
     [isCursorCleared, value],
   )
+  const placeholderForeColor =
+    typeof placeholderCommandState?.foreColor === 'string' ? placeholderCommandState.foreColor : undefined
+  const placeholderBackColor =
+    typeof placeholderCommandState?.backColor === 'string' ? placeholderCommandState.backColor : undefined
   const contentEditableStyle = useMemo(
     (): React.CSSProperties | undefined =>
-      placeholderFormat?.foreColor || placeholderFormat?.backColor
+      placeholderForeColor || placeholderBackColor
         ? {
             ...(style || {}),
-            ...(placeholderFormat.foreColor ? { '--placeholder-color': placeholderFormat.foreColor } : null),
-            ...(placeholderFormat.backColor ? { '--placeholder-background-color': placeholderFormat.backColor } : null),
+            ...(placeholderForeColor ? { '--placeholder-color': placeholderForeColor } : null),
+            ...(placeholderBackColor ? { '--placeholder-background-color': placeholderBackColor } : null),
           }
         : style,
-    [placeholderFormat?.backColor, placeholderFormat?.foreColor, style],
+    [placeholderBackColor, placeholderForeColor, style],
   )
 
   const hasMulticursor = useSelector(hasMulticursorSelector)
@@ -789,11 +793,11 @@ const Editable = ({
       innerRef={contentRef}
       aria-label={'editable-' + head(path)}
       data-editable
-      data-placeholder-bold={placeholderFormat?.bold}
-      data-placeholder-code={placeholderFormat?.code}
-      data-placeholder-italic={placeholderFormat?.italic}
-      data-placeholder-strikethrough={placeholderFormat?.strikethrough}
-      data-placeholder-underline={placeholderFormat?.underline}
+      data-placeholder-bold={placeholderCommandState?.bold === true ? true : undefined}
+      data-placeholder-code={placeholderCommandState?.code === true ? true : undefined}
+      data-placeholder-italic={placeholderCommandState?.italic === true ? true : undefined}
+      data-placeholder-strikethrough={placeholderCommandState?.strikethrough === true ? true : undefined}
+      data-placeholder-underline={placeholderCommandState?.underline === true ? true : undefined}
       className={cx(editableRecipe(), className)}
       html={
         value === EM_TOKEN
