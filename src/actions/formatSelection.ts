@@ -11,7 +11,6 @@ import simplifyPath from '../selectors/simplifyPath'
 import themeColors from '../selectors/themeColors'
 import { mergeBatchEditing } from '../stores/batchEditing'
 import { updateCommandState } from '../stores/commandStateStore'
-import { setFormatCursorOffset } from '../stores/formatCursorOffset'
 import suppressFocusStore from '../stores/suppressFocus'
 import head from '../util/head'
 import rgbToHex from '../util/rgbToHex'
@@ -52,10 +51,6 @@ export const formatSelectionActionCreator =
         state.noteFocus ? (noteValue(state, state.cursor) ?? '') : thought.value,
       )
       const savedSelection = selection.save()
-      // Capture the caret offset before selecting the whole thought. execCommand fires a synchronous input event
-      // while the entire thought is selected, so without this the Editable onChange handler would read the
-      // end-of-thought offset and move the caret to the end of the thought when the format is undone (#4628).
-      setFormatCursorOffset(selection.offsetThought())
       // Note that we must suppress focus events in the Editable component, otherwise selecting text will set editing:true on mobile.
       selection.select(contentEditable)
       if (!(command === 'backColor' && color === 'bg' && !hasCustomBackgroundColor)) {
