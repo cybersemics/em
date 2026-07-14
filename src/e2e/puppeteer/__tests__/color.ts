@@ -6,6 +6,7 @@ import clickThought from '../helpers/clickThought'
 import extractColor from '../helpers/extractColor'
 import getBulletColor from '../helpers/getBulletColor'
 import getEditingText from '../helpers/getEditingText'
+import getSelection from '../helpers/getSelection'
 import getSuperscriptColor from '../helpers/getSuperScriptColor'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
@@ -179,6 +180,132 @@ it('Bullet remains the default color when a substring color is set', async () =>
   expect(bulletColor).toBe(null)
 })
 
+it('Selection remains active after applying a font color to part of the text', async () => {
+  const importText = `
+  - Labrador
+  - Golden Retriever`
+
+  await paste(importText)
+
+  await clickThought('Golden Retriever')
+
+  await setSelection(0, 6)
+  // Set text color for the selected substring
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="text color swatches"] [aria-label="blue"]')
+
+  // The active selection should be preserved (not dismissed) after applying the font color
+  const selectedText = await getSelection().toString()
+  expect(selectedText).toBe('Golden')
+})
+
+it('Selection remains active after applying a font color to text that has a background color elsewhere', async () => {
+  const importText = `
+  - Labrador
+  - Golden Retriever`
+
+  await paste(importText)
+
+  await clickThought('Golden Retriever')
+
+  // Apply a background color to the first substring ("Golden")
+  await setSelection(0, 6)
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="background color swatches"] [aria-label="green"]')
+
+  // Select a different substring ("Retriever"), which now lives in a separate text node after the colored span
+  await setSelection('Retriever')
+
+  // Apply a font color to the second substring
+  await click('[aria-label="text color swatches"] [aria-label="blue"]')
+
+  // The active selection should be preserved (not dismissed) even though the thought already has a background color (#4275)
+  const selectedText = await getSelection().toString()
+  expect(selectedText).toBe('Retriever')
+})
+
+it('Applying a font color clears a background color on the overlapping part of the selection', async () => {
+  const importText = `
+  - Labrador
+  - Golden Retriever`
+
+  await paste(importText)
+
+  await clickThought('Golden Retriever')
+
+  // Apply a background color to the first substring ("Golden")
+  await setSelection(0, 6)
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="background color swatches"] [aria-label="green"]')
+
+  // Select a range that overlaps the colored substring ("Golden Ret"), spanning the colored span and the following text node
+  await setSelection('Golden Ret')
+
+  // Apply a font color over the overlapping selection
+  await click('[aria-label="text color swatches"] [aria-label="blue"]')
+
+  // The background color on the overlapping substring should be cleared, leaving only the font color (#4275)
+  const cursorText = await getEditingText()
+  expect(extractColor(cursorText!).backgroundColor).toBe(null)
+  expect(extractColor(cursorText!).color).toBe(rgbaToHex(colors.light.blue))
+})
+
+it('Selection remains active after applying a font color to text that already has a background color', async () => {
+  const importText = `
+  - Labrador
+  - Golden Retriever`
+
+  await paste(importText)
+
+  await clickThought('Golden Retriever')
+
+  // Apply a background color to the substring "Golden"
+  await setSelection(0, 6)
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="background color swatches"] [aria-label="green"]')
+
+  // Apply a font color to the same selection without clearing it
+  await click('[aria-label="text color swatches"] [aria-label="blue"]')
+
+  // The active selection should be preserved (not dismissed) even though the font color cleared the
+  // background color, which forces a re-render (#4275)
+  const selectedText = await getSelection().toString()
+  expect(selectedText).toBe('Golden')
+
+  // The font color should override the background color, leaving only the font color
+  const cursorText = await getEditingText()
+  expect(extractColor(cursorText!).backgroundColor).toBe(null)
+  expect(extractColor(cursorText!).color).toBe(rgbaToHex(colors.light.blue))
+})
+
+it('Applying a font color overrides a background color on a selection that contains an existing font color', async () => {
+  await paste('Hello world of beautiful world')
+
+  await clickThought('Hello world of beautiful world')
+
+  // Apply a font color to the first "world"
+  await setSelection('world')
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="text color swatches"] [aria-label="green"]')
+
+  // Apply a background color to "world of beautiful", which contains the existing font color
+  await setSelection('world of beautiful')
+  await click('[aria-label="background color swatches"] [aria-label="green"]')
+
+  // Apply a font color to the same selection
+  await setSelection('world of beautiful')
+  await click('[aria-label="text color swatches"] [aria-label="green"]')
+
+  // The font color should override the background color, leaving only the font color (#4275)
+  const cursorText = await getEditingText()
+  expect(extractColor(cursorText!).backgroundColor).toBe(null)
+  expect(extractColor(cursorText!).color).toBe(rgbaToHex(colors.light.green))
+
+  // The active selection should be preserved (not dismissed)
+  const selectedText = await getSelection().toString()
+  expect(selectedText).toBe('world of beautiful')
+})
+
 it('Empty <font> element will be removed after setting color to default.', async () => {
   const importText = `
   - Labrador
@@ -263,7 +390,13 @@ it('Verify superscript colors in different views', async () => {
   expect(supColor1).toBe(null) // Superscript should remain uncolored for partial text coloring
 
   // Test 2: Verify superscript color when entire thought is colored
+  // Press Escape to clear the active text selection and close the color picker before navigating.
+  // The picker popover overlaps the top thoughts, so it would otherwise intercept the click on 'k';
+  // and a preserved selection keeps the picker open (it no longer collapses to a caret), so toggling
+  // the toolbar button is not sufficient to close it (#4275).
+  await press('Escape')
   await clickThought('k')
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="text color swatches"] [aria-label="blue"]')
 
   const supColor2 = await getSuperscriptColor()

@@ -19,6 +19,38 @@ import { setDescendantActionCreator as setDescendant } from './setDescendant'
 
 const BACKGROUND_COLOR_REGEX = /background-color\s*:\s*[^;]+;?/i
 
+// Matches a neutral pure-black or pure-white background color (default background or execCommand artifacts), which must not count as a custom background color to clear.
+const NEUTRAL_BACKGROUND_COLOR_REGEX =
+  /^\s*(?:#000000|#fff(?:fff)?|rgba?\(\s*0\s*,\s*0\s*,\s*0\s*[,)]|rgba?\(\s*255\s*,\s*255\s*,\s*255\s*[,)])/i
+
+/**
+ * Removes a redundant default background-color and default text color from <font>/<span> descendants of root, then unwraps any
+ * element left without a meaningful style or color attribute. Mutates root in place (#3901). Used both on a detached document
+ * (to compute the cleaned thought/note value) and on the live ContentEditable (to clean a partial selection in place without an
+ * innerHTML reset that would collapse the active selection — see formatSelection below, #4275).
+ */
+const stripRedundantColors = (root: ParentNode, defaultBackgroundHex: string, defaultColorHex: string): void => {
+  for (const el of Array.from(root.querySelectorAll<HTMLElement>('font, span'))) {
+    // Remove background-color if it matches the default background color
+    if (el.style.backgroundColor && rgbToHex(el.style.backgroundColor) === defaultBackgroundHex) {
+      el.style.removeProperty('background-color')
+      if (!el.getAttribute('style')?.trim()) {
+        el.removeAttribute('style')
+      }
+    }
+
+    // Remove color if it matches the default text color
+    if (el.style.color && rgbToHex(el.style.color) === defaultColorHex) {
+      el.style.removeProperty('color')
+    }
+
+    // Unwrap tags that have no meaningful style or color attributes
+    if (!el.getAttribute('style')?.trim() && !el.getAttribute('color')?.trim()) {
+      el.replaceWith(...Array.from(el.childNodes))
+    }
+  }
+}
+
 /** Format the browser selection or cursor thought as bold, italic, strikethrough, underline. */
 export const formatSelectionActionCreator =
   (
@@ -41,18 +73,40 @@ export const formatSelectionActionCreator =
     )
     if (!contentEditable) return
 
-    if (
+    // A whole-thought (or empty) selection formats the entire thought/note; a partial selection formats only the selected text.
+    const isWholeThought =
       (selection.text()?.length === 0 && strip(thought.value).length !== 0) ||
       selection.text()?.length === strip(thought.value).length
-    ) {
-      // Check the value of the note or thought for a custom background color (#3901)
-      const hasCustomBackgroundColor = BACKGROUND_COLOR_REGEX.test(
-        state.noteFocus ? (noteValue(state, state.cursor) ?? '') : thought.value,
-      )
+
+    // Check for a custom background color to clear, scoped to the region being formatted.
+    // For a whole-thought (or empty) selection the thought/note value is the relevant scope (#3901).
+    // For a partial selection only the selected text matters (#4275): a background color elsewhere in
+    // the thought must not count, otherwise the redundant default-background write below would force a
+    // ContentEditable re-render that dismisses the active selection.
+    //
+    // The partial-selection background color is read from the live DOM (selection.backgroundColor) rather than the
+    // serialized selection HTML. The serialization omits a wrapping element when the selection fills its entire
+    // text, so a background color on a single span/font wrapping the whole selection would be missed (#4275, #3904).
+    // Neutral pure-black/pure-white values are excluded because they are either the default background or artifacts
+    // that some browsers' execCommand adds to the selection fragment (and post-processing then strips).
+    const selectionBackgroundColor = isWholeThought ? null : selection.backgroundColor(contentEditable)
+    const hasRealSelectionBackgroundColor =
+      !!selectionBackgroundColor && !NEUTRAL_BACKGROUND_COLOR_REGEX.test(selectionBackgroundColor)
+
+    const hasCustomBackgroundColor = isWholeThought
+      ? BACKGROUND_COLOR_REGEX.test(state.noteFocus ? (noteValue(state, state.cursor) ?? '') : thought.value)
+      : hasRealSelectionBackgroundColor
+
+    // Skip resetting the background color to the default when there is no custom background color to clear.
+    // Applying the default background color adds a span that the post-processing below immediately strips,
+    // forcing a ContentEditable re-render that dismisses an active partial selection (#4275).
+    const skipDefaultBackgroundColor = command === 'backColor' && color === 'bg' && !hasCustomBackgroundColor
+
+    if (isWholeThought) {
       const savedSelection = selection.save()
       // Note that we must suppress focus events in the Editable component, otherwise selecting text will set editing:true on mobile.
       selection.select(contentEditable)
-      if (!(command === 'backColor' && color === 'bg' && !hasCustomBackgroundColor)) {
+      if (!skipDefaultBackgroundColor) {
         document.execCommand(command, false, color ? colors[color] : '')
       }
 
@@ -69,7 +123,9 @@ export const formatSelectionActionCreator =
     }
     // format selected text only
     else {
-      document.execCommand(command, false, color ? colors[color] : '')
+      if (!skipDefaultBackgroundColor) {
+        document.execCommand(command, false, color ? colors[color] : '')
+      }
       updateCommandState()
     }
 
@@ -89,33 +145,29 @@ export const formatSelectionActionCreator =
         const path = state.noteFocus ? resolveNotePath(state, state.cursor) : state.cursor
         if (!path) return
 
-        // Use DOMParser to remove background-color and unwrap font/span tags that have no meaningful attributes
-        const doc = new DOMParser().parseFromString(value, 'text/html')
+        const defaultBackgroundHex = rgbToHex(colors.bg)
+        const defaultColorHex = rgbToHex(state.noteFocus ? colors.fg : colors.fgNote)
 
-        for (const el of Array.from(doc.body.querySelectorAll<HTMLElement>('font, span'))) {
-          // Remove background-color if it matches the default background color
-          if (el.style.backgroundColor && rgbToHex(el.style.backgroundColor) === rgbToHex(colors.bg)) {
-            el.style.removeProperty('background-color')
-            if (!el.getAttribute('style')?.trim()) {
-              el.removeAttribute('style')
-            }
+        // A partial thought selection is cleaned directly on the live ContentEditable DOM so the change is
+        // reflected WITHOUT a forced innerHTML reset below. A reset collapses the native selection to a caret,
+        // which cannot be restored with its native handles/context menu on Android — programmatic selection
+        // does not re-show the native selection UI there (#4275, Issue F). Mutating the existing nodes in place
+        // preserves the active selection. A whole-thought selection (or a note) is instead parsed into a
+        // detached document and the ContentEditable updated via force, as before (#3901).
+        const partialThought = !isWholeThought && !state.noteFocus
+
+        const newValue = (() => {
+          if (partialThought) {
+            stripRedundantColors(contentEditable, defaultBackgroundHex, defaultColorHex)
+            return contentEditable.innerHTML
           }
-
-          // Remove color if it matches the default text color
-          if (el.style.color && rgbToHex(el.style.color) === rgbToHex(state.noteFocus ? colors.fg : colors.fgNote)) {
-            el.style.removeProperty('color')
-          }
-
-          // Unwrap tags that have no meaningful style or color attributes
-          if (!el.getAttribute('style')?.trim() && !el.getAttribute('color')?.trim()) {
-            el.replaceWith(...Array.from(el.childNodes))
-          }
-        }
-
-        const newValue = doc.body.innerHTML
+          const doc = new DOMParser().parseFromString(value, 'text/html')
+          stripRedundantColors(doc.body, defaultBackgroundHex, defaultColorHex)
+          return doc.body.innerHTML
+        })()
 
         // Overwrite the value of the thought or note with the stripped value in order to remove background highlighting (#3901)
-        if (newValue !== value)
+        if (newValue !== value) {
           dispatch(
             state.noteFocus
               ? setDescendant({
@@ -128,11 +180,14 @@ export const formatSelectionActionCreator =
                   oldValue: value,
                   newValue: newValue,
                   path: simplifyPath(state, path),
-                  // force the ContentEditable to update
-                  force: true,
+                  // Force the ContentEditable to re-render only for a whole-thought selection (whose selection is
+                  // saved and restored above). A partial selection is cleaned in place and must NOT force a
+                  // re-render, which would collapse the active selection (#4275).
+                  force: isWholeThought,
                   mergePrev: true,
                 }),
           )
+        }
       })
     }
   }
