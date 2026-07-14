@@ -365,9 +365,29 @@ const globalCss = defineGlobalStyles({
   /* :empty does not work because thought may contain <br> */
   '[placeholder]:empty::before': {
     fontStyle: 'italic',
-    color: 'dim',
+    color: 'var(--placeholder-color, {colors.dim})',
+    backgroundColor: 'var(--placeholder-background-color, transparent)',
     content: 'attr(placeholder)',
     cursor: 'text',
+  },
+  '[placeholder][data-placeholder-bold]:empty::before': {
+    fontWeight: 700,
+  },
+  '[placeholder][data-placeholder-italic]:empty::before': {
+    fontStyle: 'italic',
+  },
+  '[placeholder][data-placeholder-underline]:empty::before': {
+    textDecorationLine: 'underline',
+  },
+  '[placeholder][data-placeholder-strikethrough]:empty::before': {
+    textDecorationLine: 'line-through',
+  },
+  '[placeholder][data-placeholder-underline][data-placeholder-strikethrough]:empty::before': {
+    textDecorationLine: 'underline line-through',
+  },
+  '[placeholder][data-placeholder-code]:empty::before': {
+    backgroundColor: 'var(--placeholder-background-color, {colors.codeBg})',
+    fontFamily: 'monospace',
   },
   // PandaCSS does not directly support fallbacks: https://github.com/chakra-ui/panda/discussions/846
   ':root': {

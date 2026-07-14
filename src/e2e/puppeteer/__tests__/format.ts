@@ -3,6 +3,7 @@ import clickThought from '../helpers/clickThought'
 import exportThoughts from '../helpers/exportThoughts'
 import getEditingText from '../helpers/getEditingText'
 import paste from '../helpers/paste'
+import press from '../helpers/press'
 import waitForEditable from '../helpers/waitForEditable'
 import { page } from '../session'
 
@@ -104,4 +105,38 @@ it('Bold button stays active when the cursor is moved to a fully-bold thought vi
 
   // the Bold button should reflect the thought's bold formatting rather than flickering back to inactive
   expect(await isBoldButtonActive()).toBe(true)
+})
+
+it('Clear Thought placeholder inherits whole-thought formatting (#4612)', async () => {
+  const importText = `
+  - hello`
+
+  await paste(importText)
+  await clickThought('hello')
+
+  await click('[data-testid="toolbar-icon"][aria-label="Bold"]')
+  await click('[data-testid="toolbar-icon"][aria-label="Underline"]')
+  await page.waitForFunction(() => {
+    const html = document.querySelector('[data-editing=true] [data-editable]')?.innerHTML || ''
+    return html.includes('<b>') && html.includes('<u>') && html.includes('hello')
+  })
+
+  await press('c', { ctrl: true, alt: true, shift: true })
+  await page.waitForFunction(() => document.querySelector('[data-editing=true] [data-editable]')?.innerHTML === '')
+
+  const placeholderStyle = await page.evaluate(() => {
+    const editable = document.querySelector('[data-editing=true] [data-editable]')
+    if (!editable) throw new Error('Editing thought not found')
+
+    const style = getComputedStyle(editable, '::before')
+    return {
+      content: style.content,
+      fontWeight: style.fontWeight,
+      textDecorationLine: style.textDecorationLine,
+    }
+  })
+
+  expect(placeholderStyle.content).toContain('hello')
+  expect(Number.parseInt(placeholderStyle.fontWeight, 10)).toBeGreaterThanOrEqual(700)
+  expect(placeholderStyle.textDecorationLine).toContain('underline')
 })

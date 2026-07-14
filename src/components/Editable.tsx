@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import React, { FocusEventHandler, useCallback, useEffect, useRef } from 'react'
+import React, { FocusEventHandler, useCallback, useEffect, useMemo, useRef } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import { cx } from '../../styled-system/css'
 import { editableRecipe, invalidOptionRecipe } from '../../styled-system/recipes'
@@ -51,6 +51,7 @@ import addEmojiSpace from '../util/addEmojiSpace'
 import containsURL from '../util/containsURL'
 import ellipsize from '../util/ellipsize'
 import equalPath from '../util/equalPath'
+import getCommandState from '../util/getCommandState'
 import haptics from '../util/haptics'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
@@ -154,6 +155,25 @@ const Editable = ({
   const value = useSelector(state => getThoughtById(state, head(simplePath))?.value || '')
   const rank = useSelector(state => getThoughtById(state, head(simplePath))?.rank || 0)
   const isCursorCleared = useSelector(state => !!isEditing && state.cursorCleared)
+  const placeholderCommandState = useMemo(
+    () => (isCursorCleared ? getCommandState(value) : null),
+    [isCursorCleared, value],
+  )
+  const placeholderForeColor =
+    typeof placeholderCommandState?.foreColor === 'string' ? placeholderCommandState.foreColor : undefined
+  const placeholderBackColor =
+    typeof placeholderCommandState?.backColor === 'string' ? placeholderCommandState.backColor : undefined
+  const contentEditableStyle = useMemo(
+    (): React.CSSProperties | undefined =>
+      placeholderForeColor || placeholderBackColor
+        ? {
+            ...(style || {}),
+            ...(placeholderForeColor ? { '--placeholder-color': placeholderForeColor } : null),
+            ...(placeholderBackColor ? { '--placeholder-background-color': placeholderBackColor } : null),
+          }
+        : style,
+    [placeholderBackColor, placeholderForeColor, style],
+  )
 
   const hasMulticursor = useSelector(hasMulticursorSelector)
   // store the old value so that we have a transcendental head when it is changed
@@ -773,6 +793,11 @@ const Editable = ({
       innerRef={contentRef}
       aria-label={'editable-' + head(path)}
       data-editable
+      data-placeholder-bold={placeholderCommandState?.bold || undefined}
+      data-placeholder-code={placeholderCommandState?.code || undefined}
+      data-placeholder-italic={placeholderCommandState?.italic || undefined}
+      data-placeholder-strikethrough={placeholderCommandState?.strikethrough || undefined}
+      data-placeholder-underline={placeholderCommandState?.underline || undefined}
       className={cx(editableRecipe(), className)}
       html={
         value === EM_TOKEN
@@ -805,7 +830,7 @@ const Editable = ({
       // iOS Safari delays event handling in case the DOM is modified during setTimeout inside an event handler,
       // unless it is given a hint that the element is some sort of form control
       role='button'
-      style={style}
+      style={contentEditableStyle}
     />
   )
 }
