@@ -61,13 +61,18 @@ describe('Format', () => {
     // sanity: the background highlight was applied
     await waitUntil(async () => /background-color/.test((await thoughtHtml()) ?? ''))
 
-    // Dispatch the exact cancelable beforeinput that iOS native undo produces, in the real WebKit engine.
+    // Trigger native undo the way iOS shake-to-undo / three-finger swipe does. In real WebKit, document.execCommand('undo')
+    // fires the same cancelable historyUndo beforeinput events as the native gesture — TWO of them here, because the
+    // background highlight applied two execCommands (foreColor + backColor). em's beforeinput handler blocks the native
+    // DOM undo (preventDefault) and dedupes the burst into a single em undo, which re-renders the editable (#3954).
     await browser.execute(() => {
-      const target = document.querySelector('[data-editable]') ?? document.body
-      target.dispatchEvent(new InputEvent('beforeinput', { inputType: 'historyUndo', cancelable: true, bubbles: true }))
+      const editable = document.querySelector('[data-editable]') as HTMLElement | null
+      editable?.focus()
+      document.execCommand('undo')
     })
 
-    // after native undo the thought returns to plain, visible text with no leftover color/background markup
+    // em undo re-renders asynchronously; the thought returns to plain, visible text with no leftover color/background.
+    // A double undo would also revert the paste and remove the thought, so asserting "One" verifies both the fix and the dedupe.
     await waitUntil(async () => (await thoughtHtml()) === 'One')
     expect(await thoughtHtml()).toBe('One')
   })

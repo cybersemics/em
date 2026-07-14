@@ -576,6 +576,9 @@ export const handleGestureCancel = () => {
   })
 }
 
+/** Timestamp of the last native history undo/redo dispatched from the beforeinput handler. A single native undo/redo gesture can fire multiple historyUndo/historyRedo beforeinput events — one per document.execCommand the undone action performed (e.g. a background highlight applies foreColor + backColor = 2). Since em coalesces the whole format into one undo step, this collapses the burst into a single em undo/redo (#3954). */
+let lastNativeHistoryHandledAt = 0
+
 /** In the specific case of the newThought and indent commands, prevent default in beforeinput event instead of keydown to preserve default iOS auto-capitalization behavior. The Enter and space characters needs to be prevented so that it doesn't get inserted into the thought (#3707). */
 export const beforeInput = (e: InputEvent) => {
   // Native undo/redo (iOS shake-to-undo or three-finger swipe) fires a cancelable beforeinput with inputType
@@ -585,7 +588,14 @@ export const beforeInput = (e: InputEvent) => {
   // which reverts to the correct Redux state and re-renders the editable. The cancelable check gates on the case we
   // can actually prevent; native browser undo is intentionally superseded by em's undo (#3879).
   if ((e.inputType === 'historyUndo' || e.inputType === 'historyRedo') && e.cancelable) {
+    // Always block the native undo, even for the duplicate events WebKit fires for one gesture.
     e.preventDefault()
+    // Dedupe: one gesture can emit several historyUndo events (one per execCommand of the undone action). Collapse
+    // them into a single em undo/redo. Distinct user gestures are far slower than this window (a shake requires a
+    // dialog tap; a swipe is a discrete motion), so intentional repeats are never suppressed.
+    const now = performance.now()
+    if (now - lastNativeHistoryHandledAt < 250) return
+    lastNativeHistoryHandledAt = now
     const state = store.getState()
     if (e.inputType === 'historyUndo') {
       if (isUndoEnabled(state)) store.dispatch(undo())
