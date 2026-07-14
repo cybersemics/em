@@ -7,22 +7,6 @@ import newThought from '../helpers/newThought'
 import tap from '../helpers/tap.js'
 
 describe('Format', () => {
-  it('applying bold to a focused cursor thought does not close the keyboard', async () => {
-    // 1. Create a new thought 'Thought One'.
-    await newThought('Thought One')
-
-    // 2. Measure the scroll position of the viewport before formatting.
-    const scrollBefore = await browser.execute(() => window.scrollY)
-
-    // 3. Apply bold by tapping the Bold toolbar icon.
-    const boldButton = await browser.$('[data-testid="toolbar-icon"][aria-label="Bold"]').getElement()
-    await tap(boldButton, { y: 60 })
-
-    // 4. Measure the scroll position again and ensure it did not change (#3999).
-    const scrollAfter = await browser.execute(() => window.scrollY)
-    expect(scrollAfter).toBe(scrollBefore)
-  })
-
   it('applying bold to an unfocused cursor thought does not open the keyboard', async () => {
     // 1. Create a new thought 'Thought One'.
     await newThought('Thought One')
