@@ -7,19 +7,13 @@ import getThoughtById from '../selectors/getThoughtById'
 import getThoughtFill from '../selectors/getThoughtFill'
 import getCommandState from '../util/getCommandState'
 
-/** Gets inline styles that should apply to a superscript when the entire thought is formatted. */
+/** Gets inline styles that should apply to a superscript when the entire thought is bold or italic. */
 const getThoughtFormattingStyle = (value: string): React.CSSProperties | undefined => {
   const commandState = getCommandState(value)
-  const textDecoration = [
-    commandState.underline ? 'underline' : null,
-    commandState.strikethrough ? 'line-through' : null,
-  ].filter(Boolean)
 
   const style: React.CSSProperties = {
     ...(commandState.bold ? { fontWeight: 600 } : null),
     ...(commandState.italic ? { fontStyle: 'italic' } : null),
-    ...(commandState.code ? { fontFamily: 'monospace' } : null),
-    ...(textDecoration.length ? { textDecoration: textDecoration.join(' ') } : null),
   }
 
   return Object.keys(style).length > 0 ? style : undefined

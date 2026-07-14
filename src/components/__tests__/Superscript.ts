@@ -47,11 +47,11 @@ it('Superscript should use bold formatting from the thought.', async () => {
   expect(superscripts[1].style.fontWeight).toBe('')
 })
 
-it('Superscript should use whole-thought inline formatting.', async () => {
+it('Superscript should only use whole-thought bold and italic formatting.', async () => {
   await dispatch([
     importText({
       text: `
-        - <i><u><strike><code>a</code></strike></u></i>
+        - <b><i><u><strike><code>a</code></strike></u></i></b>
           - a
       `,
     }),
@@ -60,9 +60,10 @@ it('Superscript should use whole-thought inline formatting.', async () => {
   await act(vi.runOnlyPendingTimersAsync)
 
   const superscript = screen.getAllByRole('superscript')[0] as HTMLElement
+  expect(superscript.style.fontWeight).toBe('600')
   expect(superscript.style.fontStyle).toBe('italic')
-  expect(superscript.style.fontFamily).toBe('monospace')
-  expect(superscript.style.textDecoration).toBe('underline line-through')
+  expect(superscript.style.fontFamily).toBe('')
+  expect(superscript.style.textDecoration).toBe('')
 })
 
 it('Superscript should not render on thoughts in a single context', async () => {
