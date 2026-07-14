@@ -793,11 +793,11 @@ const Editable = ({
       innerRef={contentRef}
       aria-label={'editable-' + head(path)}
       data-editable
-      data-placeholder-bold={placeholderCommandState?.bold === true ? true : undefined}
-      data-placeholder-code={placeholderCommandState?.code === true ? true : undefined}
-      data-placeholder-italic={placeholderCommandState?.italic === true ? true : undefined}
-      data-placeholder-strikethrough={placeholderCommandState?.strikethrough === true ? true : undefined}
-      data-placeholder-underline={placeholderCommandState?.underline === true ? true : undefined}
+      data-placeholder-bold={placeholderCommandState?.bold || undefined}
+      data-placeholder-code={placeholderCommandState?.code || undefined}
+      data-placeholder-italic={placeholderCommandState?.italic || undefined}
+      data-placeholder-strikethrough={placeholderCommandState?.strikethrough || undefined}
+      data-placeholder-underline={placeholderCommandState?.underline || undefined}
       className={cx(editableRecipe(), className)}
       html={
         value === EM_TOKEN
