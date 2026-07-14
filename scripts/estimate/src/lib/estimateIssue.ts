@@ -23,20 +23,24 @@ export interface Estimate {
 const estimateIssue = async ({
   issue,
   issueRef,
+  issueUrl = '',
   instructions,
   samples,
-  token,
+  openaiApiKey,
   everhour,
   taskId,
   dryRunAI = false,
   dryRunEverhour = false,
 }: {
   issue: IssueInput
-  /** Clickable issue reference (`#N` as an OSC 8 terminal hyperlink) for log output; see issueLink. */
+  /** Issue reference label (`#N`, as an OSC 8 terminal hyperlink locally) for log output; see issueLink. */
   issueRef: string
+  /** Trailing ` - <url>` suffix appended at the end of log lines in CI; empty locally. See issueUrlSuffix. */
+  issueUrl?: string
   instructions: string
   samples: EstimateSample[]
-  token: string
+  /** OpenAI API key passed through to the inference call. */
+  openaiApiKey: string
   everhour: EverhourClient
   taskId: string
   dryRunAI?: boolean
@@ -44,12 +48,12 @@ const estimateIssue = async ({
 }): Promise<Estimate | null> => {
   // Skip AI inference entirely in AI dry-run mode.
   if (dryRunAI) {
-    console.info(`[DRY_RUN_AI] Would estimate ${issueRef} "${issue.title}"`)
+    console.info(`[DRY_RUN_AI] Would estimate ${issueRef} "${issue.title}"${issueUrl}`)
     return null
   }
 
   const prompt = buildPrompt(samples, issue)
-  const outputs = await inference({ token, prompt, instructions })
+  const outputs = await inference({ apiKey: openaiApiKey, prompt, instructions })
   const { estimate: category } = validateEstimate(outputs)
   const estimate: Estimate = {
     category,
@@ -60,7 +64,7 @@ const estimateIssue = async ({
   // Write the estimate to Everhour unless the Everhour write is being dry-run.
   if (dryRunEverhour) {
     console.info(
-      `[DRY_RUN_EVERHOUR] Would set Everhour estimate for ${issueRef} "${issue.title}": ${estimate.category} / ${estimate.hours}h`,
+      `[DRY_RUN_EVERHOUR] Would set Everhour estimate for ${issueRef} "${issue.title}": ${estimate.category} / ${estimate.hours}h${issueUrl}`,
     )
   } else {
     await everhour.setEstimate(taskId, estimate.seconds)

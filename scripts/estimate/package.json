@@ -12,7 +12,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "dotenv": "^16.0.0",
+    "dotenv": "^17.4.2",
     "openai": "^4.0.0",
     "zod": "^4.4.3"
   },

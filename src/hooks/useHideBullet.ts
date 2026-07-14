@@ -12,6 +12,7 @@ import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
+import stripTags from '../util/stripTags'
 
 /** Gets a globally defined bullet. */
 const getGlobalBullet = (key: string) => GLOBAL_STYLE_ENV[key as keyof typeof GLOBAL_STYLE_ENV]?.bullet
@@ -43,6 +44,10 @@ const useHideBullet = ({
     /** Returns true if the bullet should be hidden. */
     const hideBullet = () =>
       thought.value !== '=grandchildren' && attributeEquals(state, head(simplePath), '=bullet', 'None')
+
+    /** Returns true if the bullet should be hidden because the thought value is an ellipsis. */
+    const hideBulletEllipsis = () =>
+      stripTags(thought.value) === '...' && !findDescendant(state, head(simplePath), '=bullet')
 
     /** Returns true if the bullet should be hidden because it is in table column 1 and is not the cursor. */
     const hideBulletTable = () => {
@@ -80,7 +85,7 @@ const useHideBullet = ({
       return bulletEnv.some(envChildBullet => envChildBullet === 'None')
     }
 
-    return hideBullet() || hideBulletTable() || hideBulletZoom() || hideBulletEnv()
+    return hideBullet() || hideBulletEllipsis() || hideBulletTable() || hideBulletZoom() || hideBulletEnv()
   })
 
   return hideBullet
