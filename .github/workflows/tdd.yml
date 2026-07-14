@@ -17,6 +17,9 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   CI: true
   COPILOT_AGENT_FIREWALL_ALLOW_LIST_ADDITIONS: googlechromelabs.github.io,storage.googleapis.com
+  # Skip Puppeteer's Chrome download on install — no CI job uses the bundled browser (Puppeteer
+  # tests attach to the browserless/chrome service via CDP), saving ~20s per install.
+  PUPPETEER_SKIP_DOWNLOAD: true
 
 jobs:
   # ---------------------------------------------------------------------------
@@ -310,6 +313,10 @@ jobs:
       - name: Fetch PR head
         run: git fetch origin ${{ github.event.pull_request.head.sha }}
 
+      - name: Restore GitHub Actions files from PR HEAD
+        if: github.event_name == 'pull_request'
+        run: git checkout FETCH_HEAD -- .github/actions/
+
       - name: Checkout test files from PR head
         id: patch
         run: |
@@ -358,7 +365,7 @@ jobs:
 
       - name: Install npm dependencies
         if: steps.patch.outputs.empty != 'true'
-        run: yarn
+        uses: ./.github/actions/install
 
       - name: Run changed unit tests on base (expect failure)
         if: steps.patch.outputs.empty != 'true'
@@ -467,7 +474,7 @@ jobs:
 
       - name: Install npm dependencies
         if: steps.patch.outputs.empty != 'true'
-        run: yarn
+        uses: ./.github/actions/install
 
       - name: Start SSL proxy
         if: steps.patch.outputs.empty != 'true'
@@ -585,7 +592,7 @@ jobs:
 
       - name: Install npm dependencies
         if: steps.patch.outputs.empty != 'true'
-        run: yarn
+        uses: ./.github/actions/install
 
       - name: Build
         if: steps.patch.outputs.empty != 'true'

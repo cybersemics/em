@@ -30,6 +30,11 @@ permissions:
   # and to run `git log` for the prompt version.
   contents: read
 
+env:
+  # Skip Puppeteer's Chrome download on install — the estimate workspace never uses a browser,
+  # saving ~20s per install.
+  PUPPETEER_SKIP_DOWNLOAD: true
+
 jobs:
   backfill:
     runs-on: ubuntu-latest
