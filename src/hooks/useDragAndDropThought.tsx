@@ -19,6 +19,7 @@ import { longPressActionCreator as longPress } from '../actions/longPress'
 import { moveThoughtActionCreator as moveThought } from '../actions/moveThought'
 import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from '../actions/setIsMulticursorExecuting'
 import { isTouch } from '../browser'
+import MoveThoughtAlert from '../components/MoveThoughtAlert'
 import { ThoughtContainerProps } from '../components/Thought'
 import { AlertType, LongPressState } from '../constants'
 import allowTouchToScroll from '../device/allowTouchToScroll'
@@ -273,9 +274,9 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
 
         const numThoughts = draggedItems.length
         const alertFrom = numThoughts === 1 ? `"${ellipsize(firstFromThought.value)}"` : `${numThoughts} thoughts`
-        const alertTo = isRoot([parentThought.id]) ? 'home' : `"${ellipsize(parentThought.value)}"`
+        const alertTo = isRoot([parentThought.id]) ? 'home' : parentThought.value
 
-        dispatch(alert(`${alertFrom} moved to ${alertTo} context.`))
+        dispatch(alert(() => <MoveThoughtAlert from={alertFrom} to={alertTo} toPath={parent} inContext=' context' />))
       }, 100)
     }
   })

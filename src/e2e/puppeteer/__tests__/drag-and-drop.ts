@@ -8,6 +8,7 @@ import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
 import screenshot from '../helpers/screenshot'
 import simulateDragAndDrop from '../helpers/simulateDragAndDrop'
+import waitForAlertContent from '../helpers/waitForAlertContent'
 import waitForEditable from '../helpers/waitForEditable'
 import { page } from '../session'
 
@@ -315,6 +316,45 @@ describe('drag', () => {
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
+  })
+
+  it('renders destination link in moved alert', async () => {
+    await paste(`
+      - a
+        - b
+      - c
+      - d
+    `)
+
+    await page.evaluate(() => {
+      const em = window.em as WindowEm
+      em.store.dispatch({ type: 'setCursor', path: null })
+    })
+
+    await dragAndDropThought('d', 'a', {
+      position: 'child',
+      showAlert: true,
+    })
+
+    await waitForAlertContent('"d" moved to "a"')
+
+    const destinationLinkText = await page.$eval(
+      '[data-testid=alert-content] [data-thought-link]',
+      el => el.textContent,
+    )
+    expect(destinationLinkText).toBe('a')
+
+    await page.evaluate(() => {
+      const em = window.em as WindowEm
+      em.store.dispatch({ type: 'setCursor', path: null })
+    })
+
+    await page.click('[data-testid=alert-content] [data-thought-link]')
+
+    await page.waitForFunction(() => {
+      const em = window.em as WindowEm
+      return em.prettyPath(em.store.getState().cursor) === 'a'
+    })
   })
 
   it('should allow dropping before first thought in table row', async () => {

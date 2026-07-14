@@ -1,3 +1,4 @@
+import React from 'react'
 import { DropTargetMonitor, useDrop } from 'react-dnd'
 import { NativeTypes } from 'react-dnd-html5-backend'
 import { useDispatch } from 'react-redux'
@@ -15,6 +16,7 @@ import { importFilesActionCreator as importFiles } from '../actions/importFiles'
 import { longPressActionCreator as longPress } from '../actions/longPress'
 import { moveThoughtActionCreator as moveThought } from '../actions/moveThought'
 import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from '../actions/setIsMulticursorExecuting'
+import MoveThoughtAlert from '../components/MoveThoughtAlert'
 import { AlertType, HOME_TOKEN, LongPressState } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
 import getNextRank from '../selectors/getNextRank'
@@ -254,17 +256,28 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
         const dropTop = shouldDropAtTop(pathTo)
         const thoughtFrom = getThoughtById(state, head(firstItem.path))
         const thoughtTo = getThoughtById(state, parentId)
+        const toPath = simplifyPath(state, rootedParentOf(state, pathTo))
 
         const alertFrom =
           draggedItems.length === 1 ? `"${ellipsize(thoughtFrom?.value || '')}"` : `${draggedItems.length} thoughts`
 
-        const alertTo = parentId === HOME_TOKEN ? 'home' : `"${ellipsize(thoughtTo?.value || '')}"`
+        const alertTo = parentId === HOME_TOKEN ? 'home' : thoughtTo?.value || ''
 
         const inContext = props.showContexts
           ? ` in the context of ${ellipsize(headValue(state, props.simplePath ?? props.path) || 'MISSING_CONTEXT')}`
           : ''
 
-        store.dispatch(alert(`${alertFrom} moved to${dropTop ? ' top of' : ''} ${alertTo}${inContext}.`))
+        store.dispatch(
+          alert(() =>
+            React.createElement(MoveThoughtAlert, {
+              from: alertFrom,
+              inContext,
+              to: alertTo,
+              toPath,
+              top: dropTop,
+            }),
+          ),
+        )
       }, 100)
     }
   })
