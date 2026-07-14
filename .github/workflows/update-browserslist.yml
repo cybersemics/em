@@ -35,7 +35,7 @@ jobs:
           node-version: 22
 
       - name: Install npm dependencies
-        run: yarn
+        uses: ./.github/actions/install
 
       - name: Update browserslist database
         run: |
