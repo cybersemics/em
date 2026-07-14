@@ -27,7 +27,7 @@ jobs:
           persist-credentials: false
 
       - name: Install npm dependencies 🛠
-        run: yarn
+        uses: ./.github/actions/install
 
       - name: Build 🔧
         run: yarn docs

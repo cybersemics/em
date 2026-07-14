@@ -41,7 +41,7 @@ jobs:
           cache: 'yarn'
 
       - name: Install npm dependencies
-        run: yarn
+        uses: ./.github/actions/install
 
       - name: Pull Vercel environment
         run: yarn dlx vercel pull --yes --environment=preview --token="$VERCEL_TOKEN"
