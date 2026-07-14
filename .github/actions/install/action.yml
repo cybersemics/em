@@ -1,0 +1,48 @@
+name: Install dependencies
+description: >
+  Install Yarn dependencies with node_modules caching to skip the slow Link step
+  (native builds + linking), and guarantee the postinstall-generated outputs
+  (styled-system/ and packages/webview/dist/) exist afterward.
+
+  Design (decoupled by change-frequency, so a frequent src change never busts the
+  expensive dependency cache):
+    - node_modules + .yarn/install-state.gz are cached on deps only (.yarnrc.yml + yarn.lock).
+      This captures the linked packages, native builds, and node_modules/.yarn-state.yml
+      "already built" flags. On a hit, Yarn skips the workspace postinstall.
+    - styled-system/ is regenerated on EVERY run via `yarn build:styles` (~5s). It is cheap
+      and this eliminates the entire class of "node_modules restored but styled-system stale"
+      bugs — no cache key can under-specify it.
+    - packages/webview/dist/ IS cached (its cold build is ~14s) on its own inputs, and rebuilt
+      via `yarn build:packages` only when that cache misses.
+
+runs:
+  using: composite
+  steps:
+    - name: Restore node_modules cache
+      id: cache-node-modules
+      uses: actions/cache@v4
+      with:
+        path: |
+          node_modules
+          .yarn/install-state.gz
+        key: ${{ runner.os }}-node22-yarn-v1-${{ hashFiles('.yarnrc.yml', 'yarn.lock') }}
+
+    - name: Restore packages/webview build cache
+      id: cache-webview
+      uses: actions/cache@v4
+      with:
+        path: packages/webview/dist
+        key: ${{ runner.os }}-webview-v1-${{ hashFiles('packages/webview/src/**', 'packages/webview/scripts/**', 'packages/webview/rollup.config.mjs', 'packages/webview/tsconfig.json', 'packages/webview/package.json') }}
+
+    - name: Install npm dependencies
+      shell: bash
+      run: yarn
+
+    - name: Generate styled-system (PandaCSS codegen)
+      shell: bash
+      run: yarn build:styles
+
+    - name: Build packages/webview (on cache miss)
+      if: steps.cache-webview.outputs.cache-hit != 'true'
+      shell: bash
+      run: yarn build:packages
