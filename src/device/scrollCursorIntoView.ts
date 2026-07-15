@@ -1,6 +1,8 @@
-import { isSafari, isTouch } from '../browser'
+import { isCapacitor, isSafari, isTouch } from '../browser'
 import { PREVENT_AUTOSCROLL_TIMEOUT, isPreventAutoscrollInProgress } from '../device/preventAutoscroll'
+import getSafeAreaBottom from '../device/virtual-keyboard/getSafeAreaBottom'
 import viewportStore from '../stores/viewport'
+import virtualKeyboardStore from '../stores/virtualKeyboardStore'
 
 /** Scrolls the minimum amount necessary to move the viewport so that it includes the element. */
 const scrollIntoViewIfNeeded = (y: number, height: number) => {
@@ -23,6 +25,17 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
   // On desktop or when the virtual keyboard is down, it is equivalent to window.innerHeight.
   const visualViewportHeight = window.visualViewport?.height ?? window.innerHeight
 
+  // On iOS Capacitor, window.visualViewport.height does NOT shrink when the keyboard opens (unlike desktop and iOS Safari),
+  // so it cannot detect keyboard overlap on its own. In that case, derive the visible height from the measured keyboard height.
+  // viewportStore.virtualKeyboardHeight is normalized against the safe-area-bottom inset by iOSCapacitorHandler, so add it back
+  // to recover the keyboard's true top edge. Safari and desktop keep using visualViewport.height (unchanged behavior).
+  // See: src/device/virtual-keyboard/handlers/iOSCapacitorHandler.ts (#3705)
+  const virtualKeyboard = virtualKeyboardStore.getState()
+  const effectiveViewportHeight =
+    isCapacitor() && virtualKeyboard.open
+      ? viewport.innerHeight - viewport.virtualKeyboardHeight - getSafeAreaBottom()
+      : visualViewportHeight
+
   /** The y position of the element relative to the document. */
   const yDocument = viewport.layoutTreeTop + y
 
@@ -33,7 +46,7 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
   const toolbarBottom = toolbarRect ? toolbarRect.bottom : 0
   const navbarRect = document.querySelector('[aria-label="nav"]')?.getBoundingClientRect()
   const isAboveViewport = yViewport < toolbarBottom
-  const isBelowViewport = yViewport + height > visualViewportHeight - (navbarRect?.height ?? 0)
+  const isBelowViewport = yViewport + height > effectiveViewportHeight - (navbarRect?.height ?? 0)
 
   if (!isAboveViewport && !isBelowViewport) return
 
@@ -44,7 +57,7 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
   // add offset to account for the navbar height and prevent scrolled to elements from being hidden below
   const scrollYNew = isAboveViewport
     ? yDocument - (toolbarRect?.height ?? 0) - height / 2
-    : yDocument - visualViewportHeight + height * 1.5 + (navbarRect?.height ?? 0)
+    : yDocument - effectiveViewportHeight + height * 1.5 + (navbarRect?.height ?? 0)
 
   // scroll to 1 instead of 0
   // otherwise Mobile Safari scrolls to the top after MultiGesture
