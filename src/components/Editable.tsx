@@ -49,6 +49,7 @@ import storageModel from '../stores/storageModel'
 import suppressFocusStore from '../stores/suppressFocus'
 import addEmojiSpace from '../util/addEmojiSpace'
 import containsURL from '../util/containsURL'
+import debugLog from '../util/debugLog'
 import ellipsize from '../util/ellipsize'
 import equalPath from '../util/equalPath'
 import getCommandState from '../util/getCommandState'
@@ -108,7 +109,7 @@ let cursorOffsetInitialized = false
 /** Returns a guard function that throws with the given message if it is called more than `limit` times within a
  * rolling `windowMs` window. Used to convert a runaway re-entrant loop into a loud, stack-unwinding error instead of
  * a frozen main thread. The default limit is far above any human typing/IME/autocomplete burst. */
-const useInfiniteLoopGuard = (message: string, limit = 100, windowMs = 1000) => {
+const useInfiniteLoopGuard = (name: string, message: string, limit = 100, windowMs = 1000) => {
   const stateRef = useRef({ count: 0, windowStart: 0 })
   return useCallback(() => {
     const now = performance.now()
@@ -118,10 +119,16 @@ const useInfiniteLoopGuard = (message: string, limit = 100, windowMs = 1000) => 
       guard.count = 0
     }
     guard.count++
+    // Log high-water marks so the rolling log shows the loop tightening (dt collapsing) before it trips the limit.
+    if (guard.count % 25 === 0) {
+      debugLog.log('guard', { guard: name, count: guard.count })
+    }
     if (guard.count > limit) {
+      // Log immediately before throwing so the final pre-freeze burst is captured even though the throw unwinds the stack.
+      debugLog.log('guard', { guard: name, count: guard.count, threw: true })
       throw new Error(message)
     }
-  }, [message, limit, windowMs])
+  }, [name, message, limit, windowMs])
 }
 
 /**
@@ -180,9 +187,11 @@ const Editable = ({
   const oldValueRef = useRef(value)
   // Guards against a runaway re-entrant loop in the change/autocomplete handlers freezing the app (#4467).
   const guardChangeHandler = useInfiniteLoopGuard(
+    'change',
     'Infinite loop detected in Editable.onChangeHandler: over 100 change events within 1s',
   )
   const guardAutocompleteInput = useInfiniteLoopGuard(
+    'autocomplete',
     'Infinite loop detected in Editable.onAutocompleteInput: over 100 input events within 1s',
   )
   const nullRef = useRef<HTMLInputElement>(null)
@@ -324,6 +333,9 @@ const Editable = ({
       return
     }
 
+    // Log the value transition at the point the edit is committed to Redux. Correlates with the 'change' branch that queued it.
+    debugLog.log('edit', { oldValue, newValue, rank })
+
     dispatch(
       editThought({
         oldValue,
@@ -393,6 +405,19 @@ const Editable = ({
     const AUTOCOMPLETE_SPACE_WINDOW_MS = 250
     let pendingAutocompleteAt: number | null = null
 
+    /** Snapshots the input event and editable state for the rolling log. `branch` names the code path that handled the event,
+     * so the log distinguishes an ignored keystroke from the retarget path that runs after iOS autocomplete. */
+    const logInput = (e: InputEvent, branch: string) =>
+      debugLog.log('input', {
+        branch,
+        inputType: e.inputType,
+        data: e.data,
+        isComposing: e.isComposing,
+        value: editable.textContent,
+        sel: selection.offsetThought() ?? selection.offset(),
+        pending: pendingAutocompleteAt,
+      })
+
     /** After iOS autocomplete (insertReplacementText) accepts a word, no touch events reach the DOM
      * in a "dead zone" beneath the word until focus is retargeted. Moving focus to the asyncFocus dummy input
      * and back to the previous active element allows touch events to reach the DOM again.
@@ -406,19 +431,24 @@ const Editable = ({
       guardAutocompleteInput()
 
       if (e.inputType === 'insertReplacementText') {
+        logInput(e, 'replacement-pending')
         pendingAutocompleteAt = performance.now()
         return
       }
 
       if (e.inputType !== 'insertText' || e.data !== ' ' || pendingAutocompleteAt == null) {
+        logInput(e, 'ignored')
         pendingAutocompleteAt = null
         return
       }
 
       if (performance.now() - pendingAutocompleteAt > AUTOCOMPLETE_SPACE_WINDOW_MS) {
+        logInput(e, 'window-expired')
         pendingAutocompleteAt = null
         return
       }
+
+      logInput(e, 'retarget')
 
       const savedCharOffset = selection.offsetThought() ?? selection.offset() ?? 0
 
@@ -427,18 +457,78 @@ const Editable = ({
       throttledChangeRef.current(oldValueRef.current, { rank, simplePath })
       throttledChangeRef.current.flush()
 
+      // Log each retarget step around the native focus/selection calls so a freeze can be pinned to the exact call
+      // that stopped returning (the last 'retarget' entry before the log goes silent is the culprit).
+      debugLog.log('retarget', { step: 'asyncFocus', savedOffset: savedCharOffset })
       asyncFocus({ force: true })
 
+      debugLog.log('retarget', { step: 'preventAutoscroll', savedOffset: savedCharOffset })
       preventAutoscroll(editable)
       // Restore the selection offset captured when insertText(' ') arrived.
+      debugLog.log('retarget', { step: 'selection.set', savedOffset: savedCharOffset })
       selection.set(editable, { offset: savedCharOffset })
       preventAutoscrollEnd(editable)
 
       pendingAutocompleteAt = null
     }
 
-    editable?.addEventListener('input', onAutocompleteInput)
-    return () => editable?.removeEventListener('input', onAutocompleteInput)
+    // The following native listeners are scoped to this effect (Safari touch only) so they add zero surface area on other
+    // platforms. Each is a no-op when debug logging is disabled. They capture the raw event stream around autocomplete,
+    // which React's synthetic onChange does not fully expose (e.g. beforeinput, composition, and focus retargeting).
+
+    /** Logs the key sequence leading into an autocomplete freeze. */
+    const onEditableKeyDown = (e: KeyboardEvent) => debugLog.log('keydown', { key: e.key, isComposing: e.isComposing })
+
+    /** Logs beforeinput, which precedes each mutation and reveals intent (e.g. insertReplacementText) even if input never fires. */
+    const onEditableBeforeInput = (e: Event) =>
+      e instanceof InputEvent &&
+      debugLog.log('beforeinput', { inputType: e.inputType, data: e.data, isComposing: e.isComposing })
+
+    /** Logs IME composition boundaries; iOS autocorrect runs inside a composition and a hang may straddle these. */
+    const onEditableCompositionStart = () => debugLog.log('composition', { phase: 'start' })
+    /** Logs the end of an IME composition, including the committed data. */
+    const onEditableCompositionEnd = (e: CompositionEvent) =>
+      debugLog.log('composition', { phase: 'end', data: e.data })
+
+    /** Describes the currently focused element (tag + data-testid) so focus retargeting during autocomplete can be traced. */
+    const describeActiveElement = () => {
+      const el = document.activeElement
+      return { tag: el?.tagName ?? null, testid: el?.getAttribute?.('data-testid') ?? null }
+    }
+    /** Logs when the editable gains focus, recording which element is now active. */
+    const onEditableFocus = () => debugLog.log('focus', describeActiveElement())
+    /** Logs when the editable loses focus, recording which element is now active (reveals the asyncFocus retarget target). */
+    const onEditableBlur = () => debugLog.log('blur', describeActiveElement())
+
+    /** Logs caret movement ONLY during the ~250ms autocomplete window (pendingAutocompleteAt != null) to trace the caret
+     * entering the touch dead zone without flooding the log with every ordinary selection change. */
+    const onSelectionChange = () => {
+      if (pendingAutocompleteAt == null) return
+      debugLog.log('selectionchange', {
+        anchor: selection.anchorOffset(),
+        focus: selection.offset(),
+        collapsed: selection.isCollapsed(),
+      })
+    }
+
+    editable.addEventListener('input', onAutocompleteInput)
+    editable.addEventListener('keydown', onEditableKeyDown)
+    editable.addEventListener('beforeinput', onEditableBeforeInput)
+    editable.addEventListener('compositionstart', onEditableCompositionStart)
+    editable.addEventListener('compositionend', onEditableCompositionEnd)
+    editable.addEventListener('focus', onEditableFocus)
+    editable.addEventListener('blur', onEditableBlur)
+    document.addEventListener('selectionchange', onSelectionChange)
+    return () => {
+      editable.removeEventListener('input', onAutocompleteInput)
+      editable.removeEventListener('keydown', onEditableKeyDown)
+      editable.removeEventListener('beforeinput', onEditableBeforeInput)
+      editable.removeEventListener('compositionstart', onEditableCompositionStart)
+      editable.removeEventListener('compositionend', onEditableCompositionEnd)
+      editable.removeEventListener('focus', onEditableFocus)
+      editable.removeEventListener('blur', onEditableBlur)
+      document.removeEventListener('selectionchange', onSelectionChange)
+    }
   }, [contentRef, rank, simplePath, guardAutocompleteInput])
 
   useEffect(() => {
@@ -469,6 +559,13 @@ const Editable = ({
         // TODO: What happens when actual HTML is inserted from the clipboard app? It needs to be differentiated from plain text with divs.
         // TODO: Consider handling this in importData or textToHtml, as onChangeHandler should not contain import logic. Just need to make sure it does not introduce regressions.
         const text = e.target.value.slice(oldValue.length).replace(/<div>/g, '\n')
+        debugLog.log('change', {
+          branch: 'clipboard',
+          isClipboardInsert,
+          oldValue,
+          newValue: e.target.value,
+          cursorOffset: selection.offsetThought(),
+        })
         dispatch(
           importData({
             path: simplePath,
@@ -531,6 +628,17 @@ const Editable = ({
 
           if (readonly || uneditable || options) invalidStateError(null)
 
+          // The newValue === oldValue short-circuit is the primary defense against the re-entrant change loop (#4467).
+          // Logging it reveals whether the guard is firing because this short-circuit is being defeated (values differ
+          // every cycle) or bypassed entirely.
+          debugLog.log('change', {
+            branch: 'noop',
+            isClipboardInsert,
+            oldValue,
+            newValue,
+            cursorOffset: cursorOffsetWithEmojiSpace,
+          })
+
           // if we cancel the edit, we have to cancel pending its
           // this can occur for example by editing a value away from and back to its
           throttledChangeRef.current.cancel()
@@ -545,14 +653,35 @@ const Editable = ({
         }
 
         if (readonly) {
+          debugLog.log('change', {
+            branch: 'readonly',
+            isClipboardInsert,
+            oldValue,
+            newValue,
+            cursorOffset: cursorOffsetWithEmojiSpace,
+          })
           dispatch(error({ value: `"${ellipsize(oldValueClean)}" is read-only and cannot be edited.` }))
           throttledChangeRef.current.cancel() // see above
           return
         } else if (uneditable) {
+          debugLog.log('change', {
+            branch: 'uneditable',
+            isClipboardInsert,
+            oldValue,
+            newValue,
+            cursorOffset: cursorOffsetWithEmojiSpace,
+          })
           dispatch(error({ value: `"${ellipsize(oldValueClean)}" is uneditable.` }))
           throttledChangeRef.current.cancel() // see above
           return
         } else if (options && !options.includes(newValue.toLowerCase())) {
+          debugLog.log('change', {
+            branch: 'invalid',
+            isClipboardInsert,
+            oldValue,
+            newValue,
+            cursorOffset: cursorOffsetWithEmojiSpace,
+          })
           invalidStateError(newValue)
           throttledChangeRef.current.cancel() // see above
           return
@@ -592,6 +721,13 @@ const Editable = ({
           isDivider(newValue)
         ) {
           // update new supercript value and url boolean
+          debugLog.log('change', {
+            branch: 'immediate',
+            isClipboardInsert,
+            oldValue,
+            newValue,
+            cursorOffset: cursorOffsetWithEmojiSpace,
+          })
           throttledChangeRef.current.flush()
           // if a style needs to be re-applied with cursorClearedWrapper, the editable needs to re-render immediately to prevent
           // a flash of unstyled content
@@ -602,6 +738,13 @@ const Editable = ({
             cursorOffset: cursorOffsetWithEmojiSpace,
           })
         } else {
+          debugLog.log('change', {
+            branch: 'throttled',
+            isClipboardInsert,
+            oldValue,
+            newValue,
+            cursorOffset: cursorOffsetWithEmojiSpace,
+          })
           throttledChangeRef.current(newValue, { rank, simplePath })
         }
       })
