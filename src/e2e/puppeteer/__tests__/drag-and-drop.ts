@@ -4,8 +4,10 @@ import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
 import dragAndDropThought from '../helpers/dragAndDropThought'
+import getEditingText from '../helpers/getEditingText'
 import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
+import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import simulateDragAndDrop from '../helpers/simulateDragAndDrop'
 import waitForAlertContent from '../helpers/waitForAlertContent'
@@ -326,10 +328,7 @@ describe('drag', () => {
       - d
     `)
 
-    await page.evaluate(() => {
-      const em = window.em as WindowEm
-      em.store.dispatch({ type: 'setCursor', path: null })
-    })
+    await press('Escape')
 
     await dragAndDropThought('d', 'a', {
       position: 'child',
@@ -344,17 +343,12 @@ describe('drag', () => {
     )
     expect(destinationLinkText).toBe('a')
 
-    await page.evaluate(() => {
-      const em = window.em as WindowEm
-      em.store.dispatch({ type: 'setCursor', path: null })
-    })
+    await page.click('[aria-label=nav] [data-testid=home] a')
+    await page.waitForFunction(() => !document.querySelector('[data-editing=true] [data-editable]'))
+    expect(await getEditingText()).toBeUndefined()
 
     await page.click('[data-testid=alert-content] [data-thought-link]')
-
-    await page.waitForFunction(() => {
-      const em = window.em as WindowEm
-      return em.prettyPath(em.store.getState().cursor) === 'a'
-    })
+    expect(await getEditingText()).toBe('a')
   })
 
   it('should allow dropping before first thought in table row', async () => {

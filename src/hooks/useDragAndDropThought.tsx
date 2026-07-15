@@ -274,7 +274,7 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
 
         const numThoughts = draggedItems.length
         const alertFrom = numThoughts === 1 ? `"${ellipsize(firstFromThought.value)}"` : `${numThoughts} thoughts`
-        const alertTo = isRoot([parentThought.id]) ? 'home' : parentThought.value
+        const alertTo = isRoot([parentThought.id]) ? 'home' : ellipsize(parentThought.value)
 
         dispatch(alert(() => <MoveThoughtAlert from={alertFrom} to={alertTo} toPath={parent} inContext=' context' />))
       }, 100)

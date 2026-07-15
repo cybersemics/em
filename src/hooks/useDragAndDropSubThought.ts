@@ -261,7 +261,7 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
         const alertFrom =
           draggedItems.length === 1 ? `"${ellipsize(thoughtFrom?.value || '')}"` : `${draggedItems.length} thoughts`
 
-        const alertTo = parentId === HOME_TOKEN ? 'home' : thoughtTo?.value || ''
+        const alertTo = parentId === HOME_TOKEN ? 'home' : ellipsize(thoughtTo?.value || '')
 
         const inContext = props.showContexts
           ? ` in the context of ${ellipsize(headValue(state, props.simplePath ?? props.path) || 'MISSING_CONTEXT')}`

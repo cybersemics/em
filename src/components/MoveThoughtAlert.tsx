@@ -20,12 +20,7 @@ const MoveThoughtAlert: FC<MoveThoughtAlertProps> = ({ from, inContext = '', to,
     ) : (
       <>
         &quot;
-        <Link
-          charLimit={16}
-          simplePath={toPath}
-          label={to}
-          style={{ cursor: 'pointer', textDecoration: 'underline' }}
-        />
+        <Link simplePath={toPath} label={to} style={{ cursor: 'pointer', textDecoration: 'underline' }} />
         &quot;
       </>
     )}
