@@ -235,6 +235,12 @@ const GesturePath = ({
   strokeWidth,
   useGradient,
 }: GesturePathProps) => {
+  /** Generates an SVG path string for a curved segment of the gesture. */
+  const generateArcPath = (index: number, pathDirs: Direction[]) => {
+    const { startX, startY, radius, sweepFlag, endX, endY } = generateArcCoordinates(index, pathDirs, size)
+    return `M ${startX} ${startY} A ${radius} ${radius} 0 0 ${sweepFlag} ${endX} ${endY}`
+  }
+
   const commonPathProps = {
     strokeWidth: strokeWidth * 1.5,
     strokeLinecap: 'round' as const,
@@ -311,14 +317,7 @@ const GesturePath = ({
           path === 'rdld'
             ? RDLD_SEGMENTS[i]
             : rounded
-              ? (() => {
-                  const { startX, startY, radius, sweepFlag, endX, endY } = generateArcCoordinates(
-                    i,
-                    Array.from(path) as Direction[],
-                    size,
-                  )
-                  return `M ${startX} ${startY} A ${radius} ${radius} 0 0 ${sweepFlag} ${endX} ${endY}`
-                })()
+              ? generateArcPath(i, Array.from(path) as Direction[])
               : `M ${x} ${y} l ${segment.dx * scale} ${segment.dy * scale}`
         const stroke = useGradient
           ? `url(#${extendedPath}-gradient-${i})`
