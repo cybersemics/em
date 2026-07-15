@@ -15,12 +15,12 @@ import {
 /**
  * Renders a progressive blur over the app content while the gesture menu is open.
  *
- * Composed as a sibling of <Content/> so it lands inside MultiGesture's react-native-web <View> at
- * runtime. Per CSS painting order the blur (position:absolute, z-index:auto) paints above the in-flow
- * Content but below the position:fixed; z-index:24 gesture trace — so the content behind the menu
- * blurs while the trace stays sharp. An overlay rendered outside View cannot achieve this because
- * View's z-index:0 stacking context traps the trace below any root-level element.
- * See docs/superpowers/specs/2026-06-26-gesture-trace-above-blur-root-cause-and-decision.md.
+ * Rendered by GestureMenu as a sibling of PopupBase, so at runtime it lands inside MultiGesture's
+ * react-native-web <View> alongside the gesture trace. Per CSS painting order the blur
+ * (position:absolute, z-index:gestureContentBlur) paints above the in-flow Content but below the
+ * position:fixed; z-index:gestureTrace gesture trace — so the content behind the menu blurs while the
+ * trace stays sharp. It is a sibling of PopupBase rather than a child so it is ordered in the shared
+ * <View> stacking context instead of being trapped inside PopupBase's higher 'popup' stacking context.
  */
 const GestureContentBlur: FC = () => {
   const animationState = gestureStore.useSelector(state => state.gestureMenuAnimationState)

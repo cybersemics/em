@@ -26,8 +26,6 @@ import DesktopCommandUniverse from './DesktopCommandUniverse'
 import DropGutter from './DropGutter'
 import ErrorMessage from './ErrorMessage'
 import Footer from './Footer'
-import GestureContentBlur from './GestureMenu/GestureContentBlur'
-import GestureMenu from './GestureMenu/GestureMenu'
 import HamburgerMenu from './HamburgerMenu'
 import LatestCommandsDiagram from './LatestCommandsDiagram'
 import MultiGesture from './MultiGesture'
@@ -195,7 +193,6 @@ const AppComponent: FC = () => {
       <Alert />
       <Tips />
       {!isTouch && <DesktopCommandUniverse />}
-      {isTouch && <GestureMenu />}
       <ErrorMessage />
       {enableLatestCommandsDiagram && <LatestCommandsDiagram position='bottom' />}
       <MobileCommandUniverse />
@@ -224,7 +221,6 @@ const AppComponent: FC = () => {
               // overflow: hidden is needed to prevent the content from briefly scrolling horizontally during a gesture.
               <div className={css({ position: 'relative', overflow: 'hidden' })} style={{ fontSize }}>
                 <Content />
-                {isTouch && <GestureContentBlur />}
               </div>
             }
           </>

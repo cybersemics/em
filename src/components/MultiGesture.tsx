@@ -6,6 +6,7 @@ import { noop } from '../constants'
 import testFlags from '../e2e/testFlags'
 import { clearGesture, updateGesture } from '../stores/gesture'
 import isInGestureZone from '../util/isInGestureZone'
+import GestureMenu from './GestureMenu/GestureMenu'
 import ScrollZone from './ScrollZone'
 import TraceGesture from './TraceGesture'
 
@@ -351,6 +352,10 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         // removes it, letting gesture blur/trace layer above NavBar in the root context.
         style={{ zIndex: 'auto' } as unknown as ViewStyle}
       >
+        {/* GestureMenu mounts here (rather than at the app root) so the menu, its content blur, and the
+            gesture trace share this <View>'s stacking context, letting z-index order the trace above the
+            blur. GestureMenu renders nothing until the menu is active. */}
+        <GestureMenu />
         <TraceGesture eventNodeRef={ref} />
         <ScrollZone leftHanded={this.leftHanded} />
         <div ref={ref}>{this.props.children}</div>

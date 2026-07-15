@@ -16,6 +16,7 @@ import gestureStore, {
 import storageModel from '../../stores/storageModel'
 import FadeTransition from '../FadeTransition'
 import PopupBase from '../PopupBase'
+import GestureContentBlur from './GestureContentBlur'
 import GestureMenuItem from './GestureMenuItem'
 import { GESTURE_MENU_BOTTOM_TAIL_REM, GESTURE_MENU_PADDING_REM, GESTURE_MENU_ROW_GAP_REM } from './constants'
 
@@ -254,44 +255,50 @@ const GestureMenuWithTransition: FC = () => {
   if (animationState === 'hidden') return null
 
   return (
-    <PopupBase background='transparent' ref={popupRef} fullScreen>
-      <div
-        data-testid='popup-value'
-        className={css({
-          boxSizing: 'border-box',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'start',
-          alignItems: 'center',
-          width: '100%',
-          position: 'absolute',
-          top: 0,
-        })}
-      >
-        {/* Apply the fade transition only to the glow, overlay, and gesture menu contents
-          to prevent them from appearing only after the animation ends. */}
-        <FadeTransition nodeRef={overlayRef} in={fadeIn} type='fast' unmountOnExit onExited={onGestureMenuExited}>
-          <div
-            ref={overlayRef}
-            className={css({
-              position: 'relative',
-              // prevent mix-blend-mode and backdrop-filter from affecting each other
-              isolation: 'isolate',
-              width: '100%',
-              maxHeight: '100dvh',
-            })}
-            // paddingBottom sourced from GestureMenu/constants (shared with the content-blur tail).
-            style={{ paddingBottom: `${GESTURE_MENU_BOTTOM_TAIL_REM}rem` }}
-          >
-            <Overlay />
-            {isGlowBackgroundLoaded && <Glow />}
-            <div style={{ position: 'relative', zIndex: 1 }}>
-              <GestureMenu commands={commands} />
+    <>
+      <PopupBase background='transparent' ref={popupRef} fullScreen>
+        <div
+          data-testid='popup-value'
+          className={css({
+            boxSizing: 'border-box',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'start',
+            alignItems: 'center',
+            width: '100%',
+            position: 'absolute',
+            top: 0,
+          })}
+        >
+          {/* Apply the fade transition only to the glow, overlay, and gesture menu contents
+            to prevent them from appearing only after the animation ends. */}
+          <FadeTransition nodeRef={overlayRef} in={fadeIn} type='fast' unmountOnExit onExited={onGestureMenuExited}>
+            <div
+              ref={overlayRef}
+              className={css({
+                position: 'relative',
+                // prevent mix-blend-mode and backdrop-filter from affecting each other
+                isolation: 'isolate',
+                width: '100%',
+                maxHeight: '100dvh',
+              })}
+              // paddingBottom sourced from GestureMenu/constants (shared with the content-blur tail).
+              style={{ paddingBottom: `${GESTURE_MENU_BOTTOM_TAIL_REM}rem` }}
+            >
+              <Overlay />
+              {isGlowBackgroundLoaded && <Glow />}
+              <div style={{ position: 'relative', zIndex: 1 }}>
+                <GestureMenu commands={commands} />
+              </div>
             </div>
-          </div>
-        </FadeTransition>
-      </div>
-    </PopupBase>
+          </FadeTransition>
+        </div>
+      </PopupBase>
+      {/* Sibling of PopupBase (not a child) so its gestureContentBlur z-index is ordered in the shared
+          <View> stacking context — below the trace, above the content — rather than being trapped inside
+          PopupBase's higher 'popup' stacking context. */}
+      <GestureContentBlur />
+    </>
   )
 }
 
