@@ -14,8 +14,8 @@ interface CommandUniverseGridProps {
 const CommandUniverseGrid = ({ commands, search }: CommandUniverseGridProps) => {
   const fontSize = useSelector(state => state.fontSize)
   return (
-    <table className={css({ fontSize: '14px' })}>
-      <tbody
+    <div className={css({ fontSize: '14px' })}>
+      <div
         className={css({
           display: 'grid',
           gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
@@ -27,8 +27,8 @@ const CommandUniverseGrid = ({ commands, search }: CommandUniverseGridProps) => 
         {commands.filter(nonNull).map(command => (
           <CommandUniverseGridItem key={command.id} command={command} search={search} />
         ))}
-      </tbody>
-    </table>
+      </div>
+    </div>
   )
 }
 

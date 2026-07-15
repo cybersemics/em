@@ -37,7 +37,7 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, se
   const Icon = command.svg ?? SettingsIcon
 
   return (
-    <tr
+    <div
       className={css({
         position: 'relative',
         textAlign: 'left',
@@ -50,9 +50,8 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, se
         marginInline: '0.2rem',
       })}
     >
-      {/* Gesture diagram container. */}
       {isTouch ? (
-        <td
+        <div
           className={css({
             boxSizing: 'border-box',
             minWidth: 0,
@@ -60,21 +59,37 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, se
             textAlign: 'center',
           })}
         >
-          <GestureDiagram
-            cssRaw={css.raw({
-              width: { sm: '80px', md: '130px' },
-              height: { sm: '80px', md: '130px' },
+          {/* Responsive square wrapper: the cell width drives the diagram size, capped so it never
+              balloons past its natural max. The diagram runs in `fillContainer` mode to fill this box. */}
+          <div
+            className={css({
+              display: 'block',
+              width: '100%',
+              aspectRatio: '1 / 1',
+              margin: '0 auto',
+              maxWidth: '130px',
             })}
-            path={gestureString(command)}
-            size={130}
-            arrowSize={25}
-            strokeWidth={7.5}
-            arrowhead={'outlined'}
-          />
-        </td>
+          >
+            <GestureDiagram
+              fillContainer
+              path={gestureString(command)}
+              size={150}
+              arrowSize={1}
+              strokeWidth={12}
+              color='#ffffff'
+              arrowhead='outlined-wide'
+              chevronApexAngle={80}
+              chevronSize={2.2}
+              cornerRadius={12}
+              tipExtension={28}
+              gradient={{ from: 'rgba(88, 181, 212, 0.45)', to: 'rgba(255, 255, 255, 1)' }}
+              glow={false}
+            />
+          </div>
+        </div>
       ) : null}
 
-      <td
+      <div
         className={css({
           display: 'flex',
           flexDirection: 'column',
@@ -130,8 +145,8 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, se
         >
           {description}
         </p>
-      </td>
-    </tr>
+      </div>
+    </div>
   )
 }
 
