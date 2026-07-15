@@ -196,7 +196,7 @@ const RDLD_SEGMENTS = [
 ]
 
 /** Joins SVG path segments into one path by stripping redundant leading move commands from continuations. */
-const joinRdldSegments = (segments: string[]) =>
+const joinPathSegments = (segments: string[]) =>
   segments.reduce((acc, segment, i) => (i === 0 ? segment : `${acc} ${segment.replace(/^M [\d.,]+ /, '')}`), '')
 
 type GesturePathProps = {
@@ -285,7 +285,7 @@ const GesturePath = ({
     if (allHighlighted || noneHighlighted) {
       return (
         <path
-          d={joinRdldSegments(RDLD_SEGMENTS)}
+          d={joinPathSegments(RDLD_SEGMENTS)}
           stroke={allHighlighted ? activeColor : inactiveColor}
           {...commonPathProps}
         />
@@ -295,9 +295,9 @@ const GesturePath = ({
     return (
       <>
         {highlight! > 0 && (
-          <path d={joinRdldSegments(RDLD_SEGMENTS.slice(0, highlight))} stroke={activeColor} {...commonPathProps} />
+          <path d={joinPathSegments(RDLD_SEGMENTS.slice(0, highlight))} stroke={activeColor} {...commonPathProps} />
         )}
-        <path d={joinRdldSegments(RDLD_SEGMENTS.slice(highlight))} stroke={inactiveColor} {...commonPathProps} />
+        <path d={joinPathSegments(RDLD_SEGMENTS.slice(highlight))} stroke={inactiveColor} {...commonPathProps} />
       </>
     )
   }
