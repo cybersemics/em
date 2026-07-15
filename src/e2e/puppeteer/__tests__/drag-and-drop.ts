@@ -1,5 +1,4 @@
 import path from 'path'
-import { WindowEm } from '../../../initialize'
 import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
@@ -19,10 +18,6 @@ import { page } from '../session'
 // Adding sleep(1000) before the snapshot does not help.
 const UNCLE_DIFF_THRESHOLD = 0.4
 
-// Override EXPAND_HOVER_DELAY
-// TODO: Fails intermittently with "Drag destination element not found" when set to 10.
-const MOCK_EXPAND_HOVER_DELAY = 100
-
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
 })
@@ -32,13 +27,13 @@ vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
 /**
  * Waits until the element with the given text content is not visible in the UI, i.e. unmounted, or hidden by display: none, visibility: hidden, or opacity: 0 on itself or any ancestor.
  *
- * Polling is required for hover-expansion collapse assertions. The collapse is dispatched only after the expandHoverDown debounce (MOCK_EXPAND_HOVER_DELAY) fires, and is only observable after the subsequent React render unmounts the subtree. A fixed sleep equal to the debounce delay races the timer callback and the render on a loaded CI runner.
+ * Poll because hover-collapse happens asynchronously. It only occurs after the hover delay expires and React finishes rendering, so a fixed sleep can be flaky on CI.
  *
  * @param text The exact text content to search for.
  * @param selector The CSS selector to search within (defaults to '[data-editable]', which selects thoughts).
  * @throws If the element is still visible after the timeout.
  */
-const waitForElementNotVisible = async (text: string, selector = '[data-editable]'): Promise<void> => {
+const waitUntilElementNotVisible = async (text: string, selector = '[data-editable]'): Promise<void> => {
   // match the waitForEditable timeout, which accounts for parallel test load
   const timeout = 6000
   await page
@@ -421,12 +416,6 @@ describe('drop', () => {
 describe('hover expansion', () => {
   beforeEach(async () => {
     await hideHUD()
-
-    // inject MOCK_EXPAND_HOVER_DELAY
-    const em = window.em as WindowEm
-    await page.evaluate(value => {
-      em.testFlags.expandHoverDelay = value
-    }, MOCK_EXPAND_HOVER_DELAY)
   })
 
   // Clean up after each test by releasing the mouse button
@@ -450,8 +439,8 @@ describe('hover expansion', () => {
     // Start dragging thought C
     await dragAndDropThought('C', 'A', { hold: true, position: 'child' })
 
-    // Wait for expansion to occur
-    await sleep(MOCK_EXPAND_HOVER_DELAY)
+    // Wait for the expansion to commit before starting the next drag.
+    await waitForEditable('A1')
 
     // Verify that A1 and A2 are visible (A has expanded)
     const a1Editable = await waitForEditable('A1')
@@ -473,16 +462,14 @@ describe('hover expansion', () => {
     await dragAndDropThought('C', 'A', { hold: true, position: 'child' })
 
     // Wait for the expansion to commit before starting the next drag.
-    // Not only does this confirm the precondition (otherwise the collapse assertion passes vacuously if A never expanded),
-    // but A1/A2 mounting shifts B down, so B's bounding box must be read after the layout shift.
     await waitForEditable('A1')
 
     // Now drag to thought B instead
     await dragAndDropThought('C', 'B', { hold: true, position: 'after', skipMouseDown: true })
 
     // Verify that A1 and A2 are no longer visible (A has collapsed)
-    await waitForElementNotVisible('A1')
-    await waitForElementNotVisible('A2')
+    await waitUntilElementNotVisible('A1')
+    await waitUntilElementNotVisible('A2')
   })
 
   it('collapses nested thoughts when dragging away', async () => {
@@ -500,14 +487,12 @@ describe('hover expansion', () => {
     await dragAndDropThought('C', 'A', { hold: true, position: 'child' })
 
     // Wait for the expansion to commit before starting the next drag.
-    // The next drag targets A1, which does not exist until A expands, and the mount shifts the layout.
     await waitForEditable('A1')
 
     // Now move to A1 using the dragAndDropThought function with skipMouseDown
     await dragAndDropThought('C', 'A1', { hold: true, position: 'child', skipMouseDown: true })
 
     // Verify that A1-1 and A1-2 are visible (A1 has expanded)
-    // waitForEditable polls, so no fixed sleep for the expandHoverDown debounce is needed.
     const a11Editable = await waitForEditable('A1-1')
     const a12Editable = await waitForEditable('A1-2')
 
@@ -518,14 +503,14 @@ describe('hover expansion', () => {
     await dragAndDropThought('C', 'A2', { hold: true, position: 'child', skipMouseDown: true })
 
     // Verify that A1-1 and A1-2 are no longer visible (A1 has collapsed)
-    await waitForElementNotVisible('A1-1')
-    await waitForElementNotVisible('A1-2')
+    await waitUntilElementNotVisible('A1-1')
+    await waitUntilElementNotVisible('A1-2')
 
     // Now drag completely away to B
     await dragAndDropThought('C', 'B', { hold: true, position: 'after', skipMouseDown: true })
 
     // Verify that all A's children (A1 and A2) are no longer visible (A has collapsed)
-    await waitForElementNotVisible('A1')
-    await waitForElementNotVisible('A2')
+    await waitUntilElementNotVisible('A1')
+    await waitUntilElementNotVisible('A2')
   })
 })
