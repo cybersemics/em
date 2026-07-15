@@ -1,6 +1,7 @@
-import { isSafari, isTouch } from '../browser'
+import { isCapacitor, isSafari, isTouch } from '../browser'
 import { PREVENT_AUTOSCROLL_TIMEOUT, isPreventAutoscrollInProgress } from '../device/preventAutoscroll'
 import viewportStore from '../stores/viewport'
+import virtualKeyboardStore from '../stores/virtualKeyboardStore'
 
 /** Scrolls the minimum amount necessary to move the viewport so that it includes the element. */
 const scrollIntoViewIfNeeded = (y: number, height: number) => {
@@ -21,7 +22,18 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
   // window.visualViewport.height excludes the virtual keyboard height (i.e. it changes when the keyboard is open/closed).
   // It changes in a single step (before the virtual keyboard animation completes), so we can use it to determine if the element will be below the visible area.
   // On desktop or when the virtual keyboard is down, it is equivalent to window.innerHeight.
-  const visualViewportHeight = window.visualViewport?.height ?? window.innerHeight
+  //
+  // Exception: In Capacitor, the native WebView does not shrink window.visualViewport when the virtual keyboard opens
+  // (iOS sets Keyboard.resize = 'none'; the Android WebView behaves the same way). visualViewport.height therefore stays
+  // equal to the full innerHeight even while the keyboard covers the bottom of the screen, which would cause the cursor
+  // to be autoscrolled on every focus change instead of only when it reaches the bottom of the visible area (#3766).
+  // Instead, derive the visible height from viewportStore, which tracks the real keyboard height natively (see
+  // iOSCapacitorHandler). virtualKeyboardHeight retains its last value when the keyboard is closed, so only subtract it
+  // when the keyboard is actually open.
+  const keyboardOpen = virtualKeyboardStore.getState().open
+  const visualViewportHeight = isCapacitor()
+    ? viewport.innerHeight - (keyboardOpen ? viewport.virtualKeyboardHeight : 0)
+    : (window.visualViewport?.height ?? window.innerHeight)
 
   /** The y position of the element relative to the document. */
   const yDocument = viewport.layoutTreeTop + y
