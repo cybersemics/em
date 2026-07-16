@@ -18,6 +18,7 @@ import getThoughtFill from '../selectors/getThoughtFill'
 import isContextViewActive from '../selectors/isContextViewActive'
 import isMulticursorPath from '../selectors/isMulticursorPath'
 import rootedParentOf from '../selectors/rootedParentOf'
+import commandStateStore from '../stores/commandStateStore'
 import calculateCursorOverlayRadius from '../util/calculateCursorOverlayRadius'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
@@ -291,7 +292,13 @@ const Bullet = ({
     return children.length < Object.keys(thought.childrenMap).length
   })
 
-  const fill = useSelector(state => getThoughtFill(state, thoughtId))
+  const persistedFill = useSelector(state => getThoughtFill(state, thoughtId))
+  const isEmpty = useSelector(state => getThoughtById(state, thoughtId)?.value === '')
+  const activeCommandFill = commandStateStore.useSelector(state => {
+    const fill = state.backColor || state.foreColor
+    return typeof fill === 'string' ? fill : undefined
+  })
+  const fill = persistedFill || (isEditing && isEmpty ? activeCommandFill : undefined)
 
   const isExpanded = useSelector(state => !!state.expanded[hashPath(path)])
   const isBulletExpanded = isCursorParent || isCursorGrandparent || isEditing || isExpanded
