@@ -180,14 +180,12 @@ describe('formatSelection', () => {
   })
 
   // Reproduces the whole-thought formatting relied on by format.ts > "Clear Thought placeholder inherits ... (#4612)"
-  it('applies multiple whole-thought formats in a single undoable path', async () => {
+  it('applies multiple whole-thought formats', async () => {
     await setupThought('hello')
 
-    placeCaret()
     store.dispatch(formatSelection('bold'))
     await act(vi.runOnlyPendingTimersAsync)
 
-    placeCaret()
     store.dispatch(formatSelection('underline'))
     await act(vi.runOnlyPendingTimersAsync)
 

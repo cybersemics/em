@@ -70,11 +70,23 @@ const insertAtRange = (container: HTMLElement, range: Range, node: Node) => {
   }
 }
 
+/** Text color applied by a backColor command for contrast against the background (always black, per product design). */
+const CONTRAST_COLOR = '#000000'
+
+/** Determines the target text color and background for a single color command. A foreColor sets the text color and
+ * clears the background; a backColor sets the background and forces a contrasting (black) text color. This folds
+ * ColorPicker's former two-dispatch foreColor + backColor pairing into a single transform (#4637). */
+const resolveColors = (
+  command: 'foreColor' | 'backColor',
+  colorValue: string | undefined,
+): { color: string | null; background: string | null } =>
+  command === 'foreColor'
+    ? { color: colorValue ?? null, background: null }
+    : { color: CONTRAST_COLOR, background: colorValue ?? null }
+
 /** Applies a foreColor/backColor to the [start, end) range, consolidating into a single <font> element that carries
- * both the color attribute and the background-color style. Works for both whole-thought and partial ranges: the range
- * content is extracted, any existing color/background wrappers within it are collapsed (a color override replaces them),
- * the new color/background is merged in, and the result is re-wrapped once. This mirrors execCommand, which merges
- * foreColor + backColor onto one element rather than nesting a <span> inside a <font>. */
+ * both the color attribute and the background-color style. The color command fully redetermines both properties (see
+ * resolveColors), so existing color/background wrappers within the range are stripped before re-wrapping once. */
 const applyColor = (
   container: HTMLElement,
   start: number,
@@ -88,33 +100,15 @@ const applyColor = (
   range.setStart(s.node, s.offset)
   range.setEnd(e.node, e.offset)
 
-  // extract the range into a temp container so existing color/background wrappers can be gathered and stripped
+  // extract the range into a temp container so existing color/background wrappers can be stripped
   const temp = document.createElement('div')
   temp.appendChild(range.extractContents())
-
-  let color: string | null = null
-  let background: string | null = null
-  // inner wrappers within the extracted range are the range's own formatting
   for (const el of Array.from(temp.querySelectorAll<HTMLElement>('font, span'))) {
-    color = el.getAttribute('color') || el.style.color || color
-    background = el.style.backgroundColor || background
     el.replaceWith(...Array.from(el.childNodes))
   }
   temp.normalize()
-  // fall back to the formatting ancestors that fully contain the range (left empty by extractContents when the range
-  // was entirely inside a single wrapper, e.g. the second dispatch of a foreColor + backColor pair)
-  for (let n: Node | null = range.startContainer; n && n !== container; n = n.parentNode) {
-    if (isFormattingElement(n)) {
-      color = color || n.getAttribute('color') || n.style.color || null
-      background = background || n.style.backgroundColor || null
-    }
-  }
 
-  if (command === 'foreColor') {
-    color = colorValue ?? null
-  } else {
-    background = colorValue ?? null
-  }
+  const { color, background } = resolveColors(command, colorValue)
 
   let insertNode: Node
   if (color || background) {
