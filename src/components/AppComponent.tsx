@@ -16,6 +16,7 @@ import isTutorial from '../selectors/isTutorial'
 import theme from '../selectors/theme'
 import themeColors from '../selectors/themeColors'
 import store from '../stores/app'
+import debugLog from '../util/debugLog'
 import isDocumentEditable from '../util/isDocumentEditable'
 import Alert from './Alert'
 import CommandCenter from './CommandCenter/CommandCenter'
@@ -123,7 +124,14 @@ const AppComponent: FC = () => {
   const fontSize = useSelector(state => state.fontSize)
   const showModal = useSelector(state => state.showModal)
   const tutorial = useSelector(isTutorial)
+  const debugCrashLog = useSelector(getUserSetting(Settings.debugCrashLog))
   const rootRef = useRef<HTMLDivElement>(null)
+
+  // Mirror the Debug Logging setting into the persistent debug log. Kept here (a single always-mounted
+  // top-level effect) so the logger stays decoupled from the Redux store.
+  useEffect(() => {
+    debugLog.setEnabled(debugCrashLog)
+  }, [debugCrashLog])
 
   useEffect(() => {
     WebviewBackground.changeBackgroundColor({ color: colors.bg })

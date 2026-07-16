@@ -17,7 +17,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "prettier": "^3.8.4",
+    "prettier": "^3.9.5",
     "typescript": "5.9.3"
   }
 }

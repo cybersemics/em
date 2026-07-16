@@ -27,6 +27,9 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   CI: true
   COPILOT_AGENT_FIREWALL_ALLOW_LIST_ADDITIONS: googlechromelabs.github.io,storage.googleapis.com
+  # Skip Puppeteer's Chrome download on install — no CI job uses the bundled browser (Puppeteer
+  # tests attach to the browserless/chrome service via CDP), saving ~20s per install.
+  PUPPETEER_SKIP_DOWNLOAD: true
   # Activates the console proxy (src/util/consoleProxy.ts), which we need because BrowserStack
   # can't access iOS console logs.
   VITE_BROWSER_CONSOLE_CAPTURE: 1
@@ -70,7 +73,7 @@ jobs:
           cache: 'yarn'
 
       - name: Install npm dependencies
-        run: yarn
+        uses: ./.github/actions/install
 
       - name: Build
         run: yarn build
