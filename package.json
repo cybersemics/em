@@ -89,13 +89,13 @@
     "scripts/estimate"
   ],
   "dependencies": {
-    "@capacitor/android": "^8.4.1",
+    "@capacitor/android": "^8.4.2",
     "@capacitor/clipboard": "^8.0.1",
-    "@capacitor/core": "^8.4.1",
+    "@capacitor/core": "^8.4.2",
     "@capacitor/haptics": "^8.0.2",
-    "@capacitor/ios": "^8.4.1",
+    "@capacitor/ios": "^8.4.2",
     "@capacitor/keyboard": "^8.0.5",
-    "@capacitor/status-bar": "^8.0.2",
+    "@capacitor/status-bar": "^8.0.3",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@mui/material": "^9.2.0",
@@ -167,7 +167,7 @@
   "devDependencies": {
     "@babel/core": "^8.0.1",
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
-    "@capacitor/cli": "^8.4.1",
+    "@capacitor/cli": "^8.4.2",
     "@eslint-community/eslint-plugin-eslint-comments": "^4.7.2",
     "@pandacss/dev": "^1.11.4",
     "@pandacss/eslint-plugin": "^0.3.2",
