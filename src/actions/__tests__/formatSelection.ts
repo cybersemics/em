@@ -365,4 +365,25 @@ describe('formatSelection color', () => {
       '<font color="#000000" style="background-color: rgb(255, 87, 61);">One two</font><font color="#000000" style="background-color: rgb(0, 214, 136);"> three</font>',
     )
   })
+
+  // a background color applied over a bold thought must keep both the <b> and the color <font>
+  it('preserves bold when applying a background color to the whole thought', async () => {
+    await setupThought('One')
+
+    // bold the whole thought
+    placeCaret()
+    store.dispatch(formatSelection('bold'))
+    await act(vi.runOnlyPendingTimersAsync)
+    expect(cursorValue()).toBe('<b>One</b>')
+
+    // apply a background color to the whole thought
+    placeCaret()
+    applyColorSwatch({ backgroundColor: 'green' })
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const value = cursorValue()
+    expect(value).toContain('<b>')
+    expect(value).toContain('background-color: rgb(0, 214, 136)')
+    expect(value).toBe('<font color="#000000" style="background-color: rgb(0, 214, 136);"><b>One</b></font>')
+  })
 })

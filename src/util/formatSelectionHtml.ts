@@ -134,6 +134,38 @@ const applyColor = (
   removeEmptyFormatting(container)
 }
 
+/** Consolidates a whole-thought foreColor/backColor into a single <font> element carrying both the color attribute and
+ * the background-color style. Only color wrappers (font/span) are stripped, so non-color formatting (b/i/u/code) that
+ * wraps the thought is preserved. */
+const consolidateWholeColor = (
+  container: HTMLElement,
+  command: 'foreColor' | 'backColor',
+  colorValue: string | undefined,
+) => {
+  let color: string | null = null
+  let background: string | null = null
+  for (const el of Array.from(container.querySelectorAll<HTMLElement>('font, span'))) {
+    color = el.getAttribute('color') || el.style.color || color
+    background = el.style.backgroundColor || background
+    el.replaceWith(...Array.from(el.childNodes))
+  }
+  container.normalize()
+
+  if (command === 'foreColor') {
+    color = colorValue ?? null
+  } else {
+    background = colorValue ?? null
+  }
+
+  if (!color && !background) return
+
+  const font = document.createElement('font')
+  if (color) font.setAttribute('color', rgbToHex(color))
+  if (background) font.style.backgroundColor = background
+  while (container.firstChild) font.appendChild(container.firstChild)
+  container.appendChild(font)
+}
+
 /** Options for {@link formatSelectionHtml}. */
 interface FormatOptions {
   /** Plain-text start offset of the range (inclusive). */
@@ -190,8 +222,8 @@ const formatSelectionHtml = (html: string, { start, end, command, colorValue, wh
         container.appendChild(wrapper)
       }
     } else {
-      // color: consolidate foreColor/backColor into a single <font> element
-      applyColor(container, start, end, command as 'foreColor' | 'backColor', colorValue)
+      // color: consolidate the whole-thought foreColor/backColor into a single <font>, preserving non-color tags (b/i/u)
+      consolidateWholeColor(container, command as 'foreColor' | 'backColor', colorValue)
     }
   } else if (tag) {
     // partial tag command: wrap the selected range in the formatting tag
