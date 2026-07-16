@@ -130,27 +130,19 @@ const applyColor = (
 
 /** Consolidates a whole-thought foreColor/backColor into a single <font> element carrying both the color attribute and
  * the background-color style. Only color wrappers (font/span) are stripped, so non-color formatting (b/i/u/code) that
- * wraps the thought is preserved. */
+ * wraps the thought is preserved. The color command fully redetermines both properties (see resolveColors): a foreColor
+ * clears the background, a backColor forces a contrasting text color. */
 const consolidateWholeColor = (
   container: HTMLElement,
   command: 'foreColor' | 'backColor',
   colorValue: string | undefined,
 ) => {
-  let color: string | null = null
-  let background: string | null = null
   for (const el of Array.from(container.querySelectorAll<HTMLElement>('font, span'))) {
-    color = el.getAttribute('color') || el.style.color || color
-    background = el.style.backgroundColor || background
     el.replaceWith(...Array.from(el.childNodes))
   }
   container.normalize()
 
-  if (command === 'foreColor') {
-    color = colorValue ?? null
-  } else {
-    background = colorValue ?? null
-  }
-
+  const { color, background } = resolveColors(command, colorValue)
   if (!color && !background) return
 
   const font = document.createElement('font')
