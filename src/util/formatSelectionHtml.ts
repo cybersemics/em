@@ -157,8 +157,7 @@ const consolidateWholeColor = (
 
 /** Removes color/background declarations that match the theme defaults and unwraps the resulting attribute-less
  * font/span elements. Runs after a color command so that resetting to a default color leaves no redundant markup
- * (#3901). defaultColor is the default text color and defaultBackgroundColor the default background (both hex,
- * resolved by the caller — the text default differs between thoughts and notes). */
+ * (#3901). The default text color and default background color are both hex values, and differ between thoughts and notes). */
 const stripDefaultColors = (container: HTMLElement, defaultColor: string, defaultBackgroundColor: string) => {
   const defaultColorHex = rgbToHex(defaultColor)
   const defaultBackgroundHex = rgbToHex(defaultBackgroundColor)
