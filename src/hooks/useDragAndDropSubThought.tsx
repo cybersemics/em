@@ -1,4 +1,3 @@
-import React from 'react'
 import { DropTargetMonitor, useDrop } from 'react-dnd'
 import { NativeTypes } from 'react-dnd-html5-backend'
 import { useDispatch } from 'react-redux'
@@ -17,7 +16,7 @@ import { longPressActionCreator as longPress } from '../actions/longPress'
 import { moveThoughtActionCreator as moveThought } from '../actions/moveThought'
 import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from '../actions/setIsMulticursorExecuting'
 import MoveThoughtAlert from '../components/MoveThoughtAlert'
-import { AlertType, HOME_TOKEN, LongPressState } from '../constants'
+import { AlertType, LongPressState } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
 import getNextRank from '../selectors/getNextRank'
 import getPrevRank from '../selectors/getPrevRank'
@@ -34,7 +33,6 @@ import equalPath from '../util/equalPath'
 import haptics from '../util/haptics'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
-import headValue from '../util/headValue'
 import isDescendantPath from '../util/isDescendantPath'
 import isDivider from '../util/isDivider'
 import isDraggedFile from '../util/isDraggedFile'
@@ -252,32 +250,14 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
         const firstItem = draggedItems[0]
         const pathTo = getPathTo(state, firstItem.path)
 
-        const parentId = head(rootedParentOf(state, pathTo))
         const dropTop = shouldDropAtTop(pathTo)
         const thoughtFrom = getThoughtById(state, head(firstItem.path))
-        const thoughtTo = getThoughtById(state, parentId)
         const toPath = simplifyPath(state, rootedParentOf(state, pathTo))
 
         const alertFrom =
           draggedItems.length === 1 ? `"${ellipsize(thoughtFrom?.value || '')}"` : `${draggedItems.length} thoughts`
 
-        const alertTo = parentId === HOME_TOKEN ? 'home' : ellipsize(thoughtTo?.value || '')
-
-        const inContext = props.showContexts
-          ? ` in the context of ${ellipsize(headValue(state, props.simplePath ?? props.path) || 'MISSING_CONTEXT')}`
-          : ''
-
-        store.dispatch(
-          alert(() =>
-            React.createElement(MoveThoughtAlert, {
-              from: alertFrom,
-              inContext,
-              to: alertTo,
-              toPath,
-              top: dropTop,
-            }),
-          ),
-        )
+        store.dispatch(alert(() => <MoveThoughtAlert from={alertFrom} toPath={toPath} top={dropTop} />))
       }, 100)
     }
   })

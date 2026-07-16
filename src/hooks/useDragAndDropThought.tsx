@@ -29,7 +29,6 @@ import findDescendant from '../selectors/findDescendant'
 import getNextRank from '../selectors/getNextRank'
 import getRankAfter from '../selectors/getRankAfter'
 import getRankBefore from '../selectors/getRankBefore'
-import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursor from '../selectors/hasMulticursor'
 import isBefore from '../selectors/isBefore'
 import isContextViewActive from '../selectors/isContextViewActive'
@@ -266,17 +265,13 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
       // wait until after MultiGesture has cleared the error so this alert does not get cleared
       setTimeout(() => {
         const state = getState()
-        const parentThought = getThoughtById(state, head(parentOf(props.simplePath)))
-        if (!parentThought) return
-
         const firstFromThought = pathToThought(state, draggedItems[0].simplePath)
         if (!firstFromThought) return
 
         const numThoughts = draggedItems.length
         const alertFrom = numThoughts === 1 ? `"${ellipsize(firstFromThought.value)}"` : `${numThoughts} thoughts`
-        const alertTo = isRoot([parentThought.id]) ? 'home' : ellipsize(parentThought.value)
 
-        dispatch(alert(() => <MoveThoughtAlert from={alertFrom} to={alertTo} toPath={parent} inContext=' context' />))
+        dispatch(alert(() => <MoveThoughtAlert from={alertFrom} toPath={parent} />))
       }, 100)
     }
   })
