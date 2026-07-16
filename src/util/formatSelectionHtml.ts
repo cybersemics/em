@@ -1,4 +1,5 @@
 import CommandState from '../@types/CommandState'
+import { ALLOWED_FORMATTING_TAGS } from '../constants'
 import getCommandState from './getCommandState'
 import rgbToHex from './rgbToHex'
 
@@ -21,22 +22,8 @@ const TAG_BY_COMMAND: Record<TagCommand, string> = {
 const tagForCommand = (command: FormatCommand): string | undefined =>
   command in TAG_BY_COMMAND ? TAG_BY_COMMAND[command as TagCommand] : undefined
 
-/** Creates the wrapper element for a formatting command, mirroring the markup document.execCommand produces. */
-const createWrapper = (command: FormatCommand, colorValue?: string): HTMLElement => {
-  // foreColor is emitted by execCommand as <font color="#hex">
-  if (command === 'foreColor') {
-    const font = document.createElement('font')
-    if (colorValue) font.setAttribute('color', rgbToHex(colorValue))
-    return font
-  }
-  // backColor is emitted by execCommand as <span style="background-color: rgb(...)">
-  if (command === 'backColor') {
-    const span = document.createElement('span')
-    if (colorValue) span.style.backgroundColor = colorValue
-    return span
-  }
-  return document.createElement(tagForCommand(command) || 'span')
-}
+/** Creates the wrapper element for a tag formatting command (bold/italic/underline/strikethrough/code). */
+const createWrapper = (command: FormatCommand): HTMLElement => document.createElement(tagForCommand(command) || 'span')
 
 /** Maps a plain-text character offset within a root node to a { node, offset } position on a text node. */
 const positionAtOffset = (root: Node, target: number): { node: Node; offset: number } => {
@@ -55,25 +42,73 @@ const positionAtOffset = (root: Node, target: number): { node: Node; offset: num
   return { node: root, offset: 0 }
 }
 
-/** Consolidates a whole-thought foreColor/backColor into a single <font> element carrying both the color attribute and
- * the background-color style, replacing any existing color/background wrappers (including partial inner ones). */
-const consolidateWholeColor = (
+/** Removes empty formatting elements (e.g. the <font> left behind after extractContents splits a colored range). */
+const removeEmptyFormatting = (container: HTMLElement) => {
+  for (const el of Array.from(container.querySelectorAll(ALLOWED_FORMATTING_TAGS.join(',')))) {
+    if ((el.textContent ?? '') === '') el.remove()
+  }
+}
+
+/** Returns true if the node is a formatting element (b/i/u/font/span/etc.). */
+const isFormattingElement = (node: Node): node is HTMLElement =>
+  node.nodeType === Node.ELEMENT_NODE && ALLOWED_FORMATTING_TAGS.includes((node as HTMLElement).tagName.toLowerCase())
+
+/** Inserts a node at the (collapsed) range, lifting out of any empty formatting ancestors that extractContents left
+ * behind. Without this, re-coloring content that already fills a single wrapper (e.g. the second dispatch of a
+ * foreColor + backColor pair) would nest the new <font> inside the emptied one instead of replacing it. */
+const insertAtRange = (container: HTMLElement, range: Range, node: Node) => {
+  // Climb from the insertion point to the outermost formatting ancestor that extractContents left empty, and replace
+  // it with the node. (The collapsed range often sits on an empty text node inside the emptied wrapper.)
+  let emptyAncestor: HTMLElement | null = null
+  for (let n: Node | null = range.startContainer; n && n !== container; n = n.parentNode) {
+    if (isFormattingElement(n) && (n.textContent ?? '') === '') emptyAncestor = n
+  }
+  if (emptyAncestor) {
+    emptyAncestor.replaceWith(node)
+  } else {
+    range.insertNode(node)
+  }
+}
+
+/** Applies a foreColor/backColor to the [start, end) range, consolidating into a single <font> element that carries
+ * both the color attribute and the background-color style. Works for both whole-thought and partial ranges: the range
+ * content is extracted, any existing color/background wrappers within it are collapsed (a color override replaces them),
+ * the new color/background is merged in, and the result is re-wrapped once. This mirrors execCommand, which merges
+ * foreColor + backColor onto one element rather than nesting a <span> inside a <font>. */
+const applyColor = (
   container: HTMLElement,
+  start: number,
+  end: number,
   command: 'foreColor' | 'backColor',
   colorValue: string | undefined,
 ) => {
-  // Gather the existing whole-thought color state and strip every color/background wrapper — including partial inner
-  // ones, which a whole-thought color overrides — then re-wrap the whole content in a single <font> that carries both
-  // the color attribute and the background-color style. This mirrors execCommand, which merges foreColor + backColor
-  // onto one element rather than nesting a <span> inside a <font>.
+  const range = document.createRange()
+  const s = positionAtOffset(container, start)
+  const e = positionAtOffset(container, end)
+  range.setStart(s.node, s.offset)
+  range.setEnd(e.node, e.offset)
+
+  // extract the range into a temp container so existing color/background wrappers can be gathered and stripped
+  const temp = document.createElement('div')
+  temp.appendChild(range.extractContents())
+
   let color: string | null = null
   let background: string | null = null
-  for (const el of Array.from(container.querySelectorAll<HTMLElement>('font, span'))) {
+  // inner wrappers within the extracted range are the range's own formatting
+  for (const el of Array.from(temp.querySelectorAll<HTMLElement>('font, span'))) {
     color = el.getAttribute('color') || el.style.color || color
     background = el.style.backgroundColor || background
     el.replaceWith(...Array.from(el.childNodes))
   }
-  container.normalize()
+  temp.normalize()
+  // fall back to the formatting ancestors that fully contain the range (left empty by extractContents when the range
+  // was entirely inside a single wrapper, e.g. the second dispatch of a foreColor + backColor pair)
+  for (let n: Node | null = range.startContainer; n && n !== container; n = n.parentNode) {
+    if (isFormattingElement(n)) {
+      color = color || n.getAttribute('color') || n.style.color || null
+      background = background || n.style.backgroundColor || null
+    }
+  }
 
   if (command === 'foreColor') {
     color = colorValue ?? null
@@ -81,13 +116,22 @@ const consolidateWholeColor = (
     background = colorValue ?? null
   }
 
-  if (!color && !background) return
+  let insertNode: Node
+  if (color || background) {
+    const font = document.createElement('font')
+    if (color) font.setAttribute('color', rgbToHex(color))
+    if (background) font.style.backgroundColor = background
+    while (temp.firstChild) font.appendChild(temp.firstChild)
+    insertNode = font
+  } else {
+    const fragment = document.createDocumentFragment()
+    while (temp.firstChild) fragment.appendChild(temp.firstChild)
+    insertNode = fragment
+  }
 
-  const font = document.createElement('font')
-  if (color) font.setAttribute('color', rgbToHex(color))
-  if (background) font.style.backgroundColor = background
-  while (container.firstChild) font.appendChild(container.firstChild)
-  container.appendChild(font)
+  insertAtRange(container, range, insertNode)
+  // remove any now-empty formatting element left behind where the range was extracted
+  removeEmptyFormatting(container)
 }
 
 /** Options for {@link formatSelectionHtml}. */
@@ -141,23 +185,27 @@ const formatSelectionHtml = (html: string, { start, end, command, colorValue, wh
           el.replaceWith(...Array.from(el.childNodes))
         }
       } else {
-        const wrapper = createWrapper(command, colorValue)
+        const wrapper = createWrapper(command)
         while (container.firstChild) wrapper.appendChild(container.firstChild)
         container.appendChild(wrapper)
       }
     } else {
-      // color: consolidate the whole-thought foreColor/backColor into a single <font> element
-      consolidateWholeColor(container, command as 'foreColor' | 'backColor', colorValue)
+      // color: consolidate foreColor/backColor into a single <font> element
+      applyColor(container, start, end, command as 'foreColor' | 'backColor', colorValue)
     }
-  } else {
+  } else if (tag) {
+    // partial tag command: wrap the selected range in the formatting tag
     const range = document.createRange()
     const s = positionAtOffset(container, start)
     const e = positionAtOffset(container, end)
     range.setStart(s.node, s.offset)
     range.setEnd(e.node, e.offset)
-    const wrapper = createWrapper(command, colorValue)
+    const wrapper = createWrapper(command)
     wrapper.appendChild(range.extractContents())
     range.insertNode(wrapper)
+  } else {
+    // partial color command: consolidate foreColor/backColor into a single <font> element over the range
+    applyColor(container, start, end, command as 'foreColor' | 'backColor', colorValue)
   }
 
   container.normalize()

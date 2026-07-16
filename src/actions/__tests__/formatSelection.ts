@@ -42,6 +42,38 @@ const selectRange = (start: number, end: number) => {
   sel.addRange(range)
 }
 
+/** Selects the plain-text sub-range [start, end) of the cursor thought's editable, walking across nested formatting
+ * nodes (unlike selectRange, which assumes a single text node). */
+const selectPlainRange = (start: number, end: number) => {
+  const editable = getEditable()
+  const walker = document.createTreeWalker(editable, NodeFilter.SHOW_TEXT)
+  let startNode: Node | null = null
+  let startOffset = 0
+  let endNode: Node | null = null
+  let endOffset = 0
+  let acc = 0
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    const len = node.textContent?.length ?? 0
+    if (!startNode && start <= acc + len) {
+      startNode = node
+      startOffset = start - acc
+    }
+    if (startNode && end <= acc + len) {
+      endNode = node
+      endOffset = end - acc
+      break
+    }
+    acc += len
+  }
+  if (!startNode || !endNode) throw new Error('selectPlainRange: offsets out of bounds')
+  const range = document.createRange()
+  range.setStart(startNode, startOffset)
+  range.setEnd(endNode, endOffset)
+  const sel = window.getSelection()!
+  sel.removeAllRanges()
+  sel.addRange(range)
+}
+
 /** Places a collapsed caret at the start of the cursor thought's editable (formats the whole thought). */
 const placeCaret = () => {
   const editable = getEditable()
@@ -291,6 +323,46 @@ describe('formatSelection color', () => {
 
     expect(cursorValue()).toBe(
       '<font color="#000000" style="background-color: rgb(255, 87, 61);">some formatted text</font>',
+    )
+  })
+
+  // undo.ts > "Should revert background color changes back to previous values" (the two-green markup that undo restores)
+  it('applies a background color to two separate words as consolidated font tags', async () => {
+    await setupThought('Lorem Ipsum Dolor Sit Amet')
+
+    // green background on the first word "Lorem"
+    selectPlainRange(0, 'Lorem'.length)
+    applyColorSwatch({ backgroundColor: 'green' })
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // green background on the last word "Amet"
+    selectPlainRange('Lorem Ipsum Dolor Sit '.length, 'Lorem Ipsum Dolor Sit Amet'.length)
+    applyColorSwatch({ backgroundColor: 'green' })
+    await act(vi.runOnlyPendingTimersAsync)
+
+    expect(cursorValue()).toBe(
+      '<font color="#000000" style="background-color: rgb(0, 214, 136);">Lorem</font> Ipsum Dolor Sit <font color="#000000" style="background-color: rgb(0, 214, 136);">Amet</font>',
+    )
+  })
+
+  // overlapping partial background colors: green on "two three", then red on "One two" — the overlap ("two") takes the
+  // most recent (red), leaving only " three" green
+  it('applies overlapping partial background colors, most recent winning the overlap', async () => {
+    await setupThought('One two three')
+
+    // green background on "two three"
+    selectPlainRange('One '.length, 'One two three'.length)
+    applyColorSwatch({ backgroundColor: 'green' })
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // red background on "One two"
+    selectPlainRange(0, 'One two'.length)
+    applyColorSwatch({ backgroundColor: 'red' })
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // "One two" is red; " three" remains green
+    expect(cursorValue()).toBe(
+      '<font color="#000000" style="background-color: rgb(255, 87, 61);">One two</font><font color="#000000" style="background-color: rgb(0, 214, 136);"> three</font>',
     )
   })
 })
