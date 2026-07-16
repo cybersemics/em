@@ -1,5 +1,4 @@
 import { act } from 'react'
-import { ColorToken } from '../../colors.config'
 import getThoughtById from '../../selectors/getThoughtById'
 import noteValue from '../../selectors/noteValue'
 import store from '../../stores/app'
@@ -211,32 +210,10 @@ describe('formatSelection', () => {
 })
 
 /**
- * Emulates ColorPicker.toggleTextColor, which dispatches a foreColor + backColor pair for a single swatch click. A text
- * swatch passes `color`; a background swatch passes `backgroundColor`; `selected` is true when re-clicking the active
- * swatch (deselect). This lets the color.ts Puppeteer behaviors be reproduced at the action level.
- */
-const applyColorSwatch = ({
-  color,
-  backgroundColor,
-  selected = false,
-}: {
-  color?: ColorToken
-  backgroundColor?: ColorToken
-  selected?: boolean
-}) => {
-  const fgColor: ColorToken = store.getState().noteFocus ? 'fgNote' : 'fg'
-  const foreArg: ColorToken = selected
-    ? fgColor
-    : ((color || (backgroundColor && backgroundColor !== 'fg' ? 'black' : 'bg')) as ColorToken)
-  const backArg: ColorToken = selected ? 'bg' : (backgroundColor ?? 'bg')
-  store.dispatch(formatSelection('foreColor', foreArg))
-  store.dispatch(formatSelection('backColor', backArg))
-}
-
-/**
- * These reproduce the (thought-value) behaviors of the color.ts Puppeteer tests at the action level. Assertions on the
- * rendered bullet, superscript, context view, and letter case are UI-specific and remain in color.ts. Tests marked
- * `it.skip` require the fore/back consolidation into a single <font> element, which is a follow-up implementation step (#4637).
+ * These reproduce the (thought-value) behaviors of the color.ts Puppeteer tests at the action level. Each color swatch
+ * is a single formatSelection dispatch: a foreColor sets the text color and clears the background; a backColor sets the
+ * background and forces a contrasting (black) text color. Deselecting a color applies the default foreground (#4637).
+ * Assertions on the rendered bullet, superscript, context view, and letter case are UI-specific and remain in color.ts.
  */
 describe('formatSelection color', () => {
   beforeEach(createTestApp)
@@ -247,7 +224,7 @@ describe('formatSelection color', () => {
     await setupThought('Golden Retriever')
 
     placeCaret()
-    applyColorSwatch({ color: 'blue' })
+    store.dispatch(formatSelection('foreColor', 'blue'))
     await act(vi.runOnlyPendingTimersAsync)
 
     expect(cursorValue()).toBe('<font color="#00c7e6">Golden Retriever</font>')
@@ -258,7 +235,7 @@ describe('formatSelection color', () => {
     await setupThought('Golden Retriever')
 
     selectRange(0, 'Golden'.length)
-    applyColorSwatch({ color: 'blue' })
+    store.dispatch(formatSelection('foreColor', 'blue'))
     await act(vi.runOnlyPendingTimersAsync)
 
     expect(cursorValue()).toBe('<font color="#00c7e6">Golden</font> Retriever')
@@ -274,7 +251,7 @@ describe('formatSelection color', () => {
       await act(vi.runOnlyPendingTimersAsync)
     }
     placeCaret()
-    applyColorSwatch({ color: 'blue' })
+    store.dispatch(formatSelection('foreColor', 'blue'))
     await act(vi.runOnlyPendingTimersAsync)
 
     placeCaret()
@@ -289,7 +266,7 @@ describe('formatSelection color', () => {
     await setupThought('Golden Retriever')
 
     placeCaret()
-    applyColorSwatch({ backgroundColor: 'green' })
+    store.dispatch(formatSelection('backColor', 'green'))
     await act(vi.runOnlyPendingTimersAsync)
 
     expect(cursorValue()).toBe(
@@ -302,11 +279,11 @@ describe('formatSelection color', () => {
     await setupThought('Golden Retriever')
 
     placeCaret()
-    applyColorSwatch({ backgroundColor: 'green' })
+    store.dispatch(formatSelection('backColor', 'green'))
     await act(vi.runOnlyPendingTimersAsync)
 
     placeCaret()
-    applyColorSwatch({ color: 'purple' })
+    store.dispatch(formatSelection('foreColor', 'purple'))
     await act(vi.runOnlyPendingTimersAsync)
 
     expect(cursorValue()).toBe('<font color="#aa80ff">Golden Retriever</font>')
@@ -317,11 +294,11 @@ describe('formatSelection color', () => {
     await setupThought('Golden Retriever')
 
     placeCaret()
-    applyColorSwatch({ color: 'green' })
+    store.dispatch(formatSelection('foreColor', 'green'))
     await act(vi.runOnlyPendingTimersAsync)
 
     placeCaret()
-    applyColorSwatch({ backgroundColor: 'purple' })
+    store.dispatch(formatSelection('backColor', 'purple'))
     await act(vi.runOnlyPendingTimersAsync)
 
     expect(cursorValue()).toBe(
@@ -334,11 +311,11 @@ describe('formatSelection color', () => {
     await setupThought('Golden Retriever')
 
     placeCaret()
-    applyColorSwatch({ color: 'blue' })
+    store.dispatch(formatSelection('foreColor', 'blue'))
     await act(vi.runOnlyPendingTimersAsync)
 
     placeCaret()
-    applyColorSwatch({ color: 'fg' })
+    store.dispatch(formatSelection('foreColor', 'fg'))
     await act(vi.runOnlyPendingTimersAsync)
 
     expect(cursorValue()).toBe('Golden Retriever')
@@ -349,7 +326,7 @@ describe('formatSelection color', () => {
     await setupThought('some <font color="#ff573d">formatted</font> text')
 
     placeCaret()
-    applyColorSwatch({ color: 'red' })
+    store.dispatch(formatSelection('foreColor', 'red'))
     await act(vi.runOnlyPendingTimersAsync)
 
     expect(cursorValue()).toBe('<font color="#ff573d">some formatted text</font>')
@@ -360,7 +337,7 @@ describe('formatSelection color', () => {
     await setupThought('some <font color="#000000" style="background-color: rgb(255, 87, 61);">formatted</font> text')
 
     placeCaret()
-    applyColorSwatch({ backgroundColor: 'red' })
+    store.dispatch(formatSelection('backColor', 'red'))
     await act(vi.runOnlyPendingTimersAsync)
 
     expect(cursorValue()).toBe(
@@ -374,12 +351,12 @@ describe('formatSelection color', () => {
 
     // green background on the first word "Lorem"
     selectPlainRange(0, 'Lorem'.length)
-    applyColorSwatch({ backgroundColor: 'green' })
+    store.dispatch(formatSelection('backColor', 'green'))
     await act(vi.runOnlyPendingTimersAsync)
 
     // green background on the last word "Amet"
     selectPlainRange('Lorem Ipsum Dolor Sit '.length, 'Lorem Ipsum Dolor Sit Amet'.length)
-    applyColorSwatch({ backgroundColor: 'green' })
+    store.dispatch(formatSelection('backColor', 'green'))
     await act(vi.runOnlyPendingTimersAsync)
 
     expect(cursorValue()).toBe(
@@ -394,12 +371,12 @@ describe('formatSelection color', () => {
 
     // green background on "two three"
     selectPlainRange('One '.length, 'One two three'.length)
-    applyColorSwatch({ backgroundColor: 'green' })
+    store.dispatch(formatSelection('backColor', 'green'))
     await act(vi.runOnlyPendingTimersAsync)
 
     // red background on "One two"
     selectPlainRange(0, 'One two'.length)
-    applyColorSwatch({ backgroundColor: 'red' })
+    store.dispatch(formatSelection('backColor', 'red'))
     await act(vi.runOnlyPendingTimersAsync)
 
     // "One two" is red; " three" remains green
@@ -420,7 +397,7 @@ describe('formatSelection color', () => {
 
     // apply a background color to the whole thought
     placeCaret()
-    applyColorSwatch({ backgroundColor: 'green' })
+    store.dispatch(formatSelection('backColor', 'green'))
     await act(vi.runOnlyPendingTimersAsync)
 
     const value = cursorValue()
@@ -434,24 +411,23 @@ describe('formatSelection color', () => {
     await setupThought('123')
 
     placeCaret()
-    applyColorSwatch({ backgroundColor: 'green' })
+    store.dispatch(formatSelection('backColor', 'green'))
     await act(vi.runOnlyPendingTimersAsync)
 
     placeCaret()
-    applyColorSwatch({ color: 'blue' })
+    store.dispatch(formatSelection('foreColor', 'blue'))
     await act(vi.runOnlyPendingTimersAsync)
 
     expect(cursorValue()).toBe('<font color="#00c7e6">123</font>')
   })
 
   // #3877: an empty thought (e.g. one produced by splitting) should not accept a text/background color.
-  // KNOWN GAP: formatSelection currently wraps the empty value in a <font>. Skipped (red when un-skipped) until guarded.
   it('does not apply a color to an empty thought (#3877)', async () => {
     store.dispatch(newThought({ value: '' }))
     await act(vi.runOnlyPendingTimersAsync)
 
     placeCaret()
-    applyColorSwatch({ backgroundColor: 'green' })
+    store.dispatch(formatSelection('backColor', 'green'))
     await act(vi.runOnlyPendingTimersAsync)
 
     expect(cursorValue()).toBe('')
@@ -467,7 +443,7 @@ describe('formatSelection note', () => {
     await setupNote('Note')
 
     placeNoteCaret()
-    applyColorSwatch({ backgroundColor: 'green' })
+    store.dispatch(formatSelection('backColor', 'green'))
     await act(vi.runOnlyPendingTimersAsync)
 
     expect(noteVal()).toBe('<font color="#000000" style="background-color: rgb(0, 214, 136);">Note</font>')
@@ -478,13 +454,13 @@ describe('formatSelection note', () => {
     await setupNote('Note')
 
     placeNoteCaret()
-    applyColorSwatch({ backgroundColor: 'green' })
+    store.dispatch(formatSelection('backColor', 'green'))
     await act(vi.runOnlyPendingTimersAsync)
     expect(noteVal()).toBe('<font color="#000000" style="background-color: rgb(0, 214, 136);">Note</font>')
 
-    // re-applying the same background color (selected) toggles it off
+    // deselecting a background applies the default note foreground, which clears the background
     placeNoteCaret()
-    applyColorSwatch({ backgroundColor: 'green', selected: true })
+    store.dispatch(formatSelection('foreColor', 'fgNote'))
     await act(vi.runOnlyPendingTimersAsync)
     expect(noteVal()).toBe('Note')
   })
@@ -494,11 +470,11 @@ describe('formatSelection note', () => {
     await setupNote('Note')
 
     placeNoteCaret()
-    applyColorSwatch({ backgroundColor: 'green' })
+    store.dispatch(formatSelection('backColor', 'green'))
     await act(vi.runOnlyPendingTimersAsync)
 
     placeNoteCaret()
-    applyColorSwatch({ color: 'yellow' })
+    store.dispatch(formatSelection('foreColor', 'yellow'))
     await act(vi.runOnlyPendingTimersAsync)
 
     expect(noteVal()).toBe('<font color="#ffd014">Note</font>')
