@@ -6,6 +6,7 @@ import Command from '../@types/Command'
 import { isBrowser } from '../browser'
 import { gestureString } from '../commands'
 import openMobileCommandUniverseCommand from '../commands/openMobileCommandUniverse'
+import * as selection from '../device/selection'
 import useFilteredCommands from '../hooks/useFilteredCommands'
 import gestureStore, {
   onGestureMenuEntered,
@@ -239,6 +240,20 @@ const GestureMenuWithTransition: FC = () => {
   })
 
   const [isGlowBackgroundLoaded, setIsGlowBackgroundLoaded] = useState(false)
+
+  // Holds the text selection range while the gesture menu is open so it can be restored when the menu is dismissed.
+  const savedRangeRef = useRef<selection.SavedRange | null>(null)
+
+  // Hide the native text selection (and the iOS selection callout / edit menu) while the gesture menu is onscreen, then restore it when the menu is dismissed. The range is removed rather than cleared so that focus and the editor state (e.g. the mobile keyboard) are preserved, and saved so a cancelled gesture leaves the selection exactly as it was.
+  useEffect(() => {
+    if (showGestureMenu) {
+      savedRangeRef.current = selection.saveRange()
+      if (savedRangeRef.current) selection.removeRanges()
+    } else if (savedRangeRef.current) {
+      selection.restoreRange(savedRangeRef.current)
+      savedRangeRef.current = null
+    }
+  }, [showGestureMenu])
 
   // Sync Redux showGestureMenu to gestureStore animation state
   useEffect(() => {

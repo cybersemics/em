@@ -21,6 +21,14 @@ export interface SavedSelection {
   offset: number
 }
 
+/** A saved range selection (anchor and focus) that can restore a non-collapsed browser selection when passed to selection.restoreRange. Unlike SavedSelection, it preserves the selected range rather than collapsing to the caret. */
+export interface SavedRange {
+  anchorNode: Node
+  anchorOffset: number
+  focusNode: Node
+  focusOffset: number
+}
+
 /** Gets the padding of an element as an array of numbers [top, right, bottom, left]. */
 const getElementPaddings = (element: HTMLElement): [number, number, number, number] => {
   const paddings = window.getComputedStyle(element, null).getPropertyValue('padding').split('px').map(Number)
@@ -277,6 +285,43 @@ export const save = (): SavedSelection | null => {
   } else {
     return null
   }
+}
+
+/** Removes all selection ranges without blurring the focused element. Unlike clear, this preserves focus (and the mobile keyboard) and does not trigger onBlur. Used to hide the native selection (and the iOS selection callout / edit menu) while preserving the editor state. */
+export const removeRanges = (): void => {
+  window.getSelection()?.removeAllRanges()
+}
+
+/** Saves the full selection range (anchor and focus) so that a non-collapsed selection can be restored later with selection.restoreRange. Returns null if there is no selection range. Unlike save, this preserves the selected range rather than collapsing to the focus. */
+export const saveRange = (): SavedRange | null => {
+  const sel = window.getSelection()
+
+  if (sel && sel.rangeCount > 0 && sel.anchorNode && sel.focusNode) {
+    return {
+      anchorNode: sel.anchorNode,
+      anchorOffset: sel.anchorOffset,
+      focusNode: sel.focusNode,
+      focusOffset: sel.focusOffset,
+    }
+  } else {
+    return null
+  }
+}
+
+/** Restores a selection range saved by selection.saveRange. NOOP if the saved range is null, if its nodes are no longer connected to the document (e.g. the thought was edited or deleted), or if a selection is already active (so a selection set in the meantime is not clobbered). */
+export const restoreRange = (savedRange: SavedRange | null): void => {
+  if (!savedRange) return
+
+  const { anchorNode, anchorOffset, focusNode, focusOffset } = savedRange
+  if (!anchorNode.isConnected || !focusNode.isConnected) return
+
+  const sel = window.getSelection()
+  if (!sel) return
+
+  // Do not overwrite a selection that was set after the range was saved (e.g. by a command that executed while the gesture menu was open).
+  if (sel.rangeCount > 0 && !sel.isCollapsed) return
+
+  sel.setBaseAndExtent(anchorNode, anchorOffset, focusNode, focusOffset)
 }
 
 /**
