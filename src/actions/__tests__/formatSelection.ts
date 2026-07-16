@@ -1,13 +1,16 @@
 import { act } from 'react'
 import { ColorToken } from '../../colors.config'
 import getThoughtById from '../../selectors/getThoughtById'
+import noteValue from '../../selectors/noteValue'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import getCommandState from '../../util/getCommandState'
 import head from '../../util/head'
 import { formatSelectionActionCreator as formatSelection } from '../formatSelection'
+import { importTextActionCreator as importText } from '../importText'
 import { newThoughtActionCreator as newThought } from '../newThought'
+import { toggleNoteActionCreator as toggleNote } from '../toggleNote'
 
 /**
  * These reproduce the formatting behaviors of the format.ts Puppeteer tests at the (cheaper) action level. This is now
@@ -88,6 +91,47 @@ const placeCaret = () => {
 /** Creates a single thought and puts the cursor on it. */
 const setupThought = async (value: string) => {
   store.dispatch([newThought({ value }), setCursor([value])])
+  await act(vi.runOnlyPendingTimersAsync)
+}
+
+/** Returns the note-editable DOM element for the cursor thought. */
+const getNoteEditable = (): HTMLElement => {
+  const state = store.getState()
+  const id = head(state.cursor!)
+  const editable = document.querySelector(`[aria-label="note-editable"][data-thought-id="${id}"]`)
+  if (!editable) throw new Error(`Note editable not found for thought ${id}`)
+  return editable as HTMLElement
+}
+
+/** Returns the value of the cursor thought's note. */
+const noteVal = (): string | null => {
+  const state = store.getState()
+  return noteValue(state, state.cursor!)
+}
+
+/** Places a collapsed caret at the start of the cursor thought's note-editable (formats the whole note). */
+const placeNoteCaret = () => {
+  const editable = getNoteEditable()
+  const range = document.createRange()
+  range.selectNodeContents(editable)
+  range.collapse(true)
+  const sel = window.getSelection()!
+  sel.removeAllRanges()
+  sel.addRange(range)
+}
+
+/** Creates a thought "x" with a note, puts the cursor on the thought, and focuses the note. */
+const setupNote = async (note: string) => {
+  store.dispatch([
+    importText({
+      text: `
+      - x
+        - =note
+          - ${note}`,
+    }),
+    setCursor(['x']),
+    toggleNote(),
+  ])
   await act(vi.runOnlyPendingTimersAsync)
 }
 
@@ -385,5 +429,80 @@ describe('formatSelection color', () => {
     expect(value).toContain('<b>')
     expect(value).toContain('background-color: rgb(0, 214, 136)')
     expect(value).toBe('<font color="#000000" style="background-color: rgb(0, 214, 136);"><b>One</b></font>')
+  })
+
+  // #4265: applying a text color to a numeric thought that has a background color clears the background
+  it('clears the background color of a numeric thought when applying a text color (#4265)', async () => {
+    await setupThought('123')
+
+    placeCaret()
+    applyColorSwatch({ backgroundColor: 'green' })
+    await act(vi.runOnlyPendingTimersAsync)
+
+    placeCaret()
+    applyColorSwatch({ color: 'blue' })
+    await act(vi.runOnlyPendingTimersAsync)
+
+    expect(cursorValue()).toBe('<font color="#00c7e6">123</font>')
+  })
+
+  // #3877: an empty thought (e.g. one produced by splitting) should not accept a text/background color.
+  // KNOWN GAP: formatSelection currently wraps the empty value in a <font>. Skipped (red when un-skipped) until guarded.
+  it('does not apply a color to an empty thought (#3877)', async () => {
+    store.dispatch(newThought({ value: '' }))
+    await act(vi.runOnlyPendingTimersAsync)
+
+    placeCaret()
+    applyColorSwatch({ backgroundColor: 'green' })
+    await act(vi.runOnlyPendingTimersAsync)
+
+    expect(cursorValue()).toBe('')
+  })
+})
+
+describe('formatSelection note', () => {
+  beforeEach(createTestApp)
+  afterEach(cleanupTestApp)
+
+  // #4009 / color.ts > "Toggle the background color of the note" (intermediate): a note can be given a background color
+  it('applies a background color to a note', async () => {
+    await setupNote('Note')
+
+    placeNoteCaret()
+    applyColorSwatch({ backgroundColor: 'green' })
+    await act(vi.runOnlyPendingTimersAsync)
+
+    expect(noteVal()).toBe('<font color="#000000" style="background-color: rgb(0, 214, 136);">Note</font>')
+  })
+
+  // #3901 / color.ts > "Toggling note background color on and off should remove formatting tag"
+  it('removes the background color from a note when toggled off', async () => {
+    await setupNote('Note')
+
+    placeNoteCaret()
+    applyColorSwatch({ backgroundColor: 'green' })
+    await act(vi.runOnlyPendingTimersAsync)
+    expect(noteVal()).toBe('<font color="#000000" style="background-color: rgb(0, 214, 136);">Note</font>')
+
+    // re-applying the same background color (selected) toggles it off
+    placeNoteCaret()
+    applyColorSwatch({ backgroundColor: 'green', selected: true })
+    await act(vi.runOnlyPendingTimersAsync)
+    expect(noteVal()).toBe('Note')
+  })
+
+  // #3901: setting a foreground color on a note that has a background color removes the background
+  it('setting a note foreground color removes its background color', async () => {
+    await setupNote('Note')
+
+    placeNoteCaret()
+    applyColorSwatch({ backgroundColor: 'green' })
+    await act(vi.runOnlyPendingTimersAsync)
+
+    placeNoteCaret()
+    applyColorSwatch({ color: 'yellow' })
+    await act(vi.runOnlyPendingTimersAsync)
+
+    expect(noteVal()).toBe('<font color="#ffd014">Note</font>')
   })
 })
