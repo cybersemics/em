@@ -28,8 +28,29 @@ const tagForCommand = (command: FormatCommand): string | undefined =>
 /** Creates the wrapper element for a tag formatting command (bold/italic/underline/strikethrough/code). */
 const createWrapper = (command: FormatCommand): HTMLElement => document.createElement(tagForCommand(command) || 'span')
 
+/** Unwraps every element matching the selector within the root, replacing each with its child nodes (removing the tag
+ * while preserving its content). */
+const unwrapAll = (root: Element | DocumentFragment, selector: string) => {
+  for (const el of Array.from(root.querySelectorAll(selector))) {
+    el.replaceWith(...Array.from(el.childNodes))
+  }
+}
+
+/** Wraps an extracted fragment in the command's tag, first unwrapping any nested instances of the same tag so the
+ * result doesn't nest redundantly (e.g. bolding a whole thought that already has a bold substring). */
+const wrapWithTag = (fragment: DocumentFragment, command: FormatCommand): HTMLElement => {
+  unwrapAll(fragment, tagForCommand(command)!)
+  const wrapper = createWrapper(command)
+  wrapper.appendChild(fragment)
+  wrapper.normalize()
+  return wrapper
+}
+
+/** A { node, offset } position on a text node, as resolved from a plain-text offset. */
+type Position = { node: Node; offset: number }
+
 /** Maps a plain-text character offset within a root node to a { node, offset } position on a text node. */
-const positionAtOffset = (root: Node, target: number): { node: Node; offset: number } => {
+const positionAtOffset = (root: Node, target: number): Position => {
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
   let last: Text | null = null
   let remaining = target
@@ -87,28 +108,24 @@ const resolveColors = (
     ? { color: colorValue ?? null, background: null }
     : { color: CONTRAST_COLOR, background: colorValue ?? null }
 
-/** Applies a foreColor/backColor to the [start, end) range, consolidating into a single <font> element that carries
- * both the color attribute and the background-color style. The color command fully redetermines both properties (see
+/** Applies a foreColor/backColor to the range [s, e), consolidating into a single <font> element that carries both the
+ * color attribute and the background-color style. The color command fully redetermines both properties (see
  * resolveColors), so existing color/background wrappers within the range are stripped before re-wrapping once. */
 const applyColor = (
   container: HTMLElement,
-  start: number,
-  end: number,
+  s: Position,
+  e: Position,
   command: 'foreColor' | 'backColor',
   colorValue: string | undefined,
 ) => {
   const range = document.createRange()
-  const s = positionAtOffset(container, start)
-  const e = positionAtOffset(container, end)
   range.setStart(s.node, s.offset)
   range.setEnd(e.node, e.offset)
 
   // extract the range into a temp container so existing color/background wrappers can be stripped
   const temp = document.createElement('div')
   temp.appendChild(range.extractContents())
-  for (const el of Array.from(temp.querySelectorAll<HTMLElement>('font, span'))) {
-    el.replaceWith(...Array.from(el.childNodes))
-  }
+  unwrapAll(temp, 'font, span')
   temp.normalize()
 
   const { color, background } = resolveColors(command, colorValue)
@@ -140,9 +157,7 @@ const consolidateWholeColor = (
   command: 'foreColor' | 'backColor',
   colorValue: string | undefined,
 ) => {
-  for (const el of Array.from(container.querySelectorAll<HTMLElement>('font, span'))) {
-    el.replaceWith(...Array.from(el.childNodes))
-  }
+  unwrapAll(container, 'font, span')
   container.normalize()
 
   const { color, background } = resolveColors(command, colorValue)
@@ -201,8 +216,6 @@ interface FormatOptions {
   defaultColor?: string
   /** The theme's default background color (hex); used to detect a background-reset no-op and stripped after a color command. */
   defaultBackgroundColor?: string
-  /** Whether the command applies to the whole thought (collapsed caret or full selection). */
-  whole: boolean
 }
 
 /**
@@ -213,7 +226,7 @@ interface FormatOptions {
  */
 const formatSelectionHtml = (
   html: string,
-  { start, end, command, colorValue, defaultColor, defaultBackgroundColor, whole }: FormatOptions,
+  { start, end, command, colorValue, defaultColor, defaultBackgroundColor }: FormatOptions,
 ): string => {
   const container = document.createElement('div')
   container.innerHTML = html
@@ -221,13 +234,22 @@ const formatSelectionHtml = (
   const isColor = command === 'foreColor' || command === 'backColor'
   const tag = tagForCommand(command)
 
+  // resolve the range endpoints once; the partial branches (removeFormat, tag wrap, and color) all reuse them
+  const s = positionAtOffset(container, start)
+  const e = positionAtOffset(container, end)
+
+  // a command applies to the whole thought when its range spans the entire text; the caller normalizes a collapsed
+  // caret or full selection to [0, plainLength], so this is exactly start === 0 && end === plainLength
+  const plainLength = container.textContent?.length ?? 0
+  const whole = start === 0 && end === plainLength
+
   // Color commands that apply no new formatting: an empty thought has no text to color (#3877), and re-applying the
   // default background over a value with no custom background contributes nothing (#3901). The color is not applied in
   // these cases, but the cleanup pass below still runs so any pre-existing default-matching markup is normalized. The
   // command is a no-op only if that cleanup also leaves the value unchanged (decided by the caller comparing the result).
   const skipApplication =
     isColor &&
-    ((container.textContent?.length ?? 0) === 0 ||
+    (plainLength === 0 ||
       (command === 'backColor' &&
         defaultBackgroundColor !== undefined &&
         colorValue !== undefined &&
@@ -240,8 +262,6 @@ const formatSelectionHtml = (
       container.innerHTML = container.textContent ?? ''
     } else {
       const range = document.createRange()
-      const s = positionAtOffset(container, start)
-      const e = positionAtOffset(container, end)
       range.setStart(s.node, s.offset)
       range.setEnd(e.node, e.offset)
       const contents = range.extractContents()
@@ -252,36 +272,27 @@ const formatSelectionHtml = (
   }
 
   if (!skipApplication) {
-    if (whole) {
-      if (tag) {
-        // toggle the tag on/off based on whether the whole thought already has it applied
-        const active = getCommandState(html)[command as keyof CommandState]
-        if (active) {
-          for (const el of Array.from(container.querySelectorAll(tag))) {
-            el.replaceWith(...Array.from(el.childNodes))
-          }
-        } else {
-          const wrapper = createWrapper(command)
-          while (container.firstChild) wrapper.appendChild(container.firstChild)
-          container.appendChild(wrapper)
-        }
-      } else {
-        // color: consolidate the whole-thought foreColor/backColor into a single <font>, preserving non-color tags (b/i/u)
-        consolidateWholeColor(container, command as 'foreColor' | 'backColor', colorValue)
-      }
+    if (whole && !tag) {
+      // color: consolidate the whole-thought foreColor/backColor into a single <font>, preserving non-color tags (b/i/u)
+      consolidateWholeColor(container, command as 'foreColor' | 'backColor', colorValue)
     } else if (tag) {
-      // partial tag command: wrap the selected range in the formatting tag
-      const range = document.createRange()
-      const s = positionAtOffset(container, start)
-      const e = positionAtOffset(container, end)
-      range.setStart(s.node, s.offset)
-      range.setEnd(e.node, e.offset)
-      const wrapper = createWrapper(command)
-      wrapper.appendChild(range.extractContents())
-      range.insertNode(wrapper)
+      // whole-thought toggle-off: the tag already covers all text, so just remove it
+      if (whole && getCommandState(html)[command as keyof CommandState]) {
+        unwrapAll(container, tag)
+      } else {
+        // wrap the range (the whole thought or the selected sub-range) in the tag, collapsing any nested same-tags
+        const range = document.createRange()
+        if (whole) {
+          range.selectNodeContents(container)
+        } else {
+          range.setStart(s.node, s.offset)
+          range.setEnd(e.node, e.offset)
+        }
+        range.insertNode(wrapWithTag(range.extractContents(), command))
+      }
     } else {
       // partial color command: consolidate foreColor/backColor into a single <font> element over the range
-      applyColor(container, start, end, command as 'foreColor' | 'backColor', colorValue)
+      applyColor(container, s, e, command as 'foreColor' | 'backColor', colorValue)
     }
   }
 

@@ -162,6 +162,42 @@ describe('formatSelection', () => {
     expect(value).toContain('hello')
   })
 
+  it('applies bold to the whole thought after bolding a substring, without nesting', async () => {
+    await setupThought('Hello Bold World')
+
+    // bold just "Bold"
+    selectRange('Hello '.length, 'Hello Bold'.length)
+    await dispatch(formatSelection('bold'))
+    expect(cursorValue()).toBe('Hello <b>Bold</b> World')
+
+    // bold the entire thought
+    selectPlainRange(0, 'Hello Bold World'.length)
+    await dispatch(formatSelection('bold'))
+    expect(cursorValue()).toBe('<b>Hello Bold World</b>')
+  })
+
+  it('bolds a range overlapping an existing bold substring, without nesting', async () => {
+    await setupThought('Hello Bold World')
+
+    // bold just "Bold"
+    selectRange('Hello '.length, 'Hello Bold'.length)
+    await dispatch(formatSelection('bold'))
+    expect(cursorValue()).toBe('Hello <b>Bold</b> World')
+
+    // bold "Bold World", which overlaps the existing bold on "Bold"
+    selectPlainRange('Hello '.length, 'Hello Bold World'.length)
+    await dispatch(formatSelection('bold'))
+    expect(cursorValue()).toBe('Hello <b>Bold World</b>')
+  })
+
+  it('bolds a whole thought whose leading text is italic, wrapping the outer tag', async () => {
+    await setupThought('<i>Hello</i> World')
+
+    selectPlainRange(0, 'Hello World'.length)
+    await dispatch(formatSelection('bold'))
+    expect(cursorValue()).toBe('<b><i>Hello</i> World</b>')
+  })
+
   it('removes formatting from the whole thought', async () => {
     await setupThought('goodbye')
 

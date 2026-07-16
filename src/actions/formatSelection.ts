@@ -60,7 +60,6 @@ export const formatSelectionActionCreator =
       colorValue: color ? colors[color] : undefined,
       defaultColor: state.noteFocus ? colors.fg : colors.fgNote,
       defaultBackgroundColor: colors.bg,
-      whole,
     })
 
     // Update the toolbar command state when formatting a sub-range (the whole-thought state is derived from the caret).
