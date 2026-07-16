@@ -11,11 +11,8 @@ import { mergeBatchEditing } from '../stores/batchEditing'
 import { updateCommandState } from '../stores/commandStateStore'
 import suppressFocusStore from '../stores/suppressFocus'
 import formatSelectionHtml, { FormatCommand } from '../util/formatSelectionHtml'
-import rgbToHex from '../util/rgbToHex'
 import { editThoughtActionCreator as editThought } from './editThought'
 import { setDescendantActionCreator as setDescendant } from './setDescendant'
-
-const BACKGROUND_COLOR_REGEX = /background-color\s*:\s*[^;]+;?/i
 
 /** Format the browser selection or cursor thought as bold, italic, strikethrough, underline, code, color, or removeFormat.
  * Computes the new HTML synchronously with the DOM (no document.execCommand) and dispatches a single editThought/setDescendant (#4637). */
@@ -56,53 +53,15 @@ export const formatSelectionActionCreator =
       end = plainLength
     }
 
-    // Preserve the special case where re-applying the default background color over a value that has no custom
-    // background color is a no-op (#3901).
-    const hasCustomBackgroundColor = BACKGROUND_COLOR_REGEX.test(value)
-    const skip = command === 'backColor' && color === 'bg' && !hasCustomBackgroundColor
-
-    let newValue = value
-    if (!skip) {
-      newValue = formatSelectionHtml(value, {
-        start,
-        end,
-        command,
-        colorValue: color ? colors[color] : undefined,
-        whole,
-      })
-    }
-
-    // Cleanup pass (folded in from the former async thunk): remove background-color/color that matches the default
-    // and unwrap font/span tags that have no meaningful attributes (#3901).
-    if (command === 'backColor' || command === 'foreColor') {
-      const doc = new DOMParser().parseFromString(newValue, 'text/html')
-      for (const el of Array.from(doc.body.querySelectorAll<HTMLElement>('font, span'))) {
-        // Remove background-color if it matches the default background color
-        if (el.style.backgroundColor && rgbToHex(el.style.backgroundColor) === rgbToHex(colors.bg)) {
-          el.style.removeProperty('background-color')
-          if (!el.getAttribute('style')?.trim()) {
-            el.removeAttribute('style')
-          }
-        }
-
-        // Remove color if it matches the default text color, whether expressed as a color attribute
-        // (e.g. <font color="#ffffff">) or a style (e.g. <span style="color: ...">).
-        const defaultColorHex = rgbToHex(state.noteFocus ? colors.fg : colors.fgNote)
-        const colorAttr = el.getAttribute('color')
-        if (colorAttr && rgbToHex(colorAttr) === defaultColorHex) {
-          el.removeAttribute('color')
-        }
-        if (el.style.color && rgbToHex(el.style.color) === defaultColorHex) {
-          el.style.removeProperty('color')
-        }
-
-        // Unwrap tags that have no meaningful style or color attributes
-        if (!el.getAttribute('style')?.trim() && !el.getAttribute('color')?.trim()) {
-          el.replaceWith(...Array.from(el.childNodes))
-        }
-      }
-      newValue = doc.body.innerHTML
-    }
+    const newValue = formatSelectionHtml(value, {
+      start,
+      end,
+      command,
+      colorValue: color ? colors[color] : undefined,
+      defaultColor: state.noteFocus ? colors.fg : colors.fgNote,
+      defaultBackgroundColor: colors.bg,
+      whole,
+    })
 
     // Update the toolbar command state when formatting a sub-range (the whole-thought state is derived from the caret).
     if (!whole) updateCommandState()

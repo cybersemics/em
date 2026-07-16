@@ -9,6 +9,9 @@ type TagCommand = 'bold' | 'italic' | 'underline' | 'strikethrough' | 'code'
 /** All formatting commands handled by the synchronous transform. */
 export type FormatCommand = TagCommand | 'foreColor' | 'backColor' | 'removeFormat'
 
+/** Matches a background-color declaration in a style attribute, used to detect whether a value has a custom background. */
+const BACKGROUND_COLOR_REGEX = /background-color\s*:\s*[^;]+;?/i
+
 /** Command → HTML tag for the simple toggle formatting commands (mirrors document.execCommand output). */
 const TAG_BY_COMMAND: Record<TagCommand, string> = {
   bold: 'b',
@@ -152,6 +155,39 @@ const consolidateWholeColor = (
   container.appendChild(font)
 }
 
+/** Removes color/background declarations that match the theme defaults and unwraps the resulting attribute-less
+ * font/span elements. Runs after a color command so that resetting to a default color leaves no redundant markup
+ * (#3901). defaultColor is the default text color and defaultBackgroundColor the default background (both hex,
+ * resolved by the caller — the text default differs between thoughts and notes). */
+const stripDefaultColors = (container: HTMLElement, defaultColor: string, defaultBackgroundColor: string) => {
+  const defaultColorHex = rgbToHex(defaultColor)
+  const defaultBackgroundHex = rgbToHex(defaultBackgroundColor)
+  for (const el of Array.from(container.querySelectorAll<HTMLElement>('font, span'))) {
+    // remove a background-color that matches the default background color
+    if (el.style.backgroundColor && rgbToHex(el.style.backgroundColor) === defaultBackgroundHex) {
+      el.style.removeProperty('background-color')
+      if (!el.getAttribute('style')?.trim()) {
+        el.removeAttribute('style')
+      }
+    }
+
+    // remove a color that matches the default text color, whether expressed as a color attribute
+    // (e.g. <font color="#ffffff">) or a style (e.g. <span style="color: ...">)
+    const colorAttr = el.getAttribute('color')
+    if (colorAttr && rgbToHex(colorAttr) === defaultColorHex) {
+      el.removeAttribute('color')
+    }
+    if (el.style.color && rgbToHex(el.style.color) === defaultColorHex) {
+      el.style.removeProperty('color')
+    }
+
+    // unwrap tags that have no meaningful style or color attributes
+    if (!el.getAttribute('style')?.trim() && !el.getAttribute('color')?.trim()) {
+      el.replaceWith(...Array.from(el.childNodes))
+    }
+  }
+}
+
 /** Options for {@link formatSelectionHtml}. */
 interface FormatOptions {
   /** Plain-text start offset of the range (inclusive). */
@@ -162,6 +198,10 @@ interface FormatOptions {
   command: FormatCommand
   /** The resolved color value (hex) for foreColor/backColor. */
   colorValue?: string
+  /** The theme's default text color (hex); color/background matching this is stripped after a color command. */
+  defaultColor?: string
+  /** The theme's default background color (hex); used to detect a background-reset no-op and stripped after a color command. */
+  defaultBackgroundColor?: string
   /** Whether the command applies to the whole thought (collapsed caret or full selection). */
   whole: boolean
 }
@@ -172,10 +212,28 @@ interface FormatOptions {
  * This is the synchronous replacement for document.execCommand: it computes the formatted markup directly rather than
  * mutating a contentEditable and waiting for the change to re-enter Redux (#4637).
  */
-const formatSelectionHtml = (html: string, { start, end, command, colorValue, whole }: FormatOptions): string => {
+const formatSelectionHtml = (
+  html: string,
+  { start, end, command, colorValue, defaultColor, defaultBackgroundColor, whole }: FormatOptions,
+): string => {
   const container = document.createElement('div')
   container.innerHTML = html
+
+  const isColor = command === 'foreColor' || command === 'backColor'
   const tag = tagForCommand(command)
+
+  // Color commands that apply no new formatting: an empty thought has no text to color (#3877), and re-applying the
+  // default background over a value with no custom background contributes nothing (#3901). The color is not applied in
+  // these cases, but the cleanup pass below still runs so any pre-existing default-matching markup is normalized. The
+  // command is a no-op only if that cleanup also leaves the value unchanged (decided by the caller comparing the result).
+  const skipApplication =
+    isColor &&
+    ((container.textContent?.length ?? 0) === 0 ||
+      (command === 'backColor' &&
+        defaultBackgroundColor !== undefined &&
+        colorValue !== undefined &&
+        rgbToHex(colorValue) === rgbToHex(defaultBackgroundColor) &&
+        !BACKGROUND_COLOR_REGEX.test(html)))
 
   // removeFormat: replace the range (or the whole thought) with its plain text
   if (command === 'removeFormat') {
@@ -194,36 +252,43 @@ const formatSelectionHtml = (html: string, { start, end, command, colorValue, wh
     return container.innerHTML
   }
 
-  if (whole) {
-    if (tag) {
-      // toggle the tag on/off based on whether the whole thought already has it applied
-      const active = getCommandState(html)[command as keyof CommandState]
-      if (active) {
-        for (const el of Array.from(container.querySelectorAll(tag))) {
-          el.replaceWith(...Array.from(el.childNodes))
+  if (!skipApplication) {
+    if (whole) {
+      if (tag) {
+        // toggle the tag on/off based on whether the whole thought already has it applied
+        const active = getCommandState(html)[command as keyof CommandState]
+        if (active) {
+          for (const el of Array.from(container.querySelectorAll(tag))) {
+            el.replaceWith(...Array.from(el.childNodes))
+          }
+        } else {
+          const wrapper = createWrapper(command)
+          while (container.firstChild) wrapper.appendChild(container.firstChild)
+          container.appendChild(wrapper)
         }
       } else {
-        const wrapper = createWrapper(command)
-        while (container.firstChild) wrapper.appendChild(container.firstChild)
-        container.appendChild(wrapper)
+        // color: consolidate the whole-thought foreColor/backColor into a single <font>, preserving non-color tags (b/i/u)
+        consolidateWholeColor(container, command as 'foreColor' | 'backColor', colorValue)
       }
+    } else if (tag) {
+      // partial tag command: wrap the selected range in the formatting tag
+      const range = document.createRange()
+      const s = positionAtOffset(container, start)
+      const e = positionAtOffset(container, end)
+      range.setStart(s.node, s.offset)
+      range.setEnd(e.node, e.offset)
+      const wrapper = createWrapper(command)
+      wrapper.appendChild(range.extractContents())
+      range.insertNode(wrapper)
     } else {
-      // color: consolidate the whole-thought foreColor/backColor into a single <font>, preserving non-color tags (b/i/u)
-      consolidateWholeColor(container, command as 'foreColor' | 'backColor', colorValue)
+      // partial color command: consolidate foreColor/backColor into a single <font> element over the range
+      applyColor(container, start, end, command as 'foreColor' | 'backColor', colorValue)
     }
-  } else if (tag) {
-    // partial tag command: wrap the selected range in the formatting tag
-    const range = document.createRange()
-    const s = positionAtOffset(container, start)
-    const e = positionAtOffset(container, end)
-    range.setStart(s.node, s.offset)
-    range.setEnd(e.node, e.offset)
-    const wrapper = createWrapper(command)
-    wrapper.appendChild(range.extractContents())
-    range.insertNode(wrapper)
-  } else {
-    // partial color command: consolidate foreColor/backColor into a single <font> element over the range
-    applyColor(container, start, end, command as 'foreColor' | 'backColor', colorValue)
+  }
+
+  // after a color command, strip color/background that matches the theme defaults and unwrap the emptied wrappers (#3901)
+  if (isColor && defaultColor !== undefined && defaultBackgroundColor !== undefined) {
+    stripDefaultColors(container, defaultColor, defaultBackgroundColor)
   }
 
   container.normalize()
