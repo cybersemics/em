@@ -1,7 +1,4 @@
-/**
- * Hide iOS keyboard by tapping done button above the keyboard.
- * Uses the global browser object from WDIO.
- */
+/** Dismisses the iOS keyboard by tapping the native "Done" button. */
 const hideKeyboardByTappingDone = async () => {
   const oldContext = ((await browser.getContext()) as string) || 'NATIVE_APP'
   await browser.switchContext('NATIVE_APP')

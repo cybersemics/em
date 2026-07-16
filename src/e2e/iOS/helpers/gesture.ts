@@ -1,5 +1,6 @@
 import Direction from '../../../@types/Direction'
 import Gesture from '../../../@types/Gesture'
+import restoreScroll from './restoreScroll'
 
 export interface GestureOptions {
   xStart?: number
@@ -17,52 +18,73 @@ interface PointerAction {
   origin?: string
 }
 
-/** Apply gesture action for the given path. */
+/** Performs a touch swipe along a viewport-relative path, translated to screen coordinates via the WebView origin. */
 const gesture = async (path: Gesture, { xStart, yStart, segmentLength = 60, waitMs = 200 }: GestureOptions = {}) => {
-  if (!xStart || !yStart) {
-    const windowSize = await browser.getWindowSize()
-    xStart = xStart ?? windowSize!.width / 3
-    yStart = yStart ?? windowSize!.height / 2
-  }
+  const { scrollBefore, defaultX, defaultY } = await browser.execute(() => ({
+    scrollBefore: { x: window.scrollX, y: window.scrollY },
+    defaultX: window.innerWidth / 3,
+    defaultY: window.innerHeight / 2,
+  }))
 
-  // Build actions array for performActions
-  // Safari/XCUITest doesn't support the DELETE /actions endpoint (releaseActions)
-  // which WebDriverIO's action().perform() calls automatically after performing
-  const pointerActions: PointerAction[] = [
-    { type: 'pointerMove', duration: 0, x: Math.round(xStart), y: Math.round(yStart), origin: 'viewport' },
-    { type: 'pointerDown', button: 0 },
-    { type: 'pause', duration: waitMs },
-  ]
+  xStart = xStart ?? defaultX
+  yStart = yStart ?? defaultY
 
-  // Build move actions for each direction in the path
+  const viewportPoints: { x: number; y: number }[] = [{ x: xStart, y: yStart }]
   let currentX = xStart
   let currentY = yStart
 
   for (const direction of Array.from(path) as Direction[]) {
     currentX = currentX + (direction === 'r' ? +segmentLength : direction === 'l' ? -segmentLength : 0)
     currentY = currentY + (direction === 'd' ? +segmentLength : direction === 'u' ? -segmentLength : 0)
-
-    pointerActions.push({
-      type: 'pointerMove',
-      duration: waitMs,
-      x: Math.round(currentX),
-      y: Math.round(currentY),
-      origin: 'viewport',
-    })
-    pointerActions.push({ type: 'pause', duration: waitMs })
+    viewportPoints.push({ x: currentX, y: currentY })
   }
 
-  pointerActions.push({ type: 'pointerUp', button: 0 })
+  const oldContext = ((await browser.getContext()) as string) || 'NATIVE_APP'
+  try {
+    await browser.switchContext('NATIVE_APP')
 
-  // Use performActions directly to avoid the automatic releaseActions call
-  await browser.performActions([
-    {
-      type: 'pointer',
-      id: 'finger1',
-      parameters: { pointerType: 'touch' },
-      actions: pointerActions,
-    },
-  ])
+    const webContainer = await browser.$('//XCUIElementTypeOther[@name="em"]').getElement()
+    const { x: webOriginX, y: webOriginY } = await browser.getElementRect(webContainer.elementId)
+
+    /** Translate WebView viewport coordinates to device screen coordinates. */
+    const toScreen = (p: { x: number; y: number }) => ({
+      x: Math.round(p.x + webOriginX),
+      y: Math.round(p.y + webOriginY),
+    })
+
+    const start = toScreen(viewportPoints[0])
+    const pointerActions: PointerAction[] = [
+      { type: 'pointerMove', duration: 0, x: start.x, y: start.y, origin: 'viewport' },
+      { type: 'pointerDown', button: 0 },
+      { type: 'pause', duration: waitMs },
+    ]
+
+    for (let i = 1; i < viewportPoints.length; i++) {
+      const screen = toScreen(viewportPoints[i])
+      pointerActions.push({
+        type: 'pointerMove',
+        duration: waitMs,
+        x: screen.x,
+        y: screen.y,
+        origin: 'viewport',
+      })
+      pointerActions.push({ type: 'pause', duration: waitMs })
+    }
+
+    pointerActions.push({ type: 'pointerUp', button: 0 })
+
+    await browser.performActions([
+      {
+        type: 'pointer',
+        id: 'finger1',
+        parameters: { pointerType: 'touch' },
+        actions: pointerActions,
+      },
+    ])
+  } finally {
+    await browser.switchContext(oldContext)
+    await restoreScroll(scrollBefore)
+  }
 }
 
 export default gesture

@@ -24,10 +24,9 @@ describe('Split', () => {
     await clickThought('puppeteer')
 
     const editableNodeHandle = await waitForEditable('web scraping')
-    await clickThought('web scraping')
 
-    await tap(editableNodeHandle, { y: 60, x: 25 })
-    await tap(editableNodeHandle, { y: 60, x: 25 })
+    await tap(editableNodeHandle, { horizontalTapLine: 'left', x: 25 })
+    await tap(editableNodeHandle, { horizontalTapLine: 'left', x: 25 })
     await tapReturnKey()
 
     const offset = await getSelection()?.focusOffset
