@@ -26,12 +26,20 @@ const multicursorAlertMiddleware: ThunkMiddleware<State> = ({ getState, dispatch
 
     // On mobile, show the Command Center when multicursor is active, and hide it when inactive.
     if (isTouch) {
-      if (numMulticursors === 0 && state.showCommandCenter) {
+      if (state.showSidebar && state.showCommandCenter) {
+        // Close the Command Center when the sidebar opens. The open sidebar covers the whole
+        // viewport, and the CC behind it forces the sidebar's full-screen backdrop-filter to re-blur
+        // the whole screen every frame (dropped frames — the backdrop can't cache with the CC's own
+        // composited + blurred layer in it). Closing the CC clears the multicursor (standard CC-close
+        // behavior, via toggleDropdown), so it does NOT reappear when the sidebar closes.
         dispatch(toggleDropdown({ dropDownType: 'commandCenter', value: false }))
-      } else if (numMulticursors > 0 && !state.showCommandCenter && !state.showUndoSlider) {
+      } else if (numMulticursors === 0 && state.showCommandCenter) {
+        dispatch(toggleDropdown({ dropDownType: 'commandCenter', value: false }))
+      } else if (numMulticursors > 0 && !state.showCommandCenter && !state.showUndoSlider && !state.showSidebar) {
         // Do not open the Command Center while the Undo Slider session is active.
         // Otherwise undoing/redoing a multicursor command (e.g. delete from the Command Center) restores the
         // multicursor, which would re-open the Command Center and dismiss the Undo Slider being used.
+        // The !showSidebar guard keeps it from opening over the sidebar if a multiselect happens while open.
         dispatch(toggleDropdown({ dropDownType: 'commandCenter', value: true }))
       }
     }
