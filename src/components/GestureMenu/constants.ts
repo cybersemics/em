@@ -21,9 +21,3 @@ export const GESTURE_MENU_PADDING_REM = 2.25
 
 /** Bottom tail below the last row (shared with the overlay's paddingBottom), in rem. */
 export const GESTURE_MENU_BOTTOM_TAIL_REM = 11.111
-
-/**
- * Header ("Gestures" label + divider + margin) above the command list, in rem.
- * Aggregate approximation of the header block; not sourced from a single literal.
- */
-export const GESTURE_MENU_HEADER_REM = 4.0
