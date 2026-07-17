@@ -9,9 +9,6 @@ type TagCommand = 'bold' | 'italic' | 'underline' | 'strikethrough' | 'code'
 /** All formatting commands handled by the synchronous transform. */
 export type FormatCommand = TagCommand | 'foreColor' | 'backColor' | 'removeFormat'
 
-/** Matches a background-color declaration in a style attribute, used to detect whether a value has a custom background. */
-const BACKGROUND_COLOR_REGEX = /background-color\s*:\s*[^;]+;?/i
-
 /** Command → HTML tag for the simple toggle formatting commands (mirrors document.execCommand output). */
 const TAG_BY_COMMAND: Record<TagCommand, string> = {
   bold: 'b',
@@ -98,15 +95,26 @@ const insertAtRange = (container: HTMLElement, range: Range, node: Node) => {
 const CONTRAST_COLOR = '#000000'
 
 /** Determines the target text color and background for a single color command. A foreColor sets the text color and
- * clears the background; a backColor sets the background and forces a contrasting (black) text color. This folds
- * ColorPicker's former two-dispatch foreColor + backColor pairing into a single transform (#4637). */
+ * clears the background; a backColor sets the background and forces a contrasting (black) text color — unless the
+ * background is the theme default, in which case it clears both (removing a background rather than applying a redundant
+ * default-colored wrapper, #3901). This folds ColorPicker's former two-dispatch foreColor + backColor pairing into a
+ * single transform (#4637). */
 const resolveColors = (
   command: 'foreColor' | 'backColor',
   colorValue: string | undefined,
-): { color: string | null; background: string | null } =>
-  command === 'foreColor'
-    ? { color: colorValue ?? null, background: null }
-    : { color: CONTRAST_COLOR, background: colorValue ?? null }
+  defaultBackgroundColor: string | undefined,
+): { color: string | null; background: string | null } => {
+  if (command === 'foreColor') return { color: colorValue ?? null, background: null }
+  // a backColor set to the default background clears the background (and the forced contrast color)
+  if (
+    colorValue !== undefined &&
+    defaultBackgroundColor !== undefined &&
+    rgbToHex(colorValue) === rgbToHex(defaultBackgroundColor)
+  ) {
+    return { color: null, background: null }
+  }
+  return { color: CONTRAST_COLOR, background: colorValue ?? null }
+}
 
 /** Applies a foreColor/backColor to the given range (a sub-range or the whole thought's contents), consolidating into a
  * single <font> element that carries both the color attribute and the background-color style. The color command fully
@@ -117,6 +125,7 @@ const applyColor = (
   range: Range,
   command: 'foreColor' | 'backColor',
   colorValue: string | undefined,
+  defaultBackgroundColor: string | undefined,
 ) => {
   // extract the range into a temp container so existing color/background wrappers can be stripped
   const temp = document.createElement('div')
@@ -124,7 +133,7 @@ const applyColor = (
   unwrapAll(temp, 'font, span')
   temp.normalize()
 
-  const { color, background } = resolveColors(command, colorValue)
+  const { color, background } = resolveColors(command, colorValue, defaultBackgroundColor)
 
   let insertNode: Node
   if (color || background) {
@@ -205,7 +214,6 @@ const formatSelectionHtml = (
   const container = document.createElement('div')
   container.innerHTML = html
 
-  const isColor = command === 'foreColor' || command === 'backColor'
   const tag = tagForCommand(command)
 
   // resolve the range endpoints once; the partial branches (removeFormat, tag wrap, and color) all reuse them
@@ -216,19 +224,6 @@ const formatSelectionHtml = (
   // caret or full selection to [0, plainLength], so this is exactly start === 0 && end === plainLength
   const plainLength = container.textContent?.length ?? 0
   const whole = start === 0 && end === plainLength
-
-  // Color commands that apply no new formatting: an empty thought has no text to color (#3877), and re-applying the
-  // default background over a value with no custom background contributes nothing (#3901). The color is not applied in
-  // these cases, but the cleanup pass below still runs so any pre-existing default-matching markup is normalized. The
-  // command is a no-op only if that cleanup also leaves the value unchanged (decided by the caller comparing the result).
-  const skipApplication =
-    isColor &&
-    (plainLength === 0 ||
-      (command === 'backColor' &&
-        defaultBackgroundColor !== undefined &&
-        colorValue !== undefined &&
-        rgbToHex(colorValue) === rgbToHex(defaultBackgroundColor) &&
-        !BACKGROUND_COLOR_REGEX.test(html)))
 
   // removeFormat: replace the range (or the whole thought) with its plain text
   if (command === 'removeFormat') {
@@ -245,32 +240,29 @@ const formatSelectionHtml = (
     return container.innerHTML
   }
 
-  if (!skipApplication) {
-    // whole-thought tag toggle-off: the tag already covers all text, so just remove it (no re-wrap)
-    if (tag && whole && getCommandState(html)[command as keyof CommandState]) {
-      unwrapAll(container, tag)
+  // whole-thought tag toggle-off: the tag already covers all text, so just remove it (no re-wrap)
+  if (tag && whole && getCommandState(html)[command as keyof CommandState]) {
+    unwrapAll(container, tag)
+  } else {
+    // build the range to reformat: the whole thought's contents (grabbing boundary wrappers) or the sub-range
+    const range = document.createRange()
+    if (whole) {
+      range.selectNodeContents(container)
     } else {
-      // build the range to reformat: the whole thought's contents (grabbing boundary wrappers) or the sub-range
-      const range = document.createRange()
-      if (whole) {
-        range.selectNodeContents(container)
-      } else {
-        range.setStart(s.node, s.offset)
-        range.setEnd(e.node, e.offset)
-      }
-      if (tag) {
-        // wrap the range in the tag, collapsing any nested same-tags
-        range.insertNode(wrapWithTag(range.extractContents(), command))
-      } else {
-        // color: consolidate the range's foreColor/backColor into a single <font>, preserving non-color tags (b/i/u)
-        applyColor(container, range, command as 'foreColor' | 'backColor', colorValue)
+      range.setStart(s.node, s.offset)
+      range.setEnd(e.node, e.offset)
+    }
+    if (tag) {
+      // wrap the range in the tag, collapsing any nested same-tags
+      range.insertNode(wrapWithTag(range.extractContents(), command))
+    } else {
+      // color: consolidate the range's foreColor/backColor into a single <font>, preserving non-color tags (b/i/u)
+      applyColor(container, range, command as 'foreColor' | 'backColor', colorValue, defaultBackgroundColor)
+      // strip color/background that matches the theme defaults and unwrap the emptied wrappers (#3901)
+      if (defaultColor !== undefined && defaultBackgroundColor !== undefined) {
+        stripDefaultColors(container, defaultColor, defaultBackgroundColor)
       }
     }
-  }
-
-  // after a color command, strip color/background that matches the theme defaults and unwrap the emptied wrappers (#3901)
-  if (isColor && defaultColor !== undefined && defaultBackgroundColor !== undefined) {
-    stripDefaultColors(container, defaultColor, defaultBackgroundColor)
   }
 
   container.normalize()

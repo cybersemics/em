@@ -39,6 +39,11 @@ export const formatSelectionActionCreator =
     // The current value of the note or thought being formatted (#3901).
     const value = state.noteFocus ? (noteValue(state, state.cursor) ?? '') : thought.value
 
+    if (value.length === 0) {
+      suppressFocusStore.update(false)
+      return
+    }
+
     // Compute the plain-text character offsets [start, end) of the selection relative to the editable.
     const plainLength = contentEditable.textContent?.length ?? 0
     const range = selection.offsetRange(contentEditable)
