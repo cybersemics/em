@@ -40,6 +40,13 @@ interface Options {
   excludeMeta?: boolean
   /** Exclude archived thoughts. */
   excludeArchived?: boolean
+  /**
+   * Limits the export depth relative to the root thought.
+   * When set to 0, only the root thought is exported with no children.
+   * When set to 1, the root thought and its direct children are exported.
+   * When undefined, all descendants are exported (default).
+   */
+  maxDepth?: number
 }
 
 /** Exports the navigable subtree of the given context. */
@@ -47,7 +54,7 @@ export const exportContext = (
   state: State,
   contextOrThoughtId: Context | ThoughtId,
   format: MimeType = 'text/html',
-  { indent = 0, title, excludeMarkdownFormatting, excludeMeta, excludeSrc, excludeArchived }: Options = {},
+  { indent = 0, title, excludeMarkdownFormatting, excludeMeta, excludeSrc, excludeArchived, maxDepth }: Options = {},
 ): string => {
   const linePostfix = format === 'text/html' ? (indent === 0 ? '  ' : '') + '</li>' : ''
   const tab0 = Array(indent).fill('').join('  ')
@@ -61,7 +68,9 @@ export const exportContext = (
   const context = Array.isArray(contextOrThoughtId) ? contextOrThoughtId : thoughtToContext(state, thoughtId!)
   const isNoteAndMetaExcluded = excludeMeta && head(context) === '=note'
 
-  const childrenFiltered = children.filter(exportFilter({ excludeArchived, excludeMeta }))
+  const childrenFiltered = (maxDepth !== undefined && maxDepth <= 0 ? [] : children).filter(
+    exportFilter({ excludeArchived, excludeMeta }),
+  )
 
   // Note: export single thought without bullet
   const linePrefix = format === 'text/html' ? '<li>' : '- '
@@ -74,6 +83,7 @@ export const exportContext = (
       excludeMeta,
       excludeArchived,
       excludeMarkdownFormatting,
+      maxDepth: maxDepth !== undefined ? maxDepth - 1 : undefined,
       indent: indent + (isNoteAndMetaExcluded ? 0 : format === 'text/html' ? (indent === 0 ? 3 : 2) : 1),
     })
 
