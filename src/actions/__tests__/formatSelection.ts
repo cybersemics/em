@@ -238,6 +238,17 @@ describe('formatSelection color', () => {
     expect(cursorValue()).toBe('<font color="#00c7e6">Golden</font> Retriever')
   })
 
+  // coloring a substring whose boundary aligns with an existing formatting wrapper must not leave an empty tag behind
+  it('does not leave an empty formatting tag when coloring an existing bold substring', async () => {
+    await setupThought('X<b>ab</b>Y')
+
+    // color exactly the bold "ab"
+    selectPlainRange(1, 3)
+    await dispatch(formatSelection('foreColor', 'blue'))
+
+    expect(cursorValue()).toBe('X<font color="#00c7e6"><b>ab</b></font>Y')
+  })
+
   // color.ts > "remove all formatting from the thought"
   it('removes all formatting from the thought', async () => {
     await setupThought('Labrador')
