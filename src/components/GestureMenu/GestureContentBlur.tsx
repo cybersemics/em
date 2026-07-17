@@ -2,6 +2,7 @@ import { animate, useMotionValue } from 'motion/react'
 import { FC, useEffect } from 'react'
 import { css } from '../../../styled-system/css'
 import gestureStore from '../../stores/gesture'
+import durations from '../../util/durations'
 import ProgressiveBlur from '../ProgressiveBlur'
 
 /**
@@ -22,7 +23,12 @@ const GestureContentBlur: FC = () => {
   // MotionValue per-layer rather than via a wrapping element.
   const blurOpacity = useMotionValue(0)
   useEffect(() => {
-    const controls = animate(blurOpacity, animationState === 'visible' ? 1 : 0, { duration: 0.15, ease: 'easeOut' })
+    // Match the menu content's FadeTransition type='fast' (durations.fast, ease-out) so the blur
+    // and menu fade in/out together. durations.get returns ms (0 in e2e tests); motion wants seconds.
+    const controls = animate(blurOpacity, animationState === 'visible' ? 1 : 0, {
+      duration: durations.get('fast') / 1000,
+      ease: 'easeOut',
+    })
     return controls.stop
   }, [animationState, blurOpacity])
 
