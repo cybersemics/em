@@ -98,17 +98,27 @@ const moveThought = (
   const duplicateSubthought = () =>
     childrenOfDestination.find(child => normalizeThought(child.value) === normalizeThought(sourceThought.value))
 
-  // if thought is being moved to the same context that is not a duplicate case
+  const destinationContext = pathToContext(state, destinationThoughtPath)
+
+  // Auto-merge duplicate siblings is limited to metaprogramming-attribute contexts.
+  // Attribute subtrees (e.g. =children, =style) must be hierarchically merged on move/paste so a
+  // context never ends up with two of the same attribute. Normal thoughts are NOT merged, so
+  // duplicate siblings coexist rather than silently disappearing (see
+  // https://github.com/cybersemics/em/issues/3621).
+  // isAttribute(sourceThought.value) merges the attribute node itself; destinationContext.some(isAttribute)
+  // detects that the destination is inside a meta subtree, which drives the hierarchical recursion as
+  // mergeThoughts moves each descendant back through moveThought.
+  const isMetaMerge = isAttribute(sourceThought.value) || !!destinationContext?.some(isAttribute)
+
   // skipMerge bypasses the auto-merge when the caller intentionally moves a thought to a context
-  // that already contains a thought with the same value (e.g. swapParent with two empty thoughts).
+  // that already contains a thought with the same value (e.g. swapParent).
   // Do not treat empty thoughts as duplicates: an empty thought is a placeholder with no identity, so merging
   // it into an existing empty sibling would silently drop it (e.g. pasting a series with multiple empty thoughts).
   // See https://github.com/cybersemics/em/issues/4448.
-  const duplicateThought = !sameContext && !skipMerge && sourceThought.value !== '' ? duplicateSubthought() : null
+  const duplicateThought =
+    !sameContext && !skipMerge && sourceThought.value !== '' && isMetaMerge ? duplicateSubthought() : null
 
   const isPendingMerge = duplicateThought && (sourceThought.pending || duplicateThought.pending)
-
-  const destinationContext = pathToContext(state, destinationThoughtPath)
 
   const isArchived = destinationContext?.indexOf('=archive') !== -1
 
