@@ -265,11 +265,8 @@ describe('Caret', () => {
     await browser.execute(() => window.scrollTo(0, 0))
     const rect = await getElementRectByScreen(editable)
 
-    // Prime with a tap on the thought's center + keyboard dismissal. This is required for
-    // the synthetic edge-touch below to reliably win the timing race that a real finger triggers on
-    // its own (see comment on the tap). A native tap (not a webview element.click()) is used because
-    // on real devices only a native touch focuses the editable and opens the keyboard. Priming while
-    // "Hello" has the cursor is also what leaves offsetRef.current set (and never reset) on pre-#4371.
+    // Prime with a tap on the thought's center + keyboard dismissal. Priming while
+    // "Hello" has the cursor is what leaves offsetRef.current set (and never reset) pre-#4371.
     await browser.performActions([
       {
         type: 'pointer',
