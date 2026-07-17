@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
+import { isAndroid } from '../browser'
 import { AlertType, Settings } from '../constants'
 import globals from '../globals'
 import useScrollTop from '../hooks/useScrollTop'
@@ -8,8 +9,19 @@ import getUserSetting from '../selectors/getUserSetting'
 import viewportStore from '../stores/viewport'
 import haptics from '../util/haptics'
 
-/** True if the browser supports the ScrollTimeline Web Animations API. */
-const supportsScrollTimeline = 'ScrollTimeline' in window
+/**
+ * True if we should drive the parallax with a compositor ScrollTimeline animation.
+ *
+ * ScrollTimeline IS present in the Android WebView, but the animation it creates does NOT composite
+ * there: Blink runs it on the main thread bound to the (main-thread) document scroller, and it
+ * cannot be promoted (will-change / contain / a smaller layer were all measured to make no
+ * difference). A perpetually-running main-thread animation sets the compositor's has_main_animation
+ * flag on EVERY presented frame document-wide, which forces unrelated animations (e.g. the sidebar
+ * dropdown) off the compositor-only fast path. On Android we therefore fall back to the JS scroll
+ * transform below, which updates only while scrolling and registers no standing animation. The
+ * fallback's formula is identical to the keyframes, so the parallax looks the same.
+ */
+const supportsScrollTimeline = 'ScrollTimeline' in window && !isAndroid
 
 /** Triggers haptic light feedback on scroll. Uses a passive scroll listener for efficiency. */
 const useScrollHaptics = () => {
