@@ -391,6 +391,16 @@ describe('formatSelection color', () => {
 
     expect(cursorValue()).toBe('')
   })
+
+  // #3901: applying the default background color to a thought that has no custom background is a no-op.
+  it('does not add markup when applying the default background to a thought with no background (#3901)', async () => {
+    await setupThought('Hello')
+
+    selectPlainRange(0, 'Hello'.length)
+    await dispatch(formatSelection('backColor', 'bg'))
+
+    expect(cursorValue()).toBe('Hello')
+  })
 })
 
 describe('formatSelection note', () => {
