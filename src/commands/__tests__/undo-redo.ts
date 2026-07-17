@@ -607,6 +607,74 @@ describe('grouping', () => {
     expect(exportedAfterSecondUndo).not.toContain('<b>')
   })
 
+  // Each ColorPicker application is now a single synchronous editThought (no mergePrev/batching), so consecutive color
+  // applications are separate undo steps. The HTML values mirror what formatSelectionHtml produces for each command.
+  it('undoing after applying two background colors reverts only the most recent (#4636)', () => {
+    const greenBg = '<font color="#000000" style="background-color: rgb(0, 214, 136);">hello</font>'
+    const redBg = '<font color="#000000" style="background-color: rgb(255, 87, 61);">hello</font>'
+    store.dispatch([
+      importText({
+        text: `
+          - hello`,
+      }),
+      // first background color: green
+      editThought(['hello'], greenBg),
+      // second background color: red
+      editThought([greenBg], redBg),
+    ])
+
+    // verify the red background is applied
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/html')).toContain('<li>' + redBg + '</li>')
+
+    // a single undo reverts only the most recent color, restoring the green background
+    store.dispatch(undo())
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/html')).toContain('<li>' + greenBg + '</li>')
+  })
+
+  it('undoing after applying two foreground colors reverts only the most recent', () => {
+    const blue = '<font color="#00c7e6">hello</font>'
+    const red = '<font color="#ff573d">hello</font>'
+    store.dispatch([
+      importText({
+        text: `
+          - hello`,
+      }),
+      // first foreground color: blue
+      editThought(['hello'], blue),
+      // second foreground color: red
+      editThought([blue], red),
+    ])
+
+    // verify the red foreground is applied
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/html')).toContain('<li>' + red + '</li>')
+
+    // a single undo reverts only the most recent color, restoring the blue foreground
+    store.dispatch(undo())
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/html')).toContain('<li>' + blue + '</li>')
+  })
+
+  it('undoing after applying a background color over a foreground color restores the foreground color', () => {
+    const blue = '<font color="#00c7e6">hello</font>'
+    const greenBg = '<font color="#000000" style="background-color: rgb(0, 214, 136);">hello</font>'
+    store.dispatch([
+      importText({
+        text: `
+          - hello`,
+      }),
+      // foreground color: blue
+      editThought(['hello'], blue),
+      // background color: green (replaces the foreground with contrasting black text)
+      editThought([blue], greenBg),
+    ])
+
+    // verify the background color is applied
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/html')).toContain('<li>' + greenBg + '</li>')
+
+    // a single undo reverts the background color, leaving the foreground color
+    store.dispatch(undo())
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/html')).toContain('<li>' + blue + '</li>')
+  })
+
   it('formatting edit applied directly after newThought should not delete the thought on undo', () => {
     store.dispatch([
       importText({
