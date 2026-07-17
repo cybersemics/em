@@ -1,16 +1,20 @@
 import { defineRecipe } from '@pandacss/dev'
+import { DROPDOWN_MASK_BAND, MASK_OVERSIZE } from './sidebarMaskGeometry'
 
-/** Recipe that defines the static parts of the sidebar scrollable content mask.
- * A single mask gradient is used across all states (128px transparent band followed
- * by a 48px fade to black); mask-position-y and opacity are both animated imperatively
- * from Sidebar.tsx via framer-motion so the dropdown-hide slide and its accompanying
- * dim-out stay in lockstep through the asymmetric two-stage open/close timing. */
+/** Recipe for the sidebar scrollable content mask. A single STATIC mask gradient is used across
+ * all states (a transparent band followed by a fade to black, oversized so every slide position
+ * stays covered — see sidebarMaskGeometry for the shared numbers). The mask itself never animates
+ * or repaints: Sidebar.tsx slides it with a compositor transform pair — the mask-bearing wrapper
+ * translates while the scroller inside counter-translates, so the gradient glides over
+ * pixel-stationary content — and dims the scroller with a CSS opacity transition, keeping the
+ * whole effect on the GPU (mask-position animation re-rasterized the list every frame; see
+ * COMPOSITED SLIDING MASK in Sidebar.tsx). */
 const sidebarContentMaskRecipe = defineRecipe({
   className: 'sidebar-content-mask',
   base: {
     maskRepeat: 'no-repeat',
-    maskImage: 'linear-gradient(to bottom, transparent 0, transparent 128px, black 176px)',
-    maskSize: '100% calc(100% + 176px)',
+    maskImage: `linear-gradient(to bottom, transparent 0, transparent ${DROPDOWN_MASK_BAND}px, black ${MASK_OVERSIZE}px)`,
+    maskSize: `100% calc(100% + ${MASK_OVERSIZE}px)`,
   },
 })
 
