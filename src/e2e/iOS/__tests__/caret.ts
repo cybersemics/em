@@ -251,4 +251,79 @@ describe('Caret', () => {
     expect(selectionTextContent).toBe('new')
     expect(childrenTexts).toEqual(['foo', 'bar'])
   })
+
+  /**
+   * Reproduction of #4394 and #4291. Tapping ~4px past the right edge of a non-cursor thought incorrectly opened the
+   * virtual keyboard. Safari's touch-adjustment heuristic retargets the synthesized mouse cascade onto the
+   * nearby editable while the `touchstart`/`touchend` land on the thought-annotation overlay, so the
+   * editable's `onTouchEnd` never runs to `preventDefault`.
+   */
+  it('Keyboard incorrectly opens on the right-edge tap of a non-cursor thought (#4394)', async () => {
+    await newThought('Hello')
+
+    const editable = await waitForEditable('Hello')
+    await browser.execute(() => window.scrollTo(0, 0))
+    const rect = await getElementRectByScreen(editable)
+
+    // Prime with a tap on the thought's center + keyboard dismissal. Priming while
+    // "Hello" has the cursor is what leaves offsetRef.current set (and never reset) pre-#4371.
+    await browser.performActions([
+      {
+        type: 'pointer',
+        id: 'finger1',
+        parameters: { pointerType: 'touch' },
+        actions: [
+          {
+            type: 'pointerMove',
+            duration: 0,
+            x: Math.round(rect.x + rect.width / 2),
+            y: Math.round(rect.y + rect.height / 2),
+            origin: 'viewport',
+          },
+          { type: 'pointerDown', button: 0 },
+          { type: 'pause', duration: 60 },
+          { type: 'pointerUp', button: 0 },
+        ],
+      },
+    ])
+    await hideKeyboardByTappingDone()
+
+    // Cursor Back (swipe right) to set the cursor to null, so that "Hello" becomes a non-cursor thought.
+    await gesture('r', {
+      xStart: rect.x + 5,
+      yStart: rect.y + rect.height / 2,
+      segmentLength: rect.width,
+    })
+
+    // Tap just past the right edge of the thought text, vertically centered.
+    const tapX = Math.round(rect.x + rect.width + 4)
+    const tapY = Math.round(rect.y + rect.height / 2)
+    await browser.performActions([
+      {
+        type: 'pointer',
+        id: 'finger1',
+        parameters: { pointerType: 'touch' },
+        actions: [
+          {
+            type: 'pointerMove',
+            duration: 0,
+            x: tapX,
+            y: tapY,
+            origin: 'viewport',
+            width: 40,
+            height: 40,
+            pressure: 0.9,
+          },
+          { type: 'pointerDown', button: 0 },
+          { type: 'pause', duration: 90 },
+          { type: 'pointerUp', button: 0 },
+        ],
+      },
+    ])
+
+    const keyboard = await isKeyboardShown()
+
+    // A non-cursor thought must not open the virtual keyboard.
+    expect(keyboard).toBe(false)
+  })
 })

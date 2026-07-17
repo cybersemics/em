@@ -189,6 +189,9 @@ export const isEndOfElementNode = (): boolean => {
 // TODO: The browser selection offset has different semantics when the selection is on a text node vs an element node. Unfortunately this function has been used indiscriminately for both cases. We should clean this up and only use the function on text nodes.
 export const offset = (): number | null => window.getSelection()?.focusOffset ?? null
 
+/** Returns the character offset of the selection's anchor (the fixed end of a range; `offset` returns the focus/moving end). */
+export const anchorOffset = (): number | null => window.getSelection()?.anchorOffset ?? null
+
 /** Returns the character offset within a thought, taking into account siblings and intervening ancestor elements.
  *
  * @example <div>Hello <b>wo|rld</b></div> // returns offset 8
