@@ -25,6 +25,13 @@ interface ProgressiveBlurProps extends React.HTMLAttributes<HTMLDivElement> {
   opacity?: MotionValue<number>
   /** Additional CSS mask-image to intersect with each layer's slice mask. Applied per-layer so it works with backdrop-filter (unlike masking a parent). */
   mask?: string
+  /** Promote each blur layer onto its own compositing layer (will-change: transform). Lets the
+   * compositor cache the backdrop-filter result, so an animation painting in front of the blur (e.g.
+   * the sidebar's section-glow crossfade) no longer forces it to re-rasterize the entire backdrop
+   * every frame — which otherwise drops frames badly when the backdrop is expensive (a large
+   * thoughtspace, or the command center beneath). Opt-in because a promoted backdrop-filter layer
+   * costs GPU memory per layer; only enable it where the measured re-raster cost justifies it. */
+  promoteLayers?: boolean
 }
 
 /** A progressive blur component using a multi-layered slice technique with backdrop-filter. */
@@ -36,6 +43,7 @@ const ProgressiveBlur = ({
   width = '100%',
   opacity,
   mask,
+  promoteLayers,
   className,
   ...props
 }: ProgressiveBlurProps) => {
@@ -83,6 +91,7 @@ const ProgressiveBlur = ({
               opacity,
               backdropFilter: `blur(${layer.radius.toFixed(2)}px)`,
               WebkitBackdropFilter: `blur(${layer.radius.toFixed(2)}px)`,
+              ...(promoteLayers && { willChange: 'transform' }),
 
               // Sliced mask with overlap (feather), clamped to container bounds.
               // When an extra mask is provided, intersect it with the slice mask
