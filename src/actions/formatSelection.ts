@@ -1,6 +1,7 @@
 /* eslint-disable import/prefer-default-export */
 import Thunk from '../@types/Thunk'
 import { ColorToken } from '../colors.config'
+import registerNativeUndoStep from '../device/registerNativeUndoStep'
 import * as selection from '../device/selection'
 import noteValue from '../selectors/noteValue'
 import pathToThought from '../selectors/pathToThought'
@@ -69,15 +70,19 @@ export const formatSelectionActionCreator =
     // Update the toolbar command state when formatting a sub-range (the whole-thought state is derived from the caret).
     if (!whole) updateCommandState()
 
+    const path = state.noteFocus ? resolveNotePath(state, state.cursor) : state.cursor
+
+    // On iOS (Safari and Capacitor, both WKWebView), register a native undo step for this format while focus is still
+    // suppressed. The value is applied via editThought below rather than document.execCommand, so WebKit records no
+    // native step; without one, a shake/three-finger native undo gesture fires nothing and the historyUndo beforeinput
+    // handler that routes native undo through em's own undo never runs (#3954, #4637). The registered step's DOM effect
+    // is overwritten by the editThought re-render; it exists only as the trigger for the native undo gesture.
+    if (newValue !== value && path) registerNativeUndoStep(contentEditable, newValue)
+
     suppressFocusStore.update(false)
 
-    if (newValue === value) return
+    if (newValue === value || !path) return
 
-    const path = state.noteFocus ? resolveNotePath(state, state.cursor) : state.cursor
-    if (!path) return
-
-    // Dispatch a single synchronous edit. foreColor + backColor land in the same (synchronous) batch window and merge
-    // into a single undo step via mergeBatchEditing (#4620).
     dispatch(
       state.noteFocus
         ? setDescendant({
