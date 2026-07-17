@@ -28,7 +28,6 @@ import visibleDistanceAboveCursor from '../selectors/visibleDistanceAboveCursor'
 import store from '../stores/app'
 import animateDroppedThought from '../util/animateDroppedThought'
 import appendToPath from '../util/appendToPath'
-import ellipsize from '../util/ellipsize'
 import equalPath from '../util/equalPath'
 import haptics from '../util/haptics'
 import hashPath from '../util/hashPath'
@@ -254,10 +253,17 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
         const thoughtFrom = getThoughtById(state, head(firstItem.path))
         const toPath = simplifyPath(state, rootedParentOf(state, pathTo))
 
-        const alertFrom =
-          draggedItems.length === 1 ? `"${ellipsize(thoughtFrom?.value || '')}"` : `${draggedItems.length} thoughts`
-
-        store.dispatch(alert(() => <MoveThoughtAlert from={alertFrom} toPath={toPath} top={dropTop} />))
+        store.dispatch(
+          alert(() => (
+            <MoveThoughtAlert
+              contextPath={props.showContexts ? props.simplePath ?? props.path : undefined}
+              from={thoughtFrom?.value || ''}
+              numThoughts={draggedItems.length}
+              toPath={toPath}
+              top={dropTop}
+            />
+          )),
+        )
       }, 100)
     }
   })

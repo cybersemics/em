@@ -38,7 +38,6 @@ import simplifyPath from '../selectors/simplifyPath'
 import store from '../stores/app'
 import selectionRangeStore from '../stores/selectionRangeStore'
 import appendToPath from '../util/appendToPath'
-import ellipsize from '../util/ellipsize'
 import equalPath from '../util/equalPath'
 import haptics from '../util/haptics'
 import head from '../util/head'
@@ -268,10 +267,11 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
         const firstFromThought = pathToThought(state, draggedItems[0].simplePath)
         if (!firstFromThought) return
 
-        const numThoughts = draggedItems.length
-        const alertFrom = numThoughts === 1 ? `"${ellipsize(firstFromThought.value)}"` : `${numThoughts} thoughts`
-
-        dispatch(alert(() => <MoveThoughtAlert from={alertFrom} toPath={parent} />))
+        dispatch(
+          alert(() => (
+            <MoveThoughtAlert from={firstFromThought.value} numThoughts={draggedItems.length} toPath={parent} />
+          )),
+        )
       }, 100)
     }
   })
