@@ -37,11 +37,16 @@ async function runBeforeTreecrdtClose(): Promise<void> {
 const getRuntime = (): NonNullable<ClientOptions['runtime']> => {
   const runtimeOverride = storage.getItem('treecrdtRuntime')
 
-  if (runtimeOverride === 'direct' || runtimeOverride === 'dedicated-worker' || runtimeOverride === 'shared-worker') {
+  if (
+    runtimeOverride === 'auto' ||
+    runtimeOverride === 'direct' ||
+    runtimeOverride === 'dedicated-worker' ||
+    runtimeOverride === 'shared-worker'
+  ) {
     return { type: runtimeOverride }
   }
 
-  return typeof SharedWorker === 'undefined' ? { type: 'auto' } : { type: 'shared-worker' }
+  return { type: 'auto' }
 }
 
 /** Initializes the TreeCRDT client. */
@@ -63,8 +68,8 @@ export const initTreecrdt = async (): Promise<TreecrdtClient> => {
           filename: `/treecrdt-em-${tsid}.db`,
           fallback: 'throw',
         },
-    // Tests may opt into memory storage when persistence is irrelevant. Normal browser sessions use SharedWorker+OPFS
-    // so the one-store-across-tabs path remains the default behavior.
+    // Tests may opt into memory storage when persistence is irrelevant. Normal browser sessions let TreeCRDT choose
+    // the supported persistent runtime for OPFS.
     runtime: useTransientMemory ? { type: 'direct' } : getRuntime(),
     docId: tsid,
   })
