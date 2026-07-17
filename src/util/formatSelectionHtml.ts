@@ -108,20 +108,16 @@ const resolveColors = (
     ? { color: colorValue ?? null, background: null }
     : { color: CONTRAST_COLOR, background: colorValue ?? null }
 
-/** Applies a foreColor/backColor to the range [s, e), consolidating into a single <font> element that carries both the
- * color attribute and the background-color style. The color command fully redetermines both properties (see
- * resolveColors), so existing color/background wrappers within the range are stripped before re-wrapping once. */
+/** Applies a foreColor/backColor to the given range (a sub-range or the whole thought's contents), consolidating into a
+ * single <font> element that carries both the color attribute and the background-color style. The color command fully
+ * redetermines both properties (see resolveColors), so existing color/background wrappers within the range are stripped
+ * before re-wrapping once. Non-color formatting (b/i/u/code) within the range is preserved. */
 const applyColor = (
   container: HTMLElement,
-  s: Position,
-  e: Position,
+  range: Range,
   command: 'foreColor' | 'backColor',
   colorValue: string | undefined,
 ) => {
-  const range = document.createRange()
-  range.setStart(s.node, s.offset)
-  range.setEnd(e.node, e.offset)
-
   // extract the range into a temp container so existing color/background wrappers can be stripped
   const temp = document.createElement('div')
   temp.appendChild(range.extractContents())
@@ -146,28 +142,6 @@ const applyColor = (
   insertAtRange(container, range, insertNode)
   // remove any now-empty formatting element left behind where the range was extracted
   removeEmptyFormatting(container)
-}
-
-/** Consolidates a whole-thought foreColor/backColor into a single <font> element carrying both the color attribute and
- * the background-color style. Only color wrappers (font/span) are stripped, so non-color formatting (b/i/u/code) that
- * wraps the thought is preserved. The color command fully redetermines both properties (see resolveColors): a foreColor
- * clears the background, a backColor forces a contrasting text color. */
-const consolidateWholeColor = (
-  container: HTMLElement,
-  command: 'foreColor' | 'backColor',
-  colorValue: string | undefined,
-) => {
-  unwrapAll(container, 'font, span')
-  container.normalize()
-
-  const { color, background } = resolveColors(command, colorValue)
-  if (!color && !background) return
-
-  const font = document.createElement('font')
-  if (color) font.setAttribute('color', rgbToHex(color))
-  if (background) font.style.backgroundColor = background
-  while (container.firstChild) font.appendChild(container.firstChild)
-  container.appendChild(font)
 }
 
 /** Removes color/background declarations that match the theme defaults and unwraps the resulting attribute-less
@@ -272,27 +246,25 @@ const formatSelectionHtml = (
   }
 
   if (!skipApplication) {
-    if (whole && !tag) {
-      // color: consolidate the whole-thought foreColor/backColor into a single <font>, preserving non-color tags (b/i/u)
-      consolidateWholeColor(container, command as 'foreColor' | 'backColor', colorValue)
-    } else if (tag) {
-      // whole-thought toggle-off: the tag already covers all text, so just remove it
-      if (whole && getCommandState(html)[command as keyof CommandState]) {
-        unwrapAll(container, tag)
-      } else {
-        // wrap the range (the whole thought or the selected sub-range) in the tag, collapsing any nested same-tags
-        const range = document.createRange()
-        if (whole) {
-          range.selectNodeContents(container)
-        } else {
-          range.setStart(s.node, s.offset)
-          range.setEnd(e.node, e.offset)
-        }
-        range.insertNode(wrapWithTag(range.extractContents(), command))
-      }
+    // whole-thought tag toggle-off: the tag already covers all text, so just remove it (no re-wrap)
+    if (tag && whole && getCommandState(html)[command as keyof CommandState]) {
+      unwrapAll(container, tag)
     } else {
-      // partial color command: consolidate foreColor/backColor into a single <font> element over the range
-      applyColor(container, s, e, command as 'foreColor' | 'backColor', colorValue)
+      // build the range to reformat: the whole thought's contents (grabbing boundary wrappers) or the sub-range
+      const range = document.createRange()
+      if (whole) {
+        range.selectNodeContents(container)
+      } else {
+        range.setStart(s.node, s.offset)
+        range.setEnd(e.node, e.offset)
+      }
+      if (tag) {
+        // wrap the range in the tag, collapsing any nested same-tags
+        range.insertNode(wrapWithTag(range.extractContents(), command))
+      } else {
+        // color: consolidate the range's foreColor/backColor into a single <font>, preserving non-color tags (b/i/u)
+        applyColor(container, range, command as 'foreColor' | 'backColor', colorValue)
+      }
     }
   }
 
