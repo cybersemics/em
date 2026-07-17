@@ -281,6 +281,9 @@ const GestureMenuWithTransition: FC = () => {
                 isolation: 'isolate',
                 width: '100%',
                 maxHeight: '100dvh',
+                // Keeps the compositor layer alive so Android WebView doesn't drop the subtree for a
+                // frame at fade end, flashing the sibling GestureContentBlur blur through the menu.
+                willChange: 'opacity',
               })}
               // paddingBottom sourced from GestureMenu/constants (shared with the content-blur tail).
               style={{ paddingBottom: `${GESTURE_MENU_BOTTOM_TAIL_REM}rem` }}
