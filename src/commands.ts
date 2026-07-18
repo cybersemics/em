@@ -95,6 +95,88 @@ export const hashKeyDown = (e: KeyboardEvent): string =>
   // use e.keyCode if available instead
   (letters[e.keyCode] || digits[e.keyCode] || e.key || '').toUpperCase()
 
+/* A map of typed modifier tokens to the hash prefix used by hashCommand.
+ * All Command/Control synonyms map to META_ because em's matching layer has no functioning literal-control
+ * distinction: hashCommand ignores Key.control and hashKeyDown folds e.ctrlKey into META_. See docs/commands.md.
+ */
+const SHORTCUT_MODIFIERS: Index<'META_' | 'ALT_' | 'SHIFT_'> = {
+  cmd: 'META_',
+  command: 'META_',
+  meta: 'META_',
+  ctrl: 'META_',
+  control: 'META_',
+  '⌘': 'META_',
+  '⌃': 'META_',
+  opt: 'ALT_',
+  option: 'ALT_',
+  alt: 'ALT_',
+  '⌥': 'ALT_',
+  shift: 'SHIFT_',
+  '⇧': 'SHIFT_',
+}
+
+/* A map of typed named keys to their canonical, uppercased key (matching hashCommand's key format). */
+const SHORTCUT_NAMED_KEYS: Index<string> = {
+  enter: 'ENTER',
+  return: 'ENTER',
+  esc: 'ESCAPE',
+  escape: 'ESCAPE',
+  space: 'SPACE',
+  backspace: 'BACKSPACE',
+  delete: 'DELETE',
+  del: 'DELETE',
+  tab: 'TAB',
+  up: 'ARROWUP',
+  down: 'ARROWDOWN',
+  left: 'ARROWLEFT',
+  right: 'ARROWRIGHT',
+}
+
+/**
+ * Parses a search query that looks like a keyboard shortcut (e.g. "cmd option k", "ctrl+option+k") into a hash string
+ * that can be compared directly against hashCommand. Returns null if the query is not a recognized shortcut, in which
+ * case the query should be treated as a normal label search.
+ *
+ * Tokens are case-insensitive and order-independent, separated by whitespace and/or "+". A query is recognized as a
+ * shortcut iff it contains at least one modifier token and exactly one valid key token (a single character or a known
+ * named key). All Command/Control synonyms (cmd, command, meta, ctrl, control) map to META, consistent with how em
+ * matches keypresses at runtime.
+ */
+export const parseCommandShortcut = (query: string): string | null => {
+  const tokens = query
+    .toLowerCase()
+    .split(/[\s+]+/)
+    .filter(token => token.length > 0)
+
+  if (tokens.length === 0) return null
+
+  const modifiers = new Set<'META_' | 'ALT_' | 'SHIFT_'>()
+  const keys: string[] = []
+
+  tokens.forEach(token => {
+    const modifier = SHORTCUT_MODIFIERS[token]
+    if (modifier) {
+      modifiers.add(modifier)
+    } else {
+      // a valid key is a known named key or a single character
+      const key = SHORTCUT_NAMED_KEYS[token] || (token.length === 1 ? token.toUpperCase() : null)
+      if (key) keys.push(key)
+      // an unrecognized multi-character token means this is not a shortcut
+      else keys.push('')
+    }
+  })
+
+  // recognized as a shortcut iff at least one modifier and exactly one valid key
+  if (modifiers.size === 0 || keys.length !== 1 || keys[0] === '') return null
+
+  return (
+    (modifiers.has('META_') ? 'META_' : '') +
+    (modifiers.has('ALT_') ? 'ALT_' : '') +
+    (modifiers.has('SHIFT_') ? 'SHIFT_' : '') +
+    keys[0]
+  )
+}
+
 const ARROW_KEYS_TO_CHARACTER: Record<ArrowKey, string> = {
   ArrowLeft: '←',
   ArrowRight: '→',
