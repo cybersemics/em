@@ -239,7 +239,7 @@ describe('render', () => {
 
   // Regression test for https://github.com/cybersemics/em/issues/3062
   // .skip keeps normal CI green while the test is red; remove the .skip when the fix lands.
-  it.skip('render an ordered number instead of a bullet for =children/=bullet/Ordered', async () => {
+  it('render an ordered number instead of a bullet for =children/=bullet/Ordered', async () => {
     await dispatch([
       importText({
         text: `
