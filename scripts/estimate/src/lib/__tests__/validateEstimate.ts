@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import validateEstimate from '../validateEstimate.ts'
-import { EstimateCategorySchema, EstimateResponseSchema } from '../validateEstimate.ts'
+import validateEstimate, { EstimateCategorySchema, EstimateResponseSchema, parseEstimate } from '../validateEstimate.ts'
 
 describe('validateEstimate', () => {
-  it('parses valid model output', () => {
+  it('parses valid model output and defaults the richer fields', () => {
     const result = validateEstimate(['{"estimate": "M"}'])
-    expect(result).toEqual({ estimate: 'M' })
+    expect(result.estimate).toBe('M')
+    expect(result.confidence).toBe('medium')
+    expect(result.rationale).toBe('')
   })
 
   it('handles all valid categories', () => {
@@ -16,9 +17,16 @@ describe('validateEstimate', () => {
     }
   })
 
+  it('parses the richer fields when present', () => {
+    const result = validateEstimate([
+      '{"rationale": "small fix", "estimate": "S", "confidence": "high", "secondChoice": "M"}',
+    ])
+    expect(result).toEqual({ rationale: 'small fix', estimate: 'S', confidence: 'high', secondChoice: 'M' })
+  })
+
   it('skips invalid output and uses next valid one', () => {
     const result = validateEstimate(['invalid json', '{"estimate": "S"}'])
-    expect(result).toEqual({ estimate: 'S' })
+    expect(result.estimate).toBe('S')
   })
 
   it('throws after max validation attempts with all invalid', () => {
@@ -31,6 +39,25 @@ describe('validateEstimate', () => {
 
   it('rejects output missing estimate field', () => {
     expect(() => validateEstimate(['{"foo": "bar"}', '{}', '{"other": "M"}'])).toThrow()
+  })
+})
+
+describe('parseEstimate', () => {
+  it('returns the parsed response for valid output', () => {
+    expect(parseEstimate('{"estimate": "L"}')?.estimate).toBe('L')
+  })
+
+  it('returns null for malformed JSON', () => {
+    expect(parseEstimate('not json')).toBeNull()
+  })
+
+  it('returns null for a schema mismatch', () => {
+    expect(parseEstimate('{"estimate": "NOPE"}')).toBeNull()
+    expect(parseEstimate('{}')).toBeNull()
+  })
+
+  it('returns null for an invalid confidence value', () => {
+    expect(parseEstimate('{"estimate": "M", "confidence": "certain"}')).toBeNull()
   })
 })
 
@@ -48,9 +75,9 @@ describe('EstimateCategorySchema', () => {
 })
 
 describe('EstimateResponseSchema', () => {
-  it('parses valid response', () => {
+  it('parses valid response and defaults optional fields', () => {
     const result = EstimateResponseSchema.parse({ estimate: 'L' })
-    expect(result).toEqual({ estimate: 'L' })
+    expect(result).toEqual({ rationale: '', estimate: 'L', confidence: 'medium' })
   })
 
   it('rejects missing estimate', () => {
