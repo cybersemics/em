@@ -26,7 +26,7 @@ Dry-run flags: `--dry` skips both the model call and the Everhour write; `--dry-
 
 The estimator draws multiple independent samples per issue (self-consistency voting via the Chat Completions `n` parameter) and reports the modal category, so each estimate carries an `agreement` score (fraction of votes that agreed) and a self-reported `confidence`. Both are surfaced in the audit comment.
 
-To measure accuracy, run the leave-one-out harness. For each labeled sample it rebuilds the prompt from every _other_ sample, estimates the held-out issue, and compares to the known-correct category. It reports exact-bucket and ±1-bucket accuracy, a confusion matrix, and a calibration breakdown. It makes model calls but never writes to Everhour.
+To measure accuracy, run the leave-one-out harness. For each labeled sample it retrieves the nearest neighbors from every _other_ sample (reusing the cached embeddings, so it makes no embedding calls), estimates the held-out issue, and compares to the known-correct category. It reports exact-bucket and ±1-bucket accuracy, a confusion matrix, a calibration breakdown, and how many estimates the confidence gate flagged for review. It makes model calls but never writes to Everhour.
 
 ```bash
 cd scripts/estimate
@@ -34,6 +34,28 @@ yarn evaluate
 ```
 
 Inference is tunable via `ESTIMATE_*` env vars (see `.env.example`): `ESTIMATE_MODEL`, `ESTIMATE_VOTES`, `ESTIMATE_REASONING_EFFORT`, `ESTIMATE_TEMPERATURE`.
+
+## Retrieval few-shot (kNN)
+
+Instead of stuffing every labeled sample into the prompt, the estimator injects only the _k_ samples most similar to the target issue. Each sample's title + body + labels is embedded once with an OpenAI embeddings model (`text-embedding-3-small` by default) and the vectors are cached on disk, committed to the repo at `.github/instructions/estimate/embeddings.json`. At estimate time only the target issue is embedded (one call); the cached sample vectors are cosine-ranked and the top _k_ neighbors (default 8, `ESTIMATE_NEIGHBORS`) are passed to the prompt ordered closest-last. The distribution of the neighbors' known categories (e.g. `M×4, S×3, L×1`) is injected as an extra signal.
+
+Because only _k_ neighbors ever enter the prompt, the sample corpus can grow without bloating the prompt. When embeddings are unavailable (no API key, empty cache, or an embedding error) the pipeline falls back to the previous "all samples" behavior — it never hard-crashes.
+
+Regenerate the cache after adding or editing samples (requires `OPENAI_API_KEY`). Only new or content-changed samples are re-embedded; pass `--force` to re-embed everything:
+
+```bash
+cd scripts/estimate
+yarn embed          # embed new / changed samples
+yarn embed --force  # re-embed all samples
+```
+
+Tunable via `ESTIMATE_EMBEDDING_MODEL` and `ESTIMATE_NEIGHBORS`.
+
+## Confidence gate
+
+Three independent uncertainty signals are combined into a single gate decision: vote `agreement`, neighbor-category `dispersion` (how scattered the neighbors' categories are on the ordinal scale), and the model's self-reported `confidence`. The gate trips when **any** signal is uncertain — agreement below `ESTIMATE_GATE_MIN_AGREEMENT` (0.5), dispersion above `ESTIMATE_GATE_MAX_DISPERSION` (0.5), or confidence below `ESTIMATE_GATE_MIN_CONFIDENCE` (medium).
+
+When the gate trips the estimate is still written to Everhour exactly as usual (no regression), but the issue is additionally flagged for human review by applying the `estimate-needs-review` label, and the gate outcome plus neighbor distribution are surfaced in the audit comment for auditability. When the gate does not trip, behavior is unchanged.
 
 Manual correction (via issue comment)
 

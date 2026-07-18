@@ -33,4 +33,15 @@ describe('buildPrompt', () => {
     const result = buildPrompt([], { title: 'T', body: 'B', labels: [] })
     expect(result).not.toContain('## Examples')
   })
+
+  it('injects the neighbor distribution line when provided', () => {
+    const result = buildPrompt([], { title: 'T', body: 'B', labels: [] }, { neighborDistribution: 'M×4, S×3' })
+    expect(result).toContain('## Similar past issues')
+    expect(result).toContain('M×4, S×3')
+  })
+
+  it('omits the neighbor distribution section when not provided', () => {
+    const result = buildPrompt([], { title: 'T', body: 'B', labels: [] })
+    expect(result).not.toContain('## Similar past issues')
+  })
 })

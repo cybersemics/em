@@ -1,9 +1,9 @@
 /**
- * Leave-one-out evaluation harness for the estimator. For each labeled sample, rebuilds the prompt
- * from every OTHER sample, runs the full inference + voting pipeline on the held-out issue, and
- * compares the predicted category to the known-correct `expected`. Reports exact-bucket accuracy,
- * ±1-bucket accuracy, a confusion matrix, and a calibration breakdown (accuracy by vote agreement
- * and by self-reported confidence).
+ * Leave-one-out evaluation harness for the estimator. For each labeled sample, retrieves the nearest
+ * neighbors from every OTHER sample (reusing cached embeddings, so no embedding API calls), runs the
+ * full inference + voting + gate pipeline on the held-out issue, and compares the predicted category
+ * to the known-correct `expected`. Reports exact-bucket accuracy, ±1-bucket accuracy, a confusion
+ * matrix, a calibration breakdown, and how many predictions the confidence gate flagged for review.
  *
  * This is the "ruler" for the estimator: run it before and after a prompt/model/voting change to
  * confirm the change actually helps. Offline — it makes model calls but never writes to Everhour.
@@ -15,10 +15,18 @@ import * as path from 'path'
 import { fileURLToPath } from 'url'
 import { ESTIMATE_CATEGORIES, type EstimateCategory } from './everhour/estimates.ts'
 import buildPrompt from './lib/buildPrompt.ts'
+import { type MaybeEmbeddedSample, joinSamplesWithEmbeddings, loadEmbeddingCache } from './lib/embeddingCache.ts'
+import { evaluateGate, resolveGateThresholds } from './lib/estimateGate.ts'
 import inference from './lib/inference.ts'
 import loadInstructions from './lib/loadInstructions.ts'
 import loadSamples, { type EstimateSample } from './lib/loadSamples.ts'
+import { formatNeighborDistribution, neighborDispersion, neighborDistribution } from './lib/neighborDistribution.ts'
+import { selectNeighbors } from './lib/retrieval.ts'
 import tallyVotes from './lib/tallyVotes.ts'
+
+// Number of nearest-neighbor samples injected per held-out evaluation, matching estimateIssue's
+// ESTIMATE_NEIGHBORS default so the harness measures the same prompt shape used in production.
+const NEIGHBORS = process.env.ESTIMATE_NEIGHBORS != null ? Number(process.env.ESTIMATE_NEIGHBORS) : 8
 
 /** One graded prediction from the leave-one-out run. */
 export interface EvalRow {
@@ -27,6 +35,8 @@ export interface EvalRow {
   predicted: EstimateCategory
   agreement: number
   confidence: 'high' | 'medium' | 'low'
+  /** Whether the confidence gate flagged this prediction for review. Optional for hand-built rows. */
+  needsReview?: boolean
 }
 
 /** Aggregate metrics computed from a set of graded predictions. */
@@ -86,28 +96,55 @@ export const computeMetrics = (rows: EvalRow[]): EvalMetrics => {
   }
 }
 
-/** Runs leave-one-out inference over all samples and returns the graded rows. */
+/**
+ * Runs leave-one-out inference over all samples and returns the graded rows. Each held-out sample
+ * is estimated using kNN retrieval over the OTHER samples' cached embeddings — the held-out sample
+ * is excluded from its own neighbor set, mirroring production retrieval without leaking the answer.
+ * When cached embeddings are unavailable, it degrades to the all-others prompt (the pre-retrieval
+ * behavior). Reuses each sample's cached vector as both candidate and query, so evaluation makes no
+ * embeddings API calls.
+ */
 const runLeaveOneOut = async (
   samples: EstimateSample[],
+  embeddedSamples: MaybeEmbeddedSample[],
   instructions: string,
   openaiApiKey: string,
 ): Promise<EvalRow[]> => {
+  const thresholds = resolveGateThresholds()
   const rows: EvalRow[] = []
   for (let i = 0; i < samples.length; i++) {
     const target = samples[i]
-    const others = samples.filter((_, j) => j !== i)
-    const prompt = buildPrompt(others, target.input)
+    const targetEmbedding = embeddedSamples[i]?.embedding
+
+    // Candidates are every OTHER sample that has a cached embedding.
+    const candidates = embeddedSamples
+      .filter((entry, j): entry is MaybeEmbeddedSample & { embedding: number[] } => j !== i && entry.embedding != null)
+      .map(entry => ({ sample: entry.sample, embedding: entry.embedding }))
+
+    // Retrieve neighbors when the target has a vector and candidates exist; else fall back to all others.
+    const useRetrieval = targetEmbedding != null && candidates.length > 0
+    const promptSamples = useRetrieval
+      ? selectNeighbors({ target: targetEmbedding, candidates, k: NEIGHBORS })
+      : samples.filter((_, j) => j !== i)
+    const distribution = useRetrieval ? neighborDistribution(promptSamples) : []
+    const dispersion = useRetrieval ? neighborDispersion(promptSamples) : undefined
+
+    const prompt = buildPrompt(promptSamples, target.input, {
+      neighborDistribution: formatNeighborDistribution(distribution) || undefined,
+    })
     const outputs = await inference({ apiKey: openaiApiKey, prompt, instructions })
     const vote = tallyVotes(outputs)
+    const gate = evaluateGate({ agreement: vote.agreement, dispersion, confidence: vote.confidence }, thresholds)
     rows.push({
       issue: target.source?.issue,
       expected: target.expected as EstimateCategory,
       predicted: vote.estimate,
       agreement: vote.agreement,
       confidence: vote.confidence,
+      needsReview: gate.needsReview,
     })
     console.info(
-      `  ${target.source?.issue ? `#${target.source.issue}` : `sample ${i + 1}`}: expected ${target.expected}, predicted ${vote.estimate} (agreement ${Math.round(vote.agreement * 100)}%, confidence ${vote.confidence})`,
+      `  ${target.source?.issue ? `#${target.source.issue}` : `sample ${i + 1}`}: expected ${target.expected}, predicted ${vote.estimate} (agreement ${Math.round(vote.agreement * 100)}%, confidence ${vote.confidence}${gate.needsReview ? ', ⚠️ needs-review' : ''})`,
     )
   }
   return rows
@@ -157,9 +194,17 @@ const main = async () => {
   const samples = loadSamples(repoRoot)
   if (samples.length === 0) throw new Error('No samples found to evaluate.')
 
-  console.info(`Evaluating ${samples.length} samples (leave-one-out)...`)
-  const rows = await runLeaveOneOut(samples, instructions, openaiApiKey)
+  // Reuse the committed embeddings cache so retrieval in the harness makes no API calls. A sample
+  // missing a fresh vector simply falls back to the all-others prompt for that iteration.
+  const embeddedSamples = joinSamplesWithEmbeddings(samples, loadEmbeddingCache(repoRoot))
+  const withEmbeddings = embeddedSamples.filter(entry => entry.embedding != null).length
+  console.info(
+    `Evaluating ${samples.length} samples (leave-one-out); ${withEmbeddings}/${samples.length} have cached embeddings for retrieval.`,
+  )
+  const rows = await runLeaveOneOut(samples, embeddedSamples, instructions, openaiApiKey)
   console.info(formatReport(computeMetrics(rows)))
+  const flagged = rows.filter(row => row.needsReview).length
+  console.info(`\nFlagged for human review by the confidence gate: ${flagged}/${rows.length}`)
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
