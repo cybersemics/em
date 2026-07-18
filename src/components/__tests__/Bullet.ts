@@ -236,6 +236,34 @@ describe('render', () => {
     const bullet = document.querySelector(`[data-testid="bullet-${path}"]`)
     expect(bullet).toBeInTheDocument()
   })
+
+  // Regression test for https://github.com/cybersemics/em/issues/3062
+  // .skip keeps normal CI green while the test is red; remove the .skip when the fix lands.
+  it.skip('render an ordered number instead of a bullet for =children/=bullet/Ordered', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - x
+          - =children
+            - =bullet
+              - Ordered
+          - a
+          - b
+          - c
+      `,
+      }),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // a, b, c should render numbered glyphs 1, 2, 3 instead of leaf bullets
+    const ordered = document.querySelectorAll('[data-bullet="ordered"]')
+    expect(Array.from(ordered).map(el => el.textContent)).toEqual(['1.', '2.', '3.'])
+
+    // the ordered children should not render a leaf bullet glyph
+    const leaves = document.querySelectorAll('[data-bullet="leaf"]')
+    expect(leaves.length).toBe(0)
+  })
 })
 
 describe('expansion', () => {
