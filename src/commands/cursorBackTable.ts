@@ -3,6 +3,7 @@ import Command from '../@types/Command'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import BackIcon from '../components/icons/BackIcon'
 import * as selection from '../device/selection'
+import globals from '../globals'
 import isTableCol2 from '../selectors/isTableCol2'
 import headValue from '../util/headValue'
 import parentOf from '../util/parentOf'
@@ -27,7 +28,11 @@ const cursorBackTableCommand: Command = {
     if (!selection.isThought() || !selection.isCollapsed()) return false
     return selection.offsetThought() === 0
   },
-  exec: (dispatch, getState) => {
+  exec: (dispatch, getState, e, { type }) => {
+    const event = e as KeyboardEvent
+    // require a discrete keypress to cross the column boundary; ignore auto-repeat while the key is held down
+    if (type === 'keyboard' && event.repeat) return
+
     const state = getState()
     const { cursor } = state
     if (!cursor) return
@@ -38,6 +43,9 @@ const cursorBackTableCommand: Command = {
 
     // place the caret at the end of the column-one thought, continuing the leftward caret motion
     dispatch(setCursor({ path: parentPath, offset: value?.length ?? 0, preserveMulticursor: true }))
+
+    // suppress auto-repeat of this key until it is released so that holding it does not race the caret through the parent thought
+    if (type === 'keyboard') globals.arrowKeyBoundaryCross = event.key
   },
 }
 

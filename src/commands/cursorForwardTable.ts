@@ -3,6 +3,7 @@ import Command from '../@types/Command'
 import { cursorForwardActionCreator as cursorForward } from '../actions/cursorForward'
 import CursorForwardIcon from '../components/icons/CursorForwardIcon'
 import * as selection from '../device/selection'
+import globals from '../globals'
 import attributeEquals from '../selectors/attributeEquals'
 import { firstVisibleChild } from '../selectors/getChildren'
 import rootedParentOf from '../selectors/rootedParentOf'
@@ -35,7 +36,16 @@ const cursorForwardTableCommand: Command = {
     // only when there is a column-two child to move into
     return !!firstVisibleChild(state, head(simplifyPath(state, cursor)))
   },
-  exec: dispatch => dispatch(cursorForward()),
+  exec: (dispatch, getState, e, { type }) => {
+    const event = e as KeyboardEvent
+    // require a discrete keypress to cross the column boundary; ignore auto-repeat while the key is held down
+    if (type === 'keyboard' && event.repeat) return
+
+    dispatch(cursorForward())
+
+    // suppress auto-repeat of this key until it is released so that holding it does not race the caret through the child thought
+    if (type === 'keyboard') globals.arrowKeyBoundaryCross = event.key
+  },
 }
 
 export default cursorForwardTableCommand
