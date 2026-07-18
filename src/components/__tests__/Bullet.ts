@@ -237,8 +237,7 @@ describe('render', () => {
     expect(bullet).toBeInTheDocument()
   })
 
-  // Regression test for https://github.com/cybersemics/em/issues/3062
-  // .skip keeps normal CI green while the test is red; remove the .skip when the fix lands.
+  // https://github.com/cybersemics/em/issues/3062
   it('render an ordered number instead of a bullet for =children/=bullet/Ordered', async () => {
     await dispatch([
       importText({

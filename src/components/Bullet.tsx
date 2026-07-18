@@ -11,7 +11,7 @@ import { AlertType } from '../constants'
 import { LongPressProps } from '../hooks/useLongPress'
 import attributeEquals from '../selectors/attributeEquals'
 import findDescendant from '../selectors/findDescendant'
-import { getAllChildrenAsThoughts, getChildrenRanked, isVisible } from '../selectors/getChildren'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import getLexeme from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
 import getThoughtFill from '../selectors/getThoughtFill'
@@ -43,6 +43,8 @@ interface BulletProps {
   isCursorGrandparent?: boolean
   isCursorParent?: boolean
   isInContextView?: boolean
+  /** 1-based ordinal position among visible non-attribute siblings (from linearizeTree), used to number =bullet/Ordered lists. -1 for attributes. */
+  childIndexNonAttribute?: number
 }
 
 const isIOSSafari = isTouch && isiPhone && isSafari()
@@ -213,7 +215,10 @@ const BulletOrdered = ({ fill, order }: { fill?: string; order: number }) => {
     <text
       aria-label='bullet-glyph'
       data-bullet='ordered'
-      x={330}
+      // Right-anchor the number so multi-digit ordinals form a period-aligned column. x is offset to the right of the
+      // viewBox center (300) by roughly half the width of a typical ordinal so single/short numbers are centered on the
+      // bullet position, aligning with the leaf bullet and cursor overlay (both centered at cx=300).
+      x={450}
       y={300}
       textAnchor='end'
       dominantBaseline='central'
@@ -265,6 +270,7 @@ const Bullet = ({
   isCursorGrandparent,
   isCursorParent,
   isInContextView,
+  childIndexNonAttribute,
   // depth,
   // debugIndex,
 }: BulletProps) => {
@@ -316,6 +322,8 @@ const Bullet = ({
   const order = useSelector(state => {
     // Ordered numbering does not apply in the context view.
     if (showContexts) return null
+    // childIndexNonAttribute is -1 for attributes and undefined outside the linearized tree; neither should be numbered.
+    if (childIndexNonAttribute == null || childIndexNonAttribute < 0) return null
     const thought = getThoughtById(state, thoughtId)
     // Never number a meta attribute (e.g. =children itself when hidden thoughts are shown).
     if (!thought || isAttribute(thought.value)) return null
@@ -324,12 +332,8 @@ const Bullet = ({
     const isOrdered =
       attributeEquals(state, findDescendant(state, parentId, '=children'), '=bullet', 'Ordered') ||
       attributeEquals(state, findDescendant(state, grandparentId, '=grandchildren'), '=bullet', 'Ordered')
-    if (!isOrdered) return null
-    // Number by position among visible (non-meta) siblings in the same rank/render order as linearizeTree.
-    const index = getChildrenRanked(state, parentId)
-      .filter(isVisible(state))
-      .findIndex(child => child.id === thoughtId)
-    return index >= 0 ? index + 1 : null
+    // Number by position among visible (non-meta) siblings, precomputed once by linearizeTree in render order.
+    return isOrdered ? childIndexNonAttribute + 1 : null
   })
 
   const isExpanded = useSelector(state => !!state.expanded[hashPath(path)])
