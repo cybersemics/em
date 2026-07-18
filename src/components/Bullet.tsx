@@ -216,9 +216,9 @@ const BulletOrdered = ({ fill, order }: { fill?: string; order: number }) => {
       aria-label='bullet-glyph'
       data-bullet='ordered'
       // Right-anchor the number so multi-digit ordinals form a period-aligned column. x is offset to the right of the
-      // viewBox center (300) by roughly half the width of a typical ordinal so single/short numbers are centered on the
-      // bullet position, aligning with the leaf bullet and cursor overlay (both centered at cx=300).
-      x={450}
+      // viewBox center (300) so a single digit is centered on the bullet position, aligning with the leaf bullet and
+      // cursor overlay (both centered at cx=300).
+      x={501}
       y={300}
       textAnchor='end'
       dominantBaseline='central'
