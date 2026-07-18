@@ -11,7 +11,10 @@ import * as path from 'path'
 import { fileURLToPath } from 'url'
 import EverhourClient from './everhour/client.ts'
 import extractIssueNumber from './everhour/extractIssueNumber.ts'
+import { type MaybeEmbeddedSample, joinSamplesWithEmbeddings, loadEmbeddingCache } from './lib/embeddingCache.ts'
 import estimateIssue from './lib/estimateIssue.ts'
+import flagForReview from './lib/flagForReview.ts'
+import formatEstimateAudit from './lib/formatEstimateAudit.ts'
 import getPromptVersion from './lib/getPromptVersion.ts'
 import issueLink from './lib/issueLink.ts'
 import issueUrlSuffix from './lib/issueUrlSuffix.ts'
@@ -78,6 +81,7 @@ const processTask = async ({
   repoName,
   instructions,
   samples,
+  embeddedSamples,
   promptVersion,
   dryRunAI,
   dryRunEverhour,
@@ -91,6 +95,7 @@ const processTask = async ({
   repoName: string
   instructions: string
   samples: ReturnType<typeof loadSamples>
+  embeddedSamples: MaybeEmbeddedSample[]
   promptVersion: string
   dryRunAI: boolean
   dryRunEverhour: boolean
@@ -105,6 +110,7 @@ const processTask = async ({
     issueUrl: issueUrlSuffix(owner, repoName, issue.number),
     instructions,
     samples,
+    embeddedSamples,
     openaiApiKey,
     everhour,
     taskId,
@@ -125,9 +131,27 @@ const processTask = async ({
     `  Estimated issue ${issueLink(owner, repoName, issue.number)} @ ${category} / ${hours}h${issueUrlSuffix(owner, repoName, issue.number)}`,
   )
 
+  // When the confidence gate flags the estimate, add a review label. Best-effort and independent of
+  // the audit comment: the estimate is already recorded, so a labeling failure must not discard it.
+  if (estimate.needsReview) {
+    await flagForReview({
+      owner,
+      repoName,
+      issueNumber: issue.number,
+      githubToken,
+      issueRef: issueLink(owner, repoName, issue.number),
+    })
+  }
+
   // Leave an audit comment on the GitHub issue. Best-effort: a comment failure must not abort the
   // backfill run or discard the estimate already recorded, so failures are warned, not thrown.
-  const commentBody = `Everhour estimate: ${category} / ${hours}h\nConfidence: ${confidence} (agreement ${Math.round(agreement * 100)}%)\nPrompt version: ${promptVersionLink(owner, repoName, promptVersion)}\nSource: backfill`
+  const commentBody = [
+    `Everhour estimate: ${category} / ${hours}h`,
+    `Confidence: ${confidence} (agreement ${Math.round(agreement * 100)}%)`,
+    `Prompt version: ${promptVersionLink(owner, repoName, promptVersion)}`,
+    ...formatEstimateAudit(estimate),
+    'Source: backfill',
+  ].join('\n')
   try {
     const commentResp = await fetch(
       `https://api.github.com/repos/${owner}/${repoName}/issues/${issue.number}/comments`,
@@ -208,6 +232,9 @@ const main = async () => {
   // 2. Extract issue numbers and fetch GitHub issues
   const instructions = loadInstructions(repoRoot)
   const samples = loadSamples(repoRoot)
+  // Join samples with their cached embeddings for kNN retrieval. estimateIssue falls back to the
+  // all-samples prompt when the cache is empty or embeddings are otherwise unavailable.
+  const embeddedSamples = joinSamplesWithEmbeddings(samples, loadEmbeddingCache(repoRoot))
   const promptVersion = getPromptVersion(repoRoot)
 
   // 3. Page through the project's tasks, processing one page at a time rather than loading
@@ -290,6 +317,7 @@ const main = async () => {
         repoName,
         instructions,
         samples,
+        embeddedSamples,
         promptVersion,
         dryRunAI,
         dryRunEverhour,
