@@ -7,6 +7,7 @@
     "backfill": "node src/backfill.ts",
     "build": "tsc --noEmit",
     "command": "node src/command.ts",
+    "evaluate": "node src/evaluate.ts",
     "format": "prettier --write .",
     "issue": "node src/issue.ts",
     "typecheck": "tsc --noEmit"

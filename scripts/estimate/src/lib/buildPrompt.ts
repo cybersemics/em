@@ -25,7 +25,10 @@ const buildPrompt = (samples: EstimateSample[], issue: IssueInput): string => {
   prompt += `Title: ${issue.title}\n`
   prompt += `Labels: ${issue.labels.join(', ')}\n`
   prompt += `Body:\n${issue.body}\n\n`
-  prompt += 'Respond with only a JSON object: {"estimate": "<CATEGORY>"}\n'
+  prompt +=
+    'Respond with only a JSON object with these fields, in this order: ' +
+    '{"rationale": "<brief reasoning>", "estimate": "<CATEGORY>", "confidence": "high|medium|low", "secondChoice": "<CATEGORY>"}. ' +
+    'Put "rationale" first so you reason before committing to a bucket.\n'
 
   return prompt
 }
