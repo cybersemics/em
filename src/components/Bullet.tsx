@@ -1,6 +1,6 @@
 import React, { useRef } from 'react'
 import { ConnectDragSource } from 'react-dnd'
-import { useSelector } from 'react-redux'
+import { shallowEqual, useSelector } from 'react-redux'
 import { css, cva, cx } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import Path from '../@types/Path'
@@ -9,6 +9,7 @@ import ThoughtId from '../@types/ThoughtId'
 import { isMac, isSafari, isTouch, isiPhone } from '../browser'
 import { AlertType } from '../constants'
 import { LongPressProps } from '../hooks/useLongPress'
+import attribute from '../selectors/attribute'
 import attributeEquals from '../selectors/attributeEquals'
 import findDescendant from '../selectors/findDescendant'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
@@ -209,14 +210,19 @@ const BulletParent = ({
   )
 }
 
-/** An ordered-list number rendered in place of a bullet for =children/=bullet/Ordered. Rendered inside the same scaling bullet SVG (viewBox 0 0 600 600) so it sizes and positions consistently across platforms and font sizes. */
-const BulletOrdered = ({ fill, order }: { fill?: string; order: number }) => {
+/** Converts a 1-based index to a lowercase letter sequence (1→a, 26→z, 27→aa, …) for lettered ordered lists. */
+const numberToLetters = (n: number): string =>
+  n <= 0 ? '' : numberToLetters(Math.floor((n - 1) / 26)) + String.fromCharCode(97 + ((n - 1) % 26))
+
+/** An ordered-list glyph (number or letter) rendered in place of a bullet for =children/=bullet/Ordered or =children/=bullet/Alpha. Rendered inside the same scaling bullet SVG (viewBox 0 0 600 600) so it sizes and positions consistently across platforms and font sizes. */
+const BulletOrdered = ({ fill, index, style }: { fill?: string; index: number; style: 'Ordered' | 'Alpha' }) => {
+  const label = style === 'Alpha' ? numberToLetters(index) : `${index}`
   return (
     <text
       aria-label='bullet-glyph'
-      data-bullet='ordered'
-      // Right-anchor the number so multi-digit ordinals form a period-aligned column. x is offset to the right of the
-      // viewBox center (300) so a single digit is centered on the bullet position, aligning with the leaf bullet and
+      data-bullet={style === 'Alpha' ? 'alpha' : 'ordered'}
+      // Right-anchor the glyph so multi-character ordinals form a period-aligned column. x is offset to the right of the
+      // viewBox center (300) so a single character is centered on the bullet position, aligning with the leaf bullet and
       // cursor overlay (both centered at cx=300).
       x={501}
       y={300}
@@ -225,7 +231,7 @@ const BulletOrdered = ({ fill, order }: { fill?: string; order: number }) => {
       className={css({ fill: 'bullet' })}
       style={{ fill, fontSize: '360px' }}
     >
-      {order}.
+      {label}.
     </text>
   )
 }
@@ -318,8 +324,8 @@ const Bullet = ({
 
   const fill = useSelector(state => getThoughtFill(state, thoughtId))
 
-  /** The 1-based ordinal of an ordered list item, or null if the thought is not in an ordered context. A thought is ordered when its parent has =children/=bullet/Ordered or its grandparent has =grandchildren/=bullet/Ordered. */
-  const order = useSelector(state => {
+  /** The 1-based ordinal and style of an ordered list item, or null if the thought is not in an ordered context. A thought is ordered when its parent has =children/=bullet/Ordered|Alpha or its grandparent has =grandchildren/=bullet/Ordered|Alpha. */
+  const ordered = useSelector((state): { index: number; style: 'Ordered' | 'Alpha' } | null => {
     // Ordered numbering does not apply in the context view.
     if (showContexts) return null
     // childIndexNonAttribute is -1 for attributes and undefined outside the linearized tree; neither should be numbered.
@@ -329,12 +335,13 @@ const Bullet = ({
     if (!thought || isAttribute(thought.value)) return null
     const parentId = thought.parentId
     const grandparentId = getThoughtById(state, parentId)?.parentId ?? null
-    const isOrdered =
-      attributeEquals(state, findDescendant(state, parentId, '=children'), '=bullet', 'Ordered') ||
-      attributeEquals(state, findDescendant(state, grandparentId, '=grandchildren'), '=bullet', 'Ordered')
+    const bulletStyle =
+      attribute(state, findDescendant(state, parentId, '=children'), '=bullet') ??
+      attribute(state, findDescendant(state, grandparentId, '=grandchildren'), '=bullet')
+    if (bulletStyle !== 'Ordered' && bulletStyle !== 'Alpha') return null
     // Number by position among visible (non-meta) siblings, precomputed once by linearizeTree in render order.
-    return isOrdered ? childIndexNonAttribute + 1 : null
-  })
+    return { index: childIndexNonAttribute + 1, style: bulletStyle }
+  }, shallowEqual)
 
   const isExpanded = useSelector(state => !!state.expanded[hashPath(path)])
   const isBulletExpanded = isCursorParent || isCursorGrandparent || isEditing || isExpanded
@@ -361,8 +368,8 @@ const Bullet = ({
         {!(publish && (isRoot || isRootChildLeaf)) && isHighlighted && !isDropGutterDeleteHovering && (
           <BulletHighlightOverlay isHighlighted={isHighlighted} leaf={leaf} publish={publish} simplePath={simplePath} />
         )}
-        {order != null ? (
-          <BulletOrdered fill={fill} order={order} />
+        {ordered != null ? (
+          <BulletOrdered fill={fill} index={ordered.index} style={ordered.style} />
         ) : leaf && !showContexts ? (
           <BulletLeaf
             done={isDone}
