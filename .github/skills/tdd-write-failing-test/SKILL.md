@@ -56,6 +56,14 @@ Agent judgement — both are valid. Default to grouping with the nearest existin
 
 The fixture handles app launch, navigation, and tutorial-skip **per test** — do not redo those inside the test. Start straight from your helper calls. Tap em controls through the **`click` / `tap` helper**, never a raw click (see `browser-control`'s fastClick trap).
 
+Annotate the test with a **single, bare issue-URL comment** — nothing more:
+
+```ts
+// https://github.com/cybersemics/em/issues/4331
+```
+
+Do **not** label it a "regression test" (it is just a normal test), and do **not** add a code comment explaining the `.skip` (the skip is a transient marker described in this skill, not something to document in the merged test).
+
 ### web / android — Vitest + puppeteer helpers (`src/e2e/puppeteer/__tests__/`)
 
 ```ts
@@ -73,8 +81,7 @@ describe('command center', () => {
     await emulate(KnownDevices['iPhone 15 Pro'])
   }, 10000)
 
-  // Regression test for https://github.com/cybersemics/em/issues/4331
-  // .skip keeps normal CI green while the test is red; remove the .skip when the fix lands (Step 6).
+  // https://github.com/cybersemics/em/issues/4331
   it.skip('overlay stays solid after a modal opened over it is closed', async () => {
     await newThought('hello world')
     await gesture('u') // swipe up → open Command Center
@@ -97,8 +104,7 @@ import newThought from '../helpers/newThought'
 import tap from '../helpers/tap'
 
 describe('command center', () => {
-  // Regression test for https://github.com/cybersemics/em/issues/4331
-  // .skip keeps normal CI green while the test is red; remove the .skip when the fix lands (Step 6).
+  // https://github.com/cybersemics/em/issues/4331
   it.skip('overlay stays solid after a modal opened over it is closed', async () => {
     await newThought('hello world')
     await gesture('u') // swipe up → open Command Center
@@ -141,7 +147,7 @@ Commit the **`it.skip`** test together with any test-only `data-testid` hook fro
 
 Then hand back to the caller. The fix proceeds in the normal flow (plan → implement). **After the fix:**
 
-1. **Remove the `.skip`** (`it.skip` → `it`).
+1. **Remove the `.skip`** (`it.skip` → `it`), leaving only the bare issue-URL comment above the test — no "regression test" label and no `.skip`-rationale comment.
 2. Re-run via **`run-test`** — it must now **pass** (the green that proves the fix and turns on permanent coverage).
 3. Commit the fix **and** the skip-removal together, so the merged test is a normal, passing, ongoing-coverage test.
 

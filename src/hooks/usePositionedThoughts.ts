@@ -4,7 +4,7 @@ import Index from '../@types/IndexType'
 import ThoughtId from '../@types/ThoughtId'
 import TreeThought from '../@types/TreeThought'
 import TreeThoughtPositioned from '../@types/TreeThoughtPositioned'
-import { LongPressState } from '../constants'
+import { HOME_TOKEN, LongPressState } from '../constants'
 import testFlags from '../e2e/testFlags'
 import scrollTopStore from '../stores/scrollTop'
 import head from '../util/head'
@@ -98,6 +98,17 @@ const usePositionedThoughts = (
     // key thoughtId of thought with =table attribute
     const tableCol1Widths = new Map<ThoughtId, number>()
 
+    // The root context can also be a table (e.g. toggling Table View while the cursor is on a top-level thought sets =view/Table on the root).
+    // Unlike other tables, the root is never rendered as a node in linearizeTree, so it never gets visibleChildrenKeys and its col1 width is never registered below.
+    // Register it here, keyed by HOME_TOKEN, from the measured widths of the visible top-level col1 thoughts, so its col2 descendants can be shifted right (see ancestorTableWidths).
+    const homeTableCol1Width = treeThoughts.reduce(
+      (accum, node) => (node.depth === 0 && node.isTableCol1 ? Math.max(accum, sizes[node.key]?.width || 0) : accum),
+      0,
+    )
+    if (homeTableCol1Width > 0) {
+      tableCol1Widths.set(HOME_TOKEN, homeTableCol1Width)
+    }
+
     const treeThoughtsPositioned = treeThoughts.map((node, i) => {
       const prev = treeThoughts[i - 1] as TreeThought | undefined
       const prevCliff = prev ? sizes[prev.key]?.cliff : 0
@@ -126,8 +137,10 @@ const usePositionedThoughts = (
 
       // sum ancestor table widths
       // ignore thought and parent since horizontal shift should begin with col 2, and tableCol1Widths is keyed by the thought with =table
-      const ancestorTableWidths = node.path.reduce(
-        (accum, id, i) => accum + (tableCol1Widths.get(node.path[i - 2]) || 0),
+      // Prepend HOME_TOKEN so that a table on the root context (which is never rendered as a node and thus never appears in a Path) is treated as a virtual ancestor and still shifts its col2 descendants right.
+      const pathWithHome = [HOME_TOKEN, ...node.path]
+      const ancestorTableWidths = pathWithHome.reduce(
+        (accum, id, i) => accum + (tableCol1Widths.get(pathWithHome[i - 2]) || 0),
         0,
       )
 
@@ -141,12 +154,13 @@ const usePositionedThoughts = (
             ? fontSize
             : // table col2: shift right by the width of table col1 to offset ancestorTableWidths, since col1 is still visible
               // then shift left by 3 em, which is about the most we can do without col1 getting cropped by the left edge of the screen
+              // fall back to HOME_TOKEN when the table is on the root context (its col1 is not present in the Path)
               node.isTableCol2
-              ? -(tableCol1Widths.get(node.path[node.path.length - 3]) || 0) + fontSize * 3
+              ? -(tableCol1Widths.get(node.path[node.path.length - 3] ?? HOME_TOKEN) || 0) + fontSize * 3
               : // table col2 child: if the child is a leaf, shift right by the width of table col1 again since col1 is still visible
                 // otherwise, shift by 3 em since col1 is now hidden, but we don't want too much of a jump
                 node.isTableCol2Child && node.leaf
-                ? -(tableCol1Widths.get(node.path[node.path.length - 4]) || 0) + fontSize * 4
+                ? -(tableCol1Widths.get(node.path[node.path.length - 4] ?? HOME_TOKEN) || 0) + fontSize * 4
                 : 0)
       }
 
@@ -223,7 +237,7 @@ const usePositionedThoughts = (
         cliff,
         height,
         singleLineHeightWithCliff,
-        width: tableCol1Widths.get(head(parentOf(node.path))),
+        width: tableCol1Widths.get(head(parentOf(node.path)) ?? HOME_TOKEN),
         isLastVisible,
         x,
         y,
