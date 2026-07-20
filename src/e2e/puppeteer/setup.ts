@@ -114,8 +114,8 @@ const setup = async ({
     // wait for welcome modal to appear
     await page.waitForSelector('#skip-tutorial')
 
-    // DOM click is reliable across headless, standalone Chrome, and mobile emulation.
-    await page.evaluate(() => (document.getElementById('skip-tutorial') as HTMLElement | null)?.click())
+    // click the skip tutorial link
+    await page.click('#skip-tutorial')
 
     // wait for welcome modal to disappear
     await page.waitForFunction(() => !document.getElementById('skip-tutorial'))
