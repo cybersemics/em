@@ -8,6 +8,7 @@ import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import setTheme from '../helpers/setTheme'
 import waitForSelector from '../helpers/waitForSelector'
+import { page } from '../session'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
@@ -32,6 +33,29 @@ describe('sidebar', () => {
     expect(await screenshotWithoutToolbarIcons()).toMatchImageSnapshot({
       customSnapshotIdentifier: 'sidebar-empty-light',
     })
+  })
+
+  it('does not clip the bottom edge of the scroll area', async () => {
+    await openSidebar()
+
+    const maskCoverage = await page.evaluate(() => {
+      const scroller = document.querySelector<HTMLElement>('[data-scroll-at-edge]')
+      const maskCarrier = scroller?.parentElement
+      const scrollArea = maskCarrier?.parentElement
+      if (!scroller || !maskCarrier || !scrollArea) return null
+
+      return {
+        maskCarrierBottom: maskCarrier.getBoundingClientRect().bottom,
+        scrollAreaHeight: scrollArea.getBoundingClientRect().height,
+        scrollerBottom: scroller.getBoundingClientRect().bottom,
+        scrollerHeight: scroller.getBoundingClientRect().height,
+      }
+    })
+
+    if (!maskCoverage) throw new Error('Sidebar mask elements were not mounted.')
+
+    expect(maskCoverage.maskCarrierBottom).toBeGreaterThanOrEqual(maskCoverage.scrollerBottom - 0.5)
+    expect(maskCoverage.scrollerHeight).toBeCloseTo(maskCoverage.scrollAreaHeight)
   })
 
   it('recently edited thoughts', async () => {

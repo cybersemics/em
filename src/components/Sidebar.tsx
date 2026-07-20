@@ -56,7 +56,7 @@ import { toggleSidebarActionCreator } from '../actions/toggleSidebar'
 import { isAndroid, isSafari } from '../browser'
 import { LongPressState } from '../constants'
 import useBreakpoint from '../hooks/useBreakpoint'
-import { DROPDOWN_MASK_BAND, SCROLL_HINT_FADE } from '../recipes/sidebarMaskGeometry'
+import { DROPDOWN_MASK_BAND, MASK_OVERSIZE, SCROLL_HINT_FADE } from '../recipes/sidebarMaskGeometry'
 import themeColors from '../selectors/themeColors'
 import viewportStore from '../stores/viewport'
 import durations from '../util/durations'
@@ -1436,10 +1436,11 @@ const Sidebar = () => {
                     </FadeTransition>
 
                     {/* Scroll area under the sliding mask (see the COMPOSITED SLIDING MASK note):
-                        the outer div carries the STATIC mask gradient and translates by maskSlideY;
-                        the scroller inside counter-translates so its content and scroll clip stay
-                        pixel-stationary while the gradient glides over them. The dim is plain
-                        opacity on the scroller itself. */}
+                        the mask carrier extends beyond this viewport by MASK_OVERSIZE and
+                        translates by maskSlideY. The scroller retains the viewport's exact height
+                        and counter-translates, so its content and scroll clip stay pixel-stationary
+                        while the gradient glides over them. The fixed oversize keeps the scroller
+                        inside the carrier's border-box mask at every animation position. */}
                     <div
                       className={css({
                         flex: 1,
@@ -1451,10 +1452,15 @@ const Sidebar = () => {
                     >
                       <div
                         style={{
+                          // Fixed border-box bounds keep the counter-translated scroller inside the
+                          // mask carrier throughout the animation and give WebKit a stable
+                          // compositing surface.
+                          height: `calc(100% + ${MASK_OVERSIZE}px)`,
                           transform: `translateY(${maskSlideY}px)`,
                           transition: `transform ${STAGE_DURATION}s ${cssEaseOut}`,
-                          // This box rises up to 176px over the header/dropdown when revealed — it
-                          // must not swallow their taps; the scroller re-enables its own events.
+                          // This box rises up to MASK_OVERSIZE over the header/dropdown when
+                          // revealed — it must not swallow their taps; the scroller re-enables its
+                          // own events.
                           pointerEvents: 'none',
                           // Android: pre-promote so the transition doesn't create the layer
                           // mid-interaction (on-the-fly layer creation blanks content for a frame
@@ -1462,7 +1468,14 @@ const Sidebar = () => {
                           willChange: isAndroid ? 'transform' : undefined,
                         }}
                         className={cx(
-                          css({ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }),
+                          css({
+                            position: 'absolute',
+                            top: 0,
+                            right: 0,
+                            left: 0,
+                            display: 'flex',
+                            flexDirection: 'column',
+                          }),
                           sidebarContentMaskRecipe(),
                         )}
                       >
@@ -1472,6 +1485,7 @@ const Sidebar = () => {
                           style={{
                             // Counter-slide: cancels the mask wrapper's translate so the list never
                             // visually moves; only the gradient does.
+                            height: `calc(100% - ${MASK_OVERSIZE}px)`,
                             transform: `translateY(${-maskSlideY}px)`,
                             // Dim is a CSS opacity transition (compositor-driven), not a framer
                             // MotionValue ticked per frame on the main thread. 0.5 open / 1 closed.
@@ -1481,7 +1495,7 @@ const Sidebar = () => {
                             willChange: isAndroid ? 'opacity, transform' : undefined,
                           }}
                           className={css({
-                            flex: 1,
+                            flexShrink: 0,
                             overflowY: 'scroll',
                             overflowX: 'hidden',
                             overscrollBehavior: 'contain',
