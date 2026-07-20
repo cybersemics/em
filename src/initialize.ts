@@ -113,15 +113,22 @@ const initializeInternal = async () => {
 }
 
 let initializePromise: ReturnType<typeof initializeInternal> | null = null
+let initializeStartedResolve: (() => void) | null = null
+const initializeStarted = new Promise<void>(resolve => {
+  initializeStartedResolve = resolve
+})
 
 /** Initialize local db and window events. */
 export const initialize = (): ReturnType<typeof initializeInternal> => {
   initializePromise = initializeInternal()
+  initializeStartedResolve?.()
+  initializeStartedResolve = null
   return initializePromise
 }
 
 /** Waits for app initialization to finish. Used by e2e tests before interacting with exposed helpers. */
 export const waitForInitialized = async (): Promise<void> => {
+  if (!initializePromise) await initializeStarted
   await initializePromise
 }
 
