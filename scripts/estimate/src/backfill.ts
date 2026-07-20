@@ -116,7 +116,7 @@ const processTask = async ({
   // write was dry-run — a dry Everhour run must not post a comment claiming an estimate was recorded.
   if (!estimate || dryRunEverhour) return
 
-  const { category, hours } = estimate
+  const { category, hours, confidence, agreement } = estimate
 
   // Log the estimate first: it has already been written to Everhour by estimateIssue, so it must be
   // reported even if the best-effort audit comment below fails. Logging after the POST risked losing
@@ -127,7 +127,7 @@ const processTask = async ({
 
   // Leave an audit comment on the GitHub issue. Best-effort: a comment failure must not abort the
   // backfill run or discard the estimate already recorded, so failures are warned, not thrown.
-  const commentBody = `Everhour estimate: ${category} / ${hours}h\nPrompt version: ${promptVersionLink(owner, repoName, promptVersion)}\nSource: backfill`
+  const commentBody = `Everhour estimate: ${category} / ${hours}h\nConfidence: ${confidence} (agreement ${Math.round(agreement * 100)}%)\nPrompt version: ${promptVersionLink(owner, repoName, promptVersion)}\nSource: backfill`
   try {
     const commentResp = await fetch(
       `https://api.github.com/repos/${owner}/${repoName}/issues/${issue.number}/comments`,

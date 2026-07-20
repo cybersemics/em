@@ -491,6 +491,7 @@ export enum LongPressState {
 // User settings that can be saved to /EM/Settings/
 // See Settings modal for full descriptions.
 export enum Settings {
+  debugCrashLog = 'debugCrashLog',
   disableGestureTracing = 'disableGestureTracing',
   experienceMode = 'experienceMode',
   hideScrollZone = 'hideScrollZone',

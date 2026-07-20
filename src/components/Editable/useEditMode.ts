@@ -14,6 +14,26 @@ import usePrevious from '../../hooks/usePrevious'
 import hasMulticursor from '../../selectors/hasMulticursor'
 import equalPath from '../../util/equalPath'
 
+// #4173: Ghost-click suppression state. On a rapid tap between adjacent thoughts, iOS Safari coalesces the
+// two taps into a double-tap and emits a delayed, retargeted synthesized mousedown/click/dblclick on the
+// previously-focused thought ~50-250ms after the second tap's touchend. That delayed mousedown would drive
+// onMouseDown -> setCursor and yank the cursor back. We record the last real touchend (time + element); a
+// genuine mousedown follows its own touchend within a few ms on the same element, whereas the ghost arrives
+// later on a different thought, so it can be detected and dropped.
+let lastTouchEndTime = 0
+let lastTouchEndTarget: EventTarget | null = null
+const GHOST_MOUSE_WINDOW_MS = 700
+
+/**
+ * Returns true if the last real touchend recently (within GHOST_MOUSE_WINDOW_MS) landed on a DIFFERENT
+ * editable than `editable` — the shared signature of iOS's rapid-tap retargeting (#4173). Reads the last
+ * recorded touchend from module state.
+ */
+const isRetargetedTap = (editable: EventTarget): boolean =>
+  !!lastTouchEndTarget &&
+  lastTouchEndTarget !== editable &&
+  performance.now() - lastTouchEndTime < GHOST_MOUSE_WINDOW_MS
+
 /** Automatically sets the selection on the given contentRef element when the thought should be selected. Handles a variety of conditions that determine whether this should occur. */
 const useEditMode = ({
   contentRef,
@@ -139,16 +159,57 @@ const useEditMode = ({
     if (!editable) return
 
     /** Sets the DOM selection and updates the Redux cursor state. */
-    const setCaretOffset = (offset: number) => {
+    const setCaretOffset = (offset: number, { cursorHistoryClear }: { cursorHistoryClear?: boolean } = {}) => {
       selection.set(editable, { offset })
-      dispatch(setCursor({ path, offset }))
+      dispatch(setCursor({ path, offset, cursorHistoryClear }))
     }
 
     /** Marks the beginning of a touch so that onMouseDown can determine whether a long press is occurring. */
     const onTouchStart = () => (pressingRef.current = true)
 
-    /** Marks the end of a touch, indicating to onMouseDown that a long press is not occurring. */
-    const onTouchEnd = () => (pressingRef.current = false)
+    /** Ends the touch, records it for ghost-click detection, and sets the cursor on the tapped thought. */
+    const onTouchEnd = (e: TouchEvent) => {
+      pressingRef.current = false
+      // Evaluate against the PREVIOUS touchend before overwriting it below.
+      const willRetarget = isRetargetedTap(editable)
+      lastTouchEndTime = performance.now()
+      lastTouchEndTarget = editable
+
+      // #4173: touchend is the only event iOS reliably delivers to the tapped thought — on a rapid tap it
+      // retargets the synthesized mousedown/focus to the previously-focused thought (onMouseDown suppresses
+      // that ghost), so onFocus cannot be relied on to move the cursor. Set the cursor here.
+      dispatch((dispatch, getState) => {
+        const state = getState()
+        const move =
+          willRetarget &&
+          state.isKeyboardOpen &&
+          !equalPath(state.cursor, path) &&
+          !hasMulticursor(state) &&
+          state.longPress === LongPressState.Inactive &&
+          style?.visibility !== 'hidden'
+        if (!move) return
+
+        // Place the caret where the user tapped. getCaretOffset is coordinate-based, so it resolves the offset
+        // even though the synthesized mousedown/focus retargeted away.
+        const { offset } = getCaretOffset(editable, {
+          clientX: e.changedTouches[0].clientX,
+          clientY: e.changedTouches[0].clientY,
+        })
+
+        // Dispatch only the Redux cursor; the declarative selection effect places the caret on the next render.
+        // Calling selection.set() synchronously during touchend triggers iOS's text-selection machinery, which
+        // swallows the immediately-following rapid tap.
+        dispatch(
+          setCursor({
+            path,
+            offset,
+            cursorHistoryClear: true,
+            isKeyboardOpen: true,
+            preserveMulticursor: true,
+          }),
+        )
+      })
+    }
 
     /**
      * Handles the mousedown event for the editable element.
@@ -167,6 +228,16 @@ const useEditMode = ({
       // If the press is ongoing (touchend has not been dispatched) then a long press is ongoing and setCaretOffset will interfere
       // with default iOS Safari drag-and-drop text selection.
       if (pressingRef.current) return
+
+      // #4173: Suppress WebKit's delayed retargeted ghost mouse events. On a rapid tap between adjacent
+      // thoughts, iOS emits a delayed mousedown/click/dblclick on the previously-focused thought after the
+      // second tap already moved focus. A genuine mousedown follows its own touchend within a few ms on the
+      // same element; a ghost arrives later on a different thought. Dropping it (preventDefault also blocks
+      // the focus change) keeps the cursor on the thought the user actually tapped.
+      if (isTouch && isSafari() && isRetargetedTap(editable)) {
+        e.preventDefault()
+        return
+      }
 
       // If editing or the cursor is on the thought, allow the default browser selection or perform manual caret positioning so the offset is correct.
       // See: #981
@@ -226,7 +297,18 @@ const useEditMode = ({
         editable.removeEventListener('focus', onFocus)
       }
     }
-  }, [contentRef, editingOrOnCursor, isCursor, isMulticursor, fontSize, allowDefaultSelection, path, dispatch])
+  }, [
+    contentRef,
+    editing,
+    editingOrOnCursor,
+    isCursor,
+    isMulticursor,
+    fontSize,
+    allowDefaultSelection,
+    path,
+    dispatch,
+    style?.visibility,
+  ])
 
   // Resume focus if sidebar was just closed and isEditing is true.
   // Disable focus restoration on mobile until the hamburger menu & sidebar backdrop can be made to
