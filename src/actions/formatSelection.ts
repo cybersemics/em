@@ -9,7 +9,14 @@ import pathToThought from '../selectors/pathToThought'
 import resolveNotePath from '../selectors/resolveNotePath'
 import simplifyPath from '../selectors/simplifyPath'
 import themeColors from '../selectors/themeColors'
-import { mergeBatchEditing } from '../stores/batchEditing'
+import {
+  endBatchEditing,
+  getBatchEditingUndoLabel,
+  isBatchEditing,
+  mergeBatchEditing,
+  setBatchEditingUndoLabel,
+  startBatchEditing,
+} from '../stores/batchEditing'
 import { updateCommandState } from '../stores/commandStateStore'
 import suppressFocusStore from '../stores/suppressFocus'
 import head from '../util/head'
@@ -20,19 +27,39 @@ import { setDescendantActionCreator as setDescendant } from './setDescendant'
 
 const BACKGROUND_COLOR_REGEX = /background-color\s*:\s*[^;]+;?/i
 
+type FormatSelectionCommand =
+  | 'bold'
+  | 'italic'
+  | 'strikethrough'
+  | 'underline'
+  | 'code'
+  | 'foreColor'
+  | 'backColor'
+  | 'removeFormat'
+
+const FORMAT_SELECTION_UNDO_LABELS: Record<FormatSelectionCommand, string> = {
+  bold: 'Bold',
+  italic: 'Italic',
+  strikethrough: 'Strikethrough',
+  underline: 'Underline',
+  code: 'Code',
+  foreColor: 'Text Color',
+  backColor: 'Background Color',
+  removeFormat: 'Clear Formatting',
+}
+
+/** Gets the user-facing undo label for a browser formatting command. */
+const getFormatSelectionUndoLabel = (command: FormatSelectionCommand): string => FORMAT_SELECTION_UNDO_LABELS[command]
+
 /** Format the browser selection or cursor thought as bold, italic, strikethrough, underline. */
 export const formatSelectionActionCreator =
-  (
-    command: 'bold' | 'italic' | 'strikethrough' | 'underline' | 'code' | 'foreColor' | 'backColor' | 'removeFormat',
-    color?: ColorToken,
-  ): Thunk =>
+  (command: FormatSelectionCommand, color?: ColorToken): Thunk =>
   (dispatch, getState) => {
     const state = getState()
     if (!state.cursor) return
     const thought = pathToThought(state, state.cursor)
     if (!thought) return
     const colors = themeColors(state)
-    suppressFocusStore.update(true)
 
     // format whole thought (if there is no selection)
     const contentEditable = document.querySelector(
@@ -42,107 +69,123 @@ export const formatSelectionActionCreator =
     )
     if (!contentEditable) return
 
-    if (
-      (selection.text()?.length === 0 && strip(thought.value).length !== 0) ||
-      selection.text()?.length === strip(thought.value).length
-    ) {
-      // Check the value of the note or thought for a custom background color (#3901)
-      const hasCustomBackgroundColor = BACKGROUND_COLOR_REGEX.test(
-        state.noteFocus ? (noteValue(state, state.cursor) ?? '') : thought.value,
-      )
-      const savedSelection = selection.save()
-      const inputMode = contentEditable.getAttribute('inputmode')
-      const editable = contentEditable as HTMLElement
+    const wasBatchEditing = isBatchEditing()
+    const undoLabel = getFormatSelectionUndoLabel(command)
+    if (wasBatchEditing) {
+      if (!getBatchEditingUndoLabel()) setBatchEditingUndoLabel(undoLabel)
+    } else {
+      startBatchEditing(undoLabel)
+    }
 
-      // Prevent the virtual keyboard from opening when the editable is focused
-      if (isTouch && isSafari() && !state.isKeyboardOpen) editable.setAttribute('inputmode', 'none')
+    suppressFocusStore.update(true)
 
-      // Note that we must suppress focus events in the Editable component, otherwise selecting text will set editing:true on mobile.
-      editable.focus({ preventScroll: true })
-      selection.select(contentEditable)
-      if (!(command === 'backColor' && color === 'bg' && !hasCustomBackgroundColor)) {
+    try {
+      if (
+        (selection.text()?.length === 0 && strip(thought.value).length !== 0) ||
+        selection.text()?.length === strip(thought.value).length
+      ) {
+        // Check the value of the note or thought for a custom background color (#3901)
+        const hasCustomBackgroundColor = BACKGROUND_COLOR_REGEX.test(
+          state.noteFocus ? (noteValue(state, state.cursor) ?? '') : thought.value,
+        )
+        const savedSelection = selection.save()
+        const inputMode = contentEditable.getAttribute('inputmode')
+        const editable = contentEditable as HTMLElement
+
+        // Prevent the virtual keyboard from opening when the editable is focused
+        if (isTouch && isSafari() && !state.isKeyboardOpen) editable.setAttribute('inputmode', 'none')
+
+        // Note that we must suppress focus events in the Editable component, otherwise selecting text will set editing:true on mobile.
+        editable.focus({ preventScroll: true })
+        selection.select(contentEditable)
+        if (!(command === 'backColor' && color === 'bg' && !hasCustomBackgroundColor)) {
+          document.execCommand(command, false, color ? colors[color] : '')
+        }
+
+        // Only restore the selection (which keeps the editable focused) when in edit mode.
+        // On mobile, selecting the contentEditable to apply formatting re-focuses it; restoring the selection would
+        // re-open the virtual keyboard even though the user had manually dismissed it. Clearing the selection blurs
+        // the editable so the keyboard stays closed, matching the edit mode invariant (#3996).
+        const editMode = !isTouch || state.isKeyboardOpen
+        if (savedSelection && editMode) {
+          selection.restore(savedSelection)
+        } else {
+          selection.clear()
+        }
+
+        if (isTouch && isSafari() && !state.isKeyboardOpen) contentEditable.setAttribute('inputmode', inputMode ?? '')
+      }
+      // format selected text only
+      else {
         document.execCommand(command, false, color ? colors[color] : '')
+        updateCommandState()
       }
 
-      // Only restore the selection (which keeps the editable focused) when in edit mode.
-      // On mobile, selecting the contentEditable to apply formatting re-focuses it; restoring the selection would
-      // re-open the virtual keyboard even though the user had manually dismissed it. Clearing the selection blurs
-      // the editable so the keyboard stays closed, matching the edit mode invariant (#3996).
-      const editMode = !isTouch || state.isKeyboardOpen
-      if (savedSelection && editMode) {
-        selection.restore(savedSelection)
-      } else {
-        selection.clear()
-      }
+      if (command === 'backColor' || command === 'foreColor') {
+        dispatch((dispatch, getState) => {
+          const state = getState()
+          if (!state.cursor) return
 
-      if (isTouch && isSafari() && !state.isKeyboardOpen) contentEditable.setAttribute('inputmode', inputMode ?? '')
-    }
-    // format selected text only
-    else {
-      document.execCommand(command, false, color ? colors[color] : '')
-      updateCommandState()
-    }
+          // Could be formatting either a thought or a note (#3901)
+          const value = state.noteFocus
+            ? noteValue(state, state.cursor)
+            : getThoughtById(state, head(state.cursor))?.value
+          if (!value) return
 
-    suppressFocusStore.update(false)
+          const path = state.noteFocus ? resolveNotePath(state, state.cursor) : state.cursor
+          if (!path) return
 
-    if (command === 'backColor' || command === 'foreColor') {
-      dispatch((dispatch, getState) => {
-        const state = getState()
-        if (!state.cursor) return
+          // Use DOMParser to remove background-color and unwrap font/span tags that have no meaningful attributes
+          const doc = new DOMParser().parseFromString(value, 'text/html')
 
-        // Could be formatting either a thought or a note (#3901)
-        const value = state.noteFocus
-          ? noteValue(state, state.cursor)
-          : getThoughtById(state, head(state.cursor))?.value
-        if (!value) return
+          for (const el of Array.from(doc.body.querySelectorAll<HTMLElement>('font, span'))) {
+            // Remove background-color if it matches the default background color
+            if (el.style.backgroundColor && rgbToHex(el.style.backgroundColor) === rgbToHex(colors.bg)) {
+              el.style.removeProperty('background-color')
+              if (!el.getAttribute('style')?.trim()) {
+                el.removeAttribute('style')
+              }
+            }
 
-        const path = state.noteFocus ? resolveNotePath(state, state.cursor) : state.cursor
-        if (!path) return
+            // Remove color if it matches the default text color
+            if (el.style.color && rgbToHex(el.style.color) === rgbToHex(state.noteFocus ? colors.fg : colors.fgNote)) {
+              el.style.removeProperty('color')
+            }
 
-        // Use DOMParser to remove background-color and unwrap font/span tags that have no meaningful attributes
-        const doc = new DOMParser().parseFromString(value, 'text/html')
-
-        for (const el of Array.from(doc.body.querySelectorAll<HTMLElement>('font, span'))) {
-          // Remove background-color if it matches the default background color
-          if (el.style.backgroundColor && rgbToHex(el.style.backgroundColor) === rgbToHex(colors.bg)) {
-            el.style.removeProperty('background-color')
-            if (!el.getAttribute('style')?.trim()) {
-              el.removeAttribute('style')
+            // Unwrap tags that have no meaningful style or color attributes
+            if (!el.getAttribute('style')?.trim() && !el.getAttribute('color')?.trim()) {
+              el.replaceWith(...Array.from(el.childNodes))
             }
           }
 
-          // Remove color if it matches the default text color
-          if (el.style.color && rgbToHex(el.style.color) === rgbToHex(state.noteFocus ? colors.fg : colors.fgNote)) {
-            el.style.removeProperty('color')
-          }
+          const newValue = doc.body.innerHTML
+          const batchUndoLabel = getBatchEditingUndoLabel()
 
-          // Unwrap tags that have no meaningful style or color attributes
-          if (!el.getAttribute('style')?.trim() && !el.getAttribute('color')?.trim()) {
-            el.replaceWith(...Array.from(el.childNodes))
-          }
-        }
-
-        const newValue = doc.body.innerHTML
-
-        // Overwrite the value of the thought or note with the stripped value in order to remove background highlighting (#3901)
-        if (newValue !== value)
-          dispatch(
-            state.noteFocus
-              ? setDescendant({
-                  path,
-                  values: [newValue],
-                  mergePrev: mergeBatchEditing(),
-                })
-              : editThought({
-                  cursorOffset: selection.offsetThought() ?? undefined,
-                  oldValue: value,
-                  newValue: newValue,
-                  path: simplifyPath(state, path),
-                  // force the ContentEditable to update
-                  force: true,
-                  mergePrev: mergeBatchEditing(),
-                }),
-          )
-      })
+          // Overwrite the value of the thought or note with the stripped value in order to remove background highlighting (#3901)
+          if (newValue !== value)
+            dispatch(
+              state.noteFocus
+                ? setDescendant({
+                    path,
+                    values: [newValue],
+                    mergePrev: mergeBatchEditing(),
+                    undoLabel: batchUndoLabel,
+                  })
+                : editThought({
+                    cursorOffset: selection.offsetThought() ?? undefined,
+                    oldValue: value,
+                    newValue: newValue,
+                    path: simplifyPath(state, path),
+                    // force the ContentEditable to update
+                    force: true,
+                    mergePrev: mergeBatchEditing(),
+                    undoLabel: batchUndoLabel,
+                  }),
+            )
+        })
+      }
+    } finally {
+      suppressFocusStore.update(false)
+      if (!wasBatchEditing) endBatchEditing()
     }
   }

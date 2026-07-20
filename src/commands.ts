@@ -44,6 +44,7 @@ import head from './util/head'
 import keyValueBy from './util/keyValueBy'
 import parentOf from './util/parentOf'
 import UnreachableError from './util/unreachable'
+import { dispatchWithUndoLabel } from './util/withUndoLabel'
 
 export const globalCommands: Command[] = Object.values(commandsObject)
 
@@ -211,6 +212,13 @@ export const chainCommand = (command1: Command, command2: Command): Command => {
 
 const eventNoop = { preventDefault: noop } as Event
 
+/** Gets the user-facing undo/redo label for a command. */
+const getCommandUndoLabel = (command: Command, state: State) => {
+  if (typeof command.undoLabel === 'function') return command.undoLabel(state)
+  if (command.undoLabel) return command.undoLabel
+  return command.labelInverse && command.isActive?.(state) ? command.labelInverse : command.label
+}
+
 /** Filter the cursors based on the filter type. Cursors are sorted in document order. */
 const filterCursors = (state: State, cursors: Path[], filter: MulticursorFilter = 'all') => {
   switch (filter) {
@@ -291,7 +299,12 @@ export const executeCommand = (
   if (!canExecute) return
 
   // execute single command
-  command.exec(commandStore.dispatch, commandStore.getState, event, { type })
+  command.exec(
+    dispatchWithUndoLabel(commandStore.dispatch, getCommandUndoLabel(command, commandStore.getState())),
+    commandStore.getState,
+    event,
+    { type },
+  )
 }
 
 /** Execute command. Defaults to global store and keyboard shortcuts. */
@@ -346,6 +359,9 @@ export const executeCommandWithMulticursor = (
   const canExecute = filteredPaths.every(path => !command.canExecute || command.canExecute({ ...state, cursor: path }))
   if (!canExecute) return
 
+  const commandUndoLabel = getCommandUndoLabel(command, state)
+  const dispatchWithCommandUndoLabel = dispatchWithUndoLabel(commandStore.dispatch, commandUndoLabel)
+
   // Reverse the order of the cursors if the command has reverse multicursor mode enabled.
   if (multicursor.reverse) {
     filteredPaths.reverse()
@@ -356,21 +372,21 @@ export const executeCommandWithMulticursor = (
   commandStore.dispatch(
     setIsMulticursorExecuting({
       value: true,
-      undoLabel: command.id,
+      undoLabel: commandUndoLabel,
     }),
   )
 
   // If there is a custom execMulticursor function, call it with the filtered multicursors.
   // Otherwise, execute the command once for each of the filtered multicursors.
   if (multicursor.execMulticursor) {
-    multicursor.execMulticursor(filteredPaths, commandStore.dispatch, commandStore.getState)
+    multicursor.execMulticursor(filteredPaths, dispatchWithCommandUndoLabel, commandStore.getState)
   } else {
     for (const path of filteredPaths) {
       // Make sure we have the correct path to the thought in case it was moved during execution.
       const recomputedPath = recomputePath(commandStore.getState(), head(path))
       if (!recomputedPath) continue
 
-      commandStore.dispatch(setCursor({ path: recomputedPath }))
+      dispatchWithCommandUndoLabel(setCursor({ path: recomputedPath }))
       executeCommand(command, { store: commandStore, type, event })
     }
   }
@@ -378,12 +394,12 @@ export const executeCommandWithMulticursor = (
   // Restore the cursor to its original value if not prevented.
   // Note that state.cursor is the old cursor, before any commands were executed.
   if (!multicursor.preventSetCursor && state.cursor) {
-    commandStore.dispatch(setCursor({ path: recomputePath(commandStore.getState(), head(state.cursor)) }))
+    dispatchWithCommandUndoLabel(setCursor({ path: recomputePath(commandStore.getState(), head(state.cursor)) }))
   }
 
   // Restore multicursors
   if (!multicursor.clearMulticursor) {
-    commandStore.dispatch(
+    dispatchWithCommandUndoLabel(
       paths.map(path => (dispatch, getState) => {
         const recomputedPath = recomputePath(getState(), head(path))
         if (!recomputedPath) return
@@ -392,10 +408,10 @@ export const executeCommandWithMulticursor = (
     )
   }
 
-  multicursor.onComplete?.(filteredPaths, commandStore.dispatch, commandStore.getState)
+  multicursor.onComplete?.(filteredPaths, dispatchWithCommandUndoLabel, commandStore.getState)
 
   // Reset isMulticursorExecuting after all operations
-  commandStore.dispatch(setIsMulticursorExecuting({ value: false }))
+  dispatchWithCommandUndoLabel(setIsMulticursorExecuting({ value: false }))
 }
 
 /**

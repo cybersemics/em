@@ -25,20 +25,15 @@ enum EditThoughtDirection {
   Shorter = 'Shorter',
 }
 
-/** Interface for the setIsMulticursorExecuting action. */
-interface SetIsMulticursorExecutingAction extends Action<'setIsMulticursorExecuting'> {
-  value: boolean
-  undoLabel?: string
-}
-
-/** Type guard to check if an action is a setIsMulticursorExecuting action. */
-function isSetIsMulticursorExecutingAction(action: Action<string>): action is SetIsMulticursorExecutingAction {
-  return action.type === 'setIsMulticursorExecuting'
-}
-
 /** Type guard for editThought action. */
 function isEditThoughtAction(action: UnknownAction): action is UnknownAction & editThoughtPayload {
   return action.type === 'editThought'
+}
+
+/** Gets the user-facing undo/redo label from an action. */
+function getActionUndoLabel(action: UnknownAction): string | undefined {
+  const undoLabel = action.undoLabel
+  return typeof undoLabel === 'string' ? undoLabel : undefined
 }
 
 /** Compare the text contents of the old and new values to determine the direction of the edit.
@@ -118,9 +113,9 @@ const diffState = <T>(newValue: Index<T>, value: Index<T>): Operation[] =>
 /**
  * Append action names to all operations of a Patch.
  */
-const addActionsToPatch = (patch: Operation[], actions: ActionType[]): Patch =>
+const addActionsToPatch = (patch: Operation[], actions: ActionType[], undoLabel?: string): Patch =>
   // TODO: Fix Patch type to support any Operation, not just GetOperation. See Patch.ts.
-  patch.map(operation => ({ ...operation, actions })) as Patch
+  patch.map(operation => ({ ...operation, actions, ...(undoLabel ? { undoLabel } : null) })) as Patch
 
 /**
  * Gets the first action from a patch.
@@ -128,7 +123,7 @@ const addActionsToPatch = (patch: Operation[], actions: ActionType[]): Patch =>
 const getPatchAction = (patch: Patch): ActionType => patch[0]?.actions[0]
 
 /**
- * Returns true if a patch represents an undoable action. A patch's first action may be a non-action label (e.g. a multicursor command's undoLabel), so check all actions in the patch rather than only the first.
+ * Returns true if a patch represents an undoable action. Historical patches may have stored a non-action label at actions[0], so check all actions in the patch rather than only the first.
  */
 const isPatchUndoable = (patch: Patch | undefined): boolean => !!patch?.[0]?.actions.some(isUndoable)
 
@@ -145,7 +140,11 @@ const undoOneReducer = (state: State): State => {
   const lastUndoPatch = nthLast(undoPatches, 1)
   if (!lastUndoPatch) return state
   const newState = produce(state, (state: State) => applyPatch(state, lastUndoPatch).newDocument)
-  const correspondingRedoPatch = addActionsToPatch(diffState(newState as Index, state), [...lastUndoPatch[0]?.actions])
+  const correspondingRedoPatch = addActionsToPatch(
+    diffState(newState as Index, state),
+    [...lastUndoPatch[0]?.actions],
+    lastUndoPatch[0]?.undoLabel,
+  )
   return {
     ...newState,
     redoPatches: [...redoPatches, correspondingRedoPatch],
@@ -163,7 +162,11 @@ const redoOneReducer = (state: State): State => {
   const lastRedoPatch = nthLast(redoPatches, 1)
   if (!lastRedoPatch) return state
   const newState = produce(state, (state: State) => applyPatch(state, lastRedoPatch).newDocument)
-  const correspondingUndoPatch = addActionsToPatch(diffState(newState as Index, state), [...lastRedoPatch[0]?.actions])
+  const correspondingUndoPatch = addActionsToPatch(
+    diffState(newState as Index, state),
+    [...lastRedoPatch[0]?.actions],
+    lastRedoPatch[0]?.undoLabel,
+  )
   return {
     ...newState,
     redoPatches: redoPatches.slice(0, -1),
@@ -363,10 +366,11 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
             ...newState.undoPatches.slice(0, -1),
             ...(combinedUndoPatch.length
               ? [
-                  addActionsToPatch(combinedUndoPatch, [
-                    ...(lastUndoPatch && lastUndoPatch.length > 0 ? lastUndoPatch[0]?.actions : []),
-                    actionType,
-                  ]),
+                  addActionsToPatch(
+                    combinedUndoPatch,
+                    [...(lastUndoPatch && lastUndoPatch.length > 0 ? lastUndoPatch[0]?.actions : []), actionType],
+                    lastUndoPatch?.[0]?.undoLabel || getActionUndoLabel(action),
+                  ),
                 ]
               : []),
           ],
@@ -385,11 +389,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
             redoPatches: [],
             undoPatches: [
               ...newState.undoPatches,
-              addActionsToPatch(undoPatch, [
-                // Override the action label with undoLabel so that the command label is used in the alert on undo/redo of a multicursor command.
-                // TODO: A better solution would add a label to the Patch itself.
-                isSetIsMulticursorExecutingAction(action) ? (action.undoLabel as ActionType) : lastAction.type,
-              ]),
+              addActionsToPatch(undoPatch, [lastAction.type], getActionUndoLabel(action)),
             ],
           }
         : newState

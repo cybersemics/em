@@ -25,6 +25,7 @@ import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
 import parentOf from '../util/parentOf'
+import withUndoLabel from '../util/withUndoLabel'
 
 const isIOSSafari = isTouch && isiPhone && isSafari()
 
@@ -264,17 +265,22 @@ const BulletPositioner = forwardRef<SVGSVGElement, PropsWithChildren<BulletPosit
           const parentChildren = pathParent ? getChildren(state, head(pathParent)) : null
           // if thought is not expanded, set the cursor on the thought
           // if thought is expanded, collapse it by moving the cursor to its parent
-          dispatch([
-            // set pin false on expanded only child
-            ...(isExpanded &&
-            (!pathParent ||
-              parentChildren?.length === 1 ||
-              findDescendant(state, pathParent && head(pathParent), ['=children', '=pin', 'true']))
-              ? [setDescendant({ path: simplePath, values: ['=pin', 'false'] })]
-              : [deleteAttribute({ path: simplePath, value: '=pin' })]),
-            // move cursor
-            setCursor({ path: shouldCollapse ? pathParent : path, preserveMulticursor: true }),
-          ])
+          dispatch(
+            withUndoLabel(
+              [
+                // set pin false on expanded only child
+                ...(isExpanded &&
+                (!pathParent ||
+                  parentChildren?.length === 1 ||
+                  findDescendant(state, pathParent && head(pathParent), ['=children', '=pin', 'true']))
+                  ? [setDescendant({ path: simplePath, values: ['=pin', 'false'] })]
+                  : [deleteAttribute({ path: simplePath, value: '=pin' })]),
+                // move cursor
+                setCursor({ path: shouldCollapse ? pathParent : path, preserveMulticursor: true }),
+              ],
+              'Pin Thought',
+            ),
+          )
         })
       },
       [dispatch, dragHold, path, simplePath],

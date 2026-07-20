@@ -8,6 +8,7 @@ import getThoughtById from '../selectors/getThoughtById'
 import applyLetterCase from '../util/applyLetterCase'
 import fastClick from '../util/fastClick'
 import head from '../util/head'
+import withUndoLabel from '../util/withUndoLabel'
 import Popover from './Popover'
 import LowerCaseIcon from './icons/LowerCaseIcon'
 import SentenceCaseIcon from './icons/SentenceCaseIcon'
@@ -23,7 +24,7 @@ const LetterCasePicker: FC<{ size?: number }> = memo(({ size }) => {
   const toggleLetterCase = (command: LetterCaseType, e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation()
     e.preventDefault()
-    dispatch(formatLetterCase(command))
+    dispatch(withUndoLabel(formatLetterCase(command), command.replace(/([a-z])([A-Z])/g, '$1 $2')))
   }
   const selected = useSelector(state => {
     const value = (!!state.cursor && getThoughtById(state, head(state.cursor))?.value) || ''

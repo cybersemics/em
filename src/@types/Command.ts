@@ -109,6 +109,9 @@ interface Command {
   /** For toggling commands, a short label that indicates the inverse action from the current state (e.g. "Add to Favorites" and "Remove from Favorites"). */
   labelInverse?: string
 
+  /** Label for undo/redo alerts. Defaults to the command's active label. */
+  undoLabel?: string | ((state: State) => string)
+
   /** A callback that is invoked when the command's toolbar button is long pressed. */
   longPress?: (dispatch: Dispatch) => void
 

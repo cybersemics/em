@@ -12,6 +12,7 @@ import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 import keyValueBy from '../util/keyValueBy'
 import reducerFlow from '../util/reducerFlow'
+import sortPreferenceToUndoLabel from '../util/sortPreferenceToUndoLabel'
 import unroot from '../util/unroot'
 import alert from './alert'
 import deleteAttribute from './deleteAttribute'
@@ -170,8 +171,15 @@ const toggleSort = (
 /** Action-creator for toggleSort. */
 export const toggleSortActionCreator =
   (payload: Parameters<typeof toggleSort>[1]): Thunk =>
-  dispatch =>
-    dispatch({ type: 'toggleSort', ...payload })
+  (dispatch, getState) => {
+    const currentSortPreference = getSortPreference(getState(), head(payload.simplePath))
+    const nextSortPreference = decideNextSortPreference(currentSortPreference)
+    dispatch({
+      type: 'toggleSort',
+      ...payload,
+      undoLabel: sortPreferenceToUndoLabel(nextSortPreference),
+    })
+  }
 
 export default _.curryRight(toggleSort, 2)
 
