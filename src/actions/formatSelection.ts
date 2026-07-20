@@ -1,5 +1,6 @@
 /* eslint-disable import/prefer-default-export */
 import Thunk from '../@types/Thunk'
+import { isTouch } from '../browser'
 import { ColorToken } from '../colors.config'
 import registerNativeUndoStep from '../device/registerNativeUndoStep'
 import * as selection from '../device/selection'
@@ -35,6 +36,9 @@ export const formatSelectionActionCreator =
       suppressFocusStore.update(false)
       return
     }
+
+    // Was the editable was already focused (keyboard open) when formatting was invoked? When false (e.g. formatting the whole thought from the toolbar with the keyboard closed), precautions against the keyboard opening must be applied in registerNativeUndoStep.
+    const editMode = !isTouch || state.isKeyboardOpen || false
 
     // The current value of the note or thought being formatted (#3901).
     const value = state.noteFocus ? (noteValue(state, state.cursor) ?? '') : thought.value
@@ -77,7 +81,7 @@ export const formatSelectionActionCreator =
     // native step; without one, a shake/three-finger native undo gesture fires nothing and the historyUndo beforeinput
     // handler that routes native undo through em's own undo never runs (#3954, #4637). The registered step's DOM effect
     // is overwritten by the editThought re-render; it exists only as the trigger for the native undo gesture.
-    if (newValue !== value && path) registerNativeUndoStep(contentEditable, newValue)
+    if (newValue !== value && path) registerNativeUndoStep(contentEditable, newValue, editMode)
 
     suppressFocusStore.update(false)
 
@@ -90,7 +94,7 @@ export const formatSelectionActionCreator =
             values: [newValue],
           })
         : editThought({
-            cursorOffset: end,
+            cursorOffset: range?.end,
             oldValue: value,
             newValue,
             path: simplifyPath(state, path),

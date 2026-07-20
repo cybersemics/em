@@ -1,5 +1,5 @@
 import { isSafari, isTouch } from '../browser'
-import { select } from './selection'
+import * as selection from './selection'
 
 /**
  * Registers a single native undo step in WKWebView for a formatSelection edit on iOS (Safari and the Capacitor app,
@@ -17,11 +17,23 @@ import { select } from './selection'
  *
  * No-op on non-iOS platforms (isTouch && isSafari gates iOS WKWebView; desktop Safari has no shake/three-finger undo).
  */
-const registerNativeUndoStep = (editable: HTMLElement, html: string): void => {
+const registerNativeUndoStep = (editable: HTMLElement, html: string, editMode: boolean): void => {
   if (!isTouch || !isSafari()) return
-  editable.focus({ preventScroll: true })
-  select(editable)
+
+  const inputMode = editable.getAttribute('inputmode')
+
+  if (!editMode) {
+    editable.setAttribute('inputmode', 'none') // prevent keyboard from reopening on focus
+    editable.focus({ preventScroll: true })
+    selection.select(editable)
+  }
+
   document.execCommand('insertHTML', false, html)
+
+  if (!editMode) {
+    selection.clear()
+    editable.setAttribute('inputmode', inputMode ?? '')
+  }
 }
 
 export default registerNativeUndoStep
