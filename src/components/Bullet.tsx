@@ -218,12 +218,15 @@ const BulletOrdered = ({ fill, order }: { fill?: string; order: number }) => {
       // Right-anchor the number so multi-digit ordinals form a period-aligned column. x is offset to the right of the
       // viewBox center (300) so a single digit is centered on the bullet position, aligning with the leaf bullet and
       // cursor overlay (both centered at cx=300).
-      x={501}
-      y={300}
+      x={567}
+      // Sit on the thought text's alphabetic baseline. The viewBox (0 0 600 600) is mapped to lineHeight (fontSize *
+      // 1.25), so the text baseline falls at a fixed user-space y independent of font size; 440 aligns the number with
+      // the text baseline while keeping it visually centered in the cursor overlay (radius 245 at cy=300).
+      y={440}
       textAnchor='end'
-      dominantBaseline='central'
       className={css({ fill: 'bullet' })}
-      style={{ fill, fontSize: '360px' }}
+      // fontSize 480 in user space renders at fontSize * 1.25 * (480/600) = fontSize, matching the thought text size.
+      style={{ fill, fontSize: '480px' }}
     >
       {order}.
     </text>
