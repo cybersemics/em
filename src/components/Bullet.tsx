@@ -295,10 +295,12 @@ const Bullet = ({
   const persistedFill = useSelector(state => getThoughtFill(state, thoughtId))
   const isEmpty = useSelector(state => getThoughtById(state, thoughtId)?.value === '')
   const activeCommandFill = commandStateStore.useSelector(state => {
+    if (!isEditing || !isEmpty) return undefined
+
     const fill = state.backColor || state.foreColor
     return typeof fill === 'string' ? fill : undefined
   })
-  const fill = persistedFill || (isEditing && isEmpty ? activeCommandFill : undefined)
+  const fill = persistedFill || activeCommandFill
 
   const isExpanded = useSelector(state => !!state.expanded[hashPath(path)])
   const isBulletExpanded = isCursorParent || isCursorGrandparent || isEditing || isExpanded
