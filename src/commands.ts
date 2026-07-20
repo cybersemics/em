@@ -607,6 +607,12 @@ export const keyUp = (e: KeyboardEvent) => {
   if (e.key === (isMac ? 'Meta' : 'Control') && globals.suppressExpansion) {
     store.dispatch(suppressExpansion(false))
   }
+
+  // clear the table column boundary crossing suppression once the arrow key is released, so it can cross again on the next discrete press
+  if (globals.arrowKeyBoundaryCross === e.key) {
+    globals.arrowKeyBoundaryCross = null
+  }
+
   keyCommandId = null
 }
 
@@ -623,6 +629,13 @@ export const keyDown = (e: KeyboardEvent) => {
   // For some reason, when the caret is at the beginning of the thought, alt + ArrowLeft sets the caret to the end.
   // Prevent this default behavior, as the caret should have nowhere to go when it is already at the beginning.
   if (e.altKey && e.key === 'ArrowLeft' && selection.offset() === 0 && selection.isThought()) {
+    e.preventDefault()
+    return
+  }
+
+  // After a table column boundary is crossed on a discrete keypress, hard-stop auto-repeat of the same arrow key until it is released.
+  // This prevents holding the arrow key from continuously advancing the caret into or through the adjacent thought — it must be released and pressed again to move further.
+  if (globals.arrowKeyBoundaryCross === e.key && e.repeat) {
     e.preventDefault()
     return
   }

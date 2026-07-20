@@ -3,13 +3,21 @@ import { CATEGORY_TO_HOURS, type EstimateCategory, categoryToSeconds } from '../
 import buildPrompt, { type IssueInput } from './buildPrompt.ts'
 import inference from './inference.ts'
 import type { EstimateSample } from './loadSamples.ts'
-import validateEstimate from './validateEstimate.ts'
+import tallyVotes from './tallyVotes.ts'
 
-/** An issue estimate expressed as a category and its equivalent hours and seconds. */
+/** An issue estimate expressed as a category and its equivalent hours and seconds, plus vote confidence signals. */
 export interface Estimate {
   category: EstimateCategory
   hours: number
   seconds: number
+  /** Fraction of valid votes that agreed with the chosen category (0–1). */
+  agreement: number
+  /** Self-reported confidence carried from a winning vote. */
+  confidence: 'high' | 'medium' | 'low'
+  /** Rationale carried from a winning vote, for the audit trail. */
+  rationale: string
+  /** Second-choice category from a winning vote, if provided. */
+  secondChoice?: EstimateCategory
 }
 
 /**
@@ -54,11 +62,15 @@ const estimateIssue = async ({
 
   const prompt = buildPrompt(samples, issue)
   const outputs = await inference({ apiKey: openaiApiKey, prompt, instructions })
-  const { estimate: category } = validateEstimate(outputs)
+  const vote = tallyVotes(outputs)
   const estimate: Estimate = {
-    category,
-    hours: CATEGORY_TO_HOURS[category],
-    seconds: categoryToSeconds(category),
+    category: vote.estimate,
+    hours: CATEGORY_TO_HOURS[vote.estimate],
+    seconds: categoryToSeconds(vote.estimate),
+    agreement: vote.agreement,
+    confidence: vote.confidence,
+    rationale: vote.rationale,
+    secondChoice: vote.secondChoice,
   }
 
   // Write the estimate to Everhour unless the Everhour write is being dry-run.

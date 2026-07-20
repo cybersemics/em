@@ -7,9 +7,12 @@ import extractColor from '../helpers/extractColor'
 import getBulletColor from '../helpers/getBulletColor'
 import getEditingText from '../helpers/getEditingText'
 import getSuperscriptColor from '../helpers/getSuperScriptColor'
+import keyboard from '../helpers/keyboard'
+import newThought from '../helpers/newThought'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import setSelection from '../helpers/setSelection'
+import waitForEditable from '../helpers/waitForEditable'
 import { page } from '../session'
 
 /** Click the first note. Assumes that there will be only a single note. */
@@ -17,6 +20,22 @@ const clickFirstNote = () => click('[aria-label="note-editable"]')
 
 /** Retrieve the innerHTML of the first note on the page. Assumes that there will be only a single note. */
 const getFirstNoteText = () => page.evaluate(() => document.querySelector('[aria-label="note-editable"]')?.innerHTML)
+
+/** Selects all contents of the editable cursor thought, including nested formatting tags. */
+const selectAllEditingText = () =>
+  page.evaluate(() => {
+    const editable = document.querySelector('[data-editing=true] [data-editable]')
+    if (!editable) throw new Error('No editing editable found')
+
+    const range = document.createRange()
+    range.selectNodeContents(editable)
+    const selection = window.getSelection()
+    selection?.removeAllRanges()
+    selection?.addRange(range)
+  })
+
+/** Waits one frame for selectionchange-driven command state to propagate. */
+const nextFrame = () => page.evaluate(() => new Promise(requestAnimationFrame))
 
 vi.setConfig({ testTimeout: 60000, hookTimeout: 60000 })
 
@@ -38,6 +57,65 @@ it('Set the text color of the text and bullet', async () => {
   expect(rgbToHex(bulletColor!)).toBe(rgbaToHex(colors.light.blue))
   expect(result?.color).toBe(rgbaToHex(colors.light.blue))
   expect(result?.backgroundColor).toBe(null)
+})
+
+it('Bullet keeps the font color after deleting all text without moving the cursor', async () => {
+  await newThought('hello')
+
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="text color swatches"] [aria-label="red"]')
+  await waitForEditable('<font color="#ff573d">hello</font>')
+
+  const bulletColorBeforeDelete = await getBulletColor()
+  expect(rgbToHex(bulletColorBeforeDelete!)).toBe(rgbaToHex(colors.light.red))
+
+  await selectAllEditingText()
+  await press('Backspace')
+  await waitForEditable('')
+  await nextFrame()
+
+  const bulletColorAfterDelete = await getBulletColor()
+  expect(rgbToHex(bulletColorAfterDelete!)).toBe(rgbaToHex(colors.light.red))
+
+  await keyboard.type('a')
+  await waitForEditable('<font color="#ff573d">a</font>')
+
+  const bulletColorAfterTyping = await getBulletColor()
+  expect(rgbToHex(bulletColorAfterTyping!)).toBe(rgbaToHex(colors.light.red))
+})
+
+it('Bullet clears the font color after deleting all text and moving the cursor away', async () => {
+  await newThought('hello')
+
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="text color swatches"] [aria-label="red"]')
+  await waitForEditable('<font color="#ff573d">hello</font>')
+
+  await selectAllEditingText()
+  await press('Backspace')
+  await waitForEditable('')
+  await nextFrame()
+
+  const bulletColorAfterDelete = await getBulletColor()
+  expect(rgbToHex(bulletColorAfterDelete!)).toBe(rgbaToHex(colors.light.red))
+
+  await press('Enter')
+  await nextFrame()
+
+  const newThoughtBulletColor = await getBulletColor()
+  expect(newThoughtBulletColor).toBe(null)
+
+  await press('ArrowUp')
+  await nextFrame()
+
+  const emptyThoughtBulletColor = await getBulletColor()
+  expect(emptyThoughtBulletColor).toBe(null)
+
+  await keyboard.type('a')
+  await waitForEditable('a')
+
+  const bulletColorAfterTyping = await getBulletColor()
+  expect(bulletColorAfterTyping).toBe(null)
 })
 
 it('Bullet keeps the font color after applying Upper Case', async () => {
