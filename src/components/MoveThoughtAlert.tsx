@@ -1,5 +1,6 @@
 import { FC } from 'react'
 import { useSelector } from 'react-redux'
+import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import getThoughtById from '../selectors/getThoughtById'
 import ellipsize from '../util/ellipsize'
@@ -18,7 +19,7 @@ interface MoveThoughtAlertProps {
   /** True when the thought was moved to the top of the destination context. */
   top?: boolean
   /** Context whose occurrence received the thought when dropping in context view. */
-  contextPath?: SimplePath
+  contextPath?: Path
 }
 
 /** Alert shown after drag-and-drop moves a thought to another context. */
@@ -36,16 +37,11 @@ const MoveThoughtAlert: FC<MoveThoughtAlertProps> = ({ contextPath, from, numTho
       ) : (
         <>
           &quot;
-          <Link
-            simplePath={toPath}
-            label={ellipsize(to)}
-            style={{ cursor: 'pointer', textDecoration: 'underline' }}
-          />
+          <Link simplePath={toPath} label={ellipsize(to)} style={{ cursor: 'pointer', textDecoration: 'underline' }} />
           &quot;
         </>
       )}
-      {contextPath ? ` in the context of ${ellipsize(context || 'MISSING_CONTEXT')}` : ''}
-      .
+      {contextPath ? ` in the context of ${ellipsize(context || 'MISSING_CONTEXT')}` : ''}.
     </span>
   )
 }

@@ -256,7 +256,7 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
         store.dispatch(
           alert(() => (
             <MoveThoughtAlert
-              contextPath={props.showContexts ? props.simplePath ?? props.path : undefined}
+              contextPath={props.showContexts ? (props.simplePath ?? props.path) : undefined}
               from={thoughtFrom?.value || ''}
               numThoughts={draggedItems.length}
               toPath={toPath}
