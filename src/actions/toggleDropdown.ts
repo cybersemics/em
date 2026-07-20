@@ -5,13 +5,14 @@ import { registerActionMetadata } from '../util/actionMetadata.registry'
 import reducerFlow from '../util/reducerFlow'
 import clearMulticursors from './clearMulticursors'
 
-type DropdownType = 'colorPicker' | 'letterCase' | 'sortPicker' | 'commandCenter' | 'undoSlider'
+type DropdownType = 'bulletPicker' | 'colorPicker' | 'letterCase' | 'sortPicker' | 'commandCenter' | 'undoSlider'
 
 type DropdownStateKeys =
-  'showColorPicker' | 'showLetterCase' | 'showSortPicker' | 'showCommandCenter' | 'showUndoSlider'
+  'showBulletPicker' | 'showColorPicker' | 'showLetterCase' | 'showSortPicker' | 'showCommandCenter' | 'showUndoSlider'
 
 // Map dropdown types to their state keys
 const DROPDOWN_STATE_KEYS: Record<DropdownType, DropdownStateKeys> = {
+  bulletPicker: 'showBulletPicker',
   colorPicker: 'showColorPicker',
   letterCase: 'showLetterCase',
   sortPicker: 'showSortPicker',

@@ -263,6 +263,32 @@ describe('render', () => {
     const leaves = document.querySelectorAll('[data-bullet="leaf"]')
     expect(leaves.length).toBe(0)
   })
+
+  it('render a lettered glyph instead of a bullet for =children/=bullet/Alpha', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - x
+          - =children
+            - =bullet
+              - Alpha
+          - a
+          - b
+          - c
+      `,
+      }),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // a, b, c should render lettered glyphs a, b, c instead of leaf bullets
+    const lettered = document.querySelectorAll('[data-bullet="alpha"]')
+    expect(Array.from(lettered).map(el => el.textContent)).toEqual(['a.', 'b.', 'c.'])
+
+    // the lettered children should not render a leaf bullet glyph
+    const leaves = document.querySelectorAll('[data-bullet="leaf"]')
+    expect(leaves.length).toBe(0)
+  })
 })
 
 describe('expansion', () => {
