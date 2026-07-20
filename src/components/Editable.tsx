@@ -539,6 +539,13 @@ const Editable = ({
   /** Performs meta validation and calls thoughtChangeHandler immediately or using throttled reference. */
   const onChangeHandler = useCallback(
     (e: ContentEditableEvent) => {
+      // Ignore programmatic edits made while formatting is suppressing focus — specifically the throwaway
+      // execCommand('insertHTML') that registerNativeUndoStep runs on iOS to create a native undo step. em's Redux
+      // truth comes from the synchronous editThought dispatched by formatSelection; recording this DOM mutation would
+      // create a duplicate undo step (WebKit re-serializes the inserted HTML, so it is not even value-identical). The
+      // editThought's forced re-render restores the editable to the exact computed value (#4637).
+      if (suppressFocusStore.getState()) return
+
       // Infinite loop guard. onChangeHandler is re-entrant (edit → dispatch editThought → re-render →
       // input → onChange). The newValue === oldValue short-circuit below normally breaks the cycle, but a
       // corrupted Thought/Lexeme pair can defeat it and spin the main thread, freezing the app (#4467).
