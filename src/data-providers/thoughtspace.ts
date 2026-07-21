@@ -29,8 +29,15 @@ export type ThoughtspaceRuntimeInitOptions = {
   materialization?: ThoughtspaceMaterializationBridge
 }
 
+export type ThoughtspaceAccessBlockedReason = 'already-open' | 'unsupported'
+
+export type ThoughtspaceAccessResult =
+  { status: 'acquired' } | { status: 'blocked'; reason: ThoughtspaceAccessBlockedReason }
+
 /** App-facing lifecycle interface for the active thoughtspace implementation. */
 export interface ThoughtspaceRuntime {
+  /** Acquires any runtime-specific access required before opening the interactive thoughtspace. */
+  acquireAccess: () => Promise<ThoughtspaceAccessResult>
   init: (options?: ThoughtspaceRuntimeInitOptions) => Promise<{ clientId: string }>
   drop: () => Promise<unknown>
   waitForIdle: () => Promise<void>

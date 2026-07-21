@@ -1,8 +1,9 @@
 import type { Operation } from '@treecrdt/interface'
 import type { DataProvider } from '../DataProvider'
 import { initPermissionsStore } from '../permissionsStore'
-import type { ThoughtspaceRuntimeInitOptions } from '../thoughtspace'
+import type { ThoughtspaceAccessResult, ThoughtspaceRuntimeInitOptions } from '../thoughtspace'
 import { clientIdReady } from '../thoughtspaceSession'
+import acquireTreecrdtSessionLock from './sessionLock'
 import { pushTreecrdtLocalOpsToRemote } from './sync'
 import { getMaterializedThoughtsToStoreVersion, waitForMaterializedThoughtsToStore } from './sync/materializationQueue'
 import treecrdtDb, { init as initTreecrdtThoughtspace } from './thoughtspace'
@@ -69,8 +70,21 @@ const waitForStableIdle = async (): Promise<void> => {
   )
 }
 
+/** Acquires exclusive access to persistent TreeCRDT storage for this page. */
+const acquireAccess = async (): Promise<ThoughtspaceAccessResult> => {
+  const lockStatus = await acquireTreecrdtSessionLock()
+
+  return lockStatus === 'acquired'
+    ? { status: 'acquired' }
+    : {
+        status: 'blocked',
+        reason: lockStatus === 'unavailable' ? 'already-open' : 'unsupported',
+      }
+}
+
 /** TreeCRDT lifecycle implementation for the app thoughtspace runtime. */
 export const treecrdtRuntime = {
+  acquireAccess,
   init: async (options?: ThoughtspaceRuntimeInitOptions): Promise<{ clientId: string }> => {
     const clientId = await clientIdReady
     await initPermissionsStore()

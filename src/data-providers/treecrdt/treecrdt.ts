@@ -41,7 +41,7 @@ const getRuntime = (): NonNullable<ClientOptions['runtime']> => {
     return { type: runtimeOverride }
   }
 
-  return typeof SharedWorker === 'undefined' ? { type: 'auto' } : { type: 'shared-worker' }
+  return { type: 'dedicated-worker' }
 }
 
 /** Initializes the TreeCRDT client. */
@@ -63,8 +63,8 @@ export const initTreecrdt = async (): Promise<TreecrdtClient> => {
           filename: `/treecrdt-em-${tsid}.db`,
           fallback: 'throw',
         },
-    // Tests may opt into memory storage when persistence is irrelevant. Normal browser sessions use SharedWorker+OPFS
-    // so the one-store-across-tabs path remains the default behavior.
+    // Tests may opt into memory storage when persistence is irrelevant. Persistent browser sessions use one
+    // dedicated worker guarded by the page-lifetime session lock acquired before app initialization.
     runtime: useTransientMemory ? { type: 'direct' } : getRuntime(),
     docId: tsid,
   })

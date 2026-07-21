@@ -10,13 +10,20 @@ declare module global {
   const browser: Browser
 }
 
+type TreecrdtTestRuntime = 'dedicated-worker' | 'direct' | 'shared-worker'
+
 let context: BrowserContext
 let treecrdtStorage: 'memory' | 'opfs' = 'memory'
+let treecrdtRuntime: TreecrdtTestRuntime = 'direct'
 
 /** Seeds isolated browser storage before the app bundle starts. */
-const installTestSessionStorage = async (sessionId: string, storage: typeof treecrdtStorage): Promise<void> => {
+const installTestSessionStorage = async (
+  sessionId: string,
+  storage: typeof treecrdtStorage,
+  runtime: typeof treecrdtRuntime,
+): Promise<void> => {
   await page.evaluateOnNewDocument(
-    ({ sessionId, storage }) => {
+    ({ runtime, sessionId, storage }) => {
       if (!sessionStorage.getItem('__em_puppeteer_storage_initialized')) {
         localStorage.clear()
         sessionStorage.setItem('__em_puppeteer_storage_initialized', '1')
@@ -24,21 +31,23 @@ const installTestSessionStorage = async (sessionId: string, storage: typeof tree
 
       localStorage.setItem('tsid', sessionId)
       localStorage.setItem('accessToken', sessionId)
-      localStorage.setItem('treecrdtRuntime', 'direct')
+      localStorage.setItem('treecrdtRuntime', runtime)
       localStorage.setItem('treecrdtStorage', storage)
     },
-    { sessionId, storage },
+    { runtime, sessionId, storage },
   )
 }
 
 /** Use persistent OPFS storage for tests that verify reload/materialization from storage. */
-export const usePersistentTreecrdtStorage = () => {
+export const usePersistentTreecrdtStorage = ({ runtime = 'direct' }: { runtime?: TreecrdtTestRuntime } = {}) => {
   beforeAll(() => {
     treecrdtStorage = 'opfs'
+    treecrdtRuntime = runtime
   })
 
   afterAll(() => {
     treecrdtStorage = 'memory'
+    treecrdtRuntime = 'direct'
   })
 }
 
@@ -69,7 +78,7 @@ const setup = async ({
 
   const sessionId = createId()
 
-  await installTestSessionStorage(sessionId, treecrdtStorage)
+  await installTestSessionStorage(sessionId, treecrdtStorage, treecrdtRuntime)
 
   page.on('dialog', async dialog => dialog.accept())
 
