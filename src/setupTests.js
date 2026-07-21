@@ -34,6 +34,12 @@ vi.stubGlobal('ResizeObserver', ResizeObserverMock)
 
 HTMLImageElement.prototype.decode = vi.fn().mockResolvedValue(undefined)
 
+// jsdom does not implement Range.prototype.getClientRects, which getCaretOffset uses for glyph hit-testing.
+// Return an empty list to match jsdom's zero-size layout, preventing "range.getClientRects is not a function" errors.
+if (typeof Range.prototype.getClientRects !== 'function') {
+  Range.prototype.getClientRects = () => []
+}
+
 // stub jest globally. This is needed incase jest is being directly referenced in the code.
 vi.stubGlobal('jest', vi)
 

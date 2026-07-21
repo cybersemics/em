@@ -1,5 +1,6 @@
 /* eslint-disable import/prefer-default-export */
 import Thunk from '../@types/Thunk'
+import { isSafari, isTouch } from '../browser'
 import { ColorToken } from '../colors.config'
 import * as selection from '../device/selection'
 import getThoughtById from '../selectors/getThoughtById'
@@ -8,6 +9,7 @@ import pathToThought from '../selectors/pathToThought'
 import resolveNotePath from '../selectors/resolveNotePath'
 import simplifyPath from '../selectors/simplifyPath'
 import themeColors from '../selectors/themeColors'
+import { mergeBatchEditing } from '../stores/batchEditing'
 import { updateCommandState } from '../stores/commandStateStore'
 import suppressFocusStore from '../stores/suppressFocus'
 import head from '../util/head'
@@ -49,17 +51,31 @@ export const formatSelectionActionCreator =
         state.noteFocus ? (noteValue(state, state.cursor) ?? '') : thought.value,
       )
       const savedSelection = selection.save()
+      const inputMode = contentEditable.getAttribute('inputmode')
+      const editable = contentEditable as HTMLElement
+
+      // Prevent the virtual keyboard from opening when the editable is focused
+      if (isTouch && isSafari() && !state.isKeyboardOpen) editable.setAttribute('inputmode', 'none')
+
       // Note that we must suppress focus events in the Editable component, otherwise selecting text will set editing:true on mobile.
+      editable.focus({ preventScroll: true })
       selection.select(contentEditable)
       if (!(command === 'backColor' && color === 'bg' && !hasCustomBackgroundColor)) {
         document.execCommand(command, false, color ? colors[color] : '')
       }
 
-      if (savedSelection) {
+      // Only restore the selection (which keeps the editable focused) when in edit mode.
+      // On mobile, selecting the contentEditable to apply formatting re-focuses it; restoring the selection would
+      // re-open the virtual keyboard even though the user had manually dismissed it. Clearing the selection blurs
+      // the editable so the keyboard stays closed, matching the edit mode invariant (#3996).
+      const editMode = !isTouch || state.isKeyboardOpen
+      if (savedSelection && editMode) {
         selection.restore(savedSelection)
       } else {
         selection.clear()
       }
+
+      if (isTouch && isSafari() && !state.isKeyboardOpen) contentEditable.setAttribute('inputmode', inputMode ?? '')
     }
     // format selected text only
     else {
@@ -115,7 +131,7 @@ export const formatSelectionActionCreator =
               ? setDescendant({
                   path,
                   values: [newValue],
-                  mergePrev: true,
+                  mergePrev: mergeBatchEditing(),
                 })
               : editThought({
                   cursorOffset: selection.offsetThought() ?? undefined,
@@ -124,7 +140,7 @@ export const formatSelectionActionCreator =
                   path: simplifyPath(state, path),
                   // force the ContentEditable to update
                   force: true,
-                  mergePrev: true,
+                  mergePrev: mergeBatchEditing(),
                 }),
           )
       })

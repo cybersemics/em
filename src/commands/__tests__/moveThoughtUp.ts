@@ -1,9 +1,11 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { toggleContextViewActionCreator as toggleContextView } from '../../actions/toggleContextView'
 import { executeCommandWithMulticursor } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
+import getChildrenRankedByContext from '../../test-helpers/getChildrenRankedByContext'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import moveThoughtUpCommand from '../moveThoughtUp'
@@ -31,6 +33,31 @@ describe('moveThoughtUp', () => {
   - a
   - c
   - b`)
+  })
+
+  it('moves a thought up in nested context view', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - b
+              - c
+              - d
+              - e
+          - b
+        `,
+      }),
+      setCursor(['b']),
+      toggleContextView(),
+      setCursor(['b', 'a', 'e']),
+    ])
+
+    executeCommandWithMulticursor(moveThoughtUpCommand, { store })
+    executeCommandWithMulticursor(moveThoughtUpCommand, { store })
+
+    const state = store.getState()
+    const children = getChildrenRankedByContext(state, ['a', 'b'])
+    expect(children.map(child => child.value)).toEqual(['e', 'c', 'd'])
   })
 
   describe('multicursor', () => {

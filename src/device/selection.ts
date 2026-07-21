@@ -51,6 +51,16 @@ export const clear = (): void => {
   }
 }
 
+/** Selects the entire contents of the given node. Used to stage rich content for a programmatic copy. */
+export const selectNode = (node: Node): void => {
+  const sel = window.getSelection()
+  if (!sel) return
+  const range = document.createRange()
+  range.selectNodeContents(node)
+  sel.removeAllRanges()
+  sel.addRange(range)
+}
+
 /** Returns true if the selection is a collapsed caret, i.e. the beginning and end of the selection are the same. Returns undefined if there is no selection. */
 export const isCollapsed = (): boolean => !!window.getSelection()?.isCollapsed
 
@@ -178,6 +188,9 @@ export const isEndOfElementNode = (): boolean => {
 /** Returns the character offset of the active selection. */
 // TODO: The browser selection offset has different semantics when the selection is on a text node vs an element node. Unfortunately this function has been used indiscriminately for both cases. We should clean this up and only use the function on text nodes.
 export const offset = (): number | null => window.getSelection()?.focusOffset ?? null
+
+/** Returns the character offset of the selection's anchor (the fixed end of a range; `offset` returns the focus/moving end). */
+export const anchorOffset = (): number | null => window.getSelection()?.anchorOffset ?? null
 
 /** Returns the character offset within a thought, taking into account siblings and intervening ancestor elements.
  *
@@ -468,7 +481,11 @@ export const html = () => {
 
       // Check if the node is an Element using the instanceof operator
       if (node instanceof Element) {
-        containerHtml = node.outerHTML
+        // When the caret is collapsed on the editable element itself (e.g. when the cursor is moved to a thought
+        // by tapping its bullet), return the editable's inner HTML rather than its outerHTML, so that the wrapper
+        // element and its attributes (such as placeholder="<b>…</b>", whose value contains raw HTML) are excluded
+        // from the selection html (#3912).
+        containerHtml = node.getAttribute('contenteditable') === 'true' ? node.innerHTML : node.outerHTML
       } else if (node instanceof CharacterData) {
         while (node.parentElement?.tagName !== 'DIV') {
           node = node.parentElement!

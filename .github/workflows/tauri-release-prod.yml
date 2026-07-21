@@ -1,0 +1,173 @@
+name: Tauri Release (prod)
+
+# Publishes a versioned desktop release of the em app whenever a version tag (v*) is
+# pushed. Each tag produces its own permanent GitHub Release with native installers
+# for macOS (Apple Silicon + Intel), Windows, and Linux.
+
+on:
+  push:
+    tags:
+      - 'v*'
+  # Allows re-running a release manually. Select the desired tag as the workflow ref
+  # so `github.ref_name` resolves to the version tag.
+  workflow_dispatch:
+
+# tauri-action needs write access to create/update the GitHub Release.
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  CI: true
+  # Skip Puppeteer's Chrome download on install — the desktop build never uses the bundled
+  # browser, saving ~20s per install across the build matrix.
+  PUPPETEER_SKIP_DOWNLOAD: true
+  # Exposed at workflow level so the macOS keychain-import step can gate on its
+  # presence. Empty when the signing secret is unset, in which case macOS builds
+  # fall back to ad-hoc signing (see the tauri-action step below).
+  # Only APPLE_CERTIFICATE is set here; other notarization credentials are set
+  # only in the notarization step to avoid Tauri CLI attempting notarization
+  # when credentials are absent (Tauri treats an empty APPLE_TEAM_ID as "set"
+  # and attempts notarization, which fails with "Team ID must be at least 3 chars").
+  APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+
+jobs:
+  build:
+    name: Build (${{ matrix.platform }} ${{ matrix.args }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest # Apple Silicon (M1+)
+            args: --target aarch64-apple-darwin
+          - platform: macos-latest # Intel (cross-compiled)
+            args: --target x86_64-apple-darwin
+          - platform: ubuntu-22.04
+            args: ''
+          - platform: windows-latest
+            args: ''
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v6
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Set Node.js version
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          # Only needed on macOS, where we build both architectures.
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - name: Cache Rust build
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: ./src-tauri -> target
+
+      - name: Install Linux dependencies
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - name: Install npm dependencies
+        uses: ./.github/actions/install
+
+      - name: Set desktop version (MSI-compatible)
+        run: yarn tauri:version
+
+      # Compute whether all Apple Developer ID + notarization credentials are
+      # present. This step runs before the two mutually-exclusive build steps so
+      # that their `if` conditions can use a step output instead of env vars.
+      # We cannot rely on workflow-level env vars for the notarization guard
+      # because secrets that are absent resolve to empty strings (""), and Tauri
+      # CLI treats any non-absent APPLE_TEAM_ID — including "" — as "notarize
+      # requested", then fails validation with "Team ID must be at least 3 chars".
+      - name: Check Apple signing credentials
+        id: apple-signing
+        if: matrix.platform == 'macos-latest'
+        run: |
+          if [[ -n "$AC" && -n "$ASI" && -n "$AID" && -n "$APW" && -n "$ATI" ]]; then
+            echo "full_credentials=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "full_credentials=false" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          AC: ${{ secrets.APPLE_CERTIFICATE }}
+          ASI: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          AID: ${{ secrets.APPLE_ID }}
+          APW: ${{ secrets.APPLE_PASSWORD }}
+          ATI: ${{ secrets.APPLE_TEAM_ID }}
+
+      # Import the Developer ID certificate into a temporary keychain so codesign
+      # can find the identity. Runs only on macOS when the certificate secret is
+      # configured; otherwise the build proceeds with ad-hoc signing.
+      - name: Import Apple signing certificate
+        if: matrix.platform == 'macos-latest' && env.APPLE_CERTIFICATE != ''
+        env:
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          echo "$APPLE_CERTIFICATE" | base64 --decode > "$RUNNER_TEMP/certificate.p12"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security set-keychain-settings -t 3600 -u build.keychain
+          security import "$RUNNER_TEMP/certificate.p12" -k build.keychain -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
+
+      # Runs when Apple credentials are absent or incomplete (all non-macOS
+      # platforms always use this path). Notarization env vars are intentionally
+      # not set here — Tauri CLI treats any value (including "") as "present" and
+      # would attempt notarization, failing validation for short or empty values.
+      - name: Build and publish desktop app (ad-hoc signing)
+        if: steps.apple-signing.outputs.full_credentials != 'true'
+        uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Ad-hoc signing is required on Apple Silicon so downloaded builds are not
+          # rejected as "damaged". Keep notarization credentials unset in this path.
+          APPLE_SIGNING_IDENTITY: '-'
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: em desktop ${{ github.ref_name }}
+          releaseBody: |
+            em desktop release ${{ github.ref_name }}.
+
+            > ⚠️ These builds are **unsigned** and may trigger Gatekeeper (macOS) or SmartScreen (Windows) warnings.
+            > On macOS, right-click the app and choose **Open** to bypass Gatekeeper (or run `xattr -cr /Applications/em.app`).
+          prerelease: false
+          releaseDraft: false
+          args: ${{ matrix.args }}
+
+      - name: Build and publish desktop app (Developer ID + notarization)
+        if: steps.apple-signing.outputs.full_credentials == 'true'
+        uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Use notarization only when all Apple signing credentials are configured.
+          # Set directly from secrets (not workflow-level env) to ensure Tauri CLI
+          # only sees these credentials in the notarization path.
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: em desktop ${{ github.ref_name }}
+          releaseBody: |
+            em desktop release ${{ github.ref_name }}.
+
+            > ⚠️ These builds are **unsigned** and may trigger Gatekeeper (macOS) or SmartScreen (Windows) warnings.
+            > On macOS, right-click the app and choose **Open** to bypass Gatekeeper (or run `xattr -cr /Applications/em.app`).
+          prerelease: false
+          releaseDraft: false
+          args: ${{ matrix.args }}

@@ -4,6 +4,8 @@ import { Capacitor } from '@capacitor/core'
 
 export const isIOS = Capacitor.getPlatform() === 'ios'
 
+export const isBrowser = typeof window !== 'undefined' && Capacitor.getPlatform() === 'web'
+
 /** Returns true if the user's device is touch screen. The use of matchMedia('pointer: coarse') did not work for Android webviews, so checking if it is Android Webview using capacitor. */
 export const isTouch =
   typeof window !== 'undefined' &&

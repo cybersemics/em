@@ -19,6 +19,7 @@ import waitForHiddenEditable from '../helpers/waitForHiddenEditable'
 import waitForSelector from '../helpers/waitForSelector'
 import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
 import waitUntil from '../helpers/waitUntil'
+import { page } from '../session'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
@@ -376,5 +377,74 @@ describe('mobile only', () => {
 
     // keyboard should not open, so the active element should be the body or null
     await waitUntil(() => !document.activeElement || document.activeElement === document.body)
+  })
+
+  // Regression test for https://github.com/cybersemics/em/issues/3958
+  it('caret should be dismissed when the virtual keyboard is closed without blurring (e.g. Android Down Arrow)', async () => {
+    await paste(`
+    - One
+    - Two
+    - Three`)
+
+    // tap thought One to put the caret on it (keyboard open)
+    await clickThought('One')
+    await clickThought('One')
+
+    // precondition: the caret is on a thought with the keyboard open
+    expect(await getSelection().focusNode).toBeTruthy()
+
+    // Simulate dismissing the virtual keyboard with the Android Down Arrow button.
+    // Because the app declares interactive-widget=overlays-content (index.html), the keyboard overlays
+    // content and does not fire a visualViewport resize; instead the Chromium VirtualKeyboard API reports
+    // the keyboard geometry. Unlike the Done button (which blurs the editable, see closeKeyboard), the Down
+    // Arrow only hides the keyboard: its occluded height collapses to 0 with no blur event. Emulate that by
+    // faking the keyboard geometry (open then dismissed) and firing the geometrychange event the app listens to.
+    await page.evaluate(() => {
+      // The VirtualKeyboard API is not in TypeScript's lib.dom; cast locally so this test compiles
+      // independently of the ambient declaration in src/@types/VirtualKeyboard.d.ts.
+      const virtualKeyboard = (navigator as unknown as { virtualKeyboard: EventTarget }).virtualKeyboard
+      /** Overrides the reported keyboard occluded height to simulate the keyboard opening/closing. */
+      const overrideHeight = (height: number) =>
+        Object.defineProperty(virtualKeyboard, 'boundingRect', { configurable: true, get: () => ({ height }) })
+      /** Fires a geometrychange event, as the browser does when the virtual keyboard shows/hides. */
+      const fireGeometryChange = () => virtualKeyboard.dispatchEvent(new Event('geometrychange'))
+
+      // keyboard open: it occludes part of the screen
+      overrideHeight(300)
+      fireGeometryChange()
+
+      // Down Arrow pressed: keyboard hides, occluded height collapses to 0 (no blur)
+      overrideHeight(0)
+      fireGeometryChange()
+    })
+
+    // the caret should be dismissed along with the keyboard
+    await waitUntil(() => !window.getSelection()?.focusNode)
+    expect(await getSelection().focusNode).toBeFalsy()
+  })
+
+  // Regression test for https://github.com/cybersemics/em/issues/3996
+  // .skip keeps normal CI green while the test is red; remove the .skip when the fix lands.
+  it('tapping a text formatting button after the keyboard is manually dismissed should not open the keyboard', async () => {
+    // Step 1: create a thought
+    await gesture(newThoughtCommand)
+    await keyboard.type('One')
+    await waitForEditable('One')
+
+    // Step 2: manually dismiss the keyboard (blur the active element, as the native Done button does)
+    await closeKeyboard()
+    await waitUntil(() => !document.activeElement || document.activeElement === document.body)
+
+    // Step 3: tap the Bold button on the toolbar
+    await click('[data-testid="toolbar-icon"][aria-label="Bold"]')
+
+    // the formatting should still be applied to the whole thought
+    await waitUntil(() => !!document.querySelector('[data-editable] b'))
+
+    // the keyboard should NOT open, so the editable should not be re-focused (the active element should remain the body or null)
+    const activeLabel = await page.evaluate(
+      () => document.activeElement?.getAttribute('aria-label') ?? document.activeElement?.tagName ?? null,
+    )
+    expect(activeLabel).not.toMatch(/^editable-/)
   })
 })

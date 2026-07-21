@@ -20,7 +20,7 @@ const thoughtRecipe = defineRecipe({
     inverse: {
       true: {
         // invert placeholder color if the color is inverted (such as when a background color is applied)
-        '[placeholder]:empty::before': { color: { _base: 'dimInverse' } },
+        '[placeholder]:empty::before': { color: { _base: 'var(--placeholder-color, {colors.dimInverse})' } },
       },
     },
     flex: {

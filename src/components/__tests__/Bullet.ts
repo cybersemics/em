@@ -54,6 +54,52 @@ describe('render', () => {
     expect(bullets.length).toBe(0)
   })
 
+  it('do not render a bullet on a thought with value "..."', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - ...
+      `,
+      }),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const bullets = document.querySelectorAll('[aria-label="bullet"]')
+    expect(bullets.length).toBe(0)
+  })
+
+  it('do not render a bullet on a formatted thought with value "..."', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - **...**
+      `,
+      }),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const bullets = document.querySelectorAll('[aria-label="bullet"]')
+    expect(bullets.length).toBe(0)
+  })
+
+  it('render a bullet on an ellipsis thought with =bullet', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - ...
+          - =bullet
+      `,
+      }),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const bullets = document.querySelectorAll('[aria-label="bullet"]')
+    expect(bullets.length).toBe(1)
+  })
+
   it('do not render bullets on a child of a thought with =children/=bullet/None', async () => {
     await dispatch([
       importText({
@@ -189,6 +235,33 @@ describe('render', () => {
     const path = hashPath(contextToPath(store.getState(), ['a', 'a1', 'm', 'b1']))
     const bullet = document.querySelector(`[data-testid="bullet-${path}"]`)
     expect(bullet).toBeInTheDocument()
+  })
+
+  // https://github.com/cybersemics/em/issues/3062
+  it('render an ordered number instead of a bullet for =children/=bullet/Ordered', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - x
+          - =children
+            - =bullet
+              - Ordered
+          - a
+          - b
+          - c
+      `,
+      }),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // a, b, c should render numbered glyphs 1, 2, 3 instead of leaf bullets
+    const ordered = document.querySelectorAll('[data-bullet="ordered"]')
+    expect(Array.from(ordered).map(el => el.textContent)).toEqual(['1.', '2.', '3.'])
+
+    // the ordered children should not render a leaf bullet glyph
+    const leaves = document.querySelectorAll('[data-bullet="leaf"]')
+    expect(leaves.length).toBe(0)
   })
 })
 
