@@ -21,20 +21,7 @@ interface ActiveButtonGlowImageProps {
   isActive: boolean | undefined
 }
 
-/**
- * Soft glow shown behind a button in its active state.
- *
- * A single `plus-lighter`-blended, pre-blurred glow asset. This was formerly two stacked layers —
- * a `luminosity` and a `saturation` blend of a blue→purple gradient, softened by a runtime
- * `filter: blur(23px)` — but that stack was the source of GPU corruption on Android's WebView:
- * the HSL blend modes composite to a solid black box over the dark canvas, and the runtime
- * filter+blend combo smeared during the fade. `plus-lighter` is a separable, additive lightening
- * blend (the result is always ≥ the backdrop, so it can never darken), the blur is baked into the
- * asset (no runtime filter), and one layer approximates the old look — a single, filter-free,
- * cross-platform-safe effect with no platform branching. Regenerate the asset via
- * scripts/gen-active-glow.sh; tune glow intensity via the activeButtonGlow enter opacity in
- * recipes/fadeTransition.ts. A negative margin lets the soft edge bloom past the button.
- */
+/** Pre-blurred additive glow that avoids Android corruption from filtered HSL blend layers. */
 const ActiveButtonGlowImage: FC<ActiveButtonGlowImageProps> = ({ isActive }) => {
   const nodeRef = useRef<HTMLDivElement>(null)
   return (

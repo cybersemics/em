@@ -79,10 +79,7 @@ const HamburgerMenu = () => {
         })}
         style={{
           ...positionFixedStyles,
-          // Android: keep the hamburger on its OWN compositing layer. Un-promoted it gets
-          // squashed with the sidebar header region; when a section switch invalidates that
-          // shared layer and raster misses the frame deadline, the hamburger blanks with it
-          // (measured as has_missing_content frames in cc traces).
+          // Android: isolate the hamburger to avoid sidebar compositing flicker.
           willChange: isAndroid ? 'transform' : undefined,
           padding: `${paddingTop}px 15px 10px 15px`,
           // On macOS, if the user cancels a drag and then switches tabs, upon returning mouseup will fire at coordinates (0,0), triggering fastClick on any element located at (0,0).

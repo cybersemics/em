@@ -14,10 +14,7 @@ export default defineRecipe({
     borderRadius: 'var(--panel-command-radius)',
     overflow: 'hidden',
     mixBlendMode: 'color-dodge',
-    // Faint inner glow. Painted as the element's own background so it blends through the base
-    // color-dodge above rather than needing a separate blended ::before layer — one fewer
-    // backdrop-reading blend composite per button (these stack across every Command Center
-    // button and mobile GPUs corrupt on too many). Formerly a `_before` pseudo-element.
+    // Paint the glow in the background to avoid another blended layer on mobile GPUs.
     backgroundImage: `radial-gradient(
         121.9% 149.44% at 57.5% 55.06%,
         rgba(130, 108, 203, 0) 0%,

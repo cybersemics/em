@@ -24,22 +24,16 @@
  * └── RecentlyDeleted.
  *
  * Animation model:
- * Motion is driven by Framer Motion `MotionValue`s — numbers that update outside React's render
- * cycle, not React state.
+ * Framer Motion values drive animation without re-rendering React on each frame.
  *
  * There are four independent animation systems:
  * 1. Drawer slide. Triggered by `showSidebar`. This animates `MotionValue` `x`. Manual swipes drive
  * the `x` value directly. The position and opacity of sidebar layers derive from `x`.
- * 2. Section color tint. Triggered by changes in `sectionId`. Every section's pre-tinted layer
- * stays mounted (baked webp images / JS-pre-tinted gradients — see bakedOverlay and tintColor)
- * and the switch is a pure opacity crossfade over SLOW_DURATION; no filter ever animates or
- * exists at runtime (runtime hue/sat filters allocated fresh GPU buffers per frame).
+ * 2. Section color tint. `sectionId` crossfades pre-tinted images and gradients.
  * 3. Sidebar dropdown. Triggered by `dropdownOpen`. Animates four values over STAGE_DURATION:
  * the opacity of dropdown item rows, the opacity of the chevron, the intensity of the sidebar headers' glow
  * (intensified when the dropdown is open), and a mask that dims the content of the sidebar underneath.
- * 4. Scroll-hint mask. Trigger: `isScrolled`. Slides the same static mask gradient (via the
- * `maskSlideY` transform pair — see COMPOSITED SLIDING MASK) to add a top-edge fade when the
- * list is scrolled.
+ * 4. Scroll-hint mask. `isScrolled` slides the content mask to add a top-edge fade.
  *
  */
 import * as Dialog from '@radix-ui/react-dialog'
@@ -76,21 +70,17 @@ import sectionTints from './sidebarSectionTints.json'
 /** Default ease-out curve used for most sidebar animations. */
 const EASE_OUT = [0.16, 0.6, 0.2, 1] as const
 
-/** EASE_OUT as a CSS cubic-bezier, for compositor-driven CSS transitions. Derived so the framer
- * animations and the CSS transitions can never ease differently. */
+/** CSS equivalent of EASE_OUT. */
 const cssEaseOut = `cubic-bezier(${EASE_OUT.join(', ')})`
 
 /** Softer ease-out used when *closing* the sidebar. The less aggressive start prevents the
  * drawer from appearing to "jump" when the user releases a swipe. */
 const EASE_OUT_GENTLE = [0.25, 0.1, 0.25, 1] as const
 
-/** Number of stacked backdrop-filter layers in the sidebar's ProgressiveBlur. Each layer re-samples
- * the full backdrop every frame; Android's WebView flickers under the load (especially with the
- * Command Center also open), so it gets fewer. */
+/** Android uses one blur layer to avoid WebView compositing flicker. */
 const PROGRESSIVE_BLUR_LAYERS = isAndroid ? 1 : 4
 
-/** Minimum blur radius applied to every ProgressiveBlur layer. With fewer layers on Android the
- * trailing edge would otherwise drop to a hard 0px band; a small floor keeps the falloff smooth. */
+/** Preserve a smooth trailing edge when Android uses one blur layer. */
 const PROGRESSIVE_BLUR_MIN = isAndroid ? 4 : 0
 
 /** Duration (seconds) of the dropdown open/close animation. */
@@ -100,10 +90,7 @@ const STAGE_DURATION = durations.get('medium') / 1000
  * glow overlay's resize on dropdown expand. */
 const SLOW_DURATION = durations.get('slow') / 1000
 
-/** Y offsets that slide the scrollable content's mask in and out — derived from the same
- * sidebarMaskGeometry constants that define the recipe's gradient stops, so the slide offsets and
- * the gradient shape cannot drift apart. These position the gradient relative to the scroll
- * area's top edge. */
+/** Position the shared mask geometry relative to the scroll area's top edge. */
 const DROPDOWN_MASK_OFFSET = -DROPDOWN_MASK_BAND
 const SCROLL_HINT_MASK_OFFSET = -SCROLL_HINT_FADE
 
@@ -127,10 +114,8 @@ type SidebarSection = {
  * - Favorites: 0° (no rotation, uses the base overlay color)
  * - Recently Edited: -45° (shifts toward cooler tones)
  * - Recently Deleted: 128° (shifts toward warmer tones).
- * The hue/saturate values live in sidebarSectionTints.json — shared with
- * scripts/gen-sidebar-overlays.py, which bakes the SAME values into the per-section webp overlays
- * (see bakedOverlay). A change to the JSON must be followed by re-running that script, or the
- * baked glow and the JS-tinted gradient (tintColor) will no longer match.
+ * The hue/saturate values in sidebarSectionTints.json are shared by the runtime gradient and the
+ * locally generated AVIF overlays. Regenerate the images after changing these values.
  */
 const SECTIONS: SidebarSection[] = [
   { id: 'favorites', label: 'Favorites', icon: FavoritesIcon, ...sectionTints.favorites },
@@ -204,19 +189,8 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
    * selected item must translate up to land on the header row. */
   const itemEls = useRef<Record<string, HTMLDivElement | null>>({})
 
-  /** Returns the y-offset of the selected item's SidebarSectionRow within the dropdown
-   * container — i.e. the distance the selected item must translate UP to overlay the
-   * header row at y=0.
-   *
-   * Why the offsetParent branch: framer-motion applies a CSS transform to each item's
-   * motion.div wrapper (via style.y). A transformed element becomes the offsetParent of
-   * its descendants in both Chromium and WebKit, so sectionRow.offsetTop returns different
-   * values depending on whether the motion.div currently has a transform applied. With a
-   * transform (closed state) offsetParent is the motion.div, so offsetTop covers only the
-   * inner div's padding (~9px) and we have to add the motion.div's own offsetTop. Without
-   * a transform (open state) offsetParent skips up to the dropdown container, so offsetTop
-   * already includes the motion.div's static y. Without this branch, non-Favorites sections
-   * end up either under- or over-translated and the slide lands far from the header row. */
+  /** Distance the selected row must move to become the closed header. A transformed wrapper can
+   * become offsetParent, so include its offset only when offsetTop does not already contain it. */
   const getSelectedOffset = useCallback(() => {
     const inner = itemEls.current[sectionId]
     const sectionRow = inner?.firstElementChild as HTMLElement | null
@@ -230,11 +204,7 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
     return Math.max(0, idx) * 54
   }, [sectionId, sections])
 
-  // Memoized: offsetTop reads force synchronous layout, and running them on EVERY render (many
-  // per second mid-animation) stalls the main thread exactly when raster commits are racing the
-  // frame deadline (measured as checkerboarded has_missing_content frames). Once per
-  // toggle/section change is enough — the row geometry only changes with those.
-
+  // Measure only when the dropdown or section changes; offsetTop forces layout.
   const selectedOffset = useMemo(getSelectedOffset, [getSelectedOffset, isOpen])
 
   return (
@@ -252,35 +222,16 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
           gap: '0.5rem',
         })}
       >
-        {/*
-         * Invisible layout spacer. Reserves the header row's height and width so the chevron sits
-         * after the title and the content below starts in the right place. The VISIBLE title is the
-         * selected dropdown row (see the item render below), which is PERSISTENT — always opacity 1
-         * — and slides into this spot. There is no longer a header/selected-item opacity swap, so
-         * the title can never blank at the hand-off. `visibility: hidden` reserves space without
-         * painting, and never toggles, so it costs nothing and can't gap.
-         */}
+        {/* Reserve space for the selected dropdown row, which slides here when closed. */}
         <div style={{ visibility: 'hidden' }} aria-hidden>
           <SidebarSectionRow icon={section.icon} label={section.label} />
         </div>
-        {/*
-         * Chevron timing (CSS transition; a compositor fade, no framer tick):
-         *   - Open: fades out (1 → 0) concurrent with the rest of the dropdown.
-         *   - Close: transition-delay holds it for one STAGE_DURATION, then it fades back in over
-         *     the next STAGE_DURATION on the now-static header row — matching the old [0, 0, 1]
-         *     keyframes for a completed open. One divergence from the keyframes: on an INTERRUPTED
-         *     close (chevron still mid-fade-out), the transition holds the current mid-fade value
-         *     through the delay instead of snapping to 0 — acceptably subtle here (≤ ~0.2 effective
-         *     opacity for one stage, given the 0.4 base). Linear ease so the faint chevron reads as
-         *     a fade, not a pop.
-         */}
+        {/* Fade out on open; wait for the selected row to settle before fading back in. */}
         <div
-          // CSS crossfade (was framer keyframes). Open: fade out over one stage. Close: hold one
-          // stage (transition-delay), then fade back in — see the timing note above.
           style={{
             opacity: isOpen ? 0 : 1,
             transition: `opacity ${STAGE_DURATION}s ${isOpen ? 'ease-out' : 'linear'} ${isOpen ? 0 : STAGE_DURATION}s`,
-            willChange: isAndroid ? 'opacity' : undefined, // iOS: promotion feeds GPU-OOM, no benefit
+            willChange: isAndroid ? 'opacity' : undefined, // Android: avoid opacity-transition flicker.
           }}
           className={css({ display: 'inline-flex', paddingTop: '0.375rem' })}
         >
@@ -293,8 +244,7 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
         </div>
       </div>
 
-      {/* Full-screen backdrop behind the dropdown. When clicked, it dismisses the dropdown. CSS
-          opacity fade (was a framer animate prop ticking per frame on the main thread). */}
+      {/* Dismiss the dropdown when the area behind it is clicked. */}
       <div
         style={{ opacity: isOpen ? 1 : 0, transition: `opacity ${STAGE_DURATION}s ${cssEaseOut}` }}
         {...fastClick(() => setIsOpen(false))}
@@ -310,11 +260,9 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
         })}
       />
 
-      {/* Dropdown menu containing all sections in their original order. See the dropdown stage in the Animation model for per-element timing. */}
+      {/* Dropdown sections in display order. */}
       <div
-        // Android: isolate the dropdown rows into their own small compositing layer — small
-        // layers raster within the frame budget, and their invalidation can't blank innocent
-        // neighbours squashed into a shared layer (the fast-toggle flicker).
+        // Android: isolate the dropdown rows to avoid compositing flicker.
         style={{ willChange: isAndroid ? 'transform' : undefined }}
         className={css({
           position: 'absolute',
@@ -334,20 +282,11 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
             <div
               key={s.id}
               style={{
-                // Every row keeps the SAME compositing setup regardless of which section is
-                // selected: a constant willChange, an always-present transform, and one transition
-                // covering both properties. Switching the selected section then changes ONLY
-                // compositor values (transform / opacity) — it never flips willChange, creates a
-                // transform layer, or re-renders the icon size, each of which re-rasters and blanks
-                // the row for a frame (the fast-section-switch flicker). The selected row is the
-                // persistent title (always opacity 1): it slides to the top to become the header
-                // when closed, and is the list item when open. Non-selected rows fade in/out.
+                // The selected row stays visible and slides into the header; other rows fade.
                 opacity: isSelected ? 1 : isOpen ? 1 : 0,
                 transform: `translateY(${isSelected && !isOpen ? -selectedOffset : 0}px)`,
                 transition: `opacity ${STAGE_DURATION}s ${cssEaseOut}, transform ${STAGE_DURATION}s ${cssEaseOut}`,
-                // Android only: the constant promotion is what prevents the fast-switch flicker on
-                // Blink. On iOS/WebKit it instead grows the GPU process (promoted-layer buffers that
-                // release lazily) — gate off; the transform/opacity transitions composite natively.
+                // Android: keep each row promoted to avoid fast-switch flicker.
                 willChange: isAndroid ? 'transform, opacity' : undefined,
               }}
             >
@@ -369,11 +308,7 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
                   '@media (hover: hover)': { _hover: { opacity: 1 } },
                   '@media (hover: none)': { _active: { opacity: 1 } },
                   transition: 'opacity {durations.fast} ease-out',
-                  // Pre-promote to its own compositor layer (Android/Blink only). Without this, the
-                  // first touchdown starts the :hover/:active opacity transition, which makes Blink
-                  // CREATE a layer on the spot — that creation blanks the row for one frame (the
-                  // "flash out-in before the hover style applies"). iOS/WebKit has no creation-blank,
-                  // and promoting instead feeds the GPU-process OOM, so gate to Android.
+                  // Android: promote before the active-state fade to avoid a one-frame blank.
                   willChange: isAndroid ? 'opacity' : undefined,
                 })}
               >
@@ -437,10 +372,7 @@ const tintColor = (color: string, sectionId: SidebarSectionId): string => {
 }
 
 /**
- * Primary glow overlay behind the sidebar header. Renders a cropped region of a background
- * image and animates its size/position when the dropdown expands, giving a soft glow that
- * intensifies and shifts when the user opens the section picker. Hue-rotate / saturate
- * filters (driven by motion values from the parent) re-tint the glow per section.
+ * Primary glow overlay behind the sidebar header. It resizes when the section dropdown opens.
  *
  * Spans 100vw so the glow bleeds beyond the sidebar's right edge on large devices.
  */
@@ -453,20 +385,12 @@ const SidebarOverlay1 = ({
   opacity: MotionValue<number>
   /** Whether the dropdown is currently expanded. */
   expanded: boolean
-  /** Active section — glow layers CSS-transition their opacity toward it (compositor-driven, so
-   * the crossfade runs on the GPU thread instead of a per-frame framer tick on the main thread). */
+  /** Active section. */
   sectionId: SidebarSectionId
 }) => {
   const isLargeDevice = useBreakpoint('lg')
 
-  // WebKit (Safari/iOS): animate background-size/-position on a single full-viewport layer — the
-  // pre-optimization path. The transform-scale approach below (a Chromium win, see the next comment)
-  // is a WebKit disaster: WebKit re-rasterizes a filtered layer every frame while its transform
-  // animates, AND sizes that layer's backing store to the SCALED, blurred bounds. So on iOS the
-  // dropdown resize both repaints per frame (jank) and allocates a large transient blur buffer on
-  // every open/close — which the WebContent process eventually OOM-kills on ("terminated … using too
-  // much memory"). Background-size tweening repaints in place within a fixed-size layer, which WebKit
-  // composites smoothly (this is the behaviour iOS shipped happily before the Android perf work).
+  // WebKit resizes a fixed layer; scaling it creates oversized backing stores and can exhaust memory.
   if (isSafari()) {
     const collapsed = {
       backgroundSize: 'calc(1482px * 0.425) calc(744px * 0.475)',
@@ -479,10 +403,7 @@ const SidebarOverlay1 = ({
           backgroundPositionY: safeY(-158),
           backgroundPositionX: '-320px',
         }
-    // ALL sections' pre-baked images stay permanently mounted, each crossfading its own opacity
-    // toward the active section. Inactive layers sit at opacity 0 — painted and resident, so a
-    // switch is a pure compositor crossfade between two ready layers (no fresh-mount raster/pop).
-    // The sidebar-position opacity lives on the wrapper, so no per-layer multiply is needed.
+    // Keep every tint mounted so section changes are opacity-only crossfades.
     return (
       <motion.div
         style={{ opacity }}
@@ -495,9 +416,6 @@ const SidebarOverlay1 = ({
               opacity: sec.id === sectionId ? 1 : 0,
               transition: `opacity ${SLOW_DURATION}s linear`,
               backgroundImage: bakedOverlay(1, sec.id),
-              // NO will-change on iOS: promoting each full-viewport section layer to its own GPU
-              // backing store grows the GPU process per switch (the jetsam-OOM path). The opacity
-              // crossfade composites fine unpromoted here (measured: web-FPS unchanged, ~59).
             }}
             initial={collapsed}
             animate={expanded ? open : collapsed}
@@ -523,33 +441,17 @@ const SidebarOverlay1 = ({
     )
   }
 
-  // Chromium: the dropdown resize is a transform (scale + translate) on an inner layer, not an animated
-  // background-size/position on the outer one: transform is GPU-composited, whereas background-size
-  // and background-position repaint the whole 100vw×100vh layer every frame. The inner layer is
-  // sized and positioned to the COLLAPSED crop, so collapsed = the identity transform, and the open
-  // state is reached by scaling from the top-left origin (equivalent to growing background-size from
-  // the background-position corner) plus a translate for the position shift. This is faithful to the
-  // old animation — size = base × scale, so a linear scale tween equals the old linear
-  // background-size tween, and the safe-area term cancels in the translate deltas (safeY is linear).
-  // The multipliers below mirror the original background-size fractions of the 1482×744 image:
-  //   - Large devices: width fixed (scaleX 1), height 0.475→0.825; positionY -84→-164.
-  //   - Small screens: both dims 0.425/0.475→0.85; positionX -150→-320, positionY -84→-158.
+  // Chromium transforms the collapsed crop because animating background geometry repaints each frame.
   const collapsed = { x: 0, y: 0, scaleX: 1, scaleY: 1 }
   const open = isLargeDevice
     ? { x: 0, y: -164 - -84, scaleX: 1, scaleY: 0.825 / 0.475 }
     : { x: -320 - -150, y: -158 - -84, scaleX: 0.85 / 0.425, scaleY: 0.85 / 0.475 }
-  // CSS transform string for the resize (was a framer `animate` prop ticking on the main thread
-  // every frame — the whole point is to run it on the compositor). transform + opacity are the
-  // only animated properties; both composite.
   const t = expanded ? open : collapsed
   const resizeTransform = `translate(${t.x}px, ${t.y}px) scale(${t.scaleX}, ${t.scaleY})`
 
   return (
-    // Outer: animates opacity only — a plain compositing layer, so the fade composites instead of
-    // repainting. The filter lives on the inner (static value), so animating opacity here never
-    // forces the filter to re-run.
     <motion.div
-      // willChange (Android only): see the scroll-area mask note — same promotion rationale.
+      // Android: promote the fade to avoid repaint flicker.
       style={{ opacity, willChange: isAndroid ? 'opacity' : undefined }}
       className={css({
         position: 'absolute',
@@ -566,26 +468,18 @@ const SidebarOverlay1 = ({
         },
       })}
     >
-      {/* Inner glow layer(s), sized/positioned to the collapsed crop. Each carries a STATIC
-          hue/sat filter and the transform TOGETHER: the cached filtered buffer just composites
-          (scales) — no per-frame repaint. ALL sections stay permanently mounted (opacity 0 when
-          inactive): per-switch mount/unmount of full-viewport layers reshuffles Chromium's layer
-          assignment and flickers unrelated overlapping elements (e.g. the hamburger). */}
+      {/* Keep every tinted crop mounted so section changes only crossfade opacity. */}
       {SECTIONS.map(sec => (
         <div
           key={sec.id}
-          // top must be an inline style, NOT css(): safeY() is a runtime function call, and Panda
-          // extracts css() statically at build time — it can't evaluate the call, silently drops
-          // the property, and the glow renders 84px too low (top: 0).
+          // Panda cannot extract runtime safeY(), so top must remain inline.
           style={{
             backgroundImage: bakedOverlay(1, sec.id),
             opacity: sec.id === sectionId ? 1 : 0,
             transform: resizeTransform,
             transition: `opacity ${SLOW_DURATION}s linear, transform ${SLOW_DURATION}s ${cssEaseOut}`,
             top: safeY(-84) /* collapsed backgroundPositionY */,
-            // willChange (Android only): the promotion prevents the crossfade/resize repaint races
-            // measured there; desktop Chromium doesn't need it and would pay 3 resident
-            // full-viewport layers, and iOS never runs this branch (isSafari early return above).
+            // Android: promote the crossfade and resize to avoid repaint flicker.
             willChange: isAndroid ? 'opacity, transform' : undefined,
           }}
           className={css({
@@ -617,13 +511,10 @@ const SidebarOverlay2 = ({
   width: string
   /** Opacity derived from the sidebar's x position. */
   opacity: MotionValue<number>
-  /** Active section — glow layers CSS-transition their opacity toward it (compositor-driven, so
-   * the crossfade runs on the GPU thread instead of a per-frame framer tick on the main thread). */
+  /** Active section. */
   sectionId: SidebarSectionId
 }) => {
-  /** Pre-baked per-section images on BOTH engines: zero runtime filters, and the half-res baked
-   * assets quarter the compositing bandwidth of these resident layers — the glow stack's weight
-   * was what made mask-snap rasters miss frame deadlines on Android (missing-content flicker). */
+  /** Pre-baked section tints avoid runtime filters. */
   const layers = SECTIONS.map(sec => ({
     key: sec.id,
     backgroundImage: bakedOverlay(2, sec.id),
@@ -631,8 +522,6 @@ const SidebarOverlay2 = ({
   }))
 
   return (
-    // Outer: animates opacity only (plain compositing layer). Inner holds the static filter + image
-    // + mask, so the fade composites a cached buffer instead of re-running the filter every frame.
     <motion.div
       style={{ opacity, width, willChange: isAndroid ? 'opacity' : undefined }}
       className={css({
@@ -647,11 +536,7 @@ const SidebarOverlay2 = ({
       {layers.map(({ key, active, ...styles }) => (
         <motion.div
           key={key}
-          // willChange (Android only): without a runtime filter these layers lose their implicit
-          // compositing trigger; unpromoted on Android the crossfade's per-frame opacity writes
-          // REPAINT them (measured: dropped frames doubled). On iOS/WebKit the trade-off inverts —
-          // promoting these full-viewport layers grows the GPU process toward jetsam-OOM, and the
-          // fade composites smoothly without it (measured: web-FPS unchanged), so gate to Android.
+          // Android: promote the crossfade to avoid repaint flicker.
           style={{
             ...styles,
             opacity: active ? 1 : 0,
@@ -696,16 +581,12 @@ const SidebarGradient = ({
   showSidebar: boolean
   /** Callback to open/close the sidebar. */
   toggleSidebar: (value: boolean) => void
-  /** Active section — glow layers CSS-transition their opacity toward it (compositor-driven, so
-   * the crossfade runs on the GPU thread instead of a per-frame framer tick on the main thread). */
+  /** Active section. */
   sectionId: SidebarSectionId
 }) => {
-  // Raw rgba/hex literals from the active theme — NOT Panda's token(): sidebarBg/bgTransparent are
-  // semantic (theme-conditioned) tokens, so token() returns a 'var(--colors-…)' reference that
-  // tintColor cannot parse (it would silently fall through and leave every section untinted).
+  // tintColor needs resolved theme colors rather than Panda's CSS variable references.
   const colors = useSelector(themeColors)
-  /** Gradient colors pre-tinted in JS on both engines — no runtime filter (see bakedOverlay).
-   * Memoized: tintColor composes 3x3 color matrices, and the result only changes with the theme. */
+  /** Pre-tinted gradient colors, recomputed only when the theme changes. */
   const layers = useMemo(
     () =>
       SECTIONS.map(sec => ({
@@ -716,9 +597,6 @@ const SidebarGradient = ({
   )
 
   return (
-    // Outer: animates opacity only (plain compositing layer) and owns the click-to-dismiss target.
-    // Inner holds the static gradient + hue/sat filter, so the fade composites a cached buffer
-    // rather than re-running the filter every frame (which repaints this full-height layer).
     <motion.div
       aria-label='sidebar-gradient'
       aria-hidden='true'
@@ -736,8 +614,7 @@ const SidebarGradient = ({
       {layers.map(({ key, ...styles }) => (
         <motion.div
           key={key}
-          // willChange (Android only): see SidebarOverlay2's layer note — promote on Android to
-          // avoid repaint jank, but NOT on iOS where the promotion drives the GPU-process OOM.
+          // Android: promote the crossfade to avoid repaint flicker.
           style={{
             ...styles,
             opacity: key === sectionId ? 1 : 0,
@@ -781,8 +658,7 @@ const SidebarBackground = ({
   toggleSidebar: (value: boolean) => void
   /** CSS width string for child overlay components. */
   width: string
-  /** Active section — glow layers CSS-transition their opacity toward it (compositor-driven, so
-   * the crossfade runs on the GPU thread instead of a per-frame framer tick on the main thread). */
+  /** Active section. */
   sectionId: SidebarSectionId
 }) => {
   // Derive opacity from sidebar x position, then apply cubic ease-in
@@ -814,13 +690,7 @@ const SidebarBackground = ({
         })}
       />
 
-      {/*
-       * Blur/gradient stacking order is engine-specific:
-       *   - WebKit (Safari/iOS): blur -above- the gradient; the reverse produces patchy artifacts.
-       *   - Chromium: blur -below- the gradient; the reverse produces visible banding.
-       * backdrop-filter is expensive on Chromium (each layer recomposites the full backdrop every
-       * frame during the slide), so Android uses fewer layers — see PROGRESSIVE_BLUR_LAYERS.
-       */}
+      {/* WebKit needs blur above the gradient; Chromium needs it below. */}
       {isSafari() ? (
         <>
           <SidebarGradient
@@ -869,9 +739,8 @@ const SidebarBackground = ({
  * and section content. Handles open/close (Redux), swipe-to-close gestures, section
  * switching, Escape key, and body scroll lock.
  *
- * The drawer subtree mounts only while open (and during the close slide-out; see drawerMounted)
- * and slides via a framer-motion x transform; swipe gestures are handled manually because
- * framer-motion's drag has no "wait and see" phase for direction detection.
+ * The drawer remains mounted through its close animation. Swipe gestures are handled manually
+ * because framer-motion's drag has no "wait and see" phase for direction detection.
  */
 const Sidebar = () => {
   // ============================
@@ -911,27 +780,12 @@ const Sidebar = () => {
     }
   }, [showSidebar])
 
-  /** Self-managed mount for the sidebar subtree, replacing Radix's forceMount. It mounts on open
-   * and stays mounted through the close slide-out (torn down in the drawer's onAnimationComplete,
-   * with a fallback in an effect below for closes where no slide-out runs), so the enter/exit
-   * animations still play while a fully-closed sidebar costs zero compositing. The parent Sidebar
-   * component and its motion values persist across this; only the subtree's own state (list scroll
-   * position, Favorites UI state) resets on close, which is acceptable here. */
+  /** Keep the subtree mounted until its close animation finishes. */
   const [drawerMounted, setDrawerMounted] = useState(showSidebar)
 
-  // COMPOSITED SLIDING MASK. mask-position is not compositor-animatable in ANY engine (Blink
-  // composites only transform/opacity/filter/backdrop-filter), so SLIDING the mask by position
-  // re-rasterized the list every frame (~30fps on Pixel 6). SNAPPING it instead (tried next)
-  // necessarily pops: any snap timing either leaks the list through the half-faded dropdown rows
-  // (mid-transition) or blanks the just-selected section until the close animation ends (late).
-  // Resolution: the gradient is STATIC (never repaints — see sidebarContentMaskRecipe) and the
-  // slide is reproduced with a TRANSFORM PAIR: the mask-bearing wrapper translates by maskSlideY
-  // while the scroller inside counter-translates by -maskSlideY, so the content and its scroll
-  // clip stay pixel-stationary while the gradient glides across them — visually identical to the
-  // original mask-position animation, but both transforms are CSS transitions that run on the
-  // compositor, in lockstep with the row/dim fades (same duration + ease). This also covers the
-  // scroll-hint fade, which was previously its own per-frame mask-position animation.
-  // Gradient geometry (128px transparent band + 48px fade, oversized so every state is covered):
+  // Slide the static mask carrier and counter-slide the scroller. This moves the gradient without
+  // repainting or moving the content. The carrier is oversized to keep the viewport covered.
+  // Positions for the 128px dropdown band and 48px scroll fade:
   //   0     = band in place — the region under the open dropdown is hidden
   //   -128  = revealed, with the 48px scroll-hint fade at the top edge (list is scrolled)
   //   -176  = fully revealed (list at the top; no fade)
@@ -991,16 +845,11 @@ const Sidebar = () => {
    * `x.set()` calls (during a swipe). */
   const x = useMotionValue(showSidebar ? 0 : -widthPx)
 
-  // Sync drawerMounted with showSidebar. Mounting is immediate; unmounting normally happens in
-  // the drawer's onAnimationComplete so the close slide-out can play first. But if the drawer is
-  // already fully off-screen when the close arrives — a swipe carried it exactly to the edge, or
-  // the sidebar was toggled closed before the open animation began — framer has nothing to
-  // animate and never fires onAnimationComplete, which would leave a zombie sidebar mounted
-  // forever. Unmount directly in that case.
   useEffect(() => {
     if (showSidebar) {
       setDrawerMounted(true)
     } else if (x.get() === -widthPx) {
+      // Framer does not fire onAnimationComplete when there is no distance to animate.
       setDrawerMounted(false)
     }
   }, [showSidebar, x, widthPx])
@@ -1013,8 +862,7 @@ const Sidebar = () => {
     return linear * linear
   })
 
-  /** The open/close transition. Aggressive ease-out on open, gentler one on close so the
-   * drawer doesn't appear to "jump" if the close kicks off from a swipe-release. */
+  /** The open/close transition. */
   const transition = useMemo(
     () => ({
       duration: STAGE_DURATION,
@@ -1149,9 +997,7 @@ const Sidebar = () => {
       if (longPressRef.current === LongPressState.DragHold || longPressRef.current === LongPressState.DragInProgress)
         return
 
-      // Immediately prevent default for all backdrop-initiated touches. There's nothing
-      // scrollable on the backdrop, and waiting for the 3px direction-detection threshold
-      // gives Android enough time to start its overscroll bounce animation.
+      // Prevent backdrop touches before Android begins its overscroll bounce.
       if (swipe.startedOnBackdrop && e.cancelable) {
         e.preventDefault()
       }
@@ -1266,18 +1112,7 @@ const Sidebar = () => {
        * key ourselves, and we don't want Radix to add its own overlay.
        */}
       <Dialog.Root open={showSidebar || drawerMounted} onOpenChange={toggleSidebar} modal={false}>
-        {/*
-         * No forceMount: the sidebar subtree mounts on open and unmounts once the close slide-out
-         * finishes (see drawerMounted + the drawer's onAnimationComplete), so a fully-closed sidebar
-         * costs zero compositing. Keeping Dialog `open` true while drawerMounted is still set lets
-         * the exit animation play before Radix tears the portal down.
-         */}
         <Dialog.Portal>
-          {/*
-           * Root container for all sidebar layers. Fixed-positioned to cover
-           * the entire viewport. pointerEvents:none allows clicks to pass through
-           * to the main content; individual child layers opt-in to pointer events.
-           */}
           <div
             data-testid='sidebar'
             inert={!showSidebar}
@@ -1320,11 +1155,7 @@ const Sidebar = () => {
               onEscapeKeyDown={e => e.preventDefault()}
               aria-describedby={undefined} // Suppress Radix console warning – not applicable here
             >
-              {/* The drawer panel. Slides horizontally via the x motion value. It now mounts
-                  off-screen (initial x = -widthPx) and animates in, since the subtree is no longer
-                  force-mounted; on close it animates back off-screen, then onAnimationComplete
-                  unmounts the subtree (see drawerMounted). style.x lets a manual swipe override the
-                  animated value mid-flight. */}
+              {/* Unmount the drawer after its close animation. */}
               <motion.div
                 ref={drawerRef}
                 style={{ x, opacity: contentOpacity }}
@@ -1429,12 +1260,7 @@ const Sidebar = () => {
                       </div>
                     </FadeTransition>
 
-                    {/* Scroll area under the sliding mask (see the COMPOSITED SLIDING MASK note):
-                        the mask carrier extends beyond this viewport by MASK_OVERSIZE and
-                        translates by maskSlideY. The scroller retains the viewport's exact height
-                        and counter-translates, so its content and scroll clip stay pixel-stationary
-                        while the gradient glides over them. The fixed oversize keeps the scroller
-                        inside the carrier's border-box mask at every animation position. */}
+                    {/* The oversized mask carrier slides while the scroller counter-slides. */}
                     <div
                       className={css({
                         flex: 1,
@@ -1446,19 +1272,13 @@ const Sidebar = () => {
                     >
                       <div
                         style={{
-                          // Fixed border-box bounds keep the counter-translated scroller inside the
-                          // mask carrier throughout the animation and give WebKit a stable
-                          // compositing surface.
+                          // Cover the viewport at every mask position.
                           height: `calc(100% + ${MASK_OVERSIZE}px)`,
                           transform: `translateY(${maskSlideY}px)`,
                           transition: `transform ${STAGE_DURATION}s ${cssEaseOut}`,
-                          // This box rises up to MASK_OVERSIZE over the header/dropdown when
-                          // revealed — it must not swallow their taps; the scroller re-enables its
-                          // own events.
+                          // Let taps pass through the carrier; the scroller opts back in.
                           pointerEvents: 'none',
-                          // Android: pre-promote so the transition doesn't create the layer
-                          // mid-interaction (on-the-fly layer creation blanks content for a frame
-                          // on Blink). iOS: no promotion (GPU-process memory, see overlay notes).
+                          // Android: promote before the mask transition to avoid a one-frame blank.
                           willChange: isAndroid ? 'transform' : undefined,
                         }}
                         className={cx(
@@ -1477,12 +1297,10 @@ const Sidebar = () => {
                           data-scroll-at-edge
                           onScroll={e => setIsScrolled(e.currentTarget.scrollTop > 0)}
                           style={{
-                            // Counter-slide: cancels the mask wrapper's translate so the list never
-                            // visually moves; only the gradient does.
+                            // Keep the list stationary as its mask carrier moves.
                             height: `calc(100% - ${MASK_OVERSIZE}px)`,
                             transform: `translateY(${-maskSlideY}px)`,
-                            // Dim is a CSS opacity transition (compositor-driven), not a framer
-                            // MotionValue ticked per frame on the main thread. 0.5 open / 1 closed.
+                            // Dim the content while the dropdown is open.
                             opacity: dropdownOpen ? 0.5 : 1,
                             transition: `opacity ${STAGE_DURATION}s ${cssEaseOut}, transform ${STAGE_DURATION}s ${cssEaseOut}`,
                             pointerEvents: 'auto',
