@@ -1165,6 +1165,16 @@ const Sidebar = () => {
                 onAnimationComplete={() => {
                   if (!showSidebar) setDrawerMounted(false)
                 }}
+                onClickCapture={e => {
+                  if (isLargeDevice) return
+
+                  const { right, width } = e.currentTarget.getBoundingClientRect()
+                  if (e.clientX < right - width * 0.1) return
+
+                  e.preventDefault()
+                  e.stopPropagation()
+                  toggleSidebar(false)
+                }}
                 className={css({
                   position: 'fixed',
                   top: 'safeAreaTop',
@@ -1178,25 +1188,6 @@ const Sidebar = () => {
                   pointerEvents: 'auto',
                 })}
               >
-                {/* Tap-to-close strip on small screens. The full-width sidebar covers the whole
-                    viewport, so users need an alternative to swipe; the right 10% acts as a
-                    dismiss target. */}
-                {!isLargeDevice && (
-                  <div
-                    aria-hidden='true'
-                    onClick={() => toggleSidebar(false)}
-                    className={css({
-                      position: 'absolute',
-                      top: 0,
-                      right: 0,
-                      bottom: 0,
-                      width: '10%',
-                      zIndex: 1,
-                      cursor: 'pointer',
-                    })}
-                  />
-                )}
-
                 {/* Detects when the sidebar is mid-swipe-close and disables Favorites
                     drag-and-drop so the two gestures don't fight. Throttles to once per 10ms;
                     leading:false skips the first event before x has moved. */}
