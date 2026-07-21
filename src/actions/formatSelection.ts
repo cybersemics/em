@@ -2,6 +2,7 @@
 import Thunk from '../@types/Thunk'
 import { isTouch } from '../browser'
 import { ColorToken } from '../colors.config'
+import { commandEmitter } from '../commands'
 import registerNativeUndoStep from '../device/registerNativeUndoStep'
 import * as selection from '../device/selection'
 import noteValue from '../selectors/noteValue'
@@ -20,6 +21,13 @@ import { setDescendantActionCreator as setDescendant } from './setDescendant'
 export const formatSelectionActionCreator =
   (command: FormatCommand, color?: ColorToken): Thunk =>
   (dispatch, getState) => {
+    // Flush any pending throttled edit from the Editable so formatSelection reads the latest committed value.
+    // A toolbar picker (e.g. ColorPicker) dispatches formatSelection directly, bypassing executeCommand's
+    // commandEmitter flush; without this, a still-in-flight typed edit (EDIT_THROTTLE trailing edge) commits AFTER the
+    // formatting edit and clobbers it, dropping the applied color/formatting (#4657). The keyboard and gesture command
+    // paths already flush via commandEmitter.trigger('command').
+    commandEmitter.trigger('command')
+
     const state = getState()
     if (!state.cursor) return
     const thought = pathToThought(state, state.cursor)
