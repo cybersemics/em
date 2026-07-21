@@ -18,9 +18,11 @@ import getThoughtFill from '../selectors/getThoughtFill'
 import isContextViewActive from '../selectors/isContextViewActive'
 import isMulticursorPath from '../selectors/isMulticursorPath'
 import rootedParentOf from '../selectors/rootedParentOf'
+import commandStateStore from '../stores/commandStateStore'
 import calculateCursorOverlayRadius from '../util/calculateCursorOverlayRadius'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
+import isAttribute from '../util/isAttribute'
 import parentOf from '../util/parentOf'
 import BulletPositioner from './BulletPositioner'
 
@@ -42,6 +44,8 @@ interface BulletProps {
   isCursorGrandparent?: boolean
   isCursorParent?: boolean
   isInContextView?: boolean
+  /** 1-based ordinal position among visible non-attribute siblings (from linearizeTree), used to number =bullet/Ordered lists. -1 for attributes. */
+  childIndexNonAttribute?: number
 }
 
 const isIOSSafari = isTouch && isiPhone && isSafari()
@@ -206,6 +210,30 @@ const BulletParent = ({
   )
 }
 
+/** An ordered-list number rendered in place of a bullet for =children/=bullet/Ordered. Rendered inside the same scaling bullet SVG (viewBox 0 0 600 600) so it sizes and positions consistently across platforms and font sizes. */
+const BulletOrdered = ({ fill, order }: { fill?: string; order: number }) => {
+  return (
+    <text
+      aria-label='bullet-glyph'
+      data-bullet='ordered'
+      // Right-anchor the number so multi-digit ordinals form a period-aligned column. x is offset to the right of the
+      // viewBox center (300) so a single digit is centered on the bullet position, aligning with the leaf bullet and
+      // cursor overlay (both centered at cx=300).
+      x={567}
+      // Sit on the thought text's alphabetic baseline. The viewBox (0 0 600 600) is mapped to lineHeight (fontSize *
+      // 1.25), so the text baseline falls at a fixed user-space y independent of font size; 440 aligns the number with
+      // the text baseline while keeping it visually centered in the cursor overlay (radius 245 at cy=300).
+      y={440}
+      textAnchor='end'
+      className={css({ fill: 'bullet' })}
+      // fontSize 480 in user space renders at fontSize * 1.25 * (480/600) = fontSize, matching the thought text size.
+      style={{ fill, fontSize: '480px' }}
+    >
+      {order}.
+    </text>
+  )
+}
+
 /** A larger circle that surrounds the bullet of the cursor thought. */
 const BulletHighlightOverlay = ({
   isHighlighted,
@@ -246,6 +274,7 @@ const Bullet = ({
   isCursorGrandparent,
   isCursorParent,
   isInContextView,
+  childIndexNonAttribute,
   // depth,
   // debugIndex,
 }: BulletProps) => {
@@ -291,7 +320,33 @@ const Bullet = ({
     return children.length < Object.keys(thought.childrenMap).length
   })
 
-  const fill = useSelector(state => getThoughtFill(state, thoughtId))
+  const persistedFill = useSelector(state => getThoughtFill(state, thoughtId))
+  const isEmpty = useSelector(state => getThoughtById(state, thoughtId)?.value === '')
+  const activeCommandFill = commandStateStore.useSelector(state => {
+    if (!isEditing || !isEmpty) return undefined
+
+    const fill = state.backColor || state.foreColor
+    return typeof fill === 'string' ? fill : undefined
+  })
+  const fill = persistedFill || activeCommandFill
+
+  /** The 1-based ordinal of an ordered list item, or null if the thought is not in an ordered context. A thought is ordered when its parent has =children/=bullet/Ordered or its grandparent has =grandchildren/=bullet/Ordered. */
+  const order = useSelector(state => {
+    // Ordered numbering does not apply in the context view.
+    if (showContexts) return null
+    // childIndexNonAttribute is -1 for attributes and undefined outside the linearized tree; neither should be numbered.
+    if (childIndexNonAttribute == null || childIndexNonAttribute < 0) return null
+    const thought = getThoughtById(state, thoughtId)
+    // Never number a meta attribute (e.g. =children itself when hidden thoughts are shown).
+    if (!thought || isAttribute(thought.value)) return null
+    const parentId = thought.parentId
+    const grandparentId = getThoughtById(state, parentId)?.parentId ?? null
+    const isOrdered =
+      attributeEquals(state, findDescendant(state, parentId, '=children'), '=bullet', 'Ordered') ||
+      attributeEquals(state, findDescendant(state, grandparentId, '=grandchildren'), '=bullet', 'Ordered')
+    // Number by position among visible (non-meta) siblings, precomputed once by linearizeTree in render order.
+    return isOrdered ? childIndexNonAttribute + 1 : null
+  })
 
   const isExpanded = useSelector(state => !!state.expanded[hashPath(path)])
   const isBulletExpanded = isCursorParent || isCursorGrandparent || isEditing || isExpanded
@@ -318,7 +373,9 @@ const Bullet = ({
         {!(publish && (isRoot || isRootChildLeaf)) && isHighlighted && !isDropGutterDeleteHovering && (
           <BulletHighlightOverlay isHighlighted={isHighlighted} leaf={leaf} publish={publish} simplePath={simplePath} />
         )}
-        {leaf && !showContexts ? (
+        {order != null ? (
+          <BulletOrdered fill={fill} order={order} />
+        ) : leaf && !showContexts ? (
           <BulletLeaf
             done={isDone}
             fill={fill}

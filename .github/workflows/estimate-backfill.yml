@@ -8,6 +8,20 @@ on:
         description: Maximum number of tasks to process (blank = script default of 10)
         required: false
         type: number
+      startPage:
+        description: 1-based Everhour task page to begin pagination from (blank = page 1)
+        required: false
+        type: number
+      dryRunEverhour:
+        description: Run inference but skip writing estimates to Everhour
+        required: false
+        default: false
+        type: boolean
+      dryRunAI:
+        description: Skip AI inference entirely (no estimates produced)
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   # To post the estimate audit comment on each backfilled issue.
@@ -16,27 +30,39 @@ permissions:
   # and to run `git log` for the prompt version.
   contents: read
 
+env:
+  # Skip Puppeteer's Chrome download on install — the estimate workspace never uses a browser,
+  # saving ~20s per install.
+  PUPPETEER_SKIP_DOWNLOAD: true
+
 jobs:
   backfill:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           # backfill.ts runs `git log` to compute the prompt version; a shallow
           # clone would make it resolve to "unknown", so fetch full history.
           fetch-depth: 0
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 24
-      - run: yarn install --frozen-lockfile
+      - run: yarn install --immutable
       - name: Build estimate workspace
         run: yarn workspace em-estimate build
       - name: Backfill Everhour estimates
         run: node scripts/estimate/src/backfill.ts
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # OpenAI API key used for issue estimation inference (backfill.ts).
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           EVERHOUR_API_KEY: ${{ secrets.EVERHOUR_API_KEY }}
           # An EVERHOUR_PROJECT_ID secret must be configured in repo settings.
           EVERHOUR_PROJECT_ID: ${{ secrets.EVERHOUR_PROJECT_ID }}
           # Blank input falls through to the script's default (parseInt(LIMIT ?? '10')).
           LIMIT: ${{ inputs.limit }}
+          # Blank input falls through to the script's default (parseInt(PAGE ?? '1')).
+          PAGE: ${{ inputs.startPage }}
+          # Optional per-stage dry-run toggles for manual runs; default false in production.
+          DRY_RUN_EVERHOUR: ${{ inputs.dryRunEverhour }}
+          DRY_RUN_AI: ${{ inputs.dryRunAI }}

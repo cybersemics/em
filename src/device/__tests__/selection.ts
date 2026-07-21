@@ -1,5 +1,5 @@
 import getTextContentFromHTML from '../../device/getTextContentFromHTML'
-import { offsetFromClosestParent } from '../selection'
+import { anchorOffsetThought, html, offsetFromClosestParent, offsetThought } from '../selection'
 
 /** Create dummy div with given html value. */
 const createDummyDiv = (htmlValue: string) => {
@@ -78,5 +78,49 @@ describe('offsetFromClosestParent', () => {
       node: dummyEditable.getElementsByTagName('b')[0].childNodes[2],
       offset: 4,
     })
+  })
+})
+
+describe('selection offsets', () => {
+  it('resolves backward selection anchor and focus offsets through nested formatting', () => {
+    const editable = createDummyDiv('one <b>two</b> three')
+    editable.setAttribute('aria-label', 'note-editable')
+    document.body.appendChild(editable)
+
+    const trailingText = editable.childNodes[2]
+    const currentSelection = window.getSelection()!
+    currentSelection.removeAllRanges()
+    currentSelection.collapse(trailingText, trailingText.textContent!.length)
+    currentSelection.extend(trailingText, 0)
+
+    expect(anchorOffsetThought()).toBe(13)
+    expect(offsetThought()).toBe(7)
+
+    editable.remove()
+  })
+})
+
+describe('html', () => {
+  // When the caret is collapsed on the editable element itself (e.g. when the cursor is moved to a thought by
+  // tapping its bullet), html() must return the editable's contents, not its outer wrapper element with attributes
+  // such as placeholder="<b>One</b>" (#3912).
+  it('returns the editable inner html rather than the wrapper element for a collapsed caret on the editable', () => {
+    const editable = document.createElement('div')
+    editable.setAttribute('contenteditable', 'true')
+    editable.setAttribute('data-editable', 'true')
+    editable.setAttribute('placeholder', '<b>One</b>')
+    editable.innerHTML = '<b>One</b>'
+    document.body.appendChild(editable)
+
+    const range = document.createRange()
+    range.setStart(editable, 0)
+    range.collapse(true)
+    const selection = window.getSelection()!
+    selection.removeAllRanges()
+    selection.addRange(range)
+
+    expect(html()).toBe('<b></b>')
+
+    document.body.removeChild(editable)
   })
 })

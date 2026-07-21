@@ -9,6 +9,9 @@ on:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   CI: true
+  # Skip Puppeteer's Chrome download on install — this job never uses the bundled browser,
+  # saving ~20s per install.
+  PUPPETEER_SKIP_DOWNLOAD: true
 
 jobs:
   update-browserslist:
@@ -32,7 +35,7 @@ jobs:
           node-version: 22
 
       - name: Install npm dependencies
-        run: yarn
+        uses: ./.github/actions/install
 
       - name: Update browserslist database
         run: |

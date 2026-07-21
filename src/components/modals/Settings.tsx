@@ -6,8 +6,10 @@ import { fontSizeActionCreator } from '../../actions/fontSize'
 import { showModalActionCreator as showModal } from '../../actions/showModal'
 import { toggleUserSettingActionCreator as toggleUserSetting } from '../../actions/toggleUserSetting'
 import { DEFAULT_FONT_SIZE, MAX_FONT_SIZE, MIN_FONT_SIZE, Settings } from '../../constants'
+import copy from '../../device/copy'
 import globals from '../../globals'
 import getUserSetting from '../../selectors/getUserSetting'
+import debugLog from '../../util/debugLog'
 import fastClick from '../../util/fastClick'
 import haptics from '../../util/haptics'
 import storage from '../../util/storage'
@@ -113,6 +115,40 @@ const FontSize = () => {
   )
 }
 
+/** Controls for the persistent debug log: copy the captured entries to the clipboard or clear them. Only rendered when Debug Logging is enabled. */
+const DebugLog = () => {
+  const enabled = useSelector(getUserSetting(Settings.debugCrashLog))
+  const [status, setStatus] = useState<string | null>(null)
+
+  if (!enabled) return null
+
+  return (
+    <div className={css({ marginTop: '1em' })}>
+      <a
+        {...fastClick(() => {
+          const text = debugLog.format()
+          copy(text)
+          setStatus(text ? `Copied ${debugLog.read().length} entries` : 'Log is empty')
+        })}
+        className={extendTapRecipe()}
+      >
+        Copy debug log
+      </a>
+      <span className={css({ margin: '0 0.5em', color: 'dim' })}>·</span>
+      <a
+        {...fastClick(() => {
+          debugLog.clear()
+          setStatus('Cleared')
+        })}
+        className={extendTapRecipe()}
+      >
+        Clear debug log
+      </a>
+      {status ? <span className={css({ marginLeft: '0.5em', color: 'dim' })}> ({status})</span> : null}
+    </div>
+  )
+}
+
 /** User settings modal. */
 const ModalSettings = () => {
   const dispatch = useDispatch()
@@ -163,6 +199,14 @@ const ModalSettings = () => {
         <Setting settingsKey={Settings.leftHanded} title='Left Handed'>
           Moves the scroll zone to the left side of the screen and the gesture zone to the right.
         </Setting>
+
+        <Setting settingsKey={Settings.debugCrashLog} title='Debug Logging'>
+          Records a rolling log of app events to help diagnose rare, hard-to-reproduce bugs (such as freezes).
+          Everything is stored locally on this device and nothing is transmitted. Leave this off unless a developer asks
+          you to enable it. Use “Copy debug log” to share the captured log.
+        </Setting>
+
+        <DebugLog />
 
         <a
           className={css({ color: 'error' })}

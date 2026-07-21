@@ -15,12 +15,15 @@ env:
   VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
   VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+  # Skip Puppeteer's Chrome download on install — the Vercel build never uses the bundled
+  # browser, saving ~20s per install.
+  PUPPETEER_SKIP_DOWNLOAD: true
 
 jobs:
   preview:
     name: Deploy Preview
     runs-on: ubuntu-latest
-    if: github.event_name != 'pull_request' || github.event.pull_request.changed_files > 0
+    if: github.event.pull_request.changed_files > 0
 
     steps:
       - name: Clone repository
@@ -38,7 +41,7 @@ jobs:
           cache: 'yarn'
 
       - name: Install npm dependencies
-        run: yarn
+        uses: ./.github/actions/install
 
       - name: Pull Vercel environment
         run: yarn dlx vercel pull --yes --environment=preview --token="$VERCEL_TOKEN"

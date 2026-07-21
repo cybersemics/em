@@ -1,5 +1,6 @@
 import { KnownDevices } from 'puppeteer'
 import newThoughtCommand from '../../../commands/newThought'
+import { WindowEm } from '../../../initialize'
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
 import command from '../helpers/command'
@@ -28,7 +29,7 @@ const getNoteState = () =>
       range.setEnd(selection.focusNode, selection.focusOffset)
     }
 
-    const state = window.em.testHelpers.getState()
+    const state = (window.em as WindowEm).testHelpers.getState()
 
     return {
       focusInsideNote,
@@ -51,12 +52,12 @@ const waitForNoteText = (text: string | null) =>
   )
 
 // Regression test for https://github.com/cybersemics/em/pull/4524
-// .skip keeps normal CI green while the test is red; remove the .skip when the fix lands.
-it.skip('Restores note content and caret across alternating undo and redo', async () => {
+it('Restores note content and caret across alternating undo and redo', async () => {
   await newThought('a')
   await command('note')
   await waitForSelector('[aria-label="note-editable"]')
   await keyboard.type('one two three')
+  await waitForNoteText('one two three')
 
   // replace the trailing word to create separate addition, deletion, and addition undo groups
   await press('ArrowLeft', { shift: true })
@@ -67,6 +68,7 @@ it.skip('Restores note content and caret across alternating undo and redo', asyn
   await press('ArrowLeft', { shift: true })
   await press('Backspace')
   await keyboard.type(' four')
+  await waitForNoteText('one two four')
 
   await command('undo')
   await waitForNoteText('one two')
@@ -236,4 +238,32 @@ it('Should revert background color changes back to previous values', async () =>
   expect(text).toBe(
     '<font color="#000000" style="background-color: rgb(0, 214, 136);">Lorem</font> Ipsum Dolor Sit <font color="#000000" style="background-color: rgb(0, 214, 136);">Amet</font>',
   )
+})
+
+// Regression test for https://github.com/cybersemics/em/issues/4620
+// Each background color application should be its own undo step (like font color), so undoing after
+// applying two background colors reverts only the most recent one instead of clearing all of them at once.
+it('applying multiple background colors should each be a separate undo step', async () => {
+  await paste(`
+    - One`)
+
+  // focus the thought and place the caret inside it (no selection → whole-thought formatting)
+  await clickThought('One')
+
+  // open the ColorPicker
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+
+  // apply a red background to the whole thought
+  await click('[aria-label="background color swatches"] [aria-label="red"]')
+
+  // apply a green background to the whole thought
+  await click('[aria-label="background color swatches"] [aria-label="green"]')
+
+  // a single undo should revert only the most recent (green) application, restoring the red background —
+  // not revert every background color application at once
+  await press('z', { meta: true })
+
+  const exported = await exportThoughts({ mimeType: 'text/html' })
+  expect(exported).toContain('background-color: rgb(255, 87, 61)')
+  expect(exported).not.toContain('rgb(0, 214, 136)')
 })

@@ -9,10 +9,7 @@ const categorizeCommand: Command = {
   label: 'Categorize',
   description: 'Move the current thought into a new, empty thought at the same level.',
   gesture: 'lu',
-  keyboard: [
-    { key: 'o', meta: true, alt: true },
-    { key: ']', meta: true },
-  ],
+  keyboard: { key: 'o', meta: true, alt: true },
   // Multicursor functionality is handled in the categorize action.
   // TODO: Implement this with multicursor: true so that we don't need to make a special case of this command in Select All chaining.
   // See: useFilteredCommands

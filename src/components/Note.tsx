@@ -23,7 +23,7 @@ import getThoughtById from '../selectors/getThoughtById'
 import noteValue from '../selectors/noteValue'
 import resolveNotePath from '../selectors/resolveNotePath'
 import store from '../stores/app'
-import batchEditingStore from '../stores/batchEditing'
+import { mergeBatchEditing } from '../stores/batchEditing'
 import appendToPath from '../util/appendToPath'
 import equalPathHead from '../util/equalPathHead'
 import head from '../util/head'
@@ -77,7 +77,7 @@ const Note = React.memo(
 
     /** Saves the note caret offset without creating an undo patch. */
     const saveNoteOffset = useCallback(() => {
-      dispatch(setNoteOffset({ value: selection.offsetThought() ?? selection.offset() }))
+      dispatch(setNoteOffset({ value: selection.anchorOffsetThought() ?? selection.anchorOffset() }))
     }, [dispatch])
 
     /** Handles note keyboard shortcuts. */
@@ -141,7 +141,7 @@ const Note = React.memo(
             // Strip <br> from beginning and end of text
             e.target.value.replace(/^<br>|<br>$/gi, '')
 
-        saveNoteOffset()
+        const noteOffset = selection.offsetThought() ?? selection.offset()
 
         // update the referenced thought directly if it exists
         dispatch((dispatch, getState) => {
@@ -149,6 +149,7 @@ const Note = React.memo(
 
           const targetPath = resolveNotePath(state, path) ?? path
           const noteThought = firstVisibleChild(state, head(targetPath))
+          const mergePrev = mergeBatchEditing()
 
           if (noteThought) {
             dispatch(
@@ -156,21 +157,23 @@ const Note = React.memo(
                 path: appendToPath(targetPath, noteThought.id) as SimplePath,
                 oldValue: noteThought.value,
                 newValue: value,
-                mergePrev: batchEditingStore.getState(), // If batch editing is in progress, merge this edit with the previous one in the undo stack.
+                mergePrev,
+                noteOffset: noteOffset ?? undefined,
               }),
             )
           } else {
+            dispatch(setNoteOffset({ value: noteOffset }))
             dispatch(
               setDescendant({
                 path: targetPath,
                 values: [value],
-                mergePrev: batchEditingStore.getState(), // If batch editing is in progress, merge this edit with the previous one in the undo stack.
+                mergePrev,
               }),
             )
           }
         })
       },
-      [dispatch, path, justPasted, saveNoteOffset],
+      [dispatch, path, justPasted],
     )
 
     /** Set state.noteFocus if Note lost focus and did not move to another Note. Set state.keyboardOpen if keyboard is closed. */
