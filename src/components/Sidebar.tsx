@@ -389,17 +389,11 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
   )
 }
 
-/** Pre-baked per-section glow image (tint + 8px blur baked at build time by
- * scripts/gen-sidebar-overlays.py). IOS/WebKit uses these with NO runtime filter: even STATIC
- * filters allocate fresh GPU-process buffers on every (re)mount there — measured +676MB/6
- * section switches animating and +1262MB crossfading statically-filtered copies — which is the
- * exact growth jetsam kills the WebKit GPU process over. Plain image layers allocate nothing. */
+/** Pre-baked section tint and blur; avoids runtime filters that leak WebKit GPU buffers. */
 const bakedOverlay = (layer: 1 | 2, sectionId: SidebarSectionId) =>
-  `url(/img/sidebar/overlay-layer-${layer}-${sectionId}.webp)`
+  `url(/img/sidebar/overlay-layer-${layer}-${sectionId}.avif)`
 
-/** Applies the CSS hue-rotate + saturate color matrices (Filter Effects spec) to an rgb/rgba/hex
- * color in JS, so the iOS gradient can use pre-tinted colors instead of a runtime filter (see
- * bakedOverlay for why iOS must not filter at runtime). */
+/** Applies CSS hue-rotate and saturation matrices to a color without a runtime filter. */
 const tintColor = (color: string, sectionId: SidebarSectionId): string => {
   const section = SECTIONS.find(sec => sec.id === sectionId)!
   const rad = (section.hue * Math.PI) / 180
@@ -1079,8 +1073,8 @@ const Sidebar = () => {
     // Both engines use the pre-baked per-section variants (see bakedOverlay) — warm them so the
     // first section switch crossfades without a fetch/decode hitch mid-animation.
     for (const section of SECTIONS) {
-      preload(`/img/sidebar/overlay-layer-1-${section.id}.webp`)
-      preload(`/img/sidebar/overlay-layer-2-${section.id}.webp`)
+      preload(`/img/sidebar/overlay-layer-1-${section.id}.avif`)
+      preload(`/img/sidebar/overlay-layer-2-${section.id}.avif`)
     }
   }, [])
 
