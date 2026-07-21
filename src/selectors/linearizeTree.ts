@@ -21,6 +21,7 @@ import { appendToPathMemo } from '../util/appendToPath'
 import equalPath from '../util/equalPath'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
+import isAttribute from '../util/isAttribute'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import parseLet from '../util/parseLet'
@@ -99,6 +100,13 @@ const linearizeTree = (
   const styleChildren = getStyle(state, childrenAttributeId)
   const style = safeRefMerge(styleAccum, styleChildren, styleFromGrandparent)
 
+  // 0-based ordinal of each visible non-attribute child, used to number =bullet/Ordered lists without re-sorting siblings in each Bullet.
+  // Attributes (e.g. =children when showHiddenThoughts is enabled) occupy a slot in filteredChildren but are skipped in the numbering (-1).
+  const childIndexNonAttribute = filteredChildren.reduce<number[]>(
+    (accum, child) => [...accum, isAttribute(child.value) ? -1 : accum.filter(index => index >= 0).length],
+    [],
+  )
+
   const thoughts = filteredChildren.reduce<TreeThought[]>((accum, filteredChild, i) => {
     // If the context view is active, render the context's parent instead of the context itself.
     // This allows the path to be accumulated correctly across the context view.
@@ -133,6 +141,7 @@ const linearizeTree = (
       depth,
       env: envNew || undefined,
       indexChild: i,
+      childIndexNonAttribute: childIndexNonAttribute[i],
       indexDescendant: virtualIndexNew,
       isCursor,
       isEmpty,

@@ -66,6 +66,8 @@ export interface ThoughtContainerProps {
   childrenForced?: ThoughtId[]
   // used by testFlags.simulateDrop
   debugIndex?: number
+  // 1-based ordinal position among visible non-attribute siblings, used to number =bullet/Ordered lists
+  childIndexNonAttribute?: number
   depth?: number
   env?: LazyEnv
   expandedContextThought?: Path
@@ -245,6 +247,7 @@ const ThoughtContainer = ({
   allowSingleContext,
   childrenForced,
   debugIndex,
+  childIndexNonAttribute,
   depth = 0,
   env,
   hideBullet: hideBulletProp,
@@ -593,6 +596,7 @@ const ThoughtContainer = ({
               simplePath={simplePath}
               thoughtId={thoughtId}
               isInContextView={isInContextView}
+              childIndexNonAttribute={childIndexNonAttribute}
               // debugIndex={debugIndex}
               // depth={depth}
             />

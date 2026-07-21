@@ -231,12 +231,20 @@ jobs:
                   return `**${label}**\n\n<img src="${url}" alt="${label}" width="900" />`
                 })
                 .join('\n\n')
-              const authorNote = author ? ` by @${esc(author)}` : ''
+              const authorMention = author ? `@${esc(author)}` : ''
+              // The first path segment of each diff is the test file name (snapshots live in
+              // __image_snapshots__/{testFile}/). Derive the unique set to emit a single
+              // targeted update command scoped to the affected test files.
+              const testFiles = [...new Set(rels.map(rel => rel.split('/')[0]))].filter(Boolean).sort()
+              const updateCommand = `yarn test:puppeteer -u ${testFiles.map(esc).join(' ')}`
               body = [
                 marker,
                 '### 🖼️ Puppeteer snapshot diffs',
                 '',
-                `⚠️ Auto-generated, **unverified** diff images from PR #${prNumber}${authorNote} (run ${runId}).`,
+                `Left: Expected (base branch) | Right: Actual (PR branch)`,
+                `${authorMention}: These snapshot tests failed, which indicates a visual regression. Please review your changes. If the visual changes are intentional, update the snapshots for the affected test files:`,
+                '',
+                `\`\`\`\n${updateCommand}\n\`\`\``,
                 '',
                 `<details open><summary>${rels.length} changed snapshot(s)</summary>`,
                 '',
