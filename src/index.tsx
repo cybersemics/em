@@ -3,7 +3,7 @@ import './util/consoleProxy'
 import { createRoot } from 'react-dom/client'
 import App from './components/App'
 import ThoughtspaceInUse from './components/ThoughtspaceInUse'
-import acquireTreecrdtSessionLock from './data-providers/treecrdt/sessionLock'
+import { thoughtspaceRuntime } from './data-providers/thoughtspace'
 import testFlags from './e2e/testFlags'
 import './index.css'
 import { initialize } from './initialize'
@@ -14,12 +14,12 @@ import initEvents from './util/initEvents'
 const container = document.getElementById('root')
 const root = createRoot(container!)
 
-/** Acquires persistent storage ownership before initializing or rendering the interactive app. */
+/** Acquires thoughtspace access before initializing or rendering the interactive app. */
 const bootstrap = async (): Promise<void> => {
-  const lockStatus = await acquireTreecrdtSessionLock()
+  const access = await thoughtspaceRuntime.acquireAccess()
 
-  if (lockStatus !== 'acquired') {
-    root.render(<ThoughtspaceInUse status={lockStatus} />)
+  if (access.status === 'blocked') {
+    root.render(<ThoughtspaceInUse reason={access.reason} />)
     return
   }
 

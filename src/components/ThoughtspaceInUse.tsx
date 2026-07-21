@@ -1,10 +1,10 @@
 import { css, cx } from '../../styled-system/css'
 import { anchorButtonRecipe } from '../../styled-system/recipes'
-import type { TreecrdtSessionLockStatus } from '../data-providers/treecrdt/sessionLock'
+import type { ThoughtspaceAccessBlockedReason } from '../data-providers/thoughtspace'
 import fastClick from '../util/fastClick'
 
-/** Bootstrap screen shown when persistent TreeCRDT storage cannot be opened safely in this tab. */
-const ThoughtspaceInUse = ({ status }: { status: Exclude<TreecrdtSessionLockStatus, 'acquired'> }) => (
+/** Bootstrap screen shown when the active thoughtspace cannot be opened safely in this tab. */
+const ThoughtspaceInUse = ({ reason }: { reason: ThoughtspaceAccessBlockedReason }) => (
   <main
     aria-label='thoughtspace-in-use'
     className={css({
@@ -17,11 +17,11 @@ const ThoughtspaceInUse = ({ status }: { status: Exclude<TreecrdtSessionLockStat
     })}
   >
     <div className={css({ maxWidth: 520 })}>
-      <h1>{status === 'unavailable' ? 'em is already open' : 'em cannot safely open this thoughtspace'}</h1>
+      <h1>{reason === 'already-open' ? 'em is already open' : 'em cannot safely open this thoughtspace'}</h1>
       <p>
-        {status === 'unavailable'
+        {reason === 'already-open'
           ? 'To protect your local data, em currently supports one tab per thoughtspace. Close the other tab, then retry.'
-          : 'This browser does not support the tab lock required to protect your local data.'}
+          : 'This browser does not support the storage coordination required to protect your local data.'}
       </p>
       <a
         aria-label='retry-thoughtspace'
