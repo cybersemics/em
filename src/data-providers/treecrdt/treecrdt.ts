@@ -37,12 +37,7 @@ async function runBeforeTreecrdtClose(): Promise<void> {
 const getRuntime = (): NonNullable<ClientOptions['runtime']> => {
   const runtimeOverride = storage.getItem('treecrdtRuntime')
 
-  if (
-    runtimeOverride === 'auto' ||
-    runtimeOverride === 'direct' ||
-    runtimeOverride === 'dedicated-worker' ||
-    runtimeOverride === 'shared-worker'
-  ) {
+  if (runtimeOverride === 'direct' || runtimeOverride === 'dedicated-worker' || runtimeOverride === 'shared-worker') {
     return { type: runtimeOverride }
   }
 

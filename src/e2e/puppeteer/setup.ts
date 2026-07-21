@@ -10,7 +10,7 @@ declare module global {
   const browser: Browser
 }
 
-type TreecrdtTestRuntime = 'auto' | 'dedicated-worker' | 'direct' | 'shared-worker'
+type TreecrdtTestRuntime = 'dedicated-worker' | 'direct' | 'shared-worker'
 
 let context: BrowserContext
 let treecrdtStorage: 'memory' | 'opfs' = 'memory'

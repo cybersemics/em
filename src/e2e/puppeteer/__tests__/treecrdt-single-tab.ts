@@ -8,7 +8,7 @@ import { page, setPage } from '../session'
 import { usePersistentTreecrdtStorage } from '../setup'
 
 vi.setConfig({ testTimeout: 60000 })
-;(usePersistentTreecrdtStorage as unknown as (options?: { runtime?: string }) => void)({ runtime: 'dedicated-worker' })
+usePersistentTreecrdtStorage({ runtime: 'dedicated-worker' })
 
 const PERSISTENCE_ERROR = /sqlite3_open_v2|SQL logic error|database is locked|Thoughtspace persistence failed|TreeCRDT/i
 
@@ -35,7 +35,6 @@ it('keeps one active tab across refreshes and successive tab handoffs', async ()
   await paste('persisted in the first tab')
   expect(await exportThoughts()).toContain('persisted in the first tab')
   await waitForThoughtExistInDb('persisted in the first tab')
-  await first.evaluate(() => (window.em as WindowEm).testHelpers.waitForThoughtspaceRuntimeIdle())
 
   await refresh()
   await waitForHydratedThought(first, 'persisted in the first tab')

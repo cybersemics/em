@@ -1,5 +1,6 @@
 type LockCallback = (lock: Lock | null) => Promise<unknown> | unknown
 
+const TEST_TSID = 'test-thoughtspace'
 const originalLocks = Object.getOwnPropertyDescriptor(navigator, 'locks')
 
 /** Installs a controllable Web Locks implementation for the current test. */
@@ -22,6 +23,7 @@ afterEach(() => {
 })
 
 it('holds an exclusive lock for this thoughtspace for the lifetime of the page', async () => {
+  localStorage.setItem('tsid', TEST_TSID)
   const request = vi.fn((...args: unknown[]) => {
     const callback = args[2] as LockCallback
     return Promise.resolve(callback({ mode: 'exclusive', name: String(args[0]) } as Lock))
@@ -33,7 +35,7 @@ it('holds an exclusive lock for this thoughtspace for the lifetime of the page',
   await expect(acquireTreecrdtSessionLock()).resolves.toBe('acquired')
   await expect(acquireTreecrdtSessionLock()).resolves.toBe('acquired')
   expect(request).toHaveBeenCalledWith(
-    expect.stringMatching(/^em-treecrdt-session:/),
+    `em-treecrdt-session:${TEST_TSID}`,
     { ifAvailable: true, mode: 'exclusive' },
     expect.any(Function),
   )

@@ -30,7 +30,7 @@ const bootstrap = async (): Promise<void> => {
   }
 
   root.render(<App />)
-  register()
 }
 
 void bootstrap()
+register()

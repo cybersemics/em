@@ -23,13 +23,14 @@ const ThoughtspaceInUse = ({ reason }: { reason: ThoughtspaceAccessBlockedReason
           ? 'To protect your local data, em currently supports one tab per thoughtspace. Close the other tab, then retry.'
           : 'This browser does not support the storage coordination required to protect your local data.'}
       </p>
-      <a
+      <button
         aria-label='retry-thoughtspace'
         className={cx(anchorButtonRecipe(), css({ display: 'inline-block', marginTop: 15, minWidth: 0 }))}
+        type='button'
         {...fastClick(() => window.location.reload())}
       >
         Retry
-      </a>
+      </button>
     </div>
   </main>
 )
