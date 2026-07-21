@@ -370,6 +370,10 @@ const globalCss = defineGlobalStyles({
     content: 'attr(placeholder)',
     cursor: 'text',
   },
+  '[placeholder][data-placeholder-cleared]:empty::before': {
+    color: 'var(--placeholder-color, currentColor)',
+    opacity: 0.5,
+  },
   '[placeholder][data-placeholder-bold]:empty::before': {
     fontWeight: 700,
   },
