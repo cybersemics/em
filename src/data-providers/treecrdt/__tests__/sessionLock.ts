@@ -3,6 +3,8 @@ type LockCallback = (lock: Lock | null) => Promise<unknown> | unknown
 const TEST_TSID = 'test-thoughtspace'
 const originalLocks = Object.getOwnPropertyDescriptor(navigator, 'locks')
 
+vi.mock('../../thoughtspaceSession', () => ({ tsid: 'test-thoughtspace' }))
+
 /** Installs a controllable Web Locks implementation for the current test. */
 const setLocks = (request: (...args: unknown[]) => Promise<unknown>): void => {
   Object.defineProperty(navigator, 'locks', {
