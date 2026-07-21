@@ -8,10 +8,7 @@ import { page, setPage } from '../session'
 import { usePersistentTreecrdtStorage } from '../setup'
 
 vi.setConfig({ testTimeout: 60000 })
-// TDD overlays this test onto the base branch, whose storage helper does not accept runtime options yet.
-;(usePersistentTreecrdtStorage as (options?: { runtime?: 'dedicated-worker' }) => void)({
-  runtime: 'dedicated-worker',
-})
+usePersistentTreecrdtStorage({ runtime: 'dedicated-worker' })
 
 const PERSISTENCE_ERROR = /sqlite3_open_v2|SQL logic error|database is locked|Thoughtspace persistence failed|TreeCRDT/i
 
