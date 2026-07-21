@@ -158,6 +158,10 @@ it('move cursor from formatted thought to first unformatted thought in descendin
   // Make text bold using the toolbar
   await click('[data-testid="toolbar-icon"][aria-label="Bold"]')
 
+  // Formatting is committed asynchronously from the contenteditable change event. Wait for it before navigating so
+  // ArrowDown cannot race the pending edit in slower CI browsers.
+  await waitUntil(() => document.querySelector('[data-editing=true] [data-editable]')?.innerHTML === '<b>apple</b>')
+
   // Press arrow down to move cursor
   await press('ArrowDown')
 
