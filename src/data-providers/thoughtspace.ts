@@ -10,6 +10,9 @@ export type PersistThoughtspaceBatch = Parameters<DataProvider['updateThoughts']
   local?: boolean
 }
 
+/** Storage lifetime requested from the active thoughtspace provider. */
+export type ThoughtspaceStorage = 'memory' | 'persistent'
+
 export type ThoughtspaceMaterializationSnapshot = {
   schemaVersion: number
   thoughtIndex: Index<Thought>

@@ -14,14 +14,22 @@ type PersistTreecrdtBatch = Parameters<DataProvider['updateThoughts']>[0] & {
   local?: boolean
 }
 
-export type TreecrdtTabPolicy = 'multiple' | 'single'
+type MultipleTabTreecrdtClientConfig = TreecrdtClientConfig &
+  Readonly<{
+    storage: 'memory'
+    runtime: 'direct'
+  }>
 
-/** TreeCRDT client settings and em's independent policy for allowing multiple tabs. */
-export type TreecrdtRuntimeConfig = Readonly<{
-  client?: TreecrdtClientConfig
-  /** Use multiple only when the complete thoughtspace runtime safely supports concurrent tabs. */
-  tabPolicy: TreecrdtTabPolicy
-}>
+/** TreeCRDT client settings and em's supported tab-access policies. */
+export type TreecrdtRuntimeConfig =
+  | Readonly<{
+      client?: TreecrdtClientConfig
+      tabPolicy: 'single'
+    }>
+  | Readonly<{
+      client: MultipleTabTreecrdtClientConfig
+      tabPolicy: 'multiple'
+    }>
 
 const TREECRDT_IDLE_TIMEOUT = 30000
 
@@ -81,6 +89,13 @@ const waitForStableIdle = async (): Promise<void> => {
 
 /** Creates the TreeCRDT lifecycle used by the app thoughtspace runtime. */
 export const createTreecrdtRuntime = ({ client, tabPolicy }: TreecrdtRuntimeConfig): ThoughtspaceRuntime => {
+  const storage = client?.storage ?? 'persistent'
+  const workerRuntime = client?.runtime ?? 'dedicated-worker'
+
+  if (tabPolicy === 'multiple' && (storage !== 'memory' || workerRuntime !== 'direct')) {
+    throw new Error('Multiple-tab TreeCRDT access requires in-memory storage with the direct runtime.')
+  }
+
   /** Applies em's tab policy before the TreeCRDT client is opened. */
   const acquireAccess = async (): Promise<ThoughtspaceAccessResult> => {
     if (tabPolicy === 'multiple') return { status: 'acquired' }

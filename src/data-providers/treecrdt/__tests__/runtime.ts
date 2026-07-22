@@ -23,12 +23,24 @@ it.each([
 })
 
 it('does not require a session lock when multiple tabs are allowed', async () => {
-  // Persistent client settings prove that tab policy, rather than storage or worker choice, controls access.
   const treecrdtRuntime = createTreecrdtRuntime({
-    client: { storage: 'opfs', runtime: 'dedicated-worker' },
+    client: { storage: 'memory', runtime: 'direct' },
     tabPolicy: 'multiple',
   })
 
   await expect(treecrdtRuntime.acquireAccess()).resolves.toEqual({ status: 'acquired' })
   expect(acquireTreecrdtSessionLock).not.toHaveBeenCalled()
+})
+
+it('rejects unsupported multiple-tab client settings at both the type and runtime boundaries', () => {
+  // Pre-bootstrap configuration crosses a JavaScript boundary, so retain the runtime guard in addition to the type.
+  // @ts-expect-error Persistent dedicated-worker storage is incompatible with multiple-tab access.
+  const invalidConfig: Parameters<typeof createTreecrdtRuntime>[0] = {
+    client: { storage: 'persistent', runtime: 'dedicated-worker' },
+    tabPolicy: 'multiple',
+  }
+
+  expect(() => createTreecrdtRuntime(invalidConfig)).toThrow(
+    'Multiple-tab TreeCRDT access requires in-memory storage with the direct runtime.',
+  )
 })

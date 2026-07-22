@@ -1,7 +1,7 @@
 /* eslint-disable import/prefer-default-export */
 import chalk from 'chalk'
 import { Browser, BrowserContext, ConsoleMessage, Device, Page } from 'puppeteer'
-import type { TreecrdtRuntimeConfig, TreecrdtTabPolicy } from '../../data-providers/treecrdt/runtime'
+import type { TreecrdtRuntimeConfig } from '../../data-providers/treecrdt/runtime'
 import { WindowEm } from '../../initialize'
 import createId from '../../util/createId'
 import { page, setPage } from './session'
@@ -13,20 +13,37 @@ declare module global {
 
 type TreecrdtTestRuntime = 'dedicated-worker' | 'direct' | 'shared-worker'
 
+type TreecrdtTestProfile =
+  | Readonly<{ storage: 'memory' }>
+  | Readonly<{
+      storage: 'persistent'
+      runtime: TreecrdtTestRuntime
+    }>
+
+const memoryTreecrdtProfile: TreecrdtTestProfile = { storage: 'memory' }
+
 let context: BrowserContext
-let treecrdtStorage: 'memory' | 'opfs' = 'memory'
-let treecrdtRuntime: TreecrdtTestRuntime = 'direct'
-let treecrdtTabPolicy: TreecrdtTabPolicy = 'multiple'
+let activeTreecrdtProfile: TreecrdtTestProfile = memoryTreecrdtProfile
 
 /** Returns the explicit TreeCRDT configuration for a Puppeteer page. */
-const getTreecrdtRuntimeConfig = (docId: string): TreecrdtRuntimeConfig => ({
-  client: {
-    docId,
-    runtime: treecrdtRuntime,
-    storage: treecrdtStorage,
-  },
-  tabPolicy: treecrdtTabPolicy,
-})
+const getTreecrdtRuntimeConfig = (docId: string, profile: TreecrdtTestProfile): TreecrdtRuntimeConfig =>
+  profile.storage === 'persistent'
+    ? {
+        client: {
+          docId,
+          runtime: profile.runtime,
+          storage: 'persistent',
+        },
+        tabPolicy: 'single',
+      }
+    : {
+        client: {
+          docId,
+          runtime: 'direct',
+          storage: 'memory',
+        },
+        tabPolicy: 'multiple',
+      }
 
 /** Injects typed TreeCRDT configuration before the app bundle starts. */
 const installTreecrdtRuntimeConfig = async (target: Page, config: TreecrdtRuntimeConfig): Promise<void> => {
@@ -47,7 +64,11 @@ const installTreecrdtRuntimeConfig = async (target: Page, config: TreecrdtRuntim
 }
 
 /** Seeds an isolated browser session and typed test configuration before the app bundle starts. */
-const installTestSession = async (target: Page, sessionId: string): Promise<void> => {
+const installTestSession = async (
+  target: Page,
+  sessionId: string,
+  treecrdtConfig: TreecrdtRuntimeConfig,
+): Promise<void> => {
   await target.evaluateOnNewDocument(sessionId => {
     if (!sessionStorage.getItem('__em_puppeteer_storage_initialized')) {
       localStorage.clear()
@@ -58,29 +79,35 @@ const installTestSession = async (target: Page, sessionId: string): Promise<void
     localStorage.setItem('accessToken', sessionId)
   }, sessionId)
 
-  await installTreecrdtRuntimeConfig(target, getTreecrdtRuntimeConfig(sessionId))
+  await installTreecrdtRuntimeConfig(target, treecrdtConfig)
 }
 
 /** Opens an additional page with the current TreeCRDT test configuration. */
-export const createTreecrdtTestPage = async (browserContext: BrowserContext, docId: string): Promise<Page> => {
+export const createTreecrdtTestPage = async (
+  browserContext: BrowserContext,
+  docId: string,
+  profile: TreecrdtTestProfile,
+): Promise<Page> => {
   const target = await browserContext.newPage()
-  await installTreecrdtRuntimeConfig(target, getTreecrdtRuntimeConfig(docId))
+  await installTreecrdtRuntimeConfig(target, getTreecrdtRuntimeConfig(docId, profile))
   return target
 }
 
 /** Use persistent OPFS storage for tests that verify reload/materialization from storage. */
-export const usePersistentTreecrdtStorage = ({ runtime = 'direct' }: { runtime?: TreecrdtTestRuntime } = {}) => {
+export const usePersistentTreecrdtStorage = ({
+  runtime = 'direct',
+}: { runtime?: TreecrdtTestRuntime } = {}): TreecrdtTestProfile => {
+  const profile = { storage: 'persistent', runtime } as const
+
   beforeAll(() => {
-    treecrdtStorage = 'opfs'
-    treecrdtRuntime = runtime
-    treecrdtTabPolicy = 'single'
+    activeTreecrdtProfile = profile
   })
 
   afterAll(() => {
-    treecrdtStorage = 'memory'
-    treecrdtRuntime = 'direct'
-    treecrdtTabPolicy = 'multiple'
+    activeTreecrdtProfile = memoryTreecrdtProfile
   })
+
+  return profile
 }
 
 /** Opens em in a new incognito window in Puppeteer. */
@@ -110,7 +137,7 @@ const setup = async ({
 
   const sessionId = createId()
 
-  await installTestSession(page, sessionId)
+  await installTestSession(page, sessionId, getTreecrdtRuntimeConfig(sessionId, activeTreecrdtProfile))
 
   page.on('dialog', async dialog => dialog.accept())
 

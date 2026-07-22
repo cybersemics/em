@@ -1,10 +1,5 @@
-import {
-  type ClientOptions,
-  type RuntimeMode,
-  type StorageMode,
-  type TreecrdtClient,
-  createTreecrdtClient,
-} from '@treecrdt/wa-sqlite'
+import { type ClientOptions, type RuntimeMode, type TreecrdtClient, createTreecrdtClient } from '@treecrdt/wa-sqlite'
+import type { ThoughtspaceStorage } from '../thoughtspace'
 import { tsid } from '../thoughtspaceSession'
 
 let client: TreecrdtClient | null = null
@@ -13,14 +8,14 @@ const beforeCloseHandlers = new Set<() => Promise<void>>()
 
 /** App-level TreeCRDT client configuration. Omit it to use persistent browser defaults. */
 export type TreecrdtClientConfig = Readonly<{
-  storage: StorageMode
+  storage: ThoughtspaceStorage
   runtime: RuntimeMode
   docId?: string
 }>
 
 /** Converts app-level configuration to the full TreeCRDT client options. */
 const getClientOptions = (config?: TreecrdtClientConfig): ClientOptions => {
-  const storage = config?.storage ?? 'opfs'
+  const storage = config?.storage ?? 'persistent'
 
   return {
     storage:
