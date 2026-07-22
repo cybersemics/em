@@ -48,17 +48,9 @@ const getTreecrdtRuntimeConfig = (docId: string, profile: TreecrdtTestProfile): 
 /** Injects typed TreeCRDT configuration before the app bundle starts. */
 const installTreecrdtRuntimeConfig = async (target: Page, config: TreecrdtRuntimeConfig): Promise<void> => {
   await target.evaluateOnNewDocument(treecrdt => {
-    type PreloadedWindowEm = Omit<Partial<WindowEm>, 'testFlags'> & {
-      testFlags?: Partial<WindowEm['testFlags']>
-    }
-
-    const emWindow = window as Window & { em?: PreloadedWindowEm }
-    emWindow.em = {
-      ...emWindow.em,
-      testFlags: {
-        ...emWindow.em?.testFlags,
-        treecrdt,
-      },
+    window.emConfig = {
+      ...window.emConfig,
+      treecrdt,
     }
   }, config)
 }

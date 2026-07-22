@@ -18,20 +18,16 @@ window.blur = noop
 window.scrollTo = noop
 window.matchMedia = window.matchMedia || (() => false)
 
-// Unit tests use an explicitly configured in-memory TreeCRDT client. The application reads preloaded test flags
-// when its modules are evaluated, matching the established pre-bootstrap configuration used by browser tests.
-window.em = {
-  ...(window.em || {}),
-  testFlags: {
-    ...(window.em?.testFlags || {}),
-    treecrdt: {
-      client: {
-        storage: 'memory',
-        runtime: 'direct',
-        docId: createId(),
-      },
-      tabPolicy: 'multiple',
+// Unit tests explicitly configure an in-memory TreeCRDT client before application modules are evaluated.
+window.emConfig = {
+  ...window.emConfig,
+  treecrdt: {
+    client: {
+      storage: 'memory',
+      runtime: 'direct',
+      docId: createId(),
     },
+    tabPolicy: 'multiple',
   },
 }
 
