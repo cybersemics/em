@@ -1,18 +1,35 @@
 import type { Operation } from '@treecrdt/interface'
 import type { DataProvider } from '../DataProvider'
 import { initPermissionsStore } from '../permissionsStore'
-import type { ThoughtspaceAccessResult, ThoughtspaceRuntimeInitOptions } from '../thoughtspace'
+import type { ThoughtspaceAccessResult, ThoughtspaceRuntime, ThoughtspaceRuntimeInitOptions } from '../thoughtspace'
 import { clientIdReady } from '../thoughtspaceSession'
 import acquireTreecrdtSessionLock from './sessionLock'
 import { pushTreecrdtLocalOpsToRemote } from './sync'
 import { getMaterializedThoughtsToStoreVersion, waitForMaterializedThoughtsToStore } from './sync/materializationQueue'
 import treecrdtDb, { init as initTreecrdtThoughtspace } from './thoughtspace'
-import { initTreecrdt } from './treecrdt'
+import { type TreecrdtClientConfig, initTreecrdt } from './treecrdt'
 import { getTreecrdtWriteBarrierVersion, waitForTreecrdtWriteBarrier, withTreecrdtWriteBarrier } from './writeBarrier'
 
 type PersistTreecrdtBatch = Parameters<DataProvider['updateThoughts']>[0] & {
   local?: boolean
 }
+
+type MultipleTabTreecrdtClientConfig = TreecrdtClientConfig &
+  Readonly<{
+    storage: 'memory'
+    runtime: 'direct'
+  }>
+
+/** TreeCRDT client settings and em's supported tab-access policies. */
+export type TreecrdtRuntimeConfig =
+  | Readonly<{
+      client?: TreecrdtClientConfig
+      tabPolicy: 'single'
+    }>
+  | Readonly<{
+      client: MultipleTabTreecrdtClientConfig
+      tabPolicy: 'multiple'
+    }>
 
 const TREECRDT_IDLE_TIMEOUT = 30000
 
@@ -70,31 +87,42 @@ const waitForStableIdle = async (): Promise<void> => {
   )
 }
 
-/** Acquires exclusive access to persistent TreeCRDT storage for this page. */
-const acquireAccess = async (): Promise<ThoughtspaceAccessResult> => {
-  const lockStatus = await acquireTreecrdtSessionLock()
+/** Creates the TreeCRDT lifecycle used by the app thoughtspace runtime. */
+export const createTreecrdtRuntime = ({ client, tabPolicy }: TreecrdtRuntimeConfig): ThoughtspaceRuntime => {
+  const storage = client?.storage ?? 'persistent'
+  const workerRuntime = client?.runtime ?? 'dedicated-worker'
 
-  return lockStatus === 'acquired'
-    ? { status: 'acquired' }
-    : {
-        status: 'blocked',
-        reason: lockStatus === 'unavailable' ? 'already-open' : 'unsupported',
-      }
+  if (tabPolicy === 'multiple' && (storage !== 'memory' || workerRuntime !== 'direct')) {
+    throw new Error('Multiple-tab TreeCRDT access requires in-memory storage with the direct runtime.')
+  }
+
+  /** Applies em's tab policy before the TreeCRDT client is opened. */
+  const acquireAccess = async (): Promise<ThoughtspaceAccessResult> => {
+    if (tabPolicy === 'multiple') return { status: 'acquired' }
+
+    const lockStatus = await acquireTreecrdtSessionLock()
+
+    return lockStatus === 'acquired'
+      ? { status: 'acquired' }
+      : {
+          status: 'blocked',
+          reason: lockStatus === 'unavailable' ? 'already-open' : 'unsupported',
+        }
+  }
+
+  return {
+    acquireAccess,
+    init: async (options?: ThoughtspaceRuntimeInitOptions): Promise<{ clientId: string }> => {
+      const clientId = await clientIdReady
+      await initPermissionsStore()
+      await initTreecrdt(client)
+      await initTreecrdtThoughtspace(clientIdToReplicaId(clientId), options?.materialization)
+      return { clientId }
+    },
+    drop: () => treecrdtDb.clear(),
+    waitForIdle: (): Promise<void> => withIdleTimeout(waitForStableIdle()),
+    persistPushQueueBatches,
+  }
 }
 
-/** TreeCRDT lifecycle implementation for the app thoughtspace runtime. */
-export const treecrdtRuntime = {
-  acquireAccess,
-  init: async (options?: ThoughtspaceRuntimeInitOptions): Promise<{ clientId: string }> => {
-    const clientId = await clientIdReady
-    await initPermissionsStore()
-    await initTreecrdt()
-    await initTreecrdtThoughtspace(clientIdToReplicaId(clientId), options?.materialization)
-    return { clientId }
-  },
-  drop: () => treecrdtDb.clear(),
-  waitForIdle: (): Promise<void> => withIdleTimeout(waitForStableIdle()),
-  persistPushQueueBatches,
-}
-
-export default treecrdtRuntime
+export default createTreecrdtRuntime

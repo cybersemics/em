@@ -1,5 +1,4 @@
 import { Capacitor } from '@capacitor/core'
-import storage from '../../util/storage'
 import { tsid } from '../thoughtspaceSession'
 
 export type TreecrdtSessionLockStatus = 'acquired' | 'unavailable' | 'unsupported'
@@ -7,14 +6,14 @@ export type TreecrdtSessionLockStatus = 'acquired' | 'unavailable' | 'unsupporte
 let statusPromise: Promise<TreecrdtSessionLockStatus> | null = null
 
 /**
- * Acquires an origin-wide, page-lifetime lock before the persistent TreeCRDT database is opened.
+ * Acquires an origin-wide, page-lifetime lock for a single-tab TreeCRDT thoughtspace.
  *
  * The callback deliberately remains pending. The browser releases the Web Lock automatically when
- * the page is closed or navigated away from, allowing another tab to safely open the same OPFS file.
+ * the page is closed or navigated away from, allowing another tab to acquire access.
  */
 export const acquireTreecrdtSessionLock = (): Promise<TreecrdtSessionLockStatus> => {
-  // In-memory tests do not share persistent storage. Native apps cannot open a second browser tab.
-  if (storage.getItem('treecrdtStorage') === 'memory' || Capacitor.isNativePlatform()) {
+  // Native apps cannot open a second browser tab, so exclusive access is already guaranteed.
+  if (Capacitor.isNativePlatform()) {
     return Promise.resolve('acquired')
   }
 

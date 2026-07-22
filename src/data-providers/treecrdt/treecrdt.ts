@@ -1,21 +1,34 @@
-import { type ClientOptions, type TreecrdtClient, createTreecrdtClient } from '@treecrdt/wa-sqlite'
-import storage from '../../util/storage'
+import { type ClientOptions, type RuntimeMode, type TreecrdtClient, createTreecrdtClient } from '@treecrdt/wa-sqlite'
+import type { ThoughtspaceStorage } from '../thoughtspace'
 import { tsid } from '../thoughtspaceSession'
 
 let client: TreecrdtClient | null = null
 
 const beforeCloseHandlers = new Set<() => Promise<void>>()
 
-/** Creates an isolated in-memory document id for each Vitest TreeCRDT client. */
-const createTestDocId = (): string => `${tsid}-test-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`
+/** App-level TreeCRDT client configuration. Omit it to use persistent browser defaults. */
+export type TreecrdtClientConfig = Readonly<{
+  storage: ThoughtspaceStorage
+  runtime: RuntimeMode
+  docId?: string
+}>
 
-/** Creates the minimal test client needed by initialize without loading wa-sqlite assets in Vitest. */
-const createTestTreecrdtClient = async (): Promise<TreecrdtClient> => {
-  return createTreecrdtClient({
-    storage: { type: 'memory' },
-    runtime: { type: 'direct' },
-    docId: createTestDocId(),
-  })
+/** Converts app-level configuration to the full TreeCRDT client options. */
+const getClientOptions = (config?: TreecrdtClientConfig): ClientOptions => {
+  const storage = config?.storage ?? 'persistent'
+
+  return {
+    storage:
+      storage === 'memory'
+        ? { type: 'memory' }
+        : {
+            type: 'opfs',
+            filename: `/treecrdt-em-${tsid}.db`,
+            fallback: 'throw',
+          },
+    runtime: { type: config?.runtime ?? (storage === 'memory' ? 'direct' : 'dedicated-worker') },
+    docId: config?.docId ?? tsid,
+  }
 }
 
 /** Runs before `client.close()` / `client.drop()` (e.g. tear down WebSocket sync). Returns an unregister function. */
@@ -33,41 +46,11 @@ async function runBeforeTreecrdtClose(): Promise<void> {
   await Promise.all(handlers.map(h => h()))
 }
 
-/** Gets the configured TreeCRDT runtime for persistent browser sessions. */
-const getRuntime = (): NonNullable<ClientOptions['runtime']> => {
-  const runtimeOverride = storage.getItem('treecrdtRuntime')
-
-  if (runtimeOverride === 'direct' || runtimeOverride === 'dedicated-worker' || runtimeOverride === 'shared-worker') {
-    return { type: runtimeOverride }
-  }
-
-  return { type: 'dedicated-worker' }
-}
-
 /** Initializes the TreeCRDT client. */
-export const initTreecrdt = async (): Promise<TreecrdtClient> => {
+export const initTreecrdt = async (config?: TreecrdtClientConfig): Promise<TreecrdtClient> => {
   if (client) return client
 
-  if (import.meta.env.MODE === 'test') {
-    client = await createTestTreecrdtClient()
-    return client
-  }
-
-  const useTransientMemory = storage.getItem('treecrdtStorage') === 'memory'
-
-  client = await createTreecrdtClient({
-    storage: useTransientMemory
-      ? { type: 'memory' }
-      : {
-          type: 'opfs',
-          filename: `/treecrdt-em-${tsid}.db`,
-          fallback: 'throw',
-        },
-    // Tests may opt into memory storage when persistence is irrelevant. Persistent browser sessions use one
-    // dedicated worker guarded by the page-lifetime session lock acquired before app initialization.
-    runtime: useTransientMemory ? { type: 'direct' } : getRuntime(),
-    docId: tsid,
-  })
+  client = await createTreecrdtClient(getClientOptions(config))
   return client
 }
 

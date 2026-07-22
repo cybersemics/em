@@ -9,7 +9,7 @@ const TEST_REPLICA_ID = new Uint8Array(32).fill(1)
 
 /** Initializes an isolated in-memory TreeCRDT client and thoughtspace for unit tests. */
 const initTestThoughtspace = async (replicaId: Uint8Array = TEST_REPLICA_ID): Promise<void> => {
-  await initTreecrdt()
+  await initTreecrdt({ storage: 'memory', runtime: 'direct' })
   await initTreecrdtThoughtspace(replicaId)
 }
 
