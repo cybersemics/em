@@ -24,10 +24,13 @@ window.em = {
   ...(window.em || {}),
   testFlags: {
     ...(window.em?.testFlags || {}),
-    treecrdtClientConfig: {
-      storage: 'memory',
-      runtime: 'direct',
-      docId: createId(),
+    treecrdtRuntimeConfig: {
+      client: {
+        storage: 'memory',
+        runtime: 'direct',
+        docId: createId(),
+      },
+      tabPolicy: 'multiple',
     },
   },
 }

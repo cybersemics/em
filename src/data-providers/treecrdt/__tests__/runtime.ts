@@ -16,16 +16,19 @@ it.each([
   ['unsupported', { status: 'blocked', reason: 'unsupported' }],
 ] as const)('maps the %s session-lock status to thoughtspace access', async (lockStatus, access) => {
   acquireTreecrdtSessionLock.mockResolvedValue(lockStatus)
-  const treecrdtRuntime = createTreecrdtRuntime()
+  const treecrdtRuntime = createTreecrdtRuntime({ tabPolicy: 'single' })
 
   await expect(treecrdtRuntime.acquireAccess()).resolves.toEqual(access)
-  expect(acquireTreecrdtSessionLock).toHaveBeenCalledWith('opfs')
+  expect(acquireTreecrdtSessionLock).toHaveBeenCalledWith()
 })
 
-it('does not require a session lock for in-memory storage', async () => {
-  acquireTreecrdtSessionLock.mockResolvedValue('acquired')
-  const treecrdtRuntime = createTreecrdtRuntime({ storage: 'memory', runtime: 'direct' })
+it('does not require a session lock when multiple tabs are allowed', async () => {
+  // Persistent client settings prove that tab policy, rather than storage or worker choice, controls access.
+  const treecrdtRuntime = createTreecrdtRuntime({
+    client: { storage: 'opfs', runtime: 'dedicated-worker' },
+    tabPolicy: 'multiple',
+  })
 
   await expect(treecrdtRuntime.acquireAccess()).resolves.toEqual({ status: 'acquired' })
-  expect(acquireTreecrdtSessionLock).toHaveBeenCalledWith('memory')
+  expect(acquireTreecrdtSessionLock).not.toHaveBeenCalled()
 })

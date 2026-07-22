@@ -14,6 +14,15 @@ type PersistTreecrdtBatch = Parameters<DataProvider['updateThoughts']>[0] & {
   local?: boolean
 }
 
+export type TreecrdtTabPolicy = 'multiple' | 'single'
+
+/** TreeCRDT client settings and em's independent policy for allowing multiple tabs. */
+export type TreecrdtRuntimeConfig = Readonly<{
+  client?: TreecrdtClientConfig
+  /** Use multiple only when the complete thoughtspace runtime safely supports concurrent tabs. */
+  tabPolicy: TreecrdtTabPolicy
+}>
+
 const TREECRDT_IDLE_TIMEOUT = 30000
 
 /** Rejects if provider idle work never settles. */
@@ -71,10 +80,12 @@ const waitForStableIdle = async (): Promise<void> => {
 }
 
 /** Creates the TreeCRDT lifecycle used by the app thoughtspace runtime. */
-export const createTreecrdtRuntime = (clientConfig?: TreecrdtClientConfig): ThoughtspaceRuntime => {
-  /** Acquires exclusive access before persistent TreeCRDT storage is opened. */
+export const createTreecrdtRuntime = ({ client, tabPolicy }: TreecrdtRuntimeConfig): ThoughtspaceRuntime => {
+  /** Applies em's tab policy before the TreeCRDT client is opened. */
   const acquireAccess = async (): Promise<ThoughtspaceAccessResult> => {
-    const lockStatus = await acquireTreecrdtSessionLock(clientConfig?.storage ?? 'opfs')
+    if (tabPolicy === 'multiple') return { status: 'acquired' }
+
+    const lockStatus = await acquireTreecrdtSessionLock()
 
     return lockStatus === 'acquired'
       ? { status: 'acquired' }
@@ -89,7 +100,7 @@ export const createTreecrdtRuntime = (clientConfig?: TreecrdtClientConfig): Thou
     init: async (options?: ThoughtspaceRuntimeInitOptions): Promise<{ clientId: string }> => {
       const clientId = await clientIdReady
       await initPermissionsStore()
-      await initTreecrdt(clientConfig)
+      await initTreecrdt(client)
       await initTreecrdtThoughtspace(clientIdToReplicaId(clientId), options?.materialization)
       return { clientId }
     },
