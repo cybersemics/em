@@ -9,7 +9,10 @@ type PreloadedBootstrapConfig = Partial<BootstrapConfig>
 
 declare global {
   interface Window {
-    /** Application configuration injected before the em bundle evaluates. */
+    /**
+     * Optional configuration supplied before the application bundle evaluates.
+     * Read once during module initialization; runtime APIs are exposed later on window.em.
+     */
     emConfig?: PreloadedBootstrapConfig
   }
 }
