@@ -1,9 +1,7 @@
 /* eslint-disable import/prefer-default-export */
 import Thunk from '../@types/Thunk'
-import { isTouch } from '../browser'
 import { ColorToken } from '../colors.config'
 import { commandEmitter } from '../commands'
-import registerNativeUndoStep from '../device/registerNativeUndoStep'
 import * as selection from '../device/selection'
 import noteValue from '../selectors/noteValue'
 import pathToThought from '../selectors/pathToThought'
@@ -11,7 +9,6 @@ import resolveNotePath from '../selectors/resolveNotePath'
 import simplifyPath from '../selectors/simplifyPath'
 import themeColors from '../selectors/themeColors'
 import { updateCommandState } from '../stores/commandStateStore'
-import suppressFocusStore from '../stores/suppressFocus'
 import formatSelectionHtml, { FormatCommand } from '../util/formatSelectionHtml'
 import { editThoughtActionCreator as editThought } from './editThought'
 import { setDescendantActionCreator as setDescendant } from './setDescendant'
@@ -33,28 +30,18 @@ export const formatSelectionActionCreator =
     const thought = pathToThought(state, state.cursor)
     if (!thought) return
     const colors = themeColors(state)
-    suppressFocusStore.update(true)
 
     const contentEditable = document.querySelector(
       state.noteFocus
         ? `[aria-label="note-editable"][data-thought-id="${thought.id}"]`
         : `[aria-label="editable-${thought.id}"]`,
     ) as HTMLElement | null
-    if (!contentEditable) {
-      suppressFocusStore.update(false)
-      return
-    }
-
-    // Was the editable was already focused (keyboard open) when formatting was invoked? When false (e.g. formatting the whole thought from the toolbar with the keyboard closed), precautions against the keyboard opening must be applied in registerNativeUndoStep.
-    const editMode = !isTouch || state.isKeyboardOpen || false
+    if (!contentEditable) return
 
     // The current value of the note or thought being formatted (#3901).
     const value = state.noteFocus ? (noteValue(state, state.cursor) ?? '') : thought.value
 
-    if (value.length === 0) {
-      suppressFocusStore.update(false)
-      return
-    }
+    if (value.length === 0) return
 
     // Compute the plain-text character offsets [start, end) of the selection relative to the editable.
     const plainLength = contentEditable.textContent?.length ?? 0
@@ -83,15 +70,6 @@ export const formatSelectionActionCreator =
     if (!whole) updateCommandState()
 
     const path = state.noteFocus ? resolveNotePath(state, state.cursor) : state.cursor
-
-    // On iOS (Safari and Capacitor, both WKWebView), register a native undo step for this format while focus is still
-    // suppressed. The value is applied via editThought below rather than document.execCommand, so WebKit records no
-    // native step; without one, a shake/three-finger native undo gesture fires nothing and the historyUndo beforeinput
-    // handler that routes native undo through em's own undo never runs (#3954, #4637). The registered step's DOM effect
-    // is overwritten by the editThought re-render; it exists only as the trigger for the native undo gesture.
-    if (newValue !== value && path) registerNativeUndoStep(contentEditable, newValue, editMode)
-
-    suppressFocusStore.update(false)
 
     if (newValue === value || !path) return
 

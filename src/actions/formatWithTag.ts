@@ -4,7 +4,6 @@ import Thunk from '../@types/Thunk'
 import * as selection from '../device/selection'
 import pathToThought from '../selectors/pathToThought'
 import thoughtToPath from '../selectors/thoughtToPath'
-import suppressFocusStore from '../stores/suppressFocus'
 import getCommandState from '../util/getCommandState'
 import strip from '../util/strip'
 import { editThoughtActionCreator as editThought } from './editThought'
@@ -18,7 +17,6 @@ export const formatWithTagActionCreator =
     const thought = pathToThought(state, state.cursor)
     if (!thought) return
     const simplePath = thoughtToPath(state, thought.id)
-    suppressFocusStore.update(true)
 
     const tagRegExp = new RegExp(`<${tag}[^>]*>|<\/${tag}>`, 'g')
 
@@ -62,5 +60,4 @@ export const formatWithTagActionCreator =
         }),
       )
     }
-    suppressFocusStore.update(false)
   }
