@@ -32,7 +32,9 @@ stop_dev_server() {
         # Otherwise, the process can exit here and stop_docker_container will never be called, and the next run will fail because the port is already in use.
         kill $DEV_SERVER_PID || true
     fi
-    [ -n "$DEV_SERVER_LOG" ] && rm -f "$DEV_SERVER_LOG"
+    if [ -n "$DEV_SERVER_LOG" ]; then
+        rm -f "$DEV_SERVER_LOG"
+    fi
 }
 
 cleanup() {
