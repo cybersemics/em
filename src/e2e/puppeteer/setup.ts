@@ -1,6 +1,6 @@
 /* eslint-disable import/prefer-default-export */
 import chalk from 'chalk'
-import { Browser, BrowserContext, ConsoleMessage, Device } from 'puppeteer'
+import { Browser, BrowserContext, ConsoleMessage, Device, Page } from 'puppeteer'
 import { WindowEm } from '../../initialize'
 import createId from '../../util/createId'
 import { page, setPage } from './session'
@@ -16,26 +16,56 @@ let context: BrowserContext
 let treecrdtStorage: 'memory' | 'opfs' = 'memory'
 let treecrdtRuntime: TreecrdtTestRuntime = 'direct'
 
-/** Seeds isolated browser storage before the app bundle starts. */
-const installTestSessionStorage = async (
+/** Injects typed TreeCRDT configuration before the app bundle starts. */
+const installTreecrdtClientConfig = async (
+  target: Page,
+  config: { docId: string; runtime: TreecrdtTestRuntime; storage: typeof treecrdtStorage },
+): Promise<void> => {
+  await target.evaluateOnNewDocument(treecrdtClientConfig => {
+    type PreloadedWindowEm = Omit<Partial<WindowEm>, 'testFlags'> & {
+      testFlags?: Partial<WindowEm['testFlags']>
+    }
+
+    const emWindow = window as Window & { em?: PreloadedWindowEm }
+    emWindow.em = {
+      ...emWindow.em,
+      testFlags: {
+        ...emWindow.em?.testFlags,
+        treecrdtClientConfig,
+      },
+    }
+  }, config)
+}
+
+/** Seeds an isolated browser session and typed test configuration before the app bundle starts. */
+const installTestSession = async (
+  target: Page,
   sessionId: string,
   storage: typeof treecrdtStorage,
   runtime: typeof treecrdtRuntime,
 ): Promise<void> => {
-  await page.evaluateOnNewDocument(
-    ({ runtime, sessionId, storage }) => {
-      if (!sessionStorage.getItem('__em_puppeteer_storage_initialized')) {
-        localStorage.clear()
-        sessionStorage.setItem('__em_puppeteer_storage_initialized', '1')
-      }
+  await target.evaluateOnNewDocument(sessionId => {
+    if (!sessionStorage.getItem('__em_puppeteer_storage_initialized')) {
+      localStorage.clear()
+      sessionStorage.setItem('__em_puppeteer_storage_initialized', '1')
+    }
 
-      localStorage.setItem('tsid', sessionId)
-      localStorage.setItem('accessToken', sessionId)
-      localStorage.setItem('treecrdtRuntime', runtime)
-      localStorage.setItem('treecrdtStorage', storage)
-    },
-    { runtime, sessionId, storage },
-  )
+    localStorage.setItem('tsid', sessionId)
+    localStorage.setItem('accessToken', sessionId)
+  }, sessionId)
+
+  await installTreecrdtClientConfig(target, { docId: sessionId, runtime, storage })
+}
+
+/** Opens an additional page with the current TreeCRDT test configuration. */
+export const createTreecrdtTestPage = async (browserContext: BrowserContext, docId: string): Promise<Page> => {
+  const target = await browserContext.newPage()
+  await installTreecrdtClientConfig(target, {
+    docId,
+    runtime: treecrdtRuntime,
+    storage: treecrdtStorage,
+  })
+  return target
 }
 
 /** Use persistent OPFS storage for tests that verify reload/materialization from storage. */
@@ -78,7 +108,7 @@ const setup = async ({
 
   const sessionId = createId()
 
-  await installTestSessionStorage(sessionId, treecrdtStorage, treecrdtRuntime)
+  await installTestSession(page, sessionId, treecrdtStorage, treecrdtRuntime)
 
   page.on('dialog', async dialog => dialog.accept())
 

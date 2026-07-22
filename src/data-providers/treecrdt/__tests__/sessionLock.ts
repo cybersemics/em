@@ -65,12 +65,11 @@ it('fails closed when Web Locks are unavailable', async () => {
 })
 
 it('does not lock isolated in-memory storage', async () => {
-  localStorage.setItem('treecrdtStorage', 'memory')
   const request = vi.fn(() => Promise.resolve())
   setLocks(request)
 
   const { acquireTreecrdtSessionLock } = await import('../sessionLock')
 
-  await expect(acquireTreecrdtSessionLock()).resolves.toBe('acquired')
+  await expect(acquireTreecrdtSessionLock('memory')).resolves.toBe('acquired')
   expect(request).not.toHaveBeenCalled()
 })

@@ -1,4 +1,5 @@
 import { DebouncedFunc } from 'lodash'
+import type { TreecrdtClientConfig } from '../data-providers/treecrdt/treecrdt'
 
 type TestFlags = {
   logActions: boolean
@@ -17,6 +18,8 @@ type TestFlags = {
   simulateDrop: boolean
   /** The throttled scrollCursorIntoView function. Exposed so that tests can cancel its pending trailing call before asserting on the scroll position. */
   throttledScrollCursorIntoView: DebouncedFunc<(y: number, height: number) => void> | null
+  /** TreeCRDT client configuration injected before application modules load. */
+  treecrdtClientConfig: TreecrdtClientConfig | null
 }
 
 const preloadedTestFlags =
@@ -35,6 +38,7 @@ const testFlags: TestFlags = {
   simulateDrag: false,
   simulateDrop: false,
   throttledScrollCursorIntoView: null,
+  treecrdtClientConfig: preloadedTestFlags?.treecrdtClientConfig ?? null,
 }
 
 export default testFlags

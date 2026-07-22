@@ -5,6 +5,7 @@ import * as matchers from 'jest-extended'
 import { noop } from 'lodash'
 import { TextDecoder, TextEncoder } from 'util'
 import 'vi-canvas-mock'
+import createId from './util/createId'
 
 expect.extend(matchers)
 
@@ -16,6 +17,20 @@ global.TextDecoder = TextDecoder
 window.blur = noop
 window.scrollTo = noop
 window.matchMedia = window.matchMedia || (() => false)
+
+// Unit tests use an explicitly configured in-memory TreeCRDT client. The application reads preloaded test flags
+// when its modules are evaluated, matching the established pre-bootstrap configuration used by browser tests.
+window.em = {
+  ...(window.em || {}),
+  testFlags: {
+    ...(window.em?.testFlags || {}),
+    treecrdtClientConfig: {
+      storage: 'memory',
+      runtime: 'direct',
+      docId: createId(),
+    },
+  },
+}
 
 document.execCommand = () => {
   console.warn('document.execCommand is not implemented in JSDOM')

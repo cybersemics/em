@@ -5,7 +5,7 @@ import paste from '../helpers/paste'
 import refresh from '../helpers/refresh'
 import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
 import { page, setPage } from '../session'
-import { usePersistentTreecrdtStorage } from '../setup'
+import { createTreecrdtTestPage, usePersistentTreecrdtStorage } from '../setup'
 
 vi.setConfig({ testTimeout: 60000 })
 usePersistentTreecrdtStorage({ runtime: 'dedicated-worker' })
@@ -42,8 +42,8 @@ it('keeps one active tab across refreshes and successive tab handoffs', async ()
 
   const sessionId = await first.evaluate(() => localStorage.getItem('tsid'))
   if (!sessionId) throw new Error('Expected the Puppeteer session to define a tsid')
-  const second = await first.browserContext().newPage()
-  const third = await first.browserContext().newPage()
+  const second = await createTreecrdtTestPage(first.browserContext(), sessionId)
+  const third = await createTreecrdtTestPage(first.browserContext(), sessionId)
   captureRuntimeErrors(second, errors)
   captureRuntimeErrors(third, errors)
 
