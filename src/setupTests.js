@@ -24,7 +24,7 @@ window.em = {
   ...(window.em || {}),
   testFlags: {
     ...(window.em?.testFlags || {}),
-    treecrdtRuntimeConfig: {
+    treecrdt: {
       client: {
         storage: 'memory',
         runtime: 'direct',

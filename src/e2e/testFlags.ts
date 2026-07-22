@@ -19,7 +19,7 @@ type TestFlags = {
   /** The throttled scrollCursorIntoView function. Exposed so that tests can cancel its pending trailing call before asserting on the scroll position. */
   throttledScrollCursorIntoView: DebouncedFunc<(y: number, height: number) => void> | null
   /** TreeCRDT runtime configuration injected before application modules load. */
-  treecrdtRuntimeConfig: TreecrdtRuntimeConfig | null
+  treecrdt: TreecrdtRuntimeConfig | null
 }
 
 const preloadedTestFlags =
@@ -38,7 +38,7 @@ const testFlags: TestFlags = {
   simulateDrag: false,
   simulateDrop: false,
   throttledScrollCursorIntoView: null,
-  treecrdtRuntimeConfig: preloadedTestFlags?.treecrdtRuntimeConfig ?? null,
+  treecrdt: preloadedTestFlags?.treecrdt ?? null,
 }
 
 export default testFlags

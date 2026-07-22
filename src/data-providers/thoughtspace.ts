@@ -50,7 +50,7 @@ export const db: DataProvider = treecrdtDb
 
 /** The active thoughtspace runtime implementation. */
 export const thoughtspaceRuntime: ThoughtspaceRuntime = createTreecrdtRuntime(
-  testFlags.treecrdtRuntimeConfig ?? { tabPolicy: 'single' },
+  testFlags.treecrdt ?? { tabPolicy: 'single' },
 )
 
 export default db
