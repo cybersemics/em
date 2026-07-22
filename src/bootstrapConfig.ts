@@ -5,7 +5,7 @@ export type BootstrapConfig = Readonly<{
   treecrdt: TreecrdtRuntimeConfig
 }>
 
-type PreloadedBootstrapConfig = Partial<BootstrapConfig>
+type BootstrapConfigOverrides = Partial<BootstrapConfig>
 
 declare global {
   interface Window {
@@ -13,7 +13,7 @@ declare global {
      * Optional configuration supplied before the application bundle evaluates.
      * Read once during module initialization; runtime APIs are exposed later on window.em.
      */
-    emConfig?: PreloadedBootstrapConfig
+    emConfig?: BootstrapConfigOverrides
   }
 }
 
