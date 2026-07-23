@@ -134,7 +134,7 @@ it('move children to the correct sibling in a sorted context', () => {
 })
 
 // https://github.com/cybersemics/em/issues/4582
-it.skip('note remains on the original thought when split', () => {
+it('note remains on the original thought when split', () => {
   const steps = [
     importText({
       text: `
