@@ -206,4 +206,45 @@ describe('Table View', () => {
     // Allow a small tolerance for cliff padding between the two levels.
     expect(fifteen.y - (eight.y + eight.height)).toBeLessThan(eight.height)
   })
+
+  // Regression test for https://github.com/cybersemics/em/pull/4654 (Issue D)
+  // When Table View is applied across multiple nested levels, dividing the available width in half at every level
+  // would compound and crush the deeper columns toward the 1em floor (one character per line) and push them off the
+  // right edge. Nested tables should instead share the band across up to three visible levels so the focused columns
+  // stay legible, with deeper levels revealed as the cursor descends.
+  it('nested Table View columns stay legible instead of crushing across levels', async () => {
+    await page.setViewport({ width: 800, height: 900 })
+
+    // Four nested tables. Each level has =view/Table, so every thought is simultaneously the col1 cell of its parent's
+    // table and a table itself — the multi-level nesting from the issue.
+    await paste(`
+      - The project exceeded all initial expectations.
+        - =view
+          - Table
+        - Every test case passed without any critical issues.
+          - =view
+            - Table
+          - We identified several opportunities for improvement.
+            - =view
+              - Table
+            - The application performed consistently under heavy load.
+              - =view
+                - Table
+              - Documentation was updated after every major change.
+    `)
+
+    // Focus a middle level so the three deepest columns are within the visible window.
+    await clickThought('We identified several opportunities for improvement.')
+
+    const level3 = await (await getEditable('We identified several opportunities for improvement.')).boundingBox()
+    const level4 = await (await getEditable('The application performed consistently under heavy load.')).boundingBox()
+
+    if (!level3 || !level4) {
+      throw new Error('Could not get bounding boxes for the nested table columns')
+    }
+
+    // Both focused columns must remain legible — not crushed toward the ~1em floor (one character per line).
+    expect(level3.width).toBeGreaterThan(100)
+    expect(level4.width).toBeGreaterThan(100)
+  })
 })

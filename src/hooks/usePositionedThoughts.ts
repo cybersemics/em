@@ -103,6 +103,22 @@ const usePositionedThoughts = (
     // key thoughtId of thought with =table attribute
     const tableCol1Widths = new Map<ThoughtId, number>()
 
+    // The set of keys of thoughts that are themselves tables (i.e. have =view/Table, so linearizeTree populated
+    // visibleChildrenKeys). Used to detect nested tables: a col1 cell whose thought is also a table means the tables
+    // form a multi-level chain, so the column band is divided among up to three visible levels rather than 50/50.
+    const tableThoughtKeys = new Set(treeThoughts.filter(node => node.visibleChildrenKeys).map(node => node.key))
+
+    // The number of table levels to divide the available horizontal band among. A standalone table splits its band
+    // 50/50 between col1 and col2. When tables are nested across multiple levels, dividing by two at each level would
+    // halve the band repeatedly and crush the deeper columns toward zero (one character per line, off the right edge).
+    // Instead divide by three so up to three table levels stay legible at once; deeper levels are revealed as the
+    // cursor descends via the global translateX shift (see indentCursorAncestorTables / indent in LayoutTree).
+    const maxVisibleTableColumns = 3
+
+    // The rightmost extent a thought may occupy, mirroring the maxWidth boundary in LayoutTree (90vw on wider screens,
+    // 100vw otherwise, minus the left content padding).
+    const availableTableWidth = (innerWidth > 560 ? 0.9 : 1) * innerWidth - CONTENT_BOX_PADDING_LEFT
+
     // The root context can also be a table (e.g. toggling Table View while the cursor is on a top-level thought sets =view/Table on the root).
     // Unlike other tables, the root is never rendered as a node in linearizeTree, so it never gets visibleChildrenKeys and its col1 width is never registered below.
     // Register it here, keyed by HOME_TOKEN, from the measured widths of the visible top-level col1 thoughts, so its col2 descendants can be shifted right (see ancestorTableWidths).
@@ -111,11 +127,14 @@ const usePositionedThoughts = (
       0,
     )
     if (homeTableCol1Width > 0) {
-      // Cap the root table's col1 at roughly half the available horizontal band so col1 and col2 share the space and
-      // wrap responsively, rather than a long col1 consuming the width and pushing col2 off the right edge.
-      // The root's col1 thoughts sit at depth 0 with no ancestor tables, so col1X is effectively 0 here.
-      const availableWidth = (innerWidth > 560 ? 0.9 : 1) * innerWidth - CONTENT_BOX_PADDING_LEFT
-      const col1MaxWidth = Math.max(availableWidth / 2, fontSize)
+      // If the root table's col1 thoughts are themselves tables, the tables are nested, so divide the band among up to
+      // three levels; otherwise split it 50/50. The root's col1 thoughts sit at depth 0 with no ancestor tables, so
+      // there is no indentation to subtract here.
+      const homeCol1IsNested = treeThoughts.some(
+        node => node.depth === 0 && node.isTableCol1 && node.visibleChildrenKeys,
+      )
+      const homeColumns = homeCol1IsNested ? maxVisibleTableColumns : 2
+      const col1MaxWidth = Math.max(availableTableWidth / homeColumns, fontSize)
       tableCol1Widths.set(HOME_TOKEN, Math.min(homeTableCol1Width, col1MaxWidth))
     }
 
@@ -150,18 +169,19 @@ const usePositionedThoughts = (
           0,
         )
         if (tableCol1Width > 0) {
-          // Cap col1 at roughly half the available horizontal band so col1 and col2 share the space and
-          // wrap responsively, rather than a long col1 consuming the width and crushing col2 off the right edge.
-          // x of the col1 thoughts (one level below this table thought). The col1 children inherit this thought's
-          // ancestor table widths plus, when this thought is itself in a col2 (nested tables), its parent table's col1 width.
-          const col1X =
-            fontSize * (node.depth + 1) +
-            ancestorTableWidths +
-            (tableCol1Widths.get(head(parentOf(node.path)) ?? HOME_TOKEN) || 0)
-          // The rightmost extent a thought may occupy, mirroring the maxWidth boundary in LayoutTree (90vw on wider screens, 100vw otherwise, minus the left content padding).
-          const availableWidth = (innerWidth > 560 ? 0.9 : 1) * innerWidth - CONTENT_BOX_PADDING_LEFT
+          // Detect whether this table is part of a nested chain: either it has an ancestor table, or its own col1
+          // cells are themselves tables. A standalone table splits its band 50/50 between col1 and col2; a nested
+          // table divides it among up to three levels so deeper columns stay legible instead of compounding toward
+          // zero at each level (which pushed them off the right edge — see maxVisibleTableColumns).
+          const nodeAncestorIds = [HOME_TOKEN, ...parentOf(node.path)]
+          const ancestorTableCount = nodeAncestorIds.reduce((count, id) => count + (tableCol1Widths.has(id) ? 1 : 0), 0)
+          const col1CellsAreTables = node.visibleChildrenKeys.some(childKey => tableThoughtKeys.has(childKey))
+          const columns = ancestorTableCount > 0 || col1CellsAreTables ? maxVisibleTableColumns : 2
+          // Subtract only this table's own indentation (not the ancestor table widths), so the cap does not shrink
+          // with nesting depth. The col1 cells sit one level below this table thought.
+          const col1Indent = fontSize * (node.depth + 1)
           // Never cap below 1em so col1 remains usable even on very narrow or deeply nested layouts.
-          const col1MaxWidth = Math.max((availableWidth - col1X) / 2, fontSize)
+          const col1MaxWidth = Math.max((availableTableWidth - col1Indent) / columns, fontSize)
           tableCol1Widths.set(head(node.path), Math.min(tableCol1Width, col1MaxWidth))
         }
       }
