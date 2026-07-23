@@ -190,6 +190,34 @@ describe('formatSelection', () => {
     expect(cursorValue()).toBe('Hello <b>Bold World</b>')
   })
 
+  it('unbolds a substring when bolding the same range twice', async () => {
+    await setupThought('Hello World')
+
+    // bold "World"
+    selectRange('Hello '.length, 'Hello World'.length)
+    await dispatch(formatSelection('bold'))
+    expect(cursorValue()).toBe('Hello <b>World</b>')
+
+    // re-select the same range and bold again → the bold should toggle off
+    selectPlainRange('Hello '.length, 'Hello World'.length)
+    await dispatch(formatSelection('bold'))
+    expect(cursorValue()).toBe('Hello World')
+  })
+
+  it('unbolds a sub-range of an existing bold substring', async () => {
+    await setupThought('Hello World')
+
+    // bold "World"
+    selectRange('Hello '.length, 'Hello World'.length)
+    await dispatch(formatSelection('bold'))
+    expect(cursorValue()).toBe('Hello <b>World</b>')
+
+    // select "orl" (a sub-range within the bold "World") and bold again → that sub-range should toggle off
+    selectPlainRange('Hello W'.length, 'Hello Worl'.length)
+    await dispatch(formatSelection('bold'))
+    expect(cursorValue()).toBe('Hello <b>W</b>orl<b>d</b>')
+  })
+
   it('bolds a whole thought whose leading text is italic, wrapping the outer tag', async () => {
     await setupThought('<i>Hello</i> World')
 

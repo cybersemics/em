@@ -63,6 +63,73 @@ const positionAtOffset = (root: Node, target: number): Position => {
   return { node: root, offset: 0 }
 }
 
+/** Returns the nearest ancestor element of the given tag (within container), starting from node, or null. */
+const closestTag = (node: Node, container: Node, tag: string): HTMLElement | null => {
+  let n: Node | null = node.nodeType === Node.ELEMENT_NODE ? node : node.parentNode
+  while (n && n !== container) {
+    if (n.nodeType === Node.ELEMENT_NODE && (n as HTMLElement).tagName.toLowerCase() === tag) return n as HTMLElement
+    n = n.parentNode
+  }
+  return null
+}
+
+/** Returns true if every selected character in the [s, e) range is already inside an element of the given tag, i.e. the
+ * range is fully formatted and applying the command should toggle it off rather than wrap it again. */
+const isRangeFullyTagged = (container: HTMLElement, s: Position, e: Position, tag: string): boolean => {
+  const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT)
+  let started = false
+  let sawText = false
+  let node = walker.nextNode() as Text | null
+  while (node) {
+    if (node === s.node) started = true
+    if (started) {
+      const len = node.textContent?.length ?? 0
+      const from = node === s.node ? s.offset : 0
+      const to = node === e.node ? e.offset : len
+      // only require a tag ancestor for nodes that actually contribute selected characters (skip zero-width boundaries)
+      if (to > from) {
+        if (!closestTag(node, container, tag)) return false
+        sawText = true
+      }
+    }
+    if (node === e.node) break
+    node = walker.nextNode() as Text | null
+  }
+  return sawText
+}
+
+/** Returns the plain-text character offset of the start of el within container. */
+const plainOffsetOf = (container: HTMLElement, el: Element): number => {
+  const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT)
+  let offset = 0
+  let node = walker.nextNode()
+  while (node) {
+    if (el.contains(node)) return offset
+    offset += node.textContent?.length ?? 0
+    node = walker.nextNode()
+  }
+  return offset
+}
+
+/** Splits the enclosing tag element (if any) at the plain-text offset, so the point becomes a boundary between two
+ * sibling tag elements. A no-op if the offset is not inside a tag element or lands on its edge. Used to expose a
+ * sub-range for toggling the tag off. */
+const splitTagAtOffset = (container: HTMLElement, offset: number, tag: string) => {
+  const pos = positionAtOffset(container, offset)
+  const tagEl = closestTag(pos.node, container, tag)
+  if (!tagEl) return
+  const tail = document.createRange()
+  tail.setStart(pos.node, pos.offset)
+  tail.setEnd(tagEl, tagEl.childNodes.length)
+  const contents = tail.extractContents()
+  if ((contents.textContent ?? '') !== '') {
+    const newTag = document.createElement(tag)
+    newTag.appendChild(contents)
+    tagEl.after(newTag)
+  }
+  if ((tagEl.textContent ?? '') === '') tagEl.remove()
+}
+
 /** Removes empty formatting elements (e.g. the <font> left behind after extractContents splits a colored range). */
 const removeEmptyFormatting = (container: HTMLElement) => {
   for (const el of Array.from(container.querySelectorAll(ALLOWED_FORMATTING_TAGS.join(',')))) {
@@ -243,6 +310,19 @@ const formatSelectionHtml = (
   // whole-thought tag toggle-off: the tag already covers all text, so just remove it (no re-wrap)
   if (tag && whole && getCommandState(html)[command as keyof CommandState]) {
     unwrapAll(container, tag)
+  } else if (tag && !whole && isRangeFullyTagged(container, s, e, tag)) {
+    // partial-range tag toggle-off: the selected sub-range is already fully formatted. Split the enclosing tag at both
+    // boundaries so the range's content sits in its own tag element(s), then unwrap every tag element that lies fully
+    // within [start, end], leaving the tag intact on either side (e.g. bolding "orl" in "<b>World</b>" → "<b>W</b>orl<b>d</b>").
+    splitTagAtOffset(container, end, tag)
+    splitTagAtOffset(container, start, tag)
+    for (const el of Array.from(container.querySelectorAll(tag))) {
+      const elStart = plainOffsetOf(container, el)
+      if (elStart >= start && elStart + (el.textContent?.length ?? 0) <= end) {
+        el.replaceWith(...Array.from(el.childNodes))
+      }
+    }
+    removeEmptyFormatting(container)
   } else {
     // build the range to reformat: the whole thought's contents (grabbing boundary wrappers) or the sub-range
     const range = document.createRange()
@@ -255,6 +335,7 @@ const formatSelectionHtml = (
     if (tag) {
       // wrap the range in the tag, collapsing any nested same-tags
       range.insertNode(wrapWithTag(range.extractContents(), command))
+      removeEmptyFormatting(container)
     } else {
       // color: consolidate the range's foreColor/backColor into a single <font>, preserving non-color tags (b/i/u)
       applyColor(container, range, command as 'foreColor' | 'backColor', colorValue, defaultBackgroundColor)
