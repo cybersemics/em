@@ -168,7 +168,7 @@ it('applying multiple background colors should each be a separate undo step', as
 })
 
 // https://github.com/cybersemics/em/issues/4632
-it.skip('undoing a whole-thought background color should keep the caret in place', async () => {
+it('undoing a whole-thought background color should keep the caret in place', async () => {
   await paste(`
     - Welcome to the Jungle`)
 
