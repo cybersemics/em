@@ -16,8 +16,7 @@ import { editThoughtActionCreator as editThought } from './editThought'
 import { setDescendantActionCreator as setDescendant } from './setDescendant'
 
 /**
- * Registers a single native undo step in WKWebView for a formatSelection edit on iOS (Safari and the Capacitor app,
- * both WKWebView).
+ * Registers a single native undo step in WKWebView for a formatSelection edit on iOS.
  *
  * The DOMParser-based formatSelection applies formatting by re-rendering the contentEditable from Redux (editThought),
  * not via document.execCommand, so WebKit records no native undo step. Without a step, a native undo gesture
@@ -95,11 +94,8 @@ export const formatSelectionActionCreator =
 
     if (newValue === value || !path) return
 
-    // On iOS (Safari and Capacitor, both WKWebView), register a native undo step for this format while focus is still
-    // suppressed. The value is applied via editThought below rather than document.execCommand, so WebKit records no
-    // native step; without one, a shake/three-finger native undo gesture fires nothing and the historyUndo beforeinput
-    // handler that routes native undo through em's own undo never runs (#3954, #4637). The registered step's DOM effect
-    // is overwritten by the editThought re-render; it exists only as the trigger for the native undo gesture.
+    // Only call document.execCommand when the keyboard is open and the caret is on a thought.
+    // This avoids messy and buggy focus-management logic.
     if (state.isKeyboardOpen) registerNativeUndoStep(newValue)
 
     dispatch(
