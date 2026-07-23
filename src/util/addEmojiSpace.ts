@@ -16,7 +16,7 @@ const getVisibleText = (html: string): { sourceIndices: number[]; text: string }
   const sourceIndices = [0]
   let text = ''
 
-  for (let i = 0; i < html.length; ) {
+  for (let i = 0; i < html.length;) {
     if (html[i] === '<') {
       const tagEnd = html.indexOf('>', i + 1)
       if (tagEnd >= 0) {
