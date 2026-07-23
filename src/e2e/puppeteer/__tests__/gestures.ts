@@ -1,10 +1,9 @@
 import { type ConsoleMessage, KnownDevices } from 'puppeteer'
-import deleteCommand from '../../../commands/delete'
 import newSubthoughtCommand from '../../../commands/newSubthought'
 import newThoughtCommand from '../../../commands/newThought'
 import $ from '../helpers/$'
 import exportThoughts from '../helpers/exportThoughts'
-import gesture, { endGesture } from '../helpers/gesture'
+import gesture, { endGesture, startGesture } from '../helpers/gesture'
 import reloadWithProductionTiming from '../helpers/initialize'
 import keyboard from '../helpers/keyboard'
 import press from '../helpers/press'
@@ -89,35 +88,31 @@ describe('gestures', () => {
   })
 
   // https://github.com/cybersemics/em/issues/4536
-  it('does not execute a gesture that starts in the scroll zone', async () => {
+  it('does not activate a gesture that starts in the scroll zone', async () => {
     await gesture(newThoughtCommand)
     for (let i = 0; i < 20; i++) {
       await keyboard.type(`thought ${i}`)
       if (i < 19) await press('Enter')
     }
 
-    const before = await exportThoughts()
     expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0)
     const viewport = page.viewport()!
     const xStart = viewport.width - Math.round(viewport.width / 8)
     const yStart = Math.round(viewport.height / 3)
+    const traceClassBefore = await page.$eval('[data-testid=gesture-trace]', element => element.className)
 
-    /** Keep native scroll events arriving as the touch starts, reproducing the responder termination caused by iOS scrolling. */
-    const scroll = async () => {
-      for (let i = 0; i < 3; i++) {
-        await page.mouse.wheel({ deltaY: -10 })
-      }
+    const activeGesture = await startGesture({ xStart, yStart })
+    try {
+      await activeGesture.move('u')
+      await page.evaluate(() => new Promise(requestAnimationFrame))
+      await activeGesture.move('l')
+      await activeGesture.move('dr')
+      await page.evaluate(() => new Promise(requestAnimationFrame))
+
+      expect(await page.$eval('[data-testid=gesture-trace]', element => element.className)).toBe(traceClassBefore)
+    } finally {
+      await activeGesture.end()
     }
-
-    await Promise.all([
-      scroll(),
-      gesture(deleteCommand, {
-        xStart,
-        yStart,
-      }),
-    ])
-
-    expect(await exportThoughts()).toBe(before)
   })
 })
 
