@@ -74,7 +74,7 @@ jobs:
       - name: Cache Rust build
         uses: swatinem/rust-cache@v2
         with:
-          workspaces: ./src-tauri -> target
+          workspaces: ./desktop -> target
 
       - name: Install Linux dependencies
         if: matrix.platform == 'ubuntu-22.04'
