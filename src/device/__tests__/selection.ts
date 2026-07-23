@@ -1,5 +1,5 @@
 import getTextContentFromHTML from '../../device/getTextContentFromHTML'
-import { html, offsetFromClosestParent } from '../selection'
+import { anchorOffsetThought, html, offsetFromClosestParent, offsetThought } from '../selection'
 
 /** Create dummy div with given html value. */
 const createDummyDiv = (htmlValue: string) => {
@@ -78,6 +78,25 @@ describe('offsetFromClosestParent', () => {
       node: dummyEditable.getElementsByTagName('b')[0].childNodes[2],
       offset: 4,
     })
+  })
+})
+
+describe('selection offsets', () => {
+  it('resolves backward selection anchor and focus offsets through nested formatting', () => {
+    const editable = createDummyDiv('one <b>two</b> three')
+    editable.setAttribute('aria-label', 'note-editable')
+    document.body.appendChild(editable)
+
+    const trailingText = editable.childNodes[2]
+    const currentSelection = window.getSelection()!
+    currentSelection.removeAllRanges()
+    currentSelection.collapse(trailingText, trailingText.textContent!.length)
+    currentSelection.extend(trailingText, 0)
+
+    expect(anchorOffsetThought()).toBe(13)
+    expect(offsetThought()).toBe(7)
+
+    editable.remove()
   })
 })
 

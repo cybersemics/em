@@ -36,13 +36,18 @@ export interface editThoughtPayload extends MergePrevActionPayload {
   /** Force the Editable to re-render. */
   // TODO: This is used to force the Editable to re-render on generateThought, which co-opts clearThought during its pending state. Is there a better way to do this?
   force?: boolean
+  /** Persist the note caret with the edit so undo and redo can restore it. */
+  noteOffset?: number
   oldValue: string
   newValue: string
   path: SimplePath
 }
 
 /** Changes the text of an existing thought. */
-const editThought = (state: State, { cursorOffset, force, oldValue, newValue, path }: editThoughtPayload) => {
+const editThought = (
+  state: State,
+  { cursorOffset, force, noteOffset, oldValue, newValue, path }: editThoughtPayload,
+) => {
   if (oldValue === newValue || isDivider(oldValue)) return state
 
   // thoughts may exist for both the old value and the new value
@@ -207,6 +212,7 @@ const editThought = (state: State, { cursorOffset, force, oldValue, newValue, pa
     // otherwise activating clearThought after edit will toggle it off
     ...(state.cursorCleared ? { cursorCleared: false } : null),
     ...(force ? { editableNonce: state.editableNonce + 1 } : null),
+    ...(noteOffset != null ? { noteOffset } : null),
   }
 
   const stateAfterUpdate = updateThoughts(stateNew, {

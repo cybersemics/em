@@ -2,6 +2,10 @@ import { fireEvent, screen } from '@testing-library/dom'
 import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { toggleNoteActionCreator as toggleNote } from '../../actions/toggleNote'
+import { HOME_TOKEN } from '../../constants'
+import * as selection from '../../device/selection'
+import exportContext from '../../selectors/exportContext'
+import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
@@ -68,6 +72,76 @@ describe('=note', () => {
     // verify the note value is rendered
     const element = screen.getByText('foo')
     expect(element)
+  })
+
+  test('does not merge note text into the thought when Backspace is pressed at the beginning of a note', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - One
+        - Two
+          - =note
+            - Hello World`,
+      }),
+      setCursor(['Two']),
+      toggleNote(),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const noteEditor = screen.getByLabelText('note-editable')
+
+    await act(async () => {
+      fireEvent.focus(noteEditor)
+      selection.set(noteEditor, { offset: 0 })
+      fireEvent.keyDown(noteEditor, { key: 'Backspace' })
+    })
+
+    await act(vi.runAllTimersAsync)
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - One
+  - Two
+    - =note
+      - Hello World`)
+  })
+
+  test('allows partial note text selection without collapsing the range', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - One
+          - =note
+            - Hello World`,
+      }),
+      setCursor(['One']),
+      toggleNote(),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const noteEditor = screen.getByLabelText('note-editable')
+
+    await act(async () => {
+      fireEvent.focus(noteEditor)
+
+      const textNode = noteEditor.firstChild!
+      const range = document.createRange()
+      const currentSelection = window.getSelection()!
+
+      range.setStart(textNode, 0)
+      range.setEnd(textNode, 5)
+      currentSelection.removeAllRanges()
+      currentSelection.addRange(range)
+
+      fireEvent.select(noteEditor)
+    })
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const currentSelection = window.getSelection()!
+    expect(currentSelection.isCollapsed).toBe(false)
+    expect(currentSelection.toString()).toBe('Hello')
   })
 })
 
