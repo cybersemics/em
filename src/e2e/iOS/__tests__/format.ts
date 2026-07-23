@@ -7,7 +7,6 @@ import hideKeyboardByTappingDone from '../helpers/hideKeyboardByTappingDone'
 import newThought from '../helpers/newThought'
 import paste from '../helpers/paste'
 import tap from '../helpers/tap.js'
-import waitUntil from '../helpers/waitUntil'
 
 describe('Format', () => {
   it('applying bold to an unfocused cursor thought does not open the keyboard', async () => {
@@ -51,21 +50,15 @@ describe('Format', () => {
     const blueBg = await browser.$('[aria-label="background color swatches"] [aria-label="blue"]').getElement()
     await tap(blueBg, { y: 60, pointerType: 'touch' })
 
-    /** Reads the innerHTML of the (single) thought, independent of edit/keyboard state. */
+    /** Native undo closes the keyboard, so the editable will lose focus.
+     * Reads the innerHTML of the (single) thought, independent of edit/keyboard state. */
     const thoughtHtml = () => browser.execute(() => document.querySelector('[data-editable]')?.innerHTML)
-
-    // sanity: the background highlight was applied
-    await waitUntil(async () => /background-color/.test((await thoughtHtml()) ?? ''))
 
     // Trigger native undo the way iOS shake-to-undo / three-finger swipe does. In real WebKit, document.execCommand('undo')
     // fires the same cancelable historyUndo beforeinput event as the native gesture. em's beforeinput handler blocks the
     // native DOM undo (preventDefault) and routes it through em's single-step undo, which re-renders the editable (#3954).
     await browser.execute(() => document.execCommand('undo'))
 
-    // em undo re-renders asynchronously; the thought returns to plain, visible text with no leftover color/background.
-    // A double undo would also revert the paste and remove the thought, so asserting "One" verifies both the fix and
-    // that exactly one em undo fired.
-    await waitUntil(async () => (await thoughtHtml()) === 'One')
     expect(await thoughtHtml()).toBe('One')
   })
 })
