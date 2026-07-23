@@ -78,3 +78,20 @@ it('inserts emoji spacing immediately and allows Backspace at the emoji boundary
 
   expect(editable.textContent).toBe('🧠Hello')
 })
+
+it('inserts emoji spacing immediately before colored text', async () => {
+  act(() => {
+    windowEvent('keydown', { key: 'Enter' })
+  })
+
+  const editable = (await findThoughtByText(''))!
+  expect(editable).toBeVisible()
+
+  editable.innerHTML = '👋<font color="#ff0000">Hello</font>'
+  act(() => {
+    fireEvent.input(editable, { bubbles: true })
+  })
+
+  expect(editable.textContent).toBe('👋 Hello')
+  expect(editable.innerHTML).toBe('👋 <font color="#ff0000">Hello</font>')
+})
