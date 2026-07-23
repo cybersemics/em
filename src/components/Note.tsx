@@ -19,7 +19,6 @@ import getThoughtById from '../selectors/getThoughtById'
 import noteValue from '../selectors/noteValue'
 import resolveNotePath from '../selectors/resolveNotePath'
 import store from '../stores/app'
-import { mergeBatchEditing } from '../stores/batchEditing'
 import equalPathHead from '../util/equalPathHead'
 import head from '../util/head'
 import strip from '../util/strip'
@@ -129,7 +128,6 @@ const Note = React.memo(
             setDescendant({
               path: targetPath,
               values: [value],
-              mergePrev: mergeBatchEditing(), // If batch editing is in progress, merge this edit with the previous one in the undo stack (except the first edit of a batch, which starts a new undo step).
             }),
           )
         })

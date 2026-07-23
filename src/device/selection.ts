@@ -238,6 +238,21 @@ export const offsetStart = (): number | null => {
   return range.startOffset || 0
 }
 
+/** Returns the plain-text character offsets [start, end) of the current selection relative to the given editable
+ * element (ignoring nested HTML), or null if there is no selection within it. Used to apply formatting to an
+ * arbitrary sub-range synchronously (#4637). */
+export const offsetRange = (editable: HTMLElement): { start: number; end: number } | null => {
+  const selection = window.getSelection()
+  if (!selection || selection.rangeCount === 0) return null
+  const range = selection.getRangeAt(0)
+  if (!editable.contains(range.commonAncestorContainer)) return null
+  const pre = range.cloneRange()
+  pre.selectNodeContents(editable)
+  pre.setEnd(range.startContainer, range.startOffset)
+  const start = pre.toString().length
+  return { start, end: start + range.toString().length }
+}
+
 /** Restores the selection with the given restoration object (returned by selection.save). NOOP if the restoration object is null or undefined. */
 export const restore = (savedSelection: SavedSelection | null): void => {
   if (!savedSelection) return

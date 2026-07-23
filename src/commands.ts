@@ -19,10 +19,12 @@ import { addMulticursorActionCreator as addMulticursor } from './actions/addMult
 import { alertActionCreator as alert } from './actions/alert'
 import { clearMulticursorsActionCreator as clearMulticursors } from './actions/clearMulticursors'
 import { gestureMenuActionCreator as gestureMenu } from './actions/gestureMenu'
+import { redoActionCreator as redo } from './actions/redo'
 import { setCursorActionCreator as setCursor } from './actions/setCursor'
 import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from './actions/setIsMulticursorExecuting'
 import { showLatestCommandsActionCreator as showLatestCommands } from './actions/showLatestCommands'
 import { suppressExpansionActionCreator as suppressExpansion } from './actions/suppressExpansion'
+import { undoActionCreator as undo } from './actions/undo'
 import { isMac } from './browser'
 import * as commandsObject from './commands/index'
 import openMobileCommandUniverseCommand from './commands/openMobileCommandUniverse'
@@ -33,6 +35,7 @@ import documentSort from './selectors/documentSort'
 import getUserSetting from './selectors/getUserSetting'
 import hasMulticursor from './selectors/hasMulticursor'
 import isAllSelected from './selectors/isAllSelected'
+import isUndoEnabled from './selectors/isUndoEnabled'
 import thoughtToPath from './selectors/thoughtToPath'
 import store from './stores/app'
 import editingValueStore from './stores/editingValue'
@@ -575,6 +578,24 @@ export const handleGestureCancel = () => {
 
 /** In the specific case of the newThought and indent commands, prevent default in beforeinput event instead of keydown to preserve default iOS auto-capitalization behavior. The Enter and space characters needs to be prevented so that it doesn't get inserted into the thought (#3707). */
 export const beforeInput = (e: InputEvent) => {
+  // Native undo/redo (iOS shake-to-undo or three-finger swipe) fires a cancelable beforeinput with inputType
+  // historyUndo/historyRedo. Left unhandled, it mutates the contenteditable DOM directly, bypassing em's undo and
+  // leaving stale formatting markup (e.g. a black font color from a removed background highlight) that renders the
+  // thought invisible (#3954). Block the native undo before it touches the DOM and route it through em's undo/redo,
+  // which reverts to the correct Redux state and re-renders the editable. Each formatSelection registers exactly one
+  // native undo step (#4637), so one native gesture maps to one em undo/redo — no dedupe is needed. The cancelable check
+  // gates on the case we can actually prevent; native browser undo is intentionally superseded by em's undo (#3879).
+  if ((e.inputType === 'historyUndo' || e.inputType === 'historyRedo') && e.cancelable) {
+    e.preventDefault()
+    const state = store.getState()
+    if (e.inputType === 'historyUndo') {
+      if (isUndoEnabled(state)) store.dispatch(undo())
+    } else if (state.redoPatches.length > 0) {
+      store.dispatch(redo())
+    }
+    return
+  }
+
   if (keyCommandId === 'newThought' || (keyCommandId === 'indent' && editingValueStore.getState() === '')) {
     e.preventDefault()
   }

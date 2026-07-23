@@ -326,14 +326,12 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       // - The closeAlert action is merged with the previous action so that the alert can be undone.
       // - All actions during the execution of a multicursor command will be merged together. The prevous action will always be setIsMulticursorExecuting.
       // - Chained commands will be merged into the previous command, e.g. Select All + Categorize
-      // - mergePrev: true forces the current action to merge with the previous patch. Used to group foreColor+backColor changes (background highlight) into a single undo step.
       if (
         (isNavigation(actionType) && isNavigation(lastAction?.type)) ||
         shouldMergeWithLastEditThought ||
         actionType === 'closeAlert' ||
         state.isMulticursorExecuting ||
-        (lastAction as UnknownAction)?.mergeNext ||
-        (action as UnknownAction)?.mergePrev
+        (lastAction as UnknownAction)?.mergeNext
       ) {
         lastAction = action
         const lastUndoPatch = nthLast(state.undoPatches, 1)

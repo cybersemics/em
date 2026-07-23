@@ -1,5 +1,4 @@
 import _ from 'lodash'
-import MergePrevActionPayload from '../@types/MergePrevActionPayload'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
@@ -12,7 +11,7 @@ import appendToPath from '../util/appendToPath'
 import createId from '../util/createId'
 import head from '../util/head'
 
-interface setDescendantPayload extends MergePrevActionPayload {
+interface setDescendantPayload {
   path: Path
   value?: string
   values?: string[]
