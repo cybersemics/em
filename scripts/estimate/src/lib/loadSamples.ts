@@ -18,6 +18,8 @@ export interface EstimateSample {
     comment?: number
     hours: number
   }
+  /** Source filename (e.g. `issue-1540.json`), populated at load. Used to key the embeddings cache. */
+  file?: string
 }
 
 /** Loads all estimation samples from the samples directory. Throws if sample count exceeds MAX_SAMPLES. */
@@ -37,7 +39,7 @@ const loadSamples = (repoRoot: string): EstimateSample[] => {
 
   return files.map(file => {
     const content = fs.readFileSync(path.join(samplesPath, file), 'utf-8')
-    return JSON.parse(content) as EstimateSample
+    return { ...(JSON.parse(content) as EstimateSample), file }
   })
 }
 

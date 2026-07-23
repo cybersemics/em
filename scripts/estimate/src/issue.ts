@@ -6,7 +6,10 @@ import 'dotenv/config'
 import * as fs from 'fs'
 import { fileURLToPath } from 'url'
 import EverhourClient from './everhour/client.ts'
+import { joinSamplesWithEmbeddings, loadEmbeddingCache } from './lib/embeddingCache.ts'
 import estimateIssue from './lib/estimateIssue.ts'
+import flagForReview from './lib/flagForReview.ts'
+import formatEstimateAudit from './lib/formatEstimateAudit.ts'
 import getPromptVersion from './lib/getPromptVersion.ts'
 import issueLink from './lib/issueLink.ts'
 import issueUrlSuffix from './lib/issueUrlSuffix.ts'
@@ -53,6 +56,9 @@ const main = async () => {
   // Load instructions and samples
   const instructions = loadInstructions(repoRoot)
   const samples = loadSamples(repoRoot)
+  // Join samples with their cached embeddings for kNN retrieval. Falls back to the all-samples
+  // prompt inside estimateIssue when the cache is empty or embeddings are otherwise unavailable.
+  const embeddedSamples = joinSamplesWithEmbeddings(samples, loadEmbeddingCache(repoRoot))
 
   // Build prompt, run inference, and write the estimate to Everhour
   const issueInput = {
@@ -77,6 +83,7 @@ const main = async () => {
     issueUrl: issueUrlSuffix(owner, repoName, issue.number),
     instructions,
     samples,
+    embeddedSamples,
     openaiApiKey,
     everhour,
     taskId: task.id,
@@ -93,8 +100,25 @@ const main = async () => {
     `Estimated issue ${issueLink(owner, repoName, issue.number)} @ ${category} / ${hours}h${issueUrlSuffix(owner, repoName, issue.number)}`,
   )
 
+  // When the confidence gate flags the estimate, add a review label. Best-effort and independent of
+  // the audit comment: the estimate is already recorded, so a labeling failure must not discard it.
+  if (estimate.needsReview) {
+    await flagForReview({
+      owner,
+      repoName,
+      issueNumber: issue.number,
+      githubToken,
+      issueRef: issueLink(owner, repoName, issue.number),
+    })
+  }
+
   // Leave an audit comment. Best-effort: a comment failure must not discard the estimate already recorded.
-  const commentBody = `Estimate: ${category} / ${hours}h\nConfidence: ${confidence} (agreement ${Math.round(agreement * 100)}%)\nPrompt version: ${promptVersionLink(owner, repoName, promptVersion)}`
+  const commentBody = [
+    `Estimate: ${category} / ${hours}h`,
+    `Confidence: ${confidence} (agreement ${Math.round(agreement * 100)}%)`,
+    `Prompt version: ${promptVersionLink(owner, repoName, promptVersion)}`,
+    ...formatEstimateAudit(estimate),
+  ].join('\n')
 
   try {
     const commentResp = await fetch(
