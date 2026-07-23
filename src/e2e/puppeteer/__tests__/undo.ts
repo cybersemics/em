@@ -5,9 +5,11 @@ import clickThought from '../helpers/clickThought'
 import exportThoughts from '../helpers/exportThoughts'
 import gesture from '../helpers/gesture'
 import getEditingText from '../helpers/getEditingText'
+import getSelection from '../helpers/getSelection'
 import keyboard from '../helpers/keyboard'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
+import setSelection from '../helpers/setSelection'
 import { page } from '../session'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
@@ -163,4 +165,27 @@ it('applying multiple background colors should each be a separate undo step', as
   const exported = await exportThoughts({ mimeType: 'text/html' })
   expect(exported).toContain('background-color: rgb(255, 87, 61)')
   expect(exported).not.toContain('rgb(0, 214, 136)')
+})
+
+// https://github.com/cybersemics/em/issues/4632
+it.skip('undoing a whole-thought background color should keep the caret in place', async () => {
+  await paste(`
+    - Welcome to the Jungle`)
+
+  // focus the thought and place the caret in the middle (no selection → whole-thought formatting)
+  await clickThought('Welcome to the Jungle')
+  await setSelection(11, 11)
+
+  // open the ColorPicker
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+
+  // apply a red background to the whole thought
+  await click('[aria-label="background color swatches"] [aria-label="red"]')
+
+  // undo the background color application
+  await press('z', { meta: true })
+
+  // the caret should remain where the user left it (offset 11), not jump to the start or end of the thought
+  const offset = await getSelection().focusOffset
+  expect(offset).toBe(11)
 })
