@@ -28,7 +28,13 @@ import { setDescendantActionCreator as setDescendant } from './setDescendant'
 const BACKGROUND_COLOR_REGEX = /background-color\s*:\s*[^;]+;?/i
 
 type FormatSelectionCommand =
-  | 'bold' | 'italic' | 'strikethrough' | 'underline' | 'code' | 'foreColor' | 'backColor'
+  | 'bold'
+  | 'italic'
+  | 'strikethrough'
+  | 'underline'
+  | 'code'
+  | 'foreColor'
+  | 'backColor'
   | 'removeFormat'
 
 const FORMAT_SELECTION_UNDO_LABELS: Record<FormatSelectionCommand, string> = {

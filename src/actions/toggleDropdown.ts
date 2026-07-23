@@ -8,7 +8,11 @@ import clearMulticursors from './clearMulticursors'
 type DropdownType = 'colorPicker' | 'letterCase' | 'sortPicker' | 'commandCenter' | 'undoSlider'
 
 type DropdownStateKeys =
-  'showColorPicker' | 'showLetterCase' | 'showSortPicker' | 'showCommandCenter' | 'showUndoSlider'
+  | 'showColorPicker'
+  | 'showLetterCase'
+  | 'showSortPicker'
+  | 'showCommandCenter'
+  | 'showUndoSlider'
 
 // Map dropdown types to their state keys
 const DROPDOWN_STATE_KEYS: Record<DropdownType, DropdownStateKeys> = {
