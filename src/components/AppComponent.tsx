@@ -25,7 +25,6 @@ import DesktopCommandUniverse from './DesktopCommandUniverse'
 import DropGutter from './DropGutter'
 import ErrorMessage from './ErrorMessage'
 import Footer from './Footer'
-import GestureMenu from './GestureMenu'
 import HamburgerMenu from './HamburgerMenu'
 import LatestCommandsDiagram from './LatestCommandsDiagram'
 import MultiGesture from './MultiGesture'
@@ -193,7 +192,6 @@ const AppComponent: FC = () => {
       <Alert />
       <Tips />
       {!isTouch && <DesktopCommandUniverse />}
-      {isTouch && <GestureMenu />}
       <ErrorMessage />
       {enableLatestCommandsDiagram && <LatestCommandsDiagram position='bottom' />}
       <MobileCommandUniverse />
