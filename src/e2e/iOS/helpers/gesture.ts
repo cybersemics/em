@@ -2,11 +2,9 @@ import Direction from '../../../@types/Direction'
 import Gesture from '../../../@types/Gesture'
 
 export interface GestureOptions {
-  hold?: boolean
   xStart?: number
   yStart?: number
   segmentLength?: number
-  segmentLengths?: number[]
   waitMs?: number
 }
 
@@ -19,13 +17,8 @@ interface PointerAction {
   origin?: string
 }
 
-let activePointerPosition: { x: number; y: number } | null = null
-
 /** Apply gesture action for the given path. */
-const gesture = async (
-  path: Gesture,
-  { hold, xStart, yStart, segmentLength = 60, segmentLengths, waitMs = 200 }: GestureOptions = {},
-) => {
+const gesture = async (path: Gesture, { xStart, yStart, segmentLength = 60, waitMs = 200 }: GestureOptions = {}) => {
   if (!xStart || !yStart) {
     const windowSize = await browser.getWindowSize()
     xStart = xStart ?? windowSize!.width / 3
@@ -44,26 +37,21 @@ const gesture = async (
   let currentX = xStart
   let currentY = yStart
 
-  for (const [index, direction] of (Array.from(path) as Direction[]).entries()) {
-    const currentSegmentLength = segmentLengths?.[index] ?? segmentLength
-    currentX = currentX + (direction === 'r' ? +currentSegmentLength : direction === 'l' ? -currentSegmentLength : 0)
-    currentY = currentY + (direction === 'd' ? +currentSegmentLength : direction === 'u' ? -currentSegmentLength : 0)
+  for (const direction of Array.from(path) as Direction[]) {
+    currentX = currentX + (direction === 'r' ? +segmentLength : direction === 'l' ? -segmentLength : 0)
+    currentY = currentY + (direction === 'd' ? +segmentLength : direction === 'u' ? -segmentLength : 0)
 
-    pointerActions.push(
-      {
-        type: 'pointerMove',
-        duration: waitMs,
-        x: Math.round(currentX),
-        y: Math.round(currentY),
-        origin: 'viewport',
-      },
-      { type: 'pause', duration: waitMs },
-    )
+    pointerActions.push({
+      type: 'pointerMove',
+      duration: waitMs,
+      x: Math.round(currentX),
+      y: Math.round(currentY),
+      origin: 'viewport',
+    })
+    pointerActions.push({ type: 'pause', duration: waitMs })
   }
 
-  if (!hold) {
-    pointerActions.push({ type: 'pointerUp', button: 0 })
-  }
+  pointerActions.push({ type: 'pointerUp', button: 0 })
 
   // Use performActions directly to avoid the automatic releaseActions call
   await browser.performActions([
@@ -74,32 +62,6 @@ const gesture = async (
       actions: pointerActions,
     },
   ])
-
-  activePointerPosition = hold ? { x: Math.round(currentX), y: Math.round(currentY) } : null
-}
-
-/** End a gesture that was started with hold: true. */
-export const endGesture = async () => {
-  if (!activePointerPosition) {
-    throw new Error('Cannot end gesture: no held gesture is active.')
-  }
-
-  const { x, y } = activePointerPosition
-  try {
-    await browser.performActions([
-      {
-        type: 'pointer',
-        id: 'finger1',
-        parameters: { pointerType: 'touch' },
-        actions: [
-          { type: 'pointerMove', duration: 0, x, y, origin: 'viewport' },
-          { type: 'pointerUp', button: 0 },
-        ],
-      },
-    ])
-  } finally {
-    activePointerPosition = null
-  }
 }
 
 export default gesture

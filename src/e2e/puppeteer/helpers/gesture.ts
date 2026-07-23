@@ -50,11 +50,17 @@ const gesture = async (
   {
     hold,
     target,
+    xStart,
+    yStart,
   }: {
     /** If true, the gesture will be held and not completed with touchEnd. */
     hold?: boolean
     /** CSS selector for the element where the gesture should begin. */
     target?: string
+    /** Horizontal coordinate where the gesture should begin. */
+    xStart?: number
+    /** Vertical coordinate where the gesture should begin. */
+    yStart?: number
   } = {},
 ) => {
   if (isCommand(gestureOrCommand) && !gestureOrCommand.gesture) {
@@ -77,8 +83,8 @@ const gesture = async (
   // Starting position more reliably in gesture zone
   // For iPhone 15 Pro (393px wide), gesture zone is approximately x < 295px
   // Use center-left area to ensure we're in the gesture zone
-  let x = 150
-  let y = 350
+  let x = xStart ?? 150
+  let y = yStart ?? 350
 
   if (target) {
     const rect = await page.$eval(target, element => {

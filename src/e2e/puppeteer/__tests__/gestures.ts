@@ -1,4 +1,5 @@
 import { type ConsoleMessage, KnownDevices } from 'puppeteer'
+import deleteCommand from '../../../commands/delete'
 import newSubthoughtCommand from '../../../commands/newSubthought'
 import newThoughtCommand from '../../../commands/newThought'
 import $ from '../helpers/$'
@@ -6,6 +7,7 @@ import exportThoughts from '../helpers/exportThoughts'
 import gesture, { endGesture } from '../helpers/gesture'
 import reloadWithProductionTiming from '../helpers/initialize'
 import keyboard from '../helpers/keyboard'
+import press from '../helpers/press'
 import waitForSelector from '../helpers/waitForSelector'
 import { page } from '../session'
 
@@ -68,7 +70,8 @@ describe('gestures', () => {
     await page.emulate(KnownDevices['iPhone 15 Pro'])
   })
 
-  it('releases a gesture when its loading target unmounts (#3887 STR C)', async () => {
+  // https://github.com/cybersemics/em/issues/3887
+  it('releases a gesture when its loading target unmounts', async () => {
     await reloadWithProductionTiming()
     await waitForSelector('[data-loading-indicator]')
 
@@ -83,6 +86,38 @@ describe('gestures', () => {
 
     await waitForSelector('[data-testid=popup-value]', { hidden: true })
     expect(await $('[data-testid=popup-value]')).toBeNull()
+  })
+
+  // https://github.com/cybersemics/em/issues/4536
+  it('does not execute a gesture that starts in the scroll zone', async () => {
+    await gesture(newThoughtCommand)
+    for (let i = 0; i < 20; i++) {
+      await keyboard.type(`thought ${i}`)
+      if (i < 19) await press('Enter')
+    }
+
+    const before = await exportThoughts()
+    expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0)
+    const viewport = page.viewport()!
+    const xStart = viewport.width - Math.round(viewport.width / 8)
+    const yStart = Math.round(viewport.height / 3)
+
+    /** Keep native scroll events arriving as the touch starts, reproducing the responder termination caused by iOS scrolling. */
+    const scroll = async () => {
+      for (let i = 0; i < 3; i++) {
+        await page.mouse.wheel({ deltaY: -10 })
+      }
+    }
+
+    await Promise.all([
+      scroll(),
+      gesture(deleteCommand, {
+        xStart,
+        yStart,
+      }),
+    ])
+
+    expect(await exportThoughts()).toBe(before)
   })
 })
 
