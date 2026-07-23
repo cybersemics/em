@@ -43,20 +43,11 @@ if (typeof Range.prototype.getClientRects !== 'function') {
 // stub jest globally. This is needed incase jest is being directly referenced in the code.
 vi.stubGlobal('jest', vi)
 
-// Fix the intermittent CI failure `ReferenceError: localStorage is not defined` (#3345).
-//
-// This is a teardown/lifecycle race, not a missing mock. util/storage.ts and util/storeSession.ts
-// access the *bare identifiers* `localStorage`/`sessionStorage` (not `window.localStorage`). Vitest's
-// jsdom environment installs those as OWN properties on the global object and deletes them at the end of
-// each test file (`keys.forEach(key => delete global[key])`). Module-scoped throttled/debounced writers
-// (e.g. saveJumpHistory, the storageCache setters, getEmThought's saveCache) schedule real timers that can
-// fire AFTER teardown, at which point the bare identifiers are unbound and throw a ReferenceError. Because
-// it depends on whether a stray timer happens to fire post-teardown, the failure is intermittent.
-//
-// Installing a persistent fallback on the global object's PROTOTYPE keeps the bare identifiers resolvable
-// after teardown: teardown only deletes OWN keys, so the prototype entry survives. During a test the jsdom
-// (own) `localStorage`/`sessionStorage` shadows this fallback, so in-test behavior is unchanged; the
-// fallback only takes effect for stray post-teardown timer callbacks.
+// Fix intermittent `ReferenceError: localStorage is not defined` (#3345). jsdom installs
+// localStorage/sessionStorage as OWN globals and deletes them after each test file, but module-scoped
+// throttled writers (e.g. saveJumpHistory) can fire timers post-teardown that hit the bare identifiers.
+// Defining a fallback on the global PROTOTYPE keeps them resolvable (teardown only deletes OWN keys);
+// jsdom's own properties shadow it during tests, so in-test behavior is unchanged.
 const globalPrototype = Object.getPrototypeOf(globalThis)
 // Guard against polluting Object.prototype in the unlikely event the global's prototype is Object.prototype.
 if (globalPrototype && globalPrototype !== Object.prototype) {
