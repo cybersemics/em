@@ -219,6 +219,16 @@ export const offsetThought = (): number | null => {
   return total
 }
 
+/** Returns the plain-text character offset of the selection's focus relative to the given root node, ignoring nested HTML markup. Returns null if there is no selection or the focus is not within the node. */
+export const offsetFromNode = (node: Node): number | null => {
+  const selection = window.getSelection()
+  if (!selection?.focusNode || !node.contains(selection.focusNode)) return null
+  const range = document.createRange()
+  range.selectNodeContents(node)
+  range.setEnd(selection.focusNode, selection.focusOffset)
+  return range.toString().length
+}
+
 /** Returns the character offset at the end of the selection. Returns null if there is no selection. */
 export const offsetEnd = (): number | null => {
   const selection = window.getSelection()

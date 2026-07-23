@@ -537,7 +537,7 @@ it('Can change the color of a note that already has the same color applied to pa
 })
 
 // https://github.com/cybersemics/em/issues/4630
-it.skip('caret stays in place when applying font color to a note that has a background color', async () => {
+it('caret stays in place when applying font color to a note that has a background color', async () => {
   await paste(`
     - One
       - =note
