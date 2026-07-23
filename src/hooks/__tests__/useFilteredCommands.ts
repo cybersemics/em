@@ -163,6 +163,8 @@ vi.mock('../../commands', async () => {
     chainCommand: actual.chainCommand,
     commandById: actual.commandById,
     gestureString: actual.gestureString,
+    hashCommand: actual.hashCommand,
+    parseCommandShortcut: actual.parseCommandShortcut,
     globalCommands,
   }
 })
@@ -345,6 +347,49 @@ describe('useFilteredCommands', () => {
         const { result } = renderHook(() => useFilteredCommands('back', {}), { wrapper })
 
         expect(result.current[0].id).toBe('back')
+      })
+    })
+
+    describe('Keyboard shortcut search', () => {
+      it('should match a command by its keyboard shortcut', () => {
+        // newSubthought is bound to { key: 'Enter', meta: true }
+        const { result } = renderHook(() => useFilteredCommands('cmd enter', {}), { wrapper })
+
+        const commandIds = result.current.map(cmd => cmd.id)
+        expect(commandIds).toEqual(['newSubthought'])
+      })
+
+      it('should be order-independent and support "+" separators', () => {
+        const { result } = renderHook(() => useFilteredCommands('shift + alt + s', {}), { wrapper })
+
+        // contextView is bound to { key: 's', shift: true, alt: true }
+        const commandIds = result.current.map(cmd => cmd.id)
+        expect(commandIds).toEqual(['contextView'])
+      })
+
+      it('should treat ctrl, control, and cmd as equivalent (all map to meta)', () => {
+        /** Renders the hook with the given search and returns the matched command ids. */
+        const ids = (search: string) =>
+          renderHook(() => useFilteredCommands(search, {}), { wrapper }).result.current.map(cmd => cmd.id)
+
+        expect(ids('cmd enter')).toEqual(['newSubthought'])
+        expect(ids('ctrl enter')).toEqual(['newSubthought'])
+        expect(ids('control enter')).toEqual(['newSubthought'])
+        expect(ids('meta enter')).toEqual(['newSubthought'])
+      })
+
+      it('should return no results when a recognized shortcut matches no command', () => {
+        const { result } = renderHook(() => useFilteredCommands('cmd j', {}), { wrapper })
+
+        expect(result.current).toEqual([])
+      })
+
+      it('should fall back to label search when the query is not a recognized shortcut', () => {
+        // "context" has no modifier token, so it is a normal label search, not a shortcut
+        const { result } = renderHook(() => useFilteredCommands('context', {}), { wrapper })
+
+        const commandIds = result.current.map(cmd => cmd.id)
+        expect(commandIds).toContain('contextView')
       })
     })
 
