@@ -138,9 +138,7 @@ const usePositionedThoughts = (
           ancestorTableWidths +
           // table col1: shift left by an additional 1 em so that the shift at the next depth does not feel so extreme
           (node.isTableCol1
-            ? // When the col1 cursor is itself a table (i.e. nested tables), its own col2 children start after its full width and would be pushed off the right edge.
-              // Absorb this thought's own col1 width (the width of the parent table's col1, which is where this thought is positioned) so that its col2 children are revealed, matching the shift the cursor receives when it descends into them.
-              (node.visibleChildrenKeys ? tableCol1Widths.get(head(parentOf(node.path))) || 0 : 0) + fontSize
+            ? fontSize
             : // table col2: shift right by the width of table col1 to offset ancestorTableWidths, since col1 is still visible
               // then shift left by 3 em, which is about the most we can do without col1 getting cropped by the left edge of the screen
               node.isTableCol2

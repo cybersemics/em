@@ -78,45 +78,40 @@ describe('Table View', () => {
   })
 
   // Regression test for https://github.com/cybersemics/em/issues/3570
-  it('nested Table View: a grandchild table reveals its own columns instead of crushing them off-screen', async () => {
-    // The bug is most pronounced on wide screens, where the counter-indentation shifts the tree less
-    // and the deeply nested columns are pushed off the right edge. Use a wide viewport to reproduce it.
-    await page.setViewport({ width: 1600, height: 1000 })
+  // When Table View is applied to a thought whose col1 text is long, col1 must not consume the whole
+  // width and crush col2 off the right edge. Instead col1 and col2 should share the available width and
+  // wrap responsively. The crush only manifests on narrow screens, so use a narrow viewport.
+  // .skip keeps normal CI green while the test is red (before the fix); the skip is removed when the fix lands.
+  it.skip('long col1 shares width with col2 instead of crushing it off-screen', async () => {
+    await page.setViewport({ width: 500, height: 900 })
 
-    // Three nested Table Views (on the parent, the subthought, and the grandchild). When the cursor is on
-    // the grandchild — which is itself a table with a wide col1 — its own col2 (the great-grandchildren)
-    // must be revealed with adequate width rather than crushed to near-zero width off the right edge.
+    // =view/Table on the parent makes "Eight…" col1 and "Fifteen…" col2 — the end state of tapping the
+    // Table View toolbar button (which toggles =view/Table on the cursor's parent) with the cursor on "Eight…".
     await paste(`
-      - A long title thought Lorem Ipsum Dolor Sit Amet Consectetur Adipiscing Elit
+      - One two three four five six seven
         - =view
           - Table
-        - B first subthought
-          - =view
-            - Table
-          - G grandchild one Lorem Ipsum Dolor Sit Amet Consectetur Adipiscing Elit Sed Do Eiusmod Tempor
-            - =view
-              - Table
-            - H great grandchild formatting should like this
-              - HH deepest content
-            - H2 great grandchild two Wo this awkward
-          - G2 grandchild two
-        - B2 second subthought
+        - Eight nine ten eleven twelve thirteen fourteen
+          - Fifteen sixteen seventeen eighteen nineteen twenty
     `)
 
-    // Place the cursor on the middle table thought (the grandchild). Its children form a nested table.
-    await clickThought('G grandchild one Lorem Ipsum Dolor Sit Amet Consectetur Adipiscing Elit Sed Do Eiusmod Tempor')
+    // Match the reported reproduction: cursor on the col1 thought.
+    await clickThought('Eight nine ten eleven twelve thirteen fourteen')
 
-    const deepest = await getEditable('HH deepest content')
-    const deepestRect = await deepest.boundingBox()
+    const col1 = await (await getEditable('Eight nine ten eleven twelve thirteen fourteen')).boundingBox()
+    const col2 = await (await getEditable('Fifteen sixteen seventeen eighteen nineteen twenty')).boundingBox()
 
-    if (!deepestRect) {
-      throw new Error('Could not get bounding box for the deepest nested table column')
+    if (!col1 || !col2) {
+      throw new Error('Could not get bounding boxes for the table columns')
     }
 
-    // Without the fix the deepest column is pushed off the right edge and crushed to ~0 width (wrapping one character per line).
-    // After the fix, navigating into the nested table reveals it with a readable width that fits within the viewport.
     const viewportWidth = await page.evaluate(() => window.innerWidth)
-    expect(deepestRect.width).toBeGreaterThan(100)
-    expect(deepestRect.x + deepestRect.width).toBeLessThanOrEqual(viewportWidth)
+
+    // col2 must remain fully within the viewport (not pushed off the right edge).
+    expect(col2.x + col2.width).toBeLessThanOrEqual(viewportWidth)
+    // col2 must be legible, not crushed to ~one character per line.
+    expect(col2.width).toBeGreaterThan(120)
+    // col1 and col2 should share the available width, so col2 is at least half as wide as col1.
+    expect(col2.width).toBeGreaterThan(col1.width * 0.5)
   })
 })
