@@ -4,9 +4,10 @@ import Index from '../@types/IndexType'
 import ThoughtId from '../@types/ThoughtId'
 import TreeThought from '../@types/TreeThought'
 import TreeThoughtPositioned from '../@types/TreeThoughtPositioned'
-import { LongPressState } from '../constants'
+import { CONTENT_BOX_PADDING_LEFT, LongPressState } from '../constants'
 import testFlags from '../e2e/testFlags'
 import scrollTopStore from '../stores/scrollTop'
+import viewportStore from '../stores/viewport'
 import head from '../util/head'
 import parentOf from '../util/parentOf'
 import useSortedContext from './useSortedContext'
@@ -34,6 +35,10 @@ const usePositionedThoughts = (
 
   const fontSize = useSelector(state => state.fontSize)
   const cliffPadding = fontSize / 4
+
+  // Available screen width, used to cap table col1 widths so that col1 and col2 share the available
+  // horizontal space instead of a long col1 consuming it all and pushing col2 off the right edge.
+  const innerWidth = viewportStore.useSelector(state => state.innerWidth)
 
   // set the bullet width only during drag or when simulateDrop is true
   useLayoutEffect(() => {
@@ -113,6 +118,13 @@ const usePositionedThoughts = (
       const singleLineHeightWithCliff = singleLineHeight + (cliff < 0 ? cliffPadding : 0)
       const height = sizes[node.key]?.height ?? singleLineHeightWithCliff
 
+      // sum ancestor table widths
+      // ignore thought and parent since horizontal shift should begin with col 2, and tableCol1Widths is keyed by the thought with =table
+      const ancestorTableWidths = node.path.reduce(
+        (accum, id, i) => accum + (tableCol1Widths.get(node.path[i - 2]) || 0),
+        0,
+      )
+
       // set the width of table col1 to the minimum width of all visible thoughts in the column
       if (node.visibleChildrenKeys) {
         const tableCol1Width = node.visibleChildrenKeys?.reduce(
@@ -120,16 +132,19 @@ const usePositionedThoughts = (
           0,
         )
         if (tableCol1Width > 0) {
-          tableCol1Widths.set(head(node.path), tableCol1Width)
+          // Cap col1 at roughly half the available horizontal band so col1 and col2 share the space and
+          // wrap responsively, rather than a long col1 consuming the width and crushing col2 off the right edge.
+          // x of the col1 thoughts (one level below this table thought). The col1 children inherit this thought's
+          // ancestor table widths plus, when this thought is itself in a col2 (nested tables), its parent table's col1 width.
+          const col1X =
+            fontSize * (node.depth + 1) + ancestorTableWidths + (tableCol1Widths.get(head(parentOf(node.path))) || 0)
+          // The rightmost extent a thought may occupy, mirroring the maxWidth boundary in LayoutTree (90vw on wider screens, 100vw otherwise, minus the left content padding).
+          const availableWidth = (innerWidth > 560 ? 0.9 : 1) * innerWidth - CONTENT_BOX_PADDING_LEFT
+          // Never cap below 1em so col1 remains usable even on very narrow or deeply nested layouts.
+          const col1MaxWidth = Math.max((availableWidth - col1X) / 2, fontSize)
+          tableCol1Widths.set(head(node.path), Math.min(tableCol1Width, col1MaxWidth))
         }
       }
-
-      // sum ancestor table widths
-      // ignore thought and parent since horizontal shift should begin with col 2, and tableCol1Widths is keyed by the thought with =table
-      const ancestorTableWidths = node.path.reduce(
-        (accum, id, i) => accum + (tableCol1Widths.get(node.path[i - 2]) || 0),
-        0,
-      )
 
       // Calculate the cursor ancestor table width when we are on the cursor node.
       // This is used to animate the entire tree to the left as the cursor moves right.
@@ -245,6 +260,7 @@ const usePositionedThoughts = (
   }, [
     cliffPadding,
     fontSize,
+    innerWidth,
     isHoveringSorted,
     maxVisibleY,
     newRank,

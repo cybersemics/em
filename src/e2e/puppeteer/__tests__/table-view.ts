@@ -60,7 +60,7 @@ describe('Table View', () => {
 
   // TODO: Why does this not work in puppeteer? The y value of `d` is incorrect. It does not clear the height of `b`.
   // This works fine in the actual app..
-  it.skip('col1 note', async () => {
+  it('col1 note', async () => {
     await paste(`
       - a
         - =view
@@ -81,8 +81,7 @@ describe('Table View', () => {
   // When Table View is applied to a thought whose col1 text is long, col1 must not consume the whole
   // width and crush col2 off the right edge. Instead col1 and col2 should share the available width and
   // wrap responsively. The crush only manifests on narrow screens, so use a narrow viewport.
-  // .skip keeps normal CI green while the test is red (before the fix); the skip is removed when the fix lands.
-  it.skip('long col1 shares width with col2 instead of crushing it off-screen', async () => {
+  it('long col1 shares width with col2 instead of crushing it off-screen', async () => {
     await page.setViewport({ width: 500, height: 900 })
 
     // =view/Table on the parent makes "Eight…" col1 and "Fifteen…" col2 — the end state of tapping the
