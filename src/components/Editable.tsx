@@ -453,8 +453,12 @@ const Editable = ({
       const savedCharOffset = selection.offsetThought() ?? selection.offset() ?? 0
 
       // Queue and flush the change with the browser-applied value to ensure it's captured before the editable blurs.
-      oldValueRef.current = editable.textContent || ''
-      throttledChangeRef.current(oldValueRef.current, { rank, simplePath })
+      // Do not overwrite oldValueRef.current first: thoughtChangeHandler reads oldValue from oldValueRef.current, so
+      // overwriting it makes oldValue === newValue and editThought no-ops, dropping the auto-correct replacement.
+      // The dropped edit leaves the DOM (e.g. "makes") and Redux (e.g. "makre") out of sync, so a subsequent native
+      // undo (three-finger swipe or shake) reverts the DOM to a value Redux already holds and appears to do nothing (#4476).
+      const newValue = editable.textContent || ''
+      throttledChangeRef.current(newValue, { rank, simplePath })
       throttledChangeRef.current.flush()
 
       // Log each retarget step around the native focus/selection calls so a freeze can be pinned to the exact call
