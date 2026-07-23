@@ -123,6 +123,7 @@ const useSheetTransforms = (ref: React.RefObject<SheetRef | null>) => {
 const CommandCenter = () => {
   const dispatch = useDispatch()
   const showCommandCenter = useSelector(state => state.showCommandCenter)
+  const showSidebar = useSelector(state => state.showSidebar)
   const isTutorialOn = useSelector(isTutorial)
   const sheetRef = useRef<SheetRef>(null)
   const { height, opacity, blurHeight } = useSheetTransforms(sheetRef)
@@ -139,10 +140,16 @@ const CommandCenter = () => {
     dispatch([toggleDropdown({ dropDownType: 'commandCenter', value: false }), clearMulticursors()])
   }, [dispatch])
 
+  useEffect(() => {
+    if (isTouch && showCommandCenter && showSidebar) onClose()
+  }, [onClose, showCommandCenter, showSidebar])
+
+  const isOpen = showCommandCenter && !showSidebar
+
   if (isTouch && !isTutorialOn) {
     return (
       <>
-        {showCommandCenter && (
+        {isOpen && (
           <motion.div
             /*
              * Progressive blur effect. Must be placed outside the Sheet to avoid separation
@@ -166,13 +173,13 @@ const CommandCenter = () => {
         <Sheet
           data-testid='command-center-panel'
           ref={sheetRef}
-          isOpen={showCommandCenter}
+          isOpen={isOpen}
           onClose={onClose}
           detent='content'
           unstyled
           tweenConfig={{
             duration: durations.get('commandCenter') / 1000,
-            ease: showCommandCenter ? easeOpen : easeClose,
+            ease: isOpen ? easeOpen : easeClose,
           }}
           style={{
             /** Override default Sheet zIndex. */

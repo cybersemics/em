@@ -32,24 +32,6 @@ const glyph = cva({
   base: {
     fill: 'bullet',
     position: 'relative',
-    '@media (max-width: 500px)': {
-      _android: {
-        position: 'relative',
-        marginLeft: '-16.8px',
-        marginRight: '-5px',
-        left: '3px',
-        fontSize: '16px',
-      },
-    },
-    '@media (min-width: 560px) and (max-width: 1024px)': {
-      _android: {
-        position: 'relative',
-        marginLeft: '-16.8px',
-        marginRight: '-5px',
-        left: '4px',
-        fontSize: '28px',
-      },
-    },
   },
   variants: {
     leaf: { true: {} },
@@ -59,20 +41,6 @@ const glyph = cva({
           fontSize: '80%',
           left: '-0.08em',
           top: '0.05em',
-        },
-        '@media (max-width: 500px)': {
-          _android: {
-            fontSize: '149%',
-            left: '2px',
-            top: '-5.1px',
-          },
-        },
-        '@media (min-width: 560px) and (max-width: 1024px)': {
-          _android: {
-            fontSize: '149%',
-            left: '2px',
-            top: '-5.1px',
-          },
         },
       },
     },
@@ -89,22 +57,6 @@ const glyph = cva({
           top: '-0.1em',
           marginRight: '-0.1em',
         },
-        '@media (max-width: 500px)': {
-          _android: {
-            content: "'+'",
-            left: '0.05em',
-            top: '-0.1em',
-            marginRight: '-0.1em',
-          },
-        },
-        '@media (min-width: 560px) and (max-width: 1024px)': {
-          _android: {
-            content: "'+'",
-            left: '0.05em',
-            top: '-0.1em',
-            marginRight: '-0.1em',
-          },
-        },
       },
     },
   },
@@ -119,62 +71,6 @@ const glyph = cva({
           top: '0',
           left: '-0.3em',
           marginRight: 'calc(-0.48em - 5px)',
-        },
-        '@media (max-width: 500px)': {
-          _android: {
-            position: 'relative',
-            fontSize: '160%',
-            left: '1px',
-            top: '-8.1px',
-            marginRight: '-5px',
-            paddingRight: '10px',
-          },
-        },
-        '@media (min-width: 560px) and (max-width: 1024px)': {
-          _android: {
-            position: 'relative',
-            fontSize: '171%',
-            left: '2px',
-            top: '-7.1px',
-            marginRight: '-5px',
-            paddingRight: '10px',
-          },
-        },
-      },
-    },
-    {
-      leaf: false,
-      isBulletExpanded: true,
-      css: {
-        '@media (max-width: 500px)': {
-          _android: {
-            left: '2px',
-            top: '-1.6px',
-            fontSize: '19px',
-          },
-        },
-        '@media (min-width: 560px) and (max-width: 1024px)': {
-          _android: {},
-        },
-      },
-    },
-    {
-      leaf: false,
-      showContexts: true,
-      isBulletExpanded: true,
-      css: {
-        '@media (max-width: 500px)': {
-          _android: {
-            left: '2px',
-            fontSize: '20px',
-            top: '-2.5px',
-          },
-        },
-        '@media (min-width: 560px) and (max-width: 1024px)': {
-          _android: {
-            left: '3px',
-            top: '-5.1px',
-          },
         },
       },
     },
@@ -308,17 +204,6 @@ const BulletPositioner = forwardRef<SVGSVGElement, PropsWithChildren<BulletPosit
           css({
             _mobile: {
               marginRight: showContexts ? '-1.5px' : undefined,
-            },
-            '@media (min-width: 560px) and (max-width: 1024px)': {
-              _android: {
-                transition: `transform {durations.veryFast} ease-in-out`,
-                marginLeft: '-3px',
-              },
-            },
-            '@media (max-width: 500px)': {
-              _android: {
-                marginLeft: '-3px',
-              },
             },
             display: bulletIsDivider ? 'none' : undefined,
             position: 'absolute',

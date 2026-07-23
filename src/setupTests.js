@@ -42,3 +42,6 @@ if (typeof Range.prototype.getClientRects !== 'function') {
 
 // stub jest globally. This is needed incase jest is being directly referenced in the code.
 vi.stubGlobal('jest', vi)
+
+// mock HTMLImageElement.decode for jsdom
+HTMLImageElement.prototype.decode = vi.fn().mockResolvedValue(undefined)

@@ -17,13 +17,12 @@ interface PanelCommandProps {
   size?: 'small' | 'medium'
 }
 
-interface ActiveButtonGlowGradientProps {
-  size?: 'small' | 'medium'
+interface ActiveButtonGlowImageProps {
   isActive: boolean | undefined
 }
 
-/** Glow gradient for active button state. */
-const ActiveButtonGlowGradient: FC<ActiveButtonGlowGradientProps> = ({ isActive }) => {
+/** Pre-blurred additive glow that avoids Android corruption from filtered HSL blend layers. */
+const ActiveButtonGlowImage: FC<ActiveButtonGlowImageProps> = ({ isActive }) => {
   const nodeRef = useRef<HTMLDivElement>(null)
   return (
     <FadeTransition
@@ -41,15 +40,12 @@ const ActiveButtonGlowGradient: FC<ActiveButtonGlowGradientProps> = ({ isActive 
         ref={nodeRef}
         className={css({
           gridArea: 'command',
-          objectFit: 'contain',
-          objectPosition: 'center',
-          backgroundGradient: 'activeGlow',
-          borderRadius: '0px',
+          margin: -40,
           pointerEvents: 'none',
-          filter: 'blur(23px)',
-          padding: 40 /* Expands the Paint Rect so it includes all of the blur. */,
-          margin: -40 /* Pulls it back so layout doesn't break. */,
-          backgroundClip: 'content-box' /* Ensures background doesn't fill the padding. */,
+          backgroundImage: 'url(/img/command-center/active-glow.png)',
+          backgroundSize: '100% 100%',
+          backgroundRepeat: 'no-repeat',
+          mixBlendMode: 'plus-lighter',
         })}
       />
     </FadeTransition>
@@ -93,8 +89,7 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
           : { gridColumn: 'span 1', gridTemplateColumns: 'auto', gridTemplateAreas: `"command"` }),
       })}
     >
-      {/* For the first fade in to work properly, ActiveButtonGlowGradient must be already mounted with opacity 0. */}
-      <ActiveButtonGlowGradient isActive={isButtonActive} />
+      <ActiveButtonGlowImage isActive={isButtonActive} />
       <div
         className={cx(
           panelCommandRecipe({
