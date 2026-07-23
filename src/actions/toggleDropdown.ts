@@ -8,10 +8,7 @@ import clearMulticursors from './clearMulticursors'
 type DropdownType = 'colorPicker' | 'letterCase' | 'sortPicker' | 'commandCenter' | 'undoSlider'
 
 type DropdownStateKeys =
-  | 'showColorPicker'
-  | 'showLetterCase'
-  | 'showSortPicker'
-  | 'showCommandCenter'
+  | 'showColorPicker' | 'showLetterCase' | 'showSortPicker' | 'showCommandCenter'
   | 'showUndoSlider'
 
 // Map dropdown types to their state keys
