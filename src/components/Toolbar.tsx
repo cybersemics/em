@@ -207,7 +207,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   )
 
   return (
-    <FadeTransition in={!distractionFreeTyping} type='distractionFreeTyping' unmountOnExit>
+    <FadeTransition in={!distractionFreeTyping || showDropdown} type='distractionFreeTyping' unmountOnExit>
       <div
         aria-label='toolbar'
         className={cx(
