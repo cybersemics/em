@@ -2,9 +2,13 @@
  * IOS Safari text formatting tests.
  * Uses WDIO test runner with Mocha framework.
  */
+import clickThought from '../helpers/clickThought'
 import hideKeyboardByTappingDone from '../helpers/hideKeyboardByTappingDone'
 import newThought from '../helpers/newThought'
+import paste from '../helpers/paste'
 import tap from '../helpers/tap.js'
+import waitForEditable from '../helpers/waitForEditable'
+import waitUntil from '../helpers/waitUntil'
 
 describe('Format', () => {
   it('applying bold to an unfocused cursor thought does not open the keyboard', async () => {
@@ -25,5 +29,51 @@ describe('Format', () => {
     // 5. Measure the scroll position again and ensure it did not change (#3999).
     const scrollAfter = await browser.execute(() => window.scrollY)
     expect(scrollAfter).toBe(scrollBefore)
+  })
+
+  // Regression test for https://github.com/cybersemics/em/issues/3954.
+  // Native undo (iOS shake-to-undo / three-finger swipe) fires a *cancelable* `beforeinput` with inputType
+  // historyUndo (verified on-device). Left unhandled it mutates the contenteditable DOM directly, bypassing em's undo
+  // and desyncing the DOM from Redux — for a background highlight this reverts only the last execCommand step, leaving
+  // a black font color with no background that renders the thought invisible (black-on-black on the default dark
+  // theme). em's beforeinput handler must preventDefault this and route it through em's undo, which reverts to the
+  // correct Redux state and re-renders the editable.
+  //
+  // This exercises the real iOS path that the puppeteer suite cannot: preventing the cancelable `beforeinput`
+  // suppresses the follow-up `input`, so Chromium's execCommand('undo') (input-only, non-cancelable) never reaches it.
+  it('undoing a background highlight via native undo restores visible text (#3954)', async () => {
+    // Use a pre-existing thought so the format edit is its own undo step (not coalesced with newThought).
+    await paste(`
+    - One`)
+    await waitForEditable('One')
+    await clickThought('One') // set the cursor on the thought
+
+    // Apply a blue background highlight via the toolbar.
+    const textColor = await browser.$('[data-testid="toolbar-icon"][aria-label="Text Color"]').getElement()
+    await tap(textColor, { y: 60, pointerType: 'touch' })
+    const blueBg = await browser.$('[aria-label="background color swatches"] [aria-label="blue"]').getElement()
+    await blueBg.waitForDisplayed({ timeout: 5000 })
+    await tap(blueBg, { y: 60, pointerType: 'touch' })
+
+    /** Reads the innerHTML of the (single) thought, independent of edit/keyboard state. */
+    const thoughtHtml = () => browser.execute(() => document.querySelector('[data-editable]')?.innerHTML)
+
+    // sanity: the background highlight was applied
+    await waitUntil(async () => /background-color/.test((await thoughtHtml()) ?? ''))
+
+    // Trigger native undo the way iOS shake-to-undo / three-finger swipe does. In real WebKit, document.execCommand('undo')
+    // fires the same cancelable historyUndo beforeinput events as the native gesture — TWO of them here, because the
+    // background highlight applied two execCommands (foreColor + backColor). em's beforeinput handler blocks the native
+    // DOM undo (preventDefault) and dedupes the burst into a single em undo, which re-renders the editable (#3954).
+    await browser.execute(() => {
+      const editable = document.querySelector('[data-editable]') as HTMLElement | null
+      editable?.focus()
+      document.execCommand('undo')
+    })
+
+    // em undo re-renders asynchronously; the thought returns to plain, visible text with no leftover color/background.
+    // A double undo would also revert the paste and remove the thought, so asserting "One" verifies both the fix and the dedupe.
+    await waitUntil(async () => (await thoughtHtml()) === 'One')
+    expect(await thoughtHtml()).toBe('One')
   })
 })

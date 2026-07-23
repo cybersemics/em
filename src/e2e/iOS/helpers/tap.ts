@@ -95,7 +95,6 @@ const tap = async (
   // Use performActions directly to avoid the automatic releaseActions call
   // Safari/XCUITest doesn't support the DELETE /actions endpoint (releaseActions)
   // which WebDriverIO's action().perform() calls automatically after performing
-  // Note: pointerType defaults to 'mouse' in WebDriverIO's action API
   await browser.performActions([
     {
       type: 'pointer',
