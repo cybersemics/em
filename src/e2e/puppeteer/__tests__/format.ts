@@ -155,10 +155,12 @@ it('Clear Thought dims emoji in the placeholder (#4671)', async () => {
     const style = getComputedStyle(editable, '::before')
     return {
       content: style.content,
+      filter: style.filter,
       opacity: style.opacity,
     }
   })
 
   expect(placeholderStyle.content).toContain('👋 Hello')
-  expect(placeholderStyle.opacity).toBe('0.5')
+  expect(placeholderStyle.filter).toBe('opacity(0.5)')
+  expect(placeholderStyle.opacity).toBe('1')
 })
