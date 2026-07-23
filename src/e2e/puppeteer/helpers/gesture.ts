@@ -49,9 +49,12 @@ const gesture = async (
   gestureOrCommand: Gesture | Command,
   {
     hold,
+    target,
   }: {
     /** If true, the gesture will be held and not completed with touchEnd. */
     hold?: boolean
+    /** CSS selector for the element where the gesture should begin. */
+    target?: string
   } = {},
 ) => {
   if (isCommand(gestureOrCommand) && !gestureOrCommand.gesture) {
@@ -76,6 +79,15 @@ const gesture = async (
   // Use center-left area to ensure we're in the gesture zone
   let x = 150
   let y = 350
+
+  if (target) {
+    const rect = await page.$eval(target, element => {
+      const { height, left, top, width } = element.getBoundingClientRect()
+      return { height, left, top, width }
+    })
+    x = rect.left + rect.width / 2
+    y = rect.top + rect.height / 2
+  }
 
   // Generate points for each direction in the gesture
   const points = [{ x, y }]
@@ -107,5 +119,8 @@ const gesture = async (
     await page.touchscreen.touchEnd()
   }
 }
+
+/** End a gesture that was started with hold: true. */
+export const endGesture = () => page.touchscreen.touchEnd()
 
 export default gesture

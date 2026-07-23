@@ -218,15 +218,6 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         return !this.props.shouldCancelGesture?.()
       },
 
-      // Called when the responder system terminates the gesture without firing onPanResponderRelease,
-      // e.g. when a competing responder takes over. Without this, props.onEnd / props.onCancel never
-      // run and the gesture menu stays stuck on screen. Treated as a cancel since the sequence may
-      // have been disrupted by whatever stole the responder. See #3887.
-      onPanResponderTerminate: (e: GestureResponderEvent) => {
-        this.props.onCancel?.({ clientStart: this.clientStart, e })
-        this.reset()
-      },
-
       onPanResponderMove: (e: GestureResponderEvent, gestureState: GestureState) => {
         if (testFlags.logMultigesture) {
           console.info('onPanResponderMove', {

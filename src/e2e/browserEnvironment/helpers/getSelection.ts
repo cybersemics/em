@@ -11,6 +11,8 @@ import { BrowserEnvironment } from '../types'
  **/
 const getSelection = (browser: BrowserEnvironment) => {
   return {
+    /** Return the currently selected text. */
+    toString: (): Promise<string> => browser.execute(() => window.getSelection()?.toString() ?? ''),
     get focusOffset(): Promise<number | undefined> {
       return browser.execute(() => window.getSelection()?.focusOffset)
     },

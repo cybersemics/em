@@ -1,9 +1,12 @@
 import { type ConsoleMessage, KnownDevices } from 'puppeteer'
 import newSubthoughtCommand from '../../../commands/newSubthought'
 import newThoughtCommand from '../../../commands/newThought'
+import $ from '../helpers/$'
 import exportThoughts from '../helpers/exportThoughts'
-import gesture from '../helpers/gesture'
+import gesture, { endGesture } from '../helpers/gesture'
+import reloadWithProductionTiming from '../helpers/initialize'
 import keyboard from '../helpers/keyboard'
+import waitForSelector from '../helpers/waitForSelector'
 import { page } from '../session'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
@@ -57,6 +60,29 @@ describe('alerts', () => {
     // Verify alert content contains gesture hint text
     const alertText = await page.$eval('[data-testid=alert-content]', el => el.textContent)
     expect(alertText).toBeTruthy()
+  })
+})
+
+describe('gestures', () => {
+  beforeEach(async () => {
+    await page.emulate(KnownDevices['iPhone 15 Pro'])
+  })
+
+  it('releases a gesture when its loading target unmounts (#3887 STR C)', async () => {
+    await reloadWithProductionTiming()
+    await waitForSelector('[data-loading-indicator]')
+
+    try {
+      await gesture('d', { hold: true, target: '[data-loading-indicator]' })
+      await waitForSelector('[data-testid=popup-value]')
+
+      await waitForSelector('[data-loading-indicator]', { hidden: true })
+    } finally {
+      await endGesture()
+    }
+
+    await waitForSelector('[data-testid=popup-value]', { hidden: true })
+    expect(await $('[data-testid=popup-value]')).toBeNull()
   })
 })
 
