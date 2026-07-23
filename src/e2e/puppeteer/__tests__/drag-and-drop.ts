@@ -1,4 +1,5 @@
 import path from 'path'
+import { WindowEm } from '../../../initialize'
 import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
@@ -20,6 +21,9 @@ import { page } from '../session'
 // puppeteer-screen-recorder does not reveal any active animations.
 // Adding sleep(1000) before the snapshot does not help.
 const UNCLE_DIFF_THRESHOLD = 0.4
+
+// Override EXPAND_HOVER_DELAY
+const MOCK_EXPAND_HOVER_DELAY = 100
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
@@ -450,6 +454,12 @@ describe('drop', () => {
 describe('hover expansion', () => {
   beforeEach(async () => {
     await hideHUD()
+
+    // inject MOCK_EXPAND_HOVER_DELAY
+    const em = window.em as WindowEm
+    await page.evaluate(value => {
+      em.testFlags.expandHoverDelay = value
+    }, MOCK_EXPAND_HOVER_DELAY)
   })
 
   // Clean up after each test by releasing the mouse button

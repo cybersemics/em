@@ -12,7 +12,7 @@ export const TOOLBAR_HEIGHT = 50
 export const MAX_DISTANCE_FROM_CURSOR = 3
 export const MAX_DEPTH = 20
 
-// Number of ms to wait after hovering over a thought before expanding, during drag-and-drop.
+// Number of ms to wait after hovering over a thought before expanding, during drag-and-drop. Overriden by testFlags.expandHoverDelay during drag-and-drop tests.
 export const EXPAND_HOVER_DELAY = 1000
 
 // ms on startup before offline mode is enabled
