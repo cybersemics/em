@@ -12,6 +12,7 @@ import useGestureMenuLayout, {
   GESTURE_MENU_GROUP_GAP_REM,
   GESTURE_MENU_PANEL_PADDING_MD_REM,
   GESTURE_MENU_PANEL_PADDING_REM,
+  GESTURE_MENU_PANEL_PADDING_VERTICAL_MD_REM,
   GESTURE_MENU_ROW_GAP_REM,
 } from '../hooks/useGestureMenuLayout'
 import gestureStore, {
@@ -41,13 +42,21 @@ const GestureMenu: FC<{
   const mainCommands = commands.filter(cmd => cmd.id !== 'cancel' && cmd.id !== 'openMobileCommandUniverse')
   const persistentCommands = commands.filter(cmd => cmd.id === 'cancel' || cmd.id === 'openMobileCommandUniverse')
 
-  const { columnCount, rowsPerColumn, visibleRegularCount, persistentColumnIndex, persistentInline } =
+  const { columnCount, rowsPerColumn, visibleRegularCount, persistentColumnIndex, isMultiColumn, persistentInline } =
     useGestureMenuLayout(mainCommands.length, persistentCommands.length)
-  const isMultiColumn = columnCount > 1
 
-  // 5rem panel padding for the multi-column layout (per the Figma mockups), 2.25rem for single column
-  // (mobile portrait, or narrow landscape above md that only fits one column).
-  const horizontalPadding = `${isMultiColumn ? GESTURE_MENU_PANEL_PADDING_MD_REM : GESTURE_MENU_PANEL_PADDING_REM}rem`
+  // NOTE: useGestureMenuLayout picks padding via isMobilePortrait, not isMultiColumn (columnCount
+  // isn't known yet), so it can assume 5rem where this render ends up using 2.25rem. columnCount
+  // may then undercount but never overcount.
+  const horizontalPadding = isMultiColumn
+    ? `${GESTURE_MENU_PANEL_PADDING_MD_REM}rem`
+    : `${GESTURE_MENU_PANEL_PADDING_REM}rem`
+
+  const verticalPadding = isMultiColumn
+    ? `${GESTURE_MENU_PANEL_PADDING_VERTICAL_MD_REM}rem`
+    : `${GESTURE_MENU_PANEL_PADDING_REM}rem`
+
+  const isSingleColumnMobile = !isMultiColumn && !isBrowser
 
   // In a multi-column layout the divider spans only the first column; single column spans the full width.
   const dividerWidth = isMultiColumn
@@ -124,12 +133,11 @@ const GestureMenu: FC<{
       >
         {gestureInProgress && (
           <div
-            className={css({
-              paddingBlock: '2.25rem',
-            })}
             style={{
+              paddingBlock: verticalPadding,
+
               paddingInline: horizontalPadding,
-              paddingTop: !isBrowser ? '0.75rem' : undefined,
+              paddingTop: isSingleColumnMobile ? '0.75rem' : undefined,
             }}
           >
             {/* Header */}

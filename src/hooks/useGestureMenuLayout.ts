@@ -20,7 +20,7 @@ export const GESTURE_MENU_MD_BREAKPOINT_PX = 400
 /** Minimum column width, 280px ÷ 18 at the default root font size. */
 export const GESTURE_MENU_MIN_COLUMN_WIDTH_REM = 15.556
 
-/** Gap between columns. Desktop mockup (node 6586:107957) column stride 352px with ~317px content width → ~35px. */
+/** Gap between columns. 35px ÷ 18 at the default root font size. */
 export const GESTURE_MENU_COLUMN_GAP_REM = 1.944
 
 /** Horizontal panel padding above the `md` breakpoint (90px per side in both mockups = 5rem at the 18px default root). */
@@ -28,6 +28,9 @@ export const GESTURE_MENU_PANEL_PADDING_MD_REM = 5
 
 /** Horizontal panel padding below `md` (existing single-column value). */
 export const GESTURE_MENU_PANEL_PADDING_REM = 2.25
+
+/** Vertical panel padding above the `md` breakpoint (multi-column). */
+export const GESTURE_MENU_PANEL_PADDING_VERTICAL_MD_REM = 1.7
 
 /** Vertical gap between command rows (existing literal). */
 export const GESTURE_MENU_ROW_GAP_REM = 1.2
@@ -58,6 +61,8 @@ interface GestureMenuLayout {
   persistentColumnIndex: number
   /** True below the `md` breakpoint — the menu stays single-column and keeps its mobile-portrait behavior. */
   isMobilePortrait: boolean
+  /** True when the menu renders more than one column (`columnCount > 1`). */
+  isMultiColumn: boolean
   /**
    * True when the persistent commands (Cancel/Command Universe) flow inline at the bottom of the
    * last column instead of a full-width row below the grid. Only when the regular commands aren't
@@ -98,7 +103,9 @@ const useGestureMenuLayout = (regularCount: number, persistentCount = 0): Gestur
   // Row/header/padding geometry shared by both height budgets.
   const rowPitchPx = GESTURE_MENU_ROW_PITCH_REM * remPx
   const headerPx = GESTURE_MENU_HEADER_HEIGHT_REM * remPx
-  const verticalPaddingPx = 2 * GESTURE_MENU_PANEL_PADDING_REM * remPx
+  const verticalPaddingRem =
+    columnCount > 1 ? GESTURE_MENU_PANEL_PADDING_VERTICAL_MD_REM : GESTURE_MENU_PANEL_PADDING_REM
+  const verticalPaddingPx = 2 * verticalPaddingRem * remPx
   const persistentBlockPx = GESTURE_MENU_PERSISTENT_BLOCK_HEIGHT_REM * remPx
   const gridHeightPx = availableHeightPx - headerPx - verticalPaddingPx
 
@@ -130,7 +137,15 @@ const useGestureMenuLayout = (regularCount: number, persistentCount = 0): Gestur
   const rowsPerColumn = persistentInline ? balancedRows : bottomRows
   const visibleRegularCount = persistentInline ? regularCount : bottomFits ? regularCount : bottomCapacity
 
-  return { columnCount, rowsPerColumn, visibleRegularCount, persistentColumnIndex, isMobilePortrait, persistentInline }
+  return {
+    columnCount,
+    rowsPerColumn,
+    visibleRegularCount,
+    persistentColumnIndex,
+    isMobilePortrait,
+    isMultiColumn: columnCount > 1,
+    persistentInline,
+  }
 }
 
 export default useGestureMenuLayout
