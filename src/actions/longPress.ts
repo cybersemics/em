@@ -6,6 +6,8 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/clearMulticursors'
+import { dismissKeyboardActionCreator as dismissKeyboard } from '../actions/dismissKeyboard'
+import { isTouch } from '../browser'
 import { AlertText, AlertType, LongPressState } from '../constants'
 import globals from '../globals'
 import hasMulticursor from '../selectors/hasMulticursor'
@@ -142,6 +144,14 @@ export const longPressActionCreator =
     }
 
     dispatch({ type: 'longPress', ...payload })
+
+    // Dismiss the virtual keyboard when a drag begins on touch devices. On iOS the editable remains focused
+    // when a long press escalates into a drag, so the keyboard stays open over the "Drag and drop to move thought"
+    // hint unless it is explicitly closed here. Only fire on the transition into DragInProgress (not on every hover
+    // update, which re-dispatches DragInProgress) since dismissKeyboard blurs the editable. See #4683.
+    if (isTouch && value === LongPressState.DragInProgress && previousValue !== LongPressState.DragInProgress) {
+      dispatch(dismissKeyboard())
+    }
 
     if (value === LongPressState.DragInProgress) {
       const { hoveringPath } = payload
