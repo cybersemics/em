@@ -16,6 +16,11 @@ export const AsyncFocus: () => (options?: { force?: boolean }) => void = () => {
   const hiddenInput = document.createElement('input')
 
   hiddenInput.setAttribute('type', 'text')
+
+  // prevent the virtual keyboard from being triggered by the hidden input focus
+  // See: https://stackoverflow.com/questions/12204571/mobile-safari-javascript-focus-method-on-inputfield-only-works-with-click/55652503?noredirect=1#comment139764803_55652503
+  hiddenInput.inputMode = 'none'
+
   hiddenInput.style.position = 'absolute'
   hiddenInput.style.opacity = '0'
 
