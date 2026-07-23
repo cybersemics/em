@@ -22,6 +22,19 @@ yarn backfill --dry 10
 
 Dry-run flags: `--dry` skips both the model call and the Everhour write; `--dry-ai` skips only the model call; `--dry-everhour` skips only the Everhour write (and the issue audit comment).
 
+## Evaluation
+
+The estimator draws multiple independent samples per issue (self-consistency voting via the Chat Completions `n` parameter) and reports the modal category, so each estimate carries an `agreement` score (fraction of votes that agreed) and a self-reported `confidence`. Both are surfaced in the audit comment.
+
+To measure accuracy, run the leave-one-out harness. For each labeled sample it rebuilds the prompt from every _other_ sample, estimates the held-out issue, and compares to the known-correct category. It reports exact-bucket and ±1-bucket accuracy, a confusion matrix, and a calibration breakdown. It makes model calls but never writes to Everhour.
+
+```bash
+cd scripts/estimate
+yarn evaluate
+```
+
+Inference is tunable via `ESTIMATE_*` env vars (see `.env.example`): `ESTIMATE_MODEL`, `ESTIMATE_VOTES`, `ESTIMATE_REASONING_EFFORT`, `ESTIMATE_TEMPERATURE`.
+
 Manual correction (via issue comment)
 
 ```md

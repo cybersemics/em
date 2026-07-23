@@ -1,0 +1,274 @@
+# Posts Puppeteer visual-regression diff images inline in a PR comment.
+#
+# This is the privileged half of a two-workflow pair. The `Puppeteer` workflow
+# (puppeteer.yml) runs the tests on the `pull_request` trigger — which gives fork
+# PRs a read-only token that cannot push a branch or comment. It uploads the diff
+# PNGs (on failure) and the PR number as artifacts. This workflow then runs on
+# `workflow_run` in the **base-repo context**, where it has a write token, hosts
+# the images on the `snapshot-diffs` orphan branch, and upserts the PR comment.
+#
+# SECURITY: the triggering run's artifacts are produced by untrusted fork code, so
+# every value read from them is untrusted input. This job therefore:
+#   - never checks out or executes PR code (data only);
+#   - uses least-privilege permissions;
+#   - verifies the PR head sha matches the workflow_run head sha (anti-spoofing);
+#   - safely extracts artifacts (no path traversal, PNG-only, size/count caps);
+#   - builds the comment from a fixed URL pattern with sanitized labels.
+name: Puppeteer Diff Comment
+
+on:
+  workflow_run:
+    workflows: ['Puppeteer']
+    types: [completed]
+
+permissions:
+  contents: write # push the snapshot-diffs orphan branch
+  pull-requests: write # upsert the PR comment
+  actions: read # download artifacts from the triggering run
+
+# Serialize per source branch so concurrent runs don't race on the branch push.
+concurrency:
+  group: puppeteer-diff-${{ github.event.workflow_run.head_repository.full_name }}-${{ github.event.workflow_run.head_branch }}
+  cancel-in-progress: false
+
+jobs:
+  comment:
+    name: Post diff comment
+    runs-on: ubuntu-latest
+    # Only for PR-triggered runs that actually ran the tests (success => resolved
+    # path, failure => diffs to post). Skipped/cancelled runs produce no artifacts.
+    if: >-
+      github.event.workflow_run.event == 'pull_request' &&
+      (github.event.workflow_run.conclusion == 'success' || github.event.workflow_run.conclusion == 'failure')
+
+    steps:
+      # Download ALL artifacts from the triggering run. Cross-run download requires
+      # run-id + github-token. pr-number is always present for PR runs; __diff_output__
+      # is present only when a snapshot test failed.
+      - name: Download artifacts
+        uses: actions/download-artifact@v7
+        with:
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: artifacts
+
+      # Resolve the PR number from the artifact and verify it against the
+      # workflow_run head sha so a crafted pr-number.txt cannot target another PR.
+      - name: Resolve and verify PR number
+        id: pr
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs')
+            const file = 'artifacts/pr-number/pr-number.txt'
+            if (!fs.existsSync(file)) {
+              core.info('No pr-number artifact found; nothing to do.')
+              return
+            }
+            const raw = fs.readFileSync(file, 'utf8').trim()
+            if (!/^[0-9]+$/.test(raw)) {
+              core.setFailed(`Refusing to proceed: pr-number artifact is not a plain integer (${JSON.stringify(raw)}).`)
+              return
+            }
+            const prNumber = Number(raw)
+            const headSha = context.payload.workflow_run.head_sha
+            const { owner, repo } = context.repo
+            const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number: prNumber })
+            // Anti-spoofing: the PR the images claim to belong to must be the one
+            // whose head commit actually triggered the test run.
+            if (pr.head.sha !== headSha) {
+              core.setFailed(
+                `Aborting: PR #${prNumber} head sha ${pr.head.sha} does not match the ` +
+                  `workflow_run head sha ${headSha}. This likely indicates a spoofed pr-number artifact.`,
+              )
+              return
+            }
+            core.setOutput('number', String(prNumber))
+            core.setOutput('author', pr.user ? pr.user.login : '')
+
+      # Safely stage diff PNGs, host them on the snapshot-diffs orphan branch, and
+      # emit a manifest for the comment step. Only this PR's folder is touched; on
+      # the resolved (no-diff) path the folder is pruned.
+      - name: Publish diffs to snapshot-diffs branch
+        id: publish
+        if: steps.pr.outputs.number
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ steps.pr.outputs.number }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          BRANCH: snapshot-diffs
+          SRC: artifacts/__diff_output__
+          MANIFEST: ${{ github.workspace }}/committed-images.txt
+        run: |
+          set -euo pipefail
+
+          MAX_FILES=50
+          MAX_BYTES=$((5 * 1024 * 1024))
+
+          # 1. Safely collect PNGs into a staging dir, rejecting path traversal,
+          #    disallowed filename characters, non-PNGs, oversized files, and
+          #    anything beyond the count cap.
+          STAGE="$(mktemp -d)"
+          : > "$MANIFEST"
+          count=0
+          if [ -d "$SRC" ]; then
+            while IFS= read -r -d '' f; do
+              rel="${f#"$SRC"/}"
+              case "$rel" in
+                *..* | /*)
+                  echo "Rejecting unsafe path: $rel"
+                  continue
+                  ;;
+              esac
+              if printf '%s' "$rel" | grep -qE '[^A-Za-z0-9._/-]'; then
+                echo "Rejecting filename with disallowed characters: $rel"
+                continue
+              fi
+              size="$(stat -c%s "$f")"
+              if [ "$size" -gt "$MAX_BYTES" ]; then
+                echo "Rejecting oversized file ($size bytes): $rel"
+                continue
+              fi
+              count=$((count + 1))
+              if [ "$count" -gt "$MAX_FILES" ]; then
+                echo "Reached file count cap ($MAX_FILES); ignoring remaining diffs."
+                count="$MAX_FILES"
+                break
+              fi
+              mkdir -p "$STAGE/$(dirname "$rel")"
+              cp "$f" "$STAGE/$rel"
+              printf '%s\n' "$rel" >> "$MANIFEST"
+            done < <(find "$SRC" -type f -name '*.png' -print0)
+          fi
+          echo "collected=$count" >> "$GITHUB_OUTPUT"
+          echo "Collected $count diff image(s)."
+
+          # 2. Publish to the orphan branch. Recompute from the latest remote state
+          #    on each attempt so concurrent PRs (each touching a distinct pr-<n>/
+          #    folder) reconcile via a simple fast-forward push + retry.
+          REMOTE="https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          publish() {
+            local work
+            work="$(mktemp -d)"
+            cd "$work"
+            git init -q
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git remote add origin "$REMOTE"
+            if git fetch -q origin "$BRANCH"; then
+              git checkout -q -b "$BRANCH" FETCH_HEAD
+            else
+              git checkout -q --orphan "$BRANCH"
+              git reset -q --hard || true
+              find . -maxdepth 1 ! -name .git ! -name . -exec rm -rf {} +
+            fi
+
+            # Keep only the latest run per PR.
+            rm -rf "pr-$PR"
+            if [ "$count" -gt 0 ]; then
+              mkdir -p "pr-$PR/$RUN_ID"
+              cp -R "$STAGE/." "pr-$PR/$RUN_ID/"
+            fi
+
+            git add -A
+            if git diff --cached --quiet; then
+              echo "No branch changes to publish."
+              return 0
+            fi
+            git commit -q -m "chore(snapshot-diffs): PR #$PR run $RUN_ID"
+            git push -q origin "HEAD:refs/heads/$BRANCH"
+          }
+
+          published=false
+          for attempt in 1 2 3 4 5; do
+            if publish; then
+              published=true
+              break
+            fi
+            echo "Publish attempt $attempt failed; retrying after backoff."
+            sleep $((RANDOM % 5 + 1))
+          done
+          if [ "$published" != true ]; then
+            echo "Failed to publish diffs to $BRANCH after multiple attempts." >&2
+            exit 1
+          fi
+
+      # Upsert the PR comment. Renders diffs inline from fixed raw URLs, or a
+      # resolved message when the latest run had no diffs.
+      - name: Upsert PR comment
+        if: steps.pr.outputs.number
+        uses: actions/github-script@v7
+        env:
+          PR: ${{ steps.pr.outputs.number }}
+          AUTHOR: ${{ steps.pr.outputs.author }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+          COLLECTED: ${{ steps.publish.outputs.collected }}
+        with:
+          script: |
+            const fs = require('fs')
+            const { owner, repo } = context.repo
+            const marker = '<!-- puppeteer-diff -->'
+            const prNumber = Number(process.env.PR)
+            const runId = process.env.RUN_ID
+            const runUrl = process.env.RUN_URL
+            const author = process.env.AUTHOR
+            const collected = Number(process.env.COLLECTED || '0')
+
+            // HTML-escape defensively (filenames are already allowlisted upstream).
+            const esc = s =>
+              String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c])
+
+            let body
+            if (collected > 0) {
+              const manifest = fs.readFileSync(`${process.env.GITHUB_WORKSPACE}/committed-images.txt`, 'utf8')
+              const rels = manifest.split('\n').map(l => l.trim()).filter(Boolean)
+              const base = `https://raw.githubusercontent.com/${owner}/${repo}/snapshot-diffs/pr-${prNumber}/${runId}`
+              const blocks = rels
+                .map(rel => {
+                  const url = `${base}/${rel.split('/').map(encodeURIComponent).join('/')}`
+                  const label = esc(rel.replace('/__diff_output__/', ' / '))
+                  return `**${label}**\n\n<img src="${url}" alt="${label}" width="900" />`
+                })
+                .join('\n\n')
+              const authorMention = author ? `@${esc(author)}` : ''
+              // The first path segment of each diff is the test file name (snapshots live in
+              // __image_snapshots__/{testFile}/). Derive the unique set to emit a single
+              // targeted update command scoped to the affected test files.
+              const testFiles = [...new Set(rels.map(rel => rel.split('/')[0]))].filter(Boolean).sort()
+              const updateCommand = `yarn test:puppeteer -u ${testFiles.map(esc).join(' ')}`
+              body = [
+                marker,
+                '### 🖼️ Puppeteer snapshot diffs',
+                '',
+                `${authorMention}: These snapshot tests failed, which indicates a visual regression. Please review your changes. If the visual changes are intentional, update the snapshots for the affected test files:`,
+                '',
+                `\`\`\`\n${updateCommand}\n\`\`\``,
+                '',
+                `<details open><summary>${rels.length} broken snapshot${rels.length === 1 ? '' : 's'}</summary>`,
+                '',
+                `Left: Expected (base branch) | Right: Actual (PR branch)`,
+                blocks,
+                '',
+                '</details>',
+                '',
+                `[View workflow run](${runUrl})`,
+              ].join('\n')
+            } else {
+              body = [
+                marker,
+                '### 🖼️ Puppeteer snapshot diffs',
+                '',
+                `✅ No snapshot diffs in the latest run (${runId}). Any previously reported diffs have been cleared.`,
+                '',
+                `[View workflow run](${runUrl})`,
+              ].join('\n')
+            }
+
+            const { data: comments } = await github.rest.issues.listComments({ owner, repo, issue_number: prNumber })
+            const existing = comments.find(c => c.body && c.body.includes(marker))
+            if (existing) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body })
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number: prNumber, body })
+            }

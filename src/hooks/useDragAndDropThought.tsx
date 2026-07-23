@@ -19,6 +19,7 @@ import { longPressActionCreator as longPress } from '../actions/longPress'
 import { moveThoughtActionCreator as moveThought } from '../actions/moveThought'
 import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from '../actions/setIsMulticursorExecuting'
 import { isTouch } from '../browser'
+import MoveThoughtAlert from '../components/MoveThoughtAlert'
 import { ThoughtContainerProps } from '../components/Thought'
 import { AlertType, LongPressState } from '../constants'
 import allowTouchToScroll from '../device/allowTouchToScroll'
@@ -28,7 +29,6 @@ import findDescendant from '../selectors/findDescendant'
 import getNextRank from '../selectors/getNextRank'
 import getRankAfter from '../selectors/getRankAfter'
 import getRankBefore from '../selectors/getRankBefore'
-import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursor from '../selectors/hasMulticursor'
 import isBefore from '../selectors/isBefore'
 import isContextViewActive from '../selectors/isContextViewActive'
@@ -38,7 +38,6 @@ import simplifyPath from '../selectors/simplifyPath'
 import store from '../stores/app'
 import selectionRangeStore from '../stores/selectionRangeStore'
 import appendToPath from '../util/appendToPath'
-import ellipsize from '../util/ellipsize'
 import equalPath from '../util/equalPath'
 import haptics from '../util/haptics'
 import head from '../util/head'
@@ -265,17 +264,14 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
       // wait until after MultiGesture has cleared the error so this alert does not get cleared
       setTimeout(() => {
         const state = getState()
-        const parentThought = getThoughtById(state, head(parentOf(props.simplePath)))
-        if (!parentThought) return
-
         const firstFromThought = pathToThought(state, draggedItems[0].simplePath)
         if (!firstFromThought) return
 
-        const numThoughts = draggedItems.length
-        const alertFrom = numThoughts === 1 ? `"${ellipsize(firstFromThought.value)}"` : `${numThoughts} thoughts`
-        const alertTo = isRoot([parentThought.id]) ? 'home' : `"${ellipsize(parentThought.value)}"`
-
-        dispatch(alert(`${alertFrom} moved to ${alertTo} context.`))
+        dispatch(
+          alert(() => (
+            <MoveThoughtAlert from={firstFromThought.value} numThoughts={draggedItems.length} toPath={parent} />
+          )),
+        )
       }, 100)
     }
   })

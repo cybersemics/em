@@ -2307,16 +2307,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@browserstack/wdio-browserstack-service@npm:^2.0.2":
-  version: 2.0.2
-  resolution: "@browserstack/wdio-browserstack-service@npm:2.0.2"
-  dependencies:
-    "@bufbuild/protobuf": "npm:^2.5.2"
-    "@grpc/grpc-js": "npm:1.13.3"
-  checksum: 10c0/83ece33caf05d4334a0eec4892edb521bee89a8e8376c41ad69aee42a32d2ac14b549fd5429a5b3015fc878e801dc2a0002e4ab06f38bff588dcb51ed16ef88b
-  languageName: node
-  linkType: hard
-
 "@bufbuild/protobuf@npm:^2.5.2":
   version: 2.10.2
   resolution: "@bufbuild/protobuf@npm:2.10.2"
@@ -8321,18 +8311,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@wdio/browserstack-service@npm:^9.29.1":
-  version: 9.29.1
-  resolution: "@wdio/browserstack-service@npm:9.29.1"
+"@wdio/browserstack-service@npm:^9.30.0":
+  version: 9.30.0
+  resolution: "@wdio/browserstack-service@npm:9.30.0"
   dependencies:
     "@browserstack/ai-sdk-node": "npm:1.5.17"
-    "@browserstack/wdio-browserstack-service": "npm:^2.0.2"
+    "@bufbuild/protobuf": "npm:^2.5.2"
+    "@grpc/grpc-js": "npm:1.13.3"
     "@percy/appium-app": "npm:^2.0.9"
     "@percy/selenium-webdriver": "npm:^2.2.2"
     "@types/gitconfiglocal": "npm:^2.0.1"
-    "@wdio/logger": "npm:9.29.1"
-    "@wdio/reporter": "npm:9.29.1"
-    "@wdio/types": "npm:9.29.1"
+    "@wdio/logger": "npm:^9.0.0"
+    "@wdio/reporter": "npm:^9.0.0"
+    "@wdio/types": "npm:^9.0.0"
     browserstack-local: "npm:^1.5.1"
     chalk: "npm:^5.3.0"
     csv-writer: "npm:^1.6.0"
@@ -8342,12 +8333,12 @@ __metadata:
     tar: "npm:^7.5.11"
     undici: "npm:^6.24.0"
     uuid: "npm:^11.1.0"
-    webdriverio: "npm:9.29.1"
+    webdriverio: "npm:^9.0.0"
     winston-transport: "npm:^4.5.0"
-    yauzl: "npm:^3.0.0"
+    yauzl: "npm:^3.4.0"
   peerDependencies:
     "@wdio/cli": ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0 || ^9.0.0
-  checksum: 10c0/8beb15c82e3559feda89a8728d65e0854e2f43b461405e57e8bbc08120f0a0e5b9fda5f9c970e5764963c36ca605044f13726a4d31f1280e4e2feb301d00b2ad
+  checksum: 10c0/0ceb610a70b7be676d60987b6c98272296fc2c710384a67501620fc6c228348917a2afba233b8f9024fc0b751278f03491edc6769bf6406bda26934830a93e9f
   languageName: node
   linkType: hard
 
@@ -8467,7 +8458,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@wdio/logger@npm:9.29.1, @wdio/logger@npm:^9.29.1":
+"@wdio/logger@npm:9.29.1, @wdio/logger@npm:^9.0.0, @wdio/logger@npm:^9.29.1":
   version: 9.29.1
   resolution: "@wdio/logger@npm:9.29.1"
   dependencies:
@@ -8529,7 +8520,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@wdio/reporter@npm:9.29.1":
+"@wdio/reporter@npm:9.29.1, @wdio/reporter@npm:^9.0.0":
   version: 9.29.1
   resolution: "@wdio/reporter@npm:9.29.1"
   dependencies:
@@ -8590,7 +8581,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@wdio/types@npm:9.29.1, @wdio/types@npm:^9.29.1":
+"@wdio/types@npm:9.29.1, @wdio/types@npm:^9.0.0, @wdio/types@npm:^9.29.1":
   version: 9.29.1
   resolution: "@wdio/types@npm:9.29.1"
   dependencies:
@@ -11485,15 +11476,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dompurify@npm:^3.4.11":
-  version: 3.4.11
-  resolution: "dompurify@npm:3.4.11"
+"dompurify@npm:^3.4.12":
+  version: 3.4.12
+  resolution: "dompurify@npm:3.4.12"
   dependencies:
     "@types/trusted-types": "npm:^2.0.7"
   dependenciesMeta:
     "@types/trusted-types":
       optional: true
-  checksum: 10c0/31439481c7e8fc3805d40c376936fd66936620fb1b1a31a2ec097f6165412c37f2d868e082c9ceba62bb37661c1ea132a5db4d5213434317e30df68d4aca9cc9
+  checksum: 10c0/127a13817353d4e20e75a991a9022a04c3af12af7479f68e2b8bee6dbc7330a96edfb8f4ebff96f4f0f24cd43e8dbba46214131f510c3aa87a843bd8b610d0ab
   languageName: node
   linkType: hard
 
@@ -11745,7 +11736,7 @@ __metadata:
     "@typescript-eslint/parser": "npm:^8.64.0"
     "@vitejs/plugin-basic-ssl": "npm:^2.3.0"
     "@vitejs/plugin-react": "npm:^5.1.4"
-    "@wdio/browserstack-service": "npm:^9.29.1"
+    "@wdio/browserstack-service": "npm:^9.30.0"
     "@wdio/cli": "npm:^9.29.1"
     "@wdio/globals": "npm:^9.29.1"
     "@wdio/local-runner": "npm:^9.29.1"
@@ -11759,7 +11750,7 @@ __metadata:
     clipboard: "npm:^2.0.11"
     cloudflared: "npm:^0.7.1"
     dnd-core: "npm:^16.0.1"
-    dompurify: "npm:^3.4.11"
+    dompurify: "npm:^3.4.12"
     dotenv: "npm:17.4.2"
     emitter20: "npm:^2.0.0"
     emoji-regex: "npm:^10.6.0"
@@ -11795,11 +11786,11 @@ __metadata:
     lockfile-lint: "npm:^5.0.0"
     lodash: "npm:^4.18.1"
     lottie-react: "npm:^2.4.1"
-    marked: "npm:^18.0.5"
+    marked: "npm:^18.0.6"
     moize: "npm:^6.1.7"
     motion: "npm:^12.42.2"
     murmurhash3js: "npm:^3.0.1"
-    nanoid: "npm:^5.1.16"
+    nanoid: "npm:^6.0.0"
     npm-run-all2: "npm:^9.0.2"
     openai: "npm:^5.20.3"
     page-lifecycle: "⚠️ OVERRIDDEN BY 'resolutions' - Source: https://github.com/magic-akari/page-lifecycle#feat/add-types | Tarball: https://codeload.github.com/magic-akari/page-lifecycle/tar.gz/50b50421bdeab3d211a57e81a277f699638373b0 | Configured in: package.json#resolutions"
@@ -11834,7 +11825,7 @@ __metadata:
     truncate-html: "npm:^1.2.2"
     ts-key-enum: "npm:^2.0.12"
     typescript: "npm:5.9.3"
-    undici: "npm:^6.21.3"
+    undici: "npm:^8.7.0"
     vi-canvas-mock: "npm:^1.0.0"
     vite: "npm:^7.3.1"
     vite-plugin-checker: "npm:^0.12.0"
@@ -17885,12 +17876,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"marked@npm:^18.0.5":
-  version: 18.0.5
-  resolution: "marked@npm:18.0.5"
+"marked@npm:^18.0.6":
+  version: 18.0.6
+  resolution: "marked@npm:18.0.6"
   bin:
     marked: bin/marked.js
-  checksum: 10c0/22763935a0a243c41851b010a086ea85a09951e379948b6aa629b6cecdcd66e3a5e8c4acac2f6b29c183c20609d3e5102495270207dfd5f4c46ddd773a4ddb9b
+  checksum: 10c0/85827aa9d7293b0eb5470c40bb0f60bdbd4a1d6647cfce3602afaa3b8e42ed229c74d1d61d3c41d4e7822d56df179862da970f2e11012e94c1a788387e69d36d
   languageName: node
   linkType: hard
 
@@ -18781,12 +18772,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nanoid@npm:^5.1.16":
-  version: 5.1.16
-  resolution: "nanoid@npm:5.1.16"
+"nanoid@npm:^6.0.0":
+  version: 6.0.0
+  resolution: "nanoid@npm:6.0.0"
   bin:
     nanoid: bin/nanoid.js
-  checksum: 10c0/04b4f96237f5639716da0e98f453361b313bebaf458bb67dea2d384724fc8b3340a28f032a4373052150bcf3b801d122e291d81ae4fc522969f55c134f4401a3
+  checksum: 10c0/45bc79b7fc3f8f7110986fee7ac8acc2dc673b4c9ebe0c28a05fd0b2c2bb7a0b9942e43a558e39ea3c41a7fb74c7de1a0f8b73263b025f82e87cdb4a769188c3
   languageName: node
   linkType: hard
 
@@ -23987,6 +23978,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"undici@npm:^8.7.0":
+  version: 8.7.0
+  resolution: "undici@npm:8.7.0"
+  checksum: 10c0/b7e5ecb4de82fa4f905011a77544fe7ba4da06f27167ff99313a7ae2869f3cb233d676dcd085533bc69f36989bc40871f5ae6ea6e4c9b91db92616b9e91b579d
+  languageName: node
+  linkType: hard
+
 "unicode-canonical-property-names-ecmascript@npm:^2.0.0":
   version: 2.0.1
   resolution: "unicode-canonical-property-names-ecmascript@npm:2.0.1"
@@ -24738,7 +24736,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webdriverio@npm:9.29.1":
+"webdriverio@npm:9.29.1, webdriverio@npm:^9.0.0":
   version: 9.29.1
   resolution: "webdriverio@npm:9.29.1"
   dependencies:
@@ -25817,13 +25815,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"yauzl@npm:^3.0.0":
-  version: 3.2.0
-  resolution: "yauzl@npm:3.2.0"
+"yauzl@npm:^3.4.0":
+  version: 3.4.0
+  resolution: "yauzl@npm:3.4.0"
   dependencies:
-    buffer-crc32: "npm:~0.2.3"
     pend: "npm:~1.2.0"
-  checksum: 10c0/7b40b3dc46b95761a2a764391d257a11f494d365875af73a1b48fe16d4bd103dd178612e60168d12a0e59a8ba4f6411a15a5e8871d5a5f78255d6cc1ce39ee62
+  checksum: 10c0/17a98c42c0065e8af429eb8a61f7a0e4562181ed54080366b838f34f741b6829f167f804787c86b7646bb042707f35871739f053de0548285e405a2eae4da025
   languageName: node
   linkType: hard
 

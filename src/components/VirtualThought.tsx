@@ -54,6 +54,7 @@ const selectCursor = (state: State) => state.cursor
 const VirtualThought = ({
   debugIndex,
   depth,
+  childIndexNonAttribute,
   dropUncle,
   env,
   indexDescendant,
@@ -77,6 +78,7 @@ const VirtualThought = ({
   // contextChain is needed to uniquely identify thoughts across context views
   debugIndex?: number
   depth: number
+  childIndexNonAttribute: number
   dropUncle?: boolean
   env?: LazyEnv
   indexDescendant: number
@@ -250,6 +252,7 @@ const VirtualThought = ({
         <Subthought
           autofocus={autofocus}
           debugIndex={debugIndex}
+          childIndexNonAttribute={childIndexNonAttribute}
           depth={depth + 1}
           dropUncle={dropUncle}
           env={env}

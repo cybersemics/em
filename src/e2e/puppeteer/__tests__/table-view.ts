@@ -113,4 +113,32 @@ describe('Table View', () => {
     // col1 and col2 should share the available width, so col2 is at least half as wide as col1.
     expect(col2.width).toBeGreaterThan(col1.width * 0.5)
   })
+
+  // Regression test for https://github.com/cybersemics/em/issues/3568
+  it('first subthought should not overlap the parent when Table View is applied to the root context', async () => {
+    // Applying Table View to the root context (i.e. toggling it while the cursor is on a top-level thought)
+    // makes the top-level thought column 1 and its subthoughts column 2.
+    await paste(`
+      - =view
+        - Table
+      - One
+        - Lorem Ipsum Dolor Sit Amet Consectetur
+        - bla bla
+        - note
+    `)
+
+    const parent = await getEditable('One')
+    const firstSubthought = await getEditable('Lorem Ipsum')
+
+    const parentRect = await parent.boundingBox()
+    const subthoughtRect = await firstSubthought.boundingBox()
+
+    if (!parentRect || !subthoughtRect) {
+      throw new Error('Could not get bounding boxes for "One" and "Lorem Ipsum"')
+    }
+
+    // In Table View the parent (column 1) and its first subthought (column 2) are rendered on the same row.
+    // The subthought must begin at or after the right edge of the parent, otherwise the two overlap.
+    expect(subthoughtRect.x).toBeGreaterThanOrEqual(parentRect.x + parentRect.width)
+  })
 })
