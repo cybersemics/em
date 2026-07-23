@@ -21,7 +21,9 @@ const GestureMenuItem: FC<{
   gestureInProgress: string
   isFirstCommand?: boolean
   isLastCommand?: boolean
-}> = ({ command, selected, gestureInProgress, isFirstCommand, isLastCommand }) => {
+  /** Whether to scroll the selected row into view. Disabled in the non-scrolling multi-column grid. Defaults to true. */
+  autoScroll?: boolean
+}> = ({ command, selected, gestureInProgress, isFirstCommand, isLastCommand, autoScroll = true }) => {
   const ref = useRef<HTMLDivElement | null>(null)
   const disabled = useSelector((state: State) => !isExecutable(state, command))
   const isActive = command.isActive?.(store.getState())
@@ -33,7 +35,7 @@ const GestureMenuItem: FC<{
   const gestureHighlight = useGestureHighlight({ command, gestureInProgress, selected, disabled })
 
   useEffect(() => {
-    if (!selected) return
+    if (!autoScroll || !selected) return
     if (!isFirstCommand && !isLastCommand) {
       ref.current?.scrollIntoView({ block: 'nearest' })
       return
@@ -52,8 +54,12 @@ const GestureMenuItem: FC<{
         flexDirection: 'row',
         alignItems: selected ? 'stretch' : 'center',
         gap: '0.89rem',
-        paddingTop: selected ? '0.6rem' : 0,
+        // Always reserve the top padding on a column's first row so selecting it doesn't shift the
+        // column down and misalign its top from sibling columns.
+        paddingTop: selected || isFirstCommand ? '0.6rem' : 0,
         paddingBottom: selected ? '0.1rem' : 0,
+        // Allow the row to shrink within a grid cell so the label's nowrap text does not overflow the column.
+        minWidth: 0,
       })}
     >
       <div

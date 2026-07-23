@@ -7,6 +7,14 @@ import { isBrowser } from '../browser'
 import { gestureString } from '../commands'
 import openMobileCommandUniverseCommand from '../commands/openMobileCommandUniverse'
 import useFilteredCommands from '../hooks/useFilteredCommands'
+import useGestureMenuLayout, {
+  GESTURE_MENU_COLUMN_GAP_REM,
+  GESTURE_MENU_GROUP_GAP_REM,
+  GESTURE_MENU_PANEL_PADDING_MD_REM,
+  GESTURE_MENU_PANEL_PADDING_REM,
+  GESTURE_MENU_PANEL_PADDING_VERTICAL_MD_REM,
+  GESTURE_MENU_ROW_GAP_REM,
+} from '../hooks/useGestureMenuLayout'
 import gestureStore, {
   onGestureMenuEntered,
   onGestureMenuExited,
@@ -34,6 +42,70 @@ const GestureMenu: FC<{
   const mainCommands = commands.filter(cmd => cmd.id !== 'cancel' && cmd.id !== 'openMobileCommandUniverse')
   const persistentCommands = commands.filter(cmd => cmd.id === 'cancel' || cmd.id === 'openMobileCommandUniverse')
 
+  const { columnCount, rowsPerColumn, visibleRegularCount, persistentColumnIndex, isMultiColumn, persistentInline } =
+    useGestureMenuLayout(mainCommands.length, persistentCommands.length)
+
+  // NOTE: useGestureMenuLayout picks padding via isMobilePortrait, not isMultiColumn (columnCount
+  // isn't known yet), so it can assume 5rem where this render ends up using 2.25rem. columnCount
+  // may then undercount but never overcount.
+  const horizontalPadding = isMultiColumn
+    ? `${GESTURE_MENU_PANEL_PADDING_MD_REM}rem`
+    : `${GESTURE_MENU_PANEL_PADDING_REM}rem`
+
+  const verticalPadding = isMultiColumn
+    ? `${GESTURE_MENU_PANEL_PADDING_VERTICAL_MD_REM}rem`
+    : `${GESTURE_MENU_PANEL_PADDING_REM}rem`
+
+  const isSingleColumnMobile = !isMultiColumn && !isBrowser
+
+  // In a multi-column layout the divider spans only the first column; single column spans the full width.
+  const dividerWidth = isMultiColumn
+    ? `calc((100% - ${(columnCount - 1) * GESTURE_MENU_COLUMN_GAP_REM}rem) / ${columnCount})`
+    : '100%'
+
+  const visibleMainCommands = isMultiColumn ? mainCommands.slice(0, visibleRegularCount) : mainCommands
+
+  /** Renders the regular command rows. Auto-scroll is only enabled in the single-column (scrolling) layout. */
+  const renderMainCommands = (items: Command[]) =>
+    items.map((command, index) => (
+      <GestureMenuItem
+        gestureInProgress={gestureInProgress as string}
+        key={command.id}
+        selected={gestureInProgress === gestureString(command)}
+        command={command}
+        isFirstCommand={index === 0}
+        isLastCommand={index === items.length - 1}
+        autoScroll={!isMultiColumn}
+      />
+    ))
+
+  /**
+   * Render the persistent commands (Cancel / Command Universe). `horizontal` is true for the
+   * full-width bottom row, where the items sit side by side: there every item must reserve the same
+   * top padding as a first row, otherwise only the first item gets `isFirstCommand` padding and the
+   * rest ride higher, misaligning the row. In the vertical inline block only the top item is first.
+   */
+  const renderPersistentItems = (horizontal: boolean) =>
+    persistentCommands.map((command, index) => {
+      const mobileCommandUniverseInProgress = gestureInProgress
+        ?.toString()
+        .endsWith(gestureString(openMobileCommandUniverseCommand))
+      const isMobileCommandUniverseMatch = command.id === 'openMobileCommandUniverse' && mobileCommandUniverseInProgress
+      const isCancelMatch = command.id === 'cancel' && !hasMatchingCommand && !mobileCommandUniverseInProgress
+
+      return (
+        <GestureMenuItem
+          gestureInProgress={gestureInProgress as string}
+          key={command.id}
+          selected={isMobileCommandUniverseMatch || gestureInProgress === gestureString(command) || isCancelMatch}
+          command={command}
+          isFirstCommand={horizontal || index === 0}
+          isLastCommand={index === persistentCommands.length - 1}
+          autoScroll={!isMultiColumn}
+        />
+      )
+    })
+
   return (
     <div
       className={css({
@@ -52,19 +124,21 @@ const GestureMenu: FC<{
           textAlign: 'left',
           maxWidth: '100%',
           maxHeight: '100%',
-          width: '45.889rem',
           cursor: 'default',
           display: 'flex',
           flexDirection: 'column',
         })}
-        style={{ fontSize }}
+        // Drop the fixed content-width cap above md — descriptions are bounded by the column width there.
+        style={{ fontSize, width: isMultiColumn ? undefined : '45.889rem' }}
       >
         {gestureInProgress && (
           <div
-            className={css({
-              padding: '2.25rem',
-              paddingTop: !isBrowser ? '0.75rem' : undefined,
-            })}
+            style={{
+              paddingBlock: verticalPadding,
+
+              paddingInline: horizontalPadding,
+              paddingTop: isSingleColumnMobile ? '0.75rem' : undefined,
+            }}
           >
             {/* Header */}
             <div className={css({ marginBottom: '1.389rem' })}>
@@ -81,64 +155,110 @@ const GestureMenu: FC<{
               <div
                 style={{
                   height: '1px',
-                  width: '100%',
+                  width: dividerWidth,
                   background: 'linear-gradient(90deg, rgba(174, 168, 214, 0.59) 0%, rgba(28, 27, 36, 0) 100%)',
                 }}
               />
             </div>
 
-            {/* Main commands */}
-            <div
-              className={css({
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '1.2rem',
-              })}
-            >
-              {mainCommands.map((command, index) => (
-                <GestureMenuItem
-                  gestureInProgress={gestureInProgress as string}
-                  key={command.id}
-                  selected={gestureInProgress === gestureString(command)}
-                  command={command}
-                  isFirstCommand={index === 0}
-                  isLastCommand={index === mainCommands.length - 1}
-                />
-              ))}
-            </div>
-            {/* Cancel / Cheatsheet block */}
-            {persistentCommands.length > 0 && (
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  marginTop: !mainCommands.length ? 0 : '2.15rem',
-                  gap: '1.2rem',
-                }}
-              >
-                {persistentCommands.map((command, index) => {
-                  const mobileCommandUniverseInProgress = gestureInProgress
-                    ?.toString()
-                    .endsWith(gestureString(openMobileCommandUniverseCommand))
-                  const isMobileCommandUniverseMatch =
-                    command.id === 'openMobileCommandUniverse' && mobileCommandUniverseInProgress
-                  const isCancelMatch =
-                    command.id === 'cancel' && !hasMatchingCommand && !mobileCommandUniverseInProgress
-
-                  return (
-                    <GestureMenuItem
-                      gestureInProgress={gestureInProgress as string}
-                      key={command.id}
-                      selected={
-                        isMobileCommandUniverseMatch || gestureInProgress === gestureString(command) || isCancelMatch
-                      }
-                      command={command}
-                      isFirstCommand={index === 0}
-                      isLastCommand={index === persistentCommands.length - 1}
-                    />
-                  )
-                })}
-              </div>
+            {isMultiColumn ? (
+              /* Multi-column grid: main commands flow top-to-bottom then left-to-right and own every
+                 column. When there's slack (persistentInline) the persistent commands sit inline at
+                 the bottom of the last column; otherwise they fall back to a full-width row below. */
+              <>
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))`,
+                    columnGap: `${GESTURE_MENU_COLUMN_GAP_REM}rem`,
+                  }}
+                >
+                  {/* Split the commands into column-major chunks (top-to-bottom then left-to-right)
+                     and render each column as its own nested grid. Per-column row tracks — rather
+                     than one shared set of tracks — keep a selected command's description from
+                     inflating the matching row in sibling columns. */}
+                  {Array.from({ length: columnCount }, (_, columnIndex) =>
+                    visibleMainCommands.slice(columnIndex * rowsPerColumn, (columnIndex + 1) * rowsPerColumn),
+                  ).map((columnCommands, columnIndex) => {
+                    // The inline persistent block is appended below the last column that holds main
+                    // commands (persistentColumnIndex), so it never sits in its own empty column.
+                    const showInlinePersistent =
+                      persistentInline && persistentCommands.length > 0 && columnIndex === persistentColumnIndex
+                    return (
+                      <div key={columnIndex} style={{ minWidth: 0 }}>
+                        <div
+                          style={{
+                            display: 'grid',
+                            // Auto rows (rather than a fixed repeat(rowsPerColumn)) so a column with
+                            // fewer commands than its siblings — e.g. the last column when persistent
+                            // commands flow inline — is only as tall as its own items, with no trailing
+                            // empty tracks pushing the inline persistent block down.
+                            gridAutoRows: 'min-content',
+                            rowGap: `${GESTURE_MENU_ROW_GAP_REM}rem`,
+                          }}
+                        >
+                          {renderMainCommands(columnCommands)}
+                        </div>
+                        {showInlinePersistent && (
+                          <div
+                            style={{
+                              display: 'flex',
+                              flexDirection: 'column',
+                              // Drop the group gap when this column has no main commands to separate from.
+                              marginTop: columnCommands.length === 0 ? 0 : `${GESTURE_MENU_GROUP_GAP_REM}rem`,
+                              gap: `${GESTURE_MENU_ROW_GAP_REM}rem`,
+                            }}
+                          >
+                            {renderPersistentItems(false)}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+                {!persistentInline && persistentCommands.length > 0 && (
+                  <div
+                    style={{
+                      marginTop: visibleMainCommands.length === 0 ? 0 : `${GESTURE_MENU_GROUP_GAP_REM}rem`,
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        columnGap: `${GESTURE_MENU_COLUMN_GAP_REM}rem`,
+                      }}
+                    >
+                      {renderPersistentItems(true)}
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              /* Single column (mobile portrait or narrow landscape): unchanged flex layout. */
+              <>
+                <div
+                  className={css({
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '1.2rem',
+                  })}
+                >
+                  {renderMainCommands(mainCommands)}
+                </div>
+                {persistentCommands.length > 0 && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      marginTop: !mainCommands.length ? 0 : '2.15rem',
+                      gap: '1.2rem',
+                    }}
+                  >
+                    {renderPersistentItems(false)}
+                  </div>
+                )}
+              </>
             )}
           </div>
         )}
