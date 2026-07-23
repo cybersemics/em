@@ -1,9 +1,13 @@
 import { type ConsoleMessage, KnownDevices } from 'puppeteer'
 import newSubthoughtCommand from '../../../commands/newSubthought'
 import newThoughtCommand from '../../../commands/newThought'
+import $ from '../helpers/$'
 import exportThoughts from '../helpers/exportThoughts'
-import gesture from '../helpers/gesture'
+import gesture, { endGesture, startGesture } from '../helpers/gesture'
+import reloadWithProductionTiming from '../helpers/initialize'
 import keyboard from '../helpers/keyboard'
+import press from '../helpers/press'
+import waitForSelector from '../helpers/waitForSelector'
 import { page } from '../session'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
@@ -57,6 +61,58 @@ describe('alerts', () => {
     // Verify alert content contains gesture hint text
     const alertText = await page.$eval('[data-testid=alert-content]', el => el.textContent)
     expect(alertText).toBeTruthy()
+  })
+})
+
+describe('gestures', () => {
+  beforeEach(async () => {
+    await page.emulate(KnownDevices['iPhone 15 Pro'])
+  })
+
+  // https://github.com/cybersemics/em/issues/3887
+  it('releases a gesture when its loading target unmounts', async () => {
+    await reloadWithProductionTiming()
+    await waitForSelector('[data-loading-indicator]')
+
+    try {
+      await gesture('d', { hold: true, target: '[data-loading-indicator]' })
+      await waitForSelector('[data-testid=popup-value]')
+
+      await waitForSelector('[data-loading-indicator]', { hidden: true })
+    } finally {
+      await endGesture()
+    }
+
+    await waitForSelector('[data-testid=popup-value]', { hidden: true })
+    expect(await $('[data-testid=popup-value]')).toBeNull()
+  })
+
+  // https://github.com/cybersemics/em/issues/4536
+  it('does not activate a gesture that starts in the scroll zone', async () => {
+    await gesture(newThoughtCommand)
+    for (let i = 0; i < 20; i++) {
+      await keyboard.type(`thought ${i}`)
+      if (i < 19) await press('Enter')
+    }
+
+    expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0)
+    const viewport = page.viewport()!
+    const xStart = viewport.width - Math.round(viewport.width / 8)
+    const yStart = Math.round(viewport.height / 3)
+    const traceClassBefore = await page.$eval('[data-testid=gesture-trace]', element => element.className)
+
+    const activeGesture = await startGesture({ xStart, yStart })
+    try {
+      await activeGesture.move('u')
+      await page.evaluate(() => new Promise(requestAnimationFrame))
+      await activeGesture.move('l')
+      await activeGesture.move('dr')
+      await page.evaluate(() => new Promise(requestAnimationFrame))
+
+      expect(await page.$eval('[data-testid=gesture-trace]', element => element.className)).toBe(traceClassBefore)
+    } finally {
+      await activeGesture.end()
+    }
   })
 })
 

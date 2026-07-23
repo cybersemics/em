@@ -427,13 +427,17 @@ jobs:
         if: github.event_name == 'pull_request'
         run: git checkout FETCH_HEAD -- .github/actions/
 
-      - name: Checkout test files from PR head
+      - name: Checkout test files and support from PR head
         id: patch
         run: |
           PUPPETEER_FILES=$(echo "${{ needs.detect.outputs.puppeteer_files }}" | base64 -d)
+          PUPPETEER_SUPPORT_FILES=$(git diff --name-only "${{ needs.detect.outputs.merge_base }}" FETCH_HEAD -- \
+            | grep -E '^src/e2e/(browserEnvironment|puppeteer)/(helpers|config|setup)/' || true)
 
           echo "=== Changed puppeteer test files ==="
           echo "$PUPPETEER_FILES"
+          echo "=== Changed puppeteer test support files ==="
+          echo "$PUPPETEER_SUPPORT_FILES"
 
           if [ -z "$PUPPETEER_FILES" ]; then
             echo "No puppeteer test files to process"
@@ -441,11 +445,10 @@ jobs:
             exit 0
           fi
 
-          # Check out each test file directly from the PR head. This reliably handles
-          # both modified files and brand-new test files (including new directories),
-          # where git apply --3way can fail because there is no base blob to merge.
-          echo "=== Checking out puppeteer test files from PR head ==="
-          for f in $PUPPETEER_FILES; do
+          # Test support is part of the test, not the application fix. Check it out
+          # with the test so the base-branch run reaches the behavioral assertion.
+          echo "=== Checking out puppeteer test files and support from PR head ==="
+          for f in $PUPPETEER_FILES $PUPPETEER_SUPPORT_FILES; do
             echo "Checking out: $f"
             git checkout FETCH_HEAD -- "$f"
           done
@@ -546,13 +549,17 @@ jobs:
         if: github.event_name == 'pull_request'
         run: git checkout FETCH_HEAD -- .github/actions/
 
-      - name: Checkout test files from PR head
+      - name: Checkout test files and support from PR head
         id: patch
         run: |
           IOS_FILES=$(echo "${{ needs.detect.outputs.ios_files }}" | base64 -d)
+          IOS_SUPPORT_FILES=$(git diff --name-only "${{ needs.detect.outputs.merge_base }}" FETCH_HEAD -- \
+            | grep -E '^src/e2e/(browserEnvironment|iOS)/(helpers|config|setup)/' || true)
 
           echo "=== Changed iOS test files ==="
           echo "$IOS_FILES"
+          echo "=== Changed iOS test support files ==="
+          echo "$IOS_SUPPORT_FILES"
 
           if [ -z "$IOS_FILES" ]; then
             echo "No iOS test files to process"
@@ -560,10 +567,10 @@ jobs:
             exit 0
           fi
 
-          # Check out each test file directly from the PR head. This reliably handles
-          # both modified files and brand-new test files (including new directories).
-          echo "=== Checking out iOS test files from PR head ==="
-          for f in $IOS_FILES; do
+          # Test support is part of the test, not the application fix. Check it out
+          # with the test so the base-branch run reaches the behavioral assertion.
+          echo "=== Checking out iOS test files and support from PR head ==="
+          for f in $IOS_FILES $IOS_SUPPORT_FILES; do
             echo "Checking out: $f"
             git checkout FETCH_HEAD -- "$f"
           done
