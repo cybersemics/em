@@ -477,4 +477,14 @@ describe('formatSelection note', () => {
 
     expect(noteVal()).toBe('<font color="#ffd014">Note</font>')
   })
+
+  // #4657: a note can be explicitly set to white (the thought default color). White (fg, opaque) must not be treated as
+  // the note's own default (fgNote, 50%-alpha white), which would clear it — the two differ only in opacity.
+  it('sets a note foreground color to white', async () => {
+    await setupNote('Note')
+
+    await dispatch(formatSelection('foreColor', 'fg'))
+
+    expect(noteVal()).toBe('<font color="#ffffff">Note</font>')
+  })
 })

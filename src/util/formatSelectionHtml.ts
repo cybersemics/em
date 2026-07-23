@@ -1,7 +1,6 @@
-import CommandState from '../@types/CommandState'
 import { ALLOWED_FORMATTING_TAGS } from '../constants'
-import getCommandState from './getCommandState'
 import rgbToHex from './rgbToHex'
+import rgbaToHex from './rgbaToHex'
 
 /** A formatting command that maps to a single HTML tag toggle. */
 type TagCommand = 'bold' | 'italic' | 'underline' | 'strikethrough' | 'code'
@@ -161,25 +160,32 @@ const insertAtRange = (container: HTMLElement, range: Range, node: Node) => {
 /** Text color applied by a backColor command for contrast against the background (always black, per product design). */
 const CONTRAST_COLOR = '#000000'
 
+/** Normalizes a color to an alpha-aware hex so that colors differing only in opacity are not treated as equal — e.g.
+ * opaque white (fg, the thought default) vs 50%-alpha white (fgNote, the note default), which both collapse to #ffffff
+ * under an alpha-dropping conversion. This is what lets a note be explicitly set to white without being mistaken for a
+ * reset to its own (translucent) default (#4657). Passes 6-digit hex inputs (e.g. the default background) through. */
+const toComparableColor = (color: string): string => (color.startsWith('#') ? rgbToHex(color) : rgbaToHex(color))
+
 /** Determines the target text color and background for a single color command. A foreColor sets the text color and
- * clears the background; a backColor sets the background and forces a contrasting (black) text color — unless the
- * background is the theme default, in which case it clears both (removing a background rather than applying a redundant
- * default-colored wrapper, #3901). This folds ColorPicker's former two-dispatch foreColor + backColor pairing into a
- * single transform (#4637). */
+ * clears the background; a backColor sets the background and forces a contrasting (black) text color. A color set to
+ * the corresponding theme default clears it instead of applying a redundant default-colored wrapper (foreColor →
+ * default text color, backColor → default background), leaving no markup (#3901). This folds ColorPicker's former
+ * two-dispatch foreColor + backColor pairing into a single transform (#4637). */
 const resolveColors = (
   command: 'foreColor' | 'backColor',
   colorValue: string | undefined,
+  defaultColor: string | undefined,
   defaultBackgroundColor: string | undefined,
 ): { color: string | null; background: string | null } => {
-  if (command === 'foreColor') return { color: colorValue ?? null, background: null }
-  // a backColor set to the default background clears the background (and the forced contrast color)
-  if (
-    colorValue !== undefined &&
-    defaultBackgroundColor !== undefined &&
-    rgbToHex(colorValue) === rgbToHex(defaultBackgroundColor)
-  ) {
-    return { color: null, background: null }
+  /** True if the color value equals the given theme default (compared as alpha-aware hex). */
+  const isDefault = (value: string | undefined, defaultValue: string | undefined) =>
+    value !== undefined && defaultValue !== undefined && toComparableColor(value) === toComparableColor(defaultValue)
+
+  if (command === 'foreColor') {
+    return { color: isDefault(colorValue, defaultColor) ? null : (colorValue ?? null), background: null }
   }
+  // a backColor set to the default background clears both the background and the forced contrast color
+  if (isDefault(colorValue, defaultBackgroundColor)) return { color: null, background: null }
   return { color: CONTRAST_COLOR, background: colorValue ?? null }
 }
 
@@ -192,6 +198,7 @@ const applyColor = (
   range: Range,
   command: 'foreColor' | 'backColor',
   colorValue: string | undefined,
+  defaultColor: string | undefined,
   defaultBackgroundColor: string | undefined,
 ) => {
   // extract the range into a temp container so existing color/background wrappers can be stripped
@@ -200,56 +207,24 @@ const applyColor = (
   unwrapAll(temp, 'font, span')
   temp.normalize()
 
-  const { color, background } = resolveColors(command, colorValue, defaultBackgroundColor)
+  const { color, background } = resolveColors(command, colorValue, defaultColor, defaultBackgroundColor)
 
-  let insertNode: Node
+  // move the (color-stripped) content into a fragment, wrapping it in a single <font> when a color/background applies
+  const content = document.createDocumentFragment()
+  while (temp.firstChild) content.appendChild(temp.firstChild)
+
+  let insertNode: Node = content
   if (color || background) {
     const font = document.createElement('font')
     if (color) font.setAttribute('color', rgbToHex(color))
     if (background) font.style.backgroundColor = background
-    while (temp.firstChild) font.appendChild(temp.firstChild)
+    font.appendChild(content)
     insertNode = font
-  } else {
-    const fragment = document.createDocumentFragment()
-    while (temp.firstChild) fragment.appendChild(temp.firstChild)
-    insertNode = fragment
   }
 
   insertAtRange(container, range, insertNode)
   // remove any now-empty formatting element left behind where the range was extracted
   removeEmptyFormatting(container)
-}
-
-/** Removes color/background declarations that match the theme defaults and unwraps the resulting attribute-less
- * font/span elements. Runs after a color command so that resetting to a default color leaves no redundant markup
- * (#3901). The default text color and default background color are both hex values, and differ between thoughts and notes). */
-const stripDefaultColors = (container: HTMLElement, defaultColor: string, defaultBackgroundColor: string) => {
-  const defaultColorHex = rgbToHex(defaultColor)
-  const defaultBackgroundHex = rgbToHex(defaultBackgroundColor)
-  for (const el of Array.from(container.querySelectorAll<HTMLElement>('font, span'))) {
-    // remove a background-color that matches the default background color
-    if (el.style.backgroundColor && rgbToHex(el.style.backgroundColor) === defaultBackgroundHex) {
-      el.style.removeProperty('background-color')
-      if (!el.getAttribute('style')?.trim()) {
-        el.removeAttribute('style')
-      }
-    }
-
-    // remove a color that matches the default text color, whether expressed as a color attribute
-    // (e.g. <font color="#ffffff">) or a style (e.g. <span style="color: ...">)
-    const colorAttr = el.getAttribute('color')
-    if (colorAttr && rgbToHex(colorAttr) === defaultColorHex) {
-      el.removeAttribute('color')
-    }
-    if (el.style.color && rgbToHex(el.style.color) === defaultColorHex) {
-      el.style.removeProperty('color')
-    }
-
-    // unwrap tags that have no meaningful style or color attributes
-    if (!el.getAttribute('style')?.trim() && !el.getAttribute('color')?.trim()) {
-      el.replaceWith(...Array.from(el.childNodes))
-    }
-  }
 }
 
 /** Options for {@link formatSelectionHtml}. */
@@ -282,38 +257,36 @@ const formatSelectionHtml = (
   container.innerHTML = html
 
   const tag = tagForCommand(command)
+  const plainLength = container.textContent?.length ?? 0
 
-  // resolve the range endpoints once; the partial branches (removeFormat, tag wrap, and color) all reuse them
+  // The caller normalizes a collapsed caret or full selection to [0, plainLength], so this is a whole-thought command.
+  const whole = start === 0 && end === plainLength
+
+  // resolve the range endpoints once; several branches reuse them
   const s = positionAtOffset(container, start)
   const e = positionAtOffset(container, end)
 
-  // a command applies to the whole thought when its range spans the entire text; the caller normalizes a collapsed
-  // caret or full selection to [0, plainLength], so this is exactly start === 0 && end === plainLength
-  const plainLength = container.textContent?.length ?? 0
-  const whole = start === 0 && end === plainLength
-
-  // removeFormat: replace the range (or the whole thought) with its plain text
-  if (command === 'removeFormat') {
+  /** Builds a Range over the target: the whole thought's contents (selecting the outer wrapper elements too, so a wrap
+   * grabs them) or the plain-text sub-range. */
+  const makeRange = (): Range => {
+    const range = document.createRange()
     if (whole) {
-      container.innerHTML = container.textContent ?? ''
+      range.selectNodeContents(container)
     } else {
-      const range = document.createRange()
       range.setStart(s.node, s.offset)
       range.setEnd(e.node, e.offset)
-      const contents = range.extractContents()
-      range.insertNode(document.createTextNode(contents.textContent ?? ''))
     }
-    container.normalize()
-    return container.innerHTML
+    return range
   }
 
-  // whole-thought tag toggle-off: the tag already covers all text, so just remove it (no re-wrap)
-  if (tag && whole && getCommandState(html)[command as keyof CommandState]) {
-    unwrapAll(container, tag)
-  } else if (tag && !whole && isRangeFullyTagged(container, s, e, tag)) {
-    // partial-range tag toggle-off: the selected sub-range is already fully formatted. Split the enclosing tag at both
-    // boundaries so the range's content sits in its own tag element(s), then unwrap every tag element that lies fully
-    // within [start, end], leaving the tag intact on either side (e.g. bolding "orl" in "<b>World</b>" → "<b>W</b>orl<b>d</b>").
+  if (command === 'removeFormat') {
+    // replace the range (whole thought or sub-range) with its plain text
+    const range = makeRange()
+    range.insertNode(document.createTextNode(range.extractContents().textContent ?? ''))
+  } else if (tag && isRangeFullyTagged(container, s, e, tag)) {
+    // toggle the tag off (the range is already fully formatted): split the enclosing tag at both boundaries so the
+    // range's content sits in its own tag element(s), then unwrap every tag element within [start, end], leaving the
+    // tag intact on either side (e.g. bolding "orl" in "<b>World</b>" → "<b>W</b>orl<b>d</b>").
     splitTagAtOffset(container, end, tag)
     splitTagAtOffset(container, start, tag)
     for (const el of Array.from(container.querySelectorAll(tag))) {
@@ -323,27 +296,21 @@ const formatSelectionHtml = (
       }
     }
     removeEmptyFormatting(container)
+  } else if (tag) {
+    // wrap the range in the tag, collapsing any nested same-tags
+    const range = makeRange()
+    range.insertNode(wrapWithTag(range.extractContents(), command))
+    removeEmptyFormatting(container)
   } else {
-    // build the range to reformat: the whole thought's contents (grabbing boundary wrappers) or the sub-range
-    const range = document.createRange()
-    if (whole) {
-      range.selectNodeContents(container)
-    } else {
-      range.setStart(s.node, s.offset)
-      range.setEnd(e.node, e.offset)
-    }
-    if (tag) {
-      // wrap the range in the tag, collapsing any nested same-tags
-      range.insertNode(wrapWithTag(range.extractContents(), command))
-      removeEmptyFormatting(container)
-    } else {
-      // color: consolidate the range's foreColor/backColor into a single <font>, preserving non-color tags (b/i/u)
-      applyColor(container, range, command as 'foreColor' | 'backColor', colorValue, defaultBackgroundColor)
-      // strip color/background that matches the theme defaults and unwrap the emptied wrappers (#3901)
-      if (defaultColor !== undefined && defaultBackgroundColor !== undefined) {
-        stripDefaultColors(container, defaultColor, defaultBackgroundColor)
-      }
-    }
+    // color: consolidate the range's foreColor/backColor into a single <font>, preserving non-color tags (b/i/u)
+    applyColor(
+      container,
+      makeRange(),
+      command as 'foreColor' | 'backColor',
+      colorValue,
+      defaultColor,
+      defaultBackgroundColor,
+    )
   }
 
   container.normalize()

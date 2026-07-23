@@ -86,7 +86,7 @@ export const formatSelectionActionCreator =
       end,
       command,
       colorValue: color ? colors[color] : undefined,
-      defaultColor: state.noteFocus ? colors.fg : colors.fgNote,
+      defaultColor: state.noteFocus ? colors.fgNote : colors.fg,
       defaultBackgroundColor: colors.bg,
     })
 
