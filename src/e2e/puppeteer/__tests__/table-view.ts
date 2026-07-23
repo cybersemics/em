@@ -1,6 +1,7 @@
 import path from 'path'
 import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
+import command from '../helpers/command'
 import getEditable from '../helpers/getEditable'
 import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
@@ -140,5 +141,69 @@ describe('Table View', () => {
     // In Table View the parent (column 1) and its first subthought (column 2) are rendered on the same row.
     // The subthought must begin at or after the right edge of the parent, otherwise the two overlap.
     expect(subthoughtRect.x).toBeGreaterThanOrEqual(parentRect.x + parentRect.width)
+  })
+
+  // Regression test for https://github.com/cybersemics/em/pull/4654 (Issue B)
+  // Toggling Table View while the cursor is on a top-level thought applies =view/Table to the root context,
+  // making the top-level thought col1 and its subthoughts col2. A long col1 must not consume the whole width
+  // and push col2 off the right edge; col1 and col2 should share the available width. The crush only manifests
+  // on narrow screens, so use a narrow viewport.
+  it('col2 stays on-screen when Table View is toggled on at the thought level', async () => {
+    await page.setViewport({ width: 375, height: 812 })
+
+    await paste(`
+      - One two three four five six seven
+        - Eight nine ten eleven twelve thirteen fourteen
+          - Fifteen sixteen seventeen eighteen nineteen twenty
+    `)
+
+    // Cursor on the top-level thought, then toggle Table View — applies =view/Table to the root context.
+    await clickThought('One two three four five six seven')
+    await command('toggleTableView')
+
+    const col1 = await (await getEditable('One two three four five six seven')).boundingBox()
+    const col2 = await (await getEditable('Eight nine ten eleven twelve thirteen fourteen')).boundingBox()
+
+    if (!col1 || !col2) {
+      throw new Error('Could not get bounding boxes for the table columns')
+    }
+
+    const viewportWidth = await page.evaluate(() => window.innerWidth)
+
+    // col2 must remain fully within the viewport (not pushed off the right edge).
+    expect(col2.x + col2.width).toBeLessThanOrEqual(viewportWidth)
+    // col2 must be legible, not crushed to ~one character per line.
+    expect(col2.width).toBeGreaterThan(100)
+  })
+
+  // Regression test for https://github.com/cybersemics/em/pull/4654 (Issue C)
+  // When Table View is turned off, a thought that was previously a wrapped col2 cell must have its height
+  // re-measured. Otherwise the stale (taller) wrapped height leaves a blank gap below it.
+  it('no blank gap below a former col2 thought after Table View is turned off', async () => {
+    await page.setViewport({ width: 375, height: 812 })
+
+    await paste(`
+      - One two three four five six seven
+        - Eight nine ten eleven twelve thirteen fourteen
+          - Fifteen sixteen seventeen eighteen nineteen twenty
+    `)
+
+    // Turn Table View on at the root context, move the cursor down into the table and back, then turn it off.
+    await clickThought('One two three four five six seven')
+    await command('toggleTableView')
+    await clickThought('Eight nine ten eleven twelve thirteen fourteen')
+    await clickThought('One two three four five six seven')
+    await command('toggleTableView')
+
+    const eight = await (await getEditable('Eight nine ten eleven twelve thirteen fourteen')).boundingBox()
+    const fifteen = await (await getEditable('Fifteen sixteen seventeen eighteen nineteen twenty')).boundingBox()
+
+    if (!eight || !fifteen) {
+      throw new Error('Could not get bounding boxes for the thoughts')
+    }
+
+    // "Fifteen…" should render directly below "Eight…" once Table View is off, with no blank gap.
+    // Allow a small tolerance for cliff padding between the two levels.
+    expect(fifteen.y - (eight.y + eight.height)).toBeLessThan(eight.height)
   })
 })

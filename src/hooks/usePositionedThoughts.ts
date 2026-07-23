@@ -111,7 +111,12 @@ const usePositionedThoughts = (
       0,
     )
     if (homeTableCol1Width > 0) {
-      tableCol1Widths.set(HOME_TOKEN, homeTableCol1Width)
+      // Cap the root table's col1 at roughly half the available horizontal band so col1 and col2 share the space and
+      // wrap responsively, rather than a long col1 consuming the width and pushing col2 off the right edge.
+      // The root's col1 thoughts sit at depth 0 with no ancestor tables, so col1X is effectively 0 here.
+      const availableWidth = (innerWidth > 560 ? 0.9 : 1) * innerWidth - CONTENT_BOX_PADDING_LEFT
+      const col1MaxWidth = Math.max(availableWidth / 2, fontSize)
+      tableCol1Widths.set(HOME_TOKEN, Math.min(homeTableCol1Width, col1MaxWidth))
     }
 
     const treeThoughtsPositioned = treeThoughts.map((node, i) => {
