@@ -42,6 +42,7 @@ import getSetting from '../selectors/getSetting'
 import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursorSelector from '../selectors/hasMulticursor'
 import rootedParentOf from '../selectors/rootedParentOf'
+import thoughtToPath from '../selectors/thoughtToPath'
 import { mergeBatchEditing } from '../stores/batchEditing'
 import editingValueStore from '../stores/editingValue'
 import editingValueUntrimmedStore from '../stores/editingValueUntrimmed'
@@ -270,6 +271,10 @@ const Editable = ({
       dispatch((dispatch, getState) => {
         const state = getState()
 
+        // A drop into a collapsed context removes the dragged Editable before its trailing click fires. Ignore the
+        // event if this component's path no longer points to the thought's current location. (#4680)
+        if (!transient && !equalPath(thoughtToPath(state, head(simplePath)), simplePath)) return
+
         // do not set cursor if it is unchanged and we are not entering when keyboard is open
         if ((!isKeyboardOpen || state.isKeyboardOpen) && equalPath(state.cursor, path)) return
 
@@ -300,7 +305,7 @@ const Editable = ({
     },
     // When isEditing changes, we need to reset the cursor on the thought.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [dispatch, isEditing, path],
+    [dispatch, isEditing, path, simplePath, transient],
   )
 
   /**
