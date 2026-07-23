@@ -59,8 +59,8 @@ describe('Table View', () => {
     expect(image).toMatchImageSnapshot()
   })
 
-  // TODO: Why does this not work in puppeteer? The y value of `d` is incorrect. It does not clear the height of `b`.
-  // This works fine in the actual app..
+  // Regression test: a col1 thought with a long wrapping note must have its full height measured so the
+  // following row (`d`/`e`) clears the bottom of the note instead of overlapping it.
   it('col1 note', async () => {
     await paste(`
       - a
