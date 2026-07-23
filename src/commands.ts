@@ -573,8 +573,19 @@ export const handleGestureCancel = () => {
   })
 }
 
-/** In the specific case of the newThought and indent commands, prevent default in beforeinput event instead of keydown to preserve default iOS auto-capitalization behavior. The Enter and space characters needs to be prevented so that it doesn't get inserted into the thought (#3707). */
+/** In the specific case of the newThought and indent commands, prevent default in beforeinput event instead of keydown to preserve default iOS auto-capitalization behavior. The Enter and space characters needs to be prevented so that it doesn't get inserted into the thought (#3707).
+ *
+ * Also intercepts native undo/redo, which iOS triggers via three-finger swipe, shake-to-undo, or the Edit menu. These dispatch a beforeinput event with inputType historyUndo/historyRedo rather than a keydown, so the Cmd+Z block in the undo/redo commands never catches them. Left to run natively, WebKit's contentEditable undo manipulates the DOM out of sync with the Redux thought state, duplicating text (e.g. an autocorrected word and its original are both re-inserted on redo). Blocking the native operation and routing it through the app's undo/redo commands keeps Redux as the single source of truth (#4477). */
 export const beforeInput = (e: InputEvent) => {
+  if (e.inputType === 'historyUndo' || e.inputType === 'historyRedo') {
+    // Always block the native operation, even when there is nothing to undo/redo, so WebKit never mutates the editable directly.
+    e.preventDefault()
+    const command = commandById(e.inputType === 'historyUndo' ? 'undo' : 'redo')
+    // Flush any pending throttled edit to Redux before undoing/redoing, mirroring the keydown path (#4477).
+    commandEmitter.trigger('command', command)
+    executeCommand(command, { event: e, type: 'keyboard', store })
+    return
+  }
   if (keyCommandId === 'newThought' || (keyCommandId === 'indent' && editingValueStore.getState() === '')) {
     e.preventDefault()
   }
