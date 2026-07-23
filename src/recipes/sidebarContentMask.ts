@@ -1,5 +1,5 @@
 import { defineRecipe } from '@pandacss/dev'
-import { DROPDOWN_MASK_BAND, MASK_OVERSIZE } from './sidebarMaskGeometry'
+import { DROPDOWN_MASK_BAND, MASK_OVERSIZE } from '../constants'
 
 /** Static mask shared by the translated carrier in Sidebar. */
 const sidebarContentMaskRecipe = defineRecipe({
