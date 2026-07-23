@@ -49,9 +49,7 @@ const addEmojiSpace = (html: string): string => {
   if (match && match[0] && match[0].length < text.length) {
     const startsWithNonWhiteSpaceCharacter = /^\S/.test(text.slice(match[0].length))
     const insertionIndex = sourceIndices[match[0].length]
-    return startsWithNonWhiteSpaceCharacter
-      ? `${html.slice(0, insertionIndex)} ${html.slice(insertionIndex)}`
-      : html
+    return startsWithNonWhiteSpaceCharacter ? `${html.slice(0, insertionIndex)} ${html.slice(insertionIndex)}` : html
   }
 
   return html
