@@ -1,6 +1,5 @@
 import Command from '../@types/Command'
-import FormattingCommand from '../@types/FormattingCommand'
-import { formatWithTagActionCreator as formatWithTag } from '../actions/formatWithTag'
+import { formatSelectionActionCreator as formatSelection } from '../actions/formatSelection'
 import Icon from '../components/icons/CodeIcon'
 import hasMulticursor from '../selectors/hasMulticursor'
 import isDocumentEditable from '../util/isDocumentEditable'
@@ -18,7 +17,7 @@ const codeCommand: Command = {
     return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
   },
   exec: dispatch => {
-    dispatch(formatWithTag(FormattingCommand.code))
+    dispatch(formatSelection('code'))
   },
   // The isActive logic for formatting commands is handled differently than other commands because it references the CommandStateStore. This can be found in ToolbarButton (isButtonActive)
 }

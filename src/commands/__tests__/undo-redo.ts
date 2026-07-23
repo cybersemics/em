@@ -777,7 +777,7 @@ describe('grouping', () => {
     // Root cause: formatLetterCase dispatched a separate setCursor action, creating a navigation
     // patch that triggered undoTwice, restoring cursorOffset to the pre-setCursor value (0 on
     // desktop when editingValueStore is non-null from a prior edit).
-    // Fix: formatLetterCase now passes cursorOffset directly to editThought (matching formatWithTag),
+    // Fix: formatLetterCase now passes cursorOffset directly to editThought (matching the other formatting actions),
     // and undoReducer preserves the current cursorOffset when undoing a formatting-only edit.
     store.dispatch([importText({ text: `- hello` }), setCursor(['hello'])])
 

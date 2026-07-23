@@ -1,12 +1,10 @@
 import { KnownDevices } from 'puppeteer'
 import newThoughtCommand from '../../../commands/newThought'
-import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
 import exportThoughts from '../helpers/exportThoughts'
 import gesture from '../helpers/gesture'
 import getEditingText from '../helpers/getEditingText'
 import keyboard from '../helpers/keyboard'
-import paste from '../helpers/paste'
 import press from '../helpers/press'
 import { page } from '../session'
 

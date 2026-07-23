@@ -29,13 +29,6 @@ describe('Format', () => {
     expect(scrollAfter).toBe(scrollBefore)
   })
 
-  // Regression test for https://github.com/cybersemics/em/issues/3954, retained for the DOMParser refactor (#4637).
-  // Native undo (iOS shake-to-undo / three-finger swipe) fires a *cancelable* `beforeinput` with inputType historyUndo
-  // (verified on-device). Left unhandled it mutates the contenteditable DOM directly, bypassing em's undo and desyncing
-  // the DOM from Redux — for a background highlight this leaves a black font color with no background that renders the
-  // thought invisible (black-on-black on the default dark theme). em's beforeinput handler must preventDefault this and
-  // route it through em's undo, which reverts to the correct Redux state and re-renders the editable.
-  //
   // With the DOMParser refactor, formatSelection registers exactly one native undo step per format (#4637) and the
   // ColorPicker applies a swatch in a single dispatch, so one native undo gesture maps to one em undo (no dedupe).
   it('undoing a background highlight via native undo restores visible text (#3954)', async () => {
