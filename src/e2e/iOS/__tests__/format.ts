@@ -7,7 +7,6 @@ import hideKeyboardByTappingDone from '../helpers/hideKeyboardByTappingDone'
 import newThought from '../helpers/newThought'
 import paste from '../helpers/paste'
 import tap from '../helpers/tap.js'
-import waitForEditable from '../helpers/waitForEditable'
 import waitUntil from '../helpers/waitUntil'
 
 describe('Format', () => {
@@ -44,14 +43,12 @@ describe('Format', () => {
     // Use a pre-existing thought so the format edit is its own undo step (not coalesced with newThought).
     await paste(`
     - One`)
-    await waitForEditable('One')
     await clickThought('One') // set the cursor on the thought
 
     // Apply a blue background highlight via the toolbar.
     const textColor = await browser.$('[data-testid="toolbar-icon"][aria-label="Text Color"]').getElement()
     await tap(textColor, { y: 60, pointerType: 'touch' })
     const blueBg = await browser.$('[aria-label="background color swatches"] [aria-label="blue"]').getElement()
-    await blueBg.waitForDisplayed({ timeout: 5000 })
     await tap(blueBg, { y: 60, pointerType: 'touch' })
 
     /** Reads the innerHTML of the (single) thought, independent of edit/keyboard state. */
@@ -63,11 +60,7 @@ describe('Format', () => {
     // Trigger native undo the way iOS shake-to-undo / three-finger swipe does. In real WebKit, document.execCommand('undo')
     // fires the same cancelable historyUndo beforeinput event as the native gesture. em's beforeinput handler blocks the
     // native DOM undo (preventDefault) and routes it through em's single-step undo, which re-renders the editable (#3954).
-    await browser.execute(() => {
-      const editable = document.querySelector('[data-editable]') as HTMLElement | null
-      editable?.focus()
-      document.execCommand('undo')
-    })
+    await browser.execute(() => document.execCommand('undo'))
 
     // em undo re-renders asynchronously; the thought returns to plain, visible text with no leftover color/background.
     // A double undo would also revert the paste and remove the thought, so asserting "One" verifies both the fix and
