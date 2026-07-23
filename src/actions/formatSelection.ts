@@ -66,9 +66,6 @@ export const formatSelectionActionCreator =
       defaultBackgroundColor: colors.bg,
     })
 
-    // Update the toolbar command state when formatting a sub-range (the whole-thought state is derived from the caret).
-    if (!whole) updateCommandState()
-
     const path = state.noteFocus ? resolveNotePath(state, state.cursor) : state.cursor
 
     if (newValue === value || !path) return
@@ -88,4 +85,7 @@ export const formatSelectionActionCreator =
             force: true,
           }),
     )
+
+    // Update the toolbar command state when formatting a sub-range (the whole-thought state is derived from the caret).
+    if (!whole || !state.isKeyboardOpen) updateCommandState()
   }
