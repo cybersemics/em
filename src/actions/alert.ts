@@ -1,6 +1,6 @@
 import _ from 'lodash'
-import { FC } from 'react'
-import Alert from '../@types/Alert'
+import type Alert from '../@types/Alert'
+import type { AlertValue } from '../@types/Alert'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import { AlertType } from '../constants'
@@ -10,7 +10,7 @@ import clearMulticursors from './clearMulticursors'
 
 interface Options {
   alertType?: keyof typeof AlertType
-  value: string | null
+  value: AlertValue
   // used to cancel imports
   importFileId?: string
   clearDelay?: number | null
@@ -47,7 +47,7 @@ const alertReducer = (state: State, { alertType, value, importFileId, clearDelay
  */
 export const alertActionCreator =
   (
-    value: string | FC | null,
+    value: AlertValue,
     {
       alertType,
       clearDelay,

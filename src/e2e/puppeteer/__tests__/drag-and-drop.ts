@@ -3,10 +3,13 @@ import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
 import dragAndDropThought from '../helpers/dragAndDropThought'
+import getEditingText from '../helpers/getEditingText'
 import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
+import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import simulateDragAndDrop from '../helpers/simulateDragAndDrop'
+import waitForAlertContent from '../helpers/waitForAlertContent'
 import waitForEditable from '../helpers/waitForEditable'
 import { page } from '../session'
 
@@ -317,6 +320,37 @@ describe('drag', () => {
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
+  })
+
+  it('renders destination link in moved alert', async () => {
+    await paste(`
+      - a
+        - b
+      - c
+      - d
+    `)
+
+    await press('Escape')
+
+    await dragAndDropThought('d', 'a', {
+      position: 'child',
+      showAlert: true,
+    })
+
+    await waitForAlertContent('"d" moved to "a"')
+
+    const destinationLinkText = await page.$eval(
+      '[data-testid=alert-content] [data-thought-link]',
+      el => el.textContent,
+    )
+    expect(destinationLinkText).toBe('a')
+
+    await page.click('[aria-label=nav] [data-testid=home] a')
+    await page.waitForFunction(() => !document.querySelector('[data-editing=true] [data-editable]'))
+    expect(await getEditingText()).toBeUndefined()
+
+    await page.click('[data-testid=alert-content] [data-thought-link]')
+    expect(await getEditingText()).toBe('a')
   })
 
   it('should allow dropping before first thought in table row', async () => {

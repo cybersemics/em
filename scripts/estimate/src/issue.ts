@@ -82,7 +82,7 @@ const main = async () => {
     taskId: task.id,
   })
   if (!estimate) return
-  const { category, hours } = estimate
+  const { category, hours, confidence, agreement } = estimate
 
   // Get prompt version
   const promptVersion = getPromptVersion(repoRoot)
@@ -94,7 +94,7 @@ const main = async () => {
   )
 
   // Leave an audit comment. Best-effort: a comment failure must not discard the estimate already recorded.
-  const commentBody = `Estimate: ${category} / ${hours}h\nPrompt version: ${promptVersionLink(owner, repoName, promptVersion)}`
+  const commentBody = `Estimate: ${category} / ${hours}h\nConfidence: ${confidence} (agreement ${Math.round(agreement * 100)}%)\nPrompt version: ${promptVersionLink(owner, repoName, promptVersion)}`
 
   try {
     const commentResp = await fetch(

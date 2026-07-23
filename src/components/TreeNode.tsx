@@ -21,6 +21,7 @@ const TreeNode = ({
   depth,
   env,
   indexChild,
+  childIndexNonAttribute,
   indexDescendant,
   isCursor,
   isEmpty,
@@ -165,6 +166,7 @@ const TreeNode = ({
           <VirtualThought
             debugIndex={testFlags.simulateDrop ? indexChild : undefined}
             depth={depth}
+            childIndexNonAttribute={childIndexNonAttribute}
             dropUncle={thoughtId === cursorUncleId}
             env={env}
             indexDescendant={indexDescendant}

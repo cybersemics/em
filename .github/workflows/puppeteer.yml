@@ -66,3 +66,18 @@ jobs:
           name: __diff_output__
           path: src/e2e/puppeteer/__tests__/__image_snapshots__/**/__diff_output__/
           if-no-files-found: ignore
+
+      # Carry the PR number to the privileged workflow_run job. github.event.workflow_run.pull_requests
+      # is empty for fork PRs, so the number must be passed via an artifact. Uploaded on every PR run
+      # (success or failure) so the comment can be posted on failure and pruned/resolved on success.
+      - name: Save PR number
+        if: always() && github.event_name == 'pull_request'
+        run: echo "${{ github.event.pull_request.number }}" > pr-number.txt
+
+      - name: Upload PR number artifact
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v7
+        with:
+          name: pr-number
+          path: pr-number.txt
+          if-no-files-found: ignore
