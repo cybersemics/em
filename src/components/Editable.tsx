@@ -823,7 +823,15 @@ const Editable = ({
       if (isTouch && isSafari()) {
         dispatch((dispatch, getState) => {
           const state = getState()
-          if (state.showCommandCenter) {
+          // On iOS a long press (~415–650ms) triggers this native onFocus and reopens the virtual keyboard
+          // even when preventDefault was called in touchend — there is no way to prevent the focus itself.
+          // Dismiss the keyboard again here when the Command Center is open (#3387) or a drag gesture is in
+          // progress (#4683), otherwise the keyboard reopens on top of the drag-and-drop hint after it was
+          // dismissed at drag start. Clearing after two animation frames (rather than synchronously) avoids
+          // iOS Writing Tools getting stuck open and the selection being restored.
+          const isDragging =
+            state.longPress === LongPressState.DragHold || state.longPress === LongPressState.DragInProgress
+          if (state.showCommandCenter || isDragging) {
             selection.clear()
             dispatch(keyboardOpenActionCreator({ value: false }))
             requestAnimationFrame(() => {
