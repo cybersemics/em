@@ -1,5 +1,7 @@
 /* eslint-disable no-restricted-properties */
 /** Wraps the browser Selection API in a device-agnostic interface. */
+import { Capacitor } from '@capacitor/core'
+import { Keyboard } from '@capacitor/keyboard'
 import { isHTMLElement } from 'motion/react'
 import SplitResult from '../@types/SplitResult'
 import { ALLOWED_FORMATTING_TAGS } from '../constants'
@@ -48,6 +50,12 @@ export const clear = (): void => {
   // Blur the active document element to close the keyboard.
   if (document.activeElement instanceof HTMLElement) {
     document.activeElement.blur()
+  }
+
+  // On iOS Capacitor a DOM blur does not reliably dismiss the native WKWebView keyboard (Keyboard
+  // resize is 'none'), so hide it explicitly via the Keyboard plugin.
+  if (Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('Keyboard')) {
+    Keyboard.hide()
   }
 }
 

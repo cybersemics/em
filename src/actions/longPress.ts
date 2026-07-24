@@ -1,5 +1,3 @@
-import { Capacitor } from '@capacitor/core'
-import { Keyboard } from '@capacitor/keyboard'
 import _ from 'lodash'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import DropThoughtZone from '../@types/DropThoughtZone'
@@ -20,7 +18,6 @@ import shaker from '../util/shaker'
 import alert from './alert'
 import { expandHoverDownActionCreator as expandHoverDown } from './expandHoverDown'
 import { expandOnHoverTopActionCreator as expandHoverUp } from './expandHoverUp'
-import { keyboardOpenActionCreator as keyboardOpen } from './keyboardOpen'
 
 interface InactivePayload {
   value: LongPressState.Inactive
@@ -150,25 +147,13 @@ export const longPressActionCreator =
 
     // Close the keyboard when a drag gesture begins on touch. The editable stays focused when a long
     // press activates the drag (DragHold, fired when the user holds without moving) or escalates into a
-    // drag (DragInProgress), so no blur event fires to dismiss the keyboard on its own.
-    //
-    // This must NOT be gated on state.cursor (as dismissKeyboardActionCreator is): in the Home-cleared
-    // repro the redux cursor is not yet set at DragHold, yet the native keyboard is visually open. It also
-    // must set isKeyboardOpen: false unconditionally, otherwise useEditMode re-focuses the editable
-    // (asyncFocus + selection.set) as the drag advances and the keyboard immediately reopens.
-    //
-    // On iOS Capacitor a DOM blur does not reliably dismiss the native WKWebView keyboard (Keyboard
-    // resize is 'none'), so hide it explicitly via the Keyboard plugin. Fires again on the
-    // DragHold -> DragInProgress transition for resilience against a re-focus race. Caret restoration
-    // falls back to state.cursorOffset, so it is unaffected.
+    // drag (DragInProgress), so no blur event fires to dismiss the keyboard on its own. selection.clear()
+    // blurs the editable (which resets isKeyboardOpen via Editable's onBlur) and hides the native iOS
+    // keyboard. useEditMode bails while a drag is active, so it does not re-focus and reopen the keyboard.
     const enteringDrag =
       (value === LongPressState.DragHold || value === LongPressState.DragInProgress) && previousValue !== value
     if (isTouch && enteringDrag) {
-      if (Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('Keyboard')) {
-        Keyboard.hide()
-      }
       selection.clear()
-      dispatch(keyboardOpen({ value: false }))
     }
 
     if (value === LongPressState.DragInProgress) {
