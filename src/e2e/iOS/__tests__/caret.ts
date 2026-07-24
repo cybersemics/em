@@ -23,6 +23,66 @@ import waitUntil from '../helpers/waitUntil'
 // https://github.com/cybersemics/em/issues/1523
 
 describe('Caret', () => {
+  // https://github.com/cybersemics/em/issues/4426
+  it.skip('Caret placed at the end of a wrapped line whose next line begins with formatted text stays on that line', async () => {
+    await paste(
+      'Lorem ipsum dolor sit amet, <b>consectetur adipiscing elit</b>, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
+    )
+
+    const editableNodeHandle = await getEditable('Lorem ipsum dolor sit amet,')
+    // Enter edit mode.
+    await tap(editableNodeHandle, { y: 8, x: 8 })
+    await waitUntil(isKeyboardShown)
+
+    // Measure the layout. The plain text node "Lorem ipsum dolor sit amet, " occupies the first visual
+    // line and the bold text wraps onto the next line. Compute the first line's vertical center relative
+    // to the editable's center, which is what tap's `y` option is added to.
+    const { boldStart, tapYOffset, boldWrapsToNewLine } = await browser.execute(() => {
+      const editable = document.querySelector('[data-editing=true] [data-editable]') as HTMLElement
+      const rect = editable.getBoundingClientRect()
+      const plainNode = editable.firstChild as Text
+      const boldNode = editable.querySelector('b')!.firstChild as Text
+      const plainLen = plainNode.textContent!.length
+      const rPlainEnd = document.createRange()
+      rPlainEnd.setStart(plainNode, plainLen - 1)
+      rPlainEnd.setEnd(plainNode, plainLen)
+      const plainLastCharRect = rPlainEnd.getBoundingClientRect()
+      const rBold0 = document.createRange()
+      rBold0.setStart(boldNode, 0)
+      rBold0.setEnd(boldNode, 1)
+      const boldFirstRect = rBold0.getBoundingClientRect()
+      return {
+        boldStart: plainLen,
+        tapYOffset: Math.round(plainLastCharRect.top + plainLastCharRect.height / 2 - (rect.y + rect.height / 2)),
+        boldWrapsToNewLine: boldFirstRect.top > plainLastCharRect.top + 3,
+      }
+    })
+
+    // Precondition: the bold text must wrap onto the next visual line for this bug to manifest.
+    expect(boldWrapsToNewLine).toBe(true)
+
+    // Tap the end of the first visual line (just past its right edge, at the line's vertical center).
+    await tap(editableNodeHandle, { horizontalTapLine: 'right', y: tapYOffset })
+
+    // Read the caret's global offset across the editable's text nodes.
+    const caretOffset = await browser.execute(() => {
+      const sel = window.getSelection()!
+      const editable = document.querySelector('[data-editing=true] [data-editable]') as HTMLElement
+      const walker = document.createTreeWalker(editable, NodeFilter.SHOW_TEXT)
+      let node: Node | null
+      let global = 0
+      while ((node = walker.nextNode())) {
+        if (node === sel.focusNode) return global + sel.focusOffset
+        global += (node.textContent || '').length
+      }
+      return -1
+    })
+
+    // The caret must stay on the first line (before the bold boundary), not jump to the start of the bold
+    // text on the next line (which corresponds to offset === boldStart).
+    expect(caretOffset).toBeLessThan(boldStart)
+  })
+
   it('Enter edit mode', async () => {
     await newThought('foo')
     await hideKeyboardByTappingDone()
