@@ -9,7 +9,7 @@ Adhere to the functional programming style:
 - Avoid `for` loops; use `map`, `filter`, `reduce`.
 - Use point-free style: Avoid `setTimeout(() => cb())`; use `setTimeout(cb)`.
 
-See existing code if you are unfamiliar with this approach. Support will be offered to those new to this style, but willingness and effort is required.
+See existing code if you are unfamiliar with this approach. Support will be offered to those new to this style, but willingness and effort are required.
 
 ## Code Quality
 
@@ -17,7 +17,7 @@ Here are some code quality requirements:
 
 - Do not use overly vague variable names or extraneous affixes such as "data"
 - Avoid redundancy
-- Write a JSDOC comment for each function definition
+- Write a JSDoc comment for each function definition
 - Add a descriptive comment to any code that is counterintuitive, non-obvious, non-trivial, or requires additional explanation
 
 All of these requirements entail judgment calls. There is no clear cut rule of what is right and wrong. Good judgment is contextual and based on experience. Preserving code quality is just as much a part of the task as completing requested changes. Please count on critical discussion during code reviews. The stances of "it works" or "it's good enough" or "that's beyond what I was asked to do" will generally not be considered valid objections to these requirements.
@@ -30,7 +30,7 @@ The project uses 2 spaces for tabs. Please make sure your editor settings match.
 
 All contributions must be submitted through public pull requests on the repo at https://github.com/cybersemics/em. This is typically done by forking the repo, creating a new branch, making your changes, pushing your branch to your fork, and then opening a Pull Request against `dev` from the GitHub interface. All pull requests will be reviewed and feedback will be provided.
 
-- Enter a descriptive title for all PR's.
+- Enter a descriptive title for all PRs.
 - Add the issue number to the description (not the title).
 - Commit messages should be succinct and provide a relevant summary of the contained changes.
 - Each commit should correspond to a single, unified set of changes for a single purpose.

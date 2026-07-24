@@ -133,3 +133,20 @@ it.each<{ cursor: string[] | null; cursorName: string }>([
   expect(store.getState().cursor).toEqual(cursorBefore)
   await act(vi.runOnlyPendingTimersAsync)
 })
+
+it('inserts emoji spacing immediately before colored text', async () => {
+  act(() => {
+    windowEvent('keydown', { key: 'Enter' })
+  })
+
+  const editable = (await findThoughtByText(''))!
+  expect(editable).toBeVisible()
+
+  editable.innerHTML = '👋<font color="#ff0000">Hello</font>'
+  act(() => {
+    fireEvent.input(editable, { bubbles: true })
+  })
+
+  expect(editable.textContent).toBe('👋 Hello')
+  expect(editable.innerHTML).toBe('👋 <font color="#ff0000">Hello</font>')
+})
