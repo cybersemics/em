@@ -81,7 +81,7 @@ Hashes are uppercased, modifier-prefixed strings — so `Cmd+Shift+P` becomes `M
 - Calls `e.preventDefault()` before dispatching, *unless* `command.permitDefault` is set. (`command.preventDefault` forces a preventDefault even when `canExecute` returns false.)
 - Routes through `executeCommandWithMulticursor`, which short-circuits to `executeCommand` if no multicursor is active.
 
-There's a special case in `beforeInput` for `newThought` and `indent` to handle iOS auto-capitalization: the Enter / space character is prevented in the `beforeinput` event rather than `keydown` ([issue #3707](https://github.com/cybersemics/em/issues/3707)).
+There's a special case in `beforeInput` for `newThought` and `indent` to handle iOS auto-capitalization: the Enter / space character is prevented in the `beforeinput` event rather than `keydown` ([issue #3707](https://github.com/cybersemics/em/issues/3707)). `beforeInput` also handles space-to-indent on Android: the soft keyboard reports the space keydown with `keyCode` 229 (`'Unidentified'`), so the command is never matched in `keyDown`; instead the space `beforeinput` on an empty thought is detected directly and the indent is dispatched ([issue #4178](https://github.com/cybersemics/em/issues/4178)).
 
 ### Gesture activation
 

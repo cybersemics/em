@@ -27,7 +27,7 @@ const pressSpaceAndroid = () =>
 
 describe('space-to-indent', () => {
   // https://github.com/cybersemics/em/issues/4178
-  it.skip('space on an empty thought indents it as a subthought on Android', async () => {
+  it('space on an empty thought indents it as a subthought on Android', async () => {
     await newThought('A')
     await press('Enter')
     await waitForEditable('')

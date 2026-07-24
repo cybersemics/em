@@ -19,6 +19,7 @@ import { addMulticursorActionCreator as addMulticursor } from './actions/addMult
 import { alertActionCreator as alert } from './actions/alert'
 import { clearMulticursorsActionCreator as clearMulticursors } from './actions/clearMulticursors'
 import { gestureMenuActionCreator as gestureMenu } from './actions/gestureMenu'
+import { indentActionCreator as indent } from './actions/indent'
 import { setCursorActionCreator as setCursor } from './actions/setCursor'
 import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from './actions/setIsMulticursorExecuting'
 import { showLatestCommandsActionCreator as showLatestCommands } from './actions/showLatestCommands'
@@ -577,6 +578,16 @@ export const handleGestureCancel = () => {
 export const beforeInput = (e: InputEvent) => {
   if (keyCommandId === 'newThought' || (keyCommandId === 'indent' && editingValueStore.getState() === '')) {
     e.preventDefault()
+    return
+  }
+
+  // On Android, the soft keyboard reports the space keydown with keyCode 229 ('Unidentified'), so the
+  // space-to-indent command is never matched in keyDown (unlike desktop/iOS) and keyCommandId is not set.
+  // Detect the resulting space insertion on an empty thought here and trigger the indent manually,
+  // preventing the space character from being inserted (#4178).
+  if (e.inputType === 'insertText' && e.data === ' ' && editingValueStore.getState() === '') {
+    e.preventDefault()
+    store.dispatch(indent())
   }
 }
 
