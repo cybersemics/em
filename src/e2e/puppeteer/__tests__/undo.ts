@@ -33,6 +33,41 @@ it('Re-render cursor thought on undo', async () => {
   expect(thoughtValue).toBe('hello')
 })
 
+/** Dispatches a native undo/redo beforeinput event on the thought currently being edited, as iOS does for a three-finger swipe or shake-to-undo. */
+const dispatchNativeHistory = (inputType: 'historyUndo' | 'historyRedo') =>
+  page.evaluate(type => {
+    const editable = document.querySelector('[data-editing=true] [data-editable]')
+    editable?.dispatchEvent(new InputEvent('beforeinput', { inputType: type, bubbles: true, cancelable: true }))
+  }, inputType)
+
+// iOS three-finger swipe and shake-to-undo dispatch a beforeinput event with inputType historyUndo/historyRedo rather than Cmd+Z.
+// Left to run natively, WebKit's contentEditable undo mutates the DOM out of sync with Redux (duplicating text, e.g. an autocorrected
+// word and its original both re-inserted on redo). Verify these events are intercepted and routed through the app's undo/redo. (#4477)
+it('Native undo/redo beforeinput (iOS three-finger swipe / shake-to-undo) routes through the app undo/redo', async () => {
+  // create a thought "hello"
+  await press('Enter')
+  await keyboard.type('hello')
+
+  // create a thought "a"
+  await press('Enter')
+  await keyboard.type('a')
+
+  // edit "hello" to "hello world"
+  await clickThought('hello')
+  await press('ArrowRight', { ctrl: true })
+  await keyboard.type(' world')
+
+  expect(await getEditingText()).toBe('hello world')
+
+  // native undo (dispatched as iOS does, not via Cmd+Z)
+  await dispatchNativeHistory('historyUndo')
+  expect(await getEditingText()).toBe('hello')
+
+  // native redo restores the edit exactly, without duplicating text
+  await dispatchNativeHistory('historyRedo')
+  expect(await getEditingText()).toBe('hello world')
+})
+
 // We have to test this in puppeteer because chained commands are executed as separate commands at a higher level than action-creators and undone with an ad hoc mergeNext property on the action.
 it('Undo Select All + Categorize chained command in one step', async () => {
   await page.emulate(KnownDevices['iPhone 15 Pro'])
