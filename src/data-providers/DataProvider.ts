@@ -13,11 +13,13 @@ export interface DataProvider<T extends any[] = any> {
   getLexemesByIds: (keys: string[]) => Promise<(Lexeme | undefined)[]>
   getThoughtById: (id: ThoughtId) => Promise<Thought | undefined>
   getThoughtsByIds: (ids: ThoughtId[]) => Promise<(Thought | undefined)[]>
+  /** Resolved value is provider-specific; the treecrdt provider returns `readonly Operation[]` for local tree mutations. */
   updateThoughts: (args: {
     thoughtIndexUpdates: Index<Thought | null>
     lexemeIndexUpdates: Index<Lexeme | null>
     lexemeIndexUpdatesOld: Index<Lexeme | undefined>
     schemaVersion: number
+    movePlacements?: Index<ThoughtId | null>
   }) => Promise<unknown>
   freeThought: (id: ThoughtId) => Promise<void>
   freeLexeme: (key: string) => Promise<void>

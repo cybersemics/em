@@ -105,6 +105,7 @@ export default [
       '**/docs/*',
       '**/functions/*',
       '**/scripts/*',
+      'public/wa-sqlite/**',
     ],
   },
   {

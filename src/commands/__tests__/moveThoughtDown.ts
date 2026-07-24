@@ -29,7 +29,7 @@ describe('moveThoughtDown', () => {
 
     const state = store.getState()
     const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
-    expect(exported).toBe(`- __ROOT__
+    expect(exported).toBe(`- ${HOME_TOKEN}
   - a
   - c
   - b`)
@@ -81,7 +81,7 @@ describe('moveThoughtDown', () => {
 
       const state = store.getState()
       const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
-      expect(exported).toBe(`- __ROOT__
+      expect(exported).toBe(`- ${HOME_TOKEN}
   - a
   - c
   - b
@@ -113,7 +113,7 @@ describe('moveThoughtDown', () => {
 
       const state = store.getState()
       const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
-      expect(exported).toBe(`- __ROOT__
+      expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - a2
     - a1
@@ -142,7 +142,7 @@ describe('moveThoughtDown', () => {
 
       const state = store.getState()
       const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
-      expect(exported).toBe(`- __ROOT__
+      expect(exported).toBe(`- ${HOME_TOKEN}
   - a
   - b
   - c`)

@@ -58,7 +58,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 ## D
 
-**DataProvider** — The single interface ([`DataProvider.ts`](../src/data-providers/DataProvider.ts)) for storage backends. `db` in [`yjs/thoughtspace.ts`](../src/data-providers/yjs/thoughtspace.ts) is the live implementation.
+**DataProvider** — The single interface ([`DataProvider.ts`](../src/data-providers/DataProvider.ts)) for storage backends. The active implementation is exported through [`data-providers/thoughtspace.ts`](../src/data-providers/thoughtspace.ts).
 
 **dbQueue / freeQueue** — Two halves of the push-queue split. `dbQueue` writes batches with `local || remote` set; `freeQueue` releases entries from the in-memory cache. See [persistence.md → Push queue](persistence.md#push-queue-redux--yjs).
 
@@ -192,7 +192,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **updatedBy** — `clientId` of the writer. Stamped on every Thought and Lexeme write so observers can filter out self-originated change events.
 
-**updateThoughts** — Both an action ([`actions/updateThoughts.ts`](../src/actions/updateThoughts.ts)) that mutates Redux and queues a push, and the `DataProvider` entry point ([`yjs/thoughtspace.ts`](../src/data-providers/yjs/thoughtspace.ts)) that writes to Yjs. The action calls into the provider via the push queue.
+**updateThoughts** — The action ([`actions/updateThoughts.ts`](../src/actions/updateThoughts.ts)) that mutates Redux and queues a push. The push queue persists those batches through the active data provider's `updateThoughts`.
 
 ## V
 

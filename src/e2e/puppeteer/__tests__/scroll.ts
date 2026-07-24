@@ -1,4 +1,4 @@
-import { WindowEm } from '../../../initialize'
+import type { WindowEm } from '../../../initialize'
 import clickThought from '../helpers/clickThought'
 import getEditingText from '../helpers/getEditingText'
 import paste from '../helpers/paste'
@@ -7,11 +7,12 @@ import waitForEditable from '../helpers/waitForEditable'
 import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
 import waitUntil from '../helpers/waitUntil'
 import { page } from '../session'
+import { usePersistentTreecrdtStorage } from '../setup'
 
-const em = window.em as WindowEm
 const MOCK_REPLICATION_DELAY = 100
 
-vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
+vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
+usePersistentTreecrdtStorage()
 
 describe('scrollCursorIntoView', () => {
   it('should scroll cursor into view after page refresh with delayed replicateChildren', async () => {
@@ -49,6 +50,22 @@ describe('scrollCursorIntoView', () => {
 
     await waitForThoughtExistInDb('t')
 
+    // Simulate slow TreeCRDT reads during app startup after refresh.
+    await page.evaluateOnNewDocument(value => {
+      type PreloadedWindowEm = Omit<Partial<WindowEm>, 'testFlags'> & {
+        testFlags?: Partial<WindowEm['testFlags']>
+      }
+
+      const emWindow = window as Window & { em?: PreloadedWindowEm }
+      emWindow.em = {
+        ...emWindow.em,
+        testFlags: {
+          ...emWindow.em?.testFlags,
+          replicationDelay: value,
+        },
+      }
+    }, MOCK_REPLICATION_DELAY)
+
     await refresh()
 
     // Wait for page to be ready after refresh
@@ -57,12 +74,6 @@ describe('scrollCursorIntoView', () => {
     // Verify the initial scroll position is 0
     const initialScrollY = await page.evaluate(() => window.scrollY)
     expect(initialScrollY).toBe(0)
-
-    // Set test delay for data replication after refresh
-    // This simulates the regression case where thoughts are loaded slowly from the database
-    await page.evaluate(value => {
-      em.testFlags.replicationDelay = value
-    }, MOCK_REPLICATION_DELAY)
 
     // Wait for the cursor to be restored to thought 't'
     await waitForEditable('t')

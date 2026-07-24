@@ -395,7 +395,7 @@ describe('expansion', () => {
     await act(vi.runOnlyPendingTimersAsync)
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toEqual(`- __ROOT__
+    expect(exported).toEqual(`- ${HOME_TOKEN}
   - a
     - b
       - c
@@ -422,7 +422,7 @@ describe('expansion', () => {
     await act(() => vi.runAllTimersAsync())
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toEqual(`- __ROOT__
+    expect(exported).toEqual(`- ${HOME_TOKEN}
   - a
     - b
       - =pin
@@ -454,7 +454,7 @@ describe('expansion', () => {
     await act(() => vi.runAllTimersAsync())
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toEqual(`- __ROOT__
+    expect(exported).toEqual(`- ${HOME_TOKEN}
   - a
     - =children
       - =pin

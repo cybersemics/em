@@ -1,5 +1,9 @@
+/* eslint-disable import/prefer-default-export */
 import chalk from 'chalk'
-import { Browser, BrowserContext, ConsoleMessage, Device } from 'puppeteer'
+import { Browser, BrowserContext, ConsoleMessage, Device, Page } from 'puppeteer'
+import type { TreecrdtRuntimeConfig } from '../../data-providers/treecrdt/runtime'
+import { WindowEm } from '../../initialize'
+import createId from '../../util/createId'
 import { page, setPage } from './session'
 
 // eslint-disable-next-line @typescript-eslint/no-namespace, @typescript-eslint/prefer-namespace-keyword
@@ -7,7 +11,96 @@ declare module global {
   const browser: Browser
 }
 
+type TreecrdtTestRuntime = 'dedicated-worker' | 'direct' | 'shared-worker'
+
+type TreecrdtTestProfile =
+  | Readonly<{ storage: 'memory' }>
+  | Readonly<{
+      storage: 'persistent'
+      runtime: TreecrdtTestRuntime
+    }>
+
+const memoryTreecrdtProfile: TreecrdtTestProfile = { storage: 'memory' }
+
 let context: BrowserContext
+let activeTreecrdtProfile: TreecrdtTestProfile = memoryTreecrdtProfile
+
+/** Returns the explicit TreeCRDT configuration for a Puppeteer page. */
+const getTreecrdtRuntimeConfig = (docId: string, profile: TreecrdtTestProfile): TreecrdtRuntimeConfig =>
+  profile.storage === 'persistent'
+    ? {
+        client: {
+          docId,
+          runtime: profile.runtime,
+          storage: 'persistent',
+        },
+        tabPolicy: 'single',
+      }
+    : {
+        client: {
+          docId,
+          runtime: 'direct',
+          storage: 'memory',
+        },
+        tabPolicy: 'multiple',
+      }
+
+/** Injects typed TreeCRDT configuration before the app bundle starts. */
+const installTreecrdtRuntimeConfig = async (target: Page, config: TreecrdtRuntimeConfig): Promise<void> => {
+  await target.evaluateOnNewDocument(treecrdt => {
+    window.emConfig = {
+      ...window.emConfig,
+      treecrdt,
+    }
+  }, config)
+}
+
+/** Seeds an isolated browser session and typed test configuration before the app bundle starts. */
+const installTestSession = async (
+  target: Page,
+  sessionId: string,
+  treecrdtConfig: TreecrdtRuntimeConfig,
+): Promise<void> => {
+  await target.evaluateOnNewDocument(sessionId => {
+    if (!sessionStorage.getItem('__em_puppeteer_storage_initialized')) {
+      localStorage.clear()
+      sessionStorage.setItem('__em_puppeteer_storage_initialized', '1')
+    }
+
+    localStorage.setItem('tsid', sessionId)
+    localStorage.setItem('accessToken', sessionId)
+  }, sessionId)
+
+  await installTreecrdtRuntimeConfig(target, treecrdtConfig)
+}
+
+/** Opens an additional page with the current TreeCRDT test configuration. */
+export const createTreecrdtTestPage = async (
+  browserContext: BrowserContext,
+  docId: string,
+  profile: TreecrdtTestProfile,
+): Promise<Page> => {
+  const target = await browserContext.newPage()
+  await installTreecrdtRuntimeConfig(target, getTreecrdtRuntimeConfig(docId, profile))
+  return target
+}
+
+/** Use persistent OPFS storage for tests that verify reload/materialization from storage. */
+export const usePersistentTreecrdtStorage = ({
+  runtime = 'direct',
+}: { runtime?: TreecrdtTestRuntime } = {}): TreecrdtTestProfile => {
+  const profile = { storage: 'persistent', runtime } as const
+
+  beforeAll(() => {
+    activeTreecrdtProfile = profile
+  })
+
+  afterAll(() => {
+    activeTreecrdtProfile = memoryTreecrdtProfile
+  })
+
+  return profile
+}
 
 /** Opens em in a new incognito window in Puppeteer. */
 const setup = async ({
@@ -33,6 +126,10 @@ const setup = async ({
   if (emulatedDevice) {
     await page.emulate(emulatedDevice)
   }
+
+  const sessionId = createId()
+
+  await installTestSession(page, sessionId, getTreecrdtRuntimeConfig(sessionId, activeTreecrdtProfile))
 
   page.on('dialog', async dialog => dialog.accept())
 
@@ -62,6 +159,7 @@ const setup = async ({
   })
 
   await page.goto(url)
+  await page.evaluate(() => (window.em as WindowEm).testHelpers.waitForInitialized())
 
   if (skipTutorial) {
     // wait for welcome modal to appear
@@ -72,13 +170,33 @@ const setup = async ({
 
     // wait for welcome modal to disappear
     await page.waitForFunction(() => !document.getElementById('skip-tutorial'))
+
+    // The skip action clears storage, closes the modal, and rerenders the empty thoughtspace.
+    // Wait until the first real e2e key command can be handled by the app shell.
+    await page.waitForSelector('#content')
+    await page.waitForSelector('[aria-label=menu]')
+    await page.waitForFunction(() => !document.querySelector('[aria-label=modal]'))
+    await page.waitForFunction(() => document.querySelector('[aria-label=empty-thoughtspace], [data-editable]'))
+    await page.evaluate(async () => {
+      await (window.em as Partial<WindowEm> | undefined)?.testHelpers?.waitForThoughtspaceRuntimeIdle?.()
+    })
   }
 }
 
 beforeEach(setup, 60000)
 
+// TreeCRDT teardown can drain OPFS writes from import-heavy tests before dropping storage.
 afterEach(async () => {
   if (page) {
+    await page
+      .evaluate(async () => {
+        await (window.em as Partial<WindowEm> | undefined)?.testHelpers?.waitForThoughtspaceRuntimeIdle?.()
+        await (window.em as Partial<WindowEm> | undefined)?.testHelpers?.dropThoughtspace?.()
+      })
+      .catch(() => {
+        // Ignore teardown errors when a failing test has already closed or navigated the page.
+      })
+
     await page.close().catch(() => {
       // Ignore errors when closing the page.
     })
@@ -89,4 +207,4 @@ afterEach(async () => {
       // Ignore errors when closing the context.
     })
   }
-})
+}, 60000)

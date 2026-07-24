@@ -34,6 +34,7 @@ import isBefore from '../selectors/isBefore'
 import isContextViewActive from '../selectors/isContextViewActive'
 import isMulticursorPath from '../selectors/isMulticursorPath'
 import pathToThought from '../selectors/pathToThought'
+import prevSibling from '../selectors/prevSibling'
 import simplifyPath from '../selectors/simplifyPath'
 import store from '../stores/app'
 import selectionRangeStore from '../stores/selectionRangeStore'
@@ -241,6 +242,7 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
             oldPath: thoughtFrom,
             newPath,
             newRank: prevPath ? getRankAfter(state, prevPath) : getRankBefore(state, props.simplePath),
+            afterId: prevPath ? head(prevPath) : (prevSibling(state, props.simplePath)?.id ?? null),
           }),
         )
       }

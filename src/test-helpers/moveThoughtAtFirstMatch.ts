@@ -8,7 +8,10 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 
-type Payload = Omit<MoveThoughtPayload, 'oldPath' | 'newPath'> & { from: string[]; to: string[] }
+type Payload = Omit<MoveThoughtPayload, 'oldPath' | 'newPath'> & {
+  from: string[]
+  to: string[]
+}
 
 /**
  * Get ranked old and new paths for the unranked paths.

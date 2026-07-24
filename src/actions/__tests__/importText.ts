@@ -452,7 +452,7 @@ it.skip('should strip tags whose font weight is less than or equal to 400', () =
   const paste = `<span style="font-weight:400;">Hello world. </span> <span style="font-weight:100;">This is a test </span>`
   const actual = importExport(paste, 'text/html')
   const expectedOutput = `<ul>
-  <li>__ROOT__${EMPTY_SPACE}
+  <li>${HOME_TOKEN}${EMPTY_SPACE}
     <ul>
       <li>Hello world.  This is a test</li>
     </ul>
@@ -465,7 +465,7 @@ it('should convert font weight to 700 if the font weight in a tag is greater tha
   const paste = `<span style="font-weight: 500;">Hello world. </span><span style="font-weight: 800;">This is a test</span>`
   const actual = importExport(paste, 'text/html')
   const expectedOutput = `<ul>
-  <li>__ROOT__${EMPTY_SPACE}
+  <li>${HOME_TOKEN}${EMPTY_SPACE}
     <ul>
       <li><span style="font-weight: 700;">Hello world. </span><span style="font-weight: 700;">This is a test</span></li>
     </ul>
@@ -478,7 +478,7 @@ it('should not strip whole tag unless other style apart from font-weight should 
   const paste = `<span style="font-weight: 400; font-style: italic;">a</span>`
   const actual = importExport(paste, 'text/html')
   const expectedOutput = `<ul>
-  <li>__ROOT__${EMPTY_SPACE}
+  <li>${HOME_TOKEN}${EMPTY_SPACE}
     <ul>
       <li><span style="font-style: italic;">a</span></li>
     </ul>
@@ -500,7 +500,7 @@ it('allow formatting tags', () => {
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/html')
 
   const expectedOutput = `<ul>
-  <li>__ROOT__${EMPTY_SPACE}
+  <li>${HOME_TOKEN}${EMPTY_SPACE}
     <ul>
       <li>guardians <b>of the </b><b>galaxy </b></li>
       <li>guardians <i>of the </i><i>universe </i></li>
@@ -630,7 +630,7 @@ it('import single line with style attributes', () => {
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/html')
 
   expect(exported).toBe(`<ul>
-  <li>__ROOT__${EMPTY_SPACE}
+  <li>${HOME_TOKEN}${EMPTY_SPACE}
     <ul>
       <li><span style="color: rgb(255, 255, 255);font-weight: bold;background-color: rgb(0, 0, 0);">Atonement</span></li>
     </ul>
@@ -645,7 +645,7 @@ it('import single line with style attributes and a single br tag', () => {
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/html')
 
   expect(exported).toBe(`<ul>
-  <li>__ROOT__${EMPTY_SPACE}
+  <li>${HOME_TOKEN}${EMPTY_SPACE}
     <ul>
       <li><span style="color: pink;">Marcel Duchamp: The Art of the Possible</span></li>
     </ul>

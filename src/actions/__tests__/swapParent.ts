@@ -284,7 +284,11 @@ describe('sort', () => {
   it('root children are re-sorted after swapParent with active sort', () => {
     // Reproduce the issue: cursor on A, set Created sort, create subthought B, swap B with A.
     // B must be created as a separate step so its creation order is after A, C, D.
-    const steps = [
+    vi.useFakeTimers()
+    vi.setSystemTime(0)
+
+    let stateNew = initialState()
+    stateNew = reducerFlow([
       importText({
         text: `
         - a
@@ -294,12 +298,12 @@ describe('sort', () => {
       }),
       setCursor(['a']),
       setSortPreference({ simplePath: HOME_PATH, sortPreference: { type: 'Created', direction: 'Asc' } }),
-      newThought({ value: 'b', insertNewSubthought: true }),
-      setCursor(['a', 'b']),
-      swapParent,
-    ]
+    ])(stateNew)
 
-    const stateNew = reducerFlow(steps)(initialState())
+    vi.setSystemTime(1000)
+    stateNew = reducerFlow([newThought({ value: 'b', insertNewSubthought: true }), setCursor(['a', 'b']), swapParent])(
+      stateNew,
+    )
 
     // Use excludeMeta to focus on regular thoughts only.
     // b was created last (separate newThought step), so it always sorts after c and d in Created Asc order.
@@ -313,6 +317,8 @@ describe('sort', () => {
   - d
   - b
     - a`)
+
+    vi.useRealTimers()
   })
 })
 
