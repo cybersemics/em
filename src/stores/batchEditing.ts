@@ -46,17 +46,6 @@ export const endBatchEditing = () => {
   })
 }
 
-/** Returns true if batch editing is currently active. */
-export const isBatchEditing = (): boolean => batchEditing.getState().batching
-
-/** Gets the current batch's user-facing undo label, if any. */
-export const getBatchEditingUndoLabel = (): string | undefined => batchEditing.getState().undoLabel
-
-/** Sets the current batch's user-facing undo label. */
-export const setBatchEditingUndoLabel = (undoLabel: string) => {
-  batchEditing.update({ undoLabel })
-}
-
 /** Returns the mergePrev value for an edit dispatched during a possible batch, recording that an edit has occurred. Returns false when not batching or for the
  * first edit in a batch (which starts a new undo step), and true for subsequent edits in the same batch (which merge into it). */
 export const mergeBatchEditing = (): boolean => {

@@ -19,7 +19,7 @@ import getThoughtById from '../selectors/getThoughtById'
 import noteValue from '../selectors/noteValue'
 import resolveNotePath from '../selectors/resolveNotePath'
 import store from '../stores/app'
-import { getBatchEditingUndoLabel, mergeBatchEditing } from '../stores/batchEditing'
+import batchEditing, { mergeBatchEditing } from '../stores/batchEditing'
 import equalPathHead from '../util/equalPathHead'
 import head from '../util/head'
 import strip from '../util/strip'
@@ -124,7 +124,7 @@ const Note = React.memo(
           const state = getState()
 
           const targetPath = resolveNotePath(state, path) ?? path
-          const undoLabel = getBatchEditingUndoLabel()
+          const undoLabel = batchEditing.getState().undoLabel
 
           dispatch(
             setDescendant({

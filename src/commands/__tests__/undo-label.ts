@@ -8,12 +8,7 @@ import { executeCommand } from '../../commands'
 import { HOME_PATH } from '../../constants'
 import contextToPath from '../../selectors/contextToPath'
 import store from '../../stores/app'
-import {
-  endBatchEditing,
-  getBatchEditingUndoLabel,
-  mergeBatchEditing,
-  startBatchEditing,
-} from '../../stores/batchEditing'
+import batchEditing, { endBatchEditing, mergeBatchEditing, startBatchEditing } from '../../stores/batchEditing'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import withUndoLabel from '../../util/withUndoLabel'
@@ -37,7 +32,7 @@ const dispatchBatchFormattingEdit = (undoLabel: string, newValue: string) => {
         newValue,
         force: true,
         mergePrev: mergeBatchEditing(),
-        undoLabel: getBatchEditingUndoLabel(),
+        undoLabel: batchEditing.getState().undoLabel,
       }),
     )
   } finally {

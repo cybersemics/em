@@ -42,7 +42,7 @@ import getSetting from '../selectors/getSetting'
 import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursorSelector from '../selectors/hasMulticursor'
 import rootedParentOf from '../selectors/rootedParentOf'
-import { getBatchEditingUndoLabel, mergeBatchEditing } from '../stores/batchEditing'
+import batchEditing, { mergeBatchEditing } from '../stores/batchEditing'
 import editingValueStore from '../stores/editingValue'
 import editingValueUntrimmedStore from '../stores/editingValueUntrimmed'
 import storageModel from '../stores/storageModel'
@@ -336,7 +336,7 @@ const Editable = ({
     // Log the value transition at the point the edit is committed to Redux. Correlates with the 'change' branch that queued it.
     debugLog.log('edit', { oldValue, newValue, rank })
 
-    const undoLabel = getBatchEditingUndoLabel()
+    const undoLabel = batchEditing.getState().undoLabel
 
     dispatch(
       editThought({
