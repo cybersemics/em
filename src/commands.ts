@@ -19,6 +19,7 @@ import { addMulticursorActionCreator as addMulticursor } from './actions/addMult
 import { alertActionCreator as alert } from './actions/alert'
 import { clearMulticursorsActionCreator as clearMulticursors } from './actions/clearMulticursors'
 import { gestureMenuActionCreator as gestureMenu } from './actions/gestureMenu'
+import { indentActionCreator as indent } from './actions/indent'
 import { redoActionCreator as redo } from './actions/redo'
 import { setCursorActionCreator as setCursor } from './actions/setCursor'
 import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from './actions/setIsMulticursorExecuting'
@@ -576,7 +577,12 @@ export const handleGestureCancel = () => {
   })
 }
 
-/** In the specific case of the newThought and indent commands, prevent default in beforeinput event instead of keydown to preserve default iOS auto-capitalization behavior. The Enter and space characters needs to be prevented so that it doesn't get inserted into the thought (#3707). */
+/** In the specific case of the newThought and indent commands, prevent default in beforeinput event instead of keydown to preserve default iOS auto-capitalization behavior. The Enter and space characters needs to be prevented so that it doesn't get inserted into the thought (#3707).
+ *
+ * Android soft keyboards report the space keydown as keyCode 229 ('Unidentified'), so the space-to-indent
+ * command is never matched in keyDown and keyCommandId is never set. The second branch catches that case:
+ * a `beforeinput` insertText of a single space over an empty thought indents it instead of inserting the
+ * space, mirroring the keyDown-matched path on desktop/iOS (#4178). */
 export const beforeInput = (e: InputEvent) => {
   // Native undo/redo (iOS shake-to-undo or three-finger swipe) fires a cancelable beforeinput with inputType
   // historyUndo/historyRedo. Left unhandled, it mutates the contenteditable DOM directly, bypassing em's undo and
@@ -598,6 +604,17 @@ export const beforeInput = (e: InputEvent) => {
 
   if (keyCommandId === 'newThought' || (keyCommandId === 'indent' && editingValueStore.getState() === '')) {
     e.preventDefault()
+    return
+  }
+
+  // On Android, the soft keyboard reports the space keydown with keyCode 229 ('Unidentified'), so the
+  // space-to-indent command is never matched in keyDown and keyCommandId is not set. Catch the space here
+  // and indent the empty thought instead of letting the literal space get inserted (#4178). Non-empty
+  // thoughts and other input types (paste, IME composition) are excluded, so typing a space mid-word is
+  // unaffected; desktop/iOS reach indent via their keyDown-matched path and short-circuit above.
+  if (e.inputType === 'insertText' && e.data === ' ' && editingValueStore.getState() === '') {
+    e.preventDefault()
+    store.dispatch(indent())
   }
 }
 
