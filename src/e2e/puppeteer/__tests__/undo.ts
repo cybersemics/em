@@ -6,6 +6,7 @@ import exportThoughts from '../helpers/exportThoughts'
 import gesture from '../helpers/gesture'
 import getEditingText from '../helpers/getEditingText'
 import keyboard from '../helpers/keyboard'
+import newThought from '../helpers/newThought'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import { page } from '../session'
@@ -163,4 +164,29 @@ it('applying multiple background colors should each be a separate undo step', as
   const exported = await exportThoughts({ mimeType: 'text/html' })
   expect(exported).toContain('background-color: rgb(255, 87, 61)')
   expect(exported).not.toContain('rgb(0, 214, 136)')
+})
+
+// https://github.com/cybersemics/em/issues/4722
+// The iOS three-finger-swipe and shake-to-undo gestures dispatch a native beforeinput event with
+// inputType 'historyUndo' on the focused editable. em must route this to its own undo so that
+// structural actions (e.g. creating a new thought) can be undone via these gestures, rather than
+// falling through to WebKit's text-only native undo (which shows "Nothing to Undo" and leaves the
+// newly created thought in place).
+it.skip('native undo (beforeinput historyUndo) undoes thought creation', async () => {
+  // create a new thought "hello"
+  await newThought('hello')
+
+  // simulate the native iOS undo gesture
+  await page.evaluate(() => {
+    document.activeElement?.dispatchEvent(
+      new InputEvent('beforeinput', { inputType: 'historyUndo', bubbles: true, cancelable: true }),
+    )
+  })
+
+  // allow the undo to re-render
+  await new Promise(resolve => setTimeout(resolve, 500))
+
+  // the newly created thought should be removed entirely, leaving an empty thoughtspace
+  const editableCount = await page.$$eval('[data-editable]', els => els.length)
+  expect(editableCount).toBe(0)
 })
