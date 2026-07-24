@@ -2,6 +2,7 @@ import React, { FC } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
+import Thunk from '../@types/Thunk'
 import { formatSelectionActionCreator as formatSelection } from '../actions/formatSelection'
 import { isTouch } from '../browser'
 import { ColorToken } from '../colors.config'
@@ -9,6 +10,7 @@ import themeColors from '../selectors/themeColors'
 import { endBatchEditing, startBatchEditing } from '../stores/batchEditing'
 import commandStateStore from '../stores/commandStateStore'
 import rgbToHex from '../util/rgbToHex'
+import withUndoLabel from '../util/withUndoLabel'
 import Popover from './Popover'
 import TextColorIcon from './icons/TextColor'
 
@@ -61,11 +63,14 @@ const ColorSwatch: FC<{
 
   /** Toggles the text color to the clicked swatch. If the swatch is already selected, sets text color and background color back to default. */
   const toggleTextColor = () => {
+    const undoLabel = backgroundColor ? 'Background Color' : 'Text Color'
+
     // Batch the foreColor and backColor edits into a single undo step. Starting the batch before the foreColor dispatch
     // ensures that whichever edit lands first anchors the undo step, so re-applying a background color (whose forced black
     // text is a no-op) still forms its own undo step instead of merging into the previous color application (#4620).
-    startBatchEditing()
-    dispatch((dispatch, getState) => {
+    startBatchEditing(undoLabel)
+    /** Applies foreground color so nested dispatches can inherit the swatch's undo label. */
+    const applyForegroundColor: Thunk = (dispatch, getState) => {
       // Note is semi-transparent by default and its color must be reset to that rather than white, which is the fg color for thoughts. (#3902)
       const fgColor = getState().noteFocus ? 'fgNote' : 'fg'
       dispatch(
@@ -74,10 +79,11 @@ const ColorSwatch: FC<{
           selected ? fgColor : color || (backgroundColor && backgroundColor !== 'fg' ? 'black' : 'bg'),
         ),
       )
-    })
+    }
+    dispatch(withUndoLabel(applyForegroundColor, undoLabel))
 
     // Apply background color to the selection
-    dispatch(formatSelection('backColor', selected ? 'bg' : (backgroundColor ?? 'bg')))
+    dispatch(withUndoLabel(formatSelection('backColor', selected ? 'bg' : (backgroundColor ?? 'bg')), undoLabel))
     endBatchEditing()
   }
 

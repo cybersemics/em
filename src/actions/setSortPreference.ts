@@ -12,6 +12,7 @@ import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 import keyValueBy from '../util/keyValueBy'
 import reducerFlow from '../util/reducerFlow'
+import sortPreferenceToUndoLabel from '../util/sortPreferenceToUndoLabel'
 import unroot from '../util/unroot'
 import alert from './alert'
 import deleteAttribute from './deleteAttribute'
@@ -147,7 +148,11 @@ const setSortPreference = (
 export const setSortPreferenceActionCreator =
   (payload: Parameters<typeof setSortPreference>[1]): Thunk =>
   dispatch =>
-    dispatch({ type: 'setSortPreference', ...payload })
+    dispatch({
+      type: 'setSortPreference',
+      ...payload,
+      undoLabel: sortPreferenceToUndoLabel(payload.sortPreference),
+    })
 
 export default _.curryRight(setSortPreference, 2)
 

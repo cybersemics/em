@@ -9,7 +9,7 @@ import pathToThought from '../selectors/pathToThought'
 import resolveNotePath from '../selectors/resolveNotePath'
 import simplifyPath from '../selectors/simplifyPath'
 import themeColors from '../selectors/themeColors'
-import { mergeBatchEditing } from '../stores/batchEditing'
+import batchEditing, { endBatchEditing, mergeBatchEditing, startBatchEditing } from '../stores/batchEditing'
 import { updateCommandState } from '../stores/commandStateStore'
 import suppressFocusStore from '../stores/suppressFocus'
 import head from '../util/head'
@@ -20,19 +20,32 @@ import { setDescendantActionCreator as setDescendant } from './setDescendant'
 
 const BACKGROUND_COLOR_REGEX = /background-color\s*:\s*[^;]+;?/i
 
+type FormatSelectionCommand =
+  'bold' | 'italic' | 'strikethrough' | 'underline' | 'code' | 'foreColor' | 'backColor' | 'removeFormat'
+
+const FORMAT_SELECTION_UNDO_LABELS: Record<FormatSelectionCommand, string> = {
+  bold: 'Bold',
+  italic: 'Italic',
+  strikethrough: 'Strikethrough',
+  underline: 'Underline',
+  code: 'Code',
+  foreColor: 'Text Color',
+  backColor: 'Background Color',
+  removeFormat: 'Clear Formatting',
+}
+
+/** Gets the user-facing undo label for a browser formatting command. */
+const getFormatSelectionUndoLabel = (command: FormatSelectionCommand): string => FORMAT_SELECTION_UNDO_LABELS[command]
+
 /** Format the browser selection or cursor thought as bold, italic, strikethrough, underline. */
 export const formatSelectionActionCreator =
-  (
-    command: 'bold' | 'italic' | 'strikethrough' | 'underline' | 'code' | 'foreColor' | 'backColor' | 'removeFormat',
-    color?: ColorToken,
-  ): Thunk =>
+  (command: FormatSelectionCommand, color?: ColorToken): Thunk =>
   (dispatch, getState) => {
     const state = getState()
     if (!state.cursor) return
     const thought = pathToThought(state, state.cursor)
     if (!thought) return
     const colors = themeColors(state)
-    suppressFocusStore.update(true)
 
     // format whole thought (if there is no selection)
     const contentEditable = document.querySelector(
@@ -41,6 +54,18 @@ export const formatSelectionActionCreator =
         : `[aria-label="editable-${thought.id}"]`,
     )
     if (!contentEditable) return
+
+    // A batch may already be in progress (e.g. one started by the ColorPicker). If so, only fill in a missing undo label;
+    // otherwise start a new batch that this thunk owns and closes at the end.
+    const wasBatchEditing = batchEditing.getState().batching
+    const undoLabel = getFormatSelectionUndoLabel(command)
+    if (wasBatchEditing) {
+      if (!batchEditing.getState().undoLabel) batchEditing.update({ undoLabel })
+    } else {
+      startBatchEditing(undoLabel)
+    }
+
+    suppressFocusStore.update(true)
 
     if (
       (selection.text()?.length === 0 && strip(thought.value).length !== 0) ||
@@ -123,6 +148,7 @@ export const formatSelectionActionCreator =
         }
 
         const newValue = doc.body.innerHTML
+        const batchUndoLabel = batchEditing.getState().undoLabel
 
         // Overwrite the value of the thought or note with the stripped value in order to remove background highlighting (#3901)
         if (newValue !== value)
@@ -132,6 +158,7 @@ export const formatSelectionActionCreator =
                   path,
                   values: [newValue],
                   mergePrev: mergeBatchEditing(),
+                  undoLabel: batchUndoLabel,
                 })
               : editThought({
                   cursorOffset: selection.offsetThought() ?? undefined,
@@ -141,8 +168,11 @@ export const formatSelectionActionCreator =
                   // force the ContentEditable to update
                   force: true,
                   mergePrev: mergeBatchEditing(),
+                  undoLabel: batchUndoLabel,
                 }),
           )
       })
     }
+
+    if (!wasBatchEditing) endBatchEditing()
   }

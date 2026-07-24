@@ -7,6 +7,8 @@ import ActionType from './ActionType'
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 interface ExtendedOperation<T = any> extends GetOperation<T> {
   actions: ActionType[]
+  /** User-facing label for the undo/redo alert. */
+  undoLabel?: string
 }
 
 type Patch = ExtendedOperation[]

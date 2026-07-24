@@ -12,6 +12,11 @@ import head from '../util/head'
 const pinCommand: Command = {
   id: 'pin',
   label: 'Pin',
+  undoLabel: state => {
+    const { cursor } = state
+    if (!cursor) return 'Pin Thought'
+    return isPinned(state, head(cursor)) ? 'Unpin Thought' : 'Pin Thought'
+  },
   labelInverse: 'Unpin',
   description: 'Pins open a thought so its subthoughts are always visible.',
   descriptionInverse: 'Unpins a thought so its subthoughts are automatically hidden.',

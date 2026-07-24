@@ -3,6 +3,8 @@
 // editThought merge rules in undoRedoEnhancer (#3905).
 interface MergePrevActionPayload {
   mergePrev?: boolean
+  /** User-facing label to show when undoing or redoing the patch created by this action. */
+  undoLabel?: string
 }
 
 export default MergePrevActionPayload

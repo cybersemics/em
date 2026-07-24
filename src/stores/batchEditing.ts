@@ -6,6 +6,8 @@ interface BatchEditing {
   batching: boolean
   /** Whether at least one edit has been recorded since the current batch started. */
   edited: boolean
+  /** User-facing label to show when undoing or redoing the current batch. */
+  undoLabel?: string
 }
 
 /** A store that signals that multiple execCommand operations are in progress and should be treated as a single edit. While batching, editThought actions
@@ -18,13 +20,13 @@ const batchEditing = ministore<BatchEditing>({ batching: false, edited: false })
 let endBatchTimer: ReturnType<typeof setTimeout> | undefined
 
 /** Starts a batch of edits that should be merged into a single undo step. */
-export const startBatchEditing = () => {
+export const startBatchEditing = (undoLabel?: string) => {
   // Cancel a pending deferred close so the incoming edits are anchored to this fresh batch.
   if (endBatchTimer) {
     clearTimeout(endBatchTimer)
     endBatchTimer = undefined
   }
-  batchEditing.update({ batching: true, edited: false })
+  batchEditing.update({ batching: true, edited: false, undoLabel })
 }
 
 /** Ends the current batch of edits.
@@ -40,7 +42,7 @@ export const endBatchEditing = () => {
   if (endBatchTimer) clearTimeout(endBatchTimer)
   endBatchTimer = setTimeout(() => {
     endBatchTimer = undefined
-    batchEditing.update({ batching: false, edited: false })
+    batchEditing.update({ batching: false, edited: false, undoLabel: undefined })
   })
 }
 

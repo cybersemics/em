@@ -1,20 +1,19 @@
 /* eslint-disable import/prefer-default-export */
-import { startCase } from 'lodash'
 import Thunk from '../@types/Thunk'
 import { AlertType } from '../constants'
-import getLatestActionType from '../util/getLastActionType'
+import getLatestActionLabel from '../util/getLastActionLabel'
 import { alertActionCreator as alert } from './alert'
 
 /** Action-creator for undo. */
 export const undoActionCreator = (): Thunk => (dispatch, getState) => {
-  const lastActionType = getLatestActionType(getState().undoPatches)
+  const lastActionLabel = getLatestActionLabel(getState().undoPatches)
 
   dispatch({ type: 'undo' })
 
-  if (!lastActionType) return
+  if (!lastActionLabel) return
 
   dispatch(
-    alert(`Undo: ${startCase(lastActionType)}`, {
+    alert(`Undo: ${lastActionLabel}`, {
       alertType: AlertType.Undo,
     }),
   )
