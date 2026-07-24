@@ -2,15 +2,19 @@ import type ThoughtId from '../../../@types/ThoughtId'
 import type Timestamp from '../../../@types/Timestamp'
 import { EM_TOKEN, SETTINGS_TOKEN, SETTINGS_VALUE } from '../../../constants'
 import hashThought from '../../../util/hashThought'
-import treecrdtThoughtspace, { createIndexedChildrenMap, init as initTreecrdtThoughtspace } from '../thoughtspace'
-import { getTreecrdtClient, initTreecrdt } from '../treecrdt'
-
-const TEST_REPLICA_ID = new Uint8Array(32).fill(1)
+import createTreecrdtThoughtspace from '../runtime'
+import { createIndexedChildrenMap } from '../thoughtspace'
 
 /** Initializes an isolated in-memory TreeCRDT client and thoughtspace for unit tests. */
-const initTestThoughtspace = async (replicaId: Uint8Array = TEST_REPLICA_ID): Promise<void> => {
-  await initTreecrdt({ storage: 'memory', runtime: 'direct' })
-  await initTreecrdtThoughtspace(replicaId)
+const treecrdt = createTreecrdtThoughtspace({
+  client: { storage: 'memory', runtime: 'direct' },
+  tabPolicy: 'multiple',
+})
+const treecrdtThoughtspace = treecrdt.db
+
+/** Initializes the bound in-memory test runtime. */
+const initTestThoughtspace = async (): Promise<void> => {
+  await treecrdt.init()
 }
 
 const PIN_ID = '00000000000000000000000000000101' as ThoughtId
@@ -36,11 +40,12 @@ const thought = (id: ThoughtId, parentId: ThoughtId, value: string, rank: number
 })
 
 /** Persists thoughts through the real TreeCRDT data provider. */
-const persistThoughts = (
+const persistThoughtsTo = (
+  db: typeof treecrdtThoughtspace,
   thoughts: ReturnType<typeof thought>[],
   movePlacements?: Record<ThoughtId, ThoughtId | null>,
 ) =>
-  treecrdtThoughtspace.updateThoughts({
+  db.updateThoughts({
     thoughtIndexUpdates: Object.fromEntries(thoughts.map(thought => [thought.id, thought])),
     lexemeIndexUpdates: {},
     lexemeIndexUpdatesOld: {},
@@ -48,12 +53,18 @@ const persistThoughts = (
     movePlacements,
   })
 
+/** Persists thoughts through the shared test thoughtspace. */
+const persistThoughts = (
+  thoughts: ReturnType<typeof thought>[],
+  movePlacements?: Record<ThoughtId, ThoughtId | null>,
+) => persistThoughtsTo(treecrdtThoughtspace, thoughts, movePlacements)
+
 beforeEach(async () => {
-  await treecrdtThoughtspace.clear()
+  await treecrdt.drop()
 })
 
 afterEach(async () => {
-  await treecrdtThoughtspace.clear()
+  await treecrdt.drop()
 })
 
 it('seeds fixed system thoughts in the TreeCRDT provider', async () => {
@@ -103,7 +114,7 @@ it('uses indexed attribute values as childrenMap keys without changing TreeCRDT 
 })
 
 it('falls back to rank placement when explicit afterId is stale', async () => {
-  await initTestThoughtspace(new Uint8Array(32).fill(1))
+  await initTestThoughtspace()
 
   await persistThoughts([thought(PARENT_ID, EM_TOKEN, 'parent', 0), thought(OTHER_PARENT_ID, EM_TOKEN, 'other', 1)])
   await persistThoughts([thought(THOUGHT_A_ID, PARENT_ID, 'a', 0)])
@@ -121,9 +132,45 @@ it('falls back to rank placement when explicit afterId is stale', async () => {
     }),
   ).resolves.toBeDefined()
 
-  await expect(getTreecrdtClient().tree.children(PARENT_ID)).resolves.toEqual([
-    THOUGHT_A_ID,
-    THOUGHT_X_ID,
-    THOUGHT_B_ID,
-  ])
+  const parent = await treecrdtThoughtspace.getThoughtById(PARENT_ID)
+  expect(Object.values(parent?.childrenMap ?? {})).toEqual([THOUGHT_A_ID, THOUGHT_X_ID, THOUGHT_B_ID])
+})
+
+it('queues writes issued before initialization and applies them to the initialized session', async () => {
+  let writeSettled = false
+  const write = persistThoughts([thought(PARENT_ID, EM_TOKEN, 'queued', 0)]).finally(() => {
+    writeSettled = true
+  })
+
+  await Promise.resolve()
+  expect(writeSettled).toBe(false)
+
+  await initTestThoughtspace()
+  await expect(write).resolves.toBeDefined()
+  await expect(treecrdtThoughtspace.getThoughtById(PARENT_ID)).resolves.toMatchObject({ value: 'queued' })
+})
+
+it('keeps separately created thoughtspace sessions isolated', async () => {
+  const first = createTreecrdtThoughtspace({
+    client: { storage: 'memory', runtime: 'direct', docId: 'isolated-first' },
+    tabPolicy: 'multiple',
+  })
+  const second = createTreecrdtThoughtspace({
+    client: { storage: 'memory', runtime: 'direct', docId: 'isolated-second' },
+    tabPolicy: 'multiple',
+  })
+
+  try {
+    await first.init()
+    await second.init()
+
+    await persistThoughtsTo(first.db, [thought(PARENT_ID, EM_TOKEN, 'first', 0)])
+    await persistThoughtsTo(second.db, [thought(PARENT_ID, EM_TOKEN, 'second', 0)])
+
+    await expect(first.db.getThoughtById(PARENT_ID)).resolves.toMatchObject({ value: 'first' })
+    await expect(second.db.getThoughtById(PARENT_ID)).resolves.toMatchObject({ value: 'second' })
+  } finally {
+    await first.drop()
+    await second.drop()
+  }
 })

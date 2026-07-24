@@ -9,6 +9,8 @@ import hashThought from '../../../util/hashThought'
 import type { DataProvider } from '../../DataProvider'
 import type { ThoughtspaceMaterializationSnapshot } from '../../thoughtspace'
 
+export type MaterializationDataProvider = Pick<DataProvider, 'getLexemeById' | 'getThoughtById' | 'updateThoughts'>
+
 export type MaterializationThoughtRefresh = {
   /** Thought ids removed from the tree. */
   deletedIds: ThoughtId[]
@@ -33,7 +35,7 @@ const getCurrentLexeme = async (
   key: string,
   updates: Index<Lexeme | null>,
   snapshot: ThoughtspaceMaterializationSnapshot,
-  db: DataProvider,
+  db: MaterializationDataProvider,
 ): Promise<Lexeme | undefined> => {
   if (updates[key] === null) return undefined
   return updates[key] || snapshot.lexemeIndex[key] || (await db.getLexemeById(key))
@@ -43,7 +45,7 @@ const getCurrentLexeme = async (
 const addLexemeContext = async (
   updates: Index<Lexeme | null>,
   snapshot: ThoughtspaceMaterializationSnapshot,
-  db: DataProvider,
+  db: MaterializationDataProvider,
   thought: Thought,
 ): Promise<void> => {
   if (!isLexemeContextThought(thought)) return
@@ -63,7 +65,7 @@ const addLexemeContext = async (
 const removeLexemeContext = async (
   updates: Index<Lexeme | null>,
   snapshot: ThoughtspaceMaterializationSnapshot,
-  db: DataProvider,
+  db: MaterializationDataProvider,
   thought: Thought | undefined,
 ): Promise<void> => {
   if (!isLexemeContextThought(thought)) return
@@ -87,7 +89,7 @@ const removeLexemeContext = async (
 /** Applies TreeCRDT sibling order to em's temporary rank projection for one parent. */
 const addTreeOrderRankProjection = async (
   updates: Index<Thought>,
-  db: DataProvider,
+  db: MaterializationDataProvider,
   parentId: ThoughtId,
 ): Promise<void> => {
   const parent = await db.getThoughtById(parentId)
@@ -109,7 +111,7 @@ const addTreeOrderRankProjection = async (
 /** Collects affected ids from materialization changes, loads fresh thoughts + lexemes from the provider. */
 export async function refreshThoughtsFromMaterializationChanges(
   changes: Change[],
-  db: DataProvider,
+  db: MaterializationDataProvider,
   snapshot: ThoughtspaceMaterializationSnapshot,
 ): Promise<MaterializationThoughtRefresh> {
   const deleted = new Set<ThoughtId>()
