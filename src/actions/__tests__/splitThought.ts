@@ -133,6 +133,35 @@ it('move children to the correct sibling in a sorted context', () => {
       - C`)
 })
 
+// https://github.com/cybersemics/em/issues/4582
+it('note remains on the original thought when split', () => {
+  const steps = [
+    importText({
+      text: `
+      - The world of greatest Airbender
+        - =note
+          - Avatar Aang
+      `,
+    }),
+    setCursor(['The world of greatest Airbender']),
+    splitThought({
+      splitResult: {
+        left: 'The world of greatest ',
+        right: 'Airbender',
+      },
+    }),
+  ]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - The world of greatest
+    - =note
+      - Avatar Aang
+  - Airbender`)
+})
+
 it('split thought with whitespace in HTML formatting', () => {
   const steps = [
     newThought('<meta charset="utf-8">one<i> two</i>'),
