@@ -8,7 +8,7 @@ vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
 describe('space-to-indent', () => {
   // https://github.com/cybersemics/em/issues/4178
-  it.skip('indents an empty thought when Android delivers space as a beforeinput insertText', async () => {
+  it('indents an empty thought when Android delivers space as a beforeinput insertText', async () => {
     // create thought A, then a new empty thought below it
     await newThought('A')
     await press('Enter')
