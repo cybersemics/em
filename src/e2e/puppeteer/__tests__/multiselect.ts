@@ -1,4 +1,5 @@
 import { KnownDevices } from 'puppeteer'
+import { WindowEm } from '../../../initialize'
 import clickThought from '../helpers/clickThought'
 import command from '../helpers/command'
 import emulate from '../helpers/emulate'
@@ -6,6 +7,7 @@ import longPressThought from '../helpers/longPressThought'
 import multiselectThoughts from '../helpers/multiselectThoughts'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
+import waitForAlertContent from '../helpers/waitForAlertContent'
 import waitForEditable from '../helpers/waitForEditable'
 import { page } from '../session'
 
@@ -25,6 +27,32 @@ describe('multiselect', () => {
 
     expect(highlightedBullets.length).toBe(2)
     expect(alertContent).toContain('2 thoughts selected')
+  })
+
+  // Regression test for https://github.com/cybersemics/em/issues/3612
+  // The multiselect indicator must never auto-dismiss, otherwise closing it would clear the selection.
+  it('should not auto-dismiss the multiselect alert while a selection is active', async () => {
+    await paste(`
+        - a
+        - b
+        `)
+
+    await multiselectThoughts(['a'])
+
+    await waitForAlertContent('1 thought selected')
+
+    // The multiselect indicator is dispatched with clearDelay: null so it never auto-dismisses.
+    // Auto-dismiss is globally disabled in tests (testFlags.preventAutoDismiss), which mocks any finite
+    // delay to Infinity. A regression that dropped the intentional clearDelay: null would therefore
+    // resolve to Infinity instead of null, so asserting null catches it.
+    const clearDelay = await page.evaluate(() => (window.em as WindowEm).store.getState().alert?.clearDelay)
+    expect(clearDelay).toBeNull()
+
+    const highlightedBullets = await page.$$('[aria-label="bullet"][data-highlighted="true"]')
+    const alertContent = await page.$eval('[data-testid=alert-content]', el => el.textContent)
+
+    expect(alertContent).toContain('1 thought selected')
+    expect(highlightedBullets.length).toBe(1)
   })
 
   // Regression test for https://github.com/cybersemics/em/issues/3993

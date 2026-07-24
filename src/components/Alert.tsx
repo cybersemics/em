@@ -16,12 +16,12 @@ import Notification from './Notification'
 import RedoIcon from './RedoIcon'
 import UndoIcon from './UndoIcon'
 
-/** A custom hook that manages a delayed effect with start and clear timer functions. The callback will not be called if delay is null, 0, or undefined. */
+/** A custom hook that manages a delayed effect with start and clear timer functions. The callback will not be called if delay is null, 0, undefined, or non-finite (e.g. Infinity). */
 const useDelayedEffect = (callback: () => void, delay: number | null | undefined) => {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const startTimer = useCallback(() => {
-    if (!delay) return
+    if (!delay || !Number.isFinite(delay)) return
     if (timerRef.current) {
       clearTimeout(timerRef.current)
     }
@@ -36,7 +36,7 @@ const useDelayedEffect = (callback: () => void, delay: number | null | undefined
   }, [])
 
   useEffect(() => {
-    if (delay) {
+    if (delay && Number.isFinite(delay)) {
       startTimer()
     }
     return clearTimer

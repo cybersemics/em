@@ -5,6 +5,8 @@ type TestFlags = {
   logMultigesture: boolean
   /** Delay in ms before expanding the hovering thought. */
   expandHoverDelay: number | null
+  /** Globally disable alert auto-dismiss by mocking any finite clearDelay to Infinity. Lets tests assume an alert stays until manually cleared, without sleeping or per-alert flags. */
+  preventAutoDismiss: boolean
   /** Delay in ms to mock data replication, for simulating network latency in tests. */
   replicationDelay: number
   /** Prevent automatic app initialization on page load. */
@@ -29,6 +31,7 @@ const testFlags: TestFlags = {
   logActions: false,
   logMultigesture: false,
   expandHoverDelay: null,
+  preventAutoDismiss: false,
   replicationDelay: 0,
   preventInitialize: preloadedTestFlags?.preventInitialize ?? false,
   initialize: null,
