@@ -5,6 +5,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 local.log
+# cloudflared tunnel diagnostic logs written at runtime by the BrowserStack e2e run
+cloudflared-browserstack.log
+serve.log
 
 .pnp.*
 .yarn/*

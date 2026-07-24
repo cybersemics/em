@@ -20,6 +20,16 @@ if (!process.env.BROWSERSTACK_ACCESS_KEY) {
 const user = process.env.BROWSERSTACK_USERNAME
 const date = new Date().toISOString().slice(0, 10)
 
+// Fixed public hostname of the named `copilot-browserstack` Cloudflare tunnel. Unlike the
+// ephemeral quick tunnel (random *.trycloudflare.com), the named tunnel always resolves to
+// this stable URL, which an administrator binds to the tunnel via a Public Hostname ingress
+// rule + DNS CNAME (browserstack.emthought.cc -> <tunnel-uuid>.cfargotunnel.com).
+const NAMED_TUNNEL_URL = 'https://browserstack.emthought.cc'
+
+// The named connector's output is teed here so the CI workflow can upload it as a diagnostic
+// artifact when a run fails. Written to the repo root (cwd) where the workflow can find it.
+const CONNECTOR_LOG_PATH = path.resolve(process.cwd(), 'cloudflared-browserstack.log')
+
 let tunnelProcess: ChildProcess | null = null
 
 /**
@@ -106,6 +116,70 @@ async function startTunnel(): Promise<string> {
 }
 
 /**
+ * Starts the named `copilot-browserstack` Cloudflare tunnel connector and resolves once the
+ * public hostname is reachable.
+ *
+ * Unlike the ephemeral quick tunnel, the named tunnel's connector authenticates with a
+ * connector token and serves the fixed hostname NAMED_TUNNEL_URL. We reuse the same
+ * `cloudflared` npm binary (no Docker) to honor the existing architecture.
+ *
+ * The connector token is passed ONLY via the child process's TUNNEL_TOKEN env var (never as a
+ * CLI arg and never logged). It overrides the parent's TUNNEL_TOKEN (the Vite app-gate token)
+ * for the child only, so the two tokens never collide.
+ *
+ * Readiness: cloudflared dials outbound to Cloudflare's edge, and on the first CI run an
+ * administrator must finish binding the Public Hostname in the Cloudflare dashboard. We
+ * therefore poll the public URL for up to 5 minutes. Any HTTP response (including a 403 from
+ * the app gate or a 404) proves connectivity; DNS/TLS/connection failures do not.
+ */
+async function startNamedTunnel(token: string): Promise<string> {
+  // Install the cloudflared binary if not already present
+  if (!fs.existsSync(bin)) {
+    await install(bin)
+  }
+
+  const logStream = fs.createWriteStream(CONNECTOR_LOG_PATH, { flags: 'a' })
+  const proc = spawn(bin, ['tunnel', '--no-autoupdate', '--protocol', 'http2', 'run'], {
+    stdio: ['ignore', 'pipe', 'pipe'],
+    // Child-scoped TUNNEL_TOKEN carries the connector token; it shadows the parent's app-gate
+    // TUNNEL_TOKEN for this process only.
+    env: { ...process.env, TUNNEL_TOKEN: token },
+  })
+  tunnelProcess = proc
+  proc.stdout?.pipe(logStream)
+  proc.stderr?.pipe(logStream)
+
+  // Detect an early connector exit (e.g. an invalid token) so we fail fast instead of polling
+  // the public URL for the full timeout.
+  let exited = false
+  proc.once('exit', () => {
+    exited = true
+  })
+
+  const timeoutMs = 5 * 60 * 1000
+  const start = Date.now()
+  while (Date.now() - start < timeoutMs) {
+    if (exited) {
+      throw new Error(
+        `cloudflared connector exited before ${NAMED_TUNNEL_URL} became reachable; see ${CONNECTOR_LOG_PATH}`,
+      )
+    }
+    try {
+      // redirect: 'manual' so a redirect still counts as a reachable HTTP response without
+      // chasing the redirect to another host.
+      await fetch(NAMED_TUNNEL_URL, { redirect: 'manual' })
+      return NAMED_TUNNEL_URL
+    } catch {
+      // DNS/TLS/connection failure — the hostname is not routed yet. Keep waiting.
+    }
+    await new Promise(resolve => setTimeout(resolve, 5000))
+  }
+
+  const log = fs.existsSync(CONNECTOR_LOG_PATH) ? fs.readFileSync(CONNECTOR_LOG_PATH, 'utf8') : ''
+  throw new Error(`Timed out after 5 minutes waiting for ${NAMED_TUNNEL_URL}. Connector log:\n${log}`)
+}
+
+/**
  * WDIO configuration for BrowserStack iOS testing.
  * Uses cloudflared tunnel to expose the local HTTPS dev server via a public
  * URL with a real CA-signed cert, avoiding Safari's self-signed cert restrictions.
@@ -159,9 +233,18 @@ export const config: WebdriverIO.Config = {
   onPrepare: async function () {
     // Start cloudflared tunnel if not already set (e.g. by a CI workflow step)
     if (!process.env.CLOUDFLARED_URL) {
-      const url = await startTunnel()
-      process.env.CLOUDFLARED_URL = url
-      console.info(`cloudflared tunnel: ${url}`)
+      // Named path: when CLOUDFLARE_TUNNEL_TOKEN is present (set by ios.yml), start the
+      // persistent named `copilot-browserstack` connector, which serves the fixed public
+      // hostname. Otherwise (tdd.yml / local runs) fall back to the ephemeral quick tunnel.
+      if (process.env.CLOUDFLARE_TUNNEL_TOKEN) {
+        const url = await startNamedTunnel(process.env.CLOUDFLARE_TUNNEL_TOKEN)
+        process.env.CLOUDFLARED_URL = url
+        console.info(`cloudflared named tunnel: ${url}`)
+      } else {
+        const url = await startTunnel()
+        process.env.CLOUDFLARED_URL = url
+        console.info(`cloudflared tunnel: ${url}`)
+      }
     }
 
     // Append tunnel token to the URL so the Vite token gate allows access

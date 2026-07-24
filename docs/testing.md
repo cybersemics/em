@@ -207,6 +207,28 @@ wdio documentation:
 - https://webdriver.io/docs/configurationfile
 - https://webdriver.io/docs/browserstack-service
 
+#### Cloudflare tunnel for the dev server
+
+BrowserStack's iOS Safari devices load the app over a public HTTPS URL rather than BrowserStack Local, because Safari blocks `localStorage` on self-signed certs. [`wdio.browserstack.conf.ts`](../src/e2e/iOS/config/wdio.browserstack.conf.ts) exposes the local dev server (`https://localhost:3000`) through [`cloudflared`](https://github.com/cloudflare/cloudflared) (the npm binary — no Docker) and sets `CLOUDFLARED_URL` for the test session. There are two tunnel modes, selected automatically by the presence of the `CLOUDFLARE_TUNNEL_TOKEN` env var:
+
+- **Ephemeral quick tunnel** (default — local runs and [`tdd.yml`](../.github/workflows/tdd.yml)): a random `*.trycloudflare.com` URL is created per run and torn down in `onComplete`. Requires no setup.
+- **Named tunnel** (used by [`ios.yml`](../.github/workflows/ios.yml) when `CLOUDFLARE_TUNNEL_TOKEN` is set): a stable connector for the `copilot-browserstack` Cloudflare tunnel is started, serving the fixed public hostname **`https://browserstack.emthought.cc`**. The workflow waits up to five minutes for that hostname to respond before running tests.
+
+> The dev server is served over HTTPS in CI, and Vite only enforces `server.allowedHosts`/`preview.allowedHosts` for **HTTP** servers — so the public hostname does not need to be added to any allowlist.
+
+##### One-time administrator setup for the named tunnel
+
+The named tunnel requires one-time infrastructure and dashboard configuration. This only needs to be done once (and re-run of the workflow if the first attempt times out):
+
+1. **Prerequisite — `emthought.cc` must be an active zone in the same Cloudflare account** as the `copilot-browserstack` tunnel (its nameservers delegated to Cloudflare). The tunnel's Public Hostname domain is chosen from a dropdown of account zones, so without the zone there is nothing to route to. _(If Cloudflare is not the DNS host, instead run `cloudflared tunnel route dns copilot-browserstack browserstack.emthought.cc`, or manually add a CNAME `browserstack.emthought.cc → <tunnel-uuid>.cfargotunnel.com`.)_
+2. Create the GitHub Actions repository secret **`CLOUDFLARE_TUNNEL_TOKEN`** — the tunnel-specific **connector** token from the Cloudflare dashboard (not an API token). Its presence is what switches `ios.yml` to the named tunnel.
+3. Start the **BrowserStack** workflow manually (`workflow_dispatch`).
+4. While it is running, return to the `copilot-browserstack` tunnel in the Cloudflare dashboard. **The connector — and therefore the Public Hostname / Route step — appears only after the workflow run brings a connector online.** The workflow's five-minute public-readiness loop exists precisely to give you time to complete this step on the first run.
+5. Add a **Public Hostname**: subdomain `browserstack`, domain `emthought.cc`, service `https://localhost:3000`, and enable **No TLS Verify** (the origin uses a self-signed cert). Saving it auto-creates the DNS CNAME `browserstack.emthought.cc → <tunnel-uuid>.cfargotunnel.com`.
+6. Save it before the five-minute readiness loop expires. If the run timed out, simply re-run the workflow — subsequent runs connect the already-configured hostname immediately.
+
+Because a named tunnel must have a single active connector per run, `ios.yml` uses a repo-wide `concurrency` group (`browserstack`, `cancel-in-progress: false`) so two runs never connect the same tunnel simultaneously.
+
 Related tests: [/src/e2e/iOS](../src/e2e/iOS)
 
 ## Vitest configuration
