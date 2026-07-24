@@ -367,6 +367,15 @@ const initEvents = (store: Store<State, any>) => {
     }
   }
 
+  /**
+   * Disables native pinch-to-zoom, which iOS Safari leaves enabled by ignoring the viewport's
+   * user-scalable=no/maximum-scale=1. Over the scroll zone (where touchmove is intentionally not
+   * prevented) a two-finger pinch otherwise zooms the app and spuriously triggers the gesture menu.
+   * Pinch/rotate fire the WebKit-specific gesturestart/gesturechange events; preventing their default
+   * disables the native zoom without affecting single-finger gestures, which use touch events. See #4724.
+   */
+  const onGesture = (e: Event) => e.preventDefault()
+
   // prevent browser from restoring the scroll position so that we can do it manually
   window.history.scrollRestoration = 'manual'
 
@@ -384,6 +393,9 @@ const initEvents = (store: Store<State, any>) => {
   window.addEventListener('dragenter', dragEnter)
   window.addEventListener('dragleave', dragLeave)
   window.addEventListener('drop', drop)
+  // disable native pinch-to-zoom (see onGesture)
+  document.addEventListener('gesturestart', onGesture)
+  document.addEventListener('gesturechange', onGesture)
 
   const resizeHost = window.visualViewport || window
   resizeHost.addEventListener('resize', updateSize)
@@ -413,6 +425,8 @@ const initEvents = (store: Store<State, any>) => {
     window.removeEventListener('dragenter', dragEnter)
     window.removeEventListener('dragleave', dragLeave)
     window.removeEventListener('drop', drop)
+    document.removeEventListener('gesturestart', onGesture)
+    document.removeEventListener('gesturechange', onGesture)
     lifecycle.removeEventListener('statechange', onStateChange)
     resizeHost.removeEventListener('resize', updateSize)
     virtualKeyboardHandler.destroy()
