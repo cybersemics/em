@@ -370,6 +370,11 @@ const globalCss = defineGlobalStyles({
     content: 'attr(placeholder)',
     cursor: 'text',
   },
+  '[placeholder][data-placeholder-cleared]:empty::before': {
+    color: 'var(--placeholder-color, currentColor)',
+    // Safari does not fade color emoji with opacity on a pseudo-element, so filter the rendered content instead.
+    filter: 'opacity(0.5)',
+  },
   '[placeholder][data-placeholder-bold]:empty::before': {
     fontWeight: 700,
   },

@@ -140,3 +140,27 @@ it('Clear Thought placeholder inherits whole-thought formatting (#4612)', async 
   expect(Number.parseInt(placeholderStyle.fontWeight, 10)).toBeGreaterThanOrEqual(700)
   expect(placeholderStyle.textDecorationLine).toContain('underline')
 })
+
+it('Clear Thought dims emoji in the placeholder (#4671)', async () => {
+  await paste('- 👋 Hello')
+  await clickThought('👋 Hello')
+
+  await press('c', { ctrl: true, alt: true, shift: true })
+  await page.waitForFunction(() => document.querySelector('[data-editing=true] [data-editable]')?.innerHTML === '')
+
+  const placeholderStyle = await page.evaluate(() => {
+    const editable = document.querySelector('[data-editing=true] [data-editable]')
+    if (!editable) throw new Error('Editing thought not found')
+
+    const style = getComputedStyle(editable, '::before')
+    return {
+      content: style.content,
+      filter: style.filter,
+      opacity: style.opacity,
+    }
+  })
+
+  expect(placeholderStyle.content).toContain('👋 Hello')
+  expect(placeholderStyle.filter).toBe('opacity(0.5)')
+  expect(placeholderStyle.opacity).toBe('1')
+})
