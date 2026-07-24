@@ -17,6 +17,7 @@ import rgbToHex from '../util/rgbToHex'
 import strip from '../util/strip'
 import { editThoughtActionCreator as editThought } from './editThought'
 import { setDescendantActionCreator as setDescendant } from './setDescendant'
+import { setNoteFocusActionCreator as setNoteFocus } from './setNoteFocus'
 
 const BACKGROUND_COLOR_REGEX = /background-color\s*:\s*[^;]+;?/i
 
@@ -125,24 +126,37 @@ export const formatSelectionActionCreator =
         const newValue = doc.body.innerHTML
 
         // Overwrite the value of the thought or note with the stripped value in order to remove background highlighting (#3901)
-        if (newValue !== value)
-          dispatch(
-            state.noteFocus
-              ? setDescendant({
-                  path,
-                  values: [newValue],
-                  mergePrev: mergeBatchEditing(),
-                })
-              : editThought({
-                  cursorOffset: selection.offsetThought() ?? undefined,
-                  oldValue: value,
-                  newValue: newValue,
-                  path: simplifyPath(state, path),
-                  // force the ContentEditable to update
-                  force: true,
-                  mergePrev: mergeBatchEditing(),
-                }),
-          )
+        if (newValue !== value) {
+          if (state.noteFocus) {
+            // Capture the caret's plain-text offset within the note before overwriting its value. Overwriting
+            // re-renders the note's ContentEditable, which drops the caret; restoring the offset via setNoteFocus
+            // places it back where the user left off instead of jumping to the start/end of the note (#4630).
+            const editMode = !isTouch || state.isKeyboardOpen
+            const noteCaretOffset = editMode ? selection.offsetFromNode(contentEditable) : null
+
+            dispatch(
+              setDescendant({
+                path,
+                values: [newValue],
+                mergePrev: mergeBatchEditing(),
+              }),
+            )
+
+            if (noteCaretOffset !== null) dispatch(setNoteFocus({ value: true, offset: noteCaretOffset }))
+          } else {
+            dispatch(
+              editThought({
+                cursorOffset: selection.offsetThought() ?? undefined,
+                oldValue: value,
+                newValue: newValue,
+                path: simplifyPath(state, path),
+                // force the ContentEditable to update
+                force: true,
+                mergePrev: mergeBatchEditing(),
+              }),
+            )
+          }
+        }
       })
     }
   }

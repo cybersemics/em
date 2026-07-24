@@ -6,6 +6,7 @@ import clickThought from '../helpers/clickThought'
 import extractColor from '../helpers/extractColor'
 import getBulletColor from '../helpers/getBulletColor'
 import getEditingText from '../helpers/getEditingText'
+import getSelection from '../helpers/getSelection'
 import getSuperscriptColor from '../helpers/getSuperScriptColor'
 import keyboard from '../helpers/keyboard'
 import newThought from '../helpers/newThought'
@@ -33,6 +34,20 @@ const selectAllEditingText = () =>
     selection?.removeAllRanges()
     selection?.addRange(range)
   })
+
+/** Sets a collapsed caret at the given plain-text offset within the first note. */
+const setNoteCaret = (offset: number) =>
+  page.evaluate((offset: number) => {
+    const note = document.querySelector('[aria-label="note-editable"]')
+    const textNode = note?.firstChild
+    if (!textNode) throw new Error('No text node found in note editable')
+    const range = document.createRange()
+    range.setStart(textNode, offset)
+    range.setEnd(textNode, offset)
+    const selection = window.getSelection()
+    selection?.removeAllRanges()
+    selection?.addRange(range)
+  }, offset)
 
 /** Waits one frame for selectionchange-driven command state to propagate. */
 const nextFrame = () => page.evaluate(() => new Promise(requestAnimationFrame))
@@ -519,4 +534,34 @@ it('Can change the color of a note that already has the same color applied to pa
 
   const note = await getFirstNoteText()
   expect(note).toBe('<font color="#ff573d">some formatted text</font>')
+})
+
+// https://github.com/cybersemics/em/issues/4630
+it('caret stays in place when applying font color to a note that has a background color', async () => {
+  await paste(`
+    - One
+      - =note
+        - Welcome to the Jungle
+  `)
+
+  await clickFirstNote()
+
+  // place the caret in the middle of the note text
+  await setNoteCaret(10)
+
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+
+  // apply a background color to the whole note
+  await click('[aria-label="background color swatches"] [aria-label="green"]')
+
+  // apply a font color to the whole note, which removes the background color
+  await click('[aria-label="text color swatches"] [aria-label="blue"]')
+
+  // wait for the caret to settle after the note re-renders
+  await nextFrame()
+  await nextFrame()
+
+  // the caret should stay where the user left off, not jump to the start or end of the note
+  const offset = await getSelection().focusOffset
+  expect(offset).toBe(10)
 })
