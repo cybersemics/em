@@ -75,7 +75,7 @@ const twoFingerGesture = async (
 
 describe('Gesture', () => {
   // Regression test for #4233: two-finger tracing must not be interpreted as a gesture.
-  it.skip('should not recognize a gesture when tracing with two fingers', async () => {
+  it('should not recognize a gesture when tracing with two fingers', async () => {
     // Trace the newThought gesture ('rd') with two fingers. Nothing should happen.
     await twoFingerGesture(gestures.newThought)
 
