@@ -172,7 +172,7 @@ it('applying multiple background colors should each be a separate undo step', as
 // structural actions (e.g. creating a new thought) can be undone via these gestures, rather than
 // falling through to WebKit's text-only native undo (which shows "Nothing to Undo" and leaves the
 // newly created thought in place).
-it.skip('native undo (beforeinput historyUndo) undoes thought creation', async () => {
+it('native undo (beforeinput historyUndo) undoes thought creation', async () => {
   // create a new thought "hello"
   await newThought('hello')
 

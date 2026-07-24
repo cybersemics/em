@@ -83,6 +83,8 @@ Hashes are uppercased, modifier-prefixed strings — so `Cmd+Shift+P` becomes `M
 
 There's a special case in `beforeInput` for `newThought` and `indent` to handle iOS auto-capitalization: the Enter / space character is prevented in the `beforeinput` event rather than `keydown` ([issue #3707](https://github.com/cybersemics/em/issues/3707)).
 
+`beforeInput` also intercepts native undo/redo (`inputType` `historyUndo` / `historyRedo`) — triggered by the iOS three-finger swipe or shake gesture, or the browser's Edit menu — and routes them to em's Redux `undo` / `redo`. WebKit's native undo only reverses text edits, so without this, structural actions like creating a new thought could not be undone via these gestures ([issue #4722](https://github.com/cybersemics/em/issues/4722)).
+
 ### Gesture activation
 
 A gesture is a string of swipe directions, where each character is one of `'l'`, `'r'`, `'u'`, `'d'` (left/right/up/down). For example, `'rdru'` is right → down → right → up. Multiple sequences can map to the same command — the first one is the canonical gesture shown in the UI.

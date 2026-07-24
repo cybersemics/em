@@ -19,10 +19,12 @@ import { addMulticursorActionCreator as addMulticursor } from './actions/addMult
 import { alertActionCreator as alert } from './actions/alert'
 import { clearMulticursorsActionCreator as clearMulticursors } from './actions/clearMulticursors'
 import { gestureMenuActionCreator as gestureMenu } from './actions/gestureMenu'
+import { redoActionCreator as redo } from './actions/redo'
 import { setCursorActionCreator as setCursor } from './actions/setCursor'
 import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from './actions/setIsMulticursorExecuting'
 import { showLatestCommandsActionCreator as showLatestCommands } from './actions/showLatestCommands'
 import { suppressExpansionActionCreator as suppressExpansion } from './actions/suppressExpansion'
+import { undoActionCreator as undo } from './actions/undo'
 import { isMac } from './browser'
 import * as commandsObject from './commands/index'
 import openMobileCommandUniverseCommand from './commands/openMobileCommandUniverse'
@@ -573,8 +575,15 @@ export const handleGestureCancel = () => {
   })
 }
 
-/** In the specific case of the newThought and indent commands, prevent default in beforeinput event instead of keydown to preserve default iOS auto-capitalization behavior. The Enter and space characters needs to be prevented so that it doesn't get inserted into the thought (#3707). */
+/** In the specific case of the newThought and indent commands, prevent default in beforeinput event instead of keydown to preserve default iOS auto-capitalization behavior. The Enter and space characters needs to be prevented so that it doesn't get inserted into the thought (#3707). Also intercept native undo/redo (e.g. iOS three-finger swipe or shake gesture, or the browser Edit menu) so that em's Redux undo/redo is used instead of WebKit's text-only native undo, which cannot undo structural actions like creating a new thought (#4722). */
 export const beforeInput = (e: InputEvent) => {
+  // Route native undo/redo to em's Redux undo/redo. WebKit's native undo only reverses text edits, so structural actions (e.g. newThought) triggered by an iOS undo gesture would otherwise be silently ignored. Always preventDefault to block the native undo.
+  if (e.inputType === 'historyUndo' || e.inputType === 'historyRedo') {
+    e.preventDefault()
+    store.dispatch(e.inputType === 'historyUndo' ? undo() : redo())
+    return
+  }
+
   if (keyCommandId === 'newThought' || (keyCommandId === 'indent' && editingValueStore.getState() === '')) {
     e.preventDefault()
   }
