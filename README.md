@@ -9,7 +9,7 @@
 ## Documentation
 
 - [Overview](https://github.com/cybersemics/em/wiki/Docs) - An overview of the architecture, data structures, and tips for contributors.
-- [Roadmap](https://github.com/cybersemics/em/wiki/Roadmap) - A high level overview of the project, including vision and objectives.
+- [Roadmap](https://github.com/cybersemics/em/wiki/Roadmap) - A high-level overview of the project, including vision and objectives.
 
 ## Setup
 
@@ -34,7 +34,7 @@ There are two testing scripts:
 
 ### Windows
 
-You will need the bash cli in your system to run the Puppeteer tests on Windows.
+You will need the Bash CLI on your system to run the Puppeteer tests on Windows.
 
 There are two ways to run bash on Windows:
 
