@@ -68,38 +68,23 @@ export const getChildren = getVisibleThoughtsById(getAllChildrenAsThoughts)
 const getChildrenSortedBy = (state: State, id: ThoughtId, compare: ComparatorFunction<Thought>): Thought[] =>
   sort(getAllChildrenAsThoughts(state, id), compare)
 
-/** Creates children sorted by direction-aware comparator. When descComparator is omitted, the ascending comparator is reversed for descending order. */
-const getChildrenSortedByDirection = (
-  state: State,
-  id: ThoughtId,
-  ascComparator: ComparatorFunction<Thought>,
-  descComparator?: ComparatorFunction<Thought>,
-): Thought[] => {
+/** Returns the direction-aware comparator used to order the children of a context according to its sort preference, or null if the context is sorted manually (i.e. by rank). This is the single source of truth for the sort order, shared by getAllChildrenSorted and the Sort Picker's rank-consistency check. Empty thoughts are sorted to their point of creation. */
+export const getSortComparator = (state: State, id: ThoughtId): ComparatorFunction<Thought> | null => {
   const sortPreference = getSortPreference(state, id)
-  const comparator = sortPreference.direction === 'Desc' ? descComparator || _.flip(ascComparator) : ascComparator
-  return getChildrenSortedBy(state, id, comparator)
+  const isDescending = sortPreference.direction === 'Desc'
+  switch (sortPreference.type) {
+    case 'Alphabetical':
+      return isDescending ? compareThoughtDescending : compareThought
+    case 'Created':
+      return isDescending ? _.flip(compareThoughtByCreated) : compareThoughtByCreated
+    case 'Updated':
+      return isDescending ? _.flip(compareThoughtByUpdated) : compareThoughtByUpdated
+    case 'Note':
+      return isDescending ? compareThoughtByNoteDescendingAndRank(state) : compareThoughtByNoteAndRank(state)
+    default:
+      return null
+  }
 }
-
-/** Generates children sorted by their values. Sorts empty thoughts to their point of creation. */
-const getChildrenSortedAlphabetical = (state: State, id: ThoughtId): Thought[] =>
-  getChildrenSortedByDirection(state, id, compareThought, compareThoughtDescending)
-
-/** Generates children sorted by their creation date. */
-const getChildrenSortedCreated = (state: State, id: ThoughtId): Thought[] =>
-  getChildrenSortedByDirection(state, id, compareThoughtByCreated)
-
-/** Generates children sorted by their last updated date. */
-const getChildrenSortedUpdated = (state: State, id: ThoughtId): Thought[] =>
-  getChildrenSortedByDirection(state, id, compareThoughtByUpdated)
-
-/** Generates children sorted by their note value. */
-const getChildrenSortedNote = (state: State, id: ThoughtId): Thought[] =>
-  getChildrenSortedByDirection(
-    state,
-    id,
-    compareThoughtByNoteAndRank(state),
-    compareThoughtByNoteDescendingAndRank(state),
-  )
 
 /** Finds any child that matches the predicate. If there is more than one child that matches the predicate, which one is returned is non-deterministic. */
 export const findAnyChild = (
@@ -188,18 +173,8 @@ export const childrenFilterPredicate = _.curry((state: State, parentPath: Simple
 }, 3)
 /** Gets all children of a Context sorted by rank or sort preference. */
 export const getAllChildrenSorted = (state: State, id: ThoughtId): Thought[] => {
-  const sortPreference = getSortPreference(state, id)
-  if (sortPreference.type === 'Alphabetical') {
-    return getChildrenSortedAlphabetical(state, id)
-  } else if (sortPreference.type === 'Created') {
-    return getChildrenSortedCreated(state, id)
-  } else if (sortPreference.type === 'Updated') {
-    return getChildrenSortedUpdated(state, id)
-  } else if (sortPreference.type === 'Note') {
-    return getChildrenSortedNote(state, id)
-  } else {
-    return getChildrenRanked(state, id)
-  }
+  const comparator = getSortComparator(state, id)
+  return comparator ? getChildrenSortedBy(state, id, comparator) : getChildrenRanked(state, id)
 }
 
 /** Gets all visible children of a thought sorted by rank or sort preference.
