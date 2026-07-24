@@ -4,6 +4,7 @@ import newSubthought from '../../actions/newSubthought'
 import newThought from '../../actions/newThought'
 import toggleContextView from '../../actions/toggleContextView'
 import { HOME_TOKEN } from '../../constants'
+import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
 import getContexts from '../../selectors/getContexts'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
@@ -166,6 +167,46 @@ describe('normal view', () => {
     const stateNew = reducerFlow(steps)(initialState())
 
     expect(stateNew.cursor).toBe(null)
+  })
+
+  it('cursor should stay on the last known position when archiving a different thought that has a previous sibling (#4077)', () => {
+    const steps = [
+      importText({
+        text: `
+          - One
+          - Two
+          - Three
+          - Four
+          - Five
+        `,
+      }),
+      setCursor(['Five']),
+    ]
+
+    const stateBefore = reducerFlow(steps)(initialState())
+    const stateNew = archiveThought({ path: contextToPath(stateBefore, ['Two'])! })(stateBefore)
+
+    expectPathToEqual(stateNew, stateNew.cursor, ['Five'])
+  })
+
+  it('cursor should stay on the last known position when archiving a different thought that has no previous sibling (#4077)', () => {
+    const steps = [
+      importText({
+        text: `
+          - One
+          - Two
+          - Three
+          - Four
+          - Five
+        `,
+      }),
+      setCursor(['Five']),
+    ]
+
+    const stateBefore = reducerFlow(steps)(initialState())
+    const stateNew = archiveThought({ path: contextToPath(stateBefore, ['One'])! })(stateBefore)
+
+    expectPathToEqual(stateNew, stateNew.cursor, ['Five'])
   })
 
   it('empty thought should be archived if it has descendants', () => {

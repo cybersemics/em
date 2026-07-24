@@ -843,13 +843,17 @@ const Editable = ({
 
       dispatch((dispatch, getState) => {
         const { longPress } = getState()
-        if (longPress === LongPressState.Inactive) {
+        // Do not set the cursor on a hidden thought. After a focused thought is archived by dragging
+        // it to the DropGutter, a spurious focus event can fire on its (now hidden) Editable, which
+        // would otherwise override the cursor that archiveThought placed on the previous sibling.
+        // When hidden thoughts are shown, isVisible is true and the cursor can still be set. (#4077)
+        if (longPress === LongPressState.Inactive && isVisible) {
           setCursorOnThought({ isKeyboardOpen: true })
         }
       })
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [value, setCursorOnThought],
+    [value, isVisible, setCursorOnThought],
   )
 
   /**
