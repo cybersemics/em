@@ -24,7 +24,7 @@ import waitUntil from '../helpers/waitUntil'
 
 describe('Caret', () => {
   // https://github.com/cybersemics/em/issues/4426
-  it.skip('Caret placed at the end of a wrapped line whose next line begins with formatted text stays on that line', async () => {
+  it('Caret placed at the end of a wrapped line whose next line begins with formatted text stays on that line', async () => {
     await paste(
       'Lorem ipsum dolor sit amet, <b>consectetur adipiscing elit</b>, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
     )
