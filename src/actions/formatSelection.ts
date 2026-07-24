@@ -34,16 +34,14 @@ import { setDescendantActionCreator as setDescendant } from './setDescendant'
  *
  * In order to avoid keyboard focus messiness, this is only called when the keyboard is open and the caret is on a thought.
  * This means that when the keyboard is closed, a native undo step will not be registered and the native undo stack will drift out of sync.
- * 
  * The native undo stack will already drift out of sync for unrelated reasons such as `undoTwice` behavior, and non-editing actions that are
  * undoable.
  *
  * Limitations:
  *
- * The only way to intercept a native undo gesture is via the `beforeinput` event, which is only dispatched when the native undo stack has a step
+ * - The only way to intercept a native undo gesture is via the `beforeinput` event, which is only dispatched when the native undo stack has a step
  * to undo. When the stack drifts out of sync, the native dialog will not display an option to undo or redo past a certain point.
- * 
- * If there are no editables, such as after undoing the creation of the only remaining thought, then there will be no `beforeinput` event and native
+ * - If there are no editables, such as after undoing the creation of the only remaining thought, then there will be no `beforeinput` event and native
  * undo/redo behavior will stop having an effect. Technically, native undo is still running, but it doesn't know how to re-create a deleted thought.
  */
 const registerNativeUndoStep = (html: string): void => {
