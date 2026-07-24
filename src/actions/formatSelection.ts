@@ -11,6 +11,7 @@ import simplifyPath from '../selectors/simplifyPath'
 import themeColors from '../selectors/themeColors'
 import { mergeBatchEditing } from '../stores/batchEditing'
 import { updateCommandState } from '../stores/commandStateStore'
+import { setFormatCursorOffset } from '../stores/formatCursorOffset'
 import suppressFocusStore from '../stores/suppressFocus'
 import head from '../util/head'
 import rgbToHex from '../util/rgbToHex'
@@ -51,6 +52,12 @@ export const formatSelectionActionCreator =
         state.noteFocus ? (noteValue(state, state.cursor) ?? '') : thought.value,
       )
       const savedSelection = selection.save()
+
+      // Capture the caret offset before selecting the whole thought below. The execCommand that follows fires an onChange
+      // in Editable whose selection.offsetThought() would resolve to the end of the (now fully selected) thought; storing
+      // the pre-selection offset lets Editable record where the user actually left the caret, so it is preserved on undo (#4632).
+      setFormatCursorOffset(selection.offsetThought())
+
       const inputMode = contentEditable.getAttribute('inputmode')
       const editable = contentEditable as HTMLElement
 

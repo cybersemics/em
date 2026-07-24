@@ -45,6 +45,7 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import { mergeBatchEditing } from '../stores/batchEditing'
 import editingValueStore from '../stores/editingValue'
 import editingValueUntrimmedStore from '../stores/editingValueUntrimmed'
+import formatCursorOffset from '../stores/formatCursorOffset'
 import storageModel from '../stores/storageModel'
 import suppressFocusStore from '../stores/suppressFocus'
 import addEmojiSpace from '../util/addEmojiSpace'
@@ -605,7 +606,10 @@ const Editable = ({
       */
         editingValueStore.update(newValue)
 
-        const cursorOffset = selection.offsetThought()
+        // Prefer the offset captured before a whole-thought format operation (formatSelection), which selects the entire
+        // thought before execCommand; otherwise selection.offsetThought() here would resolve to the end of the thought and
+        // the caret would jump there on undo (#4632). Falls back to the live selection offset for ordinary edits.
+        const cursorOffset = formatCursorOffset.getState() ?? selection.offsetThought()
         // If addEmojiSpace inserts a space, keep the caret in the same visual position after re-render.
         let cursorOffsetWithEmojiSpace = cursorOffset === null ? undefined : cursorOffset
         if (
