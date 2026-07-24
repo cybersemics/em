@@ -39,4 +39,36 @@ describe('toggleSortPicker error', () => {
 
     expect(sortPickerError(store.getState())).toBeNull()
   })
+
+  it('does not report an error when duplicate thoughts are created among other thoughts under alphabetical sort', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+        `,
+      }),
+      setCursor(['a']),
+    ])
+
+    const state = store.getState()
+    // Enable alphabetical ascending sort on the home context.
+    store.dispatch(
+      setSortPreference({
+        simplePath: simplifyPath(state, rootedParentOf(state, state.cursor!)),
+        sortPreference: { type: 'Alphabetical', direction: 'Asc' },
+      }),
+    )
+
+    // Create a duplicate 'a', then 'c', then two 'b's. Duplicate values make the comparator-sorted children
+    // non-monotonic in rank, which previously caused getSortedRank to insert a thought with a rank that inverted
+    // the sort order and turned the Sort icon red (#4483 follow-up).
+    store.dispatch([
+      newThought({ value: 'a' }),
+      newThought({ value: 'c' }),
+      newThought({ value: 'b' }),
+      newThought({ value: 'b' }),
+    ])
+
+    expect(sortPickerError(store.getState())).toBeNull()
+  })
 })
