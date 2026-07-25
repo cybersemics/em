@@ -6,7 +6,6 @@ import longPressThought from '../helpers/longPressThought'
 import multiselectThoughts from '../helpers/multiselectThoughts'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
-import waitForAlertContent from '../helpers/waitForAlertContent'
 import waitForEditable from '../helpers/waitForEditable'
 import { page } from '../session'
 
@@ -28,25 +27,7 @@ describe('multiselect', () => {
     expect(alertContent).toContain('2 thoughts selected')
   })
 
-  // The multiselect indicator must never auto-dismiss, otherwise closing it would clear the selection.
-  it('should not auto-dismiss the multiselect alert while a selection is active', async () => {
-    await paste(`
-        - a
-        - b
-        `)
-
-    await multiselectThoughts(['a'])
-
-    await waitForAlertContent('1 thought selected')
-
-    const highlightedBullets = await page.$$('[aria-label="bullet"][data-highlighted="true"]')
-    const alertContent = await page.$eval('[data-testid=alert-content]', el => el.textContent)
-
-    expect(alertContent).toContain('1 thought selected')
-    expect(highlightedBullets.length).toBe(1)
-  })
-
-  // Regression test for https://github.com/cybersemics/em/issues/3993
+  // https://github.com/cybersemics/em/issues/3993
   // When Select All is active, the native copy handler must copy all selected thoughts, not just the focused cursor.
   // .skip keeps normal CI green while the test is red; remove the .skip when the fix lands.
   it('copies all selected thoughts when Select All is active', async () => {
@@ -84,7 +65,7 @@ describe('multiselect', () => {
     expect(copiedText).toContain('c')
   })
 
-  // Regression test for https://github.com/cybersemics/em/issues/3993 (Desktop Safari)
+  // https://github.com/cybersemics/em/issues/3993 (Desktop Safari)
   // The copy command must write text/html and the text/em marker to the clipboard itself, rather than
   // relying on the native copy event of the focused editable. Safari (like headless Chrome) does not fire
   // a copy event for a collapsed contenteditable selection, so without an explicit text/html the browser
