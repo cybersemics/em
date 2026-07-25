@@ -27,7 +27,7 @@ describe('multiselect', () => {
     expect(alertContent).toContain('2 thoughts selected')
   })
 
-  // Regression test for https://github.com/cybersemics/em/issues/3993
+  // https://github.com/cybersemics/em/issues/3993
   // When Select All is active, the native copy handler must copy all selected thoughts, not just the focused cursor.
   // .skip keeps normal CI green while the test is red; remove the .skip when the fix lands.
   it('copies all selected thoughts when Select All is active', async () => {
@@ -65,7 +65,7 @@ describe('multiselect', () => {
     expect(copiedText).toContain('c')
   })
 
-  // Regression test for https://github.com/cybersemics/em/issues/3993 (Desktop Safari)
+  // https://github.com/cybersemics/em/issues/3993 (Desktop Safari)
   // The copy command must write text/html and the text/em marker to the clipboard itself, rather than
   // relying on the native copy event of the focused editable. Safari (like headless Chrome) does not fire
   // a copy event for a collapsed contenteditable selection, so without an explicit text/html the browser
