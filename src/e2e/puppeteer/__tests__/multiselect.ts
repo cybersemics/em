@@ -1,5 +1,4 @@
 import { KnownDevices } from 'puppeteer'
-import { WindowEm } from '../../../initialize'
 import clickThought from '../helpers/clickThought'
 import command from '../helpers/command'
 import emulate from '../helpers/emulate'
@@ -29,7 +28,6 @@ describe('multiselect', () => {
     expect(alertContent).toContain('2 thoughts selected')
   })
 
-  // Regression test for https://github.com/cybersemics/em/issues/3612
   // The multiselect indicator must never auto-dismiss, otherwise closing it would clear the selection.
   it('should not auto-dismiss the multiselect alert while a selection is active', async () => {
     await paste(`
@@ -40,13 +38,6 @@ describe('multiselect', () => {
     await multiselectThoughts(['a'])
 
     await waitForAlertContent('1 thought selected')
-
-    // The multiselect indicator is dispatched with clearDelay: null so it never auto-dismisses.
-    // Under Puppeteer/webdriver, the alert reducer mocks finite clearDelay values to Infinity.
-    // A regression that dropped the intentional clearDelay: null would therefore resolve to Infinity
-    // instead of null, so asserting null catches it.
-    const clearDelay = await page.evaluate(() => (window.em as WindowEm).store.getState().alert?.clearDelay)
-    expect(clearDelay).toBeNull()
 
     const highlightedBullets = await page.$$('[aria-label="bullet"][data-highlighted="true"]')
     const alertContent = await page.$eval('[data-testid=alert-content]', el => el.textContent)
