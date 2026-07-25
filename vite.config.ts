@@ -1,5 +1,6 @@
 import basicSsl from '@vitejs/plugin-basic-ssl'
 import react from '@vitejs/plugin-react'
+import { execSync } from 'child_process'
 import type { IncomingMessage, ServerResponse } from 'http'
 import path from 'path'
 import { type Plugin, type PreviewServer, type ViteDevServer, defineConfig } from 'vite'
@@ -8,6 +9,16 @@ import { createHtmlPlugin } from 'vite-plugin-html'
 import { VitePWA } from 'vite-plugin-pwa'
 
 const useHttps = !process.env.HTTP
+
+/** Resolve the short git commit hash of the current build, injected into the app via `define`. Prefers Vercel's build-time env var, falls back to git, then to 'unknown'. */
+const commitHash = (() => {
+  if (process.env.VERCEL_GIT_COMMIT_SHA) return process.env.VERCEL_GIT_COMMIT_SHA.slice(0, 7)
+  try {
+    return execSync('git rev-parse --short HEAD').toString().trim()
+  } catch {
+    return 'unknown'
+  }
+})()
 
 /**
  * Vite plugin that gates access behind a secret token when TUNNEL_TOKEN is set.
@@ -58,6 +69,9 @@ export default defineConfig({
   },
   build: {
     outDir: 'build',
+  },
+  define: {
+    __COMMIT_HASH__: JSON.stringify(commitHash),
   },
   plugins: [
     react(),
