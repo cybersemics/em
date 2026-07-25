@@ -4,7 +4,6 @@ import Alert from '../@types/Alert'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import { AlertType } from '../constants'
-import testFlags from '../e2e/testFlags'
 import alertStore from '../stores/alert'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import clearMulticursors from './clearMulticursors'
@@ -34,12 +33,14 @@ const alertReducer = (state: State, { alertType, value, importFileId, clearDelay
           alertType,
           value,
           importFileId,
-          // In tests, testFlags.preventAutoDismiss mocks any finite delay to Infinity so alerts never
-          // auto-dismiss. This keeps tests deterministic without sleeping or per-alert flags: an alert
-          // is assumed present until manually cleared. Infinity is distinguishable from an explicit
-          // null, so a regression that dropped an intentional clearDelay: null is still detectable.
+          // Under Puppeteer/webdriver, mock any finite delay to Infinity so alerts never auto-dismiss.
+          // This keeps e2e tests deterministic without sleeping or per-alert flags: an alert is assumed
+          // present until manually cleared. Infinity is distinguishable from an explicit null, so a
+          // regression that dropped an intentional clearDelay: null is still detectable.
           clearDelay:
-            testFlags.preventAutoDismiss && Number.isFinite(resolvedClearDelay) ? Infinity : resolvedClearDelay,
+            typeof navigator !== 'undefined' && navigator.webdriver && Number.isFinite(resolvedClearDelay)
+              ? Infinity
+              : resolvedClearDelay,
         }
       : null,
   }

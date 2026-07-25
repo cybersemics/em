@@ -42,9 +42,9 @@ describe('multiselect', () => {
     await waitForAlertContent('1 thought selected')
 
     // The multiselect indicator is dispatched with clearDelay: null so it never auto-dismisses.
-    // Auto-dismiss is globally disabled in tests (testFlags.preventAutoDismiss), which mocks any finite
-    // delay to Infinity. A regression that dropped the intentional clearDelay: null would therefore
-    // resolve to Infinity instead of null, so asserting null catches it.
+    // Under Puppeteer/webdriver, the alert reducer mocks finite clearDelay values to Infinity.
+    // A regression that dropped the intentional clearDelay: null would therefore resolve to Infinity
+    // instead of null, so asserting null catches it.
     const clearDelay = await page.evaluate(() => (window.em as WindowEm).store.getState().alert?.clearDelay)
     expect(clearDelay).toBeNull()
 
