@@ -6,7 +6,8 @@ import exportThoughts from '../helpers/exportThoughts'
 import gesture, { endGesture, startGesture } from '../helpers/gesture'
 import reloadWithProductionTiming from '../helpers/initialize'
 import keyboard from '../helpers/keyboard'
-import press from '../helpers/press'
+import paste from '../helpers/paste'
+import scrollTo from '../helpers/scrollTo'
 import waitForSelector from '../helpers/waitForSelector'
 import { page } from '../session'
 
@@ -89,11 +90,41 @@ describe('gestures', () => {
 
   // https://github.com/cybersemics/em/issues/4536
   it('does not activate a gesture that starts in the scroll zone', async () => {
-    await gesture(newThoughtCommand)
-    for (let i = 0; i < 20; i++) {
-      await keyboard.type(`thought ${i}`)
-      if (i < 19) await press('Enter')
-    }
+    await paste(`
+      - thought 1
+      - thought 2
+      - thought 3
+      - thought 4
+      - thought 5
+      - thought 6
+      - thought 7
+      - thought 8
+      - thought 9
+      - thought 10
+      - thought 11
+      - thought 12
+      - thought 13
+      - thought 14
+      - thought 15
+      - thought 16
+      - thought 17
+      - thought 18
+      - thought 19
+      - thought 20
+      - thought 21
+      - thought 22
+      - thought 23
+      - thought 24
+      - thought 25
+      - thought 26
+      - thought 27
+      - thought 28
+      - thought 29
+      - thought 30
+    `)
+
+    // Scroll partway down so the swipe has room to scroll further and a baseline to measure from.
+    await scrollTo(0, 100)
 
     expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0)
     const viewport = page.viewport()!
