@@ -131,19 +131,28 @@ describe('gestures', () => {
     const xStart = viewport.width - Math.round(viewport.width / 8)
     const yStart = Math.round(viewport.height / 3)
     const traceClassBefore = await page.$eval('[data-testid=gesture-trace]', element => element.className)
+    const exportedBefore = await exportThoughts()
 
     const activeGesture = await startGesture({ xStart, yStart })
-    try {
-      await activeGesture.move('u')
-      await page.evaluate(() => new Promise(requestAnimationFrame))
-      await activeGesture.move('l')
-      await activeGesture.move('dr')
-      await page.evaluate(() => new Promise(requestAnimationFrame))
+    await activeGesture.move('u')
+    await page.evaluate(() => new Promise(requestAnimationFrame))
 
-      expect(await page.$eval('[data-testid=gesture-trace]', element => element.className)).toBe(traceClassBefore)
-    } finally {
-      await activeGesture.end()
-    }
+    // Draw New Thought (rd) with the rest of the touch. If the abandoned gesture is wrongly
+    // re-activated after scrolling takes over the touch responder (#4536), the tail is recognized
+    // as a command and executes on release. A short right segment keeps the touch on screen from
+    // its right-edge start.
+    await activeGesture.move('r', { segmentLength: 40 })
+    await activeGesture.move('d')
+    await page.evaluate(() => new Promise(requestAnimationFrame))
+
+    expect(await page.$eval('[data-testid=gesture-trace]', element => element.className)).toBe(traceClassBefore)
+
+    // Commands execute when the touch is released, so the release is part of the behavior under
+    // test. There is no cleanup concern in moving it out of a finally: the page is closed after
+    // every test, so a failed assertion cannot leak the held touch into another test.
+    await activeGesture.end()
+
+    expect(await exportThoughts()).toBe(exportedBefore)
   })
 })
 
