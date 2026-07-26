@@ -20,9 +20,13 @@ describe('Gestures', () => {
     const handle = await getSelectionEndHandlePosition()
     await gesture('d', { segmentLength: 90, waitMs: 600, xStart: handle.x, yStart: handle.y })
 
+    // This runs after the touch is released, so it can only catch a gesture menu that is stuck open
+    // (the #3887 failure mode) — a menu that flashed during the drag is already gone by now.
     const gestureMenu = await $('[data-testid=popup-value]')
     expect(await gestureMenu.isExisting()).toBe(false)
 
+    // This is the assertion that detects the regression: on the pre-fix code the hijacked handle
+    // drag collapses the selection to '', while the menu check above still passes.
     expect(await getSelection().toString()).toContain('one two')
   })
 })
