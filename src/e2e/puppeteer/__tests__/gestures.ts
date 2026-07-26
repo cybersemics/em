@@ -130,7 +130,6 @@ describe('gestures', () => {
     const viewport = page.viewport()!
     const xStart = viewport.width - Math.round(viewport.width / 8)
     const yStart = Math.round(viewport.height / 3)
-    const traceClassBefore = await page.$eval('[data-testid=gesture-trace]', element => element.className)
     const exportedBefore = await exportThoughts()
 
     const activeGesture = await startGesture({ xStart, yStart })
@@ -145,7 +144,10 @@ describe('gestures', () => {
     await activeGesture.move('d')
     await page.evaluate(() => new Promise(requestAnimationFrame))
 
-    expect(await page.$eval('[data-testid=gesture-trace]', element => element.className)).toBe(traceClassBefore)
+    // The gesture menu must not appear while the touch is held. This check can only see a menu
+    // that has rendered by the end of the moves; the export comparison after release below is the
+    // load-bearing assertion.
+    expect(await $('[data-testid=popup-value]')).toBeNull()
 
     // Commands execute when the touch is released, so the release is part of the behavior under
     // test. There is no cleanup concern in moving it out of a finally: the page is closed after
