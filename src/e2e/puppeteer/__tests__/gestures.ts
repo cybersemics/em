@@ -132,9 +132,14 @@ describe('gestures', () => {
     const yStart = Math.round(viewport.height / 3)
     const exportedBefore = await exportThoughts()
 
+    const scrollYBefore = await page.evaluate(() => window.scrollY)
     const activeGesture = await startGesture({ xStart, yStart })
     await activeGesture.move('u')
-    await page.evaluate(() => new Promise(requestAnimationFrame))
+
+    // A swipe in the scroll zone must scroll the page. Waiting for the scroll also guarantees the
+    // browser has taken over the touch before the rest of the moves — the condition under which a
+    // wrongly re-activated gesture (#4536) would begin.
+    await page.waitForFunction((before: number) => window.scrollY > before, {}, scrollYBefore)
 
     // Draw New Thought (rd) with the rest of the touch. If the abandoned gesture is wrongly
     // re-activated after scrolling takes over the touch responder (#4536), the tail is recognized
@@ -142,7 +147,6 @@ describe('gestures', () => {
     // its right-edge start.
     await activeGesture.move('r', { segmentLength: 40 })
     await activeGesture.move('d')
-    await page.evaluate(() => new Promise(requestAnimationFrame))
 
     // The gesture menu must not appear while the touch is held. This check can only see a menu
     // that has rendered by the end of the moves; the export comparison after release below is the
