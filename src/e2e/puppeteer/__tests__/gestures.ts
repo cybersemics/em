@@ -148,9 +148,13 @@ describe('gestures', () => {
     await activeGesture.move('r', { segmentLength: 40 })
     await activeGesture.move('d')
 
-    // The gesture menu must not appear while the touch is held. This check can only see a menu
-    // that has rendered by the end of the moves; the export comparison after release below is the
-    // load-bearing assertion.
+    // The gesture trace must stay hidden. A wrongly re-activated gesture (#4536) always updates
+    // the gesture store and shows the trace, even when its re-tracked sequence happens not to form
+    // a command — so this is the reliable mid-touch signal of re-activation, while the export
+    // comparison after release catches the command execution itself.
+    expect(await page.$eval('[data-testid=gesture-trace]', element => getComputedStyle(element).opacity)).toBe('0')
+
+    // The gesture menu must not appear while the touch is held.
     expect(await $('[data-testid=popup-value]')).toBeNull()
 
     // Commands execute when the touch is released, so the release is part of the behavior under
