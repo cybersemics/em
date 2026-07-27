@@ -877,7 +877,8 @@ describe('multicursor', () => {
 
     expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
     expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
-    expect(isContextExpanded(stateNew, ['a', 'b', 'c'])).toBeTruthy()
+    // the multicursor path itself is a selected thought, so it stays collapsed
+    expect(isContextExpanded(stateNew, ['a', 'b', 'c'])).toBeFalsy()
   })
 
   it('cursor ancestors are still expanded alongside multicursor ancestors', () => {
@@ -903,7 +904,7 @@ describe('multicursor', () => {
   })
 
   // https://github.com/cybersemics/em/issues/4738
-  it.skip('a multicursor thought does not expand its own children', () => {
+  it('a multicursor thought does not expand its own children', () => {
     const text = `
       - a
         - x

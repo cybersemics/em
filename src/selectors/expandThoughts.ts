@@ -26,6 +26,7 @@ import childIdsToThoughts from './childIdsToThoughts'
 import { anyChild, getAllChildrenAsThoughts } from './getChildren'
 import getContexts from './getContexts'
 import pinned from './isPinned'
+import rootedParentOf from './rootedParentOf'
 
 /** Returns true if a thought is marked as done. */
 const isDone = (state: State, id: ThoughtId | null): boolean => {
@@ -185,8 +186,14 @@ function expandThoughts(state: State, path: Path | null): Index<Path | Context> 
     throw new Error(`Invalid path ${path}. No thought found with id ${head(path)}`)
   }
 
-  // Expand ancestors of the cursor path and all multicursor paths so that selected thoughts remain visible.
-  return [path || HOME_PATH, ...Object.values(state.multicursors)].reduce(
+  // Expand the ancestors of the cursor path and of every multicursor path so that selected thoughts
+  // remain visible. Multicursor paths are mapped to their parent so that only their ancestors are
+  // expanded, never the selected thoughts themselves — selected thoughts must always stay collapsed.
+  // https://github.com/cybersemics/em/issues/4738
+  return [
+    path || HOME_PATH,
+    ...Object.values(state.multicursors).map(multicursorPath => rootedParentOf(state, multicursorPath)),
+  ].reduce(
     (acc, expansionPath) => ({
       ...acc,
       ...expandThoughtsRecursive(state, expansionPath, HOME_PATH),
