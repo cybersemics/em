@@ -1,10 +1,15 @@
 # Skills
 
-A skill is a folder under `.github/skills/` containing a `SKILL.md` file. It holds a procedure for one situation — how to reproduce a bug, how to run a single test, how to read a failing CI run — and the agent reads it only when something invokes it by name.
+A skill is a folder under `.github/skills/` containing a `SKILL.md` file. It holds a procedure for a given situation — how to reproduce a bug, how to run a single test, how to read a failing CI run — and the agent reads it **only when something invokes it by name**.
 
-That "only when invoked" part is the point. Standing instructions are read on every run and compete for the agent's attention whether or not they are relevant. A skill costs nothing until it is needed, so it can afford to be long and specific.
+That "only when invoked" part is the key benefit of skills. Custom instructions are read on every run, and compete for the agent's attention whether or not they are relevant. A skill costs nothing until it is needed, so they can afford to be long and specific.
 
-A subset of these is shared with agents running on a developer's own machine, through symlinks from `.agents/skills/`. Which ones, and why the rest cannot travel, is covered in [External agents](external-agents.md).
+In general, if you want to add an additional capability to the agent, you should:
+
+- Create a new skill.
+- Reference the skill in custom instructions (Worker Bee, github-instructions, AGENTS.md)
+
+> A subset of skills is shared with agents running on a developer's own machine, through symlinks from `.agents/skills/`. This is covered in [External agents](external-agents.md).
 
 ## The skills
 
@@ -246,7 +251,11 @@ It runs before the working tree is accounted for, because a documentation edit i
 
 The stakes are higher here than in a project where docs are only read by people. `docs/` is **required reading for the [`plan`](#plan) skill**, so a stale document is not merely unhelpful — it is the input to the next agent's plan, and a plan built on a constraint that no longer holds produces confident, wrong code. Every change that leaves documentation behind makes the following session start from a worse map.
 
-**Routing happens three ways**, because no one of them is sufficient. The [`plan`](#plan) skill's list of documents a change would invalidate is the strongest, having been written while reasoning about behaviour rather than paths. A grep of `docs/` for the identifiers the change touched is next, and it is the pass that finds a document describing your code from another subsystem's point of view. Last and narrowest is a table mapping source areas to the document that owns them — `src/data-providers/**` to [`persistence.md`](../persistence.md), `src/commands/**` to [`commands.md`](../commands.md), `.github/skills/**` to these agent docs.
+**Routing happens three ways**, because no one of them is sufficient.
+
+- The [`plan`](#plan) skill's list of documents a change would invalidate is the strongest, having been written while reasoning about behaviour rather than paths.
+- A grep of `docs/` for the identifiers the change touched is next, and it is the pass that finds a document describing your code from another subsystem's point of view. 
+- Last and narrowest is a table mapping source areas to the document that owns them — `src/data-providers/**` to [`persistence.md`](../persistence.md), `src/commands/**` to [`commands.md`](../commands.md), `.github/skills/**` to these agent docs.
 
 That table is explicitly a floor rather than a ceiling, because path-keyed routing cannot see behaviour. Editing `src/selectors/getChildren.ts` routes to [`data-model.md`](../data-model.md) and nothing else, yet [`glossary.md`](../glossary.md), [`metaprogramming.md`](../metaprogramming.md), and [`testing.md`](../testing.md) all cite that same function — the by-name pass finds them; the table never would. A changed file matching no row at all is treated as a finding rather than a pass: either the document that should cover that area does not exist, which is worth saying out loud, or the table needs a row.
 
