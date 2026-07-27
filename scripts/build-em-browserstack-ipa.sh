@@ -35,6 +35,11 @@
 # -----
 # Run at the em repository's root, passing your BrowserStack credentials inline:
 #
+#   BROWSERSTACK_USERNAME=value BROWSERSTACK_ACCESS_KEY=value yarn build:ios:browserstack
+#
+# That yarn script is just an alias for this file, so invoking it directly works the
+# same way and takes the same variables:
+#
 #   BROWSERSTACK_USERNAME=value BROWSERSTACK_ACCESS_KEY=value ./scripts/build-em-browserstack-ipa.sh
 #
 # Optional, also inline:

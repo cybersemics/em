@@ -146,7 +146,7 @@ Two ways this bites, both ending in a blank screen and a timeout, and both needi
 Either way the fix is the same — rebuild and re-upload with [`scripts/build-em-browserstack-ipa.sh`](../../scripts/build-em-browserstack-ipa.sh):
 
 ```bash
-BROWSERSTACK_USERNAME=… BROWSERSTACK_ACCESS_KEY=… ./scripts/build-em-browserstack-ipa.sh
+BROWSERSTACK_USERNAME=… BROWSERSTACK_ACCESS_KEY=… yarn build:ios:browserstack
 ```
 
 It builds em in Capacitor server mode with `https://bs-local.com:3000` baked in — BrowserStack's hostname for whichever machine is running the tunnel — and uploads the `.ipa` under the `em-server-mode` id the skill looks for. It has to run on a Mac with Xcode, but needs nothing beyond a free personal Apple ID: BrowserStack re-signs on upload, so a personal-team Development certificate is enough. The script's own header comment carries the full prerequisites and the reasoning behind each signing step.
