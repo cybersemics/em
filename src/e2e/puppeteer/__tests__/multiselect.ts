@@ -106,7 +106,7 @@ describe('multiselect', () => {
   })
 
   // https://github.com/cybersemics/em/issues/4739
-  it.skip('shift + click selects thoughts between the clicked and previously selected thought', async () => {
+  it('shift + click selects thoughts between the clicked and previously selected thought', async () => {
     await paste(`
         - a
         - b
@@ -118,6 +118,56 @@ describe('multiselect', () => {
     // start multiselect on b
     await multiselectThoughts(['b'])
     // shift + click d to select all thoughts between b and d
+    await shiftClickThought('d')
+
+    const highlightedValues = await page.$$eval('[aria-label="bullet"][data-highlighted="true"]', bullets =>
+      bullets.map(
+        bullet => bullet.closest('[aria-label="thought-container"]')?.querySelector('[data-editable]')?.textContent,
+      ),
+    )
+
+    expect(highlightedValues.sort()).toEqual(['b', 'c', 'd'])
+  })
+
+  // https://github.com/cybersemics/em/issues/4739
+  it('shift + click selects between thoughts in reverse order', async () => {
+    await paste(`
+        - a
+        - b
+        - c
+        - d
+        - e
+        `)
+
+    // start multiselect on d
+    await multiselectThoughts(['d'])
+    // shift + click b to select all thoughts between b and d, regardless of order
+    await shiftClickThought('b')
+
+    const highlightedValues = await page.$$eval('[aria-label="bullet"][data-highlighted="true"]', bullets =>
+      bullets.map(
+        bullet => bullet.closest('[aria-label="thought-container"]')?.querySelector('[data-editable]')?.textContent,
+      ),
+    )
+
+    expect(highlightedValues.sort()).toEqual(['b', 'c', 'd'])
+  })
+
+  // https://github.com/cybersemics/em/issues/4739
+  it('shift + click selects between thoughts in a sorted list', async () => {
+    await paste(`
+        - =sort
+          - Alphabetical
+        - d
+        - b
+        - e
+        - a
+        - c
+        `)
+
+    // in a sorted list the thoughts render as a, b, c, d, e
+    // start multiselect on b, then shift + click d to select b, c, d in sorted order
+    await multiselectThoughts(['b'])
     await shiftClickThought('d')
 
     const highlightedValues = await page.$$eval('[aria-label="bullet"][data-highlighted="true"]', bullets =>
