@@ -1,4 +1,5 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { toggleContextViewActionCreator as toggleContextView } from '../../actions/toggleContextView'
 import { executeCommandWithMulticursor } from '../../commands'
 import * as copyModule from '../../device/copy'
 import store from '../../stores/app'
@@ -173,6 +174,40 @@ describe('copyCursor', () => {
   - c2`,
         expect.objectContaining({ html: expect.any(String) }),
       )
+    })
+
+    // https://github.com/cybersemics/em/issues/4737
+    it.skip('does not move the cursor or multiselect when copying in context view', async () => {
+      store.dispatch([
+        importText({
+          text: `
+            - a
+              - m
+                - x
+                - y
+                - z
+            - b
+              - m
+                - x
+                - y
+                - z
+          `,
+        }),
+        setCursor(['a', 'm']),
+        toggleContextView(),
+        setCursor(['a', 'm', 'a']),
+        addMulticursor(['a', 'm', 'a']),
+        addMulticursor(['a', 'm', 'b']),
+      ])
+
+      const cursorBefore = store.getState().cursor
+      const multicursorsBefore = Object.values(store.getState().multicursors)
+
+      executeCommandWithMulticursor(copyCursorCommand, { store })
+
+      const state = store.getState()
+      expect(state.cursor).toEqual(cursorBefore)
+      expect(Object.values(state.multicursors)).toEqual(multicursorsBefore)
     })
   })
 })
