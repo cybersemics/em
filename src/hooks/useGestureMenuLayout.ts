@@ -41,8 +41,18 @@ export const GESTURE_MENU_GROUP_GAP_REM = 2.15
 /** Approximate height of the "Gestures" header block (label + divider + bottom margin). */
 export const GESTURE_MENU_HEADER_HEIGHT_REM = 2.8
 
-/** Approximate row pitch: command label height (~0.95rem) plus the row gap. */
-export const GESTURE_MENU_ROW_PITCH_REM = 0.95 + GESTURE_MENU_ROW_GAP_REM
+/** Approximate row pitch of an unselected row: the icon/label height (1rem) plus the row gap. */
+export const GESTURE_MENU_ROW_PITCH_REM = 1 + GESTURE_MENU_ROW_GAP_REM
+
+/**
+ * Extra height one selected command adds over a plain row, reserved from the grid so a selected
+ * description never crops the column. A selected row (GestureMenuItem) grows by its top padding
+ * (0.6rem), the label→description gap (0.5rem), up to two wrapped description lines (2 × 1.1rem),
+ * and its bottom padding (0.1rem). Reserving the two-line worst case keeps the menu crop-free at the
+ * cost of showing one or two fewer commands when a long description wraps — the reviewer explicitly
+ * prefers fewer commands over a clipped menu.
+ */
+export const GESTURE_MENU_SELECTED_RESERVE_REM = 0.6 + 0.5 + 2 * 1.1 + 0.1
 
 /** Approximate height of the persistent block: a single full-width bottom row plus the group gap above it. */
 export const GESTURE_MENU_PERSISTENT_BLOCK_HEIGHT_REM = GESTURE_MENU_GROUP_GAP_REM + GESTURE_MENU_ROW_PITCH_REM
@@ -101,17 +111,20 @@ const useGestureMenuLayout = (regularCount: number, persistentCount = 0): Gestur
   // the CAP; the packed layout below uses as many columns as the commands actually need, up to this.
   const maxColumns = isMobilePortrait ? 1 : Math.max(1, Math.floor((availableWidthPx + gapPx) / (minColumnPx + gapPx)))
 
-  // Row/header/padding geometry shared by both height budgets. Padding is picked off maxColumns (the
-  // width ceiling), not the packed columnCount — the multi-column budget only feeds trimming, which
-  // only runs when the layout is actually multi-column; a packed collapse to one column renders via
-  // the (scrolling, non-trimming) single-column path where the budget is unused.
+  // Row/header/padding geometry shared by both height budgets. The budget uses the *larger*
+  // single-column vertical padding (GESTURE_MENU_PANEL_PADDING_REM), not the tighter multi-column
+  // padding: a packed layout can collapse to the single-column path, which renders with this larger
+  // padding, so budgeting against it keeps that path from cropping. Multi-column renders with less
+  // padding (more room), so this only ever under-fills a column by a fraction of a row — never crops.
   const rowPitchPx = GESTURE_MENU_ROW_PITCH_REM * remPx
   const headerPx = GESTURE_MENU_HEADER_HEIGHT_REM * remPx
-  const verticalPaddingRem =
-    maxColumns > 1 ? GESTURE_MENU_PANEL_PADDING_VERTICAL_MD_REM : GESTURE_MENU_PANEL_PADDING_REM
-  const verticalPaddingPx = 2 * verticalPaddingRem * remPx
+  const verticalPaddingPx = 2 * GESTURE_MENU_PANEL_PADDING_REM * remPx
   const persistentBlockPx = GESTURE_MENU_PERSISTENT_BLOCK_HEIGHT_REM * remPx
-  const gridHeightPx = availableHeightPx - headerPx - verticalPaddingPx
+  // Reserve for the one selected command's expanded description so a wrapped description never crops
+  // the bottom of a column (the multi-column menu doesn't scroll). One command is selected whenever a
+  // gesture is in progress, so the reserve applies to both budgets.
+  const selectedReservePx = GESTURE_MENU_SELECTED_RESERVE_REM * remPx
+  const gridHeightPx = availableHeightPx - headerPx - verticalPaddingPx - selectedReservePx
 
   // Two height budgets, i.e. two values of maxRowsPerColumn — they measure different physical heights
   // and cannot collapse to one. When persistent commands flow inline there is no separate bottom row,
@@ -129,33 +142,54 @@ const useGestureMenuLayout = (regularCount: number, persistentCount = 0): Gestur
   // alone can ask for e.g. 5 columns on a wide screen when only 3 physically fit — those extra
   // columns would render below the minimum width / overflow. Math.min(maxColumns, …) clamps to the
   // fit; Math.max(1, …) floors at a single column.
+  //
+  // The inline layout keeps the persistent block (Cancel / Command Universe) whole and stacks it at
+  // the bottom of a column whenever it fits; only when there's genuinely no room does it fall to the
+  // full-width bottom row. Preference order for the persistent block:
+  //   1. under the last main column, if the main tail + persistent still fit the capacity;
+  //   2. else in the next (spare) column, if one is available within maxColumns — this is the case a
+  //      full first column with an empty second column used to send to the bottom row by mistake;
+  //   3. else (all columns full to capacity, or the block itself is taller than a column) the
+  //      full-width bottom row.
+  const mainColumnsNeeded = regularCount === 0 ? 0 : Math.ceil(regularCount / maxRowsInline)
+  const mainInLastMainCol = mainColumnsNeeded === 0 ? 0 : regularCount - (mainColumnsNeeded - 1) * maxRowsInline
+  // When the persistent block stacks under main commands it sits below a group gap (GROUP_GAP, wider
+  // than a normal row gap), which against the integer row capacity costs one extra row — reserve it
+  // (only when there actually is a persistent block). A block in its own spare column has no main
+  // above it and no group gap, so no extra row.
+  const groupGapReserve = persistentCount > 0 ? 1 : 0
+  const fitsUnderLastMainColumn =
+    regularCount > 0 && mainInLastMainCol + persistentCount + groupGapReserve <= maxRowsInline
+  const spareColumnAvailable = mainColumnsNeeded < maxColumns && persistentCount <= maxRowsInline
+  // Inline requires the main commands themselves to fit the columns (no trimming in inline) and a
+  // home for the persistent block.
+  const persistentInlineFits = mainColumnsNeeded <= maxColumns && (fitsUnderLastMainColumn || spareColumnAvailable)
 
-  // Inline layout: persistent commands stack at the bottom of the last column that actually holds
-  // main commands (never a lone empty column), so they count toward the column need. mainColumnsUsed
-  // is how many columns the main commands alone fill; the persistent block attaches to the last of
-  // those. Inline is used only when more than one column is genuinely needed AND that attach column
-  // still fits the inline budget — otherwise persistent falls back to the bottom row. When the packed
-  // layout collapses to a single column, the component's single-column path renders persistent
-  // instead (isMultiColumn === false), so inline is scoped to inlineColumns > 1.
-  const inlineColumns = Math.min(maxColumns, Math.max(1, Math.ceil((regularCount + persistentCount) / maxRowsInline)))
-  const mainColumnsUsed = regularCount === 0 ? 0 : Math.min(inlineColumns, Math.ceil(regularCount / maxRowsInline))
-  const persistentColumnIndex = Math.max(mainColumnsUsed - 1, 0)
-  const mainInLastMainCol = regularCount === 0 ? 0 : regularCount - Math.max(mainColumnsUsed - 1, 0) * maxRowsInline
-  const attachColRows = mainInLastMainCol + persistentCount
-  const persistentInline = inlineColumns > 1 && attachColRows <= maxRowsInline
+  let columnCount: number
+  let rowsPerColumn: number
+  let visibleRegularCount: number
+  let persistentColumnIndex: number
+  let persistentInline: boolean
 
-  // Bottom-row layout: only main commands fill the grid (persistent take a reserved full-width row),
-  // packed into as few columns as needed and capped by maxColumns; main trims from the end when it
-  // overflows the grid capacity, since the multi-column menu doesn't scroll.
-  const bottomColumns = Math.min(maxColumns, Math.max(1, Math.ceil(regularCount / maxRowsBottom)))
-  const bottomCapacity = bottomColumns * maxRowsBottom
-  const bottomFits = regularCount <= bottomCapacity
-
-  // Rows per column is the fixed capacity (not a balanced average), so column 0 fills first and the
-  // last column drains.
-  const columnCount = persistentInline ? inlineColumns : bottomColumns
-  const rowsPerColumn = persistentInline ? maxRowsInline : maxRowsBottom
-  const visibleRegularCount = persistentInline ? regularCount : bottomFits ? regularCount : bottomCapacity
+  if (persistentInlineFits) {
+    // Attach the persistent block under the last main column, or spill it into the spare column.
+    persistentColumnIndex = fitsUnderLastMainColumn ? Math.max(mainColumnsNeeded - 1, 0) : mainColumnsNeeded
+    columnCount = fitsUnderLastMainColumn ? Math.max(mainColumnsNeeded, 1) : mainColumnsNeeded + 1
+    rowsPerColumn = maxRowsInline
+    visibleRegularCount = regularCount
+    // A single column renders through the component's single-column path, which lays out the
+    // persistent commands itself — inline only applies to the multi-column grid.
+    persistentInline = columnCount > 1
+  } else {
+    // Bottom-row layout: only main commands fill the grid (persistent take a reserved full-width
+    // row), packed into as few columns as needed and capped by maxColumns; main trims from the end
+    // when it overflows the grid capacity, since the multi-column menu doesn't scroll.
+    columnCount = Math.min(maxColumns, Math.max(1, Math.ceil(regularCount / maxRowsBottom)))
+    rowsPerColumn = maxRowsBottom
+    visibleRegularCount = Math.min(regularCount, columnCount * maxRowsBottom)
+    persistentColumnIndex = 0
+    persistentInline = false
+  }
 
   return {
     columnCount,

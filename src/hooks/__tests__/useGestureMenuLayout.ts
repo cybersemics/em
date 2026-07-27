@@ -20,12 +20,13 @@ const setViewport = (innerWidth: number, innerHeight: number) => {
 const layout = (regularCount: number, persistentCount = 0) =>
   renderHook(() => useGestureMenuLayout(regularCount, persistentCount), { wrapper }).result.current
 
-// A viewport tall enough that maxRows never caps rowsPerColumn (a column can hold ~126 rows).
+// Viewport heights chosen (at the 18px default root) to yield known per-column capacities above the
+// two-column width breakpoint:
+//   TALL  → maxRowsInline 121 (a column never fills, so packing collapses to a single column)
+//   MID   → maxRowsInline 8, maxRowsBottom 6
+//   SHORT → maxRowsInline 3, maxRowsBottom 1
 const TALL = 5000
-
-// A short viewport where, above the md breakpoint, maxRowsInline = 5 and maxRowsBottom = 3. Used to
-// force the packed layout into multiple columns with realistic command counts (TALL would need ~130
-// commands to overflow a single column).
+const MID = 540
 const SHORT = 340
 
 describe('useGestureMenuLayout', () => {
@@ -38,8 +39,8 @@ describe('useGestureMenuLayout', () => {
   })
 
   // --- Width cap: columns never exceed what fits the viewport ---------------------------------
-  // Each case supplies enough commands to overflow a single column (maxRowsInline = 5 at SHORT), so
-  // the packed column count is bounded by the width cap rather than by the command count.
+  // Each case supplies enough commands to overflow the columns, so the packed column count is bounded
+  // by the width cap rather than by the command count.
 
   it('caps at one column just below the two-column width threshold', () => {
     // 760px panel − 2·90px padding = 580px inner width (< 595px 2-column threshold).
@@ -60,8 +61,7 @@ describe('useGestureMenuLayout', () => {
   })
 
   it('caps at three columns at iPad-1177 geometry', () => {
-    // 1177px frame − 180px padding = 997px inner width (matches mockup 6585:107093). 15 commands
-    // over a 5-row capacity need 3 columns, which the width also allows.
+    // 1177px frame − 180px padding = 997px inner width (matches mockup 6585:107093).
     setViewport(1177, SHORT)
     expect(layout(15).columnCount).toBe(3)
   })
@@ -90,32 +90,45 @@ describe('useGestureMenuLayout', () => {
   })
 
   it('opens a second column only once the first is full', () => {
-    // SHORT → maxRowsInline 5. 6 commands overflow the first column's capacity by one.
-    setViewport(854, SHORT)
-    const { columnCount, rowsPerColumn } = layout(6)
+    // MID → maxRowsInline 8. 8 commands fit one column; 9 overflow into a second.
+    setViewport(854, MID)
+    expect(layout(8).columnCount).toBe(1)
+    const { columnCount, rowsPerColumn } = layout(9)
     expect(columnCount).toBe(2)
-    // Fixed capacity, not a balanced average (which would be ceil(6/2) = 3): column 0 fills to 5,
+    // Fixed capacity, not a balanced average (which would be ceil(9/2) = 5): column 0 fills to 8,
     // column 1 holds the remaining 1.
-    expect(rowsPerColumn).toBe(5)
+    expect(rowsPerColumn).toBe(8)
   })
 
   it('drains the last column as the list narrows instead of rebalancing', () => {
-    // The first column stays pinned at capacity (5) while the last column shrinks 2 → 1.
-    setViewport(854, SHORT)
-    expect(layout(7).rowsPerColumn).toBe(5)
-    expect(layout(6).rowsPerColumn).toBe(5)
+    // The first column stays pinned at capacity (8) while the last column shrinks.
+    setViewport(854, MID)
+    expect(layout(10).rowsPerColumn).toBe(8)
+    expect(layout(9).rowsPerColumn).toBe(8)
   })
 
   // --- Persistent commands (Cancel / Gesture Cheatsheet) -----------------------------------------
 
-  it('flows persistent commands inline at the bottom of the last main column', () => {
-    // SHORT → maxRowsInline 5. 6 main fill columns 5 + 1; persistent (2) stack under the last (1 + 2 = 3 ≤ 5).
-    setViewport(854, SHORT)
-    const { persistentInline, rowsPerColumn, visibleRegularCount, persistentColumnIndex } = layout(6, 2)
+  it('flows persistent commands inline under the last main column when they fit', () => {
+    // MID → maxRowsInline 8. 10 main pack 8 + 2; persistent (2) stack under the last (2 + 2 = 4 ≤ 8).
+    setViewport(854, MID)
+    const { persistentInline, columnCount, rowsPerColumn, visibleRegularCount, persistentColumnIndex } = layout(10, 2)
     expect(persistentInline).toBe(true)
-    expect(rowsPerColumn).toBe(5)
-    expect(visibleRegularCount).toBe(6)
+    expect(columnCount).toBe(2)
+    expect(rowsPerColumn).toBe(8)
+    expect(visibleRegularCount).toBe(10)
     expect(persistentColumnIndex).toBe(1)
+  })
+
+  it('spills persistent into the spare column when the first column is full', () => {
+    // Regression: 8 main exactly fill column 0 (capacity 8). Persistent (2) do not fit under it
+    // (8 + 2 > 8), but a second column is free, so they flow inline there instead of the bottom row.
+    setViewport(854, MID)
+    const { persistentInline, columnCount, visibleRegularCount, persistentColumnIndex } = layout(8, 2)
+    expect(persistentInline).toBe(true)
+    expect(columnCount).toBe(2)
+    expect(persistentColumnIndex).toBe(1)
+    expect(visibleRegularCount).toBe(8)
   })
 
   it('collapses persistent to the single-column path when everything fits one column', () => {
@@ -128,13 +141,27 @@ describe('useGestureMenuLayout', () => {
     expect(persistentInline).toBe(false)
   })
 
-  it('falls back to the bottom row when persistent does not fit under the last column', () => {
-    // SHORT → maxRowsInline 5, maxRowsBottom 3. 9 main pack 5 + 4; 4 + 2 persistent = 6 > 5, so
-    // persistent drops to the full-width bottom row and main trims to the reserved grid (2 × 3 = 6).
-    setViewport(854, SHORT)
-    const { persistentInline, visibleRegularCount } = layout(9, 2)
+  it('falls back to the bottom row when every column is full', () => {
+    // MID → maxRowsInline 8, maxRowsBottom 6. 16 main fill both columns to capacity with no room for
+    // the persistent block anywhere inline, so it drops to the full-width bottom row and main trims to
+    // the reserved-height grid (2 × 6 = 12).
+    setViewport(854, MID)
+    const { persistentInline, columnCount, rowsPerColumn, visibleRegularCount } = layout(16, 2)
     expect(persistentInline).toBe(false)
-    expect(visibleRegularCount).toBe(6)
+    expect(columnCount).toBe(2)
+    expect(rowsPerColumn).toBe(6)
+    expect(visibleRegularCount).toBe(12)
+  })
+
+  it('does not collapse into an overfull single column that would crop', () => {
+    // Regression (825×461): the budget uses the larger single-column padding and reserves the
+    // persistent group gap, so 5 main + 2 persistent no longer "fit" one column. Rather than collapse
+    // to the non-scrolling single-column path and clip Command Universe, it uses the spare column.
+    setViewport(825, 461)
+    const { columnCount, isMultiColumn, persistentInline } = layout(5, 2)
+    expect(columnCount).toBe(2)
+    expect(isMultiColumn).toBe(true)
+    expect(persistentInline).toBe(true)
   })
 
   it('never flows persistent inline in single column', () => {
@@ -142,17 +169,17 @@ describe('useGestureMenuLayout', () => {
     expect(layout(4, 2).persistentInline).toBe(false)
   })
 
-  // --- Trimming and edges ------------------------------------------------------------------------
+  // --- Trimming and edges: the grid never overflows (no cropping) --------------------------------
 
-  it('caps rowsPerColumn and trims regular commands on a short viewport', () => {
-    // 854×340 → 2 columns, maxRowsBottom 3. 10 main + 2 persistent → persistent can't fit inline, so
-    // it falls to the bottom row and main trims to the reserved-height grid (2 × 3 = 6).
-    setViewport(854, SHORT)
-    const { columnCount, rowsPerColumn, visibleRegularCount } = layout(10, 2)
+  it('trims regular commands to the grid capacity so nothing crops', () => {
+    // 854×500 → 2 columns, maxRowsBottom 6. 30 main can't fit inline, so persistent take the bottom
+    // row and main trims to 2 × 6 = 12.
+    setViewport(854, MID)
+    const { columnCount, rowsPerColumn, visibleRegularCount } = layout(30, 2)
     expect(columnCount).toBe(2)
-    expect(rowsPerColumn).toBe(3)
-    expect(visibleRegularCount).toBe(6)
-    expect(visibleRegularCount).toBeLessThan(10)
+    expect(rowsPerColumn).toBe(6)
+    expect(visibleRegularCount).toBe(12)
+    expect(visibleRegularCount).toBeLessThan(30)
   })
 
   it('never trims below zero', () => {
