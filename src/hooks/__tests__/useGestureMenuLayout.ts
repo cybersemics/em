@@ -20,8 +20,13 @@ const setViewport = (innerWidth: number, innerHeight: number) => {
 const layout = (regularCount: number, persistentCount = 0) =>
   renderHook(() => useGestureMenuLayout(regularCount, persistentCount), { wrapper }).result.current
 
-// A viewport tall enough that maxRows never caps rowsPerColumn.
+// A viewport tall enough that maxRows never caps rowsPerColumn (a column can hold ~126 rows).
 const TALL = 5000
+
+// A short viewport where, above the md breakpoint, maxRowsInline = 5 and maxRowsBottom = 3. Used to
+// force the packed layout into multiple columns with realistic command counts (TALL would need ~130
+// commands to overflow a single column).
+const SHORT = 340
 
 describe('useGestureMenuLayout', () => {
   beforeEach(() => {
@@ -32,34 +37,39 @@ describe('useGestureMenuLayout', () => {
     })
   })
 
-  it('renders one column just below the two-column threshold', () => {
+  // --- Width cap: columns never exceed what fits the viewport ---------------------------------
+  // Each case supplies enough commands to overflow a single column (maxRowsInline = 5 at SHORT), so
+  // the packed column count is bounded by the width cap rather than by the command count.
+
+  it('caps at one column just below the two-column width threshold', () => {
     // 760px panel − 2·90px padding = 580px inner width (< 595px 2-column threshold).
-    setViewport(760, TALL)
-    expect(layout(5).columnCount).toBe(1)
+    setViewport(760, SHORT)
+    expect(layout(10).columnCount).toBe(1)
   })
 
-  it('renders two columns just above the threshold', () => {
+  it('allows two columns just above the width threshold', () => {
     // 820px panel − 180px padding = 640px inner width.
-    setViewport(820, TALL)
-    expect(layout(5).columnCount).toBe(2)
+    setViewport(820, SHORT)
+    expect(layout(10).columnCount).toBe(2)
   })
 
-  it('renders two columns at desktop-854 geometry', () => {
+  it('caps at two columns at desktop-854 geometry', () => {
     // 854px panel − 180px padding = 674px inner width (matches mockup 6586:107957).
-    setViewport(854, TALL)
-    expect(layout(8).columnCount).toBe(2)
+    setViewport(854, SHORT)
+    expect(layout(10).columnCount).toBe(2)
   })
 
-  it('renders three columns at iPad-1177 geometry', () => {
-    // 1177px frame − 180px padding = 997px inner width (matches mockup 6585:107093).
-    setViewport(1177, TALL)
-    expect(layout(11).columnCount).toBe(3)
+  it('caps at three columns at iPad-1177 geometry', () => {
+    // 1177px frame − 180px padding = 997px inner width (matches mockup 6585:107093). 15 commands
+    // over a 5-row capacity need 3 columns, which the width also allows.
+    setViewport(1177, SHORT)
+    expect(layout(15).columnCount).toBe(3)
   })
 
   it('falls back to one column on a narrow landscape viewport', () => {
     // 700px − 180px = 520px inner width, fits fewer than two minimum-width columns.
-    setViewport(700, TALL)
-    expect(layout(6).columnCount).toBe(1)
+    setViewport(700, SHORT)
+    expect(layout(10).columnCount).toBe(1)
   })
 
   it('forces one column below the md breakpoint', () => {
@@ -69,14 +79,78 @@ describe('useGestureMenuLayout', () => {
     expect(isMobilePortrait).toBe(true)
   })
 
+  // --- Packed layout: use as many columns as needed, not as many as fit --------------------------
+
+  it('stays single-column when every command fits one column (tall viewport)', () => {
+    // 854 fits two columns by width, but 8 commands fit one column's height, so it stays single.
+    setViewport(854, TALL)
+    const { columnCount, isMultiColumn } = layout(8)
+    expect(columnCount).toBe(1)
+    expect(isMultiColumn).toBe(false)
+  })
+
+  it('opens a second column only once the first is full', () => {
+    // SHORT → maxRowsInline 5. 6 commands overflow the first column's capacity by one.
+    setViewport(854, SHORT)
+    const { columnCount, rowsPerColumn } = layout(6)
+    expect(columnCount).toBe(2)
+    // Fixed capacity, not a balanced average (which would be ceil(6/2) = 3): column 0 fills to 5,
+    // column 1 holds the remaining 1.
+    expect(rowsPerColumn).toBe(5)
+  })
+
+  it('drains the last column as the list narrows instead of rebalancing', () => {
+    // The first column stays pinned at capacity (5) while the last column shrinks 2 → 1.
+    setViewport(854, SHORT)
+    expect(layout(7).rowsPerColumn).toBe(5)
+    expect(layout(6).rowsPerColumn).toBe(5)
+  })
+
+  // --- Persistent commands (Cancel / Gesture Cheatsheet) -----------------------------------------
+
+  it('flows persistent commands inline at the bottom of the last main column', () => {
+    // SHORT → maxRowsInline 5. 6 main fill columns 5 + 1; persistent (2) stack under the last (1 + 2 = 3 ≤ 5).
+    setViewport(854, SHORT)
+    const { persistentInline, rowsPerColumn, visibleRegularCount, persistentColumnIndex } = layout(6, 2)
+    expect(persistentInline).toBe(true)
+    expect(rowsPerColumn).toBe(5)
+    expect(visibleRegularCount).toBe(6)
+    expect(persistentColumnIndex).toBe(1)
+  })
+
+  it('collapses persistent to the single-column path when everything fits one column', () => {
+    // Tall viewport: 8 main + 2 persistent fit one column, so the single-column (mobile) path renders
+    // persistent rather than the inline multi-column block.
+    setViewport(854, TALL)
+    const { columnCount, isMultiColumn, persistentInline } = layout(8, 2)
+    expect(columnCount).toBe(1)
+    expect(isMultiColumn).toBe(false)
+    expect(persistentInline).toBe(false)
+  })
+
+  it('falls back to the bottom row when persistent does not fit under the last column', () => {
+    // SHORT → maxRowsInline 5, maxRowsBottom 3. 9 main pack 5 + 4; 4 + 2 persistent = 6 > 5, so
+    // persistent drops to the full-width bottom row and main trims to the reserved grid (2 × 3 = 6).
+    setViewport(854, SHORT)
+    const { persistentInline, visibleRegularCount } = layout(9, 2)
+    expect(persistentInline).toBe(false)
+    expect(visibleRegularCount).toBe(6)
+  })
+
+  it('never flows persistent inline in single column', () => {
+    setViewport(390, TALL)
+    expect(layout(4, 2).persistentInline).toBe(false)
+  })
+
+  // --- Trimming and edges ------------------------------------------------------------------------
+
   it('caps rowsPerColumn and trims regular commands on a short viewport', () => {
-    // 854×340 → 2 columns, maxRowsBottom 3. 12 total items (10 main + 2 persistent) need 6
-    // balanced rows > maxRowsInline 5, so it falls back to the bottom row and trims main to the grid.
-    setViewport(854, 340)
+    // 854×340 → 2 columns, maxRowsBottom 3. 10 main + 2 persistent → persistent can't fit inline, so
+    // it falls to the bottom row and main trims to the reserved-height grid (2 × 3 = 6).
+    setViewport(854, SHORT)
     const { columnCount, rowsPerColumn, visibleRegularCount } = layout(10, 2)
     expect(columnCount).toBe(2)
     expect(rowsPerColumn).toBe(3)
-    // Main commands fill the reserved-height grid: 2 × 3 = 6 visible.
     expect(visibleRegularCount).toBe(6)
     expect(visibleRegularCount).toBeLessThan(10)
   })
@@ -86,71 +160,21 @@ describe('useGestureMenuLayout', () => {
     expect(layout(30).visibleRegularCount).toBeGreaterThanOrEqual(0)
   })
 
-  it('flows persistent commands inline and balances them across the columns', () => {
-    // Tall viewport, 5 main + 2 persistent = 7 items over 2 columns → 4 balanced rows.
-    setViewport(854, TALL)
-    const { persistentInline, rowsPerColumn, visibleRegularCount, persistentColumnIndex } = layout(5, 2)
-    expect(persistentInline).toBe(true)
-    expect(rowsPerColumn).toBe(4)
-    expect(visibleRegularCount).toBe(5)
-    // Main fills both columns (4 + 1), so persistent attaches to the last column.
-    expect(persistentColumnIndex).toBe(1)
-  })
-
-  it('attaches persistent to the first column when a single main command leaves later columns empty', () => {
-    // Tall viewport, 1 main + 2 persistent over 2 columns: main reaches only the first column,
-    // so the persistent block joins it rather than sitting alone in the empty second column.
-    setViewport(854, TALL)
-    const { persistentInline, persistentColumnIndex } = layout(1, 2)
-    expect(persistentInline).toBe(true)
-    expect(persistentColumnIndex).toBe(0)
-  })
-
-  it('attaches persistent to the first column when there are no main commands', () => {
-    // Tall viewport, 0 main + 2 persistent over 2 columns: persistent sits at the top of column 0.
-    setViewport(854, TALL)
-    const { persistentInline, persistentColumnIndex } = layout(0, 2)
-    expect(persistentInline).toBe(true)
-    expect(persistentColumnIndex).toBe(0)
-  })
-
-  it('keeps all commands inline when they fit the inline height budget', () => {
-    // H=420 → maxRowsInline 7. 8 main + 2 persistent = 10 items over 2 columns → 5 balanced rows ≤ 7.
-    setViewport(854, 420)
-    const { persistentInline, rowsPerColumn, visibleRegularCount } = layout(8, 2)
-    expect(persistentInline).toBe(true)
-    expect(rowsPerColumn).toBe(5)
-    // Main commands are NOT trimmed — they balance with the persistent commands.
-    expect(visibleRegularCount).toBe(8)
-  })
-
-  it('falls back to the bottom row when the balanced grid overflows the inline height', () => {
-    // H=420 → maxRowsInline 7. 13 main + 2 persistent = 15 items over 2 columns → 8 balanced rows > 7.
-    setViewport(854, 420)
-    const { persistentInline, visibleRegularCount } = layout(13, 2)
-    expect(persistentInline).toBe(false)
-    // Bottom-row path trims main to the reserved-height grid capacity (2 × maxRowsBottom 5 = 10).
-    expect(visibleRegularCount).toBe(10)
-  })
-
-  it('never flows persistent inline in single column', () => {
-    setViewport(390, TALL)
-    expect(layout(4, 2).persistentInline).toBe(false)
-  })
-
   it('handles zero regular commands', () => {
     setViewport(1177, TALL)
-    const { rowsPerColumn, visibleRegularCount } = layout(0)
-    expect(rowsPerColumn).toBe(0)
+    const { columnCount, visibleRegularCount } = layout(0)
+    expect(columnCount).toBe(1)
     expect(visibleRegularCount).toBe(0)
   })
 
   it('scales the column count with the runtime font size', () => {
-    // At 2× font size, the 280px minimum column doubles, so desktop-854 drops to 1 column.
-    setViewport(854, TALL)
+    // At the default font size, 10 commands on a short 2-column viewport use both columns. At 2×
+    // font the 280px minimum column doubles, dropping desktop-854 to a single column.
+    setViewport(854, SHORT)
+    expect(layout(10).columnCount).toBe(2)
     act(() => {
       store.dispatch(fontSizeActionCreator(36))
     })
-    expect(layout(8).columnCount).toBe(1)
+    expect(layout(10).columnCount).toBe(1)
   })
 })
