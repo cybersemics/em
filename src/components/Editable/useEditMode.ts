@@ -12,6 +12,7 @@ import preventAutoscroll, { preventAutoscrollEnd } from '../../device/preventAut
 import * as selection from '../../device/selection'
 import usePrevious from '../../hooks/usePrevious'
 import hasMulticursor from '../../selectors/hasMulticursor'
+import multitouchStore from '../../stores/multitouch'
 import equalPath from '../../util/equalPath'
 
 // #4173: Ghost-click suppression state. On a rapid tap between adjacent thoughts, iOS Safari coalesces the
@@ -186,6 +187,10 @@ const useEditMode = ({
           !equalPath(state.cursor, path) &&
           !hasMulticursor(state) &&
           state.longPress === LongPressState.Inactive &&
+          // Do not move the cursor when the tap is part of a multi-touch gesture (e.g. pinch or two-finger
+          // trace): the caret must stay where it was. The latch persists through the terminating touchend of
+          // the gesture and resets on the next single-finger touchstart. See #4233.
+          !multitouchStore.getState() &&
           style?.visibility !== 'hidden'
         if (!move) return
 
@@ -221,6 +226,13 @@ const useEditMode = ({
       // If CMD/CTRL is pressed, don't focus the editable.
       const isMultiselectClick = isMac ? e.metaKey : e.ctrlKey
       if (isMultiselectClick) {
+        e.preventDefault()
+        return
+      }
+
+      // Ignore synthesized mouse events that are part of a multi-touch gesture (e.g. pinch): the caret must
+      // not move to the touch. preventDefault also blocks the native focus/caret change. See #4233.
+      if (multitouchStore.getState()) {
         e.preventDefault()
         return
       }

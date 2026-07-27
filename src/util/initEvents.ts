@@ -20,7 +20,7 @@ import pathExists from '../selectors/pathExists'
 import store from '../stores/app'
 import { updateCommandState } from '../stores/commandStateStore'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
-import { updateMultitouch } from '../stores/multitouch'
+import multitouchStore, { updateMultitouch } from '../stores/multitouch'
 import { updateScrollTop } from '../stores/scrollTop'
 import selectionRangeStore from '../stores/selectionRangeStore'
 import storageModel from '../stores/storageModel'
@@ -304,6 +304,17 @@ const initEvents = (store: Store<State, any>) => {
    */
   const onSafariGesture = (e: Event) => e.preventDefault()
 
+  /**
+   * Prevents native behavior during a multi-touch gesture (e.g. two-finger tracing or pinch). While the
+   * multitouch latch is set, this preventDefaults touchmove so the browser does not move the contentEditable
+   * caret / extend the text selection to follow the fingers (observed on iOS Safari) or scroll the page. It is
+   * a no-op for single-finger interactions (the latch is only set once a second finger is down), so normal
+   * scrolling and text selection are unaffected. Registered non-passively so preventDefault is honored. See #4233.
+   */
+  const onMultitouchMove = (e: TouchEvent) => {
+    if (multitouchStore.getState() && e.cancelable) e.preventDefault()
+  }
+
   /** Handle a page lifecycle state change, i.e. switching apps. */
   const onStateChange = ({ oldState, newState }: { oldState: LifecycleState; newState: LifecycleState }) => {
     clearTimeout(passiveTimeout)
@@ -394,6 +405,9 @@ const initEvents = (store: Store<State, any>) => {
   window.addEventListener('touchstart', updateMultitouch)
   window.addEventListener('touchend', updateMultitouch)
   window.addEventListener('touchcancel', updateMultitouch)
+  // prevent the native caret / text selection and scrolling from following the fingers during a multi-touch
+  // gesture (non-passive so preventDefault is honored). See #4233.
+  window.addEventListener('touchmove', onMultitouchMove, { passive: false })
   // disable native pinch-to-zoom / two-finger page panning on iOS Safari (#4233)
   document.addEventListener('gesturestart', onSafariGesture)
   document.addEventListener('gesturechange', onSafariGesture)
@@ -430,6 +444,7 @@ const initEvents = (store: Store<State, any>) => {
     window.removeEventListener('touchstart', updateMultitouch)
     window.removeEventListener('touchend', updateMultitouch)
     window.removeEventListener('touchcancel', updateMultitouch)
+    window.removeEventListener('touchmove', onMultitouchMove)
     document.removeEventListener('gesturestart', onSafariGesture)
     document.removeEventListener('gesturechange', onSafariGesture)
     document.removeEventListener('gestureend', onSafariGesture)
