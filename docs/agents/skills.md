@@ -4,7 +4,7 @@ A skill is a folder under `.github/skills/` containing a `SKILL.md` file. It hol
 
 That "only when invoked" part is the point. Standing instructions are read on every run and compete for the agent's attention whether or not they are relevant. A skill costs nothing until it is needed, so it can afford to be long and specific.
 
-## The eleven skills
+## The twelve skills
 
 ```mermaid
 flowchart TD
@@ -25,6 +25,7 @@ flowchart TD
     TD --> PUS["<b>puppeteer-update-snapshots</b><br/>regenerate screenshots"]
 
     CM --> ES["<b>end-session</b><br/>checklist before stopping"]
+    ES --> DS["<b>docs-sync</b><br/>make docs true again"]
 
     style IR fill:#2d4a2d,color:#fff
     style PL fill:#2d4a2d,color:#fff
@@ -33,6 +34,7 @@ flowchart TD
     click IR "skills.md#issue-repro" "issue-repro — reproduce before investigating"
     click PL "skills.md#plan" "plan — plan and critique before implementing"
     click ES "skills.md#end-session" "end-session — the exit checklist"
+    click DS "skills.md#docs-sync" "docs-sync — keep documentation true"
     click BC "skills.md#browser-control" "browser-control — routes by platform"
     click BCC "skills.md#browser-control-chrome" "browser-control-chrome — web and Android"
     click BCI "skills.md#browser-control-ios" "browser-control-ios — real iPhone"
@@ -58,6 +60,7 @@ The two green boxes are the gates — the agent must run them before it is allow
 | [`test-diagnosis`](#test-diagnosis) | Classify a CI failure and decide how to fix it | [SKILL.md](../../.github/skills/test-diagnosis/SKILL.md) |
 | [`puppeteer-update-snapshots`](#puppeteer-update-snapshots) | Regenerate screenshot comparisons after an intended visual change | [SKILL.md](../../.github/skills/puppeteer-update-snapshots/SKILL.md) |
 | [`end-session`](#end-session) | Work through the exit checklist before stopping for any reason | [SKILL.md](../../.github/skills/end-session/SKILL.md) |
+| [`docs-sync`](#docs-sync) | Repair the documentation your change made untrue, in the same commit | [SKILL.md](../../.github/skills/docs-sync/SKILL.md) |
 
 ## The gates
 
@@ -223,15 +226,16 @@ The exit gate. [`issue-repro`](#issue-repro) and [`plan`](#plan) control the way
 
 It exists because the last action of a run is the one nobody supervises, and its two worst failures are silent ones. A session that ends with the fix still sitting in the working tree has destroyed the work rather than delivered it: the runner is disposable, so the branch looks untouched and the effort is gone. A session that ends while CI is still running has reported a result it never watched. Both read as success from inside the transcript, which is why this is a checklist rather than a principle.
 
-Six steps, and the order is load-bearing — the working tree is cleaned before CI is checked, because committing restarts CI and therefore restarts the checklist:
+The order is load-bearing. Documentation is repaired before the tree is taken stock of, because a doc edit is itself a file change; the tree is cleaned before CI is checked, because committing restarts CI and therefore restarts the checklist:
 
 0. **Are you allowed to stop at all?** Not straight after a gate confirmation line, not mid fix-validate loop, not with CI still running. Only four endings are legitimate: the work is green, a documented attempt limit was hit, the bug would not reproduce, or the path is genuinely ambiguous.
-1. **Account for every changed file.** Each line of `git status --porcelain` is either part of the work, scratch to delete, or something the agent did not write — which it must leave alone and mention, never quietly discard.
-2. **Commit and push.** `git status --porcelain` and `git log @{u}..HEAD` must both come back empty.
-3. **No test left skipped**, checked against what this branch added rather than the whole suite.
-4. **Every CI check green**, read with the TDD workflow in mind, since a red `TDD` check means the opposite of a red test suite.
-5. **The pull request is in order** — draft, issue number, plan in the description.
-6. **Report**, including what was deliberately left undone.
+1. **Does the documentation still describe reality?** Hands off to [`docs-sync`](#docs-sync), and carries back either the documents it updated or `docs: unaffected — <reason>`.
+2. **Account for every changed file.** Each line of `git status --porcelain` is either part of the work, scratch to delete, or something the agent did not write — which it must leave alone and mention, never quietly discard.
+3. **Commit and push.** `git status --porcelain` and `git log @{u}..HEAD` must both come back empty.
+4. **No test left skipped**, checked against what this branch added rather than the whole suite.
+5. **Every CI check green**, read with the TDD workflow in mind, since a red `TDD` check means the opposite of a red test suite.
+6. **The pull request is in order** — draft, issue number, plan in the description.
+7. **Report**, including the `docs:` line and what was deliberately left undone.
 
 Step 0 comes first because the more common failure is not a messy ending but a premature one — stopping to wait for a human who is not there. An earlier version of this system had agents printing a gate line and then yielding mid-task.
 
@@ -245,6 +249,30 @@ end-session: escalating — checklist passed per .github/skills/end-session/SKIL
 ```
 
 Unlike the gate lines, this one genuinely is a stopping point — the only one.
+
+### docs-sync
+
+**Source: [`.github/skills/docs-sync/SKILL.md`](../../.github/skills/docs-sync/SKILL.md)**
+
+The first step of `end-session`, and the reason documentation here is expected to stay true rather than slowly rot. It takes the files a change touched, works out which documents describe them, and repairs whatever the change made false — in the same commit.
+
+It runs before the working tree is accounted for, because a documentation edit is itself a file change. Run it afterwards and it misses the commit.
+
+The stakes are higher here than in a project where docs are only read by people. `docs/` is **required reading for the [`plan`](#plan) skill**, so a stale document is not merely unhelpful — it is the input to the next agent's plan, and a plan built on a constraint that no longer holds produces confident, wrong code. Every change that leaves documentation behind makes the following session start from a worse map.
+
+**Routing happens three ways**, because no one of them is sufficient. The [`plan`](#plan) skill's list of documents a change would invalidate is the strongest, having been written while reasoning about behaviour rather than paths. A grep of `docs/` for the identifiers the change touched is next, and it is the pass that finds a document describing your code from another subsystem's point of view. Last and narrowest is a table mapping source areas to the document that owns them — `src/data-providers/**` to [`persistence.md`](../persistence.md), `src/commands/**` to [`commands.md`](../commands.md), `.github/skills/**` to these agent docs.
+
+That table is explicitly a floor rather than a ceiling, because path-keyed routing cannot see behaviour. Editing `src/selectors/getChildren.ts` routes to [`data-model.md`](../data-model.md) and nothing else, yet [`glossary.md`](../glossary.md), [`metaprogramming.md`](../metaprogramming.md), and [`testing.md`](../testing.md) all cite that same function — the by-name pass finds them; the table never would. A changed file matching no row at all is treated as a finding rather than a pass: either the document that should cover that area does not exist, which is worth saying out loud, or the table needs a row.
+
+The skill is also blunt that the table is **not a reading list**. It says which documents a change may have broken, not which should have been read — that is [`plan`](#plan)'s job, and it deliberately starts from the index, [`folder-structure.md`](../folder-structure.md), and [`glossary.md`](../glossary.md), because you cannot know in advance which subsystem a problem really lives in. Narrowing what you read to the rows a table matched would guarantee you only ever learn about code you already knew to look for.
+
+**The rule that decides most edits** is that documentation describes how the project works now, and why it is that way — it is not a changelog. Replace the false sentence; do not append "as of #4712 this changed". Git already holds the history, and a doc that accumulates change notes grows longer and less true at once, leaving the next reader to work out which paragraph is current. The matching constraint is that *reasoning* must survive: a passage explaining why iOS sessions are created outside the tooling is design intent, not history, and stripping it damages the doc as much as leaving a lie in it.
+
+Three things go stale, and the skill checks for them in order of how often they bite: a source path that was renamed or deleted while the prose around it still reads fine; a sentence asserting behaviour that just changed; and a diagram, table, or count that enumerates something — the failure mode this very page is prone to, where the prose is right and the mermaid node beneath it is not.
+
+It reports one line back into the ending — the documents it updated, or `docs: unaffected — <reason>`. The second is a common and legitimate outcome, but it is a conclusion reached after checking the table, not a default.
+
+The escalation rule is the interesting one. If a change contradicts **design intent** recorded in a doc — not a detail, but the stated reason a subsystem is built the way it is — the agent stops and raises it instead of editing the intent to match the new code. Quietly rewriting the "why" erases the only record that a deliberate decision was ever made.
 
 ## Writing a new skill
 

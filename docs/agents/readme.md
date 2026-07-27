@@ -9,7 +9,7 @@ We targeted Copilot specifically because the project already runs on GitHub — 
 | Document | What it covers |
 | --- | --- |
 | This page | The map: what the pieces are, what loads when, how a task flows through them |
-| [Skills](skills.md) | The eleven skills, what each one does, and how they call each other |
+| [Skills](skills.md) | The twelve skills, what each one does, and how they call each other |
 | [Environment](environment.md) | What the runner sets up, how the agent drives a browser, how iOS works |
 | [MCP servers](mcp.md) | The three external tool servers, what each gives the agent, and how they are wired |
 | [The TDD workflow](tdd.md) | Why regression tests are committed switched off, and what the CI checks mean |
@@ -30,7 +30,7 @@ flowchart TD
     CI["copilot-instructions.md<br/>persona · environment · methodology"]
     WB["agents/worker-bee.agent.md<br/>same content, plus a name and description"]
     INS["instructions/*.instructions.md<br/>code standards · testing rules"]
-    SK["skills/*/SKILL.md<br/>eleven skills, loaded on demand"]
+    SK["skills/*/SKILL.md<br/>twelve skills, loaded on demand"]
     RUN(["The running agent"])
 
     CI --> RUN
@@ -41,7 +41,7 @@ flowchart TD
     click CI "../../.github/copilot-instructions.md" "Open copilot-instructions.md"
     click WB "../../.github/agents/worker-bee.agent.md" "Open worker-bee.agent.md"
     click INS "../../.github/instructions/" "Open the instructions folder"
-    click SK "skills.md" "All eleven skills"
+    click SK "skills.md" "All twelve skills"
 ```
 
 The split matters because the agent's attention is finite. Anything in the first three is competing for room on every single run, so it has to earn its place. A skill costs nothing until it is needed, which is why the detailed procedures — how to bring up an iOS device, how to run one test, how to read a CI failure — are skills rather than standing instructions.
@@ -140,7 +140,7 @@ The checklist opens by asking whether the agent is entitled to stop at all, beca
 │   ├── code-standards.instructions.md
 │   ├── testing.instructions.md
 │   └── estimate/                    Not a Copilot instruction — see below
-├── skills/                          Eleven skills — see skills.md
+├── skills/                          Twelve skills — see skills.md
 ├── actions/
 │   ├── install/                     Cached dependency install
 │   ├── serve/                       Start the built app and wait for it

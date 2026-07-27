@@ -141,6 +141,7 @@ Every skill declares what it is allowed to use in its `allowed-tools` frontmatte
 | [`test-diagnosis`](skills.md#test-diagnosis) | ✓ | | |
 | [`puppeteer-update-snapshots`](skills.md#puppeteer-update-snapshots) | ✓ | | |
 | [`end-session`](skills.md#end-session) | ✓ | | |
+| [`docs-sync`](skills.md#docs-sync) | ✓ | | |
 
 [`browser-control`](skills.md#browser-control) and [`issue-repro`](skills.md#issue-repro) list both browser servers because they route to either platform without knowing in advance which it will be.
 
