@@ -2,16 +2,19 @@
 
 Everything else in this folder describes the GitHub Copilot cloud agent. This page describes the other half: **agents running on a developer's own machine** — Codex, Claude Code, or anything else that reads a repository-level instruction file.
 
-The two are separate environments that deliberately share their procedures. A cloud agent wakes up in a runner where the dev server is already listening, Chrome is already up on a debugging port, and BrowserStack credentials are already in the environment. None of that is true on a laptop. But *how to plan a change*, *how to write a test that fails for the right reason*, and *how to end a session honestly* do not depend on any of it.
+They are two environments that deliberately share their procedures. A cloud agent wakes up in a runner where the dev server is already listening, Chrome is already up on a debugging port, and BrowserStack credentials are already in the environment. None of that is true on a laptop. But *how to plan a change*, *how to write a test that fails for the right reason*, and *how to end a session honestly* do not depend on any of it.
+
+The environments are separate; the instruction files are not. The cloud agent reads the local entry point as well as its own, which constrains how that file can be written.
 
 ## The two entry points
 
 | | Cloud agent | Local agent |
 | --- | --- | --- |
-| Reads | `.github/copilot-instructions.md` | `AGENTS.md` |
-| Also reads | `.github/agents/worker-bee.agent.md` | `CLAUDE.md` → symlink → `AGENTS.md` |
+| Reads | `.github/copilot-instructions.md`, `.github/agents/worker-bee.agent.md`, `.github/instructions/*` — **and `AGENTS.md` and `CLAUDE.md`** | `AGENTS.md` (Claude Code via `CLAUDE.md` → symlink) |
 | Skills in | `.github/skills/` | `.agents/skills/` → symlinks → `.github/skills/` |
 | Browser work | Yes — provisioned Chrome and real iPhones | No |
+
+The cloud agent's row is the surprising one, and it shapes everything below — see [Copilot reads AGENTS.md too](#copilot-reads-agentsmd-too).
 
 ```mermaid
 flowchart TD
@@ -33,6 +36,7 @@ flowchart TD
     CI --> SK
     WB --> SK
     AG --> AS
+    CI -.also reads,<br/>lowest precedence.-> AG
 
     click SK "skills.md" "What each skill does"
     click CI "../../.github/copilot-instructions.md" "Open copilot-instructions.md"
@@ -40,6 +44,26 @@ flowchart TD
 ```
 
 `AGENTS.md` is the canonical local entry point and `.agents/skills/` the canonical local skill directory. Claude Code's `CLAUDE.md` and `.claude/skills` are symlinks onto them, so a Claude Code session and a Codex session read byte-identical instructions. Both tools follow symlinks.
+
+The `CLAUDE.md` symlink is required, not decorative: Claude Code does **not** read `AGENTS.md` natively, and `ln -s AGENTS.md CLAUDE.md` is Anthropic's own documented workaround.
+
+## Copilot reads AGENTS.md too
+
+This was designed on the assumption that the two entry points were read by two different agents. That assumption was wrong, and it is worth stating plainly because it constrains how `AGENTS.md` can be written.
+
+Since August 2025 the Copilot coding agent reads `AGENTS.md` — and `CLAUDE.md`, and `GEMINI.md` — [alongside](https://github.blog/changelog/2025-08-28-copilot-coding-agent-now-supports-agents-md-custom-instructions/) its own files. They are **combined, not overridden**: "all sets of relevant instructions are provided to Copilot", in [this order of precedence](https://docs.github.com/en/copilot/concepts/response-customization):
+
+1. Path-specific — `.github/instructions/*.instructions.md`
+2. Repository-wide — `.github/copilot-instructions.md`
+3. Agent instructions — `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`
+
+There is no documented way to switch that off, so this cannot be solved by exclusion. Two consequences follow.
+
+**Every statement in `AGENTS.md` has to be true for the cloud agent as well.** An early draft opened by declaring that the Copilot agent does not read the file, and elsewhere stated that the browser and device skills were unavailable. Copilot would have read both as being about itself — and the second is precisely the belief [`issue-repro`](skills.md#issue-repro) exists to fight, since agents talk themselves out of iOS work given any excuse. Anything environment-specific belongs in the Copilot files, which the cloud agent reads at higher precedence anyway.
+
+**`AGENTS.md` is deliberately the softer document.** It describes rather than dictates, because a developer's own machine is their own workflow — branch naming, commit granularity, and when to run what are not this file's business. That register is safe *because* of the precedence order: the strict forms of the rules that protect shared state, like the exit gate and the documentation obligation, are stated independently in `.github/copilot-instructions.md`, which outranks this file. The rule to remember when editing: **do not soften something only `AGENTS.md` says**, or the cloud agent inherits the soft version by default.
+
+Because `CLAUDE.md` is a symlink, Copilot ingests the same content twice, once under each name. That is wasteful rather than harmful, and it is the price of Claude Code support.
 
 ## Why the skills are symlinked rather than copied
 
@@ -77,6 +101,6 @@ ln -s ../../.github/skills/<name> .agents/skills/<name>
 
 Then add a row to the table in `AGENTS.md`, and update the shared list on this page. Check first that the skill names no cloud-only tool or provisioned resource — and if it names one in a single line, prefer the one-clause treatment above to leaving it out.
 
-**The two prompt files are not symlinked to each other, and should not be.** `AGENTS.md` and `.github/copilot-instructions.md` genuinely differ: one describes an environment that is already running, the other an environment you have to start. Their overlap is the parts that are already delegated to skills. Do not try to unify them — unify the procedures they both call instead.
+**The two prompt files are not symlinked to each other, and should not be.** `AGENTS.md` and `.github/copilot-instructions.md` genuinely differ: one describes an environment that is already running, the other an environment you have to start, and one dictates where the other suggests. Their overlap is the parts already delegated to skills. Do not try to unify them — unify the procedures they both call instead. Remember that the cloud agent reads *both*, so they must not contradict each other, only differ in what they cover.
 
 **`allowed-tools` is an open question.** Every skill declares it with Copilot's vocabulary — `bash`, and the MCP *server* names `chrome-devtools` and `wdio`. Claude Code expects its own tool names, and none of the skills installed locally on any developer machine here use the field at all. Whether an unrecognised value is ignored or is treated as a restriction granting nothing has not been tested. If a shared skill behaves as though it has no tools, this is the first thing to check.
