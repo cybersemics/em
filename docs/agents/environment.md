@@ -4,7 +4,7 @@ The agent wakes up in a machine that has already been prepared for it. Understan
 
 ## What the setup step builds
 
-`.github/workflows/copilot-setup-steps.yml` runs before the agent's session begins. The file name and the job name inside it must both be exactly `copilot-setup-steps`, or Copilot will not use it.
+[`.github/workflows/copilot-setup-steps.yml`](../../.github/workflows/copilot-setup-steps.yml) runs before the agent's session begins. The file name and the job name inside it must both be exactly `copilot-setup-steps`, or Copilot will not use it.
 
 | Step | Why |
 | --- | --- |
@@ -48,6 +48,11 @@ flowchart LR
     MCP -->|"look at things"| CHROME
     BRIDGE -->|"do things"| CHROME
     HELPERS --> BRIDGE
+
+    click CHROME "../../scripts/shared-chrome.mjs" "scripts/shared-chrome.mjs"
+    click MCP "mcp.md#chrome-devtools" "The chrome-devtools server"
+    click BRIDGE "environment.md#what-the-bridge-actually-is" "How the bridge works"
+    click HELPERS "skills.md#browser-control" "The observe-versus-act rule"
 ```
 
 The tooling is configured with `--browser-url`, which means it **joins** the already-running Chrome rather than launching its own. The bridge connects to the same one. So the agent can inspect the page with one tool, act on it with a helper through the other, and both are looking at the same window.
@@ -58,7 +63,7 @@ Because the tooling joins rather than launches, **Chrome must already be running
 
 ### What the bridge actually is
 
-`src/e2e/puppeteer/attachExistingBrowserInstance.ts` connects to the shared Chrome, finds the tab with the app in it, and hands it to the helpers as the page they operate on.
+[`src/e2e/puppeteer/attachExistingBrowserInstance.ts`](../../src/e2e/puppeteer/attachExistingBrowserInstance.ts) connects to the shared Chrome, finds the tab with the app in it, and hands it to the helpers as the page they operate on.
 
 There is a concrete reason it exists rather than just using the tooling for everything: connecting this way restores real touch input, which the general tooling does not expose. Real touch is what makes the actual gesture helper work — the same code the test suite runs, rather than an approximation of it.
 
@@ -123,9 +128,9 @@ Nothing waits on a tool call during the slow part. A detached background process
 
 Three pieces come out of this:
 
-- **`scripts/start-ios-session.mjs`** opens a tunnel so the phone can reach the dev server, requests the device, and stays alive holding the tunnel open.
-- **`.github/skills/browser-control-ios/heartbeat.sh`** pings the session every 90 seconds so BrowserStack does not reclaim it while the agent is thinking. It gives up after three consecutive failures and writes out BrowserStack's own explanation of what happened — which is the only after-the-fact clue available if a session dies.
-- **`scripts/mcp-session-proxy.mjs`** is a small local server. The tooling connects to it and asks to start a session; instead of creating one, it hands back the session that already exists, instantly.
+- **[`scripts/start-ios-session.mjs`](../../scripts/start-ios-session.mjs)** opens a tunnel so the phone can reach the dev server, requests the device, and stays alive holding the tunnel open.
+- **[`.github/skills/browser-control-ios/heartbeat.sh`](../../.github/skills/browser-control-ios/heartbeat.sh)** pings the session every 90 seconds so BrowserStack does not reclaim it while the agent is thinking. It gives up after three consecutive failures and writes out BrowserStack's own explanation of what happened — which is the only after-the-fact clue available if a session dies.
+- **[`scripts/mcp-session-proxy.mjs`](../../scripts/mcp-session-proxy.mjs)** is a small local server. The three separate problems it solves are laid out in [MCP servers](mcp.md#why-there-is-a-shim-in-the-middle). The tooling connects to it and asks to start a session; instead of creating one, it hands back the session that already exists, instantly.
 
 The proxy solves a second problem too. The sandbox's firewall rejects certain outgoing requests because of a malformed header, so the proxy forwards requests itself in a way the firewall accepts. Everything from the agent to the proxy is local traffic, which is never inspected.
 
@@ -140,7 +145,7 @@ Two ways this bites, both ending in a blank screen and a timeout, and both needi
 
 ### The iOS bridge
 
-`src/e2e/iOS/attachExistingSession.ts` reads the session ID from the file, attaches, and switches into the web layer. From there, working with the page is identical to any other platform.
+[`src/e2e/iOS/attachExistingSession.ts`](../../src/e2e/iOS/attachExistingSession.ts) reads the session ID from the file, attaches, and switches into the web layer. From there, working with the page is identical to any other platform.
 
 Worth knowing: the first attach costs tens of seconds while the connection to the web layer warms up. Compose several actions into one script rather than running several scripts.
 

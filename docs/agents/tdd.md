@@ -1,6 +1,6 @@
 # The TDD workflow
 
-Every bug fix in this project ships with a test. That much is ordinary. The part that surprises people is that **the test is committed switched off**, and that a CI check exists whose whole job is to confirm the test *fails*.
+Every bug fix in this project should ship with a test. That much is ordinary. The part that surprises people is that **the test is committed switched off**, and that a CI check exists whose whole job is to confirm the test *fails*.
 
 This is the most confusing part of the agent setup, and the part most likely to be misread by a human skimming a pull request. It is worth ten minutes.
 
@@ -60,11 +60,11 @@ So **"CI failed" does not on its own mean the bug is unfixed.** You have to look
 - **The TDD check is red** — the new test passes on code without the fix. The test is not actually testing the reported bug. Fix the test.
 - **The normal suite is red** — something is genuinely broken. Fix the code.
 
-Both prompt files and the `tdd-write-failing-test` skill spell this out, because an agent that misreads it will "fix" a perfectly good test until it stops catching anything.
+Both prompt files and the [`tdd-write-failing-test`](skills.md#tdd-write-failing-test) skill spell this out, because an agent that misreads it will "fix" a perfectly good test until it stops catching anything.
 
 ## How the check works
 
-`.github/workflows/tdd.yml` runs on every pull request in four stages.
+[`.github/workflows/tdd.yml`](../../.github/workflows/tdd.yml) runs on every pull request in four stages.
 
 ```mermaid
 flowchart TD
@@ -75,6 +75,12 @@ flowchart TD
     U --> S["<b>summary</b><br/>one check for branch protection"]
     P --> S
     I --> S
+
+    click D "tdd.md#how-the-check-works" "What detect classifies"
+    click U "tdd.md#how-the-check-works" "The unit job"
+    click P "tdd.md#how-the-check-works" "The puppeteer job"
+    click I "tdd.md#how-the-check-works" "The iOS job"
+    click S "tdd.md#escape-hatches" "The single check, and how to skip it"
 ```
 
 **detect** compares the pull request against the point it branched from, and sorts changed test files into unit, puppeteer, and iOS. It then filters twice: to files that actually add new test cases, and to files that add switched-off ones. That first filter matters — editing the inside of an existing test should not trigger any of this.
@@ -85,7 +91,7 @@ It then decides whether to skip. It skips if no test files changed; if the pull 
 
 1. Check out the base branch — the code *without* the fix.
 2. Copy just the changed test files across from the pull request.
-3. Switch any newly-added skipped tests back on, via `.github/actions/unskip-added-tests`.
+3. Switch any newly-added skipped tests back on, via [`.github/actions/unskip-added-tests`](../../.github/actions/unskip-added-tests/action.yml).
 4. Run them, and **require them to fail.**
 
 Step 2 copies the test files individually rather than applying a patch, because a brand-new test file has nothing on the base branch to patch against.
@@ -107,7 +113,7 @@ The legitimate reason to reach for a label is adding coverage for behaviour that
 
 ## Why locally run tests ignore the skip
 
-The `run-test` skill always switches a test on before running it, then puts the file back.
+The [`run-test`](skills.md#run-test) skill always switches a test on before running it, then puts the file back.
 
 Without that, asking a runner to run a switched-off test gets you "0 tests run" — which reads almost exactly like a pass. An agent validating its own work would take that as success and move on with a test that never executed.
 
@@ -115,7 +121,7 @@ Without that, asking a runner to run a switched-off test gets you "0 tests run" 
 
 ## Writing the test itself
 
-Handled by the `tdd-write-failing-test` skill; the essentials:
+Handled by the [`tdd-write-failing-test`](skills.md#tdd-write-failing-test) skill; the essentials:
 
 **One test for the reported bug.** If an issue lists several ways to trigger the same underlying problem, pick one. They share a cause, and one test proves the fix.
 

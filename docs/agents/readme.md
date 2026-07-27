@@ -9,8 +9,9 @@ We targeted Copilot specifically because the project already runs on GitHub — 
 | Document | What it covers |
 | --- | --- |
 | This page | The map: what the pieces are, what loads when, how a task flows through them |
-| [Skills](skills.md) | The ten skills, what each one does, and how they call each other |
+| [Skills](skills.md) | The eleven skills, what each one does, and how they call each other |
 | [Environment](environment.md) | What the runner sets up, how the agent drives a browser, how iOS works |
+| [MCP servers](mcp.md) | The three external tool servers, what each gives the agent, and how they are wired |
 | [The TDD workflow](tdd.md) | Why regression tests are committed switched off, and what the CI checks mean |
 
 ## The four kinds of file
@@ -29,13 +30,18 @@ flowchart TD
     CI["copilot-instructions.md<br/>persona · environment · methodology"]
     WB["agents/worker-bee.agent.md<br/>same content, plus a name and description"]
     INS["instructions/*.instructions.md<br/>code standards · testing rules"]
-    SK["skills/*/SKILL.md<br/>ten skills, loaded on demand"]
+    SK["skills/*/SKILL.md<br/>eleven skills, loaded on demand"]
     RUN(["The running agent"])
 
     CI --> RUN
     WB --> RUN
     INS --> RUN
     SK -.invoked by name.-> RUN
+
+    click CI "../../.github/copilot-instructions.md" "Open copilot-instructions.md"
+    click WB "../../.github/agents/worker-bee.agent.md" "Open worker-bee.agent.md"
+    click INS "../../.github/instructions/" "Open the instructions folder"
+    click SK "skills.md" "All eleven skills"
 ```
 
 The split matters because the agent's attention is finite. Anything in the first three is competing for room on every single run, so it has to earn its place. A skill costs nothing until it is needed, which is why the detailed procedures — how to bring up an iOS device, how to run one test, how to read a CI failure — are skills rather than standing instructions.
@@ -76,7 +82,21 @@ flowchart TD
     G --> H{"All green?"}
     H -- no --> I["test-diagnosis — work out what kind of failure it is"]
     I --> E
-    H -- yes --> J["Done"]
+    H -- yes --> J["<b>Exit gate</b> — end-session skill"]
+    J --> J1["Nothing uncommitted, nothing unpushed,<br/>no test left skipped, CI observed green"]
+    J1 --> K["Done"]
+
+    click C "skills.md#issue-repro" "The issue-repro skill"
+    click C1 "skills.md#browser-control" "How the browser is brought up"
+    click C2 "tdd.md" "Why the test is committed switched off"
+    click D "skills.md#plan" "The plan skill"
+    click D1 "skills.md#plan" "What the plan must contain"
+    click D2 "skills.md#plan" "The critique stage"
+    click E1 "tdd.md#why-locally-run-tests-ignore-the-skip" "Switching the test back on"
+    click G "skills.md#ci-monitor" "The ci-monitor skill"
+    click I "skills.md#test-diagnosis" "The test-diagnosis skill"
+    click J "skills.md#end-session" "The end-session skill"
+    click J1 "skills.md#end-session" "The exit checklist, step by step"
 ```
 
 Both gates exist to stop the same failure. An agent that starts reading source code before it has seen the bug happen will form a theory from the code and then go looking for evidence to support it. Making it reproduce the problem first means it has a real observation to work from. Making it write the plan against quoted, existing code means it extends what is there instead of building something new beside it.
@@ -96,6 +116,19 @@ plan: complete — architectural plan produced and critique passed per .github/s
 
 They are there so that a human reading the transcript can see at a glance whether the process was followed, rather than having to infer it. Both prompts also spell out that printing the line does **not** end the agent's turn — an earlier version of this design had agents printing the line and then stopping to wait for a human who was not there.
 
+### The exit gate
+
+A third declaration sits at the other end of the run. The two gates above control entry into implementation; the [`end-session`](skills.md#end-session) skill controls the exit, and the agent works through it before every ending — finished, escalating, or a turn it believes changed nothing.
+
+```
+end-session: complete — checklist passed per .github/skills/end-session/SKILL.md.
+end-session: escalating — checklist passed per .github/skills/end-session/SKILL.md; blocked on <one-line reason>.
+```
+
+It exists because the last action of a run is the one nobody supervises, and two of its failures are silent. A session that ends with the fix still sitting in the working tree has destroyed the work rather than delivered it — the runner is disposable, the branch looks untouched, and the effort is unrecoverable. A session that ends while CI is still running has reported a result it never observed. Both read as success from inside the transcript, which is exactly why they need a checklist rather than good intentions: account for every changed file, commit and push, remove any `.skip`, watch every check finish, then report.
+
+The checklist opens by asking whether the agent is entitled to stop at all, because the more common failure is stopping too early — mid-loop, or straight after a gate line. Escalation is explicitly *not* an exemption. It is when unpushed work is most likely to be lost, since the agent is stopping mid-task rather than at a natural finish. Unlike the two entry gates, this confirmation line genuinely is a stopping point, and it is the only one.
+
 ## Where everything lives
 
 ```
@@ -107,7 +140,7 @@ They are there so that a human reading the transcript can see at a glance whethe
 │   ├── code-standards.instructions.md
 │   ├── testing.instructions.md
 │   └── estimate/                    Not a Copilot instruction — see below
-├── skills/                          Ten skills — see skills.md
+├── skills/                          Eleven skills — see skills.md
 ├── actions/
 │   ├── install/                     Cached dependency install
 │   ├── serve/                       Start the built app and wait for it
@@ -128,8 +161,8 @@ src/e2e/
 
 Two workflows are part of this system rather than ordinary CI:
 
-- **`copilot-setup-steps.yml`** builds the environment the agent wakes up in — the display, the browser, the dev server, credentials. It must be named exactly that, and its job must be called `copilot-setup-steps`, or Copilot ignores it. Covered in [Environment](environment.md).
-- **`tdd.yml`** independently verifies that any new test genuinely fails before the fix. Covered in [The TDD workflow](tdd.md).
+- **[`copilot-setup-steps.yml`](../../.github/workflows/copilot-setup-steps.yml)** builds the environment the agent wakes up in — the display, the browser, the dev server, credentials. It must be named exactly that, and its job must be called `copilot-setup-steps`, or Copilot ignores it. Covered in [Environment](environment.md#what-the-setup-step-builds).
+- **[`tdd.yml`](../../.github/workflows/tdd.yml)** independently verifies that any new test genuinely fails before the fix. Covered in [The TDD workflow](tdd.md#how-the-check-works).
 
 The rest (`test`, `lint`, `puppeteer`, `ios`, the Vercel and Tauri workflows) are normal project CI. The agent has to make them pass, but they were not built for it.
 
@@ -137,7 +170,7 @@ The rest (`test`, `lint`, `puppeteer`, `ios`, the Vercel and Tauri workflows) ar
 
 Worth knowing about, because nothing here will tell you when one of them breaks:
 
-- **MCP server configuration.** An MCP server is an external tool the agent can call. Two matter here: `chrome-devtools` for driving Chrome, and `wdio` for driving iOS. They are configured in Copilot's own settings, not in this repository. In particular, `chrome-devtools` must be given `--browser-url=http://127.0.0.1:9222` so that it joins the browser the setup step already started instead of launching a second one.
+- **[MCP server configuration](mcp.md).** An MCP server is an external tool the agent can call. Three matter here: [`chrome-devtools`](mcp.md#chrome-devtools) for driving Chrome, [`wdio`](mcp.md#wdio) for driving iOS, and [the GitHub server](mcp.md#the-github-server) for reading issues and CI runs. They are configured in Copilot's own settings, not in this repository. In particular, `chrome-devtools` must be given `--browser-url=http://127.0.0.1:9222` so that it joins the browser the setup step already started instead of launching a second one.
 - **The pre-built iOS app.** iOS work runs against an app binary uploaded to BrowserStack under the name `em-server-mode`. BrowserStack deletes uploads 30 days after they were last used, and there is no tooling to rebuild it automatically. If it lapses, iOS reproduction stops working and someone has to rebuild and re-upload it by hand.
 - **Secrets.** `BROWSERSTACK_USERNAME`, `BROWSERSTACK_ACCESS_KEY`, and `OPENAI_API_KEY` are repository secrets.
 - **Network allowances.** The agent runs behind a firewall that blocks outbound traffic by default. Hosts it needs are listed in `COPILOT_AGENT_FIREWALL_ALLOW_LIST_ADDITIONS` in the setup workflow. A new external dependency needs adding there or it will fail in a way that looks like a hang.
@@ -152,7 +185,7 @@ A few habits that keep it coherent:
 
 **Say why, not just what.** Most of these files explain their own reasoning — why iOS sessions are created outside the tooling, why a raw click silently fails, why a test is committed switched off. That is not padding. An agent that knows the reason handles the case the instructions did not anticipate; one following a rule blindly does something confidently wrong. The same goes for whoever reads this in six months.
 
-**Name skills exactly.** A skill is invoked by the name in its folder and frontmatter. `ci_monitor` is not `ci-monitor`, and a near-miss simply fails to find anything.
+**Name skills exactly.** A skill is invoked by the name in its folder and frontmatter. `ci_monitor` is not [`ci-monitor`](skills.md#ci-monitor), and a near-miss simply fails to find anything.
 
 **Check cross-references still hold.** These files refer to each other constantly, and to `docs/` and to real source paths. When you rename or restructure something, grep `.github/` for the old name.
 
