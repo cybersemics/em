@@ -1,0 +1,342 @@
+# Puppeteer flaky-test stress detector
+#
+# Proactively catches flaky Puppeteer tests by running the full suite many times
+# against `main` on a daily cron, then aggregating vitest JSON reports into a
+# flaky-test list. This replaces the manual fan-out via `trigger_wf.sh` /
+# `ghworkflow` for routine flake hunting, without loading the PR CI pipeline.
+#
+# Budget (public repo → Actions minutes are free; concurrency is the real limit):
+#   - 30 iterations × ~10 min ≈ 300 job-minutes/day
+#   - max-parallel: 5 leaves ≥15 of ~20 concurrent slots for PR/push CI
+#   - wall-clock ≈ 1 hour at 02:30 UTC (low-traffic window)
+#   - build once, reuse via artifact (avoids 29 redundant builds)
+#
+# Manual dispatch:
+#   gh workflow run puppeteer-flaky.yml -f iterations=5
+#
+# Discord notifications (optional):
+#   1. In Discord: channel settings → Integrations → Webhooks → New Webhook
+#   2. Copy the URL into a repo secret named DISCORD_WEBHOOK_URL
+#   Notifications fire only when flakes or infra failures are found (no daily noise).
+#
+# Report destinations:
+#   - Workflow run summary (always)
+#   - Long-lived GitHub issue (marker: <!-- flaky-test-report -->), upserted each run
+#   - Discord webhook (flakes/infra only, when the secret is set)
+
+name: Puppeteer Flaky
+
+on:
+  # Cron disabled while validating the workflow; re-enable when ready:
+  # schedule:
+  #   # Daily at 02:30 UTC — low overlap with typical PR activity
+  #   - cron: '30 2 * * *'
+  workflow_dispatch:
+    inputs:
+      iterations:
+        description: 'Number of full-suite stress iterations (1–50)'
+        required: false
+        default: '30'
+        type: string
+
+concurrency:
+  group: puppeteer-flaky
+  cancel-in-progress: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  CI: true
+  COPILOT_AGENT_FIREWALL_ALLOW_LIST_ADDITIONS: googlechromelabs.github.io,storage.googleapis.com
+  # Skip Puppeteer's Chrome download on install — tests attach to browserless via CDP.
+  PUPPETEER_SKIP_DOWNLOAD: true
+
+permissions:
+  contents: read
+  issues: write
+  actions: read
+
+jobs:
+  setup:
+    name: Setup matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.gen.outputs.matrix }}
+      iterations: ${{ steps.gen.outputs.iterations }}
+    steps:
+      - name: Generate iteration matrix
+        id: gen
+        run: |
+          set -euo pipefail
+          RAW='${{ github.event.inputs.iterations }}'
+          N="${RAW:-30}"
+          if ! [[ "$N" =~ ^[0-9]+$ ]] || [ "$N" -lt 1 ] || [ "$N" -gt 50 ]; then
+            echo "iterations must be an integer between 1 and 50 (got: $N)" >&2
+            exit 1
+          fi
+          # JSON array [1, 2, ..., N] for strategy.matrix.iteration
+          MATRIX="[$(seq -s, 1 "$N")]"
+          echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
+          echo "iterations=$N" >> "$GITHUB_OUTPUT"
+          echo "Will run $N stress iteration(s): $MATRIX"
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v6
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Set Node.js version
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: 'yarn'
+
+      - name: Install npm dependencies
+        uses: ./.github/actions/install
+
+      - name: Build
+        run: yarn build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: build
+          path: build/
+          retention-days: 1
+
+  stress:
+    name: Stress ${{ matrix.iteration }}
+    needs: [setup, build]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 5
+      matrix:
+        iteration: ${{ fromJSON(needs.setup.outputs.matrix) }}
+    services:
+      browserless:
+        image: browserless/chrome:latest
+        ports:
+          - 7566:3000
+        env:
+          CONNECTION_TIMEOUT: -1
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v6
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Set Node.js version
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: 'yarn'
+
+      - name: Install npm dependencies
+        uses: ./.github/actions/install
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: build
+          path: build
+
+      - name: Serve
+        uses: ./.github/actions/serve
+
+      - name: Test
+        # Vitest still writes the JSON report on test failure; continue so the
+        # upload step runs. Infra crashes (OOM, cancel) leave no report and are
+        # flagged by the aggregator as infra failures.
+        continue-on-error: true
+        id: test
+        run: |
+          mkdir -p flaky-results
+          yarn test:puppeteer \
+            --reporter=default \
+            --reporter=json \
+            --outputFile=flaky-results/iteration-${{ matrix.iteration }}.json
+
+      - name: Upload iteration report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: flaky-results-${{ matrix.iteration }}
+          path: flaky-results/iteration-${{ matrix.iteration }}.json
+          if-no-files-found: warn
+          retention-days: 7
+
+  report:
+    name: Report
+    needs: [setup, stress]
+    # setup provides the iteration count; skip if the matrix was never generated
+    if: always() && needs.setup.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v6
+
+      - name: Download all iteration reports
+        uses: actions/download-artifact@v7
+        with:
+          pattern: flaky-results-*
+          path: flaky-results
+          merge-multiple: true
+
+      - name: Aggregate flaky-test report
+        id: aggregate
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          ITERATIONS: ${{ needs.setup.outputs.iterations }}
+        run: |
+          set +e
+          mkdir -p flaky-results
+          node scripts/flaky-report.mjs flaky-results "$ITERATIONS" "$RUN_URL" > report.md
+          STATUS=$?
+          set -e
+
+          cat report.md >> "$GITHUB_STEP_SUMMARY"
+
+          if [ -f flaky-results/flaky-summary.json ]; then
+            CLEAN=$(node -e "console.log(JSON.parse(require('fs').readFileSync('flaky-results/flaky-summary.json','utf8')).clean)")
+            FLAKE_COUNT=$(node -e "console.log(JSON.parse(require('fs').readFileSync('flaky-results/flaky-summary.json','utf8')).flakeCount)")
+            INFRA_COUNT=$(node -e "console.log(JSON.parse(require('fs').readFileSync('flaky-results/flaky-summary.json','utf8')).infraFailureCount)")
+          else
+            CLEAN=false
+            FLAKE_COUNT=0
+            INFRA_COUNT=1
+          fi
+
+          echo "clean=$CLEAN" >> "$GITHUB_OUTPUT"
+          echo "flake_count=$FLAKE_COUNT" >> "$GITHUB_OUTPUT"
+          echo "infra_count=$INFRA_COUNT" >> "$GITHUB_OUTPUT"
+          echo "aggregate_exit=$STATUS" >> "$GITHUB_OUTPUT"
+
+      - name: Upsert GitHub issue
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        env:
+          CLEAN: ${{ steps.aggregate.outputs.clean }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        with:
+          script: |
+            const fs = require('fs')
+            const marker = '<!-- flaky-test-report -->'
+            const { owner, repo } = context.repo
+            const clean = process.env.CLEAN === 'true'
+            const runUrl = process.env.RUN_URL
+            const report = fs.readFileSync('report.md', 'utf8')
+            const stamp = new Date().toISOString()
+
+            // Find the long-lived tracking issue by marker (open or closed).
+            const q = `repo:${owner}/${repo} is:issue in:body "${marker}"`
+            const search = await github.rest.search.issuesAndPullRequests({ q, per_page: 5 })
+            const existing = (search.data.items || [])[0]
+
+            if (existing) {
+              if (clean) {
+                // Keep the last failure report in the body; append history via comment.
+                await github.rest.issues.update({
+                  owner,
+                  repo,
+                  issue_number: existing.number,
+                  title: 'Puppeteer flaky tests (last run clean)',
+                })
+                await github.rest.issues.createComment({
+                  owner,
+                  repo,
+                  issue_number: existing.number,
+                  body: `Clean run at ${stamp}: all stress iterations passed.\n\n${runUrl}`,
+                })
+              } else {
+                await github.rest.issues.update({
+                  owner,
+                  repo,
+                  issue_number: existing.number,
+                  title: 'Puppeteer flaky tests detected',
+                  body: report,
+                  state: 'open',
+                })
+                if (existing.state === 'closed') {
+                  await github.rest.issues.createComment({
+                    owner,
+                    repo,
+                    issue_number: existing.number,
+                    body: `Reopened by flaky-stress run: ${runUrl}`,
+                  })
+                }
+              }
+              core.info(`Updated issue #${existing.number}`)
+            } else if (!clean) {
+              const created = await github.rest.issues.create({
+                owner,
+                repo,
+                title: 'Puppeteer flaky tests detected',
+                body: report,
+              })
+              core.info(`Created issue #${created.data.number}`)
+            } else {
+              core.info('Clean run and no existing tracking issue; skipping issue creation.')
+            }
+
+      - name: Notify Discord
+        if: steps.aggregate.outputs.clean != 'true'
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          FLAKE_COUNT: ${{ steps.aggregate.outputs.flake_count }}
+          INFRA_COUNT: ${{ steps.aggregate.outputs.infra_count }}
+        run: |
+          set -euo pipefail
+          if [ -z "${DISCORD_WEBHOOK_URL:-}" ]; then
+            echo "DISCORD_WEBHOOK_URL secret not set; skipping Discord notification."
+            exit 0
+          fi
+
+          if [ ! -f flaky-results/flaky-summary.json ]; then
+            CONTENT=$(node -e "
+              process.stdout.write(JSON.stringify({
+                content: [
+                  '**Puppeteer flaky-stress alert**',
+                  'Aggregator failed before producing a summary.',
+                  process.env.RUN_URL,
+                ].join('\\n'),
+              }))
+            ")
+          else
+            TOP=$(node -e "
+              const s = JSON.parse(require('fs').readFileSync('flaky-results/flaky-summary.json','utf8'))
+              const lines = (s.topOffenders || []).map(t =>
+                '• ' + t.file + ' › ' + t.fullName + ' — failed ' + t.failed + '/' + t.of
+              )
+              process.stdout.write(lines.join('\\n') || '(none)')
+            ")
+            CONTENT=$(node -e "
+              const text = [
+                '**Puppeteer flaky-stress alert**',
+                'Failing tests: ' + process.env.FLAKE_COUNT + ' | Infra failures: ' + process.env.INFRA_COUNT,
+                '',
+                'Top offenders:',
+                process.argv[1],
+                '',
+                process.env.RUN_URL,
+              ].join('\\n')
+              process.stdout.write(JSON.stringify({ content: text.slice(0, 1900) }))
+            " "$TOP")
+          fi
+
+          curl -sS -f -X POST \
+            -H 'Content-Type: application/json' \
+            -d "$CONTENT" \
+            "$DISCORD_WEBHOOK_URL"
+          echo "Discord notification sent."
+
+      - name: Fail job when flakes or infra failures found
+        if: steps.aggregate.outputs.clean != 'true'
+        run: |
+          echo "Flakes and/or infra failures detected — see the job summary and tracking issue."
+          exit 1
