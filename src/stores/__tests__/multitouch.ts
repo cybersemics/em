@@ -1,26 +1,29 @@
-import multitouchStore, { updateActiveTouches } from '../multitouch'
+import multitouchStore, { updateMultitouch } from '../multitouch'
 
 /** Builds a minimal TouchEvent-like object with the given number of active touches. */
 const touchEvent = (numTouches: number) => ({ touches: { length: numTouches } }) as TouchEvent
 
 beforeEach(() => {
-  updateActiveTouches(touchEvent(0))
+  updateMultitouch(touchEvent(0))
 })
 
-it('tracks the number of active touch points', () => {
-  expect(multitouchStore.getState()).toBe(0)
+it('latches true while more than one finger is down and clears only when every finger lifts', () => {
+  expect(multitouchStore.getState()).toBe(false)
 
-  updateActiveTouches(touchEvent(1))
-  expect(multitouchStore.getState()).toBe(1)
+  // a single finger does not latch
+  updateMultitouch(touchEvent(1))
+  expect(multitouchStore.getState()).toBe(false)
 
-  updateActiveTouches(touchEvent(2))
-  expect(multitouchStore.getState()).toBe(2)
+  // a second finger latches the store
+  updateMultitouch(touchEvent(2))
+  expect(multitouchStore.getState()).toBe(true)
 
-  // a finger lifts, leaving one touch
-  updateActiveTouches(touchEvent(1))
-  expect(multitouchStore.getState()).toBe(1)
+  // one finger lifts, leaving one still down: the latch must persist so a drag cannot begin from the
+  // remaining finger mid-gesture (the core of #4233)
+  updateMultitouch(touchEvent(1))
+  expect(multitouchStore.getState()).toBe(true)
 
-  // all fingers lift
-  updateActiveTouches(touchEvent(0))
-  expect(multitouchStore.getState()).toBe(0)
+  // all fingers lift: the latch clears
+  updateMultitouch(touchEvent(0))
+  expect(multitouchStore.getState()).toBe(false)
 })

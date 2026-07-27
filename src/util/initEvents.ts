@@ -20,7 +20,7 @@ import pathExists from '../selectors/pathExists'
 import store from '../stores/app'
 import { updateCommandState } from '../stores/commandStateStore'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
-import { updateActiveTouches } from '../stores/multitouch'
+import { updateMultitouch } from '../stores/multitouch'
 import { updateScrollTop } from '../stores/scrollTop'
 import selectionRangeStore from '../stores/selectionRangeStore'
 import storageModel from '../stores/storageModel'
@@ -391,9 +391,9 @@ const initEvents = (store: Store<State, any>) => {
   window.addEventListener('touchend', onTouchEnd)
   // track the number of active touch points so that multi-touch input can be rejected (e.g. two-finger
   // tracing must not begin a drag-and-drop). See #4233.
-  window.addEventListener('touchstart', updateActiveTouches)
-  window.addEventListener('touchend', updateActiveTouches)
-  window.addEventListener('touchcancel', updateActiveTouches)
+  window.addEventListener('touchstart', updateMultitouch)
+  window.addEventListener('touchend', updateMultitouch)
+  window.addEventListener('touchcancel', updateMultitouch)
   // disable native pinch-to-zoom / two-finger page panning on iOS Safari (#4233)
   document.addEventListener('gesturestart', onSafariGesture)
   document.addEventListener('gesturechange', onSafariGesture)
@@ -427,9 +427,9 @@ const initEvents = (store: Store<State, any>) => {
     window.removeEventListener('mousemove', onMouseMove)
     window.removeEventListener('touchmove', onTouchMove)
     window.removeEventListener('touchend', onTouchEnd)
-    window.removeEventListener('touchstart', updateActiveTouches)
-    window.removeEventListener('touchend', updateActiveTouches)
-    window.removeEventListener('touchcancel', updateActiveTouches)
+    window.removeEventListener('touchstart', updateMultitouch)
+    window.removeEventListener('touchend', updateMultitouch)
+    window.removeEventListener('touchcancel', updateMultitouch)
     document.removeEventListener('gesturestart', onSafariGesture)
     document.removeEventListener('gesturechange', onSafariGesture)
     document.removeEventListener('gestureend', onSafariGesture)
