@@ -115,7 +115,7 @@ describe('multiselect', () => {
     })
 
   // https://github.com/cybersemics/em/issues/4741
-  it.skip('ArrowUp moves the cursor to the first selected thought when multiple thoughts are selected', async () => {
+  it('ArrowUp moves the cursor to the first selected thought when multiple thoughts are selected', async () => {
     await paste(`
         - a
         - b
@@ -133,7 +133,7 @@ describe('multiselect', () => {
   })
 
   // https://github.com/cybersemics/em/issues/4741
-  it.skip('ArrowDown moves the cursor to the last selected thought when multiple thoughts are selected', async () => {
+  it('ArrowDown moves the cursor to the last selected thought when multiple thoughts are selected', async () => {
     await paste(`
         - a
         - b
