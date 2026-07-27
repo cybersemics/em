@@ -1,4 +1,5 @@
 import { KnownDevices } from 'puppeteer'
+import clickBullet from '../helpers/clickBullet'
 import clickThought from '../helpers/clickThought'
 import command from '../helpers/command'
 import emulate from '../helpers/emulate'
@@ -6,11 +7,22 @@ import longPressThought from '../helpers/longPressThought'
 import multiselectThoughts from '../helpers/multiselectThoughts'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
-import shiftClickThought from '../helpers/shiftClickThought'
 import waitForEditable from '../helpers/waitForEditable'
 import { page } from '../session'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
+
+/** Shift + Click the bullet of the given thought to select all thoughts between it and the previously selected thought. */
+const shiftClickThought = async (value: string) => {
+  await waitForEditable(value)
+
+  await page.keyboard.down('Shift')
+  try {
+    await clickBullet(value)
+  } finally {
+    await page.keyboard.up('Shift')
+  }
+}
 
 describe('multiselect', () => {
   it('should multiselect two thoughts at once', async () => {
