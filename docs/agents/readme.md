@@ -1,0 +1,163 @@
+# Agent Infrastructure
+
+This repository is set up so that GitHub Copilot's cloud coding agent can pick up an issue and work it end to end — reproduce the bug, plan a fix, write it, open a pull request, and keep fixing until CI is green — without a human driving each step.
+
+Making that work takes more than a prompt. It takes a described environment, a browser the agent can actually drive, the project's own test helpers exposed to it, and CI that checks the agent did the honest thing rather than the convenient thing. This folder documents all of it.
+
+We targeted Copilot specifically because the project already runs on GitHub — issues, pull requests, and CI are all here, so the agent lives where the work already is.
+
+| Document | What it covers |
+| --- | --- |
+| This page | The map: what the pieces are, what loads when, how a task flows through them |
+| [Skills](skills.md) | The ten skills, what each one does, and how they call each other |
+| [Environment](environment.md) | What the runner sets up, how the agent drives a browser, how iOS works |
+| [The TDD workflow](tdd.md) | Why regression tests are committed switched off, and what the CI checks mean |
+
+## The four kinds of file
+
+Everything lives under `.github/`. There are four kinds of file, and the difference between them is **when the agent reads them**.
+
+| Kind | Where | When it is read |
+| --- | --- | --- |
+| Repository instructions | `.github/copilot-instructions.md` | Every run, automatically |
+| Agent definition | `.github/agents/worker-bee.agent.md` | When you assign work to that named agent |
+| Scoped instructions | `.github/instructions/*.instructions.md` | Alongside the above |
+| Skills | `.github/skills/<name>/SKILL.md` | Only when something invokes that skill by name |
+
+```mermaid
+flowchart TD
+    CI["copilot-instructions.md<br/>persona · environment · methodology"]
+    WB["agents/worker-bee.agent.md<br/>same content, plus a name and description"]
+    INS["instructions/*.instructions.md<br/>code standards · testing rules"]
+    SK["skills/*/SKILL.md<br/>ten skills, loaded on demand"]
+    RUN(["The running agent"])
+
+    CI --> RUN
+    WB --> RUN
+    INS --> RUN
+    SK -.invoked by name.-> RUN
+```
+
+The split matters because the agent's attention is finite. Anything in the first three is competing for room on every single run, so it has to earn its place. A skill costs nothing until it is needed, which is why the detailed procedures — how to bring up an iOS device, how to run one test, how to read a CI failure — are skills rather than standing instructions.
+
+### Why there are two near-identical prompt files
+
+`copilot-instructions.md` and `worker-bee.agent.md` say almost the same thing. That is deliberate but not ideal, and it comes from history: Worker Bee came first, and the repository instructions were later rewritten to match it. They then drifted apart over several commits because updates were applied to one and not always the other.
+
+They are now kept **byte-identical below their opening lines**, so a plain diff tells you whether they have drifted again:
+
+```bash
+diff <(tail -n +6 .github/agents/worker-bee.agent.md) \
+     <(tail -n +3 .github/copilot-instructions.md)
+```
+
+Silence means they agree. **If you edit one, make the same edit to the other and re-run that command.** This is the single easiest thing to get wrong when changing agent behaviour, because both files look complete and correct on their own while quietly disagreeing.
+
+One open question sits behind this. We do not know for certain whether `copilot-instructions.md` is still loaded when a named agent from `.github/agents/` is selected. If it is, Worker Bee could be trimmed down to only what differs. Until someone confirms it, both files carry the full content, which is safe either way.
+
+## How a task actually flows
+
+The agent is not allowed to jump straight to writing code. Two **gates** stand in front of implementation — a gate being a step it must complete and then declare out loud, in a fixed wording, before it may continue.
+
+```mermaid
+flowchart TD
+    A["Issue assigned to the agent"] --> B{"Does the issue have<br/>Steps to Reproduce?"}
+    B -- yes --> C["<b>Gate 1</b> — issue-repro skill"]
+    C --> C1["Reproduce the bug in a real browser or device"]
+    C1 --> C2["Write a test that fails,<br/>committed switched off with .skip"]
+    C2 --> D["<b>Gate 2</b> — plan skill"]
+    B -- no --> D
+    D --> D1["Write a plan, quoting the code that already exists"]
+    D1 --> D2["Attack your own plan and revise it"]
+    D2 --> E["Create a branch and implement the fix"]
+    E --> E1["Switch the test back on by removing .skip"]
+    E1 --> F["Open a draft pull request"]
+    F --> G["ci-monitor — wait for every check to finish"]
+    G --> H{"All green?"}
+    H -- no --> I["test-diagnosis — work out what kind of failure it is"]
+    I --> E
+    H -- yes --> J["Done"]
+```
+
+Both gates exist to stop the same failure. An agent that starts reading source code before it has seen the bug happen will form a theory from the code and then go looking for evidence to support it. Making it reproduce the problem first means it has a real observation to work from. Making it write the plan against quoted, existing code means it extends what is there instead of building something new beside it.
+
+The declarations are literal. After the first gate the agent must print one of these lines exactly:
+
+```
+issue-repro: not applicable — the issue has no Steps to Reproduce.
+issue-repro: applicable — executing .github/skills/issue-repro/SKILL.md before any investigation.
+```
+
+and after the second:
+
+```
+plan: complete — architectural plan produced and critique passed per .github/skills/plan/SKILL.md.
+```
+
+They are there so that a human reading the transcript can see at a glance whether the process was followed, rather than having to infer it. Both prompts also spell out that printing the line does **not** end the agent's turn — an earlier version of this design had agents printing the line and then stopping to wait for a human who was not there.
+
+## Where everything lives
+
+```
+.github/
+├── copilot-instructions.md          Read on every run
+├── agents/
+│   └── worker-bee.agent.md          The named agent; same content
+├── instructions/
+│   ├── code-standards.instructions.md
+│   ├── testing.instructions.md
+│   └── estimate/                    Not a Copilot instruction — see below
+├── skills/                          Ten skills — see skills.md
+├── actions/
+│   ├── install/                     Cached dependency install
+│   ├── serve/                       Start the built app and wait for it
+│   └── unskip-added-tests/          Switches .skip tests back on — see tdd.md
+└── workflows/
+    ├── copilot-setup-steps.yml      Builds the agent's environment
+    └── tdd.yml                      Checks new tests genuinely fail first
+
+scripts/
+├── shared-chrome.mjs                One Chrome that agent and tests share
+├── start-ios-session.mjs            Opens the BrowserStack iOS session
+└── mcp-session-proxy.mjs            Lets the iOS tooling join that session
+
+src/e2e/
+├── puppeteer/attachExistingBrowserInstance.ts   Web and Android bridge
+└── iOS/attachExistingSession.ts                 iOS bridge
+```
+
+Two workflows are part of this system rather than ordinary CI:
+
+- **`copilot-setup-steps.yml`** builds the environment the agent wakes up in — the display, the browser, the dev server, credentials. It must be named exactly that, and its job must be called `copilot-setup-steps`, or Copilot ignores it. Covered in [Environment](environment.md).
+- **`tdd.yml`** independently verifies that any new test genuinely fails before the fix. Covered in [The TDD workflow](tdd.md).
+
+The rest (`test`, `lint`, `puppeteer`, `ios`, the Vercel and Tauri workflows) are normal project CI. The agent has to make them pass, but they were not built for it.
+
+## Things this depends on that are not in the repository
+
+Worth knowing about, because nothing here will tell you when one of them breaks:
+
+- **MCP server configuration.** An MCP server is an external tool the agent can call. Two matter here: `chrome-devtools` for driving Chrome, and `wdio` for driving iOS. They are configured in Copilot's own settings, not in this repository. In particular, `chrome-devtools` must be given `--browser-url=http://127.0.0.1:9222` so that it joins the browser the setup step already started instead of launching a second one.
+- **The pre-built iOS app.** iOS work runs against an app binary uploaded to BrowserStack under the name `em-server-mode`. BrowserStack deletes uploads 30 days after they were last used, and there is no tooling to rebuild it automatically. If it lapses, iOS reproduction stops working and someone has to rebuild and re-upload it by hand.
+- **Secrets.** `BROWSERSTACK_USERNAME`, `BROWSERSTACK_ACCESS_KEY`, and `OPENAI_API_KEY` are repository secrets.
+- **Network allowances.** The agent runs behind a firewall that blocks outbound traffic by default. Hosts it needs are listed in `COPILOT_AGENT_FIREWALL_ALLOW_LIST_ADDITIONS` in the setup workflow. A new external dependency needs adding there or it will fail in a way that looks like a hang.
+
+## Changing any of this
+
+A few habits that keep it coherent:
+
+**Edit both prompt files together, and run the diff.** See above. This is the most common mistake.
+
+**Put procedures in skills, not in the prompts.** If it is a series of steps for a particular situation, it belongs in a skill, where it costs nothing until needed. The prompts should say *when* to reach for something, not *how* to do it.
+
+**Say why, not just what.** Most of these files explain their own reasoning — why iOS sessions are created outside the tooling, why a raw click silently fails, why a test is committed switched off. That is not padding. An agent that knows the reason handles the case the instructions did not anticipate; one following a rule blindly does something confidently wrong. The same goes for whoever reads this in six months.
+
+**Name skills exactly.** A skill is invoked by the name in its folder and frontmatter. `ci_monitor` is not `ci-monitor`, and a near-miss simply fails to find anything.
+
+**Check cross-references still hold.** These files refer to each other constantly, and to `docs/` and to real source paths. When you rename or restructure something, grep `.github/` for the old name.
+
+## Related but separate: issue estimation
+
+`.github/instructions/estimate/` contains a prompt and 21 sample issues used to guess how long an issue will take, then sync that to Everhour. Three workflows drive it: on issue open, on an `/estimate` comment, and a manual backfill.
+
+Despite living under `instructions/`, **this is not read by Copilot and is not part of the coding agent.** It is a prompt loaded by a separate Node program in `scripts/estimate/`, which calls OpenAI directly. It is documented in [`scripts/estimate/README.md`](../../scripts/estimate/README.md).
