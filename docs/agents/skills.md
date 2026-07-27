@@ -38,18 +38,18 @@ flowchart TD
     style PL fill:#2d4a2d,color:#fff
     style ES fill:#4a2d2d,color:#fff
 
-    click IR "skills.md#issue-repro" "issue-repro — reproduce before investigating"
-    click PL "skills.md#plan" "plan — plan and critique before implementing"
-    click ES "skills.md#end-session" "end-session — the exit checklist"
-    click DS "skills.md#docs-sync" "docs-sync — keep documentation true"
-    click BC "skills.md#browser-control" "browser-control — routes by platform"
-    click BCC "skills.md#browser-control-chrome" "browser-control-chrome — web and Android"
-    click BCI "skills.md#browser-control-ios" "browser-control-ios — real iPhone"
-    click TDD "skills.md#tdd-write-failing-test" "tdd-write-failing-test — capture the bug"
-    click RT "skills.md#run-test" "run-test — run one test for real"
-    click CM "skills.md#ci-monitor" "ci-monitor — wait for every check"
-    click TD "skills.md#test-diagnosis" "test-diagnosis — classify the failure"
-    click PUS "skills.md#puppeteer-update-snapshots" "puppeteer-update-snapshots — regenerate screenshots"
+    click IR "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#issue-repro" "issue-repro — reproduce before investigating"
+    click PL "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#plan" "plan — plan and critique before implementing"
+    click ES "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#end-session" "end-session — the exit checklist"
+    click DS "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#docs-sync" "docs-sync — keep documentation true"
+    click BC "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#browser-control" "browser-control — routes by platform"
+    click BCC "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#browser-control-chrome" "browser-control-chrome — web and Android"
+    click BCI "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#browser-control-ios" "browser-control-ios — real iPhone"
+    click TDD "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#tdd-write-failing-test" "tdd-write-failing-test — capture the bug"
+    click RT "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#run-test" "run-test — run one test for real"
+    click CM "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#ci-monitor" "ci-monitor — wait for every check"
+    click TD "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#test-diagnosis" "test-diagnosis — classify the failure"
+    click PUS "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#puppeteer-update-snapshots" "puppeteer-update-snapshots — regenerate screenshots"
 ```
 
 The two green boxes are the gates — the agent must run them before it is allowed to write code. The red box is the exit gate, run before it stops for any reason. Everything else it reaches for as needed.

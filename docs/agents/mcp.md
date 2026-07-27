@@ -31,11 +31,11 @@ flowchart LR
     AGENT --> WD --> PROXY --> PHONE
     AGENT --> GHS --> REPO
 
-    click CD "mcp.md#chrome-devtools" "How chrome-devtools is set up"
-    click WD "mcp.md#wdio" "How wdio is set up"
-    click GHS "mcp.md#the-github-server" "What the GitHub server is used for"
-    click PROXY "mcp.md#why-there-is-a-shim-in-the-middle" "Why the shim exists"
-    click CHROME "environment.md#one-browser-two-ways-in" "The shared browser"
+    click CD "https://github.com/cybersemics/em/blob/HEAD/docs/agents/mcp.md#chrome-devtools" "How chrome-devtools is set up"
+    click WD "https://github.com/cybersemics/em/blob/HEAD/docs/agents/mcp.md#wdio" "How wdio is set up"
+    click GHS "https://github.com/cybersemics/em/blob/HEAD/docs/agents/mcp.md#the-github-server" "What the GitHub server is used for"
+    click PROXY "https://github.com/cybersemics/em/blob/HEAD/docs/agents/mcp.md#why-there-is-a-shim-in-the-middle" "Why the shim exists"
+    click CHROME "https://github.com/cybersemics/em/blob/HEAD/docs/agents/environment.md#one-browser-two-ways-in" "The shared browser"
 ```
 
 ## The most important thing to know
@@ -159,8 +159,8 @@ flowchart TD
 
     style B fill:#2d4a2d,color:#fff
 
-    click B "environment.md#what-the-bridge-actually-is" "How the bridge works"
-    click M "skills.md#browser-control" "The observe-versus-act rule"
+    click B "https://github.com/cybersemics/em/blob/HEAD/docs/agents/environment.md#what-the-bridge-actually-is" "How the bridge works"
+    click M "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#browser-control" "The observe-versus-act rule"
 ```
 
 **Looking at the app is free** — use whatever tool is convenient.

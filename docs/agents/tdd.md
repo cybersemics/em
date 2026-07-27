@@ -76,11 +76,11 @@ flowchart TD
     P --> S
     I --> S
 
-    click D "tdd.md#how-the-check-works" "What detect classifies"
-    click U "tdd.md#how-the-check-works" "The unit job"
-    click P "tdd.md#how-the-check-works" "The puppeteer job"
-    click I "tdd.md#how-the-check-works" "The iOS job"
-    click S "tdd.md#escape-hatches" "The single check, and how to skip it"
+    click D "https://github.com/cybersemics/em/blob/HEAD/docs/agents/tdd.md#how-the-check-works" "What detect classifies"
+    click U "https://github.com/cybersemics/em/blob/HEAD/docs/agents/tdd.md#how-the-check-works" "The unit job"
+    click P "https://github.com/cybersemics/em/blob/HEAD/docs/agents/tdd.md#how-the-check-works" "The puppeteer job"
+    click I "https://github.com/cybersemics/em/blob/HEAD/docs/agents/tdd.md#how-the-check-works" "The iOS job"
+    click S "https://github.com/cybersemics/em/blob/HEAD/docs/agents/tdd.md#escape-hatches" "The single check, and how to skip it"
 ```
 
 **detect** compares the pull request against the point it branched from, and sorts changed test files into unit, puppeteer, and iOS. It then filters twice: to files that actually add new test cases, and to files that add switched-off ones. That first filter matters — editing the inside of an existing test should not trigger any of this.

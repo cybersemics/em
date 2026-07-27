@@ -38,9 +38,9 @@ flowchart TD
     AG --> AS
     CI -.also reads,<br/>lowest precedence.-> AG
 
-    click SK "skills.md" "What each skill does"
-    click CI "../../.github/copilot-instructions.md" "Open copilot-instructions.md"
-    click AG "../../AGENTS.md" "Open AGENTS.md"
+    click SK "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md" "What each skill does"
+    click CI "https://github.com/cybersemics/em/blob/HEAD/.github/copilot-instructions.md" "Open copilot-instructions.md"
+    click AG "https://github.com/cybersemics/em/blob/HEAD/AGENTS.md" "Open AGENTS.md"
 ```
 
 `AGENTS.md` is the canonical local entry point and `.agents/skills/` the canonical local skill directory. Claude Code's `CLAUDE.md` and `.claude/skills` are symlinks onto them, so a Claude Code session and a Codex session read byte-identical instructions. Both tools follow symlinks.

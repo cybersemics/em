@@ -41,10 +41,10 @@ flowchart TD
     INS --> RUN
     SK -.invoked by name.-> RUN
 
-    click CI "../../.github/copilot-instructions.md" "Open copilot-instructions.md"
-    click WB "../../.github/agents/worker-bee.agent.md" "Open worker-bee.agent.md"
-    click INS "../../.github/instructions/" "Open the instructions folder"
-    click SK "skills.md" "Every skill, and how they call each other"
+    click CI "https://github.com/cybersemics/em/blob/HEAD/.github/copilot-instructions.md" "Open copilot-instructions.md"
+    click WB "https://github.com/cybersemics/em/blob/HEAD/.github/agents/worker-bee.agent.md" "Open worker-bee.agent.md"
+    click INS "https://github.com/cybersemics/em/tree/HEAD/.github/instructions" "Open the instructions folder"
+    click SK "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md" "Every skill, and how they call each other"
 ```
 
 The split matters because the agent's attention is finite. Anything in the first three is competing for room on every single run, so it has to earn its place. A skill costs nothing until it is needed, which is why the detailed procedures — how to bring up an iOS device, how to run one test, how to read a CI failure — are skills rather than standing instructions.
@@ -90,17 +90,17 @@ flowchart TD
     J --> J1["Nothing left untrue, nothing left behind,<br/>nothing claimed that was not observed"]
     J1 --> K["Done"]
 
-    click C "skills.md#issue-repro" "The issue-repro skill"
-    click C1 "skills.md#browser-control" "How the browser is brought up"
-    click C2 "tdd.md" "Why the test is committed switched off"
-    click D "skills.md#plan" "The plan skill"
-    click D1 "skills.md#plan" "What the plan must contain"
-    click D2 "skills.md#plan" "The critique stage"
-    click E1 "tdd.md#why-locally-run-tests-ignore-the-skip" "Switching the test back on"
-    click G "skills.md#ci-monitor" "The ci-monitor skill"
-    click I "skills.md#test-diagnosis" "The test-diagnosis skill"
-    click J "skills.md#end-session" "The end-session skill"
-    click J1 "skills.md#end-session" "The exit checklist, step by step"
+    click C "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#issue-repro" "The issue-repro skill"
+    click C1 "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#browser-control" "How the browser is brought up"
+    click C2 "https://github.com/cybersemics/em/blob/HEAD/docs/agents/tdd.md" "Why the test is committed switched off"
+    click D "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#plan" "The plan skill"
+    click D1 "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#plan" "What the plan must contain"
+    click D2 "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#plan" "The critique stage"
+    click E1 "https://github.com/cybersemics/em/blob/HEAD/docs/agents/tdd.md#why-locally-run-tests-ignore-the-skip" "Switching the test back on"
+    click G "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#ci-monitor" "The ci-monitor skill"
+    click I "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#test-diagnosis" "The test-diagnosis skill"
+    click J "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#end-session" "The end-session skill"
+    click J1 "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#end-session" "The exit checklist, step by step"
 ```
 
 Both gates exist to stop the same failure. An agent that starts reading source code before it has seen the bug happen will form a theory from the code and then go looking for evidence to support it. Making it reproduce the problem first means it has a real observation to work from. Making it write the plan against quoted, existing code means it extends what is there instead of building something new beside it.

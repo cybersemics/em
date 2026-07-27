@@ -49,10 +49,10 @@ flowchart LR
     BRIDGE -->|"do things"| CHROME
     HELPERS --> BRIDGE
 
-    click CHROME "../../scripts/shared-chrome.mjs" "scripts/shared-chrome.mjs"
-    click MCP "mcp.md#chrome-devtools" "The chrome-devtools server"
-    click BRIDGE "environment.md#what-the-bridge-actually-is" "How the bridge works"
-    click HELPERS "skills.md#browser-control" "The observe-versus-act rule"
+    click CHROME "https://github.com/cybersemics/em/blob/HEAD/scripts/shared-chrome.mjs" "scripts/shared-chrome.mjs"
+    click MCP "https://github.com/cybersemics/em/blob/HEAD/docs/agents/mcp.md#chrome-devtools" "The chrome-devtools server"
+    click BRIDGE "https://github.com/cybersemics/em/blob/HEAD/docs/agents/environment.md#what-the-bridge-actually-is" "How the bridge works"
+    click HELPERS "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#browser-control" "The observe-versus-act rule"
 ```
 
 The tooling is configured with `--browser-url`, which means it **joins** the already-running Chrome rather than launching its own. The bridge connects to the same one. So the agent can inspect the page with one tool, act on it with a helper through the other, and both are looking at the same window.
