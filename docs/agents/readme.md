@@ -4,27 +4,29 @@ This repository is set up so that GitHub Copilot's cloud coding agent can pick u
 
 Making that work takes more than a prompt. It takes a described environment, a browser the agent can actually drive, the project's own test helpers exposed to it, and CI that checks the agent did the honest thing rather than the convenient thing. This folder documents all of it.
 
-We targeted Copilot specifically because the project already runs on GitHub — issues, pull requests, and CI are all here, so the agent lives where the work already is. Agents running on a developer's own machine — Codex, Claude Code — share the same procedures through symlinked skills, but not the same environment; that half is covered in [External agents](external-agents.md).
+We targeted Copilot specifically because the project already runs on GitHub — issues, pull requests, and CI are all here, so the agent lives where the work already is.
 
-| Document | What it covers |
-| --- | --- |
-| This page | The map: what the pieces are, what loads when, how a task flows through them |
-| [Skills](skills.md) | Every skill, what each one does, and how they call each other |
-| [Environment](environment.md) | What the runner sets up, how the agent drives a browser, how iOS works |
-| [MCP servers](mcp.md) | The three external tool servers, what each gives the agent, and how they are wired |
-| [The TDD workflow](tdd.md) | Why regression tests are committed switched off, and what the CI checks mean |
+> Agents running on a developer's own machine — Codex, Claude Code — share a subset of these skills through symlinks. See [External agents](external-agents.md).
+
+| Document                              | What it covers                                                                     |
+| ------------------------------------- | ---------------------------------------------------------------------------------- |
+| This page                             | The map: what the pieces are, what loads when, how a task flows through them       |
+| [Skills](skills.md)                   | Every skill, what each one does, and how they call each other                      |
+| [Environment](environment.md)         | What the runner sets up, how the agent drives a browser, how iOS works             |
+| [MCP servers](mcp.md)                 | The three external tool servers, what each gives the agent, and how they are wired |
+| [The TDD workflow](tdd.md)            | Why regression tests are committed switched off, and what the CI checks mean       |
 | [External agents](external-agents.md) | Codex and Claude Code — what they share with the cloud agent, and what they cannot |
 
 ## The four kinds of file
 
 Everything the **cloud agent** reads lives under `.github/`. (A local agent reads `AGENTS.md` and `.agents/skills/` instead — see [External agents](external-agents.md).) There are four kinds of file, and the difference between them is **when the agent reads them**.
 
-| Kind | Where | When it is read |
-| --- | --- | --- |
-| Repository instructions | `.github/copilot-instructions.md` | Every run, automatically |
-| Agent definition | `.github/agents/worker-bee.agent.md` | When you assign work to that named agent |
-| Scoped instructions | `.github/instructions/*.instructions.md` | Alongside the above |
-| Skills | `.github/skills/<name>/SKILL.md` | Only when something invokes that skill by name |
+| Kind                    | Where                                    | When it is read                                |
+| ----------------------- | ---------------------------------------- | ---------------------------------------------- |
+| Repository instructions | `.github/copilot-instructions.md`        | Every run, automatically                       |
+| Agent definition        | `.github/agents/worker-bee.agent.md`     | When you assign work to that named agent       |
+| Scoped instructions     | `.github/instructions/*.instructions.md` | Alongside the above                            |
+| Skills                  | `.github/skills/<name>/SKILL.md`         | Only when something invokes that skill by name |
 
 ```mermaid
 flowchart TD
@@ -49,18 +51,19 @@ The split matters because the agent's attention is finite. Anything in the first
 
 ### Why there are two near-identical prompt files
 
-`copilot-instructions.md` and `worker-bee.agent.md` say almost the same thing. That is deliberate but not ideal, and it comes from history: Worker Bee came first, and the repository instructions were later rewritten to match it. They then drifted apart over several commits because updates were applied to one and not always the other.
+From testing, it seems that Copilot more strongly follows custom instructions when they're defined as a **custom agent** than in the `copilot-instructions.md` custom instruction file.
 
-They are now kept **byte-identical below their opening lines**, so a plain diff tells you whether they have drifted again:
+For **the vast majority of development tasks**, we recommend you assign your tasks to the **"🐝 Worker Bee"** coding agent. This'll make sure you're taking advantage of all of the agent optimizations in the project.
+
+However, in some cases, it's **just not possible to assign tasks to a custom agent in Copilot**. For these cases, we keep `copilot-instructions.md` as a backup.
+
+**If you edit one, make the same edit to the other.** Use this command to diff and see if they've drifted:
 
 ```bash
 diff <(tail -n +6 .github/agents/worker-bee.agent.md) \
      <(tail -n +3 .github/copilot-instructions.md)
 ```
 
-Silence means they agree. **If you edit one, make the same edit to the other and re-run that command.** This is the single easiest thing to get wrong when changing agent behaviour, because both files look complete and correct on their own while quietly disagreeing.
-
-One open question sits behind this. We do not know for certain whether `copilot-instructions.md` is still loaded when a named agent from `.github/agents/` is selected. If it is, Worker Bee could be trimmed down to only what differs. Until someone confirms it, both files carry the full content, which is safe either way.
 
 ## How a task actually flows
 
@@ -119,16 +122,13 @@ They are there so that a human reading the transcript can see at a glance whethe
 
 ### The exit gate
 
-A third declaration sits at the other end of the run. The two gates above control entry into implementation; the [`end-session`](skills.md#end-session) skill controls the exit, and the agent works through it before every ending — finished, escalating, or a turn it believes changed nothing.
+A third gate, [`end-session`](skills.md#end-session), sits right at the end, before the agent is allowed to finish. This skill contains a checklist that the agent must work through it before every ending — finished, escalating, or a turn it believes changed nothing.
 
 ```
 end-session: complete — checklist passed per .github/skills/end-session/SKILL.md.
 end-session: escalating — checklist passed per .github/skills/end-session/SKILL.md; blocked on <one-line reason>.
 ```
 
-It exists because the last action of a run is the one nobody supervises, and two of its failures are silent. A session that ends with the fix still sitting in the working tree has destroyed the work rather than delivered it — the runner is disposable, the branch looks untouched, and the effort is unrecoverable. A session that ends while CI is still running has reported a result it never observed. Both read as success from inside the transcript, which is exactly why they need a checklist rather than good intentions. It covers the documentation the change made untrue, every file in the working tree, the push, any test left switched off, CI, the pull request, and the report — in that order, because each step would be undone by the one after it if they were swapped.
-
-The checklist opens by asking whether the agent is entitled to stop at all, because the more common failure is stopping too early — mid-loop, or straight after a gate line. Escalation is explicitly *not* an exemption. It is when unpushed work is most likely to be lost, since the agent is stopping mid-task rather than at a natural finish. Unlike the two entry gates, this confirmation line genuinely is a stopping point, and it is the only one.
 
 ## Where everything lives
 
@@ -190,15 +190,13 @@ Worth knowing about, because nothing here will tell you when one of them breaks:
 
 A few habits that keep it coherent:
 
-**Edit both prompt files together, and run the diff.** See above. This is the most common mistake.
+- **Edit both prompt files together, and run the diff.** See above. This is the most common mistake.
 
-**Put procedures in skills, not in the prompts.** If it is a series of steps for a particular situation, it belongs in a skill, where it costs nothing until needed. The prompts should say *when* to reach for something, not *how* to do it.
+- **Put procedures in skills, not in the prompts.** If it is a series of steps for a particular situation, it belongs in a skill, where it costs nothing until needed. The prompts should say *when* to reach for something, not *how* to do it.
 
-**Say why, not just what.** Most of these files explain their own reasoning — why iOS sessions are created outside the tooling, why a raw click silently fails, why a test is committed switched off. That is not padding. An agent that knows the reason handles the case the instructions did not anticipate; one following a rule blindly does something confidently wrong. The same goes for whoever reads this in six months.
+- **Say why, not just what.** Most of these files explain their own reasoning — why iOS sessions are created outside the tooling, why a raw click silently fails, why a test is committed switched off. That is not padding. An agent that knows the reason handles the case the instructions did not anticipate; one following a rule blindly does something confidently wrong. The same goes for whoever reads this in six months.
 
-**Name skills exactly.** A skill is invoked by the name in its folder and frontmatter. `ci_monitor` is not [`ci-monitor`](skills.md#ci-monitor), and a near-miss simply fails to find anything.
-
-**Check cross-references still hold.** These files refer to each other constantly, and to `docs/` and to real source paths. When you rename or restructure something, grep `.github/` for the old name.
+- **Check cross-references still hold.** These files refer to each other constantly, and to `docs/` and to real source paths. When you rename or restructure something, grep `.github/` for the old name.
 
 ## Related but separate: issue estimation
 
