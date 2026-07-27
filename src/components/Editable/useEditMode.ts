@@ -98,6 +98,7 @@ const useEditMode = ({
           (cursorOffset !== null || !selection.isThought()) &&
           !isMulticursor &&
           !dragHold &&
+          !dragInProgress &&
           !disabledRef.current)
 
       if (shouldSetSelection) {
