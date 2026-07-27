@@ -31,6 +31,7 @@ import { AlertType, COMMAND_PALETTE_TIMEOUT, HOME_PATH, LongPressState, Settings
 import * as selection from './device/selection'
 import globals from './globals'
 import documentSort from './selectors/documentSort'
+import getThoughtById from './selectors/getThoughtById'
 import getUserSetting from './selectors/getUserSetting'
 import hasMulticursor from './selectors/hasMulticursor'
 import isAllSelected from './selectors/isAllSelected'
@@ -42,6 +43,7 @@ import equalPath from './util/equalPath'
 import haptics from './util/haptics'
 import hashPath from './util/hashPath'
 import head from './util/head'
+import isAttribute from './util/isAttribute'
 import keyValueBy from './util/keyValueBy'
 import parentOf from './util/parentOf'
 import UnreachableError from './util/unreachable'
@@ -269,6 +271,19 @@ const recomputePath = (state: State, thoughtId: ThoughtId) => {
   return path && equalPath(path, HOME_PATH) ? null : path
 }
 
+/**
+ * Truncates a path to its nearest ancestor that is not within a metaprogramming attribute. If a command moves the cursor or a multicursor into a metaprogramming attribute (e.g. swapNote moving a thought into =note), the selection should be set to the nearest non-attribute ancestor instead. Returns the path unchanged if it contains no attribute, or null if truncation would leave an empty path.
+ */
+const nearestNonAttributeAncestor = (state: State, path: Path): Path | null => {
+  const attributeIndex = path.findIndex(id => {
+    const thought = getThoughtById(state, id)
+    return !!thought && isAttribute(thought.value)
+  })
+  if (attributeIndex === -1) return path
+  const truncated = path.slice(0, attributeIndex) as Path
+  return truncated.length > 0 ? truncated : null
+}
+
 /** Execute a single command. Defaults to global store and keyboard shortcuts. Use `executeCommandWithMulticursor` to execute a command with multicursor mode. */
 export const executeCommand = (
   command: Command,
@@ -378,17 +393,27 @@ export const executeCommandWithMulticursor = (
 
   // Restore the cursor to its original value if not prevented.
   // Note that state.cursor is the old cursor, before any commands were executed.
+  // If the cursor thought was moved into a metaprogramming attribute (e.g. swapNote moves it into =note),
+  // restore it to the nearest non-attribute ancestor instead.
   if (!multicursor.preventSetCursor && state.cursor) {
-    commandStore.dispatch(setCursor({ path: recomputePath(commandStore.getState(), head(state.cursor)) }))
+    const restoreState = commandStore.getState()
+    const recomputedPath = recomputePath(restoreState, head(state.cursor))
+    commandStore.dispatch(
+      setCursor({ path: recomputedPath && nearestNonAttributeAncestor(restoreState, recomputedPath) }),
+    )
   }
 
   // Restore multicursors
   if (!multicursor.clearMulticursor) {
     commandStore.dispatch(
       paths.map(path => (dispatch, getState) => {
-        const recomputedPath = recomputePath(getState(), head(path))
-        if (!recomputedPath) return
-        dispatch(addMulticursor({ path: recomputedPath }))
+        const state = getState()
+        const recomputedPath = recomputePath(state, head(path))
+        // If a multicursor thought was moved into a metaprogramming attribute (e.g. swapNote moves it into
+        // =note), restore it to the nearest non-attribute ancestor instead.
+        const restoredPath = recomputedPath && nearestNonAttributeAncestor(state, recomputedPath)
+        if (!restoredPath) return
+        dispatch(addMulticursor({ path: restoredPath }))
       }),
     )
   }
