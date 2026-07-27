@@ -2,8 +2,11 @@ import path from 'path'
 import configureSnapshots from '../configureSnapshots'
 import getEditable from '../helpers/getEditable'
 import hideHUD from '../helpers/hideHUD'
+import multiselectThoughts from '../helpers/multiselectThoughts'
 import paste from '../helpers/paste'
+import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
+import { page } from '../session'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
@@ -13,6 +16,31 @@ vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
 
 describe('Table View', () => {
   beforeEach(hideHUD)
+
+  it('applies Table View once when an even multiselect shares a parent (#4745)', async () => {
+    await paste(`
+      - a
+        - b
+          - c
+        - d
+          - e
+    `)
+
+    await multiselectThoughts(['b', 'd'])
+    await press('t', { alt: true, shift: true })
+
+    await page.waitForFunction(() => {
+      const editables = Array.from(document.querySelectorAll<HTMLElement>('[data-editable]'))
+      const b = editables.find(editable => editable.textContent === 'b')
+      const c = editables.find(editable => editable.textContent === 'c')
+      if (!b || !c) return false
+
+      const bRect = b.getBoundingClientRect()
+      const cRect = c.getBoundingClientRect()
+
+      return Math.abs(bRect.top - cRect.top) < 1 && cRect.left >= bRect.right
+    })
+  })
 
   /**
    * "col1 narrow" means that all thoughts in the first column have short text, so the first table column can be narrower in order to give plenty of room for the second column.
