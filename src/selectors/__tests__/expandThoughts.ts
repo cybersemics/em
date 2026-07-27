@@ -901,4 +901,27 @@ describe('multicursor', () => {
     expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
     expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
   })
+
+  // https://github.com/cybersemics/em/issues/4738
+  it.skip('a multicursor thought does not expand its own children', () => {
+    const text = `
+      - a
+        - x
+      - b
+      - c
+    `
+
+    const steps = [
+      importText({ text }),
+      setCursor(['c']),
+      addMulticursor(['a']),
+      addMulticursor(['b']),
+      addMulticursor(['c']),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    // a is selected but none of its descendants are, so it must stay collapsed
+    expect(isContextExpanded(stateNew, ['a'])).toBeFalsy()
+  })
 })
