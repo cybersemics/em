@@ -1,4 +1,6 @@
 import { KnownDevices } from 'puppeteer'
+import { WindowEm } from '../../../initialize'
+import sleep from '../../../util/sleep'
 import clickThought from '../helpers/clickThought'
 import command from '../helpers/command'
 import emulate from '../helpers/emulate'
@@ -102,6 +104,50 @@ describe('multiselect', () => {
     expect(copied['text/html']).toContain('a')
     expect(copied['text/html']).toContain('b')
     expect(copied['text/html']).toContain('c')
+  })
+
+  /** Returns the value of the thought the cursor is on. */
+  const cursorValue = () =>
+    page.evaluate(() => {
+      const em = window.em as WindowEm
+      const state = em.testHelpers.getState()
+      return state.cursor ? (em.getThoughtById(state.cursor[state.cursor.length - 1])?.value ?? null) : null
+    })
+
+  // https://github.com/cybersemics/em/issues/4741
+  it.skip('ArrowUp moves the cursor to the first selected thought when multiple thoughts are selected', async () => {
+    await paste(`
+        - a
+        - b
+        - c
+        - d
+        - e
+        `)
+    await waitForEditable('e')
+
+    await multiselectThoughts(['b', 'c', 'd'])
+    await press('ArrowUp')
+    await sleep(500)
+
+    expect(await cursorValue()).toBe('b')
+  })
+
+  // https://github.com/cybersemics/em/issues/4741
+  it.skip('ArrowDown moves the cursor to the last selected thought when multiple thoughts are selected', async () => {
+    await paste(`
+        - a
+        - b
+        - c
+        - d
+        - e
+        `)
+    await waitForEditable('e')
+
+    await multiselectThoughts(['b', 'c', 'd'])
+    await press('ArrowDown')
+    await sleep(500)
+
+    expect(await cursorValue()).toBe('d')
   })
 })
 
