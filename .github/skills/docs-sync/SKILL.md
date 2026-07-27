@@ -58,7 +58,7 @@ Noisy, and worth skimming rather than trusting wholesale — but it finds every 
 | [`commands.md`](../../docs/commands.md) | `src/commands/**`, `src/commands.ts` | You add, remove, or change a command, its shortcut, or the command system itself |
 | [`glossary.md`](../../docs/glossary.md) | The project's vocabulary, across all of `src/` | You introduce, rename, or retire a term of art — anything a newcomer would have to look up |
 | [`testing.md`](../../docs/testing.md) | `src/e2e/**`, `src/test-helpers/**`, `src/setupTests.js` | Helper contracts, test patterns, platforms, or runners change |
-| [`agents/*.md`](../../docs/agents/) | `.github/skills/**`, `.github/agents/**`, `.github/copilot-instructions.md`, `.github/workflows/copilot-setup-steps.yml`, `.github/workflows/tdd.yml`, the `scripts/*.mjs` the agent depends on | Anything about how the agent works changes — a skill, the prompts, the environment, the MCP wiring |
+| [`agents/*.md`](../../docs/agents/) | `.github/skills/**`, `.github/agents/**`, `.github/copilot-instructions.md`, `AGENTS.md`, `.agents/**`, `.github/workflows/copilot-setup-steps.yml`, `.github/workflows/tdd.yml`, the `scripts/*.mjs` the agent depends on | Anything about how any agent works changes — a skill, either entry point, which skills are shared, the environment, the MCP wiring |
 
 **A changed file that matches no row is a finding, not a pass.** Either the document that should describe that area does not exist — say so in your report, and do not invent one on the spot — or this table is missing a row, in which case add it here as part of your change.
 

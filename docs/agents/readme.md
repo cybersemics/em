@@ -4,7 +4,7 @@ This repository is set up so that GitHub Copilot's cloud coding agent can pick u
 
 Making that work takes more than a prompt. It takes a described environment, a browser the agent can actually drive, the project's own test helpers exposed to it, and CI that checks the agent did the honest thing rather than the convenient thing. This folder documents all of it.
 
-We targeted Copilot specifically because the project already runs on GitHub — issues, pull requests, and CI are all here, so the agent lives where the work already is.
+We targeted Copilot specifically because the project already runs on GitHub — issues, pull requests, and CI are all here, so the agent lives where the work already is. Agents running on a developer's own machine — Codex, Claude Code — share the same procedures through symlinked skills, but not the same environment; that half is covered in [External agents](external-agents.md).
 
 | Document | What it covers |
 | --- | --- |
@@ -13,10 +13,11 @@ We targeted Copilot specifically because the project already runs on GitHub — 
 | [Environment](environment.md) | What the runner sets up, how the agent drives a browser, how iOS works |
 | [MCP servers](mcp.md) | The three external tool servers, what each gives the agent, and how they are wired |
 | [The TDD workflow](tdd.md) | Why regression tests are committed switched off, and what the CI checks mean |
+| [External agents](external-agents.md) | Codex and Claude Code — what they share with the cloud agent, and what they cannot |
 
 ## The four kinds of file
 
-Everything lives under `.github/`. There are four kinds of file, and the difference between them is **when the agent reads them**.
+Everything the **cloud agent** reads lives under `.github/`. (A local agent reads `AGENTS.md` and `.agents/skills/` instead — see [External agents](external-agents.md).) There are four kinds of file, and the difference between them is **when the agent reads them**.
 
 | Kind | Where | When it is read |
 | --- | --- | --- |
@@ -157,6 +158,16 @@ scripts/
 src/e2e/
 ├── puppeteer/attachExistingBrowserInstance.ts   Web and Android bridge
 └── iOS/attachExistingSession.ts                 iOS bridge
+```
+
+And the local half, which is almost entirely symlinks into the above — see [External agents](external-agents.md):
+
+```
+AGENTS.md                            Read by Codex and Claude Code
+CLAUDE.md            → AGENTS.md
+.agents/skills/                      The shared subset, one symlink each
+└── <name>           → .github/skills/<name>
+.claude/skills       → .agents/skills
 ```
 
 Two workflows are part of this system rather than ordinary CI:

@@ -4,6 +4,8 @@ A skill is a folder under `.github/skills/` containing a `SKILL.md` file. It hol
 
 That "only when invoked" part is the point. Standing instructions are read on every run and compete for the agent's attention whether or not they are relevant. A skill costs nothing until it is needed, so it can afford to be long and specific.
 
+A subset of these is shared with agents running on a developer's own machine, through symlinks from `.agents/skills/`. Which ones, and why the rest cannot travel, is covered in [External agents](external-agents.md).
+
 ## The skills
 
 ```mermaid
