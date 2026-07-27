@@ -138,10 +138,18 @@ The proxy solves a second problem too. The sandbox's firewall rejects certain ou
 
 iOS runs a pre-built app uploaded to BrowserStack under the name `em-server-mode`. It is not rebuilt per run — day-to-day web changes do not need one, since the app loads the dev server through the tunnel.
 
-Two ways this bites, both ending in a blank screen and a timeout, and both needing a human:
+Two ways this bites, both ending in a blank screen and a timeout, and both needing a human at a Mac:
 
-- **The upload lapsed.** BrowserStack deletes apps 30 days after last use. There is no automation to rebuild it.
+- **The upload lapsed.** BrowserStack deletes apps 30 days after last use.
 - **The build predates HTTPS.** The app has its server address baked in. A build made before the dev server moved to HTTPS points at `http://` and loads nothing.
+
+Either way the fix is the same — rebuild and re-upload with [`scripts/build-em-browserstack-ipa.sh`](../../scripts/build-em-browserstack-ipa.sh):
+
+```bash
+BROWSERSTACK_USERNAME=… BROWSERSTACK_ACCESS_KEY=… ./scripts/build-em-browserstack-ipa.sh
+```
+
+It builds em in Capacitor server mode with `https://bs-local.com:3000` baked in — BrowserStack's hostname for whichever machine is running the tunnel — and uploads the `.ipa` under the `em-server-mode` id the skill looks for. It has to run on a Mac with Xcode, but needs nothing beyond a free personal Apple ID: BrowserStack re-signs on upload, so a personal-team Development certificate is enough. The script's own header comment carries the full prerequisites and the reasoning behind each signing step.
 
 ### The iOS bridge
 

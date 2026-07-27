@@ -153,7 +153,8 @@ end-session: escalating — checklist passed per .github/skills/end-session/SKIL
 scripts/
 ├── shared-chrome.mjs                One Chrome that agent and tests share
 ├── start-ios-session.mjs            Opens the BrowserStack iOS session
-└── mcp-session-proxy.mjs            Lets the iOS tooling join that session
+├── mcp-session-proxy.mjs            Lets the iOS tooling join that session
+└── build-em-browserstack-ipa.sh     Rebuilds and re-uploads the iOS app
 
 src/e2e/
 ├── puppeteer/attachExistingBrowserInstance.ts   Web and Android bridge
@@ -182,7 +183,7 @@ The rest (`test`, `lint`, `puppeteer`, `ios`, the Vercel and Tauri workflows) ar
 Worth knowing about, because nothing here will tell you when one of them breaks:
 
 - **[MCP server configuration](mcp.md).** An MCP server is an external tool the agent can call. Three matter here: [`chrome-devtools`](mcp.md#chrome-devtools) for driving Chrome, [`wdio`](mcp.md#wdio) for driving iOS, and [the GitHub server](mcp.md#the-github-server) for reading issues and CI runs. They are configured in Copilot's own settings, not in this repository. In particular, `chrome-devtools` must be given `--browser-url=http://127.0.0.1:9222` so that it joins the browser the setup step already started instead of launching a second one.
-- **The pre-built iOS app.** iOS work runs against an app binary uploaded to BrowserStack under the name `em-server-mode`. BrowserStack deletes uploads 30 days after they were last used, and there is no tooling to rebuild it automatically. If it lapses, iOS reproduction stops working and someone has to rebuild and re-upload it by hand.
+- **The pre-built iOS app.** iOS work runs against an app binary uploaded to BrowserStack under the name `em-server-mode`. BrowserStack deletes uploads 30 days after they were last used, and if it lapses, iOS reproduction stops working until someone rebuilds it. That is a one-command job on a Mac with Xcode — [`scripts/build-em-browserstack-ipa.sh`](../../scripts/build-em-browserstack-ipa.sh), covered in [Environment](environment.md#the-app-on-the-device) — but it is not automated and nothing warns you before it expires.
 - **Secrets.** `BROWSERSTACK_USERNAME`, `BROWSERSTACK_ACCESS_KEY`, and `OPENAI_API_KEY` are repository secrets.
 - **Network allowances.** The agent runs behind a firewall that blocks outbound traffic by default. Hosts it needs are listed in `COPILOT_AGENT_FIREWALL_ALLOW_LIST_ADDITIONS` in the setup workflow. A new external dependency needs adding there or it will fail in a way that looks like a hang.
 
