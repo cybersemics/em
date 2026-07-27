@@ -15,7 +15,7 @@ The in-repo documentation for **em**. The GitHub wiki is being deprecated in fav
 ## Agents
 
 - [Agent Infrastructure](agents/readme.md) — How the GitHub Copilot coding agent works on this repo: what it reads, and how a task flows through it.
-- [Skills](agents/skills.md) — The twelve skills under `.github/skills/`, what each does, and how they call each other.
+- [Skills](agents/skills.md) — The skills under `.github/skills/`, what each does, and how they call each other.
 - [Agent Environment](agents/environment.md) — What the runner provisions, how the agent drives a browser, and how iOS runs on a real device.
 - [MCP Servers](agents/mcp.md) — The external tool servers the agent calls, how they are configured (outside this repo), and what breaks when they are not.
 - [The TDD Workflow](agents/tdd.md) — Why regression tests are committed switched off, and why a red TDD check and a red test suite mean opposite things.

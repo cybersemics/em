@@ -9,7 +9,7 @@ We targeted Copilot specifically because the project already runs on GitHub — 
 | Document | What it covers |
 | --- | --- |
 | This page | The map: what the pieces are, what loads when, how a task flows through them |
-| [Skills](skills.md) | The twelve skills, what each one does, and how they call each other |
+| [Skills](skills.md) | Every skill, what each one does, and how they call each other |
 | [Environment](environment.md) | What the runner sets up, how the agent drives a browser, how iOS works |
 | [MCP servers](mcp.md) | The three external tool servers, what each gives the agent, and how they are wired |
 | [The TDD workflow](tdd.md) | Why regression tests are committed switched off, and what the CI checks mean |
@@ -30,7 +30,7 @@ flowchart TD
     CI["copilot-instructions.md<br/>persona · environment · methodology"]
     WB["agents/worker-bee.agent.md<br/>same content, plus a name and description"]
     INS["instructions/*.instructions.md<br/>code standards · testing rules"]
-    SK["skills/*/SKILL.md<br/>twelve skills, loaded on demand"]
+    SK["skills/*/SKILL.md<br/>one folder per skill, loaded on demand"]
     RUN(["The running agent"])
 
     CI --> RUN
@@ -41,7 +41,7 @@ flowchart TD
     click CI "../../.github/copilot-instructions.md" "Open copilot-instructions.md"
     click WB "../../.github/agents/worker-bee.agent.md" "Open worker-bee.agent.md"
     click INS "../../.github/instructions/" "Open the instructions folder"
-    click SK "skills.md" "All twelve skills"
+    click SK "skills.md" "Every skill, and how they call each other"
 ```
 
 The split matters because the agent's attention is finite. Anything in the first three is competing for room on every single run, so it has to earn its place. A skill costs nothing until it is needed, which is why the detailed procedures — how to bring up an iOS device, how to run one test, how to read a CI failure — are skills rather than standing instructions.
@@ -83,7 +83,7 @@ flowchart TD
     H -- no --> I["test-diagnosis — work out what kind of failure it is"]
     I --> E
     H -- yes --> J["<b>Exit gate</b> — end-session skill"]
-    J --> J1["Nothing uncommitted, nothing unpushed,<br/>no test left skipped, CI observed green"]
+    J --> J1["Nothing left untrue, nothing left behind,<br/>nothing claimed that was not observed"]
     J1 --> K["Done"]
 
     click C "skills.md#issue-repro" "The issue-repro skill"
@@ -125,7 +125,7 @@ end-session: complete — checklist passed per .github/skills/end-session/SKILL.
 end-session: escalating — checklist passed per .github/skills/end-session/SKILL.md; blocked on <one-line reason>.
 ```
 
-It exists because the last action of a run is the one nobody supervises, and two of its failures are silent. A session that ends with the fix still sitting in the working tree has destroyed the work rather than delivered it — the runner is disposable, the branch looks untouched, and the effort is unrecoverable. A session that ends while CI is still running has reported a result it never observed. Both read as success from inside the transcript, which is exactly why they need a checklist rather than good intentions: account for every changed file, commit and push, remove any `.skip`, watch every check finish, then report.
+It exists because the last action of a run is the one nobody supervises, and two of its failures are silent. A session that ends with the fix still sitting in the working tree has destroyed the work rather than delivered it — the runner is disposable, the branch looks untouched, and the effort is unrecoverable. A session that ends while CI is still running has reported a result it never observed. Both read as success from inside the transcript, which is exactly why they need a checklist rather than good intentions. It covers the documentation the change made untrue, every file in the working tree, the push, any test left switched off, CI, the pull request, and the report — in that order, because each step would be undone by the one after it if they were swapped.
 
 The checklist opens by asking whether the agent is entitled to stop at all, because the more common failure is stopping too early — mid-loop, or straight after a gate line. Escalation is explicitly *not* an exemption. It is when unpushed work is most likely to be lost, since the agent is stopping mid-task rather than at a natural finish. Unlike the two entry gates, this confirmation line genuinely is a stopping point, and it is the only one.
 
@@ -140,7 +140,7 @@ The checklist opens by asking whether the agent is entitled to stop at all, beca
 │   ├── code-standards.instructions.md
 │   ├── testing.instructions.md
 │   └── estimate/                    Not a Copilot instruction — see below
-├── skills/                          Twelve skills — see skills.md
+├── skills/                          One folder per skill — see skills.md
 ├── actions/
 │   ├── install/                     Cached dependency install
 │   ├── serve/                       Start the built app and wait for it

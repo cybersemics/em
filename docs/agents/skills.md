@@ -4,7 +4,7 @@ A skill is a folder under `.github/skills/` containing a `SKILL.md` file. It hol
 
 That "only when invoked" part is the point. Standing instructions are read on every run and compete for the agent's attention whether or not they are relevant. A skill costs nothing until it is needed, so it can afford to be long and specific.
 
-## The twelve skills
+## The skills
 
 ```mermaid
 flowchart TD
@@ -68,16 +68,11 @@ The two green boxes are the gates — the agent must run them before it is allow
 
 **Source: [`.github/skills/issue-repro/SKILL.md`](../../.github/skills/issue-repro/SKILL.md)**
 
-Runs when an issue contains a "Steps to Reproduce" section, or something close to it like "How to reproduce". Six stages:
+Runs when an issue contains a "Steps to Reproduce" section, or something close to it like "How to reproduce".
 
-1. **Read the issue** and pull out the steps, what currently happens, what should happen, and which platform to test on.
-2. **Bring up a browser** by handing that platform to [`browser-control`](#browser-control).
-3. **Reproduce the failure** by following the steps exactly and confirming the reported behaviour actually occurs.
-4. **Write a failing test** via [`tdd-write-failing-test`](#tdd-write-failing-test), while the reproduction is fresh.
-5. **Fix it**, using what was observed to find the cause.
-6. **Prove the fix** by re-running that test until it passes, up to five attempts before escalating.
+It reads the issue for the steps, the current and expected behaviour, and the platform; hands that platform to [`browser-control`](#browser-control) to bring up a browser or device; follows the steps exactly until the reported failure actually occurs; turns that reproduction into a failing test through [`tdd-write-failing-test`](#tdd-write-failing-test) while it is still fresh; and only then goes looking for the cause. The fix is not finished until that test passes, with a bounded number of attempts before escalating.
 
-Until stage 3 succeeds, the agent may not read source code to form theories, guess at causes, edit files, or open a pull request. That restriction is the entire value of the skill. An agent that reads the code first builds a theory from the code and then finds evidence for it; one that has watched the bug happen is working from an observation.
+Until the failure has actually been observed, the agent may not read source code to form theories, guess at causes, edit files, or open a pull request. That restriction is the entire value of the skill. An agent that reads the code first builds a theory from the code and then finds evidence for it; one that has watched the bug happen is working from an observation.
 
 **Picking the platform** happens from the issue's tags first, then from words in the body:
 
@@ -100,17 +95,15 @@ Runs before implementation on anything non-trivial. For a bug with reproduction 
 
 It is two stages performed by the same agent in one pass. First write the plan, then attack it. There is no separate reviewer.
 
-The plan has five sections. The first three require evidence, and **evidence means a `file.ts:120-134` reference with the actual lines quoted** — "I looked at the selectors" does not count:
+The load-bearing part is what the plan has to establish before it may propose anything, and the standard of proof it is held to. **Evidence means a `file.ts:120-134` reference with the actual lines quoted** — "I looked at the selectors" does not count.
 
-1. **What already exists** that touches this idea. Read the relevant files in `docs/`, then grep the source. For each thing found, note not just what it does but what it quietly assumes — a regex anchored to the start of a string only handles the leading case, and building a whole-string scanner next to it is both wasted work and a bug.
-2. **Extend or build new**, decided against section 1. Extending is the default; a new path needs a defended reason, and "it was easier to write fresh" is not one.
-3. **What else might break.** For anything touching the editor that means explicitly considering deletion, text selection, caret position, undo, IME composition, copy and paste, gestures, and multi-cursor — because changing one path in an editor routinely breaks its neighbour.
-4. **At least two approaches** compared briefly, to break first-instinct lock-in.
-5. **A sketch of the change** in plain words — which files, which functions — but not the code.
+It has to establish **what already exists** that touches the idea, found by reading the relevant files in `docs/` and then grepping the source, and recorded with what each piece quietly *assumes* as well as what it does — a regex anchored to the start of a string only handles the leading case, and building a whole-string scanner next to it is both wasted work and a bug. It has to decide **extend or build new** against that evidence, with extending as the default and a new path needing a defended reason; "it was easier to write fresh" is not one. And it has to enumerate **what else might break** — for anything touching the editor, that means explicitly considering deletion, text selection, caret position, undo, IME composition, copy and paste, gestures, and multi-cursor, because changing one path in an editor routinely breaks its neighbour.
+
+Beyond that it compares more than one approach, to break first-instinct lock-in, and sketches where the change will live in plain words rather than code.
 
 Then the critique stage re-opens the cited files and checks the quotes really say what the plan claimed, tries to defeat any decision to build something new, names an adjacent behaviour the plan glossed over, and checks nothing contradicts the design intent recorded in `docs/`. If any check fails, revise and critique again.
 
-The skill names the three ways this goes wrong: filling in plausible sections with no quoted evidence, writing a plan and then building something else, and over-planning a change smaller than the plan.
+The skill names the ways this goes wrong: filling in plausible sections with no quoted evidence, writing a plan and then building something else, and over-planning a change smaller than the plan.
 
 ## Driving the app
 
@@ -226,18 +219,9 @@ The exit gate. [`issue-repro`](#issue-repro) and [`plan`](#plan) control the way
 
 It exists because the last action of a run is the one nobody supervises, and its two worst failures are silent ones. A session that ends with the fix still sitting in the working tree has destroyed the work rather than delivered it: the runner is disposable, so the branch looks untouched and the effort is gone. A session that ends while CI is still running has reported a result it never watched. Both read as success from inside the transcript, which is why this is a checklist rather than a principle.
 
-The order is load-bearing. Documentation is repaired before the tree is taken stock of, because a doc edit is itself a file change; the tree is cleaned before CI is checked, because committing restarts CI and therefore restarts the checklist:
+It opens by asking whether the agent is entitled to stop at all — not straight after a gate confirmation line, not mid fix-validate loop, not with CI still running — because the more common failure is not a messy ending but a premature one, stopping to wait for a human who is not there. An earlier version of this system had agents printing a gate line and then yielding mid-task. Only four endings are legitimate: the work is green, a documented attempt limit was hit, the bug would not reproduce, or the path is genuinely ambiguous.
 
-0. **Are you allowed to stop at all?** Not straight after a gate confirmation line, not mid fix-validate loop, not with CI still running. Only four endings are legitimate: the work is green, a documented attempt limit was hit, the bug would not reproduce, or the path is genuinely ambiguous.
-1. **Does the documentation still describe reality?** Hands off to [`docs-sync`](#docs-sync), and carries back either the documents it updated or `docs: unaffected — <reason>`.
-2. **Account for every changed file.** Each line of `git status --porcelain` is either part of the work, scratch to delete, or something the agent did not write — which it must leave alone and mention, never quietly discard.
-3. **Commit and push.** `git status --porcelain` and `git log @{u}..HEAD` must both come back empty.
-4. **No test left skipped**, checked against what this branch added rather than the whole suite.
-5. **Every CI check green**, read with the TDD workflow in mind, since a red `TDD` check means the opposite of a red test suite.
-6. **The pull request is in order** — draft, issue number, plan in the description.
-7. **Report**, including the `docs:` line and what was deliberately left undone.
-
-Step 0 comes first because the more common failure is not a messy ending but a premature one — stopping to wait for a human who is not there. An earlier version of this system had agents printing a gate line and then yielding mid-task.
+From there the order is load-bearing, and each step is placed where it is for a reason. Documentation is repaired first, through [`docs-sync`](#docs-sync), because a doc edit is itself a file change and anything done after the tree is taken stock of misses the commit. Then every changed file is accounted for — each line of `git status --porcelain` is part of the work, scratch to delete, or something the agent did not write, which it must leave alone and mention rather than quietly discard. Then everything is committed and pushed, verified by `git status --porcelain` and `git log @{u}..HEAD` both coming back empty. Only then is CI examined, because committing restarts it. Regression tests are checked for a leftover `.skip` against what this branch added rather than the whole suite, the pull request is checked for its draft status, issue number, and plan, and the final report carries the `docs:` line along with whatever was deliberately left undone.
 
 Escalation is explicitly not an exemption. It is the point at which unpushed work is *most* likely to be lost, because the agent is stopping in the middle rather than at a natural finish, and an escalation that discards the investigation makes the user start from zero.
 
