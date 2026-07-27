@@ -76,7 +76,7 @@ const GestureMenu: FC<{
                   fontWeight: 500,
                 }}
               >
-                Gestures
+                Gestures xxx
               </div>
               <div
                 style={{
