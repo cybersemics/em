@@ -44,15 +44,25 @@ export const GESTURE_MENU_HEADER_HEIGHT_REM = 2.8
 /** Approximate row pitch of an unselected row: the icon/label height (1rem) plus the row gap. */
 export const GESTURE_MENU_ROW_PITCH_REM = 1 + GESTURE_MENU_ROW_GAP_REM
 
+// Source of truth for GestureMenuItem.tsx's selected-state styling — imported there so the two
+// never drift apart.
+export const GESTURE_MENU_ITEM_SELECTED_PADDING_TOP_REM = 0.6
+export const GESTURE_MENU_ITEM_LABEL_DESCRIPTION_GAP_REM = 0.5
+export const GESTURE_MENU_ITEM_DESCRIPTION_LINE_HEIGHT_REM = 1.1
+const GESTURE_MENU_ITEM_DESCRIPTION_MAX_LINES = 2
+export const GESTURE_MENU_ITEM_SELECTED_PADDING_BOTTOM_REM = 0.1
+
 /**
  * Extra height one selected command adds over a plain row, reserved from the grid so a selected
- * description never crops the column. A selected row (GestureMenuItem) grows by its top padding
- * (0.6rem), the label→description gap (0.5rem), up to two wrapped description lines (2 × 1.1rem),
- * and its bottom padding (0.1rem). Reserving the two-line worst case keeps the menu crop-free at the
- * cost of showing one or two fewer commands when a long description wraps — the reviewer explicitly
- * prefers fewer commands over a clipped menu.
+ * description never crops the column. Reserving the two-line worst case keeps the menu crop-free at
+ * the cost of showing one or two fewer commands when a long description wraps — the reviewer
+ * explicitly prefers fewer commands over a clipped menu.
  */
-export const GESTURE_MENU_SELECTED_RESERVE_REM = 0.6 + 0.5 + 2 * 1.1 + 0.1
+export const GESTURE_MENU_SELECTED_RESERVE_REM =
+  GESTURE_MENU_ITEM_SELECTED_PADDING_TOP_REM +
+  GESTURE_MENU_ITEM_LABEL_DESCRIPTION_GAP_REM +
+  GESTURE_MENU_ITEM_DESCRIPTION_MAX_LINES * GESTURE_MENU_ITEM_DESCRIPTION_LINE_HEIGHT_REM +
+  GESTURE_MENU_ITEM_SELECTED_PADDING_BOTTOM_REM
 
 /** Approximate height of the persistent block: a single full-width bottom row plus the group gap above it. */
 export const GESTURE_MENU_PERSISTENT_BLOCK_HEIGHT_REM = GESTURE_MENU_GROUP_GAP_REM + GESTURE_MENU_ROW_PITCH_REM

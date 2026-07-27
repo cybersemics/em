@@ -6,6 +6,12 @@ import Command from '../@types/Command'
 import State from '../@types/State'
 import { gestureString } from '../commands'
 import useGestureHighlight from '../hooks/useGestureHighlight'
+import {
+  GESTURE_MENU_ITEM_DESCRIPTION_LINE_HEIGHT_REM,
+  GESTURE_MENU_ITEM_LABEL_DESCRIPTION_GAP_REM,
+  GESTURE_MENU_ITEM_SELECTED_PADDING_BOTTOM_REM,
+  GESTURE_MENU_ITEM_SELECTED_PADDING_TOP_REM,
+} from '../hooks/useGestureMenuLayout'
 import store from '../stores/app'
 import GestureDiagram from './GestureDiagram'
 
@@ -54,13 +60,18 @@ const GestureMenuItem: FC<{
         flexDirection: 'row',
         alignItems: selected ? 'stretch' : 'center',
         gap: '0.89rem',
-        // Always reserve the top padding on a column's first row so selecting it doesn't shift the
-        // column down and misalign its top from sibling columns.
-        paddingTop: selected || isFirstCommand ? '0.6rem' : 0,
-        paddingBottom: selected ? '0.1rem' : 0,
         // Allow the row to shrink within a grid cell so the label's nowrap text does not overflow the column.
         minWidth: 0,
       })}
+      // paddingTop/paddingBottom are computed from GESTURE_MENU_ITEM_SELECTED_PADDING_*_REM (shared
+      // with useGestureMenuLayout's reserve calc), so they're plain inline styles — panda's css()
+      // only extracts statically analyzable literals, not values from an imported constant.
+      style={{
+        // Always reserve the top padding on a column's first row so selecting it doesn't shift the
+        // column down and misalign its top from sibling columns.
+        paddingTop: selected || isFirstCommand ? `${GESTURE_MENU_ITEM_SELECTED_PADDING_TOP_REM}rem` : 0,
+        paddingBottom: selected ? `${GESTURE_MENU_ITEM_SELECTED_PADDING_BOTTOM_REM}rem` : 0,
+      }}
     >
       <div
         className={css({
@@ -90,8 +101,8 @@ const GestureMenuItem: FC<{
         className={css({
           display: 'flex',
           flexDirection: 'column',
-          gap: '0.5rem',
         })}
+        style={{ gap: `${GESTURE_MENU_ITEM_LABEL_DESCRIPTION_GAP_REM}rem` }}
       >
         <div
           className={css({
@@ -116,8 +127,8 @@ const GestureMenuItem: FC<{
               fontWeight: 400,
               color: 'fgOverlay75',
               marginBlock: 0,
-              lineHeight: '1.1rem',
             })}
+            style={{ lineHeight: `${GESTURE_MENU_ITEM_DESCRIPTION_LINE_HEIGHT_REM}rem` }}
           >
             {description}
           </p>
