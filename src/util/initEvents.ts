@@ -20,6 +20,7 @@ import pathExists from '../selectors/pathExists'
 import store from '../stores/app'
 import { updateCommandState } from '../stores/commandStateStore'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
+import { updateActiveTouches } from '../stores/multitouch'
 import { updateScrollTop } from '../stores/scrollTop'
 import selectionRangeStore from '../stores/selectionRangeStore'
 import storageModel from '../stores/storageModel'
@@ -294,6 +295,15 @@ const initEvents = (store: Store<State, any>) => {
     scrollAtEdge.stop()
   }
 
+  /**
+   * Prevents native pinch-to-zoom on iOS Safari. Safari ignores the viewport `user-scalable=no` /
+   * `maximum-scale=1` settings and still allows pinch-to-zoom and two-finger panning of the page,
+   * both of which should be inert in the app. `gesturestart`/`gesturechange`/`gestureend` are
+   * Safari-only events fired for multi-finger gestures; other browsers never fire them, so this is a
+   * no-op elsewhere. See #4233.
+   */
+  const onSafariGesture = (e: Event) => e.preventDefault()
+
   /** Handle a page lifecycle state change, i.e. switching apps. */
   const onStateChange = ({ oldState, newState }: { oldState: LifecycleState; newState: LifecycleState }) => {
     clearTimeout(passiveTimeout)
@@ -379,6 +389,15 @@ const initEvents = (store: Store<State, any>) => {
   // Note: touchstart may not be propagated after dragHold
   window.addEventListener('touchmove', onTouchMove)
   window.addEventListener('touchend', onTouchEnd)
+  // track the number of active touch points so that multi-touch input can be rejected (e.g. two-finger
+  // tracing must not begin a drag-and-drop). See #4233.
+  window.addEventListener('touchstart', updateActiveTouches)
+  window.addEventListener('touchend', updateActiveTouches)
+  window.addEventListener('touchcancel', updateActiveTouches)
+  // disable native pinch-to-zoom / two-finger page panning on iOS Safari (#4233)
+  document.addEventListener('gesturestart', onSafariGesture)
+  document.addEventListener('gesturechange', onSafariGesture)
+  document.addEventListener('gestureend', onSafariGesture)
   window.addEventListener('beforeunload', onBeforeUnload)
   window.addEventListener('scroll', updateScrollTop)
   window.addEventListener('dragenter', dragEnter)
@@ -408,6 +427,12 @@ const initEvents = (store: Store<State, any>) => {
     window.removeEventListener('mousemove', onMouseMove)
     window.removeEventListener('touchmove', onTouchMove)
     window.removeEventListener('touchend', onTouchEnd)
+    window.removeEventListener('touchstart', updateActiveTouches)
+    window.removeEventListener('touchend', updateActiveTouches)
+    window.removeEventListener('touchcancel', updateActiveTouches)
+    document.removeEventListener('gesturestart', onSafariGesture)
+    document.removeEventListener('gesturechange', onSafariGesture)
+    document.removeEventListener('gestureend', onSafariGesture)
     window.removeEventListener('beforeunload', onBeforeUnload)
     window.removeEventListener('scroll', updateScrollTop)
     window.removeEventListener('dragenter', dragEnter)

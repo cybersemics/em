@@ -1,7 +1,7 @@
 import { errorActionCreator as error } from '../../actions/error'
 import store from '../../stores/app'
 // Importing initEvents registers the global window 'error' listener as a side effect.
-import '../initEvents'
+import initEvents from '../initEvents'
 
 beforeEach(() => {
   store.dispatch(error({ value: null }))
@@ -18,4 +18,18 @@ it('shows an error banner for genuine errors with an error object', () => {
 it('ignores opaque cross-origin "Script error." events', () => {
   window.dispatchEvent(new ErrorEvent('error', { message: 'Script error.', error: null, filename: '', lineno: 0 }))
   expect(store.getState().error).toBe(null)
+})
+
+// iOS Safari ignores the viewport user-scalable=no / maximum-scale=1 settings and still allows native
+// pinch-to-zoom and two-finger page panning, which should be inert in the app. initEvents prevents this
+// by calling preventDefault on the Safari-only gesturestart/gesturechange/gestureend events. See #4233.
+it('prevents native pinch-to-zoom gestures (iOS Safari)', () => {
+  initEvents(store)
+
+  const gestureNames = ['gesturestart', 'gesturechange', 'gestureend']
+  gestureNames.forEach(name => {
+    const e = new Event(name, { cancelable: true })
+    document.dispatchEvent(e)
+    expect(e.defaultPrevented).toBe(true)
+  })
 })
