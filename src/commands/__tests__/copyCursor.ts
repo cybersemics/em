@@ -177,7 +177,7 @@ describe('copyCursor', () => {
     })
 
     // https://github.com/cybersemics/em/issues/4737
-    it.skip('does not move the cursor or multiselect when copying in context view', async () => {
+    it('does not move the cursor or multiselect when copying in context view', async () => {
       store.dispatch([
         importText({
           text: `
