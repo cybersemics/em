@@ -4,22 +4,27 @@ import { useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { textNoteRecipe } from '../../styled-system/recipes'
 import Path from '../@types/Path'
+import SimplePath from '../@types/SimplePath'
 import { cursorDownActionCreator as cursorDown } from '../actions/cursorDown'
 import { deleteThoughtActionCreator as deleteThought } from '../actions/deleteThought'
+import { editThoughtActionCreator as editThought } from '../actions/editThought'
 import { keyboardOpenActionCreator as keyboardOpen } from '../actions/keyboardOpen'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { setDescendantActionCreator as setDescendant } from '../actions/setDescendant'
 import { setNoteFocusActionCreator as setNoteFocus } from '../actions/setNoteFocus'
+import { setNoteOffsetActionCreator as setNoteOffset } from '../actions/setNoteOffset'
 import { toggleNoteActionCreator as toggleNote } from '../actions/toggleNote'
 import { isTouch } from '../browser'
 import preventAutoscroll, { preventAutoscrollEnd } from '../device/preventAutoscroll'
 import * as selection from '../device/selection'
 import useFreshCallback from '../hooks/useFreshCallback'
+import { firstVisibleChild } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import noteValue from '../selectors/noteValue'
 import resolveNotePath from '../selectors/resolveNotePath'
 import store from '../stores/app'
 import { mergeBatchEditing } from '../stores/batchEditing'
+import appendToPath from '../util/appendToPath'
 import equalPathHead from '../util/equalPathHead'
 import head from '../util/head'
 import strip from '../util/strip'
@@ -44,7 +49,7 @@ const Note = React.memo(
 
     /** Gets the value of the note. Returns null if no note exists or if the context view is active. */
     const note = useSelector(state => noteValue(state, path))
-    const noteOffset = useSelector(state => state.noteOffset)
+    const editableNonce = useSelector(state => state.editableNonce)
 
     /** Focus Handling with useFreshCallback. */
     const onFocus = useFreshCallback(() => {
@@ -62,11 +67,18 @@ const Note = React.memo(
 
     // set the caret on the note if editing this thought and noteFocus is true
     useEffect(() => {
+      const noteOffset = store.getState().noteOffset
+
       // cursor must be true if note is focused
       if (hasFocus && noteOffset !== null) {
         selection.set(noteRef.current!, { offset: noteOffset })
       }
-    }, [hasFocus, noteOffset])
+    }, [hasFocus, editableNonce])
+
+    /** Saves the note caret offset without creating an undo patch. */
+    const saveNoteOffset = useCallback(() => {
+      dispatch(setNoteOffset({ value: selection.anchorOffsetThought() ?? selection.anchorOffset() }))
+    }, [dispatch])
 
     /** Handles note keyboard shortcuts. */
     const onKeyDown = useCallback(
@@ -79,6 +91,16 @@ const Note = React.memo(
           e.stopPropagation()
           e.preventDefault()
           dispatch(toggleNote())
+        }
+        // prevent Backspace at the beginning of a non-empty note from bubbling up to the thought deletion command
+        else if (
+          e.key === 'Backspace' &&
+          note &&
+          selection.isCollapsed() &&
+          (selection.offsetThought() ?? selection.offset()) === 0
+        ) {
+          e.stopPropagation()
+          e.preventDefault()
         }
         // delete empty note
         // (delete non-empty note is handled by delete command, which allows mobile gesture to work)
@@ -119,19 +141,36 @@ const Note = React.memo(
             // Strip <br> from beginning and end of text
             e.target.value.replace(/^<br>|<br>$/gi, '')
 
+        const noteOffset = selection.offsetThought() ?? selection.offset()
+
         // update the referenced thought directly if it exists
         dispatch((dispatch, getState) => {
           const state = getState()
 
           const targetPath = resolveNotePath(state, path) ?? path
+          const noteThought = firstVisibleChild(state, head(targetPath))
+          const mergePrev = mergeBatchEditing()
 
-          dispatch(
-            setDescendant({
-              path: targetPath,
-              values: [value],
-              mergePrev: mergeBatchEditing(), // If batch editing is in progress, merge this edit with the previous one in the undo stack (except the first edit of a batch, which starts a new undo step).
-            }),
-          )
+          if (noteThought) {
+            dispatch(
+              editThought({
+                path: appendToPath(targetPath, noteThought.id) as SimplePath,
+                oldValue: noteThought.value,
+                newValue: value,
+                mergePrev,
+                noteOffset: noteOffset ?? undefined,
+              }),
+            )
+          } else {
+            dispatch(setNoteOffset({ value: noteOffset }))
+            dispatch(
+              setDescendant({
+                path: targetPath,
+                values: [value],
+                mergePrev,
+              }),
+            )
+          }
         })
       },
       [dispatch, path, justPasted],
@@ -217,6 +256,7 @@ const Note = React.memo(
           onDrop={isTouch ? (e: React.DragEvent) => e.preventDefault() : undefined}
           onKeyDown={onKeyDown}
           onChange={onChange}
+          onSelect={saveNoteOffset}
           // Text copied from a note and pasted on a thought should not bring along the note's default color and italicization. (#3779)
           onCopy={onCopy}
           onCut={onCut}
