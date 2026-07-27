@@ -6,6 +6,7 @@ import longPressThought from '../helpers/longPressThought'
 import multiselectThoughts from '../helpers/multiselectThoughts'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
+import shiftClickThought from '../helpers/shiftClickThought'
 import waitForEditable from '../helpers/waitForEditable'
 import { page } from '../session'
 
@@ -102,6 +103,30 @@ describe('multiselect', () => {
     expect(copied['text/html']).toContain('a')
     expect(copied['text/html']).toContain('b')
     expect(copied['text/html']).toContain('c')
+  })
+
+  // https://github.com/cybersemics/em/issues/4739
+  it.skip('shift + click selects thoughts between the clicked and previously selected thought', async () => {
+    await paste(`
+        - a
+        - b
+        - c
+        - d
+        - e
+        `)
+
+    // start multiselect on b
+    await multiselectThoughts(['b'])
+    // shift + click d to select all thoughts between b and d
+    await shiftClickThought('d')
+
+    const highlightedValues = await page.$$eval('[aria-label="bullet"][data-highlighted="true"]', bullets =>
+      bullets.map(
+        bullet => bullet.closest('[aria-label="thought-container"]')?.querySelector('[data-editable]')?.textContent,
+      ),
+    )
+
+    expect(highlightedValues.sort()).toEqual(['b', 'c', 'd'])
   })
 })
 
