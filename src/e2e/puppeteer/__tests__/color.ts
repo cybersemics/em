@@ -565,3 +565,34 @@ it('caret stays in place when applying font color to a note that has a backgroun
   const offset = await getSelection().focusOffset
   expect(offset).toBe(10)
 })
+
+// https://github.com/cybersemics/em/issues/4630
+it('caret stays in place when repeatedly applying font color over background color', async () => {
+  await paste(`
+    - One
+      - =note
+        - Welcome to the Jungle
+  `)
+
+  await clickFirstNote()
+
+  // place the caret in the middle of the note text
+  await setNoteCaret(10)
+
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+
+  // apply background then font color twice; the resolved caret offset is identical each time,
+  // so the caret restoration must re-fire even when the offset does not change (#4630)
+  await click('[aria-label="background color swatches"] [aria-label="green"]')
+  await click('[aria-label="text color swatches"] [aria-label="red"]')
+  await click('[aria-label="background color swatches"] [aria-label="green"]')
+  await click('[aria-label="text color swatches"] [aria-label="red"]')
+
+  // wait for the caret to settle after the note re-renders
+  await nextFrame()
+  await nextFrame()
+
+  // the caret should still stay where the user left off, not jump to the end of the note
+  const offset = await getSelection().focusOffset
+  expect(offset).toBe(10)
+})
