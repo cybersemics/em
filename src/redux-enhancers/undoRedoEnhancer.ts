@@ -303,8 +303,13 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       if (
         // bail if state has not changed
         state === newState ||
-        // bail if the action is not undoable
-        !isUndoable(actionType) ||
+        // bail if the action is not undoable, unless a multicursor command is executing.
+        // All actions dispatched during a multicursor command belong to its single undo entry, including
+        // non-undoable ones such as the addMulticursor calls that restore the multiselect at the end of
+        // executeCommandWithMulticursor. Skipping them here would bake their changes into the merge
+        // baseline reconstructed below, so undo would restore the original multiselect without removing
+        // the restored one, leaving both selected (#4728).
+        (!isUndoable(actionType) && !state.isMulticursorExecuting) ||
         // ignore the first importText since it is part of app initialization and should not be undoable
         // otherwise the edit merge logic below will create an undo patch with an invalid lexemeIndex/000
         // See: https://github.com/cybersemics/em/issues/1494

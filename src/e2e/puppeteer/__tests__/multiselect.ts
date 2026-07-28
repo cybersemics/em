@@ -131,7 +131,7 @@ describe('multiselect', () => {
   })
 
   // https://github.com/cybersemics/em/issues/4728
-  it.skip('restores the multiselect to the swapped thoughts when Swap Note is undone', async () => {
+  it('restores the multiselect to the swapped thoughts when Swap Note is undone', async () => {
     await paste(`
         - a
           - =view
