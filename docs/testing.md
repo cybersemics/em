@@ -1,12 +1,57 @@
-# Quick Start
+# Testing
+
+## How to use this guide
+
+- If you are a **human**, read [Principles](#principles) and [Test Levels](#test-levels) once. Everything after is reference material for when you need it.
+- If you are an **AI agent performing a code review**, skip to [Reviewing Tests](#reviewing-tests) and check the diff against each item. The [Principles](#principles) explain the reasoning behind each item if a finding needs justification.
+- If you are an **AI agent writing a test**, start with [Principles](#principles), then use [Test Levels](#test-levels) to choose where the test belongs and imitate the golden example for that level.
+
+## Quick Start
+
+The project requires Node.js 22.13 or newer. Install dependencies with `yarn` before running tests.
 
 ```sh
 yarn test            # unit and jsdom tests
-yarn test:puppeteer  # puppeteer (docker required)
-yarn test:ios        # webdriverio (browserstack account required)
+yarn test:puppeteer  # puppeteer (Docker required; starts its own local Vite server)
 ```
 
-# Stack
+The iOS suites require the app to already be running:
+
+```sh
+# terminal 1
+yarn start
+
+# terminal 2
+yarn test:ios:browserstack  # BrowserStack credentials required
+yarn test:ios:local         # local Appium and iOS Simulator required
+```
+
+See [WebdriverIO tests](#5-webdriverio-tests) for the full BrowserStack and local Appium prerequisites.
+
+### Run a specific test
+
+Prefer a focused test while developing:
+
+```sh
+# unit, store, or JSDOM test file
+yarn test src/util/__tests__/ellipsize.ts
+yarn test src/util/__tests__/ellipsize.ts -t "ellipsize"
+
+# Puppeteer test file (the runner accepts a filename fragment)
+yarn test:puppeteer caret
+yarn test:puppeteer caret -t "should move the caret to the correct position"
+
+# iOS test file
+yarn test:ios:local --spec src/e2e/iOS/__tests__/caret.ts
+```
+
+To accept an intentional visual change, update only the affected Puppeteer snapshots:
+
+```sh
+yarn test:puppeteer -u render-thoughts
+```
+
+## Stack
 
 - Vitest
 - JSDOM
@@ -15,97 +60,219 @@ yarn test:ios        # webdriverio (browserstack account required)
 - Browserless
 - Docker
 - WebdriverIO
-- Github Actions
+- GitHub Actions
 
-# Reporting Bugs
+## Principles
 
-## Issue Titles
+### 1. Act as the user
 
-If a bug is platform specific, put the platform in brackets at the beginning of the title. If the bug is on all platforms, the prefix can be omitted.
+Every test level has a "user" — the consumer of the interface at that level. A test may only do what that level's user can do.
 
-| Prefix                | Meaning                                                      |
-|-----------------------|--------------------------------------------------------------|
-| `[Mobile]`            | iOS / Mobile Safari / Android                                |
-| `[iOS]`               | iOS / Mobile Safari                                          |
-| `[iOS Capacitor]`     | iOS Capacitor build, but *not* Mobile Safari                 |
-| `[Android]`           | Android                                                      |
-| `[Chrome]`            | Desktop Chrome                                               |
-| *(no prefix)*         | Issue present on all platforms                               |
+| Level                | The "user" is…            | …who can only                                                       |
+|----------------------|---------------------------|---------------------------------------------------------------------|
+| Unit                 | calling code              | call the function with arguments and read the return value          |
+| Store                | the command layer         | dispatch commands/actions and read state through selectors          |
+| JSDOM (RTL)          | a person (emulated DOM)   | render the app, fire events, query the visible DOM                  |
+| Puppeteer / iOS      | a person                  | click, tap, type, swipe, scroll — and read what is on the screen    |
 
-## Headings
+The rule holds at every level; only the identity of the user changes. At the integration level (Puppeteer/iOS) the user is a person, so the test may only click, tap, type, swipe, and read the screen. From a real code review:
 
-When reporting a bug, use these standard three headings: **Steps to Reproduce**, **Current Behavior**, and **Expected Behavior**. Describing something as "wrong", "not working", "broken", etc, is not sufficient. Broken behavior can only be understood in terms of the difference between current and expected behavior.
+> Direct access of `em.store` is not allowed in integration tests. Basically you should treat the puppeteer and iOS tests as a blackbox where the test runner can only do things that the user can do. There are a few exceptions, but that's the general policy.
+>
+> So instead of explicitly dispatching a `setCursor` action (which a user cannot do unless they are a developer and open up the JS console), set the cursor to null the way a normal user would: tapping the home icon in the bottom left corner, or hitting escape on the keyboard.
 
-These headings should be populated as follows:
+Note that the rule is level-dependent. Dispatching `setCursorFirstMatch` is perfectly idiomatic in a store test — dispatching actions is exactly what the store's "user" (the command layer) does. The same dispatch in a puppeteer test is a violation, because a person cannot dispatch actions.
 
-> ## Steps to Reproduce
-> 
-> *Describe the exact steps needed for someone else to trigger the unexpected behavior.*
-> 
-> ## Current Behavior
-> 
-> *The current (wrong) behavior that is observed when the steps are followed. Typically this refers to the `main` branch. (When describing a regression in a PR, this can refer to the PR branch and should be accompanied by a commit hash for clarity.*
-> 
-> *This should only describe the result of following the steps. Any conditions required to observe the behavior should go in Steps to Reproduce.*
->  
-> ## Expected Behavior
-> 
-> *The expected (intended) behavior that should occur when the steps are followed. Typically this refers to the behavior that has not yet been implemented. (When describing a regression on a PR branch, this can refer to the existing, correct behavior on `main`.)*
-> 
-> *Be specific.*
-> 
-> *e.g.*
-> - NO: ~~Should work correctly.~~
-> - NO: ~~Thought should be expanded.~~
-> - YES: `b` should be expanded.
-> 
-> *Often the best approach is to state the expected specific behavior followed by the expected general behavior:*
-> - `b` should be expanded.
-> - Subthoughts with no siblings should be expanded.
+The same applies to *reading* state, not just changing it. Asserting on Redux state couples an integration test to implementation details that can change without any change in user-facing behavior — the test then fails on harmless refactors and can keep passing while the actual user experience is broken. Assert only on what the user can observe: the rendered DOM or the exported outline.
 
-Here's a real example from issue #2733:
+> The use of `em.testHelpers.getState` is tightly coupling the test to various parts of the Redux state (implementation details), which we really want to avoid. It's important that integration tests behave like a normal user and do not have access to what is "under the hood."
+>
+> The few times we add a backdoor in existing tests are as last resorts, when there is no other way to test something. Now that we have dedicated test engineers, we need to maintain high standards and work hard to promote separation of concerns and maintainability.
+>
+> — [#3172 review comment](https://github.com/cybersemics/em/pull/3172#discussion_r2274819907)
 
-> ## Steps to Reproduce
-> ```
-> - x
->   - b
->   - a
->   - =sort
->     - Alphabetical
->       - Desc
-> ```
-> 
-> 1. Set the cursor on `x`.
-> 2. Activate New Subthought Above (Meta + Shift + Enter).
-> 3. Move cursor up/down.
-> 
-> ## Current Behavior
-> * Cursor up moves the cursor from the empty thought to `a`.
-> * Cursor down: Nothing happens.
-> 
-> ## Expected Behavior
-> * Cursor up should move the cursor from the empty thought to `x`.
-> * Cursor down should move the cursor from the empty thought to `b`.
+### 2. Arrange with shortcuts. Act as the user. Assert on what the user sees.
 
-# Test Levels
+Every test has three phases: **arrange** sets up the state the test needs, **act** performs the behavior the test exists to cover, and **assert** checks the result. Each phase has different rules:
+
+- **Arrange** may use [sanctioned backdoors](#sanctioned-backdoors). Nearly every puppeteer test seeds its fixture with `paste` (a backdoor to `importToContext`) rather than typing it in keystroke by keystroke. This is deliberate: if setup went through the UI, every test would transitively depend on every feature used in its setup, and a single input bug would fail the whole suite.
+- **Act** — the behavior under test — must go through a real user entry point: the actual keyboard shortcut, gesture, toolbar button, or Command Universe entry. The trigger is part of the system under test. If the shortcut breaks, the feature is broken for users even when the underlying action is fine — that is precisely the coverage an integration test adds over a store test.
+- **Assert** on user-visible output: the exported outline via `exportThoughts`/`exportContext`, or DOM state queried by `aria-label`/`data-testid`. Never on Redux state.
+
+The same division applies to JSDOM tests: dispatches and imports are allowed for arrange, but the act should normally use `@testing-library/user-event` (or `fireEvent` when the lower-level event is specifically under test). Query the result through the rendered DOM, preferring accessible roles and names over `data-testid`.
+
+Arrange shortcuts may compress setup, but the resulting state must still be reachable through normal application behavior. Do not manufacture contradictory state or omit a precondition that is essential to the behavior—for example, invoking a cursor-only action without arranging a cursor. The exception is a test that explicitly covers recovery from corrupt or legacy data. If the application cannot create the state the test claims to reproduce, the test is not evidence that the user scenario works.
+
+A useful invariant falls out of this: **the trigger under test appears exactly once — in the act.** When a command is needed incidentally in some other test's setup, execute it by id with the [`command`](../src/e2e/puppeteer/helpers/command.ts) helper. For example, [multiselect.ts](../src/e2e/puppeteer/__tests__/multiselect.ts) tests *copy*, so it arranges the selection with `command('selectAll')` and acts with a real `press('c', { meta: true })`. If the Select All gesture changes, exactly one test should fail — the Select All test — not every test that used selection as a stepping stone.
+
+To decide where a command gets tested:
+
+1. Testing the command's **logic**? Store test. `executeCommand` is the legitimate interface at that level.
+2. Testing the command **as a feature**? Puppeteer/iOS test, triggered through one of its real entry points. Which entry point you choose is part of what you are covering.
+3. Command needed **incidentally** in another test's arrange? `command(id)` helper — the trigger doesn't matter there, and coupling to it would create false failures.
+4. Command has **no user entry point at all**? That is a product bug, not a testing problem. File it; don't test around it.
+
+### 3. Never wait for wall-clock time. Wait for the response.
+
+An arbitrary `sleep` used for synchronization is what you write when you don't know what condition you are waiting for. Name the condition instead: after every simulated action, ask *what would the user see change?* and wait for exactly that.
+
+This rule is about waiting for real time to pass, not about safety limits or time-dependent behavior:
+
+- Runner timeouts such as Vitest's `testTimeout` and WDIO's `waitforTimeout` are legitimate safety limits.
+- When elapsed time is the behavior under test (debounce, throttle, delayed UI, etc.), use fake timers and advance them explicitly instead of sleeping in real time.
+- Durations that are part of simulated input, such as how long a long press is held or how quickly a swipe moves, are action parameters rather than synchronization waits.
+
+```ts
+// ❌ Don't: hand-rolled polling against a state backdoor (real code — do not imitate)
+const childCount = await page.evaluate(async () => {
+  const em = window.em as WindowEm
+  for (let i = 0; i < 20; i++) {
+    if (em.getAllChildrenAsThoughts(['A']).length > 0) break
+    await new Promise(resolve => setTimeout(resolve, 50))
+  }
+  return em.getAllChildrenAsThoughts(['A']).length
+})
+```
+
+```ts
+// ✅ Do: wait for the user-visible result, then assert
+await waitForEditable('hello world')
+
+const exported = await exportThoughts()
+expect(exported).toBe(`
+- a
+  - hello world
+`)
+```
+
+If no waiter exists for your condition, the escape hatch is a **new waiter helper** (model it on [`waitForEditable`](../src/e2e/puppeteer/helpers/waitForEditable.ts) or [`waitForContextHasChildWithValue`](../src/e2e/puppeteer/helpers/waitForContextHasChildWithValue.ts)) — never a sleep. ([#3163 review comment](https://github.com/cybersemics/em/pull/3163#discussion_r2261698577))
+
+The sanctioned `paste` and `setTheme` Puppeteer helpers still contain fixed sleeps. The iOS `showEditMenu` helper also has a documented WebKit settlement delay. These are known driver/synchronization debt, not general examples to copy. If one is changed, prefer replacing the delay with a named readiness condition when the platform exposes one.
+
+Treat a flaky test as deterministic behavior whose controlling condition is not known yet. Reproduce it, inspect the visible output and available diagnostics, and identify that condition before adding a delay, retry, or workaround. Do not make the whole suite slower to mask one uncertain test. Most application animation durations are already reduced to zero when `navigator.webdriver` is present; tests should wait for the resulting UI state, not replay production timing. Restoring production timing to reach an otherwise-unreachable state (such as the loading phase) is a backdoor decision, not a synchronization tactic — see [Sanctioned Backdoors](#sanctioned-backdoors).
+
+### 4. Compose helpers
+
+Helpers are the vocabulary; tests are sentences. A puppeteer test should read as a sequence like `paste → clickThought → press → waitForEditable → exportThoughts → expect`. There are helpers for nearly everything (see [Test Helpers](#test-helpers)); use them before writing raw Puppeteer calls or Redux plumbing.
+
+Writing a **new helper** is allowed but is a design event, not a workaround: name it after the user's intent (`clickThought`, not `clickDivTreeNode`), put it in the helpers directory, and expect it to be reviewed as shared vocabulary. Inline `page.evaluate` in a test file is acceptable only for reading user-visible DOM (e.g. counting elements by `aria-label`); anything touching `window.em` belongs in a sanctioned helper or nowhere.
+
+A helper should have a narrow, explicit contract:
+
+- Do one user action or query one condition. Compose a higher-level helper when the same sequence expresses a recurring user intent.
+- Keep expectations in the test so the behavior being proved is visible. A helper may wait for the action it performs to settle, but it must not hide unrelated assertions or synchronization.
+- Accept semantic inputs and named options rather than exposing browser plumbing or positional booleans.
+- If a required target or precondition is missing, throw a descriptive error. Do not silently return, use an optional-chain fallback, or allow the test to pass without performing its act.
+
+### 5. Keep tests concrete and boring
+
+A test is orchestration code. Anyone — human or agent — should be able to read it top to bottom and know exactly what user session it reproduces and what outcome it expects. No cleverness, no abstraction for its own sake, no conditional logic.
+
+In tests, a little duplication is usually clearer than an abstraction:
+
+- Inline short, meaningful fixtures and expected values. Do not derive the expected value with the same logic used by the implementation.
+- Reuse canonical domain constants and genuinely complex setup, but do not introduce a helper merely to avoid repeating a few literals.
+- Cover one independently diagnosable behavior or condition per test. A tightly coupled positive/negative pair may share an expensive E2E session when the test name and assertions still make failures unambiguous.
+- Avoid a combinatorial cross-product of orthogonal presentation variants. Each higher-level variant should protect a distinct risk.
+
+That includes the test name: it states the expected behavior, not the function under test.
+
+- NO: ~~`indent works`~~
+- YES: `indent an empty thought when space is pressed at the start`
+
+### 6. Do not hide tests
+
+- Never commit `.only`.
+- A new `.skip` must explain why it cannot run and link to the issue or follow-up that will enable it. A skipped test documents intended behavior; it does not count as coverage.
+- The staged [TDD regression workflow](#tdd-regression-validation) is the one transient exception: its newly added `it.skip` plus bare issue URL is a recognized red-test marker. The focused runner and TDD workflow explicitly unskip it, and the fix must remove `.skip` before merge.
+- Retries are reserved for documented external nondeterminism. They are not a substitute for waiting on the correct condition or fixing a deterministic failure.
+
+### 7. Make false positives difficult
+
+An assertion must distinguish the intended behavior from plausible wrong behavior. Assert the exact result, not a convenient proxy:
+
+- Prefer direct, typed matchers such as `expect(actual).toBe(expected)` over truthiness checks.
+- Assert the complete relevant output when a partial count, substring, or absence from one context could still pass after the wrong mutation.
+- When the bug could produce a specific wrong destination or duplicate, assert both the desired effect and the absence of that wrong result.
+- Do not trim, normalize, sort, or otherwise transform actual output merely to make the assertion pass unless that transformation is itself part of the public contract.
+
+Preconditions matter too. If the act did not occur because its target was missing, the test must fail at that point rather than drift into an assertion that can pass coincidentally.
+
+Negative assertions have a timing requirement. "The menu does not appear" must be evaluated at the moment the wrong behavior would manifest — while the gesture is held, before the popup would have been dismissed — or be superseded by a positive assertion that could not hold if the wrong behavior had occurred. A negative check made after the window has closed is vacuous. The same discipline applies wherever the product commits behavior at a lifecycle boundary (release, blur, submit, timer flush): the final assertion must run after that commit point, and cleanup must not perform the completing step after the last assertion.
+
+This principle also governs the machinery that judges tests. A CI step that validates a test run is itself an assertion, and must distinguish the intended signal (the test executed and failed on its assertion) from plausible wrong signals (the test never ran: a compile error, missing credentials, an environment failure). An exit code alone cannot make that distinction.
+
+### 8. Select by meaning, not structure
+
+Choose the most semantic locator available:
+
+1. Accessible role and name, visible label, or domain value (for example, `clickThought('hello')`).
+2. A stable `aria-label`.
+3. A purpose-built `data-testid` when no user-facing semantic target exists.
+4. A named query helper when the semantic lookup is necessarily more involved.
+
+Do not select by styling or animation classes, generic ids, DOM ancestry, `parentElement` chains, array index, render order, or an unrelated neighboring control. Those selectors describe the current implementation rather than the thing the user is interacting with. If several elements intentionally match, query the semantic collection and assert its cardinality explicitly.
+
+### 9. Preserve production behavior
+
+Tests should exercise the same product semantics that users run. Do not add CI- or test-only branches to application code merely to make a test pass. Such branches ship test knowledge in the production build and can make the suite exercise behavior that users never receive.
+
+When a dependency must be controlled:
+
+1. Mock only an external boundary, and install the substitute from test code when possible.
+2. Prefer an existing dependency-injection seam or a named, arrange-only helper. Never replace the function, component, command, or effect the test claims to cover.
+3. If the browser or device driver cannot create a required condition, use a narrowly scoped helper from the [sanctioned backdoor](#sanctioned-backdoors) policy. Do not compensate with ad hoc application branches or inline DOM mutation.
+
+Environment-specific application code can be legitimate when it changes only test mechanics, such as reducing irrelevant animation durations, preventing browser interference, or exposing diagnostics. It must be explicit, narrowly scoped, production-default-safe, and unable to change the semantic outcome under assertion. If timing, animation, or the adapted behavior is the subject of the test, exercise the real production behavior instead.
+
+## Test Levels
 
 The project has multiple levels of automated testing, from single function unit tests up to realistic end-to-end (E2E) tests that run tests against an actual device or browser.
 
-Use the lowest level that is sufficient for your test case. If your test case does not require a DOM, use a unit test. If it requires a DOM but is not browser or device-specific, use a React Testing Library (RTL) test. Higher level tests may provide a more realistic testing environment, but they are slower and, in the case of webdriverio on browserstack, cost per minute of usage.
+**Use the lowest level that is sufficient for your test case.** If your test case does not require a DOM, use a unit test. If it requires a DOM but is not browser or device-specific, use a React Testing Library (RTL) test. Higher-level tests may provide a more realistic testing environment, but they are slower and, in the case of WebdriverIO on BrowserStack, cost per minute of usage.
+
+Mock an external boundary only when that boundary is not the subject of the test. Do not mock the function or effect being proved, reimplement a rendered component inside its test, or assert only that a mock behaved as configured. When JSDOM cannot exercise the relevant browser behavior—layout, scrolling, selection, native input, and similar APIs—move the test to Puppeteer instead of replacing the behavior with a mock.
 
 ### 1. Unit Tests
 
 ⚡️⚡️⚡️ 1–20ms each
 
-Basic unit tests are great for testing pure functions directly.
+Basic unit tests are great for testing pure functions directly. The "user" is calling code: arguments in, return value out.
 
 Related tests: [actions](../src/actions/__tests__), [selectors](../src/selectors/__tests__), [util](../src/util/__tests__)
+
+Golden example: [`ellipsize.ts`](../src/util/__tests__/ellipsize.ts)
 
 ### 2. Store Tests
 
 ⚡️⚡️⚡️ 1–20ms each
 
-The command tests require dispatching Redux actions but do not need a DOM. You can use the helpers `createTestStore` and `executeCommand` to operate directly on a Redux store, then make assertions about `store.getState()`. This allows commands to be tested independently of the user device.
+Command tests require dispatching Redux actions but do not need a DOM. Import the shared app store, reset it with `beforeEach(initStore)`, and invoke the production `executeCommand` or `executeCommandWithMulticursor` API. Read the result through selectors rather than inspecting arbitrary state fields. This allows commands to be tested independently of the user device.
+
+The idiom: seed with a plaintext outline (`importText`), execute the command, assert on the exported outline. From [`indent.ts`](../src/commands/__tests__/indent.ts):
+
+```ts
+beforeEach(initStore)
+
+it('indent on empty thought', () => {
+  store.dispatch(
+    importText({
+      text: `
+        - a
+      `,
+    }),
+  )
+  store.dispatch([setCursor(['a']), newThought({ value: '' })])
+
+  executeCommandWithMulticursor(indentCommand, { store, type: 'keyboard' })
+
+  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toEqual(`- ${HOME_TOKEN}
+  - a
+    - `)
+})
+```
 
 Related tests: [commands](../src/commands/__tests__)
 
@@ -117,7 +284,11 @@ Anything that tests a rendered component requires a DOM. If there are no browser
 
 - [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/) (RTL)
 
+Mount the app with `createTestApp`, seed state via dispatch (allowed at this level for arrange), and assert on the DOM by `aria-label`/`data-testid`.
+
 Related tests: [components](../src/components/__tests__)
+
+Golden example: [`Bullet.ts`](../src/components/__tests__/Bullet.ts)
 
 ### 4. Puppeteer Tests
 
@@ -131,9 +302,32 @@ Puppeteer is a Node.js library that provides a high-level API for controlling a 
 
 Puppeteer allows you to launch a real browser instance (headless or visible), navigate to pages, interact with the DOM, execute JavaScript in the page context, capture screenshots or PDFs, and observe network or performance behavior programmatically.
 
+The "user" at this level is a person. Tests are blackbox: compose the user-action helpers, and touch app internals only through the [sanctioned backdoors](#sanctioned-backdoors). The following is the preferred shape for an undo test (adapted from [`undo.ts`](../src/e2e/puppeteer/__tests__/undo.ts)):
+
+```ts
+it('restore the previous thought text on undo', async () => {
+  await paste(`
+    - hello
+  `)
+
+  // Create undo history through the UI. A fixture backdoor cannot create a real edit history.
+  await clickThought('hello')
+  await press('ArrowRight', { ctrl: true })
+  await keyboard.type(' world')
+  await waitForEditable('hello world')
+
+  // Act.
+  await press('z', { meta: true })
+  await waitForEditable('hello')
+
+  const thoughtValue = await getEditingText()
+  expect(thoughtValue).toBe('hello')
+})
+```
+
 Related tests: [/src/e2e/puppeteer](../src/e2e/puppeteer)
 
-The Puppeteer tests are run via Vitest using the `puppeteer-e2e` project defined in [vitest.config.ts](../vitest.config.ts), which uses a custom [puppeteer-environment.ts](../src/e2e/puppeteer-environment.ts). The runner script lives at [src/e2e/puppeteer/test-puppeteer.sh](../src/e2e/puppeteer/test-puppeteer.sh) and starts the browserless container along with a dedicated Vite dev server on port 2552.
+The Puppeteer tests are run via Vitest using the `puppeteer-e2e` project defined in [vitest.config.ts](../vitest.config.ts), which uses a custom [puppeteer-environment.ts](../src/e2e/puppeteer-environment.ts). Locally, the runner script at [src/e2e/puppeteer/test-puppeteer.sh](../src/e2e/puppeteer/test-puppeteer.sh) starts the Browserless container and a dedicated Vite dev server on port 2552. In CI, the workflow supplies the Browserless service and built app server instead.
 
 #### Tips
 
@@ -142,10 +336,10 @@ High level helper functions are available for executing common user interactions
 Mobile devices can be emulated in puppeteer. This is good for testing non-platform specific mobile functionality, such as gestures. If you can test it with the Chrome Device Toolbar, you can emulate it in puppeteer.
 
 ```ts
-  await page.emulate(KnownDevices['iPhone 15 Pro'])
+await emulate(KnownDevices['iPhone 15 Pro'])
 
-  await swipe(newThoughtCommand, true)
-  await keyboard.type('a')
+await gesture(newThoughtCommand)
+await keyboard.type('a')
 ```
 
 While we prefer to avoid backdoor access to state in integration tests, it is recommended that you use the [exportThoughts](../src/e2e/puppeteer/helpers/exportThoughts.ts) helper for asserting the overall thought structure. Parsing the DOM, activating the Export modal, or taking a snapshot are either too slow or too tightly coupled to other functionality. `exportThoughts` is fast, direct, and makes for readable tests.
@@ -161,7 +355,7 @@ While we prefer to avoid backdoor access to state in integration tests, it is re
 
 #### Visual snapshot tests
 
-Snapshot tests are a specific type of puppeteer test used to prevent visual regressions. They automate taking a screenshot on your PR branch and then comparing it to a reference screenshot in `main`. If the screenshot differs by a certain number of pixels, then it is considered a regression and the test will fail. In the case of a failed snapshot test, a visual diff will be generated that allows you to see why it failed. 
+Snapshot tests are a specific type of puppeteer test used to prevent visual regressions. They automate taking a screenshot on your PR branch and then comparing it to a reference screenshot in `main`. If the screenshot differs by a certain number of pixels, then it is considered a regression and the test will fail. In the case of a failed snapshot test, a visual diff will be generated that allows you to see why it failed.
 
 Do not use snapshot tests for testing behavior (such as the result of a user action). Instead, select DOM elements by aria label or data-testid. Use snapshot tests for covering visual regressions such as positioning, layout, svg rendering, and general appearance of components.
 
@@ -169,37 +363,55 @@ In the following example, the superscript position broke so the snapshot test fa
 
 ![font-size-22-superscript-1-diff](https://github.com/user-attachments/assets/9325a0fa-f616-4582-b348-716e6d7e63f7)
 
-When running the tests locally, a link to the visual diff will be output in your shell. When running the tests in GitHub Actions, the visual diff can be downloaded from the artifact link added to the test output under "Upload snapshot diff artifact":
+When running locally, the diff path is printed in the shell. On a pull request, the Puppeteer Diff Comment workflow posts the expected/current images inline and includes a targeted update command. The raw diffs are also downloadable from the `__diff_output__` workflow artifact:
 
-<img width="587" alt="Screenshot 2024-11-08 at 11 30 25 AM" src="https://github.com/user-attachments/assets/8737a224-59b5-4736-99db-d9d9dacef0e3">
+<img width="587" alt="Screenshot 2024-11-08 at 11 30 25 AM" src="https://github.com/user-attachments/assets/8737a224-59b5-4736-99db-d9d9dacef0e3">
 
-If you are absolutely sure that the change is desired, and your PR was supposed to change the visual appearance of **em**, then run the snapshot test with `-u` to update the reference snapshot.
+If you are absolutely sure that the change is desired, and your PR was supposed to change the visual appearance of **em**, update only the affected snapshot file:
+
+```sh
+yarn test:puppeteer -u render-thoughts
+```
 
 ### 5. WebdriverIO tests
 
 ⚡️ 1–2s each (but large overhead to start session)
 
+Start the app before either iOS suite:
+
 ```sh
-# Run on BrowserStack
-yarn run test:ios:browserstack
+# terminal 1
+yarn start
 
-# Run on local Appium (requires local setup)
-yarn run test:ios:local
+# terminal 2: choose one
+yarn test:ios:browserstack
+yarn test:ios:local
 ```
 
-Environment variables:
+For BrowserStack, put the credentials in `.env.test.local`:
 
-```
-.env.test.local
+```dotenv
 BROWSERSTACK_USERNAME=your_username
 BROWSERSTACK_ACCESS_KEY=your_access_key
 ```
 
-WebdriverIO tests provide automated test coverage of actual iOS devices (among others) in the cloud with BrowserStack. This allows us to cover some of the trickiest platform-specific behaviors, such as browser selection and autoscroll.
+The BrowserStack configuration starts and stops a temporary Cloudflare tunnel automatically so the real device can reach the local HTTPS app.
 
-`wdio` executes test suites with native `WebDriver` support via `@wdio/mocha-framework` and ` @wdio/browserstack-service` which is responsible for automatic tunnel, session, and credential management. `wdio` also provides lifecycle hooks that are very helpful for initiating a session more efficiently.
+Local Appium requires macOS with Xcode and an iOS Simulator, Appium, and the XCUITest driver:
 
-The configuration files live in [src/e2e/iOS/config](../src/e2e/iOS/config) and are divided between [wdio.base.conf.ts](../src/e2e/iOS/config/wdio.base.conf.ts) which contains common settings for iOS Safari testing, [wdio.browserstack.conf.ts](../src/e2e/iOS/config/wdio.browserstack.conf.ts) using `@wdio/browserstack-service` that creates an automatic tunnel with the cloud browserstack service, and [wdio.local.conf.ts](../src/e2e/iOS/config/wdio.local.conf.ts) for local Appium testing which is only used in case we need to run tests on a local iOS simulator.
+```sh
+npm install -g appium
+appium driver install xcuitest
+appium
+```
+
+Run Appium in addition to `yarn start`, then run `yarn test:ios:local`. The local configuration installs Vite's generated development certificate in the booted simulator, so run `yarn start` at least once before starting the suite.
+
+WebdriverIO tests provide automated test coverage of actual iOS devices (among others) in the cloud with BrowserStack. This allows us to cover some of the trickiest platform-specific behaviors, such as browser selection and autoscroll. The same blackbox rules apply as for puppeteer tests.
+
+`wdio` executes test suites with native `WebDriver` support via `@wdio/mocha-framework` and `@wdio/browserstack-service`, which is responsible for session and credential management. `wdio` also provides lifecycle hooks that are helpful for initiating a session efficiently.
+
+The configuration files live in [src/e2e/iOS/config](../src/e2e/iOS/config). [wdio.base.conf.ts](../src/e2e/iOS/config/wdio.base.conf.ts) contains common iOS Safari settings and lifecycle hooks. [wdio.browserstack.conf.ts](../src/e2e/iOS/config/wdio.browserstack.conf.ts) loads credentials, starts the Cloudflare tunnel, and configures `@wdio/browserstack-service`. [wdio.local.conf.ts](../src/e2e/iOS/config/wdio.local.conf.ts) configures local Appium and the iOS Simulator.
 
 wdio documentation:
 
@@ -209,20 +421,82 @@ wdio documentation:
 
 Related tests: [/src/e2e/iOS](../src/e2e/iOS)
 
-## Vitest configuration
+### Vitest configuration
 
 [`vitest.config.ts`](../vitest.config.ts) defines two projects, both extending [`vite.config.ts`](../vite.config.ts):
 
 - **`unit`** — `jsdom` environment, picks up everything under `**/__tests__/**/*.ts` excluding `e2e/`. Setup files: [`vitest-localstorage-mock`](https://www.npmjs.com/package/vitest-localstorage-mock) (loaded first to ensure `localStorage` is defined in CI), then [`src/setupTests.js`](../src/setupTests.js). Used by `yarn test`.
-- **`puppeteer-e2e`** — custom environment [`puppeteer-environment.ts`](../src/e2e/puppeteer-environment.ts), setup file [`puppeteer/setup.ts`](../src/e2e/puppeteer/setup.ts), only includes `src/e2e/puppeteer/__tests__/*.ts`. The `vite-plugin-terminal` plugin pipes `console.log` from the page back to the terminal so puppeteer test failures are debuggable. Used by `yarn test:puppeteer` (which also starts the Browserless container and a dedicated Vite dev server on port 2552, see [`test-puppeteer.sh`](../src/e2e/puppeteer/test-puppeteer.sh)).
+- **`puppeteer-e2e`** — custom environment [`puppeteer-environment.ts`](../src/e2e/puppeteer-environment.ts), setup file [`puppeteer/setup.ts`](../src/e2e/puppeteer/setup.ts), only includes `src/e2e/puppeteer/__tests__/*.ts`. The `vite-plugin-terminal` plugin pipes `console.log` from the page back to the terminal so Puppeteer test failures are debuggable. Used by `yarn test:puppeteer`; locally, [`test-puppeteer.sh`](../src/e2e/puppeteer/test-puppeteer.sh) also starts Browserless and a dedicated Vite dev server on port 2552.
 
 iOS tests are not part of the Vitest config — they run under WDIO, see [WebdriverIO tests](#5-webdriverio-tests).
 
-# Test Helpers
+### Isolation and cleanup
 
-There are two helper directories. Use them before reaching for raw Redux dispatches or DOM queries.
+Every test starts from a known state, and setup must be paired with the matching cleanup:
 
-## `src/test-helpers/` — for unit, store, and JSDOM tests
+```ts
+// store test
+beforeEach(initStore)
+
+// rendered JSDOM test
+beforeEach(createTestApp)
+afterEach(cleanupTestApp)
+```
+
+`initStore` clears the shared store and enables fake timers. `createTestApp` additionally mounts the React tree, initializes persistence and event handlers, and enables the test drag-and-drop backend. `cleanupTestApp` clears storage, the local YJS database, the store, and event handlers, and flushes pending timers. Do not share fixture state between tests or rely on test execution order.
+
+## Sanctioned Backdoors
+
+Integration tests are blackbox, but named helpers may take shortcuts during arrange, assert, and synchronization. The categories below are the exception policy. Exceptions are enumerated, not invented: a test file must never touch `window.em`, `em.store`, `em.testHelpers`, or mutate the DOM directly. If a new backdoor is genuinely needed, put it in a helper named after the test author's intent, document its phase and constraint here, and have it reviewed as shared test vocabulary. A pull request that adds or changes a helper touching `window`, `navigator`, timers, or animation timing must update this table in the same PR.
+
+| Category | Phase | Sanctioned helpers | Constraint |
+|---|---|---|---|
+| Fixture and lifecycle | Arrange | Puppeteer [`paste`](../src/e2e/puppeteer/helpers/paste.ts) and [`resetApp`](../src/e2e/puppeteer/helpers/resetApp.ts); iOS [`paste`](../src/e2e/iOS/helpers/paste.ts) and [`resetApp`](../src/e2e/iOS/helpers/resetApp.ts) | Seed or clear state without testing the Import UI or tutorial. Never use to perform the behavior under test. |
+| Incidental app setup | Arrange | [`command`](../src/e2e/puppeteer/helpers/command.ts), [`openModal`](../src/e2e/puppeteer/helpers/openModal.ts), [`setTheme`](../src/e2e/puppeteer/helpers/setTheme.ts) | Use only when the command, modal entry point, or Settings navigation is not under test. |
+| Browser/driver limitation | Arrange | Puppeteer [`setSelection`](../src/e2e/puppeteer/helpers/setSelection.ts) and [`closeKeyboard`](../src/e2e/puppeteer/helpers/closeKeyboard.ts); iOS [`setSelection`](../src/e2e/iOS/helpers/setSelection.ts) | Simulate browser state the driver cannot reliably produce. The subsequent behavior under test must still use a real user entry point. |
+| Visual snapshot stabilization | Arrange | [`hide`](../src/e2e/puppeteer/helpers/hide.ts), [`hideVisibility`](../src/e2e/puppeteer/helpers/hideVisibility.ts), [`hideHUD`](../src/e2e/puppeteer/helpers/hideHUD.ts), [`showMousePointer`](../src/e2e/puppeteer/helpers/showMousePointer.ts), [`screenshot`](../src/e2e/puppeteer/helpers/screenshot.ts) | DOM/style mutation is allowed only to remove irrelevant nondeterminism or expose input position in a visual test. Do not hide the subject of the snapshot. |
+| Test environment controls | Arrange | [`simulateDragAndDrop`](../src/e2e/puppeteer/helpers/simulateDragAndDrop.ts), [`scrollTo`](../src/e2e/puppeteer/helpers/scrollTo.ts), and reviewed helpers that set [`testFlags`](../src/e2e/testFlags.ts) | Use only for a condition that cannot be created reliably through normal input, explain why, and restore mutable flags in `afterEach`. The control must not change the semantic outcome under test. |
+| Structural assertion | Assert | [`exportThoughts`](../src/e2e/puppeteer/helpers/exportThoughts.ts) | Export the thought tree as plaintext. Do not make additional assertions on Redux state. |
+| Non-visual synchronization | Wait | [`waitForContextHasChildWithValue`](../src/e2e/puppeteer/helpers/waitForContextHasChildWithValue.ts), [`waitForThoughtExistInDb`](../src/e2e/puppeteer/helpers/waitForThoughtExistInDb.ts), [`waitForState`](../src/e2e/puppeteer/helpers/waitForState.ts) | Use only when persistence or another prerequisite has no immediate visual signal. This is synchronization, not the test's assertion; assert the final user-visible result separately. |
+| Timing/environment spoofing | Arrange | [`reloadWithProductionTiming`](../src/e2e/puppeteer/helpers/reloadWithProductionTiming.ts) (spoofs `navigator.webdriver` to restore production animation timing) | Use only for a state that cannot exist under test timing (such as the loading phase). Justify in the helper's doc comment and state how the spoof is undone (per-test page isolation counts, but say so). Subsequent waits must still name conditions rather than replay production durations. |
+
+DOM reads are different from backdoors: inline `page.evaluate`/`browser.execute` may read user-visible DOM when no helper exists, though a repeated read should become a named helper. It may not dispatch actions, mutate app state, set test flags, or write to the DOM.
+
+Backdoors are never the act. The behavior under test always goes through a real user entry point (Principle 2).
+
+A few older tests access `window.em`, set test flags inline, mutate the DOM, or hand-roll waits. Known examples include [`spaceToIndent.ts`](../src/e2e/puppeteer/__tests__/spaceToIndent.ts), the specialized initialization test in [`startup.ts`](../src/e2e/puppeteer/__tests__/startup.ts), replication-delay setup in [`scroll.ts`](../src/e2e/puppeteer/__tests__/scroll.ts), and drag-hover timing in [`drag-and-drop.ts`](../src/e2e/puppeteer/__tests__/drag-and-drop.ts). They predate this policy; do not imitate them. When one is materially changed, move the exception behind a named helper and add it to the category table.
+
+## Reviewing Tests
+
+The review checklist is the Principles in checkable form. Every item is a yes/no question about the diff.
+
+The scope of a review is everything the tests depend on to mean something: the test files, the helpers and setup files they compose, and the CI workflows that run or validate them. Principle 7 applies to that machinery too — a validation step is itself an assertion, and "the run exited nonzero" does not distinguish *the test failed* from *the test never ran*.
+
+1. **Level and cost** — Is the test at the lowest sufficient level? Does each higher-level case protect a distinct risk instead of multiplying orthogonal variants? (Pure logic → unit/store; rendering → JSDOM; browser/device behavior or input mapping → Puppeteer/iOS.)
+2. **Reachable arrange** — Could normal application behavior create the arranged state? Are essential preconditions present and non-contradictory?
+3. **Act** — Is the behavior under test triggered through a real user entry point (Puppeteer/iOS), `userEvent`/`fireEvent` (JSDOM), or the public interface (unit/store)?
+4. **Backdoors** — Are internals touched only via the [sanctioned helpers](#sanctioned-backdoors), and only in arrange/assert/wait — never in the act?
+5. **Waiting and flakes** — No wall-clock sleeps or hand-rolled polling loops? Does each wait name a condition? Are non-visual state/DB waiters only prerequisites to a visible assertion? Was the controlling condition investigated before adding a retry or workaround?
+6. **Helper contracts** — Is the test composed from narrow, intent-named helpers? Are expectations visible in the test, unrelated waits absent from action helpers, and missing required targets reported as errors?
+7. **Selectors** — Do DOM locators identify meaning (role/name, label, semantic value, or test id) rather than style, ancestry, index, or render order?
+8. **Assertions** — Do assertions read exact user-visible output rather than Redux state, truthiness, or a proxy that plausible wrong behavior could satisfy? Is every negative assertion evaluated while the wrong behavior could still manifest, or superseded by a positive assertion that excludes it?
+9. **Commit point** — Does the final assertion run *after* the moment the product commits the behavior under test (release, blur, submit, timer flush)? Cleanup must not perform the completing step after the last assertion — if release triggers execution, release inside the test body and assert the outcome afterwards.
+10. **Scope and coupling** — Does the test cover one independently diagnosable behavior? Is its trigger used exactly once, with incidental commands going through `command(id)`?
+11. **Snapshots** — Are image snapshots used only for visual regressions, never for behavior?
+12. **Production parity and mocks** — Does the test exercise the same semantic behavior as production? Is any environment-specific adaptation explicit, narrow, and irrelevant to the assertion? Are only external boundaries mocked, leaving the production subject under test intact?
+13. **Naming** — Does the test name state the expected behavior specifically? ("`b` should be expanded", not "should work correctly".)
+14. **Readability** — Does the test read top-to-bottom as an obvious, concrete user session without unnecessary abstraction or conditional logic? Any exception must explain why it is necessary.
+15. **Fixture and isolation** — Does the test rely on—rather than repeat—the canonical setup/cleanup for its level, and avoid depending on another test's state or execution order?
+16. **Visibility** — No committed `.only`? Is every new `.skip` either the recognized transient TDD marker or linked to an issue/follow-up with its reason stated? Does the final fixed change remove the transient skip? Are retries justified by documented external nondeterminism?
+17. **Regression proof** — If this test accompanies a bug fix, does it fail on the intended assertion with the reproduced buggy value on the relevant pre-fix commit, then pass with the same assertion on the pull request? State *what specifically* fails pre-fix and why — "the TDD workflow will check" is not an answer, because the workflow proves an exit code, not a mechanism. If a test guards behavior that already works on the control commit, say so explicitly and note which test carries the red side. See [Regression Tests](#regression-tests) and [TDD regression validation](#tdd-regression-validation).
+
+The checklist enumerates the common cases, not the principles' reach. Finish with one pass per [Principle](#principles), asking: what does this diff contain that this rule governs but no item above named? The findings that matter most are often one level up from the test bodies — in a helper's contract, or in the CI that judges the run.
+
+## Test Helpers
+
+There are three helper directories. Use them before reaching for raw Redux dispatches, browser APIs, or DOM queries.
+
+### `src/test-helpers/` — for unit, store, and JSDOM tests
 
 The helpers in [`../src/test-helpers/`](../src/test-helpers) cover store setup and operations that are otherwise verbose to write by hand:
 
@@ -237,41 +511,178 @@ The helpers in [`../src/test-helpers/`](../src/test-helpers) cover store setup a
 - [`checkDataIntegrity`](../src/test-helpers/checkDataIntegrity.ts) — assertions that catch parent/child mismatches, missing Lexemes, and orphaned thoughts. Useful as a final assertion in mutation-heavy tests.
 - [`dataProviderTest`](../src/test-helpers/dataProviderTest.ts) — the alternate `DataProvider` implementation used by tests that exercise the storage layer without going through Yjs. (See [persistence.md](persistence.md) for the live YJS provider.)
 
-## `src/e2e/puppeteer/helpers/` — for puppeteer tests
+### `src/e2e/puppeteer/helpers/` — for Puppeteer tests
 
-[`../src/e2e/puppeteer/helpers/`](../src/e2e/puppeteer/helpers) contains the user-action helpers: `click`, `tap`, `type`, `swipe`, `scrollUp`, `clickThought`, `clickBullet`, `keyboardShortcut`, `dragAndDrop`, `dragAndDropFavorite`, plus per-feature waiters like `waitForCommandUniverse`, `waitForContextHasChildWithValue`, `waitForEditable`. Every puppeteer test should be a sequence of these helpers — composing them gives readable, user-centric tests.
+Puppeteer input is coordinated through the helpers in [`../src/e2e/puppeteer/helpers/`](../src/e2e/puppeteer/helpers):
 
-The most important helper is [`exportThoughts`](../src/e2e/puppeteer/helpers/exportThoughts.ts), which hits a backdoor on `window.em` to pull the entire current thought tree as the same outline format `importToContext` accepts. Asserting against the exported text is far faster, more readable, and more stable than parsing the DOM. It is the only sanctioned backdoor; everything else should go through user-facing affordances.
+| User action | Helper | Implementation |
+|---|---|---|
+| Click or tap a selector | [`click`](../src/e2e/puppeteer/helpers/click.ts) | Uses a mouse click on desktop and automatically calls Puppeteer's `page.tap` when the page is using a mobile-emulation viewport. |
+| Click a thought or bullet by value | [`clickThought`](../src/e2e/puppeteer/helpers/clickThought.ts), [`clickBullet`](../src/e2e/puppeteer/helpers/clickBullet.ts) | Resolves the semantic target and performs an element click. Use `click` when the distinction between mouse and emulated touch input is under test. |
+| Type text | [`keyboard.type`](../src/e2e/puppeteer/helpers/keyboard.ts) | Sends text through Puppeteer's keyboard API. |
+| Press a key or shortcut | [`press`](../src/e2e/puppeteer/helpers/press.ts) | Presses a key with optional `alt`, `ctrl`, `meta`, and `shift` modifiers. |
+| Swipe/command gesture | [`gesture`](../src/e2e/puppeteer/helpers/gesture.ts) | Emits `touchStart`, stepped `touchMove` events, and `touchEnd` for the supplied direction path or command gesture. |
+| Long press | [`longPressThought`](../src/e2e/puppeteer/helpers/longPressThought.ts) | Holds a touch until the thought's bullet reports the long-press highlight, then releases. |
+| Drag and drop | [`dragAndDropThought`](../src/e2e/puppeteer/helpers/dragAndDropThought.ts), [`dragAndDropFavorite`](../src/e2e/puppeteer/helpers/dragAndDropFavorite.ts), [`dragAndDrop`](../src/e2e/puppeteer/helpers/dragAndDrop.ts) | Drives real mouse down/move/up input and waits for drag-specific visible conditions. |
+| Scroll | [`scroll`](../src/e2e/puppeteer/helpers/scroll.ts), [`scrollBy`](../src/e2e/puppeteer/helpers/scrollBy.ts), [`scrollIntoView`](../src/e2e/puppeteer/helpers/scrollIntoView.ts), [`scrollTo`](../src/e2e/puppeteer/helpers/scrollTo.ts) | Scrolls the window or a named container; use the narrowest helper that expresses the intent. |
+| Emulate a mobile device | [`emulate`](../src/e2e/puppeteer/helpers/emulate.ts) | Applies a Puppeteer device profile before touch-specific input. |
 
-# Test Flags
+Per-feature waiters include [`waitForEditable`](../src/e2e/puppeteer/helpers/waitForEditable.ts), [`waitForAlertContent`](../src/e2e/puppeteer/helpers/waitForAlertContent.ts), [`waitForContextHasChildWithValue`](../src/e2e/puppeteer/helpers/waitForContextHasChildWithValue.ts), and [`waitForThoughtExistInDb`](../src/e2e/puppeteer/helpers/waitForThoughtExistInDb.ts). Every Puppeteer test should read as a sequence of these helpers.
 
-[testFlags](../src/e2e/testFlags.ts) are used to alter runtime behavior of the app during tests. This is generally forbidden, as the automated test environment should be as close as possible to production so that it is testing the same behavior the end user sees. But there are some conditions that are difficult or impossible to create through normal user behavior (e.g. network latency) or that can enhance test readability (e.g. visualizations) when runtime alternation is warranted.
+The most important helper is [`exportThoughts`](../src/e2e/puppeteer/helpers/exportThoughts.ts), which hits a backdoor on `window.em` to pull the entire current thought tree as the same outline format `importToContext` accepts. Asserting against the exported text is far faster, more readable, and more stable than parsing the DOM.
 
-## Drag-and-drop visualization
+### `src/e2e/iOS/helpers/` — for WebdriverIO tests
+
+The iOS suite has a separate driver vocabulary in [`../src/e2e/iOS/helpers/`](../src/e2e/iOS/helpers): [`tap`](../src/e2e/iOS/helpers/tap.ts) emits a W3C pointer action, [`keyboard.type`](../src/e2e/iOS/helpers/keyboard.ts) uses WDIO `sendKeys`, and [`gesture`](../src/e2e/iOS/helpers/gesture.ts) emits a touch pointer path. Helpers such as [`tapReturnKey`](../src/e2e/iOS/helpers/tapReturnKey.ts), [`hideKeyboardByTappingDone`](../src/e2e/iOS/helpers/hideKeyboardByTappingDone.ts), and [`showEditMenu`](../src/e2e/iOS/helpers/showEditMenu.ts) cross into native iOS UI when Web content APIs are insufficient.
+
+Do not import Puppeteer helpers into iOS tests or assume identical driver behavior. Keep the test vocabulary parallel at the level of user intent, not implementation.
+
+## Test Flags
+
+[testFlags](../src/e2e/testFlags.ts) are used to alter runtime behavior of the app during tests. This is generally forbidden, as the automated test environment should be as close as possible to production so that it is testing the same behavior the end user sees. But there are some conditions that are difficult or impossible to create through normal user behavior (e.g. network latency) or that can enhance test readability (e.g. visualizations) when runtime alteration is warranted.
+
+### Drag-and-drop visualization
 
 You can enable drop target visualization boxes by running `em.testFlags.simulateDrop = true` in the JS console or setting `testFlags.simulateDrop` to true in [src/e2e/testFlags.ts](../src/e2e/testFlags.ts).
 
 <img width="320" height="314" alt="Screenshot 2025-12-24 16 01 49" src="https://github.com/user-attachments/assets/9072a8d2-1324-41fb-9487-8f4f2c1165f2" />
 
-# CI workflows
+## Regression Tests
 
-Three GitHub Actions workflows run on every push to `main` and every pull request. All three accept `workflow_dispatch` with an optional `rerun_id` so the `ghworkflow` shell function (see [Tips](#triggering-github-actions-workflows-manually)) can fan out manually-triggered runs for flake hunting.
+Every bug fix ships with an automated test. Start from the verified reproduction, but do not treat an exploratory transcript as a test verbatim:
+
+1. Choose the lowest test level that still covers the failure. Preserve browser/device behavior or input mapping only when it is relevant to the bug.
+2. Keep the essential, reachable preconditions and the real production trigger. Remove diagnostic probes, exploratory detours, and setup already owned by the test fixture.
+3. Assert the issue's **Expected Behavior**, never its buggy **Current Behavior**. The same assertion should be red before the fix and green afterward; do not invert it between phases.
+4. If several reported triggers share one root cause, cover one representative trigger. Add another case only when it protects a distinct code path or risk.
+5. Reuse the production interaction helpers from the reproduction rather than reimplementing their event or gesture logic.
+
+Know what the fixture supplies. Do not repeat app launch, navigation, tutorial dismissal, state reset, or cleanup already guaranteed by the runner. Repeating fixture work adds noise and can create a second, subtly different setup path.
+
+If the assertion target has no semantic locator, follow [Principle 8](#8-select-by-meaning-not-structure). A new `data-testid` is a last-resort, behavior-neutral test hook: make it minimal and additive, and do not combine it with styling or product changes. Adding the hook enables the test; it is not the bug fix.
+
+### A red test must fail for the right reason
+
+A pre-fix failure is evidence only when arrange and act complete and the **intended assertion** fails with an actual value that matches the reproduced bug. A timeout, missing selector, setup exception, infrastructure error, or failure at a different assertion does not prove that the test captures the bug.
+
+When the failure is wrong, fix the test—not the application—and rerun it against the unfixed code until it reaches the intended assertion. Only then implement the fix. Afterward, rerun the unchanged assertion and confirm it passes.
+
+## CI workflows
+
+The primary Test, Puppeteer, and BrowserStack workflows run on pushes to `main` and on pull requests (BrowserStack uses `pull_request_target`). The TDD workflow runs on pull requests that add tests. All four accept `workflow_dispatch` with an optional `rerun_id` so the `ghworkflow` shell function (see [Tips](#triggering-github-actions-workflows-manually)) can fan out manually triggered runs for flake hunting.
 
 | Workflow | File | What it runs | Notes |
 |---|---|---|---|
 | **Test** | [`.github/workflows/test.yml`](../.github/workflows/test.yml) | `yarn test` (Vitest unit + jsdom) | The fast tier. Should always pass. |
-| **Puppeteer** | [`.github/workflows/puppeteer.yml`](../.github/workflows/puppeteer.yml) | `yarn test:puppeteer` against a `browserless/chrome:latest` service container on port 7566. Image-snapshot diffs are uploaded as a `snapshot-diff` artifact when tests fail. | The slow tier. Triggered only when changed-files > 0. |
-| **BrowserStack** | [`.github/workflows/ios.yml`](../.github/workflows/ios.yml) | `yarn test:ios:browserstack` against real iOS devices via BrowserStack. | Trigger is `pull_request_target` (so credentials can be exposed to the workflow), guarded by `changed_files > 0`. |
+| **Puppeteer** | [`.github/workflows/puppeteer.yml`](../.github/workflows/puppeteer.yml) | `yarn test:puppeteer` against a `browserless/chrome:latest` service container on port 7566. | On failure, image-snapshot diffs are uploaded in the `__diff_output__` artifact. |
+| **BrowserStack** | [`.github/workflows/ios.yml`](../.github/workflows/ios.yml) | `yarn test:ios` (an alias of `test:ios:browserstack`) against real iOS devices via BrowserStack. | Uses `pull_request_target` so credentials are available, guarded by `changed_files > 0`, and serialized to avoid exhausting the shared device pool. |
+| **TDD** | [`.github/workflows/tdd.yml`](../.github/workflows/tdd.yml) | Runs newly added unit, Puppeteer, and iOS tests against the selected pre-fix commit. | Expects the new regression test to fail before the fix. Pull requests only. |
 
-Other workflows live in [`.github/workflows/`](../.github/workflows) — `lint.yml`, `tdd.yml`, `docs.yml`, `update-browserslist.yml`, `copilot-setup-steps.yml` — but the three above are the test pipelines proper.
+When a Puppeteer snapshot test fails on a pull request, the [`Puppeteer Diff Comment`](../.github/workflows/puppeteer-diff-comment.yml) workflow safely publishes the diff images to the `snapshot-diffs` branch and upserts a PR comment with the affected files and targeted `yarn test:puppeteer -u ...` command. The raw `__diff_output__` artifact is also available from the workflow run. Locally, the diff path is printed in the test runner output. See [Visual snapshot tests](#visual-snapshot-tests).
 
-When a Puppeteer snapshot test fails, the visual diff is downloadable from the workflow run page; locally, the diff path is printed in the test runner output. See [Visual snapshot tests](#visual-snapshot-tests).
+Other workflows live in [`.github/workflows/`](../.github/workflows), including `lint.yml`, `docs.yml`, `update-browserslist.yml`, and `copilot-setup-steps.yml`.
 
-# Manual Test Cases
+### TDD regression validation
+
+When a pull request adds a regression test alongside a bug fix, it must satisfy the [regression-test design and failure gate](#regression-tests), then demonstrate both sides of the change:
+
+1. It fails against the relevant pre-fix implementation.
+2. It passes on the pull request.
+
+The [`tdd-write-failing-test` skill](../.github/skills/tdd-write-failing-test/SKILL.md) temporarily stages the red test as `it.skip` with a bare issue-URL comment. Its focused `run-test` runner unskips the test for local validation, so a skipped test can never masquerade as a pass. The TDD workflow likewise unskips it against the pre-fix implementation and expects the valid assertion failure described above. After the fix, remove `.skip`; the normal Test/Puppeteer/BrowserStack workflow must run the unchanged assertion and pass. Never merge the transient skip.
+
+The TDD workflow detects added `it(...)`/`test(...)` definitions in unit, Puppeteer, and iOS test files. It checks out the pre-fix implementation and overlays the changed test files from the pull request. For tests that are not staged with the transient skip, the normal workflows prove the green side separately.
+
+By default, the pre-fix implementation is the PR's base commit. If the bug was introduced later or another commit is a better control, add this on its own line in the pull request description:
+
+```text
+/tdd <commit>
+```
+
+Use a skip label only when the test intentionally covers behavior that already works on the control commit:
+
+- `skip-tdd` — skip all TDD validation.
+- `skip-tdd-unit` — skip unit/store/JSDOM validation.
+- `skip-tdd-puppeteer` — skip Puppeteer validation.
+- `skip-tdd-ios` — skip BrowserStack iOS validation.
+
+Test-only coverage pull requests with no application-code changes are skipped automatically. When a label is needed, it documents why a red pre-fix run is not expected; it must not be used merely to bypass a surprising failure.
+
+## Reporting Bugs
+
+### Issue Titles
+
+If a bug is platform specific, put the platform in brackets at the beginning of the title. If the bug is on all platforms, the prefix can be omitted.
+
+| Prefix                | Meaning                                                      |
+|-----------------------|--------------------------------------------------------------|
+| `[Mobile]`            | iOS / Mobile Safari / Android                                |
+| `[iOS]`               | iOS / Mobile Safari                                          |
+| `[iOS Capacitor]`     | iOS Capacitor build, but *not* Mobile Safari                 |
+| `[Android]`           | Android                                                      |
+| `[Chrome]`            | Desktop Chrome                                               |
+| *(no prefix)*         | Issue present on all platforms                               |
+
+### Headings
+
+When reporting a bug, use these standard three headings: **Steps to Reproduce**, **Current Behavior**, and **Expected Behavior**. Describing something as "wrong", "not working", "broken", etc, is not sufficient. Broken behavior can only be understood in terms of the difference between current and expected behavior.
+
+These headings should be populated as follows:
+
+> ## Steps to Reproduce
+>
+> *Describe the exact steps needed for someone else to trigger the unexpected behavior.*
+>
+> ## Current Behavior
+>
+> *The current (wrong) behavior that is observed when the steps are followed. Typically this refers to the `main` branch. (When describing a regression in a PR, this can refer to the PR branch and should be accompanied by a commit hash for clarity.*
+>
+> *This should only describe the result of following the steps. Any conditions required to observe the behavior should go in Steps to Reproduce.*
+>
+> ## Expected Behavior
+>
+> *The expected (intended) behavior that should occur when the steps are followed. Typically this refers to the behavior that has not yet been implemented. (When describing a regression on a PR branch, this can refer to the existing, correct behavior on `main`.)*
+>
+> *Be specific.*
+>
+> *e.g.*
+> - NO: ~~Should work correctly.~~
+> - NO: ~~Thought should be expanded.~~
+> - YES: `b` should be expanded.
+>
+> *Often the best approach is to state the expected specific behavior followed by the expected general behavior:*
+> - `b` should be expanded.
+> - Subthoughts with no siblings should be expanded.
+
+Here's a real example from issue #2733:
+
+> ## Steps to Reproduce
+> ```
+> - x
+>   - b
+>   - a
+>   - =sort
+>     - Alphabetical
+>       - Desc
+> ```
+>
+> 1. Set the cursor on `x`.
+> 2. Activate New Subthought Above (Meta + Shift + Enter).
+> 3. Move cursor up/down.
+>
+> ## Current Behavior
+> * Cursor up moves the cursor from the empty thought to `a`.
+> * Cursor down: Nothing happens.
+>
+> ## Expected Behavior
+> * Cursor up should move the cursor from the empty thought to `x`.
+> * Cursor down should move the cursor from the empty thought to `b`.
+
+## Manual Test Cases
 
 Various test cases that may need to be tested manually.
 
-## Touch Events
+### Touch Events
 
 - Enter edit mode ([#1208](https://github.com/cybersemics/em/issues/1208))
 - Preserve editing: true ([#1209](https://github.com/cybersemics/em/issues/1209))
@@ -287,11 +698,11 @@ Various test cases that may need to be tested manually.
 - Preserve editing clicking on child edge ([#946](https://github.com/cybersemics/em/issues/946))
 - Auto-Capitalization on Enter ([#999](https://github.com/cybersemics/em/issues/999))
 
-## Autofocus
+### Autofocus
 
 - Smoothly fade in/out thoughts ([#3588](https://github.com/cybersemics/em/issues/3588#issuecomment-3725211721))
 
-## Render
+### Render
 
 Test `enter` and `leave` on each of the following actions:
 
@@ -440,22 +851,25 @@ Test `enter` and `leave` on each of the following actions:
           - y
     ```
 
-# Tips and Tricks
+## Tips and Tricks
 
-## Database operations and fake timers
+### Database operations and fake timers
 
-> It looks like we must use fake timers if we want the `store` state to be updated based on database operations (e.g., if we use `initialize()` to reload the state). I think this is because the `thoughtspace` operations are asynchronous and don't call the store operations prior to the test ending. (I'm not sure why we didn't get other errors that made this clear.)
-
-https://github.com/cybersemics/em/pull/2741
+`initStore` and `createTestApp` enable fake timers. When a test calls `initialize()` or performs database work directly, explicitly flush the resulting scheduled work before asserting:
 
 ```ts
-// Use fake timers here to ensure that the store operations run after loading into the db
 vi.useFakeTimers()
 await initialize()
 await vi.runAllTimersAsync()
 ```
 
-## Triggering GitHub Actions workflows manually
+> It looks like we must use fake timers if we want the `store` state to be updated based on database operations (e.g., if we use `initialize()` to reload the state). I think this is because the `thoughtspace` operations are asynchronous and don't call the store operations prior to the test ending. (I'm not sure why we didn't get other errors that made this clear.)
+
+https://github.com/cybersemics/em/pull/2741
+
+In a rendered JSDOM test, wrap timer advancement that causes React updates in `act`.
+
+### Triggering GitHub Actions workflows manually
 
 In the event of a flaky GitHub Actions workflow, it can be useful to manually trigger multiple runs to flush out failures. The following shell function can be used to automate this process:
 
@@ -499,9 +913,9 @@ ghworkflow() {
 }
 ```
 
-Aside: `workflow_dispatch` must be enabled to allow manual workflow triggers. 
+Aside: `workflow_dispatch` must be enabled to allow manual workflow triggers.
 
-This is already set on all the **em** workflows, so you shouldn't need to worry about it.
+This is already set on the Test, Puppeteer, BrowserStack, and TDD workflows. Other **em** workflows may use different triggers.
 
 ```yml
 on:
@@ -512,9 +926,9 @@ on:
         required: false
 ```
 
-## Identifying regressions with git bisect
+### Identifying regressions with git bisect
 
-`git bisect` performs a binary search over a range of commits between a known good state (no bug) and a known bad state (bug) to efficiently find the first commit that introduced a regression. Identifying the exact commit will provide a vital clue about the cause of the bug and will inform the solution. 
+`git bisect` performs a binary search over a range of commits between a known good state (no bug) and a known bad state (bug) to efficiently find the first commit that introduced a regression. Identifying the exact commit will provide a vital clue about the cause of the bug and will inform the solution.
 
 Finding the beginning of the search range is somewhat arbitrary. If you know that a regression was introduced very recently, sometimes you can just go back a few weeks. Otherwise you should go back far enough to ensure that you find the good commit (before the regression was introduced). I recommend 1–2 years. It’ll quickly pare down when the search space is cut in half each time (i.e. log2 of n, where n is the number of commits). Any longer than a couple years and the codebase will have changed so much that it will be slow/difficult to install old versions of everything and recreate the environment. If the regression is that old, it probably requires approaching it as a novel bug anyway as the code has changed so much, it would be impossible to `git revert`.
 
@@ -528,16 +942,3 @@ Your only job at each step is:
 4. Run `git bisect bad` if the regression is still present and `git bisect good` if it is gone.
 
 Record the commit hash it gives you at the very end and you’ve found the source of the regression! Often I take one more step of testing the bad commit again and the commit right before it (should be good) just to be extra sure. If any good/bad determination was mistaken along the way then it will throw off the whole process and the final result will not be accurate. But if you are precise and methodical, you can search through hundreds of commits in a matter of minutes to find the offending commit.
-
-# Best Practices
-
-- Avoid coupling Puppeteer tests to Redux state or other implementation details.
-   e.g.
-   
-   > The use of `em.testHelpers.getState` is tightly coupling the test to various parts of the Redux state (implementation details), which we really want to avoid. It's important that integration tests behave like a normal user and do not have access to what is "under the hood." 
-   > 
-   > The few times we add a backdoor in existing tests are as last resorts, when there is no other way to test something. Now that we have dedicated test engineers, we need to maintain high standards and work hard to promote separation of concerns and maintainability.
-   
-   https://github.com/cybersemics/em/pull/3172#discussion_r2274819907
-- No arbitrary `sleep`; instead wait for a specific condition
-   - https://github.com/cybersemics/em/pull/3163#discussion_r2261698577
