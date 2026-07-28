@@ -7,7 +7,9 @@ That "only when invoked" part is the key benefit of skills. Custom instructions 
 In general, if you want to add an additional capability to the agent, you should:
 
 - Create a new skill.
-- Reference the skill in custom instructions (Worker Bee, github-instructions)
+- Reference the skill in custom instructions (Worker Bee, github-instructions, AGENTS.md)
+
+> A subset of skills is shared with agents running on a developer's own machine, through symlinks from `.agents/skills/`. This is covered in [External agents](external-agents.md).
 
 ## The skills
 
