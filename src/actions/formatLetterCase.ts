@@ -55,5 +55,6 @@ export const formatLetterCaseActionCreator =
 
     // noteFocus doesn't respect cursorOffset, so better to avoid setting the cursor when the caret is on a note (#4469)
     // It shouldn't be possible to have noteFocus be true with the keyboard closed, so setCursor shouldn't be necessary for notes.
+    // It seems like the caret goes to the end of the note anyway when its value is replaced.
     if (!state.noteFocus) dispatch(setCursor({ path: cursorSimplePath, offset }))
   }
