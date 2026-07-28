@@ -53,5 +53,7 @@ export const formatLetterCaseActionCreator =
 
     dispatch(editActions)
 
-    dispatch(setCursor({ path: cursorSimplePath, offset, noteFocus: state.noteFocus }))
+    // noteFocus doesn't respect cursorOffset, so better to avoid setting the cursor when the caret is on a note (#4469)
+    // It shouldn't be possible to have noteFocus be true with the keyboard closed, so setCursor shouldn't be necessary for notes.
+    if (!state.noteFocus) dispatch(setCursor({ path: cursorSimplePath, offset }))
   }
