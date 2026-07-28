@@ -115,15 +115,10 @@ const cursorUpCommand: Command = {
       })
     } else {
       const state = getState()
+      const firstPath = hasMulticursor(state) ? documentSort(state, Object.values(state.multicursors))[0] : null
 
       // when a multiselect is active, collapse it and move the cursor to the first selected thought in document order
-      if (hasMulticursor(state)) {
-        const firstPath = documentSort(state, Object.values(state.multicursors))[0]
-        if (firstPath) dispatch(setCursor({ path: firstPath }))
-        return
-      }
-
-      dispatch(cursorUp())
+      dispatch(firstPath ? setCursor({ path: firstPath }) : cursorUp())
     }
   }),
 }

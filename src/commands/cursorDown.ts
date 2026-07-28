@@ -113,16 +113,11 @@ const cursorDownCommand: Command = {
       })
     } else {
       const state = getState()
+      const sortedPaths = hasMulticursor(state) ? documentSort(state, Object.values(state.multicursors)) : []
+      const lastPath = sortedPaths[sortedPaths.length - 1]
 
       // when a multiselect is active, collapse it and move the cursor to the last selected thought in document order
-      if (hasMulticursor(state)) {
-        const sortedPaths = documentSort(state, Object.values(state.multicursors))
-        const lastPath = sortedPaths[sortedPaths.length - 1]
-        if (lastPath) dispatch(setCursor({ path: lastPath }))
-        return
-      }
-
-      dispatch(cursorDown())
+      dispatch(lastPath ? setCursor({ path: lastPath }) : cursorDown())
     }
   }),
 }

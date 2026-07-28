@@ -1,8 +1,7 @@
-import { addMulticursorActionCreator as addMulticursor } from '../../actions/addMulticursor'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { executeCommand } from '../../commands'
-import contextToPath from '../../selectors/contextToPath'
 import store from '../../stores/app'
+import { addMulticursorAtFirstMatchActionCreator as addMulticursorAtFirstMatch } from '../../test-helpers/addMulticursorAtFirstMatch'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import headValue from '../../util/headValue'
@@ -142,10 +141,9 @@ describe('cursorUp Up (no shift) with an active multiselect', () => {
       }),
       // place the cursor away from the selection to prove the target is the first selected thought, not relative to the cursor
       setCursor(['e']),
-      (dispatch, getState) => {
-        const state = getState()
-        ;['b', 'c', 'd'].forEach(value => dispatch(addMulticursor({ path: contextToPath(state, [value])! })))
-      },
+      addMulticursorAtFirstMatch(['b']),
+      addMulticursorAtFirstMatch(['c']),
+      addMulticursorAtFirstMatch(['d']),
     ])
 
     executeCommand(cursorUpCommand, { store, event: upEvent })
