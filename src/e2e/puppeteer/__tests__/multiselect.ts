@@ -105,7 +105,7 @@ describe('multiselect', () => {
   })
 
   // https://github.com/cybersemics/em/issues/4728
-  it.skip('shows the multiselect highlight on table column 1 thoughts', async () => {
+  it('shows the multiselect highlight on table column 1 thoughts', async () => {
     await paste(`
         - a
           - =view
