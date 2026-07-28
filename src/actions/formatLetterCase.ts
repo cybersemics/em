@@ -28,7 +28,7 @@ export const formatLetterCaseActionCreator =
     const offset = selection.offsetThought()
     const cursorSimplePath = simplifyPath(state, cursor)
     const editActions = paths.flatMap(path => {
-      const value = state.noteFocus ? noteValue(state, cursor) : getThoughtById(state, head(cursor))?.value
+      const value = state.noteFocus ? noteValue(state, cursor) : getThoughtById(state, head(path))?.value
 
       if (!value) return []
 
