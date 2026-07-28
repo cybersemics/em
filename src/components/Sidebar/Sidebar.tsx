@@ -45,7 +45,18 @@ import { css } from '../../../styled-system/css'
 import { longPressActionCreator as longPress } from '../../actions/longPress'
 import { toggleSidebarActionCreator } from '../../actions/toggleSidebar'
 import { isAndroid } from '../../browser'
-import { DROPDOWN_MASK_BAND, LongPressState, MASK_OVERSIZE } from '../../constants'
+import {
+  DROPDOWN_MASK_BAND,
+  DROPDOWN_MASK_OFFSET,
+  EASE_OUT,
+  EASE_OUT_GENTLE,
+  LongPressState,
+  MASK_OVERSIZE,
+  SCROLL_HINT_MASK_OFFSET,
+  SIDEBAR_WIDTH_PX,
+  STAGE_DURATION,
+  cssEaseOut,
+} from '../../constants'
 import useBreakpoint from '../../hooks/useBreakpoint'
 import viewportStore from '../../stores/viewport'
 import FadeTransition from '../FadeTransition'
@@ -55,15 +66,6 @@ import RecentlyEdited from '../RecentlyEdited'
 import SidebarBackground from './SidebarBackground'
 import SidebarGlow from './SidebarGlow'
 import SidebarHeader from './SidebarHeader'
-import {
-  DROPDOWN_MASK_OFFSET,
-  EASE_OUT,
-  EASE_OUT_GENTLE,
-  SCROLL_HINT_MASK_OFFSET,
-  SIDEBAR_WIDTH_PX,
-  STAGE_DURATION,
-  cssEaseOut,
-} from './sidebarConstants'
 import { SECTIONS, SidebarSectionId } from './sidebarSections'
 import useSidebarSwipe from './useSidebarSwipe'
 

@@ -3,8 +3,10 @@
 import CommandId from './@types/CommandId'
 import SimplePath from './@types/SimplePath'
 import ThoughtId from './@types/ThoughtId'
+import { isAndroid } from './browser'
 import { ColorToken } from './colors.config'
 import emojiRegex from './emojiRegex'
+import durations from './util/durations'
 
 export const TOOLBAR_HEIGHT = 50
 
@@ -18,6 +20,38 @@ export const SCROLL_HINT_FADE = 48
 
 /** Extra carrier extent (px) beyond the scroll viewport — keeps every mask slide position covered. */
 export const MASK_OVERSIZE = DROPDOWN_MASK_BAND + SCROLL_HINT_FADE
+
+/** Offsets that position the mask geometry relative to the scroll area's top edge. */
+export const DROPDOWN_MASK_OFFSET = -DROPDOWN_MASK_BAND
+export const SCROLL_HINT_MASK_OFFSET = -SCROLL_HINT_FADE
+
+// Sidebar layout and animation
+
+/** Fixed sidebar width on large devices (px). Small screens use 100vw. */
+export const SIDEBAR_WIDTH_PX = 400
+
+/** Default ease-out curve used for most sidebar animations. */
+export const EASE_OUT = [0.16, 0.6, 0.2, 1] as const
+
+/** CSS equivalent of EASE_OUT. */
+export const cssEaseOut = `cubic-bezier(${EASE_OUT.join(', ')})`
+
+/** Softer ease-out used when *closing* the sidebar. The less aggressive start prevents the
+ * drawer from appearing to "jump" when the user releases a swipe. */
+export const EASE_OUT_GENTLE = [0.25, 0.1, 0.25, 1] as const
+
+/** Android uses one blur layer to avoid WebView compositing flicker. */
+export const PROGRESSIVE_BLUR_LAYERS = isAndroid ? 1 : 4
+
+/** Preserve a smooth trailing edge when Android uses one blur layer. */
+export const PROGRESSIVE_BLUR_MIN = isAndroid ? 4 : 0
+
+/** Duration (seconds) of the dropdown open/close animation. */
+export const STAGE_DURATION = durations.get('medium') / 1000
+
+/** Duration (seconds) of the slower sidebar animations: the section hue/sat shift and the
+ * glow overlay's resize on dropdown expand. */
+export const SLOW_DURATION = durations.get('slow') / 1000
 
 // maximum number of characters of children to allow expansion
 export const MAX_DISTANCE_FROM_CURSOR = 3

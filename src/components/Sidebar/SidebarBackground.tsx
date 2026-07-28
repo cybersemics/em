@@ -3,9 +3,9 @@ import { useMemo } from 'react'
 import { useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { isAndroid, isSafari } from '../../browser'
+import { PROGRESSIVE_BLUR_LAYERS, PROGRESSIVE_BLUR_MIN, SLOW_DURATION } from '../../constants'
 import themeColors from '../../selectors/themeColors'
 import ProgressiveBlur from '../ProgressiveBlur'
-import { PROGRESSIVE_BLUR_LAYERS, PROGRESSIVE_BLUR_MIN, SLOW_DURATION } from './sidebarConstants'
 import { SECTIONS, SidebarSectionId, tintColor } from './sidebarSections'
 
 /**

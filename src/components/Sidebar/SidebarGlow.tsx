@@ -1,9 +1,9 @@
 import { MotionValue, motion } from 'framer-motion'
 import { css } from '../../../styled-system/css'
 import { isAndroid, isSafari } from '../../browser'
+import { EASE_OUT, SLOW_DURATION, cssEaseOut } from '../../constants'
 import useBreakpoint from '../../hooks/useBreakpoint'
 import safeY from '../../util/safeY'
-import { EASE_OUT, SLOW_DURATION, cssEaseOut } from './sidebarConstants'
 import { SECTIONS, SidebarSectionId, bakedOverlay } from './sidebarSections'
 
 /**
