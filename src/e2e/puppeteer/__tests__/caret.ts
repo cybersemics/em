@@ -255,7 +255,7 @@ it('clicking backspace when the caret is at the end of a thought should delete a
   await press('Backspace')
 
   const textContext = await getSelection().focusNode?.textContent
-  expect(textContext).toBe('last')
+  expect(textContext).toBe('las')
 })
 
 describe('mobile only', () => {
