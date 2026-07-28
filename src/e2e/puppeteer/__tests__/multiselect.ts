@@ -103,6 +103,32 @@ describe('multiselect', () => {
     expect(copied['text/html']).toContain('b')
     expect(copied['text/html']).toContain('c')
   })
+
+  // https://github.com/cybersemics/em/issues/4728
+  it.skip('shows the multiselect highlight on table column 1 thoughts', async () => {
+    await paste(`
+        - a
+          - =view
+            - Table
+          - b
+            - c
+          - d
+            - e
+        `)
+
+    await waitForEditable('e')
+    await multiselectThoughts(['c', 'e'])
+
+    // Swap Note moves c and e into their parents' =note, so the multiselect moves up to b and d, which are
+    // in table column 1.
+    await press('KeyN', { alt: true, shift: true })
+
+    // wait for both notes to render so the assertion runs after Swap Note has completed
+    await page.waitForFunction(() => document.querySelectorAll('[aria-label="note"]').length === 2, { timeout: 5000 })
+
+    const highlightedBullets = await page.$$('[aria-label="bullet"][data-highlighted="true"]')
+    expect(highlightedBullets.length).toBe(2)
+  })
 })
 
 describe('mobile only', () => {
