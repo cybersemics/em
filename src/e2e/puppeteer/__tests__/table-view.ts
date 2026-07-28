@@ -14,6 +14,38 @@ expect.extend({
 
 vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
 
+/**
+ * Waits until the layout has settled, i.e. the position and size of every thought is unchanged over consecutive
+ * animation frames. Table layout converges over several measure passes (each column's width depends on the measured
+ * width of its cells, which in turn depends on the space left by the columns before it), so a screenshot taken too
+ * early captures a transient layout and the snapshot becomes nondeterministic.
+ */
+const waitForLayout = () =>
+  page.evaluate(async () => {
+    /** Serializes the position and size of every thought. */
+    const measure = () =>
+      Array.from(document.querySelectorAll('[data-editable]'))
+        .map(el => {
+          const { x, y, width, height } = el.getBoundingClientRect()
+          return `${x},${y},${width},${height}`
+        })
+        .join(' ')
+
+    /** Resolves on the next animation frame. */
+    const nextFrame = () => new Promise(resolve => requestAnimationFrame(resolve))
+
+    // Consider the layout settled once it is unchanged for 30 consecutive frames (~500ms), and give up after 300
+    // frames (~5s) so that a perpetually animating layout fails on the snapshot rather than hanging.
+    let previous = ''
+    let stableFrames = 0
+    for (let i = 0; i < 300 && stableFrames < 30; i++) {
+      await nextFrame()
+      const current = measure()
+      stableFrames = current === previous ? stableFrames + 1 : 0
+      previous = current
+    }
+  })
+
 describe('Table View', () => {
   beforeEach(hideHUD)
 
@@ -123,6 +155,8 @@ describe('Table View', () => {
     await clickThought('Eight nine ten eleven twelve thirteen fourteen')
     await command('toggleTableView')
 
+    await waitForLayout()
+
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
   })
@@ -143,6 +177,8 @@ describe('Table View', () => {
     // Cursor on the top-level thought, then toggle Table View — applies =view/Table to the root context.
     await clickThought('One two three four five six seven')
     await command('toggleTableView')
+
+    await waitForLayout()
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
@@ -166,6 +202,8 @@ describe('Table View', () => {
     await clickThought('Eight nine ten eleven twelve thirteen fourteen')
     await clickThought('One two three four five six seven')
     await command('toggleTableView')
+
+    await waitForLayout()
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
@@ -199,6 +237,8 @@ describe('Table View', () => {
 
     // Focus a middle level so the three deepest columns are within the visible window.
     await clickThought('We identified several opportunities for improvement.')
+
+    await waitForLayout()
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
