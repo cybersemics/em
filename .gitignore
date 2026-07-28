@@ -8,6 +8,10 @@ local.log
 # cloudflared tunnel diagnostic logs written at runtime by the BrowserStack e2e run
 cloudflared-browserstack.log
 serve.log
+# contains live connector tokens — output of scripts/provision-cloudflare-tunnel-pool.sh
+cloudflare-tunnel-pool.json
+# operator-only tool for provisioning/topping up the tunnel pool; kept local, not part of the app
+scripts/provision-cloudflare-tunnel-pool.sh
 
 .pnp.*
 .yarn/*
