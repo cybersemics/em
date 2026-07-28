@@ -19,7 +19,6 @@ import modalActionLinkRecipe from './src/recipes/modalActionLink'
 import modalTextRecipe from './src/recipes/modalText'
 import panelCommandGroupRecipe from './src/recipes/panelCommandGroupRecipe'
 import panelCommandRecipe from './src/recipes/panelCommandRecipe'
-import sidebarContentMaskRecipe from './src/recipes/sidebarContentMask'
 import slideTransitionRecipe from './src/recipes/slideTransition'
 import textNoteRecipe from './src/recipes/textNote'
 import thoughtRecipe from './src/recipes/thought'
@@ -520,7 +519,6 @@ export default defineConfig({
         invalidOptionRecipe,
         panelCommandGroupRecipe,
         panelCommandRecipe,
-        sidebarContentMaskRecipe,
       },
       slotRecipes: {
         dialogRecipe,

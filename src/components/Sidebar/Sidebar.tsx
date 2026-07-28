@@ -41,12 +41,11 @@ import { animate, motion, useMotionValue, useTransform } from 'framer-motion'
 import _ from 'lodash'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { css, cx } from '../../../styled-system/css'
-import { sidebarContentMaskRecipe } from '../../../styled-system/recipes'
+import { css } from '../../../styled-system/css'
 import { longPressActionCreator as longPress } from '../../actions/longPress'
 import { toggleSidebarActionCreator } from '../../actions/toggleSidebar'
 import { isAndroid } from '../../browser'
-import { LongPressState, MASK_OVERSIZE } from '../../constants'
+import { DROPDOWN_MASK_BAND, LongPressState, MASK_OVERSIZE } from '../../constants'
 import useBreakpoint from '../../hooks/useBreakpoint'
 import viewportStore from '../../stores/viewport'
 import FadeTransition from '../FadeTransition'
@@ -120,6 +119,10 @@ const Sidebar = () => {
   //   -128  = revealed, with the 48px scroll-hint fade at the top edge (list is scrolled)
   //   -176  = fully revealed (list at the top; no fade)
   const maskSlideY = dropdownOpen ? 0 : DROPDOWN_MASK_OFFSET + (isScrolled ? 0 : SCROLL_HINT_MASK_OFFSET)
+
+  /** The content mask carried by the slider: a transparent band the height of the dropdown, then a
+   * fade to fully visible over the scroll-hint ramp. */
+  const maskGradient = `linear-gradient(to bottom, transparent 0, transparent ${DROPDOWN_MASK_BAND}px, black ${MASK_OVERSIZE}px)`
 
   // ============================
   // Refs
@@ -445,18 +448,25 @@ const Sidebar = () => {
                           pointerEvents: 'none',
                           // Android: promote before the mask transition to avoid a one-frame blank.
                           willChange: isAndroid ? 'transform' : undefined,
+                          // Static mask: transparent for the band hidden under the open dropdown, then a
+                          // fade to fully visible. Inline rather than css() because Panda cannot extract a
+                          // template literal built from imported constants — it would silently drop the
+                          // mask. The -webkit- properties replace the prefixing Panda would have applied.
+                          maskRepeat: 'no-repeat',
+                          WebkitMaskRepeat: 'no-repeat',
+                          maskImage: maskGradient,
+                          WebkitMaskImage: maskGradient,
+                          maskSize: '100% 100%',
+                          WebkitMaskSize: '100% 100%',
                         }}
-                        className={cx(
-                          css({
-                            position: 'absolute',
-                            top: 0,
-                            right: 0,
-                            left: 0,
-                            display: 'flex',
-                            flexDirection: 'column',
-                          }),
-                          sidebarContentMaskRecipe(),
-                        )}
+                        className={css({
+                          position: 'absolute',
+                          top: 0,
+                          right: 0,
+                          left: 0,
+                          display: 'flex',
+                          flexDirection: 'column',
+                        })}
                       >
                         <motion.div
                           data-scroll-at-edge
