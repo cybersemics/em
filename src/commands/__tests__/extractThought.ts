@@ -2,7 +2,9 @@ import { findAllByLabelText, screen } from '@testing-library/react'
 import { act } from 'react'
 import { extractThoughtActionCreator as extractThought } from '../../actions/extractThought'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
+import { HOME_TOKEN } from '../../constants'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
+import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import findThoughtByText from '../../test-helpers/queries/findThoughtByText'
@@ -94,5 +96,51 @@ describe('Extract thought', () => {
     const cursorThoughts = childIdsToThoughts(store.getState(), store.getState().cursor!)
 
     expect(cursorThoughts).toMatchObject([{ value: thoughtValue.slice(0, 9) }])
+  })
+
+  // https://github.com/cybersemics/em/issues/4103
+  it('formatting is preserved and html tags are not extracted as text', async () => {
+    store.dispatch(newThought({ value: '<font color="#ff573d">Lorem ipsum dolor</font>' }))
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // the innermost element containing the text, i.e. the font tag within the thought, so that the selection is set on a text node
+    const [formattedText] = (await screen.findAllByText('Lorem ipsum dolor', { exact: true })).filter(el =>
+      el.closest('[contenteditable]'),
+    )
+    setSelection(formattedText, 0, 'Lorem ipsum'.length)
+
+    store.dispatch([extractThought()])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const [updatedThought] = getAllChildrenAsThoughts(store.getState(), HOME_TOKEN)
+    expect(updatedThought.value).toBe('<font color="#ff573d">dolor</font>')
+
+    const [createdThought] = getAllChildrenAsThoughts(store.getState(), updatedThought.id)
+    expect(createdThought.value).toBe('<font color="#ff573d">Lorem ipsum</font>')
+  })
+
+  // https://github.com/cybersemics/em/issues/4103
+  it('formatting tags that become adjacent when the selection is removed are merged', async () => {
+    store.dispatch(newThought({ value: '<font color="#ff573d">Lorem ipsum dolor</font>' }))
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const [formattedText] = (await screen.findAllByText('Lorem ipsum dolor', { exact: true })).filter(el =>
+      el.closest('[contenteditable]'),
+    )
+    // select "ipsum " from the middle of the thought, so that the remaining text on either side of the selection is re-joined
+    setSelection(formattedText, 'Lorem '.length, 'Lorem ipsum '.length)
+
+    store.dispatch([extractThought()])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const [updatedThought] = getAllChildrenAsThoughts(store.getState(), HOME_TOKEN)
+    expect(updatedThought.value).toBe('<font color="#ff573d">Lorem dolor</font>')
+
+    const [createdThought] = getAllChildrenAsThoughts(store.getState(), updatedThought.id)
+    expect(createdThought.value).toBe('<font color="#ff573d">ipsum</font>')
   })
 })
