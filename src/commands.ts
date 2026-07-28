@@ -579,8 +579,33 @@ export const handleGestureCancel = () => {
  * Android soft keyboards report the space keydown as keyCode 229 ('Unidentified'), so the space-to-indent
  * command is never matched in keyDown and keyCommandId is never set. The second branch catches that case:
  * a `beforeinput` insertText of a single space over an empty thought indents it instead of inserting the
- * space, mirroring the keyDown-matched path on desktop/iOS (#4178). */
+ * space, mirroring the keyDown-matched path on desktop/iOS (#4178).
+ *
+ * The third branch routes the iOS native undo/redo gestures (three-finger swipe and shake-to-undo) to em's
+ * undo/redo commands. They emit no key event, so keyDown never matches them and the browser applies its own
+ * text-level undo to whichever editable has the caret — silently rewriting that thought, recording it as a
+ * new edit, and leaving the actual last edit unreachable (#4476). */
 export const beforeInput = (e: InputEvent) => {
+  // The native undo/redo gestures do not fire keydown/keyup, so keyCommandId may still hold a stale command
+  // from an earlier keystroke. Match them before the keyCommandId branches so it cannot swallow them.
+  if (e.inputType === 'historyUndo' || e.inputType === 'historyRedo') {
+    const state = store.getState()
+    const command = commandById(e.inputType === 'historyUndo' ? 'undo' : 'redo')
+
+    // Mirror the modal and command universe guards in keyDown so native undo still works in text inputs
+    // that are outside the thoughtspace.
+    if (state.showDesktopCommandUniverse || state.showMobileCommandUniverse || state.showModal) return
+
+    // Flush any edit that is still throttled in Editable, otherwise it would be committed after the undo.
+    commandEmitter.trigger('command', command)
+
+    if (!command.canExecute || command.canExecute(store.getState())) {
+      e.preventDefault()
+      executeCommandWithMulticursor(command, { event: e, type: 'keyboard', store })
+    }
+    return
+  }
+
   if (keyCommandId === 'newThought' || (keyCommandId === 'indent' && editingValueStore.getState() === '')) {
     e.preventDefault()
     return

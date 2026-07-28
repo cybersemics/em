@@ -1,12 +1,12 @@
 /**
- * iOS Safari native undo tests.
+ * IOS Safari native undo tests.
  * Uses WDIO test runner with Mocha framework.
  */
 import newThought from '../helpers/newThought'
 
 describe('Undo', () => {
   // https://github.com/cybersemics/em/issues/4476
-  it.skip('native undo undoes the last edit after the caret moves to another thought', async () => {
+  it('native undo undoes the last edit after the caret moves to another thought', async () => {
     await newThought('makre')
     await newThought('second')
 
