@@ -66,7 +66,7 @@ const extractThought = (state: State): State => {
       newValue,
       path: simplifyPath(state, cursor),
       force: true,
-      cursorOffset: state.cursorOffset != null ? state.cursorOffset - (value.length - newValue.length) : undefined,
+      cursorOffset: state.cursorOffset != null ? selectionStart : undefined,
     }),
     newThought({ value: childValue, insertNewSubthought: true, preventSetCursor: true }),
   ]

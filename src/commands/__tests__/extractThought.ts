@@ -2,13 +2,16 @@ import { findAllByLabelText, screen } from '@testing-library/react'
 import { act } from 'react'
 import { extractThoughtActionCreator as extractThought } from '../../actions/extractThought'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
+import { setCursorActionCreator as setCursorThunk } from '../../actions/setCursor'
 import { HOME_TOKEN } from '../../constants'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
+import dispatch from '../../test-helpers/dispatch'
 import findThoughtByText from '../../test-helpers/queries/findThoughtByText'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import head from '../../util/head'
 
 /**
  * Set range selection.
@@ -32,7 +35,7 @@ describe('Extract thought', () => {
 
   it('an alert should be shown if there is no selection', async () => {
     const thoughtValue = 'this is a thought'
-    store.dispatch([
+    await dispatch([
       newThought({ value: thoughtValue }),
       newThought({ value: 'sub-thought', insertNewSubthought: true }),
       setCursor([thoughtValue]),
@@ -40,7 +43,7 @@ describe('Extract thought', () => {
 
     await act(vi.runOnlyPendingTimersAsync)
 
-    store.dispatch(extractThought())
+    await dispatch(extractThought())
 
     const alert = await screen.findByText('No text selected to extract')
     expect(alert).toBeTruthy()
@@ -51,7 +54,7 @@ describe('Extract thought', () => {
 
   it('the selected part of a thought is extracted as a child thought', async () => {
     const thoughtValue = 'this is a thought'
-    store.dispatch([
+    await dispatch([
       newThought({ value: thoughtValue }),
       newThought({ value: 'sub-thought', insertNewSubthought: true }),
       setCursor([thoughtValue]),
@@ -63,7 +66,7 @@ describe('Extract thought', () => {
     expect(thought).toBeTruthy()
 
     const selectedText = setSelection(thought!, 10, 17)
-    store.dispatch([extractThought()])
+    await dispatch(extractThought())
 
     const updatedThought = await findThoughtByText(thoughtValue.slice(0, 9))
     expect(updatedThought?.textContent).toBeTruthy()
@@ -80,7 +83,7 @@ describe('Extract thought', () => {
 
   it('the cursor does not get updated on child creation', async () => {
     const thoughtValue = 'this is a test thought'
-    store.dispatch([newThought({ value: thoughtValue }), setCursor([thoughtValue])])
+    await dispatch([newThought({ value: thoughtValue }), setCursor([thoughtValue])])
 
     await act(vi.runOnlyPendingTimersAsync)
 
@@ -88,7 +91,7 @@ describe('Extract thought', () => {
     expect(thought).toBeTruthy()
 
     const selectedText = setSelection(thought!, 10, 22)
-    store.dispatch([extractThought()])
+    await dispatch(extractThought())
 
     const createdThought = await findThoughtByText(selectedText)
     expect(createdThought).toBeTruthy()
@@ -100,7 +103,7 @@ describe('Extract thought', () => {
 
   // https://github.com/cybersemics/em/issues/4103
   it('formatting is preserved and html tags are not extracted as text', async () => {
-    store.dispatch(newThought({ value: '<font color="#ff573d">Lorem ipsum dolor</font>' }))
+    await dispatch(newThought({ value: '<font color="#ff573d">Lorem ipsum dolor</font>' }))
 
     await act(vi.runOnlyPendingTimersAsync)
 
@@ -110,7 +113,7 @@ describe('Extract thought', () => {
     )
     setSelection(formattedText, 0, 'Lorem ipsum'.length)
 
-    store.dispatch([extractThought()])
+    await dispatch(extractThought())
 
     await act(vi.runOnlyPendingTimersAsync)
 
@@ -123,7 +126,7 @@ describe('Extract thought', () => {
 
   // https://github.com/cybersemics/em/issues/4103
   it('formatting tags that become adjacent when the selection is removed are merged', async () => {
-    store.dispatch(newThought({ value: '<font color="#ff573d">Lorem ipsum dolor</font>' }))
+    await dispatch(newThought({ value: '<font color="#ff573d">Lorem ipsum dolor</font>' }))
 
     await act(vi.runOnlyPendingTimersAsync)
 
@@ -133,7 +136,7 @@ describe('Extract thought', () => {
     // select "ipsum " from the middle of the thought, so that the remaining text on either side of the selection is re-joined
     setSelection(formattedText, 'Lorem '.length, 'Lorem ipsum '.length)
 
-    store.dispatch([extractThought()])
+    await dispatch(extractThought())
 
     await act(vi.runOnlyPendingTimersAsync)
 
@@ -142,5 +145,33 @@ describe('Extract thought', () => {
 
     const [createdThought] = getAllChildrenAsThoughts(store.getState(), updatedThought.id)
     expect(createdThought.value).toBe('<font color="#ff573d">ipsum</font>')
+  })
+
+  it('the cursor offset is placed where the extracted text was removed', async () => {
+    await dispatch(newThought({ value: 'Lorem <b>ipsum</b> dolor' }))
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // place the caret at the end of the thought
+    await dispatch(setCursorThunk({ path: store.getState().cursor, offset: 'Lorem ipsum dolor'.length }))
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const editable = await screen.findByLabelText(`editable-${head(store.getState().cursor!)}`)
+
+    // select "ipsum ", which spans the bold tag and the text node that follows it
+    const range = document.createRange()
+    range.setStart(editable.childNodes[0], 'Lorem '.length)
+    range.setEnd(editable.childNodes[2], 1)
+    const sel = window.getSelection()
+    sel?.removeAllRanges()
+    sel?.addRange(range)
+
+    await dispatch(extractThought())
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // the caret collapses to the start of the removed text, not to its former position at the end of the thought
+    expect(store.getState().cursorOffset).toBe('Lorem '.length)
   })
 })
