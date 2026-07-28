@@ -2,7 +2,6 @@ import { ComponentType } from 'react'
 import DeleteIcon from '../icons/DeleteIcon'
 import FavoritesIcon from '../icons/FavoritesIcon'
 import PencilIcon from '../icons/PencilIcon'
-import sectionTints from './sidebarSectionTints.json'
 
 /** Valid sidebar section IDs. */
 export type SidebarSectionId = 'favorites' | 'recentlyEdited' | 'recentlyDeleted'
@@ -21,13 +20,13 @@ export type SidebarSection = {
  * - Favorites: 0° (no rotation, uses the base overlay color)
  * - Recently Edited: -45° (shifts toward cooler tones)
  * - Recently Deleted: 128° (shifts toward warmer tones).
- * The hue/saturate values in sidebarSectionTints.json are shared by the runtime gradient and the
- * locally generated AVIF overlays. Regenerate the images after changing these values.
+ * The hue/saturate values are shared by the runtime gradient and the pre-baked overlay images.
+ * Regenerate the images after changing these values.
  */
 export const SECTIONS: SidebarSection[] = [
-  { id: 'favorites', label: 'Favorites', icon: FavoritesIcon, ...sectionTints.favorites },
-  { id: 'recentlyEdited', label: 'Recently Edited', icon: PencilIcon, ...sectionTints.recentlyEdited },
-  { id: 'recentlyDeleted', label: 'Recently Deleted', icon: DeleteIcon, ...sectionTints.recentlyDeleted },
+  { id: 'favorites', label: 'Favorites', icon: FavoritesIcon, hue: 0, saturate: 1 },
+  { id: 'recentlyEdited', label: 'Recently Edited', icon: PencilIcon, hue: -45, saturate: 1.05 },
+  { id: 'recentlyDeleted', label: 'Recently Deleted', icon: DeleteIcon, hue: 128, saturate: 1.1 },
 ]
 
 /** Pre-baked section tint and blur; avoids runtime filters that leak WebKit GPU buffers. */
