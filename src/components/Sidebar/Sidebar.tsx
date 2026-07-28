@@ -6,15 +6,14 @@
  * - Uses Radix UI Dialog for accessibility (focus trapping, screen reader support)
  * - Uses Framer Motion for animations and gesture handling (see Animation model)
  * - Implements custom touch/swipe handling adapted from MUI's SwipeableDrawer pattern
- * - Multiple visual overlay layers (SidebarOverlay1, SidebarOverlay2) create
+ * - SidebarGlow layers the primary and secondary overlays to create
  * a liminal glow/lighting effects behind the sidebar content
  * - Responsive: full-width on small screens (<600px), fixed size determined by SIDEBAR_WIDTH_PX on landscape mobile and larger ("large devices").
  *
  * Component hierarchy:
  * Sidebar (root)
  * ├── SidebarBackground (dimming overlay + progressive blur + gradient)
- * ├── SidebarOverlay1 (primary glow effect, lighten blend)
- * ├── SidebarOverlay2 (secondary glow effect)
+ * ├── SidebarGlow (primary glow effect + secondary glow effect)
  * └── Dialog.Content (the actual drawer panel)
  * ├── SidebarHeader (section picker with animated dropdown)
  * │ └── SidebarSectionRow (icon + label)
@@ -55,9 +54,8 @@ import Favorites from '../Favorites'
 import RecentlyDeleted from '../RecentlyDeleted'
 import RecentlyEdited from '../RecentlyEdited'
 import SidebarBackground from './SidebarBackground'
+import SidebarGlow from './SidebarGlow'
 import SidebarHeader from './SidebarHeader'
-import SidebarOverlay1 from './SidebarOverlay1'
-import SidebarOverlay2 from './SidebarOverlay2'
 import {
   DROPDOWN_MASK_OFFSET,
   EASE_OUT,
@@ -311,10 +309,8 @@ const Sidebar = () => {
               sectionId={sectionId}
             />
 
-            {/* Primary glow overlay – responds to dropdown expansion */}
-            <SidebarOverlay1 opacity={contentOpacity} expanded={dropdownOpen} sectionId={sectionId} />
-            {/* Secondary glow overlay – adds middle tones */}
-            <SidebarOverlay2 width={width} opacity={contentOpacity} sectionId={sectionId} />
+            {/* Primary and secondary glow overlays */}
+            <SidebarGlow width={width} opacity={contentOpacity} expanded={dropdownOpen} sectionId={sectionId} />
 
             {/*
              * Dialog.Content is the actual sidebar drawer panel.
