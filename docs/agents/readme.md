@@ -83,7 +83,9 @@ flowchart TD
     G --> H{"All green?"}
     H -- no --> I["test-diagnosis — work out what kind of failure it is"]
     I --> E
-    H -- yes --> K["Done"]
+    H -- yes --> J["<b>Exit gate</b> — end-session skill"]
+    J --> J1["Nothing left untrue, nothing left behind,<br/>nothing claimed that was not observed"]
+    J1 --> K["Done"]
 
     click C "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#issue-repro" "The issue-repro skill"
     click C1 "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#browser-control" "How the browser is brought up"
@@ -94,6 +96,8 @@ flowchart TD
     click E1 "https://github.com/cybersemics/em/blob/HEAD/docs/agents/tdd.md#why-locally-run-tests-ignore-the-skip" "Switching the test back on"
     click G "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#ci-monitor" "The ci-monitor skill"
     click I "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#test-diagnosis" "The test-diagnosis skill"
+    click J "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#end-session" "The end-session skill"
+    click J1 "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#end-session" "The exit checklist, step by step"
 ```
 
 Both gates exist to stop the same failure. An agent that starts reading source code before it has seen the bug happen will form a theory from the code and then go looking for evidence to support it. Making it reproduce the problem first means it has a real observation to work from. Making it write the plan against quoted, existing code means it extends what is there instead of building something new beside it.
@@ -112,6 +116,16 @@ plan: complete — architectural plan produced and critique passed per .github/s
 ```
 
 They are there so that a human reading the transcript can see at a glance whether the process was followed, rather than having to infer it. Both prompts also spell out that printing the line does **not** end the agent's turn — an earlier version of this design had agents printing the line and then stopping to wait for a human who was not there.
+
+### The exit gate
+
+A third gate, [`end-session`](skills.md#end-session), sits right at the end, before the agent is allowed to finish. This skill contains a checklist that the agent must work through it before every ending — finished, escalating, or a turn it believes changed nothing.
+
+```
+end-session: complete — checklist passed per .github/skills/end-session/SKILL.md.
+end-session: escalating — checklist passed per .github/skills/end-session/SKILL.md; blocked on <one-line reason>.
+```
+
 
 ## Where everything lives
 
