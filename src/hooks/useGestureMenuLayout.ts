@@ -38,8 +38,22 @@ export const GESTURE_MENU_ROW_GAP_REM = 1.2
 /** Gap between the regular commands and the Cancel/Cheatsheet group (existing literal). */
 export const GESTURE_MENU_GROUP_GAP_REM = 2.15
 
-/** Approximate height of the "Gestures" header block (label + divider + bottom margin). */
-export const GESTURE_MENU_HEADER_HEIGHT_REM = 2.8
+// "Gestures" header sub-parts — mirror the inline styles in GestureMenu.tsx; keep in sync if those change.
+/** "Gestures" label font size (approximates its line height for the height budget). */
+export const GESTURE_MENU_HEADER_LABEL_FONT_SIZE_REM = 0.9 // fontSize, GestureMenu.tsx
+/** Bottom margin below the "Gestures" label, above the divider. */
+export const GESTURE_MENU_HEADER_LABEL_MARGIN_BOTTOM_REM = 0.444 // label marginBottom, GestureMenu.tsx
+/** Divider height, 1px ÷ 18 at the default root font size. Rendered as a literal 1px hairline (not scaled). */
+const GESTURE_MENU_HEADER_DIVIDER_HEIGHT_REM = 0.056
+/** Bottom margin below the whole header block, above the grid. */
+export const GESTURE_MENU_HEADER_MARGIN_BOTTOM_REM = 1.389 // header block marginBottom, GestureMenu.tsx
+
+/** Approximate height of the "Gestures" header block: label line + its margin + divider + block margin (≈2.8rem). */
+export const GESTURE_MENU_HEADER_HEIGHT_REM =
+  GESTURE_MENU_HEADER_LABEL_FONT_SIZE_REM +
+  GESTURE_MENU_HEADER_LABEL_MARGIN_BOTTOM_REM +
+  GESTURE_MENU_HEADER_DIVIDER_HEIGHT_REM +
+  GESTURE_MENU_HEADER_MARGIN_BOTTOM_REM
 
 /** Approximate row pitch of an unselected row: the icon/label height (1rem) plus the row gap. */
 export const GESTURE_MENU_ROW_PITCH_REM = 1 + GESTURE_MENU_ROW_GAP_REM

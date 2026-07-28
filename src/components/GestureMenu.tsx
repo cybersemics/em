@@ -10,6 +10,9 @@ import useFilteredCommands from '../hooks/useFilteredCommands'
 import useGestureMenuLayout, {
   GESTURE_MENU_COLUMN_GAP_REM,
   GESTURE_MENU_GROUP_GAP_REM,
+  GESTURE_MENU_HEADER_LABEL_FONT_SIZE_REM,
+  GESTURE_MENU_HEADER_LABEL_MARGIN_BOTTOM_REM,
+  GESTURE_MENU_HEADER_MARGIN_BOTTOM_REM,
   GESTURE_MENU_PANEL_PADDING_MD_REM,
   GESTURE_MENU_PANEL_PADDING_REM,
   GESTURE_MENU_PANEL_PADDING_VERTICAL_MD_REM,
@@ -141,12 +144,12 @@ const GestureMenu: FC<{
             }}
           >
             {/* Header */}
-            <div className={css({ marginBottom: '1.389rem' })}>
+            <div style={{ marginBottom: `${GESTURE_MENU_HEADER_MARGIN_BOTTOM_REM}rem` }}>
               <div
                 style={{
                   color: 'rgb(255, 255, 255, 0.7)',
-                  marginBottom: '0.444rem',
-                  fontSize: '0.9rem',
+                  marginBottom: `${GESTURE_MENU_HEADER_LABEL_MARGIN_BOTTOM_REM}rem`,
+                  fontSize: `${GESTURE_MENU_HEADER_LABEL_FONT_SIZE_REM}rem`,
                   fontWeight: 500,
                 }}
               >
