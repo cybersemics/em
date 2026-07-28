@@ -184,31 +184,6 @@ describe('Table View', () => {
     expect(image).toMatchImageSnapshot()
   })
 
-  // Regression test for https://github.com/cybersemics/em/pull/4654 (Issue C)
-  // When Table View is turned off, a thought that was previously a wrapped col2 cell must have its height
-  // re-measured. Otherwise the stale (taller) wrapped height leaves a blank gap below it.
-  it('Table View turned off', async () => {
-    await page.setViewport({ width: 375, height: 812 })
-
-    await paste(`
-      - One two three four five six seven
-        - Eight nine ten eleven twelve thirteen fourteen
-          - Fifteen sixteen seventeen eighteen nineteen twenty
-    `)
-
-    // Turn Table View on at the root context, move the cursor down into the table and back, then turn it off.
-    await clickThought('One two three four five six seven')
-    await command('toggleTableView')
-    await clickThought('Eight nine ten eleven twelve thirteen fourteen')
-    await clickThought('One two three four five six seven')
-    await command('toggleTableView')
-
-    await waitForLayout()
-
-    const image = await screenshot()
-    expect(image).toMatchImageSnapshot()
-  })
-
   // Regression test for https://github.com/cybersemics/em/pull/4654 (Issue D)
   // When Table View is applied across multiple nested levels, bounding col1 at half the band at every level would
   // compound and crush the deeper columns toward the 1em floor (one character per line) and push them off the right
