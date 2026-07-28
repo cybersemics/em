@@ -105,14 +105,18 @@ const usePositionedThoughts = (
 
     // The set of keys of thoughts that are themselves tables (i.e. have =view/Table, so linearizeTree populated
     // visibleChildrenKeys). Used to detect nested tables: a col1 cell whose thought is also a table means the tables
-    // form a multi-level chain, so the column band is divided among up to three visible levels rather than 50/50.
+    // form a multi-level chain, so the column band is shared across up to three visible levels rather than two.
     const tableThoughtKeys = new Set(treeThoughts.filter(node => node.visibleChildrenKeys).map(node => node.key))
 
-    // The number of table levels to divide the available horizontal band among. A standalone table splits its band
-    // 50/50 between col1 and col2. When tables are nested across multiple levels, dividing by two at each level would
-    // halve the band repeatedly and crush the deeper columns toward zero (one character per line, off the right edge).
-    // Instead divide by three so up to three table levels stay legible at once; deeper levels are revealed as the
-    // cursor descends via the global translateX shift (see indentCursorAncestorTables / indent in LayoutTree).
+    // The number of table levels that the available horizontal band is shared among. This does not fix the column
+    // proportions: col1 is always as wide as its widest visible thought, so a table with short col1 thoughts stays
+    // narrow and gives the rest of the band to col2. It only sets the upper bound at which an overlong col1 is
+    // clamped so that it cannot consume the entire band.
+    // For a standalone table the bound is half the band. When tables are nested across multiple levels, bounding each
+    // level at half the remaining band would compound and crush the deeper columns toward zero (one character per
+    // line, off the right edge), so the bound is a third of the band, keeping up to three table levels legible at
+    // once. Deeper levels are revealed as the cursor descends via the global translateX shift
+    // (see indentCursorAncestorTables / indent in LayoutTree).
     const maxVisibleTableColumns = 3
 
     // The rightmost extent a thought may occupy, mirroring the maxWidth boundary in LayoutTree (90vw on wider screens,
@@ -127,9 +131,9 @@ const usePositionedThoughts = (
       0,
     )
     if (homeTableCol1Width > 0) {
-      // If the root table's col1 thoughts are themselves tables, the tables are nested, so divide the band among up to
-      // three levels; otherwise split it 50/50. The root's col1 thoughts sit at depth 0 with no ancestor tables, so
-      // there is no indentation to subtract here.
+      // If the root table's col1 thoughts are themselves tables, the tables are nested, so share the band across up to
+      // three levels; otherwise bound col1 at half the band. The root's col1 thoughts sit at depth 0 with no ancestor
+      // tables, so there is no indentation to subtract here.
       const homeCol1IsNested = treeThoughts.some(
         node => node.depth === 0 && node.isTableCol1 && node.visibleChildrenKeys,
       )
@@ -170,9 +174,9 @@ const usePositionedThoughts = (
         )
         if (tableCol1Width > 0) {
           // Detect whether this table is part of a nested chain: either it has an ancestor table, or its own col1
-          // cells are themselves tables. A standalone table splits its band 50/50 between col1 and col2; a nested
-          // table divides it among up to three levels so deeper columns stay legible instead of compounding toward
-          // zero at each level (which pushed them off the right edge — see maxVisibleTableColumns).
+          // cells are themselves tables. A standalone table's col1 is bounded at half the band; a nested table's col1
+          // is bounded at a third so deeper columns stay legible instead of compounding toward zero at each level
+          // (which pushed them off the right edge — see maxVisibleTableColumns).
           const nodeAncestorIds = [HOME_TOKEN, ...parentOf(node.path)]
           const ancestorTableCount = nodeAncestorIds.reduce((count, id) => count + (tableCol1Widths.has(id) ? 1 : 0), 0)
           const col1CellsAreTables = node.visibleChildrenKeys.some(childKey => tableThoughtKeys.has(childKey))
