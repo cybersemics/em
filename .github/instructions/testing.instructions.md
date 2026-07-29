@@ -1,12 +1,11 @@
 ### Testing
 
 - Tests are located in `**/__tests__/*`.
-- Testing guidelines are described in https://github.com/cybersemics/em/wiki/Testing.
-- Use existing test helpers and follow conventions in existing tests.
+- Testing guidelines are described in `docs/testing.md`. Be sure to read this file in full before writing tests.
 - Run linter with `yarn lint`.
 - Run unit tests with `yarn test`.
 - Run Puppeteer tests with `yarn test:puppeteer`.
 - Ensure linter, unit tests, and puppeteer tests all pass before requesting a review.
-- Checking if the CI is running using if-statements in the application source code is a bad practice and should be avoided if at all possible. It adds noise to application code, pollutes the production build, and sets up potentially hard to catch bugs where the application is behaving differently in tests than in production. When mocking functionality, find a way to modify/inject the mock from the test code. For example, if you need to mock commands in the GestureMenu in the Puppeteer tests, you might use direct DOM manipulation to replace whatever commands appear with dummy commands after they are rendered in the UI. This will create a small dependency on the DOM structure (though sticking to `data-testid` and `aria-label` will mitigate this), but it's better than mocks leaking into the application code.
-- Do not silently ignore unexpected states in tests by adding if-statements. Assume elements are present (or poll until they are present if there is an asynchronous action that must be awaited). Do not clutter test code with unnecessary if-stateents or try-catch statements. Allow the tests to fail hard otherwise.
-- Do not use element selectors in tests. That creates unnecessary dependencies on the DOM structure. Instead, select based on `data-testid` or `aria-label` only. Add these attributes to the source code as needed.
+- Preserve production behavior: do not add CI- or test-only application branches that change product semantics. Control external dependencies from test code through dependency injection or a named, arrange-only helper. Any unavoidable environment adaptation must be narrow, explicit, irrelevant to the assertion, and documented by the [production-parity](../../docs/testing.md#9-preserve-production-behavior) and [sanctioned-backdoor](../../docs/testing.md#sanctioned-backdoors) policies. Do not mock the subject under test or mutate the DOM inline to create alternate behavior.
+- Fail hard when a required target or precondition is missing. For an asynchronous transition, use an existing named waiter or add one that waits for the specific condition. Do not use conditional logic, optional fallbacks, or `try`/`catch` to suppress an unexpected state and let the test continue or pass. See [helper contracts](../../docs/testing.md#4-compose-helpers) and [false-positive prevention](../../docs/testing.md#7-make-false-positives-difficult).
+- Select elements by meaning: prefer accessible role and name, a visible label or domain value, then `aria-label`, then a purpose-built `data-testid`. Do not couple tests to styling classes, DOM ancestry, index, or render order. Add an accessible attribute or test id only when no stronger semantic locator exists. See [selector guidance](../../docs/testing.md#8-select-by-meaning-not-structure).
