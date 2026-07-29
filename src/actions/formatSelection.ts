@@ -109,15 +109,15 @@ export const formatSelectionActionCreator =
 
     if (newValue === value || !path) return
 
-    // Only call document.execCommand when the keyboard is open and the caret is on a thought.
-    // This avoids messy and buggy focus-management logic.
-    if (state.isKeyboardOpen) registerNativeUndoStep(newValue)
-
     // Capture the caret's plain-text offset within the note before overwriting its value. Overwriting
     // re-renders the note's ContentEditable, which drops the caret; restoring the offset via setNoteFocus
     // places it back where the user left off instead of jumping to the start/end of the note (#4630).
     // noteFocus is only true when the caret is on a note, so it's not necessary to check whether the keyboard is open.
     const noteCaretOffset = state.noteFocus ? selection.offsetFromNode(contentEditable) : null
+
+    // Only call document.execCommand when the keyboard is open and the caret is on a thought.
+    // This avoids messy and buggy focus-management logic.
+    if (state.isKeyboardOpen) registerNativeUndoStep(newValue)
 
     dispatch(
       state.noteFocus
