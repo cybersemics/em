@@ -6,6 +6,8 @@ Making that work takes more than a prompt. It takes a described environment, a b
 
 We targeted Copilot specifically because the project already runs on GitHub — issues, pull requests, and CI are all here, so the agent lives where the work already is.
 
+> Agents running on a developer's own machine — Codex, Claude Code — share a subset of these skills through symlinks. See [External agents](external-agents.md).
+
 | Document                              | What it covers                                                                     |
 | ------------------------------------- | ---------------------------------------------------------------------------------- |
 | This page                             | The map: what the pieces are, what loads when, how a task flows through them       |
@@ -13,10 +15,11 @@ We targeted Copilot specifically because the project already runs on GitHub — 
 | [Environment](environment.md)         | What the runner sets up, how the agent drives a browser, how iOS works             |
 | [MCP servers](mcp.md)                 | The three external tool servers, what each gives the agent, and how they are wired |
 | [The TDD workflow](tdd.md)            | Why regression tests are committed switched off, and what the CI checks mean       |
+| [External agents](external-agents.md) | Codex and Claude Code — what they share with the cloud agent, and what they cannot |
 
 ## The four kinds of file
 
-Everything the agent reads lives under `.github/`. There are four kinds of file, and the difference between them is **when the agent reads them**.
+Everything the **cloud agent** reads lives under `.github/`. (A local agent reads `AGENTS.md` and `.agents/skills/` instead — see [External agents](external-agents.md).) There are four kinds of file, and the difference between them is **when the agent reads them**.
 
 | Kind                    | Where                                    | When it is read                                |
 | ----------------------- | ---------------------------------------- | ---------------------------------------------- |
@@ -83,7 +86,9 @@ flowchart TD
     G --> H{"All green?"}
     H -- no --> I["test-diagnosis — work out what kind of failure it is"]
     I --> E
-    H -- yes --> K["Done"]
+    H -- yes --> J["<b>Exit gate</b> — end-session skill"]
+    J --> J1["Nothing left untrue, nothing left behind,<br/>nothing claimed that was not observed"]
+    J1 --> K["Done"]
 
     click C "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#issue-repro" "The issue-repro skill"
     click C1 "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#browser-control" "How the browser is brought up"
@@ -94,6 +99,8 @@ flowchart TD
     click E1 "https://github.com/cybersemics/em/blob/HEAD/docs/agents/tdd.md#why-locally-run-tests-ignore-the-skip" "Switching the test back on"
     click G "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#ci-monitor" "The ci-monitor skill"
     click I "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#test-diagnosis" "The test-diagnosis skill"
+    click J "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#end-session" "The end-session skill"
+    click J1 "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#end-session" "The exit checklist, step by step"
 ```
 
 Both gates exist to stop the same failure. An agent that starts reading source code before it has seen the bug happen will form a theory from the code and then go looking for evidence to support it. Making it reproduce the problem first means it has a real observation to work from. Making it write the plan against quoted, existing code means it extends what is there instead of building something new beside it.
@@ -112,6 +119,16 @@ plan: complete — architectural plan produced and critique passed per .github/s
 ```
 
 They are there so that a human reading the transcript can see at a glance whether the process was followed, rather than having to infer it. Both prompts also spell out that printing the line does **not** end the agent's turn — an earlier version of this design had agents printing the line and then stopping to wait for a human who was not there.
+
+### The exit gate
+
+A third gate, [`end-session`](skills.md#end-session), sits right at the end, before the agent is allowed to finish. This skill contains a checklist that the agent must work through it before every ending — finished, escalating, or a turn it believes changed nothing.
+
+```
+end-session: complete — checklist passed per .github/skills/end-session/SKILL.md.
+end-session: escalating — checklist passed per .github/skills/end-session/SKILL.md; blocked on <one-line reason>.
+```
+
 
 ## Where everything lives
 
@@ -141,6 +158,16 @@ scripts/
 src/e2e/
 ├── puppeteer/attachExistingBrowserInstance.ts   Web and Android bridge
 └── iOS/attachExistingSession.ts                 iOS bridge
+```
+
+And the local half, which is almost entirely symlinks into the above — see [External agents](external-agents.md):
+
+```
+AGENTS.md                            Read by Codex and Claude Code
+CLAUDE.md            → AGENTS.md
+.agents/skills/                      The shared subset, one symlink each
+└── <name>           → .github/skills/<name>
+.claude/skills       → .agents/skills
 ```
 
 Two workflows are part of this system rather than ordinary CI:

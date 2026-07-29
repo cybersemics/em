@@ -122,7 +122,7 @@ Used in two places:
 - [`issue-repro`](skills.md#issue-repro) calls `get_issue` to read the full body and comments of the issue being worked on.
 - [`ci-monitor`](skills.md#ci-monitor) lists workflow runs for the current branch, through the **actions** tool with `method: "list_workflow_runs"`. A standalone `list_workflow_runs` tool used to exist and no longer does — a good example of an external tool surface changing underneath the skills that call it.
 
-Opening the pull request is *not* done through this server. Both prompt files specify the `runtime-tools-create_pull_request` tool, which Copilot provides directly, and explicitly forbid shelling out to `git` or `gh` to open one.
+Opening the pull request is *not* done through this server. Both prompt files and [`end-session`](skills.md#end-session) specify the `runtime-tools-create_pull_request` tool, which Copilot provides directly, and explicitly forbid shelling out to `git` or `gh` to open one.
 
 ## Which skills may use which
 
@@ -140,6 +140,8 @@ Every skill declares what it is allowed to use in its `allowed-tools` frontmatte
 | [`ci-monitor`](skills.md#ci-monitor) | ✓ | | |
 | [`test-diagnosis`](skills.md#test-diagnosis) | ✓ | | |
 | [`puppeteer-update-snapshots`](skills.md#puppeteer-update-snapshots) | ✓ | | |
+| [`end-session`](skills.md#end-session) | ✓ | | |
+| [`docs-sync`](skills.md#docs-sync) | ✓ | | |
 
 [`browser-control`](skills.md#browser-control) and [`issue-repro`](skills.md#issue-repro) list both browser servers because they route to either platform without knowing in advance which it will be.
 

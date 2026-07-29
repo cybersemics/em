@@ -19,6 +19,7 @@ allowed-tools:
   }
   ```
 
+- **In a local harness**, where that MCP server is not present, the `gh` CLI is the equivalent: `gh run list --branch "$(git rev-parse --abbrev-ref HEAD)"` to list, and `gh run view <id> --log-failed` to pull the failing log. Everything below applies unchanged — only the mechanism differs.
 - Wait for ALL in-progress runs to complete before reporting status. Never claim tests pass without actually checking.
 - For each workflow, report: passed, failed, or still running.
 - For failed workflows, pull the relevant log section showing the error.
