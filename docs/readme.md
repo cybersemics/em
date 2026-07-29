@@ -12,6 +12,10 @@ The in-repo documentation for **em**. The GitHub wiki is being deprecated in fav
 - [Drag and Drop](drag-and-drop.md) — react-dnd integration and drop targets.
 - [Layout Rendering](layout-rendering.md) — How thoughts are positioned in the absolute-flat-list layout, including the autocrop / vertical-autocrop mechanism.
 
+## Agents
+
+- [Agent Infrastructure](agents/readme.md) — How coding agents work on this repo: what the Copilot cloud agent reads, the skills they run, the environment and MCP servers behind them and the TDD workflow.
+
 ## Reference
 
 - [Glossary](glossary.md) — Project-specific terms (cliff, autofocus, lexeme, tangential context, tsid, …) with cross-links to the deeper docs. Start here if you encounter unfamiliar vocabulary.

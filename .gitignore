@@ -50,3 +50,8 @@ local.*
 /log
 /logs
 
+# per-user state when `docs` is opened as an Obsidian vault
+docs/.obsidian
+
+# scratch space – for throwaway scripts, notes, and logs
+/.local
