@@ -106,6 +106,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
   panResponder: PanResponderInstance
   scrolling = false
   sequence: Gesture = ''
+  touchTarget: Element | null = null
 
   constructor(props: MultiGestureProps) {
     super(props)
@@ -160,6 +161,9 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         const x = e.touches[0].clientX
         const y = e.touches[0].clientY
         this.clientStart = { x, y }
+        // Remember the element the browser pinned this touch to, so a release can still be detected
+        // if that element unmounts mid-gesture. See the pointerup listener below.
+        this.touchTarget = e.target instanceof Element ? e.target : null
         const inGestureZone = isInGestureZone(x, y, this.leftHanded)
 
         if (inGestureZone && !props.shouldCancelGesture?.(x, y)) {
@@ -188,17 +192,38 @@ class MultiGesture extends React.Component<MultiGestureProps> {
       this.reset()
     })
 
-    // Fallback release signal for the #3887 case where the touched DOM element unmounts mid-gesture
-    // (e.g. the EmptyThoughtspace → LayoutTree swap that fires once initial content loads). When the
-    // touch's original target is removed, the browser is free per the touch-events spec to silently
-    // drop the touchend, leaving PanResponder stuck and the gesture menu visible until the next
-    // touch. pointercancel goes through a separate event pipeline and does fire in this case.
-    // Capture phase so nothing downstream can stopPropagation before us; guarded on currentStart so
-    // it no-ops on normal gestures (where onPanResponderRelease's reset() has already cleared it).
+    // Fallback release signals for the #3887 case where the touched DOM element unmounts mid-gesture
+    // (e.g. the EmptyThoughtspace → LayoutTree swap that fires once initial content loads). The
+    // browser pins a touch to its touchstart target, so once that element is detached the remaining
+    // touchend is dispatched into the detached tree and never reaches the window listener above,
+    // leaving PanResponder stuck and the gesture menu visible until the next touch.
+    //
+    // Pointer events are not pinned the same way: pointerup is still dispatched through the document
+    // after the target is gone, so it is the reliable signal here. pointercancel is kept as a
+    // secondary net, but it is not dispatched on target removal in every engine, so it cannot be
+    // relied on alone.
+    //
+    // Both are registered in the capture phase so nothing downstream can stopPropagation first, and
+    // both no-op unless a gesture is in progress. pointerup additionally requires the original target
+    // to be detached, so a normal gesture is always released by onPanResponderRelease — regardless of
+    // whether the engine dispatches pointerup before or after touchend.
     document.addEventListener(
       'pointercancel',
       (e: PointerEvent) => {
         if (!this.currentStart) return
+        this.props.onCancel?.({ clientStart: this.clientStart, e })
+        this.reset()
+      },
+      true,
+    )
+
+    document.addEventListener(
+      'pointerup',
+      (e: PointerEvent) => {
+        if (!this.currentStart || this.touchTarget?.isConnected !== false) return
+        if (testFlags.logMultigesture) {
+          console.info('pointerup with detached touch target', { sequence: this.sequence })
+        }
         this.props.onCancel?.({ clientStart: this.clientStart, e })
         this.reset()
       },
@@ -330,6 +355,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     this.scrollYStart = null
     this.disableScroll = false
     this.sequence = ''
+    this.touchTarget = null
     clearGesture()
   }
 
