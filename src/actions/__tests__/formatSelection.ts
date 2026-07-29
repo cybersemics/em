@@ -35,21 +35,9 @@ const cursorValue = (): string => {
   return getThoughtById(state, head(state.cursor!))!.value
 }
 
-/** Selects the plain-text sub-range [start, end) of the cursor thought's editable. */
-const selectRange = (start: number, end: number) => {
-  const editable = getEditable()
-  const textNode = editable.firstChild!
-  const range = document.createRange()
-  range.setStart(textNode, start)
-  range.setEnd(textNode, end)
-  const sel = window.getSelection()!
-  sel.removeAllRanges()
-  sel.addRange(range)
-}
-
 /** Selects the plain-text sub-range [start, end) of the cursor thought's editable, walking across nested formatting
- * nodes (unlike selectRange, which assumes a single text node). */
-const selectPlainRange = (start: number, end: number) => {
+ * nodes. */
+const selectRange = (start: number, end: number) => {
   const editable = getEditable()
   const walker = document.createTreeWalker(editable, NodeFilter.SHOW_TEXT)
   let startNode: Node | null = null
@@ -152,7 +140,7 @@ describe('formatSelection', () => {
     expect(cursorValue()).toBe('Hello <b>Bold</b> World')
 
     // bold the entire thought
-    selectPlainRange(0, 'Hello Bold World'.length)
+    selectRange(0, 'Hello Bold World'.length)
     await dispatch(formatSelection('bold'))
     expect(cursorValue()).toBe('<b>Hello Bold World</b>')
   })
@@ -166,7 +154,7 @@ describe('formatSelection', () => {
     expect(cursorValue()).toBe('Hello <b>Bold</b> World')
 
     // bold "Bold World", which overlaps the existing bold on "Bold"
-    selectPlainRange('Hello '.length, 'Hello Bold World'.length)
+    selectRange('Hello '.length, 'Hello Bold World'.length)
     await dispatch(formatSelection('bold'))
     expect(cursorValue()).toBe('Hello <b>Bold World</b>')
   })
@@ -180,7 +168,7 @@ describe('formatSelection', () => {
     expect(cursorValue()).toBe('Hello <b>World</b>')
 
     // re-select the same range and bold again → the bold should toggle off
-    selectPlainRange('Hello '.length, 'Hello World'.length)
+    selectRange('Hello '.length, 'Hello World'.length)
     await dispatch(formatSelection('bold'))
     expect(cursorValue()).toBe('Hello World')
   })
@@ -194,7 +182,7 @@ describe('formatSelection', () => {
     expect(cursorValue()).toBe('Hello <b>World</b>')
 
     // select "orl" (a sub-range within the bold "World") and bold again → that sub-range should toggle off
-    selectPlainRange('Hello W'.length, 'Hello Worl'.length)
+    selectRange('Hello W'.length, 'Hello Worl'.length)
     await dispatch(formatSelection('bold'))
     expect(cursorValue()).toBe('Hello <b>W</b>orl<b>d</b>')
   })
@@ -202,7 +190,7 @@ describe('formatSelection', () => {
   it('bolds a whole thought whose leading text is italic, wrapping the outer tag', async () => {
     await dispatch([newThought({ value: '<i>Hello</i> World' })])
 
-    selectPlainRange(0, 'Hello World'.length)
+    selectRange(0, 'Hello World'.length)
     await dispatch(formatSelection('bold'))
     expect(cursorValue()).toBe('<b><i>Hello</i> World</b>')
   })
@@ -252,7 +240,7 @@ describe('formatSelection color', () => {
     await dispatch([newThought({ value: 'X<b>ab</b>Y' })])
 
     // color exactly the bold "ab"
-    selectPlainRange(1, 3)
+    selectRange(1, 3)
     await dispatch(formatSelection('foreColor', 'blue'))
 
     expect(cursorValue()).toBe('X<font color="#00c7e6"><b>ab</b></font>Y')
@@ -348,11 +336,11 @@ describe('formatSelection color', () => {
     await dispatch([newThought({ value: 'Lorem Ipsum Dolor Sit Amet' })])
 
     // green background on the first word "Lorem"
-    selectPlainRange(0, 'Lorem'.length)
+    selectRange(0, 'Lorem'.length)
     await dispatch(formatSelection('backColor', 'green'))
 
     // green background on the last word "Amet"
-    selectPlainRange('Lorem Ipsum Dolor Sit '.length, 'Lorem Ipsum Dolor Sit Amet'.length)
+    selectRange('Lorem Ipsum Dolor Sit '.length, 'Lorem Ipsum Dolor Sit Amet'.length)
     await dispatch(formatSelection('backColor', 'green'))
 
     expect(cursorValue()).toBe(
@@ -366,11 +354,11 @@ describe('formatSelection color', () => {
     await dispatch([newThought({ value: 'One two three' })])
 
     // green background on "two three"
-    selectPlainRange('One '.length, 'One two three'.length)
+    selectRange('One '.length, 'One two three'.length)
     await dispatch(formatSelection('backColor', 'green'))
 
     // red background on "One two"
-    selectPlainRange(0, 'One two'.length)
+    selectRange(0, 'One two'.length)
     await dispatch(formatSelection('backColor', 'red'))
 
     // "One two" is red; " three" remains green
@@ -420,7 +408,7 @@ describe('formatSelection color', () => {
   it('does not add markup when applying the default background to a thought with no background (#3901)', async () => {
     await dispatch([newThought({ value: 'Hello' })])
 
-    selectPlainRange(0, 'Hello'.length)
+    selectRange(0, 'Hello'.length)
     await dispatch(formatSelection('backColor', 'bg'))
 
     expect(cursorValue()).toBe('Hello')
