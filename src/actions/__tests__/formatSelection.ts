@@ -99,20 +99,6 @@ const noteVal = (): string | null => {
   return noteValue(state, state.cursor!)
 }
 
-/** Creates a thought "x" with a note, puts the cursor on the thought, and focuses the note. */
-const setupNote = async (note: string) => {
-  await dispatch([
-    importText({
-      text: `
-      - x
-        - =note
-          - ${note}`,
-    }),
-    setCursor(['x']),
-    toggleNote(),
-  ])
-}
-
 describe('formatSelection', () => {
   beforeEach(createTestApp)
   afterEach(cleanupTestApp)
@@ -448,7 +434,16 @@ describe('formatSelection note', () => {
 
   // #4009 / color.ts > "Toggle the background color of the note" (intermediate): a note can be given a background color
   it('applies a background color to a note', async () => {
-    await setupNote('Note')
+    await dispatch([
+      importText({
+        text: `
+      - x
+        - =note
+          - Note`,
+      }),
+      setCursor(['x']),
+      toggleNote(),
+    ])
 
     await dispatch(formatSelection('backColor', 'green'))
 
@@ -457,7 +452,16 @@ describe('formatSelection note', () => {
 
   // #3901 / color.ts > "Toggling note background color on and off should remove formatting tag"
   it('removes the background color from a note when toggled off', async () => {
-    await setupNote('Note')
+    await dispatch([
+      importText({
+        text: `
+      - x
+        - =note
+          - Note`,
+      }),
+      setCursor(['x']),
+      toggleNote(),
+    ])
 
     await dispatch(formatSelection('backColor', 'green'))
     expect(noteVal()).toBe('<font color="#000000" style="background-color: rgb(0, 214, 136);">Note</font>')
@@ -469,7 +473,16 @@ describe('formatSelection note', () => {
 
   // #3901: setting a foreground color on a note that has a background color removes the background
   it('setting a note foreground color removes its background color', async () => {
-    await setupNote('Note')
+    await dispatch([
+      importText({
+        text: `
+      - x
+        - =note
+          - Note`,
+      }),
+      setCursor(['x']),
+      toggleNote(),
+    ])
 
     await dispatch(formatSelection('backColor', 'green'))
 
@@ -481,7 +494,16 @@ describe('formatSelection note', () => {
   // #4657: a note can be explicitly set to white (the thought default color). White (fg, opaque) must not be treated as
   // the note's own default (fgNote, 50%-alpha white), which would clear it — the two differ only in opacity.
   it('sets a note foreground color to white', async () => {
-    await setupNote('Note')
+    await dispatch([
+      importText({
+        text: `
+      - x
+        - =note
+          - Note`,
+      }),
+      setCursor(['x']),
+      toggleNote(),
+    ])
 
     await dispatch(formatSelection('foreColor', 'fg'))
 
