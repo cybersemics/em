@@ -19,6 +19,9 @@
 #   2. Copy the URL into a repo secret named DISCORD_WEBHOOK_URL
 #   Notifications fire only when flakes or infra failures are found (no daily noise).
 #
+# Artifacts: only failed iterations upload vitest JSON. flaky-report.mjs filters to
+# failing tests only when building the summary / issue body.
+#
 # Report destinations:
 #   - Workflow run summary (always)
 #   - Long-lived GitHub issue (marker: <!-- flaky-test-report -->, label: flaky), upserted each run
@@ -150,25 +153,29 @@ jobs:
         uses: ./.github/actions/serve
 
       - name: Test
-        # Vitest still writes the JSON report on test failure; continue so the
-        # upload step runs. Infra crashes (OOM, cancel) leave no report and are
-        # flagged by the aggregator as infra failures.
+        # continue-on-error so a failed suite can still upload its vitest JSON.
+        # Successful iterations upload nothing; missing JSON ⇒ passed (see flaky-report.mjs).
+        # flaky-report.mjs ignores passed tests in the JSON and only reports failures.
         continue-on-error: true
         id: test
         run: |
           mkdir -p flaky-results
+          set +e
           yarn test:puppeteer \
             --reporter=default \
             --reporter=json \
             --outputFile=flaky-results/iteration-${{ matrix.iteration }}.json
+          status=$?
+          set -e
+          exit "$status"
 
-      - name: Upload iteration report
-        if: always()
+      - name: Upload failure report
+        if: steps.test.outcome == 'failure'
         uses: actions/upload-artifact@v7
         with:
           name: flaky-results-${{ matrix.iteration }}
           path: flaky-results/iteration-${{ matrix.iteration }}.json
-          if-no-files-found: warn
+          if-no-files-found: ignore
           retention-days: 7
 
   report:
@@ -181,7 +188,9 @@ jobs:
       - name: Clone repository
         uses: actions/checkout@v6
 
-      - name: Download all iteration reports
+      - name: Download failure reports
+        # Clean runs upload zero artifacts; ignore "not found" so aggregation still runs.
+        continue-on-error: true
         uses: actions/download-artifact@v7
         with:
           pattern: flaky-results-*
@@ -204,7 +213,7 @@ jobs:
 
           if [ -f flaky-results/flaky-summary.json ]; then
             CLEAN=$(node -e "console.log(JSON.parse(require('fs').readFileSync('flaky-results/flaky-summary.json','utf8')).clean)")
-            FLAKE_COUNT=$(node -e "console.log(JSON.parse(require('fs').readFileSync('flaky-results/flaky-summary.json','utf8')).flakeCount)")
+            FLAKE_COUNT=$(node -e "const s=JSON.parse(require('fs').readFileSync('flaky-results/flaky-summary.json','utf8')); console.log(s.failedTestCount ?? s.flakeCount ?? 0)")
             INFRA_COUNT=$(node -e "console.log(JSON.parse(require('fs').readFileSync('flaky-results/flaky-summary.json','utf8')).infraFailureCount)")
           else
             CLEAN=false
