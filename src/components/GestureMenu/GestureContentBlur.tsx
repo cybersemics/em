@@ -1,6 +1,7 @@
 import { animate, useMotionValue } from 'motion/react'
 import { FC, useEffect } from 'react'
 import { css } from '../../../styled-system/css'
+import { isAndroid } from '../../browser'
 import gestureStore from '../../stores/gesture'
 import durations from '../../util/durations'
 import ProgressiveBlur from '../ProgressiveBlur'
@@ -53,6 +54,9 @@ const GestureContentBlur: FC = () => {
         direction='to bottom'
         maxBlur={8}
         minBlur={3}
+        // Android/Chromium incurs a performance penalty from many concurrent backdrop-filter layers,
+        // so cap it to a single layer there; iOS/WebKit tolerates more, giving a smoother falloff.
+        layers={isAndroid ? 1 : 4}
         opacity={blurOpacity}
       />
     </div>

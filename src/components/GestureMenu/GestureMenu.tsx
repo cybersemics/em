@@ -18,7 +18,6 @@ import FadeTransition from '../FadeTransition'
 import PopupBase from '../PopupBase'
 import GestureContentBlur from './GestureContentBlur'
 import GestureMenuItem from './GestureMenuItem'
-import { GESTURE_MENU_BOTTOM_TAIL_REM, GESTURE_MENU_PADDING_REM, GESTURE_MENU_ROW_GAP_REM } from './constants'
 
 /**********************************************************************
  * Components
@@ -62,30 +61,25 @@ const GestureMenu: FC<{
         style={{ fontSize }}
       >
         {gestureInProgress && (
-          <div
-            style={{
-              padding: `${GESTURE_MENU_PADDING_REM}rem`,
-              ...(!isBrowser ? { paddingTop: '0.75rem' } : null),
-            }}
-          >
+          <div className={css({ padding: '2.25rem' })} style={!isBrowser ? { paddingTop: '0.75rem' } : undefined}>
             {/* Header */}
             <div className={css({ marginBottom: '1.389rem' })}>
               <div
-                style={{
+                className={css({
                   color: 'rgb(255, 255, 255, 0.7)',
                   marginBottom: '0.444rem',
                   fontSize: '0.9rem',
                   fontWeight: 500,
-                }}
+                })}
               >
                 Gestures
               </div>
               <div
-                style={{
+                className={css({
                   height: '1px',
                   width: '100%',
                   background: 'linear-gradient(90deg, rgba(174, 168, 214, 0.59) 0%, rgba(28, 27, 36, 0) 100%)',
-                }}
+                })}
               />
             </div>
 
@@ -94,8 +88,8 @@ const GestureMenu: FC<{
               className={css({
                 display: 'flex',
                 flexDirection: 'column',
+                gap: '1.2rem',
               })}
-              style={{ gap: `${GESTURE_MENU_ROW_GAP_REM}rem` }}
             >
               {mainCommands.map((command, index) => (
                 <GestureMenuItem
@@ -111,12 +105,12 @@ const GestureMenu: FC<{
             {/* Cancel / Cheatsheet block */}
             {persistentCommands.length > 0 && (
               <div
-                style={{
+                className={css({
                   display: 'flex',
                   flexDirection: 'column',
-                  marginTop: !mainCommands.length ? 0 : '2.15rem',
-                  gap: `${GESTURE_MENU_ROW_GAP_REM}rem`,
-                }}
+                  gap: '1.2rem',
+                })}
+                style={{ marginTop: !mainCommands.length ? 0 : '2.15rem' }}
               >
                 {persistentCommands.map((command, index) => {
                   const mobileCommandUniverseInProgress = gestureInProgress
@@ -284,9 +278,8 @@ const GestureMenuWithTransition: FC = () => {
                 // Keeps the compositor layer alive so Android WebView doesn't drop the subtree for a
                 // frame at fade end, flashing the sibling GestureContentBlur blur through the menu.
                 willChange: 'opacity',
+                paddingBottom: '11.111rem',
               })}
-              // paddingBottom sourced from GestureMenu/constants (shared with the content-blur tail).
-              style={{ paddingBottom: `${GESTURE_MENU_BOTTOM_TAIL_REM}rem` }}
             >
               <Overlay />
               {isGlowBackgroundLoaded && <Glow />}

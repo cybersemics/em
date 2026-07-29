@@ -8,7 +8,6 @@ import { gestureString } from '../../commands'
 import useGestureHighlight from '../../hooks/useGestureHighlight'
 import store from '../../stores/app'
 import GestureDiagram from '../GestureDiagram'
-import { GESTURE_MENU_ROW_LABEL_REM } from './constants'
 
 /** Returns true if the command can be executed in the current state. */
 const isExecutable = (state: State, command: Command) =>
@@ -91,6 +90,7 @@ const GestureMenuItem: FC<{
         <div
           className={css({
             lineHeight: '1em',
+            fontSize: '0.95rem',
             whiteSpace: 'nowrap',
             color: disabled ? 'gray45' : selected ? '#ffffff' : 'rgba(255, 255, 255, 0.6)',
             fontWeight: selected ? 600 : 400,
@@ -99,8 +99,6 @@ const GestureMenuItem: FC<{
                 ? '0px 0px 24px rgba(255, 255, 255, 0.8), 0px 0px 12px rgba(255, 255, 255, 0.6)'
                 : undefined,
           })}
-          // Sourced from GestureMenu/constants so the content-blur height formula stays in sync.
-          style={{ fontSize: `${GESTURE_MENU_ROW_LABEL_REM}rem` }}
         >
           {(isActive && command.labelInverse) || command.label}
         </div>
