@@ -8,7 +8,7 @@
 # Budget (public repo → Actions minutes are free; concurrency is the real limit):
 #   - 30 iterations × ~10 min ≈ 300 job-minutes/day
 #   - max-parallel: 15 uses most of the ~20 concurrent slots (expect PR CI to queue while this runs)
-#   - wall-clock ≈ 20–30 min at 02:30 UTC (low-traffic window)
+#   - wall-clock ≈ 20–30 min starting ~10:09 UTC (15:54 NPT)
 #   - build once, reuse via artifact (avoids 29 redundant builds)
 #
 # Manual dispatch:
@@ -30,10 +30,9 @@
 name: Puppeteer Flaky
 
 on:
-  # Cron disabled while validating the workflow; re-enable when ready:
-  # schedule:
-  #   # Daily at 02:30 UTC — low overlap with typical PR activity
-  #   - cron: '30 2 * * *'
+  schedule:
+    # Daily at 10:09 UTC (= 15:54 NPT / Asia/Kathmandu)
+    - cron: '9 10 * * *'
   workflow_dispatch:
     inputs:
       iterations:
