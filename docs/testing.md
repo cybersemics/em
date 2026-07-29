@@ -231,6 +231,8 @@ The project has multiple levels of automated testing, from single function unit 
 
 **Use the lowest level that is sufficient for your test case.** If your test case does not require a DOM, use a unit test. If it requires a DOM but is not browser or device-specific, use a React Testing Library (RTL) test. Higher-level tests may provide a more realistic testing environment, but they are slower and, in the case of WebdriverIO on BrowserStack, cost per minute of usage.
 
+**Cover each behavior at exactly one level.** Once a unit, store, or JSDOM test proves a behavior, do not add a Puppeteer or iOS test that proves the same thing again. A higher-level test is justified only by a distinct risk that the lower-level test cannot cover, such as real browser or device behavior, input mapping, or a visual regression. Redundant integration tests add no coverage and lengthen every future test run.
+
 Mock an external boundary only when that boundary is not the subject of the test. Do not mock the function or effect being proved, reimplement a rendered component inside its test, or assert only that a mock behaved as configured. When JSDOM cannot exercise the relevant browser behavior—layout, scrolling, selection, native input, and similar APIs—move the test to Puppeteer instead of replacing the behavior with a mock.
 
 ### 1. Unit Tests
