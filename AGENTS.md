@@ -19,6 +19,6 @@
 
 ## Code standards
 
-See [`.github/instructions/code-standards.instructions.md`](.github/instructions/code-standards.instructions.md) and [`.github/instructions/testing.instructions.md`](.github/instructions/testing.instructions.md). These describe the conventions the codebase follows.
+See [`.github/instructions/code-standards.instructions.md`](.github/instructions/code-standards.instructions.md) and [`.github/instructions/testing.instructions.md`](.github/instructions/testing.instructions.md). These describe the conventions the codebase follows. 
 
 Testing guidance lives in [`docs/testing.md`](docs/testing.md) — read it in full before writing tests.
