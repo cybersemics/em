@@ -152,7 +152,4 @@ const gesture = async (
   if (!hold) await activeGesture.end()
 }
 
-/** End a gesture that was started with hold: true. */
-export const endGesture = () => page.touchscreen.touchEnd()
-
 export default gesture

@@ -3,11 +3,11 @@ import newSubthoughtCommand from '../../../commands/newSubthought'
 import newThoughtCommand from '../../../commands/newThought'
 import $ from '../helpers/$'
 import exportThoughts from '../helpers/exportThoughts'
-import gesture, { endGesture, startGesture } from '../helpers/gesture'
+import gesture, { startGesture } from '../helpers/gesture'
 import keyboard from '../helpers/keyboard'
 import paste from '../helpers/paste'
-import reloadWithProductionTiming from '../helpers/reloadWithProductionTiming'
 import scrollTo from '../helpers/scrollTo'
+import setOfflineStatus from '../helpers/setOfflineStatus'
 import waitForSelector from '../helpers/waitForSelector'
 import { page } from '../session'
 
@@ -71,20 +71,24 @@ describe('gestures', () => {
   })
 
   // https://github.com/cybersemics/em/issues/3887
-  it('releases a gesture when its loading target unmounts', async () => {
-    await reloadWithProductionTiming()
+  it('releases a gesture whose touch target unmounts mid-gesture', async () => {
+    // The loading indicator is the element that unmounts under the user's finger in the reported
+    // bug: it is replaced by the thoughtspace once content loads.
+    await setOfflineStatus('connecting')
     await waitForSelector('[data-loading-indicator]')
 
-    try {
-      await gesture('d', { hold: true, target: '[data-loading-indicator]' })
-      await waitForSelector('[data-testid=popup-value]')
+    const activeGesture = await startGesture({ target: '[data-loading-indicator]' })
+    await activeGesture.move('d')
+    await waitForSelector('[data-testid=popup-value]')
 
-      await waitForSelector('[data-loading-indicator]', { hidden: true })
-    } finally {
-      await endGesture()
-    }
+    // Unmount the touch target while the touch is still held.
+    await setOfflineStatus('connected')
+    await waitForSelector('[data-loading-indicator]', { hidden: true })
 
-    await waitForSelector('[data-testid=popup-value]', { hidden: true })
+    await activeGesture.end()
+
+    // Bounded wait so that a stuck menu fails the assertion below rather than the runner's timeout.
+    await waitForSelector('[data-testid=popup-value]', { hidden: true, timeout: 5000 }).catch(() => undefined)
     expect(await $('[data-testid=popup-value]')).toBeNull()
   })
 
