@@ -10,6 +10,7 @@ import hashPath from '../util/hashPath'
 const addMulticursor = (state: State, { path }: { path: Path }): State => ({
   ...state,
   ...(state.alert?.alertType === AlertType.ScrollZoneHelp ? { alert: null } : null),
+  multicursorAnchor: null,
   multicursors: {
     ...state.multicursors,
     [hashPath(path)]: path,

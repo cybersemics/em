@@ -12,9 +12,7 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
-import { addMulticursorActionCreator as addMulticursor } from '../actions/addMulticursor'
 import { selectBetweenActionCreator as selectBetween } from '../actions/selectBetween'
-import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
 import { isMac, isTouch } from '../browser'
 import { AlertType, REGEX_TAGS } from '../constants'
@@ -514,29 +512,30 @@ const ThoughtContainer = ({
   //   ...dragHoldResult.props,
   // })
 
+  const multicursorAnchor = useSelector(state => state.multicursorAnchor)
+
   /** Handles multicursor activation. */
   const handleMultiselect = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
       if (isTouch) return
 
       const mouseEvent = e as React.MouseEvent
+      const isToggleMulticursor = isMac ? mouseEvent.metaKey : mouseEvent.ctrlKey
 
-      // Shift + Click selects all thoughts between the clicked thought and the previously selected thought.
-      if (mouseEvent.shiftKey) {
+      // Once Select Between is active, Cmd/Ctrl + Click and Shift + Click both adjust its endpoint.
+      if (mouseEvent.shiftKey || (isToggleMulticursor && multicursorAnchor)) {
         e.preventDefault()
-        // move the cursor to the clicked thought so selectBetween resolves the correct sibling level,
-        // preserving the existing multicursor selection, then add the clicked thought and fill the range
-        dispatch([setCursor({ path, preserveMulticursor: true }), addMulticursor({ path }), selectBetween()])
+        dispatch(selectBetween({ path }))
         return
       }
 
       // Cmd/Ctrl + Click toggles the clicked thought in the multicursor selection.
-      if (isMac ? mouseEvent.metaKey : mouseEvent.ctrlKey) {
+      if (isToggleMulticursor) {
         e.preventDefault()
         dispatch(toggleMulticursor({ path }))
       }
     },
-    [dispatch, path],
+    [dispatch, multicursorAnchor, path],
   )
 
   // Use custom hook for col1 alignment

@@ -161,6 +161,7 @@ const setCursor = (
     cursorInitialized: true,
     ...(!preserveMulticursor
       ? {
+          multicursorAnchor: null,
           multicursors: {},
         }
       : null),

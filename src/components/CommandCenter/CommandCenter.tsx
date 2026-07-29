@@ -16,6 +16,7 @@ import favorite from '../../commands/favorite'
 import indent from '../../commands/indent'
 import note from '../../commands/note'
 import outdent from '../../commands/outdent'
+import selectBetween from '../../commands/selectBetween'
 import swapParent from '../../commands/swapParent'
 import uncategorize from '../../commands/uncategorize'
 import isTutorial from '../../selectors/isTutorial'
@@ -280,6 +281,7 @@ const CommandCenter = () => {
                     <PanelCommand command={{ ...indent, label: '' }} size='small' />
                   </PanelCommandGroup>
                   <PanelCommand command={swapParent} size='medium' />
+                  <PanelCommand command={selectBetween} size='medium' />
                   <PanelCommand command={categorize} size='medium' />
                   <PanelCommand command={uncategorize} size='medium' />
                 </div>
