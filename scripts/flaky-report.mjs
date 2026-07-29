@@ -7,11 +7,14 @@
  *   node scripts/flaky-report.mjs <results-dir> <expected-iterations> [run-url]
  *
  * Looks for files named iteration-<n>.json under <results-dir> (recursively).
- * Missing or unparseable files are counted as infra failures (job died before
- * vitest finished), distinct from test flakes.
+ *
+ * CI only uploads JSON for **failed** iterations (trimmed to failing tests).
+ * A missing iteration-<n>.json therefore means that iteration passed (or was
+ * skipped without a report) — not an infra failure. Unparseable / malformed
+ * reports are still counted as infra failures.
  *
  * Exit codes:
- *   0 — clean run (every iteration produced a report and every test passed)
+ *   0 — clean run (no failure reports, or no failing tests in them)
  *   1 — flakes and/or infra failures found
  *   2 — usage / fatal error
  *
@@ -105,22 +108,24 @@ const reports = collectReports(resultsDir)
 /** @type {{ iteration: number, reason: string }[]} */
 const infraFailures = []
 
-for (let i = 1; i <= expectedIterations; i++) {
-  if (!reports.has(i)) {
-    infraFailures.push({ iteration: i, reason: 'missing report (job may have been cancelled, timed out, or crashed before vitest finished)' })
-  }
-}
-
 /**
  * Per-test aggregate: key = `${file}\0${fullName}`
- * @type {Map<string, { file: string, fullName: string, failed: number[], passed: number, firstError: string }>}
+ * @type {Map<string, { file: string, fullName: string, failed: number[], firstError: string }>}
  */
 const tests = new Map()
 
-let parsedIterations = 0
+let failedIterations = 0
 let totalFailedAssertions = 0
 
 for (const [iteration, path] of [...reports.entries()].sort((a, b) => a[0] - b[0])) {
+  if (iteration < 1 || iteration > expectedIterations) {
+    infraFailures.push({
+      iteration,
+      reason: `report iteration ${iteration} is outside expected range 1..${expectedIterations}`,
+    })
+    continue
+  }
+
   let data
   try {
     data = JSON.parse(readFileSync(path, 'utf8'))
@@ -129,7 +134,6 @@ for (const [iteration, path] of [...reports.entries()].sort((a, b) => a[0] - b[0
       iteration,
       reason: `unparseable report (${relative(resultsDir, path)}): ${e instanceof Error ? e.message : String(e)}`,
     })
-    reports.delete(iteration)
     continue
   }
 
@@ -141,7 +145,7 @@ for (const [iteration, path] of [...reports.entries()].sort((a, b) => a[0] - b[0
     continue
   }
 
-  parsedIterations++
+  failedIterations++
 
   for (const fileResult of data.testResults) {
     const file = shortPath(fileResult.name || 'unknown')
@@ -153,7 +157,7 @@ for (const [iteration, path] of [...reports.entries()].sort((a, b) => a[0] - b[0
       const key = `${file}\0${fullName}`
       let entry = tests.get(key)
       if (!entry) {
-        entry = { file, fullName, failed: [], passed: 0, firstError: fileResult.message || '' }
+        entry = { file, fullName, failed: [], firstError: fileResult.message || '' }
         tests.set(key, entry)
       }
       entry.failed.push(iteration)
@@ -162,39 +166,34 @@ for (const [iteration, path] of [...reports.entries()].sort((a, b) => a[0] - b[0
     }
 
     for (const assertion of assertions) {
+      // Failure-only artifacts: ignore non-failed assertions if present.
+      if (assertion.status !== 'failed') continue
+
       const fullName = assertion.fullName || assertion.title || '(unnamed)'
       const key = `${file}\0${fullName}`
       let entry = tests.get(key)
       if (!entry) {
-        entry = { file, fullName, failed: [], passed: 0, firstError: '' }
+        entry = { file, fullName, failed: [], firstError: '' }
         tests.set(key, entry)
       }
 
-      if (assertion.status === 'failed') {
-        entry.failed.push(iteration)
-        totalFailedAssertions++
-        if (!entry.firstError && assertion.failureMessages?.length) {
-          entry.firstError = assertion.failureMessages[0]
-        }
-      } else if (assertion.status === 'passed') {
-        entry.passed++
+      entry.failed.push(iteration)
+      totalFailedAssertions++
+      if (!entry.firstError && assertion.failureMessages?.length) {
+        entry.firstError = assertion.failureMessages[0]
       }
-      // skipped / pending / todo — ignore for flake rates
     }
   }
 }
 
-/** Tests that failed at least once and passed at least once, or failed intermittently across iterations. */
 const flakes = [...tests.values()]
   .filter(t => t.failed.length > 0)
   .sort((a, b) => b.failed.length - a.failed.length || a.file.localeCompare(b.file) || a.fullName.localeCompare(b.fullName))
 
-// A "flake" in the stress-test sense is any test that failed in at least one
-// iteration. Consistent failures (failed every parsed iteration) are still
-// surfaced — they are regressions, not intermittent flakes, but the daily
-// report must not hide them.
-const intermittent = flakes.filter(t => t.failed.length < parsedIterations)
-const consistent = flakes.filter(t => parsedIterations > 0 && t.failed.length === parsedIterations)
+// Denominator is expectedIterations: missing reports are treated as passes.
+const intermittent = flakes.filter(t => t.failed.length < expectedIterations)
+const consistent = flakes.filter(t => t.failed.length === expectedIterations)
+const passedIterationCount = Math.max(0, expectedIterations - failedIterations - infraFailures.length)
 
 const runLink = runUrl ? `[Workflow run](${runUrl})` : ''
 const now = new Date().toISOString()
@@ -211,17 +210,18 @@ lines.push('')
 lines.push(`| Metric | Value |`)
 lines.push(`| --- | --- |`)
 lines.push(`| Expected iterations | ${expectedIterations} |`)
-lines.push(`| Parsed reports | ${parsedIterations} |`)
+lines.push(`| Failed iterations (reports) | ${failedIterations} |`)
+lines.push(`| Passed iterations (no report) | ${passedIterationCount} |`)
 lines.push(`| Infra failures | ${infraFailures.length} |`)
 lines.push(`| Tests with ≥1 failure | ${flakes.length} |`)
 lines.push(`| Intermittent (failed some, not all) | ${intermittent.length} |`)
-lines.push(`| Consistent (failed every parsed iteration) | ${consistent.length} |`)
+lines.push(`| Consistent (failed every iteration) | ${consistent.length} |`)
 lines.push('')
 
 if (infraFailures.length > 0) {
   lines.push('## Infra failures')
   lines.push('')
-  lines.push('These iterations did not produce a usable vitest JSON report (distinct from test failures).')
+  lines.push('Uploaded reports that could not be parsed (distinct from test failures). Missing reports are treated as passed iterations.')
   lines.push('')
   for (const f of infraFailures.sort((a, b) => a.iteration - b.iteration)) {
     lines.push(`- **iteration ${f.iteration}**: ${f.reason}`)
@@ -232,12 +232,12 @@ if (infraFailures.length > 0) {
 if (flakes.length === 0 && infraFailures.length === 0) {
   lines.push('## Result')
   lines.push('')
-  lines.push(`Clean run: all ${parsedIterations} iterations produced reports and every test passed.`)
+  lines.push(`Clean run: all ${expectedIterations} iterations passed (no failure reports uploaded).`)
   lines.push('')
 } else if (flakes.length > 0) {
   lines.push('## Failing tests')
   lines.push('')
-  lines.push('Failure rate is `failed / parsed iterations`. Iteration numbers link to the parent workflow run (open the matching matrix job for logs).')
+  lines.push('Failure rate is `failed / expected iterations`. Missing iteration reports count as passes. Iteration numbers link to the parent workflow run (open the matching matrix job for logs).')
   lines.push('')
 
   const renderGroup = (title, list) => {
@@ -245,7 +245,7 @@ if (flakes.length === 0 && infraFailures.length === 0) {
     lines.push(`### ${title}`)
     lines.push('')
     for (const t of list) {
-      const rate = `${t.failed.length}/${parsedIterations}`
+      const rate = `${t.failed.length}/${expectedIterations}`
       const iters = t.failed
         .map(i => (runUrl ? `[${i}](${runUrl})` : String(i)))
         .join(', ')
@@ -274,7 +274,8 @@ const summary = {
   generatedAt: now,
   runUrl,
   expectedIterations,
-  parsedIterations,
+  failedIterations,
+  passedIterations: passedIterationCount,
   infraFailureCount: infraFailures.length,
   flakeCount: flakes.length,
   intermittentCount: intermittent.length,
@@ -285,7 +286,7 @@ const summary = {
     file: t.file,
     fullName: t.fullName,
     failed: t.failed.length,
-    of: parsedIterations,
+    of: expectedIterations,
   })),
   infraFailures,
   markdown,
