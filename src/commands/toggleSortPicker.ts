@@ -1,7 +1,7 @@
 import Command from '../@types/Command'
 import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import Icon from '../components/icons/SortWithPicker'
-import { getAllChildrenSorted, getChildrenRanked } from '../selectors/getChildren'
+import { getChildrenRanked, getSortComparator } from '../selectors/getChildren'
 import getSortPreference from '../selectors/getSortPreference'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
@@ -41,12 +41,16 @@ const toggleSortCommand: Command = {
     const sortPreference = getSortPreference(state, id)
     if (sortPreference.type === 'None') return null
 
-    // ignore empty thoughts since they are not sorted
-    const childrenSorted = getAllChildrenSorted(state, id).filter(child => child.value)
+    const comparator = getSortComparator(state, id)
+    if (!comparator) return null
+
+    // ignore empty thoughts since they are sorted to their point of creation rather than by the sort condition
     const childrenRanked = getChildrenRanked(state, id).filter(child => child.value)
 
-    return childrenSorted.length === childrenRanked.length &&
-      !childrenRanked.every((_, i) => childrenRanked[i].id === childrenSorted[i].id)
+    // The ranks match the sort condition as long as the rank order contains no strict inversion, i.e. no adjacent
+    // pair where the earlier-ranked thought sorts after the later-ranked one. Ties (equal sort keys, e.g. duplicate
+    // values) are permitted in either order, so a newly-created duplicate no longer produces a false error (#4483).
+    return childrenRanked.some((child, i) => i > 0 && comparator(childrenRanked[i - 1], child) > 0)
       ? 'Ranks do not match sort condition'
       : null
   },

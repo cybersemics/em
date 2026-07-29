@@ -15,6 +15,9 @@ on:
 # Serialize BrowserStack runs repo-wide. Every run draws from the same shared parallel-session pool, so
 # overlapping runs (a main push + PR syncs + reruns) can over-subscribe it and fail with session-creation
 # timeouts. Allowing one active run at a time keeps total live sessions within maxInstances.
+# (The Cloudflare tunnel pool tolerates concurrent connectors on its own — see
+# cloudflareTunnelPool.ts's self-verifying claim — so this serialization is purely about the
+# BrowserStack session cap now, not the tunnel.)
 # cancel-in-progress: false queues runs instead of cancelling them, so no run is dropped.
 # queue: max extends the queue from the default 1 to the maximum of 100, ensuring runs don't get silently
 # dropped if lots of jobs queue up.
@@ -46,21 +49,27 @@ jobs:
         with:
           ref: ${{github.event.pull_request.head.ref}}
           repository: ${{github.event.pull_request.head.repo.full_name}}
+          # v6 (upgraded from v4 in #3981) refuses to check out fork PR code from a
+          # pull_request_target workflow unless this is set. Untrusted fork code is
+          # gated by GitHub's "require approval for outside collaborators" setting.
+          # https://gh.io/securely-using-pull_request_target
+          allow-unsafe-pr-checkout: true
 
       # `pull_request_target` runs the workflow file from the default branch but checks out the PR's
-      # head code. PRs that branched before the HTTPS dev server migration use an HTTP-only dev
-      # server with no token gate; PRs at or after it use HTTPS + a tunnel-token gate. Detect which
-      # mode the checked-out code is in so the health check probes the right protocol and we only
-      # generate a tunnel token when one is needed.
-      - name: Detect dev server mode
+      # head code, which may predate the tunnel-token gate. Detect whether the checked-out code has
+      # that gate so we only generate a token when one is needed, and only send it when the server
+      # expects it. The gate arrived with the HTTPS dev server migration, so plugin-basic-ssl is the
+      # marker for it. Note this says nothing about the protocol any more: the Serve step forces
+      # HTTP=1, so the dev server is plain HTTP either way.
+      - name: Detect token gate
         id: server_mode
         run: |
           if grep -q "@vitejs/plugin-basic-ssl" vite.config.ts; then
-            echo "https=true" >> "$GITHUB_OUTPUT"
-            echo "Mode: HTTPS"
+            echo "has_token_gate=true" >> "$GITHUB_OUTPUT"
+            echo "Token gate: present"
           else
-            echo "https=false" >> "$GITHUB_OUTPUT"
-            echo "Mode: HTTP (PR predates HTTPS dev server migration)"
+            echo "has_token_gate=false" >> "$GITHUB_OUTPUT"
+            echo "Token gate: absent (PR predates the HTTPS dev server migration)"
           fi
 
       - name: Enable Corepack
@@ -79,7 +88,7 @@ jobs:
         run: yarn build
 
       - name: Generate tunnel token
-        if: steps.server_mode.outputs.https == 'true'
+        if: steps.server_mode.outputs.has_token_gate == 'true'
         run: |
           TOKEN=$(openssl rand -hex 16)
           echo "::add-mask::$TOKEN"
@@ -87,24 +96,33 @@ jobs:
 
       - name: Serve
         env:
-          USE_HTTPS: ${{ steps.server_mode.outputs.https }}
+          HAS_TOKEN_GATE: ${{ steps.server_mode.outputs.has_token_gate }}
         run: |
-          yarn servebuild &
+          # Bind 0.0.0.0 (--host) so the app is reachable via the runner's localhost by the
+          # cloudflared connector (which the wdio config starts). Capture the PID and tee output
+          # to serve.log so the readiness loop and the cleanup step can use them.
+          # HTTP=1 forces a plain-HTTP origin here: Cloudflare's tunnel already terminates HTTPS at its edge for Safari (a real CA-signed cert on the public hostname), so this local connector-to-origin hop never needs its own TLS.
+          HTTP=1 yarn servebuild --host > serve.log 2>&1 &
+          echo "APP_PID=$!" >> "$GITHUB_ENV"
 
           echo "Waiting for server to be ready..."
+          # Code with the gate rejects an untokened request with 403, so the probe has to carry the
+          # token; code without it has no token to carry. Either way the origin is plain HTTP.
+          if [ "$HAS_TOKEN_GATE" = "true" ]; then
+            TOKEN_PARAM="?__token=$TUNNEL_TOKEN"
+          else
+            TOKEN_PARAM=""
+          fi
           for i in {1..30}; do
-            if [ "$USE_HTTPS" = "true" ]; then
-              HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -k "https://localhost:3000?__token=$TUNNEL_TOKEN" 2>/dev/null || echo "000")
-            else
-              HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:3000" 2>/dev/null || echo "000")
-            fi
+            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:3000$TOKEN_PARAM" 2>/dev/null || echo "000")
             if [ "$HTTP_STATUS" = "200" ]; then
               echo "Server is ready!"
               break
             fi
             echo "Attempt $i/30: status $HTTP_STATUS"
             if [ $i -eq 30 ]; then
-              echo "Server failed to respond after 30 attempts"
+              echo "Server failed to respond after 30 attempts. Server log:"
+              cat serve.log || true
               exit 1
             fi
             sleep 1
@@ -118,3 +136,26 @@ jobs:
           BROWSERSTACK_BUILD_NAME: 'CI - ${{github.run_id}}'
           BROWSERSTACK_PROJECT_NAME: 'em'
           TUNNEL_TOKEN: ${{env.TUNNEL_TOKEN}}
+          # A JSON array of { name, hostname, token }, provisioned out-of-band — see
+          # cloudflareTunnelPool.ts. The wdio config checks each tunnel's occupancy before attaching
+          # to it, claims the first one that is genuinely free, and waits for a slot if they are all
+          # busy — so a dead or already-claimed tunnel doesn't block the run.
+          CLOUDFLARE_TUNNEL_POOL: ${{secrets.CLOUDFLARE_TUNNEL_POOL}}
+
+      # Best-effort cleanup on the ephemeral runner: stop the manually-started app and preserve
+      # the named connector's log for diagnosis. The connector process itself is killed by the
+      # wdio config's onComplete hook.
+      - name: Stop app
+        if: always()
+        run: |
+          if [ -n "$APP_PID" ]; then
+            kill "$APP_PID" 2>/dev/null || true
+          fi
+
+      - name: Upload cloudflared connector log
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: cloudflared-browserstack-log
+          path: cloudflared-browserstack.log
+          if-no-files-found: ignore
