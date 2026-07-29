@@ -207,6 +207,43 @@ wdio documentation:
 - https://webdriver.io/docs/configurationfile
 - https://webdriver.io/docs/browserstack-service
 
+#### Cloudflare tunnel for the dev server
+
+BrowserStack's iOS Safari devices load the app over a public HTTPS URL rather than BrowserStack Local, because Safari blocks `localStorage` on self-signed certs. [`wdio.browserstack.conf.ts`](../src/e2e/iOS/config/wdio.browserstack.conf.ts) exposes the local dev server (`https://localhost:3000`) through a pool of **named Cloudflare Tunnels** on our own domain, `emthought.cc`, using [`cloudflared`](https://github.com/cloudflare/cloudflared) (the npm binary — no Docker). This is used by every path that runs iOS Safari tests: [`ios.yml`](../.github/workflows/ios.yml), the iOS job in [`tdd.yml`](../.github/workflows/tdd.yml), and local/agent `yarn test:ios` runs.
+
+We use a fixed-domain pool rather than the ephemeral `*.trycloudflare.com` quick tunnel `cloudflared` offers out of the box, because that quick-tunnel hostname is random and third-party — allowlisting it in the Copilot agent firewall means allowlisting *anyone's* `trycloudflare.com` tunnel, not just ours. A pool of tunnels on a domain we own lets us allowlist exactly what we need, while still tolerating a dead or already-claimed tunnel (see below).
+
+> The dev server is served over plain **HTTP** in CI (the `Serve` step sets `HTTP=1`; Cloudflare terminates TLS at its edge, so the connector-to-origin hop needs none of its own). Vite enforces `server.allowedHosts`/`preview.allowedHosts` for HTTP servers, so the pool's public hostnames **must** be listed there — `.emthought.cc` appears in both in [`vite.config.ts`](../vite.config.ts). `preview.allowedHosts` does not inherit from `server.allowedHosts`, and `yarn servebuild` (vite preview) is what CI actually runs, so both entries are load-bearing.
+
+##### How a run claims a tunnel
+
+[`cloudflareTunnelPool.ts`](../src/e2e/iOS/config/cloudflareTunnelPool.ts) exports `findFirstAvailableTunnel(pool, appGateToken)`, called from `wdio.browserstack.conf.ts`'s `onPrepare`. `pool` comes from the `CLOUDFLARE_TUNNEL_POOL` env var (a JSON array of `{ name, hostname, token }`); `appGateToken` is the per-run `TUNNEL_TOKEN` (the Vite app-gate secret — see `tunnelTokenGate` in [`vite.config.ts`](../vite.config.ts)).
+
+A named tunnel accepts multiple simultaneous connectors (that's Cloudflare's HA design) and the edge load-balances **per request** across all of them. So once a run has attached its own connector it can no longer tell whether a hostname is exclusively its own: a `200` might be its own server and a `403` someone else's, at random. A single successful probe proves nothing — confirmed empirically, where two concurrent runs both got a clean `200` on the same tunnel and then had cross-talk for the rest of their sessions.
+
+The fix is to ask **before** attaching. For each candidate, in turn, the run requests `https://<hostname>/__tunnel-status` with no connector of its own in the mix, so anything that answers is unambiguously another run:
+
+- **`530`** (Cloudflare error 1033, no connector registered) — nobody home, the candidate is free.
+- **`200`** — an em instance is already answering; the payload carries its `GITHUB_RUN_ID`, so the log names the occupying run (and a run can recognise its own leftover connector rather than mistaking it for a competitor).
+- **`403`** — an em instance is answering but predates the status route; still occupied.
+
+Only then does the run attach its connector, and it requires a burst of consecutive successful token probes (each over a fresh connection, since a pooled one would re-test the same backend every time) before trusting the claim. The pre-check is not a lock — two runs can see the same tunnel free in the same instant — so the burst remains as the backstop for that race.
+
+If every tunnel is occupied the run waits, rescanning the pool every 10s for up to 45 minutes, rather than failing immediately. The starting index is derived from `GITHUB_RUN_ID` (or the PID locally) so concurrent runs spread across the pool instead of all racing for the first entry.
+
+This means `ios.yml`, `tdd.yml`, and local/agent runs can safely run concurrently against the same pool without a shared cross-workflow lock — each just claims whichever tunnel is free. (The `browserstack` concurrency group in `ios.yml` still exists, but purely because of BrowserStack's own shared parallel-session cap, not the tunnel.)
+
+##### One-time setup: provisioning the pool
+
+> The provisioning script is deliberately **not committed** — it is an operator tool for whoever administers the pool, not part of the app, and it is gitignored. Ask the pool administrator for a copy if you need to create or top up tunnels; nothing in normal development or CI requires it.
+
+Requires an **Account**-scoped Cloudflare permission grant including `Cloudflare One Connector: cloudflared Write` (Tunnel management is an account resource, not zone-scoped — a zone-scoped grant like the one used for `emthought.cc`'s bot/firewall settings does not cover it).
+
+1. `cloudflared tunnel login`, authorizing the `emthought.cc` zone.
+2. Run `provision-cloudflare-tunnel-pool.sh` (defaults to 20 tunnels named `browserstack-01.emthought.cc` … `browserstack-20.emthought.cc`). It creates each tunnel, routes its DNS CNAME, and fetches its connector token via the CLI — no dashboard steps, no timing-sensitive "catch the connector while it's live" dance.
+3. The script writes `cloudflare-tunnel-pool.json` (gitignored — it contains live tokens). Set its contents as the GitHub Actions secret `CLOUDFLARE_TUNNEL_POOL`: `gh secret set CLOUDFLARE_TUNNEL_POOL < cloudflare-tunnel-pool.json`.
+4. Re-run the script (same or a larger `POOL_SIZE`) any time to top up the pool — it reuses tunnels that already exist rather than recreating them.
+
 Related tests: [/src/e2e/iOS](../src/e2e/iOS)
 
 ## Vitest configuration

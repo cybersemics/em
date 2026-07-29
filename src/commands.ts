@@ -14,7 +14,6 @@ import Key from './@types/Key'
 import MulticursorFilter from './@types/MulticursorFilter'
 import Path from './@types/Path'
 import State from './@types/State'
-import ThoughtId from './@types/ThoughtId'
 import { addMulticursorActionCreator as addMulticursor } from './actions/addMulticursor'
 import { alertActionCreator as alert } from './actions/alert'
 import { clearMulticursorsActionCreator as clearMulticursors } from './actions/clearMulticursors'
@@ -33,10 +32,12 @@ import { AlertType, COMMAND_PALETTE_TIMEOUT, HOME_PATH, LongPressState, Settings
 import * as selection from './device/selection'
 import globals from './globals'
 import documentSort from './selectors/documentSort'
+import getThoughtById from './selectors/getThoughtById'
 import getUserSetting from './selectors/getUserSetting'
 import hasMulticursor from './selectors/hasMulticursor'
 import isAllSelected from './selectors/isAllSelected'
 import isUndoEnabled from './selectors/isUndoEnabled'
+import splitChain from './selectors/splitChain'
 import thoughtToPath from './selectors/thoughtToPath'
 import store from './stores/app'
 import editingValueStore from './stores/editingValue'
@@ -266,10 +267,13 @@ const filterCursors = (state: State, cursors: Path[], filter: MulticursorFilter 
   }
 }
 
-/** Recomputes the path to a thought. Returns null if the thought does not exist. */
-const recomputePath = (state: State, thoughtId: ThoughtId) => {
-  const path = thoughtToPath(state, thoughtId)
-  return path && equalPath(path, HOME_PATH) ? null : path
+/** Recomputes a path after a command has executed, in case the thought was moved. Returns null if the thought no longer exists. Paths that cross a context view are returned as-is, since they do not follow the parent chain and therefore cannot be reconstructed by thoughtToPath. */
+const recomputePath = (state: State, path: Path): Path | null => {
+  // e.g. a/m~/a does not follow the parent chain (the trailing a is a context of the Lexeme m, whose real parent is the root), so thoughtToPath would collapse it to a.
+  if (splitChain(state, path).length > 1) return getThoughtById(state, head(path)) ? path : null
+
+  const recomputed = thoughtToPath(state, head(path))
+  return recomputed && equalPath(recomputed, HOME_PATH) ? null : recomputed
 }
 
 /** Execute a single command. Defaults to global store and keyboard shortcuts. Use `executeCommandWithMulticursor` to execute a command with multicursor mode. */
@@ -371,7 +375,7 @@ export const executeCommandWithMulticursor = (
   } else {
     for (const path of filteredPaths) {
       // Make sure we have the correct path to the thought in case it was moved during execution.
-      const recomputedPath = recomputePath(commandStore.getState(), head(path))
+      const recomputedPath = recomputePath(commandStore.getState(), path)
       if (!recomputedPath) continue
 
       commandStore.dispatch(setCursor({ path: recomputedPath }))
@@ -382,14 +386,14 @@ export const executeCommandWithMulticursor = (
   // Restore the cursor to its original value if not prevented.
   // Note that state.cursor is the old cursor, before any commands were executed.
   if (!multicursor.preventSetCursor && state.cursor) {
-    commandStore.dispatch(setCursor({ path: recomputePath(commandStore.getState(), head(state.cursor)) }))
+    commandStore.dispatch(setCursor({ path: recomputePath(commandStore.getState(), state.cursor) }))
   }
 
   // Restore multicursors
   if (!multicursor.clearMulticursor) {
     commandStore.dispatch(
       paths.map(path => (dispatch, getState) => {
-        const recomputedPath = recomputePath(getState(), head(path))
+        const recomputedPath = recomputePath(getState(), path)
         if (!recomputedPath) return
         dispatch(addMulticursor({ path: recomputedPath }))
       }),

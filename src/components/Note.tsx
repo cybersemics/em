@@ -64,8 +64,13 @@ const Note = React.memo(
       // cursor must be true if note is focused
       if (hasFocus && noteOffset !== null) {
         selection.set(noteRef.current!, { offset: noteOffset })
+        // Clear noteOffset after placing the caret so it acts as a one-shot request. Otherwise repeatedly
+        // restoring the caret to the same offset (e.g. applying a font color over a background color multiple
+        // times) would set noteOffset to an unchanged value, the effect would not re-run, and the caret would
+        // be left wherever the note's re-render dropped it instead of the requested offset (#4630).
+        dispatch(setNoteFocus({ value: true, offset: null }))
       }
-    }, [hasFocus, noteOffset])
+    }, [dispatch, hasFocus, noteOffset])
 
     /** Handles note keyboard shortcuts. */
     const onKeyDown = useCallback(

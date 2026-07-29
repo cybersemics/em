@@ -14,6 +14,7 @@ import suppressChangeStore from '../stores/suppressChange'
 import formatSelectionHtml, { FormatCommand } from '../util/formatSelectionHtml'
 import { editThoughtActionCreator as editThought } from './editThought'
 import { setDescendantActionCreator as setDescendant } from './setDescendant'
+import { setNoteFocusActionCreator as setNoteFocus } from './setNoteFocus'
 
 /**
  * Registers a single native undo step in WKWebView for a formatSelection edit on iOS.
@@ -112,20 +113,31 @@ export const formatSelectionActionCreator =
     // This avoids messy and buggy focus-management logic.
     if (state.isKeyboardOpen) registerNativeUndoStep(newValue)
 
+    // Capture the caret's plain-text offset within the note before overwriting its value. Overwriting
+    // re-renders the note's ContentEditable, which drops the caret; restoring the offset via setNoteFocus
+    // places it back where the user left off instead of jumping to the start/end of the note (#4630).
+    // noteFocus is only true when the caret is on a note, so it's not necessary to check whether the keyboard is open.
+    const noteCaretOffset = state.noteFocus ? selection.offsetFromNode(contentEditable) : null
+
     dispatch(
       state.noteFocus
-        ? setDescendant({
-            path,
-            values: [newValue],
-          })
-        : editThought({
-            cursorOffset: range?.end,
-            oldValue: value,
-            newValue,
-            path: simplifyPath(state, path),
-            // force the ContentEditable to update
-            force: true,
-          }),
+        ? [
+            setDescendant({
+              path,
+              values: [newValue],
+            }),
+            setNoteFocus({ value: true, offset: noteCaretOffset }),
+          ]
+        : [
+            editThought({
+              cursorOffset: range?.end,
+              oldValue: value,
+              newValue,
+              path: simplifyPath(state, path),
+              // force the ContentEditable to update
+              force: true,
+            }),
+          ],
     )
 
     // Update the toolbar command state when formatting a sub-range (the whole-thought state is derived from the caret).
