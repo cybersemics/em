@@ -32,7 +32,7 @@ name: Puppeteer Flaky
 on:
   schedule:
     # Daily at 10:09 UTC (= 15:54 NPT / Asia/Kathmandu)
-    - cron: '9 10 * * *'
+    - cron: '33 10 * * *'
   workflow_dispatch:
     inputs:
       iterations:
