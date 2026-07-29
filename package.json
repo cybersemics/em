@@ -23,6 +23,7 @@
   "scripts": {
     "browserless": "docker run -p 7566:3000 -e \"CONNECTION_TIMEOUT=-1\" browserless/chrome",
     "build": "yarn build:packages && yarn build:styles && vite build",
+    "build:ios:browserstack": "./scripts/build-em-browserstack-ipa.sh",
     "build:packages": "yarn --cwd packages/webview build",
     "build:styles": "node ./scripts/build-styles.mjs",
     "cap:android": "BUILD_MODE=server yarn cap:sync && cap open android",
