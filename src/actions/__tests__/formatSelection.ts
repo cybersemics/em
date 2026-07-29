@@ -58,7 +58,7 @@ const selectRange = (start: number, end: number) => {
     }
     acc += len
   }
-  if (!startNode || !endNode) throw new Error('selectPlainRange: offsets out of bounds')
+  if (!startNode || !endNode) throw new Error('selectRange: offsets out of bounds')
   const range = document.createRange()
   range.setStart(startNode, startOffset)
   range.setEnd(endNode, endOffset)
