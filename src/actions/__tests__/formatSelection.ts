@@ -88,11 +88,6 @@ const dispatch = async (action: Thunk[] | Thunk | UnknownAction) => {
   await act(vi.runOnlyPendingTimersAsync)
 }
 
-/** Creates a single thought and puts the cursor on it. */
-const setupThought = async (value: string) => {
-  await dispatch([newThought({ value }), setCursor([value])])
-}
-
 /** Returns the value of the cursor thought's note. */
 const noteVal = (): string | null => {
   const state = store.getState()
@@ -105,7 +100,7 @@ describe('formatSelection', () => {
 
   // Reproduces format.ts > "Apply formatting to a selected portion of a thought"
   it('applies formatting to a selected portion of a thought', async () => {
-    await setupThought('Golden Retriever')
+    await dispatch([newThought({ value: 'Golden Retriever' })])
 
     // select the first word "Golden"
     selectRange(0, 'Golden'.length)
@@ -116,7 +111,7 @@ describe('formatSelection', () => {
 
   // Reproduces format.ts > "Apply text color to an uppercase formatting tag"
   it('applies a text color to the whole thought as a font tag', async () => {
-    await setupThought('Hello World')
+    await dispatch([newThought({ value: 'Hello World' })])
 
     await dispatch([formatLetterCase('UpperCase'), formatSelection('foreColor', 'blue')])
 
@@ -124,7 +119,7 @@ describe('formatSelection', () => {
   })
 
   it('toggles whole-thought bold on and off', async () => {
-    await setupThought('One')
+    await dispatch([newThought({ value: 'One' })])
 
     await dispatch(formatSelection('bold'))
     expect(cursorValue()).toBe('<b>One</b>')
@@ -136,7 +131,7 @@ describe('formatSelection', () => {
   })
 
   it('applies multiple whole-thought formats', async () => {
-    await setupThought('hello')
+    await dispatch([newThought({ value: 'hello' })])
 
     await dispatch(formatSelection('bold'))
 
@@ -149,7 +144,7 @@ describe('formatSelection', () => {
   })
 
   it('applies bold to the whole thought after bolding a substring, without nesting', async () => {
-    await setupThought('Hello Bold World')
+    await dispatch([newThought({ value: 'Hello Bold World' })])
 
     // bold just "Bold"
     selectRange('Hello '.length, 'Hello Bold'.length)
@@ -163,7 +158,7 @@ describe('formatSelection', () => {
   })
 
   it('bolds a range overlapping an existing bold substring, without nesting', async () => {
-    await setupThought('Hello Bold World')
+    await dispatch([newThought({ value: 'Hello Bold World' })])
 
     // bold just "Bold"
     selectRange('Hello '.length, 'Hello Bold'.length)
@@ -177,7 +172,7 @@ describe('formatSelection', () => {
   })
 
   it('unbolds a substring when bolding the same range twice', async () => {
-    await setupThought('Hello World')
+    await dispatch([newThought({ value: 'Hello World' })])
 
     // bold "World"
     selectRange('Hello '.length, 'Hello World'.length)
@@ -191,7 +186,7 @@ describe('formatSelection', () => {
   })
 
   it('unbolds a sub-range of an existing bold substring', async () => {
-    await setupThought('Hello World')
+    await dispatch([newThought({ value: 'Hello World' })])
 
     // bold "World"
     selectRange('Hello '.length, 'Hello World'.length)
@@ -205,7 +200,7 @@ describe('formatSelection', () => {
   })
 
   it('bolds a whole thought whose leading text is italic, wrapping the outer tag', async () => {
-    await setupThought('<i>Hello</i> World')
+    await dispatch([newThought({ value: '<i>Hello</i> World' })])
 
     selectPlainRange(0, 'Hello World'.length)
     await dispatch(formatSelection('bold'))
@@ -213,7 +208,7 @@ describe('formatSelection', () => {
   })
 
   it('removes formatting from the whole thought', async () => {
-    await setupThought('goodbye')
+    await dispatch([newThought({ value: 'goodbye' })])
 
     await dispatch(formatSelection('bold'))
     expect(cursorValue()).toBe('<b>goodbye</b>')
@@ -235,7 +230,7 @@ describe('formatSelection color', () => {
 
   // color.ts > "Set the text color of the text and bullet"
   it('sets the text color of the whole thought', async () => {
-    await setupThought('Golden Retriever')
+    await dispatch([newThought({ value: 'Golden Retriever' })])
 
     await dispatch(formatSelection('foreColor', 'blue'))
 
@@ -244,7 +239,7 @@ describe('formatSelection color', () => {
 
   // color.ts > "Bullet remains the default color when a substring color is set" (value portion)
   it('sets the text color of a substring only', async () => {
-    await setupThought('Golden Retriever')
+    await dispatch([newThought({ value: 'Golden Retriever' })])
 
     selectRange(0, 'Golden'.length)
     await dispatch(formatSelection('foreColor', 'blue'))
@@ -254,7 +249,7 @@ describe('formatSelection color', () => {
 
   // coloring a substring whose boundary aligns with an existing formatting wrapper must not leave an empty tag behind
   it('does not leave an empty formatting tag when coloring an existing bold substring', async () => {
-    await setupThought('X<b>ab</b>Y')
+    await dispatch([newThought({ value: 'X<b>ab</b>Y' })])
 
     // color exactly the bold "ab"
     selectPlainRange(1, 3)
@@ -265,7 +260,7 @@ describe('formatSelection color', () => {
 
   // color.ts > "remove all formatting from the thought"
   it('removes all formatting from the thought', async () => {
-    await setupThought('Labrador')
+    await dispatch([newThought({ value: 'Labrador' })])
 
     for (const command of ['bold', 'italic', 'underline', 'strikethrough'] as const) {
       await dispatch(formatSelection(command))
@@ -280,7 +275,7 @@ describe('formatSelection color', () => {
 
   // color.ts > "Set the background color of the text"
   it('sets the background color of the whole thought', async () => {
-    await setupThought('Golden Retriever')
+    await dispatch([newThought({ value: 'Golden Retriever' })])
 
     await dispatch(formatSelection('backColor', 'green'))
 
@@ -291,7 +286,7 @@ describe('formatSelection color', () => {
 
   // color.ts > "Clear the background color when selecting text color"
   it('clears the background color when selecting a text color', async () => {
-    await setupThought('Golden Retriever')
+    await dispatch([newThought({ value: 'Golden Retriever' })])
 
     await dispatch(formatSelection('backColor', 'green'))
 
@@ -302,7 +297,7 @@ describe('formatSelection color', () => {
 
   // color.ts > "Clear the text color when setting background color"
   it('clears the text color when setting a background color', async () => {
-    await setupThought('Golden Retriever')
+    await dispatch([newThought({ value: 'Golden Retriever' })])
 
     await dispatch(formatSelection('foreColor', 'green'))
 
@@ -315,7 +310,7 @@ describe('formatSelection color', () => {
 
   // color.ts > "Empty <font> element will be removed after setting color to default."
   it('removes the font element when setting color to default', async () => {
-    await setupThought('Golden Retriever')
+    await dispatch([newThought({ value: 'Golden Retriever' })])
 
     await dispatch(formatSelection('foreColor', 'blue'))
 
@@ -326,7 +321,7 @@ describe('formatSelection color', () => {
 
   // color.ts > "Can change the color of a thought that already has the same color applied to part of its text"
   it('changes the color of a thought that already has the color on part of its text', async () => {
-    await setupThought('some <font color="#ff573d">formatted</font> text')
+    await dispatch([newThought({ value: 'some <font color="#ff573d">formatted</font> text' })])
 
     await dispatch(formatSelection('foreColor', 'red'))
 
@@ -335,7 +330,11 @@ describe('formatSelection color', () => {
 
   // color.ts > "Can change the background color of a thought that already has the same background color applied to part of its text"
   it('changes the background color of a thought that already has the background on part of its text', async () => {
-    await setupThought('some <font color="#000000" style="background-color: rgb(255, 87, 61);">formatted</font> text')
+    await dispatch([
+      newThought({
+        value: 'some <font color="#000000" style="background-color: rgb(255, 87, 61);">formatted</font> text',
+      }),
+    ])
 
     await dispatch(formatSelection('backColor', 'red'))
 
@@ -346,7 +345,7 @@ describe('formatSelection color', () => {
 
   // undo.ts > "Should revert background color changes back to previous values" (the two-green markup that undo restores)
   it('applies a background color to two separate words as consolidated font tags', async () => {
-    await setupThought('Lorem Ipsum Dolor Sit Amet')
+    await dispatch([newThought({ value: 'Lorem Ipsum Dolor Sit Amet' })])
 
     // green background on the first word "Lorem"
     selectPlainRange(0, 'Lorem'.length)
@@ -364,7 +363,7 @@ describe('formatSelection color', () => {
   // overlapping partial background colors: green on "two three", then red on "One two" — the overlap ("two") takes the
   // most recent (red), leaving only " three" green
   it('applies overlapping partial background colors, most recent winning the overlap', async () => {
-    await setupThought('One two three')
+    await dispatch([newThought({ value: 'One two three' })])
 
     // green background on "two three"
     selectPlainRange('One '.length, 'One two three'.length)
@@ -382,7 +381,7 @@ describe('formatSelection color', () => {
 
   // a background color applied over a bold thought must keep both the <b> and the color <font>
   it('preserves bold when applying a background color to the whole thought', async () => {
-    await setupThought('One')
+    await dispatch([newThought({ value: 'One' })])
 
     // bold the whole thought
     await dispatch(formatSelection('bold'))
@@ -399,7 +398,7 @@ describe('formatSelection color', () => {
 
   // #4265: applying a text color to a numeric thought that has a background color clears the background
   it('clears the background color of a numeric thought when applying a text color (#4265)', async () => {
-    await setupThought('123')
+    await dispatch([newThought({ value: '123' })])
 
     await dispatch(formatSelection('backColor', 'green'))
 
@@ -419,7 +418,7 @@ describe('formatSelection color', () => {
 
   // #3901: applying the default background color to a thought that has no custom background is a no-op.
   it('does not add markup when applying the default background to a thought with no background (#3901)', async () => {
-    await setupThought('Hello')
+    await dispatch([newThought({ value: 'Hello' })])
 
     selectPlainRange(0, 'Hello'.length)
     await dispatch(formatSelection('backColor', 'bg'))
