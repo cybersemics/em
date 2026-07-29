@@ -45,8 +45,15 @@ const GestureMenu: FC<{
   const mainCommands = commands.filter(cmd => cmd.id !== 'cancel' && cmd.id !== 'openMobileCommandUniverse')
   const persistentCommands = commands.filter(cmd => cmd.id === 'cancel' || cmd.id === 'openMobileCommandUniverse')
 
-  const { columnCount, rowsPerColumn, visibleRegularCount, persistentColumnIndex, isMultiColumn, persistentInline } =
-    useGestureMenuLayout(mainCommands.length, persistentCommands.length)
+  const {
+    columnCount,
+    rowsPerColumn,
+    visibleRegularCount,
+    persistentColumnIndex,
+    isMobilePortrait,
+    isMultiColumn,
+    persistentInline,
+  } = useGestureMenuLayout(mainCommands.length, persistentCommands.length)
 
   // NOTE: useGestureMenuLayout picks padding via isMobilePortrait, not isMultiColumn (columnCount
   // isn't known yet), so it can assume 5rem where this render ends up using 2.25rem. columnCount
@@ -55,9 +62,13 @@ const GestureMenu: FC<{
     ? `${GESTURE_MENU_PANEL_PADDING_MD_REM}rem`
     : `${GESTURE_MENU_PANEL_PADDING_REM}rem`
 
-  const verticalPadding = isMultiColumn
-    ? `${GESTURE_MENU_PANEL_PADDING_VERTICAL_MD_REM}rem`
-    : `${GESTURE_MENU_PANEL_PADDING_REM}rem`
+  // Vertical padding: the larger single-column value only in mobile portrait; above the md breakpoint
+  // the panel uses the smaller landscape padding even when it collapses to one column, so the layout
+  // hook (which budgets the same way) can squeeze the persistent block under a full column. Keep in sync
+  // with `verticalPaddingPx` in useGestureMenuLayout.
+  const verticalPadding = isMobilePortrait
+    ? `${GESTURE_MENU_PANEL_PADDING_REM}rem`
+    : `${GESTURE_MENU_PANEL_PADDING_VERTICAL_MD_REM}rem`
 
   const isSingleColumnMobile = !isMultiColumn && !isBrowser
 

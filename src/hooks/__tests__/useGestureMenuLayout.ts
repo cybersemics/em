@@ -23,11 +23,11 @@ const layout = (regularCount: number, persistentCount = 0) =>
 // Viewport heights chosen (at the 18px default root) to yield known per-column capacities above the
 // two-column width breakpoint:
 //   TALL  → maxRowsInline 121 (a column never fills, so packing collapses to a single column)
-//   MID   → maxRowsInline 8, maxRowsBottom 6
-//   SHORT → maxRowsInline 3, maxRowsBottom 1
+//   MID   → maxRowsInline 8
+//   SHORT → maxRowsInline 3
 const TALL = 5000
-const MID = 540
-const SHORT = 340
+const MID = 490
+const SHORT = 290
 
 describe('useGestureMenuLayout', () => {
   beforeEach(() => {
@@ -141,24 +141,59 @@ describe('useGestureMenuLayout', () => {
     expect(persistentInline).toBe(false)
   })
 
-  it('falls back to the bottom row when every column is full', () => {
-    // MID → maxRowsInline 8, maxRowsBottom 6. 16 main fill both columns to capacity with no room for
-    // the persistent block anywhere inline, so it drops to the full-width bottom row and main trims to
-    // the reserved-height grid (2 × 6 = 12).
+  it('squeezes persistent under a single column as soon as it truly fits', () => {
+    // 854×610: 8 main + the persistent block (2 items + a group-gap row = 11 rows) exactly fit one
+    // column. The old floor(gridHeight / pitch) under-counted rows by one (N rows use N−1 gaps) and
+    // spilled persistent into a spare second column a row too early; the corrected count keeps the menu
+    // a single cohesive column instead.
+    setViewport(854, 610)
+    const { columnCount, persistentInline, visibleRegularCount } = layout(8, 2)
+    expect(columnCount).toBe(1)
+    expect(persistentInline).toBe(false)
+    expect(visibleRegularCount).toBe(8)
+  })
+
+  it('squeezes persistent under a single column in the reported case (837×581)', () => {
+    // The reported landscape window: 8 main fill the first column and the persistent block fits under
+    // them (~564px of content ≤ 581 once the panel uses the landscape vertical padding it actually
+    // renders here, and the full 2-line selected-description slot is still reserved). So persistent tucks
+    // under one cohesive column instead of floating in a lone spare column.
+    setViewport(837, 581)
+    const { columnCount, isMultiColumn, persistentInline } = layout(8, 2)
+    expect(columnCount).toBe(1)
+    expect(isMultiColumn).toBe(false)
+    expect(persistentInline).toBe(false)
+  })
+
+  it('drops persistent to a full-width bottom row when main commands overflow', () => {
+    // MID → maxRowsInline 8, maxRowsBottom 7 (a full-width bottom row reserves ≈1 row of column height).
+    // 16 main overflow both columns and leave no inline slack, so the persistent block becomes the
+    // bottom row and every column row holds a main command: capacity is 2 × 7 = 14 — one more visible
+    // main command than a vertical inline block (which would reserve ≈3 rows of the last column) allows.
     setViewport(854, MID)
     const { persistentInline, columnCount, rowsPerColumn, visibleRegularCount } = layout(16, 2)
     expect(persistentInline).toBe(false)
     expect(columnCount).toBe(2)
-    expect(rowsPerColumn).toBe(6)
-    expect(visibleRegularCount).toBe(12)
+    expect(rowsPerColumn).toBe(7)
+    expect(visibleRegularCount).toBe(14)
   })
 
-  it('does not collapse into an overfull single column that would crop', () => {
-    // Regression (825×461): the budget uses the larger single-column padding and reserves the
-    // persistent group gap, so 5 main + 2 persistent no longer "fit" one column. Rather than collapse
-    // to the non-scrolling single-column path and clip Command Universe, it uses the spare column.
+  it('squeezes into a single column that fits with landscape padding (825×461)', () => {
+    // 825×461: above the md breakpoint the panel renders the smaller landscape vertical padding even when
+    // it collapses to one column, so 5 main + the persistent block (~445px) fit one column without
+    // cropping. It squeezes into a single cohesive column rather than opening a spare one.
     setViewport(825, 461)
     const { columnCount, isMultiColumn, persistentInline } = layout(5, 2)
+    expect(columnCount).toBe(1)
+    expect(isMultiColumn).toBe(false)
+    expect(persistentInline).toBe(false)
+  })
+
+  it('keeps persistent in a spare column when the squeeze genuinely will not fit', () => {
+    // Short landscape window (854×MID): 8 main fill the first column but the persistent block does not
+    // fit beneath them, so rather than clip it, persistent flows into the free second column.
+    setViewport(854, MID)
+    const { columnCount, isMultiColumn, persistentInline } = layout(8, 2)
     expect(columnCount).toBe(2)
     expect(isMultiColumn).toBe(true)
     expect(persistentInline).toBe(true)
@@ -172,14 +207,27 @@ describe('useGestureMenuLayout', () => {
   // --- Trimming and edges: the grid never overflows (no cropping) --------------------------------
 
   it('trims regular commands to the grid capacity so nothing crops', () => {
-    // 854×500 → 2 columns, maxRowsBottom 6. 30 main can't fit inline, so persistent take the bottom
-    // row and main trims to 2 × 6 = 12.
+    // 854×MID → 2 columns, maxRowsBottom 7. 30 main can't fit; the persistent block drops to the bottom
+    // row and each column fills to 7 rows of main commands, so main trims to 2 × 7 = 14.
     setViewport(854, MID)
     const { columnCount, rowsPerColumn, visibleRegularCount } = layout(30, 2)
     expect(columnCount).toBe(2)
-    expect(rowsPerColumn).toBe(6)
-    expect(visibleRegularCount).toBe(12)
+    expect(rowsPerColumn).toBe(7)
+    expect(visibleRegularCount).toBe(14)
     expect(visibleRegularCount).toBeLessThan(30)
+  })
+
+  it('budgets the overflow bottom-row layout with the real multi-column padding on short viewports', () => {
+    // 854×400 fits 2 columns, so the overflow layout is always multi-column and renders the smaller
+    // 1.7rem vertical padding. Budgeting that (instead of the conservative single-column 2.25rem) frees
+    // one more row per column — maxRowsBottom 4, not 3 — so 15 main show 2 × 4 = 8 rather than 6, using
+    // the space that otherwise sat empty below the persistent row (#4313).
+    setViewport(854, 400)
+    const { columnCount, rowsPerColumn, visibleRegularCount, persistentInline } = layout(15, 2)
+    expect(columnCount).toBe(2)
+    expect(rowsPerColumn).toBe(4)
+    expect(visibleRegularCount).toBe(8)
+    expect(persistentInline).toBe(false)
   })
 
   it('never trims below zero', () => {

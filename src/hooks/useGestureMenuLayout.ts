@@ -70,6 +70,14 @@ const GESTURE_MENU_ITEM_DESCRIPTION_MAX_LINES = 2
 export const GESTURE_MENU_ITEM_SELECTED_PADDING_BOTTOM_REM = 0.1
 
 /**
+ * Height a full-width persistent bottom row reserves: the group gap above it plus one item row (the two
+ * persistent items sit side by side, so the row is one item tall regardless of count). Subtracted from
+ * the column height (`maxRowsBottom`) in the overflow layout so the row never overlaps or crops a column.
+ * `+ 1` is the item's own line height (one row pitch minus its trailing row gap).
+ */
+export const GESTURE_MENU_PERSISTENT_BOTTOM_ROW_REM = GESTURE_MENU_GROUP_GAP_REM + 1
+
+/**
  * Extra height a selected command's row adds over a plain row, so its expanded description never crops
  * the column. Budgets the two-line worst case — costs one or two commands when a description wraps, but
  * the reviewer prefers that to a clipped menu.
@@ -79,9 +87,6 @@ export const GESTURE_MENU_SELECTED_ROW_REM =
   GESTURE_MENU_ITEM_LABEL_DESCRIPTION_GAP_REM +
   GESTURE_MENU_ITEM_DESCRIPTION_MAX_LINES * GESTURE_MENU_ITEM_DESCRIPTION_LINE_HEIGHT_REM +
   GESTURE_MENU_ITEM_SELECTED_PADDING_BOTTOM_REM
-
-/** Approximate height of the persistent block: a single full-width bottom row plus the group gap above it. */
-export const GESTURE_MENU_PERSISTENT_BLOCK_HEIGHT_REM = GESTURE_MENU_GROUP_GAP_REM + GESTURE_MENU_ROW_PITCH_REM
 
 type GestureMenuLayoutProps = {
   /** Number of columns to render. */
@@ -97,9 +102,11 @@ type GestureMenuLayoutProps = {
   /** True when the menu renders more than one column (`columnCount > 1`). */
   isMultiColumn: boolean
   /**
-   * True when the persistent commands (Cancel/Command Universe) flow inline under the last column
-   * instead of a full-width row below. Requires untrimmed main commands AND both persistent commands
-   * fitting together under the last column; else they fall back to the bottom row.
+   * True when the persistent commands (Cancel/Command Universe) flow inline at the bottom of a
+   * column (their own spare column, or the last main column). True only when every main command fits
+   * AND a column has room for the block. False when main commands overflow — the block then renders as
+   * a full-width bottom row so every column row can hold a main command — and in the single-column
+   * path, which lays out persistent commands itself.
    */
   persistentInline: boolean
 }
@@ -135,29 +142,45 @@ const useGestureMenuLayout = (
   const maxColumns = isMobilePortrait ? 1 : Math.max(1, Math.floor((availableWidthPx + gapPx) / (minColumnPx + gapPx)))
 
   // Row/header/padding heights, used to work out how many rows fit in a column.
-  // For the vertical budget we use PANEL_PADDING_REM (2.25rem), which is what single-column mode
-  // actually renders as its vertical padding (GestureMenu.tsx `verticalPadding`). Multi-column renders
-  // a smaller vertical padding (VERTICAL_MD_REM, 1.7rem), but we deliberately budget with the LARGER
-  // single-column value: a packed layout can collapse down to the single-column path, and had we
-  // budgeted for the smaller padding, that path would crop. The cost is that multi-column (which has
-  // more room) under-fills a column by at most a fraction of a row — a harmless gap, never a crop.
+  // Vertical padding matches what GestureMenu.tsx renders: the larger single-column value (2.25rem) only
+  // in mobile portrait, the smaller landscape value (1.7rem) everywhere above the md breakpoint —
+  // including when a landscape layout collapses to a single column. Budgeting the value the panel
+  // actually renders (rather than always assuming the larger one) reclaims ~ 0.5 row of height in landscape,
+  // which is what lets the persistent block squeeze under a full first column instead of needing a spare
+  // one.
   const rowPitchPx = GESTURE_MENU_ROW_PITCH_REM * remPx
+  const rowGapPx = GESTURE_MENU_ROW_GAP_REM * remPx
+  const itemHeightPx = (GESTURE_MENU_ROW_PITCH_REM - GESTURE_MENU_ROW_GAP_REM) * remPx
+  const groupGapPx = GESTURE_MENU_GROUP_GAP_REM * remPx
   const headerPx = GESTURE_MENU_HEADER_HEIGHT_REM * remPx
-  const verticalPaddingPx = 2 * GESTURE_MENU_PANEL_PADDING_REM * remPx
-  const persistentBlockPx = GESTURE_MENU_PERSISTENT_BLOCK_HEIGHT_REM * remPx
+  const verticalPaddingPx =
+    2 * (isMobilePortrait ? GESTURE_MENU_PANEL_PADDING_REM : GESTURE_MENU_PANEL_PADDING_VERTICAL_MD_REM) * remPx
 
   // Extra height for the selected command's expanded description so it never crops the column bottom
   // (the multi-column menu doesn't scroll). One command is selected whenever a gesture is in progress.
   const selectedRowPx = GESTURE_MENU_SELECTED_ROW_REM * remPx
   const gridHeightPx = availableHeightPx - headerPx - verticalPaddingPx - selectedRowPx
 
-  // Max rows per column, computed two ways because the persistent block can land in two places:
-  //   maxRowsInline — persistent flows inside a column, so the whole grid height is free for rows.
-  //   maxRowsBottom — persistent takes a reserved full-width row, so that height is subtracted first.
-  // Which one is correct depends on where persistent ends up, but that decision needs these numbers —
-  // so we compute both up front, then pick below.
-  const maxRowsInline = Math.max(1, Math.floor(gridHeightPx / rowPitchPx))
-  const maxRowsBottom = Math.max(1, Math.floor((gridHeightPx - persistentBlockPx) / rowPitchPx))
+  /**
+   * How many command rows fit in `heightPx` of column height. N stacked rows span N·pitch − rowGap (the
+   * last row has no trailing gap), so we add one rowGap back before flooring — otherwise the count is
+   * short by up to a full row, which spills the persistent block into a spare column a row too soon.
+   * Inverse of {@link calcColCommandsHeightInPx}.
+   */
+  const findNumOfRowsFittingIn = (heightPx: number) => Math.max(1, Math.floor((heightPx + rowGapPx) / rowPitchPx))
+
+  /** Pixel height of a vertical stack of `rows` command rows (N rows have N−1 row gaps between them). */
+  const calcColCommandsHeightInPx = (rows: number) => (rows <= 0 ? 0 : rows * itemHeightPx + (rows - 1) * rowGapPx)
+
+  // Max rows per column when the persistent block flows inline inside a column (no reserved row below),
+  // so the whole grid height is free for rows.
+  const maxRowsInline = findNumOfRowsFittingIn(gridHeightPx)
+
+  // Max rows per column when a full-width persistent row is reserved at the bottom (the overflow layout).
+  // The reserved row eats ≈1 row of height off every column, but frees the last column's bottom rows for
+  // main commands — see the overflow branch below.
+  const persistentBottomRowPx = persistentCommandsCount > 0 ? GESTURE_MENU_PERSISTENT_BOTTOM_ROW_REM * remPx : 0
+  const maxRowsBottom = findNumOfRowsFittingIn(gridHeightPx - persistentBottomRowPx)
 
   // Packed layout: fill each column to the top before starting the next, and open only as many columns
   // as the commands need (not as many as the viewport could fit). At one column this is identical to
@@ -165,13 +188,17 @@ const useGestureMenuLayout = (
   const mainColumnsNeeded = mainCommandsCount === 0 ? 0 : Math.ceil(mainCommandsCount / maxRowsInline)
   // How many main commands land in that last main column (the rest fill earlier columns completely).
   const mainInLastMainCol = mainColumnsNeeded === 0 ? 0 : mainCommandsCount - (mainColumnsNeeded - 1) * maxRowsInline
-  // Placing persistent under main puts a group gap (wider than a normal row gap) between them, which
-  // eats one row's worth of the column's integer capacity — so count one extra row for it, but only
-  // when there's a persistent block. A block sitting in its own spare column has nothing above it, so
-  // it costs no extra row.
-  const groupGapRow = persistentCommandsCount > 0 ? 1 : 0
+  // Whether the persistent block fits under the last main column, checked in pixels rather than rounded
+  // row counts: the block is a group gap plus its own stacked rows (much shorter than the whole-row
+  // rounding it used to cost), and the column also carries the selected command's reserved expansion.
+  // The tallest column decides the fit; a full earlier column always fits by construction (that is how
+  // maxRowsInline is derived), so only the last column — the one carrying the persistent block — needs
+  // this check.
+  const persistentBlockPx =
+    persistentCommandsCount > 0 ? groupGapPx + calcColCommandsHeightInPx(persistentCommandsCount) : 0
+  const lastColumnHeightPx = calcColCommandsHeightInPx(mainInLastMainCol) + selectedRowPx + persistentBlockPx
   const fitsUnderLastMainColumn =
-    mainCommandsCount > 0 && mainInLastMainCol + persistentCommandsCount + groupGapRow <= maxRowsInline
+    mainCommandsCount > 0 && headerPx + verticalPaddingPx + lastColumnHeightPx <= availableHeightPx
   const spareColumnAvailable = mainColumnsNeeded < maxColumns && persistentCommandsCount <= maxRowsInline
   // Inline placement is possible only if all main commands fit without trimming AND the persistent
   // block has somewhere to go (under the last column, or in a spare one).
@@ -183,11 +210,13 @@ const useGestureMenuLayout = (
   let persistentColumnIndex: number
   let persistentInline: boolean
 
-  // The persistent block (Cancel / Command Universe) is never split. Place it, in order:
+  // The persistent block (Cancel / Command Universe) is never split. Place it inline only when every
+  // main command already fits and a column has slack for it:
   //   1. under the last main column, if the leftover space there fits it;
   //   2. otherwise a spare empty column, if maxColumns leaves room (this is the case where a full
-  //      first column + empty second column used to wrongly get pushed to the bottom row);
-  //   3. otherwise the full-width row along the bottom.
+  //      first column + empty second column used to wrongly get pushed to the bottom row).
+  // Otherwise — when main commands overflow — the block drops to a full-width bottom row so every
+  // column row goes to a main command (see the overflow branch).
   if (persistentInlineFits) {
     // Attach the persistent block under the last main column, or spill it into the spare column.
     persistentColumnIndex = fitsUnderLastMainColumn ? Math.max(mainColumnsNeeded - 1, 0) : mainColumnsNeeded
@@ -198,13 +227,18 @@ const useGestureMenuLayout = (
     // itself — inline only applies to the multi-column grid.
     persistentInline = columnCount > 1
   } else {
-    // Bottom-row layout: main commands fill the grid (persistent take a reserved full-width row),
-    // packed into as few columns as needed and capped by maxColumns; main trims from the end on
-    // overflow, since the multi-column menu doesn't scroll.
+    // Overflow (or the persistent block has no inline slack): give every visible column row to a MAIN
+    // command and drop the persistent block to a compact full-width row at the bottom. The two
+    // persistent items share one horizontal row (`maxRowsBottom` reserves ≈1 row of height off the
+    // columns), which costs fewer main commands than a vertical inline block — that block would reserve
+    // the last column's bottom rows (items + group gap ≈ 3 rows in one column). So when main commands
+    // overflow, the bottom row shows MORE of them, and the leftover column rows go to commands rather
+    // than sitting empty (#4313).
     columnCount = Math.min(maxColumns, Math.max(1, Math.ceil(mainCommandsCount / maxRowsBottom)))
     rowsPerColumn = maxRowsBottom
     visibleRegularCount = Math.min(mainCommandsCount, columnCount * maxRowsBottom)
     persistentColumnIndex = 0
+    // The persistent block renders as the full-width bottom row (never inline) in this layout.
     persistentInline = false
   }
 
