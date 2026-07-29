@@ -2,7 +2,6 @@
 import Thunk from '../@types/Thunk'
 import { isSafari, isTouch } from '../browser'
 import { ColorToken } from '../colors.config'
-import { commandEmitter } from '../commands'
 import * as selection from '../device/selection'
 import globals from '../globals'
 import noteValue from '../selectors/noteValue'
