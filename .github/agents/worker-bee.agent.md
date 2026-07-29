@@ -53,14 +53,17 @@ Once both gates are satisfied (or determined not to apply), continue with the li
 - After completing the initial implementation, open a draft pull request with a clear, descriptive title and summary to merge your feature branch into `main`. Create the PR with the `runtime-tools-create_pull_request` tool — do not shell out to `git` or `gh` to open it.
 - Use the `ci-monitor` skill to monitor CI status. Wait for all runs to complete before proceeding.
 - If any CI checks fail, use the `test-diagnosis` skill to review logs, identify the failing test, and fix the underlying code or test as appropriate.
-- **Regression tests use `.skip` + the TDD workflow — read which check failed.** The Step 4 test is committed `it.skip`, so the **normal** suite stays green while it is red. A separate **TDD workflow** (`tdd.yml`) un-skips it on the base branch and *expects it to fail*. A **TDD-workflow failure and a normal-suite failure therefore mean opposite things**: "CI failed" does not by itself mean the bug is unfixed — check *which* job failed (a red `TDD` check usually means the test wrongly passes on base; a red normal suite means the code is broken). When you implement the fix you **remove the `.skip`**, so the normal suite then runs it green. Always use `ci-monitor` to wait for all checks; NEVER skip the CI verification loop.
+- **Regression tests use `.skip` + the TDD workflow — read which check failed.** The Step 4 test is committed `it.skip`, so the **normal** suite stays green while it is red. A separate **TDD workflow** (`tdd.yml`) un-skips it on the base branch and _expects it to fail_. A **TDD-workflow failure and a normal-suite failure therefore mean opposite things**: "CI failed" does not by itself mean the bug is unfixed — check _which_ job failed (a red `TDD` check usually means the test wrongly passes on base; a red normal suite means the code is broken). When you implement the fix you **remove the `.skip`**, so the normal suite then runs it green. Always use `ci-monitor` to wait for all checks; NEVER skip the CI verification loop.
 - After each fix, push to the branch and repeat the CI monitoring process until all checks pass.
+- **Before you end your turn, execute the `end-session` skill.** It is the exit gate — nothing uncommitted, nothing unpushed, no test left skipped, CI observed green, and the report the user reads. Merely reading the skill file is **not** sufficient; work through its steps.
 
 ## Accessing documentation
 
-- The docs/ folder in the repository's root contains comprehensive documentation on the codebase.
+- The docs/ folder in the repository's root contains comprehensive documentation on the codebase. Start from `docs/readme.md`, which indexes every subsystem doc.
 - Once the issue-repro gate is satisfied and you begin investigating the cause, you should `grep` through all of these files at once (`docs/**/*.md`) to query the documentation for relevant information that might assist you during your work.
 - You should continue to query the documentation periodically, especially if you encounter something you don't understand or need more context on.
+- **Documentation is a two-way obligation: you read it, and you keep it true.** When your change makes something in `docs/` wrong, the `docs-sync` skill repairs it — routing the files you changed to the documents that describe them. It runs as the first step of `end-session`, before you commit, so the doc edit lands in the same commit as the change that required it.
+- This matters more here than in most projects, because `docs/` is required reading for the `plan` skill. A stale document does not just mislead a human; it becomes the input to the next agent's plan. Never leave documentation describing behaviour you have just changed, and never document a change as history ("this used to be X") — docs describe how the project works **now**.
 
 ## Best practices
 
@@ -83,11 +86,11 @@ Once both gates are satisfied (or determined not to apply), continue with the li
 - If a fix is ambiguous, seek clarification from the user.
 - If CI still fails after 5 fix-push cycles, stop and escalate to the user.
 
-## Output and communication
+## Ending a session
 
-- Summarize actions taken at each step (branch creation, commits, PR creation, CI status, fixes applied).
-- When opening a PR, include the PR URL and status.
-- When CI fails, provide a concise diagnosis and the steps taken to resolve.
+- **Every** ending runs the `end-session` skill: work complete, escalation, or a turn you believe changed nothing. It is a step-by-step checklist, and it starts by asking whether you are entitled to stop at all — most of the time you are not, and the correct action is to keep working.
+- **Never end a turn with uncommitted or unpushed work.** The runner is disposable: anything sitting in the working tree, and any commit you did not push, is destroyed when the session ends. This holds most strongly when you are escalating, because that is when you are stopping mid-task.
+- The skill also owns the shape of your final report — what you did at each step, the PR URL and status, a concise diagnosis of any CI failure and how you resolved it, and what you deliberately left undone.
 
 ## When to escalate to the user
 
