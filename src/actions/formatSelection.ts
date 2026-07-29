@@ -4,13 +4,13 @@ import { isSafari, isTouch } from '../browser'
 import { ColorToken } from '../colors.config'
 import { commandEmitter } from '../commands'
 import * as selection from '../device/selection'
+import globals from '../globals'
 import noteValue from '../selectors/noteValue'
 import pathToThought from '../selectors/pathToThought'
 import resolveNotePath from '../selectors/resolveNotePath'
 import simplifyPath from '../selectors/simplifyPath'
 import themeColors from '../selectors/themeColors'
 import { updateCommandState } from '../stores/commandStateStore'
-import suppressChangeStore from '../stores/suppressChange'
 import formatSelectionHtml, { FormatCommand } from '../util/formatSelectionHtml'
 import { editThoughtActionCreator as editThought } from './editThought'
 import { setDescendantActionCreator as setDescendant } from './setDescendant'
@@ -47,9 +47,9 @@ import { setNoteFocusActionCreator as setNoteFocus } from './setNoteFocus'
  */
 const registerNativeUndoStep = (html: string): void => {
   if (!isTouch || !isSafari()) return
-  suppressChangeStore.update(true)
+  globals.suppressChange = true
   document.execCommand('insertHTML', false, html)
-  suppressChangeStore.update(false)
+  globals.suppressChange = false
 }
 
 /** Format the browser selection or cursor thought as bold, italic, strikethrough, underline, code, color, or removeFormat.

@@ -46,7 +46,6 @@ import thoughtToPath from '../selectors/thoughtToPath'
 import editingValueStore from '../stores/editingValue'
 import editingValueUntrimmedStore from '../stores/editingValueUntrimmed'
 import storageModel from '../stores/storageModel'
-import suppressChangeStore from '../stores/suppressChange'
 import addEmojiSpace from '../util/addEmojiSpace'
 import containsURL from '../util/containsURL'
 import debugLog from '../util/debugLog'
@@ -549,7 +548,7 @@ const Editable = ({
       // truth comes from the synchronous editThought dispatched by formatSelection; recording this DOM mutation would
       // create a duplicate undo step (WebKit re-serializes the inserted HTML, so it is not even value-identical). The
       // editThought's forced re-render restores the editable to the exact computed value (#4637).
-      if (suppressChangeStore.getState()) return
+      if (globals.suppressChange) return
 
       // Infinite loop guard. onChangeHandler is re-entrant (edit → dispatch editThought → re-render →
       // input → onChange). The newValue === oldValue short-circuit below normally breaks the cycle, but a
