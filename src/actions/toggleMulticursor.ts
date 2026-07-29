@@ -10,9 +10,10 @@ import removeMulticursor from './removeMulticursor'
 /** Toggles a cursor in the multicursor set. */
 export const toggleMulticursor = (state: State, payload: { path: Path }): State => {
   const { path } = payload
+  const stateNew = isMulticursorPath(state, path) ? removeMulticursor(state, { path }) : addMulticursor(state, { path })
 
-  if (isMulticursorPath(state, path)) return removeMulticursor(state, { path })
-  else return addMulticursor(state, { path })
+  // The most recently toggled thought becomes the start anchor for the next Select Between range.
+  return { ...stateNew, multicursorAnchor: path }
 }
 
 /** Action-creator for toggleMulticursor. */

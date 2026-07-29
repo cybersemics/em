@@ -512,8 +512,6 @@ const ThoughtContainer = ({
   //   ...dragHoldResult.props,
   // })
 
-  const multicursorAnchor = useSelector(state => state.multicursorAnchor)
-
   /** Handles multicursor activation. */
   const handleMultiselect = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
@@ -522,20 +520,20 @@ const ThoughtContainer = ({
       const mouseEvent = e as React.MouseEvent
       const isToggleMulticursor = isMac ? mouseEvent.metaKey : mouseEvent.ctrlKey
 
-      // Once Select Between is active, Cmd/Ctrl + Click and Shift + Click both adjust its endpoint.
-      if (mouseEvent.shiftKey || (isToggleMulticursor && multicursorAnchor)) {
+      // Shift + Click adjusts the endpoint of the active Select Between range.
+      if (mouseEvent.shiftKey) {
         e.preventDefault()
         dispatch(selectBetween({ path }))
         return
       }
 
-      // Cmd/Ctrl + Click toggles the clicked thought in the multicursor selection.
+      // Cmd/Ctrl + Click toggles the clicked thought and makes it the next Select Between start anchor.
       if (isToggleMulticursor) {
         e.preventDefault()
         dispatch(toggleMulticursor({ path }))
       }
     },
-    [dispatch, multicursorAnchor, path],
+    [dispatch, path],
   )
 
   // Use custom hook for col1 alignment
