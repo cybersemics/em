@@ -159,7 +159,7 @@ Writing a **new helper** is allowed but is a design event, not a workaround: nam
 
 A helper should have a narrow, explicit contract:
 
-- Do one user action or query one condition. Compose a higher-level helper when the same sequence expresses a recurring user intent.
+- Do one user action or query one condition. A helper may compose the low-level driver calls that make up a single action (`longPressThought` holds and releases a touch), but it must not bundle several distinct user steps into one call — those stay inline in the test ([Principle 5](#5-keep-tests-concrete-and-boring)).
 - Keep expectations in the test so the behavior being proved is visible. A helper may wait for the action it performs to settle, but it must not hide unrelated assertions or synchronization.
 - Accept semantic inputs and named options rather than exposing browser plumbing or positional booleans.
 - If a required target or precondition is missing, throw a descriptive error. Do not silently return, use an optional-chain fallback, or allow the test to pass without performing its act.
@@ -171,9 +171,12 @@ A test is orchestration code. Anyone — human or agent — should be able to re
 In tests, a little duplication is usually clearer than an abstraction:
 
 - Inline short, meaningful fixtures and expected values. Do not derive the expected value with the same logic used by the implementation.
+- Inline the user's steps. When several tests open the same way — `importText` → `setCursor` → `toggleNote` — repeat it. Those are the concrete steps the user takes, so the repetition is inherent in the test case, not an implementation detail to hide away. ([#4657 review comment](https://github.com/cybersemics/em/pull/4657#discussion_r3670180268))
 - Reuse canonical domain constants and genuinely complex setup, but do not introduce a helper merely to avoid repeating a few literals.
 - Cover one independently diagnosable behavior or condition per test. A tightly coupled positive/negative pair may share an expensive E2E session when the test name and assertions still make failures unambiguous.
 - Avoid a combinatorial cross-product of orthogonal presentation variants. Each higher-level variant should protect a distinct risk.
+
+That applies with full force to a local wrapper around a sequence of steps, however tidy it looks: a `setupNote(text)` that hides `importText` + `setCursor` + `toggleNote` saves a few lines but forces every reader to jump elsewhere to learn which user session the test reproduces, and it quietly changes every other test the moment one of them needs a variation. The shared vocabulary in the [helper directories](#test-helpers) is not an exception to this — each of those helpers performs one user action named after the user's intent. They are the words; the test writes the sentence.
 
 That includes the test name: it states the expected behavior, not the function under test.
 
@@ -522,7 +525,7 @@ The scope of a review is everything the tests depend on to mean something: the t
 11. **Snapshots** — Are image snapshots used only for visual regressions, never for behavior?
 12. **Production parity and mocks** — Does the test exercise the same semantic behavior as production? Is any environment-specific adaptation explicit, narrow, and irrelevant to the assertion? Are only external boundaries mocked, leaving the production subject under test intact?
 13. **Naming** — Does the test name state the expected behavior specifically? ("`b` should be expanded", not "should work correctly".)
-14. **Readability** — Does the test read top-to-bottom as an obvious, concrete user session without unnecessary abstraction or conditional logic? Any exception must explain why it is necessary.
+14. **Readability** — Does the test read top-to-bottom as an obvious, concrete user session without unnecessary abstraction or conditional logic? Are the user's steps inlined rather than bundled into a local setup wrapper? Any exception must explain why it is necessary.
 15. **Fixture and isolation** — Does the test rely on—rather than repeat—the canonical setup/cleanup for its level, and avoid depending on another test's state or execution order?
 16. **Visibility** — No committed `.only`? Is every new `.skip` either the recognized transient TDD marker or linked to an issue/follow-up with its reason stated? Does the final fixed change remove the transient skip? Are retries justified by documented external nondeterminism?
 17. **Regression proof** — If this test accompanies a bug fix, does it fail on the intended assertion with the reproduced buggy value on the relevant pre-fix commit, then pass with the same assertion on the pull request? State *what specifically* fails pre-fix and why — "the TDD workflow will check" is not an answer, because the workflow proves an exit code, not a mechanism. If a test guards behavior that already works on the control commit, say so explicitly and note which test carries the red side. See [Regression Tests](#regression-tests) and [TDD regression validation](#tdd-regression-validation).
