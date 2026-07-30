@@ -19,9 +19,8 @@
  *   1 — flakes and/or infra failures found
  *   2 — usage / fatal error
  */
-
-import { readdirSync, readFileSync, writeFileSync, statSync } from 'node:fs'
-import { join, relative, basename } from 'node:path'
+import { readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs'
+import { basename, join, relative } from 'node:path'
 
 const MARKER = '<!-- flaky-test-report -->'
 
@@ -81,9 +80,7 @@ if (process.argv[2] === '--trim') {
   }
   const trimmed = trimVitestFailures(data)
   writeFileSync(file, JSON.stringify(trimmed, null, 2))
-  console.log(
-    `Trimmed ${file}: ${trimmed.numFailedTestSuites} file(s), ${trimmed.numFailedTests} failed test(s)`,
-  )
+  console.log(`Trimmed ${file}: ${trimmed.numFailedTestSuites} file(s), ${trimmed.numFailedTests} failed test(s)`)
   process.exit(0)
 }
 
@@ -234,9 +231,7 @@ for (const [iteration, path] of [...reports.entries()].sort((a, b) => a[0] - b[0
     const assertions = Array.isArray(fileResult.assertionResults) ? fileResult.assertionResults : []
 
     if (assertions.length === 0 && fileResult.status === 'failed') {
-      const fullName = fileResult.message
-        ? `(file load) ${truncate(fileResult.message, 80)}`
-        : '(file load failure)'
+      const fullName = fileResult.message ? `(file load) ${truncate(fileResult.message, 80)}` : '(file load failure)'
       recordFailure(tests, file, fullName, iteration, fileResult.message || '')
       totalFailedAssertions++
       continue
@@ -256,10 +251,7 @@ for (const [iteration, path] of [...reports.entries()].sort((a, b) => a[0] - b[0
 const failedTests = [...tests.values()]
   .filter(t => t.failed.length > 0)
   .sort(
-    (a, b) =>
-      b.failed.length - a.failed.length ||
-      a.file.localeCompare(b.file) ||
-      a.fullName.localeCompare(b.fullName),
+    (a, b) => b.failed.length - a.failed.length || a.file.localeCompare(b.file) || a.fullName.localeCompare(b.fullName),
   )
 
 const intermittent = failedTests.filter(t => t.failed.length < expectedIterations)
@@ -267,7 +259,7 @@ const consistent = failedTests.filter(t => t.failed.length === expectedIteration
 const passedIterationCount = Math.max(0, expectedIterations - failedIterations - infraFailures.length)
 
 const runLink = runUrl ? `[Workflow run](${runUrl})` : ''
-const now = new Date().toISOString()
+const now = new Date().toUTCString()
 
 const lines = []
 lines.push(MARKER)
