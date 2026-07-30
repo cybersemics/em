@@ -22,9 +22,7 @@ name: Puppeteer Flaky
 
 on:
   schedule:
-    # Two daily runs in GitHub Actions' quietest overnight window (UTC).
     - cron: '0 3 * * *' # 03:00 UTC
-    - cron: '0 7 * * *' # 07:00 UTC
   workflow_dispatch:
     inputs:
       iterations:
