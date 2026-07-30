@@ -93,7 +93,7 @@ it('cursor moves to second thought', () => {
   expectPathToEqual(stateNew, stateNew.cursor, ['ple'])
 })
 
-it('move children to the correct sibling in a sorted context', () => {
+it('children remain on the original thought in a sorted context', () => {
   const steps = [
     importText({
       text: `
@@ -126,11 +126,11 @@ it('move children to the correct sibling in a sorted context', () => {
       - Alphabetical
         - Asc
     - Baton
-    - New Orleans
-    - Rouge
       - A
       - B
-      - C`)
+      - C
+    - New Orleans
+    - Rouge`)
 })
 
 it('split thought with whitespace in HTML formatting', () => {
@@ -152,7 +152,7 @@ it('split thought with whitespace in HTML formatting', () => {
 })
 
 // https://github.com/cybersemics/em/issues/4787
-it.skip('children remain on the original thought', () => {
+it('children remain on the original thought', () => {
   const steps = [
     importText({
       text: `
