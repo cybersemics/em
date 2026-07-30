@@ -251,7 +251,8 @@ const BulletPositioner = forwardRef<SVGSVGElement, PropsWithChildren<BulletPosit
         if (dragHold) return
 
         // short circuit if toggling multiselect
-        if (!isTouch && (isMac ? e.metaKey : e.ctrlKey)) {
+        // Shift + Click selects the thoughts in between, and Cmd/Ctrl + Click toggles the clicked thought (see Thought)
+        if (!isTouch && (e.shiftKey || (isMac ? e.metaKey : e.ctrlKey))) {
           return
         }
 

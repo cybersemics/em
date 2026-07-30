@@ -13,15 +13,15 @@ export interface LongPressProps {
   onContextMenu: (e: React.MouseEvent | React.PointerEvent) => void
   onDragEnd?: () => void
   onMouseDown?: (e: React.MouseEvent | React.TouchEvent) => void
-  onMouseUp?: (e?: React.MouseEvent | React.TouchEvent) => void
+  onMouseUp?: (e?: React.MouseEvent) => void
   onTouchStart: (e: React.MouseEvent | React.TouchEvent) => void
-  onTouchEnd: (e?: React.MouseEvent | React.TouchEvent) => void
-  onTouchCancel: (e?: React.MouseEvent | React.TouchEvent) => void
+  onTouchEnd: () => void
+  onTouchCancel: () => void
 }
 
 /** Custom hook to manage long press.
  * The onLongPressStart handler is called after the delay if the user is still pressing.
- * The onLongPressEnd handler is called when the long press ends, either by the user lifting their finger (touchend, mouseup) or by the user moving their finger (touchmove, touchcancel, mousemove). It receives the ending event, if any, so that handlers can inspect the modifier keys that were held.
+ * The onLongPressEnd handler is called when the long press ends, either by the user lifting their finger (touchend, mouseup) or by the user moving their finger (touchmove, touchcancel, mousemove). It receives the event that ended the long press, if any, so that modifier keys can be read.
  **/
 const useLongPress = (
   onLongPressStart: (() => void) | null = noop,

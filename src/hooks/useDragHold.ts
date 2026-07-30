@@ -1,11 +1,11 @@
-import { useCallback, useState } from 'react'
+import React, { useCallback, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import SimplePath from '../@types/SimplePath'
 import { alertActionCreator as alert } from '../actions/alert'
 import { longPressActionCreator as longPress } from '../actions/longPress'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
-import { isMac, isTouch } from '../browser'
+import { isMac } from '../browser'
 import { AlertType, LongPressState } from '../constants'
 import hasMulticursor from '../selectors/hasMulticursor'
 import useLongPress from './useLongPress'
@@ -41,15 +41,16 @@ const useDragHold = ({
 
       setIsPressed(false)
 
-      // The multiselect modifier toggles the multicursor from the click handler in Thought, which fires before the long press ends. Toggling again here would immediately undo it. (#4782)
-      const isMultiselectClick = !!e && !isTouch && (isMac ? e.metaKey : e.ctrlKey)
+      // Shift + Click and Cmd/Ctrl + Click are handled by the click handler in Thought, which fires before the long press ends.
+      // Toggling the multicursor here as well would undo the selection that the click handler just made.
+      const multiselectModifier = !!e && (e.shiftKey || (isMac ? e.metaKey : e.ctrlKey))
 
       dispatch((dispatch, getState) => {
         const state = getState()
 
         if (state.longPress === LongPressState.DragHold) {
           if (!hasMulticursor(state)) dispatch(alert(null))
-          if (toggleMulticursorOnLongPress && !isMultiselectClick) dispatch(toggleMulticursor({ path: simplePath }))
+          if (toggleMulticursorOnLongPress && !multiselectModifier) dispatch(toggleMulticursor({ path: simplePath }))
         }
 
         dispatch([
