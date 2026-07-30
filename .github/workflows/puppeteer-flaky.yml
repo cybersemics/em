@@ -19,8 +19,8 @@
 #   2. Copy the URL into a repo secret named DISCORD_WEBHOOK_URL
 #   Notifications fire only when flakes or infra failures are found (no daily noise).
 #
-# Artifacts: only failed iterations upload vitest JSON. flaky-report.mjs filters to
-# failing tests only when building the summary / issue body.
+# Artifacts: only failed iterations upload vitest JSON, trimmed via
+# `node scripts/flaky-report.mjs --trim` so passed tests are stripped before upload.
 #
 # Report destinations:
 #   - Workflow run summary (always)
@@ -32,7 +32,7 @@ name: Puppeteer Flaky
 on:
   schedule:
     # Daily at 10:09 UTC (= 15:54 NPT / Asia/Kathmandu)
-    - cron: '33 10 * * *'
+    - cron: '15 4 * * *'
   workflow_dispatch:
     inputs:
       iterations:
@@ -152,9 +152,8 @@ jobs:
         uses: ./.github/actions/serve
 
       - name: Test
-        # continue-on-error so a failed suite can still upload its vitest JSON.
+        # continue-on-error so a failed suite can still trim + upload its vitest JSON.
         # Successful iterations upload nothing; missing JSON ⇒ passed (see flaky-report.mjs).
-        # flaky-report.mjs ignores passed tests in the JSON and only reports failures.
         continue-on-error: true
         id: test
         run: |
@@ -167,6 +166,16 @@ jobs:
           status=$?
           set -e
           exit "$status"
+
+      - name: Trim artifact to failed tests only
+        if: steps.test.outcome == 'failure'
+        run: |
+          REPORT="flaky-results/iteration-${{ matrix.iteration }}.json"
+          if [ ! -f "$REPORT" ]; then
+            echo "Test failed but no vitest JSON was written; nothing to upload."
+            exit 0
+          fi
+          node scripts/flaky-report.mjs --trim "$REPORT"
 
       - name: Upload failure report
         if: steps.test.outcome == 'failure'

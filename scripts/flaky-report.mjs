@@ -4,24 +4,20 @@
  * report. Used by .github/workflows/puppeteer-flaky.yml.
  *
  * Usage:
+ *   # Aggregate failure reports into markdown + flaky-summary.json
  *   node scripts/flaky-report.mjs <results-dir> <expected-iterations> [run-url]
  *
- * Looks for files named iteration-<n>.json under <results-dir> (recursively).
+ *   # Rewrite a vitest JSON report in place, keeping only failed tests
+ *   node scripts/flaky-report.mjs --trim <vitest-report.json>
  *
- * CI only uploads JSON for **failed** iterations. A missing iteration-<n>.json
- * means that iteration passed — not an infra failure. Unparseable / malformed
- * reports are still counted as infra failures.
+ * CI only uploads JSON for **failed** iterations (after --trim). A missing
+ * iteration-<n>.json means that iteration passed — not an infra failure.
+ * Unparseable / malformed reports are still counted as infra failures.
  *
- * Passed / skipped assertions in the vitest JSON are ignored. Output (markdown
- * + flaky-summary.json) only contains failed-test stats.
- *
- * Exit codes:
+ * Exit codes (aggregate mode):
  *   0 — clean run (no failure reports, or no failing tests in them)
  *   1 — flakes and/or infra failures found
  *   2 — usage / fatal error
- *
- * Also writes <results-dir>/flaky-summary.json with machine-readable failure
- * stats for downstream workflow steps (Discord, etc.).
  */
 
 import { readdirSync, readFileSync, writeFileSync, statSync } from 'node:fs'
@@ -29,10 +25,73 @@ import { join, relative, basename } from 'node:path'
 
 const MARKER = '<!-- flaky-test-report -->'
 
+/**
+ * Strip a vitest JSON report down to failed tests only.
+ * @param {object} data
+ * @returns {object}
+ */
+const trimVitestFailures = data => {
+  const testResults = (data.testResults || [])
+    .map(file => {
+      const failed = (file.assertionResults || []).filter(a => a.status === 'failed')
+      if (failed.length === 0 && file.status !== 'failed') return null
+      return {
+        name: file.name,
+        status: 'failed',
+        message: file.message || '',
+        assertionResults: failed.map(a => ({
+          ancestorTitles: a.ancestorTitles || [],
+          fullName: a.fullName || a.title || '(unnamed)',
+          title: a.title || a.fullName || '(unnamed)',
+          status: 'failed',
+          duration: a.duration,
+          failureMessages: a.failureMessages || [],
+          location: a.location,
+        })),
+      }
+    })
+    .filter(Boolean)
+
+  const numFailedTests = testResults.reduce(
+    (n, f) => n + ((f.assertionResults || []).length || (f.status === 'failed' ? 1 : 0)),
+    0,
+  )
+
+  return {
+    success: false,
+    numFailedTests,
+    numFailedTestSuites: testResults.length,
+    testResults,
+  }
+}
+
+// --- --trim mode: rewrite a single vitest JSON to failures only ---
+if (process.argv[2] === '--trim') {
+  const file = process.argv[3]
+  if (!file) {
+    console.error('Usage: node scripts/flaky-report.mjs --trim <vitest-report.json>')
+    process.exit(2)
+  }
+  let data
+  try {
+    data = JSON.parse(readFileSync(file, 'utf8'))
+  } catch (e) {
+    console.error(`Failed to read ${file}: ${e instanceof Error ? e.message : String(e)}`)
+    process.exit(2)
+  }
+  const trimmed = trimVitestFailures(data)
+  writeFileSync(file, JSON.stringify(trimmed, null, 2))
+  console.log(
+    `Trimmed ${file}: ${trimmed.numFailedTestSuites} file(s), ${trimmed.numFailedTests} failed test(s)`,
+  )
+  process.exit(0)
+}
+
 const [resultsDir, expectedRaw, runUrl = ''] = process.argv.slice(2)
 
 if (!resultsDir || !expectedRaw) {
   console.error('Usage: node scripts/flaky-report.mjs <results-dir> <expected-iterations> [run-url]')
+  console.error('       node scripts/flaky-report.mjs --trim <vitest-report.json>')
   process.exit(2)
 }
 
@@ -165,13 +224,15 @@ for (const [iteration, path] of [...reports.entries()].sort((a, b) => a[0] - b[0
     continue
   }
 
+  // Normalize in case the artifact was uploaded before --trim ran.
+  data = trimVitestFailures(data)
+
   failedIterations++
 
   for (const fileResult of data.testResults) {
     const file = shortPath(fileResult.name || 'unknown')
     const assertions = Array.isArray(fileResult.assertionResults) ? fileResult.assertionResults : []
 
-    // File-level failure with no assertions (e.g. load error).
     if (assertions.length === 0 && fileResult.status === 'failed') {
       const fullName = fileResult.message
         ? `(file load) ${truncate(fileResult.message, 80)}`
@@ -181,7 +242,6 @@ for (const [iteration, path] of [...reports.entries()].sort((a, b) => a[0] - b[0
       continue
     }
 
-    // Only failed assertions — ignore passed / skipped / todo.
     for (const assertion of assertions) {
       if (assertion.status !== 'failed') continue
 
@@ -202,7 +262,6 @@ const failedTests = [...tests.values()]
       a.fullName.localeCompare(b.fullName),
   )
 
-// Denominator is expectedIterations: missing reports are treated as passes.
 const intermittent = failedTests.filter(t => t.failed.length < expectedIterations)
 const consistent = failedTests.filter(t => t.failed.length === expectedIterations)
 const passedIterationCount = Math.max(0, expectedIterations - failedIterations - infraFailures.length)
@@ -283,7 +342,6 @@ if (failedTests.length === 0 && infraFailures.length === 0) {
 
 const markdown = `${lines.join('\n')}\n`
 
-/** Failure-only machine-readable summary (no passed-test data). */
 const summary = {
   marker: MARKER,
   generatedAt: now,
