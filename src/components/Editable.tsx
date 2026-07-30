@@ -591,10 +591,9 @@ const Editable = ({
         // That style should be re-applied once they type something. (#3673)
 
         const wrappedValue = state.cursorCleared ? applyOuterTag(e.target.value, oldValue) : e.target.value
-        const trimmedWrappedValue = trimHtml(wrappedValue)
-        const valueWithEmojiSpace = addEmojiSpace(trimmedWrappedValue)
+        const valueWithEmojiSpace = addEmojiSpace(wrappedValue)
         const newValue = stripEmptyFormattingTags(valueWithEmojiSpace)
-        const emojiSpaceAdded = valueWithEmojiSpace !== trimmedWrappedValue
+        const emojiSpaceAdded = valueWithEmojiSpace !== wrappedValue
         const emojiSpaceInsertionIndex = emojiSpaceAdded ? valueWithEmojiSpace.indexOf(' ') : null
 
         /* The realtime editingValue must always be updated (and not short-circuited) since oldValueRef is throttled. Otherwise, editingValueStore becomes stale and heights are not recalculated in VirtualThought.
@@ -766,6 +765,19 @@ const Editable = ({
   const onBlur: FocusEventHandler<HTMLElement> = useCallback(
     e => {
       throttledChangeRef.current.flush()
+
+      // Trim whitespace on blur rather than on every keystroke (#2159). Trimming mid-edit desyncs the Redux value from
+      // the editable, so anything that forces a re-render from Redux (e.g. formatSelection) deletes whitespace the user
+      // is still typing (#4657).
+      dispatch((dispatch, getState) => {
+        if (transient || !getThoughtById(getState(), head(simplePath))) return
+        const untrimmedValue = oldValueRef.current
+        const trimmedValue = trimHtml(untrimmedValue)
+        // the thought may have been deleted while it was focused, in which case there is nothing to trim
+        if (trimmedValue === untrimmedValue) return
+        oldValueRef.current = trimmedValue
+        dispatch(editThought({ oldValue: untrimmedValue, newValue: trimmedValue, path: simplePath }))
+      })
 
       // update the ContentEditable if the new scrubbed value is different (i.e. stripped, space after emoji added, etc)
       // they may intentionally become out of sync during editing if the value is modified programmatically (such as trim) in order to avoid reseting the caret while the user is still editing

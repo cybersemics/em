@@ -4,11 +4,16 @@ import userEvent from '@testing-library/user-event'
 import { act, createElement } from 'react'
 import { Provider } from 'react-redux'
 import SimplePath from '../../@types/SimplePath'
+import { formatSelectionActionCreator as formatSelection } from '../../actions/formatSelection'
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { executeCommand } from '../../commands'
+import clearThoughtCommand from '../../commands/clearThought'
 import { HOME_TOKEN } from '../../constants'
+import getTextContentFromHTML from '../../device/getTextContentFromHTML'
 import * as selection from '../../device/selection'
 import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
+import getThoughtById from '../../selectors/getThoughtById'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
@@ -16,6 +21,7 @@ import { moveThoughtAtFirstMatchActionCreator as moveThought } from '../../test-
 import findThoughtByText from '../../test-helpers/queries/findThoughtByText'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import windowEvent from '../../test-helpers/windowEvent'
+import head from '../../util/head'
 import Editable from '../Editable'
 
 beforeEach(createTestApp)
@@ -149,4 +155,91 @@ it('inserts emoji spacing immediately before colored text', async () => {
 
   expect(editable.textContent).toBe('👋 Hello')
   expect(editable.innerHTML).toBe('👋 <font color="#ff0000">Hello</font>')
+})
+
+it('re-applies the outer formatting tag after clearThought (#3673)', async () => {
+  act(() => {
+    windowEvent('keydown', { key: 'Enter' })
+  })
+
+  const editable = (await findThoughtByText(''))!
+  expect(editable).toBeVisible()
+
+  const user = userEvent.setup({ delay: null })
+  await user.type(editable, 'hello')
+  await act(vi.runAllTimersAsync)
+  await dispatch(formatSelection('bold'))
+  await act(vi.runAllTimersAsync)
+  expect(getThoughtById(store.getState(), head(store.getState().cursor!))!.value).toBe('<b>hello</b>')
+
+  await act(async () => {
+    executeCommand(clearThoughtCommand)
+  })
+  await act(vi.runAllTimersAsync)
+  expect(editable.innerHTML).toBe('')
+
+  await user.type(editable, 'a')
+  await act(vi.runAllTimersAsync)
+
+  expect(getThoughtById(store.getState(), head(store.getState().cursor!))!.value).toBe('<b>a</b>')
+  expect(editable.innerHTML).toBe('<b>a</b>')
+})
+
+it('preserves a trailing space while typing', async () => {
+  act(() => {
+    windowEvent('keydown', { key: 'Enter' })
+  })
+
+  const editable = (await findThoughtByText(''))!
+  expect(editable).toBeVisible()
+
+  const user = userEvent.setup({ delay: null })
+  await user.type(editable, 'North Star ')
+  await act(vi.runAllTimersAsync)
+
+  expect(editable.textContent).toBe('North Star ')
+  expect(getThoughtById(store.getState(), head(store.getState().cursor!))!.value).toBe('North Star ')
+})
+
+it('preserves a trailing space when applying a background color (#4657)', async () => {
+  act(() => {
+    windowEvent('keydown', { key: 'Enter' })
+  })
+
+  const editable = (await findThoughtByText(''))!
+  expect(editable).toBeVisible()
+
+  const user = userEvent.setup({ delay: null })
+  await user.type(editable, 'North Star ')
+  await act(vi.runAllTimersAsync)
+  await dispatch(formatSelection('backColor', 'red'))
+  await act(vi.runAllTimersAsync)
+
+  expect(editable.textContent).toBe('North Star ')
+  const value = getThoughtById(store.getState(), head(store.getState().cursor!))!.value
+  expect(getTextContentFromHTML(value)).toBe('North Star ')
+})
+
+it('trims whitespace on blur (#2159)', async () => {
+  act(() => {
+    windowEvent('keydown', { key: 'Enter' })
+  })
+
+  const editable = (await findThoughtByText(''))!
+  expect(editable).toBeVisible()
+
+  const user = userEvent.setup({ delay: null })
+  await user.type(editable, 'North Star ')
+  await act(vi.runAllTimersAsync)
+  await dispatch(formatSelection('bold'))
+  await act(vi.runAllTimersAsync)
+  expect(getThoughtById(store.getState(), head(store.getState().cursor!))!.value).toBe('<b>North Star </b>')
+
+  act(() => {
+    editable.blur()
+  })
+  await act(vi.runAllTimersAsync)
+
+  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/html')
+  expect(exported).toContain('<b>North Star</b>')
 })
