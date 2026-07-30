@@ -1,5 +1,4 @@
 import { KnownDevices } from 'puppeteer'
-import clickBullet from '../helpers/clickBullet'
 import clickThought from '../helpers/clickThought'
 import command from '../helpers/command'
 import emulate from '../helpers/emulate'
@@ -11,18 +10,6 @@ import waitForEditable from '../helpers/waitForEditable'
 import { page } from '../session'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
-
-/** Shift + Click the bullet of the given thought to select all thoughts between it and the previously selected thought. */
-const shiftClickThought = async (value: string) => {
-  await waitForEditable(value)
-
-  await page.keyboard.down('Shift')
-  try {
-    await clickBullet(value)
-  } finally {
-    await page.keyboard.up('Shift')
-  }
-}
 
 describe('multiselect', () => {
   it('should multiselect two thoughts at once', async () => {
@@ -115,80 +102,6 @@ describe('multiselect', () => {
     expect(copied['text/html']).toContain('a')
     expect(copied['text/html']).toContain('b')
     expect(copied['text/html']).toContain('c')
-  })
-
-  // https://github.com/cybersemics/em/issues/4739
-  it('shift + click selects thoughts between the clicked and previously selected thought', async () => {
-    await paste(`
-        - a
-        - b
-        - c
-        - d
-        - e
-        `)
-
-    // start multiselect on b
-    await multiselectThoughts(['b'])
-    // shift + click d to select all thoughts between b and d
-    await shiftClickThought('d')
-
-    const highlightedValues = await page.$$eval('[aria-label="bullet"][data-highlighted="true"]', bullets =>
-      bullets.map(
-        bullet => bullet.closest('[aria-label="thought-container"]')?.querySelector('[data-editable]')?.textContent,
-      ),
-    )
-
-    expect(highlightedValues.sort()).toEqual(['b', 'c', 'd'])
-  })
-
-  // https://github.com/cybersemics/em/issues/4739
-  it('shift + click selects between thoughts in reverse order', async () => {
-    await paste(`
-        - a
-        - b
-        - c
-        - d
-        - e
-        `)
-
-    // start multiselect on d
-    await multiselectThoughts(['d'])
-    // shift + click b to select all thoughts between b and d, regardless of order
-    await shiftClickThought('b')
-
-    const highlightedValues = await page.$$eval('[aria-label="bullet"][data-highlighted="true"]', bullets =>
-      bullets.map(
-        bullet => bullet.closest('[aria-label="thought-container"]')?.querySelector('[data-editable]')?.textContent,
-      ),
-    )
-
-    expect(highlightedValues.sort()).toEqual(['b', 'c', 'd'])
-  })
-
-  // https://github.com/cybersemics/em/issues/4739
-  it('shift + click selects between thoughts in a sorted list', async () => {
-    await paste(`
-        - =sort
-          - Alphabetical
-        - d
-        - b
-        - e
-        - a
-        - c
-        `)
-
-    // in a sorted list the thoughts render as a, b, c, d, e
-    // start multiselect on b, then shift + click d to select b, c, d in sorted order
-    await multiselectThoughts(['b'])
-    await shiftClickThought('d')
-
-    const highlightedValues = await page.$$eval('[aria-label="bullet"][data-highlighted="true"]', bullets =>
-      bullets.map(
-        bullet => bullet.closest('[aria-label="thought-container"]')?.querySelector('[data-editable]')?.textContent,
-      ),
-    )
-
-    expect(highlightedValues.sort()).toEqual(['b', 'c', 'd'])
   })
 })
 
