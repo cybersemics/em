@@ -90,11 +90,11 @@ It then decides whether to skip. It skips if no test files changed; if the pull 
 **unit, puppeteer, ios** each do the same thing for their kind of test:
 
 1. Check out the base branch — the code *without* the fix.
-2. Copy just the changed test files across from the pull request.
+2. Copy the changed test files across from the pull request, along with any changed test infrastructure — helpers, config, and setup — that they may depend on.
 3. Switch any newly-added skipped tests back on, via [`.github/actions/unskip-added-tests`](../../.github/actions/unskip-added-tests/action.yml).
 4. Run them, and **require them to fail.**
 
-Step 2 copies the test files individually rather than applying a patch, because a brand-new test file has nothing on the base branch to patch against.
+Step 2 copies the files individually rather than applying a patch, because a brand-new test file has nothing on the base branch to patch against. Test infrastructure comes across too, since a test that calls a new helper cannot even compile on the base branch without it.
 
 **summary** collapses the three into a single check, so branch protection has one thing to require.
 
