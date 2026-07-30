@@ -151,10 +151,6 @@ export default defineConfig({
   },
   preview: {
     headers: crossOriginIsolationHeaders,
-  },
-  preview: {
-    // `yarn servebuild` (vite preview) is what ios.yml/tdd.yml actually run behind the tunnel —
-    // preview.allowedHosts doesn't inherit server.allowedHosts, so it needs its own entry too.
     allowedHosts: ['.emthought.cc'],
   },
 })
