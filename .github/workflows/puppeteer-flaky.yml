@@ -5,7 +5,7 @@
 # without adding load to the PR CI pipeline.
 #
 # Runs:
-#   - Daily on a cron schedule
+#   - Twice daily on cron (03:00 and 07:00 UTC — quiet overnight CI hours)
 #   - Manually: `gh workflow run puppeteer-flaky.yml -f iterations=5`
 #
 # Optimizations:
@@ -21,15 +21,16 @@
 name: Puppeteer Flaky
 
 on:
-  # schedule:
-  #   # Daily at 10:09 UTC (= 15:54 NPT / Asia/Kathmandu)
-  #   - cron: '15 4 * * *'
+  schedule:
+    # Two daily runs in GitHub Actions' quietest overnight window (UTC).
+    - cron: '0 3 * * *' # 03:00 UTC
+    - cron: '0 7 * * *' # 07:00 UTC
   workflow_dispatch:
     inputs:
       iterations:
         description: 'Number of full-suite test iterations (1–50)'
         required: false
-        default: '30'
+        default: '15'
         type: string
 
 concurrency:
@@ -61,7 +62,7 @@ jobs:
         run: |
           set -euo pipefail
           RAW='${{ github.event.inputs.iterations }}'
-          N="${RAW:-30}"
+          N="${RAW:-15}"
           if ! [[ "$N" =~ ^[0-9]+$ ]] || [ "$N" -lt 1 ] || [ "$N" -gt 50 ]; then
             echo "iterations must be an integer between 1 and 50 (got: $N)" >&2
             exit 1
