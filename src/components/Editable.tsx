@@ -42,6 +42,7 @@ import getSetting from '../selectors/getSetting'
 import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursorSelector from '../selectors/hasMulticursor'
 import rootedParentOf from '../selectors/rootedParentOf'
+import thoughtToPath from '../selectors/thoughtToPath'
 import { mergeBatchEditing } from '../stores/batchEditing'
 import editingValueStore from '../stores/editingValue'
 import editingValueUntrimmedStore from '../stores/editingValueUntrimmed'
@@ -270,6 +271,10 @@ const Editable = ({
       dispatch((dispatch, getState) => {
         const state = getState()
 
+        // A drop into a collapsed context removes the dragged Editable before its trailing click fires. Ignore the
+        // event if this component's path no longer points to the thought's current location. (#4680)
+        if (!transient && !equalPath(thoughtToPath(state, head(simplePath)), simplePath)) return
+
         // do not set cursor if it is unchanged and we are not entering when keyboard is open
         if ((!isKeyboardOpen || state.isKeyboardOpen) && equalPath(state.cursor, path)) return
 
@@ -300,7 +305,7 @@ const Editable = ({
     },
     // When isEditing changes, we need to reset the cursor on the thought.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [dispatch, isEditing, path],
+    [dispatch, isEditing, path, simplePath, transient],
   )
 
   /**
@@ -823,7 +828,15 @@ const Editable = ({
       if (isTouch && isSafari()) {
         dispatch((dispatch, getState) => {
           const state = getState()
-          if (state.showCommandCenter) {
+          // On iOS a long press (~415–650ms) triggers this native onFocus and reopens the virtual keyboard
+          // even when preventDefault was called in touchend — there is no way to prevent the focus itself.
+          // Dismiss the keyboard again here when the Command Center is open (#3387) or a drag gesture is in
+          // progress (#4683), otherwise the keyboard reopens on top of the drag-and-drop hint after it was
+          // dismissed at drag start. Clearing after two animation frames (rather than synchronously) avoids
+          // iOS Writing Tools getting stuck open and the selection being restored.
+          const isDragging =
+            state.longPress === LongPressState.DragHold || state.longPress === LongPressState.DragInProgress
+          if (state.showCommandCenter || isDragging) {
             selection.clear()
             dispatch(keyboardOpenActionCreator({ value: false }))
             requestAnimationFrame(() => {
@@ -937,6 +950,7 @@ const Editable = ({
       innerRef={contentRef}
       aria-label={'editable-' + head(path)}
       data-editable
+      data-placeholder-cleared={isCursorCleared || undefined}
       data-placeholder-bold={placeholderCommandState?.bold || undefined}
       data-placeholder-code={placeholderCommandState?.code || undefined}
       data-placeholder-italic={placeholderCommandState?.italic || undefined}

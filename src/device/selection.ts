@@ -1,5 +1,7 @@
 /* eslint-disable no-restricted-properties */
 /** Wraps the browser Selection API in a device-agnostic interface. */
+import { Capacitor } from '@capacitor/core'
+import { Keyboard } from '@capacitor/keyboard'
 import { isHTMLElement } from 'motion/react'
 import SplitResult from '../@types/SplitResult'
 import { ALLOWED_FORMATTING_TAGS } from '../constants'
@@ -48,6 +50,12 @@ export const clear = (): void => {
   // Blur the active document element to close the keyboard.
   if (document.activeElement instanceof HTMLElement) {
     document.activeElement.blur()
+  }
+
+  // On iOS Capacitor a DOM blur does not reliably dismiss the native WKWebView keyboard (Keyboard
+  // resize is 'none'), so hide it explicitly via the Keyboard plugin.
+  if (Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('Keyboard')) {
+    Keyboard.hide()
   }
 }
 
@@ -217,6 +225,16 @@ export const offsetThought = (): number | null => {
   }
 
   return total
+}
+
+/** Returns the plain-text character offset of the selection's focus relative to the given root node, ignoring nested HTML markup. Returns null if there is no selection or the focus is not within the node. */
+export const offsetFromNode = (node: Node): number | null => {
+  const selection = window.getSelection()
+  if (!selection?.focusNode || !node.contains(selection.focusNode)) return null
+  const range = document.createRange()
+  range.selectNodeContents(node)
+  range.setEnd(selection.focusNode, selection.focusOffset)
+  return range.toString().length
 }
 
 /** Returns the character offset at the end of the selection. Returns null if there is no selection. */

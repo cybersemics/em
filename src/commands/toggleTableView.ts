@@ -14,7 +14,9 @@ const toggleTableViewCommand: Command = {
   description: 'Display the current list as a table, with subthoughts rendered in the second column.',
   gesture: 'rdlu',
   keyboard: { key: 't', alt: true, shift: true },
-  multicursor: true,
+  multicursor: {
+    filter: 'first-sibling',
+  },
   svg: TableViewIcon,
   canExecute: state => {
     return !!state.cursor || hasMulticursor(state)

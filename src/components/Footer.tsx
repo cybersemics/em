@@ -217,6 +217,10 @@ const Footer = () => {
         <span className={css({ color: 'dim' })}>App Version: </span>
         {pkg.version}
       </li>
+      <li className={liClass}>
+        <span className={css({ color: 'dim' })}>Commit: </span>
+        <span className={css({ fontStyle: 'monospace' })}>{__COMMIT_HASH__}</span>
+      </li>
     </ul>
   )
 }

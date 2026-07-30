@@ -22,6 +22,7 @@ vi.mock('@capacitor/keyboard', () => ({
       mockKeyboardListeners[event] = callback
       return Promise.resolve({ remove: () => {} })
     },
+    hide: () => Promise.resolve(),
     removeAllListeners: () => Promise.resolve(),
   },
 }))
