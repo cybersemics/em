@@ -5,6 +5,7 @@ import SimplePath from '../@types/SimplePath'
 import { alertActionCreator as alert } from '../actions/alert'
 import { longPressActionCreator as longPress } from '../actions/longPress'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
+import { isMac, isTouch } from '../browser'
 import { AlertType, LongPressState } from '../constants'
 import hasMulticursor from '../selectors/hasMulticursor'
 import useLongPress from './useLongPress'
@@ -34,25 +35,31 @@ const useDragHold = ({
   }, [disabled, dispatch, simplePath, sourceZone])
 
   /** Cancel highlighting of bullet and dismiss alert when long press finished. */
-  const onLongPressEnd = useCallback(() => {
-    if (disabled) return
+  const onLongPressEnd = useCallback(
+    (e?: React.MouseEvent | React.TouchEvent) => {
+      if (disabled) return
 
-    setIsPressed(false)
+      setIsPressed(false)
 
-    dispatch((dispatch, getState) => {
-      const state = getState()
+      // The multiselect modifier toggles the multicursor from the click handler in Thought, which fires before the long press ends. Toggling again here would immediately undo it. (#4782)
+      const isMultiselectClick = !!e && !isTouch && (isMac ? e.metaKey : e.ctrlKey)
 
-      if (state.longPress === LongPressState.DragHold) {
-        if (!hasMulticursor(state)) dispatch(alert(null))
-        if (toggleMulticursorOnLongPress) dispatch(toggleMulticursor({ path: simplePath }))
-      }
+      dispatch((dispatch, getState) => {
+        const state = getState()
 
-      dispatch([
-        state.alert?.alertType === AlertType.DragAndDropHint ? alert(null) : null,
-        longPress({ value: LongPressState.Inactive }),
-      ])
-    })
-  }, [disabled, dispatch, simplePath, toggleMulticursorOnLongPress])
+        if (state.longPress === LongPressState.DragHold) {
+          if (!hasMulticursor(state)) dispatch(alert(null))
+          if (toggleMulticursorOnLongPress && !isMultiselectClick) dispatch(toggleMulticursor({ path: simplePath }))
+        }
+
+        dispatch([
+          state.alert?.alertType === AlertType.DragAndDropHint ? alert(null) : null,
+          longPress({ value: LongPressState.Inactive }),
+        ])
+      })
+    },
+    [disabled, dispatch, simplePath, toggleMulticursorOnLongPress],
+  )
 
   const props = useLongPress(onLongPressStart, onLongPressEnd)
 

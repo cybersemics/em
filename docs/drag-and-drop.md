@@ -121,6 +121,8 @@ On desktop, `useLongPress` runs its own `setTimeout(delay)` because the HTML5 ba
 
 `useLongPress` also calls [`allowTouchToScroll(false)`](../src/device/allowTouchToScroll.ts) on long-press start to prevent iOS Safari from initiating a scroll before drag-and-drop kicks in (see [issue #3141](https://github.com/cybersemics/em/issues/3141)).
 
+When the press ends, `useLongPress` defers `onLongPressEnd` by 10 ms so that the browser's click event fires first. This lets click handlers short circuit while `state.longPress` is still `DragHold` — [`BulletPositioner`](../src/components/BulletPositioner.tsx) uses this to avoid collapsing a thought that was only being held. The ending event is forwarded to `onLongPressEnd`, so handlers can also inspect the modifier keys that were held. `useDragHold` uses it for the reverse case: with `toggleMulticursorOnLongPress` (set by [`Thought`](../src/components/Thought.tsx)) a long press ending in `DragHold` toggles the multicursor, except when Cmd (Ctrl on non-Mac) was held, since `Thought`'s click handler has already toggled it and a second toggle would deselect the thought.
+
 ### `useDragLeave`
 
 [`useDragLeave`](../src/hooks/useDragLeave.ts) tracks how many drop targets are currently being deep-hovered (a module-level `hoverCount`). When the count drops to zero, it debounces a 50 ms clear of `state.hoveringPath`. This prevents flicker when the cursor briefly leaves one drop zone before entering an adjacent one.

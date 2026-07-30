@@ -30,7 +30,7 @@ describe('multiselect', () => {
   })
 
   // https://github.com/cybersemics/em/issues/4782
-  it.skip('keeps the thought selected after cmd + click and hold is released', async () => {
+  it('keeps the thought selected after cmd + click and hold is released', async () => {
     await paste(`
         - a
         - b
