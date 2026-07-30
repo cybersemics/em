@@ -39,6 +39,7 @@ jobs:
       unit_files: ${{ steps.classify.outputs.unit_files }}
       puppeteer_files: ${{ steps.classify.outputs.puppeteer_files }}
       ios_files: ${{ steps.classify.outputs.ios_files }}
+      helper_files: ${{ steps.classify.outputs.helper_files }}
       skipped_unit_files: ${{ steps.classify.outputs.skipped_unit_files }}
       skipped_puppeteer_files: ${{ steps.classify.outputs.skipped_puppeteer_files }}
       skipped_ios_files: ${{ steps.classify.outputs.skipped_ios_files }}
@@ -127,6 +128,12 @@ jobs:
           # All test files (union of the above)
           ALL_TEST_FILES=$(printf '%s\n' "$UNIT_FILES" "$PUPPETEER_FILES" "$IOS_FILES" | sed '/^$/d' | sort -u)
 
+          # Test infrastructure: helpers, config, and setup used by the tests. These are
+          # checked out onto base alongside the test files, since a test that uses a new
+          # helper cannot compile on base without it.
+          HELPER_FILES=$(echo "$CHANGED_FILES" \
+            | grep -E '^src/(test-helpers/|e2e/[^/]+/(helpers|config|setup)/).*\.tsx?$' || true)
+
           # Non-test application files: TypeScript source files that are not test files,
           # test helpers, or e2e infrastructure (helpers, config, setup).
           # Excludes non-source files (markdown, yaml, json, js, css, html) to focus
@@ -154,6 +161,9 @@ jobs:
           echo ""
           echo "=== Non-test application files ==="
           echo "$NON_TEST_FILES"
+          echo ""
+          echo "=== Test infrastructure files ==="
+          echo "$HELPER_FILES"
 
           # Set outputs
           HAS_UNIT="false"
@@ -182,6 +192,7 @@ jobs:
           echo "unit_files=$(echo "$UNIT_FILES" | base64 -w 0)" >> "$GITHUB_OUTPUT"
           echo "puppeteer_files=$(echo "$PUPPETEER_FILES" | base64 -w 0)" >> "$GITHUB_OUTPUT"
           echo "ios_files=$(echo "$IOS_FILES" | base64 -w 0)" >> "$GITHUB_OUTPUT"
+          echo "helper_files=$(echo "$HELPER_FILES" | base64 -w 0)" >> "$GITHUB_OUTPUT"
           echo "skipped_unit_files=$(echo "$UNIT_SKIPPED_FILES" | base64 -w 0)" >> "$GITHUB_OUTPUT"
           echo "skipped_puppeteer_files=$(echo "$PUPPETEER_SKIPPED_FILES" | base64 -w 0)" >> "$GITHUB_OUTPUT"
           echo "skipped_ios_files=$(echo "$IOS_SKIPPED_FILES" | base64 -w 0)" >> "$GITHUB_OUTPUT"
@@ -341,6 +352,13 @@ jobs:
             git checkout FETCH_HEAD -- "$f"
           done
 
+          # Test infrastructure the changed tests may depend on, e.g. a new helper.
+          HELPER_FILES=$(echo "${{ needs.detect.outputs.helper_files }}" | base64 -d)
+          for f in $HELPER_FILES; do
+            echo "Checking out: $f"
+            git checkout FETCH_HEAD -- "$f"
+          done
+
           echo "empty=false" >> "$GITHUB_OUTPUT"
 
       - name: Enable Corepack
@@ -446,6 +464,13 @@ jobs:
           # where git apply --3way can fail because there is no base blob to merge.
           echo "=== Checking out puppeteer test files from PR head ==="
           for f in $PUPPETEER_FILES; do
+            echo "Checking out: $f"
+            git checkout FETCH_HEAD -- "$f"
+          done
+
+          # Test infrastructure the changed tests may depend on, e.g. a new helper.
+          HELPER_FILES=$(echo "${{ needs.detect.outputs.helper_files }}" | base64 -d)
+          for f in $HELPER_FILES; do
             echo "Checking out: $f"
             git checkout FETCH_HEAD -- "$f"
           done
@@ -564,6 +589,13 @@ jobs:
           # both modified files and brand-new test files (including new directories).
           echo "=== Checking out iOS test files from PR head ==="
           for f in $IOS_FILES; do
+            echo "Checking out: $f"
+            git checkout FETCH_HEAD -- "$f"
+          done
+
+          # Test infrastructure the changed tests may depend on, e.g. a new helper.
+          HELPER_FILES=$(echo "${{ needs.detect.outputs.helper_files }}" | base64 -d)
+          for f in $HELPER_FILES; do
             echo "Checking out: $f"
             git checkout FETCH_HEAD -- "$f"
           done
