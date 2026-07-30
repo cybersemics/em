@@ -11795,7 +11795,7 @@ __metadata:
     truncate-html: "npm:^1.2.2"
     ts-key-enum: "npm:^2.0.12"
     typescript: "npm:5.9.3"
-    undici: "npm:^8.7.0"
+    undici: "npm:^8.9.0"
     vi-canvas-mock: "npm:^1.0.0"
     vite: "npm:^7.3.1"
     vite-plugin-checker: "npm:^0.12.0"
@@ -23801,10 +23801,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"undici@npm:^8.7.0":
-  version: 8.7.0
-  resolution: "undici@npm:8.7.0"
-  checksum: 10c0/b7e5ecb4de82fa4f905011a77544fe7ba4da06f27167ff99313a7ae2869f3cb233d676dcd085533bc69f36989bc40871f5ae6ea6e4c9b91db92616b9e91b579d
+"undici@npm:^8.9.0":
+  version: 8.9.0
+  resolution: "undici@npm:8.9.0"
+  checksum: 10c0/e3d9fa35a9aa8360d9f56e66bd372f451ee053e25066a97fd9fab3816267035660f67870c6d709a58a5411551657af78c4475be5b31c113b04f70251309900d0
   languageName: node
   linkType: hard
 
