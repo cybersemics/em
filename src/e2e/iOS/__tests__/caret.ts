@@ -2,7 +2,6 @@
  * IOS Safari caret positioning tests.
  * Uses WDIO test runner with Mocha framework.
  */
-import { WindowEm } from '../../../initialize.js'
 import gestures from '../../../test-helpers/gestures'
 import clickThought from '../helpers/clickThought'
 import editThought from '../helpers/editThought'
@@ -63,25 +62,59 @@ describe('Caret', () => {
     expect(boldWrapsToNewLine).toBe(true)
 
     // Capture the pre-tap offset so we can wait for the tap to actually move the caret.
-    const beforeOffset = await browser.execute(() => (window.em as WindowEm).store.getState().cursorOffset)
+    const beforeOffset = await browser.execute(() => {
+      const sel = window.getSelection()
+      const editable = document.querySelector('[data-editing=true] [data-editable]') as HTMLElement
+      if (!sel?.focusNode || !editable) return -1
+      const walker = document.createTreeWalker(editable, NodeFilter.SHOW_TEXT)
+      let node: Node | null
+      let global = 0
+      while ((node = walker.nextNode())) {
+        if (node === sel.focusNode) return global + sel.focusOffset
+        global += (node.textContent || '').length
+      }
+      return -1
+    })
 
     // Tap the end of the first visual line (just past its right edge, at the line's vertical center).
     await tap(editableNodeHandle, { horizontalTapLine: 'right', y: tapYOffset })
 
-    // Tapping within the already-edited thought is handled by the synthesized mousedown → onMouseDown →
-    // getCaretOffset → setCaretOffset path, which fires after touchend and stores the resolved plain-text
-    // offset in Redux (state.cursorOffset). Reading the DOM selection immediately would catch WebKit's
-    // transient glyph-based selection before the app applies its own offset, so wait for the caret to land
-    // at the end of the first line before asserting.
+    // Reading the DOM selection immediately after tap can catch a transient selection, so wait until the
+    // selection offset changes from the pre-tap value.
     await browser.waitUntil(
       async () => {
-        const off = await browser.execute(() => (window.em as WindowEm).store.getState().cursorOffset)
-        return off != null && off !== beforeOffset && off >= boldStart - 3
+        const off = await browser.execute(() => {
+          const sel = window.getSelection()
+          const editable = document.querySelector('[data-editing=true] [data-editable]') as HTMLElement
+          if (!sel?.focusNode || !editable) return -1
+          const walker = document.createTreeWalker(editable, NodeFilter.SHOW_TEXT)
+          let node: Node | null
+          let global = 0
+          while ((node = walker.nextNode())) {
+            if (node === sel.focusNode) return global + sel.focusOffset
+            global += (node.textContent || '').length
+          }
+          return -1
+        })
+        return off >= 0 && off !== beforeOffset
       },
       { timeout: 15000, interval: 300 },
     )
 
-    const caretOffset = await browser.execute(() => (window.em as WindowEm).store.getState().cursorOffset)
+    await browser.pause(200)
+    const caretOffset = await browser.execute(() => {
+      const sel = window.getSelection()
+      const editable = document.querySelector('[data-editing=true] [data-editable]') as HTMLElement
+      if (!sel?.focusNode || !editable) return -1
+      const walker = document.createTreeWalker(editable, NodeFilter.SHOW_TEXT)
+      let node: Node | null
+      let global = 0
+      while ((node = walker.nextNode())) {
+        if (node === sel.focusNode) return global + sel.focusOffset
+        global += (node.textContent || '').length
+      }
+      return -1
+    })
 
     // The caret must stay at the end of the first line (offset < boldStart), not jump to the start of the
     // bold text on the next line, which corresponds to the ambiguous soft-wrap boundary offset === boldStart.
