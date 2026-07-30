@@ -29,7 +29,6 @@ const clear = (
     state => ({
       ...state,
       cursor: null,
-      multicursorAnchor: null,
       multicursors: {},
     }),
     // delete all thoughts

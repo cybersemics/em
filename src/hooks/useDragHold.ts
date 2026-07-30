@@ -4,9 +4,7 @@ import DragThoughtZone from '../@types/DragThoughtZone'
 import SimplePath from '../@types/SimplePath'
 import { alertActionCreator as alert } from '../actions/alert'
 import { longPressActionCreator as longPress } from '../actions/longPress'
-import { selectBetweenActionCreator as selectBetween } from '../actions/selectBetween'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
-import { isTouch } from '../browser'
 import { AlertType, LongPressState } from '../constants'
 import hasMulticursor from '../selectors/hasMulticursor'
 import useLongPress from './useLongPress'
@@ -46,13 +44,7 @@ const useDragHold = ({
 
       if (state.longPress === LongPressState.DragHold) {
         if (!hasMulticursor(state)) dispatch(alert(null))
-        if (toggleMulticursorOnLongPress) {
-          dispatch(
-            isTouch && state.multicursorAnchor
-              ? selectBetween({ path: simplePath })
-              : toggleMulticursor({ path: simplePath }),
-          )
-        }
+        if (toggleMulticursorOnLongPress) dispatch(toggleMulticursor({ path: simplePath }))
       }
 
       dispatch([
