@@ -14,11 +14,11 @@ import Key from './@types/Key'
 import MulticursorFilter from './@types/MulticursorFilter'
 import Path from './@types/Path'
 import State from './@types/State'
-import ThoughtId from './@types/ThoughtId'
 import { addMulticursorActionCreator as addMulticursor } from './actions/addMulticursor'
 import { alertActionCreator as alert } from './actions/alert'
 import { clearMulticursorsActionCreator as clearMulticursors } from './actions/clearMulticursors'
 import { gestureMenuActionCreator as gestureMenu } from './actions/gestureMenu'
+import { indentActionCreator as indent } from './actions/indent'
 import { setCursorActionCreator as setCursor } from './actions/setCursor'
 import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from './actions/setIsMulticursorExecuting'
 import { showLatestCommandsActionCreator as showLatestCommands } from './actions/showLatestCommands'
@@ -30,9 +30,11 @@ import { AlertType, COMMAND_PALETTE_TIMEOUT, HOME_PATH, LongPressState, Settings
 import * as selection from './device/selection'
 import globals from './globals'
 import documentSort from './selectors/documentSort'
+import getThoughtById from './selectors/getThoughtById'
 import getUserSetting from './selectors/getUserSetting'
 import hasMulticursor from './selectors/hasMulticursor'
 import isAllSelected from './selectors/isAllSelected'
+import splitChain from './selectors/splitChain'
 import thoughtToPath from './selectors/thoughtToPath'
 import store from './stores/app'
 import editingValueStore from './stores/editingValue'
@@ -262,10 +264,13 @@ const filterCursors = (state: State, cursors: Path[], filter: MulticursorFilter 
   }
 }
 
-/** Recomputes the path to a thought. Returns null if the thought does not exist. */
-const recomputePath = (state: State, thoughtId: ThoughtId) => {
-  const path = thoughtToPath(state, thoughtId)
-  return path && equalPath(path, HOME_PATH) ? null : path
+/** Recomputes a path after a command has executed, in case the thought was moved. Returns null if the thought no longer exists. Paths that cross a context view are returned as-is, since they do not follow the parent chain and therefore cannot be reconstructed by thoughtToPath. */
+const recomputePath = (state: State, path: Path): Path | null => {
+  // e.g. a/m~/a does not follow the parent chain (the trailing a is a context of the Lexeme m, whose real parent is the root), so thoughtToPath would collapse it to a.
+  if (splitChain(state, path).length > 1) return getThoughtById(state, head(path)) ? path : null
+
+  const recomputed = thoughtToPath(state, head(path))
+  return recomputed && equalPath(recomputed, HOME_PATH) ? null : recomputed
 }
 
 /** Execute a single command. Defaults to global store and keyboard shortcuts. Use `executeCommandWithMulticursor` to execute a command with multicursor mode. */
@@ -367,7 +372,7 @@ export const executeCommandWithMulticursor = (
   } else {
     for (const path of filteredPaths) {
       // Make sure we have the correct path to the thought in case it was moved during execution.
-      const recomputedPath = recomputePath(commandStore.getState(), head(path))
+      const recomputedPath = recomputePath(commandStore.getState(), path)
       if (!recomputedPath) continue
 
       commandStore.dispatch(setCursor({ path: recomputedPath }))
@@ -378,14 +383,14 @@ export const executeCommandWithMulticursor = (
   // Restore the cursor to its original value if not prevented.
   // Note that state.cursor is the old cursor, before any commands were executed.
   if (!multicursor.preventSetCursor && state.cursor) {
-    commandStore.dispatch(setCursor({ path: recomputePath(commandStore.getState(), head(state.cursor)) }))
+    commandStore.dispatch(setCursor({ path: recomputePath(commandStore.getState(), state.cursor) }))
   }
 
   // Restore multicursors
   if (!multicursor.clearMulticursor) {
     commandStore.dispatch(
       paths.map(path => (dispatch, getState) => {
-        const recomputedPath = recomputePath(getState(), head(path))
+        const recomputedPath = recomputePath(getState(), path)
         if (!recomputedPath) return
         dispatch(addMulticursor({ path: recomputedPath }))
       }),
@@ -575,7 +580,12 @@ export const handleGestureCancel = () => {
 
 /** In the specific case of the newThought and indent commands, prevent default in beforeinput event instead of keydown to preserve default iOS auto-capitalization behavior. The Enter and space characters needs to be prevented so that it doesn't get inserted into the thought (#3707).
  *
- * Also intercepts native undo/redo, which iOS triggers via three-finger swipe, shake-to-undo, or the Edit menu. These dispatch a beforeinput event with inputType historyUndo/historyRedo rather than a keydown, so the Cmd+Z block in the undo/redo commands never catches them. Left to run natively, WebKit's contentEditable undo manipulates the DOM out of sync with the Redux thought state, duplicating text (e.g. an autocorrected word and its original are both re-inserted on redo). Blocking the native operation and routing it through the app's undo/redo commands keeps Redux as the single source of truth (#4477). */
+ * Also intercepts native undo/redo, which iOS triggers via three-finger swipe, shake-to-undo, or the Edit menu. These dispatch a beforeinput event with inputType historyUndo/historyRedo rather than a keydown, so the Cmd+Z block in the undo/redo commands never catches them. Left to run natively, WebKit's contentEditable undo manipulates the DOM out of sync with the Redux thought state, duplicating text (e.g. an autocorrected word and its original are both re-inserted on redo). Blocking the native operation and routing it through the app's undo/redo commands keeps Redux as the single source of truth (#4477).
+ *
+ * Android soft keyboards report the space keydown as keyCode 229 ('Unidentified'), so the space-to-indent
+ * command is never matched in keyDown and keyCommandId is never set. The insertText branch catches that case:
+ * a `beforeinput` insertText of a single space over an empty thought indents it instead of inserting the
+ * space, mirroring the keyDown-matched path on desktop/iOS (#4178). */
 export const beforeInput = (e: InputEvent) => {
   if (e.inputType === 'historyUndo' || e.inputType === 'historyRedo') {
     // Always block the native operation, even when there is nothing to undo/redo, so WebKit never mutates the editable directly.
@@ -588,6 +598,17 @@ export const beforeInput = (e: InputEvent) => {
   }
   if (keyCommandId === 'newThought' || (keyCommandId === 'indent' && editingValueStore.getState() === '')) {
     e.preventDefault()
+    return
+  }
+
+  // On Android, the soft keyboard reports the space keydown with keyCode 229 ('Unidentified'), so the
+  // space-to-indent command is never matched in keyDown and keyCommandId is not set. Catch the space here
+  // and indent the empty thought instead of letting the literal space get inserted (#4178). Non-empty
+  // thoughts and other input types (paste, IME composition) are excluded, so typing a space mid-word is
+  // unaffected; desktop/iOS reach indent via their keyDown-matched path and short-circuit above.
+  if (e.inputType === 'insertText' && e.data === ' ' && editingValueStore.getState() === '') {
+    e.preventDefault()
+    store.dispatch(indent())
   }
 }
 

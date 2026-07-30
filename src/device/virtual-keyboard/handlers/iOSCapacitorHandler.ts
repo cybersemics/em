@@ -2,6 +2,8 @@ import { Capacitor } from '@capacitor/core'
 import { Keyboard } from '@capacitor/keyboard'
 import { AnimationPlaybackControls, animate } from 'framer-motion'
 import VirtualKeyboardHandler from '../../../@types/VirtualKeyboardHandler'
+import { LongPressState } from '../../../constants'
+import store from '../../../stores/app'
 import viewportStore from '../../../stores/viewport'
 import virtualKeyboardStore from '../../../stores/virtualKeyboardStore'
 import getSafeAreaBottom from '../getSafeAreaBottom'
@@ -17,6 +19,12 @@ const iOSCapacitorHandler: VirtualKeyboardHandler = {
     let controls: AnimationPlaybackControls | null = null
 
     Keyboard.addListener('keyboardWillShow', info => {
+      // Ignore the transient keyboard show that iOS fires from the unpreventable long-press onFocus during a
+      // drag (#4683). We dismiss the keyboard immediately when a drag begins, but reacting to this show would
+      // animate the virtual keyboard height up and then straight back down, making the drag-and-drop alert
+      // jump. Skip the layout update while a drag gesture is active; the keyboard should never be open then.
+      if (store.getState().longPress !== LongPressState.Inactive) return
+
       // Get the raw height of the keyboard from the event...
       const rawHeight = info.keyboardHeight || 0
 

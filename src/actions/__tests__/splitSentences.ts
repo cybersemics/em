@@ -1,3 +1,4 @@
+import MimeType from '../../@types/MimeType'
 import newThought from '../../actions/newThought'
 import splitSentences from '../../actions/splitSentences'
 import { HOME_TOKEN } from '../../constants'
@@ -15,11 +16,11 @@ import importText from '../importText'
  * @param thought The thought that needs to be split.
  * @returns The thought string after being split.
  */
-function splitThought(value: string) {
+function splitThought(value: string, format: MimeType = 'text/plain') {
   const steps = [newThought(value), splitSentences()]
 
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+  const exported = exportContext(stateNew, [HOME_TOKEN], format)
   return exported
 }
 
@@ -782,5 +783,23 @@ describe('dash splitting', () => {
     expect(exported).toBe(`- ${HOME_TOKEN}
   - one
     - 1.`)
+  })
+})
+
+describe('formatting', () => {
+  // https://github.com/cybersemics/em/issues/4229
+  it('preserves formatting on every comma-delimited segment, including segments in the middle', () => {
+    const value = '<font color="#ff573d">Hello, beautiful, people.</font>'
+    const exported = splitThought(value, 'text/html')
+
+    expect(exported).toBe(`<ul>
+  <li>${HOME_TOKEN}  
+    <ul>
+      <li><font color="#ff573d">Hello</font></li>
+      <li><font color="#ff573d">beautiful</font></li>
+      <li><font color="#ff573d">people.</font></li>
+    </ul>
+  </li>
+</ul>`)
   })
 })
