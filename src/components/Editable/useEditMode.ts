@@ -10,6 +10,7 @@ import asyncFocus from '../../device/asyncFocus'
 import getCaretOffset from '../../device/getCaretOffset'
 import preventAutoscroll, { preventAutoscrollEnd } from '../../device/preventAutoscroll'
 import * as selection from '../../device/selection'
+import virtualKeyboard from '../../device/virtual-keyboard'
 import usePrevious from '../../hooks/usePrevious'
 import hasMulticursor from '../../selectors/hasMulticursor'
 import equalPath from '../../util/equalPath'
@@ -85,6 +86,13 @@ const useEditMode = ({
           selection.clear()
         } else {
           selection.set(contentRef.current, { offset: cursorOffset ?? 0 })
+
+          // The Android WebView does not raise the virtual keyboard when the selection is set
+          // programmatically, e.g. when a gesture such as Clear Thought activates edit mode (#4686).
+          // Only show it in edit mode, otherwise the keyboard would re-open after the user dismissed it (#3996).
+          if (editMode) {
+            virtualKeyboard.show()
+          }
         }
       }
 

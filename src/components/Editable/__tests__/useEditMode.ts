@@ -1,9 +1,13 @@
-import { act } from 'react'
+import { renderHook } from '@testing-library/react'
+import { act, createElement } from 'react'
+import { Provider } from 'react-redux'
 import { importTextActionCreator as importText } from '../../../actions/importText'
+import { executeCommandWithMulticursor } from '../../../commands'
+import clearThoughtCommand from '../../../commands/clearThought'
 import store from '../../../stores/app'
-import createTestApp, { cleanupTestApp } from '../../../test-helpers/createTestApp'
+import initStore from '../../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../../test-helpers/setCursorFirstMatch'
-import windowEvent from '../../../test-helpers/windowEvent'
+import useEditMode from '../useEditMode'
 
 /** Captures the native keyboard plugin calls made by the app. */
 const keyboardShow = vi.hoisted(() => vi.fn())
@@ -32,31 +36,35 @@ vi.mock('@capacitor/keyboard', () => ({
   },
 }))
 
-vi.mock('@capacitor/status-bar', () => ({
-  StatusBar: {
-    setOverlaysWebView: () => Promise.resolve(),
-    setStyle: () => Promise.resolve(),
-  },
-  Style: { Dark: 'DARK', Light: 'LIGHT' },
-}))
-
-beforeEach(createTestApp)
-afterEach(cleanupTestApp)
+beforeEach(initStore)
 
 // https://github.com/cybersemics/em/issues/4686
-it.skip('opens the virtual keyboard when Clear Thought activates edit mode', async () => {
+it('opens the virtual keyboard when Clear Thought activates edit mode', async () => {
+  store.dispatch([importText({ text: '- Hello World' }), setCursor(['Hello World'])])
+
+  const editable = document.createElement('div')
+  editable.setAttribute('contenteditable', 'true')
+  document.body.appendChild(editable)
+
+  renderHook(
+    () =>
+      useEditMode({
+        contentRef: { current: editable as unknown as HTMLInputElement },
+        isEditing: true,
+        path: store.getState().cursor!,
+        style: undefined,
+        transient: undefined,
+      }),
+    { wrapper: ({ children }) => createElement(Provider, { store, children }) },
+  )
+
+  // the cursor is on the thought with the keyboard closed
+  expect(store.getState().isKeyboardOpen).toBeFalsy()
+  expect(keyboardShow).not.toHaveBeenCalled()
+
   await act(async () => {
-    store.dispatch([importText({ text: '- Hello World' }), setCursor(['Hello World'])])
+    executeCommandWithMulticursor(clearThoughtCommand, { store })
   })
-  await act(vi.runAllTimersAsync)
-
-  keyboardShow.mockClear()
-
-  // Clear Thought
-  act(() => {
-    windowEvent('keydown', { key: 'c', altKey: true, shiftKey: true, metaKey: true })
-  })
-  await act(vi.runAllTimersAsync)
 
   expect(keyboardShow).toHaveBeenCalled()
 })

@@ -35,6 +35,12 @@ const virtualKeyboardHandler = {
       iOSSafariHandler.destroy()
     }
   },
+  /** Opens the virtual keyboard on platforms that do not open it automatically when an editable is focused. */
+  show: () => {
+    if (isCapacitor() && !isIOS) {
+      androidCapacitorHandler.show?.()
+    }
+  },
 }
 
 export default virtualKeyboardHandler

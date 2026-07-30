@@ -85,11 +85,12 @@ AND the following are all true:
 - We're not in `LongPressState.DragHold` (the user is mid-long-press; don't hijack their selection).
 - The hook hasn't been temporarily disabled via `allowDefaultSelection` (see below).
 
-When all conditions pass, the hook calls `selection.set(contentRef.current, { offset: cursorOffset ?? 0 })`. Three Mobile Safari workarounds are layered in here:
+When all conditions pass, the hook calls `selection.set(contentRef.current, { offset: cursorOffset ?? 0 })`. Several platform workarounds are layered in here:
 
 - **Hidden-thoughts guard.** If `style.visibility === 'hidden'`, the hook calls `selection.clear()` instead of setting — otherwise switching tabs and back can fire a faulty focus event ([issue #1596](https://github.com/cybersemics/em/issues/1596)).
 - **Auto-Capitalization.** When a thought is created on iOS Safari, the Shift key needs to be on at the moment the selection is set — but synchronous selection-setting breaks Auto-Capitalization ([issue #999](https://github.com/cybersemics/em/issues/999)). Calling [`asyncFocus()`](#asyncfocusts) before the set fixes it. Doing this only when the existing selection isn't already on a thought avoids an infinite loop with nested empty thoughts.
 - **Keyboard stability during rapid edits.** [`requestAnimationFrame`](https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame) is used instead of `setTimeout` (in some places) to keep the keyboard from flickering closed during rapid delete sequences ([issue #3129](https://github.com/cybersemics/em/issues/3129)). For `swapParent`, the selection is set synchronously to keep focus stable across the swap.
+- **Android keyboard activation.** The Android WebView does not raise the virtual keyboard when the selection is set programmatically (only a tap does), so a command that activates edit mode by side effect — Clear Thought, `newThought`, etc. — would leave the caret in the thought with no keyboard ([issue #4686](https://github.com/cybersemics/em/issues/4686)). After setting the selection the hook calls [`virtualKeyboard.show()`](../src/device/virtual-keyboard/index.ts), which is a no-op on every platform except the Android Capacitor app. It is gated on `editMode` so that the keyboard is never re-opened after the user manually dismissed it ([issue #3996](https://github.com/cybersemics/em/issues/3996)).
 
 `useEditMode` returns an `allowDefaultSelection` callback. Calling it disables the hook for one tick, which lets the user click somewhere else inside a thought (e.g. to position the caret in the middle of a non-cursor thought) without the hook stomping their click. Used by `Editable`'s click handler.
 

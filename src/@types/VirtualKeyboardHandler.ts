@@ -4,6 +4,8 @@ interface VirtualKeyboardHandler {
   init: () => void
   /** Clean up any event listeners. */
   destroy: () => void
+  /** Opens the virtual keyboard. Only implemented on platforms that do not open it automatically when an editable is focused. */
+  show?: () => void
 }
 
 export default VirtualKeyboardHandler
