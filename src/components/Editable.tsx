@@ -770,10 +770,10 @@ const Editable = ({
       // the editable, so anything that forces a re-render from Redux (e.g. formatSelection) deletes whitespace the user
       // is still typing (#4657).
       dispatch((dispatch, getState) => {
+        // the thought may have been deleted while it was focused, in which case there is nothing to trim
         if (transient || !getThoughtById(getState(), head(simplePath))) return
         const untrimmedValue = oldValueRef.current
         const trimmedValue = trimHtml(untrimmedValue)
-        // the thought may have been deleted while it was focused, in which case there is nothing to trim
         if (trimmedValue === untrimmedValue) return
         oldValueRef.current = trimmedValue
         dispatch(editThought({ oldValue: untrimmedValue, newValue: trimmedValue, path: simplePath }))

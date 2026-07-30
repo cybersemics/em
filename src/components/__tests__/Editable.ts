@@ -4,12 +4,11 @@ import userEvent from '@testing-library/user-event'
 import { act, createElement } from 'react'
 import { Provider } from 'react-redux'
 import SimplePath from '../../@types/SimplePath'
-import { formatSelectionActionCreator as formatSelection } from '../../actions/formatSelection'
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import { executeCommand } from '../../commands'
 import clearThoughtCommand from '../../commands/clearThought'
 import { HOME_TOKEN } from '../../constants'
-import getTextContentFromHTML from '../../device/getTextContentFromHTML'
 import * as selection from '../../device/selection'
 import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
@@ -158,19 +157,14 @@ it('inserts emoji spacing immediately before colored text', async () => {
 })
 
 it('re-applies the outer formatting tag after clearThought (#3673)', async () => {
-  act(() => {
-    windowEvent('keydown', { key: 'Enter' })
-  })
+  // formatSelection cannot be used to create the formatted value, as it applies formatting with document.execCommand,
+  // which is stubbed out as a noop in JSDOM. See: /setupTests.js. This will change as soon as #4657 is merged.
+  await dispatch([newThought({ value: '<b>hello</b>' }), setCursor(['<b>hello</b>'])])
+  await act(vi.runAllTimersAsync)
 
-  const editable = (await findThoughtByText(''))!
+  // findThoughtByText cannot be used here, as it only matches direct text children, not the nested <b>
+  const editable = document.querySelector<HTMLElement>(`[aria-label="editable-${head(store.getState().cursor!)}"]`)!
   expect(editable).toBeVisible()
-
-  const user = userEvent.setup({ delay: null })
-  await user.type(editable, 'hello')
-  await act(vi.runAllTimersAsync)
-  await dispatch(formatSelection('bold'))
-  await act(vi.runAllTimersAsync)
-  expect(getThoughtById(store.getState(), head(store.getState().cursor!))!.value).toBe('<b>hello</b>')
 
   await act(async () => {
     executeCommand(clearThoughtCommand)
@@ -178,6 +172,7 @@ it('re-applies the outer formatting tag after clearThought (#3673)', async () =>
   await act(vi.runAllTimersAsync)
   expect(editable.innerHTML).toBe('')
 
+  const user = userEvent.setup({ delay: null })
   await user.type(editable, 'a')
   await act(vi.runAllTimersAsync)
 
@@ -201,45 +196,30 @@ it('preserves a trailing space while typing', async () => {
   expect(getThoughtById(store.getState(), head(store.getState().cursor!))!.value).toBe('North Star ')
 })
 
-it('preserves a trailing space when applying a background color (#4657)', async () => {
-  act(() => {
-    windowEvent('keydown', { key: 'Enter' })
-  })
-
-  const editable = (await findThoughtByText(''))!
-  expect(editable).toBeVisible()
-
-  const user = userEvent.setup({ delay: null })
-  await user.type(editable, 'North Star ')
-  await act(vi.runAllTimersAsync)
-  await dispatch(formatSelection('backColor', 'red'))
-  await act(vi.runAllTimersAsync)
-
-  expect(editable.textContent).toBe('North Star ')
-  const value = getThoughtById(store.getState(), head(store.getState().cursor!))!.value
-  expect(getTextContentFromHTML(value)).toBe('North Star ')
-})
-
 it('trims whitespace on blur (#2159)', async () => {
-  act(() => {
-    windowEvent('keydown', { key: 'Enter' })
-  })
+  // formatSelection cannot be used to create the formatted value, as it applies formatting with document.execCommand,
+  // which is stubbed out as a noop in JSDOM. See: /setupTests.js. This will change as soon as #4657 is merged.
+  await dispatch([newThought({ value: '<b>a b</b>' }), setCursor(['<b>a b</b>'])])
+  await act(vi.runAllTimersAsync)
 
-  const editable = (await findThoughtByText(''))!
+  // findThoughtByText cannot be used here, as it only matches direct text children, not the nested <b>
+  const editable = document.querySelector<HTMLElement>(`[aria-label="editable-${head(store.getState().cursor!)}"]`)!
   expect(editable).toBeVisible()
 
-  const user = userEvent.setup({ delay: null })
-  await user.type(editable, 'North Star ')
+  // delete the "a", leaving a leading space inside the bold tag
+  editable.innerHTML = '<b> b</b>'
+  act(() => {
+    fireEvent.input(editable, { bubbles: true })
+  })
   await act(vi.runAllTimersAsync)
-  await dispatch(formatSelection('bold'))
-  await act(vi.runAllTimersAsync)
-  expect(getThoughtById(store.getState(), head(store.getState().cursor!))!.value).toBe('<b>North Star </b>')
+  expect(getThoughtById(store.getState(), head(store.getState().cursor!))!.value).toBe('<b> b</b>')
 
   act(() => {
+    editable.focus()
     editable.blur()
   })
   await act(vi.runAllTimersAsync)
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/html')
-  expect(exported).toContain('<b>North Star</b>')
+  expect(exported).toContain('<b>b</b>')
 })
