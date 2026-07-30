@@ -12,7 +12,9 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
+import { addMulticursorActionCreator as addMulticursor } from '../actions/addMulticursor'
 import { selectBetweenActionCreator as selectBetween } from '../actions/selectBetween'
+import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
 import { isMac, isTouch } from '../browser'
 import { AlertType, REGEX_TAGS } from '../constants'
@@ -321,7 +323,16 @@ const ThoughtContainer = ({
   )
   const isInContextView = useSelector(state => isContextViewActive(state, parentOf(path)))
 
-  const hideBullet = useHideBullet({ children, env, hideBulletProp, isEditing, simplePath, isInContextView, thoughtId })
+  const hideBullet = useHideBullet({
+    children,
+    env,
+    hideBulletProp,
+    isEditing,
+    path,
+    simplePath,
+    isInContextView,
+    thoughtId,
+  })
   const style = useThoughtStyle({ children, env, styleProp, thoughtId })
   const styleAnnotation = useSelector(
     state =>
@@ -518,17 +529,18 @@ const ThoughtContainer = ({
       if (isTouch) return
 
       const mouseEvent = e as React.MouseEvent
-      const isToggleMulticursor = isMac ? mouseEvent.metaKey : mouseEvent.ctrlKey
 
-      // Shift + Click adjusts the endpoint of the active Select Between range.
+      // Shift + Click selects all thoughts between the clicked thought and the previously selected thought.
       if (mouseEvent.shiftKey) {
         e.preventDefault()
-        dispatch(selectBetween({ path }))
+        // move the cursor to the clicked thought so selectBetween resolves the correct sibling level,
+        // preserving the existing multicursor selection, then add the clicked thought and fill the range
+        dispatch([setCursor({ path, preserveMulticursor: true }), addMulticursor({ path }), selectBetween()])
         return
       }
 
-      // Cmd/Ctrl + Click toggles the clicked thought and makes it the next Select Between start anchor.
-      if (isToggleMulticursor) {
+      // Cmd/Ctrl + Click toggles the clicked thought in the multicursor selection.
+      if (isMac ? mouseEvent.metaKey : mouseEvent.ctrlKey) {
         e.preventDefault()
         dispatch(toggleMulticursor({ path }))
       }

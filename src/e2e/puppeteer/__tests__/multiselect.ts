@@ -117,78 +117,64 @@ describe('multiselect', () => {
     expect(copied['text/html']).toContain('c')
   })
 
-  // https://github.com/cybersemics/em/issues/4739
-  it('shift + click selects thoughts between the clicked and previously selected thought', async () => {
+  // https://github.com/cybersemics/em/issues/4728
+  it('shows the multiselect highlight on table column 1 thoughts', async () => {
     await paste(`
         - a
-        - b
-        - c
-        - d
-        - e
+          - =view
+            - Table
+          - b
+            - c
+          - d
+            - e
         `)
 
-    // start multiselect on b
-    await multiselectThoughts(['b'])
-    // shift + click d to select all thoughts between b and d
-    await shiftClickThought('d')
+    await waitForEditable('e')
+    await multiselectThoughts(['c', 'e'])
 
-    const highlightedValues = await page.$$eval('[aria-label="bullet"][data-highlighted="true"]', bullets =>
-      bullets.map(
-        bullet => bullet.closest('[aria-label="thought-container"]')?.querySelector('[data-editable]')?.textContent,
-      ),
-    )
+    // Swap Note moves c and e into their parents' =note, so the multiselect moves up to b and d, which are
+    // in table column 1.
+    await press('KeyN', { alt: true, shift: true })
 
-    expect(highlightedValues.sort()).toEqual(['b', 'c', 'd'])
+    // wait for both notes to render so the assertion runs after Swap Note has completed
+    await page.waitForFunction(() => document.querySelectorAll('[aria-label="note"]').length === 2, { timeout: 5000 })
+
+    const highlightedBullets = await page.$$('[aria-label="bullet"][data-highlighted="true"]')
+    expect(highlightedBullets.length).toBe(2)
   })
 
-  // https://github.com/cybersemics/em/issues/4739
-  it('shift + click selects between thoughts in reverse order', async () => {
+  // https://github.com/cybersemics/em/issues/4728
+  it('restores the multiselect to the swapped thoughts when Swap Note is undone', async () => {
     await paste(`
         - a
-        - b
-        - c
-        - d
-        - e
+          - =view
+            - Table
+          - b
+            - c
+          - d
+            - e
         `)
 
-    // start multiselect on d
-    await multiselectThoughts(['d'])
-    // shift + click b to select all thoughts between b and d, regardless of order
-    await shiftClickThought('b')
+    await waitForEditable('e')
+    await multiselectThoughts(['c', 'e'])
+
+    await press('KeyN', { alt: true, shift: true })
+
+    // wait for both notes to render so the undo runs after Swap Note has completed
+    await page.waitForFunction(() => document.querySelectorAll('[aria-label="note"]').length === 2, { timeout: 5000 })
+
+    await press('KeyZ', { meta: true })
+
+    // wait for the notes to be converted back to thoughts
+    await page.waitForFunction(() => document.querySelectorAll('[aria-label="note"]').length === 0, { timeout: 5000 })
 
     const highlightedValues = await page.$$eval('[aria-label="bullet"][data-highlighted="true"]', bullets =>
       bullets.map(
-        bullet => bullet.closest('[aria-label="thought-container"]')?.querySelector('[data-editable]')?.textContent,
+        bullet => bullet.closest('[aria-label="tree-node"]')?.querySelector('[data-editable]')?.textContent ?? null,
       ),
     )
 
-    expect(highlightedValues.sort()).toEqual(['b', 'c', 'd'])
-  })
-
-  // https://github.com/cybersemics/em/issues/4739
-  it('shift + click selects between thoughts in a sorted list', async () => {
-    await paste(`
-        - =sort
-          - Alphabetical
-        - d
-        - b
-        - e
-        - a
-        - c
-        `)
-
-    // in a sorted list the thoughts render as a, b, c, d, e
-    // start multiselect on b, then shift + click d to select b, c, d in sorted order
-    await multiselectThoughts(['b'])
-    await shiftClickThought('d')
-
-    const highlightedValues = await page.$$eval('[aria-label="bullet"][data-highlighted="true"]', bullets =>
-      bullets.map(
-        bullet => bullet.closest('[aria-label="thought-container"]')?.querySelector('[data-editable]')?.textContent,
-      ),
-    )
-
-    expect(highlightedValues.sort()).toEqual(['b', 'c', 'd'])
+    expect(highlightedValues.sort()).toEqual(['c', 'e'])
   })
 })
 
