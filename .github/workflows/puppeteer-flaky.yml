@@ -1,42 +1,33 @@
-# Puppeteer flaky-test stress detector
+# Daily Puppeteer flaky-test detector.
 #
-# Proactively catches flaky Puppeteer tests by running the full suite many times
-# against `main` on a daily cron, then aggregating vitest JSON reports into a
-# flaky-test list. This replaces the manual fan-out via `trigger_wf.sh` /
-# `ghworkflow` for routine flake hunting, without loading the PR CI pipeline.
+# Runs the full Puppeteer test suite repeatedly on `main` and aggregates Vitest
+# JSON reports to identify flaky tests. This automates routine flake detection
+# without adding load to the PR CI pipeline.
 #
-# Budget (public repo → Actions minutes are free; concurrency is the real limit):
-#   - 30 iterations × ~10 min ≈ 300 job-minutes/day
-#   - max-parallel: 15 uses most of the ~20 concurrent slots (expect PR CI to queue while this runs)
-#   - wall-clock ≈ 20–30 min starting ~10:09 UTC (15:54 NPT)
-#   - build once, reuse via artifact (avoids 29 redundant builds)
+# Runs:
+#   - Daily on a cron schedule
+#   - Manually: `gh workflow run puppeteer-flaky.yml -f iterations=5`
 #
-# Manual dispatch:
-#   gh workflow run puppeteer-flaky.yml -f iterations=5
+# Optimizations:
+#   - Builds once and reuses the artifact across all iterations
+#   - Uploads trimmed Vitest reports only for failed iterations
 #
-# Discord notifications (optional):
-#   1. In Discord: channel settings → Integrations → Webhooks → New Webhook
-#   2. Copy the URL into a repo secret named DISCORD_WEBHOOK_URL
-#   Notifications fire only when flakes or infra failures are found (no daily noise).
+# Reports:
+#   - Workflow summary
+#   - Optional Discord notification (flakes/infra failures only)
 #
-# Artifacts: only failed iterations upload vitest JSON, trimmed via
-# `node scripts/flaky-report.mjs --trim` so passed tests are stripped before upload.
-#
-# Report destinations:
-#   - Workflow run summary (always)
-#   - Long-lived GitHub issue (marker: <!-- flaky-test-report -->, label: flaky), upserted each run
-#   - Discord webhook (flakes/infra only, when the secret is set)
+# To enable Discord notifications, add a `DISCORD_WEBHOOK_URL` repository secret.
 
 name: Puppeteer Flaky
 
 on:
-  schedule:
-    # Daily at 10:09 UTC (= 15:54 NPT / Asia/Kathmandu)
-    - cron: '15 4 * * *'
+  # schedule:
+  #   # Daily at 10:09 UTC (= 15:54 NPT / Asia/Kathmandu)
+  #   - cron: '15 4 * * *'
   workflow_dispatch:
     inputs:
       iterations:
-        description: 'Number of full-suite stress iterations (1–50)'
+        description: 'Number of full-suite test iterations (1–50)'
         required: false
         default: '30'
         type: string
@@ -79,7 +70,7 @@ jobs:
           MATRIX="[$(seq -s, 1 "$N")]"
           echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
           echo "iterations=$N" >> "$GITHUB_OUTPUT"
-          echo "Will run $N stress iteration(s): $MATRIX"
+          echo "Will run $N test iteration(s): $MATRIX"
 
   build:
     name: Build
@@ -110,8 +101,8 @@ jobs:
           path: build/
           retention-days: 1
 
-  stress:
-    name: Stress ${{ matrix.iteration }}
+  test:
+    name: Test ${{ matrix.iteration }}
     needs: [setup, build]
     runs-on: ubuntu-latest
     strategy:
@@ -152,7 +143,7 @@ jobs:
         uses: ./.github/actions/serve
 
       - name: Test
-        # continue-on-error so a failed suite can still trim + upload its vitest JSON.
+        # continue-on-error so a failed suite can still upload its vitest JSON.
         # Successful iterations upload nothing; missing JSON ⇒ passed (see flaky-report.mjs).
         continue-on-error: true
         id: test
@@ -188,7 +179,7 @@ jobs:
 
   report:
     name: Report
-    needs: [setup, stress]
+    needs: [setup, test]
     # setup provides the iteration count; skip if the matrix was never generated
     if: always() && needs.setup.result == 'success'
     runs-on: ubuntu-latest
@@ -234,122 +225,6 @@ jobs:
           echo "infra_count=$INFRA_COUNT" >> "$GITHUB_OUTPUT"
           echo "aggregate_exit=$STATUS" >> "$GITHUB_OUTPUT"
 
-      # - name: Upsert GitHub issue
-      #   uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
-      #   env:
-      #     CLEAN: ${{ steps.aggregate.outputs.clean }}
-      #     RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-      #   with:
-      #     script: |
-      #       const fs = require('fs')
-      #       const marker = '<!-- flaky-test-report -->'
-      #       const { owner, repo } = context.repo
-      #       const clean = process.env.CLEAN === 'true'
-      #       const runUrl = process.env.RUN_URL
-      #       const report = fs.readFileSync('report.md', 'utf8')
-      #       const stamp = new Date().toISOString()
-
-      #       const isIssuesDisabled = err => {
-      #         const msg = err?.message || String(err)
-      #         return (
-      #           err?.status === 410 ||
-      #           /issues has been disabled/i.test(msg) ||
-      #           /issues are disabled/i.test(msg)
-      #         )
-      #       }
-
-      #       try {
-      #         const labelName = 'flaky'
-
-      #         // Ensure the label exists before create/update (idempotent).
-      #         try {
-      #           await github.rest.issues.getLabel({ owner, repo, name: labelName })
-      #         } catch (labelErr) {
-      #           if (labelErr.status === 404) {
-      #             await github.rest.issues.createLabel({
-      #               owner,
-      #               repo,
-      #               name: labelName,
-      #               color: 'fbca04',
-      #               description: 'sometimes passing and sometimes failing',
-      #             })
-      #             core.info(`Created label "${labelName}"`)
-      #           } else {
-      #             throw labelErr
-      #           }
-      #         }
-
-      #         // Find the long-lived tracking issue by marker (open or closed).
-      #         const q = `repo:${owner}/${repo} is:issue in:body "${marker}"`
-      #         const search = await github.rest.search.issuesAndPullRequests({ q, per_page: 5 })
-      #         const existing = (search.data.items || [])[0]
-
-      #         if (existing) {
-      #           if (clean) {
-      #             // Keep the last failure report in the body; append history via comment.
-      #             await github.rest.issues.update({
-      #               owner,
-      #               repo,
-      #               issue_number: existing.number,
-      #               title: 'Puppeteer flaky tests (last run clean)',
-      #             })
-      #             await github.rest.issues.createComment({
-      #               owner,
-      #               repo,
-      #               issue_number: existing.number,
-      #               body: `Clean run at ${stamp}: all stress iterations passed.\n\n${runUrl}`,
-      #             })
-      #           } else {
-      #             await github.rest.issues.update({
-      #               owner,
-      #               repo,
-      #               issue_number: existing.number,
-      #               title: 'Puppeteer flaky tests detected',
-      #               body: report,
-      #               state: 'open',
-      #             })
-      #             if (existing.state === 'closed') {
-      #               await github.rest.issues.createComment({
-      #                 owner,
-      #                 repo,
-      #                 issue_number: existing.number,
-      #                 body: `Reopened by flaky-stress run: ${runUrl}`,
-      #               })
-      #             }
-      #           }
-      #           // addLabels is additive (unlike issues.update labels, which replaces).
-      #           await github.rest.issues.addLabels({
-      #             owner,
-      #             repo,
-      #             issue_number: existing.number,
-      #             labels: [labelName],
-      #           })
-      #           core.info(`Updated issue #${existing.number}`)
-      #         } else if (!clean) {
-      #           const created = await github.rest.issues.create({
-      #             owner,
-      #             repo,
-      #             title: 'Puppeteer flaky tests detected',
-      #             body: report,
-      #             labels: [labelName],
-      #           })
-      #           core.info(`Created issue #${created.data.number}`)
-      #         } else {
-      #           core.info('Clean run and no existing tracking issue; skipping issue creation.')
-      #         }
-      #       } catch (err) {
-      #         // Forks / test repos often disable Issues. The run summary (and Discord)
-      #         // still carry the report, so skip instead of failing this step.
-      #         if (isIssuesDisabled(err)) {
-      #           core.warning(
-      #             `Skipping issue upsert: Issues are disabled on ${owner}/${repo}. ` +
-      #               'Enable Issues in repo settings, or rely on the job summary / Discord.',
-      #           )
-      #           return
-      #         }
-      #         throw err
-      #       }
-
       - name: Notify Discord
         if: steps.aggregate.outputs.clean != 'true'
         env:
@@ -368,7 +243,7 @@ jobs:
             CONTENT=$(node -e "
               process.stdout.write(JSON.stringify({
                 content: [
-                  '**Puppeteer flaky-stress alert**',
+                  '**Puppeteer flaky-test alert**',
                   'Aggregator failed before producing a summary.',
                   process.env.RUN_URL,
                 ].join('\\n'),
@@ -384,7 +259,7 @@ jobs:
             ")
             CONTENT=$(node -e "
               const text = [
-                '**Puppeteer flaky-stress alert**',
+                '**Puppeteer flaky-test alert**',
                 'Failing tests: ' + process.env.FLAKE_COUNT + ' | Infra failures: ' + process.env.INFRA_COUNT,
                 '',
                 'Top offenders:',
