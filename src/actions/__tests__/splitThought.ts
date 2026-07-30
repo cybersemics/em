@@ -150,3 +150,34 @@ it('split thought with whitespace in HTML formatting', () => {
   const cursorThought = getThoughtById(stateNew, head(stateNew.cursor!))
   expect(cursorThought?.value).toBe('<i>two</i>')
 })
+
+// https://github.com/cybersemics/em/issues/4787
+it.skip('children remain on the original thought', () => {
+  const steps = [
+    importText({
+      text: `
+      - One Two. Three.
+        - b
+        - c
+        - d
+      `,
+    }),
+    setCursor(['One Two. Three.']),
+    splitThought({
+      splitResult: {
+        left: 'One Two.',
+        right: 'Three.',
+      },
+    }),
+  ]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - One Two.
+    - b
+    - c
+    - d
+  - Three.`)
+})
