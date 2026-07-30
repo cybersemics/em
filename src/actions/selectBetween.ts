@@ -53,8 +53,11 @@ const selectBetween = (state: State, payload?: { path?: Path }): State => {
 
   // add every path between the first and last selected paths to the multicursor
   const pathsToAdd = cursorSiblingPaths.slice(startIndex, endIndex + 1)
-  // Endpoint adjustment replaces the previous range; command activation preserves its additive behavior.
-  const stateRangeCleared = path ? { ...state, multicursors: {} } : state
+  // Endpoint adjustment replaces only the active range, preserving independent selections and committed ranges.
+  const committedMulticursors = path
+    ? Object.fromEntries(Object.entries(state.multicursors).filter(([key]) => !state.multicursorRange[key]))
+    : state.multicursors
+  const stateRangeCleared = path ? { ...state, multicursors: committedMulticursors } : state
   const stateNew = reducerFlow([
     ...(path ? [setCursor({ path, preserveMulticursor: true })] : []),
     ...pathsToAdd.map(path => addMulticursor({ path })),
@@ -62,8 +65,14 @@ const selectBetween = (state: State, payload?: { path?: Path }): State => {
   // Direct endpoint selection preserves an existing anchor. The Select Between command establishes the first
   // selected thought as the anchor only when it was activated from explicit endpoints, not its select-all fallback.
   const rangeAnchor = path ? anchor : multicursorPaths.length >= 2 ? multicursorPaths.at(0)! : null
+  const rangePaths = path
+    ? pathsToAdd.filter(path => !committedMulticursors[hashPath(path)])
+    : rangeAnchor
+      ? pathsToAdd.filter(path => hashPath(path) !== hashPath(rangeAnchor))
+      : []
+  const multicursorRange = Object.fromEntries(rangePaths.map(path => [hashPath(path), path]))
 
-  return { ...stateNew, multicursorAnchor: rangeAnchor }
+  return { ...stateNew, multicursorAnchor: rangeAnchor, multicursorRange }
 }
 
 /** Action-creator for selectBetween. */

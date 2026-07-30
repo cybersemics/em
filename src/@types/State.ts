@@ -120,6 +120,8 @@ interface State {
   modals: Index<{ complete?: boolean }>
   /** The fixed endpoint of an adjustable Select Between range. */
   multicursorAnchor: Path | null
+  /** Thoughts added by the active adjustable Select Between range, keyed by hashPath(path). */
+  multicursorRange: Index<Path>
   multicursors: Index<Path>
   /** NoteFocus is true if the caret is on the note. */
   noteFocus: boolean

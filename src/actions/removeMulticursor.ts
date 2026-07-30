@@ -14,6 +14,7 @@ const removeMulticursor = (state: State, { path }: { path: Path }): State => {
     ...state,
     ...(state.alert?.alertType === AlertType.ScrollZoneHelp ? { alert: null } : null),
     multicursorAnchor: null,
+    multicursorRange: {},
     multicursors: remainingMulticursors,
   }
 }

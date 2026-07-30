@@ -25,6 +25,29 @@ const shiftClickThought = async (value: string) => {
 }
 
 describe('multiselect', () => {
+  it('adjusts a Shift-click range from its original anchor', async () => {
+    await paste(`
+        - a
+        - b
+        - c
+        - d
+        - e
+        - f
+        `)
+
+    await multiselectThoughts('a')
+    await shiftClickThought('e')
+    await shiftClickThought('c')
+
+    const highlightedValues = await page.$$eval('[aria-label="bullet"][data-highlighted="true"]', bullets =>
+      bullets.map(
+        bullet => bullet.closest('[aria-label="tree-node"]')?.querySelector('[data-editable]')?.textContent ?? null,
+      ),
+    )
+
+    expect(highlightedValues.sort()).toEqual(['a', 'b', 'c'])
+  })
+
   it('should multiselect two thoughts at once', async () => {
     await paste(`
         - a

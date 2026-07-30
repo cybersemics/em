@@ -132,6 +132,7 @@ const initialState = (created: Timestamp = timestamp()) => {
     manualSortMap: {},
     modals: {},
     multicursorAnchor: null,
+    multicursorRange: {},
     multicursors: {},
     noteFocus: false,
     noteOffset: null,
