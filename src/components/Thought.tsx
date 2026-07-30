@@ -323,7 +323,16 @@ const ThoughtContainer = ({
   )
   const isInContextView = useSelector(state => isContextViewActive(state, parentOf(path)))
 
-  const hideBullet = useHideBullet({ children, env, hideBulletProp, isEditing, simplePath, isInContextView, thoughtId })
+  const hideBullet = useHideBullet({
+    children,
+    env,
+    hideBulletProp,
+    isEditing,
+    path,
+    simplePath,
+    isInContextView,
+    thoughtId,
+  })
   const style = useThoughtStyle({ children, env, styleProp, thoughtId })
   const styleAnnotation = useSelector(
     state =>
