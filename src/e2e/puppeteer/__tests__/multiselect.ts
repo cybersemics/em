@@ -1,4 +1,5 @@
 import { KnownDevices } from 'puppeteer'
+import clickAndHoldBullet from '../helpers/clickAndHoldBullet'
 import clickThought from '../helpers/clickThought'
 import command from '../helpers/command'
 import emulate from '../helpers/emulate'
@@ -6,6 +7,7 @@ import longPressThought from '../helpers/longPressThought'
 import multiselectThoughts from '../helpers/multiselectThoughts'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
+import waitForAlertContent from '../helpers/waitForAlertContent'
 import waitForEditable from '../helpers/waitForEditable'
 import { page } from '../session'
 
@@ -25,6 +27,25 @@ describe('multiselect', () => {
 
     expect(highlightedBullets.length).toBe(2)
     expect(alertContent).toContain('2 thoughts selected')
+  })
+
+  // https://github.com/cybersemics/em/issues/4782
+  it.skip('keeps the thought selected after cmd + click and hold is released', async () => {
+    await paste(`
+        - a
+        - b
+        - c
+        `)
+
+    await clickAndHoldBullet('b', { multiselect: true })
+
+    await waitForAlertContent('selected')
+
+    const highlightedBullets = await page.$$('[aria-label="bullet"][data-highlighted="true"]')
+    const alertContent = await page.$eval('[data-testid=alert-content]', el => el.textContent)
+
+    expect(highlightedBullets.length).toBe(1)
+    expect(alertContent).toContain('1 thought selected')
   })
 
   // https://github.com/cybersemics/em/issues/3993
