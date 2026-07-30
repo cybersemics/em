@@ -14,7 +14,6 @@ import Key from './@types/Key'
 import MulticursorFilter from './@types/MulticursorFilter'
 import Path from './@types/Path'
 import State from './@types/State'
-import ThoughtId from './@types/ThoughtId'
 import { addMulticursorActionCreator as addMulticursor } from './actions/addMulticursor'
 import { alertActionCreator as alert } from './actions/alert'
 import { clearMulticursorsActionCreator as clearMulticursors } from './actions/clearMulticursors'
@@ -35,6 +34,7 @@ import getThoughtById from './selectors/getThoughtById'
 import getUserSetting from './selectors/getUserSetting'
 import hasMulticursor from './selectors/hasMulticursor'
 import isAllSelected from './selectors/isAllSelected'
+import splitChain from './selectors/splitChain'
 import thoughtToPath from './selectors/thoughtToPath'
 import store from './stores/app'
 import editingValueStore from './stores/editingValue'
@@ -265,10 +265,13 @@ const filterCursors = (state: State, cursors: Path[], filter: MulticursorFilter 
   }
 }
 
-/** Recomputes the path to a thought. Returns null if the thought does not exist. */
-const recomputePath = (state: State, thoughtId: ThoughtId) => {
-  const path = thoughtToPath(state, thoughtId)
-  return path && equalPath(path, HOME_PATH) ? null : path
+/** Recomputes a path after a command has executed, in case the thought was moved. Returns null if the thought no longer exists. Paths that cross a context view are returned as-is, since they do not follow the parent chain and therefore cannot be reconstructed by thoughtToPath. */
+const recomputePath = (state: State, path: Path): Path | null => {
+  // e.g. a/m~/a does not follow the parent chain (the trailing a is a context of the Lexeme m, whose real parent is the root), so thoughtToPath would collapse it to a.
+  if (splitChain(state, path).length > 1) return getThoughtById(state, head(path)) ? path : null
+
+  const recomputed = thoughtToPath(state, head(path))
+  return recomputed && equalPath(recomputed, HOME_PATH) ? null : recomputed
 }
 
 /**
@@ -383,7 +386,7 @@ export const executeCommandWithMulticursor = (
   } else {
     for (const path of filteredPaths) {
       // Make sure we have the correct path to the thought in case it was moved during execution.
-      const recomputedPath = recomputePath(commandStore.getState(), head(path))
+      const recomputedPath = recomputePath(commandStore.getState(), path)
       if (!recomputedPath) continue
 
       commandStore.dispatch(setCursor({ path: recomputedPath }))
@@ -397,7 +400,7 @@ export const executeCommandWithMulticursor = (
   // restore it to the nearest non-attribute ancestor instead.
   if (!multicursor.preventSetCursor && state.cursor) {
     const restoreState = commandStore.getState()
-    const recomputedPath = recomputePath(restoreState, head(state.cursor))
+    const recomputedPath = recomputePath(restoreState, state.cursor)
     commandStore.dispatch(
       setCursor({ path: recomputedPath && nearestNonAttributeAncestor(restoreState, recomputedPath) }),
     )
@@ -408,7 +411,7 @@ export const executeCommandWithMulticursor = (
     commandStore.dispatch(
       paths.map(path => (dispatch, getState) => {
         const state = getState()
-        const recomputedPath = recomputePath(state, head(path))
+        const recomputedPath = recomputePath(state, path)
         // If a multicursor thought was moved into a metaprogramming attribute (e.g. swapNote moves it into
         // =note), restore it to the nearest non-attribute ancestor instead.
         const restoredPath = recomputedPath && nearestNonAttributeAncestor(state, recomputedPath)

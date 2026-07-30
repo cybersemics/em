@@ -598,9 +598,20 @@ jobs:
         if: steps.patch.outputs.empty != 'true'
         run: yarn build
 
+      # Vite app-gate token (see tunnelTokenGate in vite.config.ts). Must be set before Serve
+      # starts the dev server, and passed to the test step below so the wdio config's tunnel-pool
+      # claim (cloudflareTunnelPool.ts) can prove a candidate is answering THIS run's server.
+      - name: Generate tunnel token
+        if: steps.patch.outputs.empty != 'true'
+        run: |
+          TOKEN=$(openssl rand -hex 16)
+          echo "::add-mask::$TOKEN"
+          echo "TUNNEL_TOKEN=$TOKEN" >> "$GITHUB_ENV"
+
       - name: Serve
         if: steps.patch.outputs.empty != 'true'
-        run: yarn servebuild &
+        # HTTP=1 forces a plain-HTTP origin here: Cloudflare's tunnel already terminates HTTPS at its edge for Safari (a real CA-signed cert on the public hostname), so this local connector-to-origin hop never needs its own TLS.
+        run: HTTP=1 yarn servebuild &
 
       - name: Run changed iOS tests on base (expect failure)
         if: steps.patch.outputs.empty != 'true'
@@ -610,6 +621,12 @@ jobs:
           BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
           BROWSERSTACK_BUILD_NAME: 'TDD - ${{ github.run_id }}'
           BROWSERSTACK_PROJECT_NAME: 'em'
+          TUNNEL_TOKEN: ${{ env.TUNNEL_TOKEN }}
+          # Same tunnel pool ios.yml uses — see cloudflareTunnelPool.ts. Eliminates this job's
+          # previous fallback to an ephemeral *.trycloudflare.com quick tunnel. Note this means a
+          # TDD run and an ios.yml run can contend for the pool, since they are in different
+          # concurrency groups — that contention is what cloudflareTunnelPool.ts is built to resolve.
+          CLOUDFLARE_TUNNEL_POOL: ${{ secrets.CLOUDFLARE_TUNNEL_POOL }}
         run: |
           IOS_FILES=$(echo "${{ needs.detect.outputs.ios_files }}" | base64 -d)
 
