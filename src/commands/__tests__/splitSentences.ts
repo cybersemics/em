@@ -161,7 +161,7 @@ describe('splitSentences', () => {
   - Bach`)
   })
 
-  it('does not split by "and" when splitting by comma', () => {
+  it('splits by comma only, not "and", when a comma is present', () => {
     store.dispatch([
       importText({
         text: `
@@ -184,8 +184,7 @@ describe('splitSentences', () => {
   - me`)
   })
 
-  // https://github.com/cybersemics/em/issues/4810
-  it('does not split by "and"', () => {
+  it('splits by the word "and" if there is no comma', () => {
     store.dispatch([
       importText({
         text: `
@@ -199,7 +198,26 @@ describe('splitSentences', () => {
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- __ROOT__
-  - Alice and the Lion`)
+  - Alice
+  - the Lion`)
+  })
+
+  // https://github.com/cybersemics/em/issues/4810
+  it('does not split by "and" within a word', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - Standard
+        `,
+      }),
+      setCursor(['Standard']),
+    ])
+
+    executeCommand(splitSentencesCommand, { store })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- __ROOT__
+  - Standard`)
   })
 
   it('splits thought with dash into main thought and child', () => {
