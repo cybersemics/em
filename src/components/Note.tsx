@@ -14,12 +14,12 @@ import { toggleNoteActionCreator as toggleNote } from '../actions/toggleNote'
 import { isTouch } from '../browser'
 import preventAutoscroll, { preventAutoscrollEnd } from '../device/preventAutoscroll'
 import * as selection from '../device/selection'
+import globals from '../globals'
 import useFreshCallback from '../hooks/useFreshCallback'
 import getThoughtById from '../selectors/getThoughtById'
 import noteValue from '../selectors/noteValue'
 import resolveNotePath from '../selectors/resolveNotePath'
 import store from '../stores/app'
-import { mergeBatchEditing } from '../stores/batchEditing'
 import equalPathHead from '../util/equalPathHead'
 import head from '../util/head'
 import strip from '../util/strip'
@@ -116,6 +116,8 @@ const Note = React.memo(
     /** Updates the =note attribute when the note text is edited. */
     const onChange = useCallback(
       (e: ContentEditableEvent) => {
+        if (globals.suppressChange) return
+
         // calculate pathToContext onChange not in render for performance
         const value = justPasted
           ? // if just pasted, strip all HTML from value
@@ -134,7 +136,6 @@ const Note = React.memo(
             setDescendant({
               path: targetPath,
               values: [value],
-              mergePrev: mergeBatchEditing(), // If batch editing is in progress, merge this edit with the previous one in the undo stack (except the first edit of a batch, which starts a new undo step).
             }),
           )
         })

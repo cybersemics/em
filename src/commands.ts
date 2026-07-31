@@ -19,10 +19,12 @@ import { alertActionCreator as alert } from './actions/alert'
 import { clearMulticursorsActionCreator as clearMulticursors } from './actions/clearMulticursors'
 import { gestureMenuActionCreator as gestureMenu } from './actions/gestureMenu'
 import { indentActionCreator as indent } from './actions/indent'
+import { redoActionCreator as redo } from './actions/redo'
 import { setCursorActionCreator as setCursor } from './actions/setCursor'
 import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from './actions/setIsMulticursorExecuting'
 import { showLatestCommandsActionCreator as showLatestCommands } from './actions/showLatestCommands'
 import { suppressExpansionActionCreator as suppressExpansion } from './actions/suppressExpansion'
+import { undoActionCreator as undo } from './actions/undo'
 import { isMac } from './browser'
 import * as commandsObject from './commands/index'
 import openMobileCommandUniverseCommand from './commands/openMobileCommandUniverse'
@@ -34,6 +36,7 @@ import getThoughtById from './selectors/getThoughtById'
 import getUserSetting from './selectors/getUserSetting'
 import hasMulticursor from './selectors/hasMulticursor'
 import isAllSelected from './selectors/isAllSelected'
+import isUndoEnabled from './selectors/isUndoEnabled'
 import splitChain from './selectors/splitChain'
 import thoughtToPath from './selectors/thoughtToPath'
 import store from './stores/app'
@@ -43,6 +46,7 @@ import equalPath from './util/equalPath'
 import haptics from './util/haptics'
 import hashPath from './util/hashPath'
 import head from './util/head'
+import isAttribute from './util/isAttribute'
 import keyValueBy from './util/keyValueBy'
 import parentOf from './util/parentOf'
 import UnreachableError from './util/unreachable'
@@ -273,6 +277,19 @@ const recomputePath = (state: State, path: Path): Path | null => {
   return recomputed && equalPath(recomputed, HOME_PATH) ? null : recomputed
 }
 
+/**
+ * Truncates a path to its nearest ancestor that is not within a metaprogramming attribute. If a command moves the cursor or a multicursor into a metaprogramming attribute (e.g. swapNote moving a thought into =note), the selection should be set to the nearest non-attribute ancestor instead. Returns the path unchanged if it contains no attribute, or null if truncation would leave an empty path.
+ */
+const nearestNonAttributeAncestor = (state: State, path: Path): Path | null => {
+  const attributeIndex = path.findIndex(id => {
+    const thought = getThoughtById(state, id)
+    return !!thought && isAttribute(thought.value)
+  })
+  if (attributeIndex === -1) return path
+  const truncated = path.slice(0, attributeIndex) as Path
+  return truncated.length > 0 ? truncated : null
+}
+
 /** Execute a single command. Defaults to global store and keyboard shortcuts. Use `executeCommandWithMulticursor` to execute a command with multicursor mode. */
 export const executeCommand = (
   command: Command,
@@ -382,17 +399,27 @@ export const executeCommandWithMulticursor = (
 
   // Restore the cursor to its original value if not prevented.
   // Note that state.cursor is the old cursor, before any commands were executed.
+  // If the cursor thought was moved into a metaprogramming attribute (e.g. swapNote moves it into =note),
+  // restore it to the nearest non-attribute ancestor instead.
   if (!multicursor.preventSetCursor && state.cursor) {
-    commandStore.dispatch(setCursor({ path: recomputePath(commandStore.getState(), state.cursor) }))
+    const restoreState = commandStore.getState()
+    const recomputedPath = recomputePath(restoreState, state.cursor)
+    commandStore.dispatch(
+      setCursor({ path: recomputedPath && nearestNonAttributeAncestor(restoreState, recomputedPath) }),
+    )
   }
 
   // Restore multicursors
   if (!multicursor.clearMulticursor) {
     commandStore.dispatch(
       paths.map(path => (dispatch, getState) => {
-        const recomputedPath = recomputePath(getState(), path)
-        if (!recomputedPath) return
-        dispatch(addMulticursor({ path: recomputedPath }))
+        const state = getState()
+        const recomputedPath = recomputePath(state, path)
+        // If a multicursor thought was moved into a metaprogramming attribute (e.g. swapNote moves it into
+        // =note), restore it to the nearest non-attribute ancestor instead.
+        const restoredPath = recomputedPath && nearestNonAttributeAncestor(state, recomputedPath)
+        if (!restoredPath) return
+        dispatch(addMulticursor({ path: restoredPath }))
       }),
     )
   }
@@ -585,6 +612,24 @@ export const handleGestureCancel = () => {
  * a `beforeinput` insertText of a single space over an empty thought indents it instead of inserting the
  * space, mirroring the keyDown-matched path on desktop/iOS (#4178). */
 export const beforeInput = (e: InputEvent) => {
+  // Native undo/redo (iOS shake-to-undo or three-finger swipe) fires a cancelable beforeinput with inputType
+  // historyUndo/historyRedo. Left unhandled, it mutates the contenteditable DOM directly, bypassing em's undo and
+  // leaving stale formatting markup (e.g. a black font color from a removed background highlight) that renders the
+  // thought invisible (#3954). Block the native undo before it touches the DOM and route it through em's undo/redo,
+  // which reverts to the correct Redux state and re-renders the editable. Each formatSelection registers exactly one
+  // native undo step (#4637), so one native gesture maps to one em undo/redo — no dedupe is needed. The cancelable check
+  // gates on the case we can actually prevent; native browser undo is intentionally superseded by em's undo (#3879).
+  if ((e.inputType === 'historyUndo' || e.inputType === 'historyRedo') && e.cancelable) {
+    e.preventDefault()
+    const state = store.getState()
+    if (e.inputType === 'historyUndo') {
+      if (isUndoEnabled(state)) store.dispatch(undo())
+    } else if (state.redoPatches.length > 0) {
+      store.dispatch(redo())
+    }
+    return
+  }
+
   if (keyCommandId === 'newThought' || (keyCommandId === 'indent' && editingValueStore.getState() === '')) {
     e.preventDefault()
     return

@@ -6,9 +6,18 @@ import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import headValue from '../../util/headValue'
 import swapNoteCommand from '../swapNote'
 
 beforeEach(initStore)
+
+/** Returns the sorted values of the current multicursor set. */
+const multicursorValues = (): (string | undefined)[] => {
+  const state = store.getState()
+  return Object.values(state.multicursors)
+    .map(path => headValue(state, path))
+    .sort()
+}
 
 describe('swapNote', () => {
   it('converts a thought to a note', () => {
@@ -83,6 +92,32 @@ describe('swapNote', () => {
   - e
     - =note
       - f`)
+    })
+
+    it('moves the multiselect and cursor to the non-attribute parents when thoughts are converted to notes', () => {
+      store.dispatch([
+        importText({
+          text: `
+            - a
+              - =view
+                - Table
+              - b
+                - c
+              - d
+                - e
+          `,
+        }),
+        setCursor(['a', 'd', 'e']),
+        addMulticursor(['a', 'b', 'c']),
+        addMulticursor(['a', 'd', 'e']),
+      ])
+
+      executeCommandWithMulticursor(swapNoteCommand, { store })
+
+      // c and e have been moved into their parents' =note attribute, so the
+      // multiselect and cursor should move up to the nearest non-attribute ancestors.
+      expect(multicursorValues()).toEqual(['b', 'd'])
+      expect(headValue(store.getState(), store.getState().cursor!)).toBe('d')
     })
   })
 })
