@@ -61,20 +61,37 @@ describe('Caret', () => {
     // Precondition: the bold text must wrap onto the next visual line for this bug to manifest.
     expect(boldWrapsToNewLine).toBe(true)
 
+    /** Reads the global caret offset plus enough context to diagnose a failed wait. */
+    const probeCaret = () =>
+      browser.execute(() => {
+        const sel = window.getSelection()
+        const editable = document.querySelector('[data-editing=true] [data-editable]') as HTMLElement | null
+        if (!editable) return { offset: -1, editing: false, focusText: null, focusIsEditable: false }
+        if (!sel?.focusNode) return { offset: -1, editing: true, focusText: null, focusIsEditable: false }
+
+        const walker = document.createTreeWalker(editable, NodeFilter.SHOW_TEXT)
+        let node: Node | null
+        let global = 0
+        let offset = -1
+        while ((node = walker.nextNode())) {
+          if (node === sel.focusNode) {
+            offset = global + sel.focusOffset
+            break
+          }
+          global += (node.textContent || '').length
+        }
+
+        return {
+          offset,
+          editing: true,
+          focusText: (sel.focusNode.textContent || '').slice(0, 40),
+          focusIsEditable: editable.contains(sel.focusNode),
+        }
+      })
+
     // Capture the pre-tap offset so we can wait for the tap to actually move the caret.
-    const beforeOffset = await browser.execute(() => {
-      const sel = window.getSelection()
-      const editable = document.querySelector('[data-editing=true] [data-editable]') as HTMLElement
-      if (!sel?.focusNode || !editable) return -1
-      const walker = document.createTreeWalker(editable, NodeFilter.SHOW_TEXT)
-      let node: Node | null
-      let global = 0
-      while ((node = walker.nextNode())) {
-        if (node === sel.focusNode) return global + sel.focusOffset
-        global += (node.textContent || '').length
-      }
-      return -1
-    })
+    let lastProbe = await probeCaret()
+    const beforeOffset = lastProbe.offset
 
     // Tap the end of the first visual line (just past its right edge, at the line's vertical center).
     await tap(editableNodeHandle, { horizontalTapLine: 'right', y: tapYOffset })
@@ -83,38 +100,18 @@ describe('Caret', () => {
     // selection offset changes from the pre-tap value.
     await browser.waitUntil(
       async () => {
-        const off = await browser.execute(() => {
-          const sel = window.getSelection()
-          const editable = document.querySelector('[data-editing=true] [data-editable]') as HTMLElement
-          if (!sel?.focusNode || !editable) return -1
-          const walker = document.createTreeWalker(editable, NodeFilter.SHOW_TEXT)
-          let node: Node | null
-          let global = 0
-          while ((node = walker.nextNode())) {
-            if (node === sel.focusNode) return global + sel.focusOffset
-            global += (node.textContent || '').length
-          }
-          return -1
-        })
-        return off >= 0 && off !== beforeOffset
+        lastProbe = await probeCaret()
+        return lastProbe.offset >= 0 && lastProbe.offset !== beforeOffset
       },
-      { timeout: 15000, interval: 300 },
+      {
+        timeout: 15000,
+        interval: 300,
+        timeoutMsg: `caret did not move after tap. beforeOffset=${beforeOffset}, last=${JSON.stringify(lastProbe)}`,
+      },
     )
 
     await browser.pause(200)
-    const caretOffset = await browser.execute(() => {
-      const sel = window.getSelection()
-      const editable = document.querySelector('[data-editing=true] [data-editable]') as HTMLElement
-      if (!sel?.focusNode || !editable) return -1
-      const walker = document.createTreeWalker(editable, NodeFilter.SHOW_TEXT)
-      let node: Node | null
-      let global = 0
-      while ((node = walker.nextNode())) {
-        if (node === sel.focusNode) return global + sel.focusOffset
-        global += (node.textContent || '').length
-      }
-      return -1
-    })
+    const { offset: caretOffset } = await probeCaret()
 
     // The caret must stay at the end of the first line (offset < boldStart), not jump to the start of the
     // bold text on the next line, which corresponds to the ambiguous soft-wrap boundary offset === boldStart.
