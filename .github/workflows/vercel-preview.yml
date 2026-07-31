@@ -3,9 +3,36 @@ name: Vercel Preview
 # pull_request_target runs in the base repo's context, so repo secrets are
 # available even for fork PRs. Untrusted fork code is gated by GitHub's
 # "require approval for outside collaborators" setting before it runs.
+#
+# The Vercel build is the web app, so documentation, agent/editor configuration, and the native
+# platform projects cannot change the preview. A PR confined to them gets no deployment and no
+# preview comment, which is the intended outcome — there is nothing to look at.
+#
+# paths-ignore skips the workflow outright, which means NO check is reported. That is only correct
+# because Vercel Preview is no longer a required status check on main. If it is ever made required
+# again, filtered PRs will sit at "Expected — Waiting for status to be reported" and block.
+# (Lint is deliberately left unfiltered and required, so every PR still reports one check.)
+#
+# A run is skipped only when EVERY changed file matches, so a PR that also touches app code still
+# deploys a preview as usual.
 on:
   pull_request_target:
     types: [opened, synchronize, reopened]
+    paths-ignore:
+      # Documentation and agent/editor configuration.
+      - '**/*.md'
+      - 'docs/**'
+      - '.github/instructions/**'
+      - '.github/skills/**'
+      - '.claude/**'
+      - '.agents/**'
+      - '.vscode/**'
+      - '.hooks/**'
+      # Native platform projects, and the icon/splash sources generated into them.
+      - 'android/**'
+      - 'ios/**'
+      - 'desktop/**'
+      - 'assets/**'
 
 permissions:
   contents: read
