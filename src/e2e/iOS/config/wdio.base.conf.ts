@@ -16,14 +16,16 @@ const appUrl = (): string => process.env.CLOUDFLARED_URL || LOCAL_URL
  * Performs one GET against the app origin, resolving to its status code and (truncated) body, or
  * null if the request never completed.
  *
- * Certificate verification is disabled because the local dev server's cert is self-signed (@vitejs/plugin-basic-ssl).
- * The body is capped because Cloudflare's HTML error pages are not small and we only need a snippet
- * of one to describe it.
+ * Certificate verification is relaxed for the loopback dev server only, whose cert is self-signed
+ * (@vitejs/plugin-basic-ssl) and which no third party can sit between; a public tunnel URL is
+ * verified normally. The body is capped because Cloudflare's HTML error pages are not small and we
+ * only need a snippet of one to describe it.
  */
 const requestOrigin = (url: string): Promise<{ statusCode: number; body: string } | null> =>
   new Promise(resolve => {
     const request = url.startsWith('https:') ? https.request : http.request
-    const req = request(url, { method: 'GET', timeout: 10000, rejectUnauthorized: false }, res => {
+    const isLoopback = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:|\/|$)/.test(url)
+    const req = request(url, { method: 'GET', timeout: 10000, rejectUnauthorized: !isLoopback }, res => {
       let body = ''
       res.setEncoding('utf8')
       res.on('data', (chunk: string) => {
