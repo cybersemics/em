@@ -9,6 +9,7 @@ import contextToThoughtId from '../selectors/contextToThoughtId'
 import findDescendant from '../selectors/findDescendant'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
+import isMulticursorPath from '../selectors/isMulticursorPath'
 import simplifyPath from '../selectors/simplifyPath'
 import appendToPath from '../util/appendToPath'
 import containsURL from '../util/containsURL'
@@ -186,12 +187,15 @@ function expandThoughts(state: State, path: Path | null): Index<Path | Context> 
     throw new Error(`Invalid path ${path}. No thought found with id ${head(path)}`)
   }
 
-  // Expand the ancestors of the cursor path and of every multicursor path so that selected thoughts
-  // remain visible. Multicursor paths are mapped to their parent so that only their ancestors are
-  // expanded, never the selected thoughts themselves — selected thoughts must always stay collapsed.
+  // A selected thought expands only its ancestors, never itself, so that it stays collapsed while
+  // remaining visible. This applies to the cursor too when it is part of the multicursor, which is the
+  // case while a multiselect is being extended with Shift+ArrowUp/ArrowDown. A cursor that is not
+  // selected expands normally.
   // https://github.com/cybersemics/em/issues/4738
+  const cursorExpansionPath = path && isMulticursorPath(state, path) ? rootedParentOf(state, path) : path || HOME_PATH
+
   return [
-    path || HOME_PATH,
+    cursorExpansionPath,
     ...Object.values(state.multicursors).map(multicursorPath => rootedParentOf(state, multicursorPath)),
   ].reduce(
     (acc, expansionPath) => ({

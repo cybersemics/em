@@ -105,7 +105,7 @@ describe('multiselect', () => {
   })
 
   // https://github.com/cybersemics/em/issues/4738
-  it.skip('does not expand a thought that the multiselect is extended onto', async () => {
+  it('does not expand a thought that the multiselect is extended onto', async () => {
     await paste(`
         - a
           - x

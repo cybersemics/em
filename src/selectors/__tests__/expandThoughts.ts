@@ -925,4 +925,24 @@ describe('multicursor', () => {
     // a is selected but none of its descendants are, so it must stay collapsed
     expect(isContextExpanded(stateNew, ['a'])).toBeFalsy()
   })
+
+  // https://github.com/cybersemics/em/issues/4738
+  it('a cursor that is part of the multicursor does not expand its own children', () => {
+    const text = `
+      - a
+        - x
+      - b
+      - c
+    `
+
+    const steps = [importText({ text }), setCursor(['a']), addMulticursor(['a']), addMulticursor(['b'])]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    // the cursor is selected, so it stays collapsed like any other selected thought
+    expect(isContextExpanded(stateNew, ['a'])).toBeFalsy()
+
+    // its ancestors are still expanded, so the selected thoughts remain visible
+    expect(isContextExpanded(stateNew, [HOME_TOKEN])).toBeTruthy()
+  })
 })
