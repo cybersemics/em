@@ -85,14 +85,16 @@ const useEditMode = ({
         if (style?.visibility === 'hidden') {
           selection.clear()
         } else {
-          selection.set(contentRef.current, { offset: cursorOffset ?? 0 })
-
-          // The Android WebView does not raise the virtual keyboard when the selection is set
-          // programmatically, e.g. when a gesture such as Clear Thought activates edit mode (#4686).
+          // Neither the Android WebView nor Chromium raises the virtual keyboard when a thought enters edit
+          // mode by side effect, e.g. via a gesture such as Clear Thought (#4686): the keyboard is raised by a
+          // tap, not by the caret being placed programmatically. Request it before setting the selection,
+          // which focuses the editing host implicitly and would make a later focus() a no-op.
           // Only show it in edit mode, otherwise the keyboard would re-open after the user dismissed it (#3996).
-          if (editMode) {
-            virtualKeyboard.show()
+          if (editMode && contentRef.current) {
+            virtualKeyboard.show(contentRef.current)
           }
+
+          selection.set(contentRef.current, { offset: cursorOffset ?? 0 })
         }
       }
 
