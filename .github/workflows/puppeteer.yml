@@ -1,12 +1,56 @@
 name: Puppeteer
 
+# Documentation, agent/editor configuration, and the native platform projects cannot change what
+# this workflow tests, so a change set confined to them has nothing for a browser to exercise.
+#
+# paths-ignore skips the workflow outright, which means NO check is reported — not a "skipped"
+# check, and not a synthetic pass from a job-level `if`. That is only correct because Puppeteer is
+# no longer a required status check on main. If it is ever made required again, filtered PRs will
+# sit at "Expected — Waiting for status to be reported" and block; use a job-level guard then.
+# (Lint is deliberately left unfiltered and required, so every PR still reports one check.)
+#
+# A run is skipped only when EVERY changed file matches, so any PR that also touches app or test
+# code still runs in full. `**/*.md` is safe because nothing under src/ imports markdown.
+#
+# The native entries below rest on `yarn build` staying web-only (build:packages, build:styles,
+# vite build). None of those directories contains a JS or TS file today, and the web favicons come
+# from public/, not assets/. If a Capacitor asset is ever wired into the Vite build, remove them.
 on:
   push:
     branches:
       - main
+    paths-ignore:
+      # Documentation and agent/editor configuration.
+      - '**/*.md'
+      - 'docs/**'
+      - '.github/instructions/**'
+      - '.github/skills/**'
+      - '.claude/**'
+      - '.agents/**'
+      - '.vscode/**'
+      - '.hooks/**'
+      # Native platform projects, and the icon/splash sources generated into them.
+      - 'android/**'
+      - 'ios/**'
+      - 'desktop/**'
+      - 'assets/**'
   pull_request:
     branches:
       - '**'
+    # GitHub Actions does not support YAML anchors, so this list is duplicated from `push` above.
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - '.github/instructions/**'
+      - '.github/skills/**'
+      - '.claude/**'
+      - '.agents/**'
+      - '.vscode/**'
+      - '.hooks/**'
+      - 'android/**'
+      - 'ios/**'
+      - 'desktop/**'
+      - 'assets/**'
   workflow_dispatch:
     inputs:
       rerun_id:
