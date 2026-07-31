@@ -98,7 +98,7 @@ it('Should revert background color changes back to previous values', async () =>
   const leftX = boundingBox.x + 1
 
   // double click to select the first word
-  await page.mouse.click(leftX, y, { clickCount: 2 })
+  await page.mouse.click(leftX, y, { count: 2 })
 
   // set the first word's background color to green
   await click('[aria-label="background color swatches"] [aria-label="green"]')
@@ -110,7 +110,7 @@ it('Should revert background color changes back to previous values', async () =>
   const rightX = boundingBox.x + boundingBox.width - 36
 
   // double click to select the last word
-  await page.mouse.click(rightX, y, { clickCount: 2 })
+  await page.mouse.click(rightX, y, { count: 2 })
 
   // set the last word's background color to green
   await click('[aria-label="background color swatches"] [aria-label="green"]')
