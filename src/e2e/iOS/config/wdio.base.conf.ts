@@ -1,28 +1,72 @@
+import http from 'http'
 import https from 'https'
 import path from 'path'
 import { drainConsoleProxy, waitForConsoleProxy } from '../../../util/consoleProxy'
 import resetApp from '../helpers/resetApp'
 
+const LOCAL_URL = 'https://localhost:3000'
+
+/** Marks the response as em's own HTML. `<div id="root" data-app="em">` is static markup in index.html (the container src/index.tsx mounts React into), and the attribute is ours alone — a generic `id="root"` could plausibly appear in a Cloudflare edge error page or the Vite token gate's 403, which are the documents this check exists to reject. */
+const APP_HTML_MARKER = 'data-app="em"'
+
+/** The URL the device loads: the public tunnel URL when one is set (BrowserStack), else the local dev server. */
+const appUrl = (): string => process.env.CLOUDFLARED_URL || LOCAL_URL
+
 /**
- * Checks if the app is running on locally.
- * @throws Error if the app is not running.
+ * Performs one GET against the app origin, resolving to its status code and (truncated) body, or
+ * null if the request never completed.
+ *
+ * Certificate verification is relaxed for the loopback dev server only, whose cert is self-signed
+ * (@vitejs/plugin-basic-ssl) and which no third party can sit between; a public tunnel URL is
+ * verified normally. The body is capped because Cloudflare's HTML error pages are not small and we
+ * only need a snippet of one to describe it.
  */
-export const checkAppRunning = (): Promise<void> => {
-  const errorMessage =
-    'App is not running on https://localhost:3000. Please start the app locally before running tests.'
-  return new Promise((resolve, reject) => {
-    const req = https.get('https://localhost:3000', { timeout: 2000, rejectUnauthorized: false }, res => {
-      res.on('data', () => {})
-      res.on('end', () => resolve())
+const requestOrigin = (url: string): Promise<{ statusCode: number; body: string } | null> =>
+  new Promise(resolve => {
+    const request = url.startsWith('https:') ? https.request : http.request
+    const isLoopback = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:|\/|$)/.test(url)
+    const req = request(url, { method: 'GET', timeout: 10000, rejectUnauthorized: !isLoopback }, res => {
+      let body = ''
+      res.setEncoding('utf8')
+      res.on('data', (chunk: string) => {
+        if (body.length < 4096) body += chunk
+      })
+      res.on('end', () => resolve({ statusCode: res.statusCode ?? 0, body }))
     })
-    req.on('error', () => {
-      reject(new Error(errorMessage))
-    })
+    req.on('error', () => resolve(null))
     req.on('timeout', () => {
       req.destroy()
-      reject(new Error(errorMessage))
+      resolve(null)
     })
+    req.end()
   })
+
+/** Describes what an origin answered with, for an error message: status, <title>, and a snippet of the markup. */
+const describeResponse = (res: { statusCode: number; body: string } | null): string => {
+  if (!res) return 'no response at all (connection refused or timed out)'
+  const title = /<title[^>]*>([^<]*)<\/title>/i.exec(res.body)?.[1]?.trim()
+  const snippet = res.body.replace(/\s+/g, ' ').trim().slice(0, 200)
+  return `HTTP ${res.statusCode}${title ? `, title "${title}"` : ''} — ${snippet || '(empty body)'}`
+}
+
+/**
+ * Checks that the origin the tests will run against actually serves em.
+ *
+ * Reachability alone is not enough: a Cloudflare edge error page (502, 1033, "can't reach origin")
+ * and the Vite token gate's 403 are both well-formed HTML documents, so a run that only checks for a
+ * response will happily test a page that never contained the app (#4814).
+ *
+ * @throws Error naming what the origin answered with instead of em.
+ */
+export const checkAppRunning = async (url: string = LOCAL_URL): Promise<void> => {
+  const res = await requestOrigin(url)
+  if (res?.statusCode === 200 && res.body.includes(APP_HTML_MARKER)) return
+  throw new Error(
+    `${url} did not serve em: ${describeResponse(res)}\n` +
+      (url === LOCAL_URL
+        ? 'Start the app locally (yarn start) before running tests.'
+        : 'The origin is wrong or unreachable — check that the tunnel points at the protocol and port the app is served on.'),
+  )
 }
 
 /**
@@ -89,35 +133,58 @@ const baseConfig = {
   },
 
   // Hooks
-  // Check if app is running before starting any workers (only in local development, not CI)
-  // Reason: when app is not running, tests will run but fail with a timeout unnecessarily.
-  // wdio.local.conf.ts always runs locally, so this check always runs for it.
-  // wdio.browserstack.conf.ts can run locally or in CI, so we check !process.env.CI.
+  // Verify the origin the device will load actually serves em, BEFORE any session is created.
+  // Reason: this is the one place a wrong origin can be caught for free. A worker cannot change
+  // specFileRetries, so a bad origin discovered later costs every spec its full retry budget —
+  // 4 specs x 5 retries x a 90s mocha timeout each, 82 min of it, on a page that never contained
+  // the app (#4814). Throwing here (rather than exiting) lets each config's own catch clean up
+  // first — notably killing the cloudflared connector, which would otherwise be orphaned and hold
+  // a pool hostname against other runs.
+  // Skipped only when there is nothing meaningful to probe: in CI without CLOUDFLARED_URL the app
+  // is served over plain HTTP (ios.yml's `HTTP=1 yarn servebuild`), so the https localhost URL is
+  // not the origin under test.
   onPrepare: async function () {
-    if (!process.env.CI) {
-      try {
-        await checkAppRunning()
-      } catch (error) {
-        console.error(error instanceof Error ? error.message : 'App is not running on https://localhost:3000')
-        process.exit(1)
-      }
-    }
+    if (!process.env.CLOUDFLARED_URL && process.env.CI) return
+    await checkAppRunning(appUrl())
   },
 
   // Navigate once at the start of the session.
   // CLOUDFLARED_URL: set by BrowserStack config (or CI) — a public HTTPS URL with a trusted cert.
   // localhost: used for local Appium testing.
   before: async function () {
-    const baseUrl = process.env.CLOUDFLARED_URL || 'https://localhost:3000'
+    const baseUrl = appUrl()
     await browser.url(baseUrl)
 
-    await browser.waitUntil(
-      async () => {
-        const body = await browser.$('body')
-        return body.isExisting()
-      },
-      { timeout: 30000 },
-    )
+    // Wait for em to have MOUNTED, not merely for the document to have parsed. A `<body>` proves
+    // nothing — a Cloudflare error page has one, as does the token gate's 403 — whereas em's own
+    // root container having children proves the app's own JavaScript ran (#4814). onPrepare already
+    // rejects an origin that is wrong from the runner's perspective; this catches the case where the
+    // device reaches something different (edge cache, gate cookie, connector load-balancing).
+    try {
+      await browser.waitUntil(
+        async () => browser.execute(() => !!document.querySelector('[data-app="em"]')?.childElementCount),
+        {
+          timeout: 30000,
+          interval: 500,
+        },
+      )
+    } catch {
+      // Report what the device is actually looking at, plus what the runner sees at the same URL.
+      // Neither is fixable by retrying, so the message has to name the origin, not the symptom.
+      const page = await browser
+        .execute(() => ({
+          url: location.href,
+          title: document.title,
+          text: (document.body?.innerText ?? '').replace(/\s+/g, ' ').trim().slice(0, 200),
+        }))
+        .catch(() => null)
+      const fromRunner = describeResponse(await requestOrigin(baseUrl))
+      throw new Error(
+        `em did not load at ${baseUrl} — the page is not the app, and no retry will change that.\n` +
+          `on device: ${page ? `${page.url} — title "${page.title}" — ${page.text || '(no text)'}` : 'page could not be inspected'}\n` +
+          `from runner: ${fromRunner}`,
+      )
+    }
   },
 
   // Before each test: reset to a clean, empty thoughtspace (clear storage, refresh, dismiss the tutorial).
