@@ -184,6 +184,24 @@ describe('splitSentences', () => {
   - me`)
   })
 
+  // https://github.com/cybersemics/em/issues/4810
+  it.skip('does not split by "and"', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - Alice and the Lion
+        `,
+      }),
+      setCursor(['Alice and the Lion']),
+    ])
+
+    executeCommand(splitSentencesCommand, { store })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- __ROOT__
+  - Alice and the Lion`)
+  })
+
   it('splits thought with dash into main thought and child', () => {
     store.dispatch([
       importText({
