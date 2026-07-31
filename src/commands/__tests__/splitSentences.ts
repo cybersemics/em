@@ -161,7 +161,7 @@ describe('splitSentences', () => {
   - Bach`)
   })
 
-  it('splits by "and" also, if have only one sentence', () => {
+  it('does not split by "and" when splitting by comma', () => {
     store.dispatch([
       importText({
         text: `
@@ -177,15 +177,15 @@ describe('splitSentences', () => {
     expect(exported).toBe(`- __ROOT__
   - me
   - you
-  - he
-  - she
+  - he and she
   - them
   - thus
+  - and
   - me`)
   })
 
   // https://github.com/cybersemics/em/issues/4810
-  it.skip('does not split by "and"', () => {
+  it('does not split by "and"', () => {
     store.dispatch([
       importText({
         text: `

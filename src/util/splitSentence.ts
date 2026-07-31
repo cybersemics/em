@@ -176,14 +176,14 @@ function splitFormattedHtmlByPlainValues(htmlValue: string, plainValues: string[
 }
 
 /**
- * Splits formatted HTML by comma/"and" delimiters based on plain text offsets.
+ * Splits formatted HTML by comma delimiters based on plain text offsets.
  *
  * @param htmlValue The original HTML thought value.
  * @param plainValue The plain text thought value.
  */
-function splitFormattedHtmlByCommaAndAnd(htmlValue: string, plainValue: string): string[] {
-  const delimiterRegex = /^(,|and)/i
-  const splitValues = plainValue.split(/,|and/i)
+function splitFormattedHtmlByComma(htmlValue: string, plainValue: string): string[] {
+  const delimiterRegex = /^,/
+  const splitValues = plainValue.split(',')
   let offset = 0
 
   return splitValues.reduce((accum: string[], splitValue) => {
@@ -254,13 +254,13 @@ const splitSentence = (value: string): SplitResult[] => {
       }
     }
 
-    // if we're sub-sentence or in one sentence territory, split by comma and "and"
-    // e.g. "john, johnson, and john doe" -> "- john - johnson - john doe"
+    // if we're sub-sentence or in one sentence territory, split by comma
+    // e.g. "john, johnson, john doe" -> "- john - johnson - john doe"
     const splitValues = plainValue
-      .split(/,|and/i)
+      .split(',')
       .map(s => s.trim())
       .filter(s => s !== '')
-    const values = plainValue !== value ? splitFormattedHtmlByCommaAndAnd(value, plainValue) : splitValues
+    const values = plainValue !== value ? splitFormattedHtmlByComma(value, plainValue) : splitValues
     return values.map(value => ({ value }))
   }
 
