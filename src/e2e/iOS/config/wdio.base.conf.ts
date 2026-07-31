@@ -6,8 +6,8 @@ import resetApp from '../helpers/resetApp'
 
 const LOCAL_URL = 'https://localhost:3000'
 
-/** Marks the response as em's own HTML. The static markup in index.html carries `<div id="root"></div>`, which src/index.tsx mounts React into, so nothing else we can be served — a Cloudflare edge error page, the Vite token gate's 403 — contains it. */
-const APP_HTML_MARKER = 'id="root"'
+/** Marks the response as em's own HTML. `<div id="root" data-app="em">` is static markup in index.html (the container src/index.tsx mounts React into), and the attribute is ours alone — a generic `id="root"` could plausibly appear in a Cloudflare edge error page or the Vite token gate's 403, which are the documents this check exists to reject. */
+const APP_HTML_MARKER = 'data-app="em"'
 
 /** The URL the device loads: the public tunnel URL when one is set (BrowserStack), else the local dev server. */
 const appUrl = (): string => process.env.CLOUDFLARED_URL || LOCAL_URL
@@ -153,15 +153,18 @@ const baseConfig = {
     await browser.url(baseUrl)
 
     // Wait for em to have MOUNTED, not merely for the document to have parsed. A `<body>` proves
-    // nothing — a Cloudflare error page has one, as does the token gate's 403 — whereas #root
-    // having children proves the app's own JavaScript ran (#4814). onPrepare already rejects an
-    // origin that is wrong from the runner's perspective; this catches the case where the device
-    // reaches something different (edge cache, gate cookie, connector load-balancing).
+    // nothing — a Cloudflare error page has one, as does the token gate's 403 — whereas em's own
+    // root container having children proves the app's own JavaScript ran (#4814). onPrepare already
+    // rejects an origin that is wrong from the runner's perspective; this catches the case where the
+    // device reaches something different (edge cache, gate cookie, connector load-balancing).
     try {
-      await browser.waitUntil(async () => browser.execute(() => !!document.getElementById('root')?.childElementCount), {
-        timeout: 30000,
-        interval: 500,
-      })
+      await browser.waitUntil(
+        async () => browser.execute(() => !!document.querySelector('[data-app="em"]')?.childElementCount),
+        {
+          timeout: 30000,
+          interval: 500,
+        },
+      )
     } catch {
       // Report what the device is actually looking at, plus what the runner sees at the same URL.
       // Neither is fixable by retrying, so the message has to name the origin, not the symptom.
