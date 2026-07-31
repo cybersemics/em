@@ -82,6 +82,9 @@ const baseConfig = {
   framework: 'mocha' as const,
   mochaOpts: {
     ui: 'bdd' as const,
+    // Per-runnable budget. beforeTest runs inside it, so every wait in the hook (resetApp's waitUntil,
+    // then waitForConsoleProxy) must fit strictly below this value — otherwise mocha times out first and
+    // its generic message wins the race against the hook's diagnostic one. See src/e2e/iOS/helpers/resetApp.ts.
     timeout: 90000,
   },
 
