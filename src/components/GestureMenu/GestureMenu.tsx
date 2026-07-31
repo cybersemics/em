@@ -66,7 +66,7 @@ const GestureMenu: FC<{
             <div className={css({ marginBottom: '1.389rem' })}>
               <div
                 className={css({
-                  color: 'rgb(255, 255, 255, 0.7)',
+                  color: 'gestureMenuLabel',
                   marginBottom: '0.444rem',
                   fontSize: '0.9rem',
                   fontWeight: 500,
@@ -78,7 +78,7 @@ const GestureMenu: FC<{
                 className={css({
                   height: '1px',
                   width: '100%',
-                  background: 'linear-gradient(90deg, rgba(174, 168, 214, 0.59) 0%, rgba(28, 27, 36, 0) 100%)',
+                  background: 'linear-gradient(90deg, {colors.gestureMenuDivider} 0%, {colors.bgTransparent} 100%)',
                 })}
               />
             </div>
