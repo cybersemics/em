@@ -122,7 +122,7 @@ describe('normal view', () => {
   })
 
   // https://github.com/cybersemics/em/issues/4585
-  it.skip('skip rows with no col2 children in table view col2', () => {
+  it('skip rows with no col2 children in table view col2', () => {
     store.dispatch([
       importText({
         text: `
@@ -132,12 +132,11 @@ describe('normal view', () => {
             - r1
               - x
             - r2
-              - y
             - r3
             - r4
               - z`,
       }),
-      setCursor(['a', 'r2', 'y']),
+      setCursor(['a', 'r1', 'x']),
       cursorNext(),
     ])
 
