@@ -95,12 +95,13 @@ export default [
   {
     ignores: [
       'node_modules/**',
+      '.claude/worktrees/**',
       'packages/**/dist/**/*',
       'packages/**/.build/**/*',
       '**/styled-system/*',
       '**/ios/*',
       '**/android/**',
-      '**/src-tauri/**',
+      '**/desktop/**',
       '**/build/*',
       '**/docs/*',
       '**/functions/*',

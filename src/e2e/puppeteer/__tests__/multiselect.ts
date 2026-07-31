@@ -130,6 +130,66 @@ describe('multiselect', () => {
     // a is selected, so its subthought x must stay collapsed
     expect(visibleThoughts).toEqual(['a', 'b', 'c'])
   })
+
+  // https://github.com/cybersemics/em/issues/4728
+  it('shows the multiselect highlight on table column 1 thoughts', async () => {
+    await paste(`
+        - a
+          - =view
+            - Table
+          - b
+            - c
+          - d
+            - e
+        `)
+
+    await waitForEditable('e')
+    await multiselectThoughts(['c', 'e'])
+
+    // Swap Note moves c and e into their parents' =note, so the multiselect moves up to b and d, which are
+    // in table column 1.
+    await press('KeyN', { alt: true, shift: true })
+
+    // wait for both notes to render so the assertion runs after Swap Note has completed
+    await page.waitForFunction(() => document.querySelectorAll('[aria-label="note"]').length === 2, { timeout: 5000 })
+
+    const highlightedBullets = await page.$$('[aria-label="bullet"][data-highlighted="true"]')
+    expect(highlightedBullets.length).toBe(2)
+  })
+
+  // https://github.com/cybersemics/em/issues/4728
+  it('restores the multiselect to the swapped thoughts when Swap Note is undone', async () => {
+    await paste(`
+        - a
+          - =view
+            - Table
+          - b
+            - c
+          - d
+            - e
+        `)
+
+    await waitForEditable('e')
+    await multiselectThoughts(['c', 'e'])
+
+    await press('KeyN', { alt: true, shift: true })
+
+    // wait for both notes to render so the undo runs after Swap Note has completed
+    await page.waitForFunction(() => document.querySelectorAll('[aria-label="note"]').length === 2, { timeout: 5000 })
+
+    await press('KeyZ', { meta: true })
+
+    // wait for the notes to be converted back to thoughts
+    await page.waitForFunction(() => document.querySelectorAll('[aria-label="note"]').length === 0, { timeout: 5000 })
+
+    const highlightedValues = await page.$$eval('[aria-label="bullet"][data-highlighted="true"]', bullets =>
+      bullets.map(
+        bullet => bullet.closest('[aria-label="tree-node"]')?.querySelector('[data-editable]')?.textContent ?? null,
+      ),
+    )
+
+    expect(highlightedValues.sort()).toEqual(['c', 'e'])
+  })
 })
 
 describe('mobile only', () => {

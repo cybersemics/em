@@ -10,6 +10,7 @@ import CursorDownIcon from '../components/icons/CursorDownIcon'
 import { HOME_PATH, HOME_TOKEN } from '../constants'
 import * as selection from '../device/selection'
 import attributeEquals from '../selectors/attributeEquals'
+import documentSort from '../selectors/documentSort'
 import { getChildrenSorted } from '../selectors/getChildren'
 import hasMulticursor from '../selectors/hasMulticursor'
 import isMulticursorPath from '../selectors/isMulticursorPath'
@@ -113,7 +114,14 @@ const cursorDownCommand: Command = {
       requestAnimationFrame(() => {
         selection.clear()
       })
-    } else dispatch(cursorDown())
+    } else {
+      const state = getState()
+      const sortedPaths = hasMulticursor(state) ? documentSort(state, Object.values(state.multicursors)) : []
+      const lastPath = sortedPaths[sortedPaths.length - 1]
+
+      // when a multiselect is active, collapse it and move the cursor to the last selected thought in document order
+      dispatch(lastPath ? setCursor({ path: lastPath }) : cursorDown())
+    }
   }),
 }
 
