@@ -101,6 +101,30 @@ describe('normal view', () => {
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'b', 'b1'])
   })
 
+  // https://github.com/cybersemics/em/issues/4585
+  it.skip('skip rows with no col2 children in table view col2', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - =view
+              - Table
+            - r1
+              - x
+            - r2
+              - y
+            - r3
+            - r4
+              - z`,
+      }),
+      setCursor(['a', 'r4', 'z']),
+      cursorPrev(),
+    ])
+
+    const stateNew = store.getState()
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'r2', 'y'])
+  })
+
   it('sorted thoughts', () => {
     store.dispatch([
       importText({
