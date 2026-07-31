@@ -1,0 +1,44 @@
+name: Test AI (Live)
+
+# Live inference tests for the Generate Thought command.
+#
+# Unlike the standard Test workflow, these tests hit the real AI server (VITE_AI_URL) and are therefore
+# NOT part of CI. They are only run when manually triggered via the "Run workflow" button (workflow_dispatch).
+#
+# Requires the VITE_AI_URL repository secret (or variable) to point at a running AI server. If unset, the
+# tests fall back to the local dev server URL, which will not be reachable in CI.
+on:
+  workflow_dispatch:
+    inputs:
+      rerun_id:
+        description: 'Optional ID for tracking repeated runs'
+        required: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  run:
+    name: Test AI (Live)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v6
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Set Node.js version
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: 'yarn'
+
+      - name: Install npm dependencies
+        run: yarn
+
+      - name: Test (live AI server)
+        run: yarn test:live
+        env:
+          VITE_AI_URL: ${{ secrets.VITE_AI_URL }}

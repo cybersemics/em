@@ -10,7 +10,7 @@ export default defineConfig({
           name: 'unit',
           globals: true,
           include: ['**/__tests__/**/*.ts'],
-          exclude: ['node_modules/**', '**/e2e/**'],
+          exclude: ['node_modules/**', '**/e2e/**', '**/*.live.ts'],
           environment: 'jsdom',
           mockReset: false,
           // vitest-localstorage-mock provides an in-test localStorage/sessionStorage mock. Note it does NOT
