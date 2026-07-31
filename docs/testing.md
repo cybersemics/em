@@ -418,6 +418,15 @@ WebdriverIO tests provide automated test coverage of actual iOS devices (among o
 
 The configuration files live in [src/e2e/iOS/config](../src/e2e/iOS/config). [wdio.base.conf.ts](../src/e2e/iOS/config/wdio.base.conf.ts) contains common iOS Safari settings and lifecycle hooks. [wdio.browserstack.conf.ts](../src/e2e/iOS/config/wdio.browserstack.conf.ts) loads credentials, starts the Cloudflare tunnel, and configures `@wdio/browserstack-service`. [wdio.local.conf.ts](../src/e2e/iOS/config/wdio.local.conf.ts) configures local Appium and the iOS Simulator.
 
+#### Origin health check
+
+An iOS run is only as good as the origin it loads, and a wrong origin is indistinguishable from a working one to a naive check: a Cloudflare edge error page (502, 1033, "can't reach origin") and the Vite token gate's `403` are both well-formed HTML documents with a `<body>`. Two hooks in [`wdio.base.conf.ts`](../src/e2e/iOS/config/wdio.base.conf.ts) assert the page is actually em:
+
+- **`onPrepare`** requests the URL the device will load (`CLOUDFLARED_URL`, else `https://localhost:3000`) from the runner and requires `200` plus em's `<div id="root">`. This runs in the launcher, before any session exists, so a wrong origin costs one request rather than the whole retry budget — a worker cannot change `specFileRetries`, so an origin discovered bad later fails every spec five times over. It throws rather than exiting so each config's own handler can clean up first (notably killing the cloudflared connector, which would otherwise be orphaned and hold a pool hostname against other runs). It is skipped in CI when `CLOUDFLARED_URL` is unset, because the app is then served over plain HTTP and the `https` localhost URL is not the origin under test.
+- **`before`** waits on the device for `#root` to have children — that is, for em's own JavaScript to have run — rather than for a `<body>` to exist. It backstops the case where the device reaches something the runner does not.
+
+Either failure names what was found instead: the HTTP status, `<title>`, and a snippet of the page, plus the device's `location.href` and visible text.
+
 wdio documentation:
 
 - https://webdriver.io/docs/cli
