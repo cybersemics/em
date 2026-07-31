@@ -103,6 +103,33 @@ describe('multiselect', () => {
     expect(copied['text/html']).toContain('b')
     expect(copied['text/html']).toContain('c')
   })
+
+  // https://github.com/cybersemics/em/issues/4738
+  it.skip('does not expand a thought that the multiselect is extended onto', async () => {
+    await paste(`
+        - a
+          - x
+        - b
+        - c
+        `)
+
+    await clickThought('c')
+
+    await press('ArrowUp', { shift: true })
+    await page.waitForFunction(
+      () => document.querySelectorAll('[aria-label="bullet"][data-highlighted="true"]').length === 2,
+    )
+
+    await press('ArrowUp', { shift: true })
+    await page.waitForFunction(
+      () => document.querySelectorAll('[aria-label="bullet"][data-highlighted="true"]').length === 3,
+    )
+
+    const visibleThoughts = await page.$$eval('[data-editable]', elements => elements.map(el => el.innerHTML))
+
+    // a is selected, so its subthought x must stay collapsed
+    expect(visibleThoughts).toEqual(['a', 'b', 'c'])
+  })
 })
 
 describe('mobile only', () => {
