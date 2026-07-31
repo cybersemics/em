@@ -32,6 +32,9 @@ let freeThoughtsThreshold = 500
 /** Escape hatch to abandon imports when frozen. This is a workaround for a bug that has not been resolved. */
 let abandonImport = false
 
+/** Used to suppress the Editable change handler to ignore execCommand in registerNativeUndoStep. */
+let suppressChange = false
+
 // check duplicate ranks within the same context for debugging
 const globals = {
   abandonImport,
@@ -40,6 +43,7 @@ const globals = {
   offlineTimer,
   rendered,
   suppressExpansion,
+  suppressChange,
   arrowKeyBoundaryCross: arrowKeyBoundaryCross as string | null,
   touching,
 }

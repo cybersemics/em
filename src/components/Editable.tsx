@@ -43,11 +43,9 @@ import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursorSelector from '../selectors/hasMulticursor'
 import rootedParentOf from '../selectors/rootedParentOf'
 import thoughtToPath from '../selectors/thoughtToPath'
-import { mergeBatchEditing } from '../stores/batchEditing'
 import editingValueStore from '../stores/editingValue'
 import editingValueUntrimmedStore from '../stores/editingValueUntrimmed'
 import storageModel from '../stores/storageModel'
-import suppressFocusStore from '../stores/suppressFocus'
 import addEmojiSpace from '../util/addEmojiSpace'
 import containsURL from '../util/containsURL'
 import debugLog from '../util/debugLog'
@@ -351,7 +349,6 @@ const Editable = ({
         // This will have no effect on useEditMode, which does not subscribe to state.cursorOffset reactively.
         cursorOffset: cursorOffset ?? selection.offsetThought() ?? undefined,
         force,
-        mergePrev: mergeBatchEditing(), // If batch editing is in progress, merge this edit with the previous one in the undo stack (except the first edit of a batch, which starts a new undo step).
       }),
     )
 
@@ -546,6 +543,13 @@ const Editable = ({
   /** Performs meta validation and calls thoughtChangeHandler immediately or using throttled reference. */
   const onChangeHandler = useCallback(
     (e: ContentEditableEvent) => {
+      // Ignore programmatic edits made while formatting is suppressing focus — specifically the throwaway
+      // execCommand('insertHTML') that registerNativeUndoStep runs on iOS to create a native undo step. em's Redux
+      // truth comes from the synchronous editThought dispatched by formatSelection; recording this DOM mutation would
+      // create a duplicate undo step (WebKit re-serializes the inserted HTML, so it is not even value-identical). The
+      // editThought's forced re-render restores the editable to the exact computed value (#4637).
+      if (globals.suppressChange) return
+
       // Infinite loop guard. onChangeHandler is re-entrant (edit → dispatch editThought → re-render →
       // input → onChange). The newValue === oldValue short-circuit below normally breaks the cycle, but a
       // corrupted Thought/Lexeme pair can defeat it and spin the main thread, freezing the app (#4467).
@@ -848,8 +852,6 @@ const Editable = ({
           }
         })
       }
-
-      if (suppressFocusStore.getState()) return
 
       // Update editingValueUntrimmedStore with the current value
       editingValueUntrimmedStore.update(value)
