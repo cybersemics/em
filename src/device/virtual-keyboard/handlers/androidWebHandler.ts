@@ -18,6 +18,9 @@ const onGeometryChange = () => {
  * the editable, so no blur event fires to dismiss the caret. We opt into the Chromium VirtualKeyboard API and
  * listen to its geometrychange event to exit edit mode and clear the browser selection when the keyboard hides.
  *
+ * Chromium also does not raise the keyboard when a thought enters edit mode by side effect, since the caret is
+ * placed by setting the browser selection rather than by a tap, so the editable must be focused by script.
+ *
  * See: https://github.com/cybersemics/em/issues/3958.
  */
 const androidWebHandler: VirtualKeyboardHandler = {
@@ -30,6 +33,13 @@ const androidWebHandler: VirtualKeyboardHandler = {
   destroy: () => {
     if (!('virtualKeyboard' in navigator)) return
     navigator.virtualKeyboard.removeEventListener('geometrychange', onGeometryChange)
+  },
+  show: editable => {
+    // Chromium raises the keyboard for a script-initiated focus during user activation (the gesture or
+    // keypress that activated edit mode), but not for the implicit focus that setting the browser selection
+    // performs. VirtualKeyboard.show() is not an option: it only works under virtualkeyboardpolicy="manual",
+    // which would suppress the keyboard on every tap.
+    editable.focus()
   },
 }
 
