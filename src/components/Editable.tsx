@@ -42,11 +42,10 @@ import getSetting from '../selectors/getSetting'
 import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursorSelector from '../selectors/hasMulticursor'
 import rootedParentOf from '../selectors/rootedParentOf'
-import { mergeBatchEditing } from '../stores/batchEditing'
+import thoughtToPath from '../selectors/thoughtToPath'
 import editingValueStore from '../stores/editingValue'
 import editingValueUntrimmedStore from '../stores/editingValueUntrimmed'
 import storageModel from '../stores/storageModel'
-import suppressFocusStore from '../stores/suppressFocus'
 import addEmojiSpace from '../util/addEmojiSpace'
 import containsURL from '../util/containsURL'
 import debugLog from '../util/debugLog'
@@ -106,31 +105,6 @@ const applyOuterTag = (newValue: string, oldValue: string): string => {
 // this flag is used to ensure that the browser selection is not restored after the initial setCursorOnThought
 let cursorOffsetInitialized = false
 
-/** Returns a guard function that throws with the given message if it is called more than `limit` times within a
- * rolling `windowMs` window. Used to convert a runaway re-entrant loop into a loud, stack-unwinding error instead of
- * a frozen main thread. The default limit is far above any human typing/IME/autocomplete burst. */
-const useInfiniteLoopGuard = (name: string, message: string, limit = 100, windowMs = 1000) => {
-  const stateRef = useRef({ count: 0, windowStart: 0 })
-  return useCallback(() => {
-    const now = performance.now()
-    const guard = stateRef.current
-    if (now - guard.windowStart > windowMs) {
-      guard.windowStart = now
-      guard.count = 0
-    }
-    guard.count++
-    // Log high-water marks so the rolling log shows the loop tightening (dt collapsing) before it trips the limit.
-    if (guard.count % 25 === 0) {
-      debugLog.log('guard', { guard: name, count: guard.count })
-    }
-    if (guard.count > limit) {
-      // Log immediately before throwing so the final pre-freeze burst is captured even though the throw unwinds the stack.
-      debugLog.log('guard', { guard: name, count: guard.count, threw: true })
-      throw new Error(message)
-    }
-  }, [name, message, limit, windowMs])
-}
-
 /**
  * An editable thought with throttled editing.
  * Use rank instead of headRank(simplePath) as it will be different for context view.
@@ -185,15 +159,6 @@ const Editable = ({
   const hasMulticursor = useSelector(hasMulticursorSelector)
   // store the old value so that we have a transcendental head when it is changed
   const oldValueRef = useRef(value)
-  // Guards against a runaway re-entrant loop in the change/autocomplete handlers freezing the app (#4467).
-  const guardChangeHandler = useInfiniteLoopGuard(
-    'change',
-    'Infinite loop detected in Editable.onChangeHandler: over 100 change events within 1s',
-  )
-  const guardAutocompleteInput = useInfiniteLoopGuard(
-    'autocomplete',
-    'Infinite loop detected in Editable.onAutocompleteInput: over 100 input events within 1s',
-  )
   const nullRef = useRef<HTMLInputElement>(null)
   const contentRef = editableRef || nullRef
   const isCursor = useSelector(state => equalPath(path, state.cursor))
@@ -270,6 +235,10 @@ const Editable = ({
       dispatch((dispatch, getState) => {
         const state = getState()
 
+        // A drop into a collapsed context removes the dragged Editable before its trailing click fires. Ignore the
+        // event if this component's path no longer points to the thought's current location. (#4680)
+        if (!transient && !equalPath(thoughtToPath(state, head(simplePath)), simplePath)) return
+
         // do not set cursor if it is unchanged and we are not entering when keyboard is open
         if ((!isKeyboardOpen || state.isKeyboardOpen) && equalPath(state.cursor, path)) return
 
@@ -300,7 +269,7 @@ const Editable = ({
     },
     // When isEditing changes, we need to reset the cursor on the thought.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [dispatch, isEditing, path],
+    [dispatch, isEditing, path, simplePath, transient],
   )
 
   /**
@@ -346,7 +315,6 @@ const Editable = ({
         // This will have no effect on useEditMode, which does not subscribe to state.cursorOffset reactively.
         cursorOffset: cursorOffset ?? selection.offsetThought() ?? undefined,
         force,
-        mergePrev: mergeBatchEditing(), // If batch editing is in progress, merge this edit with the previous one in the undo stack (except the first edit of a batch, which starts a new undo step).
       }),
     )
 
@@ -424,11 +392,16 @@ const Editable = ({
      *
      * It is possible to intercept insertReplacementText and perform the focus retargeting there
      * instead of waiting for the next insertText event, but that breaks native undo via shake or three-finger swipe.
+     *
+     * The edit is flushed synchronously (so onBlur cannot commit a stale value), but the focus retarget itself is
+     * deferred to the next animation frame. Blurring/refocusing synchronously inside this input event races UIKit's
+     * in-flight keyboard/autocorrect transaction and can deadlock the native text-input layer, freezing the app with
+     * the space bar stuck down until the device is restarted (#4607). The requestAnimationFrame callback runs after
+     * the current task but before the next paint, which keeps the iOS keyboard open (#3129) and still dismisses the
+     * touch dead zone (#4222) long before the user's next tap.
      */
     const onAutocompleteInput = (e: Event) => {
       if (!editable || !(e instanceof InputEvent)) return
-
-      guardAutocompleteInput()
 
       if (e.inputType === 'insertReplacementText') {
         logInput(e, 'replacement-pending')
@@ -457,17 +430,26 @@ const Editable = ({
       throttledChangeRef.current(oldValueRef.current, { rank, simplePath })
       throttledChangeRef.current.flush()
 
-      // Log each retarget step around the native focus/selection calls so a freeze can be pinned to the exact call
-      // that stopped returning (the last 'retarget' entry before the log goes silent is the culprit).
-      debugLog.log('retarget', { step: 'asyncFocus', savedOffset: savedCharOffset })
-      asyncFocus({ force: true })
+      // The editThought re-render that lands before the deferred callback cannot invalidate savedCharOffset:
+      // ContentEditable sets allowInnerHTMLChange to false during editing, so the DOM is not reset until blur.
+      requestAnimationFrame(() => {
+        // The editable can only detach in the single frame between the autocorrect and this callback, but guard
+        // anyway: selection.set on a detached node is the one real hazard of firing late.
+        if (!editable.isConnected) return
 
-      debugLog.log('retarget', { step: 'preventAutoscroll', savedOffset: savedCharOffset })
-      preventAutoscroll(editable)
-      // Restore the selection offset captured when insertText(' ') arrived.
-      debugLog.log('retarget', { step: 'selection.set', savedOffset: savedCharOffset })
-      selection.set(editable, { offset: savedCharOffset })
-      preventAutoscrollEnd(editable)
+        // Log each retarget step around the native focus/selection calls so a freeze can be pinned to the exact call
+        // that stopped returning (the last 'retarget' entry before the log goes silent is the culprit). `deferred`
+        // distinguishes these entries from pre-#4607-fix logs, where the retarget ran synchronously in the input event.
+        debugLog.log('retarget', { step: 'asyncFocus', savedOffset: savedCharOffset, deferred: true })
+        asyncFocus({ force: true })
+
+        debugLog.log('retarget', { step: 'preventAutoscroll', savedOffset: savedCharOffset })
+        preventAutoscroll(editable)
+        // Restore the selection offset captured when insertText(' ') arrived.
+        debugLog.log('retarget', { step: 'selection.set', savedOffset: savedCharOffset })
+        selection.set(editable, { offset: savedCharOffset })
+        preventAutoscrollEnd(editable)
+      })
 
       pendingAutocompleteAt = null
     }
@@ -529,7 +511,7 @@ const Editable = ({
       editable.removeEventListener('blur', onEditableBlur)
       document.removeEventListener('selectionchange', onSelectionChange)
     }
-  }, [contentRef, rank, simplePath, guardAutocompleteInput])
+  }, [contentRef, rank, simplePath])
 
   useEffect(() => {
     // if there is a multicursor, blur the contentRef
@@ -541,10 +523,12 @@ const Editable = ({
   /** Performs meta validation and calls thoughtChangeHandler immediately or using throttled reference. */
   const onChangeHandler = useCallback(
     (e: ContentEditableEvent) => {
-      // Infinite loop guard. onChangeHandler is re-entrant (edit → dispatch editThought → re-render →
-      // input → onChange). The newValue === oldValue short-circuit below normally breaks the cycle, but a
-      // corrupted Thought/Lexeme pair can defeat it and spin the main thread, freezing the app (#4467).
-      guardChangeHandler()
+      // Ignore programmatic edits made while formatting is suppressing focus — specifically the throwaway
+      // execCommand('insertHTML') that registerNativeUndoStep runs on iOS to create a native undo step. em's Redux
+      // truth comes from the synchronous editThought dispatched by formatSelection; recording this DOM mutation would
+      // create a duplicate undo step (WebKit re-serializes the inserted HTML, so it is not even value-identical). The
+      // editThought's forced re-render restores the editable to the exact computed value (#4637).
+      if (globals.suppressChange) return
 
       // make sure to get updated state
 
@@ -823,7 +807,15 @@ const Editable = ({
       if (isTouch && isSafari()) {
         dispatch((dispatch, getState) => {
           const state = getState()
-          if (state.showCommandCenter) {
+          // On iOS a long press (~415–650ms) triggers this native onFocus and reopens the virtual keyboard
+          // even when preventDefault was called in touchend — there is no way to prevent the focus itself.
+          // Dismiss the keyboard again here when the Command Center is open (#3387) or a drag gesture is in
+          // progress (#4683), otherwise the keyboard reopens on top of the drag-and-drop hint after it was
+          // dismissed at drag start. Clearing after two animation frames (rather than synchronously) avoids
+          // iOS Writing Tools getting stuck open and the selection being restored.
+          const isDragging =
+            state.longPress === LongPressState.DragHold || state.longPress === LongPressState.DragInProgress
+          if (state.showCommandCenter || isDragging) {
             selection.clear()
             dispatch(keyboardOpenActionCreator({ value: false }))
             requestAnimationFrame(() => {
@@ -836,19 +828,22 @@ const Editable = ({
         })
       }
 
-      if (suppressFocusStore.getState()) return
       // Update editingValueUntrimmedStore with the current value
       editingValueUntrimmedStore.update(value)
 
       dispatch((dispatch, getState) => {
         const { longPress } = getState()
-        if (longPress === LongPressState.Inactive) {
+        // Do not set the cursor on a hidden thought. After a focused thought is archived by dragging
+        // it to the DropGutter, a spurious focus event can fire on its (now hidden) Editable, which
+        // would otherwise override the cursor that archiveThought placed on the previous sibling.
+        // When hidden thoughts are shown, isVisible is true and the cursor can still be set. (#4077)
+        if (longPress === LongPressState.Inactive && isVisible) {
           setCursorOnThought({ isKeyboardOpen: true })
         }
       })
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [value, setCursorOnThought],
+    [value, isVisible, setCursorOnThought],
   )
 
   /**
@@ -936,6 +931,7 @@ const Editable = ({
       innerRef={contentRef}
       aria-label={'editable-' + head(path)}
       data-editable
+      data-placeholder-cleared={isCursorCleared || undefined}
       data-placeholder-bold={placeholderCommandState?.bold || undefined}
       data-placeholder-code={placeholderCommandState?.code || undefined}
       data-placeholder-italic={placeholderCommandState?.italic || undefined}

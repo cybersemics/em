@@ -56,7 +56,7 @@ jobs:
       # workflow_run head sha so a crafted pr-number.txt cannot target another PR.
       - name: Resolve and verify PR number
         id: pr
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b  # v7
         with:
           script: |
             const fs = require('fs')
@@ -197,7 +197,7 @@ jobs:
       # resolved message when the latest run had no diffs.
       - name: Upsert PR comment
         if: steps.pr.outputs.number
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b  # v7
         env:
           PR: ${{ steps.pr.outputs.number }}
           AUTHOR: ${{ steps.pr.outputs.author }}
@@ -231,15 +231,23 @@ jobs:
                   return `**${label}**\n\n<img src="${url}" alt="${label}" width="900" />`
                 })
                 .join('\n\n')
-              const authorNote = author ? ` by @${esc(author)}` : ''
+              const authorMention = author ? `@${esc(author)}` : ''
+              // The first path segment of each diff is the test file name (snapshots live in
+              // __image_snapshots__/{testFile}/). Derive the unique set to emit a single
+              // targeted update command scoped to the affected test files.
+              const testFiles = [...new Set(rels.map(rel => rel.split('/')[0]))].filter(Boolean).sort()
+              const updateCommand = `yarn test:puppeteer -u ${testFiles.map(esc).join(' ')}`
               body = [
                 marker,
                 '### 🖼️ Puppeteer snapshot diffs',
                 '',
-                `⚠️ Auto-generated, **unverified** diff images from PR #${prNumber}${authorNote} (run ${runId}).`,
+                `${authorMention}: These snapshot tests failed, which indicates a visual regression. Please review your changes. If the visual changes are intentional, update the snapshots for the affected test files:`,
                 '',
-                `<details open><summary>${rels.length} changed snapshot(s)</summary>`,
+                `\`\`\`\n${updateCommand}\n\`\`\``,
                 '',
+                `<details open><summary>${rels.length} broken snapshot${rels.length === 1 ? '' : 's'}</summary>`,
+                '',
+                `Left: Expected (base branch) | Right: Actual (PR branch)`,
                 blocks,
                 '',
                 '</details>',

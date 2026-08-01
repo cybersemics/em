@@ -19,6 +19,7 @@ import getThoughtFill from '../selectors/getThoughtFill'
 import isContextViewActive from '../selectors/isContextViewActive'
 import isMulticursorPath from '../selectors/isMulticursorPath'
 import rootedParentOf from '../selectors/rootedParentOf'
+import commandStateStore from '../stores/commandStateStore'
 import calculateCursorOverlayRadius from '../util/calculateCursorOverlayRadius'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
@@ -224,12 +225,15 @@ const BulletOrdered = ({ fill, index, style }: { fill?: string; index: number; s
       // Right-anchor the glyph so multi-character ordinals form a period-aligned column. x is offset to the right of the
       // viewBox center (300) so a single character is centered on the bullet position, aligning with the leaf bullet and
       // cursor overlay (both centered at cx=300).
-      x={501}
-      y={300}
+      x={567}
+      // Sit on the thought text's alphabetic baseline. The viewBox (0 0 600 600) is mapped to lineHeight (fontSize *
+      // 1.25), so the text baseline falls at a fixed user-space y independent of font size; 440 aligns the glyph with
+      // the text baseline while keeping it visually centered in the cursor overlay (radius 245 at cy=300).
+      y={440}
       textAnchor='end'
-      dominantBaseline='central'
       className={css({ fill: 'bullet' })}
-      style={{ fill, fontSize: '360px' }}
+      // fontSize 480 in user space renders at fontSize * 1.25 * (480/600) = fontSize, matching the thought text size.
+      style={{ fill, fontSize: '480px' }}
     >
       {label}.
     </text>
@@ -322,7 +326,15 @@ const Bullet = ({
     return children.length < Object.keys(thought.childrenMap).length
   })
 
-  const fill = useSelector(state => getThoughtFill(state, thoughtId))
+  const persistedFill = useSelector(state => getThoughtFill(state, thoughtId))
+  const isEmpty = useSelector(state => getThoughtById(state, thoughtId)?.value === '')
+  const activeCommandFill = commandStateStore.useSelector(state => {
+    if (!isEditing || !isEmpty) return undefined
+
+    const fill = state.backColor || state.foreColor
+    return typeof fill === 'string' ? fill : undefined
+  })
+  const fill = persistedFill || activeCommandFill
 
   /** The 1-based ordinal and style of an ordered list item, or null if the thought is not in an ordered context. A thought is ordered when its parent has =children/=bullet/Ordered|Alpha or its grandparent has =grandchildren/=bullet/Ordered|Alpha. */
   const ordered = useSelector((state): { index: number; style: 'Ordered' | 'Alpha' } | null => {

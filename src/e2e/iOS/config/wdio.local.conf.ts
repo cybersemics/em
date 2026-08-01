@@ -24,6 +24,18 @@ const PORT = process.env.APPIUM_PORT ? parseInt(process.env.APPIUM_PORT, 10) : 4
 export const config: WebdriverIO.Config = {
   ...baseConfig,
 
+  // Fail the run outright when the app is not being served, rather than letting the origin check
+  // throw: WebdriverIO logs a failed launcher hook and then boots the simulator anyway, so every
+  // spec would time out against a page that isn't the app.
+  onPrepare: async function () {
+    try {
+      await baseConfig.onPrepare()
+    } catch (err) {
+      console.error(`\niOS test setup failed: ${err instanceof Error ? err.message : String(err)}\n`)
+      process.exit(1)
+    }
+  },
+
   // Install the dev server's self-signed cert into the iOS Simulator's trust store
   // so Safari treats HTTPS as fully trusted (no localStorage/sessionStorage restrictions).
   // Runs after Appium boots the simulator, before navigating to the app.
