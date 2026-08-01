@@ -95,41 +95,41 @@ export const hashKeyDown = (e: KeyboardEvent): string =>
   // use e.keyCode if available instead
   (letters[e.keyCode] || digits[e.keyCode] || e.key || '').toUpperCase()
 
-/* A map of typed modifier tokens to the hash prefix used by hashCommand.
- * All Command/Control synonyms map to META_ because em's matching layer has no functioning literal-control
+/* A map of typed modifier tokens to the corresponding Key modifier property.
+ * All Command/Control synonyms map to meta because em's matching layer has no functioning literal-control
  * distinction: hashCommand ignores Key.control and hashKeyDown folds e.ctrlKey into META_. See docs/commands.md.
  */
-const SHORTCUT_MODIFIERS: Index<'META_' | 'ALT_' | 'SHIFT_'> = {
-  cmd: 'META_',
-  command: 'META_',
-  meta: 'META_',
-  ctrl: 'META_',
-  control: 'META_',
-  '⌘': 'META_',
-  '⌃': 'META_',
-  opt: 'ALT_',
-  option: 'ALT_',
-  alt: 'ALT_',
-  '⌥': 'ALT_',
-  shift: 'SHIFT_',
-  '⇧': 'SHIFT_',
+const SHORTCUT_MODIFIERS: Index<'meta' | 'alt' | 'shift'> = {
+  cmd: 'meta',
+  command: 'meta',
+  meta: 'meta',
+  ctrl: 'meta',
+  control: 'meta',
+  '⌘': 'meta',
+  '⌃': 'meta',
+  opt: 'alt',
+  option: 'alt',
+  alt: 'alt',
+  '⌥': 'alt',
+  shift: 'shift',
+  '⇧': 'shift',
 }
 
-/* A map of typed named keys to their canonical, uppercased key (matching hashCommand's key format). */
+/* A map of typed named keys to their canonical key name. */
 const SHORTCUT_NAMED_KEYS: Index<string> = {
-  enter: 'ENTER',
-  return: 'ENTER',
-  esc: 'ESCAPE',
-  escape: 'ESCAPE',
-  space: 'SPACE',
-  backspace: 'BACKSPACE',
-  delete: 'DELETE',
-  del: 'DELETE',
-  tab: 'TAB',
-  up: 'ARROWUP',
-  down: 'ARROWDOWN',
-  left: 'ARROWLEFT',
-  right: 'ARROWRIGHT',
+  enter: 'Enter',
+  return: 'Enter',
+  esc: 'Escape',
+  escape: 'Escape',
+  space: 'Space',
+  backspace: 'Backspace',
+  delete: 'Delete',
+  del: 'Delete',
+  tab: 'Tab',
+  up: 'ArrowUp',
+  down: 'ArrowDown',
+  left: 'ArrowLeft',
+  right: 'ArrowRight',
 }
 
 /**
@@ -150,7 +150,7 @@ export const parseCommandShortcut = (query: string): string | null => {
 
   if (tokens.length === 0) return null
 
-  const modifiers = new Set<'META_' | 'ALT_' | 'SHIFT_'>()
+  const modifiers = new Set<'meta' | 'alt' | 'shift'>()
   const keys: string[] = []
 
   tokens.forEach(token => {
@@ -159,7 +159,7 @@ export const parseCommandShortcut = (query: string): string | null => {
       modifiers.add(modifier)
     } else {
       // a valid key is a known named key or a single character
-      const key = SHORTCUT_NAMED_KEYS[token] || (token.length === 1 ? token.toUpperCase() : null)
+      const key = SHORTCUT_NAMED_KEYS[token] || (token.length === 1 ? token : null)
       if (key) keys.push(key)
       // an unrecognized multi-character token means this is not a shortcut
       else keys.push('')
@@ -169,12 +169,12 @@ export const parseCommandShortcut = (query: string): string | null => {
   // recognized as a shortcut iff at least one modifier and exactly one valid key
   if (modifiers.size === 0 || keys.length !== 1 || keys[0] === '') return null
 
-  return (
-    (modifiers.has('META_') ? 'META_' : '') +
-    (modifiers.has('ALT_') ? 'ALT_' : '') +
-    (modifiers.has('SHIFT_') ? 'SHIFT_' : '') +
-    keys[0]
-  )
+  return hashCommand({
+    key: keys[0],
+    meta: modifiers.has('meta'),
+    alt: modifiers.has('alt'),
+    shift: modifiers.has('shift'),
+  })
 }
 
 const ARROW_KEYS_TO_CHARACTER: Record<ArrowKey, string> = {
