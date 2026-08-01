@@ -189,10 +189,6 @@ const Editable = ({
     'change',
     'Infinite loop detected in Editable.onChangeHandler: over 100 change events within 1s',
   )
-  const guardAutocompleteInput = useInfiniteLoopGuard(
-    'autocomplete',
-    'Infinite loop detected in Editable.onAutocompleteInput: over 100 input events within 1s',
-  )
   const nullRef = useRef<HTMLInputElement>(null)
   const contentRef = editableRef || nullRef
   const isCursor = useSelector(state => equalPath(path, state.cursor))
@@ -426,11 +422,16 @@ const Editable = ({
      *
      * It is possible to intercept insertReplacementText and perform the focus retargeting there
      * instead of waiting for the next insertText event, but that breaks native undo via shake or three-finger swipe.
+     *
+     * The edit is flushed synchronously (so onBlur cannot commit a stale value), but the focus retarget itself is
+     * deferred to the next animation frame. Blurring/refocusing synchronously inside this input event races UIKit's
+     * in-flight keyboard/autocorrect transaction and can deadlock the native text-input layer, freezing the app with
+     * the space bar stuck down until the device is restarted (#4607). The requestAnimationFrame callback runs after
+     * the current task but before the next paint, which keeps the iOS keyboard open (#3129) and still dismisses the
+     * touch dead zone (#4222) long before the user's next tap.
      */
     const onAutocompleteInput = (e: Event) => {
       if (!editable || !(e instanceof InputEvent)) return
-
-      guardAutocompleteInput()
 
       if (e.inputType === 'insertReplacementText') {
         logInput(e, 'replacement-pending')
@@ -459,17 +460,26 @@ const Editable = ({
       throttledChangeRef.current(oldValueRef.current, { rank, simplePath })
       throttledChangeRef.current.flush()
 
-      // Log each retarget step around the native focus/selection calls so a freeze can be pinned to the exact call
-      // that stopped returning (the last 'retarget' entry before the log goes silent is the culprit).
-      debugLog.log('retarget', { step: 'asyncFocus', savedOffset: savedCharOffset })
-      asyncFocus({ force: true })
+      // The editThought re-render that lands before the deferred callback cannot invalidate savedCharOffset:
+      // ContentEditable sets allowInnerHTMLChange to false during editing, so the DOM is not reset until blur.
+      requestAnimationFrame(() => {
+        // The editable can only detach in the single frame between the autocorrect and this callback, but guard
+        // anyway: selection.set on a detached node is the one real hazard of firing late.
+        if (!editable.isConnected) return
 
-      debugLog.log('retarget', { step: 'preventAutoscroll', savedOffset: savedCharOffset })
-      preventAutoscroll(editable)
-      // Restore the selection offset captured when insertText(' ') arrived.
-      debugLog.log('retarget', { step: 'selection.set', savedOffset: savedCharOffset })
-      selection.set(editable, { offset: savedCharOffset })
-      preventAutoscrollEnd(editable)
+        // Log each retarget step around the native focus/selection calls so a freeze can be pinned to the exact call
+        // that stopped returning (the last 'retarget' entry before the log goes silent is the culprit). `deferred`
+        // distinguishes these entries from pre-#4607-fix logs, where the retarget ran synchronously in the input event.
+        debugLog.log('retarget', { step: 'asyncFocus', savedOffset: savedCharOffset, deferred: true })
+        asyncFocus({ force: true })
+
+        debugLog.log('retarget', { step: 'preventAutoscroll', savedOffset: savedCharOffset })
+        preventAutoscroll(editable)
+        // Restore the selection offset captured when insertText(' ') arrived.
+        debugLog.log('retarget', { step: 'selection.set', savedOffset: savedCharOffset })
+        selection.set(editable, { offset: savedCharOffset })
+        preventAutoscrollEnd(editable)
+      })
 
       pendingAutocompleteAt = null
     }
@@ -531,7 +541,7 @@ const Editable = ({
       editable.removeEventListener('blur', onEditableBlur)
       document.removeEventListener('selectionchange', onSelectionChange)
     }
-  }, [contentRef, rank, simplePath, guardAutocompleteInput])
+  }, [contentRef, rank, simplePath])
 
   useEffect(() => {
     // if there is a multicursor, blur the contentRef
