@@ -241,3 +241,50 @@ it('export note as a normal thought if lossless not selected', () => {
     - b
     - c`)
 })
+
+it('maxDepth 0 exports only the root thought with no children', () => {
+  const text = `
+    - a
+      - b
+        - c
+  `
+
+  const steps = [importText({ text }), setCursor(['a'])]
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, ['a'], 'text/plain', { maxDepth: 0 })
+
+  expect(exported).toBe(`- a`)
+})
+
+it('maxDepth 1 exports the root thought and its direct children only', () => {
+  const text = `
+    - a
+      - b
+        - c
+      - d
+        - e
+  `
+
+  const steps = [importText({ text }), setCursor(['a'])]
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, ['a'], 'text/plain', { maxDepth: 1 })
+
+  expect(exported).toBe(`- a
+  - b
+  - d`)
+})
+
+it('maxDepth 0 exports only the root thought as HTML with no children', () => {
+  const text = `
+    - a
+      - b
+  `
+
+  const steps = [importText({ text }), setCursor(['a'])]
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, ['a'], 'text/html', { maxDepth: 0 })
+
+  expect(exported).toBe(`<ul>
+  <li>a  </li>
+</ul>`)
+})
