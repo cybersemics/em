@@ -18,6 +18,7 @@ import virtualKeyboardHandler from '../device/virtual-keyboard'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import pathExists from '../selectors/pathExists'
 import store from '../stores/app'
+import caretOffsetStore from '../stores/caretOffsetStore'
 import { updateCommandState } from '../stores/commandStateStore'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
 import { updateScrollTop } from '../stores/scrollTop'
@@ -226,6 +227,11 @@ const initEvents = (store: Store<State, any>) => {
 
     // update command state store
     updateCommandState()
+
+    // Track the caret offset within the focused thought so that a faux caret can be rendered at the same offset on the
+    // other thoughts of an edited multiselection (see Editable). Unthrottled, otherwise the faux caret visibly lags the
+    // real caret while typing.
+    caretOffsetStore.update(selection.isThought() ? selection.offsetThought() : null)
   }
 
   /** MouseMove event listener. */

@@ -54,9 +54,16 @@ const canExecuteOutdent = (state: State): boolean => {
   )
 }
 
+/** A selector that returns true if the caret is inside a thought's text, past the start. In this state Backspace must
+ * delete a character rather than a thought, so the command declines to execute and the browser's default takes over. A
+ * multiselection can be edited this way after clearThought, which keeps the multicursors alive so that typed edits
+ * mirror across the selected thoughts (#4519). */
+const isEditingThoughtText = (): boolean =>
+  selection.isThought() && (!selection.isCollapsed() || (selection.offset() ?? 0) > 0)
+
 /** A selector that returns true if either the cursor is on an empty thought that can be deleted, or is on an only child that can be outdented. */
 const canExecute = (state: State): boolean =>
-  canExecuteOutdent(state) || canExecuteDeleteEmptyThought(state) || hasMulticursor(state)
+  canExecuteOutdent(state) || canExecuteDeleteEmptyThought(state) || (hasMulticursor(state) && !isEditingThoughtText())
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const exec: Command['exec'] = (dispatch, getState) => {

@@ -81,7 +81,7 @@ AND the following are all true:
 - Not in note focus (`!state.noteFocus`).
 - The element ref is mounted.
 - A `cursorOffset` is set, *or* the existing selection is not on a thought (so we don't steal the caret if it's already correctly placed).
-- No multicursor selection is active.
+- No multicursor selection is active, *unless* the multiselection is cleared (see [Multiselect faux caret](#multiselect-faux-caret)), in which case the caret is placed on the first cleared thought.
 - We're not in `LongPressState.DragHold` (the user is mid-long-press; don't hijack their selection).
 - The hook hasn't been temporarily disabled via `allowDefaultSelection` (see below).
 
@@ -146,6 +146,20 @@ This catches cases where the cursor moves but no `Editable` re-renders to pull t
 A non-Redux ministore tracking whether there is an active *non-collapsed* selection range — i.e. whether the user has selected text. It is updated from a `selectionchange` event handler (throttled by `SELECTION_CHANGE_THROTTLE`) and is always `false` on desktop.
 
 The main consumer is [`useDragAndDropThought`](../src/hooks/useDragAndDropThought.tsx)'s `canDrag`: when the user has a text range selected on touch, dragging is disabled so they can use the iOS magnifier and copy/paste UI without inadvertently starting a drag. See [drag-and-drop.md](drag-and-drop.md).
+
+### `caretOffsetStore`
+
+[`src/stores/caretOffsetStore.ts`](../src/stores/caretOffsetStore.ts).
+
+A non-Redux ministore tracking the caret's character offset within the focused thought, or `null` when no thought is focused. Like `selectionRangeStore` it is updated from the `selectionchange` handler in [`initEvents`](../src/util/initEvents.ts), but unthrottled, so that a faux caret driven by it does not visibly lag the real caret while typing. Its sole consumer is the multiselect faux caret below.
+
+### Multiselect faux caret
+
+[Clear Thought](../src/commands/clearThought.ts) works on a multiselection: it clears every selected thought and keeps the multicursors alive so that subsequent typing is mirrored to all of them by `Editable`'s `thoughtChangeHandler`. Only one thought can hold the real browser caret, so the others render a faux caret to show that they are being edited too.
+
+`Editable` renders that caret when the path is a multicursor member, is not the cursor, and the cursor itself is a multicursor member. The caret is positioned by overlaying an invisible copy of the editable — same recipe, so the same padding, font, and line height — containing the thought's own text truncated at `caretOffsetStore`'s offset, followed by a zero-width `FauxCaret`. The browser therefore resolves x, y, half-leading, and line wrapping exactly as it does for the real caret. Formatting tags are not reproduced in the prefix, so the faux caret can be slightly off within bold or italic text.
+
+Backspace is special-cased for this state. [`deleteEmptyThoughtOrOutdent`](../src/commands/deleteEmptyThoughtOrOutdent.ts) normally executes whenever a multiselection exists, which would swallow the keystroke; it declines when a thought is focused and the caret is past the start of the text, letting the browser delete a character and the edit mirror like any other.
 
 ### `preventAutoscroll.ts`
 

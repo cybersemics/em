@@ -11,7 +11,6 @@ const editableValues = () => page.$$eval('[data-editable]', els => els.map(el =>
 
 describe('clearThought', () => {
   // Regression test for https://github.com/cybersemics/em/issues/4519
-  // .skip keeps normal CI green while the test is red; remove the .skip when the fix lands.
   it('clears all multiselected thoughts and mirrors typing across them', async () => {
     await paste(`
       - a
@@ -68,5 +67,35 @@ describe('clearThought', () => {
       .then(handle => handle.jsonValue() as Promise<string[]>)
       .catch(() => editableValues())
     expect(mirroredValues).toEqual(['hello', 'hello', 'hello'])
+
+    // Backspace should delete a character rather than being hijacked by the multiselect delete command, and the
+    // deletion should mirror across the multiselection like any other edit.
+    await page.keyboard.press('Backspace')
+
+    const backspacedValues = await page
+      .waitForFunction(
+        () => {
+          const els = Array.from(document.querySelectorAll('[data-editable]'))
+          return els.length === 3 && els.every(el => el.innerHTML === 'hell') ? els.map(el => el.innerHTML) : false
+        },
+        { timeout: 6000 },
+      )
+      .then(handle => handle.jsonValue() as Promise<string[]>)
+      .catch(() => editableValues())
+    expect(backspacedValues).toEqual(['hell', 'hell', 'hell'])
+
+    // The faux carets should still be rendered after editing, at the same x position as the real caret so that they
+    // track it character by character.
+    const caretPositions = await page.evaluate(() => {
+      const selectionRect = getSelection()?.getRangeAt(0).getClientRects()[0]
+      const fauxCaretXs = Array.from(document.querySelectorAll('[data-testid="faux-caret-multicursor"]')).map(
+        el => el.lastElementChild!.firstElementChild!.getBoundingClientRect().x,
+      )
+      return { realCaretX: selectionRect?.x ?? null, fauxCaretXs }
+    })
+    expect(caretPositions.realCaretX).not.toBeNull()
+    expect(caretPositions.fauxCaretXs).toHaveLength(2)
+    // allow sub-pixel rounding between the browser's caret rect and the laid-out faux caret
+    caretPositions.fauxCaretXs.forEach(x => expect(x).toBeCloseTo(caretPositions.realCaretX!, 0))
   })
 })

@@ -45,6 +45,7 @@ import isMulticursorPath from '../selectors/isMulticursorPath'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import thoughtToPath from '../selectors/thoughtToPath'
+import caretOffsetStore from '../stores/caretOffsetStore'
 import editingValueStore from '../stores/editingValue'
 import editingValueUntrimmedStore from '../stores/editingValueUntrimmed'
 import storageModel from '../stores/storageModel'
@@ -133,6 +134,50 @@ const useInfiniteLoopGuard = (name: string, message: string, limit = 100, window
   }, [name, message, limit, windowMs])
 }
 
+/** Overlays a faux caret on a thought that is being edited as part of a multiselection but does not hold the real
+ * caret. Positioned by laying out the thought's own text, truncated at the real caret's offset, in an invisible copy of
+ * the editable, so that the browser resolves the caret's x, y, line wrapping, and half-leading exactly as it does for
+ * the real caret. Formatting tags are not reproduced, so the faux caret may be slightly off within bold or italic text.
+ */
+const MulticursorFauxCaret = ({ value, className }: { value: string; className?: string }) => {
+  const offset = caretOffsetStore.useState()
+
+  // The caret offset counts characters of the rendered text, so measure the prefix from textContent rather than the raw
+  // html.
+  const text = useMemo(() => {
+    const div = document.createElement('div')
+    div.innerHTML = value
+    return div.textContent ?? ''
+  }, [value])
+
+  return offset === null ? null : (
+    <span
+      aria-hidden
+      data-testid='faux-caret-multicursor'
+      className={cx(
+        editableRecipe(),
+        className,
+        css({
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          pointerEvents: 'none',
+          // the invisible prefix must not be selectable or hit-testable, and must never be read as thought content
+          userSelect: 'none',
+        }),
+      )}
+    >
+      <span className={css({ visibility: 'hidden' })}>{text.slice(0, offset)}</span>
+      {/* zero width so that the caret glyph renders at the end of the prefix without occupying layout space, which
+          would otherwise push it onto the next line when the prefix fills the line */}
+      <span className={css({ display: 'inline-block', width: 0 })}>
+        <FauxCaret caretType='multicursorStart' />
+      </span>
+    </span>
+  )
+}
+
 /**
  * An editable thought with throttled editing.
  * Use rank instead of headRank(simplePath) as it will be different for context view.
@@ -169,10 +214,16 @@ const Editable = ({
     state => state.cursorCleared && (!!isEditing || isMulticursorPath(state, path)),
   )
 
-  // Render a faux caret on the cleared thoughts of a multiselection that do not hold the real caret (i.e. all but the
-  // first/cursor thought). The cursor thought shows the real caret via useEditMode.
-  const showMulticursorFauxCaret = useSelector(
-    state => state.cursorCleared && isMulticursorPath(state, path) && !equalPath(state.cursor, path),
+  // Render a faux caret on the thoughts of an edited multiselection that do not hold the real caret (i.e. all but the
+  // first/cursor thought). The cursor thought shows the real caret via useEditMode. This outlives the cleared state:
+  // clearThought preserves the multicursors so that typed edits keep mirroring, and the faux carets must keep tracking
+  // the real caret for as long as they do.
+  const isMulticursorFauxCaretPath = useSelector(
+    state =>
+      isMulticursorPath(state, path) &&
+      !equalPath(state.cursor, path) &&
+      !!state.cursor &&
+      isMulticursorPath(state, state.cursor),
   )
 
   const placeholderCommandState = useMemo(
@@ -1029,16 +1080,11 @@ const Editable = ({
     />
   )
 
-  // When this thought is a cleared, non-cursor member of a multiselection, overlay a faux caret at the start of the
-  // (empty) editable to indicate that it too is being edited. The real caret lives on the first/cursor thought.
-  return showMulticursorFauxCaret ? (
-    <span className={css({ position: 'relative' })}>
-      <span
-        data-testid='faux-caret-multicursor'
-        className={css({ position: 'absolute', top: 0, left: 0, pointerEvents: 'none' })}
-      >
-        <FauxCaret caretType='multicursorStart' />
-      </span>
+  // When this thought is a non-cursor member of an edited multiselection, overlay a faux caret mirroring the real
+  // caret's offset to indicate that it too is being edited. The real caret lives on the first/cursor thought.
+  return isMulticursorFauxCaretPath ? (
+    <span className={css({ display: 'block', position: 'relative' })}>
+      <MulticursorFauxCaret value={value} className={className} />
       {contentEditable}
     </span>
   ) : (
