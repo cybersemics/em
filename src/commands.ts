@@ -88,13 +88,21 @@ const digits = keyValueBy(Array(58 - 48).fill(0), (n, i) => ({
 export const hashCommand = (keyboard: string | Key): string => {
   const key = typeof keyboard === 'string' ? { key: keyboard } : keyboard
 
-  return (key.meta ? 'META_' : '') + (key.alt ? 'ALT_' : '') + (key.shift ? 'SHIFT_' : '') + key.key?.toUpperCase()
+  return (
+    (key.meta ? 'META_' : '') +
+    (key.alt ? 'ALT_' : '') +
+    // On non-Mac platforms Ctrl is already the meta modifier, so control falls back to Shift (see Key).
+    (isMac && key.control ? 'CONTROL_' : '') +
+    (key.shift || (!isMac && key.control) ? 'SHIFT_' : '') +
+    key.key?.toUpperCase()
+  )
 }
 
 /** Hash all the properties of a keydown event into a string that can be compared with the result of hashCommand. */
 export const hashKeyDown = (e: KeyboardEvent): string =>
   (e.metaKey || e.ctrlKey ? 'META_' : '') +
   (e.altKey ? 'ALT_' : '') +
+  (isMac && e.ctrlKey ? 'CONTROL_' : '') +
   (e.shiftKey ? 'SHIFT_' : '') +
   // for some reason, e.key returns 'Dead' in some cases, perhaps because of alternate keyboard settings
   // e.g. alt + meta + n
@@ -129,7 +137,7 @@ export const formatKeyboardShortcut = (keyboardOrString: Key | Key[] | string): 
   return (
     (keyboard.meta ? (isMac ? 'Command' : 'Ctrl') + ' + ' : '') +
     (keyboard.alt ? (isMac ? 'Option' : 'Alt') + ' + ' : '') +
-    (keyboard.control ? 'Control + ' : '') +
+    (keyboard.control ? (isMac ? 'Control' : 'Shift') + ' + ' : '') +
     (keyboard.shift ? 'Shift + ' : '') +
     (isArrowKey(text) ? arrowTextToArrowCharacter(text) : text)
   )

@@ -71,10 +71,14 @@ If two commands share the same keyboard hash, `index()` logs a `console.error` a
 The global `keyDown` handler (registered by [`initEvents.ts`](../src/util/initEvents.ts)) hashes the event with `hashKeyDown(e)`:
 
 ```
-(meta|ctrl ? 'META_' : '') + (alt ? 'ALT_' : '') + (shift ? 'SHIFT_' : '') + key.toUpperCase()
+(meta|ctrl ? 'META_' : '') + (alt ? 'ALT_' : '') + (mac && ctrl ? 'CONTROL_' : '') + (shift ? 'SHIFT_' : '') + key.toUpperCase()
 ```
 
-Hashes are uppercased, modifier-prefixed strings — so `Cmd+Shift+P` becomes `META_SHIFT_P`. `commandKeyIndex[hash]` resolves the command in O(1). The handler also:
+Hashes are uppercased, modifier-prefixed strings — so `Cmd+Shift+P` becomes `META_SHIFT_P`. `commandKeyIndex[hash]` resolves the command in O(1).
+
+`Key.control` is the only modifier whose physical key differs by platform beyond the usual Command/Ctrl and Option/Alt substitution: on non-Mac platforms Ctrl already serves as `meta`, so `control` falls back to Shift and `hashCommand` emits `SHIFT_` for it. `heading0`–`heading5` are therefore Command + Option + Control + *n* on Mac and Ctrl + Alt + Shift + *n* elsewhere, which keeps them distinct from the text color shortcuts (Command/Ctrl + Option/Alt + *n*).
+
+The handler also:
 
 - Skips entirely if `state.showDesktopCommandUniverse` is open.
 - Skips when a modal is showing, *unless* the command has `allowExecuteFromModal: true` (e.g. navigation commands that should still work).
@@ -558,37 +562,37 @@ Open a sort picker to pick the sort option and sort by option.
 
 Sets a heading to normal text.
 
-<kbd>Command + Option + 0</kbd>
+<kbd>Command + Option + Control + 0</kbd>
 
 ### Heading 1
 
 Turns the thought into a large heading.
 
-<kbd>Command + Option + 1</kbd>
+<kbd>Command + Option + Control + 1</kbd>
 
 ### Heading 2
 
 Turns the thought into a medium-large heading.
 
-<kbd>Command + Option + 2</kbd>
+<kbd>Command + Option + Control + 2</kbd>
 
 ### Heading 3
 
 Turns the thought into a medium heading. Perhaps a pattern is emerging?
 
-<kbd>Command + Option + 3</kbd>
+<kbd>Command + Option + Control + 3</kbd>
 
 ### Heading 4
 
 Turns the thought into a medium-small heading. You get the idea.
 
-<kbd>Command + Option + 4</kbd>
+<kbd>Command + Option + Control + 4</kbd>
 
 ### Heading 5
 
 Turns the thought into a small heading. Impressive that you read this far.
 
-<kbd>Command + Option + 5</kbd>
+<kbd>Command + Option + Control + 5</kbd>
 
 ### Pin
 

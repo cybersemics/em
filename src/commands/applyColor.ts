@@ -7,12 +7,12 @@ import isDocumentEditable from '../util/isDocumentEditable'
 /** The swatch colors, in the order they appear in the ColorPicker. Applies to both the text color and background color rows. */
 const swatchColors: ColorToken[] = ['fg', 'gray', 'orange', 'yellow', 'green', 'blue', 'purple', 'pink', 'red']
 
-/** A keyboard shortcut and the color it applies. Text colors are bound to Cmd/Ctrl + Shift + <n> and background colors to Alt + <n>, where <n> is the 1-based swatch position. */
+/** A keyboard shortcut and the color it applies. Text colors are bound to Cmd/Ctrl + Option/Alt + <n> and background colors to Option/Alt + <n>, where <n> is the 1-based swatch position. */
 type ColorShortcut = { keyboard: Key; color?: ColorToken; backgroundColor?: ColorToken }
 
 /** Ordered color shortcuts. The index of each entry corresponds to the index of its keyboard shortcut in the command's keyboard array. */
 const colorShortcuts: ColorShortcut[] = [
-  ...swatchColors.map((color, i): ColorShortcut => ({ keyboard: { key: `${i + 1}`, meta: true, shift: true }, color })),
+  ...swatchColors.map((color, i): ColorShortcut => ({ keyboard: { key: `${i + 1}`, meta: true, alt: true }, color })),
   ...swatchColors.map((backgroundColor, i): ColorShortcut => ({
     keyboard: { key: `${i + 1}`, alt: true },
     backgroundColor,

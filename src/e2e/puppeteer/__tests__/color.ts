@@ -411,7 +411,7 @@ it('Can change the color of a note that already has the same color applied to pa
   expect(note).toBe('<font color="#ff573d">some formatted text</font>')
 })
 
-it('Set the text color via keyboard shortcut (Cmd + Shift + 3 = orange)', async () => {
+it('Set the text color via keyboard shortcut (Cmd + Option + 3 = orange)', async () => {
   const importText = `
   - Labrador
   - Golden Retriever`
@@ -420,8 +420,8 @@ it('Set the text color via keyboard shortcut (Cmd + Shift + 3 = orange)', async 
 
   await clickThought('Golden Retriever')
 
-  // Cmd + Shift + 3 applies the third text swatch (orange)
-  await press('3', { meta: true, shift: true })
+  // Cmd + Option + 3 applies the third text swatch (orange)
+  await press('3', { meta: true, alt: true })
 
   const cursorText = await getEditingText()
   const bulletColor = await getBulletColor()
@@ -450,7 +450,7 @@ it('Set the background color via keyboard shortcut (Alt + 4 = yellow)', async ()
   expect(result?.backgroundColor && rgbToHex(result.backgroundColor)).toBe(rgbaToHex(colors.light.yellow))
 })
 
-it('Clear the text color via the default keyboard shortcut (Cmd + Shift + 1)', async () => {
+it('Clear the text color via the default keyboard shortcut (Cmd + Option + 1)', async () => {
   const importText = `
   - Labrador
   - Golden Retriever`
@@ -459,9 +459,9 @@ it('Clear the text color via the default keyboard shortcut (Cmd + Shift + 1)', a
 
   await clickThought('Golden Retriever')
 
-  // apply orange, then reset to the default text color with Cmd + Shift + 1
-  await press('3', { meta: true, shift: true })
-  await press('1', { meta: true, shift: true })
+  // apply orange, then reset to the default text color with Cmd + Option + 1
+  await press('3', { meta: true, alt: true })
+  await press('1', { meta: true, alt: true })
 
   const result = await getEditingText()
   expect(result).toBe('Golden Retriever')
