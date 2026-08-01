@@ -72,7 +72,7 @@ Not every attribute is propagable. Currently the inheritance chain is plumbed th
 - **`=style`** — CSS styles applied to the thought's text. The child of `=style` is the property name, and its child is the value: e.g. `=style/color/tomato`. Also accepts `=children/=style` and `=grandchildren/=style` for descendant propagation.
 - **`=styleAnnotation`** — same shape as `=style`, but applied only to the thought's annotation (the dim superscript / count badge).
 - **`=styleContainer`** — same shape as `=style`, but applied to the thought's outer container element rather than its text.
-- **`=bullet`** — controls the bullet display. Options: `None` (hide the bullet). Read by [`useHideBullet`](../src/hooks/useHideBullet.ts) and [`Bullet`](../src/components/Bullet.tsx). Replaces the old `=bullets` attribute. Also propagable via `=children/=bullet` / `=grandchildren/=bullet`.
+- **`=bullet`** — controls the bullet display. Options: `None` (hide the bullet); `Ordered` (render a 1-based ordinal number in place of the bullet, so children display as an ordered list). Read by [`useHideBullet`](../src/hooks/useHideBullet.ts) and [`Bullet`](../src/components/Bullet.tsx). Replaces the old `=bullets` attribute. Also propagable via `=children/=bullet` / `=grandchildren/=bullet` — e.g. `=children/=bullet/Ordered` numbers every direct child.
 - **`=focus`** — when the cursor lands on this thought, change how ancestors and siblings are rendered. Options: `Normal` (default), `Zoom`. Zoom mode hides parent and siblings to give the active thought the full screen — handled by [`useZoom`](../src/hooks/useZoom.ts) and [`findFirstEnvContextWithZoom`](../src/selectors/findFirstEnvContextWithZoom.ts).
 
 ### Pinning & expansion

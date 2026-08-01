@@ -14,12 +14,12 @@ import { toggleNoteActionCreator as toggleNote } from '../actions/toggleNote'
 import { isTouch } from '../browser'
 import preventAutoscroll, { preventAutoscrollEnd } from '../device/preventAutoscroll'
 import * as selection from '../device/selection'
+import globals from '../globals'
 import useFreshCallback from '../hooks/useFreshCallback'
 import getThoughtById from '../selectors/getThoughtById'
 import noteValue from '../selectors/noteValue'
 import resolveNotePath from '../selectors/resolveNotePath'
 import store from '../stores/app'
-import batchEditingStore from '../stores/batchEditing'
 import equalPathHead from '../util/equalPathHead'
 import head from '../util/head'
 import strip from '../util/strip'
@@ -65,8 +65,13 @@ const Note = React.memo(
       // cursor must be true if note is focused
       if (hasFocus && noteOffset !== null) {
         selection.set(noteRef.current!, { offset: noteOffset })
+        // Clear noteOffset after placing the caret so it acts as a one-shot request. Otherwise repeatedly
+        // restoring the caret to the same offset (e.g. applying a font color over a background color multiple
+        // times) would set noteOffset to an unchanged value, the effect would not re-run, and the caret would
+        // be left wherever the note's re-render dropped it instead of the requested offset (#4630).
+        dispatch(setNoteFocus({ value: true, offset: null }))
       }
-    }, [hasFocus, noteOffset])
+    }, [dispatch, hasFocus, noteOffset])
 
     /** Handles note keyboard shortcuts. */
     const onKeyDown = useCallback(
@@ -111,6 +116,8 @@ const Note = React.memo(
     /** Updates the =note attribute when the note text is edited. */
     const onChange = useCallback(
       (e: ContentEditableEvent) => {
+        if (globals.suppressChange) return
+
         // calculate pathToContext onChange not in render for performance
         const value = justPasted
           ? // if just pasted, strip all HTML from value
@@ -129,7 +136,6 @@ const Note = React.memo(
             setDescendant({
               path: targetPath,
               values: [value],
-              mergePrev: batchEditingStore.getState(), // If batch editing is in progress, merge this edit with the previous one in the undo stack.
             }),
           )
         })

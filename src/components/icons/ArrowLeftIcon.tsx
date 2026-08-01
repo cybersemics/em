@@ -1,11 +1,10 @@
-import { FC } from 'react'
 import { css, cx } from '../../../styled-system/css'
 import { iconRecipe } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/IconType'
 
-/** Arrow-left icon used by the Command Universe Back button. */
-const ArrowLeftIcon: FC<IconType> = ({ size = 24, fill, cssRaw }) => {
+/** Arrow-left icon used by the Command Universe Back button and the Navigate Back command. */
+const ArrowLeftIcon = ({ size = 24, fill, cssRaw }: IconType) => {
   const strokeColor = fill || token('colors.fg')
 
   return (

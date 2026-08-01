@@ -13,9 +13,10 @@ type ColorShortcut = { keyboard: Key; color?: ColorToken; backgroundColor?: Colo
 /** Ordered color shortcuts. The index of each entry corresponds to the index of its keyboard shortcut in the command's keyboard array. */
 const colorShortcuts: ColorShortcut[] = [
   ...swatchColors.map((color, i): ColorShortcut => ({ keyboard: { key: `${i + 1}`, meta: true, shift: true }, color })),
-  ...swatchColors.map(
-    (backgroundColor, i): ColorShortcut => ({ keyboard: { key: `${i + 1}`, alt: true }, backgroundColor }),
-  ),
+  ...swatchColors.map((backgroundColor, i): ColorShortcut => ({
+    keyboard: { key: `${i + 1}`, alt: true },
+    backgroundColor,
+  })),
 ]
 
 /** Applies a text color or background color to the cursor thought via a keyboard shortcut, equivalent to tapping the corresponding swatch in the color picker. */

@@ -1,0 +1,45 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "em",
+  "version": "../package.json",
+  "identifier": "com.thinkwithem.em",
+  "build": {
+    "beforeDevCommand": "yarn start:http",
+    "devUrl": "http://localhost:3000",
+    "beforeBuildCommand": "yarn build",
+    "frontendDist": "../build"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "em",
+        "width": 1024,
+        "height": 768,
+        "minWidth": 360,
+        "minHeight": 480,
+        "resizable": true,
+        "fullscreen": false
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "category": "Productivity",
+    "shortDescription": "A beautiful, minimalistic note-taking app for personal sensemaking.",
+    "longDescription": "em is a beautiful, minimalistic note-taking app for personal sensemaking.",
+    "copyright": "Copyright © Cybersemics",
+    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"],
+    "macOS": {
+      "signingIdentity": "-"
+    },
+    "linux": {
+      "deb": {
+        "depends": []
+      }
+    }
+  }
+}

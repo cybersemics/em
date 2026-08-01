@@ -1,0 +1,68 @@
+name: Vercel Production
+
+# Deploy production from GitHub Actions on every push to main, so the deployment
+# no longer depends on the merged commit's author (Vercel's Git integration
+# attributes/gates deploys by the pushing user). Vercel's own Git auto-deploy for
+# main is disabled in vercel.json (git.deploymentEnabled.main = false) to avoid a
+# duplicate production deployment. Never runs on pull_request events.
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy ${{ matrix.project }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      # Deploy each Vercel project independently; one failing project must not
+      # block the other.
+      fail-fast: false
+      matrix:
+        project: [em, em-ai]
+
+    # Serialize production deploys per project without cancelling an in-flight
+    # deploy, so overlapping pushes to main queue rather than race.
+    concurrency:
+      group: vercel-production-${{ matrix.project }}
+      cancel-in-progress: false
+
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      # Each project has its own project ID; org and token are shared. Both
+      # secrets are referenced statically (no dynamic secrets indexing) and
+      # selected by the matrix value.
+      VERCEL_PROJECT_ID: ${{ matrix.project == 'em' && secrets.VERCEL_PROJECT_ID_EM || secrets.VERCEL_PROJECT_ID_EM_AI }}
+      # Skip Puppeteer's Chrome download on install — the Vercel build never uses
+      # the bundled browser, saving ~20s per install.
+      PUPPETEER_SKIP_DOWNLOAD: true
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v6
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Set Node.js version
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: 'yarn'
+
+      - name: Install npm dependencies
+        uses: ./.github/actions/install
+
+      - name: Pull Vercel environment
+        run: yarn dlx vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+
+      - name: Build
+        run: yarn dlx vercel build --prod --token="$VERCEL_TOKEN"
+
+      - name: Deploy
+        run: yarn dlx vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"

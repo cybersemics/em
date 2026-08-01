@@ -1,5 +1,7 @@
 /* eslint-disable no-restricted-properties */
 /** Wraps the browser Selection API in a device-agnostic interface. */
+import { Capacitor } from '@capacitor/core'
+import { Keyboard } from '@capacitor/keyboard'
 import { isHTMLElement } from 'motion/react'
 import SplitResult from '../@types/SplitResult'
 import { ALLOWED_FORMATTING_TAGS } from '../constants'
@@ -49,6 +51,22 @@ export const clear = (): void => {
   if (document.activeElement instanceof HTMLElement) {
     document.activeElement.blur()
   }
+
+  // On iOS Capacitor a DOM blur does not reliably dismiss the native WKWebView keyboard (Keyboard
+  // resize is 'none'), so hide it explicitly via the Keyboard plugin.
+  if (Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('Keyboard')) {
+    Keyboard.hide()
+  }
+}
+
+/** Selects the entire contents of the given node. Used to stage rich content for a programmatic copy. */
+export const selectNode = (node: Node): void => {
+  const sel = window.getSelection()
+  if (!sel) return
+  const range = document.createRange()
+  range.selectNodeContents(node)
+  sel.removeAllRanges()
+  sel.addRange(range)
 }
 
 /** Returns true if the selection is a collapsed caret, i.e. the beginning and end of the selection are the same. Returns undefined if there is no selection. */
@@ -179,6 +197,9 @@ export const isEndOfElementNode = (): boolean => {
 // TODO: The browser selection offset has different semantics when the selection is on a text node vs an element node. Unfortunately this function has been used indiscriminately for both cases. We should clean this up and only use the function on text nodes.
 export const offset = (): number | null => window.getSelection()?.focusOffset ?? null
 
+/** Returns the character offset of the selection's anchor (the fixed end of a range; `offset` returns the focus/moving end). */
+export const anchorOffset = (): number | null => window.getSelection()?.anchorOffset ?? null
+
 /** Returns the character offset within a thought, taking into account siblings and intervening ancestor elements.
  *
  * @example <div>Hello <b>wo|rld</b></div> // returns offset 8
@@ -206,6 +227,16 @@ export const offsetThought = (): number | null => {
   return total
 }
 
+/** Returns the plain-text character offset of the selection's focus relative to the given root node, ignoring nested HTML markup. Returns null if there is no selection or the focus is not within the node. */
+export const offsetFromNode = (node: Node): number | null => {
+  const selection = window.getSelection()
+  if (!selection?.focusNode || !node.contains(selection.focusNode)) return null
+  const range = document.createRange()
+  range.selectNodeContents(node)
+  range.setEnd(selection.focusNode, selection.focusOffset)
+  return range.toString().length
+}
+
 /** Returns the character offset at the end of the selection. Returns null if there is no selection. */
 export const offsetEnd = (): number | null => {
   const selection = window.getSelection()
@@ -223,6 +254,21 @@ export const offsetStart = (): number | null => {
   const range = selection.getRangeAt(0)
   if (!range) return null
   return range.startOffset || 0
+}
+
+/** Returns the plain-text character offsets [start, end) of the current selection relative to the given editable
+ * element (ignoring nested HTML), or null if there is no selection within it. Used to apply formatting to an
+ * arbitrary sub-range synchronously (#4637). */
+export const offsetRange = (editable: HTMLElement): { start: number; end: number } | null => {
+  const selection = window.getSelection()
+  if (!selection || selection.rangeCount === 0) return null
+  const range = selection.getRangeAt(0)
+  if (!editable.contains(range.commonAncestorContainer)) return null
+  const pre = range.cloneRange()
+  pre.selectNodeContents(editable)
+  pre.setEnd(range.startContainer, range.startOffset)
+  const start = pre.toString().length
+  return { start, end: start + range.toString().length }
 }
 
 /** Restores the selection with the given restoration object (returned by selection.save). NOOP if the restoration object is null or undefined. */
@@ -468,7 +514,11 @@ export const html = () => {
 
       // Check if the node is an Element using the instanceof operator
       if (node instanceof Element) {
-        containerHtml = node.outerHTML
+        // When the caret is collapsed on the editable element itself (e.g. when the cursor is moved to a thought
+        // by tapping its bullet), return the editable's inner HTML rather than its outerHTML, so that the wrapper
+        // element and its attributes (such as placeholder="<b>…</b>", whose value contains raw HTML) are excluded
+        // from the selection html (#3912).
+        containerHtml = node.getAttribute('contenteditable') === 'true' ? node.innerHTML : node.outerHTML
       } else if (node instanceof CharacterData) {
         while (node.parentElement?.tagName !== 'DIV') {
           node = node.parentElement!

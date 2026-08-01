@@ -16,13 +16,11 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
-import createId from '../util/createId'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
 import deleteThought from './deleteThought'
-import editThought from './editThought'
 import sort from './sort'
 
 interface Options {
@@ -105,14 +103,6 @@ const uncategorize = (state: State, { at }: Options): State => {
   }
 
   return reducerFlow([
-    // first edit the unacategorized thought to a unique value
-    // otherwise, it could get merged when children are outdented in the next step
-    editThought({
-      oldValue: thought.value,
-      newValue: createId(), // unique value
-      path: simplePath,
-    }),
-
     // Sort parent context if sort preference exists and parent does not have a sort preference
     // Sort preference must be moved up before sort to prevent conversion to manual sort.
     contextHasSortPreference && !parentHasSortPreference
@@ -135,6 +125,8 @@ const uncategorize = (state: State, { at }: Options): State => {
         oldPath: appendToPath(simplePath, child.id),
         newPath: appendToPath(parentOf(simplePath), child.id),
         newRank: getNewRank(state, child),
+        // If a child has the same value as the category being deleted, do not merge it into the category.
+        skipMerge: child.value === thought.value,
       })
     }),
 

@@ -4,7 +4,7 @@ import { noop } from '../constants'
 const cancelShortcut: Command = {
   id: 'cancel',
   label: 'Cancel',
-  description: 'Cancel the current gesture.',
+  description: 'Scratch it out. Cancels the current gesture.',
   hideFromDesktopCommandUniverse: true,
   multicursor: false,
   exec: noop,

@@ -95,11 +95,13 @@ export default [
   {
     ignores: [
       'node_modules/**',
+      '.claude/worktrees/**',
       'packages/**/dist/**/*',
       'packages/**/.build/**/*',
       '**/styled-system/*',
       '**/ios/*',
       '**/android/**',
+      '**/desktop/**',
       '**/build/*',
       '**/docs/*',
       '**/functions/*',

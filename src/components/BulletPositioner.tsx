@@ -251,7 +251,8 @@ const BulletPositioner = forwardRef<SVGSVGElement, PropsWithChildren<BulletPosit
         if (dragHold) return
 
         // short circuit if toggling multiselect
-        if (!isTouch && (isMac ? e.metaKey : e.ctrlKey)) {
+        // Shift + Click selects the thoughts in between, and Cmd/Ctrl + Click toggles the clicked thought (see Thought)
+        if (!isTouch && (e.shiftKey || (isMac ? e.metaKey : e.ctrlKey))) {
           return
         }
 
@@ -368,6 +369,10 @@ const BulletPositioner = forwardRef<SVGSVGElement, PropsWithChildren<BulletPosit
             // required to make the distance between bullet and thought scale properly at all font sizes.
             left: lineHeight * 0.317,
             marginBottom: glyphBottomMargin,
+            // Allow multi-digit ordered-list numbers (=bullet/Ordered) to extend left into the indent gap
+            // instead of being clipped to the bullet's square viewport. Circle/triangle glyphs stay within
+            // the viewBox, so this does not affect normal bullets.
+            overflow: 'visible',
           }}
           ref={ref}
         >
