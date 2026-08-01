@@ -52,13 +52,6 @@ const registerNativeUndoStep = (html: string): void => {
   globals.suppressChange = false
 }
 
-/** Returns the plain-text length of an HTML string. */
-const plainTextLength = (html: string): number => {
-  const div = document.createElement('div')
-  div.innerHTML = html
-  return div.textContent?.length ?? 0
-}
-
 /** Format the browser selection or cursor thought as bold, italic, strikethrough, underline, code, color, or removeFormat.
  * Computes the new HTML synchronously with the DOM (no document.execCommand) and dispatches a single editThought/setDescendant (#4637). */
 export const formatSelectionActionCreator =
@@ -74,8 +67,6 @@ export const formatSelectionActionCreator =
           const thought = pathToThought(state, path)
           if (!thought) return null
           const newValue = formatSelectionHtml(thought.value, {
-            start: 0,
-            end: plainTextLength(thought.value),
             command,
             colorValue: color ? colors[color] : undefined,
             defaultColor: colors.fg,
