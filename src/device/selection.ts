@@ -422,6 +422,27 @@ export const set = (
   sel.addRange(range)
 }
 
+/** Sets the browser selection to a range spanning the given plain-text start and end offsets relative to the root node, ignoring nested HTML. NOOP if the offsets cannot be resolved to nodes. */
+export const setRange = (root: Node, start: number, end: number): void => {
+  const startPosition = offsetFromClosestParent(root, start)
+  const endPosition = offsetFromClosestParent(root, end)
+  if (!startPosition?.node || !endPosition?.node) return
+
+  const range = document.createRange()
+  range.setStart(startPosition.node, startPosition.offset)
+  range.setEnd(endPosition.node, endPosition.offset)
+
+  const sel = window.getSelection()
+  sel?.removeAllRanges()
+  sel?.addRange(range)
+}
+
+/** Returns true if the current selection's anchor is contained within the given root node. */
+export const isWithin = (root: Node): boolean => {
+  const sel = window.getSelection()
+  return !!sel?.anchorNode && root.contains(sel.anchorNode)
+}
+
 /**
  * Split given root node into two different ranges at the given selection.
  */

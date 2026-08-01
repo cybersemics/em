@@ -132,6 +132,19 @@ export const formatSelectionActionCreator =
           ],
     )
 
+    // Restore a partial selection that the forced re-render above collapsed to a caret (#4275).
+    // The re-render resets the editable's innerHTML and sets a collapsed selection at the cursor offset, so the
+    // original range is re-applied on the next tick (after that reset) using the plain-text offsets captured before
+    // the edit. Formatting never changes the plain text, so the offsets still map to the correct nodes in the
+    // re-rendered DOM. Skipped when the editable is no longer the active selection target, so focusing a different
+    // thought before the restore fires is not overridden.
+    if (!whole && !state.noteFocus && range && range.start !== range.end) {
+      const { start: selectionStart, end: selectionEnd } = range
+      setTimeout(() => {
+        if (selection.isWithin(contentEditable)) selection.setRange(contentEditable, selectionStart, selectionEnd)
+      })
+    }
+
     // Update the toolbar command state when formatting a sub-range (the whole-thought state is derived from the caret).
     if (!whole || !state.isKeyboardOpen) updateCommandState()
   }
