@@ -11,11 +11,14 @@ import appendToPath from '../util/appendToPath'
 import createId from '../util/createId'
 import head from '../util/head'
 
+interface setDescendantPayload {
+  path: Path
+  value?: string
+  values?: string[]
+}
+
 /** Sets a sequence of values as descendants. Preserves existing descendants and unrelated siblings, except for the last value, which always gets replaced by the given value. */
-const setDescendant = (
-  state: State,
-  { path, value, values }: { path: Path; value?: string; values?: string[] },
-): State => {
+const setDescendant = (state: State, { path, value, values }: setDescendantPayload): State => {
   // normalize values to array
   const _values = values || [value!]
   if (!value && (!values || values.length === 0)) return state

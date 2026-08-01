@@ -1,0 +1,30 @@
+diff --git a/dist/TouchBackendImpl.js b/dist/TouchBackendImpl.js
+index e3ce1651aa81c5c7620f9d054d5ccb9e45460760..e802cce11de2ca2bcea100cb55d62a6dcb2c617d 100644
+--- a/dist/TouchBackendImpl.js
++++ b/dist/TouchBackendImpl.js
+@@ -64,6 +64,14 @@ export class TouchBackendImpl {
+         this.addEventListener(root, 'move', this.handleTopMove);
+         this.addEventListener(root, 'move', this.handleTopMoveCapture, true);
+         this.addEventListener(root, 'end', this.handleTopMoveEndCapture, true);
++        // iOS WKWebView intermittently drops the terminating `touchend` event, which leaves the drag
++        // stuck at DragInProgress (the dragged thought never drops/archives and "blinks"). The pointer
++        // events `pointerup`/`pointercancel` ARE reliably delivered on finger-lift, so register them as
++        // fallback end-triggers. handleTopMoveEndCapture is idempotent (guards on isDragging/didDrop) and
++        // a no-op for plain taps, so this is safe alongside the normal `touchend` path. See em issue #4315.
++        const pointerEndOptions = supportsPassive ? { capture: true, passive: false } : true;
++        root.addEventListener('pointerup', this.handleTopMoveEndCapture, pointerEndOptions);
++        root.addEventListener('pointercancel', this.handleTopMoveEndCapture, pointerEndOptions);
+         if (this.options.enableMouseEvents && !this.options.ignoreContextMenu) {
+             this.addEventListener(root, 'contextmenu', this.handleTopMoveEndCapture);
+         }
+@@ -83,6 +91,10 @@ export class TouchBackendImpl {
+         this.removeEventListener(root, 'move', this.handleTopMoveCapture, true);
+         this.removeEventListener(root, 'move', this.handleTopMove);
+         this.removeEventListener(root, 'end', this.handleTopMoveEndCapture, true);
++        // Mirror the iOS pointer-event fallback end-triggers registered in setup() (em issue #4315).
++        const pointerEndOptions = supportsPassive ? { capture: true, passive: false } : true;
++        root.removeEventListener('pointerup', this.handleTopMoveEndCapture, pointerEndOptions);
++        root.removeEventListener('pointercancel', this.handleTopMoveEndCapture, pointerEndOptions);
+         if (this.options.enableMouseEvents && !this.options.ignoreContextMenu) {
+             this.removeEventListener(root, 'contextmenu', this.handleTopMoveEndCapture);
+         }

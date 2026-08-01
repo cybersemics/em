@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "Bold text disappears",
+    "body": "There is a regression that deletes text as soon as it is made bold.\r\n\r\n## Steps to Reproduce\r\n\r\n1. Create a thought with text `ab`\r\n2. Select `b` and hit <kbd>Ctrl</kbd> + <kbd>b</kbd> to make it bold.\r\n3. Move the caret to the end of the thought\r\n4. Hit Enter\r\n\r\n## Current Behavior\r\n\r\n- a\r\n- [cursor]\r\n\r\n## Expected Behavior\r\n\r\n- a**b**\r\n- [cursor]",
+    "labels": ["bug"]
+  },
+  "expected": "S",
+  "source": {
+    "type": "everhour",
+    "issue": 1540,
+    "hours": 4
+  }
+}

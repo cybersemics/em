@@ -42,6 +42,7 @@ const urlLinkStyle = css({
   display: 'inline-block',
   overflow: 'hidden',
   position: 'relative',
+  top: '2px',
   zIndex: 'thoughtAnnotationLink',
   marginLeft: 3,
   textDecoration: 'none',
@@ -86,7 +87,13 @@ UrlIconLink.displayName = 'UrlIconLink'
 
 /** Renders an email icon and adds mailto: to email addresses. */
 const EmailIconLink = React.memo(({ email }: { email: string }) => (
-  <a href={`mailto:${email}`} target='_blank' rel='noopener noreferrer' className={urlLinkStyle}>
+  <a
+    aria-label='email-link'
+    href={`mailto:${email}`}
+    target='_blank'
+    rel='noopener noreferrer'
+    className={urlLinkStyle}
+  >
     {' '}
     <EmailIcon />
   </a>
@@ -97,7 +104,6 @@ const ThoughtAnnotation = React.memo(
   ({
     email,
     isEditing,
-    multiline,
     ellipsizedUrl,
     numContexts,
     showSuperscript,
@@ -112,7 +118,6 @@ const ThoughtAnnotation = React.memo(
   }: {
     email?: string
     isEditing: boolean
-    multiline?: boolean
     ellipsizedUrl?: boolean
     numContexts: number
     showSuperscript?: boolean
@@ -151,7 +156,6 @@ const ThoughtAnnotation = React.memo(
       <ThoughtAnnotationWrapper
         isTableCol1={isTableCol1}
         ellipsizedUrl={ellipsizedUrl}
-        multiline={multiline}
         value={value}
         styleAnnotation={styleAnnotation}
         cssRaw={cssRaw}
@@ -270,7 +274,9 @@ const ThoughtAnnotationContainer = React.memo(
       return urlValue ? stripTags(urlValue) : urlValue
     })
 
-    const email = isEmail(value) ? value : undefined
+    // Strip formatting tags (e.g. the font/span tags added by foreColor and backColor) before testing for an email address, otherwise the annotation disappears as soon as the thought is colored.
+    const emailValue = stripTags(value)
+    const email = isEmail(emailValue) ? emailValue : undefined
 
     // if a thought has the same value as editValue, re-render its ThoughtAnnotation in order to get the correct number of contexts
     editingValueStore.useSelector((editingValue: string | null) => value === editingValue)

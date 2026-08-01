@@ -1,15 +1,39 @@
 import React, { useCallback, useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { useStore } from 'react-redux'
+import { useDispatch } from 'react-redux'
 import Path from '../../@types/Path'
-import { isSafari, isTouch } from '../../browser'
+import { setCursorActionCreator as setCursor } from '../../actions/setCursor'
+import { isMac, isSafari, isTouch } from '../../browser'
 import { LongPressState } from '../../constants'
 import asyncFocus from '../../device/asyncFocus'
-import preventAutoscroll from '../../device/preventAutoscroll'
+import getCaretOffset from '../../device/getCaretOffset'
+import preventAutoscroll, { preventAutoscrollEnd } from '../../device/preventAutoscroll'
 import * as selection from '../../device/selection'
+import virtualKeyboard from '../../device/virtual-keyboard'
 import usePrevious from '../../hooks/usePrevious'
 import hasMulticursor from '../../selectors/hasMulticursor'
 import equalPath from '../../util/equalPath'
+
+// #4173: Ghost-click suppression state. On a rapid tap between adjacent thoughts, iOS Safari coalesces the
+// two taps into a double-tap and emits a delayed, retargeted synthesized mousedown/click/dblclick on the
+// previously-focused thought ~50-250ms after the second tap's touchend. That delayed mousedown would drive
+// onMouseDown -> setCursor and yank the cursor back. We record the last real touchend (time + element); a
+// genuine mousedown follows its own touchend within a few ms on the same element, whereas the ghost arrives
+// later on a different thought, so it can be detected and dropped.
+let lastTouchEndTime = 0
+let lastTouchEndTarget: EventTarget | null = null
+const GHOST_MOUSE_WINDOW_MS = 700
+
+/**
+ * Returns true if the last real touchend recently (within GHOST_MOUSE_WINDOW_MS) landed on a DIFFERENT
+ * editable than `editable` — the shared signature of iOS's rapid-tap retargeting (#4173). Reads the last
+ * recorded touchend from module state.
+ */
+const isRetargetedTap = (editable: EventTarget): boolean =>
+  !!lastTouchEndTarget &&
+  lastTouchEndTarget !== editable &&
+  performance.now() - lastTouchEndTime < GHOST_MOUSE_WINDOW_MS
 
 /** Automatically sets the selection on the given contentRef element when the thought should be selected. Handles a variety of conditions that determine whether this should occur. */
 const useEditMode = ({
@@ -37,11 +61,16 @@ const useEditMode = ({
   const disabledRef = useRef(false)
   const editableNonce = useSelector(state => state.editableNonce)
   const showSidebar = useSelector(state => state.showSidebar)
+  const fontSize = useSelector(state => state.fontSize)
+  const isCursor = useSelector(state => equalPath(path, state.cursor))
   const hadSidebar = usePrevious(showSidebar)
   const store = useStore()
+  const dispatch = useDispatch()
+  const pressingRef = useRef(false)
 
   // focus on the ContentEditable element if editing or on desktop
   const editMode = !isTouch || editing
+  const editingOrOnCursor = isCursor || editing
 
   useEffect(
     () => {
@@ -56,6 +85,15 @@ const useEditMode = ({
         if (style?.visibility === 'hidden') {
           selection.clear()
         } else {
+          // Neither the Android WebView nor Chromium raises the virtual keyboard when a thought enters edit
+          // mode by side effect, e.g. via a gesture such as Clear Thought (#4686): the keyboard is raised by a
+          // tap, not by the caret being placed programmatically. Request it before setting the selection,
+          // which focuses the editing host implicitly and would make a later focus() a no-op.
+          // Only show it in edit mode, otherwise the keyboard would re-open after the user dismissed it (#3996).
+          if (editMode && contentRef.current) {
+            virtualKeyboard.show(contentRef.current)
+          }
+
           selection.set(contentRef.current, { offset: cursorOffset ?? 0 })
         }
       }
@@ -70,6 +108,7 @@ const useEditMode = ({
           (cursorOffset !== null || !selection.isThought()) &&
           !isMulticursor &&
           !dragHold &&
+          !dragInProgress &&
           !disabledRef.current)
 
       if (shouldSetSelection) {
@@ -125,6 +164,163 @@ const useEditMode = ({
     })
   }, [])
 
+  // Handles the caret positioning logic for the editable element.
+  useEffect(() => {
+    const editable = contentRef.current
+    if (!editable) return
+
+    /** Sets the DOM selection and updates the Redux cursor state. */
+    const setCaretOffset = (offset: number, { cursorHistoryClear }: { cursorHistoryClear?: boolean } = {}) => {
+      selection.set(editable, { offset })
+      dispatch(setCursor({ path, offset, cursorHistoryClear }))
+    }
+
+    /** Marks the beginning of a touch so that onMouseDown can determine whether a long press is occurring. */
+    const onTouchStart = () => (pressingRef.current = true)
+
+    /** Ends the touch, records it for ghost-click detection, and sets the cursor on the tapped thought. */
+    const onTouchEnd = (e: TouchEvent) => {
+      pressingRef.current = false
+      // Evaluate against the PREVIOUS touchend before overwriting it below.
+      const willRetarget = isRetargetedTap(editable)
+      lastTouchEndTime = performance.now()
+      lastTouchEndTarget = editable
+
+      // #4173: touchend is the only event iOS reliably delivers to the tapped thought — on a rapid tap it
+      // retargets the synthesized mousedown/focus to the previously-focused thought (onMouseDown suppresses
+      // that ghost), so onFocus cannot be relied on to move the cursor. Set the cursor here.
+      dispatch((dispatch, getState) => {
+        const state = getState()
+        const move =
+          willRetarget &&
+          state.isKeyboardOpen &&
+          !equalPath(state.cursor, path) &&
+          !hasMulticursor(state) &&
+          state.longPress === LongPressState.Inactive &&
+          style?.visibility !== 'hidden'
+        if (!move) return
+
+        // Place the caret where the user tapped. getCaretOffset is coordinate-based, so it resolves the offset
+        // even though the synthesized mousedown/focus retargeted away.
+        const { offset } = getCaretOffset(editable, {
+          clientX: e.changedTouches[0].clientX,
+          clientY: e.changedTouches[0].clientY,
+        })
+
+        // Dispatch only the Redux cursor; the declarative selection effect places the caret on the next render.
+        // Calling selection.set() synchronously during touchend triggers iOS's text-selection machinery, which
+        // swallows the immediately-following rapid tap.
+        dispatch(
+          setCursor({
+            path,
+            offset,
+            cursorHistoryClear: true,
+            isKeyboardOpen: true,
+            preserveMulticursor: true,
+          }),
+        )
+      })
+    }
+
+    /**
+     * Handles the mousedown event for the editable element.
+     * Prevents focus on non-cursor thoughts or during multiselect clicks.
+     * When editing or cursor is present (and multicursor is not active), computes the caret position manually so that it can be set on mouseup.
+     * Prevents default behavior and manages autoscroll for certain edge cases where browser selection would be incorrect.
+     */
+    const onMouseDown = (e: MouseEvent) => {
+      // If CMD/CTRL is pressed, don't focus the editable.
+      const isMultiselectClick = isMac ? e.metaKey : e.ctrlKey
+      if (isMultiselectClick) {
+        e.preventDefault()
+        return
+      }
+
+      // If the press is ongoing (touchend has not been dispatched) then a long press is ongoing and setCaretOffset will interfere
+      // with default iOS Safari drag-and-drop text selection.
+      if (pressingRef.current) return
+
+      // #4173: Suppress WebKit's delayed retargeted ghost mouse events. On a rapid tap between adjacent
+      // thoughts, iOS emits a delayed mousedown/click/dblclick on the previously-focused thought after the
+      // second tap already moved focus. A genuine mousedown follows its own touchend within a few ms on the
+      // same element; a ghost arrives later on a different thought. Dropping it (preventDefault also blocks
+      // the focus change) keeps the cursor on the thought the user actually tapped.
+      if (isTouch && isSafari() && isRetargetedTap(editable)) {
+        e.preventDefault()
+        return
+      }
+
+      // If editing or the cursor is on the thought, allow the default browser selection or perform manual caret positioning so the offset is correct.
+      // See: #981
+      if (editingOrOnCursor && !isMulticursor) {
+        const { inVoidArea, offset } = getCaretOffset(editable, {
+          clientX: e.clientX,
+          clientY: e.clientY,
+        })
+
+        if (offset !== null) {
+          // Prevent the browser from autoscrolling to this editable element.
+          // For some reason doesn't work on touchend.
+          preventAutoscroll(editable, {
+            // about the height of a single-line thought
+            bottomMargin: fontSize * 2,
+          })
+
+          // Setting the caret offset will activate the declarative shouldSetSelection effect, which will call preventAutoscroll and selection.set
+          // all over again. Since the selection is managed imperatively in this handler, this duplicate behavior is undesirable.
+          allowDefaultSelection()
+          setCaretOffset(offset)
+
+          // It's important to avoid preventDefault when the tap is somewhere that can be handled by native browser selection behavior.
+          // If the tap is prevented, it will interfere with functionality like double tap or the context menu. If the selection is
+          // truly in a void area, then preventDefault will stop the caret from being placed on the wrong thought.
+          if (inVoidArea) {
+            e.preventDefault()
+          }
+        }
+      } else {
+        // There are areas on the outside edge of the thought that will fail to trigger onTouchEnd.
+        // In those cases, it is best to prevent onFocus or onClick, otherwise keyboard is open will be incorrectly activated.
+        // Steps to Reproduce: https://github.com/cybersemics/em/pull/2948#issuecomment-2887186117
+        // Explanation and demo: https://github.com/cybersemics/em/pull/2948#issuecomment-2887803425
+        e.preventDefault()
+      }
+    }
+
+    /** Prevents the thought from autoscrolling to the bottom of the screen when the keyboard is open.
+     * Autoscroll must be prevented until focus handling is complete, so preventAutoscrollEnd is deferred
+     * using queueMicrotask without introducing any additional delay.
+     */
+    const onFocus = () => queueMicrotask(() => preventAutoscrollEnd(editable))
+
+    editable.addEventListener('mousedown', onMouseDown)
+    if (isTouch && isSafari()) {
+      editable.addEventListener('touchstart', onTouchStart)
+      editable.addEventListener('touchend', onTouchEnd)
+      editable.addEventListener('focus', onFocus)
+    }
+
+    return () => {
+      editable.removeEventListener('mousedown', onMouseDown)
+      if (isTouch && isSafari()) {
+        editable.removeEventListener('touchstart', onTouchStart)
+        editable.removeEventListener('touchend', onTouchEnd)
+        editable.removeEventListener('focus', onFocus)
+      }
+    }
+  }, [
+    contentRef,
+    editing,
+    editingOrOnCursor,
+    isCursor,
+    isMulticursor,
+    fontSize,
+    allowDefaultSelection,
+    path,
+    dispatch,
+    style?.visibility,
+  ])
+
   // Resume focus if sidebar was just closed and isEditing is true.
   // Disable focus restoration on mobile until the hamburger menu & sidebar backdrop can be made to
   // produce consistent results when clicked to close the sidebar.
@@ -133,8 +329,6 @@ const useEditMode = ({
       contentRef.current?.focus()
     }
   }, [contentRef, hadSidebar, isEditing, showSidebar])
-
-  return allowDefaultSelection
 }
 
 export default useEditMode

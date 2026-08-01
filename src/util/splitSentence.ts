@@ -87,6 +87,34 @@ interface SplitResult {
 }
 
 /**
+ * Splits HTML at a text offset into the HTML before and after the offset, with formatting tags re-balanced onto both halves.
+ *
+ * @param htmlValue The source HTML.
+ * @param offset The text offset to split at.
+ */
+function splitHtmlAtTextOffset(htmlValue: string, offset: number): { left: string; right: string } {
+  const div = document.createElement('div')
+  div.innerHTML = htmlValue
+
+  const nodeOffset = selection.offsetFromClosestParent(div, offset)
+  if (!nodeOffset?.node) throw new Error(`Unable to map text offset to an HTML node: ${offset}`)
+
+  const range = document.createRange()
+  range.setStart(nodeOffset.node, nodeOffset.offset)
+  range.setEnd(nodeOffset.node, nodeOffset.offset)
+
+  const splitNodesResult = selection.splitNode(div, range)
+  if (!splitNodesResult) return { left: '', right: '' }
+
+  const leftDiv = document.createElement('div')
+  const rightDiv = document.createElement('div')
+  leftDiv.appendChild(splitNodesResult.left.cloneContents())
+  rightDiv.appendChild(splitNodesResult.right.cloneContents())
+
+  return { left: leftDiv.innerHTML, right: rightDiv.innerHTML }
+}
+
+/**
  * Returns HTML between text offsets while preserving valid tag structure.
  *
  * @param htmlValue The source HTML.
@@ -94,22 +122,10 @@ interface SplitResult {
  * @param endOffset Exclusive text offset.
  */
 function sliceHtmlByTextOffsets(htmlValue: string, startOffset: number, endOffset: number): string {
-  const div = document.createElement('div')
-  div.innerHTML = htmlValue
-
-  const start = selection.offsetFromClosestParent(div, startOffset)
-  const end = selection.offsetFromClosestParent(div, endOffset)
-  if (!start?.node || !end?.node) {
-    throw new Error(`Unable to map text offsets to HTML nodes: [${startOffset}, ${endOffset}]`)
-  }
-
-  const range = document.createRange()
-  range.setStart(start.node, start.offset)
-  range.setEnd(end.node, end.offset)
-
-  const fragmentDiv = document.createElement('div')
-  fragmentDiv.appendChild(range.cloneContents())
-  return fragmentDiv.innerHTML
+  // Split at the end offset, then split the left half at the start offset.
+  // A single Range spanning both offsets cannot be used: when both boundaries fall inside the same text node, cloneContents returns a bare text node and all surrounding formatting tags are dropped (#4229). splitNode anchors one boundary at the root so that the formatting ancestors are re-balanced onto each half.
+  const { left } = splitHtmlAtTextOffset(htmlValue, endOffset)
+  return splitHtmlAtTextOffset(left, startOffset).right
 }
 
 /**
@@ -160,14 +176,25 @@ function splitFormattedHtmlByPlainValues(htmlValue: string, plainValues: string[
 }
 
 /**
- * Splits formatted HTML by comma/"and" delimiters based on plain text offsets.
+ * Returns the delimiter to split a single sentence into sub-sentences, as a regex that matches the delimiter anywhere and a regex that matches it at the beginning of the remaining text.
+ * Comma takes priority over "and", which is only used when the value contains no comma.
+ * "and" is matched with word boundaries so that it does not split within a word, e.g. "Standard" (#4810).
+ *
+ * @param plainValue The plain text thought value.
+ */
+function subSentenceDelimiter(plainValue: string): { split: RegExp; leading: RegExp } {
+  return plainValue.includes(',') ? { split: /,/, leading: /^,/ } : { split: /\band\b/i, leading: /^and\b/i }
+}
+
+/**
+ * Splits formatted HTML by sub-sentence delimiters based on plain text offsets.
  *
  * @param htmlValue The original HTML thought value.
  * @param plainValue The plain text thought value.
  */
-function splitFormattedHtmlByCommaAndAnd(htmlValue: string, plainValue: string): string[] {
-  const delimiterRegex = /^(,|and)/i
-  const splitValues = plainValue.split(/,|and/i)
+function splitFormattedHtmlBySubSentence(htmlValue: string, plainValue: string): string[] {
+  const { split, leading: delimiterRegex } = subSentenceDelimiter(plainValue)
+  const splitValues = plainValue.split(split)
   let offset = 0
 
   return splitValues.reduce((accum: string[], splitValue) => {
@@ -238,13 +265,14 @@ const splitSentence = (value: string): SplitResult[] => {
       }
     }
 
-    // if we're sub-sentence or in one sentence territory, split by comma and "and"
-    // e.g. "john, johnson, and john doe" -> "- john - johnson - john doe"
+    // if we're sub-sentence or in one sentence territory, split by comma, or by the word "and" if there is no comma
+    // e.g. "john, johnson, john doe" -> "- john - johnson - john doe"
+    // e.g. "Alice and the Lion" -> "- Alice - the Lion"
     const splitValues = plainValue
-      .split(/,|and/i)
+      .split(subSentenceDelimiter(plainValue).split)
       .map(s => s.trim())
       .filter(s => s !== '')
-    const values = plainValue !== value ? splitFormattedHtmlByCommaAndAnd(value, plainValue) : splitValues
+    const values = plainValue !== value ? splitFormattedHtmlBySubSentence(value, plainValue) : splitValues
     return values.map(value => ({ value }))
   }
 

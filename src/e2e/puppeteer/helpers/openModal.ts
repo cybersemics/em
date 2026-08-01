@@ -1,6 +1,6 @@
 import ModalType from '../../../@types/Modal'
 import { WindowEm } from '../../../initialize'
-import { page } from '../setup'
+import { page } from '../session'
 import waitUntil from './waitUntil'
 
 const em = window.em as WindowEm

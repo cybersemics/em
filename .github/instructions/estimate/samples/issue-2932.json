@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "Add cycle detection to thoughtToPath",
+    "body": "Add cycle detection to `thoughtToPath` in order to prevent infinite loops. \n\nThis should not happen, but would be fatal if it did, so let's add some additional protection. \n\nhttps://github.com/cybersemics/em/blob/main/src/selectors/thoughtToPath.ts",
+    "labels": ["refactor"]
+  },
+  "expected": "XXS",
+  "source": {
+    "type": "everhour",
+    "issue": 2932,
+    "hours": 1
+  }
+}

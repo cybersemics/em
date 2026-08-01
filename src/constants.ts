@@ -6,15 +6,14 @@ import ThoughtId from './@types/ThoughtId'
 import { ColorToken } from './colors.config'
 import emojiRegex from './emojiRegex'
 
+export const TOOLBAR_HEIGHT = 50
+
 // maximum number of characters of children to allow expansion
 export const MAX_DISTANCE_FROM_CURSOR = 3
 export const MAX_DEPTH = 20
 
 // Number of ms to wait after hovering over a thought before expanding, during drag-and-drop. Overriden by testFlags.expandHoverDelay during drag-and-drop tests.
 export const EXPAND_HOVER_DELAY = 1000
-
-// threshold for keyboard visibility detection (percentage of height change)
-export const KEYBOARD_VISIBILITY_THRESHOLD = 0.15
 
 // ms on startup before offline mode is enabled
 // sufficient to avoid flash on login
@@ -138,6 +137,9 @@ export const AUTO_PROSE_VIEW_MIN_CHARS = 200
 
 /** The left and right padding of each toolbar button (px). */
 export const TOOLBAR_BUTTON_PADDING = 8
+
+/** The minimum horizontal finger travel (px) that distinguishes a toolbar swipe from a button tap. Used to suppress the button command when the user swipes even at a scroll boundary, where the toolbar cannot scroll and scrollLeft therefore cannot change. */
+export const TOOLBAR_SWIPE_THRESHOLD = 10
 
 // Used for scaling the size of icons according to the font size
 export const ICON_SCALING_FACTOR = 1.37
@@ -480,6 +482,7 @@ export enum LongPressState {
 // User settings that can be saved to /EM/Settings/
 // See Settings modal for full descriptions.
 export enum Settings {
+  debugCrashLog = 'debugCrashLog',
   disableGestureTracing = 'disableGestureTracing',
   experienceMode = 'experienceMode',
   hideScrollZone = 'hideScrollZone',
@@ -525,6 +528,8 @@ export const COMMAND_GROUPS: {
       'jumpForward',
       'moveCursorBackward',
       'moveCursorForward',
+      'navigateBack',
+      'navigateForward',
       'openDesktopCommandUniverse',
       'home',
       'search',
@@ -568,6 +573,7 @@ export const COMMAND_GROUPS: {
       'closeCommandCenter',
       'openCommandCenter',
       'removeFormat',
+      'textColor',
     ],
   },
   {
@@ -597,7 +603,7 @@ export const COMMAND_GROUPS: {
   },
   {
     title: 'Settings',
-    commands: ['customizeToolbar'],
+    commands: ['settings', 'customizeToolbar'],
   },
   {
     title: 'Help',

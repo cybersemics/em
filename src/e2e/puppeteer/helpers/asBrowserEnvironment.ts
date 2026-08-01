@@ -1,5 +1,5 @@
 import { BrowserEnvironment } from '../../browserEnvironment/types'
-import { page } from '../setup'
+import { page } from '../session'
 
 /** Converts a Page to a BrowserEnvironment. */
 const asBrowserEnvironment = (): BrowserEnvironment => ({

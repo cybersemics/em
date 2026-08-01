@@ -3,3 +3,5 @@ docs
 LICENSE.md
 packages
 src/components/icons/animations
+desktop/target
+desktop/gen

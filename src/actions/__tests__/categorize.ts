@@ -52,12 +52,7 @@ describe('normal view', () => {
 
     const stateNew = reducerFlow(steps)(initialState())
 
-    const cursorThoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
-
-    expect(cursorThoughts).toMatchObject([
-      { value: 'a', rank: 0 },
-      { value: '', rank: -1 },
-    ])
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', ''])
   })
 
   it('categorize within alphabteically sorted context', () => {

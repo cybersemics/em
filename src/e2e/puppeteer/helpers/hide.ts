@@ -1,4 +1,4 @@
-import { page } from '../setup'
+import { page } from '../session'
 
 /** Hides the first Node that matches the selector from the DOM by setting visibility: hidden. Do nothing if the selector is empty. */
 const hide = async (selector: string) => {

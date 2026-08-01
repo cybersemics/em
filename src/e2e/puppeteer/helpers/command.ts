@@ -1,6 +1,6 @@
 import CommandId from '../../../@types/CommandId'
 import { WindowEm } from '../../../initialize'
-import { page } from '../setup'
+import { page } from '../session'
 
 const em = window.em as WindowEm
 

@@ -107,3 +107,24 @@ it('moves multiple grandchildren to parent when thought with children is convert
 
   expectPathToEqual(stateNew, stateNew.cursor, ['a'])
 })
+
+it('merges note into an existing identical sibling when note is converted to thought', () => {
+  const text = `
+    - a
+      - =note
+        - b
+      - b
+      - c
+  `
+  const steps = [importText({ text }), setCursor(['a']), swapNote]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - b
+    - c`)
+
+  expectPathToEqual(stateNew, stateNew.cursor, ['a', 'b'])
+})

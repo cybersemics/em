@@ -82,12 +82,30 @@ const colors = {
     exportTextareaColor: 'rgba(170, 170, 170, 1)', // #aaa, also used in anchorButton
     panelBorder: 'rgba(36, 36, 36, 1)',
     panelBg: 'rgba(23, 23, 23, 1)', // #171717
-    commandCenterBlue: 'rgba(106, 154, 181, 1)',
-    commandCenterPurple: 'rgba(45, 8, 126, 1)', // #2d087e
+    commandCenterBlue: 'rgba(108, 150, 174, 1)', // #6c96ae
+    commandCenterPurple: 'rgba(54, 27, 112, 1)', // #361b70
+    commandCenterDoneButton: 'rgba(100, 100, 100, 0.1)',
     panelCommandBorderGradientPurple: 'rgba(130, 108, 203, 0)',
     panelCommandBorderGradientBlue: 'rgba(127, 172, 255, 0.08)',
     panelCommandBorderGradientGray: 'rgba(186, 187, 187, 0.26)',
     panelCommandBorderGradientPurpleLight: 'rgba(208, 210, 224, 0)',
+    // dialog glass colors (used in Command Universe)
+    dialogGlassFillTop: 'hsla(233, 24%, 30%, 0.24)', // gradient stop – top
+    dialogGlassFillMid: 'hsla(216, 24%, 49%, 0.12)', // gradient stop – mid
+    dialogGlassFillBottom: 'hsla(245, 9%, 23%, 0.12)', // gradient stop – bottom
+    dialogGlassStrokeBright: 'hsla(0, 0%, 100%, 0.74)', // stroke gradient stop (top 25% highlight portion of the stroke)
+    dialogGlassStrokeMuted: 'hsla(0, 0%, 100%, 0.18)', // stroke gradient stop (remaining 75% of the stroke)
+    dialogGlassMaskFade: 'rgba(255, 255, 255, 0.07)', // white fade at the bottom of the glass to soften the edge and help it blend with the bg
+    dialogHeaderButtonBg: 'rgba(255, 255, 255, 0.04)', // dialog circle button – background gradient stop – top
+    dialogHeaderButtonBgFade: 'rgba(255, 255, 255, 0)', // dialog circle button – background gradient stop – bottom (transparent)
+    dialogHeaderButtonBgHover: 'rgba(255, 255, 255, 0.10)', // dialog circle button – background gradient stop – top, active/press state
+    dialogHeaderButtonBorder: 'rgba(255, 255, 255, 0.46)', // dialog circle button – border gradient stop – top (bright glass-edge highlight)
+    dialogHeaderButtonBorderFade: 'rgba(255, 255, 255, 0.04)', // dialog circle button – border gradient stop – bottom (dim fade)
+    dialogHeaderButtonIcon: '#CECAED', // dialog circle button – icon fill
+    dialogHeaderButtonShadow: 'rgba(179, 164, 255, 0.05)', // dialog circle button – soft lavender outer glow (box-shadow)
+    dialogHeaderDivider: 'rgba(255, 255, 255, 0.12)', // dialog header – inner-edge color of the left/right fade-to-transparent dividers in the header row
+    dialogSearchAccent: '#E3BECD', // Command Universe search – glyph fill, caret, and bright (left) stop of the input text gradient
+    dialogSearchAccentFade: 'rgba(217, 211, 213, 0.50)', // Command Universe search – faded (right) stop of the input text gradient
   },
   light: {
     // Background colors in capacitor app needs to be in hexadecimal codes
@@ -174,10 +192,28 @@ const colors = {
     panelBg: 'rgba(232, 232, 232, 1)', // #171717
     commandCenterBlue: 'rgba(106, 154, 181, 1)',
     commandCenterPurple: 'rgba(45, 8, 126, 1)', // #2d087e
+    commandCenterDoneButton: 'rgba(155, 155, 155, 0.1)',
     panelCommandBorderGradientPurple: 'rgba(130, 108, 203, 0)',
     panelCommandBorderGradientBlue: 'rgba(127, 172, 255, 0.08)',
     panelCommandBorderGradientGray: 'rgba(186, 187, 187, 0.26)',
     panelCommandBorderGradientPurpleLight: 'rgba(208, 210, 224, 0)',
+    // dialog glass colors (used in Command Universe)
+    dialogGlassFillTop: 'hsla(233, 24%, 30%, 0.24)',
+    dialogGlassFillMid: 'hsla(216, 24%, 49%, 0.12)',
+    dialogGlassFillBottom: 'hsla(245, 9%, 23%, 0.12)',
+    dialogGlassStrokeMuted: 'hsla(0, 0%, 100%, 0.18)',
+    dialogGlassStrokeBright: 'hsla(0, 0%, 100%, 0.74)',
+    dialogGlassMaskFade: 'rgba(255, 255, 255, 0.07)',
+    dialogHeaderButtonBg: 'rgba(255, 255, 255, 0.04)',
+    dialogHeaderButtonBgFade: 'rgba(255, 255, 255, 0)',
+    dialogHeaderButtonBgHover: 'rgba(255, 255, 255, 0.10)',
+    dialogHeaderButtonBorder: 'rgba(255, 255, 255, 0.46)',
+    dialogHeaderButtonBorderFade: 'rgba(255, 255, 255, 0.04)',
+    dialogHeaderButtonIcon: '#CECAED',
+    dialogHeaderButtonShadow: 'rgba(179, 164, 255, 0.05)',
+    dialogHeaderDivider: 'rgba(255, 255, 255, 0.12)',
+    dialogSearchAccent: '#E3BECD',
+    dialogSearchAccentFade: 'rgba(217, 211, 213, 0.50)',
   },
 } as const
 

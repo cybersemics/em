@@ -1,4 +1,4 @@
-import React, { PropsWithChildren, useEffect } from 'react'
+import React, { PropsWithChildren, useLayoutEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
@@ -54,17 +54,20 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
     const fontSize = useSelector(state => state.fontSize)
     const multicursor = useSelector(state => state.alert?.alertType === AlertType.MulticursorActive)
     /** Used when `anchorFromBottom = true` for calculating position on mobile safari. */
-    const [height, setHeight] = React.useState(50)
-    useEffect(() => {
-      if (typeof ref === 'object' && ref?.current && anchorFromBottom) {
-        setHeight(ref.current.getBoundingClientRect().height)
-      }
-    }, [ref, anchorFromBottom])
+    const [height, setHeight] = React.useState(0)
+    const innerRef = React.useRef<HTMLDivElement>(null)
     const positionFixedStyles = usePositionFixed({
       fromBottom: anchorFromBottom,
       offset: anchorOffset,
       height,
     })
+
+    // measure the height of the popup after it has been rendered
+    useLayoutEffect(() => {
+      if (innerRef.current && anchorFromBottom) {
+        setHeight(innerRef.current.getBoundingClientRect().height)
+      }
+    }, [anchorFromBottom]) // measure on mount
     const useSwipeToDismissProps = useSwipeToDismiss({
       // dismiss after animation is complete to avoid touch events going to the Toolbar
       onDismissEnd: () => {
@@ -86,11 +89,13 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
           border: 'none',
           display: 'block',
           width: '100%',
-          height: '100%',
-          // when absolutely-positioned, the top position is calculated in usePositionFixed (#3222)
+          // use 100dvh for fixed positioning so Android WebView reliably fills the visual viewport
+          height: positionFixedStyles.position === 'fixed' ? '100dvh' : '100%',
           marginBlock: positionFixedStyles.position === 'fixed' ? 'auto' : undefined,
-          top: 0,
-          bottom: 0,
+          // when keyboard is open, position is 'absolute' and top is scroll-adjusted — preserve it
+          // when keyboard is closed, position is 'fixed' so top/bottom 0 covers the full viewport
+          top: positionFixedStyles.position === 'absolute' ? positionFixedStyles.top : 0,
+          bottom: positionFixedStyles.position === 'absolute' ? positionFixedStyles.bottom : 0,
         }
       : {}
 
@@ -108,7 +113,6 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
           right: 0,
           width: 'max-content',
           ...borderStyles,
-          ...fullScreenStyles,
           '&:hover': {
             '& [data-close-button]': {
               opacity: showXOnHover ? 1 : undefined,
@@ -119,10 +123,11 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
         })}
         // disable swipe-to-dismiss when multicursor is active
         {...(!multicursor && useSwipeToDismissProps)}
-        ref={useCombinedRefs([ref, useSwipeToDismissProps.ref])}
+        ref={useCombinedRefs([ref, innerRef, useSwipeToDismissProps.ref])}
         // merge style with useSwipeToDismissProps.style (transform, transition, and touchAction for sticking to user's touch)
         style={{
           ...positionFixedStyles,
+          ...fullScreenStyles,
           background,
           fontSize,
           padding,

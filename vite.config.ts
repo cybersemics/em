@@ -1,10 +1,74 @@
+import basicSsl from '@vitejs/plugin-basic-ssl'
 import react from '@vitejs/plugin-react'
-import fs from 'fs'
+import { execSync } from 'child_process'
+import type { IncomingMessage, ServerResponse } from 'http'
 import path from 'path'
-import { defineConfig } from 'vite'
+import { type Plugin, type PreviewServer, type ViteDevServer, defineConfig } from 'vite'
 import checker from 'vite-plugin-checker'
 import { createHtmlPlugin } from 'vite-plugin-html'
 import { VitePWA } from 'vite-plugin-pwa'
+
+const useHttps = !process.env.HTTP
+
+/** Resolve the short git commit hash of the current build, injected into the app via `define`. Prefers Vercel's build-time env var, falls back to git, then to 'unknown'. */
+const commitHash = (() => {
+  if (process.env.VERCEL_GIT_COMMIT_SHA) return process.env.VERCEL_GIT_COMMIT_SHA.slice(0, 7)
+  try {
+    return execSync('git rev-parse --short HEAD').toString().trim()
+  } catch {
+    return 'unknown'
+  }
+})()
+
+/**
+ * Vite plugin that gates access behind a secret token when TUNNEL_TOKEN is set.
+ * Used in CI to prevent unauthorized access when the dev server is exposed via
+ * a public cloudflared tunnel. The first request must include ?__token=<secret>;
+ * the gate then sets a session cookie so subsequent asset/HMR requests are
+ * allowed without the query param. Requests with neither get a 403.
+ */
+function tunnelTokenGate(): Plugin | undefined {
+  const token = process.env.TUNNEL_TOKEN
+  if (!token) return undefined
+
+  const cookieName = '__tunnel_token'
+
+  /** Middleware that allows requests bearing a valid token (via cookie or query param) and rejects all others. */
+  const gate = (server: ViteDevServer | PreviewServer) => {
+    server.middlewares.use((req: IncomingMessage, res: ServerResponse, next: () => void) => {
+      // Unauthenticated occupancy probe, answered before the token check. A run about to claim a
+      // Cloudflare tunnel needs to know whether anyone is already answering on that hostname, and
+      // it can't authenticate as whoever that would be. Deliberately exposes nothing but the CI run
+      // id, which is already public in the workflow logs. See checkOccupancy in
+      // src/e2e/iOS/config/cloudflareTunnelPool.ts.
+      if ((req.url || '').split('?')[0] === '/__tunnel-status') {
+        res.statusCode = 200
+        res.setHeader('Content-Type', 'application/json')
+        res.end(JSON.stringify({ em: true, run: process.env.GITHUB_RUN_ID || '' }))
+        return
+      }
+      // Accept an existing session cookie set on a previous authenticated request.
+      const cookieHeader = req.headers.cookie || ''
+      if (cookieHeader.split(';').some(c => c.trim() === `${cookieName}=${token}`)) {
+        return next()
+      }
+      // Accept a token in the URL and issue the session cookie.
+      const url = new URL(req.url || '/', 'http://localhost')
+      if (url.searchParams.get('__token') === token) {
+        res.setHeader('Set-Cookie', `${cookieName}=${token}; Path=/; HttpOnly; Secure; SameSite=None`)
+        return next()
+      }
+      res.statusCode = 403
+      res.end('Forbidden')
+    })
+  }
+
+  return {
+    name: 'tunnel-token-gate',
+    configureServer: gate,
+    configurePreviewServer: gate,
+  }
+}
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -16,6 +80,9 @@ export default defineConfig({
   },
   build: {
     outDir: 'build',
+  },
+  define: {
+    __COMMIT_HASH__: JSON.stringify(commitHash),
   },
   plugins: [
     react(),
@@ -29,7 +96,7 @@ export default defineConfig({
       filename: 'service-worker.ts',
       injectManifest: {
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024, // Increase limit to 4 MiB
-        globPatterns: ['**/*.{js,css,html,webp}'],
+        globPatterns: ['**/*.{js,css,html,webp,woff2}'],
       },
       manifest: {
         name: 'em',
@@ -48,18 +115,17 @@ export default defineConfig({
     }),
     // minify and add EJS capabilities to index.html
     createHtmlPlugin({ minify: true }),
+    // Use HTTPS for dev server by default. Set HTTP=1 to disable.
+    ...(useHttps ? [basicSsl()] : []),
+    // Gate access behind a token when exposed via cloudflared tunnel in CI.
+    tunnelTokenGate(),
   ],
   server: {
-    // Allow bs-local.com for BrowserStack local testing
-    allowedHosts: ['bs-local.com'],
+    // Allow bs-local.com for BrowserStack local testing, and the Cloudflare tunnel pool's
+    // hostnames (leading dot matches all *.emthought.cc subdomains) for BrowserStack iOS Safari.
+    allowedHosts: ['bs-local.com', '.emthought.cc'],
     ...(process.env.PUPPETEER
       ? {
-          // Serve the dev server over HTTPS in puppeteer tests to enable clipboard access
-          https: {
-            key: fs.readFileSync('./src/e2e/puppeteer/puppeteer-key.pem'),
-            cert: fs.readFileSync('./src/e2e/puppeteer/puppeteer.pem'),
-          },
-          // protocol `wss` is required to resolve websocket connection failure
           hmr: {
             host: 'host.docker.internal',
             // wss uses a secure websocket(wss://) connection. This was necessary to resolve mixed content security error which was observed when using ws protocol only.
@@ -67,5 +133,10 @@ export default defineConfig({
           },
         }
       : {}),
+  },
+  preview: {
+    // `yarn servebuild` (vite preview) is what ios.yml/tdd.yml actually run behind the tunnel —
+    // preview.allowedHosts doesn't inherit server.allowedHosts, so it needs its own entry too.
+    allowedHosts: ['.emthought.cc'],
   },
 })

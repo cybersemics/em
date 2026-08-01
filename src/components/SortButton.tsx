@@ -71,7 +71,7 @@ const SortButton = ({ onSortChange }: SortButtonProps) => {
               top: '100%',
               marginTop: '0.444rem',
               right: 0,
-              backgroundColor: 'bg',
+              backgroundColor: 'darkgray',
               border: 'solid 1px {colors.gray50}',
               borderRadius: '8px',
               zIndex: 'dialog',
