@@ -11,6 +11,7 @@ import { fileURLToPath } from 'url'
 import EverhourClient from './everhour/client.ts'
 import { type EstimateCategory, HOURS_TO_CATEGORY, VALID_HOURS, categoryToSeconds } from './everhour/estimates.ts'
 import issueLink from './lib/issueLink.ts'
+import issueUrlSuffix from './lib/issueUrlSuffix.ts'
 
 const TRUSTED_ASSOCIATIONS = ['OWNER', 'MEMBER', 'COLLABORATOR']
 
@@ -54,6 +55,9 @@ const main = async () => {
   const everhourApiKey = process.env.EVERHOUR_API_KEY
   if (!everhourApiKey) throw new Error('EVERHOUR_API_KEY is required')
 
+  const everhourProjectId = process.env.EVERHOUR_PROJECT_ID
+  if (!everhourProjectId) throw new Error('EVERHOUR_PROJECT_ID is required')
+
   const eventPath = process.env.GITHUB_EVENT_PATH
   if (!eventPath) throw new Error('GITHUB_EVENT_PATH is required')
 
@@ -69,6 +73,7 @@ const main = async () => {
 
   // Check trusted commenter
   if (!TRUSTED_ASSOCIATIONS.includes(comment.author_association)) {
+    await postReaction(githubToken, owner, repoName, comment.id, '-1')
     await postComment(
       githubToken,
       owner,
@@ -79,15 +84,49 @@ const main = async () => {
     return
   }
 
+  try {
+    await applyCorrection(githubToken, everhourApiKey, everhourProjectId, owner, repoName, comment, issue, hours)
+    // Mirror Copilot's status signal: swap the 👀 acknowledgment (added by the workflow) for 👍 on success.
+    await removeEyesReaction(githubToken, owner, repoName, comment.id)
+    await postReaction(githubToken, owner, repoName, comment.id, '+1')
+  } catch (err) {
+    await postReaction(githubToken, owner, repoName, comment.id, '-1')
+    throw err
+  }
+}
+
+/** Applies a manual estimate correction: updates Everhour and opens a PR with the corrected sample. */
+const applyCorrection = async (
+  githubToken: string,
+  everhourApiKey: string,
+  everhourProjectId: string,
+  owner: string,
+  repoName: string,
+  comment: CommentEvent['comment'],
+  issue: CommentEvent['issue'],
+  hours: number,
+) => {
   // Round to nearest valid category (e.g. 10h → 8h/M, 3h → 4h/S)
   const roundedHours = roundToNearestCategory(hours)
   const category = HOURS_TO_CATEGORY[roundedHours] as EstimateCategory
   const seconds = categoryToSeconds(category)
 
-  // Update Everhour immediately
+  // Update Everhour immediately. Everhour task IDs for GitHub-linked tasks embed the issue's internal
+  // database ID (gh:<issue_database_id>), not the issue number, so the task must be looked up rather
+  // than synthesized.
   const everhour = new EverhourClient({ apiKey: everhourApiKey })
-  const taskId = `gh:${issue.number}`
-  await everhour.setEstimate(taskId, seconds)
+  const task = await everhour.findTaskByIssueNumber(everhourProjectId, issue.number)
+  if (!task) {
+    await postComment(
+      githubToken,
+      owner,
+      repoName,
+      issue.number,
+      'Could not find a matching Everhour task for this issue, so the estimate was not updated.',
+    )
+    return
+  }
+  await everhour.setEstimate(task.id, seconds)
 
   // Create sample file content
   const sample = {
@@ -153,7 +192,7 @@ const main = async () => {
 
   // Open PR
   const prBody = `Adds a corrected estimate sample from \`/estimate ${roundedHours}h\`.\n\nIssue: ${owner}/${repoName}#${issue.number}\nExpected estimate: ${category} / ${roundedHours}h`
-  await fetch(`https://api.github.com/repos/${owner}/${repoName}/pulls`, {
+  const prResp = await fetch(`https://api.github.com/repos/${owner}/${repoName}/pulls`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${githubToken}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -163,18 +202,19 @@ const main = async () => {
       base: defaultBranch,
     }),
   })
-
-  // Confirm via comment
-  await postComment(
-    githubToken,
-    owner,
-    repoName,
-    issue.number,
-    `Everhour estimate updated: ${category} / ${roundedHours}h\nA PR has been opened to add the corrected sample.`,
-  )
+  const pr = (await prResp.json()) as { html_url?: string }
 
   console.info(
-    `Manual correction applied for issue ${issueLink(owner, repoName, issue.number)}: ${category} / ${roundedHours}h`,
+    `Manual correction applied for issue ${issueLink(owner, repoName, issue.number)} @ ${category} / ${roundedHours}h${issueUrlSuffix(owner, repoName, issue.number)}`,
+  )
+
+  // Surface the opened PR at the end of the run. The GitHub Pulls API returns html_url only on
+  // success; if it is absent (e.g. a PR already exists for the branch, or creation failed), fall
+  // back to a clear message rather than printing "undefined".
+  console.info(
+    pr.html_url
+      ? `Opened PR to add the corrected sample: ${pr.html_url}`
+      : 'No PR URL was returned; the PR may already exist or creation failed.',
   )
 }
 
@@ -187,10 +227,56 @@ const postComment = async (token: string, owner: string, repo: string, issueNumb
   })
 }
 
+/** Adds an emoji reaction to an issue comment to signal command status (e.g. '+1' on success, '-1' on failure). */
+const postReaction = async (token: string, owner: string, repo: string, commentId: number, content: '+1' | '-1') => {
+  await fetch(`https://api.github.com/repos/${owner}/${repo}/issues/comments/${commentId}/reactions`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      Accept: 'application/vnd.github+json',
+    },
+    body: JSON.stringify({ content }),
+  })
+}
+
+/**
+ * Removes the 👀 acknowledgment reaction added by the workflow's github-actions[bot] on success, so the
+ * comment ends up with only 👍. Best-effort: the Everhour update is already applied, so a failure here
+ * must not throw. Filtered to github-actions[bot] to avoid removing a human's 👀 reaction.
+ */
+const removeEyesReaction = async (token: string, owner: string, repo: string, commentId: number) => {
+  const listResp = await fetch(
+    `https://api.github.com/repos/${owner}/${repo}/issues/comments/${commentId}/reactions?content=eyes`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/vnd.github+json',
+      },
+    },
+  )
+  if (!listResp.ok) return
+
+  const reactions = (await listResp.json()) as Array<{ id: number; user: { login: string } | null }>
+  const eyes = reactions.find(reaction => reaction.user?.login === 'github-actions[bot]')
+  if (!eyes) return
+
+  await fetch(`https://api.github.com/repos/${owner}/${repo}/issues/comments/${commentId}/reactions/${eyes.id}`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/vnd.github+json',
+    },
+  })
+}
+
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   main().catch(err => {
     console.error(err)
-    process.exit(1)
+    // Set exitCode instead of calling process.exit(1): process.exit() terminates before Node drains
+    // its async stdout/stderr writes, which silently truncates buffered log output (including this
+    // error) when the streams are pipes, as in CI. Setting exitCode lets the process exit naturally.
+    process.exitCode = 1
   })
 }
 

@@ -9,7 +9,9 @@ describe('buildPrompt', () => {
     expect(result).toContain('Fix bug')
     expect(result).toContain('Something is broken')
     expect(result).toContain('bug')
-    expect(result).toContain('{"estimate": "<CATEGORY>"}')
+    expect(result).toContain('"estimate": "<CATEGORY>"')
+    expect(result).toContain('"rationale"')
+    expect(result).toContain('"confidence": "high|medium|low"')
   })
 
   it('includes samples when provided', () => {

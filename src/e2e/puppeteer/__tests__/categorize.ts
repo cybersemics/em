@@ -32,23 +32,23 @@ describe('categorize', () => {
     await clickThought(topParagraphText)
 
     // Perform 1st categorization
-    await press(']', { meta: true })
+    await press('o', { meta: true, alt: true })
     await press('1')
 
     // Perform 2nd categorization
-    await press(']', { meta: true })
+    await press('o', { meta: true, alt: true })
     await press('2')
 
     // Perform 3rd categorization
-    await press(']', { meta: true })
+    await press('o', { meta: true, alt: true })
     await press('3')
 
     // Perform 4th categorization
-    await press(']', { meta: true })
+    await press('o', { meta: true, alt: true })
     await press('4')
 
     // Perform 5th categorization
-    await press(']', { meta: true })
+    await press('o', { meta: true, alt: true })
     await press('5')
 
     const imageCategorized = await screenshot()

@@ -1,9 +1,23 @@
 import React from 'react'
-import { useSelector } from 'react-redux'
+import { shallowEqual, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { SystemStyleObject } from '../../styled-system/types'
 import ThoughtId from '../@types/ThoughtId'
+import getThoughtById from '../selectors/getThoughtById'
 import getThoughtFill from '../selectors/getThoughtFill'
+import getCommandState from '../util/getCommandState'
+
+/** Gets inline styles that should apply to a superscript when the entire thought is bold or italic. */
+const getThoughtFormattingStyle = (value: string): React.CSSProperties | undefined => {
+  const commandState = getCommandState(value)
+
+  const style: React.CSSProperties = {
+    ...(commandState.bold ? { fontWeight: 600 } : null),
+    ...(commandState.italic ? { fontStyle: 'italic' } : null),
+  }
+
+  return Object.keys(style).length > 0 ? style : undefined
+}
 
 /** Renders a given number as a superscript. */
 const StaticSuperscript = React.forwardRef<
@@ -18,10 +32,16 @@ const StaticSuperscript = React.forwardRef<
     thoughtId?: ThoughtId
   }
 >(({ n, style, show = true, hideZero, absolute, cssRaw, thoughtId }, forwardRef) => {
+  const isVisible = !!(show && (n || !hideZero))
   const fill = useSelector(state =>
     // make sure fill is only calculated if the superscript is shown, since getThoughtFill is expensive
-    show && (n || !hideZero) && thoughtId ? getThoughtFill(state, thoughtId) : undefined,
+    isVisible && thoughtId ? getThoughtFill(state, thoughtId) : undefined,
   )
+  const formattingStyle = useSelector(state => {
+    if (!isVisible || !thoughtId) return undefined
+    const thought = getThoughtById(state, thoughtId)
+    return thought ? getThoughtFormattingStyle(thought.value) : undefined
+  }, shallowEqual)
 
   return (
     <span
@@ -55,7 +75,7 @@ const StaticSuperscript = React.forwardRef<
                 top: '-2px',
                 left: '1px',
               })}
-              style={{ color: fill }}
+              style={{ ...formattingStyle, color: fill }}
             >
               {n}
             </sup>

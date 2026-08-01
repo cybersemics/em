@@ -54,6 +54,7 @@ const selectCursor = (state: State) => state.cursor
 const VirtualThought = ({
   debugIndex,
   depth,
+  childIndexNonAttribute,
   dropUncle,
   env,
   indexDescendant,
@@ -73,10 +74,12 @@ const VirtualThought = ({
   isLastVisible,
   autofocus,
   moveStyle,
+  wrappingWidth,
 }: {
   // contextChain is needed to uniquely identify thoughts across context views
   debugIndex?: number
   depth: number
+  childIndexNonAttribute: number
   dropUncle?: boolean
   env?: LazyEnv
   indexDescendant: number
@@ -98,6 +101,8 @@ const VirtualThought = ({
   autofocus: Autofocus
   /** Optional animation styles for moveThought animations. Applied to a child wrapper so height measurement is unaffected. */
   moveStyle?: React.CSSProperties
+  /** The horizontal width available to the thought before it wraps. Changes when the thought enters or leaves a table column (e.g. toggling Table View), so it is used to trigger a height re-measurement. Otherwise the stale wrapped height leaves a blank gap below the thought. */
+  wrappingWidth?: number
 }) => {
   // TODO: Why re-render the thought when its height changes? This information should be passively passed up to LayoutTree.
   const [height, setHeight] = useState<number | null>(singleLineHeight)
@@ -187,6 +192,7 @@ const VirtualThought = ({
     style,
     isContextViewActive,
     editingValue,
+    wrappingWidth,
   ])
 
   // Recalculate height on cursor change since indentation can change line wrapping
@@ -250,6 +256,7 @@ const VirtualThought = ({
         <Subthought
           autofocus={autofocus}
           debugIndex={debugIndex}
+          childIndexNonAttribute={childIndexNonAttribute}
           depth={depth + 1}
           dropUncle={dropUncle}
           env={env}

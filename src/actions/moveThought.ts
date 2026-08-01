@@ -15,6 +15,7 @@ import getSortPreference from '../selectors/getSortPreference'
 import getSortedRank from '../selectors/getSortedRank'
 import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
+import simplifyPath from '../selectors/simplifyPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
@@ -55,8 +56,10 @@ const moveThought = (
   //   console.error(e)
   // }
 
-  const sourceThoughtPath = oldPath
-  const destinationThoughtPath = rootedParentOf(state, newPath)
+  const oldPathSimple = simplifyPath(state, oldPath)
+  const newPathSimple = simplifyPath(state, newPath)
+  const sourceThoughtPath = oldPathSimple
+  const destinationThoughtPath = rootedParentOf(state, newPathSimple)
   const sourceThoughtId = head(sourceThoughtPath)
   const destinationThoughtId = head(destinationThoughtPath)
 
@@ -68,7 +71,7 @@ const moveThought = (
   }
 
   // use parentid from oldPath until parentId data integrity issue is fixed
-  const sourceParentId = head(rootedParentOf(state, oldPath))
+  const sourceParentId = head(rootedParentOf(state, sourceThoughtPath))
   if (sourceThought.parentId !== sourceParentId) {
     console.warn(`Invalid parentId: sourceThought.parentId does not match parentOf(oldPath).`)
     console.info('oldPath', oldPath)
@@ -97,8 +100,11 @@ const moveThought = (
 
   // if thought is being moved to the same context that is not a duplicate case
   // skipMerge bypasses the auto-merge when the caller intentionally moves a thought to a context
-  // that already contains a thought with the same value (e.g. swapParent with two empty thoughts)
-  const duplicateThought = !sameContext && !skipMerge ? duplicateSubthought() : null
+  // that already contains a thought with the same value (e.g. swapParent with two empty thoughts).
+  // Do not treat empty thoughts as duplicates: an empty thought is a placeholder with no identity, so merging
+  // it into an existing empty sibling would silently drop it (e.g. pasting a series with multiple empty thoughts).
+  // See https://github.com/cybersemics/em/issues/4448.
+  const duplicateThought = !sameContext && !skipMerge && sourceThought.value !== '' ? duplicateSubthought() : null
 
   const isPendingMerge = duplicateThought && (sourceThought.pending || duplicateThought.pending)
 
@@ -215,15 +221,15 @@ const moveThought = (
     !skipRerank
       ? state => {
           const rankPrecision = 10e-8
-          const children = getChildrenRanked(state, head(rootedParentOf(state, newPath)))
+          const children = getChildrenRanked(state, head(rootedParentOf(state, newPathSimple)))
           const ranksTooClose = children.some((thought, i) => {
             if (i === 0) return false
             const secondThought = getThoughtById(state, children[i - 1].id)
             if (!secondThought) return false
             return Math.abs(thought.rank - secondThought.rank) < rankPrecision
           })
-          // TODO: Explicitly converting to simplePath becauase context view has not been implemented yet and later we would want to change oldPath and newPath to be sourceThoughtId and destinationThoughtId instead.
-          return ranksTooClose ? rerank(state, rootedParentOf(state, newPath) as SimplePath) : state
+          // Rerank operates on the physical parent path, so use the simplified destination path.
+          return ranksTooClose ? rerank(state, rootedParentOf(state, newPathSimple) as SimplePath) : state
         }
       : null,
   ])(state)

@@ -69,7 +69,7 @@ while true; do
     -H "Content-Type: application/json" \
     -u "$BROWSERSTACK_USERNAME:$BROWSERSTACK_ACCESS_KEY" \
     --data '{"script":"return 1","args":[]}' \
-    "https://hub.browserstack.com/wd/hub/session/$SESSION_ID/execute/sync" 2>/dev/null \
+    "https://hub-cloud.browserstack.com/wd/hub/session/$SESSION_ID/execute/sync" 2>/dev/null \
     || echo "000")
   if [[ "$STATUS" =~ ^[23] ]]; then
     echo "[$(ts)] ping ok status=$STATUS"
@@ -82,10 +82,12 @@ while true; do
       # Fetch BrowserStack's post-mortem on the session so future debugging
       # has a concrete reason field instead of "the heartbeat noticed it was
       # gone." Best-effort; quietly skipped if the API is unreachable or the
-      # session is too young to have a record.
+      # session is too young to have a record. App Automate sessions live on
+      # api-cloud/app-automate (api.browserstack.com/automate is the desktop
+      # Automate product and 404s for these session ids).
       POSTMORTEM=$(curl -sS \
         -u "$BROWSERSTACK_USERNAME:$BROWSERSTACK_ACCESS_KEY" \
-        "https://api.browserstack.com/automate/sessions/$SESSION_ID.json" 2>/dev/null \
+        "https://api-cloud.browserstack.com/app-automate/sessions/$SESSION_ID.json" 2>/dev/null \
         || echo '{"error":"api fetch failed"}')
       echo "[$(ts)] browserstack session post-mortem: $POSTMORTEM"
       exit 0

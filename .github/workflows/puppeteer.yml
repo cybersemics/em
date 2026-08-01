@@ -1,12 +1,56 @@
 name: Puppeteer
 
+# Documentation, agent/editor configuration, and the native platform projects cannot change what
+# this workflow tests, so a change set confined to them has nothing for a browser to exercise.
+#
+# paths-ignore skips the workflow outright, which means NO check is reported — not a "skipped"
+# check, and not a synthetic pass from a job-level `if`. That is only correct because Puppeteer is
+# no longer a required status check on main. If it is ever made required again, filtered PRs will
+# sit at "Expected — Waiting for status to be reported" and block; use a job-level guard then.
+# (Lint is deliberately left unfiltered and required, so every PR still reports one check.)
+#
+# A run is skipped only when EVERY changed file matches, so any PR that also touches app or test
+# code still runs in full. `**/*.md` is safe because nothing under src/ imports markdown.
+#
+# The native entries below rest on `yarn build` staying web-only (build:packages, build:styles,
+# vite build). None of those directories contains a JS or TS file today, and the web favicons come
+# from public/, not assets/. If a Capacitor asset is ever wired into the Vite build, remove them.
 on:
   push:
     branches:
       - main
+    paths-ignore:
+      # Documentation and agent/editor configuration.
+      - '**/*.md'
+      - 'docs/**'
+      - '.github/instructions/**'
+      - '.github/skills/**'
+      - '.claude/**'
+      - '.agents/**'
+      - '.vscode/**'
+      - '.hooks/**'
+      # Native platform projects, and the icon/splash sources generated into them.
+      - 'android/**'
+      - 'ios/**'
+      - 'desktop/**'
+      - 'assets/**'
   pull_request:
     branches:
       - '**'
+    # GitHub Actions does not support YAML anchors, so this list is duplicated from `push` above.
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - '.github/instructions/**'
+      - '.github/skills/**'
+      - '.claude/**'
+      - '.agents/**'
+      - '.vscode/**'
+      - '.hooks/**'
+      - 'android/**'
+      - 'ios/**'
+      - 'desktop/**'
+      - 'assets/**'
   workflow_dispatch:
     inputs:
       rerun_id:
@@ -17,6 +61,9 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   CI: true
   COPILOT_AGENT_FIREWALL_ALLOW_LIST_ADDITIONS: googlechromelabs.github.io,storage.googleapis.com
+  # Skip Puppeteer's Chrome download on install — no CI job uses the bundled browser (Puppeteer
+  # tests attach to the browserless/chrome service via CDP), saving ~20s per install.
+  PUPPETEER_SKIP_DOWNLOAD: true
 
 jobs:
   run:
@@ -42,9 +89,10 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: 22
+          cache: 'yarn'
 
       - name: Install npm dependencies
-        run: yarn
+        uses: ./.github/actions/install
 
       - name: Build
         run: yarn build
@@ -61,4 +109,19 @@ jobs:
         with:
           name: __diff_output__
           path: src/e2e/puppeteer/__tests__/__image_snapshots__/**/__diff_output__/
+          if-no-files-found: ignore
+
+      # Carry the PR number to the privileged workflow_run job. github.event.workflow_run.pull_requests
+      # is empty for fork PRs, so the number must be passed via an artifact. Uploaded on every PR run
+      # (success or failure) so the comment can be posted on failure and pruned/resolved on success.
+      - name: Save PR number
+        if: always() && github.event_name == 'pull_request'
+        run: echo "${{ github.event.pull_request.number }}" > pr-number.txt
+
+      - name: Upload PR number artifact
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v7
+        with:
+          name: pr-number
+          path: pr-number.txt
           if-no-files-found: ignore

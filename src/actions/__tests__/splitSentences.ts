@@ -1,10 +1,14 @@
+import MimeType from '../../@types/MimeType'
 import newThought from '../../actions/newThought'
 import splitSentences from '../../actions/splitSentences'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
+import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
+import cursorForward from '../cursorForward'
+import importText from '../importText'
 
 /**
  * Function: splitThought.
@@ -12,11 +16,11 @@ import reducerFlow from '../../util/reducerFlow'
  * @param thought The thought that needs to be split.
  * @returns The thought string after being split.
  */
-function splitThought(value: string) {
+function splitThought(value: string, format: MimeType = 'text/plain') {
   const steps = [newThought(value), splitSentences()]
 
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+  const exported = exportContext(stateNew, [HOME_TOKEN], format)
   return exported
 }
 
@@ -674,6 +678,20 @@ describe('parenthetical content', () => {
     expect(exported).toBe(`- ${HOME_TOKEN}
   - This (has parentheses) in the middle`)
   })
+
+  it('cursorForward moves to the extracted subthought after splitting a thought with existing children', () => {
+    const text = `
+      - One two (three four)
+        - A
+        - B
+        - C
+    `
+    const steps = [importText({ text }), setCursor(['One two (three four)']), splitSentences(), cursorForward]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expectPathToEqual(stateNew, stateNew.cursor, ['One two', 'three four'])
+  })
 })
 
 describe('dash splitting', () => {
@@ -765,5 +783,23 @@ describe('dash splitting', () => {
     expect(exported).toBe(`- ${HOME_TOKEN}
   - one
     - 1.`)
+  })
+})
+
+describe('formatting', () => {
+  // https://github.com/cybersemics/em/issues/4229
+  it('preserves formatting on every comma-delimited segment, including segments in the middle', () => {
+    const value = '<font color="#ff573d">Hello, beautiful, people.</font>'
+    const exported = splitThought(value, 'text/html')
+
+    expect(exported).toBe(`<ul>
+  <li>${HOME_TOKEN}  
+    <ul>
+      <li><font color="#ff573d">Hello</font></li>
+      <li><font color="#ff573d">beautiful</font></li>
+      <li><font color="#ff573d">people.</font></li>
+    </ul>
+  </li>
+</ul>`)
   })
 })

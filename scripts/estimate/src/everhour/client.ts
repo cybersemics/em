@@ -1,3 +1,4 @@
+import extractIssueNumber from './extractIssueNumber.ts'
 import type { EverhourClientOptions, EverhourProject, EverhourTask } from './types.ts'
 
 const DEFAULT_BASE_URL = 'https://api.everhour.com'
@@ -63,6 +64,27 @@ class EverhourClient {
       method: 'PUT',
       body: JSON.stringify({ type: 'overall', total: seconds }),
     })
+  }
+
+  /**
+   * Resolves the Everhour task for a GitHub issue by paging through the project's tasks and matching
+   * on the issue number (via extractIssueNumber). Returns null when no task matches.
+   *
+   * Everhour encodes GitHub-linked tasks with an ID like `gh:<issue_database_id>` — GitHub's internal
+   * database ID, NOT the issue number — so the task ID cannot be synthesized from the issue number and
+   * must be looked up. See scripts/estimate/README.md ("Everhour task fields").
+   */
+  async findTaskByIssueNumber(projectId: string, issueNumber: number): Promise<EverhourTask | null> {
+    const PAGE_SIZE = 250
+    let page = 1
+    // Page until a matching task is found or a short page signals the last page.
+    while (true) {
+      const tasks = await this.getProjectTasks(projectId, page, PAGE_SIZE)
+      const match = tasks.find(task => extractIssueNumber(task) === issueNumber)
+      if (match) return match
+      if (tasks.length < PAGE_SIZE) return null
+      page++
+    }
   }
 
   /** Gets a single task by ID. */
