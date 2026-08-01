@@ -20,6 +20,10 @@ const args = [
   '--user-data-dir=/tmp/em-chrome-shared',
   '--no-first-run',
   '--no-default-browser-check',
+  // The dev server now serves HTTPS with a self-signed cert (@vitejs/plugin-basic-ssl). Auto-accept it
+  // so navigation never hits the interstitial — this shared Chrome only ever loads our own dev server,
+  // so blanket-ignoring cert errors is safe here and removes the need for the `thisisunsafe` bypass.
+  '--ignore-certificate-errors',
   ...(process.env.EM_CHROME_HEADLESS === '0' ? [] : ['--headless=new']),
   // Chrome's sandbox needs unprivileged user namespaces, which CI runners (Ubuntu 23.10+ / current
   // GitHub Actions images) disable via an AppArmor policy — Chrome then aborts on launch with

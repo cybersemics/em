@@ -1,11 +1,59 @@
 name: BrowserStack
 
+# Documentation, agent/editor configuration, and the native platform projects cannot change what
+# this workflow tests, so a change set confined to them has nothing for a real device to exercise.
+# Skipping is worth more here than in a cheap workflow: every run occupies the repo-wide
+# `browserstack` concurrency group below and a slot in the shared BrowserStack session pool, so one
+# pointless run delays every other PR's iOS tests behind it.
+#
+# paths-ignore skips the workflow outright, which means NO check is reported — not a "skipped"
+# check, and not a synthetic pass from a job-level `if`. That is only correct because BrowserStack
+# is no longer a required status check on main. If it is ever made required again, filtered PRs
+# will sit at "Expected — Waiting for status to be reported" and block; use a job-level guard then.
+# (Lint is deliberately left unfiltered and required, so every PR still reports one check.)
+#
+# A run is skipped only when EVERY changed file matches, so any PR that also touches app or test
+# code still runs in full. `**/*.md` is safe because nothing under src/ imports markdown.
+#
+# The native entries below rest on `yarn build` staying web-only (build:packages, build:styles,
+# vite build) and on this workflow testing mobile Safari over a tunnel rather than the Capacitor
+# app. None of those directories contains a JS or TS file today. If a Capacitor asset is ever wired
+# into the Vite build, remove them — otherwise a real change would ship untested.
 on:
   push:
     branches:
       - main
+    paths-ignore:
+      # Documentation and agent/editor configuration.
+      - '**/*.md'
+      - 'docs/**'
+      - '.github/instructions/**'
+      - '.github/skills/**'
+      - '.claude/**'
+      - '.agents/**'
+      - '.vscode/**'
+      - '.hooks/**'
+      # Native platform projects, and the icon/splash sources generated into them.
+      - 'android/**'
+      - 'ios/**'
+      - 'desktop/**'
+      - 'assets/**'
   pull_request_target:
     types: [opened, synchronize, reopened]
+    # GitHub Actions does not support YAML anchors, so this list is duplicated from `push` above.
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - '.github/instructions/**'
+      - '.github/skills/**'
+      - '.claude/**'
+      - '.agents/**'
+      - '.vscode/**'
+      - '.hooks/**'
+      - 'android/**'
+      - 'ios/**'
+      - 'desktop/**'
+      - 'assets/**'
   workflow_dispatch:
     inputs:
       rerun_id:
@@ -15,15 +63,24 @@ on:
 # Serialize BrowserStack runs repo-wide. Every run draws from the same shared parallel-session pool, so
 # overlapping runs (a main push + PR syncs + reruns) can over-subscribe it and fail with session-creation
 # timeouts. Allowing one active run at a time keeps total live sessions within maxInstances.
+# (The Cloudflare tunnel pool tolerates concurrent connectors on its own — see
+# cloudflareTunnelPool.ts's self-verifying claim — so this serialization is purely about the
+# BrowserStack session cap now, not the tunnel.)
 # cancel-in-progress: false queues runs instead of cancelling them, so no run is dropped.
+# queue: max extends the queue from the default 1 to the maximum of 100, ensuring runs don't get silently
+# dropped if lots of jobs queue up.
 concurrency:
   group: browserstack
   cancel-in-progress: false
+  queue: max
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   CI: true
   COPILOT_AGENT_FIREWALL_ALLOW_LIST_ADDITIONS: googlechromelabs.github.io,storage.googleapis.com
+  # Skip Puppeteer's Chrome download on install — no CI job uses the bundled browser (Puppeteer
+  # tests attach to the browserless/chrome service via CDP), saving ~20s per install.
+  PUPPETEER_SKIP_DOWNLOAD: true
   # Activates the console proxy (src/util/consoleProxy.ts), which we need because BrowserStack
   # can't access iOS console logs.
   VITE_BROWSER_CONSOLE_CAPTURE: 1
@@ -40,6 +97,28 @@ jobs:
         with:
           ref: ${{github.event.pull_request.head.ref}}
           repository: ${{github.event.pull_request.head.repo.full_name}}
+          # v6 (upgraded from v4 in #3981) refuses to check out fork PR code from a
+          # pull_request_target workflow unless this is set. Untrusted fork code is
+          # gated by GitHub's "require approval for outside collaborators" setting.
+          # https://gh.io/securely-using-pull_request_target
+          allow-unsafe-pr-checkout: true
+
+      # `pull_request_target` runs the workflow file from the default branch but checks out the PR's
+      # head code, which may predate the tunnel-token gate. Detect whether the checked-out code has
+      # that gate so we only generate a token when one is needed, and only send it when the server
+      # expects it. The gate arrived with the HTTPS dev server migration, so plugin-basic-ssl is the
+      # marker for it. Note this says nothing about the protocol any more: the Serve step forces
+      # HTTP=1, so the dev server is plain HTTP either way.
+      - name: Detect token gate
+        id: server_mode
+        run: |
+          if grep -q "@vitejs/plugin-basic-ssl" vite.config.ts; then
+            echo "has_token_gate=true" >> "$GITHUB_OUTPUT"
+            echo "Token gate: present"
+          else
+            echo "has_token_gate=false" >> "$GITHUB_OUTPUT"
+            echo "Token gate: absent (PR predates the HTTPS dev server migration)"
+          fi
 
       - name: Enable Corepack
         run: corepack enable
@@ -48,21 +127,83 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: 22
+          cache: 'yarn'
 
       - name: Install npm dependencies
-        run: yarn
+        uses: ./.github/actions/install
 
       - name: Build
         run: yarn build
 
+      - name: Generate tunnel token
+        if: steps.server_mode.outputs.has_token_gate == 'true'
+        run: |
+          TOKEN=$(openssl rand -hex 16)
+          echo "::add-mask::$TOKEN"
+          echo "TUNNEL_TOKEN=$TOKEN" >> "$GITHUB_ENV"
+
       - name: Serve
-        run: yarn servebuild &
+        env:
+          HAS_TOKEN_GATE: ${{ steps.server_mode.outputs.has_token_gate }}
+        run: |
+          # Bind 0.0.0.0 (--host) so the app is reachable via the runner's localhost by the
+          # cloudflared connector (which the wdio config starts). Capture the PID and tee output
+          # to serve.log so the readiness loop and the cleanup step can use them.
+          # HTTP=1 forces a plain-HTTP origin here: Cloudflare's tunnel already terminates HTTPS at its edge for Safari (a real CA-signed cert on the public hostname), so this local connector-to-origin hop never needs its own TLS.
+          HTTP=1 yarn servebuild --host > serve.log 2>&1 &
+          echo "APP_PID=$!" >> "$GITHUB_ENV"
+
+          echo "Waiting for server to be ready..."
+          # Code with the gate rejects an untokened request with 403, so the probe has to carry the
+          # token; code without it has no token to carry. Either way the origin is plain HTTP.
+          if [ "$HAS_TOKEN_GATE" = "true" ]; then
+            TOKEN_PARAM="?__token=$TUNNEL_TOKEN"
+          else
+            TOKEN_PARAM=""
+          fi
+          for i in {1..30}; do
+            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:3000$TOKEN_PARAM" 2>/dev/null || echo "000")
+            if [ "$HTTP_STATUS" = "200" ]; then
+              echo "Server is ready!"
+              break
+            fi
+            echo "Attempt $i/30: status $HTTP_STATUS"
+            if [ $i -eq 30 ]; then
+              echo "Server failed to respond after 30 attempts. Server log:"
+              cat serve.log || true
+              exit 1
+            fi
+            sleep 1
+          done
 
       - name: Test iOS on BrowserStack
         run: yarn test:ios
         env:
-          # BrowserStack credentials - WDIO's browserstack-service handles the tunnel
           BROWSERSTACK_USERNAME: ${{secrets.BROWSERSTACK_USERNAME}}
           BROWSERSTACK_ACCESS_KEY: ${{secrets.BROWSERSTACK_ACCESS_KEY}}
           BROWSERSTACK_BUILD_NAME: 'CI - ${{github.run_id}}'
           BROWSERSTACK_PROJECT_NAME: 'em'
+          TUNNEL_TOKEN: ${{env.TUNNEL_TOKEN}}
+          # A JSON array of { name, hostname, token }, provisioned out-of-band — see
+          # cloudflareTunnelPool.ts. The wdio config checks each tunnel's occupancy before attaching
+          # to it, claims the first one that is genuinely free, and waits for a slot if they are all
+          # busy — so a dead or already-claimed tunnel doesn't block the run.
+          CLOUDFLARE_TUNNEL_POOL: ${{secrets.CLOUDFLARE_TUNNEL_POOL}}
+
+      # Best-effort cleanup on the ephemeral runner: stop the manually-started app and preserve
+      # the named connector's log for diagnosis. The connector process itself is killed by the
+      # wdio config's onComplete hook.
+      - name: Stop app
+        if: always()
+        run: |
+          if [ -n "$APP_PID" ]; then
+            kill "$APP_PID" 2>/dev/null || true
+          fi
+
+      - name: Upload cloudflared connector log
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: cloudflared-browserstack-log
+          path: cloudflared-browserstack.log
+          if-no-files-found: ignore

@@ -2,6 +2,13 @@
 
 - Before writing new code, search the codebase for related mechanisms and existing architecture.
 - Prefer extending or reusing existing infrastructure over creating new solutions.
+- Do not access the app `store` directly. To read fresh state, dispatch a thunk and use `getState()` — this avoids importing the app `store` or adding it to a hook's dependency list:
+  ```ts
+  dispatch((dispatch, getState) => {
+    const state = getState()
+    // ...
+  })
+  ```
 
 ### Files, modules, and exports
 
@@ -28,6 +35,7 @@
 
 - Inline styles using PandaCSS: `className={css({ marginTop: '1em' })}`
 - Only use style attribute for dynamic runtime values. PandaCSS can only handle statically analyzable values.
+- Prefer inline CSS over recipes. Only add a recipe in `src/recipes` when the styles have variants or are shared by multiple components. A single-use recipe with only base styles should be inline CSS instead.
 
 ### Code Quality
 

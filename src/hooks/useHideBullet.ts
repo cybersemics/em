@@ -1,5 +1,6 @@
 import { useSelector } from 'react-redux'
 import LazyEnv from '../@types/LazyEnv'
+import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
@@ -9,9 +10,11 @@ import attributeEquals from '../selectors/attributeEquals'
 import findDescendant from '../selectors/findDescendant'
 import findFirstEnvContextWithZoom from '../selectors/findFirstEnvContextWithZoom'
 import getThoughtById from '../selectors/getThoughtById'
+import isMulticursorPath from '../selectors/isMulticursorPath'
 import rootedParentOf from '../selectors/rootedParentOf'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
+import stripTags from '../util/stripTags'
 
 /** Gets a globally defined bullet. */
 const getGlobalBullet = (key: string) => GLOBAL_STYLE_ENV[key as keyof typeof GLOBAL_STYLE_ENV]?.bullet
@@ -22,6 +25,7 @@ const useHideBullet = ({
   env,
   hideBulletProp,
   isEditing,
+  path,
   simplePath,
   isInContextView,
   thoughtId,
@@ -30,6 +34,7 @@ const useHideBullet = ({
   env: LazyEnv | undefined
   hideBulletProp: boolean | undefined
   isEditing: boolean
+  path: Path
   simplePath: SimplePath
   isInContextView: boolean
   thoughtId: ThoughtId
@@ -44,11 +49,16 @@ const useHideBullet = ({
     const hideBullet = () =>
       thought.value !== '=grandchildren' && attributeEquals(state, head(simplePath), '=bullet', 'None')
 
-    /** Returns true if the bullet should be hidden because it is in table column 1 and is not the cursor. */
+    /** Returns true if the bullet should be hidden because the thought value is an ellipsis. */
+    const hideBulletEllipsis = () =>
+      stripTags(thought.value) === '...' && !findDescendant(state, head(simplePath), '=bullet')
+
+    /** Returns true if the bullet should be hidden because it is in table column 1 and is neither the cursor nor a multicursor. The selection is indicated by the bullet, so hiding it would make the selection invisible. */
     const hideBulletTable = () => {
       return (
         !isInContextView &&
         !equalPath(simplePath, state.cursor) &&
+        !isMulticursorPath(state, path) &&
         attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table')
       )
     }
@@ -80,7 +90,7 @@ const useHideBullet = ({
       return bulletEnv.some(envChildBullet => envChildBullet === 'None')
     }
 
-    return hideBullet() || hideBulletTable() || hideBulletZoom() || hideBulletEnv()
+    return hideBullet() || hideBulletEllipsis() || hideBulletTable() || hideBulletZoom() || hideBulletEnv()
   })
 
   return hideBullet

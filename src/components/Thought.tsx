@@ -12,6 +12,9 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
+import { addMulticursorActionCreator as addMulticursor } from '../actions/addMulticursor'
+import { selectBetweenActionCreator as selectBetween } from '../actions/selectBetween'
+import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
 import { isMac, isTouch } from '../browser'
 import { AlertType, REGEX_TAGS } from '../constants'
@@ -66,6 +69,8 @@ export interface ThoughtContainerProps {
   childrenForced?: ThoughtId[]
   // used by testFlags.simulateDrop
   debugIndex?: number
+  // 1-based ordinal position among visible non-attribute siblings, used to number =bullet/Ordered lists
+  childIndexNonAttribute?: number
   depth?: number
   env?: LazyEnv
   expandedContextThought?: Path
@@ -248,6 +253,7 @@ const ThoughtContainer = ({
   allowSingleContext,
   childrenForced,
   debugIndex,
+  childIndexNonAttribute,
   depth = 0,
   env,
   hideBullet: hideBulletProp,
@@ -317,7 +323,16 @@ const ThoughtContainer = ({
   )
   const isInContextView = useSelector(state => isContextViewActive(state, parentOf(path)))
 
-  const hideBullet = useHideBullet({ children, env, hideBulletProp, isEditing, simplePath, isInContextView, thoughtId })
+  const hideBullet = useHideBullet({
+    children,
+    env,
+    hideBulletProp,
+    isEditing,
+    path,
+    simplePath,
+    isInContextView,
+    thoughtId,
+  })
   const style = useThoughtStyle({ children, env, styleProp, thoughtId })
   const styleAnnotation = useSelector(
     state =>
@@ -511,7 +526,21 @@ const ThoughtContainer = ({
   /** Handles multicursor activation. */
   const handleMultiselect = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
-      if (!isTouch && (isMac ? (e as React.MouseEvent).metaKey : (e as React.MouseEvent).ctrlKey)) {
+      if (isTouch) return
+
+      const mouseEvent = e as React.MouseEvent
+
+      // Shift + Click selects all thoughts between the clicked thought and the previously selected thought.
+      if (mouseEvent.shiftKey) {
+        e.preventDefault()
+        // move the cursor to the clicked thought so selectBetween resolves the correct sibling level,
+        // preserving the existing multicursor selection, then add the clicked thought and fill the range
+        dispatch([setCursor({ path, preserveMulticursor: true }), addMulticursor({ path }), selectBetween()])
+        return
+      }
+
+      // Cmd/Ctrl + Click toggles the clicked thought in the multicursor selection.
+      if (isMac ? mouseEvent.metaKey : mouseEvent.ctrlKey) {
         e.preventDefault()
         dispatch(toggleMulticursor({ path }))
       }
@@ -596,6 +625,7 @@ const ThoughtContainer = ({
               simplePath={simplePath}
               thoughtId={thoughtId}
               isInContextView={isInContextView}
+              childIndexNonAttribute={childIndexNonAttribute}
               // debugIndex={debugIndex}
               // depth={depth}
             />

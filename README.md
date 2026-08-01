@@ -9,7 +9,7 @@
 ## Documentation
 
 - [Overview](https://github.com/cybersemics/em/wiki/Docs) - An overview of the architecture, data structures, and tips for contributors.
-- [Roadmap](https://github.com/cybersemics/em/wiki/Roadmap) - A high level overview of the project, including vision and objectives.
+- [Roadmap](https://github.com/cybersemics/em/wiki/Roadmap) - A high-level overview of the project, including vision and objectives.
 
 ## Setup
 
@@ -34,7 +34,7 @@ There are two testing scripts:
 
 ### Windows
 
-You will need the bash cli in your system to run the Puppeteer tests on Windows.
+You will need the Bash CLI on your system to run the Puppeteer tests on Windows.
 
 There are two ways to run bash on Windows:
 
@@ -73,10 +73,10 @@ Runs off the local Vite development server. Ideal for rapid prototyping, debuggi
    Update your local development environment file (`.env.development.local`) by setting the following variable to the URL of your Vite dev server.
 
    ```sh
-   CAPACITOR_SERVER_URL=http://192.168.x.x:3000
+   CAPACITOR_SERVER_URL=https://192.168.x.x:3000
    ```
 
-   **Note**: Use your machine's local network IP (e.g., http://192.168.x.x:3000) rather than localhost (http://localhost:3000).
+   **Note**: Use your machine's local network IP (e.g., https://192.168.x.x:3000) rather than localhost (https://localhost:3000).
 
 2. Start the Vite development server
 
@@ -125,12 +125,12 @@ yarn build
 yarn servebuild
 ```
 
-Deploy with firebase:
+Deploy with Vercel:
 
 ```sh
-npm install -g firebase-tools
+npm install -g vercel
 
-yarn deploy:staging2
+yarn deploy:dev
 ```
 
 ## Component Hierarchy

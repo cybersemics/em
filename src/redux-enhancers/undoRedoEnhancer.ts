@@ -15,6 +15,7 @@ import getThoughtById from '../selectors/getThoughtById'
 import { isNavigation, isUndoable } from '../util/actionMetadata.registry'
 import headValue from '../util/headValue'
 import reducerFlow from '../util/reducerFlow'
+import stripTags from '../util/stripTags'
 
 /** Track a stream of editThought actions so that they can be merged,
  * allowing edits to be treated as a single undo/redo step when they involve adding new characters or else removing old characters. */
@@ -42,6 +43,7 @@ function isEditThoughtAction(action: UnknownAction): action is UnknownAction & e
 
 /** Compare the text contents of the old and new values to determine the direction of the edit.
  * Returns None if the action is not an editThought action or if the text content length is the same.
+ * Formatting edits (bold, italic, color) and case changes (HELLO → hello) preserve text length and return None.
  */
 function getEditThoughtDirection(action: UnknownAction): EditThoughtDirection {
   if (!isEditThoughtAction(action)) return EditThoughtDirection.None
@@ -58,7 +60,11 @@ function getEditThoughtDirection(action: UnknownAction): EditThoughtDirection {
       : EditThoughtDirection.Shorter
 }
 
-/** Properties that are ignored when generating state patches. */
+/** Properties that are ignored when generating state patches.
+ * The editableNonce is a transient re-render trigger (incremented by editableRender and by force edits), not real state.
+ * It must be excluded from patches, otherwise undoing a force edit reverts the nonce and editableRender re-increments
+ * it to the same value, resulting in no net change. The ContentEditable then fails to update its innerHTML while
+ * editing (allowInnerHTMLChange is false), so undoing a formatting/letter-case edit appears to do nothing. */
 const statePropertiesToOmit: (keyof State)[] = ['alert', 'cursorCleared', 'editableNonce', 'pushQueue']
 
 /**
@@ -68,11 +74,12 @@ const restorePushQueueFromPatches = (state: State, oldState: State, patch: Patch
   const lexemeIndexChanges = patch.filter(p => p?.path.startsWith('/thoughts/lexemeIndex/'))
   const thoughtIndexChanges = patch.filter(p => p?.path.startsWith('/thoughts/thoughtIndex/'))
 
-  const lexemeIndexUpdates = lexemeIndexChanges.reduce<Index<Lexeme | null>>((acc, op) => {
-    const lexemeKey = op.path.slice('/thoughts/lexemeIndex/'.length).split('/')[0]
+  const lexemeIndexUpdates = lexemeIndexChanges.reduce<Index<Lexeme | null>>((acc, { path }) => {
+    const lexemeKey = path.slice('/thoughts/lexemeIndex/'.length).split('/')[0]
     return {
       ...acc,
-      [lexemeKey]: op.value || null,
+      // Patch paths may target nested lexeme properties such as contexts. Persist the full lexeme.
+      [lexemeKey]: state.thoughts.lexemeIndex[lexemeKey] || null,
     }
   }, {})
   const thoughtIndexUpdates = thoughtIndexChanges.reduce((acc, { path }) => {
@@ -124,6 +131,9 @@ const getPatchAction = (patch: Patch): ActionType => patch[0]?.actions[0]
  * Returns true if a patch represents an undoable action. A patch's first action may be a non-action label (e.g. a multicursor command's undoLabel), so check all actions in the patch rather than only the first.
  */
 const isPatchUndoable = (patch: Patch | undefined): boolean => !!patch?.[0]?.actions.some(isUndoable)
+
+/** Actions that mutate state.multicursors. They are not undoable on their own, since selecting thoughts should not be an undo step, but they must be tracked while a multicursor command is executing. See the bail condition in the enhancer. */
+const multicursorActionTypes: Set<ActionType> = new Set(['addMulticursor', 'clearMulticursors', 'removeMulticursor'])
 
 /**
  * Gets the nth item from the end of an array.
@@ -177,16 +187,40 @@ const undoReducer = (state: State, undoPatches: Patch[]): State => {
 
   if (!undoPatches.length) return state
 
+  // Infer whether the last patch is a formatting-only edit by examining the diff operations.
+  // A formatting patch changes a thought's value without changing its plain text content.
+  // This is detected by finding an operation that restores a thoughtIndex value where
+  // stripTags(restored_value) === stripTags(current_value) — same plain text, different HTML.
+  // Letter case changes (e.g. "hello" → "HELLO") are also treated as formatting since they do not
+  // add or remove content, only change its presentation.
+  const lastPatchIsFormatting = !!lastUndoPatch?.some(op => {
+    const match = op.path.match(/^\/thoughts\/thoughtIndex\/([^/]+)\/value$/)
+    if (!match) return false
+    const id = match[1]
+    const currentValue = state.thoughts.thoughtIndex[id]?.value
+    if (currentValue === undefined || op.value === undefined) return false
+    const restoredPlain = stripTags(op.value as string)
+    const currentPlain = stripTags(currentValue)
+    return restoredPlain === currentPlain || restoredPlain.toLowerCase() === currentPlain.toLowerCase()
+  })
+
   const undoTwice = isNavigation(lastAction)
     ? isPatchUndoable(penultimateUndoPatch)
-    : penultimateAction === 'newThought'
+    : penultimateAction === 'newThought' && !lastPatchIsFormatting
 
   const poppedUndoPatches = undoTwice ? [penultimateUndoPatch, lastUndoPatch] : [lastUndoPatch]
+
+  // Capture the current cursor offset before applying the undo patch.
+  // When undoing a formatting-only edit (no undoTwice), we preserve this offset
+  // so the caret stays where it was at the time of undo, instead of jumping to
+  // the pre-formatting position that was stored in the patch.
+  const priorCursorOffset = state.cursorOffset
 
   return reducerFlow([
     undoOneReducer,
     undoTwice ? undoOneReducer : null,
     newState => restorePushQueueFromPatches(newState, state, poppedUndoPatches.flat()),
+    !undoTwice && lastPatchIsFormatting ? (s: State) => ({ ...s, cursorOffset: priorCursorOffset }) : null,
     editableRender,
   ])(state)
 }
@@ -244,6 +278,11 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       // Handle undo and redo.
       // They are defined in the redux enhancer rather than in /actions.
       if (actionType === 'undo' || actionType === 'redo') {
+        // Reset the edit-direction tracking so the next action after an undo/redo does not
+        // accidentally merge with whatever patch happens to be at the top of the stack.
+        lastAction = undefined
+        lastEditThoughtDirection = EditThoughtDirection.None
+
         const undoOrRedoState =
           actionType === 'undo'
             ? undoReducer(state, undoPatches)
@@ -267,8 +306,14 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       if (
         // bail if state has not changed
         state === newState ||
-        // bail if the action is not undoable
-        !isUndoable(actionType) ||
+        // bail if the action is not undoable.
+        // Exception: multicursor actions dispatched while a multicursor command is executing belong to the command's
+        // single undo entry, e.g. the addMulticursor calls that restore the multiselect at the end of
+        // executeCommandWithMulticursor. Skipping them would bake their changes into the merge baseline reconstructed
+        // below, so undo would restore the original multiselect without removing the restored one, leaving both
+        // selected (#4728). Other non-undoable actions are still skipped so that transient ui state (e.g. the
+        // Command Center opened by the multicursor alert middleware) is not restored by undo.
+        (!isUndoable(actionType) && !(state.isMulticursorExecuting && multicursorActionTypes.has(actionType))) ||
         // ignore the first importText since it is part of app initialization and should not be undoable
         // otherwise the edit merge logic below will create an undo patch with an invalid lexemeIndex/000
         // See: https://github.com/cybersemics/em/issues/1494
@@ -277,7 +322,8 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         return newState
       }
 
-      // Determine if an edit is an addition or a deletion
+      // Determine if an edit is an addition or a deletion.
+      // Formatting edits (bold, italic, color) and case changes preserve text length and return None, so they never merge with content edits.
       const editThoughtDirection = getEditThoughtDirection(action)
 
       const shouldMergeWithLastEditThought =
@@ -285,7 +331,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
 
       // Some actions are merged together into a single undo/redo patch.
       // - Navigation actions are merged with the previous non-navigation action. This matches the behavior of most word processors where undo will revert the last destructive action, and the cursor will be restored to where it was before. For example, if the user edits 'a' to 'aa', moves the cursor to 'b', and then undoes, the cursor will be restored to 'aa' then the edit will be undone.
-      // - Contiguous edits are merged into a single edit action. For example, if the user edits 'a' to 'ab' and then 'ab' to 'abc', the undo will revert to 'a' in one step.
+      // - Contiguous edits in the same direction are merged into a single edit action. For example, if the user edits 'a' to 'ab' and then 'ab' to 'abc', the undo will revert to 'a' in one step. Formatting edits (None direction) are never merged with any other edits — each formatting change (bold, italic, color) gets its own separate undo step.
       // - The closeAlert action is merged with the previous action so that the alert can be undone.
       // - All actions during the execution of a multicursor command will be merged together. The prevous action will always be setIsMulticursorExecuting.
       // - Chained commands will be merged into the previous command, e.g. Select All + Categorize
@@ -294,8 +340,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         shouldMergeWithLastEditThought ||
         actionType === 'closeAlert' ||
         state.isMulticursorExecuting ||
-        (lastAction as UnknownAction)?.mergeNext ||
-        (action as UnknownAction)?.mergePrev
+        (lastAction as UnknownAction)?.mergeNext
       ) {
         lastAction = action
         const lastUndoPatch = nthLast(state.undoPatches, 1)

@@ -410,6 +410,28 @@ describe('sort', () => {
     expect(empty2.rank).toEqual(b1.rank)
     expect(c2.rank).toEqual(c1.rank)
   })
+
+  it('edited thought that was empty should be sorted into place', () => {
+    const text = `
+  - =sort
+    - Alphabetical
+      - Desc
+  - One
+`
+
+    const steps = [importText({ text }), newThought({ value: '' }), editThought([''], 'Two')]
+
+    const state = reducerFlow(steps)(initialState())
+
+    const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - =sort
+    - Alphabetical
+      - Desc
+  - Two
+  - One`)
+  })
 })
 
 describe('changing thought with duplicate descendent', () => {

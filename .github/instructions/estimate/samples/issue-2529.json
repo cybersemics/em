@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "Animation: Toggle Context View",
+    "body": "## Steps to Reproduce\r\n\r\n```\r\n- a\r\n  - m\r\n    - x\r\n- b\r\n  - m\r\n    - y\r\n```\r\n\r\nToggle Context View on `a/m`.\r\n\r\n## Current Behavior\r\n\r\nNo animation:\r\n\r\nhttps://github.com/user-attachments/assets/b548213e-051a-49f8-a2fb-06d2166e1a9d\r\n\r\n## Expected Behavior\r\n\r\n- [ ] Animate each child as [disappearing text](https://codepen.io/raine/pen/ZEgRMwR?editors=1100).\r\n- [ ] Normal view fades out from lower left.\r\n- [ ] Context view fades in from upper right.\r\n- [ ] When closing the context view, the animation is reversed.\r\n- [ ] Smoothly switch directions when context view is rapidly toggled.\r\n\r\nDemonstration:\r\n\r\nhttps://github.com/user-attachments/assets/8d75f68e-01e2-4590-a642-88e992294737",
+    "labels": ["feature"]
+  },
+  "expected": "XL",
+  "source": {
+    "type": "everhour",
+    "issue": 2529,
+    "hours": 24
+  }
+}

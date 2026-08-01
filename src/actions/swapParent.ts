@@ -60,6 +60,7 @@ const swapParent = (state: State): State => {
       oldPath: simplifyPath(state, cursor),
       newPath: simplifyPath(state, parent),
       newRank: parentThought.rank,
+      skipMerge: true,
     }),
 
     // Then move the parent under the child
@@ -67,6 +68,7 @@ const swapParent = (state: State): State => {
       oldPath: simplifyPath(state, parent),
       newPath: simplifyPath(state, [...grandparent, childId, parentId]),
       newRank: childThought.rank,
+      skipMerge: true,
     }),
 
     // Move siblings under the child
@@ -75,6 +77,7 @@ const swapParent = (state: State): State => {
         oldPath: simplifyPath(state, [...parent, sibling.id]),
         newPath: simplifyPath(state, [...grandparent, childId, sibling.id]),
         newRank: sibling.rank,
+        skipMerge: true,
       }),
     ),
 
@@ -84,6 +87,7 @@ const swapParent = (state: State): State => {
         oldPath: simplifyPath(state, [...cursor, grandchild.id]),
         newPath: simplifyPath(state, [...grandparent, childId, parentId, grandchild.id]),
         newRank: grandchild.rank,
+        skipMerge: true,
       }),
     ),
 

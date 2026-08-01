@@ -31,7 +31,16 @@ const EmptyThoughtspace = ({ isTutorial }: { isTutorial?: boolean }) => {
   return (
     <div
       aria-label='empty-thoughtspace'
-      className={css({ animation: '{durations.medium} ease-out 0s normal forwards fadein' })}
+      // pointerEvents: none anchors touches to the stable #content ancestor instead of this subtree.
+      // The browser pins a touch's target at touchstart; when LoadingEllipsis (a full-screen overlay
+      // while loading) or this entire component unmounts as the thoughtspace loads in, the remaining
+      // touchmove/touchend are dispatched to the detached element and never reach the React root,
+      // killing the gesture and leaving the gesture menu stuck on screen. Nothing in this subtree is
+      // interactive, so disabling hit testing here is safe. See #3887.
+      className={css({
+        animation: '{durations.medium} ease-out 0s normal forwards fadein',
+        pointerEvents: 'none',
+      })}
     >
       {
         // show nothing during the preconnecting phase (See: useOfflineStatus)

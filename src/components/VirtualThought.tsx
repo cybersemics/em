@@ -7,6 +7,7 @@ import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
+import { getAutoscrollPadding } from '../device/preventAutoscroll'
 import useDelayedAutofocus from '../hooks/useDelayedAutofocus'
 import useLayoutAnimationFrameEffect from '../hooks/useLayoutAnimationFrameEffect'
 import useSelectorEffect from '../hooks/useSelectorEffect'
@@ -53,6 +54,7 @@ const selectCursor = (state: State) => state.cursor
 const VirtualThought = ({
   debugIndex,
   depth,
+  childIndexNonAttribute,
   dropUncle,
   env,
   indexDescendant,
@@ -72,10 +74,12 @@ const VirtualThought = ({
   isLastVisible,
   autofocus,
   moveStyle,
+  wrappingWidth,
 }: {
   // contextChain is needed to uniquely identify thoughts across context views
   debugIndex?: number
   depth: number
+  childIndexNonAttribute: number
   dropUncle?: boolean
   env?: LazyEnv
   indexDescendant: number
@@ -97,6 +101,8 @@ const VirtualThought = ({
   autofocus: Autofocus
   /** Optional animation styles for moveThought animations. Applied to a child wrapper so height measurement is unaffected. */
   moveStyle?: React.CSSProperties
+  /** The horizontal width available to the thought before it wraps. Changes when the thought enters or leaves a table column (e.g. toggling Table View), so it is used to trigger a height re-measurement. Otherwise the stale wrapped height leaves a blank gap below the thought. */
+  wrappingWidth?: number
 }) => {
   // TODO: Why re-render the thought when its height changes? This information should be passively passed up to LayoutTree.
   const [height, setHeight] = useState<number | null>(singleLineHeight)
@@ -144,16 +150,20 @@ const VirtualThought = ({
   const updateSize = useCallback(() => {
     if (!ref.current) return
 
+    // preventAutoscroll temporarily inflates the editable's padding to trick the browser out of autoscrolling.
+    // Subtract that padding so the measured height reflects the thought's true height even while the autoscroll
+    // window is open. Otherwise a height change that occurs during the window — e.g. a note added to this thought
+    // by Swap Note on touch devices — would be recorded with an inflated height or skipped entirely, leaving the
+    // next thought overlapping the note. (#4279)
+    const editable = ref.current.querySelector(`[data-editable]`)
+    const autoscrollPadding = getAutoscrollPadding(editable as HTMLElement | null)
+
     // Need to grab max height between .thought and .thought-annotation since the annotation height might be bigger (due to wrapping link icon).
     const heightNew = Math.max(
-      ref.current.getBoundingClientRect().height,
+      ref.current.getBoundingClientRect().height - autoscrollPadding,
       ref.current.querySelector('[aria-label="thought-annotation"]')?.getBoundingClientRect().height || 0,
     )
-    const widthNew = ref.current.querySelector(`[data-editable]`)?.getBoundingClientRect().width
-
-    // skip updating height when preventAutoscroll is enabled, as it modifies the element's height in order to trick Safari into not scrolling
-    const editable = ref.current.querySelector(`[data-editable]`)
-    if (editable?.hasAttribute('data-prevent-autoscroll')) return
+    const widthNew = editable?.getBoundingClientRect().width
 
     // Get the updated autofocus, otherwise isVisible will be stale.
     // Using the local autofocus and adding it as a dependency works when clicking on the cursor's parent but not when activating cursorBack from the keyboad for some reason.
@@ -182,6 +192,7 @@ const VirtualThought = ({
     style,
     isContextViewActive,
     editingValue,
+    wrappingWidth,
   ])
 
   // Recalculate height on cursor change since indentation can change line wrapping
@@ -245,6 +256,7 @@ const VirtualThought = ({
         <Subthought
           autofocus={autofocus}
           debugIndex={debugIndex}
+          childIndexNonAttribute={childIndexNonAttribute}
           depth={depth + 1}
           dropUncle={dropUncle}
           env={env}

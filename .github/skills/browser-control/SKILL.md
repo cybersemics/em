@@ -37,10 +37,10 @@ Once the sub-skill confirms the environment is up, the caller can drive it — s
 
 ## Step 1: Probe the dev server
 
-The runner's setup phase already started the Vite dev server. Verify it is responsive before bringing up any environment. Vite may serve HTTP or HTTPS (the `-k` flag accepts the self-signed dev cert):
+The runner's setup phase already started the Vite dev server. Verify it is responsive before bringing up any environment. Vite serves **HTTPS by default** (self-signed via `@vitejs/plugin-basic-ssl`); it only serves HTTP when started with `HTTP=1`. The `-k` flag accepts the self-signed dev cert:
 
 ```bash
-curl -fsS -o /dev/null http://localhost:3000 || curl -fsSk -o /dev/null https://localhost:3000
+curl -fsSk -o /dev/null https://localhost:3000 || curl -fsS -o /dev/null http://localhost:3000
 ```
 
 If neither responds, check `/tmp/dev-server.log` and report — do not start a second instance. Note which scheme responded; the sub-skill may need it.

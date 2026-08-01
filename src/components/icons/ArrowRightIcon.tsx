@@ -1,11 +1,10 @@
-import { FC } from 'react'
 import { css, cx } from '../../../styled-system/css'
 import { iconRecipe } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/IconType'
 
-/** Arrow-right icon used by the Command Universe Forward button. */
-const ArrowRightIcon: FC<IconType> = ({ size = 24, fill, cssRaw }) => {
+/** Arrow-right icon used by the Command Universe Forward button and the Navigate Forward command. */
+const ArrowRightIcon = ({ size = 24, fill, cssRaw }: IconType) => {
   const strokeColor = fill || token('colors.fg')
 
   return (

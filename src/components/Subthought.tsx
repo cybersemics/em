@@ -27,6 +27,7 @@ import Thought from './Thought'
 const Subthought = ({
   autofocus,
   debugIndex,
+  childIndexNonAttribute,
   depth,
   env,
   isMultiColumnTable,
@@ -41,6 +42,7 @@ const Subthought = ({
 }: {
   autofocus: Autofocus
   debugIndex?: number
+  childIndexNonAttribute: number
   depth: number
   dropUncle?: boolean
   env?: LazyEnv
@@ -150,6 +152,7 @@ const Subthought = ({
       >
         <Thought
           debugIndex={debugIndex}
+          childIndexNonAttribute={childIndexNonAttribute}
           depth={depth + 1}
           env={env}
           hideBullet={hideBullet}
