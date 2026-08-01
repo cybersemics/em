@@ -110,17 +110,18 @@ export const hashKeyDown = (e: KeyboardEvent): string =>
   (letters[e.keyCode] || digits[e.keyCode] || e.key || '').toUpperCase()
 
 /* A map of typed modifier tokens to the corresponding Key modifier property.
- * All Command/Control synonyms map to meta because em's matching layer has no functioning literal-control
- * distinction: hashCommand ignores Key.control and hashKeyDown folds e.ctrlKey into META_. See docs/commands.md.
+ * Command and Ctrl are the same modifier on their respective platforms, so they both map to meta. Literal Control is
+ * a distinct modifier on Mac only; on other platforms Ctrl is already meta, so a typed Ctrl maps to meta there too.
+ * See docs/commands.md.
  */
-const SHORTCUT_MODIFIERS: Index<'meta' | 'alt' | 'shift'> = {
+const SHORTCUT_MODIFIERS: Index<'meta' | 'alt' | 'shift' | 'control'> = {
   cmd: 'meta',
   command: 'meta',
   meta: 'meta',
-  ctrl: 'meta',
-  control: 'meta',
+  ctrl: isMac ? 'control' : 'meta',
+  control: isMac ? 'control' : 'meta',
   '⌘': 'meta',
-  '⌃': 'meta',
+  '⌃': isMac ? 'control' : 'meta',
   opt: 'alt',
   option: 'alt',
   alt: 'alt',
@@ -153,8 +154,8 @@ const SHORTCUT_NAMED_KEYS: Index<string> = {
  *
  * Tokens are case-insensitive and order-independent, separated by whitespace and/or "+". A query is recognized as a
  * shortcut iff it contains at least one modifier token and exactly one valid key token (a single character or a known
- * named key). All Command/Control synonyms (cmd, command, meta, ctrl, control) map to META, consistent with how em
- * matches keypresses at runtime.
+ * named key). Modifier tokens map to the same Key properties that em matches keypresses against at runtime, so typing
+ * a command's displayed shortcut (e.g. "Command + Control + e") always resolves to that command's hash.
  */
 export const parseCommandShortcut = (query: string): string | null => {
   const tokens = query
@@ -164,7 +165,7 @@ export const parseCommandShortcut = (query: string): string | null => {
 
   if (tokens.length === 0) return null
 
-  const modifiers = new Set<'meta' | 'alt' | 'shift'>()
+  const modifiers = new Set<'meta' | 'alt' | 'shift' | 'control'>()
   const keys: string[] = []
 
   tokens.forEach(token => {
@@ -187,6 +188,7 @@ export const parseCommandShortcut = (query: string): string | null => {
     key: keys[0],
     meta: modifiers.has('meta'),
     alt: modifiers.has('alt'),
+    control: modifiers.has('control'),
     shift: modifiers.has('shift'),
   })
 }

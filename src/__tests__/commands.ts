@@ -1,4 +1,4 @@
-import { hashCommand, parseCommandShortcut } from '../commands'
+import { formatKeyboardShortcut, hashCommand, parseCommandShortcut } from '../commands'
 
 describe('parseCommandShortcut', () => {
   it('parses a space-separated shortcut', () => {
@@ -25,13 +25,11 @@ describe('parseCommandShortcut', () => {
     expect(parseCommandShortcut('cmd + option + k')).toBe(hashCommand({ key: 'k', meta: true, alt: true }))
   })
 
-  it('treats all Command/Control synonyms (cmd, command, meta, ctrl, control) as META', () => {
+  it('treats all Command synonyms (cmd, command, meta) as META', () => {
     const hash = hashCommand({ key: 'k', meta: true, alt: true })
     expect(parseCommandShortcut('cmd option k')).toBe(hash)
     expect(parseCommandShortcut('command option k')).toBe(hash)
     expect(parseCommandShortcut('meta option k')).toBe(hash)
-    expect(parseCommandShortcut('ctrl option k')).toBe(hash)
-    expect(parseCommandShortcut('control option k')).toBe(hash)
   })
 
   it('treats all Option/Alt synonyms as ALT', () => {
@@ -66,14 +64,15 @@ describe('parseCommandShortcut', () => {
     expect(parseCommandShortcut('cmd 1')).toBe(hashCommand({ key: '1', meta: true }))
   })
 
-  it('finds extractThought via any Command/Control synonym (control is folded into meta)', () => {
-    // extractThought is bound to { key: 'e', control: true, meta: true }, which hashCommand normalizes to the same
-    // hash as a plain meta shortcut
-    const extractHash = hashCommand({ key: 'e', control: true, meta: true })
-    expect(parseCommandShortcut('ctrl e')).toBe(extractHash)
-    expect(parseCommandShortcut('control e')).toBe(extractHash)
-    expect(parseCommandShortcut('cmd e')).toBe(extractHash)
-    expect(parseCommandShortcut('meta e')).toBe(extractHash)
+  it('finds a command by typing the shortcut exactly as it is displayed', () => {
+    // extractThought is bound to { key: 'e', control: true, meta: true }, i.e. Command + Control + e on Mac and
+    // Ctrl + Shift + e elsewhere, since Ctrl is already the meta modifier on non-Mac platforms
+    const extractKeyboard = { key: 'e', control: true, meta: true }
+    expect(parseCommandShortcut(formatKeyboardShortcut(extractKeyboard))).toBe(hashCommand(extractKeyboard))
+
+    // heading1 is bound to { key: '1', meta: true, alt: true, control: true }
+    const heading1Keyboard = { key: '1', meta: true, alt: true, control: true }
+    expect(parseCommandShortcut(formatKeyboardShortcut(heading1Keyboard))).toBe(hashCommand(heading1Keyboard))
   })
 
   describe('non-shortcut queries return null', () => {
