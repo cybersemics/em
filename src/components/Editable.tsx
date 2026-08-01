@@ -105,31 +105,6 @@ const applyOuterTag = (newValue: string, oldValue: string): string => {
 // this flag is used to ensure that the browser selection is not restored after the initial setCursorOnThought
 let cursorOffsetInitialized = false
 
-/** Returns a guard function that throws with the given message if it is called more than `limit` times within a
- * rolling `windowMs` window. Used to convert a runaway re-entrant loop into a loud, stack-unwinding error instead of
- * a frozen main thread. The default limit is far above any human typing/IME/autocomplete burst. */
-const useInfiniteLoopGuard = (name: string, message: string, limit = 100, windowMs = 1000) => {
-  const stateRef = useRef({ count: 0, windowStart: 0 })
-  return useCallback(() => {
-    const now = performance.now()
-    const guard = stateRef.current
-    if (now - guard.windowStart > windowMs) {
-      guard.windowStart = now
-      guard.count = 0
-    }
-    guard.count++
-    // Log high-water marks so the rolling log shows the loop tightening (dt collapsing) before it trips the limit.
-    if (guard.count % 25 === 0) {
-      debugLog.log('guard', { guard: name, count: guard.count })
-    }
-    if (guard.count > limit) {
-      // Log immediately before throwing so the final pre-freeze burst is captured even though the throw unwinds the stack.
-      debugLog.log('guard', { guard: name, count: guard.count, threw: true })
-      throw new Error(message)
-    }
-  }, [name, message, limit, windowMs])
-}
-
 /**
  * An editable thought with throttled editing.
  * Use rank instead of headRank(simplePath) as it will be different for context view.
@@ -184,11 +159,6 @@ const Editable = ({
   const hasMulticursor = useSelector(hasMulticursorSelector)
   // store the old value so that we have a transcendental head when it is changed
   const oldValueRef = useRef(value)
-  // Guards against a runaway re-entrant loop in the change/autocomplete handlers freezing the app (#4467).
-  const guardChangeHandler = useInfiniteLoopGuard(
-    'change',
-    'Infinite loop detected in Editable.onChangeHandler: over 100 change events within 1s',
-  )
   const nullRef = useRef<HTMLInputElement>(null)
   const contentRef = editableRef || nullRef
   const isCursor = useSelector(state => equalPath(path, state.cursor))
@@ -559,11 +529,6 @@ const Editable = ({
       // create a duplicate undo step (WebKit re-serializes the inserted HTML, so it is not even value-identical). The
       // editThought's forced re-render restores the editable to the exact computed value (#4637).
       if (globals.suppressChange) return
-
-      // Infinite loop guard. onChangeHandler is re-entrant (edit → dispatch editThought → re-render →
-      // input → onChange). The newValue === oldValue short-circuit below normally breaks the cycle, but a
-      // corrupted Thought/Lexeme pair can defeat it and spin the main thread, freezing the app (#4467).
-      guardChangeHandler()
 
       // make sure to get updated state
 
