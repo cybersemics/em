@@ -7,7 +7,7 @@ import gesture, { startGesture } from '../helpers/gesture'
 import keyboard from '../helpers/keyboard'
 import paste from '../helpers/paste'
 import scrollTo from '../helpers/scrollTo'
-import setOfflineStatus from '../helpers/setOfflineStatus'
+import setConnectionStatus from '../helpers/setConnectionStatus'
 import waitForSelector from '../helpers/waitForSelector'
 import { page } from '../session'
 
@@ -74,7 +74,7 @@ describe('gestures', () => {
   it('releases a gesture whose touch target unmounts mid-gesture', async () => {
     // The loading indicator is the element that unmounts under the user's finger in the reported
     // bug: it is replaced by the thoughtspace once content loads.
-    await setOfflineStatus('connecting')
+    await setConnectionStatus('connecting')
     await waitForSelector('[data-loading-indicator]', { timeout: 8000 })
 
     const activeGesture = await startGesture({ target: '[data-loading-indicator]' })
@@ -85,7 +85,7 @@ describe('gestures', () => {
     // EmptyThoughtspace keeps the indicator mounted while state.isLoading is true unless the status
     // is 'offline'. isLoading is not under the test's control and stays true for the whole run in
     // CI, so 'connected' leaves the indicator mounted and this wait never resolves.
-    await setOfflineStatus('offline')
+    await setConnectionStatus('offline')
     await waitForSelector('[data-loading-indicator]', { hidden: true, timeout: 8000 })
 
     await activeGesture.end()
