@@ -75,15 +75,18 @@ describe('gestures', () => {
     // The loading indicator is the element that unmounts under the user's finger in the reported
     // bug: it is replaced by the thoughtspace once content loads.
     await setOfflineStatus('connecting')
-    await waitForSelector('[data-loading-indicator]')
+    await waitForSelector('[data-loading-indicator]', { timeout: 8000 })
 
     const activeGesture = await startGesture({ target: '[data-loading-indicator]' })
     await activeGesture.move('d')
-    await waitForSelector('[data-testid=popup-value]')
+    await waitForSelector('[data-testid=popup-value]', { timeout: 8000 })
 
-    // Unmount the touch target while the touch is still held.
-    await setOfflineStatus('connected')
-    await waitForSelector('[data-loading-indicator]', { hidden: true })
+    // Unmount the touch target while the touch is still held. 'offline' rather than 'connected':
+    // EmptyThoughtspace keeps the indicator mounted while state.isLoading is true unless the status
+    // is 'offline'. isLoading is not under the test's control and stays true for the whole run in
+    // CI, so 'connected' leaves the indicator mounted and this wait never resolves.
+    await setOfflineStatus('offline')
+    await waitForSelector('[data-loading-indicator]', { hidden: true, timeout: 8000 })
 
     await activeGesture.end()
 
