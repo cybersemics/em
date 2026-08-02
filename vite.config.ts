@@ -1,6 +1,7 @@
 import { treecrdt } from '@treecrdt/wa-sqlite/vite-plugin'
 import basicSsl from '@vitejs/plugin-basic-ssl'
 import react from '@vitejs/plugin-react'
+import { execSync } from 'child_process'
 import type { IncomingMessage, ServerResponse } from 'http'
 import path from 'path'
 import { type Plugin, type PreviewServer, type ViteDevServer, defineConfig } from 'vite'
@@ -14,6 +15,16 @@ const crossOriginIsolationHeaders = {
 }
 
 const useHttps = !process.env.HTTP
+
+/** Resolve the short git commit hash of the current build, injected into the app via `define`. Prefers Vercel's build-time env var, falls back to git, then to 'unknown'. */
+const commitHash = (() => {
+  if (process.env.VERCEL_GIT_COMMIT_SHA) return process.env.VERCEL_GIT_COMMIT_SHA.slice(0, 7)
+  try {
+    return execSync('git rev-parse --short HEAD').toString().trim()
+  } catch {
+    return 'unknown'
+  }
+})()
 
 /**
  * Vite plugin that gates access behind a secret token when TUNNEL_TOKEN is set.
@@ -31,6 +42,17 @@ function tunnelTokenGate(): Plugin | undefined {
   /** Middleware that allows requests bearing a valid token (via cookie or query param) and rejects all others. */
   const gate = (server: ViteDevServer | PreviewServer) => {
     server.middlewares.use((req: IncomingMessage, res: ServerResponse, next: () => void) => {
+      // Unauthenticated occupancy probe, answered before the token check. A run about to claim a
+      // Cloudflare tunnel needs to know whether anyone is already answering on that hostname, and
+      // it can't authenticate as whoever that would be. Deliberately exposes nothing but the CI run
+      // id, which is already public in the workflow logs. See checkOccupancy in
+      // src/e2e/iOS/config/cloudflareTunnelPool.ts.
+      if ((req.url || '').split('?')[0] === '/__tunnel-status') {
+        res.statusCode = 200
+        res.setHeader('Content-Type', 'application/json')
+        res.end(JSON.stringify({ em: true, run: process.env.GITHUB_RUN_ID || '' }))
+        return
+      }
       // Accept an existing session cookie set on a previous authenticated request.
       const cookieHeader = req.headers.cookie || ''
       if (cookieHeader.split(';').some(c => c.trim() === `${cookieName}=${token}`)) {
@@ -72,6 +94,9 @@ export default defineConfig({
     // Avoid crawling stale local checkout directories left behind after removing the TreeCRDT submodule.
     entries: ['index.html'],
   },
+  define: {
+    __COMMIT_HASH__: JSON.stringify(commitHash),
+  },
   plugins: [
     react(),
     treecrdt({ outDir: 'public/wa-sqlite' }),
@@ -110,8 +135,9 @@ export default defineConfig({
     tunnelTokenGate(),
   ],
   server: {
-    // Allow bs-local.com for BrowserStack local testing
-    allowedHosts: ['bs-local.com'],
+    // Allow bs-local.com for BrowserStack local testing, and the Cloudflare tunnel pool's
+    // hostnames (leading dot matches all *.emthought.cc subdomains) for BrowserStack iOS Safari.
+    allowedHosts: ['bs-local.com', '.emthought.cc'],
     ...(process.env.PUPPETEER
       ? {
           hmr: {
@@ -125,5 +151,6 @@ export default defineConfig({
   },
   preview: {
     headers: crossOriginIsolationHeaders,
+    allowedHosts: ['.emthought.cc'],
   },
 })

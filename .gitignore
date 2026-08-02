@@ -5,6 +5,13 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 local.log
+# cloudflared tunnel diagnostic logs written at runtime by the BrowserStack e2e run
+cloudflared-browserstack.log
+serve.log
+# contains live connector tokens — output of scripts/provision-cloudflare-tunnel-pool.sh
+cloudflare-tunnel-pool.json
+# operator-only tool for provisioning/topping up the tunnel pool; kept local, not part of the app
+scripts/provision-cloudflare-tunnel-pool.sh
 
 .pnp.*
 .yarn/*
@@ -25,8 +32,8 @@ local.log
 /build
 
 # Tauri
-src-tauri/target
-src-tauri/gen/schemas
+desktop/target
+desktop/gen/schemas
 
 # diff images output from failed Puppeteer snapshot tests
 __diff_output__
@@ -46,3 +53,8 @@ local.*
 /log
 /logs
 
+# per-user state when `docs` is opened as an Obsidian vault
+docs/.obsidian
+
+# scratch space – for throwaway scripts, notes, and logs
+/.local

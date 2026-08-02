@@ -612,7 +612,7 @@ export const COMMAND_GROUPS: {
   },
   {
     title: 'Settings',
-    commands: ['customizeToolbar'],
+    commands: ['settings', 'customizeToolbar'],
   },
   {
     title: 'Help',
