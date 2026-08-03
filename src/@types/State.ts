@@ -139,6 +139,7 @@ interface State {
   search: string | null
   searchContexts: Index<Context> | null
   searchLimit?: number
+  showBulletPicker?: boolean
   showColorPicker?: boolean
   showLetterCase?: boolean
   showDesktopCommandUniverse: boolean
