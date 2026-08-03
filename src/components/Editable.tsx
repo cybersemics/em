@@ -441,7 +441,12 @@ const Editable = ({
         // that stopped returning (the last 'retarget' entry before the log goes silent is the culprit). `deferred`
         // distinguishes these entries from pre-#4607-fix logs, where the retarget ran synchronously in the input event.
         debugLog.log('retarget', { step: 'asyncFocus', savedOffset: savedCharOffset, deferred: true })
+        // asyncFocus dispatches blur synchronously, and focus returns to the editable a few lines below, so the user
+        // is still typing. Suppress the blur handlers that resync the editable to the value in Redux, which by now
+        // has been trimmed by onChangeHandler: they would swallow the space that committed the autocomplete (#4828).
+        globals.suppressBlurSync = true
         asyncFocus({ force: true })
+        globals.suppressBlurSync = false
 
         debugLog.log('retarget', { step: 'preventAutoscroll', savedOffset: savedCharOffset })
         preventAutoscroll(editable)
@@ -749,7 +754,8 @@ const Editable = ({
       // update the ContentEditable if the new scrubbed value is different (i.e. stripped, space after emoji added, etc)
       // they may intentionally become out of sync during editing if the value is modified programmatically (such as trim) in order to avoid reseting the caret while the user is still editing
       // oldValueRef.current is the latest value since throttledChangeRef was just flushed
-      if (contentRef.current?.innerHTML !== oldValueRef.current) {
+      // Skipped during the iOS autocomplete focus retarget, whose momentary blur does not end editing (#4828).
+      if (!globals.suppressBlurSync && contentRef.current?.innerHTML !== oldValueRef.current) {
         // remove the invalid state error, remove invalid-option class, and reset editable html
         dispatch((dispatch, getState) => {
           const state = getState()
