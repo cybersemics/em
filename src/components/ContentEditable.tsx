@@ -44,7 +44,12 @@ const ContentEditable = React.memo(
           editableNonceRef.current !== editableNonce ||
           (prevHtmlRef.current !== html && allowInnerHTMLChange.current)
         ) {
-          contentRef.current!.innerHTML = html
+          // Skip a write that would produce identical markup. Assigning innerHTML replaces every child node, which
+          // destroys the browser's native text selection, so an update that has already been applied to the DOM in
+          // place (see actions/formatSelection) must not be re-applied here (#4275).
+          if (contentRef.current!.innerHTML !== html) {
+            contentRef.current!.innerHTML = html
+          }
           prevHtmlRef.current = html
         }
       },

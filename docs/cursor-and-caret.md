@@ -155,6 +155,14 @@ When `selection.set` runs on a thought that's near the bottom of the viewport, t
 
 Because the temporary CSS inflates the editable's padding, any height measured during the autoscroll window is too large. `getAutoscrollPadding(el)` returns the number of pixels of padding currently added to an element so that `VirtualThought.updateSize` can subtract it and record the thought's true height even during the window. Without this, a height change that occurs during the window — e.g. a note added by Swap Note — would be recorded with an inflated height or skipped entirely, leaving the next thought overlapping the note ([#4279](https://github.com/cybersemics/em/issues/4279)).
 
+### `morphHtml.ts`
+
+[`src/device/morphHtml.ts`](../src/device/morphHtml.ts).
+
+The browser's selection is anchored to specific DOM nodes, so assigning `innerHTML` destroys it — every node is replaced, and the native selection goes with them. Re-creating the range programmatically afterwards restores *where* the selection is but not the platform UI around it: Android does not re-show the selection handles or the context menu for a selection it did not see the user make.
+
+`morphHtml(element, html)` updates an element's contents to the given HTML in place instead, reusing the existing nodes wherever they match (re-syncing attributes, splitting a text node and moving it into a new wrapper, and only replacing what it cannot match up). [`formatSelection`](../src/actions/formatSelection.ts) applies a partial-selection format this way before dispatching `editThought`, so the forced re-render finds the markup already correct and [`ContentEditable`](../src/components/ContentEditable.tsx) skips the assignment — the user's selection is never interrupted ([#4275](https://github.com/cybersemics/em/issues/4275)). Reconciliation is best-effort: if the resulting markup ever diverges from the value being rendered, `ContentEditable` assigns `innerHTML` as before and `formatSelection` re-applies the range on the next tick.
+
 ## Testing
 
 All browser-selection testing should happen in puppeteer e2e tests, since they run against a real browser whose selection API behaves correctly.

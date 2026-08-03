@@ -326,7 +326,7 @@ it('Selection remains active after applying a font color to text that already ha
 })
 
 // https://github.com/cybersemics/em/issues/4275
-it.skip('Selection is not dropped when applying a font color over a background color', async () => {
+it('Selection is not dropped when applying a font color over a background color', async () => {
   const importText = `
   - Labrador
   - Golden Retriever`
