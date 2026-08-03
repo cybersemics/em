@@ -58,7 +58,7 @@ describe('clearThought', () => {
   })
 
   // https://github.com/cybersemics/em/issues/4830
-  it.skip('cancels clear thought mode on Escape and keeps the cursor', async () => {
+  it('cancels clear thought mode on Escape and keeps the cursor', async () => {
     await act(async () => {
       store.dispatch([
         importText({
