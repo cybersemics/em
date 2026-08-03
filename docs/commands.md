@@ -162,7 +162,7 @@ The full list of user-facing commands. For the canonical, always-up-to-date set,
 
 ### Back
 
-Move the cursor up a level.
+Move the cursor up a level. If Clear Thought is active, cancel it instead and leave the cursor where it is.
 
 <kbd>Escape</kbd>
 
