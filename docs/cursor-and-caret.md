@@ -36,8 +36,8 @@ All access to the browser selection API goes through [`device/selection.ts`](../
 
 The `selection.ts` module groups its functions roughly into:
 
-- **Reads:** `isActive()`, `isCollapsed()`, `isText()`, `isThought()`, `isNote()`, `isOnFirstLine()`, `isOnLastLine()`, `isStartOfElementNode()`, `isEndOfElementNode()`, `offset()`, `offsetThought()`, `offsetStart()`, `offsetEnd()`, `text()`, `html()`, `getBoundingClientRect()`, `isNear(x, y, distance)`.
-- **Writes:** `set(node, { offset?, end? })`, `clear()`, `select(el)`, `removeCurrentSelection()`.
+- **Reads:** `isActive()`, `isCollapsed()`, `isText()`, `isThought()`, `isNote()`, `isOnFirstLine()`, `isOnLastLine()`, `isStartOfElementNode()`, `isEndOfElementNode()`, `offset()`, `offsetThought()`, `offsetStart()`, `offsetEnd()`, `text()`, `html()`, `getBoundingClientRect()`, `isNear(x, y, distance)`, `isWithin(root)`, `offsetRange(editable)`.
+- **Writes:** `set(node, { offset?, end? })`, `setRange(root, start, end)`, `clear()`, `select(el)`, `removeCurrentSelection()`.
 - **Save/restore:** `save()` returns a `SavedSelection` opaque object; `restore(saved)` puts it back. Used when an action that re-renders the DOM needs to preserve the caret across the render.
 - **Split helpers:** `split(el)` and `splitNode(root, range)` return the HTML before/after the caret with formatting tags re-balanced. Used by the Split Sentences command and the Extract command.
 
@@ -154,6 +154,14 @@ The main consumer is [`useDragAndDropThought`](../src/hooks/useDragAndDropThough
 When `selection.set` runs on a thought that's near the bottom of the viewport, the browser will sometimes scroll the editable into view. This is fine in theory but can fight with em's own viewport autocrop logic and produce a jumpy keyboard. `preventAutoscroll` temporarily applies CSS that puts the element near the viewport center (so the browser thinks no scroll is needed), restores the original styles after a 10 ms timeout, and is invoked by `useEditMode` before `selection.set`.
 
 Because the temporary CSS inflates the editable's padding, any height measured during the autoscroll window is too large. `getAutoscrollPadding(el)` returns the number of pixels of padding currently added to an element so that `VirtualThought.updateSize` can subtract it and record the thought's true height even during the window. Without this, a height change that occurs during the window — e.g. a note added by Swap Note — would be recorded with an inflated height or skipped entirely, leaving the next thought overlapping the note ([#4279](https://github.com/cybersemics/em/issues/4279)).
+
+### `morphHtml.ts`
+
+[`src/device/morphHtml.ts`](../src/device/morphHtml.ts).
+
+The browser's selection is anchored to specific DOM nodes, so assigning `innerHTML` destroys it — every node is replaced, and the native selection goes with them. Re-creating the range programmatically afterwards restores *where* the selection is but not the platform UI around it: Android does not re-show the selection handles or the context menu for a selection it did not see the user make.
+
+`morphHtml(element, html)` updates an element's contents to the given HTML in place instead, reusing the existing nodes wherever they match (re-syncing attributes, splitting a text node and moving it into a new wrapper, and only replacing what it cannot match up). [`formatSelection`](../src/actions/formatSelection.ts) applies a partial-selection format this way before dispatching `editThought`, so the forced re-render finds the markup already correct and [`ContentEditable`](../src/components/ContentEditable.tsx) skips the assignment — the user's selection is never interrupted ([#4275](https://github.com/cybersemics/em/issues/4275)). Reconciliation is best-effort: if the resulting markup ever diverges from the value being rendered, `ContentEditable` assigns `innerHTML` as before and `formatSelection` re-applies the range on the next tick.
 
 ## Testing
 

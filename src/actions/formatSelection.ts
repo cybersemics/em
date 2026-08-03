@@ -2,6 +2,7 @@
 import Thunk from '../@types/Thunk'
 import { isSafari, isTouch } from '../browser'
 import { ColorToken } from '../colors.config'
+import morphHtml from '../device/morphHtml'
 import * as selection from '../device/selection'
 import globals from '../globals'
 import noteValue from '../selectors/noteValue'
@@ -43,12 +44,16 @@ import { setNoteFocusActionCreator as setNoteFocus } from './setNoteFocus'
  * to undo. When the stack drifts out of sync, the native dialog will not display an option to undo or redo past a certain point.
  * - If there are no editables, such as after undoing the creation of the only remaining thought, then there will be no `beforeinput` event and native
  * undo/redo behavior will stop having an effect. Technically, native undo is still running, but it doesn't know how to re-create a deleted thought.
+ *
+ * Returns true if a native undo step was registered, i.e. the live DOM was overwritten by the execCommand and must be
+ * re-rendered from Redux rather than updated in place.
  */
-const registerNativeUndoStep = (html: string): void => {
-  if (!isTouch || !isSafari()) return
+const registerNativeUndoStep = (html: string): boolean => {
+  if (!isTouch || !isSafari()) return false
   globals.suppressChange = true
   document.execCommand('insertHTML', false, html)
   globals.suppressChange = false
+  return true
 }
 
 /** Format the browser selection or cursor thought as bold, italic, strikethrough, underline, code, color, or removeFormat.
@@ -109,7 +114,20 @@ export const formatSelectionActionCreator =
 
     // Only call document.execCommand when the keyboard is open and the caret is on a thought.
     // This avoids messy and buggy focus-management logic.
-    if (state.isKeyboardOpen) registerNativeUndoStep(newValue)
+    const nativeUndoStep = state.isKeyboardOpen ? registerNativeUndoStep(newValue) : false
+
+    // The selected range when the user has selected part of a thought — the only case where the browser holds a
+    // visible selection that must survive the edit. null for a caret, a whole-thought selection, or a note.
+    const partialRange = !whole && !state.noteFocus && range && range.start !== range.end ? range : null
+
+    // Apply the formatting to the live editable in place, reusing the DOM nodes the selection is anchored in.
+    // editThought below forces the ContentEditable to update, which assigns innerHTML and destroys every node — and
+    // with them the native selection, which Android will not re-decorate with selection handles and a context menu
+    // once it has been re-created programmatically (#4275). Updating the DOM in place first makes the assignment a
+    // no-op (ContentEditable skips a write that would be identical), so the selection is never interrupted.
+    // Skipped when a native undo step was registered, since that overwrites the editable with the whole new value and
+    // relies on the forced re-render to restore it.
+    if (partialRange && !nativeUndoStep) morphHtml(contentEditable, newValue)
 
     dispatch(
       state.noteFocus
@@ -131,6 +149,24 @@ export const formatSelectionActionCreator =
             }),
           ],
     )
+
+    // Restore a partial selection that the forced re-render above collapsed to a caret (#4275).
+    // This is the fallback for the cases that are not updated in place above (iOS, where a native undo step overwrites
+    // the editable, and any markup the in-place update cannot reconcile): the re-render resets the editable's
+    // innerHTML and sets a collapsed selection at the cursor offset, so the original range is re-applied on the next
+    // tick using the plain-text offsets captured before the edit. Formatting never changes the plain text, so the
+    // offsets still map to the correct nodes in the re-rendered DOM. Skipped when the selection already spans those
+    // offsets, so a selection that survived in place is never replaced by a programmatic one, and when the editable is
+    // no longer the active selection target, so focusing a different thought before the restore fires is not
+    // overridden.
+    if (partialRange) {
+      const { start: selectionStart, end: selectionEnd } = partialRange
+      setTimeout(() => {
+        const current = selection.offsetRange(contentEditable)
+        if (current?.start === selectionStart && current?.end === selectionEnd) return
+        if (selection.isWithin(contentEditable)) selection.setRange(contentEditable, selectionStart, selectionEnd)
+      })
+    }
 
     // Update the toolbar command state when formatting a sub-range (the whole-thought state is derived from the caret).
     if (!whole || !state.isKeyboardOpen) updateCommandState()
