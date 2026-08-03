@@ -637,7 +637,7 @@ TDD needs no filter: its `detect` job already finds no changed tests in such a p
 
 #### Superseded runs
 
-Path filtering decides which runs start; concurrency decides which of them are worth finishing. When a pull request is pushed to twice in quick succession only the newer run's result is ever read, so Test, Puppeteer, Lint, TDD, and Vercel Preview each cancel the run they supersede. The first four carry this block:
+Path filtering decides which runs start; concurrency decides which of them are worth finishing. When a pull request is pushed to twice in quick succession only the newer run's result is ever read, so Test, Puppeteer, Lint, TDD, Vercel Preview, and BrowserStack each cancel the run they supersede. The first four carry this block:
 
 ```yml
 concurrency:
@@ -653,7 +653,7 @@ concurrency:
 
 Downstream workflows already tolerate it: [`Puppeteer Diff Comment`](../.github/workflows/puppeteer-diff-comment.yml) acts only on a `success` or `failure` conclusion, so a cancelled run posts nothing from its partial artifacts.
 
-BrowserStack is the one exception: it queues rather than supersedes, for the reason in its table note below. TDD's iOS job runs against the same BrowserStack account from a *different* group, so it contends for that shared session cap either way — cancelling a superseded TDD run only reduces the draw on it.
+BrowserStack does both, because its two requirements point in opposite directions: it supersedes within a pull request and queues across them, using a group at each level. See [Layered BrowserStack concurrency](#layered-browserstack-concurrency). TDD's iOS job runs against the same BrowserStack account from a *different* group, so it contends for that shared session cap either way — cancelling a superseded TDD run only reduces the draw on it.
 
 | Workflow | File | What it runs | Notes |
 |---|---|---|---|
