@@ -635,11 +635,31 @@ Because `paths-ignore` skips a workflow outright, **no check is reported at all*
 
 TDD needs no filter: its `detect` job already finds no changed tests in such a pull request and skips on its own. A run is skipped only when *every* changed file matches, so any pull request that also touches app or test code runs everything in full.
 
+#### Superseded runs
+
+Path filtering decides which runs start; concurrency decides which of them are worth finishing. When a pull request is pushed to twice in quick succession only the newer run's result is ever read, so Test, Puppeteer, Lint, TDD, and Vercel Preview each cancel the run they supersede. The first four carry this block:
+
+```yml
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: true
+```
+
+**The group key is per-trigger, not copyable between workflows.** For a `pull_request` workflow, `github.ref` is `refs/pull/<n>/merge` and is already per-pull-request. Vercel Preview cannot use it: `pull_request_target` sets `github.ref` to the base branch, which would put every open pull request in one group, so it keys on `github.event.pull_request.number` instead. Check the trigger before reusing either form.
+
+**Only pull-request runs are grouped.** Every other event falls back to `github.run_id`, which is unique per run and so never collides. This is not the same as `cancel-in-progress: false`: a *shared* group with cancellation off queues runs instead, and GitHub cancels a pending run when a newer one queues behind it — the reason BrowserStack also sets `queue: max`. Two things depend on non-pull-request runs neither cancelling nor queueing: each push to `main` needs its own result to identify the commit that broke the build, and the `ghworkflow` flake hunt ([Tips](#triggering-github-actions-workflows-manually)) fans out many `workflow_dispatch` runs on a single ref that must all actually run.
+
+**Cancelling does not strand the required check.** A cancelled run reports `cancelled`, not `success`, and Lint is the one required status check on `main`. It still cannot block a merge, because branch protection evaluates the checks on the pull request's *head* commit and only a superseded commit's run is ever cancelled — the head commit's run always finishes, since nothing supersedes it. This is the opposite of the `paths-ignore` hazard above, where the check that would gate the merge is never reported at all.
+
+Downstream workflows already tolerate it: [`Puppeteer Diff Comment`](../.github/workflows/puppeteer-diff-comment.yml) acts only on a `success` or `failure` conclusion, so a cancelled run posts nothing from its partial artifacts.
+
+BrowserStack is the one exception: it queues rather than supersedes, for the reason in its table note below. TDD's iOS job runs against the same BrowserStack account from a *different* group, so it contends for that shared session cap either way — cancelling a superseded TDD run only reduces the draw on it.
+
 | Workflow | File | What it runs | Notes |
 |---|---|---|---|
 | **Test** | [`.github/workflows/test.yml`](../.github/workflows/test.yml) | `yarn test` (Vitest unit + jsdom) | The fast tier. Should always pass. Filtered by `paths-ignore` (see above). |
 | **Puppeteer** | [`.github/workflows/puppeteer.yml`](../.github/workflows/puppeteer.yml) | `yarn test:puppeteer` against a `browserless/chrome:latest` service container on port 7566. | On failure, image-snapshot diffs are uploaded in the `__diff_output__` artifact. |
-| **BrowserStack** | [`.github/workflows/ios.yml`](../.github/workflows/ios.yml) | `yarn test:ios` (an alias of `test:ios:browserstack`) against real iOS devices via BrowserStack. | Uses `pull_request_target` so credentials are available, guarded by `changed_files > 0` and `paths-ignore`, and serialized to avoid exhausting the shared device pool. |
+| **BrowserStack** | [`.github/workflows/ios.yml`](../.github/workflows/ios.yml) | `yarn test:ios` (an alias of `test:ios:browserstack`) against real iOS devices via BrowserStack. | Uses `pull_request_target` so credentials are available, guarded by `changed_files > 0` and `paths-ignore`. Serialized repo-wide by a `browserstack` group with `cancel-in-progress: false` and `queue: max`: because the BrowserStack parallel-session cap is shared across every run, these queue rather than supersede each other, and no run is dropped. |
 | **TDD** | [`.github/workflows/tdd.yml`](../.github/workflows/tdd.yml) | Runs newly added unit, Puppeteer, and iOS tests against the selected pre-fix commit. | Expects the new regression test to fail before the fix. Pull requests only. |
 
 When a Puppeteer snapshot test fails on a pull request, the [`Puppeteer Diff Comment`](../.github/workflows/puppeteer-diff-comment.yml) workflow safely publishes the diff images to the `snapshot-diffs` branch and upserts a PR comment with the affected files and targeted `yarn test:puppeteer -u ...` command. The raw `__diff_output__` artifact is also available from the workflow run. Locally, the diff path is printed in the test runner output. See [Visual snapshot tests](#visual-snapshot-tests).
