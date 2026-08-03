@@ -36,8 +36,8 @@ All access to the browser selection API goes through [`device/selection.ts`](../
 
 The `selection.ts` module groups its functions roughly into:
 
-- **Reads:** `isActive()`, `isCollapsed()`, `isText()`, `isThought()`, `isNote()`, `isOnFirstLine()`, `isOnLastLine()`, `isStartOfElementNode()`, `isEndOfElementNode()`, `offset()`, `offsetThought()`, `offsetStart()`, `offsetEnd()`, `text()`, `html()`, `getBoundingClientRect()`, `isNear(x, y, distance)`.
-- **Writes:** `set(node, { offset?, end? })`, `clear()`, `select(el)`, `removeCurrentSelection()`.
+- **Reads:** `isActive()`, `isCollapsed()`, `isText()`, `isThought()`, `isNote()`, `isOnFirstLine()`, `isOnLastLine()`, `isStartOfElementNode()`, `isEndOfElementNode()`, `offset()`, `offsetThought()`, `offsetStart()`, `offsetEnd()`, `text()`, `html()`, `getBoundingClientRect()`, `isNear(x, y, distance)`, `isWithin(root)`, `offsetRange(editable)`.
+- **Writes:** `set(node, { offset?, end? })`, `setRange(root, start, end)`, `clear()`, `select(el)`, `removeCurrentSelection()`.
 - **Save/restore:** `save()` returns a `SavedSelection` opaque object; `restore(saved)` puts it back. Used when an action that re-renders the DOM needs to preserve the caret across the render.
 - **Split helpers:** `split(el)` and `splitNode(root, range)` return the HTML before/after the caret with formatting tags re-balanced. Used by the Split Sentences command and the Extract command.
 
