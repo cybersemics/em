@@ -575,6 +575,7 @@ export const COMMAND_GROUPS: {
       'openCommandCenter',
       'removeFormat',
       'textColor',
+      'applyColor',
     ],
   },
   {
