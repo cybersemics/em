@@ -106,6 +106,9 @@ interface Command {
   /** A keyboard sequence or array of sequences to activate the command. The first keyboard shortcut in the array will be shown in the UI. */
   keyboard?: Key | Key[] | string
 
+  /** Overrides the keyboard shortcut that is shown in the UI. Use for a command that is bound to a range of shortcuts that cannot be represented by a single Key, e.g. `{ key: '0-8', meta: true, alt: true }`. */
+  keyboardDisplay?: Key
+
   /** For toggling commands, a short label that indicates the inverse action from the current state (e.g. "Add to Favorites" and "Remove from Favorites"). */
   labelInverse?: string
 

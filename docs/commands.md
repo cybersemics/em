@@ -56,6 +56,8 @@ const pinCommand: Command = {
 
 `exec` receives the Redux `dispatch`, a `getState` thunk, the event that triggered the command, and a `{ type }` field that is `'keyboard'`, `'gesture'`, `'toolbar'`, or `'chainedGesture'` so the command can adapt its behavior (e.g. `pin` shows an alert only when triggered via keyboard, since the toolbar already gives visual feedback).
 
+A command bound to an array of keyboard shortcuts also receives `keyboardIndex`, the index within that array of the shortcut that was pressed (`undefined` for every other activation type). This lets one command cover a family of related shortcuts: `applyColor` maps Command/Ctrl + Option/Alt + *n* and Option/Alt + *n* to the *n*th text and background swatch of the [`ColorPicker`](../src/components/ColorPicker.tsx). Since only the first shortcut of an array is displayed, such a command can set `keyboardDisplay` to a single `Key` representing the whole range (`applyColor` displays `Cmd + Option + 0-8`).
+
 ### Discovery and indexing
 
 At startup, [`commands.ts`](../src/commands.ts) flattens the barrel into `globalCommands: Command[]` and builds three indices via `index()`:
