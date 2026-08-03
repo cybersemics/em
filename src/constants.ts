@@ -188,6 +188,7 @@ export const TOOLBAR_DEFAULT_COMMANDS: CommandId[] = [
   'pinAll',
   'toggleTableView',
   'toggleSortPicker',
+  'toggleBulletPicker',
   'toggleDone',
   'bold',
   'italic',
@@ -574,6 +575,7 @@ export const COMMAND_GROUPS: {
       'openCommandCenter',
       'removeFormat',
       'textColor',
+      'applyColor',
     ],
   },
   {

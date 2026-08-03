@@ -1,17 +1,81 @@
 name: Puppeteer
 
+# Documentation, agent/editor configuration, and the native platform projects cannot change what
+# this workflow tests, so a change set confined to them has nothing for a browser to exercise.
+#
+# paths-ignore skips the workflow outright, which means NO check is reported — not a "skipped"
+# check, and not a synthetic pass from a job-level `if`. That is only correct because Puppeteer is
+# no longer a required status check on main. If it is ever made required again, filtered PRs will
+# sit at "Expected — Waiting for status to be reported" and block; use a job-level guard then.
+# (Lint is deliberately left unfiltered and required, so every PR still reports one check.)
+#
+# A run is skipped only when EVERY changed file matches, so any PR that also touches app or test
+# code still runs in full. `**/*.md` is safe because nothing under src/ imports markdown.
+#
+# The native entries below rest on `yarn build` staying web-only (build:packages, build:styles,
+# vite build). None of those directories contains a JS or TS file today, and the web favicons come
+# from public/, not assets/. If a Capacitor asset is ever wired into the Vite build, remove them.
 on:
   push:
     branches:
       - main
+    paths-ignore:
+      # Documentation and agent/editor configuration.
+      - '**/*.md'
+      - 'docs/**'
+      - '.github/instructions/**'
+      - '.github/skills/**'
+      - '.claude/**'
+      - '.agents/**'
+      - '.vscode/**'
+      - '.hooks/**'
+      # Native platform projects, and the icon/splash sources generated into them.
+      - 'android/**'
+      - 'ios/**'
+      - 'desktop/**'
+      - 'assets/**'
   pull_request:
     branches:
       - '**'
+    # GitHub Actions does not support YAML anchors, so this list is duplicated from `push` above.
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - '.github/instructions/**'
+      - '.github/skills/**'
+      - '.claude/**'
+      - '.agents/**'
+      - '.vscode/**'
+      - '.hooks/**'
+      - 'android/**'
+      - 'ios/**'
+      - 'desktop/**'
+      - 'assets/**'
   workflow_dispatch:
     inputs:
       rerun_id:
         description: 'Optional ID for tracking repeated runs'
         required: false
+
+# Supersede the in-progress run when a pull request is pushed again; its result is about to be
+# replaced anyway. Only pull_request runs are grouped: `github.ref` is `refs/pull/<n>/merge` there,
+# so it is already per-PR. (vercel-preview.yml must key on the PR number instead because
+# pull_request_target sets github.ref to the base branch.)
+#
+# Every other event falls back to github.run_id, which is unique per run and therefore never
+# collides. That is deliberate, and not the same as cancel-in-progress: false — a shared group with
+# cancellation off *queues* runs, and GitHub cancels a pending run when a newer one queues behind
+# it. Pushes to main each need their own result to identify the commit that broke the build, and the
+# `ghworkflow` flake hunt (docs/testing.md § Triggering GitHub Actions workflows manually) fans out
+# many workflow_dispatch runs on one ref that must all run.
+#
+# Cancelling is safe for the downstream pair: puppeteer-diff-comment.yml acts only on a `success`
+# or `failure` conclusion, so a cancelled run posts nothing from its partial artifacts. The
+# browserless service container lives inside the job and dies with it — nothing is shared across
+# runs the way ios.yml's BrowserStack session pool is, which is why that one queues instead.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: true
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true

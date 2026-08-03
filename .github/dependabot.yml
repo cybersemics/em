@@ -1,14 +1,19 @@
 # To get started with Dependabot version updates, you'll need to specify which
 # package ecosystems to update and where the package manifests are located.
 # Please see the documentation for all configuration options:
-# https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+# https://docs.github.com/en/code-security/dependabot/working-with-dependabot/dependabot-options-reference
 
 version: 2
 updates:
   - package-ecosystem: 'npm'
     directory: '/' # Location of package file
+    # Run late Saturday night so dependency PRs don't compete with weekday work
+    # for concurrency-throttled BrowserStack runs.
     schedule:
       interval: 'weekly'
+      day: 'saturday'
+      time: '22:00'
+      timezone: 'America/New_York'
     open-pull-requests-limit: 10
     # Group related deps into single PR
     groups:

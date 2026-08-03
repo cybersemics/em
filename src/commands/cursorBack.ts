@@ -1,6 +1,7 @@
 import Command from '../@types/Command'
 import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/clearMulticursors'
 import { cursorBackActionCreator as cursorBack } from '../actions/cursorBack'
+import { cursorClearedActionCreator as cursorCleared } from '../actions/cursorCleared'
 import { isTouch } from '../browser'
 import BackIcon from '../components/icons/BackIcon'
 import scrollTo from '../device/scrollTo'
@@ -19,6 +20,13 @@ const cursorBackCommand: Command = {
   multicursor: false,
   exec: throttleByAnimationFrame((dispatch, getState) => {
     const state = getState()
+
+    // cancel clear thought mode instead of moving the cursor back, otherwise the thought that was just cleared is deselected
+    if (state.cursorCleared) {
+      dispatch(cursorCleared({ value: false }))
+      selection.clear()
+      return
+    }
 
     // clear multicursor on escape (desktop only)
     if (!isTouch && hasMulticursor(state)) {

@@ -13,6 +13,9 @@ import store from '../../../stores/app'
  * button does not blur the editable, so no blur event fires to dismiss the caret. We listen to the native
  * keyboardDidHide event to exit edit mode and clear the browser selection.
  *
+ * The Android WebView also does not raise the keyboard when the caret is placed by setting the browser
+ * selection rather than by a tap, so the keyboard must be shown explicitly via the Keyboard plugin.
+ *
  * See: https://github.com/cybersemics/em/issues/3958.
  */
 const androidCapacitorHandler: VirtualKeyboardHandler = {
@@ -25,6 +28,11 @@ const androidCapacitorHandler: VirtualKeyboardHandler = {
   },
   destroy: () => {
     Keyboard.removeAllListeners()
+  },
+  show: () => {
+    if (!Capacitor.isNativePlatform() || !Capacitor.isPluginAvailable('Keyboard')) return
+
+    Keyboard.show()
   },
 }
 

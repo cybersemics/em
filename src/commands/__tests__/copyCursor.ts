@@ -1,4 +1,5 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { toggleContextViewActionCreator as toggleContextView } from '../../actions/toggleContextView'
 import { executeCommandWithMulticursor } from '../../commands'
 import * as copyModule from '../../device/copy'
 import store from '../../stores/app'
@@ -173,6 +174,74 @@ describe('copyCursor', () => {
   - c2`,
         expect.objectContaining({ html: expect.any(String) }),
       )
+    })
+
+    it('does not move the cursor or multicursors when copying in context view', async () => {
+      store.dispatch([
+        importText({
+          text: `
+            - a
+              - m
+                - x
+                - y
+                - z
+            - b
+              - m
+                - x
+                - y
+                - z
+          `,
+        }),
+        setCursor(['a', 'm']),
+        toggleContextView(),
+        setCursor(['a', 'm', 'a']),
+        addMulticursor(['a', 'm', 'a']),
+        addMulticursor(['a', 'm', 'b']),
+      ])
+
+      const stateBefore = store.getState()
+      const cursorBefore = stateBefore.cursor
+      const multicursorsBefore = stateBefore.multicursors
+
+      executeCommandWithMulticursor(copyCursorCommand, { store })
+
+      const stateAfter = store.getState()
+      expect(stateAfter.cursor).toEqual(cursorBefore)
+      expect(stateAfter.multicursors).toEqual(multicursorsBefore)
+    })
+
+    it('does not move the cursor or multicursors when copying a descendant in context view', async () => {
+      store.dispatch([
+        importText({
+          text: `
+            - a
+              - m
+                - x
+                - y
+                - z
+            - b
+              - m
+                - x
+                - y
+                - z
+          `,
+        }),
+        setCursor(['a', 'm']),
+        toggleContextView(),
+        setCursor(['a', 'm', 'a', 'x']),
+        addMulticursor(['a', 'm', 'a', 'x']),
+        addMulticursor(['a', 'm', 'a', 'y']),
+      ])
+
+      const stateBefore = store.getState()
+      const cursorBefore = stateBefore.cursor
+      const multicursorsBefore = stateBefore.multicursors
+
+      executeCommandWithMulticursor(copyCursorCommand, { store })
+
+      const stateAfter = store.getState()
+      expect(stateAfter.cursor).toEqual(cursorBefore)
+      expect(stateAfter.multicursors).toEqual(multicursorsBefore)
     })
   })
 })

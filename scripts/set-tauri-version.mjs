@@ -1,5 +1,5 @@
 /**
- * Writes an MSI-compatible version into src-tauri/tauri.conf.json, derived from the
+ * Writes an MSI-compatible version into desktop/tauri.conf.json, derived from the
  * package.json version by subtracting an offset from the major number.
  *
  * Why this exists: em's version major (e.g. 351) has grown far beyond the limits of
@@ -32,7 +32,7 @@ const MAX_BUILD = 65535
 
 const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const packageJsonPath = resolve(rootDir, 'package.json')
-const tauriConfigPath = resolve(rootDir, 'src-tauri', 'tauri.conf.json')
+const tauriConfigPath = resolve(rootDir, 'desktop', 'tauri.conf.json')
 
 const { version } = JSON.parse(readFileSync(packageJsonPath, 'utf8'))
 
@@ -69,7 +69,7 @@ const config = readFileSync(tauriConfigPath, 'utf8')
 const updated = config.replace(/("version":\s*)"[^"]*"/, `$1"${desktopVersion}"`)
 
 if (updated === config) {
-  throw new Error('Could not find a "version" field to replace in src-tauri/tauri.conf.json.')
+  throw new Error('Could not find a "version" field to replace in desktop/tauri.conf.json.')
 }
 
 writeFileSync(tauriConfigPath, updated)
