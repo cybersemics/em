@@ -6,7 +6,9 @@ import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
+import headValue from '../../util/headValue'
 import clearThoughtCommand from '../clearThought'
+import cursorBackCommand from '../cursorBack'
 
 beforeEach(initStore)
 
@@ -53,5 +55,37 @@ describe('clearThought', () => {
     // This ensures that the focus is no longer on the note.
     const { noteFocus } = store.getState()
     expect(noteFocus).toBe(false)
+  })
+
+  // https://github.com/cybersemics/em/issues/4830
+  it.skip('cancels clear thought mode on Escape and keeps the cursor', async () => {
+    await act(async () => {
+      store.dispatch([
+        importText({
+          text: `
+            - hello
+          `,
+        }),
+        setCursorFirstMatchActionCreator(['hello']),
+      ])
+    })
+
+    await act(async () => {
+      executeCommand(clearThoughtCommand)
+    })
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    expect(store.getState().cursorCleared).toBe(true)
+
+    await act(async () => {
+      cursorBackCommand.exec(store.dispatch, store.getState, {} as KeyboardEvent, { type: 'keyboard' })
+    })
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const state = store.getState()
+    expect(state.cursorCleared).toBe(false)
+    expect(state.cursor && headValue(state, state.cursor)).toBe('hello')
   })
 })
