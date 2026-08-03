@@ -2,7 +2,6 @@ import { useMemo } from 'react'
 import { css, cx } from '../../styled-system/css'
 import { editableRecipe } from '../../styled-system/recipes'
 import caretOffsetStore from '../stores/caretOffsetStore'
-import editingValueUntrimmedStore from '../stores/editingValueUntrimmed'
 import FauxCaret from './FauxCaret'
 
 /** Returns a copy of the given node containing only the first n characters of its rendered text, along with the number
@@ -37,19 +36,19 @@ const truncateHtml = (html: string, n: number): string => {
  * Overlays a faux caret on a thought that is being edited as part of a multiselection but does not hold the real caret.
  *
  * Only one thought can hold the browser caret, so the other thoughts of the multiselection render this to show that
- * they are being edited too (see Clear Thought). It is positioned by laying out the live editing value, truncated at
- * the real caret's offset, in an invisible copy of the editable — same recipe, so the same padding, font, and line
- * height. The browser therefore resolves the caret's x, y, line wrapping, and half-leading exactly as it does for the
- * real caret, including within formatted text.
+ * they are being edited too (see Clear Thought). It is positioned by laying out the thought's own rendered html,
+ * truncated at the real caret's offset, in an invisible copy of the editable — same recipe, so the same padding, font,
+ * and line height. The browser therefore resolves the caret's x, y, line wrapping, and half-leading exactly as it does
+ * for the real caret, including within formatted text.
  *
- * The value is read from editingValueUntrimmedStore rather than the thought, since the edit is mirrored to the other
- * selected thoughts from the thought that holds the caret, and only the store tracks that value keystroke by keystroke.
+ * The html is the exact content of the editable it overlays, not the value of the thought that holds the real caret.
+ * The two are the same once an edit has been mirrored across the multiselection, but they differ before the first
+ * keystroke, and while the thoughts are cleared the editable is empty even though the thought still has its value.
  */
-const MulticursorFauxCaret = ({ className }: { className?: string }) => {
+const MulticursorFauxCaret = ({ html, className }: { html: string; className?: string }) => {
   const offset = caretOffsetStore.useState()
-  const value = editingValueUntrimmedStore.useState()
 
-  const prefix = useMemo(() => (offset === null ? '' : truncateHtml(value ?? '', offset)), [offset, value])
+  const prefix = useMemo(() => (offset === null ? '' : truncateHtml(html, offset)), [offset, html])
 
   return offset === null ? null : (
     <span

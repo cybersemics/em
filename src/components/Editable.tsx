@@ -968,6 +968,19 @@ const Editable = ({
     }
   }, [contentRef, editingOrOnCursor, hasMulticursor, handleTapBehavior])
 
+  // The html that is rendered in the editable. Note that it is empty while the thought is cleared, even though the
+  // thought still has its value, which is shown as a placeholder.
+  const html =
+    value === EM_TOKEN
+      ? '<b>em</b>'
+      : // render as empty string during temporary clear state
+        // see: /actions/cursorCleared
+        isCursorCleared
+        ? ''
+        : isEditing
+          ? value
+          : (childrenLabel ?? value)
+
   const contentEditable = (
     <ContentEditable
       disabled={disabled}
@@ -982,17 +995,7 @@ const Editable = ({
       data-placeholder-strikethrough={placeholderCommandState?.strikethrough || undefined}
       data-placeholder-underline={placeholderCommandState?.underline || undefined}
       className={cx(editableRecipe(), className)}
-      html={
-        value === EM_TOKEN
-          ? '<b>em</b>'
-          : // render as empty string during temporary clear state
-            // see: /actions/cursorCleared
-            isCursorCleared
-            ? ''
-            : isEditing
-              ? value
-              : (childrenLabel ?? value)
-      }
+      html={html}
       placeholder={placeholder}
       onFocus={onFocus}
       onBlur={onBlur}
@@ -1021,7 +1024,7 @@ const Editable = ({
   // caret's offset to indicate that it too is being edited. The real caret lives on the first/cursor thought.
   return isMulticursorFauxCaretPath ? (
     <span className={css({ display: 'block', position: 'relative' })}>
-      <MulticursorFauxCaret className={className} />
+      <MulticursorFauxCaret html={html} className={className} />
       {contentEditable}
     </span>
   ) : (

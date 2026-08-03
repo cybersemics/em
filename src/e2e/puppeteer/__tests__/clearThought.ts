@@ -82,7 +82,7 @@ describe('clearThought', () => {
   })
 
   // Regression test for https://github.com/cybersemics/em/issues/4519
-  it('deletes all multiselected thoughts when Backspace is pressed on the empty thoughts', async () => {
+  it('deletes all multiselected thoughts when Backspace is pressed on the cleared thoughts', async () => {
     await paste(`
       - a
       - b
@@ -98,16 +98,10 @@ describe('clearThought', () => {
     await clearThought()
     await waitForFirstEditable('')
 
-    // Empty the thoughts by typing and deleting the text, since a cleared thought still has its old value until it is
-    // edited.
-    await page.keyboard.type('hi')
-    await waitForFirstEditable('hi')
-    await press('Backspace')
-    await press('Backspace')
-    await waitForFirstEditable('')
     expect(await editableValues()).toEqual(['', '', ''])
 
-    // Backspace on the empty thoughts deletes every selected thought, not just the one that holds the caret.
+    // Backspace on the cleared thoughts deletes every selected thought, rather than merging them or deleting only the
+    // one that holds the caret.
     await press('Backspace')
     await waitForNoEditables()
   })
