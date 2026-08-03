@@ -35,6 +35,10 @@ let abandonImport = false
 /** Used to suppress the Editable change handler to ignore execCommand in registerNativeUndoStep. */
 let suppressChange = false
 
+/** Used to suppress the blur handlers that resync the editable's innerHTML to the value in Redux. Set while the
+ * editable is momentarily blurred and refocused to retarget focus after iOS autocomplete, which does not end editing. */
+let suppressBlurSync = false
+
 // check duplicate ranks within the same context for debugging
 const globals = {
   abandonImport,
@@ -44,6 +48,7 @@ const globals = {
   rendered,
   suppressExpansion,
   suppressChange,
+  suppressBlurSync,
   arrowKeyBoundaryCross: arrowKeyBoundaryCross as string | null,
   touching,
 }
