@@ -18,6 +18,9 @@ const editableValues = () => page.$$eval('[data-editable]', els => els.map(el =>
 const waitForFirstEditable = (value: string) =>
   page.waitForFunction(value => document.querySelector('[data-editable]')?.innerHTML === value, {}, value)
 
+/** Waits until no thoughts are rendered. */
+const waitForNoEditables = () => page.waitForFunction(() => !document.querySelector('[data-editable]'))
+
 /** Returns the index of the thought that holds the real caret, or -1 if no thought is being edited. */
 const editingIndex = () =>
   page.evaluate(() => {
@@ -76,5 +79,36 @@ describe('clearThought', () => {
     expect(carets.faux).toHaveLength(2)
     // allow sub-pixel rounding between the browser's caret rect and the laid-out faux caret
     carets.faux.forEach(x => expect(x).toBeCloseTo(carets.real!, 0))
+  })
+
+  // Regression test for https://github.com/cybersemics/em/issues/4519
+  it('deletes all multiselected thoughts when Backspace is pressed on the empty thoughts', async () => {
+    await paste(`
+      - a
+      - b
+      - c
+    `)
+
+    await waitForEditable('a')
+    await waitForEditable('b')
+    await waitForEditable('c')
+
+    await multiselectThoughts(['a', 'b', 'c'])
+
+    await clearThought()
+    await waitForFirstEditable('')
+
+    // Empty the thoughts by typing and deleting the text, since a cleared thought still has its old value until it is
+    // edited.
+    await page.keyboard.type('hi')
+    await waitForFirstEditable('hi')
+    await press('Backspace')
+    await press('Backspace')
+    await waitForFirstEditable('')
+    expect(await editableValues()).toEqual(['', '', ''])
+
+    // Backspace on the empty thoughts deletes every selected thought, not just the one that holds the caret.
+    await press('Backspace')
+    await waitForNoEditables()
   })
 })
