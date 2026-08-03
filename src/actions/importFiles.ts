@@ -301,8 +301,13 @@ export const importFilesActionCreator =
           // Do not treat empty thoughts as duplicates: an empty thought is a placeholder with no identity, so merging
           // it into an existing empty sibling would silently drop it (e.g. pasting a series with multiple empty thoughts).
           // See https://github.com/cybersemics/em/issues/4448.
+          // Like moveThought, only metaprogramming attributes should auto-merge/skip duplicates.
+          // Normal duplicate siblings must coexist.
+          const isMetaDuplicate = isAttribute(block.scope) || parentContext.some(isAttribute)
           const duplicate =
-            block.scope !== '' ? findAnyChild(stateAfterPull, id, child => child.value === block.scope) : undefined
+            block.scope !== '' && isMetaDuplicate
+              ? findAnyChild(stateAfterPull, id, child => child.value === block.scope)
+              : undefined
           const lexeme = getLexeme(stateAfterPull, block.scope)
           const hasContext = !!lexeme?.contexts.includes(id)
 

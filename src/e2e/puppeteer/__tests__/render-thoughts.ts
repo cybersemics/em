@@ -296,4 +296,19 @@ describe('Superscripts', () => {
 
     expect(output).toBe(expected)
   })
+
+  // https://github.com/cybersemics/em/pull/4539#issuecomment-5167203257
+  it('paste duplicate thought into an empty sibling at the same level', async () => {
+    await newThought('AAA')
+    await clickThought('AAA')
+    await press('c', { ctrl: true })
+    await newThought('')
+    await press('v', { ctrl: true })
+
+    const values = await page.evaluate(() =>
+      Array.from(document.querySelectorAll('[data-editable]')).map(element => (element as HTMLElement).innerText),
+    )
+
+    expect(values).toEqual(['AAA', 'AAA'])
+  })
 })
