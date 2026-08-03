@@ -1,3 +1,5 @@
+import click from '../helpers/click'
+import getSelection from '../helpers/getSelection'
 import multiselectThoughts from '../helpers/multiselectThoughts'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
@@ -29,14 +31,30 @@ const editingIndex = () =>
     return editing ? editables.indexOf(editing) : -1
   })
 
-/** Returns the x position of the real caret and of each faux caret. */
-const caretPositions = () =>
-  page.evaluate(() => ({
-    real: getSelection()?.getRangeAt(0).getClientRects()[0]?.x ?? null,
-    faux: Array.from(document.querySelectorAll('[data-testid="faux-caret-multicursor"]')).map(
-      el => el.lastElementChild!.firstElementChild!.getBoundingClientRect().x,
-    ),
-  }))
+/** Waits a single animation frame, i.e. long enough for the faux carets to be repositioned after an edit. */
+const nextFrame = () => page.evaluate(() => new Promise(requestAnimationFrame))
+
+/** Returns the number of thoughts whose bullet is highlighted, i.e. the size of the multiselection. */
+const multiselectSize = () => page.$$eval('[aria-label="bullet"][data-highlighted="true"]', els => els.length)
+
+/** Returns the position of the real caret relative to the thought that holds it, and of each faux caret relative to the
+ * thought it overlays. Rounded to the nearest pixel to allow for sub-pixel layout differences. */
+const caretOffsets = () =>
+  page.evaluate(() => {
+    /** Returns the position of a caret rect relative to the thought it belongs to. */
+    const relativeTo = (rect: DOMRect, editable: Element) => {
+      const { x, y } = editable.getBoundingClientRect()
+      return { x: Math.round(rect.x - x), y: Math.round(rect.y - y) }
+    }
+    const selection = window.getSelection()
+    const realRect = selection?.rangeCount ? selection.getRangeAt(0).getBoundingClientRect() : null
+    return {
+      real: realRect?.height ? relativeTo(realRect, document.activeElement!) : null,
+      faux: Array.from(document.querySelectorAll('[data-testid="faux-caret-multicursor"]')).map(el =>
+        relativeTo(el.getBoundingClientRect(), el.parentElement!.querySelector('[data-editable]')!),
+      ),
+    }
+  })
 
 describe('clearThought', () => {
   // Regression test for https://github.com/cybersemics/em/issues/4519
@@ -61,7 +79,7 @@ describe('clearThought', () => {
 
     // The real caret is on the first thought and a faux caret is rendered on the other two.
     expect(await editingIndex()).toBe(0)
-    expect((await caretPositions()).faux).toHaveLength(2)
+    expect((await caretOffsets()).faux).toHaveLength(2)
 
     // Typing mirrors the new value across all cleared thoughts in real-time.
     await page.keyboard.type('hello')
@@ -73,12 +91,95 @@ describe('clearThought', () => {
     await waitForFirstEditable('hell')
     expect(await editableValues()).toEqual(['hell', 'hell', 'hell'])
 
-    // The faux carets track the real caret character by character.
-    const carets = await caretPositions()
+    // The faux carets are rendered at the same position within their thought as the real caret is within its own.
+    await nextFrame()
+    const carets = await caretOffsets()
     expect(carets.real).not.toBeNull()
-    expect(carets.faux).toHaveLength(2)
-    // allow sub-pixel rounding between the browser's caret rect and the laid-out faux caret
-    carets.faux.forEach(x => expect(x).toBeCloseTo(carets.real!, 0))
+    expect(carets.faux).toEqual([carets.real, carets.real])
+  })
+
+  // Regression test for https://github.com/cybersemics/em/issues/4519
+  it('renders the faux carets at the real caret position when the edited value has a trailing space', async () => {
+    await paste(`
+      - a
+      - b
+      - c
+    `)
+
+    await waitForEditable('a')
+    await waitForEditable('b')
+    await waitForEditable('c')
+
+    await multiselectThoughts(['a', 'b', 'c'])
+
+    await clearThought()
+    await waitForFirstEditable('')
+
+    // The mirrored value is trimmed, so the faux carets must be positioned from the real caret rather than from the
+    // value rendered beneath them.
+    await page.keyboard.type('hello ')
+    await nextFrame()
+
+    const carets = await caretOffsets()
+    expect(carets.real).not.toBeNull()
+    expect(carets.faux).toEqual([carets.real, carets.real])
+  })
+
+  // Regression test for https://github.com/cybersemics/em/issues/4519
+  it('moves the caret to the tapped position without dismissing the multiselection', async () => {
+    await paste(`
+      - a
+      - b
+      - c
+    `)
+
+    await waitForEditable('a')
+    await waitForEditable('b')
+    await waitForEditable('c')
+
+    await multiselectThoughts(['a', 'b', 'c'])
+
+    await clearThought()
+    await waitForFirstEditable('')
+
+    await page.keyboard.type('hello')
+    await waitForFirstEditable('hello')
+
+    // Tapping another selected thought moves the caret there, as it would when editing a single thought. The thought is
+    // addressed by index since every selected thought renders the same mirrored value.
+    await click((await page.$$('[data-editable]'))[1], { offset: 2 })
+
+    expect(await editingIndex()).toBe(1)
+    expect(await getSelection().focusOffset).toBe(2)
+    expect(await multiselectSize()).toBe(3)
+  })
+
+  // Regression test for https://github.com/cybersemics/em/issues/4519
+  it('exits Clear Thought on Escape and clears the multiselection on the second Escape', async () => {
+    await paste(`
+      - a
+      - b
+      - c
+    `)
+
+    await waitForEditable('a')
+    await waitForEditable('b')
+    await waitForEditable('c')
+
+    await multiselectThoughts(['a', 'b', 'c'])
+
+    await clearThought()
+    await waitForFirstEditable('')
+
+    // The first Escape restores the cleared values and keeps the thoughts selected.
+    await press('Escape')
+    await waitForFirstEditable('a')
+    expect(await editableValues()).toEqual(['a', 'b', 'c'])
+    expect(await multiselectSize()).toBe(3)
+
+    // The second Escape clears the multiselection.
+    await press('Escape')
+    await page.waitForFunction(() => !document.querySelector('[aria-label="bullet"][data-highlighted="true"]'))
   })
 
   // Regression test for https://github.com/cybersemics/em/issues/4519

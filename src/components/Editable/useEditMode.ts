@@ -13,6 +13,8 @@ import * as selection from '../../device/selection'
 import virtualKeyboard from '../../device/virtual-keyboard'
 import usePrevious from '../../hooks/usePrevious'
 import hasMulticursor from '../../selectors/hasMulticursor'
+import isMultiEditing from '../../selectors/isMultiEditing'
+import isMulticursorPath from '../../selectors/isMulticursorPath'
 import equalPath from '../../util/equalPath'
 
 // #4173: Ghost-click suppression state. On a rapid tap between adjacent thoughts, iOS Safari coalesces the
@@ -176,9 +178,12 @@ const useEditMode = ({
     if (!editable) return
 
     /** Sets the DOM selection and updates the Redux cursor state. */
-    const setCaretOffset = (offset: number, { cursorHistoryClear }: { cursorHistoryClear?: boolean } = {}) => {
+    const setCaretOffset = (
+      offset: number,
+      { cursorHistoryClear, preserveMulticursor }: { cursorHistoryClear?: boolean; preserveMulticursor?: boolean } = {},
+    ) => {
       selection.set(editable, { offset })
-      dispatch(setCursor({ path, offset, cursorHistoryClear }))
+      dispatch(setCursor({ path, offset, cursorHistoryClear, preserveMulticursor }))
     }
 
     /** Marks the beginning of a touch so that onMouseDown can determine whether a long press is occurring. */
@@ -256,9 +261,15 @@ const useEditMode = ({
         return
       }
 
+      // While a multiselection is being edited (Clear Thought), a tap moves the caret as usual. The multiselection is
+      // preserved when the tapped thought belongs to it, so that edits keep mirroring to the other selected thoughts.
+      const state = store.getState()
+      const multiEditing = isMultiEditing(state)
+      const preserveMulticursor = multiEditing && isMulticursorPath(state, path)
+
       // If editing or the cursor is on the thought, allow the default browser selection or perform manual caret positioning so the offset is correct.
       // See: #981
-      if (editingOrOnCursor && !isMulticursor) {
+      if (editingOrOnCursor && (!isMulticursor || multiEditing)) {
         const { inVoidArea, offset } = getCaretOffset(editable, {
           clientX: e.clientX,
           clientY: e.clientY,
@@ -275,7 +286,7 @@ const useEditMode = ({
           // Setting the caret offset will activate the declarative shouldSetSelection effect, which will call preventAutoscroll and selection.set
           // all over again. Since the selection is managed imperatively in this handler, this duplicate behavior is undesirable.
           allowDefaultSelection()
-          setCaretOffset(offset)
+          setCaretOffset(offset, { preserveMulticursor })
 
           // It's important to avoid preventDefault when the tap is somewhere that can be handled by native browser selection behavior.
           // If the tap is prevented, it will interfere with functionality like double tap or the context menu. If the selection is
@@ -324,6 +335,7 @@ const useEditMode = ({
     allowDefaultSelection,
     path,
     dispatch,
+    store,
     style?.visibility,
   ])
 

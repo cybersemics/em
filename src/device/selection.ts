@@ -472,6 +472,27 @@ export const split = (el: HTMLElement): SplitResult | null => {
   }
 }
 
+/**
+ * Returns the position and height of the caret relative to the top left of the focused thought, or null if the caret is
+ * not in a thought. This is the real caret's own geometry, so a faux caret rendered at the same offsets within another
+ * thought is guaranteed to match it, no matter how the two thoughts' values differ (see MulticursorFauxCaret).
+ */
+export const caretRect = (): { x: number; y: number; height: number } | null => {
+  const editable = document.activeElement
+  if (!isHTMLElement(editable) || !isContentEditable(editable)) return null
+
+  const editableRect = editable.getBoundingClientRect()
+  const sel = window.getSelection()
+  const rect = sel?.rangeCount ? sel.getRangeAt(0).getBoundingClientRect() : null
+
+  // An empty thought, e.g. a cleared one, has no client rect, since the selection is on the element node rather than a
+  // text node. Fall back to the start of the editable's content box, where the caret is rendered.
+  const [paddingTop, , paddingBottom, paddingLeft] = getElementPaddings(editable)
+  return rect?.height
+    ? { x: rect.x - editableRect.x, y: rect.y - editableRect.y, height: rect.height }
+    : { x: paddingLeft, y: paddingTop, height: editableRect.height - paddingTop - paddingBottom }
+}
+
 /** Returns the selection text, or null if there is no selection. */
 export const text = () => window.getSelection()?.toString() ?? null
 

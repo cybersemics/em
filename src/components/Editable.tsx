@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import React, { FocusEventHandler, useCallback, useEffect, useMemo, useRef } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
-import { css, cx } from '../../styled-system/css'
+import { cx } from '../../styled-system/css'
 import { editableRecipe, invalidOptionRecipe } from '../../styled-system/recipes'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -41,6 +41,7 @@ import getContexts from '../selectors/getContexts'
 import getSetting from '../selectors/getSetting'
 import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursorSelector from '../selectors/hasMulticursor'
+import isMultiEditing from '../selectors/isMultiEditing'
 import isMulticursorPath from '../selectors/isMulticursorPath'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
@@ -913,8 +914,9 @@ const Editable = ({
         }
 
         if (
-          // disable editing when multicursor is enabled
-          hasMulticursorSelector(state) ||
+          // disable editing when multicursor is enabled, unless the multiselection is being edited (Clear Thought), in
+          // which case a tap moves the caret as usual
+          (hasMulticursorSelector(state) && !isMultiEditing(state)) ||
           disabled ||
           // do not set cursor on hidden thought
           // dragInProgress: not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be safe
@@ -1022,13 +1024,13 @@ const Editable = ({
 
   // When this thought is a non-cursor member of an edited multiselection, overlay a faux caret mirroring the real
   // caret's offset to indicate that it too is being edited. The real caret lives on the first/cursor thought.
-  return isMulticursorFauxCaretPath ? (
-    <span className={css({ display: 'block', position: 'relative' })}>
-      <MulticursorFauxCaret html={html} className={className} />
+  // The faux caret is rendered after the editable, and always in the same position in the tree, so that toggling it
+  // does not remount the editable and drop the native event listeners bound to it by useEditMode.
+  return (
+    <>
       {contentEditable}
-    </span>
-  ) : (
-    contentEditable
+      {isMulticursorFauxCaretPath && <MulticursorFauxCaret editableRef={contentRef} />}
+    </>
   )
 }
 

@@ -19,7 +19,7 @@ import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import isMultiEditing from '../selectors/isMultiEditing'
 import pathExists from '../selectors/pathExists'
 import store from '../stores/app'
-import caretOffsetStore from '../stores/caretOffsetStore'
+import caretRectStore from '../stores/caretRectStore'
 import { updateCommandState } from '../stores/commandStateStore'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
 import { updateScrollTop } from '../stores/scrollTop'
@@ -221,6 +221,15 @@ const initEvents = (store: Store<State, any>) => {
     { leading: false },
   )
 
+  /** Tracks the caret's position within the focused thought so that a faux caret can be rendered at the same position on
+   * the other thoughts of an edited multiselection (see MulticursorFauxCaret). Unthrottled, otherwise the faux caret
+   * visibly lags the real caret while typing. Only an edited multiselection consumes the rect, so skip the heavier
+   * caretRect otherwise. */
+  const updateCaretRect = () => {
+    const caretRect = isMultiEditing(store.getState()) ? selection.caretRect() : null
+    caretRectStore.update({ x: caretRect?.x ?? null, y: caretRect?.y ?? null, height: caretRect?.height ?? null })
+  }
+
   /** Selection change event listener; save selection offset to storage, update command state store. */
   const onSelectionChange = () => {
     // save selection offset to storage, throttled
@@ -229,12 +238,12 @@ const initEvents = (store: Store<State, any>) => {
     // update command state store
     updateCommandState()
 
-    // Track the caret offset within the focused thought so that a faux caret can be rendered at the same offset on the
-    // other thoughts of an edited multiselection (see MulticursorFauxCaret). Unthrottled, otherwise the faux caret
-    // visibly lags the real caret while typing. Only an edited multiselection consumes the offset, so skip the heavier
-    // offsetThought otherwise.
-    caretOffsetStore.update(isMultiEditing(store.getState()) ? selection.offsetThought() : null)
+    updateCaretRect()
   }
+
+  /** Input event listener. The caret is measured again after the text changes, since a deletion moves the caret without
+   * the browser firing another selectionchange once the new text has been laid out. */
+  const onInput = () => updateCaretRect()
 
   /** MouseMove event listener. */
   const onMouseMove = _.debounce(
@@ -379,6 +388,7 @@ const initEvents = (store: Store<State, any>) => {
   window.history.scrollRestoration = 'manual'
 
   document.addEventListener('selectionchange', onSelectionChange)
+  document.addEventListener('input', onInput)
   window.addEventListener('beforeinput', beforeInput)
   window.addEventListener('keydown', keyDown)
   window.addEventListener('keyup', keyUp)
@@ -409,6 +419,7 @@ const initEvents = (store: Store<State, any>) => {
   const cleanup = () => {
     unsubscribeSaveErrorReload()
     document.removeEventListener('selectionchange', onSelectionChange)
+    document.removeEventListener('input', onInput)
     window.removeEventListener('beforeinput', beforeInput)
     window.removeEventListener('keydown', keyDown)
     window.removeEventListener('keyup', keyUp)

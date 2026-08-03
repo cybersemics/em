@@ -1,11 +1,13 @@
 import Command from '../@types/Command'
 import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/clearMulticursors'
 import { cursorBackActionCreator as cursorBack } from '../actions/cursorBack'
+import { cursorClearedActionCreator as cursorCleared } from '../actions/cursorCleared'
 import { isTouch } from '../browser'
 import BackIcon from '../components/icons/BackIcon'
 import scrollTo from '../device/scrollTo'
 import * as selection from '../device/selection'
 import hasMulticursor from '../selectors/hasMulticursor'
+import isMultiEditing from '../selectors/isMultiEditing'
 import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 
 const cursorBackCommand: Command = {
@@ -19,6 +21,14 @@ const cursorBackCommand: Command = {
   multicursor: false,
   exec: throttleByAnimationFrame((dispatch, getState) => {
     const state = getState()
+
+    // While a multiselection is being edited (Clear Thought), the first Escape exits edit mode and keeps the
+    // multiselection, and the second clears it.
+    if (!isTouch && isMultiEditing(state)) {
+      dispatch(cursorCleared({ value: false }))
+      selection.clear()
+      return
+    }
 
     // clear multicursor on escape (desktop only)
     if (!isTouch && hasMulticursor(state)) {
