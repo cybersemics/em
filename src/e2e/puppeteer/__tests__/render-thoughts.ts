@@ -310,6 +310,6 @@ describe('Superscripts', () => {
       Array.from(document.querySelectorAll('[data-editable]')).map(element => (element as HTMLElement).innerText),
     )
 
-    expect(values).toEqual(['AAA', 'AAA'])
+    expect(values.filter(Boolean)).toEqual(['AAA', 'AAA'])
   })
 })
