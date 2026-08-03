@@ -45,7 +45,6 @@ import isMulticursorPath from '../selectors/isMulticursorPath'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import thoughtToPath from '../selectors/thoughtToPath'
-import caretOffsetStore from '../stores/caretOffsetStore'
 import editingValueStore from '../stores/editingValue'
 import editingValueUntrimmedStore from '../stores/editingValueUntrimmed'
 import storageModel from '../stores/storageModel'
@@ -68,7 +67,7 @@ import useEditMode from './Editable/useEditMode'
 import useOnCopy from './Editable/useOnCopy'
 import useOnCut from './Editable/useOnCut'
 import useOnPaste from './Editable/useOnPaste'
-import FauxCaret from './FauxCaret'
+import MulticursorFauxCaret from './MulticursorFauxCaret'
 
 interface EditableProps {
   editableRef?: React.RefObject<HTMLInputElement | null>
@@ -108,50 +107,6 @@ const applyOuterTag = (newValue: string, oldValue: string): string => {
 
 // this flag is used to ensure that the browser selection is not restored after the initial setCursorOnThought
 let cursorOffsetInitialized = false
-
-/** Overlays a faux caret on a thought that is being edited as part of a multiselection but does not hold the real
- * caret. Positioned by laying out the thought's own text, truncated at the real caret's offset, in an invisible copy of
- * the editable, so that the browser resolves the caret's x, y, line wrapping, and half-leading exactly as it does for
- * the real caret. Formatting tags are not reproduced, so the faux caret may be slightly off within bold or italic text.
- */
-const MulticursorFauxCaret = ({ value, className }: { value: string; className?: string }) => {
-  const offset = caretOffsetStore.useState()
-
-  // The caret offset counts characters of the rendered text, so measure the prefix from textContent rather than the raw
-  // html.
-  const text = useMemo(() => {
-    const div = document.createElement('div')
-    div.innerHTML = value
-    return div.textContent ?? ''
-  }, [value])
-
-  return offset === null ? null : (
-    <span
-      aria-hidden
-      data-testid='faux-caret-multicursor'
-      className={cx(
-        editableRecipe(),
-        className,
-        css({
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          pointerEvents: 'none',
-          // the invisible prefix must not be selectable or hit-testable, and must never be read as thought content
-          userSelect: 'none',
-        }),
-      )}
-    >
-      <span className={css({ visibility: 'hidden' })}>{text.slice(0, offset)}</span>
-      {/* zero width so that the caret glyph renders at the end of the prefix without occupying layout space, which
-          would otherwise push it onto the next line when the prefix fills the line */}
-      <span className={css({ display: 'inline-block', width: 0 })}>
-        <FauxCaret caretType='multicursorStart' />
-      </span>
-    </span>
-  )
-}
 
 /**
  * An editable thought with throttled editing.
@@ -390,27 +345,6 @@ const Editable = ({
 
     // store the value so that we have a transcendental head when it is changed
     oldValueRef.current = newValue
-
-    // When multiple thoughts are cleared together (clearThought on a multiselection), mirror the edit across all other
-    // selected thoughts in real-time. The edited thought is a member of the multiselection (its path is preserved as a
-    // multicursor by clearThought), so mirror to every other multicursor path. Reads each thought's current value fresh
-    // from state to use as the correct oldValue. Does not depend on cursorCleared, which is reset after the first edit.
-    dispatch((dispatch, getState) => {
-      const state = getState()
-      if (!isMulticursorPath(state, path)) return
-      Object.values(state.multicursors).forEach(multicursorPath => {
-        if (equalPath(multicursorPath, path)) return
-        const multicursorThought = getThoughtById(state, head(multicursorPath))
-        if (!multicursorThought || multicursorThought.value === newValue) return
-        dispatch(
-          editThought({
-            oldValue: multicursorThought.value,
-            newValue,
-            path: simplifyPath(state, multicursorPath),
-          }),
-        )
-      })
-    })
 
     dispatch((dispatch, getState) => {
       const state = getState()
@@ -778,6 +712,30 @@ const Editable = ({
           contentRef.current.innerHTML = newValue
         }
 
+        // When multiple thoughts are cleared together (clearThought on a multiselection), mirror the edit to the other
+        // selected thoughts. This is done here rather than in the throttled thoughtChangeHandler so that the mirrored
+        // thoughts stay in sync with the thought being typed into keystroke by keystroke. Each thought's current value
+        // is read fresh from state to use as the correct oldValue. Keyed off the multicursors rather than cursorCleared,
+        // which is reset after the first edit. (#4519)
+        if (isMulticursorPath(state, path)) {
+          dispatch(
+            Object.values(state.multicursors)
+              .filter(multicursorPath => !equalPath(multicursorPath, path))
+              .flatMap(multicursorPath => {
+                const thought = getThoughtById(state, head(multicursorPath))
+                return !thought || thought.value === newValue
+                  ? []
+                  : [
+                      editThought({
+                        oldValue: thought.value,
+                        newValue,
+                        path: simplifyPath(state, multicursorPath),
+                      }),
+                    ]
+              }),
+          )
+        }
+
         // run the thoughtChangeHandler immediately if superscript changes or it's a url (also when it changes true to false)
         // run it immediately is there is a style wrapper that needs to be applied to the editable after a clearThought action (#3673)
         if (
@@ -1063,7 +1021,7 @@ const Editable = ({
   // caret's offset to indicate that it too is being edited. The real caret lives on the first/cursor thought.
   return isMulticursorFauxCaretPath ? (
     <span className={css({ display: 'block', position: 'relative' })}>
-      <MulticursorFauxCaret value={value} className={className} />
+      <MulticursorFauxCaret className={className} />
       {contentEditable}
     </span>
   ) : (

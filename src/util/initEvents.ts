@@ -16,6 +16,7 @@ import { AlertType, LongPressState } from '../constants'
 import * as selection from '../device/selection'
 import virtualKeyboardHandler from '../device/virtual-keyboard'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
+import isMultiEditing from '../selectors/isMultiEditing'
 import pathExists from '../selectors/pathExists'
 import store from '../stores/app'
 import caretOffsetStore from '../stores/caretOffsetStore'
@@ -229,9 +230,10 @@ const initEvents = (store: Store<State, any>) => {
     updateCommandState()
 
     // Track the caret offset within the focused thought so that a faux caret can be rendered at the same offset on the
-    // other thoughts of an edited multiselection (see Editable). Unthrottled, otherwise the faux caret visibly lags the
-    // real caret while typing.
-    caretOffsetStore.update(selection.isThought() ? selection.offsetThought() : null)
+    // other thoughts of an edited multiselection (see MulticursorFauxCaret). Unthrottled, otherwise the faux caret
+    // visibly lags the real caret while typing. Only an edited multiselection consumes the offset, so skip the heavier
+    // offsetThought otherwise.
+    caretOffsetStore.update(isMultiEditing(store.getState()) ? selection.offsetThought() : null)
   }
 
   /** MouseMove event listener. */

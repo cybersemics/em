@@ -151,15 +151,22 @@ The main consumer is [`useDragAndDropThought`](../src/hooks/useDragAndDropThough
 
 [`src/stores/caretOffsetStore.ts`](../src/stores/caretOffsetStore.ts).
 
-A non-Redux ministore tracking the caret's character offset within the focused thought, or `null` when no thought is focused. Like `selectionRangeStore` it is updated from the `selectionchange` handler in [`initEvents`](../src/util/initEvents.ts), but unthrottled, so that a faux caret driven by it does not visibly lag the real caret while typing. Its sole consumer is the multiselect faux caret below.
+A non-Redux ministore tracking the caret's character offset within the focused thought, or `null` when no thought is focused. Like `selectionRangeStore` it is updated from the `selectionchange` handler in [`initEvents`](../src/util/initEvents.ts), but unthrottled, so that a faux caret driven by it does not visibly lag the real caret while typing. The handler only computes the offset in [multi edit mode](#multi-edit-mode), since that is its sole consumer (the multiselect faux caret below).
 
 ### Multiselect faux caret
 
-[Clear Thought](../src/commands/clearThought.ts) works on a multiselection: it clears every selected thought and keeps the multicursors alive so that subsequent typing is mirrored to all of them by `Editable`'s `thoughtChangeHandler`. Only one thought can hold the real browser caret, so the others render a faux caret to show that they are being edited too.
+[Clear Thought](../src/commands/clearThought.ts) works on a multiselection: it clears every selected thought and keeps the multicursors alive so that subsequent typing is mirrored to all of them by `Editable`'s `onChangeHandler`, which dispatches an `editThought` per selected thought on every keystroke rather than through the edit throttle, so that they stay in sync character by character. Only one thought can hold the real browser caret, so the others render a faux caret to show that they are being edited too.
 
-`Editable` renders that caret when the path is a multicursor member, is not the cursor, and the cursor itself is a multicursor member. The caret is positioned by overlaying an invisible copy of the editable — same recipe, so the same padding, font, and line height — containing the thought's own text truncated at `caretOffsetStore`'s offset, followed by a zero-width `FauxCaret`. The browser therefore resolves x, y, half-leading, and line wrapping exactly as it does for the real caret. Formatting tags are not reproduced in the prefix, so the faux caret can be slightly off within bold or italic text.
+`Editable` renders [`MulticursorFauxCaret`](../src/components/MulticursorFauxCaret.tsx) when the path is a multicursor member, is not the cursor, and the cursor itself is a multicursor member. The caret is positioned by overlaying an invisible copy of the editable — same recipe, so the same padding, font, and line height — containing the live value from [`editingValueUntrimmedStore`](../src/stores/editingValueUntrimmed.ts) truncated at `caretOffsetStore`'s offset, followed by a zero-width `FauxCaret`. The browser therefore resolves x, y, half-leading, and line wrapping exactly as it does for the real caret. Truncation walks the HTML tree rather than the plain text, so formatting tags and nested elements are preserved in the prefix and the caret stays accurate within bold or italic text.
 
-Backspace is special-cased for this state. [`deleteEmptyThoughtOrOutdent`](../src/commands/deleteEmptyThoughtOrOutdent.ts) normally executes whenever a multiselection exists, which would swallow the keystroke; it declines when a thought is focused and the caret is past the start of the text, letting the browser delete a character and the edit mirror like any other.
+### Multi edit mode
+
+[`isMultiEditing`](../src/selectors/isMultiEditing.ts) is true when a multiselection is actually being *edited*: the keyboard is open, the cursor is a multicursor member, and the browser selection is inside a thought. Only Clear Thought puts the app in this state (via `useEditMode`'s relaxed multicursor guard); an ordinary multiselection leaves the caret outside any editable, so the predicate consults the DOM selection to tell the two apart.
+
+Two commands that otherwise take over the keystroke defer to native behavior in this state:
+
+- [`deleteEmptyThoughtOrOutdent`](../src/commands/deleteEmptyThoughtOrOutdent.ts) normally executes whenever a multiselection exists. In multi edit mode it executes only when `canExecuteDeleteEmptyThought` holds — i.e. the caret is at the start of an empty thought, in which case the deletion is propagated to all selected thoughts. Otherwise it declines, letting the browser delete a character and the edit mirror like any other.
+- [`selectAll`](../src/commands/selectAll.ts) (Cmd + A) likewise declines, so the browser's native select-all applies to the text being edited rather than selecting all thoughts.
 
 ### `preventAutoscroll.ts`
 

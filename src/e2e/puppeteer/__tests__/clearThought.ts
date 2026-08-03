@@ -6,8 +6,34 @@ import { page } from '../session'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
-/** Reads the innerHTML of every rendered thought editable. */
+/** Executes Clear Thought (→←) with its keyboard shortcut. The command helper is not used because it executes the
+ * command directly, bypassing the multicursor execution that this test exercises. */
+const clearThought = () => press('c', { alt: true, shift: true, meta: true })
+
+/** Reads the innerHTML of every rendered thought. */
 const editableValues = () => page.$$eval('[data-editable]', els => els.map(el => el.innerHTML))
+
+/** Waits for the first thought to render the given value. Since an edit is mirrored to the other selected thoughts in
+ * the same dispatch, they render it in the same frame. */
+const waitForFirstEditable = (value: string) =>
+  page.waitForFunction(value => document.querySelector('[data-editable]')?.innerHTML === value, {}, value)
+
+/** Returns the index of the thought that holds the real caret, or -1 if no thought is being edited. */
+const editingIndex = () =>
+  page.evaluate(() => {
+    const editables = Array.from(document.querySelectorAll('[data-editable]'))
+    const editing = document.querySelector('[data-editing=true] [data-editable]')
+    return editing ? editables.indexOf(editing) : -1
+  })
+
+/** Returns the x position of the real caret and of each faux caret. */
+const caretPositions = () =>
+  page.evaluate(() => ({
+    real: getSelection()?.getRangeAt(0).getClientRects()[0]?.x ?? null,
+    faux: Array.from(document.querySelectorAll('[data-testid="faux-caret-multicursor"]')).map(
+      el => el.lastElementChild!.firstElementChild!.getBoundingClientRect().x,
+    ),
+  }))
 
 describe('clearThought', () => {
   // Regression test for https://github.com/cybersemics/em/issues/4519
@@ -24,78 +50,31 @@ describe('clearThought', () => {
 
     await multiselectThoughts(['a', 'b', 'c'])
 
-    // Clear Thought (→←): Cmd/Ctrl + Option + Shift + C
-    await press('c', { alt: true, shift: true, meta: true })
+    await clearThought()
 
-    // All three multiselected thoughts should be cleared (rendered as empty placeholders).
-    // Bounded wait so the assertion below surfaces a diff instead of a bare timeout when it fails.
-    const clearedValues = await page
-      .waitForFunction(
-        () => {
-          const els = Array.from(document.querySelectorAll('[data-editable]'))
-          return els.length === 3 && els.every(el => el.innerHTML === '') ? els.map(el => el.innerHTML) : false
-        },
-        { timeout: 6000 },
-      )
-      .then(handle => handle.jsonValue() as Promise<string[]>)
-      .catch(() => editableValues())
-    expect(clearedValues).toEqual(['', '', ''])
+    // All three multiselected thoughts are cleared, i.e. rendered as empty placeholders.
+    await waitForFirstEditable('')
+    expect(await editableValues()).toEqual(['', '', ''])
 
-    // A faux caret should be rendered on the two non-cursor thoughts (the first thought holds the real caret).
-    const fauxCaretCount = await page.$$eval('[data-testid="faux-caret-multicursor"]', els => els.length)
-    expect(fauxCaretCount).toBe(2)
+    // The real caret is on the first thought and a faux caret is rendered on the other two.
+    expect(await editingIndex()).toBe(0)
+    expect((await caretPositions()).faux).toHaveLength(2)
 
-    // The real caret (editing cursor) should be on the first thought.
-    const editingIndex = await page.evaluate(() => {
-      const editables = Array.from(document.querySelectorAll('[data-editable]'))
-      const editing = document.querySelector('[data-editing=true] [data-editable]')
-      return editing ? editables.indexOf(editing) : -1
-    })
-    expect(editingIndex).toBe(0)
-
-    // Typing should mirror the new value across all cleared thoughts in real-time.
+    // Typing mirrors the new value across all cleared thoughts in real-time.
     await page.keyboard.type('hello')
+    await waitForFirstEditable('hello')
+    expect(await editableValues()).toEqual(['hello', 'hello', 'hello'])
 
-    const mirroredValues = await page
-      .waitForFunction(
-        () => {
-          const els = Array.from(document.querySelectorAll('[data-editable]'))
-          return els.length === 3 && els.every(el => el.innerHTML === 'hello') ? els.map(el => el.innerHTML) : false
-        },
-        { timeout: 6000 },
-      )
-      .then(handle => handle.jsonValue() as Promise<string[]>)
-      .catch(() => editableValues())
-    expect(mirroredValues).toEqual(['hello', 'hello', 'hello'])
-
-    // Backspace should delete a character rather than being hijacked by the multiselect delete command, and the
-    // deletion should mirror across the multiselection like any other edit.
+    // Backspace deletes a character rather than the thoughts, and the deletion mirrors like any other edit.
     await page.keyboard.press('Backspace')
+    await waitForFirstEditable('hell')
+    expect(await editableValues()).toEqual(['hell', 'hell', 'hell'])
 
-    const backspacedValues = await page
-      .waitForFunction(
-        () => {
-          const els = Array.from(document.querySelectorAll('[data-editable]'))
-          return els.length === 3 && els.every(el => el.innerHTML === 'hell') ? els.map(el => el.innerHTML) : false
-        },
-        { timeout: 6000 },
-      )
-      .then(handle => handle.jsonValue() as Promise<string[]>)
-      .catch(() => editableValues())
-    expect(backspacedValues).toEqual(['hell', 'hell', 'hell'])
-
-    // The faux carets should still be rendered after editing, at the same x position as the real caret so that they
-    // track it character by character.
-    const caretPositions = await page.evaluate(() => {
-      const selectionRect = getSelection()?.getRangeAt(0).getClientRects()[0]
-      const fauxCaretXs = Array.from(document.querySelectorAll('[data-testid="faux-caret-multicursor"]')).map(
-        el => el.lastElementChild!.firstElementChild!.getBoundingClientRect().x,
-      )
-      return { realCaretX: selectionRect?.x ?? null, fauxCaretXs }
-    })
-    expect(caretPositions.realCaretX).not.toBeNull()
-    expect(caretPositions.fauxCaretXs).toHaveLength(2)
+    // The faux carets track the real caret character by character.
+    const carets = await caretPositions()
+    expect(carets.real).not.toBeNull()
+    expect(carets.faux).toHaveLength(2)
     // allow sub-pixel rounding between the browser's caret rect and the laid-out faux caret
-    caretPositions.fauxCaretXs.forEach(x => expect(x).toBeCloseTo(caretPositions.realCaretX!, 0))
+    carets.faux.forEach(x => expect(x).toBeCloseTo(carets.real!, 0))
   })
 })
