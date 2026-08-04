@@ -724,6 +724,10 @@ export const beforeInput = (e: InputEvent) => {
   // gates on the case we can actually prevent; native browser undo is intentionally superseded by em's undo (#3879).
   if ((e.inputType === 'historyUndo' || e.inputType === 'historyRedo') && e.cancelable) {
     e.preventDefault()
+    // Flush any pending throttled edit before reading the state, mirroring keyDown. Editing dispatches editThought on a
+    // throttle, so a native undo triggered mid-edit (e.g. immediately after an autocorrect) would otherwise undo the
+    // previous step and let the pending edit commit afterwards, duplicating text (#4477).
+    commandEmitter.trigger('command', commandById(e.inputType === 'historyUndo' ? 'undo' : 'redo'))
     const state = store.getState()
     if (e.inputType === 'historyUndo') {
       if (isUndoEnabled(state)) store.dispatch(undo())
