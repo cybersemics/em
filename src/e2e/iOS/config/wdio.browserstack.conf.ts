@@ -111,7 +111,7 @@ export const config: WebdriverIO.Config = {
       // BrowserStack build. All of it traces back to here, but the real cause ends up buried at
       // the top of a thousand lines of consequences. Exiting makes it the last thing printed.
       if (tunnelProcess) tunnelProcess.kill()
-      console.error(`\ncloudflared tunnel setup failed: ${err instanceof Error ? err.message : String(err)}\n`)
+      console.error(`\niOS test setup failed: ${err instanceof Error ? err.message : String(err)}\n`)
       process.exit(1)
     }
   },

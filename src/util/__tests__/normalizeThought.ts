@@ -147,6 +147,15 @@ describe('punctuation', () => {
   })
 })
 
+describe('underscores', () => {
+  // https://github.com/cybersemics/em/issues/3627
+  test('underscores should be distinguished from each other and from an empty thought', () => {
+    expect(normalizeThought('__')).not.toBe(normalizeThought('___'))
+    expect(normalizeThought('__')).not.toBe(normalizeThought(''))
+    expect(normalizeThought('___')).not.toBe(normalizeThought(''))
+  })
+})
+
 describe('quotes', () => {
   test('straight quotes are ignored', () => {
     expect(normalizeThought(`dog's`)).toBe(normalizeThought('dogs'))

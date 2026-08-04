@@ -43,7 +43,7 @@ const headingCommand = (level: HeadingLevel): Command => ({
               : ''
       }`
     : 'Sets a heading to normal text.',
-  keyboard: { key: level.toString(), meta: true, alt: true },
+  keyboard: { key: level.toString(), meta: true, alt: true, control: true },
   multicursor: true,
   svg: iconMap[level], // Assign the icon based on the level
   canExecute: state => {

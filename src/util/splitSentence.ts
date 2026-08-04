@@ -176,14 +176,25 @@ function splitFormattedHtmlByPlainValues(htmlValue: string, plainValues: string[
 }
 
 /**
- * Splits formatted HTML by comma/"and" delimiters based on plain text offsets.
+ * Returns the delimiter to split a single sentence into sub-sentences, as a regex that matches the delimiter anywhere and a regex that matches it at the beginning of the remaining text.
+ * Comma takes priority over "and", which is only used when the value contains no comma.
+ * "and" is matched with word boundaries so that it does not split within a word, e.g. "Standard" (#4810).
+ *
+ * @param plainValue The plain text thought value.
+ */
+function subSentenceDelimiter(plainValue: string): { split: RegExp; leading: RegExp } {
+  return plainValue.includes(',') ? { split: /,/, leading: /^,/ } : { split: /\band\b/i, leading: /^and\b/i }
+}
+
+/**
+ * Splits formatted HTML by sub-sentence delimiters based on plain text offsets.
  *
  * @param htmlValue The original HTML thought value.
  * @param plainValue The plain text thought value.
  */
-function splitFormattedHtmlByCommaAndAnd(htmlValue: string, plainValue: string): string[] {
-  const delimiterRegex = /^(,|and)/i
-  const splitValues = plainValue.split(/,|and/i)
+function splitFormattedHtmlBySubSentence(htmlValue: string, plainValue: string): string[] {
+  const { split, leading: delimiterRegex } = subSentenceDelimiter(plainValue)
+  const splitValues = plainValue.split(split)
   let offset = 0
 
   return splitValues.reduce((accum: string[], splitValue) => {
@@ -254,13 +265,14 @@ const splitSentence = (value: string): SplitResult[] => {
       }
     }
 
-    // if we're sub-sentence or in one sentence territory, split by comma and "and"
-    // e.g. "john, johnson, and john doe" -> "- john - johnson - john doe"
+    // if we're sub-sentence or in one sentence territory, split by comma, or by the word "and" if there is no comma
+    // e.g. "john, johnson, john doe" -> "- john - johnson - john doe"
+    // e.g. "Alice and the Lion" -> "- Alice - the Lion"
     const splitValues = plainValue
-      .split(/,|and/i)
+      .split(subSentenceDelimiter(plainValue).split)
       .map(s => s.trim())
       .filter(s => s !== '')
-    const values = plainValue !== value ? splitFormattedHtmlByCommaAndAnd(value, plainValue) : splitValues
+    const values = plainValue !== value ? splitFormattedHtmlBySubSentence(value, plainValue) : splitValues
     return values.map(value => ({ value }))
   }
 

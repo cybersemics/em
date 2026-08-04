@@ -13,7 +13,10 @@ export default defineConfig({
           name: 'unit',
           globals: true,
           include: ['**/__tests__/**/*.ts'],
-          exclude: ['node_modules/**', '**/e2e/**'],
+          // .claude/worktrees holds agent worktrees, i.e. full checkouts of this repo. Without this the
+          // unanchored include glob collects their __tests__ files too, which fail to resolve the gitignored
+          // styled-system/ imports unless PandaCSS happens to have been run in that worktree.
+          exclude: ['node_modules/**', '**/e2e/**', '.claude/**'],
           environment: 'jsdom',
           mockReset: false,
           // vitest-localstorage-mock provides an in-test localStorage/sessionStorage mock. Note it does NOT
