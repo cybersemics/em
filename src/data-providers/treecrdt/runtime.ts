@@ -181,14 +181,11 @@ const createTreecrdtThoughtspace = ({
     initPromise = null
     const promise = lifecycleTail.then(dropClient)
     dropPromise = promise
-    lifecycleTail = promise.then(
-      () => {
-        if (dropPromise === promise) dropPromise = null
-      },
-      () => {
-        if (dropPromise === promise) dropPromise = null
-      },
-    )
+    /** Clears this drop's single-flight slot without disturbing a newer queued drop. */
+    const clearCurrentDrop = () => {
+      if (dropPromise === promise) dropPromise = null
+    }
+    lifecycleTail = promise.then(clearCurrentDrop, clearCurrentDrop)
     return promise
   }
 
