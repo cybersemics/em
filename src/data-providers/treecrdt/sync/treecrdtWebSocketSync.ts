@@ -6,33 +6,12 @@ import { getTreecrdtSyncBaseUrl } from './config'
 /** Creates WebSocket sync state owned by one TreeCRDT thoughtspace and document. */
 const createTreecrdtWebSocketSync = () => {
   let syncHandle: TreecrdtWebSocketSync | null = null
-  let pendingLocalOps: Operation[] = []
 
-  /** Closes the current WebSocket without discarding writes waiting for the next connection. */
-  const closeHandle = async (): Promise<void> => {
+  /** Stops live sync and closes this thoughtspace's WebSocket. */
+  const stop = async (): Promise<void> => {
     if (syncHandle) {
       await syncHandle.close()
       syncHandle = null
-    }
-  }
-
-  /** Stops live sync, closes the WebSocket, and discards writes owned by this ending session. */
-  const stop = async (): Promise<void> => {
-    pendingLocalOps = []
-    await closeHandle()
-  }
-
-  /** Uploads local ops that were produced before this thoughtspace's WebSocket handle was ready. */
-  const flushPendingLocalOps = async (): Promise<void> => {
-    if (!syncHandle || pendingLocalOps.length === 0) return
-
-    const ops = pendingLocalOps
-    pendingLocalOps = []
-    try {
-      await syncHandle.pushLocalOps(ops)
-    } catch (err) {
-      pendingLocalOps = [...ops, ...pendingLocalOps]
-      console.warn('TreeCRDT pushLocalOps failed', err)
     }
   }
 
@@ -41,7 +20,7 @@ const createTreecrdtWebSocketSync = () => {
     const baseUrl = getTreecrdtSyncBaseUrl()
     if (!baseUrl) return
 
-    await closeHandle()
+    await stop()
 
     const handle = await connectTreecrdtWebSocketSync(client, {
       baseUrl,
@@ -60,7 +39,6 @@ const createTreecrdtWebSocketSync = () => {
     }
 
     syncHandle = handle
-    await flushPendingLocalOps()
   }
 
   /** Starts sync when `VITE_TREECRDT_SYNC_BASE_URL` is set; skips in test; logs warnings on failure. */
@@ -74,13 +52,9 @@ const createTreecrdtWebSocketSync = () => {
     }
   }
 
-  /** Uploads local edits through this thoughtspace's handle, or buffers them until that handle is ready. */
+  /** Uploads local edits through this thoughtspace's active WebSocket handle. */
   const pushLocalOps = async (ops: readonly Operation[]): Promise<void> => {
-    if (ops.length === 0) return
-    if (!syncHandle) {
-      if (getTreecrdtSyncBaseUrl()) pendingLocalOps.push(...ops)
-      return
-    }
+    if (ops.length === 0 || !syncHandle) return
     try {
       await syncHandle.pushLocalOps(ops)
     } catch (err) {

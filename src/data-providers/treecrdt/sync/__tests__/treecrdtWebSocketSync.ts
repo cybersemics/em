@@ -18,25 +18,12 @@ const createMockSyncHandle = () => ({
   syncOnce: vi.fn().mockResolvedValue(undefined),
 })
 
-type MockSyncHandle = ReturnType<typeof createMockSyncHandle>
-
-let handles: MockSyncHandle[] = []
-
-beforeEach(() => {
-  handles = []
-  getTreecrdtSyncBaseUrl.mockReturnValue('https://sync.example.test')
-  connectTreecrdtWebSocketSync.mockImplementation(async () => {
-    const handle = createMockSyncHandle()
-    handles.push(handle)
-    return handle
-  })
-})
-
-afterEach(() => {
-  vi.clearAllMocks()
-})
-
 it('isolates handles and local ops between thoughtspace instances', async () => {
+  const firstHandle = createMockSyncHandle()
+  const secondHandle = createMockSyncHandle()
+  getTreecrdtSyncBaseUrl.mockReturnValue('https://sync.example.test')
+  connectTreecrdtWebSocketSync.mockResolvedValueOnce(firstHandle).mockResolvedValueOnce(secondHandle)
+
   const first = createTreecrdtWebSocketSync()
   const second = createTreecrdtWebSocketSync()
   const firstClient = {} as TreecrdtClient
@@ -51,36 +38,12 @@ it('isolates handles and local ops between thoughtspace instances', async () => 
 
   expect(connectTreecrdtWebSocketSync).toHaveBeenNthCalledWith(1, firstClient, expect.any(Object))
   expect(connectTreecrdtWebSocketSync).toHaveBeenNthCalledWith(2, secondClient, expect.any(Object))
-  expect(handles[0].pushLocalOps).toHaveBeenCalledWith([firstOp])
-  expect(handles[1].pushLocalOps).toHaveBeenCalledWith([secondOp])
+  expect(firstHandle.pushLocalOps).toHaveBeenCalledWith([firstOp])
+  expect(secondHandle.pushLocalOps).toHaveBeenCalledWith([secondOp])
 
   await first.stop()
-  expect(handles[0].close).toHaveBeenCalledTimes(1)
-  expect(handles[1].close).not.toHaveBeenCalled()
+  expect(firstHandle.close).toHaveBeenCalledTimes(1)
+  expect(secondHandle.close).not.toHaveBeenCalled()
 
   await second.stop()
-})
-
-it('discards buffered ops when the owning thoughtspace stops', async () => {
-  const sync = createTreecrdtWebSocketSync()
-
-  await sync.pushLocalOps([{} as Operation])
-  await sync.stop()
-  await sync.start({} as TreecrdtClient)
-
-  expect(handles[0].pushLocalOps).not.toHaveBeenCalled()
-
-  await sync.stop()
-})
-
-it('flushes ops buffered before the WebSocket handle is ready', async () => {
-  const sync = createTreecrdtWebSocketSync()
-  const op = {} as Operation
-
-  await sync.pushLocalOps([op])
-  await sync.start({} as TreecrdtClient)
-
-  expect(handles[0].pushLocalOps).toHaveBeenCalledWith([op])
-
-  await sync.stop()
 })
