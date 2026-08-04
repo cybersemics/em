@@ -97,38 +97,41 @@ describe('gestures', () => {
 
   // https://github.com/cybersemics/em/issues/4536
   it('does not activate a gesture that starts in the scroll zone', async () => {
-    await paste(`
-      - thought 1
-      - thought 2
-      - thought 3
-      - thought 4
-      - thought 5
-      - thought 6
-      - thought 7
-      - thought 8
-      - thought 9
-      - thought 10
-      - thought 11
-      - thought 12
-      - thought 13
-      - thought 14
-      - thought 15
-      - thought 16
-      - thought 17
-      - thought 18
-      - thought 19
-      - thought 20
-      - thought 21
-      - thought 22
-      - thought 23
-      - thought 24
-      - thought 25
-      - thought 26
-      - thought 27
-      - thought 28
-      - thought 29
-      - thought 30
-    `)
+    // Enough thoughts to make the page scrollable. Declared once so the closing assertion compares
+    // against the known fixture rather than against a second export of the app's own state.
+    const outline = `
+- thought 1
+- thought 2
+- thought 3
+- thought 4
+- thought 5
+- thought 6
+- thought 7
+- thought 8
+- thought 9
+- thought 10
+- thought 11
+- thought 12
+- thought 13
+- thought 14
+- thought 15
+- thought 16
+- thought 17
+- thought 18
+- thought 19
+- thought 20
+- thought 21
+- thought 22
+- thought 23
+- thought 24
+- thought 25
+- thought 26
+- thought 27
+- thought 28
+- thought 29
+- thought 30
+`
+    await paste(outline)
 
     // Scroll partway down so the swipe has room to scroll further and a baseline to measure from.
     await scrollTo(0, 100)
@@ -137,7 +140,6 @@ describe('gestures', () => {
     const viewport = page.viewport()!
     const xStart = viewport.width - Math.round(viewport.width / 8)
     const yStart = Math.round(viewport.height / 3)
-    const exportedBefore = await exportThoughts()
 
     const scrollYBefore = await page.evaluate(() => window.scrollY)
     const activeGesture = await startGesture({ xStart, yStart })
@@ -169,7 +171,7 @@ describe('gestures', () => {
     // every test, so a failed assertion cannot leak the held touch into another test.
     await activeGesture.end()
 
-    expect(await exportThoughts()).toBe(exportedBefore)
+    expect(await exportThoughts()).toBe(outline)
   })
 })
 
