@@ -4,7 +4,7 @@ import type { TreecrdtClient } from '@treecrdt/wa-sqlite'
 import { getTreecrdtSyncBaseUrl } from './config'
 
 /** Creates WebSocket sync state owned by one TreeCRDT thoughtspace and document. */
-export const createTreecrdtWebSocketSync = () => {
+const createTreecrdtWebSocketSync = () => {
   let syncHandle: TreecrdtWebSocketSync | null = null
   let pendingLocalOps: Operation[] = []
 

@@ -10,8 +10,8 @@ import type {
 } from '../thoughtspace'
 import { clientIdReady, tsid } from '../thoughtspaceSession'
 import acquireTreecrdtSessionLock from './sessionLock'
-import { createTreecrdtWebSocketSync } from './sync'
 import { getMaterializedThoughtsToStoreVersion, waitForMaterializedThoughtsToStore } from './sync/materializationQueue'
+import createTreecrdtWebSocketSync from './sync/treecrdtWebSocketSync'
 import createTreecrdtDataProvider from './thoughtspace'
 import { getTreecrdtWriteBarrierVersion, waitForTreecrdtWriteBarrier, withTreecrdtWriteBarrier } from './writeBarrier'
 
@@ -44,7 +44,7 @@ export type TreecrdtRuntimeConfig =
     }>
 
 /** One app-scoped TreeCRDT thoughtspace with its bound data provider and lifecycle. */
-export interface TreecrdtThoughtspace extends ThoughtspaceRuntime {
+interface TreecrdtThoughtspace extends ThoughtspaceRuntime {
   readonly db: DataProvider
 }
 
@@ -78,7 +78,7 @@ const clientIdToReplicaId = (clientId: string): Uint8Array =>
       })()
 
 /** Converts em client settings to the full TreeCRDT client options. */
-export const getTreecrdtClientOptions = (config?: TreecrdtClientConfig): ClientOptions => {
+const getTreecrdtClientOptions = (config?: TreecrdtClientConfig): ClientOptions => {
   const storage = config?.storage ?? 'persistent'
 
   return {
@@ -111,7 +111,7 @@ const waitForStableIdle = async (): Promise<void> => {
 }
 
 /** Creates one TreeCRDT client owner and its bound app thoughtspace. */
-export const createTreecrdtThoughtspace = ({
+const createTreecrdtThoughtspace = ({
   client: clientConfig,
   tabPolicy,
 }: TreecrdtRuntimeConfig): TreecrdtThoughtspace => {
@@ -195,12 +195,13 @@ export const createTreecrdtThoughtspace = ({
     const promise = lifecycleTail.then(dropClient)
     dropPromise = promise
     lifecycleTail = promise.then(
-      () => undefined,
-      () => undefined,
+      () => {
+        if (dropPromise === promise) dropPromise = null
+      },
+      () => {
+        if (dropPromise === promise) dropPromise = null
+      },
     )
-    void promise.catch(() => {
-      if (dropPromise === promise) dropPromise = null
-    })
     return promise
   }
 

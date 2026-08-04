@@ -4,4 +4,3 @@ export {
   applyMaterializedThoughtsToStore,
   enqueueMaterializedThoughtsToStore,
 } from './applyMaterializedThoughtsToStore'
-export { createTreecrdtWebSocketSync } from './treecrdtWebSocketSync'

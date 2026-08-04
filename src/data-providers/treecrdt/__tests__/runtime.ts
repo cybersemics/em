@@ -1,5 +1,5 @@
 import { EM_TOKEN } from '../../../constants'
-import createTreecrdtThoughtspace, { getTreecrdtClientOptions } from '../runtime'
+import createTreecrdtThoughtspace from '../runtime'
 
 const { acquireTreecrdtSessionLock, createTreecrdtClient, initPermissionsStore } = vi.hoisted(() => ({
   acquireTreecrdtSessionLock: vi.fn(),
@@ -66,28 +66,20 @@ it('rejects unsupported multiple-tab client settings at both the type and runtim
   )
 })
 
-it('maps em in-memory storage to TreeCRDT memory client options', () => {
-  expect(
-    getTreecrdtClientOptions({
-      storage: 'memory',
-      runtime: 'direct',
-      docId: 'memory-doc',
-    }),
-  ).toEqual({
-    storage: { type: 'memory' },
-    runtime: { type: 'direct' },
-    docId: 'memory-doc',
-  })
-})
-
-it('maps em persistent storage to TreeCRDT OPFS client options', () => {
-  expect(
-    getTreecrdtClientOptions({
+it('maps em persistent storage to TreeCRDT OPFS client options', async () => {
+  const stopAfterOptions = new Error('stop after capturing client options')
+  createTreecrdtClient.mockRejectedValueOnce(stopAfterOptions)
+  const treecrdtThoughtspace = createTreecrdtThoughtspace({
+    client: {
       storage: 'persistent',
       runtime: 'dedicated-worker',
       docId: 'persistent-doc',
-    }),
-  ).toEqual({
+    },
+    tabPolicy: 'single',
+  })
+
+  await expect(treecrdtThoughtspace.init()).rejects.toBe(stopAfterOptions)
+  expect(createTreecrdtClient).toHaveBeenCalledWith({
     storage: {
       type: 'opfs',
       filename: expect.any(String),
@@ -103,7 +95,7 @@ it('creates the client lazily', async () => {
   createTreecrdtClient.mockImplementation(actual.createTreecrdtClient)
 
   const treecrdtThoughtspace = createTreecrdtThoughtspace({
-    client: { storage: 'memory', runtime: 'direct' },
+    client: { storage: 'memory', runtime: 'direct', docId: 'memory-doc' },
     tabPolicy: 'multiple',
   })
 
@@ -113,6 +105,11 @@ it('creates the client lazily', async () => {
 
   await treecrdtThoughtspace.init()
   expect(createTreecrdtClient).toHaveBeenCalledTimes(1)
+  expect(createTreecrdtClient).toHaveBeenCalledWith({
+    storage: { type: 'memory' },
+    runtime: { type: 'direct' },
+    docId: 'memory-doc',
+  })
 
   await treecrdtThoughtspace.drop()
 })
@@ -250,6 +247,24 @@ it('rejects queued startup writes on drop and creates a fresh gate for the next 
   await treecrdtThoughtspace.init()
   await expect(treecrdtThoughtspace.db.updateThoughts(emptyUpdates)).resolves.toEqual([])
   await treecrdtThoughtspace.drop()
+})
+
+it('runs drop again after settlement and rejects writes queued since the previous drop', async () => {
+  const treecrdtThoughtspace = createTreecrdtThoughtspace({
+    client: { storage: 'memory', runtime: 'direct' },
+    tabPolicy: 'multiple',
+  })
+
+  const firstDrop = treecrdtThoughtspace.drop()
+  await firstDrop
+
+  const queuedWrite = treecrdtThoughtspace.db.updateThoughts(emptyUpdates)
+  const queuedWriteExpectation = expect(queuedWrite).rejects.toThrow('TreeCRDT session dropped before initialization.')
+  const secondDrop = treecrdtThoughtspace.drop()
+
+  expect(secondDrop).not.toBe(firstDrop)
+  await secondDrop
+  await queuedWriteExpectation
 })
 
 it('detaches the provider and releases ownership through close when drop fails', async () => {

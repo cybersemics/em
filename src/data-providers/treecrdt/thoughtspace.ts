@@ -414,9 +414,6 @@ const createTreecrdtDataProvider = () => {
     return activeSession
   }
 
-  /** Dispatches public reads to the active session without exposing its client. */
-  const getActiveDb = (): TreecrdtSessionDataProvider => getActiveSession().db
-
   /** Dispatches public writes through the startup gate, retaining whichever session releases that write. */
   const updateThoughts: DataProvider['updateThoughts'] = async updates =>
     (await sessionGate.promise).db.updateThoughts(updates)
@@ -430,15 +427,15 @@ const createTreecrdtDataProvider = () => {
 
   const db = {
     name: 'treecrdt',
-    getLexemeById: key => getActiveDb().getLexemeById(key),
-    getLexemesByIds: keys => getActiveDb().getLexemesByIds(keys),
-    getThoughtById: id => getActiveDb().getThoughtById(id),
-    getThoughtsByIds: ids => getActiveDb().getThoughtsByIds(ids),
+    getLexemeById: key => getActiveSession().db.getLexemeById(key),
+    getLexemesByIds: keys => getActiveSession().db.getLexemesByIds(keys),
+    getThoughtById: id => getActiveSession().db.getThoughtById(id),
+    getThoughtsByIds: ids => getActiveSession().db.getThoughtsByIds(ids),
     updateThoughts,
     // Freeing cache entries remains a no-op before initialization.
     freeThought: async _id => undefined,
     freeLexeme: async _key => undefined,
-    updateLexemeIndex: lexemeIndex => getActiveDb().updateLexemeIndex(lexemeIndex),
+    updateLexemeIndex: lexemeIndex => getActiveSession().db.updateLexemeIndex(lexemeIndex),
   } satisfies Omit<DataProvider, 'clear'>
 
   /** Seeds and binds the exact client supplied by the owner, then releases queued startup writes. */
