@@ -19,6 +19,7 @@ import { pullActionCreator as pull } from '../actions/pull'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { updateThoughtsActionCreator as updateThoughts } from '../actions/updateThoughts'
 import { AlertType, HOME_PATH, HOME_TOKEN } from '../constants'
+import getTextContentFromHTML from '../device/getTextContentFromHTML'
 import globals from '../globals'
 import contextToPath from '../selectors/contextToPath'
 import findDescendant from '../selectors/findDescendant'
@@ -31,6 +32,7 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import syncStatusStore from '../stores/syncStatus'
 import addContext from '../util/addContext'
 import appendToPath from '../util/appendToPath'
+import createId from '../util/createId'
 import flattenTree from '../util/flattenTree'
 import hashThought from '../util/hashThought'
 import head from '../util/head'
@@ -311,6 +313,11 @@ export const importFilesActionCreator =
           const lexeme = getLexeme(stateAfterPull, block.scope)
           const hasContext = !!lexeme?.contexts.includes(id)
 
+          // Generate the id of the imported thought in advance so that the cursor can be set on the thought that is
+          // actually created. contextToPath cannot be used, as it resolves a value to the first matching thought and
+          // thus lands on a pre-existing duplicate sibling rather than the imported thought.
+          const idNew = createId()
+
           return new Promise<void>(resolve => {
             /** Updates the progress and resolves the task. */
             const updateAndResolve = () => updateImportProgress().then(resolve)
@@ -350,6 +357,7 @@ export const importFilesActionCreator =
                   // Any missing children from previously interrupted imports are cleaned up in createThought.
                   newThought({
                     at: importThoughtPath,
+                    id: idNew,
                     insertNewSubthought: ancestors.length > 0 || !insertBeforeNew,
                     insertBefore: ancestors.length === 0 && insertBeforeNew,
                     preventSetCursor: true,
@@ -360,8 +368,6 @@ export const importFilesActionCreator =
               // ensure the last imported thought is not deleted by freeThoughts
               (dispatch, getState) => {
                 const stateAfterImport = getState()
-                const pathNew = contextToPath(stateAfterImport, unroot([...parentContext, block.scope]))
-
                 // set cursor to first imported visible thought
                 if (!didSetCursor) {
                   const isThoughtVisible =
@@ -369,7 +375,17 @@ export const importFilesActionCreator =
                     (!isAttribute(block.scope) && ancestors.every(ancestor => !isAttribute(ancestor.scope)))
 
                   if (isThoughtVisible) {
-                    dispatch(setCursor({ path: pathNew, isKeyboardOpen: false }))
+                    dispatch(
+                      setCursor({
+                        path: appendToPath(parentPath, duplicate ? duplicate.id : idNew),
+                        // Preserve the keyboard state rather than closing it. Closing it makes the imported thought's
+                        // Editable fire a focus event when the caret is set, which sets the cursor again with no
+                        // offset and thus moves the caret back to the beginning of the thought.
+                        isKeyboardOpen: stateAfterImport.isKeyboardOpen,
+                        // place the caret at the end of the imported thought, as newThought does
+                        offset: getTextContentFromHTML(block.scope).length,
+                      }),
+                    )
                     didSetCursor = true
                   }
                 }

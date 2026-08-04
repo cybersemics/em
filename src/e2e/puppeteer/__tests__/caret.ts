@@ -278,7 +278,7 @@ describe('all platforms', () => {
   })
 
   // https://github.com/cybersemics/em/pull/4539#issuecomment-5178048205
-  it.skip('pasting a duplicate thought should leave the caret at the end of the pasted thought', async () => {
+  it('pasting a duplicate thought should leave the caret at the end of the pasted thought', async () => {
     await paste(`
       - AAA
       - BBB
