@@ -227,6 +227,16 @@ export const offsetThought = (): number | null => {
   return total
 }
 
+/** Returns the plain-text character offset of the selection's focus relative to the given root node, ignoring nested HTML markup. Returns null if there is no selection or the focus is not within the node. */
+export const offsetFromNode = (node: Node): number | null => {
+  const selection = window.getSelection()
+  if (!selection?.focusNode || !node.contains(selection.focusNode)) return null
+  const range = document.createRange()
+  range.selectNodeContents(node)
+  range.setEnd(selection.focusNode, selection.focusOffset)
+  return range.toString().length
+}
+
 /** Returns the character offset at the end of the selection. Returns null if there is no selection. */
 export const offsetEnd = (): number | null => {
   const selection = window.getSelection()
@@ -244,6 +254,21 @@ export const offsetStart = (): number | null => {
   const range = selection.getRangeAt(0)
   if (!range) return null
   return range.startOffset || 0
+}
+
+/** Returns the plain-text character offsets [start, end) of the current selection relative to the given editable
+ * element (ignoring nested HTML), or null if there is no selection within it. Used to apply formatting to an
+ * arbitrary sub-range synchronously (#4637). */
+export const offsetRange = (editable: HTMLElement): { start: number; end: number } | null => {
+  const selection = window.getSelection()
+  if (!selection || selection.rangeCount === 0) return null
+  const range = selection.getRangeAt(0)
+  if (!editable.contains(range.commonAncestorContainer)) return null
+  const pre = range.cloneRange()
+  pre.selectNodeContents(editable)
+  pre.setEnd(range.startContainer, range.startOffset)
+  const start = pre.toString().length
+  return { start, end: start + range.toString().length }
 }
 
 /** Restores the selection with the given restoration object (returned by selection.save). NOOP if the restoration object is null or undefined. */

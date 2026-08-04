@@ -413,6 +413,21 @@ const findNearestTextNode = (textNodes: Text[], clientX: number, clientY: number
 }
 
 /**
+ * Determines whether the given line — the last visual line of `node` — is immediately followed by a soft wrap
+ * into the next text node, i.e. the next non-whitespace text node's first character renders on a lower visual
+ * line. Inline formatting (bold, color, etc.) splits an editable into sibling text nodes; when the formatted
+ * run begins the next visual line, the plain prefix node ends exactly at a soft-wrap boundary even though it
+ * contains only one visual line. Without this, the end-of-wrapping-line handling misses that boundary and the
+ * caret is placed at the ambiguous position that WebKit resolves onto the next line (#4426).
+ */
+const textNodeWrapsToNext = (node: Text, line: TextNodeLine, textNodes: Text[]): boolean => {
+  const nextNode = textNodes[textNodes.indexOf(node) + 1]
+  if (!nextNode) return false
+  const nextFirstRect = getTextNodeLines(nextNode)[0]?.rect
+  return !!nextFirstRect && nextFirstRect.top - line.rect.top > line.rect.height / 2
+}
+
+/**
  * Converts a DOM position (node + offset) in the real element to a plain-text offset.
  */
 const domPositionToUnformattedOffset = (root: HTMLElement, node: Node, offset: number): number => {
@@ -470,7 +485,15 @@ const getCaretOffset = (editable: HTMLElement | null, { clientX, clientY }: Coor
   const lineEnd = lineIndex === lastLineIndex ? targetLine.end : targetLine.end - 1
 
   let offset = findOffsetAtX(nearest, clientX, lineStart, lineEnd)
-  const isEndOfWrappingLine = lineIndex < lastLineIndex && offset >= lineEnd
+  // A wrapping line is one whose end coincides with a soft wrap, where placing the caret at the boundary is
+  // ambiguous (end of this line vs. start of the next) and WebKit resolves it onto the next line. This happens
+  // (a) within a single text node when the tapped line is not its last line, and (b) across text nodes when
+  // inline formatting begins the next visual line in a sibling node — the plain prefix node then contains only
+  // one visual line, so (a) alone misses it (#4426). The cross-node check is short-circuited to run only at a
+  // line end on the node's last line.
+  const isEndOfWrappingLine =
+    offset >= lineEnd &&
+    (lineIndex < lastLineIndex || (lineIndex === lastLineIndex && textNodeWrapsToNext(nearest, targetLine, textNodes)))
 
   // iOS Safari: snap to word boundary like native iOS behavior
   if (isSafari() && isTouch && !isEndOfWrappingLine) {

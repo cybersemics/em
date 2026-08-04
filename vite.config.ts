@@ -36,6 +36,17 @@ function tunnelTokenGate(): Plugin | undefined {
   /** Middleware that allows requests bearing a valid token (via cookie or query param) and rejects all others. */
   const gate = (server: ViteDevServer | PreviewServer) => {
     server.middlewares.use((req: IncomingMessage, res: ServerResponse, next: () => void) => {
+      // Unauthenticated occupancy probe, answered before the token check. A run about to claim a
+      // Cloudflare tunnel needs to know whether anyone is already answering on that hostname, and
+      // it can't authenticate as whoever that would be. Deliberately exposes nothing but the CI run
+      // id, which is already public in the workflow logs. See checkOccupancy in
+      // src/e2e/iOS/config/cloudflareTunnelPool.ts.
+      if ((req.url || '').split('?')[0] === '/__tunnel-status') {
+        res.statusCode = 200
+        res.setHeader('Content-Type', 'application/json')
+        res.end(JSON.stringify({ em: true, run: process.env.GITHUB_RUN_ID || '' }))
+        return
+      }
       // Accept an existing session cookie set on a previous authenticated request.
       const cookieHeader = req.headers.cookie || ''
       if (cookieHeader.split(';').some(c => c.trim() === `${cookieName}=${token}`)) {
@@ -110,8 +121,9 @@ export default defineConfig({
     tunnelTokenGate(),
   ],
   server: {
-    // Allow bs-local.com for BrowserStack local testing
-    allowedHosts: ['bs-local.com'],
+    // Allow bs-local.com for BrowserStack local testing, and the Cloudflare tunnel pool's
+    // hostnames (leading dot matches all *.emthought.cc subdomains) for BrowserStack iOS Safari.
+    allowedHosts: ['bs-local.com', '.emthought.cc'],
     ...(process.env.PUPPETEER
       ? {
           hmr: {
@@ -121,5 +133,10 @@ export default defineConfig({
           },
         }
       : {}),
+  },
+  preview: {
+    // `yarn servebuild` (vite preview) is what ios.yml/tdd.yml actually run behind the tunnel —
+    // preview.allowedHosts doesn't inherit server.allowedHosts, so it needs its own entry too.
+    allowedHosts: ['.emthought.cc'],
   },
 })

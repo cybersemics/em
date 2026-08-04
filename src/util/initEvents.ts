@@ -5,7 +5,6 @@ import LifecycleState from '../@types/LifecycleState'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import { alertActionCreator as alert } from '../actions/alert'
-import { desktopCommandUniverseActionCreator as desktopCommandUniverse } from '../actions/desktopCommandUniverse'
 import { errorActionCreator as error } from '../actions/error'
 import { gestureMenuActionCreator as gestureMenu } from '../actions/gestureMenu'
 import { longPressActionCreator as longPress } from '../actions/longPress'
@@ -303,9 +302,6 @@ const initEvents = (store: Store<State, any>) => {
       const state = store.getState()
       if (state.alert?.alertType === AlertType.GestureHint) {
         store.dispatch(alert(null))
-      }
-      if (state.showDesktopCommandUniverse) {
-        store.dispatch(desktopCommandUniverse())
       }
       if (state.showGestureMenu) {
         store.dispatch(gestureMenu())

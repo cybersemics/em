@@ -14,7 +14,6 @@ import Key from './@types/Key'
 import MulticursorFilter from './@types/MulticursorFilter'
 import Path from './@types/Path'
 import State from './@types/State'
-import ThoughtId from './@types/ThoughtId'
 import { addMulticursorActionCreator as addMulticursor } from './actions/addMulticursor'
 import { alertActionCreator as alert } from './actions/alert'
 import { clearMulticursorsActionCreator as clearMulticursors } from './actions/clearMulticursors'
@@ -31,9 +30,11 @@ import { AlertType, COMMAND_PALETTE_TIMEOUT, HOME_PATH, LongPressState, Settings
 import * as selection from './device/selection'
 import globals from './globals'
 import documentSort from './selectors/documentSort'
+import getThoughtById from './selectors/getThoughtById'
 import getUserSetting from './selectors/getUserSetting'
 import hasMulticursor from './selectors/hasMulticursor'
 import isAllSelected from './selectors/isAllSelected'
+import splitChain from './selectors/splitChain'
 import thoughtToPath from './selectors/thoughtToPath'
 import store from './stores/app'
 import editingValueStore from './stores/editingValue'
@@ -42,6 +43,7 @@ import equalPath from './util/equalPath'
 import haptics from './util/haptics'
 import hashPath from './util/hashPath'
 import head from './util/head'
+import isAttribute from './util/isAttribute'
 import keyValueBy from './util/keyValueBy'
 import parentOf from './util/parentOf'
 import UnreachableError from './util/unreachable'
@@ -83,18 +85,110 @@ const digits = keyValueBy(Array(58 - 48).fill(0), (n, i) => ({
 export const hashCommand = (keyboard: string | Key): string => {
   const key = typeof keyboard === 'string' ? { key: keyboard } : keyboard
 
-  return (key.meta ? 'META_' : '') + (key.alt ? 'ALT_' : '') + (key.shift ? 'SHIFT_' : '') + key.key?.toUpperCase()
+  return (
+    (key.meta ? 'META_' : '') +
+    (key.alt ? 'ALT_' : '') +
+    // On non-Mac platforms Ctrl is already the meta modifier, so control falls back to Shift (see Key).
+    (isMac && key.control ? 'CONTROL_' : '') +
+    (key.shift || (!isMac && key.control) ? 'SHIFT_' : '') +
+    key.key?.toUpperCase()
+  )
 }
 
 /** Hash all the properties of a keydown event into a string that can be compared with the result of hashCommand. */
 export const hashKeyDown = (e: KeyboardEvent): string =>
   (e.metaKey || e.ctrlKey ? 'META_' : '') +
   (e.altKey ? 'ALT_' : '') +
+  (isMac && e.ctrlKey ? 'CONTROL_' : '') +
   (e.shiftKey ? 'SHIFT_' : '') +
   // for some reason, e.key returns 'Dead' in some cases, perhaps because of alternate keyboard settings
   // e.g. alt + meta + n
   // use e.keyCode if available instead
   (letters[e.keyCode] || digits[e.keyCode] || e.key || '').toUpperCase()
+
+/* A map of typed modifier tokens to the corresponding Key modifier property.
+ * Command and Ctrl are the same modifier on their respective platforms, so they both map to meta. Literal Control is
+ * a distinct modifier on Mac only; on other platforms Ctrl is already meta, so a typed Ctrl maps to meta there too.
+ * See docs/commands.md.
+ */
+const SHORTCUT_MODIFIERS: Index<'meta' | 'alt' | 'shift' | 'control'> = {
+  cmd: 'meta',
+  command: 'meta',
+  meta: 'meta',
+  ctrl: isMac ? 'control' : 'meta',
+  control: isMac ? 'control' : 'meta',
+  '⌘': 'meta',
+  '⌃': isMac ? 'control' : 'meta',
+  opt: 'alt',
+  option: 'alt',
+  alt: 'alt',
+  '⌥': 'alt',
+  shift: 'shift',
+  '⇧': 'shift',
+}
+
+/* A map of typed named keys to their canonical key name. */
+const SHORTCUT_NAMED_KEYS: Index<string> = {
+  enter: 'Enter',
+  return: 'Enter',
+  esc: 'Escape',
+  escape: 'Escape',
+  space: 'Space',
+  backspace: 'Backspace',
+  delete: 'Delete',
+  del: 'Delete',
+  tab: 'Tab',
+  up: 'ArrowUp',
+  down: 'ArrowDown',
+  left: 'ArrowLeft',
+  right: 'ArrowRight',
+}
+
+/**
+ * Parses a search query that looks like a keyboard shortcut (e.g. "cmd option k", "ctrl+option+k") into a hash string
+ * that can be compared directly against hashCommand. Returns null if the query is not a recognized shortcut, in which
+ * case the query should be treated as a normal label search.
+ *
+ * Tokens are case-insensitive and order-independent, separated by whitespace and/or "+". A query is recognized as a
+ * shortcut iff it contains at least one modifier token and exactly one valid key token (a single character or a known
+ * named key). Modifier tokens map to the same Key properties that em matches keypresses against at runtime, so typing
+ * a command's displayed shortcut (e.g. "Command + Control + e") always resolves to that command's hash.
+ */
+export const parseCommandShortcut = (query: string): string | null => {
+  const tokens = query
+    .toLowerCase()
+    .split(/[\s+]+/)
+    .filter(token => token.length > 0)
+
+  if (tokens.length === 0) return null
+
+  const modifiers = new Set<'meta' | 'alt' | 'shift' | 'control'>()
+  const keys: string[] = []
+
+  tokens.forEach(token => {
+    const modifier = SHORTCUT_MODIFIERS[token]
+    if (modifier) {
+      modifiers.add(modifier)
+    } else {
+      // a valid key is a known named key or a single character
+      const key = SHORTCUT_NAMED_KEYS[token] || (token.length === 1 ? token : null)
+      if (key) keys.push(key)
+      // an unrecognized multi-character token means this is not a shortcut
+      else keys.push('')
+    }
+  })
+
+  // recognized as a shortcut iff at least one modifier and exactly one valid key
+  if (modifiers.size === 0 || keys.length !== 1 || keys[0] === '') return null
+
+  return hashCommand({
+    key: keys[0],
+    meta: modifiers.has('meta'),
+    alt: modifiers.has('alt'),
+    control: modifiers.has('control'),
+    shift: modifiers.has('shift'),
+  })
+}
 
 const ARROW_KEYS_TO_CHARACTER: Record<ArrowKey, string> = {
   ArrowLeft: '←',
@@ -124,7 +218,7 @@ export const formatKeyboardShortcut = (keyboardOrString: Key | Key[] | string): 
   return (
     (keyboard.meta ? (isMac ? 'Command' : 'Ctrl') + ' + ' : '') +
     (keyboard.alt ? (isMac ? 'Option' : 'Alt') + ' + ' : '') +
-    (keyboard.control ? 'Control + ' : '') +
+    (keyboard.control ? (isMac ? 'Control' : 'Shift') + ' + ' : '') +
     (keyboard.shift ? 'Shift + ' : '') +
     (isArrowKey(text) ? arrowTextToArrowCharacter(text) : text)
   )
@@ -263,10 +357,26 @@ const filterCursors = (state: State, cursors: Path[], filter: MulticursorFilter 
   }
 }
 
-/** Recomputes the path to a thought. Returns null if the thought does not exist. */
-const recomputePath = (state: State, thoughtId: ThoughtId) => {
-  const path = thoughtToPath(state, thoughtId)
-  return path && equalPath(path, HOME_PATH) ? null : path
+/** Recomputes a path after a command has executed, in case the thought was moved. Returns null if the thought no longer exists. Paths that cross a context view are returned as-is, since they do not follow the parent chain and therefore cannot be reconstructed by thoughtToPath. */
+const recomputePath = (state: State, path: Path): Path | null => {
+  // e.g. a/m~/a does not follow the parent chain (the trailing a is a context of the Lexeme m, whose real parent is the root), so thoughtToPath would collapse it to a.
+  if (splitChain(state, path).length > 1) return getThoughtById(state, head(path)) ? path : null
+
+  const recomputed = thoughtToPath(state, head(path))
+  return recomputed && equalPath(recomputed, HOME_PATH) ? null : recomputed
+}
+
+/**
+ * Truncates a path to its nearest ancestor that is not within a metaprogramming attribute. If a command moves the cursor or a multicursor into a metaprogramming attribute (e.g. swapNote moving a thought into =note), the selection should be set to the nearest non-attribute ancestor instead. Returns the path unchanged if it contains no attribute, or null if truncation would leave an empty path.
+ */
+const nearestNonAttributeAncestor = (state: State, path: Path): Path | null => {
+  const attributeIndex = path.findIndex(id => {
+    const thought = getThoughtById(state, id)
+    return !!thought && isAttribute(thought.value)
+  })
+  if (attributeIndex === -1) return path
+  const truncated = path.slice(0, attributeIndex) as Path
+  return truncated.length > 0 ? truncated : null
 }
 
 /** Execute a single command. Defaults to global store and keyboard shortcuts. Use `executeCommandWithMulticursor` to execute a command with multicursor mode. */
@@ -291,8 +401,19 @@ export const executeCommand = (
   // Exit early if the command cannot execute
   if (!canExecute) return
 
+  // When activated by a keyboard shortcut, determine which of the command's keyboard shortcuts was pressed so it can be read in exec (e.g. to select a color based on the pressed shortcut).
+  const keyboardShortcuts = command.keyboard
+    ? Array.isArray(command.keyboard)
+      ? command.keyboard
+      : [command.keyboard]
+    : []
+  const keyboardIndex =
+    type === 'keyboard' && event instanceof KeyboardEvent && keyboardShortcuts.length > 0
+      ? keyboardShortcuts.findIndex(keyboard => hashCommand(keyboard) === hashKeyDown(event))
+      : undefined
+
   // execute single command
-  command.exec(commandStore.dispatch, commandStore.getState, event, { type })
+  command.exec(commandStore.dispatch, commandStore.getState, event, { type, keyboardIndex })
 }
 
 /** Execute command. Defaults to global store and keyboard shortcuts. */
@@ -368,7 +489,7 @@ export const executeCommandWithMulticursor = (
   } else {
     for (const path of filteredPaths) {
       // Make sure we have the correct path to the thought in case it was moved during execution.
-      const recomputedPath = recomputePath(commandStore.getState(), head(path))
+      const recomputedPath = recomputePath(commandStore.getState(), path)
       if (!recomputedPath) continue
 
       commandStore.dispatch(setCursor({ path: recomputedPath }))
@@ -378,17 +499,27 @@ export const executeCommandWithMulticursor = (
 
   // Restore the cursor to its original value if not prevented.
   // Note that state.cursor is the old cursor, before any commands were executed.
+  // If the cursor thought was moved into a metaprogramming attribute (e.g. swapNote moves it into =note),
+  // restore it to the nearest non-attribute ancestor instead.
   if (!multicursor.preventSetCursor && state.cursor) {
-    commandStore.dispatch(setCursor({ path: recomputePath(commandStore.getState(), head(state.cursor)) }))
+    const restoreState = commandStore.getState()
+    const recomputedPath = recomputePath(restoreState, state.cursor)
+    commandStore.dispatch(
+      setCursor({ path: recomputedPath && nearestNonAttributeAncestor(restoreState, recomputedPath) }),
+    )
   }
 
   // Restore multicursors
   if (!multicursor.clearMulticursor) {
     commandStore.dispatch(
       paths.map(path => (dispatch, getState) => {
-        const recomputedPath = recomputePath(getState(), head(path))
-        if (!recomputedPath) return
-        dispatch(addMulticursor({ path: recomputedPath }))
+        const state = getState()
+        const recomputedPath = recomputePath(state, path)
+        // If a multicursor thought was moved into a metaprogramming attribute (e.g. swapNote moves it into
+        // =note), restore it to the nearest non-attribute ancestor instead.
+        const restoredPath = recomputedPath && nearestNonAttributeAncestor(state, recomputedPath)
+        if (!restoredPath) return
+        dispatch(addMulticursor({ path: restoredPath }))
       }),
     )
   }
@@ -588,7 +719,8 @@ export const handleGestureCancel = () => {
 export const beforeInput = (e: InputEvent) => {
   // The native undo/redo gestures do not fire keydown/keyup, so keyCommandId may still hold a stale command
   // from an earlier keystroke. Match them before the keyCommandId branches so it cannot swallow them.
-  if (e.inputType === 'historyUndo' || e.inputType === 'historyRedo') {
+  // The cancelable check gates on the case we can actually prevent.
+  if ((e.inputType === 'historyUndo' || e.inputType === 'historyRedo') && e.cancelable) {
     const state = store.getState()
     const command = commandById(e.inputType === 'historyUndo' ? 'undo' : 'redo')
 
@@ -596,11 +728,17 @@ export const beforeInput = (e: InputEvent) => {
     // that are outside the thoughtspace.
     if (state.showDesktopCommandUniverse || state.showMobileCommandUniverse || state.showModal) return
 
+    // Block the native undo before it touches the DOM even when em has nothing to undo/redo: left unhandled,
+    // it mutates the contenteditable directly, bypassing em's undo and leaving stale formatting markup (e.g. a
+    // black font color from a removed background highlight) that renders the thought invisible (#3954). Native
+    // browser undo is intentionally superseded by em's undo (#3879). Each formatSelection registers exactly one
+    // native undo step (#4637), so one native gesture maps to one em undo/redo — no dedupe is needed.
+    e.preventDefault()
+
     // Flush any edit that is still throttled in Editable, otherwise it would be committed after the undo.
     commandEmitter.trigger('command', command)
 
     if (!command.canExecute || command.canExecute(store.getState())) {
-      e.preventDefault()
       executeCommandWithMulticursor(command, { event: e, type: 'keyboard', store })
     }
     return
