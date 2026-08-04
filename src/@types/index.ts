@@ -1,5 +1,6 @@
 import { UnknownAction } from 'redux'
 import type { TreecrdtRuntimeConfig } from '../data-providers/treecrdt/runtime'
+import type { WindowEm } from '../initialize'
 import Thunk from './Thunk'
 
 /** Application configuration resolved before runtime modules are evaluated. */
@@ -10,6 +11,16 @@ export type BootstrapConfig = Readonly<{
 /** Bootstrap properties that may be injected onto window.em before the application bundle evaluates. */
 export type BootstrapConfigOverrides = Partial<BootstrapConfig>
 
+/** Bootstrap configuration and test flags that may be injected before the application initializes. */
+export type PreloadedWindowEm = BootstrapConfigOverrides & {
+  testFlags?: Partial<WindowEm['testFlags']>
+}
+
+/** Explicit pre-initialization view of window for bootstrap writers. */
+export type PreloadedEmWindow = {
+  em?: PreloadedWindowEm
+}
+
 declare global {
   interface Document {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -17,7 +28,8 @@ declare global {
   }
 
   interface Window {
-    em: unknown
+    /** Fully initialized application namespace. Bootstrap writers use {@link PreloadedEmWindow}. */
+    em: WindowEm
     debug: (message: string) => void
     // FIX: Used only in puppeteer test environment. So need way to switch global context based on environment.
     delay: (ms: number) => Promise<boolean>

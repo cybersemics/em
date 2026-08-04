@@ -1,11 +1,10 @@
-import { WindowEm } from '../../../initialize'
 import { page } from '../session'
 
 /** Wait for the given thought value to exist in the database. */
 const waitForThoughtExistInDb = async (value: string) => {
   await page.evaluate(async value => {
     await new Promise(resolve => {
-      const testHelpers = (window.em as WindowEm).testHelpers
+      const testHelpers = window.em.testHelpers
 
       /** Polls for Lexeme in IndexedDB. */
       function pollForLexeme(value: string) {

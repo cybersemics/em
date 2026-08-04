@@ -1,4 +1,4 @@
-import type { BootstrapConfig, BootstrapConfigOverrides } from '../@types'
+import type { BootstrapConfig, PreloadedEmWindow } from '../@types'
 
 const initialEm = window.em
 
@@ -27,8 +27,9 @@ it('uses TreeCRDT configuration injected before module evaluation', async () => 
     },
     tabPolicy: 'multiple',
   }
-  window.em = {
-    ...((window.em || {}) as BootstrapConfigOverrides),
+  const preloadedWindow = window as unknown as PreloadedEmWindow
+  preloadedWindow.em = {
+    ...preloadedWindow.em,
     treecrdt,
   }
 

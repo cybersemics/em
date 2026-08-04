@@ -1,4 +1,3 @@
-import { WindowEm } from '../../../initialize'
 import { page } from '../session'
 
 interface Options {
@@ -13,7 +12,7 @@ const simulateDragAndDrop = async ({ drag, drop }: Options): Promise<void> => {
 
   await page.evaluate(
     (drag, drop) => {
-      const em = window.em as WindowEm
+      const em = window.em
       em.testFlags.simulateDrag = !!drag
       em.testFlags.simulateDrop = !!drop
     },

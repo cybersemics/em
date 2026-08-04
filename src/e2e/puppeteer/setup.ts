@@ -1,9 +1,8 @@
 /* eslint-disable import/prefer-default-export */
 import chalk from 'chalk'
 import { Browser, BrowserContext, ConsoleMessage, Device, Page } from 'puppeteer'
-import type { BootstrapConfigOverrides } from '../../@types'
+import type { PreloadedEmWindow } from '../../@types'
 import type { TreecrdtRuntimeConfig } from '../../data-providers/treecrdt/runtime'
-import { WindowEm } from '../../initialize'
 import createId from '../../util/createId'
 import { page, setPage } from './session'
 
@@ -46,35 +45,6 @@ const getTreecrdtRuntimeConfig = (docId: string, profile: TreecrdtTestProfile): 
         tabPolicy: 'multiple',
       }
 
-/** Injects typed TreeCRDT configuration before the app bundle starts. */
-const installTreecrdtRuntimeConfig = async (target: Page, config: TreecrdtRuntimeConfig): Promise<void> => {
-  await target.evaluateOnNewDocument(treecrdt => {
-    window.em = {
-      ...((window.em || {}) as BootstrapConfigOverrides),
-      treecrdt,
-    }
-  }, config)
-}
-
-/** Seeds an isolated browser session and typed test configuration before the app bundle starts. */
-const installTestSession = async (
-  target: Page,
-  sessionId: string,
-  treecrdtConfig: TreecrdtRuntimeConfig,
-): Promise<void> => {
-  await target.evaluateOnNewDocument(sessionId => {
-    if (!sessionStorage.getItem('__em_puppeteer_storage_initialized')) {
-      localStorage.clear()
-      sessionStorage.setItem('__em_puppeteer_storage_initialized', '1')
-    }
-
-    localStorage.setItem('tsid', sessionId)
-    localStorage.setItem('accessToken', sessionId)
-  }, sessionId)
-
-  await installTreecrdtRuntimeConfig(target, treecrdtConfig)
-}
-
 /** Opens an additional page with the current TreeCRDT test configuration. */
 export const createTreecrdtTestPage = async (
   browserContext: BrowserContext,
@@ -82,7 +52,16 @@ export const createTreecrdtTestPage = async (
   profile: TreecrdtTestProfile,
 ): Promise<Page> => {
   const target = await browserContext.newPage()
-  await installTreecrdtRuntimeConfig(target, getTreecrdtRuntimeConfig(docId, profile))
+  await target.evaluateOnNewDocument(
+    treecrdt => {
+      const preloadedWindow = window as unknown as PreloadedEmWindow
+      preloadedWindow.em = {
+        ...preloadedWindow.em,
+        treecrdt,
+      }
+    },
+    getTreecrdtRuntimeConfig(docId, profile),
+  )
   return target
 }
 
@@ -130,7 +109,26 @@ const setup = async ({
 
   const sessionId = createId()
 
-  await installTestSession(page, sessionId, getTreecrdtRuntimeConfig(sessionId, activeTreecrdtProfile))
+  await page.evaluateOnNewDocument(sessionId => {
+    if (!sessionStorage.getItem('__em_puppeteer_storage_initialized')) {
+      localStorage.clear()
+      sessionStorage.setItem('__em_puppeteer_storage_initialized', '1')
+    }
+
+    localStorage.setItem('tsid', sessionId)
+    localStorage.setItem('accessToken', sessionId)
+  }, sessionId)
+
+  await page.evaluateOnNewDocument(
+    treecrdt => {
+      const preloadedWindow = window as unknown as PreloadedEmWindow
+      preloadedWindow.em = {
+        ...preloadedWindow.em,
+        treecrdt,
+      }
+    },
+    getTreecrdtRuntimeConfig(sessionId, activeTreecrdtProfile),
+  )
 
   page.on('dialog', async dialog => dialog.accept())
 
@@ -160,7 +158,7 @@ const setup = async ({
   })
 
   await page.goto(url)
-  await page.evaluate(() => (window.em as WindowEm).testHelpers.waitForInitialized())
+  await page.evaluate(() => window.em.testHelpers.waitForInitialized())
 
   if (skipTutorial) {
     // wait for welcome modal to appear
@@ -179,7 +177,7 @@ const setup = async ({
     await page.waitForFunction(() => !document.querySelector('[aria-label=modal]'))
     await page.waitForFunction(() => document.querySelector('[aria-label=empty-thoughtspace], [data-editable]'))
     await page.evaluate(async () => {
-      await (window.em as Partial<WindowEm> | undefined)?.testHelpers?.waitForThoughtspaceRuntimeIdle?.()
+      await window.em?.testHelpers?.waitForThoughtspaceRuntimeIdle?.()
     })
   }
 }
@@ -191,8 +189,8 @@ afterEach(async () => {
   if (page) {
     await page
       .evaluate(async () => {
-        await (window.em as Partial<WindowEm> | undefined)?.testHelpers?.waitForThoughtspaceRuntimeIdle?.()
-        await (window.em as Partial<WindowEm> | undefined)?.testHelpers?.dropThoughtspace?.()
+        await window.em?.testHelpers?.waitForThoughtspaceRuntimeIdle?.()
+        await window.em?.testHelpers?.dropThoughtspace?.()
       })
       .catch(() => {
         // Ignore teardown errors when a failing test has already closed or navigated the page.

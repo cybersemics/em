@@ -1,4 +1,4 @@
-import type { WindowEm } from '../../../initialize'
+import type { PreloadedEmWindow } from '../../../@types'
 import clickThought from '../helpers/clickThought'
 import getEditingText from '../helpers/getEditingText'
 import paste from '../helpers/paste'
@@ -52,15 +52,11 @@ describe('scrollCursorIntoView', () => {
 
     // Simulate slow TreeCRDT reads during app startup after refresh.
     await page.evaluateOnNewDocument(value => {
-      type PreloadedWindowEm = Omit<Partial<WindowEm>, 'testFlags'> & {
-        testFlags?: Partial<WindowEm['testFlags']>
-      }
-
-      const emWindow = window as Window & { em?: PreloadedWindowEm }
-      emWindow.em = {
-        ...emWindow.em,
+      const preloadedWindow = window as unknown as PreloadedEmWindow
+      preloadedWindow.em = {
+        ...preloadedWindow.em,
         testFlags: {
-          ...emWindow.em?.testFlags,
+          ...preloadedWindow.em?.testFlags,
           replicationDelay: value,
         },
       }

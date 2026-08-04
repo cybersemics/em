@@ -1,5 +1,4 @@
 import { HOME_TOKEN } from '../../../constants.js'
-import { WindowEm } from '../../../initialize.js'
 
 async function paste(text: string): Promise<void>
 async function paste(pathUnranked: string[], text: string): Promise<void>
@@ -13,7 +12,7 @@ async function paste(pathUnranked: string | string[], text?: string): Promise<vo
   // Access window.em inside browser.execute() since window doesn't exist in Node context
   await browser.execute(
     (_pathUnranked: string[], _text: string) => {
-      const em = window.em as WindowEm
+      const em = window.em
       em.testHelpers.importToContext(_pathUnranked, _text)
 
       // Wait for React to render the DOM changes

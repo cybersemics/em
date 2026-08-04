@@ -1,4 +1,3 @@
-import { WindowEm } from '../../../initialize'
 import { page } from '../session'
 
 /**
@@ -9,7 +8,7 @@ const waitForState = async (path: string, value: any) => {
   await page.evaluate(
     async (path, value) => {
       await new Promise(resolve => {
-        const { getState, _ } = (window.em as WindowEm).testHelpers
+        const { getState, _ } = window.em.testHelpers
 
         /** Listen state changes. */
         const stateListener = () => {
