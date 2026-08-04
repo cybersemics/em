@@ -218,6 +218,62 @@ describe('all platforms', () => {
     // no assertions needed, the test will fail if the caret is not in the editable
     // If the waitUntil succeeds, the expect will always pass since we just confirmed that exact condition. If waitUntil times out, we never reach the expect anyway.
   })
+
+  // https://github.com/cybersemics/em/issues/4426
+  it('clicking the end of a wrapped line whose next line begins with formatted text keeps the caret on that line', async () => {
+    // Inline formatting splits the editable into sibling text nodes. The unformatted prefix fills the line and
+    // the long bold word does not fit in the remaining space, so the soft wrap falls exactly on the boundary
+    // between the two text nodes.
+    const prefix =
+      'Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua enim ad minim veniam quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea '
+    const value = `${prefix}<b>commodoconsequatduisauteiruredolorinrepre</b> henderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.`
+
+    await paste(value)
+
+    const editableNodeHandle = await waitForEditable(value)
+    // Click the thought to make it the cursor, which activates manual caret positioning on subsequent clicks.
+    await click(editableNodeHandle, { offset: 1 })
+
+    // Measure the layout: the vertical center of the visual line on which the unformatted prefix ends,
+    // relative to the editable's center, which is what the click helper's y option is added to.
+    const { boldWrapsToNewLine, wrapLineY } = await page.evaluate(() => {
+      const editable = document.querySelector('[data-editing=true] [data-editable]') as HTMLElement
+      const editableRect = editable.getBoundingClientRect()
+      const plainNode = editable.firstChild as Text
+      const boldNode = editable.querySelector('b')!.firstChild as Text
+
+      const prefixEndRange = document.createRange()
+      prefixEndRange.setStart(plainNode, plainNode.length - 1)
+      prefixEndRange.setEnd(plainNode, plainNode.length)
+      const prefixEndRect = prefixEndRange.getBoundingClientRect()
+
+      const boldStartRange = document.createRange()
+      boldStartRange.setStart(boldNode, 0)
+      boldStartRange.setEnd(boldNode, 1)
+      const boldStartRect = boldStartRange.getBoundingClientRect()
+
+      return {
+        boldWrapsToNewLine: boldStartRect.top > prefixEndRect.top + prefixEndRect.height / 2,
+        wrapLineY: Math.round(
+          prefixEndRect.top + prefixEndRect.height / 2 - (editableRect.y + editableRect.height / 2),
+        ),
+      }
+    })
+
+    // Precondition: the bold text must begin a new visual line for this bug to manifest.
+    expect(boldWrapsToNewLine).toBe(true)
+
+    // Click past the end of the wrapped line.
+    await click(editableNodeHandle, { edge: 'right', y: wrapLineY })
+
+    // The caret must stay at the end of the wrapped line, before the trailing wrap space, rather than jump to
+    // the start of the bold text on the next line.
+    const focusText = await getSelection().focusNode?.textContent
+    expect(focusText).toBe(prefix)
+
+    const offset = await getSelection().focusOffset
+    expect(offset).toBe(prefix.trimEnd().length)
+  })
 })
 
 describe('persistent storage', () => {

@@ -25,7 +25,7 @@ it('Apply formatting to a selected portion of a thought', async () => {
   const x = boundingBox.x + 1
   const y = boundingBox.y + boundingBox.height / 2
 
-  await page.mouse.click(x, y, { clickCount: 2 })
+  await page.mouse.click(x, y, { count: 2 })
 
   await click('[data-testid="toolbar-icon"][aria-label="Bold"]')
 

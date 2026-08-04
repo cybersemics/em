@@ -21,6 +21,9 @@ expect.extend({
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
 it('DesktopCommandUniverse', async () => {
+  // hide the HUD so that the snapshot only includes the command universe and is not affected by unrelated toolbar or navbar changes
+  await hideHUD()
+
   await press('P', { meta: true })
 
   // wait for the desktop command universe to appear before taking screenshot

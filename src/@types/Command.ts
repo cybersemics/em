@@ -19,12 +19,12 @@ interface Command {
   /** A readable, internal unique id. */
   id: CommandId
 
-  /** Executes the command. */
+  /** Executes the command. When activated by a keyboard shortcut and the command defines an array of keyboard shortcuts, `keyboardIndex` is the index of the shortcut that was pressed within that array. */
   exec: (
     dispatch: Dispatch,
     getState: () => State,
     e: Event | GestureResponderEvent | KeyboardEvent | React.MouseEvent | React.TouchEvent | React.ClipboardEvent,
-    { type }: { type: CommandType },
+    { type, keyboardIndex }: { type: CommandType; keyboardIndex?: number },
   ) => void | Promise<void>
 
   /** Short label. */
@@ -105,6 +105,9 @@ interface Command {
 
   /** A keyboard sequence or array of sequences to activate the command. The first keyboard shortcut in the array will be shown in the UI. */
   keyboard?: Key | Key[] | string
+
+  /** Overrides the keyboard shortcut that is shown in the UI. Use for a command that is bound to a range of shortcuts that cannot be represented by a single Key, e.g. `{ key: '0-8', meta: true, alt: true }`. */
+  keyboardDisplay?: Key
 
   /** For toggling commands, a short label that indicates the inverse action from the current state (e.g. "Add to Favorites" and "Remove from Favorites"). */
   labelInverse?: string

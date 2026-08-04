@@ -200,6 +200,9 @@ const getPatchAction = (patch: Patch): ActionType => patch[0]?.actions[0]
  */
 const isPatchUndoable = (patch: Patch | undefined): boolean => !!patch?.[0]?.actions.some(isUndoable)
 
+/** Actions that mutate state.multicursors. They are not undoable on their own, since selecting thoughts should not be an undo step, but they must be tracked while a multicursor command is executing. See the bail condition in the enhancer. */
+const multicursorActionTypes: Set<ActionType> = new Set(['addMulticursor', 'clearMulticursors', 'removeMulticursor'])
+
 /**
  * Gets the nth item from the end of an array.
  */
@@ -371,8 +374,14 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       if (
         // bail if state has not changed
         state === newState ||
-        // bail if the action is not undoable
-        !isUndoable(actionType) ||
+        // bail if the action is not undoable.
+        // Exception: multicursor actions dispatched while a multicursor command is executing belong to the command's
+        // single undo entry, e.g. the addMulticursor calls that restore the multiselect at the end of
+        // executeCommandWithMulticursor. Skipping them would bake their changes into the merge baseline reconstructed
+        // below, so undo would restore the original multiselect without removing the restored one, leaving both
+        // selected (#4728). Other non-undoable actions are still skipped so that transient ui state (e.g. the
+        // Command Center opened by the multicursor alert middleware) is not restored by undo.
+        (!isUndoable(actionType) && !(state.isMulticursorExecuting && multicursorActionTypes.has(actionType))) ||
         // ignore the first importText since it is part of app initialization and should not be undoable
         // otherwise the edit merge logic below will create an undo patch with an invalid lexemeIndex/000
         // See: https://github.com/cybersemics/em/issues/1494
@@ -394,14 +403,12 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       // - The closeAlert action is merged with the previous action so that the alert can be undone.
       // - All actions during the execution of a multicursor command will be merged together. The prevous action will always be setIsMulticursorExecuting.
       // - Chained commands will be merged into the previous command, e.g. Select All + Categorize
-      // - mergePrev: true forces the current action to merge with the previous patch. Used to group foreColor+backColor changes (background highlight) into a single undo step.
       if (
         (isNavigation(actionType) && isNavigation(lastAction?.type)) ||
         shouldMergeWithLastEditThought ||
         actionType === 'closeAlert' ||
         state.isMulticursorExecuting ||
-        (lastAction as UnknownAction)?.mergeNext ||
-        (action as UnknownAction)?.mergePrev
+        (lastAction as UnknownAction)?.mergeNext
       ) {
         lastAction = action
         const lastUndoPatch = nthLast(state.undoPatches, 1)

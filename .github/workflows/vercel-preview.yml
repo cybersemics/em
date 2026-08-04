@@ -3,9 +3,43 @@ name: Vercel Preview
 # pull_request_target runs in the base repo's context, so repo secrets are
 # available even for fork PRs. Untrusted fork code is gated by GitHub's
 # "require approval for outside collaborators" setting before it runs.
+#
+# The Vercel build is the web app, so documentation, agent/editor configuration, and the native
+# platform projects cannot change the preview. A PR confined to them gets no deployment and no
+# preview comment, which is the intended outcome — there is nothing to look at.
+#
+# paths-ignore skips the workflow outright, which means NO check is reported. That is only correct
+# because Vercel Preview is no longer a required status check on main. If it is ever made required
+# again, filtered PRs will sit at "Expected — Waiting for status to be reported" and block.
+# (Lint is deliberately left unfiltered and required, so every PR still reports one check.)
+#
+# A run is skipped only when EVERY changed file matches, so a PR that also touches app code still
+# deploys a preview as usual.
 on:
   pull_request_target:
     types: [opened, synchronize, reopened]
+    paths-ignore:
+      # Documentation and agent/editor configuration.
+      - '**/*.md'
+      - 'docs/**'
+      - '.github/instructions/**'
+      - '.github/skills/**'
+      - '.claude/**'
+      - '.agents/**'
+      - '.vscode/**'
+      - '.hooks/**'
+      # Native platform projects, and the icon/splash sources generated into them.
+      - 'android/**'
+      - 'ios/**'
+      - 'desktop/**'
+      - 'assets/**'
+
+# Rapidfire pushes to the same PR cancel the older preview build. Keyed on the PR number rather
+# than github.ref because pull_request_target sets github.ref to the *base* branch — every open PR
+# against main would otherwise share one group and cancel each other.
+concurrency:
+  group: vercel-preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -96,19 +130,22 @@ jobs:
           echo "url=$url" >> "$GITHUB_OUTPUT"
 
       # always() so a failed build/deploy is reported as a failed deployment rather than
-      # leaving the PR showing "in_progress" forever.
+      # leaving the PR showing "in_progress" forever. A run cancelled by the concurrency
+      # group was superseded by a newer push, not broken, so it reports "inactive" rather
+      # than the red "failure" a genuine build error gets.
       - name: Update deployment status
         if: always() && steps.deployment.outputs.result
         uses: actions/github-script@v7
         with:
           script: |
             const url = '${{ steps.deploy.outputs.url }}'
+            const cancelled = '${{ job.status }}' === 'cancelled'
             const { owner, repo } = context.repo
             await github.rest.repos.createDeploymentStatus({
               owner,
               repo,
               deployment_id: ${{ steps.deployment.outputs.result }},
-              state: url ? 'success' : 'failure',
+              state: url ? 'success' : cancelled ? 'inactive' : 'failure',
               environment_url: url || undefined,
               log_url: `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`,
             })
