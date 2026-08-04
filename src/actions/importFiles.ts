@@ -21,7 +21,6 @@ import { updateThoughtsActionCreator as updateThoughts } from '../actions/update
 import { AlertType, HOME_PATH, HOME_TOKEN } from '../constants'
 import getTextContentFromHTML from '../device/getTextContentFromHTML'
 import globals from '../globals'
-import contextToPath from '../selectors/contextToPath'
 import findDescendant from '../selectors/findDescendant'
 import { anyChild, findAnyChild } from '../selectors/getChildren'
 import { getLexeme } from '../selectors/getLexeme'
@@ -182,6 +181,13 @@ const pullDuplicateDescendants =
     }
   }
 
+/** Resolves a descendant Path by walking the given values down from a base Path. Returns null if any value has no matching child. Unlike contextToPath, the ids of the base Path are preserved, which is essential when there are duplicate thoughts, as a Context resolves a value to the first matching thought. */
+const descendantPath = (state: State, basePath: Path, values: string[]): Path | null =>
+  values.reduce<Path | null>((accum, value) => {
+    const child = accum ? findAnyChild(state, head(accum), child => child.value === value) : null
+    return accum && child ? appendToPath(accum, child.id) : null
+  }, basePath)
+
 /** Action-creator for importFiles. */
 export const importFilesActionCreator =
   ({ files, path, resume }: ImportFilesPayload): Thunk<Promise<void>> =>
@@ -247,7 +253,7 @@ export const importFilesActionCreator =
               }),
             )
 
-            const resumePath = i === 0 ? contextToPath(getState(), unroot([...parentContext, block.scope]))! : file.path
+            const resumePath = i === 0 ? appendToPath(parentPath!, duplicate ? duplicate.id : idNew) : file.path
             await manager.update(resumePath, i + 1)
           }
 
@@ -262,18 +268,15 @@ export const importFilesActionCreator =
           const stateAfterPull = getState()
 
           // if inserting into an empty destination with a sibling afterwards, import into the parent
-          const baseContext = pathToContext(
-            stateAfterPull,
-            insertBeforeNew
-              ? rootedParentOf(stateAfterPull, path)
-              : destEmpty && ancestors.length === 0
-                ? rootedParentOf(stateAfterPull, path)
-                : path,
-          )
+          const basePath =
+            insertBeforeNew || (destEmpty && ancestors.length === 0) ? rootedParentOf(stateAfterPull, path) : path
+          const baseContext = pathToContext(stateAfterPull, basePath)
           const parentContext =
             ancestors.length === 0 ? baseContext : [...unroot(baseContext), ...relativeAncestorContext]
-          // TODO: It would be better to get the id from importText rather than contextToPath
-          const parentPath = contextToPath(stateAfterPull, parentContext)
+          // Resolve the destination Path from the ids of the destination Path rather than from parentContext.
+          // A Context resolves a value to the first matching thought, so it lands the import on a pre-existing
+          // duplicate sibling rather than on the thought that was actually dropped on or pasted into.
+          const parentPath = descendantPath(stateAfterPull, basePath, relativeAncestorContext)
 
           // validate parentPath
           if (!parentPath) {

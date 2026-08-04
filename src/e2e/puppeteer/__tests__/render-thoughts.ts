@@ -316,7 +316,7 @@ describe('Superscripts', () => {
   })
 
   // https://github.com/cybersemics/em/pull/4539#issuecomment-5178983042
-  it.skip('paste into a subthought of the second of two duplicate thoughts', async () => {
+  it('paste into a subthought of the second of two duplicate thoughts', async () => {
     await paste(`
       - AAA
       - BBB
