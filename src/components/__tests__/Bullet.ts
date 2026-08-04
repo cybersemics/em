@@ -613,7 +613,7 @@ describe('multiselect', () => {
     await clickWithModifiers(getBulletByContext(['b']), { shiftKey: true })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toEqual(`- __ROOT__
+    expect(exported).toEqual(`- ${HOME_TOKEN}
   - a
   - b
     - c`)
