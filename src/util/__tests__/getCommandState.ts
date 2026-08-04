@@ -123,7 +123,7 @@ it('text and background color on font tag', () => {
 })
 
 // https://github.com/cybersemics/em/issues/3928
-it.skip('bold thought nested in a background color font tag', () => {
+it('bold thought nested in a background color font tag', () => {
   expect(
     getCommandState('<font color="#000000" style="background-color: rgb(255, 87, 61);"><b>text</b></font>'),
   ).toStrictEqual({
