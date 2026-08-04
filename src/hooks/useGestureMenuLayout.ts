@@ -88,9 +88,17 @@ export const GESTURE_MENU_SELECTED_ROW_REM =
   GESTURE_MENU_ITEM_DESCRIPTION_MAX_LINES * GESTURE_MENU_ITEM_DESCRIPTION_LINE_HEIGHT_REM +
   GESTURE_MENU_ITEM_SELECTED_PADDING_BOTTOM_REM
 
-type GestureMenuLayoutProps = {
+/** The computed multi-column Gesture Menu layout returned by {@link useGestureMenuLayout}. */
+type GestureMenuLayout = {
   /** Number of columns to render. */
   columnCount: number
+  /**
+   * How many columns the viewport width can hold, independent of how many the commands actually need.
+   * Column *width* is derived from this rather than from `columnCount` so that a column stays the same
+   * width as the gesture narrows the command list — refining `r` → `rdl` drops columns without resizing
+   * the ones that remain.
+   */
+  maxColumns: number
   /** Rows per column (capped by available height so trimming has a defined capacity). */
   rowsPerColumn: number
   /** Number of regular commands actually rendered (may be trimmed when they overflow the grid). */
@@ -121,7 +129,7 @@ const useGestureMenuLayout = (
   mainCommandsCount: number,
   /** Number of persistent commands (Cancel/Command Universe). */
   persistentCommandsCount: number,
-): GestureMenuLayoutProps => {
+): GestureMenuLayout => {
   const remPx = useSelector(state => state.fontSize)
   const innerWidth = viewportStore.useSelector(state => state.innerWidth)
   const innerHeight = viewportStore.useSelector(state => state.innerHeight)
@@ -244,6 +252,7 @@ const useGestureMenuLayout = (
 
   return {
     columnCount,
+    maxColumns,
     rowsPerColumn,
     visibleRegularCount,
     persistentColumnIndex,

@@ -47,6 +47,7 @@ const GestureMenu: FC<{
 
   const {
     columnCount,
+    maxColumns,
     rowsPerColumn,
     visibleRegularCount,
     persistentColumnIndex,
@@ -55,12 +56,12 @@ const GestureMenu: FC<{
     persistentInline,
   } = useGestureMenuLayout(mainCommands.length, persistentCommands.length)
 
-  // NOTE: useGestureMenuLayout picks padding via isMobilePortrait, not isMultiColumn (columnCount
-  // isn't known yet), so it can assume 5rem where this render ends up using 2.25rem. columnCount
-  // may then undercount but never overcount.
-  const horizontalPadding = isMultiColumn
-    ? `${GESTURE_MENU_PANEL_PADDING_MD_REM}rem`
-    : `${GESTURE_MENU_PANEL_PADDING_REM}rem`
+  // Keyed on the breakpoint rather than on how many columns the commands happen to need, so refining a
+  // gesture (r → rdl) can drop a column without also shifting the panel's padding. This now matches how
+  // useGestureMenuLayout budgets width, so the hook's column count and the rendered padding agree.
+  const horizontalPadding = isMobilePortrait
+    ? `${GESTURE_MENU_PANEL_PADDING_REM}rem`
+    : `${GESTURE_MENU_PANEL_PADDING_MD_REM}rem`
 
   // Vertical padding: the larger single-column value only in mobile portrait; above the md breakpoint
   // the panel uses the smaller landscape padding even when it collapses to one column, so the layout
@@ -72,10 +73,14 @@ const GestureMenu: FC<{
 
   const isSingleColumnMobile = !isMultiColumn && !isBrowser
 
-  // In a multi-column layout the divider spans only the first column; single column spans the full width.
-  const dividerWidth = isMultiColumn
-    ? `calc((100% - ${(columnCount - 1) * GESTURE_MENU_COLUMN_GAP_REM}rem) / ${columnCount})`
-    : '100%'
+  // The width of one column, derived from how many columns *fit* rather than how many are in use, so it
+  // is constant for a given viewport. This is what keeps the menu from resizing as a gesture narrows the
+  // command list: `r` may fill two columns and `rdl` only one, but each column is the same width in both.
+  const columnWidth = `calc((100% - ${(maxColumns - 1) * GESTURE_MENU_COLUMN_GAP_REM}rem) / ${maxColumns})`
+
+  // The divider always spans exactly one column, matching the Figma frames. Below md there is only ever
+  // one column and it fills the panel, so 100% and columnWidth coincide.
+  const dividerWidth = isMobilePortrait ? '100%' : columnWidth
 
   const visibleMainCommands = isMultiColumn ? mainCommands.slice(0, visibleRegularCount) : mainCommands
 
@@ -142,8 +147,7 @@ const GestureMenu: FC<{
           display: 'flex',
           flexDirection: 'column',
         })}
-        // Drop the fixed content-width cap above md — descriptions are bounded by the column width there.
-        style={{ fontSize, width: isMultiColumn ? undefined : '45.889rem' }}
+        style={{ fontSize }}
       >
         {gestureInProgress && (
           <div
@@ -183,7 +187,9 @@ const GestureMenu: FC<{
                 <div
                   style={{
                     display: 'grid',
-                    gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))`,
+                    // Track count comes from what fits, not what's used, so the tracks keep their width
+                    // as commands drop away; unused tracks simply render empty.
+                    gridTemplateColumns: `repeat(${maxColumns}, minmax(0, 1fr))`,
                     columnGap: `${GESTURE_MENU_COLUMN_GAP_REM}rem`,
                   }}
                 >
@@ -249,8 +255,10 @@ const GestureMenu: FC<{
                 )}
               </>
             ) : (
-              /* Single column (mobile portrait or narrow landscape): unchanged flex layout. */
-              <>
+              /* Single column: a plain flex stack rather than a grid. Above md it is held to the same
+                 columnWidth the grid tracks use, so collapsing from two columns to one leaves the
+                 surviving column exactly where and how wide it was. */
+              <div style={{ width: columnWidth }}>
                 <div
                   className={css({
                     display: 'flex',
@@ -272,7 +280,7 @@ const GestureMenu: FC<{
                     {renderPersistentItems(false)}
                   </div>
                 )}
-              </>
+              </div>
             )}
           </div>
         )}
