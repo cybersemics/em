@@ -8,14 +8,18 @@ import type { ThoughtspaceMaterializationBridge } from '../../thoughtspace'
 import { refreshAttributeChildrenFromChanges } from '../attributeChildren'
 import { waitForTreecrdtWriteBarrier } from '../writeBarrier'
 import { enqueueMaterializedThoughtsToStoreWork } from './materializationQueue'
-import {
-  type SessionBoundMaterializationStore,
-  refreshThoughtsFromMaterializationChanges,
-} from './materializationThoughtUpdates'
+import { type MaterializationStore, refreshThoughtsFromMaterializationChanges } from './materializationThoughtUpdates'
+
+/** Dependencies captured when a client registers its materialization listener. */
+type MaterializationContext = Readonly<{
+  bridge: ThoughtspaceMaterializationBridge
+  client: TreecrdtClient
+  db: MaterializationStore
+}>
 
 /** Persists lexemes that em derives locally from materialized TreeCRDT thoughts. */
 const persistDerivedLexemeUpdates = async (
-  db: SessionBoundMaterializationStore,
+  db: MaterializationStore,
   lexemeIndexUpdates: Index<Lexeme | null>,
   schemaVersion: number,
 ): Promise<void> => {
@@ -35,9 +39,7 @@ const persistDerivedLexemeUpdates = async (
  */
 export async function applyMaterializedThoughtsToStore(
   event: MaterializationEvent,
-  materialization: ThoughtspaceMaterializationBridge,
-  client: TreecrdtClient,
-  db: SessionBoundMaterializationStore,
+  { bridge, client, db }: MaterializationContext,
 ): Promise<void> {
   if (event.changes.length === 0) return
 
@@ -47,7 +49,7 @@ export async function applyMaterializedThoughtsToStore(
 
   await refreshAttributeChildrenFromChanges(client, event.changes)
 
-  const snapshot = materialization.getSnapshot()
+  const snapshot = bridge.getSnapshot()
   const { deletedIds, thoughts, lexemeIndexUpdates } = await refreshThoughtsFromMaterializationChanges(
     event.changes,
     db,
@@ -76,18 +78,14 @@ export async function applyMaterializedThoughtsToStore(
   }
 
   if (Object.keys(thoughtIndexUpdates).length > 0 || Object.keys(lexemeIndexUpdates).length > 0) {
-    await materialization.apply({ thoughtIndexUpdates, lexemeIndexUpdates })
+    await bridge.apply({ thoughtIndexUpdates, lexemeIndexUpdates })
   }
 }
 
 /** Serializes materialization refreshes so overlapping async events cannot apply out of order. */
 export function enqueueMaterializedThoughtsToStore(
   event: MaterializationEvent,
-  materialization: ThoughtspaceMaterializationBridge,
-  client: TreecrdtClient,
-  db: SessionBoundMaterializationStore,
+  context: MaterializationContext,
 ): Promise<void> {
-  return enqueueMaterializedThoughtsToStoreWork(() =>
-    applyMaterializedThoughtsToStore(event, materialization, client, db),
-  )
+  return enqueueMaterializedThoughtsToStoreWork(() => applyMaterializedThoughtsToStore(event, context))
 }

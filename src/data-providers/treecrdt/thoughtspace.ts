@@ -34,20 +34,20 @@ import { createTreecrdtLocalWriteOptions, isTreecrdtLocalMaterialization } from 
 
 type TreecrdtPlacement = { type: 'first' } | { type: 'last' } | { type: 'after'; after: ThoughtId }
 
-type TreecrdtThoughtspaceSessionIdentity = Readonly<{
+type TreecrdtClientIdentity = Readonly<{
   client: TreecrdtClient
   replicaId: Uint8Array
 }>
 
-type TreecrdtSessionDataProvider = Pick<
+type TreecrdtClientDataProvider = Pick<
   DataProvider,
   'getLexemeById' | 'getLexemesByIds' | 'getThoughtById' | 'getThoughtsByIds' | 'updateThoughts'
 > &
   Required<Pick<DataProvider, 'updateLexemeIndex'>>
 
-type TreecrdtThoughtspaceSession = TreecrdtThoughtspaceSessionIdentity &
+type TreecrdtClientBinding = TreecrdtClientIdentity &
   Readonly<{
-    db: TreecrdtSessionDataProvider
+    db: TreecrdtClientDataProvider
   }>
 
 /** Creates the private gate used by writes that race startup. */
@@ -60,7 +60,7 @@ const createDeferred = <T>() => {
   })
 
   // The public write that awaits this promise observes the rejection. This catch prevents an unhandled rejection when
-  // a session fails or drops before any pre-init write has subscribed.
+  // a client fails to bind or drops before any pre-init write has subscribed.
   void promise.catch(() => undefined)
 
   return { promise, reject, resolve }
@@ -173,9 +173,9 @@ const getTreecrdtPlacement = async (
   return { type: 'after', after: afterId }
 }
 
-/** Applies thought index updates and move placements to one exact TreeCRDT session. */
-const updateThoughtsForSession = async (
-  { client, replicaId }: TreecrdtThoughtspaceSessionIdentity,
+/** Applies thought index updates and move placements to one exact TreeCRDT client. */
+const updateThoughtsForClient = async (
+  { client, replicaId }: TreecrdtClientIdentity,
   { thoughtIndexUpdates, lexemeIndexUpdates, movePlacements }: Parameters<DataProvider['updateThoughts']>[0],
 ): Promise<readonly Operation[]> => {
   const ops: Operation[] = []
@@ -271,7 +271,7 @@ const updateThoughtsForSession = async (
   return ops
 }
 
-/** Replaces all stored lexemes in one exact TreeCRDT session. */
+/** Replaces all stored lexemes in one exact TreeCRDT client. */
 const updateLexemeIndexForClient = async (client: TreecrdtClient, lexemeIndex: Index<Lexeme>): Promise<void> => {
   await deleteAllLexemes(client)
   for (const [id, lexeme] of Object.entries(lexemeIndex)) {
@@ -286,8 +286,8 @@ const ROOT_PAYLOAD = encodeThoughtPayload({
   updatedBy: '',
 })
 
-/** Seeds TreeCRDT storage for an em thoughtspace session. */
-const initializeThoughtspaceSession = async (client: TreecrdtClient, replicaId: Uint8Array): Promise<void> => {
+/** Seeds TreeCRDT storage for an em thoughtspace. */
+const initializeThoughtspaceStorage = async (client: TreecrdtClient, replicaId: Uint8Array): Promise<void> => {
   await ensureLexemesSchema(client)
   // Ensure root has payload so getThoughtById can use the generic path.
   await client.local.payload(replicaId, GLOBAL_ROOT_TOKEN, ROOT_PAYLOAD, createTreecrdtLocalWriteOptions())
@@ -360,11 +360,8 @@ const initializeThoughtspaceSession = async (client: TreecrdtClient, replicaId: 
   await ensureAttributeChildrenIndexReady(client)
 }
 
-/** Creates a data provider whose operations are permanently bound to one TreeCRDT session. */
-const createSessionDataProvider = ({
-  client,
-  replicaId,
-}: TreecrdtThoughtspaceSessionIdentity): TreecrdtSessionDataProvider => ({
+/** Creates a data provider whose operations are permanently bound to one TreeCRDT client. */
+const createClientDataProvider = ({ client, replicaId }: TreecrdtClientIdentity): TreecrdtClientDataProvider => ({
   getLexemeById: key => getLexemeByIdSql(client, key),
   getLexemesByIds: keys => getLexemesByIdsSql(client, keys),
   getThoughtById: id => getThoughtByIdFromClient(client, id),
@@ -372,77 +369,78 @@ const createSessionDataProvider = ({
     await waitForTestReplicationDelay()
     return Promise.all(ids.map(id => getThoughtByIdFromClient(client, id)))
   },
-  updateThoughts: updates => updateThoughtsForSession({ client, replicaId }, updates),
+  updateThoughts: updates => updateThoughtsForClient({ client, replicaId }, updates),
   updateLexemeIndex: lexemeIndex => updateLexemeIndexForClient(client, lexemeIndex),
 })
 
 /**
- * Creates a TreeCRDT data provider bound by its owner to one client session at a time.
+ * Creates a TreeCRDT data provider bound by its owner to one client at a time.
  *
- * Writes issued while app initialization is delayed wait on this provider's private session gate. A failed init or a
+ * Writes issued while app initialization is delayed wait on this provider's private binding gate. A failed init or a
  * drop before init rejects that gate; the next init rotates to a fresh gate so work cannot leak into another client.
  */
 const createTreecrdtDataProvider = () => {
-  let activeSession: TreecrdtThoughtspaceSession | null = null
-  let sessionGate = createDeferred<TreecrdtThoughtspaceSession>()
+  let activeBinding: TreecrdtClientBinding | null = null
+  let bindingGate = createDeferred<TreecrdtClientBinding>()
 
-  /** Returns the active session for reads that are only valid after runtime initialization. */
-  const getActiveSession = (): TreecrdtThoughtspaceSession => {
-    if (!activeSession) throw new Error('TreeCRDT DataProvider: init not called')
-    return activeSession
+  /** Returns the active client binding for reads that are only valid after runtime initialization. */
+  const getActiveBinding = (): TreecrdtClientBinding => {
+    if (!activeBinding) throw new Error('TreeCRDT DataProvider: init not called')
+    return activeBinding
   }
 
-  /** Dispatches public writes through the startup gate, retaining whichever session releases that write. */
+  /** Dispatches public writes through the startup gate, retaining whichever client binding releases that write. */
   const updateThoughts: DataProvider['updateThoughts'] = async updates =>
-    (await sessionGate.promise).db.updateThoughts(updates)
+    (await bindingGate.promise).db.updateThoughts(updates)
 
-  /** Detaches the current session, rejects startup writes, and rotates to a fresh gate. */
-  const resetSession = (reason: unknown): void => {
-    sessionGate.reject(reason)
-    activeSession = null
-    sessionGate = createDeferred<TreecrdtThoughtspaceSession>()
+  /** Clears the current client binding, rejects startup writes, and rotates to a fresh gate. */
+  const resetBinding = (reason: unknown): void => {
+    bindingGate.reject(reason)
+    activeBinding = null
+    bindingGate = createDeferred<TreecrdtClientBinding>()
   }
 
   const db = {
     name: 'treecrdt',
-    getLexemeById: key => getActiveSession().db.getLexemeById(key),
-    getLexemesByIds: keys => getActiveSession().db.getLexemesByIds(keys),
-    getThoughtById: id => getActiveSession().db.getThoughtById(id),
-    getThoughtsByIds: ids => getActiveSession().db.getThoughtsByIds(ids),
+    getLexemeById: key => getActiveBinding().db.getLexemeById(key),
+    getLexemesByIds: keys => getActiveBinding().db.getLexemesByIds(keys),
+    getThoughtById: id => getActiveBinding().db.getThoughtById(id),
+    getThoughtsByIds: ids => getActiveBinding().db.getThoughtsByIds(ids),
     updateThoughts,
     // Freeing cache entries remains a no-op before initialization.
     freeThought: async _id => undefined,
     freeLexeme: async _key => undefined,
-    updateLexemeIndex: lexemeIndex => getActiveSession().db.updateLexemeIndex(lexemeIndex),
+    updateLexemeIndex: lexemeIndex => getActiveBinding().db.updateLexemeIndex(lexemeIndex),
   } satisfies Omit<DataProvider, 'clear'>
 
   /** Seeds and binds the exact client supplied by the owner, then releases queued startup writes. */
-  const bindSession = async (
+  const bindClient = async (
     client: TreecrdtClient,
     replicaId: Uint8Array,
     materialization?: ThoughtspaceMaterializationBridge,
   ): Promise<() => void> => {
-    if (activeSession) throw new Error('TreeCRDT DataProvider: session already initialized')
-    await initializeThoughtspaceSession(client, replicaId)
+    if (activeBinding) throw new Error('TreeCRDT DataProvider: client already bound')
+    await initializeThoughtspaceStorage(client, replicaId)
 
-    const sessionIdentity = { client, replicaId }
-    const session = {
-      ...sessionIdentity,
-      db: createSessionDataProvider(sessionIdentity),
+    const clientIdentity = { client, replicaId }
+    const binding = {
+      ...clientIdentity,
+      db: createClientDataProvider(clientIdentity),
     }
+    const materializationContext = materialization ? { bridge: materialization, client, db: binding.db } : null
 
     const unsubscribeMaterialized = client.onMaterialized(event => {
       // Local writes are already reflected optimistically. Other materialization uses the exact provider and client
-      // that created this subscription, even if the app later initializes a new session.
-      if (isTreecrdtLocalMaterialization(event) || !materialization) return
+      // that created this subscription, even if the app later binds a new client.
+      if (isTreecrdtLocalMaterialization(event) || !materializationContext) return
 
-      void enqueueMaterializedThoughtsToStore(event, materialization, client, session.db).catch(err =>
+      void enqueueMaterializedThoughtsToStore(event, materializationContext).catch(err =>
         console.error('TreeCRDT materialized UI sync failed', err),
       )
     })
 
-    activeSession = session
-    sessionGate.resolve(session)
+    activeBinding = binding
+    bindingGate.resolve(binding)
     let subscribed = true
     return () => {
       if (!subscribed) return
@@ -453,8 +451,8 @@ const createTreecrdtDataProvider = () => {
 
   return {
     db,
-    bindSession,
-    resetSession,
+    bindClient,
+    resetBinding,
   }
 }
 

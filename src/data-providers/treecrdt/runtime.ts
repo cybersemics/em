@@ -158,7 +158,7 @@ const createTreecrdtThoughtspace = ({
       }
     }
 
-    provider.resetSession(new Error('TreeCRDT session dropped before initialization.'))
+    provider.resetBinding(new Error('TreeCRDT client binding cleared before initialization.'))
 
     const unsubscribe = unsubscribeMaterialization
     unsubscribeMaterialization = null
@@ -229,7 +229,7 @@ const createTreecrdtThoughtspace = ({
       const clientId = await clientIdReady
       await initPermissionsStore()
       nextClient = await createTreecrdtClient(getTreecrdtClientOptions(clientConfig))
-      nextUnsubscribeMaterialization = await provider.bindSession(
+      nextUnsubscribeMaterialization = await provider.bindClient(
         nextClient,
         clientIdToReplicaId(clientId),
         options?.materialization,
@@ -240,7 +240,7 @@ const createTreecrdtThoughtspace = ({
       unsubscribeMaterialization = nextUnsubscribeMaterialization
       return { clientId }
     } catch (error) {
-      provider.resetSession(error)
+      provider.resetBinding(error)
       nextUnsubscribeMaterialization?.()
       await nextClient?.close()
       throw error

@@ -132,7 +132,7 @@ it('falls back to rank placement when explicit afterId is stale', async () => {
   expect(Object.values(parent?.childrenMap ?? {})).toEqual([THOUGHT_A_ID, THOUGHT_X_ID, THOUGHT_B_ID])
 })
 
-it('queues writes issued before initialization and applies them to the initialized session', async () => {
+it('queues writes issued before initialization and applies them to the bound client', async () => {
   let writeSettled = false
   const write = persistThoughts([thought(PARENT_ID, EM_TOKEN, 'queued', 0)]).finally(() => {
     writeSettled = true

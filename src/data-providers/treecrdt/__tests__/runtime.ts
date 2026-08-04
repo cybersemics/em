@@ -188,11 +188,15 @@ it('rejects writes queued before each settled drop and creates a fresh gate for 
   const treecrdtThoughtspace = createMemoryThoughtspace()
 
   const firstWrite = treecrdtThoughtspace.db.updateThoughts(emptyUpdates)
-  const firstWriteExpectation = expect(firstWrite).rejects.toThrow('TreeCRDT session dropped before initialization.')
+  const firstWriteExpectation = expect(firstWrite).rejects.toThrow(
+    'TreeCRDT client binding cleared before initialization.',
+  )
   await Promise.all([treecrdtThoughtspace.drop(), firstWriteExpectation])
 
   const secondWrite = treecrdtThoughtspace.db.updateThoughts(emptyUpdates)
-  const secondWriteExpectation = expect(secondWrite).rejects.toThrow('TreeCRDT session dropped before initialization.')
+  const secondWriteExpectation = expect(secondWrite).rejects.toThrow(
+    'TreeCRDT client binding cleared before initialization.',
+  )
   await Promise.all([treecrdtThoughtspace.drop(), secondWriteExpectation])
 
   await treecrdtThoughtspace.init()

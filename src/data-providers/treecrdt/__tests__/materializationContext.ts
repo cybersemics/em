@@ -4,6 +4,7 @@ import type ThoughtId from '../../../@types/ThoughtId'
 import type Timestamp from '../../../@types/Timestamp'
 import { EM_TOKEN } from '../../../constants'
 import type { DataProvider } from '../../DataProvider'
+import type { enqueueMaterializedThoughtsToStore as EnqueueMaterializedThoughtsToStore } from '../sync/applyMaterializedThoughtsToStore'
 import createTreecrdtDataProvider from '../thoughtspace'
 
 const { enqueueMaterializedThoughtsToStore } = vi.hoisted(() => ({
@@ -17,7 +18,7 @@ vi.mock('../sync', async importOriginal => {
 
 const THOUGHT_ID = '00000000000000000000000000000201' as ThoughtId
 
-/** Creates a minimal thought fixture for the session binding regression. */
+/** Creates a minimal thought fixture for the materialization context regression. */
 const thought = (value: string) => ({
   id: THOUGHT_ID,
   parentId: EM_TOKEN,
@@ -38,19 +39,23 @@ const persistThought = (db: Pick<DataProvider, 'updateThoughts'>, value: string)
     schemaVersion: 0,
   })
 
-it('enqueues materialization with a provider bound to the emitting session', async () => {
+it('retains the originating materialization context after rebinding the provider', async () => {
   const clientOne = await createTreecrdtClient({
     storage: { type: 'memory' },
     runtime: { type: 'direct' },
-    docId: 'session-bound-materialization-one',
+    docId: 'materialization-context-one',
   })
   const clientTwo = await createTreecrdtClient({
     storage: { type: 'memory' },
     runtime: { type: 'direct' },
-    docId: 'session-bound-materialization-two',
+    docId: 'materialization-context-two',
   })
   const provider = createTreecrdtDataProvider()
-  const materialization = {
+  const bridgeOne = {
+    getSnapshot: () => ({ schemaVersion: 0, thoughtIndex: {}, lexemeIndex: {} }),
+    apply: vi.fn(),
+  }
+  const bridgeTwo = {
     getSnapshot: () => ({ schemaVersion: 0, thoughtIndex: {}, lexemeIndex: {} }),
     apply: vi.fn(),
   }
@@ -62,8 +67,12 @@ it('enqueues materialization with a provider bound to the emitting session', asy
   })
 
   try {
-    await provider.bindSession(clientOne, new Uint8Array(32).fill(1), materialization)
-    await persistThought(provider.db, 'session one')
+    await provider.bindClient(clientOne, new Uint8Array(32).fill(1), bridgeOne)
+    await persistThought(provider.db, 'client one')
+
+    provider.resetBinding(new Error('switch client binding'))
+    await provider.bindClient(clientTwo, new Uint8Array(32).fill(2), bridgeTwo)
+    await persistThought(provider.db, 'client two')
 
     onMaterializedOne?.({
       headSeq: 1,
@@ -71,21 +80,15 @@ it('enqueues materialization with a provider bound to the emitting session', asy
     })
 
     expect(enqueueMaterializedThoughtsToStore).toHaveBeenCalledTimes(1)
-    const [, , enqueuedClient, enqueuedDb] = enqueueMaterializedThoughtsToStore.mock.calls[0] as unknown as [
-      unknown,
-      unknown,
-      typeof clientOne,
-      Pick<DataProvider, 'getThoughtById'>,
-    ]
+    const [, context] = enqueueMaterializedThoughtsToStore.mock.calls[0] as unknown as Parameters<
+      typeof EnqueueMaterializedThoughtsToStore
+    >
 
-    provider.resetSession(new Error('switch test session'))
-    await provider.bindSession(clientTwo, new Uint8Array(32).fill(2), materialization)
-    await persistThought(provider.db, 'session two')
-
-    expect(enqueuedClient).toBe(clientOne)
-    expect(enqueuedDb).not.toBe(provider.db)
-    await expect(enqueuedDb.getThoughtById(THOUGHT_ID)).resolves.toMatchObject({ value: 'session one' })
-    await expect(provider.db.getThoughtById(THOUGHT_ID)).resolves.toMatchObject({ value: 'session two' })
+    expect(context.bridge).toBe(bridgeOne)
+    expect(context.client).toBe(clientOne)
+    expect(context.db).not.toBe(provider.db)
+    await expect(context.db.getThoughtById(THOUGHT_ID)).resolves.toMatchObject({ value: 'client one' })
+    await expect(provider.db.getThoughtById(THOUGHT_ID)).resolves.toMatchObject({ value: 'client two' })
   } finally {
     await clientOne.drop()
     await clientTwo.drop()
