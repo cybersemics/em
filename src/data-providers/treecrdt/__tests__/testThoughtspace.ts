@@ -59,10 +59,6 @@ const persistThoughts = (
   movePlacements?: Record<ThoughtId, ThoughtId | null>,
 ) => persistThoughtsTo(treecrdtThoughtspace, thoughts, movePlacements)
 
-beforeEach(async () => {
-  await treecrdt.drop()
-})
-
 afterEach(async () => {
   await treecrdt.drop()
 })
