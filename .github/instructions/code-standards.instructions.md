@@ -14,6 +14,10 @@
 
 - Do not create new files for constants, hooks, components, selectors, or helper functions that are only used in a single file. Instead, define them in the same file where they are used.
   - Prefer co-located functions over unnecessary abstraction. If a function is only used in one module, define it there instead of abstracting it out into a separate file.
+- Avoid thin wrappers that give the appearance of abstraction. Before extracting a function, confirm it earns its place by answering yes to at least one of the questions below; if the answer is no to all three, inline it at the call site. A thin wrapper enlarges the internal API and hides the significant call it wraps (e.g. a lifecycle hook such as `evaluateOnNewDocument`, or a subscription), making the control flow harder to follow than the code it replaced.
+  - Does it reduce duplication? A helper called once does not.
+  - Does it establish an encapsulation boundary? A helper whose only consumers live in the same module does not.
+  - Does it hide meaningful complexity? A one- or two-line body that just forwards its arguments does not.
 - Only a single, default export is allowed. Named exports are not allowed.
   - Exception: action-creators are co-located with reducers in `src/actions` and exported as named exports.
   - Filenames should exactly match the default export name.
