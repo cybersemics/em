@@ -204,13 +204,18 @@ it('rejects writes queued before each settled drop and creates a fresh gate for 
   await treecrdtThoughtspace.drop()
 })
 
-it('detaches the provider and releases ownership through close when drop fails', async () => {
+it('discards a terminal client when drop reports an error', async () => {
   const client = await actualCreateTreecrdtClient({
     storage: { type: 'memory' },
     runtime: { type: 'direct' },
   })
   const dropError = new Error('client drop failed')
-  vi.spyOn(client, 'drop').mockRejectedValueOnce(dropError)
+  const originalDrop = client.drop.bind(client)
+  // Model wa-sqlite 0.4: drop may report an error after making the client terminal.
+  vi.spyOn(client, 'drop').mockImplementationOnce(async () => {
+    await originalDrop()
+    throw dropError
+  })
   const close = vi.spyOn(client, 'close')
   createTreecrdtClient.mockResolvedValueOnce(client)
 
@@ -220,7 +225,7 @@ it('detaches the provider and releases ownership through close when drop fails',
   expect(() => treecrdtThoughtspace.db.getThoughtById('missing' as never)).toThrow(
     'TreeCRDT DataProvider: init not called',
   )
-  expect(close).toHaveBeenCalledTimes(1)
+  expect(close).not.toHaveBeenCalled()
 
   await expect(treecrdtThoughtspace.init()).resolves.toEqual({ clientId: expect.any(String) })
   await treecrdtThoughtspace.drop()

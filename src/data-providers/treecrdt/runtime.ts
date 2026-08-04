@@ -167,23 +167,10 @@ const createTreecrdtThoughtspace = ({
     await captureError(websocketSync.stop)
     await captureError(() => unsubscribe?.())
 
-    let clientReleased = clientToDrop === null
-    if (clientToDrop) {
-      try {
-        await clientToDrop.drop()
-        clientReleased = true
-      } catch (error) {
-        errors.push(error)
-        try {
-          await clientToDrop.close()
-          clientReleased = true
-        } catch (closeError) {
-          errors.push(closeError)
-        }
-      }
-    }
+    await captureError(() => clientToDrop?.drop())
 
-    if (clientReleased && client === clientToDrop) client = null
+    // wa-sqlite clients are terminal after drop settles, including when teardown reports an error.
+    if (client === clientToDrop) client = null
     if (errors.length > 0) throw errors[0]
   }
 
