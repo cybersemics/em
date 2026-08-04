@@ -1,4 +1,5 @@
 import click from '../helpers/click'
+import clickBullet from '../helpers/clickBullet'
 import clickThought from '../helpers/clickThought'
 import exportThoughts from '../helpers/exportThoughts'
 import getEditingText from '../helpers/getEditingText'
@@ -104,6 +105,31 @@ it('Bold button stays active when the cursor is moved to a fully-bold thought vi
   await page.waitForFunction(() => (window.getSelection()?.focusOffset ?? -1) === 0)
 
   // the Bold button should reflect the thought's bold formatting rather than flickering back to inactive
+  expect(await isBoldButtonActive()).toBe(true)
+})
+
+// Regression test for #3916: applying Bold while the cursor had been placed by tapping a bullet made the button
+// flash — the activation animation played, but the command state was derived from the editable's outerHTML rather
+// than its contents, so the button fell straight back to inactive. Same cause as #3912, and the same for Italic,
+// Underline and Strikethrough, which share this code path.
+it('Bold button becomes active when a thought is formatted with the cursor placed via its bullet (#3916)', async () => {
+  const importText = `
+  - One
+  - Two`
+
+  await paste(importText)
+
+  // the cursor starts on the thought the user typed last
+  await clickThought('Two')
+
+  // move the cursor to the first thought by tapping its bullet, which collapses the caret on the editable element
+  await clickBullet('One')
+  await page.waitForFunction(() => document.querySelector('[data-editing=true] [data-editable]')?.innerHTML === 'One')
+
+  await click('[data-testid="toolbar-icon"][aria-label="Bold"]')
+  await waitForEditable('<b>One</b>')
+
+  // the Bold button should reflect the newly applied formatting rather than flashing back to inactive
   expect(await isBoldButtonActive()).toBe(true)
 })
 
