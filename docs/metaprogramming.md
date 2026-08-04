@@ -139,7 +139,6 @@ The canonical list is the `Settings` enum in [`constants.ts`](../src/constants.t
 
 ```ts
 enum Settings {
-  disableGestureTracing,
   experienceMode,
   hideScrollZone,
   leftHanded,

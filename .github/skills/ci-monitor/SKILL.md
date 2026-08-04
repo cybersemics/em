@@ -21,6 +21,7 @@ allowed-tools:
 
 - **In a local harness**, where that MCP server is not present, the `gh` CLI is the equivalent: `gh run list --branch "$(git rev-parse --abbrev-ref HEAD)"` to list, and `gh run view <id> --log-failed` to pull the failing log. Everything below applies unchanged — only the mechanism differs.
 - Wait for ALL in-progress runs to complete before reporting status. Never claim tests pass without actually checking.
+- **A `cancelled` run is not a failure.** Test, Puppeteer, Lint, and Vercel Preview cancel a run as soon as a newer push supersedes it (`docs/testing.md` § Superseded runs), so a branch that was pushed to twice in quick succession normally carries cancelled runs on the older commits. Judge each workflow by its run on the current head sha (`git rev-parse HEAD`), and never enter the iteration loop below for a run that was merely superseded.
 - For each workflow, report: passed, failed, or still running.
 - For failed workflows, pull the relevant log section showing the error.
 

@@ -89,13 +89,21 @@ const digits = keyValueBy(Array(58 - 48).fill(0), (n, i) => ({
 export const hashCommand = (keyboard: string | Key): string => {
   const key = typeof keyboard === 'string' ? { key: keyboard } : keyboard
 
-  return (key.meta ? 'META_' : '') + (key.alt ? 'ALT_' : '') + (key.shift ? 'SHIFT_' : '') + key.key?.toUpperCase()
+  return (
+    (key.meta ? 'META_' : '') +
+    (key.alt ? 'ALT_' : '') +
+    // On non-Mac platforms Ctrl is already the meta modifier, so control falls back to Shift (see Key).
+    (isMac && key.control ? 'CONTROL_' : '') +
+    (key.shift || (!isMac && key.control) ? 'SHIFT_' : '') +
+    key.key?.toUpperCase()
+  )
 }
 
 /** Hash all the properties of a keydown event into a string that can be compared with the result of hashCommand. */
 export const hashKeyDown = (e: KeyboardEvent): string =>
   (e.metaKey || e.ctrlKey ? 'META_' : '') +
   (e.altKey ? 'ALT_' : '') +
+  (isMac && e.ctrlKey ? 'CONTROL_' : '') +
   (e.shiftKey ? 'SHIFT_' : '') +
   // for some reason, e.key returns 'Dead' in some cases, perhaps because of alternate keyboard settings
   // e.g. alt + meta + n
@@ -103,17 +111,18 @@ export const hashKeyDown = (e: KeyboardEvent): string =>
   (letters[e.keyCode] || digits[e.keyCode] || e.key || '').toUpperCase()
 
 /* A map of typed modifier tokens to the corresponding Key modifier property.
- * All Command/Control synonyms map to meta because em's matching layer has no functioning literal-control
- * distinction: hashCommand ignores Key.control and hashKeyDown folds e.ctrlKey into META_. See docs/commands.md.
+ * Command and Ctrl are the same modifier on their respective platforms, so they both map to meta. Literal Control is
+ * a distinct modifier on Mac only; on other platforms Ctrl is already meta, so a typed Ctrl maps to meta there too.
+ * See docs/commands.md.
  */
-const SHORTCUT_MODIFIERS: Index<'meta' | 'alt' | 'shift'> = {
+const SHORTCUT_MODIFIERS: Index<'meta' | 'alt' | 'shift' | 'control'> = {
   cmd: 'meta',
   command: 'meta',
   meta: 'meta',
-  ctrl: 'meta',
-  control: 'meta',
+  ctrl: isMac ? 'control' : 'meta',
+  control: isMac ? 'control' : 'meta',
   '⌘': 'meta',
-  '⌃': 'meta',
+  '⌃': isMac ? 'control' : 'meta',
   opt: 'alt',
   option: 'alt',
   alt: 'alt',
@@ -146,8 +155,8 @@ const SHORTCUT_NAMED_KEYS: Index<string> = {
  *
  * Tokens are case-insensitive and order-independent, separated by whitespace and/or "+". A query is recognized as a
  * shortcut iff it contains at least one modifier token and exactly one valid key token (a single character or a known
- * named key). All Command/Control synonyms (cmd, command, meta, ctrl, control) map to META, consistent with how em
- * matches keypresses at runtime.
+ * named key). Modifier tokens map to the same Key properties that em matches keypresses against at runtime, so typing
+ * a command's displayed shortcut (e.g. "Command + Control + e") always resolves to that command's hash.
  */
 export const parseCommandShortcut = (query: string): string | null => {
   const tokens = query
@@ -157,7 +166,7 @@ export const parseCommandShortcut = (query: string): string | null => {
 
   if (tokens.length === 0) return null
 
-  const modifiers = new Set<'meta' | 'alt' | 'shift'>()
+  const modifiers = new Set<'meta' | 'alt' | 'shift' | 'control'>()
   const keys: string[] = []
 
   tokens.forEach(token => {
@@ -180,6 +189,7 @@ export const parseCommandShortcut = (query: string): string | null => {
     key: keys[0],
     meta: modifiers.has('meta'),
     alt: modifiers.has('alt'),
+    control: modifiers.has('control'),
     shift: modifiers.has('shift'),
   })
 }
@@ -212,7 +222,7 @@ export const formatKeyboardShortcut = (keyboardOrString: Key | Key[] | string): 
   return (
     (keyboard.meta ? (isMac ? 'Command' : 'Ctrl') + ' + ' : '') +
     (keyboard.alt ? (isMac ? 'Option' : 'Alt') + ' + ' : '') +
-    (keyboard.control ? 'Control + ' : '') +
+    (keyboard.control ? (isMac ? 'Control' : 'Shift') + ' + ' : '') +
     (keyboard.shift ? 'Shift + ' : '') +
     (isArrowKey(text) ? arrowTextToArrowCharacter(text) : text)
   )
@@ -395,8 +405,19 @@ export const executeCommand = (
   // Exit early if the command cannot execute
   if (!canExecute) return
 
+  // When activated by a keyboard shortcut, determine which of the command's keyboard shortcuts was pressed so it can be read in exec (e.g. to select a color based on the pressed shortcut).
+  const keyboardShortcuts = command.keyboard
+    ? Array.isArray(command.keyboard)
+      ? command.keyboard
+      : [command.keyboard]
+    : []
+  const keyboardIndex =
+    type === 'keyboard' && event instanceof KeyboardEvent && keyboardShortcuts.length > 0
+      ? keyboardShortcuts.findIndex(keyboard => hashCommand(keyboard) === hashKeyDown(event))
+      : undefined
+
   // execute single command
-  command.exec(commandStore.dispatch, commandStore.getState, event, { type })
+  command.exec(commandStore.dispatch, commandStore.getState, event, { type, keyboardIndex })
 }
 
 /** Execute command. Defaults to global store and keyboard shortcuts. */

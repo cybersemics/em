@@ -34,6 +34,13 @@ on:
       - 'desktop/**'
       - 'assets/**'
 
+# Rapidfire pushes to the same PR cancel the older preview build. Keyed on the PR number rather
+# than github.ref because pull_request_target sets github.ref to the *base* branch — every open PR
+# against main would otherwise share one group and cancel each other.
+concurrency:
+  group: vercel-preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
   deployments: write
@@ -123,19 +130,22 @@ jobs:
           echo "url=$url" >> "$GITHUB_OUTPUT"
 
       # always() so a failed build/deploy is reported as a failed deployment rather than
-      # leaving the PR showing "in_progress" forever.
+      # leaving the PR showing "in_progress" forever. A run cancelled by the concurrency
+      # group was superseded by a newer push, not broken, so it reports "inactive" rather
+      # than the red "failure" a genuine build error gets.
       - name: Update deployment status
         if: always() && steps.deployment.outputs.result
         uses: actions/github-script@v7
         with:
           script: |
             const url = '${{ steps.deploy.outputs.url }}'
+            const cancelled = '${{ job.status }}' === 'cancelled'
             const { owner, repo } = context.repo
             await github.rest.repos.createDeploymentStatus({
               owner,
               repo,
               deployment_id: ${{ steps.deployment.outputs.result }},
-              state: url ? 'success' : 'failure',
+              state: url ? 'success' : cancelled ? 'inactive' : 'failure',
               environment_url: url || undefined,
               log_url: `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`,
             })
