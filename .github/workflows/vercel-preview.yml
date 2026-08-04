@@ -3,13 +3,47 @@ name: Vercel Preview
 # pull_request_target runs in the base repo's context, so repo secrets are
 # available even for fork PRs. Untrusted fork code is gated by GitHub's
 # "require approval for outside collaborators" setting before it runs.
+#
+# The Vercel build is the web app, so documentation, agent/editor configuration, and the native
+# platform projects cannot change the preview. A PR confined to them gets no deployment and no
+# preview comment, which is the intended outcome — there is nothing to look at.
+#
+# paths-ignore skips the workflow outright, which means NO check is reported. That is only correct
+# because Vercel Preview is no longer a required status check on main. If it is ever made required
+# again, filtered PRs will sit at "Expected — Waiting for status to be reported" and block.
+# (Lint is deliberately left unfiltered and required, so every PR still reports one check.)
+#
+# A run is skipped only when EVERY changed file matches, so a PR that also touches app code still
+# deploys a preview as usual.
 on:
   pull_request_target:
     types: [opened, synchronize, reopened]
+    paths-ignore:
+      # Documentation and agent/editor configuration.
+      - '**/*.md'
+      - 'docs/**'
+      - '.github/instructions/**'
+      - '.github/skills/**'
+      - '.claude/**'
+      - '.agents/**'
+      - '.vscode/**'
+      - '.hooks/**'
+      # Native platform projects, and the icon/splash sources generated into them.
+      - 'android/**'
+      - 'ios/**'
+      - 'desktop/**'
+      - 'assets/**'
+
+# Rapidfire pushes to the same PR cancel the older preview build. Keyed on the PR number rather
+# than github.ref because pull_request_target sets github.ref to the *base* branch — every open PR
+# against main would otherwise share one group and cancel each other.
+concurrency:
+  group: vercel-preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
-  pull-requests: write
+  deployments: write
 
 env:
   VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
@@ -48,6 +82,40 @@ jobs:
       - name: Install npm dependencies
         uses: ./.github/actions/install
 
+      # Create a GitHub deployment so the preview URL appears in the PR's deployment
+      # box (and under repo Environments) rather than as a bot comment. Superseded
+      # deployments are automatically marked inactive, so stale preview URLs on older
+      # commits are visibly greyed out.
+      - name: Create deployment
+        id: deployment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo
+            const { data } = await github.rest.repos.createDeployment({
+              owner,
+              repo,
+              ref: context.payload.pull_request.head.sha,
+              environment: 'Preview',
+              // Defaults to true, which makes GitHub merge the base branch into ref and
+              // return a merge result *instead of* creating a deployment.
+              auto_merge: false,
+              // Defaults to all existing commit statuses, which would fail creation while
+              // the other CI checks on this commit are still pending.
+              required_contexts: [],
+              // Marks the environment as temporary so GitHub deactivates it on merge/close.
+              transient_environment: true,
+              description: `PR #${context.payload.pull_request.number}`,
+            })
+            await github.rest.repos.createDeploymentStatus({
+              owner,
+              repo,
+              deployment_id: data.id,
+              state: 'in_progress',
+              log_url: `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`,
+            })
+            return data.id
+
       - name: Pull Vercel environment
         run: yarn dlx vercel pull --yes --environment=preview --token="$VERCEL_TOKEN"
 
@@ -61,19 +129,23 @@ jobs:
           test -n "$url"
           echo "url=$url" >> "$GITHUB_OUTPUT"
 
-      - name: Comment preview URL
+      # always() so a failed build/deploy is reported as a failed deployment rather than
+      # leaving the PR showing "in_progress" forever. A run cancelled by the concurrency
+      # group was superseded by a newer push, not broken, so it reports "inactive" rather
+      # than the red "failure" a genuine build error gets.
+      - name: Update deployment status
+        if: always() && steps.deployment.outputs.result
         uses: actions/github-script@v7
         with:
           script: |
             const url = '${{ steps.deploy.outputs.url }}'
-            const marker = '<!-- vercel-preview -->'
-            const body = `${marker}\n<sub><img src="https://avatars.githubusercontent.com/in/8329?s=20&v=4" width="14" /></sub> Vercel preview: ${url}`
+            const cancelled = '${{ job.status }}' === 'cancelled'
             const { owner, repo } = context.repo
-            const issue_number = context.payload.pull_request.number
-            const { data: comments } = await github.rest.issues.listComments({ owner, repo, issue_number })
-            const existing = comments.find(c => c.body && c.body.includes(marker))
-            if (existing) {
-              await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body })
-            } else {
-              await github.rest.issues.createComment({ owner, repo, issue_number, body })
-            }
+            await github.rest.repos.createDeploymentStatus({
+              owner,
+              repo,
+              deployment_id: ${{ steps.deployment.outputs.result }},
+              state: url ? 'success' : cancelled ? 'inactive' : 'failure',
+              environment_url: url || undefined,
+              log_url: `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`,
+            })

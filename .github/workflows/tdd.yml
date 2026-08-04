@@ -10,6 +10,23 @@ on:
         description: 'Optional ID for tracking repeated runs'
         required: false
 
+# Supersede the in-progress run when a pull request is pushed again; its result is about to be
+# replaced anyway. Only pull_request runs are grouped: `github.ref` is `refs/pull/<n>/merge` there,
+# so it is already per-PR. (vercel-preview.yml must key on the PR number instead because
+# pull_request_target sets github.ref to the base branch.)
+#
+# workflow_dispatch falls back to github.run_id, which is unique per run and therefore never
+# collides. That is deliberate, and not the same as cancel-in-progress: false — a shared group with
+# cancellation off *queues* runs, and GitHub cancels a pending run when a newer one queues behind
+# it, which would break the `ghworkflow` flake hunt (docs/testing.md § Triggering GitHub Actions
+# workflows manually) that fans out many runs on one ref.
+#
+# This group is separate from ios.yml's `browserstack` one, so the contention noted on the ios job
+# below is unchanged; cancelling a superseded run only ever reduces the draw on that shared pool.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -39,6 +56,7 @@ jobs:
       unit_files: ${{ steps.classify.outputs.unit_files }}
       puppeteer_files: ${{ steps.classify.outputs.puppeteer_files }}
       ios_files: ${{ steps.classify.outputs.ios_files }}
+      helper_files: ${{ steps.classify.outputs.helper_files }}
       skipped_unit_files: ${{ steps.classify.outputs.skipped_unit_files }}
       skipped_puppeteer_files: ${{ steps.classify.outputs.skipped_puppeteer_files }}
       skipped_ios_files: ${{ steps.classify.outputs.skipped_ios_files }}
@@ -127,6 +145,12 @@ jobs:
           # All test files (union of the above)
           ALL_TEST_FILES=$(printf '%s\n' "$UNIT_FILES" "$PUPPETEER_FILES" "$IOS_FILES" | sed '/^$/d' | sort -u)
 
+          # Test infrastructure: helpers, config, and setup used by the tests. These are
+          # checked out onto base alongside the test files, since a test that uses a new
+          # helper cannot compile on base without it.
+          HELPER_FILES=$(echo "$CHANGED_FILES" \
+            | grep -E '^src/(test-helpers/|e2e/[^/]+/(helpers|config|setup)/).*\.tsx?$' || true)
+
           # Non-test application files: TypeScript source files that are not test files,
           # test helpers, or e2e infrastructure (helpers, config, setup).
           # Excludes non-source files (markdown, yaml, json, js, css, html) to focus
@@ -154,6 +178,9 @@ jobs:
           echo ""
           echo "=== Non-test application files ==="
           echo "$NON_TEST_FILES"
+          echo ""
+          echo "=== Test infrastructure files ==="
+          echo "$HELPER_FILES"
 
           # Set outputs
           HAS_UNIT="false"
@@ -182,6 +209,7 @@ jobs:
           echo "unit_files=$(echo "$UNIT_FILES" | base64 -w 0)" >> "$GITHUB_OUTPUT"
           echo "puppeteer_files=$(echo "$PUPPETEER_FILES" | base64 -w 0)" >> "$GITHUB_OUTPUT"
           echo "ios_files=$(echo "$IOS_FILES" | base64 -w 0)" >> "$GITHUB_OUTPUT"
+          echo "helper_files=$(echo "$HELPER_FILES" | base64 -w 0)" >> "$GITHUB_OUTPUT"
           echo "skipped_unit_files=$(echo "$UNIT_SKIPPED_FILES" | base64 -w 0)" >> "$GITHUB_OUTPUT"
           echo "skipped_puppeteer_files=$(echo "$PUPPETEER_SKIPPED_FILES" | base64 -w 0)" >> "$GITHUB_OUTPUT"
           echo "skipped_ios_files=$(echo "$IOS_SKIPPED_FILES" | base64 -w 0)" >> "$GITHUB_OUTPUT"
@@ -341,6 +369,13 @@ jobs:
             git checkout FETCH_HEAD -- "$f"
           done
 
+          # Test infrastructure the changed tests may depend on, e.g. a new helper.
+          HELPER_FILES=$(echo "${{ needs.detect.outputs.helper_files }}" | base64 -d)
+          for f in $HELPER_FILES; do
+            echo "Checking out: $f"
+            git checkout FETCH_HEAD -- "$f"
+          done
+
           echo "empty=false" >> "$GITHUB_OUTPUT"
 
       - name: Enable Corepack
@@ -449,6 +484,13 @@ jobs:
           # with the test so the base-branch run reaches the behavioral assertion.
           echo "=== Checking out puppeteer test files and support from PR head ==="
           for f in $PUPPETEER_FILES $PUPPETEER_SUPPORT_FILES; do
+            echo "Checking out: $f"
+            git checkout FETCH_HEAD -- "$f"
+          done
+
+          # Test infrastructure the changed tests may depend on, e.g. a new helper.
+          HELPER_FILES=$(echo "${{ needs.detect.outputs.helper_files }}" | base64 -d)
+          for f in $HELPER_FILES; do
             echo "Checking out: $f"
             git checkout FETCH_HEAD -- "$f"
           done
@@ -575,6 +617,13 @@ jobs:
             git checkout FETCH_HEAD -- "$f"
           done
 
+          # Test infrastructure the changed tests may depend on, e.g. a new helper.
+          HELPER_FILES=$(echo "${{ needs.detect.outputs.helper_files }}" | base64 -d)
+          for f in $HELPER_FILES; do
+            echo "Checking out: $f"
+            git checkout FETCH_HEAD -- "$f"
+          done
+
           echo "empty=false" >> "$GITHUB_OUTPUT"
 
       - name: Enable Corepack
@@ -605,9 +654,20 @@ jobs:
         if: steps.patch.outputs.empty != 'true'
         run: yarn build
 
+      # Vite app-gate token (see tunnelTokenGate in vite.config.ts). Must be set before Serve
+      # starts the dev server, and passed to the test step below so the wdio config's tunnel-pool
+      # claim (cloudflareTunnelPool.ts) can prove a candidate is answering THIS run's server.
+      - name: Generate tunnel token
+        if: steps.patch.outputs.empty != 'true'
+        run: |
+          TOKEN=$(openssl rand -hex 16)
+          echo "::add-mask::$TOKEN"
+          echo "TUNNEL_TOKEN=$TOKEN" >> "$GITHUB_ENV"
+
       - name: Serve
         if: steps.patch.outputs.empty != 'true'
-        run: yarn servebuild &
+        # HTTP=1 forces a plain-HTTP origin here: Cloudflare's tunnel already terminates HTTPS at its edge for Safari (a real CA-signed cert on the public hostname), so this local connector-to-origin hop never needs its own TLS.
+        run: HTTP=1 yarn servebuild &
 
       - name: Run changed iOS tests on base (expect failure)
         if: steps.patch.outputs.empty != 'true'
@@ -617,6 +677,12 @@ jobs:
           BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
           BROWSERSTACK_BUILD_NAME: 'TDD - ${{ github.run_id }}'
           BROWSERSTACK_PROJECT_NAME: 'em'
+          TUNNEL_TOKEN: ${{ env.TUNNEL_TOKEN }}
+          # Same tunnel pool ios.yml uses — see cloudflareTunnelPool.ts. Eliminates this job's
+          # previous fallback to an ephemeral *.trycloudflare.com quick tunnel. Note this means a
+          # TDD run and an ios.yml run can contend for the pool, since they are in different
+          # concurrency groups — that contention is what cloudflareTunnelPool.ts is built to resolve.
+          CLOUDFLARE_TUNNEL_POOL: ${{ secrets.CLOUDFLARE_TUNNEL_POOL }}
         run: |
           IOS_FILES=$(echo "${{ needs.detect.outputs.ios_files }}" | base64 -d)
 
