@@ -1,5 +1,7 @@
 /* eslint-disable import/prefer-default-export */
 import Path from '../@types/Path'
+import State from '../@types/State'
+import Thought from '../@types/Thought'
 import Thunk from '../@types/Thunk'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { suppressExpansionActionCreator as suppressExpansion } from '../actions/suppressExpansion'
@@ -14,6 +16,14 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 import parentOf from '../util/parentOf'
+
+/** Returns the last thought in the col2 of the previous table row, skipping rows with an empty col2. Returns null if no preceding row has a col2 thought. */
+const prevCol2 = (state: State, rowPath: Path): { row: Thought; col2: Thought } | null => {
+  const row = prevSibling(state, rowPath)
+  if (!row) return null
+  const col2 = getChildrenSorted(state, row.id).at(-1)
+  return col2 ? { row, col2 } : prevCol2(state, appendToPath(parentOf(rowPath), row.id))
+}
 
 /** Moves the cursor to the previous sibling, ignoring descendants. In table view, moves to the prevous row.*/
 export const cursorPrevActionCreator = (): Thunk => (dispatch, getState) => {
@@ -40,11 +50,10 @@ export const cursorPrevActionCreator = (): Thunk => (dispatch, getState) => {
   // prev row in table view col2
   // (prev row in table view col1 is handled by prevSibling in the usual way)
   else if (attributeEquals(state, head(rootedParentOf(state, cursorParent)), '=view', 'Table')) {
-    const parentPath = cursorParent
-    const prevUncle = prevSibling(state, parentPath)
-    if (prevUncle) {
-      prev = getChildrenSorted(state, prevUncle.id).at(-1) || null
-      path = prev ? appendToPath(parentOf(parentPath), prevUncle.id, prev.id) : null
+    const prevRow = prevCol2(state, cursorParent)
+    if (prevRow) {
+      prev = prevRow.col2
+      path = appendToPath(parentOf(cursorParent), prevRow.row.id, prevRow.col2.id)
     }
   }
 

@@ -192,10 +192,6 @@ const ModalSettings = () => {
           superscript will not be visible, but the context view can still be activated and used as normal.
         </Setting>
 
-        <Setting settingsKey={Settings.disableGestureTracing} title='Gesture Tracing' invert>
-          Draw a trace onto the screen while making a gesture on a touch screen device.
-        </Setting>
-
         <Setting settingsKey={Settings.leftHanded} title='Left Handed'>
           Moves the scroll zone to the left side of the screen and the gesture zone to the right.
         </Setting>

@@ -8,6 +8,24 @@ on:
     branches:
       - '**'
 
+# Supersede the in-progress run when a pull request is pushed again; its result is about to be
+# replaced anyway. Only pull_request runs are grouped: `github.ref` is `refs/pull/<n>/merge` there,
+# so it is already per-PR. (vercel-preview.yml must key on the PR number instead because
+# pull_request_target sets github.ref to the base branch.)
+#
+# Pushes to main fall back to github.run_id, which is unique per run and therefore never collides.
+# That is deliberate, and not the same as cancel-in-progress: false — a shared group with
+# cancellation off *queues* runs, and GitHub cancels a pending run when a newer one queues behind
+# it. Each push to main needs its own result to identify the commit that broke the build.
+#
+# Lint is the one required status check on main (see § Path filtering in docs/testing.md), and a
+# cancelled run reports `cancelled`, not `success`. That does not block anything: branch protection
+# evaluates the checks on the pull request's *head* commit, and only a superseded commit's run is
+# ever cancelled. The head commit's run always finishes, because nothing supersedes it.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: true
+
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   CI: true

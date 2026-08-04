@@ -202,7 +202,7 @@ So: only use it when the visual change was intentional, never to silence a failu
 
 **Source: [`.github/skills/ci-monitor/SKILL.md`](../../.github/skills/ci-monitor/SKILL.md)**
 
-Lists the workflow runs for the current branch and waits for all of them to finish before reporting. Derives the repository from the git remote rather than assuming, and filters by the current branch.
+Lists the workflow runs for the current branch and waits for all of them to finish before reporting. Derives the repository from the git remote rather than assuming, and filters by the current branch. Because the main workflows cancel a run the moment a newer push supersedes it (see [Superseded runs](../testing.md#superseded-runs)), it judges each workflow by its run on the current head sha — a `cancelled` run on an older commit is not a failure to chase.
 
 Its central instruction: **never claim tests pass without checking.** The skill says outright that hallucinating test results is the worst thing it can do. If CI still fails after five fix-and-push cycles, stop and hand back to a human.
 

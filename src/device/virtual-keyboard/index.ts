@@ -35,6 +35,26 @@ const virtualKeyboardHandler = {
       iOSSafariHandler.destroy()
     }
   },
+  /**
+   * Opens the virtual keyboard for the given editable on platforms that do not open it automatically when
+   * the browser selection is set.
+   *
+   * Must be called BEFORE `selection.set`. Setting the selection focuses the editing host implicitly, and a
+   * focus that the browser did not attribute to a script (or a tap) does not raise the keyboard — nor does a
+   * subsequent `focus()`, which is a no-op once the element is already focused.
+   */
+  show: (editable: HTMLElement) => {
+    if (isCapacitor() && isIOS) {
+      iOSCapacitorHandler.show?.(editable)
+    } else if (isCapacitor() && !isIOS) {
+      androidCapacitorHandler.show?.(editable)
+    } else if (isTouch && 'virtualKeyboard' in navigator) {
+      androidWebHandler.show?.(editable)
+    } else {
+      // fallback
+      iOSSafariHandler.show?.(editable)
+    }
+  },
 }
 
 export default virtualKeyboardHandler
