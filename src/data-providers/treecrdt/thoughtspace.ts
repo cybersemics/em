@@ -50,42 +50,20 @@ type TreecrdtThoughtspaceSession = TreecrdtThoughtspaceSessionIdentity &
     db: TreecrdtSessionDataProvider
   }>
 
-type Deferred<T> = {
-  promise: Promise<T>
-  reject: (reason: unknown) => void
-  resolve: (value: T) => void
-  settled: boolean
-}
-
 /** Creates the private gate used by writes that race startup. */
-const createDeferred = <T>(): Deferred<T> => {
-  let resolvePromise!: (value: T) => void
-  let rejectPromise!: (reason: unknown) => void
-  const promise = new Promise<T>((resolve, reject) => {
-    resolvePromise = resolve
-    rejectPromise = reject
+const createDeferred = <T>() => {
+  let resolve!: (value: T) => void
+  let reject!: (reason: unknown) => void
+  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise
+    reject = rejectPromise
   })
 
   // The public write that awaits this promise observes the rejection. This catch prevents an unhandled rejection when
   // a session fails or drops before any pre-init write has subscribed.
   void promise.catch(() => undefined)
 
-  const deferred: Deferred<T> = {
-    promise,
-    settled: false,
-    resolve: value => {
-      if (deferred.settled) return
-      deferred.settled = true
-      resolvePromise(value)
-    },
-    reject: reason => {
-      if (deferred.settled) return
-      deferred.settled = true
-      rejectPromise(reason)
-    },
-  }
-
-  return deferred
+  return { promise, reject, resolve }
 }
 
 /** Creates em's childrenMap read-model index while preserving TreeCRDT's strict child ids as values. */

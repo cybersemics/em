@@ -9,13 +9,13 @@ import { refreshAttributeChildrenFromChanges } from '../attributeChildren'
 import { waitForTreecrdtWriteBarrier } from '../writeBarrier'
 import { enqueueMaterializedThoughtsToStoreWork } from './materializationQueue'
 import {
-  type MaterializationDataProvider,
+  type SessionBoundMaterializationStore,
   refreshThoughtsFromMaterializationChanges,
 } from './materializationThoughtUpdates'
 
 /** Persists lexemes that em derives locally from materialized TreeCRDT thoughts. */
 const persistDerivedLexemeUpdates = async (
-  db: MaterializationDataProvider,
+  db: SessionBoundMaterializationStore,
   lexemeIndexUpdates: Index<Lexeme | null>,
   schemaVersion: number,
 ): Promise<void> => {
@@ -37,7 +37,7 @@ export async function applyMaterializedThoughtsToStore(
   event: MaterializationEvent,
   materialization: ThoughtspaceMaterializationBridge,
   client: TreecrdtClient,
-  db: MaterializationDataProvider,
+  db: SessionBoundMaterializationStore,
 ): Promise<void> {
   if (event.changes.length === 0) return
 
@@ -85,7 +85,7 @@ export function enqueueMaterializedThoughtsToStore(
   event: MaterializationEvent,
   materialization: ThoughtspaceMaterializationBridge,
   client: TreecrdtClient,
-  db: MaterializationDataProvider,
+  db: SessionBoundMaterializationStore,
 ): Promise<void> {
   return enqueueMaterializedThoughtsToStoreWork(() =>
     applyMaterializedThoughtsToStore(event, materialization, client, db),

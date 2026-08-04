@@ -20,7 +20,7 @@ type PersistTreecrdtBatch = Parameters<DataProvider['updateThoughts']>[0] & {
 }
 
 /** App-level TreeCRDT client configuration. Omit it to use persistent browser defaults. */
-export type TreecrdtClientConfig = Readonly<{
+type TreecrdtClientConfig = Readonly<{
   storage: ThoughtspaceStorage
   runtime: RuntimeMode
   docId?: string
