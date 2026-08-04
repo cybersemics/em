@@ -484,7 +484,6 @@ export enum LongPressState {
 // See Settings modal for full descriptions.
 export enum Settings {
   debugCrashLog = 'debugCrashLog',
-  disableGestureTracing = 'disableGestureTracing',
   experienceMode = 'experienceMode',
   hideScrollZone = 'hideScrollZone',
   leftHanded = 'leftHanded',
