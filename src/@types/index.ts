@@ -1,5 +1,14 @@
 import { UnknownAction } from 'redux'
+import type { TreecrdtRuntimeConfig } from '../data-providers/treecrdt/runtime'
 import Thunk from './Thunk'
+
+/** Application configuration resolved before runtime modules are evaluated. */
+export type BootstrapConfig = Readonly<{
+  treecrdt: TreecrdtRuntimeConfig
+}>
+
+/** Bootstrap properties that may be injected onto window.em before the application bundle evaluates. */
+export type BootstrapConfigOverrides = Partial<BootstrapConfig>
 
 declare global {
   interface Document {

@@ -19,8 +19,8 @@ window.scrollTo = noop
 window.matchMedia = window.matchMedia || (() => false)
 
 // Unit tests explicitly configure an in-memory TreeCRDT client before application modules are evaluated.
-window.emConfig = {
-  ...window.emConfig,
+window.em = {
+  ...(window.em || {}),
   treecrdt: {
     client: {
       storage: 'memory',

@@ -1,5 +1,6 @@
 import _ from 'lodash'
 import moize from 'moize'
+import type { BootstrapConfigOverrides } from './@types'
 import CommandId from './@types/CommandId'
 import Context from './@types/Context'
 import MimeType from './@types/MimeType'
@@ -169,7 +170,10 @@ const testHelpers = {
 }
 
 // add useful functions to window.em for debugging
+// Preserve bootstrap properties that were injected before the application bundle evaluated.
+const bootstrapOverrides = (window.em || {}) as BootstrapConfigOverrides
 const windowEm = {
+  ...bootstrapOverrides,
   contextToThoughtId: withState((state: State, thoughts: Context) => contextToThoughtId(state, thoughts)),
   exportContext: (contextOrThoughtId: Context | ThoughtId, format?: MimeType) =>
     exportContext(store.getState(), contextOrThoughtId, format),

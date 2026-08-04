@@ -1,27 +1,12 @@
+import type { BootstrapConfig, BootstrapConfigOverrides } from './@types'
 import type { TreecrdtRuntimeConfig } from './data-providers/treecrdt/runtime'
 
-/** Application configuration resolved before runtime modules are evaluated. */
-export type BootstrapConfig = Readonly<{
-  treecrdt: TreecrdtRuntimeConfig
-}>
-
-type BootstrapConfigOverrides = Partial<BootstrapConfig>
-
-declare global {
-  interface Window {
-    /**
-     * Optional configuration supplied before the application bundle evaluates.
-     * Read once during module initialization; runtime APIs are exposed later on window.em.
-     */
-    emConfig?: BootstrapConfigOverrides
-  }
-}
-
 const defaultTreecrdtConfig: TreecrdtRuntimeConfig = { tabPolicy: 'single' }
+const bootstrapOverrides =
+  typeof window === 'undefined' ? undefined : (window.em as BootstrapConfigOverrides | undefined)
 
 const bootstrapConfig: BootstrapConfig = {
-  treecrdt:
-    typeof window === 'undefined' ? defaultTreecrdtConfig : (window.emConfig?.treecrdt ?? defaultTreecrdtConfig),
+  treecrdt: bootstrapOverrides?.treecrdt ?? defaultTreecrdtConfig,
 }
 
 export default bootstrapConfig

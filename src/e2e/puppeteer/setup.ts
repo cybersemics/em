@@ -1,6 +1,7 @@
 /* eslint-disable import/prefer-default-export */
 import chalk from 'chalk'
 import { Browser, BrowserContext, ConsoleMessage, Device, Page } from 'puppeteer'
+import type { BootstrapConfigOverrides } from '../../@types'
 import type { TreecrdtRuntimeConfig } from '../../data-providers/treecrdt/runtime'
 import { WindowEm } from '../../initialize'
 import createId from '../../util/createId'
@@ -48,8 +49,8 @@ const getTreecrdtRuntimeConfig = (docId: string, profile: TreecrdtTestProfile): 
 /** Injects typed TreeCRDT configuration before the app bundle starts. */
 const installTreecrdtRuntimeConfig = async (target: Page, config: TreecrdtRuntimeConfig): Promise<void> => {
   await target.evaluateOnNewDocument(treecrdt => {
-    window.emConfig = {
-      ...window.emConfig,
+    window.em = {
+      ...((window.em || {}) as BootstrapConfigOverrides),
       treecrdt,
     }
   }, config)

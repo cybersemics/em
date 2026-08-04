@@ -1,14 +1,14 @@
-import type { BootstrapConfig } from '../bootstrapConfig'
+import type { BootstrapConfig, BootstrapConfigOverrides } from '../@types'
 
-const initialEmConfig = window.emConfig
+const initialEm = window.em
 
 beforeEach(() => {
-  delete window.emConfig
+  Reflect.deleteProperty(window, 'em')
   vi.resetModules()
 })
 
 afterEach(() => {
-  window.emConfig = initialEmConfig
+  window.em = initialEm
   vi.resetModules()
 })
 
@@ -27,7 +27,10 @@ it('uses TreeCRDT configuration injected before module evaluation', async () => 
     },
     tabPolicy: 'multiple',
   }
-  window.emConfig = { treecrdt }
+  window.em = {
+    ...((window.em || {}) as BootstrapConfigOverrides),
+    treecrdt,
+  }
 
   const { default: bootstrapConfig } = await import('../bootstrapConfig')
 
