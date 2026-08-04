@@ -14,7 +14,7 @@ import { spawn } from 'node:child_process'
 import puppeteer from 'puppeteer'
 
 const port = process.env.EM_CHROME_PORT || '9222'
-const executablePath = puppeteer.executablePath()
+const executablePath = await puppeteer.executablePath()
 const args = [
   `--remote-debugging-port=${port}`,
   '--user-data-dir=/tmp/em-chrome-shared',
