@@ -175,7 +175,7 @@ describe('clearThought', () => {
   })
 
   // https://github.com/cybersemics/em/pull/4520#issuecomment-5185543013
-  it.skip('moves the faux carets to the end of the thought when the end is tapped', async () => {
+  it('moves the faux carets to the end of the thought when the end is tapped', async () => {
     await paste(`
       - a
       - b
