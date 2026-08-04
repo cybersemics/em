@@ -37,6 +37,26 @@ const nextFrame = () => page.evaluate(() => new Promise(requestAnimationFrame))
 /** Returns the number of thoughts whose bullet is highlighted, i.e. the size of the multiselection. */
 const multiselectSize = () => page.$$eval('[aria-label="bullet"][data-highlighted="true"]', els => els.length)
 
+/** Waits until the real caret sits at the given plain-text offset within the thought that holds it. The offset is
+ * measured from the rendered text rather than the selection's focusOffset, which is relative to the focus node and so
+ * differs between a text-node and an element-node selection. */
+const waitForCaretTextOffset = (offset: number) =>
+  page.waitForFunction(
+    (offset: number) => {
+      const selection = window.getSelection()
+      const editing = document.querySelector('[data-editing=true] [data-editable]')
+      if (!selection?.rangeCount || !editing) return false
+      const range = selection.getRangeAt(0)
+      if (!editing.contains(range.startContainer)) return false
+      const before = document.createRange()
+      before.setStart(editing, 0)
+      before.setEnd(range.startContainer, range.startOffset)
+      return before.toString().length === offset
+    },
+    {},
+    offset,
+  )
+
 /** Returns the position of the real caret relative to the thought that holds it, and of each faux caret relative to the
  * thought it overlays. Rounded to the nearest pixel to allow for sub-pixel layout differences. */
 const caretOffsets = () =>
@@ -152,6 +172,45 @@ describe('clearThought', () => {
     expect(await editingIndex()).toBe(1)
     expect(await getSelection().focusOffset).toBe(2)
     expect(await multiselectSize()).toBe(3)
+  })
+
+  // https://github.com/cybersemics/em/pull/4520#issuecomment-5185543013
+  it.skip('moves the faux carets to the end of the thought when the end is tapped', async () => {
+    await paste(`
+      - a
+      - b
+      - c
+    `)
+
+    await waitForEditable('a')
+    await waitForEditable('b')
+    await waitForEditable('c')
+
+    await multiselectThoughts(['a', 'b', 'c'])
+
+    await clearThought()
+    await waitForFirstEditable('')
+
+    await page.keyboard.type('hello')
+    await waitForFirstEditable('hello')
+
+    // Typing leaves the carets at the end of the text; capture their position as the reference for the tap below.
+    await nextFrame()
+    const caretsAfterTyping = await caretOffsets()
+    expect(caretsAfterTyping.faux).toHaveLength(2)
+
+    // The thought is addressed by index since every selected thought renders the same mirrored value.
+    const editable = (await page.$$('[data-editable]'))[0]
+
+    // Tap the beginning of the thought, then the end.
+    await click(editable)
+    await waitForCaretTextOffset(0)
+    await click(editable, { offset: 5 })
+    await waitForCaretTextOffset(5)
+
+    // The faux carets follow the real caret back to the end of the thought.
+    await nextFrame()
+    expect((await caretOffsets()).faux).toEqual(caretsAfterTyping.faux)
   })
 
   // Regression test for https://github.com/cybersemics/em/issues/4519
