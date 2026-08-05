@@ -43,7 +43,7 @@ it('Sentence Case button is marked as active after applying Sentence Case to a t
 })
 
 // https://github.com/cybersemics/em/issues/4840
-it.skip('the selected text remains selected after applying Lower Case', async () => {
+it('the selected text remains selected after applying Lower Case', async () => {
   await paste('AAA')
 
   await clickThought('AAA')
