@@ -2,9 +2,9 @@ import { ComponentType, useCallback, useMemo, useRef } from 'react'
 import { css } from '../../../styled-system/css'
 import { token } from '../../../styled-system/tokens'
 import { isAndroid } from '../../browser'
-import { STAGE_DURATION, cssEaseOut } from '../../constants'
 import fastClick from '../../util/fastClick'
 import ChevronImg from '../ChevronImg'
+import { STAGE_DURATION, cssEaseOut } from './constants'
 import { SidebarSection, SidebarSectionId } from './sidebarSections'
 
 /** A sidebar section row: icon + label. Used for both the active header and dropdown items. */

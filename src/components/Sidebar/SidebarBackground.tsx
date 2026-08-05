@@ -3,10 +3,16 @@ import { useMemo } from 'react'
 import { useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { isAndroid, isSafari } from '../../browser'
-import { PROGRESSIVE_BLUR_LAYERS, PROGRESSIVE_BLUR_MIN, SLOW_DURATION } from '../../constants'
 import themeColors from '../../selectors/themeColors'
 import ProgressiveBlur from '../ProgressiveBlur'
+import { SLOW_DURATION } from './constants'
 import { SECTIONS, SidebarSectionId, tintColor } from './sidebarSections'
+
+/** Android uses one blur layer to avoid WebView compositing flicker. */
+const PROGRESSIVE_BLUR_LAYERS = isAndroid ? 1 : 4
+
+/** Preserve a smooth trailing edge when Android uses one blur layer. */
+const PROGRESSIVE_BLUR_MIN = isAndroid ? 4 : 0
 
 /**
  * Left-to-right gradient over the viewport edge. Sits next to ProgressiveBlur (see

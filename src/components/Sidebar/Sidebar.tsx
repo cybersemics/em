@@ -45,18 +45,7 @@ import { css } from '../../../styled-system/css'
 import { longPressActionCreator as longPress } from '../../actions/longPress'
 import { toggleSidebarActionCreator } from '../../actions/toggleSidebar'
 import { isAndroid } from '../../browser'
-import {
-  DROPDOWN_MASK_BAND,
-  DROPDOWN_MASK_OFFSET,
-  EASE_OUT,
-  EASE_OUT_GENTLE,
-  LongPressState,
-  MASK_OVERSIZE,
-  SCROLL_HINT_MASK_OFFSET,
-  SIDEBAR_WIDTH_PX,
-  STAGE_DURATION,
-  cssEaseOut,
-} from '../../constants'
+import { LongPressState } from '../../constants'
 import useBreakpoint from '../../hooks/useBreakpoint'
 import viewportStore from '../../stores/viewport'
 import FadeTransition from '../FadeTransition'
@@ -66,8 +55,28 @@ import RecentlyEdited from '../RecentlyEdited'
 import SidebarBackground from './SidebarBackground'
 import SidebarGlow from './SidebarGlow'
 import SidebarHeader from './SidebarHeader'
+import { EASE_OUT, SIDEBAR_WIDTH_PX, STAGE_DURATION, cssEaseOut } from './constants'
 import { SECTIONS, SidebarSectionId } from './sidebarSections'
 import useSidebarSwipe from './useSidebarSwipe'
+
+// Mask geometry
+
+/** Height (px) of the mask's fully-transparent band — the region hidden under the open dropdown. */
+const DROPDOWN_MASK_BAND = 128
+
+/** Height (px) of the mask's fade-to-black ramp. Doubles as the scroll-hint top fade. */
+const SCROLL_HINT_FADE = 48
+
+/** Extra carrier extent (px) beyond the scroll viewport — keeps every mask slide position covered. */
+const MASK_OVERSIZE = DROPDOWN_MASK_BAND + SCROLL_HINT_FADE
+
+/** Offsets that position the mask geometry relative to the scroll area's top edge. */
+const DROPDOWN_MASK_OFFSET = -DROPDOWN_MASK_BAND
+const SCROLL_HINT_MASK_OFFSET = -SCROLL_HINT_FADE
+
+/** Softer ease-out used when *closing* the sidebar. The less aggressive start prevents the
+ * drawer from appearing to "jump" when the user releases a swipe. */
+const EASE_OUT_GENTLE = [0.25, 0.1, 0.25, 1] as const
 
 /**
  * Top-level Sidebar component. Composes the background layers, glow overlays, drawer panel,
