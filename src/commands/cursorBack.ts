@@ -7,6 +7,7 @@ import BackIcon from '../components/icons/BackIcon'
 import scrollTo from '../device/scrollTo'
 import * as selection from '../device/selection'
 import hasMulticursor from '../selectors/hasMulticursor'
+import isMultiEditing from '../selectors/isMultiEditing'
 import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 
 const cursorBackCommand: Command = {
@@ -22,9 +23,10 @@ const cursorBackCommand: Command = {
     const state = getState()
 
     // Cancel Clear Thought mode instead of moving the cursor back, otherwise the thought that was just cleared is
-    // deselected. When a multiselection is being edited (Clear Thought on a multiselection), this makes the first
-    // Escape exit edit mode while keeping the multiselection; the second Escape then clears the multiselection below.
-    if (state.cursorCleared) {
+    // deselected. A multiselection that is being edited (Clear Thought on a multiselection) exits edit mode the same
+    // way, and needs its own predicate since the first edit resets cursorCleared (see editThought): the first Escape
+    // exits edit mode while keeping the multiselection, and the second clears the multiselection below.
+    if (state.cursorCleared || (!isTouch && isMultiEditing(state))) {
       dispatch(cursorCleared({ value: false }))
       selection.clear()
       return

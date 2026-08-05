@@ -242,7 +242,7 @@ describe('clearThought', () => {
   })
 
   // https://github.com/cybersemics/em/pull/4520#issuecomment-5186050473
-  it.skip('keeps the multiselection when Escape is pressed after typing into the cleared thoughts', async () => {
+  it('keeps the multiselection when Escape is pressed after typing into the cleared thoughts', async () => {
     await paste(`
       - a
       - b
