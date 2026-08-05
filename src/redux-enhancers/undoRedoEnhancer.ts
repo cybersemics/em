@@ -176,7 +176,7 @@ const redoOneReducer = (state: State): State => {
   }
 }
 
-/** Moves the caret to the end of the cursor thought. Undo/redo otherwise restores the cursorOffset captured before the undone action, which can be anywhere in the thought (0 on iOS, where entering edit mode sets an offsetless cursor), leaving the caret away from the word that was just restored. */
+/** Moves the caret to the end of the cursor thought. Undo/redo otherwise restores the cursorOffset captured before the undone action, which can be anywhere in the thought (the tap position on iOS, or 0), leaving the caret away from the word that was just restored. */
 const cursorOffsetAtEnd = (state: State): State => ({
   ...state,
   cursorOffset: state.cursor ? stripTags(headValue(state, state.cursor) ?? '').length : null,
