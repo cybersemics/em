@@ -129,8 +129,8 @@ When `state.multicursors` is non-empty, the user has multiple thoughts selected.
 
 | Option | Meaning |
 |---|---|
-| `disallow` | Block execution and show an alert. Use sparingly — usually `multicursor: false` or `filter` is better. |
-| `error` | The alert message shown when `disallow` is true. String or `(state) => string`. |
+| `disallow` | Block execution and show an alert when *more than one* thought is selected. A single selected thought is not multiple thoughts, so the command executes on it as if only the cursor were set — the Command Center selects the cursor thought when it opens, so its commands behave the same as the toolbar. Use sparingly — usually `multicursor: false` or `filter` is better. |
+| `error` | The alert message shown when `disallow` is true and more than one thought is selected. String or `(state) => string`. |
 | `execMulticursor(cursors, dispatch, getState)` | Custom replacement for the per-cursor loop. |
 | `onComplete(filteredCursors, dispatch, getState)` | Callback after the loop finishes. |
 | `preventSetCursor` | Don't restore the cursor at the end. |

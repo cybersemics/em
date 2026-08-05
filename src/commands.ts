@@ -36,6 +36,7 @@ import getThoughtById from './selectors/getThoughtById'
 import getUserSetting from './selectors/getUserSetting'
 import hasMulticursor from './selectors/hasMulticursor'
 import isAllSelected from './selectors/isAllSelected'
+import isMulticursorPath from './selectors/isMulticursorPath'
 import isUndoEnabled from './selectors/isUndoEnabled'
 import splitChain from './selectors/splitChain'
 import thoughtToPath from './selectors/thoughtToPath'
@@ -447,24 +448,33 @@ export const executeCommandWithMulticursor = (
   /** The value of Command['multicursor'] resolved to an object. That is, bare false has already short circuited, and bare true resolves to an empty object so that we don't need to make existential checks everywhere. */
   const multicursor = typeof command.multicursor === 'boolean' ? {} : command.multicursor
 
+  const paths = documentSort(state, Object.values(state.multicursors))
+
   // if multicursor is disallowed for this command, alert and exit early
   if (multicursor.disallow) {
-    const errorMessage = !multicursor.error
-      ? 'Cannot execute this command with multiple thoughts.'
-      : typeof multicursor.error === 'function'
-        ? multicursor.error(commandStore.getState())
-        : multicursor.error
-    commandStore.dispatch(
-      alert(errorMessage, {
-        alertType: AlertType.MulticursorError,
-      }),
-    )
-    return
+    if (paths.length > 1) {
+      const errorMessage = !multicursor.error
+        ? 'Cannot execute this command with multiple thoughts.'
+        : typeof multicursor.error === 'function'
+          ? multicursor.error(commandStore.getState())
+          : multicursor.error
+      commandStore.dispatch(
+        alert(errorMessage, {
+          alertType: AlertType.MulticursorError,
+        }),
+      )
+      return
+    }
+
+    // A single selected thought is not multiple thoughts, so execute the command on it as if only the cursor were set. Opening the Command Center selects the cursor thought, so this keeps its commands working the same as the toolbar.
+    // Only set the cursor if it is not already on the selected thought, since setCursor resets noteFocus and would move the caret out of a note.
+    if (!state.cursor || !isMulticursorPath(state, state.cursor)) {
+      commandStore.dispatch(setCursor({ path: paths[0] }))
+    }
+    return executeCommand(command, { store: commandStore, type, event })
   }
 
   // For each multicursor, place the cursor on the path and execute the command by calling executeCommand.
-  const paths = documentSort(state, Object.values(state.multicursors))
-
   const filteredPaths = filterCursors(state, paths, multicursor.filter)
 
   // Exit early if the command cannot execute on any of the filtered paths

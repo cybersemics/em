@@ -17,7 +17,7 @@ describe('command center', () => {
   }, 10000)
 
   // https://github.com/cybersemics/em/issues/3444
-  it.skip('creates a note when the Note command is tapped with a single thought selected', async () => {
+  it('creates a note when the Note command is tapped with a single thought selected', async () => {
     await paste('- Hello')
     await clickThought('Hello')
 
