@@ -1,5 +1,10 @@
+import { KnownDevices } from 'puppeteer'
+import clearThoughtCommand from '../../../commands/clearThought'
 import click from '../helpers/click'
+import emulate from '../helpers/emulate'
+import gesture from '../helpers/gesture'
 import getSelection from '../helpers/getSelection'
+import longPressThought from '../helpers/longPressThought'
 import multiselectThoughts from '../helpers/multiselectThoughts'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
@@ -301,5 +306,54 @@ describe('clearThought', () => {
     // one that holds the caret.
     await press('Backspace')
     await waitForNoEditables()
+  })
+})
+
+describe('mobile', () => {
+  beforeEach(async () => {
+    await emulate(KnownDevices['iPhone 15 Pro'])
+  }, 10000)
+
+  // https://github.com/cybersemics/em/pull/4520
+  it('dismisses the Command Center and mirrors typing when Clear Thought is performed on a multiselection', async () => {
+    await paste(`
+      - a
+      - b
+      - c
+    `)
+
+    const a = await waitForEditable('a')
+    const b = await waitForEditable('b')
+    const c = await waitForEditable('c')
+
+    await longPressThought(a, { edge: 'right' })
+    await longPressThought(b, { edge: 'right' })
+    await longPressThought(c, { edge: 'right' })
+
+    // Wait for the Command Center to reflect the full selection before acting (see multiselect.ts).
+    await page.waitForFunction(
+      () =>
+        document.querySelector('[data-testid=command-center-panel]')?.textContent?.includes('3 thoughts selected') ??
+        false,
+      { timeout: 6000 },
+    )
+
+    await gesture(clearThoughtCommand)
+
+    // The Command Center sheet is dismissed so the keyboard has the screen. The sheet's container unmounts when it
+    // closes, while the multiselection stays active.
+    await page.waitForFunction(() => !document.querySelector('[data-testid=command-menu-panel]'))
+
+    // All three thoughts are cleared and still selected.
+    await waitForFirstEditable('')
+    expect(await editableValues()).toEqual(['', '', ''])
+    expect(await multiselectSize()).toBe(3)
+
+    // Typing mirrors the new value across all selected thoughts, so the keyboard is functional while the
+    // multiselection is active.
+    await page.keyboard.type('hello')
+    await waitForFirstEditable('hello')
+    expect(await editableValues()).toEqual(['hello', 'hello', 'hello'])
+    expect(await multiselectSize()).toBe(3)
   })
 })
