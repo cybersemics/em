@@ -248,7 +248,7 @@ describe('undo', () => {
   })
 
   // https://github.com/cybersemics/em/issues/4842
-  it.skip('undo should restore all thoughts after a multicursor letter case change', () => {
+  it('undo should restore all thoughts after a multicursor letter case change', () => {
     store.dispatch([
       importText({
         text: `
@@ -283,7 +283,7 @@ describe('undo', () => {
   })
 
   // https://github.com/cybersemics/em/issues/4841
-  it.skip('undo should restore all thoughts after a multicursor text color change', () => {
+  it('undo should restore all thoughts after a multicursor text color change', () => {
     store.dispatch([
       importText({
         text: `
