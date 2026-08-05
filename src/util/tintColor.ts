@@ -1,5 +1,5 @@
 /** Applies CSS hue-rotate(deg) and saturate(amount) filter math directly to a hex or rgb(a) color,
- * without invoking a runtime CSS filter. */
+ * without invoking a runtime CSS filter. This can be useful as a performance optimization. */
 const tintColor = (color: string, hueDegrees: number, saturate: number): string => {
   const rad = (hueDegrees * Math.PI) / 180
   const c = Math.cos(rad)
