@@ -30,7 +30,10 @@ const ContentEditable = React.memo(
     useEffect(
       () => {
         if (contentRef.current) {
-          contentRef.current.innerHTML = html
+          if (contentRef.current.innerHTML !== html) {
+            contentRef.current.innerHTML = html
+          }
+          prevHtmlRef.current = html
         }
       },
       // Only set the html once on mount.
@@ -45,9 +48,11 @@ const ContentEditable = React.memo(
           editableNonceRef.current !== editableNonce ||
           (prevHtmlRef.current !== html && allowInnerHTMLChange.current)
         ) {
-          contentRef.current!.innerHTML = html
-          prevHtmlRef.current = html
+          if (contentRef.current && contentRef.current.innerHTML !== html) {
+            contentRef.current.innerHTML = html
+          }
         }
+        prevHtmlRef.current = html
       },
       // eslint-disable-next-line react-hooks/exhaustive-deps
       [html, editableNonce],

@@ -423,6 +423,48 @@ export const set = (
 }
 
 /**
+ * Returns the inline background color of an element that overlaps the current selection within the given root.
+ *
+ * The live DOM is inspected instead of serialized selection HTML because serialization omits an enclosing wrapper
+ * when the selection fills all of its text.
+ */
+export const backgroundColor = (root: Node): string | null => {
+  const selection = window.getSelection()
+
+  // Return null if there is no selection, no range, or the root is not an element
+  if (selection === null || selection.rangeCount === 0 || !(root instanceof Element)) return null
+
+  const range = selection.getRangeAt(0)
+
+  // Create a tree walker to traverse the root node and find the element that overlaps the selection
+  // to return its background color.
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT)
+  let node = walker.nextNode() as HTMLElement | null
+  while (node) {
+    if (node.style.backgroundColor && range.intersectsNode(node)) return node.style.backgroundColor
+    node = walker.nextNode() as HTMLElement | null
+  }
+  return null
+}
+
+/**
+ * Sets the browser selection to a range spanning the given plain-text offsets relative to the root.
+ */
+export const setRange = (root: Node, start: number, end: number): void => {
+  const startPosition = offsetFromClosestParent(root, start)
+  const endPosition = offsetFromClosestParent(root, end)
+  if (!startPosition?.node || !endPosition?.node) return
+
+  const range = document.createRange()
+  range.setStart(startPosition.node, startPosition.offset)
+  range.setEnd(endPosition.node, endPosition.offset)
+
+  const selection = window.getSelection()
+  selection?.removeAllRanges()
+  selection?.addRange(range)
+}
+
+/**
  * Split given root node into two different ranges at the given selection.
  */
 export function splitNode(root: HTMLElement, range: Range): { left: Range; right: Range } | null {

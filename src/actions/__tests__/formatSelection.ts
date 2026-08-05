@@ -95,6 +95,7 @@ describe('formatSelection', () => {
     await dispatch(formatSelection('bold'))
 
     expect(cursorValue()).toBe('<b>Golden</b> Retriever')
+    expect(window.getSelection()?.toString()).toBe('Golden')
   })
 
   // Reproduces format.ts > "Apply text color to an uppercase formatting tag"
@@ -365,6 +366,33 @@ describe('formatSelection color', () => {
     expect(cursorValue()).toBe(
       '<font color="#000000" style="background-color: rgb(255, 87, 61);">One two</font><font color="#000000" style="background-color: rgb(0, 214, 136);"> three</font>',
     )
+  })
+
+  it('clears an overlapping background when applying a font color', async () => {
+    await dispatch([newThought({ value: 'Hello the world of beautiful people' })])
+
+    selectRange('Hello the '.length, 'Hello the world'.length)
+    await dispatch(formatSelection('backColor', 'green'))
+
+    selectRange('Hello '.length, 'Hello the world of beautiful'.length)
+    await dispatch(formatSelection('foreColor', 'red'))
+
+    expect(cursorValue()).toBe('Hello <font color="#ff573d">the world of beautiful</font> people')
+  })
+
+  it('normalizes color wrappers before replacing a background with a font color', async () => {
+    await dispatch([newThought({ value: 'Hello world of beautiful world' })])
+
+    selectRange('Hello '.length, 'Hello world'.length)
+    await dispatch(formatSelection('foreColor', 'green'))
+
+    selectRange('Hello '.length, 'Hello world of beautiful'.length)
+    await dispatch(formatSelection('backColor', 'green'))
+
+    selectRange('Hello '.length, 'Hello world of beautiful'.length)
+    await dispatch(formatSelection('foreColor', 'green'))
+
+    expect(cursorValue()).toBe('Hello <font color="#00d688">world of beautiful</font> world')
   })
 
   // a background color applied over a bold thought must keep both the <b> and the color <font>
