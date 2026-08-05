@@ -4,9 +4,10 @@ import { useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { isAndroid, isSafari } from '../../browser'
 import themeColors from '../../selectors/themeColors'
+import tintColor from '../../util/tintColor'
 import ProgressiveBlur from '../ProgressiveBlur'
 import { SLOW_DURATION } from './constants'
-import { SECTIONS, SidebarSectionId, tintColor } from './sidebarSections'
+import { SECTIONS, SidebarSectionId } from './sidebarSections'
 
 /** Android uses one blur layer to avoid WebView compositing flicker. */
 const PROGRESSIVE_BLUR_LAYERS = isAndroid ? 1 : 4
@@ -43,9 +44,9 @@ const SidebarGradient = ({
   /** Pre-tinted gradient colors, recomputed only when the theme changes. */
   const layers = useMemo(
     () =>
-      SECTIONS.map(sec => ({
-        key: sec.id,
-        background: `linear-gradient(to right, ${tintColor(colors.sidebarBg, sec.id)} 0%, ${tintColor(colors.bgTransparent, sec.id)} 100%)`,
+      SECTIONS.map(sidebarSection => ({
+        key: sidebarSection.id,
+        background: `linear-gradient(to right, ${tintColor(colors.sidebarBg, sidebarSection.hue, sidebarSection.saturate)} 0%, ${tintColor(colors.bgTransparent, sidebarSection.hue, sidebarSection.saturate)} 100%)`,
       })),
     [colors],
   )
