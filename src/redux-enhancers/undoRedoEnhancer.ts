@@ -176,10 +176,16 @@ const redoOneReducer = (state: State): State => {
   }
 }
 
+/** Moves the caret to the end of the cursor thought. Undo/redo otherwise restores the cursorOffset captured before the undone action, which can be anywhere in the thought (0 on iOS, where entering edit mode sets an offsetless cursor), leaving the caret away from the word that was just restored. */
+const cursorOffsetAtEnd = (state: State): State => ({
+  ...state,
+  cursorOffset: state.cursor ? stripTags(headValue(state, state.cursor) ?? '').length : null,
+})
+
 /**
  * Controls the number of undo operations based on the undo history.
  */
-const undoReducer = (state: State, undoPatches: Patch[]): State => {
+const undoReducer = (state: State, undoPatches: Patch[], cursorAtEnd?: boolean): State => {
   const lastUndoPatch = nthLast(undoPatches, 1)
   const lastAction = lastUndoPatch && getPatchAction(lastUndoPatch)
   const penultimateUndoPatch = nthLast(undoPatches, 2)
@@ -221,6 +227,7 @@ const undoReducer = (state: State, undoPatches: Patch[]): State => {
     undoTwice ? undoOneReducer : null,
     newState => restorePushQueueFromPatches(newState, state, poppedUndoPatches.flat()),
     !undoTwice && lastPatchIsFormatting ? (s: State) => ({ ...s, cursorOffset: priorCursorOffset }) : null,
+    cursorAtEnd ? cursorOffsetAtEnd : null,
     editableRender,
   ])(state)
 }
@@ -228,7 +235,7 @@ const undoReducer = (state: State, undoPatches: Patch[]): State => {
 /**
  * Controls the number of redo operations based on the patch history.
  */
-const redoReducer = (state: State, redoPatches: Patch[]): State => {
+const redoReducer = (state: State, redoPatches: Patch[], cursorAtEnd?: boolean): State => {
   const lastRedoPatch = nthLast(redoPatches, 1)
   const lastAction = lastRedoPatch && getPatchAction(lastRedoPatch)
 
@@ -242,6 +249,7 @@ const redoReducer = (state: State, redoPatches: Patch[]): State => {
     redoTwice ? redoOneReducer : null,
     redoOneReducer,
     newState => restorePushQueueFromPatches(newState, state, poppedRedoPatches.flat()),
+    cursorAtEnd ? cursorOffsetAtEnd : null,
     editableRender,
   ])(state)
 }
@@ -283,11 +291,14 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         lastAction = undefined
         lastEditThoughtDirection = EditThoughtDirection.None
 
+        // Native undo/redo (iOS three-finger swipe, shake-to-undo) sets cursorAtEnd to place the caret at the end of the restored thought.
+        const cursorAtEnd = !!(action as UnknownAction).cursorAtEnd
+
         const undoOrRedoState =
           actionType === 'undo'
-            ? undoReducer(state, undoPatches)
+            ? undoReducer(state, undoPatches, cursorAtEnd)
             : actionType === 'redo'
-              ? redoReducer(state, redoPatches)
+              ? redoReducer(state, redoPatches, cursorAtEnd)
               : null
 
         // do not omit pushQueue because that includes updates added by updateThoughts

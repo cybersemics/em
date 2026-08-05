@@ -69,7 +69,7 @@ it('Native undo/redo beforeinput (iOS three-finger swipe / shake-to-undo) routes
 })
 
 // https://github.com/cybersemics/em/pull/4692#pullrequestreview-4863986059
-it.skip('Native undo places the caret at the end of the restored thought', async () => {
+it('Native undo places the caret at the end of the restored thought', async () => {
   // create a thought "correct"
   await press('Enter')
   await keyboard.type('correct')

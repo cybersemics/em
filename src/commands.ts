@@ -728,11 +728,13 @@ export const beforeInput = (e: InputEvent) => {
     // throttle, so a native undo triggered mid-edit (e.g. immediately after an autocorrect) would otherwise undo the
     // previous step and let the pending edit commit afterwards, duplicating text (#4477).
     commandEmitter.trigger('command', commandById(e.inputType === 'historyUndo' ? 'undo' : 'redo'))
+    // cursorAtEnd places the caret at the end of the restored thought rather than at the cursorOffset captured before
+    // the undone action, which on iOS is 0 and leaves the caret at the beginning of the thought.
     const state = store.getState()
     if (e.inputType === 'historyUndo') {
-      if (isUndoEnabled(state)) store.dispatch(undo())
+      if (isUndoEnabled(state)) store.dispatch(undo({ cursorAtEnd: true }))
     } else if (state.redoPatches.length > 0) {
-      store.dispatch(redo())
+      store.dispatch(redo({ cursorAtEnd: true }))
     }
     return
   }
