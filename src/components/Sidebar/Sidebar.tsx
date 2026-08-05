@@ -232,7 +232,7 @@ const Sidebar = () => {
       img.src = src
       await img.decode()
     }
-    // Both engines use the pre-baked per-section variants (see bakedOverlay) — warm them so the
+    // Both engines use the pre-baked per-section variants (see SidebarGlow) — warm them so the
     // first section switch crossfades without a fetch/decode hitch mid-animation.
     for (const section of SECTIONS) {
       preload(`/img/sidebar/overlay-layer-1-${section.id}.avif`)

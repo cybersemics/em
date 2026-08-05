@@ -4,7 +4,7 @@ import { isAndroid, isSafari } from '../../browser'
 import useBreakpoint from '../../hooks/useBreakpoint'
 import safeY from '../../util/safeY'
 import { EASE_OUT, SLOW_DURATION, cssEaseOut } from './constants'
-import { SECTIONS, SidebarSectionId, bakedOverlay } from './sidebarSections'
+import { SECTIONS, SidebarSectionId } from './sidebarSections'
 
 /**
  * Primary glow overlay behind the sidebar header. It resizes when the section dropdown opens.
@@ -44,13 +44,16 @@ const SidebarOverlay1 = ({
         style={{ opacity }}
         className={css({ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 'sidebar' })}
       >
-        {SECTIONS.map(sec => (
+        {SECTIONS.map(sidebarSection => (
           <motion.div
-            key={sec.id}
+            key={sidebarSection.id}
             style={{
-              opacity: sec.id === sectionId ? 1 : 0,
+              opacity: sidebarSection.id === sectionId ? 1 : 0,
               transition: `opacity ${SLOW_DURATION}s linear`,
-              backgroundImage: bakedOverlay(1, sec.id),
+              // Pre-tinted, pre-blurred per-section image — avoids a runtime hue-rotate/saturate
+              // filter, which made WebKit allocate a fresh GPU buffer per filtered layer and
+              // crash the app on iOS.
+              backgroundImage: `url(/img/sidebar/overlay-layer-1-${sidebarSection.id}.avif)`,
             }}
             initial={collapsed}
             animate={expanded ? open : collapsed}
@@ -104,13 +107,16 @@ const SidebarOverlay1 = ({
       })}
     >
       {/* Keep every tinted crop mounted so section changes only crossfade opacity. */}
-      {SECTIONS.map(sec => (
+      {SECTIONS.map(sidebarSection => (
         <div
-          key={sec.id}
+          key={sidebarSection.id}
           // Panda cannot extract runtime safeY(), so top must remain inline.
           style={{
-            backgroundImage: bakedOverlay(1, sec.id),
-            opacity: sec.id === sectionId ? 1 : 0,
+            // Pre-tinted, pre-blurred per-section image — avoids a runtime hue-rotate/saturate
+            // filter, which made WebKit allocate a fresh GPU buffer per filtered layer and
+            // crash the app on iOS.
+            backgroundImage: `url(/img/sidebar/overlay-layer-1-${sidebarSection.id}.avif)`,
+            opacity: sidebarSection.id === sectionId ? 1 : 0,
             transform: resizeTransform,
             transition: `opacity ${SLOW_DURATION}s linear, transform ${SLOW_DURATION}s ${cssEaseOut}`,
             top: safeY(-84) /* collapsed backgroundPositionY */,
@@ -150,10 +156,10 @@ const SidebarOverlay2 = ({
   sectionId: SidebarSectionId
 }) => {
   /** Pre-baked section tints avoid runtime filters. */
-  const layers = SECTIONS.map(sec => ({
-    key: sec.id,
-    backgroundImage: bakedOverlay(2, sec.id),
-    active: sec.id === sectionId,
+  const layers = SECTIONS.map(sidebarSection => ({
+    key: sidebarSection.id,
+    backgroundImage: `url(/img/sidebar/overlay-layer-2-${sidebarSection.id}.avif)`,
+    active: sidebarSection.id === sectionId,
   }))
 
   return (

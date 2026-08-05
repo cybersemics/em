@@ -29,10 +29,6 @@ export const SECTIONS: SidebarSection[] = [
   { id: 'recentlyDeleted', label: 'Recently Deleted', icon: DeleteIcon, hue: 128, saturate: 1.1 },
 ]
 
-/** Pre-baked section tint and blur; avoids runtime filters that leak WebKit GPU buffers. */
-export const bakedOverlay = (layer: 1 | 2, sectionId: SidebarSectionId) =>
-  `url(/img/sidebar/overlay-layer-${layer}-${sectionId}.avif)`
-
 /** Applies CSS hue-rotate and saturation matrices to a color without a runtime filter. */
 export const tintColor = (color: string, sectionId: SidebarSectionId): string => {
   const section = SECTIONS.find(sec => sec.id === sectionId)!
