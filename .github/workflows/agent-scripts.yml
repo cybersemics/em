@@ -1,12 +1,18 @@
-name: Shared Chrome
+name: Agent Scripts
 
-# Integration test for scripts/shared-chrome.mjs, the shared Chrome CDP launcher that Copilot agent
-# sessions depend on. copilot-setup-steps.yml launches the script in every agent session but only
-# triggers on changes to itself, and every other workflow sets PUPPETEER_SKIP_DOWNLOAD — so without
-# this workflow, no CI ever runs the script or puppeteer's managed Chrome, and a break like #4848
-# (un-awaited executablePath() Promise passed to spawn) ships silently and takes down agent
-# sessions. scripts/shared-chrome.test.mjs launches the real script and asserts the CDP endpoint
-# answers with Chrome's actual handshake.
+# Integration tests for the agent-session scripts — the machinery Copilot agent sessions run on,
+# which otherwise executes in no CI at all (copilot-setup-steps.yml launches it in every agent
+# session but only triggers on changes to itself), so a break like #4848 (un-awaited
+# executablePath() Promise passed to spawn) ships silently and takes down agent sessions:
+#
+#   - scripts/shared-chrome.test.mjs launches the real scripts/shared-chrome.mjs and asserts the
+#     CDP endpoint answers with Chrome's actual handshake.
+#   - scripts/bridge-attach.test.ts attaches to that Chrome through the real web executor bridge
+#     (src/e2e/puppeteer/attachExistingBrowserInstance.ts) via `npx tsx`, the same invocation the
+#     browser-control-chrome skill documents for agents.
+#   - scripts/mcp-session-proxy.test.mjs runs the real scripts/mcp-session-proxy.mjs against a
+#     local stub upstream and asserts session adoption, DELETE swallowing, and clean forwarding —
+#     no BrowserStack credentials involved.
 #
 # `paths` means a non-matching PR reports no check at all — not a skipped one — so this workflow
 # must never be made a required status check on main (see § Path filtering in docs/testing.md).
@@ -17,7 +23,12 @@ on:
     paths:
       - scripts/shared-chrome.mjs
       - scripts/shared-chrome.test.mjs
-      - .github/workflows/shared-chrome.yml
+      - scripts/mcp-session-proxy.mjs
+      - scripts/mcp-session-proxy.test.mjs
+      - scripts/bridge-attach.test.ts
+      - src/e2e/puppeteer/attachExistingBrowserInstance.ts
+      - src/e2e/puppeteer/session.ts
+      - .github/workflows/agent-scripts.yml
       # A puppeteer bump is exactly the #4848 vector: executablePath() went async with a version
       # change. Any dependency change materializes here, and the job is cheap.
       - yarn.lock
@@ -28,7 +39,12 @@ on:
     paths:
       - scripts/shared-chrome.mjs
       - scripts/shared-chrome.test.mjs
-      - .github/workflows/shared-chrome.yml
+      - scripts/mcp-session-proxy.mjs
+      - scripts/mcp-session-proxy.test.mjs
+      - scripts/bridge-attach.test.ts
+      - src/e2e/puppeteer/attachExistingBrowserInstance.ts
+      - src/e2e/puppeteer/session.ts
+      - .github/workflows/agent-scripts.yml
       - yarn.lock
   workflow_dispatch:
 
@@ -50,7 +66,7 @@ env:
 
 jobs:
   run:
-    name: Shared Chrome
+    name: Agent Scripts
     runs-on: ubuntu-latest
 
     steps:
@@ -70,9 +86,16 @@ jobs:
       # node_modules from cache, and on a hit yarn skips dependency postinstalls — including
       # puppeteer's Chrome download — leaving no browser for the script to launch. Plain `yarn` is
       # also exactly how copilot-setup-steps.yml installs, so this job exercises the same
-      # environment the script actually runs in.
+      # environment the scripts actually run in.
       - name: Install npm dependencies
         run: yarn
 
+      # First: it is the fastest and needs no browser, so a proxy break fails the run in seconds.
+      - name: Run MCP session proxy integration test
+        run: node scripts/mcp-session-proxy.test.mjs
+
       - name: Run shared Chrome integration test
         run: node scripts/shared-chrome.test.mjs
+
+      - name: Run web bridge attach integration test
+        run: npx tsx scripts/bridge-attach.test.ts

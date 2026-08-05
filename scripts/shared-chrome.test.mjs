@@ -3,7 +3,7 @@
  * endpoint it promises actually comes up. Guards against regressions like #4848, where the
  * un-awaited (async since puppeteer 22) `puppeteer.executablePath()` Promise was passed to `spawn`,
  * so Chrome never launched — a failure only observable by actually running the script, which no CI
- * workflow did. Run by .github/workflows/shared-chrome.yml.
+ * workflow did. Run by .github/workflows/agent-scripts.yml.
  *
  *   node scripts/shared-chrome.test.mjs
  *
