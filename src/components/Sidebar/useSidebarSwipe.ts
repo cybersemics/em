@@ -1,5 +1,7 @@
 import { MotionValue } from 'framer-motion'
 import { RefObject, useEffect, useRef, useState } from 'react'
+import { LongPressState } from '../../constants'
+import store from '../../stores/app'
 
 /** MUI-style uncertainty threshold for direction detection (in pixels). */
 const UNCERTAINTY_THRESHOLD = 3
@@ -13,8 +15,6 @@ interface UseSidebarSwipeOptions {
   widthPx: number
   /** Shared drawer position (0 = open, -widthPx = closed). The hook writes to it mid-swipe. */
   x: MotionValue<number>
-  /** Read live on each move; return true to suppress the swipe, for example while a thought is being dragged. */
-  isBlocked: () => boolean
   /** Called once on release with the drag distance (px) and smoothed velocity (px/s). The caller
    * decides whether to close the drawer or snap it back open. */
   onSwipeEnd: (offset: number, velocity: number) => void
@@ -32,14 +32,12 @@ interface UseSidebarSwipeOptions {
  * flips the flag when the drawer has moved. Consumers use `isSwiping` to disable Favorites
  * drag-and-drop so the two gestures don't fight.
  */
-const useSidebarSwipe = ({ enabled, drawerRef, widthPx, x, isBlocked, onSwipeEnd }: UseSidebarSwipeOptions) => {
+const useSidebarSwipe = ({ enabled, drawerRef, widthPx, x, onSwipeEnd }: UseSidebarSwipeOptions) => {
   /** Whether a horizontal swipe is currently in progress. */
   const [isSwiping, setIsSwiping] = useState(false)
 
-  /** Mirror the latest predicate/callback into refs so the document-level handlers always see the
-   * current values without forcing the listeners to re-register (matches the file's longPressRef idiom). */
-  const isBlockedRef = useRef(isBlocked)
-  isBlockedRef.current = isBlocked
+  /** Mirror the latest callback into a ref so the document-level handlers always see the current
+   * value without forcing the listeners to re-register. */
   const onSwipeEndRef = useRef(onSwipeEnd)
   onSwipeEndRef.current = onSwipeEnd
 
@@ -92,7 +90,8 @@ const useSidebarSwipe = ({ enabled, drawerRef, widthPx, x, isBlocked, onSwipeEnd
       if (!swipe.active) return
 
       // Don't swipe the sidebar closed while a thought is being dragged
-      if (isBlockedRef.current()) return
+      const longPress = store.getState().longPress
+      if (longPress === LongPressState.DragHold || longPress === LongPressState.DragInProgress) return
 
       // Prevent backdrop touches before Android begins its overscroll bounce.
       if (swipe.startedOnBackdrop && e.cancelable) {

@@ -94,9 +94,6 @@ const Sidebar = () => {
   /** Whether the sidebar is open. */
   const showSidebar = useSelector(state => state.showSidebar)
 
-  /** Check if there is a long-press in progress anywhere in the app. If so, disable sidebar's swipe
-   * gesture to prevent conflicts with thought drag-and-drop operations. */
-  const longPressState = useSelector(state => state.longPress)
   const dispatch = useDispatch()
 
   /** Which section is currently selected. */
@@ -141,10 +138,6 @@ const Sidebar = () => {
 
   /** Ref to the drawer element, used to detect if touches are inside the drawer. */
   const drawerRef = useRef<HTMLDivElement>(null)
-
-  /** Mirror longPressState into a ref so document-level touch handlers always see the current value without re-registering. */
-  const longPressRef = useRef(longPressState)
-  longPressRef.current = longPressState
 
   // ============================
   // Derived values
@@ -284,8 +277,6 @@ const Sidebar = () => {
     drawerRef,
     widthPx,
     x,
-    isBlocked: () =>
-      longPressRef.current === LongPressState.DragHold || longPressRef.current === LongPressState.DragInProgress,
     onSwipeEnd: handleSwipeEnd,
   })
 
