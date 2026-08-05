@@ -121,7 +121,7 @@ Both filter `globalCommands` by name and respect `hideFromDesktopCommandUniverse
 
 ### Multicursor
 
-When `state.multicursors` is non-empty, the user has multiple thoughts selected. Every command must declare how it behaves in this case via the required `multicursor` field — there is no implicit default.
+When `state.multicursors` is non-empty, the user has a selection of thoughts. Note that the selection may hold a single thought: opening the Command Center selects the cursor thought, so its commands always run with a multicursor of at least one. Every command must declare how it behaves with a selection via the required `multicursor` field — there is no implicit default.
 
 - **`multicursor: false`** — execute on `state.cursor` as if no multicursor existed; selection stays. For commands that don't interact with the thoughtspace (e.g. opening modals).
 - **`multicursor: true`** — execute once per selected thought.
@@ -129,7 +129,7 @@ When `state.multicursors` is non-empty, the user has multiple thoughts selected.
 
 | Option | Meaning |
 |---|---|
-| `disallow` | Block execution and show an alert when *more than one* thought is selected. A single selected thought is not multiple thoughts, so the command executes on it as if only the cursor were set — the Command Center selects the cursor thought when it opens, so its commands behave the same as the toolbar. Use sparingly — usually `multicursor: false` or `filter` is better. |
+| `disallow` | Block execution and show an alert when *more than one* thought is selected. A single selected thought is not multiple thoughts, so the command executes on it as if only the cursor were set, keeping Command Center commands consistent with the toolbar. Use sparingly — usually `multicursor: false` or `filter` is better. |
 | `error` | The alert message shown when `disallow` is true and more than one thought is selected. String or `(state) => string`. |
 | `execMulticursor(cursors, dispatch, getState)` | Custom replacement for the per-cursor loop. |
 | `onComplete(filteredCursors, dispatch, getState)` | Callback after the loop finishes. |
