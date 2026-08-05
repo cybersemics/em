@@ -14,7 +14,8 @@ import { spawn } from 'node:child_process'
 import puppeteer from 'puppeteer'
 
 const port = process.env.EM_CHROME_PORT || '9222'
-// puppeteer.executablePath() is asynchronous, so it must be awaited before it can be spawned.
+// executablePath() resolves asynchronously as of puppeteer 25, so it must be awaited. Passing the
+// unresolved promise to spawn() throws ERR_INVALID_ARG_TYPE and Chrome never listens on the port.
 const executablePath = await puppeteer.executablePath()
 const args = [
   `--remote-debugging-port=${port}`,
