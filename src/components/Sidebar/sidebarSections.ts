@@ -20,8 +20,6 @@ export type SidebarSection = {
  * - Favorites: 0° (no rotation, uses the base overlay color)
  * - Recently Edited: -45° (shifts toward cooler tones)
  * - Recently Deleted: 128° (shifts toward warmer tones).
- * The hue/saturate values are shared by the runtime gradient and the pre-baked overlay images.
- * Regenerate the images after changing these values.
  */
 export const SECTIONS: SidebarSection[] = [
   { id: 'favorites', label: 'Favorites', icon: FavoritesIcon, hue: 0, saturate: 1 },
