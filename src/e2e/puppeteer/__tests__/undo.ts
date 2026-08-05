@@ -3,9 +3,11 @@ import newThoughtCommand from '../../../commands/newThought'
 import clickThought from '../helpers/clickThought'
 import exportThoughts from '../helpers/exportThoughts'
 import gesture from '../helpers/gesture'
+import getCaretOffset from '../helpers/getCaretOffset'
 import getEditingText from '../helpers/getEditingText'
 import keyboard from '../helpers/keyboard'
 import press from '../helpers/press'
+import setSelection from '../helpers/setSelection'
 import { page } from '../session'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
@@ -64,6 +66,28 @@ it('Native undo/redo beforeinput (iOS three-finger swipe / shake-to-undo) routes
   // native redo restores the edit exactly, without duplicating text
   await dispatchNativeHistory('historyRedo')
   expect(await getEditingText()).toBe('hello world')
+})
+
+// https://github.com/cybersemics/em/pull/4692#pullrequestreview-4863986059
+it.skip('Native undo places the caret at the end of the restored thought', async () => {
+  // create a thought "correct"
+  await press('Enter')
+  await keyboard.type('correct')
+
+  // create a thought "a"
+  await press('Enter')
+  await keyboard.type('a')
+
+  // tap into the middle of the thought, then replace the first letter as the iOS keyboard does when it autocorrects a word
+  await clickThought('correct')
+  await setSelection(0, 1)
+  await keyboard.type('C')
+  expect(await getEditingText()).toBe('Correct')
+
+  // native undo (dispatched as iOS does, not via Cmd+Z)
+  await dispatchNativeHistory('historyUndo')
+  expect(await getEditingText()).toBe('correct')
+  expect(await getCaretOffset()).toBe('correct'.length)
 })
 
 // We have to test this in puppeteer because chained commands are executed as separate commands at a higher level than action-creators and undone with an ad hoc mergeNext property on the action.
