@@ -38,7 +38,7 @@
 import * as Dialog from '@radix-ui/react-dialog'
 import { animate, useTransform } from 'framer-motion'
 import _ from 'lodash'
-import { MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { longPressActionCreator as longPress } from '../../actions/longPress'
@@ -172,23 +172,6 @@ const Sidebar = () => {
     onSwipeEnd: handleSwipeEnd,
   })
 
-  /** Tap-to-close zone on the right edge, for small screens where the drawer is full-width and
-   * there's no backdrop sliver to tap. Checks click position after the fact rather than a
-   * dedicated overlay div, so scrolling inside the zone still works. */
-  const handleEdgeTap = useCallback(
-    (e: MouseEvent<HTMLDivElement>) => {
-      if (isLargeDevice) return
-
-      const { right, width: elementWidth } = e.currentTarget.getBoundingClientRect()
-      if (e.clientX < right - elementWidth * 0.1) return
-
-      e.preventDefault()
-      e.stopPropagation()
-      toggleSidebar(false)
-    },
-    [isLargeDevice, toggleSidebar],
-  )
-
   /** Detects when the sidebar is mid-swipe-close and disables Favorites drag-and-drop so the
    * two gestures don't fight. Throttles to once per 10ms; leading:false skips the first
    * event before x has moved. */
@@ -302,6 +285,7 @@ const Sidebar = () => {
               sectionId={sectionId}
             />
 
+            {/* The sliding drawer panel — header and masked scrollable content */}
             <SidebarDrawer
               drawerRef={drawerRef}
               x={x}
@@ -310,8 +294,9 @@ const Sidebar = () => {
               contentOpacity={contentOpacity}
               transition={transition}
               showSidebar={showSidebar}
+              isLargeDevice={isLargeDevice}
               title={SECTIONS.find(s => s.id === sectionId)?.label ?? ''}
-              onClickCapture={handleEdgeTap}
+              onEdgeTap={() => toggleSidebar(false)}
               onAnimationComplete={() => {
                 if (!showSidebar) setDrawerMounted(false)
               }}
@@ -337,6 +322,7 @@ const Sidebar = () => {
                 </div>
               </FadeTransition>
 
+              {/* Masked, scrollable content area below the header */}
               <SidebarContent sectionId={sectionId} dropdownOpen={dropdownOpen} isSwiping={isSwiping} />
             </SidebarDrawer>
           </div>

@@ -1,5 +1,5 @@
 import { MotionValue } from 'framer-motion'
-import { RefObject, useEffect, useRef, useState } from 'react'
+import { RefObject, useEffect, useEffectEvent, useRef, useState } from 'react'
 import { LongPressState } from '../../constants'
 import store from '../../stores/app'
 
@@ -36,10 +36,11 @@ const useSidebarSwipe = ({ enabled, drawerRef, width, x, onSwipeEnd }: UseSideba
   /** Whether a horizontal swipe is currently in progress. */
   const [isSwiping, setIsSwiping] = useState(false)
 
-  /** Mirror the latest callback into a ref so the document-level handlers always see the current
-   * value without forcing the listeners to re-register. */
-  const onSwipeEndRef = useRef(onSwipeEnd)
-  onSwipeEndRef.current = onSwipeEnd
+  /** Stable-identity wrapper that always calls the latest onSwipeEnd — lets the touch listeners
+   * below stay registered across renders without depending on the caller's callback identity. */
+  const handleSwipeEnd = useEffectEvent((offset: number, velocity: number) => {
+    onSwipeEnd(offset, velocity)
+  })
 
   /** Per-touch swipe state for the manual touch handler. We don't use framer-motion's drag because
    * it has no "wait and see" phase to disambiguate horizontal swipe from vertical scroll — this
@@ -175,7 +176,7 @@ const useSidebarSwipe = ({ enabled, drawerRef, width, x, onSwipeEnd }: UseSideba
       if (swipe.isSwiping && swipe.drawerHit) {
         const offset = Math.abs(x.get())
         const velocity = Math.max(swipe.velocity, 0)
-        onSwipeEndRef.current(offset, velocity)
+        handleSwipeEnd(offset, velocity)
       }
 
       // Reset state
