@@ -20,13 +20,17 @@ export const initPermissionsStore = async (): Promise<void> => {
     return
   }
   if (loadPromise) return loadPromise
-  loadPromise = (async () => {
+  const promise = (async () => {
     const data = await get<Index<Share>>(storageKey())
     if (data && typeof data === 'object' && !Array.isArray(data)) {
       permissionsStore.update({ entries: data })
     }
   })()
-  return loadPromise
+  loadPromise = promise
+  void promise.catch(() => {
+    if (loadPromise === promise) loadPromise = null
+  })
+  return promise
 }
 
 /** Persists current permissions (skipped in unit tests). */

@@ -4,9 +4,3 @@ export {
   applyMaterializedThoughtsToStore,
   enqueueMaterializedThoughtsToStore,
 } from './applyMaterializedThoughtsToStore'
-export {
-  pushTreecrdtLocalOpsToRemote,
-  startTreecrdtWebSocketSync,
-  stopTreecrdtWebSocketSync,
-  tryStartTreecrdtWebSocketSyncFromEnv,
-} from './treecrdtWebSocketSync'

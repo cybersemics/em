@@ -3,8 +3,7 @@ import type Lexeme from '../@types/Lexeme'
 import type Thought from '../@types/Thought'
 import bootstrapConfig from '../bootstrapConfig'
 import type { DataProvider } from './DataProvider'
-import createTreecrdtRuntime from './treecrdt/runtime'
-import treecrdtDb from './treecrdt/thoughtspace'
+import createTreecrdtThoughtspace from './treecrdt/runtime'
 
 export type PersistThoughtspaceBatch = Parameters<DataProvider['updateThoughts']>[0] & {
   local?: boolean
@@ -48,10 +47,12 @@ export interface ThoughtspaceRuntime {
   persistPushQueueBatches: (batches: readonly PersistThoughtspaceBatch[]) => Promise<void>
 }
 
+const treecrdtThoughtspace = createTreecrdtThoughtspace(bootstrapConfig.treecrdt)
+
 /** The active data provider backing the current app thoughtspace. */
-export const db: DataProvider = treecrdtDb
+export const db: DataProvider = treecrdtThoughtspace.db
 
 /** The active thoughtspace runtime implementation. */
-export const thoughtspaceRuntime: ThoughtspaceRuntime = createTreecrdtRuntime(bootstrapConfig.treecrdt)
+export const thoughtspaceRuntime: ThoughtspaceRuntime = treecrdtThoughtspace
 
 export default db
