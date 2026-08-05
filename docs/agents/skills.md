@@ -241,6 +241,8 @@ end-session: escalating — checklist passed per .github/skills/end-session/SKIL
 
 Unlike the gate lines, this one genuinely is a stopping point — the only one.
 
+The prompt is backed by a deterministic lifecycle hook. At cloud session start, [`.github/hooks/end-session.json`](../../.github/hooks/end-session.json) clears a marker tied to that Copilot session id. The skill arms it only after its checklist passes. If Worker Bee or the parent agent attempts to stop first, the hook blocks the stop and sends the agent back for another turn with the missing requirement. Nested helper subagents bypass the marker so research, test, and review workers can return normally. This catches a model response that ends before it ever chooses to invoke the skill — the failure mode a prompt-only exit gate cannot prevent. The runtime overrides a stop hook after eight consecutive blocks, preventing this guard from creating an infinite loop.
+
 ### docs-sync
 
 **Source: [`.github/skills/docs-sync/SKILL.md`](../../.github/skills/docs-sync/SKILL.md)**

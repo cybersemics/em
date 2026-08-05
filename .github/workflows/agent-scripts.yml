@@ -13,6 +13,9 @@ name: Agent Scripts
 #   - scripts/mcp-session-proxy.test.mjs runs the real scripts/mcp-session-proxy.mjs against a
 #     local stub upstream and asserts session adoption, DELETE swallowing, and clean forwarding —
 #     no BrowserStack credentials involved.
+#   - .github/hooks/end-session.test.sh exercises the cloud-agent completion hook as a lifecycle
+#     state machine: nested helpers pass, premature Worker Bee/parent stops block, and only the
+#     current session's end-session marker allows completion.
 #
 # `paths` means a non-matching PR reports no check at all — not a skipped one — so this workflow
 # must never be made a required status check on main (see § Path filtering in docs/testing.md).
@@ -26,6 +29,10 @@ on:
       - scripts/mcp-session-proxy.mjs
       - scripts/mcp-session-proxy.test.mjs
       - scripts/bridge-attach.test.ts
+      - .github/hooks/end-session.json
+      - .github/hooks/end-session.sh
+      - .github/hooks/end-session.test.sh
+      - .github/skills/end-session/SKILL.md
       - src/e2e/puppeteer/attachExistingBrowserInstance.ts
       - src/e2e/puppeteer/session.ts
       - .github/workflows/agent-scripts.yml
@@ -42,6 +49,10 @@ on:
       - scripts/mcp-session-proxy.mjs
       - scripts/mcp-session-proxy.test.mjs
       - scripts/bridge-attach.test.ts
+      - .github/hooks/end-session.json
+      - .github/hooks/end-session.sh
+      - .github/hooks/end-session.test.sh
+      - .github/skills/end-session/SKILL.md
       - src/e2e/puppeteer/attachExistingBrowserInstance.ts
       - src/e2e/puppeteer/session.ts
       - .github/workflows/agent-scripts.yml
@@ -72,6 +83,9 @@ jobs:
     steps:
       - name: Clone repository
         uses: actions/checkout@v6
+
+      - name: Run cloud agent completion guard integration test
+        run: bash .github/hooks/end-session.test.sh
 
       - name: Enable Corepack
         run: corepack enable

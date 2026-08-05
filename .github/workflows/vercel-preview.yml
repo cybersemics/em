@@ -23,6 +23,7 @@ on:
       - '**/*.md'
       - 'docs/**'
       - '.github/instructions/**'
+      - '.github/hooks/**'
       - '.github/skills/**'
       - '.claude/**'
       - '.agents/**'

@@ -17,9 +17,9 @@ We targeted Copilot specifically because the project already runs on GitHub — 
 | [The TDD workflow](tdd.md)            | Why regression tests are committed switched off, and what the CI checks mean       |
 | [External agents](external-agents.md) | Codex and Claude Code — what they share with the cloud agent, and what they cannot |
 
-## The four kinds of file
+## The five kinds of file
 
-Everything the **cloud agent** reads lives under `.github/`. (A local agent reads `AGENTS.md` and `.agents/skills/` instead — see [External agents](external-agents.md).) There are four kinds of file, and the difference between them is **when the agent reads them**.
+Everything the **cloud agent** reads lives under `.github/`. (A local agent reads `AGENTS.md` and `.agents/skills/` instead — see [External agents](external-agents.md).) There are five kinds of file, and the difference between them is **when the agent reads them**.
 
 | Kind                    | Where                                    | When it is read                                |
 | ----------------------- | ---------------------------------------- | ---------------------------------------------- |
@@ -27,6 +27,7 @@ Everything the **cloud agent** reads lives under `.github/`. (A local agent read
 | Agent definition        | `.github/agents/worker-bee.agent.md`     | When you assign work to that named agent       |
 | Scoped instructions     | `.github/instructions/*.instructions.md` | Alongside the above                            |
 | Skills                  | `.github/skills/<name>/SKILL.md`         | Only when something invokes that skill by name |
+| Hooks                   | `.github/hooks/*.json`                   | At deterministic lifecycle and tool boundaries |
 
 ```mermaid
 flowchart TD
@@ -34,20 +35,24 @@ flowchart TD
     WB["agents/worker-bee.agent.md<br/>same content, plus a name and description"]
     INS["instructions/*.instructions.md<br/>code standards · testing rules"]
     SK["skills/*/SKILL.md<br/>one folder per skill, loaded on demand"]
+    HK["hooks/*.json<br/>deterministic lifecycle enforcement"]
     RUN(["The running agent"])
 
     CI --> RUN
     WB --> RUN
     INS --> RUN
     SK -.invoked by name.-> RUN
+    RUN --> HK
+    HK -.allow or force continuation.-> RUN
 
     click CI "https://github.com/cybersemics/em/blob/HEAD/.github/copilot-instructions.md" "Open copilot-instructions.md"
     click WB "https://github.com/cybersemics/em/blob/HEAD/.github/agents/worker-bee.agent.md" "Open worker-bee.agent.md"
     click INS "https://github.com/cybersemics/em/tree/HEAD/.github/instructions" "Open the instructions folder"
     click SK "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md" "Every skill, and how they call each other"
+    click HK "https://github.com/cybersemics/em/tree/HEAD/.github/hooks" "Deterministic agent hooks"
 ```
 
-The split matters because the agent's attention is finite. Anything in the first three is competing for room on every single run, so it has to earn its place. A skill costs nothing until it is needed, which is why the detailed procedures — how to bring up an iOS device, how to run one test, how to read a CI failure — are skills rather than standing instructions.
+The split matters because the agent's attention is finite. Anything in the first three kinds is competing for room on every single run, so it has to earn its place. A skill costs nothing until it is needed, which is why the detailed procedures — how to bring up an iOS device, how to run one test, how to read a CI failure — are skills rather than standing instructions.
 
 ### Why there are two near-identical prompt files
 
@@ -129,6 +134,8 @@ end-session: complete — checklist passed per .github/skills/end-session/SKILL.
 end-session: escalating — checklist passed per .github/skills/end-session/SKILL.md; blocked on <one-line reason>.
 ```
 
+Unlike the two prompt-only entry gates, the exit gate is enforced outside the model. [`.github/hooks/end-session.json`](../../.github/hooks/end-session.json) clears a per-session marker when a cloud job starts and checks it whenever Worker Bee or its parent tries to stop. The final step of the `end-session` skill arms the marker. A premature stop is rejected with a continuation prompt, while nested specialist subagents are allowed to return normally. The marker lives only in the job's ephemeral `/tmp` directory and is tied to the current Copilot session id, so neither a previous run nor a committed file can satisfy it. Copilot has a runtime safety cap of eight consecutive blocked stops, so the hook prevents ordinary premature completion but cannot force an unbounded loop against a persistently noncompliant model.
+
 
 ## Where everything lives
 
@@ -142,6 +149,7 @@ end-session: escalating — checklist passed per .github/skills/end-session/SKIL
 │   ├── testing.instructions.md
 │   └── estimate/                    Not a Copilot instruction — see below
 ├── skills/                          One folder per skill — see skills.md
+├── hooks/                           Deterministic cloud-agent lifecycle gates
 ├── actions/
 │   ├── install/                     Cached dependency install
 │   ├── serve/                       Start the built app and wait for it

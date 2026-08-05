@@ -9,7 +9,7 @@ allowed-tools:
   - bash
 ---
 
-This is the **End Session** skill. It runs at the other end of the work from `issue-repro` and `plan`: those two gate you *into* implementation, this one gates you *out* of the session. Work through it step by step, in order, every time you are about to stop — whether you are stopping because the work is done or because you are escalating.
+This is the **End Session** skill. It runs at the other end of the work from `issue-repro` and `plan`: those two gate you _into_ implementation, this one gates you _out_ of the session. Work through it step by step, in order, every time you are about to stop — whether you are stopping because the work is done or because you are escalating.
 
 The reason this skill exists: an agent's last action is the one no one supervises. A session that ends with an uncommitted fix on a disposable runner has destroyed the work, not delivered it — the branch looks untouched and the effort is unrecoverable. A session that ends while CI is still running has reported a result it never observed. Both look like success from inside the transcript. This checklist is the thing that makes the ending honest.
 
@@ -103,7 +103,7 @@ The one legitimate exit with a `.skip` still present is an escalation where the 
 
 Use `ci-monitor`. Wait for every run on the branch to complete; do not report on a partial set.
 
-- **Read which check failed.** A red `TDD` check and a red normal suite mean opposite things. `tdd.yml` un-skips your new test on the base branch and *expects it to fail*, so a red TDD check usually means the test wrongly **passes** on base — it does not capture the bug. A red normal suite means the code is broken. "CI failed" alone is not a diagnosis.
+- **Read which check failed.** A red `TDD` check and a red normal suite mean opposite things. `tdd.yml` un-skips your new test on the base branch and _expects it to fail_, so a red TDD check usually means the test wrongly **passes** on base — it does not capture the bug. A red normal suite means the code is broken. "CI failed" alone is not a diagnosis.
 - If anything is red, this is not an ending. Diagnose with `test-diagnosis`, fix, and return to Step 3 — pushing restarts CI and restarts this checklist. Stop only at 5 fix-push cycles, and then as an escalation.
 - Never claim checks pass without having seen them pass. Hallucinated test results are the worst failure mode available to you.
 
@@ -127,6 +127,20 @@ Your final message is the entire record for whoever picks this up. It must conta
 - **A concise diagnosis of any CI failure** you hit along the way, and what you did about it.
 - **What you did not do.** Anything out of scope, deferred, or left broken. A test still skipped, a file you left alone in Step 2, a second reproduction path you did not get to. Silence here reads as "everything is handled."
 - **If escalating:** what you tried, what you observed each time, and the specific question or decision you need from the user. "It didn't work" is not an escalation.
+
+---
+
+## Step 8: Arm the deterministic completion guard
+
+Copilot cloud agent has a repository hook that refuses both Worker Bee and its parent session permission to stop until this skill reaches its final step. Arm it now, after every substantive check above has passed:
+
+```bash
+bash .github/hooks/end-session.sh arm
+```
+
+The command must print `completion guard: armed for this cloud agent session`. In local agent environments it prints that no cloud marker is required and exits successfully.
+
+Do not run this command early. The marker is not evidence that the checklist passed; it is the final consequence of having passed it. Its purpose is to make an agent that forgets or abandons this skill continue working instead of letting the runtime silently accept an incomplete response.
 
 ---
 

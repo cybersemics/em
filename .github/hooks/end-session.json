@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "type": "command",
+        "bash": "bash .github/hooks/end-session.sh session-start",
+        "timeoutSec": 10
+      }
+    ],
+    "subagentStop": [
+      {
+        "type": "command",
+        "bash": "bash .github/hooks/end-session.sh subagent-stop",
+        "timeoutSec": 10
+      }
+    ],
+    "agentStop": [
+      {
+        "type": "command",
+        "bash": "bash .github/hooks/end-session.sh agent-stop",
+        "timeoutSec": 10
+      }
+    ]
+  }
+}
