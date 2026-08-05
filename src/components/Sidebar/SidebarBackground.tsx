@@ -23,7 +23,7 @@ const PROGRESSIVE_BLUR_MIN = isAndroid ? 4 : 0
  */
 const SidebarGradient = ({
   opacity,
-  width,
+  widthAsCssString,
   showSidebar,
   toggleSidebar,
   sectionId,
@@ -31,7 +31,7 @@ const SidebarGradient = ({
   /** Opacity derived from the sidebar's x position. */
   opacity: MotionValue<number>
   /** CSS width of the gradient overlay. */
-  width: string
+  widthAsCssString: string
   /** Whether the sidebar is currently open. */
   showSidebar: boolean
   /** Callback to open/close the sidebar. */
@@ -58,7 +58,7 @@ const SidebarGradient = ({
       // width is inline for the same reason as the drawer panel: Panda cannot statically extract
       // SIDEBAR_WIDTH_PX across modules, so in css() it emits no rule and inset:0 stretches this
       // layer across the whole viewport instead of the sidebar.
-      style={{ opacity, width, willChange: isAndroid ? 'opacity' : undefined }}
+      style={{ opacity, width: widthAsCssString, willChange: isAndroid ? 'opacity' : undefined }}
       onClick={() => toggleSidebar(false)}
       className={css({
         position: 'absolute',
@@ -99,28 +99,28 @@ const SidebarGradient = ({
  */
 const SidebarBackground = ({
   x,
-  widthPx,
+  width,
   showSidebar,
   toggleSidebar,
-  width,
+  widthAsCssString,
   sectionId,
 }: {
   /** The sidebar's current x-axis translation motion value. */
   x: MotionValue<number>
   /** Sidebar width in pixels, used to derive opacity from x position. */
-  widthPx: number
+  width: number
   /** Whether the sidebar is currently open. */
   showSidebar: boolean
   /** Callback to open/close the sidebar. */
   toggleSidebar: (value: boolean) => void
   /** CSS width string for child overlay components. */
-  width: string
+  widthAsCssString: string
   /** Active section. */
   sectionId: SidebarSectionId
 }) => {
   // Derive opacity from sidebar x position, then apply cubic ease-in
   // so the background fades in gently and catches up as the sidebar settles.
-  const linearOpacity = useTransform(x, [-widthPx, 0], [0, 1])
+  const linearOpacity = useTransform(x, [-width, 0], [0, 1])
   const opacity = useTransform(linearOpacity, v => v * v * v)
 
   return (
@@ -152,7 +152,7 @@ const SidebarBackground = ({
         <>
           <SidebarGradient
             opacity={opacity}
-            width={width}
+            widthAsCssString={widthAsCssString}
             showSidebar={showSidebar}
             toggleSidebar={toggleSidebar}
             sectionId={sectionId}
@@ -162,7 +162,7 @@ const SidebarBackground = ({
             minBlur={PROGRESSIVE_BLUR_MIN}
             maxBlur={32}
             layers={PROGRESSIVE_BLUR_LAYERS}
-            width={width}
+            width={widthAsCssString}
             opacity={opacity}
             promoteLayers={isAndroid}
           />
@@ -174,13 +174,13 @@ const SidebarBackground = ({
             minBlur={PROGRESSIVE_BLUR_MIN}
             maxBlur={32}
             layers={PROGRESSIVE_BLUR_LAYERS}
-            width={width}
+            width={widthAsCssString}
             opacity={opacity}
             promoteLayers={isAndroid}
           />
           <SidebarGradient
             opacity={opacity}
-            width={width}
+            widthAsCssString={widthAsCssString}
             showSidebar={showSidebar}
             toggleSidebar={toggleSidebar}
             sectionId={sectionId}

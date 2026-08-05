@@ -144,12 +144,12 @@ const SidebarOverlay1 = ({
  * this layer is static (no dropdown response, no blend mode) and uses a stronger blur.
  */
 const SidebarOverlay2 = ({
-  width,
+  widthAsCssString,
   opacity,
   sectionId,
 }: {
   /** CSS width of the overlay (either '100%' or '400px'). */
-  width: string
+  widthAsCssString: string
   /** Opacity derived from the sidebar's x position. */
   opacity: MotionValue<number>
   /** Active section. */
@@ -164,7 +164,7 @@ const SidebarOverlay2 = ({
 
   return (
     <motion.div
-      style={{ opacity, width, willChange: isAndroid ? 'opacity' : undefined }}
+      style={{ opacity, width: widthAsCssString, willChange: isAndroid ? 'opacity' : undefined }}
       className={css({
         position: 'absolute',
         top: 0,
@@ -207,13 +207,13 @@ const SidebarOverlay2 = ({
  * siblings so each keeps its own stacking position behind the drawer panel.
  */
 const SidebarGlow = ({
-  width,
+  widthAsCssString,
   opacity,
   expanded,
   sectionId,
 }: {
   /** CSS width of the secondary overlay (either '100%' or '400px'). */
-  width: string
+  widthAsCssString: string
   /** Opacity derived from the sidebar's x position, shared by both overlays. */
   opacity: MotionValue<number>
   /** Whether the dropdown is currently expanded. Only the primary overlay responds. */
@@ -225,7 +225,7 @@ const SidebarGlow = ({
     {/* Primary glow overlay – responds to dropdown expansion */}
     <SidebarOverlay1 opacity={opacity} expanded={expanded} sectionId={sectionId} />
     {/* Secondary glow overlay – adds middle tones */}
-    <SidebarOverlay2 width={width} opacity={opacity} sectionId={sectionId} />
+    <SidebarOverlay2 widthAsCssString={widthAsCssString} opacity={opacity} sectionId={sectionId} />
   </>
 )
 

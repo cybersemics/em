@@ -14,10 +14,10 @@
  * Sidebar (root)
  * ├── SidebarBackground (dimming overlay + progressive blur + gradient)
  * ├── SidebarGlow (primary glow effect + secondary glow effect)
- * └── Dialog.Content (the actual drawer panel)
+ * └── SidebarDrawer (the drawer panel: Dialog.Content + slide animation + close gestures)
  * ├── SidebarHeader (section picker with animated dropdown)
  * │ └── SidebarSectionRow (icon + label)
- * └── Scrollable content area
+ * └── SidebarContent (masked, scrollable content area)
  * ├── Favorites
  * ├── RecentlyEdited
  * └── RecentlyDeleted.
@@ -29,59 +29,45 @@
  * 1. Drawer slide. Triggered by `showSidebar`. This animates `MotionValue` `x`. Manual swipes drive
  * the `x` value directly. The position and opacity of sidebar layers derive from `x`.
  * 2. Section color tint. `sectionId` crossfades pre-tinted images and gradients.
- * 3. Sidebar dropdown. Triggered by `dropdownOpen`. Animates four values over STAGE_DURATION:
+ * 3. Sidebar dropdown. Triggered by `dropdownOpen`. Animates four values over MEDIUM_DURATION:
  * the opacity of dropdown item rows, the opacity of the chevron, the intensity of the sidebar headers' glow
  * (intensified when the dropdown is open), and a mask that dims the content of the sidebar underneath.
  * 4. Scroll-hint mask. `isScrolled` slides the content mask to add a top-edge fade.
  *
  */
 import * as Dialog from '@radix-ui/react-dialog'
-import * as VisuallyHidden from '@radix-ui/react-visually-hidden'
-import { animate, motion, useMotionValue, useTransform } from 'framer-motion'
+import { animate, useTransform } from 'framer-motion'
 import _ from 'lodash'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { longPressActionCreator as longPress } from '../../actions/longPress'
 import { toggleSidebarActionCreator } from '../../actions/toggleSidebar'
-import { isAndroid } from '../../browser'
 import { LongPressState } from '../../constants'
 import useBreakpoint from '../../hooks/useBreakpoint'
-import viewportStore from '../../stores/viewport'
+import usePrefetchImages from '../../hooks/usePrefetchImages'
 import FadeTransition from '../FadeTransition'
-import Favorites from '../Favorites'
-import RecentlyDeleted from '../RecentlyDeleted'
-import RecentlyEdited from '../RecentlyEdited'
 import SidebarBackground from './SidebarBackground'
+import SidebarContent from './SidebarContent'
+import SidebarDrawer from './SidebarDrawer'
 import SidebarGlow from './SidebarGlow'
 import SidebarHeader from './SidebarHeader'
-import { EASE_OUT, SIDEBAR_WIDTH_PX, STAGE_DURATION, cssEaseOut } from './constants'
 import { SECTIONS, SidebarSectionId } from './sidebarSections'
+import useDrawerPosition from './useDrawerPosition'
+import useDrawerWidth from './useDrawerWidth'
 import useSidebarSwipe from './useSidebarSwipe'
 
-// Mask geometry
-
-/** Height (px) of the mask's fully-transparent band — the region hidden under the open dropdown. */
-const DROPDOWN_MASK_BAND = 128
-
-/** Height (px) of the mask's fade-to-black ramp. Doubles as the scroll-hint top fade. */
-const SCROLL_HINT_FADE = 48
-
-/** Extra carrier extent (px) beyond the scroll viewport — keeps every mask slide position covered. */
-const MASK_OVERSIZE = DROPDOWN_MASK_BAND + SCROLL_HINT_FADE
-
-/** Offsets that position the mask geometry relative to the scroll area's top edge. */
-const DROPDOWN_MASK_OFFSET = -DROPDOWN_MASK_BAND
-const SCROLL_HINT_MASK_OFFSET = -SCROLL_HINT_FADE
-
-/** Softer ease-out used when *closing* the sidebar. The less aggressive start prevents the
- * drawer from appearing to "jump" when the user releases a swipe. */
-const EASE_OUT_GENTLE = [0.25, 0.1, 0.25, 1] as const
+/** Both engines use the pre-baked per-section variants (see SidebarGlow) — prefetched below so the
+ * first section switch crossfades without a fetch/decode hitch mid-animation. */
+const GLOW_OVERLAY_IMAGE_URLS = SECTIONS.flatMap(section => [
+  `/img/sidebar/overlay-layer-1-${section.id}.avif`,
+  `/img/sidebar/overlay-layer-2-${section.id}.avif`,
+])
 
 /**
- * Top-level Sidebar component. Composes the background layers, glow overlays, drawer panel,
- * and section content. Handles open/close (Redux), swipe-to-close gestures, section
- * switching, Escape key, and body scroll lock.
+ * Top-level Sidebar component. Composes the background layers, glow overlays, drawer, and
+ * section content. Handles open/close (Redux), the gestures that can close the drawer (swipe
+ * and edge-tap), section switching, Escape key, and body scroll lock.
  *
  * The drawer remains mounted through its close animation. Swipe gestures are handled manually
  * because framer-motion's drag has no "wait and see" phase for direction detection.
@@ -99,14 +85,6 @@ const Sidebar = () => {
   /** Which section is currently selected. */
   const [sectionId, setSectionId] = useState<SidebarSectionId>('favorites')
 
-  /** Whether the scrollable content area has been scrolled down.
-   * Used to conditionally show a top fade-out mask for scroll overflow indication. */
-  const [isScrolled, setIsScrolled] = useState(false)
-
-  /** Current viewport width from the viewport store – used for responsive
-   * layout decisions (full-width vs fixed size determined by SIDEBAR_WIDTH_PX). */
-  const innerWidth = viewportStore.useSelector(state => state.innerWidth)
-
   /** Whether the dropdown is open. */
   const [dropdownOpen, setDropdownOpen] = useState(false)
 
@@ -120,18 +98,6 @@ const Sidebar = () => {
   /** Keep the subtree mounted until its close animation finishes. */
   const [drawerMounted, setDrawerMounted] = useState(showSidebar)
 
-  // Slide the static mask carrier and counter-slide the scroller. This moves the gradient without
-  // repainting or moving the content. The carrier is oversized to keep the viewport covered.
-  // Positions for the 128px dropdown band and 48px scroll fade:
-  //   0     = band in place — the region under the open dropdown is hidden
-  //   -128  = revealed, with the 48px scroll-hint fade at the top edge (list is scrolled)
-  //   -176  = fully revealed (list at the top; no fade)
-  const maskSlideY = dropdownOpen ? 0 : DROPDOWN_MASK_OFFSET + (isScrolled ? 0 : SCROLL_HINT_MASK_OFFSET)
-
-  /** The content mask carried by the slider: a transparent band the height of the dropdown, then a
-   * fade to fully visible over the scroll-hint ramp. */
-  const maskGradient = `linear-gradient(to bottom, transparent 0, transparent ${DROPDOWN_MASK_BAND}px, black ${MASK_OVERSIZE}px)`
-
   // ============================
   // Refs
   // ============================
@@ -143,50 +109,26 @@ const Sidebar = () => {
   // Derived values
   // ============================
 
+  /** True at runtime if the device is "large" (landscape mobile devices and larger). */
   const isLargeDevice = useBreakpoint('lg')
 
-  /** Sidebar width as a CSS value: fixed on large devices (so the main content stays
-   * partially visible), full-viewport on small screens. */
-  const width = isLargeDevice ? `${SIDEBAR_WIDTH_PX}px` : '100%'
+  /** Drawer width: the real pixel value for position/opacity math, and the CSS value to
+   * render it at. */
+  const { width, widthAsCssString } = useDrawerWidth(isLargeDevice)
 
-  /** Same as `width` but in raw px. Needed wherever we do arithmetic on the width — the
-   * off-screen x position (-widthPx = fully hidden), x-to-opacity transforms, and swipe-
-   * gesture hit detection. */
-  const widthPx = isLargeDevice ? SIDEBAR_WIDTH_PX : innerWidth
-
-  /** The drawer's x-axis translation. 0 = fully open, -widthPx = fully closed (off-screen
-   * to the left). Driven by both framer-motion (during open/close animations) and direct
-   * `x.set()` calls (during a swipe). */
-  const x = useMotionValue(showSidebar ? 0 : -widthPx)
-
-  useEffect(() => {
-    if (showSidebar) {
-      setDrawerMounted(true)
-    } else if (x.get() === -widthPx) {
-      // Framer does not fire onAnimationComplete when there is no distance to animate.
-      setDrawerMounted(false)
-    }
-  }, [showSidebar, x, widthPx])
+  /** The drawer's position over time: where it sits (`x`) and how it gets there (`transition`). */
+  const { x, transition } = useDrawerPosition(showSidebar, width)
 
   /** Content opacity derived from x. Linear-maps x to [0,1] then squares it, so the content
    * stays readable while the sidebar is mostly open and fades rapidly as it approaches the
    * left edge. Applied to both the drawer content and the overlay layers. */
   const contentOpacity = useTransform(x, v => {
-    const linear = Math.max(0, Math.min(1, (v + widthPx) / widthPx))
+    const linear = Math.max(0, Math.min(1, (v + width) / width))
     return linear * linear
   })
 
-  /** The open/close transition. */
-  const transition = useMemo(
-    () => ({
-      duration: STAGE_DURATION,
-      ease: showSidebar ? EASE_OUT : EASE_OUT_GENTLE,
-    }),
-    [showSidebar],
-  )
-
   // ============================
-  // Callbacks
+  // Close gestures
   // ============================
 
   /** Toggle the sidebar open/closed. */
@@ -220,25 +162,73 @@ const Sidebar = () => {
     [toggleSidebar, x, transition],
   )
 
+  /** Document-level swipe-to-close gesture, including swipes that begin on the backdrop. Owns the
+   * `isSwiping` flag; `setIsSwiping` is shared because the drawer's own `onTouchMove` also flips it. */
+  const { isSwiping, setIsSwiping } = useSidebarSwipe({
+    enabled: showSidebar,
+    drawerRef,
+    width,
+    x,
+    onSwipeEnd: handleSwipeEnd,
+  })
+
+  /** Tap-to-close zone on the right edge, for small screens where the drawer is full-width and
+   * there's no backdrop sliver to tap. Checks click position after the fact rather than a
+   * dedicated overlay div, so scrolling inside the zone still works. */
+  const handleEdgeTap = useCallback(
+    (e: MouseEvent<HTMLDivElement>) => {
+      if (isLargeDevice) return
+
+      const { right, width: elementWidth } = e.currentTarget.getBoundingClientRect()
+      if (e.clientX < right - elementWidth * 0.1) return
+
+      e.preventDefault()
+      e.stopPropagation()
+      toggleSidebar(false)
+    },
+    [isLargeDevice, toggleSidebar],
+  )
+
+  /** Detects when the sidebar is mid-swipe-close and disables Favorites drag-and-drop so the
+   * two gestures don't fight. Throttles to once per 10ms; leading:false skips the first
+   * event before x has moved. */
+  const handleDrawerTouchMove = useMemo(
+    () =>
+      _.throttle(
+        () => {
+          if (isSwiping) return
+          if (x.get() !== 0) {
+            setIsSwiping(true)
+            dispatch(longPress({ value: LongPressState.Inactive }))
+          }
+        },
+        10,
+        { leading: false },
+      ),
+    [isSwiping, setIsSwiping, x, dispatch],
+  )
+
   // ============================
   // Effects
   // ============================
 
-  /** Preload glow overlay images so they appear instantly when the sidebar first opens. */
+  /** Keeps the drawer subtree mounted through its close animation, so it can be seen sliding out
+   * instead of vanishing instantly. Opening mounts it immediately here, in time for the slide-in.
+   * Closing normally unmounts it via `onAnimationComplete` (passed to SidebarDrawer below) once
+   * the close animation actually finishes. This effect only handles the case where there's no
+   * animation to finish: if `x` is already at the closed position when `showSidebar` flips false
+   * — e.g. the drawer was swiped shut rather than toggled — Framer never fires
+   * `onAnimationComplete`, since there's no distance to animate, so nothing else would unmount it. */
   useEffect(() => {
-    /** Decode an image so the browser caches it before it's needed. */
-    const preload = async (src: string) => {
-      const img = new Image()
-      img.src = src
-      await img.decode()
+    if (showSidebar) {
+      setDrawerMounted(true)
+    } else if (x.get() === -width) {
+      setDrawerMounted(false)
     }
-    // Both engines use the pre-baked per-section variants (see SidebarGlow) — warm them so the
-    // first section switch crossfades without a fetch/decode hitch mid-animation.
-    for (const section of SECTIONS) {
-      preload(`/img/sidebar/overlay-layer-1-${section.id}.avif`)
-      preload(`/img/sidebar/overlay-layer-2-${section.id}.avif`)
-    }
-  }, [])
+  }, [showSidebar, x, width])
+
+  /** Preload glow overlay images so they appear instantly when the sidebar first opens. */
+  usePrefetchImages(GLOW_OVERLAY_IMAGE_URLS)
 
   /** Lock body scroll when sidebar is open. */
   useEffect(() => {
@@ -270,16 +260,6 @@ const Sidebar = () => {
     }
   }, [showSidebar, toggleSidebar])
 
-  /** Document-level swipe-to-close gesture, including swipes that begin on the backdrop. Owns the
-   * `isSwiping` flag; `setIsSwiping` is shared because the drawer's onTouchMove also flips it. */
-  const { isSwiping, setIsSwiping } = useSidebarSwipe({
-    enabled: showSidebar,
-    drawerRef,
-    widthPx,
-    x,
-    onSwipeEnd: handleSwipeEnd,
-  })
-
   return (
     <>
       {/*
@@ -307,215 +287,58 @@ const Sidebar = () => {
             {/* Background dimming/blur/gradient layer – sits behind everything */}
             <SidebarBackground
               x={x}
-              widthPx={widthPx}
+              width={width}
               showSidebar={showSidebar}
               toggleSidebar={toggleSidebar}
-              width={width}
+              widthAsCssString={widthAsCssString}
               sectionId={sectionId}
             />
 
             {/* Primary and secondary glow overlays */}
-            <SidebarGlow width={width} opacity={contentOpacity} expanded={dropdownOpen} sectionId={sectionId} />
+            <SidebarGlow
+              widthAsCssString={widthAsCssString}
+              opacity={contentOpacity}
+              expanded={dropdownOpen}
+              sectionId={sectionId}
+            />
 
-            {/*
-             * Dialog.Content is the actual sidebar drawer panel.
-             * - asChild: renders as its child (motion.div) instead of adding an extra DOM node
-             * - onOpenAutoFocus: prevented to stop focus from jumping into the sidebar on page load
-             * - onInteractOutside: prevented to avoid double-toggle when tapping the hamburger icon
-             *   (our own backdrop click handler manages closing)
-             * - onEscapeKeyDown: prevented because we handle Escape ourselves in a useEffect
-             *   (Radix's built-in handler would close the dialog before our handler runs)
-             */}
-            <Dialog.Content
-              asChild
-              onOpenAutoFocus={e => e.preventDefault()}
-              onInteractOutside={e => e.preventDefault()}
-              onEscapeKeyDown={e => e.preventDefault()}
-              aria-describedby={undefined} // Suppress Radix console warning – not applicable here
+            <SidebarDrawer
+              drawerRef={drawerRef}
+              x={x}
+              width={width}
+              widthAsCssString={widthAsCssString}
+              contentOpacity={contentOpacity}
+              transition={transition}
+              showSidebar={showSidebar}
+              title={SECTIONS.find(s => s.id === sectionId)?.label ?? ''}
+              onClickCapture={handleEdgeTap}
+              onAnimationComplete={() => {
+                if (!showSidebar) setDrawerMounted(false)
+              }}
+              onTouchMove={handleDrawerTouchMove}
+              onTouchEnd={() => setIsSwiping(false)}
             >
-              {/* Unmount the drawer after its close animation. */}
-              <motion.div
-                ref={drawerRef}
-                // width is inline because Panda cannot statically extract SIDEBAR_WIDTH_PX across
-                // modules; in css() it emits no rule and the drawer collapses to its content width.
-                style={{ x, opacity: contentOpacity, width }}
-                initial={{ x: -widthPx }}
-                animate={{ x: showSidebar ? 0 : -widthPx }}
-                transition={transition}
-                onAnimationComplete={() => {
-                  if (!showSidebar) setDrawerMounted(false)
-                }}
-                onClickCapture={e => {
-                  if (isLargeDevice) return
-
-                  const { right, width } = e.currentTarget.getBoundingClientRect()
-                  if (e.clientX < right - width * 0.1) return
-
-                  e.preventDefault()
-                  e.stopPropagation()
-                  toggleSidebar(false)
-                }}
-                className={css({
-                  position: 'fixed',
-                  top: 'safeAreaTop',
-                  left: 0,
-                  bottom: 0,
-                  backgroundColor: 'transparent',
-                  zIndex: 'sidebar',
-                  userSelect: 'none',
-                  outline: 'none',
-                  pointerEvents: 'auto',
-                })}
-              >
-                {/* Detects when the sidebar is mid-swipe-close and disables Favorites
-                    drag-and-drop so the two gestures don't fight. Throttles to once per 10ms;
-                    leading:false skips the first event before x has moved. */}
+              {/* Non-scrolling header. Fades in with the sidebar; the 3.75rem top margin
+                  sits just below the safe-area inset. */}
+              <FadeTransition type='medium' in={showSidebar}>
                 <div
-                  onTouchMove={_.throttle(
-                    () => {
-                      if (isSwiping) return
-                      if (x.get() !== 0) {
-                        setIsSwiping(true)
-                        dispatch(longPress({ value: LongPressState.Inactive }))
-                      }
-                    },
-                    10,
-                    { leading: false },
-                  )}
-                  onTouchEnd={() => {
-                    setIsSwiping(false)
-                  }}
-                  className={css({ height: '100%' })}
+                  className={css({
+                    marginTop: '3.75rem',
+                    padding: '0 1em',
+                  })}
                 >
-                  {/* Main sidebar content container – flex column layout */}
-                  <div
-                    aria-label='sidebar'
-                    className={css({
-                      background: 'transparent',
-                      boxSizing: 'border-box',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      width: '100%',
-                      height: '100%',
-                      color: 'fg',
-                      lineHeight: 1.8,
-                      userSelect: 'none',
-                      position: 'relative',
-                      overflow: 'hidden',
-                      isolation: 'isolate',
-                      paddingLeft: 'env(safe-area-inset-left)', // prevent notch from clipping content in landscape
-                    })}
-                  >
-                    {/* Visually hidden title for screen readers – announces the active section name */}
-                    <VisuallyHidden.Root>
-                      <Dialog.Title>{SECTIONS.find(s => s.id === sectionId)?.label}</Dialog.Title>
-                    </VisuallyHidden.Root>
-
-                    {/* Non-scrolling header. Fades in with the sidebar; the 3.75rem top margin
-                        sits just below the safe-area inset. */}
-                    <FadeTransition type='medium' in={showSidebar}>
-                      <div
-                        className={css({
-                          marginTop: '3.75rem',
-                          padding: '0 1em',
-                        })}
-                      >
-                        <SidebarHeader
-                          sections={SECTIONS}
-                          sectionId={sectionId}
-                          onSectionChange={setSectionId}
-                          isOpen={dropdownOpen}
-                          setIsOpen={setDropdownOpen}
-                        />
-                      </div>
-                    </FadeTransition>
-
-                    {/* The oversized mask carrier slides while the scroller counter-slides. */}
-                    <div
-                      className={css({
-                        flex: 1,
-                        minHeight: 0,
-                        position: 'relative',
-                        display: 'flex',
-                        flexDirection: 'column',
-                      })}
-                    >
-                      <div
-                        style={{
-                          // Cover the viewport at every mask position.
-                          height: `calc(100% + ${MASK_OVERSIZE}px)`,
-                          transform: `translateY(${maskSlideY}px)`,
-                          transition: `transform ${STAGE_DURATION}s ${cssEaseOut}`,
-                          // Let taps pass through the carrier; the scroller opts back in.
-                          pointerEvents: 'none',
-                          // Android: promote before the mask transition to avoid a one-frame blank.
-                          willChange: isAndroid ? 'transform' : undefined,
-                          // Static mask: transparent for the band hidden under the open dropdown, then a
-                          // fade to fully visible. Inline rather than css() because Panda cannot extract a
-                          // template literal built from imported constants — it would silently drop the
-                          // mask. The -webkit- properties replace the prefixing Panda would have applied.
-                          maskRepeat: 'no-repeat',
-                          WebkitMaskRepeat: 'no-repeat',
-                          maskImage: maskGradient,
-                          WebkitMaskImage: maskGradient,
-                          maskSize: '100% 100%',
-                          WebkitMaskSize: '100% 100%',
-                        }}
-                        className={css({
-                          position: 'absolute',
-                          top: 0,
-                          right: 0,
-                          left: 0,
-                          display: 'flex',
-                          flexDirection: 'column',
-                        })}
-                      >
-                        <motion.div
-                          data-scroll-at-edge
-                          onScroll={e => setIsScrolled(e.currentTarget.scrollTop > 0)}
-                          style={{
-                            // Keep the list stationary as its mask carrier moves.
-                            height: `calc(100% - ${MASK_OVERSIZE}px)`,
-                            transform: `translateY(${-maskSlideY}px)`,
-                            // Dim the content while the dropdown is open.
-                            opacity: dropdownOpen ? 0.5 : 1,
-                            transition: `opacity ${STAGE_DURATION}s ${cssEaseOut}, transform ${STAGE_DURATION}s ${cssEaseOut}`,
-                            pointerEvents: 'auto',
-                            willChange: isAndroid ? 'opacity, transform' : undefined,
-                          }}
-                          className={css({
-                            flexShrink: 0,
-                            overflowY: 'scroll',
-                            overflowX: 'hidden',
-                            overscrollBehavior: 'contain',
-                            scrollbarWidth: 'thin',
-                            scrollbarColor: '{colors.fgOverlay30} transparent',
-                            '&::-webkit-scrollbar': {
-                              width: '0px',
-                              background: 'transparent',
-                              display: 'none',
-                            },
-                            position: 'relative',
-                            padding: '0 1em',
-                          })}
-                        >
-                          {/* Render the active section's content component */}
-                          {sectionId === 'favorites' ? (
-                            <Favorites disableDragAndDrop={isSwiping} />
-                          ) : sectionId === 'recentlyEdited' ? (
-                            <RecentlyEdited />
-                          ) : sectionId === 'recentlyDeleted' ? (
-                            <RecentlyDeleted />
-                          ) : (
-                            'Not yet implemented'
-                          )}
-                        </motion.div>
-                      </div>
-                    </div>
-                  </div>
+                  <SidebarHeader
+                    sections={SECTIONS}
+                    sectionId={sectionId}
+                    onSectionChange={setSectionId}
+                    isOpen={dropdownOpen}
+                    setIsOpen={setDropdownOpen}
+                  />
                 </div>
-              </motion.div>
-            </Dialog.Content>
+              </FadeTransition>
+
+              <SidebarContent sectionId={sectionId} dropdownOpen={dropdownOpen} isSwiping={isSwiping} />
+            </SidebarDrawer>
           </div>
         </Dialog.Portal>
       </Dialog.Root>

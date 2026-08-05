@@ -12,8 +12,8 @@ interface UseSidebarSwipeOptions {
   /** The drawer element. Used to distinguish backdrop-initiated swipes from in-drawer ones. */
   drawerRef: RefObject<HTMLDivElement | null>
   /** Live drawer width in px. Doubles as the clamp bound and the backdrop→drawer hit test. */
-  widthPx: number
-  /** Shared drawer position (0 = open, -widthPx = closed). The hook writes to it mid-swipe. */
+  width: number
+  /** Shared drawer position (0 = open, -width = closed). The hook writes to it mid-swipe. */
   x: MotionValue<number>
   /** Called once on release with the drag distance (px) and smoothed velocity (px/s). The caller
    * decides whether to close the drawer or snap it back open. */
@@ -32,7 +32,7 @@ interface UseSidebarSwipeOptions {
  * flips the flag when the drawer has moved. Consumers use `isSwiping` to disable Favorites
  * drag-and-drop so the two gestures don't fight.
  */
-const useSidebarSwipe = ({ enabled, drawerRef, widthPx, x, onSwipeEnd }: UseSidebarSwipeOptions) => {
+const useSidebarSwipe = ({ enabled, drawerRef, width, x, onSwipeEnd }: UseSidebarSwipeOptions) => {
   /** Whether a horizontal swipe is currently in progress. */
   const [isSwiping, setIsSwiping] = useState(false)
 
@@ -113,7 +113,7 @@ const useSidebarSwipe = ({ enabled, drawerRef, widthPx, x, onSwipeEnd }: UseSide
 
       // For backdrop-initiated swipes, check if finger has entered the drawer
       if (swipe.startedOnBackdrop && !swipe.drawerHit) {
-        if (touchX < widthPx) {
+        if (touchX < width) {
           // Finger just entered drawer - "pick it up"
           swipe.drawerHit = true
           swipe.startX = touchX
@@ -157,7 +157,7 @@ const useSidebarSwipe = ({ enabled, drawerRef, widthPx, x, onSwipeEnd }: UseSide
 
       // Move the drawer to follow the finger
       const dragOffset = touchX - swipe.startX // Negative when dragging left
-      const newX = Math.max(-widthPx, Math.min(0, dragOffset)) // Clamp to valid range
+      const newX = Math.max(-width, Math.min(0, dragOffset)) // Clamp to valid range
       x.set(newX)
 
       // Prevent scrolling while swiping
@@ -194,7 +194,7 @@ const useSidebarSwipe = ({ enabled, drawerRef, widthPx, x, onSwipeEnd }: UseSide
       document.removeEventListener('touchmove', handleTouchMove)
       document.removeEventListener('touchend', handleTouchEnd)
     }
-  }, [enabled, widthPx, x, drawerRef])
+  }, [enabled, width, x, drawerRef])
 
   return { isSwiping, setIsSwiping }
 }

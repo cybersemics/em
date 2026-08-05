@@ -4,7 +4,7 @@ import { token } from '../../../styled-system/tokens'
 import { isAndroid } from '../../browser'
 import fastClick from '../../util/fastClick'
 import ChevronImg from '../ChevronImg'
-import { STAGE_DURATION, cssEaseOut } from './constants'
+import { MEDIUM_DURATION, cssEaseOut } from './constants'
 import { SidebarSection, SidebarSectionId } from './sidebarSections'
 
 /** A sidebar section row: icon + label. Used for both the active header and dropdown items. */
@@ -114,7 +114,7 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
         <div
           style={{
             opacity: isOpen ? 0 : 1,
-            transition: `opacity ${STAGE_DURATION}s ${isOpen ? 'ease-out' : 'linear'} ${isOpen ? 0 : STAGE_DURATION}s`,
+            transition: `opacity ${MEDIUM_DURATION}s ${isOpen ? 'ease-out' : 'linear'} ${isOpen ? 0 : MEDIUM_DURATION}s`,
             willChange: isAndroid ? 'opacity' : undefined, // Android: avoid opacity-transition flicker.
           }}
           className={css({ display: 'inline-flex', paddingTop: '0.375rem' })}
@@ -130,7 +130,7 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
 
       {/* Dismiss the dropdown when the area behind it is clicked. */}
       <div
-        style={{ opacity: isOpen ? 1 : 0, transition: `opacity ${STAGE_DURATION}s ${cssEaseOut}` }}
+        style={{ opacity: isOpen ? 1 : 0, transition: `opacity ${MEDIUM_DURATION}s ${cssEaseOut}` }}
         {...fastClick(() => setIsOpen(false))}
         className={css({
           position: 'absolute',
@@ -169,7 +169,7 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
                 // The selected row stays visible and slides into the header; other rows fade.
                 opacity: isSelected ? 1 : isOpen ? 1 : 0,
                 transform: `translateY(${isSelected && !isOpen ? -selectedOffset : 0}px)`,
-                transition: `opacity ${STAGE_DURATION}s ${cssEaseOut}, transform ${STAGE_DURATION}s ${cssEaseOut}`,
+                transition: `opacity ${MEDIUM_DURATION}s ${cssEaseOut}, transform ${MEDIUM_DURATION}s ${cssEaseOut}`,
                 // Android: keep each row promoted to avoid fast-switch flicker.
                 willChange: isAndroid ? 'transform, opacity' : undefined,
               }}
