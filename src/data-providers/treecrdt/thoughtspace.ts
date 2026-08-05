@@ -45,22 +45,16 @@ type TreecrdtClientDataProvider = Pick<
 > &
   Required<Pick<DataProvider, 'updateLexemeIndex'>>
 
-type TreecrdtClientBinding = TreecrdtClientIdentity &
-  Readonly<{
-    db: TreecrdtClientDataProvider
-  }>
-
-/** Creates the private gate used by writes that race startup. */
-const createDeferred = <T>() => {
-  let resolve!: (value: T) => void
+/** Creates the private provider-readiness state used by writes that race startup. */
+const createProviderReadiness = () => {
+  let resolve!: (db: TreecrdtClientDataProvider) => void
   let reject!: (reason: unknown) => void
-  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
+  const promise = new Promise<TreecrdtClientDataProvider>((resolvePromise, rejectPromise) => {
     resolve = resolvePromise
     reject = rejectPromise
   })
 
-  // The public write that awaits this promise observes the rejection. This catch prevents an unhandled rejection when
-  // a client fails to bind or drops before any pre-init write has subscribed.
+  // A public write observes this rejection. This catch only prevents an unhandled rejection when no write was waiting.
   void promise.catch(() => undefined)
 
   return { promise, reject, resolve }
@@ -374,60 +368,56 @@ const createClientDataProvider = ({ client, replicaId }: TreecrdtClientIdentity)
 })
 
 /**
- * Creates a TreeCRDT data provider bound by its owner to one client at a time.
+ * Creates a stable TreeCRDT data provider backed by one client-owned provider at a time.
  *
- * Writes issued while app initialization is delayed wait on this provider's private binding gate. A failed init or a
- * drop before init rejects that gate; the next init rotates to a fresh gate so work cannot leak into another client.
+ * Writes issued while app initialization is delayed wait for this provider to become ready. A failed init or a drop
+ * before init rejects those writes; the next init starts a fresh wait so work cannot leak into another client.
  */
 const createTreecrdtDataProvider = () => {
-  let activeBinding: TreecrdtClientBinding | null = null
-  let bindingGate = createDeferred<TreecrdtClientBinding>()
+  let activeDb: TreecrdtClientDataProvider | null = null
+  let providerReadiness = createProviderReadiness()
 
-  /** Returns the active client binding for reads that are only valid after runtime initialization. */
-  const getActiveBinding = (): TreecrdtClientBinding => {
-    if (!activeBinding) throw new Error('TreeCRDT DataProvider: init not called')
-    return activeBinding
+  /** Returns the active client provider for reads that are only valid after runtime initialization. */
+  const getActiveDb = (): TreecrdtClientDataProvider => {
+    if (!activeDb) throw new Error('TreeCRDT DataProvider: init not called')
+    return activeDb
   }
 
-  /** Dispatches public writes through the startup gate, retaining whichever client binding releases that write. */
+  /** Dispatches public writes to the client provider that becomes ready for them. */
   const updateThoughts: DataProvider['updateThoughts'] = async updates =>
-    (await bindingGate.promise).db.updateThoughts(updates)
+    (await providerReadiness.promise).updateThoughts(updates)
 
-  /** Clears the current client binding, rejects startup writes, and rotates to a fresh gate. */
+  /** Clears the current client provider, rejects startup writes, and creates fresh readiness state. */
   const resetBinding = (reason: unknown): void => {
-    bindingGate.reject(reason)
-    activeBinding = null
-    bindingGate = createDeferred<TreecrdtClientBinding>()
+    providerReadiness.reject(reason)
+    activeDb = null
+    providerReadiness = createProviderReadiness()
   }
 
   const db = {
     name: 'treecrdt',
-    getLexemeById: key => getActiveBinding().db.getLexemeById(key),
-    getLexemesByIds: keys => getActiveBinding().db.getLexemesByIds(keys),
-    getThoughtById: id => getActiveBinding().db.getThoughtById(id),
-    getThoughtsByIds: ids => getActiveBinding().db.getThoughtsByIds(ids),
+    getLexemeById: key => getActiveDb().getLexemeById(key),
+    getLexemesByIds: keys => getActiveDb().getLexemesByIds(keys),
+    getThoughtById: id => getActiveDb().getThoughtById(id),
+    getThoughtsByIds: ids => getActiveDb().getThoughtsByIds(ids),
     updateThoughts,
     // Freeing cache entries remains a no-op before initialization.
     freeThought: async _id => undefined,
     freeLexeme: async _key => undefined,
-    updateLexemeIndex: lexemeIndex => getActiveBinding().db.updateLexemeIndex(lexemeIndex),
+    updateLexemeIndex: lexemeIndex => getActiveDb().updateLexemeIndex(lexemeIndex),
   } satisfies Omit<DataProvider, 'clear'>
 
-  /** Seeds and binds the exact client supplied by the owner, then releases queued startup writes. */
+  /** Seeds the supplied client, creates its provider, and then releases queued startup writes. */
   const bindClient = async (
     client: TreecrdtClient,
     replicaId: Uint8Array,
     materialization?: ThoughtspaceMaterializationBridge,
   ): Promise<() => void> => {
-    if (activeBinding) throw new Error('TreeCRDT DataProvider: client already bound')
+    if (activeDb) throw new Error('TreeCRDT DataProvider: client already bound')
     await initializeThoughtspaceStorage(client, replicaId)
 
-    const clientIdentity = { client, replicaId }
-    const binding = {
-      ...clientIdentity,
-      db: createClientDataProvider(clientIdentity),
-    }
-    const materializationContext = materialization ? { bridge: materialization, client, db: binding.db } : null
+    const clientDb = createClientDataProvider({ client, replicaId })
+    const materializationContext = materialization ? { bridge: materialization, client, db: clientDb } : null
 
     const unsubscribeMaterialized = client.onMaterialized(event => {
       // Local writes are already reflected optimistically. Other materialization uses the exact provider and client
@@ -439,8 +429,8 @@ const createTreecrdtDataProvider = () => {
       )
     })
 
-    activeBinding = binding
-    bindingGate.resolve(binding)
+    activeDb = clientDb
+    providerReadiness.resolve(clientDb)
     let subscribed = true
     return () => {
       if (!subscribed) return
