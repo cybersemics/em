@@ -241,6 +241,43 @@ describe('clearThought', () => {
     await page.waitForFunction(() => !document.querySelector('[aria-label="bullet"][data-highlighted="true"]'))
   })
 
+  // https://github.com/cybersemics/em/pull/4520#issuecomment-5186050473
+  it.skip('keeps the multiselection when Escape is pressed after typing into the cleared thoughts', async () => {
+    await paste(`
+      - a
+      - b
+      - c
+    `)
+
+    await waitForEditable('a')
+    await waitForEditable('b')
+    await waitForEditable('c')
+
+    await multiselectThoughts(['a', 'b', 'c'])
+
+    await clearThought()
+    await waitForFirstEditable('')
+
+    await page.keyboard.type('hello')
+    await waitForFirstEditable('hello')
+
+    // The first Escape exits edit mode while keeping the typed value and the multiselection. Wait for either visible
+    // response to the keypress — the caret leaving the thought, or a change in the number of selected bullets — so that
+    // the multiselection can be asserted at a point where the wrong behavior would already have manifested.
+    await press('Escape')
+    await page.waitForFunction(() => {
+      const noCaret = !window.getSelection()?.rangeCount
+      const noHighlight = !document.querySelector('[aria-label="bullet"][data-highlighted="true"]')
+      return noCaret || noHighlight
+    })
+    expect(await editableValues()).toEqual(['hello', 'hello', 'hello'])
+    expect(await multiselectSize()).toBe(3)
+
+    // The second Escape clears the multiselection.
+    await press('Escape')
+    await page.waitForFunction(() => !document.querySelector('[aria-label="bullet"][data-highlighted="true"]'))
+  })
+
   // Regression test for https://github.com/cybersemics/em/issues/4519
   it('deletes all multiselected thoughts when Backspace is pressed on the cleared thoughts', async () => {
     await paste(`
