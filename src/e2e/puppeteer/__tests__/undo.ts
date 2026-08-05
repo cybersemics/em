@@ -8,6 +8,7 @@ import getEditingText from '../helpers/getEditingText'
 import keyboard from '../helpers/keyboard'
 import press from '../helpers/press'
 import setSelection from '../helpers/setSelection'
+import waitUntil from '../helpers/waitUntil'
 import { page } from '../session'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
@@ -87,6 +88,53 @@ it('Native undo places the caret at the end of the restored thought', async () =
   // native undo (dispatched as iOS does, not via Cmd+Z)
   await dispatchNativeHistory('historyUndo')
   expect(await getEditingText()).toBe('correct')
+  expect(await getCaretOffset()).toBe('correct'.length)
+})
+
+// https://github.com/cybersemics/em/pull/4692#pullrequestreview-4863986059
+it('Native undo restores the caret to the end of the thought after iOS resets the selection', async () => {
+  // create a thought "correct"
+  await press('Enter')
+  await keyboard.type('correct')
+
+  // create a thought "a"
+  await press('Enter')
+  await keyboard.type('a')
+
+  // tap into the middle of the thought, then replace the first letter as the iOS keyboard does when it autocorrects a word
+  await clickThought('correct')
+  await setSelection(0, 1)
+  await keyboard.type('C')
+  expect(await getEditingText()).toBe('Correct')
+
+  // native undo (dispatched as iOS does, not via Cmd+Z)
+  await dispatchNativeHistory('historyUndo')
+  expect(await getEditingText()).toBe('correct')
+  await waitUntil(() => document.querySelector('[data-editing=true] [data-editable]') !== null)
+
+  // iOS collapses the selection to the start of the editable after the prevented historyUndo, once the app has placed the caret
+  await page.evaluate(() => {
+    const editable = document.querySelector('[data-editing=true] [data-editable]')
+    if (!editable) throw new Error('No thought is being edited after the native undo')
+    const range = document.createRange()
+    range.setStart(editable, 0)
+    range.collapse(true)
+    const selection = window.getSelection()
+    selection?.removeAllRanges()
+    selection?.addRange(range)
+  })
+
+  // the caret is restored to the end of the restored text
+  await waitUntil(() => {
+    const editable = document.querySelector('[data-editing=true] [data-editable]')
+    const selection = window.getSelection()
+    if (!editable || !selection?.focusNode || !editable.contains(selection.focusNode)) return false
+    const range = document.createRange()
+    range.selectNodeContents(editable)
+    range.setEnd(selection.focusNode, selection.focusOffset)
+    // 'correct'.length
+    return range.toString().length === 7
+  })
   expect(await getCaretOffset()).toBe('correct'.length)
 })
 
