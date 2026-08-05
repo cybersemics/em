@@ -368,10 +368,10 @@ const createClientDataProvider = ({ client, replicaId }: TreecrdtClientIdentity)
 })
 
 /**
- * Creates a stable TreeCRDT data provider backed by one client-owned provider at a time.
+ * Creates the stable app-facing TreeCRDT data provider.
  *
- * Writes issued while app initialization is delayed wait for this provider to become ready. A failed init or a drop
- * before init rejects those writes; the next init starts a fresh wait so work cannot leak into another client.
+ * The runtime supplies its client during initialization. Writes that race initialization wait for it; a failed
+ * initialization or drop rejects those writes so a later initialization can start cleanly.
  */
 const createTreecrdtDataProvider = () => {
   let activeDb: TreecrdtClientDataProvider | null = null
