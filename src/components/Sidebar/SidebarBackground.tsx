@@ -16,10 +16,13 @@ const PROGRESSIVE_BLUR_LAYERS = isAndroid ? 1 : 4
 const PROGRESSIVE_BLUR_MIN = isAndroid ? 4 : 0
 
 /**
- * Left-to-right gradient over the viewport edge. Sits next to ProgressiveBlur (see
- * SidebarBackground for why their stacking order is browser-specific) and provides a smooth
- * color transition from the sidebar into the main content. Also acts as a click-to-dismiss
- * target.
+ * A colored gradient band as wide as the drawer, anchored to the left edge of the screen,
+ * behind the drawer: solid sidebar-tinted color at the left, fading to fully transparent at
+ * its own right edge — right where the drawer meets the rest of the app — so the sidebar's
+ * color bleeds into the content instead of cutting off with a hard line.
+ *
+ * Sits next to ProgressiveBlur (see SidebarBackground below for why their stacking order is
+ * browser-specific). Also acts as a click-to-dismiss target.
  */
 const SidebarGradient = ({
   opacity,
@@ -89,13 +92,16 @@ const SidebarGradient = ({
 }
 
 /**
- * Full-screen layer behind the drawer. Stacks a dimming overlay, ProgressiveBlur, and
- * SidebarGradient — all driven by the sidebar's x position with a cubic ease-in so the
- * background fades in gently as the drawer slides and catches up as it settles.
+ * The layer of visual effects behind the drawer, covering the full screen. Composes three
+ * pieces, back to front: a dimming overlay across the whole screen, then ProgressiveBlur and
+ * SidebarGradient — both confined to a band as wide as the drawer, anchored to its left edge —
+ * layered together to blur and color-tint the app content right behind where the drawer sits.
+ * All three fade in together, driven by the sidebar's x position, with a cubic ease-in so the
+ * background catches up gently as the drawer settles into place.
  *
- * Blur and gradient are rendered in different orders per engine: in Safari the gradient
- * goes above the blur (otherwise patchy artifacts), in Chromium the blur goes above the
- * gradient (otherwise visible banding).
+ * Blur and gradient swap stacking order per engine: in Safari the gradient renders above the
+ * blur (otherwise patchy artifacts); in Chromium the blur goes above the gradient (otherwise
+ * visible banding).
  */
 const SidebarBackground = ({
   x,
