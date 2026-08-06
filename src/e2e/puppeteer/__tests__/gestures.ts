@@ -68,7 +68,9 @@ describe('alerts', () => {
 
 describe('gestures', () => {
   beforeEach(async () => {
-    await emulate(KnownDevices['iPhone 15 Pro'])
+    await page.emulate(KnownDevices['iPhone 15 Pro'])
+    // Emulation may reload the mounted app. Let the test-mode connection timer finish before these tests override it.
+    await page.waitForFunction(() => window.em.offlineStatusStore.getState() === 'offline')
   })
 
   // https://github.com/cybersemics/em/issues/3887
