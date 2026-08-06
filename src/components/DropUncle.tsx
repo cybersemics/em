@@ -7,6 +7,7 @@ import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import testFlags from '../e2e/testFlags'
 import useDragAndDropThought from '../hooks/useDragAndDropThought'
+import usePinDropHover from '../hooks/usePinDropHover'
 import dropHoverColor from '../selectors/dropHoverColor'
 import getThoughtById from '../selectors/getThoughtById'
 import calculateCliffDropTargetHeight from '../util/calculateCliffDropTargetHeight'
@@ -36,6 +37,9 @@ const DropUncle = ({
     simplePath,
     hoverZone: DropThoughtZone.SubthoughtsDrop,
   })
+
+  // testFlags.pinDropHovers keeps the drop hover visible after it has been shown during the current drag
+  const showDropHoverPinned = usePinDropHover(isHovering)
 
   // Calculate the height for the uncle thought over cliff
   const dropTargetHeight = calculateCliffDropTargetHeight({ cliff, depth })
@@ -70,7 +74,7 @@ const DropUncle = ({
           {isHovering ? '*' : ''}
         </span>
       )}
-      {(testFlags.simulateDrag || isHovering) && (
+      {(testFlags.simulateDrag || showDropHoverPinned) && (
         <span className={dropHoverRecipe({ insideDropEnd: true })} style={{ backgroundColor: dropHoverColorValue }} />
       )}
     </span>
