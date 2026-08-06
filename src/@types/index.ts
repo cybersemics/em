@@ -11,14 +11,11 @@ export type BootstrapConfig = Readonly<{
 /** Bootstrap properties that may be injected onto window.em before the application bundle evaluates. */
 export type BootstrapConfigOverrides = Partial<BootstrapConfig>
 
-/** Bootstrap configuration and test flags that may be injected before the application initializes. */
-export type PreloadedWindowEm = BootstrapConfigOverrides & {
-  testFlags?: Partial<WindowEm['testFlags']>
-}
-
 /** Explicit pre-initialization view of window for bootstrap writers. */
 export type PreloadedEmWindow = {
-  em?: PreloadedWindowEm
+  em?: BootstrapConfigOverrides & {
+    testFlags?: Partial<WindowEm['testFlags']>
+  }
 }
 
 declare global {
