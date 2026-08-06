@@ -9,7 +9,7 @@ beforeEach(initStore)
 
 describe('canExecute', () => {
   // https://github.com/cybersemics/em/issues/4866
-  it.skip('cannot swap parent of a top-level thought when the Command Center selects the cursor', () => {
+  it('cannot swap parent of a top-level thought when the Command Center selects the cursor', () => {
     store.dispatch([
       importText({
         text: `

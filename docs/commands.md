@@ -129,7 +129,7 @@ When `state.multicursors` is non-empty, the user has multiple thoughts selected.
 
 | Option | Meaning |
 |---|---|
-| `disallow` | Block execution and show an alert. Use sparingly — usually `multicursor: false` or `filter` is better. |
+| `disallow` | Block execution and show an alert when more than one thought is selected. Use sparingly — usually `multicursor: false` or `filter` is better. |
 | `error` | The alert message shown when `disallow` is true. String or `(state) => string`. |
 | `execMulticursor(cursors, dispatch, getState)` | Custom replacement for the per-cursor loop. |
 | `onComplete(filteredCursors, dispatch, getState)` | Callback after the loop finishes. |
@@ -274,7 +274,7 @@ https://github.com/user-attachments/assets/5466ad2a-6b7c-4869-a23c-03d9d752dc9b
 
 ### Open Command Center
 
-Opens a special keyboard which contains commands that can be executed on the cursor thought.
+Opens a special keyboard which contains commands that can be executed on the cursor thought. Opening it selects the cursor thought as a multicursor, so every command tapped there runs through `executeCommandWithMulticursor` on a selection of exactly one thought. A `disallow` command is therefore still executable from the Command Center; it only alerts once a second thought is selected.
 
 ### Close Command Center
 

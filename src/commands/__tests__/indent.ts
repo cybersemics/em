@@ -149,7 +149,7 @@ describe('multicursor', () => {
 
 describe('canExecute', () => {
   // https://github.com/cybersemics/em/issues/4866
-  it.skip('cannot indent the first thought in its context', () => {
+  it('cannot indent the first thought in its context', () => {
     store.dispatch([
       importText({
         text: `

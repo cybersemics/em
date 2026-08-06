@@ -135,7 +135,7 @@ describe('multicursor', () => {
 
 describe('canExecute', () => {
   // https://github.com/cybersemics/em/issues/4866
-  it.skip('cannot outdent a top-level thought', () => {
+  it('cannot outdent a top-level thought', () => {
     store.dispatch([
       importText({
         text: `
