@@ -132,3 +132,20 @@ describe('multicursor', () => {
     expect(exported).toEqual(expectedOutput)
   })
 })
+
+describe('canExecute', () => {
+  // https://github.com/cybersemics/em/issues/4866
+  it.skip('cannot outdent a top-level thought', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+        `,
+      }),
+      setCursor(['a']),
+      addMulticursor(['a']),
+    ])
+
+    expect(outdentCommand.canExecute!(store.getState())).toBe(false)
+  })
+})
