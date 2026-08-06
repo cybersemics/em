@@ -9,6 +9,7 @@ import getEditingText from '../helpers/getEditingText'
 import getSelection from '../helpers/getSelection'
 import getSuperscriptColor from '../helpers/getSuperScriptColor'
 import keyboard from '../helpers/keyboard'
+import multiselectThoughts from '../helpers/multiselectThoughts'
 import newThought from '../helpers/newThought'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
@@ -526,4 +527,52 @@ it('caret stays in place when repeatedly applying font color over background col
   // the caret should still stay where the user left off, not jump to the end of the note
   const offset = await getSelection().focusOffset
   expect(offset).toBe(10)
+})
+
+it('Set text color with multicursor selection', async () => {
+  const importText = `
+  - Labrador
+  - Golden Retriever`
+
+  await paste(importText)
+
+  // Ctrl+click both thoughts to add them both to the multicursor set.
+  await multiselectThoughts(['Labrador', 'Golden Retriever'])
+
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="text color swatches"] [aria-label="blue"]')
+
+  // Verify the cursor thought (Golden Retriever) has the correct color.
+  const goldenText = await getEditingText()
+  expect(extractColor(goldenText!)?.color).toBe(rgbaToHex(colors.light.blue))
+
+  // Navigate to Labrador and verify its color was also applied.
+  await press('ArrowUp')
+  const labradorText = await getEditingText()
+  expect(extractColor(labradorText!)?.color).toBe(rgbaToHex(colors.light.blue))
+})
+
+it('Set background color with multicursor selection', async () => {
+  const importText = `
+  - Labrador
+  - Golden Retriever`
+
+  await paste(importText)
+
+  // Ctrl+click both thoughts to add them both to the multicursor set.
+  await multiselectThoughts(['Labrador', 'Golden Retriever'])
+
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="background color swatches"] [aria-label="green"]')
+
+  // Verify the cursor thought (Golden Retriever) has the correct background color.
+  const goldenText = await getEditingText()
+  const goldenBgColor = extractColor(goldenText!)?.backgroundColor
+  expect(goldenBgColor && rgbToHex(goldenBgColor)).toBe(rgbaToHex(colors.light.green))
+
+  // Navigate to Labrador and verify its background color was also applied.
+  await press('ArrowUp')
+  const labradorText = await getEditingText()
+  const labradorBgColor = extractColor(labradorText!)?.backgroundColor
+  expect(labradorBgColor && rgbToHex(labradorBgColor)).toBe(rgbaToHex(colors.light.green))
 })

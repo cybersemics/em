@@ -1,7 +1,9 @@
+import { createRequire } from 'node:module'
 import Terminal from 'vite-plugin-terminal'
 import { defineConfig } from 'vitest/config'
 
 const puppeteerMaxWorkers = Number(process.env.PUPPETEER_MAX_WORKERS || 2)
+const require = createRequire(import.meta.url)
 
 export default defineConfig({
   test: {
@@ -22,7 +24,10 @@ export default defineConfig({
           // vitest-localstorage-mock provides an in-test localStorage/sessionStorage mock. Note it does NOT
           // by itself prevent the intermittent `ReferenceError: localStorage is not defined` (#3345), which is
           // a teardown race handled by the persistent global-prototype fallback installed in src/setupTests.js.
-          setupFiles: ['vitest-localstorage-mock', 'src/setupTests.js'],
+          // Pre-resolve the bare specifier: vitest resolves setupFiles against the project root's *parent*
+          // directory chain, so inside an agent worktree (.claude/worktrees/*) it finds the outer checkout's
+          // copy first, which then fails vite's outside-root import check and breaks every unit test.
+          setupFiles: [require.resolve('vitest-localstorage-mock'), 'src/setupTests.js'],
         },
       },
       {

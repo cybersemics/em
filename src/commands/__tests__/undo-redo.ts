@@ -3,6 +3,8 @@ import { clearActionCreator as clear } from '../../actions/clear'
 import { cursorBackActionCreator as cursorBack } from '../../actions/cursorBack'
 import { cursorDownActionCreator as cursorDown } from '../../actions/cursorDown'
 import { editThoughtActionCreator as editThoughtRaw } from '../../actions/editThought'
+import { formatLetterCaseActionCreator as formatLetterCase } from '../../actions/formatLetterCase'
+import { formatSelectionActionCreator as formatSelection } from '../../actions/formatSelection'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { indentActionCreator as indent } from '../../actions/indent'
 import { moveThoughtDownActionCreator as moveThoughtDown } from '../../actions/moveThoughtDown'
@@ -21,6 +23,7 @@ import isUndoEnabled from '../../selectors/isUndoEnabled'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
+import getAllChildrenAsThoughtsByContext from '../../test-helpers/getAllChildrenAsThoughtsByContext'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
@@ -340,6 +343,70 @@ describe('undo', () => {
   - d
   - e`
     expect(exported).toEqual(expectedOutput)
+  })
+
+  // https://github.com/cybersemics/em/issues/4842
+  it('undo should restore all thoughts after a multicursor letter case change', () => {
+    store.dispatch([
+      importText({
+        text: `
+        - AAA
+        - BBB
+        - CCC
+        - DDD`,
+      }),
+      setCursor(['AAA']),
+      addMulticursor(['AAA']),
+      addMulticursor(['BBB']),
+      addMulticursor(['CCC']),
+      addMulticursor(['DDD']),
+      formatLetterCase('LowerCase'),
+    ])
+
+    let exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toEqual(`- ${HOME_TOKEN}
+  - aaa
+  - bbb
+  - ccc
+  - ddd`)
+
+    store.dispatch(undo())
+
+    exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toEqual(`- ${HOME_TOKEN}
+  - AAA
+  - BBB
+  - CCC
+  - DDD`)
+  })
+
+  // https://github.com/cybersemics/em/issues/4841
+  it('undo should restore all thoughts after a multicursor text color change', () => {
+    store.dispatch([
+      importText({
+        text: `
+        - AAA
+        - BBB
+        - CCC`,
+      }),
+      setCursor(['AAA']),
+      addMulticursor(['AAA']),
+      addMulticursor(['BBB']),
+      addMulticursor(['CCC']),
+      formatSelection('foreColor', 'green'),
+    ])
+
+    let values = getAllChildrenAsThoughtsByContext(store.getState(), [HOME_TOKEN]).map(child => child.value)
+    expect(values).toEqual([
+      '<font color="#00d688">AAA</font>',
+      '<font color="#00d688">BBB</font>',
+      '<font color="#00d688">CCC</font>',
+    ])
+
+    store.dispatch(undo())
+
+    values = getAllChildrenAsThoughtsByContext(store.getState(), [HOME_TOKEN]).map(child => child.value)
+    expect(values).toEqual(['AAA', 'BBB', 'CCC'])
   })
 
   it('undo should stay enabled and not throw after a multicursor command that nets to no change', () => {
