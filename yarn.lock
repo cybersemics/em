@@ -7787,15 +7787,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:^25.5.0":
-  version: 25.9.5
-  resolution: "@types/node@npm:25.9.5"
-  dependencies:
-    undici-types: "npm:>=7.24.0 <7.24.7"
-  checksum: 10c0/addbfe55f14d6a7f149a8796c2fca68463ac6caf911c623f552d07385691d36c0669a9c38724350d0e958131827d59a63c18781e753dede8113a903dd62b7932
-  languageName: node
-  linkType: hard
-
 "@types/normalize-package-data@npm:^2.4.0, @types/normalize-package-data@npm:^2.4.1":
   version: 2.4.4
   resolution: "@types/normalize-package-data@npm:2.4.4"
@@ -12660,7 +12651,6 @@ __metadata:
     openai: "npm:^7.1.0"
     page-lifecycle: "⚠️ OVERRIDDEN BY 'resolutions' - Source: https://github.com/magic-akari/page-lifecycle#feat/add-types | Tarball: https://codeload.github.com/magic-akari/page-lifecycle/tar.gz/50b50421bdeab3d211a57e81a277f699638373b0 | Configured in: package.json#resolutions"
     pluralize: "npm:^8.0.0"
-    png-to-ico: "npm:^3.0.2"
     postinstall-postinstall: "npm:^2.1.0"
     prettier: "npm:^3.9.6"
     puppeteer: "npm:^25.4.0"
@@ -21196,19 +21186,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"png-to-ico@npm:^3.0.2":
-  version: 3.0.2
-  resolution: "png-to-ico@npm:3.0.2"
-  dependencies:
-    "@types/node": "npm:^25.5.0"
-    minimist: "npm:^1.2.8"
-    pngjs: "npm:^7.0.0"
-  bin:
-    png-to-ico: bin/cli.js
-  checksum: 10c0/01bcc26bcbab18a290819c91336b217a29dba47f127d60230b70db8538d9818907784a3030482c52a312122f4484ba74b22310f91adb0c316e04d8ef9c132db5
-  languageName: node
-  linkType: hard
-
 "pngjs@npm:^3.4.0":
   version: 3.4.0
   resolution: "pngjs@npm:3.4.0"
@@ -21220,13 +21197,6 @@ __metadata:
   version: 6.0.0
   resolution: "pngjs@npm:6.0.0"
   checksum: 10c0/ac23ea329b1881d1a10575aff58116dc27b894ec3f5b84ba15c7f527d21e609fbce7ba16d48f8ccb86c7ce45ceed622472765476ab2875949d4bec55e153f87a
-  languageName: node
-  linkType: hard
-
-"pngjs@npm:^7.0.0":
-  version: 7.0.0
-  resolution: "pngjs@npm:7.0.0"
-  checksum: 10c0/0d4c7a0fd476a9c33df7d0a2a73e1d56537628a668841f6995c2bca070cf30819f9254a64363266bc14ef2fee47659dd3b4f2b18eec7ab65143015139f497b38
   languageName: node
   linkType: hard
 
@@ -25645,13 +25615,6 @@ __metadata:
     has-symbols: "npm:^1.1.0"
     which-boxed-primitive: "npm:^1.1.1"
   checksum: 10c0/7dbd35ab02b0e05fe07136c72cb9355091242455473ec15057c11430129bab38b7b3624019b8778d02a881c13de44d63cd02d122ee782fb519e1de7775b5b982
-  languageName: node
-  linkType: hard
-
-"undici-types@npm:>=7.24.0 <7.24.7":
-  version: 7.24.6
-  resolution: "undici-types@npm:7.24.6"
-  checksum: 10c0/d9cd8befb643ac904615c280a095ba4240531f6bb4a5e75a22a7483630ca8d3f1016d2ab6ace6ceda1f63b3a2db2fe037fafe121d6917a0187573aa548ff78ca
   languageName: node
   linkType: hard
 
