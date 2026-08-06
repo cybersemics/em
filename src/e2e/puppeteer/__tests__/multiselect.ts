@@ -132,7 +132,7 @@ describe('multiselect', () => {
   })
 
   // https://github.com/cybersemics/em/pull/4750
-  it.skip('points the bullet of a selected thought to the right, and expands it when the multiselect is cancelled', async () => {
+  it('points the bullet of a selected thought to the right, and expands it when the multiselect is cancelled', async () => {
     await paste(`
         - a
         - b
