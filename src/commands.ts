@@ -19,12 +19,10 @@ import { alertActionCreator as alert } from './actions/alert'
 import { clearMulticursorsActionCreator as clearMulticursors } from './actions/clearMulticursors'
 import { gestureMenuActionCreator as gestureMenu } from './actions/gestureMenu'
 import { indentActionCreator as indent } from './actions/indent'
-import { redoActionCreator as redo } from './actions/redo'
 import { setCursorActionCreator as setCursor } from './actions/setCursor'
 import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from './actions/setIsMulticursorExecuting'
 import { showLatestCommandsActionCreator as showLatestCommands } from './actions/showLatestCommands'
 import { suppressExpansionActionCreator as suppressExpansion } from './actions/suppressExpansion'
-import { undoActionCreator as undo } from './actions/undo'
 import { isMac } from './browser'
 import * as commandsObject from './commands/index'
 import openMobileCommandUniverseCommand from './commands/openMobileCommandUniverse'
@@ -36,7 +34,6 @@ import getThoughtById from './selectors/getThoughtById'
 import getUserSetting from './selectors/getUserSetting'
 import hasMulticursor from './selectors/hasMulticursor'
 import isAllSelected from './selectors/isAllSelected'
-import isUndoEnabled from './selectors/isUndoEnabled'
 import splitChain from './selectors/splitChain'
 import thoughtToPath from './selectors/thoughtToPath'
 import store from './stores/app'
@@ -713,22 +710,36 @@ export const handleGestureCancel = () => {
  * Android soft keyboards report the space keydown as keyCode 229 ('Unidentified'), so the space-to-indent
  * command is never matched in keyDown and keyCommandId is never set. The second branch catches that case:
  * a `beforeinput` insertText of a single space over an empty thought indents it instead of inserting the
- * space, mirroring the keyDown-matched path on desktop/iOS (#4178). */
+ * space, mirroring the keyDown-matched path on desktop/iOS (#4178).
+ *
+ * The third branch routes the iOS native undo/redo gestures (three-finger swipe and shake-to-undo) to em's
+ * undo/redo commands. They emit no key event, so keyDown never matches them and the browser applies its own
+ * text-level undo to whichever editable has the caret — silently rewriting that thought, recording it as a
+ * new edit, and leaving the actual last edit unreachable (#4476). */
 export const beforeInput = (e: InputEvent) => {
-  // Native undo/redo (iOS shake-to-undo or three-finger swipe) fires a cancelable beforeinput with inputType
-  // historyUndo/historyRedo. Left unhandled, it mutates the contenteditable DOM directly, bypassing em's undo and
-  // leaving stale formatting markup (e.g. a black font color from a removed background highlight) that renders the
-  // thought invisible (#3954). Block the native undo before it touches the DOM and route it through em's undo/redo,
-  // which reverts to the correct Redux state and re-renders the editable. Each formatSelection registers exactly one
-  // native undo step (#4637), so one native gesture maps to one em undo/redo — no dedupe is needed. The cancelable check
-  // gates on the case we can actually prevent; native browser undo is intentionally superseded by em's undo (#3879).
+  // The native undo/redo gestures do not fire keydown/keyup, so keyCommandId may still hold a stale command
+  // from an earlier keystroke. Match them before the keyCommandId branches so it cannot swallow them.
+  // The cancelable check gates on the case we can actually prevent.
   if ((e.inputType === 'historyUndo' || e.inputType === 'historyRedo') && e.cancelable) {
-    e.preventDefault()
     const state = store.getState()
-    if (e.inputType === 'historyUndo') {
-      if (isUndoEnabled(state)) store.dispatch(undo())
-    } else if (state.redoPatches.length > 0) {
-      store.dispatch(redo())
+    const command = commandById(e.inputType === 'historyUndo' ? 'undo' : 'redo')
+
+    // Mirror the modal and command universe guards in keyDown so native undo still works in text inputs
+    // that are outside the thoughtspace.
+    if (state.showDesktopCommandUniverse || state.showMobileCommandUniverse || state.showModal) return
+
+    // Block the native undo before it touches the DOM even when em has nothing to undo/redo: left unhandled,
+    // it mutates the contenteditable directly, bypassing em's undo and leaving stale formatting markup (e.g. a
+    // black font color from a removed background highlight) that renders the thought invisible (#3954). Native
+    // browser undo is intentionally superseded by em's undo (#3879). Each formatSelection registers exactly one
+    // native undo step (#4637), so one native gesture maps to one em undo/redo — no dedupe is needed.
+    e.preventDefault()
+
+    // Flush any edit that is still throttled in Editable, otherwise it would be committed after the undo.
+    commandEmitter.trigger('command', command)
+
+    if (!command.canExecute || command.canExecute(store.getState())) {
+      executeCommandWithMulticursor(command, { event: e, type: 'keyboard', store })
     }
     return
   }
