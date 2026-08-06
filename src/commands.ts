@@ -708,26 +708,6 @@ export const handleGestureCancel = () => {
   })
 }
 
-/** Restores the caret after a native undo/redo. IOS WebKit collapses the caret to the start of the editable after a
- * historyUndo/historyRedo beforeinput, even when the event is prevented, and it does so after the app has already placed the caret
- * at the end of the restored text, so the app's placement is overwritten. Watch for that collapse for a short window after the
- * native gesture and restore the caret. Only a collapse to the start is corrected, so ordinary caret movement is unaffected, and
- * re-setting the caret cannot retrigger the correction since the offset is then no longer 0 (#4692). */
-const restoreCaretAfterNativeHistory = (editable: EventTarget | null) => {
-  const { cursorOffset } = store.getState()
-  if (!cursorOffset || !(editable instanceof HTMLElement)) return
-
-  /** Restores the caret to the end of the restored text if iOS has collapsed it to the start of the editable. */
-  const onSelectionChange = () => {
-    if (selection.offsetThought() !== 0 || !editable.isConnected) return
-    selection.set(editable, { offset: cursorOffset })
-  }
-
-  document.addEventListener('selectionchange', onSelectionChange)
-  // Long enough to cover WebKit's asynchronous selection restore, short enough that it cannot interfere with the next user action.
-  setTimeout(() => document.removeEventListener('selectionchange', onSelectionChange), 100)
-}
-
 /** In the specific case of the newThought and indent commands, prevent default in beforeinput event instead of keydown to preserve default iOS auto-capitalization behavior. The Enter and space characters needs to be prevented so that it doesn't get inserted into the thought (#3707).
  *
  * Android soft keyboards report the space keydown as keyCode 229 ('Unidentified'), so the space-to-indent
@@ -757,7 +737,6 @@ export const beforeInput = (e: InputEvent) => {
     } else if (state.redoPatches.length > 0) {
       store.dispatch(redo({ cursorAtEnd: true }))
     }
-    restoreCaretAfterNativeHistory(e.target)
     return
   }
 

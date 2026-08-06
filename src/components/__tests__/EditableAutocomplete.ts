@@ -4,6 +4,7 @@ import { act, createElement } from 'react'
 import { Provider } from 'react-redux'
 import SimplePath from '../../@types/SimplePath'
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { keyboardOpenActionCreator as keyboardOpen } from '../../actions/keyboardOpen'
 import { HOME_TOKEN } from '../../constants'
 import * as selection from '../../device/selection'
 import contextToPath from '../../selectors/contextToPath'
@@ -66,4 +67,44 @@ it('keeps the space that commits an iOS autocorrect in the editable (#4828)', as
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
   expect(exported).toEqual(`- ${HOME_TOKEN}
   - All`)
+})
+
+// https://github.com/cybersemics/em/pull/4692
+it('keeps edit mode active through the iOS autocorrect focus retarget (#4692)', async () => {
+  await dispatch([importText({ text: '- Adf' }), setCursor(['Adf']), keyboardOpen({ value: true })])
+
+  const simplePath = contextToPath(store.getState(), ['Adf']) as SimplePath
+  const { container } = render(
+    createElement(Provider, {
+      store,
+      children: createElement(Editable, {
+        isEditing: true,
+        isVisible: true,
+        path: simplePath,
+        rank: 0,
+        simplePath,
+      }),
+    }),
+  )
+  const editable = container.querySelector('[data-editable]') as HTMLElement
+  editable.focus()
+
+  // Pressing space on a misspelled word makes iOS replace the word...
+  editable.innerHTML = 'All'
+  selection.set(editable, { offset: 'All'.length })
+  fireEvent.input(editable, { inputType: 'insertReplacementText' })
+
+  // ...and then insert the space that committed the correction.
+  editable.innerHTML = 'All '
+  selection.set(editable, { offset: 'All '.length })
+  fireEvent.input(editable, { inputType: 'insertText', data: ' ' })
+
+  // the focus retarget blurs and refocuses the editable on the next animation frame
+  await act(vi.runAllTimersAsync)
+
+  // The retarget's blur is momentary and focus returns to the same editable, so the user is still editing and the
+  // virtual keyboard is still up. If edit mode is left off, state.isKeyboardOpen disagrees with the visible keyboard
+  // and useEditMode stops placing the caret, so the next re-render of the editable (e.g. from an undo) leaves the
+  // caret at the beginning of the thought.
+  expect(store.getState().isKeyboardOpen).toBe(true)
 })
