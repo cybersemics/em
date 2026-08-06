@@ -2,6 +2,7 @@ import { type ConsoleMessage, KnownDevices } from 'puppeteer'
 import newSubthoughtCommand from '../../../commands/newSubthought'
 import newThoughtCommand from '../../../commands/newThought'
 import $ from '../helpers/$'
+import deviceEmulation from '../helpers/deviceEmulation'
 import exportThoughts from '../helpers/exportThoughts'
 import gesture, { startGesture } from '../helpers/gesture'
 import keyboard from '../helpers/keyboard'
@@ -12,6 +13,8 @@ import waitForSelector from '../helpers/waitForSelector'
 import { page } from '../session'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
+
+deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
 
 /**
  * Test suite for gesture alert behavior.
@@ -24,10 +27,6 @@ vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
  * with ongoing gesture interactions.
  */
 describe('alerts', () => {
-  beforeEach(async () => {
-    await page.emulate(KnownDevices['iPhone 15 Pro'])
-  })
-
   /**
    * Test that verifies no alert appears during gesture progress.
    *
@@ -66,10 +65,6 @@ describe('alerts', () => {
 })
 
 describe('gestures', () => {
-  beforeEach(async () => {
-    await page.emulate(KnownDevices['iPhone 15 Pro'])
-  })
-
   // https://github.com/cybersemics/em/issues/3887
   it('releases a gesture whose touch target unmounts mid-gesture', async () => {
     // The loading indicator is the element that unmounts under the user's finger in the reported
@@ -176,10 +171,6 @@ describe('gestures', () => {
 })
 
 describe('chaining commands', () => {
-  beforeEach(async () => {
-    await page.emulate(KnownDevices['iPhone 15 Pro'])
-  })
-
   it('chained command', async () => {
     const warnings: string[] = []
     /** Collect browser warnings emitted during the chained gesture. */
