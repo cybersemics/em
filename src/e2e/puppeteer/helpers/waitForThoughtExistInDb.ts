@@ -1,11 +1,12 @@
 import { page } from '../session'
 
-/** Wait for the given thought value to exist in the database. */
+/** Waits for thoughtspace initialization and the given thought value to exist in the database. */
 const waitForThoughtExistInDb = async (value: string) => {
   await page.evaluate(async value => {
-    await new Promise(resolve => {
-      const testHelpers = window.em.testHelpers
+    const testHelpers = window.em.testHelpers
+    await testHelpers.waitForInitialized()
 
+    await new Promise(resolve => {
       /** Polls for Lexeme in IndexedDB. */
       function pollForLexeme(value: string) {
         setTimeout(async () => {
