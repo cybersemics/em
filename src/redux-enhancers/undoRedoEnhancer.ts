@@ -64,8 +64,20 @@ function getEditThoughtDirection(action: UnknownAction): EditThoughtDirection {
  * The editableNonce is a transient re-render trigger (incremented by editableRender and by force edits), not real state.
  * It must be excluded from patches, otherwise undoing a force edit reverts the nonce and editableRender re-increments
  * it to the same value, resulting in no net change. The ContentEditable then fails to update its innerHTML while
- * editing (allowInnerHTMLChange is false), so undoing a formatting/letter-case edit appears to do nothing. */
-const statePropertiesToOmit: (keyof State)[] = ['alert', 'cursorCleared', 'editableNonce', 'pushQueue']
+ * editing (allowInnerHTMLChange is false), so undoing a formatting/letter-case edit appears to do nothing.
+ * The isKeyboardOpen flag is likewise device state, not document state: it reflects whether the virtual keyboard is
+ * currently up. Actions that open it as a side effect (newThought, setCursor) would otherwise record the transition in
+ * their patch, so undoing them silently closes edit mode. That desyncs the flag from the real keyboard mid-reducer and
+ * drives the dismissal machinery (clearSelection -> selection.clear -> Keyboard.hide), which then fights the next
+ * thought's attempt to raise the keyboard (#4692). Undo/redo must never move the keyboard; only the blur and
+ * dismissKeyboard paths may. */
+const statePropertiesToOmit: (keyof State)[] = [
+  'alert',
+  'cursorCleared',
+  'editableNonce',
+  'isKeyboardOpen',
+  'pushQueue',
+]
 
 /**
  * Manually recreate the pushQueue for thought and thought index updates from patches.
