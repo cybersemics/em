@@ -24,11 +24,14 @@ const GestureContentBlur: FC = () => {
   // MotionValue per-layer rather than via a wrapping element.
   const blurOpacity = useMotionValue(0)
   useEffect(() => {
-    // Match the menu content's FadeTransition type='fast' (durations.fast, ease-out) so the blur
-    // and menu fade in/out together. durations.get returns ms (0 in e2e tests); motion wants seconds.
+    // Match the menu content's FadeTransition type='fast' (durations.fast) so the blur and menu fade
+    // in/out together. durations.get returns ms (0 in e2e tests); motion wants seconds.
+    // On the way out the blur holds near full and clears late (easeInSlow, the easings.easeInSlow
+    // token spelled as a literal since motion cannot read Panda tokens), so the content stays soft
+    // behind the menu for the length of the fade instead of sharpening under it.
     const controls = animate(blurOpacity, animationState === 'visible' ? 1 : 0, {
       duration: durations.get('fast') / 1000,
-      ease: 'easeOut',
+      ease: animationState === 'exiting' ? [0.84, 0, 1, 1] : 'easeOut',
     })
     return controls.stop
   }, [animationState, blurOpacity])
