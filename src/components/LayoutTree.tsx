@@ -7,6 +7,7 @@ import Index from '../@types/IndexType'
 import ThoughtId from '../@types/ThoughtId'
 import { isTouch } from '../browser'
 import { CONTENT_BOX_PADDING_LEFT, LongPressState } from '../constants'
+import scrollWindowTo from '../device/scrollWindowTo'
 import testFlags from '../e2e/testFlags'
 import usePositionedThoughts from '../hooks/usePositionedThoughts'
 import useSizeTracking from '../hooks/useSizeTracking'
@@ -102,7 +103,7 @@ const useAutocrop = (spaceAbove: number): number => {
   useEffect(
     () => {
       const spaceAboveDelta = spaceAboveExtended - spaceAboveLast.current
-      window.scrollTo({ top: scrollY - spaceAboveDelta })
+      scrollWindowTo(scrollY - spaceAboveDelta)
       spaceAboveLast.current = spaceAboveExtended
     },
     // do not trigger effect on scrollY change
