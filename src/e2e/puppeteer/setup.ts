@@ -158,7 +158,6 @@ const setup = async ({
   })
 
   await page.goto(url)
-  await page.evaluate(() => window.em.testHelpers.waitForInitialized())
 
   if (skipTutorial) {
     // wait for welcome modal to appear
@@ -169,16 +168,6 @@ const setup = async ({
 
     // wait for welcome modal to disappear
     await page.waitForFunction(() => !document.getElementById('skip-tutorial'))
-
-    // The skip action clears storage, closes the modal, and rerenders the empty thoughtspace.
-    // Wait until the first real e2e key command can be handled by the app shell.
-    await page.waitForSelector('#content')
-    await page.waitForSelector('[aria-label=menu]')
-    await page.waitForFunction(() => !document.querySelector('[aria-label=modal]'))
-    await page.waitForFunction(() => document.querySelector('[aria-label=empty-thoughtspace], [data-editable]'))
-    await page.evaluate(async () => {
-      await window.em?.testHelpers?.waitForThoughtspaceRuntimeIdle?.()
-    })
   }
 }
 
