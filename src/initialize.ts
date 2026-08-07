@@ -73,10 +73,11 @@ const initializeInternal = async () => {
           lexemeIndex: state.thoughts.lexemeIndex,
         }
       },
-      apply: updates => {
+      apply: ({ thoughtIndex, lexemeIndex }) => {
         store.dispatch(
           updateThoughtsActionCreator({
-            ...updates,
+            thoughtIndexUpdates: thoughtIndex,
+            lexemeIndexUpdates: lexemeIndex,
             local: false,
             remote: false,
             repairCursor: true,

@@ -68,7 +68,7 @@ export async function applyMaterializedThoughtsToStore(
   }
 
   if (Object.keys(thoughtIndexUpdates).length > 0 || Object.keys(lexemeIndexUpdates).length > 0) {
-    await bridge.apply({ thoughtIndexUpdates, lexemeIndexUpdates })
+    await bridge.apply({ thoughtIndex: thoughtIndexUpdates, lexemeIndex: lexemeIndexUpdates })
   }
 }
 
