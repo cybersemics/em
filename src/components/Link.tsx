@@ -1,4 +1,3 @@
-import { unescape as decodeCharacterEntities } from 'lodash'
 import React from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
@@ -28,7 +27,7 @@ interface LinkProps {
 /** Renders a link to a thought. */
 const Link = React.memo(({ simplePath, label, charLimit = 32, style, cssRaw, className }: LinkProps) => {
   const isEM = simplePath.length === 1 && head(simplePath) === EM_TOKEN
-  const value = useSelector(state => strip(label || getThoughtById(state, head(simplePath))?.value || ''))
+  const value = useSelector(state => label ?? strip(getThoughtById(state, head(simplePath))?.value || ''))
   const dispatch = useDispatch()
 
   return (
@@ -68,7 +67,7 @@ const Link = React.memo(({ simplePath, label, charLimit = 32, style, cssRaw, cla
       }}
       dangerouslySetInnerHTML={isEM ? { __html: '<b>em</b>' } : undefined}
     >
-      {!isEM ? ellipsize(decodeCharacterEntities(value), charLimit) : null}
+      {!isEM ? ellipsize(value, charLimit) : null}
     </a>
   )
 })
