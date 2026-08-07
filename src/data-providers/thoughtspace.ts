@@ -1,6 +1,7 @@
 import type Index from '../@types/IndexType'
 import type Lexeme from '../@types/Lexeme'
 import type Thought from '../@types/Thought'
+import type ThoughtUpdates from '../@types/ThoughtUpdates'
 import bootstrapConfig from '../bootstrapConfig'
 import type { DataProvider } from './DataProvider'
 import createTreecrdtThoughtspace from './treecrdt/runtime'
@@ -18,14 +19,9 @@ export type ThoughtspaceMaterializationSnapshot = {
   lexemeIndex: Index<Lexeme>
 }
 
-export type ThoughtspaceMaterializedUpdates = {
-  thoughtIndexUpdates: Index<Thought | null>
-  lexemeIndexUpdates: Index<Lexeme | null>
-}
-
 export type ThoughtspaceMaterializationBridge = {
   getSnapshot: () => ThoughtspaceMaterializationSnapshot
-  apply: (updates: ThoughtspaceMaterializedUpdates) => void | Promise<void>
+  apply: (updates: ThoughtUpdates) => void | Promise<void>
 }
 
 export type ThoughtspaceRuntimeInitOptions = {
