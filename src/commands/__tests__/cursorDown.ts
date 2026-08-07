@@ -1,6 +1,7 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { executeCommand } from '../../commands'
 import store from '../../stores/app'
+import { addMulticursorAtFirstMatchActionCreator as addMulticursorAtFirstMatch } from '../../test-helpers/addMulticursorAtFirstMatch'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import headValue from '../../util/headValue'
@@ -16,6 +17,9 @@ beforeEach(initStore)
 
 /** Synthetic Shift+Down keyboard event. */
 const shiftDownEvent = { shiftKey: true, preventDefault: () => {} } as unknown as KeyboardEvent
+
+/** Synthetic Down keyboard event (no shift). */
+const downEvent = { shiftKey: false, preventDefault: () => {} } as unknown as KeyboardEvent
 
 /** Returns the sorted values of the current multicursor set. */
 const multicursorValues = (): (string | undefined)[] => {
@@ -119,5 +123,33 @@ describe('cursorDown Shift+Down multiselect in table view second column', () => 
     executeCommand(cursorDownCommand, { store, event: shiftDownEvent })
 
     expect(multicursorValues()).toEqual(['a', 'b'])
+  })
+})
+
+describe('cursorDown Down (no shift) with an active multiselect', () => {
+  // https://github.com/cybersemics/em/issues/4741
+  it('collapses the multiselect and moves the cursor to the last selected thought in document order', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+          - b
+          - c
+          - d
+          - e
+        `,
+      }),
+      // place the cursor away from the selection to prove the target is the last selected thought, not relative to the cursor
+      setCursor(['a']),
+      addMulticursorAtFirstMatch(['b']),
+      addMulticursorAtFirstMatch(['c']),
+      addMulticursorAtFirstMatch(['d']),
+    ])
+
+    executeCommand(cursorDownCommand, { store, event: downEvent })
+
+    const state = store.getState()
+    expect(state.cursor && headValue(state, state.cursor)).toBe('d')
+    expect(state.multicursors).toEqual({})
   })
 })

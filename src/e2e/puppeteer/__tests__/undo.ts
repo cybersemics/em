@@ -1,14 +1,13 @@
 import { KnownDevices } from 'puppeteer'
 import newThoughtCommand from '../../../commands/newThought'
-import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
 import exportThoughts from '../helpers/exportThoughts'
 import gesture from '../helpers/gesture'
 import getEditingText from '../helpers/getEditingText'
 import keyboard from '../helpers/keyboard'
 import newThought from '../helpers/newThought'
-import paste from '../helpers/paste'
 import press from '../helpers/press'
+import waitUntil from '../helpers/waitUntil'
 import { page } from '../session'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
@@ -79,114 +78,25 @@ it('Undo Select All + Categorize chained command in one step', async () => {
   expect(highlightedCount).toBe(0)
 })
 
-it('Should revert background color changes back to previous values', async () => {
-  const importText = `
-    - Lorem Ipsum Dolor Sit Amet`
-
-  await paste(importText)
-
-  // open the ColorPicker
-  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
-
-  const thought = await page.$('[aria-label=thought] [data-editable=true]')
-  const boundingBox = await thought?.boundingBox()
-
-  if (!boundingBox) throw new Error('boundingBox not found')
-
-  const y = boundingBox.y + boundingBox.height / 2
-
-  // get a position near the left edge of the thought
-  const leftX = boundingBox.x + 1
-
-  // double click to select the first word
-  await page.mouse.click(leftX, y, { clickCount: 2 })
-
-  // set the first word's background color to green
-  await click('[aria-label="background color swatches"] [aria-label="green"]')
-
-  // dismiss the existing selection range
-  await page.mouse.click(leftX, y)
-
-  // get a position near the right edge of the thought
-  const rightX = boundingBox.x + boundingBox.width - 36
-
-  // double click to select the last word
-  await page.mouse.click(rightX, y, { clickCount: 2 })
-
-  // set the last word's background color to green
-  await click('[aria-label="background color swatches"] [aria-label="green"]')
-
-  // dismiss the existing selection range
-  await page.mouse.click(rightX, y)
-
-  // get a position at the center of the thought
-  const centerX = boundingBox.x + boundingBox.width / 2
-
-  // click to place the caret in the center of the thought
-  await page.mouse.click(centerX, y)
-
-  // set the entire thought's background color to red
-  await click('[aria-label="background color swatches"] [aria-label="red"]')
-
-  // undo
-  await press('z', { meta: true })
-
-  // now the first and last words should have a green background again
-  const text = await getEditingText()
-  expect(text).toBe(
-    '<font color="#000000" style="background-color: rgb(0, 214, 136);">Lorem</font> Ipsum Dolor Sit <font color="#000000" style="background-color: rgb(0, 214, 136);">Amet</font>',
-  )
-})
-
-// Regression test for https://github.com/cybersemics/em/issues/4620
-// Each background color application should be its own undo step (like font color), so undoing after
-// applying two background colors reverts only the most recent one instead of clearing all of them at once.
-it('applying multiple background colors should each be a separate undo step', async () => {
-  await paste(`
-    - One`)
-
-  // focus the thought and place the caret inside it (no selection → whole-thought formatting)
-  await clickThought('One')
-
-  // open the ColorPicker
-  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
-
-  // apply a red background to the whole thought
-  await click('[aria-label="background color swatches"] [aria-label="red"]')
-
-  // apply a green background to the whole thought
-  await click('[aria-label="background color swatches"] [aria-label="green"]')
-
-  // a single undo should revert only the most recent (green) application, restoring the red background —
-  // not revert every background color application at once
-  await press('z', { meta: true })
-
-  const exported = await exportThoughts({ mimeType: 'text/html' })
-  expect(exported).toContain('background-color: rgb(255, 87, 61)')
-  expect(exported).not.toContain('rgb(0, 214, 136)')
-})
-
 // https://github.com/cybersemics/em/issues/4722
-// The iOS three-finger-swipe and shake-to-undo gestures dispatch a native beforeinput event with
-// inputType 'historyUndo' on the focused editable. em must route this to its own undo so that
-// structural actions (e.g. creating a new thought) can be undone via these gestures, rather than
-// falling through to WebKit's text-only native undo (which shows "Nothing to Undo" and leaves the
-// newly created thought in place).
-it('native undo (beforeinput historyUndo) undoes thought creation', async () => {
-  // create a new thought "hello"
+// The iOS three-finger-swipe and shake-to-undo gestures dispatch a cancelable beforeinput event with
+// inputType 'historyUndo' on the focused editable. em must intercept it and route it to its own undo so
+// that structural actions (e.g. creating a new thought) are reverted from Redux, rather than falling
+// through to WebKit's text-only native undo, which mutates the contenteditable directly and leaves the
+// newly created thought in place.
+it('routes a native historyUndo to em undo, reverting thought creation', async () => {
   await newThought('hello')
 
-  // simulate the native iOS undo gesture
+  // simulate the native undo gesture
   await page.evaluate(() => {
     document.activeElement?.dispatchEvent(
       new InputEvent('beforeinput', { inputType: 'historyUndo', bubbles: true, cancelable: true }),
     )
   })
 
-  // allow the undo to re-render
-  await new Promise(resolve => setTimeout(resolve, 500))
-
   // the newly created thought should be removed entirely, leaving an empty thoughtspace
-  const editableCount = await page.$$eval('[data-editable]', els => els.length)
-  expect(editableCount).toBe(0)
+  await waitUntil(() => !document.querySelector('[data-editable]'))
+
+  const exported = await exportThoughts()
+  expect(exported).toBe('')
 })

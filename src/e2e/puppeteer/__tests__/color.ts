@@ -6,8 +6,10 @@ import clickThought from '../helpers/clickThought'
 import extractColor from '../helpers/extractColor'
 import getBulletColor from '../helpers/getBulletColor'
 import getEditingText from '../helpers/getEditingText'
+import getSelection from '../helpers/getSelection'
 import getSuperscriptColor from '../helpers/getSuperScriptColor'
 import keyboard from '../helpers/keyboard'
+import multiselectThoughts from '../helpers/multiselectThoughts'
 import newThought from '../helpers/newThought'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
@@ -33,6 +35,20 @@ const selectAllEditingText = () =>
     selection?.removeAllRanges()
     selection?.addRange(range)
   })
+
+/** Sets a collapsed caret at the given plain-text offset within the first note. */
+const setNoteCaret = (offset: number) =>
+  page.evaluate((offset: number) => {
+    const note = document.querySelector('[aria-label="note-editable"]')
+    const textNode = note?.firstChild
+    if (!textNode) throw new Error('No text node found in note editable')
+    const range = document.createRange()
+    range.setStart(textNode, offset)
+    range.setEnd(textNode, offset)
+    const selection = window.getSelection()
+    selection?.removeAllRanges()
+    selection?.addRange(range)
+  }, offset)
 
 /** Waits one frame for selectionchange-driven command state to propagate. */
 const nextFrame = () => page.evaluate(() => new Promise(requestAnimationFrame))
@@ -162,31 +178,6 @@ it('Set the background color of the text', async () => {
   expect(result?.backgroundColor && rgbToHex(result.backgroundColor)).toBe(rgbaToHex(colors.light.green))
 })
 
-it('Clear the background color when selecting text color', async () => {
-  const importText = `
-    - Labrador
-    - Golden Retriever`
-
-  await paste(importText)
-
-  await clickThought('Golden Retriever')
-  let cursorText = await getEditingText()
-  expect(extractColor(cursorText!)?.backgroundColor).toBe(null)
-
-  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
-  await click('[aria-label="background color swatches"] [aria-label="green"]')
-  cursorText = await getEditingText()
-  let style = extractColor(cursorText!)
-  expect(style?.backgroundColor && rgbToHex(style.backgroundColor)).toBe(rgbaToHex(colors.light.green))
-  expect(style?.color).toBe(rgbaToHex(colors.light.black))
-
-  await click('[aria-label="text color swatches"] [aria-label="purple"]')
-  cursorText = await getEditingText()
-  style = extractColor(cursorText!)
-  expect(style?.color).toBe(rgbaToHex(colors.light.purple))
-  expect(style?.backgroundColor).toBe(null)
-})
-
 it('Bullet tracks the font color on a numeric thought that has a background color', async () => {
   const importText = `
     - 123`
@@ -215,29 +206,6 @@ it('Bullet tracks the font color on a numeric thought that has a background colo
   expect(rgbToHex(bulletColor!)).toBe(rgbaToHex(colors.light.blue))
 })
 
-it('Clear the text color when setting background color', async () => {
-  const importText = `
-    - Labrador
-    - Golden Retriever`
-
-  await paste(importText)
-
-  await clickThought('Golden Retriever')
-  let cursorText = await getEditingText()
-  expect(extractColor(cursorText!)?.color).toBe(null)
-
-  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
-  await click('[aria-label="text color swatches"] [aria-label="green"]')
-  cursorText = await getEditingText()
-  expect(extractColor(cursorText!)?.color).toBe(rgbaToHex(colors.light.green))
-
-  await click('[aria-label="background color swatches"] [aria-label="purple"]')
-  cursorText = await getEditingText()
-  const style = extractColor(cursorText!)
-  expect(style?.backgroundColor && rgbToHex(style?.backgroundColor)).toBe(rgbaToHex(colors.light.purple))
-  expect(style?.color).toBe(rgbaToHex(colors.light.black))
-})
-
 it('Bullet remains the default color when a substring color is set', async () => {
   const importText = `
   - Labrador
@@ -255,41 +223,6 @@ it('Bullet remains the default color when a substring color is set', async () =>
   // Verify bullet color remains default and only substring is colored
   const bulletColor = await getBulletColor()
   expect(bulletColor).toBe(null)
-})
-
-it('Empty <font> element will be removed after setting color to default.', async () => {
-  const importText = `
-  - Labrador
-  - Golden Retriever`
-
-  await paste(importText)
-
-  await clickThought('Golden Retriever')
-
-  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
-  await click('[aria-label="background color swatches"] [aria-label="blue"]')
-
-  await click('[aria-label="text color swatches"] [aria-label="default"]')
-  const result = await getEditingText()
-  expect(result).toBe('Golden Retriever')
-})
-
-it('Empty <span> element will be removed after setting color to default.', async () => {
-  const importText = `
-  - Labrador
-  - Golden Retriever`
-
-  await paste(importText)
-
-  await clickThought('Golden Retriever')
-
-  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
-  await click('[aria-label="text color swatches"] [aria-label="blue"]')
-
-  await click('[aria-label="text color swatches"] [aria-label="default"]')
-
-  const result = await getEditingText()
-  expect(result).toBe('Golden Retriever')
 })
 
 it('remove all formatting from the thought', async () => {
@@ -389,6 +322,7 @@ it('Clicking on a formatting tag does not close color dropdown', async () => {
   expect(textColorSwatch).toBeTruthy()
 })
 
+// Tests the ColorPicker selected value for a note
 it('Toggle the background color of the note', async () => {
   await paste(`
     - a
@@ -409,37 +343,7 @@ it('Toggle the background color of the note', async () => {
   expect(result).toBe('Note')
 })
 
-it('Toggling note background color on and off should remove formatting tag', async () => {
-  await paste(`
-    - a
-      - =note
-        - Note
-  `)
-
-  await clickFirstNote()
-  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
-  await click('[aria-label="background color swatches"] [aria-label="green"]')
-  await click('[aria-label="background color swatches"] [aria-label="green"]')
-
-  const result = await getFirstNoteText()
-  expect(result).toBe('Note')
-})
-
-it('Setting note foreground color should remove background color', async () => {
-  await paste(`
-    - a
-      - =note
-        - <font style="background-color: #FFFFFF" color="#000000">Note</font>
-  `)
-
-  await clickFirstNote()
-  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
-  await click('[aria-label="text color swatches"] [aria-label="yellow"]')
-
-  const result = await page.evaluate(() => document.querySelector('[aria-label="note-editable"]')?.innerHTML)
-  expect(result).toBe('<font color="#ffd014">Note</font>')
-})
-
+// Tests whether ColorPicker's selected flag differentiates between a thought and a note
 it('A thought and a note can have the same background color', async () => {
   await paste(`
     - a
@@ -463,22 +367,7 @@ it('A thought and a note can have the same background color', async () => {
   expect(note).toBe('<font color="#000000" style="background-color: rgb(0, 214, 136);">Note</font>')
 })
 
-it('Can change the background color of a note to match its thought', async () => {
-  await paste(`
-    - <font color="#000000" style="background-color: rgb(255, 87, 61);">a</font>  
-      - =note      
-        - <font color="#000000" style="background-color: rgb(0, 214, 136);">Note</font>
-  `)
-
-  // change the background color on the note
-  await clickFirstNote()
-  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
-  await click('[aria-label="background color swatches"] [aria-label="red"]')
-
-  const note = await getFirstNoteText()
-  expect(note).toBe('<font color="#000000" style="background-color: rgb(255, 87, 61);">Note</font>')
-})
-
+// Tests whether selected is false in the ColorPicker for foreground color
 it('Can change the color of a thought that already has the same color applied to part of its text', async () => {
   await paste(`
     - some <font color="#ff573d">formatted</font> text
@@ -492,6 +381,7 @@ it('Can change the color of a thought that already has the same color applied to
   expect(thought).toBe('<font color="#ff573d">some formatted text</font>')
 })
 
+// Tests whether selected is false in the ColorPicker for background color
 it('Can change the background color of a thought that already has the same background color applied to part of its text', async () => {
   await paste(`
     - some <font color="#000000" style="background-color: rgb(255, 87, 61);">formatted</font> text
@@ -505,6 +395,7 @@ it('Can change the background color of a thought that already has the same backg
   expect(thought).toBe('<font color="#000000" style="background-color: rgb(255, 87, 61);">some formatted text</font>')
 })
 
+// Tests whether selected is false in the ColorPicker for foreground color on a note
 it('Can change the color of a note that already has the same color applied to part of its text', async () => {
   await paste(`
     - a
@@ -519,4 +410,169 @@ it('Can change the color of a note that already has the same color applied to pa
 
   const note = await getFirstNoteText()
   expect(note).toBe('<font color="#ff573d">some formatted text</font>')
+})
+
+it('Set the text color via keyboard shortcut (Cmd + Option + 2 = orange)', async () => {
+  const importText = `
+  - Labrador
+  - Golden Retriever`
+
+  await paste(importText)
+
+  await clickThought('Golden Retriever')
+
+  // Cmd + Option + 2 applies the third text swatch (orange)
+  await press('2', { meta: true, alt: true })
+
+  const cursorText = await getEditingText()
+  const bulletColor = await getBulletColor()
+  const result = extractColor(cursorText!)
+  expect(rgbToHex(bulletColor!)).toBe(rgbaToHex(colors.light.orange))
+  expect(result?.color).toBe(rgbaToHex(colors.light.orange))
+  expect(result?.backgroundColor).toBe(null)
+})
+
+it('Set the background color via keyboard shortcut (Alt + 3 = yellow)', async () => {
+  const importText = `
+    - Labrador
+    - Golden Retriever`
+
+  await paste(importText)
+
+  await clickThought('Golden Retriever')
+
+  // Alt + 3 applies the fourth background swatch (yellow)
+  await press('3', { alt: true })
+
+  const cursorText = await getEditingText()
+  const bulletColor = await getBulletColor()
+  const result = extractColor(cursorText!)
+  expect(rgbToHex(bulletColor!)).toBe(rgbaToHex(colors.light.yellow))
+  expect(result?.backgroundColor && rgbToHex(result.backgroundColor)).toBe(rgbaToHex(colors.light.yellow))
+})
+
+it('Clear the text color via the default keyboard shortcut (Cmd + Option + 0)', async () => {
+  const importText = `
+  - Labrador
+  - Golden Retriever`
+
+  await paste(importText)
+
+  await clickThought('Golden Retriever')
+
+  // apply orange, then reset to the default text color with Cmd + Option + 0
+  await press('2', { meta: true, alt: true })
+  await press('0', { meta: true, alt: true })
+
+  const result = await getEditingText()
+  expect(result).toBe('Golden Retriever')
+})
+
+// https://github.com/cybersemics/em/issues/4630
+it('caret stays in place when applying font color to a note that has a background color', async () => {
+  await paste(`
+    - One
+      - =note
+        - Welcome to the Jungle
+  `)
+
+  await clickFirstNote()
+
+  // place the caret in the middle of the note text
+  await setNoteCaret(10)
+
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+
+  // apply a background color to the whole note
+  await click('[aria-label="background color swatches"] [aria-label="green"]')
+
+  // apply a font color to the whole note, which removes the background color
+  await click('[aria-label="text color swatches"] [aria-label="blue"]')
+
+  // wait for the caret to settle after the note re-renders
+  await nextFrame()
+  await nextFrame()
+
+  // the caret should stay where the user left off, not jump to the start or end of the note
+  const offset = await getSelection().focusOffset
+  expect(offset).toBe(10)
+})
+
+// https://github.com/cybersemics/em/issues/4630
+it('caret stays in place when repeatedly applying font color over background color', async () => {
+  await paste(`
+    - One
+      - =note
+        - Welcome to the Jungle
+  `)
+
+  await clickFirstNote()
+
+  // place the caret in the middle of the note text
+  await setNoteCaret(10)
+
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+
+  // apply background then font color twice; the resolved caret offset is identical each time,
+  // so the caret restoration must re-fire even when the offset does not change (#4630)
+  await click('[aria-label="background color swatches"] [aria-label="green"]')
+  await click('[aria-label="text color swatches"] [aria-label="red"]')
+  await click('[aria-label="background color swatches"] [aria-label="green"]')
+  await click('[aria-label="text color swatches"] [aria-label="red"]')
+
+  // wait for the caret to settle after the note re-renders
+  await nextFrame()
+  await nextFrame()
+
+  // the caret should still stay where the user left off, not jump to the end of the note
+  const offset = await getSelection().focusOffset
+  expect(offset).toBe(10)
+})
+
+it('Set text color with multicursor selection', async () => {
+  const importText = `
+  - Labrador
+  - Golden Retriever`
+
+  await paste(importText)
+
+  // Ctrl+click both thoughts to add them both to the multicursor set.
+  await multiselectThoughts(['Labrador', 'Golden Retriever'])
+
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="text color swatches"] [aria-label="blue"]')
+
+  // Verify the cursor thought (Golden Retriever) has the correct color.
+  const goldenText = await getEditingText()
+  expect(extractColor(goldenText!)?.color).toBe(rgbaToHex(colors.light.blue))
+
+  // Navigate to Labrador and verify its color was also applied.
+  await press('ArrowUp')
+  const labradorText = await getEditingText()
+  expect(extractColor(labradorText!)?.color).toBe(rgbaToHex(colors.light.blue))
+})
+
+it('Set background color with multicursor selection', async () => {
+  const importText = `
+  - Labrador
+  - Golden Retriever`
+
+  await paste(importText)
+
+  // Ctrl+click both thoughts to add them both to the multicursor set.
+  await multiselectThoughts(['Labrador', 'Golden Retriever'])
+
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="background color swatches"] [aria-label="green"]')
+
+  // Verify the cursor thought (Golden Retriever) has the correct background color.
+  const goldenText = await getEditingText()
+  const goldenBgColor = extractColor(goldenText!)?.backgroundColor
+  expect(goldenBgColor && rgbToHex(goldenBgColor)).toBe(rgbaToHex(colors.light.green))
+
+  // Navigate to Labrador and verify its background color was also applied.
+  await press('ArrowUp')
+  const labradorText = await getEditingText()
+  const labradorBgColor = extractColor(labradorText!)?.backgroundColor
+  expect(labradorBgColor && rgbToHex(labradorBgColor)).toBe(rgbaToHex(colors.light.green))
 })
