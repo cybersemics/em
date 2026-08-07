@@ -38,7 +38,7 @@ interface Command {
   multicursor:
     | boolean
     | {
-        /** If true, execution of the command will be prevented and the user will be shown an alert when more than one thought is selected. A single selected thought is executed as usual. This should only be used if the command makes absolutely no sense when multiple thoughts are selected. In most cases, even if there is no multiselect behavior, you can just execute the command on state.cursor (by setting multicursor: false) or execute the command on the first or last sibling (by setting { filter: 'first-sibling' } or { filter: 'last-sibling' ). */
+        /** If true, execution of the command will be prevented and the user will be shown an alert when more than one thought is selected. A single selected thought is executed on directly, as if only the cursor were set, so the cursor is not restored afterwards. This should only be used if the command makes absolutely no sense when multiple thoughts are selected. In most cases, even if there is no multiselect behavior, you can just execute the command on state.cursor (by setting multicursor: false) or execute the command on the first or last sibling (by setting { filter: 'first-sibling' } or { filter: 'last-sibling' ). */
         disallow?: boolean
         /** An error message to display when multicursor mode is not enabled. */
         error?: ((state: State) => string) | string
