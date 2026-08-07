@@ -1,6 +1,6 @@
 /* eslint-disable import/prefer-default-export */
 import Thunk from '../@types/Thunk'
-import { isSafari, isTouch } from '../browser'
+import { isAndroidWebView, isSafari, isTouch } from '../browser'
 import { ColorToken } from '../colors.config'
 import * as selection from '../device/selection'
 import globals from '../globals'
@@ -12,6 +12,7 @@ import simplifyPath from '../selectors/simplifyPath'
 import themeColors from '../selectors/themeColors'
 import { updateCommandState } from '../stores/commandStateStore'
 import formatSelectionHtml, { FormatCommand } from '../util/formatSelectionHtml'
+import rgbToHex from '../util/rgbToHex'
 import { editThoughtActionCreator as editThought } from './editThought'
 import { setDescendantActionCreator as setDescendant } from './setDescendant'
 import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from './setIsMulticursorExecuting'
@@ -53,8 +54,80 @@ const registerNativeUndoStep = (html: string): void => {
   globals.suppressChange = false
 }
 
+/** Returns true when two supported CSS color strings resolve to the same RGB value. */
+const colorsMatch = (a: string, b: string): boolean => {
+  try {
+    return rgbToHex(a).toLowerCase() === rgbToHex(b).toLowerCase()
+  } catch {
+    return false
+  }
+}
+
+/** Removes redundant default color artifacts created by native color commands from the live editable. */
+const stripRedundantColors = (root: ParentNode, defaultBackground: string, defaultColor: string): void => {
+  for (const el of Array.from(root.querySelectorAll<HTMLElement>('font, span'))) {
+    let removedRedundantColor = false
+    if (el.style.backgroundColor && colorsMatch(el.style.backgroundColor, defaultBackground)) {
+      el.style.removeProperty('background-color')
+      removedRedundantColor = true
+    }
+    if (el.style.color && colorsMatch(el.style.color, defaultColor)) {
+      el.style.removeProperty('color')
+      removedRedundantColor = true
+    }
+    const colorAttribute = el.getAttribute('color')
+    if (colorAttribute && colorsMatch(colorAttribute, defaultColor)) {
+      el.removeAttribute('color')
+      removedRedundantColor = true
+    }
+    if (!el.getAttribute('style')?.trim()) {
+      el.removeAttribute('style')
+    }
+    if (removedRedundantColor && el.attributes.length === 0) {
+      el.replaceWith(...Array.from(el.childNodes))
+    }
+  }
+}
+
+/**
+ * Applies a partial thought color through Chromium's native editing commands so Android retains its native selection
+ * handles and context menu. The resulting live HTML is persisted verbatim to keep the DOM and Redux in sync.
+ */
+const applyNativeAndroidColor = (
+  contentEditable: HTMLElement,
+  command: 'foreColor' | 'backColor',
+  colorValue: string,
+  defaultBackground: string,
+  defaultColor: string,
+): string => {
+  const selectedBackground = selection.backgroundColor(contentEditable)
+  const hasCustomSelectedBackground = selectedBackground !== null && !colorsMatch(selectedBackground, defaultBackground)
+  const wasSuppressingChange = globals.suppressChange
+
+  globals.suppressChange = true
+  try {
+    if (command === 'foreColor') {
+      document.execCommand('foreColor', false, colorValue)
+      if (hasCustomSelectedBackground) {
+        document.execCommand('backColor', false, defaultBackground)
+      }
+    } else {
+      const clearingBackground = colorsMatch(colorValue, defaultBackground)
+      document.execCommand('foreColor', false, clearingBackground ? defaultColor : '#000000')
+      document.execCommand('backColor', false, colorValue)
+    }
+    stripRedundantColors(contentEditable, defaultBackground, defaultColor)
+  } finally {
+    globals.suppressChange = wasSuppressingChange
+  }
+
+  return contentEditable.innerHTML
+}
+
 /** Format the browser selection or cursor thought as bold, italic, strikethrough, underline, code, color, or removeFormat.
- * Computes the new HTML synchronously with the DOM (no document.execCommand) and dispatches a single editThought/setDescendant (#4637). */
+ * Computes the new HTML synchronously and dispatches a single editThought/setDescendant. Android partial colors use a
+ * native editing command so Chromium retains its native selection UI (#4275, #4637).
+ */
 export const formatSelectionActionCreator =
   (command: FormatCommand, color?: ColorToken): Thunk =>
   (dispatch, getState) => {
@@ -125,7 +198,7 @@ export const formatSelectionActionCreator =
       end = plainLength
     }
 
-    const newValue = formatSelectionHtml(value, {
+    const formattedValue = formatSelectionHtml(value, {
       start,
       end,
       command,
@@ -136,7 +209,22 @@ export const formatSelectionActionCreator =
 
     const path = state.noteFocus ? resolveNotePath(state, state.cursor) : state.cursor
 
-    if (newValue === value || !path) return
+    if (formattedValue === value || !path) return
+
+    const partialThought = !whole && !state.noteFocus
+    const nativeAndroidColor =
+      partialThought && isAndroidWebView() && (command === 'foreColor' || command === 'backColor')
+    const newValue = nativeAndroidColor
+      ? applyNativeAndroidColor(
+          contentEditable,
+          command,
+          color ? colors[color] : command === 'foreColor' ? colors.fg : colors.bg,
+          colors.bg,
+          colors.fg,
+        )
+      : formattedValue
+
+    if (newValue === value) return
 
     // Capture the caret's plain-text offset within the note before overwriting its value. Overwriting
     // re-renders the note's ContentEditable, which drops the caret; restoring the offset via setNoteFocus
@@ -147,6 +235,13 @@ export const formatSelectionActionCreator =
     // Only call document.execCommand when the keyboard is open and the caret is on a thought.
     // This avoids messy and buggy focus-management logic.
     if (state.isKeyboardOpen) registerNativeUndoStep(newValue)
+
+    // Keep partial thought formatting synchronous with the live editable. Restoring the range immediately after the
+    // write preserves the logical selection on normal platforms without a deferred callback.
+    if (partialThought && !nativeAndroidColor) {
+      contentEditable.innerHTML = newValue
+      selection.setRange(contentEditable, start, end)
+    }
 
     dispatch(
       state.noteFocus
@@ -163,8 +258,9 @@ export const formatSelectionActionCreator =
               oldValue: value,
               newValue,
               path: simplifyPath(state, path),
-              // force the ContentEditable to update
-              force: true,
+              // Force the ContentEditable to update when formatting the whole thought. Partial thought formatting is
+              // applied to the live DOM above without a forced render.
+              force: whole,
             }),
           ],
     )
