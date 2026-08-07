@@ -451,6 +451,7 @@ export const executeCommandWithMulticursor = (
   const paths = documentSort(state, Object.values(state.multicursors))
 
   // if multicursor is disallowed for this command, alert and exit early
+  // Only multiple selected thoughts are disallowed. A single selected thought is executed as usual, otherwise commands would be blocked whenever exactly one thought is selected, e.g. by opening the Command Center.
   if (multicursor.disallow) {
     if (paths.length > 1) {
       const errorMessage = !multicursor.error
@@ -466,8 +467,8 @@ export const executeCommandWithMulticursor = (
       return
     }
 
-    // A single selected thought is not multiple thoughts, so execute the command on it as if only the cursor were set. Opening the Command Center selects the cursor thought, so this keeps its commands working the same as the toolbar.
-    // Only set the cursor if it is not already on the selected thought, since setCursor resets noteFocus and would move the caret out of a note.
+    // Execute the single selected thought here rather than falling through to the multicursor loop below, which restores the cursor when it is done. That restore dispatches setCursor, which resets noteFocus and would move the caret out of a note just created by the note command.
+    // For the same reason, only set the cursor when it is not already on the selected thought.
     if (!state.cursor || !isMulticursorPath(state, state.cursor)) {
       commandStore.dispatch(setCursor({ path: paths[0] }))
     }
