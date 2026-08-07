@@ -229,10 +229,10 @@ const applyColor = (
 
 /** Options for {@link formatSelectionHtml}. */
 interface FormatOptions {
-  /** Plain-text start offset of the range (inclusive). */
-  start: number
-  /** Plain-text end offset of the range (exclusive). */
-  end: number
+  /** Plain-text start offset of the range (inclusive). Defaults to 0, i.e. the start of the html. */
+  start?: number
+  /** Plain-text end offset of the range (exclusive). Defaults to the plain-text length of the html, i.e. the end. */
+  end?: number
   /** The formatting command to apply. */
   command: FormatCommand
   /** The resolved color value (hex) for foreColor/backColor. */
@@ -245,19 +245,23 @@ interface FormatOptions {
 
 /**
  * Applies a formatting command to an HTML string over a plain-text [start, end) range, returning the new HTML.
+ * The start and end offsets default to the full range, as in slice.
  *
  * This is the synchronous replacement for document.execCommand: it computes the formatted markup directly rather than
  * mutating a contentEditable and waiting for the change to re-enter Redux (#4637).
  */
 const formatSelectionHtml = (
   html: string,
-  { start, end, command, colorValue, defaultColor, defaultBackgroundColor }: FormatOptions,
+  { start: startOption, end: endOption, command, colorValue, defaultColor, defaultBackgroundColor }: FormatOptions,
 ): string => {
   const container = document.createElement('div')
   container.innerHTML = html
 
   const tag = tagForCommand(command)
   const plainLength = container.textContent?.length ?? 0
+
+  const start = startOption ?? 0
+  const end = endOption ?? plainLength
 
   // The caller normalizes a collapsed caret or full selection to [0, plainLength], so this is a whole-thought command.
   const whole = start === 0 && end === plainLength
