@@ -1,4 +1,5 @@
 import { EM_TOKEN } from '../../../constants'
+import { tsid } from '../../thoughtspaceSession'
 import createTreecrdtThoughtspace from '../runtime'
 
 const { mockAcquireTreecrdtSessionLock, mockCreateTreecrdtClient } = vi.hoisted(() => ({
@@ -81,11 +82,11 @@ it('maps em persistent storage to TreeCRDT OPFS client options', async () => {
   expect(mockCreateTreecrdtClient).toHaveBeenCalledWith({
     storage: {
       type: 'opfs',
-      filename: expect.any(String),
+      filename: `/treecrdt-em-${tsid}.db`,
       fallback: 'throw',
     },
     runtime: { type: 'dedicated-worker' },
-    docId: expect.any(String),
+    docId: tsid,
   })
 })
 
@@ -101,7 +102,7 @@ it('creates the client lazily', async () => {
   expect(mockCreateTreecrdtClient).toHaveBeenCalledWith({
     storage: { type: 'memory' },
     runtime: { type: 'direct' },
-    docId: expect.any(String),
+    docId: tsid,
   })
 
   await treecrdtThoughtspace.drop()
