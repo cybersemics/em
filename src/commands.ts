@@ -448,7 +448,8 @@ export const executeCommandWithMulticursor = (
   const multicursor = typeof command.multicursor === 'boolean' ? {} : command.multicursor
 
   // if multicursor is disallowed for this command, alert and exit early
-  if (multicursor.disallow) {
+  // A single selected thought is not "multiple thoughts", so it executes normally. This is the case when the Command Center is open, which selects the cursor thought.
+  if (multicursor.disallow && Object.keys(state.multicursors).length > 1) {
     const errorMessage = !multicursor.error
       ? 'Cannot execute this command with multiple thoughts.'
       : typeof multicursor.error === 'function'

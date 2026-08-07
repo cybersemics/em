@@ -1,7 +1,6 @@
 import Command from '../@types/Command'
 import { swapParentActionCreator } from '../actions/swapParent'
 import SwapParentIcon from '../components/icons/SwapParentIcon'
-import hasMulticursor from '../selectors/hasMulticursor'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 const swapParent: Command = {
@@ -15,7 +14,7 @@ const swapParent: Command = {
   },
   svg: SwapParentIcon,
   canExecute: state => {
-    return isDocumentEditable() && ((state.cursor?.length ?? 0) >= 2 || hasMulticursor(state))
+    return isDocumentEditable() && (state.cursor?.length ?? 0) >= 2
   },
   exec: dispatch => {
     dispatch(swapParentActionCreator())
