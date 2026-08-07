@@ -26,7 +26,7 @@ const bootstrap = async (): Promise<void> => {
   initEvents(store)
 
   if (!testFlags.preventInitialize) {
-    void initialize()
+    void initialize({ storage: testFlags.thoughtspaceStorage ?? 'persistent' })
   }
 
   root.render(<App />)

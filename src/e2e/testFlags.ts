@@ -11,7 +11,7 @@ type TestFlags = {
   /** Prevent automatic app initialization on page load. */
   preventInitialize: boolean
   /** Starts app initialization when preventInitialize is enabled. */
-  initialize: (() => Promise<unknown>) | null
+  initialize: ((options: { storage: ThoughtspaceStorage }) => Promise<unknown>) | null
   /** Overrides production thoughtspace storage during test startup. */
   thoughtspaceStorage: ThoughtspaceStorage | null
   /** Render drop-hover elements as blocks of color. */
