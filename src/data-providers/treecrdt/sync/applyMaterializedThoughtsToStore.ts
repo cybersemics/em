@@ -2,7 +2,6 @@
 import type { MaterializationEvent } from '@treecrdt/interface/engine'
 import type { TreecrdtClient } from '@treecrdt/wa-sqlite'
 import type Index from '../../../@types/IndexType'
-import type Lexeme from '../../../@types/Lexeme'
 import type Thought from '../../../@types/Thought'
 import type { ThoughtspaceMaterializationBridge } from '../../thoughtspace'
 import { refreshAttributeChildrenFromChanges } from '../attributeChildren'
@@ -16,22 +15,6 @@ type MaterializationContext = Readonly<{
   client: TreecrdtClient
   db: MaterializationStore
 }>
-
-/** Persists lexemes that em derives locally from materialized TreeCRDT thoughts. */
-const persistDerivedLexemeUpdates = async (
-  db: MaterializationStore,
-  lexemeIndexUpdates: Index<Lexeme | null>,
-  schemaVersion: number,
-): Promise<void> => {
-  if (Object.keys(lexemeIndexUpdates).length === 0) return
-
-  await db.updateThoughts({
-    thoughtIndexUpdates: {},
-    lexemeIndexUpdates,
-    lexemeIndexUpdatesOld: {},
-    schemaVersion,
-  })
-}
 
 /**
  * After remote TreeCRDT ops are materialized into SQLite, refresh the app-facing thoughtspace in one batch.
@@ -56,7 +39,14 @@ export async function applyMaterializedThoughtsToStore(
     snapshot,
   )
 
-  await persistDerivedLexemeUpdates(db, lexemeIndexUpdates, snapshot.schemaVersion)
+  if (Object.keys(lexemeIndexUpdates).length > 0) {
+    await db.updateThoughts({
+      thoughtIndexUpdates: {},
+      lexemeIndexUpdates,
+      lexemeIndexUpdatesOld: {},
+      schemaVersion: snapshot.schemaVersion,
+    })
+  }
 
   const thoughtIndexUpdates: Index<Thought | null> = {}
 
