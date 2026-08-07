@@ -81,7 +81,7 @@ AND the following are all true:
 - Not in note focus (`!state.noteFocus`).
 - The element ref is mounted.
 - A `cursorOffset` is set, *or* the existing selection is not on a thought (so we don't steal the caret if it's already correctly placed).
-- No multicursor selection is active.
+- No multicursor selection is active, *unless* the multiselection is cleared (see [Multiselect faux caret](#multiselect-faux-caret)), in which case the caret is placed on the first cleared thought.
 - We're not in `LongPressState.DragHold` (the user is mid-long-press; don't hijack their selection).
 - The hook hasn't been temporarily disabled via `allowDefaultSelection` (see below).
 
@@ -146,6 +146,37 @@ This catches cases where the cursor moves but no `Editable` re-renders to pull t
 A non-Redux ministore tracking whether there is an active *non-collapsed* selection range — i.e. whether the user has selected text. It is updated from a `selectionchange` event handler (throttled by `SELECTION_CHANGE_THROTTLE`) and is always `false` on desktop.
 
 The main consumer is [`useDragAndDropThought`](../src/hooks/useDragAndDropThought.tsx)'s `canDrag`: when the user has a text range selected on touch, dragging is disabled so they can use the iOS magnifier and copy/paste UI without inadvertently starting a drag. See [drag-and-drop.md](drag-and-drop.md).
+
+### `caretRectStore`
+
+[`src/stores/caretRectStore.ts`](../src/stores/caretRectStore.ts).
+
+A non-Redux ministore tracking the geometry of the real caret — its x, y, and height relative to the focused thought — or all `null` when no thought is focused. Like `selectionRangeStore` it is updated from the `selectionchange` handler in [`initEvents`](../src/util/initEvents.ts), but unthrottled, so that a faux caret driven by it does not visibly lag the real caret while typing. It is measured again on `input`, since a deletion moves the caret without the browser firing another `selectionchange` once the new text has been laid out. The handler only measures the caret in [multi edit mode](#multi-edit-mode), since that is its sole consumer (the multiselect faux caret below).
+
+Geometry is mirrored rather than the character offset because the thought that holds the real caret and the thoughts that render a faux caret do not always contain the same text: the mirrored value is trimmed, and while the thoughts are cleared the overlaid editable is empty. Laying out a copy of the text to find the offset's position therefore drifted from the real caret. `selection.caretRect()` asks the browser where the caret actually is, so the faux carets agree with it by construction, including inside formatted text and across line wraps.
+
+### Multiselect faux caret
+
+[Clear Thought](../src/commands/clearThought.ts) works on a multiselection: it clears every selected thought and keeps the multicursors alive so that subsequent typing is mirrored to all of them by `Editable`'s `onChangeHandler`, which dispatches an `editThought` per selected thought on every keystroke rather than through the edit throttle, so that they stay in sync character by character. Only one thought can hold the real browser caret, so the others render a faux caret to show that they are being edited too.
+
+`Editable` renders [`MulticursorFauxCaret`](../src/components/MulticursorFauxCaret.tsx) when the path is a multicursor member, is not the cursor, and the cursor itself is a multicursor member. It is an absolutely positioned [`FauxCaret`](../src/components/FauxCaret.tsx) placed at `caretRectStore`'s x and y within the thought, sized to the caret's height, so it appears at the same position within its thought as the real caret does within its own.
+
+It is rendered as a sibling *after* the `ContentEditable`, and always in the same position in the element tree, so that toggling it does not change the shape of `Editable`'s output. Wrapping or preceding the editable would make React recreate the editable's DOM node when the faux caret appears, silently detaching the native `mousedown` listener that `useEditMode` binds to it — which is what stops a tap from moving the caret.
+
+### Multi edit mode
+
+[`isMultiEditing`](../src/selectors/isMultiEditing.ts) is true when a multiselection is actually being *edited*: the keyboard is open, the cursor is a multicursor member, and the browser selection is inside a thought. Only Clear Thought puts the app in this state (via `useEditMode`'s relaxed multicursor guard); an ordinary multiselection leaves the caret outside any editable, so the predicate consults the DOM selection to tell the two apart.
+
+Commands and gestures that otherwise take over the interaction defer to native editing behavior in this state:
+
+- [`deleteEmptyThoughtOrOutdent`](../src/commands/deleteEmptyThoughtOrOutdent.ts) normally executes whenever a multiselection exists. In multi edit mode it executes only when `canExecuteDeleteEmptyThought` holds — i.e. the caret is at the start of an empty thought, in which case the deletion is propagated to all selected thoughts. Otherwise it declines, letting the browser delete a character and the edit mirror like any other.
+
+  A cleared thought counts as empty even before it is edited, so Backspace immediately after Clear Thought deletes the whole multiselection. This relies on the cleared state outliving the multicursor traversal: [`executeCommandWithMulticursor`](../src/commands.ts) sets the cursor to each selected thought in turn, and `setCursor` normally resets `cursorCleared` on navigate. It therefore preserves it while `isMulticursorExecuting`, and resets it once the command completes — otherwise every path but the first would look non-empty and the thoughts would be merged instead of deleted.
+- [`selectAll`](../src/commands/selectAll.ts) (Cmd + A) likewise declines, so the browser's native select-all applies to the text being edited rather than selecting all thoughts.
+- [`cursorBack`](../src/commands/cursorBack.ts) (Escape) exits multi edit mode — restoring the cleared values and closing the keyboard — while leaving the multiselection intact. A second Escape then clears the multiselection, so the two are undone in the order they were applied. The command's Clear Thought guard checks `isMultiEditing` in addition to `cursorCleared`, since the first edit resets the cleared state (see `editThought`) while the multiselection is still being edited.
+- Tapping a thought moves the caret as it does when editing a single thought, rather than being swallowed to preserve the multiselection: `Editable`'s tap handler and `useEditMode`'s `onMouseDown` both make an exception for multi edit mode, and the latter sets the caret with `preserveMulticursor` so that the tap does not dismiss the selection.
+
+On mobile, the Command Center normally opens whenever a multiselection is active ([`multicursorAlertMiddleware`](../src/redux-middleware/multicursorAlertMiddleware.ts)). It stays closed while the keyboard is open — i.e. while the multiselection is being edited — both so that the sheet does not cover the editing session and because iOS dismisses any focus that arrives while the Command Center is shown (see `onFocus` in `Editable`), which would prevent the keyboard from ever opening. `clearThought` reserves the focus with `asyncFocus` during the original touch event, since iOS Safari otherwise ignores the asynchronous `selection.set` that `useEditMode` performs after the render. When the keyboard closes, the blur resets the cleared state and the middleware re-opens the Command Center with the multiselection intact.
 
 ### `preventAutoscroll.ts`
 
