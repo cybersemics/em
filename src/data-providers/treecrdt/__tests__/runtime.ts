@@ -24,8 +24,6 @@ const emptyUpdates = {
   schemaVersion: 0,
 }
 
-const memoryConfig = { storage: 'memory' } as const
-
 beforeAll(async () => {
   const actual = await vi.importActual<TreecrdtModule>('@treecrdt/wa-sqlite')
   createRealTreecrdtClient = actual.createTreecrdtClient
@@ -56,7 +54,7 @@ it.each([
 it('rejects a different storage until drop and accepts it afterward', async () => {
   const treecrdtThoughtspace = createTreecrdtThoughtspace()
 
-  await treecrdtThoughtspace.init(memoryConfig)
+  await treecrdtThoughtspace.init({ storage: 'memory' })
   await expect(treecrdtThoughtspace.init({ storage: 'persistent' })).rejects.toThrow(
     'TreeCRDT storage cannot change before the thoughtspace is dropped.',
   )
@@ -97,7 +95,7 @@ it('creates the client lazily', async () => {
   await treecrdtThoughtspace.acquireAccess()
   expect(mockCreateTreecrdtClient).not.toHaveBeenCalled()
 
-  await treecrdtThoughtspace.init(memoryConfig)
+  await treecrdtThoughtspace.init({ storage: 'memory' })
   expect(mockCreateTreecrdtClient).toHaveBeenCalledTimes(1)
   expect(mockCreateTreecrdtClient).toHaveBeenCalledWith({
     storage: { type: 'memory' },
@@ -110,8 +108,8 @@ it('creates the client lazily', async () => {
 
 it('coalesces concurrent initialization into one client', async () => {
   const treecrdtThoughtspace = createTreecrdtThoughtspace()
-  const firstInit = treecrdtThoughtspace.init(memoryConfig)
-  const secondInit = treecrdtThoughtspace.init(memoryConfig)
+  const firstInit = treecrdtThoughtspace.init({ storage: 'memory' })
+  const secondInit = treecrdtThoughtspace.init({ storage: 'memory' })
 
   await expect(Promise.all([firstInit, secondInit])).resolves.toHaveLength(2)
   expect(mockCreateTreecrdtClient).toHaveBeenCalledTimes(1)
@@ -135,10 +133,10 @@ it('serializes an in-flight init, drop, and following init', async () => {
   })
 
   const treecrdtThoughtspace = createTreecrdtThoughtspace()
-  const firstInit = treecrdtThoughtspace.init(memoryConfig)
+  const firstInit = treecrdtThoughtspace.init({ storage: 'memory' })
   await clientStarted
   const drop = treecrdtThoughtspace.drop()
-  const secondInit = treecrdtThoughtspace.init(memoryConfig)
+  const secondInit = treecrdtThoughtspace.init({ storage: 'memory' })
 
   expect(mockCreateTreecrdtClient).toHaveBeenCalledTimes(1)
 
@@ -159,10 +157,10 @@ it('rejects queued startup writes when initialization fails and uses a fresh gat
   const queuedWrite = treecrdtThoughtspace.db.updateThoughts(emptyUpdates)
   const queuedWriteExpectation = expect(queuedWrite).rejects.toBe(initError)
 
-  await expect(treecrdtThoughtspace.init(memoryConfig)).rejects.toBe(initError)
+  await expect(treecrdtThoughtspace.init({ storage: 'memory' })).rejects.toBe(initError)
   await queuedWriteExpectation
 
-  await treecrdtThoughtspace.init(memoryConfig)
+  await treecrdtThoughtspace.init({ storage: 'memory' })
   await expect(treecrdtThoughtspace.db.updateThoughts(emptyUpdates)).resolves.toEqual([])
   await treecrdtThoughtspace.drop()
 })
@@ -182,7 +180,7 @@ it('rejects writes queued before each settled drop and creates a fresh gate for 
   )
   await Promise.all([treecrdtThoughtspace.drop(), secondWriteExpectation])
 
-  await treecrdtThoughtspace.init(memoryConfig)
+  await treecrdtThoughtspace.init({ storage: 'memory' })
   await expect(treecrdtThoughtspace.db.updateThoughts(emptyUpdates)).resolves.toEqual([])
   await treecrdtThoughtspace.drop()
 })
@@ -203,13 +201,15 @@ it('discards a terminal client when drop reports an error', async () => {
   mockCreateTreecrdtClient.mockResolvedValueOnce(client)
 
   const treecrdtThoughtspace = createTreecrdtThoughtspace()
-  await treecrdtThoughtspace.init(memoryConfig)
+  await treecrdtThoughtspace.init({ storage: 'memory' })
   await expect(treecrdtThoughtspace.drop()).rejects.toBe(dropError)
   expect(() => treecrdtThoughtspace.db.getThoughtById('missing' as never)).toThrow(
     'TreeCRDT DataProvider: init not called',
   )
   expect(close).not.toHaveBeenCalled()
 
-  await expect(treecrdtThoughtspace.init(memoryConfig)).resolves.toEqual({ clientId: expect.any(String) })
+  await expect(treecrdtThoughtspace.init({ storage: 'memory' })).resolves.toEqual({
+    clientId: expect.any(String),
+  })
   await treecrdtThoughtspace.drop()
 })
