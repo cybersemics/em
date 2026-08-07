@@ -4,6 +4,7 @@ import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
 import emulate from '../helpers/emulate'
 import gesture from '../helpers/gesture'
+import keyboard from '../helpers/keyboard'
 import paste from '../helpers/paste'
 import waitForSelector from '../helpers/waitForSelector'
 import waitUntil from '../helpers/waitUntil'
@@ -35,5 +36,9 @@ describe('command center', () => {
     expect(alertText).toBeNull()
 
     await waitForSelector('[aria-label="note"]')
+
+    // the caret is placed in the new note, so typing goes into the note rather than back into the thought
+    await keyboard.type('World')
+    await waitUntil(() => document.querySelector('[aria-label="note-editable"]')?.textContent === 'World')
   })
 })
