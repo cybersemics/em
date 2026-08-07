@@ -11,6 +11,8 @@ type TestFlags = {
   preventInitialize: boolean
   /** Starts app initialization when preventInitialize is enabled. */
   initialize: (() => Promise<unknown>) | null
+  /** Keep every drop hover that becomes visible during the current drag mounted, so multiple drop hovers can be compared in a single snapshot. */
+  pinDropHovers: boolean
   /** Render drop-hover elements as blocks of color. */
   simulateDrag: boolean
   /** Render drop targets as blocks of color. */
@@ -32,6 +34,7 @@ const testFlags: TestFlags = {
   replicationDelay: 0,
   preventInitialize: preloadedTestFlags?.preventInitialize ?? false,
   initialize: null,
+  pinDropHovers: false,
   simulateDrag: false,
   simulateDrop: false,
   throttledScrollCursorIntoView: null,
