@@ -17,7 +17,7 @@ let activeThoughtspaceStorage: ThoughtspaceStorage = 'memory'
 /** Selects thoughtspace storage before a Puppeteer page starts the app. */
 const preloadThoughtspaceStorage = (target: Page, storage: ThoughtspaceStorage) =>
   target.evaluateOnNewDocument(storage => {
-    const preloadedWindow = window as unknown as PreloadedEmWindow
+    const preloadedWindow: PreloadedEmWindow = window
     preloadedWindow.em = {
       ...preloadedWindow.em,
       testFlags: {

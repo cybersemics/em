@@ -91,7 +91,6 @@ const createTreecrdtThoughtspace = (): TreecrdtThoughtspace => {
   let lifecycleTail: Promise<void> = Promise.resolve()
   let initPromise: Promise<InitResult> | null = null
   let dropPromise: Promise<void> | null = null
-  let initStorage: ThoughtspaceStorage | null = null
   const provider = createTreecrdtDataProvider()
   const websocketSync = createTreecrdtWebSocketSync()
 
@@ -140,7 +139,6 @@ const createTreecrdtThoughtspace = (): TreecrdtThoughtspace => {
     if (dropPromise) return dropPromise
 
     initPromise = null
-    initStorage = null
     const promise = lifecycleTail.then(dropClient)
     dropPromise = promise
     /** Clears this drop's single-flight slot without disturbing a newer queued drop. */
@@ -195,12 +193,8 @@ const createTreecrdtThoughtspace = (): TreecrdtThoughtspace => {
 
   /** Coalesces adjacent init calls and preserves their order relative to drop. */
   const init = (options: ThoughtspaceRuntimeInitOptions): Promise<InitResult> => {
-    if (initStorage && initStorage !== options.storage) {
-      return Promise.reject(new Error('TreeCRDT storage cannot change before the thoughtspace is dropped.'))
-    }
     if (initPromise) return initPromise
 
-    initStorage = options.storage
     dropPromise = null
     const promise = lifecycleTail.then(() => initializeClient(options))
     initPromise = promise

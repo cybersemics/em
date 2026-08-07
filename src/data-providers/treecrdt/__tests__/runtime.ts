@@ -30,7 +30,6 @@ beforeAll(async () => {
 })
 
 beforeEach(() => {
-  mockAcquireTreecrdtSessionLock.mockResolvedValue('acquired')
   mockCreateTreecrdtClient.mockImplementation(createRealTreecrdtClient)
 })
 
@@ -49,22 +48,6 @@ it.each([
 
   await expect(treecrdtThoughtspace.acquireAccess()).resolves.toEqual(access)
   expect(mockAcquireTreecrdtSessionLock).toHaveBeenCalledWith()
-})
-
-it('rejects a different storage until drop and accepts it afterward', async () => {
-  const treecrdtThoughtspace = createTreecrdtThoughtspace()
-
-  await treecrdtThoughtspace.init({ storage: 'memory' })
-  await expect(treecrdtThoughtspace.init({ storage: 'persistent' })).rejects.toThrow(
-    'TreeCRDT storage cannot change before the thoughtspace is dropped.',
-  )
-  expect(mockCreateTreecrdtClient).toHaveBeenCalledTimes(1)
-
-  await treecrdtThoughtspace.drop()
-  const stopAfterDrop = new Error('stop after drop')
-  mockCreateTreecrdtClient.mockRejectedValueOnce(stopAfterDrop)
-  await expect(treecrdtThoughtspace.init({ storage: 'persistent' })).rejects.toBe(stopAfterDrop)
-  expect(mockCreateTreecrdtClient).toHaveBeenCalledTimes(2)
 })
 
 it('maps em persistent storage to TreeCRDT OPFS client options', async () => {
@@ -90,9 +73,10 @@ it('maps em persistent storage to TreeCRDT OPFS client options', async () => {
 
 it('creates the client lazily', async () => {
   const treecrdtThoughtspace = createTreecrdtThoughtspace()
+  mockAcquireTreecrdtSessionLock.mockResolvedValueOnce('acquired')
 
   expect(mockCreateTreecrdtClient).not.toHaveBeenCalled()
-  await treecrdtThoughtspace.acquireAccess()
+  await expect(treecrdtThoughtspace.acquireAccess()).resolves.toEqual({ status: 'acquired' })
   expect(mockCreateTreecrdtClient).not.toHaveBeenCalled()
 
   await treecrdtThoughtspace.init({ storage: 'memory' })

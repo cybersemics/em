@@ -13,9 +13,6 @@ import initEvents from './util/initEvents'
 
 const container = document.getElementById('root')
 const root = createRoot(container!)
-const thoughtspaceStorage = testFlags.thoughtspaceStorage ?? 'persistent'
-
-testFlags.initialize = () => initialize({ storage: thoughtspaceStorage })
 
 /** Acquires thoughtspace access before initializing or rendering the interactive app. */
 const bootstrap = async (): Promise<void> => {
@@ -29,7 +26,7 @@ const bootstrap = async (): Promise<void> => {
   initEvents(store)
 
   if (!testFlags.preventInitialize) {
-    void initialize({ storage: thoughtspaceStorage })
+    void initialize()
   }
 
   root.render(<App />)

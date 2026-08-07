@@ -125,8 +125,10 @@ const initializationStartedPromise = new Promise<void>(resolve => {
 })
 
 /** Initialize local db and window events. */
-export const initialize = (options: InitializeOptions): ReturnType<typeof initializeInternal> => {
-  initializationPromise = initializeInternal(options)
+export const initialize = (options?: InitializeOptions): ReturnType<typeof initializeInternal> => {
+  initializationPromise = initializeInternal({
+    storage: options?.storage ?? testFlags.thoughtspaceStorage ?? 'persistent',
+  })
   resolveInitializationStarted?.()
   resolveInitializationStarted = null
   return initializationPromise
@@ -137,6 +139,8 @@ export const waitForInitialized = async (): Promise<void> => {
   if (!initializationPromise) await initializationStartedPromise
   await initializationPromise
 }
+
+testFlags.initialize = initialize
 
 /** Partially apply state to a function. */
 const withState =

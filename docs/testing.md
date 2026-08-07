@@ -594,7 +594,7 @@ Do not import Puppeteer helpers into iOS tests or assume identical driver behavi
 
 ### Thoughtspace storage
 
-Puppeteer preloads `testFlags.thoughtspaceStorage` before the application starts. Browser tests use in-memory storage by default, while persistence-specific suites call `usePersistentTreecrdtStorage` to use OPFS. The application entry point passes the selected storage to `initialize`, so both modes use the same application startup path.
+Puppeteer preloads `testFlags.thoughtspaceStorage` before the application starts. Browser tests use in-memory storage by default, while persistence-specific suites call `usePersistentTreecrdtStorage` to use OPFS. When no storage is passed explicitly, `initialize` uses the preloaded value and otherwise defaults to persistent storage.
 
 ### Drag-and-drop visualization
 
