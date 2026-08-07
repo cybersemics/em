@@ -1,3 +1,4 @@
+import { treecrdt } from '@treecrdt/wa-sqlite/vite-plugin'
 import basicSsl from '@vitejs/plugin-basic-ssl'
 import react from '@vitejs/plugin-react'
 import { execSync } from 'child_process'
@@ -7,6 +8,11 @@ import { type Plugin, type PreviewServer, type ViteDevServer, defineConfig } fro
 import checker from 'vite-plugin-checker'
 import { createHtmlPlugin } from 'vite-plugin-html'
 import { VitePWA } from 'vite-plugin-pwa'
+
+const crossOriginIsolationHeaders = {
+  'Cross-Origin-Opener-Policy': 'same-origin',
+  'Cross-Origin-Embedder-Policy': 'require-corp',
+}
 
 const useHttps = !process.env.HTTP
 
@@ -81,11 +87,19 @@ export default defineConfig({
   build: {
     outDir: 'build',
   },
+  worker: {
+    format: 'es',
+  },
+  optimizeDeps: {
+    // Avoid crawling stale local checkout directories left behind after removing the TreeCRDT submodule.
+    entries: ['index.html'],
+  },
   define: {
     __COMMIT_HASH__: JSON.stringify(commitHash),
   },
   plugins: [
     react(),
+    treecrdt({ outDir: 'public/wa-sqlite' }),
     // Do not run vite-plugin-checker during tests, as it will clear the test output.
     // The dev server is usually running anyway, and tsc is run in lint:tsc which is triggered prepush.
     ...[!process.env.VITEST && !process.env.PUPPETEER ? checker({ typescript: true }) : undefined],
@@ -133,10 +147,10 @@ export default defineConfig({
           },
         }
       : {}),
+    headers: crossOriginIsolationHeaders,
   },
   preview: {
-    // `yarn servebuild` (vite preview) is what ios.yml/tdd.yml actually run behind the tunnel —
-    // preview.allowedHosts doesn't inherit server.allowedHosts, so it needs its own entry too.
+    headers: crossOriginIsolationHeaders,
     allowedHosts: ['.emthought.cc'],
   },
 })

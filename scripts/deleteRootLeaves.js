@@ -14,7 +14,7 @@ if (!file) {
 const thoughtIndices = JSON.parse(fs.readFileSync(file, 'utf8'))
 const { thoughtIndex, lexemeIndex } = thoughtIndices
 
-const rootChildren = getChildrenByContext(thoughtIndex, thoughtIndex.__ROOT__, context)
+const rootChildren = getChildrenByContext(thoughtIndex, thoughtIndex['00000000000000000000000000000000'], context)
 
 // delete all leaves in the root
 rootChildren.forEach(rootChild => {

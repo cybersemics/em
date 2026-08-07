@@ -14,7 +14,7 @@ if (!file || context.length === 0) {
 const thoughtIndices = JSON.parse(fs.readFileSync(file, 'utf8'))
 const { thoughtIndex, lexemeIndex } = thoughtIndices
 
-const thought = contextToThought(thoughtIndices, thoughtIndex.__ROOT__, context)
+const thought = contextToThought(thoughtIndices, thoughtIndex['00000000000000000000000000000000'], context)
 if (!thought) {
   console.error(`${context} not found`)
   process.exit(1)

@@ -7,8 +7,10 @@ import press from '../helpers/press'
 import refresh from '../helpers/refresh'
 import waitForEditable from '../helpers/waitForEditable'
 import waitUntil from '../helpers/waitUntil'
+import { usePersistentTreecrdtStorage } from '../setup'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
+usePersistentTreecrdtStorage()
 
 it('set the cursor to a thought in the home context on load', async () => {
   const importText = `

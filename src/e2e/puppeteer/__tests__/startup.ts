@@ -1,24 +1,16 @@
-import type { WindowEm } from '../../../initialize'
+import type { PreloadedEmWindow } from '../../../@types'
 import getEditingText from '../helpers/getEditingText'
 import { page } from '../session'
-
-type StartupWindow = Window & {
-  em?: {
-    testFlags?: {
-      preventInitialize?: boolean
-    }
-  }
-}
 
 vi.setConfig({ testTimeout: 30000, hookTimeout: 20000 })
 
 it('handles keyboard commands while thoughtspace initialization is delayed', async () => {
   await page.evaluateOnNewDocument(() => {
-    const startupWindow = window as StartupWindow
-    startupWindow.em = {
-      ...(startupWindow.em ?? {}),
+    const preloadedWindow = window as unknown as PreloadedEmWindow
+    preloadedWindow.em = {
+      ...preloadedWindow.em,
       testFlags: {
-        ...startupWindow.em?.testFlags,
+        ...preloadedWindow.em?.testFlags,
         preventInitialize: true,
       },
     }
@@ -26,7 +18,7 @@ it('handles keyboard commands while thoughtspace initialization is delayed', asy
 
   await page.reload({ waitUntil: 'domcontentloaded' })
 
-  await page.waitForFunction(() => typeof (window.em as WindowEm).testFlags.initialize === 'function')
+  await page.waitForFunction(() => typeof window.em.testFlags.initialize === 'function')
   await page.waitForFunction(() => !document.querySelector('[aria-label=modal]'))
   await page.waitForSelector('[aria-label=empty-thoughtspace]')
   expect(await getEditingText()).toBeUndefined()
@@ -38,7 +30,7 @@ it('handles keyboard commands while thoughtspace initialization is delayed', asy
     expect(await getEditingText()).toBe('')
   } finally {
     await page.evaluate(async () => {
-      const em = window.em as WindowEm
+      const em = window.em
       await em.testFlags.initialize?.()
       em.testFlags.preventInitialize = false
     })

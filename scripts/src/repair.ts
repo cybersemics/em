@@ -22,10 +22,10 @@ import normalizeThought from '../lib/normalizeThought.js'
 import migrate from './migrate.js'
 import Database from './types/Database.js'
 
-const ROOT_PARENT_ID = '__ROOT_PARENT_ID__' as ThoughtId
-const ABSOLUTE_TOKEN = '__ABSOLUTE__' as ThoughtId
-const EM_TOKEN = '__EM__' as ThoughtId
-const HOME_TOKEN = '__ROOT__' as ThoughtId
+const ROOT_PARENT_ID = '00000000000000000000000000000001' as ThoughtId
+const ABSOLUTE_TOKEN = '00000000000000000000000000000003' as ThoughtId
+const EM_TOKEN = '00000000000000000000000000000002' as ThoughtId
+const HOME_TOKEN = '00000000000000000000000000000000' as ThoughtId
 const HOME_PATH = [HOME_TOKEN] as Path
 
 let childrenInMultipleThoughts = 0
@@ -145,9 +145,10 @@ const moveThought = (thought: ThoughtDb, parentId: ThoughtId) => {
 
 const moveThoughtToOrphanage = (thought: ThoughtDb) => {
   // create orphanage if it doesn't exist
-  if (!db.thoughtIndex.orphanage) {
-    db.thoughtIndex.orphanage = {
-      id: 'orphanage' as ThoughtId,
+  const ORPHANAGE_ID = '00000000000000000000000000aaaa00' as ThoughtId
+  if (!db.thoughtIndex[ORPHANAGE_ID]) {
+    db.thoughtIndex[ORPHANAGE_ID] = {
+      id: ORPHANAGE_ID,
       value: 'ORPHANAGE',
       rank: Math.random(),
       children: {},
@@ -157,23 +158,23 @@ const moveThoughtToOrphanage = (thought: ThoughtDb) => {
     }
 
     // add orphanage to root children
-    db.thoughtIndex.__ROOT__.children!.orphanage = {
-      ..._.omit(db.thoughtIndex.orphanage, 'children'),
+    db.thoughtIndex[HOME_TOKEN].children![ORPHANAGE_ID] = {
+      ..._.omit(db.thoughtIndex[ORPHANAGE_ID], 'children'),
       childrenMap: {},
     }
 
     // add orphanage Lexeme
     const lexemeKey = hashThought('ORPHANAGE')
     db.lexemeIndex[lexemeKey] = {
-      id: 'orphanage',
-      contexts: { ['orphanage' as ThoughtId]: true },
+      id: ORPHANAGE_ID,
+      contexts: { [ORPHANAGE_ID]: true },
       lemma: 'orphanage',
       created: timestamp(),
       lastUpdated: timestamp(),
     }
   }
 
-  moveThought(thought, 'orphanage' as ThoughtId)
+  moveThought(thought, ORPHANAGE_ID)
 }
 
 console.info('Reading db')

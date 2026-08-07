@@ -19,17 +19,14 @@ type TestFlags = {
   throttledScrollCursorIntoView: DebouncedFunc<(y: number, height: number) => void> | null
 }
 
-const preloadedTestFlags =
-  typeof window === 'undefined'
-    ? null
-    : ((window.em as { testFlags?: Partial<TestFlags> } | undefined)?.testFlags ?? null)
+const preloadedTestFlags = typeof window === 'undefined' ? null : (window.em?.testFlags ?? null)
 
 /** Test flags that are injected into window.em.testFlags. */
 const testFlags: TestFlags = {
   logActions: false,
   logMultigesture: false,
   expandHoverDelay: null,
-  replicationDelay: 0,
+  replicationDelay: preloadedTestFlags?.replicationDelay ?? 0,
   preventInitialize: preloadedTestFlags?.preventInitialize ?? false,
   initialize: null,
   simulateDrag: false,

@@ -33,7 +33,7 @@ describe('multicursor', () => {
 
     const state = store.getState()
     const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
-    expect(exported).toBe(`- __ROOT__
+    expect(exported).toBe(`- ${HOME_TOKEN}
   - a
   - b
   - c

@@ -1,5 +1,9 @@
+/* eslint-disable import/prefer-default-export */
 import chalk from 'chalk'
-import { Browser, BrowserContext, ConsoleMessage, Device } from 'puppeteer'
+import { Browser, BrowserContext, ConsoleMessage, Device, Page } from 'puppeteer'
+import type { PreloadedEmWindow } from '../../@types'
+import type { TreecrdtRuntimeConfig } from '../../data-providers/treecrdt/runtime'
+import createId from '../../util/createId'
 import { page, setPage } from './session'
 
 // eslint-disable-next-line @typescript-eslint/no-namespace, @typescript-eslint/prefer-namespace-keyword
@@ -7,7 +11,76 @@ declare module global {
   const browser: Browser
 }
 
+type TreecrdtTestRuntime = 'dedicated-worker' | 'direct' | 'shared-worker'
+
+type TreecrdtTestProfile =
+  | Readonly<{ storage: 'memory' }>
+  | Readonly<{
+      storage: 'persistent'
+      runtime: TreecrdtTestRuntime
+    }>
+
+const memoryTreecrdtProfile: TreecrdtTestProfile = { storage: 'memory' }
+
 let context: BrowserContext
+let activeTreecrdtProfile: TreecrdtTestProfile = memoryTreecrdtProfile
+
+/** Returns the explicit TreeCRDT configuration for a Puppeteer page. */
+const getTreecrdtRuntimeConfig = (docId: string, profile: TreecrdtTestProfile): TreecrdtRuntimeConfig =>
+  profile.storage === 'persistent'
+    ? {
+        client: {
+          docId,
+          runtime: profile.runtime,
+          storage: 'persistent',
+        },
+        tabPolicy: 'single',
+      }
+    : {
+        client: {
+          docId,
+          runtime: 'direct',
+          storage: 'memory',
+        },
+        tabPolicy: 'multiple',
+      }
+
+/** Opens an additional page with the current TreeCRDT test configuration. */
+export const createTreecrdtTestPage = async (
+  browserContext: BrowserContext,
+  docId: string,
+  profile: TreecrdtTestProfile,
+): Promise<Page> => {
+  const target = await browserContext.newPage()
+  await target.evaluateOnNewDocument(
+    treecrdt => {
+      const preloadedWindow = window as unknown as PreloadedEmWindow
+      preloadedWindow.em = {
+        ...preloadedWindow.em,
+        treecrdt,
+      }
+    },
+    getTreecrdtRuntimeConfig(docId, profile),
+  )
+  return target
+}
+
+/** Use persistent OPFS storage for tests that verify reload/materialization from storage. */
+export const usePersistentTreecrdtStorage = ({
+  runtime = 'direct',
+}: { runtime?: TreecrdtTestRuntime } = {}): TreecrdtTestProfile => {
+  const profile = { storage: 'persistent', runtime } as const
+
+  beforeAll(() => {
+    activeTreecrdtProfile = profile
+  })
+
+  afterAll(() => {
+    activeTreecrdtProfile = memoryTreecrdtProfile
+  })
+
+  return profile
+}
 
 /** Opens em in a new incognito window in Puppeteer. */
 const setup = async ({
@@ -33,6 +106,29 @@ const setup = async ({
   if (emulatedDevice) {
     await page.emulate(emulatedDevice)
   }
+
+  const sessionId = createId()
+
+  await page.evaluateOnNewDocument(sessionId => {
+    if (!sessionStorage.getItem('__em_puppeteer_storage_initialized')) {
+      localStorage.clear()
+      sessionStorage.setItem('__em_puppeteer_storage_initialized', '1')
+    }
+
+    localStorage.setItem('tsid', sessionId)
+    localStorage.setItem('accessToken', sessionId)
+  }, sessionId)
+
+  await page.evaluateOnNewDocument(
+    treecrdt => {
+      const preloadedWindow = window as unknown as PreloadedEmWindow
+      preloadedWindow.em = {
+        ...preloadedWindow.em,
+        treecrdt,
+      }
+    },
+    getTreecrdtRuntimeConfig(sessionId, activeTreecrdtProfile),
+  )
 
   page.on('dialog', async dialog => dialog.accept())
 
@@ -77,8 +173,18 @@ const setup = async ({
 
 beforeEach(setup, 60000)
 
+// TreeCRDT teardown can drain OPFS writes from import-heavy tests before dropping storage.
 afterEach(async () => {
   if (page) {
+    await page
+      .evaluate(async () => {
+        await window.em?.testHelpers?.waitForThoughtspaceRuntimeIdle?.()
+        await window.em?.testHelpers?.dropThoughtspace?.()
+      })
+      .catch(() => {
+        // Ignore teardown errors when a failing test has already closed or navigated the page.
+      })
+
     await page.close().catch(() => {
       // Ignore errors when closing the page.
     })
@@ -89,4 +195,4 @@ afterEach(async () => {
       // Ignore errors when closing the context.
     })
   }
-})
+}, 60000)

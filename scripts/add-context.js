@@ -4,8 +4,8 @@ const fs = require('fs')
 const path = require('path')
 const murmurHash3 = require('murmurhash3js')
 
-const EM_TOKEN = '__EM__'
-const HOME_TOKEN = '__ROOT__'
+const EM_TOKEN = '00000000000000000000000000000002'
+const HOME_TOKEN = '00000000000000000000000000000000'
 const SEPARATOR_TOKEN = '__SEP__'
 const appendContext = (context, child) => unroot([...context, child])
 const escapeRegEx = s => s.replace(/[-[\]{}()*+?.\\^$|#\s]/g, '\\$&')
