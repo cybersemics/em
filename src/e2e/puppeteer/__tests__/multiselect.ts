@@ -104,6 +104,77 @@ describe('multiselect', () => {
     expect(copied['text/html']).toContain('c')
   })
 
+  // https://github.com/cybersemics/em/issues/4738
+  it('does not expand a thought that the multiselect is extended onto', async () => {
+    await paste(`
+        - a
+          - x
+        - b
+        - c
+        `)
+
+    await clickThought('c')
+
+    await press('ArrowUp', { shift: true })
+    await page.waitForFunction(
+      () => document.querySelectorAll('[aria-label="bullet"][data-highlighted="true"]').length === 2,
+    )
+
+    await press('ArrowUp', { shift: true })
+    await page.waitForFunction(
+      () => document.querySelectorAll('[aria-label="bullet"][data-highlighted="true"]').length === 3,
+    )
+
+    const visibleThoughts = await page.$$eval('[data-editable]', elements => elements.map(el => el.innerHTML))
+
+    // a is selected, so its subthought x must stay collapsed
+    expect(visibleThoughts).toEqual(['a', 'b', 'c'])
+  })
+
+  // https://github.com/cybersemics/em/pull/4750
+  it('points the bullet of a selected thought to the right, and expands it when the multiselect is cancelled', async () => {
+    await paste(`
+        - a
+        - b
+        - c
+          - y
+        `)
+
+    await clickThought('a')
+
+    await press('ArrowDown', { shift: true })
+    await page.waitForFunction(
+      () => document.querySelectorAll('[aria-label="bullet"][data-highlighted="true"]').length === 2,
+    )
+
+    await press('ArrowDown', { shift: true })
+    await page.waitForFunction(
+      () => document.querySelectorAll('[aria-label="bullet"][data-highlighted="true"]').length === 3,
+    )
+
+    /** Returns the rotation of the given thought's bullet. The triangle is rotated a quarter turn to point down when the thought is expanded, and is unrotated to point right when it is collapsed. */
+    const bulletRotation = (value: string) =>
+      page.evaluate((value: string) => {
+        const editable = Array.from(document.querySelectorAll('[data-editable]')).find(
+          element => element.textContent === value,
+        )
+        const bullet = editable!.closest('[aria-label="thought-container"]')!.querySelector('[data-bullet="parent"]')
+        return getComputedStyle(bullet!).transform
+      }, value)
+
+    // c is selected, so it stays collapsed and its bullet must point right
+    expect(await bulletRotation('c')).toBe('none')
+
+    await press('Escape')
+    await page.waitForFunction(
+      () => document.querySelectorAll('[aria-label="bullet"][data-highlighted="true"]').length === 0,
+    )
+
+    // the cursor is still on c, which expands once it is no longer selected
+    await waitForEditable('y')
+    expect(await bulletRotation('c')).not.toBe('none')
+  })
+
   // https://github.com/cybersemics/em/issues/4728
   it('shows the multiselect highlight on table column 1 thoughts', async () => {
     await paste(`

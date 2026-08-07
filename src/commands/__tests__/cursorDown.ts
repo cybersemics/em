@@ -1,9 +1,11 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { executeCommand } from '../../commands'
+import contextToPath from '../../selectors/contextToPath'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursorAtFirstMatch } from '../../test-helpers/addMulticursorAtFirstMatch'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import hashPath from '../../util/hashPath'
 import headValue from '../../util/headValue'
 import cursorDownCommand from '../cursorDown'
 
@@ -123,6 +125,31 @@ describe('cursorDown Shift+Down multiselect in table view second column', () => 
     executeCommand(cursorDownCommand, { store, event: shiftDownEvent })
 
     expect(multicursorValues()).toEqual(['a', 'b'])
+  })
+
+  // https://github.com/cybersemics/em/issues/4738
+  it('does not expand the thought the multiselect is extended onto', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+          - b
+          - c
+            - x
+        `,
+      }),
+      setCursor(['a']),
+    ])
+
+    executeCommand(cursorDownCommand, { store, event: shiftDownEvent })
+    executeCommand(cursorDownCommand, { store, event: shiftDownEvent })
+
+    const state = store.getState()
+    const pathC = contextToPath(state, ['c'])!
+
+    expect(multicursorValues()).toEqual(['a', 'b', 'c'])
+    // c is selected, so its subthought x must stay collapsed
+    expect(state.expanded[hashPath(pathC)]).toBeUndefined()
   })
 })
 
