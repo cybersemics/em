@@ -97,6 +97,8 @@ it('routes a native historyUndo to em undo, reverting thought creation', async (
   // the newly created thought should be removed entirely, leaving an empty thoughtspace
   await waitUntil(() => !document.querySelector('[data-editable]'))
 
+  // removeHome only strips the home token when the root has children, so an empty thoughtspace exports
+  // as the bare root
   const exported = await exportThoughts()
-  expect(exported).toBe('')
+  expect(exported).toBe('- __ROOT__')
 })
