@@ -52,17 +52,6 @@ it.each([
   expect(mockAcquireTreecrdtSessionLock).toHaveBeenCalledWith()
 })
 
-it('rejects invalid storage at runtime', async () => {
-  const treecrdtThoughtspace = createTreecrdtThoughtspace()
-  // @ts-expect-error Runtime validation protects callers that cross an untyped JavaScript boundary.
-  const invalidOptions: Parameters<typeof treecrdtThoughtspace.init>[0] = { storage: 'invalid' }
-
-  await expect(treecrdtThoughtspace.init(invalidOptions)).rejects.toThrow(
-    'TreeCRDT storage must be memory or persistent.',
-  )
-  expect(mockCreateTreecrdtClient).not.toHaveBeenCalled()
-})
-
 it('rejects a different storage until drop and accepts it afterward', async () => {
   const treecrdtThoughtspace = createTreecrdtThoughtspace()
 

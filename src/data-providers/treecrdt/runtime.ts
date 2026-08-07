@@ -195,9 +195,6 @@ const createTreecrdtThoughtspace = (): TreecrdtThoughtspace => {
 
   /** Coalesces adjacent init calls and preserves their order relative to drop. */
   const init = (options: ThoughtspaceRuntimeInitOptions): Promise<InitResult> => {
-    if (options.storage !== 'memory' && options.storage !== 'persistent') {
-      return Promise.reject(new Error('TreeCRDT storage must be memory or persistent.'))
-    }
     if (initStorage && initStorage !== options.storage) {
       return Promise.reject(new Error('TreeCRDT storage cannot change before the thoughtspace is dropped.'))
     }
