@@ -1,5 +1,5 @@
 import type { Operation } from '@treecrdt/interface'
-import { type ClientOptions, type RuntimeMode, type TreecrdtClient, createTreecrdtClient } from '@treecrdt/wa-sqlite'
+import { type ClientOptions, type TreecrdtClient, createTreecrdtClient } from '@treecrdt/wa-sqlite'
 import type { DataProvider } from '../DataProvider'
 import { initPermissionsStore } from '../permissionsStore'
 import type {
@@ -18,30 +18,6 @@ import { getTreecrdtWriteBarrierVersion, waitForTreecrdtWriteBarrier, withTreecr
 type PersistTreecrdtBatch = Parameters<DataProvider['updateThoughts']>[0] & {
   local?: boolean
 }
-
-/** App-level TreeCRDT client configuration. Omit it to use persistent browser defaults. */
-type TreecrdtClientConfig = Readonly<{
-  storage: ThoughtspaceStorage
-  runtime: RuntimeMode
-  docId?: string
-}>
-
-type MultipleTabTreecrdtClientConfig = TreecrdtClientConfig &
-  Readonly<{
-    storage: 'memory'
-    runtime: 'direct'
-  }>
-
-/** TreeCRDT client settings and em's supported tab-access policies. */
-export type TreecrdtRuntimeConfig =
-  | Readonly<{
-      client?: TreecrdtClientConfig
-      tabPolicy: 'single'
-    }>
-  | Readonly<{
-      client: MultipleTabTreecrdtClientConfig
-      tabPolicy: 'multiple'
-    }>
 
 /** One app-scoped TreeCRDT thoughtspace with its bound data provider and lifecycle. */
 interface TreecrdtThoughtspace extends ThoughtspaceRuntime {
@@ -77,23 +53,19 @@ const clientIdToReplicaId = (clientId: string): Uint8Array =>
         return replicaId
       })()
 
-/** Converts em client settings to the full TreeCRDT client options. */
-const getTreecrdtClientOptions = (config?: TreecrdtClientConfig): ClientOptions => {
-  const storage = config?.storage ?? 'persistent'
-
-  return {
-    storage:
-      storage === 'memory'
-        ? { type: 'memory' }
-        : {
-            type: 'opfs',
-            filename: `/treecrdt-em-${tsid}.db`,
-            fallback: 'throw',
-          },
-    runtime: { type: config?.runtime ?? (storage === 'memory' ? 'direct' : 'dedicated-worker') },
-    docId: config?.docId ?? tsid,
-  }
-}
+/** Converts the selected storage lifetime to TreeCRDT client options. */
+const getTreecrdtClientOptions = (storage: ThoughtspaceStorage): ClientOptions => ({
+  storage:
+    storage === 'memory'
+      ? { type: 'memory' }
+      : {
+          type: 'opfs',
+          filename: `/treecrdt-em-${tsid}.db`,
+          fallback: 'throw',
+        },
+  runtime: { type: storage === 'memory' ? 'direct' : 'dedicated-worker' },
+  docId: tsid,
+})
 
 /** Waits until both local writes and materialization refreshes are stable. */
 const waitForStableIdle = async (): Promise<void> => {
@@ -110,18 +82,8 @@ const waitForStableIdle = async (): Promise<void> => {
   )
 }
 
-/** Creates one TreeCRDT client owner and its bound app thoughtspace. */
-const createTreecrdtThoughtspace = ({
-  client: clientConfig,
-  tabPolicy,
-}: TreecrdtRuntimeConfig): TreecrdtThoughtspace => {
-  const storage = clientConfig?.storage ?? 'persistent'
-  const workerRuntime = clientConfig?.runtime ?? 'dedicated-worker'
-
-  if (tabPolicy === 'multiple' && (storage !== 'memory' || workerRuntime !== 'direct')) {
-    throw new Error('Multiple-tab TreeCRDT access requires in-memory storage with the direct runtime.')
-  }
-
+/** Creates an inert TreeCRDT client owner whose storage is selected during initialization. */
+const createTreecrdtThoughtspace = (): TreecrdtThoughtspace => {
   type InitResult = { clientId: string }
 
   let client: TreecrdtClient | null = null
@@ -129,13 +91,12 @@ const createTreecrdtThoughtspace = ({
   let lifecycleTail: Promise<void> = Promise.resolve()
   let initPromise: Promise<InitResult> | null = null
   let dropPromise: Promise<void> | null = null
+  let initStorage: ThoughtspaceStorage | null = null
   const provider = createTreecrdtDataProvider()
   const websocketSync = createTreecrdtWebSocketSync()
 
-  /** Applies em's tab policy before the TreeCRDT client is opened. */
+  /** Applies the app's single-tab policy before the TreeCRDT client is opened. */
   const acquireAccess = async (): Promise<ThoughtspaceAccessResult> => {
-    if (tabPolicy === 'multiple') return { status: 'acquired' }
-
     const lockStatus = await acquireTreecrdtSessionLock()
 
     return lockStatus === 'acquired'
@@ -179,6 +140,7 @@ const createTreecrdtThoughtspace = ({
     if (dropPromise) return dropPromise
 
     initPromise = null
+    initStorage = null
     const promise = lifecycleTail.then(dropClient)
     dropPromise = promise
     /** Clears this drop's single-flight slot without disturbing a newer queued drop. */
@@ -204,7 +166,7 @@ const createTreecrdtThoughtspace = ({
     })
 
   /** Opens and binds one client. Lifecycle serialization provides retryable single-flight behavior. */
-  const initializeClient = async (options?: ThoughtspaceRuntimeInitOptions): Promise<InitResult> => {
+  const initializeClient = async (options: ThoughtspaceRuntimeInitOptions): Promise<InitResult> => {
     let nextClient: TreecrdtClient | null = null
     let nextUnsubscribeMaterialization: (() => void) | null = null
 
@@ -212,11 +174,11 @@ const createTreecrdtThoughtspace = ({
       if (client) throw new Error('TreeCRDT client cleanup is incomplete. Retry drop before initialization.')
       const clientId = await clientIdReady
       await initPermissionsStore()
-      nextClient = await createTreecrdtClient(getTreecrdtClientOptions(clientConfig))
+      nextClient = await createTreecrdtClient(getTreecrdtClientOptions(options.storage))
       nextUnsubscribeMaterialization = await provider.bindClient(
         nextClient,
         clientIdToReplicaId(clientId),
-        options?.materialization,
+        options.materialization,
       )
       await websocketSync.tryStartFromEnv(nextClient)
 
@@ -232,9 +194,16 @@ const createTreecrdtThoughtspace = ({
   }
 
   /** Coalesces adjacent init calls and preserves their order relative to drop. */
-  const init = (options?: ThoughtspaceRuntimeInitOptions): Promise<InitResult> => {
+  const init = (options: ThoughtspaceRuntimeInitOptions): Promise<InitResult> => {
+    if (options.storage !== 'memory' && options.storage !== 'persistent') {
+      return Promise.reject(new Error('TreeCRDT storage must be memory or persistent.'))
+    }
+    if (initStorage && initStorage !== options.storage) {
+      return Promise.reject(new Error('TreeCRDT storage cannot change before the thoughtspace is dropped.'))
+    }
     if (initPromise) return initPromise
 
+    initStorage = options.storage
     dropPromise = null
     const promise = lifecycleTail.then(() => initializeClient(options))
     initPromise = promise

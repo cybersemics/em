@@ -6,15 +6,12 @@ import createTreecrdtThoughtspace from '../runtime'
 import { createIndexedChildrenMap } from '../thoughtspace'
 
 /** Initializes an isolated in-memory TreeCRDT client and thoughtspace for unit tests. */
-const treecrdt = createTreecrdtThoughtspace({
-  client: { storage: 'memory', runtime: 'direct' },
-  tabPolicy: 'multiple',
-})
+const treecrdt = createTreecrdtThoughtspace()
 const treecrdtThoughtspace = treecrdt.db
 
 /** Initializes the bound in-memory test runtime. */
 const initTestThoughtspace = async (): Promise<void> => {
-  await treecrdt.init()
+  await treecrdt.init({ storage: 'memory' })
 }
 
 const PIN_ID = '00000000000000000000000000000101' as ThoughtId
@@ -146,19 +143,13 @@ it('queues writes issued before initialization and applies them to the bound cli
   await expect(treecrdtThoughtspace.getThoughtById(PARENT_ID)).resolves.toMatchObject({ value: 'queued' })
 })
 
-it('keeps separately created thoughtspace sessions isolated', async () => {
-  const first = createTreecrdtThoughtspace({
-    client: { storage: 'memory', runtime: 'direct', docId: 'isolated-first' },
-    tabPolicy: 'multiple',
-  })
-  const second = createTreecrdtThoughtspace({
-    client: { storage: 'memory', runtime: 'direct', docId: 'isolated-second' },
-    tabPolicy: 'multiple',
-  })
+it('keeps separately created thoughtspace instances isolated', async () => {
+  const first = createTreecrdtThoughtspace()
+  const second = createTreecrdtThoughtspace()
 
   try {
-    await first.init()
-    await second.init()
+    await first.init({ storage: 'memory' })
+    await second.init({ storage: 'memory' })
 
     await persistThoughtsTo(first.db, [thought(PARENT_ID, EM_TOKEN, 'first', 0)])
     await persistThoughtsTo(second.db, [thought(PARENT_ID, EM_TOKEN, 'second', 0)])

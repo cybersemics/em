@@ -27,7 +27,7 @@ const initStore = async ({ persist, allowTutorial }: Params = {}) => {
   if (!persist) {
     await waitForThoughtspaceIdle()
     await thoughtspaceRuntime.drop()
-    await thoughtspaceRuntime.init()
+    await thoughtspaceRuntime.init({ storage: 'memory' })
     store.dispatch(clear())
   }
 

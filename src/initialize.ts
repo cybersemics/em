@@ -1,6 +1,5 @@
 import _ from 'lodash'
 import moize from 'moize'
-import type { BootstrapConfigOverrides } from './@types'
 import CommandId from './@types/CommandId'
 import Context from './@types/Context'
 import MimeType from './@types/MimeType'
@@ -15,7 +14,7 @@ import { pullActionCreator as pull } from './actions/pull'
 import { setCursorActionCreator as setCursor } from './actions/setCursor'
 import { updateThoughtsActionCreator } from './actions/updateThoughts'
 import { commandById, executeCommand } from './commands'
-import db, { thoughtspaceRuntime } from './data-providers/thoughtspace'
+import db, { type ThoughtspaceStorage, thoughtspaceRuntime } from './data-providers/thoughtspace'
 import * as selection from './device/selection'
 import testFlags from './e2e/testFlags'
 import contextToThoughtId from './selectors/contextToThoughtId'
@@ -58,12 +57,15 @@ const initializeCursor = async () => {
   }
 }
 
+type InitializeOptions = { storage: ThoughtspaceStorage }
+
 /** Initialize local db and window events. */
-const initializeInternal = async () => {
+const initializeInternal = async ({ storage }: InitializeOptions) => {
   initOfflineStatusStore(/* websocket */)
   const eventHandlers = initEvents(store)
 
   const { clientId } = await thoughtspaceRuntime.init({
+    storage,
     materialization: {
       getSnapshot: () => {
         const state = store.getState()
@@ -123,8 +125,8 @@ const initializationStartedPromise = new Promise<void>(resolve => {
 })
 
 /** Initialize local db and window events. */
-export const initialize = (): ReturnType<typeof initializeInternal> => {
-  initializationPromise = initializeInternal()
+export const initialize = (options: InitializeOptions): ReturnType<typeof initializeInternal> => {
+  initializationPromise = initializeInternal(options)
   resolveInitializationStarted?.()
   resolveInitializationStarted = null
   return initializationPromise
@@ -135,8 +137,6 @@ export const waitForInitialized = async (): Promise<void> => {
   if (!initializationPromise) await initializationStartedPromise
   await initializationPromise
 }
-
-testFlags.initialize = initialize
 
 /** Partially apply state to a function. */
 const withState =
@@ -171,10 +171,7 @@ const testHelpers = {
 }
 
 // add useful functions to window.em for debugging
-// Preserve bootstrap properties that were injected before the application bundle evaluated.
-const bootstrapOverrides = (window.em || {}) as BootstrapConfigOverrides
 const windowEm = {
-  ...bootstrapOverrides,
   contextToThoughtId: withState((state: State, thoughts: Context) => contextToThoughtId(state, thoughts)),
   exportContext: (contextOrThoughtId: Context | ThoughtId, format?: MimeType) =>
     exportContext(store.getState(), contextOrThoughtId, format),

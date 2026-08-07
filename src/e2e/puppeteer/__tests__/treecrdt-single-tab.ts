@@ -7,7 +7,7 @@ import { page, setPage } from '../session'
 import { createTreecrdtTestPage, usePersistentTreecrdtStorage } from '../setup'
 
 vi.setConfig({ testTimeout: 60000 })
-const treecrdtProfile = usePersistentTreecrdtStorage({ runtime: 'dedicated-worker' })
+const thoughtspaceStorage = usePersistentTreecrdtStorage()
 
 const PERSISTENCE_ERROR = /sqlite3_open_v2|SQL logic error|database is locked|Thoughtspace persistence failed|TreeCRDT/i
 
@@ -37,8 +37,8 @@ it('keeps one active tab across refreshes and successive tab handoffs', async ()
 
   const sessionId = await first.evaluate(() => localStorage.getItem('tsid'))
   if (!sessionId) throw new Error('Expected the Puppeteer session to define a tsid')
-  const second = await createTreecrdtTestPage(first.browserContext(), sessionId, treecrdtProfile)
-  const third = await createTreecrdtTestPage(first.browserContext(), sessionId, treecrdtProfile)
+  const second = await createTreecrdtTestPage(first.browserContext(), thoughtspaceStorage)
+  const third = await createTreecrdtTestPage(first.browserContext(), thoughtspaceStorage)
   captureRuntimeErrors(second, errors)
   captureRuntimeErrors(third, errors)
 

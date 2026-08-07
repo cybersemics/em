@@ -1,19 +1,10 @@
 import { UnknownAction } from 'redux'
-import type { TreecrdtRuntimeConfig } from '../data-providers/treecrdt/runtime'
 import type { WindowEm } from '../initialize'
 import Thunk from './Thunk'
 
-/** Application configuration resolved before runtime modules are evaluated. */
-export type BootstrapConfig = Readonly<{
-  treecrdt: TreecrdtRuntimeConfig
-}>
-
-/** Bootstrap properties that may be injected onto window.em before the application bundle evaluates. */
-export type BootstrapConfigOverrides = Partial<BootstrapConfig>
-
-/** Explicit pre-initialization view of window for bootstrap writers. */
+/** Explicit pre-initialization view of window for preload scripts. */
 export type PreloadedEmWindow = {
-  em?: BootstrapConfigOverrides & {
+  em?: {
     testFlags?: Partial<WindowEm['testFlags']>
   }
 }
@@ -25,7 +16,7 @@ declare global {
   }
 
   interface Window {
-    /** Fully initialized application namespace. Bootstrap writers use {@link PreloadedEmWindow}. */
+    /** Fully initialized application namespace. Preload writers use {@link PreloadedEmWindow}. */
     em: WindowEm
     debug: (message: string) => void
     // FIX: Used only in puppeteer test environment. So need way to switch global context based on environment.

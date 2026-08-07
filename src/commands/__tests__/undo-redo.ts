@@ -45,7 +45,7 @@ beforeEach(initStore)
  */
 describe('undo persistence', () => {
   it('persists undo thought change', async () => {
-    await initialize()
+    await initialize({ storage: 'memory' })
 
     store.dispatch([
       importText({
@@ -61,7 +61,7 @@ describe('undo persistence', () => {
     // clear and call initialize again to reload from local db (simulating page refresh)
     store.dispatch(clear())
 
-    await initialize()
+    await initialize({ storage: 'memory' })
     await vi.runAllTimersAsync()
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
@@ -77,7 +77,7 @@ describe('undo persistence', () => {
   }, 10000 /* increase timeout to give time for two calls to initialize() */)
 
   it('persists undo move placement after reload', async () => {
-    await initialize()
+    await initialize({ storage: 'memory' })
 
     store.dispatch([
       importText({
@@ -108,7 +108,7 @@ describe('undo persistence', () => {
 
     store.dispatch(clear())
 
-    await initialize()
+    await initialize({ storage: 'memory' })
     await vi.runAllTimersAsync()
     await waitForThoughtspaceIdle()
 
@@ -121,7 +121,7 @@ describe('undo persistence', () => {
   }, 10000 /* increase timeout to give time for two calls to initialize() */)
 
   it('persists redo move placement after reload', async () => {
-    await initialize()
+    await initialize({ storage: 'memory' })
 
     store.dispatch([
       importText({
@@ -161,7 +161,7 @@ describe('undo persistence', () => {
 
     store.dispatch(clear())
 
-    await initialize()
+    await initialize({ storage: 'memory' })
     await vi.runAllTimersAsync()
     await waitForThoughtspaceIdle()
 
@@ -290,7 +290,7 @@ describe('undo', () => {
   })
 
   it('cursor should restore correctly after undo archive', async () => {
-    await initialize()
+    await initialize({ storage: 'memory' })
 
     store.dispatch([newThought({ value: 'a' }), setCursor(['a']), { type: 'archiveThought' }, undo()])
 

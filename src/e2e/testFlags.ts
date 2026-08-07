@@ -1,4 +1,5 @@
 import { DebouncedFunc } from 'lodash'
+import type { ThoughtspaceStorage } from '../data-providers/thoughtspace'
 
 type TestFlags = {
   logActions: boolean
@@ -11,6 +12,8 @@ type TestFlags = {
   preventInitialize: boolean
   /** Starts app initialization when preventInitialize is enabled. */
   initialize: (() => Promise<unknown>) | null
+  /** Overrides production thoughtspace storage during test startup. */
+  thoughtspaceStorage: ThoughtspaceStorage | null
   /** Render drop-hover elements as blocks of color. */
   simulateDrag: boolean
   /** Render drop targets as blocks of color. */
@@ -29,6 +32,7 @@ const testFlags: TestFlags = {
   replicationDelay: preloadedTestFlags?.replicationDelay ?? 0,
   preventInitialize: preloadedTestFlags?.preventInitialize ?? false,
   initialize: null,
+  thoughtspaceStorage: preloadedTestFlags?.thoughtspaceStorage ?? null,
   simulateDrag: false,
   simulateDrop: false,
   throttledScrollCursorIntoView: null,
