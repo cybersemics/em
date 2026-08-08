@@ -5,10 +5,14 @@ import { act, createElement } from 'react'
 import { Provider } from 'react-redux'
 import SimplePath from '../../@types/SimplePath'
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { newThoughtActionCreator as newThought } from '../../actions/newThought'
+import { executeCommand } from '../../commands'
+import clearThoughtCommand from '../../commands/clearThought'
 import { HOME_TOKEN } from '../../constants'
 import * as selection from '../../device/selection'
 import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
+import getThoughtById from '../../selectors/getThoughtById'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
@@ -16,6 +20,7 @@ import { moveThoughtAtFirstMatchActionCreator as moveThought } from '../../test-
 import findThoughtByText from '../../test-helpers/queries/findThoughtByText'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import windowEvent from '../../test-helpers/windowEvent'
+import head from '../../util/head'
 import Editable from '../Editable'
 
 beforeEach(createTestApp)
@@ -149,4 +154,72 @@ it('inserts emoji spacing immediately before colored text', async () => {
 
   expect(editable.textContent).toBe('👋 Hello')
   expect(editable.innerHTML).toBe('👋 <font color="#ff0000">Hello</font>')
+})
+
+it('re-applies the outer formatting tag after clearThought (#3673)', async () => {
+  // formatSelection cannot be used to create the formatted value, as it applies formatting with document.execCommand,
+  // which is stubbed out as a noop in JSDOM. See: /setupTests.js. This will change as soon as #4657 is merged.
+  await dispatch([newThought({ value: '<b>hello</b>' }), setCursor(['<b>hello</b>'])])
+  await act(vi.runAllTimersAsync)
+
+  // findThoughtByText cannot be used here, as it only matches direct text children, not the nested <b>
+  const editable = document.querySelector<HTMLElement>(`[aria-label="editable-${head(store.getState().cursor!)}"]`)!
+  expect(editable).toBeVisible()
+
+  await act(async () => {
+    executeCommand(clearThoughtCommand)
+  })
+  await act(vi.runAllTimersAsync)
+  expect(editable.innerHTML).toBe('')
+
+  const user = userEvent.setup({ delay: null })
+  await user.type(editable, 'a')
+  await act(vi.runAllTimersAsync)
+
+  expect(getThoughtById(store.getState(), head(store.getState().cursor!))!.value).toBe('<b>a</b>')
+  expect(editable.innerHTML).toBe('<b>a</b>')
+})
+
+it('preserves a trailing space while typing', async () => {
+  act(() => {
+    windowEvent('keydown', { key: 'Enter' })
+  })
+
+  const editable = (await findThoughtByText(''))!
+  expect(editable).toBeVisible()
+
+  const user = userEvent.setup({ delay: null })
+  await user.type(editable, 'North Star ')
+  await act(vi.runAllTimersAsync)
+
+  expect(editable.textContent).toBe('North Star ')
+  expect(getThoughtById(store.getState(), head(store.getState().cursor!))!.value).toBe('North Star ')
+})
+
+it('trims whitespace on blur (#2159)', async () => {
+  // formatSelection cannot be used to create the formatted value, as it applies formatting with document.execCommand,
+  // which is stubbed out as a noop in JSDOM. See: /setupTests.js. This will change as soon as #4657 is merged.
+  await dispatch([newThought({ value: '<b>a b</b>' }), setCursor(['<b>a b</b>'])])
+  await act(vi.runAllTimersAsync)
+
+  // findThoughtByText cannot be used here, as it only matches direct text children, not the nested <b>
+  const editable = document.querySelector<HTMLElement>(`[aria-label="editable-${head(store.getState().cursor!)}"]`)!
+  expect(editable).toBeVisible()
+
+  // delete the "a", leaving a leading space inside the bold tag
+  editable.innerHTML = '<b> b</b>'
+  act(() => {
+    fireEvent.input(editable, { bubbles: true })
+  })
+  await act(vi.runAllTimersAsync)
+  expect(getThoughtById(store.getState(), head(store.getState().cursor!))!.value).toBe('<b> b</b>')
+
+  act(() => {
+    editable.focus()
+    editable.blur()
+  })
+  await act(vi.runAllTimersAsync)
+
+  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/html')
+  expect(exported).toContain('<b>b</b>')
 })
