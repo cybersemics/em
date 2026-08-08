@@ -330,6 +330,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
           if (g !== this.sequence[this.sequence.length - 1]) {
             // append the gesture to the sequence and call the onGesture handler
             this.sequence += g
+            debugLog.log('swipe', { dir: g, sequence: this.sequence })
             this.props.onGesture?.({ gesture: g, sequence: this.sequence, clientStart: this.clientStart!, e })
             updateGesture(this.sequence)
           }
