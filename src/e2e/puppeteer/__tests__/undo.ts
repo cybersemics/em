@@ -5,7 +5,9 @@ import exportThoughts from '../helpers/exportThoughts'
 import gesture from '../helpers/gesture'
 import getEditingText from '../helpers/getEditingText'
 import keyboard from '../helpers/keyboard'
+import newThought from '../helpers/newThought'
 import press from '../helpers/press'
+import waitUntil from '../helpers/waitUntil'
 import { page } from '../session'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
@@ -74,4 +76,29 @@ it('Undo Select All + Categorize chained command in one step', async () => {
   const highlightedCount = await page.evaluate(() => document.querySelectorAll('[data-highlighted=true]').length)
 
   expect(highlightedCount).toBe(0)
+})
+
+// https://github.com/cybersemics/em/issues/4722
+// The iOS three-finger-swipe and shake-to-undo gestures dispatch a cancelable beforeinput event with
+// inputType 'historyUndo' on the focused editable. em must intercept it and route it to its own undo so
+// that structural actions (e.g. creating a new thought) are reverted from Redux, rather than falling
+// through to WebKit's text-only native undo, which mutates the contenteditable directly and leaves the
+// newly created thought in place.
+it('routes a native historyUndo to em undo, reverting thought creation', async () => {
+  await newThought('hello')
+
+  // simulate the native undo gesture
+  await page.evaluate(() => {
+    document.activeElement?.dispatchEvent(
+      new InputEvent('beforeinput', { inputType: 'historyUndo', bubbles: true, cancelable: true }),
+    )
+  })
+
+  // the newly created thought should be removed entirely, leaving an empty thoughtspace
+  await waitUntil(() => !document.querySelector('[data-editable]'))
+
+  // removeHome only strips the home token when the root has children, so an empty thoughtspace exports
+  // as the bare root
+  const exported = await exportThoughts()
+  expect(exported).toBe('- __ROOT__')
 })
