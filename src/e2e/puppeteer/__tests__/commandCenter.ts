@@ -49,7 +49,7 @@ describe('command center', () => {
   // touchstart on whatever thought is under the finger but no touchmove, since the system claims the gesture.
   // The press outlasts the long press timer, and the touchcancel that follows must not activate multiselect,
   // which would open the Command Center underneath the app switcher.
-  it.skip('does not open when the system cancels a touch during a long press (iOS app switcher gesture)', async () => {
+  it('does not open when the system cancels a touch during a long press (iOS app switcher gesture)', async () => {
     await paste(`
         - a
         - b
@@ -64,7 +64,8 @@ describe('command center', () => {
     const highlightedBullets = await page.$$('[aria-label="bullet"][data-highlighted="true"]')
     expect(highlightedBullets.length).toBe(0)
 
-    const panel = await page.$('[data-testid=command-center-panel]')
-    expect(panel).toBeNull()
+    // the panel element stays mounted while closed, so check the state rather than the DOM
+    const showCommandCenter = await page.evaluate(() => (window.em as WindowEm).testHelpers.getState().showCommandCenter)
+    expect(showCommandCenter).toBeFalsy()
   })
 })
