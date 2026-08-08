@@ -45,12 +45,16 @@ const useDragHold = ({
       // Toggling the multicursor here as well would undo the selection that the click handler just made.
       const multiselectModifier = !!e && (e.shiftKey || (isMac ? e.metaKey : e.ctrlKey))
 
+      // touchcancel means the system claimed the touch, e.g. when the user swipes up from the bottom edge of the screen to switch apps on iOS. The page sees a touchstart with no touchmove, so the press outlasts the long press timer. A cancelled press is not a deliberate release, so it must not activate the multiselect, which would open the Command Center.
+      const cancelled = e?.type === 'touchcancel'
+
       dispatch((dispatch, getState) => {
         const state = getState()
 
         if (state.longPress === LongPressState.DragHold) {
           if (!hasMulticursor(state)) dispatch(alert(null))
-          if (toggleMulticursorOnLongPress && !multiselectModifier) dispatch(toggleMulticursor({ path: simplePath }))
+          if (toggleMulticursorOnLongPress && !multiselectModifier && !cancelled)
+            dispatch(toggleMulticursor({ path: simplePath }))
         }
 
         dispatch([

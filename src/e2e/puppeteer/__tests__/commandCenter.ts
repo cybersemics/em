@@ -1,11 +1,14 @@
 import { KnownDevices } from 'puppeteer'
 import openCommandCenterCommand from '../../../commands/openCommandCenter'
+import { WindowEm } from '../../../initialize'
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
 import emulate from '../helpers/emulate'
 import gesture from '../helpers/gesture'
 import keyboard from '../helpers/keyboard'
+import longPressThought from '../helpers/longPressThought'
 import paste from '../helpers/paste'
+import waitForEditable from '../helpers/waitForEditable'
 import waitForSelector from '../helpers/waitForSelector'
 import waitUntil from '../helpers/waitUntil'
 import { page } from '../session'
@@ -40,5 +43,31 @@ describe('command center', () => {
     // the caret is placed in the new note, so typing goes into the note rather than back into the thought
     await keyboard.type('World')
     await waitUntil(() => document.querySelector('[aria-label="note-editable"]')?.textContent === 'World')
+  })
+
+  // When the user swipes up from the bottom edge of the screen to switch apps on iOS, the page receives a
+  // touchstart on whatever thought is under the finger but no touchmove, since the system claims the gesture.
+  // The press outlasts the long press timer, and the touchcancel that follows must not activate multiselect,
+  // which would open the Command Center underneath the app switcher.
+  it('does not open when the system cancels a touch during a long press (iOS app switcher gesture)', async () => {
+    await paste(`
+        - a
+        - b
+        `)
+
+    const a = await waitForEditable('a')
+    await longPressThought(a, { cancel: true, edge: 'right' })
+
+    // wait for the long press to fully wind down before asserting
+    await waitUntil(() => (window.em as WindowEm).testHelpers.getState().longPress === 'Inactive')
+
+    const highlightedBullets = await page.$$('[aria-label="bullet"][data-highlighted="true"]')
+    expect(highlightedBullets.length).toBe(0)
+
+    // the panel element stays mounted while closed, so check the state rather than the DOM
+    const showCommandCenter = await page.evaluate(
+      () => (window.em as WindowEm).testHelpers.getState().showCommandCenter,
+    )
+    expect(showCommandCenter).toBeFalsy()
   })
 })
