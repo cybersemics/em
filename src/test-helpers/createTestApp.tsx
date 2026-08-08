@@ -18,7 +18,7 @@ const createTestApp = async ({ tutorial }: { tutorial?: boolean } = {}) => {
   await act(async () => {
     vi.useFakeTimers({ loopLimit: 100000 })
     // calls initEvents, which must be manually cleaned up
-    const init = await initialize()
+    const init = await initialize({ storage: 'memory' })
     cleanup = init.cleanup
 
     // const root = document.body.appendChild(document.createElement('div'))
@@ -80,7 +80,7 @@ export const refreshTestApp = async () => {
   await act(async () => {
     await waitForThoughtspaceIdle()
     await store.dispatch(clear())
-    await initialize()
+    await initialize({ storage: 'memory' })
     await waitForThoughtspaceIdle()
   })
 

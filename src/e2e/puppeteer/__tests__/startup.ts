@@ -31,7 +31,7 @@ it('handles keyboard commands while thoughtspace initialization is delayed', asy
   } finally {
     await page.evaluate(async () => {
       const em = window.em
-      await em.testFlags.initialize?.()
+      await em.testFlags.initialize?.({ storage: 'memory' })
       em.testFlags.preventInitialize = false
     })
   }

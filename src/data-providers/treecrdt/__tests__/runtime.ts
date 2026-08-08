@@ -1,4 +1,5 @@
 import { EM_TOKEN } from '../../../constants'
+import { tsid } from '../../thoughtspaceSession'
 import createTreecrdtThoughtspace from '../runtime'
 
 const { mockAcquireTreecrdtSessionLock, mockCreateTreecrdtClient } = vi.hoisted(() => ({
@@ -23,17 +24,6 @@ const emptyUpdates = {
   schemaVersion: 0,
 }
 
-/** Creates the standard in-memory thoughtspace used by lifecycle tests. */
-const createMemoryThoughtspace = (docId?: string) =>
-  createTreecrdtThoughtspace({
-    client: {
-      storage: 'memory',
-      runtime: 'direct',
-      ...(docId === undefined ? {} : { docId }),
-    },
-    tabPolicy: 'multiple',
-  })
-
 beforeAll(async () => {
   const actual = await vi.importActual<TreecrdtModule>('@treecrdt/wa-sqlite')
   createRealTreecrdtClient = actual.createTreecrdtClient
@@ -54,81 +44,56 @@ it.each([
   ['unsupported', { status: 'blocked', reason: 'unsupported' }],
 ] as const)('maps the %s session-lock status to thoughtspace access', async (lockStatus, access) => {
   mockAcquireTreecrdtSessionLock.mockResolvedValue(lockStatus)
-  const treecrdtThoughtspace = createTreecrdtThoughtspace({ tabPolicy: 'single' })
+  const treecrdtThoughtspace = createTreecrdtThoughtspace()
 
   await expect(treecrdtThoughtspace.acquireAccess()).resolves.toEqual(access)
   expect(mockAcquireTreecrdtSessionLock).toHaveBeenCalledWith()
 })
 
-it('does not require a session lock when multiple tabs are allowed', async () => {
-  const treecrdtThoughtspace = createTreecrdtThoughtspace({
-    client: { storage: 'memory', runtime: 'direct' },
-    tabPolicy: 'multiple',
-  })
-
-  await expect(treecrdtThoughtspace.acquireAccess()).resolves.toEqual({ status: 'acquired' })
-  expect(mockAcquireTreecrdtSessionLock).not.toHaveBeenCalled()
-})
-
-it('rejects unsupported multiple-tab client settings at both the type and runtime boundaries', () => {
-  // Pre-bootstrap configuration crosses a JavaScript boundary, so retain the runtime guard in addition to the type.
-  // @ts-expect-error Persistent dedicated-worker storage is incompatible with multiple-tab access.
-  const invalidConfig: Parameters<typeof createTreecrdtThoughtspace>[0] = {
-    client: { storage: 'persistent', runtime: 'dedicated-worker' },
-    tabPolicy: 'multiple',
-  }
-
-  expect(() => createTreecrdtThoughtspace(invalidConfig)).toThrow(
-    'Multiple-tab TreeCRDT access requires in-memory storage with the direct runtime.',
-  )
-})
-
 it('maps em persistent storage to TreeCRDT OPFS client options', async () => {
   const stopAfterOptions = new Error('stop after capturing client options')
   mockCreateTreecrdtClient.mockRejectedValueOnce(stopAfterOptions)
-  const treecrdtThoughtspace = createTreecrdtThoughtspace({
-    client: {
-      storage: 'persistent',
-      runtime: 'dedicated-worker',
-      docId: 'persistent-doc',
-    },
-    tabPolicy: 'single',
-  })
+  const treecrdtThoughtspace = createTreecrdtThoughtspace()
 
-  await expect(treecrdtThoughtspace.init()).rejects.toBe(stopAfterOptions)
+  await expect(
+    treecrdtThoughtspace.init({
+      storage: 'persistent',
+    }),
+  ).rejects.toBe(stopAfterOptions)
   expect(mockCreateTreecrdtClient).toHaveBeenCalledWith({
     storage: {
       type: 'opfs',
-      filename: expect.any(String),
+      filename: `/treecrdt-em-${tsid}.db`,
       fallback: 'throw',
     },
     runtime: { type: 'dedicated-worker' },
-    docId: 'persistent-doc',
+    docId: tsid,
   })
 })
 
 it('creates the client lazily', async () => {
-  const treecrdtThoughtspace = createMemoryThoughtspace('memory-doc')
+  const treecrdtThoughtspace = createTreecrdtThoughtspace()
+  mockAcquireTreecrdtSessionLock.mockResolvedValueOnce('acquired')
 
   expect(mockCreateTreecrdtClient).not.toHaveBeenCalled()
-  await treecrdtThoughtspace.acquireAccess()
+  await expect(treecrdtThoughtspace.acquireAccess()).resolves.toEqual({ status: 'acquired' })
   expect(mockCreateTreecrdtClient).not.toHaveBeenCalled()
 
-  await treecrdtThoughtspace.init()
+  await treecrdtThoughtspace.init({ storage: 'memory' })
   expect(mockCreateTreecrdtClient).toHaveBeenCalledTimes(1)
   expect(mockCreateTreecrdtClient).toHaveBeenCalledWith({
     storage: { type: 'memory' },
     runtime: { type: 'direct' },
-    docId: 'memory-doc',
+    docId: tsid,
   })
 
   await treecrdtThoughtspace.drop()
 })
 
 it('coalesces concurrent initialization into one client', async () => {
-  const treecrdtThoughtspace = createMemoryThoughtspace()
-  const firstInit = treecrdtThoughtspace.init()
-  const secondInit = treecrdtThoughtspace.init()
+  const treecrdtThoughtspace = createTreecrdtThoughtspace()
+  const firstInit = treecrdtThoughtspace.init({ storage: 'memory' })
+  const secondInit = treecrdtThoughtspace.init({ storage: 'memory' })
 
   await expect(Promise.all([firstInit, secondInit])).resolves.toHaveLength(2)
   expect(mockCreateTreecrdtClient).toHaveBeenCalledTimes(1)
@@ -151,11 +116,11 @@ it('serializes an in-flight init, drop, and following init', async () => {
     return createRealTreecrdtClient(options)
   })
 
-  const treecrdtThoughtspace = createMemoryThoughtspace()
-  const firstInit = treecrdtThoughtspace.init()
+  const treecrdtThoughtspace = createTreecrdtThoughtspace()
+  const firstInit = treecrdtThoughtspace.init({ storage: 'memory' })
   await clientStarted
   const drop = treecrdtThoughtspace.drop()
-  const secondInit = treecrdtThoughtspace.init()
+  const secondInit = treecrdtThoughtspace.init({ storage: 'memory' })
 
   expect(mockCreateTreecrdtClient).toHaveBeenCalledTimes(1)
 
@@ -172,20 +137,20 @@ it('rejects queued startup writes when initialization fails and uses a fresh gat
   const initError = new Error('client initialization failed')
   mockCreateTreecrdtClient.mockRejectedValueOnce(initError)
 
-  const treecrdtThoughtspace = createMemoryThoughtspace()
+  const treecrdtThoughtspace = createTreecrdtThoughtspace()
   const queuedWrite = treecrdtThoughtspace.db.updateThoughts(emptyUpdates)
   const queuedWriteExpectation = expect(queuedWrite).rejects.toBe(initError)
 
-  await expect(treecrdtThoughtspace.init()).rejects.toBe(initError)
+  await expect(treecrdtThoughtspace.init({ storage: 'memory' })).rejects.toBe(initError)
   await queuedWriteExpectation
 
-  await treecrdtThoughtspace.init()
+  await treecrdtThoughtspace.init({ storage: 'memory' })
   await expect(treecrdtThoughtspace.db.updateThoughts(emptyUpdates)).resolves.toEqual([])
   await treecrdtThoughtspace.drop()
 })
 
 it('rejects writes queued before each settled drop and creates a fresh gate for init', async () => {
-  const treecrdtThoughtspace = createMemoryThoughtspace()
+  const treecrdtThoughtspace = createTreecrdtThoughtspace()
 
   const firstWrite = treecrdtThoughtspace.db.updateThoughts(emptyUpdates)
   const firstWriteExpectation = expect(firstWrite).rejects.toThrow(
@@ -199,7 +164,7 @@ it('rejects writes queued before each settled drop and creates a fresh gate for 
   )
   await Promise.all([treecrdtThoughtspace.drop(), secondWriteExpectation])
 
-  await treecrdtThoughtspace.init()
+  await treecrdtThoughtspace.init({ storage: 'memory' })
   await expect(treecrdtThoughtspace.db.updateThoughts(emptyUpdates)).resolves.toEqual([])
   await treecrdtThoughtspace.drop()
 })
@@ -219,14 +184,16 @@ it('discards a terminal client when drop reports an error', async () => {
   const close = vi.spyOn(client, 'close')
   mockCreateTreecrdtClient.mockResolvedValueOnce(client)
 
-  const treecrdtThoughtspace = createMemoryThoughtspace()
-  await treecrdtThoughtspace.init()
+  const treecrdtThoughtspace = createTreecrdtThoughtspace()
+  await treecrdtThoughtspace.init({ storage: 'memory' })
   await expect(treecrdtThoughtspace.drop()).rejects.toBe(dropError)
   expect(() => treecrdtThoughtspace.db.getThoughtById('missing' as never)).toThrow(
     'TreeCRDT DataProvider: init not called',
   )
   expect(close).not.toHaveBeenCalled()
 
-  await expect(treecrdtThoughtspace.init()).resolves.toEqual({ clientId: expect.any(String) })
+  await expect(treecrdtThoughtspace.init({ storage: 'memory' })).resolves.toEqual({
+    clientId: expect.any(String),
+  })
   await treecrdtThoughtspace.drop()
 })

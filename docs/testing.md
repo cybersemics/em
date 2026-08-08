@@ -494,7 +494,7 @@ beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 ```
 
-`initStore` clears the shared store and enables fake timers. `createTestApp` additionally mounts the React tree, initializes persistence and event handlers, and enables the test drag-and-drop backend. `cleanupTestApp` clears storage, the local YJS database, the store, and event handlers, and flushes pending timers. Do not share fixture state between tests or rely on test execution order.
+`initStore` clears the shared store and enables fake timers. `createTestApp` additionally mounts the React tree, initializes persistence and event handlers, and enables the test drag-and-drop backend. `cleanupTestApp` clears storage, the TreeCRDT thoughtspace, the store, and event handlers, and flushes pending timers. Do not share fixture state between tests or rely on test execution order.
 
 ## Sanctioned Backdoors
 
@@ -506,7 +506,7 @@ Integration tests are blackbox, but named helpers may take shortcuts during arra
 | Incidental app setup | Arrange | [`command`](../src/e2e/puppeteer/helpers/command.ts), [`openModal`](../src/e2e/puppeteer/helpers/openModal.ts), [`setTheme`](../src/e2e/puppeteer/helpers/setTheme.ts) | Use only when the command, modal entry point, or Settings navigation is not under test. |
 | Browser/driver limitation | Arrange | Puppeteer [`setSelection`](../src/e2e/puppeteer/helpers/setSelection.ts) and [`closeKeyboard`](../src/e2e/puppeteer/helpers/closeKeyboard.ts); iOS [`setSelection`](../src/e2e/iOS/helpers/setSelection.ts) | Simulate browser state the driver cannot reliably produce. The subsequent behavior under test must still use a real user entry point. |
 | Visual snapshot stabilization | Arrange | [`hide`](../src/e2e/puppeteer/helpers/hide.ts), [`hideVisibility`](../src/e2e/puppeteer/helpers/hideVisibility.ts), [`hideHUD`](../src/e2e/puppeteer/helpers/hideHUD.ts), [`showMousePointer`](../src/e2e/puppeteer/helpers/showMousePointer.ts), [`screenshot`](../src/e2e/puppeteer/helpers/screenshot.ts) | DOM/style mutation is allowed only to remove irrelevant nondeterminism or expose input position in a visual test. Do not hide the subject of the snapshot. |
-| Test environment controls | Arrange | [`simulateDragAndDrop`](../src/e2e/puppeteer/helpers/simulateDragAndDrop.ts), [`scrollTo`](../src/e2e/puppeteer/helpers/scrollTo.ts), and reviewed helpers that set [`testFlags`](../src/e2e/testFlags.ts) | Use only for a condition that cannot be created reliably through normal input, explain why, and restore mutable flags in `afterEach`. The control must not change the semantic outcome under test. |
+| Test environment controls | Arrange | [`simulateDragAndDrop`](../src/e2e/puppeteer/helpers/simulateDragAndDrop.ts), [`scrollTo`](../src/e2e/puppeteer/helpers/scrollTo.ts), the thoughtspace storage selection in [`puppeteer/setup.ts`](../src/e2e/puppeteer/setup.ts), and reviewed helpers that set [`testFlags`](../src/e2e/testFlags.ts) | Use only for a condition that cannot be created reliably through normal input, explain why, and restore mutable flags in the corresponding `afterEach` or `afterAll` hook. The control must not change the semantic outcome under test. |
 | Structural assertion | Assert | [`exportThoughts`](../src/e2e/puppeteer/helpers/exportThoughts.ts) | Export the thought tree as plaintext. Do not make additional assertions on Redux state. |
 | Non-visual synchronization | Wait | [`waitForContextHasChildWithValue`](../src/e2e/puppeteer/helpers/waitForContextHasChildWithValue.ts), [`waitForThoughtExistInDb`](../src/e2e/puppeteer/helpers/waitForThoughtExistInDb.ts), [`waitForState`](../src/e2e/puppeteer/helpers/waitForState.ts) | Use only when persistence or another prerequisite has no immediate visual signal. This is synchronization, not the test's assertion; assert the final user-visible result separately. |
 | Timing/environment spoofing | Arrange | [`reloadWithProductionTiming`](../src/e2e/puppeteer/helpers/reloadWithProductionTiming.ts) (spoofs `navigator.webdriver` to restore production animation timing) | Use only for a state that cannot exist under test timing (such as the loading phase). Justify in the helper's doc comment and state how the spoof is undone (per-test page isolation counts, but say so). Subsequent waits must still name conditions rather than replay production durations. |
@@ -551,7 +551,7 @@ There are three helper directories. Use them before reaching for raw Redux dispa
 
 The helpers in [`../src/test-helpers/`](../src/test-helpers) cover store setup and operations that are otherwise verbose to write by hand:
 
-- [`createTestApp`](../src/test-helpers/createTestApp.tsx) — mounts `<App />` into the JSDOM environment via `@testing-library/react`, runs `initialize()`, swaps in `react-dnd-test-backend`, opts into fake timers, and closes the welcome modal. Use this when a test touches the rendered app. Pair every call with `cleanupTestApp` (it clears `localStorage`, the local YJS db, the store, and event handlers).
+- [`createTestApp`](../src/test-helpers/createTestApp.tsx) — mounts `<App />` into the JSDOM environment via `@testing-library/react`, runs `initialize({ storage: 'memory' })`, swaps in `react-dnd-test-backend`, opts into fake timers, and closes the welcome modal. Use this when a test touches the rendered app. Pair every call with `cleanupTestApp` (it clears `localStorage`, the TreeCRDT thoughtspace, the store, and event handlers).
 - [`initStore`](../src/test-helpers/initStore.ts) — initializes the store without mounting the React tree, for store-level tests that don't need a DOM.
 - [`importToContext`](../src/test-helpers/importToContext.ts) — seeds the store with a tree from a multi-line plaintext outline (the same format the `Import` modal accepts). Most fixture setup goes through this.
 - [`dispatch`](../src/test-helpers/dispatch.ts) — a thin wrapper that lets a test dispatch synchronously without re-typing `store.dispatch(...)` plumbing.
@@ -591,6 +591,10 @@ Do not import Puppeteer helpers into iOS tests or assume identical driver behavi
 ## Test Flags
 
 [testFlags](../src/e2e/testFlags.ts) are used to alter runtime behavior of the app during tests. This is generally forbidden, as the automated test environment should be as close as possible to production so that it is testing the same behavior the end user sees. But there are some conditions that are difficult or impossible to create through normal user behavior (e.g. network latency) or that can enhance test readability (e.g. visualizations) when runtime alteration is warranted.
+
+### Thoughtspace storage
+
+Puppeteer preloads `testFlags.thoughtspaceStorage` before the application starts. Browser tests use in-memory storage by default, while persistence-specific suites call `usePersistentTreecrdtStorage` to use OPFS. The application entry point passes the selected storage explicitly to `initialize`, defaulting to persistent storage when no test override is present.
 
 ### Drag-and-drop visualization
 
@@ -953,15 +957,15 @@ Test `enter` and `leave` on each of the following actions:
 
 ### Database operations and fake timers
 
-`initStore` and `createTestApp` enable fake timers. When a test calls `initialize()` or performs database work directly, explicitly flush the resulting scheduled work before asserting:
+`initStore` and `createTestApp` enable fake timers. When a test calls `initialize({ storage: 'memory' })` or performs database work directly, explicitly flush the resulting scheduled work before asserting:
 
 ```ts
 vi.useFakeTimers()
-await initialize()
+await initialize({ storage: 'memory' })
 await vi.runAllTimersAsync()
 ```
 
-> It looks like we must use fake timers if we want the `store` state to be updated based on database operations (e.g., if we use `initialize()` to reload the state). I think this is because the `thoughtspace` operations are asynchronous and don't call the store operations prior to the test ending. (I'm not sure why we didn't get other errors that made this clear.)
+> It looks like we must use fake timers if we want the `store` state to be updated based on database operations (e.g., if we use `initialize({ storage: 'memory' })` to reload the state). I think this is because the `thoughtspace` operations are asynchronous and don't call the store operations prior to the test ending. (I'm not sure why we didn't get other errors that made this clear.)
 
 https://github.com/cybersemics/em/pull/2741
 

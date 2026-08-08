@@ -2,7 +2,7 @@
 import chalk from 'chalk'
 import { Browser, BrowserContext, ConsoleMessage, Device, Page } from 'puppeteer'
 import type { PreloadedEmWindow } from '../../@types'
-import type { TreecrdtRuntimeConfig } from '../../data-providers/treecrdt/runtime'
+import type { ThoughtspaceStorage } from '../../data-providers/thoughtspace'
 import createId from '../../util/createId'
 import { page, setPage } from './session'
 
@@ -11,75 +11,43 @@ declare module global {
   const browser: Browser
 }
 
-type TreecrdtTestRuntime = 'dedicated-worker' | 'direct' | 'shared-worker'
-
-type TreecrdtTestProfile =
-  | Readonly<{ storage: 'memory' }>
-  | Readonly<{
-      storage: 'persistent'
-      runtime: TreecrdtTestRuntime
-    }>
-
-const memoryTreecrdtProfile: TreecrdtTestProfile = { storage: 'memory' }
-
 let context: BrowserContext
-let activeTreecrdtProfile: TreecrdtTestProfile = memoryTreecrdtProfile
+let activeThoughtspaceStorage: ThoughtspaceStorage = 'memory'
 
-/** Returns the explicit TreeCRDT configuration for a Puppeteer page. */
-const getTreecrdtRuntimeConfig = (docId: string, profile: TreecrdtTestProfile): TreecrdtRuntimeConfig =>
-  profile.storage === 'persistent'
-    ? {
-        client: {
-          docId,
-          runtime: profile.runtime,
-          storage: 'persistent',
-        },
-        tabPolicy: 'single',
-      }
-    : {
-        client: {
-          docId,
-          runtime: 'direct',
-          storage: 'memory',
-        },
-        tabPolicy: 'multiple',
-      }
+/** Selects thoughtspace storage before a Puppeteer page starts the app. */
+const preloadThoughtspaceStorage = (target: Page, storage: ThoughtspaceStorage) =>
+  target.evaluateOnNewDocument(storage => {
+    const preloadedWindow: PreloadedEmWindow = window
+    preloadedWindow.em = {
+      ...preloadedWindow.em,
+      testFlags: {
+        ...preloadedWindow.em?.testFlags,
+        thoughtspaceStorage: storage,
+      },
+    }
+  }, storage)
 
-/** Opens an additional page with the current TreeCRDT test configuration. */
+/** Opens an additional page with the requested thoughtspace storage. */
 export const createTreecrdtTestPage = async (
   browserContext: BrowserContext,
-  docId: string,
-  profile: TreecrdtTestProfile,
+  storage: ThoughtspaceStorage,
 ): Promise<Page> => {
   const target = await browserContext.newPage()
-  await target.evaluateOnNewDocument(
-    treecrdt => {
-      const preloadedWindow = window as unknown as PreloadedEmWindow
-      preloadedWindow.em = {
-        ...preloadedWindow.em,
-        treecrdt,
-      }
-    },
-    getTreecrdtRuntimeConfig(docId, profile),
-  )
+  await preloadThoughtspaceStorage(target, storage)
   return target
 }
 
 /** Use persistent OPFS storage for tests that verify reload/materialization from storage. */
-export const usePersistentTreecrdtStorage = ({
-  runtime = 'direct',
-}: { runtime?: TreecrdtTestRuntime } = {}): TreecrdtTestProfile => {
-  const profile = { storage: 'persistent', runtime } as const
-
+export const usePersistentTreecrdtStorage = (): ThoughtspaceStorage => {
   beforeAll(() => {
-    activeTreecrdtProfile = profile
+    activeThoughtspaceStorage = 'persistent'
   })
 
   afterAll(() => {
-    activeTreecrdtProfile = memoryTreecrdtProfile
+    activeThoughtspaceStorage = 'memory'
   })
 
-  return profile
+  return 'persistent'
 }
 
 /** Opens em in a new incognito window in Puppeteer. */
@@ -119,16 +87,7 @@ const setup = async ({
     localStorage.setItem('accessToken', sessionId)
   }, sessionId)
 
-  await page.evaluateOnNewDocument(
-    treecrdt => {
-      const preloadedWindow = window as unknown as PreloadedEmWindow
-      preloadedWindow.em = {
-        ...preloadedWindow.em,
-        treecrdt,
-      }
-    },
-    getTreecrdtRuntimeConfig(sessionId, activeTreecrdtProfile),
-  )
+  await preloadThoughtspaceStorage(page, activeThoughtspaceStorage)
 
   page.on('dialog', async dialog => dialog.accept())
 
