@@ -338,13 +338,15 @@ The Puppeteer tests are run via Vitest using the `puppeteer-e2e` project defined
 
 High level helper functions are available for executing common user interactions: [/src/e2e/puppeteer/helpers](../src/e2e/puppeteer/helpers)
 
-Mobile devices can be emulated in puppeteer. This is good for testing non-platform specific mobile functionality, such as gestures. If you can test it with the Chrome Device Toolbar, you can emulate it in puppeteer.
+Mobile devices can be emulated in puppeteer. This is good for testing non-platform specific mobile functionality, such as gestures. If you can test it with the Chrome Device Toolbar, you can emulate it in puppeteer. Select the device at suite scope so that shared setup applies it before navigation; changing mobile or touch emulation after navigation may reload the page and restart app initialization.
 
 ```ts
-await emulate(KnownDevices['iPhone 15 Pro'])
+deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
 
-await gesture(newThoughtCommand)
-await keyboard.type('a')
+it('creates a thought with a gesture', async () => {
+  await gesture(newThoughtCommand)
+  await keyboard.type('a')
+})
 ```
 
 While we prefer to avoid backdoor access to state in integration tests, it is recommended that you use the [exportThoughts](../src/e2e/puppeteer/helpers/exportThoughts.ts) helper for asserting the overall thought structure. Parsing the DOM, activating the Export modal, or taking a snapshot are either too slow or too tightly coupled to other functionality. `exportThoughts` is fast, direct, and makes for readable tests.
