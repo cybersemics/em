@@ -14,6 +14,7 @@ import { beforeInput, keyDown, keyUp } from '../commands'
 import { AlertType, LongPressState } from '../constants'
 import * as selection from '../device/selection'
 import virtualKeyboardHandler from '../device/virtual-keyboard'
+import globals from '../globals'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import pathExists from '../selectors/pathExists'
 import store from '../stores/app'
@@ -293,6 +294,13 @@ const initEvents = (store: Store<State, any>) => {
     scrollAtEdge.stop()
   }
 
+  /** Clears the spurious-focus suppression flag: a new touch means any subsequent focus/mousedown was initiated by
+   * the user, not synthesized from the previous tap. Registered in the capture phase because touchstart propagation
+   * is unreliable in the bubble phase (see the note on the touchmove listener below). */
+  const onTouchStart = () => {
+    globals.suppressFocusAfterCursorMove = false
+  }
+
   /** Handle a page lifecycle state change, i.e. switching apps. */
   const onStateChange = ({ oldState, newState }: { oldState: LifecycleState; newState: LifecycleState }) => {
     clearTimeout(passiveTimeout)
@@ -373,6 +381,7 @@ const initEvents = (store: Store<State, any>) => {
   window.addEventListener('popstate', onPopstate)
   window.addEventListener('mousemove', onMouseMove)
   // Note: touchstart may not be propagated after dragHold
+  window.addEventListener('touchstart', onTouchStart, { capture: true })
   window.addEventListener('touchmove', onTouchMove)
   window.addEventListener('touchend', onTouchEnd)
   window.addEventListener('beforeunload', onBeforeUnload)
@@ -402,6 +411,7 @@ const initEvents = (store: Store<State, any>) => {
     window.removeEventListener('keyup', keyUp)
     window.removeEventListener('popstate', onPopstate)
     window.removeEventListener('mousemove', onMouseMove)
+    window.removeEventListener('touchstart', onTouchStart, { capture: true })
     window.removeEventListener('touchmove', onTouchMove)
     window.removeEventListener('touchend', onTouchEnd)
     window.removeEventListener('beforeunload', onBeforeUnload)
