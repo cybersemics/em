@@ -65,7 +65,9 @@ describe('command center', () => {
     expect(highlightedBullets.length).toBe(0)
 
     // the panel element stays mounted while closed, so check the state rather than the DOM
-    const showCommandCenter = await page.evaluate(() => (window.em as WindowEm).testHelpers.getState().showCommandCenter)
+    const showCommandCenter = await page.evaluate(
+      () => (window.em as WindowEm).testHelpers.getState().showCommandCenter,
+    )
     expect(showCommandCenter).toBeFalsy()
   })
 })
