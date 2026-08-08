@@ -8,6 +8,8 @@ const clearMulticursors = (state: State): State => {
   return {
     ...state,
     ...(state.alert?.alertType === AlertType.ScrollZoneHelp ? { alert: null } : null),
+    multicursorAnchor: null,
+    multicursorRange: {},
     multicursors: {},
   }
 }
