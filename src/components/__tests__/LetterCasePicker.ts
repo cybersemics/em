@@ -87,6 +87,21 @@ it('Set Upper Case with multicursor selection', async () => {
   - GOODBYE EVERYONE, THIS IS MAX. THANKS FOR YOUR HELP.`)
 })
 
+// https://github.com/cybersemics/em/issues/4840
+it('multicursor selection is preserved after applying Upper Case', async () => {
+  await dispatch([
+    newThought({ value: 'Hello everyone, this is Rose. Thanks for your help.' }),
+    newThought({ value: 'Goodbye everyone, this is Max. Thanks for your help.' }),
+    addAllMulticursor({}),
+  ])
+  await click('[data-testid="toolbar-icon"][aria-label="Letter Case"]')
+  await click('[aria-label="letter case swatches"] [aria-label="UpperCase"]')
+
+  await act(vi.runOnlyPendingTimersAsync)
+
+  expect(Object.keys(store.getState().multicursors)).toHaveLength(2)
+})
+
 it('Recognizes a styled thought with uppercase text as UpperCase', async () => {
   await dispatch([newThought({ value: '<b>HELLO <font style="background-color: rgb(0, 128, 255);">WORLD</font></b>' })])
   await click('[data-testid="toolbar-icon"][aria-label="Letter Case"]')

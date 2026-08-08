@@ -36,10 +36,12 @@ All access to the browser selection API goes through [`device/selection.ts`](../
 
 The `selection.ts` module groups its functions roughly into:
 
-- **Reads:** `isActive()`, `isCollapsed()`, `isText()`, `isThought()`, `isNote()`, `isOnFirstLine()`, `isOnLastLine()`, `isStartOfElementNode()`, `isEndOfElementNode()`, `offset()`, `offsetThought()`, `offsetStart()`, `offsetEnd()`, `text()`, `html()`, `getBoundingClientRect()`, `isNear(x, y, distance)`.
-- **Writes:** `set(node, { offset?, end? })`, `clear()`, `select(el)`, `removeCurrentSelection()`.
+- **Reads:** `isActive()`, `isCollapsed()`, `isText()`, `isThought()`, `isNote()`, `isOnFirstLine()`, `isOnLastLine()`, `isStartOfElementNode()`, `isEndOfElementNode()`, `offset()`, `offsetThought()`, `offsetStart()`, `offsetEnd()`, `offsetRange(editable)`, `text()`, `html()`, `getBoundingClientRect()`, `isNear(x, y, distance)`.
+- **Writes:** `set(node, { offset?, end? })`, `setRange(node, { start, end })`, `clear()`, `select(el)`, `removeCurrentSelection()`.
 - **Save/restore:** `save()` returns a `SavedSelection` opaque object; `restore(saved)` puts it back. Used when an action that re-renders the DOM needs to preserve the caret across the render.
 - **Split helpers:** `split(el)` and `splitNode(root, range)` return the HTML before/after the caret with formatting tags re-balanced. Used by the Split Sentences command and the Extract command.
+
+`set` always collapses the caret. To keep a *range* of text selected across a programmatic edit that re-renders the editable, capture it with `offsetRange(editable)` beforehand and restore it with `setRange(editable, range)` afterwards — both work in plain-text offsets, so nested formatting tags are handled for you. This is how the Letter Case command keeps the user's text selected ([issue #4840](https://github.com/cybersemics/em/issues/4840)).
 
 The two reads worth calling out:
 
