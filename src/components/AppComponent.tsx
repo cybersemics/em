@@ -16,6 +16,7 @@ import isTutorial from '../selectors/isTutorial'
 import theme from '../selectors/theme'
 import themeColors from '../selectors/themeColors'
 import store from '../stores/app'
+import multitouchStore from '../stores/multitouch'
 import debugLog from '../util/debugLog'
 import isDocumentEditable from '../util/isDocumentEditable'
 import Alert from './Alert'
@@ -84,6 +85,10 @@ const shouldCancelGesture = (
   const state = store.getState()
   const distance = state.fontSize * 2
   return (
+    // Reject two-finger gestures (pinch-to-zoom / two-finger trace): the multitouch latch stays set for the
+    // rest of the touch interaction, so a second finger joining after a single-finger gesture has begun also
+    // cancels it (the touchstart guard in MultiGesture is skipped once a gesture is in progress). See #4233.
+    multitouchStore.getState() ||
     isOnToolbar(x, y) ||
     (x && y && selection.isNear(x, y, distance)) ||
     state.longPress !== LongPressState.Inactive ||

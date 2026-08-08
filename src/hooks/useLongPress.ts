@@ -7,6 +7,7 @@ import { isTouch } from '../browser'
 import { LongPressState, TIMEOUT_LONG_PRESS_THOUGHT, noop } from '../constants'
 import allowTouchToScroll from '../device/allowTouchToScroll'
 import * as selection from '../device/selection'
+import multitouchStore from '../stores/multitouch'
 import haptics from '../util/haptics'
 
 export interface LongPressProps {
@@ -38,6 +39,12 @@ const useLongPress = (
     /** Begin a long press, after the timer elapses on desktop, or the dragStart event is fired by TouchBackend in react-dnd. */
     const onStart = () => {
       if (!pressing) return
+
+      // Reject long-press / drag initiation during a multi-touch gesture (e.g. two-finger trace or pinch-to-zoom).
+      // The patched TouchBackend arms its drag timer from the primary touch and fires dragStart independently of
+      // react-dnd's canDrag, so this second guard is required to stop a two-finger gesture from beginning a drag.
+      // The multitouch latch stays set until every finger lifts. See #4233.
+      if (multitouchStore.getState()) return
 
       // react-dnd-touch-backend will call preventDefault on touchmove events once a drag has begun, but since there is a touchSlop threshold of 10px,
       // we can get iOS Safari to initiate a scroll before drag-and-drop begins. It is then impossible to cancel the scroll programatically. (#3141)

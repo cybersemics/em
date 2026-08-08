@@ -45,6 +45,7 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import thoughtToPath from '../selectors/thoughtToPath'
 import editingValueStore from '../stores/editingValue'
 import editingValueUntrimmedStore from '../stores/editingValueUntrimmed'
+import multitouchStore from '../stores/multitouch'
 import storageModel from '../stores/storageModel'
 import addEmojiSpace from '../util/addEmojiSpace'
 import containsURL from '../util/containsURL'
@@ -858,6 +859,14 @@ const Editable = ({
    */
   const handleTapBehavior = useCallback(
     (e: MouseEvent | TouchEvent) => {
+      // Ignore taps that are part of a multi-touch gesture (e.g. two-finger trace or pinch-to-zoom): the
+      // cursor must not move to the finger location. The multitouch latch persists through the terminating
+      // touchend/click of the gesture and is only reset by the next single-finger touchstart. See #4233.
+      if (multitouchStore.getState()) {
+        if (e.cancelable) e.preventDefault()
+        return
+      }
+
       // When MultiGesture is below the gesture threshold it is possible that onClick and onTouchEnd
       // both trigger. Prevent handleTapBehavior from running a second time via touchend in that case.
       // https://github.com/cybersemics/em/issues/1268

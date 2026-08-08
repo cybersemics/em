@@ -19,6 +19,7 @@ import pathExists from '../selectors/pathExists'
 import store from '../stores/app'
 import { updateCommandState } from '../stores/commandStateStore'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
+import multitouchStore, { updateMultitouch } from '../stores/multitouch'
 import { updateScrollTop } from '../stores/scrollTop'
 import selectionRangeStore from '../stores/selectionRangeStore'
 import storageModel from '../stores/storageModel'
@@ -293,6 +294,26 @@ const initEvents = (store: Store<State, any>) => {
     scrollAtEdge.stop()
   }
 
+  /**
+   * Prevents native pinch-to-zoom on iOS Safari. Safari ignores the viewport `user-scalable=no` /
+   * `maximum-scale=1` settings and still allows pinch-to-zoom and two-finger panning of the page,
+   * both of which should be inert in the app. `gesturestart`/`gesturechange`/`gestureend` are
+   * Safari-only events fired for multi-finger gestures; other browsers never fire them, so this is a
+   * no-op elsewhere. See #4233.
+   */
+  const onSafariGesture = (e: Event) => e.preventDefault()
+
+  /**
+   * Prevents native behavior during a multi-touch gesture (e.g. two-finger tracing or pinch). While the
+   * multitouch latch is set, this preventDefaults touchmove so the browser does not move the contentEditable
+   * caret / extend the text selection to follow the fingers (observed on iOS Safari) or scroll the page. It is
+   * a no-op for single-finger interactions (the latch is only set once a second finger is down), so normal
+   * scrolling and text selection are unaffected. Registered non-passively so preventDefault is honored. See #4233.
+   */
+  const onMultitouchMove = (e: TouchEvent) => {
+    if (multitouchStore.getState() && e.cancelable) e.preventDefault()
+  }
+
   /** Handle a page lifecycle state change, i.e. switching apps. */
   const onStateChange = ({ oldState, newState }: { oldState: LifecycleState; newState: LifecycleState }) => {
     clearTimeout(passiveTimeout)
@@ -375,6 +396,18 @@ const initEvents = (store: Store<State, any>) => {
   // Note: touchstart may not be propagated after dragHold
   window.addEventListener('touchmove', onTouchMove)
   window.addEventListener('touchend', onTouchEnd)
+  // track the number of active touch points so that multi-touch input can be rejected (e.g. two-finger
+  // tracing must not begin a drag-and-drop). See #4233.
+  window.addEventListener('touchstart', updateMultitouch)
+  window.addEventListener('touchend', updateMultitouch)
+  window.addEventListener('touchcancel', updateMultitouch)
+  // prevent the native caret / text selection and scrolling from following the fingers during a multi-touch
+  // gesture (non-passive so preventDefault is honored). See #4233.
+  window.addEventListener('touchmove', onMultitouchMove, { passive: false })
+  // disable native pinch-to-zoom / two-finger page panning on iOS Safari (#4233)
+  document.addEventListener('gesturestart', onSafariGesture)
+  document.addEventListener('gesturechange', onSafariGesture)
+  document.addEventListener('gestureend', onSafariGesture)
   window.addEventListener('beforeunload', onBeforeUnload)
   window.addEventListener('scroll', updateScrollTop)
   window.addEventListener('dragenter', dragEnter)
@@ -404,6 +437,13 @@ const initEvents = (store: Store<State, any>) => {
     window.removeEventListener('mousemove', onMouseMove)
     window.removeEventListener('touchmove', onTouchMove)
     window.removeEventListener('touchend', onTouchEnd)
+    window.removeEventListener('touchstart', updateMultitouch)
+    window.removeEventListener('touchend', updateMultitouch)
+    window.removeEventListener('touchcancel', updateMultitouch)
+    window.removeEventListener('touchmove', onMultitouchMove)
+    document.removeEventListener('gesturestart', onSafariGesture)
+    document.removeEventListener('gesturechange', onSafariGesture)
+    document.removeEventListener('gestureend', onSafariGesture)
     window.removeEventListener('beforeunload', onBeforeUnload)
     window.removeEventListener('scroll', updateScrollTop)
     window.removeEventListener('dragenter', dragEnter)
