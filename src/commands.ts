@@ -735,11 +735,18 @@ export const beforeInput = (e: InputEvent) => {
   // gates on the case we can actually prevent; native browser undo is intentionally superseded by em's undo (#3879).
   if ((e.inputType === 'historyUndo' || e.inputType === 'historyRedo') && e.cancelable) {
     e.preventDefault()
+    // Flush any pending throttled edit before reading the state, mirroring keyDown. Editing dispatches editThought on a
+    // throttle, so a native undo triggered mid-edit (e.g. immediately after an autocorrect) would otherwise undo the
+    // previous step and let the pending edit commit afterwards, duplicating text (#4477).
+    commandEmitter.trigger('command', commandById(e.inputType === 'historyUndo' ? 'undo' : 'redo'))
+    // cursorAtEnd places the caret at the end of the restored thought rather than at the cursorOffset captured before
+    // the undone action, which is the position the thought was entered at and leaves the caret away from the restored
+    // word, typically at the beginning of the thought.
     const state = store.getState()
     if (e.inputType === 'historyUndo') {
-      if (isUndoEnabled(state)) store.dispatch(undo())
+      if (isUndoEnabled(state)) store.dispatch(undo({ cursorAtEnd: true }))
     } else if (state.redoPatches.length > 0) {
-      store.dispatch(redo())
+      store.dispatch(redo({ cursorAtEnd: true }))
     }
     return
   }

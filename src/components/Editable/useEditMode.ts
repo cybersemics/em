@@ -129,6 +129,15 @@ const useEditMode = ({
       */
         if (isTouch && isSafari() && lastUndoableActionType !== 'swapParent' && !selection.isThought()) {
           asyncFocus()
+
+          // asyncFocus parks the focus on its dummy input so that the programmatic selection below is honored.
+          // Setting the browser selection focuses the editing host implicitly only when nothing else holds the focus,
+          // so the editable has to take it back explicitly. Otherwise the focus stays stranded on the dummy input:
+          // WKWebView never raises the keyboard for the editable, no caret renders, and document.hasFocus() stays
+          // false, which trips the page lifecycle handler in initEvents into clearing the selection 10ms later and
+          // dismissing the keyboard. Reached whenever the caret is placed with no prior selection on a thought, e.g.
+          // creating a thought after an undo cleared the selection (#4692).
+          contentRef.current?.focus()
         }
 
         setSelectionToCursorOffset()

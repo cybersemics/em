@@ -873,6 +873,24 @@ describe('grouping', () => {
     expect(exported).not.toContain('HELLO')
   })
 
+  // https://github.com/cybersemics/em/pull/4692
+  it('undo should not close the virtual keyboard', () => {
+    // newThought opens the keyboard as a side effect (setCursor with isKeyboardOpen: true), so the transition was
+    // recorded in its undo patch and undo silently turned edit mode back off. On iOS that desyncs the flag from the
+    // still-open keyboard mid-reducer and drives the dismissal machinery, so the next thought is created without a
+    // caret and without the keyboard. isKeyboardOpen is device state and must survive undo.
+    store.dispatch(newThought({ value: '' }))
+    expect(store.getState().isKeyboardOpen).toBe(true)
+
+    const pathKeyboard = contextToPath(store.getState(), [''])!
+    store.dispatch(editThoughtRaw({ oldValue: '', newValue: 'ab', path: pathKeyboard, cursorOffset: 2 }))
+    expect(store.getState().isKeyboardOpen).toBe(true)
+
+    store.dispatch(undo())
+
+    expect(store.getState().isKeyboardOpen).toBe(true)
+  })
+
   it('undo of a force formatting edit should increment editableNonce so the ContentEditable re-renders', () => {
     // Issue K ("nothing happens after undo"): editThought with force:true bumps editableNonce, and that bump
     // was captured in the undo patch. Undoing reverted the nonce and editableRender then re-incremented it to

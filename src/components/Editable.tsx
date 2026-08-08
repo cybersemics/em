@@ -773,7 +773,14 @@ const Editable = ({
         ((e.relatedTarget as Element).hasAttribute?.('data-editable') ||
           !!(e.relatedTarget as Element).querySelector('[aria-label="note-editable"]'))
 
-      if (isRelatedTargetEditableOrNote) return
+      // The iOS autocomplete focus retarget blurs to the asyncFocus dummy input and returns focus to this same
+      // editable a few lines later, so the user is still typing and the virtual keyboard never comes down. Its
+      // relatedTarget is a bare input rather than an editable, so the check above cannot recognize it; the
+      // suppressBlurSync flag the retarget sets is what marks a blur that does not end editing. Leaving edit mode
+      // would desync state.isKeyboardOpen from the open keyboard, which makes useEditMode stop placing the caret,
+      // so the next re-render of the editable (e.g. undoing the autocorrect) leaves the caret at the beginning of
+      // the thought (#4692).
+      if (globals.suppressBlurSync || isRelatedTargetEditableOrNote) return
 
       // detect speech-to-text
       // needs to be deferred to the next tick, otherwise causes store.getState() to be invoked in a reducer (???)
