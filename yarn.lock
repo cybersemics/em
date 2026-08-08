@@ -7259,6 +7259,45 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@trapezedev/gradle-parse@npm:7.1.3":
+  version: 7.1.3
+  resolution: "@trapezedev/gradle-parse@npm:7.1.3"
+  checksum: 10c0/78c6d3a3666f4bfa3ba1a6e007b274557c2503839114f293ee39a071b03b71a9dc3f622d4f2eb3682a2a6801ebc31553b7a85cbaed3bfa42c59d136023a64c25
+  languageName: node
+  linkType: hard
+
+"@trapezedev/project@npm:^7.0.10":
+  version: 7.1.4
+  resolution: "@trapezedev/project@npm:7.1.4"
+  dependencies:
+    "@ionic/utils-fs": "npm:^3.1.5"
+    "@ionic/utils-subprocess": "npm:^2.1.8"
+    "@prettier/plugin-xml": "npm:^2.2.0"
+    "@trapezedev/gradle-parse": "npm:7.1.3"
+    "@xmldom/xmldom": "npm:^0.9.9"
+    conventional-changelog: "npm:^3.1.4"
+    cross-spawn: "npm:^7.0.3"
+    diff: "npm:^5.1.0"
+    env-paths: "npm:^3.0.0"
+    gradle-to-js: "npm:^2.0.0"
+    ini: "npm:^2.0.0"
+    kleur: "npm:^4.1.5"
+    lodash: "npm:^4.17.21"
+    plist: "npm:^3.0.4"
+    prettier: "npm:^2.7.1"
+    prompts: "npm:^2.4.2"
+    replace: "npm:^1.1.0"
+    tempy: "npm:^3.1.0"
+    tmp: "npm:^0.2.1"
+    ts-node: "npm:^10.2.1"
+    xcode: "npm:^3.0.1"
+    xml-js: "npm:^1.6.11"
+    xpath: "npm:^0.0.32"
+    yargs: "npm:^17.2.1"
+  checksum: 10c0/ddf1058e9c6f8dd22c0d805dca99cd75ccfde698bf21b6e99188a62ce2df74d379bcf3effb098827d1e74ed61005fd56fc340f5db37a7477dfb476edfbbc5d17
+  languageName: node
+  linkType: hard
+
 "@treecrdt/auth@npm:0.1.2":
   version: 0.1.2
   resolution: "@treecrdt/auth@npm:0.1.2"
@@ -27586,6 +27625,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"y18n@npm:^4.0.0":
+  version: 4.0.3
+  resolution: "y18n@npm:4.0.3"
+  checksum: 10c0/308a2efd7cc296ab2c0f3b9284fd4827be01cfeb647b3ba18230e3a416eb1bc887ac050de9f8c4fd9e7856b2e8246e05d190b53c96c5ad8d8cb56dffb6f81024
+  languageName: node
+  linkType: hard
+
 "y18n@npm:^5.0.5":
   version: 5.0.8
   resolution: "y18n@npm:5.0.8"
@@ -27758,6 +27804,13 @@ __metadata:
   dependencies:
     pend: "npm:~1.2.0"
   checksum: 10c0/17a98c42c0065e8af429eb8a61f7a0e4562181ed54080366b838f34f741b6829f167f804787c86b7646bb042707f35871739f053de0548285e405a2eae4da025
+  languageName: node
+  linkType: hard
+
+"yn@npm:3.1.1":
+  version: 3.1.1
+  resolution: "yn@npm:3.1.1"
+  checksum: 10c0/0732468dd7622ed8a274f640f191f3eaf1f39d5349a1b72836df484998d7d9807fbea094e2f5486d6b0cd2414aad5775972df0e68f8604db89a239f0f4bf7443
   languageName: node
   linkType: hard
 
