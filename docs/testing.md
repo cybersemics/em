@@ -338,13 +338,15 @@ The Puppeteer tests are run via Vitest using the `puppeteer-e2e` project defined
 
 High level helper functions are available for executing common user interactions: [/src/e2e/puppeteer/helpers](../src/e2e/puppeteer/helpers)
 
-Mobile devices can be emulated in puppeteer. This is good for testing non-platform specific mobile functionality, such as gestures. If you can test it with the Chrome Device Toolbar, you can emulate it in puppeteer.
+Mobile devices can be emulated in puppeteer. This is good for testing non-platform specific mobile functionality, such as gestures. If you can test it with the Chrome Device Toolbar, you can emulate it in puppeteer. Select the device at suite scope so that shared setup applies it before navigation; changing mobile or touch emulation after navigation may reload the page and restart app initialization.
 
 ```ts
-await emulate(KnownDevices['iPhone 15 Pro'])
+deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
 
-await gesture(newThoughtCommand)
-await keyboard.type('a')
+it('creates a thought with a gesture', async () => {
+  await gesture(newThoughtCommand)
+  await keyboard.type('a')
+})
 ```
 
 While we prefer to avoid backdoor access to state in integration tests, it is recommended that you use the [exportThoughts](../src/e2e/puppeteer/helpers/exportThoughts.ts) helper for asserting the overall thought structure. Parsing the DOM, activating the Export modal, or taking a snapshot are either too slow or too tightly coupled to other functionality. `exportThoughts` is fast, direct, and makes for readable tests.
@@ -506,7 +508,7 @@ Integration tests are blackbox, but named helpers may take shortcuts during arra
 | Incidental app setup | Arrange | [`command`](../src/e2e/puppeteer/helpers/command.ts), [`openModal`](../src/e2e/puppeteer/helpers/openModal.ts), [`setTheme`](../src/e2e/puppeteer/helpers/setTheme.ts) | Use only when the command, modal entry point, or Settings navigation is not under test. |
 | Browser/driver limitation | Arrange | Puppeteer [`setSelection`](../src/e2e/puppeteer/helpers/setSelection.ts) and [`closeKeyboard`](../src/e2e/puppeteer/helpers/closeKeyboard.ts); iOS [`setSelection`](../src/e2e/iOS/helpers/setSelection.ts) | Simulate browser state the driver cannot reliably produce. The subsequent behavior under test must still use a real user entry point. |
 | Visual snapshot stabilization | Arrange | [`hide`](../src/e2e/puppeteer/helpers/hide.ts), [`hideVisibility`](../src/e2e/puppeteer/helpers/hideVisibility.ts), [`hideHUD`](../src/e2e/puppeteer/helpers/hideHUD.ts), [`showMousePointer`](../src/e2e/puppeteer/helpers/showMousePointer.ts), [`screenshot`](../src/e2e/puppeteer/helpers/screenshot.ts) | DOM/style mutation is allowed only to remove irrelevant nondeterminism or expose input position in a visual test. Do not hide the subject of the snapshot. |
-| Test environment controls | Arrange | [`simulateDragAndDrop`](../src/e2e/puppeteer/helpers/simulateDragAndDrop.ts), [`scrollTo`](../src/e2e/puppeteer/helpers/scrollTo.ts), and reviewed helpers that set [`testFlags`](../src/e2e/testFlags.ts) | Use only for a condition that cannot be created reliably through normal input, explain why, and restore mutable flags in `afterEach`. The control must not change the semantic outcome under test. |
+| Test environment controls | Arrange | [`deviceEmulation`](../src/e2e/puppeteer/helpers/deviceEmulation.ts), [`setConnectionStatus`](../src/e2e/puppeteer/helpers/setConnectionStatus.ts), [`simulateDragAndDrop`](../src/e2e/puppeteer/helpers/simulateDragAndDrop.ts), [`scrollTo`](../src/e2e/puppeteer/helpers/scrollTo.ts), and reviewed helpers that set [`testFlags`](../src/e2e/testFlags.ts) | Use only for a condition that cannot be created reliably through normal input, explain why, and restore mutable controls in the corresponding `afterEach` or `afterAll` hook unless per-test page isolation resets them. The control must not change the semantic outcome under test. |
 | Structural assertion | Assert | [`exportThoughts`](../src/e2e/puppeteer/helpers/exportThoughts.ts) | Export the thought tree as plaintext. Do not make additional assertions on Redux state. |
 | Non-visual synchronization | Wait | [`waitForContextHasChildWithValue`](../src/e2e/puppeteer/helpers/waitForContextHasChildWithValue.ts), [`waitForThoughtExistInDb`](../src/e2e/puppeteer/helpers/waitForThoughtExistInDb.ts), [`waitForState`](../src/e2e/puppeteer/helpers/waitForState.ts) | Use only when persistence or another prerequisite has no immediate visual signal. This is synchronization, not the test's assertion; assert the final user-visible result separately. |
 | Timing/environment spoofing | Arrange | [`reloadWithProductionTiming`](../src/e2e/puppeteer/helpers/reloadWithProductionTiming.ts) (spoofs `navigator.webdriver` to restore production animation timing) | Use only for a state that cannot exist under test timing (such as the loading phase). Justify in the helper's doc comment and state how the spoof is undone (per-test page isolation counts, but say so). Subsequent waits must still name conditions rather than replay production durations. |
@@ -678,7 +680,7 @@ Two consequences of that wait are handled inside the `run` job, after the gate a
 
 Accepted tradeoff: a suite cancelled mid-run leaves its BrowserStack session to expire on the provider's idle timeout instead of closing cleanly, briefly counting against the pool — cheaper than running entire suites against superseded commits.
 
-Other workflows live in [`.github/workflows/`](../.github/workflows), including `lint.yml`, `docs.yml`, `update-browserslist.yml`, and `copilot-setup-steps.yml`.
+Other workflows live in [`.github/workflows/`](../.github/workflows), including `lint.yml`, `docs.yml`, `update-browserslist.yml`, and `copilot-setup-steps.yml`. One of them is itself a test suite: `agent-scripts.yml` integration-tests the agent-session machinery, which otherwise runs only inside Copilot agent sessions, where a break like #4848 would ship unnoticed. [`scripts/shared-chrome.test.mjs`](../scripts/shared-chrome.test.mjs) launches the real [`scripts/shared-chrome.mjs`](../scripts/shared-chrome.mjs) and asserts its Chrome CDP endpoint answers; [`scripts/bridge-attach.test.ts`](../scripts/bridge-attach.test.ts) attaches to that Chrome through the real web executor bridge ([`attachExistingBrowserInstance.ts`](../src/e2e/puppeteer/attachExistingBrowserInstance.ts)) via `npx tsx`, the same invocation agents use; and [`scripts/mcp-session-proxy.test.mjs`](../scripts/mcp-session-proxy.test.mjs) runs the real [`scripts/mcp-session-proxy.mjs`](../scripts/mcp-session-proxy.mjs) against a local stub upstream — session adoption, DELETE swallowing, single canonical `Content-Length` — with no BrowserStack credentials. It is the one CI job that uses puppeteer's downloaded Chrome (every other workflow sets `PUPPETEER_SKIP_DOWNLOAD`), and it triggers on the scripts, their tests, the bridge modules, its own workflow file, and `yarn.lock` (a puppeteer bump is how #4848 arrived).
 
 ### TDD regression validation
 

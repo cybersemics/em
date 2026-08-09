@@ -39,6 +39,13 @@ let suppressChange = false
  * editable is momentarily blurred and refocused to retarget focus after iOS autocomplete, which does not end editing. */
 let suppressBlurSync = false
 
+/** Set when a touchend on a non-cursor thought moves the cursor without entering edit mode, and cleared on the next
+ * touchstart. While set, any focus or mousedown on an editable is the tail of that same tap: iOS Safari sometimes
+ * synthesizes them even though touchend called preventDefault (e.g. a non-cancelable touchend during scroll momentum),
+ * and by the time they arrive the tapped thought has already become the cursor, so they would incorrectly activate
+ * edit mode. A legitimate second tap always begins with a new touchstart, which clears the flag first. */
+let suppressFocusAfterCursorMove = false
+
 // check duplicate ranks within the same context for debugging
 const globals = {
   abandonImport,
@@ -49,6 +56,7 @@ const globals = {
   suppressExpansion,
   suppressChange,
   suppressBlurSync,
+  suppressFocusAfterCursorMove,
   arrowKeyBoundaryCross: arrowKeyBoundaryCross as string | null,
   touching,
 }

@@ -121,7 +121,7 @@ Both filter `globalCommands` by name and respect `hideFromDesktopCommandUniverse
 
 ### Multicursor
 
-When `state.multicursors` is non-empty, the user has multiple thoughts selected. Every command must declare how it behaves in this case via the required `multicursor` field — there is no implicit default.
+When `state.multicursors` is non-empty, the user has one or more thoughts selected. A selection of exactly one thought is common — on mobile, opening the Command Center selects the cursor thought. Every command must declare how it behaves in this case via the required `multicursor` field — there is no implicit default.
 
 - **`multicursor: false`** — execute on `state.cursor` as if no multicursor existed; selection stays. For commands that don't interact with the thoughtspace (e.g. opening modals).
 - **`multicursor: true`** — execute once per selected thought.
@@ -129,8 +129,8 @@ When `state.multicursors` is non-empty, the user has multiple thoughts selected.
 
 | Option | Meaning |
 |---|---|
-| `disallow` | Block execution and show an alert. Use sparingly — usually `multicursor: false` or `filter` is better. |
-| `error` | The alert message shown when `disallow` is true. String or `(state) => string`. |
+| `disallow` | Block execution and show an alert when *more than one* thought is selected. A single selected thought is executed on directly, as if only the cursor were set, so the cursor is not restored afterwards. Use sparingly — usually `multicursor: false` or `filter` is better. |
+| `error` | The alert message shown when `disallow` is true and more than one thought is selected. String or `(state) => string`. |
 | `execMulticursor(cursors, dispatch, getState)` | Custom replacement for the per-cursor loop. |
 | `onComplete(filteredCursors, dispatch, getState)` | Callback after the loop finishes. |
 | `preventSetCursor` | Don't restore the cursor at the end. |
@@ -139,6 +139,8 @@ When `state.multicursors` is non-empty, the user has multiple thoughts selected.
 | `filter` | One of `'all'` (default), `'first-sibling'`, `'last-sibling'`, `'prefer-ancestor'`. |
 
 `executeCommandWithMulticursor` walks the filtered cursors in document order (`documentSort`), `setCursor`s each path in turn, calls the regular `exec`, and finally restores the original cursor (unless `preventSetCursor` is set). It wraps the loop in `setIsMulticursorExecuting({ value: true, undoLabel: command.id })` so the entire multi-step operation collapses into a single undo entry.
+
+`setIsMulticursorExecuting` is the general mechanism for that collapsing, not a private detail of the command loop: [`undoRedoEnhancer`](../src/redux-enhancers/undoRedoEnhancer.ts) merges every action dispatched while `state.isMulticursorExecuting` is true into the preceding undo patch, and shows `undoLabel` in the undo/redo alert. Any code path that edits every selected thought without going through a `multicursor: true` command must bracket its dispatch with the same pair, or the user has to undo once per thought. The [`ColorPicker`](../src/components/ColorPicker.tsx) and [`LetterCasePicker`](../src/components/LetterCasePicker.tsx) reach the thoughtspace through [`formatSelection`](../src/actions/formatSelection.ts) and [`formatLetterCase`](../src/actions/formatLetterCase.ts) rather than through their `multicursor: false` toolbar commands, so those two action-creators do the bracketing themselves; drag-and-drop of a multiselect does the same.
 
 ### Gating and defaults
 
