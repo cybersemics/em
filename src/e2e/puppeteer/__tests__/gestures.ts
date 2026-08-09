@@ -65,11 +65,6 @@ describe('alerts', () => {
 })
 
 describe('gestures', () => {
-  beforeEach(async () => {
-    // Let the test-mode connection timer finish before these tests override it.
-    await page.waitForFunction(() => window.em.offlineStatusStore.getState() === 'offline')
-  })
-
   // https://github.com/cybersemics/em/issues/3887
   it('releases a gesture whose touch target unmounts mid-gesture', async () => {
     // The loading indicator is the element that unmounts under the user's finger in the reported
