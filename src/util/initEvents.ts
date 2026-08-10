@@ -27,6 +27,7 @@ import syncStatusStore from '../stores/syncStatus'
 import { updateSize } from '../stores/viewport'
 import isRoot from '../util/isRoot'
 import pathToContext from '../util/pathToContext'
+import debugLog from './debugLog'
 import durations from './durations'
 import equalPath from './equalPath'
 
@@ -304,6 +305,9 @@ const initEvents = (store: Store<State, any>) => {
   /** Handle a page lifecycle state change, i.e. switching apps. */
   const onStateChange = ({ oldState, newState }: { oldState: LifecycleState; newState: LifecycleState }) => {
     clearTimeout(passiveTimeout)
+
+    // Log lifecycle transitions so that events can be correlated with the app being backgrounded or foregrounded, e.g. a false Command Center open right before an app switch. More direct than inferring suspension from gaps in the log timeline.
+    debugLog.log('lifecycle', { oldState, newState })
 
     // dismiss the gesture alert on hide
     if (newState === 'hidden' || oldState === 'hidden') {

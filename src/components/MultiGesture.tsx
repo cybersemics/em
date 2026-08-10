@@ -3,8 +3,10 @@ import { GestureResponderEvent, PanResponder, PanResponderInstance, View } from 
 import Direction from '../@types/Direction'
 import Gesture from '../@types/Gesture'
 import { noop } from '../constants'
+import getSafeAreaBottom from '../device/virtual-keyboard/getSafeAreaBottom'
 import testFlags from '../e2e/testFlags'
 import { clearGesture, updateGesture } from '../stores/gesture'
+import viewportStore from '../stores/viewport'
 import debugLog from '../util/debugLog'
 import isInGestureZone from '../util/isInGestureZone'
 import ScrollZone from './ScrollZone'
@@ -193,6 +195,8 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         sequence: this.sequence,
         x: this.clientStart && Math.round(this.clientStart.x),
         y: this.clientStart && Math.round(this.clientStart.y),
+        innerHeight: viewportStore.getState().innerHeight,
+        safeAreaBottom: getSafeAreaBottom(),
       })
       this.props.onCancel?.({ clientStart: this.clientStart, e })
       this.reset()
@@ -340,7 +344,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
             abandon: this.abandon,
           })
         }
-        // Log the start and end coordinates so that a false gesture, such as an OS app switcher swipe misread as a command gesture, can be diagnosed from the debug log.
+        // Log the start and end coordinates so that a false gesture, such as an OS app switcher swipe misread as a command gesture, can be diagnosed from the debug log. innerHeight and safeAreaBottom determine the bottom system-gesture exclusion that was in effect (see isInGestureZone), so the log also reveals if the exclusion was inert because the safe area inset read as zero.
         debugLog.log('gesture', {
           sequence: this.sequence,
           x: this.clientStart && Math.round(this.clientStart.x),
@@ -348,6 +352,8 @@ class MultiGesture extends React.Component<MultiGestureProps> {
           endX: Math.round(gestureState.moveX),
           endY: Math.round(gestureState.moveY),
           abandon: this.abandon,
+          innerHeight: viewportStore.getState().innerHeight,
+          safeAreaBottom: getSafeAreaBottom(),
         })
         if (!this.abandon) {
           const clientEnd = {
