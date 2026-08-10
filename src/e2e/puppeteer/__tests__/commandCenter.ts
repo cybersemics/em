@@ -76,7 +76,7 @@ describe('command center', () => {
   // Center gesture (swipe up) and commits right before the app suspends. Touches that begin in the
   // bottom system-gesture strip — present exactly on devices with a home indicator, i.e. a nonzero
   // safe-area-inset-bottom — must not start a gesture.
-  it.skip('does not open when a swipe starts at the bottom edge of the screen (iOS app switcher gesture)', async () => {
+  it('does not open when a swipe starts at the bottom edge of the screen (iOS app switcher gesture)', async () => {
     await paste(`
         - a
         - b
