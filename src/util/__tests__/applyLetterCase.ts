@@ -65,4 +65,12 @@ describe('transforms that change the length of the text', () => {
   it('applies UpperCase to a value containing ß in a tag without truncating the text', () => {
     expect(applyLetterCase('UpperCase', '<b>Straße</b> means street')).toBe('<b>STRASSE</b> MEANS STREET')
   })
+
+  // title case does not capitalize a token that contains a period, so the transform of a prefix can be longer than the
+  // transform of the whole value
+  it('applies TitleCase across tags without duplicating text', () => {
+    /** Extracts the plain text of an html string. */
+    const textContent = (html: string) => new DOMParser().parseFromString(html, 'text/html').body.textContent
+    expect(textContent(applyLetterCase('TitleCase', 'ᾷßx<b>.</b>ß<b>B</b>'))).toBe('ᾷßx.ßb')
+  })
 })

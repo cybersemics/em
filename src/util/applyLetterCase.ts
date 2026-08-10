@@ -24,8 +24,14 @@ const transformText = (value: string, transform: (text: string) => string): stri
   textNodes.reduce(
     (offsets, node) => {
       const end = offsets.end + (node.textContent ?? '').length
-      // the last node ends at transform(text).length, i.e. the end of the transformed text, so nothing is ever dropped
-      const transformedEnd = transform(text.slice(0, end)).length
+      // Clamped so that the boundary can move neither backwards, which would duplicate text, nor past the end of the
+      // transformed text. The transform of a prefix can be longer than the transform of the whole text, e.g. title case
+      // does not capitalize a token that contains a period, so appending a character can shorten the result.
+      // The last node ends at transform(text).length, i.e. the end of the transformed text, so nothing is ever dropped.
+      const transformedEnd = Math.min(
+        Math.max(transform(text.slice(0, end)).length, offsets.transformedEnd),
+        transformed.length,
+      )
       node.textContent = transformed.slice(offsets.transformedEnd, transformedEnd)
       return { end, transformedEnd }
     },

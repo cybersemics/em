@@ -27,6 +27,8 @@ export const formatLetterCaseActionCreator =
     const targetPath = state.noteFocus ? resolveNotePath(state, cursor) : cursor
     const isMulticursor = hasMulticursor(state)
     const paths = isMulticursor ? Object.values(state.multicursors) : targetPath ? [targetPath] : []
+    // a multicursor may exclude the cursor thought, in which case its value is not letter-cased and its offsets do not move
+    const isCursorEdited = paths.some(path => head(path) === head(cursor))
     const offset = selection.offsetThought()
     const cursorSimplePath = simplifyPath(state, cursor)
 
@@ -50,14 +52,15 @@ export const formatLetterCaseActionCreator =
       return el.textContent?.length ?? offset
     }
 
-    const cursorOffset = cursorText !== null && offset !== null ? transformedOffset(cursorText, offset) : offset
-    const newRange =
-      cursorText !== null && selectedRange
+    const cursorOffset =
+      isCursorEdited && cursorText !== null && offset !== null ? transformedOffset(cursorText, offset) : offset
+    const restoreRange =
+      isCursorEdited && cursorText !== null && selectedRange
         ? {
             start: transformedOffset(cursorText, selectedRange.start),
             end: transformedOffset(cursorText, selectedRange.end),
           }
-        : null
+        : selectedRange
     const editActions = paths.flatMap(path => {
       const value = state.noteFocus ? noteValue(state, cursor) : getThoughtById(state, head(path))?.value
 
@@ -102,10 +105,10 @@ export const formatLetterCaseActionCreator =
     // Re-select the text that was selected before the edit (#4840). editThought re-renders the ContentEditable from
     // the new value, which destroys the browser selection, and useEditMode then collapses the caret to cursorOffset.
     // Defer to the next frame so the re-selection occurs after the re-render, before the browser paints.
-    if (newRange && newRange.end > newRange.start) {
+    if (restoreRange && restoreRange.end > restoreRange.start) {
       requestAnimationFrame(() => {
         const editable = document.querySelector(cursorEditableSelector) as HTMLElement | null
-        selection.setRange(editable, newRange)
+        selection.setRange(editable, restoreRange)
       })
     }
   }
