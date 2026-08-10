@@ -5,6 +5,7 @@ import { Keyboard } from '@capacitor/keyboard'
 import { isHTMLElement } from 'motion/react'
 import SplitResult from '../@types/SplitResult'
 import { ALLOWED_FORMATTING_TAGS } from '../constants'
+import deferredHtml from './deferredHtml'
 
 export type SelectionOptionsType = {
   offset?: number
@@ -74,6 +75,14 @@ export const isCollapsed = (): boolean => !!window.getSelection()?.isCollapsed
 
 /** Returns true if there is an active selection. */
 export const isActive = (): boolean => !!window.getSelection()?.focusNode
+
+/** Returns true when the active selection belongs to an editable whose canonical HTML reconciliation is deferred. */
+export const hasDeferredHtml = (): boolean => {
+  const focusNode = window.getSelection()?.focusNode
+  const focusElement = focusNode instanceof Element ? focusNode : focusNode?.parentElement
+  const editable = focusElement?.closest('[contenteditable="true"]')
+  return editable instanceof HTMLElement && deferredHtml.has(editable)
+}
 
 /** Traverses a node's parents until it finds an element node that is not a formatting tag. Returns null if a suitable parent cannot be found. */
 const getEditableCandidate = (node?: EventTarget | null) => {
@@ -420,31 +429,6 @@ export const set = (
   range.collapse(true)
   sel.removeAllRanges()
   sel.addRange(range)
-}
-
-/**
- * Returns the inline background color of an element that overlaps the current selection within the given root.
- *
- * The live DOM is inspected instead of serialized selection HTML because serialization omits an enclosing wrapper
- * when the selection fills all of its text.
- */
-export const backgroundColor = (root: Node): string | null => {
-  const selection = window.getSelection()
-
-  // Return null if there is no selection, no range, or the root is not an element
-  if (selection === null || selection.rangeCount === 0 || !(root instanceof Element)) return null
-
-  const range = selection.getRangeAt(0)
-
-  // Create a tree walker to traverse the root node and find the element that overlaps the selection
-  // to return its background color.
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT)
-  let node = walker.nextNode() as HTMLElement | null
-  while (node) {
-    if (node.style.backgroundColor && range.intersectsNode(node)) return node.style.backgroundColor
-    node = walker.nextNode() as HTMLElement | null
-  }
-  return null
 }
 
 /**

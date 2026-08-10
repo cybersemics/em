@@ -2,14 +2,17 @@ import { act } from 'react'
 import { UnknownAction } from 'redux'
 import Thunk from '../../@types/Thunk'
 import { formatLetterCaseActionCreator as formatLetterCase } from '../../actions/formatLetterCase'
+import colors from '../../colors.config'
 import getThoughtById from '../../selectors/getThoughtById'
 import noteValue from '../../selectors/noteValue'
 import store from '../../stores/app'
+import commandStateStore from '../../stores/commandStateStore'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import getCommandState from '../../util/getCommandState'
 import head from '../../util/head'
 import { formatSelectionActionCreator as formatSelection } from '../formatSelection'
+import { formatSelectionColorActionCreator as formatSelectionColor } from '../formatSelectionColor'
 import { importTextActionCreator as importText } from '../importText'
 import { newThoughtActionCreator as newThought } from '../newThought'
 import { toggleNoteActionCreator as toggleNote } from '../toggleNote'
@@ -368,6 +371,20 @@ describe('formatSelection color', () => {
     )
   })
 
+  it('keeps a background elsewhere when applying a font color to a different substring', async () => {
+    await dispatch([newThought({ value: 'Hello world of beautiful people' })])
+
+    selectRange('Hello '.length, 'Hello world'.length)
+    await dispatch(formatSelection('backColor', 'green'))
+
+    selectRange('Hello world of '.length, 'Hello world of beautiful'.length)
+    await dispatch(formatSelection('foreColor', 'red'))
+
+    expect(cursorValue()).toBe(
+      'Hello <font color="#000000" style="background-color: rgb(0, 214, 136);">world</font> of <font color="#ff573d">beautiful</font> people',
+    )
+  })
+
   it('clears an overlapping background when applying a font color', async () => {
     await dispatch([newThought({ value: 'Hello the world of beautiful people' })])
 
@@ -378,6 +395,16 @@ describe('formatSelection color', () => {
     await dispatch(formatSelection('foreColor', 'red'))
 
     expect(cursorValue()).toBe('Hello <font color="#ff573d">the world of beautiful</font> people')
+  })
+
+  it('replaces a background with a font color on the unchanged selection', async () => {
+    await dispatch([newThought({ value: 'Hello world' })])
+
+    selectRange('Hello '.length, 'Hello world'.length)
+    await dispatch(formatSelection('backColor', 'green'))
+    await dispatch(formatSelection('foreColor', 'red'))
+
+    expect(cursorValue()).toBe('Hello <font color="#ff573d">world</font>')
   })
 
   it('normalizes color wrappers before replacing a background with a font color', async () => {
@@ -393,6 +420,42 @@ describe('formatSelection color', () => {
     await dispatch(formatSelection('foreColor', 'green'))
 
     expect(cursorValue()).toBe('Hello <font color="#00d688">world of beautiful</font> world')
+  })
+
+  it('uses canonical color state for repeated Android swatch taps while the live DOM is deferred', async () => {
+    const userAgent = vi.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue('Android')
+    await dispatch([newThought({ value: 'Golden Retriever' })])
+
+    getEditable().focus()
+    selectRange(0, 'Golden'.length)
+    await dispatch(formatSelectionColor({ color: 'blue' }))
+    expect(commandStateStore.getState().foreColor).toBe(colors.light.blue)
+    expect(cursorValue()).toBe('<font color="#00c7e6">Golden</font> Retriever')
+    // Live DOM stays uncolored while the native range is active.
+    expect(getEditable().innerHTML).toBe('Golden Retriever')
+
+    await dispatch(formatSelectionColor({ color: 'blue' }))
+    expect(commandStateStore.getState().foreColor).toBeUndefined()
+    expect(cursorValue()).toBe('Golden Retriever')
+    userAgent.mockRestore()
+  })
+
+  it('writes a deferred Android partial color once the selection collapses', async () => {
+    const userAgent = vi.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue('Android')
+    await dispatch([newThought({ value: 'Golden Retriever' })])
+
+    const editable = getEditable()
+    editable.focus()
+    selectRange(0, 'Golden'.length)
+    await dispatch(formatSelectionColor({ color: 'blue' }))
+    expect(editable.innerHTML).toBe('Golden Retriever')
+
+    window.getSelection()?.collapseToEnd()
+    document.dispatchEvent(new Event('selectionchange'))
+    await act(vi.runOnlyPendingTimersAsync)
+
+    expect(editable.innerHTML).toBe('<font color="#00c7e6">Golden</font> Retriever')
+    userAgent.mockRestore()
   })
 
   // a background color applied over a bold thought must keep both the <b> and the color <font>

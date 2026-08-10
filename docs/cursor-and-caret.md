@@ -36,7 +36,7 @@ All access to the browser selection API goes through [`device/selection.ts`](../
 
 The `selection.ts` module groups its functions roughly into:
 
-- **Reads:** `isActive()`, `isCollapsed()`, `isText()`, `isThought()`, `isNote()`, `isOnFirstLine()`, `isOnLastLine()`, `isStartOfElementNode()`, `isEndOfElementNode()`, `offset()`, `offsetThought()`, `offsetStart()`, `offsetEnd()`, `offsetRange(editable)`, `backgroundColor(root)`, `text()`, `html()`, `getBoundingClientRect()`, `isNear(x, y, distance)`.
+- **Reads:** `isActive()`, `isCollapsed()`, `isText()`, `isThought()`, `isNote()`, `isOnFirstLine()`, `isOnLastLine()`, `isStartOfElementNode()`, `isEndOfElementNode()`, `offset()`, `offsetThought()`, `offsetStart()`, `offsetEnd()`, `offsetRange(editable)`, `hasDeferredHtml()`, `text()`, `html()`, `getBoundingClientRect()`, `isNear(x, y, distance)`.
 - **Writes:** `set(node, { offset?, end? })`, `setRange(root, start, end)`, `clear()`, `select(el)`, `removeCurrentSelection()`.
 - **Save/restore:** `save()` returns a `SavedSelection` opaque object; `restore(saved)` puts it back. Used when an action that re-renders the DOM needs to preserve the caret across the render.
 - **Split helpers:** `split(el)` and `splitNode(root, range)` return the HTML before/after the caret with formatting tags re-balanced. Used by the Split Sentences command and the Extract command.
@@ -50,7 +50,7 @@ Caret position is set via [`Editable`](../src/components/Editable.tsx)'s use of 
 
 Partial thought formatting is one of the cases where manual range preservation is unavoidable. [`formatSelection`](../src/actions/formatSelection.ts) computes the canonical HTML, writes it to the live editable, and calls `selection.setRange` synchronously before dispatching the edit without a forced render. [`ContentEditable`](../src/components/ContentEditable.tsx) skips an `innerHTML` assignment when the live HTML already matches the prop, so the React effect does not destroy the restored range.
 
-Android partial foreground and background colors are a deliberately narrower exception. Programmatically replacing or restoring the range preserves its text but dismisses Chromium's native selection handles and context menu. This path therefore applies the color through the browser's native editing command, removes redundant default colors in place, and stores that exact live HTML in Redux in the same edit. Other platforms and formatting commands continue to use the deterministic HTML formatter.
+Android partial foreground and background colors are a deliberately narrower exception. Programmatically replacing or restoring the range preserves its text but dismisses Chromium's native selection handles and context menu. `formatSelection` therefore stores the canonical formatted HTML in Redux without touching the live editable, and `ContentEditable` defers its prop-to-`innerHTML` reconciliation while the non-collapsed range remains active. The latest value is applied when the range collapses, leaves the editable, or the editable blurs. Browser input or composition supersedes the pending write; copy and cut flush it before serializing the range. [`device/deferredHtml.ts`](../src/device/deferredHtml.ts) tracks this short-lived divergence so the color picker keeps its canonical selected state instead of reparsing stale live HTML.
 
 ### Desktop
 
