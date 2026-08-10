@@ -9,11 +9,6 @@ import checker from 'vite-plugin-checker'
 import { createHtmlPlugin } from 'vite-plugin-html'
 import { VitePWA } from 'vite-plugin-pwa'
 
-const crossOriginIsolationHeaders = {
-  'Cross-Origin-Opener-Policy': 'same-origin',
-  'Cross-Origin-Embedder-Policy': 'require-corp',
-}
-
 const useHttps = !process.env.HTTP
 
 /** Resolve the short git commit hash of the current build, injected into the app via `define`. Prefers Vercel's build-time env var, falls back to git, then to 'unknown'. */
@@ -110,7 +105,7 @@ export default defineConfig({
       filename: 'service-worker.ts',
       injectManifest: {
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024, // Increase limit to 4 MiB
-        globPatterns: ['**/*.{js,css,html,webp,woff2}'],
+        globPatterns: ['**/*.{js,mjs,wasm,css,html,webp,woff2}'],
       },
       manifest: {
         name: 'em',
@@ -157,10 +152,8 @@ export default defineConfig({
           },
         }
       : {}),
-    headers: crossOriginIsolationHeaders,
   },
   preview: {
-    headers: crossOriginIsolationHeaders,
     allowedHosts: ['.emthought.cc'],
   },
 })

@@ -8,7 +8,6 @@ const PuppeteerEnvironment: Environment = {
   async setup(global, options) {
     builtinEnvironments['happy-dom'].setup(global, options)
 
-    // Keep cross-origin isolation enabled so direct OPFS can run in Puppeteer.
     // List of Chromium switches: https://peter.sh/experiments/chromium-command-line-switches/
     const args = [
       '--deterministic-fetch',
