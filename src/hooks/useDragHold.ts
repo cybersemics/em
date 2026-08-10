@@ -8,6 +8,7 @@ import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/
 import { isMac } from '../browser'
 import { AlertType, LongPressState } from '../constants'
 import hasMulticursor from '../selectors/hasMulticursor'
+import debugLog from '../util/debugLog'
 import useLongPress from './useLongPress'
 
 /** Adds event handlers to detect long press and set state.longPress while the user is long pressing a thought in preparation for a drag. */
@@ -50,6 +51,12 @@ const useDragHold = ({
 
       dispatch((dispatch, getState) => {
         const state = getState()
+
+        // Log how the press ended so that a false multiselect, e.g. an OS app switcher swipe misread as a long press, can be diagnosed from the debug log. eventType distinguishes a deliberate release (touchend) from a system-claimed touch (touchcancel).
+        debugLog.log('longPressEnd', {
+          eventType: e?.type ?? null,
+          dragHold: state.longPress === LongPressState.DragHold,
+        })
 
         if (state.longPress === LongPressState.DragHold) {
           if (!hasMulticursor(state)) dispatch(alert(null))
