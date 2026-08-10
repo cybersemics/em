@@ -31,12 +31,33 @@ export const formatLetterCaseActionCreator =
     const cursorSimplePath = simplifyPath(state, cursor)
 
     // The plain-text offsets of the selected text within the cursor thought, so that it can be re-selected after the
-    // edit (#4840). Letter case transforms preserve text length (see applyLetterCase), so the offsets remain valid.
+    // edit (#4840).
     const cursorEditableSelector = `[aria-label="editable-${head(cursor)}"]`
     const cursorEditable = state.noteFocus
       ? null
       : (document.querySelector(cursorEditableSelector) as HTMLElement | null)
+    const cursorText = cursorEditable?.textContent ?? null
     const selectedRange = cursorEditable ? selection.offsetRange(cursorEditable) : null
+
+    /** Maps a plain-text offset in the cursor thought to the corresponding offset in the letter-cased thought. A letter
+     * case transform can change the length of the text (e.g. 'ß'.toUpperCase() === 'SS'), so an offset is only valid
+     * after the edit if the text that precedes it is transformed too. */
+    const transformedOffset = (text: string, offset: number): number => {
+      // round-trip the plain text through an element so that it is escaped, since applyLetterCase parses HTML
+      const el = document.createElement('div')
+      el.textContent = text.slice(0, offset)
+      el.innerHTML = applyLetterCase(command, el.innerHTML)
+      return el.textContent?.length ?? offset
+    }
+
+    const cursorOffset = cursorText !== null && offset !== null ? transformedOffset(cursorText, offset) : offset
+    const newRange =
+      cursorText !== null && selectedRange
+        ? {
+            start: transformedOffset(cursorText, selectedRange.start),
+            end: transformedOffset(cursorText, selectedRange.end),
+          }
+        : null
     const editActions = paths.flatMap(path => {
       const value = state.noteFocus ? noteValue(state, cursor) : getThoughtById(state, head(path))?.value
 
@@ -73,7 +94,7 @@ export const formatLetterCaseActionCreator =
       // It shouldn't be possible to have noteFocus be true with the keyboard closed, so setCursor shouldn't be necessary for notes.
       // It seems like the caret goes to the end of the note anyway when its value is replaced.
       // preserveMulticursor keeps the multiselected thoughts selected, otherwise setCursor clears them (#4840).
-      !state.noteFocus ? setCursor({ path: cursorSimplePath, offset, preserveMulticursor: true }) : null,
+      !state.noteFocus ? setCursor({ path: cursorSimplePath, offset: cursorOffset, preserveMulticursor: true }) : null,
 
       isMulticursor ? setIsMulticursorExecuting({ value: false }) : null,
     ])
@@ -81,10 +102,10 @@ export const formatLetterCaseActionCreator =
     // Re-select the text that was selected before the edit (#4840). editThought re-renders the ContentEditable from
     // the new value, which destroys the browser selection, and useEditMode then collapses the caret to cursorOffset.
     // Defer to the next frame so the re-selection occurs after the re-render, before the browser paints.
-    if (selectedRange && selectedRange.end > selectedRange.start) {
+    if (newRange && newRange.end > newRange.start) {
       requestAnimationFrame(() => {
         const editable = document.querySelector(cursorEditableSelector) as HTMLElement | null
-        selection.setRange(editable, selectedRange)
+        selection.setRange(editable, newRange)
       })
     }
   }

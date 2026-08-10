@@ -57,3 +57,19 @@ it('the selected text remains selected after applying Lower Case', async () => {
 
   expect(await getSelection().toString()).toBe('aaa')
 })
+
+// https://github.com/cybersemics/em/pull/4858#pullrequestreview-4893666301
+it('the selected text remains selected after a letter case change that lengthens it', async () => {
+  await paste('Straße x')
+
+  await clickThought('Straße x')
+  await setSelection(0, 6)
+
+  await scrollIntoView('[data-testid="toolbar-icon"][aria-label="Letter Case"]', { inline: 'center' })
+  await click('[data-testid="toolbar-icon"][aria-label="Letter Case"]')
+  await click('[aria-label="letter case swatches"] [aria-label="UpperCase"]')
+
+  await waitForEditable('STRASSE X')
+
+  expect(await getSelection().toString()).toBe('STRASSE')
+})
