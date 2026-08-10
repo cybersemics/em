@@ -17,14 +17,13 @@ import { toggleNoteActionCreator as toggleNote } from '../actions/toggleNote'
 import { isTouch } from '../browser'
 import preventAutoscroll, { preventAutoscrollEnd } from '../device/preventAutoscroll'
 import * as selection from '../device/selection'
+import globals from '../globals'
 import useFreshCallback from '../hooks/useFreshCallback'
 import { firstVisibleChild } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import noteValue from '../selectors/noteValue'
 import resolveNotePath from '../selectors/resolveNotePath'
 import store from '../stores/app'
-import { mergeBatchEditing } from '../stores/batchEditing'
-import appendToPath from '../util/appendToPath'
 import equalPathHead from '../util/equalPathHead'
 import head from '../util/head'
 import strip from '../util/strip'
@@ -72,13 +71,13 @@ const Note = React.memo(
       // cursor must be true if note is focused
       if (hasFocus && noteOffset !== null) {
         selection.set(noteRef.current!, { offset: noteOffset })
+        // Clear noteOffset after placing the caret so it acts as a one-shot request. Otherwise repeatedly
+        // restoring the caret to the same offset (e.g. applying a font color over a background color multiple
+        // times) would set noteOffset to an unchanged value, the effect would not re-run, and the caret would
+        // be left wherever the note's re-render dropped it instead of the requested offset (#4630).
+        dispatch(setNoteFocus({ value: true, offset: null }))
       }
-    }, [hasFocus, editableNonce])
-
-    /** Saves the note caret offset without creating an undo patch. */
-    const saveNoteOffset = useCallback(() => {
-      dispatch(setNoteOffset({ value: selection.anchorOffsetThought() ?? selection.anchorOffset() }))
-    }, [dispatch])
+    }, [dispatch, hasFocus, noteOffset])
 
     /** Handles note keyboard shortcuts. */
     const onKeyDown = useCallback(
@@ -133,6 +132,8 @@ const Note = React.memo(
     /** Updates the =note attribute when the note text is edited. */
     const onChange = useCallback(
       (e: ContentEditableEvent) => {
+        if (globals.suppressChange) return
+
         // calculate pathToContext onChange not in render for performance
         const value = justPasted
           ? // if just pasted, strip all HTML from value
@@ -151,26 +152,12 @@ const Note = React.memo(
           const noteThought = firstVisibleChild(state, head(targetPath))
           const mergePrev = mergeBatchEditing()
 
-          if (noteThought) {
-            dispatch(
-              editThought({
-                path: appendToPath(targetPath, noteThought.id) as SimplePath,
-                oldValue: noteThought.value,
-                newValue: value,
-                mergePrev,
-                noteOffset: noteOffset ?? undefined,
-              }),
-            )
-          } else {
-            dispatch(setNoteOffset({ value: noteOffset }))
-            dispatch(
-              setDescendant({
-                path: targetPath,
-                values: [value],
-                mergePrev,
-              }),
-            )
-          }
+          dispatch(
+            setDescendant({
+              path: targetPath,
+              values: [value],
+            }),
+          )
         })
       },
       [dispatch, path, justPasted],

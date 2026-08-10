@@ -19,12 +19,12 @@ interface Command {
   /** A readable, internal unique id. */
   id: CommandId
 
-  /** Executes the command. */
+  /** Executes the command. When activated by a keyboard shortcut and the command defines an array of keyboard shortcuts, `keyboardIndex` is the index of the shortcut that was pressed within that array. */
   exec: (
     dispatch: Dispatch,
     getState: () => State,
     e: Event | GestureResponderEvent | KeyboardEvent | React.MouseEvent | React.TouchEvent | React.ClipboardEvent,
-    { type }: { type: CommandType },
+    { type, keyboardIndex }: { type: CommandType; keyboardIndex?: number },
   ) => void | Promise<void>
 
   /** Short label. */
@@ -38,7 +38,7 @@ interface Command {
   multicursor:
     | boolean
     | {
-        /** If true, execution of the command will be prevented and the user will be shown an alert. This should only be used if the command makes absolutely no sense when multiple thoughts are selected. In most cases, even if there is no multiselect behavior, you can just execute the command on state.cursor (by setting multicursor: false) or execute the command on the first or last sibling (by setting { filter: 'first-sibling' } or { filter: 'last-sibling' ). */
+        /** If true, execution of the command will be prevented and the user will be shown an alert when more than one thought is selected. A single selected thought is executed on directly, as if only the cursor were set, so the cursor is not restored afterwards. This should only be used if the command makes absolutely no sense when multiple thoughts are selected. In most cases, even if there is no multiselect behavior, you can just execute the command on state.cursor (by setting multicursor: false) or execute the command on the first or last sibling (by setting { filter: 'first-sibling' } or { filter: 'last-sibling' ). */
         disallow?: boolean
         /** An error message to display when multicursor mode is not enabled. */
         error?: ((state: State) => string) | string
@@ -105,6 +105,9 @@ interface Command {
 
   /** A keyboard sequence or array of sequences to activate the command. The first keyboard shortcut in the array will be shown in the UI. */
   keyboard?: Key | Key[] | string
+
+  /** Overrides the keyboard shortcut that is shown in the UI. Use for a command that is bound to a range of shortcuts that cannot be represented by a single Key, e.g. `{ key: '0-8', meta: true, alt: true }`. */
+  keyboardDisplay?: Key
 
   /** For toggling commands, a short label that indicates the inverse action from the current state (e.g. "Add to Favorites" and "Remove from Favorites"). */
   labelInverse?: string

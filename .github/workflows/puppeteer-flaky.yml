@@ -1,0 +1,283 @@
+# Daily Puppeteer flaky-test detector.
+#
+# Runs the full Puppeteer test suite repeatedly on `main` and aggregates Vitest
+# JSON reports to identify flaky tests. This automates routine flake detection
+# without adding load to the PR CI pipeline.
+#
+# Runs:
+#   - Twice daily on cron (03:00 and 07:00 UTC — quiet overnight CI hours)
+#   - Manually: `gh workflow run puppeteer-flaky.yml -f iterations=5`
+#
+# Optimizations:
+#   - Builds once and reuses the artifact across all iterations
+#   - Uploads trimmed Vitest reports only for failed iterations
+#
+# Reports:
+#   - Workflow summary
+#   - Optional Discord notification (flakes/infra failures only)
+#
+# To enable Discord notifications, add a `DISCORD_WEBHOOK_URL` repository secret.
+
+name: Puppeteer Flaky
+
+on:
+  schedule:
+    - cron: '0 3 * * *' # 03:00 UTC
+  workflow_dispatch:
+    inputs:
+      iterations:
+        description: 'Number of full-suite test iterations (1–50)'
+        required: false
+        default: '15'
+        type: string
+
+concurrency:
+  group: puppeteer-flaky
+  cancel-in-progress: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  CI: true
+  COPILOT_AGENT_FIREWALL_ALLOW_LIST_ADDITIONS: googlechromelabs.github.io,storage.googleapis.com
+  # Skip Puppeteer's Chrome download on install — tests attach to browserless via CDP.
+  PUPPETEER_SKIP_DOWNLOAD: true
+
+permissions:
+  contents: read
+  issues: write
+  actions: read
+
+jobs:
+  setup:
+    name: Setup matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.gen.outputs.matrix }}
+      iterations: ${{ steps.gen.outputs.iterations }}
+    steps:
+      - name: Generate iteration matrix
+        id: gen
+        run: |
+          set -euo pipefail
+          RAW='${{ github.event.inputs.iterations }}'
+          N="${RAW:-15}"
+          if ! [[ "$N" =~ ^[0-9]+$ ]] || [ "$N" -lt 1 ] || [ "$N" -gt 50 ]; then
+            echo "iterations must be an integer between 1 and 50 (got: $N)" >&2
+            exit 1
+          fi
+          # JSON array [1, 2, ..., N] for strategy.matrix.iteration
+          MATRIX="[$(seq -s, 1 "$N")]"
+          echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
+          echo "iterations=$N" >> "$GITHUB_OUTPUT"
+          echo "Will run $N test iteration(s): $MATRIX"
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v6
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Set Node.js version
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: 'yarn'
+
+      - name: Install npm dependencies
+        uses: ./.github/actions/install
+
+      - name: Build
+        run: yarn build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: build
+          path: build/
+          retention-days: 1
+
+  test:
+    name: Test ${{ matrix.iteration }}
+    needs: [setup, build]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 15
+      matrix:
+        iteration: ${{ fromJSON(needs.setup.outputs.matrix) }}
+    services:
+      browserless:
+        image: browserless/chrome:latest
+        ports:
+          - 7566:3000
+        env:
+          CONNECTION_TIMEOUT: -1
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v6
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Set Node.js version
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: 'yarn'
+
+      - name: Install npm dependencies
+        uses: ./.github/actions/install
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: build
+          path: build
+
+      - name: Serve
+        uses: ./.github/actions/serve
+
+      - name: Test
+        # continue-on-error so a failed suite can still upload its vitest JSON.
+        # Successful iterations upload nothing; missing JSON ⇒ passed (see flaky-report.mjs).
+        continue-on-error: true
+        id: test
+        run: |
+          mkdir -p flaky-results
+          set +e
+          yarn test:puppeteer \
+            --reporter=default \
+            --reporter=json \
+            --outputFile=flaky-results/iteration-${{ matrix.iteration }}.json
+          status=$?
+          set -e
+          exit "$status"
+
+      - name: Trim artifact to failed tests only
+        if: steps.test.outcome == 'failure'
+        run: |
+          REPORT="flaky-results/iteration-${{ matrix.iteration }}.json"
+          if [ ! -f "$REPORT" ]; then
+            echo "Test failed but no vitest JSON was written; nothing to upload."
+            exit 0
+          fi
+          node scripts/flaky-report.mjs --trim "$REPORT"
+
+      - name: Upload failure report
+        if: steps.test.outcome == 'failure'
+        uses: actions/upload-artifact@v7
+        with:
+          name: flaky-results-${{ matrix.iteration }}
+          path: flaky-results/iteration-${{ matrix.iteration }}.json
+          if-no-files-found: ignore
+          retention-days: 7
+
+  report:
+    name: Report
+    needs: [setup, test]
+    # setup provides the iteration count; skip if the matrix was never generated
+    if: always() && needs.setup.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v6
+
+      - name: Download failure reports
+        # Clean runs upload zero artifacts; ignore "not found" so aggregation still runs.
+        continue-on-error: true
+        uses: actions/download-artifact@v7
+        with:
+          pattern: flaky-results-*
+          path: flaky-results
+          merge-multiple: true
+
+      - name: Aggregate flaky-test report
+        id: aggregate
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          ITERATIONS: ${{ needs.setup.outputs.iterations }}
+        run: |
+          set +e
+          mkdir -p flaky-results
+          node scripts/flaky-report.mjs flaky-results "$ITERATIONS" "$RUN_URL" > report.md
+          STATUS=$?
+          set -e
+
+          cat report.md >> "$GITHUB_STEP_SUMMARY"
+
+          if [ -f flaky-results/flaky-summary.json ]; then
+            CLEAN=$(node -e "console.log(JSON.parse(require('fs').readFileSync('flaky-results/flaky-summary.json','utf8')).clean)")
+            FLAKE_COUNT=$(node -e "const s=JSON.parse(require('fs').readFileSync('flaky-results/flaky-summary.json','utf8')); console.log(s.failedTestCount ?? s.flakeCount ?? 0)")
+            INFRA_COUNT=$(node -e "console.log(JSON.parse(require('fs').readFileSync('flaky-results/flaky-summary.json','utf8')).infraFailureCount)")
+          else
+            CLEAN=false
+            FLAKE_COUNT=0
+            INFRA_COUNT=1
+          fi
+
+          echo "clean=$CLEAN" >> "$GITHUB_OUTPUT"
+          echo "flake_count=$FLAKE_COUNT" >> "$GITHUB_OUTPUT"
+          echo "infra_count=$INFRA_COUNT" >> "$GITHUB_OUTPUT"
+          echo "aggregate_exit=$STATUS" >> "$GITHUB_OUTPUT"
+
+      - name: Notify Discord
+        if: steps.aggregate.outputs.clean != 'true'
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          FLAKE_COUNT: ${{ steps.aggregate.outputs.flake_count }}
+          INFRA_COUNT: ${{ steps.aggregate.outputs.infra_count }}
+        run: |
+          set -euo pipefail
+          if [ -z "${DISCORD_WEBHOOK_URL:-}" ]; then
+            echo "DISCORD_WEBHOOK_URL secret not set; skipping Discord notification."
+            exit 0
+          fi
+
+          if [ ! -f flaky-results/flaky-summary.json ]; then
+            CONTENT=$(node -e "
+              process.stdout.write(JSON.stringify({
+                content: [
+                  '**Puppeteer flaky-test alert**',
+                  'Aggregator failed before producing a summary.',
+                  process.env.RUN_URL,
+                ].join('\\n'),
+              }))
+            ")
+          else
+            TOP=$(node -e "
+              const s = JSON.parse(require('fs').readFileSync('flaky-results/flaky-summary.json','utf8'))
+              const lines = (s.topOffenders || []).map(t =>
+                '• ' + t.file + ' › ' + t.fullName + ' — failed ' + t.failed + '/' + t.of
+              )
+              process.stdout.write(lines.join('\\n') || '(none)')
+            ")
+            CONTENT=$(node -e "
+              const text = [
+                '**Puppeteer flaky-test alert**',
+                'Failing tests: ' + process.env.FLAKE_COUNT + ' | Infra failures: ' + process.env.INFRA_COUNT,
+                '',
+                'Top offenders:',
+                process.argv[1],
+                '',
+                process.env.RUN_URL,
+              ].join('\\n')
+              process.stdout.write(JSON.stringify({ content: text.slice(0, 1900) }))
+            " "$TOP")
+          fi
+
+          curl -sS -f -X POST \
+            -H 'Content-Type: application/json' \
+            -d "$CONTENT" \
+            "$DISCORD_WEBHOOK_URL"
+          echo "Discord notification sent."
+
+      - name: Fail job when flakes or infra failures found
+        if: steps.aggregate.outputs.clean != 'true'
+        run: |
+          echo "Flakes and/or infra failures detected — see the job summary and tracking issue."
+          exit 1

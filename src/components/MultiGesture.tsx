@@ -5,6 +5,7 @@ import Gesture from '../@types/Gesture'
 import { noop } from '../constants'
 import testFlags from '../e2e/testFlags'
 import { clearGesture, updateGesture } from '../stores/gesture'
+import debugLog from '../util/debugLog'
 import isInGestureZone from '../util/isInGestureZone'
 import ScrollZone from './ScrollZone'
 import TraceGesture from './TraceGesture'
@@ -106,6 +107,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
   panResponder: PanResponderInstance
   scrolling = false
   sequence: Gesture = ''
+  touchTarget: Element | null = null
 
   constructor(props: MultiGestureProps) {
     super(props)
@@ -160,6 +162,9 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         const x = e.touches[0].clientX
         const y = e.touches[0].clientY
         this.clientStart = { x, y }
+        // Remember the element the browser pinned this touch to, so a release can still be detected
+        // if that element unmounts mid-gesture. See the pointerup listener below.
+        this.touchTarget = e.target instanceof Element ? e.target : null
         const inGestureZone = isInGestureZone(x, y, this.leftHanded)
 
         if (inGestureZone && !props.shouldCancelGesture?.(x, y)) {
@@ -184,21 +189,47 @@ class MultiGesture extends React.Component<MultiGestureProps> {
       if (testFlags.logMultigesture) {
         console.info('touchcancel')
       }
+      debugLog.log('gestureCancel', {
+        sequence: this.sequence,
+        x: this.clientStart && Math.round(this.clientStart.x),
+        y: this.clientStart && Math.round(this.clientStart.y),
+      })
       this.props.onCancel?.({ clientStart: this.clientStart, e })
       this.reset()
     })
 
-    // Fallback release signal for the #3887 case where the touched DOM element unmounts mid-gesture
-    // (e.g. the EmptyThoughtspace → LayoutTree swap that fires once initial content loads). When the
-    // touch's original target is removed, the browser is free per the touch-events spec to silently
-    // drop the touchend, leaving PanResponder stuck and the gesture menu visible until the next
-    // touch. pointercancel goes through a separate event pipeline and does fire in this case.
-    // Capture phase so nothing downstream can stopPropagation before us; guarded on currentStart so
-    // it no-ops on normal gestures (where onPanResponderRelease's reset() has already cleared it).
+    // Fallback release signals for the #3887 case where the touched DOM element unmounts mid-gesture
+    // (e.g. the EmptyThoughtspace → LayoutTree swap that fires once initial content loads). The
+    // browser pins a touch to its touchstart target, so once that element is detached the remaining
+    // touchend is dispatched into the detached tree and never reaches the window listener above,
+    // leaving PanResponder stuck and the gesture menu visible until the next touch.
+    //
+    // Pointer events are not pinned the same way: pointerup is still dispatched through the document
+    // after the target is gone, so it is the reliable signal here. pointercancel is kept as a
+    // secondary net, but it is not dispatched on target removal in every engine, so it cannot be
+    // relied on alone.
+    //
+    // Both are registered in the capture phase so nothing downstream can stopPropagation first, and
+    // both no-op unless a gesture is in progress. pointerup additionally requires the original target
+    // to be detached, so a normal gesture is always released by onPanResponderRelease — regardless of
+    // whether the engine dispatches pointerup before or after touchend.
     document.addEventListener(
       'pointercancel',
       (e: PointerEvent) => {
         if (!this.currentStart) return
+        this.props.onCancel?.({ clientStart: this.clientStart, e })
+        this.reset()
+      },
+      true,
+    )
+
+    document.addEventListener(
+      'pointerup',
+      (e: PointerEvent) => {
+        if (!this.currentStart || this.touchTarget?.isConnected !== false) return
+        if (testFlags.logMultigesture) {
+          console.info('pointerup with detached touch target', { sequence: this.sequence })
+        }
         this.props.onCancel?.({ clientStart: this.clientStart, e })
         this.reset()
       },
@@ -216,15 +247,6 @@ class MultiGesture extends React.Component<MultiGestureProps> {
           })
         }
         return !this.props.shouldCancelGesture?.()
-      },
-
-      // Called when the responder system terminates the gesture without firing onPanResponderRelease,
-      // e.g. when a competing responder takes over. Without this, props.onEnd / props.onCancel never
-      // run and the gesture menu stays stuck on screen. Treated as a cancel since the sequence may
-      // have been disrupted by whatever stole the responder. See #3887.
-      onPanResponderTerminate: (e: GestureResponderEvent) => {
-        this.props.onCancel?.({ clientStart: this.clientStart, e })
-        this.reset()
       },
 
       onPanResponderMove: (e: GestureResponderEvent, gestureState: GestureState) => {
@@ -254,7 +276,12 @@ class MultiGesture extends React.Component<MultiGestureProps> {
           // Check if we're in the gesture zone before deciding whether to disable scrolling
           // This ensures we only prevent scrolling in the gesture zone, but allow it elsewhere
           const touchLocation = e.nativeEvent.touches[0] || e.nativeEvent
-          const inGestureZone = isInGestureZone(touchLocation.pageX, touchLocation.pageY, this.leftHanded)
+          // isInGestureZone takes viewport coordinates, so convert from page coordinates. Otherwise the zone's viewport-relative bounds are compared against scroll-offset coordinates and the check breaks when the page is scrolled.
+          const inGestureZone = isInGestureZone(
+            touchLocation.pageX - window.scrollX,
+            touchLocation.pageY - window.scrollY,
+            this.leftHanded,
+          )
 
           // Only keep disableScroll=true if we're actually in the gesture zone
           // This addresses both issues: prevents scrolling in gesture zone during gestures,
@@ -313,6 +340,15 @@ class MultiGesture extends React.Component<MultiGestureProps> {
             abandon: this.abandon,
           })
         }
+        // Log the start and end coordinates so that a false gesture, such as an OS app switcher swipe misread as a command gesture, can be diagnosed from the debug log.
+        debugLog.log('gesture', {
+          sequence: this.sequence,
+          x: this.clientStart && Math.round(this.clientStart.x),
+          y: this.clientStart && Math.round(this.clientStart.y),
+          endX: Math.round(gestureState.moveX),
+          endY: Math.round(gestureState.moveY),
+          abandon: this.abandon,
+        })
         if (!this.abandon) {
           const clientEnd = {
             x: gestureState.moveX,
@@ -339,6 +375,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     this.scrollYStart = null
     this.disableScroll = false
     this.sequence = ''
+    this.touchTarget = null
     clearGesture()
   }
 

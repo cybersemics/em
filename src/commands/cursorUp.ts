@@ -10,6 +10,7 @@ import CursorUpIcon from '../components/icons/CursorUp'
 import { HOME_PATH, HOME_TOKEN } from '../constants'
 import * as selection from '../device/selection'
 import attributeEquals from '../selectors/attributeEquals'
+import documentSort from '../selectors/documentSort'
 import { getChildrenSorted } from '../selectors/getChildren'
 import hasMulticursor from '../selectors/hasMulticursor'
 import isMulticursorPath from '../selectors/isMulticursorPath'
@@ -112,7 +113,13 @@ const cursorUpCommand: Command = {
       requestAnimationFrame(() => {
         selection.clear()
       })
-    } else dispatch(cursorUp())
+    } else {
+      const state = getState()
+      const firstPath = hasMulticursor(state) ? documentSort(state, Object.values(state.multicursors))[0] : null
+
+      // when a multiselect is active, collapse it and move the cursor to the first selected thought in document order
+      dispatch(firstPath ? setCursor({ path: firstPath }) : cursorUp())
+    }
   }),
 }
 

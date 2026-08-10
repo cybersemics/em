@@ -188,6 +188,7 @@ export const TOOLBAR_DEFAULT_COMMANDS: CommandId[] = [
   'pinAll',
   'toggleTableView',
   'toggleSortPicker',
+  'toggleBulletPicker',
   'toggleDone',
   'bold',
   'italic',
@@ -483,7 +484,6 @@ export enum LongPressState {
 // See Settings modal for full descriptions.
 export enum Settings {
   debugCrashLog = 'debugCrashLog',
-  disableGestureTracing = 'disableGestureTracing',
   experienceMode = 'experienceMode',
   hideScrollZone = 'hideScrollZone',
   leftHanded = 'leftHanded',
@@ -574,6 +574,7 @@ export const COMMAND_GROUPS: {
       'openCommandCenter',
       'removeFormat',
       'textColor',
+      'applyColor',
     ],
   },
   {

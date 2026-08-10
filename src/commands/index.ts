@@ -1,5 +1,6 @@
 /* eslint-disable import/prefer-default-export */
 
+export { default as applyColor } from './applyColor'
 export { default as archive } from './archive'
 export { default as bindContext } from './bindContext'
 export { default as bold } from './bold'
@@ -68,6 +69,7 @@ export { default as strikethrough } from './strikethrough'
 export { default as swapNote } from './swapNote'
 export { default as swapParent } from './swapParent'
 export { default as textColor } from './textColor'
+export { default as toggleBulletPicker } from './toggleBulletPicker'
 export { default as toggleContextView } from './toggleContextView'
 export { default as toggleDone } from './toggleDone'
 export { default as toggleHiddenThoughts } from './toggleHiddenThoughts'
