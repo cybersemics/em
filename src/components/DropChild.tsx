@@ -7,7 +7,6 @@ import SimplePath from '../@types/SimplePath'
 import { isTouch } from '../browser'
 import testFlags from '../e2e/testFlags'
 import useDragAndDropSubThought from '../hooks/useDragAndDropSubThought'
-import usePinDropHover from '../hooks/usePinDropHover'
 import dropHoverColor from '../selectors/dropHoverColor'
 import { hasChildren } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
@@ -35,9 +34,6 @@ const DropChild = ({ depth, path, simplePath, cliff, isLastVisible }: DropChildP
   const fontSize = useSelector(state => state.fontSize)
 
   const { isHovering, dropTarget } = useDragAndDropSubThought({ path, simplePath })
-
-  // testFlags.pinDropHovers keeps the drop hover visible after it has been shown during the current drag
-  const showDropHoverPinned = usePinDropHover(isHovering)
 
   // Calculate the height for the child thought over cliff
   // If the thought is at a cliff (cliff < 0) or is the last visible thought, calculate the drop target height
@@ -89,7 +85,7 @@ const DropChild = ({ depth, path, simplePath, cliff, isLastVisible }: DropChildP
             {isHovering ? '*' : ''}
           </span>
         )}
-        {(testFlags.simulateDrag || showDropHoverPinned) && (
+        {(testFlags.simulateDrag || isHovering) && (
           <span
             className={cx(
               dropHoverRecipe({ insideDropEnd: true, insideDivider: isDivider(value) }),

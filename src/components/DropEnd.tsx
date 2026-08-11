@@ -7,7 +7,6 @@ import Path from '../@types/Path'
 import { isTouch } from '../browser'
 import testFlags from '../e2e/testFlags'
 import useDragAndDropSubThought from '../hooks/useDragAndDropSubThought'
-import usePinDropHover from '../hooks/usePinDropHover'
 import attributeEquals from '../selectors/attributeEquals'
 import dropHoverColor from '../selectors/dropHoverColor'
 import { getChildrenSorted } from '../selectors/getChildren'
@@ -96,9 +95,6 @@ const DropEnd = ({
     )
   })
 
-  // testFlags.pinDropHovers keeps the drop hover visible after it has been shown during the current drag
-  const showDropHoverPinned = usePinDropHover(!!showDropHover)
-
   // Allocate extra more space (1.4 em) to last drop target panel
   const dropTargetHeight = isLastVisible ? calculateCliffDropTargetHeight({ cliff, depth }) + 1.4 : 0
 
@@ -139,7 +135,7 @@ const DropEnd = ({
           {strip(value)}
         </span>
       )}
-      {(showDropHoverPinned || testFlags.simulateDrag) && (
+      {(showDropHover || testFlags.simulateDrag) && (
         <span
           className={dropHoverRecipe({ insideDropEnd: true })}
           style={{
