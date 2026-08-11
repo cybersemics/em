@@ -1,4 +1,5 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { undoActionCreator as undo } from '../../actions/undo'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
@@ -9,6 +10,9 @@ import nativeHistory from '../nativeHistory'
 
 /** Captures the native history listener registered by the module so the test can invoke it. */
 const mockNativeHistoryListeners: Record<string, (event: { type: 'undo' | 'redo' }) => void> = {}
+
+/** Captures the undo/redo availability last reported to iOS. */
+let mockHistoryAvailability: { canUndo: boolean; canRedo: boolean } | null = null
 
 vi.mock('@capacitor/core', () => ({
   Capacitor: {
@@ -24,8 +28,16 @@ vi.mock('webview-background', () => ({
       mockNativeHistoryListeners[event] = callback
       return Promise.resolve({ remove: () => Promise.resolve() })
     },
+    setHistoryAvailability: (availability: { canUndo: boolean; canRedo: boolean }) => {
+      mockHistoryAvailability = availability
+      return Promise.resolve()
+    },
   },
 }))
+
+beforeEach(() => {
+  mockHistoryAvailability = null
+})
 
 beforeEach(initStore)
 
@@ -51,4 +63,17 @@ it('undoes and redoes an edit when iOS emits a native history gesture', () => {
   mockNativeHistoryListeners.nativeHistory({ type: 'redo' })
   expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - Make`)
+})
+
+// https://github.com/cybersemics/em/pull/4692#pullrequestreview-4907108666
+it.skip('reports em undo and redo availability to iOS', () => {
+  nativeHistory.init()
+
+  // a newly created thought can be undone, but there is nothing to redo
+  store.dispatch([importText({ text: '- Make' }), setCursor(['Make'])])
+  expect(mockHistoryAvailability).toEqual({ canUndo: true, canRedo: false })
+
+  // undoing it makes redo available
+  store.dispatch(undo())
+  expect(mockHistoryAvailability).toEqual({ canUndo: false, canRedo: true })
 })
