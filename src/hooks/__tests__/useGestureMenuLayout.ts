@@ -5,10 +5,14 @@ import { fontSizeActionCreator } from '../../actions/fontSize'
 import store from '../../stores/app'
 import viewportStore from '../../stores/viewport'
 import useGestureMenuLayout, {
+  GESTURE_MENU_COLUMN_GAP_REM,
   GESTURE_MENU_HEADER_HEIGHT_REM,
-  GESTURE_MENU_PANEL_PADDING_MD_REM,
-  GESTURE_MENU_PANEL_PADDING_REM,
-  GESTURE_MENU_PANEL_PADDING_VERTICAL_MD_REM,
+  GESTURE_MENU_MD_BREAKPOINT,
+  GESTURE_MENU_MIN_COLUMN_WIDTH_REM,
+  GESTURE_MENU_PANEL_PADDING_HORIZONTAL_MULTI_COLUMN_FIT_REM,
+  GESTURE_MENU_PANEL_PADDING_HORIZONTAL_SINGLE_COLUMN_FIT_REM,
+  GESTURE_MENU_PANEL_PADDING_VERTICAL_MULTI_COLUMN_FIT_REM,
+  GESTURE_MENU_PANEL_PADDING_VERTICAL_SINGLE_COLUMN_FIT_REM,
   GESTURE_MENU_ROW_GAP_REM,
   GESTURE_MENU_ROW_PITCH_REM,
   GESTURE_MENU_SELECTED_ROW_REM,
@@ -51,16 +55,17 @@ describe('useGestureMenuLayout', () => {
   // by the width cap rather than by the command count.
 
   it('caps at one column just below the two-column width threshold', () => {
-    // maxColumns is measured against the NARROW padding — how many columns the viewport can physically
-    // hold. Two need 595.008px of content (2 × 280.008 + 34.992 gap, the rem constants at an 18px
-    // root), reached at 595.008 + 81 = 676.008px, so 676px is the last single-column width.
-    setViewport(676, SHORT)
+    // maxColumns is measured against the WIDE multi-column padding — a second column opens only if it
+    // still fits at the gutters the panel renders once it has opened. Two columns need 595.008px of
+    // content (2 × 280.008 + 34.992 gap, the rem constants at an 18px root), reached at
+    // 595.008 + 180 = 775.008px, so 775px is the last single-column width.
+    setViewport(775, SHORT)
     expect(layout(10).columnCount).toBe(1)
   })
 
   it('allows two columns just above the width threshold', () => {
-    // 677px − 81px narrow padding = 596px inner width, the first width holding two columns.
-    setViewport(677, SHORT)
+    // 776px − 180px wide padding = 596px inner width, the first width holding two columns.
+    setViewport(776, SHORT)
     expect(layout(10).columnCount).toBe(2)
   })
 
@@ -70,19 +75,21 @@ describe('useGestureMenuLayout', () => {
   })
 
   it('caps at two columns at desktop-854 geometry', () => {
-    // 854px panel − 81px narrow padding = 773px, two minimum-width columns (matches mockup 6586:107957).
+    // 854px panel − 180px wide padding = 674px, two minimum-width columns (595.008px) with room to
+    // spare but short of a third (910.008px). Matches mockup 6586:107957.
     setViewport(854, SHORT)
     expect(layout(10).columnCount).toBe(2)
   })
 
   it('caps at three columns at iPad-1177 geometry', () => {
-    // 1177px frame − 81px narrow padding = 1096px, three minimum-width columns (mockup 6585:107093).
+    // 1177px frame − 180px wide padding = 997px, three minimum-width columns (910.008px) and not a
+    // fourth (1225.032px). Matches mockup 6585:107093.
     setViewport(1177, SHORT)
     expect(layout(15).columnCount).toBe(3)
   })
 
   it('falls back to one column on a narrow landscape viewport', () => {
-    // 600px − 81px narrow padding = 519px, fits fewer than two minimum-width columns.
+    // 600px − 180px wide padding = 420px, fits fewer than two minimum-width columns.
     setViewport(600, SHORT)
     expect(layout(10).columnCount).toBe(1)
   })
@@ -97,37 +104,70 @@ describe('useGestureMenuLayout', () => {
   // --- Horizontal panel padding: the wide gutters are a multi-column value ------------------------
 
   it('narrows the panel padding when only one column fits', () => {
-    // 404px is 4px above the md breakpoint, so it used to take the full 5rem (90px) gutters and leave
-    // 224px of content — less than the 280px minimum column. One column fits, so it takes the narrow
-    // padding instead: 40.5px per side, 323px of content.
+    // 404px is 4px above the md breakpoint. At the wide 5rem (90px) gutters it would leave 224px of
+    // content — under the 280px minimum column — so maxColumns floors to 1. A single-column panel takes
+    // the narrow padding instead: 40.5px per side, 323px of content.
     setViewport(404, TALL)
     const { maxColumns, horizontalPaddingRem, isMobilePortrait } = layout(12)
     expect(isMobilePortrait).toBe(false)
     expect(maxColumns).toBe(1)
-    expect(horizontalPaddingRem).toBe(GESTURE_MENU_PANEL_PADDING_REM)
+    expect(horizontalPaddingRem).toBe(GESTURE_MENU_PANEL_PADDING_HORIZONTAL_SINGLE_COLUMN_FIT_REM)
   })
 
   it('keeps the wide padding once a second column fits', () => {
     setViewport(854, SHORT)
     const { maxColumns, horizontalPaddingRem } = layout(10)
     expect(maxColumns).toBe(2)
-    expect(horizontalPaddingRem).toBe(GESTURE_MENU_PANEL_PADDING_MD_REM)
+    expect(horizontalPaddingRem).toBe(GESTURE_MENU_PANEL_PADDING_HORIZONTAL_MULTI_COLUMN_FIT_REM)
   })
 
   it('keeps the narrow padding below the md breakpoint', () => {
     setViewport(390, TALL)
-    expect(layout(12).horizontalPaddingRem).toBe(GESTURE_MENU_PANEL_PADDING_REM)
+    expect(layout(12).horizontalPaddingRem).toBe(GESTURE_MENU_PANEL_PADDING_HORIZONTAL_SINGLE_COLUMN_FIT_REM)
   })
 
-  it('uses the wide padding as soon as two columns fit, even when they end up narrow', () => {
-    // The reported case. 729px physically holds two columns (648px of content at the narrow padding),
-    // so maxColumns is 2 and rule 2 applies the wide padding — leaving 549px for those two columns,
-    // i.e. ~257px each, under GESTURE_MENU_MIN_COLUMN_WIDTH_REM. That constant gates whether a column
-    // OPENS; it is not a floor on the rendered width.
+  it('stays single-column when a second column would not fit the wide padding', () => {
+    // The reported case. 729px could physically hold two columns — 648px of content at the narrow
+    // padding — but a two-column panel renders the wide gutters, leaving only 549px, short of the
+    // 595.008px two minimum-width columns need. Measuring maxColumns against the padding the panel
+    // would actually render is what keeps a column from opening at a width it cannot honour: the
+    // menu stays at one column, which then takes the narrow padding.
     setViewport(729, SHORT)
-    const { maxColumns, horizontalPaddingRem } = layout(10)
-    expect(maxColumns).toBe(2)
-    expect(horizontalPaddingRem).toBe(GESTURE_MENU_PANEL_PADDING_MD_REM)
+    const { maxColumns, columnCount, horizontalPaddingRem } = layout(10)
+    expect(maxColumns).toBe(1)
+    expect(columnCount).toBe(1)
+    expect(horizontalPaddingRem).toBe(GESTURE_MENU_PANEL_PADDING_HORIZONTAL_SINGLE_COLUMN_FIT_REM)
+  })
+
+  it('never opens a column narrower than the minimum width', () => {
+    // The invariant the wide-padding basis buys, and the reason the 677–775px band stays single-column:
+    // whenever more than one column opens, the content left by the wide gutters divides into columns
+    // that are each at least GESTURE_MENU_MIN_COLUMN_WIDTH_REM. Mirrors the component's own track width:
+    // calc((100% − (maxColumns−1) × gap) / maxColumns), resolved against the padded content box.
+    //
+    // Sampled every 10px across the whole range, then every 1px around the two- and three-column
+    // thresholds (775/776 and 1090/1091) — an off-by-one in the basis surfaces there and nowhere else.
+    // A full 1px sweep of the range renders the hook 1000× and exceeds the 5s test timeout.
+    const rem = 18
+    const coarse = []
+    for (let w = GESTURE_MENU_MD_BREAKPOINT; w <= 1400; w += 10) coarse.push(w)
+    const fine = []
+    for (const threshold of [775, 1090]) {
+      for (let w = threshold - 8; w <= threshold + 8; w += 1) fine.push(w)
+    }
+    let multiColumnWidths = 0
+    for (const innerWidth of [...coarse, ...fine]) {
+      setViewport(innerWidth, SHORT)
+      const { maxColumns } = layout(30)
+      if (maxColumns === 1) continue
+      multiColumnWidths++
+      const contentPx = innerWidth - 2 * GESTURE_MENU_PANEL_PADDING_HORIZONTAL_MULTI_COLUMN_FIT_REM * rem
+      const columnPx = (contentPx - (maxColumns - 1) * GESTURE_MENU_COLUMN_GAP_REM * rem) / maxColumns
+      expect(columnPx).toBeGreaterThanOrEqual(GESTURE_MENU_MIN_COLUMN_WIDTH_REM * rem)
+    }
+    // Guards the sweep against passing vacuously: a regression pinning maxColumns to 1 would skip every
+    // assertion above and still report green.
+    expect(multiColumnWidths).toBeGreaterThan(0)
   })
 
   it('keeps the padding fixed as a narrowing gesture drains columns', () => {
@@ -140,6 +180,57 @@ describe('useGestureMenuLayout', () => {
     expect(few.columnCount).toBe(1)
     expect(few.horizontalPaddingRem).toBe(many.horizontalPaddingRem)
     expect(few.maxColumns).toBe(many.maxColumns)
+  })
+
+  // --- Vertical panel padding: rendered must equal budgeted ---------------------------------------
+  // The component renders `verticalPaddingRem` straight from the hook instead of re-deriving it, so
+  // these also pin what the panel paints. Regression guard: the value was briefly derived twice, and
+  // the render silently fell back to the roomier single-column padding while the row budget kept
+  // spending the tighter multi-column one — costing the column ~0.5 row it had already been given.
+
+  it('tightens the vertical padding once a second column fits', () => {
+    setViewport(854, SHORT)
+    const { maxColumns, verticalPaddingRem } = layout(10)
+    expect(maxColumns).toBe(2)
+    expect(verticalPaddingRem).toBe(GESTURE_MENU_PANEL_PADDING_VERTICAL_MULTI_COLUMN_FIT_REM)
+  })
+
+  it('keeps the roomier vertical padding when only one column fits', () => {
+    // 404px is above md but holds one column, so it takes the single-column value on both axes.
+    setViewport(404, TALL)
+    const { maxColumns, verticalPaddingRem, isMobilePortrait } = layout(12)
+    expect(isMobilePortrait).toBe(false)
+    expect(maxColumns).toBe(1)
+    expect(verticalPaddingRem).toBe(GESTURE_MENU_PANEL_PADDING_VERTICAL_SINGLE_COLUMN_FIT_REM)
+  })
+
+  it('keeps the roomier vertical padding below the md breakpoint', () => {
+    setViewport(390, TALL)
+    expect(layout(12).verticalPaddingRem).toBe(GESTURE_MENU_PANEL_PADDING_VERTICAL_SINGLE_COLUMN_FIT_REM)
+  })
+
+  it('budgets the row count against the vertical padding it reports', () => {
+    // The invariant the regression broke: a full column plus the header, BOTH reported vertical
+    // paddings and the selected-row reserve must fit the viewport. Spends verticalPaddingRem itself
+    // rather than a hardcoded constant, so the budget and the rendered padding cannot diverge again.
+    setViewport(854, MID)
+    const { rowsPerColumn, verticalPaddingRem } = layout(30)
+    const rem = 18
+    const columnPx = rowsPerColumn * GESTURE_MENU_ROW_PITCH_REM * rem - GESTURE_MENU_ROW_GAP_REM * rem
+    const chromePx = (GESTURE_MENU_HEADER_HEIGHT_REM + 2 * verticalPaddingRem + GESTURE_MENU_SELECTED_ROW_REM) * rem
+    expect(columnPx + chromePx).toBeLessThanOrEqual(MID)
+  })
+
+  it('holds the vertical padding fixed as a narrowing gesture drains columns', () => {
+    // Same rule as the horizontal padding: keyed on maxColumns, never on columnCount. A gesture that
+    // empties a column must not change the panel's vertical padding — or its row budget.
+    setViewport(854, MID)
+    const many = layout(16)
+    const few = layout(3)
+    expect(many.columnCount).toBe(2)
+    expect(few.columnCount).toBe(1)
+    expect(few.verticalPaddingRem).toBe(many.verticalPaddingRem)
+    expect(few.rowsPerColumn).toBe(many.rowsPerColumn)
   })
 
   // --- Packed layout: use as many columns as needed, not as many as fit --------------------------
@@ -217,7 +308,7 @@ describe('useGestureMenuLayout', () => {
     const columnPx = rowsPerColumn * GESTURE_MENU_ROW_PITCH_REM * rem - GESTURE_MENU_ROW_GAP_REM * rem
     const chromePx =
       (GESTURE_MENU_HEADER_HEIGHT_REM +
-        2 * GESTURE_MENU_PANEL_PADDING_VERTICAL_MD_REM +
+        2 * GESTURE_MENU_PANEL_PADDING_VERTICAL_MULTI_COLUMN_FIT_REM +
         GESTURE_MENU_SELECTED_ROW_REM) *
       rem
     expect(columnPx + chromePx).toBeLessThanOrEqual(MID)

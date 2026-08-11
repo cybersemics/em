@@ -12,8 +12,6 @@ import useGestureMenuLayout, {
   GESTURE_MENU_HEADER_LABEL_FONT_SIZE_REM,
   GESTURE_MENU_HEADER_LABEL_MARGIN_BOTTOM_REM,
   GESTURE_MENU_HEADER_MARGIN_BOTTOM_REM,
-  GESTURE_MENU_PANEL_PADDING_REM,
-  GESTURE_MENU_PANEL_PADDING_VERTICAL_MD_REM,
   GESTURE_MENU_ROW_GAP_REM,
 } from '../hooks/useGestureMenuLayout'
 import gestureStore, {
@@ -44,25 +42,19 @@ const GestureMenu: FC<{
     columnCount,
     maxColumns,
     horizontalPaddingRem,
+    verticalPaddingRem,
     rowsPerColumn,
     visibleCommandCount,
     isMobilePortrait,
     isMultiColumn,
   } = useGestureMenuLayout(commands.length)
 
-  // Taken from the hook rather than re-derived here, so the rendered padding is always the value the
-  // width budget was computed against. It keys on how many columns *fit* — never on how many the
-  // commands happen to need — so refining a gesture (r → rdl) can drop a column without shifting the
-  // panel's padding.
+  // Both paddings come from the hook rather than being re-derived here, so what the panel renders is
+  // always what the hook's width and height budgets were computed against. They key on how many columns
+  // *fit* — never on how many the commands happen to need — so refining a gesture (r → rdl) can drop a
+  // column without shifting the panel's padding.
   const horizontalPadding = `${horizontalPaddingRem}rem`
-
-  // Vertical padding: the larger single-column value only in mobile portrait; above the md breakpoint
-  // the panel uses the smaller landscape padding even when it collapses to one column, which buys the
-  // layout hook (budgeting the same way) roughly half a row of extra column height. Keep in sync with
-  // `verticalPaddingPx` in useGestureMenuLayout.
-  const verticalPadding = isMobilePortrait
-    ? `${GESTURE_MENU_PANEL_PADDING_REM}rem`
-    : `${GESTURE_MENU_PANEL_PADDING_VERTICAL_MD_REM}rem`
+  const verticalPadding = `${verticalPaddingRem}rem`
 
   const isSingleColumnMobile = !isMultiColumn && !isBrowser
 
