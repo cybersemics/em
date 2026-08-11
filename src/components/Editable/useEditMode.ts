@@ -11,6 +11,7 @@ import getCaretOffset from '../../device/getCaretOffset'
 import preventAutoscroll, { preventAutoscrollEnd } from '../../device/preventAutoscroll'
 import * as selection from '../../device/selection'
 import virtualKeyboard from '../../device/virtual-keyboard'
+import globals from '../../globals'
 import usePrevious from '../../hooks/usePrevious'
 import hasMulticursor from '../../selectors/hasMulticursor'
 import equalPath from '../../util/equalPath'
@@ -255,6 +256,15 @@ const useEditMode = ({
       // same element; a ghost arrives later on a different thought. Dropping it (preventDefault also blocks
       // the focus change) keeps the cursor on the thought the user actually tapped.
       if (isTouch && isSafari() && isRetargetedTap(editable)) {
+        e.preventDefault()
+        return
+      }
+
+      // Suppress the synthesized mousedown that iOS Safari can emit for a tap whose touchend already moved
+      // the cursor without entering edit mode (see globals.suppressFocusAfterCursorMove). The cursor move
+      // re-rendered this thought with editingOrOnCursor true before the mousedown arrived, so the branch
+      // below would place the caret and refocus the editable as if this were a second tap.
+      if (isTouch && isSafari() && globals.suppressFocusAfterCursorMove) {
         e.preventDefault()
         return
       }

@@ -33,7 +33,6 @@ const gesture = async (path: Gesture, { xStart, yStart, segmentLength = 60, wait
     { type: 'pointerDown', button: 0 },
     { type: 'pause', duration: waitMs },
   ]
-
   // Build move actions for each direction in the path
   let currentX = xStart
   let currentY = yStart
