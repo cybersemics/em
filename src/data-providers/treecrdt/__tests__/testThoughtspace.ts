@@ -130,8 +130,30 @@ it('falls back to rank placement when explicit afterId is stale', async () => {
   expect(Object.values(parent?.childrenMap ?? {})).toEqual([THOUGHT_A_ID, THOUGHT_X_ID, THOUGHT_B_ID])
 })
 
+it('excludes the moving thought from stale rank placement', async () => {
+  await initTestThoughtspace()
+
+  await persistThoughts([thought(PARENT_ID, EM_TOKEN, 'parent', 0), thought(OTHER_PARENT_ID, EM_TOKEN, 'other', 1)])
+  await persistThoughts([thought(THOUGHT_X_ID, PARENT_ID, 'x', 0)])
+  await persistThoughts([thought(THOUGHT_Y_ID, PARENT_ID, 'y', 1)])
+  await persistThoughts([thought(THOUGHT_A_ID, PARENT_ID, 'a', 2)])
+
+  await persistThoughts([thought(THOUGHT_Y_ID, OTHER_PARENT_ID, 'y', 0)], {
+    [THOUGHT_Y_ID]: null,
+  })
+
+  await expect(
+    persistThoughts([thought(THOUGHT_X_ID, PARENT_ID, 'x', 1)], {
+      [THOUGHT_X_ID]: THOUGHT_Y_ID,
+    }),
+  ).resolves.toBeDefined()
+
+  const parent = await treecrdtThoughtspace.getThoughtById(PARENT_ID)
+  expect(Object.values(parent?.childrenMap ?? {})).toEqual([THOUGHT_X_ID, THOUGHT_A_ID])
+})
+
 // https://github.com/cybersemics/em/pull/4325#issuecomment-5248342036
-it.skip('reads sibling order once per thought when inserting a wide batch', async () => {
+it('reads sibling order once per thought when inserting a wide batch', async () => {
   const client = await createTreecrdtClient({
     storage: { type: 'memory' },
     runtime: { type: 'direct' },

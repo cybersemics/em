@@ -125,17 +125,12 @@ const getRankPlacement = async (
   rank: number,
 ): Promise<TreecrdtPlacement> => {
   const childIds = await client.tree.children(parentId)
-  let after: Thought | undefined
+  const afterId = childIds.reduce<ThoughtId | undefined>(
+    (previousId, childId, index) => (childId !== thoughtId && index < rank ? (childId as ThoughtId) : previousId),
+    undefined,
+  )
 
-  for (const childId of childIds) {
-    if (childId === thoughtId) continue
-    const child = await getThoughtByIdFromClient(client, childId as ThoughtId)
-    if (child && child.rank < rank && (!after || child.rank > after.rank)) {
-      after = child
-    }
-  }
-
-  return after ? { type: 'after', after: after.id } : { type: 'first' }
+  return afterId ? { type: 'after', after: afterId } : { type: 'first' }
 }
 
 /** Resolves caller-provided TreeCRDT placement, falling back to rank when old callers or stale siblings omit it. */
