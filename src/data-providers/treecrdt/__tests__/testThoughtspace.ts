@@ -3,6 +3,7 @@ import type ThoughtId from '../../../@types/ThoughtId'
 import type Timestamp from '../../../@types/Timestamp'
 import { EM_TOKEN, SETTINGS_TOKEN, SETTINGS_VALUE } from '../../../constants'
 import hashThought from '../../../util/hashThought'
+import type { DataProvider } from '../../DataProvider'
 import createTreecrdtThoughtspace from '../runtime'
 import createTreecrdtDataProvider, { createIndexedChildrenMap } from '../thoughtspace'
 
@@ -39,7 +40,7 @@ const thought = (id: ThoughtId, parentId: ThoughtId, value: string, rank: number
 
 /** Persists thoughts through the real TreeCRDT data provider. */
 const persistThoughtsTo = (
-  db: Pick<typeof treecrdtThoughtspace, 'updateThoughts'>,
+  db: Pick<DataProvider, 'updateThoughts'>,
   thoughts: ReturnType<typeof thought>[],
   movePlacements?: Record<ThoughtId, ThoughtId | null>,
 ) =>
