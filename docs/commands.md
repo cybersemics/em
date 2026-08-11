@@ -446,7 +446,10 @@ Selects all thoughts at the current level. May reduce wrist strain.
 
 ### Select Between
 
-Selects all thoughts between two selected thoughts.
+Selects all sibling thoughts between two selected endpoints. On desktop, Command/Ctrl-click an unselected thought to
+set the fixed anchor, then Shift-click an endpoint. Subsequent Shift-clicks adjust the endpoint, replacing only the
+active range while preserving separately selected or previously committed ranges. A deselected thought is not used as
+a later anchor.
 
 ### Copy Cursor
 

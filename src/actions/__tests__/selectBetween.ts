@@ -338,3 +338,25 @@ test('preserves a committed range when selecting from a new anchor', () => {
 
   expect(selected).toEqual(['b', 'c', 'd', 'f', 'g', 'h'])
 })
+
+test('does not use a deselected thought as the next Select Between anchor', () => {
+  const text = `
+    - a
+    - b
+    - c
+    - d
+    - e
+  `
+
+  let stateNew = importText(initialState(), { text })
+  stateNew = toggleMulticursor(stateNew, { path: contextToPath(stateNew, ['b'])! })
+  stateNew = selectBetween(stateNew, { path: contextToPath(stateNew, ['d'])! })
+  stateNew = toggleMulticursor(stateNew, { path: contextToPath(stateNew, ['d'])! })
+  stateNew = selectBetween(stateNew, { path: contextToPath(stateNew, ['a'])! })
+
+  const selected = Object.values(stateNew.multicursors)
+    .map(path => prettyPath(stateNew, path))
+    .sort()
+
+  expect(selected).toEqual(['a', 'b', 'c'])
+})
