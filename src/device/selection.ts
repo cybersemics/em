@@ -221,6 +221,21 @@ const offsetWithinEditable = (node: Node | null, offset: number): number | null 
   return total
 }
 
+/** Returns the character offset of the selection anchor within a thought, taking into account nested formatting. */
+export const anchorOffsetThought = (): number | null => {
+  const selection = window.getSelection()
+  return selection ? offsetWithinEditable(selection.anchorNode, selection.anchorOffset) : null
+}
+
+/** Returns the character offset within a thought, taking into account siblings and intervening ancestor elements.
+ *
+ * @example <div>Hello <b>wo|rld</b></div> // returns offset 8
+ */
+export const offsetThought = (): number | null => {
+  const selection = window.getSelection()
+  return selection ? offsetWithinEditable(selection.focusNode, selection.focusOffset) : null
+}
+
 /** Returns the plain-text character offset of the selection's focus relative to the given root node, ignoring nested HTML markup. Returns null if there is no selection or the focus is not within the node. */
 export const offsetFromNode = (node: Node): number | null => {
   const selection = window.getSelection()

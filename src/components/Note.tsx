@@ -24,6 +24,7 @@ import getThoughtById from '../selectors/getThoughtById'
 import noteValue from '../selectors/noteValue'
 import resolveNotePath from '../selectors/resolveNotePath'
 import store from '../stores/app'
+import appendToPath from '../util/appendToPath'
 import equalPathHead from '../util/equalPathHead'
 import head from '../util/head'
 import strip from '../util/strip'
@@ -49,6 +50,7 @@ const Note = React.memo(
     /** Gets the value of the note. Returns null if no note exists or if the context view is active. */
     const note = useSelector(state => noteValue(state, path))
     const editableNonce = useSelector(state => state.editableNonce)
+    const noteOffset = useSelector(state => state.noteOffset)
 
     /** Focus Handling with useFreshCallback. */
     const onFocus = useFreshCallback(() => {
@@ -66,10 +68,16 @@ const Note = React.memo(
 
     // set the caret on the note if editing this thought and noteFocus is true
     useEffect(() => {
-      const noteOffset = store.getState().noteOffset
-
       // cursor must be true if note is focused
-      if (hasFocus && noteOffset !== null) {
+      // Do not collapse an active range or reset an already-correct caret during normal typing. The note and
+      // editableNonce dependencies still restore the caret after formatting and undo/redo re-render the note.
+      const selectionOffset = noteRef.current ? selection.offsetFromNode(noteRef.current) : null
+      if (
+        hasFocus &&
+        noteOffset !== null &&
+        !(selection.isActive() && !selection.isCollapsed()) &&
+        selectionOffset !== noteOffset
+      ) {
         selection.set(noteRef.current!, { offset: noteOffset })
         // Clear noteOffset after placing the caret so it acts as a one-shot request. Otherwise repeatedly
         // restoring the caret to the same offset (e.g. applying a font color over a background color multiple
@@ -77,7 +85,12 @@ const Note = React.memo(
         // be left wherever the note's re-render dropped it instead of the requested offset (#4630).
         dispatch(setNoteFocus({ value: true, offset: null }))
       }
-    }, [dispatch, hasFocus, noteOffset])
+    }, [dispatch, editableNonce, hasFocus, note, noteOffset])
+
+    /** Saves the note caret offset without creating an undo patch. */
+    const saveNoteOffset = useCallback(() => {
+      dispatch(setNoteOffset({ value: selection.anchorOffsetThought() ?? selection.anchorOffset() }))
+    }, [dispatch])
 
     /** Handles note keyboard shortcuts. */
     const onKeyDown = useCallback(
@@ -150,14 +163,25 @@ const Note = React.memo(
 
           const targetPath = resolveNotePath(state, path) ?? path
           const noteThought = firstVisibleChild(state, head(targetPath))
-          const mergePrev = mergeBatchEditing()
 
-          dispatch(
-            setDescendant({
-              path: targetPath,
-              values: [value],
-            }),
-          )
+          if (noteThought) {
+            dispatch(
+              editThought({
+                path: appendToPath(targetPath, noteThought.id) as SimplePath,
+                oldValue: noteThought.value,
+                newValue: value,
+                noteOffset: noteOffset ?? undefined,
+              }),
+            )
+          } else {
+            dispatch(setNoteOffset({ value: noteOffset }))
+            dispatch(
+              setDescendant({
+                path: targetPath,
+                values: [value],
+              }),
+            )
+          }
         })
       },
       [dispatch, path, justPasted],
