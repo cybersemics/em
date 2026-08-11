@@ -36,6 +36,7 @@ import getThoughtById from './selectors/getThoughtById'
 import getUserSetting from './selectors/getUserSetting'
 import hasMulticursor from './selectors/hasMulticursor'
 import isAllSelected from './selectors/isAllSelected'
+import isRedoEnabled from './selectors/isRedoEnabled'
 import isUndoEnabled from './selectors/isUndoEnabled'
 import splitChain from './selectors/splitChain'
 import thoughtToPath from './selectors/thoughtToPath'
@@ -720,7 +721,7 @@ export const handleNativeHistory = (type: 'undo' | 'redo') => {
   const state = store.getState()
   if (type === 'undo') {
     if (isUndoEnabled(state)) store.dispatch(undo({ cursorAtEnd: true }))
-  } else if (state.redoPatches.length > 0) {
+  } else if (isRedoEnabled(state)) {
     store.dispatch(redo({ cursorAtEnd: true }))
   }
 }

@@ -1,4 +1,5 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import { undoActionCreator as undo } from '../../actions/undo'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
@@ -66,11 +67,11 @@ it('undoes and redoes an edit when iOS emits a native history gesture', () => {
 })
 
 // https://github.com/cybersemics/em/pull/4692#pullrequestreview-4907108666
-it.skip('reports em undo and redo availability to iOS', () => {
+it('reports em undo and redo availability to iOS', () => {
   nativeHistory.init()
 
   // a newly created thought can be undone, but there is nothing to redo
-  store.dispatch([importText({ text: '- Make' }), setCursor(['Make'])])
+  store.dispatch(newThought({ value: 'Make' }))
   expect(mockHistoryAvailability).toEqual({ canUndo: true, canRedo: false })
 
   // undoing it makes redo available

@@ -14,6 +14,7 @@ npx cap sync
 <docgen-index>
 
 * [`changeBackgroundColor(...)`](#changebackgroundcolor)
+* [`setHistoryAvailability(...)`](#sethistoryavailability)
 * [`addListener('nativeHistory', ...)`](#addlistenernativehistory-)
 * [`removeAllListeners()`](#removealllisteners)
 * [Interfaces](#interfaces)
@@ -32,6 +33,23 @@ changeBackgroundColor(options: { color: string; }) => Promise<void>
 | Param         | Type                            |
 | ------------- | ------------------------------- |
 | **`options`** | <code>{ color: string; }</code> |
+
+--------------------
+
+
+### setHistoryAvailability(...)
+
+```typescript
+setHistoryAvailability(options: { canUndo: boolean; canRedo: boolean; }) => Promise<void>
+```
+
+Reports whether the app has an action to undo or redo, which iOS reads to decide whether to offer the
+native history gesture. Gestures it does offer are confirmed with an overlay, so an app that does not
+report its availability has iOS confirming an undo or redo that does nothing.
+
+| Param         | Type                                                 |
+| ------------- | ---------------------------------------------------- |
+| **`options`** | <code>{ canUndo: boolean; canRedo: boolean; }</code> |
 
 --------------------
 
