@@ -1,5 +1,6 @@
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
+import addMulticursorAtFirstMatch from '../../test-helpers/addMulticursorAtFirstMatch'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
@@ -113,4 +114,37 @@ it('should maintain sort order when bumping down in a sorted context', () => {
     - A
     - B
     - C`)
+})
+
+// https://github.com/cybersemics/em/issues/3134
+it.skip('bump the parent of multiple selected thoughts down and move the selected thoughts into it', () => {
+  const steps = [
+    importText({
+      text: `
+        - a
+          - b
+          - c
+          - d
+          - e
+          - f
+      `,
+    }),
+    setCursor(['a', 'b']),
+    addMulticursorAtFirstMatch(['a', 'b']),
+    addMulticursorAtFirstMatch(['a', 'c']),
+    addMulticursorAtFirstMatch(['a', 'd']),
+    bumpThoughtDown({}),
+  ]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - ${''}
+    - a
+      - b
+      - c
+      - d
+    - e
+    - f`)
 })
