@@ -23,6 +23,14 @@ Both backends are configured with:
 
 The values come from [`constants.ts`](../src/constants.ts).
 
+#### Tauri desktop shell
+
+The desktop app runs the same web build inside a Tauri (wry) webview, so it selects `HTML5Backend` like any other desktop browser. That only works because [`desktop/tauri.conf.json`](../desktop/tauri.conf.json) sets `dragDropEnabled: false` on the window.
+
+Left at its default of `true`, Tauri installs a native drag-and-drop handler on the webview so it can surface OS file drops as `tauri://drag-*` events. On macOS that handler overrides the webview's `NSDraggingDestination` methods (`draggingEntered:`, `draggingUpdated:`, `performDragOperation:`, `draggingExited:`) and unconditionally reports every drag as consumed, so the `WKWebView` superclass implementation never runs and WebKit never dispatches the corresponding DOM `dragenter` / `dragover` / `drop` events. Only the destination side is intercepted — `dragstart` still fires, so `beginDrag` runs and the drag appears to start, but nothing can ever be hovered or dropped. Windows (WebView2) and Linux (WebKitGTK) intercept drops the same way.
+
+Disabling it removes that handler, so drag events reach the page normally. Nothing is lost: em never listened for the `tauri://drag-*` events, and OS file drops go back to arriving as react-dnd's `NativeTypes.FILE`, which is what the app already handles.
+
 ### State machine: `state.longPress`
 
 The whole subsystem is orchestrated by a single Redux state field, [`state.longPress`](../src/@types/State.ts), which is a `LongPressState` enum with these values (see [`constants.ts`](../src/constants.ts)):
