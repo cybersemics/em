@@ -146,11 +146,11 @@ jobs:
           # All test files (union of the above)
           ALL_TEST_FILES=$(printf '%s\n' "$UNIT_FILES" "$PUPPETEER_FILES" "$IOS_FILES" | sed '/^$/d' | sort -u)
 
-          # Test infrastructure: helpers, config, and setup used by the tests. These are
-          # checked out onto base alongside the test files, since a test that uses a new
-          # helper cannot compile on base without it.
+          # Test infrastructure: helpers, config, setup, and shared e2e root files used
+          # by the tests. These are checked out onto base alongside the test files, since
+          # a test/support change cannot compile on base without its infrastructure.
           HELPER_FILES=$(echo "$CHANGED_FILES" \
-            | grep -E '^src/(test-helpers/|e2e/[^/]+/(helpers|config|setup)/).*\.tsx?$' || true)
+            | grep -E '^src/test-helpers/.*\.tsx?$|^src/e2e/[^/]+\.tsx?$|^src/e2e/[^/]+/(helpers|config|setup)/.*\.tsx?$' || true)
 
           # Non-test application files: TypeScript source files that are not test files,
           # test helpers, or e2e infrastructure (helpers, config, setup).

@@ -701,7 +701,7 @@ When a pull request adds a regression test alongside a bug fix, it must satisfy 
 
 The [`tdd-write-failing-test` skill](../.github/skills/tdd-write-failing-test/SKILL.md) temporarily stages the red test as `it.skip` with a bare issue-URL comment. Its focused `run-test` runner unskips the test for local validation, so a skipped test can never masquerade as a pass. The TDD workflow likewise unskips it against the pre-fix implementation and expects the valid assertion failure described above. After the fix, remove `.skip`; the normal Test/Puppeteer/BrowserStack workflow must run the unchanged assertion and pass. Never merge the transient skip.
 
-The TDD workflow detects added `it(...)`/`test(...)` definitions in unit, Puppeteer, and iOS test files. It checks out the pre-fix implementation and overlays the changed test files — plus any changed test helpers, config, or setup they depend on — from the pull request. For tests that are not staged with the transient skip, the normal workflows prove the green side separately.
+The TDD workflow detects added `it(...)`/`test(...)` definitions in unit, Puppeteer, and iOS test files. It checks out the pre-fix implementation and overlays the changed test files — plus any changed test infrastructure they depend on (helpers, config/setup directories, and shared `src/e2e/*.ts` files) — from the pull request. For tests that are not staged with the transient skip, the normal workflows prove the green side separately.
 
 By default, the pre-fix implementation is the PR's base commit. If the bug was introduced later or another commit is a better control, add this on its own line in the pull request description:
 

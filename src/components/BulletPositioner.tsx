@@ -285,7 +285,10 @@ const BulletPositioner = forwardRef<SVGSVGElement, PropsWithChildren<BulletPosit
     const isThoughtPinned = useSelector(state => !!isPinned(state, thoughtId))
 
     const isExpanded = useSelector(state => !!state.expanded[hashPath(path)])
-    const isBulletExpanded = isCursorParent || isCursorGrandparent || isEditing || isExpanded
+    // A selected thought stays collapsed even when it is the cursor, so state.expanded alone determines
+    // whether its bullet points down.
+    // https://github.com/cybersemics/em/issues/4738
+    const isBulletExpanded = isExpanded || (!isMulticursor && (isCursorParent || isCursorGrandparent || isEditing))
 
     // offset margin with padding by equal amounts proportional to the font size to extend the click area
     const extendClickWidth = fontSize * 1.2

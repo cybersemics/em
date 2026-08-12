@@ -1,22 +1,23 @@
 import { FC, useEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
-import { css } from '../../styled-system/css'
-import { token } from '../../styled-system/tokens'
-import Command from '../@types/Command'
-import { isBrowser } from '../browser'
-import { gestureString } from '../commands'
-import openMobileCommandUniverseCommand from '../commands/openMobileCommandUniverse'
-import useFilteredCommands from '../hooks/useFilteredCommands'
+import { css } from '../../../styled-system/css'
+import { token } from '../../../styled-system/tokens'
+import Command from '../../@types/Command'
+import { isBrowser } from '../../browser'
+import { gestureString } from '../../commands'
+import openMobileCommandUniverseCommand from '../../commands/openMobileCommandUniverse'
+import useFilteredCommands from '../../hooks/useFilteredCommands'
 import gestureStore, {
   onGestureMenuEntered,
   onGestureMenuExited,
   startGestureMenuEnter,
   startGestureMenuExit,
-} from '../stores/gesture'
-import storageModel from '../stores/storageModel'
-import FadeTransition from './FadeTransition'
+} from '../../stores/gesture'
+import storageModel from '../../stores/storageModel'
+import FadeTransition from '../FadeTransition'
+import PopupBase from '../PopupBase'
+import GestureContentBlur from './GestureContentBlur'
 import GestureMenuItem from './GestureMenuItem'
-import PopupBase from './PopupBase'
 
 /**********************************************************************
  * Components
@@ -60,30 +61,25 @@ const GestureMenu: FC<{
         style={{ fontSize }}
       >
         {gestureInProgress && (
-          <div
-            className={css({
-              padding: '2.25rem',
-              paddingTop: !isBrowser ? '0.75rem' : undefined,
-            })}
-          >
+          <div className={css({ padding: '2.25rem' })} style={!isBrowser ? { paddingTop: '0.75rem' } : undefined}>
             {/* Header */}
             <div className={css({ marginBottom: '1.389rem' })}>
               <div
-                style={{
-                  color: 'rgb(255, 255, 255, 0.7)',
+                className={css({
+                  color: 'gestureMenuLabel',
                   marginBottom: '0.444rem',
                   fontSize: '0.9rem',
                   fontWeight: 500,
-                }}
+                })}
               >
                 Gestures
               </div>
               <div
-                style={{
+                className={css({
                   height: '1px',
                   width: '100%',
-                  background: 'linear-gradient(90deg, rgba(174, 168, 214, 0.59) 0%, rgba(28, 27, 36, 0) 100%)',
-                }}
+                  background: 'linear-gradient(90deg, {colors.gestureMenuDivider} 0%, {colors.bgTransparent} 100%)',
+                })}
               />
             </div>
 
@@ -109,12 +105,12 @@ const GestureMenu: FC<{
             {/* Cancel / Cheatsheet block */}
             {persistentCommands.length > 0 && (
               <div
-                style={{
+                className={css({
                   display: 'flex',
                   flexDirection: 'column',
-                  marginTop: !mainCommands.length ? 0 : '2.15rem',
                   gap: '1.2rem',
-                }}
+                })}
+                style={{ marginTop: !mainCommands.length ? 0 : '2.15rem' }}
               >
                 {persistentCommands.map((command, index) => {
                   const mobileCommandUniverseInProgress = gestureInProgress
@@ -144,30 +140,6 @@ const GestureMenu: FC<{
         )}
       </div>
     </div>
-  )
-}
-
-/** Renders a blur effect overlay for the gesture menu. */
-function ProgressiveBlur() {
-  const animationState = gestureStore.useSelector(state => state.gestureMenuAnimationState)
-
-  return (
-    <div
-      className={css({
-        pointerEvents: 'none',
-        position: 'absolute',
-        backdropFilter: 'blur(5px)',
-        mask: 'linear-gradient(180deg, {colors.black} 0%, {colors.bgOverlay80} 80%, {colors.bgTransparent} 100%)',
-        width: '100%',
-        top: 0,
-        height: '100%',
-      })}
-      style={{
-        // Use ease-out on enter so the blur appears immediately, and easeInSlow on exit so it lingers before fading.
-        transition: `opacity ${token('durations.fast')} ${animationState === 'exiting' ? token('easings.easeInSlow') : 'ease-out'}`,
-        opacity: animationState === 'visible' ? 1 : 0,
-      }}
-    />
   )
 }
 
@@ -214,10 +186,10 @@ function Overlay() {
       className={css({
         pointerEvents: 'none',
         position: 'absolute',
-        background: 'linear-gradient(180deg, {colors.black} 0%, {colors.bgOverlay80} 70%, {colors.bgTransparent} 100%)',
+        background: 'linear-gradient(180deg, {colors.black} 0%, {colors.bgOverlay80} 60%, {colors.bgOverlay50} 100%)',
         top: 0,
         width: '100%',
-        height: '100%',
+        height: '100dvh',
       })}
     />
   )
@@ -277,44 +249,52 @@ const GestureMenuWithTransition: FC = () => {
   if (animationState === 'hidden') return null
 
   return (
-    <PopupBase background='transparent' ref={popupRef} fullScreen>
-      <div
-        data-testid='popup-value'
-        className={css({
-          boxSizing: 'border-box',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'start',
-          alignItems: 'center',
-          width: '100%',
-          position: 'absolute',
-          top: 0,
-        })}
-      >
-        <ProgressiveBlur />
-        {/* Apply the fade transition only to the glow, overlay, and gesture menu contents 
-        to prevent the progressive blur from appearing only after the animation ends. */}
-        <FadeTransition nodeRef={overlayRef} in={fadeIn} type='fast' unmountOnExit onExited={onGestureMenuExited}>
-          <div
-            ref={overlayRef}
-            className={css({
-              position: 'relative',
-              // prevent mix-blend-mode and backdrop-filter from affecting each other
-              isolation: 'isolate',
-              width: '100%',
-              paddingBottom: '11.111rem',
-              maxHeight: '100dvh',
-            })}
-          >
-            <Overlay />
-            {isGlowBackgroundLoaded && <Glow />}
-            <div style={{ position: 'relative', zIndex: 1 }}>
-              <GestureMenu commands={commands} />
+    <>
+      <PopupBase background='transparent' ref={popupRef} fullScreen>
+        <div
+          data-testid='popup-value'
+          className={css({
+            boxSizing: 'border-box',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'start',
+            alignItems: 'center',
+            width: '100%',
+            position: 'absolute',
+            top: 0,
+          })}
+        >
+          {/* Apply the fade transition only to the glow, overlay, and gesture menu contents
+            to prevent them from appearing only after the animation ends. */}
+          <FadeTransition nodeRef={overlayRef} in={fadeIn} type='fast' unmountOnExit onExited={onGestureMenuExited}>
+            <div
+              ref={overlayRef}
+              className={css({
+                position: 'relative',
+                // prevent mix-blend-mode and backdrop-filter from affecting each other
+                isolation: 'isolate',
+                width: '100%',
+                maxHeight: '100dvh',
+                // Keeps the compositor layer alive so Android WebView doesn't drop the subtree for a
+                // frame at fade end, flashing the sibling GestureContentBlur blur through the menu.
+                willChange: 'opacity',
+                paddingBottom: '11.111rem',
+              })}
+            >
+              <Overlay />
+              {isGlowBackgroundLoaded && <Glow />}
+              <div style={{ position: 'relative', zIndex: 1 }}>
+                <GestureMenu commands={commands} />
+              </div>
             </div>
-          </div>
-        </FadeTransition>
-      </div>
-    </PopupBase>
+          </FadeTransition>
+        </div>
+      </PopupBase>
+      {/* Sibling of PopupBase (not a child) so its gestureContentBlur z-index is ordered in the shared
+          <View> stacking context — below the trace, above the content — rather than being trapped inside
+          PopupBase's higher 'popup' stacking context. */}
+      <GestureContentBlur />
+    </>
   )
 }
 
