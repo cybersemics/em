@@ -1,6 +1,8 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useCallback, useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
-import { isTouch } from '../browser'
+import { isAndroidWebView, isTouch } from '../browser'
+import deferredHtml from '../device/deferredHtml'
+import * as selection from '../device/selection'
 import globals from '../globals'
 
 interface ContentEditableProps extends Omit<React.HTMLProps<HTMLDivElement>, 'onChange'> {
@@ -24,13 +26,56 @@ const ContentEditable = React.memo(
     const contentRef = innerRef || newContentRef
     const prevHtmlRef = useRef<string>(html)
     const allowInnerHTMLChange = useRef<boolean>(true)
+    const pendingHtmlRef = useRef<string | null>(null)
     const editableNonce = useSelector(state => state.editableNonce)
     const editableNonceRef = useRef<number>(editableNonce)
+
+    /** Applies HTML immediately, unless an Android native range must retain ownership of the live DOM. */
+    const applyOrDeferHtml = useCallback(
+      (nextHtml: string) => {
+        const editable = contentRef.current
+        if (!editable) return
+        const range = selection.offsetRange(editable)
+        if (isAndroidWebView() && range && range.start !== range.end) {
+          pendingHtmlRef.current = nextHtml
+          deferredHtml.mark(editable)
+          return
+        }
+        pendingHtmlRef.current = null
+        deferredHtml.clear(editable)
+        if (editable.innerHTML !== nextHtml) editable.innerHTML = nextHtml
+      },
+      [contentRef],
+    )
+
+    /** Flushes deferred HTML, optionally restoring the logical range after replacing the editable's DOM. */
+    const flushPendingHtml = useCallback(
+      ({ preserveSelection = false }: { preserveSelection?: boolean } = {}) => {
+        const editable = contentRef.current
+        const pendingHtml = pendingHtmlRef.current
+        if (!editable || pendingHtml === null) return
+        const range = preserveSelection ? selection.offsetRange(editable) : null
+
+        // Clear first because assigning innerHTML may synchronously emit selectionchange.
+        pendingHtmlRef.current = null
+        deferredHtml.clear(editable)
+        if (editable.innerHTML !== pendingHtml) editable.innerHTML = pendingHtml
+        if (range) selection.setRange(editable, range.start, range.end)
+      },
+      [contentRef],
+    )
+
+    /** Cancels reconciliation when browser input supersedes the pending formatting-only DOM write. */
+    const cancelPendingHtml = useCallback(() => {
+      pendingHtmlRef.current = null
+      if (contentRef.current) deferredHtml.clear(contentRef.current)
+    }, [contentRef])
 
     useEffect(
       () => {
         if (contentRef.current) {
-          contentRef.current.innerHTML = html
+          applyOrDeferHtml(html)
+          prevHtmlRef.current = html
         }
       },
       // Only set the html once on mount.
@@ -40,14 +85,22 @@ const ContentEditable = React.memo(
 
     useEffect(
       () => {
+        const editable = contentRef.current
+        const range = editable ? selection.offsetRange(editable) : null
+        // Android partial colors mark deferredHtml before React re-renders. Always reconcile those updates even when
+        // allowInnerHTMLChange is false, including the case where the native range collapses before this effect runs —
+        // otherwise prevHtmlRef advances and the canonical value is never written.
+        const shouldReconcileDeferred = !!editable && deferredHtml.has(editable)
+        const preserveAndroidRange = isAndroidWebView() && !!range && range.start !== range.end
         // prevent innerHTML update when editing
         if (
           editableNonceRef.current !== editableNonce ||
-          (prevHtmlRef.current !== html && allowInnerHTMLChange.current)
+          (prevHtmlRef.current !== html &&
+            (allowInnerHTMLChange.current || preserveAndroidRange || shouldReconcileDeferred))
         ) {
-          contentRef.current!.innerHTML = html
-          prevHtmlRef.current = html
+          applyOrDeferHtml(html)
         }
+        prevHtmlRef.current = html
       },
       // eslint-disable-next-line react-hooks/exhaustive-deps
       [html, editableNonce],
@@ -57,8 +110,22 @@ const ContentEditable = React.memo(
       editableNonceRef.current = editableNonce
     }, [editableNonce])
 
+    useEffect(() => {
+      /** Applies a pending value after Android's native range collapses or leaves this editable. */
+      const onSelectionChange = () => {
+        if (pendingHtmlRef.current === null || !contentRef.current) return
+        const range = selection.offsetRange(contentRef.current)
+        if (!range || range.start === range.end) flushPendingHtml({ preserveSelection: !!range })
+      }
+
+      document.addEventListener('selectionchange', onSelectionChange)
+      return () => document.removeEventListener('selectionchange', onSelectionChange)
+    }, [contentRef, flushPendingHtml])
+
     // eslint-disable-next-line jsdoc/require-jsdoc
     const handleInput = (originalEvent: React.SyntheticEvent<HTMLDivElement>) => {
+      // Browser input supersedes a pending formatting-only DOM write.
+      cancelPendingHtml()
       const innerHTML = contentRef!.current!.innerHTML
 
       // prevent innerHTML update when editing
@@ -80,6 +147,22 @@ const ContentEditable = React.memo(
           allowInnerHTMLChange.current = true
           if (props.onPaste) props.onPaste(e)
         }}
+        onBeforeInput={(e: React.InputEvent<HTMLDivElement>) => {
+          cancelPendingHtml()
+          if (props.onBeforeInput) props.onBeforeInput(e)
+        }}
+        onCompositionStart={(e: React.CompositionEvent<HTMLDivElement>) => {
+          cancelPendingHtml()
+          if (props.onCompositionStart) props.onCompositionStart(e)
+        }}
+        onCopy={(e: React.ClipboardEvent<HTMLDivElement>) => {
+          flushPendingHtml({ preserveSelection: true })
+          if (props.onCopy) props.onCopy(e)
+        }}
+        onCut={(e: React.ClipboardEvent<HTMLDivElement>) => {
+          flushPendingHtml({ preserveSelection: true })
+          if (props.onCut) props.onCut(e)
+        }}
         ref={contentRef}
         contentEditable={!disabled}
         // capitalize the first letter of each sentence to match the native on-screen keyboard behavior (e.g. iOS auto-capitalizes by default, but Android does not unless autocapitalize is set) (#3531)
@@ -88,6 +171,7 @@ const ContentEditable = React.memo(
         spellCheck={!navigator.webdriver}
         style={style}
         onBlur={(originalEvent: React.FocusEvent<HTMLDivElement>) => {
+          flushPendingHtml()
           const innerHTML = contentRef!.current!.innerHTML
 
           // allow innerHTML updates after blur

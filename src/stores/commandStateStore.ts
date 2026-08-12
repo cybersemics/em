@@ -66,10 +66,19 @@ export const updateCommandState = () => {
   const state = store.getState()
   if (!state.cursor) return
   const selectionIsActiveThought = selection.isActive() && selection.isThought()
+  const currentCommandState = commandStateStore.getState()
   const action = selectionIsActiveThought
     ? {
         ...getCommandState(selection.html() ?? ''),
         ...(!selection.text()?.length ? getActiveEmptySelectionColors(state) : {}),
+        // Android partial colors update Redux before the live DOM so Chromium retains its native selection UI.
+        // Preserve the canonical color state until ContentEditable reconciles and the live selection can be parsed.
+        ...(selection.hasDeferredHtml()
+          ? {
+              foreColor: currentCommandState.foreColor,
+              backColor: currentCommandState.backColor,
+            }
+          : {}),
       }
     : getCommandState(pathToThought(state, state.cursor)?.value ?? '')
   commandStateStore.update(action)

@@ -1,7 +1,8 @@
 /* eslint-disable import/prefer-default-export */
 import Thunk from '../@types/Thunk'
-import { isSafari, isTouch } from '../browser'
+import { isAndroidWebView, isSafari, isTouch } from '../browser'
 import { ColorToken } from '../colors.config'
+import deferredHtml from '../device/deferredHtml'
 import * as selection from '../device/selection'
 import globals from '../globals'
 import hasMulticursor from '../selectors/hasMulticursor'
@@ -10,8 +11,9 @@ import pathToThought from '../selectors/pathToThought'
 import resolveNotePath from '../selectors/resolveNotePath'
 import simplifyPath from '../selectors/simplifyPath'
 import themeColors from '../selectors/themeColors'
-import { updateCommandState } from '../stores/commandStateStore'
+import commandStateStore, { updateCommandState } from '../stores/commandStateStore'
 import formatSelectionHtml, { FormatCommand } from '../util/formatSelectionHtml'
+import resolveSelectionColors from '../util/resolveSelectionColors'
 import { editThoughtActionCreator as editThought } from './editThought'
 import { setDescendantActionCreator as setDescendant } from './setDescendant'
 import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from './setIsMulticursorExecuting'
@@ -54,7 +56,8 @@ const registerNativeUndoStep = (html: string): void => {
 }
 
 /** Format the browser selection or cursor thought as bold, italic, strikethrough, underline, code, color, or removeFormat.
- * Computes the new HTML synchronously with the DOM (no document.execCommand) and dispatches a single editThought/setDescendant (#4637). */
+ * Computes the new HTML synchronously and dispatches a single editThought/setDescendant (#4275, #4637).
+ */
 export const formatSelectionActionCreator =
   (command: FormatCommand, color?: ColorToken): Thunk =>
   (dispatch, getState) => {
@@ -125,18 +128,28 @@ export const formatSelectionActionCreator =
       end = plainLength
     }
 
-    const newValue = formatSelectionHtml(value, {
+    const colorValue = color ? colors[color] : undefined
+    const defaultColor = state.noteFocus ? colors.fgNote : colors.fg
+    const formattedValue = formatSelectionHtml(value, {
       start,
       end,
       command,
-      colorValue: color ? colors[color] : undefined,
-      defaultColor: state.noteFocus ? colors.fgNote : colors.fg,
+      colorValue,
+      defaultColor,
       defaultBackgroundColor: colors.bg,
     })
 
     const path = state.noteFocus ? resolveNotePath(state, state.cursor) : state.cursor
 
-    if (newValue === value || !path) return
+    if (formattedValue === value || !path) return
+
+    const partialThought = !whole && !state.noteFocus
+    const deferredAndroidColor =
+      partialThought && isAndroidWebView() && (command === 'foreColor' || command === 'backColor')
+    const newValue = formattedValue
+
+    if (newValue === value) return
+    if (deferredAndroidColor) deferredHtml.mark(contentEditable)
 
     // Capture the caret's plain-text offset within the note before overwriting its value. Overwriting
     // re-renders the note's ContentEditable, which drops the caret; restoring the offset via setNoteFocus
@@ -147,6 +160,13 @@ export const formatSelectionActionCreator =
     // Only call document.execCommand when the keyboard is open and the caret is on a thought.
     // This avoids messy and buggy focus-management logic.
     if (state.isKeyboardOpen) registerNativeUndoStep(newValue)
+
+    // Keep partial thought formatting synchronous with the live editable. Restoring the range immediately after the
+    // write preserves the logical selection on normal platforms without a deferred callback.
+    if (partialThought && !deferredAndroidColor) {
+      contentEditable.innerHTML = newValue
+      selection.setRange(contentEditable, start, end)
+    }
 
     dispatch(
       state.noteFocus
@@ -163,12 +183,22 @@ export const formatSelectionActionCreator =
               oldValue: value,
               newValue,
               path: simplifyPath(state, path),
-              // force the ContentEditable to update
-              force: true,
+              // Force the ContentEditable to update when formatting the whole thought. Partial thought formatting is
+              // applied to the live DOM above without a forced render.
+              force: whole,
             }),
           ],
     )
 
+    // Android keeps the live DOM untouched while Chromium owns the native selection UI, so derive the selected swatch
+    // from the same canonical color resolution as formatSelectionHtml instead of reparsing the temporarily stale DOM.
+    if (deferredAndroidColor) {
+      const resolved = resolveSelectionColors(command, colorValue, defaultColor, colors.bg)
+      commandStateStore.update({
+        foreColor: resolved.color ?? undefined,
+        backColor: resolved.background ?? undefined,
+      })
+    }
     // Update the toolbar command state when formatting a sub-range (the whole-thought state is derived from the caret).
-    if (!whole || !state.isKeyboardOpen) updateCommandState()
+    else if (!whole || !state.isKeyboardOpen) updateCommandState()
   }

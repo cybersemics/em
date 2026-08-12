@@ -225,6 +225,134 @@ it('Bullet remains the default color when a substring color is set', async () =>
   expect(bulletColor).toBe(null)
 })
 
+it('Selection remains active after applying a font color to part of the text', async () => {
+  await paste(`
+  - Golden Retriever`)
+
+  await clickThought('Golden Retriever')
+  await setSelection(0, 6)
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="text color swatches"] [aria-label="blue"]')
+
+  expect(await getSelection().toString()).toBe('Golden')
+  expect(extractColor((await getEditingText())!).backgroundColor).toBe(null)
+  expect(extractColor((await getEditingText())!).color).toBe(rgbaToHex(colors.light.blue))
+})
+
+it('Selection remains active when applying a font color after a background elsewhere', async () => {
+  await paste(`
+  - Golden Retriever`)
+
+  await clickThought('Golden Retriever')
+  await setSelection(0, 6)
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="background color swatches"] [aria-label="green"]')
+
+  await setSelection(7, 16)
+  await click('[aria-label="text color swatches"] [aria-label="blue"]')
+
+  expect(await getSelection().toString()).toBe('Retriever')
+  await press('Escape')
+  await waitForEditable(
+    '<font color="#000000" style="background-color: rgb(0, 214, 136);">Golden</font> <font color="#00c7e6">Retriever</font>',
+  )
+})
+
+describe('Android partial colors', () => {
+  beforeEach(async () => {
+    // isAndroidWebView reads navigator.userAgent at formatting time. Keep desktop pointer input so the test can use
+    // the existing desktop toolbar interaction; mobile emulation must be configured before the app loads or the
+    // module-level isTouch value remains desktop while Puppeteer emits touch events.
+    await page.setUserAgent(
+      'Mozilla/5.0 (Linux; Android 13; Pixel 5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36',
+    )
+  })
+
+  // https://github.com/cybersemics/em/issues/4275
+  it('keeps the selection active until a partial font color is committed to the DOM', async () => {
+    await paste(`
+    - Golden Retriever`)
+
+    await clickThought('Golden Retriever')
+    await setSelection(0, 6)
+    await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+    await click('[aria-label="text color swatches"] [aria-label="blue"]')
+
+    expect(await getSelection().toString()).toBe('Golden')
+    await press('Escape')
+    await waitForEditable('<font color="#00c7e6">Golden</font> Retriever')
+  })
+
+  it('keeps the selection active when a font color replaces a background on the same range', async () => {
+    await paste(`
+    - Golden Retriever`)
+
+    await clickThought('Golden Retriever')
+    await setSelection(0, 6)
+    await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+    await click('[aria-label="background color swatches"] [aria-label="green"]')
+    expect(await getSelection().toString()).toBe('Golden')
+
+    await click('[aria-label="text color swatches"] [aria-label="blue"]')
+    expect(await getSelection().toString()).toBe('Golden')
+
+    await press('Escape')
+    await waitForEditable('<font color="#00c7e6">Golden</font> Retriever')
+  })
+
+  it('lets browser input supersede a deferred partial color', async () => {
+    await paste(`
+    - Golden Retriever`)
+
+    await clickThought('Golden Retriever')
+    await setSelection(0, 6)
+    await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+    await click('[aria-label="text color swatches"] [aria-label="blue"]')
+
+    await keyboard.type('Silver')
+    await waitForEditable('Silver Retriever')
+  })
+
+  it('flushes a deferred partial color before copy serializes the selection', async () => {
+    await paste(`
+    - Golden Retriever`)
+
+    await clickThought('Golden Retriever')
+    await setSelection(0, 6)
+    await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+    await click('[aria-label="text color swatches"] [aria-label="blue"]')
+    expect(await getSelection().toString()).toBe('Golden')
+
+    const html = await page.evaluate(() => {
+      const editable = document.querySelector('[data-editing=true] [data-editable]')
+      if (!editable) throw new Error('No editing editable found')
+      const clipboardData = new DataTransfer()
+      editable.dispatchEvent(new ClipboardEvent('copy', { clipboardData, bubbles: true, cancelable: true }))
+      return clipboardData.getData('text/html')
+    })
+
+    expect(html).toContain('color="#00c7e6"')
+    expect(html).toContain('Golden')
+  })
+
+  it('undoes a deferred partial color after the selection is dismissed', async () => {
+    await paste(`
+    - Golden Retriever`)
+
+    await clickThought('Golden Retriever')
+    await setSelection(0, 6)
+    await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+    await click('[aria-label="text color swatches"] [aria-label="blue"]')
+    expect(await getSelection().toString()).toBe('Golden')
+
+    await press('Escape')
+    await waitForEditable('<font color="#00c7e6">Golden</font> Retriever')
+
+    await press('z', { meta: true })
+    await waitForEditable('Golden Retriever')
+  })
+})
+
 it('remove all formatting from the thought', async () => {
   const importText = `
   - Labrador`
@@ -274,7 +402,9 @@ it('Verify superscript colors in different views', async () => {
   expect(supColor1).toBe(null) // Superscript should remain uncolored for partial text coloring
 
   // Test 2: Verify superscript color when entire thought is colored
+  await press('Escape')
   await clickThought('k')
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="text color swatches"] [aria-label="blue"]')
 
   const supColor2 = await getSuperscriptColor()
