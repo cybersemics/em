@@ -1,9 +1,11 @@
+import { createTreecrdtClient } from '@treecrdt/wa-sqlite'
 import type ThoughtId from '../../../@types/ThoughtId'
 import type Timestamp from '../../../@types/Timestamp'
 import { EM_TOKEN, SETTINGS_TOKEN, SETTINGS_VALUE } from '../../../constants'
 import hashThought from '../../../util/hashThought'
+import type { DataProvider } from '../../DataProvider'
 import createTreecrdtThoughtspace from '../runtime'
-import { createIndexedChildrenMap } from '../thoughtspace'
+import createTreecrdtDataProvider, { createIndexedChildrenMap } from '../thoughtspace'
 
 /** Initializes an isolated in-memory TreeCRDT client and thoughtspace for unit tests. */
 const treecrdt = createTreecrdtThoughtspace()
@@ -38,7 +40,7 @@ const thought = (id: ThoughtId, parentId: ThoughtId, value: string, rank: number
 
 /** Persists thoughts through the real TreeCRDT data provider. */
 const persistThoughtsTo = (
-  db: typeof treecrdtThoughtspace,
+  db: Pick<DataProvider, 'updateThoughts'>,
   thoughts: ReturnType<typeof thought>[],
   movePlacements?: Record<ThoughtId, ThoughtId | null>,
 ) =>
@@ -127,6 +129,55 @@ it('falls back to rank placement when explicit afterId is stale', async () => {
 
   const parent = await treecrdtThoughtspace.getThoughtById(PARENT_ID)
   expect(Object.values(parent?.childrenMap ?? {})).toEqual([THOUGHT_A_ID, THOUGHT_X_ID, THOUGHT_B_ID])
+})
+
+it('excludes the moving thought from stale rank placement', async () => {
+  await initTestThoughtspace()
+
+  await persistThoughts([thought(PARENT_ID, EM_TOKEN, 'parent', 0), thought(OTHER_PARENT_ID, EM_TOKEN, 'other', 1)])
+  await persistThoughts([thought(THOUGHT_X_ID, PARENT_ID, 'x', 0)])
+  await persistThoughts([thought(THOUGHT_Y_ID, PARENT_ID, 'y', 1)])
+  await persistThoughts([thought(THOUGHT_A_ID, PARENT_ID, 'a', 2)])
+
+  await persistThoughts([thought(THOUGHT_Y_ID, OTHER_PARENT_ID, 'y', 0)], {
+    [THOUGHT_Y_ID]: null,
+  })
+
+  await expect(
+    persistThoughts([thought(THOUGHT_X_ID, PARENT_ID, 'x', 1)], {
+      [THOUGHT_X_ID]: THOUGHT_Y_ID,
+    }),
+  ).resolves.toBeDefined()
+
+  const parent = await treecrdtThoughtspace.getThoughtById(PARENT_ID)
+  expect(Object.values(parent?.childrenMap ?? {})).toEqual([THOUGHT_X_ID, THOUGHT_A_ID])
+})
+
+// https://github.com/cybersemics/em/pull/4325#issuecomment-5248342036
+it('reads sibling order once per thought when inserting a wide batch', async () => {
+  const client = await createTreecrdtClient({
+    storage: { type: 'memory' },
+    runtime: { type: 'direct' },
+  })
+  const provider = createTreecrdtDataProvider()
+
+  try {
+    await provider.bindClient(client, new Uint8Array(32).fill(1))
+    await persistThoughtsTo(provider.db, [thought(PARENT_ID, EM_TOKEN, 'parent', 0)])
+
+    const childIds = Array.from({ length: 40 }, (_, index) => (index + 512).toString(16).padStart(32, '0') as ThoughtId)
+    const childrenSpy = vi.spyOn(client.tree, 'children')
+
+    await persistThoughtsTo(
+      provider.db,
+      childIds.map((id, index) => thought(id, PARENT_ID, `child-${index}`, index + 0.5)),
+    )
+
+    expect(childrenSpy).toHaveBeenCalledTimes(childIds.length)
+    await expect(client.tree.children(PARENT_ID)).resolves.toEqual(childIds)
+  } finally {
+    await client.drop()
+  }
 })
 
 it('queues writes issued before initialization and applies them to the bound client', async () => {
