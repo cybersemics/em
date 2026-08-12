@@ -10,6 +10,8 @@ import asyncFocus from '../../device/asyncFocus'
 import getCaretOffset from '../../device/getCaretOffset'
 import preventAutoscroll, { preventAutoscrollEnd } from '../../device/preventAutoscroll'
 import * as selection from '../../device/selection'
+import virtualKeyboard from '../../device/virtual-keyboard'
+import globals from '../../globals'
 import usePrevious from '../../hooks/usePrevious'
 import hasMulticursor from '../../selectors/hasMulticursor'
 import equalPath from '../../util/equalPath'
@@ -84,6 +86,15 @@ const useEditMode = ({
         if (style?.visibility === 'hidden') {
           selection.clear()
         } else {
+          // Neither the Android WebView nor Chromium raises the virtual keyboard when a thought enters edit
+          // mode by side effect, e.g. via a gesture such as Clear Thought (#4686): the keyboard is raised by a
+          // tap, not by the caret being placed programmatically. Request it before setting the selection,
+          // which focuses the editing host implicitly and would make a later focus() a no-op.
+          // Only show it in edit mode, otherwise the keyboard would re-open after the user dismissed it (#3996).
+          if (editMode && contentRef.current) {
+            virtualKeyboard.show(contentRef.current)
+          }
+
           selection.set(contentRef.current, { offset: cursorOffset ?? 0 })
         }
       }
@@ -98,6 +109,7 @@ const useEditMode = ({
           (cursorOffset !== null || !selection.isThought()) &&
           !isMulticursor &&
           !dragHold &&
+          !dragInProgress &&
           !disabledRef.current)
 
       if (shouldSetSelection) {
@@ -235,6 +247,15 @@ const useEditMode = ({
       // same element; a ghost arrives later on a different thought. Dropping it (preventDefault also blocks
       // the focus change) keeps the cursor on the thought the user actually tapped.
       if (isTouch && isSafari() && isRetargetedTap(editable)) {
+        e.preventDefault()
+        return
+      }
+
+      // Suppress the synthesized mousedown that iOS Safari can emit for a tap whose touchend already moved
+      // the cursor without entering edit mode (see globals.suppressFocusAfterCursorMove). The cursor move
+      // re-rendered this thought with editingOrOnCursor true before the mousedown arrived, so the branch
+      // below would place the caret and refocus the editable as if this were a second tap.
+      if (isTouch && isSafari() && globals.suppressFocusAfterCursorMove) {
         e.preventDefault()
         return
       }

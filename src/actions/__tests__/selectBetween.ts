@@ -51,6 +51,36 @@ test('ignore order of selected thoughts', () => {
   expect(selected).toEqual(['b', 'c', 'd', 'e'])
 })
 
+test('select between two thoughts in a sorted list', () => {
+  const text = `
+    - x
+      - =sort
+        - Alphabetical
+      - f
+      - c
+      - a
+      - e
+      - d
+      - b
+  `
+
+  const steps = [
+    importText({ text }),
+    setCursor(['x', 'b']),
+    addMulticursor(['x', 'b']),
+    addMulticursor(['x', 'e']),
+    selectBetween,
+  ]
+
+  const stateNew = reducerFlow(steps)(initialState())
+
+  const selected = Object.values(stateNew.multicursors)
+    .map(path => getThoughtById(stateNew, head(path))?.value)
+    .sort()
+
+  expect(selected).toEqual(['b', 'c', 'd', 'e'])
+})
+
 test('select between two thoughts at the same level', () => {
   const text = `
     - x

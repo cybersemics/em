@@ -56,6 +56,8 @@ const pinCommand: Command = {
 
 `exec` receives the Redux `dispatch`, a `getState` thunk, the event that triggered the command, and a `{ type }` field that is `'keyboard'`, `'gesture'`, `'toolbar'`, or `'chainedGesture'` so the command can adapt its behavior (e.g. `pin` shows an alert only when triggered via keyboard, since the toolbar already gives visual feedback).
 
+A command bound to an array of keyboard shortcuts also receives `keyboardIndex`, the index within that array of the shortcut that was pressed (`undefined` for every other activation type). This lets one command cover a family of related shortcuts: `applyColor` maps Command/Ctrl + Option/Alt + *n* and Option/Alt + *n* to the *n*th text and background swatch of the [`ColorPicker`](../src/components/ColorPicker.tsx). Since only the first shortcut of an array is displayed, such a command can set `keyboardDisplay` to a single `Key` representing the whole range (`applyColor` displays `Cmd + Option + 0-8`).
+
 ### Discovery and indexing
 
 At startup, [`commands.ts`](../src/commands.ts) flattens the barrel into `globalCommands: Command[]` and builds three indices via `index()`:
@@ -71,21 +73,27 @@ If two commands share the same keyboard hash, `index()` logs a `console.error` a
 The global `keyDown` handler (registered by [`initEvents.ts`](../src/util/initEvents.ts)) hashes the event with `hashKeyDown(e)`:
 
 ```
-(meta|ctrl ? 'META_' : '') + (alt ? 'ALT_' : '') + (shift ? 'SHIFT_' : '') + key.toUpperCase()
+(meta|ctrl ? 'META_' : '') + (alt ? 'ALT_' : '') + (mac && ctrl ? 'CONTROL_' : '') + (shift ? 'SHIFT_' : '') + key.toUpperCase()
 ```
 
-Hashes are uppercased, modifier-prefixed strings — so `Cmd+Shift+P` becomes `META_SHIFT_P`. `commandKeyIndex[hash]` resolves the command in O(1). The handler also:
+Hashes are uppercased, modifier-prefixed strings — so `Cmd+Shift+P` becomes `META_SHIFT_P`. `commandKeyIndex[hash]` resolves the command in O(1).
+
+`Key.control` is the only modifier whose physical key differs by platform beyond the usual Command/Ctrl and Option/Alt substitution: on non-Mac platforms Ctrl already serves as `meta`, so `control` falls back to Shift and `hashCommand` emits `SHIFT_` for it. `heading0`–`heading5` are therefore Command + Option + Control + *n* on Mac and Ctrl + Alt + Shift + *n* elsewhere, which keeps them distinct from the text color shortcuts (Command/Ctrl + Option/Alt + *n*). `parseCommandShortcut`, which lets the Command Universe be searched by shortcut, applies the same platform mapping, so typing a command's shortcut exactly as it is displayed always resolves to that command.
+
+The handler also:
 
 - Skips entirely if `state.showDesktopCommandUniverse` is open.
 - Skips when a modal is showing, *unless* the command has `allowExecuteFromModal: true` (e.g. navigation commands that should still work).
 - Calls `e.preventDefault()` before dispatching, *unless* `command.permitDefault` is set. (`command.preventDefault` forces a preventDefault even when `canExecute` returns false.)
 - Routes through `executeCommandWithMulticursor`, which short-circuits to `executeCommand` if no multicursor is active.
 
-There's a special case in `beforeInput` for `newThought` and `indent` to handle iOS auto-capitalization: the Enter / space character is prevented in the `beforeinput` event rather than `keydown` ([issue #3707](https://github.com/cybersemics/em/issues/3707)).
+There's a special case in `beforeInput` for `newThought` and `indent` to handle iOS auto-capitalization: the Enter / space character is prevented in the `beforeinput` event rather than `keydown` ([issue #3707](https://github.com/cybersemics/em/issues/3707)). A second branch in `beforeInput` handles Android: soft keyboards report the space keydown as `keyCode 229` (`'Unidentified'`), so it never matches the `indent` command in `keyDown` and `keyCommandId` is never set — the branch catches the `beforeinput` `insertText` of a single space over an empty thought and dispatches `indent` directly ([issue #4178](https://github.com/cybersemics/em/issues/4178)).
 
 ### Gesture activation
 
 A gesture is a string of swipe directions, where each character is one of `'l'`, `'r'`, `'u'`, `'d'` (left/right/up/down). For example, `'rdru'` is right → down → right → up. Multiple sequences can map to the same command — the first one is the canonical gesture shown in the UI.
+
+A gesture can only *start* inside the gesture zone ([`isInGestureZone`](../src/util/isInGestureZone.ts), enforced by [`MultiGesture`](../src/components/MultiGesture.tsx)): the screen minus the scroll zone (a strip on the right, or on the left for left-handed users), the toolbar at the top, and — on devices with a home indicator (nonzero `safe-area-inset-bottom`) — a strip at the bottom where the OS recognizes system gestures. Without the bottom exclusion, the upward app switcher swipe is committed as the Open Command Center gesture right before the app suspends. Touches that start outside the zone scroll the page as usual.
 
 `handleGestureSegment` is called incrementally as the user swipes; it triggers a haptic for each new segment and, after `COMMAND_PALETTE_TIMEOUT`, opens the gesture menu so the user can see all commands reachable from the current sequence.
 
@@ -115,7 +123,7 @@ Both filter `globalCommands` by name and respect `hideFromDesktopCommandUniverse
 
 ### Multicursor
 
-When `state.multicursors` is non-empty, the user has multiple thoughts selected. Every command must declare how it behaves in this case via the required `multicursor` field — there is no implicit default.
+When `state.multicursors` is non-empty, the user has one or more thoughts selected. A selection of exactly one thought is common — on mobile, opening the Command Center selects the cursor thought. Every command must declare how it behaves in this case via the required `multicursor` field — there is no implicit default.
 
 - **`multicursor: false`** — execute on `state.cursor` as if no multicursor existed; selection stays. For commands that don't interact with the thoughtspace (e.g. opening modals).
 - **`multicursor: true`** — execute once per selected thought.
@@ -123,8 +131,8 @@ When `state.multicursors` is non-empty, the user has multiple thoughts selected.
 
 | Option | Meaning |
 |---|---|
-| `disallow` | Block execution and show an alert. Use sparingly — usually `multicursor: false` or `filter` is better. |
-| `error` | The alert message shown when `disallow` is true. String or `(state) => string`. |
+| `disallow` | Block execution and show an alert when *more than one* thought is selected. A single selected thought is executed on directly, as if only the cursor were set, so the cursor is not restored afterwards. Use sparingly — usually `multicursor: false` or `filter` is better. |
+| `error` | The alert message shown when `disallow` is true and more than one thought is selected. String or `(state) => string`. |
 | `execMulticursor(cursors, dispatch, getState)` | Custom replacement for the per-cursor loop. |
 | `onComplete(filteredCursors, dispatch, getState)` | Callback after the loop finishes. |
 | `preventSetCursor` | Don't restore the cursor at the end. |
@@ -133,6 +141,8 @@ When `state.multicursors` is non-empty, the user has multiple thoughts selected.
 | `filter` | One of `'all'` (default), `'first-sibling'`, `'last-sibling'`, `'prefer-ancestor'`. |
 
 `executeCommandWithMulticursor` walks the filtered cursors in document order (`documentSort`), `setCursor`s each path in turn, calls the regular `exec`, and finally restores the original cursor (unless `preventSetCursor` is set). It wraps the loop in `setIsMulticursorExecuting({ value: true, undoLabel: command.id })` so the entire multi-step operation collapses into a single undo entry.
+
+`setIsMulticursorExecuting` is the general mechanism for that collapsing, not a private detail of the command loop: [`undoRedoEnhancer`](../src/redux-enhancers/undoRedoEnhancer.ts) merges every action dispatched while `state.isMulticursorExecuting` is true into the preceding undo patch, and shows `undoLabel` in the undo/redo alert. Any code path that edits every selected thought without going through a `multicursor: true` command must bracket its dispatch with the same pair, or the user has to undo once per thought. The [`ColorPicker`](../src/components/ColorPicker.tsx) and [`LetterCasePicker`](../src/components/LetterCasePicker.tsx) reach the thoughtspace through [`formatSelection`](../src/actions/formatSelection.ts) and [`formatLetterCase`](../src/actions/formatLetterCase.ts) rather than through their `multicursor: false` toolbar commands, so those two action-creators do the bracketing themselves; drag-and-drop of a multiselect does the same.
 
 ### Gating and defaults
 
@@ -162,7 +172,7 @@ The full list of user-facing commands. For the canonical, always-up-to-date set,
 
 ### Back
 
-Move the cursor up a level.
+Move the cursor up a level. If Clear Thought is active, cancel it instead and leave the cursor where it is.
 
 <kbd>Escape</kbd>
 
@@ -558,37 +568,37 @@ Open a sort picker to pick the sort option and sort by option.
 
 Sets a heading to normal text.
 
-<kbd>Command + Option + 0</kbd>
+<kbd>Command + Option + Control + 0</kbd>
 
 ### Heading 1
 
 Turns the thought into a large heading.
 
-<kbd>Command + Option + 1</kbd>
+<kbd>Command + Option + Control + 1</kbd>
 
 ### Heading 2
 
 Turns the thought into a medium-large heading.
 
-<kbd>Command + Option + 2</kbd>
+<kbd>Command + Option + Control + 2</kbd>
 
 ### Heading 3
 
 Turns the thought into a medium heading. Perhaps a pattern is emerging?
 
-<kbd>Command + Option + 3</kbd>
+<kbd>Command + Option + Control + 3</kbd>
 
 ### Heading 4
 
 Turns the thought into a medium-small heading. You get the idea.
 
-<kbd>Command + Option + 4</kbd>
+<kbd>Command + Option + Control + 4</kbd>
 
 ### Heading 5
 
 Turns the thought into a small heading. Impressive that you read this far.
 
-<kbd>Command + Option + 5</kbd>
+<kbd>Command + Option + Control + 5</kbd>
 
 ### Pin
 

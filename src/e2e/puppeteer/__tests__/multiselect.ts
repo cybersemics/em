@@ -27,7 +27,7 @@ describe('multiselect', () => {
     expect(alertContent).toContain('2 thoughts selected')
   })
 
-  // Regression test for https://github.com/cybersemics/em/issues/3993
+  // https://github.com/cybersemics/em/issues/3993
   // When Select All is active, the native copy handler must copy all selected thoughts, not just the focused cursor.
   // .skip keeps normal CI green while the test is red; remove the .skip when the fix lands.
   it('copies all selected thoughts when Select All is active', async () => {
@@ -65,7 +65,7 @@ describe('multiselect', () => {
     expect(copiedText).toContain('c')
   })
 
-  // Regression test for https://github.com/cybersemics/em/issues/3993 (Desktop Safari)
+  // https://github.com/cybersemics/em/issues/3993 (Desktop Safari)
   // The copy command must write text/html and the text/em marker to the clipboard itself, rather than
   // relying on the native copy event of the focused editable. Safari (like headless Chrome) does not fire
   // a copy event for a collapsed contenteditable selection, so without an explicit text/html the browser
@@ -102,6 +102,66 @@ describe('multiselect', () => {
     expect(copied['text/html']).toContain('a')
     expect(copied['text/html']).toContain('b')
     expect(copied['text/html']).toContain('c')
+  })
+
+  // https://github.com/cybersemics/em/issues/4728
+  it('shows the multiselect highlight on table column 1 thoughts', async () => {
+    await paste(`
+        - a
+          - =view
+            - Table
+          - b
+            - c
+          - d
+            - e
+        `)
+
+    await waitForEditable('e')
+    await multiselectThoughts(['c', 'e'])
+
+    // Swap Note moves c and e into their parents' =note, so the multiselect moves up to b and d, which are
+    // in table column 1.
+    await press('KeyN', { alt: true, shift: true })
+
+    // wait for both notes to render so the assertion runs after Swap Note has completed
+    await page.waitForFunction(() => document.querySelectorAll('[aria-label="note"]').length === 2, { timeout: 5000 })
+
+    const highlightedBullets = await page.$$('[aria-label="bullet"][data-highlighted="true"]')
+    expect(highlightedBullets.length).toBe(2)
+  })
+
+  // https://github.com/cybersemics/em/issues/4728
+  it('restores the multiselect to the swapped thoughts when Swap Note is undone', async () => {
+    await paste(`
+        - a
+          - =view
+            - Table
+          - b
+            - c
+          - d
+            - e
+        `)
+
+    await waitForEditable('e')
+    await multiselectThoughts(['c', 'e'])
+
+    await press('KeyN', { alt: true, shift: true })
+
+    // wait for both notes to render so the undo runs after Swap Note has completed
+    await page.waitForFunction(() => document.querySelectorAll('[aria-label="note"]').length === 2, { timeout: 5000 })
+
+    await press('KeyZ', { meta: true })
+
+    // wait for the notes to be converted back to thoughts
+    await page.waitForFunction(() => document.querySelectorAll('[aria-label="note"]').length === 0, { timeout: 5000 })
+
+    const highlightedValues = await page.$$eval('[aria-label="bullet"][data-highlighted="true"]', bullets =>
+      bullets.map(
+        bullet => bullet.closest('[aria-label="tree-node"]')?.querySelector('[data-editable]')?.textContent ?? null,
+      ),
+    )
+
+    expect(highlightedValues.sort()).toEqual(['c', 'e'])
   })
 })
 

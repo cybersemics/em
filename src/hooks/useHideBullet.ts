@@ -1,5 +1,6 @@
 import { useSelector } from 'react-redux'
 import LazyEnv from '../@types/LazyEnv'
+import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
@@ -9,6 +10,7 @@ import attributeEquals from '../selectors/attributeEquals'
 import findDescendant from '../selectors/findDescendant'
 import findFirstEnvContextWithZoom from '../selectors/findFirstEnvContextWithZoom'
 import getThoughtById from '../selectors/getThoughtById'
+import isMulticursorPath from '../selectors/isMulticursorPath'
 import rootedParentOf from '../selectors/rootedParentOf'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
@@ -23,6 +25,7 @@ const useHideBullet = ({
   env,
   hideBulletProp,
   isEditing,
+  path,
   simplePath,
   isInContextView,
   thoughtId,
@@ -31,6 +34,7 @@ const useHideBullet = ({
   env: LazyEnv | undefined
   hideBulletProp: boolean | undefined
   isEditing: boolean
+  path: Path
   simplePath: SimplePath
   isInContextView: boolean
   thoughtId: ThoughtId
@@ -46,14 +50,18 @@ const useHideBullet = ({
       thought.value !== '=grandchildren' && attributeEquals(state, head(simplePath), '=bullet', 'None')
 
     /** Returns true if the bullet should be hidden because the thought value is an ellipsis. */
-    const hideBulletEllipsis = () =>
-      stripTags(thought.value) === '...' && !findDescendant(state, head(simplePath), '=bullet')
+    const hideBulletEllipsis = () => {
+      const valuePlainText = stripTags(thought.value)
+      const isEllipsis = valuePlainText === '...' || valuePlainText === '…'
+      return isEllipsis && !findDescendant(state, head(simplePath), '=bullet')
+    }
 
-    /** Returns true if the bullet should be hidden because it is in table column 1 and is not the cursor. */
+    /** Returns true if the bullet should be hidden because it is in table column 1 and is neither the cursor nor a multicursor. The selection is indicated by the bullet, so hiding it would make the selection invisible. */
     const hideBulletTable = () => {
       return (
         !isInContextView &&
         !equalPath(simplePath, state.cursor) &&
+        !isMulticursorPath(state, path) &&
         attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table')
       )
     }

@@ -141,6 +141,7 @@ export default function BulletCursorOverlay({
     env: {},
     hideBulletProp,
     isEditing: true,
+    path,
     simplePath,
     isInContextView,
     thoughtId: head(simplePath),
