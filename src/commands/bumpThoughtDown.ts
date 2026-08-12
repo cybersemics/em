@@ -13,8 +13,13 @@ const bumpThoughtDownCommand: Command = {
   gesture: 'drd',
   keyboard: { key: 'd', meta: true, alt: true },
   multicursor: {
-    disallow: true,
-    error: 'Cannot bump down multiple thoughts.',
+    // Bump the selected thoughts' parent down and move the selected thoughts into it in a single action.
+    execMulticursor: (cursors, dispatch) => {
+      dispatch(bumpThoughtDown({ paths: cursors }))
+    },
+    // The cursor is set to the new empty thought so that it can be edited immediately.
+    preventSetCursor: true,
+    clearMulticursor: true,
   },
   svg: BumpThoughtDownIcon,
   canExecute: state => {
