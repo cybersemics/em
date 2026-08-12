@@ -19,7 +19,7 @@ const multicursorValues = (): (string | undefined)[] => {
 
 describe('cursorForward', () => {
   // https://github.com/cybersemics/em/issues/3527
-  it.skip('selects the children of the selected thoughts', () => {
+  it('selects the children of the selected thoughts', () => {
     store.dispatch([
       importText({
         text: `
