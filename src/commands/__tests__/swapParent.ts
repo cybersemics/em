@@ -22,4 +22,21 @@ describe('canExecute', () => {
 
     expect(swapParentCommand.canExecute!(store.getState())).toBe(false)
   })
+
+  // https://github.com/cybersemics/em/issues/4866
+  it('can swap parent of a selected subthought when the cursor is on a parent-level thought', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - AAA
+          - BBB
+            - CCC
+        `,
+      }),
+      setCursor(['AAA']),
+      addMulticursor(['BBB', 'CCC']),
+    ])
+
+    expect(swapParentCommand.canExecute!(store.getState())).toBe(true)
+  })
 })
