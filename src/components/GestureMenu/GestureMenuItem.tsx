@@ -1,13 +1,13 @@
 import { FC, useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
-import { css } from '../../styled-system/css'
-import { token } from '../../styled-system/tokens'
-import Command from '../@types/Command'
-import State from '../@types/State'
-import { gestureString } from '../commands'
-import useGestureHighlight from '../hooks/useGestureHighlight'
-import store from '../stores/app'
-import GestureDiagram from './GestureDiagram'
+import { css } from '../../../styled-system/css'
+import { token } from '../../../styled-system/tokens'
+import Command from '../../@types/Command'
+import State from '../../@types/State'
+import { gestureString } from '../../commands'
+import useGestureHighlight from '../../hooks/useGestureHighlight'
+import store from '../../stores/app'
+import GestureDiagram from '../GestureDiagram'
 
 /** Returns true if the command can be executed in the current state. */
 const isExecutable = (state: State, command: Command) =>
@@ -89,8 +89,8 @@ const GestureMenuItem: FC<{
       >
         <div
           className={css({
-            fontSize: '0.95rem',
             lineHeight: '1em',
+            fontSize: '0.95rem',
             whiteSpace: 'nowrap',
             color: disabled ? 'gray45' : selected ? '#ffffff' : 'rgba(255, 255, 255, 0.6)',
             fontWeight: selected ? 600 : 400,
