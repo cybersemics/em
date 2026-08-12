@@ -31,7 +31,7 @@ const multicursorValues = (): (string | undefined)[] => {
 
 describe('cursorBack', () => {
   // https://github.com/cybersemics/em/issues/3526
-  it.skip('selects the parents of the selected thoughts', () => {
+  it('selects the parents of the selected thoughts', () => {
     store.dispatch([
       importText({
         text: `
@@ -56,5 +56,43 @@ describe('cursorBack', () => {
     executeCommandWithMulticursor(cursorBackCommand, { store, type: 'gesture' })
 
     expect(multicursorValues()).toEqual(['a', 'd'])
+  })
+
+  it('deselects selected thoughts at the root level since they have no parent', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+          - b
+          - c
+        `,
+      }),
+      setCursor(['a']),
+      addMulticursorAtFirstMatch(['a']),
+      addMulticursorAtFirstMatch(['b']),
+    ])
+
+    executeCommandWithMulticursor(cursorBackCommand, { store, type: 'gesture' })
+
+    expect(multicursorValues()).toEqual([])
+  })
+
+  it('keeps a selected thought that is the parent of another selected thought selected', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - x
+            - a
+              - b
+        `,
+      }),
+      setCursor(['x', 'a']),
+      addMulticursorAtFirstMatch(['x', 'a']),
+      addMulticursorAtFirstMatch(['x', 'a', 'b']),
+    ])
+
+    executeCommandWithMulticursor(cursorBackCommand, { store, type: 'gesture' })
+
+    expect(multicursorValues()).toEqual(['a', 'x'])
   })
 })
