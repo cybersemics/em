@@ -192,7 +192,11 @@ const Metaprogramming = () => {
 const About = () => {
   return (
     <div>
-      {' '}
+      <p className={css({ fontSize: 'sm', marginTop: '2em' })}>
+        <b>Private browsing:</b> Storage is temporary and varies by browser. Safari Private Browsing loses locally
+        stored thoughts when the page reloads or closes; Chromium-based browsers keep them only until the private
+        session ends. Use a regular browser window for persistent storage.
+      </p>
       <div className={css({ fontSize: 'sm', marginTop: '2em', fontStyle: 'italic', opacity: 0.7 })}>
         <div>
           Context View icon by{' '}

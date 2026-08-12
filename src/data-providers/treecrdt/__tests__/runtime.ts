@@ -64,7 +64,7 @@ it('maps em persistent storage to TreeCRDT OPFS client options', async () => {
     storage: {
       type: 'opfs',
       filename: `/treecrdt-em-${tsid}.db`,
-      fallback: 'throw',
+      fallback: 'memory',
     },
     runtime: { type: 'dedicated-worker' },
     docId: tsid,
