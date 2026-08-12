@@ -61,7 +61,7 @@ const getTreecrdtClientOptions = (storage: ThoughtspaceStorage): ClientOptions =
       : {
           type: 'opfs',
           filename: `/treecrdt-em-${tsid}.db`,
-          fallback: 'throw',
+          fallback: 'memory',
         },
   runtime: { type: storage === 'memory' ? 'direct' : 'dedicated-worker' },
   docId: tsid,
@@ -182,6 +182,11 @@ const createTreecrdtThoughtspace = (): TreecrdtThoughtspace => {
 
       client = nextClient
       unsubscribeMaterialization = nextUnsubscribeMaterialization
+      if (options.storage === 'persistent' && nextClient.storage === 'memory') {
+        console.warn(
+          'Persistent thoughtspace storage is unavailable. em is using temporary in-memory storage; changes will be lost when this page reloads or closes.',
+        )
+      }
       return { clientId }
     } catch (error) {
       provider.resetBinding(error)
