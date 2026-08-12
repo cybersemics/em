@@ -27,7 +27,8 @@ const indentCommand: Command = {
   svg: IndentIcon,
   canExecute: state => {
     // indent is a no-op on the first thought in a context, so the command is only executable if every selected thought has a previous sibling to be indented into
-    const paths = selectedPaths(state)
+    // descendants of another selected thought are indented along with their ancestor, so they are excluded by the multicursor filter
+    const paths = selectedPaths(state, 'prefer-ancestor')
     return isDocumentEditable() && paths.length > 0 && paths.every(path => !!prevSibling(state, path))
   },
   exec: (dispatch, getState, e, { type }) => {

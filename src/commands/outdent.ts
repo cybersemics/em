@@ -20,7 +20,8 @@ const outdentCommand: Command = {
   svg: OutdentIcon,
   canExecute: state => {
     // outdent is a no-op on a top-level thought, since there is no grandparent to move it into
-    const paths = selectedPaths(state)
+    // descendants of another selected thought are outdented along with their ancestor, so they are excluded by the multicursor filter
+    const paths = selectedPaths(state, 'prefer-ancestor')
     return isDocumentEditable() && paths.length > 0 && paths.every(path => path.length > 1)
   },
   exec: (dispatch, getState) => {
