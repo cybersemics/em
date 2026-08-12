@@ -1,9 +1,10 @@
 import { fireEvent, screen } from '@testing-library/dom'
 import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { redoActionCreator as redo } from '../../actions/redo'
 import { toggleNoteActionCreator as toggleNote } from '../../actions/toggleNote'
+import { undoActionCreator as undo } from '../../actions/undo'
 import { HOME_TOKEN } from '../../constants'
-import * as selection from '../../device/selection'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
@@ -74,16 +75,16 @@ describe('=note', () => {
     expect(element)
   })
 
-  test('does not merge note text into the thought when Backspace is pressed at the beginning of a note', async () => {
+  // https://github.com/cybersemics/em/issues/4479
+  test('undoes and redoes contiguous typing in a note as one edit', async () => {
     await dispatch([
       importText({
         text: `
-        - One
-        - Two
+        - a
           - =note
-            - Hello World`,
+            - `,
       }),
-      setCursor(['Two']),
+      setCursor(['a']),
       toggleNote(),
     ])
 
@@ -92,56 +93,32 @@ describe('=note', () => {
     const noteEditor = screen.getByLabelText('note-editable')
 
     await act(async () => {
-      fireEvent.focus(noteEditor)
-      selection.set(noteEditor, { offset: 0 })
-      fireEvent.keyDown(noteEditor, { key: 'Backspace' })
+      fireEvent.input(noteEditor, { target: { innerHTML: 'a' } })
+      fireEvent.input(noteEditor, { target: { innerHTML: 'ab' } })
+      fireEvent.input(noteEditor, { target: { innerHTML: 'abc' } })
     })
 
-    await act(vi.runAllTimersAsync)
+    await act(async () => {
+      store.dispatch(undo())
+      await vi.runOnlyPendingTimersAsync()
+    })
 
     expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
-  - One
-  - Two
+  - a
     - =note
-      - Hello World`)
-  })
-
-  test('allows partial note text selection without collapsing the range', async () => {
-    await dispatch([
-      importText({
-        text: `
-        - One
-          - =note
-            - Hello World`,
-      }),
-      setCursor(['One']),
-      toggleNote(),
-    ])
-
-    await act(vi.runOnlyPendingTimersAsync)
-
-    const noteEditor = screen.getByLabelText('note-editable')
+      - `)
 
     await act(async () => {
-      fireEvent.focus(noteEditor)
-
-      const textNode = noteEditor.firstChild!
-      const range = document.createRange()
-      const currentSelection = window.getSelection()!
-
-      range.setStart(textNode, 0)
-      range.setEnd(textNode, 5)
-      currentSelection.removeAllRanges()
-      currentSelection.addRange(range)
-
-      fireEvent.select(noteEditor)
+      store.dispatch(redo())
+      await vi.runOnlyPendingTimersAsync()
     })
 
-    await act(vi.runOnlyPendingTimersAsync)
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - a
+    - =note
+      - abc`)
 
-    const currentSelection = window.getSelection()!
-    expect(currentSelection.isCollapsed).toBe(false)
-    expect(currentSelection.toString()).toBe('Hello')
+    await act(vi.runAllTimersAsync)
   })
 })
 

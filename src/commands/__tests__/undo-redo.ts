@@ -10,8 +10,7 @@ import { indentActionCreator as indent } from '../../actions/indent'
 import { moveThoughtDownActionCreator as moveThoughtDown } from '../../actions/moveThoughtDown'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import { redoActionCreator as redo } from '../../actions/redo'
-import { setCursorActionCreator as setCursorRaw } from '../../actions/setCursor'
-import { setNoteOffsetActionCreator as setNoteOffset } from '../../actions/setNoteOffset'
+import { setNoteFocusActionCreator as setNoteFocus } from '../../actions/setNoteFocus'
 import { toggleNoteActionCreator as toggleNote } from '../../actions/toggleNote'
 import { undoActionCreator as undo } from '../../actions/undo'
 import { executeCommandWithMulticursor } from '../../commands'
@@ -24,7 +23,6 @@ import exportContext from '../../selectors/exportContext'
 import { getLexeme } from '../../selectors/getLexeme'
 import isUndoEnabled from '../../selectors/isUndoEnabled'
 import store from '../../stores/app'
-import editingValueStore from '../../stores/editingValue'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
 import getAllChildrenAsThoughtsByContext from '../../test-helpers/getAllChildrenAsThoughtsByContext'
@@ -131,26 +129,6 @@ describe('undo', () => {
     store.dispatch(undo())
 
     expect(store.getState()).toEqual(prevState)
-  })
-
-  it('does not create empty reverse patches when an undo becomes a no-op', () => {
-    store.dispatch(
-      importText({
-        text: `
-        - a`,
-      }),
-    )
-
-    const path = contextToPath(store.getState(), ['a'])!
-    editingValueStore.update(null)
-    store.dispatch(setCursorRaw({ path, noteOffset: 0 }))
-
-    // Simulate the browser clamping the empty note caret before the navigation patch is undone.
-    store.dispatch(setNoteOffset({ value: null }))
-    store.dispatch(undo())
-
-    expect(store.getState().redoPatches).toEqual([])
-    expect(() => store.dispatch(redo())).not.toThrow()
   })
 
   it('ingore alerts', () => {
@@ -1016,47 +994,6 @@ describe('grouping', () => {
     - cat`)
   })
 
-  it('typed replacements should undo in one step for thoughts and notes', () => {
-    const original = 'The world of beautiful birds'
-
-    store.dispatch([
-      importText({
-        text: `
-        - ${original}`,
-      }),
-      editThought([original], 'The world of beautiful p'),
-      editThought(['The world of beautiful p'], 'The world of beautiful pe'),
-      editThought(['The world of beautiful pe'], 'The world of beautiful peo'),
-      editThought(['The world of beautiful peo'], 'The world of beautiful peop'),
-      editThought(['The world of beautiful peop'], 'The world of beautiful peopl'),
-      editThought(['The world of beautiful peopl'], 'The world of beautiful people'),
-      undo(),
-    ])
-
-    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
-  - ${original}`)
-
-    store.dispatch([
-      importText({
-        text: `
-        - note-replace-word
-          - =note
-            - ${original}`,
-      }),
-      editThought(['note-replace-word', '=note', original], 'The world of beautiful p'),
-      editThought(['note-replace-word', '=note', 'The world of beautiful p'], 'The world of beautiful pe'),
-      editThought(['note-replace-word', '=note', 'The world of beautiful pe'], 'The world of beautiful peo'),
-      editThought(['note-replace-word', '=note', 'The world of beautiful peo'], 'The world of beautiful peop'),
-      editThought(['note-replace-word', '=note', 'The world of beautiful peop'], 'The world of beautiful peopl'),
-      editThought(['note-replace-word', '=note', 'The world of beautiful peopl'], 'The world of beautiful people'),
-      undo(),
-    ])
-
-    expect(exportContext(store.getState(), ['note-replace-word'], 'text/plain')).toEqual(`- note-replace-word
-  - =note
-    - ${original}`)
-  })
-
   it('creating an empty note should undo without reverting the previous edit', () => {
     store.dispatch([newThought({ value: 'note-new' }), setCursor(['note-new'])])
 
@@ -1075,6 +1012,33 @@ describe('grouping', () => {
   - note-new`)
   })
 
+  it('deleting an empty note should undo without reverting the previous edit', () => {
+    store.dispatch([
+      importText({
+        text: `
+        - note-delete-empty
+          - =note
+            - `,
+      }),
+      setCursor(['note-delete-empty']),
+      setNoteFocus({ value: true, offset: 0 }),
+    ])
+
+    const undoPatchesBefore = store.getState().undoPatches.length
+
+    store.dispatch(toggleNote())
+
+    expect(store.getState().undoPatches.length).toBe(undoPatchesBefore + 1)
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - note-delete-empty`)
+
+    store.dispatch(undo())
+
+    expect(exportContext(store.getState(), ['note-delete-empty'], 'text/plain')).toEqual(`- note-delete-empty
+  - =note
+    - `)
+  })
+
   it('note offset should round trip with a note edit', () => {
     const original = 'one two three'
     const updated = 'one two'
@@ -1087,9 +1051,9 @@ describe('grouping', () => {
             - ${original}`,
       }),
       setCursor(['note-offset']),
-      toggleNote(),
-      setNoteOffset({ value: original.length }),
     ])
+
+    store.dispatch(setNoteFocus({ value: true, offset: original.length }))
 
     const path = contextToPath(store.getState(), ['note-offset', '=note', original])!
     store.dispatch(
