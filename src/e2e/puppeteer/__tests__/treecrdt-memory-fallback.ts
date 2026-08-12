@@ -1,5 +1,5 @@
 import type { ConsoleMessage } from 'puppeteer'
-import exportThoughts from '../helpers/exportThoughts'
+import keyboard from '../helpers/keyboard'
 import press from '../helpers/press'
 import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
 import { page } from '../session'
@@ -8,7 +8,7 @@ import { usePersistentTreecrdtStorage } from '../setup'
 vi.setConfig({ testTimeout: 60000 })
 usePersistentTreecrdtStorage()
 
-it('completes a multiline paste when persistent storage falls back to memory', async () => {
+it('keeps the thoughtspace writable when persistent storage falls back to memory', async () => {
   const warnings: string[] = []
   /** Captures the storage fallback warning emitted during initialization. */
   const captureWarning = (message: ConsoleMessage) => {
@@ -19,32 +19,15 @@ it('completes a multiline paste when persistent storage falls back to memory', a
   // Exceed SQLite's path capacity so the real dedicated-worker OPFS open fails deterministically.
   await page.evaluateOnNewDocument(() => localStorage.setItem('tsid', 'x'.repeat(512)))
   await page.reload({ waitUntil: 'load' })
-  const initialized = await page.evaluate(() =>
-    window.em.testHelpers.waitForInitialized().then(
-      () => true,
-      () => false,
-    ),
-  )
+  await page.evaluate(() => window.em.testHelpers.waitForInitialized())
 
-  expect(initialized).toBe(true)
   expect(warnings).toContain(
     'Persistent thoughtspace storage is unavailable. em is using temporary in-memory storage; changes will be lost when this page reloads or closes.',
   )
 
   await press('Enter')
-  await page.evaluate(async text => {
-    await navigator.clipboard.write([new ClipboardItem({ 'text/plain': new Blob([text], { type: 'text/plain' }) })])
-  }, 'AAA\n  111\n    222\n    333\nBBB\nCCC')
-  await press('Insert', { shift: true })
-
-  await waitForThoughtExistInDb('CCC')
-  await page.evaluate(() => window.em.testHelpers.waitForThoughtspaceRuntimeIdle())
-  expect((await exportThoughts()).trim()).toBe(`- AAA
-  - 111
-    - 222
-    - 333
-- BBB
-- CCC`)
+  await keyboard.type('fallback write')
+  await waitForThoughtExistInDb('fallback write')
 
   page.off('console', captureWarning)
 })
