@@ -12,7 +12,6 @@ import { keyboardOpenActionCreator as keyboardOpen } from '../actions/keyboardOp
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { setDescendantActionCreator as setDescendant } from '../actions/setDescendant'
 import { setNoteFocusActionCreator as setNoteFocus } from '../actions/setNoteFocus'
-import { setNoteOffsetActionCreator as setNoteOffset } from '../actions/setNoteOffset'
 import { toggleNoteActionCreator as toggleNote } from '../actions/toggleNote'
 import { isTouch } from '../browser'
 import preventAutoscroll, { preventAutoscrollEnd } from '../device/preventAutoscroll'
@@ -50,7 +49,6 @@ const Note = React.memo(
     /** Gets the value of the note. Returns null if no note exists or if the context view is active. */
     const note = useSelector(state => noteValue(state, path))
     const editableNonce = useSelector(state => state.editableNonce)
-    const noteOffset = useSelector(state => state.noteOffset)
 
     /** Focus Handling with useFreshCallback. */
     const onFocus = useFreshCallback(() => {
@@ -68,16 +66,9 @@ const Note = React.memo(
 
     // set the caret on the note if editing this thought and noteFocus is true
     useEffect(() => {
+      const { noteOffset } = store.getState()
       // cursor must be true if note is focused
-      // Do not collapse an active range or reset an already-correct caret during normal typing. The note and
-      // editableNonce dependencies still restore the caret after formatting and undo/redo re-render the note.
-      const selectionOffset = noteRef.current ? selection.offsetFromNode(noteRef.current) : null
-      if (
-        hasFocus &&
-        noteOffset !== null &&
-        !(selection.isActive() && !selection.isCollapsed()) &&
-        selectionOffset !== noteOffset
-      ) {
+      if (hasFocus && noteOffset !== null) {
         selection.set(noteRef.current!, { offset: noteOffset })
         // Clear noteOffset after placing the caret so it acts as a one-shot request. Otherwise repeatedly
         // restoring the caret to the same offset (e.g. applying a font color over a background color multiple
@@ -85,12 +76,7 @@ const Note = React.memo(
         // be left wherever the note's re-render dropped it instead of the requested offset (#4630).
         dispatch(setNoteFocus({ value: true, offset: null }))
       }
-    }, [dispatch, editableNonce, hasFocus, note, noteOffset])
-
-    /** Saves the note caret offset without creating an undo patch. */
-    const saveNoteOffset = useCallback(() => {
-      dispatch(setNoteOffset({ value: selection.anchorOffsetThought() ?? selection.anchorOffset() }))
-    }, [dispatch])
+    }, [dispatch, editableNonce, hasFocus])
 
     /** Handles note keyboard shortcuts. */
     const onKeyDown = useCallback(
@@ -103,16 +89,6 @@ const Note = React.memo(
           e.stopPropagation()
           e.preventDefault()
           dispatch(toggleNote())
-        }
-        // prevent Backspace at the beginning of a non-empty note from bubbling up to the thought deletion command
-        else if (
-          e.key === 'Backspace' &&
-          note &&
-          selection.isCollapsed() &&
-          (selection.offsetThought() ?? selection.offset()) === 0
-        ) {
-          e.stopPropagation()
-          e.preventDefault()
         }
         // delete empty note
         // (delete non-empty note is handled by delete command, which allows mobile gesture to work)
@@ -174,7 +150,6 @@ const Note = React.memo(
               }),
             )
           } else {
-            dispatch(setNoteOffset({ value: noteOffset }))
             dispatch(
               setDescendant({
                 path: targetPath,
@@ -267,7 +242,6 @@ const Note = React.memo(
           onDrop={isTouch ? (e: React.DragEvent) => e.preventDefault() : undefined}
           onKeyDown={onKeyDown}
           onChange={onChange}
-          onSelect={saveNoteOffset}
           // Text copied from a note and pasted on a thought should not bring along the note's default color and italicization. (#3779)
           onCopy={onCopy}
           onCut={onCut}

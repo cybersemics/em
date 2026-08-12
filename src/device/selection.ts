@@ -96,10 +96,6 @@ const isContentEditable = (node: Element | null): boolean => node?.hasAttribute(
 /** Check the node, if it exists, for an ariaLabel set to note-editable. */
 const isNoteEditable = (node: Element | null): boolean => node?.ariaLabel === 'note-editable'
 
-/** Returns true if the node is an editable thought or note root. */
-const isEditableRoot = (node: Node | null): boolean =>
-  node instanceof Element && (isContentEditable(node) || isNoteEditable(node))
-
 /** Returns true if the node is part of a note. Defaults to using the active selection. */
 export const isNote = (node?: EventTarget | null): boolean => {
   const editable = node === undefined ? document.activeElement : getEditableCandidate(node)
@@ -204,12 +200,22 @@ export const offset = (): number | null => window.getSelection()?.focusOffset ??
 /** Returns the character offset of the selection's anchor (the fixed end of a range; `offset` returns the focus/moving end). */
 export const anchorOffset = (): number | null => window.getSelection()?.anchorOffset ?? null
 
-/** Returns a node offset relative to its editable root, taking into account siblings and intervening ancestors. */
-const offsetWithinEditable = (node: Node | null, offset: number): number | null => {
-  if (!node) return null
-  let total = node.nodeType === Node.ELEMENT_NODE ? (offset ? node.textContent?.length || 0 : 0) : offset
-  let curNode: Node | null = node
-  while (curNode && !isEditableRoot(curNode)) {
+/** Returns the character offset within a thought, taking into account siblings and intervening ancestor elements.
+ *
+ * @example <div>Hello <b>wo|rld</b></div> // returns offset 8
+ */
+export const offsetThought = (): number | null => {
+  const selection = window.getSelection()
+  if (!selection?.focusNode) return null
+
+  let total =
+    selection.focusNode.nodeType === Node.ELEMENT_NODE
+      ? selection.focusOffset
+        ? selection.focusNode.textContent?.length || 0
+        : 0
+      : selection.focusOffset
+  let curNode: Node | null = selection.focusNode.nodeType === Node.TEXT_NODE ? selection.focusNode : selection.focusNode
+  while (curNode && !(curNode as HTMLElement)?.hasAttribute?.('data-editable')) {
     if (curNode?.previousSibling) {
       total += curNode.previousSibling.textContent?.length || 0
       curNode = curNode.previousSibling
@@ -219,21 +225,6 @@ const offsetWithinEditable = (node: Node | null, offset: number): number | null 
   }
 
   return total
-}
-
-/** Returns the character offset of the selection anchor within a thought, taking into account nested formatting. */
-export const anchorOffsetThought = (): number | null => {
-  const selection = window.getSelection()
-  return selection ? offsetWithinEditable(selection.anchorNode, selection.anchorOffset) : null
-}
-
-/** Returns the character offset within a thought, taking into account siblings and intervening ancestor elements.
- *
- * @example <div>Hello <b>wo|rld</b></div> // returns offset 8
- */
-export const offsetThought = (): number | null => {
-  const selection = window.getSelection()
-  return selection ? offsetWithinEditable(selection.focusNode, selection.focusOffset) : null
 }
 
 /** Returns the plain-text character offset of the selection's focus relative to the given root node, ignoring nested HTML markup. Returns null if there is no selection or the focus is not within the node. */
