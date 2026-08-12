@@ -43,6 +43,7 @@ import thoughtToPath from './selectors/thoughtToPath'
 import store from './stores/app'
 import editingValueStore from './stores/editingValue'
 import gestureStore from './stores/gesture'
+import debugLog from './util/debugLog'
 import equalPath from './util/equalPath'
 import haptics from './util/haptics'
 import hashPath from './util/hashPath'
@@ -415,6 +416,8 @@ export const executeCommand = (
     type === 'keyboard' && event instanceof KeyboardEvent && keyboardShortcuts.length > 0
       ? keyboardShortcuts.findIndex(keyboard => hashCommand(keyboard) === hashKeyDown(event))
       : undefined
+
+  debugLog.log('command', { id: command.id, commandType: type })
 
   // execute single command
   command.exec(commandStore.dispatch, commandStore.getState, event, { type, keyboardIndex })

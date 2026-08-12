@@ -72,6 +72,21 @@ describe('render', () => {
     expect(bullets.length).toBe(0)
   })
 
+  it('do not render a bullet on a thought with UTF-8 ellipsis character "…"', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - …
+      `,
+      }),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const bullets = document.querySelectorAll('[aria-label="bullet"]')
+    expect(bullets.length).toBe(0)
+  })
+
   it('do not render a bullet on a formatted thought with value "..."', async () => {
     await dispatch([
       importText({

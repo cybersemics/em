@@ -56,14 +56,14 @@ describe('capacity', () => {
   it('trims to the capacity, keeping the most recent entries', () => {
     debugLog.setEnabled(true)
     debugLog.clear()
-    for (let i = 0; i < 600; i++) {
+    for (let i = 0; i < 1100; i++) {
       debugLog.log('n', { i })
     }
     const entries = debugLog.read()
-    expect(entries.length).toBe(500)
+    expect(entries.length).toBe(1000)
     // the oldest 100 were dropped, so the first retained entry is #100
     expect(entries[0].i).toBe(100)
-    expect(entries[entries.length - 1].i).toBe(599)
+    expect(entries[entries.length - 1].i).toBe(1099)
   })
 })
 

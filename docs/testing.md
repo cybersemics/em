@@ -468,9 +468,13 @@ This means `ios.yml`, `tdd.yml`, and local/agent runs can safely run concurrentl
 Requires an **Account**-scoped Cloudflare permission grant including `Cloudflare One Connector: cloudflared Write` (Tunnel management is an account resource, not zone-scoped — a zone-scoped grant like the one used for `emthought.cc`'s bot/firewall settings does not cover it).
 
 1. `cloudflared tunnel login`, authorizing the `emthought.cc` zone.
-2. Run `provision-cloudflare-tunnel-pool.sh` (defaults to 20 tunnels named `browserstack-01.emthought.cc` … `browserstack-20.emthought.cc`). It creates each tunnel, routes its DNS CNAME, and fetches its connector token via the CLI — no dashboard steps, no timing-sensitive "catch the connector while it's live" dance.
+2. Run `provision-cloudflare-tunnel-pool.sh [POOL_SIZE] [NAME_PREFIX] [DOMAIN]`. It creates each tunnel, routes its DNS CNAME, and fetches its connector token via the CLI — no dashboard steps, no timing-sensitive "catch the connector while it's live" dance.
 3. The script writes `cloudflare-tunnel-pool.json` (gitignored — it contains live tokens). Set its contents as the GitHub Actions secret `CLOUDFLARE_TUNNEL_POOL`: `gh secret set CLOUDFLARE_TUNNEL_POOL < cloudflare-tunnel-pool.json`.
 4. Re-run the script (same or a larger `POOL_SIZE`) any time to top up the pool — it reuses tunnels that already exist rather than recreating them.
+
+##### If you're a developer who needs tunnel access
+
+If you're a developer or agent making changes to BrowserStack CI, you'll need access to a **separate tunnel pool used for the development environment**. Ask the project maintainer, who will be able to give you access to the values needed for the `CLOUDFLARE_TUNNEL_POOL` secret.
 
 Related tests: [/src/e2e/iOS](../src/e2e/iOS)
 
