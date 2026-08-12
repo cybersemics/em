@@ -33,13 +33,14 @@ for ((i = 0; i < TIMEOUT; i++)); do
     session:*)
       sid="${status#session:}"
       echo "iOS session ready: $sid"
-      "$ROOT/.github/skills/browser-control-ios/heartbeat.sh" "$sid"
       # Start the WebDriver shim so the wdio-MCP can adopt this session (provider:local +
       # appiumConfig -> this proxy). It fakes new-session with $sid and forwards commands to
       # BrowserStack over node:https. Detached; holds until the agent session ends.
+      # It comes up before the heartbeat because the heartbeat pings through it.
       PROXY_PORT="${EM_MCP_PROXY_PORT:-4723}"
       setsid nohup node "$ROOT/scripts/mcp-session-proxy.mjs" >/tmp/em-mcp-proxy.log 2>&1 &
       disown
+      "$ROOT/.github/skills/browser-control-ios/heartbeat.sh" "$sid"
       echo "wdio-MCP shim: point start_session at { provider:'local', platform:'ios', noReset:true, appiumConfig:{ protocol:'http', host:'127.0.0.1', port:$PROXY_PORT, path:'/wd/hub' } }"
       exit 0
       ;;

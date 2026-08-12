@@ -185,8 +185,11 @@ const main = async () => {
   console.info(`iOS session ready: ${sessionId}`)
 
   // Hold the process (and thus the tunnel) open. Do NOT deleteSession — the bridge + heartbeat own
-  // the live session from here. This resolves only on SIGTERM/SIGINT (shutdown above).
-  await new Promise(() => {})
+  // the live session from here. The process exits only via the SIGTERM/SIGINT shutdown above.
+  // This timer is what keeps it alive: browserstack-local spawns the tunnel binary as an unref'd
+  // daemon, so without a referenced handle the event loop empties and node exits within seconds —
+  // dropping the tunnel client and leaving the device on BrowserStack's "Page not found" page.
+  setInterval(() => {}, 1 << 30)
 }
 
 main()

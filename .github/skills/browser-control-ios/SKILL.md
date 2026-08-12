@@ -40,7 +40,7 @@ Create the BrowserStack session with the bring-up script:
 .github/skills/browser-control-ios/bringup.sh
 ```
 
-This launches `scripts/start-ios-session.mjs` detached, which (1) starts a **BrowserStack Local** tunnel, (2) creates the App Automate session against the pre-warmed `em-server-mode` app with the iOS/XCUITest caps, and (3) holds the tunnel open for the run. The script writes the session id to `/tmp/em-bs-session.txt`; the wrapper polls for it, starts the **heartbeat**, and starts the **wdio-MCP shim** (`scripts/mcp-session-proxy.mjs`) automatically. On success it prints `iOS session ready: <id>` plus the `appiumConfig` to give to wdio-MCP; on failure it prints the bring-up log and exits non-zero.
+This launches `scripts/start-ios-session.mjs` detached, which (1) starts a **BrowserStack Local** tunnel, (2) creates the App Automate session against the pre-warmed `em-server-mode` app with the iOS/XCUITest caps, and (3) holds the tunnel open for the run. The script writes the session id to `/tmp/em-bs-session.txt`; the wrapper polls for it, starts the **wdio-MCP shim** (`scripts/mcp-session-proxy.mjs`), and then starts the **heartbeat** (which pings through that shim) automatically. On success it prints `iOS session ready: <id>` plus the `appiumConfig` to give to wdio-MCP; on failure it prints the bring-up log and exits non-zero.
 
 To target a different device/OS, set env before the call:
 
@@ -54,17 +54,29 @@ From here you can drive the live session either through **wdio-MCP** (interactiv
 
 ### App binary
 
-The session drives a pre-built **server-mode** build of **em**'s Capacitor app. The IPA file for this build is already uploaded to BrowserStack under the `custom_id` **`em-server-mode`** (override with `EM_IOS_APP`), so day-to-day web changes need no rebuild. Reference it by `custom_id`; do **not** rebuild the native app per run. If bring-up fails with an app-not-found error (in `/tmp/em-ios-bringup.log`), the pre-warmed app has lapsed (BrowserStack deletes apps 30 days after last use) — **escalate to the user** to re-upload it (they need to do it manually; there is no tooling to automatically build IPAs yet).
+The session drives a pre-built **server-mode** build of **em**'s Capacitor app. The IPA file for this build is already uploaded to BrowserStack under the `custom_id` **`em-server-mode`** (override with `EM_IOS_APP`), so day-to-day web changes need no rebuild. Do **not** rebuild the native app per run. If bring-up fails with an app-not-found error (in `/tmp/em-ios-bringup.log`), the pre-warmed app has lapsed (BrowserStack deletes apps 30 days after last use) — **escalate to the user** to re-upload it (they need to do it manually; there is no tooling to automatically build IPAs yet).
+
+> **A bare `custom_id` only resolves for the account that uploaded the IPA.** The pre-warmed app is usually uploaded by a teammate, so for our credentials it is a _group_ app and a bare `em-server-mode` fails with `BROWSERSTACK_INVALID_APP_CAP` even though the app exists. Pass the fully-qualified `shareable_id` instead, e.g. `EM_IOS_APP='rainerevere_45MgCt/em-server-mode'`. List what is actually reachable — and pick the newest `uploaded_at` — with:
+>
+> ```bash
+> curl -s -u "$BROWSERSTACK_USERNAME:$BROWSERSTACK_ACCESS_KEY" \
+>   https://api-cloud.browserstack.com/app-automate/recent_group_apps
+> ```
 
 > **The pre-warmed IPA must be an HTTPS-aware build.** The dev server now serves HTTPS (self-signed). The server-mode build handles this with `DevServerViewController` (`ios/App/App/DevServerViewController.swift`), which accepts the self-signed cert at the WKWebView auth challenge, and a baked `server.url` of `https://bs-local.com:3000`. An IPA built **before** the HTTPS migration has an `http://…` `server.url` and will load nothing against the HTTPS-only dev server — the webview stays blank and wait-for-mount (Step 2) times out. If that happens, **escalate to the user to rebuild and re-upload `em-server-mode`** from an HTTPS branch (same manual rebuild path as above).
 
 ### Heartbeat
 
-`bringup.sh` starts the heartbeat **automatically** once the session id lands (you don't run it by hand). It keeps the BrowserStack session alive during long agent sessions — pings the hub every 90s, logs to `/tmp/heartbeat-<id>.log`, self-exits after 3 consecutive failures, and appends BrowserStack's session post-mortem on give-up (the only post-hoc signal for why a session died). The session id is in `/tmp/em-bs-session.txt`, which the wdio-MCP shim and e2e bridge both read.
+`bringup.sh` starts the heartbeat **automatically** once the session id lands (you don't run it by hand). It keeps the BrowserStack session alive during long agent sessions — pings `GET /contexts` every 90s through the wdio-MCP shim (set `EM_HEARTBEAT_URL` to ping the hub directly), logs to `/tmp/heartbeat-<id>.log`, self-exits after 3 consecutive failures, and appends BrowserStack's session post-mortem on give-up (the only post-hoc signal for why a session died). The session id is in `/tmp/em-bs-session.txt`, which the wdio-MCP shim and e2e bridge both read.
 
 ## Step 2: Connect a driver and land in the webview context
 
-The app launches and its WKWebView **auto-loads the dev server on launch** (its baked `server.url`, `https://bs-local.com:3000`, reaches the runner's HTTPS dev server through the BrowserStack Local tunnel) — there is **no `navigate` step**. The self-signed dev cert is accepted by `DevServerViewController` inside the app, so — unlike the Safari E2E tests, which need a cloudflared CA-signed cert — no public tunnel is required here. (Agent-driven sessions don't set `TUNNEL_TOKEN`, so the dev server's token gate is inert and the app loads without a `?__token` param.) If the webview never mounts (blank page, Step 2 wait times out), suspect a pre-HTTPS IPA — see **App binary** above.
+The app launches and its WKWebView **auto-loads the dev server on launch** (its baked `server.url`, `https://bs-local.com:3000`, reaches the runner's HTTPS dev server through the BrowserStack Local tunnel) — there is **no `navigate` step**. The self-signed dev cert is accepted by `DevServerViewController` inside the app, so — unlike the Safari E2E tests, which need a cloudflared CA-signed cert — no public tunnel is required here. (Agent-driven sessions don't set `TUNNEL_TOKEN`, so the dev server's token gate is inert and the app loads without a `?__token` param.)
+
+> **If no `WEBVIEW_*` context ever appears, read the native page source before guessing — the two failure modes look alike but have opposite causes.** Dump it with the bridge/MCP (`browser.getPageSource()`), and match the text:
+>
+> - **BrowserStack's "Page not found / ⚠️ Unable to display the page"** — the request left the device but never reached the runner: the **BrowserStack Local tunnel is not routing**. Confirm with `curl -s "https://api.browserstack.com/local/v1/list?auth_token=$BROWSERSTACK_ACCESS_KEY&state=running"` — an empty `instances` array means the tunnel never registered, _even though the binary logs `[SUCCESS] You can now access your local server(s)`_ (it reports success before the WebSocket upgrade to BrowserStack completes). If the upgrade is blocked by an egress firewall/MITM, the tunnel cannot be established and iOS reproduction is impossible from that environment — **escalate to the user**; there is no in-sandbox workaround, because the app's `server.url` is baked at build time (`capacitor.config.ts`) and cannot be repointed at a public cloudflared URL without rebuilding the IPA.
+> - **A blank page** (only scroll bars in the native tree) — the request _did_ reach the dev server but the webview refused to render it. Suspect a **pre-HTTPS IPA** — see **App binary** above.
 
 ### Interactive driving via wdio-MCP
 
