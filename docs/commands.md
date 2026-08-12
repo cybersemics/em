@@ -153,6 +153,10 @@ Three fields shape what happens when the command might not be runnable:
 - **`permitDefault`** — do *not* call `e.preventDefault()` even when the command runs. Useful for shortcuts that piggyback on existing browser behavior (e.g. system copy/paste).
 - **`allowExecuteFromModal`** — allow the command to run while a modal is open. Defaults to false; navigation commands set this to true.
 
+### Repeat
+
+`repeat` (Command/Ctrl + .) has no behavior of its own — its `exec` is a noop. `executeCommand` records every command it executes in [`lastCommandStore`](../src/stores/lastCommand.ts), and both `executeCommand` and `executeCommandWithMulticursor` resolve `repeat` to that command before executing, so the repeated command runs through the normal path with its own `canExecute`, multicursor, and `keyboardIndex` handling. Resolving before execution (rather than executing from within `repeat.exec`) also keeps `repeat.ts` free of an import of `commands.ts`, which would be circular. Since `repeat` resolves away before it is ever recorded, it never repeats itself.
+
 ### Adding a new command
 
 1. Create `src/commands/yourCommand.ts`. Default-export a `Command` object with at minimum `id`, `label`, `exec`, and `multicursor`.
@@ -661,6 +665,12 @@ Undo the last action.
 Redo the last undone action.
 
 <kbd>Command + Shift + z</kbd>
+
+### Repeat
+
+Repeats the last command. Repeats the last command.
+
+<kbd>Command + .</kbd>
 
 ### Toggle Undo Slider
 

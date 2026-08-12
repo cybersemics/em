@@ -579,7 +579,7 @@ export const COMMAND_GROUPS: {
   },
   {
     title: 'Oops',
-    commands: ['undo', 'redo'],
+    commands: ['undo', 'redo', 'repeat'],
   },
   {
     title: 'Special Views',

@@ -43,6 +43,7 @@ import thoughtToPath from './selectors/thoughtToPath'
 import store from './stores/app'
 import editingValueStore from './stores/editingValue'
 import gestureStore from './stores/gesture'
+import lastCommandStore from './stores/lastCommand'
 import debugLog from './util/debugLog'
 import equalPath from './util/equalPath'
 import haptics from './util/haptics'
@@ -384,9 +385,17 @@ const nearestNonAttributeAncestor = (state: State, path: Path): Path | null => {
   return truncated.length > 0 ? truncated : null
 }
 
+/**
+ * Resolves the repeat command to the last command that was executed. Returns any other command unchanged, or null if there is no last command to repeat.
+ *
+ * Repeat has no behavior of its own. It is resolved before execution rather than in its exec so that the repeated command is executed through the same path as any other command, and thus gets its own canExecute, multicursor, and keyboardIndex handling. Since repeat is never recorded as the last command, the resolved command is never repeat and there is no infinite recursion.
+ */
+const resolveRepeat = (command: Command): Command | null =>
+  command.id !== 'repeat' ? command : lastCommandStore.getState().command
+
 /** Execute a single command. Defaults to global store and keyboard shortcuts. Use `executeCommandWithMulticursor` to execute a command with multicursor mode. */
 export const executeCommand = (
-  command: Command,
+  commandArg: Command,
   {
     store: storeArg,
     type,
@@ -402,9 +411,16 @@ export const executeCommand = (
   type = type ?? 'keyboard'
   event = event ?? eventNoop
 
+  const command = resolveRepeat(commandArg)
+  // Exit early if there is no last command to repeat
+  if (!command) return
+
   const canExecute = !command.canExecute || command.canExecute(commandStore.getState())
   // Exit early if the command cannot execute
   if (!canExecute) return
+
+  // Track the last command that was executed so that it can be executed again by the repeat command
+  lastCommandStore.update({ command })
 
   // When activated by a keyboard shortcut, determine which of the command's keyboard shortcuts was pressed so it can be read in exec (e.g. to select a color based on the pressed shortcut).
   const keyboardShortcuts = command.keyboard
@@ -425,7 +441,7 @@ export const executeCommand = (
 
 /** Execute command. Defaults to global store and keyboard shortcuts. */
 export const executeCommandWithMulticursor = (
-  command: Command,
+  commandArg: Command,
   {
     store: storeArg,
     type,
@@ -440,6 +456,10 @@ export const executeCommandWithMulticursor = (
   const commandStore = storeArg ?? store
   type = type ?? 'keyboard'
   event = event ?? eventNoop
+
+  const command = resolveRepeat(commandArg)
+  // Exit early if there is no last command to repeat
+  if (!command) return
 
   const state = commandStore.getState()
 
