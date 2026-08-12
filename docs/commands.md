@@ -155,7 +155,14 @@ Three fields shape what happens when the command might not be runnable:
 
 ### Repeat
 
-`repeat` (Command/Ctrl + .) has no behavior of its own — its `exec` is a noop. `executeCommand` records every command it executes in [`lastCommandStore`](../src/stores/lastCommand.ts), and both `executeCommand` and `executeCommandWithMulticursor` resolve `repeat` to that command before executing, so the repeated command runs through the normal path with its own `canExecute`, multicursor, and `keyboardIndex` handling. Resolving before execution (rather than executing from within `repeat.exec`) also keeps `repeat.ts` free of an import of `commands.ts`, which would be circular. Since `repeat` resolves away before it is ever recorded, it never repeats itself.
+`repeat` (Command/Ctrl + .) has no behavior of its own — its `exec` is a noop. `executeCommand` records the last command it executed in [`lastCommandStore`](../src/stores/lastCommand.ts), and both `executeCommand` and `executeCommandWithMulticursor` resolve `repeat` to that command before executing, so the repeated command runs through the normal path with its own `canExecute`, multicursor, and `keyboardIndex` handling. Resolving before execution (rather than executing from within `repeat.exec`) also keeps `repeat.ts` free of an import of `commands.ts`, which would be circular.
+
+Only commands that make an *undoable, non-navigational* change are recorded, so that Repeat repeats the last edit no matter how many navigation or non-undoable commands intervened. `executeCommand` detects this by comparing the last non-navigation undo patch (the patch that Undo would revert, as classified by [`actionMetadata.registry`](../src/util/actionMetadata.registry.ts)) before and after `exec`. Consequently:
+
+- Navigation commands (Cursor Down, Jump Back) are skipped — their actions are registered `isNavigation`.
+- Commands that dispatch no undoable action (Export, Settings, Command Universe) are skipped, since they add no patch.
+- `undo`, `redo`, and `repeat` itself are never recorded. They move through the undo history rather than making a new undoable change, and recording `repeat` would recurse.
+- A command that only dispatches asynchronously (Generate Thought) is not recorded, since its patch does not exist yet when `exec` returns.
 
 ### Adding a new command
 
@@ -669,6 +676,8 @@ Redo the last undone action.
 ### Repeat
 
 Repeats the last command. Repeats the last command.
+
+Navigation and non-undoable commands are ignored, so Repeat always repeats the last command that changed the thoughtspace.
 
 <kbd>Command + .</kbd>
 

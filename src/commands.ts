@@ -12,6 +12,7 @@ import Gesture from './@types/Gesture'
 import Index from './@types/IndexType'
 import Key from './@types/Key'
 import MulticursorFilter from './@types/MulticursorFilter'
+import Patch from './@types/Patch'
 import Path from './@types/Path'
 import State from './@types/State'
 import { addMulticursorActionCreator as addMulticursor } from './actions/addMulticursor'
@@ -44,6 +45,7 @@ import store from './stores/app'
 import editingValueStore from './stores/editingValue'
 import gestureStore from './stores/gesture'
 import lastCommandStore from './stores/lastCommand'
+import { isNavigation } from './util/actionMetadata.registry'
 import debugLog from './util/debugLog'
 import equalPath from './util/equalPath'
 import haptics from './util/haptics'
@@ -393,6 +395,17 @@ const nearestNonAttributeAncestor = (state: State, path: Path): Path | null => {
 const resolveRepeat = (command: Command): Command | null =>
   command.id !== 'repeat' ? command : lastCommandStore.getState().command
 
+/** Commands that are never recorded as the last command for repeat. Repeat itself would recurse, and undo and redo move through the undo history rather than making a new undoable change, so repeating them is the job of their own shortcuts. */
+const commandsNotRepeated = new Set<CommandId>(['redo', 'repeat', 'undo'])
+
+/** Returns the last undo patch that is not a navigation action, i.e. the patch that Undo would revert. Mirrors getLatestActionType, but returns the patch itself so that patches can be compared by identity. */
+const lastUndoablePatch = (state: State): Patch | undefined => {
+  for (let i = state.undoPatches.length - 1; i >= 0; i--) {
+    if (!isNavigation(state.undoPatches[i][0]?.actions[0])) return state.undoPatches[i]
+  }
+  return undefined
+}
+
 /** Execute a single command. Defaults to global store and keyboard shortcuts. Use `executeCommandWithMulticursor` to execute a command with multicursor mode. */
 export const executeCommand = (
   commandArg: Command,
@@ -419,9 +432,6 @@ export const executeCommand = (
   // Exit early if the command cannot execute
   if (!canExecute) return
 
-  // Track the last command that was executed so that it can be executed again by the repeat command
-  lastCommandStore.update({ command })
-
   // When activated by a keyboard shortcut, determine which of the command's keyboard shortcuts was pressed so it can be read in exec (e.g. to select a color based on the pressed shortcut).
   const keyboardShortcuts = command.keyboard
     ? Array.isArray(command.keyboard)
@@ -435,8 +445,16 @@ export const executeCommand = (
 
   debugLog.log('command', { id: command.id, commandType: type })
 
+  const undoablePatchPrev = lastUndoablePatch(commandStore.getState())
+
   // execute single command
   command.exec(commandStore.dispatch, commandStore.getState, event, { type, keyboardIndex })
+
+  // Record the last command so that it can be executed again by the repeat command, but only if it made an undoable, non-navigational change to the thoughtspace. Otherwise repeat would repeat cursor movements and commands that dispatch no undoable actions (e.g. Cursor Down, Export) rather than the last edit, no matter how many of them occurred since.
+  // Patches are compared by identity rather than by action type, since the same command may be executed repeatedly (e.g. Bold twice in a row). A command that only dispatches asynchronously (e.g. Generate Thought) is not recorded, as its patch does not exist yet.
+  if (!commandsNotRepeated.has(command.id) && lastUndoablePatch(commandStore.getState()) !== undoablePatchPrev) {
+    lastCommandStore.update({ command })
+  }
 }
 
 /** Execute command. Defaults to global store and keyboard shortcuts. */
