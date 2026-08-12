@@ -36,12 +36,14 @@ import getThoughtById from './selectors/getThoughtById'
 import getUserSetting from './selectors/getUserSetting'
 import hasMulticursor from './selectors/hasMulticursor'
 import isAllSelected from './selectors/isAllSelected'
+import isMulticursorPath from './selectors/isMulticursorPath'
 import isUndoEnabled from './selectors/isUndoEnabled'
 import splitChain from './selectors/splitChain'
 import thoughtToPath from './selectors/thoughtToPath'
 import store from './stores/app'
 import editingValueStore from './stores/editingValue'
 import gestureStore from './stores/gesture'
+import debugLog from './util/debugLog'
 import equalPath from './util/equalPath'
 import haptics from './util/haptics'
 import hashPath from './util/hashPath'
@@ -415,6 +417,8 @@ export const executeCommand = (
       ? keyboardShortcuts.findIndex(keyboard => hashCommand(keyboard) === hashKeyDown(event))
       : undefined
 
+  debugLog.log('command', { id: command.id, commandType: type })
+
   // execute single command
   command.exec(commandStore.dispatch, commandStore.getState, event, { type, keyboardIndex })
 }
@@ -447,25 +451,34 @@ export const executeCommandWithMulticursor = (
   /** The value of Command['multicursor'] resolved to an object. That is, bare false has already short circuited, and bare true resolves to an empty object so that we don't need to make existential checks everywhere. */
   const multicursor = typeof command.multicursor === 'boolean' ? {} : command.multicursor
 
+  const paths = documentSort(state, Object.values(state.multicursors))
+
   // if multicursor is disallowed for this command, alert and exit early
-  // A single selected thought is not "multiple thoughts", so it executes normally. This is the case when the Command Center is open, which selects the cursor thought.
-  if (multicursor.disallow && Object.keys(state.multicursors).length > 1) {
-    const errorMessage = !multicursor.error
-      ? 'Cannot execute this command with multiple thoughts.'
-      : typeof multicursor.error === 'function'
-        ? multicursor.error(commandStore.getState())
-        : multicursor.error
-    commandStore.dispatch(
-      alert(errorMessage, {
-        alertType: AlertType.MulticursorError,
-      }),
-    )
-    return
+  // Only multiple selected thoughts are disallowed. A single selected thought is executed as usual, otherwise commands would be blocked whenever exactly one thought is selected, e.g. by opening the Command Center.
+  if (multicursor.disallow) {
+    if (paths.length > 1) {
+      const errorMessage = !multicursor.error
+        ? 'Cannot execute this command with multiple thoughts.'
+        : typeof multicursor.error === 'function'
+          ? multicursor.error(commandStore.getState())
+          : multicursor.error
+      commandStore.dispatch(
+        alert(errorMessage, {
+          alertType: AlertType.MulticursorError,
+        }),
+      )
+      return
+    }
+
+    // Execute the single selected thought here rather than falling through to the multicursor loop below, which restores the cursor when it is done. That restore dispatches setCursor, which resets noteFocus and would move the caret out of a note just created by the note command.
+    // For the same reason, only set the cursor when it is not already on the selected thought.
+    if (!state.cursor || !isMulticursorPath(state, state.cursor)) {
+      commandStore.dispatch(setCursor({ path: paths[0] }))
+    }
+    return executeCommand(command, { store: commandStore, type, event })
   }
 
   // For each multicursor, place the cursor on the path and execute the command by calling executeCommand.
-  const paths = documentSort(state, Object.values(state.multicursors))
-
   const filteredPaths = filterCursors(state, paths, multicursor.filter)
 
   // Exit early if the command cannot execute on any of the filtered paths
