@@ -501,11 +501,18 @@ export const caretRect = (): { x: number; y: number; height: number } | null => 
   }
 
   // An empty thought, e.g. a cleared one, has no client rect, since the selection is on the element node rather than a
-  // text node. Fall back to the start of the editable's content box, where the caret is rendered.
+  // text node. Fall back to the start of the editable's content box, where the caret is rendered. The height is a
+  // single line rather than the height of the editable, which spans several lines when a cleared thought's value is
+  // rendered as a multiline placeholder.
   const [paddingTop, , paddingBottom, paddingLeft] = getElementPaddings(editable)
+  const lineHeight = parseFloat(window.getComputedStyle(editable).lineHeight)
   return rect?.height
     ? { x: rect.x - editableRect.x, y: rect.y - editableRect.y, height: rect.height }
-    : { x: paddingLeft, y: paddingTop, height: editableRect.height - paddingTop - paddingBottom }
+    : {
+        x: paddingLeft,
+        y: paddingTop,
+        height: lineHeight || editableRect.height - paddingTop - paddingBottom,
+      }
 }
 
 /** Returns the selection text, or null if there is no selection. */

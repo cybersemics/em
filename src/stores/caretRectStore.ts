@@ -1,3 +1,6 @@
+import * as selection from '../device/selection'
+import isMultiEditing from '../selectors/isMultiEditing'
+import store from './app'
 import reactMinistore from './react-ministore'
 
 /** A reactive store that tracks the position and height of the caret relative to the top left of the thought that holds
@@ -17,5 +20,14 @@ const caretRectStore = reactMinistore<{ x: number | null; y: number | null; heig
   y: null,
   height: null,
 })
+
+/** Measures the real caret and updates the store. Unthrottled, otherwise the faux caret visibly lags the real caret
+ * while typing. Only an edited multiselection consumes the rect, so skip the heavier caretRect otherwise. Called from
+ * the selectionchange and input handlers in initEvents, and again from MulticursorFauxCaret when the edited value
+ * changes without either event, e.g. on undo. */
+export const updateCaretRect = () => {
+  const caretRect = isMultiEditing(store.getState()) ? selection.caretRect() : null
+  caretRectStore.update({ x: caretRect?.x ?? null, y: caretRect?.y ?? null, height: caretRect?.height ?? null })
+}
 
 export default caretRectStore

@@ -6,6 +6,7 @@ import { editableRecipe, invalidOptionRecipe } from '../../styled-system/recipes
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import TutorialChoice from '../@types/TutorialChoice'
+import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/clearMulticursors'
 import { cursorClearedActionCreator as cursorCleared } from '../actions/cursorCleared'
 import { editThoughtActionCreator as editThought } from '../actions/editThought'
 import { errorActionCreator as error } from '../actions/error'
@@ -840,11 +841,17 @@ const Editable = ({
       dispatch(cursorCleared({ value: false }))
 
       if (isTouch) {
-        dispatch(keyboardOpenActionCreator({ value: false }))
+        dispatch((dispatch, getState) => {
+          // Blurring the thought that holds the caret ends an edited multiselection (Clear Thought), so end the
+          // multiselection too. Otherwise the multicursors survive the blur and re-open the Command Center as soon as
+          // the keyboard closes (see multicursorAlertMiddleware). (#4519)
+          if (isMulticursorPath(getState(), path)) dispatch(clearMulticursors())
+          dispatch(keyboardOpenActionCreator({ value: false }))
+        })
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [simplePath],
+    [simplePath, path],
   )
 
   /**

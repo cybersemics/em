@@ -15,10 +15,9 @@ import { AlertType, LongPressState } from '../constants'
 import * as selection from '../device/selection'
 import virtualKeyboardHandler from '../device/virtual-keyboard'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
-import isMultiEditing from '../selectors/isMultiEditing'
 import pathExists from '../selectors/pathExists'
 import store from '../stores/app'
-import caretRectStore from '../stores/caretRectStore'
+import { updateCaretRect } from '../stores/caretRectStore'
 import { updateCommandState } from '../stores/commandStateStore'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
 import { updateScrollTop } from '../stores/scrollTop'
@@ -219,15 +218,6 @@ const initEvents = (store: Store<State, any>) => {
     SELECTION_CHANGE_THROTTLE,
     { leading: false },
   )
-
-  /** Tracks the caret's position within the focused thought so that a faux caret can be rendered at the same position on
-   * the other thoughts of an edited multiselection (see MulticursorFauxCaret). Unthrottled, otherwise the faux caret
-   * visibly lags the real caret while typing. Only an edited multiselection consumes the rect, so skip the heavier
-   * caretRect otherwise. */
-  const updateCaretRect = () => {
-    const caretRect = isMultiEditing(store.getState()) ? selection.caretRect() : null
-    caretRectStore.update({ x: caretRect?.x ?? null, y: caretRect?.y ?? null, height: caretRect?.height ?? null })
-  }
 
   /** Selection change event listener; save selection offset to storage, update command state store. */
   const onSelectionChange = () => {

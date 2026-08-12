@@ -1,5 +1,9 @@
+import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
-import caretRectStore from '../stores/caretRectStore'
+import useLayoutAnimationFrameEffect from '../hooks/useLayoutAnimationFrameEffect'
+import getThoughtById from '../selectors/getThoughtById'
+import caretRectStore, { updateCaretRect } from '../stores/caretRectStore'
+import head from '../util/head'
 import FauxCaret from './FauxCaret'
 
 /**
@@ -18,6 +22,12 @@ import FauxCaret from './FauxCaret'
 const MulticursorFauxCaret = ({ editableRef }: { editableRef: React.RefObject<HTMLElement | null> }) => {
   const { x, y, height } = caretRectStore.useState()
   const editable = editableRef.current
+
+  // Re-measure the real caret when the value of the thought that holds it changes without a selectionchange or input
+  // event, i.e. when the DOM text is replaced programmatically. Undo and redo do exactly that, and would otherwise
+  // leave the faux carets at the offset of the text that was replaced. (#4519)
+  const cursorValue = useSelector(state => (state.cursor ? getThoughtById(state, head(state.cursor))?.value : null))
+  useLayoutAnimationFrameEffect(updateCaretRect, [cursorValue])
 
   return x === null || !editable ? null : (
     <span

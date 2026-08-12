@@ -81,6 +81,15 @@ const caretOffsets = () =>
     }
   })
 
+/** Returns the height of each faux caret alongside the height of the thought it overlays. */
+const fauxCaretHeights = () =>
+  page.$$eval('[data-testid="faux-caret-multicursor"]', els =>
+    els.map(el => ({
+      caret: el.getBoundingClientRect().height,
+      editable: el.parentElement!.querySelector('[data-editable]')!.getBoundingClientRect().height,
+    })),
+  )
+
 describe('clearThought', () => {
   // Regression test for https://github.com/cybersemics/em/issues/4519
   it('clears all multiselected thoughts and mirrors typing across them', async () => {
@@ -281,6 +290,69 @@ describe('clearThought', () => {
     // The second Escape clears the multiselection.
     await press('Escape')
     await page.waitForFunction(() => !document.querySelector('[aria-label="bullet"][data-highlighted="true"]'))
+  })
+
+  // https://github.com/cybersemics/em/pull/4520#issuecomment-5255961961
+  it('moves the faux carets back to the real caret when the edit is undone', async () => {
+    await paste(`
+      - a
+      - b
+      - c
+    `)
+
+    await waitForEditable('a')
+    await waitForEditable('b')
+    await waitForEditable('c')
+
+    await multiselectThoughts(['a', 'b', 'c'])
+
+    await clearThought()
+    await waitForFirstEditable('')
+
+    // The caret is at the beginning of the cleared thoughts; capture the faux caret positions as the reference for the
+    // undo below, which restores the caret to the beginning as well.
+    await nextFrame()
+    const caretsCleared = await caretOffsets()
+    expect(caretsCleared.faux).toHaveLength(2)
+
+    await page.keyboard.type('hello world')
+    await waitForFirstEditable('hello world')
+
+    // Undo replaces the rendered text without a selectionchange or input event, so the faux carets must be re-measured
+    // rather than left at the offset of the text that was replaced.
+    await press('z', { meta: true })
+    await waitForFirstEditable('hello')
+    await waitForCaretTextOffset(0)
+
+    await nextFrame()
+    expect((await caretOffsets()).faux.map(caret => caret.x)).toEqual(caretsCleared.faux.map(caret => caret.x))
+  })
+
+  // https://github.com/cybersemics/em/pull/4520#issuecomment-5262417060
+  it('renders the faux carets at a single line height when the first thought wraps onto several lines', async () => {
+    const multiline = 'this is a long thought that wraps onto several lines when it is rendered on a narrow screen'
+
+    await paste(`
+      - ${multiline}
+      - b
+      - c
+    `)
+
+    await waitForEditable(multiline)
+    await waitForEditable('b')
+    await waitForEditable('c')
+
+    await multiselectThoughts([multiline, 'b', 'c'])
+
+    await clearThought()
+    await waitForFirstEditable('')
+
+    // A cleared thought renders its value as a placeholder, so the first thought is still several lines tall. The faux
+    // carets take their height from the real caret, which is one line tall, not from the thought that holds it.
+    await nextFrame()
+    const heights = await fauxCaretHeights()
+    expect(heights).toHaveLength(2)
+    heights.forEach(({ caret, editable }) => expect(caret).toBeLessThanOrEqual(editable))
   })
 
   // Regression test for https://github.com/cybersemics/em/issues/4519
