@@ -186,10 +186,10 @@ function Overlay() {
       className={css({
         pointerEvents: 'none',
         position: 'absolute',
-        background: 'linear-gradient(180deg, {colors.black} 0%, {colors.bgOverlay80} 70%, {colors.bgTransparent} 100%)',
+        background: 'linear-gradient(180deg, {colors.black} 0%, {colors.bgOverlay80} 60%, {colors.bgOverlay50} 100%)',
         top: 0,
         width: '100%',
-        height: '100%',
+        height: '100dvh',
       })}
     />
   )
