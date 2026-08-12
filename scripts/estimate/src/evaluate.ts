@@ -8,7 +8,7 @@
  * This is the "ruler" for the estimator: run it before and after a prompt/model/voting change to
  * confirm the change actually helps. Offline — it makes model calls but never writes to Everhour.
  *
- * Run manually (needs OPENAI_API_KEY): cd scripts/estimate && yarn evaluate
+ * Run manually (needs OPENAI_API_KEY) with `cd scripts/estimate && yarn evaluate`.
  */
 import 'dotenv/config'
 import * as path from 'path'
@@ -36,7 +36,7 @@ export interface EvalMetrics {
   exact: { count: number; fraction: number }
   /** Count and fraction of predictions within one bucket of the expected category. */
   within1: { count: number; fraction: number }
-  /** confusion[expected][predicted] = count. */
+  /** `confusion[expected][predicted]` = count. */
   confusion: Record<string, Record<string, number>>
   /** Accuracy grouped by a calibration key (agreement tier or confidence level). */
   calibration: Record<string, { total: number; exact: number }>
@@ -66,6 +66,7 @@ export const computeMetrics = (rows: EvalRow[]): EvalMetrics => {
   }
 
   const calibration: Record<string, { total: number; exact: number }> = {}
+  /** Records one prediction against a calibration bucket, counting it as exact when it hit the right category. */
   const bump = (key: string, isExact: boolean) => {
     calibration[key] ??= { total: 0, exact: 0 }
     calibration[key].total += 1
@@ -144,6 +145,7 @@ const formatReport = (metrics: EvalMetrics): string => {
   return lines.join('\n')
 }
 
+/** Runs the leave-one-out evaluation over every labeled sample and prints the accuracy report. */
 const main = async () => {
   const openaiApiKey = process.env.OPENAI_API_KEY
   if (!openaiApiKey) throw new Error('OPENAI_API_KEY is required')

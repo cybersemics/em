@@ -164,6 +164,7 @@ const createSession = () =>
     req.end()
   })
 
+/** Brings up the tunnel and the BrowserStack iOS session, writing the session id for the proxy to adopt. */
 const main = async () => {
   setStatus('tunnel-starting')
   try {

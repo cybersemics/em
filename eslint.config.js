@@ -105,7 +105,6 @@ export default [
       '**/build/*',
       '**/docs/*',
       '**/functions/*',
-      '**/scripts/*',
     ],
   },
   {
