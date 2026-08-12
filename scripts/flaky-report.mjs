@@ -84,7 +84,7 @@ if (process.argv[2] === '--trim') {
   }
   const trimmed = trimVitestFailures(data)
   writeFileSync(file, JSON.stringify(trimmed, null, 2))
-  console.log(`Trimmed ${file}: ${trimmed.numFailedTestSuites} file(s), ${trimmed.numFailedTests} failed test(s)`)
+  console.info(`Trimmed ${file}: ${trimmed.numFailedTestSuites} file(s), ${trimmed.numFailedTests} failed test(s)`)
   process.exit(0)
 }
 
