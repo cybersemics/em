@@ -164,6 +164,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
       if (e?.touches.length > 0) {
         const x = e.touches[0].clientX
         const y = e.touches[0].clientY
+        debugLog.log('touchstart', { x: Math.round(x), y: Math.round(y) })
         this.clientStart = { x, y }
         // Remember the element the browser pinned this touch to, so a release can still be detected
         // if that element unmounts mid-gesture. See the pointerup listener below.
@@ -180,10 +181,12 @@ class MultiGesture extends React.Component<MultiGestureProps> {
 
     // Since we set this.disableScroll or this.abandon on touchstart, we need to reset them on touchend.
     // This occurs, for eample, on tap.
-    window.addEventListener('touchend', () => {
+    window.addEventListener('touchend', (e: TouchEvent) => {
       if (testFlags.logMultigesture) {
         console.info('touchend')
       }
+      const touch = e.changedTouches[0]
+      debugLog.log('touchend', touch ? { x: Math.round(touch.clientX), y: Math.round(touch.clientY) } : {})
       this.reset()
     })
 
