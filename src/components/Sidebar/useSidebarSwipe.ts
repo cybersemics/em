@@ -38,9 +38,7 @@ const useSidebarSwipe = ({ enabled, drawerRef, width, x, onSwipeEnd }: UseSideba
 
   /** Stable-identity wrapper that always calls the latest onSwipeEnd — lets the touch listeners
    * below stay registered across renders without depending on the caller's callback identity. */
-  const handleSwipeEnd = useEffectEvent((offset: number, velocity: number) => {
-    onSwipeEnd(offset, velocity)
-  })
+  const handleSwipeEnd = useEffectEvent(onSwipeEnd)
 
   /** Per-touch swipe state for the manual touch handler. We don't use framer-motion's drag because
    * it has no "wait and see" phase to disambiguate horizontal swipe from vertical scroll — this
