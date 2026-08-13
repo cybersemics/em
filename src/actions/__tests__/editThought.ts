@@ -415,6 +415,44 @@ describe('sort', () => {
     - C`)
   })
 
+  it('keep a thought with an empty HTML tag at its insertion point until text is added', () => {
+    const stateBefore = reducerFlow([
+      importText({
+        text: `
+          - X
+            - =sort
+              - Alphabetical
+            - A
+            - B
+            - C
+        `,
+      }),
+      setCursor(['X']),
+      newThought({ insertNewSubthought: true, value: '' }),
+      editThought(['X', ''], '<b></b>'),
+    ])(initialState())
+
+    expect(exportContext(stateBefore, [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - X
+    - =sort
+      - Alphabetical
+    - A
+    - B
+    - C
+    - ****`)
+
+    const stateAfter = editThought(['X', '<b></b>'], '<b></b>a')(stateBefore)
+
+    expect(exportContext(stateAfter, [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - X
+    - ****a
+    - =sort
+      - Alphabetical
+    - A
+    - B
+    - C`)
+  })
+
   it('rank should not change when editing a thought to empty', () => {
     const text = `
     - =sort
