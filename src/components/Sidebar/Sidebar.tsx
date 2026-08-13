@@ -45,6 +45,7 @@ import { longPressActionCreator as longPress } from '../../actions/longPress'
 import { toggleSidebarActionCreator } from '../../actions/toggleSidebar'
 import { LongPressState } from '../../constants'
 import useBreakpoint from '../../hooks/useBreakpoint'
+import useLockBodyScroll from '../../hooks/useLockBodyScroll'
 import usePrefetchImages from '../../hooks/usePrefetchImages'
 import FadeTransition from '../FadeTransition'
 import SidebarBackground from './SidebarBackground'
@@ -214,16 +215,7 @@ const Sidebar = () => {
   usePrefetchImages(GLOW_OVERLAY_IMAGE_URLS)
 
   /** Lock body scroll when sidebar is open. */
-  useEffect(() => {
-    if (showSidebar) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
-    }
-    return () => {
-      document.body.style.overflow = ''
-    }
-  }, [showSidebar])
+  useLockBodyScroll(showSidebar)
 
   /** Handle escape key to close sidebar. */
   useEffect(() => {
