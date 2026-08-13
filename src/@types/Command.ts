@@ -19,7 +19,7 @@ interface Command {
   /** A readable, internal unique id. */
   id: CommandId
 
-  /** Executes the command. When activated by a keyboard shortcut and the command defines an array of keyboard shortcuts, `keyboardIndex` is the index of the shortcut that was pressed within that array. */
+  /** Executes the command. When activated by a keyboard shortcut and the command defines an array of keyboard shortcuts, `keyboardIndex` is the index of the shortcut that was pressed within that array. When the command is executed again by repeat, it is the index that was recorded with it. */
   exec: (
     dispatch: Dispatch,
     getState: () => State,

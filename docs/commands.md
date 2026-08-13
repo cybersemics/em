@@ -56,7 +56,7 @@ const pinCommand: Command = {
 
 `exec` receives the Redux `dispatch`, a `getState` thunk, the event that triggered the command, and a `{ type }` field that is `'keyboard'`, `'gesture'`, `'toolbar'`, or `'chainedGesture'` so the command can adapt its behavior (e.g. `pin` shows an alert only when triggered via keyboard, since the toolbar already gives visual feedback).
 
-A command bound to an array of keyboard shortcuts also receives `keyboardIndex`, the index within that array of the shortcut that was pressed (`undefined` for every other activation type). This lets one command cover a family of related shortcuts: `applyColor` maps Command/Ctrl + Option/Alt + *n* and Option/Alt + *n* to the *n*th text and background swatch of the [`ColorPicker`](../src/components/ColorPicker.tsx). Since only the first shortcut of an array is displayed, such a command can set `keyboardDisplay` to a single `Key` representing the whole range (`applyColor` displays `Cmd + Option + 0-8`).
+A command bound to an array of keyboard shortcuts also receives `keyboardIndex`, the index within that array of the shortcut that was pressed (`undefined` when the command was not activated by one of its own keyboard shortcuts). This lets one command cover a family of related shortcuts: `applyColor` maps Command/Ctrl + Option/Alt + *n* and Option/Alt + *n* to the *n*th text and background swatch of the [`ColorPicker`](../src/components/ColorPicker.tsx). Since only the first shortcut of an array is displayed, such a command can set `keyboardDisplay` to a single `Key` representing the whole range (`applyColor` displays `Cmd + Option + 0-8`).
 
 ### Discovery and indexing
 
@@ -155,7 +155,9 @@ Three fields shape what happens when the command might not be runnable:
 
 ### Repeat
 
-`repeat` (Command/Ctrl + .) has no behavior of its own — its `exec` is a noop. `executeCommand` records the last command it executed in a module-level `lastCommand` variable, and both `executeCommand` and `executeCommandWithMulticursor` resolve `repeat` to it before executing, so the repeated command runs through the normal path with its own `canExecute`, multicursor, and `keyboardIndex` handling. Resolving before execution (rather than executing from within `repeat.exec`) also keeps `repeat.ts` free of an import of `commands.ts`, which would be circular.
+`repeat` (Command/Ctrl + .) has no behavior of its own — its `exec` is a noop. `executeCommand` records the last command it executed in a module-level `lastCommand` variable, and both `executeCommand` and `executeCommandWithMulticursor` resolve `repeat` to it before executing, so the repeated command runs through the normal path with its own `canExecute` and multicursor handling. Resolving before execution (rather than executing from within `repeat.exec`) also keeps `repeat.ts` free of an import of `commands.ts`, which would be circular.
+
+`keyboardIndex` is recorded alongside the command and restored when it is repeated, since it cannot be derived from the Command/Ctrl + . keypress — that keypress matches none of the repeated command's own shortcuts. Without it, repeating `applyColor` would have no swatch to apply and would silently do nothing. `executeCommandWithMulticursor` resolves `repeat` itself and then delegates an already-resolved command, so it forwards the recorded index through executeCommand's `keyboardIndex` option.
 
 Only commands that make an *undoable, non-navigational* change are recorded, so that Repeat repeats the last edit no matter how many navigation or non-undoable commands intervened. `executeCommand` detects this by comparing the last non-navigation undo patch (the patch that Undo would revert, as classified by [`actionMetadata.registry`](../src/util/actionMetadata.registry.ts)) before and after `exec`. Consequently:
 
