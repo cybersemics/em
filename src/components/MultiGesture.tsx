@@ -1,11 +1,15 @@
 import React, { PropsWithChildren } from 'react'
-import { GestureResponderEvent, PanResponder, PanResponderInstance, View } from 'react-native'
+import { GestureResponderEvent, PanResponder, PanResponderInstance, View, ViewStyle } from 'react-native'
 import Direction from '../@types/Direction'
 import Gesture from '../@types/Gesture'
 import { noop } from '../constants'
+import getSafeAreaBottom from '../device/virtual-keyboard/getSafeAreaBottom'
 import testFlags from '../e2e/testFlags'
 import { clearGesture, updateGesture } from '../stores/gesture'
+import viewportStore from '../stores/viewport'
+import debugLog from '../util/debugLog'
 import isInGestureZone from '../util/isInGestureZone'
+import GestureMenu from './GestureMenu/GestureMenu'
 import ScrollZone from './ScrollZone'
 import TraceGesture from './TraceGesture'
 
@@ -188,6 +192,13 @@ class MultiGesture extends React.Component<MultiGestureProps> {
       if (testFlags.logMultigesture) {
         console.info('touchcancel')
       }
+      debugLog.log('gestureCancel', {
+        sequence: this.sequence,
+        x: this.clientStart && Math.round(this.clientStart.x),
+        y: this.clientStart && Math.round(this.clientStart.y),
+        innerHeight: viewportStore.getState().innerHeight,
+        safeAreaBottom: getSafeAreaBottom(),
+      })
       this.props.onCancel?.({ clientStart: this.clientStart, e })
       this.reset()
     })
@@ -270,7 +281,12 @@ class MultiGesture extends React.Component<MultiGestureProps> {
           // Check if we're in the gesture zone before deciding whether to disable scrolling
           // This ensures we only prevent scrolling in the gesture zone, but allow it elsewhere
           const touchLocation = e.nativeEvent.touches[0] || e.nativeEvent
-          const inGestureZone = isInGestureZone(touchLocation.pageX, touchLocation.pageY, this.leftHanded)
+          // isInGestureZone takes viewport coordinates, so convert from page coordinates. Otherwise the zone's viewport-relative bounds are compared against scroll-offset coordinates and the check breaks when the page is scrolled.
+          const inGestureZone = isInGestureZone(
+            touchLocation.pageX - window.scrollX,
+            touchLocation.pageY - window.scrollY,
+            this.leftHanded,
+          )
 
           // Only keep disableScroll=true if we're actually in the gesture zone
           // This addresses both issues: prevents scrolling in gesture zone during gestures,
@@ -315,6 +331,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
           if (g !== this.sequence[this.sequence.length - 1]) {
             // append the gesture to the sequence and call the onGesture handler
             this.sequence += g
+            debugLog.log('swipe', { dir: g, sequence: this.sequence })
             this.props.onGesture?.({ gesture: g, sequence: this.sequence, clientStart: this.clientStart!, e })
             updateGesture(this.sequence)
           }
@@ -329,6 +346,17 @@ class MultiGesture extends React.Component<MultiGestureProps> {
             abandon: this.abandon,
           })
         }
+        // Log the start and end coordinates so that a false gesture, such as an OS app switcher swipe misread as a command gesture, can be diagnosed from the debug log. innerHeight and safeAreaBottom determine the bottom system-gesture exclusion that was in effect (see isInGestureZone), so the log also reveals if the exclusion was inert because the safe area inset read as zero.
+        debugLog.log('gesture', {
+          sequence: this.sequence,
+          x: this.clientStart && Math.round(this.clientStart.x),
+          y: this.clientStart && Math.round(this.clientStart.y),
+          endX: Math.round(gestureState.moveX),
+          endY: Math.round(gestureState.moveY),
+          abandon: this.abandon,
+          innerHeight: viewportStore.getState().innerHeight,
+          safeAreaBottom: getSafeAreaBottom(),
+        })
         if (!this.abandon) {
           const clientEnd = {
             x: gestureState.moveX,
@@ -362,7 +390,16 @@ class MultiGesture extends React.Component<MultiGestureProps> {
   render() {
     const ref = React.createRef<HTMLDivElement>()
     return (
-      <View {...this.panResponder.panHandlers}>
+      <View
+        {...this.panResponder.panHandlers}
+        // View's default z-index:0 traps children below NavBar's stacking context; z-index:auto
+        // removes it, letting gesture blur/trace layer above NavBar in the root context.
+        style={{ zIndex: 'auto' } as unknown as ViewStyle}
+      >
+        {/* GestureMenu mounts here (rather than at the app root) so the menu, its content blur, and the
+            gesture trace share this <View>'s stacking context, letting z-index order the trace above the
+            blur. GestureMenu renders nothing until the menu is active. */}
+        <GestureMenu />
         <TraceGesture eventNodeRef={ref} />
         <ScrollZone leftHanded={this.leftHanded} />
         <div ref={ref}>{this.props.children}</div>

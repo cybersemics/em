@@ -9,6 +9,7 @@ import contextToThoughtId from '../selectors/contextToThoughtId'
 import findDescendant from '../selectors/findDescendant'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
+import isMulticursorPath from '../selectors/isMulticursorPath'
 import simplifyPath from '../selectors/simplifyPath'
 import appendToPath from '../util/appendToPath'
 import containsURL from '../util/containsURL'
@@ -26,6 +27,7 @@ import childIdsToThoughts from './childIdsToThoughts'
 import { anyChild, getAllChildrenAsThoughts } from './getChildren'
 import getContexts from './getContexts'
 import pinned from './isPinned'
+import rootedParentOf from './rootedParentOf'
 
 /** Returns true if a thought is marked as done. */
 const isDone = (state: State, id: ThoughtId | null): boolean => {
@@ -185,8 +187,17 @@ function expandThoughts(state: State, path: Path | null): Index<Path | Context> 
     throw new Error(`Invalid path ${path}. No thought found with id ${head(path)}`)
   }
 
-  // Expand ancestors of the cursor path and all multicursor paths so that selected thoughts remain visible.
-  return [path || HOME_PATH, ...Object.values(state.multicursors)].reduce(
+  // A selected thought expands only its ancestors, never itself, so that it stays collapsed while
+  // remaining visible. This applies to the cursor too when it is part of the multicursor, which is the
+  // case while a multiselect is being extended with Shift+ArrowUp/ArrowDown. A cursor that is not
+  // selected expands normally.
+  // https://github.com/cybersemics/em/issues/4738
+  const cursorExpansionPath = path && isMulticursorPath(state, path) ? rootedParentOf(state, path) : path || HOME_PATH
+
+  return [
+    cursorExpansionPath,
+    ...Object.values(state.multicursors).map(multicursorPath => rootedParentOf(state, multicursorPath)),
+  ].reduce(
     (acc, expansionPath) => ({
       ...acc,
       ...expandThoughtsRecursive(state, expansionPath, HOME_PATH),

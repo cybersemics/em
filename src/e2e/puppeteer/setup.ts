@@ -1,5 +1,6 @@
 import chalk from 'chalk'
 import { Browser, BrowserContext, ConsoleMessage, Device } from 'puppeteer'
+import deviceEmulation from './helpers/deviceEmulation'
 import { page, setPage } from './session'
 
 // eslint-disable-next-line @typescript-eslint/no-namespace, @typescript-eslint/prefer-namespace-keyword
@@ -15,7 +16,7 @@ const setup = async ({
   // Use host.docker.internal to connect to the host machine from inside the container. On Github actions, host.docker.internal is not available, so use 172.17.0.1 instead.
   url = process.env.CI ? 'https://172.17.0.1:3000' : 'https://host.docker.internal:2552',
   // url = 'https://google.com',
-  emulatedDevice,
+  emulatedDevice = deviceEmulation.device,
   skipTutorial = true,
 }: {
   puppeteerBrowser?: Browser

@@ -356,7 +356,10 @@ const Bullet = ({
   }, shallowEqual)
 
   const isExpanded = useSelector(state => !!state.expanded[hashPath(path)])
-  const isBulletExpanded = isCursorParent || isCursorGrandparent || isEditing || isExpanded
+  // A selected thought stays collapsed even when it is the cursor, so state.expanded alone determines
+  // whether its bullet points down.
+  // https://github.com/cybersemics/em/issues/4738
+  const isBulletExpanded = isExpanded || (!isMulticursor && (isCursorParent || isCursorGrandparent || isEditing))
 
   const isRoot = simplePath.length === 1
   const isRootChildLeaf = simplePath.length === 2 && leaf

@@ -4,7 +4,7 @@ import storage from './storage'
 const DEBUG_LOG_KEY = 'debugLog'
 
 /** Maximum number of entries retained in the rolling buffer. Older entries are dropped first. */
-const DEBUG_LOG_CAPACITY = 500
+const DEBUG_LOG_CAPACITY = 1000
 
 /** Maximum length of any single stringified field. Longer values are truncated to protect the ~5MB localStorage quota. */
 const FIELD_MAX_LENGTH = 2000

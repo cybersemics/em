@@ -878,7 +878,15 @@ const Editable = ({
           // iOS Writing Tools getting stuck open and the selection being restored.
           const isDragging =
             state.longPress === LongPressState.DragHold || state.longPress === LongPressState.DragInProgress
-          if (state.showCommandCenter || isDragging) {
+          // A tap that moved the cursor without entering edit mode can likewise produce this focus despite
+          // preventDefault (see globals.suppressFocusAfterCursorMove). The !isKeyboardOpen check keeps
+          // programmatic focus flows intact: commands that activate edit mode by side effect set
+          // state.isKeyboardOpen before useEditMode focuses the editable.
+          const isSpuriousTapFocus = globals.suppressFocusAfterCursorMove && !state.isKeyboardOpen
+          if (isSpuriousTapFocus) {
+            debugLog.log('guard', { step: 'suppressFocusAfterCursorMove' })
+          }
+          if (state.showCommandCenter || isDragging || isSpuriousTapFocus) {
             selection.clear()
             dispatch(keyboardOpenActionCreator({ value: false }))
             requestAnimationFrame(() => {
@@ -895,12 +903,18 @@ const Editable = ({
       editingValueUntrimmedStore.update(value)
 
       dispatch((dispatch, getState) => {
-        const { longPress } = getState()
+        const state = getState()
         // Do not set the cursor on a hidden thought. After a focused thought is archived by dragging
         // it to the DropGutter, a spurious focus event can fire on its (now hidden) Editable, which
         // would otherwise override the cursor that archiveThought placed on the previous sibling.
         // When hidden thoughts are shown, isVisible is true and the cursor can still be set. (#4077)
-        if (longPress === LongPressState.Inactive && isVisible) {
+        // Do not activate edit mode when the focus is the tail of a tap that already moved the cursor
+        // without edit mode (see globals.suppressFocusAfterCursorMove); the block above dismissed it.
+        if (
+          state.longPress === LongPressState.Inactive &&
+          isVisible &&
+          !(globals.suppressFocusAfterCursorMove && !state.isKeyboardOpen)
+        ) {
           setCursorOnThought({ isKeyboardOpen: true })
         }
       })
@@ -925,6 +939,17 @@ const Editable = ({
       dispatch((dispatch, getState) => {
         const state = getState()
 
+        // Record the tap inputs that determine which branch runs. `cancelable: false` on a touchend means the
+        // preventDefault below is a silent no-op and iOS Safari will still synthesize focus/mouse events for the tap.
+        debugLog.log('tap', {
+          eventType: e.type,
+          cancelable: e.cancelable,
+          touching: globals.touching,
+          editingOrOnCursor,
+          isVisible,
+          longPress: state.longPress,
+        })
+
         // If long press is in progress, don't allow the editable to receive focus or iOS Safari will scroll it.
         if (state.longPress !== LongPressState.Inactive) {
           e.preventDefault()
@@ -941,6 +966,15 @@ const Editable = ({
           (!globals.touching && (!editingOrOnCursor || !isVisible))
         ) {
           e.preventDefault()
+
+          // iOS Safari sometimes synthesizes the tap's focus/mousedown despite the preventDefault above (observed
+          // with non-cancelable touchends, e.g. tapping during scroll momentum). By the time they fire, the
+          // setCursorOnThought below has made this the cursor thought, so onFocus and useEditMode's onMouseDown
+          // would treat them as a second tap and open the keyboard. Flag them for suppression until the next
+          // touchstart proves the user actually tapped again.
+          if (e.type === 'touchend' && isTouch && isSafari()) {
+            globals.suppressFocusAfterCursorMove = true
+          }
 
           if (!isVisible) {
             selection.clear()
