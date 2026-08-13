@@ -23,6 +23,14 @@ Both backends are configured with:
 
 The values come from [`constants.ts`](../src/constants.ts).
 
+#### Tauri desktop shell
+
+The desktop app runs the same web build inside a Tauri (wry) webview, so it selects `HTML5Backend` like any other desktop browser. That only works because [`desktop/tauri.conf.json`](../desktop/tauri.conf.json) sets `dragDropEnabled: false` on the window.
+
+Left at its default of `true`, Tauri installs a native drag-and-drop handler on the webview so it can surface OS file drops as `tauri://drag-*` events. On macOS that handler overrides the webview's `NSDraggingDestination` methods (`draggingEntered:`, `draggingUpdated:`, `performDragOperation:`, `draggingExited:`) and unconditionally reports every drag as consumed, so the `WKWebView` superclass implementation never runs and WebKit never dispatches the corresponding DOM `dragenter` / `dragover` / `drop` events. Only the destination side is intercepted — `dragstart` still fires, so `beginDrag` runs and the drag appears to start, but nothing can ever be hovered or dropped. Windows (WebView2) and Linux (WebKitGTK) intercept drops the same way.
+
+Disabling it removes that handler, so drag events reach the page normally. Nothing is lost: em never listened for the `tauri://drag-*` events, and OS file drops go back to arriving as react-dnd's `NativeTypes.FILE`, which is what the app already handles.
+
 ### State machine: `state.longPress`
 
 The whole subsystem is orchestrated by a single Redux state field, [`state.longPress`](../src/@types/State.ts), which is a `LongPressState` enum with these values (see [`constants.ts`](../src/constants.ts)):
@@ -177,6 +185,7 @@ The previous `QuickDropIcon` / `DeleteDrop` / `CopyOneDrop` / `ExportDrop` icon 
 - [`DragAndDropContext`](../src/components/DragAndDropContext.tsx) — `DndProvider` wrapping the app; selects backend by `isTouch`.
 - [`DragOnly`](../src/components/DragOnly.tsx) — a fragment that only renders its children when `state.longPress === DragInProgress` (or a test flag is set). Used to skip mounting drop targets and overlays when not dragging.
 - [`DropHover`](../src/components/DropHover.tsx) — the blue-bar visual indicator. Subscribes to `state.hoveringPath` and `state.hoverZone` and decides whether *this* particular drop target should render the bar. For sorted contexts, additionally compares the dragging value's `compareReasonable` order against neighbors to choose which gap to highlight.
+- [`usePinDropHover`](../src/hooks/usePinDropHover.ts) — test-only latch used by `DropHover`, `DropEnd`, `DropChild`, and `DropUncle`. When `testFlags.pinDropHovers` is set, a drop hover that has been shown during the current drag stays visible until the drag ends, so e2e snapshot tests can compare multiple drop hovers in a single screenshot (see [Testing](testing.md#drag-and-drop-visualization)).
 
 ## Multicursor drag
 

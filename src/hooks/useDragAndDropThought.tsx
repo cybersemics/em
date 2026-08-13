@@ -49,6 +49,7 @@ import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import throttleByMousePosition from '../util/throttleByMousePosition'
+import usePinDropHover from './usePinDropHover'
 
 export type DropValidationResult = {
   isValid: boolean
@@ -367,12 +368,14 @@ const useDragAndDropThought = (props: Partial<ThoughtContainerProps> & { hoverZo
     return state.draggingThoughts.some(draggedPath => equalPath(draggedPath, propsTypes.simplePath))
   })
 
+  const isHoveringPinned = usePinDropHover(isHovering)
+
   return {
     isDragging: isDraggingBullet || isDraggingEditable || isDraggingMultiple, // Combine both drag states: either this is the primary drag source OR it's part of multiselect drag
     dragSourceBullet,
     dragSourceEditable,
     dragPreview,
-    isHovering,
+    isHovering: isHoveringPinned,
     isDeepHovering,
     canDropThought,
     dropTarget,

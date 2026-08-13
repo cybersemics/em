@@ -14,6 +14,8 @@ type TestFlags = {
   initialize: ((options: { storage: ThoughtspaceStorage }) => Promise<unknown>) | null
   /** Overrides production thoughtspace storage during test startup. */
   thoughtspaceStorage: ThoughtspaceStorage | null
+  /** Keep every drop hover that becomes visible during the current drag mounted, so multiple drop hovers can be compared in a single snapshot. */
+  pinDropHovers: boolean
   /** Render drop-hover elements as blocks of color. */
   simulateDrag: boolean
   /** Render drop targets as blocks of color. */
@@ -33,6 +35,7 @@ const testFlags: TestFlags = {
   preventInitialize: preloadedTestFlags?.preventInitialize ?? false,
   initialize: null,
   thoughtspaceStorage: preloadedTestFlags?.thoughtspaceStorage ?? null,
+  pinDropHovers: false,
   simulateDrag: false,
   simulateDrop: false,
   throttledScrollCursorIntoView: null,
