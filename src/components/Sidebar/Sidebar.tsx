@@ -217,14 +217,19 @@ const Sidebar = () => {
   /** Lock body scroll when sidebar is open. */
   useLockBodyScroll(showSidebar)
 
-  /** Handle escape key to close sidebar. */
+  /** Handle escape key to dismiss the sidebar one layer at a time: the dropdown first, then the
+   * sidebar itself. */
   useEffect(() => {
     if (!showSidebar) return
 
-    /** Close sidebar when Escape is pressed. */
+    /** Close the dropdown if it is open, otherwise close the sidebar. */
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        toggleSidebar(false)
+        if (dropdownOpen) {
+          setDropdownOpen(false)
+        } else {
+          toggleSidebar(false)
+        }
         e.preventDefault()
         e.stopPropagation()
       }
@@ -233,7 +238,7 @@ const Sidebar = () => {
     return () => {
       document.removeEventListener('keydown', handleKeyDown)
     }
-  }, [showSidebar, toggleSidebar])
+  }, [showSidebar, dropdownOpen, toggleSidebar])
 
   return (
     <>
