@@ -376,6 +376,45 @@ describe('sort', () => {
   - D`)
   })
 
+  // https://github.com/cybersemics/em/issues/4847
+  it('keep an emoji-only thought at its insertion point until text is added', () => {
+    const stateEmoji = reducerFlow([
+      importText({
+        text: `
+          - X
+            - =sort
+              - Alphabetical
+            - A
+            - B
+            - C
+        `,
+      }),
+      setCursor(['X']),
+      newThought({ insertNewSubthought: true, value: '' }),
+      editThought(['X', ''], '🙂'),
+    ])(initialState())
+
+    expect(exportContext(stateEmoji, [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - X
+    - =sort
+      - Alphabetical
+    - A
+    - B
+    - C
+    - 🙂`)
+
+    const stateEmojiWithText = editThought(['X', '🙂'], '🙂a')(stateEmoji)
+
+    expect(exportContext(stateEmojiWithText, [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - X
+    - =sort
+      - Alphabetical
+    - 🙂a
+    - A
+    - B
+    - C`)
+  })
+
   it('rank should not change when editing a thought to empty', () => {
     const text = `
     - =sort
