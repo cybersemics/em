@@ -9,6 +9,7 @@ import hashPath from '../util/hashPath'
 import reducerFlow from '../util/reducerFlow'
 import addMulticursor from './addMulticursor'
 import setCursor from './setCursor'
+import toggleMulticursor from './toggleMulticursor'
 
 /** Selects all thoughts between two selected thoughts, or between the active anchor and a new endpoint. */
 const selectBetween = (state: State, payload?: { path?: Path }): State => {
@@ -19,7 +20,12 @@ const selectBetween = (state: State, payload?: { path?: Path }): State => {
   const anchor = path ? (state.multicursorAnchor ?? multicursorPaths.at(-1) ?? null) : null
   const endpointPaths = path && anchor ? [anchor, path] : multicursorPaths
 
-  if ((path && !anchor) || endpointPaths.length === 1) {
+  // Match the existing Shift-click behavior by starting the multiselect at the clicked thought.
+  if (path && !anchor) {
+    return reducerFlow([setCursor({ path, preserveMulticursor: true }), toggleMulticursor({ path })])(state)
+  }
+
+  if (endpointPaths.length === 1) {
     return alert(state, { value: 'Select Between requires at least two selected thoughts.' })
   }
 

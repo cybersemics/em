@@ -448,8 +448,9 @@ Selects all thoughts at the current level. May reduce wrist strain.
 
 Selects all sibling thoughts between two selected endpoints. On desktop, Command/Ctrl-click an unselected thought to
 set the fixed anchor, then Shift-click an endpoint. Subsequent Shift-clicks adjust the endpoint, replacing only the
-active range while preserving separately selected or previously committed ranges. A deselected thought is not used as
-a later anchor.
+active range while preserving separately selected or previously committed ranges. With no active multiselect,
+Shift-click selects the clicked thought and establishes it as the anchor. If the anchor is deselected, the last
+remaining selected thought becomes the next anchor.
 
 ### Copy Cursor
 

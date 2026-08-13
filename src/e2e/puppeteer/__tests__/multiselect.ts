@@ -25,6 +25,26 @@ const shiftClickThought = async (value: string) => {
 }
 
 describe('multiselect', () => {
+  // https://github.com/cybersemics/em/issues/4740
+  it('starts multiselect at the Shift-clicked thought when there is no selection', async () => {
+    await paste(`
+        - a
+        - b
+        - c
+        `)
+
+    await clickThought('a')
+    await shiftClickThought('c')
+
+    const highlightedValues = await page.$$eval('[aria-label="bullet"][data-highlighted="true"]', bullets =>
+      bullets.map(
+        bullet => bullet.closest('[aria-label="tree-node"]')?.querySelector('[data-editable]')?.textContent ?? null,
+      ),
+    )
+
+    expect(highlightedValues).toEqual(['c'])
+  })
+
   it('adjusts a Shift-click range from its original anchor', async () => {
     await paste(`
         - a
