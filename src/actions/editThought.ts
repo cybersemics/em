@@ -21,6 +21,7 @@ import hashThought from '../util/hashThought'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
 import isDivider from '../util/isDivider'
+import isEmptyOrEmojiOnly from '../util/isEmptyOrEmojiOnly'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
 import removeContext from '../util/removeContext'
@@ -142,12 +143,13 @@ const editThought = (
   const isNote = parentOfEditedThought.value === '=note'
   const sortPreference = getSortPreference(state, editedThought.parentId)
   const sortType = sortPreference.type
+  const isValueEmptyOrEmojiOnly = isEmptyOrEmojiOnly(newValue)
 
   const thoughtNew: Thought = {
     ...editedThought,
     ...(editedThought.generating ? { generating: false } : null),
     rank:
-      newValue !== '' && (sortType === 'Alphabetical' || sortType === 'Created' || sortType === 'Updated')
+      !isValueEmptyOrEmojiOnly && (sortType === 'Alphabetical' || sortType === 'Created' || sortType === 'Updated')
         ? getSortedRank(state, editedThought.parentId, newValue, {
             created: editedThought.created,
             staleId: editedThought.id,
