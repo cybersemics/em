@@ -994,22 +994,23 @@ describe('grouping', () => {
     - cat`)
   })
 
+  // https://github.com/cybersemics/em/pull/4524#issuecomment-4899657845
   it('creating an empty note should undo without reverting the previous edit', () => {
-    store.dispatch([newThought({ value: 'note-new' }), setCursor(['note-new'])])
+    store.dispatch([newThought({ value: '' }), editThought([''], 'One'), setCursor(['One'])])
 
     const undoPatchesBefore = store.getState().undoPatches.length
 
     store.dispatch(toggleNote())
 
     expect(store.getState().undoPatches.length).toBe(undoPatchesBefore + 1)
-    expect(exportContext(store.getState(), ['note-new'], 'text/plain')).toEqual(`- note-new
+    expect(exportContext(store.getState(), ['One'], 'text/plain')).toEqual(`- One
   - =note
     - `)
 
     store.dispatch(undo())
 
     expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
-  - note-new`)
+  - One`)
   })
 
   it('deleting an empty note should undo without reverting the previous edit', () => {

@@ -7,6 +7,7 @@ import gesture from '../helpers/gesture'
 import getEditingText from '../helpers/getEditingText'
 import keyboard from '../helpers/keyboard'
 import newThought from '../helpers/newThought'
+import paste from '../helpers/paste'
 import press from '../helpers/press'
 import waitForSelector from '../helpers/waitForSelector'
 import { page } from '../session'
@@ -44,6 +45,24 @@ const waitForNoteText = (text: string | null) =>
     text,
   )
 
+/** Gets the current native selection within the rendered note. */
+const getNoteSelection = () =>
+  page.evaluate(() => {
+    const note = document.querySelector('[aria-label="note-editable"]')
+    const selection = window.getSelection()
+
+    return {
+      isCollapsed: selection?.isCollapsed ?? null,
+      selectedText: selection?.toString() ?? null,
+      selectionInsideNote:
+        !!note &&
+        !!selection?.anchorNode &&
+        !!selection.focusNode &&
+        note.contains(selection.anchorNode) &&
+        note.contains(selection.focusNode),
+    }
+  })
+
 // https://github.com/cybersemics/em/issues/4479
 it('undoes and redoes contiguous note typing with its caret', async () => {
   await newThought('a')
@@ -71,6 +90,70 @@ it('undoes and redoes contiguous note typing with its caret', async () => {
       offset: 0,
       text: '',
     },
+  })
+})
+
+// https://github.com/cybersemics/em/pull/4524#issuecomment-4899593086
+// https://github.com/cybersemics/em/pull/4524#issuecomment-4899733982
+it('restores the note caret after undo so Backspace edits the note without merging thoughts', async () => {
+  await paste(`
+    - One
+    - Two
+      - =note
+        - The world of birds
+  `)
+
+  const note = await waitForSelector('[aria-label="note-editable"]')
+  if (!note) throw new Error('Note editable not found')
+  await note.click()
+  await press('Home')
+  await press('ArrowRight')
+  await press('ArrowRight')
+  await press('ArrowRight')
+  await press('ArrowRight')
+  await press('ArrowRight', { shift: true })
+  await press('ArrowRight', { shift: true })
+  await press('ArrowRight', { shift: true })
+  await press('ArrowRight', { shift: true })
+  await press('ArrowRight', { shift: true })
+  await keyboard.type('cage')
+  await waitForNoteText('The cage of birds')
+
+  await press('z', { meta: true })
+  await waitForNoteText('The world of birds')
+  await press('Backspace')
+  await waitForNoteText('The word of birds')
+
+  const exported = await exportThoughts()
+  expect(exported).toBe(`
+- One
+- Two
+  - =note
+    - The word of birds`)
+})
+
+// https://github.com/cybersemics/em/pull/4524#issuecomment-4936720071
+it('keeps a double-clicked word selected within a note', async () => {
+  await paste(`
+    - One
+      - =note
+        - Hello world
+  `)
+
+  const note = await waitForSelector('[aria-label="note-editable"]')
+  if (!note) throw new Error('Note editable not found')
+  const boundingBox = await note.boundingBox()
+  if (!boundingBox) throw new Error('Note bounding box not found')
+
+  await page.mouse.click(boundingBox.x + 1, boundingBox.y + boundingBox.height / 2, { count: 2 })
+  await page.evaluate(
+    () => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))),
+  )
+
+  expect(await getNoteSelection()).toEqual({
+    isCollapsed: false,
+    selectedText: 'Hello',
+    selectionInsideNote: true,
   })
 })
 
