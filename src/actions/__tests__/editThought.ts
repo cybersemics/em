@@ -386,7 +386,7 @@ describe('sort', () => {
               - Alphabetical
             - A
             - B
-            - C
+            - D
         `,
       }),
       setCursor(['X']),
@@ -400,19 +400,19 @@ describe('sort', () => {
       - Alphabetical
     - A
     - B
-    - C
+    - D
     - 🙂`)
 
-    const stateEmojiWithText = editThought(['X', '🙂'], '🙂a')(stateEmoji)
+    const stateEmojiWithText = editThought(['X', '🙂'], '🙂C')(stateEmoji)
 
     expect(exportContext(stateEmojiWithText, [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - X
     - =sort
       - Alphabetical
-    - 🙂a
+    - 🙂C
     - A
     - B
-    - C`)
+    - D`)
   })
 
   it('keep a thought with an empty HTML tag at its insertion point until text is added', () => {
@@ -424,7 +424,7 @@ describe('sort', () => {
               - Alphabetical
             - A
             - B
-            - C
+            - D
         `,
       }),
       setCursor(['X']),
@@ -438,19 +438,19 @@ describe('sort', () => {
       - Alphabetical
     - A
     - B
-    - C
+    - D
     - ****`)
 
-    const stateAfter = editThought(['X', '<b></b>'], '<b></b>a')(stateBefore)
+    const stateAfter = editThought(['X', '<b></b>'], '<b></b>C')(stateBefore)
 
     expect(exportContext(stateAfter, [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - X
-    - ****a
+    - ****C
     - =sort
       - Alphabetical
     - A
     - B
-    - C`)
+    - D`)
   })
 
   it('rank should not change when editing a thought to empty', () => {
