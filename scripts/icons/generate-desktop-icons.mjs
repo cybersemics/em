@@ -17,7 +17,7 @@ import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import sharp from 'sharp'
 
-const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
 const sourcePath = resolve(rootDir, 'assets', 'icon-only.png')
 const icnsPath = resolve(rootDir, 'desktop', 'icons', 'icon.icns')
 

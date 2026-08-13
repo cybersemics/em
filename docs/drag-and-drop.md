@@ -185,6 +185,7 @@ The previous `QuickDropIcon` / `DeleteDrop` / `CopyOneDrop` / `ExportDrop` icon 
 - [`DragAndDropContext`](../src/components/DragAndDropContext.tsx) — `DndProvider` wrapping the app; selects backend by `isTouch`.
 - [`DragOnly`](../src/components/DragOnly.tsx) — a fragment that only renders its children when `state.longPress === DragInProgress` (or a test flag is set). Used to skip mounting drop targets and overlays when not dragging.
 - [`DropHover`](../src/components/DropHover.tsx) — the blue-bar visual indicator. Subscribes to `state.hoveringPath` and `state.hoverZone` and decides whether *this* particular drop target should render the bar. For sorted contexts, additionally compares the dragging value's `compareReasonable` order against neighbors to choose which gap to highlight.
+- [`usePinDropHover`](../src/hooks/usePinDropHover.ts) — test-only latch used by `DropHover`, `DropEnd`, `DropChild`, and `DropUncle`. When `testFlags.pinDropHovers` is set, a drop hover that has been shown during the current drag stays visible until the drag ends, so e2e snapshot tests can compare multiple drop hovers in a single screenshot (see [Testing](testing.md#drag-and-drop-visualization)).
 
 ## Multicursor drag
 
