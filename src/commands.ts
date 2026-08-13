@@ -400,10 +400,6 @@ export const resetLastCommand = () => {
   lastCommand = null
 }
 
-/** Resolves the repeat command to the last command that was executed and the keyboardIndex it was triggered with. Returns null if there is nothing to repeat. Any other command resolves to itself with no keyboardIndex, leaving it to be derived from the event. */
-const resolveRepeat = (command: Command): { command: Command; keyboardIndex?: number } | null =>
-  command.id === 'repeat' ? lastCommand : { command }
-
 /** Returns the index of the command's keyboard shortcut that was pressed, so that it can be read in exec (e.g. to select a color based on the pressed shortcut). Returns undefined if the command was not activated by one of its own keyboard shortcuts. */
 const keyboardIndexOf = (
   command: Command,
@@ -445,8 +441,8 @@ export const executeCommand = (
   type = type ?? 'keyboard'
   event = event ?? eventNoop
 
-  // resolve repeat to the last command that was executed, and exit early if there is none
-  const resolved = resolveRepeat(commandArg)
+  // resolve repeat to the last command that was executed and the keyboardIndex it was triggered with, and exit early if there is none
+  const resolved = commandArg.id === 'repeat' ? lastCommand : { command: commandArg }
   if (!resolved) return
   const command = resolved.command
 
@@ -489,8 +485,8 @@ export const executeCommandWithMulticursor = (
   type = type ?? 'keyboard'
   event = event ?? eventNoop
 
-  // resolve repeat to the last command that was executed, and exit early if there is none
-  const resolved = resolveRepeat(commandArg)
+  // resolve repeat to the last command that was executed and the keyboardIndex it was triggered with, and exit early if there is none
+  const resolved = commandArg.id === 'repeat' ? lastCommand : { command: commandArg }
   if (!resolved) return
   const command = resolved.command
   // Every executeCommand call below is given the already resolved command, so it cannot resolve repeat itself. Forward the recorded keyboardIndex explicitly, otherwise it would be derived from the repeat keypress and lost.
