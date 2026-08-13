@@ -36,7 +36,15 @@ runs:
 
     - name: Install npm dependencies
       shell: bash
-      run: yarn
+      run: |
+        for i in 1 2 3; do
+          yarn && exit 0
+          echo "yarn install failed (attempt ${i}/3), retrying..."
+          sleep 5
+        done
+
+        echo "yarn install failed after 3 attempts"
+        exit 1
 
     - name: Generate styled-system (PandaCSS codegen)
       shell: bash
