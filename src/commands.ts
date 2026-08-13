@@ -12,6 +12,7 @@ import Gesture from './@types/Gesture'
 import Index from './@types/IndexType'
 import Key from './@types/Key'
 import MulticursorFilter from './@types/MulticursorFilter'
+import Patch from './@types/Patch'
 import Path from './@types/Path'
 import State from './@types/State'
 import { addMulticursorActionCreator as addMulticursor } from './actions/addMulticursor'
@@ -43,6 +44,7 @@ import thoughtToPath from './selectors/thoughtToPath'
 import store from './stores/app'
 import editingValueStore from './stores/editingValue'
 import gestureStore from './stores/gesture'
+import { isNavigation } from './util/actionMetadata.registry'
 import debugLog from './util/debugLog'
 import equalPath from './util/equalPath'
 import haptics from './util/haptics'
@@ -384,9 +386,29 @@ const nearestNonAttributeAncestor = (state: State, path: Path): Path | null => {
   return truncated.length > 0 ? truncated : null
 }
 
+/**
+ * The last command that was executed, tracked so that it can be executed again by the repeat command. Not reactive — nothing subscribes to it — so it is a plain module variable rather than a ministore.
+ *
+ * Repeat has no behavior of its own. Both executeCommand and executeCommandWithMulticursor swap it out for lastCommand before executing, rather than executing from within its exec, so that the repeated command runs through the same path as any other command and gets its own canExecute, multicursor, and keyboardIndex handling. Since repeat is repeatable: false, it is never recorded here, so the swap never resolves to repeat itself and cannot recurse.
+ */
+let lastCommand: Command | null = null
+
+/** Resets the last command. For testing only, since lastCommand persists across tests within a file. */
+export const resetLastCommand = () => {
+  lastCommand = null
+}
+
+/** Returns the last undo patch that is not a navigation action, i.e. the patch that Undo would revert. Mirrors getLatestActionType, but returns the patch itself so that patches can be compared by identity. */
+const lastUndoablePatch = (state: State): Patch | undefined => {
+  for (let i = state.undoPatches.length - 1; i >= 0; i--) {
+    if (!isNavigation(state.undoPatches[i][0]?.actions[0])) return state.undoPatches[i]
+  }
+  return undefined
+}
+
 /** Execute a single command. Defaults to global store and keyboard shortcuts. Use `executeCommandWithMulticursor` to execute a command with multicursor mode. */
 export const executeCommand = (
-  command: Command,
+  commandArg: Command,
   {
     store: storeArg,
     type,
@@ -401,6 +423,10 @@ export const executeCommand = (
   const commandStore = storeArg ?? store
   type = type ?? 'keyboard'
   event = event ?? eventNoop
+
+  // resolve repeat to the last command that was executed, and exit early if there is none
+  const command = commandArg.id !== 'repeat' ? commandArg : lastCommand
+  if (!command) return
 
   const canExecute = !command.canExecute || command.canExecute(commandStore.getState())
   // Exit early if the command cannot execute
@@ -419,13 +445,21 @@ export const executeCommand = (
 
   debugLog.log('command', { id: command.id, commandType: type })
 
+  const undoablePatchPrev = lastUndoablePatch(commandStore.getState())
+
   // execute single command
   command.exec(commandStore.dispatch, commandStore.getState, event, { type, keyboardIndex })
+
+  // Record the last command so that it can be executed again by the repeat command, but only if it made an undoable, non-navigational change to the thoughtspace. Otherwise repeat would repeat cursor movements and commands that dispatch no undoable actions (e.g. Cursor Down, Export) rather than the last edit, no matter how many of them occurred since.
+  // Patches are compared by identity rather than by action type, since the same command may be executed repeatedly (e.g. Bold twice in a row). A command that only dispatches asynchronously (e.g. Generate Thought) is not recorded, as its patch does not exist yet.
+  if (command.repeatable !== false && lastUndoablePatch(commandStore.getState()) !== undoablePatchPrev) {
+    lastCommand = command
+  }
 }
 
 /** Execute command. Defaults to global store and keyboard shortcuts. */
 export const executeCommandWithMulticursor = (
-  command: Command,
+  commandArg: Command,
   {
     store: storeArg,
     type,
@@ -440,6 +474,10 @@ export const executeCommandWithMulticursor = (
   const commandStore = storeArg ?? store
   type = type ?? 'keyboard'
   event = event ?? eventNoop
+
+  // resolve repeat to the last command that was executed, and exit early if there is none
+  const command = commandArg.id !== 'repeat' ? commandArg : lastCommand
+  if (!command) return
 
   const state = commandStore.getState()
 

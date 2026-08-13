@@ -127,6 +127,9 @@ interface Command {
   /** When true, prevent the default browser behavior even when canExecute returns false. */
   preventDefault?: boolean
 
+  /** When false, the command is never recorded as the last command and thus is never executed again by the repeat command. Set on commands that move through the undo history rather than making a new undoable change (undo and redo), and on repeat itself, which would otherwise recurse. Defaults to true. */
+  repeatable?: boolean
+
   /** An icon that represents the command in the Toolbar. */
   svg?: (icon: IconType) => React.ReactNode
 

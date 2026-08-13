@@ -153,6 +153,17 @@ Three fields shape what happens when the command might not be runnable:
 - **`permitDefault`** — do *not* call `e.preventDefault()` even when the command runs. Useful for shortcuts that piggyback on existing browser behavior (e.g. system copy/paste).
 - **`allowExecuteFromModal`** — allow the command to run while a modal is open. Defaults to false; navigation commands set this to true.
 
+### Repeat
+
+`repeat` (Command/Ctrl + .) has no behavior of its own — its `exec` is a noop. `executeCommand` records the last command it executed in a module-level `lastCommand` variable, and both `executeCommand` and `executeCommandWithMulticursor` resolve `repeat` to it before executing, so the repeated command runs through the normal path with its own `canExecute`, multicursor, and `keyboardIndex` handling. Resolving before execution (rather than executing from within `repeat.exec`) also keeps `repeat.ts` free of an import of `commands.ts`, which would be circular.
+
+Only commands that make an *undoable, non-navigational* change are recorded, so that Repeat repeats the last edit no matter how many navigation or non-undoable commands intervened. `executeCommand` detects this by comparing the last non-navigation undo patch (the patch that Undo would revert, as classified by [`actionMetadata.registry`](../src/util/actionMetadata.registry.ts)) before and after `exec`. Consequently:
+
+- Navigation commands (Cursor Down, Jump Back) are skipped — their actions are registered `isNavigation`.
+- Commands that dispatch no undoable action (Export, Settings, Command Universe) are skipped, since they add no patch.
+- Commands that set `repeatable: false` are never recorded. `undo` and `redo` move through the undo history rather than making a new undoable change, and recording `repeat` would recurse.
+- A command that only dispatches asynchronously (Generate Thought) is not recorded, since its patch does not exist yet when `exec` returns.
+
 ### Adding a new command
 
 1. Create `src/commands/yourCommand.ts`. Default-export a `Command` object with at minimum `id`, `label`, `exec`, and `multicursor`.
@@ -665,6 +676,14 @@ Undo the last action.
 Redo the last undone action.
 
 <kbd>Command + Shift + z</kbd>
+
+### Repeat
+
+Repeats the last command. Repeats the last command.
+
+Navigation and non-undoable commands are ignored, so Repeat always repeats the last command that changed the thoughtspace.
+
+<kbd>Command + .</kbd>
 
 ### Toggle Undo Slider
 
