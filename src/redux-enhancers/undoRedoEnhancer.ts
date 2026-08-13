@@ -41,11 +41,27 @@ function isEditThoughtAction(action: UnknownAction): action is UnknownAction & e
   return action.type === 'editThought'
 }
 
+/** Returns true when a restored note offset is being cleared after the caret has been placed. */
+function isClearNoteOffsetAction(action: UnknownAction): boolean {
+  return action.type === 'setNoteFocus' && action.value === true && action.offset === null
+}
+
 /** Gets plain text from html. */
 function getTextContent(value: string): string {
   const element = document.createElement('div')
   element.innerHTML = value
   return element.textContent || ''
+}
+
+/** Infers the note caret offset before an edit from its post-edit offset and plain-text length delta. */
+function getNoteOffsetBeforeEdit(action: UnknownAction): number | null {
+  if (!isEditThoughtAction(action) || action.noteOffset == null) return null
+
+  const oldTextLength = getTextContent(action.oldValue).length
+  const newTextLength = getTextContent(action.newValue).length
+  const noteOffsetBeforeEdit = action.noteOffset + oldTextLength - newTextLength
+
+  return Math.max(0, Math.min(oldTextLength, noteOffsetBeforeEdit))
 }
 
 /** Compare the text contents of the old and new values to determine the direction of the edit.
@@ -311,6 +327,9 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       if (
         // bail if state has not changed
         state === newState ||
+        // Clearing a one-shot note offset after restoring the caret is ephemeral. Recording it as a navigation
+        // action would clear the redo stack immediately after undo.
+        isClearNoteOffsetAction(action) ||
         // bail if the action is not undoable.
         // Exception: multicursor actions dispatched while a multicursor command is executing belong to the command's
         // single undo entry, e.g. the addMulticursor calls that restore the multiselect at the end of
@@ -389,7 +408,11 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       lastEditThoughtDirection = editThoughtDirection
 
       // add a new undo patch
-      const undoPatch = diffState(newState as Index, state)
+      // Note focus intentionally does not dispatch on every caret movement. For the first note edit after focus,
+      // infer the pre-edit caret so the inverse patch can restore it instead of leaving the caret at the end.
+      const noteOffsetBeforeEdit = getNoteOffsetBeforeEdit(action)
+      const stateBeforeAction = noteOffsetBeforeEdit == null ? state : { ...state, noteOffset: noteOffsetBeforeEdit }
+      const undoPatch = diffState(newState as Index, stateBeforeAction)
       return undoPatch.length
         ? {
             ...newState,

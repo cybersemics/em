@@ -131,7 +131,7 @@ const Note = React.memo(
             // Strip <br> from beginning and end of text
             e.target.value.replace(/^<br>|<br>$/gi, '')
 
-        const noteOffset = selection.offsetThought() ?? selection.offset()
+        const noteOffset = noteRef.current ? selection.offsetFromNode(noteRef.current) : null
 
         // update the referenced thought directly if it exists
         dispatch((dispatch, getState) => {

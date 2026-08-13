@@ -1054,7 +1054,7 @@ describe('grouping', () => {
       setCursor(['note-offset']),
     ])
 
-    store.dispatch(setNoteFocus({ value: true, offset: original.length }))
+    store.dispatch(setNoteFocus({ value: true, offset: null }))
 
     const path = contextToPath(store.getState(), ['note-offset', '=note', original])!
     store.dispatch(
@@ -1075,6 +1075,8 @@ describe('grouping', () => {
     expect(exportContext(store.getState(), ['note-offset'], 'text/plain')).toEqual(`- note-offset
   - =note
     - ${original}`)
+
+    store.dispatch(setNoteFocus({ value: true, offset: null }))
 
     store.dispatch(redo())
 

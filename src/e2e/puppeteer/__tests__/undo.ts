@@ -94,7 +94,7 @@ it('undoes and redoes contiguous note typing with its caret', async () => {
 })
 
 // https://github.com/cybersemics/em/pull/4524#issuecomment-4899593086
-it.skip('restores the note caret after undo so Backspace edits the note without merging thoughts', async () => {
+it('restores the note caret after undo so Backspace edits the note without merging thoughts', async () => {
   await paste(`
     - One
     - Two
@@ -125,7 +125,7 @@ it.skip('restores the note caret after undo so Backspace edits the note without 
   await press('Backspace')
   const afterBackspace = await getNoteState()
 
-  const exported = await exportThoughts()
+  const exported = (await exportThoughts()).trimEnd()
   expect({ afterBackspace, exported, undone }).toEqual({
     afterBackspace: {
       focusInsideNote: true,
