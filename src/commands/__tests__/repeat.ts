@@ -1,9 +1,8 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
-import { executeCommandWithMulticursor } from '../../commands'
+import { executeCommandWithMulticursor, resetLastCommand } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
-import lastCommandStore from '../../stores/lastCommand'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import headValue from '../../util/headValue'
@@ -22,8 +21,8 @@ vi.mock('../../util/throttleByAnimationFrame', () => ({
 
 beforeEach(() => {
   initStore()
-  // lastCommandStore is a module-level store that is not reset by initStore
-  lastCommandStore.update({ command: null })
+  // lastCommand is module-level state in commands.ts that is not reset by initStore
+  resetLastCommand()
 })
 
 it('execute the last command again', () => {

@@ -44,7 +44,6 @@ import thoughtToPath from './selectors/thoughtToPath'
 import store from './stores/app'
 import editingValueStore from './stores/editingValue'
 import gestureStore from './stores/gesture'
-import lastCommandStore from './stores/lastCommand'
 import { isNavigation } from './util/actionMetadata.registry'
 import debugLog from './util/debugLog'
 import equalPath from './util/equalPath'
@@ -388,15 +387,16 @@ const nearestNonAttributeAncestor = (state: State, path: Path): Path | null => {
 }
 
 /**
- * Resolves the repeat command to the last command that was executed. Returns any other command unchanged, or null if there is no last command to repeat.
+ * The last command that was executed, tracked so that it can be executed again by the repeat command. Not reactive — nothing subscribes to it — so it is a plain module variable rather than a ministore.
  *
- * Repeat has no behavior of its own. It is resolved before execution rather than in its exec so that the repeated command is executed through the same path as any other command, and thus gets its own canExecute, multicursor, and keyboardIndex handling. Since repeat is never recorded as the last command, the resolved command is never repeat and there is no infinite recursion.
+ * Repeat has no behavior of its own. Both executeCommand and executeCommandWithMulticursor swap it out for lastCommand before executing, rather than executing from within its exec, so that the repeated command runs through the same path as any other command and gets its own canExecute, multicursor, and keyboardIndex handling. Since repeat is repeatable: false, it is never recorded here, so the swap never resolves to repeat itself and cannot recurse.
  */
-const resolveRepeat = (command: Command): Command | null =>
-  command.id !== 'repeat' ? command : lastCommandStore.getState().command
+let lastCommand: Command | null = null
 
-/** Commands that are never recorded as the last command for repeat. Repeat itself would recurse, and undo and redo move through the undo history rather than making a new undoable change, so repeating them is the job of their own shortcuts. */
-const commandsNotRepeated = new Set<CommandId>(['redo', 'repeat', 'undo'])
+/** Resets the last command. For testing only, since lastCommand persists across tests within a file. */
+export const resetLastCommand = () => {
+  lastCommand = null
+}
 
 /** Returns the last undo patch that is not a navigation action, i.e. the patch that Undo would revert. Mirrors getLatestActionType, but returns the patch itself so that patches can be compared by identity. */
 const lastUndoablePatch = (state: State): Patch | undefined => {
@@ -424,8 +424,8 @@ export const executeCommand = (
   type = type ?? 'keyboard'
   event = event ?? eventNoop
 
-  const command = resolveRepeat(commandArg)
-  // Exit early if there is no last command to repeat
+  // resolve repeat to the last command that was executed, and exit early if there is none
+  const command = commandArg.id !== 'repeat' ? commandArg : lastCommand
   if (!command) return
 
   const canExecute = !command.canExecute || command.canExecute(commandStore.getState())
@@ -452,8 +452,8 @@ export const executeCommand = (
 
   // Record the last command so that it can be executed again by the repeat command, but only if it made an undoable, non-navigational change to the thoughtspace. Otherwise repeat would repeat cursor movements and commands that dispatch no undoable actions (e.g. Cursor Down, Export) rather than the last edit, no matter how many of them occurred since.
   // Patches are compared by identity rather than by action type, since the same command may be executed repeatedly (e.g. Bold twice in a row). A command that only dispatches asynchronously (e.g. Generate Thought) is not recorded, as its patch does not exist yet.
-  if (!commandsNotRepeated.has(command.id) && lastUndoablePatch(commandStore.getState()) !== undoablePatchPrev) {
-    lastCommandStore.update({ command })
+  if (command.repeatable !== false && lastUndoablePatch(commandStore.getState()) !== undoablePatchPrev) {
+    lastCommand = command
   }
 }
 
@@ -475,8 +475,8 @@ export const executeCommandWithMulticursor = (
   type = type ?? 'keyboard'
   event = event ?? eventNoop
 
-  const command = resolveRepeat(commandArg)
-  // Exit early if there is no last command to repeat
+  // resolve repeat to the last command that was executed, and exit early if there is none
+  const command = commandArg.id !== 'repeat' ? commandArg : lastCommand
   if (!command) return
 
   const state = commandStore.getState()
