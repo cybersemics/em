@@ -1,8 +1,8 @@
 import { clearActionCreator as clear } from '../actions/clear'
 import { thoughtspaceRuntime } from '../data-providers/thoughtspace'
 import store from '../stores/app'
-import waitForThoughtspaceIdle from './waitForThoughtspaceIdle'
 import { resetStores } from '../stores/ministore'
+import waitForThoughtspaceIdle from './waitForThoughtspaceIdle'
 
 interface Params {
   /**
