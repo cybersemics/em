@@ -48,6 +48,12 @@ interface GestureDiagramProps {
    * the familiar fade-in along the gesture. Supplying both ends turns that into an arbitrary
    * two-color ramp. Has no effect when `useGradient` is false. */
   gradient?: GestureGradient
+  /** Draw the gesture as one continuous <path> instead of one <path> per segment, so that
+   * overlapping round caps at the joints cannot show up as beads. Defaults to true for solid
+   * strokes (there is no per-segment paint to preserve) and false for gradient strokes (so the
+   * ramp follows the gesture's turns). Set it explicitly to trade a gradient's per-segment ramp
+   * for a seamless stroke with a single chord-aligned ramp. */
+  continuous?: boolean
   /** Stroke color for highlighted segments when useGradient=false. Default: token('colors.vividHighlight'). */
   highlightColor?: string
 }
@@ -170,18 +176,115 @@ const ArcGradient = ({ index, extendedPath, size }: { index: number; extendedPat
   )
 }
 
+// The 4 custom Bezier segments for the rdld (Command Universe) question-mark gesture.
+const RDLD_SEGMENTS = [
+  'M 29.7,13.5 Q 46.8,-4.5 63,13.5',
+  'M 63,13.5 Q 72,27 54,40.5',
+  'M 54,40.5 Q 45,49.5 45,58.5',
+  'M 45,58.5 L 45,72',
+]
+
+/** Joins SVG path segments into one path by stripping redundant leading move commands from continuations. */
+const joinPathSegments = (segments: string[]) =>
+  segments.reduce((acc, segment, i) => (i === 0 ? segment : `${acc} ${segment.replace(/^M [\d.,]+ /, '')}`), '')
+
+/** Builds a single SVG path `d` string chaining every arc of a `rounded` gesture, so the arcs form
+ * one continuous stroke instead of a series of separate ones. */
+const arcChainPath = (path: Gesture, size: number) => {
+  const dirs = Array.from(path) as Direction[]
+  return dirs
+    .map((_, i) => {
+      const { startX, startY, radius, sweepFlag, endX, endY } = generateArcCoordinates(i, dirs, size)
+      // Only the first arc needs a move command; the rest continue from where the previous ended.
+      return `${i === 0 ? `M ${startX} ${startY} ` : ''}A ${radius} ${radius} 0 0 ${sweepFlag} ${endX} ${endY}`
+    })
+    .join(' ')
+}
+
+/** Returns the first and last points of the gesture. Used to align a continuous gradient with the
+ * gesture's overall direction of travel, since a linear gradient is a projection onto a single
+ * line and has no way to follow the path's turns. */
+const gestureEndpoints = (
+  path: Gesture,
+  positions: { x: number; y: number }[],
+  rounded: boolean | undefined,
+  size: number,
+) => {
+  // The rdld glyph is hardcoded, so read its endpoints off the first and last segment.
+  if (path === 'rdld') return { start: { x: 29.7, y: 13.5 }, end: { x: 45, y: 72 } }
+  if (rounded) {
+    const dirs = Array.from(path) as Direction[]
+    const first = generateArcCoordinates(0, dirs, size)
+    const last = generateArcCoordinates(dirs.length - 1, dirs, size)
+    return { start: { x: first.startX, y: first.startY }, end: { x: last.endX, y: last.endY } }
+  }
+  return { start: positions[0], end: positions[positions.length - 1] }
+}
+
+/** Generates the single linear gradient used by a continuous stroke, running from the start of the
+ * gesture to its end. */
+const ContinuousGradient = ({
+  extendedPath,
+  path,
+  positions,
+  rounded,
+  size,
+}: {
+  extendedPath: Gesture
+  path: Gesture
+  positions: { x: number; y: number }[]
+  rounded?: boolean
+  size: number
+}) => {
+  const { start, end } = gestureEndpoints(path, positions, rounded, size)
+  return (
+    <linearGradient
+      id={`${extendedPath}-gradient-continuous`}
+      gradientUnits='userSpaceOnUse'
+      x1={start.x}
+      y1={start.y}
+      x2={end.x}
+      y2={end.y}
+    >
+      <stop offset='0%' className={`${extendedPath}-gradient-continuous-start`} />
+      <stop offset='100%' className={`${extendedPath}-gradient-continuous-stop`} />
+    </linearGradient>
+  )
+}
+
 /** Generate CSS rules defining the colors for the gradients that are applied to gesture diagram path segments. */
 const GradientStyleBlock = ({
   color,
+  continuous,
   gradient,
   highlight,
   path,
 }: {
   color?: string
+  /** When true, emit a single ramp spanning the whole gesture instead of one ramp per segment. */
+  continuous?: boolean
   gradient?: GestureGradient
   highlight?: number
   path: Gesture
 }) => {
+  // A continuous stroke is one <path> with one paint, so it gets one ramp running the length of
+  // the gesture rather than the per-segment ramps below. There is no per-segment highlight to
+  // express, so the whole gesture is either highlighted or it is not.
+  if (continuous) {
+    const stopColor =
+      highlight != null && highlight >= path.length ? token('colors.vividHighlight') : color || token('colors.fg')
+    const from = gradient?.from ?? token('colors.bg')
+    const to = gradient?.to ?? stopColor
+    return (
+      <style>
+        {`
+            .${path}-gradient-continuous-start { stop-color: ${from} }
+            .${path}-gradient-continuous-stop { stop-color: ${to} }
+          `}
+      </style>
+    )
+  }
+
   const index = path === 'rdl' ? 3 : path === 'ldr' ? 2 : undefined
   // The initial path segment should start at 25% opacity. Subsequent path segmenets should start at 50% opacity.
   // The final path segment should start at 75% opacity.
@@ -214,21 +317,11 @@ const GradientStyleBlock = ({
   )
 }
 
-// The 4 custom Bezier segments for the rdld (Command Universe) question-mark gesture.
-const RDLD_SEGMENTS = [
-  'M 29.7,13.5 Q 46.8,-4.5 63,13.5',
-  'M 63,13.5 Q 72,27 54,40.5',
-  'M 54,40.5 Q 45,49.5 45,58.5',
-  'M 45,58.5 L 45,72',
-]
-
-/** Joins SVG path segments into one path by stripping redundant leading move commands from continuations. */
-const joinPathSegments = (segments: string[]) =>
-  segments.reduce((acc, segment, i) => (i === 0 ? segment : `${acc} ${segment.replace(/^M [\d.,]+ /, '')}`), '')
-
 type GesturePathProps = {
   arrowhead: 'filled' | 'outlined' | 'none'
   color?: string
+  /** Draw the gesture as one continuous <path> rather than one <path> per segment. */
+  continuous: boolean
   dropShadow?: string
   extendedPath: Gesture
   highlight?: number
@@ -248,6 +341,7 @@ type GesturePathProps = {
 const GesturePath = ({
   arrowhead,
   color,
+  continuous,
   dropShadow,
   extendedPath,
   highlight,
@@ -281,56 +375,58 @@ const GesturePath = ({
   const activeColor = highlightColor ?? token('colors.vividHighlight')
   const inactiveColor = color ?? token('colors.fg')
 
-  // Combined-path rendering for straight, solid-color paths. Using a single <path>
-  // with strokeLinejoin='round' avoids overlapping round caps at joints, which
-  // become visible as blobs/beads when strokeWidth is large relative to segment length.
-  if (!useGradient && !rounded && path !== 'rdld') {
+  // Continuous rendering. Drawing the gesture as a single <path> with strokeLinejoin='round'
+  // avoids the overlapping round caps at the joints, which show up as blobs/beads when the stroke
+  // is thick relative to the segment length. The rdld glyph has no arrowhead of its own.
+  if (continuous) {
     /** Builds an SVG path `d` attribute string from a list of points. */
     const makePath = (points: typeof positions) =>
       points.map((pos, i) => `${i === 0 ? 'M' : 'L'} ${pos.x} ${pos.y}`).join(' ')
 
-    if (allHighlighted || noneHighlighted) {
+    /** Builds the `d` attribute for a whole gesture, in whichever shape family it belongs to. */
+    const wholePath = () =>
+      path === 'rdld' ? joinPathSegments(RDLD_SEGMENTS) : rounded ? arcChainPath(path, size) : makePath(positions)
+
+    const continuousMarkerEnd = path === 'rdld' ? undefined : markerEnd
+
+    // One <path> carries one stroke paint, so a continuous gradient cannot use the per-segment
+    // ramps. It uses the single chord-aligned ramp declared in <defs> instead, which already
+    // expresses progression along the gesture — so it is not split at the highlight index the way
+    // a solid stroke is.
+    if (useGradient) {
       return (
         <path
-          d={makePath(positions)}
-          stroke={allHighlighted ? activeColor : inactiveColor}
-          markerEnd={markerEnd}
+          d={wholePath()}
+          stroke={`url(#${extendedPath}-gradient-continuous)`}
+          markerEnd={continuousMarkerEnd}
           {...commonPathProps}
         />
       )
     }
 
-    return (
-      <>
-        <path d={makePath(positions.slice(0, highlight! + 1))} stroke={activeColor} {...commonPathProps} />
-        <path
-          d={makePath(positions.slice(highlight))}
-          stroke={inactiveColor}
-          markerEnd={markerEnd}
-          {...commonPathProps}
-        />
-      </>
-    )
-  }
-
-  // Combined-path rendering for the rdld (Command Universe) solid-color special case.
-  if (!useGradient && path === 'rdld') {
     if (allHighlighted || noneHighlighted) {
       return (
         <path
-          d={joinPathSegments(RDLD_SEGMENTS)}
+          d={wholePath()}
           stroke={allHighlighted ? activeColor : inactiveColor}
+          markerEnd={continuousMarkerEnd}
           {...commonPathProps}
         />
       )
     }
 
+    // Partially highlighted: a highlighted prefix and an unhighlighted remainder, each drawn as its
+    // own continuous path. Splitting on `positions` needs the shared vertex in both halves, hence
+    // the +1; splitting on whole rdld segments does not.
+    const [prefix, remainder] =
+      path === 'rdld'
+        ? [joinPathSegments(RDLD_SEGMENTS.slice(0, highlight)), joinPathSegments(RDLD_SEGMENTS.slice(highlight))]
+        : [makePath(positions.slice(0, highlight! + 1)), makePath(positions.slice(highlight))]
+
     return (
       <>
-        {highlight! > 0 && (
-          <path d={joinPathSegments(RDLD_SEGMENTS.slice(0, highlight))} stroke={activeColor} {...commonPathProps} />
-        )}
-        <path d={joinPathSegments(RDLD_SEGMENTS.slice(highlight))} stroke={inactiveColor} {...commonPathProps} />
+        {prefix && <path d={prefix} stroke={activeColor} {...commonPathProps} />}
+        <path d={remainder} stroke={inactiveColor} markerEnd={continuousMarkerEnd} {...commonPathProps} />
       </>
     )
   }
@@ -392,9 +488,14 @@ const GestureDiagram = ({
   glow = true,
   useGradient = true,
   gradient,
+  continuous,
   highlightColor,
 }: GestureDiagramProps) => {
   const [id] = useState(nanoid())
+
+  // Solid strokes have no per-segment paint to preserve, so they are drawn as one path by default.
+  // Gradient strokes default to per-segment so the ramp can follow the gesture's turns.
+  const isContinuous = continuous ?? !useGradient
 
   // match signaturePad shadow in TraceGesture component
   // TODO: Why isn't this working?
@@ -595,7 +696,16 @@ const GestureDiagram = ({
           )}
           {useGradient && (
             <>
-              {extendedPath === 'rdld' ? (
+              {isContinuous ? (
+                // A single ramp spanning the gesture, aligned with its overall direction of travel.
+                <ContinuousGradient
+                  extendedPath={extendedPath}
+                  path={path}
+                  positions={positions}
+                  rounded={rounded}
+                  size={size}
+                />
+              ) : extendedPath === 'rdld' ? (
                 <MobileCommandUniverseGradients />
               ) : (
                 pathSegments.map((segment, i) => {
@@ -627,12 +737,19 @@ const GestureDiagram = ({
         </defs>
 
         {useGradient && (
-          <GradientStyleBlock color={color} gradient={gradient} highlight={highlight} path={extendedPath} />
+          <GradientStyleBlock
+            color={color}
+            continuous={isContinuous}
+            gradient={gradient}
+            highlight={highlight}
+            path={extendedPath}
+          />
         )}
 
         <GesturePath
           arrowhead={arrowhead}
           color={color}
+          continuous={isContinuous}
           dropShadow={dropShadow}
           extendedPath={extendedPath}
           highlight={highlight}
