@@ -500,7 +500,7 @@ beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 ```
 
-`initStore` is async: it drops and reinitializes the in-memory TreeCRDT thoughtspace, clears the shared Redux store, resets module-level ministores (vitest only isolates those per file), and enables fake timers. Pass it directly to `beforeEach(initStore)` so vitest awaits it; if you wrap the hook, you must `await initStore()` yourself. `createTestApp` additionally mounts the React tree, initializes persistence and event handlers, and enables the test drag-and-drop backend. `cleanupTestApp` clears storage, the TreeCRDT thoughtspace, the store, and event handlers, and flushes pending timers. Do not share fixture state between tests or rely on test execution order.
+`initStore` is async and enables fake timers. By default, it drops and reinitializes the in-memory TreeCRDT thoughtspace, clears the shared Redux store, and resets every [ministore](glossary.md#m) to its initial state. Ministores are module-level singletons that Vitest isolates per test file, not per test. `initStore({ persist: true })` skips the thoughtspace, Redux, and ministore resets. Pass it directly to `beforeEach(initStore)` so Vitest awaits it; wrappers must explicitly `await initStore()`. `createTestApp` resets ministores before `initialize({ storage: 'memory' })` runs, and additionally mounts the React tree, initializes persistence and event handlers, and enables the test drag-and-drop backend. `cleanupTestApp` clears storage, the TreeCRDT thoughtspace, the store, and event handlers, and flushes pending timers. Do not share fixture state between tests or rely on test execution order.
 
 ## Sanctioned Backdoors
 
