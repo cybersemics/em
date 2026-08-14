@@ -44,7 +44,10 @@ describe('DOM', () => {
   })
 
   // https://github.com/cybersemics/em/issues/4924
-  it('bumps the cursor thought down when the keyboard shortcut is pressed', async () => {
+  it.each<{ shiftKey: boolean; chord: string }>([
+    { shiftKey: false, chord: 'Command + Option + D' },
+    { shiftKey: true, chord: 'Command + Option + Shift + D' },
+  ])('bumps the cursor thought down when $chord is pressed', async ({ shiftKey }) => {
     await dispatch([
       importText({
         text: `
@@ -59,7 +62,7 @@ describe('DOM', () => {
 
     act(() => {
       window.dispatchEvent(
-        new KeyboardEvent('keydown', { key: 'd', metaKey: true, altKey: true, shiftKey: true, bubbles: true }),
+        new KeyboardEvent('keydown', { key: 'd', metaKey: true, altKey: true, shiftKey, bubbles: true }),
       )
     })
 
