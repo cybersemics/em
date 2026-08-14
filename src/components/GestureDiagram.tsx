@@ -256,6 +256,48 @@ const polylinePath = (points: Point[], cornerRadius = 0): string => {
   return commands.join(' ')
 }
 
+/** Returns the bounding box of a set of points, in the same shape SVG's getBBox() reports. */
+const boundsOf = (points: Point[]) => {
+  const xs = points.map(point => point.x)
+  const ys = points.map(point => point.y)
+  const x = Math.min(...xs)
+  const y = Math.min(...ys)
+  return { x, y, width: Math.max(...xs) - x, height: Math.max(...ys) - y }
+}
+
+/** Returns the viewBox that frames the given geometry bounds, padded for everything that is drawn
+ * beyond the path's centerline. The bounds describe the centerline only — that is what getBBox()
+ * reports, since it excludes stroke, markers and filters — so the padding has to cover the stroke
+ * width and the arrowhead's overhang itself. */
+const paddedViewBox = (
+  bounds: { x: number; y: number; width: number; height: number },
+  {
+    arrowhead,
+    arrowSize,
+    outlinedMarker,
+    strokeWidth,
+  }: {
+    arrowhead: 'filled' | 'outlined' | 'outlined-wide' | 'none'
+    arrowSize: number
+    outlinedMarker: boolean
+    strokeWidth: number
+  },
+) => {
+  // Without an arrowhead the path has no directional asymmetry, so a single uniform padding value
+  // on all four sides is enough to keep the stroke from being clipped at the SVG edge. Half the
+  // stroke diameter sits outside the path centerline on each side.
+  if (arrowhead === 'none') {
+    const pad = strokeWidth / 2
+    return `${bounds.x - pad} ${bounds.y - pad} ${bounds.width + pad * 2} ${bounds.height + pad * 2}`
+  }
+
+  // When an arrowhead is present the geometry is asymmetric — the marker protrudes past the path
+  // end — so padding differs per axis.
+  return `${bounds.x - arrowSize - strokeWidth * 4} ${bounds.y - arrowSize - strokeWidth * 2} ${
+    bounds.width + arrowSize * (outlinedMarker ? 2 : 5) + strokeWidth * 8
+  } ${bounds.height + arrowSize * 2 + strokeWidth * 4}`
+}
+
 /** Returns the three points of a chevron arrowhead — two legs meeting at an apex that sits on the
  * gesture's final point, `tip`, splaying backward away from the direction of travel. `previous` is
  * the vertex before the tip, and supplies that direction. `apexAngle` is the interior angle between
@@ -747,31 +789,25 @@ const GestureDiagram = ({
   // 'outlined-wide' shares the outlined marker's geometry wherever it falls back to one.
   const outlinedMarker = arrowhead === 'outlined' || arrowhead === 'outlined-wide'
 
+  const viewBoxPadding = { arrowhead, arrowSize: arrowSize!, outlinedMarker, strokeWidth }
+
+  // Straight gestures are made of line segments whose endpoints we already know, so their bounds
+  // can be computed during render and React can own the viewBox attribute. Setting it imperatively
+  // after mount raced with iOS Safari's repainting: the SVG painted once with user space equal to
+  // pixel space, and the post-mount attribute change did not reliably trigger a repaint under the
+  // new coordinate system, leaving the gesture visibly offset inside its box. `rounded` and rdld
+  // gestures are curves whose extent we do not track, so they still measure with getBBox() below.
+  const measuredDuringRender = path !== 'rdld' && !rounded
+  const computedViewBox =
+    viewBox ??
+    (measuredDuringRender
+      ? paddedViewBox(boundsOf(chevron ? [...positions, ...chevron] : positions), viewBoxPadding)
+      : undefined)
+
   /** Crop the viewbox to the diagram and adjust the svg element's height when first rendered. */
   const onRef = (el: SVGGraphicsElement | null) => {
-    if (!el) return
-
-    if (!viewBox) {
-      const bbox = el.getBBox()
-      if (arrowhead === 'none') {
-        // Without an arrowhead the path has no directional asymmetry, so we use
-        // a single uniform padding value on all four sides.
-
-        // Only pad enough to keep the stroke from being clipped at the SVG edge.
-        // Half the stroke diameter sits outside the path centerline on each side.
-        const pad = strokeWidth / 2
-        el.setAttribute('viewBox', `${bbox.x - pad} ${bbox.y - pad} ${bbox.width + pad * 2} ${bbox.height + pad * 2}`)
-      } else {
-        // When an arrowhead is present the geometry is asymmetric — the marker
-        // protrudes past the path end — so padding differs per axis.
-        el.setAttribute(
-          'viewBox',
-          `${bbox.x - arrowSize! - strokeWidth * 4} ${bbox.y - arrowSize! - strokeWidth * 2} ${
-            +bbox.width + +arrowSize! * (arrowhead === 'outlined' ? 2 : 5) + +strokeWidth * 8
-          } ${+bbox.height + +arrowSize! * 2 + +strokeWidth * 4}`,
-        )
-      }
-    }
+    if (!el || viewBox || measuredDuringRender) return
+    el.setAttribute('viewBox', paddedViewBox(el.getBBox(), viewBoxPadding))
   }
 
   return (
@@ -783,7 +819,7 @@ const GestureDiagram = ({
         className={css(inGestureContainer && { position: 'relative', top: '10px' }, { width: '100%', height: '100%' })}
         style={style}
         ref={onRef}
-        viewBox={viewBox}
+        viewBox={computedViewBox}
       >
         <defs>
           {arrowhead !== 'none' && !chevron && (
