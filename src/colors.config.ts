@@ -59,6 +59,10 @@ const colors = {
     bgMuted: 'rgba(51, 51, 51, 1)', // #333
     footerBg: 'rgba(26, 26, 26, 1)', // #1a1a1a
     gestureDiagramWrapper: 'rgba(94, 94, 94, 1)',
+    // Endpoints of the two-color stroke gradient used by the Command Universe gesture diagrams.
+    // Same in both themes: that surface is a dialog with fixed dark background art.
+    gestureDiagramGradientStart: 'rgba(88, 181, 212, 0.45)', // #58b5d4 @ 45%
+    gestureDiagramGradientEnd: 'rgba(255, 255, 255, 1)',
     pickerBg: 'rgba(20, 20, 20, 1)', // #141414
     sidebarBg: 'rgba(10, 10, 18, 1)', // #0a0a12
     sidebarOverlayBg: 'rgba(0, 0, 0, 0.5)', // this is defined separately to bgOverlay50 as it doesn't change between dark/light mode
@@ -169,6 +173,9 @@ const colors = {
     bgMuted: 'rgba(221, 221, 221, 1)', // #ddd
     footerBg: 'rgba(228, 228, 228, 1)', // #e4e4e4
     gestureDiagramWrapper: 'rgba(180, 180, 180, 1)',
+    // See the dark palette: intentionally identical in both themes.
+    gestureDiagramGradientStart: 'rgba(88, 181, 212, 0.45)', // #58b5d4 @ 45%
+    gestureDiagramGradientEnd: 'rgba(255, 255, 255, 1)',
     pickerBg: 'rgba(235, 235, 235, 1)', // #ebebeb
     sidebarBg: 'rgba(230, 230, 230, 1)', // #0a0a12
     sidebarOverlayBg: 'rgba(0, 0, 0, 0.5)', // this is defined separately to bgOverlay50 as it doesn't change between dark/light mode
