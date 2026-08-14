@@ -7,6 +7,12 @@ import Direction from '../@types/Direction'
 import Gesture from '../@types/Gesture'
 import { GESTURE_GLOW_BLUR, GESTURE_GLOW_COLOR } from '../constants'
 
+/** The two endpoint colors of a gesture diagram's stroke gradient. The stroke starts at `from` and ends at `to`. */
+interface GestureGradient {
+  from: string
+  to: string
+}
+
 interface GestureDiagramProps {
   arrowSize?: number
   color?: string
@@ -37,6 +43,11 @@ interface GestureDiagramProps {
   glow?: boolean
   /** When true (default), renders gradient strokes via <defs> + GradientStyleBlock. When false, uses solid strokes from highlightColor/color. */
   useGradient?: boolean
+  /** Overrides both endpoints of the stroke gradient. By default the gradient fades the stroke
+   * color up out of the background (`from` = bg, `to` = the stroke color), which is what produces
+   * the familiar fade-in along the gesture. Supplying both ends turns that into an arbitrary
+   * two-color ramp. Has no effect when `useGradient` is false. */
+  gradient?: GestureGradient
   /** Stroke color for highlighted segments when useGradient=false. Default: token('colors.vividHighlight'). */
   highlightColor?: string
 }
@@ -160,7 +171,17 @@ const ArcGradient = ({ index, extendedPath, size }: { index: number; extendedPat
 }
 
 /** Generate CSS rules defining the colors for the gradients that are applied to gesture diagram path segments. */
-const GradientStyleBlock = ({ color, highlight, path }: { color?: string; highlight?: number; path: Gesture }) => {
+const GradientStyleBlock = ({
+  color,
+  gradient,
+  highlight,
+  path,
+}: {
+  color?: string
+  gradient?: GestureGradient
+  highlight?: number
+  path: Gesture
+}) => {
   const index = path === 'rdl' ? 3 : path === 'ldr' ? 2 : undefined
   // The initial path segment should start at 25% opacity. Subsequent path segmenets should start at 50% opacity.
   // The final path segment should start at 75% opacity.
@@ -178,9 +199,15 @@ const GradientStyleBlock = ({ color, highlight, path }: { color?: string; highli
             ? token('colors.vividHighlight')
             : color || token('colors.fg')
 
+        // The ramp runs from `from` to `to`, with the percentages above weighting `to`. The
+        // defaults reproduce the original single-color behavior exactly: fade the stroke color up
+        // out of the background. `gradient` replaces both ends with an arbitrary color pair.
+        const from = gradient?.from ?? token('colors.bg')
+        const to = gradient?.to ?? stopColor
+
         return `
-            .${path}-gradient-${i}-start { stop-color: color-mix(in srgb, ${stopColor} ${startPercent}%, ${token('colors.bg')}) }
-            .${path}-gradient-${i}-stop { stop-color: color-mix(in srgb, ${stopColor} ${stopPercent}%, ${token('colors.bg')}) }
+            .${path}-gradient-${i}-start { stop-color: color-mix(in srgb, ${to} ${startPercent}%, ${from}) }
+            .${path}-gradient-${i}-stop { stop-color: color-mix(in srgb, ${to} ${stopPercent}%, ${from}) }
           `
       })}
     </style>
@@ -364,6 +391,7 @@ const GestureDiagram = ({
   arrowhead = 'filled',
   glow = true,
   useGradient = true,
+  gradient,
   highlightColor,
 }: GestureDiagramProps) => {
   const [id] = useState(nanoid())
@@ -598,7 +626,9 @@ const GestureDiagram = ({
           )}
         </defs>
 
-        {useGradient && <GradientStyleBlock color={color} highlight={highlight} path={extendedPath} />}
+        {useGradient && (
+          <GradientStyleBlock color={color} gradient={gradient} highlight={highlight} path={extendedPath} />
+        )}
 
         <GesturePath
           arrowhead={arrowhead}
