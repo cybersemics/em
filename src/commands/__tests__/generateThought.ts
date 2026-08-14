@@ -1,5 +1,6 @@
 import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { undoActionCreator as undo } from '../../actions/undo'
 import { executeCommand } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
@@ -226,6 +227,36 @@ test('not fetch title when first child is not a URL', async () => {
   expect(exported).toBe(`- ${HOME_TOKEN}
   - AI generated text
     - Not a URL`)
+
+  vi.unstubAllEnvs()
+})
+
+test('restore the original value rather than the pending value on undo', async () => {
+  // Mock AI URL environment variable
+  vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+
+  // Mock AI response
+  mockFetch.mockResolvedValueOnce({
+    json: () => Promise.resolve({ content: 'generated', err: null }),
+  })
+
+  await dispatch([importText({ text: `- a` }), setCursor(['a'])])
+
+  // use act, otherwise pending value (...) will still be rendered
+  await act(async () => {
+    executeCommand(generateThought)
+  })
+
+  // Precondition: the thought was generated, otherwise the undo below would have nothing to revert.
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - a generated`)
+
+  await dispatch(undo())
+
+  // The pending value "a..." is set with updateThoughts, which is not undoable, so it must be restored to the
+  // original value before the generated value is applied. Otherwise undo reverts to "a...".
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - a`)
 
   vi.unstubAllEnvs()
 })
