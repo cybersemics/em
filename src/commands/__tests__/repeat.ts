@@ -3,9 +3,11 @@ import { executeCommandWithMulticursor, resetLastCommand } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
+import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import headValue from '../../util/headValue'
+import bumpThoughtDownCommand from '../bumpThoughtDown'
 import cursorDownCommand from '../cursorDown'
 import exportContextCommand from '../exportContext'
 import moveThoughtDownCommand from '../moveThoughtDown'
@@ -139,6 +141,39 @@ it('ignore commands that do not dispatch an undoable action', () => {
   expect(exported).toEqual(`- __ROOT__
   - a
   - b`)
+})
+
+it('repeat a command that handles the multiselect itself', () => {
+  store.dispatch([
+    importText({
+      text: `
+        - a
+          - b
+          - c
+        - d
+          - e
+    `,
+    }),
+    setCursor(['a', 'b']),
+    addMulticursor(['a', 'b']),
+    addMulticursor(['a', 'c']),
+  ])
+
+  // Bump Thought Down defines execMulticursor, so it is executed once with the whole selection rather than once per selected thought.
+  executeCommandWithMulticursor(bumpThoughtDownCommand, { store })
+
+  store.dispatch(setCursor(['d']))
+  executeCommandWithMulticursor(repeatCommand, { store })
+
+  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+  expect(exported).toEqual(`- __ROOT__
+  - ${''}
+    - a
+      - b
+      - c
+  - ${''}
+    - d
+    - e`)
 })
 
 it('ignore undo', () => {
