@@ -100,14 +100,13 @@ const moveThought = (
 
   const destinationContext = pathToContext(state, destinationThoughtPath)
 
-  // Auto-merge duplicate siblings is limited to metaprogramming-attribute contexts.
-  // Attribute subtrees (e.g. =children, =style) must be hierarchically merged on move/paste so a
-  // context never ends up with two of the same attribute. Normal thoughts are NOT merged, so
-  // duplicate siblings coexist rather than silently disappearing (see
-  // https://github.com/cybersemics/em/issues/3621).
-  // isAttribute(sourceThought.value) merges the attribute node itself; destinationContext.some(isAttribute)
-  // detects that the destination is inside a meta subtree, which drives the hierarchical recursion as
-  // mergeThoughts moves each descendant back through moveThought.
+  // Only metaprogramming attributes are auto-merged with a duplicate sibling, since a context must never
+  // contain two of the same attribute. Normal thoughts are not merged, otherwise moving a thought into a
+  // context that already contains the same value would silently delete it. See
+  // https://github.com/cybersemics/em/issues/3621.
+  // The attribute itself is merged when moved (isAttribute(sourceThought.value)), and its descendants are
+  // merged hierarchically as mergeThoughts moves each of them back through moveThought within the meta
+  // subtree (destinationContext.some(isAttribute)).
   const isMetaMerge = isAttribute(sourceThought.value) || !!destinationContext?.some(isAttribute)
 
   // skipMerge bypasses the auto-merge when the caller intentionally moves a thought to a context
@@ -116,7 +115,7 @@ const moveThought = (
   // it into an existing empty sibling would silently drop it (e.g. pasting a series with multiple empty thoughts).
   // See https://github.com/cybersemics/em/issues/4448.
   const duplicateThought =
-    !sameContext && !skipMerge && sourceThought.value !== '' && isMetaMerge ? duplicateSubthought() : null
+    isMetaMerge && !sameContext && !skipMerge && sourceThought.value !== '' ? duplicateSubthought() : null
 
   const isPendingMerge = duplicateThought && (sourceThought.pending || duplicateThought.pending)
 

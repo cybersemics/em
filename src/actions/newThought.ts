@@ -55,8 +55,6 @@ import unroot from '../util/unroot'
 export interface NewThoughtPayload {
   /** The Path which the new thought is inserted after, unless insertBefore or insertNewSubthought are specified. */
   at?: Path
-  /** The id of the new thought. Allows the caller to know the id of the thought that is created. Default: a new id. */
-  id?: ThoughtId
   /** Callback for when the updates have been synced with IDB. */
   idbSynced?: () => void
   insertNewSubthought?: boolean
@@ -80,7 +78,6 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
 
   const {
     at,
-    id,
     idbSynced,
     insertNewSubthought,
     insertBefore,
@@ -161,7 +158,7 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
           : getRankAfter(state, simplePath)
 
   // when creating a new context in a context view, newThoughtId is the new empty thought (a/~m/_), and newContextId is the newly added Lexeme context (/ABS/_/m)
-  const newThoughtId = id || createId()
+  const newThoughtId = createId()
   const newContextId = insertContext ? createId() : null
 
   const reducers = [
@@ -222,7 +219,6 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
 export const newThoughtActionCreator =
   ({
     at,
-    id,
     idbSynced,
     insertBefore,
     insertNewSubthought,
@@ -230,8 +226,6 @@ export const newThoughtActionCreator =
     value = '',
   }: {
     at?: Path
-    /** The id of the new thought. Allows the caller to know the id of the thought that is created. Default: a new id. */
-    id?: ThoughtId
     /** Callback for when the updates have been synced with IDB. */
     idbSynced?: () => void
     insertBefore?: boolean
@@ -258,7 +252,6 @@ export const newThoughtActionCreator =
     dispatch({
       type: 'newThought',
       at: path,
-      id,
       idbSynced,
       insertBefore,
       insertNewSubthought,
