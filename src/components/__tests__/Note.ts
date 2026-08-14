@@ -1,7 +1,12 @@
 import { fireEvent, screen } from '@testing-library/dom'
 import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { redoActionCreator as redo } from '../../actions/redo'
 import { toggleNoteActionCreator as toggleNote } from '../../actions/toggleNote'
+import { undoActionCreator as undo } from '../../actions/undo'
+import { HOME_TOKEN } from '../../constants'
+import exportContext from '../../selectors/exportContext'
+import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
@@ -68,6 +73,52 @@ describe('=note', () => {
     // verify the note value is rendered
     const element = screen.getByText('foo')
     expect(element)
+  })
+
+  // https://github.com/cybersemics/em/issues/4479
+  test('undoes and redoes contiguous typing in a note as one edit', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - a
+          - =note
+            - `,
+      }),
+      setCursor(['a']),
+      toggleNote(),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const noteEditor = screen.getByLabelText('note-editable')
+
+    await act(async () => {
+      fireEvent.input(noteEditor, { target: { innerHTML: 'a' } })
+      fireEvent.input(noteEditor, { target: { innerHTML: 'ab' } })
+      fireEvent.input(noteEditor, { target: { innerHTML: 'abc' } })
+    })
+
+    await act(async () => {
+      store.dispatch(undo())
+      await vi.runOnlyPendingTimersAsync()
+    })
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - a
+    - =note
+      - `)
+
+    await act(async () => {
+      store.dispatch(redo())
+      await vi.runOnlyPendingTimersAsync()
+    })
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - a
+    - =note
+      - abc`)
+
+    await act(vi.runAllTimersAsync)
   })
 })
 

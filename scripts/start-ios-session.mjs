@@ -16,8 +16,11 @@
  *   2. creates the App Automate session (caps mirror .github/skills/browser-control-ios/SKILL.md),
  *   3. writes the session id to /tmp/em-bs-session.txt (the shim, bridge, and heartbeat read it)
  *      and a machine-readable status to /tmp/em-ios-bringup.status,
- *   4. stays alive to hold the tunnel open for the whole agent session (the BrowserStack Local
- *      child dies with this process, so it must not exit until the session is done).
+ *   4. stays alive so the SIGTERM/SIGINT handler can stop the tunnel cleanly. The tunnel does
+ *      NOT die with this process: browserstack-local runs the BrowserStackLocal binary in
+ *      --daemon mode, so it self-daemonizes and survives us. Staying alive is about owning
+ *      cleanup — exit without bsLocal.stop() and the daemon lingers until a manual
+ *      `BrowserStackLocal --daemon stop` (or pkill).
  *
  * It never calls deleteSession: the server-side session must outlive this client and is kept warm
  * by the heartbeat (.github/skills/browser-control-ios/heartbeat.sh). On SIGTERM/SIGINT it stops the
@@ -164,6 +167,7 @@ const createSession = () =>
     req.end()
   })
 
+/** Brings up the tunnel and the BrowserStack iOS session, writing the session id for the proxy to adopt. */
 const main = async () => {
   setStatus('tunnel-starting')
   try {
@@ -184,11 +188,11 @@ const main = async () => {
   setStatus(`session:${sessionId}`)
   console.info(`iOS session ready: ${sessionId}`)
 
-  // Hold the process (and thus the tunnel) open. Do NOT deleteSession — the bridge + heartbeat own
-  // the live session from here. The process exits only via the SIGTERM/SIGINT shutdown above.
-  // This timer is what keeps it alive: browserstack-local spawns the tunnel binary as an unref'd
-  // daemon, so without a referenced handle the event loop empties and node exits within seconds —
-  // dropping the tunnel client and leaving the device on BrowserStack's "Page not found" page.
+  // Stay alive until SIGTERM/SIGINT so the shutdown handler above can run bsLocal.stop(). The
+  // tunnel itself would survive us (the binary is a self-daemonized process), but exiting here
+  // orphans it. A pending promise holds nothing — with no referenced handle the event loop
+  // drains and node exits seconds after "session ready" — so keep a referenced timer instead.
+  // Do NOT deleteSession — the bridge + heartbeat own the live session from here.
   setInterval(() => {}, 1 << 30)
 }
 

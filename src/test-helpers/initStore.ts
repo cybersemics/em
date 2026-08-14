@@ -1,5 +1,6 @@
 import { clearActionCreator as clear } from '../actions/clear'
 import store from '../stores/app'
+import { resetStores } from '../stores/ministore'
 
 interface Params {
   /**
@@ -22,7 +23,13 @@ const initStore = ({ persist, allowTutorial }: Params = {}) => {
   // This makes tests deterministic and prevents post-teardown access to window/localStorage.
   vi.useFakeTimers()
 
-  if (!persist) store.dispatch(clear())
+  if (!persist) {
+    store.dispatch(clear())
+
+    // Ministores are module-level singletons that vitest only isolates per test file, so reset them
+    // alongside the Redux store to give each test the same clean slate.
+    resetStores()
+  }
 
   if (!allowTutorial) {
     store.dispatch([

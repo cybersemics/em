@@ -21,26 +21,27 @@
 # clamped lower on real devices or the timer we were resetting wasn't the one
 # actually killing the session.
 #
-# We ping GET /contexts rather than GET /url or POST /execute/sync. /contexts is an
-# Appium command that forces the full WebDriver → Appium → XCUITest round trip (harder
-# to mis-classify as "no real activity" than a metadata GET) and is valid in BOTH the
-# native and webview contexts. POST /execute/sync was the previous choice, but
-# XCUITestDriver answers a plain-JS execute in the NATIVE_APP context with 405 "Method is
-# not implemented" — so every ping read as a failure and the heartbeat gave up after 3
-# while the session was healthy, letting the idle timer it was holding off kill it.
+# We use POST /execute/sync (script: "return 1") rather than GET /url for the
+# ping. /execute/sync forces the full WebDriver → Appium → XCUITest →
+# safaridriver → page JS bridge round trip, which is harder to mis-classify as
+# "no real activity" than a metadata GET. GET /url was the original choice
+# because it was small and W3C-standard, but the field evidence suggests at
+# least one timer on this stack ignores it.
 #
-# The ping goes through the local shim (scripts/mcp-session-proxy.mjs, started by
-# bringup.sh) rather than straight to the BrowserStack hub, because the sandbox egress
-# MITM mangles direct hub requests; the shim re-frames them over node:https (see
-# scripts/mcp-session-proxy.mjs). Override with EM_HEARTBEAT_URL to ping the hub
-# directly (CI / no firewall).
+# A 405 response counts as a SUCCESSFUL ping. In the NATIVE_APP context (before a
+# driver attaches and switches to the webview) XCUITest answers a plain-JS execute
+# with 405 "Method is not implemented" — the session answered, it just declined the
+# script. Soak-verified 2026-08-13: a session receiving only 405-answered pings
+# stayed alive past 1000s, so 405s do reset the idle timer. Treating them as
+# failures made the heartbeat give up ~270s into every session whose driver hadn't
+# attached yet, and the abandoned session then idled out (~505s) — the dominant
+# session-death signature before this fix.
 set -uo pipefail
 
 SESSION_ID="${1:?session id required}"
 INTERVAL="${HEARTBEAT_INTERVAL:-90}"
 MAX_FAILS=3
 LOG="/tmp/heartbeat-${SESSION_ID}.log"
-HUB_URL="${EM_HEARTBEAT_URL:-http://127.0.0.1:${EM_MCP_PROXY_PORT:-4723}/wd/hub}"
 
 # --- Self-daemonize ---------------------------------------------------------
 # The agent launches us from a Bash tool call whose shell exits after the
@@ -73,10 +74,13 @@ while true; do
   # t=INTERVAL. Otherwise a long agent turn immediately after start_session
   # could let the idle timer fire before we ever poke it.
   STATUS=$(curl -sS -o /dev/null -w "%{http_code}" \
+    -X POST \
+    -H "Content-Type: application/json" \
     -u "$BROWSERSTACK_USERNAME:$BROWSERSTACK_ACCESS_KEY" \
-    "$HUB_URL/session/$SESSION_ID/contexts" 2>/dev/null \
+    --data '{"script":"return 1","args":[]}' \
+    "https://hub-cloud.browserstack.com/wd/hub/session/$SESSION_ID/execute/sync" 2>/dev/null \
     || echo "000")
-  if [[ "$STATUS" =~ ^[23] ]]; then
+  if [[ "$STATUS" =~ ^[23] || "$STATUS" == "405" ]]; then
     echo "[$(ts)] ping ok status=$STATUS"
     FAILS=0
   else
