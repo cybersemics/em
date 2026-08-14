@@ -328,7 +328,7 @@ describe('Caret', () => {
   })
 
   // https://github.com/cybersemics/em/issues/4869
-  it.skip('opens the keyboard on a new thought created after undoing a new thought', async () => {
+  it('opens the keyboard on a new thought created after undoing a new thought', async () => {
     await newThought()
 
     const undo = await browser.$('[data-testid="toolbar-icon"][aria-label="Undo"]').getElement()
