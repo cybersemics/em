@@ -8,6 +8,7 @@ import App from '../components/App'
 import db from '../data-providers/thoughtspace'
 import { initialize } from '../initialize'
 import store from '../stores/app'
+import { resetStores } from '../stores/ministore'
 import storage from '../util/storage'
 import waitForThoughtspaceIdle from './waitForThoughtspaceIdle'
 
@@ -17,6 +18,12 @@ let cleanup: Await<ReturnType<typeof initialize>>['cleanup']
 const createTestApp = async ({ tutorial }: { tutorial?: boolean } = {}) => {
   await act(async () => {
     vi.useFakeTimers({ loopLimit: 100000 })
+
+    // Ministores are module-level singletons that vitest only isolates per test file, so reset them
+    // before initialize so that each test mounts against a clean slate. Must come before initialize,
+    // which populates some ministores (e.g. offlineStatusStore).
+    resetStores()
+
     // calls initEvents, which must be manually cleaned up
     const init = await initialize({ storage: 'memory' })
     cleanup = init.cleanup

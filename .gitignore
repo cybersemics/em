@@ -21,6 +21,9 @@ scripts/provision-cloudflare-tunnel-pool.sh
 !.yarn/sdks
 !.yarn/versions
 
+# install state of the isolated icon toolchain (scripts/icons), which is its own Yarn project
+scripts/icons/.yarn/
+
 .DS_Store
 .env*.local
 .eslintcache

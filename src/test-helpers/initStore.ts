@@ -1,6 +1,7 @@
 import { clearActionCreator as clear } from '../actions/clear'
 import { thoughtspaceRuntime } from '../data-providers/thoughtspace'
 import store from '../stores/app'
+import { resetStores } from '../stores/ministore'
 import waitForThoughtspaceIdle from './waitForThoughtspaceIdle'
 
 interface Params {
@@ -29,6 +30,10 @@ const initStore = async ({ persist, allowTutorial }: Params = {}) => {
     await thoughtspaceRuntime.drop()
     await thoughtspaceRuntime.init({ storage: 'memory' })
     store.dispatch(clear())
+
+    // Ministores are module-level singletons that vitest only isolates per test file, so reset them
+    // alongside the Redux store to give each test the same clean slate.
+    resetStores()
   }
 
   if (!allowTutorial) {

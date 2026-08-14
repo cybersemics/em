@@ -273,11 +273,17 @@ echo "==> pod install"
 # bundles, so they can't carry a provisioning profile. Forcing one onto them fails the
 # whole archive. So: skip signing entirely here, and let Export (Step 6) sign just the
 # App bundle.
+#
+# Debug, not Release: DevServerCertPlugin (ios/App/App/DevServerViewController.swift),
+# which trusts the dev server's self-signed certificate, is compiled out by #if DEBUG in
+# Release builds. A Release IPA connects to https://bs-local.com:3000, gets the TLS
+# challenge, rejects it, and renders a blank webview -- this build only ever targets the
+# dev server, so it must be Debug.
 echo "==> xcodebuild archive"
 xcodebuild archive \
   -workspace ios/App/App.xcworkspace \
   -scheme App \
-  -configuration Release \
+  -configuration Debug \
   -archivePath "$WORKDIR/App.xcarchive" \
   -destination 'generic/platform=iOS' \
   CODE_SIGNING_ALLOWED=NO

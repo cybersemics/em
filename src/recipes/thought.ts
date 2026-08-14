@@ -9,14 +9,6 @@ const thoughtRecipe = defineRecipe({
     display: 'inline-block',
     verticalAlign: 'top',
     whiteSpace: 'pre-wrap',
-    '@media (max-width: 500px)': {
-      marginTop: { _android: '-2.1px' },
-      marginLeft: { _android: '0.5em' },
-    },
-    '@media (min-width: 560px) and (max-width: 1024px)': {
-      marginTop: { _android: '-0.1px' },
-      marginLeft: { _android: '0.5em' },
-    },
   },
   variants: {
     /** Assign annotation height on single line truncated url. */

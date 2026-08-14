@@ -3,21 +3,27 @@
  * Aggregates vitest JSON reports from a Puppeteer flaky-stress run into a markdown
  * report. Used by .github/workflows/puppeteer-flaky.yml.
  *
- * Usage:
- *   # Aggregate failure reports into markdown + flaky-summary.json
- *   node scripts/flaky-report.mjs <results-dir> <expected-iterations> [run-url]
+ * Aggregate failure reports into markdown + flaky-summary.json.
  *
- *   # Rewrite a vitest JSON report in place, keeping only failed tests
- *   node scripts/flaky-report.mjs --trim <vitest-report.json>
+ * ```sh
+ * node scripts/flaky-report.mjs <results-dir> <expected-iterations> [run-url]
+ * ```
+ *
+ * Rewrite a vitest JSON report in place, keeping only failed tests.
+ *
+ * ```sh
+ * node scripts/flaky-report.mjs --trim <vitest-report.json>
+ * ```
  *
  * CI only uploads JSON for **failed** iterations (after --trim). A missing
  * iteration-<n>.json means that iteration passed — not an infra failure.
  * Unparseable / malformed reports are still counted as infra failures.
  *
  * Exit codes (aggregate mode):
- *   0 — clean run (no failure reports, or no failing tests in them)
- *   1 — flakes and/or infra failures found
- *   2 — usage / fatal error
+ *
+ * - 0 — clean run (no failure reports, or no failing tests in them)
+ * - 1 — flakes and/or infra failures found
+ * - 2 — usage / fatal error.
  */
 import { readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs'
 import { basename, join, relative } from 'node:path'
@@ -26,8 +32,6 @@ const MARKER = '<!-- flaky-test-report -->'
 
 /**
  * Strip a vitest JSON report down to failed tests only.
- * @param {object} data
- * @returns {object}
  */
 const trimVitestFailures = data => {
   const testResults = (data.testResults || [])
@@ -80,7 +84,7 @@ if (process.argv[2] === '--trim') {
   }
   const trimmed = trimVitestFailures(data)
   writeFileSync(file, JSON.stringify(trimmed, null, 2))
-  console.log(`Trimmed ${file}: ${trimmed.numFailedTestSuites} file(s), ${trimmed.numFailedTests} failed test(s)`)
+  console.info(`Trimmed ${file}: ${trimmed.numFailedTestSuites} file(s), ${trimmed.numFailedTests} failed test(s)`)
   process.exit(0)
 }
 
@@ -100,10 +104,11 @@ if (!Number.isInteger(expectedIterations) || expectedIterations < 1) {
 
 /**
  * Recursively collect files named iteration-<n>.json under dir.
- * @returns {Map<number, string>} iteration → absolute path
+ * @returns Iteration → absolute path.
  */
 const collectReports = dir => {
   const found = new Map()
+  /** Recurses into one directory, adding any iteration-<n>.json it finds to the accumulated map. */
   const walk = d => {
     let entries
     try {
@@ -133,7 +138,6 @@ const collectReports = dir => {
 
 /**
  * Relativize a test filepath for display (strip cwd / workspace prefixes).
- * @param {string} filepath
  */
 const shortPath = filepath => {
   const marker = '/src/e2e/puppeteer/'
@@ -149,8 +153,6 @@ const shortPath = filepath => {
 
 /**
  * Truncate an error message for the markdown report.
- * @param {string} msg
- * @param {number} max
  */
 const truncate = (msg, max = 400) => {
   const cleaned = String(msg || '')
@@ -161,12 +163,7 @@ const truncate = (msg, max = 400) => {
 }
 
 /**
- * Record a failed test occurrence.
- * @param {Map<string, { file: string, fullName: string, failed: number[], firstError: string }>} tests
- * @param {string} file
- * @param {string} fullName
- * @param {number} iteration
- * @param {string} [error]
+ * Record a failed test occurrence into the tests map, keyed by file and full test name.
  */
 const recordFailure = (tests, file, fullName, iteration, error = '') => {
   const key = `${file}\0${fullName}`
@@ -307,6 +304,7 @@ if (failedTests.length === 0 && infraFailures.length === 0) {
   )
   lines.push('')
 
+  /** Appends a titled markdown section for one group of failing tests, skipping empty groups. */
   const renderGroup = (title, list) => {
     if (list.length === 0) return
     lines.push(`### ${title}`)

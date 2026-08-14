@@ -1,6 +1,6 @@
 /**
  * Handles /estimate Nh comments on GitHub issues.
- * Triggered by: .github/workflows/estimate-command.yml
+ * Triggered by the .github/workflows/estimate-command.yml workflow.
  *
  * On a trusted /estimate command, immediately updates the Everhour estimate for the linked
  * GitHub issue and opens a PR to commit the corrected sample to the training corpus.
@@ -27,7 +27,7 @@ interface CommentEvent {
     number: number
     title: string
     body: string | null
-    labels: Array<{ name: string }>
+    labels: { name: string }[]
   }
 }
 
@@ -48,51 +48,56 @@ const roundToNearestCategory = (hours: number): (typeof VALID_HOURS)[number] => 
 /** Generates a deterministic sample filename for an issue. */
 const sampleFilename = (issueNumber: number): string => `issue-${issueNumber}.json`
 
-const main = async () => {
-  const githubToken = process.env.GITHUB_TOKEN
-  if (!githubToken) throw new Error('GITHUB_TOKEN is required')
+/** Posts a comment on a GitHub issue. */
+const postComment = async (token: string, owner: string, repo: string, issueNumber: number, body: string) => {
+  await fetch(`https://api.github.com/repos/${owner}/${repo}/issues/${issueNumber}/comments`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ body }),
+  })
+}
 
-  const everhourApiKey = process.env.EVERHOUR_API_KEY
-  if (!everhourApiKey) throw new Error('EVERHOUR_API_KEY is required')
+/** Adds an emoji reaction to an issue comment to signal command status (e.g. '+1' on success, '-1' on failure). */
+const postReaction = async (token: string, owner: string, repo: string, commentId: number, content: '+1' | '-1') => {
+  await fetch(`https://api.github.com/repos/${owner}/${repo}/issues/comments/${commentId}/reactions`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      Accept: 'application/vnd.github+json',
+    },
+    body: JSON.stringify({ content }),
+  })
+}
 
-  const everhourProjectId = process.env.EVERHOUR_PROJECT_ID
-  if (!everhourProjectId) throw new Error('EVERHOUR_PROJECT_ID is required')
+/**
+ * Removes the 👀 acknowledgment reaction added by the workflow's github-actions[bot] on success, so the
+ * comment ends up with only 👍. Best-effort: the Everhour update is already applied, so a failure here
+ * must not throw. Filtered to github-actions[bot] to avoid removing a human's 👀 reaction.
+ */
+const removeEyesReaction = async (token: string, owner: string, repo: string, commentId: number) => {
+  const listResp = await fetch(
+    `https://api.github.com/repos/${owner}/${repo}/issues/comments/${commentId}/reactions?content=eyes`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/vnd.github+json',
+      },
+    },
+  )
+  if (!listResp.ok) return
 
-  const eventPath = process.env.GITHUB_EVENT_PATH
-  if (!eventPath) throw new Error('GITHUB_EVENT_PATH is required')
+  const reactions = (await listResp.json()) as { id: number; user: { login: string } | null }[]
+  const eyes = reactions.find(reaction => reaction.user?.login === 'github-actions[bot]')
+  if (!eyes) return
 
-  const repo = process.env.GITHUB_REPOSITORY ?? ''
-  const [owner, repoName] = repo.split('/')
-
-  const eventPayload: CommentEvent = JSON.parse(fs.readFileSync(eventPath, 'utf-8'))
-  const { comment, issue } = eventPayload
-
-  // Parse command
-  const hours = parseEstimateCommand(comment.body)
-  if (hours === null) return // Not an estimate command
-
-  // Check trusted commenter
-  if (!TRUSTED_ASSOCIATIONS.includes(comment.author_association)) {
-    await postReaction(githubToken, owner, repoName, comment.id, '-1')
-    await postComment(
-      githubToken,
-      owner,
-      repoName,
-      issue.number,
-      'Only repository owners, members, and collaborators can submit estimate corrections.',
-    )
-    return
-  }
-
-  try {
-    await applyCorrection(githubToken, everhourApiKey, everhourProjectId, owner, repoName, comment, issue, hours)
-    // Mirror Copilot's status signal: swap the 👀 acknowledgment (added by the workflow) for 👍 on success.
-    await removeEyesReaction(githubToken, owner, repoName, comment.id)
-    await postReaction(githubToken, owner, repoName, comment.id, '+1')
-  } catch (err) {
-    await postReaction(githubToken, owner, repoName, comment.id, '-1')
-    throw err
-  }
+  await fetch(`https://api.github.com/repos/${owner}/${repo}/issues/comments/${commentId}/reactions/${eyes.id}`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/vnd.github+json',
+    },
+  })
 }
 
 /** Applies a manual estimate correction: updates Everhour and opens a PR with the corrected sample. */
@@ -217,57 +222,52 @@ const applyCorrection = async (
       : 'No PR URL was returned; the PR may already exist or creation failed.',
   )
 }
+/** Handles one /estimate command: applies the correction to Everhour and opens the corpus PR. */
+const main = async () => {
+  const githubToken = process.env.GITHUB_TOKEN
+  if (!githubToken) throw new Error('GITHUB_TOKEN is required')
 
-/** Posts a comment on a GitHub issue. */
-const postComment = async (token: string, owner: string, repo: string, issueNumber: number, body: string) => {
-  await fetch(`https://api.github.com/repos/${owner}/${repo}/issues/${issueNumber}/comments`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ body }),
-  })
-}
+  const everhourApiKey = process.env.EVERHOUR_API_KEY
+  if (!everhourApiKey) throw new Error('EVERHOUR_API_KEY is required')
 
-/** Adds an emoji reaction to an issue comment to signal command status (e.g. '+1' on success, '-1' on failure). */
-const postReaction = async (token: string, owner: string, repo: string, commentId: number, content: '+1' | '-1') => {
-  await fetch(`https://api.github.com/repos/${owner}/${repo}/issues/comments/${commentId}/reactions`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-      Accept: 'application/vnd.github+json',
-    },
-    body: JSON.stringify({ content }),
-  })
-}
+  const everhourProjectId = process.env.EVERHOUR_PROJECT_ID
+  if (!everhourProjectId) throw new Error('EVERHOUR_PROJECT_ID is required')
 
-/**
- * Removes the 👀 acknowledgment reaction added by the workflow's github-actions[bot] on success, so the
- * comment ends up with only 👍. Best-effort: the Everhour update is already applied, so a failure here
- * must not throw. Filtered to github-actions[bot] to avoid removing a human's 👀 reaction.
- */
-const removeEyesReaction = async (token: string, owner: string, repo: string, commentId: number) => {
-  const listResp = await fetch(
-    `https://api.github.com/repos/${owner}/${repo}/issues/comments/${commentId}/reactions?content=eyes`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: 'application/vnd.github+json',
-      },
-    },
-  )
-  if (!listResp.ok) return
+  const eventPath = process.env.GITHUB_EVENT_PATH
+  if (!eventPath) throw new Error('GITHUB_EVENT_PATH is required')
 
-  const reactions = (await listResp.json()) as Array<{ id: number; user: { login: string } | null }>
-  const eyes = reactions.find(reaction => reaction.user?.login === 'github-actions[bot]')
-  if (!eyes) return
+  const repo = process.env.GITHUB_REPOSITORY ?? ''
+  const [owner, repoName] = repo.split('/')
 
-  await fetch(`https://api.github.com/repos/${owner}/${repo}/issues/comments/${commentId}/reactions/${eyes.id}`, {
-    method: 'DELETE',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: 'application/vnd.github+json',
-    },
-  })
+  const eventPayload: CommentEvent = JSON.parse(fs.readFileSync(eventPath, 'utf-8'))
+  const { comment, issue } = eventPayload
+
+  // Parse command
+  const hours = parseEstimateCommand(comment.body)
+  if (hours === null) return // Not an estimate command
+
+  // Check trusted commenter
+  if (!TRUSTED_ASSOCIATIONS.includes(comment.author_association)) {
+    await postReaction(githubToken, owner, repoName, comment.id, '-1')
+    await postComment(
+      githubToken,
+      owner,
+      repoName,
+      issue.number,
+      'Only repository owners, members, and collaborators can submit estimate corrections.',
+    )
+    return
+  }
+
+  try {
+    await applyCorrection(githubToken, everhourApiKey, everhourProjectId, owner, repoName, comment, issue, hours)
+    // Mirror Copilot's status signal: swap the 👀 acknowledgment (added by the workflow) for 👍 on success.
+    await removeEyesReaction(githubToken, owner, repoName, comment.id)
+    await postReaction(githubToken, owner, repoName, comment.id, '+1')
+  } catch (err) {
+    await postReaction(githubToken, owner, repoName, comment.id, '-1')
+    throw err
+  }
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
@@ -281,3 +281,5 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
 }
 
 export { parseEstimateCommand, roundToNearestCategory, sampleFilename, TRUSTED_ASSOCIATIONS }
+
+export default main

@@ -500,7 +500,7 @@ beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 ```
 
-`initStore` clears the shared store and enables fake timers. `createTestApp` additionally mounts the React tree, initializes persistence and event handlers, and enables the test drag-and-drop backend. `cleanupTestApp` clears storage, the TreeCRDT thoughtspace, the store, and event handlers, and flushes pending timers. Do not share fixture state between tests or rely on test execution order.
+`initStore` is async and enables fake timers. By default, it drops and reinitializes the in-memory TreeCRDT thoughtspace, clears the shared Redux store, and resets every [ministore](glossary.md#m) to its initial state. Ministores are module-level singletons that Vitest isolates per test file, not per test. `initStore({ persist: true })` skips the thoughtspace, Redux, and ministore resets. Pass it directly to `beforeEach(initStore)` so Vitest awaits it; wrappers must explicitly `await initStore()`. `createTestApp` resets ministores before `initialize({ storage: 'memory' })` runs, and additionally mounts the React tree, initializes persistence and event handlers, and enables the test drag-and-drop backend. `cleanupTestApp` clears storage, the TreeCRDT thoughtspace, the store, and event handlers, and flushes pending timers. Do not share fixture state between tests or rely on test execution order.
 
 ## Sanctioned Backdoors
 
@@ -558,7 +558,7 @@ There are three helper directories. Use them before reaching for raw Redux dispa
 The helpers in [`../src/test-helpers/`](../src/test-helpers) cover store setup and operations that are otherwise verbose to write by hand:
 
 - [`createTestApp`](../src/test-helpers/createTestApp.tsx) — mounts `<App />` into the JSDOM environment via `@testing-library/react`, runs `initialize({ storage: 'memory' })`, swaps in `react-dnd-test-backend`, opts into fake timers, and closes the welcome modal. Use this when a test touches the rendered app. Pair every call with `cleanupTestApp` (it clears `localStorage`, the TreeCRDT thoughtspace, the store, and event handlers).
-- [`initStore`](../src/test-helpers/initStore.ts) — initializes the store without mounting the React tree, for store-level tests that don't need a DOM.
+- [`initStore`](../src/test-helpers/initStore.ts) — async store setup without mounting the React tree. Clears Redux state, resets ministores via `resetStores`, reinitializes the in-memory thoughtspace, and enables fake timers. Await it (or pass it directly to `beforeEach`).
 - [`importToContext`](../src/test-helpers/importToContext.ts) — seeds the store with a tree from a multi-line plaintext outline (the same format the `Import` modal accepts). Most fixture setup goes through this.
 - [`dispatch`](../src/test-helpers/dispatch.ts) — a thin wrapper that lets a test dispatch synchronously without re-typing `store.dispatch(...)` plumbing.
 - **Operate-by-value helpers.** Where a test would otherwise need to look up a `ThoughtId` to dispatch an action, prefer the value-keyed variants:
