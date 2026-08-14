@@ -1,5 +1,6 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { setCursorActionCreator as setCursorToPath } from '../../actions/setCursor'
+import { toggleContextViewActionCreator as toggleContextView } from '../../actions/toggleContextView'
 import { executeCommandWithMulticursor } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
@@ -146,6 +147,45 @@ it('move the cursor to the surviving thought when the cursor is on a duplicate t
   - a
     - w
     - x`)
+})
+
+it('merge the duplicates of the cursor thought when the cursor crosses a context view', () => {
+  store.dispatch([
+    importText({
+      text: `
+        - a
+          - m
+            - x
+        - b
+          - m
+            - y
+          - n
+          - n
+        - a
+          - z
+      `,
+    }),
+    setCursor(['a', 'm']),
+    toggleContextView(),
+    // the cursor is on the context b of a/m, i.e. the thought b at the root, so the duplicate a's at the root are
+    // merged. The duplicate n's under b are at a different level and must be left alone.
+    setCursor(['a', 'm', 'b']),
+  ])
+
+  executeCommandWithMulticursor(mergeDuplicatesCommand, { store })
+
+  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toEqual(`- ${HOME_TOKEN}
+  - a
+    - m
+      - x
+    - z
+  - b
+    - m
+      - y
+    - n
+    - n`)
 })
 
 describe('multicursor', () => {

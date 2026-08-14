@@ -2,13 +2,12 @@ import _ from 'lodash'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import { getAllChildrenSorted } from '../selectors/getChildren'
-import rootedParentOf from '../selectors/rootedParentOf'
-import simplifyPath from '../selectors/simplifyPath'
+import getThoughtById from '../selectors/getThoughtById'
+import thoughtToPath from '../selectors/thoughtToPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 import normalizeThought from '../util/normalizeThought'
-import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
 import mergeThoughts from './mergeThoughts'
 
@@ -18,9 +17,16 @@ const mergeDuplicates = (state: State): State => {
 
   if (!cursor) return state
 
-  const simplePath = simplifyPath(state, cursor)
-  const parentPath = parentOf(simplePath)
-  const children = getAllChildrenSorted(state, head(rootedParentOf(state, simplePath)))
+  const cursorThought = getThoughtById(state, head(cursor))
+  if (!cursorThought) return state
+
+  // Take the level from the cursor thought's parent rather than inferring it from the cursor Path. A Path that crosses
+  // a context view does not describe the thought's real ancestry, and simplifyPath resolves it to the context that the
+  // view was activated on, e.g. a cursor on /a/m/b in the context view of /a/m simplifies to b/m, whose level has
+  // nothing to do with the thoughts the user is looking at. parentId is the cursor thought's actual level in every view.
+  const parentId = cursorThought.parentId
+  const parentPath = thoughtToPath(state, parentId)
+  const children = getAllChildrenSorted(state, parentId)
 
   // Do not treat empty thoughts as duplicates, consistent with moveThought. An empty thought is a placeholder with no
   // identity, so merging it into an existing empty sibling would silently drop it.
