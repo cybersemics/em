@@ -40,6 +40,7 @@ import isRoot from '../util/isRoot'
 import throttleByMousePosition from '../util/throttleByMousePosition'
 import { DropValidationResult } from './useDragAndDropThought'
 import useDragLeave from './useDragLeave'
+import usePinDropHover from './usePinDropHover'
 
 interface DroppableSubthoughts {
   path: Path
@@ -314,7 +315,9 @@ const useDragAndDropSubThought = (props: DroppableSubthoughts) => {
 
   useDragLeave({ isDeepHovering, canDropThought })
 
-  return { isHovering, isDeepHovering, dropTarget }
+  const isHoveringPinned = usePinDropHover(isHovering)
+
+  return { isHovering: isHoveringPinned, isDeepHovering, dropTarget }
 }
 
 export default useDragAndDropSubThought

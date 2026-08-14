@@ -1,6 +1,6 @@
 /**
  * Estimates a newly opened GitHub issue and writes the result to Everhour.
- * Triggered by: .github/workflows/estimate-issue-opened.yml
+ * Triggered by the .github/workflows/estimate-issue-opened.yml workflow.
  */
 import 'dotenv/config'
 import * as fs from 'fs'
@@ -18,7 +18,7 @@ interface IssuePayload {
   number: number
   title: string
   body: string | null
-  labels: Array<{ name: string }>
+  labels: { name: string }[]
 }
 
 /** Main entry point for the issue-opened estimation workflow. */

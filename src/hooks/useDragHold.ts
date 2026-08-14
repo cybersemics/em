@@ -8,6 +8,7 @@ import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/
 import { isMac } from '../browser'
 import { AlertType, LongPressState } from '../constants'
 import hasMulticursor from '../selectors/hasMulticursor'
+import debugLog from '../util/debugLog'
 import useLongPress from './useLongPress'
 
 /** Adds event handlers to detect long press and set state.longPress while the user is long pressing a thought in preparation for a drag. */
@@ -45,12 +46,22 @@ const useDragHold = ({
       // Toggling the multicursor here as well would undo the selection that the click handler just made.
       const multiselectModifier = !!e && (e.shiftKey || (isMac ? e.metaKey : e.ctrlKey))
 
+      // touchcancel means the system claimed the touch, e.g. when the user swipes up from the bottom edge of the screen to switch apps on iOS. The page sees a touchstart with no touchmove, so the press outlasts the long press timer. A cancelled press is not a deliberate release, so it must not activate the multiselect, which would open the Command Center.
+      const cancelled = e?.type === 'touchcancel'
+
       dispatch((dispatch, getState) => {
         const state = getState()
 
+        // Log how the press ended so that a false multiselect, e.g. an OS app switcher swipe misread as a long press, can be diagnosed from the debug log. eventType distinguishes a deliberate release (touchend) from a system-claimed touch (touchcancel).
+        debugLog.log('longPressEnd', {
+          eventType: e?.type ?? null,
+          dragHold: state.longPress === LongPressState.DragHold,
+        })
+
         if (state.longPress === LongPressState.DragHold) {
           if (!hasMulticursor(state)) dispatch(alert(null))
-          if (toggleMulticursorOnLongPress && !multiselectModifier) dispatch(toggleMulticursor({ path: simplePath }))
+          if (toggleMulticursorOnLongPress && !multiselectModifier && !cancelled)
+            dispatch(toggleMulticursor({ path: simplePath }))
         }
 
         dispatch([
