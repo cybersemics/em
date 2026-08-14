@@ -12,9 +12,7 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
-import { addMulticursorActionCreator as addMulticursor } from '../actions/addMulticursor'
 import { selectBetweenActionCreator as selectBetween } from '../actions/selectBetween'
-import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
 import { isMac, isTouch } from '../browser'
 import { AlertType, REGEX_TAGS } from '../constants'
@@ -530,9 +528,7 @@ const ThoughtContainer = ({
       // Shift + Click selects all thoughts between the clicked thought and the previously selected thought.
       if (mouseEvent.shiftKey) {
         e.preventDefault()
-        // move the cursor to the clicked thought so selectBetween resolves the correct sibling level,
-        // preserving the existing multicursor selection, then add the clicked thought and fill the range
-        dispatch([setCursor({ path, preserveMulticursor: true }), addMulticursor({ path }), selectBetween()])
+        dispatch(selectBetween({ path }))
         return
       }
 
