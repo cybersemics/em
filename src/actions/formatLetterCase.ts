@@ -12,6 +12,7 @@ import head from '../util/head'
 import { editThoughtActionCreator as editThought } from './editThought'
 import { setCursorActionCreator as setCursor } from './setCursor'
 import { setDescendantActionCreator as setDescendant } from './setDescendant'
+import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from './setIsMulticursorExecuting'
 
 /** Format the browser selection or cursor thought based on the specified letter case change. */
 export const formatLetterCaseActionCreator =
@@ -24,7 +25,8 @@ export const formatLetterCaseActionCreator =
     // when the caret is on a note, format the note instead of the thought (#4469)
     // resolveNotePath returns null if the thought has no note, in which case there is nothing to format
     const targetPath = state.noteFocus ? resolveNotePath(state, cursor) : cursor
-    const paths = hasMulticursor(state) ? Object.values(state.multicursors) : targetPath ? [targetPath] : []
+    const isMulticursor = hasMulticursor(state)
+    const paths = isMulticursor ? Object.values(state.multicursors) : targetPath ? [targetPath] : []
     const offset = selection.offsetThought()
     const cursorSimplePath = simplifyPath(state, cursor)
     const editActions = paths.flatMap(path => {
@@ -51,10 +53,19 @@ export const formatLetterCaseActionCreator =
           ]
     })
 
-    dispatch(editActions)
+    // Bracket the per-thought edits with setIsMulticursorExecuting so that they collapse into a single undo step, as
+    // executeCommandWithMulticursor does for multicursor commands. Otherwise each selected thought would have to be
+    // undone individually (#4842).
+    dispatch([
+      isMulticursor ? setIsMulticursorExecuting({ value: true, undoLabel: 'letterCase' }) : null,
 
-    // noteFocus doesn't respect cursorOffset, so better to avoid setting the cursor when the caret is on a note (#4469)
-    // It shouldn't be possible to have noteFocus be true with the keyboard closed, so setCursor shouldn't be necessary for notes.
-    // It seems like the caret goes to the end of the note anyway when its value is replaced.
-    if (!state.noteFocus) dispatch(setCursor({ path: cursorSimplePath, offset }))
+      ...editActions,
+
+      // noteFocus doesn't respect cursorOffset, so better to avoid setting the cursor when the caret is on a note (#4469)
+      // It shouldn't be possible to have noteFocus be true with the keyboard closed, so setCursor shouldn't be necessary for notes.
+      // It seems like the caret goes to the end of the note anyway when its value is replaced.
+      !state.noteFocus ? setCursor({ path: cursorSimplePath, offset }) : null,
+
+      isMulticursor ? setIsMulticursorExecuting({ value: false }) : null,
+    ])
   }

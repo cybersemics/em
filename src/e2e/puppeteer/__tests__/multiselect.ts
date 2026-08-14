@@ -1,4 +1,5 @@
 import { KnownDevices } from 'puppeteer'
+import clickBullet from '../helpers/clickBullet'
 import clickThought from '../helpers/clickThought'
 import command from '../helpers/command'
 import emulate from '../helpers/emulate'
@@ -11,7 +12,62 @@ import { page } from '../session'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
+/** Shift + Click the bullet of the given thought to select all thoughts between it and the previously selected thought. */
+const shiftClickThought = async (value: string) => {
+  await waitForEditable(value)
+
+  await page.keyboard.down('Shift')
+  try {
+    await clickBullet(value)
+  } finally {
+    await page.keyboard.up('Shift')
+  }
+}
+
 describe('multiselect', () => {
+  // https://github.com/cybersemics/em/issues/4740
+  it('starts multiselect at the Shift-clicked thought when there is no selection', async () => {
+    await paste(`
+        - a
+        - b
+        - c
+        `)
+
+    await clickThought('a')
+    await shiftClickThought('c')
+
+    const highlightedValues = await page.$$eval('[aria-label="bullet"][data-highlighted="true"]', bullets =>
+      bullets.map(
+        bullet => bullet.closest('[aria-label="tree-node"]')?.querySelector('[data-editable]')?.textContent ?? null,
+      ),
+    )
+
+    expect(highlightedValues).toEqual(['c'])
+  })
+
+  it('adjusts a Shift-click range from its original anchor', async () => {
+    await paste(`
+        - a
+        - b
+        - c
+        - d
+        - e
+        - f
+        `)
+
+    await multiselectThoughts('a')
+    await shiftClickThought('e')
+    await shiftClickThought('c')
+
+    const highlightedValues = await page.$$eval('[aria-label="bullet"][data-highlighted="true"]', bullets =>
+      bullets.map(
+        bullet => bullet.closest('[aria-label="tree-node"]')?.querySelector('[data-editable]')?.textContent ?? null,
+      ),
+    )
+
+    expect(highlightedValues.sort()).toEqual(['a', 'b', 'c'])
+  })
+
   it('should multiselect two thoughts at once', async () => {
     await paste(`
         - a
@@ -102,6 +158,77 @@ describe('multiselect', () => {
     expect(copied['text/html']).toContain('a')
     expect(copied['text/html']).toContain('b')
     expect(copied['text/html']).toContain('c')
+  })
+
+  // https://github.com/cybersemics/em/issues/4738
+  it('does not expand a thought that the multiselect is extended onto', async () => {
+    await paste(`
+        - a
+          - x
+        - b
+        - c
+        `)
+
+    await clickThought('c')
+
+    await press('ArrowUp', { shift: true })
+    await page.waitForFunction(
+      () => document.querySelectorAll('[aria-label="bullet"][data-highlighted="true"]').length === 2,
+    )
+
+    await press('ArrowUp', { shift: true })
+    await page.waitForFunction(
+      () => document.querySelectorAll('[aria-label="bullet"][data-highlighted="true"]').length === 3,
+    )
+
+    const visibleThoughts = await page.$$eval('[data-editable]', elements => elements.map(el => el.innerHTML))
+
+    // a is selected, so its subthought x must stay collapsed
+    expect(visibleThoughts).toEqual(['a', 'b', 'c'])
+  })
+
+  // https://github.com/cybersemics/em/pull/4750
+  it('points the bullet of a selected thought to the right, and expands it when the multiselect is cancelled', async () => {
+    await paste(`
+        - a
+        - b
+        - c
+          - y
+        `)
+
+    await clickThought('a')
+
+    await press('ArrowDown', { shift: true })
+    await page.waitForFunction(
+      () => document.querySelectorAll('[aria-label="bullet"][data-highlighted="true"]').length === 2,
+    )
+
+    await press('ArrowDown', { shift: true })
+    await page.waitForFunction(
+      () => document.querySelectorAll('[aria-label="bullet"][data-highlighted="true"]').length === 3,
+    )
+
+    /** Returns the rotation of the given thought's bullet. The triangle is rotated a quarter turn to point down when the thought is expanded, and is unrotated to point right when it is collapsed. */
+    const bulletRotation = (value: string) =>
+      page.evaluate((value: string) => {
+        const editable = Array.from(document.querySelectorAll('[data-editable]')).find(
+          element => element.textContent === value,
+        )
+        const bullet = editable!.closest('[aria-label="thought-container"]')!.querySelector('[data-bullet="parent"]')
+        return getComputedStyle(bullet!).transform
+      }, value)
+
+    // c is selected, so it stays collapsed and its bullet must point right
+    expect(await bulletRotation('c')).toBe('none')
+
+    await press('Escape')
+    await page.waitForFunction(
+      () => document.querySelectorAll('[aria-label="bullet"][data-highlighted="true"]').length === 0,
+    )
+
+    // the cursor is still on c, which expands once it is no longer selected
+    await waitForEditable('y')
+    expect(await bulletRotation('c')).not.toBe('none')
   })
 
   // https://github.com/cybersemics/em/issues/4728

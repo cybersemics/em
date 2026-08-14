@@ -6,8 +6,8 @@ import type { EverhourTask } from './types.ts'
  * Tries several strategies in order:
  * 1. **Task ID** — standard Everhour GitHub format `gh:REPO_ID:ISSUE_NUMBER`
  * 2. **number** — explicit issue-number field returned by Everhour for GitHub-linked tasks. Covers
- *    the `gh:ISSUE_ID` task-ID form (2 segments) where the ID is GitHub's internal issue database ID
- *    rather than the issue number, so strategy 1 cannot apply.
+ * the `gh:ISSUE_ID` task-ID form (2 segments) where the ID is GitHub's internal issue database ID
+ * rather than the issue number, so strategy 1 cannot apply.
  * 3. **URL** — GitHub issue/PR URL, e.g. `https://github.com/owner/repo/issues/76`
  * 4. **foreignId** — numeric string returned by some Everhour API versions for GitHub-linked tasks
  * 5. **Task name** — `#NUMBER` appearing anywhere in the name (e.g. `"Fix bug (#123)"` or `"#123 Title"`).

@@ -3,11 +3,15 @@ import { clearActionCreator as clear } from '../../actions/clear'
 import { cursorBackActionCreator as cursorBack } from '../../actions/cursorBack'
 import { cursorDownActionCreator as cursorDown } from '../../actions/cursorDown'
 import { editThoughtActionCreator as editThoughtRaw } from '../../actions/editThought'
+import { formatLetterCaseActionCreator as formatLetterCase } from '../../actions/formatLetterCase'
+import { formatSelectionActionCreator as formatSelection } from '../../actions/formatSelection'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { indentActionCreator as indent } from '../../actions/indent'
 import { moveThoughtDownActionCreator as moveThoughtDown } from '../../actions/moveThoughtDown'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import { redoActionCreator as redo } from '../../actions/redo'
+import { setNoteFocusActionCreator as setNoteFocus } from '../../actions/setNoteFocus'
+import { toggleNoteActionCreator as toggleNote } from '../../actions/toggleNote'
 import { undoActionCreator as undo } from '../../actions/undo'
 import { executeCommandWithMulticursor } from '../../commands'
 import moveThoughtDownCommand from '../../commands/moveThoughtDown'
@@ -21,6 +25,7 @@ import isUndoEnabled from '../../selectors/isUndoEnabled'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
+import getAllChildrenAsThoughtsByContext from '../../test-helpers/getAllChildrenAsThoughtsByContext'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import archiveCommand from '../archive'
@@ -242,6 +247,70 @@ describe('undo', () => {
   - d
   - e`
     expect(exported).toEqual(expectedOutput)
+  })
+
+  // https://github.com/cybersemics/em/issues/4842
+  it('undo should restore all thoughts after a multicursor letter case change', () => {
+    store.dispatch([
+      importText({
+        text: `
+        - AAA
+        - BBB
+        - CCC
+        - DDD`,
+      }),
+      setCursor(['AAA']),
+      addMulticursor(['AAA']),
+      addMulticursor(['BBB']),
+      addMulticursor(['CCC']),
+      addMulticursor(['DDD']),
+      formatLetterCase('LowerCase'),
+    ])
+
+    let exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toEqual(`- ${HOME_TOKEN}
+  - aaa
+  - bbb
+  - ccc
+  - ddd`)
+
+    store.dispatch(undo())
+
+    exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toEqual(`- ${HOME_TOKEN}
+  - AAA
+  - BBB
+  - CCC
+  - DDD`)
+  })
+
+  // https://github.com/cybersemics/em/issues/4841
+  it('undo should restore all thoughts after a multicursor text color change', () => {
+    store.dispatch([
+      importText({
+        text: `
+        - AAA
+        - BBB
+        - CCC`,
+      }),
+      setCursor(['AAA']),
+      addMulticursor(['AAA']),
+      addMulticursor(['BBB']),
+      addMulticursor(['CCC']),
+      formatSelection('foreColor', 'green'),
+    ])
+
+    let values = getAllChildrenAsThoughtsByContext(store.getState(), [HOME_TOKEN]).map(child => child.value)
+    expect(values).toEqual([
+      '<font color="#00d688">AAA</font>',
+      '<font color="#00d688">BBB</font>',
+      '<font color="#00d688">CCC</font>',
+    ])
+
+    store.dispatch(undo())
+
+    values = getAllChildrenAsThoughtsByContext(store.getState(), [HOME_TOKEN]).map(child => child.value)
+    expect(values).toEqual(['AAA', 'BBB', 'CCC'])
   })
 
   it('undo should stay enabled and not throw after a multicursor command that nets to no change', () => {
@@ -857,6 +926,164 @@ describe('grouping', () => {
   - B`
 
     expect(exported).toEqual(expectedOutput)
+  })
+
+  it('contiguous note additions should undo and redo in one step', () => {
+    store.dispatch([
+      importText({
+        text: `
+        - note-add
+          - =note
+            - x`,
+      }),
+      editThought(['note-add', '=note', 'x'], 'xy'),
+      editThought(['note-add', '=note', 'xy'], 'xyz'),
+      undo(),
+    ])
+
+    expect(exportContext(store.getState(), ['note-add'], 'text/plain')).toEqual(`- note-add
+  - =note
+    - x`)
+
+    store.dispatch(redo())
+
+    expect(exportContext(store.getState(), ['note-add'], 'text/plain')).toEqual(`- note-add
+  - =note
+    - xyz`)
+  })
+
+  it('contiguous note deletes should undo in one step', () => {
+    store.dispatch([
+      importText({
+        text: `
+        - note-delete
+          - =note
+            - xyz`,
+      }),
+      editThought(['note-delete', '=note', 'xyz'], 'xy'),
+      editThought(['note-delete', '=note', 'xy'], 'x'),
+      undo(),
+    ])
+
+    expect(exportContext(store.getState(), ['note-delete'], 'text/plain')).toEqual(`- note-delete
+  - =note
+    - xyz`)
+  })
+
+  it('note replacements should stay as separate undo steps', () => {
+    store.dispatch([
+      importText({
+        text: `
+        - note-replace
+          - =note
+            - cat`,
+      }),
+      editThought(['note-replace', '=note', 'cat'], 'bat'),
+      editThought(['note-replace', '=note', 'bat'], 'bit'),
+      undo(),
+    ])
+
+    expect(exportContext(store.getState(), ['note-replace'], 'text/plain')).toEqual(`- note-replace
+  - =note
+    - bat`)
+
+    store.dispatch(undo())
+
+    expect(exportContext(store.getState(), ['note-replace'], 'text/plain')).toEqual(`- note-replace
+  - =note
+    - cat`)
+  })
+
+  // https://github.com/cybersemics/em/pull/4524#issuecomment-4899657845
+  it('creating an empty note should undo without reverting the previous edit', () => {
+    store.dispatch([newThought({ value: '' }), editThought([''], 'One'), setCursor(['One'])])
+
+    const undoPatchesBefore = store.getState().undoPatches.length
+
+    store.dispatch(toggleNote())
+
+    expect(store.getState().undoPatches.length).toBe(undoPatchesBefore + 1)
+    expect(exportContext(store.getState(), ['One'], 'text/plain')).toEqual(`- One
+  - =note
+    - `)
+
+    store.dispatch(undo())
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - One`)
+  })
+
+  it('deleting an empty note should undo without reverting the previous edit', () => {
+    store.dispatch([
+      importText({
+        text: `
+        - note-delete-empty
+          - =note
+            - `,
+      }),
+      setCursor(['note-delete-empty']),
+      setNoteFocus({ value: true, offset: 0 }),
+    ])
+
+    const undoPatchesBefore = store.getState().undoPatches.length
+
+    store.dispatch(toggleNote())
+
+    expect(store.getState().undoPatches.length).toBe(undoPatchesBefore + 1)
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - note-delete-empty`)
+
+    store.dispatch(undo())
+
+    expect(exportContext(store.getState(), ['note-delete-empty'], 'text/plain')).toEqual(`- note-delete-empty
+  - =note
+    - `)
+  })
+
+  it('note offset should round trip with a note edit', () => {
+    const original = 'one two three'
+    const updated = 'one two'
+
+    store.dispatch([
+      importText({
+        text: `
+        - note-offset
+          - =note
+            - ${original}`,
+      }),
+      setCursor(['note-offset']),
+    ])
+
+    store.dispatch(setNoteFocus({ value: true, offset: null }))
+
+    const path = contextToPath(store.getState(), ['note-offset', '=note', original])!
+    store.dispatch(
+      editThoughtRaw({
+        path,
+        oldValue: original,
+        newValue: updated,
+        noteOffset: updated.length,
+      }),
+    )
+
+    expect(store.getState().noteOffset).toBe(updated.length)
+
+    store.dispatch(undo())
+
+    expect(store.getState().noteFocus).toBe(true)
+    expect(store.getState().noteOffset).toBe(original.length)
+    expect(exportContext(store.getState(), ['note-offset'], 'text/plain')).toEqual(`- note-offset
+  - =note
+    - ${original}`)
+
+    store.dispatch(setNoteFocus({ value: true, offset: null }))
+
+    store.dispatch(redo())
+
+    expect(store.getState().noteOffset).toBe(updated.length)
+    expect(exportContext(store.getState(), ['note-offset'], 'text/plain')).toEqual(`- note-offset
+  - =note
+    - ${updated}`)
   })
 
   it('contiguous edit additions should should not be grouped with deletions', () => {

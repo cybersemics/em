@@ -5,17 +5,17 @@
  * browser. Uses puppeteer's managed Chrome so it's identical on local and the CI runner.
  *
  * Run before starting the agent / Claude Code (the chrome-devtools MCP with `--browser-url` will NOT
- * launch Chrome itself — it expects this to be already running):
+ * launch Chrome itself — it expects this to be already running).
  *
- *   node scripts/shared-chrome.mjs            # headless (default)
- *   EM_CHROME_HEADLESS=0 node scripts/shared-chrome.mjs   # headed, for watching locally
+ * ```sh
+ * node scripts/shared-chrome.mjs            # headless (default)
+ * EM_CHROME_HEADLESS=0 node scripts/shared-chrome.mjs   # headed, for watching locally
+ * ```
  */
 import { spawn } from 'node:child_process'
 import puppeteer from 'puppeteer'
 
 const port = process.env.EM_CHROME_PORT || '9222'
-// executablePath() resolves asynchronously as of puppeteer 25, so it must be awaited. Passing the
-// unresolved promise to spawn() throws ERR_INVALID_ARG_TYPE and Chrome never listens on the port.
 const executablePath = await puppeteer.executablePath()
 const args = [
   `--remote-debugging-port=${port}`,
