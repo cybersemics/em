@@ -107,7 +107,7 @@ export const formatLetterCaseActionCreator =
     // Defer to the next frame so the re-selection occurs after the re-render, before the browser paints.
     if (restoreRange && restoreRange.end > restoreRange.start) {
       requestAnimationFrame(() => {
-        const editable = document.querySelector(cursorEditableSelector) as HTMLElement | null
+        const editable = document.querySelector(cursorEditableSelector)
         selection.setRange(editable, restoreRange)
       })
     }
