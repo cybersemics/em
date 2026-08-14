@@ -1,45 +1,53 @@
 import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { undoActionCreator as undo } from '../../actions/undo'
 import { executeCommand, executeCommandWithMulticursor } from '../../commands'
 import bumpThoughtDown from '../../commands/bumpThoughtDown'
 import { AlertType, HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
+import hasMulticursor from '../../selectors/hasMulticursor'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
+import expectPathToEqual from '../../test-helpers/expectPathToEqual'
+import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 
-beforeEach(createTestApp)
-afterEach(cleanupTestApp)
+beforeEach(initStore)
 
-it('reset content editable inner html on bumpThoughtDown', async () => {
-  await dispatch([
-    importText({
-      text: `
+describe('DOM', () => {
+  beforeEach(createTestApp)
+  afterEach(cleanupTestApp)
+
+  it('reset content editable inner html on bumpThoughtDown', async () => {
+    await dispatch([
+      importText({
+        text: `
         - a
           - b`,
-    }),
-    setCursor(['a']),
-  ])
+      }),
+      setCursor(['a']),
+    ])
 
-  await act(vi.runOnlyPendingTimersAsync)
+    await act(vi.runOnlyPendingTimersAsync)
 
-  expect(document.querySelector(`div[data-editable]`)?.textContent).toBe('a')
+    expect(document.querySelector(`div[data-editable]`)?.textContent).toBe('a')
 
-  await act(async () => {
-    executeCommand(bumpThoughtDown)
+    await act(async () => {
+      executeCommand(bumpThoughtDown)
+    })
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    expect(document.querySelector(`div[data-editable]`)?.textContent).toBe('')
   })
-
-  await act(vi.runOnlyPendingTimersAsync)
-
-  expect(document.querySelector(`div[data-editable]`)?.textContent).toBe('')
 })
 
 describe('multicursor', () => {
   // https://github.com/cybersemics/em/issues/3134
-  it('bump the parent of the selected thoughts down and move the selected thoughts into it', async () => {
-    await dispatch([
+  it('bumps the parent of the selected thoughts down and moves the selected thoughts into it', () => {
+    store.dispatch([
       importText({
         text: `
           - a
@@ -55,13 +63,7 @@ describe('multicursor', () => {
       addMulticursor(['a', 'd']),
     ])
 
-    await act(vi.runOnlyPendingTimersAsync)
-
-    await act(async () => {
-      executeCommandWithMulticursor(bumpThoughtDown, { store })
-    })
-
-    await act(vi.runOnlyPendingTimersAsync)
+    executeCommandWithMulticursor(bumpThoughtDown, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
@@ -75,8 +77,8 @@ describe('multicursor', () => {
     - f`)
   })
 
-  it('bump a single selected thought down', async () => {
-    await dispatch([
+  it('bumps a single selected thought down', () => {
+    store.dispatch([
       importText({
         text: `
           - a
@@ -88,13 +90,7 @@ describe('multicursor', () => {
       addMulticursor(['a', 'b']),
     ])
 
-    await act(vi.runOnlyPendingTimersAsync)
-
-    await act(async () => {
-      executeCommandWithMulticursor(bumpThoughtDown, { store })
-    })
-
-    await act(vi.runOnlyPendingTimersAsync)
+    executeCommandWithMulticursor(bumpThoughtDown, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
@@ -106,8 +102,8 @@ describe('multicursor', () => {
     - c`)
   })
 
-  it('move the selected thoughts into a new empty thought when they are in the home context', async () => {
-    await dispatch([
+  it('moves the selected thoughts into a new empty thought when they are in the home context', () => {
+    store.dispatch([
       importText({
         text: `
           - a
@@ -119,13 +115,7 @@ describe('multicursor', () => {
       addMulticursor(['b']),
     ])
 
-    await act(vi.runOnlyPendingTimersAsync)
-
-    await act(async () => {
-      executeCommandWithMulticursor(bumpThoughtDown, { store })
-    })
-
-    await act(vi.runOnlyPendingTimersAsync)
+    executeCommandWithMulticursor(bumpThoughtDown, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
@@ -136,8 +126,66 @@ describe('multicursor', () => {
   - c`)
   })
 
-  it('disallow bumping down thoughts from different parents', async () => {
-    await dispatch([
+  it('sets the cursor on the new empty thought and clears the multicursor', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - b
+            - c`,
+      }),
+      setCursor(['a', 'b']),
+      addMulticursor(['a', 'b']),
+      addMulticursor(['a', 'c']),
+    ])
+
+    executeCommandWithMulticursor(bumpThoughtDown, { store })
+
+    const state = store.getState()
+
+    // The caret belongs on the bumped parent's empty replacement, ready to type its new value,
+    // just as when the command is executed without a multiselect.
+    expectPathToEqual(state, state.cursor, [''])
+    expect(hasMulticursor(state)).toBeFalse()
+  })
+
+  it('reverts the bump on a single undo', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - b
+            - c
+            - d`,
+      }),
+      setCursor(['a', 'b']),
+      addMulticursor(['a', 'b']),
+      addMulticursor(['a', 'c']),
+    ])
+
+    executeCommandWithMulticursor(bumpThoughtDown, { store })
+
+    // Precondition: the bump occurred, otherwise the undo below would have nothing to revert.
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - ${''}
+    - a
+      - b
+      - c
+    - d`)
+
+    store.dispatch(undo())
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - b
+    - c
+    - d`)
+  })
+
+  it('disallows bumping down thoughts from different parents', () => {
+    store.dispatch([
       importText({
         text: `
           - a
@@ -150,19 +198,12 @@ describe('multicursor', () => {
       addMulticursor(['c', 'd']),
     ])
 
-    await act(vi.runOnlyPendingTimersAsync)
+    executeCommandWithMulticursor(bumpThoughtDown, { store })
 
-    await act(async () => {
-      executeCommandWithMulticursor(bumpThoughtDown, { store })
-    })
-
-    // assert the alert before the pending timers are run, since the alert is auto-dismissed after a delay
     expect(store.getState().alert).toMatchObject({
       alertType: AlertType.MulticursorError,
       value: 'Cannot bump down thoughts from different parents.',
     })
-
-    await act(vi.runOnlyPendingTimersAsync)
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 

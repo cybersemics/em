@@ -128,7 +128,7 @@ Nothing waits on a tool call during the slow part. A detached background process
 
 Three pieces come out of this:
 
-- **[`scripts/start-ios-session.mjs`](../../scripts/start-ios-session.mjs)** opens a tunnel so the phone can reach the dev server, requests the device, and stays alive holding the tunnel open.
+- **[`scripts/start-ios-session.mjs`](../../scripts/start-ios-session.mjs)** opens a tunnel so the phone can reach the dev server, requests the device, and stays alive so the tunnel can be shut down cleanly on exit. The tunnel binary itself is a self-daemonizing process that would survive the script — staying alive is about owning its cleanup, not holding it open.
 - **[`.github/skills/browser-control-ios/heartbeat.sh`](../../.github/skills/browser-control-ios/heartbeat.sh)** pings the session every 90 seconds so BrowserStack does not reclaim it while the agent is thinking. It gives up after three consecutive failures and writes out BrowserStack's own explanation of what happened — which is the only after-the-fact clue available if a session dies.
 - **[`scripts/mcp-session-proxy.mjs`](../../scripts/mcp-session-proxy.mjs)** is a small local server. The three separate problems it solves are laid out in [MCP servers](mcp.md#why-there-is-a-shim-in-the-middle). The tooling connects to it and asks to start a session; instead of creating one, it hands back the session that already exists, instantly.
 
@@ -138,12 +138,12 @@ The proxy solves a second problem too. The sandbox's firewall rejects certain ou
 
 iOS runs a pre-built app uploaded to BrowserStack under the name `em-server-mode`. It is not rebuilt per run — day-to-day web changes do not need one, since the app loads the dev server through the tunnel.
 
-Two ways this bites, both ending in a blank screen and a timeout, and both needing a human at a Mac:
+Two ways this bites, both ending in a black screen and a timeout, and both needing a human at a Mac:
 
 - **The upload lapsed.** BrowserStack deletes apps 30 days after last use.
-- **The build predates HTTPS.** The app has its server address baked in. A build made before the dev server moved to HTTPS points at `http://` and loads nothing.
+- **The build is bad.** The app has its dev-server address baked in and needs the self-signed certificate handler compiled in, and a build made any other way than `yarn build:ios:browserstack` (which bakes the address and forces a Debug configuration) tends to get one of them wrong — the webview then loads nothing. The skill doc explains how to tell the two bad-build modes apart from inside a session.
 
-Either way it has to be rebuilt and re-uploaded from a Mac with Xcode.
+Either way it has to be rebuilt and re-uploaded with `yarn build:ios:browserstack` from a Mac with Xcode signing set up.
 
 ### The iOS bridge
 

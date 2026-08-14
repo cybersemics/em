@@ -76,7 +76,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **EM_TOKEN** — Sentinel `ThoughtId` (`'__EM__'`) for the hidden system context where user settings (e.g. `[EM, 'Settings']`) are stored. See [`constants.ts`](../src/constants.ts).
 
-**expanded** — `state.expanded: Index<boolean>`, keyed by `hashPath(path)`. A thought's children are walked by `linearizeTree` only if its path is in this map. See [`expandThoughts`](../src/selectors/expandThoughts.ts).
+**expanded** — `state.expanded: Index<boolean>`, keyed by `hashPath(path)`. A thought's children are walked by `linearizeTree` only if its path is in this map. Expansion is derived from the cursor _and_ the multicursor: a selected thought expands its ancestors but stays collapsed itself, so any reducer that changes `state.multicursors` must recalculate `expanded`. See [`expandThoughts`](../src/selectors/expandThoughts.ts).
 
 ## F
 

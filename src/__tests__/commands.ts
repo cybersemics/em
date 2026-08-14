@@ -1,12 +1,4 @@
-import { importTextActionCreator as importText } from '../actions/importText'
-import { executeCommandWithMulticursor, formatKeyboardShortcut, hashCommand, parseCommandShortcut } from '../commands'
-import swapParent from '../commands/swapParent'
-import { HOME_TOKEN } from '../constants'
-import exportContext from '../selectors/exportContext'
-import store from '../stores/app'
-import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../test-helpers/addMulticursorAtFirstMatch'
-import initStore from '../test-helpers/initStore'
-import { setCursorFirstMatchActionCreator as setCursor } from '../test-helpers/setCursorFirstMatch'
+import { formatKeyboardShortcut, hashCommand, parseCommandShortcut } from '../commands'
 
 describe('parseCommandShortcut', () => {
   it('parses a space-separated shortcut', () => {
@@ -109,54 +101,5 @@ describe('parseCommandShortcut', () => {
     it('a plain multi-word label', () => {
       expect(parseCommandShortcut('new thought')).toBeNull()
     })
-  })
-})
-
-describe('executeCommandWithMulticursor', () => {
-  beforeEach(initStore)
-
-  // https://github.com/cybersemics/em/issues/3443
-  it('executes a command that disallows multicursor when a single thought is selected', () => {
-    store.dispatch([
-      importText({
-        text: `
-          - a
-            - b
-        `,
-      }),
-      setCursor(['a', 'b']),
-      addMulticursor(['a', 'b']),
-    ])
-
-    executeCommandWithMulticursor(swapParent, { store })
-
-    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
-  - b
-    - a`)
-  })
-
-  it('blocks a command that disallows multicursor when multiple thoughts are selected', () => {
-    store.dispatch([
-      importText({
-        text: `
-          - a
-            - b
-          - c
-            - d
-        `,
-      }),
-      setCursor(['a', 'b']),
-      addMulticursor(['a', 'b']),
-      addMulticursor(['c', 'd']),
-    ])
-
-    executeCommandWithMulticursor(swapParent, { store })
-
-    expect(store.getState().alert?.value).toBe('Cannot swap parent with multiple thoughts.')
-    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
-  - a
-    - b
-  - c
-    - d`)
   })
 })

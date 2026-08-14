@@ -131,6 +131,8 @@ const initialState = (created: Timestamp = timestamp()) => {
     longPress: LongPressState.Inactive,
     manualSortMap: {},
     modals: {},
+    multicursorAnchor: null,
+    multicursorRange: {},
     multicursors: {},
     noteFocus: false,
     noteOffset: null,

@@ -2,7 +2,9 @@ import durationsConfig from '../durations.config'
 
 /** Initialize duration helper. */
 function init() {
-  let inTest: boolean = !!navigator.webdriver
+  // Guarded because constants.ts pulls this module in, and constants.ts is imported by the Node-side
+  // e2e helpers where navigator does not exist.
+  let inTest: boolean = typeof navigator !== 'undefined' && !!navigator.webdriver
   /** Check if we're in e2e tests and return zero if we are else return the actual duration. */
   const durationOrZero = (duration: number) => (inTest ? 0 : duration)
 

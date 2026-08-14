@@ -25,12 +25,11 @@ import DesktopCommandUniverse from './DesktopCommandUniverse'
 import DropGutter from './DropGutter'
 import ErrorMessage from './ErrorMessage'
 import Footer from './Footer'
-import GestureMenu from './GestureMenu'
 import HamburgerMenu from './HamburgerMenu'
 import LatestCommandsDiagram from './LatestCommandsDiagram'
 import MultiGesture from './MultiGesture'
 import NavBar from './NavBar'
-import Sidebar from './Sidebar'
+import Sidebar from './Sidebar/Sidebar'
 import Tips from './Tips/Tips'
 import Toolbar from './Toolbar'
 import Tutorial from './Tutorial'
@@ -193,7 +192,6 @@ const AppComponent: FC = () => {
       <Alert />
       <Tips />
       {!isTouch && <DesktopCommandUniverse />}
-      {isTouch && <GestureMenu />}
       <ErrorMessage />
       {enableLatestCommandsDiagram && <LatestCommandsDiagram position='bottom' />}
       <MobileCommandUniverse />

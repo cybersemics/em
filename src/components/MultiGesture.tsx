@@ -1,5 +1,5 @@
 import React, { PropsWithChildren } from 'react'
-import { GestureResponderEvent, PanResponder, PanResponderInstance, View } from 'react-native'
+import { GestureResponderEvent, PanResponder, PanResponderInstance, View, ViewStyle } from 'react-native'
 import Direction from '../@types/Direction'
 import Gesture from '../@types/Gesture'
 import { noop } from '../constants'
@@ -9,6 +9,7 @@ import { clearGesture, updateGesture } from '../stores/gesture'
 import viewportStore from '../stores/viewport'
 import debugLog from '../util/debugLog'
 import isInGestureZone from '../util/isInGestureZone'
+import GestureMenu from './GestureMenu/GestureMenu'
 import ScrollZone from './ScrollZone'
 import TraceGesture from './TraceGesture'
 
@@ -163,6 +164,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
       if (e?.touches.length > 0) {
         const x = e.touches[0].clientX
         const y = e.touches[0].clientY
+        debugLog.log('touchstart', { x: Math.round(x), y: Math.round(y) })
         this.clientStart = { x, y }
         // Remember the element the browser pinned this touch to, so a release can still be detected
         // if that element unmounts mid-gesture. See the pointerup listener below.
@@ -179,10 +181,12 @@ class MultiGesture extends React.Component<MultiGestureProps> {
 
     // Since we set this.disableScroll or this.abandon on touchstart, we need to reset them on touchend.
     // This occurs, for eample, on tap.
-    window.addEventListener('touchend', () => {
+    window.addEventListener('touchend', (e: TouchEvent) => {
       if (testFlags.logMultigesture) {
         console.info('touchend')
       }
+      const touch = e.changedTouches[0]
+      debugLog.log('touchend', touch ? { x: Math.round(touch.clientX), y: Math.round(touch.clientY) } : {})
       this.reset()
     })
 
@@ -389,7 +393,16 @@ class MultiGesture extends React.Component<MultiGestureProps> {
   render() {
     const ref = React.createRef<HTMLDivElement>()
     return (
-      <View {...this.panResponder.panHandlers}>
+      <View
+        {...this.panResponder.panHandlers}
+        // View's default z-index:0 traps children below NavBar's stacking context; z-index:auto
+        // removes it, letting gesture blur/trace layer above NavBar in the root context.
+        style={{ zIndex: 'auto' } as unknown as ViewStyle}
+      >
+        {/* GestureMenu mounts here (rather than at the app root) so the menu, its content blur, and the
+            gesture trace share this <View>'s stacking context, letting z-index order the trace above the
+            blur. GestureMenu renders nothing until the menu is active. */}
+        <GestureMenu />
         <TraceGesture eventNodeRef={ref} />
         <ScrollZone leftHanded={this.leftHanded} />
         <div ref={ref}>{this.props.children}</div>
