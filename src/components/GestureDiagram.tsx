@@ -64,6 +64,10 @@ interface GestureDiagramProps {
    * the corners sharp. Only applies to continuous rendering, since rounding a corner means editing
    * the geometry either side of a vertex that per-segment paths do not share. */
   cornerRadius?: number
+  /** Extra length added to the final segment, in user-space units, so there is breathing room
+   * between the last bend and the arrowhead. Default 0. Straight gestures only — `rounded` and the
+   * rdld glyph derive their geometry elsewhere and are unaffected. */
+  tipExtension?: number
   /** Stroke color for highlighted segments when useGradient=false. Default: token('colors.vividHighlight'). */
   highlightColor?: string
 }
@@ -530,6 +534,7 @@ const GestureDiagram = ({
   gradient,
   continuous,
   cornerRadius = 0,
+  tipExtension = 0,
   highlightColor,
 }: GestureDiagramProps) => {
   const [id] = useState(nanoid())
@@ -661,6 +666,21 @@ const GestureDiagram = ({
     positions[positions.length - 1] = {
       x: lastSegmentStartPos.x + lastSegment.dx,
       y: lastSegmentStartPos.y + lastSegment.dy,
+    }
+  }
+
+  // Push the final vertex further along its own direction. Runs after the overlap-shortening above
+  // so it extends whatever length that settled on, and before anything reads `positions`, so the
+  // gradient chord and the viewBox pick the new tip up automatically.
+  if (tipExtension > 0 && positions.length >= 2) {
+    const tip = positions[positions.length - 1]
+    const previous = positions[positions.length - 2]
+    const dx = tip.x - previous.x
+    const dy = tip.y - previous.y
+    const length = Math.hypot(dx, dy) || 1
+    positions[positions.length - 1] = {
+      x: tip.x + (dx / length) * tipExtension,
+      y: tip.y + (dy / length) * tipExtension,
     }
   }
 
