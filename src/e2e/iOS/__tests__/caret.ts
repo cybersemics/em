@@ -326,4 +326,22 @@ describe('Caret', () => {
     // A non-cursor thought must not open the virtual keyboard.
     expect(keyboard).toBe(false)
   })
+
+  // https://github.com/cybersemics/em/issues/4869
+  it.skip('opens the keyboard on a new thought created after undoing a new thought', async () => {
+    await newThought()
+
+    const undo = await browser.$('[data-testid="toolbar-icon"][aria-label="Undo"]').getElement()
+    await tap(undo, { pointerType: 'touch' })
+    // Wait for the undone thought to be removed, otherwise newThought below matches the stale editable.
+    await waitUntil(
+      async () => (await browser.execute(() => document.querySelectorAll('[data-editable]').length)) === 0,
+    )
+
+    await newThought()
+
+    // Allow the caret to be placed and the keyboard animation to complete.
+    await browser.pause(2000)
+    expect(await isKeyboardShown()).toBe(true)
+  })
 })
