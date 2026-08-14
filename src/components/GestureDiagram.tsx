@@ -13,6 +13,12 @@ interface GestureGradient {
   to: string
 }
 
+/** A point in the gesture diagram's user coordinate space. */
+interface Point {
+  x: number
+  y: number
+}
+
 interface GestureDiagramProps {
   arrowSize?: number
   color?: string
@@ -54,6 +60,10 @@ interface GestureDiagramProps {
    * ramp follows the gesture's turns). Set it explicitly to trade a gradient's per-segment ramp
    * for a seamless stroke with a single chord-aligned ramp. */
   continuous?: boolean
+  /** Radius of the rounded bend at each interior vertex, in user-space units. 0 (default) leaves
+   * the corners sharp. Only applies to continuous rendering, since rounding a corner means editing
+   * the geometry either side of a vertex that per-segment paths do not share. */
+  cornerRadius?: number
   /** Stroke color for highlighted segments when useGradient=false. Default: token('colors.vividHighlight'). */
   highlightColor?: string
 }
@@ -201,15 +211,43 @@ const arcChainPath = (path: Gesture, size: number) => {
     .join(' ')
 }
 
+/** Returns the point `distance` units away from `from` in the direction of `to`, never travelling
+ * more than halfway there. */
+const pointTowards = (from: Point, to: Point, distance: number): Point => {
+  const dx = to.x - from.x
+  const dy = to.y - from.y
+  const length = Math.hypot(dx, dy) || 1
+  // Cap at half the segment so that the corners either side of a short segment cannot overlap.
+  const offset = Math.min(distance, length / 2)
+  return { x: from.x + (dx / length) * offset, y: from.y + (dy / length) * offset }
+}
+
+/** Builds an SVG path `d` string through the given points. A positive `cornerRadius` softens each
+ * interior vertex into a quadratic curve — pull back along the incoming segment, forward along the
+ * outgoing one, and curve between the two using the vertex itself as the control point — so the
+ * bends read as rounded turns rather than mitered joins. */
+const polylinePath = (points: Point[], cornerRadius = 0): string => {
+  if (cornerRadius <= 0 || points.length < 3) {
+    return points.map((point, i) => `${i === 0 ? 'M' : 'L'} ${point.x} ${point.y}`).join(' ')
+  }
+
+  const commands = [`M ${points[0].x} ${points[0].y}`]
+  for (let i = 1; i < points.length - 1; i++) {
+    const vertex = points[i]
+    const before = pointTowards(vertex, points[i - 1], cornerRadius)
+    const after = pointTowards(vertex, points[i + 1], cornerRadius)
+    commands.push(`L ${before.x} ${before.y}`, `Q ${vertex.x} ${vertex.y} ${after.x} ${after.y}`)
+  }
+
+  const last = points[points.length - 1]
+  commands.push(`L ${last.x} ${last.y}`)
+  return commands.join(' ')
+}
+
 /** Returns the first and last points of the gesture. Used to align a continuous gradient with the
  * gesture's overall direction of travel, since a linear gradient is a projection onto a single
  * line and has no way to follow the path's turns. */
-const gestureEndpoints = (
-  path: Gesture,
-  positions: { x: number; y: number }[],
-  rounded: boolean | undefined,
-  size: number,
-) => {
+const gestureEndpoints = (path: Gesture, positions: Point[], rounded: boolean | undefined, size: number) => {
   // The rdld glyph is hardcoded, so read its endpoints off the first and last segment.
   if (path === 'rdld') return { start: { x: 29.7, y: 13.5 }, end: { x: 45, y: 72 } }
   if (rounded) {
@@ -232,7 +270,7 @@ const ContinuousGradient = ({
 }: {
   extendedPath: Gesture
   path: Gesture
-  positions: { x: number; y: number }[]
+  positions: Point[]
   rounded?: boolean
   size: number
 }) => {
@@ -322,6 +360,8 @@ type GesturePathProps = {
   color?: string
   /** Draw the gesture as one continuous <path> rather than one <path> per segment. */
   continuous: boolean
+  /** Radius of the rounded bend at each interior vertex. 0 leaves the corners sharp. */
+  cornerRadius: number
   dropShadow?: string
   extendedPath: Gesture
   highlight?: number
@@ -329,7 +369,7 @@ type GesturePathProps = {
   id: string
   path: Gesture
   pathSegments: { dx: number; dy: number }[]
-  positions: { x: number; y: number }[]
+  positions: Point[]
   rounded?: boolean
   scale: number
   size: number
@@ -342,6 +382,7 @@ const GesturePath = ({
   arrowhead,
   color,
   continuous,
+  cornerRadius,
   dropShadow,
   extendedPath,
   highlight,
@@ -380,8 +421,7 @@ const GesturePath = ({
   // is thick relative to the segment length. The rdld glyph has no arrowhead of its own.
   if (continuous) {
     /** Builds an SVG path `d` attribute string from a list of points. */
-    const makePath = (points: typeof positions) =>
-      points.map((pos, i) => `${i === 0 ? 'M' : 'L'} ${pos.x} ${pos.y}`).join(' ')
+    const makePath = (points: Point[]) => polylinePath(points, cornerRadius)
 
     /** Builds the `d` attribute for a whole gesture, in whichever shape family it belongs to. */
     const wholePath = () =>
@@ -489,6 +529,7 @@ const GestureDiagram = ({
   useGradient = true,
   gradient,
   continuous,
+  cornerRadius = 0,
   highlightColor,
 }: GestureDiagramProps) => {
   const [id] = useState(nanoid())
@@ -750,6 +791,7 @@ const GestureDiagram = ({
           arrowhead={arrowhead}
           color={color}
           continuous={isContinuous}
+          cornerRadius={cornerRadius}
           dropShadow={dropShadow}
           extendedPath={extendedPath}
           highlight={highlight}
