@@ -43,8 +43,9 @@ interface GestureDiagramProps {
   rounded?: boolean
   /** If true, the cancel gesture will have the same styling as the other gestures. Otherwise, there are additional sizing and margin styles applied. */
   styleCancelAsRegularGesture?: boolean
-  /** Which kind of arrowhead to draw. 'none' skips the marker entirely. */
-  arrowhead?: 'filled' | 'outlined' | 'none'
+  /** Which kind of arrowhead to draw. 'none' skips the marker entirely. 'outlined-wide' draws a
+   * wider chevron as its own path rather than an SVG marker; see `chevronPoints`. */
+  arrowhead?: 'filled' | 'outlined' | 'outlined-wide' | 'none'
   /** When true, renders a drop-shadow glow filter on all path segments. Default: true. */
   glow?: boolean
   /** When true (default), renders gradient strokes via <defs> + GradientStyleBlock. When false, uses solid strokes from highlightColor/color. */
@@ -68,6 +69,13 @@ interface GestureDiagramProps {
    * between the last bend and the arrowhead. Default 0. Straight gestures only — `rounded` and the
    * rdld glyph derive their geometry elsewhere and are unaffected. */
   tipExtension?: number
+  /** Interior angle between the two legs of the 'outlined-wide' chevron, in degrees. Smaller is
+   * sharper. Default 80. Ignored by every other arrowhead. */
+  chevronApexAngle?: number
+  /** How far each leg of the 'outlined-wide' chevron spreads sideways, as a multiple of the drawn
+   * stroke thickness, so the arrowhead stays in proportion at any weight. Default 2.2. Ignored by
+   * every other arrowhead. */
+  chevronSize?: number
   /** Stroke color for highlighted segments when useGradient=false. Default: token('colors.vividHighlight'). */
   highlightColor?: string
 }
@@ -248,6 +256,40 @@ const polylinePath = (points: Point[], cornerRadius = 0): string => {
   return commands.join(' ')
 }
 
+/** Returns the three points of a chevron arrowhead — two legs meeting at an apex that sits on the
+ * gesture's final point, `tip`, splaying backward away from the direction of travel. `previous` is
+ * the vertex before the tip, and supplies that direction. `apexAngle` is the interior angle between
+ * the legs in degrees (smaller is sharper); `halfSpan` is how far each leg spreads sideways from
+ * the gesture's centerline.
+ *
+ * Drawn as its own <path> rather than as an SVG <marker>, because a marker gets its own coordinate
+ * system and cannot reference the gesture's gradient — an arrowhead drawn as a marker would jump to
+ * a flat color instead of continuing the ramp through to the tip.
+ */
+const chevronPoints = (
+  tip: Point,
+  previous: Point,
+  { apexAngle, halfSpan }: { apexAngle: number; halfSpan: number },
+): Point[] => {
+  const dx = tip.x - previous.x
+  const dy = tip.y - previous.y
+  const length = Math.hypot(dx, dy) || 1
+  // Unit vector pointing forward along the final segment, and its perpendicular.
+  const forwardX = dx / length
+  const forwardY = dy / length
+  const sideX = -forwardY
+  const sideY = forwardX
+  // How far back from the apex the legs sit, solved so that they always meet at exactly `apexAngle`
+  // whatever `halfSpan` works out to. The floor guards very wide angles, where the tangent tends to
+  // zero and the legs would be flung arbitrarily far back.
+  const legBack = halfSpan / Math.max(Math.tan((apexAngle / 2) * (Math.PI / 180)), 0.01)
+  return [
+    { x: tip.x - forwardX * legBack + sideX * halfSpan, y: tip.y - forwardY * legBack + sideY * halfSpan },
+    tip,
+    { x: tip.x - forwardX * legBack - sideX * halfSpan, y: tip.y - forwardY * legBack - sideY * halfSpan },
+  ]
+}
+
 /** Returns the first and last points of the gesture. Used to align a continuous gradient with the
  * gesture's overall direction of travel, since a linear gradient is a projection onto a single
  * line and has no way to follow the path's turns. */
@@ -360,7 +402,9 @@ const GradientStyleBlock = ({
 }
 
 type GesturePathProps = {
-  arrowhead: 'filled' | 'outlined' | 'none'
+  arrowhead: 'filled' | 'outlined' | 'outlined-wide' | 'none'
+  /** The arrowhead is drawn separately as a chevron path, so no marker is attached to the stroke. */
+  chevron: boolean
   color?: string
   /** Draw the gesture as one continuous <path> rather than one <path> per segment. */
   continuous: boolean
@@ -384,6 +428,7 @@ type GesturePathProps = {
 /** Renders the gesture path as SVG path element(s). */
 const GesturePath = ({
   arrowhead,
+  chevron,
   color,
   continuous,
   cornerRadius,
@@ -416,7 +461,7 @@ const GesturePath = ({
   }
   const allHighlighted = highlight != null && highlight >= path.length
   const noneHighlighted = highlight == null || highlight === 0
-  const markerEnd = arrowhead !== 'none' ? `url(#${id})` : undefined
+  const markerEnd = arrowhead !== 'none' && !chevron ? `url(#${id})` : undefined
   const activeColor = highlightColor ?? token('colors.vividHighlight')
   const inactiveColor = color ?? token('colors.fg')
 
@@ -535,6 +580,8 @@ const GestureDiagram = ({
   continuous,
   cornerRadius = 0,
   tipExtension = 0,
+  chevronApexAngle = 80,
+  chevronSize = 2.2,
   highlightColor,
 }: GestureDiagramProps) => {
   const [id] = useState(nanoid())
@@ -684,6 +731,22 @@ const GestureDiagram = ({
     }
   }
 
+  // 'outlined-wide' replaces the SVG marker with a chevron path, but only where there is a final
+  // straight segment to align it with. `rounded` and rdld gestures have no such segment, so they
+  // fall back to the ordinary outlined marker.
+  const chevron =
+    arrowhead === 'outlined-wide' && !rounded && path !== 'rdld' && positions.length >= 2
+      ? chevronPoints(positions[positions.length - 1], positions[positions.length - 2], {
+          apexAngle: chevronApexAngle,
+          // Scale with the drawn stroke, not the raw strokeWidth, so the arrowhead stays in
+          // proportion to the line it terminates.
+          halfSpan: strokeWidth * 1.5 * chevronSize,
+        })
+      : null
+
+  // 'outlined-wide' shares the outlined marker's geometry wherever it falls back to one.
+  const outlinedMarker = arrowhead === 'outlined' || arrowhead === 'outlined-wide'
+
   /** Crop the viewbox to the diagram and adjust the svg element's height when first rendered. */
   const onRef = (el: SVGGraphicsElement | null) => {
     if (!el) return
@@ -723,34 +786,28 @@ const GestureDiagram = ({
         viewBox={viewBox}
       >
         <defs>
-          {arrowhead !== 'none' && (
+          {arrowhead !== 'none' && !chevron && (
             <marker
               id={id}
               viewBox='0 0 10 10'
               refX={rounded ? '0' : '5'}
               refY='5'
-              markerWidth={arrowSize! * (arrowhead === 'outlined' ? 2 : 1)}
-              markerHeight={arrowSize! * (arrowhead === 'outlined' ? 3 : 1)}
+              markerWidth={arrowSize! * (outlinedMarker ? 2 : 1)}
+              markerHeight={arrowSize! * (outlinedMarker ? 3 : 1)}
               markerUnits='userSpaceOnUse'
               orient='auto-start-reverse'
             >
               <path
-                d={
-                  arrowhead === 'filled'
-                    ? 'M 0 0 L 10 5 L 0 10 z'
-                    : arrowhead === 'outlined'
-                      ? 'M 0 0 L 5 5 L 0 10'
-                      : undefined
-                }
+                d={arrowhead === 'filled' ? 'M 0 0 L 10 5 L 0 10 z' : 'M 0 0 L 5 5 L 0 10'}
                 fill={
-                  arrowhead === 'outlined'
+                  outlinedMarker
                     ? 'none'
                     : highlight != null && highlight >= path.length
                       ? (highlightColor ?? token('colors.vividHighlight'))
                       : (color ?? token('colors.fg'))
                 }
-                stroke={arrowhead === 'outlined' ? (color ?? token('colors.fg')) : 'none'}
-                strokeWidth={arrowhead === 'outlined' ? strokeWidth / 3 : 0}
+                stroke={outlinedMarker ? (color ?? token('colors.fg')) : 'none'}
+                strokeWidth={outlinedMarker ? strokeWidth / 3 : 0}
                 style={dropShadow ? { filter: dropShadow } : undefined}
               />
             </marker>
@@ -809,6 +866,7 @@ const GestureDiagram = ({
 
         <GesturePath
           arrowhead={arrowhead}
+          chevron={!!chevron}
           color={color}
           continuous={isContinuous}
           cornerRadius={cornerRadius}
@@ -826,6 +884,27 @@ const GestureDiagram = ({
           strokeWidth={strokeWidth}
           useGradient={useGradient}
         />
+
+        {chevron && (
+          <path
+            d={polylinePath(chevron)}
+            // Sharing the gesture's own gradient is the whole reason the chevron is a sibling path
+            // rather than a marker: the ramp carries on through the arrowhead instead of stopping
+            // at the tip of the stroke.
+            stroke={
+              useGradient && isContinuous
+                ? `url(#${extendedPath}-gradient-continuous)`
+                : highlight != null && highlight >= path.length
+                  ? (highlightColor ?? token('colors.vividHighlight'))
+                  : (color ?? token('colors.fg'))
+            }
+            strokeWidth={strokeWidth * 1.5}
+            strokeLinecap='round'
+            strokeLinejoin='round'
+            fill='none'
+            style={dropShadow ? { filter: dropShadow } : undefined}
+          />
+        )}
       </svg>
     </span>
   )
