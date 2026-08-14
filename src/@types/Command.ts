@@ -33,15 +33,11 @@ interface Command {
   /**
    * Determines how the command behaves when multiple thoughts are selected. This is a required property because multicursor support is nontrivial, and it must be thought through for each new command that is added.
    * - If true, the command will be executed for each cursor. Optional object for more control.
-   * - If false, the command will be executed as if there were no multicursors. The command will be executed on state.cursor as usual and any thoughts that are selected will stay selected. This is ideal for commands that do not interact with the thoughtspace, such as opening the Command Universe or navigating to a modal. If instead you want to disallow the command when multiple thoughts are selected, set { disallow: true }.
+   * - If false, the command will be executed as if there were no multicursors. The command will be executed on state.cursor as usual and any thoughts that are selected will stay selected. This is ideal for commands that do not interact with the thoughtspace, such as opening the Command Universe or navigating to a modal.
    **/
   multicursor:
     | boolean
     | {
-        /** If true, execution of the command will be prevented and the user will be shown an alert when more than one thought is selected. A single selected thought is executed on directly, as if only the cursor were set, so the cursor is not restored afterwards. This should only be used if the command makes absolutely no sense when multiple thoughts are selected. In most cases, even if there is no multiselect behavior, you can just execute the command on state.cursor (by setting multicursor: false) or execute the command on the first or last sibling (by setting { filter: 'first-sibling' } or { filter: 'last-sibling' ). */
-        disallow?: boolean
-        /** An error message to display when multicursor mode is not enabled. */
-        error?: ((state: State) => string) | string
         /** Optional override for executing the command for multiple cursors. */
         execMulticursor?: (cursors: Path[], dispatch: Dispatch, getState: () => State) => void
         /** A callback that is invoked when the command finishes executing for all filtered multicursors. */
