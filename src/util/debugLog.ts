@@ -1,3 +1,4 @@
+import pkg from '../../package.json'
 import storage from './storage'
 
 /** The localStorage key under which the rolling debug log is persisted. */
@@ -158,6 +159,8 @@ const setEnabled = (value: boolean): void => {
       ua: typeof navigator !== 'undefined' ? navigator.userAgent : '',
       screen: typeof window !== 'undefined' && window.screen ? `${window.screen.width}x${window.screen.height}` : '',
       mode: import.meta.env.MODE,
+      appVersion: pkg.version,
+      commitHash: __COMMIT_HASH__,
     })
     startFrameHeartbeat()
   } else {

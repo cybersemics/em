@@ -1,6 +1,0 @@
-{
-  "scripts": {
-    "build": "tsc",
-    "start": "node build/scripts/restoreChildren/index.js"
-  }
-}

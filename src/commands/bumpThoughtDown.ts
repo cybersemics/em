@@ -12,9 +12,13 @@ const bumpThoughtDownCommand: Command = {
   description: 'Bump the current thought down one level and replace it with a new, empty thought.',
   gesture: 'drd',
   keyboard: { key: 'd', meta: true, alt: true },
+  // The command ends with the caret in a new empty thought ready for typing, so keep the cursor where
+  // the last execution put it and clear the selection, as newThought does. Restoring the original
+  // cursor would move the caret off the empty thought whenever the bumped thought had no children,
+  // since the recomputed path then leads to the moved value rather than its empty replacement.
   multicursor: {
-    disallow: true,
-    error: 'Cannot bump down multiple thoughts.',
+    preventSetCursor: true,
+    clearMulticursor: true,
   },
   svg: BumpThoughtDownIcon,
   canExecute: state => {

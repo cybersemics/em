@@ -394,17 +394,8 @@ const globalCss = defineGlobalStyles({
     backgroundColor: 'var(--placeholder-background-color, {colors.codeBg})',
     fontFamily: 'monospace',
   },
-  // PandaCSS does not directly support fallbacks: https://github.com/chakra-ui/panda/discussions/846
   ':root': {
-    '--active-glow-gradient':
-      'linear-gradient(180deg, {colors.commandCenterBlue} 0%, {colors.commandCenterPurple} 100%)',
     '--safe-area-inset-bottom': 'env(safe-area-inset-bottom)',
-  },
-  '@supports (background-image: linear-gradient(180deg in oklch, #000))': {
-    ':root': {
-      '--active-glow-gradient':
-        'linear-gradient(180deg in oklch, {colors.commandCenterBlue} 0%, {colors.commandCenterPurple} 100%)',
-    },
   },
 })
 
@@ -428,8 +419,8 @@ export default defineConfig({
       breakpoints: {
         sm: '320px', // approx size of iPhone SE
         md: '400px', // approx size of iPhone 12 Pro
-        lg: '600px', // approx size of iPad
-        xl: '768px', // approx size of landscape tablet or laptop
+        lg: '600px', // landscape mobile devices and larger
+        xl: '800px', // approx size of a laptop
         '2xl': '1000px', // approx size of a desktop
         '3xl': '1200px', // approx size of a large desktop
       },
@@ -488,6 +479,7 @@ export default defineConfig({
             'cloneDroppedThought',
             'hoverArrow',
             'gestureTrace',
+            'gestureContentBlur',
             'hamburgerMenu',
             'sidebar',
             'modal',
@@ -549,11 +541,6 @@ export default defineConfig({
           },
         },
         durations,
-        gradients: {
-          activeGlow: {
-            value: 'var(--active-glow-gradient)',
-          },
-        },
       },
     },
   },
