@@ -20,6 +20,17 @@ const isExecutable = (state: State, command: Command) =>
   (!command.canExecute || command.canExecute(state)) &&
   (command.allowExecuteFromModal || !state.showModal || !state.showMobileCommandUniverse)
 
+/**
+ * Per-row "descend into the fog" transforms for the last visible single-column rows (issue #3801 §4).
+ * Index 0 = no fog; 1–4 fade progressively so hidden commands feel like they're emerging from fog.
+ */
+const FOG_STYLES: Record<number, { transform: string; opacity: number; filter: string }> = {
+  1: { transform: 'translateX(0.65rem) scale(0.875)', opacity: 0.875, filter: 'blur(1.5px)' },
+  2: { transform: 'translateX(0.95rem) scale(0.85)', opacity: 0.8, filter: 'blur(2px)' },
+  3: { transform: 'translateX(2.1rem) scale(0.825)', opacity: 0.7, filter: 'blur(2.5px)' },
+  4: { transform: 'translateX(2.8rem) scale(0.75)', opacity: 0.45, filter: 'blur(3px)' },
+}
+
 /** Renders a single command row inside the Gesture Menu. */
 const GestureMenuItem: FC<{
   command: Command
@@ -29,7 +40,9 @@ const GestureMenuItem: FC<{
   isLastCommand?: boolean
   /** Whether to scroll the selected row into view. Disabled in the non-scrolling multi-column grid. Defaults to true. */
   autoScroll?: boolean
-}> = ({ command, selected, gestureInProgress, isFirstCommand, isLastCommand, autoScroll = true }) => {
+  /** Fog depth (0–4) applied to trailing single-column rows when the list overflows. 0/undefined = no fog. */
+  fogDepth?: number
+}> = ({ command, selected, gestureInProgress, isFirstCommand, isLastCommand, autoScroll = true, fogDepth = 0 }) => {
   const ref = useRef<HTMLDivElement | null>(null)
   const disabled = useSelector((state: State) => !isExecutable(state, command))
   const isActive = command.isActive?.(store.getState())
@@ -52,6 +65,8 @@ const GestureMenuItem: FC<{
     }
   })
 
+  const fog = FOG_STYLES[fogDepth]
+
   return (
     <div
       ref={ref}
@@ -71,6 +86,9 @@ const GestureMenuItem: FC<{
         // column down and misalign its top from sibling columns.
         paddingTop: selected || isFirstCommand ? `${GESTURE_MENU_ITEM_SELECTED_PADDING_TOP_REM}rem` : 0,
         paddingBottom: selected ? `${GESTURE_MENU_ITEM_SELECTED_PADDING_BOTTOM_REM}rem` : 0,
+        // Fog transforms scale from the left edge so the translateX offset alone controls how far each
+        // row has drifted right as it descends into the fog.
+        ...(fog ? { ...fog, transformOrigin: 'left center' } : null),
       }}
     >
       <div

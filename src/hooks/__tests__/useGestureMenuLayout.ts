@@ -326,6 +326,29 @@ describe('useGestureMenuLayout', () => {
     expect(visibleCommandCount).toBe(0)
   })
 
+  // --- Single-column cap and fog (issue #3801) ---------------------------------------------------
+  // The single column caps at the same `rowsPerColumn` the grid uses; the component fogs the trailing
+  // rows rather than scrolling, so `visibleCommandCount < commandCount` is what drives the fog.
+
+  it('caps single-column visible commands on a short portrait viewport', () => {
+    // Narrow portrait → single column. A short viewport with many commands must hide some.
+    setViewport(390, 700)
+    const { columnCount, isMultiColumn, rowsPerColumn, visibleCommandCount } = layout(20)
+    expect(columnCount).toBe(1)
+    expect(isMultiColumn).toBe(false)
+    expect(visibleCommandCount).toBe(rowsPerColumn)
+    expect(visibleCommandCount).toBeLessThan(20)
+    expect(visibleCommandCount).toBeGreaterThan(0)
+  })
+
+  it('shows all single-column commands without overflow when they fit', () => {
+    // Tall portrait viewport, few commands → everything fits, no fog.
+    setViewport(390, TALL)
+    const { isMultiColumn, visibleCommandCount } = layout(4)
+    expect(isMultiColumn).toBe(false)
+    expect(visibleCommandCount).toBe(4)
+  })
+
   it('scales the column count with the runtime font size', () => {
     // At the default font size, 10 commands on a short 2-column viewport use both columns. At 2×
     // font the 280px minimum column doubles, dropping desktop-854 to a single column.

@@ -9,6 +9,7 @@ import openMobileCommandUniverseCommand from '../../commands/openMobileCommandUn
 import useFilteredCommands from '../../hooks/useFilteredCommands'
 import useGestureMenuLayout, {
   GESTURE_MENU_COLUMN_GAP_REM,
+  GESTURE_MENU_FOG_ROW_COUNT,
   GESTURE_MENU_HEADER_LABEL_FONT_SIZE_REM,
   GESTURE_MENU_HEADER_LABEL_MARGIN_BOTTOM_REM,
   GESTURE_MENU_HEADER_MARGIN_BOTTOM_REM,
@@ -68,8 +69,12 @@ const GestureMenu: FC<{
   // one column and it fills the panel, so 100% and columnWidth coincide.
   const dividerWidth = isMobilePortrait ? '100%' : columnWidth
 
-  // Only the grid trims; the single-column stack renders every command and scrolls instead.
-  const visibleCommands = isMultiColumn ? commands.slice(0, visibleCommandCount) : commands
+  // Both layouts cap instead of scrolling, so both trim to what the hook budgeted.
+  const visibleCommands = commands.slice(0, visibleCommandCount)
+
+  // True when the cap hides commands, so the single column fogs its trailing rows to signal "more
+  // below" (issue #3801 §4). The grid has no equivalent affordance — it simply drops the overflow.
+  const hasOverflow = visibleCommandCount < commands.length
 
   /**
    * Whether a command's row renders as selected. Every command is selected by an exact gesture match;
@@ -87,19 +92,33 @@ const GestureMenu: FC<{
     return false
   }
 
-  /** Renders command rows. Auto-scroll is only enabled in the single-column (scrolling) layout. */
-  const renderCommands = (items: Command[]) =>
-    items.map((command, index) => (
-      <GestureMenuItem
-        gestureInProgress={gestureInProgress as string}
-        key={command.id}
-        selected={isSelected(command)}
-        command={command}
-        isFirstCommand={index === 0}
-        isLastCommand={index === items.length - 1}
-        autoScroll={!isMultiColumn}
-      />
-    ))
+  /**
+   * Renders command rows. Auto-scroll is disabled everywhere now that both layouts cap their visible
+   * rows instead of scrolling. When `fog` is set (single-column overflow), the last
+   * GESTURE_MENU_FOG_ROW_COUNT rows fade into the fog to signal hidden commands (issue #3801 §4).
+   */
+  const renderCommands = (items: Command[], { fog = false }: { fog?: boolean } = {}) =>
+    items.map((command, index) => {
+      const distanceFromEnd = items.length - 1 - index
+      const fogDepth = fog ? Math.max(0, GESTURE_MENU_FOG_ROW_COUNT - distanceFromEnd) : 0
+      return (
+        <GestureMenuItem
+          gestureInProgress={gestureInProgress as string}
+          key={command.id}
+          selected={isSelected(command)}
+          command={command}
+          isFirstCommand={index === 0}
+          isLastCommand={index === items.length - 1}
+          autoScroll={false}
+          fogDepth={fogDepth}
+        />
+      )
+    })
+
+  // Single column is full-height so the capped list fills the viewport and its fogged bottom rows sit
+  // at the bottom of the screen (issue #3801 §4); multi-column stays content-height (bounded by
+  // maxHeight).
+  const fullHeight = `calc(100dvh - ${token('spacing.safeAreaBottom')} - ${token('spacing.safeAreaTop')})`
 
   return (
     <div
@@ -112,6 +131,7 @@ const GestureMenu: FC<{
         paddingTop: 'safeAreaTop',
         fontFamily: 'radioCanada',
       })}
+      style={{ height: isMultiColumn ? undefined : fullHeight }}
     >
       <div
         className={css({
@@ -123,7 +143,13 @@ const GestureMenu: FC<{
           display: 'flex',
           flexDirection: 'column',
         })}
-        style={{ fontSize }}
+        // Width is bounded by `columnWidth` on the column itself, so no fixed content-width cap here.
+        // In single column, fill the full-height root so the padded column below spans the viewport.
+        style={{
+          fontSize,
+          flex: isMultiColumn ? undefined : 1,
+          minHeight: isMultiColumn ? undefined : 0,
+        }}
       >
         {gestureInProgress && (
           <div
@@ -132,13 +158,21 @@ const GestureMenu: FC<{
 
               paddingInline: horizontalPadding,
               paddingTop: isSingleColumnMobile ? '0.75rem' : undefined,
+              // Full-height flex column in single column: the header stays fixed and the list flexes to
+              // fill the rest, so the capped list ends at the bottom of the viewport.
+              display: isMultiColumn ? undefined : 'flex',
+              flexDirection: isMultiColumn ? undefined : 'column',
+              height: isMultiColumn ? undefined : '100%',
+              minHeight: isMultiColumn ? undefined : 0,
             }}
           >
             {/* Header */}
             <div style={{ marginBottom: `${GESTURE_MENU_HEADER_MARGIN_BOTTOM_REM}rem` }}>
               <div
-                style={{
+                className={css({
                   color: 'gestureMenuLabel',
+                })}
+                style={{
                   marginBottom: `${GESTURE_MENU_HEADER_LABEL_MARGIN_BOTTOM_REM}rem`,
                   fontSize: `${GESTURE_MENU_HEADER_LABEL_FONT_SIZE_REM}rem`,
                   fontWeight: 500,
@@ -191,18 +225,30 @@ const GestureMenu: FC<{
                 ))}
               </div>
             ) : (
-              /* Single column: a plain flex stack rather than a grid. Above md it is held to the same
-                 columnWidth the grid tracks use, so collapsing from two columns to one leaves the
-                 surviving column exactly where and how wide it was. */
-              <div style={{ width: columnWidth }}>
+              /* Single column: a plain flex stack rather than a grid, held to the same columnWidth the
+                 grid tracks use so collapsing from two columns to one leaves the surviving column exactly
+                 where and how wide it was. Full-height so the list runs to the bottom of the viewport: it
+                 caps its rows to the visible height and fogs the trailing ones (issue #3801 §4). Cancel
+                 and Command Universe are the last two entries and trim like any other command. */
+              <div
+                style={{
+                  width: columnWidth,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  flex: 1,
+                  minHeight: 0,
+                }}
+              >
                 <div
                   className={css({
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '1.2rem',
                   })}
+                  // Cap to the visible height and clip the fogged overflow rather than scrolling.
+                  style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}
                 >
-                  {renderCommands(visibleCommands)}
+                  {renderCommands(visibleCommands, { fog: hasOverflow })}
                 </div>
               </div>
             )}

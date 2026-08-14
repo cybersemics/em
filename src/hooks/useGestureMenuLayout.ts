@@ -88,6 +88,9 @@ export const GESTURE_MENU_SELECTED_ROW_REM =
   GESTURE_MENU_ITEM_DESCRIPTION_MAX_LINES * GESTURE_MENU_ITEM_DESCRIPTION_LINE_HEIGHT_REM +
   GESTURE_MENU_ITEM_SELECTED_PADDING_BOTTOM_REM
 
+/** Number of trailing single-column rows that fade into the fog when the list overflows (issue #3801 §4). */
+export const GESTURE_MENU_FOG_ROW_COUNT = 4
+
 /** The computed multi-column Gesture Menu layout returned by {@link useGestureMenuLayout}. */
 type GestureMenuLayout = {
   /** Number of columns to render. */
@@ -195,7 +198,9 @@ const useGestureMenuLayout = (
   // and once we're down to one column, this is identical to the single-column mobile layout.
   const columnCount = Math.min(maxColumns, Math.max(1, Math.ceil(commandCount / rowsPerColumn)))
 
-  // Trim to what the open columns can actually hold, so the grid never crops a partially drawn row.
+  // Trim to what the open columns can actually hold, so neither layout ever crops a partially drawn
+  // row. At one column this is the single-column cap: the list stops at the last fully visible row and
+  // the component fogs the trailing ones instead of scrolling (issue #3801 §4).
   const visibleCommandCount = Math.min(commandCount, columnCount * rowsPerColumn)
 
   return {
