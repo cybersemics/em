@@ -11,6 +11,13 @@ import GestureDiagram from './GestureDiagram'
 import HighlightedText from './HighlightedText'
 import SettingsIcon from './icons/SettingsIcon'
 
+// Hoisted out of the render so that GestureDiagram's memoization is not defeated by a fresh object
+// identity on every render.
+const GESTURE_GRADIENT = {
+  from: token('colors.gestureDiagramGradientStart'),
+  to: token('colors.gestureDiagramGradientEnd'),
+}
+
 /** Returns true if the command can be executed in the current state. */
 const isExecutable = (state: State, command: Command) =>
   (!command.canExecute || command.canExecute(state)) &&
@@ -60,17 +67,30 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, se
             textAlign: 'center',
           })}
         >
-          <GestureDiagram
-            cssRaw={css.raw({
-              width: { sm: '80px', md: '130px' },
-              height: { sm: '80px', md: '130px' },
+          {/* Square box for the diagram to fill. The cell's width drives the size, capped so it
+              never grows past what the old fixed sizing allowed. */}
+          <div
+            className={css({
+              width: '100%',
+              aspectRatio: '1 / 1',
+              maxWidth: '130px',
+              margin: '0 auto',
             })}
-            path={gestureString(command)}
-            size={130}
-            arrowSize={25}
-            strokeWidth={7.5}
-            arrowhead={'outlined'}
-          />
+          >
+            <GestureDiagram
+              path={gestureString(command)}
+              fillContainer
+              size={150}
+              arrowSize={1}
+              strokeWidth={12}
+              arrowhead='outlined-wide'
+              cornerRadius={12}
+              tipExtension={28}
+              gradient={GESTURE_GRADIENT}
+              continuous
+              glow={false}
+            />
+          </div>
         </td>
       ) : null}
 
