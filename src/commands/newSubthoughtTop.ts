@@ -11,8 +11,11 @@ const newSubthoughtTopCommand: Command = {
   gesture: 'rdu',
   keyboard: { key: Key.Enter, shift: true, meta: true },
   multicursor: {
-    disallow: true,
-    error: 'Cannot create a new subthought with multiple thoughts.',
+    // Each selected thought is a distinct insertion parent, so execute once per selected thought.
+    // preventSetCursor leaves the cursor in the last created subthought, ready to type, instead of restoring the old cursor.
+    // clearMulticursor drops the stale selection so typing edits only the new subthought.
+    clearMulticursor: true,
+    preventSetCursor: true,
   },
   svg: NewSubthoughtAboveIcon,
   canExecute: () => isDocumentEditable(),
