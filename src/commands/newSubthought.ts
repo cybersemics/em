@@ -7,7 +7,10 @@ import isDocumentEditable from '../util/isDocumentEditable'
 const exec = newThought({ insertNewSubthought: true })
 
 const multicursor: Command['multicursor'] = {
-  filter: 'last-sibling',
+  // Each selected thought is a distinct insertion parent, so execute once per selected thought.
+  // A sibling filter would collapse a selection of siblings to a single insertion, silently discarding most of the selection.
+  // preventSetCursor leaves the cursor in the last created subthought, ready to type, instead of restoring the old cursor.
+  // clearMulticursor drops the stale selection so typing edits only the new subthought.
   clearMulticursor: true,
   preventSetCursor: true,
 }
