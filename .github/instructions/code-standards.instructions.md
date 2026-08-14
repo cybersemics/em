@@ -55,5 +55,6 @@
 
 - Write a JSDOC comment for each function definition.
 - Add descriptive comments to code that is counterintuitive, non-obvious, or requires explanation.
+- JSDOC prose must be complete sentences (`jsdoc/require-description-complete-sentence`). Put shell commands, which are neither capitalized nor sentence-terminated, in a fenced code block, and end the lead-in line with a period rather than a colon — a colon merges the fence into the preceding paragraph and the rule then demands a period after the command. For a single command, inline code inside a sentence reads better than a fence: ``Run manually with `node scripts/estimate/src/backfill.ts`.`` Never let the rule's autofixer capitalize a command, path, or identifier.
 - Avoid overly vague variable names or extraneous affixes such as "data".
 - Avoid redundancy in code and naming.
