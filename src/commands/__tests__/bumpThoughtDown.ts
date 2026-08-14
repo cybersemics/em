@@ -44,7 +44,7 @@ describe('DOM', () => {
   })
 
   // https://github.com/cybersemics/em/issues/4924
-  it.skip('bumps the cursor thought down when the keyboard shortcut is pressed', async () => {
+  it('bumps the cursor thought down when the keyboard shortcut is pressed', async () => {
     await dispatch([
       importText({
         text: `
