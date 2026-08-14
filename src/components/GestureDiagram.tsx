@@ -69,6 +69,10 @@ interface GestureDiagramProps {
    * between the last bend and the arrowhead. Default 0. Straight gestures only — `rounded` and the
    * rdld glyph derive their geometry elsewhere and are unaffected. */
   tipExtension?: number
+  /** Size the diagram to its parent rather than to a fixed pixel size derived from
+   * `size`/`maxWidth`/`maxHeight`, and frame it with a centered square viewBox so that every
+   * gesture fills its cell at the same visual scale whatever its shape. */
+  fillContainer?: boolean
   /** Interior angle between the two legs of the 'outlined-wide' chevron, in degrees. Smaller is
    * sharper. Default 80. Ignored by every other arrowhead. */
   chevronApexAngle?: number
@@ -198,6 +202,10 @@ const ArcGradient = ({ index, extendedPath, size }: { index: number; extendedPat
   )
 }
 
+// The natural extent of the rdld glyph below, in user-space units: its tallest dimension, from the
+// top of the question mark to the bottom of its stem.
+const RDLD_NATURAL_EXTENT = 76
+
 // The 4 custom Bezier segments for the rdld (Command Universe) question-mark gesture.
 const RDLD_SEGMENTS = [
   'M 29.7,13.5 Q 46.8,-4.5 63,13.5',
@@ -298,6 +306,19 @@ const paddedViewBox = (
   } ${bounds.height + arrowSize * 2 + strokeWidth * 4}`
 }
 
+/** Returns a square viewBox centered on the given bounds, at least `minExtent` across before
+ * padding is added. Squaring the viewBox keeps every gesture at the same scale whatever its shape,
+ * so a grid of diagrams reads as one set rather than each one filling its cell differently. */
+const squareViewBox = (
+  bounds: { x: number; y: number; width: number; height: number },
+  { minExtent, pad }: { minExtent: number; pad: number },
+) => {
+  const side = Math.max(bounds.width, bounds.height, minExtent) + pad * 2
+  const centerX = bounds.x + bounds.width / 2
+  const centerY = bounds.y + bounds.height / 2
+  return `${centerX - side / 2} ${centerY - side / 2} ${side} ${side}`
+}
+
 /** Returns the three points of a chevron arrowhead — two legs meeting at an apex that sits on the
  * gesture's final point, `tip`, splaying backward away from the direction of travel. `previous` is
  * the vertex before the tip, and supplies that direction. `apexAngle` is the interior angle between
@@ -354,15 +375,15 @@ const ContinuousGradient = ({
   path,
   positions,
   rounded,
-  size,
+  arcSize,
 }: {
   extendedPath: Gesture
   path: Gesture
   positions: Point[]
   rounded?: boolean
-  size: number
+  arcSize: number
 }) => {
-  const { start, end } = gestureEndpoints(path, positions, rounded, size)
+  const { start, end } = gestureEndpoints(path, positions, rounded, arcSize)
   return (
     <linearGradient
       id={`${extendedPath}-gradient-continuous`}
@@ -452,6 +473,9 @@ type GesturePathProps = {
   continuous: boolean
   /** Radius of the rounded bend at each interior vertex. 0 leaves the corners sharp. */
   cornerRadius: number
+  /** The `size` the arcs of a `rounded` gesture are derived from. Differs from `size` only in
+   * fillContainer mode, where curves are scaled up to match the straight gestures' extent. */
+  arcSize: number
   dropShadow?: string
   extendedPath: Gesture
   highlight?: number
@@ -462,10 +486,14 @@ type GesturePathProps = {
   positions: Point[]
   rounded?: boolean
   scale: number
-  size: number
   strokeWidth: number
   useGradient: boolean
 }
+
+/** Wraps its children in a scaling <g> when a scale is needed, and renders them bare otherwise so
+ * that the common case adds no element to the tree. */
+const GestureGroup = ({ scale, children }: { scale: number; children: React.ReactNode }) =>
+  scale === 1 ? <>{children}</> : <g transform={`scale(${scale})`}>{children}</g>
 
 /** Renders the gesture path as SVG path element(s). */
 const GesturePath = ({
@@ -474,6 +502,7 @@ const GesturePath = ({
   color,
   continuous,
   cornerRadius,
+  arcSize,
   dropShadow,
   extendedPath,
   highlight,
@@ -484,13 +513,12 @@ const GesturePath = ({
   positions,
   rounded,
   scale,
-  size,
   strokeWidth,
   useGradient,
 }: GesturePathProps) => {
   /** Generates an SVG path string for a curved segment of the gesture. */
   const generateArcPath = (index: number, pathDirs: Direction[]) => {
-    const { startX, startY, radius, sweepFlag, endX, endY } = generateArcCoordinates(index, pathDirs, size)
+    const { startX, startY, radius, sweepFlag, endX, endY } = generateArcCoordinates(index, pathDirs, arcSize)
     return `M ${startX} ${startY} A ${radius} ${radius} 0 0 ${sweepFlag} ${endX} ${endY}`
   }
 
@@ -516,7 +544,7 @@ const GesturePath = ({
 
     /** Builds the `d` attribute for a whole gesture, in whichever shape family it belongs to. */
     const wholePath = () =>
-      path === 'rdld' ? joinPathSegments(RDLD_SEGMENTS) : rounded ? arcChainPath(path, size) : makePath(positions)
+      path === 'rdld' ? joinPathSegments(RDLD_SEGMENTS) : rounded ? arcChainPath(path, arcSize) : makePath(positions)
 
     const continuousMarkerEnd = path === 'rdld' ? undefined : markerEnd
 
@@ -622,6 +650,7 @@ const GestureDiagram = ({
   continuous,
   cornerRadius = 0,
   tipExtension = 0,
+  fillContainer = false,
   chevronApexAngle = 80,
   chevronSize = 2.2,
   highlightColor,
@@ -789,6 +818,16 @@ const GestureDiagram = ({
   // 'outlined-wide' shares the outlined marker's geometry wherever it falls back to one.
   const outlinedMarker = arrowhead === 'outlined' || arrowhead === 'outlined-wide'
 
+  // In fillContainer mode every gesture is framed by a square viewBox at least `fitExtent` across,
+  // so that they all render at the same scale. Curved gestures are smaller than that by nature, so
+  // they are scaled up to match; otherwise they would sit marooned in the middle of their cell
+  // while the straight gestures filled theirs.
+  // - rounded: a full turn spans 2 * radius = 0.8 * arcSize, so arcSize = fitExtent / 0.8.
+  // - rdld: hardcoded coordinates, so it is scaled with a transform instead.
+  const fitExtent = size + tipExtension
+  const arcSize = fillContainer ? fitExtent / 0.8 : size
+  const glyphScale = fillContainer && path === 'rdld' ? fitExtent / RDLD_NATURAL_EXTENT : 1
+
   const viewBoxPadding = { arrowhead, arrowSize: arrowSize!, outlinedMarker, strokeWidth }
 
   // Straight gestures are made of line segments whose endpoints we already know, so their bounds
@@ -798,25 +837,42 @@ const GestureDiagram = ({
   // new coordinate system, leaving the gesture visibly offset inside its box. `rounded` and rdld
   // gestures are curves whose extent we do not track, so they still measure with getBBox() below.
   const measuredDuringRender = path !== 'rdld' && !rounded
+  // The square viewBox pads equally on all sides, so it takes the larger of the two axis paddings.
+  const squarePadding = { minExtent: fitExtent, pad: arrowSize! + strokeWidth * 4 }
+  /** Frames the given geometry bounds as a viewBox, squared off when filling a container. */
+  const frame = (bounds: { x: number; y: number; width: number; height: number }) =>
+    fillContainer ? squareViewBox(bounds, squarePadding) : paddedViewBox(bounds, viewBoxPadding)
   const computedViewBox =
-    viewBox ??
-    (measuredDuringRender
-      ? paddedViewBox(boundsOf(chevron ? [...positions, ...chevron] : positions), viewBoxPadding)
-      : undefined)
+    viewBox ?? (measuredDuringRender ? frame(boundsOf(chevron ? [...positions, ...chevron] : positions)) : undefined)
 
   /** Crop the viewbox to the diagram and adjust the svg element's height when first rendered. */
   const onRef = (el: SVGGraphicsElement | null) => {
     if (!el || viewBox || measuredDuringRender) return
-    el.setAttribute('viewBox', paddedViewBox(el.getBBox(), viewBoxPadding))
+    el.setAttribute('viewBox', frame(el.getBBox()))
   }
 
   return (
     <span
-      className={css({ display: 'inline-block' }, cssRaw)}
-      style={{ width: `${maxWidth ?? size}px`, height: `${maxHeight ?? size}px` }}
+      className={css({ display: fillContainer ? 'block' : 'inline-block' }, cssRaw)}
+      style={
+        fillContainer
+          ? // Width only. The height follows from the SVG's own aspect ratio, which its square
+            // viewBox fixes at 1:1. Constraining the span's height instead would rely on a
+            // percentage height resolving against an aspect-ratio-derived parent, which iOS Safari
+            // does not treat as definite — the chain collapses and the SVG overflows the span.
+            { width: '100%' }
+          : { width: `${maxWidth ?? size}px`, height: `${maxHeight ?? size}px` }
+      }
     >
       <svg
-        className={css(inGestureContainer && { position: 'relative', top: '10px' }, { width: '100%', height: '100%' })}
+        className={css(
+          inGestureContainer && { position: 'relative', top: '10px' },
+          // In fillContainer mode the SVG's own box is what gives the span its height, so it has to
+          // be a block: as an inline element it would sit on a text baseline and the descender gap
+          // below it would show up as extra height. In fixed-size mode the span's height is
+          // explicit, so the gap is not observable and the SVG simply fills it.
+          fillContainer ? { width: '100%', display: 'block' } : { width: '100%', height: '100%' },
+        )}
         style={style}
         ref={onRef}
         viewBox={computedViewBox}
@@ -857,7 +913,7 @@ const GestureDiagram = ({
                   path={path}
                   positions={positions}
                   rounded={rounded}
-                  size={size}
+                  arcSize={arcSize}
                 />
               ) : extendedPath === 'rdld' ? (
                 <MobileCommandUniverseGradients />
@@ -868,7 +924,7 @@ const GestureDiagram = ({
                       key={`${extendedPath}-gradient-${i}`}
                       index={i}
                       extendedPath={extendedPath}
-                      size={size}
+                      size={arcSize}
                     />
                   ) : (
                     <linearGradient
@@ -900,26 +956,31 @@ const GestureDiagram = ({
           />
         )}
 
-        <GesturePath
-          arrowhead={arrowhead}
-          chevron={!!chevron}
-          color={color}
-          continuous={isContinuous}
-          cornerRadius={cornerRadius}
-          dropShadow={dropShadow}
-          extendedPath={extendedPath}
-          highlight={highlight}
-          highlightColor={highlightColor}
-          id={id}
-          path={path}
-          pathSegments={pathSegments}
-          positions={positions}
-          rounded={rounded}
-          scale={scale}
-          size={size}
-          strokeWidth={strokeWidth}
-          useGradient={useGradient}
-        />
+        {/* The rdld glyph is hardcoded at a fixed size, so fillContainer scales it with a transform
+            rather than by re-deriving its coordinates. Gradients referenced from <defs> resolve in
+            the user space inside this group, so their coordinates need no adjustment. */}
+        <GestureGroup scale={glyphScale}>
+          <GesturePath
+            arrowhead={arrowhead}
+            chevron={!!chevron}
+            color={color}
+            continuous={isContinuous}
+            cornerRadius={cornerRadius}
+            arcSize={arcSize}
+            dropShadow={dropShadow}
+            extendedPath={extendedPath}
+            highlight={highlight}
+            highlightColor={highlightColor}
+            id={id}
+            path={path}
+            pathSegments={pathSegments}
+            positions={positions}
+            rounded={rounded}
+            scale={scale}
+            strokeWidth={strokeWidth}
+            useGradient={useGradient}
+          />
+        </GestureGroup>
 
         {chevron && (
           <path
