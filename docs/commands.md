@@ -451,6 +451,10 @@ Join all thoughts at the same level into a single thought.
 
 https://github.com/user-attachments/assets/1f7a91e0-4dd5-4054-b463-9e3b724a8d57
 
+### Merge Duplicates
+
+Merges all duplicate siblings at the same level as the cursor. The first thought of each duplicated value is kept, and the children of the rest are moved into it. Empty thoughts are never treated as duplicates.
+
 ### Split Sentences
 
 Splits multiple sentences in a single thought into separate thoughts.

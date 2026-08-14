@@ -562,6 +562,7 @@ export const COMMAND_GROUPS: {
     title: 'Editing thoughts',
     commands: [
       'join',
+      'mergeDuplicates',
       'splitSentences',
       'bold',
       'italic',
