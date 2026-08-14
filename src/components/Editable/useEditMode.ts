@@ -267,7 +267,7 @@ const useEditMode = ({
       const state = store.getState()
       const multiEditing = isMultiEditing(state)
       const preserveMulticursor = multiEditing && isMulticursorPath(state, path)
-      
+
       // Suppress the synthesized mousedown that iOS Safari can emit for a tap whose touchend already moved
       // the cursor without entering edit mode (see globals.suppressFocusAfterCursorMove). The cursor move
       // re-rendered this thought with editingOrOnCursor true before the mousedown arrived, so the branch

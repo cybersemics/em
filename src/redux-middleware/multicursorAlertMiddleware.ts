@@ -28,15 +28,22 @@ const multicursorAlertMiddleware: ThunkMiddleware<State> = ({ getState, dispatch
     if (isTouch) {
       if (numMulticursors === 0 && state.showCommandCenter) {
         dispatch(toggleDropdown({ dropDownType: 'commandCenter', value: false }))
-      } else if (numMulticursors > 0 && !state.showCommandCenter && !state.showUndoSlider && !state.isKeyboardOpen) {
+      } else if (
+        numMulticursors > 0 &&
+        !state.showCommandCenter &&
         // Do not open the Command Center while the Undo Slider session is active.
         // Otherwise undoing/redoing a multicursor command (e.g. delete from the Command Center) restores the
         // multicursor, which would re-open the Command Center and dismiss the Undo Slider being used.
-        // Do not open the Command Center while the keyboard is open, i.e. while the multiselection is being edited
+        !state.showUndoSlider &&
+        // Do not re-open the Command Center while the keyboard is open, i.e. while the multiselection is being edited
         // (Clear Thought). The sheet would cover the editing session, and on iOS any focus that arrives while the
         // Command Center is shown is actively dismissed (see onFocus in Editable), so the keyboard could never open.
         // When the keyboard closes (blur or exiting the cleared state), the multicursors are still active and this
         // branch re-opens the Command Center.
+        // The multiselection itself changing is exempt, since selecting a thought while the keyboard is open is how
+        // the Command Center is opened in the first place (Open Command Center adds the cursor thought).
+        (!state.isKeyboardOpen || numMulticursors !== prevNumMulticursors)
+      ) {
         dispatch(toggleDropdown({ dropDownType: 'commandCenter', value: true }))
       }
     }

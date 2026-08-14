@@ -335,6 +335,10 @@ const initEvents = (store: Store<State, any>) => {
       oldState === 'active' &&
       newState === 'passive' &&
       document.activeElement &&
+      // document.activeElement falls back to the body when nothing is focused, so the keyboard can only be open if
+      // some other element has focus. Without this, Clear Thought's asynchronous focus was mistaken for an app
+      // switch and the caret it had just placed was cleared. https://github.com/cybersemics/em/pull/4520
+      document.activeElement !== document.body &&
       !document.hasFocus()
     ) {
       passiveTimeout = setTimeout(selection.clear, 10) as unknown as number

@@ -842,10 +842,13 @@ const Editable = ({
 
       if (isTouch) {
         dispatch((dispatch, getState) => {
+          const state = getState()
           // Blurring the thought that holds the caret ends an edited multiselection (Clear Thought), so end the
           // multiselection too. Otherwise the multicursors survive the blur and re-open the Command Center as soon as
           // the keyboard closes (see multicursorAlertMiddleware). (#4519)
-          if (isMulticursorPath(getState(), path)) dispatch(clearMulticursors())
+          // Not when the Command Center is open, since then the blur was caused by the Command Center opening over the
+          // thought (see onFocus), rather than by the user dismissing the keyboard.
+          if (!state.showCommandCenter && isMulticursorPath(state, path)) dispatch(clearMulticursors())
           dispatch(keyboardOpenActionCreator({ value: false }))
         })
       }
