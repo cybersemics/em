@@ -332,7 +332,8 @@ describe('Caret', () => {
     await newThought()
 
     const undo = await browser.$('[data-testid="toolbar-icon"][aria-label="Undo"]').getElement()
-    await tap(undo, { pointerType: 'touch' })
+    // The y offset compensates for the browser top bar, which getElementRect does not account for.
+    await tap(undo, { y: 60, pointerType: 'touch' })
     // Wait for the undone thought to be removed, otherwise newThought below matches the stale editable.
     await waitUntil(
       async () => (await browser.execute(() => document.querySelectorAll('[data-editable]').length)) === 0,
