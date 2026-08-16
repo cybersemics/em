@@ -218,7 +218,7 @@
     "@wdio/types": "^9.30.1",
     "browserstack-local": "^1.5.8",
     "chalk": "^6.0.0",
-    "cloudflared": "^0.7.1",
+    "cloudflared": "^0.7.3",
     "dotenv": "17.4.2",
     "eslint": "^10.8.0",
     "eslint-config-prettier": "^10.1.8",
