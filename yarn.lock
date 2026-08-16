@@ -11752,7 +11752,7 @@ __metadata:
     lottie-react: "npm:^2.4.1"
     marked: "npm:^18.0.9"
     moize: "npm:^6.1.7"
-    motion: "npm:^13.0.0"
+    motion: "npm:^13.1.0"
     murmurhash3js: "npm:^3.0.1"
     nanoid: "npm:^6.0.1"
     npm-run-all2: "npm:^9.0.3"
@@ -13863,9 +13863,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"framer-motion@npm:^13.0.0":
-  version: 13.0.0
-  resolution: "framer-motion@npm:13.0.0"
+"framer-motion@npm:^13.1.0":
+  version: 13.1.0
+  resolution: "framer-motion@npm:13.1.0"
   dependencies:
     motion-dom: "npm:^13.0.0"
     motion-utils: "npm:^13.0.0"
@@ -13878,7 +13878,7 @@ __metadata:
       optional: true
     react-dom:
       optional: true
-  checksum: 10c0/96647614a9dd1b89f3243d766772b3641ee5b84c49b59f0578090c1e66985203eb9d635c4933b5923477206f7f89e33de7359bb0d3d7b3334788fe8c64445759
+  checksum: 10c0/0fa4c5d17369f288bfff434191fbd112d44ae06f7a99370e691128db1e302804332e5ec5e980c7a59ffcdb3248fe68f96bce5931d0c066eff55ec6d493fc197c
   languageName: node
   linkType: hard
 
@@ -18465,11 +18465,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"motion@npm:^13.0.0":
-  version: 13.0.0
-  resolution: "motion@npm:13.0.0"
+"motion@npm:^13.1.0":
+  version: 13.1.0
+  resolution: "motion@npm:13.1.0"
   dependencies:
-    framer-motion: "npm:^13.0.0"
+    framer-motion: "npm:^13.1.0"
     tslib: "npm:^2.4.0"
   peerDependencies:
     react: ^18.0.0 || ^19.0.0
@@ -18479,7 +18479,7 @@ __metadata:
       optional: true
     react-dom:
       optional: true
-  checksum: 10c0/08d32acb63fff8763d6591d6e4f114b0e16aea878969aecea65de696481e7af3eecd0a5c1a1ba91e504e82e5a9b851b4f8387da7afbfbb2db3d77f5d941fa6a4
+  checksum: 10c0/2f974b22929945cf96d0164916fb04c470d993ab81ca9006bd590638edb35d04e202dc3f4e61fede4fd81bc9ef9d8a47555d73c776e428a357e09097e35b2750
   languageName: node
   linkType: hard
 
