@@ -1,4 +1,5 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { keyboardOpenActionCreator as keyboardOpen } from '../../actions/keyboardOpen'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import { executeCommand, executeCommandWithMulticursor } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
@@ -255,6 +256,23 @@ describe('splitSentences', () => {
   - one - 1.
   - two.
   - three.`)
+  })
+
+  // https://github.com/cybersemics/em/issues/4675
+  it.skip('does not enter edit mode if the keyboard is closed', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - one. two. three.
+        `,
+      }),
+      setCursor(['one. two. three.']),
+      keyboardOpen({ value: false }),
+    ])
+
+    executeCommand(splitSentencesCommand, { store })
+
+    expect(store.getState().isKeyboardOpen).toBe(false)
   })
 
   describe('multicursor', () => {
