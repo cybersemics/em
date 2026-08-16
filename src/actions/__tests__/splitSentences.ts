@@ -788,13 +788,36 @@ describe('dash splitting', () => {
 
 describe('symbol splitting', () => {
   // https://github.com/cybersemics/em/issues/4393
-  it.skip('splits thought on arrows', () => {
+  it('splits thought on arrows', () => {
     const value = 'a → b → c'
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
   - a
   - b
+  - c`)
+  })
+
+  it('splits thought on each of the symbols ↑↓←→+:', () => {
+    const value = 'a ↑ b ↓ c ← d → e + f : g'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+  - b
+  - c
+  - d
+  - e
+  - f
+  - g`)
+  })
+
+  it('splits thought on comma rather than on a symbol', () => {
+    const value = 'a: b, c'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - a: b
   - c`)
   })
 })
