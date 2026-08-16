@@ -285,6 +285,30 @@ describe('splitSentences', () => {
   - More C.`)
     })
 
+    // https://github.com/cybersemics/em/issues/4396
+    it.skip('splits thoughts with a colon into a main thought and child', async () => {
+      store.dispatch([
+        importText({
+          text: `
+            - Start: 1
+            - End: 5
+          `,
+        }),
+        setCursor(['Start: 1']),
+        addMulticursor(['Start: 1']),
+        addMulticursor(['End: 5']),
+      ])
+
+      executeCommandWithMulticursor(splitSentencesCommand, { store })
+
+      const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+      expect(exported).toBe(`- __ROOT__
+  - Start
+    - 1
+  - End
+    - 5`)
+    })
+
     it('handles mixed scenarios with single and multiple sentences', async () => {
       store.dispatch([
         importText({
