@@ -307,6 +307,34 @@ describe('render', () => {
     const leaves = document.querySelectorAll('[data-bullet="leaf"]')
     expect(leaves.length).toBe(0)
   })
+
+  // https://github.com/cybersemics/em/issues/4956
+  it.skip('do not apply =children/=bullet to context view entries', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - a
+          - m
+            - x
+        - b
+          - =children
+            - =bullet
+              - Ordered
+          - c
+            - m
+              - y
+      `,
+      }),
+      setCursor(['a', 'm']),
+      toggleContextView(),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // c is a context of m, so b's =children/=bullet/Ordered should not number it
+    const ordered = document.querySelectorAll('[data-bullet="ordered"]')
+    expect(ordered.length).toBe(0)
+  })
 })
 
 describe('expansion', () => {
