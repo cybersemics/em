@@ -296,6 +296,8 @@ The predicate is [`childrenFilterPredicate`](../src/selectors/getChildren.ts). I
 
 When no sort preference is set, manual `rank` order is used. This is why fractional ranks matter: dragging a thought between two siblings is a single rank update, not a sibling-wide reshuffle.
 
+Empty and emoji-only thoughts are exempt from the sort condition and keep their point of creation. [`newThought`](../src/actions/newThought.ts) and [`editThought`](../src/actions/editThought.ts) preserve their `rank` instead of sorting them into place, so a thought you have just created stays where you created it while you type into it. [`getSortComparator`](../src/selectors/getChildren.ts) honors this by falling back to `rank` whenever either thought being compared is empty or emoji-only, which is what keeps the sorted list in agreement with the rendered order — the tree itself is built from `getChildrenRanked`.
+
 ## Views
 
 ### Normal view
