@@ -191,7 +191,7 @@ describe('normal view', () => {
   })
 
   // https://github.com/cybersemics/em/issues/4951
-  it.skip('move cursor from a new empty thought to the last thought in an ascending sorted context', () => {
+  it('move cursor from a new empty thought to the last thought in an ascending sorted context', () => {
     const text = `
       - a
         - =sort
