@@ -34,6 +34,38 @@ describe('space-to-indent', () => {
     expect(exported).toEqual(expectedOutput)
   })
 
+  // https://github.com/cybersemics/em/issues/4950
+  it.skip('indent on empty thought in a sorted context', () => {
+    store.dispatch(
+      importText({
+        text: `
+          - a
+            - =sort
+              - Alphabetical
+                - Asc
+            - b
+            - c
+        `,
+      }),
+    )
+    store.dispatch([setCursor(['a', 'c']), newThought({ value: '' })])
+
+    executeCommandWithMulticursor(indentCommand, { store, type: 'keyboard' })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+
+    const expectedOutput = `- ${HOME_TOKEN}
+  - a
+    - =sort
+      - Alphabetical
+        - Asc
+    - b
+    - c
+      - `
+
+    expect(exported).toEqual(expectedOutput)
+  })
+
   it('do nothing on a non-empty thought', () => {
     store.dispatch(
       importText({
