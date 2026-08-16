@@ -457,7 +457,7 @@ Merges all duplicate siblings at the same level as the cursor. The first thought
 
 ### Split Sentences
 
-Splits multiple sentences in a single thought into separate thoughts.
+Splits multiple sentences in a single thought into separate thoughts. Sentence punctuation (`.;!?`) takes priority; a thought with a single sentence is split on commas, then on the symbols `↑↓←→+:`, then on the word "and". A dash (`-`, `–`, or `—`) and trailing parenthetical content are split into a subthought instead of a sibling.
 
 <kbd>Command + Shift + S</kbd>
 
