@@ -4412,19 +4412,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@mui/core-downloads-tracker@npm:^9.3.0":
+"@mui/core-downloads-tracker@npm:^9.3.1":
   version: 9.3.1
   resolution: "@mui/core-downloads-tracker@npm:9.3.1"
   checksum: 10c0/ca04394edbcfb62ad88174477f69bd6e472a61446ad70fa1574091a6a3e9dcdac46d4a7f4551c8189990974a861c82cf8983b023fbd6f1d1172ab192d1c79a79
   languageName: node
   linkType: hard
 
-"@mui/material@npm:^9.3.0":
-  version: 9.3.0
-  resolution: "@mui/material@npm:9.3.0"
+"@mui/material@npm:^9.3.1":
+  version: 9.3.1
+  resolution: "@mui/material@npm:9.3.1"
   dependencies:
     "@babel/runtime": "npm:^7.29.7"
-    "@mui/core-downloads-tracker": "npm:^9.3.0"
+    "@mui/core-downloads-tracker": "npm:^9.3.1"
     "@mui/system": "npm:^9.3.0"
     "@mui/types": "npm:^9.3.0"
     "@mui/utils": "npm:^9.3.0"
@@ -4451,7 +4451,7 @@ __metadata:
       optional: true
     "@types/react":
       optional: true
-  checksum: 10c0/d85139227a11876ddfd7af6afb9e10d333d4efad00c8d846aede895d1f596435176206cfd028b86200938f577c68e1252f456baaf4475bdb9a93874aed6e6b0d
+  checksum: 10c0/88000cb5ffbce365a8186eefeb5b3d2d918b8d349e2dec82cd7c5b58e4a3aa1b32ef46513c4c5c16f87427798752fc917ae5db7ccca51198ae7637333629baa9
   languageName: node
   linkType: hard
 
@@ -11663,7 +11663,7 @@ __metadata:
     "@emotion/react": "npm:^11.14.0"
     "@emotion/styled": "npm:^11.14.1"
     "@eslint-community/eslint-plugin-eslint-comments": "npm:^4.7.2"
-    "@mui/material": "npm:^9.3.0"
+    "@mui/material": "npm:^9.3.1"
     "@pandacss/dev": "npm:^1.12.0"
     "@pandacss/eslint-plugin": "npm:^0.3.2"
     "@radix-ui/react-dialog": "npm:^1.1.23"
