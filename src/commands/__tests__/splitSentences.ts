@@ -286,7 +286,7 @@ describe('splitSentences', () => {
     })
 
     // https://github.com/cybersemics/em/issues/4396
-    it.skip('splits thoughts with a colon into a main thought and child', async () => {
+    it('splits thoughts with a colon into a main thought and child', async () => {
       store.dispatch([
         importText({
           text: `

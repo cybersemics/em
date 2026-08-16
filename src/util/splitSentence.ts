@@ -245,15 +245,16 @@ const splitSentence = (value: string): SplitResult[] => {
    */
   const hasOnlyPeriodAtEnd = once(() => /^[^.;!?]*\.$[^.;!?]*/.test(plainValue.trim()))
 
-  // if we're sub-sentence or in one sentence territory, check for dash splitting first
+  // if we're sub-sentence or in one sentence territory, check for child splitting first
   // e.g. "one - 1" -> "- one   - 1" (as child)
+  // e.g. "Start: 1" -> "- Start   - 1" (as child)
   if (!sentenceSplitters || hasOnlyPeriodAtEnd()) {
-    // Check for dash (-, –, or —) and split into child if found
+    // Check for a dash (-, –, or —) or a colon and split into child if found
     // This handles Case 1: Split into child when there's only one sentence
-    // Match the first dash that has content on both sides
-    const dashMatch = plainValue.match(/^(.+?)\s*([-–—])\s*(.+)$/)
-    if (dashMatch) {
-      const [_, leftPart, __, rightPart] = dashMatch
+    // Match the first delimiter that has content on both sides. A colon must be followed by whitespace so that it does not split a url or a time, e.g. "http://localhost:3000" and "10:30".
+    const childMatch = plainValue.match(/^(.+?)\s*(?:[-–—]\s*|:\s+)(.+)$/)
+    if (childMatch) {
+      const [_, leftPart, rightPart] = childMatch
       const trimmedLeft = leftPart.trim()
       const trimmedRight = rightPart.trim()
       // Only split if both parts have content
