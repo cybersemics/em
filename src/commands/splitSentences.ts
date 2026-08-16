@@ -10,7 +10,7 @@ import splitSentence from '../util/splitSentence'
 const splitSentencesCommand: Command = {
   id: 'splitSentences',
   label: 'Split Sentences',
-  description: 'Splits multiple sentences in a single thought into separate thoughts.',
+  description: 'Splits multiple sentences in a single thought into separate thoughts within a new empty category.',
   keyboard: { key: 's', meta: true, shift: true },
   gesture: 'dlr',
   multicursor: true,

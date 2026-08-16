@@ -457,7 +457,7 @@ Merges all duplicate siblings at the same level as the cursor. The first thought
 
 ### Split Sentences
 
-Splits multiple sentences in a single thought into separate thoughts.
+Splits multiple sentences in a single thought into separate thoughts. The thoughts are placed in a new empty category, which keeps them distinct from the split thought's siblings.
 
 <kbd>Command + Shift + S</kbd>
 
