@@ -251,7 +251,9 @@ const splitSentence = (value: string): SplitResult[] => {
     // Check for dash (-, –, or —) and split into child if found
     // This handles Case 1: Split into child when there's only one sentence
     // Match the first dash that has content on both sides
-    const dashMatch = plainValue.match(/^(.+?)\s*([-–—])\s*(.+)$/)
+    // A comma-separated list takes priority over the dash, so that a hyphenated name such as "Jean-Michel" is not treated as the split point (#3525).
+    const isCommaList = plainValue.split(',').filter(s => s.trim()).length > 1
+    const dashMatch = isCommaList ? null : plainValue.match(/^(.+?)\s*([-–—])\s*(.+)$/)
     if (dashMatch) {
       const [_, leftPart, __, rightPart] = dashMatch
       const trimmedLeft = leftPart.trim()

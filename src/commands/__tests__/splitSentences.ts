@@ -239,7 +239,7 @@ describe('splitSentences', () => {
   })
 
   // https://github.com/cybersemics/em/issues/3525
-  it.skip('splits by comma when both a comma and a dash are present', () => {
+  it('splits by comma when both a comma and a dash are present', () => {
     store.dispatch([
       importText({
         text: `
