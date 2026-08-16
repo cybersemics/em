@@ -5,6 +5,9 @@ import { act, createElement } from 'react'
 import { Provider } from 'react-redux'
 import SimplePath from '../../@types/SimplePath'
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { undoActionCreator as undo } from '../../actions/undo'
+import { executeCommand } from '../../commands'
+import splitSentencesCommand from '../../commands/splitSentences'
 import { HOME_TOKEN } from '../../constants'
 import * as selection from '../../device/selection'
 import contextToPath from '../../selectors/contextToPath'
@@ -149,4 +152,33 @@ it('inserts emoji spacing immediately before colored text', async () => {
 
   expect(editable.textContent).toBe('👋 Hello')
   expect(editable.innerHTML).toBe('👋 <font color="#ff0000">Hello</font>')
+})
+
+// https://github.com/cybersemics/em/issues/3616
+it('renders the restored value after undoing Split Sentences', async () => {
+  const value = 'Sentence one. Sentence two. Sentence three.'
+
+  act(() => {
+    windowEvent('keydown', { key: 'Enter' })
+  })
+
+  const editable = (await findThoughtByText(''))!
+  expect(editable).toBeVisible()
+
+  // type the value, which stops the contenteditable from accepting external innerHTML changes until it is forced to re-render
+  editable.innerHTML = value
+  act(() => {
+    fireEvent.input(editable, { bubbles: true })
+  })
+  await act(vi.runAllTimersAsync)
+
+  executeCommand(splitSentencesCommand, { store })
+  await act(vi.runAllTimersAsync)
+
+  expect(editable.textContent).toBe('Sentence one.')
+
+  await dispatch(undo())
+  await act(vi.runAllTimersAsync)
+
+  expect(editable.textContent).toBe(value)
 })
