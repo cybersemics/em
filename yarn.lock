@@ -11742,7 +11742,7 @@ __metadata:
     fake-indexeddb: "npm:^6.2.5"
     fast-json-patch: "npm:^3.1.1"
     fp-and-or: "npm:^1.0.2"
-    happy-dom: "npm:^20.11.1"
+    happy-dom: "npm:^20.11.2"
     himalaya: "npm:^1.1.1"
     html-escaper: "npm:^3.0.3"
     idb-keyval: "npm:^6.3.0"
@@ -14522,9 +14522,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"happy-dom@npm:^20.11.1":
-  version: 20.11.1
-  resolution: "happy-dom@npm:20.11.1"
+"happy-dom@npm:^20.11.2":
+  version: 20.11.2
+  resolution: "happy-dom@npm:20.11.2"
   dependencies:
     "@types/node": "npm:>=20.0.0"
     "@types/whatwg-mimetype": "npm:^3.0.2"
@@ -14533,7 +14533,7 @@ __metadata:
     entities: "npm:^7.0.1"
     whatwg-mimetype: "npm:^3.0.0"
     ws: "npm:^8.21.0"
-  checksum: 10c0/f2335e8b87f1917c3725051c22dd7dafef13229af0dde9412d146fbaa961713a81ca4dcc741ecef8bf5fb64ea4182e3886305ac93ecb822dec7be028a6f7c51e
+  checksum: 10c0/cf59418fff5f2bd8d4b827a986afadfbd892b6c8c3986881bbb4d2db7fcea69483b87505f221110db5b9787f1226174b3600823abf2b2ad38d8397b67515b98e
   languageName: node
   linkType: hard
 
