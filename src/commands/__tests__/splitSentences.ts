@@ -238,6 +238,29 @@ describe('splitSentences', () => {
     - 1`)
   })
 
+  // https://github.com/cybersemics/em/issues/3525
+  it.skip('splits by comma when both a comma and a dash are present', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - Jeff Koons, Jean-Michel Basquiat (creator of Untitled), Cindy Sherman (a photographer), Richard Prince
+        `,
+      }),
+      setCursor([
+        'Jeff Koons, Jean-Michel Basquiat (creator of Untitled), Cindy Sherman (a photographer), Richard Prince',
+      ]),
+    ])
+
+    executeCommand(splitSentencesCommand, { store })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- __ROOT__
+  - Jeff Koons
+  - Jean-Michel Basquiat (creator of Untitled)
+  - Cindy Sherman (a photographer)
+  - Richard Prince`)
+  })
+
   it('splits by sentences when both dash and multiple sentences are present', () => {
     store.dispatch([
       importText({
