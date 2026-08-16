@@ -259,7 +259,7 @@ describe('splitSentences', () => {
   })
 
   // https://github.com/cybersemics/em/issues/4675
-  it.skip('does not enter edit mode if the keyboard is closed', () => {
+  it('does not enter edit mode if the keyboard is closed', () => {
     store.dispatch([
       importText({
         text: `
