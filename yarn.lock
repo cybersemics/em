@@ -11780,7 +11780,7 @@ __metadata:
     react-modal-sheet: "npm:^5.2.1"
     react-native-web: "npm:^0.21.2"
     react-redux: "npm:^9.3.0"
-    react-signature-pad-wrapper: "npm:^4.3.2"
+    react-signature-pad-wrapper: "npm:^4.3.3"
     react-transition-group: "npm:^4.4.5"
     redux: "npm:^5.0.1"
     redux-mock-store: "npm:^1.5.5"
@@ -20767,17 +20767,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-signature-pad-wrapper@npm:^4.3.2":
-  version: 4.3.2
-  resolution: "react-signature-pad-wrapper@npm:4.3.2"
+"react-signature-pad-wrapper@npm:^4.3.3":
+  version: 4.3.3
+  resolution: "react-signature-pad-wrapper@npm:4.3.3"
   dependencies:
     prop-types: "npm:^15.8.1"
-    signature_pad: "npm:^5.1.0"
+    signature_pad: "npm:^5.1.4"
     throttle-debounce: "npm:^5.0.0"
   peerDependencies:
     react: 17 - 19
     react-dom: 17 - 19
-  checksum: 10c0/5a7221b57f273443144ecd7fcaf41edb0f6bfa9e380563b8f8d90fe33aca4aab4b1368eacc583848402f98d12b39c88027684fb75a2f07fe0fb18b578d66c88b
+  checksum: 10c0/36d9d9d743a7b93c4adfb870234523bcca79755581e36fa63faf674f92775f5319e0bab0a57920b1c68a14df43eb2d199d843c651d0863c3c1bd1e73268de43a
   languageName: node
   linkType: hard
 
@@ -22088,10 +22088,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"signature_pad@npm:^5.1.0":
-  version: 5.1.3
-  resolution: "signature_pad@npm:5.1.3"
-  checksum: 10c0/660599a0f657fbed0ef5561320b44a03bbb6d6be76885fd0176210ccab626470e815d84fd8dbf08637a89c3256e4e00a2bda98803050231aadd0ccc10848ac93
+"signature_pad@npm:^5.1.4":
+  version: 5.1.4
+  resolution: "signature_pad@npm:5.1.4"
+  checksum: 10c0/814942a0ee0fa83e416ef84a1f66ee10772b80cbaa2b757e787c86adbda0c34d8f902bab8f120138b979410806faa4dddd22fdc7887bdd79ab74f9248d762338
   languageName: node
   linkType: hard
 
