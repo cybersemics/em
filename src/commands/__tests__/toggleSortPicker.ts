@@ -75,7 +75,7 @@ describe('toggleSortPicker error', () => {
   })
 
   // https://github.com/cybersemics/em/issues/4084
-  it.skip('does not report an error when a thought is split into sentences under updated sort', () => {
+  it('does not report an error when a thought is split into sentences under updated sort', () => {
     store.dispatch([
       importText({
         text: `

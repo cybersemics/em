@@ -12,9 +12,11 @@ import compareByRank from '../util/compareByRank'
 import {
   compareThought,
   compareThoughtByCreated,
+  compareThoughtByCreatedDescending,
   compareThoughtByNoteAndRank,
   compareThoughtByNoteDescendingAndRank,
   compareThoughtByUpdated,
+  compareThoughtByUpdatedDescending,
   compareThoughtDescending,
 } from '../util/compareThought'
 import head from '../util/head'
@@ -76,9 +78,9 @@ export const getSortComparator = (state: State, id: ThoughtId): ComparatorFuncti
     case 'Alphabetical':
       return isDescending ? compareThoughtDescending : compareThought
     case 'Created':
-      return isDescending ? _.flip(compareThoughtByCreated) : compareThoughtByCreated
+      return isDescending ? compareThoughtByCreatedDescending : compareThoughtByCreated
     case 'Updated':
-      return isDescending ? _.flip(compareThoughtByUpdated) : compareThoughtByUpdated
+      return isDescending ? compareThoughtByUpdatedDescending : compareThoughtByUpdated
     case 'Note':
       return isDescending ? compareThoughtByNoteDescendingAndRank(state) : compareThoughtByNoteAndRank(state)
     default:

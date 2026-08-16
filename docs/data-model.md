@@ -294,6 +294,8 @@ The predicate is [`childrenFilterPredicate`](../src/selectors/getChildren.ts). I
 - `Updated` (Asc/Desc).
 - `Note` (sort by the `=note` value of each child).
 
+Ties are broken by `rank` for `Created`, `Updated`, and `Note`, so thoughts with the same timestamp or note keep the order they are rendered in (rendering is `rank` order). See [`compareThought`](../src/util/compareThought.ts).
+
 When no sort preference is set, manual `rank` order is used. This is why fractional ranks matter: dragging a thought between two siblings is a single rank update, not a sibling-wide reshuffle.
 
 ## Views
