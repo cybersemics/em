@@ -19,6 +19,7 @@ import store from '../stores/app'
 import head from '../util/head'
 import isDescendantPath from '../util/isDescendantPath'
 import once from '../util/once'
+import parentOf from '../util/parentOf'
 import NoOtherContexts from './NoOtherContexts'
 import Thought from './Thought'
 
@@ -87,6 +88,8 @@ const Subthought = ({
     state => state.lastUndoableActionType === 'splitThought' && state.cursor && head(state.cursor) === head(simplePath),
   )
   const hideBullet = useSelector(state => {
+    // A context view entry is rendered in place of its context, so the =children/=bullet of its real parent must not hide its bullet.
+    if (isContextViewActive(state, parentOf(path))) return false
     const hideBulletsChildren = attributeEquals(state, childrenAttributeId, '=bullet', 'None')
     if (hideBulletsChildren) return true
     const hideBulletsGrandchildren =

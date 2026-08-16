@@ -309,7 +309,7 @@ describe('render', () => {
   })
 
   // https://github.com/cybersemics/em/issues/4956
-  it.skip('do not apply =children/=bullet to context view entries', async () => {
+  it('do not apply =children/=bullet to context view entries', async () => {
     await dispatch([
       importText({
         text: `
@@ -334,6 +334,34 @@ describe('render', () => {
     // c is a context of m, so b's =children/=bullet/Ordered should not number it
     const ordered = document.querySelectorAll('[data-bullet="ordered"]')
     expect(ordered.length).toBe(0)
+  })
+
+  // https://github.com/cybersemics/em/issues/4956
+  it('do not apply =children/=bullet/None to context view entries', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - a
+          - m
+            - x
+        - b
+          - =children
+            - =bullet
+              - None
+          - c
+            - m
+              - y
+      `,
+      }),
+      setCursor(['a', 'm']),
+      toggleContextView(),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // c is a context of m, so b's =children/=bullet/None should not hide its bullet
+    const path = hashPath(contextToPath(store.getState(), ['a', 'm', 'c']))
+    expect(document.querySelector(`[data-testid="bullet-${path}"]`)).toBeInTheDocument()
   })
 })
 
