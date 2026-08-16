@@ -10453,12 +10453,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cloudflared@npm:^0.7.1":
-  version: 0.7.1
-  resolution: "cloudflared@npm:0.7.1"
+"cloudflared@npm:^0.7.3":
+  version: 0.7.3
+  resolution: "cloudflared@npm:0.7.3"
   bin:
-    cloudflared: lib/cloudflared.js
-  checksum: 10c0/e5cb2a44f514c19f80078eed019cf772d545ff58e528359b5d31a96de0885e959085fee37b21d3c99053d93b5a4abeb8c23b5cb66127257ad4dc92ef01912626
+    cloudflared: ./lib/cloudflared.js
+  checksum: 10c0/b0902ae9ae35a4611b7e69cdfbe52beaefa60d8b399cb5cc6fc5c3b6535513bbcc1cc2ca9b869fde41f076bb31960c1bec4580e72be12b0affd41c9a529313fa
   languageName: node
   linkType: hard
 
@@ -11719,7 +11719,7 @@ __metadata:
     browserstack-local: "npm:^1.5.8"
     chalk: "npm:^6.0.0"
     clipboard: "npm:^2.0.11"
-    cloudflared: "npm:^0.7.1"
+    cloudflared: "npm:^0.7.3"
     dnd-core: "npm:^16.0.1"
     dompurify: "npm:^3.4.13"
     dotenv: "npm:17.4.2"
