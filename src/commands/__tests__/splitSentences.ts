@@ -257,6 +257,31 @@ describe('splitSentences', () => {
   - three.`)
   })
 
+  // https://github.com/cybersemics/em/issues/4395
+  it.skip('inserts the sentences into a new empty category', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - b
+            - one. two. three
+        `,
+      }),
+      setCursor(['a', 'one. two. three']),
+    ])
+
+    executeCommand(splitSentencesCommand, { store })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- __ROOT__
+  - a
+    - b
+    - ${''}
+      - one.
+      - two.
+      - three`)
+  })
+
   describe('multicursor', () => {
     it('splits sentences in multiple thoughts', async () => {
       store.dispatch([
