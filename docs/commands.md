@@ -87,6 +87,8 @@ The handler also:
 - Calls `e.preventDefault()` before dispatching, *unless* `command.permitDefault` is set. (`command.preventDefault` forces a preventDefault even when `canExecute` returns false.)
 - Routes through `executeCommandWithMulticursor`, which short-circuits to `executeCommand` if no multicursor is active.
 
+`keyDown` is a `window` listener, so a React handler that calls `stopPropagation` shadows every command bound to that key. [`Note`](../src/components/Note.tsx) does exactly that for the keys that navigate its own contenteditable — Escape and ArrowUp exit the note, Backspace deletes an empty one, ArrowDown moves the cursor down — so it only claims a keypress that carries no command modifier. A chord that includes Command/Ctrl or Option belongs to a command rather than to the note, and is left to propagate ([issue #4954](https://github.com/cybersemics/em/issues/4954)).
+
 There's a special case in `beforeInput` for `newThought` and `indent` to handle iOS auto-capitalization: the Enter / space character is prevented in the `beforeinput` event rather than `keydown` ([issue #3707](https://github.com/cybersemics/em/issues/3707)). A second branch in `beforeInput` handles Android: soft keyboards report the space keydown as `keyCode 229` (`'Unidentified'`), so it never matches the `indent` command in `keyDown` and `keyCommandId` is never set — the branch catches the `beforeinput` `insertText` of a single space over an empty thought and dispatches `indent` directly ([issue #4178](https://github.com/cybersemics/em/issues/4178)).
 
 ### Gesture activation
