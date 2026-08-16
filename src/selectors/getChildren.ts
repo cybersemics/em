@@ -21,6 +21,7 @@ import head from '../util/head'
 import isAbsolute from '../util/isAbsolute'
 import isAttribute from '../util/isAttribute'
 import isDescendantPath from '../util/isDescendantPath'
+import isEmptyOrEmojiOnly from '../util/isEmptyOrEmojiOnly'
 import sort from '../util/sort'
 import unroot from '../util/unroot'
 import childIdsToThoughts from './childIdsToThoughts'
@@ -68,22 +69,32 @@ export const getChildren = getVisibleThoughtsById(getAllChildrenAsThoughts)
 const getChildrenSortedBy = (state: State, id: ThoughtId, compare: ComparatorFunction<Thought>): Thought[] =>
   sort(getAllChildrenAsThoughts(state, id), compare)
 
-/** Returns the direction-aware comparator used to order the children of a context according to its sort preference, or null if the context is sorted manually (i.e. by rank). This is the single source of truth for the sort order, shared by getAllChildrenSorted and the Sort Picker's rank-consistency check. Empty thoughts are sorted to their point of creation. */
+/** Returns the direction-aware comparator used to order the children of a context according to its sort preference, or null if the context is sorted manually (i.e. by rank). This is the single source of truth for the sort order, shared by getAllChildrenSorted and the Sort Picker's rank-consistency check. Empty and emoji-only thoughts are sorted to their point of creation. */
 export const getSortComparator = (state: State, id: ThoughtId): ComparatorFunction<Thought> | null => {
   const sortPreference = getSortPreference(state, id)
   const isDescending = sortPreference.direction === 'Desc'
-  switch (sortPreference.type) {
-    case 'Alphabetical':
-      return isDescending ? compareThoughtDescending : compareThought
-    case 'Created':
-      return isDescending ? _.flip(compareThoughtByCreated) : compareThoughtByCreated
-    case 'Updated':
-      return isDescending ? _.flip(compareThoughtByUpdated) : compareThoughtByUpdated
-    case 'Note':
-      return isDescending ? compareThoughtByNoteDescendingAndRank(state) : compareThoughtByNoteAndRank(state)
-    default:
-      return null
-  }
+  const comparator = ((): ComparatorFunction<Thought> | null => {
+    switch (sortPreference.type) {
+      case 'Alphabetical':
+        return isDescending ? compareThoughtDescending : compareThought
+      case 'Created':
+        return isDescending ? _.flip(compareThoughtByCreated) : compareThoughtByCreated
+      case 'Updated':
+        return isDescending ? _.flip(compareThoughtByUpdated) : compareThoughtByUpdated
+      case 'Note':
+        return isDescending ? compareThoughtByNoteDescendingAndRank(state) : compareThoughtByNoteAndRank(state)
+      default:
+        return null
+    }
+  })()
+
+  if (!comparator) return null
+
+  // Empty and emoji-only thoughts have no meaningful sort key, so newThought and editThought leave them at their point
+  // of creation, i.e. at their rank. Compare them by rank so that the sort order matches the rendered order, which is
+  // always by rank (#4950). Otherwise an empty thought created at the end of an alphabetically sorted context is sorted
+  // to the beginning, and sibling-relative commands such as space-to-indent look at the wrong neighbor.
+  return (a, b) => (isEmptyOrEmojiOnly(a.value) || isEmptyOrEmojiOnly(b.value) ? compareByRank(a, b) : comparator(a, b))
 }
 
 /** Finds any child that matches the predicate. If there is more than one child that matches the predicate, which one is returned is non-deterministic. */

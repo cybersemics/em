@@ -35,7 +35,7 @@ describe('space-to-indent', () => {
   })
 
   // https://github.com/cybersemics/em/issues/4950
-  it.skip('indent on empty thought in a sorted context', () => {
+  it('indent on empty thought in a sorted context', () => {
     store.dispatch(
       importText({
         text: `
