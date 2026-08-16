@@ -786,6 +786,19 @@ describe('dash splitting', () => {
   })
 })
 
+describe('symbol splitting', () => {
+  // https://github.com/cybersemics/em/issues/4393
+  it.skip('splits thought on arrows', () => {
+    const value = 'a → b → c'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+  - b
+  - c`)
+  })
+})
+
 describe('formatting', () => {
   // https://github.com/cybersemics/em/issues/4229
   it('preserves formatting on every comma-delimited segment, including segments in the middle', () => {
