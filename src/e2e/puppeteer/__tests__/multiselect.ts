@@ -324,4 +324,40 @@ describe('mobile only', () => {
 
     expect(highlightedBullets.length).toBe(2)
   })
+
+  // https://github.com/cybersemics/em/issues/3528
+  it.skip('single tap adds a thought to the multiselect, and a second tap removes it', async () => {
+    await paste(`
+        - a
+        - b
+        - c
+        `)
+
+    const a = await waitForEditable('a')
+    await longPressThought(a, { edge: 'right' })
+
+    await clickThought('b')
+
+    await expect
+      .poll(() =>
+        page.$$eval('[aria-label="bullet"][data-highlighted="true"]', bullets =>
+          bullets.map(
+            bullet => bullet.closest('[aria-label="tree-node"]')?.querySelector('[data-editable]')?.textContent ?? null,
+          ),
+        ),
+      )
+      .toEqual(['a', 'b'])
+
+    await clickThought('b')
+
+    await expect
+      .poll(() =>
+        page.$$eval('[aria-label="bullet"][data-highlighted="true"]', bullets =>
+          bullets.map(
+            bullet => bullet.closest('[aria-label="tree-node"]')?.querySelector('[data-editable]')?.textContent ?? null,
+          ),
+        ),
+      )
+      .toEqual(['a'])
+  })
 })
