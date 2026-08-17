@@ -1,7 +1,6 @@
 import Command from '../@types/Command'
-import Dispatch from '../@types/Dispatch'
 import Path from '../@types/Path'
-import State from '../@types/State'
+import Thunk from '../@types/Thunk'
 import { alertActionCreator as alert } from '../actions/alert'
 import { cursorClearedActionCreator as cursorCleared } from '../actions/cursorCleared'
 import { editThoughtActionCreator as editThought } from '../actions/editThought'
@@ -72,119 +71,121 @@ const fetchWebpageTitle = async (url: string): Promise<string | null> => {
  * Cursor-specific side effects (cursorCleared and the caret at the end of the generated value) are the caller's
  * responsibility, since they apply to a single thought and this may be one of many running concurrently.
  */
-const generateThoughtAtPath = async (dispatch: Dispatch, getState: () => State, path: Path): Promise<string | null> => {
-  const state = getState()
+const generateThoughtAtPathActionCreator =
+  (path: Path): Thunk<Promise<string | null>> =>
+  async (dispatch, getState) => {
+    const state = getState()
 
-  const simplePath = simplifyPath(state, path)
-  const thought = getThoughtById(state, head(simplePath))
-  if (!thought) return null
+    const simplePath = simplifyPath(state, path)
+    const thought = getThoughtById(state, head(simplePath))
+    if (!thought) return null
 
-  // Do nothing if a generation is already in progress for this thought. Two overlapping runs would each restore their
-  // own snapshot of the thought and race to edit it.
-  if (thought.generating) return null
+    // Do nothing if a generation is already in progress for this thought. Two overlapping runs would each restore their
+    // own snapshot of the thought and race to edit it.
+    if (thought.generating) return null
 
-  const children = getChildrenRanked(state, thought.id)
-  const firstChild = children[0]
-  // Fetch the webpage title when the thought is empty and its first child is a URL. Otherwise generate with AI.
-  const shouldFetchTitle = thought.value === '' && !!firstChild && isURL(firstChild.value)
+    const children = getChildrenRanked(state, thought.id)
+    const firstChild = children[0]
+    // Fetch the webpage title when the thought is empty and its first child is a URL. Otherwise generate with AI.
+    const shouldFetchTitle = thought.value === '' && !!firstChild && isURL(firstChild.value)
 
-  if (!shouldFetchTitle && !import.meta.env.VITE_AI_URL) {
-    throw new Error('import.meta.env.VITE_AI_URL is not configured')
-  }
-
-  const valuePending = `${thought.value}...`
-
-  // set to pending while the value is being generated
-  dispatch(
-    updateThoughts({
-      thoughtIndexUpdates: {
-        [thought.id]: {
-          ...thought,
-          value: valuePending,
-          generating: true,
-        },
-      },
-      lexemeIndexUpdates: {},
-      local: false,
-      remote: false,
-      overwritePending: true,
-    }),
-  )
-
-  let valueNew = thought.value
-
-  if (shouldFetchTitle) {
-    try {
-      const title = await fetchWebpageTitle(firstChild.value)
-      valueNew = title || ''
-    } catch {
-      dispatch(error({ value: 'Failed to fetch webpage title' }))
-      valueNew = ''
+    if (!shouldFetchTitle && !import.meta.env.VITE_AI_URL) {
+      throw new Error('import.meta.env.VITE_AI_URL is not configured')
     }
-  } else {
-    // prompt with ancestors and siblings
-    const ancestors = pathToContext(state, parentOf(simplePath))
-    const siblingsText = children.map(child => (child.id === thought.id ? `${child.value}_` : child.value)).join('\n')
 
-    // if there is only one child, then insert the "blank" at the end of the ancestor chain:
-    //   e.g. Films/Watched/Carol/Starring:/_
-    // Otherwise, insert it after all the children:
-    //   e.g. Films/Watched/Carol/Starring:/
-    //        Cate Blanchett
-    //        Rooney Mara
-    //        _
-    const ancestorsText = ancestors.join('/')
-    const input = `${ancestorsText}${children.length > 1 ? '/\n' : ''}${siblingsText}`
+    const valuePending = `${thought.value}...`
 
-    // generate thought
-    const res = await fetch(import.meta.env.VITE_AI_URL!, { method: 'POST', body: input })
-    const { content, err } = (await res.json()) as { content: string; err: { status: number; message: string } }
-    if (err) {
-      if (err.status === 429) {
-        dispatch(alert('Rate limit reached. Please try again later.'))
-      } else {
-        dispatch(error({ value: err.message }))
+    // set to pending while the value is being generated
+    dispatch(
+      updateThoughts({
+        thoughtIndexUpdates: {
+          [thought.id]: {
+            ...thought,
+            value: valuePending,
+            generating: true,
+          },
+        },
+        lexemeIndexUpdates: {},
+        local: false,
+        remote: false,
+        overwritePending: true,
+      }),
+    )
+
+    let valueNew = thought.value
+
+    if (shouldFetchTitle) {
+      try {
+        const title = await fetchWebpageTitle(firstChild.value)
+        valueNew = title || ''
+      } catch {
+        dispatch(error({ value: 'Failed to fetch webpage title' }))
+        valueNew = ''
       }
     } else {
-      // Trim the AI content to avoid double spaces
-      const trimmedContent = content.trim()
-      valueNew = `${thought.value}${thought.value && trimmedContent ? ' ' : ''}${trimmedContent}`
+      // prompt with ancestors and siblings
+      const ancestors = pathToContext(state, parentOf(simplePath))
+      const siblingsText = children.map(child => (child.id === thought.id ? `${child.value}_` : child.value)).join('\n')
+
+      // if there is only one child, then insert the "blank" at the end of the ancestor chain:
+      //   e.g. Films/Watched/Carol/Starring:/_
+      // Otherwise, insert it after all the children:
+      //   e.g. Films/Watched/Carol/Starring:/
+      //        Cate Blanchett
+      //        Rooney Mara
+      //        _
+      const ancestorsText = ancestors.join('/')
+      const input = `${ancestorsText}${children.length > 1 ? '/\n' : ''}${siblingsText}`
+
+      // generate thought
+      const res = await fetch(import.meta.env.VITE_AI_URL!, { method: 'POST', body: input })
+      const { content, err } = (await res.json()) as { content: string; err: { status: number; message: string } }
+      if (err) {
+        if (err.status === 429) {
+          dispatch(alert('Rate limit reached. Please try again later.'))
+        } else {
+          dispatch(error({ value: err.message }))
+        }
+      } else {
+        // Trim the AI content to avoid double spaces
+        const trimmedContent = content.trim()
+        valueNew = `${thought.value}${thought.value && trimmedContent ? ' ' : ''}${trimmedContent}`
+      }
     }
-  }
 
-  const thoughtPending = getThoughtById(getState(), thought.id)
-  // bail if the thought was deleted while its value was being generated
-  if (!thoughtPending) return null
+    const thoughtPending = getThoughtById(getState(), thought.id)
+    // bail if the thought was deleted while its value was being generated
+    if (!thoughtPending) return null
 
-  dispatch([
-    // Restore the original value before applying the generated one. updateThoughts is not undoable, so the pending
-    // value would otherwise become the state that undo reverts to, leaving the thought at "a..." rather than "a". It
-    // is also why editThought was previously given an oldValue whose Lexeme was never created. Both updates are
-    // dispatched in the same batch, so the restored value is never rendered.
-    updateThoughts({
-      thoughtIndexUpdates: {
-        [thought.id]: {
-          ...thoughtPending,
-          value: thought.value,
-          generating: false,
+    dispatch([
+      // Restore the original value before applying the generated one. updateThoughts is not undoable, so the pending
+      // value would otherwise become the state that undo reverts to, leaving the thought at "a..." rather than "a". It
+      // is also why editThought was previously given an oldValue whose Lexeme was never created. Both updates are
+      // dispatched in the same batch, so the restored value is never rendered.
+      updateThoughts({
+        thoughtIndexUpdates: {
+          [thought.id]: {
+            ...thoughtPending,
+            value: thought.value,
+            generating: false,
+          },
         },
-      },
-      lexemeIndexUpdates: {},
-      local: false,
-      remote: false,
-      overwritePending: true,
-    }),
-    // editThought automatically sets Thought.generating to false
-    editThought({
-      force: true,
-      oldValue: thought.value,
-      newValue: valueNew,
-      path: simplePath,
-    }),
-  ])
+        lexemeIndexUpdates: {},
+        local: false,
+        remote: false,
+        overwritePending: true,
+      }),
+      // editThought automatically sets Thought.generating to false
+      editThought({
+        force: true,
+        oldValue: thought.value,
+        newValue: valueNew,
+        path: simplePath,
+      }),
+    ])
 
-  return valueNew
-}
+    return valueNew
+  }
 
 /** Generate a thought using AI. */
 const generateThought: Command = {
@@ -198,7 +199,7 @@ const generateThought: Command = {
   multicursor: {
     // preventSetCursor is not needed: execMulticursor never moves the cursor, so the restore at the end of the loop
     // sets it to the path it is already on.
-    execMulticursor: (cursors, dispatch, getState) => {
+    execMulticursor: (cursors, dispatch) => {
       /** Generates a thought for every selected thought within a single undo bracket. */
       const generateAll = async () => {
         // Yield before opening the undo bracket. executeCommandWithMulticursor is synchronous: it opens its own
@@ -212,7 +213,7 @@ const generateThought: Command = {
         // Generate concurrently, so that the selection takes one round trip rather than one per thought and every
         // selected thought shows its pending state immediately. allSettled rather than all, so that a rejected request
         // cannot skip the dispatch below and leave the bracket open over the remaining generations.
-        await Promise.allSettled(cursors.map(path => generateThoughtAtPath(dispatch, getState, path)))
+        await Promise.allSettled(cursors.map(path => dispatch(generateThoughtAtPathActionCreator(path))))
 
         dispatch(setIsMulticursorExecuting({ value: false }))
       }
@@ -233,7 +234,7 @@ const generateThought: Command = {
     // flag that only applies to the thought being edited, so it is set here rather than in generateThoughtAtPath.
     dispatch(cursorCleared({ value: true }))
 
-    const valueNew = await generateThoughtAtPath(dispatch, getState, cursor)
+    const valueNew = await dispatch(generateThoughtAtPathActionCreator(cursor))
 
     // editThought resets cursorCleared as part of the same reducer pass that updates the thought, which is what allows
     // the new value to reach the DOM. Resetting it here only has an effect when nothing was generated.
