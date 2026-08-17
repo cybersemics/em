@@ -422,6 +422,41 @@ export const set = (
   sel.addRange(range)
 }
 
+/** Selects a range of the given node's plain text content, i.e. ignoring nested HTML. Used to restore a selection that was destroyed by a programmatic edit of the thought's value.
+ *
+  @param node     The node to set the selection on.
+  @param start    Character offset of the start of the selection relative to the plain text content.
+  @param end      Character offset of the end of the selection relative to the plain text content.
+ */
+export const setRange = (node: Node | null, { start, end }: { start: number; end: number }): void => {
+  if (!node) return
+
+  // convert the outer offsets (relative to the thought) to inner offsets (relative to the nearest ancestor of each end of the new selection), which is what Range expects
+  // this handles nested HTML elements such as <b> or <i>
+  const startNodeOffset = offsetFromClosestParent(node, start)
+  const endNodeOffset = offsetFromClosestParent(node, end)
+  if (!startNodeOffset || !endNodeOffset) return
+
+  const startNode = startNodeOffset.node ?? node
+  const endNode = endNodeOffset.node ?? node
+
+  const sel = window.getSelection()
+  if (!sel) return
+
+  const range = document.createRange()
+
+  try {
+    range.setStart(startNode, startNodeOffset.offset)
+    range.setEnd(endNode, endNodeOffset.offset)
+  } catch (e) {
+    console.warn(e)
+    return
+  }
+
+  sel.removeAllRanges()
+  sel.addRange(range)
+}
+
 /**
  * Split given root node into two different ranges at the given selection.
  */

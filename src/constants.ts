@@ -1,4 +1,3 @@
-/* eslint-disable import/prefer-default-export */
 /** Defines app-wide constants. */
 import CommandId from './@types/CommandId'
 import SimplePath from './@types/SimplePath'
@@ -563,6 +562,7 @@ export const COMMAND_GROUPS: {
     title: 'Editing thoughts',
     commands: [
       'join',
+      'mergeDuplicates',
       'splitSentences',
       'bold',
       'italic',
@@ -579,7 +579,7 @@ export const COMMAND_GROUPS: {
   },
   {
     title: 'Oops',
-    commands: ['undo', 'redo'],
+    commands: ['undo', 'redo', 'repeat'],
   },
   {
     title: 'Special Views',

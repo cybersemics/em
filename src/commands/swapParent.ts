@@ -9,15 +9,13 @@ const swapParent: Command = {
   label: 'Swap Parent',
   description: 'Swap the current thought with its parent.',
   gesture: 'ul',
-  multicursor: {
-    disallow: true,
-    error: 'Cannot swap parent with multiple thoughts.',
-  },
+  multicursor: true,
   svg: SwapParentIcon,
   canExecute: state => {
     // swapParent is a no-op on a top-level thought, since there is no grandparent to swap it with. The selected thought is not necessarily the cursor, e.g. when a subthought is long pressed while the cursor is on a thought at another level.
+    // A selected top-level thought is skipped rather than blocking the rest of the selection, so the command is executable as long as at least one selected thought can be swapped.
     const paths = selectedPaths(state)
-    return isDocumentEditable() && paths.length > 0 && paths.every(path => path.length > 1)
+    return isDocumentEditable() && paths.some(path => path.length > 1)
   },
   exec: dispatch => {
     dispatch(swapParentActionCreator())
