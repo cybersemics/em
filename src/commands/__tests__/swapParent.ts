@@ -1,5 +1,4 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
-import { undoActionCreator as undo } from '../../actions/undo'
 import { executeCommandWithMulticursor } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
@@ -47,7 +46,7 @@ describe('canExecute', () => {
   })
 
   // https://github.com/cybersemics/em/pull/4867#pullrequestreview-4951406524
-  it.skip('cannot swap parent when multiple thoughts are selected', () => {
+  it('cannot swap parent when multiple thoughts are selected', () => {
     store.dispatch([
       importText({
         text: `
@@ -67,124 +66,7 @@ describe('canExecute', () => {
 })
 
 describe('multicursor', () => {
-  it('swaps each selected thought with its own parent', () => {
-    store.dispatch([
-      importText({
-        text: `
-          - =children
-            - =pin
-              - true
-          - a1
-            - b1
-          - a2
-            - b2
-          - a3
-            - b3
-        `,
-      }),
-      setCursor(['a1', 'b1']),
-      addMulticursor(['a1', 'b1']),
-      addMulticursor(['a2', 'b2']),
-      addMulticursor(['a3', 'b3']),
-    ])
-
-    executeCommandWithMulticursor(swapParentCommand, { store })
-
-    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-
-    expect(exported).toEqual(`- ${HOME_TOKEN}
-  - =children
-    - =pin
-      - true
-  - b1
-    - a1
-  - b2
-    - a2
-  - b3
-    - a3`)
-  })
-
-  it('swaps thoughts at different levels', () => {
-    store.dispatch([
-      importText({
-        text: `
-          - a1
-            - b1
-          - a2
-            - b2
-              - c2
-        `,
-      }),
-      setCursor(['a1', 'b1']),
-      addMulticursor(['a1', 'b1']),
-      addMulticursor(['a2', 'b2', 'c2']),
-    ])
-
-    executeCommandWithMulticursor(swapParentCommand, { store })
-
-    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-
-    expect(exported).toEqual(`- ${HOME_TOKEN}
-  - b1
-    - a1
-  - a2
-    - c2
-      - b2`)
-  })
-
-  it('swaps selected siblings with their parent in turn', () => {
-    store.dispatch([
-      importText({
-        text: `
-          - a
-            - b
-            - c
-        `,
-      }),
-      setCursor(['a', 'b']),
-      addMulticursor(['a', 'b']),
-      addMulticursor(['a', 'c']),
-    ])
-
-    executeCommandWithMulticursor(swapParentCommand, { store })
-
-    // b is swapped with a first, moving its sibling c under b. c is then swapped with its new parent b,
-    // moving b and its sibling a under c.
-    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-
-    expect(exported).toEqual(`- ${HOME_TOKEN}
-  - c
-    - a
-    - b`)
-  })
-
-  it('does not swap a selected thought that is already at the root', () => {
-    store.dispatch([
-      importText({
-        text: `
-          - a1
-            - b1
-          - a2
-            - b2
-        `,
-      }),
-      setCursor(['a1']),
-      addMulticursor(['a1']),
-      addMulticursor(['a2', 'b2']),
-    ])
-
-    executeCommandWithMulticursor(swapParentCommand, { store })
-
-    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-
-    expect(exported).toEqual(`- ${HOME_TOKEN}
-  - a1
-    - b1
-  - b2
-    - a2`)
-  })
-
-  it('restores the cursor and multicursors to the swapped thoughts', () => {
+  it('swaps the selected thought with its parent and restores the selection', () => {
     store.dispatch([
       importText({
         text: `
@@ -196,59 +78,73 @@ describe('multicursor', () => {
       }),
       setCursor(['a1', 'b1']),
       addMulticursor(['a1', 'b1']),
-      addMulticursor(['a2', 'b2']),
     ])
 
     executeCommandWithMulticursor(swapParentCommand, { store })
 
     const state = store.getState()
 
-    // b1 and b2 moved to the root, so the restored cursor and multicursors must follow them there.
+    expect(exportContext(state, [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - b1
+    - a1
+  - a2
+    - b2`)
+
+    // b1 moved to the root, so the restored cursor and multicursor must follow it there. Restoring the
+    // multicursor is what keeps the Command Center open after the swap.
     expectPathToEqual(state, state.cursor, ['b1'])
     expect(
       Object.values(state.multicursors).map(path => childIdsToThoughts(state, path).map(thought => thought.value)),
-    ).toEqual([['b1'], ['b2']])
+    ).toEqual([['b1']])
   })
 
-  it('reverts every swap on a single undo', () => {
+  // https://github.com/cybersemics/em/pull/4867#pullrequestreview-4951406524
+  it('does not swap when a thought and its parent are both selected', () => {
     store.dispatch([
       importText({
         text: `
-          - a1
-            - b1
-          - a2
-            - b2
-          - a3
-            - b3
+          - AAA
+            - BBB
+          - CCC
+          - DDD
         `,
       }),
-      setCursor(['a1', 'b1']),
-      addMulticursor(['a1', 'b1']),
-      addMulticursor(['a2', 'b2']),
-      addMulticursor(['a3', 'b3']),
+      setCursor(['AAA', 'BBB']),
+      addMulticursor(['AAA', 'BBB']),
+      addMulticursor(['AAA']),
     ])
 
     executeCommandWithMulticursor(swapParentCommand, { store })
 
-    // Precondition: all three swaps occurred, otherwise the undo below would have nothing to revert.
     expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
-  - b1
-    - a1
-  - b2
-    - a2
-  - b3
-    - a3`)
+  - AAA
+    - BBB
+  - CCC
+  - DDD`)
+  })
 
-    store.dispatch(undo())
+  // https://github.com/cybersemics/em/pull/4867#pullrequestreview-4951406524
+  it('does not swap when thoughts in different contexts are selected', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - AAA
+            - BBB
+          - CCC
+          - DDD
+        `,
+      }),
+      setCursor(['AAA', 'BBB']),
+      addMulticursor(['AAA', 'BBB']),
+      addMulticursor(['CCC']),
+    ])
 
-    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    executeCommandWithMulticursor(swapParentCommand, { store })
 
-    expect(exported).toEqual(`- ${HOME_TOKEN}
-  - a1
-    - b1
-  - a2
-    - b2
-  - a3
-    - b3`)
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - AAA
+    - BBB
+  - CCC
+  - DDD`)
   })
 })
