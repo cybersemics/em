@@ -125,7 +125,7 @@ Both filter `globalCommands` by name and respect `hideFromDesktopCommandUniverse
 
 When `state.multicursors` is non-empty, the user has one or more thoughts selected. A selection of exactly one thought is common — on mobile, opening the Command Center selects the cursor thought. Every command must declare how it behaves in this case via the required `multicursor` field — there is no implicit default.
 
-- **`multicursor: false`** — execute on `state.cursor` as if no multicursor existed; selection stays. For commands that don't interact with the thoughtspace (e.g. opening modals).
+- **`multicursor: false`** — execute on `state.cursor` as if no multicursor existed; selection stays. For commands that don't interact with the thoughtspace (e.g. opening modals). The cursor-navigation commands also declare `multicursor: false` yet still respond to a selection, since navigating a multiselect means moving the selection itself rather than executing once per selected thought: [`cursorUp`](../src/commands/cursorUp.ts) and [`cursorDown`](../src/commands/cursorDown.ts) read `state.multicursors` in their own `exec` to extend or collapse the selection, and the [`cursorForward`](../src/actions/cursorForward.ts) reducer replaces the selection with the thoughts one level forward.
 - **`multicursor: true`** — execute once per selected thought.
 - **`multicursor: { ... }`** — fine-grained control with these options:
 
@@ -193,7 +193,7 @@ https://github.com/user-attachments/assets/ab558971-0839-4a46-a421-e074509795f0
 
 ### Forward
 
-Move the cursor down a level.
+Move the cursor down a level. When thoughts are selected, deselect them and select the thoughts one level forward instead: the visible children of each selected thought, or its contexts when its context view is active.
 
 ### Cursor Up
 
