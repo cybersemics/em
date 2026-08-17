@@ -159,7 +159,7 @@ Three fields shape what happens when the command might not be runnable:
 
 `keyboardIndex` is recorded alongside the command and restored when it is repeated, since it cannot be derived from the Command/Ctrl + . keypress — that keypress matches none of the repeated command's own shortcuts. Without it, repeating `applyColor` would have no swatch to apply and would silently do nothing. `executeCommandWithMulticursor` resolves `repeat` itself and then delegates an already-resolved command, so it forwards the recorded index through executeCommand's `keyboardIndex` option.
 
-Only commands that make an *undoable, non-navigational* change are recorded, so that Repeat repeats the last edit no matter how many navigation or non-undoable commands intervened. `executeCommand` detects this by comparing the last non-navigation undo patch (the patch that Undo would revert, as classified by [`actionMetadata.registry`](../src/util/actionMetadata.registry.ts)) before and after `exec`. Consequently:
+Only commands that make an *undoable, non-navigational* change are recorded, so that Repeat repeats the last edit no matter how many navigation or non-undoable commands intervened. This is detected by comparing the last non-navigation undo patch (the patch that Undo would revert, as classified by [`actionMetadata.registry`](../src/util/actionMetadata.registry.ts)) before and after execution. A command with a custom `execMulticursor` never reaches `executeCommand`, so `executeCommandWithMulticursor` records it around that call instead, comparing the patch from the same point the per-cursor loop does — after `setIsMulticursorExecuting`. Consequently:
 
 - Navigation commands (Cursor Down, Jump Back) are skipped — their actions are registered `isNavigation`.
 - Commands that dispatch no undoable action (Export, Settings, Command Universe) are skipped, since they add no patch.
@@ -421,7 +421,7 @@ https://github.com/user-attachments/assets/95f037cc-cf88-4392-98fb-4d79cdae4fba
 
 ### Bump Thought Down
 
-Bump the current thought down one level and replace it with a new, empty thought.
+Bump the current thought down one level and replace it with a new, empty thought. When multiple thoughts are selected, their parent is bumped down and the selected thoughts are moved into the new thought.
 
 <kbd>Command + Option + d</kbd>
 
