@@ -11756,7 +11756,7 @@ __metadata:
     jsdom: "npm:^30.0.1"
     lockfile-lint: "npm:^5.0.0"
     lodash: "npm:^4.18.1"
-    lottie-react: "npm:^2.4.1"
+    lottie-react: "npm:^3.1.0"
     marked: "npm:^18.0.9"
     moize: "npm:^6.1.7"
     motion: "npm:^13.1.0"
@@ -17605,22 +17605,22 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lottie-react@npm:^2.4.1":
-  version: 2.4.1
-  resolution: "lottie-react@npm:2.4.1"
+"lottie-react@npm:^3.1.0":
+  version: 3.1.0
+  resolution: "lottie-react@npm:3.1.0"
   dependencies:
-    lottie-web: "npm:^5.10.2"
+    lottie-web: "npm:^5.13.0"
   peerDependencies:
-    react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
-    react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
-  checksum: 10c0/7f6a0a2cf2af25deabe7b4d4c9917e47d12016673613c59dcdd8ef52e10e914dd0c1f71d4a275d56aaba03fe9d85b333087f7c8d40a8f967ece4a0444c7a3cdf
+    react: ^18.2.0 || ^19.0.0
+    react-dom: ^18.2.0 || ^19.0.0
+  checksum: 10c0/501c06309c2e5ce2c3d445801d96359c68ca7ec6315f3c7c9c1be421716a548285c96b1915faf881bb4372b230a13ff47dcc4bda1ac12570ddb44a8b0a022766
   languageName: node
   linkType: hard
 
-"lottie-web@npm:^5.10.2":
-  version: 5.12.2
-  resolution: "lottie-web@npm:5.12.2"
-  checksum: 10c0/0aeaf631b10a76afd025df70c2a1486543530708e07a316946c08e55891dac483ffbaf2bf3648ae0b9c54c733118a0a086fd150aa76f7848606214c67ad72c30
+"lottie-web@npm:^5.13.0":
+  version: 5.13.0
+  resolution: "lottie-web@npm:5.13.0"
+  checksum: 10c0/b463ad462169df3f7e04b7f3716274e269842554f1d72b8303ca7245628f2512982a59ae31698b3d57fbcda886228ae160fcb2aa518c6cecd8a95974db2458ee
   languageName: node
   linkType: hard
 
