@@ -4,11 +4,13 @@ import { cursorClearedActionCreator as cursorCleared } from '../actions/cursorCl
 import { editThoughtActionCreator as editThought } from '../actions/editThought'
 import { errorActionCreator as error } from '../actions/error'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
+import { showModalActionCreator as showModal } from '../actions/showModal'
 import { updateThoughtsActionCreator as updateThoughts } from '../actions/updateThoughts'
 import GenerateThoughtIcon from '../components/icons/GenerateThoughtIcon'
 import { getChildrenRanked } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import simplifyPath from '../selectors/simplifyPath'
+import { consumeAiDisclosureAllowance, hasAcknowledgedAiDisclosure, requestAiDisclosure } from '../util/aiDisclosure'
 import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
 import isURL from '../util/isURL'
@@ -71,7 +73,7 @@ const generateThought: Command = {
     error: 'Cannot generate multiple thoughts.',
   },
   canExecute: state => isDocumentEditable() && !!state.cursor,
-  exec: async (dispatch, getState) => {
+  exec: async (dispatch, getState, e, commandContext) => {
     const state = getState()
 
     // do nothing if generation is already in progress
@@ -133,6 +135,12 @@ const generateThought: Command = {
       ])
     } else {
       // AI generation path
+      if (!hasAcknowledgedAiDisclosure() && !consumeAiDisclosureAllowance()) {
+        requestAiDisclosure(() => generateThought.exec(dispatch, getState, e, commandContext))
+        dispatch(showModal({ id: 'aiDisclosure' }))
+        return
+      }
+
       if (!import.meta.env.VITE_AI_URL) {
         throw new Error('import.meta.env.VITE_AI_URL is not configured')
       }

@@ -7,6 +7,13 @@ import store from '../../stores/app'
 import dispatch from '../../test-helpers/dispatch'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import {
+  acceptAiDisclosure,
+  acknowledgeAiDisclosure,
+  allowAiDisclosureOnce,
+  clearAiDisclosureAcknowledgement,
+  hasAcknowledgedAiDisclosure,
+} from '../../util/aiDisclosure'
 import generateThought from '../generateThought'
 
 // Mock fetch for testing
@@ -16,6 +23,7 @@ global.fetch = mockFetch
 beforeEach(() => {
   initStore()
   vi.clearAllMocks()
+  clearAiDisclosureAcknowledgement()
 })
 
 test('fetch and set webpage title when cursor is on empty thought with URL child', async () => {
@@ -168,6 +176,7 @@ test('not fetch title when thought is not empty', async () => {
 
   // Mock AI URL environment variable
   vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+  acknowledgeAiDisclosure()
 
   // Mock AI response
   mockFetch.mockResolvedValueOnce({
@@ -203,6 +212,7 @@ test('not fetch title when first child is not a URL', async () => {
 
   // Mock AI URL environment variable
   vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+  acknowledgeAiDisclosure()
 
   // Mock AI response
   mockFetch.mockResolvedValueOnce({
@@ -226,6 +236,117 @@ test('not fetch title when first child is not a URL', async () => {
   expect(exported).toBe(`- ${HOME_TOKEN}
   - AI generated text
     - Not a URL`)
+
+  vi.unstubAllEnvs()
+})
+
+test('show AI disclosure and avoid network request before acknowledgement', async () => {
+  const text = `
+      - 
+        - Not a URL
+    `
+
+  vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+
+  await dispatch([importText({ text }), setCursor([''])])
+
+  await act(async () => {
+    executeCommand(generateThought)
+  })
+
+  expect(store.getState().showModal).toBe('aiDisclosure')
+  expect(mockFetch).not.toHaveBeenCalled()
+
+  const state = store.getState()
+  const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - 
+    - Not a URL`)
+  expect(state.cursorCleared).toBe(false)
+
+  vi.unstubAllEnvs()
+})
+
+test('continues the current request after allowing AI once', async () => {
+  const text = `
+      -${' '}
+        - Not a URL
+    `
+
+  vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+  mockFetch.mockResolvedValueOnce({
+    json: () => Promise.resolve({ content: 'AI generated text', err: null }),
+  })
+
+  await dispatch([importText({ text }), setCursor([''])])
+
+  await act(async () => {
+    executeCommand(generateThought)
+  })
+
+  const continuation = acceptAiDisclosure({ remember: false })
+  await act(async () => {
+    continuation?.()
+  })
+
+  expect(mockFetch).toHaveBeenCalledWith('http://test-ai-url', expect.any(Object))
+
+  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - AI generated text
+    - Not a URL`)
+
+  vi.unstubAllEnvs()
+})
+
+test('continues the current request after always allowing AI', async () => {
+  const text = `
+      -${' '}
+        - Not a URL
+    `
+
+  vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+  mockFetch.mockResolvedValueOnce({
+    json: () => Promise.resolve({ content: 'AI generated text', err: null }),
+  })
+
+  await dispatch([importText({ text }), setCursor([''])])
+
+  await act(async () => {
+    executeCommand(generateThought)
+  })
+
+  const continuation = acceptAiDisclosure({ remember: true })
+  await act(async () => {
+    continuation?.()
+  })
+
+  expect(mockFetch).toHaveBeenCalledWith('http://test-ai-url', expect.any(Object))
+  expect(hasAcknowledgedAiDisclosure()).toBe(true)
+
+  vi.unstubAllEnvs()
+})
+
+test('allow next use without persisting AI disclosure acknowledgement', async () => {
+  const text = `
+      - 
+        - Not a URL
+    `
+
+  vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+  allowAiDisclosureOnce()
+  mockFetch.mockResolvedValueOnce({
+    json: () => Promise.resolve({ content: 'AI generated text', err: null }),
+  })
+
+  await dispatch([importText({ text }), setCursor([''])])
+
+  await act(async () => {
+    executeCommand(generateThought)
+  })
+
+  expect(mockFetch).toHaveBeenCalledWith('http://test-ai-url', expect.any(Object))
+  expect(store.getState().showModal).toBeNull()
 
   vi.unstubAllEnvs()
 })
