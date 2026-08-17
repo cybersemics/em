@@ -11,8 +11,10 @@ const useSizeTracking = () => {
   const removeSize = useCallback((key: string) => {
     if (unmounted.current) return
     setSizes(sizesOld => {
-      delete sizesOld[key]
-      return sizesOld
+      if (!(key in sizesOld)) return sizesOld
+      const sizesNew = { ...sizesOld }
+      delete sizesNew[key]
+      return sizesNew
     })
   }, [])
 

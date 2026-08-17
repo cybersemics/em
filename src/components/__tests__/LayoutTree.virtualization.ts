@@ -19,8 +19,8 @@ afterEach(async () => {
 })
 
 it('does not commit when no thought crosses the viewport boundary while preserving boundary virtualization', async () => {
-  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 100, 20))
-  await act(async () => viewportStore.update({ innerHeight: 100 }))
+  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 100, 36))
+  await act(async () => viewportStore.update({ innerHeight: 72 }))
 
   await dispatch(
     importText({
@@ -30,6 +30,10 @@ it('does not commit when no thought crosses the viewport boundary while preservi
   await dispatch(setCursor(null))
   await act(vi.runOnlyPendingTimersAsync)
 
+  // The ninth thought is exactly on the strict virtualization boundary:
+  // 72px viewport + five 36px overscan rows + one 36px row height = 288px.
+  expect(await queryThoughtByText('thought 9')).not.toBeNull()
+  expect(await queryThoughtByText('thought 10')).toBeNull()
   expect(await queryThoughtByText('thought 60')).toBeNull()
 
   onRender.mockClear()
@@ -40,10 +44,21 @@ it('does not commit when no thought crosses the viewport boundary while preservi
   })
 
   expect(onRender).not.toHaveBeenCalled()
+  expect(await queryThoughtByText('thought 9')).not.toBeNull()
+  expect(await queryThoughtByText('thought 10')).toBeNull()
   expect(await queryThoughtByText('thought 60')).toBeNull()
 
+  await act(async () => viewportStore.update({ innerHeight: 108 }))
+
+  expect(await queryThoughtByText('thought 10')).not.toBeNull()
+  expect(await queryThoughtByText('thought 11')).toBeNull()
+
+  await act(async () => viewportStore.update({ innerHeight: 72 }))
+
+  expect(await queryThoughtByText('thought 10')).toBeNull()
+
   await act(async () => {
-    document.documentElement.scrollTop = 1000
+    document.documentElement.scrollTop = 5000
     window.dispatchEvent(new Event('scroll'))
     await vi.runOnlyPendingTimersAsync()
   })
