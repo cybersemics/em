@@ -47,7 +47,7 @@ describe('command center', () => {
   })
 
   // https://github.com/cybersemics/em/issues/3445
-  it.skip('stays open when the Delete command is tapped', async () => {
+  it('stays open when the Delete command is tapped', async () => {
     await paste(`
         - a
         - b
