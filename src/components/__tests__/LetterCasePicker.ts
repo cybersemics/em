@@ -4,6 +4,7 @@ import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
+import { addMulticursorAtFirstMatchActionCreator as addMulticursorAtFirstMatch } from '../../test-helpers/addMulticursorAtFirstMatch'
 import click from '../../test-helpers/click'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
@@ -85,6 +86,64 @@ it('Set Upper Case with multicursor selection', async () => {
   expect(exported).toEqual(`- ${HOME_TOKEN}
   - HELLO EVERYONE, THIS IS ROSE. THANKS FOR YOUR HELP.
   - GOODBYE EVERYONE, THIS IS MAX. THANKS FOR YOUR HELP.`)
+})
+
+// https://github.com/cybersemics/em/issues/4840
+it('multicursor selection is preserved after applying Upper Case', async () => {
+  await dispatch([
+    newThought({ value: 'Hello everyone, this is Rose. Thanks for your help.' }),
+    newThought({ value: 'Goodbye everyone, this is Max. Thanks for your help.' }),
+    addAllMulticursor({}),
+  ])
+  await click('[data-testid="toolbar-icon"][aria-label="Letter Case"]')
+  await click('[aria-label="letter case swatches"] [aria-label="UpperCase"]')
+
+  await act(vi.runOnlyPendingTimersAsync)
+
+  expect(Object.keys(store.getState().multicursors)).toHaveLength(2)
+})
+
+// https://github.com/cybersemics/em/issues/4840
+it('multicursor selection is preserved after applying Upper Case to one of two thoughts', async () => {
+  await dispatch([
+    newThought({ value: 'Hello everyone, this is Rose. Thanks for your help.' }),
+    newThought({ value: 'Goodbye everyone, this is Max. Thanks for your help.' }),
+    addMulticursorAtFirstMatch(['Hello everyone, this is Rose. Thanks for your help.']),
+  ])
+  await click('[data-testid="toolbar-icon"][aria-label="Letter Case"]')
+  await click('[aria-label="letter case swatches"] [aria-label="UpperCase"]')
+
+  await act(vi.runOnlyPendingTimersAsync)
+
+  expect(Object.keys(store.getState().multicursors)).toHaveLength(1)
+
+  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+  expect(exported).toEqual(`- ${HOME_TOKEN}
+  - HELLO EVERYONE, THIS IS ROSE. THANKS FOR YOUR HELP.
+  - Goodbye everyone, this is Max. Thanks for your help.`)
+})
+
+// https://github.com/cybersemics/em/issues/4840
+it('multicursor selection is preserved after applying Upper Case to two of three thoughts', async () => {
+  await dispatch([
+    newThought({ value: 'Hello everyone, this is Rose. Thanks for your help.' }),
+    newThought({ value: 'Goodbye everyone, this is Max. Thanks for your help.' }),
+    newThought({ value: 'See you soon, this is Ann. Thanks for your help.' }),
+    addMulticursorAtFirstMatch(['Hello everyone, this is Rose. Thanks for your help.']),
+    addMulticursorAtFirstMatch(['See you soon, this is Ann. Thanks for your help.']),
+  ])
+  await click('[data-testid="toolbar-icon"][aria-label="Letter Case"]')
+  await click('[aria-label="letter case swatches"] [aria-label="UpperCase"]')
+
+  await act(vi.runOnlyPendingTimersAsync)
+
+  expect(Object.keys(store.getState().multicursors)).toHaveLength(2)
+
+  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+  expect(exported).toEqual(`- ${HOME_TOKEN}
+  - HELLO EVERYONE, THIS IS ROSE. THANKS FOR YOUR HELP.
+  - Goodbye everyone, this is Max. Thanks for your help.
+  - SEE YOU SOON, THIS IS ANN. THANKS FOR YOUR HELP.`)
 })
 
 it('Recognizes a styled thought with uppercase text as UpperCase', async () => {
