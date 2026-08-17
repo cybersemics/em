@@ -2,6 +2,7 @@ import { importTextActionCreator as importText } from '../../actions/importText'
 import { undoActionCreator as undo } from '../../actions/undo'
 import { executeCommandWithMulticursor } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
+import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import exportContext from '../../selectors/exportContext'
 import hasMulticursor from '../../selectors/hasMulticursor'
 import store from '../../stores/app'
@@ -119,7 +120,7 @@ describe('multicursor', () => {
     expectPathToEqual(state, state.cursor, ['b', ''])
   })
 
-  it('clears the multicursor after execution', () => {
+  it('selects the new subthoughts so that each of them is expanded into view', () => {
     store.dispatch([
       importText({
         text: `
@@ -130,6 +131,35 @@ describe('multicursor', () => {
       setCursor(['a']),
       addMulticursor(['a']),
       addMulticursor(['b']),
+    ])
+
+    executeCommandWithMulticursor(newSubthoughtCommand, { store })
+
+    const state = store.getState()
+
+    expect(
+      Object.values(state.multicursors).map(path => childIdsToThoughts(state, path).map(thought => thought.value)),
+    ).toEqual([
+      ['a', ''],
+      ['b', ''],
+    ])
+
+    // A thought is only expanded when it is the cursor or a multicursor parent, so the selection above is what makes both new subthoughts visible.
+    expect(
+      Object.values(state.expanded).map(path => childIdsToThoughts(state, path).map(thought => thought.value)),
+    ).toIncludeAllMembers([['a'], ['b']])
+  })
+
+  it('clears the multicursor when a single thought is selected, so that the new subthought can be typed into', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+          - b
+        `,
+      }),
+      setCursor(['a']),
+      addMulticursor(['a']),
     ])
 
     executeCommandWithMulticursor(newSubthoughtCommand, { store })

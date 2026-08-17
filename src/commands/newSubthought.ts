@@ -1,7 +1,17 @@
+import _ from 'lodash'
 import { Key } from 'ts-key-enum'
 import Command from '../@types/Command'
+import Path from '../@types/Path'
+import { addMulticursorActionCreator as addMulticursor } from '../actions/addMulticursor'
+import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/clearMulticursors'
 import { newThoughtActionCreator as newThought } from '../actions/newThought'
+import { removeMulticursorActionCreator as removeMulticursor } from '../actions/removeMulticursor'
+import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import Icon from '../components/icons/NewSubthoughtIcon'
+import { getChildrenRanked } from '../selectors/getChildren'
+import getThoughtById from '../selectors/getThoughtById'
+import appendToPath from '../util/appendToPath'
+import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 const exec = newThought({ insertNewSubthought: true })
@@ -9,10 +19,33 @@ const exec = newThought({ insertNewSubthought: true })
 const multicursor: Command['multicursor'] = {
   // Each selected thought is a distinct insertion parent, so execute once per selected thought.
   // A sibling filter would collapse a selection of siblings to a single insertion, silently discarding most of the selection.
-  // preventSetCursor leaves the cursor in the last created subthought, ready to type, instead of restoring the old cursor.
-  // clearMulticursor drops the stale selection so typing edits only the new subthought.
-  clearMulticursor: true,
+  // preventSetCursor leaves the cursor in the last created subthought instead of restoring the old cursor.
   preventSetCursor: true,
+  onComplete: (filteredCursors, dispatch) => {
+    dispatch((dispatch, getState) => {
+      const state = getState()
+
+      // The new subthought is inserted with the highest rank in each selected thought, including in a sorted context.
+      const newSubthoughtPaths = filteredCursors.reduce<Path[]>((accum, path) => {
+        const lastChild = getThoughtById(state, head(path)) ? _.last(getChildrenRanked(state, head(path))) : null
+        return lastChild ? [...accum, appendToPath(path, lastChild.id)] : accum
+      }, [])
+
+      // A single selected thought behaves like the command without a multiselect: clear the selection so that the new subthought, which already has the cursor, can be typed into immediately.
+      if (newSubthoughtPaths.length < 2) {
+        dispatch(clearMulticursors())
+        return
+      }
+
+      // Move the selection from the selected thoughts to their new subthoughts. Thoughts are only expanded around the cursor and the multicursors, so otherwise every new subthought except the one with the cursor would be created out of sight.
+      // Add the new subthoughts before removing the old selection so that the number of multicursors never passes through zero, which would close the Command Center on mobile.
+      newSubthoughtPaths.forEach(path => dispatch(addMulticursor({ path })))
+      filteredCursors.forEach(path => dispatch(removeMulticursor({ path })))
+
+      // state.expanded is recalculated on setCursor, so set the cursor to apply the expansion of the new selection. The cursor is already in the last new subthought, so this does not move it.
+      dispatch(setCursor({ path: _.last(newSubthoughtPaths)!, preserveMulticursor: true }))
+    })
+  },
 }
 
 const newSubthoughtCommand: Command = {
