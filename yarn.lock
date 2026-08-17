@@ -8084,12 +8084,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vitest/pretty-format@npm:4.1.9":
-  version: 4.1.9
-  resolution: "@vitest/pretty-format@npm:4.1.9"
+"@vitest/pretty-format@npm:4.1.10":
+  version: 4.1.10
+  resolution: "@vitest/pretty-format@npm:4.1.10"
   dependencies:
     tinyrainbow: "npm:^3.1.0"
-  checksum: 10c0/5b96295f25ab885616230ad1355fc82f490bebb39cc707688d7c8969c08270d7e076ed8a10af4e762ed57145193c6061a1f549f136f0ded344f8db0c2b3fb3de
+  checksum: 10c0/1a5daba730ffe23f2000bff484b4b2842f3b178d93663cb487b215516b8d3b62caa3e2bb2a3c63307b61a9fe58fb9bfff38559bc0c5e49d8aa403d6803a1d918
   languageName: node
   linkType: hard
 
@@ -8136,15 +8136,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vitest/snapshot@npm:^4.1.7":
-  version: 4.1.9
-  resolution: "@vitest/snapshot@npm:4.1.9"
+"@vitest/snapshot@npm:^4.1.10":
+  version: 4.1.10
+  resolution: "@vitest/snapshot@npm:4.1.10"
   dependencies:
-    "@vitest/pretty-format": "npm:4.1.9"
-    "@vitest/utils": "npm:4.1.9"
+    "@vitest/pretty-format": "npm:4.1.10"
+    "@vitest/utils": "npm:4.1.10"
     magic-string: "npm:^0.30.21"
     pathe: "npm:^2.0.3"
-  checksum: 10c0/c3099df12ad1f9c1e180441856c9eb82f1990f87ff16aafedd6fa19978eaff20bc59220b692a99fcc822daef86eab256ba3dadb49544b7bd625b57c49cd9d995
+  checksum: 10c0/e71398725f51af5fd0c07bb4b957d0f987daf9b4c564ac24cb2a4d1afde1a6939f535ac17761a32dcc41b0a1e6d4088af66dc44df89fdebebb92aabed1a92b5f
   languageName: node
   linkType: hard
 
@@ -8165,14 +8165,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vitest/utils@npm:4.1.9":
-  version: 4.1.9
-  resolution: "@vitest/utils@npm:4.1.9"
+"@vitest/utils@npm:4.1.10":
+  version: 4.1.10
+  resolution: "@vitest/utils@npm:4.1.10"
   dependencies:
-    "@vitest/pretty-format": "npm:4.1.9"
+    "@vitest/pretty-format": "npm:4.1.10"
     convert-source-map: "npm:^2.0.0"
     tinyrainbow: "npm:^3.1.0"
-  checksum: 10c0/d55506c077fd72c091eb66f02926f0abf72801c87a085f565698289562f47befa114ae2c680ab8736dfe46abab0cfd6b8031f2ac519bafeb37578aa6e5ad03c5
+  checksum: 10c0/05b0ecec6997ec22fc08377e57dbd8fa37992e05961f3a7a916d98b1ab56d15c2a87dbd83d392b628242bdc156b1705e7fa60a3bf0c54bdb51158c153e05fc5d
   languageName: node
   linkType: hard
 
@@ -11738,7 +11738,7 @@ __metadata:
     eslint-plugin-react: "npm:^7.37.5"
     eslint-plugin-react-hooks: "npm:^7.1.1"
     eslint-plugin-react-refresh: "npm:^0.5.4"
-    expect-webdriverio: "npm:^5.7.0"
+    expect-webdriverio: "npm:^6.0.2"
     fake-indexeddb: "npm:^6.2.5"
     fast-json-patch: "npm:^3.1.1"
     fp-and-or: "npm:^1.0.2"
@@ -13233,11 +13233,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expect-webdriverio@npm:^5.7.0":
-  version: 5.7.0
-  resolution: "expect-webdriverio@npm:5.7.0"
+"expect-webdriverio@npm:^6.0.2":
+  version: 6.0.3
+  resolution: "expect-webdriverio@npm:6.0.3"
   dependencies:
-    "@vitest/snapshot": "npm:^4.1.7"
+    "@vitest/snapshot": "npm:^4.1.10"
     deep-eql: "npm:^5.0.2"
     expect: "npm:^30.4.1"
     jest-matcher-utils: "npm:^30.4.1"
@@ -13252,7 +13252,7 @@ __metadata:
       optional: false
     webdriverio:
       optional: false
-  checksum: 10c0/c895f2c451a1bf5a75a1e57ec07d0993203a7834abe85e45aeba8c91f0e779d736219a54702048582c647624cd6452625184810e51e75daa43276a4412cfb680
+  checksum: 10c0/a468020db6d4ce56d2c08d46ddd8c47d0f91e90465eb8655fbd7fba08f5d027b128f09bae7f12524d3150ab4cb470fe46b6d3a232306cb46ad2d3109e7ff36ab
   languageName: node
   linkType: hard
 
