@@ -1,5 +1,4 @@
 import { act } from 'react'
-import { cursorBackActionCreator as cursorBack } from '../../actions/cursorBack'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { undoActionCreator as undo } from '../../actions/undo'
 import { executeCommand, executeCommandWithMulticursor } from '../../commands'
@@ -509,11 +508,9 @@ describe('multicursor', () => {
           - b
         `,
       }),
-      setCursor(['a']),
+      setCursor(null),
       addMulticursor(['a']),
       addMulticursor(['b']),
-      // Back on a top-level thought clears the cursor and preserves the multicursor.
-      cursorBack(),
     ])
 
     // The keydown handler gates execution on canExecute against the real state, so a cursorless multiselect would not
