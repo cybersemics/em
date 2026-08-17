@@ -12,6 +12,19 @@ import { usePersistentTreecrdtStorage } from '../setup'
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 usePersistentTreecrdtStorage()
 
+/** Returns the persistent tree node that contains the editable with the given value. */
+const getTreeNode = async (value: string) => {
+  const editable = (await waitForEditable(value)).asElement()
+  if (!editable) throw new Error(`Editable "${value}" not found.`)
+
+  const treeNode = (
+    await editable.evaluateHandle(element => (element as Element).closest('[aria-label="tree-node"]'))
+  ).asElement()
+  if (!treeNode) throw new Error(`Tree node for "${value}" not found.`)
+
+  return treeNode
+}
+
 it('set the cursor to a thought in the home context on load', async () => {
   const importText = `
   - a
@@ -94,8 +107,10 @@ it('do nothing when clicking on a hidden ancestor', async () => {
         - d`
   await paste(importText)
   await waitForEditable('d')
+  const ancestorTreeNode = await getTreeNode('a')
   await clickThought('d')
-  await clickThought('a')
+  await ancestorTreeNode.waitForSelector('[data-editable]', { hidden: true })
+  await click(ancestorTreeNode)
 
   const thoughtValue = await getEditingText()
   expect(thoughtValue).toBe('d')
@@ -109,6 +124,8 @@ it('do nothing when clicking on a hidden great uncle', async () => {
   - d`
   await paste(importText)
 
+  const greatUncleTreeNode = await getTreeNode('d')
+
   // click a to expand b and c
   await waitForEditable('a')
   await clickThought('a')
@@ -117,7 +134,8 @@ it('do nothing when clicking on a hidden great uncle', async () => {
   // for some reason we need to sleep before clicking c, otherwise the cursor is moved to d
   await waitForEditable('c')
   await clickThought('c')
-  await clickThought('d')
+  await greatUncleTreeNode.waitForSelector('[data-editable]', { hidden: true })
+  await click(greatUncleTreeNode)
 
   const thoughtValue = await getEditingText()
   expect(thoughtValue).toBe('c')

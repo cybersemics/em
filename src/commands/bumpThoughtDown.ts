@@ -13,10 +13,14 @@ const bumpThoughtDownCommand: Command = {
   gesture: 'drd',
   keyboard: { key: 'd', meta: true, alt: true },
   // The command ends with the caret in a new empty thought ready for typing, so keep the cursor where
-  // the last execution put it and clear the selection, as newThought does. Restoring the original
-  // cursor would move the caret off the empty thought whenever the bumped thought had no children,
-  // since the recomputed path then leads to the moved value rather than its empty replacement.
+  // the reducer put it and clear the selection, as newThought does. Restoring the original cursor
+  // would move the caret off the empty thought, since the recomputed path then leads to the moved
+  // value rather than its empty replacement.
   multicursor: {
+    // Bump the selected thoughts' parent down and move the selected thoughts into it in a single action.
+    execMulticursor: (cursors, dispatch) => {
+      dispatch(bumpThoughtDown({ paths: cursors }))
+    },
     preventSetCursor: true,
     clearMulticursor: true,
   },
