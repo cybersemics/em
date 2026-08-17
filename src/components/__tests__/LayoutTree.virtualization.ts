@@ -1,6 +1,5 @@
 import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
-import viewportStore from '../../stores/viewport'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
 import queryThoughtByText from '../../test-helpers/queries/queryThoughtByText'
@@ -14,13 +13,19 @@ beforeEach(async () => {
 })
 
 afterEach(async () => {
+  document.documentElement.scrollTop = 0
   vi.restoreAllMocks()
   await cleanupTestApp()
 })
 
 it('does not commit when no thought crosses the viewport boundary while preserving boundary virtualization', async () => {
   vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 100, 36))
-  await act(async () => viewportStore.update({ innerHeight: 72 }))
+  const innerHeight = vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(72)
+  const resizeHost = window.visualViewport ?? window
+  await act(async () => {
+    resizeHost.dispatchEvent(new Event('resize'))
+    await vi.runOnlyPendingTimersAsync()
+  })
 
   await dispatch(
     importText({
@@ -37,6 +42,20 @@ it('does not commit when no thought crosses the viewport boundary while preservi
   expect(await queryThoughtByText('thought 60')).toBeNull()
 
   onRender.mockClear()
+
+  // Safari reports negative scrollTop values during elastic overscroll. The virtualization boundary must stay
+  // clamped to zero so that rubber-banding at the top does not mount or unmount thoughts.
+  await act(async () => {
+    document.documentElement.scrollTop = -1
+    window.dispatchEvent(new Event('scroll'))
+    await vi.runOnlyPendingTimersAsync()
+  })
+
+  expect(onRender).not.toHaveBeenCalled()
+  expect(await queryThoughtByText('thought 9')).not.toBeNull()
+  expect(await queryThoughtByText('thought 10')).toBeNull()
+
+  onRender.mockClear()
   await act(async () => {
     document.documentElement.scrollTop = 1
     window.dispatchEvent(new Event('scroll'))
@@ -48,17 +67,26 @@ it('does not commit when no thought crosses the viewport boundary while preservi
   expect(await queryThoughtByText('thought 10')).toBeNull()
   expect(await queryThoughtByText('thought 60')).toBeNull()
 
-  await act(async () => viewportStore.update({ innerHeight: 108 }))
+  innerHeight.mockReturnValue(108)
+  await act(async () => {
+    resizeHost.dispatchEvent(new Event('resize'))
+    await vi.runOnlyPendingTimersAsync()
+  })
 
   expect(await queryThoughtByText('thought 10')).not.toBeNull()
   expect(await queryThoughtByText('thought 11')).toBeNull()
 
-  await act(async () => viewportStore.update({ innerHeight: 72 }))
+  innerHeight.mockReturnValue(72)
+  await act(async () => {
+    resizeHost.dispatchEvent(new Event('resize'))
+    await vi.runOnlyPendingTimersAsync()
+  })
 
   expect(await queryThoughtByText('thought 10')).toBeNull()
 
+  // Thought 60 crosses its 288px-ahead cutoff around 1836px; 1900px is reachable for this 2160px list.
   await act(async () => {
-    document.documentElement.scrollTop = 5000
+    document.documentElement.scrollTop = 1900
     window.dispatchEvent(new Event('scroll'))
     await vi.runOnlyPendingTimersAsync()
   })
