@@ -2,13 +2,14 @@ import { importTextActionCreator as importText } from '../../actions/importText'
 import { undoActionCreator as undo } from '../../actions/undo'
 import { executeCommandWithMulticursor } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
+import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
-import hasMulticursor from '../../selectors/hasMulticursor'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import hashPath from '../../util/hashPath'
 import newSubthoughtTopCommand from '../newSubthoughtTop'
 
 beforeEach(initStore)
@@ -119,7 +120,7 @@ describe('multicursor', () => {
     expectPathToEqual(state, state.cursor, ['b', ''])
   })
 
-  it('clears the multicursor after execution', () => {
+  it('selects the new subthoughts after execution', () => {
     store.dispatch([
       importText({
         text: `
@@ -134,7 +135,33 @@ describe('multicursor', () => {
 
     executeCommandWithMulticursor(newSubthoughtTopCommand, { store })
 
-    expect(hasMulticursor(store.getState())).toBeFalse()
+    const state = store.getState()
+    const multicursors = Object.values(state.multicursors)
+
+    expect(multicursors).toHaveLength(2)
+    expectPathToEqual(state, multicursors[0], ['a', ''])
+    expectPathToEqual(state, multicursors[1], ['b', ''])
+  })
+
+  it('expands each selected thought so that its new subthought is visible', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+          - b
+        `,
+      }),
+      setCursor(['a']),
+      addMulticursor(['a']),
+      addMulticursor(['b']),
+    ])
+
+    executeCommandWithMulticursor(newSubthoughtTopCommand, { store })
+
+    const state = store.getState()
+
+    expect(state.expanded[hashPath(contextToPath(state, ['a'])!)]).toBeTruthy()
+    expect(state.expanded[hashPath(contextToPath(state, ['b'])!)]).toBeTruthy()
   })
 
   it('reverts every created subthought on a single undo', () => {
