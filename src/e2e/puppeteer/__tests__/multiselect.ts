@@ -326,7 +326,7 @@ describe('mobile only', () => {
   })
 
   // https://github.com/cybersemics/em/issues/3528
-  it.skip('single tap adds a thought to the multiselect, and a second tap removes it', async () => {
+  it('single tap adds a thought to the multiselect, and a second tap removes it', async () => {
     await paste(`
         - a
         - b

@@ -16,6 +16,7 @@ import { keyboardOpenActionCreator } from '../actions/keyboardOpen'
 import { newThoughtActionCreator as newThought } from '../actions/newThought'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
+import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
 import { tutorialNextActionCreator as tutorialNext } from '../actions/tutorialNext'
 import { isMac, isSafari, isTouch } from '../browser'
 import { commandEmitter } from '../commands'
@@ -923,13 +924,19 @@ const Editable = ({
 
             // close all popups when clicking on a thought
             dispatch(toggleDropdown())
+          }
+          // While the Command Center is open, a tap toggles the thought's selection rather than moving the cursor,
+          // which is the only way to add a thought to the multiselect on mobile apart from long pressing it.
+          // Deselecting the last selected thought closes the Command Center (see multicursorAlertMiddleware).
+          else if (state.showCommandCenter) {
+            dispatch(toggleMulticursor({ path }))
           } else {
             setCursorOnThought()
           }
         }
       })
     },
-    [disabled, dispatch, editingOrOnCursor, isVisible, setCursorOnThought],
+    [disabled, dispatch, editingOrOnCursor, isVisible, path, setCursorOnThought],
   )
 
   /** Registers native event listeners for tap behavior (click and touchend). */
