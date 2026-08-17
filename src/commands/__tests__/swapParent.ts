@@ -45,6 +45,25 @@ describe('canExecute', () => {
 
     expect(swapParentCommand.canExecute!(store.getState())).toBe(true)
   })
+
+  // https://github.com/cybersemics/em/pull/4867#pullrequestreview-4951406524
+  it.skip('cannot swap parent when multiple thoughts are selected', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - AAA
+            - BBB
+          - CCC
+          - DDD
+        `,
+      }),
+      setCursor(['AAA', 'BBB']),
+      addMulticursor(['AAA', 'BBB']),
+      addMulticursor(['CCC']),
+    ])
+
+    expect(swapParentCommand.canExecute!(store.getState())).toBe(false)
+  })
 })
 
 describe('multicursor', () => {
