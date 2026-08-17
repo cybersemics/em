@@ -135,6 +135,8 @@ When the press ends, `useLongPress` defers `onLongPressEnd` by 10 ms so that the
 
 [`useDragLeave`](../src/hooks/useDragLeave.ts) tracks how many drop targets are currently being deep-hovered (a module-level `hoverCount`). When the count drops to zero, it debounces a 50 ms clear of `state.hoveringPath`. This prevents flicker when the cursor briefly leaves one drop zone before entering an adjacent one.
 
+Because `hoverCount` is shared across every drop target, only a change in `isDeepHovering` may adjust it. The hook's effect also re-runs on mount and when `canDropThought` or `hoverZone` change, and treating those as hover transitions would let a thought mounting mid-drag decrement the count to zero and blank the drop indicator while a target is still hovered. A separate unmount-only effect releases a target's contribution to the count, so a thought the layout unmounts mid-drag doesn't leak one.
+
 ### `useDropHoverColor`
 
 [`useDropHoverColor`](../src/hooks/useDropHoverColor.ts) — small UI hook that maps the drop zone's depth to its hover color. Used by the various Drop* components.
