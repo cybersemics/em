@@ -15,6 +15,7 @@ import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
+import addEmojiSpace from '../util/addEmojiSpace'
 import appendToPath from '../util/appendToPath'
 import createId from '../util/createId'
 import head from '../util/head'
@@ -136,8 +137,14 @@ const importText = (
       : destValue.slice(0, htmlReplaceStart || 0) + destValue.slice(htmlReplaceEnd || 0)
 
     const insertPosition = htmlReplaceStart || htmlCaretPosition
-    const newValue = `${replacedDestValue.slice(0, insertPosition)}${text}${replacedDestValue.slice(insertPosition)}`
-    const offset = caretPosition + getTextContentFromHTML(text).length
+    const combinedValue = `${replacedDestValue.slice(0, insertPosition)}${text}${replacedDestValue.slice(insertPosition)}`
+    const newValue = addEmojiSpace(combinedValue)
+    const offsetBeforeEmojiSpace = caretPosition + getTextContentFromHTML(text).length
+    const emojiSpaceInsertionOffset = newValue === combinedValue ? -1 : getTextContentFromHTML(newValue).indexOf(' ')
+    const offset =
+      emojiSpaceInsertionOffset >= 0 && offsetBeforeEmojiSpace >= emojiSpaceInsertionOffset
+        ? offsetBeforeEmojiSpace + 1
+        : offsetBeforeEmojiSpace
 
     return reducerFlow([
       // Force the editable to re-render in order to trigger setSelectionToCursorOffset in useEditMode and restore the caret.
