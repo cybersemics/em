@@ -10,7 +10,6 @@ import getSelection from '../helpers/getSelection'
 import getSuperscriptColor from '../helpers/getSuperScriptColor'
 import keyboard from '../helpers/keyboard'
 import multiselectThoughts from '../helpers/multiselectThoughts'
-import newThought from '../helpers/newThought'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import setSelection from '../helpers/setSelection'
@@ -76,7 +75,12 @@ it('Set the text color of the text and bullet', async () => {
 })
 
 it('Bullet keeps the font color after deleting all text without moving the cursor', async () => {
-  await newThought('hello')
+  const importText = `
+    - hello`
+
+  await paste(importText)
+
+  await clickThought('hello')
 
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="text color swatches"] [aria-label="red"]')
@@ -101,7 +105,12 @@ it('Bullet keeps the font color after deleting all text without moving the curso
 })
 
 it('Bullet clears the font color after deleting all text and moving the cursor away', async () => {
-  await newThought('hello')
+  const importText = `
+    - hello`
+
+  await paste(importText)
+
+  await clickThought('hello')
 
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="text color swatches"] [aria-label="red"]')
