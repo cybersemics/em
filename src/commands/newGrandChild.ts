@@ -9,8 +9,10 @@ const newGrandChildCommand: Command = {
   description: 'Create a thought within the first subthought.',
   gesture: 'rdrd',
   multicursor: {
-    disallow: true,
-    error: 'Cannot create a new grandchild with multiple thoughts.',
+    // The action sets the cursor to the new empty grandchild with the keyboard open, ready to type. The default restore would move the caret back to the originally selected thought.
+    preventSetCursor: true,
+    // The selection of parent thoughts is stale once the caret is in a new empty grandchild; keeping it would aim the next multicursor command at the parents while the user is typing elsewhere.
+    clearMulticursor: true,
   },
   // TODO: Create unique icon
   svg: SettingsIcon,

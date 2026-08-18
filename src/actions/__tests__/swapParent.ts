@@ -283,27 +283,34 @@ describe('sort', () => {
 
   it('root children are re-sorted after swapParent with active sort', () => {
     // Reproduce the issue: cursor on A, set Created sort, create subthought B, swap B with A.
-    // B must be created as a separate step so its creation order is after A, C, D.
+    // B must be created in a later millisecond than A, C, and D: Created sort falls back to alphabetical order on
+    // thoughts created in the same millisecond, which would put b first regardless of the swap. The reducers run
+    // synchronously, so the clock has to be advanced explicitly between the two creation steps.
     vi.useFakeTimers()
-    vi.setSystemTime(0)
-
-    let stateNew = initialState()
-    stateNew = reducerFlow([
-      importText({
-        text: `
+    let stateNew
+    try {
+      const stateBefore = reducerFlow([
+        importText({
+          text: `
         - a
         - c
         - d
       `,
-      }),
-      setCursor(['a']),
-      setSortPreference({ simplePath: HOME_PATH, sortPreference: { type: 'Created', direction: 'Asc' } }),
-    ])(stateNew)
+        }),
+        setCursor(['a']),
+        setSortPreference({ simplePath: HOME_PATH, sortPreference: { type: 'Created', direction: 'Asc' } }),
+      ])(initialState())
 
-    vi.setSystemTime(1000)
-    stateNew = reducerFlow([newThought({ value: 'b', insertNewSubthought: true }), setCursor(['a', 'b']), swapParent])(
-      stateNew,
-    )
+      vi.advanceTimersByTime(1000)
+
+      stateNew = reducerFlow([
+        newThought({ value: 'b', insertNewSubthought: true }),
+        setCursor(['a', 'b']),
+        swapParent,
+      ])(stateBefore)
+    } finally {
+      vi.useRealTimers()
+    }
 
     // Use excludeMeta to focus on regular thoughts only.
     // b was created last (separate newThought step), so it always sorts after c and d in Created Asc order.

@@ -14,10 +14,10 @@ const bindContextCommand: Command = {
   svg: BindContextIcon,
   description: 'Bind two different contexts of a thought so that they always have the same children.',
   gesture: 'rud',
-  multicursor: {
-    disallow: true,
-    error: 'Cannot bind multiple thoughts.',
-  },
+  // Bind each selected context in turn. Selected contexts of different context views each get their own binding.
+  // Selected contexts of the same context view overwrite each other, since =bindContextCommand holds a single
+  // context, so the last one in document order wins — exactly as if the command were invoked on each in turn.
+  multicursor: true,
   keyboard: { key: 'b', shift: true, alt: true },
   hideFromHelp: true,
   canExecute: state => isDocumentEditable() && !!state.cursor,

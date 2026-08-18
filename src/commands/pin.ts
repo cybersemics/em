@@ -16,6 +16,7 @@ const pinCommand: Command = {
   description: 'Pins open a thought so its subthoughts are always visible.',
   descriptionInverse: 'Unpins a thought so its subthoughts are automatically hidden.',
   keyboard: { key: 'p', meta: true, alt: true },
+  gesture: 'ud',
   svg: PinIcon,
   canExecute: state => {
     return !!state.cursor || hasMulticursor(state)
