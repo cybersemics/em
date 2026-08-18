@@ -420,6 +420,22 @@ const lastUndoablePatch = (state: State): Patch | undefined => {
   return undefined
 }
 
+/**
+ * Records the last command so that it can be executed again by the repeat command, but only if it made an undoable, non-navigational change to the thoughtspace. Otherwise repeat would repeat cursor movements and commands that dispatch no undoable actions (e.g. Cursor Down, Export) rather than the last edit, no matter how many of them occurred since.
+ *
+ * Patches are compared by identity rather than by action type, since the same command may be executed repeatedly (e.g. Bold twice in a row). A command that only dispatches asynchronously (e.g. Generate Thought) is not recorded, as its patch does not exist yet.
+ */
+const recordLastCommand = (
+  command: Command,
+  keyboardIndex: number | undefined,
+  stateAfter: State,
+  undoablePatchPrev: Patch | undefined,
+) => {
+  if (command.repeatable !== false && lastUndoablePatch(stateAfter) !== undoablePatchPrev) {
+    lastCommand = { command, keyboardIndex }
+  }
+}
+
 /** Execute a single command. Defaults to global store and keyboard shortcuts. Use `executeCommandWithMulticursor` to execute a command with multicursor mode. */
 export const executeCommand = (
   commandArg: Command,
@@ -460,11 +476,7 @@ export const executeCommand = (
   // execute single command
   command.exec(commandStore.dispatch, commandStore.getState, event, { type, keyboardIndex })
 
-  // Record the last command so that it can be executed again by the repeat command, but only if it made an undoable, non-navigational change to the thoughtspace. Otherwise repeat would repeat cursor movements and commands that dispatch no undoable actions (e.g. Cursor Down, Export) rather than the last edit, no matter how many of them occurred since.
-  // Patches are compared by identity rather than by action type, since the same command may be executed repeatedly (e.g. Bold twice in a row). A command that only dispatches asynchronously (e.g. Generate Thought) is not recorded, as its patch does not exist yet.
-  if (command.repeatable !== false && lastUndoablePatch(commandStore.getState()) !== undoablePatchPrev) {
-    lastCommand = { command, keyboardIndex }
-  }
+  recordLastCommand(command, keyboardIndex, commandStore.getState(), undoablePatchPrev)
 }
 
 /** Execute command. Defaults to global store and keyboard shortcuts. */
@@ -553,7 +565,10 @@ export const executeCommandWithMulticursor = (
   // If there is a custom execMulticursor function, call it with the filtered multicursors.
   // Otherwise, execute the command once for each of the filtered multicursors.
   if (multicursor.execMulticursor) {
+    // execMulticursor bypasses executeCommand, which is what records the last command for the repeat command, so record it here. The patch is captured after setIsMulticursorExecuting, the same point the per-cursor loop below captures it from, so that both branches judge a change by the same measure.
+    const undoablePatchPrev = lastUndoablePatch(commandStore.getState())
     multicursor.execMulticursor(filteredPaths, commandStore.dispatch, commandStore.getState)
+    recordLastCommand(command, keyboardIndex, commandStore.getState(), undoablePatchPrev)
   } else {
     for (const path of filteredPaths) {
       // Make sure we have the correct path to the thought in case it was moved during execution.
