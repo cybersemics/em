@@ -192,6 +192,44 @@ describe('=note/=path', () => {
     await act(vi.runAllTimersAsync)
   })
 
+  test('preserves child identity when duplicate values are edited', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - a
+          - =note
+            - =path
+              - b
+          - b
+            - c
+              - child of first c
+            - c
+              - child of second c
+            - d`,
+      }),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const noteEditor = screen.getByLabelText('note-editable')
+    await act(async () => {
+      fireEvent.focus(noteEditor)
+      fireEvent.input(noteEditor, { target: { innerHTML: 'x, c, d' } })
+    })
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const state = store.getState()
+    const targetId = contextToThoughtId(state, ['a', 'b'])!
+    const children = getChildrenSorted(state, targetId)
+    const x = children.find(child => child.value === 'x')!
+    const c = children.find(child => child.value === 'c')!
+
+    expect(getChildrenSorted(state, x.id).map(child => child.value)).toEqual(['child of first c'])
+    expect(getChildrenSorted(state, c.id).map(child => child.value)).toEqual(['child of second c'])
+
+    await act(vi.runAllTimersAsync)
+  })
+
   test('safely adds and removes target children when commas change', async () => {
     await dispatch([
       importText({

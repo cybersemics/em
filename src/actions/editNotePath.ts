@@ -2,9 +2,8 @@ import _ from 'lodash'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
-import ThoughtId from '../@types/ThoughtId'
 import Thunk from '../@types/Thunk'
-import { getAllChildren } from '../selectors/getChildren'
+import { getChildrenSorted } from '../selectors/getChildren'
 import getNextRank from '../selectors/getNextRank'
 import getThoughtById from '../selectors/getThoughtById'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
@@ -15,29 +14,44 @@ import createThought from './createThought'
 import deleteThought from './deleteThought'
 import editThought from './editThought'
 
-interface NoteChild {
-  id: ThoughtId
-  value: string
-}
-
 interface Payload {
-  children: NoteChild[]
   noteOffset?: number
   path: Path
-  previousChildIds: ThoughtId[]
+  values: string[]
 }
 
 /** Reconciles the visible children referenced by a path-based note in a single undoable action. */
-const editNotePath = (state: State, { children, noteOffset, path, previousChildIds }: Payload): State => {
+const editNotePath = (state: State, { noteOffset, path, values }: Payload): State => {
   const parentId = head(path)
   if (!getThoughtById(state, parentId)) return state
 
-  const childIds = new Set(getAllChildren(state, parentId))
-  const nextChildIds = new Set(children.map(child => child.id))
+  const currentChildren = getChildrenSorted(state, parentId)
+  const matchedChildIds = new Set(
+    values.flatMap((value, index) => (currentChildren[index]?.value === value ? [currentChildren[index].id] : [])),
+  )
+
+  // Preserve unchanged values before assigning edited values so sorting changes do not redirect subsequent edits.
+  const exactMatches = values.map((value, index) => {
+    const samePositionChild = currentChildren[index]
+    if (samePositionChild?.value === value) return samePositionChild
+
+    const child = currentChildren.find(child => child.value === value && !matchedChildIds.has(child.id))
+    if (child) matchedChildIds.add(child.id)
+    return child
+  })
+
+  const children = values.map((value, index) => {
+    const exactMatch = exactMatches[index]
+    if (exactMatch) return { id: exactMatch.id, value }
+
+    const child = currentChildren.find(child => !matchedChildIds.has(child.id))
+    if (child) matchedChildIds.add(child.id)
+    return { id: child?.id, value }
+  })
 
   return reducerFlow([
     ...children.map(child => (state: State) => {
-      const thought = getThoughtById(state, child.id)
+      const thought = child.id ? getThoughtById(state, child.id) : undefined
 
       if (thought) {
         return thought.parentId === parentId
@@ -50,14 +64,14 @@ const editNotePath = (state: State, { children, noteOffset, path, previousChildI
       }
 
       return createThought(state, {
-        id: child.id,
         path,
         rank: getNextRank(state, parentId),
         value: child.value,
       })
     }),
-    ...previousChildIds
-      .filter(id => childIds.has(id) && !nextChildIds.has(id))
+    ...currentChildren
+      .map(child => child.id)
+      .filter(id => !matchedChildIds.has(id))
       .map(id => deleteThought({ pathParent: path, thoughtId: id })),
     noteOffset == null ? null : state => ({ ...state, noteOffset }),
   ])(state)

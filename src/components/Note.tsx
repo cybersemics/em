@@ -5,7 +5,6 @@ import { css, cx } from '../../styled-system/css'
 import { textNoteRecipe } from '../../styled-system/recipes'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
-import ThoughtId from '../@types/ThoughtId'
 import { cursorDownActionCreator as cursorDown } from '../actions/cursorDown'
 import { deleteThoughtActionCreator as deleteThought } from '../actions/deleteThought'
 import { editNotePathActionCreator as editNotePath } from '../actions/editNotePath'
@@ -20,14 +19,13 @@ import preventAutoscroll, { preventAutoscrollEnd } from '../device/preventAutosc
 import * as selection from '../device/selection'
 import globals from '../globals'
 import useFreshCallback from '../hooks/useFreshCallback'
-import { firstVisibleChild, getChildrenSorted } from '../selectors/getChildren'
+import { firstVisibleChild } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import noteValue from '../selectors/noteValue'
 import resolveNoteKey from '../selectors/resolveNoteKey'
 import resolveNotePath from '../selectors/resolveNotePath'
 import store from '../stores/app'
 import appendToPath from '../util/appendToPath'
-import createId from '../util/createId'
 import equalPathHead from '../util/equalPathHead'
 import head from '../util/head'
 import strip from '../util/strip'
@@ -46,7 +44,6 @@ const Note = React.memo(
   }) => {
     const dispatch = useDispatch()
     const noteRef: { current: HTMLElement | null } = useRef(null)
-    const pathNoteChildIdsRef = useRef<ThoughtId[] | null>(null)
     const fontSize = useSelector(state => state.fontSize)
     const hasFocus = useSelector(state => state.noteFocus && equalPathHead(state.cursor, path))
     const [justPasted, setJustPasted] = useState(false)
@@ -63,7 +60,6 @@ const Note = React.memo(
       const targetPath = resolveNotePath(state, path)
       const { noteId } = resolveNoteKey(state, head(path))
       if (targetPath && !noteId) {
-        pathNoteChildIdsRef.current = getChildrenSorted(state, head(targetPath)).map(child => child.id)
         setNoteDraft(noteValue(state, path) ?? '')
       }
       dispatch(
@@ -155,22 +151,14 @@ const Note = React.memo(
           const { noteId } = resolveNoteKey(state, head(path))
 
           if (!noteId && resolvedTargetPath) {
-            const previousChildIds =
-              pathNoteChildIdsRef.current ?? getChildrenSorted(state, head(targetPath)).map(child => child.id)
             const values = value.split(',').map(value => value.trim())
-            const children = values.map((value, index) => ({
-              id: previousChildIds[index] ?? createId(),
-              value,
-            }))
 
-            pathNoteChildIdsRef.current = children.map(child => child.id)
             setNoteDraft(value)
             dispatch(
               editNotePath({
-                children,
                 noteOffset: noteOffset ?? undefined,
                 path: targetPath,
-                previousChildIds,
+                values,
               }),
             )
             return
@@ -203,7 +191,6 @@ const Note = React.memo(
     /** Set state.noteFocus if Note lost focus and did not move to another Note. Set state.keyboardOpen if keyboard is closed. */
     const onBlur = useCallback(
       (e: React.FocusEvent) => {
-        pathNoteChildIdsRef.current = null
         setNoteDraft(null)
         if (!selection.isNote(e.relatedTarget)) {
           dispatch(setNoteFocus({ value: false }))
