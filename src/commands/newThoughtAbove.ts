@@ -11,7 +11,6 @@ const newThoughtAboveCommand: Command = {
   description: 'Create a new thought immediately above the current thought.',
   gesture: 'rul',
   multicursor: {
-    filter: 'first-sibling',
     clearMulticursor: true,
     preventSetCursor: true,
   },

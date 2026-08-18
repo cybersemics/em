@@ -125,7 +125,7 @@ Both filter `globalCommands` by name and respect `hideFromDesktopCommandUniverse
 
 When `state.multicursors` is non-empty, the user has one or more thoughts selected. A selection of exactly one thought is common — on mobile, opening the Command Center selects the cursor thought. Every command must declare how it behaves in this case via the required `multicursor` field — there is no implicit default.
 
-- **`multicursor: false`** — execute on `state.cursor` as if no multicursor existed; selection stays. For commands that don't interact with the thoughtspace (e.g. opening modals). The cursor-navigation commands also declare `multicursor: false` yet still respond to a selection, since navigating a multiselect means moving the selection itself rather than executing once per selected thought: [`cursorUp`](../src/commands/cursorUp.ts) and [`cursorDown`](../src/commands/cursorDown.ts) read `state.multicursors` in their own `exec` to extend or collapse the selection, and the [`cursorForward`](../src/actions/cursorForward.ts) reducer replaces the selection with the thoughts one level forward.
+- **`multicursor: false`** — execute on `state.cursor` as if no multicursor existed; selection stays. For commands that don't interact with the thoughtspace (e.g. opening modals). The cursor-navigation commands also declare `multicursor: false` yet still respond to a selection, since navigating a multiselect means moving the selection itself rather than executing once per selected thought: [`cursorUp`](../src/commands/cursorUp.ts) and [`cursorDown`](../src/commands/cursorDown.ts) read `state.multicursors` in their own `exec` to extend or collapse the selection, and the [`cursorForward`](../src/actions/cursorForward.ts) and [`cursorBack`](../src/actions/cursorBack.ts) reducers replace the selection with the thoughts one level forward or back.
 - **`multicursor: true`** — execute once per selected thought.
 - **`multicursor: { ... }`** — fine-grained control with these options:
 
@@ -143,6 +143,8 @@ When `state.multicursors` is non-empty, the user has one or more thoughts select
 `executeCommandWithMulticursor` walks the filtered cursors in document order (`documentSort`), `setCursor`s each path in turn, calls the regular `exec`, and finally restores the original cursor (unless `preventSetCursor` is set). It wraps the loop in `setIsMulticursorExecuting({ value: true, undoLabel: command.id })` so the entire multi-step operation collapses into a single undo entry.
 
 `setIsMulticursorExecuting` is the general mechanism for that collapsing, not a private detail of the command loop: [`undoRedoEnhancer`](../src/redux-enhancers/undoRedoEnhancer.ts) merges every action dispatched while `state.isMulticursorExecuting` is true into the preceding undo patch, and shows `undoLabel` in the undo/redo alert. Any code path that edits every selected thought without going through a `multicursor: true` command must bracket its dispatch with the same pair, or the user has to undo once per thought. The [`ColorPicker`](../src/components/ColorPicker.tsx) and [`LetterCasePicker`](../src/components/LetterCasePicker.tsx) reach the thoughtspace through [`formatSelection`](../src/actions/formatSelection.ts) and [`formatLetterCase`](../src/actions/formatLetterCase.ts) rather than through their `multicursor: false` toolbar commands, so those two action-creators do the bracketing themselves; drag-and-drop of a multiselect does the same.
+
+The whole of `executeCommandWithMulticursor` is synchronous, including that bracket, so an **asynchronous** command gets no help from it: the bracket is opened and closed around the call, and anything dispatched after the first `await` lands outside it. [`generateThought`](../src/commands/generateThought.ts) is the case in point — its `exec` only reaches the thoughtspace once a network request has returned. It defines an `execMulticursor` that yields once (so that the loop's own synchronous bracket has closed), opens a second bracket of its own, generates every selected thought, and closes it only after all of them have settled. A `multicursor: true` declaration would instead leave one undo step per generated thought, and each `exec`'s own `setCursor` would drop the caret on whichever request happened to finish last.
 
 ### Gating and defaults
 
@@ -185,7 +187,7 @@ The full list of user-facing commands. For the canonical, always-up-to-date set,
 
 ### Back
 
-Move the cursor up a level. If Clear Thought is active, cancel it instead and leave the cursor where it is.
+Move the cursor up a level. If Clear Thought is active, cancel it instead and leave the cursor where it is. When thoughts are selected, deselect them and select the parent of each selected thought instead — except on desktop, where <kbd>Escape</kbd> clears the selection rather than moving it.
 
 <kbd>Escape</kbd>
 
