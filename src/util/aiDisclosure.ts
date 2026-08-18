@@ -15,15 +15,22 @@ export const allowAiDisclosureOnce = () => {
 }
 
 /** Consumes a one-time AI allowance, returning whether one was available. */
-export const consumeAiDisclosureAllowance = () => {
+const consumeAiDisclosureAllowance = () => {
   if (!allowNextAiUse) return false
   allowNextAiUse = false
   return true
 }
 
-/** Stores an AI request to run after the user accepts the disclosure. */
-export const requestAiDisclosure = (continuation: () => void) => {
+/** Queues an AI request if disclosure is required. Returns true when the disclosure must be shown. */
+const requestAiDisclosure = (continuation: () => void) => {
+  if (hasAcknowledgedAiDisclosure() || consumeAiDisclosureAllowance()) return false
   pendingAiUse = continuation
+  return true
+}
+
+/** Persists acknowledgement of the AI data disclosure on this device. */
+export const acknowledgeAiDisclosure = () => {
+  storage.setItem(AI_DISCLOSURE_KEY, ACKNOWLEDGED_VALUE)
 }
 
 /** Allows the pending AI request and returns it for the caller to run. */
@@ -44,14 +51,11 @@ export const cancelAiDisclosure = () => {
   pendingAiUse = null
 }
 
-/** Persists acknowledgement of the AI data disclosure on this device. */
-export const acknowledgeAiDisclosure = () => {
-  storage.setItem(AI_DISCLOSURE_KEY, ACKNOWLEDGED_VALUE)
-}
-
 /** Clears persisted AI data disclosure acknowledgement. Intended for tests. */
 export const clearAiDisclosureAcknowledgement = () => {
   storage.removeItem(AI_DISCLOSURE_KEY)
   allowNextAiUse = false
   pendingAiUse = null
 }
+
+export default requestAiDisclosure

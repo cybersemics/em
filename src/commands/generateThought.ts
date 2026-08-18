@@ -10,7 +10,7 @@ import GenerateThoughtIcon from '../components/icons/GenerateThoughtIcon'
 import { getChildrenRanked } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import simplifyPath from '../selectors/simplifyPath'
-import { consumeAiDisclosureAllowance, hasAcknowledgedAiDisclosure, requestAiDisclosure } from '../util/aiDisclosure'
+import requestAiDisclosure from '../util/aiDisclosure'
 import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
 import isURL from '../util/isURL'
@@ -135,8 +135,10 @@ const generateThought: Command = {
       ])
     } else {
       // AI generation path
-      if (!hasAcknowledgedAiDisclosure() && !consumeAiDisclosureAllowance()) {
-        requestAiDisclosure(() => generateThought.exec(dispatch, getState, e, commandContext))
+      const requiresAiDisclosure = requestAiDisclosure(() =>
+        generateThought.exec(dispatch, getState, e, commandContext),
+      )
+      if (requiresAiDisclosure) {
         dispatch(showModal({ id: 'aiDisclosure' }))
         return
       }
