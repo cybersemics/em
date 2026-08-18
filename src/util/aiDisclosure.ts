@@ -1,9 +1,21 @@
+/**
+ * AI data disclosure utility, which is used to request AI use and persist acknowledgement of the AI data
+ * disclosure on this device.
+ *
+ * After implementing the sync engine, this should be revisited so that the acknowledgement is persisted for
+ * all devices of a current user, but not across all users of the same shared thoughtspace.
+ */
 import storage from './storage'
 
+/** Version of the AI data disclosure acknowledgement. */
 const AI_DISCLOSURE_VERSION = 'v1'
+/** Key for the AI data disclosure acknowledgement. */
 const AI_DISCLOSURE_KEY = `aiDisclosureAcknowledged/${AI_DISCLOSURE_VERSION}`
+/** Value for the AI data disclosure acknowledgement. */
 const ACKNOWLEDGED_VALUE = '1'
+/** Whether to allow one more AI use without persisting acknowledgement. */
 let allowNextAiUse = false
+/** The AI request to run after the user accepts the disclosure. */
 let pendingAiUse: (() => void) | null = null
 
 /** Returns true if the user has acknowledged the AI data disclosure on this device. */
