@@ -12,10 +12,9 @@ const swapParent: Command = {
   multicursor: true,
   svg: SwapParentIcon,
   canExecute: state => {
-    // swapParent is only defined for a single thought, as each swap restructures the tree that the next swap would act on. The selected thought is not necessarily the cursor, e.g. when a subthought is long pressed while the cursor is on a thought at another level.
-    // It is also a no-op on a top-level thought, since there is no grandparent to swap it with.
+    // swapParent is a no-op on a top-level thought, since there is no grandparent to swap it with. The command is therefore only executable if every selected thought is a subthought, so that a selection containing an ineligible thought disables it rather than partially applying. The selected thoughts are not necessarily the cursor, e.g. when a subthought is long pressed while the cursor is on a thought at another level.
     const paths = selectedPaths(state)
-    return isDocumentEditable() && paths.length === 1 && paths[0].length > 1
+    return isDocumentEditable() && paths.length > 0 && paths.every(path => path.length > 1)
   },
   exec: dispatch => {
     dispatch(swapParentActionCreator())
