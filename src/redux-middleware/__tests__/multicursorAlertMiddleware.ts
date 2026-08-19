@@ -6,10 +6,12 @@ import { undoActionCreator as undo } from '../../actions/undo'
 import { executeCommandWithMulticursor } from '../../commands'
 import clearThoughtCommand from '../../commands/clearThought'
 import deleteCommand from '../../commands/delete'
+import indentCommand from '../../commands/indent'
 import { initialize } from '../../initialize'
 import contextToPath from '../../selectors/contextToPath'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
+import { editThoughtByContextActionCreator as editThoughtByContext } from '../../test-helpers/editThoughtByContext'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 
@@ -104,6 +106,46 @@ it('does not re-open the Command Center over an edited multiselection when the m
 
   store.dispatch(addMulticursor(['b']))
   expect(store.getState().showCommandCenter).toBe(false)
+})
+
+// https://github.com/cybersemics/em/pull/4520
+it.skip('does not re-open the Command Center when a multicursor command restores the multiselection mid-edit', async () => {
+  await initialize()
+
+  store.dispatch([
+    importText({
+      text: `
+        - a
+        - b
+        - c`,
+    }),
+    setCursor(['a']),
+    addMulticursor(['a']),
+    addMulticursor(['b']),
+    addMulticursor(['c']),
+  ])
+
+  // Clear Thought enters multi edit mode: the keyboard opens and the Command Center closes.
+  executeCommandWithMulticursor(clearThoughtCommand, { store })
+
+  expect(store.getState().isKeyboardOpen).toBe(true)
+  expect(store.getState().showCommandCenter).toBe(false)
+
+  // Typing exits the cleared state while the multiselection is still being edited.
+  store.dispatch(editThoughtByContext(['a'], 'ab'))
+
+  expect(store.getState().isKeyboardOpen).toBe(true)
+  expect(store.getState().showCommandCenter).toBe(false)
+
+  // Typing a space runs indent (space-to-indent), which bails on a non-empty thought without indenting. The
+  // multicursor loop still sets the cursor to each selected thought, which empties state.multicursors, and then
+  // restores them one at a time — so the count passes through 0 and the first restored multicursor is
+  // indistinguishable from starting a new multiselection. That must not re-open the Command Center over the
+  // editing session: on iOS the focus that follows is dismissed (see onFocus in Editable), closing the keyboard.
+  executeCommandWithMulticursor(indentCommand, { store, type: 'keyboard' })
+
+  expect(store.getState().showCommandCenter).toBe(false)
+  expect(Object.keys(store.getState().multicursors).length).toBe(3)
 })
 
 it('does not show the Command Center when undoing a multicursor delete while the Undo Slider is active', async () => {
