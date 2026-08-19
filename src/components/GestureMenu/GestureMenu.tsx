@@ -84,9 +84,9 @@ const GestureMenu: FC<{
   }
 
   /**
-   * Renders command rows. Auto-scroll is disabled now that the layout caps its visible rows instead of
-   * scrolling. When `fog` is set, the last GESTURE_MENU_FOG_ROW_COUNT rows fade into the fog to signal
-   * hidden commands (issue #3801 §4).
+   * Renders command rows. The layout caps its visible rows instead of scrolling, so no row scrolls itself
+   * into view. When `fog` is set, the last GESTURE_MENU_FOG_ROW_COUNT rows fade into the fog to signal
+   * hidden commands.
    */
   const renderCommands = (items: Command[], { fog = false }: { fog?: boolean } = {}) =>
     items.map((command, index) => {
@@ -99,8 +99,6 @@ const GestureMenu: FC<{
           selected={isSelected(command)}
           command={command}
           isFirstCommand={index === 0}
-          isLastCommand={index === items.length - 1}
-          autoScroll={false}
           fogDepth={fogDepth}
         />
       )

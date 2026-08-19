@@ -1,4 +1,4 @@
-import { FC, useEffect, useRef } from 'react'
+import { FC } from 'react'
 import { useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { token } from '../../../styled-system/tokens'
@@ -37,13 +37,9 @@ const GestureMenuItem: FC<{
   selected: boolean
   gestureInProgress: string
   isFirstCommand?: boolean
-  isLastCommand?: boolean
-  /** Whether to scroll the selected row into view. Disabled in the non-scrolling multi-column grid. Defaults to true. */
-  autoScroll?: boolean
   /** Fog depth (0–4) applied to trailing single-column rows when the list overflows. 0/undefined = no fog. */
   fogDepth?: number
-}> = ({ command, selected, gestureInProgress, isFirstCommand, isLastCommand, autoScroll = true, fogDepth = 0 }) => {
-  const ref = useRef<HTMLDivElement | null>(null)
+}> = ({ command, selected, gestureInProgress, isFirstCommand, fogDepth = 0 }) => {
   const disabled = useSelector((state: State) => !isExecutable(state, command))
   const isActive = command.isActive?.(store.getState())
   const description = useSelector((state: State) => {
@@ -53,23 +49,10 @@ const GestureMenuItem: FC<{
 
   const gestureHighlight = useGestureHighlight({ command, gestureInProgress, selected, disabled })
 
-  useEffect(() => {
-    if (!autoScroll || !selected) return
-    if (!isFirstCommand && !isLastCommand) {
-      ref.current?.scrollIntoView({ block: 'nearest' })
-      return
-    }
-    const scrollContainer = ref.current?.parentElement
-    if (scrollContainer) {
-      scrollContainer.scrollTop = isFirstCommand ? 0 : scrollContainer.scrollHeight
-    }
-  })
-
   const fog = FOG_STYLES[fogDepth]
 
   return (
     <div
-      ref={ref}
       className={css({
         display: 'flex',
         flexDirection: 'row',
