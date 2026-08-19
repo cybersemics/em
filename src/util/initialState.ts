@@ -109,6 +109,7 @@ const initialState = (created: Timestamp = timestamp()) => {
     contextViews: {},
     cursor: null,
     cursorBeforeSearch: null,
+    cursorBeforeEmContext: null,
     cursorBeforeQuickAdd: null,
     cursorCleared: false,
     cursorHistory: [],

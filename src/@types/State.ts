@@ -34,6 +34,7 @@ interface State {
    * See: /actions/cursorCleared.
    */
   cursorCleared: boolean
+  cursorBeforeEmContext: Path | null
   cursorBeforeQuickAdd: Path | null
   cursorBeforeSearch: Path | null
   cursorHistory: Path[]

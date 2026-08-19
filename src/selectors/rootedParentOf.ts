@@ -1,12 +1,13 @@
 import Context from '../@types/Context'
 import Path from '../@types/Path'
 import State from '../@types/State'
-import { ABSOLUTE_PATH, ABSOLUTE_TOKEN, HOME_PATH, HOME_TOKEN } from '../constants'
+import { ABSOLUTE_PATH, ABSOLUTE_TOKEN, EM_PATH, EM_TOKEN, HOME_PATH, HOME_TOKEN } from '../constants'
 import parentOf from '../util/parentOf'
 
 const RootPathMap: Record<string, Path> = {
   [HOME_TOKEN]: HOME_PATH,
   [ABSOLUTE_TOKEN]: ABSOLUTE_PATH,
+  [EM_TOKEN]: EM_PATH,
 }
 
 /** Checks if an object is of type Path. */

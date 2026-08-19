@@ -21,7 +21,7 @@ import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } f
 import { isTouch } from '../browser'
 import MoveThoughtAlert from '../components/MoveThoughtAlert'
 import { ThoughtContainerProps } from '../components/Thought'
-import { AlertType, LongPressState } from '../constants'
+import { AlertType, EM_TOKEN, LongPressState } from '../constants'
 import allowTouchToScroll from '../device/allowTouchToScroll'
 import * as selection from '../device/selection'
 import documentSort from '../selectors/documentSort'
@@ -110,12 +110,17 @@ const beginDrag = ({ path }: ThoughtContainerProps): DragThoughtItem[] => {
 }
 
 /** Memoized function that returns true if the thought can be dropped at the destination path. This does not need to account for hidden thoughts since they have pointer-events:none. This function will be called in a continuous loop by react-dnd so it needs to be fast. */
-const canDropPath = moize((from: Path, to: Path) => !isDescendantPath(to, from, { exclusive: true }), {
-  // only needs to be big enough to cache the calls within a single drag
-  // i.e. a reasonable number of destation thoughts that will be hovered over during a single drag
-  maxSize: 50,
-  profileName: 'canDropPath',
-})
+const canDropPath = moize(
+  (from: Path, to: Path) =>
+    // thoughts cannot be moved between the EM context and the home thoughtspace (e.g. dragging a Favorite into the EM-rooted outline)
+    (from[0] === EM_TOKEN) === (to[0] === EM_TOKEN) && !isDescendantPath(to, from, { exclusive: true }),
+  {
+    // only needs to be big enough to cache the calls within a single drag
+    // i.e. a reasonable number of destation thoughts that will be hovered over during a single drag
+    maxSize: 50,
+    profileName: 'canDropPath',
+  },
+)
 
 /** Returns true if the ThoughtContainer can be dropped at the given DropTarget. */
 const canDrop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {

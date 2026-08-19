@@ -6,7 +6,7 @@ import { css, cx } from '../../styled-system/css'
 import Index from '../@types/IndexType'
 import ThoughtId from '../@types/ThoughtId'
 import { isTouch } from '../browser'
-import { CONTENT_BOX_PADDING_LEFT, LongPressState } from '../constants'
+import { CONTENT_BOX_PADDING_LEFT, EM_TOKEN, LongPressState } from '../constants'
 import testFlags from '../e2e/testFlags'
 import usePositionedThoughts from '../hooks/usePositionedThoughts'
 import useSizeTracking from '../hooks/useSizeTracking'
@@ -128,12 +128,14 @@ const LayoutTree = () => {
   const fontSize = useSelector(state => state.fontSize)
   const dragInProgress = useSelector(state => state.longPress === LongPressState.DragInProgress)
   const ref = useRef<HTMLDivElement>(null)
-  const indentDepth = useSelector(state =>
-    state.cursor && state.cursor.length > 2
+  const indentDepth = useSelector(state => {
+    // EM paths include the root token explicitly, so their visual depth is one less than their length
+    const cursorDepth = state.cursor ? state.cursor.length - (state.cursor[0] === EM_TOKEN ? 1 : 0) : 0
+    return state.cursor && cursorDepth > 2
       ? // when the cursor is on a leaf, the indention level should not change
-        state.cursor.length - (hasChildren(state, head(state.cursor)) ? 2 : 3)
-      : 0,
-  )
+        cursorDepth - (hasChildren(state, head(state.cursor)) ? 2 : 3)
+      : 0
+  })
 
   // Width of thought bullet, using the default from Bullet.tsx
   const [bulletWidth, setBulletWidth] = useState(fontSize * 1.25)
@@ -161,7 +163,8 @@ const LayoutTree = () => {
     )
       return 0
     const isCursorLeaf = !hasChildren(state, head(state.cursor))
-    return state.cursor.length + (isCursorLeaf ? -1 : 0)
+    // EM paths include the root token explicitly, so their visual depth is one less than their length
+    return state.cursor.length - (state.cursor[0] === EM_TOKEN ? 1 : 0) + (isCursorLeaf ? -1 : 0)
   })
 
   // first uncle of the cursor used for DropUncle

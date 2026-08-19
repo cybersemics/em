@@ -19,6 +19,7 @@ import syncStatusStore from '../stores/syncStatus'
 import equalArrays from '../util/equalArrays'
 import hashThought from '../util/hashThought'
 import head from '../util/head'
+import isEM from '../util/isEM'
 import keyValueBy from '../util/keyValueBy'
 
 /** Debounce visible thought checks to avoid checking on every action. */
@@ -39,7 +40,7 @@ const initialPullQueue = (): Record<ThoughtId, true> => ({
 /** Appends all visible paths and their visible children to the pullQueue. */
 const expandPullQueue = (state: State): Record<ThoughtId, true> => {
   const { cursor } = state
-  const path = cursor || [HOME_TOKEN]
+  const path = cursor || (isEM(state.rootContext) ? [EM_TOKEN] : [HOME_TOKEN])
 
   // Generate a map of all visible paths, including the cursor, all its ancestors, and the expanded paths. Keyed by ThoughtId.
   const expandedPaths = {

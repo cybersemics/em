@@ -9,9 +9,11 @@ import expandThoughts from '../selectors/expandThoughts'
 import hasMulticursor from '../selectors/hasMulticursor'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import isAbsolute from '../util/isAbsolute'
+import isEM from '../util/isEM'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
 import toggleAbsoluteContext from './toggleAbsoluteContext'
+import toggleEmContext from './toggleEmContext'
 
 /** Replaces the multiselect with the parents of each selected thought. Parents shared by multiple selected thoughts are selected once, since the multicursor set is keyed by path. */
 const multicursorBack = (state: State): State => {
@@ -58,7 +60,8 @@ const cursorBack = (state: State): State => {
           setCursor({
             // offset shouldn't be null if we want useEditMode to set the selection to the new thought
             offset: 0,
-            path: cursorNew!.length > 0 ? cursorNew : null,
+            // the EM root itself is not rendered, so a cursor that would land on [EM_TOKEN] clears instead
+            path: cursorNew!.length > 0 && !isEM(cursorNew!) ? cursorNew : null,
             isKeyboardOpen,
             preserveMulticursor: true,
           }),
@@ -66,19 +69,21 @@ const cursorBack = (state: State): State => {
           // append to cursor history to allow 'forward' gesture
           cursorHistory({ cursor: cursorOld }),
         ]
-      : // if there is no cursor and isAbsoluteRoot is active, toggle the context
+      : // if there is no cursor and isAbsoluteRoot or the EM context is active, toggle out of the context
         // else of search is active, close the search
         isAbsoluteRoot
         ? [toggleAbsoluteContext]
-        : search === ''
-          ? [
-              // close the search
-              searchReducer({ value: null }),
+        : isEM(rootContext)
+          ? [toggleEmContext]
+          : search === ''
+            ? [
+                // close the search
+                searchReducer({ value: null }),
 
-              // restore the cursor
-              state.cursorBeforeSearch ? setCursor({ path: state.cursorBeforeSearch, isKeyboardOpen }) : null,
-            ]
-          : [],
+                // restore the cursor
+                state.cursorBeforeSearch ? setCursor({ path: state.cursorBeforeSearch, isKeyboardOpen }) : null,
+              ]
+            : [],
   )(state)
 }
 

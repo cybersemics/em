@@ -1,6 +1,7 @@
 import State from '../../@types/State'
 import importText from '../../actions/importText'
 import toggleContextView from '../../actions/toggleContextView'
+import { EM_TOKEN, HOME_TOKEN } from '../../constants'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import contextToPath from '../../selectors/contextToPath'
 import addMulticursor from '../../test-helpers/addMulticursorAtFirstMatch'
@@ -13,6 +14,8 @@ import cursorBack from '../cursorBack'
 import cursorForward from '../cursorForward'
 import newSubthought from '../newSubthought'
 import newThought from '../newThought'
+import settings from '../settings'
+import toggleEmContext from '../toggleEmContext'
 
 /** Converts the multicursor set to a list of contexts in a readable way. */
 const multicursorContexts = (state: State): string[][] =>
@@ -144,5 +147,25 @@ describe('multicursor', () => {
 
     expect(multicursorContexts(stateNew)).toEqual([['x', 'a']])
     expect(stateNew.expanded[hashPath(contextToPath(stateNew, ['x', 'a'])!)]).toBeFalsy()
+  })
+})
+
+describe('em context', () => {
+  it('clear the cursor instead of moving it to the unrendered EM root', () => {
+    const steps = [settings({ key: 'Theme', value: 'Dark' }), toggleEmContext, cursorBack]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    // still in the EM context, but no cursor
+    expect(stateNew.rootContext).toEqual([EM_TOKEN])
+    expect(stateNew.cursor).toEqual(null)
+  })
+
+  it('exit the EM context when there is no cursor', () => {
+    const steps = [settings({ key: 'Theme', value: 'Dark' }), toggleEmContext, cursorBack, cursorBack]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(stateNew.rootContext).toEqual([HOME_TOKEN])
   })
 })

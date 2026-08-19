@@ -134,6 +134,8 @@ export const ROOT_CONTEXTS = [HOME_TOKEN, ABSOLUTE_TOKEN]
 
 export const HOME_PATH = [HOME_TOKEN] as SimplePath
 export const ABSOLUTE_PATH = [ABSOLUTE_TOKEN] as SimplePath
+// Unlike HOME and ABSOLUTE, EM is not in ROOT_CONTEXTS: EM paths include the root token explicitly, and isRoot([EM_TOKEN]) must stay false or thoughtToPath would strip the prefix. Use isEM for root checks in EM-rooted views.
+export const EM_PATH = [EM_TOKEN] as SimplePath
 
 export const ALLOW_SINGLE_CONTEXT = false
 
@@ -613,7 +615,7 @@ export const COMMAND_GROUPS: {
   },
   {
     title: 'Settings',
-    commands: ['settings', 'customizeToolbar'],
+    commands: ['settings', 'customizeToolbar', 'editSettings'],
   },
   {
     title: 'Help',
