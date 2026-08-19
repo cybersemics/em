@@ -33,6 +33,14 @@ describe('enabled gate', () => {
     expect(debugLog.read().some(e => e.type === 'session')).toBe(true)
   })
 
+  it('includes appVersion and commitHash in the session marker', () => {
+    debugLog.setEnabled(true)
+    const session = debugLog.read().find(e => e.type === 'session')
+    expect(typeof session?.appVersion).toBe('string')
+    expect((session?.appVersion as string).length).toBeGreaterThan(0)
+    expect(typeof session?.commitHash).toBe('string')
+  })
+
   it('setEnabled is idempotent (no duplicate session markers)', () => {
     debugLog.setEnabled(true)
     debugLog.setEnabled(true)

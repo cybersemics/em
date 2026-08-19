@@ -4,8 +4,10 @@ import { useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { textNoteRecipe } from '../../styled-system/recipes'
 import Path from '../@types/Path'
+import SimplePath from '../@types/SimplePath'
 import { cursorDownActionCreator as cursorDown } from '../actions/cursorDown'
 import { deleteThoughtActionCreator as deleteThought } from '../actions/deleteThought'
+import { editThoughtActionCreator as editThought } from '../actions/editThought'
 import { keyboardOpenActionCreator as keyboardOpen } from '../actions/keyboardOpen'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { setDescendantActionCreator as setDescendant } from '../actions/setDescendant'
@@ -16,10 +18,12 @@ import preventAutoscroll, { preventAutoscrollEnd } from '../device/preventAutosc
 import * as selection from '../device/selection'
 import globals from '../globals'
 import useFreshCallback from '../hooks/useFreshCallback'
+import { firstVisibleChild } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import noteValue from '../selectors/noteValue'
 import resolveNotePath from '../selectors/resolveNotePath'
 import store from '../stores/app'
+import appendToPath from '../util/appendToPath'
 import equalPathHead from '../util/equalPathHead'
 import head from '../util/head'
 import strip from '../util/strip'
@@ -44,7 +48,7 @@ const Note = React.memo(
 
     /** Gets the value of the note. Returns null if no note exists or if the context view is active. */
     const note = useSelector(state => noteValue(state, path))
-    const noteOffset = useSelector(state => state.noteOffset)
+    const editableNonce = useSelector(state => state.editableNonce)
 
     /** Focus Handling with useFreshCallback. */
     const onFocus = useFreshCallback(() => {
@@ -62,6 +66,7 @@ const Note = React.memo(
 
     // set the caret on the note if editing this thought and noteFocus is true
     useEffect(() => {
+      const { noteOffset } = store.getState()
       // cursor must be true if note is focused
       if (hasFocus && noteOffset !== null) {
         selection.set(noteRef.current!, { offset: noteOffset })
@@ -71,7 +76,7 @@ const Note = React.memo(
         // be left wherever the note's re-render dropped it instead of the requested offset (#4630).
         dispatch(setNoteFocus({ value: true, offset: null }))
       }
-    }, [dispatch, hasFocus, noteOffset])
+    }, [dispatch, editableNonce, hasFocus])
 
     /** Handles note keyboard shortcuts. */
     const onKeyDown = useCallback(
@@ -126,18 +131,32 @@ const Note = React.memo(
             // Strip <br> from beginning and end of text
             e.target.value.replace(/^<br>|<br>$/gi, '')
 
+        const noteOffset = noteRef.current ? selection.offsetFromNode(noteRef.current) : null
+
         // update the referenced thought directly if it exists
         dispatch((dispatch, getState) => {
           const state = getState()
 
           const targetPath = resolveNotePath(state, path) ?? path
+          const noteThought = firstVisibleChild(state, head(targetPath))
 
-          dispatch(
-            setDescendant({
-              path: targetPath,
-              values: [value],
-            }),
-          )
+          if (noteThought) {
+            dispatch(
+              editThought({
+                path: appendToPath(targetPath, noteThought.id) as SimplePath,
+                oldValue: noteThought.value,
+                newValue: value,
+                noteOffset: noteOffset ?? undefined,
+              }),
+            )
+          } else {
+            dispatch(
+              setDescendant({
+                path: targetPath,
+                values: [value],
+              }),
+            )
+          }
         })
       },
       [dispatch, path, justPasted],
@@ -187,13 +206,6 @@ const Note = React.memo(
             position: 'relative',
             marginBottom: '2px',
             padding: '0 0 4px 0',
-            '@media (max-width: 1024px)': {
-              _android: {
-                position: 'relative',
-                marginBottom: '2px',
-                paddingBottom: '4px',
-              },
-            },
           }),
         )}
         style={{

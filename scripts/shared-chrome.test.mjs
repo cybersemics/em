@@ -5,7 +5,9 @@
  * so Chrome never launched — a failure only observable by actually running the script, which no CI
  * workflow did. Run by .github/workflows/agent-scripts.yml.
  *
- *   node scripts/shared-chrome.test.mjs
+ * ```sh
+ * node scripts/shared-chrome.test.mjs
+ * ```
  *
  * Respects EM_CHROME_PORT like the script itself (CI uses the default :9222, the same port the
  * chrome-devtools MCP and the web executor bridge are configured for). When running locally, note
@@ -35,6 +37,7 @@ child.on('exit', (code, signal) => {
   exited = { code, signal }
 })
 
+/** Kills the Chrome child process so the test never leaves a browser running. */
 const cleanup = () => {
   if (child.pid && !exited) {
     try {

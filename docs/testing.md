@@ -151,6 +151,8 @@ The sanctioned `paste` and `setTheme` Puppeteer helpers still contain fixed slee
 
 Treat a flaky test as deterministic behavior whose controlling condition is not known yet. Reproduce it, inspect the visible output and available diagnostics, and identify that condition before adding a delay, retry, or workaround. Do not make the whole suite slower to mask one uncertain test. Most application animation durations are already reduced to zero when `navigator.webdriver` is present; tests should wait for the resulting UI state, not replay production timing. Restoring production timing to reach an otherwise-unreachable state (such as the loading phase) is a backdoor decision, not a synchronization tactic — see [Sanctioned Backdoors](#sanctioned-backdoors).
 
+One controlling condition is worth naming because it recurs. On desktop, typing into a thought triggers distraction-free typing, which **unmounts** the toolbar, nav bar, and hamburger menu. It does not fire on the keystroke: it fires when the throttled edit commits `EDIT_THROTTLE` (500 ms) later, so a test that types and then clicks one of those elements has a ~500 ms budget that CI load can exhaust. The failure surfaces as Puppeteer's `Node is detached from document` when the unmount lands between resolving the element and clicking it, or as a selector timeout once the element is gone — nothing brings the HUD back but a pointer event ([`openSidebar`](../src/e2e/puppeteer/helpers/openSidebar.ts) moves the mouse for exactly this reason). When the act is a toolbar click, prefer an arrange that does not type: `paste` + `clickThought`.
+
 ### 4. Compose helpers
 
 Helpers are the vocabulary; tests are sentences. A puppeteer test should read as a sequence like `paste → clickThought → press → waitForEditable → exportThoughts → expect`. There are helpers for nearly everything (see [Test Helpers](#test-helpers)); use them before writing raw Puppeteer calls or Redux plumbing.
@@ -500,7 +502,7 @@ beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 ```
 
-`initStore` clears the shared store and enables fake timers. `createTestApp` additionally mounts the React tree, initializes persistence and event handlers, and enables the test drag-and-drop backend. `cleanupTestApp` clears storage, the local YJS database, the store, and event handlers, and flushes pending timers. Do not share fixture state between tests or rely on test execution order.
+`initStore` clears the shared store, resets every [ministore](glossary.md#m) to its initial state, and enables fake timers. Ministores are module-level singletons that vitest isolates per test *file*, not per test, so resetting them in setup is what keeps one test's ephemeral UI state out of the next; a test that needs a ministore reset on its own can call `store.reset()` on it directly. `initStore({ persist: true })` skips both resets. `createTestApp` resets ministores the same way, before `initialize()` runs, and additionally mounts the React tree, initializes persistence and event handlers, and enables the test drag-and-drop backend. `cleanupTestApp` clears storage, the local YJS database, the store, and event handlers, and flushes pending timers. Do not share fixture state between tests or rely on test execution order.
 
 ## Sanctioned Backdoors
 
@@ -557,7 +559,7 @@ There are three helper directories. Use them before reaching for raw Redux dispa
 
 The helpers in [`../src/test-helpers/`](../src/test-helpers) cover store setup and operations that are otherwise verbose to write by hand:
 
-- [`createTestApp`](../src/test-helpers/createTestApp.tsx) — mounts `<App />` into the JSDOM environment via `@testing-library/react`, runs `initialize()`, swaps in `react-dnd-test-backend`, opts into fake timers, and closes the welcome modal. Use this when a test touches the rendered app. Pair every call with `cleanupTestApp` (it clears `localStorage`, the local YJS db, the store, and event handlers).
+- [`createTestApp`](../src/test-helpers/createTestApp.tsx) — mounts `<App />` into the JSDOM environment via `@testing-library/react`, resets all ministores, runs `initialize()`, swaps in `react-dnd-test-backend`, opts into fake timers, and closes the welcome modal. Use this when a test touches the rendered app. Pair every call with `cleanupTestApp` (it clears `localStorage`, the local YJS db, the store, and event handlers).
 - [`initStore`](../src/test-helpers/initStore.ts) — initializes the store without mounting the React tree, for store-level tests that don't need a DOM.
 - [`importToContext`](../src/test-helpers/importToContext.ts) — seeds the store with a tree from a multi-line plaintext outline (the same format the `Import` modal accepts). Most fixture setup goes through this.
 - [`dispatch`](../src/test-helpers/dispatch.ts) — a thin wrapper that lets a test dispatch synchronously without re-typing `store.dispatch(...)` plumbing.
@@ -972,6 +974,10 @@ await vi.runAllTimersAsync()
 https://github.com/cybersemics/em/pull/2741
 
 In a rendered JSDOM test, wrap timer advancement that causes React updates in `act`.
+
+### Automated flaky-test detection
+
+The `Puppeteer Flaky` workflow (`.github/workflows/puppeteer-flaky.yml`) stress-runs the full Puppeteer suite nightly on `main` (15 iterations by default; `gh workflow run puppeteer-flaky.yml -f iterations=5` to run manually). `scripts/flaky-report.mjs` aggregates the Vitest JSON reports into a workflow summary that distinguishes intermittent failures (likely flakes) from consistent ones (likely regressions). When failures are found, the workflow sends a Discord notification (if the `DISCORD_WEBHOOK_URL` repository secret is set) and files a tracking issue for each **intermittently** failing test — titled `Flaky test: <file> > <full name>`, labelled `test`, and deduplicated by exact title match against open issues, so a test that is already tracked is not re-filed. A test that fails every iteration is a consistent failure rather than a flake; it appears in the summary and the Discord alert but is not filed as an issue.
 
 ### Triggering GitHub Actions workflows manually
 

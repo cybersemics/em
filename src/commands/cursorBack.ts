@@ -40,7 +40,8 @@ const cursorBackCommand: Command = {
 
     const { cursor, search } = state
 
-    if (cursor || search != null) {
+    // a multicursor can exist without a cursor, e.g. a thought selected by long press, so it must be checked in addition to the cursor for the selection to be moved back a level (touch only, since escape clears the multicursor on desktop above)
+    if (cursor || search != null || hasMulticursor(state)) {
       dispatch(cursorBack())
 
       // clear browser selection if cursor has been removed
@@ -52,7 +53,8 @@ const cursorBackCommand: Command = {
 
     // As a convenience, allow cursorBack to scroll to the top if the cursor is already null.
     // Only do this after the cursor is already null to avoid disrupting the user when they are simply moving up a level to adjust autofocus and immediately back down a level to a sibling.
-    if (!cursor) {
+    // Not when thoughts are selected, since then Back moves the selection rather than the cursor.
+    if (!cursor && !hasMulticursor(state)) {
       scrollTo('top', 'smooth')
     }
   }),

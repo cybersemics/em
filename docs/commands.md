@@ -56,7 +56,7 @@ const pinCommand: Command = {
 
 `exec` receives the Redux `dispatch`, a `getState` thunk, the event that triggered the command, and a `{ type }` field that is `'keyboard'`, `'gesture'`, `'toolbar'`, or `'chainedGesture'` so the command can adapt its behavior (e.g. `pin` shows an alert only when triggered via keyboard, since the toolbar already gives visual feedback).
 
-A command bound to an array of keyboard shortcuts also receives `keyboardIndex`, the index within that array of the shortcut that was pressed (`undefined` for every other activation type). This lets one command cover a family of related shortcuts: `applyColor` maps Command/Ctrl + Option/Alt + *n* and Option/Alt + *n* to the *n*th text and background swatch of the [`ColorPicker`](../src/components/ColorPicker.tsx). Since only the first shortcut of an array is displayed, such a command can set `keyboardDisplay` to a single `Key` representing the whole range (`applyColor` displays `Cmd + Option + 0-8`).
+A command bound to an array of keyboard shortcuts also receives `keyboardIndex`, the index within that array of the shortcut that was pressed (`undefined` when the command was not activated by one of its own keyboard shortcuts). This lets one command cover a family of related shortcuts: `applyColor` maps Command/Ctrl + Option/Alt + *n* and Option/Alt + *n* to the *n*th text and background swatch of the [`ColorPicker`](../src/components/ColorPicker.tsx). Since only the first shortcut of an array is displayed, such a command can set `keyboardDisplay` to a single `Key` representing the whole range (`applyColor` displays `Cmd + Option + 0-8`).
 
 ### Discovery and indexing
 
@@ -125,7 +125,7 @@ Both filter `globalCommands` by name and respect `hideFromDesktopCommandUniverse
 
 When `state.multicursors` is non-empty, the user has one or more thoughts selected. A selection of exactly one thought is common — on mobile, opening the Command Center selects the cursor thought. Every command must declare how it behaves in this case via the required `multicursor` field — there is no implicit default.
 
-- **`multicursor: false`** — execute on `state.cursor` as if no multicursor existed; selection stays. For commands that don't interact with the thoughtspace (e.g. opening modals).
+- **`multicursor: false`** — execute on `state.cursor` as if no multicursor existed; selection stays. For commands that don't interact with the thoughtspace (e.g. opening modals). The cursor-navigation commands also declare `multicursor: false` yet still respond to a selection, since navigating a multiselect means moving the selection itself rather than executing once per selected thought: [`cursorUp`](../src/commands/cursorUp.ts) and [`cursorDown`](../src/commands/cursorDown.ts) read `state.multicursors` in their own `exec` to extend or collapse the selection, and the [`cursorForward`](../src/actions/cursorForward.ts) and [`cursorBack`](../src/actions/cursorBack.ts) reducers replace the selection with the thoughts one level forward or back.
 - **`multicursor: true`** — execute once per selected thought.
 - **`multicursor: { ... }`** — fine-grained control with these options:
 
@@ -144,6 +144,8 @@ When `state.multicursors` is non-empty, the user has one or more thoughts select
 
 `setIsMulticursorExecuting` is the general mechanism for that collapsing, not a private detail of the command loop: [`undoRedoEnhancer`](../src/redux-enhancers/undoRedoEnhancer.ts) merges every action dispatched while `state.isMulticursorExecuting` is true into the preceding undo patch, and shows `undoLabel` in the undo/redo alert. Any code path that edits every selected thought without going through a `multicursor: true` command must bracket its dispatch with the same pair, or the user has to undo once per thought. The [`ColorPicker`](../src/components/ColorPicker.tsx) and [`LetterCasePicker`](../src/components/LetterCasePicker.tsx) reach the thoughtspace through [`formatSelection`](../src/actions/formatSelection.ts) and [`formatLetterCase`](../src/actions/formatLetterCase.ts) rather than through their `multicursor: false` toolbar commands, so those two action-creators do the bracketing themselves; drag-and-drop of a multiselect does the same.
 
+The whole of `executeCommandWithMulticursor` is synchronous, including that bracket, so an **asynchronous** command gets no help from it: the bracket is opened and closed around the call, and anything dispatched after the first `await` lands outside it. [`generateThought`](../src/commands/generateThought.ts) is the case in point — its `exec` only reaches the thoughtspace once a network request has returned. It defines an `execMulticursor` that yields once (so that the loop's own synchronous bracket has closed), opens a second bracket of its own, generates every selected thought, and closes it only after all of them have settled. A `multicursor: true` declaration would instead leave one undo step per generated thought, and each `exec`'s own `setCursor` would drop the caret on whichever request happened to finish last.
+
 ### Gating and defaults
 
 Three fields shape what happens when the command might not be runnable:
@@ -152,6 +154,19 @@ Three fields shape what happens when the command might not be runnable:
 - **`preventDefault`** — call `e.preventDefault()` even when `canExecute` returns false. Useful for keyboard shortcuts that should *always* swallow the keypress.
 - **`permitDefault`** — do *not* call `e.preventDefault()` even when the command runs. Useful for shortcuts that piggyback on existing browser behavior (e.g. system copy/paste).
 - **`allowExecuteFromModal`** — allow the command to run while a modal is open. Defaults to false; navigation commands set this to true.
+
+### Repeat
+
+`repeat` (Command/Ctrl + .) has no behavior of its own — its `exec` is a noop. `executeCommand` records the last command it executed in a module-level `lastCommand` variable, and both `executeCommand` and `executeCommandWithMulticursor` resolve `repeat` to it before executing, so the repeated command runs through the normal path with its own `canExecute` and multicursor handling. Resolving before execution (rather than executing from within `repeat.exec`) also keeps `repeat.ts` free of an import of `commands.ts`, which would be circular.
+
+`keyboardIndex` is recorded alongside the command and restored when it is repeated, since it cannot be derived from the Command/Ctrl + . keypress — that keypress matches none of the repeated command's own shortcuts. Without it, repeating `applyColor` would have no swatch to apply and would silently do nothing. `executeCommandWithMulticursor` resolves `repeat` itself and then delegates an already-resolved command, so it forwards the recorded index through executeCommand's `keyboardIndex` option.
+
+Only commands that make an *undoable, non-navigational* change are recorded, so that Repeat repeats the last edit no matter how many navigation or non-undoable commands intervened. This is detected by comparing the last non-navigation undo patch (the patch that Undo would revert, as classified by [`actionMetadata.registry`](../src/util/actionMetadata.registry.ts)) before and after execution. A command with a custom `execMulticursor` never reaches `executeCommand`, so `executeCommandWithMulticursor` records it around that call instead, comparing the patch from the same point the per-cursor loop does — after `setIsMulticursorExecuting`. Consequently:
+
+- Navigation commands (Cursor Down, Jump Back) are skipped — their actions are registered `isNavigation`.
+- Commands that dispatch no undoable action (Export, Settings, Command Universe) are skipped, since they add no patch.
+- Commands that set `repeatable: false` are never recorded. `undo` and `redo` move through the undo history rather than making a new undoable change, and recording `repeat` would recurse.
+- A command that only dispatches asynchronously (Generate Thought) is not recorded, since its patch does not exist yet when `exec` returns.
 
 ### Adding a new command
 
@@ -172,7 +187,7 @@ The full list of user-facing commands. For the canonical, always-up-to-date set,
 
 ### Back
 
-Move the cursor up a level. If Clear Thought is active, cancel it instead and leave the cursor where it is.
+Move the cursor up a level. If Clear Thought is active, cancel it instead and leave the cursor where it is. When thoughts are selected, deselect them and select the parent of each selected thought instead — except on desktop, where <kbd>Escape</kbd> clears the selection rather than moving it.
 
 <kbd>Escape</kbd>
 
@@ -180,7 +195,7 @@ https://github.com/user-attachments/assets/ab558971-0839-4a46-a421-e074509795f0
 
 ### Forward
 
-Move the cursor down a level.
+Move the cursor down a level. When thoughts are selected, deselect them and select the thoughts one level forward instead: the visible children of each selected thought, or its contexts when its context view is active.
 
 ### Cursor Up
 
@@ -408,7 +423,7 @@ https://github.com/user-attachments/assets/95f037cc-cf88-4392-98fb-4d79cdae4fba
 
 ### Bump Thought Down
 
-Bump the current thought down one level and replace it with a new, empty thought.
+Bump the current thought down one level and replace it with a new, empty thought. When multiple thoughts are selected, their parent is bumped down and the selected thoughts are moved into the new thought.
 
 <kbd>Command + Option + d</kbd>
 
@@ -438,6 +453,10 @@ Join all thoughts at the same level into a single thought.
 
 https://github.com/user-attachments/assets/1f7a91e0-4dd5-4054-b463-9e3b724a8d57
 
+### Merge Duplicates
+
+Merges all duplicate siblings at the same level as the cursor. The first thought of each duplicated value is kept, and the children of the rest are moved into it. Empty thoughts are never treated as duplicates.
+
 ### Split Sentences
 
 Splits multiple sentences in a single thought into separate thoughts.
@@ -456,7 +475,11 @@ Selects all thoughts at the current level. May reduce wrist strain.
 
 ### Select Between
 
-Selects all thoughts between two selected thoughts.
+Selects all sibling thoughts between two selected endpoints. On desktop, Command/Ctrl-click an unselected thought to
+set the fixed anchor, then Shift-click an endpoint. Subsequent Shift-clicks adjust the endpoint, replacing only the
+active range while preserving separately selected or previously committed ranges. With no active multiselect,
+Shift-click selects the clicked thought and establishes it as the anchor. If the anchor is deselected, the last
+remaining selected thought becomes the next anchor.
 
 ### Copy Cursor
 
@@ -661,6 +684,14 @@ Undo the last action.
 Redo the last undone action.
 
 <kbd>Command + Shift + z</kbd>
+
+### Repeat
+
+Repeats the last command. Repeats the last command.
+
+Navigation and non-undoable commands are ignored, so Repeat always repeats the last command that changed the thoughtspace.
+
+<kbd>Command + .</kbd>
 
 ### Toggle Undo Slider
 
