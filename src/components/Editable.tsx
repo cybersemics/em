@@ -925,10 +925,13 @@ const Editable = ({
             // close all popups when clicking on a thought
             dispatch(toggleDropdown())
           }
-          // While the Command Center is open, a tap toggles the thought's selection rather than moving the cursor,
-          // which is the only way to add a thought to the multiselect on mobile apart from long pressing it.
-          // Deselecting the last selected thought closes the Command Center (see multicursorAlertMiddleware).
-          else if (state.showCommandCenter) {
+          // While a multiselect is active, a tap toggles the thought's selection rather than moving the cursor.
+          // On mobile this is the only way to add a thought to the multiselect apart from long pressing it, and on
+          // desktop it makes a plain click consistent with that tap. Shift + Click and Cmd/Ctrl + Click are excluded
+          // since Thought's handleMultiselect owns them, and toggling here would move multicursorAnchor and thereby
+          // collapse the Shift + Click range (see selectBetween). Deselecting the last selected thought ends the
+          // multiselect, which closes the Command Center on mobile (see multicursorAlertMiddleware).
+          else if (hasMulticursorSelector(state) && !e.shiftKey && !(isMac ? e.metaKey : e.ctrlKey)) {
             dispatch(toggleMulticursor({ path }))
           } else {
             setCursorOnThought()

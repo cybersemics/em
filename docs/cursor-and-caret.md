@@ -67,7 +67,7 @@ The two-tap pattern:
 - By default, edit mode is off. Tapping a non-cursor thought moves the cursor but does **not** open the keyboard.
 - Tapping the cursor thought a second time activates edit mode and opens the keyboard.
 - Closing the keyboard (or navigating to the root) exits edit mode.
-- While the Command Center is open (`state.showCommandCenter`, raised on touch by [`multicursorAlertMiddleware`](../src/redux-middleware/multicursorAlertMiddleware.ts) as soon as a thought is selected), a tap toggles the tapped thought's multicursor selection instead of moving the cursor. This is the second way to add a thought to the selection on mobile, alongside long pressing it. Deselecting the last selected thought closes the Command Center, which restores the normal tap behavior.
+- While a multiselect is active, a tap on a thought or on its bullet toggles that thought's selection instead of moving the cursor. Deselecting the last selected thought ends the multiselect and restores the normal tap behavior. See [Multicursor](commands.md#multicursor).
 
 There are also commands that activate edit mode by side effect, because they modify the visible thought: `newThought`, `newSubthought`, `clearText`, `subcategorizeOne`, etc.
 

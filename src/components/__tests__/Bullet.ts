@@ -13,6 +13,7 @@ import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../..
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
 import findCursor from '../../test-helpers/queries/findCursor'
+import findThoughtByText from '../../test-helpers/queries/findThoughtByText'
 import getBulletByContext from '../../test-helpers/queries/getBulletByContext'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import hashPath from '../../util/hashPath'
@@ -632,5 +633,70 @@ describe('multiselect', () => {
   - a
   - b
     - c`)
+  })
+
+  // https://github.com/cybersemics/em/issues/3528
+  it('click on a bullet toggles the clicked thought while a multiselect is active, without expanding or collapsing it', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - a
+        - b
+          - c
+      `,
+      }),
+      setCursor(['b']),
+      addMulticursor(['a']),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const user = userEvent.setup({ delay: null })
+    await user.click(getBulletByContext(['b']))
+    await act(() => vi.runAllTimersAsync())
+
+    expect(getBulletByContext(['a'])).toHaveAttribute('data-highlighted', 'true')
+    expect(getBulletByContext(['b'])).toHaveAttribute('data-highlighted', 'true')
+
+    // expansion is determined by the selected thoughts during a multiselect, so =pin is not set
+    const exportedAfterSelect = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exportedAfterSelect).toEqual(`- __ROOT__
+  - a
+  - b
+    - c`)
+
+    await user.click(getBulletByContext(['b']))
+    await act(() => vi.runAllTimersAsync())
+
+    expect(getBulletByContext(['a'])).toHaveAttribute('data-highlighted', 'true')
+    expect(getBulletByContext(['b'])).toHaveAttribute('data-highlighted', 'false')
+  })
+
+  // https://github.com/cybersemics/em/issues/3528
+  it('click on a thought toggles the clicked thought while a multiselect is active', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - a
+        - b
+      `,
+      }),
+      addMulticursor(['a']),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const user = userEvent.setup({ delay: null })
+    await user.click((await findThoughtByText('b'))!)
+    await act(() => vi.runAllTimersAsync())
+
+    expect(getBulletByContext(['a'])).toHaveAttribute('data-highlighted', 'true')
+    expect(getBulletByContext(['b'])).toHaveAttribute('data-highlighted', 'true')
+
+    await user.click((await findThoughtByText('b'))!)
+    await act(() => vi.runAllTimersAsync())
+
+    expect(getBulletByContext(['a'])).toHaveAttribute('data-highlighted', 'true')
+    expect(getBulletByContext(['b'])).toHaveAttribute('data-highlighted', 'false')
   })
 })

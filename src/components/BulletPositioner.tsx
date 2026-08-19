@@ -9,12 +9,14 @@ import SimplePath from '../@types/SimplePath'
 import { deleteAttributeActionCreator as deleteAttribute } from '../actions/deleteAttribute'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { setDescendantActionCreator as setDescendant } from '../actions/setDescendant'
+import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
 import { isMac, isSafari, isTouch, isiPhone } from '../browser'
 import { LongPressState } from '../constants'
 import { LongPressProps } from '../hooks/useLongPress'
 import findDescendant from '../selectors/findDescendant'
 import getChildren from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
+import hasMulticursor from '../selectors/hasMulticursor'
 import isContextViewActive from '../selectors/isContextViewActive'
 import isMulticursorPath from '../selectors/isMulticursorPath'
 import isPinned from '../selectors/isPinned'
@@ -154,6 +156,15 @@ const BulletPositioner = forwardRef<SVGSVGElement, PropsWithChildren<BulletPosit
 
         dispatch((dispatch, getState) => {
           const state = getState()
+
+          // While a multiselect is active, tapping the bullet toggles the thought's selection, the same as
+          // tapping the thought itself. Expansion is determined by the selected thoughts during a multiselect,
+          // so the =pin handling below is skipped.
+          if (hasMulticursor(state)) {
+            dispatch(toggleMulticursor({ path }))
+            return
+          }
+
           const isExpanded = state.expanded[hashPath(path)]
           const children = getChildren(state, head(path))
           const shouldCollapse = isExpanded && children.length > 0
