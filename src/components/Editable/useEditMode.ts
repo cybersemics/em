@@ -59,6 +59,7 @@ const useEditMode = ({
   const editing = useSelector(state => state.isKeyboardOpen)
   const isMulticursor = useSelector(hasMulticursor)
   const isCursorCleared = useSelector(state => state.cursorCleared)
+  const wasCursorCleared = usePrevious(isCursorCleared)
   const noteFocus = useSelector(state => state.noteFocus)
   const dragHold = useSelector(state => state.longPress === LongPressState.DragHold)
   const dragInProgress = useSelector(state => state.longPress === LongPressState.DragInProgress)
@@ -96,6 +97,15 @@ const useEditMode = ({
           // Only show it in edit mode, otherwise the keyboard would re-open after the user dismissed it (#3996).
           if (editMode && contentRef.current) {
             virtualKeyboard.show(contentRef.current)
+          }
+
+          // selection.set focuses the editing host only implicitly, i.e. only when nothing else holds the focus,
+          // and asyncFocus parks it on a hidden input. After a drag-and-drop the selection is cleared, so Clear
+          // Thought left the editable unfocused with no caret, faux caret or keyboard (#4519). Only on the
+          // transition into the cleared state; focusing on any other run blurs the previously focused editable
+          // before the selection is set, which recomputes the cursor offset and ends the editing session.
+          if (isCursorCleared && wasCursorCleared === false && contentRef.current) {
+            contentRef.current.focus()
           }
 
           selection.set(contentRef.current, { offset: cursorOffset ?? 0 })

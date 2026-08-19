@@ -40,6 +40,22 @@ if (typeof Range.prototype.getClientRects !== 'function') {
   Range.prototype.getClientRects = () => []
 }
 
+// Likewise for getBoundingClientRect, which selection.caretRect uses to measure the caret. Reachable in jsdom
+// only once an editable actually holds the focus, which is what useEditMode does when placing the caret.
+if (typeof Range.prototype.getBoundingClientRect !== 'function') {
+  Range.prototype.getBoundingClientRect = () => ({
+    x: 0,
+    y: 0,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: 0,
+    height: 0,
+    toJSON: () => ({}),
+  })
+}
+
 // stub jest globally. This is needed incase jest is being directly referenced in the code.
 vi.stubGlobal('jest', vi)
 
