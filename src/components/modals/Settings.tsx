@@ -9,6 +9,7 @@ import { DEFAULT_FONT_SIZE, MAX_FONT_SIZE, MIN_FONT_SIZE, Settings } from '../..
 import copy from '../../device/copy'
 import globals from '../../globals'
 import getUserSetting from '../../selectors/getUserSetting'
+import { clearAiDisclosureAcknowledgement, hasAcknowledgedAiDisclosure } from '../../util/aiDisclosure'
 import debugLog from '../../util/debugLog'
 import fastClick from '../../util/fastClick'
 import haptics from '../../util/haptics'
@@ -149,6 +150,37 @@ const DebugLog = () => {
   )
 }
 
+/** Lets a user revoke a previously remembered AI data acknowledgement on this device. */
+const AiAcknowledgement = () => {
+  const [acknowledged, setAcknowledged] = useState(hasAcknowledgedAiDisclosure)
+  const [removed, setRemoved] = useState(false)
+
+  if (!acknowledged && !removed) return null
+
+  return (
+    <div className={css({ marginBottom: '2em' })}>
+      <div>AI Data Acknowledgment</div>
+      <p className={css({ marginTop: '0.45rem', fontSize: 'md', color: 'dim' })}>
+        {acknowledged
+          ? 'AI features are allowed without asking each time on this device.'
+          : 'Removed. You will be asked before thought context is sent to an AI service.'}
+      </p>
+      {acknowledged ? (
+        <a
+          {...fastClick(() => {
+            clearAiDisclosureAcknowledgement()
+            setAcknowledged(false)
+            setRemoved(true)
+          })}
+          className={extendTapRecipe()}
+        >
+          Remove AI acknowledgment
+        </a>
+      ) : null}
+    </div>
+  )
+}
+
 /** User settings modal. */
 const ModalSettings = () => {
   const dispatch = useDispatch()
@@ -177,6 +209,8 @@ const ModalSettings = () => {
         <div className={css({ marginBottom: '2em' })}>
           <ThemeSwitch />
         </div>
+
+        <AiAcknowledgement />
 
         <Setting settingsKey={Settings.experienceMode} title='Training Mode' invert>
           Shows a notification each time a gesture is executed on a touch screen device. This is helpful when you are

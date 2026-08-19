@@ -63,7 +63,7 @@ export const cancelAiDisclosure = () => {
   pendingAiUse = null
 }
 
-/** Clears persisted AI data disclosure acknowledgement. Intended for tests. */
+/** Revokes AI data disclosure acknowledgement and clears any pending or one-time AI use. */
 export const clearAiDisclosureAcknowledgement = () => {
   storage.removeItem(AI_DISCLOSURE_KEY)
   allowNextAiUse = false

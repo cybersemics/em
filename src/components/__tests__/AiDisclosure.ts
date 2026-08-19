@@ -4,7 +4,11 @@ import { showModalActionCreator as showModal } from '../../actions/showModal'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
-import { clearAiDisclosureAcknowledgement, hasAcknowledgedAiDisclosure } from '../../util/aiDisclosure'
+import {
+  acknowledgeAiDisclosure,
+  clearAiDisclosureAcknowledgement,
+  hasAcknowledgedAiDisclosure,
+} from '../../util/aiDisclosure'
 
 beforeEach(createTestApp)
 beforeEach(() => {
@@ -64,4 +68,21 @@ it('persists acknowledgement when the user chooses to remember it', async () => 
 
   expect(hasAcknowledgedAiDisclosure()).toBe(true)
   expect(store.getState().showModal).toBeNull()
+})
+
+it('lets the user remove a remembered acknowledgement in Settings', async () => {
+  acknowledgeAiDisclosure()
+  await dispatch(showModal({ id: 'settings' }))
+
+  await act(vi.runOnlyPendingTimersAsync)
+
+  expect(screen.getByText('AI features are allowed without asking each time on this device.')).toBeVisible()
+
+  await act(async () => {
+    fireEvent.click(screen.getByText('Remove AI acknowledgment'))
+  })
+
+  expect(screen.getByText('Removed. You will be asked before thought context is sent to an AI service.')).toBeVisible()
+  expect(screen.queryByText('Remove AI acknowledgment')).toBeNull()
+  expect(hasAcknowledgedAiDisclosure()).toBe(false)
 })
