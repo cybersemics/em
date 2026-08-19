@@ -1,12 +1,21 @@
 import { findAllByLabelText, screen } from '@testing-library/react'
 import { act } from 'react'
 import { extractThoughtActionCreator as extractThought } from '../../actions/extractThought'
+import { importTextActionCreator as importText } from '../../actions/importText'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
+import { undoActionCreator as undo } from '../../actions/undo'
+import { executeCommandWithMulticursor } from '../../commands'
+import { HOME_TOKEN } from '../../constants'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
+import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
+import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
+import expectPathToEqual from '../../test-helpers/expectPathToEqual'
+import initStore from '../../test-helpers/initStore'
 import findThoughtByText from '../../test-helpers/queries/findThoughtByText'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import extractThoughtCommand from '../extractThought'
 
 /**
  * Set range selection.
@@ -23,6 +32,8 @@ const setSelection = (element: HTMLElement, selectionStart: number, selectionEnd
 
   return range.toString()
 }
+
+beforeEach(initStore)
 
 describe('Extract thought', () => {
   beforeEach(createTestApp)
@@ -94,5 +105,167 @@ describe('Extract thought', () => {
     const cursorThoughts = childIdsToThoughts(store.getState(), store.getState().cursor!)
 
     expect(cursorThoughts).toMatchObject([{ value: thoughtValue.slice(0, 9) }])
+  })
+
+  describe('multicursor', () => {
+    it('extracts from the thought being edited when several thoughts are selected', async () => {
+      store.dispatch([
+        importText({
+          text: `
+            - alpha bravo
+            - charlie delta
+            - echo
+          `,
+        }),
+        setCursor(['alpha bravo']),
+      ])
+
+      await act(vi.runOnlyPendingTimersAsync)
+
+      const thought = await findThoughtByText('alpha bravo')
+      expect(thought).toBeTruthy()
+      setSelection(thought!, 6, 11)
+
+      store.dispatch([addMulticursor(['alpha bravo']), addMulticursor(['charlie delta']), addMulticursor(['echo'])])
+
+      executeCommandWithMulticursor(extractThoughtCommand, { store })
+
+      // The other selected thoughts keep their values. Slicing them at the selection's offsets would have left
+      // "charlita" with the child "e del", and "echo" with an empty child.
+      expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - alpha
+    - bravo
+  - charlie delta
+  - echo`)
+    })
+
+    it('extracts from the thought being edited when a different thought is selected', async () => {
+      store.dispatch([
+        importText({
+          text: `
+            - alpha bravo
+            - charlie delta
+          `,
+        }),
+        setCursor(['alpha bravo']),
+      ])
+
+      await act(vi.runOnlyPendingTimersAsync)
+
+      const thought = await findThoughtByText('alpha bravo')
+      expect(thought).toBeTruthy()
+      setSelection(thought!, 6, 11)
+
+      // select a thought other than the one being edited, as alt-clicking its bullet does
+      store.dispatch([addMulticursor(['charlie delta'])])
+
+      executeCommandWithMulticursor(extractThoughtCommand, { store })
+
+      // The extraction applies to the thought that owns the selection, not to the selected thought.
+      expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - alpha
+    - bravo
+  - charlie delta`)
+    })
+
+    it('leaves the cursor and the selected thoughts selected', async () => {
+      store.dispatch([
+        importText({
+          text: `
+            - alpha bravo
+            - charlie delta
+            - echo
+          `,
+        }),
+        setCursor(['alpha bravo']),
+      ])
+
+      await act(vi.runOnlyPendingTimersAsync)
+
+      const thought = await findThoughtByText('alpha bravo')
+      expect(thought).toBeTruthy()
+      setSelection(thought!, 6, 11)
+
+      store.dispatch([addMulticursor(['alpha bravo']), addMulticursor(['charlie delta']), addMulticursor(['echo'])])
+
+      executeCommandWithMulticursor(extractThoughtCommand, { store })
+
+      // Precondition: the extraction occurred, otherwise the assertions below would hold vacuously.
+      expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - alpha
+    - bravo
+  - charlie delta
+  - echo`)
+
+      const state = store.getState()
+
+      expectPathToEqual(state, state.cursor, ['alpha'])
+      expect(
+        Object.values(state.multicursors).map(path => childIdsToThoughts(state, path).map(thought => thought.value)),
+      ).toEqual([['alpha'], ['charlie delta'], ['echo']])
+    })
+
+    it('an alert should be shown if there is no selection and several thoughts are selected', async () => {
+      store.dispatch([
+        importText({
+          text: `
+            - alpha bravo
+            - charlie delta
+          `,
+        }),
+        setCursor(['alpha bravo']),
+        addMulticursor(['alpha bravo']),
+        addMulticursor(['charlie delta']),
+      ])
+
+      // Flush the throttled "2 thoughts selected" alert from the multiselect so that it cannot overwrite the alert
+      // raised by the command below.
+      await act(vi.runOnlyPendingTimersAsync)
+
+      executeCommandWithMulticursor(extractThoughtCommand, { store })
+
+      expect(await screen.findByText('No text selected to extract')).toBeTruthy()
+
+      expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - alpha bravo
+  - charlie delta`)
+    })
+
+    it('reverts the extraction on a single undo', async () => {
+      store.dispatch([
+        importText({
+          text: `
+            - alpha bravo
+            - charlie delta
+            - echo
+          `,
+        }),
+        setCursor(['alpha bravo']),
+      ])
+
+      await act(vi.runOnlyPendingTimersAsync)
+
+      const thought = await findThoughtByText('alpha bravo')
+      expect(thought).toBeTruthy()
+      setSelection(thought!, 6, 11)
+
+      store.dispatch([addMulticursor(['alpha bravo']), addMulticursor(['charlie delta']), addMulticursor(['echo'])])
+
+      executeCommandWithMulticursor(extractThoughtCommand, { store })
+
+      // Precondition: the extraction occurred, otherwise the undo below would have nothing to revert.
+      expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - alpha
+    - bravo
+  - charlie delta
+  - echo`)
+
+      store.dispatch(undo())
+
+      expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - alpha bravo
+  - charlie delta
+  - echo`)
+    })
   })
 })
