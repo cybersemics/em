@@ -40,16 +40,8 @@ const GestureMenu: FC<{
 
   const hasMatchingCommand = commands.some(cmd => (gestureInProgress as string) === gestureString(cmd))
 
-  const {
-    columnCount,
-    maxColumns,
-    horizontalPaddingRem,
-    verticalPaddingRem,
-    rowsPerColumn,
-    visibleCommandCount,
-    isMobilePortrait,
-    isMultiColumn,
-  } = useGestureMenuLayout(commands.length)
+  const { columnCount, maxColumns, horizontalPaddingRem, verticalPaddingRem, rowsPerColumn, visibleCommandCount } =
+    useGestureMenuLayout(commands.length)
 
   // Both paddings come from the hook rather than being re-derived here, so what the panel renders is
   // always what the hook's width and height budgets were computed against. They key on how many columns
@@ -58,23 +50,22 @@ const GestureMenu: FC<{
   const horizontalPadding = `${horizontalPaddingRem}rem`
   const verticalPadding = `${verticalPaddingRem}rem`
 
-  const isSingleColumnMobile = !isMultiColumn && !isBrowser
+  const isSingleColumnMobile = maxColumns === 1 && !isBrowser
 
   // The width of one column, derived from how many columns *fit* rather than how many are in use, so it
   // is constant for a given viewport. This is what keeps the menu from resizing as a gesture narrows the
   // command list: `r` may fill two columns and `rdl` only one, but each column is the same width in both.
   const columnWidth = `calc((100% - ${(maxColumns - 1) * GESTURE_MENU_COLUMN_GAP_REM}rem) / ${maxColumns})`
 
-  // The divider always spans exactly one column, matching the Figma frames. Below md there is only ever
-  // one column and it fills the panel, so 100% and columnWidth coincide.
-  const dividerWidth = isMobilePortrait ? '100%' : columnWidth
-
-  // Both layouts cap instead of scrolling, so both trim to what the hook budgeted.
+  // The layout caps instead of scrolling, so it trims to what the hook budgeted.
   const visibleCommands = commands.slice(0, visibleCommandCount)
 
-  // True when the cap hides commands, so the single column fogs its trailing rows to signal "more
-  // below" (issue #3801 §4). The grid has no equivalent affordance — it simply drops the overflow.
-  const hasOverflow = visibleCommandCount < commands.length
+  // Fog the trailing rows when one column is all that *fits* and the cap is hiding commands (issue #3801
+  // §4). Keyed on maxColumns rather than columnCount for the reason the paddings are: if the viewport
+  // could open another column, the overflow would go there instead of into the fog. Under overflow the
+  // two are equal anyway — overflow means packing was capped by width — so this is the same condition
+  // stated as its cause. A grid that fits more than one column never fogs; it drops the overflow.
+  const fogsOverflow = maxColumns === 1 && visibleCommandCount < commands.length
 
   /**
    * Whether a command's row renders as selected. Every command is selected by an exact gesture match;
@@ -93,9 +84,9 @@ const GestureMenu: FC<{
   }
 
   /**
-   * Renders command rows. Auto-scroll is disabled everywhere now that both layouts cap their visible
-   * rows instead of scrolling. When `fog` is set (single-column overflow), the last
-   * GESTURE_MENU_FOG_ROW_COUNT rows fade into the fog to signal hidden commands (issue #3801 §4).
+   * Renders command rows. Auto-scroll is disabled now that the layout caps its visible rows instead of
+   * scrolling. When `fog` is set, the last GESTURE_MENU_FOG_ROW_COUNT rows fade into the fog to signal
+   * hidden commands (issue #3801 §4).
    */
   const renderCommands = (items: Command[], { fog = false }: { fog?: boolean } = {}) =>
     items.map((command, index) => {
@@ -115,11 +106,6 @@ const GestureMenu: FC<{
       )
     })
 
-  // Single column is full-height so the capped list fills the viewport and its fogged bottom rows sit
-  // at the bottom of the screen (issue #3801 §4); multi-column stays content-height (bounded by
-  // maxHeight).
-  const fullHeight = `calc(100dvh - ${token('spacing.safeAreaBottom')} - ${token('spacing.safeAreaTop')})`
-
   return (
     <div
       className={css({
@@ -127,11 +113,10 @@ const GestureMenu: FC<{
         flexDirection: 'column',
         maxWidth: '100%',
         overflow: 'hidden',
-        maxHeight: `calc(100dvh - ${token('spacing.safeAreaBottom')} - ${token('spacing.safeAreaTop')})`,
+        height: `calc(100dvh - ${token('spacing.safeAreaBottom')} - ${token('spacing.safeAreaTop')})`,
         paddingTop: 'safeAreaTop',
         fontFamily: 'radioCanada',
       })}
-      style={{ height: isMultiColumn ? undefined : fullHeight }}
     >
       <div
         className={css({
@@ -144,12 +129,7 @@ const GestureMenu: FC<{
           flexDirection: 'column',
         })}
         // Width is bounded by `columnWidth` on the column itself, so no fixed content-width cap here.
-        // In single column, fill the full-height root so the padded column below spans the viewport.
-        style={{
-          fontSize,
-          flex: isMultiColumn ? undefined : 1,
-          minHeight: isMultiColumn ? undefined : 0,
-        }}
+        style={{ fontSize }}
       >
         {gestureInProgress && (
           <div
@@ -158,12 +138,6 @@ const GestureMenu: FC<{
 
               paddingInline: horizontalPadding,
               paddingTop: isSingleColumnMobile ? '0.75rem' : undefined,
-              // Full-height flex column in single column: the header stays fixed and the list flexes to
-              // fill the rest, so the capped list ends at the bottom of the viewport.
-              display: isMultiColumn ? undefined : 'flex',
-              flexDirection: isMultiColumn ? undefined : 'column',
-              height: isMultiColumn ? undefined : '100%',
-              minHeight: isMultiColumn ? undefined : 0,
             }}
           >
             {/* Header */}
@@ -185,73 +159,49 @@ const GestureMenu: FC<{
                   height: '1px',
                   background: 'linear-gradient(90deg, {colors.gestureMenuDivider} 0%, {colors.bgTransparent} 100%)',
                 })}
-                style={{ width: dividerWidth }}
+                // The divider always spans exactly one column, matching the Figma frames. Where only one
+                // column fits, columnWidth already resolves to the full panel width, so the same
+                // expression covers both cases.
+                style={{ width: columnWidth }}
               />
             </div>
 
-            {isMultiColumn ? (
-              /* Multi-column grid: commands flow top-to-bottom then left-to-right and own every column.
-                 Cancel and Command Universe are simply the last two entries, so they land wherever the
-                 packing puts them — including split across a column boundary. */
-              <div
-                style={{
-                  display: 'grid',
-                  // Track count comes from what fits, not what's used, so the tracks keep their width
-                  // as commands drop away; unused tracks simply render empty.
-                  gridTemplateColumns: `repeat(${maxColumns}, minmax(0, 1fr))`,
-                  columnGap: `${GESTURE_MENU_COLUMN_GAP_REM}rem`,
-                }}
-              >
-                {/* Split the commands into column-major chunks (top-to-bottom then left-to-right)
-                   and render each column as its own nested grid. Per-column row tracks — rather
-                   than one shared set of tracks — keep a selected command's description from
-                   inflating the matching row in sibling columns. */}
-                {Array.from({ length: columnCount }, (_, columnIndex) =>
-                  visibleCommands.slice(columnIndex * rowsPerColumn, (columnIndex + 1) * rowsPerColumn),
-                ).map((columnCommands, columnIndex) => (
-                  <div key={columnIndex} style={{ minWidth: 0 }}>
-                    <div
-                      style={{
-                        display: 'grid',
-                        // Auto rows (rather than a fixed repeat(rowsPerColumn)) so a short last column
-                        // is only as tall as its own items, with no trailing empty tracks.
-                        gridAutoRows: 'min-content',
-                        rowGap: `${GESTURE_MENU_ROW_GAP_REM}rem`,
-                      }}
-                    >
-                      {renderCommands(columnCommands)}
-                    </div>
+            {/* One grid at every viewport. Commands flow top-to-bottom then left-to-right and own every
+                column; Cancel and Command Universe are simply the last two entries, so they land wherever
+                the packing puts them — including split across a column boundary. A single column is this
+                same grid with one occupied track, not a separate flex stack: the track supplies exactly
+                the width the stack used to set by hand, so the two are the same layout and cannot drift. */}
+            <div
+              style={{
+                display: 'grid',
+                // Track count comes from what fits, not what's used, so the tracks keep their width
+                // as commands drop away; unused tracks simply render empty.
+                gridTemplateColumns: `repeat(${maxColumns}, minmax(0, 1fr))`,
+                columnGap: `${GESTURE_MENU_COLUMN_GAP_REM}rem`,
+              }}
+            >
+              {/* Split the commands into column-major chunks (top-to-bottom then left-to-right)
+                 and render each column as its own nested grid. Per-column row tracks — rather
+                 than one shared set of tracks — keep a selected command's description from
+                 inflating the matching row in sibling columns. */}
+              {Array.from({ length: columnCount }, (_, columnIndex) =>
+                visibleCommands.slice(columnIndex * rowsPerColumn, (columnIndex + 1) * rowsPerColumn),
+              ).map((columnCommands, columnIndex) => (
+                <div key={columnIndex} style={{ minWidth: 0 }}>
+                  <div
+                    style={{
+                      display: 'grid',
+                      // Auto rows (rather than a fixed repeat(rowsPerColumn)) so a short last column
+                      // is only as tall as its own items, with no trailing empty tracks.
+                      gridAutoRows: 'min-content',
+                      rowGap: `${GESTURE_MENU_ROW_GAP_REM}rem`,
+                    }}
+                  >
+                    {renderCommands(columnCommands, { fog: fogsOverflow })}
                   </div>
-                ))}
-              </div>
-            ) : (
-              /* Single column: a plain flex stack rather than a grid, held to the same columnWidth the
-                 grid tracks use so collapsing from two columns to one leaves the surviving column exactly
-                 where and how wide it was. Full-height so the list runs to the bottom of the viewport: it
-                 caps its rows to the visible height and fogs the trailing ones (issue #3801 §4). Cancel
-                 and Command Universe are the last two entries and trim like any other command. */
-              <div
-                style={{
-                  width: columnWidth,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  flex: 1,
-                  minHeight: 0,
-                }}
-              >
-                <div
-                  className={css({
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '1.2rem',
-                  })}
-                  // Cap to the visible height and clip the fogged overflow rather than scrolling.
-                  style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}
-                >
-                  {renderCommands(visibleCommands, { fog: hasOverflow })}
                 </div>
-              </div>
-            )}
+              ))}
+            </div>
           </div>
         )}
       </div>

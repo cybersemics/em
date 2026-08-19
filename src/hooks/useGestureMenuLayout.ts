@@ -26,7 +26,7 @@ export const GESTURE_MENU_COLUMN_GAP_REM = 1.944
 /**
  * Horizontal panel padding when the viewport has room for more than one column (90px per side in both
  * multi-column mockups = 5rem at the 18px default root). Keyed on `maxColumns` — how many columns
- * *fit* — never on `columnCount` / `isMultiColumn`, which is how many the commands currently occupy.
+ * *fit* — never on `columnCount`, which is how many the commands currently occupy.
  * The two diverge as a gesture narrows the list, and the padding must not move when they do.
  */
 export const GESTURE_MENU_PANEL_PADDING_HORIZONTAL_MULTI_COLUMN_FIT_REM = 5
@@ -118,10 +118,6 @@ type GestureMenuLayout = {
   rowsPerColumn: number
   /** Number of commands actually rendered (may be trimmed when they overflow the grid). */
   visibleCommandCount: number
-  /** True below the `md` breakpoint — the menu stays single-column and keeps its mobile-portrait behavior. */
-  isMobilePortrait: boolean
-  /** True when the menu renders more than one column (`columnCount > 1`). */
-  isMultiColumn: boolean
 }
 
 /**
@@ -210,8 +206,6 @@ const useGestureMenuLayout = (
     verticalPaddingRem,
     rowsPerColumn,
     visibleCommandCount,
-    isMobilePortrait,
-    isMultiColumn: columnCount > 1,
   }
 }
 

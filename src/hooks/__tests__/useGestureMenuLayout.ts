@@ -96,9 +96,8 @@ describe('useGestureMenuLayout', () => {
 
   it('forces one column below the md breakpoint', () => {
     setViewport(390, TALL)
-    const { columnCount, isMobilePortrait } = layout(12)
+    const { columnCount } = layout(12)
     expect(columnCount).toBe(1)
-    expect(isMobilePortrait).toBe(true)
   })
 
   // --- Horizontal panel padding: the wide gutters are a multi-column value ------------------------
@@ -108,8 +107,7 @@ describe('useGestureMenuLayout', () => {
     // content — under the 280px minimum column — so maxColumns floors to 1. A single-column panel takes
     // the narrow padding instead: 40.5px per side, 323px of content.
     setViewport(404, TALL)
-    const { maxColumns, horizontalPaddingRem, isMobilePortrait } = layout(12)
-    expect(isMobilePortrait).toBe(false)
+    const { maxColumns, horizontalPaddingRem } = layout(12)
     expect(maxColumns).toBe(1)
     expect(horizontalPaddingRem).toBe(GESTURE_MENU_PANEL_PADDING_HORIZONTAL_SINGLE_COLUMN_FIT_REM)
   })
@@ -198,8 +196,7 @@ describe('useGestureMenuLayout', () => {
   it('keeps the roomier vertical padding when only one column fits', () => {
     // 404px is above md but holds one column, so it takes the single-column value on both axes.
     setViewport(404, TALL)
-    const { maxColumns, verticalPaddingRem, isMobilePortrait } = layout(12)
-    expect(isMobilePortrait).toBe(false)
+    const { maxColumns, verticalPaddingRem } = layout(12)
     expect(maxColumns).toBe(1)
     expect(verticalPaddingRem).toBe(GESTURE_MENU_PANEL_PADDING_VERTICAL_SINGLE_COLUMN_FIT_REM)
   })
@@ -238,9 +235,8 @@ describe('useGestureMenuLayout', () => {
   it('stays single-column when every command fits one column (tall viewport)', () => {
     // 854 fits two columns by width, but 8 commands fit one column's height, so it stays single.
     setViewport(854, TALL)
-    const { columnCount, isMultiColumn } = layout(8)
+    const { columnCount } = layout(8)
     expect(columnCount).toBe(1)
-    expect(isMultiColumn).toBe(false)
   })
 
   it('opens a second column only once the first is full', () => {
@@ -333,9 +329,8 @@ describe('useGestureMenuLayout', () => {
   it('caps single-column visible commands on a short portrait viewport', () => {
     // Narrow portrait → single column. A short viewport with many commands must hide some.
     setViewport(390, 700)
-    const { columnCount, isMultiColumn, rowsPerColumn, visibleCommandCount } = layout(20)
+    const { columnCount, rowsPerColumn, visibleCommandCount } = layout(20)
     expect(columnCount).toBe(1)
-    expect(isMultiColumn).toBe(false)
     expect(visibleCommandCount).toBe(rowsPerColumn)
     expect(visibleCommandCount).toBeLessThan(20)
     expect(visibleCommandCount).toBeGreaterThan(0)
@@ -344,8 +339,8 @@ describe('useGestureMenuLayout', () => {
   it('shows all single-column commands without overflow when they fit', () => {
     // Tall portrait viewport, few commands → everything fits, no fog.
     setViewport(390, TALL)
-    const { isMultiColumn, visibleCommandCount } = layout(4)
-    expect(isMultiColumn).toBe(false)
+    const { columnCount, visibleCommandCount } = layout(4)
+    expect(columnCount).toBe(1)
     expect(visibleCommandCount).toBe(4)
   })
 
