@@ -26,6 +26,16 @@ const multicursorAlertMiddleware: ThunkMiddleware<State> = ({ getState, dispatch
 
     // On mobile, show the Command Center when multicursor is active, and hide it when inactive.
     if (isTouch) {
+      // Do not react while a multicursor command is executing. The command loop sets the cursor to each selected
+      // thought in turn, which empties state.multicursors, and then restores them one at a time (see
+      // executeCommandWithMulticursor), so the count churns through 0 and back up again. That is internal
+      // bookkeeping rather than the user changing the selection, and reacting to it re-opens the Command Center over
+      // an editing session (space is bound to indent, so it runs the whole loop on every space typed after Clear
+      // Thought). The closing setIsMulticursorExecuting({ value: false }) is dispatched once the command completes,
+      // and this middleware evaluates it against the settled multicursors. setCursor suppresses its own cursorCleared
+      // reset over the same window and for the same reason.
+      if (state.isMulticursorExecuting) return
+
       if (numMulticursors === 0 && state.showCommandCenter) {
         dispatch(toggleDropdown({ dropDownType: 'commandCenter', value: false }))
       } else if (

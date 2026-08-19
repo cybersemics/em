@@ -109,7 +109,7 @@ it('does not re-open the Command Center over an edited multiselection when the m
 })
 
 // https://github.com/cybersemics/em/pull/4520
-it.skip('does not re-open the Command Center when a multicursor command restores the multiselection mid-edit', async () => {
+it('does not re-open the Command Center when a multicursor command restores the multiselection mid-edit', async () => {
   await initialize()
 
   store.dispatch([
