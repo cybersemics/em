@@ -55,3 +55,22 @@ describe('HTML-tagged values (e.g. from background color formatting)', () => {
     expect(applyLetterCase('UpperCase', value)).toBe('<b>HELLO <font color="#00FF00">GREEN</font> WORLD</b>')
   })
 })
+
+describe('transforms that change the length of the text', () => {
+  // https://github.com/cybersemics/em/pull/4858#pullrequestreview-4893666301
+  it('applies UpperCase to a value containing ß without truncating the text', () => {
+    expect(applyLetterCase('UpperCase', '"Straße" means "Street" in German')).toBe('"STRASSE" MEANS "STREET" IN GERMAN')
+  })
+
+  it('applies UpperCase to a value containing ß in a tag without truncating the text', () => {
+    expect(applyLetterCase('UpperCase', '<b>Straße</b> means street')).toBe('<b>STRASSE</b> MEANS STREET')
+  })
+
+  // title case does not capitalize a token that contains a period, so the transform of a prefix can be longer than the
+  // transform of the whole value
+  it('applies TitleCase across tags without duplicating text', () => {
+    /** Extracts the plain text of an html string. */
+    const textContent = (html: string) => new DOMParser().parseFromString(html, 'text/html').body.textContent
+    expect(textContent(applyLetterCase('TitleCase', 'ᾷßx<b>.</b>ß<b>B</b>'))).toBe('ᾷßx.ßb')
+  })
+})

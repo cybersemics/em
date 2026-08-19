@@ -1,4 +1,6 @@
 import selectBetween from '../../actions/selectBetween'
+import toggleMulticursor from '../../actions/toggleMulticursor'
+import contextToPath from '../../selectors/contextToPath'
 import getThoughtById from '../../selectors/getThoughtById'
 import addMulticursor from '../../test-helpers/addMulticursorAtFirstMatch'
 import prettyPath from '../../test-helpers/prettyPath'
@@ -266,4 +268,95 @@ test('alert if there is only one thought', () => {
 
   const stateNew = reducerFlow(steps)(initialState())
   expect(stateNew).toHaveProperty('alert')
+})
+
+test('adjusts the active range while preserving the original anchor', () => {
+  const text = `
+    - a
+    - b
+    - c
+    - d
+    - e
+    - f
+  `
+
+  let stateNew = importText(initialState(), { text })
+  stateNew = toggleMulticursor(stateNew, { path: contextToPath(stateNew, ['a'])! })
+  stateNew = selectBetween(stateNew, { path: contextToPath(stateNew, ['e'])! })
+  stateNew = selectBetween(stateNew, { path: contextToPath(stateNew, ['c'])! })
+
+  const selected = Object.values(stateNew.multicursors)
+    .map(path => prettyPath(stateNew, path))
+    .sort()
+
+  expect(selected).toEqual(['a', 'b', 'c'])
+})
+
+test('preserves independently selected thoughts when extending from a new anchor', () => {
+  const text = `
+    - a
+    - b
+    - c
+    - d
+    - e
+    - f
+  `
+
+  let stateNew = importText(initialState(), { text })
+  stateNew = toggleMulticursor(stateNew, { path: contextToPath(stateNew, ['a'])! })
+  stateNew = toggleMulticursor(stateNew, { path: contextToPath(stateNew, ['c'])! })
+  stateNew = selectBetween(stateNew, { path: contextToPath(stateNew, ['e'])! })
+
+  const selected = Object.values(stateNew.multicursors)
+    .map(path => prettyPath(stateNew, path))
+    .sort()
+
+  expect(selected).toEqual(['a', 'c', 'd', 'e'])
+})
+
+test('preserves a committed range when selecting from a new anchor', () => {
+  const text = `
+    - a
+    - b
+    - c
+    - d
+    - e
+    - f
+    - g
+    - h
+  `
+
+  let stateNew = importText(initialState(), { text })
+  stateNew = toggleMulticursor(stateNew, { path: contextToPath(stateNew, ['b'])! })
+  stateNew = selectBetween(stateNew, { path: contextToPath(stateNew, ['d'])! })
+  stateNew = toggleMulticursor(stateNew, { path: contextToPath(stateNew, ['f'])! })
+  stateNew = selectBetween(stateNew, { path: contextToPath(stateNew, ['h'])! })
+
+  const selected = Object.values(stateNew.multicursors)
+    .map(path => prettyPath(stateNew, path))
+    .sort()
+
+  expect(selected).toEqual(['b', 'c', 'd', 'f', 'g', 'h'])
+})
+
+test('does not use a deselected thought as the next Select Between anchor', () => {
+  const text = `
+    - a
+    - b
+    - c
+    - d
+    - e
+  `
+
+  let stateNew = importText(initialState(), { text })
+  stateNew = toggleMulticursor(stateNew, { path: contextToPath(stateNew, ['b'])! })
+  stateNew = selectBetween(stateNew, { path: contextToPath(stateNew, ['d'])! })
+  stateNew = toggleMulticursor(stateNew, { path: contextToPath(stateNew, ['d'])! })
+  stateNew = selectBetween(stateNew, { path: contextToPath(stateNew, ['a'])! })
+
+  const selected = Object.values(stateNew.multicursors)
+    .map(path => prettyPath(stateNew, path))
+    .sort()
+
+  expect(selected).toEqual(['a', 'b', 'c'])
 })

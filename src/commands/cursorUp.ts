@@ -79,7 +79,9 @@ const cursorUpCommand: Command = {
       const isPrevPathMulticursor = prevPath && isMulticursorPath(state, prevPath)
 
       dispatch([
-        setCursor({ path: prevPath, preserveMulticursor: true }),
+        // Update the multicursor before moving the cursor, since setCursor computes state.expanded and a
+        // selected thought must not expand its own children.
+        // https://github.com/cybersemics/em/issues/4738
         dispatch => {
           // New multicursor set
           if (isMulticursorEmpty) {
@@ -108,6 +110,7 @@ const cursorUpCommand: Command = {
             return
           }
         },
+        setCursor({ path: prevPath, preserveMulticursor: true }),
       ])
 
       requestAnimationFrame(() => {

@@ -8,6 +8,7 @@ import SimplePath from '../@types/SimplePath'
 import ThoughtId from '../@types/ThoughtId'
 import { LongPressState } from '../constants'
 import testFlags from '../e2e/testFlags'
+import usePinDropHover from '../hooks/usePinDropHover'
 import attributeEquals from '../selectors/attributeEquals'
 import calculateAutofocus from '../selectors/calculateAutofocus'
 import dropHoverColor from '../selectors/dropHoverColor'
@@ -139,7 +140,10 @@ const DropHoverIfVisible = ({
     )
   })
 
-  return showDropHover ? <DropHover simplePath={simplePath} /> : null
+  // testFlags.pinDropHovers keeps the drop hover visible after it has been shown during the current drag
+  const showDropHoverPinned = usePinDropHover(showDropHover)
+
+  return showDropHoverPinned ? <DropHover simplePath={simplePath} /> : null
 }
 
 const DropHoverMemo = React.memo(DropHoverIfVisible)
