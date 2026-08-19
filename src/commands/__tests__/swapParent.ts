@@ -45,6 +45,25 @@ describe('canExecute', () => {
     expect(swapParentCommand.canExecute!(store.getState())).toBe(true)
   })
 
+  // https://github.com/cybersemics/em/pull/4867#pullrequestreview-4973103498
+  it.skip('can swap parent when every selected thought is a subthought', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - AAA
+            - BBB
+          - CCC
+            - DDD
+        `,
+      }),
+      setCursor(['AAA', 'BBB']),
+      addMulticursor(['AAA', 'BBB']),
+      addMulticursor(['CCC', 'DDD']),
+    ])
+
+    expect(swapParentCommand.canExecute!(store.getState())).toBe(true)
+  })
+
   // https://github.com/cybersemics/em/pull/4867#pullrequestreview-4951406524
   it('cannot swap parent when multiple thoughts are selected', () => {
     store.dispatch([
