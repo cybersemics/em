@@ -44,10 +44,7 @@ describe('DOM', () => {
   })
 
   // https://github.com/cybersemics/em/issues/4924
-  it.each<{ shiftKey: boolean; chord: string }>([
-    { shiftKey: false, chord: 'Command + Option + D' },
-    { shiftKey: true, chord: 'Command + Option + Shift + D' },
-  ])('bumps the cursor thought down when $chord is pressed', async ({ shiftKey }) => {
+  it('bumps the cursor thought down when Command + Shift + D is pressed', async () => {
     await dispatch([
       importText({
         text: `
@@ -61,9 +58,7 @@ describe('DOM', () => {
     await act(vi.runOnlyPendingTimersAsync)
 
     act(() => {
-      window.dispatchEvent(
-        new KeyboardEvent('keydown', { key: 'd', metaKey: true, altKey: true, shiftKey, bubbles: true }),
-      )
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'd', metaKey: true, shiftKey: true, bubbles: true }))
     })
 
     await act(vi.runOnlyPendingTimersAsync)

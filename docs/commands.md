@@ -423,10 +423,7 @@ https://github.com/user-attachments/assets/95f037cc-cf88-4392-98fb-4d79cdae4fba
 
 Bump the current thought down one level and replace it with a new, empty thought.
 
-<kbd>Command + Option + d</kbd> or <kbd>Command + Option + Shift + d</kbd>
-
-macOS reserves Command + Option + D for "Turn Dock Hiding On/Off" and never delivers the keydown to the browser, so the
-Shift variant is provided as an alternative that is reachable on Mac.
+<kbd>Command + Shift + D</kbd>
 
 https://github.com/user-attachments/assets/838c3546-4aa0-4256-af89-621356b455ad
 
