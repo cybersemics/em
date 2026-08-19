@@ -9,11 +9,11 @@ import openMobileCommandUniverseCommand from '../../commands/openMobileCommandUn
 import useFilteredCommands from '../../hooks/useFilteredCommands'
 import useGestureMenuLayout, {
   GESTURE_MENU_COLUMN_GAP_REM,
-  GESTURE_MENU_FOG_ROW_COUNT,
   GESTURE_MENU_HEADER_LABEL_FONT_SIZE_REM,
   GESTURE_MENU_HEADER_LABEL_MARGIN_BOTTOM_REM,
   GESTURE_MENU_HEADER_MARGIN_BOTTOM_REM,
   GESTURE_MENU_ROW_GAP_REM,
+  fogDepthAt,
 } from '../../hooks/useGestureMenuLayout'
 import gestureStore, {
   onGestureMenuEntered,
@@ -91,7 +91,7 @@ const GestureMenu: FC<{
   const renderCommands = (items: Command[], { fog = false }: { fog?: boolean } = {}) =>
     items.map((command, index) => {
       const distanceFromEnd = items.length - 1 - index
-      const fogDepth = fog ? Math.max(0, GESTURE_MENU_FOG_ROW_COUNT - distanceFromEnd) : 0
+      const fogDepth = fog ? fogDepthAt(distanceFromEnd) : 0
       return (
         <GestureMenuItem
           gestureInProgress={gestureInProgress as string}
