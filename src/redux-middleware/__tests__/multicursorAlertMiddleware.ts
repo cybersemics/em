@@ -1,11 +1,13 @@
 import { cursorClearedActionCreator as cursorCleared } from '../../actions/cursorCleared'
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { removeMulticursorActionCreator as removeMulticursor } from '../../actions/removeMulticursor'
 import { toggleDropdownActionCreator as toggleDropdown } from '../../actions/toggleDropdown'
 import { undoActionCreator as undo } from '../../actions/undo'
 import { executeCommandWithMulticursor } from '../../commands'
 import clearThoughtCommand from '../../commands/clearThought'
 import deleteCommand from '../../commands/delete'
 import { initialize } from '../../initialize'
+import contextToPath from '../../selectors/contextToPath'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import initStore from '../../test-helpers/initStore'
@@ -68,6 +70,40 @@ it('hides the Command Center while a multiselection is being edited and re-opens
 
   expect(store.getState().showCommandCenter).toBe(true)
   expect(Object.keys(store.getState().multicursors).length).toBe(3)
+})
+
+// https://github.com/cybersemics/em/pull/4520#issuecomment-5339007687
+it('does not re-open the Command Center over an edited multiselection when the multicursor count changes mid-edit', async () => {
+  await initialize()
+
+  store.dispatch([
+    importText({
+      text: `
+        - a
+        - b
+        - c`,
+    }),
+    setCursor(['a']),
+    addMulticursor(['a']),
+    addMulticursor(['b']),
+    addMulticursor(['c']),
+  ])
+
+  // Clear Thought enters multi edit mode: the keyboard opens and the Command Center closes.
+  executeCommandWithMulticursor(clearThoughtCommand, { store })
+
+  expect(store.getState().isKeyboardOpen).toBe(true)
+  expect(store.getState().showCommandCenter).toBe(false)
+
+  // The multicursor count fluctuating while the multiselection is already being edited (e.g. a stray add/remove) is
+  // not the same event as starting a new multiselection with Open Command Center (which only ever runs from no
+  // multiselection, see openCommandCenter.ts), so it must not re-open the Command Center over the editing session.
+  const pathB = contextToPath(store.getState(), ['b'])!
+  store.dispatch(removeMulticursor({ path: pathB }))
+  expect(store.getState().showCommandCenter).toBe(false)
+
+  store.dispatch(addMulticursor(['b']))
+  expect(store.getState().showCommandCenter).toBe(false)
 })
 
 it('does not show the Command Center when undoing a multicursor delete while the Undo Slider is active', async () => {

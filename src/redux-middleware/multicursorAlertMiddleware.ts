@@ -40,9 +40,12 @@ const multicursorAlertMiddleware: ThunkMiddleware<State> = ({ getState, dispatch
         // Command Center is shown is actively dismissed (see onFocus in Editable), so the keyboard could never open.
         // When the keyboard closes (blur or exiting the cleared state), the multicursors are still active and this
         // branch re-opens the Command Center.
-        // The multiselection itself changing is exempt, since selecting a thought while the keyboard is open is how
-        // the Command Center is opened in the first place (Open Command Center adds the cursor thought).
-        (!state.isKeyboardOpen || numMulticursors !== prevNumMulticursors)
+        // Starting a multiselection from none is exempt, since selecting a thought while the keyboard is open is how
+        // the Command Center is opened in the first place (Open Command Center adds the cursor thought, and only ever
+        // does so when there was no multiselection yet). Checking prevNumMulticursors rather than a plain count-change
+        // keeps a multiselection that is already being edited (Clear Thought) from re-opening the Command Center over
+        // the editing session should its multicursor count fluctuate for some unrelated reason while typing.
+        (!state.isKeyboardOpen || prevNumMulticursors === 0)
       ) {
         dispatch(toggleDropdown({ dropDownType: 'commandCenter', value: true }))
       }
