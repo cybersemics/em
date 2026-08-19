@@ -161,6 +161,9 @@ const BulletPositioner = forwardRef<SVGSVGElement, PropsWithChildren<BulletPosit
           // tapping the thought itself. Expansion is determined by the selected thoughts during a multiselect,
           // so the =pin handling below is skipped.
           if (hasMulticursor(state)) {
+            // A bullet is not an editable, so Content treats the tap as a click on empty space and closes all
+            // dropdowns, which clears the multiselect along with the Command Center (see toggleDropdown).
+            e.stopPropagation()
             dispatch(toggleMulticursor({ path }))
             return
           }
