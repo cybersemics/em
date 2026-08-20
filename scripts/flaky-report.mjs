@@ -310,11 +310,12 @@ if (failedTests.length === 0 && infraFailures.length === 0) {
     lines.push(`### ${title}`)
     lines.push('')
     for (const t of list) {
-      const rate = `${t.failed.length}/${expectedIterations}`
       const iters = t.failed.map(i => (runUrl ? `[${i}](${runUrl})` : String(i))).join(', ')
       lines.push(`#### \`${t.file}\` › ${t.fullName}`)
       lines.push('')
-      lines.push(`- **Failed**: ${rate} (iterations: ${iters})`)
+      lines.push(
+        `- **Failed**: ${t.failed.length} of ${expectedIterations} iterations (failed on ${t.failed.length === 1 ? 'iteration' : 'iterations'} ${iters})`,
+      )
       if (t.firstError) {
         lines.push(`- **First error**:`)
         lines.push('')
