@@ -609,7 +609,7 @@ export const COMMAND_GROUPS: {
   },
   {
     title: 'Visibility',
-    commands: ['pin', 'pinAll', 'toggleDone', 'toggleHiddenThoughts'],
+    commands: ['pin', 'pinAll', 'pinDescendants', 'toggleDone', 'toggleHiddenThoughts'],
   },
   {
     title: 'Settings',

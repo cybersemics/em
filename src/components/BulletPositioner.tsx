@@ -166,7 +166,15 @@ const BulletPositioner = forwardRef<SVGSVGElement, PropsWithChildren<BulletPosit
             ...(isExpanded &&
             (!pathParent ||
               parentChildren?.length === 1 ||
-              findDescendant(state, pathParent && head(pathParent), ['=children', '=pin', 'true']))
+              findDescendant(state, pathParent && head(pathParent), ['=children', '=pin', 'true']) ||
+              // =descendants/=pin propagates from any ancestor; the nearest ancestor that sets it wins
+              parentOf(path)
+                .slice()
+                .reverse()
+                .reduce<boolean | null>(
+                  (accum, id) => accum ?? isPinned(state, findDescendant(state, id, '=descendants')),
+                  null,
+                ))
               ? [setDescendant({ path: simplePath, values: ['=pin', 'false'] })]
               : [deleteAttribute({ path: simplePath, value: '=pin' })]),
             // move cursor
