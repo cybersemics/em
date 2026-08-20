@@ -9,6 +9,7 @@ import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
+import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 
 beforeEach(createTestApp)
@@ -119,6 +120,68 @@ describe('=note', () => {
       - abc`)
 
     await act(vi.runAllTimersAsync)
+  })
+
+  // https://github.com/cybersemics/em/issues/4954
+  test('move thought down with the caret in a note', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - a
+          - =note
+            - test
+        - b`,
+      }),
+      setCursor(['a']),
+      toggleNote(),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    await act(async () => {
+      fireEvent.keyDown(screen.getByLabelText('note-editable'), {
+        key: 'ArrowDown',
+        metaKey: true,
+        shiftKey: true,
+      })
+    })
+
+    await act(vi.runAllTimersAsync)
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - b
+  - a
+    - =note
+      - test`)
+  })
+
+  // https://github.com/cybersemics/em/issues/4954
+  test('cursor next with the caret in a note', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - a
+          - =note
+            - test
+          - x
+        - b`,
+      }),
+      setCursor(['a']),
+      toggleNote(),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    await act(async () => {
+      fireEvent.keyDown(screen.getByLabelText('note-editable'), {
+        key: 'ArrowDown',
+        metaKey: true,
+      })
+    })
+
+    await act(vi.runAllTimersAsync)
+
+    expectPathToEqual(store.getState(), store.getState().cursor, ['b'])
   })
 })
 

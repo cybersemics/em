@@ -81,6 +81,11 @@ const Note = React.memo(
     /** Handles note keyboard shortcuts. */
     const onKeyDown = useCallback(
       (e: React.KeyboardEvent) => {
+        // Only unmodified keys are note navigation. A chord that includes a command modifier belongs to a command
+        // (e.g. Cmd + Shift + ArrowDown is Move Thought Down), so let it propagate to the global keyDown handler
+        // instead of swallowing it as Cursor Down or Toggle Note (#4954).
+        if (e.metaKey || e.ctrlKey || e.altKey) return
+
         // delete empty note
         const note = noteValue(store.getState(), path)
 
