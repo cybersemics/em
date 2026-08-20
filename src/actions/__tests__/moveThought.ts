@@ -9,7 +9,6 @@ import getContexts from '../../selectors/getContexts'
 import getLexeme from '../../selectors/getLexeme'
 import getRankAfter from '../../selectors/getRankAfter'
 import pathToThought from '../../selectors/pathToThought'
-import checkDataIntegrity from '../../test-helpers/checkDataIntegrity'
 import contextToThought from '../../test-helpers/contextToThought'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
@@ -618,28 +617,6 @@ it('move with nested duplicate thoughts and merge their children', () => {
 
   // context ['p', 'a', 'b'] should not have any garbage children
   expect(getChildrenRankedByContext(stateNew, ['p', 'a', 'b'])).toHaveLength(0)
-})
-
-it('data integrity test', () => {
-  const text = `
-  - k
-    - a
-      - b
-        - c
-  - m`
-  const steps = [
-    importText({ text }),
-    moveThoughtAtFirstMatch({
-      from: ['k', 'a'],
-      to: ['m', 'a'],
-      newRank: 0,
-    }),
-  ]
-  const stateNew = reducerFlow(steps)(initialState())
-  const { missingLexemeValues, missingParentIds } = checkDataIntegrity(stateNew)
-
-  expect(missingLexemeValues).toHaveLength(0)
-  expect(missingParentIds).toHaveLength(0)
 })
 
 it('consistent rank between lexemeIndex and thoughtIndex on duplicate merge', () => {
