@@ -2,7 +2,10 @@ import type { PreloadedEmWindow } from '../../../@types'
 import clickThought from '../helpers/clickThought'
 import getEditingText from '../helpers/getEditingText'
 import paste from '../helpers/paste'
+import press from '../helpers/press'
 import refresh from '../helpers/refresh'
+import scrollTo from '../helpers/scrollTo'
+import waitForBrowserSettled from '../helpers/waitForBrowserSettled'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
 import waitUntil from '../helpers/waitUntil'
@@ -10,6 +13,18 @@ import { page } from '../session'
 import { usePersistentTreecrdtStorage } from '../setup'
 
 const MOCK_REPLICATION_DELAY = 100
+
+/** Gets the y position of a thought relative to the viewport. Throws if the thought is not rendered. */
+const getThoughtTop = async (value: string): Promise<number> => {
+  const top = await page.evaluate(value => {
+    const thought = Array.from(document.querySelectorAll('[data-editable]')).find(
+      element => element.innerHTML === value,
+    )
+    return thought ? thought.getBoundingClientRect().top : null
+  }, value)
+  if (top === null) throw new Error(`Thought "${value}" is not rendered.`)
+  return top
+}
 
 vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
 usePersistentTreecrdtStorage()
@@ -138,78 +153,25 @@ describe('autocrop', () => {
 
     await clickThought('m')
 
-    const yDiff = await page.evaluate(async () => {
-      /** Calls a function every 10 ms until it returns truthy. Times out after 5 seconds. */
-      function waitUntil<T>(fn: () => T): Promise<T> {
-        const start = Date.now()
-        return new Promise((resolve, reject) => {
-          const interval = setInterval(() => {
-            if (Date.now() - start > 5000) {
-              reject('Timeout exceeded')
-            }
-            const result = fn()
-            if (result) {
-              clearInterval(interval)
-              resolve(result)
-            }
-          }, 10)
-        })
-      }
+    // scroll down so that z is rendered and visible
+    await scrollTo(0, 200)
 
-      /** Waits until the cursor is the specified value. */
-      async function waitUntilCursor(value: string): Promise<void> {
-        await waitUntil(
-          () => (document.querySelector('[data-editing=true]') as HTMLElement | undefined)?.innerText === value,
-        )
-      }
+    await clickThought('z')
+    await waitUntil(() => document.querySelector('[data-editing=true] [data-editable]')?.innerHTML === 'z')
+    await waitForBrowserSettled()
 
-      /** Waits until an editable with the specified value appears and return it. */
-      async function waitUntilEditable(value: string): Promise<HTMLElement> {
-        return waitUntil(
-          () =>
-            Array.from(document.querySelectorAll('[data-editable]')).find(
-              element => element.innerHTML === value,
-            ) as HTMLElement,
-        )
-      }
+    // get the y position of thought z relative to the viewport before moving the cursor down to 1
+    const topBefore = await getThoughtTop('z')
 
-      // scroll down so z is visible
-      window.scrollBy({ top: 200 })
+    // navigate deeper to z's child, which crops the space above the cursor
+    await press('ArrowDown')
+    await waitUntil(() => document.querySelector('[data-editing=true] [data-editable]')?.innerHTML === '1')
+    await waitForBrowserSettled()
 
-      // wait for virtualized thoughts to be rendered
-      const thoughtZ = await waitUntilEditable('z')
+    // get the y position of thought z relative to the viewport after moving the cursor down to 1
+    const topAfter = await getThoughtTop('z')
 
-      // TODO: How to click z instead of arrowing down?
-      // thoughtZ.click()
-      let cursorText: string | undefined
-      while (cursorText !== 'z') {
-        window.dispatchEvent(new KeyboardEvent('keydown', { key: 'arrowdown' }))
-        const cursorEl = document.querySelector('[data-editing=true]') as HTMLElement | undefined
-        cursorText = cursorEl?.innerText
-
-        // sleep 50ms to allow virtualized thoughts to be rendered
-        await new Promise(resolve => setTimeout(resolve, 50))
-      }
-
-      // TODO: Why is the cursor on 1 instead of z?
-      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'arrowup' }))
-      await waitUntilCursor('z')
-
-      // get the y position of thought z relative to the viewport before moving thn cursor down to 1
-      const cursorTopBefore = thoughtZ?.getBoundingClientRect().top
-
-      // TODO: How to click 1 instead of arrowing down?
-      // thought1.click()
-      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'arrowdown' }))
-      await waitUntilCursor('1')
-
-      // get the y position of thought z relative to the viewport after moving the cursor down to 1
-      const cursorTopAfter = thoughtZ?.getBoundingClientRect().top
-
-      return cursorTopBefore && cursorTopAfter ? cursorTopAfter - cursorTopBefore : null
-    })
-
-    // TODO: We should expect 0 scroll. WHy does it scroll by 0.25px?
-    expect(yDiff).toBeLessThan(1)
+    // TODO: We should expect 0 scroll. Why does it scroll by 0.25px?
+    expect(Math.abs(topAfter - topBefore)).toBeLessThan(1)
   })
 })
