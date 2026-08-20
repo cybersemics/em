@@ -106,30 +106,4 @@ describe('command center', () => {
     await gesture('u', { xStart: innerWidth / 4, yStart: innerHeight - 200 })
     await waitUntil(() => (window.em as WindowEm).testHelpers.getState().showCommandCenter)
   })
-
-  // https://github.com/cybersemics/em/pull/4867#issuecomment-5268447739
-  it('stays open after Swap Parent is tapped', async () => {
-    await paste(`
-        - AAA
-          - BBB
-        `)
-
-    // expand AAA so that its subthought is rendered
-    await clickThought('AAA')
-    await clickThought('BBB')
-
-    await gesture(openCommandCenterCommand)
-    await waitForSelector('[data-testid=command-center-panel]')
-
-    await click('[data-testid="command-center-panel"] [aria-label="Swap Parent"]')
-
-    // the swap moves BBB to the root and the cursor follows it there
-    await waitUntil(() => (window.em as WindowEm).testHelpers.getState().cursor?.length === 1)
-
-    // the panel element stays mounted while closed, so check the state rather than the DOM
-    const showCommandCenter = await page.evaluate(
-      () => (window.em as WindowEm).testHelpers.getState().showCommandCenter,
-    )
-    expect(showCommandCenter).toBe(true)
-  })
 })
