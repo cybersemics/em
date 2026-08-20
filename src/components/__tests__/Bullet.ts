@@ -510,6 +510,41 @@ describe('expansion', () => {
     - d
       - e`)
   })
+
+  it('tapping on the bullet of a thought expanded by =descendants on an ancestor should unpin it', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - a
+          - =descendants
+            - =pin
+              - true
+          - b
+            - c
+              - d
+      `,
+      }),
+    ])
+
+    const bulletOfThoughtC = getBulletByContext(['a', 'b', 'c'])
+
+    const user = userEvent.setup({ delay: null })
+    await user.click(bulletOfThoughtC)
+
+    await act(() => vi.runAllTimersAsync())
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toEqual(`- __ROOT__
+  - a
+    - =descendants
+      - =pin
+        - true
+    - b
+      - c
+        - =pin
+          - false
+        - d`)
+  })
 })
 
 describe('multiselect', () => {
