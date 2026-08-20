@@ -17,10 +17,30 @@ const gestureMenuFogRecipe = defineRecipe({
   variants: {
     depth: {
       0: {},
-      1: { transform: 'translateX(0.65rem) scale(0.875)', opacity: 0.875, filter: 'blur(1.5px)' },
-      2: { transform: 'translateX(0.95rem) scale(0.85)', opacity: 0.8, filter: 'blur(2px)' },
-      3: { transform: 'translateX(2.1rem) scale(0.825)', opacity: 0.7, filter: 'blur(2.5px)' },
-      4: { transform: 'translateX(2.8rem) scale(0.75)', opacity: 0.45, filter: 'blur(3px)' },
+      1: {
+        transform: 'translateX(0.65rem) scale(0.875)',
+        marginBottom: '-0.275rem',
+        opacity: 0.875,
+        filter: 'blur(1.5px)',
+      },
+      2: {
+        transform: 'translateX(0.95rem) scale(0.85)',
+        marginBottom: '-0.33rem',
+        opacity: 0.8,
+        filter: 'blur(2px)',
+      },
+      3: {
+        transform: 'translateX(2.1rem) scale(0.825)',
+        marginBottom: '-0.385rem',
+        opacity: 0.7,
+        filter: 'blur(2.5px)',
+      },
+      4: {
+        transform: 'translateX(2.8rem) scale(0.75)',
+        marginBottom: '-0.55rem',
+        opacity: 0.45,
+        filter: 'blur(3px)',
+      },
     },
   },
   defaultVariants: {
