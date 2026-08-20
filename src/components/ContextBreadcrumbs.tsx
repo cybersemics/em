@@ -1,4 +1,4 @@
-import { unescape as decodeCharacterEntities, isEqual } from 'lodash'
+import { isEqual } from 'lodash'
 import React, { createRef, useMemo } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
@@ -121,7 +121,7 @@ const BreadCrumb = React.memo(
         {showDivider ? <span style={delimiterStyle}> {showContexts ? '⇢' : '•'} </span> : null}
         {!isDeleting &&
           (staticText ? (
-            ellipsize(decodeCharacterEntities(value))
+            ellipsize(value || '')
           ) : label === HOME_TOKEN ? (
             <HomeLink color={token('colors.gray50')} size={16} className={css({ position: 'static' })} />
           ) : (
