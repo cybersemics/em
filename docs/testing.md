@@ -567,7 +567,6 @@ The helpers in [`../src/test-helpers/`](../src/test-helpers) cover store setup a
   - [`newThoughtAtFirstMatch`](../src/test-helpers/newThoughtAtFirstMatch.ts), [`editThoughtByContext`](../src/test-helpers/editThoughtByContext.ts), [`moveThoughtAtFirstMatch`](../src/test-helpers/moveThoughtAtFirstMatch.ts), [`deleteThoughtAtFirstMatch`](../src/test-helpers/deleteThoughtAtFirstMatch.ts), [`addMulticursorAtFirstMatch`](../src/test-helpers/addMulticursorAtFirstMatch.ts).
 - **Read-by-value helpers.** [`getAllChildrenByContext`](../src/test-helpers/getAllChildrenByContext.ts), [`getChildrenRankedByContext`](../src/test-helpers/getChildrenRankedByContext.ts), [`getAllChildrenAsThoughtsByContext`](../src/test-helpers/getAllChildrenAsThoughtsByContext.ts), [`attributeByContext`](../src/test-helpers/attributeByContext.ts), [`contextToThought`](../src/test-helpers/contextToThought.ts).
 - [`expectPathToEqual`](../src/test-helpers/expectPathToEqual.ts) — Jest matcher that compares paths by their thought *values* rather than ids, so test failures are readable.
-- [`checkDataIntegrity`](../src/test-helpers/checkDataIntegrity.ts) — assertions that catch parent/child mismatches, missing Lexemes, and orphaned thoughts. Useful as a final assertion in mutation-heavy tests.
 - [`dataProviderTest`](../src/test-helpers/dataProviderTest.ts) — shared assertions for storage providers that implement the data provider interface.
 
 ### `src/e2e/puppeteer/helpers/` — for Puppeteer tests

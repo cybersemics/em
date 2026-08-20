@@ -200,7 +200,6 @@ describe('undo', () => {
 
     // TODO: This does not seem to properly test restorePushQueueFromPatches.
     // It passes even when the Lexeme is set to null.
-    // It was only noticed because of the Lexeme data integrity check added to updateThoughts.
     // See: undoRedoEnhancer commit on 7/2/22
     const lexemeA = getLexeme(stateNew, 'a')
     expect(lexemeA).toBeTruthy()
