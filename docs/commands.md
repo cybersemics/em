@@ -189,6 +189,8 @@ The full list of user-facing commands. For the canonical, always-up-to-date set,
 
 Move the cursor up a level. If Clear Thought is active, cancel it instead and leave the cursor where it is. When thoughts are selected, deselect them and select the parent of each selected thought instead — except on desktop, where <kbd>Escape</kbd> clears the selection rather than moving it.
 
+With thoughts selected, Back moves the selection up a level: the selected thoughts are deselected and their parents are selected. Selected thoughts at the root level have no parent, so they are simply deselected. On desktop, where Back is bound to <kbd>Escape</kbd>, the selection is cleared instead.
+
 <kbd>Escape</kbd>
 
 https://github.com/user-attachments/assets/ab558971-0839-4a46-a421-e074509795f0
