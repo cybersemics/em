@@ -534,7 +534,7 @@ describe('expansion', () => {
     await act(() => vi.runAllTimersAsync())
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toEqual(`- __ROOT__
+    expect(exported).toEqual(`- ${HOME_TOKEN}
   - a
     - =descendants
       - =pin
