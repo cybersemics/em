@@ -5,6 +5,7 @@ import paste from '../helpers/paste'
 import scrollIntoView from '../helpers/scrollIntoView'
 import setSelection from '../helpers/setSelection'
 import waitForEditable from '../helpers/waitForEditable'
+import waitUntil from '../helpers/waitUntil'
 import { page } from '../session'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 60000 })
@@ -55,6 +56,11 @@ it('the selected text remains selected after applying Lower Case', async () => {
 
   await waitForEditable('aaa')
 
+  // formatLetterCase re-selects the text on the animation frame after the edit re-renders the editable, so the
+  // editable can already show the new value while the caret is still collapsed. Wait for the re-selection,
+  // otherwise the test intermittently fails in CI.
+  await waitUntil(() => window.getSelection()?.toString() === 'aaa')
+
   expect(await getSelection().toString()).toBe('aaa')
 })
 
@@ -70,6 +76,9 @@ it('the selected text remains selected after a letter case change that lengthens
   await click('[aria-label="letter case swatches"] [aria-label="UpperCase"]')
 
   await waitForEditable('STRASSE X')
+
+  // see the comment on the re-selection wait above
+  await waitUntil(() => window.getSelection()?.toString() === 'STRASSE')
 
   expect(await getSelection().toString()).toBe('STRASSE')
 })
