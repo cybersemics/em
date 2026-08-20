@@ -65,9 +65,6 @@ export interface ImportTextPayload {
   /** Set the lastUpdated timestamp on the imported thoughts. Default: now. */
   lastUpdated?: Timestamp
 
-  /** Prevents pasting a single line of text into the destination thought, and always pastes as a child. */
-  preventInline?: boolean
-
   /** Prevents the default behavior of setting the cursor to the last thought at the first level. */
   preventSetCursor?: boolean
 
@@ -97,7 +94,6 @@ const importText = (
     text,
     idbSynced,
     lastUpdated,
-    preventInline,
     preventSetCursor,
     rawDestValue,
     replaceEnd,
@@ -123,7 +119,7 @@ const importText = (
   const destValue = rawDestValue || destThought.value
 
   // if we are only importing a single line of html, then simply modify the current thought
-  if (!preventInline && numLines <= 1 && !isRoam && !isRoot(path)) {
+  if (numLines <= 1 && !isRoam && !isRoot(path)) {
     // insert the text into the destValue in the correct place
     // if cursorCleared is true i.e. clearThought is enabled we don't have to use existing thought to be appended
 
