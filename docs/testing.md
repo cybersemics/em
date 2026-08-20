@@ -151,6 +151,8 @@ The sanctioned `paste` and `setTheme` Puppeteer helpers still contain fixed slee
 
 Treat a flaky test as deterministic behavior whose controlling condition is not known yet. Reproduce it, inspect the visible output and available diagnostics, and identify that condition before adding a delay, retry, or workaround. Do not make the whole suite slower to mask one uncertain test. Most application animation durations are already reduced to zero when `navigator.webdriver` is present; tests should wait for the resulting UI state, not replay production timing. Restoring production timing to reach an otherwise-unreachable state (such as the loading phase) is a backdoor decision, not a synchronization tactic — see [Sanctioned Backdoors](#sanctioned-backdoors).
 
+One controlling condition is worth naming because it recurs. On desktop, typing into a thought triggers distraction-free typing, which **unmounts** the toolbar, nav bar, and hamburger menu. It does not fire on the keystroke: it fires when the throttled edit commits `EDIT_THROTTLE` (500 ms) later, so a test that types and then clicks one of those elements has a ~500 ms budget that CI load can exhaust. The failure surfaces as Puppeteer's `Node is detached from document` when the unmount lands between resolving the element and clicking it, or as a selector timeout once the element is gone — nothing brings the HUD back but a pointer event ([`openSidebar`](../src/e2e/puppeteer/helpers/openSidebar.ts) moves the mouse for exactly this reason). When the act is a toolbar click, prefer an arrange that does not type: `paste` + `clickThought`.
+
 ### 4. Compose helpers
 
 Helpers are the vocabulary; tests are sentences. A puppeteer test should read as a sequence like `paste → clickThought → press → waitForEditable → exportThoughts → expect`. There are helpers for nearly everything (see [Test Helpers](#test-helpers)); use them before writing raw Puppeteer calls or Redux plumbing.
@@ -972,6 +974,10 @@ await vi.runAllTimersAsync()
 https://github.com/cybersemics/em/pull/2741
 
 In a rendered JSDOM test, wrap timer advancement that causes React updates in `act`.
+
+### Automated flaky-test detection
+
+The `Puppeteer Flaky` workflow (`.github/workflows/puppeteer-flaky.yml`) stress-runs the full Puppeteer suite nightly on `main` (15 iterations by default; `gh workflow run puppeteer-flaky.yml -f iterations=5` to run manually). `scripts/flaky-report.mjs` aggregates the Vitest JSON reports into a workflow summary that distinguishes intermittent failures (likely flakes) from consistent ones (likely regressions). When failures are found, the workflow sends a Discord notification (if the `DISCORD_WEBHOOK_URL` repository secret is set) and files a tracking issue for each **intermittently** failing test — titled `Flaky test: <file> > <full name>`, labelled `test`, and deduplicated by exact title match against open issues, so a test that is already tracked is not re-filed. A test that fails every iteration is a consistent failure rather than a flake; it appears in the summary and the Discord alert but is not filed as an issue.
 
 ### Triggering GitHub Actions workflows manually
 

@@ -251,7 +251,7 @@ const splitSentence = (value: string): SplitResult[] => {
   if (!sentenceSplitters || hasOnlyPeriodAtEnd()) {
     // Check for a dash (-, –, or —) or a colon and split into child if found
     // This handles Case 1: Split into child when there's only one sentence
-    // Match the first delimiter that has content on both sides. A colon must be followed by whitespace so that it does not split a url or a time, e.g. "http://localhost:3000" and "10:30".
+    // Match the first delimiter that has content on both sides. A colon must be followed by whitespace so that it does not split a time, e.g. "10:30".
     const childMatch = plainValue.match(/^(.+?)\s*(?:[-–—]\s*|:\s+)(.+)$/)
     if (childMatch) {
       const [_, leftPart, rightPart] = childMatch
@@ -263,6 +263,25 @@ const splitSentence = (value: string): SplitResult[] => {
         const leftHtml = sliceHtmlByTextOffsets(value, 0, leftPart.length)
         const rightHtml = sliceHtmlByTextOffsets(value, rightPartStart, plainValue.length)
         return [{ value: trimHtml(leftHtml) }, { value: trimHtml(rightHtml), insertNewSubThought: true }]
+      }
+    }
+
+    // Check for slash and split into a chain of descendants, each part a child of the previous
+    // e.g. "one/two/three" -> "- one  - two (child)  - three (grandchild)"
+    if (plainValue.includes('/')) {
+      let offset = 0
+      const boundaries = plainValue.split('/').map(part => {
+        const start = offset
+        offset += part.length + 1
+        return { start, end: start + part.length }
+      })
+      const parts = boundaries.filter(({ start, end }) => plainValue.slice(start, end).trim() !== '')
+      // Only split if the slash has content on both sides
+      if (parts.length > 1) {
+        return parts.map(({ start, end }, i) => ({
+          value: trimHtml(sliceHtmlByTextOffsets(value, start, end)),
+          ...(i > 0 ? { insertNewSubThought: true } : null),
+        }))
       }
     }
 
