@@ -1,5 +1,5 @@
 import { render } from '@testing-library/react'
-import { act, createRef } from 'react'
+import { Profiler, ProfilerOnRenderCallback, act, createRef } from 'react'
 import { DndProvider } from 'react-dnd'
 import { TestBackend } from 'react-dnd-test-backend'
 import Await from '../@types/Await'
@@ -15,7 +15,10 @@ import waitForThoughtspaceIdle from './waitForThoughtspaceIdle'
 let cleanup: Await<ReturnType<typeof initialize>>['cleanup']
 
 /** Mounts the App component to the JSDOM environment for testing, initializes the store, initializes the db, and attaches global event handlers. If you do not need to test mounted components, you can import initialize directly and avoid createTestApp. */
-const createTestApp = async ({ tutorial }: { tutorial?: boolean } = {}) => {
+const createTestApp = async ({
+  profilerOnRender,
+  tutorial,
+}: { profilerOnRender?: ProfilerOnRenderCallback; tutorial?: boolean } = {}) => {
   await act(async () => {
     vi.useFakeTimers({ loopLimit: 100000 })
 
@@ -35,7 +38,13 @@ const createTestApp = async ({ tutorial }: { tutorial?: boolean } = {}) => {
 
     render(
       <DndProvider backend={TestBackend}>
-        <App />
+        {profilerOnRender ? (
+          <Profiler id='App' onRender={profilerOnRender}>
+            <App />
+          </Profiler>
+        ) : (
+          <App />
+        )}
       </DndProvider>,
     )
 
