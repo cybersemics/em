@@ -31,8 +31,8 @@ vi.mock('page-lifecycle', () => ({
   },
 }))
 
-beforeEach(() => {
-  initStore()
+beforeEach(async () => {
+  await initStore()
 })
 
 afterEach(() => {

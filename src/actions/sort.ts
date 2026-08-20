@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import Index from '../@types/IndexType'
 import SortPreference from '../@types/SortPreference'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
@@ -30,9 +31,14 @@ const sort = (state: State, id: ThoughtId, sortPreference?: SortPreference): Sta
 
   if (Object.keys(thoughtIndexUpdates).length === 0) return state
 
+  const movePlacements: Index<ThoughtId | null> = keyValueBy(children, (child, i) =>
+    child.id in thoughtIndexUpdates ? { [child.id]: i === 0 ? null : children[i - 1].id } : null,
+  )
+
   return updateThoughts(state, {
     thoughtIndexUpdates,
     lexemeIndexUpdates: {},
+    movePlacements,
     preventExpandThoughts: true,
   })
 }
