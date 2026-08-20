@@ -18,6 +18,7 @@ import State from './@types/State'
 import { addMulticursorActionCreator as addMulticursor } from './actions/addMulticursor'
 import { alertActionCreator as alert } from './actions/alert'
 import { clearMulticursorsActionCreator as clearMulticursors } from './actions/clearMulticursors'
+import { cursorClearedActionCreator as cursorCleared } from './actions/cursorCleared'
 import { gestureMenuActionCreator as gestureMenu } from './actions/gestureMenu'
 import { indentActionCreator as indent } from './actions/indent'
 import { redoActionCreator as redo } from './actions/redo'
@@ -608,6 +609,13 @@ export const executeCommandWithMulticursor = (
   }
 
   multicursor.onComplete?.(filteredPaths, commandStore.dispatch, commandStore.getState)
+
+  // The cleared state is preserved while the cursor is set to each selected thought (see setCursor), so reset it now
+  // that the command has completed, just as setCursor resets it when a command moves the cursor off a single cleared
+  // thought. Only reset it if it was set before the command, otherwise clearThought's own multiselect clear is undone.
+  if (state.cursorCleared) {
+    commandStore.dispatch(cursorCleared({ value: false }))
+  }
 
   // Reset isMulticursorExecuting after all operations
   commandStore.dispatch(setIsMulticursorExecuting({ value: false }))
