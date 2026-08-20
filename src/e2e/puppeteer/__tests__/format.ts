@@ -4,6 +4,7 @@ import exportThoughts from '../helpers/exportThoughts'
 import getEditingText from '../helpers/getEditingText'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
+import waitForCursor from '../helpers/waitForCursor'
 import waitForEditable from '../helpers/waitForEditable'
 import { page } from '../session'
 
@@ -122,7 +123,7 @@ it('Clear Thought placeholder inherits whole-thought formatting (#4612)', async 
   })
 
   await press('c', { ctrl: true, alt: true, shift: true })
-  await page.waitForFunction(() => document.querySelector('[data-editing=true] [data-editable]')?.innerHTML === '')
+  await waitForCursor('')
 
   const placeholderStyle = await page.evaluate(() => {
     const editable = document.querySelector('[data-editing=true] [data-editable]')
@@ -146,7 +147,7 @@ it('Clear Thought dims emoji in the placeholder (#4671)', async () => {
   await clickThought('👋 Hello')
 
   await press('c', { ctrl: true, alt: true, shift: true })
-  await page.waitForFunction(() => document.querySelector('[data-editing=true] [data-editable]')?.innerHTML === '')
+  await waitForCursor('')
 
   const placeholderStyle = await page.evaluate(() => {
     const editable = document.querySelector('[data-editing=true] [data-editable]')

@@ -6,6 +6,7 @@ import press from '../helpers/press'
 import refresh from '../helpers/refresh'
 import scrollTo from '../helpers/scrollTo'
 import waitForBrowserSettled from '../helpers/waitForBrowserSettled'
+import waitForCursor from '../helpers/waitForCursor'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
 import waitUntil from '../helpers/waitUntil'
@@ -157,7 +158,7 @@ describe('autocrop', () => {
     await scrollTo(0, 200)
 
     await clickThought('z')
-    await waitUntil(() => document.querySelector('[data-editing=true] [data-editable]')?.innerHTML === 'z')
+    await waitForCursor('z')
     await waitForBrowserSettled()
 
     // get the y position of thought z relative to the viewport before moving the cursor down to 1
@@ -165,7 +166,7 @@ describe('autocrop', () => {
 
     // navigate deeper to z's child, which crops the space above the cursor
     await press('ArrowDown')
-    await waitUntil(() => document.querySelector('[data-editing=true] [data-editable]')?.innerHTML === '1')
+    await waitForCursor('1')
     await waitForBrowserSettled()
 
     // get the y position of thought z relative to the viewport after moving the cursor down to 1
