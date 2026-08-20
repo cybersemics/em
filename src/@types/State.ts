@@ -139,7 +139,6 @@ interface State {
   remoteSearch: boolean
   resourceCache: Index<string>
   rootContext: Context
-  schemaVersion: number
   search: string | null
   searchContexts: Index<Context> | null
   searchLimit?: number

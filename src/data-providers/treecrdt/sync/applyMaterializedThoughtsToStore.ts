@@ -44,7 +44,6 @@ export async function applyMaterializedThoughtsToStore(
       thoughtIndexUpdates: {},
       lexemeIndexUpdates,
       lexemeIndexUpdatesOld: {},
-      schemaVersion: snapshot.schemaVersion,
     })
   }
 

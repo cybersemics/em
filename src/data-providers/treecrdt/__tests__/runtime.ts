@@ -21,7 +21,6 @@ const emptyUpdates = {
   thoughtIndexUpdates: {},
   lexemeIndexUpdates: {},
   lexemeIndexUpdatesOld: {},
-  schemaVersion: 0,
 }
 
 beforeAll(async () => {

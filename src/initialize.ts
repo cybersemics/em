@@ -70,7 +70,6 @@ const initializeInternal = async ({ storage }: InitializeOptions) => {
       getSnapshot: () => {
         const state = store.getState()
         return {
-          schemaVersion: state.schemaVersion,
           thoughtIndex: state.thoughts.thoughtIndex,
           lexemeIndex: state.thoughts.lexemeIndex,
         }

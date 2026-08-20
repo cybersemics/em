@@ -36,7 +36,6 @@ const persistThought = (db: Pick<DataProvider, 'updateThoughts'>, value: string)
     thoughtIndexUpdates: { [THOUGHT_ID]: thought(value) },
     lexemeIndexUpdates: {},
     lexemeIndexUpdatesOld: {},
-    schemaVersion: 0,
   })
 
 it('retains the originating materialization context after rebinding the provider', async () => {
@@ -52,11 +51,11 @@ it('retains the originating materialization context after rebinding the provider
   })
   const provider = createTreecrdtDataProvider()
   const bridgeOne = {
-    getSnapshot: () => ({ schemaVersion: 0, thoughtIndex: {}, lexemeIndex: {} }),
+    getSnapshot: () => ({ thoughtIndex: {}, lexemeIndex: {} }),
     apply: vi.fn(),
   }
   const bridgeTwo = {
-    getSnapshot: () => ({ schemaVersion: 0, thoughtIndex: {}, lexemeIndex: {} }),
+    getSnapshot: () => ({ thoughtIndex: {}, lexemeIndex: {} }),
     apply: vi.fn(),
   }
 

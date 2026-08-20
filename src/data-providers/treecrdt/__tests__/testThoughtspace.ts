@@ -48,7 +48,6 @@ const persistThoughtsTo = (
     thoughtIndexUpdates: Object.fromEntries(thoughts.map(thought => [thought.id, thought])),
     lexemeIndexUpdates: {},
     lexemeIndexUpdatesOld: {},
-    schemaVersion: 0,
     movePlacements,
   })
 
