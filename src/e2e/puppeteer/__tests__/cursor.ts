@@ -5,8 +5,8 @@ import getEditingText from '../helpers/getEditingText'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import refresh from '../helpers/refresh'
+import waitForCursor from '../helpers/waitForCursor'
 import waitForEditable from '../helpers/waitForEditable'
-import waitUntil from '../helpers/waitUntil'
 import { usePersistentTreecrdtStorage } from '../setup'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
@@ -182,7 +182,7 @@ it('move cursor from formatted thought to first unformatted thought in descendin
   await press('ArrowDown')
 
   // Wait for cursor to move to 'pear'
-  await waitUntil(() => document.querySelector('[data-editing=true] [data-editable]')?.innerHTML === 'pear')
+  await waitForCursor('pear')
 
   // Verify cursor moved to 'pear' (when cursorDown)
   const downThoughtValue = await getEditingText()
@@ -191,12 +191,12 @@ it('move cursor from formatted thought to first unformatted thought in descendin
   await press('ArrowUp')
 
   // Before doing consecutive arrow up presses, wait until the cursor is on the apple thought then proceed with the arrow up press once again. The reason for doing is cursorUp and cursorDown are throttled to run once per animation frame, so repeated keypresses within the same frame might be ignored especially when running in CI.
-  await waitUntil(() => document.querySelector('[data-editing=true] [data-editable]')?.innerHTML === '<b>apple</b>')
+  await waitForCursor('<b>apple</b>')
 
   await press('ArrowUp')
 
   // Wait for cursor to move to 'fruits'
-  await waitUntil(() => document.querySelector('[data-editing=true] [data-editable]')?.innerHTML === 'fruits')
+  await waitForCursor('fruits')
 
   // Verify cursor moved to 'fruits' (when cursorUp)
   const upThoughtValue = await getEditingText()
