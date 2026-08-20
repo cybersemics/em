@@ -17,8 +17,8 @@ import generateThought from '../generateThought'
 const mockFetch = vi.fn()
 global.fetch = mockFetch
 
-beforeEach(() => {
-  initStore()
+beforeEach(async () => {
+  await initStore()
   vi.clearAllMocks()
   // clearAllMocks does not drain queued mockResolvedValueOnce responses, which would otherwise leak into the next test
   mockFetch.mockReset()

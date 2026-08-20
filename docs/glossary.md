@@ -58,7 +58,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 ## D
 
-**DataProvider** — The single interface ([`DataProvider.ts`](../src/data-providers/DataProvider.ts)) for storage backends. `db` in [`yjs/thoughtspace.ts`](../src/data-providers/yjs/thoughtspace.ts) is the live implementation.
+**DataProvider** — The single interface ([`DataProvider.ts`](../src/data-providers/DataProvider.ts)) for storage backends. The active implementation is exported through [`data-providers/thoughtspace.ts`](../src/data-providers/thoughtspace.ts).
 
 **dbQueue / freeQueue** — Two halves of the push-queue split. `dbQueue` writes batches with `local || remote` set; `freeQueue` releases entries from the in-memory cache. See [persistence.md → Push queue](persistence.md#push-queue-redux--yjs).
 
@@ -134,7 +134,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **permissionsClientDoc** — Separate Y.Doc holding `Index<Share>` keyed by access token (one entry per device with access). CRUD in [`permissionsModel.ts`](../src/data-providers/yjs/permissionsModel.ts).
 
-**=pin / =pinChildren** — Meta-attributes that keep a thought (or all children of a context) expanded. `=pin` is also pre-loaded eagerly during `fetchDescendants` to avoid a flash of expanded children before `=pin/false` resolves.
+**=pin** — Meta-attribute that keeps a thought expanded. Scoped variants: `=children/=pin` keeps all children of a context expanded (the replacement for the old `=pinChildren`), and `=descendants/=pin` keeps the entire subtree expanded. `=pin` is also pre-loaded eagerly during `fetchDescendants` to avoid a flash of expanded children before `=pin/false` resolves. See [metaprogramming.md](metaprogramming.md#pinning--expansion).
 
 **pull queue** — [`pullQueue.ts`](../src/redux-middleware/pullQueue.ts) middleware that, on every action, computes the visible thought IDs and triggers `pull` for any pending ones. Debounced 10 ms, throttled 100 ms. See [persistence.md → Pull queue](persistence.md#pull-queue-yjs--redux).
 
@@ -192,7 +192,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **updatedBy** — `clientId` of the writer. Stamped on every Thought and Lexeme write so observers can filter out self-originated change events.
 
-**updateThoughts** — Both an action ([`actions/updateThoughts.ts`](../src/actions/updateThoughts.ts)) that mutates Redux and queues a push, and the `DataProvider` entry point ([`yjs/thoughtspace.ts`](../src/data-providers/yjs/thoughtspace.ts)) that writes to Yjs. The action calls into the provider via the push queue.
+**updateThoughts** — The action ([`actions/updateThoughts.ts`](../src/actions/updateThoughts.ts)) that mutates Redux and queues a push. The push queue persists those batches through the active data provider's `updateThoughts`.
 
 ## V
 

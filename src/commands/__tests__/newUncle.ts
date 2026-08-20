@@ -38,8 +38,8 @@ describe('multicursor', () => {
   - a
     - b
     - c
-  - 
-  - 
+  - ${''}
+  - ${''}
   - x`)
   })
 
@@ -66,7 +66,7 @@ describe('multicursor', () => {
     expect(exported).toEqual(`- ${HOME_TOKEN}
   - a
     - b
-  - 
+  - ${''}
   - c
     - d
       - e
@@ -179,13 +179,13 @@ describe('multicursor', () => {
     expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
   - a
     - b
-  - 
+  - ${''}
   - c
     - d
-  - 
+  - ${''}
   - e
     - f
-  - `)
+  - ${''}`)
 
     store.dispatch(undo())
 

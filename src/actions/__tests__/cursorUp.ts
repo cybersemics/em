@@ -167,8 +167,8 @@ describe('normal view', () => {
     expectPathToEqual(state, prevThought(state, state.cursor!), ['a'])
   })
 
-  it('move cursor from empty thought to previous thought in context sorted in descending order', () => {
-    initStore()
+  it('move cursor from empty thought to previous thought in context sorted in descending order', async () => {
+    await initStore()
 
     act(() => {
       store.dispatch([

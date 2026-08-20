@@ -5,11 +5,14 @@ import { Provider } from 'react-redux'
 import SimplePath from '../../@types/SimplePath'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { keyboardOpenActionCreator as keyboardOpen } from '../../actions/keyboardOpen'
+import { executeCommandWithMulticursor } from '../../commands'
+import clearThoughtCommand from '../../commands/clearThought'
 import { HOME_TOKEN } from '../../constants'
 import * as selection from '../../device/selection'
 import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
+import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import dispatch from '../../test-helpers/dispatch'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
@@ -107,4 +110,62 @@ it('keeps edit mode active through the iOS autocorrect focus retarget (#4692)', 
   // and useEditMode stops placing the caret, so the next re-render of the editable (e.g. from an undo) leaves the
   // caret at the beginning of the thought.
   expect(store.getState().isKeyboardOpen).toBe(true)
+})
+
+// https://github.com/cybersemics/em/pull/4520#issuecomment-5186318307
+it('keeps multi edit mode through the focus retarget after an iOS autocorrect', async () => {
+  await dispatch([
+    importText({
+      text: `
+        - a
+        - b
+        - c`,
+    }),
+    setCursor(['a']),
+    addMulticursor(['a']),
+    addMulticursor(['b']),
+    addMulticursor(['c']),
+  ])
+
+  // Clear Thought on the multiselection enters multi edit mode: the keyboard opens and the Command Center closes.
+  await act(async () => {
+    executeCommandWithMulticursor(clearThoughtCommand, { store })
+  })
+  expect(store.getState().isKeyboardOpen).toBe(true)
+  expect(store.getState().showCommandCenter).toBe(false)
+
+  const simplePath = contextToPath(store.getState(), ['a']) as SimplePath
+  const { container } = render(
+    createElement(Provider, {
+      store,
+      children: createElement(Editable, {
+        isEditing: true,
+        isVisible: true,
+        path: simplePath,
+        rank: 0,
+        simplePath,
+      }),
+    }),
+  )
+  const editable = container.querySelector('[data-editable]') as HTMLElement
+  editable.focus()
+
+  // Pressing space on a misspelled word makes iOS replace the word...
+  editable.innerHTML = 'hello'
+  selection.set(editable, { offset: 'hello'.length })
+  fireEvent.input(editable, { inputType: 'insertReplacementText' })
+
+  // ...and then insert the space that committed the correction.
+  editable.innerHTML = 'hello '
+  selection.set(editable, { offset: 'hello '.length })
+  fireEvent.input(editable, { inputType: 'insertText', data: ' ' })
+
+  // the focus retarget blurs and refocuses the editable on the next animation frame
+  await act(vi.runAllTimersAsync)
+
+  // The retarget's momentary blur must not end the editing session: the keyboard stays open, the multiselection is
+  // intact, and the Command Center stays closed rather than re-opening over the editing session.
+  expect(store.getState().isKeyboardOpen).toBe(true)
+  expect(store.getState().showCommandCenter).toBe(false)
+  expect(Object.keys(store.getState().multicursors)).toHaveLength(3)
 })

@@ -148,6 +148,8 @@ When `state.multicursors` is non-empty, the user has one or more thoughts select
 
 `setIsMulticursorExecuting` is the general mechanism for that collapsing, not a private detail of the command loop: [`undoRedoEnhancer`](../src/redux-enhancers/undoRedoEnhancer.ts) merges every action dispatched while `state.isMulticursorExecuting` is true into the preceding undo patch, and shows `undoLabel` in the undo/redo alert. Any code path that edits every selected thought without going through a `multicursor: true` command must bracket its dispatch with the same pair, or the user has to undo once per thought. The [`ColorPicker`](../src/components/ColorPicker.tsx) and [`LetterCasePicker`](../src/components/LetterCasePicker.tsx) reach the thoughtspace through [`formatSelection`](../src/actions/formatSelection.ts) and [`formatLetterCase`](../src/actions/formatLetterCase.ts) rather than through their `multicursor: false` toolbar commands, so those two action-creators do the bracketing themselves; drag-and-drop of a multiselect does the same.
 
+The flag is also what marks the traversal as bookkeeping rather than user intent, so that observers do not react to the transient state it passes through. Setting the cursor to each selected thought empties `state.multicursors` (the loop does not pass `preserveMulticursor`) and the restore then re-adds them one at a time, so the count falls to zero and climbs back mid-command; it would likewise reset `cursorCleared` on each hop. [`setCursor`](../src/actions/setCursor.ts) preserves `cursorCleared` while the flag is set, and [`multicursorAlertMiddleware`](../src/redux-middleware/multicursorAlertMiddleware.ts) suspends the Command Center's show/hide reaction. Both settle on the closing `setIsMulticursorExecuting({ value: false })`, which the middleware evaluates against the final multicursors.
+
 The whole of `executeCommandWithMulticursor` is synchronous, including that bracket, so an **asynchronous** command gets no help from it: the bracket is opened and closed around the call, and anything dispatched after the first `await` lands outside it. [`generateThought`](../src/commands/generateThought.ts) is the case in point — its `exec` only reaches the thoughtspace once a network request has returned. It defines an `execMulticursor` that yields once (so that the loop's own synchronous bracket has closed), opens a second bracket of its own, generates every selected thought, and closes it only after all of them have settled. A `multicursor: true` declaration would instead leave one undo step per generated thought, and each `exec`'s own `setCursor` would drop the caret on whichever request happened to finish last.
 
 ### Gating and defaults
@@ -642,6 +644,12 @@ Pins open all thoughts at the current level.
 <kbd>Command + Shift + P</kbd>
 
 https://github.com/user-attachments/assets/db31b678-1e84-48c8-b4bf-0ce70a9b96c7
+
+### Pin Descendants
+
+Pins open all descendants of the current thought. Sets `=descendants/=pin` on the cursor thought, which expands the entire subtree whenever the thought itself is expanded.
+
+<kbd>Command + Option + Shift + P</kbd>
 
 ### Mark as done
 

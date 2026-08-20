@@ -28,6 +28,7 @@ import { editThoughtByContextActionCreator as editThought } from '../../test-hel
 import getAllChildrenAsThoughtsByContext from '../../test-helpers/getAllChildrenAsThoughtsByContext'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import archiveCommand from '../archive'
 import deleteCommand from '../delete'
 import indentCommand from '../indent'
@@ -46,7 +47,7 @@ beforeEach(initStore)
  */
 describe('undo persistence', () => {
   it('persists undo thought change', async () => {
-    await initialize()
+    await initialize({ storage: 'memory' })
 
     store.dispatch([
       importText({
@@ -62,7 +63,7 @@ describe('undo persistence', () => {
     // clear and call initialize again to reload from local db (simulating page refresh)
     store.dispatch(clear())
 
-    await initialize()
+    await initialize({ storage: 'memory' })
     await vi.runAllTimersAsync()
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
@@ -75,6 +76,103 @@ describe('undo persistence', () => {
 
     await vi.runAllTimersAsync()
     vi.useRealTimers()
+  }, 10000 /* increase timeout to give time for two calls to initialize() */)
+
+  it('persists undo move placement after reload', async () => {
+    await initialize({ storage: 'memory' })
+
+    store.dispatch([
+      importText({
+        text: `
+        - a
+        - b
+        - c
+        - d
+        - e`,
+      }),
+      setCursor(['a']),
+      addMulticursor(['a']),
+      addMulticursor(['b']),
+      addMulticursor(['c']),
+    ])
+
+    executeCommandWithMulticursor(moveThoughtDownCommand, { store })
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - d
+  - a
+  - b
+  - c
+  - e`)
+
+    store.dispatch(undo())
+    await waitForThoughtspaceIdle()
+
+    store.dispatch(clear())
+
+    await initialize({ storage: 'memory' })
+    await vi.runAllTimersAsync()
+    await waitForThoughtspaceIdle()
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - a
+  - b
+  - c
+  - d
+  - e`)
+  }, 10000 /* increase timeout to give time for two calls to initialize() */)
+
+  it('persists redo move placement after reload', async () => {
+    await initialize({ storage: 'memory' })
+
+    store.dispatch([
+      importText({
+        text: `
+        - a
+        - b
+        - c
+        - d
+        - e`,
+      }),
+      setCursor(['a']),
+      addMulticursor(['a']),
+      addMulticursor(['b']),
+      addMulticursor(['c']),
+    ])
+
+    executeCommandWithMulticursor(moveThoughtDownCommand, { store })
+    store.dispatch(undo())
+    await waitForThoughtspaceIdle()
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - a
+  - b
+  - c
+  - d
+  - e`)
+
+    store.dispatch(redo())
+    await waitForThoughtspaceIdle()
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - d
+  - a
+  - b
+  - c
+  - e`)
+
+    store.dispatch(clear())
+
+    await initialize({ storage: 'memory' })
+    await vi.runAllTimersAsync()
+    await waitForThoughtspaceIdle()
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - d
+  - a
+  - b
+  - c
+  - e`)
   }, 10000 /* increase timeout to give time for two calls to initialize() */)
 })
 
@@ -194,7 +292,7 @@ describe('undo', () => {
   })
 
   it('cursor should restore correctly after undo archive', async () => {
-    await initialize()
+    await initialize({ storage: 'memory' })
 
     store.dispatch([newThought({ value: 'a' }), setCursor(['a']), { type: 'archiveThought' }, undo()])
 

@@ -19,6 +19,7 @@ import globals from '../globals'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import pathExists from '../selectors/pathExists'
 import store from '../stores/app'
+import { updateCaretRect } from '../stores/caretRectStore'
 import { updateCommandState } from '../stores/commandStateStore'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
 import { updateScrollTop } from '../stores/scrollTop'
@@ -228,7 +229,13 @@ const initEvents = (store: Store<State, any>) => {
 
     // update command state store
     updateCommandState()
+
+    updateCaretRect()
   }
+
+  /** Input event listener. The caret is measured again after the text changes, since a deletion moves the caret without
+   * the browser firing another selectionchange once the new text has been laid out. */
+  const onInput = () => updateCaretRect()
 
   /** MouseMove event listener. */
   const onMouseMove = _.debounce(
@@ -329,6 +336,10 @@ const initEvents = (store: Store<State, any>) => {
       oldState === 'active' &&
       newState === 'passive' &&
       document.activeElement &&
+      // document.activeElement falls back to the body when nothing is focused, so the keyboard can only be open if
+      // some other element has focus. Without this, Clear Thought's asynchronous focus was mistaken for an app
+      // switch and the caret it had just placed was cleared. https://github.com/cybersemics/em/pull/4520
+      document.activeElement !== document.body &&
       !document.hasFocus()
     ) {
       passiveTimeout = setTimeout(selection.clear, 10) as unknown as number
@@ -380,6 +391,7 @@ const initEvents = (store: Store<State, any>) => {
   window.history.scrollRestoration = 'manual'
 
   document.addEventListener('selectionchange', onSelectionChange)
+  document.addEventListener('input', onInput)
   window.addEventListener('beforeinput', beforeInput)
   window.addEventListener('keydown', keyDown)
   window.addEventListener('keyup', keyUp)
@@ -414,6 +426,7 @@ const initEvents = (store: Store<State, any>) => {
   const cleanup = () => {
     unsubscribeSaveErrorReload()
     document.removeEventListener('selectionchange', onSelectionChange)
+    document.removeEventListener('input', onInput)
     window.removeEventListener('beforeinput', beforeInput)
     window.removeEventListener('keydown', keyDown)
     window.removeEventListener('keyup', keyUp)
