@@ -28,6 +28,8 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **belowCursor** — Flag set on every `TreeThought` after the cursor is encountered during the in-order walk. Used to exclude hidden thoughts below the cursor from `totalHeight` so the document doesn't have a giant trailing dead zone.
 
+**Block** — `{ scope: string, children: Block[] }` — the intermediate parse tree that all imported content is normalized into before it becomes thoughts. `scope` is the thought value (may contain formatting HTML); produced by [`htmlToJson`](../src/util/htmlToJson.ts) and `text-block-parser`, consumed by [`importJson`](../src/util/importJson.ts) and [`flattenTree`](../src/util/flattenTree.ts). See [import-pipeline.md](import-pipeline.md).
+
 **Brand** — Nominal-typing trick: `Path & Brand<'SimplePath'>` requires an explicit cast to convert. Used to enforce invariants TypeScript can't track. See [`Brand.ts`](../src/@types/Brand.ts).
 
 **buffer depth** — `BUFFER_DEPTH = 2` in `pull`. Beyond this depth, descendants returned by `fetchDescendants` are marked `pending: true` rather than being fully fetched. The hard BFS-queue cap is `MAX_THOUGHTS_QUEUED = 100`. See [persistence.md → fetchDescendants](persistence.md#fetchdescendants-the-actual-pull-engine).
@@ -152,6 +154,8 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **replication** — Loading a Y.Doc into the in-memory cache (from local IDB and, when wired, from the websocket server). `replicateThought` / `replicateLexeme` are idempotent under concurrency. See [persistence.md → Replication](persistence.md#replication).
 
+**resumable import** — The `importFiles` mechanism: a `ResumeImport` manifest in localStorage plus the raw file text in IndexedDB, written before importing and updated after every thought, so an interrupted import is offered for resume on the next launch. Contrast with the atomic `importText`. See [import-pipeline.md → importFiles](import-pipeline.md#importfiles-resumable-import).
+
 **ROOT_CONTEXTS** — `[HOME_TOKEN, ABSOLUTE_TOKEN]`. The two top-level contexts.
 
 **ROOT_PARENT_ID** — Sentinel `ThoughtId` used as the docKey for root-context Y.Docs. Distinct from `HOME_TOKEN` / `ABSOLUTE_TOKEN`, which are the root *thoughts*; `ROOT_PARENT_ID` is the *parent* of those root thoughts in the persistence layer.
@@ -171,6 +175,8 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 **=style** — Meta-attribute carrying CSS styles. Variants: `=children/=style` (apply to direct children), `=grandchildren/=style` (one level deeper).
 
 ## T
+
+**text/em** — Clipboard MIME flavor (`'true'`) written by em's copy handlers to mark the clipboard source as em. Read by [`useOnPaste`](../src/components/Editable/useOnPaste.ts) as `isEmText` to distinguish internal from external pastes. Cannot be written on mobile Safari or through `@capacitor/clipboard`. See [import-pipeline.md → The copy side](import-pipeline.md#the-copy-side).
 
 **tangential context** — A context that hasn't been pulled directly through the cursor's ancestor chain but is referenced via a Lexeme entry in another loaded thought. `replicateThought` walks the Lexeme's `cx-${id}` entries and pulls ancestors so tangential references resolve. See `thoughtspace.ts` lines around the comment "tangential contexts".
 
