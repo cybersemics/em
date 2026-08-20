@@ -12,6 +12,7 @@ import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { isSafari, isTouch } from '../browser'
 import { beforeInput, keyDown, keyUp } from '../commands'
 import { AlertType, LongPressState } from '../constants'
+import nativeHistory from '../device/nativeHistory'
 import * as selection from '../device/selection'
 import virtualKeyboardHandler from '../device/virtual-keyboard'
 import globals from '../globals'
@@ -412,6 +413,9 @@ const initEvents = (store: Store<State, any>) => {
   // Initialize virtual keyboard handlers
   virtualKeyboardHandler.init()
 
+  // Route iOS native undo/redo gestures through em's undo/redo in the Capacitor app
+  nativeHistory.init()
+
   // clean up on app switch in PWA
   // https://github.com/cybersemics/em/issues/1030
   lifecycle.addEventListener('statechange', onStateChange)
@@ -439,6 +443,7 @@ const initEvents = (store: Store<State, any>) => {
     lifecycle.removeEventListener('statechange', onStateChange)
     resizeHost.removeEventListener('resize', updateSize)
     virtualKeyboardHandler.destroy()
+    nativeHistory.destroy()
     eventHandlers = null
   }
 

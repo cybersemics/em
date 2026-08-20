@@ -797,10 +797,15 @@ const Editable = ({
     e => {
       throttledChangeRef.current.flush()
 
-      // The iOS autocomplete focus retarget blurs and refocuses the editable within the same frame, so its momentary
-      // blur does not end editing. Skip the value resync (#4828) and the editing teardown below: otherwise the blur
-      // closes the keyboard and exits the cleared state mid-typing, and on an edited multiselection the Command
-      // Center re-opens over the editing session (see multicursorAlertMiddleware).
+      // The iOS autocomplete focus retarget blurs to the asyncFocus dummy input and refocuses this same editable
+      // within the same frame, so its momentary blur does not end editing. Its relatedTarget is a bare input rather
+      // than an editable, so the check below cannot recognize it; the suppressBlurSync flag the retarget sets is what
+      // marks a blur that does not end editing. Skip the value resync (#4828) and the editing teardown below:
+      // otherwise the blur closes the keyboard and exits the cleared state mid-typing, on an edited multiselection the
+      // Command Center re-opens over the editing session (see multicursorAlertMiddleware), and the resulting desync
+      // between state.isKeyboardOpen and the open keyboard makes useEditMode stop placing the caret, so the next
+      // re-render of the editable (e.g. undoing the autocorrect) leaves the caret at the beginning of the thought
+      // (#4692).
       if (globals.suppressBlurSync) return
 
       // update the ContentEditable if the new scrubbed value is different (i.e. stripped, space after emoji added, etc)

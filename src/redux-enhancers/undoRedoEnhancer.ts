@@ -88,8 +88,20 @@ function getEditThoughtDirection(action: UnknownAction): EditThoughtDirection {
  * The editableNonce is a transient re-render trigger (incremented by editableRender and by force edits), not real state.
  * It must be excluded from patches, otherwise undoing a force edit reverts the nonce and editableRender re-increments
  * it to the same value, resulting in no net change. The ContentEditable then fails to update its innerHTML while
- * editing (allowInnerHTMLChange is false), so undoing a formatting/letter-case edit appears to do nothing. */
-const statePropertiesToOmit: (keyof State)[] = ['alert', 'cursorCleared', 'editableNonce', 'pushQueue']
+ * editing (allowInnerHTMLChange is false), so undoing a formatting/letter-case edit appears to do nothing.
+ * The isKeyboardOpen flag is likewise device state, not document state: it reflects whether the virtual keyboard is
+ * currently up. Actions that open it as a side effect (newThought, setCursor) would otherwise record the transition in
+ * their patch, so undoing them silently closes edit mode. That desyncs the flag from the real keyboard mid-reducer and
+ * drives the dismissal machinery (clearSelection -> selection.clear -> Keyboard.hide), which then fights the next
+ * thought's attempt to raise the keyboard (#4692). Undo/redo must never move the keyboard; only the blur and
+ * dismissKeyboard paths may. */
+const statePropertiesToOmit: (keyof State)[] = [
+  'alert',
+  'cursorCleared',
+  'editableNonce',
+  'isKeyboardOpen',
+  'pushQueue',
+]
 
 /** Reconstructs TreeCRDT move updates and placement metadata from the final state produced by an undo/redo patch. */
 const restoreMoveUpdatesFromThoughtUpdates = (
@@ -265,10 +277,16 @@ const redoOneReducer = (state: State): State => {
   }
 }
 
+/** Moves the caret to the end of the cursor thought. Undo/redo otherwise restores the cursorOffset captured before the undone action, which can be anywhere in the thought (the tap position on iOS, or 0), leaving the caret away from the word that was just restored. */
+const cursorOffsetAtEnd = (state: State): State => ({
+  ...state,
+  cursorOffset: state.cursor ? stripTags(headValue(state, state.cursor) ?? '').length : null,
+})
+
 /**
  * Controls the number of undo operations based on the undo history.
  */
-const undoReducer = (state: State, undoPatches: Patch[]): State => {
+const undoReducer = (state: State, undoPatches: Patch[], cursorAtEnd?: boolean): State => {
   const lastUndoPatch = nthLast(undoPatches, 1)
   const lastAction = lastUndoPatch && getPatchAction(lastUndoPatch)
   const penultimateUndoPatch = nthLast(undoPatches, 2)
@@ -310,6 +328,7 @@ const undoReducer = (state: State, undoPatches: Patch[]): State => {
     undoTwice ? undoOneReducer : null,
     newState => restorePushQueueFromPatches(newState, state, poppedUndoPatches.flat()),
     !undoTwice && lastPatchIsFormatting ? (s: State) => ({ ...s, cursorOffset: priorCursorOffset }) : null,
+    cursorAtEnd ? cursorOffsetAtEnd : null,
     editableRender,
   ])(state)
 }
@@ -317,7 +336,7 @@ const undoReducer = (state: State, undoPatches: Patch[]): State => {
 /**
  * Controls the number of redo operations based on the patch history.
  */
-const redoReducer = (state: State, redoPatches: Patch[]): State => {
+const redoReducer = (state: State, redoPatches: Patch[], cursorAtEnd?: boolean): State => {
   const lastRedoPatch = nthLast(redoPatches, 1)
   const lastAction = lastRedoPatch && getPatchAction(lastRedoPatch)
 
@@ -331,6 +350,7 @@ const redoReducer = (state: State, redoPatches: Patch[]): State => {
     redoTwice ? redoOneReducer : null,
     redoOneReducer,
     newState => restorePushQueueFromPatches(newState, state, poppedRedoPatches.flat()),
+    cursorAtEnd ? cursorOffsetAtEnd : null,
     editableRender,
   ])(state)
 }
@@ -372,11 +392,14 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         lastAction = undefined
         lastEditThoughtDirection = EditThoughtDirection.None
 
+        // Native undo/redo (iOS three-finger swipe, shake-to-undo) sets cursorAtEnd to place the caret at the end of the restored thought.
+        const cursorAtEnd = !!(action as UnknownAction).cursorAtEnd
+
         const undoOrRedoState =
           actionType === 'undo'
-            ? undoReducer(state, undoPatches)
+            ? undoReducer(state, undoPatches, cursorAtEnd)
             : actionType === 'redo'
-              ? redoReducer(state, redoPatches)
+              ? redoReducer(state, redoPatches, cursorAtEnd)
               : null
 
         // do not omit pushQueue because that includes updates added by updateThoughts

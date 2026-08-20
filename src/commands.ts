@@ -39,6 +39,7 @@ import getUserSetting from './selectors/getUserSetting'
 import hasMulticursor from './selectors/hasMulticursor'
 import isAllSelected from './selectors/isAllSelected'
 import isMulticursorPath from './selectors/isMulticursorPath'
+import isRedoEnabled from './selectors/isRedoEnabled'
 import isUndoEnabled from './selectors/isUndoEnabled'
 import splitChain from './selectors/splitChain'
 import thoughtToPath from './selectors/thoughtToPath'
@@ -796,6 +797,23 @@ export const handleGestureCancel = () => {
   })
 }
 
+/** Performs a native undo/redo gesture (iOS shake-to-undo, three-finger swipe, or the Edit menu) as em's own undo/redo, so that Redux remains the single source of truth. Called from both routes a native gesture can arrive by: the `historyUndo`/`historyRedo` `beforeinput` event in the browser, and the `nativeHistory` event from the Capacitor plugin. */
+export const handleNativeHistory = (type: 'undo' | 'redo') => {
+  // Flush any pending throttled edit before reading the state, mirroring keyDown. Editing dispatches editThought on a
+  // throttle, so a native undo triggered mid-edit (e.g. immediately after an autocorrect) would otherwise undo the
+  // previous step and let the pending edit commit afterwards, duplicating text (#4477).
+  commandEmitter.trigger('command', commandById(type))
+  // cursorAtEnd places the caret at the end of the restored thought rather than at the cursorOffset captured before
+  // the undone action, which is the position the thought was entered at and leaves the caret away from the restored
+  // word, typically at the beginning of the thought.
+  const state = store.getState()
+  if (type === 'undo') {
+    if (isUndoEnabled(state)) store.dispatch(undo({ cursorAtEnd: true }))
+  } else if (isRedoEnabled(state)) {
+    store.dispatch(redo({ cursorAtEnd: true }))
+  }
+}
+
 /** In the specific case of the newThought and indent commands, prevent default in beforeinput event instead of keydown to preserve default iOS auto-capitalization behavior. The Enter and space characters needs to be prevented so that it doesn't get inserted into the thought (#3707).
  *
  * Android soft keyboards report the space keydown as keyCode 229 ('Unidentified'), so the space-to-indent
@@ -810,14 +828,11 @@ export const beforeInput = (e: InputEvent) => {
   // which reverts to the correct Redux state and re-renders the editable. Each formatSelection registers exactly one
   // native undo step (#4637), so one native gesture maps to one em undo/redo — no dedupe is needed. The cancelable check
   // gates on the case we can actually prevent; native browser undo is intentionally superseded by em's undo (#3879).
+  // In the Capacitor app the gesture never reaches WebKit at all and arrives via nativeHistory instead, so the two
+  // routes cannot both fire for a single gesture.
   if ((e.inputType === 'historyUndo' || e.inputType === 'historyRedo') && e.cancelable) {
     e.preventDefault()
-    const state = store.getState()
-    if (e.inputType === 'historyUndo') {
-      if (isUndoEnabled(state)) store.dispatch(undo())
-    } else if (state.redoPatches.length > 0) {
-      store.dispatch(redo())
-    }
+    handleNativeHistory(e.inputType === 'historyUndo' ? 'undo' : 'redo')
     return
   }
 
