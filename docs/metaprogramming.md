@@ -97,8 +97,8 @@ Not every attribute is propagable. Currently the `=children`/`=grandchildren` in
 
 - **`=bindContext`** — binds the current context to another so edits propagate between them. Created via the `bindContext` command, which stores the destination under a paired internal key `=bindContextCommand`.
 - **`=label`** — display alternative text for the thought (the *label*) while continuing to use the thought's real value for any context lookups. The real value remains hidden unless the user is editing. Consumed by [`Editable`](../src/components/Editable.tsx) and [`ThoughtAnnotation`](../src/components/ThoughtAnnotation.tsx).
-- **`=note`** — render a small note in lighter type underneath the thought. The first child of `=note` is the note's text. See [`Note`](../src/components/Note.tsx).
-- **`=path`** — used under a `=note` to redirect the note's content to another thought (looked up by path), instead of rendering the literal child of `=note`. See [`resolveNoteKey`](../src/selectors/resolveNoteKey.ts).
+- **`=note`** — render a small note in lighter type underneath the thought. The first child of a literal `=note` is the note's text. See [`Note`](../src/components/Note.tsx).
+- **`=path`** — used under a `=note` to redirect the note's content to another thought (looked up by path), instead of rendering the literal child of `=note`. The target's visible children are rendered in their configured sort order, separated by commas, and editing the note updates the corresponding children. See [`resolveNoteKey`](../src/selectors/resolveNoteKey.ts).
 - **`=let`** — define lexically-scoped named values that descendants can reference. Parsed by [`parseLet`](../src/util/parseLet.ts) and consumed by [`useThoughtStyle`](../src/hooks/useThoughtStyle.ts) (so a `=let` binding for a color name resolves when used in `=style`).
 
 ### Content sources
