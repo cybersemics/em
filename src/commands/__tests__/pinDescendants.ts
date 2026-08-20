@@ -28,7 +28,7 @@ it('toggle on when there is no =descendants attribute', () => {
   executeCommand(pinDescendantsCommand, { store })
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-  expect(exported).toEqual(`- __ROOT__
+  expect(exported).toEqual(`- ${HOME_TOKEN}
   - a
     - =descendants
       - =pin
@@ -58,7 +58,7 @@ it('toggle on when there is an unrelated =descendants attribute', () => {
   executeCommand(pinDescendantsCommand, { store })
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-  expect(exported).toEqual(`- __ROOT__
+  expect(exported).toEqual(`- ${HOME_TOKEN}
   - a
     - =descendants
       - =test
@@ -87,7 +87,7 @@ it('toggle on when =descendants/=pin is false', () => {
   executeCommand(pinDescendantsCommand, { store })
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-  expect(exported).toEqual(`- __ROOT__
+  expect(exported).toEqual(`- ${HOME_TOKEN}
   - a
     - =descendants
       - =pin
@@ -116,7 +116,7 @@ it('remove =descendants when toggling off from =pin/true', () => {
   executeCommand(pinDescendantsCommand, { store })
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-  expect(exported).toEqual(`- __ROOT__
+  expect(exported).toEqual(`- ${HOME_TOKEN}
   - a
     - b
       - c
@@ -141,7 +141,7 @@ it('remove =descendants when toggling off from =pin', () => {
   executeCommand(pinDescendantsCommand, { store })
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-  expect(exported).toEqual(`- __ROOT__
+  expect(exported).toEqual(`- ${HOME_TOKEN}
   - a
     - b
       - c
@@ -167,7 +167,7 @@ it('preserve unrelated =descendants attributes when toggling off', () => {
   executeCommand(pinDescendantsCommand, { store })
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-  expect(exported).toEqual(`- __ROOT__
+  expect(exported).toEqual(`- ${HOME_TOKEN}
   - a
     - =descendants
       - =test
