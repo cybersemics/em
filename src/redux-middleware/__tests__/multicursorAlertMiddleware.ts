@@ -42,7 +42,7 @@ it('shows the Command Center on mobile when a multicursor is active', async () =
 })
 
 it('hides the Command Center while a multiselection is being edited and re-opens it when the keyboard closes', async () => {
-  await initialize()
+  await initialize({ storage: 'memory' })
 
   store.dispatch([
     importText({
@@ -76,7 +76,7 @@ it('hides the Command Center while a multiselection is being edited and re-opens
 
 // https://github.com/cybersemics/em/pull/4520#issuecomment-5339007687
 it('does not re-open the Command Center over an edited multiselection when the multicursor count changes mid-edit', async () => {
-  await initialize()
+  await initialize({ storage: 'memory' })
 
   store.dispatch([
     importText({
@@ -110,7 +110,7 @@ it('does not re-open the Command Center over an edited multiselection when the m
 
 // https://github.com/cybersemics/em/pull/4520
 it('does not re-open the Command Center when a multicursor command restores the multiselection mid-edit', async () => {
-  await initialize()
+  await initialize({ storage: 'memory' })
 
   store.dispatch([
     importText({
