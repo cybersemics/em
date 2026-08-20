@@ -5,6 +5,7 @@ import openCommandCenterCommand from '../../../commands/openCommandCenter'
 import click from '../helpers/click'
 import clickBullet from '../helpers/clickBullet'
 import clickThought from '../helpers/clickThought'
+import clickToolbar from '../helpers/clickToolbar'
 import closeKeyboard from '../helpers/closeKeyboard'
 import emulate from '../helpers/emulate'
 import gesture from '../helpers/gesture'
@@ -497,7 +498,7 @@ describe('mobile only', () => {
     await waitUntil(() => !document.activeElement || document.activeElement === document.body)
 
     // Step 3: tap the Bold button on the toolbar
-    await click('[data-testid="toolbar-icon"][aria-label="Bold"]')
+    await clickToolbar('Bold')
 
     // the formatting should still be applied to the whole thought
     await waitUntil(() => !!document.querySelector('[data-editable] b'))

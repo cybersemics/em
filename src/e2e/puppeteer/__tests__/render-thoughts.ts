@@ -3,6 +3,7 @@ import { HOME_TOKEN } from '../../../constants'
 import configureSnapshots from '../configureSnapshots'
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
+import clickToolbar from '../helpers/clickToolbar'
 import command from '../helpers/command'
 import exportThoughts from '../helpers/exportThoughts'
 import hide from '../helpers/hide'
@@ -218,8 +219,7 @@ describe('Color Theme', () => {
     await paste(importText)
 
     await clickThought('Golden Retriever')
-    await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
-    await click('[aria-label="background color swatches"] [aria-label="green"]')
+    await clickToolbar('Text Color', 'background color swatches', 'green')
 
     await clickThought('Labrador')
     await click('[aria-label="text color swatches"] [aria-label="purple"]')

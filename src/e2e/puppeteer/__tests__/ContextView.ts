@@ -1,9 +1,7 @@
-import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
+import clickToolbar from '../helpers/clickToolbar'
 import paste from '../helpers/paste'
 import refresh from '../helpers/refresh'
-import scrollBy from '../helpers/scrollBy'
-import scrollIntoView from '../helpers/scrollIntoView'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
 import { usePersistentTreecrdtStorage } from '../setup'
@@ -31,9 +29,7 @@ it('load buffered ancestors of contexts when context view is activated', async (
   await waitForEditable('m')
 
   await clickThought('m')
-  await scrollIntoView('[data-testid="toolbar-icon"][aria-label="Context View"]')
-  await scrollBy('#toolbar', 50, 0)
-  await click('[data-testid="toolbar-icon"][aria-label="Context View"]')
+  await clickToolbar('Context View')
 
   // assert that c is loaded
   await waitForEditable('c')

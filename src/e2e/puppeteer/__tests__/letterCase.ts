@@ -1,8 +1,7 @@
-import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
+import clickToolbar from '../helpers/clickToolbar'
 import getSelection from '../helpers/getSelection'
 import paste from '../helpers/paste'
-import scrollIntoView from '../helpers/scrollIntoView'
 import setSelection from '../helpers/setSelection'
 import waitForEditable from '../helpers/waitForEditable'
 import waitUntil from '../helpers/waitUntil'
@@ -23,14 +22,10 @@ it('Sentence Case button is marked as active after applying Sentence Case to a t
   await clickThought('hello world. second sentence.')
 
   // Apply a background highlight color
-  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
-  await click('[aria-label="background color swatches"] [aria-label="blue"]')
+  await clickToolbar('Text Color', 'background color swatches', 'blue')
 
-  // Open the Letter Case picker
-  await click('[data-testid="toolbar-icon"][aria-label="Letter Case"]')
-
-  // Click Sentence Case
-  await click('[aria-label="letter case swatches"] [aria-label="SentenceCase"]')
+  // Apply Sentence Case
+  await clickToolbar('Letter Case', 'SentenceCase')
 
   // The picker stays open after clicking a swatch; check the active state of each button.
   // An active button has a solid foreground border; an inactive button has a transparent border.
@@ -50,9 +45,7 @@ it('the selected text remains selected after applying Lower Case', async () => {
   await clickThought('AAA')
   await setSelection(0, 3)
 
-  await scrollIntoView('[data-testid="toolbar-icon"][aria-label="Letter Case"]', { inline: 'center' })
-  await click('[data-testid="toolbar-icon"][aria-label="Letter Case"]')
-  await click('[aria-label="letter case swatches"] [aria-label="LowerCase"]')
+  await clickToolbar('Letter Case', 'LowerCase')
 
   await waitForEditable('aaa')
 
@@ -71,9 +64,7 @@ it('the selected text remains selected after a letter case change that lengthens
   await clickThought('Straße x')
   await setSelection(0, 6)
 
-  await scrollIntoView('[data-testid="toolbar-icon"][aria-label="Letter Case"]', { inline: 'center' })
-  await click('[data-testid="toolbar-icon"][aria-label="Letter Case"]')
-  await click('[aria-label="letter case swatches"] [aria-label="UpperCase"]')
+  await clickToolbar('Letter Case', 'UpperCase')
 
   await waitForEditable('STRASSE X')
 
