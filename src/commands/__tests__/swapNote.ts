@@ -34,7 +34,7 @@ describe('swapNote', () => {
     executeCommand(swapNoteCommand, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toBe(`- __ROOT__
+    expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - =note
       - b`)
@@ -56,7 +56,7 @@ describe('swapNote', () => {
     executeCommand(swapNoteCommand, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toBe(`- __ROOT__
+    expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - b
   - c`)
@@ -83,7 +83,7 @@ describe('swapNote', () => {
       executeCommandWithMulticursor(swapNoteCommand, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-      expect(exported).toBe(`- __ROOT__
+      expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - =note
       - b

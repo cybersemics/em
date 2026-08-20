@@ -641,6 +641,12 @@ Pins open all thoughts at the current level.
 
 https://github.com/user-attachments/assets/db31b678-1e84-48c8-b4bf-0ce70a9b96c7
 
+### Pin Descendants
+
+Pins open all descendants of the current thought. Sets `=descendants/=pin` on the cursor thought, which expands the entire subtree whenever the thought itself is expanded.
+
+<kbd>Command + Option + Shift + P</kbd>
+
 ### Mark as done
 
 Crosses out a thought to mark it as completed.

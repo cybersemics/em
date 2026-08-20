@@ -24,7 +24,7 @@ vi.mock('../../browser', async importOriginal => {
 beforeEach(initStore)
 
 it('shows the Command Center on mobile when a multicursor is active', async () => {
-  await initialize()
+  await initialize({ storage: 'memory' })
 
   store.dispatch([
     importText({
@@ -149,7 +149,7 @@ it('does not re-open the Command Center when a multicursor command restores the 
 })
 
 it('does not show the Command Center when undoing a multicursor delete while the Undo Slider is active', async () => {
-  await initialize()
+  await initialize({ storage: 'memory' })
 
   store.dispatch([
     importText({

@@ -1,7 +1,7 @@
 import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
 import Timestamp from '../@types/Timestamp'
-import { clientId } from '../data-providers/yjs'
+import { clientId } from '../data-providers/thoughtspaceSession'
 import timestamp from './timestamp'
 
 /** Returns a shallow copy of an object with all keys that do not have a value of null. */

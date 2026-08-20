@@ -24,8 +24,8 @@ const startHovering = () => {
 /** Advances past the hook's 50ms debounce. */
 const flushDebounce = () => act(() => vi.advanceTimersByTimeAsync(100))
 
-beforeEach(() => {
-  initStore()
+beforeEach(async () => {
+  await initStore()
   vi.useFakeTimers()
 })
 

@@ -106,6 +106,12 @@ const Metaprogramming = () => {
         Applies a meta attribute to all children of a thought.
       </p>
 
+      <code>=descendants</code>
+      <p>
+        <Options options={['=pin']} />
+        Applies a meta attribute to all descendants of a thought.
+      </p>
+
       <code>=drop</code>
       <p>
         <Options options={['top', 'bottom']} />

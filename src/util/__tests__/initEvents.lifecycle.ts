@@ -42,8 +42,8 @@ vi.mock('../../device/selection', async importOriginal => {
   return { ...actual, clear: vi.fn() }
 })
 
-beforeEach(() => {
-  initStore()
+beforeEach(async () => {
+  await initStore()
 })
 
 afterEach(() => {

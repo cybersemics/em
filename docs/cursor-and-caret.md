@@ -50,7 +50,7 @@ The two reads worth calling out:
 
 Caret position is set via [`Editable`](../src/components/Editable.tsx)'s use of `selection.set`. The hook that actually decides *when* to set the selection is [`useEditMode`](#useeditmode), described below.
 
-Notes own a separate contenteditable in [`Note`](../src/components/Note.tsx), so they restore their caret directly instead of using `useEditMode`. Each note edit captures the post-edit character offset relative to the note root with `offsetFromNode()` and carries it on the `editThought` action. The undo enhancer uses the edit's plain-text length change to retain the corresponding pre-edit offset. Undo and redo force the note to render, then `Note` reads the requested `state.noteOffset` non-reactively, places the caret, and clears that one-shot request without adding another undo entry. Keeping the offset non-reactive prevents an ordinary click or text selection from being overwritten by a render.
+Notes own a separate contenteditable in [`Note`](../src/components/Note.tsx), so they restore their caret directly instead of using `useEditMode`. Each note edit captures the post-edit character offset relative to the note root with `offsetFromNode()` and carries it on the note's edit action (`editThought` for a literal note or `editNotePath` for a path-based note). The undo enhancer uses the edit's plain-text length change to retain the corresponding pre-edit offset. Undo and redo force the note to render, then `Note` reads the requested `state.noteOffset` non-reactively, places the caret, and clears that one-shot request without adding another undo entry. Keeping the offset non-reactive prevents an ordinary click or text selection from being overwritten by a render.
 
 ### Desktop
 

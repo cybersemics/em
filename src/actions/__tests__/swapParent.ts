@@ -324,6 +324,8 @@ describe('sort', () => {
   - d
   - b
     - a`)
+
+    vi.useRealTimers()
   })
 })
 
