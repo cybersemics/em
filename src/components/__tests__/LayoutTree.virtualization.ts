@@ -5,11 +5,11 @@ import dispatch from '../../test-helpers/dispatch'
 import queryThoughtByText from '../../test-helpers/queries/queryThoughtByText'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 
-const onRender = vi.fn()
+const profilerOnRender = vi.fn()
 
 beforeEach(async () => {
-  onRender.mockClear()
-  await createTestApp({ onRender })
+  profilerOnRender.mockClear()
+  await createTestApp({ profilerOnRender })
 })
 
 afterEach(async () => {
@@ -41,7 +41,7 @@ it('does not commit when no thought crosses the viewport boundary while preservi
   expect(await queryThoughtByText('thought 10')).toBeNull()
   expect(await queryThoughtByText('thought 60')).toBeNull()
 
-  onRender.mockClear()
+  profilerOnRender.mockClear()
 
   // Safari reports negative scrollTop values during elastic overscroll. The virtualization boundary must stay
   // clamped to zero so that rubber-banding at the top does not mount or unmount thoughts.
@@ -51,18 +51,18 @@ it('does not commit when no thought crosses the viewport boundary while preservi
     await vi.runOnlyPendingTimersAsync()
   })
 
-  expect(onRender).not.toHaveBeenCalled()
+  expect(profilerOnRender).not.toHaveBeenCalled()
   expect(await queryThoughtByText('thought 9')).not.toBeNull()
   expect(await queryThoughtByText('thought 10')).toBeNull()
 
-  onRender.mockClear()
+  profilerOnRender.mockClear()
   await act(async () => {
     document.documentElement.scrollTop = 1
     window.dispatchEvent(new Event('scroll'))
     await vi.runOnlyPendingTimersAsync()
   })
 
-  expect(onRender).not.toHaveBeenCalled()
+  expect(profilerOnRender).not.toHaveBeenCalled()
   expect(await queryThoughtByText('thought 9')).not.toBeNull()
   expect(await queryThoughtByText('thought 10')).toBeNull()
   expect(await queryThoughtByText('thought 60')).toBeNull()

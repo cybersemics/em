@@ -15,9 +15,9 @@ let cleanup: Await<ReturnType<typeof initialize>>['cleanup']
 
 /** Mounts the App component to the JSDOM environment for testing, initializes the store, initializes the db, and attaches global event handlers. If you do not need to test mounted components, you can import initialize directly and avoid createTestApp. */
 const createTestApp = async ({
-  onRender,
+  profilerOnRender,
   tutorial,
-}: { onRender?: ProfilerOnRenderCallback; tutorial?: boolean } = {}) => {
+}: { profilerOnRender?: ProfilerOnRenderCallback; tutorial?: boolean } = {}) => {
   await act(async () => {
     vi.useFakeTimers({ loopLimit: 100000 })
 
@@ -37,8 +37,8 @@ const createTestApp = async ({
 
     render(
       <DndProvider backend={TestBackend}>
-        {onRender ? (
-          <Profiler id='App' onRender={onRender}>
+        {profilerOnRender ? (
+          <Profiler id='App' onRender={profilerOnRender}>
             <App />
           </Profiler>
         ) : (
