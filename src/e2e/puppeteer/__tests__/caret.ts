@@ -7,6 +7,7 @@ import clickBullet from '../helpers/clickBullet'
 import clickThought from '../helpers/clickThought'
 import closeKeyboard from '../helpers/closeKeyboard'
 import emulate from '../helpers/emulate'
+import exportThoughts from '../helpers/exportThoughts'
 import gesture from '../helpers/gesture'
 import getEditingText from '../helpers/getEditingText'
 import getSelection from '../helpers/getSelection'
@@ -295,6 +296,38 @@ describe('all platforms', () => {
 
     const offset = await getSelection().focusOffset
     expect(offset).toBe(prefix.trimEnd().length)
+  })
+
+  // https://github.com/cybersemics/em/pull/4539#issuecomment-5178048205
+  it('pasting a duplicate thought should leave the caret at the end of the pasted thought', async () => {
+    await paste(`
+      - AAA
+      - BBB
+      - CCC
+    `)
+
+    await clickThought('AAA')
+    await press('c', { ctrl: true })
+
+    const editableNodeHandle = await waitForEditable('CCC')
+    await click(editableNodeHandle, { edge: 'right' })
+    await press('Enter')
+    await waitForEditable('')
+
+    await press('v', { ctrl: true })
+
+    // the import is asynchronous; it is complete when the empty thought has been replaced by the pasted thought
+    await waitUntil(() => !Array.from(document.querySelectorAll('[data-editable]')).some(el => el.innerHTML === ''))
+
+    await keyboard.type('x')
+
+    const exported = await exportThoughts()
+    expect(exported).toBe(`
+- AAA
+- BBB
+- CCC
+- AAAx
+`)
   })
 })
 

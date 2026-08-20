@@ -812,7 +812,7 @@ it('import multiple empty thoughts within a series into a non-leaf destination',
   expect(values).toEqual(['y', 'A', '', 'B', '', 'C'])
 })
 
-it('set cursor correctly after duplicate merge', () => {
+it('importing a normal thought that duplicates a sibling keeps both (no merge)', () => {
   const text = '- a\n  - b'
 
   const stateNew = reducerFlow([
@@ -828,6 +828,26 @@ it('set cursor correctly after duplicate merge', () => {
 
   expect(exported).toBe(`- ${HOME_TOKEN}
   - a
+  - a
+    - b`)
+})
+
+it('importing a metaprogramming attribute that duplicates a sibling merges hierarchically', () => {
+  const text = '- =a\n  - b'
+
+  const stateNew = reducerFlow([
+    newThought('=a'),
+    newThought(''),
+    importTextAtFirstMatch({
+      at: [''],
+      text,
+    }),
+  ])(initialState())
+
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - =a
     - b`)
 })
 

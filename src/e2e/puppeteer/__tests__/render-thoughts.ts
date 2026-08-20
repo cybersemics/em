@@ -13,6 +13,8 @@ import screenshot from '../helpers/screenshot'
 import scroll from '../helpers/scroll'
 import scrollTo from '../helpers/scrollTo'
 import setTheme from '../helpers/setTheme'
+import waitForEditable from '../helpers/waitForEditable'
+import waitUntil from '../helpers/waitUntil'
 import { page } from '../session'
 
 expect.extend({
@@ -295,5 +297,54 @@ describe('Superscripts', () => {
     const expected = `<ul><li>__ROOT__<ul><li>This is a Thisthought<ul><li>=note<ul><li>This is a note</li></ul></li></ul></li></ul></li></ul>`
 
     expect(output).toBe(expected)
+  })
+
+  // https://github.com/cybersemics/em/pull/4539#issuecomment-5167203257
+  it('paste duplicate thought into an empty sibling at the same level', async () => {
+    await newThought('AAA')
+    await clickThought('AAA')
+    await press('c', { ctrl: true })
+    await newThought('')
+    await press('v', { ctrl: true })
+
+    const values = await page.evaluate(() =>
+      Array.from(document.querySelectorAll('[data-editable]')).map(element => (element as HTMLElement).innerText),
+    )
+
+    expect(values.filter(Boolean)).toEqual(['AAA', 'AAA'])
+  })
+
+  // https://github.com/cybersemics/em/pull/4539#issuecomment-5178983042
+  it('paste into a subthought of the second of two duplicate thoughts', async () => {
+    await paste(`
+      - AAA
+      - BBB
+      - CCC
+      - AAA
+    `)
+
+    await clickThought('AAA')
+    await press('c', { ctrl: true })
+
+    // move the cursor to the second AAA, which follows CCC
+    await clickThought('CCC')
+    await press('ArrowDown')
+
+    await press('Enter', { meta: true })
+    await waitForEditable('')
+
+    await press('v', { ctrl: true })
+
+    // the import is asynchronous; it is complete when the empty thought has been replaced by the pasted thought
+    await waitUntil(() => !Array.from(document.querySelectorAll('[data-editable]')).some(el => el.innerHTML === ''))
+
+    const exported = await exportThoughts()
+    expect(exported).toBe(`
+- AAA
+- BBB
+- CCC
+- AAA
+  - AAA
+`)
   })
 })
