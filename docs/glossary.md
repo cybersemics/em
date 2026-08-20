@@ -134,7 +134,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **permissionsClientDoc** — Separate Y.Doc holding `Index<Share>` keyed by access token (one entry per device with access). CRUD in [`permissionsModel.ts`](../src/data-providers/yjs/permissionsModel.ts).
 
-**=pin / =pinChildren** — Meta-attributes that keep a thought (or all children of a context) expanded. `=pin` is also pre-loaded eagerly during `fetchDescendants` to avoid a flash of expanded children before `=pin/false` resolves.
+**=pin** — Meta-attribute that keeps a thought expanded. Scoped variants: `=children/=pin` keeps all children of a context expanded (the replacement for the old `=pinChildren`), and `=descendants/=pin` keeps the entire subtree expanded. `=pin` is also pre-loaded eagerly during `fetchDescendants` to avoid a flash of expanded children before `=pin/false` resolves. See [metaprogramming.md](metaprogramming.md#pinning--expansion).
 
 **pull queue** — [`pullQueue.ts`](../src/redux-middleware/pullQueue.ts) middleware that, on every action, computes the visible thought IDs and triggers `pull` for any pending ones. Debounced 10 ms, throttled 100 ms. See [persistence.md → Pull queue](persistence.md#pull-queue-yjs--redux).
 
