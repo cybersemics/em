@@ -325,9 +325,7 @@ describe('useFilteredCommands', () => {
         expect(commandIds).not.toContain('contextView')
       })
 
-      // Searching with `thOUGHT` should return `New Thought` and `New Subthought`, but it returns empty now.
-      // TODO: remove `.skip` after `useFilteredCommands` hook is updated
-      it.skip('should support case insensitive search', () => {
+      it('should support case insensitive search', () => {
         const { result } = renderHook(() => useFilteredCommands('thOUGHT', {}), { wrapper })
 
         const commandIds = result.current.map(cmd => cmd.id)
