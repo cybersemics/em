@@ -831,8 +831,7 @@ it('set cursor correctly after duplicate merge', () => {
     - b`)
 })
 
-// TODO
-it.skip('encode single open angled bracket', () => {
+it('encode single open angled bracket', () => {
   const text = `
 - a
   - <b
