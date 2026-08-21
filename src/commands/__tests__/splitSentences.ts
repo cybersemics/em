@@ -26,7 +26,7 @@ describe('splitSentences', () => {
     executeCommand(splitSentencesCommand, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toBe(`- __ROOT__
+    expect(exported).toBe(`- ${HOME_TOKEN}
   - This is sentence one.
   - This is sentence two.
   - This is sentence three.`)
@@ -42,7 +42,7 @@ describe('splitSentences', () => {
     executeCommand(splitSentencesCommand, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toBe(`- __ROOT__
+    expect(exported).toBe(`- ${HOME_TOKEN}
   - **This is sentence one.**
   - **This is sentence two.**
   - **This is sentence three.**`)
@@ -55,7 +55,7 @@ describe('splitSentences', () => {
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/html')
     expect(exported).toBe(`<ul>
-  <li>__ROOT__  
+  <li>${HOME_TOKEN}  
     <ul>
       <li>Hello<b>.</b></li>
       <li>World.</li>
@@ -75,7 +75,7 @@ describe('splitSentences', () => {
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/html')
     expect(exported).toBe(`<ul>
-  <li>__ROOT__  
+  <li>${HOME_TOKEN}  
     <ul>
       <li><font color="#000000" style="background-color: rgb(0, 214, 136);">font</font></li>
     </ul>
@@ -97,7 +97,7 @@ describe('splitSentences', () => {
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/html')
     expect(exported).toBe(`<ul>
-  <li>__ROOT__  
+  <li>${HOME_TOKEN}  
     <ul>
       <li><font color="#000000" style="background-color: rgb(0, 214, 136);">comma one</font></li>
       <li><font color="#000000" style="background-color: rgb(0, 214, 136);">comma two</font></li>
@@ -119,7 +119,7 @@ describe('splitSentences', () => {
     executeCommand(splitSentencesCommand, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toBe(`- __ROOT__
+    expect(exported).toBe(`- ${HOME_TOKEN}
   - This is a single sentence.`)
   })
 
@@ -136,7 +136,7 @@ describe('splitSentences', () => {
     executeCommand(splitSentencesCommand, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toBe(`- __ROOT__
+    expect(exported).toBe(`- ${HOME_TOKEN}
   - Hello, world!
   - How are you?
   - I'm fine, thanks.`)
@@ -155,7 +155,7 @@ describe('splitSentences', () => {
     executeCommand(splitSentencesCommand, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toBe(`- __ROOT__
+    expect(exported).toBe(`- ${HOME_TOKEN}
   - Gödel
   - Escher
   - Bach`)
@@ -174,7 +174,7 @@ describe('splitSentences', () => {
     executeCommand(splitSentencesCommand, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toBe(`- __ROOT__
+    expect(exported).toBe(`- ${HOME_TOKEN}
   - me
   - you
   - he and she
@@ -197,7 +197,7 @@ describe('splitSentences', () => {
     executeCommand(splitSentencesCommand, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toBe(`- __ROOT__
+    expect(exported).toBe(`- ${HOME_TOKEN}
   - Alice
   - the Lion`)
   })
@@ -216,7 +216,7 @@ describe('splitSentences', () => {
     executeCommand(splitSentencesCommand, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toBe(`- __ROOT__
+    expect(exported).toBe(`- ${HOME_TOKEN}
   - Standard`)
   })
 
@@ -233,7 +233,7 @@ describe('splitSentences', () => {
     executeCommand(splitSentencesCommand, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toBe(`- __ROOT__
+    expect(exported).toBe(`- ${HOME_TOKEN}
   - one
     - 1`)
   })
@@ -251,7 +251,7 @@ describe('splitSentences', () => {
     executeCommand(splitSentencesCommand, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toBe(`- __ROOT__
+    expect(exported).toBe(`- ${HOME_TOKEN}
   - one - 1.
   - two.
   - three.`)
@@ -275,7 +275,7 @@ describe('splitSentences', () => {
       executeCommandWithMulticursor(splitSentencesCommand, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-      expect(exported).toBe(`- __ROOT__
+      expect(exported).toBe(`- ${HOME_TOKEN}
   - A.
   - This is A.
   - More A.
@@ -302,7 +302,7 @@ describe('splitSentences', () => {
       executeCommandWithMulticursor(splitSentencesCommand, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-      expect(exported).toBe(`- __ROOT__
+      expect(exported).toBe(`- ${HOME_TOKEN}
   - Start
     - 1
   - End
@@ -327,7 +327,7 @@ describe('splitSentences', () => {
       executeCommandWithMulticursor(splitSentencesCommand, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-      expect(exported).toBe(`- __ROOT__
+      expect(exported).toBe(`- ${HOME_TOKEN}
   - One sentence only.
   - Two sentences here.
   - And the second one.
