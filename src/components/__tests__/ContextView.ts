@@ -497,11 +497,9 @@ describe('render', () => {
   })
 })
 
-// contenteditable is not supported in user-event@v13
-// TODO: user-event@v14 has some peer dependency conflicts
-describe.skip('editing', () => {
+describe('editing', () => {
   it('edit a context', async () => {
-    store.dispatch([
+    await dispatch([
       importText({
         text: `
           - a
@@ -514,25 +512,27 @@ describe.skip('editing', () => {
       toggleContextView(),
     ])
 
-    const subthoughts = await findSubthoughts('m')
+    await act(vi.runOnlyPendingTimersAsync)
 
-    const thoughtA = await findByLabelText(subthoughts[0], 'thought')
+    const contexts = await findSubthoughts('m')
+    const thoughtA = (await findThoughtByText('a', contexts[0]))!
 
     const user = userEvent.setup({ delay: null })
     await user.click(thoughtA)
 
+    await act(vi.runAllTimersAsync)
+
+    // jsdom leaves the caret at offset 0, so the typed character is prepended
     await user.type(thoughtA, 'z')
 
-    await user.type(thoughtA, '{esc}')
-    store.dispatch(toggleContextView())
+    await act(vi.runAllTimersAsync)
 
-    const thoughtA2 = await findAllThoughtsByText('a')
-    expect(thoughtA2).toHaveLength(0)
+    // a context is the thought itself, so renaming it renames the thought everywhere it is rendered:
+    // once in the tree and once as a context of m
+    expect(await findAllThoughtsByText('za')).toHaveLength(2)
+    expect(await queryThoughtByText('a')).toBeNull()
 
-    const thoughtAZ = await findAllThoughtsByText('az')
-    expect(thoughtAZ).toHaveLength(1)
-
-    const thoughtB = await findAllThoughtsByText('b')
-    expect(thoughtB).toHaveLength(1)
+    // the other context is untouched
+    expect(await findAllThoughtsByText('b')).toHaveLength(2)
   })
 })
