@@ -30,10 +30,9 @@ describe('split by comma', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - One
-    - Two
-    - Three`)
+  - One
+  - Two
+  - Three`)
   })
 
   it("split single thought on comma if a thought with a mix of commas and periods has only one period and it's the last character", () => {
@@ -41,10 +40,9 @@ describe('split by comma', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - One
-    - Two
-    - Three.`)
+  - One
+  - Two
+  - Three.`)
   })
 
   it('split single thought on comma and remove the empty thought when there are empty space after the period', () => {
@@ -52,10 +50,9 @@ describe('split by comma', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - One
-    - Two
-    - Three.`)
+  - One
+  - Two
+  - Three.`)
   })
 
   it('split single thought on comma and remove the empty space when there are no periods but empty space in the end', () => {
@@ -63,10 +60,9 @@ describe('split by comma', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - One
-    - Two
-    - Three`)
+  - One
+  - Two
+  - Three`)
   })
 
   it('split single thought on commas when there is a combination of periods and commas, but no empty space followed by the periods.', () => {
@@ -74,9 +70,8 @@ describe('split by comma', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - One.Two
-    - Three`)
+  - One.Two
+  - Three`)
   })
 })
 
@@ -94,10 +89,9 @@ describe('simple split', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - One.
-    - Two.
-    - Three.`)
+  - One.
+  - Two.
+  - Three.`)
   })
 
   it('split single thought on period when there is a combination of periods and commas.', () => {
@@ -105,9 +99,8 @@ describe('simple split', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - One.
-    - Two, Three`)
+  - One.
+  - Two, Three`)
   })
 
   it('split single thought on main split characters if thought has only one period at the end but has other split characters too, even there is no empty space followed by that splitter', () => {
@@ -115,10 +108,9 @@ describe('simple split', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - One,Seven?
-    - Two!
-    - Three.`)
+  - One,Seven?
+  - Two!
+  - Three.`)
   })
 
   it('split thought by sentences surrounded by siblings', () => {
@@ -142,15 +134,28 @@ describe('simple split', () => {
   - b`)
   })
 
+  it('sets the cursor on the new empty category', () => {
+    const steps = [
+      newThought('a'),
+      newThought('One. Two. Three.'),
+      newThought('b'),
+      setCursor(['One. Two. Three.']),
+      splitSentences(),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expectPathToEqual(stateNew, stateNew.cursor, [''])
+  })
+
   it('split single thought as expected if the thought has splitter ... and ?!', () => {
     const value = 'One... Two?! Three. '
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - One...
-    - Two?!
-    - Three.`)
+  - One...
+  - Two?!
+  - Three.`)
   })
 
   it('split single thought by splitters and remove the empty thought when the thought ends with empty spaces after the splitter. ', () => {
@@ -158,9 +163,8 @@ describe('simple split', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - One.
-    - Two.`)
+  - One.
+  - Two.`)
   })
 })
 
@@ -171,10 +175,9 @@ describe('brackets or quotations', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - One.
-    - (Two.)
-    - Three.`)
+  - One.
+  - (Two.)
+  - Three.`)
   })
 
   it('split the single thought on the way that the left quotation marks should go with the sentence that is on the right of the splitter, while the right quotation marks should go with the sentence which is on the left of the splitter', () => {
@@ -182,10 +185,9 @@ describe('brackets or quotations', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - One.
-    - " Two."
-    - Three.`)
+  - One.
+  - " Two."
+  - Three.`)
   })
 
   it('split the single thought as expected if multiple sets of brackets and quotation marks present in one sentence. ', () => {
@@ -193,9 +195,8 @@ describe('brackets or quotations', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - One.(Two) "Three."
-    - Four.`)
+  - One.(Two) "Three."
+  - Four.`)
   })
 
   it('split single thought as expected if closed brackets and quotation marks present in one sentence. ', () => {
@@ -203,11 +204,10 @@ describe('brackets or quotations', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - One.
-    - ("Two?")
-    - "(Three.Four?)"
-    - Five.`)
+  - One.
+  - ("Two?")
+  - "(Three.Four?)"
+  - Five.`)
   })
 
   it('split single thoughts expected if a closed bracket present before a left quotation mark. ', () => {
@@ -215,10 +215,9 @@ describe('brackets or quotations', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - One.
-    - (Two?)
-    - "  Three."`)
+  - One.
+  - (Two?)
+  - "  Three."`)
   })
 
   it('split single thought as expected if multiple sets of brackets and quotation marks next to each other and separated by a splitter. ', () => {
@@ -226,10 +225,9 @@ describe('brackets or quotations', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - 'One'.
-    - ("Two?")
-    - Three.`)
+  - 'One'.
+  - ("Two?")
+  - Three.`)
   })
 
   it('split single thought in a way that the empty space between the splitter and the " should be kept', () => {
@@ -237,10 +235,9 @@ describe('brackets or quotations', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - One.
-    - "Two.  "
-    - Three.`)
+  - One.
+  - "Two.  "
+  - Three.`)
   })
 
   it('split single thought in a way the empty space in the front end should be removed', () => {
@@ -248,10 +245,9 @@ describe('brackets or quotations', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - (One.)
-    - Two.
-    - Three.`)
+  - (One.)
+  - Two.
+  - Three.`)
   })
 })
 
@@ -293,9 +289,8 @@ describe('abbreviations', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - B.A. or B.S.;
-    - meet Dr. Chin.`)
+  - B.A. or B.S.;
+  - meet Dr. Chin.`)
   })
 
   it('split thought as expected when empty spaces present between the abbreviation and the splitter', () => {
@@ -303,9 +298,8 @@ describe('abbreviations', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - go to Washington D.C. ;
-    - meet Dr. Chin.`)
+  - go to Washington D.C. ;
+  - meet Dr. Chin.`)
   })
 
   it('split thought as expected when multiple abbreviations exist in the thought, and it ends with an abbreviation with no splitter behind but empty space', () => {
@@ -313,9 +307,8 @@ describe('abbreviations', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - meet Dr. Chin.
-    - go to Washington D.C.`)
+  - meet Dr. Chin.
+  - go to Washington D.C.`)
   })
 
   it('split thought as expected if the dot comes from an abbreviation followed by a bracket', () => {
@@ -323,9 +316,8 @@ describe('abbreviations', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - One. Two
-      - U.N.`)
+  - One. Two
+    - U.N.`)
   })
 
   it('split thought as expected if the dot comes from an abbreviation followed by empty spaces and a quotation mark', () => {
@@ -333,9 +325,8 @@ describe('abbreviations', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - One.
-    - Two "U.N. "`)
+  - One.
+  - Two "U.N. "`)
   })
 
   it('split thought as expected if the dot comes from an abbreviation, before the abbreviation it has an quotation mark with empty spaces', () => {
@@ -343,9 +334,8 @@ describe('abbreviations', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - One.
-    - Two " U.N."`)
+  - One.
+  - Two " U.N."`)
   })
 
   it('split thought as expected if the dot comes from an abbreviation, ends with a quotation mark and a bracket', () => {
@@ -353,9 +343,8 @@ describe('abbreviations', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - One.
-    - Two ("U.N.") Three.`)
+  - One.
+  - Two ("U.N.") Three.`)
   })
 
   it('split thought as expected if the dot comes from an abbreviation, ends with a splitter, a quotation mark and a bracket', () => {
@@ -363,10 +352,9 @@ describe('abbreviations', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - One.
-    - Two ("U.N.?")
-    - Three.`)
+  - One.
+  - Two ("U.N.?")
+  - Three.`)
   })
 })
 
@@ -392,9 +380,8 @@ describe('decimal numbers', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - Fruit cost: apple $10.23, pear $10.70;
-    - Meat cost: beef $20.50, salmon $12.85, chicken $10.00`)
+  - Fruit cost: apple $10.23, pear $10.70;
+  - Meat cost: beef $20.50, salmon $12.85, chicken $10.00`)
   })
 
   it('split single thought as expected when the dot comes from the end of an integer', () => {
@@ -402,9 +389,8 @@ describe('decimal numbers', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - Apple: $10.
-    - Pear: $15.`)
+  - Apple: $10.
+  - Pear: $15.`)
   })
 
   it('split single thought as expected if the dot comes from a decimal number followed by a splitter and a bracket', () => {
@@ -412,10 +398,9 @@ describe('decimal numbers', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - One.
-    - ( $12.30, $3.50?)
-    - Two.`)
+  - One.
+  - ( $12.30, $3.50?)
+  - Two.`)
   })
 
   it('split single thought as expected if a decimal number followed by a splitter and a bracket that next to another quotation mark', () => {
@@ -423,9 +408,8 @@ describe('decimal numbers', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - ($3.50?)
-    - "One."`)
+  - ($3.50?)
+  - "One."`)
   })
 
   it('split single thought as expected if the dot comes from a decimal number ends with a splitter and an empty space, followed by a quotation mark and a closed bracket', () => {
@@ -433,10 +417,9 @@ describe('decimal numbers', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - One.
-    - (" $2.3, 3.5M! ")
-    - Two.`)
+  - One.
+  - (" $2.3, 3.5M! ")
+  - Two.`)
   })
 
   it('split single thought if two integer numbers are separated by a splitter that is not a dot', () => {
@@ -444,9 +427,8 @@ describe('decimal numbers', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - 2!
-    - 3`)
+  - 2!
+  - 3`)
   })
 })
 
@@ -488,10 +470,9 @@ describe('email address', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - "( abc@xyz.com!)"
-    - One.
-    - Two.`)
+  - "( abc@xyz.com!)"
+  - One.
+  - Two.`)
   })
 
   it('split single thought as expected if the dot comes from an email address and the address has a symbol that does not belongs to the email address', () => {
@@ -499,9 +480,8 @@ describe('email address', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - abc@xyz.com, One;
-    - Two.`)
+  - abc@xyz.com, One;
+  - Two.`)
   })
 
   it('split single thought as expected if it has more than one email address in the sentence before the real splitter ', () => {
@@ -509,9 +489,8 @@ describe('email address', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - abc@email.com def@email.com;
-    - One.`)
+  - abc@email.com def@email.com;
+  - One.`)
   })
 
   it('split single thought as expected if it has more than one email address in the sentence after the real splitter ', () => {
@@ -519,9 +498,8 @@ describe('email address', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - One.
-    - abc@email.com def@email.com;`)
+  - One.
+  - abc@email.com def@email.com;`)
   })
 
   it('split single thought as expected if there is empty spaces between the email address and the real splitter', () => {
@@ -529,9 +507,8 @@ describe('email address', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - abc@email.com def@email.com ;
-    - One.`)
+  - abc@email.com def@email.com ;
+  - One.`)
   })
 })
 
@@ -581,9 +558,8 @@ describe('url address', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - abc.com ;
-    - One.`)
+  - abc.com ;
+  - One.`)
   })
 
   it('split single thought as expected if the dot comes from an url and the url address starts with a quotation mark ', () => {
@@ -599,9 +575,8 @@ describe('url address', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - ("http://www.xyz.com!")
-    - One.`)
+  - ("http://www.xyz.com!")
+  - One.`)
   })
 
   it('split single thought as the rule below: if the dot is a url address without http, https and www, then the letters of the top-level domain must be two or more small characters', () => {
@@ -609,9 +584,8 @@ describe('url address', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - xyz.info abc.Edf One.Two.
-    - abc.e`)
+  - xyz.info abc.Edf One.Two.
+  - abc.e`)
   })
 
   it('split single thought as expected if it has more than one url address before the real splitter', () => {
@@ -619,9 +593,8 @@ describe('url address', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - http://www.abc.com, www.def.com!
-    - www.def.com/xyz`)
+  - http://www.abc.com, www.def.com!
+  - www.def.com/xyz`)
   })
 
   it('split single thought as expected if there are two or more urls present after the real splitter', () => {
@@ -629,9 +602,8 @@ describe('url address', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - http://www.abc.com;
-    - www.def.com, www.def.com/xyz`)
+  - http://www.abc.com;
+  - www.def.com, www.def.com/xyz`)
   })
 })
 
@@ -641,10 +613,9 @@ describe('complicated cases', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - www.xyz.com
-    - abc@email.com
-    - $3.4`)
+  - www.xyz.com
+  - abc@email.com
+  - $3.4`)
   })
 
   it('split single thought as expected if a url address and an email address surrounded by quotation marks are separated by a splitter', () => {
@@ -652,9 +623,8 @@ describe('complicated cases', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - www.xyz.com!
-    - "abc@email.com"`)
+  - www.xyz.com!
+  - "abc@email.com"`)
   })
 
   it('split single thought as expected if a url address and an email address surrounded by quotation marks in one sentence are separated by empty spaces and a splitter', () => {
@@ -662,9 +632,8 @@ describe('complicated cases', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - www.xyz.com ...
-    - "abc@email.com"`)
+  - www.xyz.com ...
+  - "abc@email.com"`)
   })
 
   it('split single thought as expected if there are two or more special cases in one sentence before the splitter, ', () => {
@@ -672,9 +641,8 @@ describe('complicated cases', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - abc@xyz.com, www.xyz.com/def!
-    - http://www.abc.com $3.20`)
+  - abc@xyz.com, www.xyz.com/def!
+  - http://www.abc.com $3.20`)
   })
 
   it('split single thought as expected with combinations of many more special cases', () => {
@@ -682,11 +650,10 @@ describe('complicated cases', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - R.N. abc.com ;
-    - $3.20, One.
-    - http://www.abc.com Two abc@email.com  ;)
-    - "Three."`)
+  - R.N. abc.com ;
+  - $3.20, One.
+  - http://www.abc.com Two abc@email.com  ;)
+  - "Three."`)
   })
 
   it('split single thought as expected if it has other special cases', () => {
@@ -694,10 +661,9 @@ describe('complicated cases', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - react.js;
-    - file: abc.txt, def.doc"One.Two.Three".
-    - IPv4: 11.11.11.111`)
+  - react.js;
+  - file: abc.txt, def.doc"One.Two.Three".
+  - IPv4: 11.11.11.111`)
   })
 })
 
@@ -707,9 +673,8 @@ describe('parenthetical content', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - This is a thought
-      - and a subthought`)
+  - This is a thought
+    - and a subthought`)
   })
 
   it('splits thought with parenthetical content that ends with a period', () => {
@@ -717,9 +682,8 @@ describe('parenthetical content', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - This is a thought
-      - and a subthought`)
+  - This is a thought
+    - and a subthought`)
   })
 
   it('does not split when parentheses are not at the end', () => {
@@ -741,7 +705,7 @@ describe('parenthetical content', () => {
 
     const stateNew = reducerFlow(steps)(initialState())
 
-    expectPathToEqual(stateNew, stateNew.cursor, ['', 'One two', 'three four'])
+    expectPathToEqual(stateNew, stateNew.cursor, ['One two', 'three four'])
   })
 })
 
@@ -751,9 +715,8 @@ describe('dash splitting', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - one
-      - 1`)
+  - one
+    - 1`)
   })
 
   it('splits thought with en-dash into main thought and subthought', () => {
@@ -761,9 +724,8 @@ describe('dash splitting', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - one
-      - 1`)
+  - one
+    - 1`)
   })
 
   it('splits thought with em-dash into main thought and subthought', () => {
@@ -771,9 +733,8 @@ describe('dash splitting', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - one
-      - 1`)
+  - one
+    - 1`)
   })
 
   it('splits thought with dash and extra spaces', () => {
@@ -781,9 +742,8 @@ describe('dash splitting', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - one
-      - 1`)
+  - one
+    - 1`)
   })
 
   it('splits on first dash when multiple dashes are present', () => {
@@ -791,9 +751,8 @@ describe('dash splitting', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - one
-      - two - three`)
+  - one
+    - two - three`)
   })
 
   it('does not split when dash is at the beginning', () => {
@@ -817,10 +776,9 @@ describe('dash splitting', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - one - 1.
-    - two.
-    - three.`)
+  - one - 1.
+  - two.
+  - three.`)
   })
 
   it('splits by sentences when dash and multiple sentences with different punctuation', () => {
@@ -828,10 +786,9 @@ describe('dash splitting', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - one - 1!
-    - two?
-    - three.`)
+  - one - 1!
+  - two?
+  - three.`)
   })
 
   it('splits by dash when there is only one sentence ending with period', () => {
@@ -839,9 +796,8 @@ describe('dash splitting', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - one
-      - 1.`)
+  - one
+    - 1.`)
   })
 })
 
@@ -854,13 +810,9 @@ describe('formatting', () => {
     expect(exported).toBe(`<ul>
   <li>${HOME_TOKEN}  
     <ul>
-      <li>${'      ' /* prevent trim_trailing_whitespace */}
-        <ul>
-          <li><font color="#ff573d">Hello</font></li>
-          <li><font color="#ff573d">beautiful</font></li>
-          <li><font color="#ff573d">people.</font></li>
-        </ul>
-      </li>
+      <li><font color="#ff573d">Hello</font></li>
+      <li><font color="#ff573d">beautiful</font></li>
+      <li><font color="#ff573d">people.</font></li>
     </ul>
   </li>
 </ul>`)

@@ -7,6 +7,7 @@ import editableRender from '../actions/editableRender'
 import newThought from '../actions/newThought'
 import setCursor from '../actions/setCursor'
 import getTextContentFromHTML from '../device/getTextContentFromHTML'
+import { getChildren } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import simplifyPath from '../selectors/simplifyPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
@@ -16,7 +17,7 @@ import reducerFlow from '../util/reducerFlow'
 import splitSentence from '../util/splitSentence'
 import categorize from './categorize'
 
-/** Split thought by sentences. Create new thought for each sentence within a new empty category, so that the sentences remain distinct from the thought's siblings. Thought value, on which cursor is on, replace with first sentence. */
+/** Split thought by sentences. Create new thought for each sentence. If the thought has siblings, the sentences are placed within a new empty category so that they remain distinct from the siblings, and the cursor is left on the category. Thought value, on which cursor is on, replace with first sentence. */
 const splitSentences = (state: State): State => {
   const { cursor } = state
   if (!cursor) return state
@@ -30,22 +31,30 @@ const splitSentences = (state: State): State => {
     return state
   }
 
+  // The category only serves to keep the sentences distinct from the thought's siblings, so it is omitted when the thought has none.
+  const hasSiblings = getChildren(state, cursorThought.parentId).length > 1
+
   // move the thought into a new empty category, which becomes the parent of all the sentences
-  const stateCategorized = categorize(state)
+  const stateCategorized = hasSiblings ? categorize(state) : state
+
+  // categorize sets the cursor on the new empty category, of which the thought being split is now the only child
+  const categoryPath =
+    hasSiblings && getThoughtById(stateCategorized, head(cursor))?.parentId !== cursorThought.parentId
+      ? stateCategorized.cursor
+      : null
 
   // categorize alerts and does nothing if the thought cannot be categorized, e.g. its parent is readonly
-  if (!stateCategorized.cursor || getThoughtById(stateCategorized, head(cursor))?.parentId === cursorThought.parentId) {
+  if (hasSiblings && !categoryPath) {
     return stateCategorized
   }
 
-  // categorize sets the cursor on the new empty category, of which the thought being split is now the only child
-  const cursorNew = appendToPath(stateCategorized.cursor, head(cursor))
+  const cursorNew = categoryPath ? appendToPath(categoryPath, head(cursor)) : cursor
 
   const [firstSentence, ...otherSentences] = sentences
 
   const stateAfterSplit = reducerFlow([
     // newThought inserts relative to the cursor, so move the cursor back to the thought being split
-    setCursor({ path: cursorNew }),
+    categoryPath ? setCursor({ path: cursorNew }) : null,
     editThought({
       oldValue: value,
       newValue: firstSentence.value,
@@ -61,7 +70,10 @@ const splitSentences = (state: State): State => {
     : null
 
   const reducers = [
-    setCursor({ path: cursorNew, offset: getTextContentFromHTML(firstSentence.value).length }),
+    // leave the cursor on the new empty category, ready for the user to name it, otherwise at the end of the first sentence
+    categoryPath
+      ? setCursor({ path: categoryPath, offset: 0 })
+      : setCursor({ path: cursorNew, offset: getTextContentFromHTML(firstSentence.value).length }),
     cursorForwardPath ? cursorHistory({ cursor: cursorForwardPath }) : null,
     editableRender,
   ]

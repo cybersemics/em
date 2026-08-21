@@ -27,10 +27,9 @@ describe('splitSentences', () => {
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- __ROOT__
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - This is sentence one.
-    - This is sentence two.
-    - This is sentence three.`)
+  - This is sentence one.
+  - This is sentence two.
+  - This is sentence three.`)
   })
 
   it('splits a thought with multiple sentences all wrapped in a single bold tag', () => {
@@ -44,10 +43,9 @@ describe('splitSentences', () => {
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- __ROOT__
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - **This is sentence one.**
-    - **This is sentence two.**
-    - **This is sentence three.**`)
+  - **This is sentence one.**
+  - **This is sentence two.**
+  - **This is sentence three.**`)
   })
 
   it('splits a thought when only the period is formatted', () => {
@@ -59,12 +57,8 @@ describe('splitSentences', () => {
     expect(exported).toBe(`<ul>
   <li>__ROOT__  
     <ul>
-      <li>${'      ' /* prevent trim_trailing_whitespace */}
-        <ul>
-          <li>Hello<b>.</b></li>
-          <li>World.</li>
-        </ul>
-      </li>
+      <li>Hello<b>.</b></li>
+      <li>World.</li>
     </ul>
   </li>
 </ul>`)
@@ -105,12 +99,8 @@ describe('splitSentences', () => {
     expect(exported).toBe(`<ul>
   <li>__ROOT__  
     <ul>
-      <li>${'      ' /* prevent trim_trailing_whitespace */}
-        <ul>
-          <li><font color="#000000" style="background-color: rgb(0, 214, 136);">comma one</font></li>
-          <li><font color="#000000" style="background-color: rgb(0, 214, 136);">comma two</font></li>
-        </ul>
-      </li>
+      <li><font color="#000000" style="background-color: rgb(0, 214, 136);">comma one</font></li>
+      <li><font color="#000000" style="background-color: rgb(0, 214, 136);">comma two</font></li>
     </ul>
   </li>
 </ul>`)
@@ -147,10 +137,9 @@ describe('splitSentences', () => {
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- __ROOT__
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - Hello, world!
-    - How are you?
-    - I'm fine, thanks.`)
+  - Hello, world!
+  - How are you?
+  - I'm fine, thanks.`)
   })
 
   it('splits by comma if have only one sentence', () => {
@@ -167,10 +156,9 @@ describe('splitSentences', () => {
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- __ROOT__
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - Gödel
-    - Escher
-    - Bach`)
+  - Gödel
+  - Escher
+  - Bach`)
   })
 
   it('splits by comma only, not "and", when a comma is present', () => {
@@ -187,14 +175,13 @@ describe('splitSentences', () => {
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- __ROOT__
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - me
-    - you
-    - he and she
-    - them
-    - thus
-    - and
-    - me`)
+  - me
+  - you
+  - he and she
+  - them
+  - thus
+  - and
+  - me`)
   })
 
   it('splits by the word "and" if there is no comma', () => {
@@ -211,9 +198,8 @@ describe('splitSentences', () => {
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- __ROOT__
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - Alice
-    - the Lion`)
+  - Alice
+  - the Lion`)
   })
 
   // https://github.com/cybersemics/em/issues/4810
@@ -248,9 +234,8 @@ describe('splitSentences', () => {
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- __ROOT__
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - one
-      - 1`)
+  - one
+    - 1`)
   })
 
   it('splits by sentences when both dash and multiple sentences are present', () => {
@@ -267,14 +252,13 @@ describe('splitSentences', () => {
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- __ROOT__
-  - ${'' /* prevent trim_trailing_whitespace */}
-    - one - 1.
-    - two.
-    - three.`)
+  - one - 1.
+  - two.
+  - three.`)
   })
 
   // https://github.com/cybersemics/em/issues/4395
-  it('inserts the sentences into a new empty category', () => {
+  it('inserts the sentences into a new empty category when the thought has siblings', () => {
     store.dispatch([
       importText({
         text: `
