@@ -99,6 +99,8 @@ const linearizeTree = (
   const grandchildrenAttributeId = findDescendant(state, thoughtId, '=grandchildren')
   const styleChildren = getStyle(state, childrenAttributeId)
   const style = safeRefMerge(styleAccum, styleChildren, styleFromGrandparent)
+  // As an exception, =children/=style is not applied to =children itself, which is visible when hidden thoughts are shown.
+  const styleWithoutChildren = safeRefMerge(styleAccum, styleFromGrandparent)
 
   // =let definitions on this thought are added to the env inherited from ancestors and passed to all descendants.
   // If there are no =let definitions, the inherited env is passed through unchanged to preserve its object reference, otherwise a new reference on every render would defeat the memoization of TreeNode and its descendants.
@@ -163,7 +165,7 @@ const linearizeTree = (
       rank: child.rank,
       showContexts: contextViewActive,
       simplePath: contextViewActive ? thoughtToPath(state, child.id) : appendToPathMemo(simplePath, child.id),
-      style,
+      style: child.id === childrenAttributeId ? styleWithoutChildren : style,
       thoughtId: child.id,
       ...(isTable
         ? { visibleChildrenKeys: getChildren(state, child.id).map(child => crossContextualKey(contextChain, child.id)) }
