@@ -8,6 +8,10 @@ import { ALLOWED_ATTR, ALLOWED_TAGS, REGEX_NONFORMATTING_HTML, REGEX_PLAINTEXT_B
 // Note: This regex cannot check properly for a tag nested within itself. However for general cases it works properly.
 const REGEX_STARTS_WITH_CLOSED_TAG = /^<([A-Z][A-Z0-9]*)\b[^>]*>(.*?)<\/\1>/ims
 
+// An open angled bracket that does not begin a complete tag, e.g. the "<" in "<b" or "a < b".
+// Sanitization drops such an incomplete tag along with the rest of the value, so it must be escaped first.
+const REGEX_LONE_ANGLED_BRACKET = /<(?!\/?[a-z][^>]*>)/gi
+
 // Text content enclosed in double asterisks '**' representing markdown bold (non-greedy).
 // Example: **markdown bold**
 const REGEX_MARKDOWN_BOLD = /\*\*([^<]+?)\*\*/g
@@ -47,10 +51,13 @@ const REGEX_MARKDOWN_ITALICS = /\*([^<]+?)\*/g
 const blocksToHtml = (parsedBlocks: Block[]): string =>
   parsedBlocks
     .map(block => {
-      const value = DOMPurify.sanitize(block.scope.replace(REGEX_PLAINTEXT_BULLET, '').trim(), {
-        ALLOWED_TAGS,
-        ALLOWED_ATTR,
-      })
+      const value = DOMPurify.sanitize(
+        block.scope.replace(REGEX_PLAINTEXT_BULLET, '').trim().replace(REGEX_LONE_ANGLED_BRACKET, '&lt;'),
+        {
+          ALLOWED_TAGS,
+          ALLOWED_ATTR,
+        },
+      )
       const childrenHtml = block.children.length > 0 ? `<ul>${blocksToHtml(block.children)}</ul>` : ''
       // Preserve a bullet line whose value is empty (e.g. "- " within a copied series of thoughts) as an empty <li>.
       // Whitespace-only artifacts from indented input (no bullet) are still dropped. See https://github.com/cybersemics/em/issues/4448.
