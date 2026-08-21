@@ -5,10 +5,9 @@ import waitForElement from './waitForElement.js'
 /** Options shared by the button tap and the dropdown value tap.
  *
  * ToolbarButton binds onTouchStart/onTouchEnd when isTouch and onMouseDown/onClick otherwise, so the toolbar is only
- * reachable with a touch pointer on a device; tap's 'mouse' default never fires the command. The y offset is the
- * Safari chrome offset used throughout this suite, since tap reads page coordinates but taps in screen coordinates.
+ * reachable with a touch pointer on a device; tap's 'mouse' default never fires the command.
  */
-const tapOptions = { y: 60, pointerType: 'touch' } as const
+const tapOptions = { pointerType: 'touch' } as const
 
 /**
  * Tap a toolbar button by its label, and optionally a value in the dropdown that it opens, e.g. `tapToolbar('Bold')` or `tapToolbar('Text Color', 'background color swatches', 'blue')`.

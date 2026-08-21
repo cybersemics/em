@@ -1,6 +1,6 @@
 import type { Element } from 'webdriverio'
-
-// import getNativeElementRect from './getNativeElementRect'
+import getElementRectByScreen from './getElementRectByScreen.js'
+import getScreenOffset from './getScreenOffset.js'
 
 interface Options {
   // Where in the horizontal line (inside) of the target node should be tapped. Defaults to center, which
@@ -22,6 +22,11 @@ interface Options {
 
 /**
  * Tap a node with an optional text offset or x,y offset.
+ *
+ * The tap is dispatched with `performActions`, which Appium's XCUITest driver always runs in the native
+ * context even while the WEBVIEW context is active, so it takes device screen coordinates. The node is
+ * therefore measured in screen coordinates too — see `getScreenOffset` for how the two frames are bridged.
+ *
  * Uses the global browser object from WDIO.
  */
 const tap = async (
@@ -42,12 +47,12 @@ const tap = async (
     )
   }
 
-  const boundingBox = await browser.getElementRect(elementId)
+  const boundingBox = await getElementRectByScreen(nodeHandle)
   if (!boundingBox) throw new Error('Bounding box of editable not found.')
 
-  /** Get cordinates for specific text node if the given node has text child. */
-  const offsetCoordinates = () =>
-    browser.execute(
+  /** Get screen coordinates for specific text node if the given node has text child. */
+  const offsetCoordinates = async () => {
+    const rect = await browser.execute(
       function (ele, offset) {
         // Element does not contain native properties like nodeName, textContent, etc
         // Not sure what the actual WebDriverIO type that is returned by findElement
@@ -65,6 +70,12 @@ const tap = async (
       nodeHandle,
       offset,
     )
+    if (!rect) return
+    // Range rects are viewport-relative, unlike the page-relative rect getElementRectByScreen starts from, so
+    // this path adds the offset itself rather than reusing that helper.
+    const screenOffset = await getScreenOffset()
+    return { x: rect.x + screenOffset.x, y: rect.y + screenOffset.y }
+  }
 
   const coordinate = !offset
     ? {
@@ -80,9 +91,6 @@ const tap = async (
     : await offsetCoordinates()
 
   if (!coordinate) throw new Error('Coordinate not found.')
-
-  // const topBarRect = await getNativeElementRect(browser, '//XCUIElementTypeOther[@name="topBrowserBar"]')
-  // console.log('topbarrect', topBarRect)
 
   console.info(
     `Coordinates: x ${coordinate.x} y ${coordinate.y} x-offset ${x} y-offset ${y} bb-x ${boundingBox.x} bby ${boundingBox.y}`,
