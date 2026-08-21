@@ -251,9 +251,10 @@ const splitSentence = (value: string): SplitResult[] => {
     // Check for dash (-, –, or —) and split into child if found
     // This handles Case 1: Split into child when there's only one sentence
     // Match the first dash that has content on both sides
-    // A comma-separated list takes priority over the dash, so that a hyphenated name such as "Jean-Michel" is not treated as the split point (#3525).
+    // A dash surrounded by whitespace is a delimiter and takes priority over commas, e.g. "Shopping list - apples, bananas".
+    // A dash without surrounding whitespace may be part of a hyphenated word, so commas take priority, e.g. "Jeff Koons, Jean-Michel Basquiat" (#3525).
     const isCommaList = plainValue.split(',').filter(s => s.trim()).length > 1
-    const dashMatch = isCommaList ? null : plainValue.match(/^(.+?)\s*([-–—])\s*(.+)$/)
+    const dashMatch = plainValue.match(isCommaList ? /^(.+?)\s+([-–—])\s+(.+)$/ : /^(.+?)\s*([-–—])\s*(.+)$/)
     if (dashMatch) {
       const [_, leftPart, __, rightPart] = dashMatch
       const trimmedLeft = leftPart.trim()
@@ -263,7 +264,16 @@ const splitSentence = (value: string): SplitResult[] => {
         const rightPartStart = plainValue.lastIndexOf(rightPart)
         const leftHtml = sliceHtmlByTextOffsets(value, 0, leftPart.length)
         const rightHtml = sliceHtmlByTextOffsets(value, rightPartStart, plainValue.length)
-        return [{ value: trimHtml(leftHtml) }, { value: trimHtml(rightHtml), insertNewSubThought: true }]
+        // the right side of the dash is split by comma so that each item becomes its own child
+        // e.g. "Shopping list - apples, bananas" -> "- Shopping list   - apples   - bananas"
+        const rightValues = rightPart.includes(',')
+          ? splitFormattedHtmlBySubSentence(rightHtml, rightPart)
+          : [trimHtml(rightHtml)]
+        return [
+          { value: trimHtml(leftHtml) },
+          // only the first item becomes a child of the left side; the rest are its siblings
+          ...rightValues.map((value, i) => ({ value, ...(i === 0 ? { insertNewSubThought: true } : null) })),
+        ]
       }
     }
 

@@ -254,7 +254,7 @@ describe('splitSentences', () => {
     executeCommand(splitSentencesCommand, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toBe(`- __ROOT__
+    expect(exported).toBe(`- ${HOME_TOKEN}
   - Jeff Koons
   - Jean-Michel Basquiat (creator of Untitled)
   - Cindy Sherman (a photographer)
