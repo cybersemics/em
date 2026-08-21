@@ -7,9 +7,9 @@ import hasMulticursor from '../selectors/hasMulticursor'
 import headValue from '../util/headValue'
 import splitSentence from '../util/splitSentence'
 
-const splitSentencesCommand: Command = {
+const splitSentencesCommand = {
   id: 'splitSentences',
-  label: 'Split Sentences',
+  label: 'Split Sentences' as const,
   description: 'Splits multiple sentences in a single thought into separate thoughts.',
   keyboard: { key: 's', meta: true, shift: true },
   gesture: 'dlr',
@@ -31,6 +31,6 @@ const splitSentencesCommand: Command = {
 
     dispatch(splitSentences())
   },
-}
+} satisfies Command
 
 export default splitSentencesCommand

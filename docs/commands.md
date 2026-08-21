@@ -34,9 +34,9 @@ interface Command {
 A real example, abridged from [`pin.ts`](../src/commands/pin.ts):
 
 ```ts
-const pinCommand: Command = {
+const pinCommand = {
   id: 'pin',
-  label: 'Pin',
+  label: 'Pin' as const,
   labelInverse: 'Unpin',
   description: 'Pins open a thought so its subthoughts are always visible.',
   keyboard: { key: 'p', meta: true, alt: true },
@@ -51,8 +51,10 @@ const pinCommand: Command = {
     /* dispatch toggleAttribute({ path: cursor, values: ['=pin', 'true'] }) */
   },
   isActive: state => !!isPinned(state, head(/* ... */)),
-}
+} satisfies Command
 ```
+
+The `satisfies Command` and the `as const` on the label are load-bearing rather than stylistic. Annotating the constant `: Command` instead would type it as the interface, discarding what each command actually says about itself; `satisfies` checks the object against the interface while keeping the inferred type. The label needs `as const` on top of that, because the interface types `label` as `string` and that contextual type widens the literal even under `satisfies`. Together they let [`CommandLabel`](../src/@types/CommandLabel.ts) be derived as the union of every command's label, the same way [`CommandId`](../src/@types/CommandId.ts) is derived from the barrel's keys, so neither type has to repeat what the commands already declare. A command that skips either one widens its label to `string` and collapses that union. Rather than let that pass silently, `CommandLabel` resolves to a message naming the fix, so every call site that passes a label fails to compile and reports it.
 
 `exec` receives the Redux `dispatch`, a `getState` thunk, the event that triggered the command, and a `{ type }` field that is `'keyboard'`, `'gesture'`, `'toolbar'`, or `'chainedGesture'` so the command can adapt its behavior (e.g. `pin` shows an alert only when triggered via keyboard, since the toolbar already gives visual feedback).
 
@@ -135,8 +137,6 @@ When `state.multicursors` is non-empty, the user has one or more thoughts select
 
 | Option | Meaning |
 |---|---|
-| `disallow` | Block execution and show an alert when *more than one* thought is selected. A single selected thought is executed on directly, as if only the cursor were set, so the cursor is not restored afterwards. Use sparingly — usually `multicursor: false` or `filter` is better. |
-| `error` | The alert message shown when `disallow` is true and more than one thought is selected. String or `(state) => string`. |
 | `execMulticursor(cursors, dispatch, getState)` | Custom replacement for the per-cursor loop. |
 | `onComplete(filteredCursors, dispatch, getState)` | Callback after the loop finishes. |
 | `preventSetCursor` | Don't restore the cursor at the end. |
@@ -431,7 +431,7 @@ https://github.com/user-attachments/assets/95f037cc-cf88-4392-98fb-4d79cdae4fba
 
 Bump the current thought down one level and replace it with a new, empty thought. When multiple thoughts are selected, their parent is bumped down and the selected thoughts are moved into the new thought.
 
-<kbd>Command + Option + d</kbd>
+<kbd>Command + Shift + D</kbd>
 
 https://github.com/user-attachments/assets/838c3546-4aa0-4256-af89-621356b455ad
 
@@ -466,6 +466,8 @@ Merges all duplicate siblings at the same level as the cursor. The first thought
 ### Split Sentences
 
 Splits multiple sentences in a single thought into separate thoughts.
+
+A thought that contains only a single sentence is split into siblings on commas, or on the word "and" if there is no comma. A dash or a colon splits it into a main thought and a child instead, e.g. `one - 1` and `Start: 1` both become a thought with a single child. A colon only splits when it is followed by whitespace, so that a time such as `10:30` is left intact. In a comma-separated list, a dash only splits when it is surrounded by whitespace, so that a hyphenated word such as `Jean-Michel` is left intact; the right side of such a dash is then split on its commas, e.g. `Shopping list - apples, bananas` becomes a thought with two children.
 
 <kbd>Command + Shift + S</kbd>
 

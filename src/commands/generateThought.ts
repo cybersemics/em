@@ -188,9 +188,9 @@ const generateThoughtAtPathActionCreator =
   }
 
 /** Generate a thought using AI. */
-const generateThought: Command = {
+const generateThought = {
   id: 'generateThought',
-  label: 'Generate Thought',
+  label: 'Generate Thought' as const,
   description: 'Generates a thought using AI.',
   // svg: Icon,
   keyboard: { key: 'g', meta: true, alt: true },
@@ -243,6 +243,6 @@ const generateThought: Command = {
       cursorCleared({ value: false }),
     ])
   },
-}
+} satisfies Command
 
 export default generateThought

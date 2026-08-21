@@ -94,7 +94,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 ## H
 
-**HOME_TOKEN** — Sentinel `ThoughtId` (`'__ROOT__'`) for the home root. The path `[HOME_TOKEN]` represents the root thought itself; every regular `Path` starts with a child of HOME (or ABSOLUTE) and the root token is implied. See [data-model.md → Path](data-model.md#path).
+**HOME_TOKEN** — Sentinel `ThoughtId` for the home root. The path `[HOME_TOKEN]` represents the root thought itself; every regular `Path` starts with a child of HOME (or ABSOLUTE) and the root token is implied. See [data-model.md → Path](data-model.md#path).
 
 ## I
 
@@ -146,7 +146,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 ## R
 
-**rank** — `number` on `Thought` that determines sort order among siblings. Unique per parent; absolute value irrelevant. Fractional and negative values let inserts avoid renumbering. Overridden visually by `=sort` if set. See [data-model.md → rank](data-model.md#rank).
+**rank** — `number` on `Thought` that determines sort order among siblings. Unique per parent; absolute value irrelevant. Fractional and negative values let inserts avoid renumbering. Rank is the only order the render path reads: a parent's `=sort` takes effect by renumbering its children's ranks, not by re-sorting at render time. See [data-model.md → rank](data-model.md#rank).
 
 **reducerFlow** — [`util/reducerFlow.ts`](../src/util/reducerFlow.ts) — composes a list of reducers into a single reducer. Standard pattern in `actions/`.
 
@@ -162,7 +162,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **SimplePath** — A `Path` branded as having no cycles (no context-view crossings). Required by code that needs a single contiguous context. Get one via `simplifyPath` or by structurally guaranteeing it and casting. See [data-model.md → SimplePath](data-model.md#simplepath).
 
-**=sort** — Meta-attribute that overrides manual rank ordering. Options: `Alphabetical`, `Created`, `Updated`, `Note` (sort by `=note` value), each `Asc` or `Desc`.
+**=sort** — Meta-attribute that sorts a context's children, replacing their manual order by renumbering their ranks. Options: `Alphabetical`, `Created`, `Updated`, `Note` (sort by `=note` value), each `Asc` or `Desc`.
 
 **splitChain** — [`splitChain.ts`](../src/selectors/splitChain.ts) — splits a `Path` into `SimplePath[]` at every context-view boundary. Inverse: [`contextChainToPath`](../src/util/contextChainToPath.ts).
 

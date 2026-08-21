@@ -178,10 +178,10 @@ This is what powers the Context View (showing all contexts that contain "this va
 
 Several `ThoughtId`-typed string constants identify the trees inside the thoughtspace ([`constants.ts`](../src/constants.ts) lines ~117-129):
 
-- **`HOME_TOKEN`** = `__ROOT__`. The user's home tree — what they see when no zoom or context is active. `HOME_PATH` is `[HOME_TOKEN]`.
-- **`ABSOLUTE_TOKEN`** = `__ABSOLUTE__`. An alternate root tree, used to organize transient or session-scoped thoughts. `ABSOLUTE_PATH` is `[ABSOLUTE_TOKEN]`.
-- **`EM_TOKEN`** = `__EM__`. A meta-tree that holds user settings, system metadata, and other internal state (e.g. `[EM_TOKEN, 'Settings', 'Tutorial']`). Not exposed as a normal navigable thought.
-- **`ROOT_PARENT_ID`** = `__ROOT_PARENT_ID__`. The synthetic `parentId` of the root tokens themselves — there's no actual thought there, but the value lets `parentId` always be defined.
+- **`HOME_TOKEN`** = The user's home tree — what they see when no zoom or context is active. `HOME_PATH` is `[HOME_TOKEN]`.
+- **`ABSOLUTE_TOKEN`** = An alternate root tree, used to organize transient or session-scoped thoughts. `ABSOLUTE_PATH` is `[ABSOLUTE_TOKEN]`.
+- **`EM_TOKEN`** = A meta-tree that holds user settings, system metadata, and other internal state (e.g. `[EM_TOKEN, 'Settings', 'Tutorial']`). Not exposed as a normal navigable thought.
+- **`ROOT_PARENT_ID`** = The synthetic `parentId` of the root tokens themselves — there's no actual thought there, but the value lets `parentId` always be defined.
 - **`ROOT_CONTEXTS`** = `[HOME_TOKEN, ABSOLUTE_TOKEN]`. Used in places that need to special-case both root trees together.
 
 `state.rootContext` selects which root the UI is currently rooted at (Home or Absolute).
@@ -286,7 +286,7 @@ Two parent-relative concerns shape what `getChildren` / `getAllChildrenSorted` a
 
 The predicate is [`childrenFilterPredicate`](../src/selectors/getChildren.ts). It also has a special case for the absolute context (`absoluteContextTime`) so newly-added thoughts surface there during a session.
 
-**Sort order** is governed by the parent's `=sort` attribute, read via [`getSortPreference`](../src/selectors/getSortPreference.ts). Options:
+**Sort order** is a property of each context, declared by its `=sort` attribute and read via [`getSortPreference`](../src/selectors/getSortPreference.ts). Options:
 
 - (none, default) — manual ordering by `rank`.
 - `Alphabetical` (Asc/Desc).
@@ -294,7 +294,15 @@ The predicate is [`childrenFilterPredicate`](../src/selectors/getChildren.ts). I
 - `Updated` (Asc/Desc).
 - `Note` (sort by the `=note` value of each child).
 
-When no sort preference is set, manual `rank` order is used. This is why fractional ranks matter: dragging a thought between two siblings is a single rank update, not a sibling-wide reshuffle.
+There is no global or default sort preference: a context without `=sort` is sorted manually. This is why fractional ranks matter: dragging a thought between two siblings is a single rank update, not a sibling-wide reshuffle.
+
+**A sort preference is materialized into `rank`, not applied at render time.** The render path ([`linearizeTree`](../src/selectors/linearizeTree.ts)) reads children with [`getChildrenRanked`](../src/selectors/getChildren.ts), so what you see on screen is always `rank` order. `=sort` reaches the screen because the actions that set it renumber the context's children to match:
+
+- [`toggleSort`](../src/actions/toggleSort.ts) (cycles the preference) and [`setSortPreference`](../src/actions/setSortPreference.ts) (sets a specific one, from the Sort Picker) both end in the [`sort`](../src/actions/sort.ts) action, which renumbers the children to `0, 1, 2, …` in sorted order. [`uncategorize`](../src/actions/uncategorize.ts) and [`swapParent`](../src/actions/swapParent.ts) call it too, since both move children into a context that may be sorted.
+- Thoughts created or edited afterwards are given a rank that keeps the context sorted, via [`getSortedRank`](../src/selectors/getSortedRank.ts) — a fractional rank between the neighbors the new value sorts between.
+- Toggling sort back off restores the pre-sort manual order from `state.manualSortMap`, which records each child's rank at the moment the context was first sorted.
+
+The comparator itself lives in [`getSortComparator`](../src/selectors/getChildren.ts) and is applied directly by [`getAllChildrenSorted`](../src/selectors/getChildren.ts) / [`getChildrenSorted`](../src/selectors/getChildren.ts). Those are the selectors that compute the desired order (for `sort`, for insertion points, for sibling navigation); they agree with the rendered order only because the ranks are kept materialized.
 
 ## Views
 

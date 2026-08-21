@@ -52,9 +52,9 @@ const exec: Command['exec'] = (dispatch, getState, e, { type }) => {
   }
 }
 
-const deleteCommand: Command = {
+const deleteCommand = {
   id: 'delete',
-  label: 'Delete',
+  label: 'Delete' as const,
   description: 'Say goodbye to the current thought. Hit undo if you are not ready to part ways.',
   gesture: 'ldldl',
   multicursor: {
@@ -71,6 +71,6 @@ const deleteCommand: Command = {
   },
   exec,
   svg: Icon,
-}
+} satisfies Command
 
 export default deleteCommand

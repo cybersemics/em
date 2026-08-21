@@ -9,9 +9,9 @@ import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
 
-const pinAllCommand: Command = {
+const pinAllCommand = {
   id: 'pinAll',
-  label: 'Pin All',
+  label: 'Pin All' as const,
   labelInverse: 'Unpin All',
   description: 'Pins open all thoughts at the current level.',
   descriptionInverse: 'Unpins all thoughts at the current level.',
@@ -40,6 +40,6 @@ const pinAllCommand: Command = {
     if (!cursor || isRoot(cursor)) return false
     return !!isChildrenPinned(state, head(simplifyPath(state, rootedParentOf(state, cursor))))
   },
-}
+} satisfies Command
 
 export default pinAllCommand

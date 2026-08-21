@@ -24,9 +24,9 @@ import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 
-const cursorUpCommand: Command = {
+const cursorUpCommand = {
   id: 'cursorUp',
-  label: 'Cursor Up',
+  label: 'Cursor Up' as const,
   keyboard: [{ key: Key.ArrowUp }, { key: Key.ArrowUp, shift: true }],
   hideFromHelp: true,
   multicursor: false,
@@ -124,6 +124,6 @@ const cursorUpCommand: Command = {
       dispatch(firstPath ? setCursor({ path: firstPath }) : cursorUp())
     }
   }),
-}
+} satisfies Command
 
 export default cursorUpCommand

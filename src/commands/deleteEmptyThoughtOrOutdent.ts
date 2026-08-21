@@ -77,9 +77,9 @@ const exec: Command['exec'] = (dispatch, getState) => {
   }
 }
 
-const deleteEmptyThoughtOrOutdent: Command = {
+const deleteEmptyThoughtOrOutdent = {
   id: 'deleteEmptyThoughtOrOutdent',
-  label: 'Delete Empty Thought Or Outdent',
+  label: 'Delete Empty Thought Or Outdent' as const,
   keyboard: [{ key: Key.Backspace }, { key: Key.Backspace, shift: true }],
   hideFromHelp: true,
   multicursor: {
@@ -89,6 +89,6 @@ const deleteEmptyThoughtOrOutdent: Command = {
   svg: DeleteEmptyThoughtIcon,
   canExecute,
   exec,
-}
+} satisfies Command
 
 export default deleteEmptyThoughtOrOutdent
