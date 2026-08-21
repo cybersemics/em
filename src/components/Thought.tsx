@@ -356,6 +356,10 @@ const ThoughtContainer = ({
     return showContexts && isRoot(pathParent)
   })
 
+  // The ancestors of the context that are rendered as breadcrumbs in the context view.
+  // A context that is a direct child of the home context has a simplePath of length 1, so rootedParentOf returns HOME_PATH and ContextBreadcrumbs renders the HomeLink.
+  const contextBreadcrumbsAncestors = useSelector(state => rootedParentOf(state, simplePath), shallowEqual)
+
   // true if the thought has an invalid option
   const invalidOption = useSelector(state => {
     const thought = getThoughtById(state, thoughtId)
@@ -587,7 +591,7 @@ const ThoughtContainer = ({
         }),
       )}
     >
-      {showContexts && simplePath.length > 1 && (
+      {showContexts && !isRoot(simplePath) && (
         <div
           className={css({
             /* Tighten up the space between the context-breadcrumbs and the thought (similar to the space above a note). */
@@ -599,7 +603,7 @@ const ThoughtContainer = ({
             marginTop: '0.462rem',
           })}
         >
-          <ContextBreadcrumbs path={parentOf(simplePath)} homeContext={homeContext} />
+          <ContextBreadcrumbs path={contextBreadcrumbsAncestors} homeContext={homeContext} />
         </div>
       )}
 
