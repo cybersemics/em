@@ -596,6 +596,8 @@ The most important helper is [`exportThoughts`](../src/e2e/puppeteer/helpers/exp
 
 The iOS suite has a separate driver vocabulary in [`../src/e2e/iOS/helpers/`](../src/e2e/iOS/helpers): [`tap`](../src/e2e/iOS/helpers/tap.ts) emits a W3C pointer action, [`keyboard.type`](../src/e2e/iOS/helpers/keyboard.ts) uses WDIO `sendKeys`, and [`gesture`](../src/e2e/iOS/helpers/gesture.ts) emits a touch pointer path. Helpers such as [`tapReturnKey`](../src/e2e/iOS/helpers/tapReturnKey.ts), [`hideKeyboardByTappingDone`](../src/e2e/iOS/helpers/hideKeyboardByTappingDone.ts), and [`showEditMenu`](../src/e2e/iOS/helpers/showEditMenu.ts) cross into native iOS UI when Web content APIs are insufficient.
 
+Tap toolbar buttons with [`tapToolbar`](../src/e2e/iOS/helpers/tapToolbar.ts), the iOS counterpart to Puppeteer's [`clickToolbar`](../src/e2e/puppeteer/helpers/clickToolbar.ts), rather than tapping the button element directly. Most of the toolbar's buttons sit outside a phone-width viewport until the horizontally scrolling toolbar is scrolled, and a tap aimed at an off-screen button hits nothing — silently, since the command simply never runs. `tapToolbar` centers the button first (the toolbar's edges are overlapped by opaque scroll arrows that swallow a tap on a button scrolled only just into view) and taps with a touch pointer, which [`ToolbarButton`](../src/components/ToolbarButton.tsx) requires on a touch device because it binds `onTouchStart`/`onTouchEnd` rather than `onMouseDown`/`onClick`.
+
 Do not import Puppeteer helpers into iOS tests or assume identical driver behavior. Keep the test vocabulary parallel at the level of user intent, not implementation.
 
 ## Test Flags
