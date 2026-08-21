@@ -70,7 +70,7 @@ describe('GestureMenu', () => {
     // A viewport wide enough for two columns, holding a gesture that matches nothing. maxColumns is 2 but
     // only Cancel and Command Universe remain, so columnCount is 1 — the single column at a wide viewport,
     // which the iPhone snapshot above (below the 400px md breakpoint, maxColumns 1) does not reach.
-    await page.emulate(KnownDevices['iPad Mini landscape'])
+    await emulate(KnownDevices['iPad Mini landscape'])
 
     await hideHUD()
 
