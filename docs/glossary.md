@@ -94,7 +94,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 ## H
 
-**HOME_TOKEN** — Sentinel `ThoughtId` (`'__ROOT__'`) for the home root. The path `[HOME_TOKEN]` represents the root thought itself; every regular `Path` starts with a child of HOME (or ABSOLUTE) and the root token is implied. See [data-model.md → Path](data-model.md#path).
+**HOME_TOKEN** — Sentinel `ThoughtId` for the home root. The path `[HOME_TOKEN]` represents the root thought itself; every regular `Path` starts with a child of HOME (or ABSOLUTE) and the root token is implied. See [data-model.md → Path](data-model.md#path).
 
 ## I
 
