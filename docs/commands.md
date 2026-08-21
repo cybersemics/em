@@ -34,9 +34,9 @@ interface Command {
 A real example, abridged from [`pin.ts`](../src/commands/pin.ts):
 
 ```ts
-const pinCommand: Command = {
+const pinCommand = {
   id: 'pin',
-  label: 'Pin',
+  label: 'Pin' as const,
   labelInverse: 'Unpin',
   description: 'Pins open a thought so its subthoughts are always visible.',
   keyboard: { key: 'p', meta: true, alt: true },
@@ -51,8 +51,10 @@ const pinCommand: Command = {
     /* dispatch toggleAttribute({ path: cursor, values: ['=pin', 'true'] }) */
   },
   isActive: state => !!isPinned(state, head(/* ... */)),
-}
+} satisfies Command
 ```
+
+The `satisfies Command` and the `as const` on the label are load-bearing rather than stylistic. Annotating the constant `: Command` instead would type it as the interface, discarding what each command actually says about itself; `satisfies` checks the object against the interface while keeping the inferred type. The label needs `as const` on top of that, because the interface types `label` as `string` and that contextual type widens the literal even under `satisfies`. Together they let [`CommandLabel`](../src/@types/CommandLabel.ts) be derived as the union of every command's label, the same way [`CommandId`](../src/@types/CommandId.ts) is derived from the barrel's keys, so neither type has to repeat what the commands already declare. A command that skips either one widens its label to `string` and collapses that union. Rather than let that pass silently, `CommandLabel` resolves to a message naming the fix, so every call site that passes a label fails to compile and reports it.
 
 `exec` receives the Redux `dispatch`, a `getState` thunk, the event that triggered the command, and a `{ type }` field that is `'keyboard'`, `'gesture'`, `'toolbar'`, or `'chainedGesture'` so the command can adapt its behavior (e.g. `pin` shows an alert only when triggered via keyboard, since the toolbar already gives visual feedback).
 

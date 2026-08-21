@@ -3,9 +3,9 @@ import { extractThoughtActionCreator as extract } from '../actions/extractThough
 import ExtractThoughtIcon from '../components/icons/ExtractThoughtIcon'
 import hasMulticursor from '../selectors/hasMulticursor'
 
-const extractThought: Command = {
+const extractThought = {
   id: 'extractThought',
-  label: 'Extract',
+  label: 'Extract' as const,
   description: 'Extract selected part of a thought as its child',
   keyboard: { key: 'e', control: true, meta: true },
   // Extract takes its input from the browser text selection, of which the document has exactly one. The
@@ -21,6 +21,6 @@ const extractThought: Command = {
   exec: dispatch => {
     dispatch(extract())
   },
-}
+} satisfies Command
 
 export default extractThought
