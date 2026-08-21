@@ -474,10 +474,7 @@ describe('undo', () => {
     - d`)
   })
 
-  // Broken when space-to-indent was added.
-  // This test relies on multicursor across levels which will be disallowed soon, so it will need to be updaded anyway.
-  // indentCommand and moveCursorForwar should probably be combined as well.
-  it.skip('undo should restore complex multicursor operations involving multiple command types', () => {
+  it('undo should restore complex multicursor operations involving multiple command types', () => {
     store.dispatch([
       importText({
         text: `
@@ -496,8 +493,8 @@ describe('undo', () => {
       addMulticursor(['d']),
     ])
 
-    // Execute moveCursorForward on selected thoughts
-    executeCommandWithMulticursor(indentCommand, { store })
+    // Indent the selected thoughts under a. Uses moveCursorForward (Tab) rather than the indent command, whose space-to-indent keyboard shortcut only applies to an empty thought.
+    executeCommandWithMulticursor(moveCursorForward, { store })
 
     // Check intermediate state after indent
     let exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
