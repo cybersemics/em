@@ -275,6 +275,23 @@ describe('splitSentences', () => {
     expect(store.getState().isKeyboardOpen).toBe(false)
   })
 
+  // https://github.com/cybersemics/em/issues/4675
+  it('stays in edit mode if the keyboard is open', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - one. two. three.
+        `,
+      }),
+      setCursor(['one. two. three.']),
+      keyboardOpen({ value: true }),
+    ])
+
+    executeCommand(splitSentencesCommand, { store })
+
+    expect(store.getState().isKeyboardOpen).toBe(true)
+  })
+
   describe('multicursor', () => {
     it('splits sentences in multiple thoughts', async () => {
       store.dispatch([
