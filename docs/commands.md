@@ -721,6 +721,12 @@ Add or remove buttons from the toolbar.
 
 Customize your experience of em.
 
+### Edit Settings
+
+Edit the raw settings of em as an outline.
+
+Roots the outline at the EM context (`state.rootContext = [EM_TOKEN]`) with the cursor on `Settings`, so the system context can be edited like any other thoughts. Activating the command again, Home, or Back with no cursor returns to the home thoughtspace and restores the previous cursor. The URL and persisted cursor are not updated while the EM context is the root, and thoughts cannot be dragged between the two roots. See [layout-rendering.md → Root selection](layout-rendering.md#linearizetree-the-in-order-traversal).
+
 ### Device Management
 
 Add or remove devices that can access and edit this thoughtspace.

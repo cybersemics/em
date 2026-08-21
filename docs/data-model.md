@@ -120,6 +120,8 @@ A `Path` is a **non-empty** sequence of `ThoughtId`s from contiguous contexts. e
 
 A `Path` always starts at the ROOT thought. The ROOT thought itself is *not* part of the `Path` — it is implied as the starting point. The `Path` representing the ROOT thought is the special case `[HOME_TOKEN]`.
 
+The EM context is the exception: paths into it **include** `EM_TOKEN` explicitly as their first element (e.g. `[EM_TOKEN, settingsId]`), produced by `thoughtToPath` and consumed by `unroot`/`appendToPath` without stripping. This is what makes an EM path distinguishable from a home path of the same shape. (`contextToPath` currently returns EM paths *without* the prefix — a pre-existing inconsistency; prefer `thoughtToPath` or explicit construction for EM paths.)
+
 The most important `Path` in the app is `state.cursor` — the path of the thought being viewed/edited. Clicking a thought sets `state.cursor` to its path; pressing `ArrowDown` extends the path with the child's id; etc.
 
 #### Circular Paths

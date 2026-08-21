@@ -11,6 +11,7 @@ import {
   ABSOLUTE_PATH,
   CONTENT_BOX_PADDING_LEFT,
   CONTENT_BOX_PADDING_RIGHT,
+  EM_PATH,
   HOME_PATH,
   LongPressState,
   TRANSIENT_THOUGHT_ID,
@@ -23,6 +24,7 @@ import isTutorial from '../selectors/isTutorial'
 import fastClick from '../util/fastClick'
 import head from '../util/head'
 import isAbsolute from '../util/isAbsolute'
+import isEM from '../util/isEM'
 import Editable from './Editable'
 import EmptyThoughtspace from './EmptyThoughtspace'
 import LayoutTree from './LayoutTree'
@@ -46,7 +48,7 @@ const Content: FC = () => {
   const tutorialStep = useSelector(state => +(getSetting(state, 'Tutorial Step') || 1))
   const search = useSelector(state => state.search)
   const rootThoughtsLength = useSelector(state => {
-    const rankedRoot = isAbsolute(state.rootContext) ? ABSOLUTE_PATH : HOME_PATH
+    const rankedRoot = isAbsolute(state.rootContext) ? ABSOLUTE_PATH : isEM(state.rootContext) ? EM_PATH : HOME_PATH
     const children = filterAllChildren(state, head(rankedRoot), childrenFilterPredicate(state, rankedRoot))
     return children.length
   })

@@ -3,7 +3,7 @@ import Index from '../@types/IndexType'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
-import { EXPAND_THOUGHT_CHAR, HOME_PATH, HOME_TOKEN, MAX_EXPAND_DEPTH } from '../constants'
+import { EM_PATH, EXPAND_THOUGHT_CHAR, HOME_PATH, HOME_TOKEN, MAX_EXPAND_DEPTH } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
 import contextToThoughtId from '../selectors/contextToThoughtId'
 import findDescendant from '../selectors/findDescendant'
@@ -18,6 +18,7 @@ import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
 import isDescendant from '../util/isDescendant'
+import isEM from '../util/isEM'
 import keyValueBy from '../util/keyValueBy'
 import parentOf from '../util/parentOf'
 import publishMode from '../util/publishMode'
@@ -205,7 +206,9 @@ function expandThoughts(state: State, path: Path | null): Index<Path | Context> 
   // case while a multiselect is being extended with Shift+ArrowUp/ArrowDown. A cursor that is not
   // selected expands normally.
   // https://github.com/cybersemics/em/issues/4738
-  const cursorExpansionPath = path && isMulticursorPath(state, path) ? rootedParentOf(state, path) : path || HOME_PATH
+  // the outline root: EM paths are unreachable from HOME, so the walk must start from the active root
+  const rootPath = isEM(state.rootContext) ? EM_PATH : HOME_PATH
+  const cursorExpansionPath = path && isMulticursorPath(state, path) ? rootedParentOf(state, path) : path || rootPath
 
   return [
     cursorExpansionPath,
@@ -213,7 +216,7 @@ function expandThoughts(state: State, path: Path | null): Index<Path | Context> 
   ].reduce(
     (acc, expansionPath) => ({
       ...acc,
-      ...expandThoughtsRecursive(state, expansionPath, HOME_PATH),
+      ...expandThoughtsRecursive(state, expansionPath, rootPath),
     }),
     {} as Index<Path | Context>,
   )

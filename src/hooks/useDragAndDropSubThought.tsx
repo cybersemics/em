@@ -16,7 +16,7 @@ import { longPressActionCreator as longPress } from '../actions/longPress'
 import { moveThoughtActionCreator as moveThought } from '../actions/moveThought'
 import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from '../actions/setIsMulticursorExecuting'
 import MoveThoughtAlert from '../components/MoveThoughtAlert'
-import { AlertType, LongPressState } from '../constants'
+import { AlertType, EM_TOKEN, LongPressState } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
 import getNextRank from '../selectors/getNextRank'
 import getPrevRank from '../selectors/getPrevRank'
@@ -87,6 +87,8 @@ const canDrop = ({ path: thoughtsTo }: DroppableSubthoughts, monitor: DropTarget
     (!isHidden() || isClosestHiddenParent()) &&
     // do not drop on descendants
     draggedItems.every(item => !isDescendantPath(thoughtsTo, item.path)) &&
+    // thoughts cannot be moved between the EM context and the home thoughtspace
+    draggedItems.every(item => (item.path[0] === EM_TOKEN) === (thoughtsTo[0] === EM_TOKEN)) &&
     // do not drop on dividers
     !isDivider(getThoughtById(state, head(thoughtsTo))?.value) &&
     // do not drop on context view

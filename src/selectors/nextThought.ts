@@ -10,6 +10,7 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
+import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
 import once from '../util/once'
 import parentOf from '../util/parentOf'
@@ -49,7 +50,7 @@ const nextUncle = (state: State, path: Path): Path | null => {
   // the thought is a root child, then there is no uncle
   // otherwise, recursively call nextThought on the parent and prevent traversing children
   // eslint-disable-next-line @typescript-eslint/no-use-before-define
-  return isRoot(pathParent) ? null : nextThought(state, pathParent, { ignoreChildren: true })
+  return isRoot(pathParent) || isEM(pathParent) ? null : nextThought(state, pathParent, { ignoreChildren: true })
 }
 
 /** Gets the next thought after a given path (default: cursor) whether it is a child, sibling, or uncle, and its respective contextChain.

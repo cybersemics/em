@@ -6,7 +6,7 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import TreeThought from '../@types/TreeThought'
-import { HOME_PATH } from '../constants'
+import { EM_PATH, HOME_PATH } from '../constants'
 import calculateAutofocus from '../selectors/calculateAutofocus'
 import findDescendant from '../selectors/findDescendant'
 import getChildren, { childrenFilterPredicate, getChildrenRanked, hasChildren } from '../selectors/getChildren'
@@ -22,6 +22,7 @@ import equalPath from '../util/equalPath'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
+import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import parseLet from '../util/parseLet'
@@ -74,9 +75,10 @@ const linearizeTree = (
     indexDescendant: 0,
   },
 ): TreeThought[] => {
-  const path = basePath || HOME_PATH
+  const path = basePath || (isEM(state.rootContext) ? EM_PATH : HOME_PATH)
   const hashedPath = hashPath(path)
-  if (!isRoot(path) && !state.expanded[hashedPath] && !equalPath(state.expandHoverDownPath, path)) return []
+  if (!isRoot(path) && !isEM(path) && !state.expanded[hashedPath] && !equalPath(state.expandHoverDownPath, path))
+    return []
 
   const thoughtId = head(path)
   const thought = getThoughtById(state, thoughtId)

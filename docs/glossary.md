@@ -74,7 +74,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 ## E
 
-**EM_TOKEN** — Sentinel `ThoughtId` (`'__EM__'`) for the hidden system context where user settings (e.g. `[EM, 'Settings']`) are stored. See [`constants.ts`](../src/constants.ts).
+**EM_TOKEN** — Sentinel `ThoughtId` (`'__EM__'`) for the system context where user settings (e.g. `[EM, 'Settings']`) are stored. Normally hidden, but the outline can be rooted at it for direct editing via the **Edit Settings** command (`toggleEmContext`), which flips `state.rootContext` to `[EM_TOKEN]`. Not in `ROOT_CONTEXTS`: EM paths carry the token explicitly, so `isRoot` is false for `[EM_TOKEN]` and `isEM` is used for root checks in EM-rooted views. See [`constants.ts`](../src/constants.ts).
 
 **expanded** — `state.expanded: Index<boolean>`, keyed by `hashPath(path)`. A thought's children are walked by `linearizeTree` only if its path is in this map. Expansion is derived from the cursor _and_ the multicursor: a selected thought expands its ancestors but stays collapsed itself, so any reducer that changes `state.multicursors` must recalculate `expanded`. See [`expandThoughts`](../src/selectors/expandThoughts.ts).
 
@@ -128,7 +128,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 ## P
 
-**Path** — `[ThoughtId, ...ThoughtId[]]` — non-empty sequence of thought ids from root to a thought. Root itself is implied (`[HOME_TOKEN]` is the special case). May contain cycles when traversing context views. See [data-model.md → Path](data-model.md#path).
+**Path** — `[ThoughtId, ...ThoughtId[]]` — non-empty sequence of thought ids from root to a thought. Root itself is implied (`[HOME_TOKEN]` is the special case), except EM paths, which include `EM_TOKEN` explicitly as their first element. May contain cycles when traversing context views. See [data-model.md → Path](data-model.md#path).
 
 **pending** — Flag on `Thought` indicating the id is known to exist (`thoughtIndex[id]` is set) but the real data hasn't been pulled from local/remote storage yet. UI renders placeholders; the pull queue fetches based on visible pending IDs.
 

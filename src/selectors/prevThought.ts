@@ -7,6 +7,7 @@ import prevSibling from '../selectors/prevSibling'
 import appendToPath from '../util/appendToPath'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
+import isEM from '../util/isEM'
 import parentOf from '../util/parentOf'
 import simplifyPath from './simplifyPath'
 
@@ -27,7 +28,8 @@ const lastVisibleDescendant = (state: State, path: Path): Path => {
 
 /** Gets the previous thought in visual order. */
 const prevThought = (state: State, path: Path): Path | null => {
-  const pathParent = path.length > 1 ? parentOf(path) : null
+  // the EM root itself is not rendered, so a parent of [EM_TOKEN] is treated as no parent
+  const pathParent = path.length > 1 && !isEM(parentOf(path)) ? parentOf(path) : null
 
   // If in context view, try to get previous context first
   if (isContextViewActive(state, pathParent)) {

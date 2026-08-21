@@ -2,7 +2,7 @@ import _ from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
 import Path from '../@types/Path'
 import State from '../@types/State'
-import { HOME_PATH, HOME_TOKEN } from '../constants'
+import { EM_TOKEN, HOME_PATH, HOME_TOKEN } from '../constants'
 import * as selection from '../device/selection'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import { hasChildren } from '../selectors/getChildren'
@@ -88,6 +88,12 @@ const updateUrlHistory = (state: State, path: Path) => {
 
   // nothing to update if the cursor has not changed
   if (state.isLoading || equalPath(pathPrev, path)) return
+
+  // EM cursors cannot be represented in the URL (decodeThoughtsUrl only roots at HOME), so skip both the URL update and cursor persistence while the EM context is the outline root
+  if (path && path[0] === EM_TOKEN) {
+    pathPrev = path
+    return
+  }
   pathPrev = path
 
   const decoded = decodeThoughtsUrl(state)

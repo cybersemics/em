@@ -4,10 +4,13 @@ import importText from '../../actions/importText'
 import { importTextActionCreator as importTextAction } from '../../actions/importText'
 import newSubthought from '../../actions/newSubthought'
 import newThought from '../../actions/newThought'
+import settings from '../../actions/settings'
 import toggleContextView from '../../actions/toggleContextView'
+import toggleEmContext from '../../actions/toggleEmContext'
 import toggleHiddenThoughts from '../../actions/toggleHiddenThoughts'
 import { executeCommand } from '../../commands'
 import newSubthoughtTopCommand from '../../commands/newSubthoughtTop'
+import { EM_TOKEN } from '../../constants'
 import contextToPath from '../../selectors/contextToPath'
 import isContextViewActive from '../../selectors/isContextViewActive'
 import prevThought from '../../selectors/prevThought'
@@ -282,5 +285,16 @@ describe('context view', () => {
 
     expect(isContextViewActive(stateNew, contextToPath(stateNew, ['a', 'm']))).toBeTruthy()
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'z'])
+  })
+})
+
+describe('em context', () => {
+  it('do not move the cursor to the unrendered EM root', () => {
+    const steps = [settings({ key: 'Theme', value: 'Dark' }), toggleEmContext, cursorUp]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    // the cursor remains on Settings, the first thought of the EM-rooted outline
+    expectPathToEqual(stateNew, stateNew.cursor, [EM_TOKEN, 'Settings'])
   })
 })
