@@ -23,9 +23,9 @@ interface Indent {
   type: 'indent'
 }
 
-const moveCursorForward: Command = {
+const moveCursorForward = {
   id: 'moveCursorForward',
-  label: 'Move Cursor Forward',
+  label: 'Move Cursor Forward' as const,
   description: 'Move the current thought to the end of the previous thought or to next column in table view.',
   keyboard: { key: Key.Tab },
   multicursor: {
@@ -64,6 +64,6 @@ const moveCursorForward: Command = {
           { type: 'indent' },
     )
   },
-}
+} satisfies Command
 
 export default moveCursorForward

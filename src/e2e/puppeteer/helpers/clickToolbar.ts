@@ -1,3 +1,4 @@
+import type CommandLabel from '../../../@types/CommandLabel'
 import { page } from '../session'
 import click from './click'
 import scrollIntoView from './scrollIntoView'
@@ -8,7 +9,7 @@ import waitForSelector from './waitForSelector'
  *
  * A picker is rendered inside the toolbar button that opens it (see ToolbarButton), so values are matched by aria-label within the button. Nested values are given as a path, which is required when a value is ambiguous on its own, e.g. the Text Color dropdown contains both a text and a background swatch labeled "blue", so `clickToolbar('Text Color', 'background color swatches', 'blue')`.
  */
-const clickToolbar = async (label: string, ...values: string[]) => {
+const clickToolbar = async (label: CommandLabel, ...values: string[]) => {
   const toolbarSelector = `[data-testid="toolbar-icon"][aria-label="${label}"]`
 
   // The toolbar scrolls horizontally, so a button may be out of view. Center it rather than scrolling it just far enough, since the toolbar's edges are overlapped by opaque scroll arrows that would swallow the click.

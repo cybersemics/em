@@ -8,9 +8,9 @@ import splitChain from '../selectors/splitChain'
 import isDocumentEditable from '../util/isDocumentEditable'
 import pathToContext from '../util/pathToContext'
 
-const bindContextCommand: Command = {
+const bindContextCommand = {
   id: 'bindContext',
-  label: 'Bind Context',
+  label: 'Bind Context' as const,
   svg: BindContextIcon,
   description: 'Bind two different contexts of a thought so that they always have the same children.',
   gesture: 'rud',
@@ -40,6 +40,6 @@ const bindContextCommand: Command = {
       }),
     )
   },
-}
+} satisfies Command
 
 export default bindContextCommand

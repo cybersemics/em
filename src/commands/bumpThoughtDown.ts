@@ -6,9 +6,9 @@ import * as selection from '../device/selection'
 import hasMulticursor from '../selectors/hasMulticursor'
 import isDocumentEditable from '../util/isDocumentEditable'
 
-const bumpThoughtDownCommand: Command = {
+const bumpThoughtDownCommand = {
   id: 'bumpThoughtDown',
-  label: 'Bump Thought Down',
+  label: 'Bump Thought Down' as const,
   description: 'Bump the current thought down one level and replace it with a new, empty thought.',
   gesture: 'drd',
   keyboard: { key: 'd', meta: true, alt: true },
@@ -36,6 +36,6 @@ const bumpThoughtDownCommand: Command = {
 
     dispatch(bumpThoughtDown())
   },
-}
+} satisfies Command
 
 export default bumpThoughtDownCommand
