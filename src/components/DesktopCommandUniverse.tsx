@@ -1,4 +1,4 @@
-import React, { FC, ReactElement, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import React, { FC, ReactElement, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
 import { css } from '../../styled-system/css'
@@ -11,6 +11,7 @@ import { hashCommand, hashKeyDown } from '../commands'
 import { executeCommandWithMulticursor } from '../commands'
 import openDesktopCommandUniverseCommand from '../commands/openDesktopCommandUniverse'
 import * as selection from '../device/selection'
+import stubCommands from '../e2e/stubCommands'
 import testFlags from '../e2e/testFlags'
 import useFilteredCommands from '../hooks/useFilteredCommands'
 import storageModel from '../stores/storageModel'
@@ -314,17 +315,8 @@ const DesktopCommandUniverseWithTransition: FC = () => {
     sortActiveCommandsFirst: true,
   })
 
-  // Snapshot tests stub the command list so that the snapshot does not have to be updated whenever a command is added or removed.
-  // Memoized since a new array on every render would re-trigger the effects that depend on the command list.
-  const commandUniverseCommandIds = testFlags.commandUniverseCommandIds
-  const commands = useMemo(
-    () =>
-      commandUniverseCommandIds
-        ? commandsAll.filter(command => commandUniverseCommandIds.includes(command.id))
-        : commandsAll,
-    // testFlags.commandUniverseCommandIds is mutated by tests after mount, so it must be a dependency in order for the stub to be applied
-    [commandsAll, commandUniverseCommandIds],
-  )
+  // Snapshot tests replace the commands with stub commands so that the snapshot only covers the appearance of the command list.
+  const commands = testFlags.stubCommandUniverse ? stubCommands : commandsAll
 
   // clear search when desktop command universe is closed
   useEffect(() => {

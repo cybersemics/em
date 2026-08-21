@@ -25,8 +25,8 @@ it('DesktopCommandUniverse', async () => {
   // hide the HUD so that the snapshot only includes the command universe and is not affected by unrelated toolbar or navbar changes
   await hideHUD()
 
-  // stub the command list so that the snapshot does not have to be updated whenever a command is added or removed
-  await stubCommandUniverse(['newThought', 'newSubthought', 'indent', 'outdent', 'undo', 'redo', 'toggleSort'])
+  // replace the commands with stub commands so that the snapshot only covers the appearance of the command list and does not have to be updated whenever a command is added, removed, or edited
+  await stubCommandUniverse()
 
   await press('P', { meta: true })
 
