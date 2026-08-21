@@ -54,8 +54,14 @@ const publishPinAll = (state: State, context: Context) => {
  *
  * @param expansionBasePath - The base path for the original, nonrecursive call to expandThoughts.
  * @param path - Current path.
+ * @param descendantsPinnedInherited - The effective =descendants/=pin state inherited from the nearest ancestor that sets it.
  */
-function expandThoughtsRecursive(state: State, expansionBasePath: Path, path: Path): Index<Path | Context> {
+function expandThoughtsRecursive(
+  state: State,
+  expansionBasePath: Path,
+  path: Path,
+  descendantsPinnedInherited: boolean | null = null,
+): Index<Path | Context> {
   if (
     // arbitrarily limit depth to prevent infinite context view expansion (i.e. cycles)
     path.length - expansionBasePath.length + 1 >
@@ -100,6 +106,10 @@ function expandThoughtsRecursive(state: State, expansionBasePath: Path, path: Pa
         return !isAttribute(child.value) || isAncestor() || isExpansionBasePath()
       })
 
+  // the =descendants/=pin state that applies to this thought's children: the thought's own =descendants/=pin if set, otherwise the value inherited from the nearest ancestor that sets it
+  const descendantsPinned =
+    pinned(state, findDescendant(state, thoughtId, '=descendants')) ?? descendantsPinnedInherited
+
   // expand if child is an only child
   const grandchild = anyChild(state, visibleChildren[0]?.id)
   const hasOnlyChild =
@@ -114,7 +124,7 @@ function expandThoughtsRecursive(state: State, expansionBasePath: Path, path: Pa
     // do not expand if thought or parent's subthoughts have =pin/false or =done
     pinned(state, visibleChildren[0].id) !== false &&
     !isDone(state, visibleChildren[0].id) &&
-    childrenPinned(state, thoughtId) !== false
+    (childrenPinned(state, thoughtId) ?? descendantsPinned) !== false
 
   const childrenExpanded =
     isTable(state, thoughtId) || hasOnlyChild || publishPinAll(state, simplePath)
@@ -145,7 +155,9 @@ function expandThoughtsRecursive(state: State, expansionBasePath: Path, path: Pa
             (!showContexts &&
               (stripTags(child.value).endsWith(EXPAND_THOUGHT_CHAR) ||
                 pinned(state, child.id) ||
-                (childrenPinned(state, thoughtId) && pinned(state, child.id) === null && !isDone(state, child.id))))
+                ((childrenPinned(state, thoughtId) ?? descendantsPinned) &&
+                  pinned(state, child.id) === null &&
+                  !isDone(state, child.id))))
           )
         })
 
@@ -159,7 +171,8 @@ function expandThoughtsRecursive(state: State, expansionBasePath: Path, path: Pa
     childrenExpanded,
     childOrContext => {
       const newPath = unroot([...path, showContexts ? childOrContext.parentId : childOrContext.id])
-      return expandThoughtsRecursive(state, expansionBasePath, newPath)
+      // do not propagate =descendants/=pin into the context view, since the contexts' subtrees are outside the pinned subtree
+      return expandThoughtsRecursive(state, expansionBasePath, newPath, showContexts ? null : descendantsPinned)
     },
     initialExpanded,
   )

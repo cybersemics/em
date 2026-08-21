@@ -8,7 +8,7 @@ Three things make this work:
 2. The data structure stores meta-attribute children under their *value* in `childrenMap` (e.g. `childrenMap['=pin']`), giving the lookup a constant-time fast path. See [data-model.md](data-model.md).
 3. The `attribute()` / `attributeEquals()` / `findDescendant()` selectors hide the lookup behind a small API.
 
-Generally, an attribute affects *only its parent thought*. Two special attributes — `=children` and `=grandchildren` — broadcast settings to descendants.
+Generally, an attribute affects *only its parent thought*. Three special attributes broadcast settings to descendants: `=children` and `=grandchildren` apply attributes one and two levels down, and `=descendants` applies recursively to the entire subtree (currently only `=pin`).
 
 Meta-attribute children are hidden in normal view. Toggle the **Show Hidden Thoughts** command (`Option + Shift + H`) — which flips `state.showHiddenThoughts` — to view and edit them.
 
@@ -35,12 +35,13 @@ The four selectors most code uses:
 - [`findDescendant(state, id, values)`](../src/selectors/findDescendant.ts) — walks down a chain of values (e.g. `['=children', '=pin', 'true']`) and returns the deepest matching `ThoughtId`, or `null`. Uses the `childrenMap` shortcut at every meta-prefixed step. Use this for deeper checks, especially through `=children` / `=grandchildren` propagation.
 - `findAnyChild(state, id, predicate)` — generic find on regular children. Used by some bespoke attribute lookups.
 
-## Inheritance: `=children` and `=grandchildren`
+## Inheritance: `=children`, `=grandchildren`, and `=descendants`
 
-Two attributes broadcast settings to descendants:
+Three attributes broadcast settings to descendants:
 
 - `=children` applies its own attributes (e.g. `=style`, `=bullet`, `=pin`, `=note`) to **every direct child** of the parent.
 - `=grandchildren` does the same, one level deeper.
+- `=descendants` applies to **the entire subtree**, recursively. Currently only `=pin` is plumbed through (see [Pinning & expansion](#pinning--expansion)); the nearest ancestor that sets `=descendants/=pin` wins, and a closer-scoped `=children/=pin` or a thought's own `=pin` overrides it.
 
 Example — make `b` and `c` colored tomato:
 
@@ -61,7 +62,7 @@ The descendant attribute lookups consult these inheritance points in addition to
 - The pinned-children behavior at `=children/=pin/true` is what replaced the old `=pinChildren` attribute.
 - `=children` and `=grandchildren` thoughts are themselves filtered out of rendering — they never appear as siblings.
 
-Not every attribute is propagable. Currently the inheritance chain is plumbed through for `=style`, `=styleAnnotation`, `=styleContainer`, `=bullet`, and `=pin`. Other attributes apply only to the direct parent.
+Not every attribute is propagable. Currently the `=children`/`=grandchildren` inheritance chain is plumbed through for `=style`, `=styleAnnotation`, `=styleContainer`, `=bullet`, and `=pin`; `=descendants` supports only `=pin`. Other attributes apply only to the direct parent.
 
 ## Attribute reference
 
@@ -77,7 +78,7 @@ Not every attribute is propagable. Currently the inheritance chain is plumbed th
 
 ### Pinning & expansion
 
-- **`=pin`** — keep this thought expanded regardless of cursor position. Options: `true`, `false`. To pin every child of a context, use `=children/=pin/true` (this is the replacement for the now-removed `=pinChildren`). [`expandThoughts`](../src/selectors/expandThoughts.ts) and [`isPinned`](../src/selectors/isPinned.ts) consume it; [`isChildrenPinned`](../src/selectors/isChildrenPinned.ts) is the shared read for the `=children/=pin` form, and the [`pinAll`](../src/actions/pinAll.ts) reducer writes it.
+- **`=pin`** — keep this thought expanded regardless of cursor position. Options: `true`, `false`. To pin every child of a context, use `=children/=pin/true` (this is the replacement for the now-removed `=pinChildren`). To pin the entire subtree open, use `=descendants/=pin/true` (the **Pin Descendants** command); it takes effect whenever the thought itself is expanded, and a descendant's own `=pin/false` or `=children/=pin/false` overrides it for that descendant. [`expandThoughts`](../src/selectors/expandThoughts.ts) and [`isPinned`](../src/selectors/isPinned.ts) consume it; [`isChildrenPinned`](../src/selectors/isChildrenPinned.ts) is the shared read for the `=children/=pin` form, and the [`pinAll`](../src/actions/pinAll.ts) reducer writes it.
 
 ### Movement & editing constraints
 
@@ -96,8 +97,8 @@ Not every attribute is propagable. Currently the inheritance chain is plumbed th
 
 - **`=bindContext`** — binds the current context to another so edits propagate between them. Created via the `bindContext` command, which stores the destination under a paired internal key `=bindContextCommand`.
 - **`=label`** — display alternative text for the thought (the *label*) while continuing to use the thought's real value for any context lookups. The real value remains hidden unless the user is editing. Consumed by [`Editable`](../src/components/Editable.tsx) and [`ThoughtAnnotation`](../src/components/ThoughtAnnotation.tsx).
-- **`=note`** — render a small note in lighter type underneath the thought. The first child of `=note` is the note's text. See [`Note`](../src/components/Note.tsx).
-- **`=path`** — used under a `=note` to redirect the note's content to another thought (looked up by path), instead of rendering the literal child of `=note`. See [`resolveNoteKey`](../src/selectors/resolveNoteKey.ts).
+- **`=note`** — render a small note in lighter type underneath the thought. The first child of a literal `=note` is the note's text. See [`Note`](../src/components/Note.tsx).
+- **`=path`** — used under a `=note` to redirect the note's content to another thought (looked up by path), instead of rendering the literal child of `=note`. The target's visible children are rendered in their configured sort order, separated by commas, and editing the note updates the corresponding children. See [`resolveNoteKey`](../src/selectors/resolveNoteKey.ts).
 - **`=let`** — define lexically-scoped named values that descendants can reference. Parsed by [`parseLet`](../src/util/parseLet.ts) and consumed by [`useThoughtStyle`](../src/hooks/useThoughtStyle.ts) (so a `=let` binding for a color name resolves when used in `=style`).
 
 ### Content sources
@@ -120,8 +121,9 @@ Not every attribute is propagable. Currently the inheritance chain is plumbed th
 
 ### Inheritance
 
-- **`=children`** — apply attributes to every direct child. See [Inheritance](#inheritance-children-and-grandchildren).
+- **`=children`** — apply attributes to every direct child. See [Inheritance](#inheritance-children-grandchildren-and-descendants).
 - **`=grandchildren`** — apply attributes to every grandchild.
+- **`=descendants`** — apply attributes to the entire subtree, recursively. Currently only `=pin`.
 
 ## Defunct or test-only attributes
 

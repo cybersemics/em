@@ -33,7 +33,7 @@ const issueBody = t =>
     '',
     `- **File**: \`${t.file}\``,
     `- **Test**: ${t.fullName}`,
-    `- **Failed**: ${t.failed}/${t.of} iterations (iterations: ${t.iterations.join(', ')})`,
+    `- **Failed**: ${t.failed} of ${t.of} iterations (failed on ${t.iterations.length === 1 ? 'iteration' : 'iterations'} ${t.iterations.join(', ')})`,
     ...(t.firstError ? ['', '**First error**:', '', '```', t.firstError, '```'] : []),
   ].join('\n')
 
