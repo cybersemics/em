@@ -11,7 +11,6 @@ import { hashCommand, hashKeyDown } from '../commands'
 import { executeCommandWithMulticursor } from '../commands'
 import openDesktopCommandUniverseCommand from '../commands/openDesktopCommandUniverse'
 import * as selection from '../device/selection'
-import stubCommands from '../e2e/stubCommands'
 import testFlags from '../e2e/testFlags'
 import useFilteredCommands from '../hooks/useFilteredCommands'
 import storageModel from '../stores/storageModel'
@@ -315,8 +314,8 @@ const DesktopCommandUniverseWithTransition: FC = () => {
     sortActiveCommandsFirst: true,
   })
 
-  // Snapshot tests replace the commands with stub commands so that the snapshot only covers the appearance of the command list.
-  const commands = testFlags.stubCommandUniverse ? stubCommands : commandsAll
+  // Snapshot tests inject stub commands so that the snapshot only covers the appearance of the command list.
+  const commands = testFlags.commandUniverseCommands ?? commandsAll
 
   // clear search when desktop command universe is closed
   useEffect(() => {

@@ -608,7 +608,7 @@ Test durable persistence in a regular browser context. Private browsing storage 
 
 ### Command Universe stub
 
-`testFlags.stubCommandUniverse`, set by the [stubCommandUniverse](../src/e2e/puppeteer/helpers/stubCommandUniverse.ts) helper, replaces the commands in the Desktop Command Universe with the [stub commands](../src/e2e/stubCommands.ts). Its snapshot then covers only the appearance of the command list, rather than the label, description, icon, and keyboard shortcut of every real command, which would otherwise have to be regenerated whenever any command was added, removed, or edited.
+The [stubCommandUniverse](../src/e2e/puppeteer/helpers/stubCommandUniverse.ts) helper injects stub commands into `testFlags.commandUniverseCommands`, which the Desktop Command Universe renders in place of the real commands. Its snapshot then covers only the appearance of the command list, rather than the label, description, icon, and keyboard shortcut of every real command, which would otherwise have to be regenerated whenever any command was added, removed, or edited.
 
 ### Drag-and-drop visualization
 
