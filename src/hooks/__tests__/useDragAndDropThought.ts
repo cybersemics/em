@@ -34,8 +34,8 @@ vi.mock('react-dnd', async importOriginal => {
 /** Provides the Redux store to hooks and components under test. */
 const wrapper = ({ children }: PropsWithChildren) => createElement(Provider, { store, children })
 
-beforeEach(() => {
-  initStore()
+beforeEach(async () => {
+  await initStore()
   dragEndCallbacks.length = 0
 })
 
