@@ -457,3 +457,138 @@ describe('table view', () => {
     })
   })
 })
+
+describe('=focus/Zoom', () => {
+  it('hide siblings of the zoomed cursor', () => {
+    const text = `
+      - a
+      - b
+        - =focus
+          - Zoom
+    `
+    const steps = [importText({ text }), setCursor(['b'])]
+    const stateNew = reducerFlow(steps)(initialState())
+    const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
+      [key]: calculateAutofocus(stateNew, simplePath),
+    }))
+    expect(autofocusMap).toMatchObject({
+      a: 'hide',
+      b: 'show',
+    })
+  })
+
+  it('hide the parent, siblings, and uncles of the zoomed cursor', () => {
+    const text = `
+      - a
+        - b
+          - =focus
+            - Zoom
+          - c
+        - d
+      - e
+    `
+    const steps = [importText({ text }), setCursor(['a', 'b'])]
+    const stateNew = reducerFlow(steps)(initialState())
+    const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
+      [key]: calculateAutofocus(stateNew, simplePath),
+    }))
+    expect(autofocusMap).toMatchObject({
+      a: 'hide-parent',
+      'a/b': 'show',
+      'a/b/c': 'show',
+      'a/d': 'hide',
+      e: 'hide',
+    })
+  })
+
+  it('zoom persists when the cursor moves onto a descendant of the zoomed thought', () => {
+    const text = `
+      - a
+        - b
+          - =focus
+            - Zoom
+          - c
+        - d
+      - e
+    `
+    const steps = [importText({ text }), setCursor(['a', 'b', 'c'])]
+    const stateNew = reducerFlow(steps)(initialState())
+    const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
+      [key]: calculateAutofocus(stateNew, simplePath),
+    }))
+    expect(autofocusMap).toMatchObject({
+      a: 'hide-parent',
+      'a/b': 'show',
+      'a/b/c': 'show',
+      'a/d': 'hide',
+      e: 'hide',
+    })
+  })
+
+  it('do not zoom when the cursor is outside the zoomed thought', () => {
+    const text = `
+      - a
+      - b
+        - =focus
+          - Zoom
+    `
+    const steps = [importText({ text }), setCursor(['a'])]
+    const stateNew = reducerFlow(steps)(initialState())
+    const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
+      [key]: calculateAutofocus(stateNew, simplePath),
+    }))
+    expect(autofocusMap).toMatchObject({
+      a: 'show',
+      b: 'show',
+    })
+  })
+
+  it('=children/=focus/Zoom zooms every child of the context', () => {
+    const text = `
+      - a
+        - =children
+          - =focus
+            - Zoom
+        - b
+          - c
+        - d
+      - e
+    `
+    const steps = [importText({ text }), setCursor(['a', 'b'])]
+    const stateNew = reducerFlow(steps)(initialState())
+    const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
+      [key]: calculateAutofocus(stateNew, simplePath),
+    }))
+    expect(autofocusMap).toMatchObject({
+      a: 'hide-parent',
+      'a/b': 'show',
+      'a/b/c': 'show',
+      'a/d': 'hide',
+      e: 'hide',
+    })
+  })
+
+  it('the innermost zoom wins when zoomed thoughts are nested', () => {
+    const text = `
+      - a
+        - =focus
+          - Zoom
+        - b
+          - =focus
+            - Zoom
+          - c
+        - d
+    `
+    const steps = [importText({ text }), setCursor(['a', 'b'])]
+    const stateNew = reducerFlow(steps)(initialState())
+    const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
+      [key]: calculateAutofocus(stateNew, simplePath),
+    }))
+    expect(autofocusMap).toMatchObject({
+      a: 'hide-parent',
+      'a/b': 'show',
+      'a/b/c': 'show',
+      'a/d': 'hide',
+    })
+  })
+})
