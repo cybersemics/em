@@ -77,7 +77,7 @@ Not every attribute is propagable. Currently the inheritance chain is plumbed th
 
 ### Pinning & expansion
 
-- **`=pin`** — keep this thought expanded regardless of cursor position. Options: `true`, `false`. To pin every child of a context, use `=children/=pin/true` (this is the replacement for the now-removed `=pinChildren`). [`expandThoughts`](../src/selectors/expandThoughts.ts) and [`isPinned`](../src/selectors/isPinned.ts) consume it.
+- **`=pin`** — keep this thought expanded regardless of cursor position. Options: `true`, `false`. To pin every child of a context, use `=children/=pin/true` (this is the replacement for the now-removed `=pinChildren`). [`expandThoughts`](../src/selectors/expandThoughts.ts) and [`isPinned`](../src/selectors/isPinned.ts) consume it; [`isChildrenPinned`](../src/selectors/isChildrenPinned.ts) is the shared read for the `=children/=pin` form, and the [`pinAll`](../src/actions/pinAll.ts) reducer writes it.
 
 ### Movement & editing constraints
 

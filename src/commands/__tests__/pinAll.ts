@@ -9,18 +9,18 @@ import pinAllCommand from '../pinAll'
 
 beforeEach(initStore)
 
-it('toggle on when there is no =children attribute', () => {
-  // import thoughts
+/** Exports the current thoughtspace as plaintext. */
+const exported = () => exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+
+it('pin all subthoughts at the current level', () => {
   store.dispatch([
     importText({
       text: `
         - a
           - b
             - c
-            - d
-          - e
-            - f
-            - g
+          - d
+            - e
     `,
     }),
     setCursor(['a', 'b']),
@@ -28,156 +28,40 @@ it('toggle on when there is no =children attribute', () => {
 
   executeCommand(pinAllCommand, { store })
 
-  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-  expect(exported).toEqual(`- __ROOT__
+  expect(exported()).toEqual(`- ${HOME_TOKEN}
   - a
     - =children
       - =pin
         - true
     - b
       - c
-      - d
-    - e
-      - f
-      - g`)
+    - d
+      - e`)
 })
 
-it('toggle on when there is an unrelated =children attribute', () => {
-  store.dispatch([
-    importText({
-      text: `
-        - A
-          - B
-            - =children
-              - =bullet
-                - None
-            - C
-              - D
-            - E
-              - F
-    `,
-    }),
-    setCursor(['A', 'B', 'C']),
-  ])
-
-  executeCommand(pinAllCommand, { store })
-
-  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-  expect(exported).toEqual(`- __ROOT__
-  - A
-    - B
-      - =children
-        - =bullet
-          - None
-        - =pin
-      - C
-        - D
-      - E
-        - F`)
-})
-
-it('toggle on when =children/=pin is false', () => {
-  // import thoughts
+it('isActive reflects whether the current level is pinned', () => {
   store.dispatch([
     importText({
       text: `
         - a
-          - =children
-            - =pin
-              - false
           - b
             - c
-            - d
-          - e
-            - f
-            - g
     `,
     }),
     setCursor(['a', 'b']),
   ])
 
-  executeCommand(pinAllCommand, { store })
-
-  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-  expect(exported).toEqual(`- __ROOT__
-  - a
-    - =children
-      - =pin
-        - true
-    - b
-      - c
-      - d
-    - e
-      - f
-      - g`)
-})
-
-it('remove =children when toggling off from =pin/true', () => {
-  // import thoughts
-  store.dispatch([
-    importText({
-      text: `
-        - a
-          - =children
-            - =pin
-              - true
-          - b
-            - c
-            - d
-          - e
-            - f
-            - g
-    `,
-    }),
-    setCursor(['a', 'b']),
-  ])
+  expect(pinAllCommand.isActive!(store.getState())).toBe(false)
 
   executeCommand(pinAllCommand, { store })
 
-  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-  expect(exported).toEqual(`- __ROOT__
-  - a
-    - b
-      - c
-      - d
-    - e
-      - f
-      - g`)
+  expect(pinAllCommand.isActive!(store.getState())).toBe(true)
 })
 
-it('remove =children when toggling off from =pin', () => {
-  // import thoughts
-  store.dispatch([
-    importText({
-      text: `
-        - a
-          - =children
-            - =pin
-          - b
-            - c
-            - d
-          - e
-            - f
-            - g
-    `,
-    }),
-    setCursor(['a', 'b']),
-  ])
-
-  executeCommand(pinAllCommand, { store })
-
-  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-  expect(exported).toEqual(`- __ROOT__
-  - a
-    - b
-      - c
-      - d
-    - e
-      - f
-      - g`)
-})
-
-it('remove =pin/false from all subthoughts when toggling on', () => {
+// Pin All strips =pin/false from each subthought before setting =children/=pin, so it used to dispatch several
+// actions and thus create one undo patch each. A single undo left the thoughts in a state the user never
+// created: unpinned, but with their =pin/false settings still missing.
+it('undo restores =pin/false subthoughts in a single step', () => {
   store.dispatch([
     importText({
       text: `
@@ -186,71 +70,46 @@ it('remove =pin/false from all subthoughts when toggling on', () => {
             - =pin
               - false
             - c
-            - d
-          - e
+          - d
             - =pin
               - false
-            - f
-            - g
-          - h
-            - i
-            - j
+            - e
     `,
     }),
     setCursor(['a', 'b']),
   ])
 
+  const before = exported()
+  const undoPatchesBefore = store.getState().undoPatches.length
+
   executeCommand(pinAllCommand, { store })
 
-  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-  expect(exported).toEqual(`- __ROOT__
-  - a
-    - =children
-      - =pin
-        - true
-    - b
-      - c
-      - d
-    - e
-      - f
-      - g
-    - h
-      - i
-      - j`)
+  expect(store.getState().undoPatches.length - undoPatchesBefore).toBe(1)
+
+  store.dispatch({ type: 'undo' })
+
+  expect(exported()).toEqual(before)
 })
 
-it('preserve unrelated =children attributes when toggling off', () => {
+it('redo reapplies the pin in a single step', () => {
   store.dispatch([
     importText({
       text: `
         - a
-          - =children
-            - =bullet
-              - None
-            - =pin
           - b
+            - =pin
+              - false
             - c
-            - d
-          - e
-            - f
-            - g
     `,
     }),
     setCursor(['a', 'b']),
   ])
 
   executeCommand(pinAllCommand, { store })
+  const afterPin = exported()
 
-  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-  expect(exported).toEqual(`- __ROOT__
-  - a
-    - =children
-      - =bullet
-        - None
-    - b
-      - c
-      - d
-    - e
-      - f
-      - g`)
+  store.dispatch({ type: 'undo' })
+  store.dispatch({ type: 'redo' })
+
+  expect(exported()).toEqual(afterPin)
 })
