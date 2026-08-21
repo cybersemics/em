@@ -286,7 +286,7 @@ Two parent-relative concerns shape what `getChildren` / `getAllChildrenSorted` a
 
 The predicate is [`childrenFilterPredicate`](../src/selectors/getChildren.ts). It also has a special case for the absolute context (`absoluteContextTime`) so newly-added thoughts surface there during a session.
 
-**Sort order** is governed by the parent's `=sort` attribute, read via [`getSortPreference`](../src/selectors/getSortPreference.ts). Options:
+**Sort order** is a property of each context, declared by its `=sort` attribute and read via [`getSortPreference`](../src/selectors/getSortPreference.ts). Options:
 
 - (none, default) — manual ordering by `rank`.
 - `Alphabetical` (Asc/Desc).
@@ -294,7 +294,15 @@ The predicate is [`childrenFilterPredicate`](../src/selectors/getChildren.ts). I
 - `Updated` (Asc/Desc).
 - `Note` (sort by the `=note` value of each child).
 
-When no sort preference is set, manual `rank` order is used. This is why fractional ranks matter: dragging a thought between two siblings is a single rank update, not a sibling-wide reshuffle.
+There is no global or default sort preference: a context without `=sort` is sorted manually. This is why fractional ranks matter: dragging a thought between two siblings is a single rank update, not a sibling-wide reshuffle.
+
+**A sort preference is materialized into `rank`, not applied at render time.** The render path ([`linearizeTree`](../src/selectors/linearizeTree.ts)) reads children with [`getChildrenRanked`](../src/selectors/getChildren.ts), so what you see on screen is always `rank` order. `=sort` reaches the screen because the actions that set it renumber the context's children to match:
+
+- [`toggleSort`](../src/actions/toggleSort.ts) (cycles the preference) and [`setSortPreference`](../src/actions/setSortPreference.ts) (sets a specific one, from the Sort Picker) both end in the [`sort`](../src/actions/sort.ts) action, which renumbers the children to `0, 1, 2, …` in sorted order. [`uncategorize`](../src/actions/uncategorize.ts) and [`swapParent`](../src/actions/swapParent.ts) call it too, since both move children into a context that may be sorted.
+- Thoughts created or edited afterwards are given a rank that keeps the context sorted, via [`getSortedRank`](../src/selectors/getSortedRank.ts) — a fractional rank between the neighbors the new value sorts between.
+- Toggling sort back off restores the pre-sort manual order from `state.manualSortMap`, which records each child's rank at the moment the context was first sorted.
+
+The comparator itself lives in [`getSortComparator`](../src/selectors/getChildren.ts) and is applied directly by [`getAllChildrenSorted`](../src/selectors/getChildren.ts) / [`getChildrenSorted`](../src/selectors/getChildren.ts). Those are the selectors that compute the desired order (for `sort`, for insertion points, for sibling navigation); they agree with the rendered order only because the ranks are kept materialized.
 
 ## Views
 
