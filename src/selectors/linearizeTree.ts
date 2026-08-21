@@ -99,6 +99,8 @@ const linearizeTree = (
   const grandchildrenAttributeId = findDescendant(state, thoughtId, '=grandchildren')
   const styleChildren = getStyle(state, childrenAttributeId)
   const style = safeRefMerge(styleAccum, styleChildren, styleFromGrandparent)
+  // As an exception, =children/=style is not applied to =children itself, which is visible when hidden thoughts are shown.
+  const styleWithoutChildren = safeRefMerge(styleAccum, styleFromGrandparent)
 
   // 0-based ordinal of each visible non-attribute child, used to number =bullet/Ordered lists without re-sorting siblings in each Bullet.
   // Attributes (e.g. =children when showHiddenThoughts is enabled) occupy a slot in filteredChildren but are skipped in the numbering (-1).
@@ -106,6 +108,11 @@ const linearizeTree = (
     (accum, child) => [...accum, isAttribute(child.value) ? -1 : accum.filter(index => index >= 0).length],
     [],
   )
+
+  // The =let definitions of this context, merged over the definitions inherited from ancestors so that a deeper =let overrides a shallower one.
+  // Calculated once for all children to preserve the object reference and avoid re-renders.
+  const envParsed = parseLet(state, path)
+  const envNew = Object.keys(envParsed).length > 0 ? { ...env, ...envParsed } : env
 
   const thoughts = filteredChildren.reduce<TreeThought[]>((accum, filteredChild, i) => {
     // If the context view is active, render the context's parent instead of the context itself.
@@ -117,9 +124,6 @@ const linearizeTree = (
     const childPath = appendToPathMemo(path, child.id)
     const lastVirtualIndex = accum.length > 0 ? accum[accum.length - 1].indexDescendant : 0
     const virtualIndexNew = indexDescendant + lastVirtualIndex + (depth === 0 && i === 0 ? 0 : 1)
-    const envParsed = parseLet(state, path)
-    const envNew =
-      env && Object.keys(env).length > 0 && Object.keys(envParsed).length > 0 ? { ...env, ...envParsed } : undefined
 
     // As soon as the cursor is found, set belowCursor to true. It will be propagated to every subsequent thought.
     // See: TreeThought.belowCursor
@@ -161,7 +165,7 @@ const linearizeTree = (
       rank: child.rank,
       showContexts: contextViewActive,
       simplePath: contextViewActive ? thoughtToPath(state, child.id) : appendToPathMemo(simplePath, child.id),
-      style,
+      style: child.id === childrenAttributeId ? styleWithoutChildren : style,
       thoughtId: child.id,
       ...(isTable
         ? { visibleChildrenKeys: getChildren(state, child.id).map(child => crossContextualKey(contextChain, child.id)) }
