@@ -37,6 +37,23 @@ it('Apply formatting to a selected portion of a thought', async () => {
 `)
 })
 
+it('Apply code formatting to a thought with the toolbar button', async () => {
+  const importText = `
+  - Golden Retriever`
+
+  await paste(importText)
+
+  await clickThought('Golden Retriever')
+
+  await clickToolbar('Code')
+  await waitForEditable('<code>Golden Retriever</code>')
+
+  // exportThoughts cannot assert code formatting: plaintext export only converts bold and italic to markdown, and
+  // strips every other tag, so <code> would not appear in the output.
+  const result = await getEditingText()
+  expect(result).toBe('<code>Golden Retriever</code>')
+})
+
 it('Apply text color to an uppercase formatting tag', async () => {
   const importText = `
   - Hello World`
