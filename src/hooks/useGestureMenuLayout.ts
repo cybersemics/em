@@ -47,6 +47,18 @@ export const GESTURE_MENU_PANEL_PADDING_VERTICAL_MULTI_COLUMN_FIT_REM = 1.7
 /** Vertical panel padding when one column is all that fits (the original, roomier value). */
 export const GESTURE_MENU_PANEL_PADDING_VERTICAL_SINGLE_COLUMN_FIT_REM = 2.25
 
+/**
+ * Fraction of the viewport height a tablet's command list may occupy, measured from the top of the
+ * viewport — so the header, the panel's vertical padding and the selected row's expanded description
+ * all come out of it. Below this band the hand holding the device covers the list, so the column wraps
+ * into the next one and any remainder is trimmed.
+ *
+ * Measured off the 12.9" iPad frames in Figma (node 12294-186180), which annotate the same device
+ * twice: 450 ÷ 1024 in landscape and 600 ÷ 1366 in portrait, i.e. 0.4395 and 0.4392. Agreeing to 0.1%
+ * is what lets one ratio replace a per-device table.
+ */
+export const GESTURE_MENU_TABLET_SAFE_HEIGHT_RATIO = 0.44
+
 /** Vertical gap between command rows (existing literal). */
 export const GESTURE_MENU_ROW_GAP_REM = 1.2
 
@@ -147,7 +159,10 @@ const useGestureMenuLayout = (
 
   const isMobilePortrait = innerWidth < GESTURE_MENU_MD_BREAKPOINT
 
-  const availableHeightPx = innerHeight
+  // On a tablet the list is held to the safe zone rather than the whole screen: the hand holding the
+  // device covers the bottom, so a long list is wrapped into the next column and the remainder trimmed.
+  // Everywhere else this is the full viewport, leaving every phone and desktop budget unchanged.
+  const availableHeightPx = isTablet ? innerHeight * GESTURE_MENU_TABLET_SAFE_HEIGHT_RATIO : innerHeight
 
   const minColumnPx = GESTURE_MENU_MIN_COLUMN_WIDTH_REM * remPx
   const gapPx = GESTURE_MENU_COLUMN_GAP_REM * remPx

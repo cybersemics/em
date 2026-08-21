@@ -16,6 +16,7 @@ import useGestureMenuLayout, {
   GESTURE_MENU_ROW_GAP_REM,
   GESTURE_MENU_ROW_PITCH_REM,
   GESTURE_MENU_SELECTED_ROW_REM,
+  GESTURE_MENU_TABLET_SAFE_HEIGHT_RATIO,
 } from '../useGestureMenuLayout'
 
 /**
@@ -423,6 +424,82 @@ describe('useGestureMenuLayout', () => {
     it('leaves a tablet too narrow for two columns at either padding on one column', () => {
       setViewport(600, 1000)
       expect(asTablet(() => layout(28)).maxColumns).toBe(1)
+    })
+  })
+
+  describe('tablet safe zone', () => {
+    // The hand holding a tablet covers the bottom of the screen, so a tablet's list is capped at 44% of
+    // innerHeight and the overflow is trimmed. Expected values are the full ~28-command list at an 18px
+    // root; shorter lists trim less or not at all.
+    const DEVICES = [
+      { name: 'iPad mini portrait', w: 744, h: 1133, maxColumns: 2, rows: 8, columns: 2, visible: 16 },
+      { name: 'iPad mini landscape', w: 1133, h: 744, maxColumns: 3, rows: 4, columns: 3, visible: 12 },
+      { name: 'iPad 11 portrait', w: 834, h: 1194, maxColumns: 2, rows: 9, columns: 2, visible: 18 },
+      { name: 'iPad 11 landscape', w: 1194, h: 834, maxColumns: 3, rows: 5, columns: 3, visible: 15 },
+      { name: 'iPad 12.9 portrait', w: 1024, h: 1366, maxColumns: 2, rows: 11, columns: 2, visible: 22 },
+      { name: 'iPad 12.9 landscape', w: 1366, h: 1024, maxColumns: 3, rows: 7, columns: 3, visible: 21 },
+    ]
+
+    DEVICES.forEach(({ name, w, h, maxColumns, rows, columns, visible }) => {
+      it(`caps the column at the safe zone on ${name}`, () => {
+        setViewport(w, h)
+        const result = asTablet(() => layout(28))
+        expect({
+          maxColumns: result.maxColumns,
+          rows: result.rowsPerColumn,
+          columns: result.columnCount,
+          visible: result.visibleCommandCount,
+        }).toEqual({ maxColumns, rows, columns, visible })
+      })
+    })
+
+    it('budgets the rows against 44% of the viewport height, not the whole viewport', () => {
+      // Derived from the ratio rather than hardcoded, so changing the constant moves this expectation
+      // with it and the device rows above become the thing that has to be re-measured.
+      setViewport(1024, 1366)
+      const overheadRem =
+        GESTURE_MENU_HEADER_HEIGHT_REM +
+        2 * GESTURE_MENU_PANEL_PADDING_VERTICAL_MULTI_COLUMN_FIT_REM +
+        GESTURE_MENU_SELECTED_ROW_REM
+      const expected = Math.floor(
+        (1366 * GESTURE_MENU_TABLET_SAFE_HEIGHT_RATIO - overheadRem * REM + GESTURE_MENU_ROW_GAP_REM * REM) /
+          (GESTURE_MENU_ROW_PITCH_REM * REM),
+      )
+      expect(asTablet(() => layout(28)).rowsPerColumn).toBe(expected)
+    })
+
+    it('does not trim a list that already fits inside the safe zone', () => {
+      setViewport(1024, 1366)
+      const result = asTablet(() => layout(8))
+      expect(result.visibleCommandCount).toBe(8)
+    })
+
+    it('leaves non-tablet geometry on the full viewport height', () => {
+      // The same three viewports as above. Only isTablet distinguishes them, so any change here means
+      // the cap has leaked off tablets.
+      setViewport(744, 1133)
+      expect(layout(28).rowsPerColumn).toBe(24)
+
+      setViewport(1024, 1366)
+      expect({ rows: layout(28).rowsPerColumn, visible: layout(28).visibleCommandCount }).toEqual({
+        rows: 30,
+        visible: 28,
+      })
+
+      setViewport(1366, 1024)
+      expect({ rows: layout(28).rowsPerColumn, visible: layout(28).visibleCommandCount }).toEqual({
+        rows: 22,
+        visible: 28,
+      })
+    })
+
+    it('leaves phone geometry untouched', () => {
+      setViewport(402, 874)
+      expect(layout(28).rowsPerColumn).toBe(17)
+
+      setViewport(874, 402)
+      const landscape = layout(28)
+      expect({ columns: landscape.columnCount, rows: landscape.rowsPerColumn }).toEqual({ columns: 2, rows: 6 })
     })
   })
 })
