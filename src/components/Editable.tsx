@@ -6,6 +6,7 @@ import { editableRecipe, invalidOptionRecipe } from '../../styled-system/recipes
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import TutorialChoice from '../@types/TutorialChoice'
+import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/clearMulticursors'
 import { cursorClearedActionCreator as cursorCleared } from '../actions/cursorCleared'
 import { editThoughtActionCreator as editThought } from '../actions/editThought'
 import { errorActionCreator as error } from '../actions/error'
@@ -41,7 +42,10 @@ import getContexts from '../selectors/getContexts'
 import getSetting from '../selectors/getSetting'
 import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursorSelector from '../selectors/hasMulticursor'
+import isMultiEditing from '../selectors/isMultiEditing'
+import isMulticursorPath from '../selectors/isMulticursorPath'
 import rootedParentOf from '../selectors/rootedParentOf'
+import simplifyPath from '../selectors/simplifyPath'
 import thoughtToPath from '../selectors/thoughtToPath'
 import editingValueStore from '../stores/editingValue'
 import editingValueUntrimmedStore from '../stores/editingValueUntrimmed'
@@ -65,6 +69,7 @@ import useEditMode from './Editable/useEditMode'
 import useOnCopy from './Editable/useOnCopy'
 import useOnCut from './Editable/useOnCut'
 import useOnPaste from './Editable/useOnPaste'
+import MulticursorFauxCaret from './MulticursorFauxCaret'
 
 interface EditableProps {
   editableRef?: React.RefObject<HTMLInputElement | null>
@@ -135,7 +140,24 @@ const Editable = ({
   // it is possible that the thought is deleted and the Editable is re-rendered before it unmounts, so guard against undefined thought
   const value = useSelector(state => getThoughtById(state, head(simplePath))?.value || '')
   const rank = useSelector(state => getThoughtById(state, head(simplePath))?.rank || 0)
-  const isCursorCleared = useSelector(state => !!isEditing && state.cursorCleared)
+  const isCursorCleared = useSelector(
+    // A thought is displayed as cleared when clearThought is active and it is either the cursor thought (single clear)
+    // or a member of a multiselection (multiselect clear).
+    state => state.cursorCleared && (!!isEditing || isMulticursorPath(state, path)),
+  )
+
+  // Render a faux caret on the thoughts of an edited multiselection that do not hold the real caret (i.e. all but the
+  // first/cursor thought). The cursor thought shows the real caret via useEditMode. This outlives the cleared state:
+  // clearThought preserves the multicursors so that typed edits keep mirroring, and the faux carets must keep tracking
+  // the real caret for as long as they do.
+  const isMulticursorFauxCaretPath = useSelector(
+    state =>
+      isMulticursorPath(state, path) &&
+      !equalPath(state.cursor, path) &&
+      !!state.cursor &&
+      isMulticursorPath(state, state.cursor),
+  )
+
   const placeholderCommandState = useMemo(
     () => (isCursorCleared ? getCommandState(value) : null),
     [isCursorCleared, value],
@@ -697,6 +719,30 @@ const Editable = ({
           contentRef.current.innerHTML = newValue
         }
 
+        // When multiple thoughts are cleared together (clearThought on a multiselection), mirror the edit to the other
+        // selected thoughts. This is done here rather than in the throttled thoughtChangeHandler so that the mirrored
+        // thoughts stay in sync with the thought being typed into keystroke by keystroke. Each thought's current value
+        // is read fresh from state to use as the correct oldValue. Keyed off the multicursors rather than cursorCleared,
+        // which is reset after the first edit. (#4519)
+        if (isMulticursorPath(state, path)) {
+          dispatch(
+            Object.values(state.multicursors)
+              .filter(multicursorPath => !equalPath(multicursorPath, path))
+              .flatMap(multicursorPath => {
+                const thought = getThoughtById(state, head(multicursorPath))
+                return !thought || thought.value === newValue
+                  ? []
+                  : [
+                      editThought({
+                        oldValue: thought.value,
+                        newValue,
+                        path: simplifyPath(state, multicursorPath),
+                      }),
+                    ]
+              }),
+          )
+        }
+
         // run the thoughtChangeHandler immediately if superscript changes or it's a url (also when it changes true to false)
         // run it immediately is there is a style wrapper that needs to be applied to the editable after a clearThought action (#3673)
         if (
@@ -751,11 +797,21 @@ const Editable = ({
     e => {
       throttledChangeRef.current.flush()
 
+      // The iOS autocomplete focus retarget blurs to the asyncFocus dummy input and refocuses this same editable
+      // within the same frame, so its momentary blur does not end editing. Its relatedTarget is a bare input rather
+      // than an editable, so the check below cannot recognize it; the suppressBlurSync flag the retarget sets is what
+      // marks a blur that does not end editing. Skip the value resync (#4828) and the editing teardown below:
+      // otherwise the blur closes the keyboard and exits the cleared state mid-typing, on an edited multiselection the
+      // Command Center re-opens over the editing session (see multicursorAlertMiddleware), and the resulting desync
+      // between state.isKeyboardOpen and the open keyboard makes useEditMode stop placing the caret, so the next
+      // re-render of the editable (e.g. undoing the autocorrect) leaves the caret at the beginning of the thought
+      // (#4692).
+      if (globals.suppressBlurSync) return
+
       // update the ContentEditable if the new scrubbed value is different (i.e. stripped, space after emoji added, etc)
       // they may intentionally become out of sync during editing if the value is modified programmatically (such as trim) in order to avoid reseting the caret while the user is still editing
       // oldValueRef.current is the latest value since throttledChangeRef was just flushed
-      // Skipped during the iOS autocomplete focus retarget, whose momentary blur does not end editing (#4828).
-      if (!globals.suppressBlurSync && contentRef.current?.innerHTML !== oldValueRef.current) {
+      if (contentRef.current?.innerHTML !== oldValueRef.current) {
         // remove the invalid state error, remove invalid-option class, and reset editable html
         dispatch((dispatch, getState) => {
           const state = getState()
@@ -790,11 +846,20 @@ const Editable = ({
       dispatch(cursorCleared({ value: false }))
 
       if (isTouch) {
-        dispatch(keyboardOpenActionCreator({ value: false }))
+        dispatch((dispatch, getState) => {
+          const state = getState()
+          // Blurring the thought that holds the caret ends an edited multiselection (Clear Thought), so end the
+          // multiselection too. Otherwise the multicursors survive the blur and re-open the Command Center as soon as
+          // the keyboard closes (see multicursorAlertMiddleware). (#4519)
+          // Not when the Command Center is open, since then the blur was caused by the Command Center opening over the
+          // thought (see onFocus), rather than by the user dismissing the keyboard.
+          if (!state.showCommandCenter && isMulticursorPath(state, path)) dispatch(clearMulticursors())
+          dispatch(keyboardOpenActionCreator({ value: false }))
+        })
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [simplePath],
+    [simplePath, path],
   )
 
   /**
@@ -900,8 +965,9 @@ const Editable = ({
         }
 
         if (
-          // disable editing when multicursor is enabled
-          hasMulticursorSelector(state) ||
+          // disable editing when multicursor is enabled, unless the multiselection is being edited (Clear Thought), in
+          // which case a tap moves the caret as usual
+          (hasMulticursorSelector(state) && !isMultiEditing(state)) ||
           disabled ||
           // do not set cursor on hidden thought
           // dragInProgress: not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be safe
@@ -964,7 +1030,20 @@ const Editable = ({
     }
   }, [contentRef, editingOrOnCursor, hasMulticursor, handleTapBehavior])
 
-  return (
+  // The html that is rendered in the editable. Note that it is empty while the thought is cleared, even though the
+  // thought still has its value, which is shown as a placeholder.
+  const html =
+    value === EM_TOKEN
+      ? '<b>em</b>'
+      : // render as empty string during temporary clear state
+        // see: /actions/cursorCleared
+        isCursorCleared
+        ? ''
+        : isEditing
+          ? value
+          : (childrenLabel ?? value)
+
+  const contentEditable = (
     <ContentEditable
       disabled={disabled}
       stopDragOver={stopDragOver}
@@ -978,17 +1057,7 @@ const Editable = ({
       data-placeholder-strikethrough={placeholderCommandState?.strikethrough || undefined}
       data-placeholder-underline={placeholderCommandState?.underline || undefined}
       className={cx(editableRecipe(), className)}
-      html={
-        value === EM_TOKEN
-          ? '<b>em</b>'
-          : // render as empty string during temporary clear state
-            // see: /actions/cursorCleared
-            isCursorCleared
-            ? ''
-            : isEditing
-              ? value
-              : (childrenLabel ?? value)
-      }
+      html={html}
       placeholder={placeholder}
       onFocus={onFocus}
       onBlur={onBlur}
@@ -1011,6 +1080,17 @@ const Editable = ({
       role='button'
       style={contentEditableStyle}
     />
+  )
+
+  // When this thought is a non-cursor member of an edited multiselection, overlay a faux caret mirroring the real
+  // caret's offset to indicate that it too is being edited. The real caret lives on the first/cursor thought.
+  // The faux caret is rendered after the editable, and always in the same position in the tree, so that toggling it
+  // does not remount the editable and drop the native event listeners bound to it by useEditMode.
+  return (
+    <>
+      {contentEditable}
+      {isMulticursorFauxCaretPath && <MulticursorFauxCaret editableRef={contentRef} />}
+    </>
   )
 }
 

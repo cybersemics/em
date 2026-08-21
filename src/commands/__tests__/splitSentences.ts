@@ -1,7 +1,7 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import { executeCommand, executeCommandWithMulticursor } from '../../commands'
-import { HOME_TOKEN } from '../../constants'
+import { EMPTY_SPACE, HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
@@ -55,7 +55,7 @@ describe('splitSentences', () => {
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/html')
     expect(exported).toBe(`<ul>
-  <li>${HOME_TOKEN}  
+  <li>${HOME_TOKEN}${EMPTY_SPACE}
     <ul>
       <li>Hello<b>.</b></li>
       <li>World.</li>
@@ -75,7 +75,7 @@ describe('splitSentences', () => {
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/html')
     expect(exported).toBe(`<ul>
-  <li>${HOME_TOKEN}  
+  <li>${HOME_TOKEN}${EMPTY_SPACE}
     <ul>
       <li><font color="#000000" style="background-color: rgb(0, 214, 136);">font</font></li>
     </ul>
@@ -97,7 +97,7 @@ describe('splitSentences', () => {
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/html')
     expect(exported).toBe(`<ul>
-  <li>${HOME_TOKEN}  
+  <li>${HOME_TOKEN}${EMPTY_SPACE}
     <ul>
       <li><font color="#000000" style="background-color: rgb(0, 214, 136);">comma one</font></li>
       <li><font color="#000000" style="background-color: rgb(0, 214, 136);">comma two</font></li>

@@ -1,4 +1,5 @@
 import { DebouncedFunc } from 'lodash'
+import type { ThoughtspaceStorage } from '../data-providers/thoughtspace'
 
 type TestFlags = {
   logActions: boolean
@@ -10,7 +11,9 @@ type TestFlags = {
   /** Prevent automatic app initialization on page load. */
   preventInitialize: boolean
   /** Starts app initialization when preventInitialize is enabled. */
-  initialize: (() => Promise<unknown>) | null
+  initialize: ((options: { storage: ThoughtspaceStorage }) => Promise<unknown>) | null
+  /** Overrides production thoughtspace storage during test startup. */
+  thoughtspaceStorage: ThoughtspaceStorage | null
   /** Keep every drop hover that becomes visible during the current drag mounted, so multiple drop hovers can be compared in a single snapshot. */
   pinDropHovers: boolean
   /** Render drop-hover elements as blocks of color. */
@@ -21,19 +24,17 @@ type TestFlags = {
   throttledScrollCursorIntoView: DebouncedFunc<(y: number, height: number) => void> | null
 }
 
-const preloadedTestFlags =
-  typeof window === 'undefined'
-    ? null
-    : ((window.em as { testFlags?: Partial<TestFlags> } | undefined)?.testFlags ?? null)
+const preloadedTestFlags = typeof window === 'undefined' ? null : (window.em?.testFlags ?? null)
 
 /** Test flags that are injected into window.em.testFlags. */
 const testFlags: TestFlags = {
   logActions: false,
   logMultigesture: false,
   expandHoverDelay: null,
-  replicationDelay: 0,
+  replicationDelay: preloadedTestFlags?.replicationDelay ?? 0,
   preventInitialize: preloadedTestFlags?.preventInitialize ?? false,
   initialize: null,
+  thoughtspaceStorage: preloadedTestFlags?.thoughtspaceStorage ?? null,
   pinDropHovers: false,
   simulateDrag: false,
   simulateDrop: false,

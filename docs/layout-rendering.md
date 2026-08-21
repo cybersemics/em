@@ -124,15 +124,16 @@ The indent is applied as `transform: translateX(${1.5 - indent}em)` on the inner
 
 ## Virtualization
 
-`LayoutTree` virtualizes the bottom of the list. The virtualization boundary is:
+`LayoutTree` computes `viewportBottomOffset = spaceAbove + singleLineHeight * 5` and passes it with `innerHeight`. Each `TreeNode` combines those stable values with the current `scrollTop` to get the bottom virtualization boundary:
 
 ```ts
-viewportBottom = viewportBottomState (= scrollTop + innerHeight)
+viewportBottom = max(scrollTop, 0)
+               + innerHeight
                + spaceAbove
-               + (singleLineHeight * 5)   // overshoot, so a small scroll doesn't reveal blanks
+               + (singleLineHeight * 5) // overshoot, so a small scroll doesn't reveal blanks
 ```
 
-Thoughts whose `y > viewportBottom` are still in `treeThoughtsPositioned` but rendered with `height: 0` if both `belowCursor` and `!isVisible`. (Above the cursor, the autocrop already takes care of the blank.)
+Each `TreeNode` subscribes to `scrollTopStore` with a selector that returns only whether that thought is beyond the boundary. Most scroll updates leave this boolean unchanged, so they do not rerender `LayoutTree`, `TransitionGroup`, or the full thought list. A `TreeNode` returns `null` only when it is below the cursor, is not the cursor itself, and its `y` is more than one estimated thought height beyond `viewportBottom`. It remains in `treeThoughtsPositioned` so crossing the boundary can render it without rebuilding the list, while the fixed container height keeps the document height stable. (Above the cursor, autocrop already handles the blank space.)
 
 ## `useSizeTracking` and the `sizes` map
 

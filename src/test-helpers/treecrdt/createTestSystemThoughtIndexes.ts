@@ -1,0 +1,62 @@
+import type Index from '../../@types/IndexType'
+import type Lexeme from '../../@types/Lexeme'
+import type Thought from '../../@types/Thought'
+import type Timestamp from '../../@types/Timestamp'
+import { EM_TOKEN, ROOT_PARENT_ID, SETTINGS_TOKEN, SETTINGS_VALUE } from '../../constants'
+import { SYSTEM_ROOT_THOUGHT_IDS } from '../../data-providers/treecrdt/systemThoughtIds'
+import hashThought from '../../util/hashThought'
+
+/** Creates em-style indexes for the in-memory TreeCRDT unit-test provider. */
+export const createTestSystemThoughtIndexes = (
+  created: Timestamp = 0 as Timestamp,
+): {
+  thoughtIndex: Index<Thought>
+  lexemeIndex: Index<Lexeme>
+} => {
+  const thoughtIndex: Index<Thought> = {}
+
+  for (const id of SYSTEM_ROOT_THOUGHT_IDS) {
+    thoughtIndex[id] = {
+      id,
+      value: id,
+      rank: 0,
+      created,
+      lastUpdated: created,
+      updatedBy: '',
+      parentId: ROOT_PARENT_ID,
+      childrenMap: {},
+    }
+  }
+
+  thoughtIndex[EM_TOKEN] = {
+    ...thoughtIndex[EM_TOKEN],
+    childrenMap: {
+      [SETTINGS_TOKEN]: SETTINGS_TOKEN,
+    },
+  }
+
+  thoughtIndex[SETTINGS_TOKEN] = {
+    id: SETTINGS_TOKEN,
+    value: SETTINGS_VALUE,
+    rank: 0,
+    created,
+    lastUpdated: created,
+    updatedBy: '',
+    parentId: EM_TOKEN,
+    childrenMap: {},
+  }
+
+  return {
+    thoughtIndex,
+    lexemeIndex: {
+      [hashThought(SETTINGS_VALUE)]: {
+        contexts: [SETTINGS_TOKEN],
+        created,
+        lastUpdated: created,
+        updatedBy: '',
+      },
+    },
+  }
+}
+
+export default createTestSystemThoughtIndexes

@@ -5,17 +5,22 @@ import { AlertType } from '../constants'
 import getLatestActionType from '../util/getLastActionType'
 import { alertActionCreator as alert } from './alert'
 
-/** Action-creator for undo. */
-export const undoActionCreator = (): Thunk => (dispatch, getState) => {
-  const lastActionType = getLatestActionType(getState().undoPatches)
+/** Action-creator for undo.
+ *
+ * @param cursorAtEnd  Place the caret at the end of the restored thought instead of restoring the cursor offset captured before the undone action. Used by native undo (iOS three-finger swipe / shake-to-undo), which is expected to leave the caret at the end of the restored word.
+ */
+export const undoActionCreator =
+  ({ cursorAtEnd }: { cursorAtEnd?: boolean } = {}): Thunk =>
+  (dispatch, getState) => {
+    const lastActionType = getLatestActionType(getState().undoPatches)
 
-  dispatch({ type: 'undo' })
+    dispatch({ type: 'undo', cursorAtEnd })
 
-  if (!lastActionType) return
+    if (!lastActionType) return
 
-  dispatch(
-    alert(`Undo: ${startCase(lastActionType)}`, {
-      alertType: AlertType.Undo,
-    }),
-  )
-}
+    dispatch(
+      alert(`Undo: ${startCase(lastActionType)}`, {
+        alertType: AlertType.Undo,
+      }),
+    )
+  }
