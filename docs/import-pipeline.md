@@ -136,7 +136,16 @@ Both executors normalize input through the same two stages. This funnel is the o
 
 ### strip
 
-[`strip`](../src/util/strip.ts) is the inverse-direction utility: it reduces HTML to plain text (or to formatting-only HTML with `preserveFormatting`), and with `stripColors` reduces to the neutral [`EXTERNAL_FORMATTING_TAGS`](../src/constants.ts) (`b`, `i`, `u`, `strong`, `strike`), dropping the spans that carry color styles. It is used for plain-text export, `rawDestValue`, and the copy handlers — not currently in the import direction.
+[`strip`](../src/util/strip.ts) is the inverse-direction utility: it reduces HTML to plain text, or to formatting-only HTML with `preserveFormatting`. It is used for plain-text export, `rawDestValue`, `splitThought`, and the copy handlers. Its `stripColors` option — reduce to the neutral [`EXTERNAL_FORMATTING_TAGS`](../src/constants.ts) (`b`, `i`, `u`, `strong`, `strike`), dropping color spans — has no remaining caller; it is the remnant of the pre-parse sanitization removed in #2814, described next.
+
+### Sanitize after parsing, not before
+
+The funnel's shape is a deliberate decision, recorded in [#2814](https://github.com/cybersemics/em/pull/2814). Until early 2025, `importData` ran the whole clipboard HTML through `strip({ preserveFormatting: isEmText, stripColors: !isEmText })` *before* `textToHtml`, and `textToHtml` itself flattened app-generated HTML (macOS/iOS Notes, WebStorm) to text and re-parsed it as an indented outline. That implemented external-color stripping ([#2499](https://github.com/cybersemics/em/pull/2499)) and Notes-app import ([#1154](https://github.com/cybersemics/em/pull/1154)), but `strip` is a DOMPurify + regex pass with no structural awareness: applied to a document, it collapsed nested `<ul>` lists into a single line ([#2807](https://github.com/cybersemics/em/issues/2807)), and the HTML → text → JSON → HTML round trip could not distinguish app-specific markup structurally. #2814 removed both, knowingly re-opening #2467 and breaking the Notes-app cases — the skipped tests marked "See commit" in [`importData.ts`](../src/actions/__tests__/importData.ts) and the TODO at the top of [`importData`](../src/actions/importData.ts) refer to it — in exchange for a funnel that parses first and transforms the parsed tree.
+
+Two consequences for anyone extending the pipeline:
+
+- Source-specific handling (Notes, ChatGPT, WorkFlowy) and any external-vs-internal sanitization belong in `htmlToJson`, operating on himalaya nodes; the ChatGPT `p1/p2` branch and `stripStyleAttribute` are the existing examples. Do not reintroduce a pre-parse `strip` of the raw HTML.
+- `importText` and `importFiles` are expected to converge toward `importFiles`. New behavior goes into the shared funnel or `importFiles`, not into `importText`'s paths.
 
 ## The copy side
 
@@ -181,10 +190,10 @@ The unifying principle: the router (`importData`), the funnel (`textToHtml`/`htm
 
 [#2467](https://github.com/cybersemics/em/issues/2467) (strip external colors), [#4161](https://github.com/cybersemics/em/issues/4161) (browser formatting carried over), [#3438](https://github.com/cybersemics/em/issues/3438) (imported font size kept), [#4073](https://github.com/cybersemics/em/issues/4073) (black text invisible after Safari↔Capacitor paste).
 
-The internal/external signal already exists: `isEmText` in `useOnPaste`/`importData`, derived from the `text/em` clipboard marker. It is currently used only for meta-charset cleanup. The fix is to thread it through the pipeline and sanitize *external* content on both executor paths:
+The internal/external signal already exists: `isEmText` in `useOnPaste`/`importData`, derived from the `text/em` marker that #2499 introduced for exactly this purpose. Its original use — `strip({ stripColors: !isEmText })` on the raw clipboard HTML — was removed in #2814 because pre-parse stripping destroyed nested structure (see [Sanitize after parsing, not before](#sanitize-after-parsing-not-before)); since then the flag is used only for meta-charset cleanup. The fix is to reintroduce the distinction **inside the funnel**, not in front of it:
 
-- **Single-line path**: sanitize `processedText` in `importData` (or the `text` splice in `importText`) when `!isEmText`. `strip(html, { stripColors: true })` already implements the desired semantics — keep `b`/`i`/`u`/`strong`/`strike` structure, drop styles and attributes — and `stripStyleAttribute` covers the keep-colors case. No new sanitizer is needed; the gap is that the inline path calls neither.
-- **Structural path**: `htmlToJson` already routes spans through `stripStyleAttribute`, which handles the invisible-black-text case for spans, but font sizes and families arriving via other channels (e.g. `<font>`, `class`-based styles) and the passthrough branch of `textToHtml` deserve the same `isEmText`-gated treatment.
+- **Structural path**: pass `isEmText` through `importText`/`importFiles` into `htmlToJson`, and have `formattingNodeToHtml` apply a stricter `stripStyleAttribute` profile for external content — drop `color`/`background-color` and font sizes entirely, keep only [`EXTERNAL_FORMATTING_TAGS`](../src/constants.ts) — while keeping the current whitelist for em content. This operates on parsed nodes, so nested lists are unaffected.
+- **Single-line path**: the inline splice in `importText` bypasses `htmlToJson` entirely, which is why even plain black text that `stripStyleAttribute` would already drop reaches the thought value. The fix consistent with the convergence direction is to run the single-line fragment through the same `htmlToJson` call and splice the resulting block's `scope`. A single-line fragment has no list structure, so #2807's failure mode cannot recur. This removes the asymmetry rather than adding a second sanitizer.
 
 #4073 is the same bug through a different door: mobile Safari and Capacitor copies carry no `text/em` marker (plain-text-only platforms), so an em→em paste across the two iOS shells is treated as external, and the `text/html` flavor iOS supplies carries `color: #000` (black on em's dark background). Stripping external colors fixes the symptom regardless of which side wrote the clipboard.
 
