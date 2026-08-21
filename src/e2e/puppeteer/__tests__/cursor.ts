@@ -183,10 +183,6 @@ it('move cursor from formatted thought to first unformatted thought in descendin
   // Wait for cursor to move to 'pear'
   await waitForCursor('pear')
 
-  // Verify cursor moved to 'pear' (when cursorDown)
-  const downThoughtValue = await getEditingText()
-  expect(downThoughtValue).toBe('pear')
-
   await press('ArrowUp')
 
   // Before doing consecutive arrow up presses, wait until the cursor is on the apple thought then proceed with the arrow up press once again. The reason for doing is cursorUp and cursorDown are throttled to run once per animation frame, so repeated keypresses within the same frame might be ignored especially when running in CI.
@@ -196,8 +192,4 @@ it('move cursor from formatted thought to first unformatted thought in descendin
 
   // Wait for cursor to move to 'fruits'
   await waitForCursor('fruits')
-
-  // Verify cursor moved to 'fruits' (when cursorUp)
-  const upThoughtValue = await getEditingText()
-  expect(upThoughtValue).toBe('fruits')
 })
