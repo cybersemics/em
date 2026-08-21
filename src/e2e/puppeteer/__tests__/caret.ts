@@ -26,8 +26,7 @@ import { usePersistentTreecrdtStorage } from '../setup'
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
 describe('all platforms', () => {
-  // TODO: Why is this failing?
-  it.skip('caret should be at the beginning of thought after split on enter', async () => {
+  it('caret should be at the beginning of thought after split on enter', async () => {
     const importText = `
     - puppeteer
       - web scraping
