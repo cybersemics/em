@@ -9,6 +9,7 @@ import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import { getAutoscrollPadding } from '../device/preventAutoscroll'
 import useDelayedAutofocus from '../hooks/useDelayedAutofocus'
+import useFreshCallback from '../hooks/useFreshCallback'
 import useLayoutAnimationFrameEffect from '../hooks/useLayoutAnimationFrameEffect'
 import useSelectorEffect from '../hooks/useSelectorEffect'
 import { hasChildren } from '../selectors/getChildren'
@@ -220,15 +221,15 @@ const VirtualThought = ({
   }, [updateSize, value])
 
   // trigger onResize with null on unmount to allow subscribers to clean up
-  useEffect(
-    () => {
-      return () => {
-        onResize?.({ height: null, width: null, id: id, isVisible: true, key: crossContextualKey })
-      }
-    },
-    // these should be memoized and not change for the life of the component, so this is effectively componentWillUnmount
+  // onResize is not stable for the life of the component: TreeNode memoizes it on cliff, which changes whenever the
+  // thought's position in the tree changes. Listing it as a dependency would run the cleanup on every such change,
+  // momentarily dropping the thought's tracked size while it is still mounted. useFreshCallback keeps the reference
+  // stable so the cleanup is only run on unmount, while still calling the latest onResize.
+  const releaseSize = useFreshCallback(
+    () => onResize?.({ height: null, width: null, id: id, isVisible: true, key: crossContextualKey }),
     [crossContextualKey, onResize, id],
   )
+  useEffect(() => releaseSize, [releaseSize])
 
   return (
     <div

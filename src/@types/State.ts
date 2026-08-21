@@ -129,7 +129,7 @@ interface State {
   noteOffset: number | null
   /**
    * Temporarily stores updates that need to be persisted.
-   * Passed to Yjs and cleared on every action.
+   * Passed to the data provider and cleared on every action.
    * See: /redux-enhancers/pushQueue.ts.
    */
   pushQueue: PushBatch[]
@@ -139,7 +139,6 @@ interface State {
   remoteSearch: boolean
   resourceCache: Index<string>
   rootContext: Context
-  schemaVersion: number
   search: string | null
   searchContexts: Index<Context> | null
   searchLimit?: number

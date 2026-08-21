@@ -15,6 +15,9 @@
 # Reports:
 #   - Workflow summary
 #   - Optional Discord notification (flakes/infra failures only)
+#   - A tracking issue per intermittently failing test (labelled `test`),
+#     deduplicated against open issues by exact title match. Tests that fail
+#     every iteration are regressions, not flakes, and are not filed.
 #
 # To enable Discord notifications, add a `DISCORD_WEBHOOK_URL` repository secret.
 
@@ -209,19 +212,7 @@ jobs:
 
           cat report.md >> "$GITHUB_STEP_SUMMARY"
 
-          if [ -f flaky-results/flaky-summary.json ]; then
-            CLEAN=$(node -e "console.log(JSON.parse(require('fs').readFileSync('flaky-results/flaky-summary.json','utf8')).clean)")
-            FLAKE_COUNT=$(node -e "const s=JSON.parse(require('fs').readFileSync('flaky-results/flaky-summary.json','utf8')); console.log(s.failedTestCount ?? s.flakeCount ?? 0)")
-            INFRA_COUNT=$(node -e "console.log(JSON.parse(require('fs').readFileSync('flaky-results/flaky-summary.json','utf8')).infraFailureCount)")
-          else
-            CLEAN=false
-            FLAKE_COUNT=0
-            INFRA_COUNT=1
-          fi
-
-          echo "clean=$CLEAN" >> "$GITHUB_OUTPUT"
-          echo "flake_count=$FLAKE_COUNT" >> "$GITHUB_OUTPUT"
-          echo "infra_count=$INFRA_COUNT" >> "$GITHUB_OUTPUT"
+          node scripts/ci/flaky-outputs.mjs flaky-results/flaky-summary.json >> "$GITHUB_OUTPUT"
           echo "aggregate_exit=$STATUS" >> "$GITHUB_OUTPUT"
 
       - name: Notify Discord
@@ -238,43 +229,23 @@ jobs:
             exit 0
           fi
 
-          if [ ! -f flaky-results/flaky-summary.json ]; then
-            CONTENT=$(node -e "
-              process.stdout.write(JSON.stringify({
-                content: [
-                  '**Puppeteer flaky-test alert**',
-                  'Aggregator failed before producing a summary.',
-                  process.env.RUN_URL,
-                ].join('\\n'),
-              }))
-            ")
-          else
-            TOP=$(node -e "
-              const s = JSON.parse(require('fs').readFileSync('flaky-results/flaky-summary.json','utf8'))
-              const lines = (s.topOffenders || []).map(t =>
-                '• ' + t.file + ' › ' + t.fullName + ' — failed ' + t.failed + '/' + t.of
-              )
-              process.stdout.write(lines.join('\\n') || '(none)')
-            ")
-            CONTENT=$(node -e "
-              const text = [
-                '**Puppeteer flaky-test alert**',
-                'Failing tests: ' + process.env.FLAKE_COUNT + ' | Infra failures: ' + process.env.INFRA_COUNT,
-                '',
-                'Top offenders:',
-                process.argv[1],
-                '',
-                process.env.RUN_URL,
-              ].join('\\n')
-              process.stdout.write(JSON.stringify({ content: text.slice(0, 1900) }))
-            " "$TOP")
-          fi
+          CONTENT=$(node scripts/ci/flaky-discord-payload.mjs flaky-results/flaky-summary.json)
 
           curl -sS -f -X POST \
             -H 'Content-Type: application/json' \
             -d "$CONTENT" \
             "$DISCORD_WEBHOOK_URL"
           echo "Discord notification sent."
+
+      # See scripts/ci/file-flaky-issues.cjs for what gets filed and how it is deduplicated.
+      - name: File tracking issues
+        if: steps.aggregate.outputs.clean != 'true'
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        with:
+          script: |
+            await require('./scripts/ci/file-flaky-issues.cjs')({ github, context, core })
 
       - name: Fail job when flakes or infra failures found
         if: steps.aggregate.outputs.clean != 'true'
