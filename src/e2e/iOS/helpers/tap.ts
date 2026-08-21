@@ -3,18 +3,20 @@ import type { Element } from 'webdriverio'
 // import getNativeElementRect from './getNativeElementRect'
 
 interface Options {
-  // Where in the horizontal line (inside) of the target node should be tapped. Defaults to center, which
-  // matches how a person taps: told to tap a button, they aim for the middle, not the exact edge. Adjacent
-  // toolbar buttons are inline-block with no margin, so their padding boxes touch and an edge tap is half a
-  // pixel of rounding away from landing on the neighboring command.
+  // Which point of the target node to tap when no x is given. Defaults to center, which matches how a
+  // person taps: told to tap a button, they aim for the middle, not the exact edge. Adjacent toolbar
+  // buttons are inline-block with no margin, so their padding boxes touch and an edge tap is half a pixel
+  // of rounding away from landing on the neighboring command.
   horizontalTapLine?: 'left' | 'center' | 'right'
   // Pointer type to use for the tap action. Defaults to 'mouse'.
   pointerType?: 'mouse' | 'touch'
-  // Specify specific node on editable to tap. Overrides horizontalTapLine
+  // Specify specific node on editable to tap. Overrides horizontalTapLine and x
   offset?: number
-  // Number of pixels of x offset to add to the tap coordinates
+  // Pixels from the LEFT EDGE of the target node. Overrides horizontalTapLine. Never measured from the
+  // center: the center moves with the node's width, so a pixel count from it means nothing on its own.
   x?: number
-  // Number of pixels of y offset to add to the tap coordinates
+  // Pixels from the TOP EDGE of the target node. Defaults to the vertical center. Like x, measured from
+  // the edge so that the number means the same thing regardless of the node's size.
   y?: number
   // Milliseconds to delay the release of the tap.
   releaseDelayMs?: number
@@ -26,7 +28,7 @@ interface Options {
  */
 const tap = async (
   nodeHandle: Element,
-  { horizontalTapLine = 'center', offset, x = 0, y = 0, pointerType = 'mouse', releaseDelayMs = 100 }: Options = {},
+  { horizontalTapLine = 'center', offset, x, y, pointerType = 'mouse', releaseDelayMs = 100 }: Options = {},
 ) => {
   // Ensure element exists and has an elementId
   const exists = await nodeHandle.isExisting()
@@ -66,34 +68,25 @@ const tap = async (
       offset,
     )
 
-  const coordinate = !offset
-    ? {
-        x:
-          boundingBox.x +
-          (horizontalTapLine === 'left'
-            ? 1
-            : horizontalTapLine === 'right'
-              ? boundingBox.width - 1
-              : boundingBox.width / 2),
-        y: boundingBox.y + boundingBox.height / 2,
-      }
-    : await offsetCoordinates()
+  // x and y are measured from the node's top left corner, so each is meaningful on its own. Whichever is
+  // omitted falls back to that axis's default point: horizontalTapLine for x, the vertical center for y.
+  const horizontalTapLineOffset =
+    horizontalTapLine === 'left' ? 1 : horizontalTapLine === 'right' ? boundingBox.width - 1 : boundingBox.width / 2
 
-  if (!coordinate) throw new Error('Coordinate not found.')
+  const rangeCoordinate = offset !== undefined ? await offsetCoordinates() : undefined
+  if (offset !== undefined && !rangeCoordinate) throw new Error('Coordinate not found.')
+
+  const coordinate = {
+    x: rangeCoordinate ? rangeCoordinate.x : boundingBox.x + (x ?? horizontalTapLineOffset),
+    y: y !== undefined ? boundingBox.y + y : (rangeCoordinate?.y ?? boundingBox.y + boundingBox.height / 2),
+  }
 
   // const topBarRect = await getNativeElementRect(browser, '//XCUIElementTypeOther[@name="topBrowserBar"]')
   // console.log('topbarrect', topBarRect)
 
   console.info(
-    `Coordinates: x ${coordinate.x} y ${coordinate.y} x-offset ${x} y-offset ${y} bb-x ${boundingBox.x} bby ${boundingBox.y}`,
+    `Tapping at {x: ${coordinate.x}, y: ${coordinate.y}} (bounding box x ${boundingBox.x} y ${boundingBox.y} w ${boundingBox.width} h ${boundingBox.height}, x-offset ${x} y-offset ${y})`,
   )
-
-  const finalCoords = {
-    x: coordinate.x + x,
-    y: coordinate.y + y,
-  }
-
-  console.info(`Tapping at coordinates {x: ${finalCoords.x}, y: ${finalCoords.y}}`)
 
   // Use performActions directly to avoid the automatic releaseActions call
   // Safari/XCUITest doesn't support the DELETE /actions endpoint (releaseActions)
@@ -108,8 +101,8 @@ const tap = async (
         {
           type: 'pointerMove',
           duration: 0,
-          x: Math.round(finalCoords.x),
-          y: Math.round(finalCoords.y),
+          x: Math.round(coordinate.x),
+          y: Math.round(coordinate.y),
           origin: 'viewport',
         },
         { type: 'pointerDown', button: 0 },
