@@ -275,6 +275,25 @@ const splitSentence = (value: string): SplitResult[] => {
       }
     }
 
+    // Check for slash and split into a chain of descendants, each part a child of the previous
+    // e.g. "one/two/three" -> "- one  - two (child)  - three (grandchild)"
+    if (plainValue.includes('/')) {
+      let offset = 0
+      const boundaries = plainValue.split('/').map(part => {
+        const start = offset
+        offset += part.length + 1
+        return { start, end: start + part.length }
+      })
+      const parts = boundaries.filter(({ start, end }) => plainValue.slice(start, end).trim() !== '')
+      // Only split if the slash has content on both sides
+      if (parts.length > 1) {
+        return parts.map(({ start, end }, i) => ({
+          value: trimHtml(sliceHtmlByTextOffsets(value, start, end)),
+          ...(i > 0 ? { insertNewSubThought: true } : null),
+        }))
+      }
+    }
+
     // if we're sub-sentence or in one sentence territory, split by comma, or by the word "and" if there is no comma
     // e.g. "john, johnson, john doe" -> "- john - johnson - john doe"
     // e.g. "Alice and the Lion" -> "- Alice - the Lion"

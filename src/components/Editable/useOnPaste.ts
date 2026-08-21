@@ -3,6 +3,7 @@ import React, { useCallback } from 'react'
 import { useDispatch } from 'react-redux'
 import SimplePath from '../../@types/SimplePath'
 import { importDataActionCreator as importData } from '../../actions/importData'
+import { HOME_TOKEN } from '../../constants'
 import store from '../../stores/app'
 import equalPath from '../../util/equalPath'
 import strip from '../../util/strip'
@@ -30,9 +31,12 @@ const useOnPaste = ({
       // Handle raw thought import confirmation
       if (
         typeof window !== 'undefined' &&
-        plainText.startsWith(`{
+        (plainText.startsWith(`{
   "thoughtIndex": {
-    "__ROOT__": {`) &&
+    "__ROOT__": {`) ||
+          plainText.startsWith(`{
+  "thoughtIndex": {
+    "${HOME_TOKEN}": {`)) &&
         !window.confirm('Import raw thought state? Current state will be overwritten.')
       ) {
         e.preventDefault()

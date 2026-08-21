@@ -1,6 +1,5 @@
 import Context from '../../../@types/Context'
 import Thought from '../../../@types/Thought'
-import { WindowEm } from '../../../initialize'
 import { page } from '../session'
 
 /**
@@ -9,9 +8,8 @@ import { page } from '../session'
 const waitForContextHasChildWithValue = async (context: Context, childValue: string) =>
   page.waitForFunction(
     (context: Context, childValue: string) =>
-      (window.em as WindowEm)
-        .getAllChildrenAsThoughts(context)
-        .some((thought: Thought) => thought.value === childValue) && (window.em as WindowEm).getLexeme(childValue),
+      window.em.getAllChildrenAsThoughts(context).some((thought: Thought) => thought.value === childValue) &&
+      window.em.getLexeme(childValue),
     {},
     context,
     childValue,

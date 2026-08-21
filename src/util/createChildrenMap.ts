@@ -7,7 +7,7 @@ import isAttribute from '../util/isAttribute'
 import keyValueBy from '../util/keyValueBy'
 
 /** Creates a childrenMapKey based on the value of meta thoughts and the id for non-meta thoughts. Always use the id as key if there is a duplicate meta value. */
-export const childrenMapKey = (thoughtIndex: Index<ThoughtId>, child: Thought) =>
+export const childrenMapKey = (thoughtIndex: Index<ThoughtId>, child: Pick<Thought, 'id' | 'value'>) =>
   child && isAttribute(child.value) && !thoughtIndex[child.value] ? child.value : child.id
 
 /** Generates an object for O(1) lookup of a thought's children. Meta attributes are keyed by value and normal are keyed by id. Missing thoughts are excluded. */

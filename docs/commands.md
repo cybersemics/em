@@ -87,7 +87,11 @@ The handler also:
 - Calls `e.preventDefault()` before dispatching, *unless* `command.permitDefault` is set. (`command.preventDefault` forces a preventDefault even when `canExecute` returns false.)
 - Routes through `executeCommandWithMulticursor`, which short-circuits to `executeCommand` if no multicursor is active.
 
-There's a special case in `beforeInput` for `newThought` and `indent` to handle iOS auto-capitalization: the Enter / space character is prevented in the `beforeinput` event rather than `keydown` ([issue #3707](https://github.com/cybersemics/em/issues/3707)). A second branch in `beforeInput` handles Android: soft keyboards report the space keydown as `keyCode 229` (`'Unidentified'`), so it never matches the `indent` command in `keyDown` and `keyCommandId` is never set — the branch catches the `beforeinput` `insertText` of a single space over an empty thought and dispatches `indent` directly ([issue #4178](https://github.com/cybersemics/em/issues/4178)).
+There's a special case in `beforeInput` for `newThought` and `indent` to handle iOS auto-capitalization: the Enter / space character is prevented in the `beforeinput` event rather than `keydown` ([issue #3707](https://github.com/cybersemics/em/issues/3707)). Another branch in `beforeInput` handles Android: soft keyboards report the space keydown as `keyCode 229` (`'Unidentified'`), so it never matches the `indent` command in `keyDown` and `keyCommandId` is never set — the branch catches the `beforeinput` `insertText` of a single space over an empty thought and dispatches `indent` directly ([issue #4178](https://github.com/cybersemics/em/issues/4178)).
+
+`beforeInput` also intercepts native undo/redo, delegating to `handleNativeHistory`. iOS shake-to-undo and the three-finger swipe fire a cancelable `beforeinput` with `inputType` `historyUndo` / `historyRedo` rather than a `keydown`, so the Cmd+Z path never sees them. Left to run natively, the browser mutates the contenteditable directly and bypasses em's undo, leaving the DOM out of sync with Redux ([issue #3954](https://github.com/cybersemics/em/issues/3954)). The branch prevents the native operation and dispatches em's `undo` / `redo` instead. Like `keyDown`, it first triggers `commandEmitter` to flush the pending throttled edit — editing dispatches `editThought` on a throttle, so without the flush a native undo mid-edit would undo the *previous* step and let the in-progress edit commit afterwards, duplicating text ([issue #4477](https://github.com/cybersemics/em/issues/4477)). It also dispatches them with `cursorAtEnd`, which makes `undoReducer` / `redoReducer` set `cursorOffset` to the end of the restored thought instead of restoring the offset captured before the undone action — that offset is wherever the cursor was placed when the thought was entered (the tap position, or `0`), which would leave the caret away from the restored word, typically at the beginning of the thought. Only the native path opts in; Cmd+Z and the toolbar keep the word-processor behavior of restoring the cursor to where it was. Placing the caret in the DOM is left to `useEditMode`, which re-runs on the `editableNonce` bump that the undo triggers — the re-render replaces the editable's `innerHTML` and destroys the caret, and the hook sets it again from `cursorOffset`. This is why the hook's `editMode` condition must reflect the *real* keyboard state; see [Edit mode across a momentary blur](cursor-and-caret.md#edit-mode-across-a-momentary-blur).
+
+In the iOS Capacitor app the same gesture arrives by a second route, `nativeHistory`, and never reaches `beforeInput` at all. WebKit dispatches the `historyUndo` / `historyRedo` `beforeinput` only while *its own* undo stack has a step, and it registers a step only for edits it performed itself. em applies most edits by re-rendering the editable from Redux rather than through the browser's editing commands, so WebKit's stack runs dry long before em's history does — from that point iOS handles the gesture itself and reports "Nothing to Undo" while em still has plenty to undo. The gestures are driven by the responder chain's `undoManager`, so `NativeHistoryWebView` (a `WKWebView` subclass supplied by `DevServerViewController`) returns an undo manager that, instead of performing undo and redo, emits the plugin's `nativeHistory` event. `src/device/nativeHistory.ts` subscribes to it from `initEvents` and calls the same `handleNativeHistory`, so both routes behave identically. Because the native manager consumes the gesture, only one route fires per gesture. That manager has no history of its own to answer from, so `nativeHistory` also reports em's `isUndoEnabled` / `isRedoEnabled` back to it through the plugin's `setHistoryAvailability` whenever they change. iOS reads them to decide whether to deliver the gesture at all, and confirms the gestures it does deliver with an "Undo"/"Redo" overlay — so a manager that claims an availability em cannot honor has iOS confirming an undo or redo that does nothing.
 
 ### Gesture activation
 
@@ -125,7 +129,7 @@ Both filter `globalCommands` by name and respect `hideFromDesktopCommandUniverse
 
 When `state.multicursors` is non-empty, the user has one or more thoughts selected. A selection of exactly one thought is common — on mobile, opening the Command Center selects the cursor thought. Every command must declare how it behaves in this case via the required `multicursor` field — there is no implicit default.
 
-- **`multicursor: false`** — execute on `state.cursor` as if no multicursor existed; selection stays. For commands that don't interact with the thoughtspace (e.g. opening modals). The cursor-navigation commands also declare `multicursor: false` yet still respond to a selection, since navigating a multiselect means moving the selection itself rather than executing once per selected thought: [`cursorUp`](../src/commands/cursorUp.ts) and [`cursorDown`](../src/commands/cursorDown.ts) read `state.multicursors` in their own `exec` to extend or collapse the selection, and the [`cursorForward`](../src/actions/cursorForward.ts) reducer replaces the selection with the thoughts one level forward.
+- **`multicursor: false`** — execute on `state.cursor` as if no multicursor existed; selection stays. For commands that don't interact with the thoughtspace (e.g. opening modals). The cursor-navigation commands also declare `multicursor: false` yet still respond to a selection, since navigating a multiselect means moving the selection itself rather than executing once per selected thought: [`cursorUp`](../src/commands/cursorUp.ts) and [`cursorDown`](../src/commands/cursorDown.ts) read `state.multicursors` in their own `exec` to extend or collapse the selection, and the [`cursorForward`](../src/actions/cursorForward.ts) and [`cursorBack`](../src/actions/cursorBack.ts) reducers replace the selection with the thoughts one level forward or back.
 - **`multicursor: true`** — execute once per selected thought.
 - **`multicursor: { ... }`** — fine-grained control with these options:
 
@@ -144,6 +148,10 @@ When `state.multicursors` is non-empty, the user has one or more thoughts select
 
 `setIsMulticursorExecuting` is the general mechanism for that collapsing, not a private detail of the command loop: [`undoRedoEnhancer`](../src/redux-enhancers/undoRedoEnhancer.ts) merges every action dispatched while `state.isMulticursorExecuting` is true into the preceding undo patch, and shows `undoLabel` in the undo/redo alert. Any code path that edits every selected thought without going through a `multicursor: true` command must bracket its dispatch with the same pair, or the user has to undo once per thought. The [`ColorPicker`](../src/components/ColorPicker.tsx) and [`LetterCasePicker`](../src/components/LetterCasePicker.tsx) reach the thoughtspace through [`formatSelection`](../src/actions/formatSelection.ts) and [`formatLetterCase`](../src/actions/formatLetterCase.ts) rather than through their `multicursor: false` toolbar commands, so those two action-creators do the bracketing themselves; drag-and-drop of a multiselect does the same.
 
+The flag is also what marks the traversal as bookkeeping rather than user intent, so that observers do not react to the transient state it passes through. Setting the cursor to each selected thought empties `state.multicursors` (the loop does not pass `preserveMulticursor`) and the restore then re-adds them one at a time, so the count falls to zero and climbs back mid-command; it would likewise reset `cursorCleared` on each hop. [`setCursor`](../src/actions/setCursor.ts) preserves `cursorCleared` while the flag is set, and [`multicursorAlertMiddleware`](../src/redux-middleware/multicursorAlertMiddleware.ts) suspends the Command Center's show/hide reaction. Both settle on the closing `setIsMulticursorExecuting({ value: false })`, which the middleware evaluates against the final multicursors.
+
+The whole of `executeCommandWithMulticursor` is synchronous, including that bracket, so an **asynchronous** command gets no help from it: the bracket is opened and closed around the call, and anything dispatched after the first `await` lands outside it. [`generateThought`](../src/commands/generateThought.ts) is the case in point — its `exec` only reaches the thoughtspace once a network request has returned. It defines an `execMulticursor` that yields once (so that the loop's own synchronous bracket has closed), opens a second bracket of its own, generates every selected thought, and closes it only after all of them have settled. A `multicursor: true` declaration would instead leave one undo step per generated thought, and each `exec`'s own `setCursor` would drop the caret on whichever request happened to finish last.
+
 ### Gating and defaults
 
 Three fields shape what happens when the command might not be runnable:
@@ -159,7 +167,7 @@ Three fields shape what happens when the command might not be runnable:
 
 `keyboardIndex` is recorded alongside the command and restored when it is repeated, since it cannot be derived from the Command/Ctrl + . keypress — that keypress matches none of the repeated command's own shortcuts. Without it, repeating `applyColor` would have no swatch to apply and would silently do nothing. `executeCommandWithMulticursor` resolves `repeat` itself and then delegates an already-resolved command, so it forwards the recorded index through executeCommand's `keyboardIndex` option.
 
-Only commands that make an *undoable, non-navigational* change are recorded, so that Repeat repeats the last edit no matter how many navigation or non-undoable commands intervened. `executeCommand` detects this by comparing the last non-navigation undo patch (the patch that Undo would revert, as classified by [`actionMetadata.registry`](../src/util/actionMetadata.registry.ts)) before and after `exec`. Consequently:
+Only commands that make an *undoable, non-navigational* change are recorded, so that Repeat repeats the last edit no matter how many navigation or non-undoable commands intervened. This is detected by comparing the last non-navigation undo patch (the patch that Undo would revert, as classified by [`actionMetadata.registry`](../src/util/actionMetadata.registry.ts)) before and after execution. A command with a custom `execMulticursor` never reaches `executeCommand`, so `executeCommandWithMulticursor` records it around that call instead, comparing the patch from the same point the per-cursor loop does — after `setIsMulticursorExecuting`. Consequently:
 
 - Navigation commands (Cursor Down, Jump Back) are skipped — their actions are registered `isNavigation`.
 - Commands that dispatch no undoable action (Export, Settings, Command Universe) are skipped, since they add no patch.
@@ -185,7 +193,7 @@ The full list of user-facing commands. For the canonical, always-up-to-date set,
 
 ### Back
 
-Move the cursor up a level. If Clear Thought is active, cancel it instead and leave the cursor where it is.
+Move the cursor up a level. If Clear Thought is active, cancel it instead and leave the cursor where it is. When thoughts are selected, deselect them and select the parent of each selected thought instead — except on desktop, where <kbd>Escape</kbd> clears the selection rather than moving it.
 
 <kbd>Escape</kbd>
 
@@ -421,7 +429,7 @@ https://github.com/user-attachments/assets/95f037cc-cf88-4392-98fb-4d79cdae4fba
 
 ### Bump Thought Down
 
-Bump the current thought down one level and replace it with a new, empty thought.
+Bump the current thought down one level and replace it with a new, empty thought. When multiple thoughts are selected, their parent is bumped down and the selected thoughts are moved into the new thought.
 
 <kbd>Command + Option + d</kbd>
 
@@ -457,7 +465,7 @@ Merges all duplicate siblings at the same level as the cursor. The first thought
 
 ### Split Sentences
 
-Splits multiple sentences in a single thought into separate thoughts. Sentence punctuation (`.;!?`) takes priority; a thought with a single sentence is split on commas, then on the symbols `↑↓←→+:`, then on the word "and". A dash (`-`, `–`, or `—`) and trailing parenthetical content are split into a subthought instead of a sibling.
+Splits multiple sentences in a single thought into separate thoughts. Sentence punctuation (`.;!?`) takes priority; a thought with a single sentence is split on commas, then on the symbols `↑↓←→+:`, then on the word "and". A dash (`-`, `–`, or `—`) and trailing parenthetical content are split into a subthought instead of a sibling, and slashes are split into a chain of descendants.
 
 <kbd>Command + Shift + S</kbd>
 
@@ -636,6 +644,12 @@ Pins open all thoughts at the current level.
 <kbd>Command + Shift + P</kbd>
 
 https://github.com/user-attachments/assets/db31b678-1e84-48c8-b4bf-0ce70a9b96c7
+
+### Pin Descendants
+
+Pins open all descendants of the current thought. Sets `=descendants/=pin` on the cursor thought, which expands the entire subtree whenever the thought itself is expanded.
+
+<kbd>Command + Option + Shift + P</kbd>
 
 ### Mark as done
 
