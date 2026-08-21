@@ -3,10 +3,16 @@ import { useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { token } from '../../../styled-system/tokens'
 import Command from '../../@types/Command'
-import { isBrowser } from '../../browser'
 import { gestureString } from '../../commands'
 import openMobileCommandUniverseCommand from '../../commands/openMobileCommandUniverse'
 import useFilteredCommands from '../../hooks/useFilteredCommands'
+import useGestureMenuLayout, {
+  GESTURE_MENU_COLUMN_GAP_REM,
+  GESTURE_MENU_HEADER_LABEL_FONT_SIZE_REM,
+  GESTURE_MENU_HEADER_LABEL_MARGIN_BOTTOM_REM,
+  GESTURE_MENU_HEADER_MARGIN_BOTTOM_REM,
+  GESTURE_MENU_ROW_GAP_REM,
+} from '../../hooks/useGestureMenuLayout'
 import gestureStore, {
   onGestureMenuEntered,
   onGestureMenuExited,
@@ -32,8 +38,51 @@ const GestureMenu: FC<{
 
   const hasMatchingCommand = commands.some(cmd => (gestureInProgress as string) === gestureString(cmd))
 
-  const mainCommands = commands.filter(cmd => cmd.id !== 'cancel' && cmd.id !== 'openMobileCommandUniverse')
-  const persistentCommands = commands.filter(cmd => cmd.id === 'cancel' || cmd.id === 'openMobileCommandUniverse')
+  const {
+    columnCount,
+    maxColumns,
+    columnWidth,
+    dividerWidth,
+    horizontalPaddingRem,
+    paddingTopRem,
+    verticalPaddingRem,
+    rowsPerColumn,
+    visibleCommandCount,
+    isMultiColumn,
+  } = useGestureMenuLayout(commands.length)
+
+  // Only the grid trims; the single-column stack renders every command and scrolls instead.
+  const visibleCommands = isMultiColumn ? commands.slice(0, visibleCommandCount) : commands
+
+  /**
+   * Whether a command's row renders as selected. Every command is selected by an exact gesture match;
+   * Cancel and Command Universe additionally answer to the states that have no exact match of their
+   * own — Command Universe to its gesture appearing as a *suffix* of the gesture in progress, and
+   * Cancel to a gesture that matches nothing at all. They are ordinary rows in every other respect.
+   */
+  const isSelected = (command: Command) => {
+    if (gestureInProgress === gestureString(command)) return true
+    const mobileCommandUniverseInProgress = gestureInProgress
+      ?.toString()
+      .endsWith(gestureString(openMobileCommandUniverseCommand))
+    if (command.id === 'openMobileCommandUniverse') return !!mobileCommandUniverseInProgress
+    if (command.id === 'cancel') return !hasMatchingCommand && !mobileCommandUniverseInProgress
+    return false
+  }
+
+  /** Renders command rows. Auto-scroll is only enabled in the single-column (scrolling) layout. */
+  const renderCommands = (items: Command[]) =>
+    items.map((command, index) => (
+      <GestureMenuItem
+        gestureInProgress={gestureInProgress as string}
+        key={command.id}
+        selected={isSelected(command)}
+        command={command}
+        isFirstCommand={index === 0}
+        isLastCommand={index === items.length - 1}
+        autoScroll={!isMultiColumn}
+      />
+    ))
 
   return (
     <div
@@ -53,7 +102,6 @@ const GestureMenu: FC<{
           textAlign: 'left',
           maxWidth: '100%',
           maxHeight: '100%',
-          width: '45.889rem',
           cursor: 'default',
           display: 'flex',
           flexDirection: 'column',
@@ -61,79 +109,83 @@ const GestureMenu: FC<{
         style={{ fontSize }}
       >
         {gestureInProgress && (
-          <div className={css({ padding: '2.25rem' })} style={!isBrowser ? { paddingTop: '0.75rem' } : undefined}>
+          <div
+            style={{
+              paddingBlock: `${verticalPaddingRem}rem`,
+              paddingInline: `${horizontalPaddingRem}rem`,
+              paddingTop: `${paddingTopRem}rem`,
+            }}
+          >
             {/* Header */}
-            <div className={css({ marginBottom: '1.389rem' })}>
+            <div style={{ marginBottom: `${GESTURE_MENU_HEADER_MARGIN_BOTTOM_REM}rem` }}>
               <div
-                className={css({
+                style={{
                   color: 'gestureMenuLabel',
-                  marginBottom: '0.444rem',
-                  fontSize: '0.9rem',
+                  marginBottom: `${GESTURE_MENU_HEADER_LABEL_MARGIN_BOTTOM_REM}rem`,
+                  fontSize: `${GESTURE_MENU_HEADER_LABEL_FONT_SIZE_REM}rem`,
                   fontWeight: 500,
-                })}
+                }}
               >
                 Gestures
               </div>
               <div
                 className={css({
                   height: '1px',
-                  width: '100%',
                   background: 'linear-gradient(90deg, {colors.gestureMenuDivider} 0%, {colors.bgTransparent} 100%)',
                 })}
+                style={{ width: dividerWidth }}
               />
             </div>
 
-            {/* Main commands */}
-            <div
-              className={css({
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '1.2rem',
-              })}
-            >
-              {mainCommands.map((command, index) => (
-                <GestureMenuItem
-                  gestureInProgress={gestureInProgress as string}
-                  key={command.id}
-                  selected={gestureInProgress === gestureString(command)}
-                  command={command}
-                  isFirstCommand={index === 0}
-                  isLastCommand={index === mainCommands.length - 1}
-                />
-              ))}
-            </div>
-            {/* Cancel / Cheatsheet block */}
-            {persistentCommands.length > 0 && (
+            {isMultiColumn ? (
+              /* Multi-column grid: commands flow top-to-bottom then left-to-right and own every column.
+                 Cancel and Command Universe are simply the last two entries, so they land wherever the
+                 packing puts them — including split across a column boundary. */
               <div
-                className={css({
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '1.2rem',
-                })}
-                style={{ marginTop: !mainCommands.length ? 0 : '2.15rem' }}
+                style={{
+                  display: 'grid',
+                  // Track count comes from what fits, not what's used, so the tracks keep their width
+                  // as commands drop away; unused tracks simply render empty.
+                  gridTemplateColumns: `repeat(${maxColumns}, minmax(0, 1fr))`,
+                  columnGap: `${GESTURE_MENU_COLUMN_GAP_REM}rem`,
+                }}
               >
-                {persistentCommands.map((command, index) => {
-                  const mobileCommandUniverseInProgress = gestureInProgress
-                    ?.toString()
-                    .endsWith(gestureString(openMobileCommandUniverseCommand))
-                  const isMobileCommandUniverseMatch =
-                    command.id === 'openMobileCommandUniverse' && mobileCommandUniverseInProgress
-                  const isCancelMatch =
-                    command.id === 'cancel' && !hasMatchingCommand && !mobileCommandUniverseInProgress
-
-                  return (
-                    <GestureMenuItem
-                      gestureInProgress={gestureInProgress as string}
-                      key={command.id}
-                      selected={
-                        isMobileCommandUniverseMatch || gestureInProgress === gestureString(command) || isCancelMatch
-                      }
-                      command={command}
-                      isFirstCommand={index === 0}
-                      isLastCommand={index === persistentCommands.length - 1}
-                    />
-                  )
-                })}
+                {/* Split the commands into column-major chunks (top-to-bottom then left-to-right)
+                   and render each column as its own nested grid. Per-column row tracks — rather
+                   than one shared set of tracks — keep a selected command's description from
+                   inflating the matching row in sibling columns. */}
+                {Array.from({ length: columnCount }, (_, columnIndex) =>
+                  visibleCommands.slice(columnIndex * rowsPerColumn, (columnIndex + 1) * rowsPerColumn),
+                ).map((columnCommands, columnIndex) => (
+                  <div key={columnIndex} style={{ minWidth: 0 }}>
+                    <div
+                      style={{
+                        display: 'grid',
+                        // Auto rows (rather than a fixed repeat(rowsPerColumn)) so a short last column
+                        // is only as tall as its own items, with no trailing empty tracks.
+                        gridAutoRows: 'min-content',
+                        rowGap: `${GESTURE_MENU_ROW_GAP_REM}rem`,
+                      }}
+                    >
+                      {renderCommands(columnCommands)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              /* Single column: a plain flex stack rather than a grid. Above md it is held to the same
+                 columnWidth the grid tracks use, so collapsing from two columns to one leaves the
+                 surviving column exactly where and how wide it was. */
+              <div style={{ width: columnWidth }}>
+                <div
+                  className={css({
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '1.2rem',
+                  })}
+                >
+                  {renderCommands(visibleCommands)}
+                </div>
               </div>
             )}
           </div>

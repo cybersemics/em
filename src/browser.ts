@@ -1,6 +1,7 @@
 /* eslint-disable import/prefer-default-export */
 /** Defines client/browser-specific variables that do not change over the course of a session. */
 import { Capacitor } from '@capacitor/core'
+import { token } from '../styled-system/tokens'
 
 export const isIOS = Capacitor.getPlatform() === 'ios'
 
@@ -10,6 +11,23 @@ export const isBrowser = typeof window !== 'undefined' && Capacitor.getPlatform(
 export const isTouch =
   typeof window !== 'undefined' &&
   (window.matchMedia?.('(pointer: coarse)').matches || Capacitor.getPlatform() === 'android')
+
+/**
+ * Returns true if the device is a touchscreen whose *smaller* screen dimension is at least the `lg`
+ * breakpoint ("landscape mobile devices and larger", 600px — approx the short edge of an iPad).
+ *
+ * Reads `window.screen` rather than the viewport, so the answer describes the device and does not
+ * change when it is rotated or when a browser window is resized. Taking the minimum of the two screen
+ * dimensions is what excludes a phone held in landscape: an iPhone 17 Pro is 874pt wide that way and
+ * clears `lg` on viewport width alone, but `min(402, 874)` does not.
+ *
+ * Like `isTouch`, this is evaluated once at import, so device emulation applied after page load will
+ * not change it — reload after resizing.
+ */
+export const isTablet =
+  isTouch &&
+  typeof window !== 'undefined' &&
+  Math.min(window.screen.width, window.screen.height) >= parseInt(token('breakpoints.lg'))
 
 /** Returns true on Android, whether running as a native Capacitor app or in an Android browser or
  * WebView. The old check tested navigator.platform === 'Linux armv7l' (32-bit ARM only), which is
