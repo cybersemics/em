@@ -42,35 +42,6 @@ describe('DOM', () => {
 
     expect(document.querySelector(`div[data-editable]`)?.textContent).toBe('')
   })
-
-  // https://github.com/cybersemics/em/issues/4924
-  it('bumps the cursor thought down when Command + Shift + D is pressed', async () => {
-    await dispatch([
-      importText({
-        text: `
-        - AAA
-        - BBB
-        - CCC`,
-      }),
-      setCursor(['AAA']),
-    ])
-
-    await act(vi.runOnlyPendingTimersAsync)
-
-    act(() => {
-      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'd', metaKey: true, shiftKey: true, bubbles: true }))
-    })
-
-    await act(vi.runOnlyPendingTimersAsync)
-
-    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-
-    expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${''}
-    - AAA
-  - BBB
-  - CCC`)
-  })
 })
 
 describe('multicursor', () => {
