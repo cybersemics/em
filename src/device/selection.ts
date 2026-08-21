@@ -108,6 +108,38 @@ export const isThought = (node?: EventTarget | null): boolean => {
   return isContentEditable(editable) || isNoteEditable(editable)
 }
 
+/**
+ * Returns the client rects of a selection range, measuring the adjacent character when the range itself reports none.
+ *
+ * A range collapsed immediately before an element's first child reports no client rects in Chrome, which is exactly
+ * where the caret lands at offset 0 of a thought. Without a fallback, callers cannot tell which line the caret is on
+ * and assume it is the only line, so cursorDown skips past the remaining lines of a wrapped thought.
+ */
+const getRangeRects = (range: Range): DOMRect[] => {
+  const rects = Array.from(range.getClientRects())
+  if (rects.length) return rects
+
+  // Descend from an element container to the text node that the caret is positioned before.
+  let node: Node | null = range.startContainer
+  let offset = range.startOffset
+  while (node && node.nodeType !== Node.TEXT_NODE) {
+    const child: Node | null = node.childNodes[offset] ?? node.childNodes[node.childNodes.length - 1] ?? null
+    if (!child) return []
+    node = child
+    offset = 0
+  }
+
+  // An empty thought has no character to measure, and legitimately occupies a single line.
+  const length = node?.textContent?.length ?? 0
+  if (!node || !length) return []
+
+  // Measure the character next to the caret, which is always on the same line as the caret.
+  const probe = document.createRange()
+  probe.setStart(node, Math.min(offset, length - 1))
+  probe.setEnd(node, Math.min(offset + 1, length))
+  return Array.from(probe.getClientRects())
+}
+
 /** Returns true if the selection is  on the first line of a multi-line text node. Returns true if there is no selection or if the text node is only a single line. */
 export const isOnFirstLine = (): boolean => {
   const selection = window.getSelection()
@@ -142,13 +174,14 @@ export const isOnLastLine = (): boolean => {
   const { anchorNode: baseNode, rangeCount } = selection
   if (rangeCount === 0) return true
 
-  const clientRects = selection.getRangeAt(0).getClientRects()
-  if (!clientRects?.length) return true
+  const clientRects = getRangeRects(selection.getRangeAt(0))
+  if (!clientRects.length) return true
 
   const { y: rangeY, height: rangeHeight } = clientRects[0]
   if (!rangeY) return true
 
-  const baseNodeParentEl = baseNode?.parentElement as HTMLElement
+  // The anchor is a text node for a caret within the text, but is the editable itself when the caret is at offset 0.
+  const baseNodeParentEl = (baseNode instanceof Element ? baseNode : baseNode?.parentElement) as HTMLElement
   if (!baseNodeParentEl) return true
 
   // baseNodeParentEl is the thought for plain text, but formatted text requires traversing up

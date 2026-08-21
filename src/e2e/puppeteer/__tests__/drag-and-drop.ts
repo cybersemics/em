@@ -380,9 +380,7 @@ describe('drag', () => {
 describe('drop', () => {
   beforeEach(hideHUD)
 
-  // TODO: Fails intermittently due to hold: false
-  // See previous attempts to fix: https://github.com/cybersemics/em/pull/2701
-  it.skip('DragAndDropThought', async () => {
+  it('DragAndDropThought', async () => {
     await simulateDragAndDrop({ drag: true, drop: true })
 
     await paste(`

@@ -12,11 +12,11 @@ import gesture from '../helpers/gesture'
 import getEditingText from '../helpers/getEditingText'
 import getSelection from '../helpers/getSelection'
 import keyboard from '../helpers/keyboard'
+import openModal from '../helpers/openModal'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import refresh from '../helpers/refresh'
 import waitForEditable from '../helpers/waitForEditable'
-import waitForHiddenEditable from '../helpers/waitForHiddenEditable'
 import waitForSelector from '../helpers/waitForSelector'
 import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
 import waitUntil from '../helpers/waitUntil'
@@ -26,8 +26,7 @@ import { usePersistentTreecrdtStorage } from '../setup'
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
 describe('all platforms', () => {
-  // TODO: Why is this failing?
-  it.skip('caret should be at the beginning of thought after split on enter', async () => {
+  it('caret should be at the beginning of thought after split on enter', async () => {
     const importText = `
     - puppeteer
       - web scraping
@@ -350,8 +349,9 @@ describe('mobile only', () => {
     expect(offset).toBe(0)
   })
 
-  // TODO: waitForHiddenEditable is broken after virtualizing thoughts
-  it.skip('do nothing when a hidden uncle is clicked', async () => {
+  // A hidden uncle used to remain in the DOM as fully transparent text, where it could still be tapped by accident.
+  // Autofocus now fades it out and then replaces it with a fixed-height shim, so there is nothing left to tap.
+  it('a hidden uncle should not be rendered, so that it cannot be tapped', async () => {
     const importText = `
     - a
       - b
@@ -362,37 +362,37 @@ describe('mobile only', () => {
     await clickThought('a')
     await clickThought('c')
 
-    await waitForHiddenEditable('d')
-    await clickThought('d')
+    // d is an uncle of the cursor and is hidden by autofocus, so it is eventually removed from the DOM
+    await waitUntil(() => !Array.from(document.querySelectorAll('[data-editable]')).some(el => el.textContent === 'd'))
 
+    // the ancestors of the cursor remain visible and the cursor stays on c
     await waitForEditable('a')
-
-    const cursorText = await getEditingText()
-    expect(cursorText).toBe('c')
+    expect(await getEditingText()).toBe('c')
   })
 
-  it.skip('edit mode should be disabled after opening a modal', async () => {
+  it('edit mode should be disabled after opening a modal', async () => {
     const importText = `
     - a
       - b`
 
     await paste(importText)
 
+    // on mobile the first tap moves the cursor to b and the second tap enables edit mode
     await clickThought('b')
     await clickThought('b')
+    await waitUntil(() => !!document.activeElement?.closest('[data-editable]'))
 
-    // TODO: Why is the selection on the breadcrumbs? Edit mode should be active on b.
-    const textContext = await getSelection().focusNode?.textContent
-    expect(textContext).toBe('b')
+    await openModal('export')
 
-    // const focusNodeTypeBefore = await getSelection().focusNode?.nodeType
-    // expect(focusNodeTypeBefore).toBe(Node.TEXT_NODE)
-
-    await click('[aria-label="Export"]')
-    await click('.popup-close-x')
-
-    const focusNode = await getSelection().focusNode
-    expect(focusNode).toBeUndefined()
+    // the caret should leave the thought, i.e. edit mode is disabled.
+    // Note that the selection moves into the modal content rather than being cleared entirely.
+    await waitUntil(() => !document.activeElement?.closest('[data-editable]'))
+    const isCaretInThought = await page.evaluate(() => {
+      const focusNode = window.getSelection()?.focusNode
+      const focusElement = focusNode instanceof Element ? focusNode : focusNode?.parentElement
+      return !!focusElement?.closest('[data-editable]')
+    })
+    expect(isCaretInThought).toBe(false)
   })
 
   it('edit mode should be enabled after deleting an empty favorited thought', async () => {

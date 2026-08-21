@@ -25,8 +25,7 @@ it('preserves pasted HTML as text/html in bold case', async () => {
   expect(editable).toBeTruthy()
 })
 
-// TODO: Broken in due to reverting related code. See: #2814.
-it.skip('preserves pasted HTML as text/html with text color and background color', async () => {
+it('preserves pasted HTML as text/html with text color and background color', async () => {
   await press('Enter', { delay: 10 })
   await setClipboard({
     html: '<font color="#000000" style="background-color: rgb(255, 136, 0);">Hello </font><font color="#000000" style="background-color: rgb(0, 214, 136);">World</font>',
@@ -34,8 +33,10 @@ it.skip('preserves pasted HTML as text/html with text color and background color
   })
   await press('Insert', { shift: true })
 
+  // Pasted markup is preserved verbatim rather than being re-parsed into equivalent <span style> tags.
+  // See textToHtml, which no longer strips and re-parses HTML: https://github.com/cybersemics/em/pull/2814
   const editable = await waitForEditable(
-    '<span style="background-color: rgb(255, 136, 0);color: #000000;">Hello </span><span style="background-color: rgb(0, 214, 136);color: #000000;">World</span>',
+    '<font color="#000000" style="background-color: rgb(255, 136, 0);">Hello </font><font color="#000000" style="background-color: rgb(0, 214, 136);">World</font>',
   )
   expect(editable).toBeTruthy()
 })
