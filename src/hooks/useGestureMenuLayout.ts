@@ -1,5 +1,6 @@
 import { useSelector } from 'react-redux'
 import { token } from '../../styled-system/tokens'
+import { isTablet } from '../browser'
 import viewportStore from '../stores/viewport'
 
 /**********************************************************************
@@ -151,18 +152,34 @@ const useGestureMenuLayout = (
   const minColumnPx = GESTURE_MENU_MIN_COLUMN_WIDTH_REM * remPx
   const gapPx = GESTURE_MENU_COLUMN_GAP_REM * remPx
 
-  // How many columns the viewport can render: N columns need N widths + (N−1)
-  // gaps, measured against the multi-column padding. This is only an upper limit; we might render fewer columns depending
-  // on how many the commands actually needed
+  /**
+   * How many minimum-width columns fit across the viewport at a given horizontal panel padding. N
+   * columns need N widths + (N−1) gaps, so one gap is added back before dividing and a column is only
+   * counted when it *and* its leading gap still fit.
+   */
+  const columnsFittingAtPadding = (paddingRem: number) =>
+    Math.max(1, Math.floor((innerWidth - 2 * paddingRem * remPx + gapPx) / (minColumnPx + gapPx)))
+
+  // Measured against the multi-column padding. This is only an upper limit; we might render fewer
+  // columns depending on how many the commands actually needed
+  const columnsAtWidePadding = columnsFittingAtPadding(GESTURE_MENU_PANEL_PADDING_HORIZONTAL_MULTI_COLUMN_FIT_REM)
+
+  // A tablet the wide gutters hold to a single column gets the budget retried at the narrow ones. On an
+  // iPad mini in portrait the 5rem gutters leave 564px where two minimum columns need 594px, while the
+  // narrow padding leaves 663px and two 313.5px columns fit — it is the padding refusing the column, not
+  // the screen. Keyed strictly on the *wide* result, which is computed first and never reads
+  // `columnCount`, so no viewport that already holds two columns changes and the padding ↔ column-count
+  // circularity the wide-padding rule exists to avoid is still avoided.
+  const retryAtNarrowPadding =
+    isTablet &&
+    columnsAtWidePadding === 1 &&
+    columnsFittingAtPadding(GESTURE_MENU_PANEL_PADDING_HORIZONTAL_SINGLE_COLUMN_FIT_REM) > 1
+
   const maxColumns = isMobilePortrait
     ? 1
-    : Math.max(
-        1,
-        Math.floor(
-          (innerWidth - 2 * GESTURE_MENU_PANEL_PADDING_HORIZONTAL_MULTI_COLUMN_FIT_REM * remPx + gapPx) /
-            (minColumnPx + gapPx),
-        ),
-      )
+    : retryAtNarrowPadding
+      ? columnsFittingAtPadding(GESTURE_MENU_PANEL_PADDING_HORIZONTAL_SINGLE_COLUMN_FIT_REM)
+      : columnsAtWidePadding
 
   // Both paddings key on `maxColumns` — how many columns *fit* — never on `columnCount`, so a gesture
   // that narrows the list drops columns without shifting the panel. Wherever the viewport could hold
@@ -170,9 +187,12 @@ const useGestureMenuLayout = (
   // vertically; the latter is what reclaims ~0.5 row of column height on short and landscape viewports.
   // Both are returned, so the component renders exactly what the budget below is computed against.
   const fitsMultiColumn = maxColumns > 1
-  const horizontalPaddingRem = fitsMultiColumn
-    ? GESTURE_MENU_PANEL_PADDING_HORIZONTAL_MULTI_COLUMN_FIT_REM
-    : GESTURE_MENU_PANEL_PADDING_HORIZONTAL_SINGLE_COLUMN_FIT_REM
+  // The panel must render the padding the width budget was measured against: a retried tablet counted
+  // its columns at the narrow gutters, so rendering the wide ones would not fit the columns it opened.
+  const horizontalPaddingRem =
+    fitsMultiColumn && !retryAtNarrowPadding
+      ? GESTURE_MENU_PANEL_PADDING_HORIZONTAL_MULTI_COLUMN_FIT_REM
+      : GESTURE_MENU_PANEL_PADDING_HORIZONTAL_SINGLE_COLUMN_FIT_REM
   const verticalPaddingRem = fitsMultiColumn
     ? GESTURE_MENU_PANEL_PADDING_VERTICAL_MULTI_COLUMN_FIT_REM
     : GESTURE_MENU_PANEL_PADDING_VERTICAL_SINGLE_COLUMN_FIT_REM

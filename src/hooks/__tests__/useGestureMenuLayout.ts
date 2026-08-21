@@ -18,6 +18,32 @@ import useGestureMenuLayout, {
   GESTURE_MENU_SELECTED_ROW_REM,
 } from '../useGestureMenuLayout'
 
+/**
+ * `isTablet` is a module-level constant in the real `browser.ts`, so it cannot be changed per test.
+ * A getter over a mutable holder lets most of this file run as a non-tablet — which is what keeps the
+ * pre-existing cases exercising the untouched code path — while the tablet cases flip it via `asTablet`.
+ */
+const mockBrowser = { isTablet: false }
+vi.mock('../../browser', async importOriginal => {
+  const actual = await importOriginal<typeof import('../../browser')>()
+  return {
+    ...actual,
+    get isTablet() {
+      return mockBrowser.isTablet
+    },
+  }
+})
+
+/** Evaluates fn as though the app were running on a tablet. */
+const asTablet = <T>(fn: () => T): T => {
+  mockBrowser.isTablet = true
+  try {
+    return fn()
+  } finally {
+    mockBrowser.isTablet = false
+  }
+}
+
 /** Redux Provider wrapper so the hook can read state.fontSize. */
 const wrapper = ({ children }: { children: React.ReactNode }) => React.createElement(Provider, { store, children })
 
@@ -37,6 +63,9 @@ const layout = (commandCount: number) =>
 //   TALL  → rowsPerColumn 121 (a column never fills, so packing collapses to a single column)
 //   MID   → rowsPerColumn 8
 //   SHORT → rowsPerColumn 3
+/** The root font size the beforeEach below installs, i.e. 1rem in px. */
+const REM = 18
+
 const TALL = 5000
 const MID = 490
 const SHORT = 290
@@ -46,7 +75,7 @@ describe('useGestureMenuLayout', () => {
     store.dispatch({ type: 'clear', full: true })
     // Default root font size: 1rem = 18px. Min column 279px, gap 36px → stride 315px.
     act(() => {
-      store.dispatch(fontSizeActionCreator(18))
+      store.dispatch(fontSizeActionCreator(REM))
     })
   })
 
@@ -335,5 +364,65 @@ describe('useGestureMenuLayout', () => {
       store.dispatch(fontSizeActionCreator(36))
     })
     expect(layout(10).columnCount).toBe(1)
+  })
+
+  describe('narrow-tablet second column', () => {
+    /** The rendered width of one column, in px, for a layout the hook has just returned. */
+    const columnPx = (innerWidth: number, { maxColumns, horizontalPaddingRem }: ReturnType<typeof layout>) =>
+      (innerWidth - 2 * horizontalPaddingRem * REM - (maxColumns - 1) * GESTURE_MENU_COLUMN_GAP_REM * REM) / maxColumns
+
+    it('opens a second column on a tablet the wide gutters hold to one', () => {
+      // iPad mini portrait: 744 − 2×5rem leaves 564px and two minimum columns need 594px, but
+      // 744 − 2×2.25rem leaves 663px, which fits them. The padding refuses the column, not the screen.
+      setViewport(744, 1133)
+      const result = asTablet(() => layout(28))
+      expect(result.maxColumns).toBe(2)
+      expect(result.horizontalPaddingRem).toBe(GESTURE_MENU_PANEL_PADDING_HORIZONTAL_SINGLE_COLUMN_FIT_REM)
+    })
+
+    it('keeps a retried column at least the minimum column width', () => {
+      setViewport(744, 1133)
+      const result = asTablet(() => layout(28))
+      expect(columnPx(744, result)).toBeGreaterThanOrEqual(GESTURE_MENU_MIN_COLUMN_WIDTH_REM * REM)
+    })
+
+    it('tightens the vertical padding on a retried tablet, like any other multi-column viewport', () => {
+      setViewport(744, 1133)
+      expect(asTablet(() => layout(28)).verticalPaddingRem).toBe(
+        GESTURE_MENU_PANEL_PADDING_VERTICAL_MULTI_COLUMN_FIT_REM,
+      )
+    })
+
+    it('does not retry on a tablet that already fits two columns at the wide padding', () => {
+      setViewport(834, 1194)
+      const result = asTablet(() => layout(28))
+      expect(result.maxColumns).toBe(2)
+      expect(result.horizontalPaddingRem).toBe(GESTURE_MENU_PANEL_PADDING_HORIZONTAL_MULTI_COLUMN_FIT_REM)
+    })
+
+    it('does not retry at 12.9-inch geometry in either orientation', () => {
+      setViewport(1024, 1366)
+      const portrait = asTablet(() => layout(28))
+      expect(portrait.maxColumns).toBe(2)
+      expect(portrait.horizontalPaddingRem).toBe(GESTURE_MENU_PANEL_PADDING_HORIZONTAL_MULTI_COLUMN_FIT_REM)
+
+      setViewport(1366, 1024)
+      const landscape = asTablet(() => layout(28))
+      expect(landscape.maxColumns).toBe(3)
+      expect(landscape.horizontalPaddingRem).toBe(GESTURE_MENU_PANEL_PADDING_HORIZONTAL_MULTI_COLUMN_FIT_REM)
+    })
+
+    it('does not retry when the device is not a tablet', () => {
+      // the same geometry as the first case, so only isTablet distinguishes them
+      setViewport(744, 1133)
+      const result = layout(28)
+      expect(result.maxColumns).toBe(1)
+      expect(result.horizontalPaddingRem).toBe(GESTURE_MENU_PANEL_PADDING_HORIZONTAL_SINGLE_COLUMN_FIT_REM)
+    })
+
+    it('leaves a tablet too narrow for two columns at either padding on one column', () => {
+      setViewport(600, 1000)
+      expect(asTablet(() => layout(28)).maxColumns).toBe(1)
+    })
   })
 })
