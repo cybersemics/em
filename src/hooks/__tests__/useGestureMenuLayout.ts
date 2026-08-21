@@ -11,6 +11,7 @@ import useGestureMenuLayout, {
   GESTURE_MENU_MIN_COLUMN_WIDTH_REM,
   GESTURE_MENU_PANEL_PADDING_HORIZONTAL_MULTI_COLUMN_FIT_REM,
   GESTURE_MENU_PANEL_PADDING_HORIZONTAL_SINGLE_COLUMN_FIT_REM,
+  GESTURE_MENU_PANEL_PADDING_TOP_CAPACITOR_REM,
   GESTURE_MENU_PANEL_PADDING_VERTICAL_MULTI_COLUMN_FIT_REM,
   GESTURE_MENU_PANEL_PADDING_VERTICAL_SINGLE_COLUMN_FIT_REM,
   GESTURE_MENU_ROW_GAP_REM,
@@ -24,7 +25,7 @@ import useGestureMenuLayout, {
  * A getter over a mutable holder lets most of this file run as a non-tablet — which is what keeps the
  * pre-existing cases exercising the untouched code path — while the tablet cases flip it via `asTablet`.
  */
-const mockBrowser = { isTablet: false }
+const mockBrowser = { isTablet: false, isBrowser: true }
 vi.mock('../../browser', async importOriginal => {
   const actual = await importOriginal<typeof import('../../browser')>()
   return {
@@ -32,8 +33,21 @@ vi.mock('../../browser', async importOriginal => {
     get isTablet() {
       return mockBrowser.isTablet
     },
+    get isBrowser() {
+      return mockBrowser.isBrowser
+    },
   }
 })
+
+/** Evaluates fn as though the app were running under Capacitor rather than in a browser. */
+const underCapacitor = <T>(fn: () => T): T => {
+  mockBrowser.isBrowser = false
+  try {
+    return fn()
+  } finally {
+    mockBrowser.isBrowser = true
+  }
+}
 
 /** Evaluates fn as though the app were running on a tablet. */
 const asTablet = <T>(fn: () => T): T => {
@@ -500,6 +514,35 @@ describe('useGestureMenuLayout', () => {
       setViewport(874, 402)
       const landscape = layout(28)
       expect({ columns: landscape.columnCount, rows: landscape.rowsPerColumn }).toEqual({ columns: 2, rows: 6 })
+    })
+  })
+
+  describe('top padding', () => {
+    it('takes the tighter Capacitor top padding when only one column fits', () => {
+      setViewport(393, 852)
+      expect(underCapacitor(() => layout(28)).paddingTopRem).toBe(GESTURE_MENU_PANEL_PADDING_TOP_CAPACITOR_REM)
+    })
+
+    it('uses the ordinary vertical padding in a browser at the same size', () => {
+      setViewport(393, 852)
+      expect(layout(28).paddingTopRem).toBe(GESTURE_MENU_PANEL_PADDING_VERTICAL_SINGLE_COLUMN_FIT_REM)
+    })
+
+    it('does not move when a narrowing gesture drains a column under Capacitor', () => {
+      // The regression: paddingTop was keyed on columnCount, so an iPad Air dropping from two columns
+      // to one swapped 1.7rem for the 0.75rem Capacitor value and the header jumped ~0.95rem mid-gesture.
+      setViewport(820, 1180)
+      const twoColumns = underCapacitor(() => layout(28))
+      const oneColumn = underCapacitor(() => layout(2))
+      expect(twoColumns.columnCount).toBeGreaterThan(1)
+      expect(oneColumn.columnCount).toBe(1)
+      expect(oneColumn.paddingTopRem).toBe(twoColumns.paddingTopRem)
+    })
+
+    it('matches the vertical padding wherever more than one column fits', () => {
+      setViewport(820, 1180)
+      const result = underCapacitor(() => layout(28))
+      expect(result.paddingTopRem).toBe(result.verticalPaddingRem)
     })
   })
 })

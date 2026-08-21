@@ -1,6 +1,6 @@
 import { useSelector } from 'react-redux'
 import { token } from '../../styled-system/tokens'
-import { isTablet } from '../browser'
+import { isBrowser, isTablet } from '../browser'
 import viewportStore from '../stores/viewport'
 
 /**********************************************************************
@@ -46,6 +46,13 @@ export const GESTURE_MENU_PANEL_PADDING_VERTICAL_MULTI_COLUMN_FIT_REM = 1.7
 
 /** Vertical panel padding when one column is all that fits (the original, roomier value). */
 export const GESTURE_MENU_PANEL_PADDING_VERTICAL_SINGLE_COLUMN_FIT_REM = 2.25
+
+/**
+ * Top panel padding under Capacitor, where the viewport extends under the status bar (2026-06-03, to
+ * match the iPhone Figma frame). Only applies where a single column is all that fits — the wide layouts
+ * have their own vertical rhythm.
+ */
+export const GESTURE_MENU_PANEL_PADDING_TOP_CAPACITOR_REM = 0.75
 
 /**
  * Fraction of the viewport height a tablet's command list may occupy, measured from the top of the
@@ -126,6 +133,12 @@ type GestureMenuLayout = {
    * the rendered padding is always the one this hook budgeted against.
    */
   horizontalPaddingRem: number
+  /**
+   * Top panel padding, in rem. Usually `verticalPaddingRem`, but tighter under Capacitor where the
+   * viewport extends under the status bar. Keyed on `maxColumns` like the other two, never on
+   * `columnCount`.
+   */
+  paddingTopRem: number
   /**
    * Vertical panel padding per side, in rem. Returned for the same reason as `horizontalPaddingRem`:
    * this is the value the row budget below is computed against, so the component must render this one
@@ -212,6 +225,14 @@ const useGestureMenuLayout = (
     ? GESTURE_MENU_PANEL_PADDING_VERTICAL_MULTI_COLUMN_FIT_REM
     : GESTURE_MENU_PANEL_PADDING_VERTICAL_SINGLE_COLUMN_FIT_REM
 
+  // Under Capacitor the viewport runs under the status bar, so a single-column panel takes a tighter
+  // top padding. Keyed on `maxColumns` — how many columns *fit* — for the same reason as the two
+  // paddings above: refining a gesture drops columns, and the panel must not move when it does. Keying
+  // this on the column count actually in use made the header jump ~0.95rem the moment a tablet's list
+  // narrowed from two columns to one.
+  const paddingTopRem =
+    !fitsMultiColumn && !isBrowser ? GESTURE_MENU_PANEL_PADDING_TOP_CAPACITOR_REM : verticalPaddingRem
+
   const columnWidth = `calc((100% - ${(maxColumns - 1) * GESTURE_MENU_COLUMN_GAP_REM}rem) / ${maxColumns})`
   const dividerWidth = isMobilePortrait ? '100%' : columnWidth
 
@@ -251,6 +272,7 @@ const useGestureMenuLayout = (
     columnWidth,
     dividerWidth,
     horizontalPaddingRem,
+    paddingTopRem,
     verticalPaddingRem,
     rowsPerColumn,
     visibleCommandCount,

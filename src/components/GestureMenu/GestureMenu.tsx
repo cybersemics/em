@@ -3,7 +3,6 @@ import { useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { token } from '../../../styled-system/tokens'
 import Command from '../../@types/Command'
-import { isBrowser } from '../../browser'
 import { gestureString } from '../../commands'
 import openMobileCommandUniverseCommand from '../../commands/openMobileCommandUniverse'
 import useFilteredCommands from '../../hooks/useFilteredCommands'
@@ -45,13 +44,12 @@ const GestureMenu: FC<{
     columnWidth,
     dividerWidth,
     horizontalPaddingRem,
+    paddingTopRem,
     verticalPaddingRem,
     rowsPerColumn,
     visibleCommandCount,
     isMultiColumn,
   } = useGestureMenuLayout(commands.length)
-
-  const isSingleColumnMobile = !isMultiColumn && !isBrowser
 
   // Only the grid trims; the single-column stack renders every command and scrolls instead.
   const visibleCommands = isMultiColumn ? commands.slice(0, visibleCommandCount) : commands
@@ -115,7 +113,7 @@ const GestureMenu: FC<{
             style={{
               paddingBlock: `${verticalPaddingRem}rem`,
               paddingInline: `${horizontalPaddingRem}rem`,
-              paddingTop: isSingleColumnMobile ? '0.75rem' : undefined,
+              paddingTop: `${paddingTopRem}rem`,
             }}
           >
             {/* Header */}
