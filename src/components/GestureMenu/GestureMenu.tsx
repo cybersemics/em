@@ -42,31 +42,16 @@ const GestureMenu: FC<{
   const {
     columnCount,
     maxColumns,
+    columnWidth,
+    dividerWidth,
     horizontalPaddingRem,
     verticalPaddingRem,
     rowsPerColumn,
     visibleCommandCount,
-    isMobilePortrait,
     isMultiColumn,
   } = useGestureMenuLayout(commands.length)
 
-  // Both paddings come from the hook rather than being re-derived here, so what the panel renders is
-  // always what the hook's width and height budgets were computed against. They key on how many columns
-  // *fit* — never on how many the commands happen to need — so refining a gesture (r → rdl) can drop a
-  // column without shifting the panel's padding.
-  const horizontalPadding = `${horizontalPaddingRem}rem`
-  const verticalPadding = `${verticalPaddingRem}rem`
-
   const isSingleColumnMobile = !isMultiColumn && !isBrowser
-
-  // The width of one column, derived from how many columns *fit* rather than how many are in use, so it
-  // is constant for a given viewport. This is what keeps the menu from resizing as a gesture narrows the
-  // command list: `r` may fill two columns and `rdl` only one, but each column is the same width in both.
-  const columnWidth = `calc((100% - ${(maxColumns - 1) * GESTURE_MENU_COLUMN_GAP_REM}rem) / ${maxColumns})`
-
-  // The divider always spans exactly one column, matching the Figma frames. Below md there is only ever
-  // one column and it fills the panel, so 100% and columnWidth coincide.
-  const dividerWidth = isMobilePortrait ? '100%' : columnWidth
 
   // Only the grid trims; the single-column stack renders every command and scrolls instead.
   const visibleCommands = isMultiColumn ? commands.slice(0, visibleCommandCount) : commands
@@ -128,9 +113,8 @@ const GestureMenu: FC<{
         {gestureInProgress && (
           <div
             style={{
-              paddingBlock: verticalPadding,
-
-              paddingInline: horizontalPadding,
+              paddingBlock: `${verticalPaddingRem}rem`,
+              paddingInline: `${horizontalPaddingRem}rem`,
               paddingTop: isSingleColumnMobile ? '0.75rem' : undefined,
             }}
           >

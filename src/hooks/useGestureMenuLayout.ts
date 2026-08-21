@@ -17,11 +17,11 @@ import viewportStore from '../stores/viewport'
 /** Mobile-portrait breakpoint in px (`md` in panda.config.ts).*/
 export const GESTURE_MENU_MD_BREAKPOINT = parseInt(token('breakpoints.md'))
 
-/** Minimum column width, 280px ÷ 18 at the default root font size. */
-export const GESTURE_MENU_MIN_COLUMN_WIDTH_REM = 15.556
+/** Minimum column width. The Figma frames measure 280px, which is 15.556rem at the 18px default root. */
+export const GESTURE_MENU_MIN_COLUMN_WIDTH_REM = 15.5
 
-/** Gap between columns. 35px ÷ 18 at the default root font size. */
-export const GESTURE_MENU_COLUMN_GAP_REM = 1.944
+/** Gap between columns. */
+export const GESTURE_MENU_COLUMN_GAP_REM = 2
 
 /**
  * Horizontal panel padding when the viewport has room for more than one column (90px per side in both
@@ -100,6 +100,15 @@ type GestureMenuLayout = {
    */
   maxColumns: number
   /**
+   * Width of a single column, as a CSS length resolved against the panel's padded content box. Derived
+   * from `maxColumns` rather than `columnCount` so a column keeps its width as the gesture narrows the
+   * command list: `r` may fill two columns and `rdl` only one, but a column is the same width in both.
+   */
+  columnWidth: string
+  /** Width of the rule under the "Gestures" header. It always spans exactly one column. Below `md` there is only ever one column and it fills the panel, so this collapses
+   * to 100%. */
+  dividerWidth: string
+  /**
    * Horizontal panel padding per side, in rem. Returned (rather than re-derived in the component) so
    * the rendered padding is always the one this hook budgeted against.
    */
@@ -168,6 +177,9 @@ const useGestureMenuLayout = (
     ? GESTURE_MENU_PANEL_PADDING_VERTICAL_MULTI_COLUMN_FIT_REM
     : GESTURE_MENU_PANEL_PADDING_VERTICAL_SINGLE_COLUMN_FIT_REM
 
+  const columnWidth = `calc((100% - ${(maxColumns - 1) * GESTURE_MENU_COLUMN_GAP_REM}rem) / ${maxColumns})`
+  const dividerWidth = isMobilePortrait ? '100%' : columnWidth
+
   // Row, header and padding heights, used to work out how many rows fit in a column.
   const rowPitchPx = GESTURE_MENU_ROW_PITCH_REM * remPx
   const rowGapPx = GESTURE_MENU_ROW_GAP_REM * remPx
@@ -201,6 +213,8 @@ const useGestureMenuLayout = (
   return {
     columnCount,
     maxColumns,
+    columnWidth,
+    dividerWidth,
     horizontalPaddingRem,
     verticalPaddingRem,
     rowsPerColumn,
