@@ -69,8 +69,7 @@ it('alternating nested lists', async () => {
 `)
 })
 
-// TODO
-it.skip('multi-line nested html tags', async () => {
+it('multi-line nested html tags', async () => {
   const paste = `
   <li><i><b>A</b></i></li>
   <li><i><b>B</b></i></li>
@@ -109,8 +108,7 @@ it.skip('text that contains non-closed span tag', async () => {
   )
 })
 
-// TODO
-it.skip('text that contains em tag', async () => {
+it('text that contains em tag', async () => {
   const text = `
     <li>a<ul>
       <li>b</li>
@@ -134,8 +132,7 @@ it.skip('text that contains em tag', async () => {
   )
 })
 
-// TODO
-it.skip('text that contains br tag that does not have children', async () => {
+it('text that contains br tag that does not have children', async () => {
   const text = `
     <li>a</li>
     <li>b</li>
@@ -149,8 +146,7 @@ it.skip('text that contains br tag that does not have children', async () => {
   )
 })
 
-// TODO
-it.skip('text that contains br tag that has note children', async () => {
+it('text that contains br tag that has note children', async () => {
   const text = `
     <li>a</li>
     <li>b</li>
@@ -166,8 +162,7 @@ it.skip('text that contains br tag that has note children', async () => {
   )
 })
 
-// TODO
-it.skip('text that contains one or more than one not allowed formattting tags', async () => {
+it('text that contains one or more than one not allowed formattting tags', async () => {
   const text = `
     <li>a</li>
     <li>b <sup>c</sup></li>
@@ -438,8 +433,7 @@ it('should paste text with an improperly nested meta tag', async () => {
 `)
 })
 
-// TODO: Should be imported as siblings, not parent-child
-it.skip('simple duplicate', async () => {
+it('simple duplicate', async () => {
   const text = `
     - a
     - a
@@ -453,8 +447,7 @@ it.skip('simple duplicate', async () => {
   expect(exported.trim()).toBe(expectedExport.trim())
 })
 
-// TODO: No longer working as it did in importText. What should we expect?
-it.skip('multiple duplicates', async () => {
+it('multiple duplicates', async () => {
   const text = `
     - a
       - b
@@ -539,8 +532,7 @@ it("multiple li's", async () => {
 `)
 })
 
-// TODO
-it.skip('nested lines separated by <br>', async () => {
+it('nested lines separated by <br>', async () => {
   expect(
     await importExport(
       `
@@ -633,8 +625,7 @@ it.skip("empty thought with nested li's", async () => {
 `)
 })
 
-// TODO: Indentation is off
-it.skip("do not add empty parent thought when empty li node has no nested li's", async () => {
+it("do not add empty parent thought when empty li node has no nested li's", async () => {
   expect(
     await importExport(
       `
@@ -673,10 +664,9 @@ it('strip inline tag in nested list', async () => {
 `)
 })
 
-// TODO: Broken after switch from importText to importData
-it.skip('blank thoughts with subthoughts', async () => {
+it('blank thoughts with subthoughts', async () => {
   expect(
-    importExport(
+    await importExport(
       `<li>a
   <ul>
     <li>b
@@ -761,8 +751,7 @@ f
 `)
 })
 
-// TODO: Indentation broke when switching from importText to importData
-it.skip(`import bold thoughts with bold descendants`, async () => {
+it(`import bold thoughts with bold descendants`, async () => {
   const text = `
     - a
     - c
@@ -1086,10 +1075,7 @@ it('empty parent', async () => {
     - x`)
 })
 
-// TODO: Why does foo not appear in the export?
-// Confirmed that the input is being detected as a single line and editThought is called in the importText reducer.
-// Works as expected in the browser.
-it.skip('insert single-line HTML at end of thought', async () => {
+it('insert single-line HTML at end of thought', async () => {
   const html = `<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
