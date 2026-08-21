@@ -1,4 +1,4 @@
-import getNativeElementRect from './getNativeElementRect.js'
+import getWebContentOrigin from './getWebContentOrigin.js'
 
 /** Get the native screen coordinates of the current selection's end handle. */
 const getSelectionEndHandlePosition = async () => {
@@ -13,7 +13,7 @@ const getSelectionEndHandlePosition = async () => {
   if (!raw) throw new Error('Selection range not found.')
 
   const rect = JSON.parse(raw) as { bottom: number; right: number }
-  const nativeContent = await getNativeElementRect('//XCUIElementTypeOther[@name="em"]')
+  const nativeContent = await getWebContentOrigin()
   const viewportRaw = await browser.execute(() =>
     JSON.stringify({ x: window.visualViewport?.offsetLeft ?? 0, y: window.visualViewport?.offsetTop ?? 0 }),
   )
