@@ -568,6 +568,73 @@ describe('=focus/Zoom', () => {
     })
   })
 
+  it('=focus/Zoom defined in a =let expression zooms the thought that names it', () => {
+    const text = `
+      - =let
+        - =foo
+          - =focus
+            - Zoom
+      - a
+        - =foo
+      - b
+    `
+    const steps = [importText({ text }), setCursor(['a'])]
+    const stateNew = reducerFlow(steps)(initialState())
+    const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
+      [key]: calculateAutofocus(stateNew, simplePath),
+    }))
+    expect(autofocusMap).toMatchObject({
+      a: 'show',
+      b: 'hide',
+    })
+  })
+
+  it('=focus/Zoom defined in a =let expression does not zoom a thought that does not name it', () => {
+    const text = `
+      - =let
+        - =foo
+          - =focus
+            - Zoom
+      - a
+        - =foo
+      - b
+    `
+    const steps = [importText({ text }), setCursor(['b'])]
+    const stateNew = reducerFlow(steps)(initialState())
+    const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
+      [key]: calculateAutofocus(stateNew, simplePath),
+    }))
+    expect(autofocusMap).toMatchObject({
+      a: 'show',
+      b: 'show',
+    })
+  })
+
+  it('a =let binding is only in scope for descendants of the context that defines it', () => {
+    const text = `
+      - a
+        - =let
+          - =foo
+            - =focus
+              - Zoom
+        - b
+          - =foo
+        - c
+      - d
+        - =foo
+    `
+    const steps = [importText({ text }), setCursor(['d'])]
+    const stateNew = reducerFlow(steps)(initialState())
+    const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
+      [key]: calculateAutofocus(stateNew, simplePath),
+    }))
+    // d names =foo but is outside a, where the binding is defined, so it is not zoomed and a stays visible
+    expect(autofocusMap).toMatchObject({
+      a: 'show',
+      d: 'show',
+    })
+  })
+
   it('the innermost zoom wins when zoomed thoughts are nested', () => {
     const text = `
       - a

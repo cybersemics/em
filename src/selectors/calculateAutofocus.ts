@@ -5,26 +5,9 @@ import equalPath from '../util/equalPath'
 import head from '../util/head'
 import isDescendantPath from '../util/isDescendantPath'
 import isRoot from '../util/isRoot'
-import attributeEquals from './attributeEquals'
-import findDescendant from './findDescendant'
 import { hasChildren } from './getChildren'
 import rootedParentOf from './rootedParentOf'
-
-/** Returns the deepest ancestor-or-self of the cursor that has =focus/Zoom set, or null if the cursor is not zoomed. Zoom may be set on the thought itself (=focus/Zoom) or on all of its siblings via its parent (=children/=focus/Zoom). */
-const zoomPath = (state: State): Path | null => {
-  if (!state.cursor) return null
-  // Walk up from the cursor so that the innermost zoom wins when zooms are nested.
-  for (let i = state.cursor.length; i > 0; i--) {
-    const path = state.cursor.slice(0, i) as Path
-    const childrenAttributeId = findDescendant(state, head(rootedParentOf(state, path)), '=children')
-    if (
-      attributeEquals(state, head(path), '=focus', 'Zoom') ||
-      attributeEquals(state, childrenAttributeId, '=focus', 'Zoom')
-    )
-      return path
-  }
-  return null
-}
+import zoomPath from './zoomPath'
 
 /** Calculates whether a thought is shown, hidden, or dimmed based on the position of the cursor. */
 const calculateAutofocus = (state: State, path: Path) => {
