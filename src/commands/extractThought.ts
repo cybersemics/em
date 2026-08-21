@@ -8,10 +8,12 @@ const extractThought: Command = {
   label: 'Extract',
   description: 'Extract selected part of a thought as its child',
   keyboard: { key: 'e', control: true, meta: true },
-  multicursor: {
-    disallow: true,
-    error: 'Cannot extract multiple thoughts.',
-  },
+  // Extract takes its input from the browser text selection, of which the document has exactly one. The
+  // extractThought action slices state.cursor's value at that selection's character offsets, so the offsets are only
+  // meaningful for the thought that owns the selection. Executing on state.cursor is therefore the only well-defined
+  // behavior: the per-cursor loop of multicursor: true would slice every other selected thought at offsets that index
+  // into a different string, mangling their values and giving short ones an empty child.
+  multicursor: false,
   svg: ExtractThoughtIcon,
   canExecute: state => {
     return !!state.cursor || hasMulticursor(state)

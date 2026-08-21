@@ -801,6 +801,97 @@ describe('dash splitting', () => {
   })
 })
 
+describe('slash splitting', () => {
+  it('splits thought with slashes into a chain of descendants', () => {
+    const value = 'one/two/three'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - one
+    - two
+      - three`)
+  })
+
+  it('splits thought with a single slash into main thought and subthought', () => {
+    const value = 'one/two'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - one
+    - two`)
+  })
+
+  it('splits thought with slashes and extra spaces', () => {
+    const value = 'one / two / three'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - one
+    - two
+      - three`)
+  })
+
+  it('does not split when slash is at the beginning', () => {
+    const value = '/one'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - /one`)
+  })
+
+  it('does not split when slash is at the end', () => {
+    const value = 'one/'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - one/`)
+  })
+
+  it('splits by slash when there is only one sentence ending with a period', () => {
+    const value = 'one/two.'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - one
+    - two.`)
+  })
+
+  it('splits by sentences when both slashes and multiple sentences are present', () => {
+    const value = 'one/two. three.'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - one/two.
+  - three.`)
+  })
+
+  it('splits by dash before slash when both are present', () => {
+    const value = 'one - two/three'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - one
+    - two/three`)
+  })
+
+  it('does not split a url containing slashes', () => {
+    const value = 'https://abc.com/xyz/def'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - https://abc.com/xyz/def`)
+  })
+
+  it('preserves formatting on each slash-delimited segment', () => {
+    const value = '<b>one/two</b>'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - **one**
+    - **two**`)
+  })
+})
+
 describe('formatting', () => {
   // https://github.com/cybersemics/em/issues/4229
   it('preserves formatting on every comma-delimited segment, including segments in the middle', () => {

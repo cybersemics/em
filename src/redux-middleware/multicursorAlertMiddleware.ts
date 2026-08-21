@@ -26,12 +26,37 @@ const multicursorAlertMiddleware: ThunkMiddleware<State> = ({ getState, dispatch
 
     // On mobile, show the Command Center when multicursor is active, and hide it when inactive.
     if (isTouch) {
+      // Do not react while a multicursor command is executing. The command loop sets the cursor to each selected
+      // thought in turn, which empties state.multicursors, and then restores them one at a time (see
+      // executeCommandWithMulticursor), so the count churns through 0 and back up again. That is internal
+      // bookkeeping rather than the user changing the selection, and reacting to it re-opens the Command Center over
+      // an editing session (space is bound to indent, so it runs the whole loop on every space typed after Clear
+      // Thought). The closing setIsMulticursorExecuting({ value: false }) is dispatched once the command completes,
+      // and this middleware evaluates it against the settled multicursors. setCursor suppresses its own cursorCleared
+      // reset over the same window and for the same reason.
+      if (state.isMulticursorExecuting) return
+
       if (numMulticursors === 0 && state.showCommandCenter) {
         dispatch(toggleDropdown({ dropDownType: 'commandCenter', value: false }))
-      } else if (numMulticursors > 0 && !state.showCommandCenter && !state.showUndoSlider) {
+      } else if (
+        numMulticursors > 0 &&
+        !state.showCommandCenter &&
         // Do not open the Command Center while the Undo Slider session is active.
         // Otherwise undoing/redoing a multicursor command (e.g. delete from the Command Center) restores the
         // multicursor, which would re-open the Command Center and dismiss the Undo Slider being used.
+        !state.showUndoSlider &&
+        // Do not re-open the Command Center while the keyboard is open, i.e. while the multiselection is being edited
+        // (Clear Thought). The sheet would cover the editing session, and on iOS any focus that arrives while the
+        // Command Center is shown is actively dismissed (see onFocus in Editable), so the keyboard could never open.
+        // When the keyboard closes (blur or exiting the cleared state), the multicursors are still active and this
+        // branch re-opens the Command Center.
+        // Starting a multiselection from none is exempt, since selecting a thought while the keyboard is open is how
+        // the Command Center is opened in the first place (Open Command Center adds the cursor thought, and only ever
+        // does so when there was no multiselection yet). Checking prevNumMulticursors rather than a plain count-change
+        // keeps a multiselection that is already being edited (Clear Thought) from re-opening the Command Center over
+        // the editing session should its multicursor count fluctuate for some unrelated reason while typing.
+        (!state.isKeyboardOpen || prevNumMulticursors === 0)
+      ) {
         dispatch(toggleDropdown({ dropDownType: 'commandCenter', value: true }))
       }
     }

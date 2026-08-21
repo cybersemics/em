@@ -1,5 +1,4 @@
 import path from 'path'
-import { WindowEm } from '../../../initialize'
 import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
@@ -513,9 +512,8 @@ describe('hover expansion', () => {
     await hideHUD()
 
     // inject MOCK_EXPAND_HOVER_DELAY
-    const em = window.em as WindowEm
     await page.evaluate(value => {
-      em.testFlags.expandHoverDelay = value
+      window.em.testFlags.expandHoverDelay = value
     }, MOCK_EXPAND_HOVER_DELAY)
   })
 
