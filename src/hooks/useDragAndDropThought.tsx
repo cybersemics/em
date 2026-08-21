@@ -286,14 +286,15 @@ const endDrag = () => {
   // long-press start that blocks all scrolling; it is only removed on touchend, which does not fire after a drag (e.g. a
   // multiselect drop onto a subthought), leaving scrolling frozen until it is explicitly re-enabled here.
   allowTouchToScroll(true)
-  store.dispatch([
-    longPress({ value: LongPressState.Inactive }),
-    (dispatch, getState) => {
-      if (getState().alert?.alertType === AlertType.DragAndDropHint) {
-        dispatch(alert(null))
-      }
-    },
-  ])
+  store.dispatch((dispatch, getState) => {
+    if (getState().alert?.alertType === AlertType.DragAndDropHint) {
+      dispatch(alert(null))
+    }
+  })
+
+  // Keep drag protections active through the click synthesized from the drag's release. A separate user click cannot
+  // occur until a later task.
+  setTimeout(() => store.dispatch(longPress({ value: LongPressState.Inactive })))
 }
 
 /** Collects props from the DragSource. */
