@@ -187,6 +187,7 @@ export const TOOLBAR_DEFAULT_COMMANDS: CommandId[] = [
   'italic',
   'underline',
   'strikethrough',
+  'code',
   'textColor',
   'letterCase',
   'toggleContextView',
