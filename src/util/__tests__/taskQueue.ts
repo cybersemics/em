@@ -728,10 +728,11 @@ describe('taskQueue', { retry: 10 }, () => {
       expect(error).toBe(1)
     })
 
-    // TODO: Why does the end promise time out?
-    it.skip('calls onError when a task throws', async () => {
+    it('calls onError when a task rejects', async () => {
       let counter = 0
-      let error = 0
+      // Collect the errors rather than asserting inside onError. A failed assertion inside onError propagates
+      // back into the task runner, which pauses the queue and prevents the end promise from ever resolving.
+      const errors: unknown[] = []
 
       /** Increments the counter. */
       const inc = () => ++counter
@@ -747,14 +748,13 @@ describe('taskQueue', { retry: 10 }, () => {
 
       await taskQueue({
         onError: err => {
-          expect(err.message).toBe('STOP')
-          error++
+          errors.push(err)
         },
         tasks: [inc, rejectTask, inc],
       }).end
 
       expect(counter).toBe(2)
-      expect(error).toBe(1)
+      expect(errors).toEqual(['STOP'])
     })
 
     it(`on('error', ...) syntax`, async () => {
