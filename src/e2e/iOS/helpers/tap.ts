@@ -1,6 +1,5 @@
 import type { Element } from 'webdriverio'
 import getElementRectByScreen from './getElementRectByScreen.js'
-import getScreenOffset from './getScreenOffset.js'
 
 interface Options {
   // Where in the horizontal line (inside) of the target node should be tapped. Defaults to center, which
@@ -24,8 +23,9 @@ interface Options {
  * Tap a node with an optional text offset or x,y offset.
  *
  * The tap is dispatched with `performActions`, which Appium's XCUITest driver always runs in the native
- * context even while the WEBVIEW context is active, so it takes device screen coordinates. The node is
- * therefore measured in screen coordinates too — see `getScreenOffset` for how the two frames are bridged.
+ * context even while the WEBVIEW context is active, so it takes device screen coordinates rather than page
+ * coordinates. The node is therefore measured with `getElementRectByScreen`, which adds the web content's
+ * native origin. Do not compensate for the difference with a hand-tuned `y` at the call site.
  *
  * Uses the global browser object from WDIO.
  */
@@ -50,9 +50,14 @@ const tap = async (
   const boundingBox = await getElementRectByScreen(nodeHandle)
   if (!boundingBox) throw new Error('Bounding box of editable not found.')
 
-  /** Get screen coordinates for specific text node if the given node has text child. */
-  const offsetCoordinates = async () => {
-    const rect = await browser.execute(
+  /**
+   * Get the position of a specific text node as a delta from the element's own top-left corner, if the given
+   * node has a text child. Measuring the two rects against each other rather than reporting the range's own
+   * position keeps this path out of the page-versus-screen coordinate question entirely, since the delta is
+   * the same in both frames.
+   */
+  const offsetDelta = () =>
+    browser.execute(
       function (ele, offset) {
         // Element does not contain native properties like nodeName, textContent, etc
         // Not sure what the actual WebDriverIO type that is returned by findElement
@@ -62,35 +67,31 @@ const tap = async (
         const range = document.createRange()
         range.setStart(textNode, offset ?? 0)
         const { right, top, height } = range.getBoundingClientRect()
+        const elementRect = (ele as unknown as HTMLElement).getBoundingClientRect()
         return {
-          x: right,
-          y: top + height / 2,
+          x: right - elementRect.left,
+          y: top + height / 2 - elementRect.top,
         }
       },
       nodeHandle,
       offset,
     )
-    if (!rect) return
-    // Range rects are viewport-relative, unlike the page-relative rect getElementRectByScreen starts from, so
-    // this path adds the offset itself rather than reusing that helper.
-    const screenOffset = await getScreenOffset()
-    return { x: rect.x + screenOffset.x, y: rect.y + screenOffset.y }
-  }
 
-  const coordinate = !offset
+  const delta = !offset
     ? {
         x:
-          boundingBox.x +
-          (horizontalTapLine === 'left'
+          horizontalTapLine === 'left'
             ? 1
             : horizontalTapLine === 'right'
               ? boundingBox.width - 1
-              : boundingBox.width / 2),
-        y: boundingBox.y + boundingBox.height / 2,
+              : boundingBox.width / 2,
+        y: boundingBox.height / 2,
       }
-    : await offsetCoordinates()
+    : await offsetDelta()
 
-  if (!coordinate) throw new Error('Coordinate not found.')
+  if (!delta) throw new Error('Coordinate not found.')
+
+  const coordinate = { x: boundingBox.x + delta.x, y: boundingBox.y + delta.y }
 
   console.info(
     `Coordinates: x ${coordinate.x} y ${coordinate.y} x-offset ${x} y-offset ${y} bb-x ${boundingBox.x} bby ${boundingBox.y}`,
