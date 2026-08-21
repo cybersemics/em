@@ -178,10 +178,10 @@ This is what powers the Context View (showing all contexts that contain "this va
 
 Several `ThoughtId`-typed string constants identify the trees inside the thoughtspace ([`constants.ts`](../src/constants.ts) lines ~117-129):
 
-- **`HOME_TOKEN`** = `__ROOT__`. The user's home tree — what they see when no zoom or context is active. `HOME_PATH` is `[HOME_TOKEN]`.
-- **`ABSOLUTE_TOKEN`** = `__ABSOLUTE__`. An alternate root tree, used to organize transient or session-scoped thoughts. `ABSOLUTE_PATH` is `[ABSOLUTE_TOKEN]`.
-- **`EM_TOKEN`** = `__EM__`. A meta-tree that holds user settings, system metadata, and other internal state (e.g. `[EM_TOKEN, 'Settings', 'Tutorial']`). Not exposed as a normal navigable thought.
-- **`ROOT_PARENT_ID`** = `__ROOT_PARENT_ID__`. The synthetic `parentId` of the root tokens themselves — there's no actual thought there, but the value lets `parentId` always be defined.
+- **`HOME_TOKEN`** = The user's home tree — what they see when no zoom or context is active. `HOME_PATH` is `[HOME_TOKEN]`.
+- **`ABSOLUTE_TOKEN`** = An alternate root tree, used to organize transient or session-scoped thoughts. `ABSOLUTE_PATH` is `[ABSOLUTE_TOKEN]`.
+- **`EM_TOKEN`** = A meta-tree that holds user settings, system metadata, and other internal state (e.g. `[EM_TOKEN, 'Settings', 'Tutorial']`). Not exposed as a normal navigable thought.
+- **`ROOT_PARENT_ID`** = The synthetic `parentId` of the root tokens themselves — there's no actual thought there, but the value lets `parentId` always be defined.
 - **`ROOT_CONTEXTS`** = `[HOME_TOKEN, ABSOLUTE_TOKEN]`. Used in places that need to special-case both root trees together.
 
 `state.rootContext` selects which root the UI is currently rooted at (Home or Absolute).

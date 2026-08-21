@@ -467,6 +467,8 @@ Merges all duplicate siblings at the same level as the cursor. The first thought
 
 Splits multiple sentences in a single thought into separate thoughts.
 
+A thought that contains only a single sentence is split into siblings on commas, or on the word "and" if there is no comma. A dash or a colon splits it into a main thought and a child instead, e.g. `one - 1` and `Start: 1` both become a thought with a single child. A colon only splits when it is followed by whitespace, so that a time such as `10:30` is left intact.
+
 <kbd>Command + Shift + S</kbd>
 
 *Note: There is a known bug where the height of the first thought is incorrect after Split Sentences.*

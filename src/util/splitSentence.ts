@@ -245,18 +245,21 @@ const splitSentence = (value: string): SplitResult[] => {
    */
   const hasOnlyPeriodAtEnd = once(() => /^[^.;!?]*\.$[^.;!?]*/.test(plainValue.trim()))
 
-  // if we're sub-sentence or in one sentence territory, check for dash splitting first
+  // if we're sub-sentence or in one sentence territory, check for child splitting first
   // e.g. "one - 1" -> "- one   - 1" (as child)
+  // e.g. "Start: 1" -> "- Start   - 1" (as child)
   if (!sentenceSplitters || hasOnlyPeriodAtEnd()) {
-    // Check for dash (-, –, or —) and split into child if found
+    // Check for a dash (-, –, or —) or a colon and split into child if found
     // This handles Case 1: Split into child when there's only one sentence
-    // Match the first dash that has content on both sides
+    // Match the first delimiter that has content on both sides. A colon must be followed by whitespace so that it does not split a time, e.g. "10:30".
     // A dash surrounded by whitespace is a delimiter and takes priority over commas, e.g. "Shopping list - apples, bananas".
     // A dash without surrounding whitespace may be part of a hyphenated word, so commas take priority, e.g. "Jeff Koons, Jean-Michel Basquiat" (#3525).
     const isCommaList = plainValue.split(',').filter(s => s.trim()).length > 1
-    const dashMatch = plainValue.match(isCommaList ? /^(.+?)\s+([-–—])\s+(.+)$/ : /^(.+?)\s*([-–—])\s*(.+)$/)
-    if (dashMatch) {
-      const [_, leftPart, __, rightPart] = dashMatch
+    const childMatch = plainValue.match(
+      isCommaList ? /^(.+?)(?:\s+[-–—]\s+|\s*:\s+)(.+)$/ : /^(.+?)\s*(?:[-–—]\s*|:\s+)(.+)$/,
+    )
+    if (childMatch) {
+      const [_, leftPart, rightPart] = childMatch
       const trimmedLeft = leftPart.trim()
       const trimmedRight = rightPart.trim()
       // Only split if both parts have content
