@@ -614,25 +614,6 @@ it("<span> with nested li's", async () => {
 `)
 })
 
-// TODO
-it.skip("empty thought with nested li's", async () => {
-  expect(
-    await importExport(
-      `
-<li>
-  <ul>
-    <li>x</li>
-    <li>y</li>
-  </ul>
-</li>
-`,
-    ),
-  ).toBe(`
-  - x
-  - y
-`)
-})
-
 // TODO: Indentation is off
 it.skip("do not add empty parent thought when empty li node has no nested li's", async () => {
   expect(
