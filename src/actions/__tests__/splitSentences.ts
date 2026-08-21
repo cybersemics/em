@@ -786,6 +786,42 @@ describe('dash splitting', () => {
   })
 })
 
+describe('colon splitting', () => {
+  it('splits thought with colon into main thought and subthought', () => {
+    const value = 'Start: 1'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Start
+    - 1`)
+  })
+
+  it('splits on first colon when multiple colons are present', () => {
+    const value = 'one: two: three'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - one
+    - two: three`)
+  })
+
+  it('does not split a time, since the colon is not followed by a space', () => {
+    const value = '10:30'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - 10:30`)
+  })
+
+  it('does not split when the colon is at the beginning', () => {
+    const value = ': 1'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - : 1`)
+  })
+})
+
 describe('slash splitting', () => {
   it('splits thought with slashes into a chain of descendants', () => {
     const value = 'one/two/three'
