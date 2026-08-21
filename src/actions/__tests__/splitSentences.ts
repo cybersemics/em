@@ -127,10 +127,25 @@ describe('simple split', () => {
 
     expect(exported).toBe(`- ${HOME_TOKEN}
   - a
-  - One.
-  - Two.
-  - Three.
+  - ${'' /* prevent trim_trailing_whitespace */}
+    - One.
+    - Two.
+    - Three.
   - b`)
+  })
+
+  it('sets the cursor on the new empty category', () => {
+    const steps = [
+      newThought('a'),
+      newThought('One. Two. Three.'),
+      newThought('b'),
+      setCursor(['One. Two. Three.']),
+      splitSentences(),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expectPathToEqual(stateNew, stateNew.cursor, [''])
   })
 
   it('split single thought as expected if the thought has splitter ... and ?!', () => {

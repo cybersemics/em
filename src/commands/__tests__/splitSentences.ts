@@ -257,6 +257,31 @@ describe('splitSentences', () => {
   - three.`)
   })
 
+  // https://github.com/cybersemics/em/issues/4395
+  it('inserts the sentences into a new empty category when the thought has siblings', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - b
+            - one. two. three
+        `,
+      }),
+      setCursor(['a', 'one. two. three']),
+    ])
+
+    executeCommand(splitSentencesCommand, { store })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - b
+    - ${'' /* prevent trim_trailing_whitespace */}
+      - one.
+      - two.
+      - three`)
+  })
+
   describe('multicursor', () => {
     it('splits sentences in multiple thoughts', async () => {
       store.dispatch([
@@ -276,13 +301,15 @@ describe('splitSentences', () => {
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
       expect(exported).toBe(`- ${HOME_TOKEN}
-  - A.
-  - This is A.
-  - More A.
+  - ${'' /* prevent trim_trailing_whitespace */}
+    - A.
+    - This is A.
+    - More A.
   - B. This is B.
-  - C.
-  - This is C.
-  - More C.`)
+  - ${'' /* prevent trim_trailing_whitespace */}
+    - C.
+    - This is C.
+    - More C.`)
     })
 
     it('handles mixed scenarios with single and multiple sentences', async () => {
@@ -305,11 +332,13 @@ describe('splitSentences', () => {
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
       expect(exported).toBe(`- ${HOME_TOKEN}
   - One sentence only.
-  - Two sentences here.
-  - And the second one.
-  - Three now.
-  - Middle sentence.
-  - Last one.`)
+  - ${'' /* prevent trim_trailing_whitespace */}
+    - Two sentences here.
+    - And the second one.
+  - ${'' /* prevent trim_trailing_whitespace */}
+    - Three now.
+    - Middle sentence.
+    - Last one.`)
     })
   })
 })
