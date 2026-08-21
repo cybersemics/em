@@ -175,15 +175,25 @@ function splitFormattedHtmlByPlainValues(htmlValue: string, plainValues: string[
   return htmlValues
 }
 
+/** Symbols that delimit sub-sentences, e.g. "a → b → c" (#4393). */
+const symbolSplitRegex = /[↑↓←→+:]/
+
+/** Matches a sub-sentence symbol at the beginning of the remaining text. */
+const symbolLeadingRegex = /^[↑↓←→+:]/
+
 /**
  * Returns the delimiter to split a single sentence into sub-sentences, as a regex that matches the delimiter anywhere and a regex that matches it at the beginning of the remaining text.
- * Comma takes priority over "and", which is only used when the value contains no comma.
+ * Comma takes priority over the symbols ↑↓←→+:, which take priority over "and". Each is only used when the value contains none of the delimiters above it.
  * "and" is matched with word boundaries so that it does not split within a word, e.g. "Standard" (#4810).
  *
  * @param plainValue The plain text thought value.
  */
 function subSentenceDelimiter(plainValue: string): { split: RegExp; leading: RegExp } {
-  return plainValue.includes(',') ? { split: /,/, leading: /^,/ } : { split: /\band\b/i, leading: /^and\b/i }
+  return plainValue.includes(',')
+    ? { split: /,/, leading: /^,/ }
+    : symbolSplitRegex.test(plainValue)
+      ? { split: symbolSplitRegex, leading: symbolLeadingRegex }
+      : { split: /\band\b/i, leading: /^and\b/i }
 }
 
 /**
