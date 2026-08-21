@@ -959,7 +959,8 @@ const Editable = ({
         })
 
         // If long press is in progress, don't allow the editable to receive focus or iOS Safari will scroll it.
-        if (state.longPress !== LongPressState.Inactive) {
+        // Also ignore the click synthesized from the release of a drag after drag state has already been reset.
+        if (globals.suppressTapAfterDrag || state.longPress !== LongPressState.Inactive) {
           e.preventDefault()
           return
         }

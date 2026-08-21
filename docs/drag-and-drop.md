@@ -96,10 +96,11 @@ Notable behavior in [`useDragAndDropThought.tsx`](../src/hooks/useDragAndDropTho
 - **`canDrop`** rejects the drop if `state.longPress !== DragInProgress` (so it short-circuits when the drag has been canceled), if the parent path has the context view active (you can't drop into a context view), or if the destination is a descendant of any dragged thought (use of [`canDropPath`](../src/hooks/useDragAndDropThought.tsx), a [moize](https://github.com/planttheidea/moize)-cached helper with `maxSize: 50`, since `canDrop` runs every frame during hover).
 - **`drop`** validates each item separately (root/EM contexts can't move out of their root; can't drop on self), animates the dragged thought's flight to a collapsed destination via [`animateDroppedThought`](../src/util/animateDroppedThought.ts), and then dispatches either `moveThought` (default) or `createThought` (when in the context view, dropping creates a new entry under the dragged context). Wraps multicursor drops in `setIsMulticursorExecuting` so undo coalesces them.
 - **`hover`** is throttled by mouse position via [`throttleByMousePosition`](../src/util/throttleByMousePosition.ts) to update `state.hoveringPath` and `state.hoverZone` only when the cursor actually moves.
+- **`endDrag`** restores scrolling and clears drag state synchronously, then suppresses taps until the next task so a click synthesized from the drag's release cannot move the cursor to the dragged thought. A separate user click occurs in a later task and is handled normally.
 
 ### `useDragAndDropSubThought`
 
-Used by `DropChild` and `DropEnd`. Drop-only — there is no drag source. See [`useDragAndDropSubThought.ts`](../src/hooks/useDragAndDropSubThought.ts).
+Used by `DropChild` and `DropEnd`. Drop-only — there is no drag source. See [`useDragAndDropSubThought.tsx`](../src/hooks/useDragAndDropSubThought.tsx).
 
 Distinguishing rules from `useDragAndDropThought`:
 
