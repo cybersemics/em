@@ -88,21 +88,25 @@ const useFilteredCommands = (
             ? command.labelInverse
             : command.label
         ).toLowerCase()
+        // lowercase the search chars so that matching is case insensitive
         const chars = search.toLowerCase().split('')
 
         return (
           // include commands with at least one included char and no more than three chars non-matching chars
           // fuzzy matching will prioritize the best commands
           chars.some(char => char !== ' ' && label.includes(char)) &&
-          search.split('').filter(char => char !== ' ' && !label.includes(char)).length <= 3
+          chars.filter(char => char !== ' ' && !label.includes(char)).length <= 3
         )
       }
     })
 
     // sorted commands
     const sorted = _.sortBy(possibleCommands, command => {
+      // sort by the same label that is used for filtering, i.e. only use the inverse label of an active command when active commands are sorted first
       const label = (
-        command.labelInverse && command.isActive?.(store.getState()) ? command.labelInverse : command.label
+        sortActiveCommandsFirst && command.labelInverse && command.isActive?.(store.getState())
+          ? command.labelInverse
+          : command.label
       ).toLowerCase()
 
       // In gesture mode, help command should always be at the end
