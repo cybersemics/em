@@ -158,8 +158,6 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 ## S
 
-**schema version** — `SCHEMA_LATEST` in [`constants.ts`](../src/constants.ts). Sent with every `db.updateThoughts` call so legacy data can be migrated.
-
 **shortcut** — Legacy term for *command*. The folder was renamed `/src/shortcuts → /src/commands`; some doc references and helper names persist.
 
 **SimplePath** — A `Path` branded as having no cycles (no context-view crossings). Required by code that needs a single contiguous context. Get one via `simplifyPath` or by structurally guaranteeing it and casting. See [data-model.md → SimplePath](data-model.md#simplepath).

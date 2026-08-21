@@ -18,7 +18,6 @@ export interface DataProvider<T extends any[] = any> {
     thoughtIndexUpdates: Index<Thought | null>
     lexemeIndexUpdates: Index<Lexeme | null>
     lexemeIndexUpdatesOld: Index<Lexeme | undefined>
-    schemaVersion: number
     movePlacements?: Index<ThoughtId | null>
   }) => Promise<unknown>
   freeThought: (id: ThoughtId) => Promise<void>

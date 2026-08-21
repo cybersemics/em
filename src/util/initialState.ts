@@ -4,7 +4,7 @@ import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtIndices from '../@types/ThoughtIndices'
 import Timestamp from '../@types/Timestamp'
-import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, LongPressState, ROOT_PARENT_ID, SCHEMA_LATEST } from '../constants'
+import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, LongPressState, ROOT_PARENT_ID } from '../constants'
 import { clientId, tsidShared } from '../data-providers/thoughtspaceSession'
 import storageModel from '../stores/storageModel'
 import hashThought from '../util/hashThought'
@@ -140,7 +140,6 @@ const initialState = (created: Timestamp = timestamp()) => {
     redoPatches: [],
     resourceCache: {},
     rootContext: [HOME_TOKEN],
-    schemaVersion: SCHEMA_LATEST,
     search: null,
     showDesktopCommandUniverse: false,
     showGestureMenu: false,

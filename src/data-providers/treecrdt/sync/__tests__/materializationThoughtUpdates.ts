@@ -49,7 +49,6 @@ const fakeProvider = (thoughts: Index<Thought>): DataProvider => ({
 
 /** Converts test state to the provider-facing materialization snapshot. */
 const materializationSnapshot = (state: ReturnType<typeof initialState>) => ({
-  schemaVersion: state.schemaVersion,
   thoughtIndex: state.thoughts.thoughtIndex,
   lexemeIndex: state.thoughts.lexemeIndex,
 })

@@ -92,7 +92,6 @@ const pushQueue: StoreEnhancer<any> =
               thoughtIndexUpdates: batch.thoughtIndexUpdates,
               lexemeIndexUpdates: batch.lexemeIndexUpdates,
               lexemeIndexUpdatesOld: batch.lexemeIndexUpdatesOld,
-              schemaVersion: batch.updates?.schemaVersion ?? 0,
               movePlacements: batch.movePlacements,
               local: batch.local,
             })),
