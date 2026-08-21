@@ -69,8 +69,7 @@ it('alternating nested lists', async () => {
 `)
 })
 
-// TODO
-it.skip('multi-line nested html tags', async () => {
+it('multi-line nested html tags', async () => {
   const paste = `
   <li><i><b>A</b></i></li>
   <li><i><b>B</b></i></li>
@@ -90,27 +89,7 @@ it.skip('multi-line nested html tags', async () => {
   expect(actual).toBe(expectedOutput)
 })
 
-// TODO
-it.skip('text that contains non-closed span tag', async () => {
-  const paste = `
-    <li>a</li>
-    <li>b</li>
-    <li><span>c</li>
-    <li>d</li>
-  `
-  const actual = await importExport(paste)
-  expect(actual).toBe(
-    `
-- a
-- b
-- c
-- d
-`,
-  )
-})
-
-// TODO
-it.skip('text that contains em tag', async () => {
+it('text that contains em tag', async () => {
   const text = `
     <li>a<ul>
       <li>b</li>
@@ -134,8 +113,7 @@ it.skip('text that contains em tag', async () => {
   )
 })
 
-// TODO
-it.skip('text that contains br tag that does not have children', async () => {
+it('text that contains br tag that does not have children', async () => {
   const text = `
     <li>a</li>
     <li>b</li>
@@ -149,8 +127,7 @@ it.skip('text that contains br tag that does not have children', async () => {
   )
 })
 
-// TODO
-it.skip('text that contains br tag that has note children', async () => {
+it('text that contains br tag that has note children', async () => {
   const text = `
     <li>a</li>
     <li>b</li>
@@ -166,8 +143,7 @@ it.skip('text that contains br tag that has note children', async () => {
   )
 })
 
-// TODO
-it.skip('text that contains one or more than one not allowed formattting tags', async () => {
+it('text that contains one or more than one not allowed formattting tags', async () => {
   const text = `
     <li>a</li>
     <li>b <sup>c</sup></li>
@@ -183,234 +159,6 @@ it.skip('text that contains one or more than one not allowed formattting tags', 
   - d 123
   `
   expect(exported.trim()).toBe(expected.trim())
-})
-
-// TODO: Needs to be rewritten to avoid converting from HTML -> JSON -> text -> HTML. See commit.
-it.skip('should paste plain text that contains formatting', async () => {
-  const paste = `<b>a</b>
-<b>b</b>`
-  const actual = await importExport(paste, 'text/html')
-  expect(actual).toBe(
-    `<ul>
-  <li>${HOME_TOKEN}${EMPTY_SPACE}
-    <ul>
-      <li><b>a</b></li>
-      <li><b>b</b></li>
-    </ul>
-  </li>
-</ul>`,
-  )
-})
-
-// TODO: Needs to be rewritten to avoid converting from HTML -> JSON -> text -> HTML. See commit.
-it.skip('should paste plain text that contains formatting and bullet indicator is inside of formatting tags', async () => {
-  const paste = `<b>a</b>
-<b> -b</b>`
-  const actual = await importExport(paste, 'text/html')
-  const expectedHTML = `<ul>
-  <li>${HOME_TOKEN}${EMPTY_SPACE}
-    <ul>
-      <li><b>a</b>${EMPTY_SPACE}${EMPTY_SPACE}${EMPTY_SPACE}
-        <ul>
-          <li><b>b</b></li>
-        </ul>
-      </li>
-    </ul>
-  </li>
-</ul>`
-  expect(actual).toBe(expectedHTML)
-})
-
-// TODO: Needs to be rewritten to avoid converting from HTML -> JSON -> text -> HTML. See commit.
-it.skip('should paste text properly that is copied from OSX Notes.app', async () => {
-  /* eslint-disable no-irregular-whitespace */
-  const paste = `<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html>
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<meta http-equiv="Content-Style-Type" content="text/css">
-<title></title>
-<meta name="Generator" content="Cocoa HTML Writer">
-<meta name="CocoaVersion" content="1894.6">
-<style type="text/css">
-p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px 'Helvetica Neue'}
-</style>
-</head>
-<body>
-<p class="p1">A</p>
-<p class="p1"><span class="Apple-converted-space"> </span>- B</p>
-<p class="p1"><span class="Apple-converted-space"> </span>- C</p>
-</body>
-</html>
-`
-  /* eslint-enable no-irregular-whitespace */
-
-  const actual = await importExport(paste, 'text/html')
-  const expectedOutput = `<ul>
-  <li>${HOME_TOKEN}${EMPTY_SPACE}
-    <ul>
-      <li>A${EMPTY_SPACE}${EMPTY_SPACE}${EMPTY_SPACE}
-        <ul>
-          <li>B</li>
-          <li>C</li>
-        </ul>
-      </li>
-    </ul>
-  </li>
-</ul>`
-  expect(actual).toBe(expectedOutput)
-})
-
-// TODO: Needs to be rewritten to avoid converting from HTML -> JSON -> text -> HTML. See commit.
-it.skip('should paste text properly that is copied from WebStorm', async () => {
-  const paste = `<html>
-       <head>
-          <meta http-equiv="content-type" content="text/html; charset=UTF-8">
-       </head>
-       <body>
-          <pre style="background-color:#2b2b2b;color:#a9b7c6;font-family:'JetBrains Mono',monospace;font-size:9.8pt;">A<br>&#32;-B<br>&#32;-C<br></pre>
-       </body>
-    </html>`
-
-  const actual = await importExport(paste, 'text/html')
-  const expectedOutput = `<ul>
-  <li>${HOME_TOKEN}${EMPTY_SPACE}
-    <ul>
-      <li>A${EMPTY_SPACE}${EMPTY_SPACE}${EMPTY_SPACE}
-        <ul>
-          <li>B</li>
-          <li>C</li>
-        </ul>
-      </li>
-    </ul>
-  </li>
-</ul>`
-  expect(actual).toBe(expectedOutput)
-})
-
-// TODO: Needs to be rewritten to avoid converting from HTML -> JSON -> text -> HTML. See commit.
-it.skip('should paste text properly that is copied from iOS notes.app', async () => {
-  const paste =
-    '<meta charset="UTF-8"><p class="p1" style="margin: 0px; font-style: normal; font-variant-caps: normal; font-weight: normal; font-stretch: normal; font-size: 14px; line-height: normal; caret-color: rgb(0, 0, 0); color: rgb(0, 0, 0); letter-spacing: normal; orphans: auto; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-tap-highlight-color: rgba(26, 26, 26, 0.3); -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;"><span class="s1" style="font-weight: normal; font-style: normal; font-size: 14px;">A</span></p><p class="p1" style="margin: 0px; font-style: normal; font-variant-caps: normal; font-weight: normal; font-stretch: normal; font-size: 14px; line-height: normal; caret-color: rgb(0, 0, 0); color: rgb(0, 0, 0); letter-spacing: normal; orphans: auto; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-tap-highlight-color: rgba(26, 26, 26, 0.3); -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;"><span class="s1" style="font-weight: normal; font-style: normal; font-size: 14px;"><span class="Apple-converted-space"> </span>- B</span></p><p class="p1" style="margin: 0px; font-style: normal; font-variant-caps: normal; font-weight: normal; font-stretch: normal; font-size: 14px; line-height: normal; caret-color: rgb(0, 0, 0); color: rgb(0, 0, 0); letter-spacing: normal; orphans: auto; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-tap-highlight-color: rgba(26, 26, 26, 0.3); -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;"><span class="s1" style="font-weight: normal; font-style: normal; font-size: 14px;"><span class="Apple-converted-space"> </span>- C</span></p>'
-
-  const actual = await importExport(paste, 'text/html')
-  const expectedOutput = `<ul>
-  <li>${HOME_TOKEN}${EMPTY_SPACE}
-    <ul>
-      <li>A${EMPTY_SPACE}${EMPTY_SPACE}${EMPTY_SPACE}
-        <ul>
-          <li>B</li>
-          <li>C</li>
-        </ul>
-      </li>
-    </ul>
-  </li>
-</ul>`
-  expect(actual).toBe(expectedOutput)
-})
-
-// TODO: Needs to be rewritten to avoid converting from HTML -> JSON -> text -> HTML. See commit.
-it.skip('should paste text that contains formatting properly that is copied from OSX Notes.app', async () => {
-  /* eslint-disable no-irregular-whitespace */
-  const paste = `<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html>
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<meta http-equiv="Content-Style-Type" content="text/css">
-<title></title>
-<meta name="Generator" content="Cocoa HTML Writer">
-<meta name="CocoaVersion" content="1894.6">
-<style type="text/css">
-p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px 'Helvetica Neue'}
-</style>
-</head>
-<body>
-<p class="p1"><b><i>A</i></b></p>
-<p class="p1"><span class="Apple-converted-space">  </span>- <b>B</b></p>
-<p class="p1"><span class="Apple-converted-space">  </span>- <i>C</i></p>
-</body>
-</html>
-`
-  /* eslint-enable no-irregular-whitespace */
-
-  const actual = await importExport(paste, 'text/html')
-  const expectedOutput = `<ul>
-  <li>${HOME_TOKEN}${EMPTY_SPACE}
-    <ul>
-      <li><b><i>A</i></b>${EMPTY_SPACE}${EMPTY_SPACE}${EMPTY_SPACE}
-        <ul>
-          <li><b>B</b></li>
-          <li><i>C</i></li>
-        </ul>
-      </li>
-    </ul>
-  </li>
-</ul>`
-  expect(actual).toBe(expectedOutput)
-})
-
-// TODO: Needs to be rewritten to avoid converting from HTML -> JSON -> text -> HTML. See commit.
-it.skip('should paste text that contains multiple formatting properly that is copied from OSX Notes.app', async () => {
-  /* eslint-disable no-irregular-whitespace */
-  const paste = `<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html>
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<meta http-equiv="Content-Style-Type" content="text/css">
-<title></title>
-<meta name="Generator" content="Cocoa HTML Writer">
-<meta name="CocoaVersion" content="1894.6">
-<style type="text/css">
-p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px 'Helvetica Neue'}
-</style>
-</head>
-<body>
-<p class="p1"><b>A</b></p>
-<p class="p1"><span class="Apple-converted-space"> </span>- <b><i>B</i></b></p>
-<p class="p1"><span class="Apple-converted-space"> </span>- <b>C</b></p>
-</body>
-</html>
-
-`
-  /* eslint-enable no-irregular-whitespace */
-
-  const actual = await importExport(paste, 'text/html')
-  const expectedOutput = `<ul>
-  <li>${HOME_TOKEN}${EMPTY_SPACE}
-    <ul>
-      <li><b>A</b>${EMPTY_SPACE}${EMPTY_SPACE}${EMPTY_SPACE}
-        <ul>
-          <li><b><i>B</i></b></li>
-          <li><b>C</b></li>
-        </ul>
-      </li>
-    </ul>
-  </li>
-</ul>`
-  expect(actual).toBe(expectedOutput)
-})
-
-// TODO: Formatting should not be stripped out
-it.skip('should paste text that contains formatting that is copied from iOS notes.app', async () => {
-  const paste = `<meta charset="UTF-8"><p class="p1"
-                         style="margin: 0px; font-style: normal; font-variant-caps: normal; font-weight: normal; font-stretch: normal; font-size: 14px; line-height: normal; caret-color: rgb(0, 0, 0); color: rgb(0, 0, 0); letter-spacing: normal; orphans: auto; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-tap-highlight-color: rgba(26, 26, 26, 0.3); -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;">
-    <span class="s1" style="font-weight: bold; font-style: normal; font-size: 14px;">A</span></p><p class="p1"
-                                                                                                    style="margin: 0px; font-style: normal; font-variant-caps: normal; font-weight: normal; font-stretch: normal; font-size: 14px; line-height: normal; caret-color: rgb(0, 0, 0); color: rgb(0, 0, 0); letter-spacing: normal; orphans: auto; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-tap-highlight-color: rgba(26, 26, 26, 0.3); -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;">
-    <span class="s1" style="font-weight: bold; font-style: normal; font-size: 14px;"><span class="Apple-converted-space"> </span>B</span></p>`
-
-  const actual = await importExport(paste, 'text/html')
-  const expectedOutput = `<ul>
-  <li>${HOME_TOKEN}${EMPTY_SPACE}
-    <ul>
-      <li><span style="font-weight: bold;">A</span>${EMPTY_SPACE}${EMPTY_SPACE}${EMPTY_SPACE}
-        <ul>
-          <li><span style="font-weight: bold;"> B</span></li>
-        </ul>
-      </li>
-    </ul>
-  </li>
-</ul>`
-  expect(actual).toBe(expectedOutput)
 })
 
 it('should paste text with an improperly nested meta tag', async () => {
@@ -438,8 +186,7 @@ it('should paste text with an improperly nested meta tag', async () => {
 `)
 })
 
-// TODO: Should be imported as siblings, not parent-child
-it.skip('simple duplicate', async () => {
+it('simple duplicate', async () => {
   const text = `
     - a
     - a
@@ -453,8 +200,7 @@ it.skip('simple duplicate', async () => {
   expect(exported.trim()).toBe(expectedExport.trim())
 })
 
-// TODO: No longer working as it did in importText. What should we expect?
-it.skip('multiple duplicates', async () => {
+it('multiple duplicates', async () => {
   const text = `
     - a
       - b
@@ -539,8 +285,7 @@ it("multiple li's", async () => {
 `)
 })
 
-// TODO
-it.skip('nested lines separated by <br>', async () => {
+it('nested lines separated by <br>', async () => {
   expect(
     await importExport(
       `
@@ -614,27 +359,7 @@ it("<span> with nested li's", async () => {
 `)
 })
 
-// TODO
-it.skip("empty thought with nested li's", async () => {
-  expect(
-    await importExport(
-      `
-<li>
-  <ul>
-    <li>x</li>
-    <li>y</li>
-  </ul>
-</li>
-`,
-    ),
-  ).toBe(`
-  - x
-  - y
-`)
-})
-
-// TODO: Indentation is off
-it.skip("do not add empty parent thought when empty li node has no nested li's", async () => {
+it("do not add empty parent thought when empty li node has no nested li's", async () => {
   expect(
     await importExport(
       `
@@ -673,10 +398,9 @@ it('strip inline tag in nested list', async () => {
 `)
 })
 
-// TODO: Broken after switch from importText to importData
-it.skip('blank thoughts with subthoughts', async () => {
+it('blank thoughts with subthoughts', async () => {
   expect(
-    importExport(
+    await importExport(
       `<li>a
   <ul>
     <li>b
@@ -761,8 +485,7 @@ f
 `)
 })
 
-// TODO: Indentation broke when switching from importText to importData
-it.skip(`import bold thoughts with bold descendants`, async () => {
+it(`import bold thoughts with bold descendants`, async () => {
   const text = `
     - a
     - c
@@ -1086,10 +809,7 @@ it('empty parent', async () => {
     - x`)
 })
 
-// TODO: Why does foo not appear in the export?
-// Confirmed that the input is being detected as a single line and editThought is called in the importText reducer.
-// Works as expected in the browser.
-it.skip('insert single-line HTML at end of thought', async () => {
+it('insert single-line HTML at end of thought', async () => {
   const html = `<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>

@@ -447,14 +447,14 @@ it('single-line nested html tags', () => {
 </ul>`)
 })
 
-// TODO: Needs to be rewritten to avoid converting from HTML -> JSON -> text -> HTML. See commit.
-it.skip('should strip tags whose font weight is less than or equal to 400', () => {
+// Note: consecutive whitespace is collapsed on import, which is equivalent to how the HTML would be rendered.
+it('should strip tags whose font weight is less than or equal to 400', () => {
   const paste = `<span style="font-weight:400;">Hello world. </span> <span style="font-weight:100;">This is a test </span>`
   const actual = importExport(paste, 'text/html')
   const expectedOutput = `<ul>
   <li>${HOME_TOKEN}${EMPTY_SPACE}
     <ul>
-      <li>Hello world.  This is a test</li>
+      <li>Hello world. This is a test</li>
     </ul>
   </li>
 </ul>`
@@ -831,8 +831,7 @@ it('set cursor correctly after duplicate merge', () => {
     - b`)
 })
 
-// TODO
-it.skip('encode single open angled bracket', () => {
+it('encode single open angled bracket', () => {
   const text = `
 - a
   - <b
@@ -899,8 +898,7 @@ it('preserve formatting tags', () => {
   expect(importExport('<b>one</b> and <i>two</i>', 'text/html')).toBe(expectedText)
 })
 
-// TODO
-it.skip('WorkFlowy import with notes', () => {
+it('WorkFlowy import with notes', () => {
   expect(
     importExport(
       `

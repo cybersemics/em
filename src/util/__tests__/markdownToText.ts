@@ -17,9 +17,9 @@ p3
 `)
   })
 
-  // TODO: This test is skipped while we're evaluating whether to
-  // import separate lines as separate thoughts.
-  it.skip('should import separate lines as separate thoughts', () => {
+  // Soft-wrapped lines are a single paragraph in Markdown, so they are imported as a single thought with encoded line
+  // breaks, the same way multiline code and blockquotes are imported.
+  it('should import soft-wrapped lines as a single thought', () => {
     const markdown = `
 p1
 p2
@@ -27,9 +27,7 @@ p3
 `
 
     expect(markdownToText(markdown)).toBe(`
-- p1
-- p2
-- p3
+- p1&#10;p2&#10;p3
 `)
   })
 
@@ -90,28 +88,6 @@ p3
   - b
   - c
 - Heading 1 again
-`)
-  })
-
-  // TODO: This test is skipped while we're evaluating whether to
-  // import separate lines as separate thoughts.
-  it.skip('should import mixed text and lists', () => {
-    const markdown = `
-p1
-p2
-- a
-  - b
-    - c
-p3
-`
-
-    expect(markdownToText(markdown)).toBe(`
-- p1
-- p2
-- a
-  - b
-    - c
-- p3
 `)
   })
 
