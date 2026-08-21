@@ -24,6 +24,22 @@ const shiftClickThought = async (value: string) => {
   }
 }
 
+/** Waits for the given number of bullets to be highlighted by the multiselect. Reports the number that are
+ * actually highlighted on timeout, since the alternative — puppeteer's own 30 s default, which outlives the
+ * test timeout — fails the test without saying which step never arrived. */
+const waitForHighlightedBullets = async (n: number) => {
+  try {
+    await page.waitForFunction(
+      (n: number) => document.querySelectorAll('[aria-label="bullet"][data-highlighted="true"]').length === n,
+      { timeout: 10000 },
+      n,
+    )
+  } catch {
+    const highlighted = await page.$$eval('[aria-label="bullet"][data-highlighted="true"]', bullets => bullets.length)
+    throw new Error(`Expected ${n} highlighted bullets, but ${highlighted} were highlighted.`)
+  }
+}
+
 describe('multiselect', () => {
   // https://github.com/cybersemics/em/issues/4740
   it('starts multiselect at the Shift-clicked thought when there is no selection', async () => {
@@ -172,14 +188,10 @@ describe('multiselect', () => {
     await clickThought('c')
 
     await press('ArrowUp', { shift: true })
-    await page.waitForFunction(
-      () => document.querySelectorAll('[aria-label="bullet"][data-highlighted="true"]').length === 2,
-    )
+    await waitForHighlightedBullets(2)
 
     await press('ArrowUp', { shift: true })
-    await page.waitForFunction(
-      () => document.querySelectorAll('[aria-label="bullet"][data-highlighted="true"]').length === 3,
-    )
+    await waitForHighlightedBullets(3)
 
     const visibleThoughts = await page.$$eval('[data-editable]', elements => elements.map(el => el.innerHTML))
 
@@ -199,14 +211,10 @@ describe('multiselect', () => {
     await clickThought('a')
 
     await press('ArrowDown', { shift: true })
-    await page.waitForFunction(
-      () => document.querySelectorAll('[aria-label="bullet"][data-highlighted="true"]').length === 2,
-    )
+    await waitForHighlightedBullets(2)
 
     await press('ArrowDown', { shift: true })
-    await page.waitForFunction(
-      () => document.querySelectorAll('[aria-label="bullet"][data-highlighted="true"]').length === 3,
-    )
+    await waitForHighlightedBullets(3)
 
     /** Returns the rotation of the given thought's bullet. The triangle is rotated a quarter turn to point down when the thought is expanded, and is unrotated to point right when it is collapsed. */
     const bulletRotation = (value: string) =>
@@ -222,9 +230,7 @@ describe('multiselect', () => {
     expect(await bulletRotation('c')).toBe('none')
 
     await press('Escape')
-    await page.waitForFunction(
-      () => document.querySelectorAll('[aria-label="bullet"][data-highlighted="true"]').length === 0,
-    )
+    await waitForHighlightedBullets(0)
 
     // the cursor is still on c, which expands once it is no longer selected
     await waitForEditable('y')
