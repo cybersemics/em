@@ -46,7 +46,12 @@ const splitSentences = (state: State): State => {
     : null
 
   const reducers = [
-    setCursor({ path: cursor, offset: getTextContentFromHTML(firstSentence.value).length }),
+    // preserve the keyboard state from before the split, since newThought opens the keyboard
+    setCursor({
+      path: cursor,
+      offset: getTextContentFromHTML(firstSentence.value).length,
+      isKeyboardOpen: state.isKeyboardOpen,
+    }),
     cursorForwardPath ? cursorHistory({ cursor: cursorForwardPath }) : null,
     editableRender,
   ]

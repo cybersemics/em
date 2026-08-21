@@ -7,9 +7,9 @@ import hasMulticursor from '../selectors/hasMulticursor'
 import headValue from '../util/headValue'
 import splitSentence from '../util/splitSentence'
 
-const splitSentencesCommand: Command = {
+const splitSentencesCommand = {
   id: 'splitSentences',
-  label: 'Split Sentences',
+  label: 'Split Sentences' as const,
   description: 'Splits multiple sentences in a single thought into separate thoughts.',
   keyboard: { key: 's', meta: true, shift: true },
   gesture: 'dlr',
@@ -25,12 +25,12 @@ const splitSentencesCommand: Command = {
     const sentences = value !== undefined ? splitSentence(value) : []
 
     if (sentences.length <= 1) {
-      dispatch(alert('Cannot split sentences: thought is an empty thought or has only one sentence.'))
+      dispatch(alert('Nothing to split.'))
       return
     }
 
     dispatch(splitSentences())
   },
-}
+} satisfies Command
 
 export default splitSentencesCommand

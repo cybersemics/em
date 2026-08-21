@@ -58,7 +58,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 ## D
 
-**DataProvider** — The single interface ([`DataProvider.ts`](../src/data-providers/DataProvider.ts)) for storage backends. `db` in [`yjs/thoughtspace.ts`](../src/data-providers/yjs/thoughtspace.ts) is the live implementation.
+**DataProvider** — The single interface ([`DataProvider.ts`](../src/data-providers/DataProvider.ts)) for storage backends. The active implementation is exported through [`data-providers/thoughtspace.ts`](../src/data-providers/thoughtspace.ts).
 
 **dbQueue / freeQueue** — Two halves of the push-queue split. `dbQueue` writes batches with `local || remote` set; `freeQueue` releases entries from the in-memory cache. See [persistence.md → Push queue](persistence.md#push-queue-redux--yjs).
 
@@ -94,7 +94,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 ## H
 
-**HOME_TOKEN** — Sentinel `ThoughtId` (`'__ROOT__'`) for the home root. The path `[HOME_TOKEN]` represents the root thought itself; every regular `Path` starts with a child of HOME (or ABSOLUTE) and the root token is implied. See [data-model.md → Path](data-model.md#path).
+**HOME_TOKEN** — Sentinel `ThoughtId` for the home root. The path `[HOME_TOKEN]` represents the root thought itself; every regular `Path` starts with a child of HOME (or ABSOLUTE) and the root token is implied. See [data-model.md → Path](data-model.md#path).
 
 ## I
 
@@ -134,7 +134,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **permissionsClientDoc** — Separate Y.Doc holding `Index<Share>` keyed by access token (one entry per device with access). CRUD in [`permissionsModel.ts`](../src/data-providers/yjs/permissionsModel.ts).
 
-**=pin / =pinChildren** — Meta-attributes that keep a thought (or all children of a context) expanded. `=pin` is also pre-loaded eagerly during `fetchDescendants` to avoid a flash of expanded children before `=pin/false` resolves.
+**=pin** — Meta-attribute that keeps a thought expanded. Scoped variants: `=children/=pin` keeps all children of a context expanded (the replacement for the old `=pinChildren`), and `=descendants/=pin` keeps the entire subtree expanded. `=pin` is also pre-loaded eagerly during `fetchDescendants` to avoid a flash of expanded children before `=pin/false` resolves. See [metaprogramming.md](metaprogramming.md#pinning--expansion).
 
 **pull queue** — [`pullQueue.ts`](../src/redux-middleware/pullQueue.ts) middleware that, on every action, computes the visible thought IDs and triggers `pull` for any pending ones. Debounced 10 ms, throttled 100 ms. See [persistence.md → Pull queue](persistence.md#pull-queue-yjs--redux).
 
@@ -146,7 +146,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 ## R
 
-**rank** — `number` on `Thought` that determines sort order among siblings. Unique per parent; absolute value irrelevant. Fractional and negative values let inserts avoid renumbering. Overridden visually by `=sort` if set. See [data-model.md → rank](data-model.md#rank).
+**rank** — `number` on `Thought` that determines sort order among siblings. Unique per parent; absolute value irrelevant. Fractional and negative values let inserts avoid renumbering. Rank is the only order the render path reads: a parent's `=sort` takes effect by renumbering its children's ranks, not by re-sorting at render time. See [data-model.md → rank](data-model.md#rank).
 
 **reducerFlow** — [`util/reducerFlow.ts`](../src/util/reducerFlow.ts) — composes a list of reducers into a single reducer. Standard pattern in `actions/`.
 
@@ -158,13 +158,11 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 ## S
 
-**schema version** — `SCHEMA_LATEST` in [`constants.ts`](../src/constants.ts). Sent with every `db.updateThoughts` call so legacy data can be migrated.
-
 **shortcut** — Legacy term for *command*. The folder was renamed `/src/shortcuts → /src/commands`; some doc references and helper names persist.
 
 **SimplePath** — A `Path` branded as having no cycles (no context-view crossings). Required by code that needs a single contiguous context. Get one via `simplifyPath` or by structurally guaranteeing it and casting. See [data-model.md → SimplePath](data-model.md#simplepath).
 
-**=sort** — Meta-attribute that overrides manual rank ordering. Options: `Alphabetical`, `Created`, `Updated`, `Note` (sort by `=note` value), each `Asc` or `Desc`.
+**=sort** — Meta-attribute that sorts a context's children, replacing their manual order by renumbering their ranks. Options: `Alphabetical`, `Created`, `Updated`, `Note` (sort by `=note` value), each `Asc` or `Desc`.
 
 **splitChain** — [`splitChain.ts`](../src/selectors/splitChain.ts) — splits a `Path` into `SimplePath[]` at every context-view boundary. Inverse: [`contextChainToPath`](../src/util/contextChainToPath.ts).
 
@@ -192,7 +190,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **updatedBy** — `clientId` of the writer. Stamped on every Thought and Lexeme write so observers can filter out self-originated change events.
 
-**updateThoughts** — Both an action ([`actions/updateThoughts.ts`](../src/actions/updateThoughts.ts)) that mutates Redux and queues a push, and the `DataProvider` entry point ([`yjs/thoughtspace.ts`](../src/data-providers/yjs/thoughtspace.ts)) that writes to Yjs. The action calls into the provider via the push queue.
+**updateThoughts** — The action ([`actions/updateThoughts.ts`](../src/actions/updateThoughts.ts)) that mutates Redux and queues a push. The push queue persists those batches through the active data provider's `updateThoughts`.
 
 ## V
 

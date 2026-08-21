@@ -9,13 +9,14 @@ import isPinned from '../selectors/isPinned'
 import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
 
-const pinCommand: Command = {
+const pinCommand = {
   id: 'pin',
-  label: 'Pin',
+  label: 'Pin' as const,
   labelInverse: 'Unpin',
   description: 'Pins open a thought so its subthoughts are always visible.',
   descriptionInverse: 'Unpins a thought so its subthoughts are automatically hidden.',
   keyboard: { key: 'p', meta: true, alt: true },
+  gesture: 'ud',
   svg: PinIcon,
   canExecute: state => {
     return !!state.cursor || hasMulticursor(state)
@@ -49,6 +50,6 @@ const pinCommand: Command = {
     const path = cursor ? simplifyPath(state, cursor) : HOME_PATH
     return !!isPinned(state, head(path))
   },
-}
+} satisfies Command
 
 export default pinCommand

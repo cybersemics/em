@@ -1,15 +1,12 @@
 import { screen } from '@testing-library/dom'
-import { findAllByPlaceholderText } from '@testing-library/react'
 import { act } from 'react'
 import SimplePath from '../../@types/SimplePath'
-import Thunk from '../../@types/Thunk'
 import { editThoughtActionCreator as editThought } from '../../actions/editThought'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
-import { toggleAttributeActionCreator as toggleAttribute } from '../../actions/toggleAttribute'
 import { toggleSortActionCreator } from '../../actions/toggleSort'
 import { executeCommand, executeCommandWithMulticursor } from '../../commands'
-import { EM_TOKEN, HOME_PATH, HOME_TOKEN } from '../../constants'
+import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
@@ -19,7 +16,6 @@ import contextToThought from '../../test-helpers/contextToThought'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import { deleteThoughtAtFirstMatchActionCreator } from '../../test-helpers/deleteThoughtAtFirstMatch'
 import initStore from '../../test-helpers/initStore'
-import findThoughtByText from '../../test-helpers/queries/findThoughtByText'
 import getDescendantsOfContext from '../../test-helpers/queries/getDescendantsOfContext'
 import getThoughtByContext from '../../test-helpers/queries/getThoughtByContext'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
@@ -146,96 +142,6 @@ describe('DOM', () => {
       const subthoughtsOfA = getDescendantsOfContext(['a'])
 
       expect(subthoughtsOfA.map((child: HTMLElement) => child.textContent)).toMatchObject(['3', '2', '1'])
-    })
-  })
-
-  describe.skip('global', () => {
-    it('home: Asc', async () => {
-      store.dispatch([
-        newThought({ value: 'c' }),
-        newThought({ value: 'b' }),
-        newThought({ value: 'a' }),
-        setCursor(['a']),
-
-        ((dispatch, getState) =>
-          dispatch(
-            editThought({
-              oldValue: 'None',
-              newValue: 'Alphabetical',
-              path: contextToPath(getState(), [EM_TOKEN, 'Settings', 'Global Sort', 'None']) as SimplePath,
-            }),
-          )) as Thunk,
-      ])
-
-      const thought = await findThoughtByText('c')
-      expect(thought).toBeTruthy()
-
-      const thoughtsWrapper = thought!.closest('ul') as HTMLElement
-      const thoughts = await findAllByPlaceholderText(thoughtsWrapper, 'Add a thought')
-
-      expect(thoughts.map((child: HTMLElement) => child.textContent)).toMatchObject(['a', 'b', 'c'])
-    })
-
-    it('subthoughts: Asc', async () => {
-      store.dispatch([
-        newThought({ value: 'a' }),
-        newThought({ value: '3', insertNewSubthought: true }),
-        newThought({ value: '1' }),
-        newThought({ value: '2' }),
-        setCursor(['a', 'b']),
-        ((dispatch, getState) =>
-          dispatch(
-            editThought({
-              oldValue: 'None',
-              newValue: 'Alphabetical',
-              path: contextToPath(getState(), [EM_TOKEN, 'Settings', 'Global Sort', 'None']) as SimplePath,
-            }),
-          )) as Thunk,
-      ])
-
-      const thought = await findThoughtByText('a')
-      expect(thought).toBeTruthy()
-
-      const thoughtChildrenWrapper = thought!.closest('li')?.lastElementChild as HTMLElement
-      const thoughtChildren = await findAllByPlaceholderText(thoughtChildrenWrapper, 'Add a thought')
-
-      expect(thoughtChildren.map((child: HTMLElement) => child.textContent)).toMatchObject(['1', '2', '3'])
-    })
-
-    it('subthoughts: override global Asc with None', async () => {
-      store.dispatch([
-        newThought({ value: 'a' }),
-        newThought({ value: '3', insertNewSubthought: true }),
-        newThought({ value: '1' }),
-        newThought({ value: '2' }),
-
-        setCursor(['a', 'b']),
-
-        ((dispatch, getState) =>
-          dispatch(
-            editThought({
-              oldValue: 'None',
-              newValue: 'Alphabetical',
-              path: contextToPath(getState(), [EM_TOKEN, 'Settings', 'Global Sort', 'None']) as SimplePath,
-            }),
-          )) as Thunk,
-
-        (dispatch, getState) =>
-          dispatch(
-            toggleAttribute({
-              path: contextToPath(getState(), ['a']),
-              values: ['=sort', 'None'],
-            }),
-          ),
-      ])
-
-      const thought = await findThoughtByText('a')
-      expect(thought).toBeTruthy()
-
-      const thoughtChildrenWrapper = thought!.closest('li')?.lastElementChild as HTMLElement
-      const thoughtChildren = await findAllByPlaceholderText(thoughtChildrenWrapper, 'Add a thought')
-
-      expect(thoughtChildren.map((child: HTMLElement) => child.textContent)).toMatchObject(['3', '1', '2'])
     })
   })
 
@@ -877,85 +783,6 @@ describe('store', () => {
       - Asc
   - 2
   - 3`)
-    })
-  })
-
-  describe('global sort', () => {
-    it('Asc -> NULL when global is Desc', () => {
-      store.dispatch([
-        importText({
-          text: `
-            - a
-              - =sort
-                - Alphabetical
-                  - Asc
-              - b
-              - c
-              - d
-              - e
-          `,
-        }),
-
-        toggleAttribute({
-          path: [EM_TOKEN],
-          values: ['Settings', 'Global Sort', 'Alphabetical', 'Desc'],
-        }),
-
-        setCursor(['a', 'b']),
-      ])
-
-      executeCommand(toggleSortCommand, { store })
-      expect(attributeByContext(store.getState(), ['a'], '=sort')).toBe(null)
-    })
-
-    it('NULL -> None when global is Desc', () => {
-      store.dispatch([
-        importText({
-          text: `
-            - a
-              - d
-              - b
-              - c
-              - e
-          `,
-        }),
-
-        toggleAttribute({
-          path: [EM_TOKEN],
-          values: ['Settings', 'Global Sort', 'Alphabetical', 'Desc'],
-        }),
-
-        setCursor(['a', 'b']),
-      ])
-
-      executeCommand(toggleSortCommand, { store })
-      expect(attributeByContext(store.getState(), ['a'], '=sort')).toBe('None')
-    })
-
-    it('override global Asc with local Desc', () => {
-      store.dispatch([
-        importText({
-          text: `
-            - a
-              - d
-              - b
-              - c
-              - e
-          `,
-        }),
-
-        toggleAttribute({
-          path: [EM_TOKEN],
-          values: ['Settings', 'Global Sort', 'Alphabetical'],
-        }),
-
-        setCursor(['a', 'b']),
-      ])
-
-      executeCommand(toggleSortCommand, { store })
-
-      expect(attributeByContext(store.getState(), ['a'], '=sort')).toBe('Alphabetical')
-      expect(attributeByContext(store.getState(), ['a', '=sort'], 'Alphabetical')).toBe('Desc')
     })
   })
 })

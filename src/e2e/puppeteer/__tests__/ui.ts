@@ -4,6 +4,7 @@ import { KnownDevices } from 'puppeteer'
 import openCommandCenterCommand from '../../../commands/openCommandCenter'
 import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
+import emulate from '../helpers/emulate'
 import gesture from '../helpers/gesture'
 import hide from '../helpers/hide'
 import hideHUD from '../helpers/hideHUD'
@@ -12,7 +13,6 @@ import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import setTheme from '../helpers/setTheme'
 import waitForSelector from '../helpers/waitForSelector'
-import { page } from '../session'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
@@ -40,7 +40,7 @@ it('DesktopCommandUniverse', async () => {
 
 describe('GestureMenu', () => {
   it('single column', async () => {
-    await page.emulate(KnownDevices['iPhone 15 Pro'])
+    await emulate(KnownDevices['iPhone 15 Pro'])
 
     await hideHUD()
 
@@ -98,7 +98,7 @@ describe('GestureMenu', () => {
 })
 
 it('CommandCenter', async () => {
-  await page.emulate(KnownDevices['iPhone 15 Pro'])
+  await emulate(KnownDevices['iPhone 15 Pro'])
 
   // the undo button toggles between active and inactive states for some reason. Hence hide the HUD to ensure the undo button is not visible.
   await hideHUD()

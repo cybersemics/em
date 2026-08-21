@@ -96,30 +96,24 @@ export const TUTORIAL_CONTEXT2_PARENT = {
   [TUTORIAL_VERSION_BOOK]: 'Books',
 }
 
-// constants for different schema versions
-export const SCHEMA_INITIAL = 0 // DEPRECATED
-export const SCHEMA_CONTEXTCHILDREN = 1 // DEPRECATED
-export const SCHEMA_ROOT = 2 // change root → __ROOT__
-export const SCHEMA_HASHKEYS = 3 // hash lexemeIndex keys
-export const SCHEMA_META_SETTINGS = 4 // load settings from hidden thoughts via metaprogramming
-export const SCHEMA_UNIQUE_IDS = 5 // add unique ids to thoughts for independent editing (#1495)
-export const SCHEMA_CHILDREN_MAP = 6 // convert children array to childrenMap object (#1587)
-export const SCHEMA_THOUGHT_WITH_CHILDREN = 7 // store all children in the Thought Object to allow O(1) lookup (#1592)
-// 1. lexeme.lemma renamed to Lexeme.lemma
-// 2. Lexeme.contexts changed from array to object
-// 3. lexemeIndex re-keyed with new hashing function to differentiate =archive and =archive
-export const SCHEMA_LEMMA = 8
-export const SCHEMA_LATEST = 8
+export const GLOBAL_ROOT_TOKEN = '00000000000000000000000000000000' as ThoughtId
 
-// store the root string as a token that is not likely to be written by the user (bad things will happen)
-export const HOME_TOKEN = '__ROOT__' as ThoughtId
+export const ROOT_PARENT_ID = GLOBAL_ROOT_TOKEN
 
-export const ROOT_PARENT_ID = '__ROOT_PARENT_ID__' as ThoughtId
+export const HOME_TOKEN = '00000000000000000000000000000001' as ThoughtId
 
-// token for hidden system context
-export const EM_TOKEN = '__EM__' as ThoughtId
+// Display/export-only label for the fixed Home root. Do not store this as the root thought value.
+export const HOME_DISPLAY_VALUE = '__ROOT__'
 
-export const ABSOLUTE_TOKEN = '__ABSOLUTE__' as ThoughtId
+export const EM_TOKEN = '00000000000000000000000000000002' as ThoughtId
+
+export const ABSOLUTE_TOKEN = '00000000000000000000000000000003' as ThoughtId
+
+// Fixed /EM/Settings identity used by system thought bootstrap and the TreeCRDT-backed thoughtspace.
+export const SETTINGS_TOKEN = '00000000000000000000000000000004' as ThoughtId
+export const SETTINGS_VALUE = 'Settings'
+
+export const TRANSIENT_THOUGHT_ID = '00000000000000000000000000ffffff' as ThoughtId
 
 export const ROOT_CONTEXTS = [HOME_TOKEN, ABSOLUTE_TOKEN]
 
@@ -600,7 +594,7 @@ export const COMMAND_GROUPS: {
   },
   {
     title: 'Visibility',
-    commands: ['pin', 'pinAll', 'toggleDone', 'toggleHiddenThoughts'],
+    commands: ['pin', 'pinAll', 'pinDescendants', 'toggleDone', 'toggleHiddenThoughts'],
   },
   {
     title: 'Settings',

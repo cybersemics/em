@@ -5,8 +5,10 @@ import press from '../helpers/press'
 import refresh from '../helpers/refresh'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
+import { usePersistentTreecrdtStorage } from '../setup'
 
 vi.setConfig({ testTimeout: 20000 })
+usePersistentTreecrdtStorage()
 
 // TODO: Fix thought buffering after switch to YJS
 it.skip('load a child after a parent is expanded', async () => {
