@@ -5,13 +5,13 @@ import press from '../helpers/press'
 import refresh from '../helpers/refresh'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
+import waitUntil from '../helpers/waitUntil'
 import { usePersistentTreecrdtStorage } from '../setup'
 
 vi.setConfig({ testTimeout: 20000 })
 usePersistentTreecrdtStorage()
 
-// TODO: Fix thought buffering after switch to YJS
-it.skip('load a child after a parent is expanded', async () => {
+it('load a child after a parent is expanded', async () => {
   const text = `
     - a
     - b
@@ -33,22 +33,18 @@ it.skip('load a child after a parent is expanded', async () => {
   await waitForThoughtExistInDb('e')
   await refresh()
 
-  // wait for a re-render in case the lexeme was loaded after the parent
-  // getEditingText will return undefined if we don't wait
-  // we don't currently have a way to tell if a lexeme is missing or just loading
-  await new Promise(resolve => setTimeout(resolve, 100))
+  // wait for the root thoughts to be rendered after the refresh
+  await waitForEditable('b')
 
   // expand b
   await clickThought('b')
   await waitForEditable('d')
 
-  // d should now be pending
+  // d should now be pending, since its children have not been pulled yet
   const isPendingBeforeExpand = !!(await $('[data-pending=true]'))
   expect(isPendingBeforeExpand).toEqual(true)
 
-  await new Promise(resolve => setTimeout(resolve, 500))
-  const isPendingAfterExpand = !!(await $('[data-pending=true]'))
-
-  // all visible thoughts, including d, should be loaded now
-  expect(isPendingAfterExpand).toEqual(false)
+  // all visible thoughts, including d, should be loaded shortly after being rendered
+  await waitUntil(() => !document.querySelector('[data-pending=true]'))
+  expect(await $('[data-pending=true]')).toBeFalsy()
 })
