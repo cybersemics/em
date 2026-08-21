@@ -18,7 +18,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **autocrop** — Vertical: hides the empty space above a deep cursor by translating the layout container upward and counter-scrolling to keep visible thoughts stable. Horizontal: see *indent*. See [layout-rendering.md → useAutocrop](layout-rendering.md#useautocrop-vertical-autocrop).
 
-**autofocus** — Per-thought visibility classification (`show | dim | hide | hide-parent`) computed from depth relative to the cursor. The closer to the cursor, the more visible. See [`Autofocus.ts`](../src/@types/Autofocus.ts) and [`calculateAutofocus.ts`](../src/selectors/calculateAutofocus.ts).
+**autofocus** — Per-thought visibility classification (`show | dim | hide | hide-parent`) computed from depth relative to the cursor. The closer to the cursor, the more visible. `=focus/Zoom` overrides this by hiding everything outside the zoomed thought's subtree. See [`Autofocus.ts`](../src/@types/Autofocus.ts) and [`calculateAutofocus.ts`](../src/selectors/calculateAutofocus.ts).
 
 ## B
 
