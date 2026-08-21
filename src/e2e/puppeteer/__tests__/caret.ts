@@ -16,7 +16,6 @@ import paste from '../helpers/paste'
 import press from '../helpers/press'
 import refresh from '../helpers/refresh'
 import waitForEditable from '../helpers/waitForEditable'
-import waitForHiddenEditable from '../helpers/waitForHiddenEditable'
 import waitForSelector from '../helpers/waitForSelector'
 import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
 import waitUntil from '../helpers/waitUntil'
@@ -350,8 +349,9 @@ describe('mobile only', () => {
     expect(offset).toBe(0)
   })
 
-  // TODO: waitForHiddenEditable is broken after virtualizing thoughts
-  it.skip('do nothing when a hidden uncle is clicked', async () => {
+  // A hidden uncle used to remain in the DOM as fully transparent text, where it could still be tapped by accident.
+  // Autofocus now fades it out and then replaces it with a fixed-height shim, so there is nothing left to tap.
+  it('a hidden uncle should not be rendered, so that it cannot be tapped', async () => {
     const importText = `
     - a
       - b
@@ -362,13 +362,12 @@ describe('mobile only', () => {
     await clickThought('a')
     await clickThought('c')
 
-    await waitForHiddenEditable('d')
-    await clickThought('d')
+    // d is an uncle of the cursor and is hidden by autofocus, so it is eventually removed from the DOM
+    await waitUntil(() => !Array.from(document.querySelectorAll('[data-editable]')).some(el => el.textContent === 'd'))
 
+    // the ancestors of the cursor remain visible and the cursor stays on c
     await waitForEditable('a')
-
-    const cursorText = await getEditingText()
-    expect(cursorText).toBe('c')
+    expect(await getEditingText()).toBe('c')
   })
 
   it.skip('edit mode should be disabled after opening a modal', async () => {
