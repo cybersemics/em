@@ -1,5 +1,5 @@
-import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
+import clickToolbar from '../helpers/clickToolbar'
 import exportThoughts from '../helpers/exportThoughts'
 import getEditingText from '../helpers/getEditingText'
 import paste from '../helpers/paste'
@@ -28,7 +28,7 @@ it('Apply formatting to a selected portion of a thought', async () => {
 
   await page.mouse.click(x, y, { count: 2 })
 
-  await click('[data-testid="toolbar-icon"][aria-label="Bold"]')
+  await clickToolbar('Bold')
 
   // get exported html and compress all indentation (whitespace before/after newline)
   const output = await exportThoughts()
@@ -45,14 +45,11 @@ it('Apply text color to an uppercase formatting tag', async () => {
 
   await clickThought('Hello World')
 
-  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
-  await click('[aria-label="background color swatches"] [aria-label="blue"]')
+  await clickToolbar('Text Color', 'background color swatches', 'blue')
 
-  await click('[data-testid="toolbar-icon"][aria-label="Letter Case"]')
-  await click('[aria-label="letter case swatches"] [aria-label="UpperCase"]')
+  await clickToolbar('Letter Case', 'UpperCase')
 
-  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
-  await click('[aria-label="text color swatches"] [aria-label="blue"]')
+  await clickToolbar('Text Color', 'text color swatches', 'blue')
 
   const result = await getEditingText()
   expect(result).toBe('<font color="#00c7e6">HELLO WORLD</font>')
@@ -77,7 +74,7 @@ it('Bold button stays active when the cursor is moved to a fully-bold thought vi
 
   // format the whole first thought as bold
   await clickThought('One')
-  await click('[data-testid="toolbar-icon"][aria-label="Bold"]')
+  await clickToolbar('Bold')
   await waitForEditable('<b>One</b>')
 
   // move the cursor to the plain thought: the Bold button should be inactive
@@ -115,8 +112,8 @@ it('Clear Thought placeholder inherits whole-thought formatting (#4612)', async 
   await paste(importText)
   await clickThought('hello')
 
-  await click('[data-testid="toolbar-icon"][aria-label="Bold"]')
-  await click('[data-testid="toolbar-icon"][aria-label="Underline"]')
+  await clickToolbar('Bold')
+  await clickToolbar('Underline')
   await page.waitForFunction(() => {
     const html = document.querySelector('[data-editing=true] [data-editable]')?.innerHTML || ''
     return html.includes('<b>') && html.includes('<u>') && html.includes('hello')

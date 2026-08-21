@@ -1,6 +1,7 @@
 import sleep from '../../../util/sleep'
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
+import clickToolbar from '../helpers/clickToolbar'
 import getEditingText from '../helpers/getEditingText'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
@@ -169,14 +170,12 @@ it('move cursor from formatted thought to first unformatted thought in descendin
   await clickThought('apple')
 
   // Toggle sort twice (ascending then descending)
-  await click('[data-testid="toolbar-icon"][aria-label="Sort Picker"]')
-  await click('[aria-label="sort options"] [aria-label="Alphabetical"]')
+  await clickToolbar('Sort Picker', 'Alphabetical')
 
-  await click('[data-testid="toolbar-icon"][aria-label="Sort Picker"]')
-  await click('[aria-label="sort options"] [aria-label="Alphabetical"]')
+  await clickToolbar('Sort Picker', 'Alphabetical')
 
   // Make text bold using the toolbar
-  await click('[data-testid="toolbar-icon"][aria-label="Bold"]')
+  await clickToolbar('Bold')
 
   // Press arrow down to move cursor
   await press('ArrowDown')
