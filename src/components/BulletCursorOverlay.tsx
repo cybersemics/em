@@ -147,12 +147,6 @@ export default function BulletCursorOverlay({
     thoughtId: head(simplePath),
   })
 
-  const homeContext = useSelector(state => {
-    const pathParent = rootedParentOf(state, path)
-    const showContexts = isContextViewActive(state, path)
-    return showContexts && isRoot(pathParent)
-  })
-
   // Must match the breadcrumbs rendered by Thought so that the cursor overlay is aligned with the thought.
   const contextBreadcrumbsAncestors = useSelector(state => rootedParentOf(state, simplePath), shallowEqual)
 
@@ -182,7 +176,7 @@ export default function BulletCursorOverlay({
             marginTop: '0.462rem',
           })}
         >
-          <ContextBreadcrumbs hidden path={contextBreadcrumbsAncestors} homeContext={homeContext} />
+          <ContextBreadcrumbs hidden path={contextBreadcrumbsAncestors} />
         </div>
       )}
       <ThoughtPositioner path={path} hideBullet={hideBullet} cursorOverlay>

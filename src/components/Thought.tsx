@@ -350,12 +350,6 @@ const ThoughtContainer = ({
     toggleMulticursorOnLongPress: true,
   })
 
-  const homeContext = useSelector(state => {
-    const pathParent = rootedParentOf(state, path)
-    const showContexts = isContextViewActive(state, path)
-    return showContexts && isRoot(pathParent)
-  })
-
   // The ancestors of the context that are rendered as breadcrumbs in the context view.
   // A context that is a direct child of the home context has a simplePath of length 1, so rootedParentOf returns HOME_PATH and ContextBreadcrumbs renders the HomeLink.
   const contextBreadcrumbsAncestors = useSelector(state => rootedParentOf(state, simplePath), shallowEqual)
@@ -513,7 +507,6 @@ const ThoughtContainer = ({
   //   styleContainer,
   //   thought,
   //   grandparent,
-  //   homeContext,
   //   isTable,
   //   invalidOption,
   //   isChildHovering,
@@ -603,7 +596,7 @@ const ThoughtContainer = ({
             marginTop: '0.462rem',
           })}
         >
-          <ContextBreadcrumbs path={contextBreadcrumbsAncestors} homeContext={homeContext} />
+          <ContextBreadcrumbs path={contextBreadcrumbsAncestors} />
         </div>
       )}
 
