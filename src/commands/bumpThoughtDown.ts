@@ -11,7 +11,9 @@ const bumpThoughtDownCommand: Command = {
   label: 'Bump Thought Down',
   description: 'Bump the current thought down one level and replace it with a new, empty thought.',
   gesture: 'drd',
-  keyboard: { key: 'd', meta: true, alt: true },
+  // Command + Option + d is unusable, as macOS reserves it for "Turn Dock Hiding On/Off" and never delivers the
+  // keydown to the browser (#4924).
+  keyboard: { key: 'd', meta: true, shift: true },
   // The command ends with the caret in a new empty thought ready for typing, so keep the cursor where
   // the reducer put it and clear the selection, as newThought does. Restoring the original cursor
   // would move the caret off the empty thought, since the recomputed path then leads to the moved
