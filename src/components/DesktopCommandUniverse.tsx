@@ -1,4 +1,4 @@
-import React, { FC, ReactElement, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import React, { FC, ReactElement, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
 import { css } from '../../styled-system/css'
@@ -11,6 +11,7 @@ import { hashCommand, hashKeyDown } from '../commands'
 import { executeCommandWithMulticursor } from '../commands'
 import openDesktopCommandUniverseCommand from '../commands/openDesktopCommandUniverse'
 import * as selection from '../device/selection'
+import testFlags from '../e2e/testFlags'
 import useFilteredCommands from '../hooks/useFilteredCommands'
 import storageModel from '../stores/storageModel'
 import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
@@ -308,10 +309,22 @@ const DesktopCommandUniverseWithTransition: FC = () => {
   // Commands need to be calculated even if the desktop command universe is not shown because useFilteredCommands is responsible for updating gestureStore's possibleCommands which is needed to prevent haptics when there are no more possible commands. Otherwise, either haptics would continue to fire when there are no more possible commands, or would falsely fire when the current sequence is not a valid gesture but there are possible commands with additional swipes.
   const [recentCommands, setRecentCommands] = useState(storageModel.get('recentCommands'))
   const [search, setSearch] = useState('')
-  const commands = useFilteredCommands(search, {
+  const commandsAll = useFilteredCommands(search, {
     recentCommands,
     sortActiveCommandsFirst: true,
   })
+
+  // Snapshot tests stub the command list so that the snapshot does not have to be updated whenever a command is added or removed.
+  // Memoized since a new array on every render would re-trigger the effects that depend on the command list.
+  const commandUniverseCommandIds = testFlags.commandUniverseCommandIds
+  const commands = useMemo(
+    () =>
+      commandUniverseCommandIds
+        ? commandsAll.filter(command => commandUniverseCommandIds.includes(command.id))
+        : commandsAll,
+    // testFlags.commandUniverseCommandIds is mutated by tests after mount, so it must be a dependency in order for the stub to be applied
+    [commandsAll, commandUniverseCommandIds],
+  )
 
   // clear search when desktop command universe is closed
   useEffect(() => {

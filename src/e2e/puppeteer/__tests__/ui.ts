@@ -12,6 +12,7 @@ import paste from '../helpers/paste'
 import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import setTheme from '../helpers/setTheme'
+import stubCommandUniverse from '../helpers/stubCommandUniverse'
 import waitForSelector from '../helpers/waitForSelector'
 
 expect.extend({
@@ -23,6 +24,9 @@ vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 it('DesktopCommandUniverse', async () => {
   // hide the HUD so that the snapshot only includes the command universe and is not affected by unrelated toolbar or navbar changes
   await hideHUD()
+
+  // stub the command list so that the snapshot does not have to be updated whenever a command is added or removed
+  await stubCommandUniverse(['newThought', 'newSubthought', 'indent', 'outdent', 'undo', 'redo', 'toggleSort'])
 
   await press('P', { meta: true })
 
