@@ -12,6 +12,7 @@ import gesture from '../helpers/gesture'
 import getEditingText from '../helpers/getEditingText'
 import getSelection from '../helpers/getSelection'
 import keyboard from '../helpers/keyboard'
+import openModal from '../helpers/openModal'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import refresh from '../helpers/refresh'
@@ -371,28 +372,29 @@ describe('mobile only', () => {
     expect(cursorText).toBe('c')
   })
 
-  it.skip('edit mode should be disabled after opening a modal', async () => {
+  it('edit mode should be disabled after opening a modal', async () => {
     const importText = `
     - a
       - b`
 
     await paste(importText)
 
+    // on mobile the first tap moves the cursor to b and the second tap enables edit mode
     await clickThought('b')
     await clickThought('b')
+    await waitUntil(() => !!document.activeElement?.closest('[data-editable]'))
 
-    // TODO: Why is the selection on the breadcrumbs? Edit mode should be active on b.
-    const textContext = await getSelection().focusNode?.textContent
-    expect(textContext).toBe('b')
+    await openModal('export')
 
-    // const focusNodeTypeBefore = await getSelection().focusNode?.nodeType
-    // expect(focusNodeTypeBefore).toBe(Node.TEXT_NODE)
-
-    await click('[aria-label="Export"]')
-    await click('.popup-close-x')
-
-    const focusNode = await getSelection().focusNode
-    expect(focusNode).toBeUndefined()
+    // the caret should leave the thought, i.e. edit mode is disabled.
+    // Note that the selection moves into the modal content rather than being cleared entirely.
+    await waitUntil(() => !document.activeElement?.closest('[data-editable]'))
+    const isCaretInThought = await page.evaluate(() => {
+      const focusNode = window.getSelection()?.focusNode
+      const focusElement = focusNode instanceof Element ? focusNode : focusNode?.parentElement
+      return !!focusElement?.closest('[data-editable]')
+    })
+    expect(isCaretInThought).toBe(false)
   })
 
   it('edit mode should be enabled after deleting an empty favorited thought', async () => {
