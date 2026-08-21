@@ -24,7 +24,6 @@ import { ThoughtContainerProps } from '../components/Thought'
 import { AlertType, LongPressState } from '../constants'
 import allowTouchToScroll from '../device/allowTouchToScroll'
 import * as selection from '../device/selection'
-import globals from '../globals'
 import documentSort from '../selectors/documentSort'
 import findDescendant from '../selectors/findDescendant'
 import getNextRank from '../selectors/getNextRank'
@@ -283,24 +282,19 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
 
 /** Handles drag end. Resets longPress to Inactive so that gestures, alerts, and the multicursor are restored once the drag concludes, and re-enables native scrolling. This react-dnd callback is guaranteed to fire whenever a drag ends (dropped or not), which is more reliable than the touchend-based reset in useDragHold that may not fire (e.g. multicursor drop onto a subthought). Scrolling is re-enabled here because useLongPress disables it via allowTouchToScroll(false) on long-press start and only restores it on touchend, which does not fire once a drag has begun (see useLongPress.stop). */
 const endDrag = () => {
-  // Ignore the click synthesized from the drag's release. A separate user click cannot occur until a later task.
-  globals.suppressTapAfterDrag = true
-  setTimeout(() => {
-    globals.suppressTapAfterDrag = false
-  })
-
   // Re-enable native scrolling. allowTouchToScroll(false) attaches an unconditional preventDefault touchmove listener on
   // long-press start that blocks all scrolling; it is only removed on touchend, which does not fire after a drag (e.g. a
   // multiselect drop onto a subthought), leaving scrolling frozen until it is explicitly re-enabled here.
   allowTouchToScroll(true)
-  store.dispatch([
-    longPress({ value: LongPressState.Inactive }),
-    (dispatch, getState) => {
-      if (getState().alert?.alertType === AlertType.DragAndDropHint) {
-        dispatch(alert(null))
-      }
-    },
-  ])
+  store.dispatch((dispatch, getState) => {
+    if (getState().alert?.alertType === AlertType.DragAndDropHint) {
+      dispatch(alert(null))
+    }
+  })
+
+  // Keep drag protections active through the click synthesized from the drag's release. A separate user click cannot
+  // occur until a later task.
+  setTimeout(() => store.dispatch(longPress({ value: LongPressState.Inactive })))
 }
 
 /** Collects props from the DragSource. */

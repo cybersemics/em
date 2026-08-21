@@ -46,10 +46,6 @@ let suppressBlurSync = false
  * edit mode. A legitimate second tap always begins with a new touchstart, which clears the flag first. */
 let suppressFocusAfterCursorMove = false
 
-/** Set when a thought drag ends and cleared on the next task. While set, an Editable ignores the click synthesized from
- * the drag's release so it cannot move the cursor to the dragged thought after drag cleanup has completed. */
-let suppressTapAfterDrag = false
-
 // check duplicate ranks within the same context for debugging
 const globals = {
   abandonImport,
@@ -61,7 +57,6 @@ const globals = {
   suppressChange,
   suppressBlurSync,
   suppressFocusAfterCursorMove,
-  suppressTapAfterDrag,
   arrowKeyBoundaryCross: arrowKeyBoundaryCross as string | null,
   touching,
 }

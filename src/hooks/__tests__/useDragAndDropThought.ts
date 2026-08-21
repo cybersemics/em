@@ -90,7 +90,9 @@ it('preserves an unrelated cursor when a trailing click fires after drag end', a
   })
 
   expect(store.getState().cursor).toEqual(contextToPath(store.getState(), ['a']))
+  expect(store.getState().longPress).toBe(LongPressState.DragInProgress)
   await act(vi.runOnlyPendingTimersAsync)
+  expect(store.getState().longPress).toBe(LongPressState.Inactive)
 
   await act(async () => {
     fireEvent.click(editableB)
