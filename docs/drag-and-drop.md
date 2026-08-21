@@ -93,7 +93,7 @@ Used by the [`Thought`](../src/components/Thought.tsx) component. Wires up *both
 Notable behavior in [`useDragAndDropThought.tsx`](../src/hooks/useDragAndDropThought.tsx):
 
 - **`canDrag`** rejects drags from immovable / readonly thoughts (checked via `=immovable` / `=readonly` attributes on the thought *or its parent*) and from non-editable documents.
-- **`canDrop`** rejects the drop if `state.longPress !== DragInProgress` (so it short-circuits when the drag has been canceled), if the parent path has the context view active (you can't drop into a context view), or if the destination is a descendant of any dragged thought (use of [`canDropPath`](../src/hooks/useDragAndDropThought.tsx), a [moize](https://github.com/planttheidea/moize)-cached helper with `maxSize: 50`, since `canDrop` runs every frame during hover).
+- **`canDrop`** rejects the drop if `state.longPress !== DragInProgress` (so it short-circuits when the drag has been canceled), if the parent path has the context view active (you can't drop into a context view), or if the destination is a descendant of any dragged thought or lies in a different root context — a thought cannot move between the EM context and the home thoughtspace, e.g. a Favorite dragged into the EM-rooted outline (both checks live in [`canDropPath`](../src/hooks/useDragAndDropThought.tsx), a [moize](https://github.com/planttheidea/moize)-cached helper with `maxSize: 50`, since `canDrop` runs every frame during hover).
 - **`drop`** validates each item separately (root/EM contexts can't move out of their root; can't drop on self), animates the dragged thought's flight to a collapsed destination via [`animateDroppedThought`](../src/util/animateDroppedThought.ts), and then dispatches either `moveThought` (default) or `createThought` (when in the context view, dropping creates a new entry under the dragged context). Wraps multicursor drops in `setIsMulticursorExecuting` so undo coalesces them.
 - **`hover`** is throttled by mouse position via [`throttleByMousePosition`](../src/util/throttleByMousePosition.ts) to update `state.hoveringPath` and `state.hoverZone` only when the cursor actually moves.
 
@@ -103,7 +103,7 @@ Used by `DropChild` and `DropEnd`. Drop-only — there is no drag source. See [`
 
 Distinguishing rules from `useDragAndDropThought`:
 
-- `canDrop` accounts for autofocus visibility: a thought hidden by autofocus is *not* droppable, except when it's the closest hidden parent of the cursor (which gets a dedicated drop zone). Uses [`visibleDistanceAboveCursor`](../src/selectors/visibleDistanceAboveCursor.ts) to compute distance.
+- `canDrop` accounts for autofocus visibility: a thought hidden by autofocus is *not* droppable, except when it's the closest hidden parent of the cursor (which gets a dedicated drop zone). Uses [`visibleDistanceAboveCursor`](../src/selectors/visibleDistanceAboveCursor.ts) to compute distance. It also rejects descendants of the dragged thoughts, dividers, context views, and — as in `useDragAndDropThought` — destinations in a different root context from the dragged thought.
 - The `drop` handler honors the `=drop` attribute on the parent: if `=drop/top`, the dropped thought is inserted as the *first* child instead of the last (see [Metaprogramming](metaprogramming.md)).
 - Calls [`useDragLeave`](../src/hooks/useDragLeave.ts) to debounce the clear of `state.hoveringPath` (so brief flickers between adjacent drop zones don't blank the UI).
 
