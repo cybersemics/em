@@ -6,7 +6,7 @@ import isEM from '../util/isEM'
 const editSettingsCommand: Command = {
   id: 'editSettings',
   label: 'Edit Settings',
-  description: 'Edit the raw settings of em as an outline. Toggles back to your thoughts when activated again.',
+  description: 'Edit the raw settings of em as an outline.',
   multicursor: false,
   svg: SettingsIcon,
   isActive: state => isEM(state.rootContext),
