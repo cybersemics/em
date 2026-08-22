@@ -123,14 +123,14 @@ This rule is about waiting for real time to pass, not about safety limits or tim
 - Durations that are part of simulated input, such as how long a long press is held or how quickly a swipe moves, are action parameters rather than synchronization waits.
 
 ```ts
-// ❌ Don't: hand-rolled polling against a state backdoor (real code — do not imitate)
+// ❌ Don't: hand-rolled polling against a state backdoor
 const childCount = await page.evaluate(async () => {
   const em = window.em as WindowEm
   for (let i = 0; i < 20; i++) {
-    if (em.getAllChildrenAsThoughts(['A']).length > 0) break
+    if (em.getAllChildrenByContext(['A']).length > 0) break
     await new Promise(resolve => setTimeout(resolve, 50))
   }
-  return em.getAllChildrenAsThoughts(['A']).length
+  return em.getAllChildrenByContext(['A']).length
 })
 ```
 
@@ -525,7 +525,7 @@ DOM reads are different from backdoors: inline `page.evaluate`/`browser.execute`
 
 Backdoors are never the act. The behavior under test always goes through a real user entry point (Principle 2).
 
-A few older tests access `window.em`, set test flags inline, mutate the DOM, or hand-roll waits. Known examples include [`spaceToIndent.ts`](../src/e2e/puppeteer/__tests__/spaceToIndent.ts), the specialized initialization test in [`startup.ts`](../src/e2e/puppeteer/__tests__/startup.ts), replication-delay setup in [`scroll.ts`](../src/e2e/puppeteer/__tests__/scroll.ts), and drag-hover timing in [`drag-and-drop.ts`](../src/e2e/puppeteer/__tests__/drag-and-drop.ts). They predate this policy; do not imitate them. When one is materially changed, move the exception behind a named helper and add it to the category table.
+A few older tests access `window.em`, set test flags inline, mutate the DOM, or hand-roll waits. Known examples include the specialized initialization test in [`startup.ts`](../src/e2e/puppeteer/__tests__/startup.ts), replication-delay setup in [`scroll.ts`](../src/e2e/puppeteer/__tests__/scroll.ts), and drag-hover timing in [`drag-and-drop.ts`](../src/e2e/puppeteer/__tests__/drag-and-drop.ts). They predate this policy; do not imitate them. When one is materially changed, move the exception behind a named helper and add it to the category table.
 
 ## Reviewing Tests
 

@@ -20,7 +20,7 @@ import testFlags from './e2e/testFlags'
 import contextToThoughtId from './selectors/contextToThoughtId'
 import decodeThoughtsUrl from './selectors/decodeThoughtsUrl'
 import exportContext from './selectors/exportContext'
-import { getAllChildren, getAllChildrenAsThoughts, getChildrenRanked } from './selectors/getChildren'
+import { getAllChildren, getChildrenRanked } from './selectors/getChildren'
 import getContexts from './selectors/getContexts'
 import getLexeme from './selectors/getLexeme'
 import getThoughtById from './selectors/getThoughtById'
@@ -187,9 +187,6 @@ const windowEm = {
   }),
   getAllChildrenByContext: withState((state: State, context: Context) =>
     getAllChildren(state, contextToThoughtId(state, context) || null),
-  ),
-  getAllChildrenAsThoughts: withState((state: State, context: Context) =>
-    getAllChildrenAsThoughts(state, contextToThoughtId(state, context) || null),
   ),
   getAllChildrenRankedByContext: withState((state: State, context: Context) =>
     getChildrenRanked(state, contextToThoughtId(state, context) || null),
