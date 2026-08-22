@@ -217,11 +217,11 @@ const diffState = <T>(newValue: Index<T>, value: Index<T>): Operation[] =>
   compare(_.omit(newValue, statePropertiesToOmit), _.omit(value, statePropertiesToOmit))
 
 /**
- * Append action names and the raw actions that produced the patch to all operations of a Patch.
+ * Append action names to all operations of a Patch.
  */
-const addActionsToPatch = (patch: Operation[], actions: ActionType[], rawActions: UnknownAction[]): Patch =>
+const addActionsToPatch = (patch: Operation[], actions: ActionType[]): Patch =>
   // TODO: Fix Patch type to support any Operation, not just GetOperation. See Patch.ts.
-  patch.map(operation => ({ ...operation, actions, rawActions })) as Patch
+  patch.map(operation => ({ ...operation, actions })) as Patch
 
 /**
  * Gets the first action from a patch.
@@ -249,11 +249,7 @@ const undoOneReducer = (state: State): State => {
   const lastUndoPatch = nthLast(undoPatches, 1)
   if (!lastUndoPatch) return state
   const newState = produce(state, (state: State) => applyPatch(state, lastUndoPatch).newDocument)
-  const correspondingRedoPatch = addActionsToPatch(
-    diffState(newState as Index, state),
-    [...lastUndoPatch[0]?.actions],
-    [...lastUndoPatch[0]?.rawActions],
-  )
+  const correspondingRedoPatch = addActionsToPatch(diffState(newState as Index, state), [...lastUndoPatch[0]?.actions])
   return {
     ...newState,
     redoPatches: [...redoPatches, correspondingRedoPatch],
@@ -271,11 +267,7 @@ const redoOneReducer = (state: State): State => {
   const lastRedoPatch = nthLast(redoPatches, 1)
   if (!lastRedoPatch) return state
   const newState = produce(state, (state: State) => applyPatch(state, lastRedoPatch).newDocument)
-  const correspondingUndoPatch = addActionsToPatch(
-    diffState(newState as Index, state),
-    [...lastRedoPatch[0]?.actions],
-    [...lastRedoPatch[0]?.rawActions],
-  )
+  const correspondingUndoPatch = addActionsToPatch(diffState(newState as Index, state), [...lastRedoPatch[0]?.actions])
   return {
     ...newState,
     redoPatches: redoPatches.slice(0, -1),
@@ -503,14 +495,10 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
             ...newState.undoPatches.slice(0, -1),
             ...(combinedUndoPatch.length
               ? [
-                  addActionsToPatch(
-                    combinedUndoPatch,
-                    [...(lastUndoPatch && lastUndoPatch.length > 0 ? lastUndoPatch[0]?.actions : []), actionType],
-                    [
-                      ...(lastUndoPatch && lastUndoPatch.length > 0 ? lastUndoPatch[0]?.rawActions : []),
-                      action as UnknownAction,
-                    ],
-                  ),
+                  addActionsToPatch(combinedUndoPatch, [
+                    ...(lastUndoPatch && lastUndoPatch.length > 0 ? lastUndoPatch[0]?.actions : []),
+                    actionType,
+                  ]),
                 ]
               : []),
           ],
@@ -533,15 +521,11 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
             redoPatches: [],
             undoPatches: [
               ...newState.undoPatches,
-              addActionsToPatch(
-                undoPatch,
-                [
-                  // Override the action label with undoLabel so that the command label is used in the alert on undo/redo of a multicursor command.
-                  // TODO: A better solution would add a label to the Patch itself.
-                  isSetIsMulticursorExecutingAction(action) ? (action.undoLabel as ActionType) : lastAction.type,
-                ],
-                [action as UnknownAction],
-              ),
+              addActionsToPatch(undoPatch, [
+                // Override the action label with undoLabel so that the command label is used in the alert on undo/redo of a multicursor command.
+                // TODO: A better solution would add a label to the Patch itself.
+                isSetIsMulticursorExecutingAction(action) ? (action.undoLabel as ActionType) : lastAction.type,
+              ]),
             ],
           }
         : newState

@@ -1,7 +1,6 @@
 import { applyPatch } from 'fast-json-patch'
 import { produce } from 'immer'
-import { findLast, startCase } from 'lodash'
-import { UnknownAction } from 'redux'
+import { sortBy, startCase, uniq } from 'lodash'
 import ActionType from '../@types/ActionType'
 import Patch from '../@types/Patch'
 import Path from '../@types/Path'
@@ -9,11 +8,13 @@ import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import { HOME_TOKEN } from '../constants'
 import { isNavigation } from '../util/actionMetadata.registry'
+import head from '../util/head'
 import headValue from '../util/headValue'
 import isRoot from '../util/isRoot'
 import removeHome from '../util/removeHome'
 import documentSort from './documentSort'
 import exportContext from './exportContext'
+import { getChildrenRanked } from './getChildren'
 import undoSteps from './undoSteps'
 
 /** A patch with the states before and after it. */
@@ -23,97 +24,141 @@ interface Snapshot {
   after: State
 }
 
-/** Describes an action in terms of the thoughts it changed, as a step the user can follow. */
-type Describer = (action: UnknownAction, before: State) => string
+/** Describes a patch in terms of the thoughts it changed, as a step the user can follow. The patch records only the types of the actions that produced it, so what they did is read off its operations and the states on either side of it. */
+type Describer = (snapshot: Snapshot) => string
 
 /** Formats a thought value as inline code. */
 const code = (value: string) => `\`${value}\``
 
 /** Formats the value of the thought at the given path as inline code preceded by a space, or returns an empty string if there is no such thought so that a description reads naturally either way. */
-const target = (state: State, path: Path | null | undefined): string => {
+const target = (state: State, path: Path | null): string => {
   const value = path ? headValue(state, path) : undefined
   return value !== undefined ? ` ${code(value)}` : ''
 }
 
-/** Describes where a new thought is inserted relative to the thought it is created from, e.g. " after `b`". */
-const placement = (action: UnknownAction, before: State): string => {
-  const at = (action.at as Path | undefined) ?? before.cursor
-  const value = at ? headValue(before, at) : undefined
-  return value === undefined
-    ? ''
-    : action.insertNewSubthought
-      ? ` as a subthought of ${code(value)}`
-      : action.insertBefore
-        ? ` before ${code(value)}`
-        : ` after ${code(value)}`
+/** The ids of the thoughts whose entries a patch touches, from its operation paths. */
+const touchedIds = (patch: Patch): ThoughtId[] =>
+  uniq(patch.flatMap(op => op.path.match(/^\/thoughts\/thoughtIndex\/([^/]+)/)?.[1] ?? [])) as ThoughtId[]
+
+/** The ids of the thoughts that exist after a patch but not before it, i.e. that its actions created. */
+const createdIds = ({ patch, before, after }: Snapshot): ThoughtId[] =>
+  touchedIds(patch).filter(id => !before.thoughts.thoughtIndex[id] && after.thoughts.thoughtIndex[id])
+
+/** The ids of the thoughts that exist before a patch but not after it, i.e. that its actions deleted. */
+const deletedIds = ({ patch, before, after }: Snapshot): ThoughtId[] =>
+  touchedIds(patch).filter(id => before.thoughts.thoughtIndex[id] && !after.thoughts.thoughtIndex[id])
+
+/** The topmost of a set of thoughts in the given state, i.e. one whose parent is not in the set. */
+const topmost = (state: State, ids: ThoughtId[]): ThoughtId | undefined =>
+  ids.find(id => !ids.includes(state.thoughts.thoughtIndex[id].parentId))
+
+/** Describes where a thought sits in the given state relative to its siblings, or its parent when it has none, e.g. " after `b`". */
+const placement = (state: State, id: ThoughtId): string => {
+  const { parentId } = state.thoughts.thoughtIndex[id]
+  const siblings = getChildrenRanked(state, parentId)
+  const i = siblings.findIndex(sibling => sibling.id === id)
+  const previous = siblings[i - 1]
+  const next = siblings[i + 1]
+  return previous
+    ? ` after ${code(previous.value)}`
+    : next
+      ? ` before ${code(next.value)}`
+      : isRoot([parentId])
+        ? ''
+        : ` as a subthought of ${code(state.thoughts.thoughtIndex[parentId]?.value ?? '')}`
 }
 
-/** Describes the creation of a thought with the given value. */
-const describeNewThought = (action: UnknownAction, before: State, value: string): string =>
-  `Create ${value ? `thought ${code(value)}` : 'a new thought'}${placement(action, before)}.`
+/** Describes the creation of a thought, reading its value from the given state so that a value typed by a later patch of the same step can be used. */
+const describeNewThought = (snapshot: Snapshot, state: State): string => {
+  const id = topmost(snapshot.after, createdIds(snapshot))
+  const value = id && state.thoughts.thoughtIndex[id]?.value
+  return `Create ${value ? `thought ${code(value)}` : 'a new thought'}${id ? placement(snapshot.after, id) : ''}.`
+}
+
+/** Describes an edit by the first thought whose value the patch changed. Contiguous edits are merged into one patch, so this reads as a single edit from the first old value to the last new value. */
+const describeEdit = ({ patch, before, after }: Snapshot): string => {
+  const id = touchedIds(patch).find(id => {
+    const oldValue = before.thoughts.thoughtIndex[id]?.value
+    const newValue = after.thoughts.thoughtIndex[id]?.value
+    return oldValue !== undefined && newValue !== undefined && oldValue !== newValue
+  })
+  return id
+    ? `Edit ${code(before.thoughts.thoughtIndex[id].value)} to ${code(after.thoughts.thoughtIndex[id].value)}.`
+    : `Edit${target(before, before.cursor)}.`
+}
+
+/** Describes a deletion by the topmost deleted thought, falling back to the cursor. */
+const describeDelete = (snapshot: Snapshot): string => {
+  const id = topmost(snapshot.before, deletedIds(snapshot))
+  return `Delete${id ? ` ${code(snapshot.before.thoughts.thoughtIndex[id].value)}` : target(snapshot.before, snapshot.before.cursor)}.`
+}
 
 /** Hand-written descriptions of the core editing actions. Any other action falls back to its name and the cursor thought. */
 const describers: Partial<Record<ActionType, Describer>> = {
-  archiveThought: (action, before) => `Archive${target(before, (action.path as Path | undefined) ?? before.cursor)}.`,
-  categorize: (_, before) => `Categorize${target(before, before.cursor)}.`,
-  deleteThought: (action, before) => `Delete${target(before, [action.thoughtId as ThoughtId])}.`,
-  deleteThoughtWithCursor: (_, before) => `Delete${target(before, before.cursor)}.`,
-  editThought: action => `Edit ${code(action.oldValue as string)} to ${code(action.newValue as string)}.`,
-  importText: (action, before) => {
-    const text = action.text as string
-    const path = action.path as Path | undefined
-    const destination = path && !isRoot(path) ? target(before, path) : ''
-    // A multiline paste is quoted in a code block indented under the step, so that the markdown list continues after it.
-    return text.includes('\n')
-      ? `Paste${destination ? ` into${destination}` : ''}:\n\n   \`\`\`\n${text
-          .split('\n')
-          .map(line => `   ${line}`)
-          .join('\n')}\n   \`\`\``
-      : `Paste ${code(text)}${destination ? ` into${destination}` : ''}.`
+  archiveThought: ({ before }) => `Archive${target(before, before.cursor)}.`,
+  categorize: ({ before }) => `Categorize${target(before, before.cursor)}.`,
+  deleteThought: describeDelete,
+  deleteThoughtWithCursor: describeDelete,
+  editThought: describeEdit,
+  importText: snapshot => {
+    const { after } = snapshot
+    const created = createdIds(snapshot)
+    const roots = sortBy(
+      created.filter(id => !created.includes(after.thoughts.thoughtIndex[id].parentId)),
+      id => after.thoughts.thoughtIndex[id].rank,
+    )
+    // A single-line paste only changes the value of the thought it is pasted into.
+    if (!roots.length) return describeEdit(snapshot)
+    const parentId = after.thoughts.thoughtIndex[roots[0]].parentId
+    const destination = isRoot([parentId]) ? '' : ` into ${code(after.thoughts.thoughtIndex[parentId]?.value ?? '')}`
+    // The pasted thoughts are quoted in a code block indented under the step, so that the markdown list continues after it.
+    return `Paste${destination}:\n\n   \`\`\`\n${roots
+      .map(id => exportContext(after, id, 'text/plain'))
+      .join('\n')
+      .split('\n')
+      .map(line => `   ${line}`)
+      .join('\n')}\n   \`\`\``
   },
-  indent: (_, before) => `Indent${target(before, before.cursor)}.`,
-  join: (_, before) => `Join${target(before, before.cursor)} with its siblings.`,
-  moveThoughtDown: (_, before) => `Move${target(before, before.cursor)} down.`,
-  moveThoughtUp: (_, before) => `Move${target(before, before.cursor)} up.`,
-  newThought: (action, before) => describeNewThought(action, before, (action.value as string | undefined) ?? ''),
-  outdent: (_, before) => `Outdent${target(before, before.cursor)}.`,
-  splitThought: (action, before) => {
-    const { left, right } = action.splitResult as { left: string; right: string }
-    return `Split${target(before, (action.path as Path | undefined) ?? before.cursor)} into ${code(left)} and ${code(right)}.`
+  indent: ({ before }) => `Indent${target(before, before.cursor)}.`,
+  join: ({ before }) => `Join${target(before, before.cursor)} with its siblings.`,
+  moveThoughtDown: ({ before }) => `Move${target(before, before.cursor)} down.`,
+  moveThoughtUp: ({ before }) => `Move${target(before, before.cursor)} up.`,
+  newThought: snapshot => describeNewThought(snapshot, snapshot.after),
+  outdent: ({ before }) => `Outdent${target(before, before.cursor)}.`,
+  splitThought: snapshot => {
+    const { before, after } = snapshot
+    const left = before.cursor ? after.thoughts.thoughtIndex[head(before.cursor)]?.value : undefined
+    const created = createdIds(snapshot)[0]
+    const right = created && after.thoughts.thoughtIndex[created]?.value
+    return `Split${target(before, before.cursor)}${left !== undefined && right !== undefined ? ` into ${code(left)} and ${code(right)}` : ''}.`
   },
-  uncategorize: (action, before) => `Uncategorize${target(before, (action.at as Path | undefined) ?? before.cursor)}.`,
+  uncategorize: ({ before }) => `Uncategorize${target(before, before.cursor)}.`,
 }
 
-/** Describes a patch from the actions that produced it. Returns an empty string for a patch of navigation actions only, which is implied by the step it accompanies. */
-const describePatch = ({ patch, before }: Snapshot): string => {
-  const { rawActions } = patch[0]
-  const [first] = rawActions
+/** Describes a patch from the types of the actions that produced it. Returns an empty string for a patch of navigation actions only, which is implied by the step it accompanies. */
+const describePatch = (snapshot: Snapshot): string => {
+  const { before } = snapshot
+  const { actions } = snapshot.patch[0]
 
-  // A multicursor command bundles every action it dispatched into one patch. Name the command and the thoughts that were selected.
-  if (first?.type === 'setIsMulticursorExecuting') {
+  // A multicursor command bundles every action it dispatched into one patch, whose first action is the command's undoLabel. Name the command and the thoughts that were selected.
+  if (actions.includes('setIsMulticursorExecuting')) {
     const values = documentSort(before, Object.values(before.multicursors)).map(path => headValue(before, path) ?? '')
-    return `${startCase(first.undoLabel as string)}${values.length ? ` ${values.map(code).join(', ')}` : ''}.`
+    return `${startCase(actions[0])}${values.length ? ` ${values.map(code).join(', ')}` : ''}.`
   }
 
-  const primary = rawActions.find(action => !isNavigation(action.type as ActionType))
-  if (!primary) return ''
+  const type = actions.find(action => !isNavigation(action))
+  if (!type) return ''
 
-  // Contiguous edits are merged into one patch, so describe them as a single edit from the first old value to the last new value.
-  const action =
-    primary.type === 'editThought'
-      ? { ...primary, newValue: findLast(rawActions, { type: 'editThought' })!.newValue }
-      : primary
-  const describe = describers[action.type as ActionType]
-  return describe ? describe(action, before) : `${startCase(action.type)}${target(before, before.cursor)}.`
+  const describe = describers[type]
+  return describe ? describe(snapshot) : `${startCase(type)}${target(before, before.cursor)}.`
 }
 
 /** Describes a step from the snapshots of its patches in chronological order. */
 const describeStep = (snapshots: Snapshot[]): string => {
   const [created, typed] = snapshots
-  const edit = typed && findLast(typed.patch[0].rawActions, { type: 'editThought' })
   // A new thought followed by typing its value reads as a single creation, e.g. "Create thought `c` after `b`."
-  return created.patch[0].rawActions[0]?.type === 'newThought' && edit
-    ? describeNewThought(created.patch[0].rawActions[0], created.before, edit.newValue as string)
+  return created.patch[0].actions[0] === 'newThought' && typed
+    ? describeNewThought(created, typed.after)
     : snapshots.map(describePatch).filter(Boolean).join(' ')
 }
 
