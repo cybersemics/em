@@ -10,6 +10,7 @@ The in-repo documentation for **em**. The GitHub wiki is being deprecated in fav
 - [Metaprogramming](metaprogramming.md) — Hidden `=` attributes that change app behaviour.
 - [Cursor and Caret](cursor-and-caret.md) — The cursor (active thought) vs. the browser selection (caret).
 - [Drag and Drop](drag-and-drop.md) — react-dnd integration and drop targets.
+- [Import Pipeline](import-pipeline.md) — How pasted, dropped, and loaded content becomes thoughts: the `importData` router, `importText` vs `importFiles`, the parse/sanitize funnel, and the copy side.
 - [Layout Rendering](layout-rendering.md) — How thoughts are positioned in the absolute-flat-list layout, including the autocrop / vertical-autocrop mechanism.
 
 ## Agents
