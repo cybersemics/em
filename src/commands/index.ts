@@ -27,7 +27,7 @@ export { default as deleteEmptyThoughtOrOutdent } from './deleteEmptyThoughtOrOu
 export { default as devices } from './devices'
 export { default as exportContext } from './exportContext'
 export { default as extractCategory } from './extractCategory'
-export { default as extractThought } from './extractThought'
+export { default as extractSubthought } from './extractSubthought'
 export { default as favorite } from './favorite'
 export { default as fontSizeDown } from './fontSizeDown'
 export { default as fontSizeUp } from './fontSizeUp'

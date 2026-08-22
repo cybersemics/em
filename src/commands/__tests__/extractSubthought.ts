@@ -1,6 +1,6 @@
 import { findAllByLabelText, screen } from '@testing-library/react'
 import { act } from 'react'
-import { extractThoughtActionCreator as extractThought } from '../../actions/extractThought'
+import { extractSubthoughtActionCreator as extractSubthought } from '../../actions/extractSubthought'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import { undoActionCreator as undo } from '../../actions/undo'
@@ -15,7 +15,7 @@ import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import initStore from '../../test-helpers/initStore'
 import findThoughtByText from '../../test-helpers/queries/findThoughtByText'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
-import extractThoughtCommand from '../extractThought'
+import extractSubthoughtCommand from '../extractSubthought'
 
 /**
  * Set range selection.
@@ -35,7 +35,7 @@ const setSelection = (element: HTMLElement, selectionStart: number, selectionEnd
 
 beforeEach(initStore)
 
-describe('Extract thought', () => {
+describe('Extract Subthought', () => {
   beforeEach(createTestApp)
   afterEach(cleanupTestApp)
 
@@ -49,7 +49,7 @@ describe('Extract thought', () => {
 
     await act(vi.runOnlyPendingTimersAsync)
 
-    store.dispatch(extractThought())
+    store.dispatch(extractSubthought())
 
     const alert = await screen.findByText('No text selected to extract')
     expect(alert).toBeTruthy()
@@ -72,7 +72,7 @@ describe('Extract thought', () => {
     expect(thought).toBeTruthy()
 
     const selectedText = setSelection(thought!, 10, 17)
-    store.dispatch([extractThought()])
+    store.dispatch([extractSubthought()])
 
     const updatedThought = await findThoughtByText(thoughtValue.slice(0, 9))
     expect(updatedThought?.textContent).toBeTruthy()
@@ -97,7 +97,7 @@ describe('Extract thought', () => {
     expect(thought).toBeTruthy()
 
     const selectedText = setSelection(thought!, 10, 22)
-    store.dispatch([extractThought()])
+    store.dispatch([extractSubthought()])
 
     const createdThought = await findThoughtByText(selectedText)
     expect(createdThought).toBeTruthy()
@@ -128,7 +128,7 @@ describe('Extract thought', () => {
 
       store.dispatch([addMulticursor(['alpha bravo']), addMulticursor(['charlie delta']), addMulticursor(['echo'])])
 
-      executeCommandWithMulticursor(extractThoughtCommand, { store })
+      executeCommandWithMulticursor(extractSubthoughtCommand, { store })
 
       // The other selected thoughts keep their values. Slicing them at the selection's offsets would have left
       // "charlita" with the child "e del", and "echo" with an empty child.
@@ -159,7 +159,7 @@ describe('Extract thought', () => {
       // select a thought other than the one being edited, as alt-clicking its bullet does
       store.dispatch([addMulticursor(['charlie delta'])])
 
-      executeCommandWithMulticursor(extractThoughtCommand, { store })
+      executeCommandWithMulticursor(extractSubthoughtCommand, { store })
 
       // The extraction applies to the thought that owns the selection, not to the selected thought.
       expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
@@ -188,7 +188,7 @@ describe('Extract thought', () => {
 
       store.dispatch([addMulticursor(['alpha bravo']), addMulticursor(['charlie delta']), addMulticursor(['echo'])])
 
-      executeCommandWithMulticursor(extractThoughtCommand, { store })
+      executeCommandWithMulticursor(extractSubthoughtCommand, { store })
 
       // Precondition: the extraction occurred, otherwise the assertions below would hold vacuously.
       expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
@@ -222,7 +222,7 @@ describe('Extract thought', () => {
       // raised by the command below.
       await act(vi.runOnlyPendingTimersAsync)
 
-      executeCommandWithMulticursor(extractThoughtCommand, { store })
+      executeCommandWithMulticursor(extractSubthoughtCommand, { store })
 
       expect(await screen.findByText('No text selected to extract')).toBeTruthy()
 
@@ -251,7 +251,7 @@ describe('Extract thought', () => {
 
       store.dispatch([addMulticursor(['alpha bravo']), addMulticursor(['charlie delta']), addMulticursor(['echo'])])
 
-      executeCommandWithMulticursor(extractThoughtCommand, { store })
+      executeCommandWithMulticursor(extractSubthoughtCommand, { store })
 
       // Precondition: the extraction occurred, otherwise the undo below would have nothing to revert.
       expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}

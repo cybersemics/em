@@ -389,7 +389,7 @@ Deletes the current thought and moves all its subthoughts up a level.
 
 https://github.com/user-attachments/assets/a0da2b2a-925e-4f6a-9924-3bba37b7feb2
 
-### Extract
+### Extract Subthought
 
 Extract selected part of a thought as its child.
 
@@ -399,7 +399,7 @@ https://github.com/user-attachments/assets/e415abf1-6c1e-4ffd-b7aa-0fdf372effbc
 
 ### Extract Category
 
-Extract selected part of a thought as its new parent. The rest of the thought — and every other selected thought — is moved into a new category whose value is the extracted text. When the selected thoughts do not share a parent, Categorize refuses and nothing is extracted.
+Extract selected part of a thought as its new parent. Where Extract Subthought draws the selection down into a child, Extract Category lifts it up into a parent: the rest of the thought — and every other selected thought — is moved into a new category whose value is the extracted text. When the selected thoughts do not share a parent, Categorize refuses and nothing is extracted.
 
 <kbd>Command + Control + Option + e</kbd>
 

@@ -11,8 +11,8 @@ import alert from './alert'
 import editThought from './editThought'
 import newThought from './newThought'
 
-/** Extract the selection as child thought. */
-const extractThought = (state: State): State => {
+/** Extract the selection as a subthought. */
+const extractSubthought = (state: State): State => {
   const { cursor } = state
   if (!cursor) return state
 
@@ -51,12 +51,12 @@ const extractThought = (state: State): State => {
   return reducerFlow(reducers)(state)
 }
 
-/** Action-creator for extractThought. */
-export const extractThoughtActionCreator = (): Thunk => dispatch => dispatch({ type: 'extractThought' })
+/** Action-creator for extractSubthought. */
+export const extractSubthoughtActionCreator = (): Thunk => dispatch => dispatch({ type: 'extractSubthought' })
 
-export default _.curryRight(extractThought)
+export default _.curryRight(extractSubthought)
 
 // Register this action's metadata
-registerActionMetadata('extractThought', {
+registerActionMetadata('extractSubthought', {
   undoable: true,
 })

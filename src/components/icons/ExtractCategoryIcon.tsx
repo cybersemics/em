@@ -5,9 +5,9 @@ import animationData from './animations/28-extract_2.json'
 /**
  * Extract Category Icon with Conditional Lottie Animation.
  *
- * The Extract Thought funnel, mirrored vertically within the viewBox: Extract Thought draws the selection down into a
- * child, while Extract Category lifts it up into a parent. There is no animation of its own, so it reuses Extract
- * Thought's.
+ * The Extract Subthought funnel, mirrored vertically within the viewBox: Extract Subthought draws the selection down
+ * into a child, while Extract Category lifts it up into a parent. There is no animation of its own, so it reuses
+ * Extract Subthought's.
  */
 const ExtractCategoryIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
