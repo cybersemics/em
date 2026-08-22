@@ -1,5 +1,6 @@
 import { findAllByLabelText, screen } from '@testing-library/react'
 import { act } from 'react'
+import { desktopCommandUniverseActionCreator as desktopCommandUniverse } from '../../actions/desktopCommandUniverse'
 import { extractSubthoughtActionCreator as extractSubthought } from '../../actions/extractSubthought'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
@@ -31,6 +32,21 @@ const setSelection = (element: HTMLElement, selectionStart: number, selectionEnd
   sel?.addRange(range)
 
   return range.toString()
+}
+
+/**
+ * Moves the browser selection off the thought and onto an input, as the Command Universe's search box does when it
+ * takes the focus on open. The document has only one selection, so this is what a command executed from the Command
+ * Universe sees instead of the text the user selected.
+ */
+const moveSelectionToSearchInput = () => {
+  const input = document.createElement('input')
+  document.body.appendChild(input)
+  const range = document.createRange()
+  range.selectNodeContents(input)
+  const sel = window.getSelection()
+  sel?.removeAllRanges()
+  sel?.addRange(range)
 }
 
 beforeEach(initStore)
@@ -266,6 +282,55 @@ describe('Extract Subthought', () => {
   - alpha bravo
   - charlie delta
   - echo`)
+    })
+  })
+
+  describe('Command Universe', () => {
+    it('extracts the text that was selected before the Command Universe took the focus', async () => {
+      store.dispatch([importText({ text: '- hello world' }), setCursor(['hello world'])])
+
+      await act(vi.runOnlyPendingTimersAsync)
+
+      const thought = await findThoughtByText('hello world')
+      setSelection(thought!, 6, 11)
+
+      // Opening the Command Universe snapshots the selection; its search input then takes it. Executing a command
+      // closes the Command Universe first, so the snapshot has to survive the close.
+      store.dispatch(desktopCommandUniverse())
+      moveSelectionToSearchInput()
+      store.dispatch([desktopCommandUniverse(), extractSubthought()])
+
+      expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - hello
+    - world`)
+    })
+
+    it('does not apply the snapshot to a thought other than the one it was taken on', async () => {
+      store.dispatch([
+        importText({
+          text: `
+            - alpha bravo
+            - charlie delta
+          `,
+        }),
+        setCursor(['alpha bravo']),
+      ])
+
+      await act(vi.runOnlyPendingTimersAsync)
+
+      const thought = await findThoughtByText('alpha bravo')
+      setSelection(thought!, 6, 11)
+
+      store.dispatch(desktopCommandUniverse())
+      moveSelectionToSearchInput()
+
+      // A command executed from the Command Universe can move the cursor. Slicing the thought it lands on at offsets
+      // that index into the thought the snapshot came from would mangle its value.
+      store.dispatch([desktopCommandUniverse(), setCursor(['charlie delta']), extractSubthought()])
+
+      expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - alpha bravo
+  - charlie delta`)
     })
   })
 })

@@ -1,8 +1,8 @@
 import _ from 'lodash'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
-import * as selection from '../device/selection'
 import getThoughtById from '../selectors/getThoughtById'
+import selectionOffsets from '../selectors/selectionOffsets'
 import thoughtToPath from '../selectors/thoughtToPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import equalPath from '../util/equalPath'
@@ -57,18 +57,14 @@ const extractCategory = (state: State, { selectionStart, selectionEnd }: extract
 }
 
 /**
- * Action-creator for extractCategory. Reads the selection offsets from the document and passes them to the reducer,
- * which cannot read them itself without reaching outside of state.
+ * Action-creator for extractCategory. Reads the selection offsets and passes them to the reducer, which cannot read them
+ * itself without reaching outside of state.
  */
-export const extractCategoryActionCreator = (): Thunk => dispatch => {
-  // offsetStart and offsetEnd call getRangeAt(0), which throws when the document has no range at all
-  if (!selection.isActive()) return
+export const extractCategoryActionCreator = (): Thunk => (dispatch, getState) => {
+  const offsets = selectionOffsets(getState())
+  if (!offsets) return
 
-  const selectionStart = selection.offsetStart()
-  const selectionEnd = selection.offsetEnd()
-  if (selectionStart === null || selectionEnd === null) return
-
-  dispatch({ type: 'extractCategory', selectionStart, selectionEnd })
+  dispatch({ type: 'extractCategory', selectionStart: offsets.start, selectionEnd: offsets.end })
 }
 
 export default _.curryRight(extractCategory)

@@ -1,5 +1,6 @@
 import { screen } from '@testing-library/react'
 import { act } from 'react'
+import { desktopCommandUniverseActionCreator as desktopCommandUniverse } from '../../actions/desktopCommandUniverse'
 import { extractCategoryActionCreator as extractCategory } from '../../actions/extractCategory'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
@@ -30,6 +31,21 @@ const setSelection = (element: HTMLElement, selectionStart: number, selectionEnd
   sel?.addRange(range)
 
   return range.toString()
+}
+
+/**
+ * Moves the browser selection off the thought and onto an input, as the Command Universe's search box does when it
+ * takes the focus on open. The document has only one selection, so this is what a command executed from the Command
+ * Universe sees instead of the text the user selected.
+ */
+const moveSelectionToSearchInput = () => {
+  const input = document.createElement('input')
+  document.body.appendChild(input)
+  const range = document.createRange()
+  range.selectNodeContents(input)
+  const sel = window.getSelection()
+  sel?.removeAllRanges()
+  sel?.addRange(range)
 }
 
 beforeEach(initStore)
@@ -235,5 +251,24 @@ describe('Extract category', () => {
   - alpha bravo
   - charlie`)
     })
+  })
+
+  it('extracts the text that was selected before the Command Universe took the focus', async () => {
+    store.dispatch([importText({ text: '- hello world' }), setCursor(['hello world'])])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const thought = await findThoughtByText('hello world')
+    setSelection(thought!, 6, 11)
+
+    // Opening the Command Universe snapshots the selection; its search input then takes it. Executing a command
+    // closes the Command Universe first, so the snapshot has to survive the close.
+    store.dispatch(desktopCommandUniverse())
+    moveSelectionToSearchInput()
+    store.dispatch([desktopCommandUniverse(), extractCategory()])
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - world
+    - hello`)
   })
 })
