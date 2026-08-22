@@ -48,7 +48,7 @@ const pinCommand = {
     },
   },
   exec: (dispatch, getState, e, { type }) => {
-    /* dispatch toggleAttribute({ path: cursor, values: ['=pin', 'true'] }) */
+    /* dispatch pin() */
   },
   isActive: state => !!isPinned(state, head(/* ... */)),
 } satisfies Command
@@ -280,6 +280,10 @@ https://github.com/user-attachments/assets/39bf1ddd-d780-4a4c-8256-1ee7dbfb4311
 Swap the current thought with its parent.
 
 https://github.com/user-attachments/assets/0ca1a77b-e174-4884-9606-739a94cde039
+
+### Swap Grandparent
+
+Swap the current thought with its grandparent, leaving the parent in between where it is. The two thoughts exchange places in the tree and each adopts the other's children.
 
 ### Bind Context
 
