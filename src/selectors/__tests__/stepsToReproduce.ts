@@ -3,6 +3,7 @@ import { importTextActionCreator as importText } from '../../actions/importText'
 import { indentActionCreator as indent } from '../../actions/indent'
 import { moveThoughtDownActionCreator as moveThoughtDown } from '../../actions/moveThoughtDown'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
+import { swapParentActionCreator as swapParent } from '../../actions/swapParent'
 import { toggleAttributeActionCreator as toggleAttribute } from '../../actions/toggleAttribute'
 import { undoActionCreator as undo } from '../../actions/undo'
 import { executeCommandWithMulticursor } from '../../commands'
@@ -40,8 +41,9 @@ it('export the thoughtspace at the start and describe each step up to the end', 
 - b
 \`\`\`
 
-1. Create thought \`c\` after \`b\`.
-2. Indent \`c\`.`)
+1. Set cursor to \`b\`.
+2. Create thought \`c\` after \`b\`.
+3. Indent \`c\`.`)
 })
 
 it('describe the same steps when the current state is between the start and the end', () => {
@@ -53,8 +55,9 @@ it('describe the same steps when the current state is between the start and the 
 - b
 \`\`\`
 
-1. Create thought \`c\` after \`b\`.
-2. Indent \`c\`.`)
+1. Set cursor to \`b\`.
+2. Create thought \`c\` after \`b\`.
+3. Indent \`c\`.`)
 })
 
 it('export only the thoughtspace when the start and the end coincide', () => {
@@ -67,7 +70,7 @@ it('export only the thoughtspace when the start and the end coincide', () => {
 \`\`\``)
 })
 
-it('describe a new thought, an edit, a deletion, and a move', () => {
+it('describe a new thought, an edit, a deletion, and a move, each preceded by the cursor it acts on', () => {
   store.dispatch([
     importText({
       text: `
@@ -92,13 +95,17 @@ it('describe a new thought, an edit, a deletion, and a move', () => {
 - c
 \`\`\`
 
-1. Create thought \`d\` as a subthought of \`a\`.
-2. Edit \`b\` to \`bb\`.
-3. Delete \`c\`.
-4. Move \`a\` down.`)
+1. Set cursor to \`a\`.
+2. Create thought \`d\` as a subthought of \`a\`.
+3. Set cursor to \`b\`.
+4. Edit \`b\` to \`bb\`.
+5. Set cursor to \`c\`.
+6. Delete \`c\`.
+7. Set cursor to \`a\`.
+8. Move \`a\` down.`)
 })
 
-it('describe a multicursor command by its label and the selected thoughts', () => {
+it('describe a multicursor command by its label, preceded by the selection it acts on', () => {
   store.dispatch([
     importText({
       text: `
@@ -121,10 +128,12 @@ it('describe a multicursor command by its label and the selected thoughts', () =
 - d
 \`\`\`
 
-1. Move Thought Down \`a\`, \`b\`.`)
+1. Set cursor to \`a\`.
+2. Select \`a\` and \`b\`.
+3. Move Thought Down.`)
 })
 
-it('fall back to the name of the action and the cursor thought', () => {
+it('describe a toggled attribute by its path and the thought it is attached to', () => {
   store.dispatch([
     importText({
       text: `
@@ -133,14 +142,78 @@ it('fall back to the name of the action and the cursor thought', () => {
     }),
     setCursor(['a']),
     (dispatch, getState) =>
-      dispatch(toggleAttribute({ path: contextToPath(getState(), ['a']), values: ['=pin', 'true'] })),
+      dispatch(toggleAttribute({ path: contextToPath(getState(), ['a']), values: ['=sort', 'Alphabetical'] })),
   ])
 
   expect(stepsToReproduce(store.getState(), { start: 1, end: 0 })).toBe(`\`\`\`
 - a
 \`\`\`
 
-1. Toggle Attribute \`a\`.`)
+1. Set cursor to \`a\`.
+2. Toggle \`=sort/Alphabetical\` on \`a\`.`)
+})
+
+it('fall back to the name of the action and the cursor thought', () => {
+  store.dispatch([
+    importText({
+      text: `
+        - a
+          - b
+      `,
+    }),
+    setCursor(['a', 'b']),
+    swapParent(),
+  ])
+
+  expect(stepsToReproduce(store.getState(), { start: 1, end: 0 })).toBe(`\`\`\`
+- a
+  - b
+\`\`\`
+
+1. Set cursor to \`b\`.
+2. Swap Parent \`b\`.`)
+})
+
+it('name a formatting edit after the formatting it applies', () => {
+  store.dispatch([
+    importText({
+      text: `
+        - a
+      `,
+    }),
+    setCursor(['a']),
+    editThought(['a'], '<b>a</b>'),
+  ])
+
+  expect(stepsToReproduce(store.getState(), { start: 1, end: 0 })).toBe(`\`\`\`
+- a
+\`\`\`
+
+1. Set cursor to \`a\`.
+2. Bold \`a\`.`)
+})
+
+it('name an empty thought as the empty thought', () => {
+  store.dispatch([
+    importText({
+      text: `
+        - a
+        - b
+      `,
+    }),
+    setCursor(['b']),
+    editThought(['b'], ''),
+    editThought([''], 'g'),
+  ])
+
+  expect(stepsToReproduce(store.getState(), { start: 2, end: 0 })).toBe(`\`\`\`
+- a
+- b
+\`\`\`
+
+1. Set cursor to \`b\`.
+2. Edit \`b\` to the empty thought.
+3. Edit the empty thought to \`g\`.`)
 })
 
 it('quote a multiline paste in a code block', () => {
@@ -161,11 +234,12 @@ it('quote a multiline paste in a code block', () => {
       ),
   ])
 
-  expect(stepsToReproduce(store.getState(), { start: 2, end: 0 })).toBe(`\`\`\`
+  expect(stepsToReproduce(store.getState(), { start: 1, end: 0 })).toBe(`\`\`\`
 - a
 \`\`\`
 
-1. Paste into \`a\`:
+1. Set cursor to \`a\`.
+2. Paste into \`a\`:
 
    \`\`\`
    - b

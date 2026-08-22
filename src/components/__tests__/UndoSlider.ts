@@ -149,6 +149,7 @@ it('copy the steps to reproduce the actions between the start and the end', asyn
 - b
 \`\`\`
 
-1. Create thought \`c\` after \`b\`.
-2. Indent \`c\`.`)
+1. Set cursor to \`b\`.
+2. Create thought \`c\` after \`b\`.
+3. Indent \`c\`.`)
 })
