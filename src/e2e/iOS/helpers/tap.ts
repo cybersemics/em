@@ -1,5 +1,5 @@
 import type { Element } from 'webdriverio'
-import getElementRectByScreen from './getElementRectByScreen.js'
+import getScreenOffsetY from './getScreenOffsetY.js'
 
 interface Options {
   // Where in the horizontal line (inside) of the target node should be tapped. Defaults to center, which
@@ -23,9 +23,9 @@ interface Options {
  * Tap a node with an optional text offset or x,y offset.
  *
  * The tap is dispatched with `performActions`, which Appium's XCUITest driver always runs in the native
- * context even while the WEBVIEW context is active, so it takes device screen coordinates rather than page
- * coordinates. The node is therefore measured with `getElementRectByScreen`, which adds the web content's
- * native origin. Do not compensate for the difference with a hand-tuned `y` at the call site.
+ * context even while the WEBVIEW context is active, so it takes device screen coordinates. The node is
+ * measured in viewport coordinates and converted with `getScreenOffsetY`. Do not compensate for the
+ * difference with a hand-tuned `y` at the call site.
  *
  * Uses the global browser object from WDIO.
  */
@@ -47,54 +47,41 @@ const tap = async (
     )
   }
 
-  const boundingBox = await getElementRectByScreen(nodeHandle)
-  if (!boundingBox) throw new Error('Bounding box of editable not found.')
-
-  /**
-   * Get the position of a specific text node as a delta from the element's own top-left corner, if the given
-   * node has a text child. Measuring the two rects against each other rather than reporting the range's own
-   * position keeps this path out of the page-versus-screen coordinate question entirely, since the delta is
-   * the same in both frames.
-   */
-  const offsetDelta = () =>
-    browser.execute(
-      function (ele, offset) {
-        // Element does not contain native properties like nodeName, textContent, etc
-        // Not sure what the actual WebDriverIO type that is returned by findElement
-        // Node does not contain property elementId; it is only a Node inside browser.execute, so we cannot change the typeo of the nodeHandle argument
-        const textNode = (ele as unknown as Node).firstChild
-        if (!textNode || textNode.nodeName !== '#text') return
-        const range = document.createRange()
-        range.setStart(textNode, offset ?? 0)
-        const { right, top, height } = range.getBoundingClientRect()
-        const elementRect = (ele as unknown as HTMLElement).getBoundingClientRect()
-        return {
-          x: right - elementRect.left,
-          y: top + height / 2 - elementRect.top,
-        }
-      },
-      nodeHandle,
-      offset,
-    )
-
-  const delta = !offset
-    ? {
-        x:
-          horizontalTapLine === 'left'
-            ? 1
-            : horizontalTapLine === 'right'
-              ? boundingBox.width - 1
-              : boundingBox.width / 2,
-        y: boundingBox.height / 2,
+  // Viewport coordinates, not the page coordinates browser.getElementRect returns: the toolbar is
+  // position: fixed, and the W3C algorithm adds the scroll offset to a bounding rect that is pinned at 0, so
+  // its page y is just the scroll position. The text offset is measured against the element's own box in the
+  // same call, since a delta is the same in either frame.
+  const raw = await browser.execute(
+    function (ele, offset, horizontalTapLine) {
+      const element = ele as unknown as HTMLElement
+      const box = element.getBoundingClientRect()
+      if (offset === undefined || offset === null) {
+        return JSON.stringify({
+          x:
+            box.left +
+            (horizontalTapLine === 'left' ? 1 : horizontalTapLine === 'right' ? box.width - 1 : box.width / 2),
+          y: box.top + box.height / 2,
+        })
       }
-    : await offsetDelta()
+      const textNode = (element as unknown as Node).firstChild
+      if (!textNode || textNode.nodeName !== '#text') return ''
+      const range = document.createRange()
+      range.setStart(textNode, offset)
+      const { right, top, height } = range.getBoundingClientRect()
+      return JSON.stringify({ x: right, y: top + height / 2 })
+    },
+    nodeHandle,
+    offset,
+    horizontalTapLine,
+  )
+  if (!raw) throw new Error('Coordinate not found.')
 
-  if (!delta) throw new Error('Coordinate not found.')
-
-  const coordinate = { x: boundingBox.x + delta.x, y: boundingBox.y + delta.y }
+  const viewportCoordinate = JSON.parse(raw) as { x: number; y: number }
+  const offsetY = await getScreenOffsetY()
+  const coordinate = { x: viewportCoordinate.x, y: viewportCoordinate.y + offsetY }
 
   console.info(
-    `Coordinates: x ${coordinate.x} y ${coordinate.y} x-offset ${x} y-offset ${y} bb-x ${boundingBox.x} bby ${boundingBox.y}`,
+    `Coordinates: x ${coordinate.x} y ${coordinate.y} x-offset ${x} y-offset ${y} viewport-y ${viewportCoordinate.y} screen-offset-y ${offsetY}`,
   )
 
   const finalCoords = {
