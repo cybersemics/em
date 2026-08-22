@@ -16,8 +16,13 @@ import head from '../util/head'
 import headValue from '../util/headValue'
 import parentOf from '../util/parentOf'
 
+export interface moveThoughtDownPayload {
+  /** The caret offset within the cursor thought, read from the document before the move. */
+  offset?: number | null
+}
+
 /** Swaps the thought with its next siblings. */
-const moveThoughtDown = (state: State): State => {
+const moveThoughtDown = (state: State, { offset }: moveThoughtDownPayload = {}): State => {
   const { cursor } = state
 
   if (!cursor) return state
@@ -51,9 +56,6 @@ const moveThoughtDown = (state: State): State => {
     })
   }
 
-  // store selection offset before moveThought is dispatched
-  const offset = selection.offset()
-
   const rankNew = nextThought
     ? // next thought
       getRankAfter(state, simplifyPath(state, pathParent).concat(nextThought.id) as SimplePath)
@@ -72,8 +74,12 @@ const moveThoughtDown = (state: State): State => {
   })
 }
 
-/** Action-creator for moveThoughtDown. */
-export const moveThoughtDownActionCreator = (): Thunk => dispatch => dispatch({ type: 'moveThoughtDown' })
+/**
+ * Action-creator for moveThoughtDown. Reads the caret offset from the document, which the reducer cannot do itself without
+ * reaching outside of state. It must be read before the move, since moveThought re-renders the editable.
+ */
+export const moveThoughtDownActionCreator = (): Thunk => dispatch =>
+  dispatch({ type: 'moveThoughtDown', offset: selection.offset() })
 
 export default moveThoughtDown
 
