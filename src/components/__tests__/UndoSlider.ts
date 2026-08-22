@@ -1,0 +1,133 @@
+import { fireEvent } from '@testing-library/react'
+import { act } from 'react'
+import { indentActionCreator as indent } from '../../actions/indent'
+import { newThoughtActionCreator as newThought } from '../../actions/newThought'
+import { toggleDropdownActionCreator as toggleDropdown } from '../../actions/toggleDropdown'
+import { HOME_TOKEN } from '../../constants'
+import * as copyModule from '../../device/copy'
+import exportContext from '../../selectors/exportContext'
+import store from '../../stores/app'
+import click from '../../test-helpers/click'
+import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
+import dispatch from '../../test-helpers/dispatch'
+import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
+import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+
+vi.mock('../../device/copy')
+
+beforeEach(createTestApp)
+afterEach(cleanupTestApp)
+
+/** Creates a, b, and c, indents c and then b, and opens the undo slider. */
+const arrange = async () => {
+  await dispatch([
+    newThought({}),
+    editThought([''], 'a'),
+    newThought({}),
+    editThought([''], 'b'),
+    newThought({}),
+    editThought([''], 'c'),
+    indent(),
+    setCursor(['b']),
+    indent(),
+    // Open the slider explicitly rather than toggling it, since clear does not reset showUndoSlider between tests.
+    toggleDropdown({ dropDownType: 'undoSlider', value: true }),
+  ])
+  await act(vi.runOnlyPendingTimersAsync)
+}
+
+/** Returns the handle element of the undo slider with the given aria-label. */
+const handle = (label: 'undo slider start' | 'undo slider end') => {
+  const el = document.querySelector(`[aria-label="${label}"]`)
+  if (!el) throw new Error(`Element not found for aria-label: ${label}`)
+  return el
+}
+
+/** Presses an arrow key on a handle. With the slider reversed, the left arrow moves a handle back in time. */
+const press = async (label: 'undo slider start' | 'undo slider end', key: 'ArrowLeft' | 'ArrowRight') => {
+  await act(async () => {
+    fireEvent.keyDown(handle(label), { key, keyCode: key === 'ArrowLeft' ? 37 : 39 })
+  })
+}
+
+it('move the thoughtspace to the point in time under the start handle', async () => {
+  await arrange()
+
+  await press('undo slider start', 'ArrowLeft')
+  await press('undo slider start', 'ArrowLeft')
+  await press('undo slider start', 'ArrowLeft')
+
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - a
+  - b`)
+  expect(handle('undo slider start').textContent).toBe('New Thought')
+  expect(handle('undo slider end').textContent).toBe('Indent')
+})
+
+it('move the thoughtspace to the point in time under the end handle and keep the start handle', async () => {
+  await arrange()
+  await press('undo slider start', 'ArrowLeft')
+  await press('undo slider start', 'ArrowLeft')
+  await press('undo slider start', 'ArrowLeft')
+
+  await press('undo slider end', 'ArrowLeft')
+
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - a
+  - b
+    - c`)
+  expect(handle('undo slider start').textContent).toBe('New Thought')
+  expect(handle('undo slider end').textContent).toBe('Indent')
+})
+
+it('keep the end handle at least one step after the start handle', async () => {
+  await arrange()
+  await press('undo slider start', 'ArrowLeft')
+  await press('undo slider start', 'ArrowLeft')
+  await press('undo slider start', 'ArrowLeft')
+
+  await press('undo slider end', 'ArrowLeft')
+  await press('undo slider end', 'ArrowLeft')
+  await press('undo slider end', 'ArrowLeft')
+
+  // the end handle stops one step after the start handle, where c has been created but not yet indented
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - a
+  - b
+  - c`)
+})
+
+it('stop the start handle one step before the end handle', async () => {
+  await arrange()
+  await press('undo slider start', 'ArrowLeft')
+  await press('undo slider start', 'ArrowLeft')
+  await press('undo slider start', 'ArrowLeft')
+  await press('undo slider end', 'ArrowLeft')
+
+  await press('undo slider start', 'ArrowRight')
+  await press('undo slider start', 'ArrowRight')
+
+  // the start handle moves one step forward, where c has been created but not yet indented, and then stops before the end handle
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - a
+  - b
+  - c`)
+})
+
+it('copy the steps to reproduce the actions between the start and the end', async () => {
+  await arrange()
+  await press('undo slider start', 'ArrowLeft')
+  await press('undo slider start', 'ArrowLeft')
+  await press('undo slider start', 'ArrowLeft')
+  await press('undo slider end', 'ArrowLeft')
+
+  await click('[aria-label="copy steps to reproduce"]')
+
+  expect(copyModule.default).toHaveBeenCalledWith(`\`\`\`
+- a
+- b
+\`\`\`
+
+1. Create thought \`c\` after \`b\`.
+2. Indent \`c\`.`)
+})

@@ -174,6 +174,16 @@ Only commands that make an *undoable, non-navigational* change are recorded, so 
 - Commands that set `repeatable: false` are never recorded. `undo` and `redo` move through the undo history rather than making a new undoable change, and recording `repeat` would recurse.
 - A command that only dispatches asynchronously (Generate Thought) is not recorded, since its patch does not exist yet when `exec` returns.
 
+### Undo history and the undo slider
+
+Every undoable action leaves a patch on `state.undoPatches` ([`undoRedoEnhancer`](../src/redux-enhancers/undoRedoEnhancer.ts)): a fast-json-patch diff that reverts the action, whose operations also carry `actions` (the action types, or the `undoLabel` of a multicursor command) and `rawActions` (the actions as dispatched, with their payloads). Undo moves a patch from `undoPatches` to `redoPatches` as a forward patch, and redo moves it back; `redoPatches[0]` is the oldest undone action, i.e. the newest point in the history.
+
+An **undo step** — what one Undo reverts — spans two patches when a navigation action follows an undoable action (the cursor is restored to where it was before the edit) or an edit follows a `newThought` (creating a thought and typing its value are one step). [`undoSteps`](../src/selectors/undoSteps.ts) applies the same grouping across both stacks, newest first, and reports the position of the current state. It groups the two stacks separately so that the current state always falls on a step boundary, and it omits one refinement of `undoReducer`: a formatting-only edit of a freshly created thought is undone on its own by Undo but counted with the `newThought` by the selector, since telling them apart requires the thought's value at that point in the history. The `undo` and `redo` actions accept a `count` of patches to revert or restore exactly, bypassing the step logic. That is how the slider moves by whole steps in either direction: the built-in redo grouping is not the mirror image of undo (after undoing an edit together with the cursor move that followed it, one redo restores only the edit), so dispatching a plain `redo()` per step would drift.
+
+The **undo slider** ([`UndoSlider`](../src/components/UndoSlider.tsx), toggled by its toolbar button or by a long press on Undo or Redo) is an rc-slider range over those steps, capped at ten, with the present at the right. Its two handles start together at the present with the *start* handle on top. Dragging the start handle back reveals the *end* handle, which always stays at least one step after the start (except at the present, where the two coincide); the start handle stops one step before the end handle rather than pushing it. Dragging either handle moves the thoughtspace to the point in time under it, so after dragging the end handle the user sees the end point while the start handle is preserved. The name of the action that produced each handle's point in time is rendered under the handle. The handles live in component state and reset to the current state whenever the total number of patches changes, i.e. when a new action discards the history ahead of the current state.
+
+The copy button to the right of the slider copies the **steps to reproduce** the actions between the handles ([`stepsToReproduce`](../src/selectors/stepsToReproduce.ts)): the whole thoughtspace at the start point, exported as plain text with meta attributes inside a markdown code block, followed by a numbered step for each undo step up to the end point. The selector reconstructs the state before and after every patch in the range by applying the patches from the current state (inverse patches backwards, forward patches forwards) and describes each step from its `rawActions` and those states: hand-written sentences for the core editing actions (``Create thought `c` after `b`.``, ``Indent `c`.``, ``Edit `a` to `aa`.``, …), the command label and the selected thoughts for a multicursor command, and the action name plus the cursor thought for anything else. Navigation-only patches are left out, since each step names its own target.
+
 ### Adding a new command
 
 1. Create `src/commands/yourCommand.ts`. Default-export a `Command` object with at minimum `id`, `label`, `exec`, and `multicursor`.
@@ -716,6 +726,8 @@ Navigation and non-undoable commands are ignored, so Repeat always repeats the l
 ### Toggle Undo Slider
 
 Toggle a handy slider that lets you rewind edits.
+
+Drag the start handle back to rewind, then drag the end handle to a later point; the copy button copies the steps to reproduce the actions between the two. See [Undo history and the undo slider](#undo-history-and-the-undo-slider).
 
 ### Export
 

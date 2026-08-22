@@ -1368,3 +1368,20 @@ describe('multicursor grouping', () => {
   - e`)
   })
 })
+
+describe('count', () => {
+  it('undo and redo an exact number of patches instead of a whole step', () => {
+    store.dispatch([newThought({}), editThought([''], 'a')])
+
+    // a whole step would also undo the new thought
+    store.dispatch(undo({ count: 1 }))
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - `)
+
+    store.dispatch(redo({ count: 1 }))
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - a`)
+  })
+})
