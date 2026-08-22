@@ -2,6 +2,7 @@ import http from 'http'
 import https from 'https'
 import path from 'path'
 import { drainConsoleProxy, waitForConsoleProxy } from '../../../util/consoleProxy'
+import getScreenOffsetY from '../helpers/getScreenOffsetY'
 import resetApp from '../helpers/resetApp'
 
 const LOCAL_URL = 'https://localhost:3000'
@@ -195,6 +196,12 @@ const baseConfig = {
     // (the "console proxy", src/util/consoleProxy.ts, enabled via VITE_BROWSER_CONSOLE_CAPTURE=1 — see
     // .github/workflows/ios.yml). Wait for it to install after the reload resetApp performed.
     await waitForConsoleProxy()
+
+    // Measure the page-to-screen offset that tap needs, here rather than lazily on the first tap, because
+    // calibrating means tapping the page: the thoughtspace resetApp just emptied is the one moment in a test
+    // when a stray tap cannot disturb anything. A reload resets Safari's chrome, so the previous test's
+    // measurement does not carry over.
+    await getScreenOffsetY()
   },
 
   // After each test: drain the console proxy buffer and print it under the test title so browser-side console output is grouped per-it() in CI logs.

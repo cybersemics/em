@@ -1,6 +1,5 @@
 import type { Element } from 'webdriverio'
-
-// import getNativeElementRect from './getNativeElementRect'
+import getScreenOffsetY from './getScreenOffsetY.js'
 
 interface Options {
   // Where in the horizontal line (inside) of the target node should be tapped. Defaults to center, which
@@ -22,6 +21,12 @@ interface Options {
 
 /**
  * Tap a node with an optional text offset or x,y offset.
+ *
+ * The tap is dispatched with `performActions`, which Appium's XCUITest driver always runs in the native
+ * context even while the WEBVIEW context is active, so it takes device screen coordinates. The node is
+ * measured in viewport coordinates and converted with `getScreenOffsetY`. Do not compensate for the
+ * difference with a hand-tuned `y` at the call site.
+ *
  * Uses the global browser object from WDIO.
  */
 const tap = async (
@@ -42,50 +47,41 @@ const tap = async (
     )
   }
 
-  const boundingBox = await browser.getElementRect(elementId)
-  if (!boundingBox) throw new Error('Bounding box of editable not found.')
-
-  /** Get cordinates for specific text node if the given node has text child. */
-  const offsetCoordinates = () =>
-    browser.execute(
-      function (ele, offset) {
-        // Element does not contain native properties like nodeName, textContent, etc
-        // Not sure what the actual WebDriverIO type that is returned by findElement
-        // Node does not contain property elementId; it is only a Node inside browser.execute, so we cannot change the typeo of the nodeHandle argument
-        const textNode = (ele as unknown as Node).firstChild
-        if (!textNode || textNode.nodeName !== '#text') return
-        const range = document.createRange()
-        range.setStart(textNode, offset ?? 0)
-        const { right, top, height } = range.getBoundingClientRect()
-        return {
-          x: right,
-          y: top + height / 2,
-        }
-      },
-      nodeHandle,
-      offset,
-    )
-
-  const coordinate = !offset
-    ? {
-        x:
-          boundingBox.x +
-          (horizontalTapLine === 'left'
-            ? 1
-            : horizontalTapLine === 'right'
-              ? boundingBox.width - 1
-              : boundingBox.width / 2),
-        y: boundingBox.y + boundingBox.height / 2,
+  // Viewport coordinates, not the page coordinates browser.getElementRect returns: the toolbar is
+  // position: fixed, and the W3C algorithm adds the scroll offset to a bounding rect that is pinned at 0, so
+  // its page y is just the scroll position. The text offset is measured against the element's own box in the
+  // same call, since a delta is the same in either frame.
+  const raw = await browser.execute(
+    function (ele, offset, horizontalTapLine) {
+      const element = ele as unknown as HTMLElement
+      const box = element.getBoundingClientRect()
+      if (offset === undefined || offset === null) {
+        return JSON.stringify({
+          x:
+            box.left +
+            (horizontalTapLine === 'left' ? 1 : horizontalTapLine === 'right' ? box.width - 1 : box.width / 2),
+          y: box.top + box.height / 2,
+        })
       }
-    : await offsetCoordinates()
+      const textNode = (element as unknown as Node).firstChild
+      if (!textNode || textNode.nodeName !== '#text') return ''
+      const range = document.createRange()
+      range.setStart(textNode, offset)
+      const { right, top, height } = range.getBoundingClientRect()
+      return JSON.stringify({ x: right, y: top + height / 2 })
+    },
+    nodeHandle,
+    offset,
+    horizontalTapLine,
+  )
+  if (!raw) throw new Error('Coordinate not found.')
 
-  if (!coordinate) throw new Error('Coordinate not found.')
-
-  // const topBarRect = await getNativeElementRect(browser, '//XCUIElementTypeOther[@name="topBrowserBar"]')
-  // console.log('topbarrect', topBarRect)
+  const viewportCoordinate = JSON.parse(raw) as { x: number; y: number }
+  const offsetY = await getScreenOffsetY()
+  const coordinate = { x: viewportCoordinate.x, y: viewportCoordinate.y + offsetY }
 
   console.info(
-    `Coordinates: x ${coordinate.x} y ${coordinate.y} x-offset ${x} y-offset ${y} bb-x ${boundingBox.x} bby ${boundingBox.y}`,
+    `Coordinates: x ${coordinate.x} y ${coordinate.y} x-offset ${x} y-offset ${y} viewport-y ${viewportCoordinate.y} screen-offset-y ${offsetY}`,
   )
 
   const finalCoords = {
