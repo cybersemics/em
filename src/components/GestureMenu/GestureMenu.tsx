@@ -61,7 +61,11 @@ const GestureMenu: FC<{
         style={{ fontSize }}
       >
         {gestureInProgress && (
-          <div className={css({ padding: '2.25rem' })} style={!isBrowser ? { paddingTop: '0.75rem' } : undefined}>
+          <div
+            data-testid='gesture-menu-content'
+            className={css({ padding: '2.25rem' })}
+            style={!isBrowser ? { paddingTop: '0.75rem' } : undefined}
+          >
             {/* Header */}
             <div className={css({ marginBottom: '1.389rem' })}>
               <div
