@@ -551,7 +551,15 @@ export const COMMAND_GROUPS: {
   },
   {
     title: 'Moving thoughts',
-    commands: ['indent', 'outdent', 'bumpThoughtDown', 'moveThoughtDown', 'moveThoughtUp', 'swapParent'],
+    commands: [
+      'indent',
+      'outdent',
+      'bumpThoughtDown',
+      'moveThoughtDown',
+      'moveThoughtUp',
+      'swapParent',
+      'swapGrandparent',
+    ],
   },
   {
     title: 'Editing thoughts',

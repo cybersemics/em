@@ -281,6 +281,10 @@ Swap the current thought with its parent.
 
 https://github.com/user-attachments/assets/0ca1a77b-e174-4884-9606-739a94cde039
 
+### Swap Grandparent
+
+Swap the current thought with its grandparent, leaving the parent in between where it is. The two thoughts exchange places in the tree and each adopts the other's children.
+
 ### Bind Context
 
 Bind two different contexts of a thought so that they always have the same children.
