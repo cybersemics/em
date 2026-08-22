@@ -1,3 +1,4 @@
+import State from '../../@types/State'
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
@@ -8,6 +9,7 @@ import importText from '../importText'
 import newThought from '../newThought'
 import setSortPreference from '../setSortPreference'
 import swapGrandparent from '../swapGrandparent'
+import toggleAttribute from '../toggleAttribute'
 import toggleContextView from '../toggleContextView'
 
 it('no-op if cursor is not set', () => {
@@ -176,6 +178,51 @@ it('swaps below the root, preserving the great-grandparent', () => {
         - a`)
 
   expectPathToEqual(stateNew, stateNew.cursor, ['root', 'c'])
+})
+
+// Regression test for https://github.com/cybersemics/em/pull/5058#issuecomment-5382369074
+// The grandparent's children move under the child before the child's own children have left it. Reusing the ranks
+// they held under the grandparent collided with the ranks already there, and the rerank that a collision triggers
+// resolved the tie in an arbitrary order, moving a thought the swap should not have touched.
+it('does not reorder the children of any context other than the two swapped thoughts', () => {
+  const text = `
+  - a
+    - b
+      - c
+        - d
+          - e
+        - f
+      - g
+    - h
+  - i`
+
+  const steps = [
+    importText({ text }),
+    // Pin c and d, so that each gains a =pin child at a rank below its other children.
+    setCursor(['a', 'b', 'c']),
+    (state: State) => toggleAttribute(state, { path: state.cursor!, values: ['=pin', 'true'] }),
+    setCursor(['a', 'b', 'c', 'd']),
+    (state: State) => toggleAttribute(state, { path: state.cursor!, values: ['=pin', 'true'] }),
+    setCursor(['a', 'b', 'c', 'd']),
+    swapGrandparent,
+  ]
+
+  const stateNew = reducerFlow(steps)(initialState())
+
+  // Only d and b change places. g in particular stays after c, where it was after b.
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - d
+      - c
+        - =pin
+        - b
+          - =pin
+          - e
+        - f
+      - g
+    - h
+  - i`)
 })
 
 describe('context view', () => {

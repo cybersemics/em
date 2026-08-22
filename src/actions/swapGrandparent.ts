@@ -10,6 +10,7 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import head from '../util/head'
+import keyValueBy from '../util/keyValueBy'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
 import alert from './alert'
@@ -50,11 +51,22 @@ const swapGrandparent = (state: State): State => {
   const grandparentThought = getThoughtById(state, grandparentId)
   if (!childThought || !parentThought || !grandparentThought) return state
 
-  // Get only direct children of the child thought (great-grandchildren of the grandparent)
+  // The child and the grandparent exchange their entire children lists: every child of the grandparent (the parent
+  // and the parent's siblings) moves under the child, and every child of the child moves under the grandparent.
   const childChildren = getChildrenRanked(state, childId)
+  const grandparentChildren = getChildrenRanked(state, grandparentId)
+  const uncles = grandparentChildren.filter(uncle => uncle.id !== parentId)
 
-  // Get the parent's siblings (other children of the grandparent excluding the parent)
-  const uncles = getChildrenRanked(state, grandparentId).filter(uncle => uncle.id !== parentId)
+  // The grandparent's children arrive under the child before the child's own children have left it, so giving them
+  // the ranks they held under the grandparent can collide with the ranks already in place. moveThought reranks a
+  // context whose ranks collide, and rerank resolves an exact tie in whatever order the tied thoughts happen to
+  // enumerate, reordering thoughts the swap should have left alone (#5058). Ranking them past everything the child
+  // currently holds keeps them clear of it, and once the child's own children have moved out, all that remains is
+  // their order relative to each other. The reverse move needs no such offset: the grandparent has been emptied by
+  // the time the child's children arrive, so they keep the ranks they already had.
+  const ranksUnderChild = keyValueBy(grandparentChildren, (grandparentChild, i) => ({
+    [grandparentChild.id]: (childChildren.at(-1)?.rank ?? -1) + 1 + i,
+  }))
 
   const greatGrandparent = parentOf(grandparent)
   const greatGrandparentId = head(rootedParentOf(state, grandparent))
@@ -68,12 +80,12 @@ const swapGrandparent = (state: State): State => {
       skipMerge: true,
     }),
 
-    // Then move the parent under the child, keeping the rank it had under the grandparent.
+    // Then move the parent under the child, keeping its position among the grandparent's children.
     // This must precede moving the grandparent, which would otherwise become its own descendant.
     moveThought({
       oldPath: simplifyPath(state, parent),
       newPath: simplifyPath(state, [...greatGrandparent, childId, parentId]),
-      newRank: parentThought.rank,
+      newRank: ranksUnderChild[parentId],
       skipMerge: true,
     }),
 
@@ -90,7 +102,7 @@ const swapGrandparent = (state: State): State => {
       moveThought({
         oldPath: simplifyPath(state, [...grandparent, uncle.id]),
         newPath: simplifyPath(state, [...greatGrandparent, childId, uncle.id]),
-        newRank: uncle.rank,
+        newRank: ranksUnderChild[uncle.id],
         skipMerge: true,
       }),
     ),
