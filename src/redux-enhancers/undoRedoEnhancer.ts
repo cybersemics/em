@@ -94,13 +94,17 @@ function getEditThoughtDirection(action: UnknownAction): EditThoughtDirection {
  * their patch, so undoing them silently closes edit mode. That desyncs the flag from the real keyboard mid-reducer and
  * drives the dismissal machinery (clearSelection -> selection.clear -> Keyboard.hide), which then fights the next
  * thought's attempt to raise the keyboard (#4692). Undo/redo must never move the keyboard; only the blur and
- * dismissKeyboard paths may. */
+ * dismissKeyboard paths may.
+ * The selectionOffsets snapshot is likewise device state: it records where the browser selection was before a UI took
+ * the focus, so restoring the one that happened to be current when an action was undone would resurrect a selection
+ * the user has long since moved on from. */
 const statePropertiesToOmit: (keyof State)[] = [
   'alert',
   'cursorCleared',
   'editableNonce',
   'isKeyboardOpen',
   'pushQueue',
+  'selectionOffsets',
 ]
 
 /** Reconstructs TreeCRDT move updates and placement metadata from the final state produced by an undo/redo patch. */

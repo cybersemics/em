@@ -141,6 +141,7 @@ const initialState = (created: Timestamp = timestamp()) => {
     resourceCache: {},
     rootContext: [HOME_TOKEN],
     search: null,
+    selectionOffsets: null,
     showDesktopCommandUniverse: false,
     showGestureMenu: false,
     remoteSearch: false,
