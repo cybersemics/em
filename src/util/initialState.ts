@@ -142,6 +142,13 @@ const initialState = (created: Timestamp = timestamp()) => {
     rootContext: [HOME_TOKEN],
     search: null,
     selectionOffsets: null,
+    // clear resets the app by merging initialState() into the previous state through reducerFlow, so a dropdown flag
+    // omitted here would survive a clear and leave the dropdown open.
+    showBulletPicker: false,
+    showColorPicker: false,
+    showLetterCase: false,
+    showSortPicker: false,
+    showUndoSlider: false,
     showDesktopCommandUniverse: false,
     showGestureMenu: false,
     remoteSearch: false,
