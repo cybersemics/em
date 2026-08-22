@@ -34,6 +34,7 @@ type Describer = (snapshot: Snapshot) => string
 const FORMATTING: Record<string, string> = {
   b: 'Bold',
   code: 'Code',
+  font: 'Color',
   del: 'Strikethrough',
   em: 'Italic',
   i: 'Italic',
@@ -75,20 +76,56 @@ const topmost = (state: State, ids: ThoughtId[]): ThoughtId[] =>
 const selectionIds = (state: State): ThoughtId[] =>
   documentSort(state, Object.values(state.multicursors)).map(path => head(path))
 
-/** The value of a thought followed by those of its only-child descendants, separated by slashes, e.g. =pin/true. */
+/** Names a thought in the given state by its value, or as the root. */
+const describeThought = (state: State, id: ThoughtId): string =>
+  isRoot([id]) ? 'the root' : name(state.thoughts.thoughtIndex[id]?.value ?? '')
+
+/** The value of a thought followed by those of its only-child descendants, separated by slashes, e.g. =pin/true. Stops at an empty value. */
 const chain = (state: State, id: ThoughtId): string => {
   const children = getChildrenRanked(state, id)
   const { value } = state.thoughts.thoughtIndex[id]
-  return children.length === 1 ? `${value}/${chain(state, children[0].id)}` : value
+  return children.length === 1 && children[0].value ? `${value}/${chain(state, children[0].id)}` : value
 }
+
+/** The nearest meta attribute at or above a thought in the given state, i.e. the attribute whose value the thought is part of. */
+const attributeRoot = (state: State, id: ThoughtId): ThoughtId | undefined => {
+  const thought = state.thoughts.thoughtIndex[id]
+  return !thought || isRoot([id]) ? undefined : isAttribute(thought.value) ? id : attributeRoot(state, thought.parentId)
+}
+
+/** The meta attributes a patch set, as the ids of their roots in the state after it: attributes it created, and attributes whose value it changed. */
+const attributesSet = (snapshot: Snapshot): ThoughtId[] => {
+  const { patch, before, after } = snapshot
+  const created = topmost(after, createdIds(snapshot)).filter(id => isAttribute(after.thoughts.thoughtIndex[id].value))
+  const edited = touchedIds(patch)
+    .filter(id => before.thoughts.thoughtIndex[id] && after.thoughts.thoughtIndex[id])
+    .filter(id => before.thoughts.thoughtIndex[id].value !== after.thoughts.thoughtIndex[id].value)
+    .map(id => attributeRoot(after, id))
+    .filter((id): id is ThoughtId => !!id)
+  return uniq([...created, ...edited])
+}
+
+/** The meta attributes a patch removed, as the ids of their roots in the state before it. */
+const attributesRemoved = (snapshot: Snapshot): ThoughtId[] =>
+  topmost(snapshot.before, deletedIds(snapshot)).filter(id =>
+    isAttribute(snapshot.before.thoughts.thoughtIndex[id].value),
+  )
+
+/** The id of the thought a patch moved to another parent or rank, if any. */
+const movedId = ({ patch, before, after }: Snapshot): ThoughtId | undefined =>
+  touchedIds(patch).find(id => {
+    const oldThought = before.thoughts.thoughtIndex[id]
+    const newThought = after.thoughts.thoughtIndex[id]
+    return (
+      oldThought && newThought && (oldThought.parentId !== newThought.parentId || oldThought.rank !== newThought.rank)
+    )
+  })
 
 /** Describes the meta attributes that a patch set and removed, e.g. "sets `=pin/true`". Returns an empty string if it changed none. */
 const attributeChanges = (snapshot: Snapshot): string => {
   const { before, after } = snapshot
-  const set = topmost(after, createdIds(snapshot)).filter(id => isAttribute(after.thoughts.thoughtIndex[id].value))
-  const removed = topmost(before, deletedIds(snapshot)).filter(id =>
-    isAttribute(before.thoughts.thoughtIndex[id].value),
-  )
+  const set = attributesSet(snapshot)
+  const removed = attributesRemoved(snapshot)
   return [
     set.length ? `sets ${joinConjunction(set.map(id => code(chain(after, id))))}` : '',
     removed.length ? `removes ${joinConjunction(removed.map(id => code(chain(before, id))))}` : '',
@@ -110,8 +147,21 @@ const placement = (state: State, id: ThoughtId): string => {
       ? ` before ${name(next.value)}`
       : isRoot([parentId])
         ? ''
-        : ` as a subthought of ${name(state.thoughts.thoughtIndex[parentId]?.value ?? '')}`
+        : ` as a subthought of ${describeThought(state, parentId)}`
 }
+
+/** Describes an action that sets or removes a single meta attribute by the attribute and the thought it hangs off, e.g. "Toggle `=pin` on `a`.". */
+const describeAttribute =
+  ({ set, removed }: { set: string; removed: string }): Describer =>
+  snapshot => {
+    const { before, after } = snapshot
+    const [setId] = attributesSet(snapshot)
+    const [removedId] = attributesRemoved(snapshot)
+    const [state, id, verb] = setId ? [after, setId, set] : [before, removedId, removed]
+    return id
+      ? `${verb} ${code(chain(state, id))} ${setId ? 'on' : 'from'} ${describeThought(state, state.thoughts.thoughtIndex[id].parentId)}.`
+      : `${startCase(snapshot.patch[0].actions[0])}${target(before, before.cursor)}.`
+  }
 
 /** Describes the creation of a thought, reading its value from the given state so that a value typed by a later patch of the same step can be used. */
 const describeNewThought = (snapshot: Snapshot, state: State): string => {
@@ -164,16 +214,36 @@ const describeDelete = (snapshot: Snapshot): string => {
 const describers: Partial<Record<ActionType, Describer>> = {
   archiveThought: ({ before }) => `Archive${target(before, before.cursor)}.`,
   categorize: ({ before }) => `Categorize${target(before, before.cursor)}.`,
+  deleteAttribute: describeAttribute({ set: 'Set', removed: 'Remove' }),
+  deleteEmptyThought: describeDelete,
   deleteThought: describeDelete,
   deleteThoughtWithCursor: describeDelete,
   editThought: describeEdit,
+  extractCategory: snapshot => {
+    const [created] = topmost(snapshot.after, createdIds(snapshot))
+    return `Extract${created ? ` ${name(snapshot.after.thoughts.thoughtIndex[created].value)} from` : ''}${target(snapshot.before, snapshot.before.cursor)} into a category.`
+  },
+  extractSubthought: snapshot => {
+    const [created] = topmost(snapshot.after, createdIds(snapshot))
+    return `Extract${created ? ` ${name(snapshot.after.thoughts.thoughtIndex[created].value)} from` : ''}${target(snapshot.before, snapshot.before.cursor)} into a subthought.`
+  },
   importText: snapshot => {
     const { after } = snapshot
     const roots = sortBy(topmost(after, createdIds(snapshot)), id => after.thoughts.thoughtIndex[id].rank)
-    // A single-line paste only changes the value of the thought it is pasted into.
-    if (!roots.length) return describeEdit(snapshot)
+    // A single-line paste only inserts text into the value of the thought it is pasted into.
+    if (!roots.length) {
+      const { before } = snapshot
+      const id = touchedIds(snapshot.patch).find(id => {
+        const oldValue = before.thoughts.thoughtIndex[id]?.value
+        const newValue = after.thoughts.thoughtIndex[id]?.value
+        return oldValue !== undefined && newValue !== undefined && oldValue !== newValue && newValue.includes(oldValue)
+      })
+      return id
+        ? `Paste ${name(after.thoughts.thoughtIndex[id].value.replace(before.thoughts.thoughtIndex[id].value, ''))} into ${name(before.thoughts.thoughtIndex[id].value)}.`
+        : describeEdit(snapshot)
+    }
     const { parentId } = after.thoughts.thoughtIndex[roots[0]]
-    const destination = isRoot([parentId]) ? '' : ` into ${name(after.thoughts.thoughtIndex[parentId]?.value ?? '')}`
+    const destination = isRoot([parentId]) ? '' : ` into ${describeThought(after, parentId)}`
     // The pasted thoughts are quoted in a code block indented under the step, so that the markdown list continues after it.
     return `Paste${destination}:\n\n   \`\`\`\n${roots
       .map(id => exportContext(after, id, 'text/plain'))
@@ -184,10 +254,17 @@ const describers: Partial<Record<ActionType, Describer>> = {
   },
   indent: ({ before }) => `Indent${target(before, before.cursor)}.`,
   join: ({ before }) => `Join${target(before, before.cursor)} with its siblings.`,
+  moveThought: snapshot => {
+    const id = movedId(snapshot)
+    return id
+      ? `Move ${name(snapshot.after.thoughts.thoughtIndex[id].value)}${placement(snapshot.after, id)}.`
+      : `Move${target(snapshot.before, snapshot.before.cursor)}.`
+  },
   moveThoughtDown: ({ before }) => `Move${target(before, before.cursor)} down.`,
   moveThoughtUp: ({ before }) => `Move${target(before, before.cursor)} up.`,
   newThought: snapshot => describeNewThought(snapshot, snapshot.after),
   outdent: ({ before }) => `Outdent${target(before, before.cursor)}.`,
+  setDescendant: describeAttribute({ set: 'Set', removed: 'Remove' }),
   splitThought: snapshot => {
     const { before, after } = snapshot
     const left = before.cursor ? after.thoughts.thoughtIndex[head(before.cursor)]?.value : undefined
@@ -195,16 +272,9 @@ const describers: Partial<Record<ActionType, Describer>> = {
     const right = created && after.thoughts.thoughtIndex[created]?.value
     return `Split${target(before, before.cursor)}${left !== undefined && right !== undefined ? ` into ${name(left)} and ${name(right)}` : ''}.`
   },
-  toggleAttribute: snapshot => {
-    const { before, after } = snapshot
-    // the attribute is either set (created) or removed (deleted), and hangs off the thought it is attached to
-    const [set] = topmost(after, createdIds(snapshot))
-    const [removed] = topmost(before, deletedIds(snapshot))
-    const [state, id] = set ? [after, set] : [before, removed]
-    return id
-      ? `Toggle ${code(chain(state, id))} on ${name(state.thoughts.thoughtIndex[state.thoughts.thoughtIndex[id].parentId]?.value ?? '')}.`
-      : `Toggle attribute${target(before, before.cursor)}.`
-  },
+  toggleAttribute: describeAttribute({ set: 'Toggle', removed: 'Toggle' }),
+  // a global toggle rather than one of the cursor thought
+  toggleHiddenThoughts: () => 'Toggle Hidden Thoughts.',
   uncategorize: ({ before }) => `Uncategorize${target(before, before.cursor)}.`,
 }
 

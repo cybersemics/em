@@ -7,7 +7,10 @@ import { swapParentActionCreator as swapParent } from '../../actions/swapParent'
 import { toggleAttributeActionCreator as toggleAttribute } from '../../actions/toggleAttribute'
 import { undoActionCreator as undo } from '../../actions/undo'
 import { executeCommandWithMulticursor } from '../../commands'
+import deleteEmptyThoughtOrOutdentCommand from '../../commands/deleteEmptyThoughtOrOutdent'
 import moveThoughtDownCommand from '../../commands/moveThoughtDown'
+import toggleSortCommand from '../../commands/toggleSort'
+import { HOME_PATH } from '../../constants'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
@@ -245,4 +248,149 @@ it('quote a multiline paste in a code block', () => {
    - b
      - c
    \`\`\``)
+})
+
+it('describe a drag and drop by where the thought lands', () => {
+  store.dispatch([
+    importText({
+      text: `
+        - a
+          - b
+          - d
+        - e
+          - f
+      `,
+    }),
+    setCursor(['e', 'f']),
+    (dispatch, getState) => {
+      const oldPath = contextToPath(getState(), ['e', 'f'])!
+      dispatch({
+        type: 'moveThought',
+        oldPath,
+        newPath: [...contextToPath(getState(), ['a'])!, oldPath.at(-1)!],
+        newRank: 0.5,
+      })
+    },
+  ])
+
+  expect(stepsToReproduce(store.getState(), { start: 1, end: 0 })).toBe(`\`\`\`
+- a
+  - b
+  - d
+- e
+  - f
+\`\`\`
+
+1. Set cursor to \`f\`.
+2. Move \`f\` after \`b\`.`)
+})
+
+it('describe meta attributes that are set, changed, and removed', () => {
+  store.dispatch([
+    importText({
+      text: `
+        - a
+          - b
+      `,
+    }),
+    setCursor(['a']),
+    (dispatch, getState) =>
+      dispatch({ type: 'setDescendant', path: contextToPath(getState(), ['a']), values: ['=view', 'Table'] }),
+  ])
+  executeCommandWithMulticursor(toggleSortCommand, { store })
+  executeCommandWithMulticursor(toggleSortCommand, { store })
+  store.dispatch((dispatch, getState) =>
+    dispatch({ type: 'deleteAttribute', path: contextToPath(getState(), ['a']), value: '=view' }),
+  )
+
+  expect(stepsToReproduce(store.getState(), { start: 4, end: 0 })).toBe(`\`\`\`
+- a
+  - b
+\`\`\`
+
+1. Set cursor to \`a\`.
+2. Set \`=view/Table\` on \`a\`.
+3. Toggle Sort \`a\` (sets \`=sort/Alphabetical/Asc\`).
+4. Toggle Sort \`a\` (sets \`=sort/Alphabetical/Desc\`).
+5. Remove \`=view/Table\` from \`a\`.`)
+})
+
+it('name the root when an attribute is set on it', () => {
+  store.dispatch([
+    importText({
+      text: `
+        - a
+      `,
+    }),
+    setCursor(['a']),
+    toggleAttribute({ path: HOME_PATH, values: ['=view', 'Table'] }),
+  ])
+
+  expect(stepsToReproduce(store.getState(), { start: 1, end: 0 })).toBe(`\`\`\`
+- a
+\`\`\`
+
+1. Set cursor to \`a\`.
+2. Toggle \`=view/Table\` on the root.`)
+})
+
+it('describe a single-line paste by the pasted text', () => {
+  store.dispatch([
+    importText({
+      text: `
+        - a
+      `,
+    }),
+    setCursor(['a']),
+    (dispatch, getState) => dispatch(importText({ path: contextToPath(getState(), ['a'])!, text: 'xyz' })),
+  ])
+
+  expect(stepsToReproduce(store.getState(), { start: 1, end: 0 })).toBe(`\`\`\`
+- a
+\`\`\`
+
+1. Set cursor to \`a\`.
+2. Paste \`xyz\` into \`a\`.`)
+})
+
+it('describe the deletion of an empty thought', () => {
+  store.dispatch([
+    importText({
+      text: `
+        - a
+          - b
+          - ${''}
+      `,
+    }),
+    setCursor(['a', '']),
+  ])
+  executeCommandWithMulticursor(deleteEmptyThoughtOrOutdentCommand, { store })
+
+  expect(stepsToReproduce(store.getState(), { start: 1, end: 0 })).toBe(`\`\`\`
+- a
+  - b
+  - ${''}
+\`\`\`
+
+1. Set cursor to the empty thought.
+2. Delete the empty thought.`)
+})
+
+it('describe an extracted subthought by the extracted text', () => {
+  store.dispatch([
+    importText({
+      text: `
+        - hello big world
+      `,
+    }),
+    setCursor(['hello big world']),
+    { type: 'extractSubthought', selectionStart: 6, selectionEnd: 9 },
+  ])
+
+  expect(stepsToReproduce(store.getState(), { start: 1, end: 0 })).toBe(`\`\`\`
+- hello big world
+\`\`\`
+
+1. Set cursor to \`hello big world\`.
+2. Extract \`big\` from \`hello big world\` into a subthought.`)
 })
