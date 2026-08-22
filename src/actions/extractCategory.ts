@@ -11,17 +11,18 @@ import alert from './alert'
 import categorize from './categorize'
 import editThought from './editThought'
 
-/** Extracts the selection as a new category, moving the thought (or the selected thoughts) into it. */
-const extractCategory = (state: State): State => {
+export interface extractCategoryPayload {
+  /** The character offset of the start of the selection within the cursor thought's value. */
+  selectionStart: number
+  /** The character offset of the end of the selection within the cursor thought's value. */
+  selectionEnd: number
+}
+
+/** Extracts the given range of the cursor thought as a new category, moving the thought (or the selected thoughts) into it. */
+const extractCategory = (state: State, { selectionStart, selectionEnd }: extractCategoryPayload): State => {
   const { cursor } = state
   if (!cursor) return state
 
-  if (!selection.isActive()) {
-    return state
-  }
-
-  const selectionStart = selection.offsetStart()!
-  const selectionEnd = selection.offsetEnd()!
   if (selectionStart === selectionEnd) {
     return alert(state, { value: 'No text selected to extract' })
   }
@@ -55,8 +56,20 @@ const extractCategory = (state: State): State => {
   })
 }
 
-/** Action-creator for extractCategory. */
-export const extractCategoryActionCreator = (): Thunk => dispatch => dispatch({ type: 'extractCategory' })
+/**
+ * Action-creator for extractCategory. Reads the selection offsets from the document and passes them to the reducer,
+ * which cannot read them itself without reaching outside of state.
+ */
+export const extractCategoryActionCreator = (): Thunk => dispatch => {
+  // offsetStart and offsetEnd call getRangeAt(0), which throws when the document has no range at all
+  if (!selection.isActive()) return
+
+  const selectionStart = selection.offsetStart()
+  const selectionEnd = selection.offsetEnd()
+  if (selectionStart === null || selectionEnd === null) return
+
+  dispatch({ type: 'extractCategory', selectionStart, selectionEnd })
+}
 
 export default _.curryRight(extractCategory)
 
