@@ -21,6 +21,9 @@ let pendingAiUse: (() => void) | null = null
 /** Returns true if the user has acknowledged the AI data disclosure on this device. */
 export const hasAcknowledgedAiDisclosure = () => storage.getItem(AI_DISCLOSURE_KEY) === ACKNOWLEDGED_VALUE
 
+/** Returns true if an AI request is waiting for the disclosure to be accepted. */
+export const hasPendingAiUse = () => pendingAiUse !== null
+
 /** Allows one AI use without persisting acknowledgement. */
 export const allowAiDisclosureOnce = () => {
   allowNextAiUse = true

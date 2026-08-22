@@ -4,8 +4,7 @@ import { showModalActionCreator as showModal } from '../../actions/showModal'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
-import {
-  acknowledgeAiDisclosure,
+import requestAiDisclosure, {
   clearAiDisclosureAcknowledgement,
   hasAcknowledgedAiDisclosure,
 } from '../../util/aiDisclosure'
@@ -21,6 +20,7 @@ afterEach(() => {
 afterEach(cleanupTestApp)
 
 it('allows the user to cancel without acknowledging', async () => {
+  requestAiDisclosure(() => undefined)
   await dispatch(showModal({ id: 'aiDisclosure' }))
 
   await act(vi.runOnlyPendingTimersAsync)
@@ -39,6 +39,7 @@ it('allows the user to cancel without acknowledging', async () => {
 })
 
 it('allows one use without persisting acknowledgement', async () => {
+  requestAiDisclosure(() => undefined)
   await dispatch(showModal({ id: 'aiDisclosure' }))
 
   await act(vi.runOnlyPendingTimersAsync)
@@ -55,6 +56,7 @@ it('allows one use without persisting acknowledgement', async () => {
 })
 
 it('persists acknowledgement when the user chooses to remember it', async () => {
+  requestAiDisclosure(() => undefined)
   await dispatch(showModal({ id: 'aiDisclosure' }))
 
   await act(vi.runOnlyPendingTimersAsync)
@@ -70,19 +72,56 @@ it('persists acknowledgement when the user chooses to remember it', async () => 
   expect(store.getState().showModal).toBeNull()
 })
 
-it('lets the user remove a remembered acknowledgement in Settings', async () => {
-  acknowledgeAiDisclosure()
+it('lets the user toggle the AI data acknowledgement in Settings', async () => {
   await dispatch(showModal({ id: 'settings' }))
 
   await act(vi.runOnlyPendingTimersAsync)
 
-  expect(screen.getByText('AI features are allowed without asking each time on this device.')).toBeVisible()
+  expect(screen.getByText('AI Data Acknowledgment')).toBeVisible()
+  expect(
+    screen.getByText(
+      'Allows AI features without asking each time on this device. Relevant thought content may be sent to an AI service when an AI feature is used.',
+    ),
+  ).toBeVisible()
 
   await act(async () => {
-    fireEvent.click(screen.getByText('Remove AI acknowledgment'))
+    fireEvent.click(screen.getByText('AI Data Acknowledgment'))
+  })
+  await act(vi.runOnlyPendingTimersAsync)
+
+  expect(screen.queryByRole('button', { name: 'Allow once' })).toBeNull()
+  expect(hasAcknowledgedAiDisclosure()).toBe(false)
+
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+  })
+  await act(vi.runOnlyPendingTimersAsync)
+
+  expect(store.getState().showModal).toBe('settings')
+  expect(hasAcknowledgedAiDisclosure()).toBe(false)
+
+  await act(async () => {
+    fireEvent.click(screen.getByText('AI Data Acknowledgment'))
+  })
+  await act(vi.runOnlyPendingTimersAsync)
+
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: 'Always allow' }))
+  })
+  await act(vi.runAllTimersAsync)
+
+  expect(store.getState().showModal).toBe('settings')
+  expect(hasAcknowledgedAiDisclosure()).toBe(true)
+
+  expect(
+    screen.getByText(
+      'Allows AI features without asking each time on this device. Relevant thought content may be sent to an AI service when an AI feature is used.',
+    ),
+  ).toBeVisible()
+
+  await act(async () => {
+    fireEvent.click(screen.getByText('AI Data Acknowledgment'))
   })
 
-  expect(screen.getByText('Removed. You will be asked before thought context is sent to an AI service.')).toBeVisible()
-  expect(screen.queryByText('Remove AI acknowledgment')).toBeNull()
   expect(hasAcknowledgedAiDisclosure()).toBe(false)
 })

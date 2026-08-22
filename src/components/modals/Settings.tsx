@@ -150,34 +150,27 @@ const DebugLog = () => {
   )
 }
 
-/** Lets a user revoke a previously remembered AI data acknowledgement on this device. */
+/** Lets a user manage their AI data acknowledgement on this device. */
 const AiAcknowledgement = () => {
   const [acknowledged, setAcknowledged] = useState(hasAcknowledgedAiDisclosure)
-  const [removed, setRemoved] = useState(false)
-
-  if (!acknowledged && !removed) return null
+  const dispatch = useDispatch()
 
   return (
-    <div className={css({ marginBottom: '2em' })}>
-      <div>AI Data Acknowledgment</div>
-      <p className={css({ marginTop: '0.45rem', fontSize: 'md', color: 'dim' })}>
-        {acknowledged
-          ? 'AI features are allowed without asking each time on this device.'
-          : 'Removed. You will be asked before thought context is sent to an AI service.'}
-      </p>
-      {acknowledged ? (
-        <a
-          {...fastClick(() => {
-            clearAiDisclosureAcknowledgement()
-            setAcknowledged(false)
-            setRemoved(true)
-          })}
-          className={extendTapRecipe()}
-        >
-          Remove AI acknowledgment
-        </a>
-      ) : null}
-    </div>
+    <Checkbox
+      checked={acknowledged}
+      title='AI Data Acknowledgment'
+      onChange={() => {
+        if (acknowledged) {
+          clearAiDisclosureAcknowledgement()
+          setAcknowledged(false)
+        } else {
+          dispatch(showModal({ id: 'aiDisclosure' }))
+        }
+      }}
+    >
+      Allows AI features without asking each time on this device. Relevant thought content may be sent to an AI service
+      when an AI feature is used.
+    </Checkbox>
   )
 }
 
@@ -210,8 +203,6 @@ const ModalSettings = () => {
           <ThemeSwitch />
         </div>
 
-        <AiAcknowledgement />
-
         <Setting settingsKey={Settings.experienceMode} title='Training Mode' invert>
           Shows a notification each time a gesture is executed on a touch screen device. This is helpful when you are
           learning gestures and want an extra bit of feedback.
@@ -229,6 +220,8 @@ const ModalSettings = () => {
         <Setting settingsKey={Settings.leftHanded} title='Left Handed'>
           Moves the scroll zone to the left side of the screen and the gesture zone to the right.
         </Setting>
+
+        <AiAcknowledgement />
 
         <Setting settingsKey={Settings.debugCrashLog} title='Debug Logging'>
           Records a rolling log of app events to help diagnose rare, hard-to-reproduce bugs (such as freezes).
