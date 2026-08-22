@@ -63,7 +63,10 @@ const GestureMenu: FC<{
         {gestureInProgress && (
           <div
             data-testid='gesture-menu-content'
-            className={css({ padding: '2.25rem' })}
+            className={css({
+              padding: '2.25rem',
+              paddingLeft: `calc(2.25rem + ${token.var('spacing.safeAreaLeft')})`,
+            })}
             style={!isBrowser ? { paddingTop: '0.75rem' } : undefined}
           >
             {/* Header */}

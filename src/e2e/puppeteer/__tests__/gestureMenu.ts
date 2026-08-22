@@ -14,7 +14,7 @@ describe('gesture menu', () => {
   })
 
   // https://github.com/cybersemics/em/issues/3678
-  it.skip('adds left safe area padding to gesture menu content', async () => {
+  it('adds left safe area padding to gesture menu content', async () => {
     await page.evaluate(() => {
       document.documentElement.style.setProperty('--spacing-safe-area-left', '48px')
     })
