@@ -184,7 +184,9 @@ It is rendered as a sibling *after* the `ContentEditable`, and always in the sam
 
 ### Multi edit mode
 
-[`isMultiEditing`](../src/selectors/isMultiEditing.ts) is true when a multiselection is actually being *edited*: the keyboard is open, the cursor is a multicursor member, and the browser selection is inside a thought. Only Clear Thought puts the app in this state (via `useEditMode`'s relaxed multicursor guard); an ordinary multiselection leaves the caret outside any editable, so the predicate consults the DOM selection to tell the two apart.
+[`isMultiEditing`](../src/selectors/isMultiEditing.ts) is true when a multiselection is actually being *edited*: the keyboard is open, the cursor is a multicursor member, and the caret is in the cursor thought. Only Clear Thought puts the app in this state (via `useEditMode`'s relaxed multicursor guard); an ordinary multiselection leaves the caret outside any editable, so the predicate consults the DOM selection to tell the two apart.
+
+The caret is checked against the cursor thought specifically, not merely against some thought. Shift + ArrowUp/ArrowDown moves the cursor onto the next thought and only takes the caret out of the thought the multiselect started from on the following animation frame, so for that frame the caret is in a thought that is not the cursor. Accepting any thought would read that as multi edit mode and make every command below defer to the browser — most visibly Escape, which would exit an editing session that was never entered and leave the multiselection standing.
 
 Commands and gestures that otherwise take over the interaction defer to native editing behavior in this state:
 
