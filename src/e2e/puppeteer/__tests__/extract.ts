@@ -1,21 +1,11 @@
 import clickThought from '../helpers/clickThought'
+import command from '../helpers/command'
 import exportThoughts from '../helpers/exportThoughts'
 import paste from '../helpers/paste'
-import press from '../helpers/press'
 import setSelection from '../helpers/setSelection'
-import waitForContextHasChildWithValue from '../helpers/waitForContextHasChildWithValue'
-import waitForSelector from '../helpers/waitForSelector'
-import { page } from '../session'
+import waitForEditable from '../helpers/waitForEditable'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
-
-/** Runs a command from the Command Universe by searching for it by name and pressing Enter. */
-const runFromCommandUniverse = async (name: string) => {
-  await press('P', { meta: true })
-  await waitForSelector('[data-testid=desktop-command-universe]')
-  await page.keyboard.type(name)
-  await press('Enter')
-}
 
 describe('Command Universe', () => {
   // The Command Universe's search input takes the browser selection when it opens, and the document has only one
@@ -27,9 +17,9 @@ describe('Command Universe', () => {
     await clickThought('hello world')
     await setSelection(6, 11)
 
-    await runFromCommandUniverse('Extract Subthought')
+    await command('Extract Subthought', { inputType: 'commandPalette' })
 
-    await waitForContextHasChildWithValue(['hello'], 'world')
+    await waitForEditable('hello')
     expect(await exportThoughts()).toEqual('\n- hello\n  - world\n')
   })
 
@@ -38,9 +28,9 @@ describe('Command Universe', () => {
     await clickThought('hello world')
     await setSelection(6, 11)
 
-    await runFromCommandUniverse('Extract Category')
+    await command('Extract Category', { inputType: 'commandPalette' })
 
-    await waitForContextHasChildWithValue(['world'], 'hello')
+    await waitForEditable('hello')
     expect(await exportThoughts()).toEqual('\n- world\n  - hello\n')
   })
 })
