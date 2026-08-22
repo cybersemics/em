@@ -23,13 +23,25 @@ const stepLabel = (step: UndoStep): string => {
   return startCase(actions.find(action => !isNavigation(action)) ?? actions[0])
 }
 
-/** A slider with a start handle and an end handle over the undo history, plus a button that copies the steps to reproduce the actions between them. Dragging a handle moves the thoughtspace to the point in time under it. Both handles begin at the present with the start handle on top; dragging the start handle back reveals the end handle, which always stays at least one step after the start. Remounted whenever the history changes so that the handles reset to the current state. */
+/** A slider with a start handle and an end handle over the undo history, plus a button that copies the steps to reproduce the actions between them. Dragging or tapping a handle moves the thoughtspace to the point in time under it. Both handles begin at the present with the start handle on top; dragging the start handle back reveals the end handle, which always stays at least one step after the start. Remounted whenever the history changes so that the handles reset to the current state. */
 const UndoRange: FC = () => {
   const dispatch = useDispatch()
   const { steps, position } = useSelector(undoSteps)
   const max = Math.min(MAX_STEPS, steps.length)
   // The positions of the end and start handles, counted in steps back from the present (0). The end handle comes first since rc-slider orders range values ascending, which also renders the start handle on top when the two coincide.
   const [[end, start], setHandles] = useState([Math.min(position, max), Math.min(position, max)])
+
+  /** Moves the thoughtspace to the point in time at the given position by undoing or redoing the exact patches of the steps in between. */
+  const moveTo = (target: number) =>
+    dispatch((dispatch, getState) => {
+      const { steps, position } = undoSteps(getState())
+      const count = steps
+        .slice(Math.min(target, position), Math.max(target, position))
+        .reduce((sum, step) => sum + step.patches.length, 0)
+      if (count > 0) {
+        dispatch(target > position ? undo({ count }) : redo({ count }))
+      }
+    })
 
   return (
     <>
@@ -61,10 +73,16 @@ const UndoRange: FC = () => {
         }}
         // Render the name of the action under each handle. Handle 1 is the start handle, since range values are ascending.
         handleRender={(node, { index }) => {
-          const step = steps[index === 1 ? start : end]
+          const value = index === 1 ? start : end
+          const step = steps[value]
           return cloneElement(
             node,
-            undefined,
+            {
+              // Tapping a handle moves the thoughtspace to its point in time, e.g. back to the start after the end handle
+              // was dragged. A drag has already done so through onChange, in which case this is a no-op.
+              onMouseUp: () => moveTo(value),
+              onTouchEnd: () => moveTo(value),
+            },
             step ? (
               <span
                 className={css({
@@ -95,18 +113,8 @@ const UndoRange: FC = () => {
           const endClamped = startNext === start ? Math.min(endNext, Math.max(0, start - 1)) : end
           if (startClamped === start && endClamped === end) return
           setHandles([endClamped, startClamped])
-
-          // Show the point in time under the handle that moved by undoing or redoing the exact patches of the steps in between.
-          const target = startNext === start ? endClamped : startClamped
-          dispatch((dispatch, getState) => {
-            const { steps, position } = undoSteps(getState())
-            const count = steps
-              .slice(Math.min(target, position), Math.max(target, position))
-              .reduce((sum, step) => sum + step.patches.length, 0)
-            if (count > 0) {
-              dispatch(target > position ? undo({ count }) : redo({ count }))
-            }
-          })
+          // show the point in time under the handle that moved
+          moveTo(startNext === start ? endClamped : startClamped)
         }}
       />
       <a

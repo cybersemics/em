@@ -114,6 +114,27 @@ it('stop the start handle one step before the end handle', async () => {
   - c`)
 })
 
+it('move the thoughtspace to a handle when it is tapped', async () => {
+  await arrange()
+  await press('undo slider start', 'ArrowLeft')
+  await press('undo slider start', 'ArrowLeft')
+  await press('undo slider start', 'ArrowLeft')
+  await press('undo slider end', 'ArrowLeft')
+
+  await click('[aria-label="undo slider start"]')
+
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - a
+  - b`)
+
+  await click('[aria-label="undo slider end"]')
+
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - a
+  - b
+    - c`)
+})
+
 it('copy the steps to reproduce the actions between the start and the end', async () => {
   await arrange()
   await press('undo slider start', 'ArrowLeft')
