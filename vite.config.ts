@@ -143,6 +143,14 @@ export default defineConfig({
     // Allow bs-local.com for BrowserStack local testing, and the Cloudflare tunnel pool's
     // hostnames (leading dot matches all *.emthought.cc subdomains) for BrowserStack iOS Safari.
     allowedHosts: ['bs-local.com', '.emthought.cc'],
+    watch: {
+      // Agent worktrees live in .claude/worktrees and are full checkouts of the repo. Creating or
+      // updating one writes files the watcher would otherwise pick up — a nested tsconfig.json in
+      // particular makes Vite clear its cache and force a full reload. Nothing under .claude is app
+      // source, so exclude the whole directory. Appended to Vite's defaults (.git, node_modules,
+      // test-results, cacheDir), not a replacement for them.
+      ignored: ['**/.claude/**'],
+    },
     ...(process.env.PUPPETEER
       ? {
           hmr: {
