@@ -5,6 +5,7 @@ import { executeCommand } from '../../commands'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import initStore from '../../test-helpers/initStore'
+import multicursorValues from '../../test-helpers/multicursorValues'
 import findThoughtByText from '../../test-helpers/queries/findThoughtByText'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import headValue from '../../util/headValue'
@@ -15,14 +16,6 @@ beforeEach(initStore)
 
 /** Synthetic Shift+Down keyboard event. */
 const shiftDownEvent = { shiftKey: true, preventDefault: () => {} } as unknown as KeyboardEvent
-
-/** Returns the sorted values of the current multicursor set. */
-const multicursorValues = (): (string | undefined)[] => {
-  const state = store.getState()
-  return Object.values(state.multicursors)
-    .map(path => headValue(state, path))
-    .sort()
-}
 
 /** Focuses the given editable and places a collapsed caret in it, as clicking a thought does. */
 const setCaret = (editable: HTMLElement) => {
