@@ -48,7 +48,7 @@ const pinCommand = {
     },
   },
   exec: (dispatch, getState, e, { type }) => {
-    /* dispatch toggleAttribute({ path: cursor, values: ['=pin', 'true'] }) */
+    /* dispatch pin() */
   },
   isActive: state => !!isPinned(state, head(/* ... */)),
 } satisfies Command
@@ -126,6 +126,8 @@ The **Command Universe** is the searchable command palette. Two flavors:
 - **`MobileCommandUniverse`** — mobile drawer opened by `openMobileCommandUniverse`, also reachable by gesture.
 
 Both filter `globalCommands` by name and respect `hideFromDesktopCommandUniverse` / `hideFromGestureMenu` / `hideFromHelp`. Commands are presented grouped by `COMMAND_GROUPS` (in [`constants.ts`](../src/constants.ts)), which defines the order: Navigation → Creating thoughts → Deleting thoughts → Moving thoughts → Editing thoughts → Oops → Special Views → Visibility → Settings → Help → Cancel.
+
+Both take the browser selection away from the thought as they open — the desktop palette by focusing its search input, the mobile drawer by clearing the selection outright — so both snapshot it into `state.selectionOffsets` on the way in, for the commands whose input is the selected text. See [Caret / Browser Selection](cursor-and-caret.md#caret--browser-selection).
 
 ### Multicursor
 
@@ -281,6 +283,10 @@ Swap the current thought with its parent.
 
 https://github.com/user-attachments/assets/0ca1a77b-e174-4884-9606-739a94cde039
 
+### Swap Grandparent
+
+Swap the current thought with its grandparent, leaving the parent in between where it is. The two thoughts exchange places in the tree and each adopts the other's children.
+
 ### Bind Context
 
 Bind two different contexts of a thought so that they always have the same children.
@@ -389,13 +395,19 @@ Deletes the current thought and moves all its subthoughts up a level.
 
 https://github.com/user-attachments/assets/a0da2b2a-925e-4f6a-9924-3bba37b7feb2
 
-### Extract
+### Extract Subthought
 
 Extract selected part of a thought as its child.
 
 <kbd>Command + Control + e</kbd>
 
 https://github.com/user-attachments/assets/e415abf1-6c1e-4ffd-b7aa-0fdf372effbc
+
+### Extract Category
+
+Extract selected part of a thought as its new parent. Where Extract Subthought draws the selection down into a child, Extract Category lifts it up into a parent: the rest of the thought — and every other selected thought — is moved into a new category whose value is the extracted text. When the selected thoughts do not share a parent, Categorize refuses and nothing is extracted.
+
+<kbd>Command + Control + Option + e</kbd>
 
 ### Generate Thought
 

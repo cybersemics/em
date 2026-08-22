@@ -2,8 +2,8 @@ import IconType from '../../@types/IconType'
 import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/28-extract_2.json'
 
-/** Extract Thought Icon with Conditional Lottie Animation. */
-const ExtractThoughtIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+/** Extract Subthought Icon with Conditional Lottie Animation. */
+const ExtractSubthoughtIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg
@@ -25,4 +25,4 @@ const ExtractThoughtIcon = ({ fill, size = 18, style = {}, cssRaw, animated, ani
   )
 }
 
-export default ExtractThoughtIcon
+export default ExtractSubthoughtIcon

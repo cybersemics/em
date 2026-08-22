@@ -35,6 +35,8 @@
 ### Functional Programming
 
 - Prefer pure functions.
+- Reducers in `src/actions` must not read the DOM. The browser selection, focus, and element geometry live outside Redux state, so a reducer that reads them returns different state for the same arguments and cannot be exercised without a document. Read them in the action-creator co-located with the reducer and pass the values in the payload, as `extractSubthought` and `extractCategory` do with `selectionStart` and `selectionEnd`.
+  - Generating a value is not the same as reading the environment. Reducers may call `timestamp()` and `createId()`, which the thought and lexeme records require.
 - Prefer ternary operators over if statements.
 - Avoid mutations and side effects when possible.
 - Use `const`; avoid `let`.

@@ -142,9 +142,15 @@ const useEditMode = ({
         Replacing setTimeout with requestAnimationFrame guarantees (hopefully?) that it will be processed before the next repaint,
         keeping the keyboard open while rapidly deleting thoughts. (#3129)
 
-        If the last action is swapParent, set the selection synchronously to keep the focus stable after the swap.
+        If the last action is a swap, set the selection synchronously to keep the focus stable after the swap.
       */
-        if (isTouch && isSafari() && lastUndoableActionType !== 'swapParent' && !selection.isThought()) {
+        if (
+          isTouch &&
+          isSafari() &&
+          lastUndoableActionType !== 'swapParent' &&
+          lastUndoableActionType !== 'swapGrandparent' &&
+          !selection.isThought()
+        ) {
           asyncFocus()
 
           // asyncFocus parks the focus on its dummy input so that the programmatic selection below is honored.

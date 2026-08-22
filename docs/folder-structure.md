@@ -49,7 +49,7 @@ The main directory structure is organized as follows. Tests are located in a sub
 
 ## Conventions
 
-- **Pure where possible.** `selectors/` and `util/` should be pure functions; `actions/` is where side effects live.
+- **Pure where possible.** `selectors/` and `util/` should be pure functions; `actions/` is where side effects live. The exception in `selectors/` is a function that has to consult the browser selection to answer a question about state — [`isMultiEditing`](../src/selectors/isMultiEditing.ts) and [`selectionOffsets`](../src/selectors/selectionOffsets.ts), both reading through the `device/selection.ts` wrapper. Neither may be called from a reducer, which must not read the DOM at all; see the reducer purity rule in [`code-standards.instructions.md`](../.github/instructions/code-standards.instructions.md).
 - **One concern per directory.** A file that both reads state and dispatches probably belongs in `actions/`, not `selectors/`. A util that imports React belongs in `hooks/` or `components/`, not `util/`.
 - **Tests next to source.** Tests live in `__tests__/` subdirectories, not in a separate `tests/` tree.
 - **Browser API access is gated.** `window.getSelection`, `localStorage`, viewport reads — all go through `device/` or `stores/` wrappers, not direct calls in feature code.
