@@ -11,17 +11,18 @@ import alert from './alert'
 import editThought from './editThought'
 import newThought from './newThought'
 
-/** Extract the selection as a subthought. */
-const extractSubthought = (state: State): State => {
+export interface extractSubthoughtPayload {
+  /** The character offset of the start of the selection within the cursor thought's value. */
+  selectionStart: number
+  /** The character offset of the end of the selection within the cursor thought's value. */
+  selectionEnd: number
+}
+
+/** Extract the given range of the cursor thought as a subthought. */
+const extractSubthought = (state: State, { selectionStart, selectionEnd }: extractSubthoughtPayload): State => {
   const { cursor } = state
   if (!cursor) return state
 
-  if (!selection.isActive()) {
-    return state
-  }
-
-  const selectionStart = selection.offsetStart()!
-  const selectionEnd = selection.offsetEnd()!
   if (selectionStart === selectionEnd) {
     return alert(state, { value: 'No text selected to extract' })
   }
@@ -51,8 +52,20 @@ const extractSubthought = (state: State): State => {
   return reducerFlow(reducers)(state)
 }
 
-/** Action-creator for extractSubthought. */
-export const extractSubthoughtActionCreator = (): Thunk => dispatch => dispatch({ type: 'extractSubthought' })
+/**
+ * Action-creator for extractSubthought. Reads the selection offsets from the document and passes them to the reducer,
+ * which cannot read them itself without reaching outside of state.
+ */
+export const extractSubthoughtActionCreator = (): Thunk => dispatch => {
+  // offsetStart and offsetEnd call getRangeAt(0), which throws when the document has no range at all
+  if (!selection.isActive()) return
+
+  const selectionStart = selection.offsetStart()
+  const selectionEnd = selection.offsetEnd()
+  if (selectionStart === null || selectionEnd === null) return
+
+  dispatch({ type: 'extractSubthought', selectionStart, selectionEnd })
+}
 
 export default _.curryRight(extractSubthought)
 
