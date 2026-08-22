@@ -144,12 +144,31 @@ it('copy the steps to reproduce the actions between the start and the end', asyn
 
   await click('[aria-label="copy steps to reproduce"]')
 
-  expect(copyModule.default).toHaveBeenCalledWith(`\`\`\`
+  expect(copyModule.default).toHaveBeenCalledWith(`## Steps to Reproduce
+
+
+\`\`\`
 - a
 - b
 \`\`\`
 
-1. Set cursor to \`b\`.
-2. Create thought \`c\` after \`b\`.
-3. Indent \`c\`.`)
+
+1. Set the cursor on \`b\`.
+2. Create thought \`c\`.
+3. Indent.
+
+
+## Current Behavior
+
+
+\`\`\`
+- a
+- b
+  - c
+\`\`\`
+
+
+## Expected Behavior
+
+`)
 })

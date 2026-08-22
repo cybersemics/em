@@ -21,6 +21,30 @@ import stepsToReproduce from '../stepsToReproduce'
 
 beforeEach(initStore)
 
+/** The expected report for the given thoughtspace at the start, numbered steps, and thoughtspace at the end. */
+const report = (start: string, steps: string, end: string) => `## Steps to Reproduce
+
+
+\`\`\`
+${start}
+\`\`\`
+
+
+${steps}
+
+
+## Current Behavior
+
+
+\`\`\`
+${end}
+\`\`\`
+
+
+## Expected Behavior
+
+`
+
 /** Creates a, b, and c, then indents c and then b. */
 const createAndIndent = () =>
   store.dispatch([
@@ -35,45 +59,86 @@ const createAndIndent = () =>
     indent(),
   ])
 
-it('export the thoughtspace at the start and describe each step up to the end', () => {
+it('report the thoughtspace at the start, the steps up to the end, and the thoughtspace at the end', () => {
   createAndIndent()
 
   // start after b was created, end after c was indented
-  expect(stepsToReproduce(store.getState(), { start: 3, end: 1 })).toBe(`\`\`\`
+  expect(stepsToReproduce(store.getState(), { start: 3, end: 1 })).toBe(`## Steps to Reproduce
+
+
+\`\`\`
 - a
 - b
 \`\`\`
 
-1. Set cursor to \`b\`.
-2. Create thought \`c\` after \`b\`.
-3. Indent \`c\`.`)
+
+1. Set the cursor on \`b\`.
+2. Create thought \`c\`.
+3. Indent.
+
+
+## Current Behavior
+
+
+\`\`\`
+- a
+- b
+  - c
+\`\`\`
+
+
+## Expected Behavior
+
+`)
 })
 
 it('describe the same steps when the current state is between the start and the end', () => {
   createAndIndent()
   store.dispatch([undo(), undo()])
 
-  expect(stepsToReproduce(store.getState(), { start: 3, end: 1 })).toBe(`\`\`\`
-- a
+  expect(stepsToReproduce(store.getState(), { start: 3, end: 1 })).toBe(
+    report(
+      `- a
+- b`,
+      `1. Set the cursor on \`b\`.
+2. Create thought \`c\`.
+3. Indent.`,
+      `- a
 - b
-\`\`\`
-
-1. Set cursor to \`b\`.
-2. Create thought \`c\` after \`b\`.
-3. Indent \`c\`.`)
+  - c`,
+    ),
+  )
 })
 
-it('export only the thoughtspace when the start and the end coincide', () => {
+it('omit the steps when the start and the end coincide', () => {
   createAndIndent()
 
-  expect(stepsToReproduce(store.getState(), { start: 0, end: 0 })).toBe(`\`\`\`
+  expect(stepsToReproduce(store.getState(), { start: 0, end: 0 })).toBe(`## Steps to Reproduce
+
+
+\`\`\`
 - a
   - b
     - c
-\`\`\``)
+\`\`\`
+
+
+## Current Behavior
+
+
+\`\`\`
+- a
+  - b
+    - c
+\`\`\`
+
+
+## Expected Behavior
+
+`)
 })
 
-it('describe a new thought, an edit, a deletion, and a move, each preceded by the cursor it acts on', () => {
+it('name each action as dispatched, preceded by the cursor it acts on', () => {
   store.dispatch([
     importText({
       text: `
@@ -92,23 +157,27 @@ it('describe a new thought, an edit, a deletion, and a move, each preceded by th
     moveThoughtDown(),
   ])
 
-  expect(stepsToReproduce(store.getState(), { start: 5, end: 0 })).toBe(`\`\`\`
-- a
+  expect(stepsToReproduce(store.getState(), { start: 5, end: 0 })).toBe(
+    report(
+      `- a
 - b
-- c
-\`\`\`
-
-1. Set cursor to \`a\`.
+- c`,
+      `1. Set the cursor on \`a\`.
 2. Create thought \`d\` as a subthought of \`a\`.
-3. Set cursor to \`b\`.
+3. Set the cursor on \`b\`.
 4. Edit \`b\` to \`bb\`.
-5. Set cursor to \`c\`.
-6. Delete \`c\`.
-7. Set cursor to \`a\`.
-8. Move \`a\` down.`)
+5. Set the cursor on \`c\`.
+6. Delete Thought With Cursor.
+7. Set the cursor on \`a\`.
+8. Move Thought Down.`,
+      `- bb
+- a
+  - d`,
+    ),
+  )
 })
 
-it('describe a multicursor command by its label, preceded by the selection it acts on', () => {
+it('name a multicursor command by its label, preceded by the selection it acts on', () => {
   store.dispatch([
     importText({
       text: `
@@ -124,19 +193,24 @@ it('describe a multicursor command by its label, preceded by the selection it ac
   ])
   executeCommandWithMulticursor(moveThoughtDownCommand, { store })
 
-  expect(stepsToReproduce(store.getState(), { start: 1, end: 0 })).toBe(`\`\`\`
-- a
+  expect(stepsToReproduce(store.getState(), { start: 1, end: 0 })).toBe(
+    report(
+      `- a
 - b
 - c
-- d
-\`\`\`
-
-1. Set cursor to \`a\`.
+- d`,
+      `1. Set the cursor on \`a\`.
 2. Select \`a\` and \`b\`.
-3. Move Thought Down.`)
+3. Move Thought Down.`,
+      `- c
+- a
+- b
+- d`,
+    ),
+  )
 })
 
-it('describe a toggled attribute by its path and the thought it is attached to', () => {
+it('describe a toggled attribute by its path', () => {
   store.dispatch([
     importText({
       text: `
@@ -148,36 +222,19 @@ it('describe a toggled attribute by its path and the thought it is attached to',
       dispatch(toggleAttribute({ path: contextToPath(getState(), ['a']), values: ['=sort', 'Alphabetical'] })),
   ])
 
-  expect(stepsToReproduce(store.getState(), { start: 1, end: 0 })).toBe(`\`\`\`
-- a
-\`\`\`
-
-1. Set cursor to \`a\`.
-2. Toggle \`=sort/Alphabetical\` on \`a\`.`)
+  expect(stepsToReproduce(store.getState(), { start: 1, end: 0 })).toBe(
+    report(
+      `- a`,
+      `1. Set the cursor on \`a\`.
+2. Toggle Attribute \`=sort/Alphabetical\`.`,
+      `- a
+  - =sort
+    - Alphabetical`,
+    ),
+  )
 })
 
-it('fall back to the name of the action and the cursor thought', () => {
-  store.dispatch([
-    importText({
-      text: `
-        - a
-          - b
-      `,
-    }),
-    setCursor(['a', 'b']),
-    swapParent(),
-  ])
-
-  expect(stepsToReproduce(store.getState(), { start: 1, end: 0 })).toBe(`\`\`\`
-- a
-  - b
-\`\`\`
-
-1. Set cursor to \`b\`.
-2. Swap Parent \`b\`.`)
-})
-
-it('name a formatting edit after the formatting it applies', () => {
+it('name the root when an attribute is set on it', () => {
   store.dispatch([
     importText({
       text: `
@@ -185,104 +242,19 @@ it('name a formatting edit after the formatting it applies', () => {
       `,
     }),
     setCursor(['a']),
-    editThought(['a'], '<b>a</b>'),
+    toggleAttribute({ path: HOME_PATH, values: ['=view', 'Table'] }),
   ])
 
-  expect(stepsToReproduce(store.getState(), { start: 1, end: 0 })).toBe(`\`\`\`
-- a
-\`\`\`
-
-1. Set cursor to \`a\`.
-2. Bold \`a\`.`)
-})
-
-it('name an empty thought as the empty thought', () => {
-  store.dispatch([
-    importText({
-      text: `
-        - a
-        - b
-      `,
-    }),
-    setCursor(['b']),
-    editThought(['b'], ''),
-    editThought([''], 'g'),
-  ])
-
-  expect(stepsToReproduce(store.getState(), { start: 2, end: 0 })).toBe(`\`\`\`
-- a
-- b
-\`\`\`
-
-1. Set cursor to \`b\`.
-2. Edit \`b\` to the empty thought.
-3. Edit the empty thought to \`g\`.`)
-})
-
-it('quote a multiline paste in a code block', () => {
-  store.dispatch([
-    importText({
-      text: `
-        - a
-      `,
-    }),
-    setCursor(['a']),
-    (dispatch, getState) =>
-      dispatch(
-        importText({
-          path: contextToPath(getState(), ['a'])!,
-          text: `- b
-  - c`,
-        }),
-      ),
-  ])
-
-  expect(stepsToReproduce(store.getState(), { start: 1, end: 0 })).toBe(`\`\`\`
-- a
-\`\`\`
-
-1. Set cursor to \`a\`.
-2. Paste into \`a\`:
-
-   \`\`\`
-   - b
-     - c
-   \`\`\``)
-})
-
-it('describe a drag and drop by where the thought lands', () => {
-  store.dispatch([
-    importText({
-      text: `
-        - a
-          - b
-          - d
-        - e
-          - f
-      `,
-    }),
-    setCursor(['e', 'f']),
-    (dispatch, getState) => {
-      const oldPath = contextToPath(getState(), ['e', 'f'])!
-      dispatch({
-        type: 'moveThought',
-        oldPath,
-        newPath: [...contextToPath(getState(), ['a'])!, oldPath.at(-1)!],
-        newRank: 0.5,
-      })
-    },
-  ])
-
-  expect(stepsToReproduce(store.getState(), { start: 1, end: 0 })).toBe(`\`\`\`
-- a
-  - b
-  - d
-- e
-  - f
-\`\`\`
-
-1. Set cursor to \`f\`.
-2. Move \`f\` after \`b\`.`)
+  expect(stepsToReproduce(store.getState(), { start: 1, end: 0 })).toBe(
+    report(
+      `- a`,
+      `1. Set the cursor on \`a\`.
+2. Toggle Attribute \`=view/Table\` on the root.`,
+      `- =view
+  - Table
+- a`,
+    ),
+  )
 })
 
 it('describe meta attributes that are set, changed, and removed', () => {
@@ -303,19 +275,50 @@ it('describe meta attributes that are set, changed, and removed', () => {
     dispatch({ type: 'deleteAttribute', path: contextToPath(getState(), ['a']), value: '=view' }),
   )
 
-  expect(stepsToReproduce(store.getState(), { start: 4, end: 0 })).toBe(`\`\`\`
-- a
+  expect(stepsToReproduce(store.getState(), { start: 4, end: 0 })).toBe(
+    report(
+      `- a
+  - b`,
+      `1. Set the cursor on \`a\`.
+2. Set Descendant \`=view/Table\`.
+3. Toggle Sort (sets \`=sort/Alphabetical/Asc\`).
+4. Toggle Sort (sets \`=sort/Alphabetical/Desc\`).
+5. Delete Attribute \`=view/Table\`.`,
+      // toggleSort sorts the context of the cursor
+      `- a
   - b
-\`\`\`
-
-1. Set cursor to \`a\`.
-2. Set \`=view/Table\` on \`a\`.
-3. Toggle Sort \`a\` (sets \`=sort/Alphabetical/Asc\`).
-4. Toggle Sort \`a\` (sets \`=sort/Alphabetical/Desc\`).
-5. Remove \`=view/Table\` from \`a\`.`)
+- =sort
+  - Alphabetical
+    - Desc`,
+    ),
+  )
 })
 
-it('name the root when an attribute is set on it', () => {
+it('fall back to the name of the action', () => {
+  store.dispatch([
+    importText({
+      text: `
+        - a
+          - b
+      `,
+    }),
+    setCursor(['a', 'b']),
+    swapParent(),
+  ])
+
+  expect(stepsToReproduce(store.getState(), { start: 1, end: 0 })).toBe(
+    report(
+      `- a
+  - b`,
+      `1. Set the cursor on \`b\`.
+2. Swap Parent.`,
+      `- b
+  - a`,
+    ),
+  )
+})
+
+it('name a formatting edit after the formatting it applies', () => {
   store.dispatch([
     importText({
       text: `
@@ -323,15 +326,78 @@ it('name the root when an attribute is set on it', () => {
       `,
     }),
     setCursor(['a']),
-    toggleAttribute({ path: HOME_PATH, values: ['=view', 'Table'] }),
+    editThought(['a'], '<b>a</b>'),
   ])
 
-  expect(stepsToReproduce(store.getState(), { start: 1, end: 0 })).toBe(`\`\`\`
-- a
-\`\`\`
+  expect(stepsToReproduce(store.getState(), { start: 1, end: 0 })).toBe(
+    report(
+      `- a`,
+      `1. Set the cursor on \`a\`.
+2. Bold.`,
+      `- **a**`,
+    ),
+  )
+})
 
-1. Set cursor to \`a\`.
-2. Toggle \`=view/Table\` on the root.`)
+it('name an empty thought as the empty thought', () => {
+  store.dispatch([
+    importText({
+      text: `
+        - a
+        - b
+      `,
+    }),
+    setCursor(['b']),
+    editThought(['b'], ''),
+    editThought([''], 'g'),
+  ])
+
+  expect(stepsToReproduce(store.getState(), { start: 2, end: 0 })).toBe(
+    report(
+      `- a
+- b`,
+      `1. Set the cursor on \`b\`.
+2. Edit \`b\` to the empty thought.
+3. Edit the empty thought to \`g\`.`,
+      `- a
+- g`,
+    ),
+  )
+})
+
+it('quote a multiline paste in a code block', () => {
+  store.dispatch([
+    importText({
+      text: `
+        - a
+      `,
+    }),
+    setCursor(['a']),
+    (dispatch, getState) =>
+      dispatch(
+        importText({
+          path: contextToPath(getState(), ['a'])!,
+          text: `- b
+  - c`,
+        }),
+      ),
+  ])
+
+  expect(stepsToReproduce(store.getState(), { start: 1, end: 0 })).toBe(
+    report(
+      `- a`,
+      `1. Set the cursor on \`a\`.
+2. Paste:
+
+   \`\`\`
+   - b
+     - c
+   \`\`\``,
+      `- a
+  - b
+    - c`,
+    ),
+  )
 })
 
 it('describe a single-line paste by the pasted text', () => {
@@ -345,12 +411,55 @@ it('describe a single-line paste by the pasted text', () => {
     (dispatch, getState) => dispatch(importText({ path: contextToPath(getState(), ['a'])!, text: 'xyz' })),
   ])
 
-  expect(stepsToReproduce(store.getState(), { start: 1, end: 0 })).toBe(`\`\`\`
-- a
-\`\`\`
+  expect(stepsToReproduce(store.getState(), { start: 1, end: 0 })).toBe(
+    report(
+      `- a`,
+      `1. Set the cursor on \`a\`.
+2. Paste \`xyz\`.`,
+      `- xyza`,
+    ),
+  )
+})
 
-1. Set cursor to \`a\`.
-2. Paste \`xyz\` into \`a\`.`)
+it('describe a drag and drop by where the thought lands', () => {
+  store.dispatch([
+    importText({
+      text: `
+        - a
+          - b
+          - d
+        - e
+          - f
+      `,
+    }),
+    setCursor(['a']),
+    (dispatch, getState) => {
+      const oldPath = contextToPath(getState(), ['e', 'f'])!
+      dispatch({
+        type: 'moveThought',
+        oldPath,
+        newPath: [...contextToPath(getState(), ['a'])!, oldPath.at(-1)!],
+        newRank: 0.5,
+      })
+    },
+  ])
+
+  expect(stepsToReproduce(store.getState(), { start: 1, end: 0 })).toBe(
+    report(
+      `- a
+  - b
+  - d
+- e
+  - f`,
+      `1. Set the cursor on \`a\`.
+2. Move Thought \`f\` after \`b\`.`,
+      `- a
+  - b
+  - f
+  - d
+- e`,
+    ),
+  )
 })
 
 it('describe the deletion of an empty thought', () => {
@@ -366,14 +475,17 @@ it('describe the deletion of an empty thought', () => {
   ])
   executeCommandWithMulticursor(deleteEmptyThoughtOrOutdentCommand, { store })
 
-  expect(stepsToReproduce(store.getState(), { start: 1, end: 0 })).toBe(`\`\`\`
-- a
+  expect(stepsToReproduce(store.getState(), { start: 1, end: 0 })).toBe(
+    report(
+      `- a
   - b
-  - ${''}
-\`\`\`
-
-1. Set cursor to the empty thought.
-2. Delete the empty thought.`)
+  - ${''}`,
+      `1. Set the cursor on the empty thought.
+2. Delete Empty Thought.`,
+      `- a
+  - b`,
+    ),
+  )
 })
 
 it('describe an extracted subthought by the extracted text', () => {
@@ -387,10 +499,13 @@ it('describe an extracted subthought by the extracted text', () => {
     { type: 'extractSubthought', selectionStart: 6, selectionEnd: 9 },
   ])
 
-  expect(stepsToReproduce(store.getState(), { start: 1, end: 0 })).toBe(`\`\`\`
-- hello big world
-\`\`\`
-
-1. Set cursor to \`hello big world\`.
-2. Extract \`big\` from \`hello big world\` into a subthought.`)
+  expect(stepsToReproduce(store.getState(), { start: 1, end: 0 })).toBe(
+    report(
+      `- hello big world`,
+      `1. Set the cursor on \`hello big world\`.
+2. Extract Subthought \`big\`.`,
+      `- hello  world
+  - big`,
+    ),
+  )
 })
