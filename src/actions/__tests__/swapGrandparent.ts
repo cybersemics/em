@@ -1,6 +1,4 @@
-import State from '../../@types/State'
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
-import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
@@ -8,16 +6,10 @@ import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 import importText from '../importText'
 import newThought from '../newThought'
+import pin from '../pin'
 import setSortPreference from '../setSortPreference'
 import swapGrandparent from '../swapGrandparent'
-import toggleAttribute from '../toggleAttribute'
 import toggleContextView from '../toggleContextView'
-
-/** A reducer that pins the thought at the given unranked path, giving it a =pin child. */
-const pin =
-  (at: string[]) =>
-  (state: State): State =>
-    toggleAttribute(state, { path: contextToPath(state, at), values: ['=pin', 'true'] })
 
 it('no-op if cursor is not set', () => {
   const text = `
@@ -206,9 +198,10 @@ it('does not reorder the children of any context other than the two swapped thou
   const steps = [
     importText({ text }),
     // Pin c and d, so that each gains a =pin child at a rank below its other children.
-    pin(['a', 'b', 'c']),
-    pin(['a', 'b', 'c', 'd']),
+    setCursor(['a', 'b', 'c']),
+    pin,
     setCursor(['a', 'b', 'c', 'd']),
+    pin,
     swapGrandparent,
   ]
 

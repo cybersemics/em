@@ -1,7 +1,7 @@
 import pluralize from 'pluralize'
 import Command from '../@types/Command'
 import { alertActionCreator as alert } from '../actions/alert'
-import { toggleAttributeActionCreator as toggleAttribute } from '../actions/toggleAttribute'
+import { pinActionCreator as pin } from '../actions/pin'
 import PinIcon from '../components/icons/PinIcon'
 import { HOME_PATH } from '../constants'
 import hasMulticursor from '../selectors/hasMulticursor'
@@ -38,12 +38,7 @@ const pinCommand = {
       dispatch(alert(pinned ? 'Unpinned thought' : 'Pinned thought'))
     }
 
-    dispatch(
-      toggleAttribute({
-        path: cursor,
-        values: ['=pin', 'true'],
-      }),
-    )
+    dispatch(pin())
   },
   isActive: state => {
     const { cursor } = state

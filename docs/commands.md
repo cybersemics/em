@@ -48,7 +48,7 @@ const pinCommand = {
     },
   },
   exec: (dispatch, getState, e, { type }) => {
-    /* dispatch toggleAttribute({ path: cursor, values: ['=pin', 'true'] }) */
+    /* dispatch pin() */
   },
   isActive: state => !!isPinned(state, head(/* ... */)),
 } satisfies Command
