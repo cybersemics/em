@@ -137,10 +137,16 @@ const attributeChanges = (snapshot: Snapshot): string => {
 /** Returns true if the given thought is the cursor thought in the given state. */
 const isCursor = (state: State, id: ThoughtId): boolean => !!state.cursor && head(state.cursor) === id
 
+/** The siblings of a thought without the meta attributes, which are hidden and so cannot serve as a landmark. */
+const visibleSiblings = (state: State, id: ThoughtId) =>
+  getChildrenRanked(state, state.thoughts.thoughtIndex[id].parentId).filter(
+    sibling => sibling.id === id || !isAttribute(sibling.value),
+  )
+
 /** Describes where a thought sits in the given state relative to its siblings, or its parent when it has none, e.g. " after `b`". */
 const placement = (state: State, id: ThoughtId): string => {
   const { parentId } = state.thoughts.thoughtIndex[id]
-  const siblings = getChildrenRanked(state, parentId)
+  const siblings = visibleSiblings(state, id)
   const i = siblings.findIndex(sibling => sibling.id === id)
   const previous = siblings[i - 1]
   const next = siblings[i + 1]
@@ -158,7 +164,7 @@ const describeNewThought = (snapshot: Snapshot, state: State): string => {
   const { before, after } = snapshot
   const [id] = topmost(after, createdIds(snapshot))
   const value = id && state.thoughts.thoughtIndex[id]?.value
-  const siblings = id ? getChildrenRanked(after, after.thoughts.thoughtIndex[id].parentId) : []
+  const siblings = id ? visibleSiblings(after, id) : []
   const previous = siblings[siblings.findIndex(sibling => sibling.id === id) - 1]
   const isDefaultPlacement = !!previous && isCursor(before, previous.id)
   return `Create ${value ? `thought ${code(value)}` : 'a new thought'}${id && !isDefaultPlacement ? placement(after, id) : ''}.`

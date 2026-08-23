@@ -1,3 +1,4 @@
+import { archiveThoughtActionCreator as archiveThought } from '../../actions/archiveThought'
 import { deleteThoughtWithCursorActionCreator as deleteThoughtWithCursor } from '../../actions/deleteThoughtWithCursor'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { indentActionCreator as indent } from '../../actions/indent'
@@ -679,6 +680,52 @@ it('clamp positions that are outside the history', () => {
 \`\`\`
 - aa
 - b
+\`\`\`
+
+## Expected Behavior
+
+
+`)
+})
+
+it('do not describe a thought as placed after a hidden meta attribute', () => {
+  store.dispatch([
+    importText({
+      text: `
+        - a
+          - d
+            - e
+        - z
+      `,
+    }),
+    setCursor(['a', 'd', 'e']),
+    archiveThought({}),
+    // the new thought lands after =archive, which is hidden, so its position is described by its parent instead
+    newThought({ value: 'f', insertNewSubthought: true }),
+  ])
+
+  expect(stepsToReproduce(store.getState(), { start: 3, end: 0 })).toBe(`## Steps to Reproduce
+
+\`\`\`
+- a
+  - d
+    - e
+- z
+\`\`\`
+
+1. Set the cursor on \`e\`.
+2. Archive Thought.
+3. Create thought \`f\` as a subthought of \`d\`.
+
+## Current Behavior
+
+\`\`\`
+- a
+  - d
+    - =archive
+      - e
+    - f
+- z
 \`\`\`
 
 ## Expected Behavior
