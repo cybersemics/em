@@ -11853,7 +11853,7 @@ __metadata:
     himalaya: "npm:^1.1.1"
     html-escaper: "npm:^3.0.3"
     idb-keyval: "npm:^6.3.0"
-    immer: "npm:^11.1.16"
+    immer: "npm:^11.1.18"
     ipfs-http-client: "npm:^43.0.1"
     it-all: "npm:^3.0.11"
     jest: "npm:^30.4.2"
@@ -15090,10 +15090,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"immer@npm:^11.1.16":
-  version: 11.1.16
-  resolution: "immer@npm:11.1.16"
-  checksum: 10c0/34670f732f51e465398ec7c64e62a89478565064d9104b789d950ea4e54f6c48c1f9ffa95d002137070878da0c3ad2ecb8e13e8c85a11ef6fa5749945b622f25
+"immer@npm:^11.1.18":
+  version: 11.1.18
+  resolution: "immer@npm:11.1.18"
+  checksum: 10c0/afe02fcd154134eb2b3bea5a06051ef2e220677dbbc9c0b17ea2ce1c22bfc3690ac16f916922c12ad9c074617a02148ac5d94cbf0886d76e7ebac726806679d0
   languageName: node
   linkType: hard
 
