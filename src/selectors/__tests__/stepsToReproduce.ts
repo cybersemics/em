@@ -858,3 +858,25 @@ it('place a subthought created above the existing subthoughts by the first of th
 
 `)
 })
+
+it('omit the thoughtspace when it is empty', () => {
+  store.dispatch([newThought({}), editThought([''], 'a'), newThought({}), editThought([''], 'b'), indent()])
+
+  expect(stepsToReproduce(store.getState(), { start: 3, end: 0 })).toBe(`## Steps to Reproduce
+
+1. New Thought \`a\`.
+2. New Thought \`b\`.
+3. Indent.
+
+## Current Behavior
+
+\`\`\`
+- a
+  - b
+\`\`\`
+
+## Expected Behavior
+
+
+`)
+})

@@ -326,10 +326,12 @@ const describeSetCursor = (state: State, path: Path) => `Set the cursor on${targ
 const describeSelect = (state: State, ids: ThoughtId[]) =>
   `Select ${joinConjunction(ids.map(id => name(state.thoughts.thoughtIndex[id]?.value ?? '')))}.`
 
-/** Exports the thoughtspace of the given state as plain text with meta attributes, without the root. */
+/** Exports the thoughtspace of the given state as plain text with meta attributes, without the root. Returns an empty string if the thoughtspace is empty, which exports as the root's placeholder value rather than as nothing. */
 const exportTree = (state: State): string =>
-  // removeHome wraps the children of the root in newlines
-  removeHome(exportContext(state, [HOME_TOKEN], 'text/plain')).replace(/^\n|\n$/g, '')
+  getChildrenRanked(state, HOME_TOKEN).length
+    ? // removeHome wraps the children of the root in newlines
+      removeHome(exportContext(state, [HOME_TOKEN], 'text/plain')).replace(/^\n|\n$/g, '')
+    : ''
 
 /** Generates a bug report in markdown for the actions between two positions of the undo history: the steps to reproduce them, starting from the thoughtspace at the start position, followed by the thoughtspace at the end position as the current behavior and an empty heading for the expected behavior. Positions count steps back from the present, so start is at or before end. */
 const stepsToReproduce = (state: State, positions: { start: number; end: number }): string => {
@@ -405,13 +407,17 @@ const stepsToReproduce = (state: State, positions: { start: number; end: number 
     { descriptions: [], cursor: null, selection: [] },
   )
 
+  const treeAtStart = exportTree(stateAt(start))
+  const treeAtEnd = exportTree(stateAt(end))
+
   // Sections are separated by a single blank line. The report ends with two blank lines for the expected behavior to be written into.
   return [
     '## Steps to Reproduce',
-    `\`\`\`\n${exportTree(stateAt(start))}\n\`\`\``,
+    // an empty thoughtspace has no tree to show
+    ...(treeAtStart ? [`\`\`\`\n${treeAtStart}\n\`\`\``] : []),
     ...(descriptions.length ? [descriptions.map((description, i) => `${i + 1}. ${description}`).join('\n')] : []),
     '## Current Behavior',
-    `\`\`\`\n${exportTree(stateAt(end))}\n\`\`\``,
+    ...(treeAtEnd ? [`\`\`\`\n${treeAtEnd}\n\`\`\``] : []),
     '## Expected Behavior\n\n\n',
   ].join('\n\n')
 }
