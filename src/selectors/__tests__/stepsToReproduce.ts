@@ -649,3 +649,40 @@ it('describe an extracted subthought by the extracted text', () => {
 
 `)
 })
+
+it('clamp positions that are outside the history', () => {
+  store.dispatch([
+    importText({
+      text: `
+        - a
+        - b
+      `,
+    }),
+    setCursor(['a']),
+    editThought(['a'], 'aa'),
+  ])
+
+  // The undo slider keeps its handles as long as the number of patches is unchanged, so a handle can end up past the end of a
+  // history that has since been regrouped.
+  expect(stepsToReproduce(store.getState(), { start: 99, end: -1 })).toBe(`## Steps to Reproduce
+
+\`\`\`
+- a
+- b
+\`\`\`
+
+1. Set the cursor on \`a\`.
+2. Edit \`a\` to \`aa\`.
+
+## Current Behavior
+
+\`\`\`
+- aa
+- b
+\`\`\`
+
+## Expected Behavior
+
+
+`)
+})

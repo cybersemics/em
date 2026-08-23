@@ -249,10 +249,17 @@ const undoOneReducer = (state: State): State => {
   const lastUndoPatch = nthLast(undoPatches, 1)
   if (!lastUndoPatch) return state
   const newState = produce(state, (state: State) => applyPatch(state, lastUndoPatch).newDocument)
-  const correspondingRedoPatch = addActionsToPatch(diffState(newState as Index, state), [...lastUndoPatch[0]?.actions])
+  const correspondingRedoPatch = addActionsToPatch(diffState(newState as Index, state), [
+    ...(lastUndoPatch[0]?.actions ?? []),
+  ])
   return {
     ...newState,
-    redoPatches: [...redoPatches, correspondingRedoPatch],
+    // Do not push an empty patch. A patch that a non-undoable action has already reverted applies as a no-op, so the patch
+    // computed to redo it is empty. (The Note command is the reachable case: it is not undoable and writes back the noteFocus
+    // and noteOffset that the undoable setNoteFocus recorded.) An empty patch carries no actions, so it disables undo
+    // (getLastActionType returns undefined) and throws on the spread above the next time it is reached. Drop it instead, as
+    // both patch-creating branches of the reducer below already do; the patch restored nothing, so nothing is lost.
+    redoPatches: correspondingRedoPatch.length ? [...redoPatches, correspondingRedoPatch] : redoPatches,
     undoPatches: undoPatches.slice(0, -1),
     cursorCleared: false,
     lastUndoableActionType: lastUndoPatch[0]?.actions[0],
@@ -267,11 +274,14 @@ const redoOneReducer = (state: State): State => {
   const lastRedoPatch = nthLast(redoPatches, 1)
   if (!lastRedoPatch) return state
   const newState = produce(state, (state: State) => applyPatch(state, lastRedoPatch).newDocument)
-  const correspondingUndoPatch = addActionsToPatch(diffState(newState as Index, state), [...lastRedoPatch[0]?.actions])
+  const correspondingUndoPatch = addActionsToPatch(diffState(newState as Index, state), [
+    ...(lastRedoPatch[0]?.actions ?? []),
+  ])
   return {
     ...newState,
     redoPatches: redoPatches.slice(0, -1),
-    undoPatches: [...undoPatches, correspondingUndoPatch],
+    // Do not push an empty patch. See undoOneReducer.
+    undoPatches: correspondingUndoPatch.length ? [...undoPatches, correspondingUndoPatch] : undoPatches,
     cursorCleared: false,
     lastUndoableActionType: lastRedoPatch[0]?.actions[0],
   }

@@ -307,8 +307,14 @@ const exportTree = (state: State): string =>
   removeHome(exportContext(state, [HOME_TOKEN], 'text/plain')).replace(/^\n|\n$/g, '')
 
 /** Generates a bug report in markdown for the actions between two positions of the undo history: the steps to reproduce them, starting from the thoughtspace at the start position, followed by the thoughtspace at the end position as the current behavior and an empty heading for the expected behavior. Positions count steps back from the present, so start is at or before end. */
-const stepsToReproduce = (state: State, { start, end }: { start: number; end: number }): string => {
+const stepsToReproduce = (state: State, positions: { start: number; end: number }): string => {
   const { steps, position } = undoSteps(state)
+
+  // Clamp the positions to the history, which may have changed since they were chosen. The undo slider keeps its handles as
+  // long as the number of patches is unchanged, but the same number of patches can group into fewer steps, leaving a handle
+  // past the end of the history.
+  const start = Math.min(Math.max(positions.start, 0), steps.length)
+  const end = Math.min(Math.max(positions.end, 0), start)
 
   // Reconstruct the state before and after each patch between the current state and the two positions.
   // The undo stack holds inverse patches, applied newest first to walk back to the start.
