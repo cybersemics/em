@@ -164,7 +164,7 @@ it('name each action as dispatched, preceded by the cursor it acts on', () => {
 \`\`\`
 
 1. Set the cursor on \`a\`.
-2. Create thought \`d\` as a subthought of \`a\`.
+2. Create subthought \`d\` of \`a\`.
 3. Set the cursor on \`b\`.
 4. Edit \`b\` to \`bb\`.
 5. Set the cursor on \`c\`.
@@ -715,7 +715,7 @@ it('do not describe a thought as placed after a hidden meta attribute', () => {
 
 1. Set the cursor on \`e\`.
 2. Archive Thought.
-3. Create thought \`f\` as a subthought of \`d\`.
+3. Create subthought \`f\` of \`d\`.
 
 ## Current Behavior
 
@@ -726,6 +726,42 @@ it('do not describe a thought as placed after a hidden meta attribute', () => {
       - e
     - f
 - z
+\`\`\`
+
+## Expected Behavior
+
+
+`)
+})
+
+it('name a new subthought by its parent', () => {
+  store.dispatch([
+    importText({
+      text: `
+        - a
+        - b
+      `,
+    }),
+    setCursor(['b']),
+    newThought({ insertNewSubthought: true }),
+  ])
+
+  expect(stepsToReproduce(store.getState(), { start: 1, end: 0 })).toBe(`## Steps to Reproduce
+
+\`\`\`
+- a
+- b
+\`\`\`
+
+1. Set the cursor on \`b\`.
+2. Create a new subthought \`b\`.
+
+## Current Behavior
+
+\`\`\`
+- a
+- b
+  - ${''}
 \`\`\`
 
 ## Expected Behavior

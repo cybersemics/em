@@ -135,6 +135,26 @@ it('move the thoughtspace to a handle when it is tapped', async () => {
     - c`)
 })
 
+it('keep the handles where they were when the slider is closed and reopened', async () => {
+  await arrange()
+  await press('undo slider start', 'ArrowLeft')
+  await press('undo slider start', 'ArrowLeft')
+  await press('undo slider start', 'ArrowLeft')
+  await press('undo slider end', 'ArrowLeft')
+
+  await click('[data-testid="toolbar-icon"][aria-label="Toggle Undo Slider"]')
+  await act(vi.runAllTimersAsync)
+
+  // the slider is unmounted while it is closed, which is what discarded the handles
+  expect(document.querySelector('[aria-label="undo slider start"]')).toBeNull()
+
+  await click('[data-testid="toolbar-icon"][aria-label="Toggle Undo Slider"]')
+  await act(vi.runAllTimersAsync)
+
+  expect(handle('undo slider start').getAttribute('aria-valuenow')).toBe('3')
+  expect(handle('undo slider end').getAttribute('aria-valuenow')).toBe('1')
+})
+
 it('copy the steps to reproduce the actions between the start and the end', async () => {
   await arrange()
   await press('undo slider start', 'ArrowLeft')

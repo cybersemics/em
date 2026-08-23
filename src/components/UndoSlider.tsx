@@ -17,19 +17,31 @@ import CopyClipboard from './icons/CopyClipboard'
 /** The maximum number of steps the slider spans. */
 const MAX_STEPS = 10
 
+/** The positions of the end and start handles, counted in steps back from the present (0), and the length of the history they were set against. */
+interface Handles {
+  end: number
+  historyLength: number
+  start: number
+}
+
 /** The name of the action that a step applied, as it appears in the undo alert, e.g. "New Thought". A navigation action is skipped in favor of the change it accompanies. */
 const stepLabel = (step: UndoStep): string => {
   const actions = step.patches.flatMap(patch => patch[0].actions)
   return startCase(actions.find(action => !isNavigation(action)) ?? actions[0])
 }
 
-/** A slider with a start handle and an end handle over the undo history, plus a button that copies the steps to reproduce the actions between them. Dragging or tapping a handle moves the thoughtspace to the point in time under it. Both handles begin at the present with the start handle on top; dragging the start handle back reveals the end handle, which always stays at least one step after the start. Remounted whenever the history changes so that the handles reset to the current state. */
-const UndoRange: FC = () => {
+/** A slider with a start handle and an end handle over the undo history, plus a button that copies the steps to reproduce the actions between them. Dragging or tapping a handle moves the thoughtspace to the point in time under it. Both handles begin at the present with the start handle on top; dragging the start handle back reveals the end handle, which always stays at least one step after the start. */
+const UndoRange: FC<{ handles: Handles | null; setHandles: (handles: { end: number; start: number }) => void }> = ({
+  handles,
+  setHandles,
+}) => {
   const dispatch = useDispatch()
   const { steps, position } = useSelector(undoSteps)
   const max = Math.min(MAX_STEPS, steps.length)
-  // The positions of the end and start handles, counted in steps back from the present (0). The end handle comes first since rc-slider orders range values ascending, which also renders the start handle on top when the two coincide.
-  const [[end, start], setHandles] = useState([Math.min(position, max), Math.min(position, max)])
+  // Both handles are at the current state until the user moves one. They are clamped to the history, which can be regrouped
+  // into fewer steps while they are set.
+  const end = Math.min(handles?.end ?? position, max)
+  const start = Math.min(handles?.start ?? position, max)
 
   /** Moves the thoughtspace to the point in time at the given position by undoing or redoing the exact patches of the steps in between. */
   const moveTo = (target: number) =>
@@ -112,7 +124,7 @@ const UndoRange: FC = () => {
           const startClamped = startNext === start ? start : Math.max(startNext, end === 0 ? 0 : end + 1)
           const endClamped = startNext === start ? Math.min(endNext, Math.max(0, start - 1)) : end
           if (startClamped === start && endClamped === end) return
-          setHandles([endClamped, startClamped])
+          setHandles({ end: endClamped, start: startClamped })
           // show the point in time under the handle that moved
           moveTo(startNext === start ? endClamped : startClamped)
         }}
@@ -136,9 +148,12 @@ const UndoRange: FC = () => {
 /** Undo slider that can rewind edits and copy the steps to reproduce them. */
 const UndoSlider: FC = () => {
   const showUndoSlider = useSelector(state => !!state.showUndoSlider)
-  // A new action discards the history ahead of the current state, so remount the handles at the current state. Undo and
-  // redo only move a patch between the two stacks, leaving the total unchanged.
   const historyLength = useSelector(state => state.undoPatches.length + state.redoPatches.length)
+  // The handles are held here rather than in UndoRange, which is unmounted while the slider is closed, so that closing and
+  // reopening the slider leaves them where the user put them. They are discarded when a new action discards the history ahead
+  // of the current state, since they no longer refer to the same steps; undo and redo only move a patch between the two
+  // stacks, leaving the total unchanged.
+  const [handles, setHandles] = useState<Handles | null>(null)
 
   return (
     <FadeTransition in={showUndoSlider} type='medium' unmountOnExit>
@@ -153,7 +168,10 @@ const UndoSlider: FC = () => {
           gap: '1.5em',
         })}
       >
-        <UndoRange key={historyLength} />
+        <UndoRange
+          handles={handles?.historyLength === historyLength ? handles : null}
+          setHandles={({ end, start }) => setHandles({ end, historyLength, start })}
+        />
       </div>
     </FadeTransition>
   )

@@ -159,15 +159,27 @@ const placement = (state: State, id: ThoughtId): string => {
         : ` as a subthought of ${describeThought(state, parentId)}`
 }
 
-/** Describes the creation of a thought, reading its value from the given state so that a value typed by a later patch of the same step can be used. Its placement is only spelled out when it is not the default, right after the cursor. */
+/** Describes the creation of a thought, reading its value from the given state so that a value typed by a later patch of the same step can be used. */
 const describeNewThought = (snapshot: Snapshot, state: State): string => {
   const { before, after } = snapshot
   const [id] = topmost(after, createdIds(snapshot))
-  const value = id && state.thoughts.thoughtIndex[id]?.value
-  const siblings = id ? visibleSiblings(after, id) : []
+  if (!id) return 'Create a new thought.'
+
+  const value = state.thoughts.thoughtIndex[id]?.value
+  const siblings = visibleSiblings(after, id)
+  const { parentId } = after.thoughts.thoughtIndex[id]
+
+  // A thought created as the only visible child of another is a subthought of it, named by its parent rather than by its position.
+  if (siblings.length === 1 && !isRoot([parentId])) {
+    return value
+      ? `Create subthought ${code(value)} of ${describeThought(after, parentId)}.`
+      : `Create a new subthought ${describeThought(after, parentId)}.`
+  }
+
+  // Otherwise the position is only spelled out when it is not the default, right after the cursor.
   const previous = siblings[siblings.findIndex(sibling => sibling.id === id) - 1]
   const isDefaultPlacement = !!previous && isCursor(before, previous.id)
-  return `Create ${value ? `thought ${code(value)}` : 'a new thought'}${id && !isDefaultPlacement ? placement(after, id) : ''}.`
+  return `Create ${value ? `thought ${code(value)}` : 'a new thought'}${isDefaultPlacement ? '' : placement(after, id)}.`
 }
 
 /** Describes an edit by the first thought whose value the patch changed. Contiguous edits are merged into one patch, so this reads as a single edit from the first old value to the last new value. A formatting command changes the tags but not the text, so it is named after the tag it added or removed, e.g. Bold. */
