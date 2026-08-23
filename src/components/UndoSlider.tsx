@@ -1,12 +1,13 @@
 import { startCase } from 'lodash'
 import Slider from 'rc-slider'
 import 'rc-slider/assets/index.css'
-import { FC, cloneElement, useState } from 'react'
+import { FC, cloneElement, useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { alertActionCreator as alert } from '../actions/alert'
 import { redoActionCreator as redo } from '../actions/redo'
 import { undoActionCreator as undo } from '../actions/undo'
+import { commandEmitter } from '../commands'
 import copy from '../device/copy'
 import stepsToReproduce from '../selectors/stepsToReproduce'
 import undoSteps, { UndoStep } from '../selectors/undoSteps'
@@ -44,7 +45,10 @@ const UndoRange: FC<{ handles: Handles | null; setHandles: (handles: { end: numb
   const start = Math.min(handles?.start ?? position, max)
 
   /** Moves the thoughtspace to the point in time at the given position by undoing or redoing the exact patches of the steps in between. */
-  const moveTo = (target: number) =>
+  const moveTo = (target: number) => {
+    // Flush an edit typed since the slider was opened. It would otherwise be committed after the thoughtspace has already
+    // moved, i.e. against a different state than it was typed into. See the flush when the slider opens.
+    commandEmitter.trigger('command')
     dispatch((dispatch, getState) => {
       const { steps, position } = undoSteps(getState())
       const count = steps
@@ -54,6 +58,7 @@ const UndoRange: FC<{ handles: Handles | null; setHandles: (handles: { end: numb
         dispatch(target > position ? undo({ count }) : redo({ count }))
       }
     })
+  }
 
   return (
     <>
@@ -154,6 +159,15 @@ const UndoSlider: FC = () => {
   // of the current state, since they no longer refer to the same steps; undo and redo only move a patch between the two
   // stacks, leaving the total unchanged.
   const [handles, setHandles] = useState<Handles | null>(null)
+
+  // Flush any pending throttled edit when the slider opens, so that the last edit is part of the history the slider moves
+  // through. Editing dispatches editThought on a throttle, and the toolbar does not flush it the way the keyboard and gesture
+  // paths do, so an edit typed just before opening the slider is not recorded yet: it would be missing from the steps and lost
+  // as soon as the slider moved the thoughtspace. A toolbar picker has the same hazard, and formatSelectionColor flushes for
+  // the same reason (#4657).
+  useEffect(() => {
+    if (showUndoSlider) commandEmitter.trigger('command')
+  }, [showUndoSlider])
 
   return (
     <FadeTransition in={showUndoSlider} type='medium' unmountOnExit>

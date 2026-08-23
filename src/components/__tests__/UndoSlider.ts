@@ -11,6 +11,7 @@ import click from '../../test-helpers/click'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
+import findThoughtByText from '../../test-helpers/queries/findThoughtByText'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 
 vi.mock('../../device/copy')
@@ -187,4 +188,38 @@ it('copy the steps to reproduce the actions between the start and the end', asyn
 
 
 `)
+})
+
+it('keep an edit that has not been committed yet when the slider moves', async () => {
+  await dispatch([
+    toggleDropdown({ dropDownType: 'undoSlider', value: false }),
+    newThought({ value: 'a' }),
+    newThought({ value: 'b' }),
+    setCursor(['b']),
+  ])
+  await act(vi.runOnlyPendingTimersAsync)
+
+  // Type into the thought, leaving the throttled edit pending. Editing dispatches editThought on a throttle, so the edit is
+  // not in the history yet.
+  await act(async () => {
+    fireEvent.input((await findThoughtByText('b'))!, { target: { innerHTML: 'bb' } })
+  })
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - a
+  - b`)
+
+  // Open the slider without a click and without advancing the throttle, as tapping the toolbar on a touch device does: the
+  // toolbar does not flush pending edits and does not blur the editable.
+  await act(async () => {
+    store.dispatch(toggleDropdown({ dropDownType: 'undoSlider', value: true }))
+  })
+
+  // move the start handle back a step and forward again
+  await press('undo slider start', 'ArrowLeft')
+  await press('undo slider start', 'ArrowRight')
+  await act(vi.runAllTimersAsync)
+
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - a
+  - bb`)
 })
