@@ -247,7 +247,7 @@
     "jest-extended": "^7.0.0",
     "jest-image-snapshot": "^6.5.2",
     "jsdom": "^30.0.1",
-    "lockfile-lint": "^5.0.0",
+    "lockfile-lint": "^5.0.1",
     "npm-run-all2": "^9.0.3",
     "postinstall-postinstall": "^2.1.0",
     "prettier": "^3.9.6",
