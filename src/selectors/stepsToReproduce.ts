@@ -374,14 +374,15 @@ const stepsToReproduce = (state: State, { start, end }: { start: number; end: nu
     { descriptions: [], cursor: null, selection: [] },
   )
 
+  // Sections are separated by a single blank line. The report ends with two blank lines for the expected behavior to be written into.
   return [
     '## Steps to Reproduce',
     `\`\`\`\n${exportTree(stateAt(start))}\n\`\`\``,
     ...(descriptions.length ? [descriptions.map((description, i) => `${i + 1}. ${description}`).join('\n')] : []),
     '## Current Behavior',
     `\`\`\`\n${exportTree(stateAt(end))}\n\`\`\``,
-    '## Expected Behavior\n\n',
-  ].join('\n\n\n')
+    '## Expected Behavior\n\n\n',
+  ].join('\n\n')
 }
 
 export default stepsToReproduce
