@@ -132,7 +132,7 @@
     "ipfs-http-client": "^43.0.1",
     "lodash": "^4.18.1",
     "lottie-react": "^3.1.0",
-    "marked": "^18.0.9",
+    "marked": "^18.0.10",
     "moize": "^6.1.7",
     "motion": "^13.1.0",
     "murmurhash3js": "^3.0.1",
