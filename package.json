@@ -229,7 +229,7 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-export-default-identifier": "0.3.0",
     "eslint-plugin-import": "^2.32.0",
-    "eslint-plugin-jsdoc": "^64.1.0",
+    "eslint-plugin-jsdoc": "^64.2.1",
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-n": "^18.3.0",
     "eslint-plugin-node": "^11.1.0",
