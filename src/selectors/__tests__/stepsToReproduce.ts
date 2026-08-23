@@ -10,6 +10,8 @@ import { undoActionCreator as undo } from '../../actions/undo'
 import { executeCommandWithMulticursor } from '../../commands'
 import deleteEmptyThoughtOrOutdentCommand from '../../commands/deleteEmptyThoughtOrOutdent'
 import moveThoughtDownCommand from '../../commands/moveThoughtDown'
+import newSubthoughtTopCommand from '../../commands/newSubthoughtTop'
+import newThoughtAboveCommand from '../../commands/newThoughtAbove'
 import toggleSortCommand from '../../commands/toggleSort'
 import { HOME_PATH } from '../../constants'
 import store from '../../stores/app'
@@ -44,7 +46,7 @@ it('report the thoughtspace at the start, the steps up to the end, and the thoug
 \`\`\`
 
 1. Set the cursor on \`b\`.
-2. Create thought \`c\`.
+2. New Thought \`c\`.
 3. Indent.
 
 ## Current Behavior
@@ -84,7 +86,7 @@ it('describe the same steps when the current state is between the start and the 
 \`\`\`
 
 1. Set the cursor on \`b\`.
-2. Create thought \`c\`.
+2. New Thought \`c\`.
 3. Indent.
 
 ## Current Behavior
@@ -164,7 +166,7 @@ it('name each action as dispatched, preceded by the cursor it acts on', () => {
 \`\`\`
 
 1. Set the cursor on \`a\`.
-2. Create subthought \`d\` of \`a\`.
+2. New Subthought \`d\`.
 3. Set the cursor on \`b\`.
 4. Edit \`b\` to \`bb\`.
 5. Set the cursor on \`c\`.
@@ -695,13 +697,22 @@ it('do not describe a thought as placed after a hidden meta attribute', () => {
         - a
           - d
             - e
-        - z
+        - f
       `,
     }),
     setCursor(['a', 'd', 'e']),
     archiveThought({}),
-    // the new thought lands after =archive, which is hidden, so its position is described by its parent instead
-    newThought({ value: 'f', insertNewSubthought: true }),
+    setCursor(['f']),
+    // move f into d, where the only other child is the hidden =archive
+    (dispatch, getState) => {
+      const oldPath = contextToPath(getState(), ['f'])!
+      dispatch({
+        type: 'moveThought',
+        oldPath,
+        newPath: [...contextToPath(getState(), ['a', 'd'])!, oldPath.at(-1)!],
+        newRank: 1,
+      })
+    },
   ])
 
   expect(stepsToReproduce(store.getState(), { start: 3, end: 0 })).toBe(`## Steps to Reproduce
@@ -710,12 +721,13 @@ it('do not describe a thought as placed after a hidden meta attribute', () => {
 - a
   - d
     - e
-- z
+- f
 \`\`\`
 
 1. Set the cursor on \`e\`.
 2. Archive Thought.
-3. Create subthought \`f\` of \`d\`.
+3. Set the cursor on \`f\`.
+4. Move Thought as a subthought of \`d\`.
 
 ## Current Behavior
 
@@ -725,7 +737,6 @@ it('do not describe a thought as placed after a hidden meta attribute', () => {
     - =archive
       - e
     - f
-- z
 \`\`\`
 
 ## Expected Behavior
@@ -734,7 +745,7 @@ it('do not describe a thought as placed after a hidden meta attribute', () => {
 `)
 })
 
-it('name a new subthought by its parent', () => {
+it('name a thought created inside the cursor a new subthought', () => {
   store.dispatch([
     importText({
       text: `
@@ -754,7 +765,7 @@ it('name a new subthought by its parent', () => {
 \`\`\`
 
 1. Set the cursor on \`b\`.
-2. Create a new subthought \`b\`.
+2. New Subthought.
 
 ## Current Behavior
 
@@ -762,6 +773,84 @@ it('name a new subthought by its parent', () => {
 - a
 - b
   - ${''}
+\`\`\`
+
+## Expected Behavior
+
+
+`)
+})
+
+it('place a thought created above the cursor by the cursor', () => {
+  store.dispatch([
+    importText({
+      text: `
+        - a
+        - b
+        - c
+      `,
+    }),
+    setCursor(['c']),
+  ])
+  executeCommandWithMulticursor(newThoughtAboveCommand, { store })
+
+  expect(stepsToReproduce(store.getState(), { start: 1, end: 0 })).toBe(`## Steps to Reproduce
+
+\`\`\`
+- a
+- b
+- c
+\`\`\`
+
+1. Set the cursor on \`c\`.
+2. New Thought before \`c\`.
+
+## Current Behavior
+
+\`\`\`
+- a
+- b
+- ${''}
+- c
+\`\`\`
+
+## Expected Behavior
+
+
+`)
+})
+
+it('place a subthought created above the existing subthoughts by the first of them', () => {
+  store.dispatch([
+    importText({
+      text: `
+        - a
+          - x
+          - y
+      `,
+    }),
+    setCursor(['a']),
+  ])
+  executeCommandWithMulticursor(newSubthoughtTopCommand, { store })
+
+  expect(stepsToReproduce(store.getState(), { start: 1, end: 0 })).toBe(`## Steps to Reproduce
+
+\`\`\`
+- a
+  - x
+  - y
+\`\`\`
+
+1. Set the cursor on \`a\`.
+2. New Subthought before \`x\`.
+
+## Current Behavior
+
+\`\`\`
+- a
+  - ${''}
+  - x
+  - y
 \`\`\`
 
 ## Expected Behavior

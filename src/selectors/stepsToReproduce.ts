@@ -159,27 +159,34 @@ const placement = (state: State, id: ThoughtId): string => {
         : ` as a subthought of ${describeThought(state, parentId)}`
 }
 
-/** Describes the creation of a thought, reading its value from the given state so that a value typed by a later patch of the same step can be used. */
+/** Describes the creation of a thought by the command that creates it, e.g. "New Subthought `e`.". The value is read from the given state so that a value typed by a later patch of the same step can be used. */
 const describeNewThought = (snapshot: Snapshot, state: State): string => {
   const { before, after } = snapshot
+  const type = snapshot.patch[0].actions.find(action => !isNavigation(action)) ?? 'newThought'
   const [id] = topmost(after, createdIds(snapshot))
-  if (!id) return 'Create a new thought.'
+  if (!id) return `${startCase(type)}.`
 
   const value = state.thoughts.thoughtIndex[id]?.value
-  const siblings = visibleSiblings(after, id)
   const { parentId } = after.thoughts.thoughtIndex[id]
+  const siblings = visibleSiblings(after, id)
+  const i = siblings.findIndex(sibling => sibling.id === id)
+  const previous = siblings[i - 1]
+  const next = siblings[i + 1]
+  const isSubthought = isCursor(before, parentId)
 
-  // A thought created as the only visible child of another is a subthought of it, named by its parent rather than by its position.
-  if (siblings.length === 1 && !isRoot([parentId])) {
-    return value
-      ? `Create subthought ${code(value)} of ${describeThought(after, parentId)}.`
-      : `Create a new subthought ${describeThought(after, parentId)}.`
-  }
-
-  // Otherwise the position is only spelled out when it is not the default, right after the cursor.
-  const previous = siblings[siblings.findIndex(sibling => sibling.id === id) - 1]
-  const isDefaultPlacement = !!previous && isCursor(before, previous.id)
-  return `Create ${value ? `thought ${code(value)}` : 'a new thought'}${isDefaultPlacement ? '' : placement(after, id)}.`
+  // New Subthought dispatches newThought with insertNewSubthought, so only the thought's parent tells the two commands apart.
+  const command = isSubthought && type === 'newThought' ? 'New Subthought' : startCase(type)
+  // The cursor gives the position of a thought created at the bottom of it or right after it, which is what New Subthought
+  // and New Thought do. Anything else is spelled out, including a subthought inserted above the existing subthoughts.
+  const isDefaultPosition = isSubthought ? !next : !!previous && isCursor(before, previous.id)
+  // A thought inserted above the cursor is placed by the cursor rather than by the sibling above it, which is what New
+  // Thought Above does.
+  const position = isDefaultPosition
+    ? ''
+    : next && isCursor(before, next.id)
+      ? ` before ${name(next.value)}`
+      : placement(after, id)
+  return `${command}${value ? ` ${code(value)}` : ''}${position}.`
 }
 
 /** Describes an edit by the first thought whose value the patch changed. Contiguous edits are merged into one patch, so this reads as a single edit from the first old value to the last new value. A formatting command changes the tags but not the text, so it is named after the tag it added or removed, e.g. Bold. */
@@ -306,7 +313,7 @@ const describePatch = (snapshot: Snapshot): string => {
 /** Describes a step from the snapshots of its patches in chronological order. */
 const describeStep = (snapshots: Snapshot[]): string => {
   const [created, typed] = snapshots
-  // A new thought followed by typing its value reads as a single creation, e.g. "Create thought `c`."
+  // A new thought followed by typing its value reads as a single creation, e.g. "New Thought `c`."
   return created.patch[0].actions[0] === 'newThought' && typed
     ? describeNewThought(created, typed.after)
     : snapshots.map(describePatch).filter(Boolean).join(' ')
