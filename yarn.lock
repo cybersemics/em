@@ -11881,7 +11881,7 @@ __metadata:
     jest-extended: "npm:^7.0.0"
     jest-image-snapshot: "npm:^6.5.2"
     jsdom: "npm:^30.0.1"
-    lockfile-lint: "npm:^5.0.0"
+    lockfile-lint: "npm:^5.0.1"
     lodash: "npm:^4.18.1"
     lottie-react: "npm:^3.1.0"
     marked: "npm:^18.0.9"
@@ -13546,7 +13546,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fast-glob@npm:^3.2.11, fast-glob@npm:^3.3.2":
+"fast-glob@npm:^3.2.11":
   version: 3.3.2
   resolution: "fast-glob@npm:3.3.2"
   dependencies:
@@ -17513,18 +17513,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lockfile-lint@npm:^5.0.0":
-  version: 5.0.0
-  resolution: "lockfile-lint@npm:5.0.0"
+"lockfile-lint@npm:^5.0.1":
+  version: 5.0.1
+  resolution: "lockfile-lint@npm:5.0.1"
   dependencies:
     cosmiconfig: "npm:^9.0.0"
     debug: "npm:^4.3.4"
-    fast-glob: "npm:^3.3.2"
     lockfile-lint-api: "npm:^5.9.2"
+    tinyglobby: "npm:^0.2.15"
     yargs: "npm:^17.7.2"
   bin:
     lockfile-lint: bin/lockfile-lint.js
-  checksum: 10c0/734450f5247081e05e9ae05d340f01bd850a5bf13c7e488c4d671cb1632f3111972d4a44026dca581cccceac94c3dd4c96f59c2309724d43d062014fdc1243ff
+  checksum: 10c0/76aa88b0537353f94248a51cd49b7d2f4e2718191a2766d4a6260b297cee0adccb6af1146bc42594cf79f2f6af78bb2f9dc4b0d50026c502b1fc106306dfd53c
   languageName: node
   linkType: hard
 
