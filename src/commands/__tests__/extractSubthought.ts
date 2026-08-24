@@ -151,15 +151,12 @@ describe('Extract Subthought', () => {
 
       await act(vi.runOnlyPendingTimersAsync)
 
-      // findThoughtByText matches a thought's direct text children, of which a formatted thought has none
       const thought = await findCursor()
       expect(thought).toBeTruthy()
       setSelection(thought!, 6, 12)
 
       store.dispatch(extractSubthought())
 
-      // The offsets are plain text offsets, so slicing the value by them would land in the middle of the <b> tag and
-      // mangle the markup (#4103).
       const state = store.getState()
       expect(getThoughtById(state, head(state.cursor!))!.value).toBe('<b>Lorem dolor</b>')
       expect(getAllChildrenAsThoughtsByContext(state, ['<b>Lorem dolor</b>']).map(child => child.value)).toEqual([
