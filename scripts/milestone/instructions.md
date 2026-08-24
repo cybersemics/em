@@ -15,8 +15,9 @@ Your job is to choose the single open GitHub milestone that best matches a new i
 7. **The subject of an issue outranks the mechanism it would be delivered through.** A request to warn the user about an AI feature is ✨ AI even though the warning would be an alert; ask what the issue is _about_, not what UI would implement it.
 8. **The title states what the issue is about; the steps only say how to get there.** Reproduction steps are sometimes shared verbatim between two separate issues that the same sequence happens to expose, so a feature named only in the steps is not necessarily the subject. When the title names a defect, it decides. Fall back to a feature named in the steps — "Select Recently Edited", "open the Command Universe" — only when the title is too unspecific to place on its own.
 9. **An issue involving text colour or formatting is 🎨 Formatting**, even when it also touches the structure of thoughts — one instance of the rule above, and the most common one.
-10. Labels are weak evidence. `bug` versus `enhancement` says nothing about which subsystem owns the work.
-11. Do not fall back to a large or general-sounding milestone just because nothing obvious fits. Returning `null` is better than a wrong assignment — a human is asked, which costs far less than a miscategorized issue nobody finds again.
+10. **Scrolling is never 📐 Layout.** If the scroll position, the scroll zone, or parallax is involved, it is 🛼 Autoscroll. Layout is for positioning at rest with no scrolling in play.
+11. Labels are weak evidence. `bug` versus `enhancement` says nothing about which subsystem owns the work.
+12. Do not fall back to a large or general-sounding milestone just because nothing obvious fits. Returning `null` is better than a wrong assignment — a human is asked, which costs far less than a miscategorized issue nobody finds again.
 
 ## Milestones
 
@@ -43,7 +44,7 @@ _Examples:_ Fix Search · Cannot edit search results · Allow cursor to select H
 **🧤 Drag & Drop** — Dragging thoughts and dropping them: drag activation and cancellation, drop targets, hover indicators, auto-expansion while hovering, and scrolling at the screen edge mid-drag.
 _Examples:_ Allow drop hover indicator next to dragging thought · Drag-and-drop: Only one uncle auto expands · CSS-based drop hover width
 
-**🏹 Browser Selection** — The caret and the browser's text selection: where the caret lands, entering and leaving edit mode, focus, selection ranges, and selection moved or lost by an operation.
+**🏹 Browser Selection** — The caret and the browser's text selection: where the caret lands, entering and leaving edit mode, focus, selection ranges, and selection moved or lost by an operation. **Takes precedence over ↩️ Undo/Redo** whenever the complaint is about the caret or the selection itself rather than something incidental to it.
 _Examples:_ Caret offset incorrectly set to 0 when mouseup fails to fire · [iOS] Keyboard incorrectly opens when tapping right edge of thought · [Mobile] Split Sentence: Do not enter edit mode
 
 **🔁 Sync** — Persistence and replication: pending thoughts, missing or stale Lexemes, data that does not survive a reload, and concurrent edits.
@@ -52,7 +53,7 @@ _Examples:_ Pending thoughts sometimes never load · updateLexeme: Missing docKe
 **↩️ Undo/Redo** — The undo/redo stack: what becomes an undo step, how steps are chunked, and errors raised while undoing or redoing.
 _Examples:_ Undoing text editing deletes the thought entirely · Undoing past the end of the stack produces duplicate text · Forced edits don't undo until after editable blurs
 
-**🌿 Thoughtspace** — **Secondary; yields to any primary subsystem.** The hierarchy and structure of thoughts and the cursor: commands that restructure the tree — Swap Parent, Swap Note, Split Sentence, Categorize and Uncategorize, archive, favorites — and where the cursor ends up afterwards. Almost any issue touches the thought tree somewhere, which is exactly why this one has to yield: reach for it only when no more specific subsystem describes the work.
+**🌿 Thoughtspace** — **Secondary; yields to any primary subsystem.** The hierarchy and structure of thoughts and the cursor: commands that restructure the tree — Swap Parent, Swap Note, Split Sentence, Categorize and Uncategorize, archive, favorites — and where the cursor ends up afterwards. Almost any issue touches the thought tree somewhere, which is exactly why this one has to yield: reach for it only when no more specific subsystem describes the work. One case where it does not yield: **a hard error raised while adding or removing a thought belongs here**, whatever surface triggered the command. The surface is then incidental — the bug is in the operation, not in the button that ran it.
 _Examples:_ Uncategorize leaf should delete thought · Split sentence should ignore decimal numbers · Swap Parent does not carry marked as done state
 
 **✅ Test Engineering** — The test suites and the machinery around them: flaky tests, CI workflows, test helpers and configuration, and build or dependency plumbing.
@@ -60,13 +61,13 @@ _Examples:_ Flaky test: Sidebar - Node is either not clickable or not an Element
 
 **✨ Agent Workflows** — The repository's coding agents and its issue automation: agent prompts and skills, and the GitHub Actions workflows that triage or act on issues and pull requests. Distinct from ✅ Test Engineering, which owns the test suites and the CI that runs them, and from ✨ AI, which is an app feature rather than repository tooling.
 
-**🤹‍♀️ CSS Animation** — Animations and transitions where the motion itself is what is wrong: what animates, how it moves, where it animates to, and animation that plays at the wrong time or not at all. Not every issue that mentions a fade or a slide belongs here.
+**🤹‍♀️ CSS Animation** — Animations and transitions where the motion itself is what is wrong: what animates, how it moves, where it animates to, and animation that plays at the wrong time or not at all. Not every issue that mentions a fade or a slide belongs here, and **a flash is not an animation** — flashing is something rendered incorrectly for a single frame, which is a rendering fault rather than a motion one.
 _Examples:_ Animation: Move Thought Up/Down · Cursor overlay parent-child animation follows S-curve · Thought should not fade in after split thought on Enter
 
-**🛼 Autoscroll** — Scrolling the viewport to follow the cursor: bringing a new or moved cursor into view, and the screen jumping or shifting as a result.
+**🛼 Autoscroll** — Anything to do with scrolling: bringing a new or moved cursor into view, the screen jumping or shifting as a result, the scroll zone, and parallax. If scrolling is involved at all, it belongs here rather than in 📐 Layout.
 _Examples:_ [iOS] New thought not scrolled into view · Space above thoughts jumps when previous uncle collapses · Autoscroll triggers twice on Cursor Back
 
-**📐 Layout** — **Static** positioning and geometry: where thoughts, bullets, annotations, superscripts, dividers, and table columns sit at rest; width, height, line wrapping, and reflow.
+**📐 Layout** — **Static** positioning and geometry with no scrolling involved: where thoughts, bullets, annotations, superscripts, dividers, and table columns sit at rest; width, height, line wrapping, and reflow. Anything involving the scroll position or the scroll zone is 🛼 Autoscroll, not this.
 _Examples:_ Thought width exceeds viewport width below around 500px · [iOS] Thought text does not align vertically with bullet · Divider position is incorrect in table view and changes with cursor
 
 **💹 Metaprogramming** — Metaprogramming attributes such as `=children`, `=pin`, and `=label`: their behavior, scope, validation, and interaction with each other.
