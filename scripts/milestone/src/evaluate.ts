@@ -35,8 +35,8 @@ const SPLIT = process.env.MILESTONE_EVAL_SPLIT ?? 'train'
 /**
  * The floor `yarn evaluate` fails below.
  *
- * Set from the blind measurement — 69% accuracy on samples chosen and written without being read —
- * rather than from the train figure, which runs about 14 points higher because the prompt was
+ * Set from the blind measurement — 70–76% across four runs on samples chosen and written without
+ * being read — rather than from the train figure, which runs well above it because the prompt was
  * revised against it. The margin is deliberately thin: this is a floor that should hurt if accuracy
  * regresses, not a comfortable one. It is not a target anyone should be satisfied by.
  */
