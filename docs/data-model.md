@@ -216,7 +216,7 @@ A note on `parentOf` vs `rootedParentOf`: [`rootedParentOf`](../src/selectors/ro
 #### Basic traversal
 
 - [`parentOfThought`](../src/selectors/parentOfThought.ts) — parent `Thought` of a `ThoughtId`.
-- [`nextSibling`](../src/selectors/nextSibling.ts) / [`prevSibling`](../src/selectors/prevSibling.ts) — next/previous sibling, honoring the parent's sort preference. `prevSibling` also handles context view.
+- [`nextSibling`](../src/selectors/nextSibling.ts) / [`prevSibling`](../src/selectors/prevSibling.ts) — next/previous sibling, honoring the parent's sort preference. `prevSibling` also handles context view, inferring it from the parent path. Since nothing distinguishes a `SimplePath` from a context-view `Path` at runtime, a caller holding a `SimplePath` must pass `{ showContexts: false }`, or a thought in a cyclic context — whose simple parent path *is* the path the context view is active on, e.g. `a/m/x` rendered at `a/m~/a/x` — will be looked up among the contexts of `m` rather than its children.
 - [`rootedParentOf`](../src/selectors/rootedParentOf.ts) — parent `Path`, returning `[HOME_TOKEN]` for root children.
 - [`parentOf`](../src/util/parentOf.ts) — parent of a `Path` or `Context` (may be empty).
 - [`appendToPath`](../src/util/appendToPath.ts) — appends one or more thoughts to a `Path` / `SimplePath`, dropping the root token.
