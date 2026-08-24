@@ -35,10 +35,10 @@ describe('tallyVotes', () => {
     expect(result).toMatchObject({ milestone: '📐 Layout', validVotes: 2, totalVotes: 3 })
   })
 
-  it('flags a tie so the gate can withhold the assignment', () => {
+  it('flags a tie, and still reports a winner', () => {
     const result = tallyVotes([vote('🧤 Drag & Drop'), vote('📐 Layout')], TITLES)
     expect(result!.tied).toBe(true)
-    // The winner is still reported so the question posted to a human can name a closest guess.
+    // The winner is what gets assigned; the flag exists so ties can be measured.
     expect(result!.milestone).toBe('🧤 Drag & Drop')
   })
 

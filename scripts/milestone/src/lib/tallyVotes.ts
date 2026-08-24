@@ -52,8 +52,9 @@ const tallyVotes = (rawOutputs: string[], milestoneTitles: string[]): VoteResult
 
   const maxCount = Math.max(...counts.values())
   const leaders = [...counts.entries()].filter(([, count]) => count === maxCount).map(([milestone]) => milestone)
-  // Break a tie by vote order so the winner is deterministic, and so a tied run can still name its
-  // closest guess when it asks a human. The gate is what refuses to assign on a tie.
+  // Break a tie by vote order so the winner is deterministic. A tie is reported but does not change
+  // the outcome: its modal winner is assigned like any other, since a tie is a choice between two
+  // plausible buckets rather than a failure to find one.
   const winning = votes.find(vote => leaders.includes(vote.milestone))!
 
   // Average the self-reported confidence over every vote that chose the winning milestone, rather

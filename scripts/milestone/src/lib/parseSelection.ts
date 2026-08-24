@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-/** Self-reported confidence levels, in ascending order. The order is what the assignment gate compares against. */
+/** Self-reported confidence levels, in ascending order. Reported and measured, but nothing is gated on them. */
 export const CONFIDENCE_LEVELS = ['low', 'medium', 'high'] as const
 
 export type Confidence = (typeof CONFIDENCE_LEVELS)[number]

@@ -2,7 +2,7 @@
 
 Automatic issue categorization for the `em` project. When an issue is opened, this picks the open GitHub milestone that best matches it and assigns it. Milestones here are subsystems rather than releases, so the milestone is the issue's category.
 
-Success is silent — the assigned milestone is the whole result. When the selection is not confident enough to act on, no milestone is assigned and a comment asks @raineorshine for the category instead.
+Success is silent — the assigned milestone is the whole result. The only issues left uncategorized are those that match no existing milestone, where a comment asks @raineorshine for the category instead.
 
 ## Setup
 
@@ -32,7 +32,7 @@ Five independent samples are drawn in one request (self-consistency voting via t
 
 **The milestone is assigned whenever the votes name one.** There is no confidence threshold, and a tie resolves to its modal winner rather than a question — a tie is a choice between two plausible buckets, not a failure to find one.
 
-That was measured rather than assumed. The gate used to require `high` self-reported confidence and 60% agreement, and scoring the signal it depended on showed why that was the wrong shape: **verbalized confidence reaches AUROC 0.53 on the held-out set — indistinguishable from no signal at all.** Thresholding a signal that cannot rank correct predictions above wrong ones does not buy accuracy, it only withholds milestones from issues the categorizer had already placed correctly. Vote agreement carries a little more information (0.60), but the rejection curve prices it plainly: requiring unanimity gains 4 points of accuracy and costs 11 points of coverage.
+There is no threshold because the signal one would rest on does not discriminate. **Verbalized confidence measures AUROC 0.53 on held-out samples — indistinguishable from no signal at all**, and on the blind subset it is exactly 0.50, with every output claiming the same level. Thresholding a signal that cannot rank correct predictions above wrong ones buys no accuracy; it only withholds milestones from issues already placed correctly. Vote agreement carries slightly more (0.54–0.60), and the rejection curve prices it plainly: requiring unanimity gains about 2 points of accuracy and costs 7 of coverage.
 
 The costs here are asymmetric, and not in the intuitive direction. An unmilestoned issue drops out of every milestone view and is found by accident; a wrongly milestoned one sits visibly out of place in a list someone browses, one click from correct. A question posted to a maintainer is the expensive outcome, not the safe one — at any real frequency it recreates the manual triage this tool exists to remove.
 
@@ -70,9 +70,9 @@ The default is `train` on purpose. A held-out set is only meaningful while it st
 
 ### Scoring the confidence signal
 
-Accuracy says how often the categorizer is right. It does not say whether the signal the gate is built on can tell a right answer from a wrong one, which is a different question and the one that decides whether a threshold is worth having. Every run therefore also reports **AUROC** — the probability a correct prediction outranks a wrong one, where 0.5 means the signal carries no information — and **AUARC**, the mean accuracy across every coverage level, for ranking candidate signals against each other.
+Accuracy says how often the categorizer is right. It does not say whether its confidence can tell a right answer from a wrong one, which is a different question and the one that decides whether any threshold is worth having. Every run therefore also reports **AUROC** — the probability a correct prediction outranks a wrong one, where 0.5 means the signal carries no information — and **AUARC**, the mean accuracy across every coverage level, for ranking candidate signals against each other.
 
-Both score the milestone the votes actually named rather than the one the gate let through. Scoring the gated output would bake the current thresholds into the measurement of those same thresholds.
+Both score the milestone the votes actually named rather than whatever survived to be assigned. The two coincide while nothing withholds an assignment, and they are kept distinct so that reintroducing any threshold cannot end up measuring itself.
 
 The accuracy-rejection curve beneath them is the artifact to act on: each row is a candidate gate setting with the coverage and accuracy it would deliver. It is evaluated only at the distinct values the score takes, because these scores are heavily tied and a curve that sliced inside a tied block would report an arbitrary ordering as though it were signal.
 
@@ -80,7 +80,7 @@ Declines are reported as two lines rather than one rate. A genuine no-fit means 
 
 `MILESTONE_EVAL_JSON=path` dumps the graded rows, each carrying the agreement and confidence behind its verdict, so alternative gate thresholds can be scored against a run that already happened rather than paying for inference again.
 
-The harness runs the exact pipeline the workflow uses over every sample and grades it strictly: the assigned milestone must equal the recorded one, and a sample the gate refused to assign counts as a prediction of "no milestone", because that is what production would do. It reports accuracy, precision over the assignments actually made, an outcome breakdown, the mismatches, and a calibration table — then **exits non-zero below `MILESTONE_MIN_ACCURACY`** (default 0.66, set from a blind baseline of 69%), so a prompt edit that regresses accuracy fails rather than printing a slightly worse number nobody compares.
+The harness runs the exact pipeline the workflow uses over every sample and grades it strictly: the assigned milestone must equal the recorded one, and a sample the votes could not place counts as a prediction of "no milestone", because that is what production would do. It reports accuracy, precision over the assignments actually made, an outcome breakdown, the mismatches, and a calibration table — then **exits non-zero below `MILESTONE_MIN_ACCURACY`** (default 0.66, set from a blind baseline of 69%), so a prompt edit that regresses accuracy fails rather than printing a slightly worse number nobody compares.
 
 Run it before and after editing the instructions. It makes model calls but never writes to any issue, and it is deliberately not part of CI.
 

@@ -8,7 +8,7 @@
  * below `MILESTONE_MIN_ACCURACY`, so a prompt change that regresses accuracy fails rather than
  * printing a slightly worse number nobody compares.
  *
- * A sample the gate refuses to assign counts as a prediction of "no milestone", because that is what
+ * A sample the votes could not place counts as a prediction of "no milestone", because that is what
  * production would do. Samples whose `expected` is null are the cases where asking a human is the
  * correct answer.
  *
@@ -51,11 +51,15 @@ export interface EvalRow {
   expected: string | null
   /** What the workflow would have done: the assigned milestone, or null when it would have asked. */
   predicted: string | null
-  /** The milestone the votes landed on, even when the gate withheld it. */
+  /**
+   * The milestone the votes landed on. Identical to `predicted` while nothing withholds an
+   * assignment, and kept separate deliberately: if a gate is ever reintroduced, scoring the signal
+   * against the gated output would measure the thresholds with themselves.
+   */
   guess: string | null
   assigned: boolean
   agreement: number
-  /** Whether the vote tied, which withholds assignment independently of the thresholds. */
+  /** Whether the vote tied. Recorded for measurement only; a tie assigns its modal winner. */
   tied: boolean
   confidence: Confidence
 }
@@ -72,8 +76,6 @@ export interface EvalMetrics {
     askedButFitted: number
     /** Asked a human where asking was the right answer. */
     askedCorrectly: number
-    /** Asked a human even though the withheld guess was the recorded milestone — accuracy the gate cost. */
-    withheldButCorrect: number
   }
   /** Of the milestones actually assigned, the fraction that were right. The cost of a silent mistake. */
   precision: { count: number; total: number; fraction: number }
@@ -86,11 +88,11 @@ export interface EvalMetrics {
 /**
  * Whether a row's vote landed on the right milestone.
  *
- * Deliberately reads `guess`, not `predicted`. `predicted` is null wherever the gate withheld, so
- * scoring against it would bake the current thresholds into the measurement of those same
- * thresholds. `guess` is the milestone the votes actually named, which is what a confidence signal
- * is supposed to rank. Abstention falls out for free: a sample that fits no milestone and was
- * guessed as none counts as correct.
+ * Deliberately reads `guess`, not `predicted`. The two coincide today because nothing withholds an
+ * assignment, but if a gate returns, `predicted` becomes null wherever it withheld — and scoring a
+ * confidence signal against a gated output would measure the thresholds with themselves. `guess` is
+ * the milestone the votes actually named, which is what a signal is supposed to rank. Abstention
+ * falls out for free: a sample that fits no milestone and was guessed as none counts as correct.
  */
 export const isCorrect = (row: EvalRow): boolean => row.guess === row.expected
 
@@ -228,7 +230,6 @@ export const computeMetrics = (rows: EvalRow[]): EvalMetrics => {
       assignedWrong: assignedRows.filter(row => row.predicted !== row.expected).length,
       askedButFitted: rows.filter(row => !row.assigned && row.expected !== null).length,
       askedCorrectly: rows.filter(row => !row.assigned && row.expected === null).length,
-      withheldButCorrect: rows.filter(row => !row.assigned && row.guess !== null && row.guess === row.expected).length,
     },
     precision: {
       count: assignedRows.filter(row => row.predicted === row.expected).length,
@@ -334,9 +335,6 @@ export const formatReport = (metrics: EvalMetrics): string => {
   lines.push(`  assigned, wrong   : ${metrics.outcomes.assignedWrong}`)
   lines.push(`  asked, but fitted : ${metrics.outcomes.askedButFitted}`)
   lines.push(`  asked, correctly  : ${metrics.outcomes.askedCorrectly}`)
-  // Kept as a regression signal now that nothing gates on confidence: this should stay at zero, and
-  // a non-zero value means something is withholding a milestone the votes placed correctly.
-  lines.push(`  withheld a correct guess: ${metrics.outcomes.withheldButCorrect}`)
 
   lines.push('')
   lines.push('Confusion (expected → predicted), mismatches only:')

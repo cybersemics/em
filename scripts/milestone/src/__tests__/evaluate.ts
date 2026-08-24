@@ -40,21 +40,7 @@ describe('computeMetrics', () => {
       assignedWrong: 2,
       askedButFitted: 1,
       askedCorrectly: 1,
-      withheldButCorrect: 0,
     })
-  })
-
-  it('counts a correct guess the gate withheld, which is what relaxing the gate would recover', () => {
-    const withheld: EvalRow = {
-      expected: 'C',
-      predicted: null,
-      guess: 'C',
-      assigned: false,
-      agreement: 0.5,
-      tied: false,
-      confidence: 'medium',
-    }
-    expect(computeMetrics([...rows, withheld]).outcomes.withheldButCorrect).toBe(1)
   })
 
   it('measures precision over assignments only, since only those are silent', () => {
