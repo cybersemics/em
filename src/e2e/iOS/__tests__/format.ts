@@ -3,10 +3,11 @@
  * Uses WDIO test runner with Mocha framework.
  */
 import clickThought from '../helpers/clickThought'
+import getEditingText from '../helpers/getEditingText'
 import hideKeyboardByTappingDone from '../helpers/hideKeyboardByTappingDone'
 import newThought from '../helpers/newThought'
 import paste from '../helpers/paste'
-import tap from '../helpers/tap.js'
+import tapToolbar from '../helpers/tapToolbar.js'
 
 describe('Format', () => {
   it('applying bold to an unfocused cursor thought does not open the keyboard', async () => {
@@ -21,10 +22,13 @@ describe('Format', () => {
     const scrollBefore = await browser.execute(() => window.scrollY)
 
     // 4. Apply bold by tapping the Bold toolbar icon.
-    const boldButton = await browser.$('[data-testid="toolbar-icon"][aria-label="Bold"]').getElement()
-    await tap(boldButton, { y: 60 })
+    await tapToolbar('Bold')
 
-    // 5. Measure the scroll position again and ensure it did not change (#3999).
+    // 5. Assert that bold was actually applied. Without this the test passes even when the tap misses the button
+    // entirely, since a tap that hits nothing trivially satisfies the scroll assertion below.
+    expect(await getEditingText()).toBe('<b>Thought One</b>')
+
+    // 6. Measure the scroll position again and ensure it did not change (#3999).
     const scrollAfter = await browser.execute(() => window.scrollY)
     expect(scrollAfter).toBe(scrollBefore)
   })
@@ -38,10 +42,7 @@ describe('Format', () => {
     await clickThought('One') // set the cursor on the thought
 
     // Apply a blue background highlight via the toolbar.
-    const textColor = await browser.$('[data-testid="toolbar-icon"][aria-label="Text Color"]').getElement()
-    await tap(textColor, { y: 60, pointerType: 'touch' })
-    const blueBg = await browser.$('[aria-label="background color swatches"] [aria-label="blue"]').getElement()
-    await tap(blueBg, { y: 60, pointerType: 'touch' })
+    await tapToolbar('Text Color', 'background color swatches', 'blue')
 
     /** Native undo closes the keyboard, so the editable will lose focus.
      * Reads the innerHTML of the (single) thought, independent of edit/keyboard state. */

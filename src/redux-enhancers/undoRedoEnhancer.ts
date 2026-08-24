@@ -7,12 +7,15 @@ import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
 import Patch from '../@types/Patch'
 import State from '../@types/State'
+import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import { editThoughtPayload } from '../actions/editThought'
 import editableRender from '../actions/editableRender'
 import updateThoughts from '../actions/updateThoughts'
+import { getChildrenRanked } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import { isNavigation, isUndoable } from '../util/actionMetadata.registry'
+import equalArrays from '../util/equalArrays'
 import headValue from '../util/headValue'
 import reducerFlow from '../util/reducerFlow'
 import stripTags from '../util/stripTags'
@@ -41,6 +44,29 @@ function isEditThoughtAction(action: UnknownAction): action is UnknownAction & e
   return action.type === 'editThought'
 }
 
+/** Returns true when a restored note offset is being cleared after the caret has been placed. */
+function isClearNoteOffsetAction(action: UnknownAction): boolean {
+  return action.type === 'setNoteFocus' && action.value === true && action.offset === null
+}
+
+/** Gets plain text from html. */
+function getTextContent(value: string): string {
+  const element = document.createElement('div')
+  element.innerHTML = value
+  return element.textContent || ''
+}
+
+/** Infers the note caret offset before an edit from its post-edit offset and plain-text length delta. */
+function getNoteOffsetBeforeEdit(action: UnknownAction): number | null {
+  if (!isEditThoughtAction(action) || action.noteOffset == null) return null
+
+  const oldTextLength = getTextContent(action.oldValue).length
+  const newTextLength = getTextContent(action.newValue).length
+  const noteOffsetBeforeEdit = action.noteOffset + oldTextLength - newTextLength
+
+  return Math.max(0, Math.min(oldTextLength, noteOffsetBeforeEdit))
+}
+
 /** Compare the text contents of the old and new values to determine the direction of the edit.
  * Returns None if the action is not an editThought action or if the text content length is the same.
  * Formatting edits (bold, italic, color) and case changes (HELLO → hello) preserve text length and return None.
@@ -48,14 +74,12 @@ function isEditThoughtAction(action: UnknownAction): action is UnknownAction & e
 function getEditThoughtDirection(action: UnknownAction): EditThoughtDirection {
   if (!isEditThoughtAction(action)) return EditThoughtDirection.None
 
-  const oldElement = document.createElement('div')
-  const newElement = document.createElement('div')
-  oldElement.innerHTML = action.oldValue
-  newElement.innerHTML = action.newValue
+  const oldText = getTextContent(action.oldValue)
+  const newText = getTextContent(action.newValue)
 
-  return newElement.textContent.length === oldElement.textContent.length
+  return newText.length === oldText.length
     ? EditThoughtDirection.None
-    : newElement.textContent.length > oldElement.textContent.length
+    : newText.length > oldText.length
       ? EditThoughtDirection.Longer
       : EditThoughtDirection.Shorter
 }
@@ -64,8 +88,84 @@ function getEditThoughtDirection(action: UnknownAction): EditThoughtDirection {
  * The editableNonce is a transient re-render trigger (incremented by editableRender and by force edits), not real state.
  * It must be excluded from patches, otherwise undoing a force edit reverts the nonce and editableRender re-increments
  * it to the same value, resulting in no net change. The ContentEditable then fails to update its innerHTML while
- * editing (allowInnerHTMLChange is false), so undoing a formatting/letter-case edit appears to do nothing. */
-const statePropertiesToOmit: (keyof State)[] = ['alert', 'cursorCleared', 'editableNonce', 'pushQueue']
+ * editing (allowInnerHTMLChange is false), so undoing a formatting/letter-case edit appears to do nothing.
+ * The isKeyboardOpen flag is likewise device state, not document state: it reflects whether the virtual keyboard is
+ * currently up. Actions that open it as a side effect (newThought, setCursor) would otherwise record the transition in
+ * their patch, so undoing them silently closes edit mode. That desyncs the flag from the real keyboard mid-reducer and
+ * drives the dismissal machinery (clearSelection -> selection.clear -> Keyboard.hide), which then fights the next
+ * thought's attempt to raise the keyboard (#4692). Undo/redo must never move the keyboard; only the blur and
+ * dismissKeyboard paths may.
+ * The selectionOffsets snapshot is likewise device state: it records where the browser selection was before a UI took
+ * the focus, so restoring the one that happened to be current when an action was undone would resurrect a selection
+ * the user has long since moved on from. */
+const statePropertiesToOmit: (keyof State)[] = [
+  'alert',
+  'cursorCleared',
+  'editableNonce',
+  'isKeyboardOpen',
+  'pushQueue',
+  'selectionOffsets',
+]
+
+/** Reconstructs TreeCRDT move updates and placement metadata from the final state produced by an undo/redo patch. */
+const restoreMoveUpdatesFromThoughtUpdates = (
+  state: State,
+  oldState: State,
+  thoughtIndexUpdates: Index<Thought | null>,
+): {
+  thoughtIndexUpdates: Index<Thought | null>
+  movePlacements: Index<ThoughtId | null>
+} => {
+  const touchedParentIds = Object.entries(thoughtIndexUpdates).reduce<Set<ThoughtId>>((acc, [id, thought]) => {
+    const thoughtId = id as ThoughtId
+    if (!thought) return acc
+
+    const oldThought = getThoughtById(oldState, thoughtId)
+    const moved = oldThought && (oldThought.parentId !== thought.parentId || oldThought.rank !== thought.rank)
+    if (!moved) return acc
+
+    acc.add(oldThought.parentId)
+    acc.add(thought.parentId)
+    return acc
+  }, new Set())
+
+  const { thoughtIndexUpdates: moveThoughtIndexUpdates, movePlacements } = [...touchedParentIds].reduce<{
+    thoughtIndexUpdates: Index<Thought | null>
+    movePlacements: Index<ThoughtId | null>
+  }>(
+    (acc, parentId) => {
+      const oldChildren = getChildrenRanked(oldState, parentId).map(child => child.id)
+      const children = getChildrenRanked(state, parentId)
+      const childIds = children.map(child => child.id)
+      if (equalArrays(oldChildren, childIds)) return acc
+
+      children.forEach((child, i) => {
+        const childThought = getThoughtById(state, child.id)
+        if (!childThought) return
+
+        acc.thoughtIndexUpdates[child.id] = childThought
+        acc.movePlacements[child.id] = i === 0 ? null : childIds[i - 1]
+      })
+
+      return acc
+    },
+    { thoughtIndexUpdates: {}, movePlacements: {} },
+  )
+
+  const moveThoughtIds = new Set(Object.keys(movePlacements))
+  const nonMoveThoughtIndexUpdates = Object.entries(thoughtIndexUpdates).reduce<Index<Thought | null>>(
+    (acc, [id, thought]) => (moveThoughtIds.has(id) ? acc : { ...acc, [id]: thought }),
+    {},
+  )
+
+  return {
+    thoughtIndexUpdates: {
+      ...nonMoveThoughtIndexUpdates,
+      ...moveThoughtIndexUpdates,
+    },
+    movePlacements,
+  }
+}
 
 /**
  * Manually recreate the pushQueue for thought and thought index updates from patches.
@@ -82,7 +182,7 @@ const restorePushQueueFromPatches = (state: State, oldState: State, patch: Patch
       [lexemeKey]: state.thoughts.lexemeIndex[lexemeKey] || null,
     }
   }, {})
-  const thoughtIndexUpdates = thoughtIndexChanges.reduce((acc, { path }) => {
+  const thoughtIndexUpdates = thoughtIndexChanges.reduce<Index<Thought | null>>((acc, { path }) => {
     const id = path.slice('/thoughts/thoughtIndex/'.length).split('/')[0]
     return {
       ...acc,
@@ -102,10 +202,15 @@ const restorePushQueueFromPatches = (state: State, oldState: State, patch: Patch
     cursor: state.cursor,
     editingValue: state.cursor ? headValue(state, state.cursor) : null,
   }
+  const moveUpdates = restoreMoveUpdatesFromThoughtUpdates(state, oldState, thoughtIndexUpdates)
 
   return {
     ...state,
-    pushQueue: updateThoughts({ lexemeIndexUpdates, thoughtIndexUpdates })(oldStateWithUpdatedCursor).pushQueue,
+    pushQueue: updateThoughts({
+      lexemeIndexUpdates,
+      thoughtIndexUpdates: moveUpdates.thoughtIndexUpdates,
+      ...(Object.keys(moveUpdates.movePlacements).length > 0 ? { movePlacements: moveUpdates.movePlacements } : null),
+    })(oldStateWithUpdatedCursor).pushQueue,
   }
 }
 
@@ -176,10 +281,16 @@ const redoOneReducer = (state: State): State => {
   }
 }
 
+/** Moves the caret to the end of the cursor thought. Undo/redo otherwise restores the cursorOffset captured before the undone action, which can be anywhere in the thought (the tap position on iOS, or 0), leaving the caret away from the word that was just restored. */
+const cursorOffsetAtEnd = (state: State): State => ({
+  ...state,
+  cursorOffset: state.cursor ? stripTags(headValue(state, state.cursor) ?? '').length : null,
+})
+
 /**
  * Controls the number of undo operations based on the undo history.
  */
-const undoReducer = (state: State, undoPatches: Patch[]): State => {
+const undoReducer = (state: State, undoPatches: Patch[], cursorAtEnd?: boolean): State => {
   const lastUndoPatch = nthLast(undoPatches, 1)
   const lastAction = lastUndoPatch && getPatchAction(lastUndoPatch)
   const penultimateUndoPatch = nthLast(undoPatches, 2)
@@ -221,6 +332,7 @@ const undoReducer = (state: State, undoPatches: Patch[]): State => {
     undoTwice ? undoOneReducer : null,
     newState => restorePushQueueFromPatches(newState, state, poppedUndoPatches.flat()),
     !undoTwice && lastPatchIsFormatting ? (s: State) => ({ ...s, cursorOffset: priorCursorOffset }) : null,
+    cursorAtEnd ? cursorOffsetAtEnd : null,
     editableRender,
   ])(state)
 }
@@ -228,7 +340,7 @@ const undoReducer = (state: State, undoPatches: Patch[]): State => {
 /**
  * Controls the number of redo operations based on the patch history.
  */
-const redoReducer = (state: State, redoPatches: Patch[]): State => {
+const redoReducer = (state: State, redoPatches: Patch[], cursorAtEnd?: boolean): State => {
   const lastRedoPatch = nthLast(redoPatches, 1)
   const lastAction = lastRedoPatch && getPatchAction(lastRedoPatch)
 
@@ -242,6 +354,7 @@ const redoReducer = (state: State, redoPatches: Patch[]): State => {
     redoTwice ? redoOneReducer : null,
     redoOneReducer,
     newState => restorePushQueueFromPatches(newState, state, poppedRedoPatches.flat()),
+    cursorAtEnd ? cursorOffsetAtEnd : null,
     editableRender,
   ])(state)
 }
@@ -283,11 +396,14 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         lastAction = undefined
         lastEditThoughtDirection = EditThoughtDirection.None
 
+        // Native undo/redo (iOS three-finger swipe, shake-to-undo) sets cursorAtEnd to place the caret at the end of the restored thought.
+        const cursorAtEnd = !!(action as UnknownAction).cursorAtEnd
+
         const undoOrRedoState =
           actionType === 'undo'
-            ? undoReducer(state, undoPatches)
+            ? undoReducer(state, undoPatches, cursorAtEnd)
             : actionType === 'redo'
-              ? redoReducer(state, redoPatches)
+              ? redoReducer(state, redoPatches, cursorAtEnd)
               : null
 
         // do not omit pushQueue because that includes updates added by updateThoughts
@@ -306,6 +422,9 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       if (
         // bail if state has not changed
         state === newState ||
+        // Clearing a one-shot note offset after restoring the caret is ephemeral. Recording it as a navigation
+        // action would clear the redo stack immediately after undo.
+        isClearNoteOffsetAction(action) ||
         // bail if the action is not undoable.
         // Exception: multicursor actions dispatched while a multicursor command is executing belong to the command's
         // single undo entry, e.g. the addMulticursor calls that restore the multiselect at the end of
@@ -384,7 +503,11 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       lastEditThoughtDirection = editThoughtDirection
 
       // add a new undo patch
-      const undoPatch = diffState(newState as Index, state)
+      // Note focus intentionally does not dispatch on every caret movement. For the first note edit after focus,
+      // infer the pre-edit caret so the inverse patch can restore it instead of leaving the caret at the end.
+      const noteOffsetBeforeEdit = getNoteOffsetBeforeEdit(action)
+      const stateBeforeAction = noteOffsetBeforeEdit == null ? state : { ...state, noteOffset: noteOffsetBeforeEdit }
+      const undoPatch = diffState(newState as Index, stateBeforeAction)
       return undoPatch.length
         ? {
             ...newState,

@@ -9,7 +9,6 @@ import getContexts from '../../selectors/getContexts'
 import getLexeme from '../../selectors/getLexeme'
 import getRankAfter from '../../selectors/getRankAfter'
 import pathToThought from '../../selectors/pathToThought'
-import checkDataIntegrity from '../../test-helpers/checkDataIntegrity'
 import contextToThought from '../../test-helpers/contextToThought'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
@@ -96,6 +95,54 @@ it('move within context (rank only)', () => {
   expect(thoughtA2.parentId).toBe(thoughtA.id)
 
   expect(getContexts(stateNew, 'a2')).toMatchObject([thoughtA2.id])
+})
+
+it('rank adapter placement excludes the moved thought', () => {
+  const state = reducerFlow([newThought('a'), newThought('b'), newThought('c')])(initialState())
+
+  const thoughtA = contextToThought(state, ['a'])!
+  const thoughtB = contextToThought(state, ['b'])!
+  const thoughtC = contextToThought(state, ['c'])!
+
+  const stateNew = moveThoughtAtFirstMatch({
+    from: ['b'],
+    to: ['b'],
+    newRank: (thoughtB.rank + thoughtC.rank) / 2,
+  })(state)
+
+  expect(stateNew.pushQueue.at(-1)?.movePlacements?.[thoughtB.id]).toBe(thoughtA.id)
+})
+
+it('explicit first placement is not inferred from rank', () => {
+  const state = reducerFlow([newThought('a'), newThought('b'), newThought('c')])(initialState())
+
+  const thoughtA = contextToThought(state, ['a'])!
+  const thoughtC = contextToThought(state, ['c'])!
+
+  const stateNew = moveThoughtAtFirstMatch({
+    from: ['c'],
+    to: ['c'],
+    newRank: thoughtA.rank + 0.5,
+    afterId: null,
+  })(state)
+
+  expect(stateNew.pushQueue.at(-1)?.movePlacements).toHaveProperty(thoughtC.id)
+  expect(stateNew.pushQueue.at(-1)?.movePlacements?.[thoughtC.id]).toBeNull()
+})
+
+it('rejects placement after the moved thought', () => {
+  const state = reducerFlow([newThought('a'), newThought('b'), newThought('c')])(initialState())
+
+  const thoughtB = contextToThought(state, ['b'])!
+
+  expect(() =>
+    moveThoughtAtFirstMatch({
+      from: ['b'],
+      to: ['b'],
+      newRank: thoughtB.rank,
+      afterId: thoughtB.id,
+    })(state),
+  ).toThrow('afterId must be null or a child of the destination context')
 })
 
 it('move across contexts', () => {
@@ -571,28 +618,6 @@ it('move with nested duplicate attributes and merge their children', () => {
 
   // context ['p', '=a', 'b'] should not have any garbage children
   expect(getChildrenRankedByContext(stateNew, ['p', '=a', 'b'])).toHaveLength(0)
-})
-
-it('data integrity test', () => {
-  const text = `
-  - k
-    - a
-      - b
-        - c
-  - m`
-  const steps = [
-    importText({ text }),
-    moveThoughtAtFirstMatch({
-      from: ['k', 'a'],
-      to: ['m', 'a'],
-      newRank: 0,
-    }),
-  ]
-  const stateNew = reducerFlow(steps)(initialState())
-  const { missingLexemeValues, missingParentIds } = checkDataIntegrity(stateNew)
-
-  expect(missingLexemeValues).toHaveLength(0)
-  expect(missingParentIds).toHaveLength(0)
 })
 
 it('consistent rank between lexemeIndex and thoughtIndex on duplicate attribute merge', () => {

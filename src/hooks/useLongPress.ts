@@ -21,7 +21,7 @@ export interface LongPressProps {
 
 /** Custom hook to manage long press.
  * The onLongPressStart handler is called after the delay if the user is still pressing.
- * The onLongPressEnd handler is called when the long press ends, either by the user lifting their finger (touchend, mouseup) or by the user moving their finger (touchmove, touchcancel, mousemove). It receives the event that ended the long press, if any, so that modifier keys can be read.
+ * The onLongPressEnd handler is called when the long press ends, either by the user lifting their finger (touchend, mouseup) or by the user moving their finger (touchmove, touchcancel, mousemove). It receives the event that ended the long press, if any, so that modifier keys and the event type (e.g. touchend vs touchcancel) can be read.
  **/
 const useLongPress = (
   onLongPressStart: (() => void) | null = noop,

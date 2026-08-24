@@ -4,8 +4,8 @@ import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtIndices from '../@types/ThoughtIndices'
 import Timestamp from '../@types/Timestamp'
-import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, LongPressState, ROOT_PARENT_ID, SCHEMA_LATEST } from '../constants'
-import { clientId, tsidShared } from '../data-providers/yjs'
+import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, LongPressState, ROOT_PARENT_ID } from '../constants'
+import { clientId, tsidShared } from '../data-providers/thoughtspaceSession'
 import storageModel from '../stores/storageModel'
 import hashThought from '../util/hashThought'
 import never from '../util/never'
@@ -131,6 +131,8 @@ const initialState = (created: Timestamp = timestamp()) => {
     longPress: LongPressState.Inactive,
     manualSortMap: {},
     modals: {},
+    multicursorAnchor: null,
+    multicursorRange: {},
     multicursors: {},
     noteFocus: false,
     noteOffset: null,
@@ -138,8 +140,15 @@ const initialState = (created: Timestamp = timestamp()) => {
     redoPatches: [],
     resourceCache: {},
     rootContext: [HOME_TOKEN],
-    schemaVersion: SCHEMA_LATEST,
     search: null,
+    selectionOffsets: null,
+    // clear resets the app by merging initialState() into the previous state through reducerFlow, so a dropdown flag
+    // omitted here would survive a clear and leave the dropdown open.
+    showBulletPicker: false,
+    showColorPicker: false,
+    showLetterCase: false,
+    showSortPicker: false,
+    showUndoSlider: false,
     showDesktopCommandUniverse: false,
     showGestureMenu: false,
     remoteSearch: false,

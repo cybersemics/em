@@ -467,6 +467,34 @@ describe('uncategorizing contexts with meta attributes', () => {
   - e`)
   })
 
+  it('should delete =descendants/=pin when uncategorizing a context', () => {
+    const steps = [
+      importText({
+        text: `
+          - a
+            - b
+              - =descendants
+                - =pin
+                  - true
+              - c
+            - d
+          - e
+        `,
+      }),
+      setCursor(['a', 'b']),
+      uncategorize({}),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - c
+    - d
+  - e`)
+  })
+
   it('should keep =children if it has remaining children after uncategorizing', () => {
     const steps = [
       importText({

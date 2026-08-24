@@ -1,5 +1,10 @@
+/* eslint-disable import/prefer-default-export */
 import chalk from 'chalk'
-import { Browser, BrowserContext, ConsoleMessage, Device } from 'puppeteer'
+import { Browser, BrowserContext, ConsoleMessage, Device, Page } from 'puppeteer'
+import type { PreloadedEmWindow } from '../../@types'
+import type { ThoughtspaceStorage } from '../../data-providers/thoughtspace'
+import createId from '../../util/createId'
+import deviceEmulation from './helpers/deviceEmulation'
 import { page, setPage } from './session'
 
 // eslint-disable-next-line @typescript-eslint/no-namespace, @typescript-eslint/prefer-namespace-keyword
@@ -8,6 +13,43 @@ declare module global {
 }
 
 let context: BrowserContext
+let activeThoughtspaceStorage: ThoughtspaceStorage = 'memory'
+
+/** Selects thoughtspace storage before a Puppeteer page starts the app. */
+const preloadThoughtspaceStorage = (target: Page, storage: ThoughtspaceStorage) =>
+  target.evaluateOnNewDocument(storage => {
+    const preloadedWindow: PreloadedEmWindow = window
+    preloadedWindow.em = {
+      ...preloadedWindow.em,
+      testFlags: {
+        ...preloadedWindow.em?.testFlags,
+        thoughtspaceStorage: storage,
+      },
+    }
+  }, storage)
+
+/** Opens an additional page with the requested thoughtspace storage. */
+export const createTreecrdtTestPage = async (
+  browserContext: BrowserContext,
+  storage: ThoughtspaceStorage,
+): Promise<Page> => {
+  const target = await browserContext.newPage()
+  await preloadThoughtspaceStorage(target, storage)
+  return target
+}
+
+/** Use persistent OPFS storage for tests that verify reload/materialization from storage. */
+export const usePersistentTreecrdtStorage = (): ThoughtspaceStorage => {
+  beforeAll(() => {
+    activeThoughtspaceStorage = 'persistent'
+  })
+
+  afterAll(() => {
+    activeThoughtspaceStorage = 'memory'
+  })
+
+  return 'persistent'
+}
 
 /** Opens em in a new incognito window in Puppeteer. */
 const setup = async ({
@@ -15,7 +57,7 @@ const setup = async ({
   // Use host.docker.internal to connect to the host machine from inside the container. On Github actions, host.docker.internal is not available, so use 172.17.0.1 instead.
   url = process.env.CI ? 'https://172.17.0.1:3000' : 'https://host.docker.internal:2552',
   // url = 'https://google.com',
-  emulatedDevice,
+  emulatedDevice = deviceEmulation.device,
   skipTutorial = true,
 }: {
   puppeteerBrowser?: Browser
@@ -33,6 +75,20 @@ const setup = async ({
   if (emulatedDevice) {
     await page.emulate(emulatedDevice)
   }
+
+  const sessionId = createId()
+
+  await page.evaluateOnNewDocument(sessionId => {
+    if (!sessionStorage.getItem('__em_puppeteer_storage_initialized')) {
+      localStorage.clear()
+      sessionStorage.setItem('__em_puppeteer_storage_initialized', '1')
+    }
+
+    localStorage.setItem('tsid', sessionId)
+    localStorage.setItem('accessToken', sessionId)
+  }, sessionId)
+
+  await preloadThoughtspaceStorage(page, activeThoughtspaceStorage)
 
   page.on('dialog', async dialog => dialog.accept())
 
@@ -77,8 +133,18 @@ const setup = async ({
 
 beforeEach(setup, 60000)
 
+// TreeCRDT teardown can drain OPFS writes from import-heavy tests before dropping storage.
 afterEach(async () => {
   if (page) {
+    await page
+      .evaluate(async () => {
+        await window.em?.testHelpers?.waitForThoughtspaceRuntimeIdle?.()
+        await window.em?.testHelpers?.dropThoughtspace?.()
+      })
+      .catch(() => {
+        // Ignore teardown errors when a failing test has already closed or navigated the page.
+      })
+
     await page.close().catch(() => {
       // Ignore errors when closing the page.
     })
@@ -89,4 +155,4 @@ afterEach(async () => {
       // Ignore errors when closing the context.
     })
   }
-})
+}, 60000)

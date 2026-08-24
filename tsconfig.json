@@ -27,8 +27,10 @@
       // DefaultRootState was removed in v8 and thus cannot be augmented anymore.
       // https://stackoverflow.com/a/78550104/480608
       "react-redux-default": ["./node_modules/react-redux"],
-      "react-redux": ["./src/@types/react-redux.d.ts"]
+      "react-redux": ["./src/@types/react-redux.d.ts"],
+      "@treecrdt/wa-sqlite/client": ["./node_modules/@treecrdt/wa-sqlite/dist/client.d.ts"],
+      "@treecrdt/wa-sqlite/vite-plugin": ["./node_modules/@treecrdt/wa-sqlite/dist/vite-plugin.d.ts"]
     },
-    "types": ["vitest/globals", "@wdio/globals/types", "@wdio/mocha-framework", "@wdio/browserstack-service"]
+    "types": ["node", "vitest/globals", "@wdio/globals/types", "@wdio/mocha-framework", "@wdio/browserstack-service"]
   }
 }

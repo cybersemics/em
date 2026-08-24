@@ -72,6 +72,21 @@ describe('render', () => {
     expect(bullets.length).toBe(0)
   })
 
+  it('do not render a bullet on a thought with UTF-8 ellipsis character "…"', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - …
+      `,
+      }),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const bullets = document.querySelectorAll('[aria-label="bullet"]')
+    expect(bullets.length).toBe(0)
+  })
+
   it('do not render a bullet on a formatted thought with value "..."', async () => {
     await dispatch([
       importText({
@@ -266,6 +281,32 @@ describe('render', () => {
     const leaves = document.querySelectorAll('[data-bullet="leaf"]')
     expect(leaves.length).toBe(0)
   })
+
+  it('render a lettered glyph instead of a bullet for =children/=bullet/Alpha', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - x
+          - =children
+            - =bullet
+              - Alpha
+          - a
+          - b
+          - c
+      `,
+      }),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // a, b, c should render lettered glyphs a, b, c instead of leaf bullets
+    const lettered = document.querySelectorAll('[data-bullet="alpha"]')
+    expect(Array.from(lettered).map(el => el.textContent)).toEqual(['a.', 'b.', 'c.'])
+
+    // the lettered children should not render a leaf bullet glyph
+    const leaves = document.querySelectorAll('[data-bullet="leaf"]')
+    expect(leaves.length).toBe(0)
+  })
 })
 
 describe('expansion', () => {
@@ -398,7 +439,7 @@ describe('expansion', () => {
     await act(vi.runOnlyPendingTimersAsync)
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toEqual(`- __ROOT__
+    expect(exported).toEqual(`- ${HOME_TOKEN}
   - a
     - b
       - c
@@ -425,7 +466,7 @@ describe('expansion', () => {
     await act(() => vi.runAllTimersAsync())
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toEqual(`- __ROOT__
+    expect(exported).toEqual(`- ${HOME_TOKEN}
   - a
     - b
       - =pin
@@ -457,7 +498,7 @@ describe('expansion', () => {
     await act(() => vi.runAllTimersAsync())
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toEqual(`- __ROOT__
+    expect(exported).toEqual(`- ${HOME_TOKEN}
   - a
     - =children
       - =pin
@@ -468,6 +509,41 @@ describe('expansion', () => {
       - c
     - d
       - e`)
+  })
+
+  it('tapping on the bullet of a thought expanded by =descendants on an ancestor should unpin it', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - a
+          - =descendants
+            - =pin
+              - true
+          - b
+            - c
+              - d
+      `,
+      }),
+    ])
+
+    const bulletOfThoughtC = getBulletByContext(['a', 'b', 'c'])
+
+    const user = userEvent.setup({ delay: null })
+    await user.click(bulletOfThoughtC)
+
+    await act(() => vi.runAllTimersAsync())
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toEqual(`- ${HOME_TOKEN}
+  - a
+    - =descendants
+      - =pin
+        - true
+    - b
+      - c
+        - =pin
+          - false
+        - d`)
   })
 })
 
@@ -587,7 +663,7 @@ describe('multiselect', () => {
     await clickWithModifiers(getBulletByContext(['b']), { shiftKey: true })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toEqual(`- __ROOT__
+    expect(exported).toEqual(`- ${HOME_TOKEN}
   - a
   - b
     - c`)

@@ -4,6 +4,7 @@ import { isSafari, isTouch } from '../browser'
 import { ColorToken } from '../colors.config'
 import * as selection from '../device/selection'
 import globals from '../globals'
+import hasMulticursor from '../selectors/hasMulticursor'
 import noteValue from '../selectors/noteValue'
 import pathToThought from '../selectors/pathToThought'
 import resolveNotePath from '../selectors/resolveNotePath'
@@ -13,6 +14,7 @@ import { updateCommandState } from '../stores/commandStateStore'
 import formatSelectionHtml, { FormatCommand } from '../util/formatSelectionHtml'
 import { editThoughtActionCreator as editThought } from './editThought'
 import { setDescendantActionCreator as setDescendant } from './setDescendant'
+import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from './setIsMulticursorExecuting'
 import { setNoteFocusActionCreator as setNoteFocus } from './setNoteFocus'
 
 /**
@@ -57,6 +59,41 @@ export const formatSelectionActionCreator =
   (command: FormatCommand, color?: ColorToken): Thunk =>
   (dispatch, getState) => {
     const state = getState()
+
+    // Multicursor: apply the color to each selected thought in full, since there is no browser selection.
+    if (hasMulticursor(state) && (command === 'foreColor' || command === 'backColor')) {
+      const colors = themeColors(state)
+      dispatch([
+        // Bracket the per-thought edits with setIsMulticursorExecuting so that they collapse into a single undo step, as
+        // executeCommandWithMulticursor does for multicursor commands. Otherwise each selected thought would have to be
+        // undone individually (#4841).
+        setIsMulticursorExecuting({ value: true, undoLabel: 'textColor' }),
+
+        ...Object.values(state.multicursors).map(path => {
+          const thought = pathToThought(state, path)
+          if (!thought) return null
+          const newValue = formatSelectionHtml(thought.value, {
+            command,
+            colorValue: color ? colors[color] : undefined,
+            defaultColor: colors.fg,
+            defaultBackgroundColor: colors.bg,
+          })
+          return newValue !== thought.value
+            ? editThought({
+                oldValue: thought.value,
+                newValue,
+                path: simplifyPath(state, path),
+                // force the ContentEditable to update
+                force: true,
+              })
+            : null
+        }),
+
+        setIsMulticursorExecuting({ value: false }),
+      ])
+      return
+    }
+
     if (!state.cursor) return
     const thought = pathToThought(state, state.cursor)
     if (!thought) return

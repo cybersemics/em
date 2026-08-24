@@ -57,12 +57,33 @@ on:
         description: 'Optional ID for tracking repeated runs'
         required: false
 
+# Supersede the in-progress run when a pull request is pushed again; its result is about to be
+# replaced anyway. Only pull_request runs are grouped: `github.ref` is `refs/pull/<n>/merge` there,
+# so it is already per-PR. (vercel-preview.yml must key on the PR number instead because
+# pull_request_target sets github.ref to the base branch.)
+#
+# Every other event falls back to github.run_id, which is unique per run and therefore never
+# collides. That is deliberate, and not the same as cancel-in-progress: false — a shared group with
+# cancellation off *queues* runs, and GitHub cancels a pending run when a newer one queues behind
+# it. Pushes to main each need their own result to identify the commit that broke the build, and the
+# `ghworkflow` flake hunt (docs/testing.md § Triggering GitHub Actions workflows manually) fans out
+# many workflow_dispatch runs on one ref that must all run.
+#
+# Cancelling is safe for the downstream pair: puppeteer-diff-comment.yml acts only on a `success`
+# or `failure` conclusion, so a cancelled run posts nothing from its partial artifacts. The
+# browserless service container lives inside the job and dies with it — nothing is shared across
+# runs the way ios.yml's BrowserStack session pool is, which is why that one queues instead.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: true
+
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   CI: true
   COPILOT_AGENT_FIREWALL_ALLOW_LIST_ADDITIONS: googlechromelabs.github.io,storage.googleapis.com
-  # Skip Puppeteer's Chrome download on install — no CI job uses the bundled browser (Puppeteer
-  # tests attach to the browserless/chrome service via CDP), saving ~20s per install.
+  # Skip Puppeteer's Chrome download on install — none of this workflow's jobs uses the bundled
+  # browser (Puppeteer tests attach to the browserless/chrome service via CDP; only
+  # agent-scripts.yml launches the bundled browser), saving ~20s per install.
   PUPPETEER_SKIP_DOWNLOAD: true
 
 jobs:

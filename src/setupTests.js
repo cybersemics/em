@@ -40,6 +40,36 @@ if (typeof Range.prototype.getClientRects !== 'function') {
   Range.prototype.getClientRects = () => []
 }
 
+// Likewise for getBoundingClientRect, which selection.caretRect uses to measure the caret. Reachable in jsdom
+// only once an editable actually holds the focus, which is what useEditMode does when placing the caret.
+if (typeof Range.prototype.getBoundingClientRect !== 'function') {
+  Range.prototype.getBoundingClientRect = () => ({
+    x: 0,
+    y: 0,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: 0,
+    height: 0,
+    toJSON: () => ({}),
+  })
+}
+
+// jsdom swallows exceptions thrown inside DOM event listeners: it catches them and reports them as an
+// `error` event on window instead of letting them propagate out of dispatchEvent. Vitest turns that event back
+// into a run-failing unhandled error, but only while no other `error` listener is registered — and initEvents
+// registers one at module scope for the error banner, so importing app code silently disables it and a test
+// that crashes on every click still passes. Re-fail the run explicitly. Only trusted events are re-thrown, so
+// tests that dispatch a synthetic ErrorEvent to exercise the banner (src/util/__tests__/initEvents.ts) are
+// unaffected.
+window.addEventListener('error', e => {
+  if (!e.isTrusted || !e.error) return
+  // Mark the event handled so jsdom does not additionally log it to the virtual console.
+  e.preventDefault()
+  process.emit('uncaughtException', e.error)
+})
+
 // stub jest globally. This is needed incase jest is being directly referenced in the code.
 vi.stubGlobal('jest', vi)
 

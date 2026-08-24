@@ -162,6 +162,16 @@ async function claim(
   const logStream = fs.createWriteStream(CONNECTOR_LOG_PATH, { flags: 'a' })
   logStream.write(`\n--- claiming ${candidate.name} (${candidate.hostname}) ---\n`)
 
+  // Child-scoped TUNNEL_TOKEN carries this candidate's connector token; it shadows the parent's
+  // TUNNEL_TOKEN (the Vite app-gate token) for this process only, same seam PR #4622 established.
+  const childEnv: NodeJS.ProcessEnv = { ...process.env, TUNNEL_TOKEN: candidate.token }
+  // cloudflared logs its entire environment at startup. It masks TUNNEL_TOKEN, because it knows
+  // that one is a credential, but it has no reason to treat CLOUDFLARE_TUNNEL_POOL as anything
+  // special — so inheriting the pool writes every connector token in it, in plaintext, into the
+  // connector log this function is about to pipe to. The connector only ever needs its own token,
+  // handed to it above, so the pool has no business being in this process at all.
+  delete childEnv.CLOUDFLARE_TUNNEL_POOL
+
   // http:// here matches the origin the CI "Serve" step starts with HTTP=1 — Cloudflare's tunnel already
   // terminates HTTPS at its edge for Safari (a real CA-signed cert on the public hostname), so this local
   // connector-to-origin hop never needs its own TLS. (Also: these are remotely-managed tunnels, so this
@@ -172,10 +182,7 @@ async function claim(
     ['tunnel', '--no-autoupdate', '--protocol', 'http2', 'run', '--url', 'http://localhost:3000'],
     {
       stdio: ['ignore', 'pipe', 'pipe'],
-      // Child-scoped TUNNEL_TOKEN carries this candidate's connector token; it shadows the
-      // parent's TUNNEL_TOKEN (the Vite app-gate token) for this process only, same seam PR
-      // #4622 established.
-      env: { ...process.env, TUNNEL_TOKEN: candidate.token },
+      env: childEnv,
     },
   )
   proc.stdout?.pipe(logStream)
