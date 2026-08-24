@@ -15,10 +15,14 @@ export default defineConfig({
           name: 'unit',
           globals: true,
           include: ['**/__tests__/**/*.ts'],
+          // The two e2e spec directories run in their own runners (Puppeteer below, WebdriverIO via
+          // yarn test:ios), so they are excluded here — but only those directories, not all of
+          // src/e2e: the e2e harness itself has plain unit tests (e.g. the BrowserStack slot waiter's
+          // mocked-fetch tests), which nothing else would run.
           // .claude/worktrees holds agent worktrees, i.e. full checkouts of this repo. Without this the
           // unanchored include glob collects their __tests__ files too, which fail to resolve the gitignored
           // styled-system/ imports unless PandaCSS happens to have been run in that worktree.
-          exclude: ['node_modules/**', '**/e2e/**', '.claude/**'],
+          exclude: ['node_modules/**', 'src/e2e/puppeteer/__tests__/**', 'src/e2e/iOS/__tests__/**', '.claude/**'],
           environment: 'jsdom',
           mockReset: false,
           // vitest-localstorage-mock provides an in-test localStorage/sessionStorage mock. Note it does NOT

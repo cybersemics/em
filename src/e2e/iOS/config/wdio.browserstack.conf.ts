@@ -2,6 +2,7 @@ import { type ChildProcess } from 'child_process'
 import dotenv from 'dotenv'
 import path from 'path'
 import { findFirstAvailableTunnel, parseTunnelPool } from './cloudflareTunnelPool'
+import waitForBrowserStackSlots from './waitForBrowserStackSlots'
 import baseConfig from './wdio.base.conf.js'
 
 // Load .env.test.local before checking env vars since this file is imported
@@ -101,6 +102,12 @@ export const config: WebdriverIO.Config = {
         const sep = process.env.CLOUDFLARED_URL.includes('?') ? '&' : '?'
         process.env.CLOUDFLARED_URL = `${process.env.CLOUDFLARED_URL}${sep}__token=${process.env.TUNNEL_TOKEN}`
       }
+
+      // Wait for the shared BrowserStack account to have room for this run's workers before any
+      // session is created, rather than discovering an exhausted pool as a session-creation timeout
+      // mid-suite. This is what lets concurrent runs overlap instead of queueing repo-wide on
+      // GitHub — see .github/workflows/ios.yml.
+      await waitForBrowserStackSlots(baseConfig.maxInstances)
 
       await baseConfig.onPrepare()
     } catch (err) {
