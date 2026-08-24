@@ -1,6 +1,8 @@
 import { AlertType, HOME_TOKEN } from '../../constants'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
+import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
+import isContextViewActive from '../../selectors/isContextViewActive'
 import addMulticursor from '../../test-helpers/addMulticursorAtFirstMatch'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
@@ -147,6 +149,45 @@ describe('context view', () => {
     - m
       - ${''}
         - y`)
+  })
+
+  // https://github.com/cybersemics/em/issues/3391
+  it('categorize multiselected thoughts in a nested context view', () => {
+    const steps = [
+      importText({
+        text: `
+          - a
+            - m
+              - x
+                - f
+                - g
+          - b
+            - m
+              - y`,
+      }),
+      setCursor(['a', 'm']),
+      toggleContextView,
+      setCursor(['a', 'm', 'a', 'x', 'f']),
+      addMulticursor(['a', 'm', 'a', 'x', 'f']),
+      addMulticursor(['a', 'm', 'a', 'x', 'g']),
+      categorize,
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - m
+      - x
+        - ${'' /* prevent trim_trailing_whitespace */}
+          - f
+          - g
+  - b
+    - m
+      - y`)
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'a', 'x', ''])
+    expect(isContextViewActive(stateNew, contextToPath(stateNew, ['a', 'm']))).toBeTruthy()
   })
 })
 
