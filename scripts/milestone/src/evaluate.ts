@@ -22,7 +22,7 @@ import { resolveGateThresholds } from './lib/gate.ts'
 import GitHubClient, { type Milestone } from './lib/github.ts'
 import loadInstructions from './lib/loadInstructions.ts'
 import loadSamples, { type MilestoneSample } from './lib/loadSamples.ts'
-import type { Confidence } from './lib/parseSelection.ts'
+import { CONFIDENCE_LEVELS, type Confidence } from './lib/parseSelection.ts'
 import selectMilestone from './lib/selectMilestone.ts'
 
 const DEFAULT_REPO = 'cybersemics/em'
@@ -79,6 +79,112 @@ export interface EvalMetrics {
   /** Accuracy grouped by a calibration key (agreement tier or confidence level). */
   calibration: Record<string, { total: number; correct: number }>
 }
+
+/**
+ * Whether a row's vote landed on the right milestone.
+ *
+ * Deliberately reads `guess`, not `predicted`. `predicted` is null wherever the gate withheld, so
+ * scoring against it would bake the current thresholds into the measurement of those same
+ * thresholds. `guess` is the milestone the votes actually named, which is what a confidence signal
+ * is supposed to rank. Abstention falls out for free: a sample that fits no milestone and was
+ * guessed as none counts as correct.
+ */
+export const isCorrect = (row: EvalRow): boolean => row.guess === row.expected
+
+/** Extracts the confidence score a signal assigns to a row. */
+export type Signal = (row: EvalRow) => number
+
+/** One candidate gate setting: the accuracy and coverage that thresholding here would deliver. */
+export interface CurvePoint {
+  /** A distinct value the score takes. */
+  threshold: number
+  /** Rows scoring at or above the threshold. */
+  answered: number
+  coverage: number
+  correct: number
+  accuracy: number
+}
+
+/**
+ * Area under the ROC curve: the probability that a randomly chosen correct prediction outranks a
+ * randomly chosen wrong one. 0.5 means the signal carries no information at all; 1 is perfect
+ * separation. Returns null when every row is correct or every row is wrong, where it is undefined.
+ *
+ * Ties count half. That term is not cosmetic — without it a constant signal scores 0 rather than
+ * 0.5, which reads as a perfectly inverted signal instead of an inert one.
+ */
+export const auroc = (rows: EvalRow[], score: Signal): number | null => {
+  const pos = rows.filter(isCorrect)
+  const neg = rows.filter(row => !isCorrect(row))
+  if (pos.length === 0 || neg.length === 0) return null
+
+  let wins = 0
+  for (const p of pos) {
+    for (const n of neg) {
+      wins += score(p) > score(n) ? 1 : score(p) === score(n) ? 0.5 : 0
+    }
+  }
+  return wins / (pos.length * neg.length)
+}
+
+/**
+ * The accuracy-rejection curve, evaluated only at the distinct values the score actually takes.
+ *
+ * Evaluating at distinct values is what makes this tie-safe. These scores are heavily tied, and a
+ * curve that sliced inside a tied block would be reporting an arbitrary ordering as though it were
+ * signal. Each point is a candidate gate setting, which makes this the artifact to act on.
+ */
+export const rejectionCurve = (rows: EvalRow[], score: Signal): CurvePoint[] =>
+  [...new Set(rows.map(score))]
+    .sort((a, b) => b - a)
+    .map(threshold => {
+      const answered = rows.filter(row => score(row) >= threshold)
+      const correct = answered.filter(isCorrect).length
+      return {
+        threshold,
+        answered: answered.length,
+        coverage: answered.length / rows.length,
+        correct,
+        accuracy: answered.length ? correct / answered.length : 0,
+      }
+    })
+
+/**
+ * Mean accuracy across every coverage level — one scalar for ranking signals against each other.
+ *
+ * Ties break by issue number purely so the result is reproducible; within a tied block the ordering
+ * is still arbitrary, which is why the rejection curve is what you act on and this is only for
+ * comparison.
+ */
+export const auarc = (rows: EvalRow[], score: Signal): number => {
+  if (rows.length === 0) return 0
+  const ordered = [...rows].sort((a, b) => score(b) - score(a) || (a.issue ?? 0) - (b.issue ?? 0))
+  let correct = 0
+  let total = 0
+  ordered.forEach((row, i) => {
+    if (isCorrect(row)) correct += 1
+    total += correct / (i + 1)
+  })
+  return total / ordered.length
+}
+
+/**
+ * The candidate signals, scored side by side.
+ *
+ * `blend` averages the two independent families — the model's own claim and the spread of its votes
+ * — since averaging agreement with unanimity would mostly restate agreement. `unanimity+agreement`
+ * is reported too so the alternative reading of that comparison is visible rather than assumed.
+ */
+export const SIGNALS: { name: string; score: Signal }[] = [
+  { name: 'verbalized', score: row => CONFIDENCE_LEVELS.indexOf(row.confidence) / (CONFIDENCE_LEVELS.length - 1) },
+  { name: 'agreement', score: row => row.agreement },
+  { name: 'unanimity', score: row => (row.agreement === 1 ? 1 : 0) },
+  {
+    name: 'blend',
+    score: row => (CONFIDENCE_LEVELS.indexOf(row.confidence) / (CONFIDENCE_LEVELS.length - 1) + row.agreement) / 2,
+  },
+  { name: 'unanimity+agreement', score: row => ((row.agreement === 1 ? 1 : 0) + row.agreement) / 2 },
+]
 
 /** Buckets a 0–1 agreement score into a coarse calibration tier. */
 const agreementTier = (agreement: number): string =>
@@ -145,6 +251,68 @@ export const resolveMinAccuracy = (env: Record<string, string | undefined> = pro
 
 /** Formats a 0–1 fraction as a whole-number percentage. */
 const percent = (fraction: number): string => `${Math.round(fraction * 100)}%`
+
+/** Formats an AUROC value, which is undefined when every row shares an outcome. */
+const formatAuroc = (value: number | null): string => (value === null ? '—' : value.toFixed(2))
+
+/**
+ * Renders the signal-discrimination table, the rejection curve for the strongest signal, and the
+ * decomposed decline rate.
+ *
+ * Base accuracy is printed beside the table on purpose: it is what makes a flat, useless signal
+ * obvious at a glance, since a signal that cannot discriminate produces a curve that never rises
+ * above it.
+ */
+export const formatSignalReport = (rows: EvalRow[]): string => {
+  const lines: string[] = []
+  const base = rows.length ? rows.filter(isCorrect).length / rows.length : 0
+
+  lines.push('')
+  lines.push(`Signal discrimination (${SPLIT}; AUROC 0.5 = no signal; base accuracy ${percent(base)}):`)
+  lines.push('  signal                AUROC   AUARC')
+  const scored = SIGNALS.map(signal => ({
+    ...signal,
+    auroc: auroc(rows, signal.score),
+    auarc: auarc(rows, signal.score),
+  }))
+  for (const signal of scored) {
+    lines.push(`  ${signal.name.padEnd(20)} ${formatAuroc(signal.auroc).padStart(5)}   ${signal.auarc.toFixed(2)}`)
+  }
+
+  // A tie withholds independently of the thresholds, so the signal is also scored without those rows.
+  const tied = rows.filter(row => row.tied)
+  if (tied.length > 0) {
+    const untied = rows.filter(row => !row.tied)
+    const best = [...scored].sort((a, b) => b.auarc - a.auarc)[0]
+    lines.push(
+      `  (excluding ${tied.length} tied row${tied.length === 1 ? '' : 's'}, ${best.name}: AUROC ${formatAuroc(auroc(untied, best.score))}, AUARC ${auarc(untied, best.score).toFixed(2)})`,
+    )
+  }
+
+  const best = [...scored].sort((a, b) => b.auarc - a.auarc)[0]
+  lines.push('')
+  lines.push(`Accuracy-rejection curve for ${best.name}:`)
+  lines.push('  threshold  answers  coverage  accuracy')
+  for (const point of rejectionCurve(rows, best.score)) {
+    lines.push(
+      `  ${point.threshold.toFixed(2).padStart(9)}  ${String(point.answered).padStart(7)}  ${percent(point.coverage).padStart(8)}  ${percent(point.accuracy).padStart(8)}`,
+    )
+  }
+
+  // A single blended decline rate would hide a prompt defect behind an intended feature: both
+  // produce the same behaviour in production, but only one of them is a bug.
+  const declined = rows.filter(row => row.guess === null)
+  lines.push('')
+  lines.push('Declines (the votes named no milestone):')
+  lines.push(
+    `  genuine no-fit    : ${declined.filter(row => row.expected === null).length}  (nothing fitted; the comment is the signal)`,
+  )
+  lines.push(
+    `  spurious decline  : ${declined.filter(row => row.expected !== null).length}  (a milestone plainly fitted — prompt defect)`,
+  )
+
+  return lines.join('\n')
+}
 
 /** Renders the metrics summary as human-readable text. */
 export const formatReport = (metrics: EvalMetrics): string => {
@@ -289,6 +457,7 @@ const main = async () => {
 
   const metrics = computeMetrics(rows)
   console.info(formatReport(metrics))
+  console.info(formatSignalReport(rows))
   if (failures.length > 0) console.info(`Ungraded: ${failures.length} (excluded from every figure above)`)
 
   if (metrics.correct.fraction < minAccuracy) {

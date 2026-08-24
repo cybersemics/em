@@ -69,6 +69,16 @@ MILESTONE_EVAL_SPLIT=all yarn evaluate
 
 The default is `train` on purpose. A held-out set is only meaningful while it stays unseen, and every look at it leaks a little; a default of `test` would consume it on routine runs until it measured nothing but how often it had been consulted. Quote the `test` number when reporting accuracy, and let the gap between the two tell you how much of any improvement was real.
 
+### Scoring the confidence signal
+
+Accuracy says how often the categorizer is right. It does not say whether the signal the gate is built on can tell a right answer from a wrong one, which is a different question and the one that decides whether a threshold is worth having. Every run therefore also reports **AUROC** — the probability a correct prediction outranks a wrong one, where 0.5 means the signal carries no information — and **AUARC**, the mean accuracy across every coverage level, for ranking candidate signals against each other.
+
+Both score the milestone the votes actually named rather than the one the gate let through. Scoring the gated output would bake the current thresholds into the measurement of those same thresholds.
+
+The accuracy-rejection curve beneath them is the artifact to act on: each row is a candidate gate setting with the coverage and accuracy it would deliver. It is evaluated only at the distinct values the score takes, because these scores are heavily tied and a curve that sliced inside a tied block would report an arbitrary ordering as though it were signal.
+
+Declines are reported as two lines rather than one rate. A genuine no-fit means the taxonomy has a hole and the comment is doing its job; a spurious decline means the model refused when something plainly fitted, which is a prompt defect. They look identical in production, so a single blended figure would hide the second behind the first.
+
 `MILESTONE_EVAL_JSON=path` dumps the graded rows, each carrying the agreement and confidence behind its verdict, so alternative gate thresholds can be scored against a run that already happened rather than paying for inference again.
 
 The harness runs the exact pipeline the workflow uses over every sample and grades it strictly: the assigned milestone must equal the recorded one, and a sample the gate refused to assign counts as a prediction of "no milestone", because that is what production would do. It reports accuracy, precision over the assignments actually made, an outcome breakdown, the mismatches, and a calibration table — then **exits non-zero below `MILESTONE_MIN_ACCURACY`** (default 0.8, against a measured baseline of 86%), so a prompt edit that regresses accuracy fails rather than printing a slightly worse number nobody compares.

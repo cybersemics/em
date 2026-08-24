@@ -1,5 +1,15 @@
 import { describe, expect, it, vi } from 'vitest'
-import { type EvalRow, computeMetrics, formatReport, grade, resolveMinAccuracy } from '../evaluate.ts'
+import {
+  type EvalRow,
+  auarc,
+  auroc,
+  computeMetrics,
+  formatReport,
+  grade,
+  isCorrect,
+  rejectionCurve,
+  resolveMinAccuracy,
+} from '../evaluate.ts'
 import type { Milestone } from '../lib/github.ts'
 import type { MilestoneSample } from '../lib/loadSamples.ts'
 import type { Selection } from '../lib/selectMilestone.ts'
@@ -153,5 +163,100 @@ describe('grade', () => {
     expect(rows).toHaveLength(2)
     expect(failures).toHaveLength(0)
     vi.restoreAllMocks()
+  })
+})
+
+/** Builds a graded row with a given outcome and score, for the signal metrics. */
+const row = (issue: number, correct: boolean, agreement: number): EvalRow => ({
+  issue,
+  expected: 'A',
+  predicted: correct ? 'A' : 'B',
+  guess: correct ? 'A' : 'B',
+  assigned: true,
+  agreement,
+  tied: false,
+  confidence: 'high',
+})
+
+const byAgreement = (r: EvalRow) => r.agreement
+
+describe('isCorrect', () => {
+  it('scores the guess, not the gated prediction', () => {
+    // A withheld row still has a guess, and that is what a confidence signal has to rank.
+    expect(isCorrect({ ...row(1, true, 1), predicted: null, assigned: false })).toBe(true)
+  })
+
+  it('treats a correct abstention as correct', () => {
+    expect(isCorrect({ ...row(1, true, 1), expected: null, guess: null, predicted: null })).toBe(true)
+  })
+
+  it('treats declining when a milestone fitted as incorrect', () => {
+    expect(isCorrect({ ...row(1, true, 1), expected: 'A', guess: null, predicted: null })).toBe(false)
+  })
+})
+
+describe('auroc', () => {
+  it('is 1 when the score separates correct from wrong perfectly', () => {
+    expect(auroc([row(1, true, 1), row(2, true, 0.9), row(3, false, 0.5)], byAgreement)).toBe(1)
+  })
+
+  it('is 0 when the score is exactly reversed', () => {
+    expect(auroc([row(1, true, 0.2), row(2, false, 0.8), row(3, false, 0.9)], byAgreement)).toBe(0)
+  })
+
+  it('is 0.5 for a constant score, not 0', () => {
+    // Without the half-credit term for ties an inert signal would read as perfectly inverted.
+    expect(auroc([row(1, true, 0.8), row(2, false, 0.8), row(3, true, 0.8)], byAgreement)).toBe(0.5)
+  })
+
+  it('is undefined when every row is correct', () => {
+    expect(auroc([row(1, true, 1), row(2, true, 0.5)], byAgreement)).toBeNull()
+  })
+
+  it('is undefined when every row is wrong', () => {
+    expect(auroc([row(1, false, 1), row(2, false, 0.5)], byAgreement)).toBeNull()
+  })
+})
+
+describe('auarc', () => {
+  it('averages accuracy across every coverage level', () => {
+    // Ranked perfectly: 1/1, 2/2, 2/3 → mean 0.889.
+    expect(auarc([row(1, true, 1), row(2, true, 0.9), row(3, false, 0.1)], byAgreement)).toBeCloseTo(0.889, 3)
+  })
+
+  it('does not depend on the order rows arrive in', () => {
+    const rows = [row(1, true, 1), row(2, false, 0.4), row(3, true, 0.9), row(4, false, 0.2)]
+    expect(auarc([...rows].reverse(), byAgreement)).toBeCloseTo(auarc(rows, byAgreement), 10)
+  })
+
+  it('is 1 when every row is correct, matching base accuracy', () => {
+    expect(auarc([row(1, true, 0.8), row(2, true, 0.8)], byAgreement)).toBe(1)
+  })
+})
+
+describe('rejectionCurve', () => {
+  it('emits one point per distinct score', () => {
+    const curve = rejectionCurve([row(1, true, 1), row(2, true, 1), row(3, false, 0.6)], byAgreement)
+    expect(curve.map(p => p.threshold)).toEqual([1, 0.6])
+  })
+
+  it('emits exactly two points for a two-valued signal', () => {
+    const rows = [row(1, true, 1), row(2, false, 0), row(3, true, 1), row(4, false, 0)]
+    expect(rejectionCurve(rows, byAgreement)).toHaveLength(2)
+  })
+
+  it('increases coverage monotonically as the threshold falls', () => {
+    const curve = rejectionCurve([row(1, true, 1), row(2, true, 0.8), row(3, false, 0.6)], byAgreement)
+    expect(curve.map(p => p.coverage)).toEqual([1 / 3, 2 / 3, 1])
+  })
+
+  it('collapses a constant score to one flat point at base accuracy', () => {
+    // The exact form of "a constant signal is inert". AUARC only equals base accuracy in
+    // expectation over tied orderings, so this is where that property is asserted exactly.
+    const rows = [row(1, true, 0.8), row(2, false, 0.8), row(3, true, 0.8), row(4, false, 0.8)]
+    const curve = rejectionCurve(rows, byAgreement)
+    expect(curve).toHaveLength(1)
+    expect(curve[0].coverage).toBe(1)
+    expect(curve[0].accuracy).toBe(0.5)
   })
 })
