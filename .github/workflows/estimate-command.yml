@@ -37,9 +37,12 @@ jobs:
               content: 'eyes',
             })
       - uses: actions/checkout@v6
+      - name: Enable Corepack
+        run: corepack enable
       - uses: actions/setup-node@v6
         with:
           node-version: 24
+          cache: 'yarn'
       - run: yarn install --immutable
       - name: Build estimate workspace
         run: yarn workspace em-estimate build
