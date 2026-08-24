@@ -20,9 +20,6 @@ flowchart TD
     START --> IR["<b>issue-repro</b><br/>reproduce the bug first"]
     START --> PL["<b>plan</b><br/>plan before writing code"]
     START --> CM["<b>ci-monitor</b><br/>watch CI to completion"]
-    START --> WI["<b>write-issue</b><br/>file a bug others can reproduce"]
-
-    WI -.-> IR
 
     IR --> BC["<b>browser-control</b><br/>picks the platform"]
     BC --> BCC["<b>browser-control-chrome</b><br/>web · Android"]
@@ -41,7 +38,6 @@ flowchart TD
     style PL fill:#2d4a2d,color:#fff
     style ES fill:#4a2d2d,color:#fff
 
-    click WI "https://github.com/cybersemics/em/blob/HEAD/.github/skills/write-issue/SKILL.md" "write-issue — file an issue that can be reproduced"
     click IR "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#issue-repro" "issue-repro — reproduce before investigating"
     click PL "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#plan" "plan — plan and critique before implementing"
     click ES "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#end-session" "end-session — the exit checklist"
@@ -60,7 +56,6 @@ The two green boxes are the gates — the agent must run them before it is allow
 
 | Skill | What it does | Source |
 | --- | --- | --- |
-| `write-issue` | Write a GitHub issue in the format the reproduction gate can actually read | [SKILL.md](../../.github/skills/write-issue/SKILL.md) |
 | [`issue-repro`](#issue-repro) | Reproduce a reported bug for real, then capture it in a test, before touching the cause | [SKILL.md](../../.github/skills/issue-repro/SKILL.md) |
 | [`plan`](#plan) | Write an architectural plan grounded in existing code, then attack it | [SKILL.md](../../.github/skills/plan/SKILL.md) |
 | [`browser-control`](#browser-control) | Bring up a browser or device for a given platform | [SKILL.md](../../.github/skills/browser-control/SKILL.md) |
@@ -73,6 +68,7 @@ The two green boxes are the gates — the agent must run them before it is allow
 | [`puppeteer-update-snapshots`](#puppeteer-update-snapshots) | Regenerate screenshot comparisons after an intended visual change | [SKILL.md](../../.github/skills/puppeteer-update-snapshots/SKILL.md) |
 | [`end-session`](#end-session) | Work through the exit checklist before stopping for any reason | [SKILL.md](../../.github/skills/end-session/SKILL.md) |
 | [`docs-sync`](#docs-sync) | Repair the documentation your change made untrue, in the same commit | [SKILL.md](../../.github/skills/docs-sync/SKILL.md) |
+| `write-issue` | Write a GitHub issue in the format this repo uses | [SKILL.md](../../.github/skills/write-issue/SKILL.md) |
 
 ## The gates
 
