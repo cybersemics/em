@@ -3,15 +3,15 @@ import { type EvalRow, computeMetrics, formatReport, resolveMinAccuracy } from '
 
 const rows: EvalRow[] = [
   // assigned, and right
-  { expected: 'A', predicted: 'A', guess: 'A', assigned: true, agreement: 1, confidence: 'high' },
+  { expected: 'A', predicted: 'A', guess: 'A', assigned: true, agreement: 1, tied: false, confidence: 'high' },
   // assigned, and wrong
-  { expected: 'B', predicted: 'A', guess: 'A', assigned: true, agreement: 0.9, confidence: 'high' },
+  { expected: 'B', predicted: 'A', guess: 'A', assigned: true, agreement: 0.9, tied: false, confidence: 'high' },
   // asked, though a milestone did fit
-  { expected: 'C', predicted: null, guess: 'A', assigned: false, agreement: 0.4, confidence: 'low' },
+  { expected: 'C', predicted: null, guess: 'A', assigned: false, agreement: 0.4, tied: false, confidence: 'low' },
   // asked, and asking was right
-  { expected: null, predicted: null, guess: null, assigned: false, agreement: 0.6, confidence: 'medium' },
+  { expected: null, predicted: null, guess: null, assigned: false, agreement: 0.6, tied: false, confidence: 'medium' },
   // assigned, though nothing fitted
-  { expected: null, predicted: 'A', guess: 'A', assigned: true, agreement: 1, confidence: 'high' },
+  { expected: null, predicted: 'A', guess: 'A', assigned: true, agreement: 1, tied: false, confidence: 'high' },
 ]
 
 describe('computeMetrics', () => {
@@ -38,6 +38,7 @@ describe('computeMetrics', () => {
       guess: 'C',
       assigned: false,
       agreement: 0.5,
+      tied: false,
       confidence: 'medium',
     }
     expect(computeMetrics([...rows, withheld]).outcomes.withheldButCorrect).toBe(1)

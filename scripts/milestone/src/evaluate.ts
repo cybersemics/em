@@ -52,6 +52,8 @@ export interface EvalRow {
   guess: string | null
   assigned: boolean
   agreement: number
+  /** Whether the vote tied, which withholds assignment independently of the thresholds. */
+  tied: boolean
   confidence: Confidence
 }
 
@@ -208,6 +210,7 @@ const grade = async (
       guess: selection.milestone,
       assigned: selection.assign,
       agreement: selection.agreement,
+      tied: selection.tied,
       confidence: selection.confidence,
     })
     const signals = `${Math.round(selection.agreement * 100)}%/${selection.confidence}`
