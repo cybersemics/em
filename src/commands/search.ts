@@ -5,9 +5,9 @@ import { searchActionCreator as search } from '../actions/search'
 import SearchIcon from '../components/SearchIcon'
 import * as selection from '../device/selection'
 
-const searchCommand: Command = {
+const searchCommand = {
   id: 'search',
-  label: 'Search',
+  label: 'Search' as const,
   description: 'Open the Search input. Use the same command to close.',
   svg: SearchIcon,
   multicursor: false,
@@ -25,6 +25,6 @@ const searchCommand: Command = {
       dispatch(restoreCursorBeforeSearch())
     }
   },
-}
+} satisfies Command
 
 export default searchCommand

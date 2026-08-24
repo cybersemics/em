@@ -36,9 +36,9 @@ const getPinAllState = (state: State, thoughtId: ThoughtId) => {
   }
 }
 
-const pinAllCommand: Command = {
+const pinAllCommand = {
   id: 'pinAll',
-  label: 'Pin All',
+  label: 'Pin All' as const,
   labelInverse: 'Unpin All',
   description: 'Pins open all thoughts at the current level.',
   descriptionInverse: 'Unpins all thoughts at the current level.',
@@ -116,6 +116,6 @@ const pinAllCommand: Command = {
     const path = simplifyPath(state, rootedParentOf(state, state.cursor))
     return !!getPinAllState(state, head(path)).pinned
   },
-}
+} satisfies Command
 
 export default pinAllCommand

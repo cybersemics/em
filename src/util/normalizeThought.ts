@@ -38,7 +38,7 @@ const REGEX_NORMALIZE = new RegExp(
  */
 const normalizeThought = moize(
   s => {
-    const stripped =
+    const normalized =
       // always distinguish single characters from each other
       s.length <= 1
         ? s
@@ -48,6 +48,9 @@ const normalizeThought = moize(
             .replace(REGEX_NORMALIZE, '')
             /** Change ampersand to 'and'. */
             .replace(/&/g, 'and')
+
+    // Fall back to the original value when every character is stripped (e.g. '__'), otherwise all thoughts that consist entirely of ignored characters would be equivalent to each other and to the empty thought.
+    const stripped = normalized || s
 
     const strippedLowerCase = stripped.toLowerCase()
 

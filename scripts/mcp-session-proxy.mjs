@@ -37,11 +37,13 @@ const UP_PROTOCOL = process.env.EM_UPSTREAM_PROTOCOL ?? 'https'
 const user = process.env.BROWSERSTACK_USERNAME
 const key = process.env.BROWSERSTACK_ACCESS_KEY
 
+/** Logs to stderr so the MCP stdio channel stays clean. */
 const log = (...a) => console.error('[mcp-session-proxy]', ...a)
+/** Reads the BrowserStack session id that bringup.sh wrote to the session file. */
 const readSessionId = () => readFileSync(SESSION_FILE, 'utf8').trim()
 
 /** Capabilities returned in the fake new-session response — marks it iOS so webdriverio adds the
- *  Appium/mobile commands (getContexts, switchContext, …) the MCP tools rely on. */
+ * Appium/mobile commands (getContexts, switchContext, …) the MCP tools rely on. */
 const sessionCaps = {
   platformName: 'iOS',
   'appium:automationName': 'XCUITest',
@@ -60,29 +62,39 @@ const readBody = req =>
 /**
  * Forward one request to the real BrowserStack hub over node:https, injecting Basic auth.
  *
- * node:https is the entire reason this hop exists: it emits a SINGLE canonical `Content-Length`, so the
+ * `node:https` is the entire reason this hop exists: it emits a SINGLE canonical `Content-Length`, so the
  * sandbox firewall's Go MITM has nothing to duplicate (see the header comment). We set only these
  * headers — never the client's — so no stray lowercase `content-length` is ever forwarded, and let
- * node compute the length from the body. (EM_UPSTREAM_PROTOCOL=http switches to node:http for tests.)
+ * node compute the length from the body. (EM_UPSTREAM_PROTOCOL=http switches to node:http for tests).
  */
 const forward = (req, body, res) =>
   new Promise(resolve => {
     const mod = UP_PROTOCOL === 'http' ? http : https
-    const headers = { 'Content-Type': 'application/json', Authorization: 'Basic ' + Buffer.from(`${user}:${key}`).toString('base64') }
+    const headers = {
+      'Content-Type': 'application/json',
+      Authorization: 'Basic ' + Buffer.from(`${user}:${key}`).toString('base64'),
+    }
     if (body.length) headers['Content-Length'] = body.length // single, canonical, explicit
-    const upstreamReq = mod.request({ hostname: UP_HOST, port: UP_PORT, path: req.url, method: req.method, headers }, upstream => {
-      const chunks = []
-      upstream.on('data', c => chunks.push(c))
-      upstream.on('end', () => {
-        const upBody = Buffer.concat(chunks)
-        if ((upstream.statusCode ?? 0) >= 400) {
-          log(`forward ${req.method} ${req.url} via=node:https sent-bytes=${body.length} -> HTTP ${upstream.statusCode} server=${upstream.headers.server} body: ${upBody.toString('utf8').slice(0, 200).replace(/\s+/g, ' ')}`)
-        }
-        res.writeHead(upstream.statusCode ?? 502, { 'content-type': upstream.headers['content-type'] ?? 'application/json' })
-        res.end(upBody)
-        resolve()
-      })
-    })
+    const upstreamReq = mod.request(
+      { hostname: UP_HOST, port: UP_PORT, path: req.url, method: req.method, headers },
+      upstream => {
+        const chunks = []
+        upstream.on('data', c => chunks.push(c))
+        upstream.on('end', () => {
+          const upBody = Buffer.concat(chunks)
+          if ((upstream.statusCode ?? 0) >= 400) {
+            log(
+              `forward ${req.method} ${req.url} via=node:https sent-bytes=${body.length} -> HTTP ${upstream.statusCode} server=${upstream.headers.server} body: ${upBody.toString('utf8').slice(0, 200).replace(/\s+/g, ' ')}`,
+            )
+          }
+          res.writeHead(upstream.statusCode ?? 502, {
+            'content-type': upstream.headers['content-type'] ?? 'application/json',
+          })
+          res.end(upBody)
+          resolve()
+        })
+      },
+    )
     upstreamReq.setTimeout(60000, () => upstreamReq.destroy(new Error('upstream timeout')))
     upstreamReq.on('error', e => {
       log('upstream error', e.message)

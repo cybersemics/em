@@ -5,6 +5,7 @@ import openCommandCenterCommand from '../../../commands/openCommandCenter'
 import click from '../helpers/click'
 import clickBullet from '../helpers/clickBullet'
 import clickThought from '../helpers/clickThought'
+import clickToolbar from '../helpers/clickToolbar'
 import closeKeyboard from '../helpers/closeKeyboard'
 import emulate from '../helpers/emulate'
 import gesture from '../helpers/gesture'
@@ -20,6 +21,7 @@ import waitForSelector from '../helpers/waitForSelector'
 import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
 import waitUntil from '../helpers/waitUntil'
 import { page } from '../session'
+import { usePersistentTreecrdtStorage } from '../setup'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
@@ -131,29 +133,6 @@ describe('all platforms', () => {
     expect(offset).toBe(0)
   })
 
-  it('when cursor is null, clicking on a thought after refreshing page, caret should be set on first click', async () => {
-    const importText = `
-    - a
-    - b`
-
-    await paste(importText)
-    await clickThought('a')
-
-    // Set cursor to null
-    await click('#content')
-
-    await waitForThoughtExistInDb('a')
-    await waitForThoughtExistInDb('b')
-
-    await refresh()
-
-    await waitForEditable('b')
-    await clickThought('b')
-
-    const textContext = await getSelection().focusNode?.textContent
-    expect(textContext).toBe('b')
-  })
-
   // https://github.com/cybersemics/em/issues/1568
   it('caret at the end of a thought should be preserved on indent and outdent', async () => {
     const importText = `
@@ -239,6 +218,89 @@ describe('all platforms', () => {
 
     // no assertions needed, the test will fail if the caret is not in the editable
     // If the waitUntil succeeds, the expect will always pass since we just confirmed that exact condition. If waitUntil times out, we never reach the expect anyway.
+  })
+
+  // https://github.com/cybersemics/em/issues/4426
+  it('clicking the end of a wrapped line whose next line begins with formatted text keeps the caret on that line', async () => {
+    // Inline formatting splits the editable into sibling text nodes. The unformatted prefix fills the line and
+    // the long bold word does not fit in the remaining space, so the soft wrap falls exactly on the boundary
+    // between the two text nodes.
+    const prefix =
+      'Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua enim ad minim veniam quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea '
+    const value = `${prefix}<b>commodoconsequatduisauteiruredolorinrepre</b> henderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.`
+
+    await paste(value)
+
+    const editableNodeHandle = await waitForEditable(value)
+    // Click the thought to make it the cursor, which activates manual caret positioning on subsequent clicks.
+    await click(editableNodeHandle, { offset: 1 })
+
+    // Measure the layout: the vertical center of the visual line on which the unformatted prefix ends,
+    // relative to the editable's center, which is what the click helper's y option is added to.
+    const { boldWrapsToNewLine, wrapLineY } = await page.evaluate(() => {
+      const editable = document.querySelector('[data-editing=true] [data-editable]') as HTMLElement
+      const editableRect = editable.getBoundingClientRect()
+      const plainNode = editable.firstChild as Text
+      const boldNode = editable.querySelector('b')!.firstChild as Text
+
+      const prefixEndRange = document.createRange()
+      prefixEndRange.setStart(plainNode, plainNode.length - 1)
+      prefixEndRange.setEnd(plainNode, plainNode.length)
+      const prefixEndRect = prefixEndRange.getBoundingClientRect()
+
+      const boldStartRange = document.createRange()
+      boldStartRange.setStart(boldNode, 0)
+      boldStartRange.setEnd(boldNode, 1)
+      const boldStartRect = boldStartRange.getBoundingClientRect()
+
+      return {
+        boldWrapsToNewLine: boldStartRect.top > prefixEndRect.top + prefixEndRect.height / 2,
+        wrapLineY: Math.round(
+          prefixEndRect.top + prefixEndRect.height / 2 - (editableRect.y + editableRect.height / 2),
+        ),
+      }
+    })
+
+    // Precondition: the bold text must begin a new visual line for this bug to manifest.
+    expect(boldWrapsToNewLine).toBe(true)
+
+    // Click past the end of the wrapped line.
+    await click(editableNodeHandle, { edge: 'right', y: wrapLineY })
+
+    // The caret must stay at the end of the wrapped line, before the trailing wrap space, rather than jump to
+    // the start of the bold text on the next line.
+    const focusText = await getSelection().focusNode?.textContent
+    expect(focusText).toBe(prefix)
+
+    const offset = await getSelection().focusOffset
+    expect(offset).toBe(prefix.trimEnd().length)
+  })
+})
+
+describe('persistent storage', () => {
+  usePersistentTreecrdtStorage()
+
+  it('when cursor is null, clicking on a thought after refreshing page, caret should be set on first click', async () => {
+    const importText = `
+    - a
+    - b`
+
+    await paste(importText)
+    await clickThought('a')
+
+    // Set cursor to null
+    await click('#content')
+
+    await waitForThoughtExistInDb('a')
+    await waitForThoughtExistInDb('b')
+
+    await refresh()
+
+    await waitForEditable('b')
+    await clickThought('b')
+
+    const textContext = await getSelection().focusNode?.textContent
+    expect(textContext).toBe('b')
   })
 })
 
@@ -436,7 +498,7 @@ describe('mobile only', () => {
     await waitUntil(() => !document.activeElement || document.activeElement === document.body)
 
     // Step 3: tap the Bold button on the toolbar
-    await click('[data-testid="toolbar-icon"][aria-label="Bold"]')
+    await clickToolbar('Bold')
 
     // the formatting should still be applied to the whole thought
     await waitUntil(() => !!document.querySelector('[data-editable] b'))

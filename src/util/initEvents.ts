@@ -5,7 +5,6 @@ import LifecycleState from '../@types/LifecycleState'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import { alertActionCreator as alert } from '../actions/alert'
-import { desktopCommandUniverseActionCreator as desktopCommandUniverse } from '../actions/desktopCommandUniverse'
 import { errorActionCreator as error } from '../actions/error'
 import { gestureMenuActionCreator as gestureMenu } from '../actions/gestureMenu'
 import { longPressActionCreator as longPress } from '../actions/longPress'
@@ -13,11 +12,14 @@ import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { isSafari, isTouch } from '../browser'
 import { beforeInput, keyDown, keyUp } from '../commands'
 import { AlertType, LongPressState } from '../constants'
+import nativeHistory from '../device/nativeHistory'
 import * as selection from '../device/selection'
 import virtualKeyboardHandler from '../device/virtual-keyboard'
+import globals from '../globals'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import pathExists from '../selectors/pathExists'
 import store from '../stores/app'
+import { updateCaretRect } from '../stores/caretRectStore'
 import { updateCommandState } from '../stores/commandStateStore'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
 import { updateScrollTop } from '../stores/scrollTop'
@@ -27,6 +29,7 @@ import syncStatusStore from '../stores/syncStatus'
 import { updateSize } from '../stores/viewport'
 import isRoot from '../util/isRoot'
 import pathToContext from '../util/pathToContext'
+import debugLog from './debugLog'
 import durations from './durations'
 import equalPath from './equalPath'
 
@@ -226,7 +229,13 @@ const initEvents = (store: Store<State, any>) => {
 
     // update command state store
     updateCommandState()
+
+    updateCaretRect()
   }
+
+  /** Input event listener. The caret is measured again after the text changes, since a deletion moves the caret without
+   * the browser firing another selectionchange once the new text has been laid out. */
+  const onInput = () => updateCaretRect()
 
   /** MouseMove event listener. */
   const onMouseMove = _.debounce(
@@ -294,18 +303,25 @@ const initEvents = (store: Store<State, any>) => {
     scrollAtEdge.stop()
   }
 
+  /** Clears the spurious-focus suppression flag: a new touch means any subsequent focus/mousedown was initiated by
+   * the user, not synthesized from the previous tap. Registered in the capture phase because touchstart propagation
+   * is unreliable in the bubble phase (see the note on the touchmove listener below). */
+  const onTouchStart = () => {
+    globals.suppressFocusAfterCursorMove = false
+  }
+
   /** Handle a page lifecycle state change, i.e. switching apps. */
   const onStateChange = ({ oldState, newState }: { oldState: LifecycleState; newState: LifecycleState }) => {
     clearTimeout(passiveTimeout)
+
+    // Log lifecycle transitions so that events can be correlated with the app being backgrounded or foregrounded, e.g. a false Command Center open right before an app switch. More direct than inferring suspension from gaps in the log timeline.
+    debugLog.log('lifecycle', { oldState, newState })
 
     // dismiss the gesture alert on hide
     if (newState === 'hidden' || oldState === 'hidden') {
       const state = store.getState()
       if (state.alert?.alertType === AlertType.GestureHint) {
         store.dispatch(alert(null))
-      }
-      if (state.showDesktopCommandUniverse) {
-        store.dispatch(desktopCommandUniverse())
       }
       if (state.showGestureMenu) {
         store.dispatch(gestureMenu())
@@ -320,6 +336,10 @@ const initEvents = (store: Store<State, any>) => {
       oldState === 'active' &&
       newState === 'passive' &&
       document.activeElement &&
+      // document.activeElement falls back to the body when nothing is focused, so the keyboard can only be open if
+      // some other element has focus. Without this, Clear Thought's asynchronous focus was mistaken for an app
+      // switch and the caret it had just placed was cleared. https://github.com/cybersemics/em/pull/4520
+      document.activeElement !== document.body &&
       !document.hasFocus()
     ) {
       passiveTimeout = setTimeout(selection.clear, 10) as unknown as number
@@ -371,12 +391,14 @@ const initEvents = (store: Store<State, any>) => {
   window.history.scrollRestoration = 'manual'
 
   document.addEventListener('selectionchange', onSelectionChange)
+  document.addEventListener('input', onInput)
   window.addEventListener('beforeinput', beforeInput)
   window.addEventListener('keydown', keyDown)
   window.addEventListener('keyup', keyUp)
   window.addEventListener('popstate', onPopstate)
   window.addEventListener('mousemove', onMouseMove)
   // Note: touchstart may not be propagated after dragHold
+  window.addEventListener('touchstart', onTouchStart, { capture: true })
   window.addEventListener('touchmove', onTouchMove)
   window.addEventListener('touchend', onTouchEnd)
   window.addEventListener('beforeunload', onBeforeUnload)
@@ -391,6 +413,9 @@ const initEvents = (store: Store<State, any>) => {
   // Initialize virtual keyboard handlers
   virtualKeyboardHandler.init()
 
+  // Route iOS native undo/redo gestures through em's undo/redo in the Capacitor app
+  nativeHistory.init()
+
   // clean up on app switch in PWA
   // https://github.com/cybersemics/em/issues/1030
   lifecycle.addEventListener('statechange', onStateChange)
@@ -401,11 +426,13 @@ const initEvents = (store: Store<State, any>) => {
   const cleanup = () => {
     unsubscribeSaveErrorReload()
     document.removeEventListener('selectionchange', onSelectionChange)
+    document.removeEventListener('input', onInput)
     window.removeEventListener('beforeinput', beforeInput)
     window.removeEventListener('keydown', keyDown)
     window.removeEventListener('keyup', keyUp)
     window.removeEventListener('popstate', onPopstate)
     window.removeEventListener('mousemove', onMouseMove)
+    window.removeEventListener('touchstart', onTouchStart, { capture: true })
     window.removeEventListener('touchmove', onTouchMove)
     window.removeEventListener('touchend', onTouchEnd)
     window.removeEventListener('beforeunload', onBeforeUnload)
@@ -416,6 +443,7 @@ const initEvents = (store: Store<State, any>) => {
     lifecycle.removeEventListener('statechange', onStateChange)
     resizeHost.removeEventListener('resize', updateSize)
     virtualKeyboardHandler.destroy()
+    nativeHistory.destroy()
     eventHandlers = null
   }
 

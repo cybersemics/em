@@ -24,9 +24,9 @@ import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 
-const cursorUpCommand: Command = {
+const cursorUpCommand = {
   id: 'cursorUp',
-  label: 'Cursor Up',
+  label: 'Cursor Up' as const,
   keyboard: [{ key: Key.ArrowUp }, { key: Key.ArrowUp, shift: true }],
   hideFromHelp: true,
   multicursor: false,
@@ -79,7 +79,9 @@ const cursorUpCommand: Command = {
       const isPrevPathMulticursor = prevPath && isMulticursorPath(state, prevPath)
 
       dispatch([
-        setCursor({ path: prevPath, preserveMulticursor: true }),
+        // Update the multicursor before moving the cursor, since setCursor computes state.expanded and a
+        // selected thought must not expand its own children.
+        // https://github.com/cybersemics/em/issues/4738
         dispatch => {
           // New multicursor set
           if (isMulticursorEmpty) {
@@ -108,6 +110,7 @@ const cursorUpCommand: Command = {
             return
           }
         },
+        setCursor({ path: prevPath, preserveMulticursor: true }),
       ])
 
       requestAnimationFrame(() => {
@@ -121,6 +124,6 @@ const cursorUpCommand: Command = {
       dispatch(firstPath ? setCursor({ path: firstPath }) : cursorUp())
     }
   }),
-}
+} satisfies Command
 
 export default cursorUpCommand

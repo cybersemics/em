@@ -1,5 +1,4 @@
 import path from 'path'
-import { WindowEm } from '../../../initialize'
 import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
@@ -451,14 +450,70 @@ describe('drop', () => {
   })
 })
 
+/* Multiple drop hovers pinned in a single snapshot for comparison of their relative position and width.
+   testFlags.pinDropHovers keeps each drop hover visible after it has been hovered during a drag, so a
+   single screenshot can capture more than one. The drop hover colors alternate by depth, which visually
+   distinguishes the pinned bars. See: https://github.com/cybersemics/em/issues/3115. */
+describe('pinned drop hovers', () => {
+  beforeEach(hideHUD)
+
+  it('DropChild of d and DropEnd after d', async () => {
+    await paste(`
+      - x
+      - a
+        - b
+        - c
+        - d
+    `)
+
+    await simulateDragAndDrop({ pinDropHovers: true })
+
+    await clickThought('a')
+
+    // hover the DropChild of the leaf thought d (drop as a child of d)
+    await dragAndDropThought('x', 'd', { hold: true, position: 'child' })
+
+    // then hover the DropEnd at the end of a's children (drop as a sibling after d)
+    await dragAndDropThought('x', 'd', { hold: true, position: 'after', skipMouseDown: true })
+
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
+
+  it('cliff DropEnd and root sibling ThoughtDrop', async () => {
+    // pin a and b open so that c is visible without the cursor, creating a multi-level cliff below c
+    await paste(`
+      - x
+      - a
+        - =pin
+          - true
+        - b
+          - =pin
+            - true
+          - c
+      - d
+    `)
+
+    await simulateDragAndDrop({ pinDropHovers: true })
+
+    // hover the cliff DropEnd below the deepest thought c
+    await dragAndDropThought('x', 'c', { hold: true, position: 'after' })
+
+    // then hover the ThoughtDrop before the root thought d
+    await dragAndDropThought('x', 'd', { hold: true, position: 'before', skipMouseDown: true })
+
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
+})
+
 describe('hover expansion', () => {
   beforeEach(async () => {
     await hideHUD()
 
     // inject MOCK_EXPAND_HOVER_DELAY
-    const em = window.em as WindowEm
     await page.evaluate(value => {
-      em.testFlags.expandHoverDelay = value
+      window.em.testFlags.expandHoverDelay = value
     }, MOCK_EXPAND_HOVER_DELAY)
   })
 

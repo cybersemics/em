@@ -1,4 +1,5 @@
 import { KnownDevices } from 'puppeteer'
+import clickBullet from '../helpers/clickBullet'
 import clickThought from '../helpers/clickThought'
 import command from '../helpers/command'
 import emulate from '../helpers/emulate'
@@ -11,7 +12,78 @@ import { page } from '../session'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
+/** Shift + Click the bullet of the given thought to select all thoughts between it and the previously selected thought. */
+const shiftClickThought = async (value: string) => {
+  await waitForEditable(value)
+
+  await page.keyboard.down('Shift')
+  try {
+    await clickBullet(value)
+  } finally {
+    await page.keyboard.up('Shift')
+  }
+}
+
+/** Waits for the given number of bullets to be highlighted by the multiselect. Reports the number that are
+ * actually highlighted on timeout, since the alternative — puppeteer's own 30 s default, which outlives the
+ * test timeout — fails the test without saying which step never arrived. */
+const waitForHighlightedBullets = async (n: number) => {
+  try {
+    await page.waitForFunction(
+      (n: number) => document.querySelectorAll('[aria-label="bullet"][data-highlighted="true"]').length === n,
+      { timeout: 10000 },
+      n,
+    )
+  } catch {
+    const highlighted = await page.$$eval('[aria-label="bullet"][data-highlighted="true"]', bullets => bullets.length)
+    throw new Error(`Expected ${n} highlighted bullets, but ${highlighted} were highlighted.`)
+  }
+}
+
 describe('multiselect', () => {
+  // https://github.com/cybersemics/em/issues/4740
+  it('starts multiselect at the Shift-clicked thought when there is no selection', async () => {
+    await paste(`
+        - a
+        - b
+        - c
+        `)
+
+    await clickThought('a')
+    await shiftClickThought('c')
+
+    const highlightedValues = await page.$$eval('[aria-label="bullet"][data-highlighted="true"]', bullets =>
+      bullets.map(
+        bullet => bullet.closest('[aria-label="tree-node"]')?.querySelector('[data-editable]')?.textContent ?? null,
+      ),
+    )
+
+    expect(highlightedValues).toEqual(['c'])
+  })
+
+  it('adjusts a Shift-click range from its original anchor', async () => {
+    await paste(`
+        - a
+        - b
+        - c
+        - d
+        - e
+        - f
+        `)
+
+    await multiselectThoughts('a')
+    await shiftClickThought('e')
+    await shiftClickThought('c')
+
+    const highlightedValues = await page.$$eval('[aria-label="bullet"][data-highlighted="true"]', bullets =>
+      bullets.map(
+        bullet => bullet.closest('[aria-label="tree-node"]')?.querySelector('[data-editable]')?.textContent ?? null,
+      ),
+    )
+
+    expect(highlightedValues.sort()).toEqual(['a', 'b', 'c'])
+  })
+
   it('should multiselect two thoughts at once', async () => {
     await paste(`
         - a
@@ -102,6 +174,127 @@ describe('multiselect', () => {
     expect(copied['text/html']).toContain('a')
     expect(copied['text/html']).toContain('b')
     expect(copied['text/html']).toContain('c')
+  })
+
+  // https://github.com/cybersemics/em/issues/4738
+  it('does not expand a thought that the multiselect is extended onto', async () => {
+    await paste(`
+        - a
+          - x
+        - b
+        - c
+        `)
+
+    await clickThought('c')
+
+    await press('ArrowUp', { shift: true })
+    await waitForHighlightedBullets(2)
+
+    await press('ArrowUp', { shift: true })
+    await waitForHighlightedBullets(3)
+
+    const visibleThoughts = await page.$$eval('[data-editable]', elements => elements.map(el => el.innerHTML))
+
+    // a is selected, so its subthought x must stay collapsed
+    expect(visibleThoughts).toEqual(['a', 'b', 'c'])
+  })
+
+  // https://github.com/cybersemics/em/pull/4750
+  it('points the bullet of a selected thought to the right, and expands it when the multiselect is cancelled', async () => {
+    await paste(`
+        - a
+        - b
+        - c
+          - y
+        `)
+
+    await clickThought('a')
+
+    await press('ArrowDown', { shift: true })
+    await waitForHighlightedBullets(2)
+
+    await press('ArrowDown', { shift: true })
+    await waitForHighlightedBullets(3)
+
+    /** Returns the rotation of the given thought's bullet. The triangle is rotated a quarter turn to point down when the thought is expanded, and is unrotated to point right when it is collapsed. */
+    const bulletRotation = (value: string) =>
+      page.evaluate((value: string) => {
+        const editable = Array.from(document.querySelectorAll('[data-editable]')).find(
+          element => element.textContent === value,
+        )
+        const bullet = editable!.closest('[aria-label="thought-container"]')!.querySelector('[data-bullet="parent"]')
+        return getComputedStyle(bullet!).transform
+      }, value)
+
+    // c is selected, so it stays collapsed and its bullet must point right
+    expect(await bulletRotation('c')).toBe('none')
+
+    await press('Escape')
+    await waitForHighlightedBullets(0)
+
+    // the cursor is still on c, which expands once it is no longer selected
+    await waitForEditable('y')
+    expect(await bulletRotation('c')).not.toBe('none')
+  })
+
+  // https://github.com/cybersemics/em/issues/4728
+  it('shows the multiselect highlight on table column 1 thoughts', async () => {
+    await paste(`
+        - a
+          - =view
+            - Table
+          - b
+            - c
+          - d
+            - e
+        `)
+
+    await waitForEditable('e')
+    await multiselectThoughts(['c', 'e'])
+
+    // Swap Note moves c and e into their parents' =note, so the multiselect moves up to b and d, which are
+    // in table column 1.
+    await press('KeyN', { alt: true, shift: true })
+
+    // wait for both notes to render so the assertion runs after Swap Note has completed
+    await page.waitForFunction(() => document.querySelectorAll('[aria-label="note"]').length === 2, { timeout: 5000 })
+
+    const highlightedBullets = await page.$$('[aria-label="bullet"][data-highlighted="true"]')
+    expect(highlightedBullets.length).toBe(2)
+  })
+
+  // https://github.com/cybersemics/em/issues/4728
+  it('restores the multiselect to the swapped thoughts when Swap Note is undone', async () => {
+    await paste(`
+        - a
+          - =view
+            - Table
+          - b
+            - c
+          - d
+            - e
+        `)
+
+    await waitForEditable('e')
+    await multiselectThoughts(['c', 'e'])
+
+    await press('KeyN', { alt: true, shift: true })
+
+    // wait for both notes to render so the undo runs after Swap Note has completed
+    await page.waitForFunction(() => document.querySelectorAll('[aria-label="note"]').length === 2, { timeout: 5000 })
+
+    await press('KeyZ', { meta: true })
+
+    // wait for the notes to be converted back to thoughts
+    await page.waitForFunction(() => document.querySelectorAll('[aria-label="note"]').length === 0, { timeout: 5000 })
+
+    const highlightedValues = await page.$$eval('[aria-label="bullet"][data-highlighted="true"]', bullets =>
+      bullets.map(
+        bullet => bullet.closest('[aria-label="tree-node"]')?.querySelector('[data-editable]')?.textContent ?? null,
+      ),
+    )
+
+    expect(highlightedValues.sort()).toEqual(['c', 'e'])
   })
 })
 

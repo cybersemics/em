@@ -312,7 +312,9 @@ const CommandItem: FC<{
             })}
           >
             <span className={css({ whiteSpace: 'nowrap' })}>
-              {command.keyboard && <CommandKeyboardShortcut keyboardOrString={command.keyboard} />}
+              {command.keyboard && (
+                <CommandKeyboardShortcut keyboardOrString={command.keyboardDisplay ?? command.keyboard} />
+              )}
             </span>
           </Cell>
         )

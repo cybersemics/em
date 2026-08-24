@@ -1,12 +1,13 @@
+import { treecrdt } from '@treecrdt/wa-sqlite/vite-plugin'
 import basicSsl from '@vitejs/plugin-basic-ssl'
 import react from '@vitejs/plugin-react'
 import { execSync } from 'child_process'
-import type { IncomingMessage, ServerResponse } from 'http'
 import path from 'path'
-import { type Plugin, type PreviewServer, type ViteDevServer, defineConfig } from 'vite'
+import { type Plugin, defineConfig } from 'vite'
 import checker from 'vite-plugin-checker'
 import { createHtmlPlugin } from 'vite-plugin-html'
 import { VitePWA } from 'vite-plugin-pwa'
+import tunnelTokenGateMiddleware from './src/vite-middleware/tunnelTokenGate'
 
 const useHttps = !process.env.HTTP
 
@@ -26,36 +27,25 @@ const commitHash = (() => {
  * a public cloudflared tunnel. The first request must include ?__token=<secret>;
  * the gate then sets a session cookie so subsequent asset/HMR requests are
  * allowed without the query param. Requests with neither get a 403.
+ *
+ * Vite's HTML middleware runs first and rewrites `req.url` to `/index.html` for
+ * browser navigations, dropping `?__token=`. The gate itself reads `originalUrl`
+ * (see src/vite-middleware/tunnelTokenGate.ts).
  */
 function tunnelTokenGate(): Plugin | undefined {
   const token = process.env.TUNNEL_TOKEN
   if (!token) return undefined
 
-  const cookieName = '__tunnel_token'
-
-  /** Middleware that allows requests bearing a valid token (via cookie or query param) and rejects all others. */
-  const gate = (server: ViteDevServer | PreviewServer) => {
-    server.middlewares.use((req: IncomingMessage, res: ServerResponse, next: () => void) => {
-      // Accept an existing session cookie set on a previous authenticated request.
-      const cookieHeader = req.headers.cookie || ''
-      if (cookieHeader.split(';').some(c => c.trim() === `${cookieName}=${token}`)) {
-        return next()
-      }
-      // Accept a token in the URL and issue the session cookie.
-      const url = new URL(req.url || '/', 'http://localhost')
-      if (url.searchParams.get('__token') === token) {
-        res.setHeader('Set-Cookie', `${cookieName}=${token}; Path=/; HttpOnly; Secure; SameSite=None`)
-        return next()
-      }
-      res.statusCode = 403
-      res.end('Forbidden')
-    })
-  }
+  const gate = tunnelTokenGateMiddleware(token)
 
   return {
     name: 'tunnel-token-gate',
-    configureServer: gate,
-    configurePreviewServer: gate,
+    configureServer(server) {
+      server.middlewares.use(gate)
+    },
+    configurePreviewServer(server) {
+      server.middlewares.use(gate)
+    },
   }
 }
 
@@ -70,11 +60,19 @@ export default defineConfig({
   build: {
     outDir: 'build',
   },
+  worker: {
+    format: 'es',
+  },
+  optimizeDeps: {
+    // Avoid crawling stale local checkout directories left behind after removing the TreeCRDT submodule.
+    entries: ['index.html'],
+  },
   define: {
     __COMMIT_HASH__: JSON.stringify(commitHash),
   },
   plugins: [
     react(),
+    treecrdt({ outDir: 'public/wa-sqlite' }),
     // Do not run vite-plugin-checker during tests, as it will clear the test output.
     // The dev server is usually running anyway, and tsc is run in lint:tsc which is triggered prepush.
     ...[!process.env.VITEST && !process.env.PUPPETEER ? checker({ typescript: true }) : undefined],
@@ -85,7 +83,7 @@ export default defineConfig({
       filename: 'service-worker.ts',
       injectManifest: {
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024, // Increase limit to 4 MiB
-        globPatterns: ['**/*.{js,css,html,webp,woff2}'],
+        globPatterns: ['**/*.{js,mjs,wasm,css,html,webp,woff2}'],
       },
       manifest: {
         name: 'em',
@@ -95,6 +93,16 @@ export default defineConfig({
             src: 'favicon.ico',
             sizes: '64x64 32x32 24x24 16x16',
             type: 'image/x-icon',
+          },
+          {
+            src: 'android-chrome-192x192.png',
+            sizes: '192x192',
+            type: 'image/png',
+          },
+          {
+            src: 'android-chrome-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
           },
         ],
         background_color: '#ffffff',
@@ -110,8 +118,17 @@ export default defineConfig({
     tunnelTokenGate(),
   ],
   server: {
-    // Allow bs-local.com for BrowserStack local testing
-    allowedHosts: ['bs-local.com'],
+    // Allow bs-local.com for BrowserStack local testing, and the Cloudflare tunnel pool's
+    // hostnames (leading dot matches all *.emthought.cc subdomains) for BrowserStack iOS Safari.
+    allowedHosts: ['bs-local.com', '.emthought.cc'],
+    watch: {
+      // Agent worktrees live in .claude/worktrees and are full checkouts of the repo. Creating or
+      // updating one writes files the watcher would otherwise pick up — a nested tsconfig.json in
+      // particular makes Vite clear its cache and force a full reload. Nothing under .claude is app
+      // source, so exclude the whole directory. Appended to Vite's defaults (.git, node_modules,
+      // test-results, cacheDir), not a replacement for them.
+      ignored: ['**/.claude/**'],
+    },
     ...(process.env.PUPPETEER
       ? {
           hmr: {
@@ -121,5 +138,10 @@ export default defineConfig({
           },
         }
       : {}),
+  },
+  preview: {
+    // `yarn servebuild` (vite preview) is what ios.yml/tdd.yml actually run behind the tunnel —
+    // preview.allowedHosts doesn't inherit server.allowedHosts, so it needs its own entry too.
+    allowedHosts: ['.emthought.cc'],
   },
 })

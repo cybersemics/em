@@ -1,12 +1,15 @@
+import { fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { toggleContextViewActionCreator as toggleContextView } from '../../actions/toggleContextView'
 import { toggleHiddenThoughtsActionCreator as toggleHiddenThoughts } from '../../actions/toggleHiddenThoughts'
-import { HOME_TOKEN } from '../../constants'
+import { isMac } from '../../browser'
+import { HOME_TOKEN, TIMEOUT_LONG_PRESS_THOUGHT } from '../../constants'
 import contextToPath from '../../selectors/contextToPath'
 import { exportContext } from '../../selectors/exportContext'
 import store from '../../stores/app'
+import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
 import findCursor from '../../test-helpers/queries/findCursor'
@@ -59,6 +62,21 @@ describe('render', () => {
       importText({
         text: `
         - ...
+      `,
+      }),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const bullets = document.querySelectorAll('[aria-label="bullet"]')
+    expect(bullets.length).toBe(0)
+  })
+
+  it('do not render a bullet on a thought with UTF-8 ellipsis character "…"', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - …
       `,
       }),
     ])
@@ -263,6 +281,32 @@ describe('render', () => {
     const leaves = document.querySelectorAll('[data-bullet="leaf"]')
     expect(leaves.length).toBe(0)
   })
+
+  it('render a lettered glyph instead of a bullet for =children/=bullet/Alpha', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - x
+          - =children
+            - =bullet
+              - Alpha
+          - a
+          - b
+          - c
+      `,
+      }),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // a, b, c should render lettered glyphs a, b, c instead of leaf bullets
+    const lettered = document.querySelectorAll('[data-bullet="alpha"]')
+    expect(Array.from(lettered).map(el => el.textContent)).toEqual(['a.', 'b.', 'c.'])
+
+    // the lettered children should not render a leaf bullet glyph
+    const leaves = document.querySelectorAll('[data-bullet="leaf"]')
+    expect(leaves.length).toBe(0)
+  })
 })
 
 describe('expansion', () => {
@@ -395,7 +439,7 @@ describe('expansion', () => {
     await act(vi.runOnlyPendingTimersAsync)
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toEqual(`- __ROOT__
+    expect(exported).toEqual(`- ${HOME_TOKEN}
   - a
     - b
       - c
@@ -422,7 +466,7 @@ describe('expansion', () => {
     await act(() => vi.runAllTimersAsync())
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toEqual(`- __ROOT__
+    expect(exported).toEqual(`- ${HOME_TOKEN}
   - a
     - b
       - =pin
@@ -454,7 +498,7 @@ describe('expansion', () => {
     await act(() => vi.runAllTimersAsync())
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toEqual(`- __ROOT__
+    expect(exported).toEqual(`- ${HOME_TOKEN}
   - a
     - =children
       - =pin
@@ -465,5 +509,163 @@ describe('expansion', () => {
       - c
     - d
       - e`)
+  })
+
+  it('tapping on the bullet of a thought expanded by =descendants on an ancestor should unpin it', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - a
+          - =descendants
+            - =pin
+              - true
+          - b
+            - c
+              - d
+      `,
+      }),
+    ])
+
+    const bulletOfThoughtC = getBulletByContext(['a', 'b', 'c'])
+
+    const user = userEvent.setup({ delay: null })
+    await user.click(bulletOfThoughtC)
+
+    await act(() => vi.runAllTimersAsync())
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toEqual(`- ${HOME_TOKEN}
+  - a
+    - =descendants
+      - =pin
+        - true
+    - b
+      - c
+        - =pin
+          - false
+        - d`)
+  })
+})
+
+describe('multiselect', () => {
+  /** Clicks an element with modifier keys held down, optionally holding the mouse down long enough to activate a long press first. */
+  const clickWithModifiers = async (
+    el: HTMLElement,
+    { hold, ...modifiers }: { hold?: boolean; shiftKey?: boolean; metaKey?: boolean; ctrlKey?: boolean } = {},
+  ) => {
+    await act(async () => {
+      fireEvent.mouseDown(el)
+    })
+
+    if (hold) {
+      await act(() => vi.advanceTimersByTimeAsync(TIMEOUT_LONG_PRESS_THOUGHT))
+    }
+
+    await act(async () => {
+      fireEvent.mouseUp(el, modifiers)
+      fireEvent.click(el, modifiers)
+    })
+
+    await act(vi.runAllTimersAsync)
+  }
+
+  it('shift + click selects the thoughts between the clicked thought and the previously selected thought', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - a
+        - b
+        - c
+        - d
+        - e
+      `,
+      }),
+      addMulticursor(['b']),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    await clickWithModifiers(getBulletByContext(['d']), { shiftKey: true })
+
+    expect(getBulletByContext(['a'])).toHaveAttribute('data-highlighted', 'false')
+    expect(getBulletByContext(['b'])).toHaveAttribute('data-highlighted', 'true')
+    expect(getBulletByContext(['c'])).toHaveAttribute('data-highlighted', 'true')
+    expect(getBulletByContext(['d'])).toHaveAttribute('data-highlighted', 'true')
+    expect(getBulletByContext(['e'])).toHaveAttribute('data-highlighted', 'false')
+  })
+
+  it('shift + long press selects between the thoughts without deselecting the pressed thought', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - a
+        - b
+        - c
+        - d
+        - e
+        - f
+      `,
+      }),
+      addMulticursor(['b']),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    await clickWithModifiers(getBulletByContext(['e']), { shiftKey: true, hold: true })
+
+    expect(getBulletByContext(['a'])).toHaveAttribute('data-highlighted', 'false')
+    expect(getBulletByContext(['b'])).toHaveAttribute('data-highlighted', 'true')
+    expect(getBulletByContext(['c'])).toHaveAttribute('data-highlighted', 'true')
+    expect(getBulletByContext(['d'])).toHaveAttribute('data-highlighted', 'true')
+    expect(getBulletByContext(['e'])).toHaveAttribute('data-highlighted', 'true')
+    expect(getBulletByContext(['f'])).toHaveAttribute('data-highlighted', 'false')
+  })
+
+  it('cmd + long press toggles the pressed thought without deselecting it', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - a
+        - b
+        - c
+      `,
+      }),
+      addMulticursor(['a']),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    await clickWithModifiers(getBulletByContext(['c']), {
+      ...(isMac ? { metaKey: true } : { ctrlKey: true }),
+      hold: true,
+    })
+
+    expect(getBulletByContext(['a'])).toHaveAttribute('data-highlighted', 'true')
+    expect(getBulletByContext(['b'])).toHaveAttribute('data-highlighted', 'false')
+    expect(getBulletByContext(['c'])).toHaveAttribute('data-highlighted', 'true')
+  })
+
+  it('shift + click on an expanded thought selects it without collapsing it', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - a
+        - b
+          - c
+      `,
+      }),
+      setCursor(['b']),
+      addMulticursor(['a']),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    await clickWithModifiers(getBulletByContext(['b']), { shiftKey: true })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toEqual(`- ${HOME_TOKEN}
+  - a
+  - b
+    - c`)
   })
 })
