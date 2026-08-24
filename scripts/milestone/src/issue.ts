@@ -76,6 +76,12 @@ const main = async () => {
         ? `${prefix}asked for a category on #${issueNumber} (${result.detail})`
         : `Skipped #${issueNumber}: ${result.detail}`
   console.info(`${summary} - ${url}`)
+
+  // A dry run's whole purpose is to show what would happen, and for the ask path what happens is a
+  // public comment. Print it so it can be read before it is ever posted.
+  if (dryRun && result.question) {
+    console.info(`\n--- comment that would be posted ---\n${result.question}\n---`)
+  }
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

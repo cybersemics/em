@@ -20,10 +20,14 @@ const formatQuestion = (selection: Selection): string => {
 
   if (selection.milestone) {
     lines.push('')
+    const votes = `${selection.validVotes} vote${selection.validVotes === 1 ? '' : 's'}`
     lines.push(
-      `Closest guess: **${selection.milestone}** — ${Math.round(selection.agreement * 100)}% of ${selection.validVotes} votes agreed, confidence ${selection.confidence}.`,
+      `Closest guess: **${selection.milestone}** — ${Math.round(selection.agreement * 100)}% of ${votes} agreed, confidence ${selection.confidence}.`,
     )
-    if (selection.secondChoice) lines.push(`Second choice: ${selection.secondChoice}.`)
+    // A second choice identical to the guess tells the reader nothing and reads like a mistake.
+    if (selection.secondChoice && selection.secondChoice !== selection.milestone) {
+      lines.push(`Second choice: ${selection.secondChoice}.`)
+    }
   }
 
   if (selection.rationale) {

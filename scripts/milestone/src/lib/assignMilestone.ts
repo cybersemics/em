@@ -19,6 +19,8 @@ export interface AssignResult {
   milestone: string | null
   /** One-line explanation of the outcome, for the workflow log. */
   detail: string
+  /** The comment body, when asking a human. Returned rather than only posted so a dry run can show it. */
+  question?: string
 }
 
 /** Options for categorizing one issue. */
@@ -87,8 +89,9 @@ const assignMilestone = async ({
     }
   }
 
-  if (!dryRun) await github.comment(issueNumber, formatQuestion(selection))
-  return { action: 'asked', milestone: selection.milestone, detail: selection.reasons.join('; ') }
+  const question = formatQuestion(selection)
+  if (!dryRun) await github.comment(issueNumber, question)
+  return { action: 'asked', milestone: selection.milestone, detail: selection.reasons.join('; '), question }
 }
 
 export default assignMilestone
