@@ -90,7 +90,8 @@
   },
   "workspaces": [
     "packages/*",
-    "scripts/estimate"
+    "scripts/estimate",
+    "scripts/milestone"
   ],
   "dependencies": {
     "@capacitor/android": "^8.5.0",

@@ -1,0 +1,12 @@
+{
+  "input": {
+    "body": "Restore functionality of the **Generate Thought** command which uses the [package/ai](https://github.com/cybersemics/em/tree/main/packages/ai) server.\n\n<img width=\"471\" height=\"62\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/dc8e2310-8bd5-4fbe-95ca-2c05446fd28f\" />\n\n- Review [package/ai](https://github.com/cybersemics/em/tree/main/packages/ai) README and deploy instructions.\n- Review and test #4406 \n  - It was released hastily as a rough port from Digital Ocean to Vercel. Untested.\n- Configure `em - ai` project on Vercel.\n- Take opportunities to improve deployment process, making it easy to deploy, set up OpenAI api key, and run locally or on Vercel, etc.",
+    "labels": ["bug"],
+    "title": "Generate Thought: Restore ai functionality"
+  },
+  "expected": "✨ AI",
+  "source": {
+    "issue": 4731,
+    "type": "github"
+  }
+}

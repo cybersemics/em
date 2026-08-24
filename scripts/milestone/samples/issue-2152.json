@@ -1,0 +1,12 @@
+{
+  "input": {
+    "body": "Restore functionality covered by this skipped test: \r\n\r\nhttps://github.com/cybersemics/em/blob/f68689f6471af07ba87db97cdd9b68bf42cdc910/src/components/__tests__/style.ts#L63-L80",
+    "labels": ["bug"],
+    "title": "Do not apply =children/style to =children itself"
+  },
+  "expected": "💹 Metaprogramming",
+  "source": {
+    "issue": 2152,
+    "type": "github"
+  }
+}

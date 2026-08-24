@@ -1,0 +1,12 @@
+{
+  "input": {
+    "body": "Tested on iPhone. \n\nEven slight variations to the ancestors or font size can invalidate the steps. \n\n## Steps to Reproduce\r\n\r\n```\r\n- a\n  - 📒 Journal\n    - 2026\n      - 6/5\n        - Guiding Light\n          - a\n          - b\n          - c\n          - d\n          - e\n          - Acknowledge\r\n```\n\n1. Set the font size to 13px. \n2. Set the caret on `Acknowledge`. \n3. Scroll so that Acknowledge is close to the bottom of the screen, but not close enough that it will autoscroll when typing (see video). \n4. Type \" the \". \n   - If it autoscrolls it means you don't have the scroll position correct. Go back to Step 3. \n5. Type \"g\"\n   - If it _doesn't_ autoscroll it means you don't have the scroll position correct, or the device is the wrong size. Go back to Step 3.\r\n\r\n## Current Behavior\r\n\r\nWhen you type \"g\" it autoscrolls. \r\n\r\nhttps://github.com/user-attachments/assets/c6dfb530-96fe-4365-87c0-3637326d770f\n\n## Expected Behavior\r\n\r\nWhen you type \"g\", no scroll should occur because you already typed \"the\" on the same line without moving the scroll position.\n\nI originally speculated that it was related to the glyph that extends below the text baseline, but it is also reproducible through typing \"a\".",
+    "labels": ["bug", "low-priority"],
+    "title": "Incorrect autoscroll when close of bottom of screen at 13px"
+  },
+  "expected": "🛼 Autoscroll",
+  "source": {
+    "issue": 4515,
+    "type": "github"
+  }
+}

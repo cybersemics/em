@@ -1,0 +1,12 @@
+{
+  "input": {
+    "body": "The issue only occurs if the cursor is non-null. \n\n## Steps to Reproduce\r\n\r\n```\r\n- a\n  - b\n  - c\r\n```\n\n1. Set the cursor on `a`. \n2. Drag `b` after `c`. \r\n\r\n## Current Behavior\r\n\r\nCursor moves to `b`. \r\n\r\n## Expected Behavior\n\nCursor should stay on `a`.\n\nThe cursor should not move thoughts after a drag-and-drop. \n\nIf it was a descendant (inclusive) of the dragged thought, then and only then should its ancestors be updated.",
+    "labels": ["bug"],
+    "title": "Cursor incorrectly moves to destination when child is dragged"
+  },
+  "expected": "🧤 Drag & Drop",
+  "source": {
+    "issue": 4839,
+    "type": "github"
+  }
+}

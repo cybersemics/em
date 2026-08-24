@@ -1,0 +1,12 @@
+{
+  "input": {
+    "body": "## Steps to Reproduce\n\nSwipe →↓← and hold. \n\r\n## Current Behavior\n\nThe last segment of the Select Between gesture diagram is not highlighted. \n\n![image](https://github.com/user-attachments/assets/c149e62c-542c-480e-9c37-b0bd2ecc1c4c)\n\r\n## Expected Behavior\n\nThe last segment of the Select Between gesture diagram should be highlighted to reflect the gesture in progress.",
+    "labels": ["bug"],
+    "title": "Select Between gesture diagram segment not highlighted"
+  },
+  "expected": "🫆 Gesture Diagram",
+  "source": {
+    "issue": 3519,
+    "type": "github"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "input": {
+    "body": "- [x] Blocked by: #2526\r\n\r\n## Steps to Reproduce\r\n\r\n```\r\n- a\r\n- b\r\n- c\r\n```\r\n\r\nDelete `b`.\r\n\r\n## Current Behavior\r\n\r\n`b` fades out according to the default unmount animation.\r\n\r\n## Expected Behavior\r\n\r\nThe thought should fade out, blur, and shrink (scale3d) when the following commands are executed:\r\n\r\n- Delete\r\n- Collapse Context",
+    "labels": ["feature"],
+    "title": "Animation: Blur and shrink on delete/collapseContext"
+  },
+  "expected": "🤹‍♀️ CSS Animation",
+  "source": {
+    "issue": 2527,
+    "type": "github"
+  }
+}

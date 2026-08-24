@@ -1,0 +1,12 @@
+{
+  "input": {
+    "body": "gateway.pinata.cloud\r\ncloudflare-ipfs.com\r\nipfs.infura.io\r\nipfs.io",
+    "labels": ["feature", "low-priority"],
+    "title": "Publish: Request from multiple gateways"
+  },
+  "expected": "🎁 Collaboration",
+  "source": {
+    "issue": 580,
+    "type": "github"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "input": {
+    "body": "## Steps to Reproduce\n\n1. Create thought `hello`.\n2. Set the color to red.\n3. Select all text in the thought.\n4. Hit Backspace/Delete on the keyboard to delete the text.\n5. Type `a`.\n\n## Current Behavior\n\nWhen the text is deleted, the bullet color changes to the default, even though the text color is preserved when the user starts typing again.\n\n## Expected Behavior\n\nWhen the text is deleted and the cursor does not move, the bullet color should not change. Only change the bullet cursor back to the default if the cursor moves away from the thought while it is empty.",
+    "labels": ["bug"],
+    "title": "Bullet color incorrectly changes to default when colored thought is empty"
+  },
+  "expected": "🎨 Formatting",
+  "source": {
+    "issue": 4639,
+    "type": "github"
+  }
+}

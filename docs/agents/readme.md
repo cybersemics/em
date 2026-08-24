@@ -198,8 +198,9 @@ A few habits that keep it coherent:
 
 - **Check cross-references still hold.** These files refer to each other constantly, and to `docs/` and to real source paths. When you rename or restructure something, grep `.github/` for the old name.
 
-## Related but separate: issue estimation
+## Related but separate: issue triage
 
-`.github/instructions/estimate/` contains a prompt and 21 sample issues used to guess how long an issue will take, then sync that to Everhour. Three workflows drive it: on issue open, on an `/estimate` comment, and a manual backfill.
+Two Node programs under `scripts/` triage new issues rather than write code. **Neither is part of the coding agent, and neither prompt is read by Copilot.** Each loads its own prompt and calls OpenAI directly.
 
-Despite living under `instructions/`, **this is not read by Copilot and is not part of the coding agent.** It is a prompt loaded by a separate Node program in `scripts/estimate/`, which calls OpenAI directly. It is documented in [`scripts/estimate/README.md`](../../scripts/estimate/README.md).
+- **[`scripts/estimate/`](../../scripts/estimate/README.md)** — guesses how long an issue will take, then syncs that to Everhour. Its prompt and 21 sample issues live under `.github/instructions/estimate/`, which is the only reason that folder appears in the tree above. Three workflows drive it: on issue open, on an `/estimate` comment, and a manual backfill.
+- **[`scripts/milestone/`](../../scripts/milestone/README.md)** — assigns the best-matching open milestone to a newly opened issue, treating each milestone as a subsystem. One workflow drives it, on issue open or manual dispatch; it is silent when it succeeds and comments asking for a category when it is not confident enough to assign. Its prompt and samples sit beside its code rather than under `.github/instructions/`, and the samples are deliberately kept out of the prompt so that `yarn evaluate` measures the prompt rather than recalling its own examples.

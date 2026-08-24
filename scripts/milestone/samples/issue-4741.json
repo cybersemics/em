@@ -1,0 +1,12 @@
+{
+  "input": {
+    "body": "When multiple thoughts are selected, press ArrowUp or ArrowDown to set the cursor to the first or last selected thought, respectively.\n\n# ArrowUp to set cursor to first selected thought\n\n## Steps to Reproduce\n\n```\n- a\n- b\n- c\n- d\n- e\n```\n\n1. Select `b`, `c`, `d`\n2. ArrowUp\n\n## Current Behavior\n\nCursor moves to `c` or `a` depending on where the cursor was before the multiselect started.\n\n## Expected Behavior\n\nCursor should move to `b`.\n\n# ArrowDown to set cursor to last selected thought\n\n## Steps to Reproduce\n\n```\n- a\n- b\n- c\n- d\n- e\n```\n\n1. Select `b`, `c`, `d`\n2. ArrowDown\n\n## Current Behavior\n\nCursor moves to `c` or `e` depending on where the cursor was before the multiselect started.\n\n## Expected Behavior\n\nCursor should move to `d`.",
+    "labels": ["bug"],
+    "title": "Multiselect: ArrowUp/ArrowDown to set cursor to first/last thought"
+  },
+  "expected": "👆 Multiselect",
+  "source": {
+    "issue": 4741,
+    "type": "github"
+  }
+}

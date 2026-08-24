@@ -1,0 +1,12 @@
+{
+  "input": {
+    "body": "## Steps to Reproduce\n\n1. Open in a new incognito window. \n2. Open the Gesture Menu. \n\n## Current Behavior\n\nThere is a brief delay before the background glow is rendered. \n\nhttps://github.com/user-attachments/assets/7a100327-775e-420e-b0ec-87df3c430d88\n\n## Expected Behavior\n\nBackground images should be preloaded and cached before the component appears. \n\n## Requirements\n\nWe need to ensure a 1:1 relationship between preloading and rendering. i.e. Prevent background images from being added without preloading, and prevent preloaded images from being orphaned if removed from component.\n\nWe should take this opportunity to ensure that the image actually exists at compile-time. It's a very similar problem with considerable solution overlap. \n\nA **static code transformation** approach is the most forward compatible and developer friendly solution. New developers will get preloading for free without any special syntax. \n\nThe solution must:\n\n- Allow natural inline css definition of background images \n- Does not increase initial bundle size or native app install size \n- Preload at the right time—after page load and before the component is shown\n- Not block interaction \n- Prioritize components that are more likely to be used first (separate PR)\n  - e.g. preload GestureMenu before Browse Deleted\n  - Consider a hash identifier at the end of the image url: `gesture-menu-glow.png#p1`\n  - Or a comment directive: `// preload-p1`, `// preload-p2`, `// preload-p3`, etc",
+    "labels": ["bug"],
+    "title": "Preload background images"
+  },
+  "expected": "🫧 Liminal UI",
+  "source": {
+    "issue": 4427,
+    "type": "github"
+  }
+}

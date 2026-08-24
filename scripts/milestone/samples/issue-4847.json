@@ -1,0 +1,12 @@
+{
+  "input": {
+    "body": "## Steps to Reproduce\r\n\r\n```\r\n- X\n  - =sort\n    - Alphabetical\n  - A\n  - B\n  - C\r\n```\n\n1. Set the cursor on `X`. \n2. New Subthought (Cmd + Enter).\n3. Type 🙂. \n4. Type additional characters. \r\n\r\n## Current Behavior\r\n\r\n🙂 is sorted to the top immediately (step 3). \n\n![image](https://github.com/user-attachments/assets/bde642af-9cea-482f-99a2-a86a389a25ef)\r\n\r\n## Expected Behavior\n\n🙂 should not be sorted to the top (step 3). \n\n![image](https://github.com/user-attachments/assets/cd2a8c67-bf50-49a1-9eed-e179c6f2d5bc)\n\n🙂 should be sorted to the top only after additional characters are typed (step 4), just like empty thoughts. \r\n\r\nThoughts that consist only of emoji should have the same sort behavior as empty thoughts. \n\n## Notes\n\nThe above steps only show one of several cases that involve stable sort behavior, but you should not need to enumerate or test every one if the empty thought condition is simply expanded to include lone emoji.\n\nUnlike the empty thought, the emoji is typed, which triggers onChange. That might require different handling. However, empty thoughts maintain a stable sort position not just when they are create through New Subthought, but also when they are created through deleting characters in an existing thought. So I suspect that the machinery is already there. ",
+    "labels": ["bug"],
+    "title": "Stable sort lone emoji like empty thoughts"
+  },
+  "expected": "📈 Sorting",
+  "source": {
+    "issue": 4847,
+    "type": "github"
+  }
+}

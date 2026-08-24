@@ -1,0 +1,12 @@
+{
+  "input": {
+    "body": "## Step to reproduce\n1. Create 2 thought A and B\n2. Move B as A's subthought\n3. Tap Though A's bullet (>) button to collapse Subthought B\n4. Tap Hamburger button\n5. Tap Thought B that is under the Home icon, NOT the one under Thought A\n\n\n## Current behavior\nThought B is not visible.\nIf user adds Create New Subthought gesture, thought A become greyish due to out of focus.\nIf user adds Create New Subthought gesture again, thought A will disappear.\nNote: This is because there are 2 Thought B on the Recently Edited history list, the one under Home from Step 1, and under Thought A.\nThe one under Home (root) no longer exists, and it is still linked to the new location under Thought B. Therefore, this creates a confusion to the app. \n\n<img width=\"300\" height=\"1259\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/435dbab5-694a-4cb8-a963-347ac096b127\" />\n\n\n**Video:**\n\nhttps://github.com/user-attachments/assets/8e1824b2-07ba-4f85-845c-14c8fd3f83be\n\n\n## Expected behavior\nFocus should be on the selected thought on the newest location. The Thought A should be auto-collapsed showing the new location of Subthought B.\nTo avoid confusion logic, the Recently Edited history list should display the last known location of the edited thought. \n\n\n",
+    "labels": ["bug"],
+    "title": "The selected Thought is not in view from Recently Edited history list"
+  },
+  "expected": "🗞️ Recently Edited",
+  "source": {
+    "issue": 3577,
+    "type": "github"
+  }
+}

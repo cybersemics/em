@@ -1,0 +1,12 @@
+{
+  "input": {
+    "body": "\r\n\r\n## Precondition\r\n- Turn ON Auto Correction on Keyboard Setting\r\n- Turn OFF Predictive Text on Keyboard Setting\r\n\r\n## Step to Reproduce\r\n1. Create a new thought\r\n2. Type `Makre`\r\n3. Tap Space to auto correct `Makre` into `Make`\r\n4. Create new thought again\r\n5. Swipe left with 3 finger to undo Step 4; creating new thought\r\n6. Swipe left with 3 finger to undo Step 3; auto correct implementation\r\n7. Swipe left with 3 finger to undo Step 2; to delete the thought entirely\r\n\r\n## Current behavior\r\nNothing to undo alert is shown on Step 7.\r\nNote: This is not reproducible when undoing using Undo button on Toolbar\r\n\r\n<img width=\"580\" height=\"274\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/96e16f38-aabc-425d-998d-ca6df6f6efbf\" />\r\n\r\n## Expected behavior\r\nAlert should not be shown. \r\nThe thought should be deleted by the Undo on Step 7.\r\n\r\n\r\n_Originally posted by @BayuAri in https://github.com/cybersemics/em/pull/4692#pullrequestreview-4874957952_\r\n            ",
+    "labels": ["bug", "low-priority"],
+    "title": "`Nothing to Undo` alert is prompted after undoing the auto correct"
+  },
+  "expected": "↩️ Undo/Redo",
+  "source": {
+    "issue": 4984,
+    "type": "github"
+  }
+}
