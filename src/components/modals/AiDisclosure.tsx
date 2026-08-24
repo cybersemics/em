@@ -22,6 +22,7 @@ const AiDisclosure: FC = () => {
       id='aiDisclosure'
       title='AI Data Acknowledgment'
       onClose={cancelAiDisclosure}
+      onClosed={pendingAiUse ? undefined : returnToSettings}
       actions={({ close }) => (
         <div className={css({ display: 'flex', flexWrap: 'wrap', gap: '1em', justifyContent: 'center' })}>
           <ActionButton

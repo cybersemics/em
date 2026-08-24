@@ -72,6 +72,24 @@ it('persists acknowledgement when the user chooses to remember it', async () => 
   expect(store.getState().showModal).toBeNull()
 })
 
+it('returns to Settings when the Settings disclosure is closed with Escape', async () => {
+  await dispatch(showModal({ id: 'settings' }))
+  await act(vi.runOnlyPendingTimersAsync)
+
+  await act(async () => {
+    fireEvent.click(screen.getByText('AI Data Acknowledgment'))
+  })
+  await act(vi.runOnlyPendingTimersAsync)
+
+  await act(async () => {
+    fireEvent.keyDown(window, { key: 'Escape' })
+  })
+  await act(vi.runOnlyPendingTimersAsync)
+
+  expect(screen.getByRole('heading', { name: 'Settings' })).toBeVisible()
+  expect(hasAcknowledgedAiDisclosure()).toBe(false)
+})
+
 it('lets the user toggle the AI data acknowledgement in Settings', async () => {
   await dispatch(showModal({ id: 'settings' }))
 
