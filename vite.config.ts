@@ -7,7 +7,7 @@ import { type Plugin, defineConfig } from 'vite'
 import checker from 'vite-plugin-checker'
 import { createHtmlPlugin } from 'vite-plugin-html'
 import { VitePWA } from 'vite-plugin-pwa'
-import tunnelTokenGateMiddleware from './tunnelTokenGate'
+import tunnelTokenGateMiddleware from './src/vite-middleware/tunnelTokenGate'
 
 const useHttps = !process.env.HTTP
 
@@ -30,7 +30,7 @@ const commitHash = (() => {
  *
  * Vite's HTML middleware runs first and rewrites `req.url` to `/index.html` for
  * browser navigations, dropping `?__token=`. The gate itself reads `originalUrl`
- * (see tunnelTokenGate.ts).
+ * (see src/vite-middleware/tunnelTokenGate.ts).
  */
 function tunnelTokenGate(): Plugin | undefined {
   const token = process.env.TUNNEL_TOKEN
