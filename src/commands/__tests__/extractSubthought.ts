@@ -191,6 +191,28 @@ describe('Extract Subthought', () => {
         ['<b><i>ipsum</i></b>'],
       )
     })
+
+    it('keeps each color when the selection spans two of them', async () => {
+      const value = '<span style="color: red;">Lorem ipsum </span><span style="color: green;">dolor sit</span>'
+      store.dispatch([importText({ text: `- ${value}` }), setCursor([value])])
+
+      await act(vi.runOnlyPendingTimersAsync)
+
+      const thought = await findCursor()
+      expect(thought).toBeTruthy()
+      // "ipsum dolor", which starts in the red half and ends in the green half
+      setSelection(thought!, 6, 17)
+
+      store.dispatch(extractSubthought())
+
+      // The duplicate space that preceeded "sit" has been trimmed.
+      const state = store.getState()
+      const newValue = '<span style="color: red;">Lorem </span><span style="color: green;">sit</span>'
+      expect(getThoughtById(state, head(state.cursor!))!.value).toBe(newValue)
+      expect(getAllChildrenAsThoughtsByContext(state, [newValue]).map(child => child.value)).toEqual([
+        '<span style="color: red;">ipsum </span><span style="color: green;">dolor</span>',
+      ])
+    })
   })
 
   describe('multicursor', () => {
