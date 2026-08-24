@@ -72,6 +72,7 @@ const modalRecipe = defineSlotRecipe({
       devices: {},
       export: {},
       feedback: {},
+      aiDisclosure: {},
       invites: {},
       help: {},
       settings: {},

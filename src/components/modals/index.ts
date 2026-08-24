@@ -1,6 +1,7 @@
 /* eslint-disable import/prefer-default-export */
 
 export { default as auth } from './Auth'
+export { default as aiDisclosure } from './AiDisclosure'
 export { default as customizeToolbar } from './CustomizeToolbar'
 export { default as devices } from './Devices'
 export { default as export } from './Export'
