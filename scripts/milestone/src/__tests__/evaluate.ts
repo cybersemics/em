@@ -1,5 +1,8 @@
-import { describe, expect, it } from 'vitest'
-import { type EvalRow, computeMetrics, formatReport, resolveMinAccuracy } from '../evaluate.ts'
+import { describe, expect, it, vi } from 'vitest'
+import { type EvalRow, computeMetrics, formatReport, grade, resolveMinAccuracy } from '../evaluate.ts'
+import type { Milestone } from '../lib/github.ts'
+import type { MilestoneSample } from '../lib/loadSamples.ts'
+import type { Selection } from '../lib/selectMilestone.ts'
 
 const rows: EvalRow[] = [
   // assigned, and right
@@ -94,5 +97,61 @@ describe('resolveMinAccuracy', () => {
 
   it('throws on a value outside 0–1', () => {
     expect(() => resolveMinAccuracy({ MILESTONE_MIN_ACCURACY: '85' })).toThrow(/MILESTONE_MIN_ACCURACY/)
+  })
+})
+
+describe('grade', () => {
+  const milestones: Milestone[] = [{ number: 20, title: '🧤 Drag & Drop', description: '' }]
+
+  /** Builds a sample whose issue number identifies it in the graded output. */
+  const sample = (issue: number): MilestoneSample => ({
+    input: { title: `issue ${issue}`, body: 'body', labels: [] },
+    expected: '🧤 Drag & Drop',
+    split: 'test',
+    source: { type: 'github', issue },
+  })
+
+  const selection: Selection = {
+    milestone: '🧤 Drag & Drop',
+    agreement: 1,
+    validVotes: 5,
+    totalVotes: 5,
+    tied: false,
+    confidence: 'high',
+    rationale: '',
+    secondChoice: null,
+    assign: true,
+    reasons: [],
+  }
+
+  it('records a failed sample and keeps grading the rest', async () => {
+    vi.spyOn(console, 'info').mockImplementation(() => {})
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+    // The second sample fails the way a transient network fault does, after its own retries.
+    const select = vi
+      .fn()
+      .mockResolvedValueOnce(selection)
+      .mockRejectedValueOnce(new Error('fetch failed'))
+      .mockResolvedValueOnce(selection)
+
+    const { rows, failures } = await grade([sample(1), sample(2), sample(3)], milestones, 'i', 'k', select)
+
+    expect(rows.map(row => row.issue)).toEqual([1, 3])
+    expect(failures).toEqual([{ issue: 2, message: 'fetch failed' }])
+    vi.restoreAllMocks()
+  })
+
+  it('grades every sample when nothing fails', async () => {
+    vi.spyOn(console, 'info').mockImplementation(() => {})
+    const { rows, failures } = await grade(
+      [sample(1), sample(2)],
+      milestones,
+      'i',
+      'k',
+      vi.fn().mockResolvedValue(selection),
+    )
+    expect(rows).toHaveLength(2)
+    expect(failures).toHaveLength(0)
+    vi.restoreAllMocks()
   })
 })

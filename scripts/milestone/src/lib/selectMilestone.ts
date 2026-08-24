@@ -5,6 +5,14 @@ import inference, { type InferenceOptions } from './inference.ts'
 import tallyVotes, { type VoteResult } from './tallyVotes.ts'
 
 const MAX_INFERENCE_ATTEMPTS = 3
+/**
+ * Base delay between inference attempts, multiplied by the attempt number.
+ *
+ * Retrying without a pause is barely retrying at all: three attempts fire within milliseconds, so a
+ * network blip lasting a second exhausts them and fails the run for a fault that would have cleared
+ * on its own. This was observed emptying a 109-sample evaluation after 22 samples.
+ */
+const RETRY_DELAY_MS = 1000
 
 /** A tallied vote plus the gate's decision about whether it may be assigned automatically. */
 export type Selection = VoteResult & GateResult
@@ -19,6 +27,8 @@ export interface SelectMilestoneOptions {
   thresholds?: GateThresholds
   /** Inference implementation, injectable so callers can exercise the pipeline without network access. */
   infer?: (options: InferenceOptions) => Promise<string[]>
+  /** Base delay between retries. Tests pass 0 so they do not spend the real backoff. */
+  retryDelayMs?: number
 }
 
 /**
@@ -40,6 +50,7 @@ const selectMilestone = async ({
   openaiApiKey,
   thresholds = DEFAULT_GATE_THRESHOLDS,
   infer = inference,
+  retryDelayMs = RETRY_DELAY_MS,
 }: SelectMilestoneOptions): Promise<Selection> => {
   const prompt = buildPrompt(milestones, issue)
   const titles = milestones.map(milestone => milestone.title)
@@ -55,6 +66,9 @@ const selectMilestone = async ({
       lastError = error as Error
     }
     console.warn(`Milestone inference attempt ${attempt}/${MAX_INFERENCE_ATTEMPTS} failed: ${lastError.message}`)
+    if (attempt < MAX_INFERENCE_ATTEMPTS && retryDelayMs > 0) {
+      await new Promise(resolve => setTimeout(resolve, retryDelayMs * attempt))
+    }
   }
 
   throw new Error(`Milestone inference failed after ${MAX_INFERENCE_ATTEMPTS} attempts: ${lastError!.message}`)

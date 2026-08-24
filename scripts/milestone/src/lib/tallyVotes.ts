@@ -1,5 +1,5 @@
 import matchMilestone from './matchMilestone.ts'
-import parseSelection, { type Confidence, type SelectionResponse } from './parseSelection.ts'
+import parseSelection, { CONFIDENCE_LEVELS, type Confidence, type SelectionResponse } from './parseSelection.ts'
 
 /** Aggregated result of a self-consistency vote across several model samples. */
 export interface VoteResult {
@@ -13,7 +13,7 @@ export interface VoteResult {
   totalVotes: number
   /** Whether two or more candidates tied for the most votes. A tie never assigns. */
   tied: boolean
-  /** Self-reported confidence carried from a winning vote. */
+  /** Self-reported confidence, averaged over the votes that chose the winning milestone. */
   confidence: Confidence
   /** Rationale carried from a winning vote, for the audit trail and the question posted to a human. */
   rationale: string
@@ -56,13 +56,23 @@ const tallyVotes = (rawOutputs: string[], milestoneTitles: string[]): VoteResult
   // closest guess when it asks a human. The gate is what refuses to assign on a tie.
   const winning = votes.find(vote => leaders.includes(vote.milestone))!
 
+  // Average the self-reported confidence over every vote that chose the winning milestone, rather
+  // than reading it off one of them. Drawing several samples and then keeping a single sample's
+  // confidence throws away most of what the extra samples were drawn for; the votes that named a
+  // different milestone are excluded because their confidence is about a different answer.
+  const agreeing = votes.filter(vote => vote.milestone === winning.milestone)
+  const meanLevel =
+    agreeing.reduce((total, vote) => total + CONFIDENCE_LEVELS.indexOf(vote.response.confidence), 0) / agreeing.length
+  // Round halves down, so a split between two levels reports the more cautious of them.
+  const confidence = CONFIDENCE_LEVELS[Math.ceil(meanLevel - 0.5)]
+
   return {
     milestone: winning.milestone,
     agreement: maxCount / votes.length,
     validVotes: votes.length,
     totalVotes: rawOutputs.length,
     tied: leaders.length > 1,
-    confidence: winning.response.confidence,
+    confidence,
     rationale: winning.response.rationale,
     secondChoice: matchMilestone(winning.response.secondChoice, milestoneTitles),
   }

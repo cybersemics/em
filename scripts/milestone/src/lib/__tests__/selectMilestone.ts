@@ -20,6 +20,7 @@ const options = (infer: () => Promise<string[]>) => ({
   instructions: 'instructions',
   openaiApiKey: 'test-key',
   infer,
+  retryDelayMs: 0,
 })
 
 describe('selectMilestone', () => {

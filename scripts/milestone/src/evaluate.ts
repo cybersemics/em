@@ -185,23 +185,49 @@ export const formatReport = (metrics: EvalMetrics): string => {
   return lines.join('\n')
 }
 
-/** Runs the selection pipeline over every sample and returns the graded rows. */
-const grade = async (
+/** A sample that could not be graded at all, because inference failed even after its retries. */
+export interface EvalFailure {
+  issue?: number
+  message: string
+}
+
+/**
+ * Runs the selection pipeline over every sample and returns the graded rows, plus any samples that
+ * could not be graded.
+ *
+ * A sample that fails is recorded and skipped rather than aborting the run. Inference reaches over
+ * the network dozens of times here, so a single transient fault is likely across a long evaluation,
+ * and letting it discard every result already computed makes the harness unusable exactly when it is
+ * doing the most work. Failures are counted and reported rather than passed over quietly — a run
+ * that silently graded fewer samples than it was given would overstate its own coverage.
+ */
+export const grade = async (
   samples: MilestoneSample[],
   milestones: Milestone[],
   instructions: string,
   openaiApiKey: string,
-): Promise<EvalRow[]> => {
+  select: typeof selectMilestone = selectMilestone,
+): Promise<{ rows: EvalRow[]; failures: EvalFailure[] }> => {
   const thresholds = resolveGateThresholds()
   const rows: EvalRow[] = []
+  const failures: EvalFailure[] = []
   for (const sample of samples) {
-    const selection = await selectMilestone({
-      issue: sample.input,
-      milestones,
-      instructions,
-      openaiApiKey,
-      thresholds,
-    })
+    let selection
+    try {
+      selection = await select({
+        issue: sample.input,
+        milestones,
+        instructions,
+        openaiApiKey,
+        thresholds,
+      })
+    } catch (error) {
+      failures.push({ issue: sample.source?.issue, message: (error as Error).message })
+      console.warn(
+        `  ${sample.source?.issue ? `#${sample.source.issue}` : sample.input.title.slice(0, 40)}: NOT GRADED`,
+      )
+      continue
+    }
     const predicted = selection.assign ? selection.milestone : null
     rows.push({
       issue: sample.source?.issue,
@@ -221,7 +247,7 @@ const grade = async (
       `  ${sample.source?.issue ? `#${sample.source.issue}` : sample.input.title.slice(0, 40)}: expected ${sample.expected ?? NONE}, ${outcome} ${predicted === sample.expected ? '✓' : '✗'}`,
     )
   }
-  return rows
+  return { rows, failures }
 }
 
 /** Evaluates the categorizer over every labeled sample and prints the accuracy report. */
@@ -246,7 +272,11 @@ const main = async () => {
   if (milestones.length === 0) throw new Error(`No open milestones found in ${repo}.`)
 
   console.info(`Evaluating ${samples.length} ${SPLIT} samples against ${milestones.length} open milestones...`)
-  const rows = await grade(samples, milestones, instructions, openaiApiKey)
+  const { rows, failures } = await grade(samples, milestones, instructions, openaiApiKey)
+  if (failures.length > 0) {
+    console.warn(`\n${failures.length} of ${samples.length} samples could not be graded and are excluded:`)
+    for (const failure of failures) console.warn(`  #${failure.issue ?? '?'}: ${failure.message}`)
+  }
 
   // Each row carries the agreement and confidence behind its verdict, so alternative gate
   // thresholds can be scored offline against a run that already happened. Without this, answering
@@ -259,6 +289,7 @@ const main = async () => {
 
   const metrics = computeMetrics(rows)
   console.info(formatReport(metrics))
+  if (failures.length > 0) console.info(`Ungraded: ${failures.length} (excluded from every figure above)`)
 
   if (metrics.correct.fraction < minAccuracy) {
     throw new Error(
