@@ -2,12 +2,12 @@ import { treecrdt } from '@treecrdt/wa-sqlite/vite-plugin'
 import basicSsl from '@vitejs/plugin-basic-ssl'
 import react from '@vitejs/plugin-react'
 import { execSync } from 'child_process'
-import type { IncomingMessage, ServerResponse } from 'http'
 import path from 'path'
-import { type Plugin, type PreviewServer, type ViteDevServer, defineConfig } from 'vite'
+import { type Plugin, defineConfig } from 'vite'
 import checker from 'vite-plugin-checker'
 import { createHtmlPlugin } from 'vite-plugin-html'
 import { VitePWA } from 'vite-plugin-pwa'
+import tunnelTokenGateMiddleware from './tunnelTokenGate'
 
 const useHttps = !process.env.HTTP
 
@@ -27,47 +27,25 @@ const commitHash = (() => {
  * a public cloudflared tunnel. The first request must include ?__token=<secret>;
  * the gate then sets a session cookie so subsequent asset/HMR requests are
  * allowed without the query param. Requests with neither get a 403.
+ *
+ * Vite's HTML middleware runs first and rewrites `req.url` to `/index.html` for
+ * browser navigations, dropping `?__token=`. The gate itself reads `originalUrl`
+ * (see tunnelTokenGate.ts).
  */
 function tunnelTokenGate(): Plugin | undefined {
   const token = process.env.TUNNEL_TOKEN
   if (!token) return undefined
 
-  const cookieName = '__tunnel_token'
-
-  /** Middleware that allows requests bearing a valid token (via cookie or query param) and rejects all others. */
-  const gate = (server: ViteDevServer | PreviewServer) => {
-    server.middlewares.use((req: IncomingMessage, res: ServerResponse, next: () => void) => {
-      // Unauthenticated occupancy probe, answered before the token check. A run about to claim a
-      // Cloudflare tunnel needs to know whether anyone is already answering on that hostname, and
-      // it can't authenticate as whoever that would be. Deliberately exposes nothing but the CI run
-      // id, which is already public in the workflow logs. See checkOccupancy in
-      // src/e2e/iOS/config/cloudflareTunnelPool.ts.
-      if ((req.url || '').split('?')[0] === '/__tunnel-status') {
-        res.statusCode = 200
-        res.setHeader('Content-Type', 'application/json')
-        res.end(JSON.stringify({ em: true, run: process.env.GITHUB_RUN_ID || '' }))
-        return
-      }
-      // Accept an existing session cookie set on a previous authenticated request.
-      const cookieHeader = req.headers.cookie || ''
-      if (cookieHeader.split(';').some(c => c.trim() === `${cookieName}=${token}`)) {
-        return next()
-      }
-      // Accept a token in the URL and issue the session cookie.
-      const url = new URL(req.url || '/', 'http://localhost')
-      if (url.searchParams.get('__token') === token) {
-        res.setHeader('Set-Cookie', `${cookieName}=${token}; Path=/; HttpOnly; Secure; SameSite=None`)
-        return next()
-      }
-      res.statusCode = 403
-      res.end('Forbidden')
-    })
-  }
+  const gate = tunnelTokenGateMiddleware(token)
 
   return {
     name: 'tunnel-token-gate',
-    configureServer: gate,
-    configurePreviewServer: gate,
+    configureServer(server) {
+      server.middlewares.use(gate)
+    },
+    configurePreviewServer(server) {
+      server.middlewares.use(gate)
+    },
   }
 }
 

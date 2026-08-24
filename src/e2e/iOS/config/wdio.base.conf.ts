@@ -10,7 +10,10 @@ const LOCAL_URL = 'https://localhost:3000'
 const APP_HTML_MARKER = 'data-app="em"'
 
 /** The URL the device loads: the public tunnel URL when one is set (BrowserStack), else the local dev server. */
-const appUrl = (): string => process.env.CLOUDFLARED_URL || LOCAL_URL
+const appUrl = (): string =>
+  // Inserts `/` before `?`. String concat on `https://host` yields `https://host?__token=`, which
+  // iOS Safari does not load as `/` — first session 403s, later spec retries can still pass.
+  new URL(process.env.CLOUDFLARED_URL || LOCAL_URL).href
 
 /**
  * Performs one GET against the app origin, resolving to its status code and (truncated) body, or
@@ -170,7 +173,6 @@ const baseConfig = {
       )
     } catch {
       // Report what the device is actually looking at, plus what the runner sees at the same URL.
-      // Neither is fixable by retrying, so the message has to name the origin, not the symptom.
       const page = await browser
         .execute(() => ({
           url: location.href,
@@ -180,7 +182,7 @@ const baseConfig = {
         .catch(() => null)
       const fromRunner = describeResponse(await requestOrigin(baseUrl))
       throw new Error(
-        `em did not load at ${baseUrl} — the page is not the app, and no retry will change that.\n` +
+        `em did not load at ${baseUrl} — the page is not the app.\n` +
           `on device: ${page ? `${page.url} — title "${page.title}" — ${page.text || '(no text)'}` : 'page could not be inspected'}\n` +
           `from runner: ${fromRunner}`,
       )
