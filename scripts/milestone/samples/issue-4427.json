@@ -5,6 +5,7 @@
     "title": "Preload background images"
   },
   "expected": "🫧 Liminal UI",
+  "split": "train",
   "source": {
     "issue": 4427,
     "type": "github"

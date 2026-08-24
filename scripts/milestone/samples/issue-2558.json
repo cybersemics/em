@@ -5,6 +5,7 @@
     "labels": ["bug"]
   },
   "expected": "🛼 Autoscroll",
+  "split": "train",
   "source": {
     "type": "github",
     "issue": 2558

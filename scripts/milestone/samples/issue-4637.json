@@ -5,6 +5,7 @@
     "labels": ["refactor"]
   },
   "expected": "🎨 Formatting",
+  "split": "train",
   "source": {
     "type": "github",
     "issue": 4637

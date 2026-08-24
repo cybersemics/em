@@ -5,6 +5,7 @@
     "title": "Last subthought shifts down on initial render"
   },
   "expected": "📐 Layout",
+  "split": "train",
   "source": {
     "issue": 3671,
     "type": "github"

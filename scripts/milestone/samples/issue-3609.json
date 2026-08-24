@@ -5,6 +5,7 @@
     "labels": ["bug", "hold"]
   },
   "expected": "🗞️ Recently Edited",
+  "split": "train",
   "source": {
     "type": "github",
     "issue": 3609

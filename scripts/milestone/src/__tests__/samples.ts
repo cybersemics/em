@@ -49,6 +49,21 @@ describe('milestone samples', () => {
     expect(samples.filter(sample => sample.expected === null).length).toBeGreaterThan(0)
   })
 
+  it('assigns every sample to a split', () => {
+    for (const sample of samples) {
+      expect(['train', 'test'], `#${sample.source?.issue} split`).toContain(sample.split)
+    }
+  })
+
+  it('keeps both halves populated and spanning the taxonomy', () => {
+    const train = samples.filter(sample => sample.split === 'train')
+    const test = samples.filter(sample => sample.split === 'test')
+    expect(train.length).toBeGreaterThan(0)
+    expect(test.length).toBeGreaterThan(0)
+    // A held-out half that covered only a few milestones would measure those rather than the prompt.
+    expect(new Set(test.map(sample => sample.expected)).size).toBeGreaterThan(10)
+  })
+
   it('does not label two samples with the same issue', () => {
     const issues = samples.map(sample => sample.source?.issue)
     expect(new Set(issues).size).toBe(issues.length)

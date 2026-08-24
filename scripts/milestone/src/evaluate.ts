@@ -26,6 +26,13 @@ import type { Confidence } from './lib/parseSelection.ts'
 import selectMilestone from './lib/selectMilestone.ts'
 
 const DEFAULT_REPO = 'cybersemics/em'
+
+/**
+ * Which half of the corpus to evaluate. Defaults to `train`, deliberately: the held-out half is only
+ * meaningful while it stays unseen, and a default of `test` would consume it on every routine run
+ * until it measured nothing but how many times it had been looked at.
+ */
+const SPLIT = process.env.MILESTONE_EVAL_SPLIT ?? 'train'
 // The measured baseline is 25/29 (86%). The floor sits below it rather than at it because the
 // evaluation is stochastic — five samples are drawn per issue, so one sample flipping moves the
 // score 3.4 points. At 0.8 a single flip still passes and two consecutive regressions fail, which
@@ -141,7 +148,7 @@ const percent = (fraction: number): string => `${Math.round(fraction * 100)}%`
 export const formatReport = (metrics: EvalMetrics): string => {
   const lines: string[] = []
   lines.push('')
-  lines.push('=== Milestone categorizer evaluation ===')
+  lines.push(`=== Milestone categorizer evaluation (${SPLIT}) ===`)
   lines.push(`Samples: ${metrics.total}`)
   lines.push(`Accuracy: ${metrics.correct.count}/${metrics.total} (${percent(metrics.correct.fraction)})`)
   lines.push(
@@ -222,16 +229,20 @@ const main = async () => {
   const minAccuracy = resolveMinAccuracy()
   const repo = process.env.GITHUB_REPOSITORY ?? process.env.MILESTONE_REPO ?? DEFAULT_REPO
 
+  if (!['train', 'test', 'all'].includes(SPLIT)) {
+    throw new Error(`MILESTONE_EVAL_SPLIT must be train, test, or all, got "${SPLIT}"`)
+  }
+
   const instructions = loadInstructions()
-  const samples = loadSamples()
-  if (samples.length === 0) throw new Error('No samples found to evaluate.')
+  const samples = loadSamples().filter(sample => SPLIT === 'all' || sample.split === SPLIT)
+  if (samples.length === 0) throw new Error(`No ${SPLIT} samples found to evaluate.`)
 
   // Reading milestones from a public repository needs no token, so the evaluation runs locally with
   // nothing but an OpenAI key.
   const milestones = await new GitHubClient({ repo, token: process.env.GITHUB_TOKEN }).listOpenMilestones()
   if (milestones.length === 0) throw new Error(`No open milestones found in ${repo}.`)
 
-  console.info(`Evaluating ${samples.length} samples against ${milestones.length} open milestones...`)
+  console.info(`Evaluating ${samples.length} ${SPLIT} samples against ${milestones.length} open milestones...`)
   const rows = await grade(samples, milestones, instructions, openaiApiKey)
 
   // Each row carries the agreement and confidence behind its verdict, so alternative gate

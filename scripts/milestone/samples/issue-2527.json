@@ -5,6 +5,7 @@
     "title": "Animation: Blur and shrink on delete/collapseContext"
   },
   "expected": "🤹‍♀️ CSS Animation",
+  "split": "train",
   "source": {
     "issue": 2527,
     "type": "github"

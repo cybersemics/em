@@ -5,6 +5,7 @@
     "title": "Do not apply =children/style to =children itself"
   },
   "expected": "💹 Metaprogramming",
+  "split": "train",
   "source": {
     "issue": 2152,
     "type": "github"

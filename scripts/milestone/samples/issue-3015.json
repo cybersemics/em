@@ -5,6 +5,7 @@
     "title": "copyCursor: `useOnCopy` overwrites ClipboardJS"
   },
   "expected": "📋 Copy & Paste",
+  "split": "test",
   "source": {
     "issue": 3015,
     "type": "github"

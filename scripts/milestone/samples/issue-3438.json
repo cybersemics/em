@@ -5,6 +5,7 @@
     "title": "Ignore imported font size"
   },
   "expected": "🛗 Import/Export",
+  "split": "train",
   "source": {
     "issue": 3438,
     "type": "github"

@@ -5,6 +5,7 @@
     "title": "First word selected when double tapping slightly above last word"
   },
   "expected": "🏹 Browser Selection",
+  "split": "train",
   "source": {
     "issue": 4916,
     "type": "github"

@@ -5,6 +5,7 @@
     "labels": ["refactor"]
   },
   "expected": "🏹 Browser Selection",
+  "split": "test",
   "source": {
     "type": "github",
     "issue": 4470

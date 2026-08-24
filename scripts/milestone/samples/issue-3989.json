@@ -5,6 +5,7 @@
     "labels": ["bug"]
   },
   "expected": "📱 iOS",
+  "split": "train",
   "source": {
     "type": "github",
     "issue": 3989

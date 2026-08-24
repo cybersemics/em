@@ -5,6 +5,7 @@
     "title": "The selected Thought is not in view from Recently Edited history list"
   },
   "expected": "🗞️ Recently Edited",
+  "split": "test",
   "source": {
     "issue": 3577,
     "type": "github"

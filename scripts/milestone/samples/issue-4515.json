@@ -5,6 +5,7 @@
     "title": "Incorrect autoscroll when close of bottom of screen at 13px"
   },
   "expected": "🛼 Autoscroll",
+  "split": "train",
   "source": {
     "issue": 4515,
     "type": "github"

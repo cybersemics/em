@@ -5,6 +5,7 @@
     "title": "Suggestion: Adding status labels for GitHub PRs and use Assignee more rigorously"
   },
   "expected": null,
+  "split": "train",
   "source": {
     "issue": 4861,
     "type": "github"

@@ -5,6 +5,7 @@
     "title": "Render subthoughts of Home thought in Search"
   },
   "expected": "🔍 Search",
+  "split": "test",
   "source": {
     "issue": 318,
     "type": "github"

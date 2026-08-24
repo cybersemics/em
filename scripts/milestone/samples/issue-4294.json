@@ -5,6 +5,7 @@
     "title": "[IOS Capacitor] Overlapping Share dialog and virtual keyboard when sharing while the keyboard opens"
   },
   "expected": "📱 iOS",
+  "split": "test",
   "source": {
     "issue": 4294,
     "type": "github"

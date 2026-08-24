@@ -5,6 +5,7 @@
     "title": "Tapping in between Font or Background Color buttons dismisses the Color Picker"
   },
   "expected": "🔧 Toolbar",
+  "split": "train",
   "source": {
     "issue": 4264,
     "type": "github"

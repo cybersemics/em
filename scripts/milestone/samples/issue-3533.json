@@ -5,6 +5,7 @@
     "title": "Inconsistent alert copy when deleting thought from Toolbar vs Command Center"
   },
   "expected": "📣 Alert/Tip",
+  "split": "train",
   "source": {
     "issue": 3533,
     "type": "github"

@@ -5,6 +5,7 @@
     "labels": ["test"]
   },
   "expected": "✅ Test Engineering",
+  "split": "train",
   "source": {
     "type": "github",
     "issue": 3125

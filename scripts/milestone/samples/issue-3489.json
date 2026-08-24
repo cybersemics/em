@@ -5,6 +5,7 @@
     "title": "scrollCursorIntoView test fails locally"
   },
   "expected": "✅ Test Engineering",
+  "split": "test",
   "source": {
     "issue": 3489,
     "type": "github"

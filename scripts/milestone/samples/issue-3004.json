@@ -5,6 +5,7 @@
     "labels": ["bug"]
   },
   "expected": "📐 Layout",
+  "split": "train",
   "source": {
     "type": "github",
     "issue": 3004

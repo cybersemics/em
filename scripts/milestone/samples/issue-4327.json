@@ -5,6 +5,7 @@
     "labels": ["bug"]
   },
   "expected": "👆 Multiselect",
+  "split": "train",
   "source": {
     "type": "github",
     "issue": 4327

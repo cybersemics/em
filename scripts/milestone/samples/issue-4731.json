@@ -5,6 +5,7 @@
     "title": "Generate Thought: Restore ai functionality"
   },
   "expected": "✨ AI",
+  "split": "test",
   "source": {
     "issue": 4731,
     "type": "github"

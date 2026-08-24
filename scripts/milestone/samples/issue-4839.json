@@ -5,6 +5,7 @@
     "title": "Cursor incorrectly moves to destination when child is dragged"
   },
   "expected": "🧤 Drag & Drop",
+  "split": "test",
   "source": {
     "issue": 4839,
     "type": "github"

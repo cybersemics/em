@@ -5,6 +5,7 @@
     "title": "Stable sort lone emoji like empty thoughts"
   },
   "expected": "📈 Sorting",
+  "split": "train",
   "source": {
     "issue": 4847,
     "type": "github"

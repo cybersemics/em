@@ -52,6 +52,25 @@ cd scripts/milestone
 yarn evaluate
 ```
 
+### The two halves
+
+The corpus is split in two, and the split is the whole reason the numbers mean anything. An earlier version of this corpus was 29 samples chosen by hand; it scored 90%, while 40 later samples drawn semi-randomly from the same milestones scored 53%. The gap was not the model — it was that hand-picking selects the issues a person finds easy to categorize, which are the same ones the model finds easy. Tuning a prompt against samples it was measured on repeats that mistake in a quieter way.
+
+So `split` is recorded in every sample file, assigned by alternating over a milestone-ordered list so both halves span the taxonomy:
+
+- **`train`** — read these errors, and revise the prompt against them.
+- **`test`** — held out. Score a revised prompt here to find out whether it actually generalized.
+
+```bash
+yarn evaluate                            # train, the default
+MILESTONE_EVAL_SPLIT=test yarn evaluate  # the honest number — run sparingly
+MILESTONE_EVAL_SPLIT=all yarn evaluate
+```
+
+The default is `train` on purpose. A held-out set is only meaningful while it stays unseen, and every look at it leaks a little; a default of `test` would consume it on routine runs until it measured nothing but how often it had been consulted. Quote the `test` number when reporting accuracy, and let the gap between the two tell you how much of any improvement was real.
+
+`MILESTONE_EVAL_JSON=path` dumps the graded rows, each carrying the agreement and confidence behind its verdict, so alternative gate thresholds can be scored against a run that already happened rather than paying for inference again.
+
 The harness runs the exact pipeline the workflow uses over every sample and grades it strictly: the assigned milestone must equal the recorded one, and a sample the gate refused to assign counts as a prediction of "no milestone", because that is what production would do. It reports accuracy, precision over the assignments actually made, an outcome breakdown, the mismatches, and a calibration table — then **exits non-zero below `MILESTONE_MIN_ACCURACY`** (default 0.8, against a measured baseline of 86%), so a prompt edit that regresses accuracy fails rather than printing a slightly worse number nobody compares.
 
 Run it before and after editing the instructions. It makes model calls but never writes to any issue, and it is deliberately not part of CI.
@@ -64,9 +83,12 @@ Adding a sample: fetch the issue, save it as `samples/issue-<number>.json`, and 
 {
   "input": { "title": "…", "body": "…", "labels": ["bug"] },
   "expected": "🧤 Drag & Drop",
+  "split": "train",
   "source": { "type": "github", "issue": 4839 }
 }
 ```
+
+Put a new sample in whichever half is smaller, and prefer picking issues without first checking whether they look easy.
 
 Use `"expected": null` for an issue that genuinely fits no milestone, which asserts that the workflow asks rather than guesses.
 

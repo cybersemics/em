@@ -5,6 +5,7 @@
     "title": "`Nothing to Undo` alert is prompted after undoing the auto correct"
   },
   "expected": "↩️ Undo/Redo",
+  "split": "test",
   "source": {
     "issue": 4984,
     "type": "github"

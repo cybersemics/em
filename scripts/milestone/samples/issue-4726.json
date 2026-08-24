@@ -5,6 +5,7 @@
     "labels": ["bug"]
   },
   "expected": "↩️ Undo/Redo",
+  "split": "train",
   "source": {
     "type": "github",
     "issue": 4726

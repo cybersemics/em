@@ -5,6 +5,7 @@
     "title": "Publish: Request from multiple gateways"
   },
   "expected": "🎁 Collaboration",
+  "split": "test",
   "source": {
     "issue": 580,
     "type": "github"

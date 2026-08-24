@@ -20,6 +20,12 @@ export interface MilestoneSample {
   }
   /** Title of the correct milestone, or null when no existing milestone fits and a human should be asked. */
   expected: string | null
+  /**
+   * Which half of the corpus this sample belongs to. `train` is for reading errors and revising the
+   * prompt; `test` is held out so a revised prompt can be scored against issues it was not tuned on.
+   * Assigned by alternating over a milestone-ordered list, so both halves span the taxonomy.
+   */
+  split: 'train' | 'test'
   source?: {
     type: string
     issue: number

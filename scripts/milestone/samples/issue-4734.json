@@ -5,6 +5,7 @@
     "labels": ["design-needed"]
   },
   "expected": "✨ AI",
+  "split": "train",
   "source": {
     "type": "github",
     "issue": 4734

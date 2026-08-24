@@ -5,6 +5,7 @@
     "labels": ["bug"]
   },
   "expected": "🔧 Toolbar",
+  "split": "train",
   "source": {
     "type": "github",
     "issue": 3751

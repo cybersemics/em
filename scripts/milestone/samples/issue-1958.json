@@ -5,6 +5,7 @@
     "labels": ["bug"]
   },
   "expected": "🔁 Sync",
+  "split": "train",
   "source": {
     "type": "github",
     "issue": 1958

@@ -5,6 +5,7 @@
     "labels": ["bug"]
   },
   "expected": "🤖 Android",
+  "split": "train",
   "source": {
     "type": "github",
     "issue": 4276

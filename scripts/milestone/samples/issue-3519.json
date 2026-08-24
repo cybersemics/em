@@ -5,6 +5,7 @@
     "title": "Select Between gesture diagram segment not highlighted"
   },
   "expected": "🫆 Gesture Diagram",
+  "split": "test",
   "source": {
     "issue": 3519,
     "type": "github"

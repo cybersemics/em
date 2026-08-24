@@ -5,6 +5,7 @@
     "labels": ["bug"]
   },
   "expected": "🫆 Gesture Diagram",
+  "split": "train",
   "source": {
     "type": "github",
     "issue": 3517

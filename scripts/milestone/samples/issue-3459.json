@@ -5,6 +5,7 @@
     "title": "Incorrect thought detection on Tutorial message: Tap a thought to reveal its subthought ''=pin\""
   },
   "expected": "👩🏻‍🏫 Tutorial",
+  "split": "train",
   "source": {
     "issue": 3459,
     "type": "github"

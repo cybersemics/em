@@ -5,6 +5,7 @@
     "title": "Archived thoughts reappears when user refresh the app"
   },
   "expected": "🔁 Sync",
+  "split": "train",
   "source": {
     "issue": 3761,
     "type": "github"

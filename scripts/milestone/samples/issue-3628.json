@@ -5,6 +5,7 @@
     "title": "Swap Parent: Parent's note disappears when swapped with subthought with note"
   },
   "expected": "🌿 Thoughtspace",
+  "split": "test",
   "source": {
     "issue": 3628,
     "type": "github"

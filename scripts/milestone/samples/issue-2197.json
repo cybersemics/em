@@ -5,6 +5,7 @@
     "labels": ["bug"]
   },
   "expected": "🌿 Thoughtspace",
+  "split": "train",
   "source": {
     "type": "github",
     "issue": 2197

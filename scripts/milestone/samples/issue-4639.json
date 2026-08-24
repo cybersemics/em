@@ -5,6 +5,7 @@
     "title": "Bullet color incorrectly changes to default when colored thought is empty"
   },
   "expected": "🎨 Formatting",
+  "split": "test",
   "source": {
     "issue": 4639,
     "type": "github"
