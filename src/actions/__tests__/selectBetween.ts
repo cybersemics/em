@@ -237,7 +237,7 @@ test('if no thoughts are selected and there is no cursor, select all thoughts at
     - f
   `
 
-  const steps = [importText({ text }), setCursor(['x', 'b']), selectBetween]
+  const steps = [importText({ text }), setCursor(null), selectBetween]
 
   const stateNew = reducerFlow(steps)(initialState())
 

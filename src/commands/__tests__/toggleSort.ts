@@ -253,7 +253,7 @@ describe('DOM', () => {
               - f
             `,
           }),
-          setCursor(['a', 'b']),
+          setCursor(['a']),
           newThought({ value: '', insertBefore: true }),
         ])
       })
@@ -383,7 +383,7 @@ describe('DOM', () => {
               - f
             `,
           }),
-          setCursor(['a', 'b']),
+          setCursor(['a']),
           newThought({ value: '', insertNewSubthought: true }),
         ])
       })

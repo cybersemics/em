@@ -81,9 +81,9 @@ describe('multicursor', () => {
             - d
           `,
       }),
-      setCursor(['a', 'b']),
-      addMulticursor(['a', 'b']),
-      addMulticursor(['a', 'c']),
+      setCursor(['b']),
+      addMulticursor(['b']),
+      addMulticursor(['c']),
     ])
 
     executeCommandWithMulticursor(outdentCommand, { store })
