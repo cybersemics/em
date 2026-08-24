@@ -148,6 +148,132 @@ describe('context view', () => {
       - ${''}
         - y`)
   })
+
+  // In a context view, each row is a different context of the same thought. The rows share a displayed parent — the
+  // path whose context view is open — but their real (SimplePath) parents are the separate contexts they represent,
+  // so there is no single destination to categorize into and the selection must be refused.
+  //
+  // Each test asserts the alert before the exported tree, and that order is load-bearing: setCursorFirstMatch sets
+  // the cursor to null when contextToPath cannot resolve a path, and categorize then returns state unchanged, so a
+  // mistyped path would satisfy the unchanged-tree assertion while exercising nothing. The MulticursorError is only
+  // reachable once the cursor and every multicursor have resolved.
+  describe('multiple contexts', () => {
+    it('disallow categorizing two contexts in a context view, which have different parents', () => {
+      const steps = [
+        importText({
+          text: `
+            - a
+              - m
+                - x
+            - b
+              - m
+                - y`,
+        }),
+        setCursor(['a', 'm']),
+        toggleContextView,
+        setCursor(['a', 'm', 'a']),
+        addMulticursor(['a', 'm', 'a']),
+        addMulticursor(['a', 'm', 'b']),
+        categorize,
+      ]
+
+      const stateNew = reducerFlow(steps)(initialState())
+
+      expect(stateNew.alert).toMatchObject({
+        alertType: AlertType.MulticursorError,
+        value: 'Cannot categorize thoughts from different parents.',
+      })
+
+      const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+      expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - m
+      - x
+  - b
+    - m
+      - y`)
+    })
+
+    it('disallow categorizing three contexts in a context view, which have different parents', () => {
+      const steps = [
+        importText({
+          text: `
+            - a
+              - m
+                - x
+            - b
+              - m
+                - y
+            - c
+              - m
+                - z`,
+        }),
+        setCursor(['a', 'm']),
+        toggleContextView,
+        setCursor(['a', 'm', 'a']),
+        addMulticursor(['a', 'm', 'a']),
+        addMulticursor(['a', 'm', 'b']),
+        addMulticursor(['a', 'm', 'c']),
+        categorize,
+      ]
+
+      const stateNew = reducerFlow(steps)(initialState())
+
+      expect(stateNew.alert).toMatchObject({
+        alertType: AlertType.MulticursorError,
+        value: 'Cannot categorize thoughts from different parents.',
+      })
+
+      const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+      expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - m
+      - x
+  - b
+    - m
+      - y
+  - c
+    - m
+      - z`)
+    })
+
+    it('disallow categorizing a context and its ancestor context, which have different parents', () => {
+      const steps = [
+        importText({
+          text: `
+            - x
+              - m
+                - a
+                  - m
+                    - y`,
+        }),
+        setCursor(['x', 'm', 'a', 'm']),
+        toggleContextView,
+        setCursor(['x', 'm', 'a', 'm', 'a']),
+        addMulticursor(['x', 'm', 'a', 'm', 'a']),
+        addMulticursor(['x', 'm', 'a', 'm', 'x']),
+        categorize,
+      ]
+
+      const stateNew = reducerFlow(steps)(initialState())
+
+      expect(stateNew.alert).toMatchObject({
+        alertType: AlertType.MulticursorError,
+        value: 'Cannot categorize thoughts from different parents.',
+      })
+
+      const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+      expect(exported).toBe(`- ${HOME_TOKEN}
+  - x
+    - m
+      - a
+        - m
+          - y`)
+    })
+  })
 })
 
 describe('multicursor', () => {
