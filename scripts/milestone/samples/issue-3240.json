@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "Single selected thought should follow cursor",
+    "body": "## Steps to Reproduce\n\n```\n- a\n- b\n- c\n```\n\n1. Long tap `a` to select.\n2. Short tap `b`.\n\n## Current Behavior\n\n`a` stays selected and the cursor moves to `b`.\n\n## Expected Behavior\n\nIn the above case, `a` should be deselected and `b` should be selected.\n\nMore generally, the currently selected thought should always be deselected and the new cursor selected on tap when the command center is open and a single thought is selected.\n\n## Testing\n\nAdd tests to https://github.com/cybersemics/em/blob/a8a012eb998353cd7b4187ddafaba4a8f5823690/src/e2e/puppeteer/__tests__/multiselect.ts. Tests should cover the selected thoughts and the cursor.",
+    "labels": ["bug"]
+  },
+  "expected": "👆 Multiselect",
+  "split": "test",
+  "source": {
+    "type": "github",
+    "issue": 3240
+  }
+}

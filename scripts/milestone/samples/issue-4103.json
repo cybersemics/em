@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "[Desktop] HTML tag is extracted when user applies cmd+ctrl+E on a thought text with text color and formatting",
+    "body": "```\n- Lorem ipsum dolor sit amet consectetur adipiscing elit. \n```\n\n\n## Step to Reproduce: with Font Color\n1. Apply Red Font Color onto the text\n2. Select \"Lorem ipsum\" text\n3. Click cmd+ctrl+E\n\n**Font Color**\n<img width=\"648\" height=\"129\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/1707f637-52a1-46a9-a60a-a8204df30438\" />\n\n\n## Step to Reproduce: with Background Color\n1. Apply Red Font Color onto the text\n2. Select \"Lorem ipsum\" text\n3. Click cmd+ctrl+E\n\n**Background Color**\n\n<img width=\"648\" height=\"127\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/db7f730f-4430-435f-9c87-1e831a045107\" />\n\n## Step to Reproduce: with Text Formatting\n1. Apply Red Font Color onto the text\n2. Select \"Lorem ipsum\" text\n3. Click cmd+ctrl+E\n\n<img width=\"648\" height=\"103\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/75f04fd6-8a95-4fac-82ce-4fa111841c51\" />\n\n\n## Current behavior\nHTML hardcode is extracted\n\n\n**Video:**\n**Text Color**\n\nhttps://github.com/user-attachments/assets/a8a9df55-8a12-4df8-8587-300de495151b\n\n\n**Text Formatting**\n\nhttps://github.com/user-attachments/assets/c3f78d2e-d39c-4dc5-8b30-3b93281386d2\n\n\n## Expected behavior\nThis command should only extract the text\n\n\n ",
+    "labels": ["bug"]
+  },
+  "expected": "🎨 Formatting",
+  "split": "test",
+  "source": {
+    "type": "github",
+    "issue": 4103
+  }
+}

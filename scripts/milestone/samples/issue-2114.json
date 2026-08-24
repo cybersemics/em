@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "Test: Concurrent moves",
+    "body": "Add a test for the following concurrent editing scenario. Run the test 10 times to flush out race conditions. \n\n## Steps to Reproduce\r\n\r\n``` \n- a\n- b\n- c\n``` \n\nClient A: Move `c` into `a`\nClient B: Move `c` into `b`\r\n\r\n## Expected Behavior\n\n``` \n- a\n  - c\n- b\n```\n\nOr:\n\n``` \n- a\n- b\n  - c\n``` \n\r\n## Assertions\r\n \r\nMake sure the Thoughts and Lexemes are updated properly.",
+    "labels": ["hold", "test"]
+  },
+  "expected": "🔁 Sync",
+  "split": "test",
+  "source": {
+    "type": "github",
+    "issue": 2114
+  }
+}

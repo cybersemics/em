@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "Incorrect thought detection on Tutorial message: Tap a thought to reveal its subthought ''\".",
+    "body": "\n## Step to reproduce\n1. Fresh start the app \n2. Tap Start Tutorial\n3. Complete the Tutorial with creating 3 Thoughts with 1 Thought that has 2 subthoughts\n4. Do not select anything on Tutorial step 10 (the last page)\n5. Tap on the Thought with **expanded** subthoughts\n6. Tap Step 9 dot on the tutorial\n7. See the tutorial copy message\n\n\n## Current behavior\nThe last sentence of the tutorial says \n> Tap a thought to reveal its subthought ''\". \n\n**Screenshot:**\n\n<img width=\"300\" height=\"800\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/1e38f008-4807-473d-b4c9-2d62a4753d1c\" />\n**Video**\n\nhttps://github.com/user-attachments/assets/2c466a77-6ae5-4f25-86be-7141c3530515\n\n\n\n## Expected behavior\nTutorial message should show that user needs to select another thought with no subthoughts first\n\n@raineorshine \nPlease help with the expected behavior for this use case",
+    "labels": ["bug"]
+  },
+  "expected": "👩🏻‍🏫 Tutorial",
+  "split": "test",
+  "source": {
+    "type": "github",
+    "issue": 3458
+  }
+}

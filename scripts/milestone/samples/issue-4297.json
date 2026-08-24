@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "[Mobile] Gesture menu stucks onscreen after getting error  Swap Note",
+    "body": "```\n- A\n   - B\n   - C\n```\n\n\n## Step to Reproduce\n1. Create a Note under Thought A\n2. Add text as `B`\n3. Place the caret anywhere\n4. Swap Note with gesture ↑←→  on mobile or Opt + Shift + N\n5. Dismiss the error banner #4295\n\n## Current behavior\nGesture menu is still onscreen.\nWorkaround: Close the app and reopen to dismiss the Gesture Menu\n\nhttps://github.com/user-attachments/assets/e2c88a20-e519-4148-a32d-e6179e71a44d\n\n## Expected behavior\nGesture menu and tracing should be auto dismissed immediately after user completes the gesture drawing\n\n\n ",
+    "labels": ["bug"]
+  },
+  "expected": "🫧 Liminal UI",
+  "split": "test",
+  "source": {
+    "type": "github",
+    "issue": 4297
+  }
+}

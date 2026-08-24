@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "Caret is moved to the end of the text when undoing applied Background Color",
+    "body": "\r\n## Step to Reproduce\r\n1. Create Thought `Welcome to the Jungle`\r\n4. Place the caret in the middle of the text for easy spotting\r\n5. Apply Red Background Color\r\n6. Click Undo\r\n\r\n\r\n## Current behavior\r\nBackground Color is undone but the caret is moved to the end of the Notes text.\r\nThis is also valid for undoing Font Color applied.\r\nValid for Mobile and Desktop platforms\r\n\r\n<img width=\"740\" height=\"714\" alt=\"image\" src=\"https://github.com/user-attachments/assets/30ba80d9-1134-4bed-b260-bab669eee0b1\" />\r\n\r\n**Video:**\r\n\r\n\r\nhttps://github.com/user-attachments/assets/6112be8c-8c9b-40b2-a505-629499d8cdf3\r\n\r\n\r\n\r\n## Expected behavior\r\nCaret should stay where it left off.\r\n\r\n_Originally posted by @BayuAri in https://github.com/cybersemics/em/issues/4628#issuecomment-4970759373_\r\n            ",
+    "labels": ["bug"]
+  },
+  "expected": "🏹 Browser Selection",
+  "split": "test",
+  "source": {
+    "type": "github",
+    "issue": 4632
+  }
+}

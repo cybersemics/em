@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "bumpThoughtDown: Bumped thought is not sorted",
+    "body": "## Steps to Reproduce\r\n\r\n```\r\n- C\r\n  - =sort\r\n    - Alphabetical\r\n      - Asc\r\n  - A\r\n  - B\r\n```\r\n\r\n1. Set the cursor on `C`.\r\n2. Activate `bumpThoughtDown`.\r\n\r\n## Current Behavior\r\n\r\n`C` is moved to be the first sibling and the context is no longer sorted.   \r\n\r\n- [empty thought]\r\n  - C\r\n  - A\r\n  - B\r\n\r\n## Expected Behavior\r\n\r\nThe context should stay sorted and `C` should be moved to the correct position. \r\n\r\n- [empty thought]\r\n  - A\r\n  - B\r\n  - C\r\n\r\n## Testing\r\n\r\nAdd a unit test in https://github.com/cybersemics/em/blob/5ffafd3a22beb062ff2b55b87115fe898aea7870/src/actions/__tests__/bumpThoughtDown.ts to cover this case.",
+    "labels": ["bug"]
+  },
+  "expected": "🌿 Thoughtspace",
+  "split": "test",
+  "source": {
+    "type": "github",
+    "issue": 1990
+  }
+}

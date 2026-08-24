@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "Multiselect: Select between to adjust end point",
+    "body": "- [ ] Depends on #4739 \n\nAfter the first Select Between is activated, subsequent clicks should continue to select in between the first selected thought and the clicked thought, allowing the selection range to be adjusted. i.e. The first click is the start anchor, and multiple Shift + Clicks will update the end anchor of Select Between.\n\nCmd + Click should update the start anchor.\n\n## Steps to Reproduce\n\n```\n- a\n- b\n- c\n- d\n- e\n- f\n```\n\n1. Cmd + Click the bullet of `a` to start multiselect.\n2. Shift + Click the bullet of `e` to select all thoughts in between `a` and `e`.\n3. Shift + Click the bullet of `c`.\n\n## Expected Behavior\n\n`a`, `b`, `c` should be selected. \n`d` and `e` should not be selected.\n\n## Continued steps\n\n4. Cmd + Click the bullet of `e`.\n\n## Expected Behavior\n\n`a`, `b`, `c`, `e` should be selected. ",
+    "labels": ["feature"]
+  },
+  "expected": "👆 Multiselect",
+  "split": "test",
+  "source": {
+    "type": "github",
+    "issue": 4740
+  }
+}

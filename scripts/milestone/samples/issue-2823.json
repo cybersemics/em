@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "[Android] Swipe to navigate interferes with gestures",
+    "body": "## Steps to Reproduce\r\n\r\nSwipe horizontally from the left or right edge of the screen. \r\n\r\n## Current Behavior\r\n\r\nSwiping from the left/right edge of the screen navigates back/forward due to default Android behavior. \r\n\r\n## Expected Behavior\r\n\r\nDisable swipe to navigate.",
+    "labels": ["bug"]
+  },
+  "expected": "🤖 Android",
+  "split": "test",
+  "source": {
+    "type": "github",
+    "issue": 2823
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "No Context info text is always visible keeping the Context View active even when there is no context found",
+    "body": "## Step to reproduce\n1. Create 3 thoughts\n2. Select any thought\n3. Activate Context View using the button or gesture\n4. Verify that \"This thought is not found in any other contexts.\" info is shown\n5. Move to another thought\n6. Activate Context View using the button or gesture\n\n\n## Current behavior\n\"This thought is not found in any other contexts.\" info is shown on both thoughts.\nThis also happens when user moves into 2 level subthought where the thought is auto hidden but the info text remain.\nThe info text is shown until it is turned off manually.\n\n<img width=\"1062\" height=\"1021\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/c5b97a84-a2d9-4427-b32b-f825e8a4c10c\" />\n\n## Expected behavior\nRefer to the behavior of the Context View when context is available, info text should be auto hidden/collapsed under the selected thought when user moves focus to other thought or subthought.\nOr we can change the behavior of the info text into auto-disappear and turn off the Context View entirely when no context is found.\n@raineorshine \nWhat do you think about this behavior?\n\n ",
+    "labels": ["bug"]
+  },
+  "expected": "📐 Layout",
+  "split": "test",
+  "source": {
+    "type": "github",
+    "issue": 3567
+  }
+}

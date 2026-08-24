@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "[Desktop] Indent is missing the keyboard text helper",
+    "body": "## Step to Reproduce\n1. Open em on desktop browser\n2. Hover the pointer onto Indent button on the toolbar\n\n\n## Current behavior\nHelper text is `Indent ()`\n\n<img width=\"796\" height=\"708\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/614aa114-cdac-4d92-a855-0690e2fc4498\" />\n\n## Expected behavior\nHelper text should be `Indent (Tab)`\nRefer to `Outdent (Shift + Tab)`\n\n\n ",
+    "labels": ["bug"]
+  },
+  "expected": "🔧 Toolbar",
+  "split": "test",
+  "source": {
+    "type": "github",
+    "issue": 4307
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "Slowly loading thought not rendered as pending",
+    "body": "## Steps to Reproduce\r\n\r\n```\r\n- a\r\n  - b\r\n    - c\r\n```\r\n\r\nAdd `await sleep(2000)` to [replicateChildren](https://github.com/cybersemics/em/blob/c21cdc17813b6fe06f2e112cfc56693a34ed8b4a/src/data-providers/yjs/thoughtspace.ts#L739) to simulate a slow connection.\r\n\r\n## Current Behavior\r\n\r\nThoughts are only briefly rendered as pending, then are rendered as normal bullets even though they are still loading.\r\n\r\nhttps://github.com/cybersemics/em/assets/750276/5f93f26a-bb47-4179-8c02-3ce95eace879\r\n\r\n## Expected Behavior\r\n\r\nThoughts that are still loading should be rendered with the pulsing animation of pending thoughts.\r\n\r\n## Notes\r\n\r\nThis bug was fixed in a510821 but had to be [reverted](https://github.com/cybersemics/em//commit/8cd02e7bac22a604bffffc3cbce77e1fd357480e) due to a regression. Make sure to test setting the cursor on a pending thought and ensure that it does not stay permanently pending.\r\n\r\n> This reverts commit a510821d76ed449c050e1895cd560df3af4d2738. The commit caused a regression in which setting the cursor on a thought while it was still pending would cause it to stay permanently pending. (This could be simulated by adding an artificial delay to replicateThought or fetchDescendants.)\r\n> \r\n> Reverting this commit does restore some undesirable old behavior: Non-root thoughts are not initially marked as pending in fetchDescendants, so the bullet is not rendered with the pulsing animation as it should. A solution that does not cause the aforementioned regression should be re-attempted.",
+    "labels": ["bug"]
+  },
+  "expected": "🤹‍♀️ CSS Animation",
+  "split": "test",
+  "source": {
+    "type": "github",
+    "issue": 1978
+  }
+}

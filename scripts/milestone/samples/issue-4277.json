@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "[Android] Caret appear on last known position when user applies Text Color at a focus/cursor level",
+    "body": "```\n- A\n- B\n- C\n- D\n```\n\n## Step to Reproduce\n1. Place the caret on Thought A\n2. Tap the bullet of Thought D\n3. Tap Text Color\n4. Apply Red Font Color\n\n\n## Current behavior\nCaret appears blinking on Thought A but focus / cursor remains still on Thought D. \nKeyboard is shown following the appearance of caret.\nThis also reproducible on applying any Background Color\n\n<img width=\"584\" height=\"1266\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/9841fc04-6bf2-4854-aebe-989747976948\" />\n\nhttps://github.com/user-attachments/assets/9183eaa8-d33f-472e-977d-287de5ceb220\n\n\n## Expected behavior\nCaret should not appear when user applies Font nor Background Color a focus / cursor.\n\n\n ",
+    "labels": ["bug"]
+  },
+  "expected": "🤖 Android",
+  "split": "test",
+  "source": {
+    "type": "github",
+    "issue": 4277
+  }
+}

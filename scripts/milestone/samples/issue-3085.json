@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "Do not allow drag to be initiated in scroll zone",
+    "body": "## Steps to Reproduce\n\n```\n- This is a long thought that keeps going and going until it wraps onto two lines and becomes a multiline thought.\n```\n\nTap and hold the text of the thought in the far right scroll zone, then begin dragging.\n\n## Current Behavior\n\nDrag-and-drop is allowed.\n\n## Expected Behavior\n\nDrag-and-drop should be disabled in the scroll zone. \n\nThis will help prevent false negatives when the user is trying to scroll. The scroll zone is quite small now, so there's plenty of space on the rest of the screen for the user to drag.",
+    "labels": ["bug"]
+  },
+  "expected": "🧤 Drag & Drop",
+  "split": "test",
+  "source": {
+    "type": "github",
+    "issue": 3085
+  }
+}

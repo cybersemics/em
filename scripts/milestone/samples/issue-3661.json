@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "Cannot read properties of undefined (reading 'length') on redo categorize",
+    "body": "It is had to pinpoint the cause from the stack track because it bubbles up from an async YJS update. However, the error goes away when `updateLexeme` is temporarily disabled, so that is a clue.\n\nIt's possible that this will not be an issue with the new sync engine when Lexemes are just indexes and do not require such complex coordination with Thoughts.\n\n## Steps to Reproduce\n\n1. Create an empty thought.\n2. Categorize\n3. Categorize\n4. Undo\n5. Undo\n6. Redo\n7. Redo\n\n## Current Behavior\n\n`Error: Cannot read properties of undefined (reading 'length')`\n\nhttps://github.com/user-attachments/assets/cdf8c2e7-5d35-4e5b-82ff-74a26b7dda99\n\n## Expected Behavior\n\nNo error and redo the second Categorize.",
+    "labels": ["bug", "hold"]
+  },
+  "expected": "↩️ Undo/Redo",
+  "split": "test",
+  "source": {
+    "type": "github",
+    "issue": 3661
+  }
+}

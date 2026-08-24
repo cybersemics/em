@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "Improve meta attribute input validation and errors",
+    "body": "In order to make meta attributes more accessible to amateur hackers, we need robust feedback and informative error messages. \n\n- Autocomplete\n- Autocorrect\n- Invalid attribute error\n  - Link to valid attributes \n  - Did you mean _____?\n- Invalid child error\n  - e.g. `=children` only supports certain meta attributes",
+    "labels": ["feature", "design-needed"]
+  },
+  "expected": "💹 Metaprogramming",
+  "split": "test",
+  "source": {
+    "type": "github",
+    "issue": 3005
+  }
+}

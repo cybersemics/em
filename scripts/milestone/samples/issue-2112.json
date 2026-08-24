@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "Test: Concurrent edit + delete",
+    "body": "Add a test for the following concurrent editing scenario. Run the test 10 times to flush out race conditions. \n\n## Steps to Reproduce\r\n\r\n``` \n- a\n``` \n\nClient A: Edit `a` → `b`\nClient B: Delete `a`\r\n\r\n## Expected Behavior\n\nThought is deleted. \r\n\r\n## Assertions\r\n\n- Thought is deleted. \r\n- Lexeme is deleted. \n- Thought is removed from parent. ",
+    "labels": ["hold", "test"]
+  },
+  "expected": "🔁 Sync",
+  "split": "test",
+  "source": {
+    "type": "github",
+    "issue": 2112
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "Publish: Global Settings/Publish meta data",
+    "body": "- Store global meta data for publish mode in  Settings/Publish\r\n  - Author\r\n  - Date\r\n  - Email\r\n- Override local `=publish` (including partially)\r\n- Must be embedded at publish time\r\n- Modify thoughtIndex, not exported text",
+    "labels": ["feature"]
+  },
+  "expected": "🎁 Collaboration",
+  "split": "test",
+  "source": {
+    "type": "github",
+    "issue": 572
+  }
+}

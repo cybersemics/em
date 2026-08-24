@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "Space is not automatically inserted between emoji and colored text",
+    "body": "## Steps to Reproduce\n\n1. Create thought `Hello`.\n2. Set the color to red.\n3. Set the caret at the beginning and insert an emoji, 👋.\n\n## Current Behavior\n\nThe emoji is inserted but no space is added after it.\n\n```\n👋Hello\n```\n\n## Expected Behavior\n\nSpace should be immediately inserted between emoji and text, per #4139.\n\n```\n👋 Hello\n```\n",
+    "labels": ["bug"]
+  },
+  "expected": "🎨 Formatting",
+  "split": "test",
+  "source": {
+    "type": "github",
+    "issue": 4674
+  }
+}

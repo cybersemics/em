@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "Undo/Redo Nudge Up:",
+    "body": "## Steps to Reproduce\n\n```\n- a\n  - m\n    - x\n- b\n  - m\n    - y\n``` \r\n\r\n1. Set the cursor on b/m\n2. Command: Nudge Up\n4. Undo\r\n\r\n## Current Behavior\r\n\r\n\n```\nError: undefined is not an object (evaluating 'R.length')\n```\r\n\r\n## Expected Behavior\r\n\r\nUndo \"Nudge Up\" without an error.",
+    "labels": ["bug"]
+  },
+  "expected": "↩️ Undo/Redo",
+  "split": "test",
+  "source": {
+    "type": "github",
+    "issue": 4392
+  }
+}

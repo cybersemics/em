@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "Import breaks on <b>",
+    "body": "Related: #1008\r\n\r\n## Steps to Reproduce\r\n\r\nPaste the following into an empty thoughtspace:\r\n\r\n```\r\n- a\r\n  - b\r\n  - <b>c</b>\r\n```\r\n\r\n## Current Behavior\r\n\r\n- a\r\n  - b\r\n  - [empty]\r\n    - c\r\n\r\n## Expected Behavior\r\n\r\n- a\r\n  - b\r\n  - \\<b>c\\</b>",
+    "labels": ["bug"]
+  },
+  "expected": "🛗 Import/Export",
+  "split": "test",
+  "source": {
+    "type": "github",
+    "issue": 1009
+  }
+}

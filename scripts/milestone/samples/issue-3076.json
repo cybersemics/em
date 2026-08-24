@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "[Mobile] Viewport scrolls jarringly after New Thought on empty thought",
+    "body": "Related: #3075\n\n## Steps to Reproduce\n\n1. Create thought `a`.\n2. Create an empty subthought under `a`.\n3. Continue creating empty subthoughts under `a` by hitting Enter.\n\n## Current Behavior\n\nInitially, the new thoughts are gently scrolled into view so that it is not covered by the keyboard.\n\nAs more thoughts are created, the viewport begins to scroll sharply up and down. Eventually it scrolls so dramatically that the virtual keyboard closes.\n\nhttps://github.com/user-attachments/assets/3f1da487-a684-4f6a-8b21-54ba9c8f1165\n\n## Expected Behavior\n\nThe cursor thought should be scrolled into view as usual, and there should be no jarring scroll up and down. The keyboard should stay open after New Thought. It should work the same whether activating New Thought on an empty or non-empty thought.\n\n[useHideSpaceAbove](https://github.com/cybersemics/em/blob/60bab1a58979b1eb81105c259f165f87f7c4d0f7/src/components/LayoutTree.tsx#L87) is supposed to adjust the scroll position instantaneously so that there is no visible viewport shift.\n\n## Notes\n\n**The issue does not occur when activating New Thought on a non-empty thought.** That seems like a great clue. I would start by trying to figure out what is different about the empty thought that causes this behavior.",
+    "labels": ["bug"]
+  },
+  "expected": "🛼 Autoscroll",
+  "split": "test",
+  "source": {
+    "type": "github",
+    "issue": 3076
+  }
+}

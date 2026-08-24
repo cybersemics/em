@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "[iOS] Command palette persists after app becomes passive",
+    "body": "Only relevant to iPhone X and up. \n\n## Steps to Reproduce\r\n\r\n1. Grab the app switcher at the bottom of the screen and drag about 10 pixels to the right. If you do it just right it will activate the gesture hint. \n2. Without fully switching apps, let em fall back into place and become active again. \r\n\r\n## Current Behavior\r\n\r\nhttps://user-images.githubusercontent.com/750276/213871400-7b848021-65da-4b22-88dc-3dfde89ad52d.MOV\r\n\r\n## Expected Behavior\r\n\r\nThe gesture should be cancelled and the gesture hint dismissed when the app becomes passive. \n\nIf that is not possible, but the passive state can still be detected, the gesture hint should be dismissed when the app becomes activated again.",
+    "labels": ["bug"]
+  },
+  "expected": "📱 iOS",
+  "split": "test",
+  "source": {
+    "type": "github",
+    "issue": 1696
+  }
+}

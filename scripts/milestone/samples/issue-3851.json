@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "Keyboard reopens when tapping a thought after drag-and-drop",
+    "body": "## Steps to Reproduce\n\n1. Create thought `A`.\n2. Create thought `B`.\n3. Create thought `C`.\n4. Without closing the keyboard, drag `A` into `B`.\n5. Tap `B`.\n\n## Current Behavior\n\nThe keyboard reopens.\n\nhttps://github.com/user-attachments/assets/f6e12d00-4bd9-4031-a3e0-678fd8215889\n\n## Expected Behavior\n\nThe keyboard should stay closed.\n\nWhen the keyboard is down and a non-cursor thought is tapped, the first tap should set the cursor without opening the keyboard. Tapping the cursor thought (i.e. the second tap) should open the keyboard.\n\n## Notes\n\nThere is no hard rule about whether the keyboard should stay open or not immediately after a drag-and-drop (i.e. Step 4). It may actually be difficult to control this as the browser can close the keyboard on its own after certain user actions like scrolling a certain distance. The important thing is that if the keyboard is down, it should stay down and follow the typical \"two taps\" to open the keyboard again.\n\nThis bug may or may not involve [State.isKeyboardOpen](https://github.com/cybersemics/em/blob/7477fe2798614cb7f6206e264d997668c8e203ea/src/%40types/State.ts#L69-L70) being in an invalid state after the drag-and-drop (Step 4).",
+    "labels": ["bug"]
+  },
+  "expected": "🏹 Browser Selection",
+  "split": "test",
+  "source": {
+    "type": "github",
+    "issue": 3851
+  }
+}

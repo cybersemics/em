@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "Table: Overflows the right edge of screen",
+    "body": "Reduce the width of the window to emulate mobile screen size.\r\n\r\n## Steps to Reproduce\r\n\r\n```\r\n- X\r\n  - =view\r\n    - Table\r\n  - Does localhost:3012 use a different IndexedDB sandbox?\r\n    - PORT=3012\r\n  - Can localhost connect to the staging2 server?\r\n    - Yes, just change REACT_APP_WEBSOCKET_HOST\r\n```\r\n\r\n## Current Behavior\r\n\r\nThe table overflows the right edge of the screen. \r\n\r\n<img width=\"280\" alt=\"image\" src=\"https://github.com/cybersemics/em/assets/750276/3f3a0145-b60c-46b7-a9c7-6d3b5fd33cd7\">\r\n\r\n\r\n## Expected Behavior\r\n\r\nEither one or both of the columns should wrap so that the table does not extend beyond the right edge of the screen.",
+    "labels": ["bug"]
+  },
+  "expected": "📐 Layout",
+  "split": "test",
+  "source": {
+    "type": "github",
+    "issue": 1874
+  }
+}

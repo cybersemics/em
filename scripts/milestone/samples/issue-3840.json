@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "Grandchildren is gone when user Swap Note on the Children",
+    "body": "## Step to reproduce\n1. Create Thought A\n2. Create Subthought B as A's children\n3. Create Subthoought C as B's children\n4. Place the caret on B\n5. Swipe ↑←→ to Swap Note\n\n\n\n## Current behavior\nSubthought B become a Note to Thought A\nGrandchildren C is gone.\nIt remains be a subthought of the b as a note but not visible\nGrandchildren is visible when user Swap Note B as subthought again.\n\n**Video:**\n\nhttps://github.com/user-attachments/assets/c1c3aadd-16b2-48ea-8227-dfffcf1a54b0\n\n## Expected behavior: \nThe grandchildren should move to A as a subthought (children)",
+    "labels": ["bug"]
+  },
+  "expected": "🌿 Thoughtspace",
+  "split": "test",
+  "source": {
+    "type": "github",
+    "issue": 3840
+  }
+}

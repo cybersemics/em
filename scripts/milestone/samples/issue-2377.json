@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "Modal snapshot tests",
+    "body": "Create snapshot tests for each of the modals:\n\n- Devices\n- Export\n- Help\n- Welcome\n- Settings\n  - Customize Toolbar\n\nAnd:\n\n- Command Palette",
+    "labels": ["test"]
+  },
+  "expected": "✅ Test Engineering",
+  "split": "test",
+  "source": {
+    "type": "github",
+    "issue": 2377
+  }
+}

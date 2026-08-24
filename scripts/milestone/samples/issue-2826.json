@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "Import stuck \"Storing from clipboard\" when inserting trailing whitespace",
+    "body": "## Steps to Reproduce\n\r\n```\r\n- a\n  - m\n    - x\n- b\n  - m\n    - y\n  - n\n\r\n```\n\n1. Copy the above text to a clipboard app.\n2. Insert directly into an empty thought. \r\n\r\n## Current Behavior\r\n\r\nImport gets stuck with alert \"Storing from clipboard\".\r\n\r\n## Expected Behavior\r\n\r\nShould import.",
+    "labels": ["bug"]
+  },
+  "expected": "🛗 Import/Export",
+  "split": "test",
+  "source": {
+    "type": "github",
+    "issue": 2826
+  }
+}

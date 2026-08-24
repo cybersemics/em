@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "JSON Snapshot option text is overflowing on Share screen",
+    "body": "## Step to reproduce\n1. Create a thought\n2. Tap Share button on the toolbar\n\n\n\n## Current behavior\nJSON Snapshot option text is overflowing picker box.\n\n<img width=\"1067\" height=\"719\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/d3330095-4a26-438f-86c7-bcb073bac1a3\" />\n\n## Expected behavior\nJSON Shapshop text should be inside the picker box.\n\n ",
+    "labels": ["bug"]
+  },
+  "expected": "🫧 Liminal UI",
+  "split": "test",
+  "source": {
+    "type": "github",
+    "issue": 3624
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "Lexeme for nested thought with the same value as its parent is not deleted",
+    "body": "## Steps to Reproduce\r\n\r\n```\r\n- b\r\n- a\r\n  - b\r\n    - b\r\n```\r\n\r\nDelete `a`.\r\n\r\n## Current Behavior\r\n\r\nThe superscript of `b` is \"2\". \r\n\r\nThe Lexeme for `b` has two contexts: `['b']` (correct) and the deleted `['a', 'b', 'b']` (incorrect).\r\n\r\n## Expected Behavior\r\n\r\nThe superscript of `b` should be \"1\".\r\n\r\nThe Lexeme for `b` should only have one context (for the remaining `['b']`).",
+    "labels": ["bug"]
+  },
+  "expected": "🔁 Sync",
+  "split": "test",
+  "source": {
+    "type": "github",
+    "issue": 2219
+  }
+}

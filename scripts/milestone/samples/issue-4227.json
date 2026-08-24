@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "[Android] Copied text from Context Menu  is not saved onto the Clipboard",
+    "body": "## Step to Reproduce\n1. Create a new thought\n2. Add with text\n3. Select a word or phrase\n4. Tap Copy on the Context menu\n5. Open clipboard\n\n\n## Current behavior\nCopied text is not shown on the clipboard, disregard the alert shows \"Copied to Clipboard\" \n\n<img width=\"622\" height=\"1353\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/507079aa-fe2b-4dca-88f7-110d212f1e0e\" />\n\nhttps://github.com/user-attachments/assets/53e25788-d9ac-42ca-bcc1-c996fad0e3c1\n\n## Expected behavior\nCopied text should appear on the Clipboard\n\n\n ",
+    "labels": ["bug"]
+  },
+  "expected": "🤖 Android",
+  "split": "test",
+  "source": {
+    "type": "github",
+    "issue": 4227
+  }
+}

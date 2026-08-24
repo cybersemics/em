@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "[Android] Outdent and Indent buttons are flashing when user taps any buttons on Command Center",
+    "body": "## Step to Reproduce\n1. Create a thought\n2. While caret is on the newly create thought, swipe up to trigger Command Center\n3. Tap Favorite button\n\n## Current behavior\nOutdent and Indent buttons are flashing \n\nhttps://github.com/user-attachments/assets/1aff77c2-e005-4648-b21d-4273afe8b48a\n\n## Expected behavior\nOutdent and Indent buttons should only flash when user interacts with the intended button\n\n\n ",
+    "labels": ["bug"]
+  },
+  "expected": "🤖 Android",
+  "split": "test",
+  "source": {
+    "type": "github",
+    "issue": 3917
+  }
+}

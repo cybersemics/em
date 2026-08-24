@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "[Mobile] Share button on Mobile Chrome and Safari downloads the content",
+    "body": "## Step to Reproduce\n1. Open em on Mobile Safari or Chrome\n2. Create a new thought\n3. Tap Export button on the toolbar menu\n4. Tap Share button\n\n\n## Current behavior\nThought content is downloaded.\n\n<img width=\"582\" height=\"1265\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/b4b4e063-f098-4aff-a701-e9ac79d549a8\" />\n\nhttps://github.com/user-attachments/assets/a270fa95-5853-4f02-bf23-c31459377de0\n\n## Expected behavior\nShare button should open Share dialog follow the Capacitor user flow\n\n\n ",
+    "labels": ["bug"]
+  },
+  "expected": "📱 iOS",
+  "split": "test",
+  "source": {
+    "type": "github",
+    "issue": 4293
+  }
+}

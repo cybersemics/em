@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "Multiselect: Move cursor to first selected thought",
+    "body": "- [ ] Unit test\n\n## Steps to Reproduce\n\n```\n- a\n- b\n```\n\n1. Set the cursor on `a`.\n2. Long press `b` to select.\n\n## Current Behavior\n\nThe cursor is hidden but stays on `a`.\n\n## Expected Behavior\n\nThe cursor should move to `b`.",
+    "labels": ["feature"]
+  },
+  "expected": "👆 Multiselect",
+  "split": "test",
+  "source": {
+    "type": "github",
+    "issue": 3560
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "Invalid cursor after indent and note",
+    "body": "## Steps to Reproduce\n\n```\n- a\n- b\n  - =note\n    - c\n```\n\n1. Set the cursor on `b`\n2. Indent\n3. Activate the Note command (Meta + Option + n)\n\n## Current Behavior\n\nCursor is set to invalid Path `['b']`.\n\n## Expected Behavior\n\nCursor should be set to correct Path `['a', 'b']`.\n\n## Testing\n\nAdd a unit test.",
+    "labels": ["bug"]
+  },
+  "expected": "🌿 Thoughtspace",
+  "split": "test",
+  "source": {
+    "type": "github",
+    "issue": 2848
+  }
+}

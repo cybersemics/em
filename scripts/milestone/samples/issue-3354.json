@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "Split \"-\" into child",
+    "body": "Extend the `splitSentence` command to handle this extra use case. If we find they need to be orthogonal we can separate it out into its own command.\n\n# Case 1: Split into child\n\n## Steps to Reproduce\n\n```\n- one - 1\n```\n\nActivate Split Sentences on the thought.\n\n## Current Behavior\n\nCannot split sentences: thought is an empty thought or has only one sentence.\n\n## Expected Behavior\n\nSplit on `-`, `–`, or `—` (dash, en-dash, or em-dash) and insert the right half as a child of the thought.\n\n```\n- one\n  - 1\n```\n\n# Case 2: Split sentence\n\nIf a thought has both dash and multiple sentences, the current Split Sentence behavior should take precedence.\n\n## Steps to Reproduce\n\n```\n- one - 1. two. three.\n```\n\nActivate Split Sentences on the thought.\n\n## Current Behavior\n\n```\n- one - 1.\n- two.\n- three.\n```\n\n## Expected Behavior\n\nSame.",
+    "labels": ["feature"]
+  },
+  "expected": "🌿 Thoughtspace",
+  "split": "test",
+  "source": {
+    "type": "github",
+    "issue": 3354
+  }
+}

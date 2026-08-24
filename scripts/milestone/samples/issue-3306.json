@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "Swap parent animation is broken when keyboard is up",
+    "body": "Tested on iOS Safari. \n\nFeature: #2528\n\n## Steps to Reproduce\n\n```\n- A\n  - B\n```\n\n1. Set the cursor on `B`.\n2. Tap `B` to open the keyboard. \n2. Activate Swap Parent from the toolbar. \n\n## Current Behavior\n\nThe animation is choppy and cut off. \n\nhttps://github.com/user-attachments/assets/f6e4891b-d99d-4ca3-b9d0-20f23e848055\n\n## Expected Behavior\n\nThere should be a smooth animation of `A` and `B` swapping places. \n\nhttps://github.com/user-attachments/assets/c48d9aa9-5d0b-46c2-8e1f-c3717357b1df",
+    "labels": ["bug"]
+  },
+  "expected": "🤹‍♀️ CSS Animation",
+  "split": "test",
+  "source": {
+    "type": "github",
+    "issue": 3306
+  }
+}

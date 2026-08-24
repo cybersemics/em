@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "Drag and drop: Thoughts hover expand during scroll-at-edge",
+    "body": "## Steps to Reproduce\r\n\r\n```\r\n- A\n  - 1\n- B\n  - 1\n- C\n  - 1\n- D\n  - 1\n- E\n  - 1\n- F\n  - 1\n- G\n  - 1\n- H\n  - 1\n- I\n  - 1\n- J\n  - 1\n- K\n  - 1\n- L\n  - 1\n- M\n  - 1\n- N\n  - 1\n- O\n  - 1\n- P\n  - 1\n- Q\n  - 1\n- R\n  - 1\n- S\n  - 1\n- T\n  - 1\n- U\n  - 1\n- V\n  - 1\n- W\n  - 1\n- X\n  - 1\n- Y\n  - 1\n- Z\n  - 1\r\n```\n\n1. Set the cursor to null and scroll to the top. \n2. Drag `K` towards the bottom of the screen. \n3. Hold at the bottom of the screen just enough so that it autoscrolls slowly. \r\n\r\n## Current Behavior\r\n\r\n`N` is expanded. \n\nhttps://github.com/user-attachments/assets/ab1a8e06-0456-44b0-b19e-ce88df696362\r\n\r\n## Expected Behavior\r\n\r\nThoughts should not be expanded on hover during autoscroll.",
+    "labels": ["bug"]
+  },
+  "expected": "🧤 Drag & Drop",
+  "split": "test",
+  "source": {
+    "type": "github",
+    "issue": 3807
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "Drop target of temporary expansion persists into next drag-and-drop",
+    "body": "## Steps to Reproduce\r\n\r\n```\r\n- a\n  - b\n  - c\n    - c1\n    - c2\n    - c3\r\n```\n\n1. Set the cursor to null (so `c` is collapsed).  \n1. Drag `b` after `c` and hold until `c` expands. \r\n2. Cancel the drag. \n3. Drag `b` in the empty space below c.\n\r\n## Current Behavior\r\n\r\nDrop hover/target is out of place (as if below c3):\n\n![image](https://github.com/user-attachments/assets/04dcfd2b-4886-4f02-b44e-7b659ffcf442)\n\nIf dragged below and left, the drop hover appears twice:\n\n![image](https://github.com/user-attachments/assets/16d99900-1a07-4c9e-9f64-1671b72a2448)\r\n\r\n## Expected Behavior\r\n\r\nThe drop hover and target should appear in the correct place:\n\n![image](https://github.com/user-attachments/assets/8f6e6965-5fb0-473a-8a21-8a22ee6539aa)",
+    "labels": ["unable-to-reproduce"]
+  },
+  "expected": "🧤 Drag & Drop",
+  "split": "test",
+  "source": {
+    "type": "github",
+    "issue": 2809
+  }
+}

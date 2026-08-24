@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "Cancel clearThought on undo",
+    "body": "Set `state.cursorCleared` to false when undo is activated. \n\nExclude `state.cursorCleared` from undo/redo state. ",
+    "labels": ["bug"]
+  },
+  "expected": "↩️ Undo/Redo",
+  "split": "test",
+  "source": {
+    "type": "github",
+    "issue": 1716
+  }
+}

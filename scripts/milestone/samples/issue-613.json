@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "=map",
+    "body": "Combine two trees:\r\n\r\n```js\r\n(Tree, Tree) => Tree\r\n``` \r\n\r\n## Example\r\n\r\ncontent =\r\n- a\r\n  - b\r\n    - c\r\n\r\nstyles =\r\n- x\r\n  - `=style`\r\n    - color\r\n      - red\r\n  - y\r\n    - `=style`\r\n      - border\r\n        - solid 1px red\r\n\r\nf(content, styles) =\r\n- a\r\n  - `=style`\r\n    - color\r\n      - red\r\n  - b\r\n    - `=style`\r\n      - border\r\n        - solid 1px red\r\n    - c\r\n\r\n## Alternative Names\r\n\r\n- map\r\n- merge\r\n- overlay \r\n- reduce\r\n\r\n## Requirements\r\n\r\n- Should it assume the two trees are the same shape? Or should the mapping made more explicit and arbitrary?\r\n- May provide an alternative implementation to `=children` and `=grandchildren`. \r\n- Push vs Pull\r\n  - Push - Initiate from source\r\n  - Pull - Initiate at destination ",
+    "labels": ["feature"]
+  },
+  "expected": "💹 Metaprogramming",
+  "split": "test",
+  "source": {
+    "type": "github",
+    "issue": 613
+  }
+}
