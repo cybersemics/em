@@ -9,24 +9,46 @@ import { executeCommandWithMulticursor } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import exportContext from '../../selectors/exportContext'
+import getThoughtById from '../../selectors/getThoughtById'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
+import getAllChildrenAsThoughtsByContext from '../../test-helpers/getAllChildrenAsThoughtsByContext'
 import initStore from '../../test-helpers/initStore'
+import findCursor from '../../test-helpers/queries/findCursor'
 import findThoughtByText from '../../test-helpers/queries/findThoughtByText'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import head from '../../util/head'
 import extractSubthoughtCommand from '../extractSubthought'
 
 /**
- * Set range selection.
+ * Set range selection at the given plain text offsets, walking across any nested formatting nodes.
  */
 const setSelection = (element: HTMLElement, selectionStart: number, selectionEnd: number) => {
+  const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT)
+  let start: { node: Node; offset: number } | null = null
+  let end: { node: Node; offset: number } | null = null
+  let offset = 0
+
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    const length = node.textContent!.length
+    if (!start && selectionStart <= offset + length) start = { node, offset: selectionStart - offset }
+    if (start && selectionEnd <= offset + length) {
+      end = { node, offset: selectionEnd - offset }
+      break
+    }
+    offset += length
+  }
+
+  if (!start || !end)
+    throw new Error(`No text at offsets ${selectionStart}-${selectionEnd} of "${element.textContent}"`)
+
   const range = document.createRange()
   const sel = window.getSelection()
 
-  range.setStart(element.childNodes[0], selectionStart)
-  range.setEnd(element.childNodes[0], selectionEnd)
+  range.setStart(start.node, start.offset)
+  range.setEnd(end.node, end.offset)
 
   sel?.removeAllRanges()
   sel?.addRange(range)
@@ -121,6 +143,54 @@ describe('Extract Subthought', () => {
     const cursorThoughts = childIdsToThoughts(store.getState(), store.getState().cursor!)
 
     expect(cursorThoughts).toMatchObject([{ value: thoughtValue.slice(0, 9) }])
+  })
+
+  describe('formatting', () => {
+    it('extracts the selection with its formatting intact', async () => {
+      store.dispatch([importText({ text: '- <b>Lorem ipsum dolor</b>' }), setCursor(['<b>Lorem ipsum dolor</b>'])])
+
+      await act(vi.runOnlyPendingTimersAsync)
+
+      // findThoughtByText matches a thought's direct text children, of which a formatted thought has none
+      const thought = await findCursor()
+      expect(thought).toBeTruthy()
+      setSelection(thought!, 6, 12)
+
+      store.dispatch(extractSubthought())
+
+      // The offsets are plain text offsets, so slicing the value by them would land in the middle of the <b> tag and
+      // mangle the markup (#4103).
+      const state = store.getState()
+      expect(getThoughtById(state, head(state.cursor!))!.value).toBe('<b>Lorem dolor</b>')
+      expect(getAllChildrenAsThoughtsByContext(state, ['<b>Lorem dolor</b>']).map(child => child.value)).toEqual([
+        '<b>ipsum</b>',
+      ])
+    })
+
+    it('merges the tags that become adjacent at every level of nesting', async () => {
+      // The tags are nested around a single text node because selectionOffsets measures from the start of the text
+      // node the selection begins in, so offsets into a later one would not line up with the value.
+      store.dispatch([
+        importText({ text: '- <b><i>Lorem ipsum dolor</i></b>' }),
+        setCursor(['<b><i>Lorem ipsum dolor</i></b>']),
+      ])
+
+      await act(vi.runOnlyPendingTimersAsync)
+
+      const thought = await findCursor()
+      expect(thought).toBeTruthy()
+      setSelection(thought!, 6, 12)
+
+      store.dispatch(extractSubthought())
+
+      // Both halves of the split carry the whole enclosing chain, so re-joining them duplicates <b> at the top level
+      // and <i> one level down, the latter only becoming adjacent once the <b>s have merged.
+      const state = store.getState()
+      expect(getThoughtById(state, head(state.cursor!))!.value).toBe('<b><i>Lorem dolor</i></b>')
+      expect(getAllChildrenAsThoughtsByContext(state, ['<b><i>Lorem dolor</i></b>']).map(child => child.value)).toEqual(
+        ['<b><i>ipsum</i></b>'],
+      )
+    })
   })
 
   describe('multicursor', () => {
