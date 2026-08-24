@@ -5,7 +5,7 @@
     "labels": ["bug", "low-priority"]
   },
   "expected": "🧤 Drag & Drop",
-  "split": "test",
+  "split": "train",
   "source": {
     "type": "github",
     "issue": 3278

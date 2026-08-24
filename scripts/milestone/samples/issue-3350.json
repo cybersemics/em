@@ -5,7 +5,7 @@
     "labels": ["hold", "test"]
   },
   "expected": "✅ Test Engineering",
-  "split": "test",
+  "split": "train",
   "source": {
     "type": "github",
     "issue": 3350

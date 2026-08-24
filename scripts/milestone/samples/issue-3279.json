@@ -5,7 +5,7 @@
     "labels": ["bug", "hold"]
   },
   "expected": "📐 Layout",
-  "split": "test",
+  "split": "train",
   "source": {
     "type": "github",
     "issue": 3279

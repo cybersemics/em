@@ -98,7 +98,7 @@ describe('formatReport', () => {
 
 describe('resolveMinAccuracy', () => {
   it('defaults when nothing is set', () => {
-    expect(resolveMinAccuracy({})).toBe(0.8)
+    expect(resolveMinAccuracy({})).toBe(0.66)
   })
 
   it('reads the floor from the environment', () => {

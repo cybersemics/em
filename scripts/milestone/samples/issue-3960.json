@@ -5,7 +5,7 @@
     "labels": ["bug"]
   },
   "expected": "🛗 Import/Export",
-  "split": "test",
+  "split": "train",
   "source": {
     "type": "github",
     "issue": 3960

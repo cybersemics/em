@@ -5,7 +5,7 @@
     "labels": ["hold", "test"]
   },
   "expected": "🔁 Sync",
-  "split": "test",
+  "split": "train",
   "source": {
     "type": "github",
     "issue": 2114

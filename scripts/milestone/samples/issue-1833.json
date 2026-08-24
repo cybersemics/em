@@ -5,7 +5,7 @@
     "labels": ["bug", "hold"]
   },
   "expected": "📖 Context View",
-  "split": "test",
+  "split": "train",
   "source": {
     "type": "github",
     "issue": 1833

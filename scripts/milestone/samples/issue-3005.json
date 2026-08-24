@@ -5,7 +5,7 @@
     "labels": ["feature", "design-needed"]
   },
   "expected": "💹 Metaprogramming",
-  "split": "test",
+  "split": "train",
   "source": {
     "type": "github",
     "issue": 3005

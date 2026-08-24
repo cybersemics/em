@@ -5,7 +5,7 @@
     "labels": ["bug"]
   },
   "expected": "🏹 Browser Selection",
-  "split": "test",
+  "split": "train",
   "source": {
     "type": "github",
     "issue": 3851

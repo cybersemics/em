@@ -5,7 +5,7 @@
     "labels": ["bug"]
   },
   "expected": "🎨 Formatting",
-  "split": "test",
+  "split": "train",
   "source": {
     "type": "github",
     "issue": 4103

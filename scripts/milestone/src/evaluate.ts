@@ -32,11 +32,15 @@ const DEFAULT_REPO = 'cybersemics/em'
  * until it measured nothing but how many times it had been looked at.
  */
 const SPLIT = process.env.MILESTONE_EVAL_SPLIT ?? 'train'
-// The measured baseline is 25/29 (86%). The floor sits below it rather than at it because the
-// evaluation is stochastic — five samples are drawn per issue, so one sample flipping moves the
-// score 3.4 points. At 0.8 a single flip still passes and two consecutive regressions fail, which
-// catches a real prompt regression without failing on noise.
-const DEFAULT_MIN_ACCURACY = 0.8
+/**
+ * The floor `yarn evaluate` fails below.
+ *
+ * Set from the blind measurement — 69% accuracy on samples chosen and written without being read —
+ * rather than from the train figure, which runs about 14 points higher because the prompt was
+ * revised against it. The margin is deliberately thin: this is a floor that should hurt if accuracy
+ * regresses, not a comfortable one. It is not a target anyone should be satisfied by.
+ */
+const DEFAULT_MIN_ACCURACY = 0.66
 
 /** Label used in the report for the absence of a milestone, on either side of the comparison. */
 const NONE = '«none»'

@@ -5,7 +5,7 @@
     "labels": ["bug"]
   },
   "expected": "🤹‍♀️ CSS Animation",
-  "split": "test",
+  "split": "train",
   "source": {
     "type": "github",
     "issue": 3306

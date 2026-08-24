@@ -5,7 +5,7 @@
     "labels": ["feature"]
   },
   "expected": "🫧 Liminal UI",
-  "split": "test",
+  "split": "train",
   "source": {
     "type": "github",
     "issue": 3790

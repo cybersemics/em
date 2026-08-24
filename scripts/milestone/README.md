@@ -64,6 +64,8 @@ MILESTONE_EVAL_SPLIT=test yarn evaluate  # the honest number — run sparingly
 MILESTONE_EVAL_SPLIT=all yarn evaluate
 ```
 
+Samples move from `test` to `train` and never back. Reading a sample's errors is what makes it useful for revising the prompt and what disqualifies it from measuring the result, and that is not reversible — a sample cannot be un-read. So when the train half runs dry of new information, promote a stratified slice of the held-out half rather than reading all of it, and keep the rest untouched for the number you report.
+
 The default is `train` on purpose. A held-out set is only meaningful while it stays unseen, and every look at it leaks a little; a default of `test` would consume it on routine runs until it measured nothing but how often it had been consulted. Quote the `test` number when reporting accuracy, and let the gap between the two tell you how much of any improvement was real.
 
 ### Scoring the confidence signal
@@ -78,7 +80,7 @@ Declines are reported as two lines rather than one rate. A genuine no-fit means 
 
 `MILESTONE_EVAL_JSON=path` dumps the graded rows, each carrying the agreement and confidence behind its verdict, so alternative gate thresholds can be scored against a run that already happened rather than paying for inference again.
 
-The harness runs the exact pipeline the workflow uses over every sample and grades it strictly: the assigned milestone must equal the recorded one, and a sample the gate refused to assign counts as a prediction of "no milestone", because that is what production would do. It reports accuracy, precision over the assignments actually made, an outcome breakdown, the mismatches, and a calibration table — then **exits non-zero below `MILESTONE_MIN_ACCURACY`** (default 0.8, against a measured baseline of 86%), so a prompt edit that regresses accuracy fails rather than printing a slightly worse number nobody compares.
+The harness runs the exact pipeline the workflow uses over every sample and grades it strictly: the assigned milestone must equal the recorded one, and a sample the gate refused to assign counts as a prediction of "no milestone", because that is what production would do. It reports accuracy, precision over the assignments actually made, an outcome breakdown, the mismatches, and a calibration table — then **exits non-zero below `MILESTONE_MIN_ACCURACY`** (default 0.66, set from a blind baseline of 69%), so a prompt edit that regresses accuracy fails rather than printing a slightly worse number nobody compares.
 
 Run it before and after editing the instructions. It makes model calls but never writes to any issue, and it is deliberately not part of CI.
 
