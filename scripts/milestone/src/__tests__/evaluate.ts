@@ -178,6 +178,7 @@ const row = (issue: number, correct: boolean, agreement: number): EvalRow => ({
   confidence: 'high',
 })
 
+/** Scores a row by its vote agreement, the signal these tests exercise. */
 const byAgreement = (r: EvalRow) => r.agreement
 
 describe('isCorrect', () => {
