@@ -1,0 +1,12 @@
+{
+  "input": {
+    "title": "[Mobile] ScrollZone parallax does not take into account virtual keyboard",
+    "body": "## Steps to Reproduce\r\n\r\n1. Set the caret on a thought and enter edit mode. \n2. Scroll down a small amount. \n3. Close the keyboard. \r\n\r\n## Current Behavior\r\n\r\nThe scroll zone background jumps. \r\n\r\n## Expected Behavior\r\n\r\nThe scroll zone background position should not change when the keyboard opens or closed.",
+    "labels": ["bug"]
+  },
+  "expected": "🛼 Autoscroll",
+  "source": {
+    "type": "github",
+    "issue": 2558
+  }
+}

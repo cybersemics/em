@@ -1,0 +1,12 @@
+{
+  "input": {
+    "title": "'The \"home context\" cannot be deleted' error after deleting a hidden subthought",
+    "body": "## Step to reproduce\n1. Create 2 thoughts: Aaaa and Bbbb\n2. Move Bbbb into subthougt of Aaaa\n3. Tap Home button to clear all thought from focus\n4. Verify that Bbbb is hidden\n5. Tap Hamburger button\n6. Select Recently Edited\n7. Tap Bbbb under Home icon (NOT under Aaaa)\n8. Tap Delete button from toolbar\n9. Verify \"Permanently deleted Bbbb\" alert is shown.\n10. Tap the Delete button again\n\n\n## Current behavior\n**The \"home context\" cannot be deleted** red banner is shown\n\n<img width=\"300\" height=\"1260\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/7071728e-b282-4903-b7ff-a4deeb881005\" />\n\n**Video:**\n\nhttps://github.com/user-attachments/assets/4a16f3b4-c5e3-4954-9b56-413140c4658a\n\n## Expected behavior\nDelete button should be disabled when focus is on home context, for above use case, after deleting Bbbb, Delete button should be greyed out.\n\n\n",
+    "labels": ["bug", "hold"]
+  },
+  "expected": "🗞️ Recently Edited",
+  "source": {
+    "type": "github",
+    "issue": 3609
+  }
+}

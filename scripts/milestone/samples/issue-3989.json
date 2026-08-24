@@ -1,0 +1,12 @@
+{
+  "input": {
+    "title": "[iOS Capacitor] Thought is moved when user put cursor on the first thought",
+    "body": "```\n- A\n- B\n- C\n```\n\n## Step to Reproduce\n1. Tap B\n2. Tap A\n3. Tap Home button\n\n## Current behavior\nThought is moved up when user set the cursor on A\nThought is moved down when user sets cursor to null / root\n\nhttps://github.com/user-attachments/assets/c360bc06-8bc8-475f-89f6-da0a67abbc84\n\n## Expected behavior\nThought should not be static.\nRefer to the behavior of Mobile Safari\n\n ",
+    "labels": ["bug"]
+  },
+  "expected": "📱 iOS",
+  "source": {
+    "type": "github",
+    "issue": 3989
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "input": {
+    "title": "[Android] Overlapping the next thought with above existing subthought after deleting a subthought in between them",
+    "body": "```\n- Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.\n   - Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.\n- Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum\n\n```\n\n## Step to Reproduce\n1. Place the cursor on the first thought that has at least 4 lines of text\n2. Create a new subthought\n3. Add a 5 lines of text\n4. Create another new subthought\n5. Delete the newly created thought with Fire button or simply Backspace button on the virtual keyboard\n\n## Current behavior\nThe second thought is auto scrolled up and overlapping with the subthought with 5 lines of text\n\n<img width=\"582\" height=\"1257\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/948cf4c8-f016-417b-ba36-04cee995d3c3\" />\n\nhttps://github.com/user-attachments/assets/c38fdbe7-8353-4da7-8086-812e091e0f41\n\n## Expected behavior\nThe auto scroll should not make any overlapping on thought and subthought\n\n\n ",
+    "labels": ["bug"]
+  },
+  "expected": "🤖 Android",
+  "source": {
+    "type": "github",
+    "issue": 4276
+  }
+}

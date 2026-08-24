@@ -1,0 +1,12 @@
+{
+  "input": {
+    "title": "Publish: self hosted IPFS gateway",
+    "body": "https://medium.com/@rossbulat/introduction-to-ipfs-set-up-nodes-on-your-network-with-http-gateways-10e21ea689a4",
+    "labels": ["feature", "low-priority"]
+  },
+  "expected": "🎁 Collaboration",
+  "source": {
+    "type": "github",
+    "issue": 581
+  }
+}

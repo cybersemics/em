@@ -1,0 +1,12 @@
+{
+  "input": {
+    "title": "Multiselect snapshot is different in full run vs incremental run",
+    "body": "## Steps to Reproduce\n\n1. Run `yarn test:puppeteer` from the command line\n2. Open `src/e2e/puppeteer/__tests__/multiselect.ts` once it finishes (and hopefully everything passes)\n3. Save `multiselect.ts` (without making any changes) to kick off an incremental run in watch mode\n\n## Current Behavior\n\nThe `mobile only - should multiselect two thoughts at once` test fails on the incremental run, because its snapshot is different from when it was generated during the full run.\n\n<img width=\"2122\" height=\"619\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/b36b2052-98c6-4bfa-9ebd-af98059dab61\" />\n\n## Expected Behavior\n\nAll tests should generate the same snapshot during a full run as during an incremental run.",
+    "labels": ["test"]
+  },
+  "expected": "✅ Test Engineering",
+  "source": {
+    "type": "github",
+    "issue": 3125
+  }
+}

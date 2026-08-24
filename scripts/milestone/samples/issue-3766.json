@@ -1,0 +1,12 @@
+{
+  "input": {
+    "title": "[iOS] Autoscroll behaves differently between Capacitor and iOS Safari",
+    "body": "## Steps to Reproduce\n\n1. Ensure the thoughtspace contains enough thoughts that the editor begins to scroll.\n2. Scroll to the top of the editor.\n3. Tap the thought at top of the screen, opening the virtual keyboard.\n4. Tap the thought beneath it to move the cursor there.\n5. One by one, move the cursor down each thought, and observe the autoscroll behavior.\n\nRepeat these steps on both iOS Safari and iOS Capacitor, and compare the behavior between the two.\n\n## Current Behavior\n\n- In Safari, the editor only autoscrolls to reveal further thoughts when the cursor is at the bottom of the screen.\n- In Capacitor, the editor autoscrolls whenever the focussed thought changes, which creates chaotic scrolling movements as the cursor moves around the screen.\n\nhttps://github.com/user-attachments/assets/7c3c29c0-66a1-4e0b-8b3a-1902171a9bc6\n\nVideo shows iOS Safari (left) compared with iOS Capacitor (right).\n\n## Expected Behavior\n\n- Autoscroll should behave identically between Safari & Capacitor.\n",
+    "labels": ["bug"]
+  },
+  "expected": "🛼 Autoscroll",
+  "source": {
+    "type": "github",
+    "issue": 3766
+  }
+}

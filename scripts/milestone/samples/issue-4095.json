@@ -1,0 +1,12 @@
+{
+  "input": {
+    "title": "Undoing a Font Color implementation on a text with Background Color does not revert the Background Color when caret is on the thought text",
+    "body": "```\n- One\n- Two\n``` \n\n## Step to Reproduce\n1. Put the caret onto the Thought One\n2. Apply Green Background Color\n3. Apply Red Font Color\n4. With the caret still on the text, click Undo\n\n## Current behavior\nNothing happens to Text Font Color but bullet color changes to Green.\nMoving caret to Thought Two makes the Font Color reverts to Background Color.\nNote: This is not reproducible when the caret is not on Thought One\n\n<img width=\"169\" height=\"121\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/53ec8dd4-d15a-4857-8fd8-e3aefa06dfaf\" />\n\nhttps://github.com/user-attachments/assets/479b4820-8288-4442-b68b-662498072901\n\n\n## Expected behavior\nUndo should revert Background Color implementation step \n\n\n ",
+    "labels": ["bug"]
+  },
+  "expected": "🎨 Formatting",
+  "source": {
+    "type": "github",
+    "issue": 4095
+  }
+}

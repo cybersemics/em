@@ -1,0 +1,12 @@
+{
+  "input": {
+    "title": "GestureMenu doesn't highlight all matching gestures for possible commands",
+    "body": "<details> <summary><s>Original issue — no longer valid</s> (click to expand)</summary> <br>\n\n## ~~Steps to Reproduce~~\n\n~~1. Ensure there are no thoughts (notably).~~\n\n~~2. Swipe → then ↓ and hold~~\n\n## ~~Current Behavior~~\n\n~~After the first swipe, the first segment of the New Thought Gesture Diagram is not highlighted.~~\n\n![image](https://github.com/user-attachments/assets/c25795bb-b8dc-4dbb-a8c5-bd29f8ffa31e)\n\n~~After the second swipe, neither of the first two segments of the New Thought gesture diagram are highlighted.~~\n\n![image](https://github.com/user-attachments/assets/2b88b666-ac72-48f9-a487-61d89cc66cff)\n\n## ~~Expected Behavior~~\n\n~~After the first swipe, the first segment should be highlighted.~~\n\n~~After the second swipe, the first and second segments should be highlighted.~~\n\n[+]![image](https://github.com/user-attachments/assets/f3be1510-3134-4d4b-ae9b-b366a5f935ca)\n\n</details>\n\n---\n\n\n\n## Steps to Reproduce\n\n1. Swipe → then ↓ and hold\n\n## Current Behavior\nNot all possible commands shown in the GestureMenu are highlighted according to the current gestures. In this case, \n**New Thought + Outdent** , **Notes** and **Table View**, don’t highlight their first two gestures.\n\nhttps://github.com/user-attachments/assets/e97da94a-e135-4e99-9eec-a0c0c40b59ab\n\n\n## Expected Behavior\nAll possible commands should highlight the current gestures accordingly. \n",
+    "labels": ["bug"]
+  },
+  "expected": "🫆 Gesture Diagram",
+  "source": {
+    "type": "github",
+    "issue": 3517
+  }
+}

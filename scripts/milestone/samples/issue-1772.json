@@ -1,0 +1,12 @@
+{
+  "input": {
+    "title": "Long tap context highlights bullet in both normal and context views",
+    "body": "## Steps to Reproduce\r\n\r\n```\r\n- a\r\n  - m\r\n- b\r\n  - m\r\n```\r\n\r\n1. Activate context view on `a/m`.\r\n2. Long tap `a/m~/a`\r\n\r\n## Current Behavior\r\n\r\nBoth `a` and `a/m~/a` are highlighted.\r\n\r\n## Expected Behavior\r\n\r\nOnly `a/m~/a` should be highlighted.\r\n\r\nThe bullet should probably compare Path instead of SimplePath.",
+    "labels": ["bug"]
+  },
+  "expected": "📖 Context View",
+  "source": {
+    "type": "github",
+    "issue": 1772
+  }
+}

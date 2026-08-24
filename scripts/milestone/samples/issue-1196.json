@@ -1,0 +1,12 @@
+{
+  "input": {
+    "title": "importText: Duplicate Thought",
+    "body": "I think it is a regression from 354c6f32b.\r\n\r\n## Steps to Reproduce\r\n\r\n``` \r\n- a\r\n- a\r\n``` \r\n\r\nCopy and paste the above text.\r\n\r\n## Current Behavior\r\n\r\n- a\r\n- a\r\n\r\n## Expected Behavior\r\n\r\n- a ",
+    "labels": ["bug"]
+  },
+  "expected": "🛗 Import/Export",
+  "source": {
+    "type": "github",
+    "issue": 1196
+  }
+}

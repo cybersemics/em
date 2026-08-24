@@ -1,0 +1,12 @@
+{
+  "input": {
+    "title": "[iOS] Command Center remains open when selected Thought is moved as Subthought",
+    "body": "```\n- A\n- B\n- C\n```\n\n## Step to Reproduce\n1. Place the cursor on Thought C\n2. Tap and hold to select or swipe up to open Command Center\n3. While Command Center is onscreen, drag and drop Thought C as Subthought under Thought B\n\n\n## Current behavior\nCommand Center is still onscreen but selection indicator is off.\n\nhttps://github.com/user-attachments/assets/63918182-6f5f-4249-a2f2-30779c228708\n\n\n## Expected behavior\nCommand Center should be closed.\nRefer to Android behavior\n\nhttps://github.com/user-attachments/assets/76dae7d9-9fd4-4c3f-ae08-029d92cd9c71\n\n ",
+    "labels": ["bug"]
+  },
+  "expected": "👆 Multiselect",
+  "source": {
+    "type": "github",
+    "issue": 4327
+  }
+}

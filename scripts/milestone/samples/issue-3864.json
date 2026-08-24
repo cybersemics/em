@@ -1,0 +1,12 @@
+{
+  "input": {
+    "title": "[Android] Blue highlight flashes when user taps and holds on the uncovered scroll area of the Homescreen during Sidebar Menu onscreen",
+    "body": "## Step to reproduce\n1. Open em app\n2. Tap Hamburger button\n3. Tap and hold the uncovered scroll area of the Homescreen on the far right hand side\n\n\n## Current behavior\nBlue highlight flashes on screen.\nNote: tapping the Sidebar Menu does not trigger this issue\n\nhttps://github.com/user-attachments/assets/8bb3aadf-63c2-4f5e-a0ea-64854226ac35\n\n## Expected behavior\nNothing should happens.\nBlue highlight should not be flashed\n\n ",
+    "labels": ["bug"]
+  },
+  "expected": "🤖 Android",
+  "source": {
+    "type": "github",
+    "issue": 3864
+  }
+}

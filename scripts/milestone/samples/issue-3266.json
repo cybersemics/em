@@ -1,0 +1,12 @@
+{
+  "input": {
+    "title": "Dragging into sibling animates into wrong position",
+    "body": "## Steps to Reproduce\r\n\r\n```\r\n- A\n  - B\n  - C\n    - D\r\n```\n\n1. Set the cursor on `C`. \n2. Drag `B` into `C`, above `D`. \r\n\r\n## Current Behavior\r\n\r\n`D` is rendered too low. If the cursor is moved, it corrects itself.\n\n![image](https://github.com/user-attachments/assets/0605909a-7f45-4554-94f1-c4c62fc5e577)\r\n\r\n## Expected Behavior\r\n\r\n`D` should be rendered in the correct place immediately after drag-and-drop. \n\n![image](https://github.com/user-attachments/assets/0ff3c57e-bc3f-4602-96ab-9b517da589dd)",
+    "labels": ["bug"]
+  },
+  "expected": "🤹‍♀️ CSS Animation",
+  "source": {
+    "type": "github",
+    "issue": 3266
+  }
+}

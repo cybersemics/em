@@ -1,0 +1,12 @@
+{
+  "input": {
+    "title": "[Mobile] Text formatting on the destination thought is stripped when user pastes a copied text",
+    "body": "## Step to reproduce\n\n1. Create thought \"Sed tortor nunc, tristique sit amet lorem at, venenatis venenatis nunc.\" \n2. Tap Font Color button and select green color\n3. Verify that the thought color turns into green\n4. Create thought \"Aliquam auctor euismod arcu quis auctor\"\n5. Copy \"euismod\"\n6. Move the caret onto thought \"Sed tortor nunc, tristique sit amet lorem at, venenatis venenatis nunc.\" \n7. Paste the copied text\n\n## Current behavior\nText color turns to white.\nNote: This is reproducible for bold, italic and strikethrough formatting as well.  \n\nhttps://github.com/user-attachments/assets/7f3fd269-9591-4c1a-8309-a1e992e9bfdc\n\n\n## Expected behavior\nThought should stay green after receiving pasted text\n\n ",
+    "labels": ["bug"]
+  },
+  "expected": "🛗 Import/Export",
+  "source": {
+    "type": "github",
+    "issue": 3816
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "input": {
+    "title": "[Chrome] Multiple thought selection often fails",
+    "body": "## Step to reproduce\n1. Create some thoughts on Chrome desktop\n2. Click and hold to select any thought\n3. Verify that the thought is selected marked by bullet highlight and \"1 thought selected\" alert\n4. Click and hold another thought\n5. Repeat step 4 several time to add more selection\n\n\n## Current behavior\nThere is high change that the selection is failed and then the last selected thought will be the only one being selected.\n\n**Video:**\n\nhttps://github.com/user-attachments/assets/f226f846-b4b9-4ca4-b98e-0351be5016b2\n\n## Expected behavior\nThought Selection should not fail when adding more selections.\n\n ",
+    "labels": ["bug"]
+  },
+  "expected": "🧤 Drag & Drop",
+  "source": {
+    "type": "github",
+    "issue": 3572
+  }
+}

@@ -16,6 +16,7 @@
  * writes to any issue. Run manually with `cd scripts/milestone && yarn evaluate`.
  */
 import 'dotenv/config'
+import * as fs from 'fs'
 import { fileURLToPath } from 'url'
 import { resolveGateThresholds } from './lib/gate.ts'
 import GitHubClient, { type Milestone } from './lib/github.ts'
@@ -202,9 +203,10 @@ const grade = async (
       agreement: selection.agreement,
       confidence: selection.confidence,
     })
+    const signals = `${Math.round(selection.agreement * 100)}%/${selection.confidence}`
     const outcome = selection.assign
-      ? `assigned ${selection.milestone}`
-      : `asked (${selection.reasons.join('; ')}; guess ${selection.milestone ?? NONE})`
+      ? `assigned ${selection.milestone} [${signals}]`
+      : `asked (${selection.reasons.join('; ')}; guess ${selection.milestone ?? NONE}) [${signals}]`
     console.info(
       `  ${sample.source?.issue ? `#${sample.source.issue}` : sample.input.title.slice(0, 40)}: expected ${sample.expected ?? NONE}, ${outcome} ${predicted === sample.expected ? '✓' : '✗'}`,
     )
@@ -230,7 +232,18 @@ const main = async () => {
   if (milestones.length === 0) throw new Error(`No open milestones found in ${repo}.`)
 
   console.info(`Evaluating ${samples.length} samples against ${milestones.length} open milestones...`)
-  const metrics = computeMetrics(await grade(samples, milestones, instructions, openaiApiKey))
+  const rows = await grade(samples, milestones, instructions, openaiApiKey)
+
+  // Each row carries the agreement and confidence behind its verdict, so alternative gate
+  // thresholds can be scored offline against a run that already happened. Without this, answering
+  // "what would requiring unanimity cost?" means paying for the whole evaluation again.
+  const jsonPath = process.env.MILESTONE_EVAL_JSON
+  if (jsonPath) {
+    fs.writeFileSync(jsonPath, JSON.stringify(rows, null, 2) + '\n')
+    console.info(`Wrote ${rows.length} graded rows to ${jsonPath}`)
+  }
+
+  const metrics = computeMetrics(rows)
   console.info(formatReport(metrics))
 
   if (metrics.correct.fraction < minAccuracy) {

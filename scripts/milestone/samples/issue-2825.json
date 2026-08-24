@@ -1,0 +1,12 @@
+{
+  "input": {
+    "title": "Archive context: Maximum call stack exceeded",
+    "body": "## Steps to Reproduce\r\n\r\n```\r\n- a\n  - m\n    - x\n- b\n  - m\n    - y\n  - n\r\n```\n\n1. Activate context view on `a/m`. \n2. Archive `a/m~/b`. \r\n\r\n## Current Behavior\r\n\r\nMaximum call stack exceeded. \r\n\r\n## Expected Behavior\r\n\r\n`b/m` should be archived. ",
+    "labels": ["bug"]
+  },
+  "expected": "📖 Context View",
+  "source": {
+    "type": "github",
+    "issue": 2825
+  }
+}

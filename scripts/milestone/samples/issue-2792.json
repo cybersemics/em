@@ -1,0 +1,12 @@
+{
+  "input": {
+    "title": "Alert metaprogramming attribute on paste",
+    "body": "## Steps to Reproduce\n\n1. Create thought `a`\n2. Paste the below metaprogramming attributes on `a`.\n\n```\n- =sort\n  - Alphabetical\n    - Asc\n```\n\n## Current Behavior\n\nNo alert.\n\n## Expected Behavior\n\n- In general, alert `Applied ${attribute}` whenever a metaprogramming attribute is imported.\n\n    e.g. Alert `Applied sort`\n\n- If multiple attributes are applied, render an alert with multiple lines:\n\n    Import:\n    \n    ```\n    - =bullet\n      - None \n    - =sort\n      - Alphabetical\n        - Asc\n    ```\n    \n    Alert:\n    \n    ```\n    Applied bullet\n    Applied pin\n    ```\n\n- Do not alert if the top-level contains any normal thoughts, e.g.:\n    \n    ```\n    - =sort\n      - Alphabetical\n        - Asc\n    - Hello\n    ```",
+    "labels": ["feature"]
+  },
+  "expected": "💹 Metaprogramming",
+  "source": {
+    "type": "github",
+    "issue": 2792
+  }
+}

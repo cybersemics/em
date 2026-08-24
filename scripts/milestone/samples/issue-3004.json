@@ -1,0 +1,12 @@
+{
+  "input": {
+    "title": "Favorite, Pin, and Pin All icons should be filled when active",
+    "body": "## Steps to Reproduce\n\nActivate `Favorite`, `Pin`, or `Pin All` from the Toolbar.\n\n## Current Behavior\n\n✓ Inactive\n✓ Animating\n✗ Active\n\nIcons are rendered with a `fg` stroke when active, after the Lottie animation completes.\n\nhttps://github.com/user-attachments/assets/23a399cc-00ab-477a-adda-58609a38ff5f\n\n## Expected Behavior\n\nWhen in the active state, `Favorite`, `Pin`, and `Pin All` should be rendered with a `fg` fill instead of just a stroke. This is more consistent with the end of the animation, and will make it clearer when these commands are active.\n\nEnsure that there is no gap between the end of the animation and the active state. It should look smooth and end with the fill.",
+    "labels": ["bug"]
+  },
+  "expected": "📐 Layout",
+  "source": {
+    "type": "github",
+    "issue": 3004
+  }
+}
