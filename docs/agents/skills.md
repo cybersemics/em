@@ -41,7 +41,7 @@ flowchart TD
     style PL fill:#2d4a2d,color:#fff
     style ES fill:#4a2d2d,color:#fff
 
-    click WI "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#write-issue" "write-issue — file an issue that can be reproduced"
+    click WI "https://github.com/cybersemics/em/blob/HEAD/.github/skills/write-issue/SKILL.md" "write-issue — file an issue that can be reproduced"
     click IR "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#issue-repro" "issue-repro — reproduce before investigating"
     click PL "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#plan" "plan — plan and critique before implementing"
     click ES "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#end-session" "end-session — the exit checklist"
@@ -60,7 +60,7 @@ The two green boxes are the gates — the agent must run them before it is allow
 
 | Skill | What it does | Source |
 | --- | --- | --- |
-| [`write-issue`](#write-issue) | Write a GitHub issue in the format the reproduction gate can actually read | [SKILL.md](../../.github/skills/write-issue/SKILL.md) |
+| `write-issue` | Write a GitHub issue in the format the reproduction gate can actually read | [SKILL.md](../../.github/skills/write-issue/SKILL.md) |
 | [`issue-repro`](#issue-repro) | Reproduce a reported bug for real, then capture it in a test, before touching the cause | [SKILL.md](../../.github/skills/issue-repro/SKILL.md) |
 | [`plan`](#plan) | Write an architectural plan grounded in existing code, then attack it | [SKILL.md](../../.github/skills/plan/SKILL.md) |
 | [`browser-control`](#browser-control) | Bring up a browser or device for a given platform | [SKILL.md](../../.github/skills/browser-control/SKILL.md) |
@@ -73,20 +73,6 @@ The two green boxes are the gates — the agent must run them before it is allow
 | [`puppeteer-update-snapshots`](#puppeteer-update-snapshots) | Regenerate screenshot comparisons after an intended visual change | [SKILL.md](../../.github/skills/puppeteer-update-snapshots/SKILL.md) |
 | [`end-session`](#end-session) | Work through the exit checklist before stopping for any reason | [SKILL.md](../../.github/skills/end-session/SKILL.md) |
 | [`docs-sync`](#docs-sync) | Repair the documentation your change made untrue, in the same commit | [SKILL.md](../../.github/skills/docs-sync/SKILL.md) |
-
-## Filing the work
-
-### write-issue
-
-**Source: [`.github/skills/write-issue/SKILL.md`](../../.github/skills/write-issue/SKILL.md)**
-
-Runs when an issue is being written — a new bug filed, one split out of a comment thread, or an existing issue edited because it never had reproduction steps.
-
-It exists because an issue here is not a note to a human, it is the input to [`issue-repro`](#issue-repro). That gate keys off three headings by name, and reads the title's platform prefix to decide which device to bring up. An issue missing the headings cannot be worked at all — the agent is required to escalate rather than guess — and one carrying the wrong prefix sends the next agent to the wrong device. Everything the skill is strict about follows from those two couplings.
-
-[#2968](https://github.com/cybersemics/em/issues/2968) is the house cautionary tale, and the skill cites it: a real misalignment bug, described as happening "when width and height are increased", which nobody could map onto an action — font size? window size? — so it was closed unreproduced. One ambiguous step was enough to lose it. That is why the skill treats a step containing a decision as a defect.
-
-Its escalation rule is narrow and worth knowing from outside: write the issue even when you are unsure, but never invent an **Expected Behavior** you are guessing at. Apply `design-needed` and let a maintainer decide, because a guess there becomes a regression test asserting behaviour nobody chose.
 
 ## The gates
 
