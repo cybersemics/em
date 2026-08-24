@@ -1,5 +1,4 @@
 import buildPrompt, { type IssueInput } from './buildPrompt.ts'
-import gate, { DEFAULT_GATE_THRESHOLDS, type GateResult, type GateThresholds } from './gate.ts'
 import type { Milestone } from './github.ts'
 import inference, { type InferenceOptions } from './inference.ts'
 import tallyVotes, { type VoteResult } from './tallyVotes.ts'
@@ -14,9 +13,6 @@ const MAX_INFERENCE_ATTEMPTS = 3
  */
 const RETRY_DELAY_MS = 1000
 
-/** A tallied vote plus the gate's decision about whether it may be assigned automatically. */
-export type Selection = VoteResult & GateResult
-
 /** Options for selecting a milestone. */
 export interface SelectMilestoneOptions {
   issue: IssueInput
@@ -24,7 +20,6 @@ export interface SelectMilestoneOptions {
   milestones: Milestone[]
   instructions: string
   openaiApiKey: string
-  thresholds?: GateThresholds
   /** Inference implementation, injectable so callers can exercise the pipeline without network access. */
   infer?: (options: InferenceOptions) => Promise<string[]>
   /** Base delay between retries. Tests pass 0 so they do not spend the real backoff. */
@@ -32,11 +27,15 @@ export interface SelectMilestoneOptions {
 }
 
 /**
- * Runs the selection pipeline for one issue: prompt → inference → vote tally → assignment gate.
+ * Runs the selection pipeline for one issue: prompt → inference → vote tally.
  *
  * Pure with respect to GitHub — it neither reads nor writes issue state — so the workflow entry
  * point and the evaluation harness share exactly the same decision path, and the harness measures
  * what production actually does rather than an approximation of it.
+ *
+ * A `null` milestone means the votes named none, which is the only outcome that asks a human.
+ * Everything else is assigned, including a tie, which resolves to its modal winner: a tie is a
+ * choice between two plausible buckets, not a failure to find one.
  *
  * An attempt is retried only when *every* vote in it was unusable, which is the model failing to
  * answer at all. A tally that lands on "no milestone fits" is a real answer and is returned, not
@@ -48,10 +47,9 @@ const selectMilestone = async ({
   milestones,
   instructions,
   openaiApiKey,
-  thresholds = DEFAULT_GATE_THRESHOLDS,
   infer = inference,
   retryDelayMs = RETRY_DELAY_MS,
-}: SelectMilestoneOptions): Promise<Selection> => {
+}: SelectMilestoneOptions): Promise<VoteResult> => {
   const prompt = buildPrompt(milestones, issue)
   const titles = milestones.map(milestone => milestone.title)
 
@@ -60,7 +58,7 @@ const selectMilestone = async ({
     try {
       const outputs = await infer({ apiKey: openaiApiKey, prompt, instructions })
       const vote = tallyVotes(outputs, titles)
-      if (vote) return { ...vote, ...gate(vote, thresholds) }
+      if (vote) return vote
       lastError = new Error(`No usable vote in ${outputs.length} samples: ${JSON.stringify(outputs)}`)
     } catch (error) {
       lastError = error as Error

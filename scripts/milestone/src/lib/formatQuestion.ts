@@ -1,38 +1,23 @@
-import type { Selection } from './selectMilestone.ts'
+import type { VoteResult } from './tallyVotes.ts'
 
-/** The maintainer asked to categorize an issue the workflow could not confidently place. */
+/** The maintainer asked to categorize an issue that matched no existing milestone. */
 const MAINTAINER = '@raineorshine'
 
 /**
- * Formats the comment posted when no milestone is assigned.
+ * Formats the comment posted when the votes named no milestone at all.
  *
- * This is the workflow's only comment — a successful assignment says nothing — so it has to carry
- * everything a human needs to answer in one read: what was uncertain, what the model nearly chose,
- * and why. Naming the closest guess turns the question from "categorize this" into "confirm or
- * correct this", which is a much cheaper thing to be asked.
+ * This is the workflow's only comment, and it now has exactly one cause. Every issue the votes can
+ * place is assigned, so reaching here means the taxonomy has no home for this issue — which is
+ * worth a human's attention in a way that "the model was only fairly sure" never was. The model's
+ * own reasoning is quoted because it usually says what the issue is about, which is the part that
+ * decides whether a new milestone is warranted.
  */
-const formatQuestion = (selection: Selection): string => {
-  const lines = [
-    `${MAINTAINER} Which milestone should this issue go in?`,
-    '',
-    `No milestone was assigned: ${selection.reasons.join('; ')}.`,
-  ]
+const formatQuestion = (vote: VoteResult): string => {
+  const lines = [`${MAINTAINER} Which milestone should this issue go in? It did not match any existing one.`]
 
-  if (selection.milestone) {
+  if (vote.rationale) {
     lines.push('')
-    const votes = `${selection.validVotes} vote${selection.validVotes === 1 ? '' : 's'}`
-    lines.push(
-      `Closest guess: **${selection.milestone}** — ${Math.round(selection.agreement * 100)}% of ${votes} agreed, confidence ${selection.confidence}.`,
-    )
-    // A second choice identical to the guess tells the reader nothing and reads like a mistake.
-    if (selection.secondChoice && selection.secondChoice !== selection.milestone) {
-      lines.push(`Second choice: ${selection.secondChoice}.`)
-    }
-  }
-
-  if (selection.rationale) {
-    lines.push('')
-    lines.push(`> ${selection.rationale}`)
+    lines.push(`> ${vote.rationale}`)
   }
 
   return lines.join('\n')

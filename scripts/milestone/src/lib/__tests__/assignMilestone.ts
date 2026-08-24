@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import assignMilestone, { type GitHubGateway } from '../assignMilestone.ts'
 import type { Issue, Milestone } from '../github.ts'
-import type { Selection } from '../selectMilestone.ts'
+import type { VoteResult } from '../tallyVotes.ts'
 
 const MILESTONES: Milestone[] = [
   { number: 20, title: '🧤 Drag & Drop', description: '' },
@@ -17,8 +17,8 @@ const ISSUE: Issue = {
   isPullRequest: false,
 }
 
-/** A selection the gate cleared, for tests to vary one property at a time. */
-const ASSIGNABLE: Selection = {
+/** A vote that named a milestone, for tests to vary one property at a time. */
+const ASSIGNABLE: VoteResult = {
   milestone: '🧤 Drag & Drop',
   agreement: 1,
   validVotes: 5,
@@ -27,8 +27,6 @@ const ASSIGNABLE: Selection = {
   confidence: 'high',
   rationale: 'The drop indicator is misplaced.',
   secondChoice: null,
-  assign: true,
-  reasons: [],
 }
 
 /** Builds a GitHub gateway backed by the given issue and milestones, recording every write. */
@@ -61,24 +59,49 @@ describe('assignMilestone', () => {
     expect(comment).not.toHaveBeenCalled()
   })
 
-  it('asks a human instead of assigning when the gate withholds', async () => {
+  it('asks a human only when the votes named no milestone', async () => {
     const { github, setMilestone, comment } = createGitHub()
     const result = await assignMilestone({
       github,
       issueNumber: 4839,
       instructions: 'instructions',
       openaiApiKey: 'test-key',
-      select: async () => ({
-        ...ASSIGNABLE,
-        assign: false,
-        reasons: ['confidence was medium, below the required high'],
-      }),
+      select: async () => ({ ...ASSIGNABLE, milestone: null }),
     })
 
     expect(result.action).toBe('asked')
     expect(setMilestone).not.toHaveBeenCalled()
     expect(comment.mock.calls[0][1]).toContain('@raineorshine')
-    expect(comment.mock.calls[0][1]).toContain('confidence was medium, below the required high')
+  })
+
+  it('assigns a tied vote rather than asking, taking its modal winner', async () => {
+    // A tie is a choice between two plausible buckets, not a failure to find one.
+    const { github, setMilestone, comment } = createGitHub()
+    const result = await assignMilestone({
+      github,
+      issueNumber: 4839,
+      instructions: 'instructions',
+      openaiApiKey: 'test-key',
+      select: async () => ({ ...ASSIGNABLE, tied: true, agreement: 0.4 }),
+    })
+
+    expect(result).toMatchObject({ action: 'assigned', milestone: '🧤 Drag & Drop' })
+    expect(setMilestone).toHaveBeenCalledWith(4839, 20)
+    expect(comment).not.toHaveBeenCalled()
+  })
+
+  it('assigns a low-confidence vote, since self-reported confidence carries no signal', async () => {
+    const { github, setMilestone } = createGitHub()
+    const result = await assignMilestone({
+      github,
+      issueNumber: 4839,
+      instructions: 'instructions',
+      openaiApiKey: 'test-key',
+      select: async () => ({ ...ASSIGNABLE, confidence: 'low', agreement: 0.2 }),
+    })
+
+    expect(result.action).toBe('assigned')
+    expect(setMilestone).toHaveBeenCalledWith(4839, 20)
   })
 
   it('skips an issue that already has a milestone without running inference', async () => {

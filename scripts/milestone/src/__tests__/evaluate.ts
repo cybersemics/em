@@ -12,7 +12,7 @@ import {
 } from '../evaluate.ts'
 import type { Milestone } from '../lib/github.ts'
 import type { MilestoneSample } from '../lib/loadSamples.ts'
-import type { Selection } from '../lib/selectMilestone.ts'
+import type { VoteResult } from '../lib/tallyVotes.ts'
 
 const rows: EvalRow[] = [
   // assigned, and right
@@ -121,7 +121,7 @@ describe('grade', () => {
     source: { type: 'github', issue },
   })
 
-  const selection: Selection = {
+  const selection: VoteResult = {
     milestone: '🧤 Drag & Drop',
     agreement: 1,
     validVotes: 5,
@@ -130,8 +130,6 @@ describe('grade', () => {
     confidence: 'high',
     rationale: '',
     secondChoice: null,
-    assign: true,
-    reasons: [],
   }
 
   it('records a failed sample and keeps grading the rest', async () => {

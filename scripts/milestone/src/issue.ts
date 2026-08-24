@@ -12,7 +12,6 @@ import 'dotenv/config'
 import * as fs from 'fs'
 import { fileURLToPath } from 'url'
 import assignMilestone from './lib/assignMilestone.ts'
-import { resolveGateThresholds } from './lib/gate.ts'
 import GitHubClient from './lib/github.ts'
 import loadInstructions from './lib/loadInstructions.ts'
 
@@ -63,7 +62,6 @@ const main = async () => {
     issueNumber,
     instructions: loadInstructions(),
     openaiApiKey,
-    thresholds: resolveGateThresholds(),
     dryRun,
   })
 

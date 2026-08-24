@@ -18,7 +18,6 @@
 import 'dotenv/config'
 import * as fs from 'fs'
 import { fileURLToPath } from 'url'
-import { resolveGateThresholds } from './lib/gate.ts'
 import GitHubClient, { type Milestone } from './lib/github.ts'
 import loadInstructions from './lib/loadInstructions.ts'
 import loadSamples, { type MilestoneSample } from './lib/loadSamples.ts'
@@ -331,8 +330,8 @@ export const formatReport = (metrics: EvalMetrics): string => {
   lines.push(`  assigned, wrong   : ${metrics.outcomes.assignedWrong}`)
   lines.push(`  asked, but fitted : ${metrics.outcomes.askedButFitted}`)
   lines.push(`  asked, correctly  : ${metrics.outcomes.askedCorrectly}`)
-  // What relaxing MILESTONE_MIN_CONFIDENCE or MILESTONE_MIN_AGREEMENT would buy: these are the
-  // issues the model placed correctly and the gate withheld anyway.
+  // Kept as a regression signal now that nothing gates on confidence: this should stay at zero, and
+  // a non-zero value means something is withholding a milestone the votes placed correctly.
   lines.push(`  withheld a correct guess: ${metrics.outcomes.withheldButCorrect}`)
 
   lines.push('')
@@ -376,19 +375,12 @@ export const grade = async (
   openaiApiKey: string,
   select: typeof selectMilestone = selectMilestone,
 ): Promise<{ rows: EvalRow[]; failures: EvalFailure[] }> => {
-  const thresholds = resolveGateThresholds()
   const rows: EvalRow[] = []
   const failures: EvalFailure[] = []
   for (const sample of samples) {
     let selection
     try {
-      selection = await select({
-        issue: sample.input,
-        milestones,
-        instructions,
-        openaiApiKey,
-        thresholds,
-      })
+      selection = await select({ issue: sample.input, milestones, instructions, openaiApiKey })
     } catch (error) {
       failures.push({ issue: sample.source?.issue, message: (error as Error).message })
       console.warn(
@@ -396,21 +388,22 @@ export const grade = async (
       )
       continue
     }
-    const predicted = selection.assign ? selection.milestone : null
+    const predicted = selection.milestone
     rows.push({
       issue: sample.source?.issue,
       expected: sample.expected,
       predicted,
       guess: selection.milestone,
-      assigned: selection.assign,
+      assigned: selection.milestone !== null,
       agreement: selection.agreement,
       tied: selection.tied,
       confidence: selection.confidence,
     })
     const signals = `${Math.round(selection.agreement * 100)}%/${selection.confidence}`
-    const outcome = selection.assign
-      ? `assigned ${selection.milestone} [${signals}]`
-      : `asked (${selection.reasons.join('; ')}; guess ${selection.milestone ?? NONE}) [${signals}]`
+    const outcome =
+      selection.milestone !== null
+        ? `assigned ${selection.milestone} [${signals}]`
+        : `asked — no milestone fitted [${signals}]`
     console.info(
       `  ${sample.source?.issue ? `#${sample.source.issue}` : sample.input.title.slice(0, 40)}: expected ${sample.expected ?? NONE}, ${outcome} ${predicted === sample.expected ? '✓' : '✗'}`,
     )

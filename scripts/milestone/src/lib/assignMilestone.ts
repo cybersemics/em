@@ -1,7 +1,7 @@
 import formatQuestion from './formatQuestion.ts'
-import type { GateThresholds } from './gate.ts'
 import type { Issue, Milestone } from './github.ts'
-import selectMilestone, { type Selection } from './selectMilestone.ts'
+import selectMilestone from './selectMilestone.ts'
+import type { VoteResult } from './tallyVotes.ts'
 
 /** The GitHub operations the assignment flow needs. GitHubClient satisfies this. */
 export interface GitHubGateway {
@@ -29,15 +29,20 @@ export interface AssignMilestoneOptions {
   issueNumber: number
   instructions: string
   openaiApiKey: string
-  thresholds?: GateThresholds
   /** Skips both the milestone assignment and the comment, so a run can be previewed safely. */
   dryRun?: boolean
   /** Selection implementation, injectable so the flow can be tested without model access. */
-  select?: (options: Parameters<typeof selectMilestone>[0]) => Promise<Selection>
+  select?: (options: Parameters<typeof selectMilestone>[0]) => Promise<VoteResult>
 }
 
 /**
  * Categorizes one issue end to end: read it, decide, and either assign a milestone or ask a human.
+ *
+ * A milestone is assigned whenever the votes name one. Confidence thresholds used to sit here, but
+ * the model's self-reported confidence measured AUROC 0.53 — indistinguishable from no signal — so
+ * gating on it only withheld milestones from issues it had placed correctly. An unmilestoned issue
+ * disappears from every milestone view; a wrongly milestoned one sits visibly out of place, one
+ * click from correct.
  *
  * All GitHub access goes through the injected gateway and all inference through the injected
  * selector, so every branch below — including the ones that are awkward to reach in production, like
@@ -52,7 +57,6 @@ const assignMilestone = async ({
   issueNumber,
   instructions,
   openaiApiKey,
-  thresholds,
   dryRun = false,
   select = selectMilestone,
 }: AssignMilestoneOptions): Promise<AssignResult> => {
@@ -75,11 +79,11 @@ const assignMilestone = async ({
     throw new Error('Cannot categorize: the repository has no open milestones.')
   }
 
-  const selection = await select({ issue, milestones, instructions, openaiApiKey, thresholds })
+  const selection = await select({ issue, milestones, instructions, openaiApiKey })
 
-  if (selection.assign) {
-    // Always found: the gate never assigns a null milestone, and every non-null selection was
-    // already resolved against these same open milestones when the votes were tallied.
+  if (selection.milestone !== null) {
+    // Always found: every non-null selection was resolved against these same open milestones when
+    // the votes were tallied.
     const milestone = milestones.find(candidate => candidate.title === selection.milestone)!
     if (!dryRun) await github.setMilestone(issueNumber, milestone.number)
     return {
@@ -91,7 +95,7 @@ const assignMilestone = async ({
 
   const question = formatQuestion(selection)
   if (!dryRun) await github.comment(issueNumber, question)
-  return { action: 'asked', milestone: selection.milestone, detail: selection.reasons.join('; '), question }
+  return { action: 'asked', milestone: null, detail: 'the votes named no existing milestone', question }
 }
 
 export default assignMilestone

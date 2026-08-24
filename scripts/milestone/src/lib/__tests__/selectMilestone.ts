@@ -24,22 +24,21 @@ const options = (infer: () => Promise<string[]>) => ({
 })
 
 describe('selectMilestone', () => {
-  it('returns the tallied selection with the gate applied', async () => {
+  it('returns the tallied vote', async () => {
     const selection = await selectMilestone(options(async () => [vote('🧤 Drag & Drop'), vote('🧤 Drag & Drop')]))
-    expect(selection).toMatchObject({ milestone: '🧤 Drag & Drop', assign: true, reasons: [] })
+    expect(selection).toMatchObject({ milestone: '🧤 Drag & Drop', agreement: 1 })
   })
 
-  it('withholds a selection the gate rejects', async () => {
+  it('returns a medium-confidence vote unchanged, since nothing gates on confidence', async () => {
     const selection = await selectMilestone(options(async () => [vote('🧤 Drag & Drop', 'medium')]))
-    expect(selection.assign).toBe(false)
-    expect(selection.milestone).toBe('🧤 Drag & Drop')
+    expect(selection).toMatchObject({ milestone: '🧤 Drag & Drop', confidence: 'medium' })
   })
 
   it('does not retry a selection of "no milestone", which is a real answer', async () => {
     const infer = vi.fn(async () => [vote(null), vote(null)])
     const selection = await selectMilestone(options(infer))
     expect(infer).toHaveBeenCalledTimes(1)
-    expect(selection).toMatchObject({ milestone: null, assign: false })
+    expect(selection).toMatchObject({ milestone: null })
   })
 
   it('retries when every vote in an attempt is unusable', async () => {

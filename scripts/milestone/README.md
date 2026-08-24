@@ -30,16 +30,13 @@ The prompt is assembled from two halves. The system message is [`instructions.md
 
 Five independent samples are drawn in one request (self-consistency voting via the Chat Completions `n` parameter, which bills the input once and only multiplies the tiny output). Each vote is resolved against the open milestones — leniently, so a dropped emoji or `and` for `&` still matches, while a milestone that is not open is discarded as invalid rather than counted. The modal vote wins.
 
-The milestone is then assigned only if **every** gate passes:
+**The milestone is assigned whenever the votes name one.** There is no confidence threshold, and a tie resolves to its modal winner rather than a question — a tie is a choice between two plausible buckets, not a failure to find one.
 
-| Gate             | Default                            | Env                        |
-| ---------------- | ---------------------------------- | -------------------------- |
-| A milestone fits | the votes did not settle on `null` | —                          |
-| No tie           | one candidate led outright         | —                          |
-| Confidence       | `high`                             | `MILESTONE_MIN_CONFIDENCE` |
-| Agreement        | 60% of valid votes                 | `MILESTONE_MIN_AGREEMENT`  |
+That was measured rather than assumed. The gate used to require `high` self-reported confidence and 60% agreement, and scoring the signal it depended on showed why that was the wrong shape: **verbalized confidence reaches AUROC 0.53 on the held-out set — indistinguishable from no signal at all.** Thresholding a signal that cannot rank correct predictions above wrong ones does not buy accuracy, it only withholds milestones from issues the categorizer had already placed correctly. Vote agreement carries a little more information (0.60), but the rejection curve prices it plainly: requiring unanimity gains 4 points of accuracy and costs 11 points of coverage.
 
-Anything less asks for a category, quoting the closest guess, the agreement, and every reason the gate withheld — so answering is a matter of confirming or correcting rather than categorizing from scratch. A run that fails inference three times, or finds no open milestones at all, comments and fails the workflow: those are broken, not uncertain.
+The costs here are asymmetric, and not in the intuitive direction. An unmilestoned issue drops out of every milestone view and is found by accident; a wrongly milestoned one sits visibly out of place in a list someone browses, one click from correct. A question posted to a maintainer is the expensive outcome, not the safe one — at any real frequency it recreates the manual triage this tool exists to remove.
+
+So the only issues that get no milestone are the ones where the votes named none, which means the taxonomy has no home for the issue. That is worth a human's attention in a way that "the model was only fairly sure" never was. A run that fails inference three times, or finds no open milestones at all, comments and fails the workflow: those are broken rather than uncertain.
 
 Inference is tunable via `MILESTONE_*` env vars (see `.env.example`): `MILESTONE_MODEL`, `MILESTONE_VOTES`, `MILESTONE_REASONING_EFFORT`, `MILESTONE_TEMPERATURE`.
 
