@@ -373,9 +373,11 @@ const useEditMode = ({
 
       if (selection.isOnEditable(head(path))) return
 
-      // The drag only ever leaves this thought past its left edge, so the caret was already at offset 0 when it
-      // went. selectionchange is queued rather than dispatched synchronously, so this cannot recurse; and a set
-      // that the browser declines fires no event at all, so it cannot spin either.
+      // The selection only ever escapes past the left edge, where the caret already was. Dragging right keeps it
+      // clamped to the end of the thought and inside the editable, so this never runs for that direction — only
+      // the natively drawn caret drifts out there (see docs/cursor-and-caret.md).
+      // selectionchange is queued rather than dispatched synchronously, so this cannot recurse; and a set that
+      // the browser declines fires no event at all, so it cannot spin either.
       selection.set(editable, { offset: 0 })
     }
 
