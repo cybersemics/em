@@ -80,6 +80,8 @@ it('restores the caret to the cursor thought when the selection is dragged out o
 
   // the trackpad never moves the focus, so the stranded selection is pulled back to the cursor thought
   expect(selection.isOnEditable(cursorId)).toBe(true)
+  // the drag only leaves past the left edge, so the caret belongs at the start
+  expect(selection.offsetThought()).toBe(0)
   expect(store.getState().cursor).toEqual(state.cursor)
 })
 

@@ -73,8 +73,6 @@ const useEditMode = ({
   const store = useStore()
   const dispatch = useDispatch()
   const pressingRef = useRef(false)
-  // Offset to put the caret back to when the trackpad drags the selection out of the cursor thought (#3276).
-  const restoreOffsetRef = useRef(0)
 
   // focus on the ContentEditable element if editing or on desktop
   const editMode = !isTouch || editing
@@ -379,10 +377,7 @@ const useEditMode = ({
       // a thought that is about to become the cursor.
       if (pressingRef.current || performance.now() - lastTouchEndTime < GHOST_MOUSE_WINDOW_MS) return
 
-      if (selection.isOnEditable(head(path))) {
-        restoreOffsetRef.current = selection.offsetThought() ?? restoreOffsetRef.current
-        return
-      }
+      if (selection.isOnEditable(head(path))) return
 
       if (restoresThisFrame >= MAX_RESTORES_PER_FRAME) return
       restoresThisFrame++
@@ -391,8 +386,9 @@ const useEditMode = ({
         restoresThisFrame = 0
       })
 
-      // selectionchange is queued rather than dispatched synchronously, so this cannot recurse.
-      selection.set(editable, { offset: restoreOffsetRef.current })
+      // The drag only ever leaves this thought past its left edge, so the caret was already at offset 0 when it
+      // went. selectionchange is queued rather than dispatched synchronously, so this cannot recurse.
+      selection.set(editable, { offset: 0 })
     }
 
     editable.addEventListener('mousedown', onMouseDown)
