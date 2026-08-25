@@ -333,6 +333,11 @@ const useEditMode = ({
             bottomMargin: fontSize * 2,
           })
 
+          // A non-cursor thought is not an editing host while the keyboard is open (#3276), and the browser
+          // drops a caret placed in one. setCaretOffset below makes this thought the cursor, so React renders
+          // it editable on the next commit regardless; promoting it now just means the caret survives.
+          editable.contentEditable = 'true'
+
           // Setting the caret offset will activate the declarative shouldSetSelection effect, which will call preventAutoscroll and selection.set
           // all over again. Since the selection is managed imperatively in this handler, this duplicate behavior is undesirable.
           allowDefaultSelection()
