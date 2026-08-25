@@ -354,12 +354,6 @@ const useEditMode = ({
      */
     const onFocus = () => queueMicrotask(() => preventAutoscrollEnd(editable))
 
-    // The restore below is synchronous so that the stray position never reaches a paint, but a browser that
-    // refuses to move the selection back would then ping-pong forever. Cap the attempts per frame instead.
-    const MAX_RESTORES_PER_FRAME = 3
-    let restoresThisFrame = 0
-    let resetFrame: number | null = null
-
     /**
      * Keeps the caret inside the cursor thought while the keyboard is open. The iOS keyboard trackpad drags the
      * browser selection out of the editing host by hit-testing the whole document; unlike a tap it never moves
@@ -379,15 +373,9 @@ const useEditMode = ({
 
       if (selection.isOnEditable(head(path))) return
 
-      if (restoresThisFrame >= MAX_RESTORES_PER_FRAME) return
-      restoresThisFrame++
-      resetFrame ??= requestAnimationFrame(() => {
-        resetFrame = null
-        restoresThisFrame = 0
-      })
-
       // The drag only ever leaves this thought past its left edge, so the caret was already at offset 0 when it
-      // went. selectionchange is queued rather than dispatched synchronously, so this cannot recurse.
+      // went. selectionchange is queued rather than dispatched synchronously, so this cannot recurse; and a set
+      // that the browser declines fires no event at all, so it cannot spin either.
       selection.set(editable, { offset: 0 })
     }
 
@@ -406,7 +394,6 @@ const useEditMode = ({
         editable.removeEventListener('touchend', onTouchEnd)
         editable.removeEventListener('focus', onFocus)
         document.removeEventListener('selectionchange', onSelectionChange)
-        if (resetFrame !== null) cancelAnimationFrame(resetFrame)
       }
     }
   }, [
