@@ -2,7 +2,9 @@ import path from 'path'
 import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
+import command from '../helpers/command'
 import dragAndDropThought from '../helpers/dragAndDropThought'
+import exportThoughts from '../helpers/exportThoughts'
 import getEditingText from '../helpers/getEditingText'
 import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
@@ -447,6 +449,37 @@ describe('drop', () => {
         },
       })
     })
+  })
+
+  // https://github.com/cybersemics/em/issues/5089
+  it.skip('drops a thought dragged out of a cyclic context', async () => {
+    await paste(`
+      - a
+        - m
+          - x
+      - b
+        - m
+          - y
+    `)
+
+    await clickThought('a')
+    await clickThought('m')
+    await command('toggleContextView')
+    // move the cursor to the cyclic context a/m~/a so that x is rendered
+    await press('ArrowDown')
+    await waitForEditable('x')
+
+    await dragAndDropThought('x', 'm', { position: 'before' })
+
+    const exported = await exportThoughts()
+    expect(exported).toBe(`
+- a
+  - x
+  - m
+- b
+  - m
+    - y
+`)
   })
 })
 
