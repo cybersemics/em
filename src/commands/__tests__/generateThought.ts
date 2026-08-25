@@ -11,6 +11,13 @@ import dispatch from '../../test-helpers/dispatch'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import {
+  acceptAiDisclosure,
+  acknowledgeAiDisclosure,
+  allowAiDisclosureOnce,
+  clearAiDisclosureAcknowledgement,
+  hasAcknowledgedAiDisclosure,
+} from '../../util/aiDisclosure'
 import generateThought from '../generateThought'
 
 // Mock fetch for testing
@@ -20,6 +27,7 @@ global.fetch = mockFetch
 beforeEach(async () => {
   await initStore()
   vi.clearAllMocks()
+  clearAiDisclosureAcknowledgement()
   // clearAllMocks does not drain queued mockResolvedValueOnce responses, which would otherwise leak into the next test
   mockFetch.mockReset()
 })
@@ -174,6 +182,7 @@ test('not fetch title when thought is not empty', async () => {
 
   // Mock AI URL environment variable
   vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+  acknowledgeAiDisclosure()
 
   // Mock AI response
   mockFetch.mockResolvedValueOnce({
@@ -209,6 +218,7 @@ test('not fetch title when first child is not a URL', async () => {
 
   // Mock AI URL environment variable
   vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+  acknowledgeAiDisclosure()
 
   // Mock AI response
   mockFetch.mockResolvedValueOnce({
@@ -236,9 +246,68 @@ test('not fetch title when first child is not a URL', async () => {
   vi.unstubAllEnvs()
 })
 
+test('show AI disclosure and avoid network request before acknowledgement', async () => {
+  const text = `
+      - 
+        - Not a URL
+    `
+
+  vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+
+  await dispatch([importText({ text }), setCursor([''])])
+
+  await act(async () => {
+    executeCommand(generateThought)
+  })
+
+  expect(store.getState().showModal).toBe('aiDisclosure')
+  expect(mockFetch).not.toHaveBeenCalled()
+
+  const state = store.getState()
+  const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - 
+    - Not a URL`)
+  expect(state.cursorCleared).toBe(false)
+
+  vi.unstubAllEnvs()
+})
+
+test('continues the current request after allowing AI once', async () => {
+  const text = `
+      -${' '}
+        - Not a URL
+    `
+
+  vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+  mockFetch.mockResolvedValueOnce({
+    json: () => Promise.resolve({ content: 'AI generated text', err: null }),
+  })
+
+  await dispatch([importText({ text }), setCursor([''])])
+
+  await act(async () => {
+    executeCommand(generateThought)
+  })
+
+  const continuation = acceptAiDisclosure({ remember: false })
+  await act(async () => {
+    continuation?.()
+  })
+
+  expect(mockFetch).toHaveBeenCalledWith('http://test-ai-url', expect.any(Object))
+
+  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - AI generated text
+    - Not a URL`)
+  vi.unstubAllEnvs()
+})
+
 test('restore the original value rather than the pending value on undo', async () => {
   // Mock AI URL environment variable
   vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+  acknowledgeAiDisclosure()
 
   // Mock AI response
   mockFetch.mockResolvedValueOnce({
@@ -266,10 +335,63 @@ test('restore the original value rather than the pending value on undo', async (
   vi.unstubAllEnvs()
 })
 
+test('continues the current request after always allowing AI', async () => {
+  const text = `
+      -${' '}
+        - Not a URL
+    `
+
+  vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+  mockFetch.mockResolvedValueOnce({
+    json: () => Promise.resolve({ content: 'AI generated text', err: null }),
+  })
+
+  await dispatch([importText({ text }), setCursor([''])])
+
+  await act(async () => {
+    executeCommand(generateThought)
+  })
+
+  const continuation = acceptAiDisclosure({ remember: true })
+  await act(async () => {
+    continuation?.()
+  })
+
+  expect(mockFetch).toHaveBeenCalledWith('http://test-ai-url', expect.any(Object))
+  expect(hasAcknowledgedAiDisclosure()).toBe(true)
+
+  vi.unstubAllEnvs()
+})
+
+test('allow next use without persisting AI disclosure acknowledgement', async () => {
+  const text = `
+      - 
+        - Not a URL
+    `
+
+  vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+  allowAiDisclosureOnce()
+  mockFetch.mockResolvedValueOnce({
+    json: () => Promise.resolve({ content: 'AI generated text', err: null }),
+  })
+
+  await dispatch([importText({ text }), setCursor([''])])
+
+  await act(async () => {
+    executeCommand(generateThought)
+  })
+
+  expect(mockFetch).toHaveBeenCalledWith('http://test-ai-url', expect.any(Object))
+  expect(store.getState().showModal).toBeNull()
+
+  vi.unstubAllEnvs()
+})
+
 describe('multicursor', () => {
   it('generates a thought for each selected thought', async () => {
     // Mock AI URL environment variable
     vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+    acknowledgeAiDisclosure()
 
     // The selected thoughts are generated concurrently in document order, so the mocked responses are consumed in the
     // order a, b, c. Distinct content proves each response is applied to its own thought.
@@ -359,6 +481,7 @@ describe('multicursor', () => {
   it('reverts every generated thought on a single undo', async () => {
     // Mock AI URL environment variable
     vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+    acknowledgeAiDisclosure()
 
     mockFetch
       .mockResolvedValueOnce({ json: () => Promise.resolve({ content: 'one', err: null }) })
@@ -411,6 +534,7 @@ describe('multicursor', () => {
   it('keeps the cursor and the multicursor selection after generating', async () => {
     // Mock AI URL environment variable
     vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+    acknowledgeAiDisclosure()
 
     mockFetch
       .mockResolvedValueOnce({ json: () => Promise.resolve({ content: 'one', err: null }) })
@@ -454,6 +578,7 @@ describe('multicursor', () => {
   it('generates the other selected thoughts when one request returns an error', async () => {
     // Mock AI URL environment variable
     vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+    acknowledgeAiDisclosure()
 
     mockFetch
       .mockResolvedValueOnce({
@@ -496,6 +621,7 @@ describe('multicursor', () => {
   it('generates a thought for each selected thought when there is no cursor', async () => {
     // Mock AI URL environment variable
     vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+    acknowledgeAiDisclosure()
 
     mockFetch
       .mockResolvedValueOnce({ json: () => Promise.resolve({ content: 'one', err: null }) })

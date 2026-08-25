@@ -413,6 +413,8 @@ Extract selected part of a thought as its new parent. Where Extract Subthought d
 
 Generates a thought using AI.
 
+On first use of the AI generation path on a device, em shows a blocking disclosure modal. The user can cancel, allow the current use only, or allow future uses without seeing the notice again. Choosing either allow option resumes the request that opened the disclosure. A remembered acknowledgement can be removed later under Settings → AI Data Acknowledgment. The command sends a plaintext prompt to `VITE_AI_URL` (the OpenAI-backed AI service) containing the relevant current thought context: ancestors and sibling values around the cursor thought. The URL-title branch of this command does not call the AI service.
+
 <kbd>Command + Option + g</kbd>
 
 ### Delete

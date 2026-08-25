@@ -210,7 +210,7 @@ async function claim(
             )
           }
         }
-        return { url: `https://${candidate.hostname}`, process: proc }
+        return { url: `https://${candidate.hostname}/`, process: proc }
       }
       // Any other status (a different run's 403, a 404, etc.) means occupied or not ready yet.
       await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL_MS))

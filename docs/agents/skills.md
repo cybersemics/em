@@ -68,6 +68,7 @@ The two green boxes are the gates — the agent must run them before it is allow
 | [`puppeteer-update-snapshots`](#puppeteer-update-snapshots) | Regenerate screenshot comparisons after an intended visual change | [SKILL.md](../../.github/skills/puppeteer-update-snapshots/SKILL.md) |
 | [`end-session`](#end-session) | Work through the exit checklist before stopping for any reason | [SKILL.md](../../.github/skills/end-session/SKILL.md) |
 | [`docs-sync`](#docs-sync) | Repair the documentation your change made untrue, in the same commit | [SKILL.md](../../.github/skills/docs-sync/SKILL.md) |
+| `write-issue` | Write a GitHub issue in the format this repo uses | [SKILL.md](../../.github/skills/write-issue/SKILL.md) |
 
 ## The gates
 
