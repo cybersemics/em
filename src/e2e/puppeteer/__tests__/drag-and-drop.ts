@@ -452,7 +452,7 @@ describe('drop', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5089
-  it.skip('drops a thought dragged out of a cyclic context', async () => {
+  it('drops a thought dragged out of a cyclic context', async () => {
     await paste(`
       - a
         - m

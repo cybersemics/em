@@ -394,6 +394,8 @@ When `cursor` is `a/m~/b/y`, then `contextChain` is (ranks omitted for readabili
 
 Each segment is a `SimplePath`. The transition from one segment to the next happens at each `m~` boundary.
 
+An active context view is not on its own enough to split: the id following the context-view thought must be one of that thought's contexts. The distinction matters in a cyclic context (see [Context view recursion](#context-view-recursion) above), where a `SimplePath` and a context-view `Path` can be the same array of ids. The thought rendered at `a/m~/a/x` has the `SimplePath` `a/m/x`, and a context view is active on `a/m` — but `x` is an ordinary child of `m` rather than a context of it, so `a/m/x` is left whole instead of being split into `[['a', 'm'], ['x']]`.
+
 A more involved example (paste into **em** to try):
 
 ```
