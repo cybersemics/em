@@ -118,6 +118,55 @@ describe('Caret', () => {
     expect(selectionTextContent).toBe('d')
   })
 
+  // #3276: The virtual keyboard's trackpad (long press the space bar) moves the caret by hit-testing a point
+  // that follows the finger across the whole document, not by walking the focused editing host, so any thought
+  // that is an editing host can capture the caret mid-drag. The gesture itself cannot be driven from a test —
+  // it is a native keyboard interaction with no WebDriver equivalent — so these cover the two mechanisms that
+  // contain it, using the effect the gesture has on the DOM.
+  describe('Keyboard trackpad containment (#3276)', () => {
+    it('only the cursor thought is an editing host while the keyboard is open', async () => {
+      await newThought('foo')
+      await newThought('bar')
+      await waitUntil(isKeyboardShown)
+
+      const hosts = await browser.execute(() =>
+        JSON.stringify(
+          Array.from(document.querySelectorAll('[data-editable]')).map(el => ({
+            value: el.textContent,
+            editable: (el as HTMLElement).isContentEditable,
+          })),
+        ),
+      )
+
+      const editingHosts = (JSON.parse(hosts) as { value: string; editable: boolean }[]).filter(t => t.editable)
+      expect(editingHosts.map(t => t.value)).toEqual(['bar'])
+    })
+
+    it('a caret dragged out of the cursor thought is returned to it', async () => {
+      await newThought('foo')
+      await newThought('bar')
+      await waitUntil(isKeyboardShown)
+
+      // Reproduce what the trackpad does to the DOM: move the browser selection into another thought without
+      // touching the page, which is what makes it distinguishable from a tap.
+      await browser.execute(() => {
+        const other = Array.from(document.querySelectorAll('[data-editable]')).find(el => el.textContent === 'foo')
+        const range = document.createRange()
+        range.setStart(other!.firstChild!, 0)
+        range.collapse(true)
+        const sel = window.getSelection()!
+        sel.removeAllRanges()
+        sel.addRange(range)
+      })
+
+      await waitUntil(async () => (await getSelection().focusNode?.textContent) === 'bar')
+
+      // the cursor must not follow the stray caret, and the keyboard must stay up so typing still works
+      expect(await getEditingText()).toBe('bar')
+      expect(await isKeyboardShown()).toBeTruthy()
+    })
+  })
+
   it.skip('Tap empty content while keyboard up', async () => {
     const importText = `
     - a
