@@ -29,11 +29,6 @@ let lastTouchEndTime = 0
 let lastTouchEndTarget: EventTarget | null = null
 const GHOST_MOUSE_WINDOW_MS = 700
 
-// #3276: Timestamp of the most recent touch on any editable. The iOS keyboard trackpad moves the browser
-// selection without generating a single touch event in the page, so a selection change with no recent touch
-// behind it was not made by the user.
-let lastTouchTime = 0
-
 /**
  * Returns true if the last real touchend recently (within GHOST_MOUSE_WINDOW_MS) landed on a DIFFERENT
  * editable than `editable` — the shared signature of iOS's rapid-tap retargeting (#4173). Reads the last
@@ -224,10 +219,7 @@ const useEditMode = ({
     }
 
     /** Marks the beginning of a touch so that onMouseDown can determine whether a long press is occurring. */
-    const onTouchStart = () => {
-      pressingRef.current = true
-      lastTouchTime = performance.now()
-    }
+    const onTouchStart = () => (pressingRef.current = true)
 
     /** Ends the touch, records it for ghost-click detection, and sets the cursor on the tapped thought. */
     const onTouchEnd = (e: TouchEvent) => {
@@ -235,7 +227,6 @@ const useEditMode = ({
       // Evaluate against the PREVIOUS touchend before overwriting it below.
       const willRetarget = isRetargetedTap(editable)
       lastTouchEndTime = performance.now()
-      lastTouchTime = lastTouchEndTime
       lastTouchEndTarget = editable
 
       // #4173: touchend is the only event iOS reliably delivers to the tapped thought — on a rapid tap it
@@ -382,8 +373,11 @@ const useEditMode = ({
     const onSelectionChange = () => {
       if (document.activeElement !== editable || !isCursor || !editing || noteFocus) return
 
-      // A tap moves the selection on purpose, including into a different thought, which is then made the cursor.
-      if (performance.now() - lastTouchTime < GHOST_MOUSE_WINDOW_MS) return
+      // The trackpad moves the selection without generating a single touch event in the page, so anything the
+      // user did with a finger is not this. A press still in progress is a long press dragging a selection
+      // within this thought; a recently ended one is a tap, which may deliberately have moved the selection to
+      // a thought that is about to become the cursor.
+      if (pressingRef.current || performance.now() - lastTouchEndTime < GHOST_MOUSE_WINDOW_MS) return
 
       if (selection.isOnEditable(head(path))) {
         restoreOffsetRef.current = selection.offsetThought() ?? restoreOffsetRef.current

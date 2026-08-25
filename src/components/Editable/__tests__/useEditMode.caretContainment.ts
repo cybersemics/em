@@ -62,8 +62,6 @@ const moveSelectionTo = async (editable: HTMLElement) => {
   await act(vi.runAllTimersAsync)
 }
 
-// NOTE: These two tests share the module-level touch timestamp in useEditMode, which cannot be reset from
-// outside. The no-touch case must therefore run before the case that fires a touch.
 it('restores the caret to the cursor thought when the selection is dragged out of it', async () => {
   store.dispatch([importText({ text: '- a\n- b' }), setCursor(['a']), keyboardOpen({ value: true })])
 
@@ -85,7 +83,7 @@ it('restores the caret to the cursor thought when the selection is dragged out o
   expect(store.getState().cursor).toEqual(state.cursor)
 })
 
-it('does not restore the caret when a tap moved the selection to another thought', async () => {
+it('does not restore the caret while a press is in progress', async () => {
   store.dispatch([importText({ text: '- a\n- b' }), setCursor(['a']), keyboardOpen({ value: true })])
 
   const cursorId = head(store.getState().cursor!)
@@ -95,9 +93,31 @@ it('does not restore the caret when a tap moved the selection to another thought
   mountEditMode(editable)
   act(() => editable.focus())
 
-  // a tap is the user deliberately moving the caret, including into a thought that is about to become the cursor
+  // a long press dragging a selection fires selectionchange continuously between touchstart and touchend
   act(() => {
     editable.dispatchEvent(new TouchEvent('touchstart', { bubbles: true }))
+  })
+  await act(() => vi.advanceTimersByTimeAsync(1000))
+
+  await moveSelectionTo(other)
+
+  expect(selection.isOnEditable(cursorId)).toBe(false)
+})
+
+it('does not restore the caret just after a tap moved the selection to another thought', async () => {
+  store.dispatch([importText({ text: '- a\n- b' }), setCursor(['a']), keyboardOpen({ value: true })])
+
+  const cursorId = head(store.getState().cursor!)
+  const editable = createEditable(cursorId, 'a')
+  const other = createEditable('other-id', 'b')
+
+  mountEditMode(editable)
+  act(() => editable.focus())
+
+  // a tap is the user deliberately moving the caret, including into a thought about to become the cursor
+  act(() => {
+    editable.dispatchEvent(new TouchEvent('touchstart', { bubbles: true }))
+    editable.dispatchEvent(new TouchEvent('touchend', { bubbles: true, changedTouches: [] }))
   })
 
   await moveSelectionTo(other)
