@@ -146,6 +146,12 @@ Full results are [a comment on #5098](https://github.com/cybersemics/em/pull/509
 | ---------------------------------------------------------------- | -------------- | ------------------------------------------- | -------------------------------------------------------------------------------------------------- |
 | [Issue Classifier](../../.github/workflows/issue-classifier.yml) | `src/issue.ts` | Issue opened, or manual `workflow_dispatch` | Assigns the best-matching open milestone, or comments asking for a category when it cannot decide. |
 
-It needs the `OPENAI_API_KEY` repository secret; the `GITHUB_TOKEN` is supplied by Actions. The manual dispatch takes an `issue` number, which is also how an existing unclassified issue gets a milestone.
+It needs the `OPENAI_API_KEY` repository secret; the `GITHUB_TOKEN` is supplied by Actions. The manual dispatch takes an `issue` number, which is also how an existing unclassified issue gets a milestone, plus an optional `dry` toggle that runs the inference and prints the decision without assigning anything.
+
+```sh
+gh workflow run issue-classifier.yml -f issue=5092 -f dry=true
+```
+
+`workflow_dispatch` only appears once the workflow is on the default branch, so this is available after the workflow merges, not from a branch. Locally, `yarn issue 5092 --dry` runs the identical path with no writes and needs only an OpenAI key.
 
 An issue is skipped, silently and successfully, when it already has a milestone or is really a pull request. A human's classification is never overwritten.

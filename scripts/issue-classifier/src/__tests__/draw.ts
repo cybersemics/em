@@ -7,7 +7,7 @@
  * assigned itself, which would read as accuracy climbing rather than as a bug.
  */
 import { describe, expect, it } from 'vitest'
-import { buildFrame, draw, rank } from '../draw.ts'
+import { ASSIGNS_FROM, buildFrame, draw, rank } from '../draw.ts'
 import type { Issue } from '../lib/github.ts'
 
 /** One issue, defaulting everything the test in question does not care about. */
@@ -63,6 +63,18 @@ describe('buildFrame', () => {
     it('keeps an undated issue when no cutoff applies, so the guard costs nothing before deployment', () => {
       expect(buildFrame([issue(1, { createdAt: undefined })], OPEN, new Set()).map(i => i.number)).toEqual([1])
     })
+  })
+})
+
+describe('ASSIGNS_FROM', () => {
+  it('is set, so a draw cannot include issues the classifier milestoned itself', () => {
+    // Reverting this to null restores a self-confirming draw and nothing else looks wrong: the
+    // corpus still loads, the harness still runs, and accuracy quietly climbs toward 100%.
+    expect(ASSIGNS_FROM).not.toBeNull()
+  })
+
+  it('is a date the frame can actually be bounded by', () => {
+    expect(Number.isNaN(Date.parse(ASSIGNS_FROM!))).toBe(false)
   })
 })
 

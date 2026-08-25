@@ -31,21 +31,26 @@ import loadSamples from './lib/loadSamples.ts'
 const DEFAULT_REPO = 'cybersemics/em'
 
 /**
- * The date the classifier began assigning milestones itself, or null while it is not deployed.
+ * The date the Issue Classifier workflow went live and began assigning milestones itself.
  *
  * Issues created on or after this date are excluded from every draw, because their milestone may be
  * the classifier's own answer rather than a human's. Drawing one would score the classifier against
- * itself: it would be graded as correct for having reproduced the milestone it originally chose, and
- * the corpus would report accuracy climbing toward 100% as the population filled with its own output.
+ * itself: it would be graded correct for reproducing the milestone it originally chose, and the
+ * corpus would report accuracy climbing toward 100% as the population filled with its own output.
+ * A self-confirming measurement is worse than a stale one, because it reads as success.
  *
  * A date cutoff rather than an actor check on each issue's `milestoned` timeline event. The actor is
  * the exact signal, but it costs one API call per candidate across a frame of thousands, and the
  * cutoff is exactly right for a workflow that only ever fires on newly opened issues.
  *
- * **Set this to the deployment date when the Issue Classifier workflow goes live.** Leaving it null
- * afterwards is silent and self-flattering, which is the worst combination a measurement can have.
+ * The cost of this is that the pool of drawable issues stops growing: every future blind sample comes
+ * from the issues that existed on this date. Spend it deliberately — a corpus that has been read
+ * cannot be un-read, and there is no second population to fall back on.
+ *
+ * Exported so a test can assert it is set. Reverting it to null would silently restore the
+ * self-confirming draw, and nothing else about the harness would look wrong.
  */
-const ASSIGNS_FROM: string | null = null
+export const ASSIGNS_FROM: string | null = '2026-08-25'
 
 /** Command-line options for a draw. */
 export interface DrawOptions {
