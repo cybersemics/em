@@ -568,3 +568,34 @@ it('Set background color with multicursor selection', async () => {
   const labradorBgColor = extractColor(labradorText!)?.backgroundColor
   expect(labradorBgColor && rgbToHex(labradorBgColor)).toBe(rgbaToHex(colors.light.green))
 })
+
+// https://github.com/cybersemics/em/issues/4234
+it.skip('Set the background color of text that is marked as code', async () => {
+  const importText = `
+  - Hello beautiful people`
+
+  await paste(importText)
+
+  await clickThought('Hello beautiful people')
+
+  await setSelection(6, 15)
+  await press('K', { meta: true })
+  await waitForEditable('Hello <code>beautiful</code> people')
+
+  await clickToolbar('Text Color', 'background color swatches', 'red')
+  await nextFrame()
+
+  // the background that actually paints behind the code text is the nearest self-or-ancestor that is not transparent
+  const background = await page.evaluate(() => {
+    const code = document.querySelector('[data-editing=true] [data-editable] code')
+    if (!code) throw new Error('No code element found in the editing thought')
+    for (let el: Element | null = code; el; el = el.parentElement) {
+      const backgroundColor = window.getComputedStyle(el).backgroundColor
+      if (backgroundColor && backgroundColor !== 'transparent' && !backgroundColor.startsWith('rgba(0, 0, 0, 0'))
+        return backgroundColor
+    }
+    return null
+  })
+
+  expect(background && rgbToHex(background)).toBe(rgbaToHex(colors.light.red))
+})
