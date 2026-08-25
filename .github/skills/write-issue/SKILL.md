@@ -50,11 +50,13 @@ Include preconditions that are awkward but load-bearing — a specific device wi
 
 ### Current Behavior
 
-What happens, as an observation, with the evidence: a screenshot, a video, or a debug log. Not the cause, and not a proposed fix.
+What happens, as an observation, with the evidence: a screenshot, a video, or a debug log. Not the cause, and not a proposed fix. Quote a one-line error inline rather than in a fenced block; keep fences for output that actually spans lines.
 
 ### Expected Behavior
 
 What should happen instead. Write it as a condition that can be checked — a state the app is or is not in — since it is what a regression test will assert. Where the correct state is visible elsewhere in the app, a screenshot of that is useful alongside the screenshot of the bug.
+
+State the goal, not the shape of the fix. What the fix looks like is the assignee's call, and writing it out for them in advance is work they will redo.
 
 ## Optional sections
 
@@ -63,6 +65,12 @@ What should happen instead. Write it as a condition that can be checked — a st
 - **`## Debug Log`**, for an attached log file.
 
 One issue per reproduction. Where two failures share a cause and a fix, a single issue may carry both, each under its own `#` heading with its own three subsections — see [#4954](https://github.com/cybersemics/em/issues/4954).
+
+## Length
+
+Say the thing and stop. An issue is a report, not a write-up — the reader needs to know what is broken and what should happen instead, and every sentence past that is one they read before they can start.
+
+Word count is not the measure — a bug needing eight steps gets eight steps. What gets cut is the writing that is about your investigation rather than about the bug.
 
 ## Title
 
@@ -84,8 +92,6 @@ Leave priority and triage labels — `hold`, `low-priority`, `unable-to-reproduc
 
 Screenshots and videos are usually already in the conversation that prompted the issue. Copy the attachment markup across verbatim, `<img src="https://github.com/user-attachments/...">` and all; those URLs stay valid in another issue. Do not re-upload or re-host, and do not describe an image you could link.
 
-Attribute observations you did not make. An issue written up from someone else's report should not read as though you reproduced it.
-
 ## Splitting an issue out of a discussion
 
 New issues often originate in a comment thread on another issue or PR.
@@ -100,11 +106,13 @@ New issues often originate in a comment thread on another issue or PR.
 - Prose instead of numbered steps.
 - A step containing a decision — "increase the width and height", "make the thought long enough", "set up a table view".
 - Current and Expected merged into one sentence, leaving nothing to assert.
-- A theory about the cause in place of the symptom. A theory belongs in `## Notes`.
+- A theory about the cause in place of the symptom.
+- An Expected Behavior that specifies the fix rather than naming the goal.
+- A paragraph of preamble establishing what you did and did not reproduce, where a clause would do.
 - A screenshot with no steps.
 
-## When the correct behaviour is unknown
+## When something is unknown
 
 State the uncertainty in the preamble rather than omitting the issue.
 
-The exception is Expected Behavior: do not guess it. Apply `design-needed` and leave the decision to a maintainer, since a guess there becomes a regression test asserting behaviour nobody chose.
+Do not guess Expected Behavior. Apply `design-needed` and leave the decision to a maintainer, since a guess there becomes a regression test asserting behaviour nobody chose.
