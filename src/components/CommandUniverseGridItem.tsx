@@ -70,6 +70,7 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, se
             arrowSize={25}
             strokeWidth={7.5}
             arrowhead={'outlined'}
+            glow={false}
           />
         </td>
       ) : null}
