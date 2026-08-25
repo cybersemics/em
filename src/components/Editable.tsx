@@ -194,6 +194,16 @@ const Editable = ({
   // https://github.com/cybersemics/em/pull/3703
   const disabled = useSelector(state => !isDocumentEditable || state.longPress === LongPressState.DragInProgress)
 
+  const isKeyboardOpen = useSelector(state => !!state.isKeyboardOpen)
+
+  // The iOS virtual keyboard's trackpad (long press the space bar) moves the caret by hit-testing a point that
+  // follows the finger across the whole document, not by walking the focused editing host. Every thought being
+  // an editing host therefore lets the caret cross into a neighboring thought, which focuses it and drags the
+  // cursor along behind it. Keep the invariant structural instead: while the keyboard is open, only the cursor
+  // thought is an editing host. Taps on other thoughts still move the cursor via useEditMode's mousedown
+  // handler, which reads the caret offset from the tap coordinates rather than from contenteditable. (#3276)
+  const isForeignEditingHost = isTouch && isSafari() && isKeyboardOpen && !isCursor && !transient
+
   // console.info('<Editable> ' + prettyPath(store.getState(), simplePath))
   // useWhyDidYouUpdate('<Editable> ' + prettyPath(state, simplePath), {
   //   cursorOffset,
@@ -1045,7 +1055,7 @@ const Editable = ({
 
   const contentEditable = (
     <ContentEditable
-      disabled={disabled}
+      disabled={disabled || isForeignEditingHost}
       stopDragOver={stopDragOver}
       innerRef={contentRef}
       aria-label={'editable-' + head(path)}

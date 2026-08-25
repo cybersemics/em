@@ -17,6 +17,7 @@ import hasMulticursor from '../../selectors/hasMulticursor'
 import isMultiEditing from '../../selectors/isMultiEditing'
 import isMulticursorPath from '../../selectors/isMulticursorPath'
 import equalPath from '../../util/equalPath'
+import head from '../../util/head'
 
 // #4173: Ghost-click suppression state. On a rapid tap between adjacent thoughts, iOS Safari coalesces the
 // two taps into a double-tap and emits a delayed, retargeted synthesized mousedown/click/dblclick on the
@@ -27,6 +28,11 @@ import equalPath from '../../util/equalPath'
 let lastTouchEndTime = 0
 let lastTouchEndTarget: EventTarget | null = null
 const GHOST_MOUSE_WINDOW_MS = 700
+
+// #3276: Timestamp of the most recent touch on any editable. The iOS keyboard trackpad moves the browser
+// selection without generating a single touch event in the page, so a selection change with no recent touch
+// behind it was not made by the user.
+let lastTouchTime = 0
 
 /**
  * Returns true if the last real touchend recently (within GHOST_MOUSE_WINDOW_MS) landed on a DIFFERENT
@@ -72,6 +78,8 @@ const useEditMode = ({
   const store = useStore()
   const dispatch = useDispatch()
   const pressingRef = useRef(false)
+  // Offset to put the caret back to when the trackpad drags the selection out of the cursor thought (#3276).
+  const restoreOffsetRef = useRef(0)
 
   // focus on the ContentEditable element if editing or on desktop
   const editMode = !isTouch || editing
@@ -216,7 +224,10 @@ const useEditMode = ({
     }
 
     /** Marks the beginning of a touch so that onMouseDown can determine whether a long press is occurring. */
-    const onTouchStart = () => (pressingRef.current = true)
+    const onTouchStart = () => {
+      pressingRef.current = true
+      lastTouchTime = performance.now()
+    }
 
     /** Ends the touch, records it for ghost-click detection, and sets the cursor on the tapped thought. */
     const onTouchEnd = (e: TouchEvent) => {
@@ -224,6 +235,7 @@ const useEditMode = ({
       // Evaluate against the PREVIOUS touchend before overwriting it below.
       const willRetarget = isRetargetedTap(editable)
       lastTouchEndTime = performance.now()
+      lastTouchTime = lastTouchEndTime
       lastTouchEndTarget = editable
 
       // #4173: touchend is the only event iOS reliably delivers to the tapped thought — on a rapid tap it
@@ -348,11 +360,41 @@ const useEditMode = ({
      */
     const onFocus = () => queueMicrotask(() => preventAutoscrollEnd(editable))
 
+    // Coalesces restores to one per frame, so that a selection the browser refuses to move back cannot spin.
+    let restoreFrame: number | null = null
+
+    /**
+     * Keeps the caret inside the cursor thought while the keyboard is open. The iOS keyboard trackpad drags the
+     * browser selection out of the editing host by hit-testing the whole document; unlike a tap it never moves
+     * the focus, so the editable is left focused with the caret stranded in another thought, and the keyboard
+     * stays up while typing goes nowhere. Restoring only while this editable still holds the focus is what
+     * distinguishes that from the many flows that legitimately move the selection away after blurring it
+     * (selection.clear, the Command Center, drag start). (#3276).
+     */
+    const onSelectionChange = () => {
+      if (document.activeElement !== editable || !isCursor || !editing || noteFocus) return
+
+      // A tap moves the selection on purpose, including into a different thought, which is then made the cursor.
+      if (performance.now() - lastTouchTime < GHOST_MOUSE_WINDOW_MS) return
+
+      if (selection.isOnEditable(head(path))) {
+        restoreOffsetRef.current = selection.offsetThought() ?? restoreOffsetRef.current
+      } else if (restoreFrame === null) {
+        restoreFrame = requestAnimationFrame(() => {
+          restoreFrame = null
+          if (document.activeElement === editable && !selection.isOnEditable(head(path))) {
+            selection.set(editable, { offset: restoreOffsetRef.current })
+          }
+        })
+      }
+    }
+
     editable.addEventListener('mousedown', onMouseDown)
     if (isTouch && isSafari()) {
       editable.addEventListener('touchstart', onTouchStart)
       editable.addEventListener('touchend', onTouchEnd)
       editable.addEventListener('focus', onFocus)
+      document.addEventListener('selectionchange', onSelectionChange)
     }
 
     return () => {
@@ -361,9 +403,12 @@ const useEditMode = ({
         editable.removeEventListener('touchstart', onTouchStart)
         editable.removeEventListener('touchend', onTouchEnd)
         editable.removeEventListener('focus', onFocus)
+        document.removeEventListener('selectionchange', onSelectionChange)
+        if (restoreFrame !== null) cancelAnimationFrame(restoreFrame)
       }
     }
   }, [
+    noteFocus,
     contentRef,
     editing,
     editingOrOnCursor,
