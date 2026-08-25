@@ -3,9 +3,9 @@ import { newGrandChildActionCreator as newGrandChild } from '../actions/newGrand
 import SettingsIcon from '../components/icons/SettingsIcon'
 import isDocumentEditable from '../util/isDocumentEditable'
 
-const newGrandChildCommand: Command = {
+const newGrandChildCommand = {
   id: 'newGrandChild',
-  label: 'New Grandchild',
+  label: 'New Grandchild' as const,
   description: 'Create a thought within the first subthought.',
   gesture: 'rdrd',
   multicursor: {
@@ -18,6 +18,6 @@ const newGrandChildCommand: Command = {
   svg: SettingsIcon,
   canExecute: () => isDocumentEditable(),
   exec: dispatch => dispatch(newGrandChild()),
-}
+} satisfies Command
 
 export default newGrandChildCommand

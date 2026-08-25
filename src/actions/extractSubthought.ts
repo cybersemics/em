@@ -1,8 +1,8 @@
 import _ from 'lodash'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
-import * as selection from '../device/selection'
 import getThoughtById from '../selectors/getThoughtById'
+import selectionOffsets from '../selectors/selectionOffsets'
 import simplifyPath from '../selectors/simplifyPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import head from '../util/head'
@@ -11,17 +11,18 @@ import alert from './alert'
 import editThought from './editThought'
 import newThought from './newThought'
 
-/** Extract the selection as child thought. */
-const extractThought = (state: State): State => {
+export interface extractSubthoughtPayload {
+  /** The character offset of the start of the selection within the cursor thought's value. */
+  selectionStart: number
+  /** The character offset of the end of the selection within the cursor thought's value. */
+  selectionEnd: number
+}
+
+/** Extract the given range of the cursor thought as a subthought. */
+const extractSubthought = (state: State, { selectionStart, selectionEnd }: extractSubthoughtPayload): State => {
   const { cursor } = state
   if (!cursor) return state
 
-  if (!selection.isActive()) {
-    return state
-  }
-
-  const selectionStart = selection.offsetStart()!
-  const selectionEnd = selection.offsetEnd()!
   if (selectionStart === selectionEnd) {
     return alert(state, { value: 'No text selected to extract' })
   }
@@ -51,12 +52,20 @@ const extractThought = (state: State): State => {
   return reducerFlow(reducers)(state)
 }
 
-/** Action-creator for extractThought. */
-export const extractThoughtActionCreator = (): Thunk => dispatch => dispatch({ type: 'extractThought' })
+/**
+ * Action-creator for extractSubthought. Reads the selection offsets and passes them to the reducer, which cannot read them
+ * itself without reaching outside of state.
+ */
+export const extractSubthoughtActionCreator = (): Thunk => (dispatch, getState) => {
+  const offsets = selectionOffsets(getState())
+  if (!offsets) return
 
-export default _.curryRight(extractThought)
+  dispatch({ type: 'extractSubthought', selectionStart: offsets.start, selectionEnd: offsets.end })
+}
+
+export default _.curryRight(extractSubthought)
 
 // Register this action's metadata
-registerActionMetadata('extractThought', {
+registerActionMetadata('extractSubthought', {
   undoable: true,
 })

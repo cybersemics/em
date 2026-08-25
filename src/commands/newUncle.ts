@@ -7,9 +7,9 @@ import isDocumentEditable from '../util/isDocumentEditable'
 import parentOf from '../util/parentOf'
 
 // NOTE: The keyboard shotcut for New Uncle handled in New Thought command until it is confirmed that commands are evaluated in the correct order
-const newUncleCommand: Command = {
+const newUncleCommand = {
   id: 'newUncle',
-  label: 'New Subthought (next)',
+  label: 'New Subthought (next)' as const,
   description: 'Add a new thought one level up. Same as creating a new thought and then outdenting it.',
   gesture: 'dl',
   keyboard: { key: Key.Enter, meta: true, alt: true },
@@ -30,6 +30,6 @@ const newUncleCommand: Command = {
     if (!cursor) return
     dispatch(newThought({ at: parentOf(cursor) }))
   },
-}
+} satisfies Command
 
 export default newUncleCommand

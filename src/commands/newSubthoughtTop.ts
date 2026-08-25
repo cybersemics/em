@@ -9,9 +9,9 @@ import isDocumentEditable from '../util/isDocumentEditable'
 
 const exec = newThought({ insertNewSubthought: true, insertBefore: true })
 
-const newSubthoughtTopCommand: Command = {
+const newSubthoughtTopCommand = {
   id: 'newSubthoughtTop',
-  label: 'New Subthought (above)',
+  label: 'New Subthought (above)' as const,
   description: 'Create a new subthought in the current thought. Add it to the top of any existing subthoughts.',
   gesture: 'rdu',
   keyboard: { key: Key.Enter, shift: true, meta: true },
@@ -39,6 +39,6 @@ const newSubthoughtTopCommand: Command = {
   svg: NewSubthoughtAboveIcon,
   canExecute: () => isDocumentEditable(),
   exec,
-}
+} satisfies Command
 
 export default newSubthoughtTopCommand

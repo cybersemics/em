@@ -6,9 +6,9 @@ import editingValueStore from '../stores/editingValue'
 import isDocumentEditable from '../util/isDocumentEditable'
 import moveCursorForward from './moveCursorForward'
 
-const indentCommand: Command = {
+const indentCommand = {
   id: 'indent',
-  label: 'Indent',
+  label: 'Indent' as const,
   description: 'Indent the current thought one level deeper.',
   overlay: {
     keyboard: moveCursorForward.keyboard,
@@ -40,6 +40,6 @@ const indentCommand: Command = {
     dispatch(indent())
   },
   hideTitleInPanels: true,
-}
+} satisfies Command
 
 export default indentCommand
