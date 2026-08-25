@@ -11,11 +11,13 @@ const POLL_JITTER_MS = 5000
 /** How often to report that we are still waiting, so a long wait does not look like a hang. */
 const PROGRESS_INTERVAL_MS = 60000
 
-/** The account's parallel-session usage on the Automate product, and how many more sessions it can currently take. */
+/** The account's Automate usage: running parallels, plus the separate session-create queue. */
 interface SlotUsage {
   running: number
   allowed: number
   available: number
+  queued: number
+  queuedMax: number
 }
 
 /**
@@ -50,15 +52,23 @@ const getSlotUsage = async (): Promise<SlotUsage> => {
   }
 
   const plan: unknown = await res.json().catch(() => null)
-  const running = (plan as Record<string, unknown> | null)?.parallel_sessions_running
-  const allowed = (plan as Record<string, unknown> | null)?.parallel_sessions_max_allowed
-  if (typeof running !== 'number' || typeof allowed !== 'number') {
+  const record = plan as Record<string, unknown> | null
+  const running = record?.parallel_sessions_running
+  const allowed = record?.parallel_sessions_max_allowed
+  const queued = record?.queued_sessions
+  const queuedMax = record?.queued_sessions_max_allowed
+  if (
+    typeof running !== 'number' ||
+    typeof allowed !== 'number' ||
+    typeof queued !== 'number' ||
+    typeof queuedMax !== 'number'
+  ) {
     throw new Error(
-      `${PLAN_URL} did not report parallel_sessions_running and parallel_sessions_max_allowed as numbers: ${JSON.stringify(plan)}`,
+      `${PLAN_URL} did not report parallel_sessions_running, parallel_sessions_max_allowed, queued_sessions, and queued_sessions_max_allowed as numbers: ${JSON.stringify(plan)}`,
     )
   }
 
-  return { running, allowed, available: allowed - running }
+  return { running, allowed, available: allowed - running, queued, queuedMax }
 }
 
 /**
@@ -70,6 +80,12 @@ const getSlotUsage = async (): Promise<SlotUsage> => {
  * once workers are already running, which costs a spec its retry budget instead of a quiet wait.
  * Asking the API for real headroom replaces the repo-wide GitHub concurrency group that used to
  * serialize every run whether or not the pool was actually busy.
+ *
+ * Parallel headroom is not enough. Session creates that cannot start immediately sit in a separate
+ * queue (`queued_sessions` / `queued_sessions_max_allowed`). A burst of CI jobs that all see free
+ * parallels and then `POST .../session` together fills that queue and fails with
+ * `BROWSERSTACK_QUEUE_SIZE_EXCEEDED` even though `parallel_sessions_max_allowed - running` looked
+ * fine. The wait therefore also requires `queued + needed <= queuedMax`.
  *
  * This is a check-then-create wait, not a reservation: two runs can see the same headroom in the
  * same instant. `specFileRetriesDeferred` (wdio.base.conf.ts) remains the fallback for that race.
@@ -84,10 +100,12 @@ const waitForBrowserStackSlots = async (needed: number): Promise<void> => {
   while (true) {
     const usage = await getSlotUsage()
     const waitedMin = Math.round((Date.now() - start) / 60000)
+    const usageSummary = `${usage.running}/${usage.allowed} sessions running, ${usage.queued}/${usage.queuedMax} queued (${usage.available} available)`
 
-    if (usage.available >= needed) {
+    // queued + needed must fit the queue cap, not only parallel headroom — see BROWSERSTACK_QUEUE_SIZE_EXCEEDED.
+    if (usage.available >= needed && usage.queued + needed <= usage.queuedMax) {
       console.info(
-        `BrowserStack slots: ${usage.available}/${usage.allowed} available, need ${needed} — proceeding` +
+        `BrowserStack slots: ${usageSummary}, need ${needed} — proceeding` +
           (waitedMin > 0 ? ` after waiting ${waitedMin} min` : ''),
       )
       return
@@ -96,16 +114,14 @@ const waitForBrowserStackSlots = async (needed: number): Promise<void> => {
     if (Date.now() - start >= WAIT_TIMEOUT_MS) {
       throw new Error(
         `BrowserStack still had no room for ${needed} parallel sessions after waiting ` +
-          `${Math.round(WAIT_TIMEOUT_MS / 60000)} min: ${usage.running}/${usage.allowed} sessions running ` +
-          `(${usage.available} available). Another CI run or agent session is holding the pool.`,
+          `${Math.round(WAIT_TIMEOUT_MS / 60000)} min: ${usageSummary}. Another CI run is holding the pool or its queue.`,
       )
     }
 
     // Report on the first pass that has to wait, then periodically.
     if (lastProgress === start || Date.now() - lastProgress >= PROGRESS_INTERVAL_MS) {
       console.info(
-        `BrowserStack slots: need ${needed}, ${usage.running}/${usage.allowed} sessions running ` +
-          `(${usage.available} available) — waited ${waitedMin} min of ` +
+        `BrowserStack slots: need ${needed}, ${usageSummary} — waited ${waitedMin} min of ` +
           `${Math.round(WAIT_TIMEOUT_MS / 60000)} min...`,
       )
       lastProgress = Date.now()

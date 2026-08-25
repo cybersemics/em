@@ -1,11 +1,16 @@
 import waitForBrowserStackSlots from '../waitForBrowserStackSlots'
 
 /** Builds a plan.json response with the given usage, as BrowserStack's Automate plan endpoint returns it. */
-const planResponse = (running: number, allowed = 5) => ({
+const planResponse = (running: number, allowed = 5, queued = 0, queuedMax = 5) => ({
   ok: true,
   status: 200,
   statusText: 'OK',
-  json: async () => ({ parallel_sessions_running: running, parallel_sessions_max_allowed: allowed }),
+  json: async () => ({
+    parallel_sessions_running: running,
+    parallel_sessions_max_allowed: allowed,
+    queued_sessions: queued,
+    queued_sessions_max_allowed: queuedMax,
+  }),
 })
 
 beforeEach(() => {
@@ -20,7 +25,7 @@ afterEach(() => {
   vi.useRealTimers()
 })
 
-it('proceeds immediately when the pool has room', async () => {
+it('proceeds immediately when the pool and queue have room', async () => {
   const fetchMock = vi.fn().mockResolvedValue(planResponse(1))
   vi.stubGlobal('fetch', fetchMock)
 
@@ -45,11 +50,26 @@ it('waits until a later poll reports room', async () => {
   expect(fetchMock).toHaveBeenCalledTimes(3)
 })
 
+it('waits when parallels are free but the session-create queue cannot take this run', async () => {
+  const fetchMock = vi
+    .fn()
+    .mockResolvedValueOnce(planResponse(0, 5, 5, 5))
+    .mockResolvedValue(planResponse(0, 5, 0, 5))
+  vi.stubGlobal('fetch', fetchMock)
+  vi.useFakeTimers()
+
+  const waiting = waitForBrowserStackSlots(2)
+  await vi.advanceTimersByTimeAsync(30000)
+  await waiting
+
+  expect(fetchMock).toHaveBeenCalledTimes(2)
+})
+
 it('throws with the observed usage when the pool never frees up', async () => {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(planResponse(5)))
   vi.useFakeTimers()
 
-  const assertion = expect(waitForBrowserStackSlots(2)).rejects.toThrow('5/5 sessions running')
+  const assertion = expect(waitForBrowserStackSlots(2)).rejects.toThrow('5/5 sessions running, 0/5 queued')
   await vi.advanceTimersByTimeAsync(46 * 60 * 1000)
   await assertion
 })
@@ -63,7 +83,7 @@ it('throws when the plan endpoint responds with an error status', async () => {
 it('throws when the plan endpoint returns a payload without the usage fields', async () => {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, status: 200, statusText: 'OK', json: async () => ({}) }))
 
-  await expect(waitForBrowserStackSlots(2)).rejects.toThrow('parallel_sessions_running')
+  await expect(waitForBrowserStackSlots(2)).rejects.toThrow('queued_sessions')
 })
 
 it('throws when the BrowserStack credentials are missing', async () => {

@@ -62,8 +62,8 @@ on:
 # Concurrency has one requirement here: commits to the same PR must supersede each other (cancel,
 # never queue) — only the newest head is worth a device session. BrowserStack's own shared
 # parallel-session cap is NOT handled by a GitHub group. It is handled in-process by the wdio config
-# (waitForBrowserStackSlots), which asks BrowserStack's plan API for real headroom and waits for it
-# before any session is created. A GitHub group can only serialize on the assumption that the pool is
+# (waitForBrowserStackSlots), which asks BrowserStack's plan API for real parallel and queue
+# headroom and waits for it before any session is created. A GitHub group can only serialize on the
 # busy; the API knows whether it is, so two runs can overlap whenever the account actually has room
 # for both. Runner minutes spent waiting on ubuntu-latest are acceptable — this is a public repo.
 #
