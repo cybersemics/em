@@ -101,6 +101,39 @@ Put a new sample in whichever half is smaller, and prefer picking issues without
 
 Use `"expected": null` for an issue that genuinely fits no milestone, which asserts that the workflow asks rather than guesses.
 
+### Drawing a blind sample
+
+A held-out set stops being held out once it has been consulted. When that happens the answer is not to reinterpret the old set but to draw a new one, which takes a minute:
+
+```sh
+node src/draw.ts --count 150 --seed <name> --out samples-blind-2
+```
+
+The frame is every issue a human filed and milestoned, whose milestone is still open, that has a body, and that no existing sample covers. An issue whose milestone has since been closed is excluded rather than counted as a miss: the model is only ever offered the open ones, so it could not have been right.
+
+Selection is by seeded hash — an issue's rank is `sha256(seed:number)` — so a draw is reproducible from its seed alone, and adding an issue to the repository moves only that issue rather than reshuffling every other draw. The script prints issue numbers and a milestone histogram and nothing else; printing a title would undo the draw it just made.
+
+Keep the new set in its own directory rather than merging it into `samples/`. Merging is the irreversible move — the samples in `samples/` have been read, and a corpus cannot be un-read back into a blind measurement.
+
+## Comparing two models
+
+`yarn evaluate` answers "how accurate is this?". Choosing between two models is a different question, and running the first one twice and subtracting does not answer it. Two arms four points apart are equally consistent with _fixed nine, broke seven_ and with _fixed two, broke none_ — the first is noise and the second is a reason to switch, and only a per-issue pairing tells them apart.
+
+```sh
+node src/compare.ts --models gpt-5.6-terra,gpt-5.6-sol --runs 3 --samples samples-blind-2 --split all --out results.jsonl
+node src/analyze.ts --in results.jsonl --baseline gpt-5.6-terra
+```
+
+Everything downstream of the model is the production path — `buildPrompt`, `tallyVotes`, and the retry policy in `selectMilestone`, which is called with its `infer` seam pointed at a model-parameterised request. The only field that differs between arms is `model`.
+
+Three things are held fixed, because each would otherwise leak into the difference being measured: the open milestones are fetched once, both arms see the same issues, and the order within a pair alternates by run so that drift over the minutes a run takes falls across both arms rather than into one. Repetitions matter more here than they do for a single accuracy figure: with `n=5` votes the pipeline is stochastic, and a one-run gap between two models is partly two draws from two noisy processes.
+
+`analyze.ts` reports the flip table — how many issues each model got right that the other got wrong, and which ones — then McNemar's exact test over the discordant pairs, a paired bootstrap on the difference, per-model stability across runs, and the cost from the token counts the run recorded. **The flip table is the comparison**; the accuracy percentages above it are orientation. Note how few discordant pairs a 50-issue set produces: at this accuracy it is about four, and four is not enough to distinguish a real few-point difference from chance, which is why the comparison set is larger than the accuracy set.
+
+### What has been measured
+
+`gpt-5.6-terra` against `gpt-5.6-sol`, both at five votes and default reasoning effort, prompt frozen. **Sol did not beat Terra.** Full results and the reasoning behind the decision are in [`docs/agents/model-comparison.md`](../../docs/agents/model-comparison.md).
+
 ## Workflow
 
 | Workflow                                                         | Script         | Trigger                                     | Description                                                                                        |

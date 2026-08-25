@@ -32,17 +32,24 @@ export interface Sample {
   }
 }
 
-/** Loads every labeled sample, sorted by filename for a stable report order. */
-const loadSamples = (): Sample[] => {
-  if (!fs.existsSync(samplesDir)) {
+/**
+ * Loads every labeled sample, sorted by filename for a stable report order.
+ *
+ * The directory is a parameter so that a freshly drawn corpus can be evaluated from its own
+ * directory without being merged into this one. Merging it would be the destructive move: the
+ * samples here have been read, and a set that has been read cannot be un-read back into a blind
+ * measurement.
+ */
+const loadSamples = (dir: string = samplesDir): Sample[] => {
+  if (!fs.existsSync(dir)) {
     return []
   }
 
   return fs
-    .readdirSync(samplesDir)
+    .readdirSync(dir)
     .filter(file => file.endsWith('.json'))
     .sort()
-    .map(file => JSON.parse(fs.readFileSync(path.join(samplesDir, file), 'utf-8')) as Sample)
+    .map(file => JSON.parse(fs.readFileSync(path.join(dir, file), 'utf-8')) as Sample)
 }
 
 export default loadSamples

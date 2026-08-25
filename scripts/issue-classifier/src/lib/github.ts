@@ -69,14 +69,19 @@ class GitHubClient {
   }
 
   /**
-   * Makes a request to the GitHub API, retrying transient failures.
+   * Makes a request to the GitHub API, retrying transient failures, and returns the raw response.
+   *
+   * Raw rather than parsed because pagination lives in the `Link` header: GitHub refuses `page=`
+   * beyond a few pages on a large issue list and requires the cursor it hands back instead.
    *
    * Only network errors and 5xx responses are retried. A 4xx is a deterministic answer — a missing
    * issue, a bad token, a milestone that does not exist — so repeating it wastes the workflow's time
    * and buries the real cause behind the last of three identical failures.
    */
-  private async request<T>(path: string, options: RequestInit = {}): Promise<T> {
-    const url = `${this.baseUrl}${path}`
+  private async requestRaw(path: string, options: RequestInit = {}): Promise<Response> {
+    // A Link header hands back an absolute URL, so a path that already carries a scheme is used as
+    // given rather than being appended to the base a second time.
+    const url = path.startsWith('http') ? path : `${this.baseUrl}${path}`
     const headers: Record<string, string> = {
       Accept: 'application/vnd.github+json',
       'Content-Type': 'application/json',
@@ -96,8 +101,7 @@ class GitHubClient {
       }
 
       if (response) {
-        // 204 No Content is a success with no JSON body to parse.
-        if (response.ok) return (response.status === 204 ? undefined : await response.json()) as T
+        if (response.ok) return response
         const body = await response.text().catch(() => '')
         const error = new Error(`GitHub API error ${response.status} for ${path}: ${body}`)
         if (response.status < 500) throw error
@@ -109,6 +113,13 @@ class GitHubClient {
       }
     }
     throw lastError!
+  }
+
+  /** Makes a request and parses the JSON body. */
+  private async request<T>(path: string, options: RequestInit = {}): Promise<T> {
+    const response = await this.requestRaw(path, options)
+    // 204 No Content is a success with no JSON body to parse.
+    return (response.status === 204 ? undefined : await response.json()) as T
   }
 
   /**
@@ -126,6 +137,40 @@ class GitHubClient {
       if (response.length < PAGE_SIZE) return milestones
       page++
     }
+  }
+
+  /**
+   * Fetches every issue in the repository, newest first, paging until a short page signals the last
+   * one. Pull requests are filtered out — the issues API returns both — so the result is the
+   * repository's real issue history.
+   *
+   * Used to build a sampling frame for the evaluation corpus, which is why it reads the whole
+   * history rather than accepting a filter: the frame has to be the full population before anything
+   * is drawn from it.
+   */
+  async listIssues(): Promise<Issue[]> {
+    const issues: Issue[] = []
+    // Cursor pagination, not `page=`: GitHub returns 422 for a page number beyond the first few on a
+    // list this size and points at the cursor in the Link header instead.
+    let url: string | null = `/repos/${this.repo}/issues?state=all&per_page=${PAGE_SIZE}`
+    while (url) {
+      const response: Response = await this.requestRaw(url)
+      const page = (await response.json()) as IssueResponse[]
+      issues.push(
+        ...page
+          .filter(issue => issue.pull_request == null)
+          .map(issue => ({
+            number: issue.number,
+            title: issue.title,
+            body: issue.body ?? '',
+            labels: issue.labels.map(label => label.name),
+            milestone: issue.milestone?.title ?? null,
+            isPullRequest: false,
+          })),
+      )
+      url = /<([^>]+)>;\s*rel="next"/.exec(response.headers.get('link') ?? '')?.[1] ?? null
+    }
+    return issues
   }
 
   /** Fetches a single issue. */
