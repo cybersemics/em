@@ -360,8 +360,11 @@ const useEditMode = ({
      */
     const onFocus = () => queueMicrotask(() => preventAutoscrollEnd(editable))
 
-    // Coalesces restores to one per frame, so that a selection the browser refuses to move back cannot spin.
-    let restoreFrame: number | null = null
+    // The restore below is synchronous so that the stray position never reaches a paint, but a browser that
+    // refuses to move the selection back would then ping-pong forever. Cap the attempts per frame instead.
+    const MAX_RESTORES_PER_FRAME = 3
+    let restoresThisFrame = 0
+    let resetFrame: number | null = null
 
     /**
      * Keeps the caret inside the cursor thought while the keyboard is open. The iOS keyboard trackpad drags the
@@ -379,14 +382,18 @@ const useEditMode = ({
 
       if (selection.isOnEditable(head(path))) {
         restoreOffsetRef.current = selection.offsetThought() ?? restoreOffsetRef.current
-      } else if (restoreFrame === null) {
-        restoreFrame = requestAnimationFrame(() => {
-          restoreFrame = null
-          if (document.activeElement === editable && !selection.isOnEditable(head(path))) {
-            selection.set(editable, { offset: restoreOffsetRef.current })
-          }
-        })
+        return
       }
+
+      if (restoresThisFrame >= MAX_RESTORES_PER_FRAME) return
+      restoresThisFrame++
+      resetFrame ??= requestAnimationFrame(() => {
+        resetFrame = null
+        restoresThisFrame = 0
+      })
+
+      // selectionchange is queued rather than dispatched synchronously, so this cannot recurse.
+      selection.set(editable, { offset: restoreOffsetRef.current })
     }
 
     editable.addEventListener('mousedown', onMouseDown)
@@ -404,7 +411,7 @@ const useEditMode = ({
         editable.removeEventListener('touchend', onTouchEnd)
         editable.removeEventListener('focus', onFocus)
         document.removeEventListener('selectionchange', onSelectionChange)
-        if (restoreFrame !== null) cancelAnimationFrame(restoreFrame)
+        if (resetFrame !== null) cancelAnimationFrame(resetFrame)
       }
     }
   }, [
