@@ -136,7 +136,9 @@ Three things are held fixed, because each would otherwise leak into the differen
 
 ### What has been measured
 
-`gpt-5.6-terra` against `gpt-5.6-sol`, both at five votes and default reasoning effort, prompt frozen, over 500 blind issues at three runs each. **Neither model is meaningfully more accurate** — Sol by 0.6 points, 95% CI −1.8 to +3.0 — so Terra stays, at half the price. A 150-issue subset of the same draw said Sol was 4 points ahead; it did not replicate. Full results in [`docs/agents/model-comparison.md`](../../docs/agents/model-comparison.md), including why 500 issues was the smallest set that could answer this.
+`gpt-5.6-terra` against `gpt-5.6-sol`, both at five votes and default reasoning effort, prompt frozen, over 500 blind issues at three runs each. **Neither model is meaningfully more accurate** — Sol by 0.6 points, 95% CI −1.8 to +3.0 — so Terra stays, at half the price. A 150-issue subset of the same draw said Sol was 4 points ahead and did not replicate, which is what sized the set: 150 issues yields about 16 discordant pairs, and that is too few to tell a real difference from a coin.
+
+Full results are [a comment on #5098](https://github.com/cybersemics/em/pull/5098#issuecomment-5418548837) rather than a file here, since they record one experiment rather than how the classifier works.
 
 ## Workflow
 
