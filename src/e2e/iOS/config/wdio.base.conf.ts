@@ -95,7 +95,7 @@ const baseConfig = {
   // (2) leave headroom in the shared BrowserStack parallel pool for agent-driven sessions and other CI runs.
   // This is also the number of slots the BrowserStack config waits for in onPrepare
   // (waitForBrowserStackSlots), so the pool is known to have room before any worker starts.
-  maxInstances: 2,
+  maxInstances: 5,
 
   // Base iOS Safari capabilities shared between local and browserStack configs. Individual configs can override or extend these.
   baseCapabilities: {
