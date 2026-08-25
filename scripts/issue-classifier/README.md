@@ -132,7 +132,7 @@ Three things are held fixed, because each would otherwise leak into the differen
 
 ### What has been measured
 
-`gpt-5.6-terra` against `gpt-5.6-sol`, both at five votes and default reasoning effort, prompt frozen. **Sol did not beat Terra.** Full results and the reasoning behind the decision are in [`docs/agents/model-comparison.md`](../../docs/agents/model-comparison.md).
+`gpt-5.6-terra` against `gpt-5.6-sol`, both at five votes and default reasoning effort, prompt frozen, over 500 blind issues at three runs each. **Neither model is meaningfully more accurate** — Sol by 0.6 points, 95% CI −1.8 to +3.0 — so Terra stays, at half the price. A 150-issue subset of the same draw said Sol was 4 points ahead; it did not replicate. Full results in [`docs/agents/model-comparison.md`](../../docs/agents/model-comparison.md), including why 500 issues was the smallest set that could answer this.
 
 ## Workflow
 

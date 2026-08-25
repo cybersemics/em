@@ -177,6 +177,38 @@ describe('report', () => {
     expect(text).toContain('different wrong answers: 0')
   })
 
+  it('excludes an issue only one arm graded, and names it', () => {
+    // #5 exists for Terra only, which is what a dropped pair or a run cut short leaves behind.
+    const text = report(
+      [...rows, row({ model: 'gpt-5.6-terra', issue: 5, guess: 'A', expected: 'A' })],
+      'gpt-5.6-terra',
+    )
+    expect(text).toContain('Excluded 1 issue(s) only one arm graded: 5')
+    // The four properly paired issues are still the denominator.
+    expect(text).toContain('4 issues')
+  })
+
+  it('survives a run that graded only some issues, rather than throwing on the hole', () => {
+    const partial: CompareRow[] = [
+      ...rows.map(r => ({ ...r, run: 1 })),
+      // Run 2 covers only issue 1, as an aborted run would.
+      row({ model: 'gpt-5.6-terra', issue: 1, guess: 'A', expected: 'A', run: 2 }),
+      row({ model: 'gpt-5.6-sol', issue: 1, guess: 'A', expected: 'A', run: 2 }),
+    ]
+    const text = report(partial, 'gpt-5.6-terra')
+    expect(text).toContain('not graded in this run')
+    expect(text).toContain('Uneven coverage')
+  })
+
+  it('refuses a set with nothing to pair at all', () => {
+    expect(() =>
+      report(
+        [row({ model: 'gpt-5.6-terra', issue: 1, guess: 'A' }), row({ model: 'gpt-5.6-sol', issue: 2, guess: 'A' })],
+        'gpt-5.6-terra',
+      ),
+    ).toThrow(/nothing to pair/)
+  })
+
   it('refuses a file that does not hold exactly two models to pair', () => {
     expect(() => report([...rows, row({ model: 'gpt-5.6-luna', issue: 1, guess: 'A' })], 'gpt-5.6-terra')).toThrow(
       /exactly two models/,

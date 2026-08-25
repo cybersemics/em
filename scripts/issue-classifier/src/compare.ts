@@ -56,6 +56,17 @@ const DEFAULT_REPO = 'cybersemics/em'
  */
 const CONCURRENCY = 4
 
+/**
+ * Base delay between inference attempts, multiplied by the attempt number.
+ *
+ * Longer than production's, deliberately. The workflow retries inside a job a human may be waiting
+ * on; this runs unattended for over an hour, and a network interruption lasting a few seconds is a
+ * near certainty across a thousand requests. At production's one-second base all three attempts are
+ * spent within three seconds, which is short enough that a single blip took out four concurrent
+ * workers at once and cost a whole run.
+ */
+const RETRY_DELAY_MS = 5000
+
 /** Token counts for one request, as reported by the API. */
 export interface Usage {
   prompt: number
@@ -215,6 +226,7 @@ export const gradeOne = async ({
     milestones,
     instructions,
     openaiApiKey: apiKey,
+    retryDelayMs: RETRY_DELAY_MS,
     infer: async ({ apiKey, prompt, instructions }) => {
       const result = await inferWithModel({ apiKey, prompt, instructions, model, votes })
       usage.prompt += result.usage.prompt
@@ -286,24 +298,40 @@ const main = async () => {
 
   const stream = fs.createWriteStream(path.resolve(out), { flags: 'a' })
   const started = Date.now()
+  const dropped: { run: number; issue: number; message: string }[] = []
 
   for (const run of Array.from({ length: runs }, (_, i) => i + 1)) {
     // Alternate which arm goes first. If the API drifts over the minutes a run takes, the drift then
     // falls across both models rather than systematically into the one that always ran second.
     const order = run % 2 === 1 ? models : [...models].reverse()
     const rows = await mapConcurrent(samples, CONCURRENCY, async sample => {
+      const issue = sample.source!.issue
+      // A failure drops this issue from *both* arms for this run, and nothing else. Dropping the pair
+      // keeps the comparison paired, which aborting also did — but aborting threw away every issue
+      // already graded in the run, and across an hour of unattended requests a transient fault is not
+      // the unlikely case. Recorded rather than passed over: a run that quietly graded fewer issues
+      // than it was given would overstate its own coverage.
       const paired: CompareRow[] = []
-      for (const model of order) {
-        paired.push(await gradeOne({ sample, milestones, instructions, apiKey, model, votes, run }))
+      try {
+        for (const model of order) {
+          paired.push(await gradeOne({ sample, milestones, instructions, apiKey, model, votes, run }))
+        }
+      } catch (error) {
+        dropped.push({ run, issue, message: (error as Error).message })
+        console.warn(`  run ${run} #${issue}: DROPPED — ${(error as Error).message}`)
+        return []
       }
+
+      // Written here rather than after the run, so a fault late in a run cannot discard the hour of
+      // grading that preceded it.
+      for (const row of paired) stream.write(JSON.stringify(row) + '\n')
       const verdicts = paired
         .map(row => `${row.model.replace(/^gpt-[\d.]+-/, '')} ${row.correct ? '✓' : `✗ ${row.guess ?? '«none»'}`}`)
         .join('  |  ')
-      console.info(`  run ${run} #${sample.source!.issue}: ${verdicts}`)
+      console.info(`  run ${run} #${issue}: ${verdicts}`)
       return paired
     })
 
-    for (const row of rows.flat()) stream.write(JSON.stringify(row) + '\n')
     for (const model of models) {
       const arm = rows.flat().filter(row => row.model === model)
       const correct = arm.filter(row => row.correct).length
@@ -312,9 +340,12 @@ const main = async () => {
   }
 
   stream.end()
-  console.info(
-    `\nWrote ${runs * samples.length * models.length} rows to ${out} in ${Math.round((Date.now() - started) / 1000)}s`,
-  )
+  const written = (runs * samples.length - dropped.length) * models.length
+  console.info(`\nWrote ${written} rows to ${out} in ${Math.round((Date.now() - started) / 1000)}s`)
+  if (dropped.length > 0) {
+    console.warn(`\n${dropped.length} issue-run pairs were dropped and are absent from every figure:`)
+    for (const failure of dropped) console.warn(`  run ${failure.run} #${failure.issue}: ${failure.message}`)
+  }
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

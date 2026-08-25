@@ -182,19 +182,38 @@ export const report = (rows: CompareRow[], baseline: string): string => {
   if (models.length !== 2) throw new Error(`Expected exactly two models, found ${models.join(', ')}`)
   const [a, b] = models
   const runs = [...new Set(rows.map(row => row.run))].sort()
-  const issues = [...new Set(rows.map(row => row.issue))].sort((x, y) => x - y)
   const lines: string[] = []
 
   /** Every row for one model on one issue. */
   const rowsFor = (model: string, issue: number): CompareRow[] =>
     rows.filter(row => row.model === model && row.issue === issue)
 
+  // An issue only counts if both arms graded it. A run that dropped an issue — a transient fault, a
+  // run cut short — leaves a hole, and an unpaired issue silently credited to whichever arm did grade
+  // it is exactly the bias the pairing exists to remove. Dropped issues are named, not just excluded,
+  // because a comparison that quietly shrank its own sample overstates what it measured.
+  const graded = [...new Set(rows.map(row => row.issue))].sort((x, y) => x - y)
+  const issues = graded.filter(issue => models.every(model => rowsFor(model, issue).length > 0))
+  const unpaired = graded.filter(issue => !issues.includes(issue))
+
   const consensus = new Map(
     models.map(model => [model, new Map(issues.map(issue => [issue, consolidate(rowsFor(model, issue))]))]),
   )
 
+  if (issues.length === 0) throw new Error('No issue was graded by both models; there is nothing to pair.')
+
   lines.push(`=== ${a} vs ${b} ===`)
   lines.push(`${issues.length} issues × ${runs.length} run${runs.length === 1 ? '' : 's'}, paired on the same issues.`)
+  if (unpaired.length > 0) {
+    lines.push(`Excluded ${unpaired.length} issue(s) only one arm graded: ${unpaired.join(', ')}`)
+  }
+  // A model missing a whole run would otherwise show up as a quietly different denominator.
+  for (const model of models) {
+    const perRun = runs.map(run => rows.filter(row => row.model === model && row.run === run).length)
+    if (new Set(perRun).size > 1) {
+      lines.push(`Uneven coverage for ${model}: ${runs.map((run, i) => `run ${run}=${perRun[i]}`).join(', ')}`)
+    }
+  }
 
   lines.push('')
   lines.push('Per-run accuracy (each run is one independent pass over every issue):')
@@ -297,14 +316,18 @@ export const report = (rows: CompareRow[], baseline: string): string => {
     lines.push('Per-run pairing, so the consensus figure above can be checked against single runs:')
     lines.push('  run   fixed  broken  net')
     for (const run of runs) {
-      const perIssue = issues.map(issue => ({
-        a: rows.find(row => row.model === a && row.run === run && row.issue === issue)!,
-        b: rows.find(row => row.model === b && row.run === run && row.issue === issue)!,
-      }))
+      const perIssue = issues
+        .map(issue => ({
+          a: rows.find(row => row.model === a && row.run === run && row.issue === issue),
+          b: rows.find(row => row.model === b && row.run === run && row.issue === issue),
+        }))
+        .filter((pair): pair is { a: CompareRow; b: CompareRow } => pair.a != null && pair.b != null)
       const fixed = perIssue.filter(pair => !pair.a.correct && pair.b.correct).length
       const broken = perIssue.filter(pair => pair.a.correct && !pair.b.correct).length
+      const missing = issues.length - perIssue.length
       lines.push(
-        `  ${String(run).padEnd(4)}  ${String(fixed).padStart(5)}  ${String(broken).padStart(6)}  ${points((fixed - broken) / issues.length)}`,
+        `  ${String(run).padEnd(4)}  ${String(fixed).padStart(5)}  ${String(broken).padStart(6)}  ` +
+          `${points((fixed - broken) / perIssue.length)}${missing > 0 ? `  (${missing} not graded in this run)` : ''}`,
       )
     }
 
