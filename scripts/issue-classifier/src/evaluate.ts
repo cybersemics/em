@@ -1,11 +1,11 @@
 /**
- * Evaluation harness for the milestone categorizer. Runs the exact selection pipeline the workflow
+ * Evaluation harness for the issue classifier. Runs the exact selection pipeline the workflow
  * uses over every labeled sample and grades the outcome against the known-correct milestone.
  *
  * This is the ruler for the prompt: run it before and after editing
- * `scripts/milestone/instructions.md` to confirm the edit helped. Grading is
+ * `scripts/issue-classifier/instructions.md` to confirm the edit helped. Grading is
  * strict — the predicted milestone must equal the recorded one exactly — and the run exits non-zero
- * below `MILESTONE_MIN_ACCURACY`, so a prompt change that regresses accuracy fails rather than
+ * below `ISSUE_CLASSIFIER_MIN_ACCURACY`, so a prompt change that regresses accuracy fails rather than
  * printing a slightly worse number nobody compares.
  *
  * A sample the votes could not place counts as a prediction of "no milestone", because that is what
@@ -13,14 +13,14 @@
  * correct answer.
  *
  * Offline with respect to GitHub state: it reads the open milestones and calls the model, but never
- * writes to any issue. Run manually with `cd scripts/milestone && yarn evaluate`.
+ * writes to any issue. Run manually with `cd scripts/issue-classifier && yarn evaluate`.
  */
 import 'dotenv/config'
 import * as fs from 'fs'
 import { fileURLToPath } from 'url'
 import GitHubClient, { type Milestone } from './lib/github.ts'
 import loadInstructions from './lib/loadInstructions.ts'
-import loadSamples, { type MilestoneSample } from './lib/loadSamples.ts'
+import loadSamples, { type Sample } from './lib/loadSamples.ts'
 import { CONFIDENCE_LEVELS, type Confidence } from './lib/parseSelection.ts'
 import selectMilestone from './lib/selectMilestone.ts'
 
@@ -31,7 +31,7 @@ const DEFAULT_REPO = 'cybersemics/em'
  * meaningful while it stays unseen, and a default of `test` would consume it on every routine run
  * until it measured nothing but how many times it had been looked at.
  */
-const SPLIT = process.env.MILESTONE_EVAL_SPLIT ?? 'train'
+const SPLIT = process.env.ISSUE_CLASSIFIER_EVAL_SPLIT ?? 'train'
 /**
  * The floor `yarn evaluate` fails below.
  *
@@ -245,10 +245,10 @@ export const computeMetrics = (rows: EvalRow[]): EvalMetrics => {
 
 /** Reads the accuracy floor from the environment. Throws on an unusable value. */
 export const resolveMinAccuracy = (env: Record<string, string | undefined> = process.env): number => {
-  const raw = env.MILESTONE_MIN_ACCURACY
+  const raw = env.ISSUE_CLASSIFIER_MIN_ACCURACY
   const minAccuracy = raw != null ? Number(raw) : DEFAULT_MIN_ACCURACY
   if (!Number.isFinite(minAccuracy) || minAccuracy < 0 || minAccuracy > 1) {
-    throw new Error(`MILESTONE_MIN_ACCURACY must be a number between 0 and 1, got "${raw}"`)
+    throw new Error(`ISSUE_CLASSIFIER_MIN_ACCURACY must be a number between 0 and 1, got "${raw}"`)
   }
   return minAccuracy
 }
@@ -322,7 +322,7 @@ export const formatSignalReport = (rows: EvalRow[]): string => {
 export const formatReport = (metrics: EvalMetrics): string => {
   const lines: string[] = []
   lines.push('')
-  lines.push(`=== Milestone categorizer evaluation (${SPLIT}) ===`)
+  lines.push(`=== Issue classifier evaluation (${SPLIT}) ===`)
   lines.push(`Samples: ${metrics.total}`)
   lines.push(`Accuracy: ${metrics.correct.count}/${metrics.total} (${percent(metrics.correct.fraction)})`)
   lines.push(
@@ -371,7 +371,7 @@ export interface EvalFailure {
  * that silently graded fewer samples than it was given would overstate its own coverage.
  */
 export const grade = async (
-  samples: MilestoneSample[],
+  samples: Sample[],
   milestones: Milestone[],
   instructions: string,
   openaiApiKey: string,
@@ -413,16 +413,16 @@ export const grade = async (
   return { rows, failures }
 }
 
-/** Evaluates the categorizer over every labeled sample and prints the accuracy report. */
+/** Evaluates the classifier over every labeled sample and prints the accuracy report. */
 const main = async () => {
   const openaiApiKey = process.env.OPENAI_API_KEY
   if (!openaiApiKey) throw new Error('OPENAI_API_KEY is required')
 
   const minAccuracy = resolveMinAccuracy()
-  const repo = process.env.GITHUB_REPOSITORY ?? process.env.MILESTONE_REPO ?? DEFAULT_REPO
+  const repo = process.env.GITHUB_REPOSITORY ?? process.env.ISSUE_CLASSIFIER_REPO ?? DEFAULT_REPO
 
   if (!['train', 'test', 'all'].includes(SPLIT)) {
-    throw new Error(`MILESTONE_EVAL_SPLIT must be train, test, or all, got "${SPLIT}"`)
+    throw new Error(`ISSUE_CLASSIFIER_EVAL_SPLIT must be train, test, or all, got "${SPLIT}"`)
   }
 
   const instructions = loadInstructions()
@@ -444,7 +444,7 @@ const main = async () => {
   // Each row carries the agreement and confidence behind its verdict, so alternative gate
   // thresholds can be scored offline against a run that already happened. Without this, answering
   // "what would requiring unanimity cost?" means paying for the whole evaluation again.
-  const jsonPath = process.env.MILESTONE_EVAL_JSON
+  const jsonPath = process.env.ISSUE_CLASSIFIER_EVAL_JSON
   if (jsonPath) {
     fs.writeFileSync(jsonPath, JSON.stringify(rows, null, 2) + '\n')
     console.info(`Wrote ${rows.length} graded rows to ${jsonPath}`)
@@ -457,7 +457,7 @@ const main = async () => {
 
   if (metrics.correct.fraction < minAccuracy) {
     throw new Error(
-      `Accuracy ${percent(metrics.correct.fraction)} is below the required ${percent(minAccuracy)} (MILESTONE_MIN_ACCURACY).`,
+      `Accuracy ${percent(metrics.correct.fraction)} is below the required ${percent(minAccuracy)} (ISSUE_CLASSIFIER_MIN_ACCURACY).`,
     )
   }
 }

@@ -11,7 +11,7 @@ import loadSamples from '../lib/loadSamples.ts'
 const instructions = loadInstructions()
 const samples = loadSamples()
 
-describe('milestone instructions', () => {
+describe('issue classifier instructions', () => {
   it('loads from the repository', () => {
     expect(instructions).toContain('# Milestone Instructions')
   })
@@ -22,7 +22,7 @@ describe('milestone instructions', () => {
   })
 })
 
-describe('milestone samples', () => {
+describe('issue classifier samples', () => {
   it('loads a labeled corpus', () => {
     expect(samples.length).toBeGreaterThan(0)
   })

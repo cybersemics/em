@@ -1,12 +1,12 @@
-# Milestone
+# Issue Classifier
 
-Automatic issue categorization for the `em` project. When an issue is opened, this picks the open GitHub milestone that best matches it and assigns it. Milestones here are subsystems rather than releases, so the milestone is the issue's category.
+Automatic issue classification for the `em` project. When an issue is opened, this picks the open GitHub milestone that best matches it and assigns it. Milestones here are subsystems rather than releases, so the milestone is the issue's category.
 
-Success is silent — the assigned milestone is the whole result. The only issues left uncategorized are those that match no existing milestone, where a comment asks @raineorshine for the category instead.
+Success is silent — the assigned milestone is the whole result. The only issues left unclassified are those that match no existing milestone, where a comment asks @raineorshine for the category instead.
 
 ## Setup
 
-Define env variables in `scripts/milestone/.env`:
+Define env variables in `scripts/issue-classifier/.env`:
 
 ```
 GITHUB_TOKEN=
@@ -18,7 +18,7 @@ OPENAI_API_KEY=
 ## Usage
 
 ```bash
-cd scripts/milestone
+cd scripts/issue-classifier
 yarn issue 5092 --dry
 ```
 
@@ -38,20 +38,20 @@ The costs here are asymmetric, and not in the intuitive direction. An unmileston
 
 So the only issues that get no milestone are the ones where the votes named none, which means the taxonomy has no home for the issue. That is worth a human's attention in a way that "the model was only fairly sure" never was. A run that fails inference three times, or finds no open milestones at all, comments and fails the workflow: those are broken rather than uncertain.
 
-Inference is tunable via `MILESTONE_*` env vars (see `.env.example`): `MILESTONE_MODEL`, `MILESTONE_VOTES`, `MILESTONE_REASONING_EFFORT`, `MILESTONE_TEMPERATURE`.
+Inference is tunable via `ISSUE_CLASSIFIER_*` env vars (see `.env.example`): `ISSUE_CLASSIFIER_MODEL`, `ISSUE_CLASSIFIER_VOTES`, `ISSUE_CLASSIFIER_REASONING_EFFORT`, `ISSUE_CLASSIFIER_TEMPERATURE`.
 
 ## Evaluation
 
 [`samples/`](samples) holds issues whose milestone a human already chose, plus a few where the correct answer is to ask. **The samples are never placed in the prompt** — the prompt teaches the categories through the definition table and example titles instead. Holding them out is what makes the evaluation a measurement rather than a memory test, and a unit test fails if a sample's title ever appears in the instructions.
 
 ```bash
-cd scripts/milestone
+cd scripts/issue-classifier
 yarn evaluate
 ```
 
 ### The two halves
 
-The corpus is split in two, and the split is the whole reason the numbers mean anything. An earlier version of this corpus was 29 samples chosen by hand; it scored 90%, while 40 later samples drawn semi-randomly from the same milestones scored 53%. The gap was not the model — it was that hand-picking selects the issues a person finds easy to categorize, which are the same ones the model finds easy. Tuning a prompt against samples it was measured on repeats that mistake in a quieter way.
+The corpus is split in two, and the split is the whole reason the numbers mean anything. An earlier version of this corpus was 29 samples chosen by hand; it scored 90%, while 40 later samples drawn semi-randomly from the same milestones scored 53%. The gap was not the model — it was that hand-picking selects the issues a person finds easy to classify, which are the same ones the model finds easy. Tuning a prompt against samples it was measured on repeats that mistake in a quieter way.
 
 So `split` is recorded in every sample file, assigned by alternating over a milestone-ordered list so both halves span the taxonomy:
 
@@ -60,8 +60,8 @@ So `split` is recorded in every sample file, assigned by alternating over a mile
 
 ```bash
 yarn evaluate                            # train, the default
-MILESTONE_EVAL_SPLIT=test yarn evaluate  # the honest number — run sparingly
-MILESTONE_EVAL_SPLIT=all yarn evaluate
+ISSUE_CLASSIFIER_EVAL_SPLIT=test yarn evaluate  # the honest number — run sparingly
+ISSUE_CLASSIFIER_EVAL_SPLIT=all yarn evaluate
 ```
 
 Samples move from `test` to `train` and never back. Reading a sample's errors is what makes it useful for revising the prompt and what disqualifies it from measuring the result, and that is not reversible — a sample cannot be un-read. So when the train half runs dry of new information, promote a stratified slice of the held-out half rather than reading all of it, and keep the rest untouched for the number you report.
@@ -70,7 +70,7 @@ The default is `train` on purpose. A held-out set is only meaningful while it st
 
 ### Scoring the confidence signal
 
-Accuracy says how often the categorizer is right. It does not say whether its confidence can tell a right answer from a wrong one, which is a different question and the one that decides whether any threshold is worth having. Every run therefore also reports **AUROC** — the probability a correct prediction outranks a wrong one, where 0.5 means the signal carries no information — and **AUARC**, the mean accuracy across every coverage level, for ranking candidate signals against each other.
+Accuracy says how often the classifier is right. It does not say whether its confidence can tell a right answer from a wrong one, which is a different question and the one that decides whether any threshold is worth having. Every run therefore also reports **AUROC** — the probability a correct prediction outranks a wrong one, where 0.5 means the signal carries no information — and **AUARC**, the mean accuracy across every coverage level, for ranking candidate signals against each other.
 
 Both score the milestone the votes actually named rather than whatever survived to be assigned. The two coincide while nothing withholds an assignment, and they are kept distinct so that reintroducing any threshold cannot end up measuring itself.
 
@@ -78,9 +78,9 @@ The accuracy-rejection curve beneath them is the artifact to act on: each row is
 
 Declines are reported as two lines rather than one rate. A genuine no-fit means the taxonomy has a hole and the comment is doing its job; a spurious decline means the model refused when something plainly fitted, which is a prompt defect. They look identical in production, so a single blended figure would hide the second behind the first.
 
-`MILESTONE_EVAL_JSON=path` dumps the graded rows, each carrying the agreement and confidence behind its verdict, so alternative gate thresholds can be scored against a run that already happened rather than paying for inference again.
+`ISSUE_CLASSIFIER_EVAL_JSON=path` dumps the graded rows, each carrying the agreement and confidence behind its verdict, so alternative gate thresholds can be scored against a run that already happened rather than paying for inference again.
 
-The harness runs the exact pipeline the workflow uses over every sample and grades it strictly: the assigned milestone must equal the recorded one, and a sample the votes could not place counts as a prediction of "no milestone", because that is what production would do. It reports accuracy, precision over the assignments actually made, an outcome breakdown, the mismatches, and a calibration table — then **exits non-zero below `MILESTONE_MIN_ACCURACY`** (default 0.66, set below a blind baseline that has measured 70–76% across four runs), so a prompt edit that regresses accuracy fails rather than printing a slightly worse number nobody compares.
+The harness runs the exact pipeline the workflow uses over every sample and grades it strictly: the assigned milestone must equal the recorded one, and a sample the votes could not place counts as a prediction of "no milestone", because that is what production would do. It reports accuracy, precision over the assignments actually made, an outcome breakdown, the mismatches, and a calibration table — then **exits non-zero below `ISSUE_CLASSIFIER_MIN_ACCURACY`** (default 0.66, set below a blind baseline that has measured 70–76% across four runs), so a prompt edit that regresses accuracy fails rather than printing a slightly worse number nobody compares.
 
 Run it before and after editing the instructions. It makes model calls but never writes to any issue, and it is deliberately not part of CI.
 
@@ -103,10 +103,10 @@ Use `"expected": null` for an issue that genuinely fits no milestone, which asse
 
 ## Workflow
 
-| Workflow                                                                     | Script         | Trigger                                     | Description                                                                                        |
-| ---------------------------------------------------------------------------- | -------------- | ------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| [Assign Issue Milestone](../../.github/workflows/assign-issue-milestone.yml) | `src/issue.ts` | Issue opened, or manual `workflow_dispatch` | Assigns the best-matching open milestone, or comments asking for a category when it cannot decide. |
+| Workflow                                                         | Script         | Trigger                                     | Description                                                                                        |
+| ---------------------------------------------------------------- | -------------- | ------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| [Issue Classifier](../../.github/workflows/issue-classifier.yml) | `src/issue.ts` | Issue opened, or manual `workflow_dispatch` | Assigns the best-matching open milestone, or comments asking for a category when it cannot decide. |
 
-It needs the `OPENAI_API_KEY` repository secret; the `GITHUB_TOKEN` is supplied by Actions. The manual dispatch takes an `issue` number, which is also how an existing uncategorized issue gets a milestone.
+It needs the `OPENAI_API_KEY` repository secret; the `GITHUB_TOKEN` is supplied by Actions. The manual dispatch takes an `issue` number, which is also how an existing unclassified issue gets a milestone.
 
-An issue is skipped, silently and successfully, when it already has a milestone or is really a pull request. A human's categorization is never overwritten.
+An issue is skipped, silently and successfully, when it already has a milestone or is really a pull request. A human's classification is never overwritten.

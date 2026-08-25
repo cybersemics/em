@@ -91,7 +91,7 @@
   "workspaces": [
     "packages/*",
     "scripts/estimate",
-    "scripts/milestone"
+    "scripts/issue-classifier"
   ],
   "dependencies": {
     "@capacitor/android": "^8.5.0",

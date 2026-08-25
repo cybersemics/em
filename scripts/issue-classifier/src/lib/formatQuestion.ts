@@ -1,6 +1,6 @@
 import type { VoteResult } from './tallyVotes.ts'
 
-/** The maintainer asked to categorize an issue that matched no existing milestone. */
+/** The maintainer asked to classify an issue that matched no existing milestone. */
 const MAINTAINER = '@raineorshine'
 
 /**

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import assignMilestone, { type GitHubGateway } from '../assignMilestone.ts'
+import classifyIssue, { type GitHubGateway } from '../classifyIssue.ts'
 import type { Issue, Milestone } from '../github.ts'
 import type { VoteResult } from '../tallyVotes.ts'
 
@@ -43,10 +43,10 @@ const createGitHub = (issue: Issue = ISSUE, milestones: Milestone[] = MILESTONES
   return { github, setMilestone, comment }
 }
 
-describe('assignMilestone', () => {
+describe('classifyIssue', () => {
   it('assigns the selected milestone by number and posts no comment', async () => {
     const { github, setMilestone, comment } = createGitHub()
-    const result = await assignMilestone({
+    const result = await classifyIssue({
       github,
       issueNumber: 4839,
       instructions: 'instructions',
@@ -61,7 +61,7 @@ describe('assignMilestone', () => {
 
   it('asks a human only when the votes named no milestone', async () => {
     const { github, setMilestone, comment } = createGitHub()
-    const result = await assignMilestone({
+    const result = await classifyIssue({
       github,
       issueNumber: 4839,
       instructions: 'instructions',
@@ -77,7 +77,7 @@ describe('assignMilestone', () => {
   it('assigns a tied vote rather than asking, taking its modal winner', async () => {
     // A tie is a choice between two plausible buckets, not a failure to find one.
     const { github, setMilestone, comment } = createGitHub()
-    const result = await assignMilestone({
+    const result = await classifyIssue({
       github,
       issueNumber: 4839,
       instructions: 'instructions',
@@ -92,7 +92,7 @@ describe('assignMilestone', () => {
 
   it('assigns a low-confidence vote, since self-reported confidence carries no signal', async () => {
     const { github, setMilestone } = createGitHub()
-    const result = await assignMilestone({
+    const result = await classifyIssue({
       github,
       issueNumber: 4839,
       instructions: 'instructions',
@@ -107,7 +107,7 @@ describe('assignMilestone', () => {
   it('skips an issue that already has a milestone without running inference', async () => {
     const { github, setMilestone, comment } = createGitHub({ ...ISSUE, milestone: '📐 Layout' })
     const select = vi.fn(async () => ASSIGNABLE)
-    const result = await assignMilestone({
+    const result = await classifyIssue({
       github,
       issueNumber: 4839,
       instructions: 'instructions',
@@ -123,7 +123,7 @@ describe('assignMilestone', () => {
 
   it('skips a pull request', async () => {
     const { github, setMilestone, comment } = createGitHub({ ...ISSUE, isPullRequest: true })
-    const result = await assignMilestone({
+    const result = await classifyIssue({
       github,
       issueNumber: 4839,
       instructions: 'instructions',
@@ -139,7 +139,7 @@ describe('assignMilestone', () => {
   it('explains on the issue and fails when the repository has no open milestones', async () => {
     const { github, setMilestone, comment } = createGitHub(ISSUE, [])
     await expect(
-      assignMilestone({
+      classifyIssue({
         github,
         issueNumber: 4839,
         instructions: 'instructions',
@@ -154,7 +154,7 @@ describe('assignMilestone', () => {
 
   it('writes nothing in a dry run', async () => {
     const { github, setMilestone, comment } = createGitHub()
-    const result = await assignMilestone({
+    const result = await classifyIssue({
       github,
       issueNumber: 4839,
       instructions: 'instructions',

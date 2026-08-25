@@ -12,7 +12,7 @@ const samplesDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '.
  * categories through the definition table and example titles instead. Holding the samples out
  * entirely is what makes `yarn evaluate` a measurement rather than a memory test.
  */
-export interface MilestoneSample {
+export interface Sample {
   input: {
     title: string
     body: string
@@ -33,7 +33,7 @@ export interface MilestoneSample {
 }
 
 /** Loads every labeled sample, sorted by filename for a stable report order. */
-const loadSamples = (): MilestoneSample[] => {
+const loadSamples = (): Sample[] => {
   if (!fs.existsSync(samplesDir)) {
     return []
   }
@@ -42,7 +42,7 @@ const loadSamples = (): MilestoneSample[] => {
     .readdirSync(samplesDir)
     .filter(file => file.endsWith('.json'))
     .sort()
-    .map(file => JSON.parse(fs.readFileSync(path.join(samplesDir, file), 'utf-8')) as MilestoneSample)
+    .map(file => JSON.parse(fs.readFileSync(path.join(samplesDir, file), 'utf-8')) as Sample)
 }
 
 export default loadSamples

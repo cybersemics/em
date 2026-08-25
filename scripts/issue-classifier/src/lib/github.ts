@@ -12,7 +12,7 @@ export interface Milestone {
   description: string
 }
 
-/** The subset of a GitHub issue the categorizer reads. */
+/** The subset of a GitHub issue the classifier reads. */
 export interface Issue {
   number: number
   title: string
@@ -51,7 +51,7 @@ interface IssueResponse {
 }
 
 /**
- * GitHub REST API client covering the four calls the categorizer makes: list open milestones, read
+ * GitHub REST API client covering the four calls the classifier makes: list open milestones, read
  * an issue, assign a milestone, and post a comment.
  *
  * The token is optional so that read-only and `--dry` runs work against a public repository with no

@@ -11,7 +11,7 @@ import {
   resolveMinAccuracy,
 } from '../evaluate.ts'
 import type { Milestone } from '../lib/github.ts'
-import type { MilestoneSample } from '../lib/loadSamples.ts'
+import type { Sample } from '../lib/loadSamples.ts'
 import type { VoteResult } from '../lib/tallyVotes.ts'
 
 const rows: EvalRow[] = [
@@ -77,7 +77,7 @@ describe('formatReport', () => {
     expect(report).not.toContain('A → A')
   })
 
-  it('says so when nothing was miscategorized', () => {
+  it('says so when nothing was misclassified', () => {
     expect(formatReport(computeMetrics([rows[0]]))).toContain('(none)')
   })
 })
@@ -88,11 +88,11 @@ describe('resolveMinAccuracy', () => {
   })
 
   it('reads the floor from the environment', () => {
-    expect(resolveMinAccuracy({ MILESTONE_MIN_ACCURACY: '0.85' })).toBe(0.85)
+    expect(resolveMinAccuracy({ ISSUE_CLASSIFIER_MIN_ACCURACY: '0.85' })).toBe(0.85)
   })
 
   it('throws on a value outside 0–1', () => {
-    expect(() => resolveMinAccuracy({ MILESTONE_MIN_ACCURACY: '85' })).toThrow(/MILESTONE_MIN_ACCURACY/)
+    expect(() => resolveMinAccuracy({ ISSUE_CLASSIFIER_MIN_ACCURACY: '85' })).toThrow(/ISSUE_CLASSIFIER_MIN_ACCURACY/)
   })
 })
 
@@ -100,7 +100,7 @@ describe('grade', () => {
   const milestones: Milestone[] = [{ number: 20, title: '🧤 Drag & Drop', description: '' }]
 
   /** Builds a sample whose issue number identifies it in the graded output. */
-  const sample = (issue: number): MilestoneSample => ({
+  const sample = (issue: number): Sample => ({
     input: { title: `issue ${issue}`, body: 'body', labels: [] },
     expected: '🧤 Drag & Drop',
     split: 'test',

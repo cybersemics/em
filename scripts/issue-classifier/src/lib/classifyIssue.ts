@@ -12,7 +12,7 @@ export interface GitHubGateway {
 }
 
 /** What the workflow did with one issue. */
-export interface AssignResult {
+export interface ClassifyResult {
   /** `assigned` set a milestone, `asked` posted a question, `skipped` did nothing. */
   action: 'assigned' | 'asked' | 'skipped'
   /** The milestone assigned, or the closest guess when asking. Null when there was none. */
@@ -23,8 +23,8 @@ export interface AssignResult {
   question?: string
 }
 
-/** Options for categorizing one issue. */
-export interface AssignMilestoneOptions {
+/** Options for classifying one issue. */
+export interface ClassifyIssueOptions {
   github: GitHubGateway
   issueNumber: number
   instructions: string
@@ -36,7 +36,7 @@ export interface AssignMilestoneOptions {
 }
 
 /**
- * Categorizes one issue end to end: read it, decide, and either assign a milestone or ask a human.
+ * Classifies one issue end to end: read it, decide, and either assign a milestone or ask a human.
  *
  * A milestone is assigned whenever the votes name one. Confidence thresholds used to sit here, but
  * the model's self-reported confidence measured AUROC 0.53 — indistinguishable from no signal — so
@@ -52,14 +52,14 @@ export interface AssignMilestoneOptions {
  * a milestone, is skipped silently: a human's choice is never overwritten. Everything else either
  * assigns quietly or asks loudly.
  */
-const assignMilestone = async ({
+const classifyIssue = async ({
   github,
   issueNumber,
   instructions,
   openaiApiKey,
   dryRun = false,
   select = selectMilestone,
-}: AssignMilestoneOptions): Promise<AssignResult> => {
+}: ClassifyIssueOptions): Promise<ClassifyResult> => {
   const issue = await github.getIssue(issueNumber)
 
   if (issue.isPullRequest) {
@@ -71,12 +71,12 @@ const assignMilestone = async ({
 
   const milestones = await github.listOpenMilestones()
   if (milestones.length === 0) {
-    // A repository with no open milestones cannot be categorized at all. Say so on the issue before
+    // A repository with no open milestones cannot be classified at all. Say so on the issue before
     // failing, so the silence is explained rather than left to be noticed later.
     if (!dryRun) {
       await github.comment(issueNumber, 'No milestone was assigned because this repository has no open milestones.')
     }
-    throw new Error('Cannot categorize: the repository has no open milestones.')
+    throw new Error('Cannot classify: the repository has no open milestones.')
   }
 
   const selection = await select({ issue, milestones, instructions, openaiApiKey })
@@ -98,4 +98,4 @@ const assignMilestone = async ({
   return { action: 'asked', milestone: null, detail: 'the votes named no existing milestone', question }
 }
 
-export default assignMilestone
+export default classifyIssue

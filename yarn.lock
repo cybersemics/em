@@ -11748,9 +11748,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"em-milestone@workspace:scripts/milestone":
+"em-issue-classifier@workspace:scripts/issue-classifier":
   version: 0.0.0-use.local
-  resolution: "em-milestone@workspace:scripts/milestone"
+  resolution: "em-issue-classifier@workspace:scripts/issue-classifier"
   dependencies:
     dotenv: "npm:^17.4.2"
     prettier: "npm:^3.9.6"

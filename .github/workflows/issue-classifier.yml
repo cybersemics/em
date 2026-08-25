@@ -2,29 +2,29 @@
 # stays silent when it succeeds — the milestone is the whole result. When it cannot confidently
 # choose one, it posts a comment asking the maintainer for a category instead, which is a normal
 # outcome and not a failure. It can also be dispatched manually against any issue number.
-name: Assign Issue Milestone
+name: Issue Classifier
 on:
   issues:
     types: [opened]
   workflow_dispatch:
     inputs:
       issue:
-        description: 'Issue number to categorize'
+        description: 'Issue number to classify'
         required: true
 
 permissions:
   # To assign the milestone, and to post the question when the selection is not confident enough.
   issues: write
-  # To read the prompt and samples from scripts/milestone/.
+  # To read the prompt and samples from scripts/issue-classifier/.
   contents: read
 
 env:
-  # Skip Puppeteer's Chrome download on install — the milestone workspace never uses a browser,
+  # Skip Puppeteer's Chrome download on install — the issue-classifier workspace never uses a browser,
   # saving ~20s per install.
   PUPPETEER_SKIP_DOWNLOAD: true
 
 jobs:
-  assign:
+  classify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -38,10 +38,10 @@ jobs:
           node-version: 24
           cache: 'yarn'
       - run: yarn install --immutable
-      - name: Build milestone workspace
-        run: yarn workspace em-milestone build
-      - name: Assign milestone
-        run: node scripts/milestone/src/issue.ts
+      - name: Build issue-classifier workspace
+        run: yarn workspace em-issue-classifier build
+      - name: Classify issue
+        run: node scripts/issue-classifier/src/issue.ts
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # OpenAI API key used for the milestone selection inference call (issue.ts).

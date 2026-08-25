@@ -1,24 +1,24 @@
 /**
  * Assigns the best-matching open milestone to a GitHub issue, or asks a human when it cannot decide.
  *
- * Driven by the .github/workflows/assign-issue-milestone.yml workflow on `issues.opened` and on
+ * Driven by the .github/workflows/issue-classifier.yml workflow on `issues.opened` and on
  * manual dispatch. Also runs locally against any issue.
  *
  * ```bash
- * node scripts/milestone/src/issue.ts 5092 --dry
+ * node scripts/issue-classifier/src/issue.ts 5092 --dry
  * ```
  */
 import 'dotenv/config'
 import * as fs from 'fs'
 import { fileURLToPath } from 'url'
-import assignMilestone from './lib/assignMilestone.ts'
+import classifyIssue from './lib/classifyIssue.ts'
 import GitHubClient from './lib/github.ts'
 import loadInstructions from './lib/loadInstructions.ts'
 
 const DEFAULT_REPO = 'cybersemics/em'
 
 /**
- * Resolves which issue to categorize, in order of specificity: an explicit command-line argument, the
+ * Resolves which issue to classify, in order of specificity: an explicit command-line argument, the
  * `ISSUE_NUMBER` input set by a manual workflow dispatch, then the issue that triggered the workflow.
  */
 const resolveIssueNumber = (): number => {
@@ -42,7 +42,7 @@ const resolveIssueNumber = (): number => {
   return issueNumber
 }
 
-/** Categorizes one issue and reports what was done. */
+/** Classifies one issue and reports what was done. */
 const main = async () => {
   const dryRun = process.argv.includes('--dry')
 
@@ -54,10 +54,10 @@ const main = async () => {
   const token = process.env.GITHUB_TOKEN
   if (!token && !dryRun) throw new Error('GITHUB_TOKEN is required (or pass --dry to preview)')
 
-  const repo = process.env.GITHUB_REPOSITORY ?? process.env.MILESTONE_REPO ?? DEFAULT_REPO
+  const repo = process.env.GITHUB_REPOSITORY ?? process.env.ISSUE_CLASSIFIER_REPO ?? DEFAULT_REPO
   const issueNumber = resolveIssueNumber()
 
-  const result = await assignMilestone({
+  const result = await classifyIssue({
     github: new GitHubClient({ repo, token }),
     issueNumber,
     instructions: loadInstructions(),
