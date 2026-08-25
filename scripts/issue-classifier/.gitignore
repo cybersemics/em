@@ -8,4 +8,4 @@
 
 # Blind sample draws. Kept out of the repository until a set is promoted to the corpus: a drawn set
 # is only a measurement while nobody has read it, and committing one invites exactly that.
-samples-blind-*/
+samples-blind-*.jsonl

@@ -15,7 +15,8 @@ on:
 permissions:
   # To assign the milestone, and to post the question when the selection is not confident enough.
   issues: write
-  # To read the prompt and samples from scripts/issue-classifier/.
+  # To read the prompt from scripts/issue-classifier/instructions.md. The corpus is not read here:
+  # nothing on the classification path loads it, and only the evaluation harnesses do.
   contents: read
 
 env:

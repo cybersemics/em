@@ -42,7 +42,7 @@ Inference is tunable via `ISSUE_CLASSIFIER_*` env vars (see `.env.example`): `IS
 
 ## Evaluation
 
-[`samples/`](samples) holds issues whose milestone a human already chose, plus a few where the correct answer is to ask. **The samples are never placed in the prompt** — the prompt teaches the categories through the definition table and example titles instead. Holding them out is what makes the evaluation a measurement rather than a memory test, and a unit test fails if a sample's title ever appears in the instructions.
+[`samples.jsonl`](samples.jsonl) holds issues whose milestone a human already chose, one JSON object per line, plus a few where the correct answer is to ask. **The samples are never placed in the prompt** — the prompt teaches the categories through the definition table and example titles instead. Holding them out is what makes the evaluation a measurement rather than a memory test, and a unit test fails if a sample's title ever appears in the instructions.
 
 ```bash
 cd scripts/issue-classifier
@@ -84,20 +84,22 @@ The harness runs the exact pipeline the workflow uses over every sample and grad
 
 Run it before and after editing the instructions. It makes model calls but never writes to any issue, and it is deliberately not part of CI.
 
-Run `yarn test` from the repository root after editing `instructions.md`. The sample-integrity tests guard it, but the Test workflow ignores `**/*.md`, so a pull request that touches only the prompt will not run them — see [Path filtering](../../docs/testing.md#path-filtering). Sample edits are `.json` and do trigger Test normally.
+Run `yarn test` from the repository root after editing `instructions.md`. The sample-integrity tests guard it, but the Test workflow ignores `**/*.md`, so a pull request that touches only the prompt will not run them — see [Path filtering](../../docs/testing.md#path-filtering). Sample edits are `.jsonl` and do trigger Test normally.
 
-Adding a sample: fetch the issue, save it as `samples/issue-<number>.json`, and confirm the milestone is one a human actually assigned.
+Adding a sample: fetch the issue, append one line to `samples.jsonl`, and confirm the milestone is one a human actually assigned. Lines are ordered by issue number.
 
 ```json
 {
-  "input": { "title": "…", "body": "…", "labels": ["bug"] },
   "expected": "🧤 Drag & Drop",
-  "split": "train",
-  "source": { "type": "github", "issue": 4839 }
+  "input": { "body": "…", "labels": ["bug"], "title": "…" },
+  "source": { "issue": 4839, "type": "github" },
+  "split": "train"
 }
 ```
 
 Put a new sample in whichever half is smaller, and prefer picking issues without first checking whether they look easy.
+
+**The corpus is committed rather than fetched, and the labels are why.** `split` does not exist on GitHub, and `expected: null` records that asking is the correct answer rather than that a milestone is missing — neither survives a round trip. Re-fetching the rest would let the corpus drift under the measurement: a body edited after capture quietly changes what was scored, and once the classifier is assigning milestones itself, an issue it milestoned would come back with `expected` set to the classifier's own answer and grade as correct by construction. GitHub is still the source of truth for a label — the way to fix one is to reassign the milestone there and resync the line, not to edit the line alone.
 
 Use `"expected": null` for an issue that genuinely fits no milestone, which asserts that the workflow asks rather than guesses.
 
@@ -106,21 +108,23 @@ Use `"expected": null` for an issue that genuinely fits no milestone, which asse
 A held-out set stops being held out once it has been consulted. When that happens the answer is not to reinterpret the old set but to draw a new one, which takes a minute:
 
 ```sh
-node src/draw.ts --count 150 --seed <name> --out samples-blind-2
+node src/draw.ts --count 150 --seed <name> --out samples-blind-2.jsonl
 ```
 
 The frame is every issue a human filed and milestoned, whose milestone is still open, that has a body, and that no existing sample covers. An issue whose milestone has since been closed is excluded rather than counted as a miss: the model is only ever offered the open ones, so it could not have been right.
 
 Selection is by seeded hash — an issue's rank is `sha256(seed:number)` — so a draw is reproducible from its seed alone, and adding an issue to the repository moves only that issue rather than reshuffling every other draw. The script prints issue numbers and a milestone histogram and nothing else; printing a title would undo the draw it just made.
 
-Keep the new set in its own directory rather than merging it into `samples/`. Merging is the irreversible move — the samples in `samples/` have been read, and a corpus cannot be un-read back into a blind measurement.
+Keep the new set in its own file rather than merging it into `samples.jsonl`. Merging is the irreversible move — the samples there have been read, and a corpus cannot be un-read back into a blind measurement. Any `samples*.jsonl` beside the code is excluded from later draws, so a second draw cannot collide with the first.
+
+**Once the Issue Classifier workflow is live, set `ASSIGNS_FROM` in [`draw.ts`](src/draw.ts) to its deployment date.** After that, a milestone on a new issue may be the classifier's own, and drawing one grades the classifier on its own output — it scores correct for reproducing the milestone it originally chose, and accuracy climbs toward 100% as the population fills with its answers. The constant excludes issues created on or after that date; `--created-before` bounds a single draw more tightly.
 
 ## Comparing two models
 
 `yarn evaluate` answers "how accurate is this?". Choosing between two models is a different question, and running the first one twice and subtracting does not answer it. Two arms four points apart are equally consistent with _fixed nine, broke seven_ and with _fixed two, broke none_ — the first is noise and the second is a reason to switch, and only a per-issue pairing tells them apart.
 
 ```sh
-node src/compare.ts --models gpt-5.6-terra,gpt-5.6-sol --runs 3 --samples samples-blind-2 --split all --out results.jsonl
+node src/compare.ts --models gpt-5.6-terra,gpt-5.6-sol --runs 3 --samples samples-blind-2.jsonl --split all --out results.jsonl
 node src/analyze.ts --in results.jsonl --baseline gpt-5.6-terra
 ```
 

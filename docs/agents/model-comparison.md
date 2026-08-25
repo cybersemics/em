@@ -103,14 +103,14 @@ Revisit if the prompt changes materially, since the leakage analysis above shows
 
 ```sh
 cd scripts/issue-classifier
-node src/draw.ts --count 150 --seed terra-sol-2026-08-25 --out samples-blind-2
-node src/draw.ts --count 350 --seed terra-sol-2026-08-25-ext --out samples-blind-2-ext
-node src/compare.ts --models gpt-5.6-terra,gpt-5.6-sol --runs 3 --samples samples-blind-2 --split all --out fresh.jsonl
-node src/compare.ts --models gpt-5.6-terra,gpt-5.6-sol --runs 3 --samples samples-blind-2-ext --split all --out fresh.jsonl
+node src/draw.ts --count 150 --seed terra-sol-2026-08-25 --out samples-blind-2.jsonl
+node src/draw.ts --count 350 --seed terra-sol-2026-08-25-ext --out samples-blind-2-ext.jsonl
+node src/compare.ts --models gpt-5.6-terra,gpt-5.6-sol --runs 3 --samples samples-blind-2.jsonl --split all --out fresh.jsonl
+node src/compare.ts --models gpt-5.6-terra,gpt-5.6-sol --runs 3 --samples samples-blind-2-ext.jsonl --split all --out fresh.jsonl
 node src/analyze.ts --in fresh.jsonl --baseline gpt-5.6-terra
 ```
 
-Each draw is reproducible from its seed alone, and `draw.ts` excludes every issue any sample directory already holds, so the second draw cannot collide with the first. `compare.ts` records the graded outcome, the vote spread, and the token usage per (run, model, issue), so the analysis and the costing both re-run offline against a run that already happened.
+Each draw is reproducible from its seed alone, and `draw.ts` excludes every issue any `samples*.jsonl` beside it already holds, so the second draw cannot collide with the first. Both draws predate the classifier being deployed, so every milestone in them was assigned by a human; `draw.ts` now carries an `ASSIGNS_FROM` cutoff to keep that true once it is not. `compare.ts` records the graded outcome, the vote spread, and the token usage per (run, model, issue), so the analysis and the costing both re-run offline against a run that already happened.
 
 The whole study cost **$33.65** in API calls across 3331 model evaluations — 3306 that count toward a figure above, and 25 discarded with the aborted pass described below.
 

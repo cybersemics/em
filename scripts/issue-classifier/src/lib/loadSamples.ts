@@ -2,8 +2,8 @@ import * as fs from 'fs'
 import * as path from 'path'
 import { fileURLToPath } from 'url'
 
-/** The samples sit beside the code that loads them, two levels up from src/lib. */
-const samplesDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../samples')
+/** The corpus sits beside the code that loads it, two levels up from src/lib. */
+const samplesFile = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../samples.jsonl')
 
 /**
  * A labeled issue used to measure selection accuracy.
@@ -33,23 +33,40 @@ export interface Sample {
 }
 
 /**
- * Loads every labeled sample, sorted by filename for a stable report order.
+ * Loads every labeled sample from a JSONL file, one sample per line, in file order.
  *
- * The directory is a parameter so that a freshly drawn corpus can be evaluated from its own
- * directory without being merged into this one. Merging it would be the destructive move: the
- * samples here have been read, and a set that has been read cannot be un-read back into a blind
- * measurement.
+ * One file rather than a file per issue. The corpus is read as a whole by everything that touches it
+ * and is never edited one issue at a time, so a directory of 144 files bought nothing and cost a
+ * sixth of the repository's file count and a diff no reviewer could scan. A line-per-sample format
+ * keeps a label change legible as a one-line diff, which is the only granularity that ever mattered.
+ *
+ * The path is a parameter so that a freshly drawn corpus can be evaluated from its own file without
+ * being merged into this one. Merging is the irreversible move: the samples here have been read, and
+ * a set that has been read cannot be un-read back into a blind measurement.
+ *
+ * Nothing here reaches the network. The labels are the part that cannot be recovered from GitHub —
+ * `split` does not exist there, and `expected: null` records that asking is the right answer rather
+ * than that a milestone is missing — and re-fetching the rest would make the corpus drift under the
+ * measurement, silently, in whichever direction the repository happened to move.
  */
-const loadSamples = (dir: string = samplesDir): Sample[] => {
-  if (!fs.existsSync(dir)) {
+const loadSamples = (file: string = samplesFile): Sample[] => {
+  if (!fs.existsSync(file)) {
     return []
   }
 
   return fs
-    .readdirSync(dir)
-    .filter(file => file.endsWith('.json'))
-    .sort()
-    .map(file => JSON.parse(fs.readFileSync(path.join(dir, file), 'utf-8')) as Sample)
+    .readFileSync(file, 'utf-8')
+    .split('\n')
+    .filter(line => line.trim().length > 0)
+    .map((line, index) => {
+      try {
+        return JSON.parse(line) as Sample
+      } catch (error) {
+        // Name the line. A corpus of hundreds of samples on one line each is unreadable to bisect by
+        // hand, and "Unexpected token" with no location is the least useful thing to hand someone.
+        throw new Error(`${path.basename(file)} line ${index + 1} is not valid JSON: ${(error as Error).message}`)
+      }
+    })
 }
 
 export default loadSamples

@@ -8,7 +8,7 @@
  * milestone counts, and nothing else.
  *
  * The frame is every issue in the repository whose milestone is one a human assigned and which is
- * still open today, minus every issue any sample directory already holds. A closed milestone is excluded because
+ * still open today, minus every issue any sample file already holds. A closed milestone is excluded because
  * the classifier is only ever offered the open ones, so such an issue is unanswerable by
  * construction and would score as a guaranteed error that says nothing about the model.
  *
@@ -17,7 +17,7 @@
  * disappearing from the frame moves only itself rather than reshuffling every other draw.
  *
  * ```sh
- * node scripts/issue-classifier/src/draw.ts --count 150 --seed terra-sol-2026-08 --out samples-blind-2
+ * node scripts/issue-classifier/src/draw.ts --count 150 --seed terra-sol-2026-08 --out samples-blind-2.jsonl
  * ```
  */
 import * as crypto from 'crypto'
@@ -30,13 +30,35 @@ import loadSamples from './lib/loadSamples.ts'
 
 const DEFAULT_REPO = 'cybersemics/em'
 
+/**
+ * The date the classifier began assigning milestones itself, or null while it is not deployed.
+ *
+ * Issues created on or after this date are excluded from every draw, because their milestone may be
+ * the classifier's own answer rather than a human's. Drawing one would score the classifier against
+ * itself: it would be graded as correct for having reproduced the milestone it originally chose, and
+ * the corpus would report accuracy climbing toward 100% as the population filled with its own output.
+ *
+ * A date cutoff rather than an actor check on each issue's `milestoned` timeline event. The actor is
+ * the exact signal, but it costs one API call per candidate across a frame of thousands, and the
+ * cutoff is exactly right for a workflow that only ever fires on newly opened issues.
+ *
+ * **Set this to the deployment date when the Issue Classifier workflow goes live.** Leaving it null
+ * afterwards is silent and self-flattering, which is the worst combination a measurement can have.
+ */
+const ASSIGNS_FROM: string | null = null
+
 /** Command-line options for a draw. */
 export interface DrawOptions {
   count: number
   /** Seed string mixed into each candidate's rank hash, so a draw is reproducible by name. */
   seed: string
-  /** Directory to write the sample files to, relative to the workspace root. */
+  /** JSONL file to write the drawn samples to, relative to the workspace root. */
   out: string
+  /**
+   * Exclude issues created on or after this ISO date. Defaults to ASSIGNS_FROM; pass `--created-before`
+   * to bound a draw more tightly, for instance to reproduce an older draw against a grown repository.
+   */
+  createdBefore: string | null
 }
 
 /**
@@ -55,12 +77,16 @@ export const parseArgs = (argv: string[]): DrawOptions => {
   const count = Number(value('--count') ?? 50)
   const seed = value('--seed')
   const out = value('--out')
+  const createdBefore = value('--created-before') ?? ASSIGNS_FROM
 
   if (!Number.isInteger(count) || count < 1) throw new Error(`--count must be a positive integer, got "${count}"`)
   if (!seed) throw new Error('--seed is required so the draw can be reproduced')
   if (!out) throw new Error('--out is required')
+  if (createdBefore != null && Number.isNaN(Date.parse(createdBefore))) {
+    throw new Error(`--created-before must be an ISO date, got "${createdBefore}"`)
+  }
 
-  return { count, seed, out }
+  return { count, seed, out, createdBefore }
 }
 
 /**
@@ -73,20 +99,32 @@ export const rank = (seed: string, issueNumber: number): number =>
 
 /**
  * Builds the sampling frame: issues that a human filed, that a human milestoned, whose milestone is
- * still open, that have a body to classify from, and that no existing sample already covers.
+ * still open, that have a body to classify from, that no existing sample already covers, and that
+ * predate the classifier assigning milestones of its own.
  *
  * An empty body is excluded rather than kept as a hard case. The corpus asserts every sample has
  * one, and an issue whose entire content is its title is a different measurement — how well a title
  * alone classifies — mixed into this one.
  */
-export const buildFrame = (issues: Issue[], openMilestones: Set<string>, corpus: Set<number>): Issue[] =>
-  issues.filter(
+export const buildFrame = (
+  issues: Issue[],
+  openMilestones: Set<string>,
+  corpus: Set<number>,
+  createdBefore: string | null = null,
+): Issue[] => {
+  const cutoff = createdBefore == null ? null : Date.parse(createdBefore)
+  return issues.filter(
     issue =>
       issue.milestone !== null &&
       openMilestones.has(issue.milestone) &&
       issue.body.trim().length > 0 &&
-      !corpus.has(issue.number),
+      !corpus.has(issue.number) &&
+      // An issue with no recorded creation date cannot be shown to predate the cutoff, so it is
+      // excluded rather than assumed safe. Excluding a human-milestoned issue costs one candidate;
+      // admitting a classifier-milestoned one corrupts the measurement it is drawn for.
+      (cutoff === null || (issue.createdAt != null && Date.parse(issue.createdAt) < cutoff)),
   )
+}
 
 /** Draws `count` issues from the frame by seeded rank, lowest first. */
 export const draw = (frame: Issue[], seed: string, count: number): Issue[] =>
@@ -94,48 +132,48 @@ export const draw = (frame: Issue[], seed: string, count: number): Issue[] =>
 
 /** Draws a blind sample and writes it to disk. */
 const main = async () => {
-  const { count, seed, out } = parseArgs(process.argv.slice(2))
+  const { count, seed, out, createdBefore } = parseArgs(process.argv.slice(2))
   const repo = process.env.GITHUB_REPOSITORY ?? process.env.ISSUE_CLASSIFIER_REPO ?? DEFAULT_REPO
   const github = new GitHubClient({ repo, token: process.env.GITHUB_TOKEN })
 
   const [issues, milestones] = await Promise.all([github.listIssues(), github.listOpenMilestones()])
   const openMilestones = new Set(milestones.map(milestone => milestone.title))
 
-  // Every sample directory is excluded, not just `samples/`. A previously drawn set kept in its own
-  // directory is still drawn — redrawing one of its issues would quietly hand a "fresh" set an issue
-  // that had already been measured, which is the exact failure this script exists to prevent.
+  // Every sample file is excluded, not just `samples.jsonl`. A previously drawn set kept in its own
+  // file is still drawn — redrawing one of its issues would quietly hand a "fresh" set an issue that
+  // had already been measured, which is the exact failure this script exists to prevent.
   const workspace = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
   const drawnAlready = fs
-    .readdirSync(workspace, { withFileTypes: true })
-    .filter(entry => entry.isDirectory() && entry.name.startsWith('samples'))
-    .flatMap(entry => loadSamples(path.join(workspace, entry.name)))
+    .readdirSync(workspace)
+    .filter(file => file.startsWith('samples') && file.endsWith('.jsonl'))
+    .flatMap(file => loadSamples(path.join(workspace, file)))
   const corpus = new Set(drawnAlready.map(sample => sample.source!.issue))
 
-  const frame = buildFrame(issues, openMilestones, corpus)
+  const frame = buildFrame(issues, openMilestones, corpus, createdBefore)
   console.info(
-    `${issues.length} issues, ${openMilestones.size} open milestones, ${corpus.size} already drawn ` +
-      `→ frame of ${frame.length}`,
+    `${issues.length} issues, ${openMilestones.size} open milestones, ${corpus.size} already drawn` +
+      `${createdBefore ? `, created before ${createdBefore}` : ''} → frame of ${frame.length}`,
   )
   if (frame.length < count) throw new Error(`Frame holds only ${frame.length} issues; cannot draw ${count}`)
 
   const drawn = draw(frame, seed, count)
-  const outDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', out)
-  fs.mkdirSync(outDir, { recursive: true })
-
-  for (const issue of drawn) {
-    const sample = {
-      input: { body: issue.body, labels: issue.labels, title: issue.title },
-      expected: issue.milestone,
-      split: 'test',
-      source: { issue: issue.number, type: 'github' },
-    }
-    fs.writeFileSync(path.join(outDir, `issue-${issue.number}.json`), JSON.stringify(sample, null, 2) + '\n')
-  }
+  const outFile = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', out)
+  const lines = [...drawn]
+    .sort((a, b) => a.number - b.number)
+    .map(issue =>
+      JSON.stringify({
+        expected: issue.milestone,
+        input: { body: issue.body, labels: issue.labels, title: issue.title },
+        source: { issue: issue.number, type: 'github' },
+        split: 'test',
+      }),
+    )
+  fs.writeFileSync(outFile, lines.join('\n') + '\n')
 
   // Counts and issue numbers only. Printing a title here would undo the draw.
   const perMilestone = new Map<string, number>()
   for (const issue of drawn) perMilestone.set(issue.milestone!, (perMilestone.get(issue.milestone!) ?? 0) + 1)
-  console.info(`\nWrote ${drawn.length} samples to ${out}/ (seed "${seed}")`)
+  console.info(`\nWrote ${drawn.length} samples to ${out} (seed "${seed}")`)
   console.info(
     `Issues: ${drawn
       .map(issue => issue.number)

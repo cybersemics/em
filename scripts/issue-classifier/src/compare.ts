@@ -27,7 +27,7 @@
  * from the gap that resampled away.
  *
  * ```sh
- * node scripts/issue-classifier/src/compare.ts --models gpt-5.6-terra,gpt-5.6-sol --runs 3 --samples samples --split test
+ * node scripts/issue-classifier/src/compare.ts --models gpt-5.6-terra,gpt-5.6-sol --runs 3 --samples samples.jsonl
  * ```
  *
  * Writes one JSON line per (repetition, model, issue) to `--out`, carrying the graded outcome, the
@@ -98,9 +98,9 @@ export interface CompareRow {
 export interface CompareOptions {
   models: string[]
   runs: number
-  /** Directory of samples to evaluate, relative to the workspace root. */
+  /** JSONL file of samples to evaluate, relative to the workspace root. */
   samples: string
-  /** Which split to take from that directory, or `all`. */
+  /** Which split to take from that file, or `all`. */
   split: 'train' | 'test' | 'all'
   out: string
   votes: number
@@ -116,7 +116,7 @@ export const parseArgs = (argv: string[]): CompareOptions => {
 
   const models = (value('--models') ?? '').split(',').filter(Boolean)
   const runs = Number(value('--runs') ?? 1)
-  const samples = value('--samples') ?? 'samples'
+  const samples = value('--samples') ?? 'samples.jsonl'
   const split = (value('--split') ?? 'all') as CompareOptions['split']
   const out = value('--out')
   const votes = Number(value('--votes') ?? 5)
@@ -276,15 +276,15 @@ export const mapConcurrent = async <T, R>(items: T[], limit: number, fn: (item: 
 
 /** Runs every model over every sample, `runs` times, and appends the graded rows to the output file. */
 const main = async () => {
-  const { models, runs, samples: samplesDir, split, out, votes } = parseArgs(process.argv.slice(2))
+  const { models, runs, samples: samplesFile, split, out, votes } = parseArgs(process.argv.slice(2))
   const apiKey = process.env.OPENAI_API_KEY
   if (!apiKey) throw new Error('OPENAI_API_KEY is required')
 
   const repo = process.env.GITHUB_REPOSITORY ?? process.env.ISSUE_CLASSIFIER_REPO ?? DEFAULT_REPO
   const instructions = loadInstructions()
-  const dir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', samplesDir)
-  const samples = loadSamples(dir).filter(sample => split === 'all' || sample.split === split)
-  if (samples.length === 0) throw new Error(`No ${split} samples found in ${samplesDir}.`)
+  const file = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', samplesFile)
+  const samples = loadSamples(file).filter(sample => split === 'all' || sample.split === split)
+  if (samples.length === 0) throw new Error(`No ${split} samples found in ${samplesFile}.`)
 
   // Fetched once and shared by every arm: a milestone created mid-run would otherwise change the
   // prompt for whichever model happened to run after it.
@@ -292,7 +292,7 @@ const main = async () => {
   if (milestones.length === 0) throw new Error(`No open milestones found in ${repo}.`)
 
   console.info(
-    `Comparing ${models.join(' vs ')} over ${samples.length} ${split} samples from ${samplesDir}/, ` +
+    `Comparing ${models.join(' vs ')} over ${samples.length} ${split} samples from ${samplesFile}, ` +
       `${runs} run${runs === 1 ? '' : 's'}, ${votes} votes, against ${milestones.length} open milestones.`,
   )
 

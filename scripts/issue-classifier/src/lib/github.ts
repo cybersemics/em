@@ -22,6 +22,8 @@ export interface Issue {
   milestone: string | null
   /** Whether the "issue" is really a pull request. The issues API returns both. */
   isPullRequest: boolean
+  /** ISO 8601 creation timestamp. Used to date-bound a sampling frame; absent from a single read. */
+  createdAt?: string
 }
 
 /** Options for constructing a GitHubClient. */
@@ -48,6 +50,7 @@ interface IssueResponse {
   labels: { name: string }[]
   milestone: { title: string } | null
   pull_request?: unknown
+  created_at: string
 }
 
 /**
@@ -166,6 +169,7 @@ class GitHubClient {
             labels: issue.labels.map(label => label.name),
             milestone: issue.milestone?.title ?? null,
             isPullRequest: false,
+            createdAt: issue.created_at,
           })),
       )
       url = /<([^>]+)>;\s*rel="next"/.exec(response.headers.get('link') ?? '')?.[1] ?? null
