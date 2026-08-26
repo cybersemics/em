@@ -37,9 +37,9 @@ const getPinDescendantsState = (state: State, thoughtId: ThoughtId) => {
   }
 }
 
-const pinDescendantsCommand: Command = {
+const pinDescendantsCommand = {
   id: 'pinDescendants',
-  label: 'Pin Descendants',
+  label: 'Pin Descendants' as const,
   labelInverse: 'Unpin Descendants',
   description: 'Pins open all descendants of the current thought.',
   descriptionInverse: 'Unpins all descendants of the current thought.',
@@ -110,6 +110,6 @@ const pinDescendantsCommand: Command = {
     const path = cursor ? simplifyPath(state, cursor) : HOME_PATH
     return !!isPinned(state, findDescendant(state, head(path), '=descendants'))
   },
-}
+} satisfies Command
 
 export default pinDescendantsCommand

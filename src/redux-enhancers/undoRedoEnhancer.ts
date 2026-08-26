@@ -94,13 +94,17 @@ function getEditThoughtDirection(action: UnknownAction): EditThoughtDirection {
  * their patch, so undoing them silently closes edit mode. That desyncs the flag from the real keyboard mid-reducer and
  * drives the dismissal machinery (clearSelection -> selection.clear -> Keyboard.hide), which then fights the next
  * thought's attempt to raise the keyboard (#4692). Undo/redo must never move the keyboard; only the blur and
- * dismissKeyboard paths may. */
+ * dismissKeyboard paths may.
+ * The selectionOffsets snapshot is likewise device state: it records where the browser selection was before a UI took
+ * the focus, so restoring the one that happened to be current when an action was undone would resurrect a selection
+ * the user has long since moved on from. */
 const statePropertiesToOmit: (keyof State)[] = [
   'alert',
   'cursorCleared',
   'editableNonce',
   'isKeyboardOpen',
   'pushQueue',
+  'selectionOffsets',
 ]
 
 /** Reconstructs TreeCRDT move updates and placement metadata from the final state produced by an undo/redo patch. */
@@ -249,10 +253,17 @@ const undoOneReducer = (state: State): State => {
   const lastUndoPatch = nthLast(undoPatches, 1)
   if (!lastUndoPatch) return state
   const newState = produce(state, (state: State) => applyPatch(state, lastUndoPatch).newDocument)
-  const correspondingRedoPatch = addActionsToPatch(diffState(newState as Index, state), [...lastUndoPatch[0]?.actions])
+  const correspondingRedoPatch = addActionsToPatch(diffState(newState as Index, state), [
+    ...(lastUndoPatch[0]?.actions ?? []),
+  ])
   return {
     ...newState,
-    redoPatches: [...redoPatches, correspondingRedoPatch],
+    // Do not push an empty patch. A patch that a non-undoable action has already reverted applies as a no-op, so the patch
+    // computed to redo it is empty. (The Note command is the reachable case: it is not undoable and writes back the noteFocus
+    // and noteOffset that the undoable setNoteFocus recorded.) An empty patch carries no actions, so it disables undo
+    // (getLastActionType returns undefined) and throws on the spread above the next time it is reached. Drop it instead, as
+    // both patch-creating branches of the reducer below already do; the patch restored nothing, so nothing is lost.
+    redoPatches: correspondingRedoPatch.length ? [...redoPatches, correspondingRedoPatch] : redoPatches,
     undoPatches: undoPatches.slice(0, -1),
     cursorCleared: false,
     lastUndoableActionType: lastUndoPatch[0]?.actions[0],
@@ -267,11 +278,14 @@ const redoOneReducer = (state: State): State => {
   const lastRedoPatch = nthLast(redoPatches, 1)
   if (!lastRedoPatch) return state
   const newState = produce(state, (state: State) => applyPatch(state, lastRedoPatch).newDocument)
-  const correspondingUndoPatch = addActionsToPatch(diffState(newState as Index, state), [...lastRedoPatch[0]?.actions])
+  const correspondingUndoPatch = addActionsToPatch(diffState(newState as Index, state), [
+    ...(lastRedoPatch[0]?.actions ?? []),
+  ])
   return {
     ...newState,
     redoPatches: redoPatches.slice(0, -1),
-    undoPatches: [...undoPatches, correspondingUndoPatch],
+    // Do not push an empty patch. See undoOneReducer.
+    undoPatches: correspondingUndoPatch.length ? [...undoPatches, correspondingUndoPatch] : undoPatches,
     cursorCleared: false,
     lastUndoableActionType: lastRedoPatch[0]?.actions[0],
   }
@@ -284,9 +298,13 @@ const cursorOffsetAtEnd = (state: State): State => ({
 })
 
 /**
- * Controls the number of undo operations based on the undo history.
+ * Undoes one step of the undo history, which spans two patches when a navigation action follows an undoable action or an edit follows a newThought. With count, reverts exactly that many patches instead. The undo slider passes a count so that it can move through the history by whole steps in either direction (see selectors/undoSteps, which mirrors the grouping below).
  */
-const undoReducer = (state: State, undoPatches: Patch[], cursorAtEnd?: boolean): State => {
+const undoReducer = (
+  state: State,
+  undoPatches: Patch[],
+  { cursorAtEnd, count }: { cursorAtEnd?: boolean; count?: number } = {},
+): State => {
   const lastUndoPatch = nthLast(undoPatches, 1)
   const lastAction = lastUndoPatch && getPatchAction(lastUndoPatch)
   const penultimateUndoPatch = nthLast(undoPatches, 2)
@@ -314,8 +332,9 @@ const undoReducer = (state: State, undoPatches: Patch[], cursorAtEnd?: boolean):
   const undoTwice = isNavigation(lastAction)
     ? isPatchUndoable(penultimateUndoPatch)
     : penultimateAction === 'newThought' && !lastPatchIsFormatting
+  const undoCount = count ?? (undoTwice ? 2 : 1)
 
-  const poppedUndoPatches = undoTwice ? [penultimateUndoPatch, lastUndoPatch] : [lastUndoPatch]
+  const poppedUndoPatches = undoPatches.slice(-undoCount)
 
   // Capture the current cursor offset before applying the undo patch.
   // When undoing a formatting-only edit (no undoTwice), we preserve this offset
@@ -324,31 +343,34 @@ const undoReducer = (state: State, undoPatches: Patch[], cursorAtEnd?: boolean):
   const priorCursorOffset = state.cursorOffset
 
   return reducerFlow([
-    undoOneReducer,
-    undoTwice ? undoOneReducer : null,
+    ...Array.from({ length: undoCount }, () => undoOneReducer),
     newState => restorePushQueueFromPatches(newState, state, poppedUndoPatches.flat()),
-    !undoTwice && lastPatchIsFormatting ? (s: State) => ({ ...s, cursorOffset: priorCursorOffset }) : null,
+    undoCount === 1 && lastPatchIsFormatting ? (s: State) => ({ ...s, cursorOffset: priorCursorOffset }) : null,
     cursorAtEnd ? cursorOffsetAtEnd : null,
     editableRender,
   ])(state)
 }
 
 /**
- * Controls the number of redo operations based on the patch history.
+ * Redoes one step of the redo history, which spans two patches when the next patch is a navigation action or a newThought. With count, restores exactly that many patches instead (see undoReducer).
  */
-const redoReducer = (state: State, redoPatches: Patch[], cursorAtEnd?: boolean): State => {
+const redoReducer = (
+  state: State,
+  redoPatches: Patch[],
+  { cursorAtEnd, count }: { cursorAtEnd?: boolean; count?: number } = {},
+): State => {
   const lastRedoPatch = nthLast(redoPatches, 1)
   const lastAction = lastRedoPatch && getPatchAction(lastRedoPatch)
 
   if (!redoPatches.length) return state
 
   const redoTwice = lastAction && (isNavigation(lastAction) || lastAction === 'newThought')
+  const redoCount = count ?? (redoTwice ? 2 : 1)
 
-  const poppedRedoPatches = redoTwice ? [nthLast(redoPatches, 2), lastRedoPatch] : [lastRedoPatch]
+  const poppedRedoPatches = redoPatches.slice(-redoCount)
 
   return reducerFlow([
-    redoTwice ? redoOneReducer : null,
-    redoOneReducer,
+    ...Array.from({ length: redoCount }, () => redoOneReducer),
     newState => restorePushQueueFromPatches(newState, state, poppedRedoPatches.flat()),
     cursorAtEnd ? cursorOffsetAtEnd : null,
     editableRender,
@@ -394,12 +416,14 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
 
         // Native undo/redo (iOS three-finger swipe, shake-to-undo) sets cursorAtEnd to place the caret at the end of the restored thought.
         const cursorAtEnd = !!(action as UnknownAction).cursorAtEnd
+        // The undo slider passes the exact number of patches to revert or restore.
+        const count = (action as UnknownAction).count as number | undefined
 
         const undoOrRedoState =
           actionType === 'undo'
-            ? undoReducer(state, undoPatches, cursorAtEnd)
+            ? undoReducer(state, undoPatches, { cursorAtEnd, count })
             : actionType === 'redo'
-              ? redoReducer(state, redoPatches, cursorAtEnd)
+              ? redoReducer(state, redoPatches, { cursorAtEnd, count })
               : null
 
         // do not omit pushQueue because that includes updates added by updateThoughts

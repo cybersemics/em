@@ -9,9 +9,9 @@ import head from '../util/head'
 import isEmptyOrEmojiOnly from '../util/isEmptyOrEmojiOnly'
 import isRoot from '../util/isRoot'
 
-const toggleSortCommand: Command = {
+const toggleSortCommand = {
   id: 'toggleSortPicker',
-  label: 'Sort Picker',
+  label: 'Sort Picker' as const,
   description: 'Open a sort picker to pick the sort option and sort by option.',
   multicursor: false,
   hideFromHelp: true,
@@ -55,6 +55,6 @@ const toggleSortCommand: Command = {
       ? 'Ranks do not match sort condition'
       : null
   },
-}
+} satisfies Command
 
 export default toggleSortCommand

@@ -755,6 +755,37 @@ describe('dash splitting', () => {
     - two - three`)
   })
 
+  it('splits by dash and then by comma when the dash is surrounded by whitespace', () => {
+    const value = 'Shopping list - apples, bananas, potatoes'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Shopping list
+    - apples
+    - bananas
+    - potatoes`)
+  })
+
+  it('splits by comma when the dash is not surrounded by whitespace', () => {
+    const value = 'Shopping list, apples-bananas, potatoes'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Shopping list
+  - apples-bananas
+  - potatoes`)
+  })
+
+  it('preserves formatting on each comma-delimited segment after a dash split', () => {
+    const value = '<b>Shopping list - apples, bananas</b>'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - **Shopping list**
+    - **apples**
+    - **bananas**`)
+  })
+
   it('does not split when dash is at the beginning', () => {
     const value = '- one'
     const exported = splitThought(value)
@@ -798,6 +829,42 @@ describe('dash splitting', () => {
     expect(exported).toBe(`- ${HOME_TOKEN}
   - one
     - 1.`)
+  })
+})
+
+describe('colon splitting', () => {
+  it('splits thought with colon into main thought and subthought', () => {
+    const value = 'Start: 1'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Start
+    - 1`)
+  })
+
+  it('splits on first colon when multiple colons are present', () => {
+    const value = 'one: two: three'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - one
+    - two: three`)
+  })
+
+  it('does not split a time, since the colon is not followed by a space', () => {
+    const value = '10:30'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - 10:30`)
+  })
+
+  it('does not split when the colon is at the beginning', () => {
+    const value = ': 1'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - : 1`)
   })
 })
 

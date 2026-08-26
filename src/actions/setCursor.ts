@@ -65,7 +65,7 @@ const setCursor = (
     )
     return state
   }
-  // ✗ ["__ROOT__", ...]
+  // ✗ [HOME_TOKEN, ...]
   else if (path && path[0] === HOME_TOKEN) {
     // log error instead of throwing since it can cause the pullQueue to enter an infinite loop
     console.error(

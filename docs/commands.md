@@ -34,9 +34,9 @@ interface Command {
 A real example, abridged from [`pin.ts`](../src/commands/pin.ts):
 
 ```ts
-const pinCommand: Command = {
+const pinCommand = {
   id: 'pin',
-  label: 'Pin',
+  label: 'Pin' as const,
   labelInverse: 'Unpin',
   description: 'Pins open a thought so its subthoughts are always visible.',
   keyboard: { key: 'p', meta: true, alt: true },
@@ -48,11 +48,13 @@ const pinCommand: Command = {
     },
   },
   exec: (dispatch, getState, e, { type }) => {
-    /* dispatch toggleAttribute({ path: cursor, values: ['=pin', 'true'] }) */
+    /* dispatch pin() */
   },
   isActive: state => !!isPinned(state, head(/* ... */)),
-}
+} satisfies Command
 ```
+
+The `satisfies Command` and the `as const` on the label are load-bearing rather than stylistic. Annotating the constant `: Command` instead would type it as the interface, discarding what each command actually says about itself; `satisfies` checks the object against the interface while keeping the inferred type. The label needs `as const` on top of that, because the interface types `label` as `string` and that contextual type widens the literal even under `satisfies`. Together they let [`CommandLabel`](../src/@types/CommandLabel.ts) be derived as the union of every command's label, the same way [`CommandId`](../src/@types/CommandId.ts) is derived from the barrel's keys, so neither type has to repeat what the commands already declare. A command that skips either one widens its label to `string` and collapses that union. Rather than let that pass silently, `CommandLabel` resolves to a message naming the fix, so every call site that passes a label fails to compile and reports it.
 
 `exec` receives the Redux `dispatch`, a `getState` thunk, the event that triggered the command, and a `{ type }` field that is `'keyboard'`, `'gesture'`, `'toolbar'`, or `'chainedGesture'` so the command can adapt its behavior (e.g. `pin` shows an alert only when triggered via keyboard, since the toolbar already gives visual feedback).
 
@@ -125,6 +127,8 @@ The **Command Universe** is the searchable command palette. Two flavors:
 
 Both filter `globalCommands` by name and respect `hideFromDesktopCommandUniverse` / `hideFromGestureMenu` / `hideFromHelp`. Commands are presented grouped by `COMMAND_GROUPS` (in [`constants.ts`](../src/constants.ts)), which defines the order: Navigation → Creating thoughts → Deleting thoughts → Moving thoughts → Editing thoughts → Oops → Special Views → Visibility → Settings → Help → Cancel.
 
+Both take the browser selection away from the thought as they open — the desktop palette by focusing its search input, the mobile drawer by clearing the selection outright — so both snapshot it into `state.selectionOffsets` on the way in, for the commands whose input is the selected text. See [Caret / Browser Selection](cursor-and-caret.md#caret--browser-selection).
+
 ### Multicursor
 
 When `state.multicursors` is non-empty, the user has one or more thoughts selected. A selection of exactly one thought is common — on mobile, opening the Command Center selects the cursor thought. Every command must declare how it behaves in this case via the required `multicursor` field — there is no implicit default.
@@ -135,8 +139,6 @@ When `state.multicursors` is non-empty, the user has one or more thoughts select
 
 | Option | Meaning |
 |---|---|
-| `disallow` | Block execution and show an alert when *more than one* thought is selected. A single selected thought is executed on directly, as if only the cursor were set, so the cursor is not restored afterwards. Use sparingly — usually `multicursor: false` or `filter` is better. |
-| `error` | The alert message shown when `disallow` is true and more than one thought is selected. String or `(state) => string`. |
 | `execMulticursor(cursors, dispatch, getState)` | Custom replacement for the per-cursor loop. |
 | `onComplete(filteredCursors, dispatch, getState)` | Callback after the loop finishes. |
 | `preventSetCursor` | Don't restore the cursor at the end. |
@@ -173,6 +175,16 @@ Only commands that make an *undoable, non-navigational* change are recorded, so 
 - Commands that dispatch no undoable action (Export, Settings, Command Universe) are skipped, since they add no patch.
 - Commands that set `repeatable: false` are never recorded. `undo` and `redo` move through the undo history rather than making a new undoable change, and recording `repeat` would recurse.
 - A command that only dispatches asynchronously (Generate Thought) is not recorded, since its patch does not exist yet when `exec` returns.
+
+### Undo history and the undo slider
+
+Every undoable action leaves a patch on `state.undoPatches` ([`undoRedoEnhancer`](../src/redux-enhancers/undoRedoEnhancer.ts)): a fast-json-patch diff that reverts the action, whose operations also carry `actions`, the types of the actions that produced the patch (or, for a multicursor command, its `undoLabel` followed by the types). Nothing else about the actions is recorded; a patch plus the states on either side of it is the complete record of what happened. Undo moves a patch from `undoPatches` to `redoPatches` as a forward patch, and redo moves it back; `redoPatches[0]` is the oldest undone action, i.e. the newest point in the history. The moved patch is recomputed as a diff of the state on either side of the move rather than inverted symbolically, so a patch that a non-undoable action has already reverted — the Note command writes back the `noteFocus` and `noteOffset` that the undoable `setNoteFocus` recorded — applies as a no-op and yields nothing to move. Such a patch is dropped rather than pushed empty: a patch's actions are carried on its operations, so a patch with no operations has no actions, which disables undo and throws the next time it is reached.
+
+An **undo step** — what one Undo reverts — spans two patches when a navigation action follows an undoable action (the cursor is restored to where it was before the edit) or an edit follows a `newThought` (creating a thought and typing its value are one step). [`undoSteps`](../src/selectors/undoSteps.ts) applies the same grouping across both stacks, newest first, and reports the position of the current state. It groups the two stacks separately so that the current state always falls on a step boundary, and it omits one refinement of `undoReducer`: a formatting-only edit of a freshly created thought is undone on its own by Undo but counted with the `newThought` by the selector, since telling them apart requires the thought's value at that point in the history. The `undo` and `redo` actions accept a `count` of patches to revert or restore exactly, bypassing the step logic. That is how the slider moves by whole steps in either direction: the built-in redo grouping is not the mirror image of undo (after undoing an edit together with the cursor move that followed it, one redo restores only the edit), so dispatching a plain `redo()` per step would drift.
+
+The **undo slider** ([`UndoSlider`](../src/components/UndoSlider.tsx), toggled by its toolbar button or by a long press on Undo or Redo) is an rc-slider range over those steps, capped at ten, with the present at the right. Its two handles start together at the present with the *start* handle on top. Dragging the start handle back reveals the *end* handle, which always stays at least one step after the start (except at the present, where the two coincide); the start handle stops one step before the end handle rather than pushing it. Dragging or tapping either handle moves the thoughtspace to the point in time under it, so after dragging the end handle the user sees the end point while the start handle is preserved, and a tap on the start handle returns to the start point. The name of the action that produced each handle's point in time is rendered under the handle. The handles live in the state of `UndoSlider` rather than of the slider itself, which is unmounted while the slider is closed, so that closing and reopening it leaves them where the user put them. They reset to the current state whenever the total number of patches changes, i.e. when a new action discards the history ahead of the current state and they no longer refer to the same steps. Opening the slider flushes any pending throttled edit through `commandEmitter`, and so does each move: editing dispatches `editThought` on a throttle, and the toolbar does not flush it the way the keyboard and gesture paths do, so an edit typed just before the slider was opened would be missing from the steps and lost as soon as the slider moved the thoughtspace.
+
+The copy button to the right of the slider copies a **bug report** for the actions between the handles ([`stepsToReproduce`](../src/selectors/stepsToReproduce.ts)): under *Steps to Reproduce*, the whole thoughtspace at the start point, exported as plain text with meta attributes inside a markdown code block (omitted when it is empty, which exports as the root's placeholder value rather than as nothing), followed by a numbered step for each undo step up to the end point; under *Current Behavior*, the thoughtspace at the end point; and an empty *Expected Behavior* heading to fill in. The selector reconstructs the state before and after every patch in the range by applying the patches from the current state (inverse patches backwards, forward patches forwards) and describes each step from its action types, its operation paths (which name the thoughts it created, deleted, or edited), and those states. A step names the action as dispatched (``Indent.``, ``Move Thought Down.``, or the command label for a multicursor command) — a creation is named for the command that made it, since New Subthought dispatches `newThought` and only the created thought's parent tells them apart — plus whatever its arguments determined: a typed value (``New Thought `c`.``, or ``New Subthought `e`.`` for a thought created inside the cursor), a new value (``Edit `a` to `aa`.``), the formatting an edit applied (``Bold.``), a pasted text, an attribute path (``Toggle Attribute `=pin`.``), a destination (``Move Thought after `b`.`` (a meta attribute is never used as the landmark, since it is hidden)), or an extracted text. The thought acted on is named only when it is not the cursor (``on the root``), because the steps act on the cursor and the selection: they begin with ``Set the cursor on `b`.`` and, before a multicursor command, ``Select `a` and `b`.``, and a step is preceded by the same whenever it acts on a different cursor or selection than the step before it left. Navigation-only patches are folded into those cursor moves. An action without a hand-written description is named as is, plus any meta attributes it set or removed, which tell toggles apart (``Toggle Sort (sets `=sort/Alphabetical/Desc`).``).
 
 ### Adding a new command
 
@@ -280,6 +292,10 @@ https://github.com/user-attachments/assets/39bf1ddd-d780-4a4c-8256-1ee7dbfb4311
 Swap the current thought with its parent.
 
 https://github.com/user-attachments/assets/0ca1a77b-e174-4884-9606-739a94cde039
+
+### Swap Grandparent
+
+Swap the current thought with its grandparent, leaving the parent in between where it is. The two thoughts exchange places in the tree and each adopts the other's children.
 
 ### Bind Context
 
@@ -389,7 +405,7 @@ Deletes the current thought and moves all its subthoughts up a level.
 
 https://github.com/user-attachments/assets/a0da2b2a-925e-4f6a-9924-3bba37b7feb2
 
-### Extract
+### Extract Subthought
 
 Extract selected part of a thought as its child.
 
@@ -397,9 +413,17 @@ Extract selected part of a thought as its child.
 
 https://github.com/user-attachments/assets/e415abf1-6c1e-4ffd-b7aa-0fdf372effbc
 
+### Extract Category
+
+Extract selected part of a thought as its new parent. Where Extract Subthought draws the selection down into a child, Extract Category lifts it up into a parent: the rest of the thought — and every other selected thought — is moved into a new category whose value is the extracted text. When the selected thoughts do not share a parent, Categorize refuses and nothing is extracted.
+
+<kbd>Command + Control + Option + e</kbd>
+
 ### Generate Thought
 
 Generates a thought using AI.
+
+On first use of the AI generation path on a device, em shows a blocking disclosure modal. The user can cancel, allow the current use only, or allow future uses without seeing the notice again. Choosing either allow option resumes the request that opened the disclosure. A remembered acknowledgement can be removed later under Settings → AI Data Acknowledgment. The command sends a plaintext prompt to `VITE_AI_URL` (the OpenAI-backed AI service) containing the relevant current thought context: ancestors and sibling values around the cursor thought. The URL-title branch of this command does not call the AI service.
 
 <kbd>Command + Option + g</kbd>
 
@@ -431,7 +455,7 @@ https://github.com/user-attachments/assets/95f037cc-cf88-4392-98fb-4d79cdae4fba
 
 Bump the current thought down one level and replace it with a new, empty thought. When multiple thoughts are selected, their parent is bumped down and the selected thoughts are moved into the new thought.
 
-<kbd>Command + Option + d</kbd>
+<kbd>Command + Shift + D</kbd>
 
 https://github.com/user-attachments/assets/838c3546-4aa0-4256-af89-621356b455ad
 
@@ -465,7 +489,9 @@ Merges all duplicate siblings at the same level as the cursor. The first thought
 
 ### Split Sentences
 
-Splits multiple sentences in a single thought into separate thoughts. If the thought has siblings, the sentences are placed in a new empty category, which keeps them distinct from the siblings, and the cursor is placed on the category so that it can be named right away. A thought with no siblings is split in place, since there is nothing to distinguish the sentences from.
+Splits multiple sentences in a single thought into separate thoughts. When the sentences become siblings of a thought that already has siblings, they are placed in a new empty category, which keeps them distinct from those siblings, and the cursor is placed on the category so that it can be named right away. A thought with no siblings is split in place, since there is nothing to distinguish the sentences from, and so is a split that creates a child rather than siblings.
+
+A thought that contains only a single sentence is split into siblings on commas, or on the word "and" if there is no comma. A dash or a colon splits it into a main thought and a child instead, e.g. `one - 1` and `Start: 1` both become a thought with a single child. A colon only splits when it is followed by whitespace, so that a time such as `10:30` is left intact. In a comma-separated list, a dash only splits when it is surrounded by whitespace, so that a hyphenated word such as `Jean-Michel` is left intact; the right side of such a dash is then split on its commas, e.g. `Shopping list - apples, bananas` becomes a thought with two children.
 
 <kbd>Command + Shift + S</kbd>
 
@@ -708,6 +734,8 @@ Navigation and non-undoable commands are ignored, so Repeat always repeats the l
 ### Toggle Undo Slider
 
 Toggle a handy slider that lets you rewind edits.
+
+Drag the start handle back to rewind, then drag the end handle to a later point; tap a handle to jump to its point in time. The copy button copies a bug report with the steps to reproduce the actions between the two. See [Undo history and the undo slider](#undo-history-and-the-undo-slider).
 
 ### Export
 

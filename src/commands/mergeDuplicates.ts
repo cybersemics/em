@@ -1,9 +1,9 @@
 import Command from '../@types/Command'
 import { mergeDuplicatesActionCreator as mergeDuplicates } from '../actions/mergeDuplicates'
 
-const mergeDuplicatesCommand: Command = {
+const mergeDuplicatesCommand = {
   id: 'mergeDuplicates',
-  label: 'Merge Duplicates',
+  label: 'Merge Duplicates' as const,
   description: 'Merges all duplicate siblings at the same level as the cursor.',
   gesture: 'du',
   multicursor: {
@@ -14,6 +14,6 @@ const mergeDuplicatesCommand: Command = {
   exec: dispatch => {
     dispatch(mergeDuplicates())
   },
-}
+} satisfies Command
 
 export default mergeDuplicatesCommand

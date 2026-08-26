@@ -14,6 +14,7 @@ import PushBatch from './PushBatch'
 import RecentlyEditedTree from './RecentlyEditedTree'
 import SimplePath from './SimplePath'
 import StorageCache from './StorageCache'
+import ThoughtId from './ThoughtId'
 import ThoughtIndices from './ThoughtIndices'
 import Timestamp from './Timestamp'
 import Tip from './TipId'
@@ -45,8 +46,9 @@ interface State {
   cursorInitialized: boolean
   /**
    * The offset of the caret within the cursor, relative to the start of the thought.
-   * Currently only 0 and n are used, where n is the length of the thought.
    * A value of null means that the caret is not forcefully set on re-render, allowing the device to set it, e.g. on click.
+   * This is a request to place the caret, not a record of where it is: useEditMode reads it non-reactively and collapses
+   * the selection onto it. To record where a selection was, see selectionOffsets.
    */
   cursorOffset: number | null
   /** SimplePath of thought with drag hold activated. */
@@ -142,13 +144,23 @@ interface State {
   search: string | null
   searchContexts: Index<Context> | null
   searchLimit?: number
-  showBulletPicker?: boolean
-  showColorPicker?: boolean
-  showLetterCase?: boolean
+  /**
+   * A snapshot of the browser text selection within a thought, taken at the moment a UI is about to take the focus away
+   * from the editable that owns it. The document has exactly one selection, so a UI with an input of its own (the
+   * Command Universe search box) destroys the only record of what the user had selected; commands that operate on the
+   * selected text read this back instead. See selectors/selectionOffsets.
+   *
+   * Never updated in real time. Nothing subscribes to it reactively, and it is written only when a Command Universe
+   * opens, so it does not participate in the render cycle.
+   */
+  selectionOffsets: { thoughtId: ThoughtId; start: number; end: number } | null
+  showBulletPicker: boolean
+  showColorPicker: boolean
+  showLetterCase: boolean
   showDesktopCommandUniverse: boolean
   showGestureMenu: boolean
   showHiddenThoughts: boolean
-  showSortPicker?: boolean
+  showSortPicker: boolean
   showCommandCenter: boolean
   /**
    * The currently shown modal dialog box.
@@ -158,7 +170,7 @@ interface State {
   showModal?: Modal | null
   showSidebar: boolean
   showMobileCommandUniverse?: boolean
-  showUndoSlider?: boolean
+  showUndoSlider: boolean
   /* Status:
       'disconnected'   Logged out or yet to connect, but not in explicit offline mode.
       'connecting'     Connecting.

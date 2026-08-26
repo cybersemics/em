@@ -1,7 +1,7 @@
 import pluralize from 'pluralize'
 import Command from '../@types/Command'
 import { alertActionCreator as alert } from '../actions/alert'
-import { toggleAttributeActionCreator as toggleAttribute } from '../actions/toggleAttribute'
+import { pinActionCreator as pin } from '../actions/pin'
 import PinIcon from '../components/icons/PinIcon'
 import { HOME_PATH } from '../constants'
 import hasMulticursor from '../selectors/hasMulticursor'
@@ -9,9 +9,9 @@ import isPinned from '../selectors/isPinned'
 import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
 
-const pinCommand: Command = {
+const pinCommand = {
   id: 'pin',
-  label: 'Pin',
+  label: 'Pin' as const,
   labelInverse: 'Unpin',
   description: 'Pins open a thought so its subthoughts are always visible.',
   descriptionInverse: 'Unpins a thought so its subthoughts are automatically hidden.',
@@ -38,18 +38,13 @@ const pinCommand: Command = {
       dispatch(alert(pinned ? 'Unpinned thought' : 'Pinned thought'))
     }
 
-    dispatch(
-      toggleAttribute({
-        path: cursor,
-        values: ['=pin', 'true'],
-      }),
-    )
+    dispatch(pin())
   },
   isActive: state => {
     const { cursor } = state
     const path = cursor ? simplifyPath(state, cursor) : HOME_PATH
     return !!isPinned(state, head(path))
   },
-}
+} satisfies Command
 
 export default pinCommand

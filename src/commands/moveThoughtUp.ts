@@ -9,9 +9,9 @@ import appendToPath from '../util/appendToPath'
 import isDocumentEditable from '../util/isDocumentEditable'
 import parentOf from '../util/parentOf'
 
-const moveThoughtUpCommand: Command = {
+const moveThoughtUpCommand = {
   id: 'moveThoughtUp',
-  label: 'Move Thought Up',
+  label: 'Move Thought Up' as const,
   description: 'Move the current thought up.',
   gesture: 'udu',
   keyboard: { key: Key.ArrowUp, meta: true, shift: true },
@@ -34,6 +34,6 @@ const moveThoughtUpCommand: Command = {
     return !!prevThought || !!prevUnclePath
   },
   exec: dispatch => dispatch(moveThoughtUp()),
-}
+} satisfies Command
 
 export default moveThoughtUpCommand

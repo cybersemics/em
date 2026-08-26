@@ -7,9 +7,9 @@ import isAllSelected from '../selectors/isAllSelected'
 import isMultiEditing from '../selectors/isMultiEditing'
 import isDocumentEditable from '../util/isDocumentEditable'
 
-const selectAllCommand: Command = {
+const selectAllCommand = {
   id: 'selectAll',
-  label: 'Select All',
+  label: 'Select All' as const,
   labelInverse: 'Deselect All',
   description: 'Selects all thoughts at the current level. May reduce wrist strain.',
   descriptionInverse: 'Deselects all thoughts at the current level.',
@@ -58,6 +58,6 @@ const selectAllCommand: Command = {
           }),
     )
   },
-}
+} satisfies Command
 
 export default selectAllCommand

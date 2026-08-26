@@ -17,7 +17,7 @@ import reducerFlow from '../util/reducerFlow'
 import splitSentence from '../util/splitSentence'
 import categorize from './categorize'
 
-/** Split thought by sentences. Create new thought for each sentence. If the thought has siblings, the sentences are placed within a new empty category so that they remain distinct from the siblings, and the cursor is left on the category. Thought value, on which cursor is on, replace with first sentence. */
+/** Split thought by sentences. Create new thought for each sentence. When the sentences become siblings of a thought that already has siblings, they are placed within a new empty category so that they remain distinct from those siblings, and the cursor is left on the category. Thought value, on which cursor is on, replace with first sentence. */
 const splitSentences = (state: State): State => {
   const { cursor } = state
   if (!cursor) return state
@@ -31,26 +31,27 @@ const splitSentences = (state: State): State => {
     return state
   }
 
-  // The category only serves to keep the sentences distinct from the thought's siblings, so it is omitted when the thought has none.
-  const hasSiblings = getChildren(state, cursorThought.parentId).length > 1
+  const [firstSentence, ...otherSentences] = sentences
+
+  // The category only serves to keep the new thoughts distinct from the split thought's existing siblings, so it is omitted when there are none of either.
+  // The sentences become siblings only when the first of them is not inserted as a subthought: a dash, colon, slash, or parenthetical split moves the cursor into a child, and everything after it is inserted within that child.
+  const needsCategory = !otherSentences[0].insertNewSubThought && getChildren(state, cursorThought.parentId).length > 1
 
   // move the thought into a new empty category, which becomes the parent of all the sentences
-  const stateCategorized = hasSiblings ? categorize(state) : state
+  const stateCategorized = needsCategory ? categorize(state) : state
 
   // categorize sets the cursor on the new empty category, of which the thought being split is now the only child
   const categoryPath =
-    hasSiblings && getThoughtById(stateCategorized, head(cursor))?.parentId !== cursorThought.parentId
+    needsCategory && getThoughtById(stateCategorized, head(cursor))?.parentId !== cursorThought.parentId
       ? stateCategorized.cursor
       : null
 
   // categorize alerts and does nothing if the thought cannot be categorized, e.g. its parent is readonly
-  if (hasSiblings && !categoryPath) {
+  if (needsCategory && !categoryPath) {
     return stateCategorized
   }
 
   const cursorNew = categoryPath ? appendToPath(categoryPath, head(cursor)) : cursor
-
-  const [firstSentence, ...otherSentences] = sentences
 
   const stateAfterSplit = reducerFlow([
     // newThought inserts relative to the cursor, so move the cursor back to the thought being split
@@ -71,9 +72,12 @@ const splitSentences = (state: State): State => {
 
   const reducers = [
     // leave the cursor on the new empty category, ready for the user to name it, otherwise at the end of the first sentence
-    categoryPath
-      ? setCursor({ path: categoryPath, offset: 0 })
-      : setCursor({ path: cursorNew, offset: getTextContentFromHTML(firstSentence.value).length }),
+    // preserve the keyboard state from before the split, since newThought opens the keyboard
+    setCursor({
+      path: categoryPath ?? cursorNew,
+      offset: categoryPath ? 0 : getTextContentFromHTML(firstSentence.value).length,
+      isKeyboardOpen: state.isKeyboardOpen,
+    }),
     cursorForwardPath ? cursorHistory({ cursor: cursorForwardPath }) : null,
     editableRender,
   ]
