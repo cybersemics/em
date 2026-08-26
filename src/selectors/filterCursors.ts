@@ -27,7 +27,7 @@ const filterCursors = (state: State, cursors: Path[], filter: MulticursorFilter 
     case 'last-sibling': {
       const seenParents = new Set<string>()
 
-      return cursors.reverse().filter(cursor => {
+      return [...cursors].reverse().filter(cursor => {
         const parent = hashPath(parentOf(cursor))
 
         if (seenParents.has(parent)) return false
