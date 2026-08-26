@@ -395,7 +395,7 @@ Create a thought within the first subthought.
 
 ### Categorize
 
-Move the current thought into a new, empty thought at the same level.
+Move the current thought into a new, empty thought at the same level. With a multiselect, every selected thought moves into the new category — and when every visible sibling is selected, the parent's `=view` and `=pin` follow them into the category, since those options describe the thoughts the category now wraps.
 
 <kbd>Command + Option + o</kbd> or <kbd>Command + ]</kbd>
 

@@ -450,7 +450,7 @@ describe('multicursor', () => {
   })
 
   // https://github.com/cybersemics/em/issues/4330
-  it.skip('move =view to the new category when all siblings are selected', () => {
+  it('move =view to the new category when all siblings are selected', () => {
     const steps = [
       importText({
         text: `
@@ -515,7 +515,7 @@ describe('multicursor', () => {
   })
 
   // https://github.com/cybersemics/em/issues/4330
-  it.skip('move =pin to the new category when all siblings are selected', () => {
+  it('move =pin to the new category when all siblings are selected', () => {
     const steps = [
       importText({
         text: `
