@@ -1,9 +1,12 @@
 import importText from '../../actions/importText'
+import newThought from '../../actions/newThought'
 import sort from '../../actions/sort'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
+import { getChildrenRanked, isVisible } from '../../selectors/getChildren'
 import contextToThought from '../../test-helpers/contextToThought'
 import deleteThoughtAtFirstMatch from '../../test-helpers/deleteThoughtAtFirstMatch'
+import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 
@@ -97,5 +100,24 @@ describe('sort', () => {
     // b and c were out of sorted order — their ranks changed
     expect(b2.rank).not.toBe(b1.rank)
     expect(c2.rank).not.toBe(c1.rank)
+  })
+
+  // https://github.com/cybersemics/em/pull/4952#pullrequestreview-4993273973
+  it.skip('sorts an empty thought to the top', () => {
+    const text = `
+      - =sort
+        - Alphabetical
+      - b
+      - c
+    `
+    const state = reducerFlow([importText({ text }), setCursorFirstMatch(['c']), newThought({ value: '' })])(
+      initialState(),
+    )
+
+    const stateAfterSort = sort(state, HOME_TOKEN)
+
+    // the rendered order is rank order, so assert the ranked children
+    const children = getChildrenRanked(stateAfterSort, HOME_TOKEN).filter(child => isVisible(stateAfterSort, child))
+    expect(children.map(child => child.value)).toEqual(['', 'b', 'c'])
   })
 })
