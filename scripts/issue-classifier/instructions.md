@@ -59,7 +59,8 @@ _Examples:_ Uncategorize leaf should delete thought · Split sentence should ign
 **✅ Test Engineering** — The test suites and the machinery around them: flaky tests, CI workflows, test helpers and configuration, and build or dependency plumbing.
 _Examples:_ Flaky test: Sidebar - Node is either not clickable or not an Element · Enable Browserstack iOS tests in GitHub Actions · Redux middleware retains values between tests
 
-**✨ Agent Workflows** — The repository's coding agents and its issue automation: agent prompts and skills, and the GitHub Actions workflows that triage or act on issues and pull requests. Distinct from ✅ Test Engineering, which owns the test suites and the CI that runs them, and from ✨ AI, which is an app feature rather than repository tooling.
+**✨ Agent Workflows** — The repository's coding agents and its issue automation: agent prompts and skills, the GitHub Actions workflows that triage or act on issues and pull requests, and the coding conventions the agents follow. **A code style or code quality convention belongs here** — a convention is adopted by writing it into the agents' instructions, so proposing one is agent-configuration work rather than a homeless discussion. Distinct from ✅ Test Engineering, which owns the test suites and the CI that runs them, and from ✨ AI, which is an app feature rather than repository tooling.
+_Examples:_ Code Quality: Unnecessary getters/setters · A new GitHub MCP permission check in Copilot causes timeouts and sessions to fail · Code Quality: Block duplication and multiple return statements
 
 **🤹‍♀️ CSS Animation** — Animations and transitions where the motion itself is what is wrong: what animates, how it moves, where it animates to, and animation that plays at the wrong time or not at all. Not every issue that mentions a fade or a slide belongs here, and **a flash is not an animation** — flashing is something rendered incorrectly for a single frame, which is a rendering fault rather than a motion one.
 _Examples:_ Animation: Move Thought Up/Down · Cursor overlay parent-child animation follows S-curve · Thought should not fade in after split thought on Enter
@@ -112,7 +113,8 @@ _Examples:_ 🫆 and 🫧 are incorrectly sorted to the end of a list of labeled
 
 - An issue about test infrastructure, CI, or dependencies rather than app behavior is ✅ Test Engineering.
 - An issue about the coding agents, their prompts and skills, or a workflow that acts on issues automatically is ✨ Agent Workflows.
-- An issue that is really a discussion or a suggestion about how the project is run — repository conventions, how pull requests are labeled, how work is assigned — fits no milestone. Return `null`. Categorizing it would file a conversation under a subsystem that owns none of it.
+- **A coding convention is ✨ Agent Workflows, not a homeless discussion.** A rule about how code should be written — a style preference, an anti-pattern to avoid, typically titled "Code Quality: …" — is enforced by writing it into the coding agents' instructions, so that milestone owns the work even though no app subsystem does. An issue asking for one specific restructuring rather than stating a rule is a plain refactor and may still fit no milestone.
+- An issue that is really a discussion or a suggestion about how the project is run — how pull requests are labeled, how work is assigned, how releases are cut — fits no milestone. Return `null`. Categorizing it would file a conversation under a subsystem that owns none of it.
 - An issue too vague to place in a subsystem fits no milestone. Return `null` rather than guessing.
 - An issue describing several sub-tasks belongs to the milestone owning the bulk of the work.
 
@@ -126,9 +128,9 @@ Alongside the milestone, name what **kind** of work the issue is, in the `label`
 - **`refactor`** — restructuring code without changing anything a user could observe: renaming, extracting or inlining a helper, consolidating duplication, deleting dead code, migrating to an API that behaves identically. A bug fix or a feature is not a refactor however much code moves to get there, and restructuring undertaken **in order to** change behaviour is not either — the outcome decides, not the technique.
 - **`test`** — the test suites and the machinery around them: a flaky test, missing coverage, a test helper, a CI workflow that runs tests.
 - **`documentation`** — the README or the files under `docs/` and nothing else. An issue that happens to mention documentation alongside real work is not this.
-- **`agent`** — the repository's coding agents and their configuration: agent prompts, skills, and the workflows that triage or act on issues automatically.
+- **`agent`** — the repository's coding agents and their configuration: agent prompts, skills, the workflows that triage or act on issues automatically, and coding conventions, which are enforced through the agents' instructions.
 
-**Choose one, not several.** Where two seem to apply, pick the one the issue is really about: a slow rendering bug is `performance` if the complaint is the slowness and `bug` if the complaint is the wrong output; a refactor of test helpers is `refactor` if the tests assert the same things afterward and `test` if the coverage itself changes.
+**Choose one, not several.** Where two seem to apply, pick the one the issue is really about: a slow rendering bug is `performance` if the complaint is the slowness and `bug` if the complaint is the wrong output; a refactor of test helpers is `refactor` if the tests assert the same things afterward and `test` if the coverage itself changes; a coding convention is `agent` rather than `refactor`, because the deliverable is a rule in the agents' instructions rather than any particular restructuring.
 
 **`null` is for an issue that is none of these** — a discussion, a question, a proposal about how the project is run. It is rare: of the 800 most recent issues, 38 carry no kind at all.
 
