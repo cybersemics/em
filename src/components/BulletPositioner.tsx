@@ -10,7 +10,7 @@ import { deleteAttributeActionCreator as deleteAttribute } from '../actions/dele
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { setDescendantActionCreator as setDescendant } from '../actions/setDescendant'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
-import { isMac, isSafari, isTouch, isiPhone } from '../browser'
+import { isSafari, isTouch, isiPhone } from '../browser'
 import { LongPressState } from '../constants'
 import { LongPressProps } from '../hooks/useLongPress'
 import findDescendant from '../selectors/findDescendant'
@@ -25,6 +25,7 @@ import fastClick from '../util/fastClick'
 import getBulletWidth from '../util/getBulletWidth'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
+import isCommandKey from '../util/isCommandKey'
 import isDivider from '../util/isDivider'
 import parentOf from '../util/parentOf'
 
@@ -150,7 +151,7 @@ const BulletPositioner = forwardRef<SVGSVGElement, PropsWithChildren<BulletPosit
 
         // short circuit if toggling multiselect
         // Shift + Click selects the thoughts in between, and Cmd/Ctrl + Click toggles the clicked thought (see Thought)
-        if (!isTouch && (e.shiftKey || (isMac ? e.metaKey : e.ctrlKey))) {
+        if (!isTouch && (e.shiftKey || isCommandKey(e))) {
           return
         }
 

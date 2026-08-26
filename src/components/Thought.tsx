@@ -14,7 +14,7 @@ import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import { selectBetweenActionCreator as selectBetween } from '../actions/selectBetween'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
-import { isMac, isTouch } from '../browser'
+import { isTouch } from '../browser'
 import { AlertType, REGEX_TAGS } from '../constants'
 import { MIN_CONTENT_WIDTH_EM } from '../constants'
 import testFlags from '../e2e/testFlags'
@@ -44,6 +44,7 @@ import equalThoughtRanked from '../util/equalThoughtRanked'
 import getBulletWidth from '../util/getBulletWidth'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
+import isCommandKey from '../util/isCommandKey'
 import isDescendantPath from '../util/isDescendantPath'
 import isDivider from '../util/isDivider'
 import isRoot from '../util/isRoot'
@@ -530,7 +531,7 @@ const ThoughtContainer = ({
       }
 
       // Cmd/Ctrl + Click toggles the clicked thought in the multicursor selection.
-      if (isMac ? mouseEvent.metaKey : mouseEvent.ctrlKey) {
+      if (isCommandKey(mouseEvent)) {
         e.preventDefault()
         dispatch(toggleMulticursor({ path }))
       }

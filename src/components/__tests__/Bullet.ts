@@ -695,7 +695,7 @@ describe('multiselect', () => {
 
     // expansion is determined by the selected thoughts during a multiselect, so =pin is not set
     const exportedAfterSelect = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exportedAfterSelect).toEqual(`- __ROOT__
+    expect(exportedAfterSelect).toEqual(`- ${HOME_TOKEN}
   - a
   - b
     - c`)

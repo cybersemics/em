@@ -52,6 +52,7 @@ import haptics from './util/haptics'
 import hashPath from './util/hashPath'
 import head from './util/head'
 import isAttribute from './util/isAttribute'
+import isCommandKey from './util/isCommandKey'
 import keyValueBy from './util/keyValueBy'
 import parentOf from './util/parentOf'
 import UnreachableError from './util/unreachable'
@@ -858,7 +859,7 @@ export const keyDown = (e: KeyboardEvent) => {
   const state = store.getState()
 
   // track meta key for expansion algorithm
-  if (!(isMac ? e.metaKey : e.ctrlKey)) {
+  if (!isCommandKey(e)) {
     // disable suppress expansion without triggering re-render
     globals.suppressExpansion = false
   }

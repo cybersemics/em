@@ -8,6 +8,7 @@ import multiselectThoughts from '../helpers/multiselectThoughts'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import waitForEditable from '../helpers/waitForEditable'
+import waitForSelector from '../helpers/waitForSelector'
 import { page } from '../session'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
@@ -39,6 +40,9 @@ const waitForHighlightedBullets = async (n: number) => {
     throw new Error(`Expected ${n} highlighted bullets, but ${highlighted} were highlighted.`)
   }
 }
+
+/** Reads the CSS cursor rendered over the text of every thought. */
+const textCursors = () => page.$$eval('[data-editable]', editables => editables.map(el => getComputedStyle(el).cursor))
 
 describe('multiselect', () => {
   // https://github.com/cybersemics/em/issues/4740
@@ -295,6 +299,45 @@ describe('multiselect', () => {
     )
 
     expect(highlightedValues.sort()).toEqual(['c', 'e'])
+  })
+
+  it('shows a pointer cursor on the thought text while a multiselect is active', async () => {
+    await paste(`
+        - a
+        - b
+        `)
+
+    await waitForEditable('b')
+
+    expect(await textCursors()).toEqual(['auto', 'auto'])
+
+    await multiselectThoughts('b')
+    await waitForHighlightedBullets(1)
+
+    // a click on any thought now toggles its selection rather than moving the caret into its text
+    expect(await textCursors()).toEqual(['pointer', 'pointer'])
+  })
+
+  it('shows the text cursor on the thought text while the multiselection is being edited', async () => {
+    await paste(`
+        - a
+        - b
+        `)
+
+    await waitForEditable('b')
+
+    await multiselectThoughts(['a', 'b'])
+    await waitForHighlightedBullets(2)
+
+    // Clear Thought, with its keyboard shortcut rather than the command helper, which executes the command directly
+    // and would bypass the multicursor execution that clears both thoughts.
+    await press('c', { alt: true, shift: true, meta: true })
+
+    // the faux caret is rendered on b once the real caret has landed in a, i.e. once the multiselection is being edited
+    await waitForSelector('[data-testid=faux-caret-multicursor]')
+
+    // a click moves the caret as it does when a single thought is being edited
+    expect(await textCursors()).toEqual(['auto', 'auto'])
   })
 })
 
