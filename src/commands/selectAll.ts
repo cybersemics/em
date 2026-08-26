@@ -2,6 +2,7 @@ import Command from '../@types/Command'
 import { addAllMulticursorActionCreator as addAllMulticursor } from '../actions/addAllMulticursor'
 import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/clearMulticursors'
 import { isTouch } from '../browser'
+import * as selection from '../device/selection'
 import hasMulticursor from '../selectors/hasMulticursor'
 import isAllSelected from '../selectors/isAllSelected'
 import isMultiEditing from '../selectors/isMultiEditing'
@@ -48,8 +49,10 @@ const selectAllCommand = {
     // Toggle between Select All and Deselect All
     // i.e. If all thoughts at the current level are selected, clear the multicursor instead.
     // Only Deselect All on mobile, since desktop has Escape to easily deselect all.
+    const isDeselectAll = isTouch && isAllSelected(getState())
+
     dispatch(
-      isTouch && isAllSelected(getState())
+      isDeselectAll
         ? clearMulticursors()
         : addAllMulticursor({
             // Hacky magic value, but it's the easiest way to tell the command that this is a chained gesture so that it can adjust the undo behavior.
@@ -57,6 +60,14 @@ const selectAllCommand = {
             mergeNext: e.type === 'chainedGesture',
           }),
     )
+
+    // An ordinary multiselection leaves the caret outside any editable, which is how isMultiEditing tells it apart from
+    // a multiselection that is being edited (Clear Thought). Otherwise the caret left behind in the cursor thought makes
+    // the selection look edited, and the selection that Copy Cursor saves and restores around the clipboard write
+    // re-focuses the editable, rendering a faux caret on every selected thought (#5108). Shift + ArrowUp/ArrowDown takes
+    // the caret out of the multiselection the same way (see cursorUp). Cleared after the dispatch so that the Command
+    // Center is already open on mobile when the blur arrives, otherwise Editable's onBlur ends the multiselection.
+    if (!isDeselectAll) selection.clear()
   },
 } satisfies Command
 

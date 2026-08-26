@@ -181,7 +181,7 @@ describe('multiselect', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5108
-  it.skip('does not enter edit mode when the multiselection is copied', async () => {
+  it('does not enter edit mode when the multiselection is copied', async () => {
     await paste(`
         - a
         - b
