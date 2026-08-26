@@ -28,7 +28,7 @@ Without an issue number the script falls back to `ISSUE_NUMBER` (set by a manual
 
 The prompt is assembled from two halves. The system message is [`instructions.md`](instructions.md) — what each milestone means, real example issue titles from it, and the rules for choosing between them. The user message carries the **currently open** milestones, fetched from the GitHub API on every run, so a milestone created or closed today is reflected immediately with no file to update. The model may only choose a title from that list, or `null`.
 
-Five independent samples are drawn in one request (self-consistency voting via the Chat Completions `n` parameter, which bills the input once and only multiplies the tiny output). Each vote is resolved against the open milestones — leniently, so a dropped emoji or `and` for `&` still matches, while a milestone that is not open is discarded as invalid rather than counted. The modal vote wins.
+Five independent samples are drawn in one request (self-consistency voting via the Chat Completions `n` parameter, which bills the input once and only multiplies the tiny output). Each sample is constrained by a strict JSON schema ([Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs)) built per run from those same open milestones, so a conforming vote carries every field and can only name an open title or `null` — "copied verbatim" is enforced rather than requested, and a vote can no longer be lost to an invented, closed, or embellished title. The lenient resolution behind it — a dropped emoji or `and` for `&` still matches, a milestone that is not open is discarded as invalid rather than counted — remains as the backstop for replies the guarantee does not cover, such as one truncated at the token limit. The modal vote wins.
 
 ### The kind label
 
@@ -66,7 +66,7 @@ The costs here are asymmetric, and not in the intuitive direction. An unmileston
 
 So the only issues that get no milestone are the ones where the votes named none, which means the taxonomy has no home for the issue. That is worth a human's attention in a way that "the model was only fairly sure" never was. A run that fails inference three times, or finds no open milestones at all, comments and fails the workflow: those are broken rather than uncertain.
 
-Inference is tunable via `ISSUE_CLASSIFIER_*` env vars (see `.env.example`): `ISSUE_CLASSIFIER_MODEL`, `ISSUE_CLASSIFIER_VOTES`, `ISSUE_CLASSIFIER_REASONING_EFFORT`, `ISSUE_CLASSIFIER_TEMPERATURE`.
+Inference is tunable via `ISSUE_CLASSIFIER_*` env vars (see `.env.example`): `ISSUE_CLASSIFIER_MODEL` (which must support Structured Outputs), `ISSUE_CLASSIFIER_VOTES`, `ISSUE_CLASSIFIER_REASONING_EFFORT`, `ISSUE_CLASSIFIER_TEMPERATURE`.
 
 ## Evaluation
 

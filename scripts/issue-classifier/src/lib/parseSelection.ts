@@ -27,6 +27,14 @@ export type Label = (typeof LABELS)[number]
 /**
  * Schema for a single model response.
  *
+ * The request constrains the model with the strict JSON schema from buildResponseFormat below, so a
+ * conforming reply always carries every field with a valid value and this schema accepts it as a
+ * strict subset. The leniencies here are the backstop for the replies the guarantee does not cover
+ * — a reply truncated at the token limit parses as no JSON at all, and a model that does not
+ * support structured outputs fails the request rather than degrading — and the layers are
+ * deliberate: the wire contract can weaken without votes being thrown away for deviations that have
+ * a safe reading.
+ *
  * `milestone` and `confidence` are both required, because both drive the decision: a response
  * missing either one cannot be acted on, and per the workflow spec a missing field makes the output
  * invalid. `milestone` is nullable rather than optional — an explicit null is the model's way of
@@ -51,6 +59,41 @@ export const SelectionResponseSchema = z.object({
 })
 
 export type SelectionResponse = z.infer<typeof SelectionResponseSchema>
+
+/**
+ * Builds the Chat Completions `response_format` that constrains every sample to the response schema
+ * (OpenAI Structured Outputs, `strict: true`). Built per run rather than kept as a constant because
+ * `milestone` and `secondChoice` are enums of the currently open milestone titles: the "copied
+ * verbatim, or null" instruction the prompt already gives becomes something the model cannot
+ * disobey, so a vote can no longer be lost to an invented, closed, or dash-suffixed title. Behind
+ * it, matchMilestone and the vote-dropping in tallyVotes remain as backstops rather than as the
+ * front line.
+ *
+ * Strict mode requires every property to be listed in `required`, so "the model may decline" is
+ * expressed as a nullable type — null in the enum plus a `["…", "null"]` type — never as an absent
+ * field. Property order is meaningful: a strict schema emits keys in the order declared here, which
+ * is what keeps `rationale` first so the model reasons before committing to a milestone.
+ */
+export const buildResponseFormat = (milestoneTitles: string[]) => {
+  // Declared separately so `required` can be derived from it: strict mode rejects a schema whose
+  // required list does not name every property, and deriving the list makes that rejection
+  // unrepresentable rather than a runtime error waiting on the next added field.
+  const properties = {
+    rationale: { type: 'string' },
+    milestone: { type: ['string', 'null'], enum: [...milestoneTitles, null] },
+    confidence: { type: 'string', enum: [...CONFIDENCE_LEVELS] },
+    label: { type: ['string', 'null'], enum: [...LABELS, null] },
+    secondChoice: { type: ['string', 'null'], enum: [...milestoneTitles, null] },
+  }
+  return {
+    type: 'json_schema' as const,
+    json_schema: {
+      name: 'milestone_selection',
+      strict: true,
+      schema: { type: 'object', properties, required: Object.keys(properties), additionalProperties: false },
+    },
+  }
+}
 
 /**
  * Parses and validates one raw model output. Returns null when the string is not valid JSON or does
