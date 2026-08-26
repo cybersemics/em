@@ -25,6 +25,17 @@ const tunnelTokenGate = (token: string) => (req: GatedRequest, res: ServerRespon
     return
   }
 
+  // A request that arrives with a localhost Host cannot have come through the Cloudflare tunnel:
+  // Cloudflare routes traffic to the tunnel by Host, so anything traversing it presents the
+  // tunnel's public hostname. The gate exists to protect that public URL, so direct local use
+  // (a developer's browser, the iOS Simulator suite) passes untokened even when TUNNEL_TOKEN is
+  // set — e.g. exported globally in a shell profile. Vite's HTTPS dev server speaks HTTP/2, which
+  // carries the authority in the `:authority` pseudo-header instead of Host, so check both.
+  const host = String(req.headers[':authority'] || req.headers.host || '').replace(/:\d+$/, '')
+  if (host === 'localhost' || host === '127.0.0.1' || host === '[::1]') {
+    return next()
+  }
+
   const cookieHeader = req.headers.cookie || ''
   if (cookieHeader.split(';').some(c => c.trim() === `${COOKIE_NAME}=${token}`)) {
     return next()

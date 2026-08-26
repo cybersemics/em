@@ -1,5 +1,7 @@
 import { type ChildProcess } from 'child_process'
 import dotenv from 'dotenv'
+import http, { type IncomingMessage } from 'http'
+import https from 'https'
 import path from 'path'
 import { findFirstAvailableTunnel, parseTunnelPool } from './cloudflareTunnelPool'
 import baseConfig from './wdio.base.conf.js'
@@ -22,16 +24,51 @@ const date = new Date().toISOString().slice(0, 10)
 let tunnelProcess: ChildProcess | null = null
 
 /**
+ * Resolves to whether a dev server is answering on port 3000 at all. Which protocol it speaks
+ * doesn't matter here — that's between the server and the pool's stored ingress config — so both
+ * are tried, any status code counts, and self-signed certs are accepted. A plain fetch could not
+ * do this, since it has no way to skip TLS verification for the self-signed dev cert.
+ */
+const devServerRunning = async (): Promise<boolean> => {
+  /** Sends one GET over the given protocol and resolves to whether anything answered. */
+  const probe = (protocol: 'http' | 'https'): Promise<boolean> =>
+    new Promise(resolve => {
+      /** Drains the response and reports the origin as answering. */
+      const onResponse = (response: IncomingMessage) => {
+        response.resume()
+        resolve(true)
+      }
+      const request =
+        protocol === 'https'
+          ? https.request(
+              'https://localhost:3000/',
+              { method: 'GET', timeout: 2000, rejectUnauthorized: false },
+              onResponse,
+            )
+          : http.request('http://localhost:3000/', { method: 'GET', timeout: 2000 }, onResponse)
+      request.on('error', () => resolve(false))
+      request.on('timeout', () => {
+        request.destroy()
+        resolve(false)
+      })
+      request.end()
+    })
+  return (await probe('https')) || (await probe('http'))
+}
+
+/**
  * WDIO configuration for BrowserStack iOS testing.
  * Uses a pool of named Cloudflare Tunnels (see cloudflareTunnelPool.ts) to expose the local
- * HTTPS dev server via a public URL with a real CA-signed cert, avoiding Safari's self-signed
+ * dev server via a public HTTPS URL with a real CA-signed cert, avoiding Safari's self-signed
  * cert restrictions.
  *
  * Prerequisites:
  * 1. Set BROWSERSTACK_USERNAME and BROWSERSTACK_ACCESS_KEY env vars.
  * 2. Set CLOUDFLARE_TUNNEL_POOL to a JSON array of { name, hostname, token } (provisioned out-of-band — see docs/testing.md).
  * 3. Set TUNNEL_TOKEN to a per-run secret (the Vite app-gate token — see vite.config.ts).
- * 4. Start the app: yarn start (on port 3000).
+ * 4. Start the app with the same token: TUNNEL_TOKEN=<secret> yarn start (on port 3000, in the
+ * default HTTPS mode — the dev pool's ingress connects to https://localhost:3000 with No TLS
+ * Verify, so Vite's self-signed cert is accepted).
  *
  * Run: yarn test:ios:browserstack.
  */
@@ -81,12 +118,24 @@ export const config: WebdriverIO.Config = {
       if (!process.env.CLOUDFLARED_URL) {
         if (!process.env.CLOUDFLARE_TUNNEL_POOL) {
           throw new Error(
-            'CLOUDFLARE_TUNNEL_POOL is not set. The pool is provisioned out-of-band by whoever administers ' +
-              'it; set CLOUDFLARE_TUNNEL_POOL to that JSON output (see docs/testing.md).',
+            'CLOUDFLARE_TUNNEL_POOL is not set. See docs/testing.md for information on how to set this up.',
           )
         }
         if (!process.env.TUNNEL_TOKEN) {
-          throw new Error('TUNNEL_TOKEN (the per-run Vite app-gate token) must be set to claim a tunnel from the pool.')
+          throw new Error(
+            'TUNNEL_TOKEN (the per-run Vite app-gate token) must be set to claim a tunnel from the pool. See docs/testing.md for information on how to set this up.',
+          )
+        }
+
+        // With no server on port 3000, every tunnel candidate looks free, attaches a connector,
+        // and burns its ~30s claim timeout on an opaque "timed out waiting ... to answer with this
+        // run's app-gate token" — then the pool logic waits up to 45 min for a slot to "free up".
+        // Probe the origin directly first so that failure costs one request and names its actual
+        // cause.
+        if (!(await devServerRunning())) {
+          throw new Error(
+            'No dev server is answering on port 3000. Start one with the same token: `TUNNEL_TOKEN=<token> yarn start`.',
+          )
         }
 
         const pool = parseTunnelPool(process.env.CLOUDFLARE_TUNNEL_POOL)
