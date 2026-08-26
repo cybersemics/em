@@ -46,10 +46,16 @@ const selectAllCommand = {
     return true
   },
   exec: (dispatch, getState, e) => {
+    const state = getState()
+
     // Toggle between Select All and Deselect All
     // i.e. If all thoughts at the current level are selected, clear the multicursor instead.
     // Only Deselect All on mobile, since desktop has Escape to easily deselect all.
-    const isDeselectAll = isTouch && isAllSelected(getState())
+    const isDeselectAll = isTouch && isAllSelected(state)
+
+    // A multiselection that is already being edited (Clear Thought) holds the caret on purpose. Clearing it would blur
+    // the thought being edited, closing the keyboard and exiting the cleared state (see onBlur in Editable).
+    const isEdited = isMultiEditing(state)
 
     dispatch(
       isDeselectAll
@@ -65,9 +71,8 @@ const selectAllCommand = {
     // a multiselection that is being edited (Clear Thought). Otherwise the caret left behind in the cursor thought makes
     // the selection look edited, and the selection that Copy Cursor saves and restores around the clipboard write
     // re-focuses the editable, rendering a faux caret on every selected thought (#5108). Shift + ArrowUp/ArrowDown takes
-    // the caret out of the multiselection the same way (see cursorUp). Cleared after the dispatch so that the Command
-    // Center is already open on mobile when the blur arrives, otherwise Editable's onBlur ends the multiselection.
-    if (!isDeselectAll) selection.clear()
+    // the caret out of the multiselection the same way (see cursorUp).
+    if (!isDeselectAll && !isEdited) selection.clear()
   },
 } satisfies Command
 
