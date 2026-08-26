@@ -7,6 +7,7 @@ import longPressThought from '../helpers/longPressThought'
 import multiselectThoughts from '../helpers/multiselectThoughts'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
+import waitForAlertContent from '../helpers/waitForAlertContent'
 import waitForEditable from '../helpers/waitForEditable'
 import { page } from '../session'
 
@@ -39,6 +40,9 @@ const waitForHighlightedBullets = async (n: number) => {
     throw new Error(`Expected ${n} highlighted bullets, but ${highlighted} were highlighted.`)
   }
 }
+
+/** Waits a single animation frame, i.e. long enough for React to commit the render that follows a command. */
+const nextFrame = () => page.evaluate(() => new Promise(requestAnimationFrame))
 
 describe('multiselect', () => {
   // https://github.com/cybersemics/em/issues/4740
@@ -174,6 +178,28 @@ describe('multiselect', () => {
     expect(copied['text/html']).toContain('a')
     expect(copied['text/html']).toContain('b')
     expect(copied['text/html']).toContain('c')
+  })
+
+  // https://github.com/cybersemics/em/issues/5108
+  it.skip('does not enter edit mode when the multiselection is copied', async () => {
+    await paste(`
+        - a
+        - b
+        - c
+        `)
+
+    await clickThought('b')
+    await command('selectAll')
+    await waitForHighlightedBullets(3)
+
+    await press('c', { meta: true })
+    await waitForAlertContent('Copied 3 thoughts to the clipboard')
+
+    // Copy leaves the thoughts selected but not edited, so no faux caret is rendered on them (Clear Thought is
+    // what puts a multiselection into edit mode). Wait a frame first, since the faux carets would be rendered
+    // on the frame after the copy completes.
+    await nextFrame()
+    expect(await page.$$('[data-testid="faux-caret-multicursor"]')).toHaveLength(0)
   })
 
   // https://github.com/cybersemics/em/issues/4738
