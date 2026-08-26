@@ -66,21 +66,6 @@ function isUrl(str1: string, s: string) {
  */
 const SEPARATOR_TOKEN = '__SEP__'
 
-/**
- * Inserts separators in place of commas, unless the comma is part of a style within a font tag (#3455).
- */
-function separateByComma(str: string) {
-  const EMBEDDED_COMMA_TOKEN = '__COMMA__'
-  const styleRegex = /style="[^"]+$/
-
-  return str
-    .split(',')
-    .reduce((str, s) => {
-      return str + s + (styleRegex.test(str + s) ? EMBEDDED_COMMA_TOKEN : SEPARATOR_TOKEN)
-    }, '')
-    .replaceAll(EMBEDDED_COMMA_TOKEN, ',')
-}
-
 interface SplitResult {
   value: string
   insertNewSubThought?: boolean
@@ -182,6 +167,19 @@ const symbolSplitRegex = /[↑↓←→+]/
 const symbolLeadingRegex = /^[↑↓←→+]/
 
 /**
+ * Returns the punctuation delimiter that splits a single sentence into sub-sentences: a comma, or one of the symbols ↑↓←→+ when there is no comma. Returns null when the value contains neither.
+ *
+ * @param plainValue The plain text thought value.
+ */
+function punctuationSubSentenceDelimiter(plainValue: string): { split: RegExp; leading: RegExp } | null {
+  return plainValue.includes(',')
+    ? { split: /,/, leading: /^,/ }
+    : symbolSplitRegex.test(plainValue)
+      ? { split: symbolSplitRegex, leading: symbolLeadingRegex }
+      : null
+}
+
+/**
  * Returns the delimiter to split a single sentence into sub-sentences, as a regex that matches the delimiter anywhere and a regex that matches it at the beginning of the remaining text.
  * Comma takes priority over the symbols ↑↓←→+, which take priority over "and". Each is only used when the value contains none of the delimiters above it.
  * "and" is matched with word boundaries so that it does not split within a word, e.g. "Standard" (#4810).
@@ -189,11 +187,27 @@ const symbolLeadingRegex = /^[↑↓←→+]/
  * @param plainValue The plain text thought value.
  */
 function subSentenceDelimiter(plainValue: string): { split: RegExp; leading: RegExp } {
-  return plainValue.includes(',')
-    ? { split: /,/, leading: /^,/ }
-    : symbolSplitRegex.test(plainValue)
-      ? { split: symbolSplitRegex, leading: symbolLeadingRegex }
-      : { split: /\band\b/i, leading: /^and\b/i }
+  return punctuationSubSentenceDelimiter(plainValue) ?? { split: /\band\b/i, leading: /^and\b/i }
+}
+
+/**
+ * Inserts separators in place of the punctuation sub-sentence delimiter, unless the delimiter is part of a style within a font tag (#3455).
+ * The word "and" is deliberately not a delimiter here: this runs on a value whose periods turned out not to be sentence boundaries, where "and" routinely joins the parts of a single sentence, e.g. "Fruit cost: apple $10.23 and pear $10.70".
+ */
+function separateBySubSentenceDelimiter(str: string) {
+  const delimiter = punctuationSubSentenceDelimiter(str)
+  if (!delimiter) return str
+
+  const styleRegex = /style="[^"]+$/
+  // Splitting with a capture group keeps the delimiter, so that one embedded in a style can be restored in place. The parts alternate text and delimiter, e.g. "a, b" -> ["a", ",", " b"].
+  const parts = str.split(new RegExp(`(${delimiter.split.source})`))
+
+  return parts.reduce(
+    (accum, part, i) =>
+      // the delimiters sit at odd indices, each emitted by the text part before it
+      i % 2 === 1 ? accum : accum + part + (styleRegex.test(accum + part) ? (parts[i + 1] ?? '') : SEPARATOR_TOKEN),
+    '',
+  )
 }
 
 /**
@@ -369,12 +383,12 @@ const splitSentence = (value: string): SplitResult[] => {
     return newSentence + SEPARATOR_TOKEN + currSentence
   }, initialValue)
 
-  // if the return string is one sentence that ends with no other main split characters except one period at the end, split the thought by comma
+  // if the return string is one sentence that ends with no other main split characters except one period at the end, split the thought by its sub-sentence delimiter
   const hasOnlyPeriodSplitterAtEnd = !/;!?$/.test(resultSentences)
 
   const right =
     !resultSentences.match(SEPARATOR_TOKEN) && hasOnlyPeriodSplitterAtEnd
-      ? separateByComma(resultSentences)
+      ? separateBySubSentenceDelimiter(resultSentences)
           .split(SEPARATOR_TOKEN)
           .filter(s => /\S+/.test(s))
           .map(s => s.trim())
