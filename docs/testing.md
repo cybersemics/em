@@ -293,7 +293,7 @@ Anything that tests a rendered component requires a DOM. If there are no browser
 
 - [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/) (RTL)
 
-Mount the app with `createTestApp`, seed state via dispatch (allowed at this level for arrange), and assert on the DOM by `aria-label`/`data-testid`. Wrap every dispatch and command execution in `act(() => …)`: the mounted components subscribe to the store, so an unwrapped dispatch re-renders them outside React's act scope and React reports `An update to <Component> inside a test was not wrapped in act(...)`.
+Mount the app with `createTestApp`, seed state via dispatch (allowed at this level for arrange), and assert on the DOM by `aria-label`/`data-testid`. Wrap every dispatch and command execution in `act(() => …)`: the mounted components subscribe to the store, so an unwrapped dispatch re-renders them outside React's act scope, which fails the test.
 
 Related tests: [components](../src/components/__tests__)
 
