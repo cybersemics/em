@@ -3,27 +3,38 @@ import 'fake-indexeddb/auto'
 import * as matchers from 'jest-extended'
 // requires jest config resetMocks: false after react-scripts v4
 import { noop } from 'lodash'
-import { TextDecoder, TextEncoder } from 'util'
 import 'vi-canvas-mock'
 
 expect.extend(matchers)
 
-// define missing global built-ins for jest
-global.TextEncoder = TextEncoder
-global.TextDecoder = TextDecoder
-
 // add noop functions to prevent implementation error during test
 window.blur = noop
 window.scrollTo = noop
-window.matchMedia = window.matchMedia || (() => false)
+
+// jsdom does not implement matchMedia at all, so every consumer reads this stub. Report no match, which is what
+// a headless test environment is: not a coarse pointer (browser.ts) and not an installed PWA (updateUrlHistory.ts).
+if (typeof window.matchMedia !== 'function') {
+  window.matchMedia = query => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: noop,
+    removeListener: noop,
+    addEventListener: noop,
+    removeEventListener: noop,
+    dispatchEvent: () => false,
+  })
+}
 
 document.execCommand = () => {
   console.warn('document.execCommand is not implemented in JSDOM')
+  // execCommand returns false when the command is not supported, which is the honest result for a no-op stub.
+  return false
 }
 
 const ResizeObserverMock = vi.fn(
-  // eslint-disable-next-line jsdoc/require-jsdoc
-  class {
+  /** A no-op ResizeObserver, which jsdom does not implement. */
+  class implements ResizeObserver {
     observe = vi.fn()
     unobserve = vi.fn()
     disconnect = vi.fn()
@@ -32,12 +43,14 @@ const ResizeObserverMock = vi.fn(
 
 vi.stubGlobal('ResizeObserver', ResizeObserverMock)
 
-HTMLImageElement.prototype.decode = vi.fn().mockResolvedValue(undefined)
+HTMLImageElement.prototype.decode = vi.fn<() => Promise<void>>().mockResolvedValue(undefined)
 
 // jsdom does not implement Range.prototype.getClientRects, which getCaretOffset uses for glyph hit-testing.
 // Return an empty list to match jsdom's zero-size layout, preventing "range.getClientRects is not a function" errors.
+// DOMRectList is not constructible, so an array supplies the indexing and iteration and Object.assign adds the
+// item() accessor it lacks.
 if (typeof Range.prototype.getClientRects !== 'function') {
-  Range.prototype.getClientRects = () => []
+  Range.prototype.getClientRects = () => Object.assign([] as DOMRect[], { item: () => null })
 }
 
 // Likewise for getBoundingClientRect, which selection.caretRect uses to measure the caret. Reachable in jsdom
@@ -82,11 +95,11 @@ const globalPrototype = Object.getPrototypeOf(globalThis)
 // Guard against polluting Object.prototype in the unlikely event the global's prototype is Object.prototype.
 if (globalPrototype && globalPrototype !== Object.prototype) {
   /** Creates a minimal in-memory Storage implementation for use as a post-teardown fallback. */
-  const createStorageFallback = () => {
-    const store = new Map()
+  const createStorageFallback = (): Storage => {
+    const store = new Map<string, string>()
     return {
       clear: () => store.clear(),
-      getItem: key => (store.has(key) ? store.get(key) : null),
+      getItem: key => store.get(key) ?? null,
       key: index => Array.from(store.keys())[index] ?? null,
       removeItem: key => store.delete(key),
       setItem: (key, value) => store.set(key, `${value}`),
@@ -113,7 +126,10 @@ if (globalPrototype && globalPrototype !== Object.prototype) {
 // mounts an animated icon (e.g. the Command Universe) would make cleanupTestApp's vi.runAllTimersAsync abort with
 // "Aborting after running 100000 timers". Stubbing the hook keeps `animated` false, so LottieAnimation never mounts.
 // Puppeteer tests are handled separately in LottieAnimation, which seeks the animation to its last frame.
-vi.mock('./hooks/useLottieIntervalAnimation', () => ({
+// Passing the module import rather than its path is what ties the stub to the hook: it gives vi.mock the module
+// type, so a field added to the hook's return value fails to compile here instead of reaching components as
+// undefined. vi.mock does not evaluate the import; it is hoisted and resolved for its path like a string would be.
+vi.mock(import('./hooks/useLottieIntervalAnimation'), () => ({
   /** Stubbed useLottieIntervalAnimation that never animates. */
   default: () => ({ isAnimated: false, onAnimationComplete: noop }),
 }))
