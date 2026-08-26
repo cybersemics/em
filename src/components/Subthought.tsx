@@ -15,6 +15,7 @@ import getContexts from '../selectors/getContexts'
 import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
+import parentContextId from '../selectors/parentContextId'
 import store from '../stores/app'
 import head from '../util/head'
 import isDescendantPath from '../util/isDescendantPath'
@@ -82,7 +83,10 @@ const Subthought = ({
       null,
   )
   const isSplitThought = useSelector(
-    state => state.lastUndoableActionType === 'splitThought' && state.cursor && head(state.cursor) === head(simplePath),
+    state =>
+      state.lastUndoableActionType === 'splitThought' &&
+      !!state.cursor &&
+      parentContextId(state, state.cursor) === head(simplePath),
   )
   const hideBullet = useSelector(state => {
     const hideBulletsChildren = attributeEquals(state, childrenAttributeId, '=bullet', 'None')

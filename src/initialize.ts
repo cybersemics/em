@@ -34,24 +34,30 @@ import hashThought from './util/hashThought'
 import initEvents from './util/initEvents'
 import isRoot from './util/isRoot'
 import owner from './util/owner'
+import { pathIds } from './util/pathStep'
 import urlDataSource from './util/urlDataSource'
 
 /**
  * Decode cursor from url, pull and initialize the cursor.
  */
 const initializeCursor = async () => {
-  const { path } = decodeThoughtsUrl(store.getState())
+  const { path, contextViews } = decodeThoughtsUrl(store.getState())
   // if no path in decoded from the url initialize the cursor with null
   if (!path || isRoot(path)) {
     store.dispatch(setCursor({ path: null }))
   } else {
     // pull the path thoughts
-    await store.dispatch(pull(path, { maxDepth: 0 }))
+    // a context step lands on the Lexeme context, which is the thought that has to be loaded for the cursor to render
+    const ids = pathIds(path)
+    await store.dispatch(pull(ids, { maxDepth: 0 }))
     const newState = store.getState()
-    const isCursorLoaded = path.every(thoughtId => getThoughtById(newState, thoughtId))
+    const isCursorLoaded = ids.every(thoughtId => getThoughtById(newState, thoughtId))
     store.dispatch(
       setCursor({
         path: isCursorLoaded ? path : null,
+        // Restore the context views the url encodes, otherwise a cursor that crosses one is restored into a tree where
+        // that view is closed. decodeThoughtsUrl keys them by hashPath, the same way state.contextViews does.
+        ...(isCursorLoaded ? { replaceContextViews: contextViews } : null),
       }),
     )
   }

@@ -3,13 +3,13 @@ import { toggleContextViewActionCreator as toggleContextView } from '../../actio
 import { undoActionCreator as undo } from '../../actions/undo'
 import { executeCommand, executeCommandWithMulticursor } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
-import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import pathToContext from '../../util/pathToContext'
 import bindContextCommand from '../bindContext'
 
 beforeEach(initStore)
@@ -277,9 +277,7 @@ describe('multicursor', () => {
     // Nothing moved, so the cursor returns to the context it started on rather than the last context
     // executed on, and the selection remains meaningful.
     expectPathToEqual(state, state.cursor, ['a', 'm', 'a'])
-    expect(
-      Object.values(state.multicursors).map(path => childIdsToThoughts(state, path).map(thought => thought.value)),
-    ).toEqual([
+    expect(Object.values(state.multicursors).map(path => pathToContext(state, path))).toEqual([
       ['a', 'm', 'a'],
       ['a', 'm', 'b'],
     ])

@@ -4,8 +4,10 @@ import { moveThoughtDownActionCreator as moveThoughtDown } from '../actions/move
 import MoveThoughtDownIcon from '../components/icons/MoveThoughtDownIcon'
 import nextSibling from '../selectors/nextSibling'
 import appendToPath from '../util/appendToPath'
+import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
 import parentOf from '../util/parentOf'
+import { isContextStep } from '../util/pathStep'
 
 const moveThoughtDownCommand = {
   id: 'moveThoughtDown',
@@ -27,7 +29,10 @@ const moveThoughtDownCommand = {
     const nextThought = nextSibling(state, cursor)
 
     // if the cursor is the last child, move the thought to the beginning of its next uncle
-    const nextUncleThought = pathParent.length > 0 ? nextSibling(state, pathParent) : null
+    // A context row's siblings are the other contexts, so a thought inside one has no uncle to move into — doing so
+    // would take it out of the context view entirely. Decline rather than build a Path that names no rendered row.
+    const nextUncleThought =
+      pathParent.length > 0 && !isContextStep(head(pathParent)) ? nextSibling(state, pathParent) : null
     const nextUnclePath = nextUncleThought ? appendToPath(parentOf(pathParent), nextUncleThought.id) : null
 
     return !!nextThought || !!nextUnclePath

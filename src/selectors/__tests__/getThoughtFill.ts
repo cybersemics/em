@@ -1,12 +1,13 @@
 import newThought from '../../actions/newThought'
 import getThoughtFill from '../../selectors/getThoughtFill'
-import head from '../../util/head'
+import parentContextId from '../../selectors/parentContextId'
 import initialState from '../../util/initialState'
 
 /** Creates a single thought and returns its derived fill color. */
 const fillOf = (value: string) => {
   const state = newThought(initialState(), { value })
-  return getThoughtFill(state, head(state.cursor!))
+  // the fill is derived from the value the user sees, so it is the displayed thought that is colored
+  return getThoughtFill(state, parentContextId(state, state.cursor!))
 }
 
 describe('getThoughtFill', () => {

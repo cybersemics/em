@@ -21,10 +21,12 @@ import head from '../util/head'
 import isAbsolute from '../util/isAbsolute'
 import isAttribute from '../util/isAttribute'
 import isDescendantPath from '../util/isDescendantPath'
+import { stepId } from '../util/pathStep'
 import sort from '../util/sort'
 import unroot from '../util/unroot'
 import childIdsToThoughts from './childIdsToThoughts'
 import getThoughtById from './getThoughtById'
+import parentContextId from './parentContextId'
 
 // use global instance of empty array so object reference doesn't change
 const NO_CHILDREN: Thought[] = []
@@ -126,13 +128,15 @@ export const filterAllChildren = (state: State, id: ThoughtId, predicate: (child
 /** Checks if a child lies within the cursor path. */
 const isChildInCursor = (state: State, path: Path, child: Thought): boolean => {
   const childPath = unroot([...path, child.id])
-  return !!state.cursor && state.cursor[childPath.length - 1] === child.id
+  // stepId so that a context row matches the Lexeme context recorded in its context step
+  const cursorStep = state.cursor?.[childPath.length - 1]
+  return !!cursorStep && stepId(cursorStep) === child.id
 }
 
 /** Check if the cursor is a meta attribute && the given Path is the descendant of the cursor.  */
 const isDescendantOfMetaCursor = (state: State, path: Path): boolean => {
   if (!state.cursor) return false
-  const thought = getThoughtById(state, head(state.cursor))
+  const thought = getThoughtById(state, parentContextId(state, state.cursor))
   if (!thought) return false
 
   const { value: cursorValue } = thought

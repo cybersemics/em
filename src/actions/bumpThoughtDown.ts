@@ -22,6 +22,7 @@ import appendToPath from '../util/appendToPath'
 import createId from '../util/createId'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
+import headId from '../util/headId'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
 import alert from './alert'
@@ -109,12 +110,12 @@ const bumpThoughtDown = (state: State, { paths, simplePath }: { paths?: Path[]; 
     // move the selected thoughts into the new thought, preserving their order
     // we ignore selected thoughts that are somehow missing, see getThoughtById
     ...(selection || [])
-      .filter(path => getThoughtById(state, head(path)))
+      .filter(path => getThoughtById(state, headId(path)))
       .map(path =>
         moveThought({
           oldPath: simplifyPath(state, path),
-          newPath: appendToPath(simplePathWithNewRank, newThoughtId, head(path)),
-          newRank: getThoughtById(state, head(path))!.rank,
+          newPath: appendToPath(simplePathWithNewRank, newThoughtId, headId(path)),
+          newRank: getThoughtById(state, headId(path))!.rank,
         }),
       ),
 

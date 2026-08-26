@@ -5,7 +5,8 @@ import DropThoughtZone from '../@types/DropThoughtZone'
 import attributeEquals from '../selectors/attributeEquals'
 import getSortedRank from '../selectors/getSortedRank'
 import getThoughtById from '../selectors/getThoughtById'
-import head from '../util/head'
+import parentContextId from '../selectors/parentContextId'
+import headId from '../util/headId'
 import parentOf from '../util/parentOf'
 
 /** A hook that checks if a dragging thought is hovering over a sorted context, and returns new rank where that thought will be dropped. */
@@ -19,14 +20,19 @@ const useSortedContext = () => {
 
     const contextParentPath = parentOf(state.hoveringPath)
 
+    // =sort is read from the displayed thought, i.e. the context in the context view.
+    // null when hovering over a root child, where there is no parent row (parentOf returns an empty Path).
+    const contextParentId = contextParentPath.length > 0 ? parentContextId(state, contextParentPath) : null
+
     // Check if the drop target is on sorted context children or on its parent.
     const isSortedContext =
       state.hoverZone === DropThoughtZone.ThoughtDrop &&
-      attributeEquals(state, head(contextParentPath), '=sort', 'Alphabetical')
+      attributeEquals(state, contextParentId, '=sort', 'Alphabetical')
 
     // check if the hovering path is on a drop end of parent sorted context
     const hoveringOnDropEnd =
-      state.hoverZone === 'SubthoughtsDrop' && attributeEquals(state, head(state.hoveringPath), '=sort', 'Alphabetical')
+      state.hoverZone === 'SubthoughtsDrop' &&
+      attributeEquals(state, parentContextId(state, state.hoveringPath), '=sort', 'Alphabetical')
 
     if (!isSortedContext && !hoveringOnDropEnd) {
       return { isHoveringSorted: false, newRank: -1 }
@@ -37,12 +43,13 @@ const useSortedContext = () => {
 
     // Check if the dragged item is a thought and the drop zone is not a subthought
     const isThought = item?.zone === 'Thoughts'
-    const sourceThoughtId = head(item?.path || [])
 
     // get the source thought and its new rank
-    const sourceThought = isThought ? getThoughtById(state, sourceThoughtId) : null
+    // the Lexeme context, since that is the thought the drop moves and re-ranks (see moveThought)
+    const sourceThought = isThought && item?.path ? getThoughtById(state, headId(item.path)) : null
     const contextpath = hoveringOnDropEnd ? state.hoveringPath : contextParentPath
-    const newRank = getSortedRank(state, head(contextpath), sourceThought?.value || '')
+    // the rank is computed among the children of the thought the row lands on, i.e. the Lexeme context
+    const newRank = getSortedRank(state, headId(contextpath), sourceThought?.value || '')
 
     return { isHoveringSorted: true, newRank }
   }, shallowEqual)

@@ -1,20 +1,13 @@
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
-import { HOME_TOKEN } from '../constants'
 import getSortPreference from '../selectors/getSortPreference'
+import parentContextPath from '../selectors/parentContextPath'
+import rootedParentOf from '../selectors/rootedParentOf'
+import head from './head'
 
-/** Retrieves the parent ID from the state's cursor. */
-const getParentIdFromCursor = (state: State): ThoughtId | null => {
-  const cursor = state.cursor
-
-  if (!cursor || cursor.length < 2) {
-    // No cursor or cursor has less than 2 items (no parent)
-    return HOME_TOKEN
-  }
-
-  // Return the parent ID, which is the second last item in the cursor
-  return cursor[cursor.length - 2]
-}
+/** Retrieves the id of the parent of the thought displayed at the cursor. In the context view this is the parent of the context, e.g. the parent of b for the cursor a/m~/b — not the context view thought m. */
+const getParentIdFromCursor = (state: State): ThoughtId | null =>
+  state.cursor ? head(rootedParentOf(state, parentContextPath(state, state.cursor))) : null
 
 /** Cursor Sort Direction. */
 const getCursorSortDirection = (state: State) => {

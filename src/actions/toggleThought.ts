@@ -8,6 +8,7 @@ import findDescendant from '../selectors/findDescendant'
 import { hasChildren } from '../selectors/getChildren'
 import getNextRank from '../selectors/getNextRank'
 import getPrevRank from '../selectors/getPrevRank'
+import parentContextPath from '../selectors/parentContextPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import createId from '../util/createId'
@@ -24,13 +25,17 @@ const toggleThought = (
   values = values || [value!]
   if (!path || (!value && (!values || values.length === 0))) return state
 
-  const thoughtId = head(path)
+  // The toggled thought is a child of the thought the user sees (=done and the other attributes toggled here belong
+  // to the context rather than the Lexeme context in the context view). Resolving the path once keeps the lookup, the
+  // thought that is created, and the deletions in the same context.
+  const contextPath = parentContextPath(state, path)
+  const thoughtId = head(contextPath)
   const subthoughtId = findDescendant(state, thoughtId, _values[0])
   const idNew = createId()
 
   // delete the last thought if it exists
   if (_values.length === 1 && subthoughtId) {
-    return deleteThought(state, { pathParent: path, thoughtId: subthoughtId })
+    return deleteThought(state, { pathParent: contextPath, thoughtId: subthoughtId })
   }
 
   // otherwise, create the thought if it does not exist and recurse
@@ -38,7 +43,7 @@ const toggleThought = (
     ? state
     : createThought(state, {
         id: idNew,
-        path,
+        path: contextPath,
         value: _values[0],
         // meta attributes go at the top of the context
         rank: isAttribute(_values[0]) ? getPrevRank(state, thoughtId) : getNextRank(state, thoughtId),
@@ -46,13 +51,13 @@ const toggleThought = (
 
   // recursion
   const stateNew = toggleThought(stateWithSubthought, {
-    path: appendToPath(path, subthoughtId || idNew),
+    path: appendToPath(contextPath, subthoughtId || idNew),
     values: _values.slice(1),
   })
 
   // after recursion, delete empty descendants
   return values.length > 1 && subthoughtId && !hasChildren(stateNew, subthoughtId)
-    ? deleteThought(stateNew, { pathParent: path, thoughtId: subthoughtId })
+    ? deleteThought(stateNew, { pathParent: contextPath, thoughtId: subthoughtId })
     : stateNew
 }
 

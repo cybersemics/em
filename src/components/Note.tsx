@@ -22,12 +22,13 @@ import useFreshCallback from '../hooks/useFreshCallback'
 import { firstVisibleChild } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import noteValue from '../selectors/noteValue'
+import parentContextId from '../selectors/parentContextId'
 import resolveNoteKey from '../selectors/resolveNoteKey'
 import resolveNotePath from '../selectors/resolveNotePath'
 import store from '../stores/app'
 import appendToPath from '../util/appendToPath'
 import equalPathHead from '../util/equalPathHead'
-import head from '../util/head'
+import headId from '../util/headId'
 import strip from '../util/strip'
 import useOnCut from './Editable/useOnCut'
 import FauxCaret from './FauxCaret'
@@ -45,6 +46,9 @@ const Note = React.memo(
     const dispatch = useDispatch()
     const noteRef: { current: HTMLElement | null } = useRef(null)
     const fontSize = useSelector(state => state.fontSize)
+    // The note is a metaprogramming attribute of the thought the user sees, which in the context view is the context
+    // rather than the Lexeme context. formatSelection queries the note in the DOM by this id.
+    const thoughtId = useSelector(state => parentContextId(state, path))
     const hasFocus = useSelector(state => state.noteFocus && equalPathHead(state.cursor, path))
     const [justPasted, setJustPasted] = useState(false)
     const [noteDraft, setNoteDraft] = useState<string | null>(null)
@@ -58,7 +62,7 @@ const Note = React.memo(
       preventAutoscrollEnd(noteRef.current)
       const state = store.getState()
       const targetPath = resolveNotePath(state, path)
-      const { noteId } = resolveNoteKey(state, head(path))
+      const { noteId } = resolveNoteKey(state, parentContextId(state, path))
       if (targetPath && !noteId) {
         setNoteDraft(noteValue(state, path) ?? '')
       }
@@ -110,7 +114,7 @@ const Note = React.memo(
           dispatch((dispatch, getState) => {
             const state = getState()
             const targetPath = resolveNotePath(state, path) ?? path
-            const targetThought = targetPath ? getThoughtById(state, head(targetPath)) : undefined
+            const targetThought = targetPath ? getThoughtById(state, headId(targetPath)) : undefined
 
             if (targetThought) {
               dispatch(deleteThought({ pathParent: path, thoughtId: targetThought.id }))
@@ -148,7 +152,7 @@ const Note = React.memo(
 
           const resolvedTargetPath = resolveNotePath(state, path)
           const targetPath = resolvedTargetPath ?? path
-          const { noteId } = resolveNoteKey(state, head(path))
+          const { noteId } = resolveNoteKey(state, parentContextId(state, path))
 
           if (!noteId && resolvedTargetPath) {
             const values = value.split(',').map(value => value.trim())
@@ -164,7 +168,7 @@ const Note = React.memo(
             return
           }
 
-          const noteThought = firstVisibleChild(state, head(targetPath))
+          const noteThought = firstVisibleChild(state, headId(targetPath))
 
           if (noteThought) {
             dispatch(
@@ -247,7 +251,7 @@ const Note = React.memo(
           html={noteDraft ?? note ?? ''}
           innerRef={noteRef as React.RefObject<HTMLElement>}
           aria-label='note-editable'
-          data-thought-id={head(path)}
+          data-thought-id={thoughtId}
           placeholder='Enter a note'
           className={css({
             display: 'inline-block',

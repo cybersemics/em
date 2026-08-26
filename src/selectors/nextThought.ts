@@ -7,38 +7,21 @@ import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import nextSibling from '../selectors/nextSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
-import simplifyPath from '../selectors/simplifyPath'
-import appendToPath from '../util/appendToPath'
-import head from '../util/head'
+import appendToPath, { appendContextStep } from '../util/appendToPath'
+import headId from '../util/headId'
 import isRoot from '../util/isRoot'
 import once from '../util/once'
-import parentOf from '../util/parentOf'
-
-/** Gets the next context in a context view. */
-const nextContext = (state: State, path: Path): Path | null => {
-  // use rootedParentOf(path) instead of thought.parentId since we need to cross the context view
-  const parent = getThoughtById(state, head(rootedParentOf(state, path)))
-  const contexts = parent ? getContextsSortedAndRanked(state, parent.value) : []
-  // find the thought in the context view
-  const index = contexts.findIndex(cx => getThoughtById(state, cx.id)?.parentId === head(path))
-  // get the next context
-  const nextContextId = contexts[index + 1]?.id
-  const nextContext = nextContextId ? getThoughtById(state, nextContextId) : null
-  // if next does not exist (i.e. path is the last context), call nextThought on the parent and ignore the context view to move to the next uncle in the normal view
-  return nextContext
-    ? appendToPath(parentOf(path), nextContext.parentId)
-    : nextThought(state, rootedParentOf(state, path), { ignoreChildren: true }) // eslint-disable-line @typescript-eslint/no-use-before-define
-}
+import { replaceHead } from '../util/pathStep'
+import parentContextId from './parentContextId'
 
 /** Gets the first context in a context view. */
 const firstContext = (state: State, path: Path): Path | null => {
-  const thought = getThoughtById(state, head(path))
+  const thought = getThoughtById(state, parentContextId(state, path))
   const contexts = thought ? getContextsSortedAndRanked(state, thought.value) : []
 
   // if context view is empty, move to the next thought
-  const firstContext = getThoughtById(state, contexts[0]?.id)
-  return firstContext && contexts.length > 1
-    ? appendToPath(path, firstContext.parentId)
+  return contexts.length > 1 && contexts[0]
+    ? appendContextStep(path, contexts[0].id)
     : nextThought(state, path, { ignoreChildren: true }) // eslint-disable-line @typescript-eslint/no-use-before-define
 }
 
@@ -52,39 +35,34 @@ const nextUncle = (state: State, path: Path): Path | null => {
   return isRoot(pathParent) ? null : nextThought(state, pathParent, { ignoreChildren: true })
 }
 
-/** Gets the next thought after a given path (default: cursor) whether it is a child, sibling, or uncle, and its respective contextChain.
+/** Gets the next thought after a given path (default: cursor) whether it is a child, sibling, or uncle.
  *
  * @param ignoreChildren Used to ignore the subthoughts if they have been traversed already. Useful for finding the next uncle.
  */
 const nextThought = (state: State, path?: Path, { ignoreChildren }: { ignoreChildren?: boolean } = {}): Path | null => {
   path = path || state.cursor || HOME_PATH
-  const pathParent = rootedParentOf(state, path)
-  const showContexts = isContextViewActive(state, path)
-  const showContextsParent = isContextViewActive(state, pathParent)
+  const onContextView = isContextViewActive(state, path) && !ignoreChildren
 
-  const firstChild = !ignoreChildren ? firstVisibleChild(state, head(simplifyPath(state, path))) : null
+  // children come from the thought the path lands on, which in the context view is the Lexeme context
+  const firstChild = !ignoreChildren ? firstVisibleChild(state, headId(path)) : null
 
-  const onContextView = showContexts && !ignoreChildren
-  const isEmptyContext = showContextsParent && !firstChild
+  // nextSibling reads the context view off the path's own head step, so it returns the next context when the path is a
+  // context row and the next child otherwise
   const sibling = once(() => nextSibling(state, path!))
 
-  const next =
+  return (
     // on a thought with the context view activated, move to the first context
     onContextView
       ? firstContext(state, path)
-      : // in normal view, move to the first child
+      : // move to the first child
         firstChild
         ? appendToPath(path, firstChild.id)
-        : // in the context view, move to the next context
-          isEmptyContext
-          ? nextContext(state, path)
-          : // in normal view, move to the next sibling
-            sibling()
-            ? appendToPath(parentOf(path), sibling()!.id)
-            : // otherwise, move to the next uncle
-              nextUncle(state, path)
-
-  return next
+        : // move to the next sibling, i.e. the next context when in a context view
+          sibling()
+          ? replaceHead(path, sibling()!.id)
+          : // otherwise, move to the next uncle
+            nextUncle(state, path)
+  )
 }
 
 export default nextThought

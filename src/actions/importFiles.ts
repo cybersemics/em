@@ -33,7 +33,7 @@ import addContext from '../util/addContext'
 import appendToPath from '../util/appendToPath'
 import flattenTree from '../util/flattenTree'
 import hashThought from '../util/hashThought'
-import head from '../util/head'
+import headId from '../util/headId'
 import htmlToJson from '../util/htmlToJson'
 import isAttribute from '../util/isAttribute'
 import newLexeme from '../util/newLexeme'
@@ -194,8 +194,8 @@ export const importFilesActionCreator =
     const importPath = path || HOME_PATH
     // if the destination thought is empty, then it will get destroyed by importText, so we need to calculate a new insertBefore and path for subsequent thoughts
     // these will be saved to the ResumableFile but ignored on the first thought
-    const destThought = getThoughtById(stateStart, head(importPath))
-    const destIsLeaf = !anyChild(stateStart, head(importPath))
+    const destThought = getThoughtById(stateStart, headId(importPath))
+    const destIsLeaf = !anyChild(stateStart, headId(importPath))
     const destEmpty = destThought?.value === '' && destIsLeaf
     const siblingAfter = destEmpty ? nextSibling(stateStart, importPath) : null
     const insertBeforeNew = destEmpty && !!siblingAfter
@@ -255,7 +255,7 @@ export const importFilesActionCreator =
           const relativeAncestorContext = ancestors.map(block => block.scope)
 
           // must replicate descendants before calculating baseContext and parentContext
-          await dispatch(pullDuplicateDescendants(head(path), [...relativeAncestorContext, block.scope]))
+          await dispatch(pullDuplicateDescendants(headId(path), [...relativeAncestorContext, block.scope]))
 
           const stateAfterPull = getState()
 
@@ -297,7 +297,7 @@ export const importFilesActionCreator =
           // import into parent path after empty destination thought is destroyed
           const importThoughtPath = ancestors.length === 0 && insertBeforeNew ? pathNew : parentPath
 
-          const id = head(parentPath)
+          const id = headId(parentPath)
           // Do not treat empty thoughts as duplicates: an empty thought is a placeholder with no identity, so merging
           // it into an existing empty sibling would silently drop it (e.g. pasting a series with multiple empty thoughts).
           // See https://github.com/cybersemics/em/issues/4448.
@@ -317,7 +317,7 @@ export const importFilesActionCreator =
               // delete empty destination thought
               // ...unless it is a duplicate (i.e. if the pasted parent is empty), otherwise both the destination thought will be deleted and the duplicate will be skipped, leaving no parent to insert the descendants.
               i === 0 && destEmpty && !duplicate
-                ? deleteThought({ pathParent: parentPath, thoughtId: head(importPath) })
+                ? deleteThought({ pathParent: parentPath, thoughtId: headId(importPath) })
                 : null,
               // If the thought is a duplicate, immediately update the import progress and resolve the task.
               duplicate

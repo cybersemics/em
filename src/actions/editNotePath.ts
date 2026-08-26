@@ -8,7 +8,7 @@ import getNextRank from '../selectors/getNextRank'
 import getThoughtById from '../selectors/getThoughtById'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
-import head from '../util/head'
+import headId from '../util/headId'
 import reducerFlow from '../util/reducerFlow'
 import createThought from './createThought'
 import deleteThought from './deleteThought'
@@ -22,7 +22,7 @@ interface Payload {
 
 /** Reconciles the visible children referenced by a path-based note in a single undoable action. */
 const editNotePath = (state: State, { noteOffset, path, values }: Payload): State => {
-  const parentId = head(path)
+  const parentId = headId(path)
   if (!getThoughtById(state, parentId)) return state
 
   const currentChildren = getChildrenSorted(state, parentId)

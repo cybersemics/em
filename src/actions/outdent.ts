@@ -6,16 +6,18 @@ import moveThought from '../actions/moveThought'
 import * as selection from '../device/selection'
 import findDescendant from '../selectors/findDescendant'
 import getRankAfter from '../selectors/getRankAfter'
-import isContextViewActive from '../selectors/isContextViewActive'
+import parentContextId from '../selectors/parentContextId'
 import simplifyPath from '../selectors/simplifyPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import ellipsize from '../util/ellipsize'
 import head from '../util/head'
+import headId from '../util/headId'
 import headValue from '../util/headValue'
 import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
+import { isContextStep } from '../util/pathStep'
 
 export interface outdentPayload {
   /** The caret offset within the cursor thought, read from the document before the move. Null when the caret is not in the thought's text, in which case state.cursorOffset is used instead. */
@@ -34,25 +36,26 @@ const outdent = (state: State, { selectionOffset }: outdentPayload = {}): State 
     })
   }
   // cancel if parent is readonly or unextendable
-  else if (findDescendant(state, head(parentOf(cursor)), '=readonly')) {
+  // =readonly and =unextendable belong to the thought the user sees, which in the context view is the context
+  else if (findDescendant(state, parentContextId(state, parentOf(cursor)), '=readonly')) {
     return alert(state, {
       value: `"${ellipsize(headValue(state, parentOf(cursor)) ?? 'MISSING_THOUGHT')}" is read-only so "${headValue(
         state,
         cursor,
       )}" may not be de-indented.`,
     })
-  } else if (findDescendant(state, head(parentOf(cursor)), '=unextendable')) {
+  } else if (findDescendant(state, parentContextId(state, parentOf(cursor)), '=unextendable')) {
     return alert(state, {
       value: `"${ellipsize(headValue(state, parentOf(cursor)) ?? 'MISSING_THOUGHT')}" is unextendable so "${headValue(
         state,
         cursor,
       )}" may not be de-indented.`,
     })
-  } else if (isContextViewActive(state, parentOf(cursor))) {
+  } else if (isContextStep(head(cursor))) {
     return alert(state, {
       value: `Contexts may not be de-indented in the context view.`,
     })
-  } else if (isContextViewActive(state, parentOf(parentOf(cursor)))) {
+  } else if (cursor.length > 1 && isContextStep(head(parentOf(cursor) as Path))) {
     return alert(state, {
       value: `Subthoughts may not be de-indented from their context in the context view.`,
     })
@@ -60,7 +63,7 @@ const outdent = (state: State, { selectionOffset }: outdentPayload = {}): State 
 
   const offset = (selectionOffset ?? state.cursorOffset) || 0
 
-  const cursorNew: Path = appendToPath(parentOf(parentOf(cursor)), head(cursor))
+  const cursorNew: Path = appendToPath(parentOf(parentOf(cursor)), headId(cursor))
 
   const parentPath = parentOf(simplifyPath(state, cursor))
   return moveThought(state, {
@@ -77,9 +80,13 @@ const outdent = (state: State, { selectionOffset }: outdentPayload = {}): State 
  * reaching outside of state. It must be read before the move, since moveThought re-renders the editable.
  */
 export const outdentActionCreator = (): Thunk => (dispatch, getState) => {
-  const { cursor } = getState()
+  const state = getState()
+  const { cursor } = state
+  // <Editable> labels the DOM element with the displayed thought, so the cursor must resolve the same way
   const selectionOffset =
-    cursor && selection.isOnEditable(head(cursor)) && selection.isText() ? (selection.offset() ?? 0) : null
+    cursor && selection.isOnEditable(parentContextId(state, cursor)) && selection.isText()
+      ? (selection.offset() ?? 0)
+      : null
   dispatch({ type: 'outdent', selectionOffset })
 }
 

@@ -13,8 +13,6 @@ import { MIN_CONTENT_WIDTH_EM } from '../constants'
 import { LongPressProps } from '../hooks/useLongPress'
 import attributeEquals from '../selectors/attributeEquals'
 import getThoughtById from '../selectors/getThoughtById'
-import isContextViewActive from '../selectors/isContextViewActive'
-import rootedParentOf from '../selectors/rootedParentOf'
 import theme from '../selectors/theme'
 import thoughtToPath from '../selectors/thoughtToPath'
 import dndRef from '../util/dndRef'
@@ -23,6 +21,7 @@ import isAttribute from '../util/isAttribute'
 import isDivider from '../util/isDivider'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
+import { isContextStep } from '../util/pathStep'
 import Divider from './Divider'
 import Editable from './Editable'
 import usePlaceholder from './Editable/usePlaceholder'
@@ -115,7 +114,7 @@ const StaticThought = ({
   styleAnnotation,
   updateSize,
 }: ThoughtProps) => {
-  const showContexts = useSelector(state => isContextViewActive(state, rootedParentOf(state, path)))
+  const showContexts = isContextStep(head(path))
   const fontSize = useSelector(state => state.fontSize)
   const dark = useSelector(state => theme(state) !== 'Light')
   const homeContext = isRoot(simplePath) && !isContextPending

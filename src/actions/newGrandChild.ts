@@ -6,7 +6,7 @@ import { firstVisibleChild } from '../selectors/getChildren'
 import getSetting from '../selectors/getSetting'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
-import head from '../util/head'
+import headId from '../util/headId'
 
 /**
  * Creates a new grandchild at first visible subthought.
@@ -20,7 +20,7 @@ const newGrandChild = (state: State): State => {
   // cancel if cursor is not available or tutorial has just started
   if (!cursor || (tutorial && tutorialStep === TUTORIAL_STEP_START)) return state
 
-  const firstChild = firstVisibleChild(state, head(cursor))
+  const firstChild = firstVisibleChild(state, headId(cursor))
 
   // stop if there is no visible children
   if (!firstChild) return state

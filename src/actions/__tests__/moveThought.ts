@@ -9,6 +9,7 @@ import getContexts from '../../selectors/getContexts'
 import getLexeme from '../../selectors/getLexeme'
 import getRankAfter from '../../selectors/getRankAfter'
 import pathToThought from '../../selectors/pathToThought'
+import simplifyPath from '../../selectors/simplifyPath'
 import contextToThought from '../../test-helpers/contextToThought'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
@@ -633,7 +634,7 @@ it('consistent rank between lexemeIndex and thoughtIndex on duplicate attribute 
         from: ['a', '=b'],
         to: ['=b'],
         // Note: Here new rank will be 0.5 because it's calculated between a (0) and =b (1)
-        newRank: getRankAfter(newState, contextToPath(newState, ['a'])!) as number,
+        newRank: getRankAfter(newState, simplifyPath(newState, contextToPath(newState, ['a'])!)) as number,
       }),
   ]
 

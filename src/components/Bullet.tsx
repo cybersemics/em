@@ -24,7 +24,7 @@ import calculateCursorOverlayRadius from '../util/calculateCursorOverlayRadius'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
-import parentOf from '../util/parentOf'
+import { isContextStep } from '../util/pathStep'
 import BulletPositioner from './BulletPositioner'
 
 interface BulletProps {
@@ -307,7 +307,7 @@ const Bullet = ({
     const thought = getThoughtById(state, thoughtId)
     // Do not show context as pending since it will remain pending until expanded, and the context value is already loaded so there is nothing missing from the context view UI.
     // (Another approach would be to pre-load the context children as soon as the context view is activated.)
-    const showContextsParent = isContextViewActive(state, parentOf(path))
+    const showContextsParent = isContextStep(head(path))
     return isContextPending || (!showContextsParent && (thought?.pending || thought?.generating))
   })
 

@@ -11,6 +11,7 @@ import getPrevRank from '../selectors/getPrevRank'
 import getSortPreference from '../selectors/getSortPreference'
 import getSortedRank from '../selectors/getSortedRank'
 import getThoughtById from '../selectors/getThoughtById'
+import parentContextPath from '../selectors/parentContextPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import createId from '../util/createId'
@@ -25,7 +26,11 @@ const toggleAttribute = (
   const _values = values || [value!]
   if (!path || (!value && (!values || values.length === 0))) return state
 
-  const thoughtId = head(path)
+  // An attribute belongs to the thought the user sees, which in the context view is the context rather than the
+  // Lexeme context (=pin, =view, etc. are read off the context when the row is rendered). Resolving the path once
+  // keeps the lookups, the thought that is created, and the deletions in the same context.
+  const contextPath = parentContextPath(state, path)
+  const thoughtId = head(contextPath)
 
   const firstSubthoughtId = findDescendant(state, thoughtId, _values[0])
   const idNew = createId()
@@ -41,9 +46,9 @@ const toggleAttribute = (
     }
 
     return firstThought?.value === _values[0]
-      ? deleteThought(state, { pathParent: path, thoughtId: firstThought.id })
+      ? deleteThought(state, { pathParent: contextPath, thoughtId: firstThought.id })
       : setFirstSubthought(state, {
-          path: path,
+          path: contextPath,
           value: _values[0],
         })
   }
@@ -53,7 +58,7 @@ const toggleAttribute = (
     ? state
     : createThought(state, {
         id: idNew,
-        path,
+        path: contextPath,
         value: _values[0],
         rank:
           getSortPreference(state, thoughtId).type === 'Alphabetical'
@@ -63,13 +68,13 @@ const toggleAttribute = (
 
   // recursion
   const stateNew = toggleAttribute(stateWithFirstSubthought, {
-    path: appendToPath(path, firstSubthoughtId || idNew),
+    path: appendToPath(contextPath, firstSubthoughtId || idNew),
     values: _values.slice(1),
   })
 
   // after recursion, delete empty descendants
   return firstSubthoughtId && !hasChildren(stateNew, firstSubthoughtId)
-    ? deleteThought(stateNew, { pathParent: path, thoughtId: firstSubthoughtId })
+    ? deleteThought(stateNew, { pathParent: contextPath, thoughtId: firstSubthoughtId })
     : stateNew
 }
 

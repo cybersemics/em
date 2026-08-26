@@ -3,6 +3,7 @@ import { EMPTY_SPACE, EM_TOKEN, HOME_PATH, HOME_TOKEN } from '../../constants'
 import { initialize } from '../../initialize'
 import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
+import simplifyPath from '../../selectors/simplifyPath'
 import store from '../../stores/app'
 import initStore from '../../test-helpers/initStore'
 import removeHome from '../../util/removeHome'
@@ -1072,7 +1073,8 @@ it('empty parent', async () => {
 
   store.dispatch([
     newThought({}),
-    (dispatch, getState) => dispatch(importDataActionCreator({ path: contextToPath(getState(), [''])!, text })),
+    (dispatch, getState) =>
+      dispatch(importDataActionCreator({ path: simplifyPath(getState(), contextToPath(getState(), [''])!), text })),
   ])
 
   await vi.runOnlyPendingTimersAsync()
@@ -1112,7 +1114,8 @@ p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 9.0px Helvetica; color: #000000}
 
   store.dispatch([
     newThought({ value: 'a' }),
-    (dispatch, getState) => dispatch(importDataActionCreator({ path: contextToPath(getState(), ['a'])!, html })),
+    (dispatch, getState) =>
+      dispatch(importDataActionCreator({ path: simplifyPath(getState(), contextToPath(getState(), ['a'])!), html })),
   ])
 
   await vi.runOnlyPendingTimersAsync()
@@ -1134,7 +1137,7 @@ it('paste em text with browser-injected meta charset as inline, not subthought',
     (dispatch, getState) =>
       dispatch(
         importDataActionCreator({
-          path: contextToPath(getState(), ['a'])!,
+          path: simplifyPath(getState(), contextToPath(getState(), ['a'])!),
           html: `<meta charset='utf-8'>Hello`,
           text: 'Hello',
           isEmText: true,
@@ -1161,7 +1164,7 @@ it('paste em text with formatted html and meta charset as inline', async () => {
     (dispatch, getState) =>
       dispatch(
         importDataActionCreator({
-          path: contextToPath(getState(), ['a'])!,
+          path: simplifyPath(getState(), contextToPath(getState(), ['a'])!),
           html: `<meta charset='utf-8'><b>Hello</b>`,
           text: 'Hello',
           isEmText: true,
@@ -1190,7 +1193,8 @@ it('insert single-line HTML copied from Windows desktop Chrome at end of thought
 
   store.dispatch([
     newThought({ value: 'a' }),
-    (dispatch, getState) => dispatch(importDataActionCreator({ path: contextToPath(getState(), ['a'])!, html })),
+    (dispatch, getState) =>
+      dispatch(importDataActionCreator({ path: simplifyPath(getState(), contextToPath(getState(), ['a'])!), html })),
   ])
 
   await vi.runOnlyPendingTimersAsync()
@@ -1210,7 +1214,8 @@ it('insert single-line HTML copied from Mac desktop Chrome at end of thought', a
 
   store.dispatch([
     newThought({ value: 'a' }),
-    (dispatch, getState) => dispatch(importDataActionCreator({ path: contextToPath(getState(), ['a'])!, html })),
+    (dispatch, getState) =>
+      dispatch(importDataActionCreator({ path: simplifyPath(getState(), contextToPath(getState(), ['a'])!), html })),
   ])
 
   await vi.runOnlyPendingTimersAsync()
@@ -1247,7 +1252,8 @@ bar</i></p>
 
   store.dispatch([
     newThought({ value: 'a' }),
-    (dispatch, getState) => dispatch(importDataActionCreator({ path: contextToPath(getState(), ['a'])!, html })),
+    (dispatch, getState) =>
+      dispatch(importDataActionCreator({ path: simplifyPath(getState(), contextToPath(getState(), ['a'])!), html })),
   ])
 
   await vi.runOnlyPendingTimersAsync()
@@ -1284,7 +1290,8 @@ p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 9.0px Helvetica; color: #000000}
 
   store.dispatch([
     newThought({ value: 'x' }),
-    (dispatch, getState) => dispatch(importDataActionCreator({ path: contextToPath(getState(), ['x'])!, html })),
+    (dispatch, getState) =>
+      dispatch(importDataActionCreator({ path: simplifyPath(getState(), contextToPath(getState(), ['x'])!), html })),
   ])
 
   await vi.runOnlyPendingTimersAsync()

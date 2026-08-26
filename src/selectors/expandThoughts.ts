@@ -11,11 +11,11 @@ import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import isMulticursorPath from '../selectors/isMulticursorPath'
 import simplifyPath from '../selectors/simplifyPath'
-import appendToPath from '../util/appendToPath'
+import appendToPath, { appendContextStep } from '../util/appendToPath'
 import containsURL from '../util/containsURL'
 import equalArrays from '../util/equalArrays'
 import hashPath from '../util/hashPath'
-import head from '../util/head'
+import headId from '../util/headId'
 import isAttribute from '../util/isAttribute'
 import isDescendant from '../util/isDescendant'
 import keyValueBy from '../util/keyValueBy'
@@ -27,6 +27,7 @@ import childIdsToThoughts from './childIdsToThoughts'
 import { anyChild, getAllChildrenAsThoughts } from './getChildren'
 import getContexts from './getContexts'
 import pinned from './isPinned'
+import parentContextId from './parentContextId'
 import rootedParentOf from './rootedParentOf'
 
 /** Returns true if a thought is marked as done. */
@@ -40,11 +41,16 @@ const childrenPinned = (state: State, id: ThoughtId): boolean | null => {
   return pinned(state, childrenAttributeId)
 }
 
+/** Builds the Path of a rendered child, recording the context-view boundary when the child is a context rather than an ordinary child. In the context view the child is the Lexeme context, e.g. b/m for the row a/m~/b. */
+const childPathOf = (path: Path, childId: ThoughtId, showContexts: boolean): Path =>
+  showContexts ? appendContextStep(path, childId) : unroot(appendToPath(path, childId))
+
 /** Returns true if the context is in table view. */
 const isTable = (state: State, id: ThoughtId) => attributeEquals(state, id, '=view', 'Table')
 
 /** Returns true if the context is the first column in a table view. */
-const isTableColumn1 = (state: State, path: Path) => attributeEquals(state, head(parentOf(path)), '=view', 'Table')
+const isTableColumn1 = (state: State, path: Path) =>
+  path.length > 1 && attributeEquals(state, parentContextId(state, parentOf(path) as Path), '=view', 'Table')
 
 /**
  * Check for =publish/=attributes/=children/=pin in publish mode.
@@ -85,22 +91,23 @@ function expandThoughtsRecursive(
   }
 
   const simplePath = !path || path.length === 0 ? HOME_PATH : simplifyPath(state, path)
-  const thoughtId = head(path)
+  // metaprogramming attributes (=children, =descendants, =pin, =view, =publish) are read off the thought the user sees,
+  // which in the context view is the context rather than the Lexeme context
+  const thoughtId = parentContextId(state, path)
   const thought = getThoughtById(state, thoughtId)
 
   const showContexts = isContextViewActive(state, path)
   const childrenUnfiltered = showContexts
     ? childIdsToThoughts(state, thought ? getContexts(state, thought.value) : [])
-    : // when getting normal view children, make sure to use simplePath head rather than path head
-      // otherwise it will retrieve the children of the context view, not the children of the context instance
-      // See ContextView test "Expand grandchildren of contexts"
-      getAllChildrenAsThoughts(state, head(simplePath))
+    : // headId is the Lexeme context inside a context view, so this retrieves its children rather
+      // than of the context. See ContextView test "Expand grandchildren of contexts"
+      getAllChildrenAsThoughts(state, headId(path))
 
   // Note: A path that is ancestor of the expansion path or expansion path itself should always be expanded.
   const visibleChildren = state.showHiddenThoughts
     ? childrenUnfiltered
     : childrenUnfiltered.filter(child => {
-        const childPath = unroot([...path, child.id])
+        const childPath = childPathOf(path, child.id, showContexts)
 
         /** Check of the path is the ancestor of the expansion path. */
         const isAncestor = () => isDescendant(childPath, expansionBasePath)
@@ -125,7 +132,7 @@ function expandThoughtsRecursive(
     !containsURL(grandchild.value) &&
     // Do not expand only child when parent's subthoughts are pinned.
     // https://github.com/cybersemics/em/issues/1732
-    !childrenPinned(state, head(parentOf(path))) &&
+    !(path.length > 1 && childrenPinned(state, parentContextId(state, parentOf(path)))) &&
     // do not expand if thought or parent's subthoughts have =pin/false or =done
     pinned(state, visibleChildren[0].id) !== false &&
     !isDone(state, visibleChildren[0].id) &&
@@ -137,7 +144,7 @@ function expandThoughtsRecursive(
         visibleChildren
       : // some children expanded
         visibleChildren.filter(child => {
-          const childPath = path ? appendToPath(path, showContexts ? child.parentId : child.id) : ([child.id] as Path)
+          const childPath = childPathOf(path, child.id, showContexts)
 
           /** Check if the path is equal to the expansion path. */
           const isExpansionBasePath = () => equalArrays(childPath, expansionBasePath)
@@ -175,7 +182,7 @@ function expandThoughtsRecursive(
   return keyValueBy(
     childrenExpanded,
     childOrContext => {
-      const newPath = unroot([...path, showContexts ? childOrContext.parentId : childOrContext.id])
+      const newPath = childPathOf(path, childOrContext.id, showContexts)
       // do not propagate =descendants/=pin into the context view, since the contexts' subtrees are outside the pinned subtree
       return expandThoughtsRecursive(state, expansionBasePath, newPath, showContexts ? null : descendantsPinned)
     },
@@ -196,8 +203,8 @@ function expandThoughts(state: State, path: Path | null): Index<Path>
  * }
  */
 function expandThoughts(state: State, path: Path | null): Index<Path | Context> {
-  if (path && !getThoughtById(state, head(path))) {
-    throw new Error(`Invalid path ${path}. No thought found with id ${head(path)}`)
+  if (path && !getThoughtById(state, headId(path))) {
+    throw new Error(`Invalid path ${path}. No thought found with id ${headId(path)}`)
   }
 
   // A selected thought expands only its ancestors, never itself, so that it stays collapsed while

@@ -11,6 +11,7 @@ import getSetting from '../../selectors/getSetting'
 import ellipsize from '../../util/ellipsize'
 import hashPath from '../../util/hashPath'
 import head from '../../util/head'
+import headId from '../../util/headId'
 import headValue from '../../util/headValue'
 import parentOf from '../../util/parentOf'
 import pathToContext from '../../util/pathToContext'
@@ -23,11 +24,11 @@ const TutorialStepAutoExpand = () => {
   const tutorialStep = useSelector(state => +getSetting(state, 'Tutorial Step')!)
   const dispatch = useDispatch()
   const isCursorLeaf = useSelector(state => {
-    const cursorChildren = cursor ? getAllChildrenAsThoughts(state, head(cursor)) : []
+    const cursorChildren = cursor ? getAllChildrenAsThoughts(state, headId(cursor)) : []
     return cursorChildren.length === 0
   })
   const cursorChildValue = useSelector(state => {
-    const cursorChildren = cursor ? getAllChildrenAsThoughts(state, head(cursor)) : []
+    const cursorChildren = cursor ? getAllChildrenAsThoughts(state, headId(cursor)) : []
     return cursorChildren[0]?.value
   })
   const contextAncestor = cursor ? (isCursorLeaf ? parentOf(parentOf(cursor)) : parentOf(cursor)) : []

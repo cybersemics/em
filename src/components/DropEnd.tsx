@@ -13,12 +13,14 @@ import dropHoverColor from '../selectors/dropHoverColor'
 import { getChildrenSorted } from '../selectors/getChildren'
 import getSortPreference from '../selectors/getSortPreference'
 import getThoughtById from '../selectors/getThoughtById'
+import parentContextId from '../selectors/parentContextId'
 import rootedParentOf from '../selectors/rootedParentOf'
 import calculateCliffDropTargetHeight from '../util/calculateCliffDropTargetHeight'
 import { compareReasonable } from '../util/compareThought'
 import dndRef from '../util/dndRef'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
+import headId from '../util/headId'
 import isRoot from '../util/isRoot'
 import strip from '../util/strip'
 import DragOnly from './DragOnly'
@@ -46,7 +48,9 @@ const DropEnd = ({
   if (!path) {
     throw new Error('path required')
   }
-  const thoughtId = head(path)
+  // the drop destination, i.e. the thought the path lands on. In the context view that is the Lexeme context, whose
+  // children the drop-end sits beneath.
+  const thoughtId = headId(path)
   const isRootPath = isRoot(path)
   const value = useSelector(state => getThoughtById(state, thoughtId)?.value) ?? ''
   // Simulated drag snapshots need a human-readable root label, but the canonical Home value remains HOME_TOKEN.
@@ -54,7 +58,7 @@ const DropEnd = ({
   const dropHoverColorValue = useSelector(state => dropHoverColor(state, depth + 1))
 
   const isParentTableCol1 = useSelector(state =>
-    attributeEquals(state, head(rootedParentOf(state, path)), '=view', 'Table'),
+    attributeEquals(state, parentContextId(state, rootedParentOf(state, path)), '=view', 'Table'),
   )
 
   const { isHovering, dropTarget } = useDragAndDropSubThought({ path })

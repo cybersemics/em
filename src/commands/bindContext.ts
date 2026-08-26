@@ -2,9 +2,8 @@ import Command from '../@types/Command'
 import { toggleAttributeActionCreator as toggleAttribute } from '../actions/toggleAttribute'
 import BindContextIcon from '../components/icons/BindContextIcon'
 import isContextViewActive from '../selectors/isContextViewActive'
-import lastThoughtsFromContextChain from '../selectors/lastThoughtsFromContextChain'
 import rootedParentOf from '../selectors/rootedParentOf'
-import splitChain from '../selectors/splitChain'
+import simplifyPath from '../selectors/simplifyPath'
 import isDocumentEditable from '../util/isDocumentEditable'
 import pathToContext from '../util/pathToContext'
 
@@ -30,8 +29,7 @@ const bindContextCommand = {
 
     if (!cursor || !isContextViewActive(state, path)) return
 
-    const contextChain = splitChain(state, cursor)
-    const contextBound = pathToContext(state, lastThoughtsFromContextChain(state, contextChain))
+    const contextBound = pathToContext(state, simplifyPath(state, cursor))
 
     dispatch(
       toggleAttribute({

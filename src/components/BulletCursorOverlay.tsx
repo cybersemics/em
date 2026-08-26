@@ -10,13 +10,13 @@ import attributeEquals from '../selectors/attributeEquals'
 import { findAnyChild, getChildrenRanked } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursor from '../selectors/hasMulticursor'
-import isContextViewActive from '../selectors/isContextViewActive'
+import parentContextId from '../selectors/parentContextId'
 import rootedParentOf from '../selectors/rootedParentOf'
 import calculateCursorOverlayRadius from '../util/calculateCursorOverlayRadius'
 import equalThoughtRanked from '../util/equalThoughtRanked'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
-import parentOf from '../util/parentOf'
+import { isContextStep } from '../util/pathStep'
 import BulletPositioner from './BulletPositioner'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
 import ThoughtAnnotationWrapper from './ThoughtAnnotationWrapper'
@@ -103,7 +103,9 @@ export default function BulletCursorOverlay({
   leaf,
 }: BulletCursorOverlayProps) {
   const value: string | undefined = useSelector(state => {
-    const thought = getThoughtById(state, head(path))
+    // the =children/=grandchildren/=bullet guards below apply to the thought the user sees, which in the context view
+    // is the context rather than the Lexeme context
+    const thought = getThoughtById(state, parentContextId(state, path))
     return thought?.value || ''
   })
 
@@ -134,7 +136,7 @@ export default function BulletCursorOverlay({
     equalChildren,
   )
 
-  const isInContextView = useSelector(state => isContextViewActive(state, parentOf(path)))
+  const isInContextView = isContextStep(head(path))
 
   const hideBullet = useHideBullet({
     children,

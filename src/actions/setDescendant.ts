@@ -6,6 +6,7 @@ import createThought from '../actions/createThought'
 import setFirstSubthought from '../actions/setFirstSubthought'
 import findDescendant from '../selectors/findDescendant'
 import getPrevRank from '../selectors/getPrevRank'
+import parentContextPath from '../selectors/parentContextPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import createId from '../util/createId'
@@ -23,14 +24,18 @@ const setDescendant = (state: State, { path, value, values }: setDescendantPaylo
   const _values = values || [value!]
   if (!value && (!values || values.length === 0)) return state
 
-  const thoughtId = head(path)
+  // The descendants set here are metaprogramming attributes (=note, =pin, =style, ...), which belong to the thought
+  // the user sees, i.e. the context rather than the Lexeme context in the context view. Resolving the path once keeps
+  // the lookup and the thoughts that are created below in the same context.
+  const contextPath = parentContextPath(state, path)
+  const thoughtId = head(contextPath)
   const firstSubthoughtId = findDescendant(state, thoughtId, _values[0])
   const idNew = createId()
 
   // base case: overwrite the first subthought with the last value in the sequence
   if (_values.length === 1) {
     return setFirstSubthought(state, {
-      path: path,
+      path: contextPath,
       value: _values[0],
     })
   }
@@ -40,14 +45,14 @@ const setDescendant = (state: State, { path, value, values }: setDescendantPaylo
     ? state
     : createThought(state, {
         id: idNew,
-        path,
+        path: contextPath,
         value: _values[0],
         rank: getPrevRank(state, thoughtId),
       })
 
   // recursion
   return setDescendant(stateWithFirstSubthought, {
-    path: appendToPath(path, firstSubthoughtId || idNew),
+    path: appendToPath(contextPath, firstSubthoughtId || idNew),
     values: _values.slice(1),
   })
 }

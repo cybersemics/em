@@ -1,6 +1,5 @@
 import _ from 'lodash'
 import Path from '../@types/Path'
-import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import Thunk from '../@types/Thunk'
@@ -15,20 +14,20 @@ import findDescendant from '../selectors/findDescendant'
 import { findAnyChild, getAllChildren } from '../selectors/getChildren'
 import getPrevRank from '../selectors/getPrevRank'
 import getThoughtById from '../selectors/getThoughtById'
-import isContextViewActive from '../selectors/isContextViewActive'
-import lastThoughtsFromContextChain from '../selectors/lastThoughtsFromContextChain'
 import nextSibling from '../selectors/nextSibling'
 import prevSibling from '../selectors/prevSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
-import splitChain from '../selectors/splitChain'
+import simplifyPath from '../selectors/simplifyPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import equalThoughtValue from '../util/equalThoughtValue'
 import head from '../util/head'
+import headId from '../util/headId'
 import isDescendantPath from '../util/isDescendantPath'
 import isDivider from '../util/isDivider'
 import isThoughtArchived from '../util/isThoughtArchived'
 import parentOf from '../util/parentOf'
+import { isContextStep } from '../util/pathStep'
 import pathToContext from '../util/pathToContext'
 import reducerFlow from '../util/reducerFlow'
 import unroot from '../util/unroot'
@@ -43,10 +42,10 @@ export const pathAndRankToArchive = (
   path: Path
   rank: number
 } | null => {
-  const rankedArchive = findAnyChild(state, head(pathParent), equalThoughtValue('=archive'))
+  const rankedArchive = findAnyChild(state, headId(pathParent), equalThoughtValue('=archive'))
   if (!rankedArchive) return null
   const archivePath = rankedArchive ? appendToPath(parentOf(path), rankedArchive.id) : parentOf(path)
-  const newRank = getPrevRank(state, head(archivePath))
+  const newRank = getPrevRank(state, headId(archivePath))
   return {
     path: [...parentOf(path), rankedArchive.id, head(path)],
     rank: newRank,
@@ -62,10 +61,10 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
 
   if (!path) return state
 
-  const contextChain = splitChain(state, path)
-  // Only rewrite the operation if the path actually crosses the context view. A SimplePath such as a/m/x is not rewritten even though a context view is active on its parent a/m, otherwise the rewrite would recurse infinitely on the same path.
-  const showContexts = contextChain.length > 1 && isContextViewActive(state, rootedParentOf(state, path))
-  const simplePath = contextChain.length > 1 ? lastThoughtsFromContextChain(state, contextChain) : (path as SimplePath)
+  // The head step says whether this position was reached by crossing a context view, so a SimplePath such as a/m/x is
+  // never rewritten even when a context view is active on its parent a/m.
+  const showContexts = isContextStep(head(path))
+  const simplePath = simplifyPath(state, path)
 
   // rewrite context view operaton in terms of normal view and update cursor
   if (showContexts) {
@@ -89,7 +88,7 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
   const isEmpty = thought.value === ''
   const isArchive = thought.value === '=archive'
   const isArchived = isThoughtArchived(state, path)
-  const hasDescendants = getAllChildren(state, head(path)).length !== 0
+  const hasDescendants = getAllChildren(state, headId(path)).length !== 0
   const isDeletable = (isEmpty && !hasDescendants) || isArchive || isArchived || isDivider(thought.value)
 
   // prev must be calculated before dispatching deleteThought

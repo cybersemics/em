@@ -6,8 +6,8 @@ import FavoritesIcon from '../components/icons/FavoritesIcon'
 import findDescendant from '../selectors/findDescendant'
 import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursor from '../selectors/hasMulticursor'
+import parentContextId from '../selectors/parentContextId'
 import ellipsize from '../util/ellipsize'
-import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 const favorite = {
@@ -19,7 +19,9 @@ const favorite = {
   multicursor: {
     onComplete(filteredCursors, dispatch, getState) {
       const state = getState()
-      const cursorFavorites = filteredCursors.filter(cursor => findDescendant(state, head(cursor), '=favorite')).length
+      const cursorFavorites = filteredCursors.filter(cursor =>
+        findDescendant(state, parentContextId(state, cursor), '=favorite'),
+      ).length
 
       dispatch(
         alert(
@@ -38,7 +40,7 @@ const favorite = {
   isActive: state => {
     const cursor = state.cursor
     if (!cursor) return false
-    const id = head(cursor)
+    const id = parentContextId(state, cursor)
     const isFavorite = findDescendant(state, id, '=favorite')
     return !!isFavorite
   },
@@ -46,7 +48,8 @@ const favorite = {
   exec: (dispatch, getState) => {
     const state = getState()
     const cursor = state.cursor!
-    const id = head(cursor)
+    // =favorite is set on the thought the user sees, which in the context view is the context rather than the Lexeme context
+    const id = parentContextId(state, cursor)
     const thought = getThoughtById(state, id)
     if (!thought) return
     const isFavorite = findDescendant(state, id, '=favorite')

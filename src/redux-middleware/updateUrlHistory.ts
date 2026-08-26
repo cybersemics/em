@@ -11,8 +11,9 @@ import { updateCommandState } from '../stores/commandStateStore'
 import storageModel from '../stores/storageModel'
 import equalArrays from '../util/equalArrays'
 import equalPath from '../util/equalPath'
-import head from '../util/head'
+import hashPath from '../util/hashPath'
 import isRoot from '../util/isRoot'
+import { stepId } from '../util/pathStep'
 
 /** Time delay (ms) to throttle the updateUrlHistory middleware so it is not executed on every action. */
 const THROTTLE_MIDDLEWARE = 100
@@ -33,8 +34,10 @@ const pathToUrl = (state: State, path: Path) => {
   const userId = window.location.pathname.split('/')[1] || '~'
   const queryString = window.location.search
   const thoughtsEncoded = path
-    // Note: Since thouhtId is a uuid, so they are url safe
-    .map((thoughtId, i) => thoughtId + (isContextViewActive(state, path.slice(0, i + 1) as Path) ? '~' : ''))
+    // Note: Since thoughtId is a uuid, they are url safe. A context step contributes the id of its Lexeme context,
+    // which is what decodeThoughtsUrl reconstructs the step from. The `~` suffix marks that the context view is active
+    // on that component, and therefore that the next component crosses it.
+    .map((step, i) => stepId(step) + (isContextViewActive(state, path.slice(0, i + 1) as Path) ? '~' : ''))
     .join('/')
 
   return `/${userId}/${thoughtsEncoded}${queryString}`
@@ -91,7 +94,8 @@ const updateUrlHistory = (state: State, path: Path) => {
   pathPrev = path
 
   const decoded = decodeThoughtsUrl(state)
-  const encoded = head(path || HOME_PATH)
+  // state.contextViews and the decoded map are both keyed by hashPath
+  const encoded = hashPath(path || HOME_PATH)
 
   // convert decoded root thought to null cursor
   const decodedPath = decoded.path || [HOME_TOKEN]

@@ -1,7 +1,6 @@
 import _ from 'lodash'
 import Path from '../@types/Path'
 import PushBatch from '../@types/PushBatch'
-import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import Thunk from '../@types/Thunk'
@@ -20,7 +19,6 @@ import mergeUpdates from '../util/mergeUpdates'
 import reducerFlow from '../util/reducerFlow'
 
 export type UpdateThoughtsOptions = Omit<PushBatch, 'lexemeIndexUpdatesOld'> & {
-  contextChain?: SimplePath[]
   cursorOffset?: number
   // callback for when the updates have been synced with IDB
   idbSynced?: () => void

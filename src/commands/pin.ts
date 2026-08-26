@@ -6,8 +6,7 @@ import PinIcon from '../components/icons/PinIcon'
 import { HOME_PATH } from '../constants'
 import hasMulticursor from '../selectors/hasMulticursor'
 import isPinned from '../selectors/isPinned'
-import simplifyPath from '../selectors/simplifyPath'
-import head from '../util/head'
+import parentContextId from '../selectors/parentContextId'
 
 const pinCommand = {
   id: 'pin',
@@ -34,7 +33,7 @@ const pinCommand = {
     // if the user used the keyboard to activate the command, show an alert describing the sort direction
     // since the user won't have the visual feedbavk from the toolbar due to the toolbar hiding logic
     if (type === 'keyboard') {
-      const pinned = isPinned(state, head(cursor))
+      const pinned = isPinned(state, parentContextId(state, cursor))
       dispatch(alert(pinned ? 'Unpinned thought' : 'Pinned thought'))
     }
 
@@ -42,8 +41,8 @@ const pinCommand = {
   },
   isActive: state => {
     const { cursor } = state
-    const path = cursor ? simplifyPath(state, cursor) : HOME_PATH
-    return !!isPinned(state, head(path))
+    // =pin is set on the thought the user sees, which in the context view is the context rather than the Lexeme context
+    return !!isPinned(state, parentContextId(state, cursor ?? HOME_PATH))
   },
 } satisfies Command
 

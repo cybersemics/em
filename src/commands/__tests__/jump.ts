@@ -9,7 +9,7 @@ import { editThoughtByContextActionCreator as editThought } from '../../test-hel
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
-import head from '../../util/head'
+import headId from '../../util/headId'
 
 /**
  * Use fake timers inside initStore function to ensure that cursor scrolling helpers complete.
@@ -357,7 +357,7 @@ describe('jump back', () => {
         dispatch(
           deleteThought({
             pathParent: state.cursor!,
-            thoughtId: head(state.cursor!),
+            thoughtId: headId(state.cursor!),
           }),
         )
       },
@@ -387,7 +387,7 @@ describe('jump back', () => {
         dispatch(
           deleteThought({
             pathParent: state.cursor!,
-            thoughtId: head(state.cursor!),
+            thoughtId: headId(state.cursor!),
           }),
         )
       },
@@ -588,7 +588,7 @@ describe('jump forward', () => {
         dispatch(
           deleteThought({
             pathParent: state.cursor!,
-            thoughtId: head(state.cursor!),
+            thoughtId: headId(state.cursor!),
           }),
         )
       },

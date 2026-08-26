@@ -1,13 +1,14 @@
 import State from '../../@types/State'
 import importText from '../../actions/importText'
 import toggleContextView from '../../actions/toggleContextView'
-import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import contextToPath from '../../selectors/contextToPath'
 import addMulticursor from '../../test-helpers/addMulticursorAtFirstMatch'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
+import expectRenderedPath from '../../test-helpers/expectRenderedPath'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import hashPath from '../../util/hashPath'
 import initialState from '../../util/initialState'
+import pathToContext from '../../util/pathToContext'
 import reducerFlow from '../../util/reducerFlow'
 import categorize from '../categorize'
 import cursorBack from '../cursorBack'
@@ -18,7 +19,7 @@ import uncategorize from '../uncategorize'
 
 /** Converts the multicursor set to a list of contexts in a readable way. */
 const multicursorContexts = (state: State): string[][] =>
-  Object.values(state.multicursors).map(path => childIdsToThoughts(state, path).map(thought => thought.value))
+  Object.values(state.multicursors).map(path => pathToContext(state, path))
 
 describe('normal view', () => {
   it('reverse cursorBack', () => {
@@ -220,6 +221,9 @@ describe('multicursor', () => {
       ['a', 'm', 'a'],
       ['a', 'm', 'b'],
     ])
+    // the Contexts alone cannot tell an ordinary child step from a context-view step, so also assert that each
+    // selected Path names a row that is actually rendered
+    Object.values(stateNew.multicursors).forEach(path => expectRenderedPath(stateNew, path))
   })
 
   it('keep a selected thought selected when it is the child of another selected thought', () => {

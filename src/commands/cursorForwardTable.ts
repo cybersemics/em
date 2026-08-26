@@ -6,6 +6,7 @@ import * as selection from '../device/selection'
 import globals from '../globals'
 import attributeEquals from '../selectors/attributeEquals'
 import { firstVisibleChild } from '../selectors/getChildren'
+import parentContextId from '../selectors/parentContextId'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
@@ -25,7 +26,7 @@ const cursorForwardTableCommand = {
     if (!cursor) return false
 
     // only applies to column-one thoughts, i.e. thoughts whose parent has =view/Table
-    const isTableCol1 = attributeEquals(state, head(rootedParentOf(state, cursor)), '=view', 'Table')
+    const isTableCol1 = attributeEquals(state, parentContextId(state, rootedParentOf(state, cursor)), '=view', 'Table')
     if (!isTableCol1) return false
 
     // only when the caret is collapsed at the end of the thought

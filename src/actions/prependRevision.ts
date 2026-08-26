@@ -6,6 +6,7 @@ import Thunk from '../@types/Thunk'
 import newThought from '../actions/newThought'
 import findDescendant from '../selectors/findDescendant'
 import { findAnyChild } from '../selectors/getChildren'
+import parentContextPath from '../selectors/parentContextPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import getPublishUrl from '../util/getPublishUrl'
@@ -14,12 +15,17 @@ import reducerFlow from '../util/reducerFlow'
 
 /** Inserts a new revision from the given CID at the top of {path}/=publish/Revisions. */
 const prependRevision = (state: State, { path, cid }: { path: Path; cid: string }) => {
+  // =publish is a metaprogramming attribute of the thought the user sees, which in the context view is the context
+  // rather than the Lexeme context. Resolving the path once keeps the lookups and the thoughts that are created below
+  // in the same context.
+  const contextPath = parentContextPath(state, path)
+
   /** Gets the =publish thought. */
-  const publishChild = (state: State) => findAnyChild(state, head(path), child => child.value === '=publish')
+  const publishChild = (state: State) => findAnyChild(state, head(contextPath), child => child.value === '=publish')
 
   /** Gets the =publish/Revisions thought. */
   const revisionsChild = (state: State): Thought | null => {
-    const publishId = findDescendant(state, head(path), '=publish')
+    const publishId = findDescendant(state, head(contextPath), '=publish')
     if (!publishId) return null
     return findAnyChild(state, publishId, child => child.value === 'Revisions') || null
   }
@@ -30,7 +36,7 @@ const prependRevision = (state: State, { path, cid }: { path: Path; cid: string 
     state =>
       !publishChild(state)
         ? newThought(state, {
-            at: path,
+            at: contextPath,
             insertNewSubthought: true,
             insertBefore: true,
             value: '=publish',
@@ -43,7 +49,7 @@ const prependRevision = (state: State, { path, cid }: { path: Path; cid: string 
     state =>
       !revisionsChild(state)
         ? newThought(state, {
-            at: appendToPath(path, publishChild(state)!.id),
+            at: appendToPath(contextPath, publishChild(state)!.id),
             insertNewSubthought: true,
             insertBefore: true,
             value: 'Revisions',
@@ -53,7 +59,7 @@ const prependRevision = (state: State, { path, cid }: { path: Path; cid: string 
 
     // insert revision url
     newThought({
-      at: appendToPath(path, publishChild(state)!.id, revisionsChild(state)!.id),
+      at: appendToPath(contextPath, publishChild(state)!.id, revisionsChild(state)!.id),
       insertNewSubthought: true,
       insertBefore: true,
       value: getPublishUrl(cid),

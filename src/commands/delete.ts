@@ -11,6 +11,7 @@ import findDescendant from '../selectors/findDescendant'
 import getThoughtById from '../selectors/getThoughtById'
 import getUserSetting from '../selectors/getUserSetting'
 import hasMulticursor from '../selectors/hasMulticursor'
+import parentContextId from '../selectors/parentContextId'
 import simplifyPath from '../selectors/simplifyPath'
 import ellipsize from '../util/ellipsize'
 import haptics from '../util/haptics'
@@ -33,7 +34,7 @@ const exec: Command['exec'] = (dispatch, getState, e, { type }) => {
 
   if (isEM(cursor) || isRoot(cursor)) {
     dispatch(error({ value: `The "${isEM(cursor) ? 'em' : 'home'} context" cannot be deleted.` }))
-  } else if (findDescendant(state, head(cursor), '=readonly')) {
+  } else if (findDescendant(state, parentContextId(state, cursor), '=readonly')) {
     dispatch(error({ value: `"${ellipsize(value)}" is read-only and cannot be deleted.` }))
   } else {
     // only activate haptics on gesture, since mobile also executes the delete command when hitting backspace on the keyboard

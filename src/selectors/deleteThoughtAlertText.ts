@@ -3,10 +3,9 @@ import State from '../@types/State'
 import ellipsize from '../util/ellipsize'
 import head from '../util/head'
 import headValue from '../util/headValue'
-import parentOf from '../util/parentOf'
+import { isContextStep } from '../util/pathStep'
 import { anyChild } from './getChildren'
 import getThoughtById from './getThoughtById'
-import isContextViewActive from './isContextViewActive'
 import simplifyPath from './simplifyPath'
 
 /** Generates the alert text for deleting or achiving a thought. Handles empty thought, note, and context view. */
@@ -20,7 +19,7 @@ const deleteThoughtAlertText = (
     archive?: boolean
   } = {},
 ): string => {
-  const showContexts = isContextViewActive(state, parentOf(path))
+  const showContexts = isContextStep(head(path))
   const simplePath = simplifyPath(state, path)
   const thought = getThoughtById(state, head(simplePath))
   const child = anyChild(state, head(simplePath))

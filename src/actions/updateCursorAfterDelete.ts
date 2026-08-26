@@ -1,22 +1,26 @@
 import { applyPatch } from 'fast-json-patch'
 import Path from '../@types/Path'
 import State from '../@types/State'
+import ThoughtId from '../@types/ThoughtId'
 import cursorBack from '../actions/cursorBack'
 import setCursor from '../actions/setCursor'
 import getContexts from '../selectors/getContexts'
 import getThoughtById from '../selectors/getThoughtById'
-import isContextViewActive from '../selectors/isContextViewActive'
 import nextContext from '../selectors/nextContext'
 import nextSibling from '../selectors/nextSibling'
+import parentContextId from '../selectors/parentContextId'
+import pathToThought from '../selectors/pathToThought'
 import prevContext from '../selectors/prevContext'
 import prevSibling from '../selectors/prevSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
-import thoughtToPath from '../selectors/thoughtToPath'
+import simplifyPath from '../selectors/simplifyPath'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
+import headId from '../util/headId'
 import headValue from '../util/headValue'
 import once from '../util/once'
 import parentOf from '../util/parentOf'
+import { isContextStep, pathIds, replaceHead } from '../util/pathStep'
 
 /** Update the cursor after it has been deleted.
  * - Sets the cursor on the next sibling, previous sibling, or parent, in that order.
@@ -31,20 +35,22 @@ const updateCursorAfterDelete = (state: State, statePrev: State) => {
   if (!cursor) return state
 
   const parentPath = rootedParentOf(statePrev, cursor)
-  const showContexts = isContextViewActive(statePrev, parentPath)
-  const simplePath = thoughtToPath(statePrev, head(cursor))
+  // the head step records whether this position was reached by crossing a context view
+  const showContexts = isContextStep(head(cursor))
+  const simplePath = simplifyPath(statePrev, cursor)
 
-  const thought = getThoughtById(statePrev, head(simplePath))
+  // the thought the user saw at the cursor, i.e. the context rather than the Lexeme context in the context view
+  const thought = pathToThought(statePrev, cursor)
 
   if (!thought) return state
 
   /** Returns true if the context view needs to be closed after deleting. Specifically, returns true if there is only one context left after the delete or if the deleted path is a cyclic context, e.g. a/m~/a. */
   const shouldCloseContextView = once(() => {
-    const parentPath = rootedParentOf(statePrev, cursor)
-    const showContexts = isContextViewActive(statePrev, parentPath)
-    const parentThought = getThoughtById(statePrev, head(parentPath))
-    const numContexts = showContexts && parentThought ? getContexts(statePrev, parentThought.value).length : 0
-    const isCyclic = head(cursor) === head(parentOf(parentOf(cursor)))
+    const contextViewThought = getThoughtById(statePrev, parentContextId(statePrev, parentPath))
+    const numContexts = showContexts && contextViewThought ? getContexts(statePrev, contextViewThought.value).length : 0
+    // a cyclic context is one whose context is the grandparent, e.g. a/m~/a
+    const isCyclic =
+      cursor.length > 2 && parentContextId(statePrev, cursor) === headId(parentOf(parentOf(cursor)) as Path)
     return isCyclic || numContexts <= 2
   })
 
@@ -56,23 +62,24 @@ const updateCursorAfterDelete = (state: State, statePrev: State) => {
         !shouldCloseContextView()
         ? prevContext(statePrev, cursor)
         : null
-      : // If context view is not enabled, get the prev thought in normal view. We need to explicitly override showContexts, otherwise prevSibling will infer that the context view is enabled and will incorrectly return the previous context.
-        prevSibling(statePrev, simplePath, { showContexts: false }),
+      : // prevSibling reads the context view off the path's own head step, which is an ordinary child step here, so it
+        // resolves in normal view without needing to be told
+        prevSibling(statePrev, cursor),
   )
 
   const next = once(() =>
-    showContexts
-      ? !shouldCloseContextView()
-        ? nextContext(statePrev, cursor)
-        : null
-      : nextSibling(statePrev, simplePath),
+    showContexts ? (!shouldCloseContextView() ? nextContext(statePrev, cursor) : null) : nextSibling(statePrev, cursor),
   )
 
   // instead of using the thought parent, use the closest valid ancestor
   // otherwise deleting a thought from a cyclic context will return an invalid cursor
   const pathParent = rootedParentOf(state, cursor)
-  const missingIndex = pathParent.findIndex(id => !getThoughtById(state, id))
+  const missingIndex = pathIds(pathParent).findIndex(id => !getThoughtById(state, id))
   const closestAncestor = missingIndex !== -1 ? (pathParent.slice(0, missingIndex) as Path) : pathParent
+
+  /** Builds the Path of a sibling of the deleted thought. When the closest valid ancestor is still the cursor's parent, the sibling is reached the same way the cursor was — which in the context view means crossing the context view. Otherwise the context-view row is gone along with its ancestor, and the sibling is an ordinary child. */
+  const siblingPath = (id: ThoughtId): Path =>
+    closestAncestor.length === cursor.length - 1 ? replaceHead(cursor, id) : appendToPath(closestAncestor, id)
 
   // If the last action was newThought (above), restore the cursor to the next thought rather than the previous.
   // If the last action was a new subthought, i.e. newThought with insertNewSubthought: true, restore the cursor to the parent.
@@ -105,12 +112,12 @@ const updateCursorAfterDelete = (state: State, statePrev: State) => {
       // Do not move the cursor to the next thought after deleting an empty thought, as it is more intuitive to move the cursor to the previous thought like a word processor.
       // this does not apply to context view or when there is a reverted cursor
       thought.value !== '' && next()
-      ? appendToPath(parentOf(cursor), next()!.id)
+      ? replaceHead(cursor, next()!.id)
       : // Case II: Set cursor on prev thought.
         // For empty thoughts, we need to fall back to next().
         // Allow revertNewSubthought to fall through to Case III (parent).
         prev() || next()
-        ? appendToPath(closestAncestor, (prev() || next())!.id)
+        ? siblingPath((prev() || next())!.id)
         : // Case III: delete last thought in context; set cursor on parent
           // if showContexts falls through here, it means either the last context was deleted or a cyclic context was deleted
           showContexts || simplePath.length > 1

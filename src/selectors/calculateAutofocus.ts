@@ -2,7 +2,7 @@ import _ from 'lodash'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import equalPath from '../util/equalPath'
-import head from '../util/head'
+import headId from '../util/headId'
 import isDescendantPath from '../util/isDescendantPath'
 import isRoot from '../util/isRoot'
 import { hasChildren } from './getChildren'
@@ -40,7 +40,8 @@ const calculateAutofocus = (state: State, path: Path) => {
 
   // Generally if the cursor is on a leaf, the autofocus should be the same as its parent.
   // This avoids a visual shift when there are no additional descendants to focus on.
-  const isCursorLeaf = !hasChildren(state, head(state.cursor))
+  // use headId so that a context in the context view is judged by the children of its Lexeme context, which are the children actually rendered beneath it
+  const isCursorLeaf = !hasChildren(state, headId(state.cursor))
 
   /** Returns true if the thought is the parent or sibling of the cursor. */
   const isParentOrSibling = () => equalPath(cursorParent, path) || equalPath(cursorParent, rootedParentOf(state, path))

@@ -17,6 +17,7 @@ import { anyChild, filterAllChildren } from '../selectors/getChildren'
 import getContexts from '../selectors/getContexts'
 import getThoughtById from '../selectors/getThoughtById'
 import getUserSetting from '../selectors/getUserSetting'
+import parentContextId from '../selectors/parentContextId'
 import rootedParentOf from '../selectors/rootedParentOf'
 import editingValueStore from '../stores/editingValue'
 import containsURL from '../util/containsURL'
@@ -216,7 +217,9 @@ const ThoughtAnnotationContainer = React.memo(
     const [calculateContexts, setCalculateContexts] = useState(false)
 
     const value: string | undefined = useSelector(state => {
-      const thought = getThoughtById(state, head(path))
+      // the value the user sees on the row, and whose contexts the superscript counts. In the context view that is the
+      // context rather than the Lexeme context.
+      const thought = getThoughtById(state, parentContextId(state, path))
       return thought?.value || ''
     })
 

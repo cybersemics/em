@@ -18,11 +18,13 @@ import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import isMulticursorPath from '../selectors/isMulticursorPath'
 import isPinned from '../selectors/isPinned'
+import parentContextId from '../selectors/parentContextId'
 import dndRef from '../util/dndRef'
 import fastClick from '../util/fastClick'
 import getBulletWidth from '../util/getBulletWidth'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
+import headId from '../util/headId'
 import isDivider from '../util/isDivider'
 import parentOf from '../util/parentOf'
 
@@ -118,15 +120,13 @@ const BulletPositioner = forwardRef<SVGSVGElement, PropsWithChildren<BulletPosit
     },
     ref,
   ) => {
-    const thoughtId = head(path)
-
     const dispatch = useDispatch()
 
     const showContexts = useSelector(state => isContextViewActive(state, path))
 
     const invalid = useSelector(state => isEditing && state.invalidState)
 
-    const bulletIsDivider = useSelector(state => isDivider(getThoughtById(state, head(path))?.value))
+    const bulletIsDivider = useSelector(state => isDivider(getThoughtById(state, parentContextId(state, path))?.value))
 
     const fontSize = useSelector(state => state.fontSize)
 
@@ -155,10 +155,10 @@ const BulletPositioner = forwardRef<SVGSVGElement, PropsWithChildren<BulletPosit
         dispatch((dispatch, getState) => {
           const state = getState()
           const isExpanded = state.expanded[hashPath(path)]
-          const children = getChildren(state, head(path))
+          const children = getChildren(state, headId(path))
           const shouldCollapse = isExpanded && children.length > 0
           const pathParent = path.length > 1 ? parentOf(path) : null
-          const parentChildren = pathParent ? getChildren(state, head(pathParent)) : null
+          const parentChildren = pathParent ? getChildren(state, headId(pathParent)) : null
           // if thought is not expanded, set the cursor on the thought
           // if thought is expanded, collapse it by moving the cursor to its parent
           dispatch([
@@ -166,10 +166,12 @@ const BulletPositioner = forwardRef<SVGSVGElement, PropsWithChildren<BulletPosit
             ...(isExpanded &&
             (!pathParent ||
               parentChildren?.length === 1 ||
-              findDescendant(state, pathParent && head(pathParent), ['=children', '=pin', 'true']) ||
-              // =descendants/=pin propagates from any ancestor; the nearest ancestor that sets it wins
+              findDescendant(state, pathParent && parentContextId(state, pathParent), ['=children', '=pin', 'true']) ||
+              // =descendants/=pin propagates from any ancestor; the nearest ancestor that sets it wins.
+              // Each ancestor's attributes belong to the thought displayed there, which in the context view is the
+              // context rather than the Lexeme context.
               parentOf(path)
-                .slice()
+                .map((step, i) => parentContextId(state, path.slice(0, i + 1) as Path))
                 .reverse()
                 .reduce<boolean | null>(
                   (accum, id) => accum ?? isPinned(state, findDescendant(state, id, '=descendants')),
@@ -186,7 +188,7 @@ const BulletPositioner = forwardRef<SVGSVGElement, PropsWithChildren<BulletPosit
     )
 
     // check if the thought is pinned
-    const isThoughtPinned = useSelector(state => !!isPinned(state, thoughtId))
+    const isThoughtPinned = useSelector(state => !!isPinned(state, parentContextId(state, path)))
 
     const isExpanded = useSelector(state => !!state.expanded[hashPath(path)])
     // A selected thought stays collapsed even when it is the cursor, so state.expanded alone determines

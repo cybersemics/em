@@ -14,11 +14,13 @@ import { getChildren } from '../selectors/getChildren'
 import getContexts from '../selectors/getContexts'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
+import parentContextId from '../selectors/parentContextId'
 import thoughtToPath from '../selectors/thoughtToPath'
 import syncStatusStore from '../stores/syncStatus'
 import equalArrays from '../util/equalArrays'
+import hashPath from '../util/hashPath'
 import hashThought from '../util/hashThought'
-import head from '../util/head'
+import headId from '../util/headId'
 import keyValueBy from '../util/keyValueBy'
 
 /** Debounce visible thought checks to avoid checking on every action. */
@@ -46,18 +48,24 @@ const expandPullQueue = (state: State): Record<ThoughtId, true> => {
     ...state.expanded,
     // generate the cursor and all its ancestors
     // i.e. ['a', b', 'c'], ['a', 'b'], ['a']
+    // keyed by hashPath to match state.expanded; keying ancestors by a bare id would put two incompatible key spaces
+    // in the same object and defeat the deduplication this merge exists for
     ...keyValueBy(path, (value, i) => {
       const pathAncestor = path.slice(0, path.length - i) as Path
-      return pathAncestor.length > 0 ? { [head(pathAncestor)]: pathAncestor } : null
+      return pathAncestor.length > 0 ? { [hashPath(pathAncestor)]: pathAncestor } : null
     }),
   }
 
   return keyValueBy(expandedPaths, (key, path) => {
-    const thoughtId = head(path)
+    // the thought the path lands on, i.e. the Lexeme context in the context view, whose children are the ones rendered
+    const thoughtId = headId(path)
     const thought = getThoughtById(state, thoughtId)
     if (!thought) return null
 
     const showContexts = isContextViewActive(state, path)
+    // the context view lists the contexts of the thought the row displays, which is the context rather than the
+    // Lexeme context when the row is itself inside a context view
+    const contextViewThought = showContexts ? getThoughtById(state, parentContextId(state, path)) : null
 
     // get visible children
     const children = getChildren(state, thoughtId)
@@ -77,7 +85,10 @@ const expandPullQueue = (state: State): Record<ThoughtId, true> => {
             // We need to get the available ancestor ids every updatePullQueue in order to continue triggering pull.
             // Otherwise context ancestors may never be pulled.
             // See: https://github.com/cybersemics/em/issues/2797
-            getContexts(state, thought.value).flatMap(cxid => [...thoughtToPath(state, cxid), cxid]),
+            getContexts(state, contextViewThought?.value ?? thought.value).flatMap(cxid => [
+              ...thoughtToPath(state, cxid),
+              cxid,
+            ]),
             cxid => ({ [cxid]: true }),
           )
         : null),

@@ -11,7 +11,7 @@ import Icon from '../components/icons/NewSubthoughtIcon'
 import { getChildrenRanked } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import appendToPath from '../util/appendToPath'
-import head from '../util/head'
+import headId from '../util/headId'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 const exec = newThought({ insertNewSubthought: true })
@@ -26,7 +26,9 @@ const multicursor: Command['multicursor'] = {
 
     // The new subthought is inserted with the highest rank in each selected thought, including in a sorted context.
     const newSubthoughtPaths = filteredCursors.reduce<Path[]>((accum, path) => {
-      const lastChild = getThoughtById(state, head(path)) ? _.last(getChildrenRanked(state, head(path))) : null
+      // the subthought is created under the thought the path lands on, which in the context view is the Lexeme context
+      const id = headId(path)
+      const lastChild = getThoughtById(state, id) ? _.last(getChildrenRanked(state, id)) : null
       return lastChild ? [...accum, appendToPath(path, lastChild.id)] : accum
     }, [])
 

@@ -6,8 +6,10 @@ import getThoughtBefore from '../selectors/getThoughtBefore'
 import prevSibling from '../selectors/prevSibling'
 import simplifyPath from '../selectors/simplifyPath'
 import appendToPath from '../util/appendToPath'
+import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
 import parentOf from '../util/parentOf'
+import { isContextStep } from '../util/pathStep'
 
 const moveThoughtUpCommand = {
   id: 'moveThoughtUp',
@@ -28,7 +30,12 @@ const moveThoughtUpCommand = {
     const prevThought = prevSibling(state, cursor)
 
     // if the cursor is on the first thought, move the thought to the end of its prev uncle
-    const prevUncleThought = pathParent.length > 0 ? getThoughtBefore(state, simplifyPath(state, pathParent)) : null
+    // A context row's siblings are the other contexts, so a thought inside one has no uncle to move into — doing so
+    // would take it out of the context view entirely. Decline rather than build a Path that names no rendered row.
+    const prevUncleThought =
+      pathParent.length > 0 && !isContextStep(head(pathParent))
+        ? getThoughtBefore(state, simplifyPath(state, pathParent))
+        : null
     const prevUnclePath = prevUncleThought ? appendToPath(parentOf(pathParent), prevUncleThought.id) : null
 
     return !!prevThought || !!prevUnclePath

@@ -5,12 +5,11 @@ import { undoActionCreator as undo } from '../../actions/undo'
 import { resetLastCommand } from '../../commands'
 import { EMPTY_SPACE, HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
-import getThoughtById from '../../selectors/getThoughtById'
+import pathToThought from '../../selectors/pathToThought'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
-import head from '../../util/head'
 
 beforeEach(async () => {
   await createTestApp()
@@ -29,7 +28,7 @@ const keyDown = async (key: string, { alt, meta }: { alt?: boolean; meta?: boole
 /** Returns the value of the cursor thought. */
 const cursorValue = (): string => {
   const state = store.getState()
-  return getThoughtById(state, head(state.cursor!))!.value
+  return pathToThought(state, state.cursor!)!.value
 }
 
 it('applies the text color of the pressed shortcut', async () => {

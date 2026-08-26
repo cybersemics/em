@@ -1,11 +1,10 @@
 import _ from 'lodash'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
-import getThoughtById from '../selectors/getThoughtById'
+import parentContextPath from '../selectors/parentContextPath'
+import pathToThought from '../selectors/pathToThought'
 import selectionOffsets from '../selectors/selectionOffsets'
-import simplifyPath from '../selectors/simplifyPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
-import head from '../util/head'
 import reducerFlow from '../util/reducerFlow'
 import alert from './alert'
 import editThought from './editThought'
@@ -27,7 +26,7 @@ const extractSubthought = (state: State, { selectionStart, selectionEnd }: extra
     return alert(state, { value: 'No text selected to extract' })
   }
 
-  const cursorThought = getThoughtById(state, head(cursor))
+  const cursorThought = pathToThought(state, cursor)
 
   if (!cursorThought) {
     console.warn('Cursor thought not found!')
@@ -42,7 +41,8 @@ const extractSubthought = (state: State, { selectionStart, selectionEnd }: extra
     editThought({
       oldValue: value,
       newValue,
-      path: simplifyPath(state, cursor),
+      // the thought the user sees, which in the context view is the context rather than the Lexeme context
+      path: parentContextPath(state, cursor),
       force: true,
       cursorOffset: state.cursorOffset != null ? state.cursorOffset - (value.length - newValue.length) : undefined,
     }),

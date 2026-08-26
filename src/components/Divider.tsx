@@ -9,29 +9,34 @@ import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { DIVIDER_MIN_WIDTH } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import parentContextId from '../selectors/parentContextId'
 import rootedParentOf from '../selectors/rootedParentOf'
 import editingValueUntrimmedStore from '../stores/editingValueUntrimmed'
 import viewportStore, { ViewportState } from '../stores/viewport'
 import equalPath from '../util/equalPath'
 import fastClick from '../util/fastClick'
 import head from '../util/head'
+import headId from '../util/headId'
 import isDivider from '../util/isDivider'
 
 /** Custom hook to fetch thought IDs that affect the divider width. */
 const useWidthDependentThoughtIds = (path: Path): ThoughtId[] => {
   return useSelector((state: State) => {
     const parentPath = rootedParentOf(state, path)
-    const parentId = head(parentPath)
-    const grandParentPath = parentId ? rootedParentOf(state, parentPath) : null
-    const grandParentId = grandParentPath ? head(grandParentPath) : null
-    const children = parentId ? getAllChildrenAsThoughts(state, parentId) : []
+    // the siblings whose widths determine the divider width are the children of the thought the ancestor path lands on,
+    // whereas =view is read from the thought displayed there. Outside the context view they are the same thought.
+    const parentId = headId(parentPath)
+    const grandParentPath = rootedParentOf(state, parentPath)
+    const grandParentId = headId(grandParentPath)
+    const children = getAllChildrenAsThoughts(state, parentId)
     const childrenWithoutDividers = children.filter(child => !isDivider(child.value))
     const isOnlyChild = childrenWithoutDividers.length === 0
     const isTableView =
-      attributeEquals(state, parentId, '=view', 'Table') || attributeEquals(state, grandParentId, '=view', 'Table')
+      attributeEquals(state, parentContextId(state, parentPath), '=view', 'Table') ||
+      attributeEquals(state, parentContextId(state, grandParentPath), '=view', 'Table')
 
     const dependentThoughtIds = isOnlyChild
-      ? isTableView && grandParentId
+      ? isTableView
         ? // If the thought is the only child and in a table view, get the grandchildren's IDs
           getAllChildrenAsThoughts(state, grandParentId)
             .filter(child => !isDivider(child.value))
@@ -69,6 +74,9 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
   const editingValueUntrimmed = editingValueUntrimmedStore.useState()
   const fontSize = useSelector(state => state.fontSize)
   const isCursorOnDivider = useSelector(state => equalPath(state.cursor, path))
+  // The aria-label identifies the thought the user sees, which is what getThoughtWidths and formatSelection query the
+  // DOM by. In the context view that is the context rather than the Lexeme context.
+  const thoughtId = useSelector(state => parentContextId(state, path))
 
   /** Sets the cursor to the divider. */
   const setCursorToDivider = (e: React.MouseEvent | React.TouchEvent) => {
@@ -106,7 +114,7 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
       {...fastClick(setCursorToDivider, { enableHaptics: false })}
     >
       <div
-        aria-label={'editable-' + head(path)}
+        aria-label={'editable-' + thoughtId}
         className={css(
           {
             border: 'solid 1px {colors.divider}',

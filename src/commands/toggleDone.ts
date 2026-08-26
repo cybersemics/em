@@ -2,9 +2,9 @@ import Command from '../@types/Command'
 import { toggleThoughtActionCreator as toggleThought } from '../actions/toggleThought'
 import Icon from '../components/icons/Check'
 import findDescendant from '../selectors/findDescendant'
-import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursor from '../selectors/hasMulticursor'
-import head from '../util/head'
+import parentContextId from '../selectors/parentContextId'
+import headValue from '../util/headValue'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 /** Toggle the built-in =done style to cross out an item. */
@@ -20,12 +20,13 @@ const toggleDone = {
     if (!isDocumentEditable()) return false
     if (!state.cursor && !hasMulticursor(state)) return false
     // do not allow marking empty thoughts as done
-    if (state.cursor && getThoughtById(state, head(state.cursor))?.value === '') return false
+    if (state.cursor && headValue(state, state.cursor) === '') return false
     return true
   },
   isActive: state => {
     const cursor = state.cursor
-    return !!cursor && !!findDescendant(state, head(cursor), ['=done'])
+    // =done is set on the thought the user sees, which in the context view is the context rather than the Lexeme context
+    return !!cursor && !!findDescendant(state, parentContextId(state, cursor), ['=done'])
   },
   exec: (dispatch, getState) => {
     const state = getState()

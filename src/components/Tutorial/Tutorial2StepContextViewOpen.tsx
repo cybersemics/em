@@ -6,6 +6,7 @@ import getContexts from '../../selectors/getContexts'
 import isContextViewActive from '../../selectors/isContextViewActive'
 import selectTutorialChoice from '../../selectors/selectTutorialChoice'
 import thoughtToPath from '../../selectors/thoughtToPath'
+import { pathIds } from '../../util/pathStep'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Tutorial2StepContextViewOpen = () => {
@@ -16,7 +17,7 @@ const Tutorial2StepContextViewOpen = () => {
       : (TUTORIAL_CONTEXT[tutorialChoice] || '').toLowerCase(),
   )
   const cursorLost = useSelector(state => {
-    const cursorThoughts = state.cursor ? childIdsToThoughts(state, state.cursor) : null
+    const cursorThoughts = state.cursor ? childIdsToThoughts(state, pathIds(state.cursor)) : null
     return (
       !cursorThoughts ||
       !cursorThoughts.some(
@@ -28,7 +29,7 @@ const Tutorial2StepContextViewOpen = () => {
     )
   })
   const contextViewClosed = useSelector(state => {
-    const cursorThoughts = state.cursor ? childIdsToThoughts(state, state.cursor) : null
+    const cursorThoughts = state.cursor ? childIdsToThoughts(state, pathIds(state.cursor)) : null
     const thoughtId = contextToThoughtId(state, [
       (cursorThoughts &&
       cursorThoughts[0].value.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()

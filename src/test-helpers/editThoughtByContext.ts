@@ -3,6 +3,7 @@ import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import editThought, { editThoughtActionCreator } from '../actions/editThought'
 import contextToPath from '../selectors/contextToPath'
+import parentContextPath from '../selectors/parentContextPath'
 import head from '../util/head'
 
 /**
@@ -14,7 +15,8 @@ import head from '../util/head'
 const editThoughtByContext = _.curryRight((state: State, context: string[], newValue: string) => {
   const path = contextToPath(state, context)
   if (!path) throw new Error(`Thought not found at context: ${context}`)
-  return editThought(state, { path, oldValue: head(context), newValue })
+  // editing targets the thought the user sees, which in the context view is the context rather than the instance
+  return editThought(state, { path: parentContextPath(state, path), oldValue: head(context), newValue })
 })
 
 /**
@@ -29,7 +31,7 @@ export const editThoughtByContextActionCreator = (context: string[], newValue: s
 
     dispatch(
       editThoughtActionCreator({
-        path,
+        path: parentContextPath(getState(), path),
         newValue,
         oldValue: head(context),
       }),

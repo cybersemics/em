@@ -13,8 +13,9 @@ import hasMulticursor from '../selectors/hasMulticursor'
 import isContextViewActive from '../selectors/isContextViewActive'
 import simplifyPath from '../selectors/simplifyPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
-import appendToPath from '../util/appendToPath'
+import appendToPath, { appendContextStep } from '../util/appendToPath'
 import head from '../util/head'
+import headId from '../util/headId'
 import headValue from '../util/headValue'
 import isRoot from '../util/isRoot'
 import reducerFlow from '../util/reducerFlow'
@@ -26,8 +27,8 @@ const multicursorForward = (state: State): State => {
   const forwardPaths = paths.flatMap(path => {
     const contextViewValue = isContextViewActive(state, path) ? headValue(state, path) : undefined
     return contextViewValue !== undefined
-      ? getContextsSortedAndRanked(state, contextViewValue).map(cx => appendToPath(path, cx.parentId))
-      : getChildrenSorted(state, head(simplifyPath(state, path))).map(child => appendToPath(path, child.id))
+      ? getContextsSortedAndRanked(state, contextViewValue).map(cx => appendContextStep(path, cx.id))
+      : getChildrenSorted(state, headId(path)).map(child => appendToPath(path, child.id))
   })
 
   // do nothing if none of the selected thoughts have children, just as the cursor does not move forward from a leaf
@@ -63,18 +64,20 @@ const cursorForward = (state: State): State => {
   if (showContexts) {
     const cursorValue = headValue(state, cursor)
     const contexts = cursorValue !== undefined ? getContextsSortedAndRanked(state, cursorValue) : []
-    const firstContext = contexts[0]
-    isValidChild = cursorFromHistory && contexts.some(cx => cx.parentId === head(cursorFromHistory))
-    cursorNew = isValidChild ? cursorFromHistory : appendToPath(cursor, firstContext.parentId)
+    // a context view with a single context renders NoOtherContexts rather than a navigable row, so there is nothing
+    // to move forward into
+    const firstContext = contexts.length > 1 ? contexts[0] : null
+    isValidChild = cursorFromHistory && contexts.some(cx => cx.id === headId(cursorFromHistory))
+    cursorNew = isValidChild ? cursorFromHistory : firstContext ? appendContextStep(cursor, firstContext.id) : cursor
   }
   // normal view
   else {
     const simplePath = simplifyPath(state, cursor)
     const firstChild = firstVisibleChild(state, head(simplePath))
-    isValidChild = cursorFromHistory && !!getThoughtById(state, head(cursor))?.childrenMap[head(cursorFromHistory)]
+    isValidChild = cursorFromHistory && !!getThoughtById(state, headId(cursor))?.childrenMap[headId(cursorFromHistory)]
     cursorNew =
       isValidChild && cursorFromHistory
-        ? appendToPath(cursor, head(cursorFromHistory))
+        ? appendToPath(cursor, headId(cursorFromHistory))
         : firstChild
           ? unroot([...cursor, firstChild.id])
           : isRoot(cursor)

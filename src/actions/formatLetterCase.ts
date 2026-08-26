@@ -2,11 +2,12 @@
 import LetterCaseType from '../@types/LetterCaseType'
 import Thunk from '../@types/Thunk'
 import * as selection from '../device/selection'
-import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursor from '../selectors/hasMulticursor'
 import noteValue from '../selectors/noteValue'
+import parentContextId from '../selectors/parentContextId'
+import parentContextPath from '../selectors/parentContextPath'
+import pathToThought from '../selectors/pathToThought'
 import resolveNotePath from '../selectors/resolveNotePath'
-import simplifyPath from '../selectors/simplifyPath'
 import applyLetterCase from '../util/applyLetterCase'
 import head from '../util/head'
 import { editThoughtActionCreator as editThought } from './editThought'
@@ -30,11 +31,10 @@ export const formatLetterCaseActionCreator =
     // a multicursor may exclude the cursor thought, in which case its value is not letter-cased and its offsets do not move
     const isCursorEdited = paths.some(path => head(path) === head(cursor))
     const offset = selection.offsetThought()
-    const cursorSimplePath = simplifyPath(state, cursor)
 
     // The plain-text offsets of the selected text within the cursor thought, so that it can be re-selected after the
     // edit (#4840).
-    const cursorEditableSelector = `[aria-label="editable-${head(cursor)}"]`
+    const cursorEditableSelector = `[aria-label="editable-${parentContextId(state, cursor)}"]`
     const cursorEditable = state.noteFocus
       ? null
       : (document.querySelector(cursorEditableSelector) as HTMLElement | null)
@@ -65,7 +65,7 @@ export const formatLetterCaseActionCreator =
           }
         : selectedRange
     const editActions = paths.flatMap(path => {
-      const value = state.noteFocus ? noteValue(state, cursor) : getThoughtById(state, head(path))?.value
+      const value = state.noteFocus ? noteValue(state, cursor) : pathToThought(state, path)?.value
 
       if (!value) return []
 
@@ -82,7 +82,8 @@ export const formatLetterCaseActionCreator =
             editThought({
               oldValue: value,
               newValue,
-              path: simplifyPath(state, path),
+              // the thought the user sees, which in the context view is the context rather than the Lexeme context
+              path: parentContextPath(state, path),
               force: true,
             }),
           ]
@@ -100,7 +101,7 @@ export const formatLetterCaseActionCreator =
       // It shouldn't be possible to have noteFocus be true with the keyboard closed, so setCursor shouldn't be necessary for notes.
       // It seems like the caret goes to the end of the note anyway when its value is replaced.
       // preserveMulticursor keeps the multiselected thoughts selected, otherwise setCursor clears them (#4840).
-      !state.noteFocus ? setCursor({ path: cursorSimplePath, offset: cursorOffset, preserveMulticursor: true }) : null,
+      !state.noteFocus ? setCursor({ path: cursor, offset: cursorOffset, preserveMulticursor: true }) : null,
 
       isMulticursor ? setIsMulticursorExecuting({ value: false }) : null,
     ])

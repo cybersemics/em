@@ -1,20 +1,20 @@
 import Path from '../@types/Path'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
-import head from '../util/head'
+import headId from '../util/headId'
 import getContextsSortedAndRanked from './getContextsSortedAndRanked'
 import getThoughtById from './getThoughtById'
+import parentContextId from './parentContextId'
 import rootedParentOf from './rootedParentOf'
 
-/** Calculates the previous context in a context view. */
+/** Calculates the previous context in a context view. Returns the Lexeme context rendered at that position; build its Path with replaceHead so the context-view step is preserved. */
 const prevContext = (state: State, path: Path): Thought | null => {
-  // use rootedParentOf(path) instead of thought.parentId since we need to cross the context view
-  const parent = getThoughtById(state, head(rootedParentOf(state, path)))
-  const contexts = parent ? getContextsSortedAndRanked(state, parent.value) : []
-  // find the thought in the context view
-  const index = contexts.findIndex(cx => getThoughtById(state, cx.id)?.parentId === head(path))
-  const context = contexts[index - 1]
-  return context ? (getThoughtById(state, context.parentId) ?? null) : null
+  // the context view is active on the parent path, and lists the contexts of the thought displayed there
+  const contextViewThought = getThoughtById(state, parentContextId(state, rootedParentOf(state, path)))
+  if (!contextViewThought) return null
+  const contexts = getContextsSortedAndRanked(state, contextViewThought.value)
+  const index = contexts.findIndex(cx => cx.id === headId(path))
+  return index > 0 ? (contexts[index - 1] ?? null) : null
 }
 
 export default prevContext

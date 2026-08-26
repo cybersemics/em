@@ -15,13 +15,12 @@ import { getChildrenSorted } from '../selectors/getChildren'
 import hasMulticursor from '../selectors/hasMulticursor'
 import isMulticursorPath from '../selectors/isMulticursorPath'
 import isTableCol2 from '../selectors/isTableCol2'
+import parentContextId from '../selectors/parentContextId'
 import prevSibling from '../selectors/prevSibling'
 import prevTableCousin from '../selectors/prevTableCousin'
 import rootedParentOf from '../selectors/rootedParentOf'
-import appendToPath from '../util/appendToPath'
-import head from '../util/head'
 import isRoot from '../util/isRoot'
-import parentOf from '../util/parentOf'
+import { replaceHead } from '../util/pathStep'
 import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 
 const cursorUpCommand = {
@@ -37,7 +36,7 @@ const cursorUpCommand = {
     if (!cursor) return true
 
     // use default browser behavior in prose mode
-    const parentId = head(rootedParentOf(state, cursor))
+    const parentId = parentContextId(state, rootedParentOf(state, cursor))
     const isProseView = attributeEquals(state, parentId, '=view', 'Prose')
     const isProseMode = isProseView && selection.offset()! > 0
     if (isProseMode) return false
@@ -66,8 +65,8 @@ const cursorUpCommand = {
         cursor && isTableCol2(state, cursor)
           ? prevTableCousin(state, cursor)
           : prevThought
-            ? // non-first child path
-              appendToPath(parentOf(path), prevThought.id)
+            ? // the previous sibling occupies the same position as the cursor, which in the context view means the previous context
+              replaceHead(path, prevThought.id)
             : // when the cursor is on the first child in a context, move up a level
               !isRoot(pathParent)
               ? pathParent

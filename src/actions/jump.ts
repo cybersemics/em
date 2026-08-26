@@ -5,7 +5,7 @@ import pathExists from '../selectors/pathExists'
 import thoughtToPath from '../selectors/thoughtToPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import equalPathHead from '../util/equalPathHead'
-import head from '../util/head'
+import headId from '../util/headId'
 import setCursor from './setCursor'
 
 /** Move the cursor back to the nth last edit point. */
@@ -20,7 +20,7 @@ const jump = (state: State, { steps }: { steps: number } = { steps: -1 }): State
     // ignore null cursor
     // ignore same thought
     // ignore deleted thought
-    .find(cursor => cursor && !equalPathHead(cursor, state.cursor) && getThoughtById(state, head(cursor)))
+    .find(cursor => cursor && !equalPathHead(cursor, state.cursor) && getThoughtById(state, headId(cursor)))
 
   // do nothing if no valid cursor was found
   // e.g. cannot go back any further
@@ -28,8 +28,11 @@ const jump = (state: State, { steps }: { steps: number } = { steps: -1 }): State
 
   // it is possible that the thought id exists but has been moved
   // in this case, reconstruct a SimplePath by traversing from the root
+  // A Path that crosses a context view cannot be reconstructed by traversing parents, since the crossing does not
+  // follow the parent chain. Fall back to the Lexeme context's real position, which at least lands on the right
+  // thought even though the context view around it is lost.
   const cursorNew =
-    lastJumpCursor && !pathExists(state, lastJumpCursor) ? thoughtToPath(state, head(lastJumpCursor)) : lastJumpCursor
+    lastJumpCursor && !pathExists(state, lastJumpCursor) ? thoughtToPath(state, headId(lastJumpCursor)) : lastJumpCursor
 
   return {
     ...setCursor(state, {

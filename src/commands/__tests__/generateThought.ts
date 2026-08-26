@@ -3,7 +3,6 @@ import { importTextActionCreator as importText } from '../../actions/importText'
 import { undoActionCreator as undo } from '../../actions/undo'
 import { executeCommand, executeCommandWithMulticursor } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
-import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
@@ -18,6 +17,7 @@ import {
   clearAiDisclosureAcknowledgement,
   hasAcknowledgedAiDisclosure,
 } from '../../util/aiDisclosure'
+import pathToContext from '../../util/pathToContext'
 import generateThought from '../generateThought'
 
 // Mock fetch for testing
@@ -570,9 +570,7 @@ describe('multicursor', () => {
 
     const state = store.getState()
     expectPathToEqual(state, state.cursor, ['a one'])
-    expect(
-      Object.values(state.multicursors).map(path => childIdsToThoughts(state, path).map(thought => thought.value)),
-    ).toEqual([['a one'], ['b two']])
+    expect(Object.values(state.multicursors).map(path => pathToContext(state, path))).toEqual([['a one'], ['b two']])
   })
 
   it('generates the other selected thoughts when one request returns an error', async () => {

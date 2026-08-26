@@ -19,6 +19,7 @@ import addEmojiSpace from '../util/addEmojiSpace'
 import appendToPath from '../util/appendToPath'
 import createId from '../util/createId'
 import head from '../util/head'
+import headId from '../util/headId'
 import htmlToJson from '../util/htmlToJson'
 import importJson from '../util/importJson'
 import isMarkdown from '../util/isMarkdown'
@@ -109,7 +110,8 @@ const importText = (
   const simplePath = simplifyPath(state, path)
   const convertedText = isRoam ? text : isMarkdown(text) ? textToHtml(markdownToText(text)) : textToHtml(text)
   const numLines = (convertedText.match(REGEX_LIST_ITEM) || []).length
-  const thoughtId = head(path)
+  // the thought the path lands on, i.e. the Lexeme context in the context view, since the import inserts children
+  const thoughtId = headId(path)
   const destThought = getThoughtById(state, thoughtId)
   if (!destThought) {
     console.error({ path })

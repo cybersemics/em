@@ -1,7 +1,8 @@
 import Path from '../@types/Path'
 import State from '../@types/State'
 import appendToPath from '../util/appendToPath'
-import head from '../util/head'
+import headId from '../util/headId'
+import { replaceHead } from '../util/pathStep'
 import { getChildrenSorted } from './getChildren'
 import isTableCol2 from './isTableCol2'
 import prevSibling from './prevSibling'
@@ -15,12 +16,13 @@ const prevTableCousin = (state: State, path: Path): Path | null => {
 
   // the previous cell within the same col1 row
   const sibling = prevSibling(state, path)
-  if (sibling) return appendToPath(parentPath, sibling.id)
+  // replaceHead so that a cell reached through a context view keeps its context-view step
+  if (sibling) return replaceHead(path, sibling.id)
 
   // otherwise, the last col2 cell of the nearest preceding non-empty col1 row
   const grandparentPath = rootedParentOf(state, parentPath)
-  const rows = getChildrenSorted(state, head(grandparentPath))
-  const rowIndex = rows.findIndex(row => row.id === head(parentPath))
+  const rows = getChildrenSorted(state, headId(grandparentPath))
+  const rowIndex = rows.findIndex(row => row.id === headId(parentPath))
   const prevRow = rows
     .slice(0, rowIndex)
     .reverse()

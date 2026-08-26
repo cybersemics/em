@@ -24,6 +24,7 @@ import isAttribute from '../util/isAttribute'
 import isDescendantPath from '../util/isDescendantPath'
 import keyValueBy from '../util/keyValueBy'
 import normalizeThought from '../util/normalizeThought'
+import { appendSteps } from '../util/pathStep'
 import pathToContext from '../util/pathToContext'
 import reducerFlow from '../util/reducerFlow'
 import timestamp from '../util/timestamp'
@@ -242,7 +243,8 @@ const moveThought = (state: State, payload: MoveThoughtPayload) => {
       const newCursorPath = isPathInCursor
         ? isCursorAtOldPath
           ? newPath
-          : ([...newPath, ...state.cursor.slice(newPath.length)] as Path)
+          : // appendSteps rather than a spread, so that a context-view step below the moved thought keeps its tag
+            appendSteps(newPath, ...state.cursor.slice(newPath.length))
         : state.cursor
 
       return {

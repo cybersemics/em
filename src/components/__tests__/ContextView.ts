@@ -4,6 +4,8 @@ import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { toggleContextViewActionCreator as toggleContextView } from '../../actions/toggleContextView'
 import globals from '../../globals'
+import linearizeTree from '../../selectors/linearizeTree'
+import simplifyPath from '../../selectors/simplifyPath'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
@@ -14,6 +16,8 @@ import findThoughtByText from '../../test-helpers/queries/findThoughtByText'
 import getClosestByLabel from '../../test-helpers/queries/getClosestByLabel'
 import queryThoughtByText from '../../test-helpers/queries/queryThoughtByText'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import hashPath from '../../util/hashPath'
+import pathToContext from '../../util/pathToContext'
 import series from '../../util/series'
 
 beforeEach(createTestApp)
@@ -99,6 +103,51 @@ it('render home icon as breadcrumbs for each context whose parent is the home co
     { value: 'a', homeBreadcrumbs: true },
     { value: 'b', homeBreadcrumbs: true },
     { value: 'b', homeBreadcrumbs: false },
+  ])
+})
+
+it('renders a separate row for each Lexeme context within one context', async () => {
+  // b holds two thoughts of the cat Lexeme, so the context view on a/cat lists b twice. Both rows display "b" but
+  // stand for different Lexeme contexts, and each renders its own children. Before the boundary was recorded in the Path,
+  // both rows shared one Path and only one of them was addressable.
+  await dispatch([
+    importText({
+      text: `
+        - a
+          - cat
+        - b
+          - cat
+            - meow
+          - Cats
+            - purr
+      `,
+    }),
+    setCursor(['a', 'cat']),
+    toggleContextView(),
+  ])
+
+  await act(vi.runOnlyPendingTimersAsync)
+
+  // context rows are the ones rendered with breadcrumbs, which distinguishes them from the top-level thought b
+  const contextRows = screen
+    .getAllByLabelText('tree-node')
+    .filter(
+      node => !!queryByLabelText(node, 'context-breadcrumbs') && queryByLabelText(node, 'thought')?.textContent === 'b',
+    )
+
+  // both Lexeme contexts are listed, each displayed as its parent context b
+  expect(contextRows).toHaveLength(2)
+
+  // each row is addressed by its own Path, so the cursor can land on either one
+  const paths = contextRows.map(row => row.getAttribute('data-path'))
+  expect(paths[0]).not.toEqual(paths[1])
+
+  // and each Path resolves to a different Lexeme context, so the two rows render different children
+  const state = store.getState()
+  const lexemeContexts = linearizeTree(state).filter(node => paths.includes(hashPath(node.path)))
+  expect(lexemeContexts.map(node => pathToContext(state, simplifyPath(state, node.path)))).toEqual([
+    ['b', 'cat'],
+    ['b', 'Cats'],
   ])
 })
 

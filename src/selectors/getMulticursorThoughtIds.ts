@@ -3,6 +3,7 @@ import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import head from '../util/head'
 import documentSort from './documentSort'
+import parentContextId from './parentContextId'
 
 /** Returns the thought ids of the current multicursor selection in document order. When both an ancestor and one of its descendants are selected, only the ancestor is included (the descendant is already copied as part of the ancestor's subtree). */
 const getMulticursorThoughtIds = (state: State): ThoughtId[] => {
@@ -14,7 +15,8 @@ const getMulticursorThoughtIds = (state: State): ThoughtId[] => {
     return [...acc.filter(p => !p.includes(head(cur))), cur]
   }, [])
 
-  return filteredPaths.map(path => head(path))
+  // the displayed thought, so that copying a context in the context view copies the context the user sees
+  return filteredPaths.map(path => parentContextId(state, path))
 }
 
 export default getMulticursorThoughtIds

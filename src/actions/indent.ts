@@ -7,16 +7,18 @@ import * as selection from '../device/selection'
 import findDescendant from '../selectors/findDescendant'
 import { getChildrenRanked } from '../selectors/getChildren'
 import getNextRank from '../selectors/getNextRank'
-import isContextViewActive from '../selectors/isContextViewActive'
+import parentContextId from '../selectors/parentContextId'
 import prevSibling from '../selectors/prevSibling'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import ellipsize from '../util/ellipsize'
 import head from '../util/head'
+import headId from '../util/headId'
 import headValue from '../util/headValue'
 import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
+import { isContextStep } from '../util/pathStep'
 
 export interface indentPayload {
   /** The caret offset within the cursor thought, read from the document before the move. Null when the caret is not in the thought's text, in which case state.cursorOffset is used instead. */
@@ -33,26 +35,31 @@ const indent = (state: State, { selectionOffset }: indentPayload = {}): State =>
 
   if (!prev) return state
 
+  // The metaprogramming attributes that govern the move belong to the thought the user sees at the parent, which in
+  // the context view is the context rather than the Lexeme context. Null when the cursor is a root child, which has no
+  // parent thought to check.
+  const parentId = cursor.length > 1 ? parentContextId(state, parentOf(cursor)) : null
+
   // cancel if cursor is EM_TOKEN or HOME_TOKEN
   if (isEM(cursor) || isRoot(cursor)) {
     return alert(state, { value: `The "${isEM(cursor) ? 'em' : 'home'} context" may not be indented.` })
   }
   // cancel if parent is readonly or unextendable
-  else if (findDescendant(state, head(parentOf(cursor)), '=readonly')) {
+  else if (findDescendant(state, parentId, '=readonly')) {
     return alert(state, {
       value: `"${ellipsize(headValue(state, parentOf(cursor)) ?? 'MISSING_THOUGHT')}" is read-only so "${headValue(
         state,
         cursor,
       )}" may not be indented.`,
     })
-  } else if (findDescendant(state, head(parentOf(cursor)), '=uneditable')) {
+  } else if (findDescendant(state, parentId, '=uneditable')) {
     return alert(state, {
       value: `"${ellipsize(headValue(state, parentOf(cursor)) ?? 'MISSING_THOUGHT')}" is unextendable so "${headValue(
         state,
         cursor,
       )}" may not be indented.`,
     })
-  } else if (isContextViewActive(state, parentOf(cursor))) {
+  } else if (isContextStep(head(cursor))) {
     return alert(state, {
       value: `Contexts may not be indented in the context view.`,
     })
@@ -60,7 +67,7 @@ const indent = (state: State, { selectionOffset }: indentPayload = {}): State =>
 
   const offset = (selectionOffset ?? state.cursorOffset) || 0
 
-  const cursorNew = appendToPath(parentOf(cursor), prev.id, head(cursor))
+  const cursorNew = appendToPath(parentOf(cursor), prev.id, headId(cursor))
 
   // For treecrdt: afterId must be a sibling (child of new parent), not the parent.
   // Tab indent should place as last child of prev, so use last child of prev; undefined if prev has no children.
@@ -81,9 +88,12 @@ const indent = (state: State, { selectionOffset }: indentPayload = {}): State =>
  * reaching outside of state. It must be read before the move, since moveThought re-renders the editable.
  */
 export const indentActionCreator = (): Thunk => (dispatch, getState) => {
-  const { cursor } = getState()
+  const state = getState()
+  const { cursor } = state
   const selectionOffset =
-    cursor && selection.isOnEditable(head(cursor)) && selection.isText() ? (selection.offset() ?? 0) : null
+    cursor && selection.isOnEditable(parentContextId(state, cursor)) && selection.isText()
+      ? (selection.offset() ?? 0)
+      : null
   dispatch({ type: 'indent', selectionOffset })
 }
 

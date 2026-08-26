@@ -11,7 +11,6 @@ import getRankBefore from '../selectors/getRankBefore'
 import getSortPreference from '../selectors/getSortPreference'
 import getSortedRank from '../selectors/getSortedRank'
 import getThoughtById from '../selectors/getThoughtById'
-import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
@@ -19,6 +18,7 @@ import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
 import parentOf from '../util/parentOf'
+import { isContextStep } from '../util/pathStep'
 import reducerFlow from '../util/reducerFlow'
 import deleteThought from './deleteThought'
 import sort from './sort'
@@ -43,12 +43,14 @@ const uncategorize = (state: State, { at }: Options): State => {
 
   // Uncategorizing a context in the context view is equivalent to uncategorizing the parent of the cursor SimplePath.
   // The cursor needs to be updated to stay in the context view.
-  const isInContextView = isContextViewActive(state, parentOf(path))
+  const isInContextView = isContextStep(head(path))
   if (isInContextView) {
     return reducerFlow([
       state => uncategorize(state, { at: rootedParentOf(state, simplePath) }),
       setCursor({
-        path: appendToPath(parentOf(path), head(parentOf(parentOf(simplePath)))),
+        // The row is addressed by its Lexeme context, which uncategorize moves up a level rather than replacing, so
+        // the cursor's own step still names it and only the context it displays has changed.
+        path,
         isKeyboardOpen: state.isKeyboardOpen,
         offset: 0,
       }),

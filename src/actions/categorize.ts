@@ -5,7 +5,7 @@ import documentSort from '../selectors/documentSort'
 import findDescendant from '../selectors/findDescendant'
 import getRankBefore from '../selectors/getRankBefore'
 import getThoughtById from '../selectors/getThoughtById'
-import isContextViewActive from '../selectors/isContextViewActive'
+import parentContextId from '../selectors/parentContextId'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
@@ -14,10 +14,12 @@ import createId from '../util/createId'
 import ellipsize from '../util/ellipsize'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
+import headId from '../util/headId'
 import headValue from '../util/headValue'
 import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
+import { isContextStep } from '../util/pathStep'
 import reducerFlow from '../util/reducerFlow'
 import alert from './alert'
 import createThought from './createThought'
@@ -42,6 +44,11 @@ const categorize = (state: State, { value = '' }: categorizePayload = {}): State
   // Check if all selected thoughts belong to the same parent
   const allSameParent = multicursorPaths.every(path => equalPath(parentOf(path), parentOf(simplePath)))
 
+  // The metaprogramming attributes that govern the destination belong to the thought the user sees there, which in the
+  // context view is the context rather than the Lexeme context. Null when the cursor is a root child, which has no
+  // parent thought to check.
+  const cursorParentId = cursorParent.length > 0 ? parentContextId(state, cursorParent) : null
+
   // cancel if a direct child of EM_TOKEN or HOME_TOKEN
   if (isEM(cursorParent) || isRoot(cursorParent)) {
     return alert(state, {
@@ -49,14 +56,14 @@ const categorize = (state: State, { value = '' }: categorizePayload = {}): State
     })
   }
   // cancel if parent is readonly
-  else if (findDescendant(state, head(cursorParent), '=readonly')) {
+  else if (findDescendant(state, cursorParentId, '=readonly')) {
     return alert(state, {
       value: `"${ellipsize(headValue(state, cursorParent) ?? 'MISSING_THOUGHT')}" is read-only so "${headValue(
         state,
         cursor,
       )}" cannot be categorized.`,
     })
-  } else if (findDescendant(state, head(cursorParent), '=unextendable')) {
+  } else if (findDescendant(state, cursorParentId, '=unextendable')) {
     return alert(state, {
       value: `"${ellipsize(headValue(state, cursorParent) ?? 'MISSING_THOUGHT')}" is unextendable so "${headValue(
         state,
@@ -74,7 +81,8 @@ const categorize = (state: State, { value = '' }: categorizePayload = {}): State
 
   const newRank = getRankBefore(state, simplePath)
   const newThoughtId = createId()
-  const isInContextView = isContextViewActive(state, parentOf(cursor))
+  // the head step records whether the cursor is a context rendered in a context view
+  const isInContextView = isContextStep(head(cursor))
 
   return reducerFlow([
     createThought({
@@ -98,16 +106,19 @@ const categorize = (state: State, { value = '' }: categorizePayload = {}): State
       : multicursorPaths
           .reverse()
           // we ignore thoughts at cursor that are somehow missing, see getThoughtById
-          .filter(path => getThoughtById(state, head(path)))
+          .filter(path => getThoughtById(state, headId(path)))
           .map(path =>
             moveThought({
               oldPath: path,
-              newPath: appendToPath(parentOf(simplePath), newThoughtId, head(path)),
-              newRank: getThoughtById(state, head(path))!.rank,
+              newPath: appendToPath(parentOf(simplePath), newThoughtId, headId(path)),
+              newRank: getThoughtById(state, headId(path))!.rank,
             }),
           )),
     setCursor({
-      path: appendToPath(cursorParent, newThoughtId),
+      // In the context view the row is addressed by its Lexeme context, which has just been moved under the new
+      // category — so the cursor's own step still names it, and only the context it displays has changed. Building a
+      // plain step from the category id instead would name a row that is not rendered.
+      path: isInContextView ? cursor : appendToPath(cursorParent, newThoughtId),
       // Place the caret at the end of the category so the user can keep typing where its value leaves off. For the
       // default empty category this is the usual offset 0.
       offset: value.length,

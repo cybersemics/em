@@ -9,20 +9,20 @@ import { HOME_TOKEN } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
 import findDescendant from '../selectors/findDescendant'
 import { getChildrenSorted } from '../selectors/getChildren'
-import isContextViewActive from '../selectors/isContextViewActive'
+import parentContextId from '../selectors/parentContextId'
 import prevContext from '../selectors/prevContext'
 import { prevSibling } from '../selectors/prevSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
-import parentOf from '../util/parentOf'
+import { isContextStep, replaceHead } from '../util/pathStep'
 
 /** Returns the last thought in the col2 of the previous table row, skipping rows with an empty col2. Returns null if no preceding row has a col2 thought. */
 const prevCol2 = (state: State, rowPath: Path): { row: Thought; col2: Thought } | null => {
   const row = prevSibling(state, rowPath)
   if (!row) return null
   const col2 = getChildrenSorted(state, row.id).at(-1)
-  return col2 ? { row, col2 } : prevCol2(state, appendToPath(parentOf(rowPath), row.id))
+  return col2 ? { row, col2 } : prevCol2(state, replaceHead(rowPath, row.id))
 }
 
 /** Moves the cursor to the previous sibling, ignoring descendants. In table view, moves to the prevous row.*/
@@ -39,30 +39,34 @@ export const cursorPrevActionCreator = (): Thunk => (dispatch, getState) => {
   }
 
   const cursorParent = rootedParentOf(state, cursor)
-  const showContexts = isContextViewActive(state, parentOf(cursor))
+  // the head step records whether this position was reached by crossing a context view
+  const showContexts = isContextStep(head(cursor))
   let prev = showContexts ? prevContext(state, cursor) : prevSibling(state, cursor)
   let path: Path | null = null
 
   // prev sibling
   if (prev) {
-    path = appendToPath(cursorParent, prev.id)
+    // the sibling of a context is reached the same way the context was, so the context-view step is preserved
+    path = replaceHead(cursor, prev.id)
   }
   // prev row in table view col2
   // (prev row in table view col1 is handled by prevSibling in the usual way)
-  else if (attributeEquals(state, head(rootedParentOf(state, cursorParent)), '=view', 'Table')) {
+  else if (attributeEquals(state, parentContextId(state, rootedParentOf(state, cursorParent)), '=view', 'Table')) {
     const prevRow = prevCol2(state, cursorParent)
     if (prevRow) {
       prev = prevRow.col2
-      path = appendToPath(parentOf(cursorParent), prevRow.row.id, prevRow.col2.id)
+      // replaceHead so that a table row reached through a context view keeps its context-view step
+      path = appendToPath(replaceHead(cursorParent, prevRow.row.id), prevRow.col2.id)
     }
   }
 
   if (!prev || !path) return
 
   const pathParent = rootedParentOf(state, path)
-  const parentId = head(pathParent)
+  const parentId = parentContextId(state, pathParent)
   const isCursorPinned =
-    attributeEquals(state, head(path), '=pin', 'true') || findDescendant(state, parentId, ['=children', '=pin', 'true'])
+    attributeEquals(state, parentContextId(state, path), '=pin', 'true') ||
+    findDescendant(state, parentId, ['=children', '=pin', 'true'])
   const isTable = attributeEquals(state, parentId, '=view', 'Table')
 
   // just long enough to keep the expansion suppressed during cursor movement in rapid succession

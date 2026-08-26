@@ -2,7 +2,6 @@ import _ from 'lodash'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
-import getChildPath from '../selectors/getChildPath'
 import { getAllChildren, getAllChildrenSorted } from '../selectors/getChildren'
 import getNextRank from '../selectors/getNextRank'
 import getThoughtById from '../selectors/getThoughtById'
@@ -11,6 +10,7 @@ import simplifyPath from '../selectors/simplifyPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
+import headId from '../util/headId'
 import isAttribute from '../util/isAttribute'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
@@ -34,7 +34,7 @@ const join = (state: State, { paths }: { paths?: Path[] } = {}) => {
 
   const children = paths
     ? // getThoughtById -> Thought | undefined, so if we (unlikely) get undefined, we filter it out, see getThoughtById
-      paths.map(path => getThoughtById(state, head(path))).filter(Boolean)
+      paths.map(path => getThoughtById(state, headId(path))).filter(Boolean)
     : getAllChildrenSorted(state, parentId).filter(child => !isAttribute(child.value))
 
   const thoughtId = head(simplePath)
@@ -50,7 +50,7 @@ const join = (state: State, { paths }: { paths?: Path[] } = {}) => {
       const grandchildren = getAllChildren(state, child.id)
 
       return grandchildren.map(child => {
-        const oldPath = getChildPath(state, child, pathToSibling)
+        const oldPath = appendToPath(pathToSibling, child)
         const newPath = appendToPath(path, child)
         return moveThought({ oldPath, newPath, newRank: (minNextRank += 1) })
       })

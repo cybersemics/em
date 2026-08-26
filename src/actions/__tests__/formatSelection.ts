@@ -2,8 +2,8 @@ import { act } from 'react'
 import { UnknownAction } from 'redux'
 import Thunk from '../../@types/Thunk'
 import { formatLetterCaseActionCreator as formatLetterCase } from '../../actions/formatLetterCase'
-import getThoughtById from '../../selectors/getThoughtById'
 import noteValue from '../../selectors/noteValue'
+import pathToThought from '../../selectors/pathToThought'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
@@ -32,7 +32,7 @@ const getEditable = (): HTMLElement => {
 /** Returns the value of the cursor thought. */
 const cursorValue = (): string => {
   const state = store.getState()
-  return getThoughtById(state, head(state.cursor!))!.value
+  return pathToThought(state, state.cursor!)!.value
 }
 
 /** Selects the plain-text sub-range [start, end) of the cursor thought's editable, walking across nested formatting

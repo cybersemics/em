@@ -6,6 +6,7 @@ import Thunk from '../@types/Thunk'
 import findDescendant from '../selectors/findDescendant'
 import { hasChildren } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
+import parentContextPath from '../selectors/parentContextPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
@@ -20,27 +21,30 @@ const deleteAttribute = (
 
   if (!path || (!value && (!values || values.length === 0))) return state
 
-  const thoughtId = head(path)
+  // An attribute belongs to the thought the user sees, which in the context view is the context rather than the Lexeme
+  // Lexeme context. Resolving the path once keeps the lookups and the deletions in the same context.
+  const contextPath = parentContextPath(state, path)
+  const thoughtId = head(contextPath)
   const firstSubthoughtId = findDescendant(state, thoughtId, _values[0])
 
   // base case: delete or overwrite the first subthought with the last value in the sequence
   if (_values.length === 1) {
     const firstSubthought = firstSubthoughtId && getThoughtById(state, firstSubthoughtId)
-    return firstSubthought ? deleteThought(state, { pathParent: path, thoughtId: firstSubthoughtId! }) : state
+    return firstSubthought ? deleteThought(state, { pathParent: contextPath, thoughtId: firstSubthoughtId! }) : state
   }
 
   // otherwise, create the first subthought if it does not exist and recurse
   // recursion
   const stateNew = firstSubthoughtId
     ? deleteAttribute(state, {
-        path: appendToPath(path, firstSubthoughtId),
+        path: appendToPath(contextPath, firstSubthoughtId),
         values: _values.slice(1),
       })
     : state
 
   // after recursion, delete empty descendants
   return firstSubthoughtId && !hasChildren(stateNew, firstSubthoughtId)
-    ? deleteThought(stateNew, { pathParent: path, thoughtId: firstSubthoughtId })
+    ? deleteThought(stateNew, { pathParent: contextPath, thoughtId: firstSubthoughtId })
     : stateNew
 }
 
