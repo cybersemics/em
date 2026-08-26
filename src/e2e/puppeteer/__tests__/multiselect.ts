@@ -7,7 +7,6 @@ import longPressThought from '../helpers/longPressThought'
 import multiselectThoughts from '../helpers/multiselectThoughts'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
-import waitForAlertContent from '../helpers/waitForAlertContent'
 import waitForEditable from '../helpers/waitForEditable'
 import { page } from '../session'
 
@@ -192,8 +191,22 @@ describe('multiselect', () => {
     await command('selectAll')
     await waitForHighlightedBullets(3)
 
+    await page.evaluate(() => {
+      const win = window as typeof window & { __copied: Record<string, string> }
+      win.__copied = {}
+      const original = DataTransfer.prototype.setData
+      DataTransfer.prototype.setData = function (type: string, data: string) {
+        win.__copied[type] = data
+        return original.call(this, type, data)
+      }
+    })
+
     await press('c', { meta: true })
-    await waitForAlertContent('Copied 3 thoughts to the clipboard')
+
+    await page.waitForFunction(
+      () => !!(window as typeof window & { __copied: Record<string, string> }).__copied['text/html'],
+      { timeout: 6000 },
+    )
 
     // Copy leaves the thoughts selected but not edited, so no faux caret is rendered on them (Clear Thought is
     // what puts a multiselection into edit mode). Wait a frame first, since the faux carets would be rendered
