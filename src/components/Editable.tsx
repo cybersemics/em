@@ -17,6 +17,7 @@ import { keyboardOpenActionCreator } from '../actions/keyboardOpen'
 import { newThoughtActionCreator as newThought } from '../actions/newThought'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
+import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
 import { tutorialNextActionCreator as tutorialNext } from '../actions/tutorialNext'
 import { isMac, isSafari, isTouch } from '../browser'
 import { commandEmitter } from '../commands'
@@ -989,13 +990,22 @@ const Editable = ({
 
             // close all popups when clicking on a thought
             dispatch(toggleDropdown())
+          }
+          // While a multiselect is active, a tap toggles the thought's selection rather than moving the cursor.
+          // On mobile this is the only way to add a thought to the multiselect apart from long pressing it, and on
+          // desktop it makes a plain click consistent with that tap. Shift + Click and Cmd/Ctrl + Click are excluded
+          // since Thought's handleMultiselect owns them, and toggling here would move multicursorAnchor and thereby
+          // collapse the Shift + Click range (see selectBetween). Deselecting the last selected thought ends the
+          // multiselect, which closes the Command Center on mobile (see multicursorAlertMiddleware).
+          else if (hasMulticursorSelector(state) && !e.shiftKey && !(isMac ? e.metaKey : e.ctrlKey)) {
+            dispatch(toggleMulticursor({ path }))
           } else {
             setCursorOnThought()
           }
         }
       })
     },
-    [disabled, dispatch, editingOrOnCursor, isVisible, setCursorOnThought],
+    [disabled, dispatch, editingOrOnCursor, isVisible, path, setCursorOnThought],
   )
 
   /** Registers native event listeners for tap behavior (click and touchend). */
