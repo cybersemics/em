@@ -1,6 +1,6 @@
 import State from '../@types/State'
 import * as selection from '../device/selection'
-import head from '../util/head'
+import contextThoughtId from './contextThoughtId'
 
 /** Returns the character offsets of the selected text within the cursor thought's value, or null if the document has no
  * selection to read at all. A collapsed caret yields equal offsets rather than null, so that a command invoked with
@@ -17,7 +17,8 @@ import head from '../util/head'
  * one the snapshot came from.
  */
 const selectionOffsets = (state: State): { start: number; end: number } | null => {
-  const thoughtId = state.cursor && head(state.cursor)
+  // the displayed thought, since that is what <Editable> labels the DOM element with
+  const thoughtId = state.cursor && contextThoughtId(state, state.cursor)
 
   if (thoughtId && !selection.isOnEditable(thoughtId) && state.selectionOffsets?.thoughtId === thoughtId) {
     return state.selectionOffsets

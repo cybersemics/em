@@ -2,11 +2,10 @@ import _ from 'lodash'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import { getAllChildrenSorted } from '../selectors/getChildren'
-import getThoughtById from '../selectors/getThoughtById'
+import pathToThought from '../selectors/pathToThought'
 import thoughtToPath from '../selectors/thoughtToPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
-import head from '../util/head'
 import normalizeThought from '../util/normalizeThought'
 import reducerFlow from '../util/reducerFlow'
 import mergeThoughts from './mergeThoughts'
@@ -17,13 +16,13 @@ const mergeDuplicates = (state: State): State => {
 
   if (!cursor) return state
 
-  const cursorThought = getThoughtById(state, head(cursor))
+  const cursorThought = pathToThought(state, cursor)
   if (!cursorThought) return state
 
   // Take the level from the cursor thought's parent rather than inferring it from the cursor Path. A Path that crosses
-  // a context view does not describe the thought's real ancestry, and simplifyPath resolves it to the context that the
-  // view was activated on, e.g. a cursor on /a/m/b in the context view of /a/m simplifies to b/m, whose level has
-  // nothing to do with the thoughts the user is looking at. parentId is the cursor thought's actual level in every view.
+  // a context view does not describe the thought's real ancestry, and simplifyPath resolves it to the Lexeme instance,
+  // e.g. a cursor on a/m~/b in the context view of a/m simplifies to b/m, whose level has nothing to do with the
+  // thoughts the user is looking at. parentId is the displayed thought's actual level in every view.
   const parentId = cursorThought.parentId
   const parentPath = thoughtToPath(state, parentId)
   const children = getAllChildrenSorted(state, parentId)

@@ -100,11 +100,7 @@ const DropHoverIfVisible = ({
 
     // Don't show drop hover between contiguous selected thoughts
     const contiguousDraggingThoughts = state.draggingThoughts.filter(draggingPath => {
-      // draggingThoughts are SimplePaths, so their siblings must always be resolved in normal view. Without
-      // showContexts:false, prevSibling infers the context view from the dragging thought's simple parent path, which
-      // in a cyclic context is the very path the context view is active on (dragging a/m~/a/x has simple parent a/m),
-      // and looks for x among the contexts of m instead of among the children of m.
-      const prev = prevSibling(state, draggingPath, { showContexts: false })
+      const prev = prevSibling(state, draggingPath)
       const prevPath = prev ? appendToPath(parentOf(draggingPath), prev.id) : null
       return prev && state.draggingThoughts.some(simplePath => equalPath(prevPath, simplePath))
     })

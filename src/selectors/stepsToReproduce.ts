@@ -15,6 +15,7 @@ import isRoot from '../util/isRoot'
 import joinConjunction from '../util/joinConjunction'
 import removeHome from '../util/removeHome'
 import stripTags from '../util/stripTags'
+import contextThoughtId from './contextThoughtId'
 import documentSort from './documentSort'
 import exportContext from './exportContext'
 import { getChildrenRanked } from './getChildren'
@@ -74,7 +75,7 @@ const topmost = (state: State, ids: ThoughtId[]): ThoughtId[] =>
 
 /** The ids of the selected thoughts in document order. */
 const selectionIds = (state: State): ThoughtId[] =>
-  documentSort(state, Object.values(state.multicursors)).map(path => head(path))
+  documentSort(state, Object.values(state.multicursors)).map(path => contextThoughtId(state, path))
 
 /** Names a thought in the given state by its value, or as the root. */
 const describeThought = (state: State, id: ThoughtId): string =>
@@ -135,7 +136,8 @@ const attributeChanges = (snapshot: Snapshot): string => {
 }
 
 /** Returns true if the given thought is the cursor thought in the given state. */
-const isCursor = (state: State, id: ThoughtId): boolean => !!state.cursor && head(state.cursor) === id
+const isCursor = (state: State, id: ThoughtId): boolean =>
+  !!state.cursor && contextThoughtId(state, state.cursor) === id
 
 /** The siblings of a thought without the meta attributes, which are hidden and so cannot serve as a landmark. */
 const visibleSiblings = (state: State, id: ThoughtId) =>
@@ -386,7 +388,7 @@ const stepsToReproduce = (state: State, positions: { start: number; end: number 
   }>(
     ({ descriptions, cursor, selection }, snapshots) => {
       const { before } = snapshots[0]
-      const cursorBefore = before.cursor ? head(before.cursor) : null
+      const cursorBefore = before.cursor ? contextThoughtId(before, before.cursor) : null
       const selectionBefore = selectionIds(before)
       const multicursor = snapshots[0].patch[0].actions.includes('setIsMulticursorExecuting')
       const primary = findLast(snapshots, ({ patch }) => patch[0].actions.some(action => !isNavigation(action)))!
@@ -400,7 +402,7 @@ const stepsToReproduce = (state: State, positions: { start: number; end: number 
             : []),
           ...(description ? [description] : []),
         ],
-        cursor: primary.after.cursor ? head(primary.after.cursor) : null,
+        cursor: primary.after.cursor ? contextThoughtId(primary.after, primary.after.cursor) : null,
         selection: multicursor ? selectionIds(primary.after) : selection,
       }
     },

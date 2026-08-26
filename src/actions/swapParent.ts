@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import Path from '../@types/Path'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import moveThought from '../actions/moveThought'
@@ -10,8 +11,10 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import head from '../util/head'
+import headId from '../util/headId'
 import keyValueBy from '../util/keyValueBy'
 import parentOf from '../util/parentOf'
+import { isContextStep } from '../util/pathStep'
 import reducerFlow from '../util/reducerFlow'
 import alert from './alert'
 import setCursor from './setCursor'
@@ -25,8 +28,8 @@ const swapParent = (state: State): State => {
 
   // disallow swapParent in context view
   if (
-    isContextViewActive(state, rootedParentOf(state, cursor)) ||
-    isContextViewActive(state, rootedParentOf(state, parentOf(cursor))) ||
+    isContextStep(head(cursor)) ||
+    (cursor.length > 1 && isContextStep(head(parentOf(cursor) as Path))) ||
     isContextViewActive(state, cursor)
   ) {
     return alert(state, { value: 'Swap Parent cannot be performed in the context view.' })
@@ -38,8 +41,8 @@ const swapParent = (state: State): State => {
   // If the cursor is at the root, do nothing.
   if (!parent.length) return state
 
-  const childId = head(cursor)
-  const parentId = head(parent)
+  const childId = headId(cursor)
+  const parentId = headId(parent)
 
   const childThought = getThoughtById(state, childId)
   const parentThought = getThoughtById(state, parentId)
@@ -64,7 +67,7 @@ const swapParent = (state: State): State => {
   }))
 
   const grandparent = parentOf(parent)
-  const grandparentId = head(rootedParentOf(state, parent))
+  const grandparentId = headId(rootedParentOf(state, parent))
 
   return reducerFlow([
     // First move the child to replace its parent's position

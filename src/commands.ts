@@ -40,7 +40,6 @@ import hasMulticursor from './selectors/hasMulticursor'
 import isAllSelected from './selectors/isAllSelected'
 import isRedoEnabled from './selectors/isRedoEnabled'
 import isUndoEnabled from './selectors/isUndoEnabled'
-import splitChain from './selectors/splitChain'
 import thoughtToPath from './selectors/thoughtToPath'
 import store from './stores/app'
 import editingValueStore from './stores/editingValue'
@@ -50,10 +49,11 @@ import debugLog from './util/debugLog'
 import equalPath from './util/equalPath'
 import haptics from './util/haptics'
 import hashPath from './util/hashPath'
-import head from './util/head'
+import headId from './util/headId'
 import isAttribute from './util/isAttribute'
 import keyValueBy from './util/keyValueBy'
 import parentOf from './util/parentOf'
+import { isSimplePath, pathIds } from './util/pathStep'
 import UnreachableError from './util/unreachable'
 
 export const globalCommands: Command[] = Object.values(commandsObject)
@@ -368,9 +368,9 @@ const filterCursors = (state: State, cursors: Path[], filter: MulticursorFilter 
 /** Recomputes a path after a command has executed, in case the thought was moved. Returns null if the thought no longer exists. Paths that cross a context view are returned as-is, since they do not follow the parent chain and therefore cannot be reconstructed by thoughtToPath. */
 const recomputePath = (state: State, path: Path): Path | null => {
   // e.g. a/m~/a does not follow the parent chain (the trailing a is a context of the Lexeme m, whose real parent is the root), so thoughtToPath would collapse it to a.
-  if (splitChain(state, path).length > 1) return getThoughtById(state, head(path)) ? path : null
+  if (!isSimplePath(path)) return getThoughtById(state, headId(path)) ? path : null
 
-  const recomputed = thoughtToPath(state, head(path))
+  const recomputed = thoughtToPath(state, headId(path))
   return recomputed && equalPath(recomputed, HOME_PATH) ? null : recomputed
 }
 
@@ -378,7 +378,9 @@ const recomputePath = (state: State, path: Path): Path | null => {
  * Truncates a path to its nearest ancestor that is not within a metaprogramming attribute. If a command moves the cursor or a multicursor into a metaprogramming attribute (e.g. swapNote moving a thought into =note), the selection should be set to the nearest non-attribute ancestor instead. Returns the path unchanged if it contains no attribute, or null if truncation would leave an empty path.
  */
 const nearestNonAttributeAncestor = (state: State, path: Path): Path | null => {
-  const attributeIndex = path.findIndex(id => {
+  // Each step is resolved to the thought it lands on. In the context view that is the Lexeme instance, whose value is
+  // the context view thought already checked earlier in the path, so no attribute ancestor is missed.
+  const attributeIndex = pathIds(path).findIndex(id => {
     const thought = getThoughtById(state, id)
     return !!thought && isAttribute(thought.value)
   })

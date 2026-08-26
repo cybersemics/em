@@ -22,6 +22,7 @@ import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
 import { getLexeme } from '../../selectors/getLexeme'
 import isUndoEnabled from '../../selectors/isUndoEnabled'
+import simplifyPath from '../../selectors/simplifyPath'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
@@ -29,6 +30,7 @@ import getAllChildrenAsThoughtsByContext from '../../test-helpers/getAllChildren
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
+import { pathIds } from '../../util/pathStep'
 import archiveCommand from '../archive'
 import deleteCommand from '../delete'
 import indentCommand from '../indent'
@@ -285,7 +287,7 @@ describe('undo', () => {
 
     const expectedCursor = [{ value: 'a', rank: 0 }]
 
-    const cursorThoughts = childIdsToThoughts(store.getState(), store.getState().cursor!)
+    const cursorThoughts = childIdsToThoughts(store.getState(), pathIds(store.getState().cursor!))
 
     expect(cursorThoughts).toMatchObject(expectedCursor)
   })
@@ -298,7 +300,7 @@ describe('undo', () => {
     const stateNew = store.getState()
     const expectedCursor = [{ value: 'a', rank: 0 }]
 
-    const cursorThoughts = stateNew.cursor && childIdsToThoughts(stateNew, stateNew.cursor)
+    const cursorThoughts = stateNew.cursor && childIdsToThoughts(stateNew, pathIds(stateNew.cursor))
 
     expect(cursorThoughts).toMatchObject(expectedCursor)
   })
@@ -694,7 +696,7 @@ describe('grouping', () => {
       undo(),
     ])
 
-    const cursorAfterFirstUndo = childIdsToThoughts(store.getState(), store.getState().cursor!)
+    const cursorAfterFirstUndo = childIdsToThoughts(store.getState(), pathIds(store.getState().cursor!))
     expect(cursorAfterFirstUndo).toMatchObject([{ value: 'a' }])
 
     const exportedAfterFirstUndo = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
@@ -708,7 +710,7 @@ describe('grouping', () => {
     // undo 'cursorBack' and 'editThought'
     store.dispatch(undo())
 
-    const cursorAfterSecondUndo = childIdsToThoughts(store.getState(), store.getState().cursor!)
+    const cursorAfterSecondUndo = childIdsToThoughts(store.getState(), pathIds(store.getState().cursor!))
     expect(cursorAfterSecondUndo).toMatchObject([{ value: 'a' }, { value: 'b' }])
 
     const exportedAfterSecondUndo = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
@@ -983,7 +985,7 @@ describe('grouping', () => {
     // and undoReducer preserves the current cursorOffset when undoing a formatting-only edit.
     store.dispatch([importText({ text: `- hello` }), setCursor(['hello'])])
 
-    const path = contextToPath(store.getState(), ['hello'])!
+    const path = simplifyPath(store.getState(), contextToPath(store.getState(), ['hello'])!)
 
     // Simulate formatLetterCase (after fix): editThought with cursorOffset set to actual position (5).
     store.dispatch(
@@ -1017,7 +1019,7 @@ describe('grouping', () => {
     store.dispatch(newThought({ value: '' }))
     expect(store.getState().isKeyboardOpen).toBe(true)
 
-    const pathKeyboard = contextToPath(store.getState(), [''])!
+    const pathKeyboard = simplifyPath(store.getState(), contextToPath(store.getState(), [''])!)
     store.dispatch(editThoughtRaw({ oldValue: '', newValue: 'ab', path: pathKeyboard, cursorOffset: 2 }))
     expect(store.getState().isKeyboardOpen).toBe(true)
 
@@ -1035,7 +1037,7 @@ describe('grouping', () => {
     // Fix: editableNonce is excluded from undo/redo patches, so undoing a force edit yields a true net increment.
     store.dispatch([importText({ text: `- hello` }), setCursor(['hello'])])
 
-    const path = contextToPath(store.getState(), ['hello'])!
+    const path = simplifyPath(store.getState(), contextToPath(store.getState(), ['hello'])!)
 
     store.dispatch(
       editThoughtRaw({
@@ -1207,7 +1209,7 @@ describe('grouping', () => {
 
     store.dispatch(setNoteFocus({ value: true, offset: null }))
 
-    const path = contextToPath(store.getState(), ['note-offset', '=note', original])!
+    const path = simplifyPath(store.getState(), contextToPath(store.getState(), ['note-offset', '=note', original])!)
     store.dispatch(
       editThoughtRaw({
         path,

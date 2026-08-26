@@ -3,26 +3,20 @@ import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import deleteThought from '../actions/deleteThought'
 import { ABSOLUTE_TOKEN } from '../constants'
+import contextThoughtId from '../selectors/contextThoughtId'
 import getContexts from '../selectors/getContexts'
 import getThoughtById from '../selectors/getThoughtById'
-import isContextViewActive from '../selectors/isContextViewActive'
+import pathToThought from '../selectors/pathToThought'
 import rootedParentOf from '../selectors/rootedParentOf'
-import thoughtToPath from '../selectors/thoughtToPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
-import headValue from '../util/headValue'
+import headId from '../util/headId'
 import once from '../util/once'
 import parentOf from '../util/parentOf'
+import { isContextStep } from '../util/pathStep'
 import reducerFlow from '../util/reducerFlow'
 import updateCursorAfterDelete from './updateCursorAfterDelete'
-
-/** Given a path to a thought within the context view (a/m~/b), find the associated thought (b/m). This is nontrivial since the associated thought (b/m) is a different Lexeme instance than the context view thought (a/m). */
-const getContext = (state: State, path: Path) => {
-  const contextValue = headValue(state, parentOf(path))
-  const contexts = contextValue !== undefined ? getContexts(state, contextValue) : []
-  return contexts.find(cxid => getThoughtById(state, cxid)?.parentId === head(path))
-}
 
 /** Deletes a thought and moves the cursor to a nearby valid thought. Works in normal view and context view. */
 const deleteThoughtWithCursor = (state: State): State => {
@@ -31,28 +25,24 @@ const deleteThoughtWithCursor = (state: State): State => {
   const cursor = state.cursor
   const parentPath = rootedParentOf(state, cursor)
 
-  // same as in newThought
-  const showContexts = isContextViewActive(state, parentPath)
-  const simplePath = thoughtToPath(state, head(cursor))
+  // The head step records whether this position was reached by crossing a context view.
+  const showContexts = isContextStep(head(cursor))
 
-  const thought = getThoughtById(state, head(simplePath))
+  // In the context view the cursor a/m~/b displays the context b but stands for the Lexeme instance b/m, which is the
+  // thought that has to be deleted. The step records that instance directly, so there is no Lexeme scan to do.
+  const instanceId = headId(cursor)
+  const thought = pathToThought(state, cursor)
 
   if (!thought) return state
 
   /** Returns true if the context view needs to be closed after deleting . Specifically, returns true if there is only one context left after the delete or if the deleted cursor is a cyclic context, e.g. a/m~/a. */
   const shouldCloseContextView = once(() => {
-    const parentPath = rootedParentOf(state, cursor)
-    const showContexts = isContextViewActive(state, parentPath)
-    const parentThought = getThoughtById(state, head(parentPath))
-    const numContexts = showContexts && parentThought ? getContexts(state, parentThought.value).length : 0
-    const isCyclic = head(cursor) === head(parentOf(parentOf(cursor)))
+    const contextViewThought = getThoughtById(state, contextThoughtId(state, parentPath))
+    const numContexts = showContexts && contextViewThought ? getContexts(state, contextViewThought.value).length : 0
+    // a cyclic context is one whose context is the grandparent, e.g. a/m~/a
+    const isCyclic = cursor.length > 2 && contextThoughtId(state, cursor) === headId(parentOf(parentOf(cursor)) as Path)
     return isCyclic || numContexts <= 2
   })
-
-  // When deleting a context from the context view, we need to delete the correct instance of the Lexeme, e.g. in a/m~/b we want to delete b/m
-  // This is a problem specifically for tangential contexts, which have a different parent from the cursor.
-  // i.e. The id of b/m is not contained within the cursor a/m~/b because they are different m instances.
-  const contextId = (showContexts && getContext(state, cursor)) || null
 
   return reducerFlow([
     // delete thought
@@ -62,11 +52,13 @@ const deleteThoughtWithCursor = (state: State): State => {
       showContexts && thought.parentId !== ABSOLUTE_TOKEN
         ? {
             pathParent: cursor,
-            thoughtId: contextId!,
+            thoughtId: instanceId,
           }
         : {
             pathParent: parentPath,
-            thoughtId: head(simplePath),
+            // the displayed thought: in the ABSOLUTE case that is the empty context itself (ABS/_), which is deleted
+            // along with the Lexeme instance inside it. In normal view it is the same thought as the instance.
+            thoughtId: thought.id,
           },
     ),
 

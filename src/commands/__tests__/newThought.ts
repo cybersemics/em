@@ -11,6 +11,8 @@ import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import head from '../../util/head'
+import headId from '../../util/headId'
+import parentOf from '../../util/parentOf'
 import newThoughtCommand from '../newThought'
 
 beforeEach(initStore)
@@ -112,7 +114,7 @@ describe('multicursor', () => {
     expect(hasMulticursor(state)).toBeFalse()
 
     // expect cursor to be on the last created thought (the empty thought after b1)
-    const bChildren = getChildrenRanked(state, head(state.cursor!.slice(0, -1)))
+    const bChildren = getChildrenRanked(state, headId(parentOf(state.cursor!)))
     expectPathToEqual(state, state.cursor, ['b', ''])
     expect(head(state.cursor!)).toBe(bChildren[1].id)
   })

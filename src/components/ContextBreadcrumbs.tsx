@@ -9,15 +9,16 @@ import { SystemStyleObject } from '../../styled-system/types'
 import Path from '../@types/Path'
 import ThoughtId from '../@types/ThoughtId'
 import { HOME_TOKEN } from '../constants'
+import contextThoughtId, { contextThoughtIds } from '../selectors/contextThoughtId'
 import getThoughtById from '../selectors/getThoughtById'
-import isContextViewActive from '../selectors/isContextViewActive'
 import simplifyPath from '../selectors/simplifyPath'
 import editingValueStore from '../stores/editingValue'
 import ellipsize from '../util/ellipsize'
 import fastClick from '../util/fastClick'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
-import parentOf from '../util/parentOf'
+import { stepId } from '../util/pathStep'
+import { isContextStep } from '../util/pathStep'
 import stripTags from '../util/stripTags'
 import FadeTransition from './FadeTransition'
 import HomeLink from './HomeLink'
@@ -49,10 +50,12 @@ const useEllipsizedThoughts = (
 
   // convert the path to a list of thought values
   // if editing, use the live editing value
+  // the thought displayed at each step, i.e. the context rather than the Lexeme instance inside a context view
+  const displayedIds = useSelector(state => contextThoughtIds(state, path), isEqual)
   const thoughtValuesLive = useSelector(
     state =>
-      path.map(id =>
-        editingValue && state.cursor && id === head(state.cursor)
+      displayedIds.map(id =>
+        editingValue && state.cursor && id === contextThoughtId(state, state.cursor)
           ? editingValue
           : ((getThoughtById(state, id)?.value || null) as string | null),
       ),
@@ -60,7 +63,7 @@ const useEllipsizedThoughts = (
   )
 
   // if charLimit is exceeded then replace the remaining characters with an ellipsis
-  const charLimitedThoughts: OverflowPath = path.map((id, i) => {
+  const charLimitedThoughts: OverflowPath = displayedIds.map((id, i) => {
     const value = thoughtValuesLive[i] ? stripTags(thoughtValuesLive[i]) : null
 
     return {
@@ -107,7 +110,7 @@ const BreadCrumb = React.memo(
   >(({ isOverflow, label, isDeleting, path, showDivider, onClickEllipsis, staticText, linkCssRaw }, ref) => {
     const simplePath = useSelector(state => simplifyPath(state, path), shallowEqual)
     const value = useSelector(state => getThoughtById(state, head(simplePath))?.value)
-    const showContexts = useSelector(state => isContextViewActive(state, parentOf(path)))
+    const showContexts = isContextStep(head(path))
     const delimiterStyle: React.CSSProperties = {
       fontSize: '0.8em',
       lineHeight: '16px',
@@ -181,7 +184,8 @@ const ContextBreadcrumbs = ({
   const [disabled, setDisabled] = React.useState(false)
   const simplePath = useSelector(state => simplifyPath(state, path), shallowEqual)
   const pathFiltered = useSelector(
-    state => (hideArchive ? (path.filter(id => getThoughtById(state, id)?.value !== '=archive') as Path) : path),
+    state =>
+      hideArchive ? (path.filter(step => getThoughtById(state, stepId(step))?.value !== '=archive') as Path) : path,
     shallowEqual,
   )
   const ellipsizedThoughts = useEllipsizedThoughts(pathFiltered, { charLimit, disabled, thoughtsLimit })

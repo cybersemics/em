@@ -12,6 +12,7 @@ import isMultiEditing from '../selectors/isMultiEditing'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
+import headId from '../util/headId'
 import headValue from '../util/headValue'
 import isDivider from '../util/isDivider'
 import isDocumentEditable from '../util/isDocumentEditable'
@@ -51,7 +52,7 @@ const canExecuteOutdent = (state: State): boolean => {
     selection.isCollapsed() &&
     isDocumentEditable() &&
     headValue(state, cursor)?.length !== 0 &&
-    getChildren(state, head(rootedParentOf(state, cursor))).length === 1
+    getChildren(state, headId(rootedParentOf(state, cursor))).length === 1
   )
 }
 

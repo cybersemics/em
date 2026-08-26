@@ -1,13 +1,13 @@
 import State from '../../@types/State'
 import importText from '../../actions/importText'
 import toggleContextView from '../../actions/toggleContextView'
-import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import contextToPath from '../../selectors/contextToPath'
 import addMulticursor from '../../test-helpers/addMulticursorAtFirstMatch'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import hashPath from '../../util/hashPath'
 import initialState from '../../util/initialState'
+import pathToContext from '../../util/pathToContext'
 import reducerFlow from '../../util/reducerFlow'
 import cursorBack from '../cursorBack'
 import cursorForward from '../cursorForward'
@@ -16,7 +16,7 @@ import newThought from '../newThought'
 
 /** Converts the multicursor set to a list of contexts in a readable way. */
 const multicursorContexts = (state: State): string[][] =>
-  Object.values(state.multicursors).map(path => childIdsToThoughts(state, path).map(thought => thought.value))
+  Object.values(state.multicursors).map(path => pathToContext(state, path))
 
 it('move cursor to parent', () => {
   const steps = [newThought('a'), newSubthought('b'), cursorBack]

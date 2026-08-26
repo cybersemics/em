@@ -7,6 +7,7 @@ import contextToPath from '../selectors/contextToPath'
 import rootedParentOf from '../selectors/rootedParentOf'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
+import headId from '../util/headId'
 
 type Payload = Omit<MoveThoughtPayload, 'oldPath' | 'newPath'> & {
   from: string[]
@@ -27,7 +28,7 @@ const getMovePaths = (state: State, from: string[], to: string[]): [Path, Path] 
 
   if (!toPath) throw new Error(`Ranked thoughts not found for context: ${to}`)
 
-  const newPath = appendToPath(toPath, head(oldPath))
+  const newPath = appendToPath(toPath, headId(oldPath))
 
   return [oldPath, newPath]
 }

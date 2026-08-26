@@ -1,23 +1,26 @@
+import Path from '../@types/Path'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import alert from '../actions/alert'
 import moveThought from '../actions/moveThought'
+import contextThoughtPath from '../selectors/contextThoughtPath'
 import findDescendant from '../selectors/findDescendant'
 import { anyChild, findAnyChild } from '../selectors/getChildren'
 import getRankAfter from '../selectors/getRankAfter'
 import getThoughtById from '../selectors/getThoughtById'
-import isContextViewActive from '../selectors/isContextViewActive'
 import pathToThought from '../selectors/pathToThought'
 import simplifyPath from '../selectors/simplifyPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import ellipsize from '../util/ellipsize'
 import head from '../util/head'
+import headId from '../util/headId'
 import headValue from '../util/headValue'
 import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
 import normalizeThought from '../util/normalizeThought'
 import parentOf from '../util/parentOf'
+import { isContextStep } from '../util/pathStep'
 import reducerFlow from '../util/reducerFlow'
 import deleteThought from './deleteThought'
 import newThought from './newThought'
@@ -30,8 +33,14 @@ const swapNote = (state: State): State => {
 
   if (!cursor) return state
 
-  const thoughtId = head(cursor)
-  const parentNoteId = findDescendant(state, head(parentOf(cursor)), '=note')
+  // The cursor thought is converted to or from a note by moving it, so it is the Lexeme instance the path lands on.
+  // A context in the context view is rejected below, so the two agree here.
+  const thoughtId = headId(cursor)
+  // =note belongs to the thought the user sees, which in the context view is the context rather than the Lexeme
+  // instance (see resolveNotePath). Resolving the parent once keeps the lookups and the =note that is created in the
+  // same context, and gives moveThought a destination it can resolve.
+  const parentPath = contextThoughtPath(state, parentOf(cursor))
+  const parentNoteId = findDescendant(state, head(parentPath), '=note')
   const parentNoteChildId = anyChild(state, parentNoteId)?.id
   const noteId = findDescendant(state, thoughtId, '=note')
 
@@ -44,23 +53,29 @@ const swapNote = (state: State): State => {
     return alert(state, { value: `Thoughts in the home context cannot be converted to a note.` })
   }
   // cancel if parent is readonly or unextendable
-  else if (findDescendant(state, head(parentOf(cursor)), '=readonly')) {
+  else if (findDescendant(state, head(parentPath), '=readonly')) {
     return alert(state, {
       value: `"${ellipsize(headValue(state, parentOf(cursor)) ?? 'MISSING_THOUGHT')}" is read-only so "${headValue(
         state,
         cursor,
       )}" cannot be converted to a note.`,
     })
-  } else if (findDescendant(state, head(parentOf(cursor)), '=uneditable')) {
+  } else if (findDescendant(state, head(parentPath), '=uneditable')) {
     return alert(state, {
       value: `"${ellipsize(headValue(state, parentOf(cursor)) ?? 'MISSING_THOUGHT')}" is unextendable so "${headValue(
         state,
         cursor,
       )}" cannot be converted to a note.`,
     })
-  } else if (isContextViewActive(state, parentOf(cursor))) {
+  } else if (isContextStep(head(cursor))) {
     return alert(state, {
       value: `A context in the context view cannot be converted to a note.`,
+    })
+  } else if (cursor.length > 1 && isContextStep(head(parentOf(cursor) as Path))) {
+    // The note belongs to the thought the parent row displays (the context), but the cursor is a child of the Lexeme
+    // instance the row stands for. There is no coherent thought to swap between, so refuse rather than guess.
+    return alert(state, {
+      value: `A subthought of a context in the context view cannot be converted to a note.`,
     })
   }
 
@@ -97,7 +112,7 @@ const swapNote = (state: State): State => {
                       ? getThoughtById(state, noteChildId)
                       : findAnyChild(
                           state,
-                          head(cursor),
+                          thoughtId,
                           child => normalizeThought(child.value) === normalizeThought(note.value),
                         )
                     return resultChild
@@ -116,7 +131,7 @@ const swapNote = (state: State): State => {
           // create =note in thn cursor's parent if one does not exist
           !parentNoteId
             ? newThought({
-                at: parentOf(cursor),
+                at: parentPath,
                 insertBefore: true,
                 insertNewSubthought: true,
                 preventSetCursor: true,
@@ -128,11 +143,11 @@ const swapNote = (state: State): State => {
             return parentNoteChildId
               ? moveThought(state, {
                   oldPath: appendToPath(
-                    parentOf(cursor),
-                    findDescendant(state, head(parentOf(cursor)), '=note')!,
+                    parentPath,
+                    findDescendant(state, head(parentPath), '=note')!,
                     parentNoteChildId,
                   ),
-                  newPath: appendToPath(parentOf(cursor), parentNoteChildId),
+                  newPath: appendToPath(parentPath, parentNoteChildId),
                   newRank: getRankAfter(state, simplePath),
                 })
               : null
@@ -143,15 +158,15 @@ const swapNote = (state: State): State => {
           // if the cursor thought still exists (had no children), move it into =note
           // if uncategorize deleted it (had children), recreate it under =note with the original value
           state => {
-            const noteId = findDescendant(state, head(parentOf(cursor)), '=note')!
+            const noteId = findDescendant(state, head(parentPath), '=note')!
             return getThoughtById(state, thoughtId)
               ? moveThought(state, {
                   oldPath: cursor,
-                  newPath: appendToPath(parentOf(cursor), noteId, thoughtId),
+                  newPath: appendToPath(parentPath, noteId, thoughtId),
                   newRank: 0,
                 })
               : newThought(state, {
-                  at: appendToPath(parentOf(cursor), noteId),
+                  at: appendToPath(parentPath, noteId),
                   insertNewSubthought: true,
                   preventSetCursor: true,
                   value: value,

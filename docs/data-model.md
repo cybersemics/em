@@ -106,10 +106,13 @@ A `Context` is just an array of *values* — the sequence of thought texts from 
 ### Path
 
 ```ts
-type Path = [ThoughtId, ...ThoughtId[]]
+type Path = [PathStep, ...PathStep[]]
+type PathStep = ThoughtId | ContextStep
 ```
 
-A `Path` is a **non-empty** sequence of `ThoughtId`s from contiguous contexts. e.g. `['kv9a-vzva-ac4n', '2mv0-atk3-tjlw', 'vkwt-ftz1-094z']` represents the Path `a/b/c`:
+A `Path` is a **non-empty** sequence of steps from the root down to a rendered thought. An ordinary child step is just
+the child's `ThoughtId`, so in normal view a Path is a plain array of ids: `['kv9a-vzva-ac4n', '2mv0-atk3-tjlw',
+'vkwt-ftz1-094z']` represents the Path `a/b/c`:
 
 ```
 - a
@@ -122,22 +125,57 @@ A `Path` always starts at the ROOT thought. The ROOT thought itself is *not* par
 
 The most important `Path` in the app is `state.cursor` — the path of the thought being viewed/edited. Clicking a thought sets `state.cursor` to its path; pressing `ArrowDown` extends the path with the child's id; etc.
 
+A step that crosses a **context view** is a [ContextStep](#contextstep) instead — see [Context view](#context-view).
+Because the boundary is recorded in the Path itself, no code has to infer where it is, and a Path is unique to the row
+it addresses.
+
 #### Circular Paths
 
 `Path`s **are allowed to contain cycles**. This is possible because of the Context View, which lets the cursor jump between contexts that share a value (and back). The fact that the cursor can be at `a/m~/b/m/a` even though `a` already appears earlier is not a bug — it's how the Context View works. See [Views](#views).
 
+#### ContextStep
+
+```ts
+type ContextStep = string & Brand<'ContextStep'>   // `~${instanceId}`
+```
+
+A step that crosses a context view, encoded as the id of the **Lexeme instance** rendered at that position, prefixed
+with `~`. For the row `a/m~/b` — the context `b` listed under the context view on `a/m` — the Path is
+`[a, m, ~<id of b/m>]`.
+
+Two things about that encoding are load-bearing:
+
+- **The step is tagged.** A `Path` that crosses a context view and a `SimplePath` made of the same thoughts are
+  therefore different arrays, and `hashPath` gives them different keys. Before the tag existed, both were the same
+  array of ids, and the boundary had to be guessed from `state.contextViews` and the
+  Lexeme — a guess that is wrong whenever an ordinary child of `m` also happens to contain an `m` of its own. It also
+  made `state.contextViews`, `state.expanded`, and `state.multicursors` collide between the two.
+- **The step stores the instance, not the context.** A single context can hold two thoughts of the same Lexeme — `b/cat`
+  and `b/Cats` are both listed under `a/cat~`, both displayed as `b`. Storing `b` would make those two rendered rows the
+  same Path and leave one of them unaddressable by the cursor. The context is recovered in O(1) from
+  `getThoughtById(state, instanceId).parentId`.
+
+Steps are manipulated through [`util/pathStep.ts`](../src/util/pathStep.ts): `contextStep`, `isContextStep`, `stepId`,
+`isSimplePath`, `pathIds`, `replaceHead`, `appendSteps`, `lastContextStepIndex`. Never take a step apart by hand.
+
 ### SimplePath
 
 ```ts
-type SimplePath = Path & Brand<'SimplePath'>
+type SimplePath = [ThoughtId, ...ThoughtId[]] & Brand<'SimplePath'>
 ```
 
-A `SimplePath` is a `Path` that has not crossed any context views, and therefore has no cycles. TypeScript can't track "this Path crossed a context view" directly, so the brand is used to require explicit casting at the boundary — that way, code that needs the no-cycles guarantee can demand a `SimplePath` and rely on the cast site to have done the analysis. See the [Brand pattern](https://spin.atomicobject.com/2018/01/15/typescript-flexible-nominal-typing/).
+A `SimplePath` is a `Path` that has not crossed any context views, and therefore has no cycles. Its elements are plain
+`ThoughtId`s rather than `PathStep`s, so a `SimplePath` is assignable to `Path` but not the other way round, and
+indexing one gives an id you can pass straight to `getThoughtById`. The brand additionally marks the no-cycles
+guarantee, which TypeScript cannot track. See the [Brand pattern](https://spin.atomicobject.com/2018/01/15/typescript-flexible-nominal-typing/).
+
+Unlike the brand, the *structure* is now checkable at runtime: [`isSimplePath(path)`](../src/util/pathStep.ts) returns
+true when a Path contains no context step.
 
 In practice, you obtain a `SimplePath` either by:
 
 - Knowing structurally that a path doesn't cross a context view (e.g. it's just a sliced parent path), and casting via `as SimplePath`.
-- Calling [`simplifyPath`](../src/selectors/simplifyPath.ts), which uses [`splitChain`](../src/selectors/splitChain.ts) to find the trailing simple segment.
+- Calling [`simplifyPath`](../src/selectors/simplifyPath.ts), which resolves the last context step and carries the rest across.
 
 ### Lexeme
 
@@ -216,7 +254,7 @@ A note on `parentOf` vs `rootedParentOf`: [`rootedParentOf`](../src/selectors/ro
 #### Basic traversal
 
 - [`parentOfThought`](../src/selectors/parentOfThought.ts) — parent `Thought` of a `ThoughtId`.
-- [`nextSibling`](../src/selectors/nextSibling.ts) / [`prevSibling`](../src/selectors/prevSibling.ts) — next/previous sibling, honoring the parent's sort preference. `prevSibling` also handles context view, inferring it from the parent path. Since nothing distinguishes a `SimplePath` from a context-view `Path` at runtime, a caller holding a `SimplePath` must pass `{ showContexts: false }`, or a thought in a cyclic context — whose simple parent path *is* the path the context view is active on, e.g. `a/m/x` rendered at `a/m~/a/x` — will be looked up among the contexts of `m` rather than its children.
+- [`nextSibling`](../src/selectors/nextSibling.ts) / [`prevSibling`](../src/selectors/prevSibling.ts) — next/previous sibling, honoring the parent's sort preference. Both handle the context view, where the siblings of a context are the other Lexeme instances. They read that off the head step of the `Path` they are given, so nothing has to be inferred and a caller holding a `SimplePath` gets normal-view siblings automatically. The returned `Thought` is an instance in the context view, so build its `Path` with [`replaceHead`](../src/util/pathStep.ts) rather than `appendToPath`.
 - [`rootedParentOf`](../src/selectors/rootedParentOf.ts) — parent `Path`, returning `[HOME_TOKEN]` for root children.
 - [`parentOf`](../src/util/parentOf.ts) — parent of a `Path` or `Context` (may be empty).
 - [`appendToPath`](../src/util/appendToPath.ts) — appends one or more thoughts to a `Path` / `SimplePath`, dropping the root token.
@@ -271,9 +309,9 @@ A note on `parentOf` vs `rootedParentOf`: [`rootedParentOf`](../src/selectors/ro
 #### Context view
 
 - [`isContextViewActive(state, path)`](../src/selectors/isContextViewActive.ts) — is context view turned on for this path?
-- [`appendChildPath`](../src/selectors/appendChildPath.ts) — append a child `SimplePath` to a parent `Path`, with context-view-aware skip behavior.
-- [`getChildPath`](../src/selectors/getChildPath.ts) — figure out the rendered child's `SimplePath` accounting for context view.
-- [`simplifyPath`](../src/selectors/simplifyPath.ts) — return the trailing `SimplePath` of a `Path` that may cross context views.
+- [`appendContextStep(path, instanceId)`](../src/util/appendToPath.ts) — append a step that crosses a context view.
+- [`simplifyPath`](../src/selectors/simplifyPath.ts) — the `SimplePath` of the Lexeme instance a `Path` describes.
+- [`contextThoughtId`](../src/selectors/contextThoughtId.ts) / [`contextThoughtPath`](../src/selectors/contextThoughtPath.ts) — the thought displayed at the head of a `Path`.
 
 ## Visibility and sorting
 
@@ -348,8 +386,15 @@ The context view is gated by `state.contextViews`, an object keyed by `hashPath(
 
 Contexts under a context view can themselves render their own children (defaulting back to normal view). The mechanics:
 
-- In normal view, a child `Path` is appended directly: `[...parentPath, childId]`.
-- In context view, the appended id needs to come from the *parent of* the context entry (because the context entry "is" the parent). [`appendChildPath`](../src/selectors/appendChildPath.ts) handles this: if the parent path has the context view active, it appends the head of `parentOf(childPath)` instead of `head(childPath)`.
+- In normal view, a child `Path` is appended directly: `appendToPath(parentPath, childId)`.
+- In context view, the step is a [ContextStep](#contextstep) built from the id of the Lexeme instance:
+  [`appendContextStep(parentPath, instanceId)`](../src/util/appendToPath.ts). The row displays the instance's *parent*,
+  but the step records the instance, because that is what makes each row uniquely addressable and what supplies the
+  row's children.
+
+To move between rows at the same level — the next or previous sibling, or the next or previous context — use
+[`replaceHead(path, id)`](../src/util/pathStep.ts) rather than `appendToPath(parentOf(path), id)`. It preserves whether
+that step crosses a context view, so it is correct in both views.
 
 Because context view jumps between subtrees, `Path`s that descend through one or more context views can become circular:
 
@@ -368,33 +413,27 @@ Because context view jumps between subtrees, `Path`s that descend through one or
 
 This is fine: the rendering is bounded by depth, and the underlying data structure tolerates the cycle.
 
-#### contextChain
+#### Resolving a Path in the context view
 
-When a `Path` crosses one or more context views, it is no longer a `SimplePath`. To get back to a `SimplePath` (which is required for any operation that needs a single contiguous context — e.g. converting to a `Context`), the path is split at every context-view boundary into a chain of `SimplePath` segments. [`splitChain`](../src/selectors/splitChain.ts) does this:
+A context-view row involves two different thoughts, and which one you want depends on what you are doing. For the row
+`a/m~/b`:
 
-Given:
+| | thought | selector |
+|---|---|---|
+| **Lexeme instance** — supplies the row's children, and is what delete, move, rank, sort and drop operate on | `b/m` | [`headId(path)`](../src/util/headId.ts) / [`simplifyPath`](../src/selectors/simplifyPath.ts) |
+| **context** — displayed on the row, edited by `<Editable>`, owns the metaprogramming attributes, and is what a *nested* context view lists the contexts of | `b` | [`contextThoughtId`](../src/selectors/contextThoughtId.ts) / [`contextThoughtPath`](../src/selectors/contextThoughtPath.ts) |
 
-```
-- a
-  - m
-    - x
-- b
-  - m
-    - y
-```
+Outside the context view all four agree, so on a `SimplePath` any of them is correct.
 
-When `cursor` is `a/m~/b/y`, then `contextChain` is (ranks omitted for readability):
+This ambiguity is intrinsic: the context view is the transitional space between two parts of the tree, and the right
+thought genuinely depends on the command. The refactor that introduced `ContextStep` did not remove the ambiguity — it
+made every call site *state* which one it means, instead of leaving one global answer that was wrong half the time.
+Deleting `a/m~/a` removes `m` from the context `a` (the instance); formatting it makes the visible `a` bold (the
+context). Both are correct.
 
-```js
-[
-  ['a', 'm'],     // the simple segment up to and including the context-view thought
-  ['b', 'y'],     // the simple segment after entering the context view
-]
-```
-
-Each segment is a `SimplePath`. The transition from one segment to the next happens at each `m~` boundary.
-
-An active context view is not on its own enough to split: the id following the context-view thought must be one of that thought's contexts. The distinction matters in a cyclic context (see [Context view recursion](#context-view-recursion) above), where a `SimplePath` and a context-view `Path` can be the same array of ids. The thought rendered at `a/m~/a/x` has the `SimplePath` `a/m/x`, and a context view is active on `a/m` — but `x` is an ordinary child of `m` rather than a context of it, so `a/m/x` is left whole instead of being split into `[['a', 'm'], ['x']]`.
+`simplifyPath` resolves only the **last** boundary and carries the steps after it across verbatim. That is what keeps a
+*constructed* Path meaningful: a reducer can build a destination like `a/m~/b/<new category>/y` before anything has
+moved, and get back `b/m/<new category>/y` rather than wherever `y` currently lives.
 
 A more involved example (paste into **em** to try):
 
@@ -425,21 +464,13 @@ A more involved example (paste into **em** to try):
           - Potentiality vs Actuality
 ```
 
-The cursor `Books/Read/C.S. Peirce/Philosophical Writings/Philosophy of Math~/Philosophy/Probability as Potential~/Potentiality/Potentiality vs Actuality` spans two context views (`Philosophy of Math` and `Probability as Potential`), so the `contextChain` has three segments:
-
-```js
-[
-  ['Books', 'Read', 'C. S. Peirce', 'Philosophical Writings', 'Philosophy of Math'],
-  ['Philosophy', 'Probability as Potential'],
-  ['Potentiality', 'Potentiality vs Actuality'],
-]
-```
+The cursor `Books/Read/C.S. Peirce/Philosophical Writings/Philosophy of Math~/Philosophy/Probability as Potential~/Potentiality/Potentiality vs Actuality` spans two context views (`Philosophy of Math` and `Probability as Potential`), so two of its steps are `ContextStep`s, and `simplifyPath` resolves it against the last of them:
+`Potentiality/Probability as Potential/Potentiality vs Actuality`.
 
 Related helpers:
 
-- [`splitChain`](../src/selectors/splitChain.ts) — `Path` → `SimplePath[]`.
-- [`lastThoughtsFromContextChain`](../src/selectors/lastThoughtsFromContextChain.ts) — picks the trailing simple segment.
-- [`simplifyPath`](../src/selectors/simplifyPath.ts) — convenience: `splitChain` + `lastThoughtsFromContextChain`.
-- [`contextChainToPath`](../src/util/contextChainToPath.ts) — flattens a chain back into a single `Path`.
-- [`thoughtsEditingFromChain`](../src/selectors/thoughtsEditingFromChain.ts) — used by edit-mode logic to identify the actively-edited segment.
-- [`chain`](../src/selectors/chain.ts) — utility for working with chains.
+- [`simplifyPath`](../src/selectors/simplifyPath.ts) — `Path` → the `SimplePath` of the Lexeme instance.
+- [`contextThoughtPath`](../src/selectors/contextThoughtPath.ts) / [`contextThoughtId`](../src/selectors/contextThoughtId.ts) — the thought displayed at the head.
+- [`headId`](../src/util/headId.ts) — the id at the head, decoding a context step.
+- [`pathStep`](../src/util/pathStep.ts) — `contextStep`, `isContextStep`, `stepId`, `isSimplePath`, `pathIds`, `replaceHead`, `appendSteps`, `lastContextStepIndex`.
+- [`appendContextStep`](../src/util/appendToPath.ts) — enter a context view.

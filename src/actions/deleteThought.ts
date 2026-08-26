@@ -15,13 +15,14 @@ import { getLexeme } from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
 import hasLexeme from '../selectors/hasLexeme'
 import rootedParentOf from '../selectors/rootedParentOf'
+import simplifyPath from '../selectors/simplifyPath'
 import thoughtToPath from '../selectors/thoughtToPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import equalPathHead from '../util/equalPathHead'
 import hashPath from '../util/hashPath'
 import hashThought from '../util/hashThought'
-import head from '../util/head'
+import headId from '../util/headId'
 import headValue from '../util/headValue'
 import isDescendant from '../util/isDescendant'
 import keyValueBy from '../util/keyValueBy'
@@ -63,7 +64,7 @@ const deleteThought = (state: State, { local = true, pathParent, thoughtId, remo
   const key = deletedThought ? hashThought(value!) : null
   const lexeme = deletedThought ? getLexeme(state, value!) : null
 
-  const parent = getThoughtById(state, deletedThought ? deletedThought.parentId : head(pathParent))
+  const parent = getThoughtById(state, deletedThought ? deletedThought.parentId : headId(pathParent))
 
   if (!parent) {
     console.error('Parent not found!', thoughtId, deletedThought?.value)
@@ -227,7 +228,12 @@ const deleteThought = (state: State, { local = true, pathParent, thoughtId, remo
 
   const isDeletedThoughtCursor = equalPathHead(simplePath, state.cursor)
 
-  const isCursorDescendantOfDeletedThought = !!simplePath && !!state.cursor && isDescendant(simplePath, state.cursor)
+  // Compare the cursor's resolved position rather than its raw steps. A cursor inside a context view describes its
+  // position by crossing a boundary, so a prefix test against the deleted thought's SimplePath would never match even
+  // when the cursor sits inside the subtree being deleted, leaving the cursor pointing at a thought that no longer
+  // exists. Outside the context view simplifyPath returns the cursor itself.
+  const isCursorDescendantOfDeletedThought =
+    !!simplePath && !!state.cursor && isDescendant(simplePath, simplifyPath(state, state.cursor))
 
   // if the deleted thought is the cursor or a descendant of the cursor, we need to calculate a new cursor.
   const cursorNew =

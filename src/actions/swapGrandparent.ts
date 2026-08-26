@@ -10,8 +10,10 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import head from '../util/head'
+import headId from '../util/headId'
 import keyValueBy from '../util/keyValueBy'
 import parentOf from '../util/parentOf'
+import { isContextStep } from '../util/pathStep'
 import reducerFlow from '../util/reducerFlow'
 import alert from './alert'
 import setCursor from './setCursor'
@@ -34,17 +36,17 @@ const swapGrandparent = (state: State): State => {
 
   // disallow swapGrandparent in context view
   if (
-    isContextViewActive(state, rootedParentOf(state, grandparent)) ||
-    isContextViewActive(state, rootedParentOf(state, parent)) ||
-    isContextViewActive(state, rootedParentOf(state, cursor)) ||
+    isContextStep(head(grandparent)) ||
+    isContextStep(head(parent)) ||
+    isContextStep(head(cursor)) ||
     isContextViewActive(state, cursor)
   ) {
     return alert(state, { value: 'Swap Grandparent cannot be performed in the context view.' })
   }
 
-  const childId = head(cursor)
-  const parentId = head(parent)
-  const grandparentId = head(grandparent)
+  const childId = headId(cursor)
+  const parentId = headId(parent)
+  const grandparentId = headId(grandparent)
 
   const childThought = getThoughtById(state, childId)
   const parentThought = getThoughtById(state, parentId)
@@ -69,7 +71,7 @@ const swapGrandparent = (state: State): State => {
   }))
 
   const greatGrandparent = parentOf(grandparent)
-  const greatGrandparentId = head(rootedParentOf(state, grandparent))
+  const greatGrandparentId = headId(rootedParentOf(state, grandparent))
 
   return reducerFlow([
     // First move the child to replace its grandparent's position

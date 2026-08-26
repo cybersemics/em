@@ -16,6 +16,8 @@ import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import initStore from '../../test-helpers/initStore'
 import findThoughtByText from '../../test-helpers/queries/findThoughtByText'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import { pathIds } from '../../util/pathStep'
+import pathToContext from '../../util/pathToContext'
 import extractSubthoughtCommand from '../extractSubthought'
 
 /**
@@ -130,7 +132,7 @@ describe('Extract Subthought', () => {
     const createdThought = await findThoughtByText(selectedText)
     expect(createdThought).toBeTruthy()
 
-    const cursorThoughts = childIdsToThoughts(store.getState(), store.getState().cursor!)
+    const cursorThoughts = childIdsToThoughts(store.getState(), pathIds(store.getState().cursor!))
 
     expect(cursorThoughts).toMatchObject([{ value: thoughtValue.slice(0, 9) }])
   })
@@ -240,9 +242,11 @@ describe('Extract Subthought', () => {
       const state = store.getState()
 
       expectPathToEqual(state, state.cursor, ['alpha'])
-      expect(
-        Object.values(state.multicursors).map(path => childIdsToThoughts(state, path).map(thought => thought.value)),
-      ).toEqual([['alpha'], ['charlie delta'], ['echo']])
+      expect(Object.values(state.multicursors).map(path => pathToContext(state, path))).toEqual([
+        ['alpha'],
+        ['charlie delta'],
+        ['echo'],
+      ])
     })
 
     it('an alert should be shown if there is no selection and several thoughts are selected', async () => {

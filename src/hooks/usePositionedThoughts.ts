@@ -1,7 +1,7 @@
 import { useLayoutEffect, useMemo, useState } from 'react'
 import { useSelector } from 'react-redux'
 import Index from '../@types/IndexType'
-import ThoughtId from '../@types/ThoughtId'
+import PathStep from '../@types/PathStep'
 import TreeThought from '../@types/TreeThought'
 import TreeThoughtPositioned from '../@types/TreeThoughtPositioned'
 import { CONTENT_BOX_PADDING_LEFT, HOME_TOKEN, LongPressState } from '../constants'
@@ -101,7 +101,9 @@ const usePositionedThoughts = (
 
     // cache table column 1 widths so they are only calculated once and then assigned to each thought in the column
     // key thoughtId of thought with =table attribute
-    const tableCol1Widths = new Map<ThoughtId, number>()
+    // Keyed by PathStep rather than ThoughtId so that lookups by raw Path element are exact: a context-view row and
+    // an ordinary child are different steps even when they resolve to the same thought.
+    const tableCol1Widths = new Map<PathStep, number>()
 
     // The set of keys of thoughts that are themselves tables (i.e. have =view/Table, so linearizeTree populated
     // visibleChildrenKeys). Used to detect nested tables: a col1 cell whose thought is also a table means the tables

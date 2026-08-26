@@ -5,7 +5,7 @@ import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { HOME_PATH } from '../constants'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import { getAllChildren } from '../selectors/getChildren'
-import head from '../util/head'
+import headId from '../util/headId'
 import isRoot from '../util/isRoot'
 
 interface Options {
@@ -32,7 +32,7 @@ export const loadFromUrlActionCreator =
     const { path: decodedPath } = decodeThoughtsUrl(state, { exists: false })
 
     // set cursor to first child if cursor is not provided via url
-    const firstChild = decodedPath ? getAllChildren(state, head(decodedPath))?.[0] : null
+    const firstChild = decodedPath ? getAllChildren(state, headId(decodedPath))?.[0] : null
 
     if (decodedPath) {
       dispatch(

@@ -8,7 +8,7 @@ import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
 import appendToPath from '../../util/appendToPath'
 import hashPath from '../../util/hashPath'
-import head from '../../util/head'
+import headId from '../../util/headId'
 import rgbToHex from '../../util/rgbToHex'
 
 beforeEach(createTestApp)
@@ -34,7 +34,7 @@ it('colors bullet and superscript when the entire thought is split across adjace
   const parentPath = contextToPath(state, ['b'])
   if (!parentPath) throw new Error('Failed to set up formatted thought fixture.')
 
-  const child = getChildrenRanked(state, head(parentPath))[0]
+  const child = getChildrenRanked(state, headId(parentPath))[0]
   const path = appendToPath(parentPath, child.id)
 
   const bullet = screen.getByTestId(`bullet-${hashPath(path)}`)

@@ -36,6 +36,7 @@ import asyncFocus from '../device/asyncFocus'
 import preventAutoscroll, { preventAutoscrollEnd } from '../device/preventAutoscroll'
 import * as selection from '../device/selection'
 import globals from '../globals'
+import contextThoughtPath from '../selectors/contextThoughtPath'
 import findDescendant from '../selectors/findDescendant'
 import { anyChild, getAllChildrenAsThoughts } from '../selectors/getChildren'
 import getContexts from '../selectors/getContexts'
@@ -45,7 +46,6 @@ import hasMulticursorSelector from '../selectors/hasMulticursor'
 import isMultiEditing from '../selectors/isMultiEditing'
 import isMulticursorPath from '../selectors/isMulticursorPath'
 import rootedParentOf from '../selectors/rootedParentOf'
-import simplifyPath from '../selectors/simplifyPath'
 import thoughtToPath from '../selectors/thoughtToPath'
 import editingValueStore from '../stores/editingValue'
 import editingValueUntrimmedStore from '../stores/editingValueUntrimmed'
@@ -128,6 +128,8 @@ const Editable = ({
   transient,
 }: EditableProps) => {
   const dispatch = useDispatch()
+  // the displayed thought: simplePath is contextThoughtPath, so in the context view this is the context rather than
+  // the Lexeme instance. It labels the DOM element, so every lookup by `editable-<id>` must resolve to the same thought.
   const thoughtId = head(simplePath)
   const parentId = useSelector(state => head(rootedParentOf(state, simplePath)))
   const readonly = useSelector(state => findDescendant(state, thoughtId, '=readonly'))
@@ -729,14 +731,17 @@ const Editable = ({
             Object.values(state.multicursors)
               .filter(multicursorPath => !equalPath(multicursorPath, path))
               .flatMap(multicursorPath => {
-                const thought = getThoughtById(state, head(multicursorPath))
+                // mirror the edit onto the thought the user sees, which in the context view is the context rather than
+                // the Lexeme instance
+                const multicursorSimplePath = contextThoughtPath(state, multicursorPath)
+                const thought = getThoughtById(state, head(multicursorSimplePath))
                 return !thought || thought.value === newValue
                   ? []
                   : [
                       editThought({
                         oldValue: thought.value,
                         newValue,
-                        path: simplifyPath(state, multicursorPath),
+                        path: multicursorSimplePath,
                       }),
                     ]
               }),
@@ -1048,7 +1053,7 @@ const Editable = ({
       disabled={disabled}
       stopDragOver={stopDragOver}
       innerRef={contentRef}
-      aria-label={'editable-' + head(path)}
+      aria-label={'editable-' + thoughtId}
       data-editable
       data-placeholder-cleared={isCursorCleared || undefined}
       data-placeholder-bold={placeholderCommandState?.bold || undefined}

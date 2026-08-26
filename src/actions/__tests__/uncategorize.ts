@@ -9,6 +9,7 @@ import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import contextToThought from '../../test-helpers/contextToThought'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
+import expectRenderedPath from '../../test-helpers/expectRenderedPath'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
@@ -378,6 +379,9 @@ describe('context view', () => {
       - y`)
 
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'b'])
+    // the cursor must name the context row that is on screen, not an ordinary child step that merely converts to the
+    // same Context
+    expectRenderedPath(stateNew, stateNew.cursor)
   })
 
   it('uncategorize context subthought in context view', () => {

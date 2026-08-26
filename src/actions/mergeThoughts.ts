@@ -14,7 +14,7 @@ import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import equalPath from '../util/equalPath'
 import hashThought from '../util/hashThought'
-import head from '../util/head'
+import headId from '../util/headId'
 import keyValueBy from '../util/keyValueBy'
 import normalizeThought from '../util/normalizeThought'
 import parentOf from '../util/parentOf'
@@ -37,29 +37,36 @@ const mergeThoughts = (
     targetThoughtPath: Path
   },
 ): State => {
-  const sourceThought = getThoughtById(state, head(sourceThoughtPath))
-  const targetThought = getThoughtById(state, head(targetThoughtPath))
+  const sourceThoughtId = headId(sourceThoughtPath)
+  const targetThoughtId = headId(targetThoughtPath)
+  const sourceThought = getThoughtById(state, sourceThoughtId)
+  const targetThought = getThoughtById(state, targetThoughtId)
 
   if (!sourceThought) {
-    console.warn(`Missing sourceThought${head(sourceThoughtPath)}. Aborting merge.`)
+    console.warn(`Missing sourceThought${sourceThoughtId}. Aborting merge.`)
     return state
   }
 
   if (!targetThought) {
-    console.warn(`Missing targetThought${head(targetThoughtPath)}. Aborting merge.`)
+    console.warn(`Missing targetThought${targetThoughtId}. Aborting merge.`)
     return state
   }
+
+  // the id of the source thought's parent as given by the Path, or null if the source thought is a root child and the
+  // Path therefore has no parent step
+  const sourceParentIdFromPath = sourceThoughtPath.length > 1 ? headId(parentOf(sourceThoughtPath)) : null
 
   // fallback to the parent in sourceThoughtPath if sourceThought.parentId does not have a corresponding thought
   // in multi-step move and merge, outdated thoughts may be reconciled into state before merge is complete
   // if no parent thought can be found, warn and safely exit
   const sourceParentThought =
-    getThoughtById(state, sourceThought.parentId) || getThoughtById(state, head(parentOf(sourceThoughtPath)))
+    getThoughtById(state, sourceThought.parentId) ||
+    (sourceParentIdFromPath ? getThoughtById(state, sourceParentIdFromPath) : undefined)
   if (!sourceParentThought) {
     console.warn(
       `mergeThoughts: sourceParentThought not found. Missing thought for both sourceThought.parentId of ${
         sourceThought.parentId
-      } and head(parentof(sourceThoughtPath)) of ${head(parentOf(sourceThoughtPath))}. Aborting merge.`,
+      } and head(parentof(sourceThoughtPath)) of ${sourceParentIdFromPath}. Aborting merge.`,
     )
     console.info('  sourceThought', sourceThought)
     console.info('  sourceThoughtPath', sourceThoughtPath)
@@ -76,9 +83,9 @@ const mergeThoughts = (
       console.info('  sourceThought', sourceThought)
       console.info('  sourceThoughtPath', sourceThoughtPath)
       console.info('  targetThoughtPath', targetThoughtPath)
-      const sourceParentId = head(parentOf(sourceThoughtPath))
-      const sourceParent = getThoughtById(state, sourceParentId)
-      if (!sourceParent) {
+      const sourceParentId = sourceParentIdFromPath
+      const sourceParent = sourceParentId ? getThoughtById(state, sourceParentId) : undefined
+      if (!sourceParentId || !sourceParent) {
         console.warn(`Missing sourceParent${sourceParentId}. Aborting merge.`)
         return state
       }

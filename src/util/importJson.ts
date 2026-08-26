@@ -21,6 +21,7 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import appendToPath from '../util/appendToPath'
 import hashThought from '../util/hashThought'
 import head from '../util/head'
+import headId from '../util/headId'
 import isAttribute from '../util/isAttribute'
 import timestamp from '../util/timestamp'
 import createId from './createId'
@@ -121,7 +122,7 @@ const saveThoughts = (
   lastUpdated = timestamp(),
   updatedBy = clientId,
 ): ThoughtIndices => {
-  const id = head(path)
+  const id = headId(path)
 
   if (!id)
     return {

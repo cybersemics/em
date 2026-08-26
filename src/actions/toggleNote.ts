@@ -1,12 +1,13 @@
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import setNoteFocus from '../actions/setNoteFocus'
+import contextThoughtId from '../selectors/contextThoughtId'
 import { anyChild } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import resolveNoteKey from '../selectors/resolveNoteKey'
 import resolveNotePath from '../selectors/resolveNotePath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
-import head from '../util/head'
+import headId from '../util/headId'
 import { deleteThoughtActionCreator as deleteThought } from './deleteThought'
 import { setDescendantActionCreator as setDescendant } from './setDescendant'
 
@@ -14,7 +15,7 @@ import { setDescendantActionCreator as setDescendant } from './setDescendant'
 const toggleNote = (state: State): State => {
   const path = state.cursor!
   const targetPath = resolveNotePath(state, path)
-  const targetThought = targetPath ? getThoughtById(state, head(targetPath)) : undefined
+  const targetThought = targetPath ? getThoughtById(state, headId(targetPath)) : undefined
   const offset = anyChild(state, targetThought?.id)?.value.length ?? 0
 
   return setNoteFocus(state, state.noteFocus ? { value: false } : { value: true, offset })
@@ -27,8 +28,9 @@ export const toggleNoteActionCreator = (): Thunk => (dispatch, getState) => {
   if (!path) return
 
   const targetPath = resolveNotePath(state, path)
-  const targetThought = targetPath ? getThoughtById(state, head(targetPath)) : undefined
-  const { noteKey } = resolveNoteKey(state, head(path))
+  const targetThought = targetPath ? getThoughtById(state, headId(targetPath)) : undefined
+  // the note belongs to the thought the user sees, which in the context view is the context (see resolveNotePath)
+  const { noteKey } = resolveNoteKey(state, contextThoughtId(state, path))
   const offset = anyChild(state, targetThought?.id)?.value.length ?? 0
 
   dispatch([

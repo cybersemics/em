@@ -154,7 +154,7 @@ A Redux middleware that listens to every action and clears the browser selection
 
 - The cursor is `null` and the selection is currently on a thought.
 - The cursor is on a divider thought.
-- The cursor is on a root child reached via the context view (`isRoot(cursor.slice(-1))`).
+- The cursor is on a root child reached via the context view (`isRoot([contextThoughtId(state, cursor)])` — the thought the row *displays*, since a context step stores the Lexeme instance rather than the context).
 
 This catches cases where the cursor moves but no `Editable` re-renders to pull the caret along — e.g. dismissing a divider with arrow keys, or navigating into a context-view root.
 

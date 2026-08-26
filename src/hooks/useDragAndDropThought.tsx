@@ -31,7 +31,6 @@ import getRankAfter from '../selectors/getRankAfter'
 import getRankBefore from '../selectors/getRankBefore'
 import hasMulticursor from '../selectors/hasMulticursor'
 import isBefore from '../selectors/isBefore'
-import isContextViewActive from '../selectors/isContextViewActive'
 import isMulticursorPath from '../selectors/isMulticursorPath'
 import pathToThought from '../selectors/pathToThought'
 import prevSibling from '../selectors/prevSibling'
@@ -48,6 +47,7 @@ import isDraggedFile from '../util/isDraggedFile'
 import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
+import { isContextStep } from '../util/pathStep'
 import throttleByMousePosition from '../util/throttleByMousePosition'
 import usePinDropHover from './usePinDropHover'
 
@@ -128,7 +128,7 @@ const canDrop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   const draggedItems = isDraggedFile(item) ? [] : item
 
   const thoughtsTo = props.path
-  const showContexts = thoughtsTo && isContextViewActive(state, parentOf(thoughtsTo))
+  const showContexts = thoughtsTo && isContextStep(head(thoughtsTo))
 
   // Disallow dropping on context view.
   // This condition must be matched in isChildHovering to correctly highlight the hovering parent.
@@ -243,11 +243,7 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
             oldPath: thoughtFrom,
             newPath,
             newRank: prevPath ? getRankAfter(state, prevPath) : getRankBefore(state, props.simplePath),
-            // props.simplePath is a SimplePath, so its previous sibling must always be resolved in normal view.
-            // See the note in DropHover on why the context view would otherwise be inferred for a cyclic context.
-            afterId: prevPath
-              ? head(prevPath)
-              : (prevSibling(state, props.simplePath, { showContexts: false })?.id ?? null),
+            afterId: prevPath ? head(prevPath) : (prevSibling(state, props.simplePath)?.id ?? null),
           }),
         )
       }

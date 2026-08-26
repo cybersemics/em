@@ -4,6 +4,7 @@ import ThoughtId from '../@types/ThoughtId'
 import Thunk from '../@types/Thunk'
 import { ABSOLUTE_TOKEN, EM_TOKEN, FREE_THOUGHTS_MARGIN, FREE_THOUGHT_JUMPS, HOME_TOKEN } from '../constants'
 import globals from '../globals'
+import contextThoughtId from '../selectors/contextThoughtId'
 import { getAllChildren } from '../selectors/getChildren'
 import getContexts from '../selectors/getContexts'
 import getDescendantThoughtIds from '../selectors/getDescendantThoughtIds'
@@ -12,8 +13,9 @@ import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import thoughtToPath from '../selectors/thoughtToPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
-import head from '../util/head'
+import headId from '../util/headId'
 import isAttribute from '../util/isAttribute'
+import { pathIds } from '../util/pathStep'
 import deleteThought from './deleteThought'
 
 /** Find the next thought that can be safely deallocated. Deletes from the beginning of state.thoughts.thoughtIndex, which is efficient, deterministic, and approximates an LRU cache due to the javascript runtime adding new entries to the end of the thoughtIndex. */
@@ -53,24 +55,27 @@ const freeThoughts = (state: State): State => {
     // drag-and-drop related thoughts
     ...(state.draggedSimplePath ?? []),
     ...(state.draggingThoughts.flat() as ThoughtId[]),
-    ...(state.hoveringPath ?? []),
+    ...(state.hoveringPath ? pathIds(state.hoveringPath) : []),
     // preserve the last few jump history points
-    ...state.jumpHistory.slice(0, FREE_THOUGHT_JUMPS).flatMap(path => path || []),
-    ...(state.importThoughtPath ?? []),
+    ...state.jumpHistory.slice(0, FREE_THOUGHT_JUMPS).flatMap(path => (path ? pathIds(path) : [])),
+    ...(state.importThoughtPath ? pathIds(state.importThoughtPath) : []),
     // preserve expanded thoughts and their children
     ...Object.values(state.expanded).flatMap(path => {
       const showContexts = isContextViewActive(state, path)
-      const thought = getThoughtById(state, head(path))
+      // the context view lists the contexts of the thought the row displays, which is the context rather than the
+      // Lexeme instance when the row is itself inside a context view
+      const contextViewThought = showContexts ? getThoughtById(state, contextThoughtId(state, path)) : null
 
       return [
-        ...path,
+        // a context step tags the instance, which is the thought that must be kept in memory
+        ...pathIds(path),
         // preserve normal children even if context view is active, so that it is instantly available when the user switches back
-        ...getAllChildren(state, head(path)),
+        ...getAllChildren(state, headId(path)),
         // preserve context childern
         // preserve context ancestors
         // See test "Do not deallocate tangential contexts children" for an example of why context children need to be preserved
-        ...(showContexts && thought
-          ? getContexts(state, thought.value).flatMap(cxid => [
+        ...(showContexts && contextViewThought
+          ? getContexts(state, contextViewThought.value).flatMap(cxid => [
               ...getAllChildren(state, cxid),
               ...thoughtToPath(state, cxid),
             ])

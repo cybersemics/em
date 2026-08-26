@@ -7,6 +7,7 @@ import exportContext from '../../selectors/exportContext'
 import getThoughtById from '../../selectors/getThoughtById'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import headId from '../../util/headId'
 import initialState from '../../util/initialState'
 import keyValueBy from '../../util/keyValueBy'
 import reducerFlow from '../../util/reducerFlow'
@@ -65,7 +66,7 @@ it('swaps two empty thoughts without error', () => {
   expect(stateNew.alert?.value).toBeFalsy()
 
   // Cursor should be on the child thought (which is now at root level after the swap)
-  const cursorId = stateNew.cursor?.[stateNew.cursor.length - 1]
+  const cursorId = stateNew.cursor && headId(stateNew.cursor)
   expect(cursorId).toBeTruthy()
   const cursorThought = getThoughtById(stateNew, cursorId!)
   expect(cursorThought).toBeTruthy()

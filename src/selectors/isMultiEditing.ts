@@ -1,6 +1,6 @@
 import State from '../@types/State'
 import * as selection from '../device/selection'
-import head from '../util/head'
+import contextThoughtId from './contextThoughtId'
 import isMulticursorPath from './isMulticursorPath'
 
 /** Returns true if a multiselection is being edited, i.e. the real caret is in the cursor thought and the cursor is one
@@ -18,6 +18,6 @@ const isMultiEditing = (state: State): boolean =>
   !!state.isKeyboardOpen &&
   !!state.cursor &&
   isMulticursorPath(state, state.cursor) &&
-  selection.isOnEditable(head(state.cursor))
+  selection.isOnEditable(contextThoughtId(state, state.cursor))
 
 export default isMultiEditing

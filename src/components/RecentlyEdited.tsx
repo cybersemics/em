@@ -8,6 +8,7 @@ import useDelayedState from '../hooks/useDelayedState'
 import recentlyEdited from '../selectors/recentlyEdited'
 import hashPath from '../util/hashPath'
 import nonNull from '../util/nonNull'
+import { pathIds } from '../util/pathStep'
 import LoadingEllipsis from './LoadingEllipsis'
 import ThoughtLink from './ThoughtLink'
 
@@ -18,7 +19,7 @@ const pullJumpHistory = (): Thunk<Promise<void>> => async (dispatch, getState) =
   await Promise.all(
     paths.map(async path => {
       try {
-        await dispatch(pullAncestors(path, { force: true, maxDepth: 0 }))
+        await dispatch(pullAncestors(pathIds(path), { force: true, maxDepth: 0 }))
       } catch (e) {
         // TODO: Missing docKey error
         console.warn(e)

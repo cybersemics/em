@@ -22,6 +22,7 @@ import viewportStore, { ViewportState } from '../stores/viewport'
 import durations from '../util/durations'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
+import headId from '../util/headId'
 import DropChild from './DropChild'
 import DropUncle from './DropUncle'
 import Subthought from './Subthought'
@@ -109,7 +110,7 @@ const VirtualThought = ({
   const isEditing = useSelector(state => equalPath(state.cursor, simplePath))
   const editingValue = editingValueStore.useSelector(state => (isEditing ? state : null))
   const isContextViewActive = useSelector(selectShowContexts(simplePath))
-  const cursorLeaf = useSelector(state => !!state.cursor && !hasChildren(state, head(state.cursor)))
+  const cursorLeaf = useSelector(state => !!state.cursor && !hasChildren(state, headId(state.cursor)))
   const cursorDepth = useSelector(state => (state.cursor ? state.cursor.length : 0))
   const fontSize = useSelector(state => state.fontSize)
   const note = useSelector(state => noteValue(state, simplePath))

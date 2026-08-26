@@ -12,6 +12,7 @@ import store from '../../stores/app'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import { pathIds } from '../../util/pathStep'
 
 beforeEach(initStore)
 
@@ -73,12 +74,12 @@ it('group contiguous navigation actions preceding a thought change on redo', () 
     redo(),
   ])
 
-  const cursorAfterFirstRedo = childIdsToThoughts(store.getState(), store.getState().cursor!)
+  const cursorAfterFirstRedo = childIdsToThoughts(store.getState(), pathIds(store.getState().cursor!))
   expect(cursorAfterFirstRedo).toMatchObject([{ value: 'arizona', rank: 0 }])
 
   store.dispatch(redo())
   const state = store.getState()
-  const cursorAfterSecondRedo = childIdsToThoughts(store.getState(), store.getState().cursor!)
+  const cursorAfterSecondRedo = childIdsToThoughts(store.getState(), pathIds(store.getState().cursor!))
   expect(cursorAfterSecondRedo).toMatchObject([{ value: 'arizona' }, { value: 'boston' }])
 
   const exportedAfterRedo = exportContext(state, [HOME_TOKEN], 'text/plain')

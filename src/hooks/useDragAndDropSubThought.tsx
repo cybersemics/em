@@ -18,10 +18,12 @@ import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } f
 import MoveThoughtAlert from '../components/MoveThoughtAlert'
 import { AlertType, LongPressState } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
+import contextThoughtId from '../selectors/contextThoughtId'
 import getNextRank from '../selectors/getNextRank'
 import getPrevRank from '../selectors/getPrevRank'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
+import pathToThought from '../selectors/pathToThought'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import visibleDistanceAboveCursor from '../selectors/visibleDistanceAboveCursor'
@@ -32,6 +34,7 @@ import equalPath from '../util/equalPath'
 import haptics from '../util/haptics'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
+import headId from '../util/headId'
 import isDescendantPath from '../util/isDescendantPath'
 import isDivider from '../util/isDivider'
 import isDraggedFile from '../util/isDraggedFile'
@@ -88,7 +91,7 @@ const canDrop = ({ path: thoughtsTo }: DroppableSubthoughts, monitor: DropTarget
     // do not drop on descendants
     draggedItems.every(item => !isDescendantPath(thoughtsTo, item.path)) &&
     // do not drop on dividers
-    !isDivider(getThoughtById(state, head(thoughtsTo))?.value) &&
+    !isDivider(pathToThought(state, thoughtsTo)?.value) &&
     // do not drop on context view
     !isContextViewActive(state, thoughtsTo)
   )
@@ -110,7 +113,7 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
 
   /** Get the path to drop the item to. */
   const getPathTo = (state: State, itemPath: Path) =>
-    appendToPath(props.showContexts ? simplifyPath(state, props.path) : props.path, head(itemPath))
+    appendToPath(props.showContexts ? simplifyPath(state, props.path) : props.path, headId(itemPath))
 
   /** Validates that the dragged items can be dropped at the destination path. */
   const validateDraggedItem = (
@@ -127,10 +130,10 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
     const pathTo = getPathTo(state, thoughtsFrom)
 
     const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)
-    const thoughtTo = getThoughtById(state, head(rootedParentOf(state, pathTo)))
-    const thoughtFrom = getThoughtById(state, head(thoughtsFrom))
-    const parentIdFrom = head(rootedParentOf(state, thoughtsFrom))
-    const parentIdTo = head(rootedParentOf(state, pathTo))
+    const thoughtTo = getThoughtById(state, headId(rootedParentOf(state, pathTo)))
+    const thoughtFrom = getThoughtById(state, headId(thoughtsFrom))
+    const parentIdFrom = headId(rootedParentOf(state, thoughtsFrom))
+    const parentIdTo = headId(rootedParentOf(state, pathTo))
     const sameContext = parentIdFrom === parentIdTo
 
     // cannot drop on itself
@@ -190,7 +193,7 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
     /** Returns true if the thought should be dropped at the top of a collapsed parent. */
     const shouldDropAtTop = (pathTo: Path) => {
       const parentPath = rootedParentOf(getState(), pathTo)
-      const parentId = head(parentPath)
+      const parentId = contextThoughtId(getState(), parentPath)
       const isExpanded = isPathExpanded(getState(), parentPath)
       return !isExpanded && attributeEquals(getState(), parentId, '=drop', 'top')
     }
@@ -206,7 +209,7 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
     draggedItems.forEach(item => {
       const state = getState()
       const pathTo = getPathTo(state, item.path)
-      const parentId = head(rootedParentOf(state, pathTo))
+      const parentId = headId(rootedParentOf(state, pathTo))
       const dropTop = shouldDropAtTop(pathTo)
 
       const thoughtTo = getThoughtById(state, parentId)
@@ -251,7 +254,7 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
         const pathTo = getPathTo(state, firstItem.path)
 
         const dropTop = shouldDropAtTop(pathTo)
-        const thoughtFrom = getThoughtById(state, head(firstItem.path))
+        const thoughtFrom = getThoughtById(state, headId(firstItem.path))
         const toPath = simplifyPath(state, rootedParentOf(state, pathTo))
 
         store.dispatch(

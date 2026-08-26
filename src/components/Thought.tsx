@@ -43,11 +43,13 @@ import equalPath from '../util/equalPath'
 import equalThoughtRanked from '../util/equalThoughtRanked'
 import getBulletWidth from '../util/getBulletWidth'
 import head from '../util/head'
+import headId from '../util/headId'
 import isAttribute from '../util/isAttribute'
 import isDescendantPath from '../util/isDescendantPath'
 import isDivider from '../util/isDivider'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
+import { isContextStep } from '../util/pathStep'
 import publishMode from '../util/publishMode'
 import safeRefMerge from '../util/safeRefMerge'
 import Bullet from './Bullet'
@@ -166,7 +168,8 @@ const useCol1Alignment = ({ path, value, isTableCol1 }: UseCol1AlignParams) => {
   /** Sibling thoughts for the current cursor. */
   const siblingThoughts = useSelector((state: State) => {
     if (!state.cursor || !isCursor) return []
-    const cursorParentId = head(rootedParentOf(state, state.cursor))
+    // children come from the thought the parent path lands on, which in the context view is the Lexeme instance
+    const cursorParentId = headId(rootedParentOf(state, state.cursor))
     return cursorParentId ? getChildren(state, cursorParentId).map(t => t.value) : []
   }, shallowEqual)
 
@@ -316,7 +319,7 @@ const ThoughtContainer = ({
   const isTableCol2 = useSelector(state =>
     attributeEquals(state, head(rootedParentOf(state, parentOf(simplePath))), '=view', 'Table'),
   )
-  const isInContextView = useSelector(state => isContextViewActive(state, parentOf(path)))
+  const isInContextView = isContextStep(head(path))
 
   const hideBullet = useHideBullet({
     children,

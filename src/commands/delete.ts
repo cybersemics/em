@@ -6,6 +6,7 @@ import { deleteThoughtWithCursorActionCreator as deleteThoughtWithCursor } from 
 import { errorActionCreator as error } from '../actions/error'
 import Icon from '../components/icons/DeleteIcon'
 import { DELETE_VIBRATE_DURATION, Settings } from '../constants'
+import contextThoughtId from '../selectors/contextThoughtId'
 import deleteThoughtAlertText from '../selectors/deleteThoughtAlertText'
 import findDescendant from '../selectors/findDescendant'
 import getThoughtById from '../selectors/getThoughtById'
@@ -33,7 +34,7 @@ const exec: Command['exec'] = (dispatch, getState, e, { type }) => {
 
   if (isEM(cursor) || isRoot(cursor)) {
     dispatch(error({ value: `The "${isEM(cursor) ? 'em' : 'home'} context" cannot be deleted.` }))
-  } else if (findDescendant(state, head(cursor), '=readonly')) {
+  } else if (findDescendant(state, contextThoughtId(state, cursor), '=readonly')) {
     dispatch(error({ value: `"${ellipsize(value)}" is read-only and cannot be deleted.` }))
   } else {
     // only activate haptics on gesture, since mobile also executes the delete command when hitting backspace on the keyboard

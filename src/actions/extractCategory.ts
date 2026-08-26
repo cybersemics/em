@@ -1,12 +1,12 @@
 import _ from 'lodash'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
-import getThoughtById from '../selectors/getThoughtById'
+import contextThoughtId from '../selectors/contextThoughtId'
+import pathToThought from '../selectors/pathToThought'
 import selectionOffsets from '../selectors/selectionOffsets'
 import thoughtToPath from '../selectors/thoughtToPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import equalPath from '../util/equalPath'
-import head from '../util/head'
 import alert from './alert'
 import categorize from './categorize'
 import editThought from './editThought'
@@ -27,7 +27,7 @@ const extractCategory = (state: State, { selectionStart, selectionEnd }: extract
     return alert(state, { value: 'No text selected to extract' })
   }
 
-  const cursorThought = getThoughtById(state, head(cursor))
+  const cursorThought = pathToThought(state, cursor)
 
   if (!cursorThought) {
     console.warn('Cursor thought not found!')
@@ -51,7 +51,7 @@ const extractCategory = (state: State, { selectionStart, selectionEnd }: extract
     oldValue: value,
     newValue,
     // The thought has been moved under the new category, so its path is no longer the cursor's. Its id is unchanged.
-    path: thoughtToPath(stateCategorized, head(cursor)),
+    path: thoughtToPath(stateCategorized, contextThoughtId(state, cursor)),
     force: true,
   })
 }

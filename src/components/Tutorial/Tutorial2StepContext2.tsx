@@ -6,6 +6,7 @@ import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
 import selectTutorialChoice from '../../selectors/selectTutorialChoice'
 import headValue from '../../util/headValue'
+import { pathIds } from '../../util/pathStep'
 import TutorialGestureDiagram from './TutorialGestureDiagram'
 import TutorialHint from './TutorialHint'
 
@@ -14,7 +15,7 @@ const Tutorial2StepContext2 = () => {
   const tutorialChoice = useSelector(selectTutorialChoice)
   const readyToType = useSelector(state => {
     if (!state.cursor) return false
-    const cursorThought = childIdsToThoughts(state, state.cursor)
+    const cursorThought = childIdsToThoughts(state, pathIds(state.cursor))
     return cursorThought.length === 2 && cursorThought[0].value === TUTORIAL_CONTEXT2_PARENT[tutorialChoice]
   })
   const select = useSelector(

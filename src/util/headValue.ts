@@ -1,9 +1,8 @@
 import Path from '../@types/Path'
 import State from '../@types/State'
-import getThoughtById from '../selectors/getThoughtById'
-import head from './head'
+import pathToThought from '../selectors/pathToThought'
 
-/** Returns the value of a the last thought in a path. */
-const headValue = (state: State, path: Path): string | undefined => getThoughtById(state, head(path))?.value
+/** Returns the value displayed at the head of a Path. In the context view this is the context's value, i.e. what the user sees on the row. */
+const headValue = (state: State, path: Path): string | undefined => pathToThought(state, path)?.value
 
 export default headValue

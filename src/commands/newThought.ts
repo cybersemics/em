@@ -1,4 +1,3 @@
-import { head } from 'lodash'
 import { Key } from 'ts-key-enum'
 import Command from '../@types/Command'
 import SplitResult from '../@types/SplitResult'
@@ -9,19 +8,20 @@ import { splitThoughtActionCreator as splitThought } from '../actions/splitThoug
 import { isTouch } from '../browser'
 import Icon from '../components/icons/NewThoughtIcon'
 import * as selection from '../device/selection'
+import contextThoughtId from '../selectors/contextThoughtId'
 import findDescendant from '../selectors/findDescendant'
-import isContextViewActive from '../selectors/isContextViewActive'
 import pathToThought from '../selectors/pathToThought'
-import rootedParentOf from '../selectors/rootedParentOf'
 import editingValueStore from '../stores/editingValue'
 import ellipsize from '../util/ellipsize'
+import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
+import { isContextStep } from '../util/pathStep'
 
 /** A selector that splits the cursor and returns a SplitResult. This function first checks that a split is allowed (i.e. cursor is non-empty, context view is not activated, etc), and returns null if not allowed. */
 const split = (state: State, el: HTMLElement): SplitResult | null => {
   const { cursor } = state
 
-  if (!cursor || isContextViewActive(state, rootedParentOf(state, cursor)) || !editingValueStore.getState()) return null
+  if (!cursor || isContextStep(head(cursor)) || !editingValueStore.getState()) return null
 
   const splitResult = cursor ? selection.split(el) : null
 
@@ -48,7 +48,8 @@ const exec: Command['exec'] = (dispatch, getState, e, { type }: { type: string }
     const thought = cursor && pathToThought(state, cursor)
 
     // Determine if thought is uneditable
-    const uneditable = cursor && findDescendant(state, head(cursor) ?? null, '=uneditable')
+    // =uneditable is set on the thought the user sees, which in the context view is the context rather than the Lexeme instance
+    const uneditable = cursor && findDescendant(state, contextThoughtId(state, cursor), '=uneditable')
 
     dispatch(
       thought && uneditable

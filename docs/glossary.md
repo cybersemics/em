@@ -28,7 +28,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **belowCursor** — Flag set on every `TreeThought` after the cursor is encountered during the in-order walk. Used to exclude hidden thoughts below the cursor from `totalHeight` so the document doesn't have a giant trailing dead zone.
 
-**Brand** — Nominal-typing trick: `Path & Brand<'SimplePath'>` requires an explicit cast to convert. Used to enforce invariants TypeScript can't track. See [`Brand.ts`](../src/@types/Brand.ts).
+**Brand** — Nominal-typing trick: `string & Brand<'ThoughtId'>` requires an explicit cast to convert. Used to enforce invariants TypeScript can't track. See [`Brand.ts`](../src/@types/Brand.ts).
 
 **buffer depth** — `BUFFER_DEPTH = 2` in `pull`. Beyond this depth, descendants returned by `fetchDescendants` are marked `pending: true` rather than being fully fetched. The hard BFS-queue cap is `MAX_THOUGHTS_QUEUED = 100`. See [persistence.md → fetchDescendants](persistence.md#fetchdescendants-the-actual-pull-engine).
 
@@ -48,11 +48,11 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **Context** — `string[]` — a sequence of thought *values* from root to leaf, e.g. `['Animals', 'Cats']`. Ambiguous when duplicate values exist at the same level. Prefer `ThoughtId`/`Path` when an id is in scope. See [data-model.md → Context](data-model.md#context).
 
+**context step** — A `Path` step that crosses a context view, encoded as `` `~${instanceId}` `` — the id of the *Lexeme instance* rendered at that row, not the context it is displayed as. Makes the boundary explicit rather than inferred, so a context-view `Path` and a `SimplePath` of the same thoughts are distinct arrays with distinct `hashPath` keys. See [data-model.md → ContextStep](data-model.md#contextstep) and [`util/pathStep.ts`](../src/util/pathStep.ts).
+
 **context view** — A view mode that replaces a thought's children with the contexts in which the thought's value appears. Toggled with `Option + Shift + S`. The "inbound links" dual to the outbound parent-child links. State: `state.contextViews`, keyed by `hashPath(path)`. See [data-model.md → Context view](data-model.md#context-view).
 
-**contextChain** — A `Path` that crosses one or more context views, split into its `SimplePath` segments. `Path → SimplePath[]` via [`splitChain`](../src/selectors/splitChain.ts). See [data-model.md → contextChain](data-model.md#contextchain).
-
-**crossContextualKey** — `${contextChain.map(head).join('')}|${id}`. The React key for a thought that may appear at multiple positions when context views are active. Same `ThoughtId` produces different keys per occurrence. See [layout-rendering.md → Keys](layout-rendering.md#keys-crosscontextualkey).
+**crossContextualKey** — `` `${contextSteps}|${headStep}` ``. The React key for a thought that may appear at multiple positions when context views are active. Both halves are unambiguous now that a *context step* records the Lexeme instance, so the same thought gets a different key at each occurrence. See [layout-rendering.md → Keys](layout-rendering.md#keys-crosscontextualkey).
 
 **cursor** — The active thought, stored as `state.cursor: Path | null`. Indicated by the gray bullet ring. Distinct from *caret*. Setting the cursor does not set the browser selection; see [cursor-and-caret.md](cursor-and-caret.md).
 
@@ -110,6 +110,8 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **Lexeme** — Object collecting all the contexts where a value (or any of its near-identical word forms — case, plurality, emoji variants) appears. Stored in `state.thoughts.lexemeIndex` keyed by `hashThought(value)`. The "inbound links" view of a thought. See [data-model.md → Lexeme](data-model.md#lexeme).
 
+**Lexeme instance** — A thought that belongs to a given `Lexeme`, as opposed to the *context* it sits in. The context view on `a/m` lists the contexts (`a`, `b`), but each row stands for an instance (`a/m`, `b/m`) — and it is the instance that supplies the row's children and that delete and move operate on. See [data-model.md → Resolving a Path in the context view](data-model.md#resolving-a-path-in-the-context-view).
+
 **linearizeTree** — Selector that produces `treeThoughts: TreeThought[]` — an in-order traversal of every visible thought. Output drives layout. See [layout-rendering.md → linearizeTree](layout-rendering.md#linearizetree-the-in-order-traversal).
 
 **LongPressState** — Enum (`Inactive | DragHold | DragInProgress | DragCanceled`) tracking the long-press / drag-in-progress state machine. Stored on `state.longPress`. See [drag-and-drop.md](drag-and-drop.md#state-machine-statelongpress).
@@ -128,7 +130,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 ## P
 
-**Path** — `[ThoughtId, ...ThoughtId[]]` — non-empty sequence of thought ids from root to a thought. Root itself is implied (`[HOME_TOKEN]` is the special case). May contain cycles when traversing context views. See [data-model.md → Path](data-model.md#path).
+**Path** — `[PathStep, ...PathStep[]]` — non-empty sequence of steps from root to a rendered thought. An ordinary child step is the child's `ThoughtId`; a step that crosses a context view is a *context step*. Root itself is implied (`[HOME_TOKEN]` is the special case). May contain cycles when traversing context views. See [data-model.md → Path](data-model.md#path).
 
 **pending** — Flag on `Thought` indicating the id is known to exist (`thoughtIndex[id]` is set) but the real data hasn't been pulled from local/remote storage yet. UI renders placeholders; the pull queue fetches based on visible pending IDs.
 
@@ -160,11 +162,11 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **shortcut** — Legacy term for *command*. The folder was renamed `/src/shortcuts → /src/commands`; some doc references and helper names persist.
 
-**SimplePath** — A `Path` branded as having no cycles (no context-view crossings). Required by code that needs a single contiguous context. Get one via `simplifyPath` or by structurally guaranteeing it and casting. See [data-model.md → SimplePath](data-model.md#simplepath).
+**SimplePath** — A `Path` with no *context steps*, and therefore no cycles. Its elements are plain `ThoughtId`s, so it is assignable to `Path` but not the reverse. Required by code that needs a single contiguous context. Get one via `simplifyPath` or by structurally guaranteeing it and casting; check one at runtime with `isSimplePath`. See [data-model.md → SimplePath](data-model.md#simplepath).
+
+**simplifyPath** — [`simplifyPath.ts`](../src/selectors/simplifyPath.ts) — the `SimplePath` of the thought a `Path` describes, resolving its last *context step*. In the context view that is the Lexeme instance (`b/m` for `a/m~/b`); for the thought displayed there (`b`) use [`contextThoughtPath`](../src/selectors/contextThoughtPath.ts). Replaces the former `splitChain` / `lastThoughtsFromContextChain` pair, which inferred the boundary rather than reading it.
 
 **=sort** — Meta-attribute that sorts a context's children, replacing their manual order by renumbering their ranks. Options: `Alphabetical`, `Created`, `Updated`, `Note` (sort by `=note` value), each `Asc` or `Desc`.
-
-**splitChain** — [`splitChain.ts`](../src/selectors/splitChain.ts) — splits a `Path` into `SimplePath[]` at every context-view boundary. Inverse: [`contextChainToPath`](../src/util/contextChainToPath.ts).
 
 **=style** — Meta-attribute carrying CSS styles. Variants: `=children/=style` (apply to direct children), `=grandchildren/=style` (one level deeper).
 

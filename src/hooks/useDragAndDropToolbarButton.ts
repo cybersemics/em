@@ -14,6 +14,7 @@ import contextToPath from '../selectors/contextToPath'
 import findDescendant from '../selectors/findDescendant'
 import { getChildrenRanked } from '../selectors/getChildren'
 import getRankBefore from '../selectors/getRankBefore'
+import simplifyPath from '../selectors/simplifyPath'
 import store from '../stores/app'
 import appendToPath from '../util/appendToPath'
 import haptics from '../util/haptics'
@@ -39,7 +40,8 @@ const drop = (commandId: CommandId, monitor: DropTargetMonitor) => {
       const userCommandIds = userCommandChildren.map(subthought => subthought.value)
 
       // user commands must exist since it was created above
-      const userCommandsPath = contextToPath(state, [EM_TOKEN, 'Settings', 'Toolbar'])!
+      // the toolbar lives in the em tree, which no context view crosses, so this is always a SimplePath
+      const userCommandsPath = simplifyPath(state, contextToPath(state, [EM_TOKEN, 'Settings', 'Toolbar'])!)
       const fromIndex = userCommandIds.indexOf(from.id)
       const toIndex = userCommandIds.indexOf(to.id)
       if (toIndex === -1) {

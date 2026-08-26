@@ -7,10 +7,9 @@ import editableRender from '../actions/editableRender'
 import newThought from '../actions/newThought'
 import setCursor from '../actions/setCursor'
 import getTextContentFromHTML from '../device/getTextContentFromHTML'
-import getThoughtById from '../selectors/getThoughtById'
-import simplifyPath from '../selectors/simplifyPath'
+import contextThoughtPath from '../selectors/contextThoughtPath'
+import pathToThought from '../selectors/pathToThought'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
-import head from '../util/head'
 import reducerFlow from '../util/reducerFlow'
 import splitSentence from '../util/splitSentence'
 
@@ -18,7 +17,7 @@ import splitSentence from '../util/splitSentence'
 const splitSentences = (state: State): State => {
   const { cursor } = state
   if (!cursor) return state
-  const cursorThought = getThoughtById(state, head(cursor))
+  const cursorThought = pathToThought(state, cursor)
   if (!cursorThought) return state
   const { value } = cursorThought
 
@@ -34,7 +33,8 @@ const splitSentences = (state: State): State => {
     editThought({
       oldValue: value,
       newValue: firstSentence.value,
-      path: simplifyPath(state, cursor),
+      // the thought the user sees, which in the context view is the context rather than the Lexeme instance
+      path: contextThoughtPath(state, cursor),
     }),
     ...otherSentences.map(sentence =>
       newThought({ value: sentence.value, insertNewSubthought: sentence.insertNewSubThought }),

@@ -6,7 +6,6 @@ import Path from '../@types/Path'
 import State from '../@types/State'
 import Timestamp from '../@types/Timestamp'
 import { EM_TOKEN } from '../constants'
-import appendToPath from '../util/appendToPath'
 import equalArrays from '../util/equalArrays'
 import hashThought from '../util/hashThought'
 import head from '../util/head'
@@ -16,6 +15,7 @@ import parentOf from '../util/parentOf'
 import pathToContext from '../util/pathToContext'
 import timestamp from '../util/timestamp'
 import isEM from './isEM'
+import { appendSteps } from './pathStep'
 
 // @MIGRATION_TODO: Fix recently edited logic.
 export interface Leaf {
@@ -142,7 +142,7 @@ const nodeChange = (state: State, tree: Tree, oldPath: Path, newPath: Path) => {
             _.unset(tree, descendantContext.slice(0, closestAncestor.length + 1))
             descendantReplaced = true
           } else {
-            const updatedDescendantPath = appendToPath(newPath, ...descendant.path.slice(newPath.length))
+            const updatedDescendantPath = appendSteps(newPath, ...descendant.path.slice(newPath.length))
             const updatedDescendantContext = contextEncode(pathToContext(state, updatedDescendantPath))
             _.unset(tree, contextEncode(pathToContext(state, descendant.path)))
             _.set(tree, updatedDescendantContext, { leaf: true, lastUpdated: timestamp(), path: updatedDescendantPath })
@@ -313,7 +313,7 @@ const nodeMove = (state: State, tree: Tree, oldPath: Path, newPath: Path) => {
     } else {
       const descendants = findTreeDescendants(state, tree, { startingPath: oldContext, showHiddenThoughts: true })
       descendants.forEach(descendant => {
-        const updatedNewPath = appendToPath(newPath, ...descendant.path.slice(oldPath.length))
+        const updatedNewPath = appendSteps(newPath, ...descendant.path.slice(oldPath.length))
         nodeAdd(state, tree, updatedNewPath)
       })
       nodeDelete(state, tree, oldPath, false)

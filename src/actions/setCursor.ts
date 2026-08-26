@@ -1,28 +1,24 @@
 import _ from 'lodash'
 import Index from '../@types/IndexType'
 import Path from '../@types/Path'
-import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import TutorialChoice from '../@types/TutorialChoice'
 import setTutorialStep from '../actions/tutorialStep'
 import {
-  HOME_PATH,
   HOME_TOKEN,
   TUTORIAL2_STEP_CONTEXT_VIEW_SELECT,
   TUTORIAL_CONTEXT,
   TUTORIAL_STEP_AUTOEXPAND_EXPAND,
 } from '../constants'
 import globals from '../globals'
-import chain from '../selectors/chain'
+import contextThoughtId from '../selectors/contextThoughtId'
 import expandThoughts from '../selectors/expandThoughts'
 import getSetting from '../selectors/getSetting'
 import getThoughtById from '../selectors/getThoughtById'
-import simplifyPath from '../selectors/simplifyPath'
 import editingValueStore from '../stores/editingValue'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import equalPath from '../util/equalPath'
-import head from '../util/head'
 import pathToContext from '../util/pathToContext'
 
 /**
@@ -31,7 +27,6 @@ import pathToContext from '../util/pathToContext'
 const setCursor = (
   state: State,
   {
-    contextChain = [],
     cursorHistoryClear,
     cursorHistoryPop,
     isKeyboardOpen,
@@ -42,7 +37,6 @@ const setCursor = (
     replaceContextViews,
     preserveMulticursor,
   }: {
-    contextChain?: SimplePath[]
     cursorHistoryClear?: boolean
     cursorHistoryPop?: boolean
     isKeyboardOpen?: boolean | null
@@ -76,9 +70,7 @@ const setCursor = (
     return state
   }
 
-  const simplePath = path ? simplifyPath(state, path) : HOME_PATH
-  const thoughtsResolved = path && contextChain.length > 0 ? chain(state, contextChain, simplePath!) : path
-  const thought = thoughtsResolved && getThoughtById(state, head(thoughtsResolved))
+  const thought = path && getThoughtById(state, contextThoughtId(state, path))
 
   // sync replaceContextViews with state.contextViews
   // ignore thoughts that are not in the path of replaceContextViews
@@ -102,8 +94,8 @@ const setCursor = (
   // TODO
   // load =src
   // setTimeout(() => {
-  //   if (thoughtsResolved) {
-  //     dispatch(loadResource(thoughtsResolved))
+  //   if (path) {
+  //     dispatch(loadResource(path))
   //   }
   // })
 
@@ -111,7 +103,7 @@ const setCursor = (
   // setCursor will be re-triggered after expansion is unsuppressed.
   const expanded = globals.suppressExpansion
     ? state.expanded
-    : expandThoughts({ ...state, contextViews: newContextViews }, thoughtsResolved)
+    : expandThoughts({ ...state, contextViews: newContextViews }, path)
 
   const tutorialChoice = +(getSetting(state, 'Tutorial Choice') || 0) as TutorialChoice
   const tutorialStep = +(getSetting(state, 'Tutorial Step') || 1)
@@ -119,8 +111,8 @@ const setCursor = (
   const tutorialNext =
     (tutorialStep === TUTORIAL_STEP_AUTOEXPAND_EXPAND && Object.keys(expanded).length > 1) ||
     (tutorialStep === TUTORIAL2_STEP_CONTEXT_VIEW_SELECT &&
-      thoughtsResolved &&
-      thoughtsResolved.length >= 1 &&
+      path &&
+      path.length >= 1 &&
       thought?.value!.toLowerCase().replace(/"/g, '') === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())
 
   // non-pure
@@ -129,17 +121,17 @@ const setCursor = (
   // only change editing status and expanded but do not move the cursor if cursor has not changed
   const stateNew = {
     ...state,
-    ...(!equalPath(thoughtsResolved, state.cursor) || state.contextViews !== newContextViews
+    ...(!equalPath(path, state.cursor) || state.contextViews !== newContextViews
       ? {
           ...(tutorialNext
             ? setTutorialStep(
-                { ...state, cursor: thoughtsResolved },
+                { ...state, cursor: path },
                 {
                   value: tutorialStep + 1,
                 },
               )
             : null),
-          cursor: thoughtsResolved,
+          cursor: path,
           cursorHistory: cursorHistoryClear
             ? []
             : cursorHistoryPop
@@ -169,9 +161,9 @@ const setCursor = (
           multicursors: {},
         }
       : null),
-    ...(!thoughtsResolved ? { showColorPicker: false, showLetterCase: false, showSortPicker: false } : null),
+    ...(!path ? { showColorPicker: false, showLetterCase: false, showSortPicker: false } : null),
     // Close command center when editing is set to true, or if there is no cursor.
-    showCommandCenter: state.showCommandCenter && !isKeyboardOpen && thoughtsResolved !== null,
+    showCommandCenter: state.showCommandCenter && !isKeyboardOpen && path !== null,
   }
 
   return stateNew

@@ -6,13 +6,13 @@ import { archiveThoughtActionCreator as archiveThought } from '../actions/archiv
 import { errorActionCreator as error } from '../actions/error'
 import ArchiveIcon from '../components/icons/ArchiveIcon'
 import { DELETE_VIBRATE_DURATION, HOME_PATH } from '../constants'
+import contextThoughtId from '../selectors/contextThoughtId'
 import findDescendant from '../selectors/findDescendant'
-import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursor from '../selectors/hasMulticursor'
 import resolveNotePath from '../selectors/resolveNotePath'
 import ellipsize from '../util/ellipsize'
 import haptics from '../util/haptics'
-import head from '../util/head'
+import headValue from '../util/headValue'
 import isDocumentEditable from '../util/isDocumentEditable'
 import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
@@ -25,10 +25,11 @@ const exec: Command['exec'] = (dispatch, getState) => {
   if (cursor) {
     if (isEM(cursor) || isRoot(cursor)) {
       dispatch(error({ value: `The "${isEM(cursor) ? 'em' : 'home'} context" cannot be archived.` }))
-    } else if (findDescendant(state, head(cursor), '=readonly')) {
-      const cursorThought = getThoughtById(state, head(cursor))
-      if (!cursorThought) return
-      dispatch(error({ value: `"${ellipsize(cursorThought.value)}" is read-only and cannot be archived.` }))
+    } else if (findDescendant(state, contextThoughtId(state, cursor), '=readonly')) {
+      // =readonly, and the value shown in the error, belong to the thought the user sees, which in the context view is the context rather than the Lexeme instance
+      const cursorValue = headValue(state, cursor)
+      if (cursorValue === undefined) return
+      dispatch(error({ value: `"${ellipsize(cursorValue)}" is read-only and cannot be archived.` }))
     } else if (noteFocus) {
       const path = state.cursor || HOME_PATH
       // At a minimum, this resolves to a path when =note is present.
@@ -38,7 +39,7 @@ const exec: Command['exec'] = (dispatch, getState) => {
 
       dispatch(archiveThought({ path: targetPath }))
     } else {
-      const value = getThoughtById(state, head(cursor))?.value
+      const value = headValue(state, cursor)
       if (value !== '') {
         haptics.vibrate(DELETE_VIBRATE_DURATION)
       }

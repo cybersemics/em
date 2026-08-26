@@ -4,18 +4,19 @@ import { useSelector } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
 import { css, cx } from '../../styled-system/css'
 import Index from '../@types/IndexType'
-import ThoughtId from '../@types/ThoughtId'
+import Path from '../@types/Path'
 import { isTouch } from '../browser'
 import { CONTENT_BOX_PADDING_LEFT, LongPressState } from '../constants'
 import testFlags from '../e2e/testFlags'
 import usePositionedThoughts from '../hooks/usePositionedThoughts'
 import useSizeTracking from '../hooks/useSizeTracking'
 import fauxCaretTreeProvider from '../recipes/fauxCaretTreeProvider'
+import { contextThoughtIds } from '../selectors/contextThoughtId'
 import { hasChildren } from '../selectors/getChildren'
 import linearizeTree from '../selectors/linearizeTree'
 import nextSibling from '../selectors/nextSibling'
 import viewportStore from '../stores/viewport'
-import head from '../util/head'
+import headId from '../util/headId'
 import parentOf from '../util/parentOf'
 import BulletCursorOverlay from './BulletCursorOverlay'
 import HoverArrow from './HoverArrow'
@@ -131,7 +132,7 @@ const LayoutTree = () => {
   const indentDepth = useSelector(state =>
     state.cursor && state.cursor.length > 2
       ? // when the cursor is on a leaf, the indention level should not change
-        state.cursor.length - (hasChildren(state, head(state.cursor)) ? 2 : 3)
+        state.cursor.length - (hasChildren(state, headId(state.cursor)) ? 2 : 3)
       : 0,
   )
 
@@ -160,7 +161,7 @@ const LayoutTree = () => {
       !state.cursor
     )
       return 0
-    const isCursorLeaf = !hasChildren(state, head(state.cursor))
+    const isCursorLeaf = !hasChildren(state, headId(state.cursor))
     return state.cursor.length + (isCursorLeaf ? -1 : 0)
   })
 
@@ -172,8 +173,9 @@ const LayoutTree = () => {
       !state.cursor
     )
       return null
-    const isCursorLeaf = !hasChildren(state, head(state.cursor))
-    const cursorParentId = state.cursor[state.cursor.length - (isCursorLeaf ? 3 : 2)] as ThoughtId | null
+    const isCursorLeaf = !hasChildren(state, headId(state.cursor))
+    // the displayed thought at that ancestor position, since it is compared against TreeThought.thoughtId
+    const cursorParentId = contextThoughtIds(state, state.cursor)[state.cursor.length - (isCursorLeaf ? 3 : 2)] ?? null
     return (cursorParentId && nextSibling(state, cursorParentId)?.id) || null
   })
 
@@ -298,7 +300,7 @@ const LayoutTree = () => {
             y={cursorThoughtPositioned.y}
             showContexts={cursorThoughtPositioned.showContexts}
             width={cursorThoughtPositioned.width}
-            parentId={head(parentOf(cursorThoughtPositioned.path))}
+            parentId={headId(parentOf(cursorThoughtPositioned.path) as Path)}
           />
         )}
         <TransitionGroup>

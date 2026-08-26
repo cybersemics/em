@@ -6,12 +6,12 @@ import editThought from '../actions/editThought'
 import moveThought from '../actions/moveThought'
 import setCursor from '../actions/setCursor'
 import getTextContentFromHTML from '../device/getTextContentFromHTML'
+import contextThoughtId from '../selectors/contextThoughtId'
 import findDescendant from '../selectors/findDescendant'
 import { findAnyChild, getChildren, getChildrenRanked, hasChildren } from '../selectors/getChildren'
 import getNextRank from '../selectors/getNextRank'
 import getThoughtBefore from '../selectors/getThoughtBefore'
-import getThoughtById from '../selectors/getThoughtById'
-import isContextViewActive from '../selectors/isContextViewActive'
+import pathToThought from '../selectors/pathToThought'
 import prevSibling from '../selectors/prevSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
@@ -19,10 +19,12 @@ import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import ellipsize from '../util/ellipsize'
 import head from '../util/head'
+import headId from '../util/headId'
 import headValue from '../util/headValue'
 import isDivider from '../util/isDivider'
 import isThoughtArchived from '../util/isThoughtArchived'
 import parentOf from '../util/parentOf'
+import { isContextStep } from '../util/pathStep'
 import pathToContext from '../util/pathToContext'
 import reducerFlow from '../util/reducerFlow'
 import archiveThought from './archiveThought'
@@ -35,23 +37,28 @@ const deleteEmptyThought = (state: State): State => {
 
   if (!cursor) return state
 
-  const cursorThought = getThoughtById(state, head(cursor))
+  // the thought the user sees at the cursor, i.e. the context rather than the Lexeme instance in the context view
+  const cursorThought = pathToThought(state, cursor)
   if (!cursorThought) return state
 
   const { value } = cursorThought
 
-  const showContexts = isContextViewActive(state, rootedParentOf(state, cursor))
+  // the head step records whether this position was reached by crossing a context view
+  const showContexts = isContextStep(head(cursor))
   const simplePath = simplifyPath(state, cursor)
-  const allChildren = getChildrenRanked(state, head(cursor))
-  const visibleChildren = getChildren(state, head(cursor))
+  // the children rendered beneath the cursor, which in the context view are the Lexeme instance's
+  const allChildren = getChildrenRanked(state, headId(cursor))
+  const visibleChildren = getChildren(state, headId(cursor))
   const isEmpty = headValue(state, cursor) === '' || state.cursorCleared
 
   // delete an empty thought with no children
-  // or delete an empty context with an only-child and no grandchildren
+  // or delete an empty context whose only child is the Lexeme instance, and the instance has no children
   // e.g. delete a/m~/_ if ABS/_ has no other children (besides m) and ABS/_/m has no children
   if (
     (isEmpty || isDivider(value)) &&
-    (showContexts ? allChildren.length === 1 && !hasChildren(state, allChildren[0].id) : allChildren.length === 0)
+    (showContexts
+      ? getChildrenRanked(state, contextThoughtId(state, cursor)).length === 1 && !hasChildren(state, headId(cursor))
+      : allChildren.length === 0)
   ) {
     return deleteThoughtWithCursor(state)
   }
@@ -70,7 +77,7 @@ const deleteEmptyThought = (state: State): State => {
       }),
       // move the child archive up a level so it does not get permanently deleted
       state => {
-        const childArchive = findAnyChild(state, head(cursor), child => child.value === '=archive')
+        const childArchive = findAnyChild(state, headId(cursor), child => child.value === '=archive')
         return childArchive
           ? moveThought(state, {
               oldPath: [...cursor, childArchive.id],
@@ -82,7 +89,7 @@ const deleteEmptyThought = (state: State): State => {
       // permanently delete the empty thought
       deleteThought({
         pathParent: parentOf(cursor),
-        thoughtId: head(cursor),
+        thoughtId: headId(cursor),
       }),
       state => updateCursorAfterDelete(state, statePrev),
     ])(state)
@@ -145,7 +152,7 @@ export const deleteEmptyThoughtActionCreator: Thunk = (dispatch, getState) => {
   const prevThought = getThoughtBefore(state, simplePath)
   // Determine if thought at cursor is uneditable
   const contextOfCursor = pathToContext(state, cursor)
-  const uneditable = contextOfCursor && findDescendant(state, head(cursor), '=uneditable')
+  const uneditable = contextOfCursor && findDescendant(state, contextThoughtId(state, cursor), '=uneditable')
 
   if (prevThought && uneditable) {
     dispatch(

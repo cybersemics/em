@@ -9,7 +9,7 @@ import getThoughtById from '../../selectors/getThoughtById'
 import thoughtToPath from '../../selectors/thoughtToPath'
 import hashPath from '../../util/hashPath'
 import hashThought from '../../util/hashThought'
-import head from '../../util/head'
+import headId from '../../util/headId'
 import isAttribute from '../../util/isAttribute'
 import isRoot from '../../util/isRoot'
 import keyValueBy from '../../util/keyValueBy'
@@ -122,13 +122,15 @@ async function* fetchDescendants(
     // Though it results in redundant fetches, this approach is far less complex and far fewer implications than adding pause/resume support or a shared queue.
     // TODO: Avoid redundant cursor fetches
     const cursor = getState().cursor
-    const cursorThought = cursor ? getThoughtById(getState(), head(cursor)) : null
-    const isCursorPending = cursor && (!cursorThought || cursorThought?.pending) && !cursorPendingIds.has(head(cursor))
+    // the Lexeme instance the cursor lands on, since that is the thought whose descendants are rendered beneath it
+    const cursorId = cursor ? headId(cursor) : null
+    const cursorThought = cursorId ? getThoughtById(getState(), cursorId) : null
+    const isCursorPending = !!cursorId && (!cursorThought || cursorThought?.pending) && !cursorPendingIds.has(cursorId)
     if (isCursorPending) {
-      cursorPendingIds.add(head(cursor!))
+      cursorPendingIds.add(cursorId!)
     }
 
-    const ids: ThoughtId[] = [...(isCursorPending ? [head(cursor)] : []), ...thoughtIdQueue.next()]
+    const ids: ThoughtId[] = [...(isCursorPending ? [cursorId!] : []), ...thoughtIdQueue.next()]
 
     // get thoughts from the database
     const providerThoughtsRaw = await provider.getThoughtsByIds(ids)

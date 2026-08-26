@@ -6,10 +6,12 @@ import { loadFromUrlActionCreator as loadFromUrl } from '../actions/loadFromUrl'
 import { newThoughtActionCreator as newThought } from '../actions/newThought'
 import { setResourceCacheActionCreator } from '../actions/setResourceCache'
 import attribute from '../selectors/attribute'
+import contextThoughtId from '../selectors/contextThoughtId'
 import { getChildren, getChildrenRanked } from '../selectors/getChildren'
 import simplifyPath from '../selectors/simplifyPath'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
+import headId from '../util/headId'
 
 /** Checks =src in the given path. If it exists, load the url and import it into the given context. Set a loading status in state.resourceCache to prevent prevent redundant fetches. */
 export const loadResourceActionCreator =
@@ -17,10 +19,12 @@ export const loadResourceActionCreator =
   (dispatch, getState) => {
     const state = getState()
     const { resourceCache } = state
-    const src = attribute(state, head(path), '=src')
+    // =src is a metaprogramming attribute of the thought the user sees, while the resource is loaded into the thought
+    // the path lands on. The two only differ in the context view.
+    const src = attribute(state, contextThoughtId(state, path), '=src')
 
     /** Returns true if the path has any children. */
-    const hasVisibleChildren = () => getChildren(state, head(path)).length > 0
+    const hasVisibleChildren = () => getChildren(state, headId(path)).length > 0
 
     if (src && !resourceCache[src] && !hasVisibleChildren()) {
       // create empty thought in which to load the source

@@ -13,6 +13,7 @@ import simplifyPath from '../selectors/simplifyPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
+import headId from '../util/headId'
 import isAttribute from '../util/isAttribute'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
@@ -62,11 +63,11 @@ const splitThought = (state: State, { path, splitResult }: { path?: Path; splitR
     // move children
     state => {
       // we can safely assume that the cursor has been set to the newly created thought that contains valueRight
-      const childNew = getThoughtById(state, head(state.cursor!))
+      const childNew = getThoughtById(state, headId(state.cursor!))
       if (!childNew) return state
       const pathRight = appendToPath(parentOf(simplePath), childNew.id)
       // only move non-attribute children to the new thought; metadata attributes (e.g. =note) remain on the original thought
-      const children = getChildrenRanked(state, head(pathLeft)).filter(child => !isAttribute(child.value))
+      const children = getChildrenRanked(state, headId(pathLeft)).filter(child => !isAttribute(child.value))
 
       return reducerFlow(
         children.map((child, i) =>

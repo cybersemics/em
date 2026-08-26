@@ -3,8 +3,10 @@ import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import exportContext from '../../selectors/exportContext'
 import addMulticursor from '../../test-helpers/addMulticursorAtFirstMatch'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
+import expectRenderedPath from '../../test-helpers/expectRenderedPath'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
+import { pathIds } from '../../util/pathStep'
 import reducerFlow from '../../util/reducerFlow'
 import categorize from '../categorize'
 import importText from '../importText'
@@ -117,6 +119,9 @@ describe('context view', () => {
         - y`)
 
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', ''])
+    // The Context alone cannot distinguish the two candidate cursors here: the new category and the context row that
+    // now displays it both convert to ['a', 'm', '']. Only one of them is a row that is actually rendered.
+    expectRenderedPath(stateNew, stateNew.cursor)
   })
 
   it('categorize context subthought', () => {
@@ -347,7 +352,7 @@ describe('multicursor', () => {
 
     const stateNew = reducerFlow(steps)(initialState())
 
-    const cursorThoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
+    const cursorThoughts = childIdsToThoughts(stateNew, pathIds(stateNew.cursor!))
 
     expect(cursorThoughts).toMatchObject([{ value: '', rank: expect.any(Number) }])
   })

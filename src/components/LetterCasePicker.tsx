@@ -4,10 +4,9 @@ import { css } from '../../styled-system/css'
 import LetterCaseType from '../@types/LetterCaseType'
 import { formatLetterCaseActionCreator as formatLetterCase } from '../actions/formatLetterCase'
 import { isTouch } from '../browser'
-import getThoughtById from '../selectors/getThoughtById'
 import applyLetterCase from '../util/applyLetterCase'
 import fastClick from '../util/fastClick'
-import head from '../util/head'
+import headValue from '../util/headValue'
 import Popover from './Popover'
 import LowerCaseIcon from './icons/LowerCaseIcon'
 import SentenceCaseIcon from './icons/SentenceCaseIcon'
@@ -26,7 +25,8 @@ const LetterCasePicker: FC<{ size?: number }> = memo(({ size }) => {
     dispatch(formatLetterCase(command))
   }
   const selected = useSelector(state => {
-    const value = (!!state.cursor && getThoughtById(state, head(state.cursor))?.value) || ''
+    // the letter case of the thought the user sees, which in the context view is the context
+    const value = (!!state.cursor && headValue(state, state.cursor)) || ''
 
     // The letter case of the thought should be independent of its formatting.
     const doc = new DOMParser().parseFromString(value, 'text/html')

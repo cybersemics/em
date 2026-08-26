@@ -1,9 +1,8 @@
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
-import getThoughtById from '../../selectors/getThoughtById'
+import pathToThought from '../../selectors/pathToThought'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
-import head from '../../util/head'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 import importText from '../importText'
@@ -176,6 +175,6 @@ it('split thought with whitespace in HTML formatting', () => {
   const stateNew = reducerFlow(steps)(initialState())
 
   // The whitespace inside the <i> tag should be trimmed in the output
-  const cursorThought = getThoughtById(stateNew, head(stateNew.cursor!))
+  const cursorThought = pathToThought(stateNew, stateNew.cursor!)
   expect(cursorThought?.value).toBe('<i>two</i>')
 })

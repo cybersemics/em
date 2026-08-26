@@ -4,11 +4,11 @@ import { isSafari, isTouch } from '../browser'
 import { ColorToken } from '../colors.config'
 import * as selection from '../device/selection'
 import globals from '../globals'
+import contextThoughtPath from '../selectors/contextThoughtPath'
 import hasMulticursor from '../selectors/hasMulticursor'
 import noteValue from '../selectors/noteValue'
 import pathToThought from '../selectors/pathToThought'
 import resolveNotePath from '../selectors/resolveNotePath'
-import simplifyPath from '../selectors/simplifyPath'
 import themeColors from '../selectors/themeColors'
 import { updateCommandState } from '../stores/commandStateStore'
 import formatSelectionHtml, { FormatCommand } from '../util/formatSelectionHtml'
@@ -82,7 +82,9 @@ export const formatSelectionActionCreator =
             ? editThought({
                 oldValue: thought.value,
                 newValue,
-                path: simplifyPath(state, path),
+                // the thought the user sees, which in the context view is the context rather than the Lexeme instance:
+                // formatting the row a/m~/b should format b, not b/m
+                path: contextThoughtPath(state, path),
                 // force the ContentEditable to update
                 force: true,
               })
@@ -162,7 +164,8 @@ export const formatSelectionActionCreator =
               cursorOffset: range?.end,
               oldValue: value,
               newValue,
-              path: simplifyPath(state, path),
+              // the thought the user sees, which in the context view is the context rather than the Lexeme instance
+              path: contextThoughtPath(state, path),
               // force the ContentEditable to update
               force: true,
             }),

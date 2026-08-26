@@ -7,11 +7,11 @@ import { pullActionCreator as pull } from '../actions/pull'
 import { pullAncestorsActionCreator as pullAncestors } from '../actions/pullAncestors'
 import db from '../data-providers/thoughtspace'
 import useDelayedState from '../hooks/useDelayedState'
-import getChildPath from '../selectors/getChildPath'
 import { getAllChildren } from '../selectors/getChildren'
 import getLexeme from '../selectors/getLexeme'
 import pathToThought from '../selectors/pathToThought'
 import thoughtToPath from '../selectors/thoughtToPath'
+import appendToPath from '../util/appendToPath'
 import hashPath from '../util/hashPath'
 import hashThought from '../util/hashThought'
 import head from '../util/head'
@@ -51,7 +51,7 @@ const RecentlyDeleted = () => {
     const archivePaths = lexeme?.contexts.map(cxid => thoughtToPath(state, cxid)) ?? []
     // paths of all the children of =archive, since those are the deleted thoughts
     const childrenPaths = archivePaths.flatMap(path =>
-      getAllChildren(state, head(path)).map(child => getChildPath(state, child, path)),
+      getAllChildren(state, head(path)).map(child => appendToPath(path, child)),
     )
     // sort by archived timestamp descending
     const childrenPathsSorted = sortBy(childrenPaths, path => -(pathToThought(state, path)?.archived || 0))

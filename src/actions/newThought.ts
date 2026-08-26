@@ -42,7 +42,7 @@ import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
-import appendToPath from '../util/appendToPath'
+import appendToPath, { appendContextStep } from '../util/appendToPath'
 import createId from '../util/createId'
 import head from '../util/head'
 import headValue from '../util/headValue'
@@ -50,6 +50,7 @@ import isEmptyOrEmojiOnly from '../util/isEmptyOrEmojiOnly'
 import isRoot from '../util/isRoot'
 import once from '../util/once'
 import parentOf from '../util/parentOf'
+import { isContextStep } from '../util/pathStep'
 import reducerFlow from '../util/reducerFlow'
 import unroot from '../util/unroot'
 
@@ -127,7 +128,7 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
   // }
 
   const showContexts = isContextViewActive(state, path)
-  const showContextsParent = isContextViewActive(state, rootedParentOf(state, path))
+  const showContextsParent = isContextStep(head(path))
   const insertContext = (showContextsParent && !insertNewSubthought) || (showContexts && insertNewSubthought)
 
   /** Gets the Path of the last visible child in a SimplePath if it is a sorted context. */
@@ -193,7 +194,9 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
       return !preventSetCursor
         ? setCursor(newState, {
             isKeyboardOpen: true,
-            path: unroot([...parentPath!, newThoughtId]),
+            // A new context in the context view is a context-view row, so its step records the Lexeme instance that was
+            // just created inside it (ABS/_/m), not the empty context thought itself (ABS/_).
+            path: insertContext ? appendContextStep(parentPath, newContextId!) : unroot([...parentPath!, newThoughtId]),
             offset: offset != null ? offset : getTextContentFromHTML(value).length,
           })
         : null

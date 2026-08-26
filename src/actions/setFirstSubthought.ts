@@ -1,18 +1,19 @@
 import _ from 'lodash'
 import Path from '../@types/Path'
-import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import createThought from '../actions/createThought'
 import editThought from '../actions/editThought'
 import { anyChild } from '../selectors/getChildren'
 import getPrevRank from '../selectors/getPrevRank'
+import simplifyPath from '../selectors/simplifyPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
-import head from '../util/head'
+import appendToPath from '../util/appendToPath'
+import headId from '../util/headId'
 
 /** Sets the value of the first subthought in the given context. */
 const setFirstSubthought = (state: State, { path, value }: { path: Path; value: string }) => {
-  const id = head(path)
+  const id = headId(path)
   const firstThoughtOld = anyChild(state, id)
 
   if (!path) {
@@ -25,14 +26,14 @@ const setFirstSubthought = (state: State, { path, value }: { path: Path; value: 
       editThought(state, {
         oldValue: firstThoughtOld.value,
         newValue: value,
-        path: path.concat(firstThoughtOld.id) as SimplePath,
+        path: appendToPath(simplifyPath(state, path), firstThoughtOld.id),
       })
     : // context is empty and so first thought must be created
       // assume context exists
       createThought(state, {
         path,
         value,
-        rank: path ? getPrevRank(state, head(path)) : 0,
+        rank: path ? getPrevRank(state, id) : 0,
       })
 }
 

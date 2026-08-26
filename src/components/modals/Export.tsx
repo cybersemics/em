@@ -41,6 +41,7 @@ import equalPath from '../../util/equalPath'
 import exportPhrase from '../../util/exportPhrase'
 import fastClick from '../../util/fastClick'
 import head from '../../util/head'
+import headId from '../../util/headId'
 import headValue from '../../util/headValue'
 import initialState from '../../util/initialState'
 import isRoot from '../../util/isRoot'
@@ -374,8 +375,8 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
       // When shouldExportFirstThought is false, expand each selected path to its children's IDs.
       // For single selection this skips the root thought; for multiple selection it skips the entire first level.
       const exportIds = !shouldExportFirstThought
-        ? sortedPaths.flatMap(simplePath => getChildrenRanked(exportedState, head(simplePath)).map(child => child.id))
-        : sortedPaths.map(simplePath => head(simplePath))
+        ? sortedPaths.flatMap(path => getChildrenRanked(exportedState, headId(path)).map(child => child.id))
+        : sortedPaths.map(path => headId(path))
 
       const exported = exportIds
         .map(thoughtId =>

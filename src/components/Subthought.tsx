@@ -9,6 +9,7 @@ import ThoughtId from '../@types/ThoughtId'
 import useCachedThoughtHtml from '../hooks/useCachedThoughtHtml'
 import useChangeRef from '../hooks/useChangeRef'
 import attributeEquals from '../selectors/attributeEquals'
+import contextThoughtId from '../selectors/contextThoughtId'
 import findFirstEnvContextWithZoom from '../selectors/findFirstEnvContextWithZoom'
 import { findAnyChild } from '../selectors/getChildren'
 import getContexts from '../selectors/getContexts'
@@ -82,7 +83,10 @@ const Subthought = ({
       null,
   )
   const isSplitThought = useSelector(
-    state => state.lastUndoableActionType === 'splitThought' && state.cursor && head(state.cursor) === head(simplePath),
+    state =>
+      state.lastUndoableActionType === 'splitThought' &&
+      !!state.cursor &&
+      contextThoughtId(state, state.cursor) === head(simplePath),
   )
   const hideBullet = useSelector(state => {
     const hideBulletsChildren = attributeEquals(state, childrenAttributeId, '=bullet', 'None')

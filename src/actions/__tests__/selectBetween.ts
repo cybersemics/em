@@ -1,11 +1,10 @@
 import selectBetween from '../../actions/selectBetween'
 import toggleMulticursor from '../../actions/toggleMulticursor'
 import contextToPath from '../../selectors/contextToPath'
-import getThoughtById from '../../selectors/getThoughtById'
+import pathToThought from '../../selectors/pathToThought'
 import addMulticursor from '../../test-helpers/addMulticursorAtFirstMatch'
 import prettyPath from '../../test-helpers/prettyPath'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
-import head from '../../util/head'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 import importText from '../importText'
@@ -77,7 +76,7 @@ test('select between two thoughts in a sorted list', () => {
   const stateNew = reducerFlow(steps)(initialState())
 
   const selected = Object.values(stateNew.multicursors)
-    .map(path => getThoughtById(stateNew, head(path))?.value)
+    .map(path => pathToThought(stateNew, path)?.value)
     .sort()
 
   expect(selected).toEqual(['b', 'c', 'd', 'e'])
@@ -105,7 +104,7 @@ test('select between two thoughts at the same level', () => {
   const stateNew = reducerFlow(steps)(initialState())
 
   const selected = Object.values(stateNew.multicursors)
-    .map(path => getThoughtById(stateNew, head(path))?.value)
+    .map(path => pathToThought(stateNew, path)?.value)
     .sort()
 
   expect(selected).toEqual(['b', 'c', 'd', 'e'])
@@ -127,7 +126,7 @@ test('if no thoughts are selected, select all thoughts at the cursor level', () 
   const stateNew = reducerFlow(steps)(initialState())
 
   const selected = Object.values(stateNew.multicursors)
-    .map(path => getThoughtById(stateNew, head(path))?.value)
+    .map(path => pathToThought(stateNew, path)?.value)
     .sort()
 
   expect(selected).toEqual(['a', 'b', 'c', 'd', 'e', 'f'])
@@ -242,7 +241,7 @@ test('if no thoughts are selected and there is no cursor, select all thoughts at
   const stateNew = reducerFlow(steps)(initialState())
 
   const selected = Object.values(stateNew.multicursors)
-    .map(path => getThoughtById(stateNew, head(path))?.value)
+    .map(path => pathToThought(stateNew, path)?.value)
     .sort()
 
   expect(selected).toEqual(['a', 'b', 'c', 'd', 'e', 'f'])

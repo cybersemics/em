@@ -9,7 +9,7 @@ import setCursor from '../actions/setCursor'
 import { getAllChildren, getChildrenRanked } from '../selectors/getChildren'
 import rootedParentOf from '../selectors/rootedParentOf'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
-import head from '../util/head'
+import headId from '../util/headId'
 import reducerFlow from '../util/reducerFlow'
 
 /** Moves the archived thought back to its original location. */
@@ -17,8 +17,8 @@ const undoArchive = (
   state: State,
   { originalPath, currPath, offset }: { originalPath: Path; currPath: Path; offset?: number },
 ) => {
-  const parentId = head(rootedParentOf(state, currPath))
-  const originalParentId = head(rootedParentOf(state, originalPath))
+  const parentId = headId(rootedParentOf(state, currPath))
+  const originalParentId = headId(rootedParentOf(state, originalPath))
 
   return reducerFlow([
     // set the cursor to the original path before restoring the thought

@@ -14,7 +14,7 @@ import { registerActionMetadata } from '../util/actionMetadata.registry'
 import { childrenMapKey } from '../util/createChildrenMap'
 import createId from '../util/createId'
 import hashThought from '../util/hashThought'
-import head from '../util/head'
+import headId from '../util/headId'
 import keyValueBy from '../util/keyValueBy'
 import timestamp from '../util/timestamp'
 
@@ -46,7 +46,7 @@ const createThought = (state: State, { path, value, rank, id, idbSynced, childre
     contexts: [...(lexemeOld?.contexts || []), ...(path.length > 0 ? [id] : [])],
   }
 
-  const parentId = head(path)
+  const parentId = headId(path)
   const parent = getThoughtById(state, parentId)
 
   if (!parent) {

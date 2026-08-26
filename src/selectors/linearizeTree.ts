@@ -2,9 +2,7 @@ import { pick } from 'lodash'
 import React from 'react'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
-import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
-import ThoughtId from '../@types/ThoughtId'
 import TreeThought from '../@types/TreeThought'
 import { HOME_PATH } from '../constants'
 import calculateAutofocus from '../selectors/calculateAutofocus'
@@ -16,26 +14,32 @@ import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
-import thoughtToPath from '../selectors/thoughtToPath'
-import { appendToPathMemo } from '../util/appendToPath'
+import { appendContextStep, appendToPathMemo } from '../util/appendToPath'
 import equalPath from '../util/equalPath'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
+import headId from '../util/headId'
 import isAttribute from '../util/isAttribute'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import parseLet from '../util/parseLet'
+import { isContextStep } from '../util/pathStep'
 import safeRefMerge from '../util/safeRefMerge'
 import attributeEquals from './attributeEquals'
+import contextThoughtId from './contextThoughtId'
+import contextThoughtPath from './contextThoughtPath'
 
 // style properties that accumulate down the hierarchy.
 // We need to accmulate positioning like marginLeft so that all descendants' positions are indented with the thought.
 const ACCUM_STYLE_PROPERTIES = ['marginLeft', 'paddingLeft']
 
 /** Generates a VirtualThought key that is unique across context views. */
-// include the head of each context view in the path in the key, otherwise there will be duplicate keys when the same thought is visible in normal view and context view
-const crossContextualKey = (contextChain: Path[] | undefined, id: ThoughtId) =>
-  `${(contextChain || []).map(head).join('')}|${id}`
+// Include every context-view boundary the path crosses, plus the row's own step. Both are unambiguous now that a
+// context step records the Lexeme instance it lands on, so the same thought visible in normal view and in a context
+// view gets different keys — as do two thoughts of the same Lexeme in one context (a/m~/cat and a/m~/cats).
+// Hashing the whole path would work too, but would change the key whenever an ancestor moves, remounting the node and
+// breaking the move animation.
+const crossContextualKey = (path: Path) => `${path.filter(isContextStep).join('')}|${head(path)}`
 
 /** Recursiveley calculates the tree of visible thoughts, in order, represented as a flat list of thoughts with tree layout information. */
 const linearizeTree = (
@@ -45,13 +49,6 @@ const linearizeTree = (
     basePath,
     /** Used to set belowCursor in recursive calls. Once true, all remaining thoughts will have belowCursor: true. See: TreeThought.belowCursor. */
     belowCursor,
-    // The id of a specific context within the context view.
-    // This allows the contexts to render the children of their Lexeme instance rather than their own children.
-    // i.e. a/~m/b should render b/m's children rather than rendering b's children. Notice that the Path a/~m/b contains a different m than b/m, so we need to pass the id of b/m to the next level to render the correct children.
-    // If we rendered the children as usual, the Lexeme would be repeated in each context, i.e. a/~m/a/m/x and a/~m/b/m/y. There is no need to render m a second time since we know the context view is activated on m.
-    contextId,
-    // accumulate the context chain in order to provide a unique key for rendering the same thought in normal view and context view
-    contextChain,
     depth,
     env,
     indexDescendant,
@@ -62,8 +59,6 @@ const linearizeTree = (
   }: {
     basePath?: Path
     belowCursor?: boolean
-    contextId?: ThoughtId
-    contextChain?: SimplePath[]
     depth: number
     env?: LazyEnv
     indexDescendant: number
@@ -78,18 +73,20 @@ const linearizeTree = (
   const hashedPath = hashPath(path)
   if (!isRoot(path) && !state.expanded[hashedPath] && !equalPath(state.expandHoverDownPath, path)) return []
 
-  const thoughtId = head(path)
+  // Two thoughts are in play at a context-view row such as a/m~/b: the context `b`, which is displayed and whose
+  // metaprogramming attributes apply, and the Lexeme instance `b/m`, which supplies the children. Outside the context
+  // view they are the same thought.
+  const thoughtId = contextThoughtId(state, path)
   const thought = getThoughtById(state, thoughtId)
+  const instanceId = headId(path)
   const simplePath = simplifyPath(state, path)
   const contextViewActive = isContextViewActive(state, path)
-  const contextChainNew = contextViewActive ? [...(contextChain || []), simplePath] : contextChain
   const children = contextViewActive
     ? thought
       ? getContextsSortedAndRanked(state, thought.value)
       : []
-    : // context children should render the children of a specific Lexeme instance to avoid repeating the Lexeme.
-      // See: contextId (above)
-      getChildrenRanked(state, contextId || thoughtId)
+    : // the instance rather than the context, so that a/m~/b renders the children of b/m without repeating the Lexeme
+      getChildrenRanked(state, instanceId)
   const filteredChildren = children.filter(childrenFilterPredicate(state, simplePath))
 
   // short circuit if the context view only has one context and the NoOtherContexts component will be displayed
@@ -113,13 +110,15 @@ const linearizeTree = (
   )
 
   const thoughts = filteredChildren.reduce<TreeThought[]>((accum, filteredChild, i) => {
-    // If the context view is active, render the context's parent instead of the context itself.
-    // This allows the path to be accumulated correctly across the context view.
-    // e.g. a/m~/b should render the children of b/m, not a/m
+    // In the context view the row displays the context, i.e. the parent of the Lexeme instance: a/m~/b displays b.
     const child = contextViewActive ? getThoughtById(state, filteredChild.parentId) : filteredChild
     // Context thought may still be pending
     if (!child) return accum
-    const childPath = appendToPathMemo(path, child.id)
+    // The step records the Lexeme instance (filteredChild), not the context, so that the row is uniquely addressable
+    // and the context-view boundary is explicit rather than re-derived from state.
+    const childPath = contextViewActive
+      ? appendContextStep(path, filteredChild.id)
+      : appendToPathMemo(path, filteredChild.id)
     const lastVirtualIndex = accum.length > 0 ? accum[accum.length - 1].indexDescendant : 0
     const virtualIndexNew = indexDescendant + lastVirtualIndex + (depth === 0 && i === 0 ? 0 : 1)
 
@@ -152,21 +151,31 @@ const linearizeTree = (
       isTableCol2,
       isTableCol2Child,
       autofocus,
-      // In the context view, use filteredChild.id (the context) rather than child.id (the context parent), otherwise duplicate thoughts in the same context will have the same key.
-      // For example, a/~m/cat and a/~m/cats need to use the ids of cat/cats rather than m.
-      // filteredChild === child in normal view, so it does not matter in that case.
-      key: crossContextualKey(contextChainNew, filteredChild.id),
+      key: crossContextualKey(childPath),
       // must filteredChild.id to work for both normal view and context view
       leaf: !hasChildren(state, filteredChild.id),
       path: childPath,
       prevChild: filteredChildren[i - 1],
       rank: child.rank,
       showContexts: contextViewActive,
-      simplePath: contextViewActive ? thoughtToPath(state, child.id) : appendToPathMemo(simplePath, child.id),
+      // the SimplePath of the displayed thought, i.e. the context in the context view. This is what Editable edits and
+      // what metaprogramming attributes are read from. Contrast simplifyPath(childPath), the Lexeme instance.
+      simplePath: contextThoughtPath(state, childPath),
       style,
       thoughtId: child.id,
       ...(isTable
-        ? { visibleChildrenKeys: getChildren(state, child.id).map(child => crossContextualKey(contextChain, child.id)) }
+        ? {
+            // The keys of the rows that will actually be rendered under this thought, which are its contexts when the
+            // context view is active on it and its children otherwise. They must be built exactly as the recursion
+            // builds them, or the col1 width lookup finds nothing.
+            visibleChildrenKeys: isContextViewActive(state, childPath)
+              ? getContextsSortedAndRanked(state, child.value).map(context =>
+                  crossContextualKey(appendContextStep(childPath, context.id)),
+                )
+              : getChildren(state, filteredChild.id).map(grandchild =>
+                  crossContextualKey(appendToPathMemo(childPath, grandchild.id)),
+                ),
+          }
         : null),
     }
 
@@ -174,8 +183,6 @@ const linearizeTree = (
     const descendants = linearizeTree(state, {
       basePath: childPath,
       belowCursor,
-      contextId: contextViewActive ? filteredChild.id : undefined,
-      contextChain: contextChainNew,
       depth: depth + 1,
       env: envNew,
       indexDescendant: virtualIndexNew,

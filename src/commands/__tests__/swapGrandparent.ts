@@ -2,13 +2,13 @@ import { importTextActionCreator as importText } from '../../actions/importText'
 import { undoActionCreator as undo } from '../../actions/undo'
 import { executeCommandWithMulticursor } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
-import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import pathToContext from '../../util/pathToContext'
 import swapGrandparentCommand from '../swapGrandparent'
 
 beforeEach(initStore)
@@ -95,9 +95,7 @@ describe('multicursor', () => {
 
     // c1 and c2 moved to the root, so the restored cursor and multicursors must follow them there.
     expectPathToEqual(state, state.cursor, ['c1'])
-    expect(
-      Object.values(state.multicursors).map(path => childIdsToThoughts(state, path).map(thought => thought.value)),
-    ).toEqual([['c1'], ['c2']])
+    expect(Object.values(state.multicursors).map(path => pathToContext(state, path))).toEqual([['c1'], ['c2']])
   })
 
   it('reverts every swap on a single undo', () => {

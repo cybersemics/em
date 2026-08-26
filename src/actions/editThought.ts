@@ -7,6 +7,7 @@ import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import Thunk from '../@types/Thunk'
 import { clientId } from '../data-providers/thoughtspaceSession'
+import contextThoughtId from '../selectors/contextThoughtId'
 import findDescendant from '../selectors/findDescendant'
 import { getAllChildren } from '../selectors/getChildren'
 import getLexeme from '../selectors/getLexeme'
@@ -81,7 +82,7 @@ const editThought = (
   const thoughtIdForExistingMetaProgrammingThought =
     isAttribute(newValue) &&
     state.cursor &&
-    head(state.cursor) === editedThought.id &&
+    contextThoughtId(state, state.cursor) === editedThought.id &&
     findDescendant(state, editedThought.parentId, newValue)
 
   // We do not want to create a duplicate metaprogramming thought within the same context. Instead this logic ensures we delete the current cursor thought and move the cursor to the existing one
