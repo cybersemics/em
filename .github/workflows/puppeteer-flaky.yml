@@ -14,10 +14,11 @@
 #
 # Reports:
 #   - Workflow summary
-#   - Optional Discord notification (flakes/infra failures only)
 #   - A tracking issue per intermittently failing test (labelled `test`),
 #     deduplicated against open issues by exact title match. Tests that fail
 #     every iteration are regressions, not flakes, and are not filed.
+#   - Optional Discord notification (flakes/infra failures only), linking each
+#     offender to its tracking issue — the one just filed, or the one already open.
 #
 # To enable Discord notifications, add a `DISCORD_WEBHOOK_URL` repository secret.
 
@@ -215,6 +216,20 @@ jobs:
           node scripts/ci/flaky-outputs.mjs flaky-results/flaky-summary.json >> "$GITHUB_OUTPUT"
           echo "aggregate_exit=$STATUS" >> "$GITHUB_OUTPUT"
 
+      # Runs before the Discord alert so it can link each offender to its tracking issue.
+      # See scripts/ci/file-flaky-issues.cjs for what gets filed and how it is deduplicated.
+      - name: File tracking issues
+        if: steps.aggregate.outputs.clean != 'true'
+        # The Discord alert is the signal humans act on; never suppress it because the Issues
+        # API failed. The run still fails below regardless.
+        continue-on-error: true
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        with:
+          script: |
+            await require('./scripts/ci/file-flaky-issues.cjs')({ github, context, core })
+
       - name: Notify Discord
         if: steps.aggregate.outputs.clean != 'true'
         env:
@@ -229,23 +244,15 @@ jobs:
             exit 0
           fi
 
-          CONTENT=$(node scripts/ci/flaky-discord-payload.mjs flaky-results/flaky-summary.json)
+          CONTENT=$(node scripts/ci/flaky-discord-payload.mjs \
+            flaky-results/flaky-summary.json \
+            flaky-results/flaky-issues.json)
 
           curl -sS -f -X POST \
             -H 'Content-Type: application/json' \
             -d "$CONTENT" \
             "$DISCORD_WEBHOOK_URL"
           echo "Discord notification sent."
-
-      # See scripts/ci/file-flaky-issues.cjs for what gets filed and how it is deduplicated.
-      - name: File tracking issues
-        if: steps.aggregate.outputs.clean != 'true'
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
-        env:
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        with:
-          script: |
-            await require('./scripts/ci/file-flaky-issues.cjs')({ github, context, core })
 
       - name: Fail job when flakes or infra failures found
         if: steps.aggregate.outputs.clean != 'true'
