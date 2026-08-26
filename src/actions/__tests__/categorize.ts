@@ -190,13 +190,9 @@ describe('context view', () => {
     expect(isContextViewActive(stateNew, contextToPath(stateNew, ['a', 'm']))).toBeTruthy()
   })
 
-  // Skipped: the single-cursor branch passes the simplified path to moveThought as oldPath, and moveThought
-  // simplifies it again. When the context view is active on a prefix of that simplified path — true only for the
-  // context the view was activated from — the second simplification resolves `x` as a context of `m` rather than as
-  // its child, finds nothing, and moveThought throws "sourceThought not found". The test above passes only because
-  // `b/m/y` does not share the `a/m` prefix.
-  // Unskip when https://github.com/cybersemics/em/issues/5104 is fixed.
-  it.skip('categorize context subthought in the context the context view was activated from', () => {
+  // Unlike the test above, the subthought is shown under the context the view was activated from, so its SimplePath
+  // shares the prefix the context view is keyed on. That prefix is what the path resolution has to leave alone.
+  it('categorize context subthought in the context the context view was activated from', () => {
     const text = `
       - a
         - m
