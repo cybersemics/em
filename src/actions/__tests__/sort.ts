@@ -103,7 +103,7 @@ describe('sort', () => {
   })
 
   // https://github.com/cybersemics/em/pull/4952#pullrequestreview-4993273973
-  it.skip('sorts an empty thought to the top', () => {
+  it('sorts an empty thought to the top', () => {
     const text = `
       - =sort
         - Alphabetical

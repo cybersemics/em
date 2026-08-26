@@ -298,6 +298,8 @@ When no sort preference is set, manual `rank` order is used. This is why fractio
 
 Empty and emoji-only thoughts are exempt from the sort condition and keep their point of creation. [`newThought`](../src/actions/newThought.ts) and [`editThought`](../src/actions/editThought.ts) preserve their `rank` instead of sorting them into place, so a thought you have just created stays where you created it while you type into it. [`getSortComparator`](../src/selectors/getChildren.ts) honors this by falling back to `rank` whenever either thought being compared is empty or emoji-only, which is what keeps the sorted list in agreement with the rendered order — the tree itself is built from `getChildrenRanked`.
 
+The exemption only holds until the sort is applied. [`sort`](../src/actions/sort.ts) re-ranks every child of a context to match the sort condition, so it asks `getSortComparator` for the comparator *without* the exemption (`sortEmpty`) and empty thoughts float to the top, ahead of everything else in either direction (`compareEmpty` is first in both `compareReasonable` and `compareReasonableDescending`). The ranks it assigns then agree with the sort condition for every child. `sort` runs whenever the sort preference is set from the Sort Picker or the `toggleSort` command, and after [`swapParent`](../src/actions/swapParent.ts) and [`uncategorize`](../src/actions/uncategorize.ts) move thoughts into a sorted context.
+
 ## Views
 
 ### Normal view
