@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import React, { FocusEventHandler, useCallback, useEffect, useMemo, useRef } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
-import { cx } from '../../styled-system/css'
+import { css, cx } from '../../styled-system/css'
 import { editableRecipe, invalidOptionRecipe } from '../../styled-system/recipes'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -48,6 +48,7 @@ import isMulticursorPath from '../selectors/isMulticursorPath'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import thoughtToPath from '../selectors/thoughtToPath'
+import caretRectStore from '../stores/caretRectStore'
 import editingValueStore from '../stores/editingValue'
 import editingValueUntrimmedStore from '../stores/editingValueUntrimmed'
 import storageModel from '../stores/storageModel'
@@ -180,6 +181,10 @@ const Editable = ({
   )
 
   const hasMulticursor = useSelector(hasMulticursorSelector)
+  // A non-null caret rect means the multiselection is being edited (Clear Thought), where a click places the caret as
+  // usual. It is the only reactive signal that distinguishes an edited multiselection from an idle one, since the
+  // browser selection that isMultiEditing consults is not part of the Redux state (see caretRectStore).
+  const multiEditing = caretRectStore.useSelector(caretRect => caretRect.x !== null)
   // store the old value so that we have a transcendental head when it is changed
   const oldValueRef = useRef(value)
   const nullRef = useRef<HTMLInputElement>(null)
@@ -1066,7 +1071,13 @@ const Editable = ({
       data-placeholder-italic={placeholderCommandState?.italic || undefined}
       data-placeholder-strikethrough={placeholderCommandState?.strikethrough || undefined}
       data-placeholder-underline={placeholderCommandState?.underline || undefined}
-      className={cx(editableRecipe(), className)}
+      className={cx(
+        editableRecipe(),
+        // While a multiselect is active, a click toggles the thought's selection rather than placing the caret in its
+        // text (see handleTapBehavior), so the text advertises a pointer rather than the text cursor.
+        hasMulticursor && !multiEditing && css({ cursor: 'pointer' }),
+        className,
+      )}
       html={html}
       placeholder={placeholder}
       onFocus={onFocus}
