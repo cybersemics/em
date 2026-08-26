@@ -52,7 +52,6 @@ import haptics from './util/haptics'
 import hashPath from './util/hashPath'
 import head from './util/head'
 import isAttribute from './util/isAttribute'
-import isCommandKey from './util/isCommandKey'
 import keyValueBy from './util/keyValueBy'
 import parentOf from './util/parentOf'
 import UnreachableError from './util/unreachable'
@@ -584,18 +583,6 @@ export const executeCommandWithMulticursor = (
     )
   }
 
-  // A command tapped in the Command Center that ends with an empty selection (e.g. delete, whose thoughts no
-  // longer exist to be restored above) would dismiss the Command Center, since multicursorAlertMiddleware
-  // closes it when nothing is selected. Select the thought the cursor landed on instead, the same way the
-  // Command Center is opened in the first place, so that it stays open and can be used again. When the last
-  // thought was deleted there is no cursor left to select and it closes as usual.
-  if (type === 'commandCenter') {
-    const state = commandStore.getState()
-    if (!hasMulticursor(state) && state.cursor) {
-      commandStore.dispatch(addMulticursor({ path: state.cursor }))
-    }
-  }
-
   multicursor.onComplete?.(filteredPaths, commandStore.dispatch, commandStore.getState)
 
   // The cleared state is preserved while the cursor is set to each selected thought (see setCursor), so reset it now
@@ -859,7 +846,7 @@ export const keyDown = (e: KeyboardEvent) => {
   const state = store.getState()
 
   // track meta key for expansion algorithm
-  if (!isCommandKey(e)) {
+  if (!(isMac ? e.metaKey : e.ctrlKey)) {
     // disable suppress expansion without triggering re-render
     globals.suppressExpansion = false
   }

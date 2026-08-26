@@ -14,7 +14,6 @@ import multiselectThoughts from '../helpers/multiselectThoughts'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import setSelection from '../helpers/setSelection'
-import waitForCursor from '../helpers/waitForCursor'
 import waitForEditable from '../helpers/waitForEditable'
 import { page } from '../session'
 
@@ -296,13 +295,11 @@ it('Verify superscript colors in different views', async () => {
   await clickThought('m')
   await clickToolbar('Context View')
 
-  // Click the green 'b' context. clickThought matches the editable's innerHTML, which is why the color markup has to
-  // be included: after 'b' is colored, its value is no longer the bare 'b' that clickThought('b') would look for.
-  await clickThought('<font color="#00d688">b</font>')
-
-  // The superscript is only read from the thought under the cursor, so wait for the click to land before reading it.
-  await waitForCursor('<font color="#00d688">b</font>')
-
+  // ArrowDown to the green 'b' context. Keyboard traversal visits the first context and its child before reaching it.
+  // TODO: Why does clickThought('b') not work here?
+  await press('ArrowDown')
+  await press('ArrowDown')
+  await press('ArrowDown')
   const supColor3 = await getSuperscriptColor()
   expect(supColor3).toBeTruthy()
   expect(rgbToHex(supColor3!)).toBe(rgbaToHex(colors.light.green)) // Superscript should match the green color in context view

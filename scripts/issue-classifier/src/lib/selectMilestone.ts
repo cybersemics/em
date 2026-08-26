@@ -56,7 +56,7 @@ const selectMilestone = async ({
   let lastError: Error | null = null
   for (let attempt = 1; attempt <= MAX_INFERENCE_ATTEMPTS; attempt++) {
     try {
-      const outputs = await infer({ apiKey: openaiApiKey, prompt, instructions, milestoneTitles: titles })
+      const outputs = await infer({ apiKey: openaiApiKey, prompt, instructions })
       const vote = tallyVotes(outputs, titles)
       if (vote) return vote
       lastError = new Error(`No usable vote in ${outputs.length} samples: ${JSON.stringify(outputs)}`)

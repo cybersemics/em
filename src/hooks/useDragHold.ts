@@ -5,10 +5,10 @@ import SimplePath from '../@types/SimplePath'
 import { alertActionCreator as alert } from '../actions/alert'
 import { longPressActionCreator as longPress } from '../actions/longPress'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
+import { isMac } from '../browser'
 import { AlertType, LongPressState } from '../constants'
 import hasMulticursor from '../selectors/hasMulticursor'
 import debugLog from '../util/debugLog'
-import isCommandKey from '../util/isCommandKey'
 import useLongPress from './useLongPress'
 
 /** Adds event handlers to detect long press and set state.longPress while the user is long pressing a thought in preparation for a drag. */
@@ -44,7 +44,7 @@ const useDragHold = ({
 
       // Shift + Click and Cmd/Ctrl + Click are handled by the click handler in Thought, which fires before the long press ends.
       // Toggling the multicursor here as well would undo the selection that the click handler just made.
-      const multiselectModifier = !!e && (e.shiftKey || isCommandKey(e))
+      const multiselectModifier = !!e && (e.shiftKey || (isMac ? e.metaKey : e.ctrlKey))
 
       // touchcancel means the system claimed the touch, e.g. when the user swipes up from the bottom edge of the screen to switch apps on iOS. The page sees a touchstart with no touchmove, so the press outlasts the long press timer. A cancelled press is not a deliberate release, so it must not activate the multiselect, which would open the Command Center.
       const cancelled = e?.type === 'touchcancel'

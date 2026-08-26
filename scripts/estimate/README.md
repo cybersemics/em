@@ -24,7 +24,7 @@ Dry-run flags: `--dry` skips both the model call and the Everhour write; `--dry-
 
 ## Evaluation
 
-The estimator draws multiple independent samples per issue (self-consistency voting via the Chat Completions `n` parameter) and reports the modal category, so each estimate carries an `agreement` score (fraction of votes that agreed) and a self-reported `confidence`. Both are surfaced in the audit comment. Each sample is constrained by a strict JSON schema ([Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs)), so a conforming vote carries every field and can only name a category on the XXS–XXL scale — the response shape the prompt requests is enforced rather than requested, and a vote can no longer be lost to a hallucinated category or a missing field. The lenient parsing behind it — missing `rationale` and `confidence` are defaulted, a malformed vote is discarded rather than aborting the tally — remains as the backstop for replies the guarantee does not cover, such as one truncated at the token limit.
+The estimator draws multiple independent samples per issue (self-consistency voting via the Chat Completions `n` parameter) and reports the modal category, so each estimate carries an `agreement` score (fraction of votes that agreed) and a self-reported `confidence`. Both are surfaced in the audit comment.
 
 To measure accuracy, run the leave-one-out harness. For each labeled sample it rebuilds the prompt from every _other_ sample, estimates the held-out issue, and compares to the known-correct category. It reports exact-bucket and ±1-bucket accuracy, a confusion matrix, and a calibration breakdown. It makes model calls but never writes to Everhour.
 
@@ -33,7 +33,7 @@ cd scripts/estimate
 yarn evaluate
 ```
 
-Inference is tunable via `ESTIMATE_*` env vars (see `.env.example`): `ESTIMATE_MODEL` (which must support Structured Outputs), `ESTIMATE_VOTES`, `ESTIMATE_REASONING_EFFORT`, `ESTIMATE_TEMPERATURE`.
+Inference is tunable via `ESTIMATE_*` env vars (see `.env.example`): `ESTIMATE_MODEL`, `ESTIMATE_VOTES`, `ESTIMATE_REASONING_EFFORT`, `ESTIMATE_TEMPERATURE`.
 
 Manual correction (via issue comment)
 

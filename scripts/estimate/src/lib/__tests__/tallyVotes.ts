@@ -51,12 +51,6 @@ describe('tallyVotes', () => {
     expect(result.secondChoice).toBe('M')
   })
 
-  it('normalizes an explicit null secondChoice, the strict schema encoding of "no second choice", to undefined', () => {
-    const result = tallyVotes([vote('L', { secondChoice: null })])
-    expect(result.estimate).toBe('L')
-    expect(result.secondChoice).toBeUndefined()
-  })
-
   it('throws when no votes are valid', () => {
     expect(() => tallyVotes(['nope', '{}', 'also bad'])).toThrow('Failed to validate any estimate vote')
   })

@@ -8,7 +8,6 @@ import gesture from '../helpers/gesture'
 import keyboard from '../helpers/keyboard'
 import longPressThought from '../helpers/longPressThought'
 import paste from '../helpers/paste'
-import waitForAlertContent from '../helpers/waitForAlertContent'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForSelector from '../helpers/waitForSelector'
 import waitUntil from '../helpers/waitUntil'
@@ -44,28 +43,6 @@ describe('command center', () => {
     // the caret is placed in the new note, so typing goes into the note rather than back into the thought
     await keyboard.type('World')
     await waitUntil(() => document.querySelector('[aria-label="note-editable"]')?.textContent === 'World')
-  })
-
-  // https://github.com/cybersemics/em/issues/3445
-  it('stays open when the Delete command is tapped', async () => {
-    await paste(`
-        - a
-        - b
-        `)
-    await clickThought('a')
-
-    await gesture(openCommandCenterCommand)
-    await waitForSelector('[data-testid=command-center-panel]')
-
-    await click('[data-testid="command-center-panel"] [aria-label="Delete"]')
-
-    // wait for the thought to be deleted before asserting on the Command Center
-    await waitForAlertContent('Deleted 1 thought')
-
-    const showCommandCenter = await page.evaluate(
-      () => (window.em as WindowEm).testHelpers.getState().showCommandCenter,
-    )
-    expect(showCommandCenter).toBe(true)
   })
 
   // When the user swipes up from the bottom edge of the screen to switch apps on iOS, the page receives a

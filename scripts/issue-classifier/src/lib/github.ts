@@ -54,8 +54,8 @@ interface IssueResponse {
 }
 
 /**
- * GitHub REST API client covering the five calls the classifier makes: list open milestones, read
- * an issue, assign a milestone, add a label, and post a comment.
+ * GitHub REST API client covering the four calls the classifier makes: list open milestones, read
+ * an issue, assign a milestone, and post a comment.
  *
  * The token is optional so that read-only and `--dry` runs work against a public repository with no
  * credentials at all, which is what lets `yarn evaluate` run locally with only an OpenAI key.
@@ -195,20 +195,6 @@ class GitHubClient {
     await this.request(`/repos/${this.repo}/issues/${issueNumber}`, {
       method: 'PATCH',
       body: JSON.stringify({ milestone: milestoneNumber }),
-    })
-  }
-
-  /**
-   * Adds labels to an issue, leaving the labels it already carries in place.
-   *
-   * A POST rather than the PATCH that `setMilestone` uses, because the issue endpoint's `labels`
-   * field replaces the whole set: patching one label onto an issue would silently strip every other
-   * label a human had put there.
-   */
-  async addLabels(issueNumber: number, labels: string[]): Promise<void> {
-    await this.request(`/repos/${this.repo}/issues/${issueNumber}/labels`, {
-      method: 'POST',
-      body: JSON.stringify({ labels }),
     })
   }
 

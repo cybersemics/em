@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import React, { FocusEventHandler, useCallback, useEffect, useMemo, useRef } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
-import { css, cx } from '../../styled-system/css'
+import { cx } from '../../styled-system/css'
 import { editableRecipe, invalidOptionRecipe } from '../../styled-system/recipes'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -17,9 +17,8 @@ import { keyboardOpenActionCreator } from '../actions/keyboardOpen'
 import { newThoughtActionCreator as newThought } from '../actions/newThought'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
-import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
 import { tutorialNextActionCreator as tutorialNext } from '../actions/tutorialNext'
-import { isSafari, isTouch } from '../browser'
+import { isMac, isSafari, isTouch } from '../browser'
 import { commandEmitter } from '../commands'
 import {
   EDIT_THROTTLE,
@@ -48,7 +47,6 @@ import isMulticursorPath from '../selectors/isMulticursorPath'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import thoughtToPath from '../selectors/thoughtToPath'
-import caretRectStore from '../stores/caretRectStore'
 import editingValueStore from '../stores/editingValue'
 import editingValueUntrimmedStore from '../stores/editingValueUntrimmed'
 import storageModel from '../stores/storageModel'
@@ -60,7 +58,6 @@ import equalPath from '../util/equalPath'
 import getCommandState from '../util/getCommandState'
 import haptics from '../util/haptics'
 import head from '../util/head'
-import isCommandKey from '../util/isCommandKey'
 import isDivider from '../util/isDivider'
 import isDocumentEditable from '../util/isDocumentEditable'
 import strip from '../util/strip'
@@ -182,10 +179,6 @@ const Editable = ({
   )
 
   const hasMulticursor = useSelector(hasMulticursorSelector)
-  // A non-null caret rect means the multiselection is being edited (Clear Thought), where a click places the caret as
-  // usual. It is the only reactive signal that distinguishes an edited multiselection from an idle one, since the
-  // browser selection that isMultiEditing consults is not part of the Redux state (see caretRectStore).
-  const multiEditing = caretRectStore.useSelector(caretRect => caretRect.x !== null)
   // store the old value so that we have a transcendental head when it is changed
   const oldValueRef = useRef(value)
   const nullRef = useRef<HTMLInputElement>(null)
@@ -996,22 +989,13 @@ const Editable = ({
 
             // close all popups when clicking on a thought
             dispatch(toggleDropdown())
-          }
-          // While a multiselect is active, a tap toggles the thought's selection rather than moving the cursor.
-          // On mobile this is the only way to add a thought to the multiselect apart from long pressing it, and on
-          // desktop it makes a plain click consistent with that tap. Shift + Click and Cmd/Ctrl + Click are excluded
-          // since Thought's handleMultiselect owns them, and toggling here would move multicursorAnchor and thereby
-          // collapse the Shift + Click range (see selectBetween). Deselecting the last selected thought ends the
-          // multiselect, which closes the Command Center on mobile (see multicursorAlertMiddleware).
-          else if (hasMulticursorSelector(state) && !e.shiftKey && !isCommandKey(e)) {
-            dispatch(toggleMulticursor({ path }))
           } else {
             setCursorOnThought()
           }
         }
       })
     },
-    [disabled, dispatch, editingOrOnCursor, isVisible, path, setCursorOnThought],
+    [disabled, dispatch, editingOrOnCursor, isVisible, setCursorOnThought],
   )
 
   /** Registers native event listeners for tap behavior (click and touchend). */
@@ -1021,8 +1005,9 @@ const Editable = ({
 
     /** Sets the cursor on the thought on click. Handles hidden elements, drags, and editing mode. */
     const onClick = (e: MouseEvent) => {
-      // If CMD/CTRL is pressed, this is a multiselect click, so don't focus the editable.
-      if (isCommandKey(e)) {
+      // If CMD/CTRL is pressed, don't focus the editable.
+      const isMultiselectClick = isMac ? e.metaKey : e.ctrlKey
+      if (isMultiselectClick) {
         e.preventDefault()
         return
       }
@@ -1071,13 +1056,7 @@ const Editable = ({
       data-placeholder-italic={placeholderCommandState?.italic || undefined}
       data-placeholder-strikethrough={placeholderCommandState?.strikethrough || undefined}
       data-placeholder-underline={placeholderCommandState?.underline || undefined}
-      className={cx(
-        editableRecipe(),
-        // While a multiselect is active, a click toggles the thought's selection rather than placing the caret in its
-        // text (see handleTapBehavior), so the text advertises a pointer rather than the text cursor.
-        hasMulticursor && !multiEditing && css({ cursor: 'pointer' }),
-        className,
-      )}
+      className={cx(editableRecipe(), className)}
       html={html}
       placeholder={placeholder}
       onFocus={onFocus}

@@ -10,8 +10,6 @@ const noFit: VoteResult = {
   totalVotes: 5,
   tied: false,
   confidence: 'high',
-  label: null,
-  labelVotes: 5,
   rationale: 'This is a repository process proposal, not work in an application subsystem.',
   secondChoice: null,
 }

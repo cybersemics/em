@@ -69,8 +69,6 @@ diff <(tail -n +6 .github/agents/worker-bee.agent.md) \
 
 The agent is not allowed to jump straight to writing code. Two **gates** stand in front of implementation — a gate being a step it must complete and then declare out loud, in a fixed wording, before it may continue.
 
-A human assigning an issue is the usual way a task starts, but not the only one: the nightly flaky-test detector starts one itself through the agent tasks API for each tracking issue it files, so a new flake is already being worked on by the time anyone reads the alert. See [Automated flaky-test detection](../testing.md#automated-flaky-test-detection). Everything below is the same either way.
-
 ```mermaid
 flowchart TD
     A["Issue assigned to the agent"] --> B{"Does the issue have<br/>Steps to Reproduce?"}
@@ -205,4 +203,4 @@ A few habits that keep it coherent:
 Two Node programs under `scripts/` triage new issues rather than write code. **Neither is part of the coding agent, and neither prompt is read by Copilot.** Each loads its own prompt and calls OpenAI directly.
 
 - **[`scripts/estimate/`](../../scripts/estimate/README.md)** — guesses how long an issue will take, then syncs that to Everhour. Its prompt and 21 sample issues live under `.github/instructions/estimate/`, which is the only reason that folder appears in the tree above. Three workflows drive it: on issue open, on an `/estimate` comment, and a manual backfill.
-- **[`scripts/issue-classifier/`](../../scripts/issue-classifier/README.md)** — assigns the best-matching open milestone to a newly opened issue, treating each milestone as a subsystem, and labels what kind of work it is — one of `bug`, `feature`, `performance`, `refactor`, `test`, `documentation`, or `agent`. The two verdicts are independent, and a label a human already applied is never contradicted. One workflow drives it, on issue open or manual dispatch; it is silent when it succeeds and comments asking for a category only when the issue matches no existing milestone and is not a pure refactor, which belongs to no subsystem by definition. Its prompt and samples sit beside its code rather than under `.github/instructions/`, and the samples are deliberately kept out of the prompt so that `yarn evaluate` measures the prompt rather than recalling its own examples.
+- **[`scripts/issue-classifier/`](../../scripts/issue-classifier/README.md)** — assigns the best-matching open milestone to a newly opened issue, treating each milestone as a subsystem. One workflow drives it, on issue open or manual dispatch; it is silent when it succeeds and comments asking for a category only when the issue matches no existing milestone. Its prompt and samples sit beside its code rather than under `.github/instructions/`, and the samples are deliberately kept out of the prompt so that `yarn evaluate` measures the prompt rather than recalling its own examples.

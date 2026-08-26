@@ -1,12 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ESTIMATE_CATEGORIES } from '../../everhour/estimates.ts'
-import validateEstimate, {
-  CONFIDENCE_LEVELS,
-  EstimateCategorySchema,
-  EstimateResponseSchema,
-  RESPONSE_FORMAT,
-  parseEstimate,
-} from '../validateEstimate.ts'
+import validateEstimate, { EstimateCategorySchema, EstimateResponseSchema, parseEstimate } from '../validateEstimate.ts'
 
 describe('validateEstimate', () => {
   it('parses valid model output and defaults the richer fields', () => {
@@ -66,10 +59,6 @@ describe('parseEstimate', () => {
   it('returns null for an invalid confidence value', () => {
     expect(parseEstimate('{"estimate": "M", "confidence": "certain"}')).toBeNull()
   })
-
-  it('accepts an explicit null secondChoice, the strict schema encoding of "no second choice"', () => {
-    expect(parseEstimate('{"estimate": "M", "secondChoice": null}')?.estimate).toBe('M')
-  })
 })
 
 describe('EstimateCategorySchema', () => {
@@ -93,41 +82,5 @@ describe('EstimateResponseSchema', () => {
 
   it('rejects missing estimate', () => {
     expect(() => EstimateResponseSchema.parse({})).toThrow()
-  })
-})
-
-describe('RESPONSE_FORMAT', () => {
-  it('offers the model exactly the fields the parse schema accepts, in the same order', () => {
-    // Property order is part of the contract: a strict schema emits keys in declaration order,
-    // which is what keeps `rationale` first so the model reasons before committing to a bucket.
-    expect(Object.keys(RESPONSE_FORMAT.json_schema.schema.properties)).toEqual(
-      Object.keys(EstimateResponseSchema.shape),
-    )
-  })
-
-  it('requires every field, so a conforming reply cannot omit one', () => {
-    const schema = RESPONSE_FORMAT.json_schema.schema
-    expect(schema.required).toEqual(Object.keys(schema.properties))
-    expect(schema.additionalProperties).toBe(false)
-  })
-
-  it('declares a strict json_schema response format', () => {
-    expect(RESPONSE_FORMAT.type).toBe('json_schema')
-    expect(RESPONSE_FORMAT.json_schema.strict).toBe(true)
-    // The name is sent to the API, which restricts it to 64 characters of [a-zA-Z0-9_-].
-    expect(RESPONSE_FORMAT.json_schema.name).toMatch(/^[a-zA-Z0-9_-]{1,64}$/)
-  })
-
-  it('constrains estimate to the category scale and confidence to the three levels', () => {
-    const { estimate, confidence } = RESPONSE_FORMAT.json_schema.schema.properties
-    expect(estimate).toEqual({ type: 'string', enum: [...ESTIMATE_CATEGORIES] })
-    expect(confidence).toEqual({ type: 'string', enum: [...CONFIDENCE_LEVELS] })
-  })
-
-  it('constrains secondChoice to the category scale plus null', () => {
-    expect(RESPONSE_FORMAT.json_schema.schema.properties.secondChoice).toEqual({
-      type: ['string', 'null'],
-      enum: [...ESTIMATE_CATEGORIES, null],
-    })
   })
 })

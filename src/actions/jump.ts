@@ -1,7 +1,7 @@
-import Path from '../@types/Path'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import getThoughtById from '../selectors/getThoughtById'
+import pathExists from '../selectors/pathExists'
 import thoughtToPath from '../selectors/thoughtToPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import equalPathHead from '../util/equalPathHead'
@@ -20,18 +20,16 @@ const jump = (state: State, { steps }: { steps: number } = { steps: -1 }): State
     // ignore null cursor
     // ignore same thought
     // ignore deleted thought
-    .find(
-      (cursor): cursor is Path =>
-        !!cursor && !equalPathHead(cursor, state.cursor) && !!getThoughtById(state, head(cursor)),
-    )
+    .find(cursor => cursor && !equalPathHead(cursor, state.cursor) && getThoughtById(state, head(cursor)))
 
   // do nothing if no valid cursor was found
   // e.g. cannot go back any further
   if (lastJumpCursor === undefined) return state
 
-  // The head thought exists (checked above) but may have been moved, so reconstruct the SimplePath by traversing
-  // from the root rather than trusting the stored Path.
-  const cursorNew = thoughtToPath(state, head(lastJumpCursor))
+  // it is possible that the thought id exists but has been moved
+  // in this case, reconstruct a SimplePath by traversing from the root
+  const cursorNew =
+    lastJumpCursor && !pathExists(state, lastJumpCursor) ? thoughtToPath(state, head(lastJumpCursor)) : lastJumpCursor
 
   return {
     ...setCursor(state, {

@@ -29,10 +29,6 @@ it('does not commit when no thought crosses the viewport boundary while preservi
 
   await dispatch(
     importText({
-      // Import leaves the cursor on the last imported thought by default. Nothing below the cursor is
-      // virtualized, so that would mount all 60 thoughts only for the setCursor(null) on the next line to
-      // unmount 51 of them again — the single most expensive thing this test did.
-      preventSetCursor: true,
       text: Array.from({ length: 60 }, (_, index) => `- thought ${index + 1}`).join('\n'),
     }),
   )

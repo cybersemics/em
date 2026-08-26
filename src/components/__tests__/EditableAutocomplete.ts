@@ -46,10 +46,7 @@ it('keeps the space that commits an iOS autocorrect in the editable (#4828)', as
     }),
   )
   const editable = container.querySelector('[data-editable]') as HTMLElement
-  // Focusing the editable sets the cursor on the thought, which re-renders it.
-  act(() => {
-    editable.focus()
-  })
+  editable.focus()
 
   // Pressing space on a misspelled word makes iOS replace the word...
   editable.innerHTML = 'All'
@@ -93,10 +90,7 @@ it('keeps edit mode active through the iOS autocorrect focus retarget (#4692)', 
     }),
   )
   const editable = container.querySelector('[data-editable]') as HTMLElement
-  // Focusing the editable sets the cursor on the thought, which re-renders it.
-  act(() => {
-    editable.focus()
-  })
+  editable.focus()
 
   // Pressing space on a misspelled word makes iOS replace the word...
   editable.innerHTML = 'All'
@@ -154,10 +148,7 @@ it('keeps multi edit mode through the focus retarget after an iOS autocorrect', 
     }),
   )
   const editable = container.querySelector('[data-editable]') as HTMLElement
-  // Focusing the editable sets the cursor on the thought, which re-renders it.
-  act(() => {
-    editable.focus()
-  })
+  editable.focus()
 
   // Pressing space on a misspelled word makes iOS replace the word...
   editable.innerHTML = 'hello'

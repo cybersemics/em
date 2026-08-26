@@ -55,15 +55,11 @@ describe('Extract category', () => {
   afterEach(cleanupTestApp)
 
   it('an alert should be shown if there is no selection', async () => {
-    act(() => {
-      store.dispatch([importText({ text: '- this is a thought' }), setCursor(['this is a thought'])])
-    })
+    store.dispatch([importText({ text: '- this is a thought' }), setCursor(['this is a thought'])])
 
     await act(vi.runOnlyPendingTimersAsync)
 
-    act(() => {
-      store.dispatch(extractCategory())
-    })
+    store.dispatch(extractCategory())
 
     expect(await screen.findByText('No text selected to extract')).toBeTruthy()
 
@@ -72,9 +68,7 @@ describe('Extract category', () => {
   })
 
   it('the selected part of a thought becomes its new parent', async () => {
-    act(() => {
-      store.dispatch([importText({ text: '- this is a thought' }), setCursor(['this is a thought'])])
-    })
+    store.dispatch([importText({ text: '- this is a thought' }), setCursor(['this is a thought'])])
 
     await act(vi.runOnlyPendingTimersAsync)
 
@@ -82,9 +76,7 @@ describe('Extract category', () => {
     expect(thought).toBeTruthy()
     setSelection(thought!, 10, 17)
 
-    act(() => {
-      store.dispatch(extractCategory())
-    })
+    store.dispatch(extractCategory())
 
     expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
   - thought
@@ -92,17 +84,15 @@ describe('Extract category', () => {
   })
 
   it('the extracted thought keeps its subthoughts', async () => {
-    act(() => {
-      store.dispatch([
-        importText({
-          text: `
-            - alpha bravo
-              - charlie
-          `,
-        }),
-        setCursor(['alpha bravo']),
-      ])
-    })
+    store.dispatch([
+      importText({
+        text: `
+          - alpha bravo
+            - charlie
+        `,
+      }),
+      setCursor(['alpha bravo']),
+    ])
 
     await act(vi.runOnlyPendingTimersAsync)
 
@@ -110,9 +100,7 @@ describe('Extract category', () => {
     expect(thought).toBeTruthy()
     setSelection(thought!, 6, 11)
 
-    act(() => {
-      store.dispatch(extractCategory())
-    })
+    store.dispatch(extractCategory())
 
     expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
   - bravo
@@ -121,9 +109,7 @@ describe('Extract category', () => {
   })
 
   it('the cursor moves to the new category, with the caret at the end of its value', async () => {
-    act(() => {
-      store.dispatch([newThought({ value: 'alpha bravo' }), setCursor(['alpha bravo'])])
-    })
+    store.dispatch([newThought({ value: 'alpha bravo' }), setCursor(['alpha bravo'])])
 
     await act(vi.runOnlyPendingTimersAsync)
 
@@ -131,9 +117,7 @@ describe('Extract category', () => {
     expect(thought).toBeTruthy()
     setSelection(thought!, 6, 11)
 
-    act(() => {
-      store.dispatch(extractCategory())
-    })
+    store.dispatch(extractCategory())
 
     const state = store.getState()
     expectPathToEqual(state, state.cursor, ['bravo'])
@@ -142,18 +126,16 @@ describe('Extract category', () => {
 
   describe('multicursor', () => {
     it('moves every selected thought into a category named by the selection', async () => {
-      act(() => {
-        store.dispatch([
-          importText({
-            text: `
-              - alpha bravo
-              - charlie
-              - delta
-            `,
-          }),
-          setCursor(['alpha bravo']),
-        ])
-      })
+      store.dispatch([
+        importText({
+          text: `
+            - alpha bravo
+            - charlie
+            - delta
+          `,
+        }),
+        setCursor(['alpha bravo']),
+      ])
 
       await act(vi.runOnlyPendingTimersAsync)
 
@@ -161,11 +143,9 @@ describe('Extract category', () => {
       expect(thought).toBeTruthy()
       setSelection(thought!, 6, 11)
 
-      act(() => {
-        store.dispatch([addMulticursor(['alpha bravo']), addMulticursor(['charlie']), addMulticursor(['delta'])])
-      })
+      store.dispatch([addMulticursor(['alpha bravo']), addMulticursor(['charlie']), addMulticursor(['delta'])])
 
-      act(() => executeCommandWithMulticursor(extractCategoryCommand, { store }))
+      executeCommandWithMulticursor(extractCategoryCommand, { store })
 
       // Only the thought that owns the selection is sliced; the others are categorized as they are.
       expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
@@ -176,17 +156,15 @@ describe('Extract category', () => {
     })
 
     it('categorizes the selected thoughts when the thought being edited is not one of them', async () => {
-      act(() => {
-        store.dispatch([
-          importText({
-            text: `
-              - alpha bravo
-              - charlie
-            `,
-          }),
-          setCursor(['alpha bravo']),
-        ])
-      })
+      store.dispatch([
+        importText({
+          text: `
+            - alpha bravo
+            - charlie
+          `,
+        }),
+        setCursor(['alpha bravo']),
+      ])
 
       await act(vi.runOnlyPendingTimersAsync)
 
@@ -195,11 +173,9 @@ describe('Extract category', () => {
       setSelection(thought!, 6, 11)
 
       // select a thought other than the one being edited, as alt-clicking its bullet does
-      act(() => {
-        store.dispatch([addMulticursor(['charlie'])])
-      })
+      store.dispatch([addMulticursor(['charlie'])])
 
-      act(() => executeCommandWithMulticursor(extractCategoryCommand, { store }))
+      executeCommandWithMulticursor(extractCategoryCommand, { store })
 
       // The two halves of the command apply where each is defined: the text is extracted from the thought that owns
       // the selection, and the categorization applies to the selected thoughts, exactly as Categorize would.
@@ -210,18 +186,16 @@ describe('Extract category', () => {
     })
 
     it('an alert should be shown and no text extracted when the selected thoughts have different parents', async () => {
-      act(() => {
-        store.dispatch([
-          importText({
-            text: `
-              - alpha bravo
-                - charlie
-              - delta
-            `,
-          }),
-          setCursor(['alpha bravo', 'charlie']),
-        ])
-      })
+      store.dispatch([
+        importText({
+          text: `
+            - alpha bravo
+              - charlie
+            - delta
+          `,
+        }),
+        setCursor(['alpha bravo', 'charlie']),
+      ])
 
       await act(vi.runOnlyPendingTimersAsync)
 
@@ -229,13 +203,11 @@ describe('Extract category', () => {
       expect(thought).toBeTruthy()
       setSelection(thought!, 0, 4)
 
-      act(() => {
-        store.dispatch([addMulticursor(['alpha bravo', 'charlie']), addMulticursor(['delta'])])
-      })
+      store.dispatch([addMulticursor(['alpha bravo', 'charlie']), addMulticursor(['delta'])])
 
       await act(vi.runOnlyPendingTimersAsync)
 
-      act(() => executeCommandWithMulticursor(extractCategoryCommand, { store }))
+      executeCommandWithMulticursor(extractCategoryCommand, { store })
 
       expect(await screen.findByText('Cannot categorize thoughts from different parents.')).toBeTruthy()
 
@@ -247,17 +219,15 @@ describe('Extract category', () => {
     })
 
     it('reverts the extraction on a single undo', async () => {
-      act(() => {
-        store.dispatch([
-          importText({
-            text: `
-              - alpha bravo
-              - charlie
-            `,
-          }),
-          setCursor(['alpha bravo']),
-        ])
-      })
+      store.dispatch([
+        importText({
+          text: `
+            - alpha bravo
+            - charlie
+          `,
+        }),
+        setCursor(['alpha bravo']),
+      ])
 
       await act(vi.runOnlyPendingTimersAsync)
 
@@ -265,11 +235,9 @@ describe('Extract category', () => {
       expect(thought).toBeTruthy()
       setSelection(thought!, 6, 11)
 
-      act(() => {
-        store.dispatch([addMulticursor(['alpha bravo']), addMulticursor(['charlie'])])
-      })
+      store.dispatch([addMulticursor(['alpha bravo']), addMulticursor(['charlie'])])
 
-      act(() => executeCommandWithMulticursor(extractCategoryCommand, { store }))
+      executeCommandWithMulticursor(extractCategoryCommand, { store })
 
       // Precondition: the extraction occurred, otherwise the undo below would have nothing to revert.
       expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
@@ -277,9 +245,7 @@ describe('Extract category', () => {
     - alpha
     - charlie`)
 
-      act(() => {
-        store.dispatch(undo())
-      })
+      store.dispatch(undo())
 
       expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
   - alpha bravo
@@ -288,9 +254,7 @@ describe('Extract category', () => {
   })
 
   it('extracts the text that was selected before the Command Universe took the focus', async () => {
-    act(() => {
-      store.dispatch([importText({ text: '- hello world' }), setCursor(['hello world'])])
-    })
+    store.dispatch([importText({ text: '- hello world' }), setCursor(['hello world'])])
 
     await act(vi.runOnlyPendingTimersAsync)
 
@@ -299,17 +263,9 @@ describe('Extract category', () => {
 
     // Opening the Command Universe snapshots the selection; its search input then takes it. Executing a command
     // closes the Command Universe first, so the snapshot has to survive the close.
-    act(() => {
-      store.dispatch(desktopCommandUniverse())
-    })
+    store.dispatch(desktopCommandUniverse())
     moveSelectionToSearchInput()
-    act(() => {
-      store.dispatch([desktopCommandUniverse(), extractCategory()])
-    })
-
-    // Let the Command Universe's fade-out complete so that it unmounts before the test ends. Otherwise its animated
-    // command icons keep a repeating interval alive, which cleanupTestApp's vi.runAllTimersAsync can never drain.
-    await act(vi.runOnlyPendingTimersAsync)
+    store.dispatch([desktopCommandUniverse(), extractCategory()])
 
     expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
   - world

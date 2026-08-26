@@ -10,6 +10,7 @@ import Index from '../../@types/IndexType'
 import Role from '../../@types/Role'
 import Share from '../../@types/Share'
 import { alertActionCreator as alert } from '../../actions/alert'
+import { isMac } from '../../browser'
 import permissionsModel from '../../data-providers/permissionsModel'
 import { permissionsStore } from '../../data-providers/permissionsStore'
 import { accessToken as accessTokenCurrent, tsid } from '../../data-providers/thoughtspaceSession'
@@ -17,7 +18,6 @@ import * as selection from '../../device/selection'
 import useStatus from '../../hooks/useStatus'
 import modalDescriptionClass from '../../recipes/modalDescriptionClass'
 import fastClick from '../../util/fastClick'
-import isCommandKey from '../../util/isCommandKey'
 import strip from '../../util/strip'
 import FadeTransition from '../FadeTransition'
 import ActionButton from './../ActionButton'
@@ -385,7 +385,7 @@ const ShareDetail = React.memo(
         (e: KeyboardEvent) => {
           if (
             e.key === 'c' &&
-            isCommandKey(e) &&
+            (isMac ? e.metaKey : e.ctrlKey) &&
             // do not override copy shortcut if user has text selected
             selection.isCollapsed() !== false &&
             // input selection is not reflected in window.getSelection()

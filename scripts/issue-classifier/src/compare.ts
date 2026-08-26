@@ -41,7 +41,7 @@ import { fileURLToPath } from 'url'
 import GitHubClient, { type Milestone } from './lib/github.ts'
 import loadInstructions from './lib/loadInstructions.ts'
 import loadSamples, { type Sample } from './lib/loadSamples.ts'
-import { type Confidence, buildResponseFormat } from './lib/parseSelection.ts'
+import type { Confidence } from './lib/parseSelection.ts'
 import selectMilestone from './lib/selectMilestone.ts'
 
 const DEFAULT_REPO = 'cybersemics/em'
@@ -136,23 +136,19 @@ export const parseArgs = (argv: string[]): CompareOptions => {
  * Deliberately a copy of `inference.ts` rather than a call into it: that module reads its model from
  * the environment at import time, which is the right shape for a workflow that runs one model and
  * the wrong shape for a harness that has to alternate between two inside a single process. The
- * request body is otherwise identical field for field — the response format comes from the same
- * buildResponseFormat production uses, so that field cannot diverge at all — and a divergence would
- * silently make the comparison measure something production does not do.
+ * request body is otherwise identical field for field, and a divergence would silently make the
+ * comparison measure something production does not do.
  */
 export const inferWithModel = async ({
   apiKey,
   prompt,
   instructions,
-  milestoneTitles,
   model,
   votes,
 }: {
   apiKey: string
   prompt: string
   instructions: string
-  /** Open milestone titles the response schema constrains `milestone` and `secondChoice` to. */
-  milestoneTitles: string[]
   model: string
   votes: number
 }): Promise<{ outputs: string[]; usage: Usage }> => {
@@ -169,7 +165,7 @@ export const inferWithModel = async ({
         { role: 'system', content: instructions },
         { role: 'user', content: prompt },
       ],
-      response_format: buildResponseFormat(milestoneTitles),
+      response_format: { type: 'json_object' },
     }),
   })
 
@@ -231,8 +227,8 @@ export const gradeOne = async ({
     instructions,
     openaiApiKey: apiKey,
     retryDelayMs: RETRY_DELAY_MS,
-    infer: async ({ apiKey, prompt, instructions, milestoneTitles }) => {
-      const result = await inferWithModel({ apiKey, prompt, instructions, milestoneTitles, model, votes })
+    infer: async ({ apiKey, prompt, instructions }) => {
+      const result = await inferWithModel({ apiKey, prompt, instructions, model, votes })
       usage.prompt += result.usage.prompt
       usage.cachedPrompt += result.usage.cachedPrompt
       usage.completion += result.usage.completion
