@@ -598,11 +598,10 @@ export const executeCommandWithMulticursor = (
   // Command Center is opened in the first place, so that it stays open and can be used again. When the last
   // thought was deleted there is no cursor left to select and it closes as usual.
   if (type === 'commandCenter') {
-    commandStore.dispatch((dispatch, getState) => {
-      const state = getState()
-      if (hasMulticursor(state) || !state.cursor) return
-      dispatch(addMulticursor({ path: state.cursor }))
-    })
+    const state = commandStore.getState()
+    if (!hasMulticursor(state) && state.cursor) {
+      commandStore.dispatch(addMulticursor({ path: state.cursor }))
+    }
   }
 
   multicursor.onComplete?.(filteredPaths, commandStore.dispatch, commandStore.getState)
