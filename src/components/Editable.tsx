@@ -19,7 +19,7 @@ import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
 import { tutorialNextActionCreator as tutorialNext } from '../actions/tutorialNext'
-import { isMac, isSafari, isTouch } from '../browser'
+import { isSafari, isTouch } from '../browser'
 import { commandEmitter } from '../commands'
 import {
   EDIT_THROTTLE,
@@ -60,6 +60,7 @@ import equalPath from '../util/equalPath'
 import getCommandState from '../util/getCommandState'
 import haptics from '../util/haptics'
 import head from '../util/head'
+import isCommandKey from '../util/isCommandKey'
 import isDivider from '../util/isDivider'
 import isDocumentEditable from '../util/isDocumentEditable'
 import strip from '../util/strip'
@@ -1002,7 +1003,7 @@ const Editable = ({
           // since Thought's handleMultiselect owns them, and toggling here would move multicursorAnchor and thereby
           // collapse the Shift + Click range (see selectBetween). Deselecting the last selected thought ends the
           // multiselect, which closes the Command Center on mobile (see multicursorAlertMiddleware).
-          else if (hasMulticursorSelector(state) && !e.shiftKey && !(isMac ? e.metaKey : e.ctrlKey)) {
+          else if (hasMulticursorSelector(state) && !e.shiftKey && !isCommandKey(e)) {
             dispatch(toggleMulticursor({ path }))
           } else {
             setCursorOnThought()
@@ -1020,9 +1021,8 @@ const Editable = ({
 
     /** Sets the cursor on the thought on click. Handles hidden elements, drags, and editing mode. */
     const onClick = (e: MouseEvent) => {
-      // If CMD/CTRL is pressed, don't focus the editable.
-      const isMultiselectClick = isMac ? e.metaKey : e.ctrlKey
-      if (isMultiselectClick) {
+      // If CMD/CTRL is pressed, this is a multiselect click, so don't focus the editable.
+      if (isCommandKey(e)) {
         e.preventDefault()
         return
       }
