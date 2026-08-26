@@ -69,6 +69,8 @@ diff <(tail -n +6 .github/agents/worker-bee.agent.md) \
 
 The agent is not allowed to jump straight to writing code. Two **gates** stand in front of implementation — a gate being a step it must complete and then declare out loud, in a fixed wording, before it may continue.
 
+A human assigning an issue is the usual way a task starts, but not the only one: the nightly flaky-test detector starts one itself through the agent tasks API for each tracking issue it files, so a new flake is already being worked on by the time anyone reads the alert. See [Automated flaky-test detection](../testing.md#automated-flaky-test-detection). Everything below is the same either way.
+
 ```mermaid
 flowchart TD
     A["Issue assigned to the agent"] --> B{"Does the issue have<br/>Steps to Reproduce?"}

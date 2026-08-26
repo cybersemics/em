@@ -5,9 +5,10 @@
  * respected.
  *
  * Resolves the tracking issue for every failing test — the one just created, or the open one that
- * already existed — and writes them to flaky-results/flaky-issues.json so the `Notify Discord` step
- * that runs after this one can link each offender in its alert. Consistent failures are never
- * filed, but are still linked when a tracking issue for them is already open.
+ * already existed — and writes them to flaky-results/flaky-issues.json so the steps that run after
+ * this one can use them: `Notify Discord` links each offender in its alert, and `Start Copilot
+ * tasks` dispatches an agent at each entry marked `created`. Consistent failures are never filed,
+ * but are still linked when a tracking issue for them is already open.
  *
  * Loaded by the `File tracking issues` step of .github/workflows/puppeteer-flaky.yml through
  * actions/github-script. Reads flaky-results/flaky-summary.json (written by
@@ -77,7 +78,7 @@ const fileFlakyIssues = async ({ github, context, core }) => {
     const open = openByTitle.get(title)
     if (open) {
       core.info(`Open issue already exists, skipping: ${title}`)
-      issues.push({ file: t.file, fullName: t.fullName, number: open.number, url: open.html_url })
+      issues.push({ file: t.file, fullName: t.fullName, number: open.number, url: open.html_url, created: false })
       continue
     }
     // Only intermittent failures are flakes. A test that failed every iteration is a consistent
@@ -102,7 +103,7 @@ const fileFlakyIssues = async ({ github, context, core }) => {
       labels: ['test'],
     })
     openByTitle.set(title, issue)
-    issues.push({ file: t.file, fullName: t.fullName, number: issue.number, url: issue.html_url })
+    issues.push({ file: t.file, fullName: t.fullName, number: issue.number, url: issue.html_url, created: true })
     created++
     core.info(`Filed issue: ${title}`)
   }
