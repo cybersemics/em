@@ -2,9 +2,8 @@ name: BrowserStack
 
 # Documentation, agent/editor configuration, and the native platform projects cannot change what
 # this workflow tests, so a change set confined to them has nothing for a real device to exercise.
-# Skipping is worth more here than in a cheap workflow: every run occupies the repo-wide
-# `browserstack` concurrency group below and a slot in the shared BrowserStack session pool, so one
-# pointless run delays every other PR's iOS tests behind it.
+# Skipping is worth more here than in a cheap workflow: every run occupies a slot in the shared
+# BrowserStack session pool, so one pointless run delays every other PR's iOS tests behind it.
 #
 # paths-ignore skips the workflow outright, which means NO check is reported — not a "skipped"
 # check, and not a synthetic pass from a job-level `if`. That is only correct because BrowserStack
@@ -60,25 +59,23 @@ on:
         description: 'Optional ID for tracking repeated runs'
         required: false
 
-# Concurrency is layered across two groups because two requirements pull in opposite directions:
-# BrowserStack usage must be serialized repo-wide (queue, never cancel), while commits to the same
-# PR must supersede each other (cancel, never queue). One group cannot do both, but GitHub allows a
-# workflow-level group and a job-level group in the same workflow, and they are independent.
+# Concurrency has one requirement here: commits to the same PR must supersede each other (cancel,
+# never queue) — only the newest head is worth a device session. BrowserStack's own shared
+# parallel-session cap is NOT handled by a GitHub group. It is handled in-process by the wdio config
+# (waitForBrowserStackSlots), which asks BrowserStack's plan API for real headroom and waits for it
+# before any session is created. A GitHub group can only serialize on the assumption that the pool is
+# busy; the API knows whether it is, so two runs can overlap whenever the account actually has room
+# for both. Runner minutes spent waiting on ubuntu-latest are acceptable — this is a public repo.
 #
-# This workflow-level group handles per-PR superseding. Each PR gets its own group with
-# cancel-in-progress, so a new commit cancels the PR's previous run whether it is still waiting for
-# the BrowserStack gate or already mid-suite — only the newest head is worth a device session, and
-# the repo-wide queue below routinely holds runs for 30-50 minutes, long enough for several pushes.
-# Non-PR runs (push to main, workflow_dispatch) get a unique group per run: superseding is only
-# wanted within a PR, every main commit should be tested, and workflow_dispatch runs are fanned out
-# deliberately for flake hunting (see ghworkflow in docs/testing.md), so none of these may cancel
-# each other. Serialization for them is enforced by the job-level gate, not here.
+# The same is true of the Cloudflare tunnel pool: the wdio config checks each tunnel's occupancy and
+# waits for a free one (see cloudflareTunnelPool.ts's self-verifying claim), so overlapping runs
+# sort out the tunnels between themselves too.
 #
-# The repo-wide `browserstack` gate lives on the `run` job (see below). It queues because every run
-# draws from the same shared parallel-session pool, so overlapping runs (a main push + PR syncs +
-# reruns) can over-subscribe it and fail with session-creation timeouts. (The Cloudflare tunnel pool
-# tolerates concurrent connectors on its own — see cloudflareTunnelPool.ts's self-verifying claim —
-# so that serialization is purely about the BrowserStack session cap, not the tunnel.)
+# Each PR gets its own group with cancel-in-progress, so a new commit cancels the PR's previous run
+# whether it is still waiting for a BrowserStack slot or already mid-suite. Non-PR runs (push to
+# main, workflow_dispatch) get a unique group per run: superseding is only wanted within a PR, every
+# main commit should be tested, and workflow_dispatch runs are fanned out deliberately for flake
+# hunting (see ghworkflow in docs/testing.md), so none of these may cancel each other.
 #
 # Tradeoff, accepted: a suite cancelled mid-run leaves its BrowserStack session to expire on the
 # provider's idle timeout instead of closing cleanly, briefly counting against the pool. That costs
@@ -108,16 +105,6 @@ jobs:
       BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
       BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
 
-    # The repo-wide gate — see the concurrency comment at the top of the file for why it sits at the
-    # job level (it must coexist with the per-PR workflow-level group; a workflow gets only one
-    # group per level). A run waiting here holds no runner. cancel-in-progress: false queues runs
-    # instead of cancelling them, and queue: max extends the pending queue from the default single
-    # slot to the maximum of 100 so queued runs are not silently dropped.
-    concurrency:
-      group: browserstack
-      cancel-in-progress: false
-      queue: max
-
     # The cancel step below needs actions: write, and declaring any permission zeroes the rest, so
     # everything the job uses is listed. contents: read is for checkout; nothing else uses the token.
     permissions:
@@ -126,15 +113,15 @@ jobs:
       pull-requests: read
 
     steps:
-      # A run can wait 30-50 minutes at the `browserstack` gate above, and its PR may merge or close
-      # in the meantime. A merge triggers this workflow's own `push` run on main, so testing the
-      # merged code again here proves nothing while holding a device session for the whole suite and
-      # delaying every PR queued behind it. The job-level `if:` cannot catch this — it is evaluated
-      # when the run is created, while the PR is still open — so the state is re-read here, as the
-      # first step after the gate admits the job. Cancelling (rather than exiting green) is honest:
-      # no test ran, so nothing may report as passed. `state` is "closed" for merged and abandoned
-      # PRs alike, and neither is worth a device session. Same-PR staleness needs no check here —
-      # the workflow-level group already cancelled superseded runs of an open PR.
+      # A run can be queued by GitHub or wait in-process for a BrowserStack slot, and its PR may
+      # merge or close in the meantime. A merge triggers this workflow's own `push` run on main, so
+      # testing the merged code again here proves nothing while holding a device session for the
+      # whole suite. The job-level `if:` cannot catch this — it is evaluated when the run is created,
+      # while the PR is still open — so the state is re-read here, as the first step of the job.
+      # Cancelling (rather than exiting green) is honest: no test ran, so nothing may report as
+      # passed. `state` is "closed" for merged and abandoned PRs alike, and neither is worth a device
+      # session. Same-PR staleness needs no check here — the workflow-level group already cancelled
+      # superseded runs of an open PR.
       - name: Cancel if PR is no longer open
         if: github.event_name == 'pull_request_target'
         env:

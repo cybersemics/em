@@ -89,10 +89,12 @@ const baseConfig = {
   setupFiles: [path.resolve(process.cwd(), 'src/e2e/iOS/setup.ts')],
 
   // Capabilities
-  // Spec files run in parallel sessions, but cap at 2 (we have 3 specs) rather than opening all at once.
+  // Spec files run in parallel sessions, but cap at 2 (we have 5 specs) rather than opening all at once.
   // Reasons: (1) bursting N simultaneous session-creations is what timed out the 3rd session on
   // BrowserStack (#0-2 "aborted due to timeout" on POST .../session); staggering avoids the spike.
   // (2) leave headroom in the shared BrowserStack parallel pool for agent-driven sessions and other CI runs.
+  // This is also the number of slots the BrowserStack config waits for in onPrepare
+  // (waitForBrowserStackSlots), so the pool is known to have room before any worker starts.
   maxInstances: 2,
 
   // Base iOS Safari capabilities shared between local and browserStack configs. Individual configs can override or extend these.
@@ -115,9 +117,12 @@ const baseConfig = {
 
   // Retry a whole spec file on failure, including failures to acquire a BrowserStack session when the
   // account's parallel pool is exhausted by concurrent runs (the "WebDriverError: ... aborted due to
-  // timeout" on POST .../session). specFileRetriesDeferred re-queues the failed spec at the END, so it
-  // retries only after the other specs finish and free up sessions — i.e. it waits for a slot rather
-  // than failing. Also auto-heals home.ts, which is known to flake under parallel load (#1475, #1523).
+  // timeout" on POST .../session). onPrepare waits for real headroom before any worker starts, but that
+  // is a check-then-create wait rather than a reservation, so two runs can still claim the same slot;
+  // this remains the fallback for that race window. specFileRetriesDeferred re-queues the failed spec at
+  // the END, so it retries only after the other specs finish and free up sessions — i.e. it waits for a
+  // slot rather than failing. Also auto-heals home.ts, which is known to flake under parallel load
+  // (#1475, #1523).
   specFileRetries: 5,
   specFileRetriesDelay: 30,
   specFileRetriesDeferred: true,
