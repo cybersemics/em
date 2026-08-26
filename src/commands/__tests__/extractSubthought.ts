@@ -57,15 +57,19 @@ describe('Extract Subthought', () => {
 
   it('an alert should be shown if there is no selection', async () => {
     const thoughtValue = 'this is a thought'
-    store.dispatch([
-      newThought({ value: thoughtValue }),
-      newThought({ value: 'sub-thought', insertNewSubthought: true }),
-      setCursor([thoughtValue]),
-    ])
+    act(() => {
+      store.dispatch([
+        newThought({ value: thoughtValue }),
+        newThought({ value: 'sub-thought', insertNewSubthought: true }),
+        setCursor([thoughtValue]),
+      ])
+    })
 
     await act(vi.runOnlyPendingTimersAsync)
 
-    store.dispatch(extractSubthought())
+    act(() => {
+      store.dispatch(extractSubthought())
+    })
 
     const alert = await screen.findByText('No text selected to extract')
     expect(alert).toBeTruthy()
@@ -76,11 +80,13 @@ describe('Extract Subthought', () => {
 
   it('the selected part of a thought is extracted as a child thought', async () => {
     const thoughtValue = 'this is a thought'
-    store.dispatch([
-      newThought({ value: thoughtValue }),
-      newThought({ value: 'sub-thought', insertNewSubthought: true }),
-      setCursor([thoughtValue]),
-    ])
+    act(() => {
+      store.dispatch([
+        newThought({ value: thoughtValue }),
+        newThought({ value: 'sub-thought', insertNewSubthought: true }),
+        setCursor([thoughtValue]),
+      ])
+    })
 
     await act(vi.runOnlyPendingTimersAsync)
 
@@ -88,7 +94,9 @@ describe('Extract Subthought', () => {
     expect(thought).toBeTruthy()
 
     const selectedText = setSelection(thought!, 10, 17)
-    store.dispatch([extractSubthought()])
+    act(() => {
+      store.dispatch([extractSubthought()])
+    })
 
     const updatedThought = await findThoughtByText(thoughtValue.slice(0, 9))
     expect(updatedThought?.textContent).toBeTruthy()
@@ -105,7 +113,9 @@ describe('Extract Subthought', () => {
 
   it('the cursor does not get updated on child creation', async () => {
     const thoughtValue = 'this is a test thought'
-    store.dispatch([newThought({ value: thoughtValue }), setCursor([thoughtValue])])
+    act(() => {
+      store.dispatch([newThought({ value: thoughtValue }), setCursor([thoughtValue])])
+    })
 
     await act(vi.runOnlyPendingTimersAsync)
 
@@ -113,7 +123,9 @@ describe('Extract Subthought', () => {
     expect(thought).toBeTruthy()
 
     const selectedText = setSelection(thought!, 10, 22)
-    store.dispatch([extractSubthought()])
+    act(() => {
+      store.dispatch([extractSubthought()])
+    })
 
     const createdThought = await findThoughtByText(selectedText)
     expect(createdThought).toBeTruthy()
@@ -125,16 +137,18 @@ describe('Extract Subthought', () => {
 
   describe('multicursor', () => {
     it('extracts from the thought being edited when several thoughts are selected', async () => {
-      store.dispatch([
-        importText({
-          text: `
-            - alpha bravo
-            - charlie delta
-            - echo
-          `,
-        }),
-        setCursor(['alpha bravo']),
-      ])
+      act(() => {
+        store.dispatch([
+          importText({
+            text: `
+              - alpha bravo
+              - charlie delta
+              - echo
+            `,
+          }),
+          setCursor(['alpha bravo']),
+        ])
+      })
 
       await act(vi.runOnlyPendingTimersAsync)
 
@@ -142,9 +156,11 @@ describe('Extract Subthought', () => {
       expect(thought).toBeTruthy()
       setSelection(thought!, 6, 11)
 
-      store.dispatch([addMulticursor(['alpha bravo']), addMulticursor(['charlie delta']), addMulticursor(['echo'])])
+      act(() => {
+        store.dispatch([addMulticursor(['alpha bravo']), addMulticursor(['charlie delta']), addMulticursor(['echo'])])
+      })
 
-      executeCommandWithMulticursor(extractSubthoughtCommand, { store })
+      act(() => executeCommandWithMulticursor(extractSubthoughtCommand, { store }))
 
       // The other selected thoughts keep their values. Slicing them at the selection's offsets would have left
       // "charlita" with the child "e del", and "echo" with an empty child.
@@ -156,15 +172,17 @@ describe('Extract Subthought', () => {
     })
 
     it('extracts from the thought being edited when a different thought is selected', async () => {
-      store.dispatch([
-        importText({
-          text: `
-            - alpha bravo
-            - charlie delta
-          `,
-        }),
-        setCursor(['alpha bravo']),
-      ])
+      act(() => {
+        store.dispatch([
+          importText({
+            text: `
+              - alpha bravo
+              - charlie delta
+            `,
+          }),
+          setCursor(['alpha bravo']),
+        ])
+      })
 
       await act(vi.runOnlyPendingTimersAsync)
 
@@ -173,9 +191,11 @@ describe('Extract Subthought', () => {
       setSelection(thought!, 6, 11)
 
       // select a thought other than the one being edited, as alt-clicking its bullet does
-      store.dispatch([addMulticursor(['charlie delta'])])
+      act(() => {
+        store.dispatch([addMulticursor(['charlie delta'])])
+      })
 
-      executeCommandWithMulticursor(extractSubthoughtCommand, { store })
+      act(() => executeCommandWithMulticursor(extractSubthoughtCommand, { store }))
 
       // The extraction applies to the thought that owns the selection, not to the selected thought.
       expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
@@ -185,16 +205,18 @@ describe('Extract Subthought', () => {
     })
 
     it('leaves the cursor and the selected thoughts selected', async () => {
-      store.dispatch([
-        importText({
-          text: `
-            - alpha bravo
-            - charlie delta
-            - echo
-          `,
-        }),
-        setCursor(['alpha bravo']),
-      ])
+      act(() => {
+        store.dispatch([
+          importText({
+            text: `
+              - alpha bravo
+              - charlie delta
+              - echo
+            `,
+          }),
+          setCursor(['alpha bravo']),
+        ])
+      })
 
       await act(vi.runOnlyPendingTimersAsync)
 
@@ -202,9 +224,11 @@ describe('Extract Subthought', () => {
       expect(thought).toBeTruthy()
       setSelection(thought!, 6, 11)
 
-      store.dispatch([addMulticursor(['alpha bravo']), addMulticursor(['charlie delta']), addMulticursor(['echo'])])
+      act(() => {
+        store.dispatch([addMulticursor(['alpha bravo']), addMulticursor(['charlie delta']), addMulticursor(['echo'])])
+      })
 
-      executeCommandWithMulticursor(extractSubthoughtCommand, { store })
+      act(() => executeCommandWithMulticursor(extractSubthoughtCommand, { store }))
 
       // Precondition: the extraction occurred, otherwise the assertions below would hold vacuously.
       expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
@@ -222,23 +246,25 @@ describe('Extract Subthought', () => {
     })
 
     it('an alert should be shown if there is no selection and several thoughts are selected', async () => {
-      store.dispatch([
-        importText({
-          text: `
-            - alpha bravo
-            - charlie delta
-          `,
-        }),
-        setCursor(['alpha bravo']),
-        addMulticursor(['alpha bravo']),
-        addMulticursor(['charlie delta']),
-      ])
+      act(() => {
+        store.dispatch([
+          importText({
+            text: `
+              - alpha bravo
+              - charlie delta
+            `,
+          }),
+          setCursor(['alpha bravo']),
+          addMulticursor(['alpha bravo']),
+          addMulticursor(['charlie delta']),
+        ])
+      })
 
       // Flush the throttled "2 thoughts selected" alert from the multiselect so that it cannot overwrite the alert
       // raised by the command below.
       await act(vi.runOnlyPendingTimersAsync)
 
-      executeCommandWithMulticursor(extractSubthoughtCommand, { store })
+      act(() => executeCommandWithMulticursor(extractSubthoughtCommand, { store }))
 
       expect(await screen.findByText('No text selected to extract')).toBeTruthy()
 
@@ -248,16 +274,18 @@ describe('Extract Subthought', () => {
     })
 
     it('reverts the extraction on a single undo', async () => {
-      store.dispatch([
-        importText({
-          text: `
-            - alpha bravo
-            - charlie delta
-            - echo
-          `,
-        }),
-        setCursor(['alpha bravo']),
-      ])
+      act(() => {
+        store.dispatch([
+          importText({
+            text: `
+              - alpha bravo
+              - charlie delta
+              - echo
+            `,
+          }),
+          setCursor(['alpha bravo']),
+        ])
+      })
 
       await act(vi.runOnlyPendingTimersAsync)
 
@@ -265,9 +293,11 @@ describe('Extract Subthought', () => {
       expect(thought).toBeTruthy()
       setSelection(thought!, 6, 11)
 
-      store.dispatch([addMulticursor(['alpha bravo']), addMulticursor(['charlie delta']), addMulticursor(['echo'])])
+      act(() => {
+        store.dispatch([addMulticursor(['alpha bravo']), addMulticursor(['charlie delta']), addMulticursor(['echo'])])
+      })
 
-      executeCommandWithMulticursor(extractSubthoughtCommand, { store })
+      act(() => executeCommandWithMulticursor(extractSubthoughtCommand, { store }))
 
       // Precondition: the extraction occurred, otherwise the undo below would have nothing to revert.
       expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
@@ -276,7 +306,9 @@ describe('Extract Subthought', () => {
   - charlie delta
   - echo`)
 
-      store.dispatch(undo())
+      act(() => {
+        store.dispatch(undo())
+      })
 
       expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
   - alpha bravo
@@ -287,7 +319,9 @@ describe('Extract Subthought', () => {
 
   describe('Command Universe', () => {
     it('extracts the text that was selected before the Command Universe took the focus', async () => {
-      store.dispatch([importText({ text: '- hello world' }), setCursor(['hello world'])])
+      act(() => {
+        store.dispatch([importText({ text: '- hello world' }), setCursor(['hello world'])])
+      })
 
       await act(vi.runOnlyPendingTimersAsync)
 
@@ -296,9 +330,17 @@ describe('Extract Subthought', () => {
 
       // Opening the Command Universe snapshots the selection; its search input then takes it. Executing a command
       // closes the Command Universe first, so the snapshot has to survive the close.
-      store.dispatch(desktopCommandUniverse())
+      act(() => {
+        store.dispatch(desktopCommandUniverse())
+      })
       moveSelectionToSearchInput()
-      store.dispatch([desktopCommandUniverse(), extractSubthought()])
+      act(() => {
+        store.dispatch([desktopCommandUniverse(), extractSubthought()])
+      })
+
+      // Let the Command Universe's fade-out complete so that it unmounts before the test ends. Otherwise its animated
+      // command icons keep a repeating interval alive, which cleanupTestApp's vi.runAllTimersAsync can never drain.
+      await act(vi.runOnlyPendingTimersAsync)
 
       expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
   - hello
@@ -306,27 +348,37 @@ describe('Extract Subthought', () => {
     })
 
     it('does not apply the snapshot to a thought other than the one it was taken on', async () => {
-      store.dispatch([
-        importText({
-          text: `
-            - alpha bravo
-            - charlie delta
-          `,
-        }),
-        setCursor(['alpha bravo']),
-      ])
+      act(() => {
+        store.dispatch([
+          importText({
+            text: `
+              - alpha bravo
+              - charlie delta
+            `,
+          }),
+          setCursor(['alpha bravo']),
+        ])
+      })
 
       await act(vi.runOnlyPendingTimersAsync)
 
       const thought = await findThoughtByText('alpha bravo')
       setSelection(thought!, 6, 11)
 
-      store.dispatch(desktopCommandUniverse())
+      act(() => {
+        store.dispatch(desktopCommandUniverse())
+      })
       moveSelectionToSearchInput()
 
       // A command executed from the Command Universe can move the cursor. Slicing the thought it lands on at offsets
       // that index into the thought the snapshot came from would mangle its value.
-      store.dispatch([desktopCommandUniverse(), setCursor(['charlie delta']), extractSubthought()])
+      act(() => {
+        store.dispatch([desktopCommandUniverse(), setCursor(['charlie delta']), extractSubthought()])
+      })
+
+      // Let the Command Universe's fade-out complete so that it unmounts before the test ends. Otherwise its animated
+      // command icons keep a repeating interval alive, which cleanupTestApp's vi.runAllTimersAsync can never drain.
+      await act(vi.runOnlyPendingTimersAsync)
 
       expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
   - alpha bravo
